@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -97,6 +97,10 @@ def GetBuildBaseName(options, target_platform):
     options: Options which might have build_base and/or target_platform
     target_platform: Target platform (typically read from mozc_version.txt)
       This can be None.
+  Returns:
+    Build base directory.
+  Raises:
+    RuntimeError: if target_platform is not supported.
   """
   if options.build_base:
     return options.build_base
@@ -228,6 +232,46 @@ def GetTopLevelSourceDirectoryName():
 
 
 
+def GetAndroidHome(options):
+  """Gets the root directory of the SDK from options, ANDROID_HOME or PATH."""
+
+  if options.android_home:
+    logging.info('Android home is set from  '
+                 '--android_home option: %s', options.android_home)
+    return options.android_home
+  else:
+    # If --android_home is not set, find the SDK directory from
+    # ANDROID_HOME or PATH.
+    if os.environ.get('ANDROID_HOME'):
+      logging.info('Android home is set from ANDROID_HOME: %s',
+                   os.environ['ANDROID_HOME'])
+      return os.environ['ANDROID_HOME']
+    for command_name in ['android',  # for ANDROID_HOME/tools
+                         'adb']:  # for ANDROID_HOME/platform-tools
+      command_path = FindFileFromPath(command_name)
+      if command_path:
+        android_home = os.path.abspath(os.path.join(
+            os.path.dirname(command_path), '..'))
+        logging.info('Android home is set from PATH: %s', android_home)
+        return android_home
+  return None
+
+
+def GetAndroidNdkHome(options):
+  if options.android_ndk_home:
+    logging.info('Android NDK home is set from  '
+                 '--android_ndk_home option: %s', options.android_ndk_home)
+    return options.android_ndk_home
+  else:
+    command_path = FindFileFromPath('ndk-build')
+    if command_path:
+      android_ndk_home = os.path.abspath(os.path.dirname(command_path))
+      logging.info('Android NDK home is set from PATH: %s', android_ndk_home)
+      return android_ndk_home
+    else:
+      return None
+
+
 def MoveToTopLevelSourceDirectory():
   """Moves to the build top level directory."""
   os.chdir(GetTopLevelSourceDirectoryName())
@@ -242,6 +286,9 @@ def AddCommonOptions(parser):
   """Adds the options common among the commands."""
   parser.add_option('--build_base', dest='build_base',
                     help='Specifies the base directory of the built binaries.')
+  parser.add_option('--verbose', '-v', dest='verbose',
+                    action='store_true', default=False,
+                    help='show verbose message.')
   return parser
 
 
@@ -326,17 +373,25 @@ def ParseGypOptions(args=None, values=None):
                     'is installed. This option is used only on Linux.')
 
   # Android
-  parser.add_option('--android_arch_abi', dest='android_arch_abi',
-                    default='armeabi',
-                    help='Arndoid abi list. e.g. "armeabi x86".')
+  parser.add_option('--android_arch', dest='android_arch',
+                    type='choice',
+                    choices=('arm', 'x86', 'mips'),
+                    default='arm',
+                    help='[Android build only] Android architecture '
+                    '(arm, x86, mips)')
   parser.add_option('--android_application_id', dest='android_application_id',
                     default='org.mozc.android.inputmethod.japanese',
-                    help='Android\'s application id (==package ID). '
+                    help='[Android build only] Android\'s application id'
+                    ' (==package ID). '
                     'If set, On Android2.1 preference screen works '
                     'incorrectly and some Java test cases failes because of '
                     'test framework\'s update.')
-  parser.add_option('--android_sdk_home', dest='android_sdk_home', default=None,
+  parser.add_option('--android_home', dest='android_home', default=None,
                     help='[Android build only] A path to the Android SDK Home. '
+                    'If not specified, automatically detected from ANDROID_HOME'
+                    ' or PATH.')
+  parser.add_option('--android_ndk_home', dest='android_ndk_home', default=None,
+                    help='[Android build only] A path to the Android NDK Home. '
                     'If not specified, automatically detected from PATH.')
 
   # NaCl
@@ -388,9 +443,6 @@ def ParseGypOptions(args=None, values=None):
                              dest=('enable_%(option_name)s' % params),
                              help=help_template % params)
 
-  AddFeatureOption(parser, feature_name='cloud sync',
-                   macro_name='ENABLE_CLOUD_SYNC',
-                   option_name='cloud_sync')
   AddFeatureOption(parser, feature_name='cloud handwriting',
                    macro_name='ENABLE_CLOUD_HANDWRITING',
                    option_name='cloud_handwriting')
@@ -511,9 +563,18 @@ def ParseRunTestsOptions(args=None, values=None):
   parser.add_option('--test_size', dest='test_size', default='small')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
+  parser.add_option('--android_home', dest='android_home', default=None,
+                    help='[Android build only] A path to the Android SDK Home. '
+                    'If not specified, automatically detected from ANDROID_HOME'
+                    ' or PATH.')
   parser.add_option('--android_device', dest='android_device',
-                    help='specify which emulator/device you test on. '
+                    help='[Android build only] specify which emulator/device '
+                    'you test on. '
                     'If not specified emulators are launched and used.')
+  parser.add_option('--android_min_port', dest='android_min_port',
+                    default='5554',
+                    help='Minimum port number of emulators which will be '
+                    'launched by this script (inclusive).')
 
   return parser.parse_args(args, values)
 
@@ -553,7 +614,7 @@ def AddPythonPathToEnvironmentFilesForWindows(out_dir):
       x64_file.write(x64_content)
 
 
-def GypMain(options, unused_args):
+def GypMain(options, unused_args, _):
   """The main function for the 'gyp' command."""
   # Generate a version definition file.
   # The version file is used in this method to check if this is dev channel.
@@ -561,7 +622,8 @@ def GypMain(options, unused_args):
   template_path = '%s/%s' % (SRC_DIR, options.version_file)
   version_path = '%s/mozc_version.txt' % SRC_DIR
   GenerateVersionFile(template_path, version_path, options.target_platform,
-                      options.channel_dev, options.android_application_id)
+                      options.channel_dev, options.android_application_id,
+                      options.android_arch)
   version = GetMozcVersion()
   target_platform = version.GetTargetPlatform()
   logging.info('Version string is %s', version.GetVersionString())
@@ -617,9 +679,9 @@ def GypMain(options, unused_args):
 
   # Get and show the list of .gyp file names.
   gyp_file_names = GetGypFileNames(options)
-  logging.info('GYP files:')
+  logging.debug('GYP files:')
   for file_name in gyp_file_names:
-    logging.info('- %s', file_name)
+    logging.debug('- %s', file_name)
 
   # Build GYP command line.
   logging.info('Building GYP command line...')
@@ -658,25 +720,23 @@ def GypMain(options, unused_args):
   else:
     gyp_options.extend(['-D', 'use_wix=NO'])
 
-  android_sdk_home = options.android_sdk_home
+  android_home = GetAndroidHome(options)
+  android_ndk_home = GetAndroidNdkHome(options)
   if target_platform == 'Android':
-    if not android_sdk_home:
-      # If --android_sdk_home is not set, find the SDK directory from PATH.
-      # Usualy $SDK/tools and/or $SDK/platform-tools is/or in PATH.
-      for command_name in ['android',  # for ANDROID_SDK_HOME/tools
-                           'adb']:  # for ANDROID_SDK_HOME/platform-tools
-        command_path = FindFileFromPath(command_name)
-        if command_path:
-          android_sdk_home = os.path.abspath(
-              os.path.join(os.path.dirname(command_path), '..'))
-          break
-    if not android_sdk_home or not os.path.isdir(android_sdk_home):
+    if not android_home or not os.path.isdir(android_home):
       raise ValueError(
-          'Android SDK Home was not found. '
-          'Use --android_sdk_home option or make the home direcotry '
+          'Android Home was not found. '
+          'Use --android_home option or make the home direcotry '
           'be included in PATH environment variable.')
-  gyp_options.extend(['-D', 'android_sdk_home=%s' % android_sdk_home])
-  gyp_options.extend(['-D', 'android_arch_abi=%s' % options.android_arch_abi])
+    if not android_ndk_home or not os.path.isdir(android_ndk_home):
+      raise ValueError(
+          'Android NDK Home was not found. '
+          'Use --android_ndk_home option or make the home direcotry '
+          'be included in PATH environment variable.')
+
+  gyp_options.extend(['-D', 'android_home=%s' % android_home])
+  gyp_options.extend(['-D', 'android_arch=%s' % options.android_arch])
+  gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
   gyp_options.extend(['-D', 'android_application_id=%s' %
                        options.android_application_id])
   gyp_options.extend(['-D', 'build_base=%s' %
@@ -760,11 +820,6 @@ def GypMain(options, unused_args):
   is_official = (options.branding == 'GoogleJapaneseInput')
   is_official_dev = (is_official and options.channel_dev)
 
-  SetCommandLineForFeature(option_name='cloud_sync',
-                           linux=is_official_dev,
-                           windows=is_official_dev,
-                           mac=is_official_dev,
-                           nacl=is_official_dev)
   SetCommandLineForFeature(option_name='cloud_handwriting',
                            linux=is_official_dev,
                            windows=is_official_dev,
@@ -812,10 +867,6 @@ def GypMain(options, unused_args):
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
     gyp_options.extend(['-D', 'use_libibus=1'])
 
-
-  # Generate make rules for Android NDK.
-  if target_platform == 'Android':
-    gyp_options.extend(['-G', 'android_ndk_version=r8'])
 
   # Dictionary configuration
   if target_platform == 'Android':
@@ -912,15 +963,6 @@ def GypMain(options, unused_args):
 
 
 
-def GetNinjaDir():
-  """Returns the directory to Ninja."""
-  return os.path.abspath(os.path.join(
-      GetTopLevelSourceDirectoryName(),
-      'third_party',
-      'ninja',
-      'files'))
-
-
 def BuildToolsMain(options, unused_args, original_directory_name):
   """The main function for 'build_tools' command."""
   build_tools_dir = os.path.join(GetRelPath(os.getcwd(),
@@ -1010,9 +1052,7 @@ def BuildOnMac(options, targets, original_directory_name):
 
 def BuildOnWindows(targets):
   """Build the target on Windows."""
-
   ninja = 'ninja.exe'
-
 
   for target in targets:
     tokens = target.split(':')
@@ -1130,20 +1170,8 @@ def RunTests(build_base, configuration, parallel_num):
     raise RunOrDieError('\n'.join([error_text] + failed_tests))
 
 
-def RunTestsOnAndroid(options, targets, build_args, original_directory_name):
+def RunTestsOnAndroid(options, build_args, original_directory_name):
   """Run a test suite for the Android version."""
-  if targets:
-    PrintErrorAndExit('Targets [%s] are not supported.' % ', '.join(targets))
-
-  # Build native and java tests once.
-  # The builds must be in sequence (build, wait and next build).
-  # Otherwise build artifacts seem to conflict.
-  android_gyp = os.path.join(SRC_DIR, 'android', 'android.gyp')
-  for target in [':build_native_small_test', ':build_java_test']:
-    (build_options, build_targets) = ParseBuildOptions(
-        build_args + [android_gyp + target])
-    BuildMain(build_options, build_targets, original_directory_name)
-
   try:
     emulators = []
     serialnumbers = []
@@ -1161,50 +1189,56 @@ def RunTestsOnAndroid(options, targets, build_args, original_directory_name):
           GetBuildBaseName(options, GetMozcVersion().GetTargetPlatform()),
           options.configuration,
           'android_sdk_home')
+      android_home = GetAndroidHome(options)
       android_util.SetUpTestingSdkHomeDirectory(android_sdk_home_original,
-                                                android_sdk_home)
-      available_ports = android_util.GetAvailableEmulatorPorts()
-      emulators = []
-      avd_names = android_util.GetAvdNames(android_sdk_home)
+                                                android_sdk_home,
+                                                android_home)
+      available_ports = [i for i
+                         in android_util.GetAvailableEmulatorPorts(android_home)
+                         if i >= int(options.android_min_port)]
+      if GetMozcVersion().GetAndroidArch() == 'arm':
+        acceptable_abi = ['armeabi', 'armeabi-v7a']
+      else:
+        acceptable_abi = [GetMozcVersion().GetAndroidArch()]
+      avd_names = [i for i in android_util.GetAvdNames(android_sdk_home)
+                   if android_util.GetAvdProperties(
+                       android_sdk_home, i)['abi.type'] in acceptable_abi]
       logging.info('Launching following AVDs; %s', avd_names)
       if len(available_ports) < len(avd_names):
         PrintErrorAndExit('available_ports (%d) is smaller than avd_names (%d)'
                           % (len(available_ports), len(avd_names)))
+      emulators = []
       # Invokes all the available emulators.
       for avd_name in avd_names:
-        emulator = Emulator(android_sdk_home, avd_name)
+        emulator = Emulator(android_sdk_home, avd_name, android_home)
         logging.info('Creating SD card for %s', avd_name)
         emulator.CreateBlankSdCard(300 * 1024 * 1024)
         logging.info('Launching %s at port %d', avd_name, available_ports[0])
         emulator.Launch(available_ports[0])
         logging.info('Waiting for %s', avd_name)
-        emulator.GetAndroidDevice().WaitForDevice()
+        emulator.GetAndroidDevice(android_home).WaitForDevice()
         available_ports = available_ports[1:]
         emulators.append(emulator)
         serialnumbers.append(emulator.serial)
         logging.info('Successfully launched %s', avd_name)
 
-    # Run native tests.
+    # Run native and Java tests.
     android_gyp = os.path.join(SRC_DIR, 'android', 'android.gyp')
-    (build_options, build_targets) = ParseBuildOptions(
-        build_args + [android_gyp + ':run_native_small_test'])
-    # Injects android_device attribute to build_options.
-    # The attribute will be used as Makefile parameter.
-    # Q: Why setattr?
-    # A: BuildMain is invoked from build command and the command
-    # does not need 'android_device' option.
-    # So ParseBuildOption method doesn't accept --android_device
-    # argument. Thus build_options doesn't have android_device attribute
-    # but we need the option here becuase there is no other way to specifiy
-    # Makefile parameter.
-    setattr(build_options, 'android_device', ','.join(serialnumbers))
-    logging.info('build_options=%s', build_options)
-    BuildMain(build_options, build_targets, original_directory_name)
-
-    # Run the test suite in Java.
-    (build_options, build_targets) = ParseBuildOptions(
-        build_args + [android_gyp + ':run_test'])
-    BuildMain(build_options, build_targets, original_directory_name)
+    for target in ('run_native_test', 'run_java_test'):
+      (build_options, build_targets) = ParseBuildOptions(
+          build_args + ['%s:%s' % (android_gyp, target)])
+      # Injects android_device attribute to build_options.
+      # The attribute will be used as Makefile parameter.
+      # Q: Why setattr?
+      # A: BuildMain is invoked from build command and the command
+      # does not need 'android_device' option.
+      # So ParseBuildOption method doesn't accept --android_device
+      # argument. Thus build_options doesn't have android_device attribute
+      # but we need the option here becuase there is no other way to specifiy
+      # Makefile parameter.
+      setattr(build_options, 'android_device', ','.join(serialnumbers))
+      logging.info('build_options=%s', build_options)
+      BuildMain(build_options, build_targets, original_directory_name)
   finally:
     # Terminate the emulators.
     for emulator in emulators:
@@ -1263,9 +1297,6 @@ def RunTestsMain(options, args, original_directory_name):
     build_options.extend(['--build_base', options.build_base])
 
   target_platform = GetMozcVersion().GetTargetPlatform()
-  if target_platform == 'Android':
-    return RunTestsOnAndroid(options, targets, build_options,
-                             original_directory_name)
   if target_platform == 'NaCl':
     return RunTestsOnNaCl(targets, build_options, original_directory_name)
 
@@ -1282,8 +1313,11 @@ def RunTestsMain(options, args, original_directory_name):
   BuildMain(build_opts, build_args, original_directory_name)
 
   # Run tests actually
-  RunTests(GetBuildBaseName(options, target_platform), options.configuration,
-           options.test_jobs)
+  if target_platform == 'Android':
+    RunTestsOnAndroid(options, build_options, original_directory_name)
+  else:
+    RunTests(GetBuildBaseName(options, target_platform), options.configuration,
+             options.test_jobs)
 
 
 def CleanBuildFilesAndDirectories(options, unused_args):
@@ -1360,7 +1394,7 @@ def CleanBuildFilesAndDirectories(options, unused_args):
     RemoveDirectoryRecursively(directory_name)
 
 
-def CleanMain(options, args):
+def CleanMain(options, args, _):
   """The main function for the 'clean' command."""
   CleanBuildFilesAndDirectories(options, args)
 
@@ -1379,25 +1413,6 @@ def ShowHelpAndExit():
   sys.exit(1)
 
 
-class BuildContextManager(object):
-  """A setting up mechanism for objects that are only required while building.
-
-  Some objects are required to be available only while build_mozc.py is running.
-  This class is useful to manage such temporal object.
-  """
-
-  def __enter__(self):
-    """Sets up build environment with "with" statement."""
-    # TODO(yukawa): Implement this
-    return self
-
-  def __exit__(self, exc_type, exc_value, traceback):
-    """Tears down build environment with "with" statement."""
-    # TODO(yukawa): Implement this
-    return False  # Thrown exception should be handled by the caller side.
-
-
-
 def main():
   logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
   logging.getLogger().addFilter(ColoredLoggingFilter())
@@ -1411,27 +1426,31 @@ def main():
   # affects functions in os.path and that causes troublesome errors.
   MoveToTopLevelSourceDirectory()
 
-  with BuildContextManager():
-    command = sys.argv[1]
-    args = sys.argv[2:]
-    if command == 'gyp':
-      (cmd_opts, cmd_args) = ParseGypOptions(args)
-      GypMain(cmd_opts, cmd_args)
-    elif command == 'build_tools':
-      (cmd_opts, cmd_args) = ParseBuildOptions(args)
-      BuildToolsMain(cmd_opts, cmd_args, original_directory_name)
-    elif command == 'build':
-      (cmd_opts, cmd_args) = ParseBuildOptions(args)
-      BuildMain(cmd_opts, cmd_args, original_directory_name)
-    elif command == 'runtests':
-      (cmd_opts, cmd_args) = ParseRunTestsOptions(args)
-      RunTestsMain(cmd_opts, cmd_args, original_directory_name)
-    elif command == 'clean':
-      (cmd_opts, cmd_args) = ParseCleanOptions(args)
-      CleanMain(cmd_opts, cmd_args)
-    else:
-      logging.error('Unknown command: %s', command)
-      ShowHelpAndExit()
+  command = sys.argv[1]
+  args = sys.argv[2:]
+
+  command_to_procedure = {
+      'gyp': (ParseGypOptions, GypMain),
+      'build_tools': (ParseBuildOptions, BuildToolsMain),
+      'build': (ParseBuildOptions, BuildMain),
+      'runtests': (ParseRunTestsOptions, RunTestsMain),
+      'clean': (ParseCleanOptions, CleanMain)}
+
+  procedure = command_to_procedure.get(command, None)
+  if procedure is None:
+    logging.error('Unknown command: %s', command)
+    ShowHelpAndExit()
+
+  # Parse options.
+  (cmd_opts, cmd_args) = procedure[0](args)
+
+  # Set log level to DEBUG if required.
+  if cmd_opts.verbose:
+    logging.getLogger().setLevel(logging.DEBUG)
+
+  # Execute build.
+  procedure[1](cmd_opts, cmd_args, original_directory_name)
+
 
 if __name__ == '__main__':
   main()

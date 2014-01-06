@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -752,6 +752,11 @@ message Request {
 message ApplicationInfo {
   optional uint32 process_id = 1;
   optional uint32 thread_id = 2;
+  // The time difference between local time and UTC time in seconds.
+  // This field is not supported except for NaCl.
+  // We use this field in NaCl Mozc because we can't know the local timezone in
+  // NaCl environment.
+  optional int32 timezone_offset = 3;
 };
 
 message Input {
@@ -823,17 +828,11 @@ message Input {
     // can be used for pinging the server
     NO_OPERATION = 14;
 
-    START_CLOUD_SYNC = 18;
-    // Obtains the current cloud sync status.  The converter will fill the
-    // 'cloud_sync_status' field in the output.
-    GET_CLOUD_SYNC_STATUS = 23;
-    // You need to specify "auth_code" field when this command is
-    // used.  This command adds the specified "auth_code" to the
-    // converter.  Currently the converter has only one slot for the
-    // "auth_code" so this command means just replacing authorization.
-    // TODO(mukai): prepare a command to invalidate an existing
-    // "auth_code".
-    ADD_AUTH_CODE = 24;
+    // Sync feature is deprecated since 1.13 dev.
+    // TODO(mozc-team): Remove following variables.
+    OBSOLETE_START_CLOUD_SYNC = 18;
+    OBSOLETE_GET_CLOUD_SYNC_STATUS = 23;
+    OBSOLETE_ADD_AUTH_CODE = 24;
 
     INSERT_TO_STORAGE = 20;
     READ_ALL_FROM_STORAGE = 21;
@@ -883,27 +882,6 @@ message Input {
   // If the command is INSERT_TO_STORAGE, all the fields must be filled.
   // If READ_ALL_FROM_STORAGE, key and value fields are ignored.
   optional GenericStorageEntry storage_entry = 10;
-
-  // Authorization information for cloud sync.  You need to specify
-  // this message for SET_AUTH_CODE command.
-  message AuthorizationInfo {
-    // The auth_code.
-    optional string auth_code = 1;
-    // The name to distinguish an authorization from others.  This is
-    // prepared in case that the configuration allows multiple tokens
-    // of OAuth2, but currently it does nothing.
-    optional string name = 2;
-    // The scope of the authorization.  Ditto.
-    optional string scope = 3;
-    // The access token. In NaCl Mozc, we can get the access token using Chrome
-    // Identity JavaScript API. This field is only used when the user enables
-    // the sync feature. When once the sync task has started, the access token
-    // will be gotten using Chrome Identity JavaScript API via NaclJsProxy.
-    // auth_code field and this are exclusive.
-    optional string access_token = 4;
-  };
-  // Specify the authorization info if the command is SET_AUTH_CODE.
-  optional AuthorizationInfo auth_code = 11;
 
   enum TouchAction {
     TOUCH_DOWN = 1;
@@ -1040,41 +1018,6 @@ message DeletionRange {
   optional int32 length = 2;
 };
 
-// TODO(peria): Move this message to a new protobuf file.
-message CloudSyncStatus {
-  enum SyncGlobalStatus {
-    SYNC_SUCCESS = 0;
-    SYNC_FAILURE = 1;
-    INSYNC = 2;
-    NOSYNC = 3;  // no synchronisation is working.
-    WAITSYNC = 4;  // waiting for minimum sync RPC duration.
-  };
-  required SyncGlobalStatus global_status = 1;
-
-  // Error types in sync feature.
-  enum ErrorCode {
-    // In case AuthToken is not accepted in OAuth2 authorization.
-    AUTHORIZATION_FAIL = 0;
-    // Any sync dictionaries have more entries than pre-defiend limit.
-    USER_DICTIONARY_NUM_ENTRY_EXCEEDED = 1;
-    // Sizes of any sync dictionaries are larger than pre-defiend limit.
-    USER_DICTIONARY_BYTESIZE_EXCEEDED = 2;
-    // The number of sync dictionaries exceeds pre-defined limit.
-    USER_DICTIONARY_NUM_DICTIONARY_EXCEEDED = 3;
-  };
-  message SyncError {
-    required ErrorCode error_code = 1;
-    optional int64 timestamp = 2 [default = -1];
-  };
-  // Error logs in sync feature.
-  repeated SyncError sync_errors = 2;
-
-  // We have no items numbered 3-5 for a historical reason.
-
-  // Timestamp of the last successful sync.
-  optional uint64 last_synced_timestamp = 6 [default = 0];
-};
-
 message Output {
   optional uint64 id = 1;
 
@@ -1147,8 +1090,6 @@ message Output {
 
   // Used when the command is READ_ALL_FROM_STORAGE.
   optional GenericStorageEntry storage_entry = 19;
-
-  optional CloudSyncStatus cloud_sync_status = 20;
 
   optional mozc.user_dictionary.UserDictionaryCommandStatus
       user_dictionary_command_status = 21;

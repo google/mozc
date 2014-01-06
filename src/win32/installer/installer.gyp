@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -172,6 +172,7 @@
                 '--version_file', '../../mozc_version.txt',
                 '--input', 'mozc_version_template.wxi',
                 '--output', '<(mozc_version_file)',
+                '--branding', '<(branding)',
               ],
               'message': '<(mozc_version_file)',
             },

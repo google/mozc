@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,24 @@
 
 {
   "name": "Sample IME for IME extension API",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "permissions": ["input"],
   "manifest_version": 2,
   "minimum_chrome_version": "22",
   "description": "Sample IME for IME extension API",
   "background": {
-    "scripts": ["ime.js"]
+    "scripts": [
+      "ime.js",
+      "init.js"
+    ]
   },
   "input_components": [{
     "name": "Sample IME for IME extension API",
     "type": "ime",
     "id": "sample_ime_for_ime_extension_api",
     "description": "Sample IME for IME extension API",
-    "language": "en",
-    "layouts": ["us"]
+    "language": "en-US",
+    "layouts": ["us::eng"]
   }],
   "icons": {
     "128": "icon128.png"

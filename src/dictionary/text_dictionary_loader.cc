@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -122,7 +122,7 @@ TextDictionaryLoader::~TextDictionaryLoader() {
 }
 
 bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
-                                               StringPiece label) {
+                                               StringPiece label) const {
   CHECK(token);
   if (label.empty()) {
     return true;
@@ -171,8 +171,11 @@ void TextDictionaryLoader::LoadWithLineLimit(
     string line;
     while (limit > 0 && file.ReadLine(&line)) {
       Util::ChopReturns(&line);
-      tokens_.push_back(ParseTSV(line));
-      --limit;
+      Token *token = ParseTSVLine(line);
+      if (token) {
+        tokens_.push_back(token);
+        --limit;
+      }
     }
     LOG(INFO) << tokens_.size() << " tokens from " << dictionary_filename;
   }
@@ -279,37 +282,34 @@ void TextDictionaryLoader::CollectTokens(vector<Token *> *res) {
   res->insert(res->end(), tokens_.begin(), tokens_.end());
 }
 
-Token *TextDictionaryLoader::ParseTSV(const string &line) {
+Token *TextDictionaryLoader::ParseTSVLine(StringPiece line) const {
+  vector<StringPiece> columns;
+  Util::SplitStringUsing(line, "\t", &columns);
+  return ParseTSV(columns);
+}
+
+Token *TextDictionaryLoader::ParseTSV(
+    const vector<StringPiece> &columns) const {
+  CHECK_LE(5, columns.size()) << "Lack of columns: " << columns.size();
+
   scoped_ptr<Token> token(new Token);
 
-  SplitIterator<SingleDelimiter> iter(line, "\t");
-  CHECK(!iter.Done()) << "Malformed line: " << line;
-  Util::NormalizeVoicedSoundMark(iter.Get(), &token->key);
+  // Parse key, lid, rid, cost, value.
+  Util::NormalizeVoicedSoundMark(columns[0], &token->key);
+  CHECK(SafeStrToInt(columns[1], &token->lid))
+      << "Wrong lid: " << columns[1];
+  CHECK(SafeStrToInt(columns[2], &token->rid))
+      << "Wrong rid: " << columns[2];
+  CHECK(SafeStrToInt(columns[3], &token->cost))
+      << "Wrong cost: " << columns[3];
+  Util::NormalizeVoicedSoundMark(columns[4], &token->value);
 
-  iter.Next();
-  CHECK(!iter.Done()) << "Malformed line: " << line;
-  CHECK(SafeStrToInt(iter.Get(), &token->lid))
-      << "Wrong lid: " << iter.Get();
-
-  iter.Next();
-  CHECK(!iter.Done()) << "Malformed line: " << line;
-  CHECK(SafeStrToInt(iter.Get(), &token->rid))
-      << "Wrong rid: " << iter.Get();
-
-  iter.Next();
-  CHECK(!iter.Done()) << "Malformed line: " << line;
-  CHECK(SafeStrToInt(iter.Get(), &token->cost))
-      << "Wrong cost: " << iter.Get();
-
-  iter.Next();
-  CHECK(!iter.Done()) << "Malformed line: " << line;
-  Util::NormalizeVoicedSoundMark(iter.Get(), &token->value);
-
-  iter.Next();
-  const StringPiece label = iter.Done() ? StringPiece() : iter.Get();
-  CHECK(RewriteSpecialToken(token.get(), label))
-      << "Invalid label: " << line;
-
+  // Optionally, label (SPELLING_CORRECTION, ZIP_CODE, etc.) may be provided in
+  // column 6.
+  if (columns.size() > 5) {
+    CHECK(RewriteSpecialToken(token.get(), columns[5]))
+        << "Invalid label: " << columns[5];
+  }
   return token.release();
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -104,14 +104,6 @@ QProgressDialog *CreateProgressDialog(
   return progress;
 }
 
-size_t GetMaxDictionaryEntrySize(bool is_syncable) {
-  if (is_syncable) {
-    return mozc::UserDictionaryStorage::max_sync_entry_size();
-  } else {
-    return mozc::UserDictionaryStorage::max_entry_size();
-  }
-}
-
 #if defined(OS_WIN) || defined(OS_MACOSX)
 void InstallStyleSheet(const QString &filename) {
   QFile file(filename);
@@ -119,23 +111,6 @@ void InstallStyleSheet(const QString &filename) {
   qApp->setStyleSheet(QLatin1String(file.readAll()));
 }
 #endif
-
-const string ConvertDictNameFromGui(const QString& gui_name) {
-  if (gui_name == QObject::tr("Sync-able dictionary")) {
-    return mozc::UserDictionaryStorage::default_sync_dictionary_name();
-  } else {
-    return gui_name.toStdString();
-  }
-}
-
-const string ConvertDictNameToGui(const string& logical_name) {
-  if (logical_name ==
-      mozc::UserDictionaryStorage::default_sync_dictionary_name()) {
-    return QObject::tr("Sync-able dictionary").toStdString();
-  } else {
-    return logical_name;
-  }
-}
 
 // Use QTextStream to read UTF16 text -- we can't use ifstream,
 // since ifstream cannot handle Wide character.
@@ -356,6 +331,14 @@ DictionaryTool::DictionaryTool(QWidget *parent)
     is_available_ = false;
     return;
   }
+
+#ifndef ENABLE_CLOUD_SYNC
+  if (session_->mutable_storage()
+      ->ConvertSyncDictionariesToNormalDictionaries()) {
+    LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
+    session_->mutable_storage()->Save();
+  }
+#endif  // !ENABLE_CLOUD_SYNC
 
   // main window
 #ifndef OS_LINUX
@@ -627,9 +610,7 @@ void DictionaryTool::OnDictionarySelectionChanged() {
     export_action_->setEnabled(false);
   } else {
     current_dic_id_ = dic_info.id;
-    const UserDictionary *dic =
-        session_->mutable_storage()->GetUserDictionary(current_dic_id_);
-    max_entry_size_ = GetMaxDictionaryEntrySize(dic->syncable());
+    max_entry_size_ = mozc::UserDictionaryStorage::max_entry_size();
     SetupDicContentEditor(dic_info);
   }
 }
@@ -648,9 +629,8 @@ void DictionaryTool::SetupDicContentEditor(
   // Update the main table widget for dictionary contents.
   StopMonitoringUserEdit();
 
-  // Disable "rename" and "delete" for sync dictionary
-  rename_action_->setEnabled(!dic->syncable());
-  delete_action_->setEnabled(!dic->syncable());
+  rename_action_->setEnabled(true);
+  delete_action_->setEnabled(true);
   import_append_action_->setEnabled(true);
   export_action_->setEnabled(true);
 
@@ -788,7 +768,7 @@ void DictionaryTool::ImportAndCreateDictionary() {
   }
 
   ImportHelper(0,   // dic_id == 0 means that "CreateNewDictonary" mode
-               ConvertDictNameFromGui(import_dialog_->dic_name()),
+               import_dialog_->dic_name().toStdString(),
                import_dialog_->file_name().toStdString(),
                import_dialog_->ime_type(),
                import_dialog_->encoding_type());
@@ -816,7 +796,7 @@ void DictionaryTool::ImportAndAppendDictionary() {
   }
 
   ImportHelper(dic_info.id,
-               ConvertDictNameFromGui(dic_info.item->text()),
+               dic_info.item->text().toStdString(),
                import_dialog_->file_name().toStdString(),
                import_dialog_->ime_type(),
                import_dialog_->encoding_type());
@@ -928,7 +908,7 @@ void DictionaryTool::ImportHelper(
 
   UpdateUIStatus();
 
-  ReportImportError(error, ConvertDictNameToGui(dic_name), added_entries_size);
+  ReportImportError(error, dic_name, added_entries_size);
 }
 
 void DictionaryTool::ImportFromDefaultIME() {
@@ -1170,7 +1150,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
   }
 
   const size_t target_max_entry_size =
-      GetMaxDictionaryEntrySize(target_dict->syncable());
+      mozc::UserDictionaryStorage::max_entry_size();
 
   if (target_dict->entries_size() + rows.size() > target_max_entry_size) {
     QMessageBox::critical(this, window_title_,
@@ -1385,14 +1365,8 @@ void DictionaryTool::OnContextMenuRequestedForList(const QPoint &pos) {
 
   QMenu *menu = new QMenu(this);
 
-  // Disable "rename" and "delete" for sync dictionary.
-  QAction *rename_action = NULL;
-  QAction *delete_action = NULL;
-  if (!IsCurrentDictionaryForSync()) {
-    // "rename" and "delete" are not available for sync dictionary.
-    rename_action = menu->addAction(tr("Rename..."));
-    delete_action = menu->addAction(tr("Delete"));
-  }
+  QAction *rename_action = menu->addAction(tr("Rename..."));
+  QAction *delete_action = menu->addAction(tr("Delete"));
   QAction *import_action = menu->addAction(tr("Import to this dictionary..."));
   QAction *export_action = menu->addAction(tr("Export this dictionary..."));
   QAction *selected_action = menu->exec(QCursor::pos());
@@ -1420,17 +1394,6 @@ DictionaryTool::DictionaryInfo DictionaryTool::current_dictionary() const {
   retval.id   = selected_dict->data(Qt::UserRole).toULongLong();
   retval.item = selected_dict;
   return retval;
-}
-
-bool DictionaryTool::IsCurrentDictionaryForSync() const {
-  const DictionaryInfo &dic_info = current_dictionary();
-  if (dic_info.item == NULL) {
-    return false;
-  }
-
-  UserDictionary *dic =
-      session_->mutable_storage()->GetUserDictionary(dic_info.id);
-  return dic->syncable();
 }
 
 void DictionaryTool::SyncToStorage() {
@@ -1465,7 +1428,7 @@ void DictionaryTool::SyncToStorage() {
 void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
   uint64 new_dic_id = 0;
   if (!session_->mutable_storage()->CreateDictionary(
-          ConvertDictNameFromGui(dic_name),
+          dic_name.toStdString(),
           &new_dic_id)) {
     LOG(ERROR) << "Failed to create a new dictionary.";
     ReportError();
@@ -1490,7 +1453,7 @@ bool DictionaryTool::InitDictionaryList() {
   for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
     QListWidgetItem *item = new QListWidgetItem(dic_list_);
     DCHECK(item);
-    item->setText(ConvertDictNameToGui(storage.dictionaries(i).name()).c_str());
+    item->setText(storage.dictionaries(i).name().c_str());
     item->setData(Qt::UserRole,
                   QVariant(
                       static_cast<qulonglong>(storage.dictionaries(i).id())));
@@ -1644,12 +1607,7 @@ void DictionaryTool::UpdateUIStatus() {
   new_action_->setEnabled(is_enable_new_dic);
   import_create_action_->setEnabled(is_enable_new_dic);
 
-  // "delete" is not available for sync dictionary.
-  if (IsCurrentDictionaryForSync()) {
-    delete_action_->setEnabled(false);
-  } else {
-    delete_action_->setEnabled(dic_list_->count() > 0);
-  }
+  delete_action_->setEnabled(dic_list_->count() > 0);
   import_append_action_->setEnabled(dic_list_->count() > 0);
 #ifdef OS_WIN
   import_default_ime_action_->setEnabled(dic_list_->count() > 0);

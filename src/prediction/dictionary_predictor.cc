@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -500,21 +500,45 @@ int DictionaryPredictor::GetLMCost(PredictionTypes types,
   return lm_cost;
 }
 
-// return dictionary node whose value/key are |key| and |value|.
-// return NULL no words are found in the dictionary.
+namespace {
+
+class FindKeyValueCallback : public DictionaryInterface::Callback {
+ public:
+  FindKeyValueCallback(StringPiece target_value,
+                       NodeAllocatorInterface *allocator)
+      : target_value_(target_value), allocator_(allocator), node_(NULL) {}
+
+  virtual ResultType OnToken(StringPiece,  // key
+                             StringPiece,  // actual_key
+                             const Token &token) {
+    if (token.value != target_value_) {
+      return TRAVERSE_CONTINUE;
+    }
+    node_ = allocator_->NewNode();
+    node_->InitFromToken(token);
+    return TRAVERSE_DONE;
+  }
+
+  Node *node() const { return node_; }
+
+ private:
+  const StringPiece target_value_;
+  NodeAllocatorInterface *allocator_;
+  Node *node_;
+};
+
+}  // namespace
+
+// Returns a dictionary node whose key is a prefix of |key| and whose value
+// equals |value|.  Returns NULL if no words are found in the dictionary.
 const Node *DictionaryPredictor::LookupKeyValueFromDictionary(
     const string &key,
     const string &value,
     NodeAllocatorInterface *allocator) const {
   DCHECK(allocator);
-  const Node *node = dictionary_->LookupPrefix(key.data(), key.size(),
-                                               allocator);
-  for (; node != NULL; node = node->bnext) {
-    if (value == node->value) {
-      return node;
-    }
-  }
-  return NULL;
+  FindKeyValueCallback callback(value, allocator);
+  dictionary_->LookupPrefix(key, false, &callback);
+  return callback.node();
 }
 
 bool DictionaryPredictor::GetHistoryKeyAndValue(

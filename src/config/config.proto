@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@ message GeneralConfig {
   optional bool upload_usage_stats = 6 [default = false];
 };
 
-message SyncConfig {
+message OBSOLETE_SyncConfig {
   optional bool use_config_sync = 1 [ default = false ];
   optional bool use_user_dictionary_sync = 2 [ default = false ];
   optional bool use_user_history_sync = 3 [ default = false ];
@@ -320,8 +320,8 @@ message Config {
   //
   // Cloud (300-319)
   //
-  // Configuration for cloud sync feature.
-  optional SyncConfig sync_config = 300;
+  // Configuration for cloud sync feature. This field is obsolete.
+  optional OBSOLETE_SyncConfig OBSOLETE_sync_config = 300;
 
   // Allow the cloud handwriting.  The handwriting UI has to notice
   // user before activating the feature, and set this field to true

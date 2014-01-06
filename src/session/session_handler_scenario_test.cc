@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -130,6 +130,7 @@ const char *kScenarioFileList[] = {
   DATA_DIR "auto_partial_suggestion.txt",
   DATA_DIR "b7132535_scenario.txt",
   DATA_DIR "b7321313_scenario.txt",
+  DATA_DIR "b7548679_scenario.txt",
   DATA_DIR "b8703702_scenario.txt",
   DATA_DIR "change_request.txt",
   DATA_DIR "clear_user_prediction.txt",

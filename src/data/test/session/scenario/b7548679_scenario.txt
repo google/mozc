@@ -1,0 +1,21 @@
+# This file contains a scenario for testing transliteration candidate.
+# See also http://b/issue?id=7548679
+
+SET_CONFIG	preedit_method	ROMAN
+SWITCH_INPUT_MODE	HIRAGANA
+SET_CONFIG	session_keymap	MSIME
+SEND_KEY	ON
+
+RESET_CONTEXT
+SEND_KEYS	hap
+EXPECT_PREEDIT	はｐ
+SEND_KEY	F9
+EXPECT_PREEDIT	ｈａｐ
+SEND_KEY	F8
+EXPECT_PREEDIT	hap
+SEND_KEY	F8
+EXPECT_PREEDIT	HAP
+SEND_KEY	F8
+EXPECT_PREEDIT	Hap
+SEND_KEY	F8
+EXPECT_PREEDIT	hap

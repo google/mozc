@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,11 +62,14 @@
     {
       'target_name': 'install_test_connection_txt',
       'type': 'none',
+      'dependencies': [
+        'mock_data_manager.gyp:gen_connection_single_column_txt_for_mock#host',
+      ],
       'copies': [
         {
           'destination': '<(mozc_data_dir)/data/test/dictionary/',
           'files': [
-            '../../data/test/dictionary/connection_single_column.txt',
+            '<(gen_out_dir)/connection_single_column.txt',
           ],
         }
       ],

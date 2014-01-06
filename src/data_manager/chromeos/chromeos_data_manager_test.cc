@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@ class ChromeOsDataManagerTest : public DataManagerTestBase {
             kLSize,
             kRSize,
             IsBoundaryInternal,
-            "data/dictionary_chromeos/connection_single_column.txt",
+            "data_manager/chromeos/connection_single_column.txt",
             1,
             "data/dictionary_chromeos/dictionary00.txt,"
             "data/dictionary_chromeos/dictionary01.txt,"

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,6 @@
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_int32(timeout);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {

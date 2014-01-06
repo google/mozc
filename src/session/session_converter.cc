@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -297,43 +297,21 @@ bool SessionConverter::ConvertToHalfWidth(const composer::Composer &composer) {
 
   string composition;
   if (CheckState(COMPOSITION | SUGGESTION)) {
-    if (!Convert(composer)) {
-      LOG(ERROR) << "Conversion failed";
-      return false;
-    }
-    GetPreedit(0, segments_->conversion_segments_size(), &composition);
-    // TODO(komatsu): This is a workaround to transliterate the whole
-    // preedit as a single segment.  We should modify
-    // converter/converter.cc to enable to accept mozc::Segment::FIXED
-    // from the session layer.
-    if (segments_->conversion_segments_size() != 1) {
-      ResizeSegmentWidth(composer, Util::CharsLen(composition));
-    }
+    composer.GetStringForPreedit(&composition);
   } else {
     composition = GetSelectedCandidate(segment_index_).value;
   }
 
-  DCHECK(CheckState(CONVERSION));
-  Attributes attributes = HALF_WIDTH;
   // TODO(komatsu): make a function to return a logical sum of ScriptType.
   // If composition_ is "あｂｃ", it should be treated as Katakana.
   if (Util::ContainsScriptType(composition, Util::KATAKANA) ||
       Util::ContainsScriptType(composition, Util::HIRAGANA) ||
       Util::ContainsScriptType(composition, Util::KANJI) ||
-      Util::IsKanaSymbolContained(composition)
-  ) {
-    attributes |= KATAKANA;
+      Util::IsKanaSymbolContained(composition)) {
+    return ConvertToTransliteration(composer, transliteration::HALF_KATAKANA);
   } else {
-    attributes |= ASCII;
-    attributes |= (candidate_list_->GetDeepestFocusedCandidate().attributes() &
-                   (UPPER | LOWER | CAPITALIZED));
+    return ConvertToTransliteration(composer, transliteration::HALF_ASCII);
   }
-  candidate_list_->MoveNextAttributes(attributes);
-  candidate_list_visible_ = false;
-  // Treat as top conversion candidate on usage stats.
-  selected_candidate_indices_[segment_index_] = 0;
-  SegmentFocus();
-  return true;
 }
 
 bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "data_manager/user_pos_manager.h"
+#include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
@@ -51,6 +52,8 @@
 #include "dictionary/text_dictionary_loader.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+
+using mozc::dictionary::CollectTokenCallback;
 
 namespace {
 // We cannot use #ifdef in DEFINE_int32.
@@ -82,6 +85,10 @@ namespace mozc {
 namespace dictionary {
 
 namespace {
+
+const bool kEnableKanaModiferInsensitiveLookup = true;
+const bool kDisableKanaModiferInsensitiveLookup = false;
+
 }  // namespace
 
 using mozc::storage::louds::KeyExpansionTable;
@@ -153,13 +160,13 @@ const Node* FindNodeByToken(const Token &token, const Node &node) {
 }
 }  // namespace
 
-void SystemDictionaryTest::BuildSystemDictionary(const vector <Token *>& source,
+void SystemDictionaryTest::BuildSystemDictionary(const vector<Token *>& source,
                                                  int num_tokens) {
   SystemDictionaryBuilder builder;
   vector<Token *> tokens;
   // Picks up first tokens.
   for (vector<Token *>::const_iterator it = source.begin();
-       tokens.size() < num_tokens && it != source.end(); it++) {
+       tokens.size() < num_tokens && it != source.end(); ++it) {
     tokens.push_back(*it);
   }
   builder.BuildFromTokens(tokens);
@@ -330,67 +337,60 @@ TEST_F(SystemDictionaryTest, test_normal_word) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  // Scans the tokens and check if they all exists.
-  vector<Token *>::const_iterator it;
-  for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
-    bool found = false;
-    Node *node = system_dic->LookupPrefix((*it)->key.c_str(), (*it)->key.size(),
-                                          NULL);
-    while (node) {
-      if (CompareForLookup(node, *it, false)) {
-        found = true;
-      }
-      Node *tmp_node = node;
-      node = node->bnext;
-      delete tmp_node;
-    }
-    EXPECT_TRUE(found) << "Failed to find " << (*it)->key.c_str() << ":"
-                       << (*it)->value.c_str();
-  }
+  CollectTokenCallback callback;
+
+  // Look up by exact key.
+  system_dic->LookupPrefix(t0->key, false, &callback);
+  ASSERT_EQ(1, callback.tokens().size());
+  EXPECT_TOKEN_EQ(*t0, callback.tokens().front());
+
+  // Look up by prefix.
+  callback.Clear();
+  system_dic->LookupPrefix(
+      "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86",  // "あいう"
+      false, &callback);
+  ASSERT_EQ(1, callback.tokens().size());
+  EXPECT_TOKEN_EQ(*t0, callback.tokens().front());
+
+  // Nothing should be looked up.
+  callback.Clear();
+  system_dic->LookupPrefix(
+      "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F",  // "かきく"
+      false, &callback);
+  EXPECT_TRUE(callback.tokens().empty());
 }
 
 TEST_F(SystemDictionaryTest, test_same_word) {
+  vector<Token> tokens(4);
+
+  tokens[0].key = "\xe3\x81\x82";  // "あ"
+  tokens[0].value = "\xe4\xba\x9c";  // "亜"
+  tokens[0].cost = 100;
+  tokens[0].lid = 50;
+  tokens[0].rid = 70;
+
+  tokens[1].key = "\xe3\x81\x82";  // "あ"
+  tokens[1].value = "\xe4\xba\x9c";  // "亜"
+  tokens[1].cost = 150;
+  tokens[1].lid = 100;
+  tokens[1].rid = 200;
+
+  tokens[2].key = "\xe3\x81\x82";  // "あ"
+  tokens[2].value = "\xe3\x81\x82";  // "あ"
+  tokens[2].cost = 100;
+  tokens[2].lid = 1000;
+  tokens[2].rid = 2000;
+
+  tokens[3].key = "\xe3\x81\x82";  // "あ"
+  tokens[3].value = "\xe4\xba\x9c";  // "亜"
+  tokens[3].cost = 1000;
+  tokens[3].lid = 2000;
+  tokens[3].rid = 3000;
+
   vector<Token *> source_tokens;
-  scoped_ptr<Token> t0(new Token);
-  // "あ"
-  t0->key = "\xe3\x81\x82";
-  // "亜"
-  t0->value = "\xe4\xba\x9c";
-  t0->cost = 100;
-  t0->lid = 50;
-  t0->rid = 70;
-
-  scoped_ptr<Token> t1(new Token);
-  // "あ"
-  t1->key = "\xe3\x81\x82";
-  // "亜"
-  t1->value = "\xe4\xba\x9c";
-  t1->cost = 150;
-  t1->lid = 100;
-  t1->rid = 200;
-
-  scoped_ptr<Token> t2(new Token);
-  // "あ"
-  t2->key = "\xe3\x81\x82";
-  // "あ"
-  t2->value = "\xe3\x81\x82";
-  t2->cost = 100;
-  t2->lid = 1000;
-  t2->rid = 2000;
-
-  scoped_ptr<Token> t3(new Token);
-  // "あ"
-  t3->key = "\xe3\x81\x82";
-  // "亜"
-  t3->value = "\xe4\xba\x9c";
-  t3->cost = 1000;
-  t3->lid = 2000;
-  t3->rid = 3000;
-
-  source_tokens.push_back(t0.get());
-  source_tokens.push_back(t1.get());
-  source_tokens.push_back(t2.get());
-  source_tokens.push_back(t3.get());
+  for (size_t i = 0; i < tokens.size(); ++i) {
+    source_tokens.push_back(&tokens[i]);
+  }
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
   scoped_ptr<SystemDictionary> system_dic(
@@ -398,23 +398,11 @@ TEST_F(SystemDictionaryTest, test_same_word) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  // Scans the tokens and check if they all exists.
-  vector<Token *>::const_iterator it;
-  for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
-    bool found = false;
-    Node *node = system_dic->LookupPrefix((*it)->key.c_str(),
-                                          (*it)->key.size(), NULL);
-    while (node) {
-      if (CompareForLookup(node, *it, false)) {
-        found = true;
-      }
-      Node *tmp_node = node;
-      node = node->bnext;
-      delete tmp_node;
-    }
-    EXPECT_TRUE(found) << "Failed to find " << (*it)->key.c_str() << ":"
-                       << (*it)->value.c_str();
-  }
+  // All the tokens should be looked up.
+  CollectTokenCallback callback;
+  system_dic->LookupPrefix("\xe3\x81\x82",  // "あ"
+                           false, &callback);
+  EXPECT_TOKENS_EQ_UNORDERED(source_tokens, callback.tokens());
 }
 
 TEST_F(SystemDictionaryTest, test_words) {
@@ -426,43 +414,25 @@ TEST_F(SystemDictionaryTest, test_words) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  // Scans the tokens and check if they all exists.
-  vector<Token *>::const_iterator it;
-  for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
-    bool found = false;
-    Node *node = system_dic->LookupPrefix((*it)->key.c_str(), (*it)->key.size(),
-                                          NULL);
-    int count = 0;
-    while (node) {
-      ++count;
-      if (CompareForLookup(node, *it, false)) {
-        found = true;
-      }
-      Node *tmp_node = node;
-      node = node->bnext;
-      delete tmp_node;
-    }
-    EXPECT_TRUE(found) << "Failed to find " << (*it)->key << ":"
-                       << (*it)->value << "\t" << (*it)->cost << "\t"
-                       << (*it)->lid << "\t"
-                       << (*it)->rid << "\tcount\t" << count;
-    if (!found) {
-      break;
-    }
+  // All the tokens should be looked up.
+  for (size_t i = 0; i < source_tokens.size(); ++i) {
+    CheckTokenExistenceCallback callback(source_tokens[i]);
+    system_dic->LookupPrefix(source_tokens[i]->key, false, &callback);
+    EXPECT_TRUE(callback.found())
+        << "Token was not found: " << PrintToken(*source_tokens[i]);
   }
 }
 
 TEST_F(SystemDictionaryTest, test_prefix) {
-  vector<Token *> source_tokens;
-
   // "は"
   const string k0 = "\xe3\x81\xaf";
   // "はひふへほ"
   const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
                     "\xbb";
-
   scoped_ptr<Token> t0(CreateToken(k0, "aa"));
   scoped_ptr<Token> t1(CreateToken(k1, "bb"));
+
+  vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
   source_tokens.push_back(t1.get());
   text_dict_->CollectTokens(&source_tokens);
@@ -473,25 +443,17 @@ TEST_F(SystemDictionaryTest, test_prefix) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  Node *node = system_dic->LookupPrefix(k1.c_str(), k1.size(), NULL);
-  ASSERT_TRUE(node != NULL) << "no nodes found";
-  bool found_k0 = false;
-  while (node) {
-    if (CompareForLookup(node, t0.get(), false)) {
-      found_k0 = true;
-    }
-    Node *tmp_node = node;
-    node = node->bnext;
-    delete tmp_node;
-  }
-  EXPECT_TRUE(found_k0) << "Failed to find " << k0;
+  // |t0| should be looked up from |k1|.
+  CheckTokenExistenceCallback callback(t0.get());
+  system_dic->LookupPrefix(k1, false, &callback);
+  EXPECT_TRUE(callback.found());
 }
 
 namespace {
 
 class LookupPrefixTestCallback : public SystemDictionary::Callback {
  public:
-  virtual ResultType OnKey(const string &key) {
+  virtual ResultType OnKey(StringPiece key) {
     if (key == "\xE3\x81\x8B\xE3\x81\x8D") {  // key == "かき"
       return TRAVERSE_CULL;
     } else if (key == "\xE3\x81\x95") {  // key == "さ"
@@ -502,9 +464,9 @@ class LookupPrefixTestCallback : public SystemDictionary::Callback {
     return TRAVERSE_CONTINUE;
   }
 
-  virtual ResultType OnToken(const string &key, const string &actual_key,
-                             const TokenInfo &token_info) {
-    result_.insert(make_pair(token_info.token->key, token_info.token->value));
+  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                             const Token &token) {
+    result_.insert(make_pair(token.key, token.value));
     return TRAVERSE_CONTINUE;
   }
 
@@ -518,7 +480,7 @@ class LookupPrefixTestCallback : public SystemDictionary::Callback {
 
 }  // namespace
 
-TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
+TEST_F(SystemDictionaryTest, LookupPrefix) {
   // Set up a test dictionary.
   struct {
     const char *key;
@@ -592,10 +554,8 @@ TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
   // Test for normal prefix lookup without key expansion.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefixWithCallback(
-        "\xE3\x81\x82\xE3\x81\x84",  // "あい"
-        false,
-        &callback);
+    system_dic->LookupPrefix("\xE3\x81\x82\xE3\x81\x84",  // "あい"
+                             false, &callback);
     const set<pair<string, string> > &result = callback.result();
     // "あ" -- "あい" should be found.
     for (size_t i = 0; i < 5; ++i) {
@@ -615,7 +575,7 @@ TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
   // feature.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefixWithCallback(
+    system_dic->LookupPrefix(
         "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F",  //"かきく"
         false,
         &callback);
@@ -633,7 +593,7 @@ TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
   // Test for TRAVERSE_NEXT_KEY.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefixWithCallback(
+    system_dic->LookupPrefix(
         "\xE3\x81\x95\xE3\x81\x97\xE3\x81\x99",  // "さしす"
         false,
         &callback);
@@ -651,7 +611,7 @@ TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
   // Test for TRAVERSE_DONE.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefixWithCallback(
+    system_dic->LookupPrefix(
         "\xE3\x81\x9F\xE3\x81\xA1\xE3\x81\xA4",  // "たちつ"
         false,
         &callback);
@@ -664,7 +624,7 @@ TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
   // Test for prefix lookup with key expansion.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefixWithCallback(
+    system_dic->LookupPrefix(
         "\xE3\x81\xAF\xE3\x81\xB2",  // "はひ"
         true,  // Use kana modifier insensitive lookup
         &callback);
@@ -864,29 +824,19 @@ TEST_F(SystemDictionaryTest, test_exact) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  {
-    Node *node = system_dic->LookupExact(k1.c_str(), k1.size(), NULL);
-    EXPECT_TRUE(node != NULL) << "no nodes found";
-    bool found_k0 = false;
-    bool found_k1 = false;
-    while (node) {
-      if (CompareForLookup(node, t0.get(), false)) {
-        found_k0 = true;
-      } else if (CompareForLookup(node, t1.get(), false)) {
-        found_k1 = true;
-      }
-      Node *tmp_node = node;
-      node = node->bnext;
-      delete tmp_node;
-    }
-    EXPECT_FALSE(found_k0) << "Should not find " << k0;
-    EXPECT_TRUE(found_k1) << "Failed to find " << k1;
-  }
-  {
-    const string hoge = "hoge";
-    Node *node = system_dic->LookupExact(hoge.c_str(), hoge.size(), NULL);
-    EXPECT_TRUE(node == NULL);
-  }
+  // |t0| should not be looked up from |k1|.
+  CheckTokenExistenceCallback callback0(t0.get());
+  system_dic->LookupExact(k1, &callback0);
+  EXPECT_FALSE(callback0.found());
+  // But |t1| should be found.
+  CheckTokenExistenceCallback callback1(t1.get());
+  system_dic->LookupExact(k1, &callback1);
+  EXPECT_TRUE(callback1.found());
+
+  // Nothing should be found from "hoge".
+  CollectTokenCallback callback_hoge;
+  system_dic->LookupExact("hoge", &callback_hoge);
+  EXPECT_TRUE(callback_hoge.tokens().empty());
 }
 
 TEST_F(SystemDictionaryTest, test_reverse) {
@@ -1147,20 +1097,11 @@ TEST_F(SystemDictionaryTest, nodes_size) {
 
   const int kNumNodes = 5;
 
-  // Tests LookupPrefix and LookupReverse.
-  NodeAllocator allocator1;
-  allocator1.set_max_nodes_size(kNumNodes);
-  Node *node = system_dic->LookupPrefix(s.c_str(), s.size(), &allocator1);
+  // Tests LookupReverse.
+  NodeAllocator allocator;
+  allocator.set_max_nodes_size(kNumNodes);
+  Node *node = system_dic->LookupReverse("1", 1, &allocator);
   int count = 0;
-  for (Node *tmp = node; tmp; tmp = tmp->bnext) {
-    ++count;
-  }
-  EXPECT_EQ(kNumNodes, count);
-
-  NodeAllocator allocator2;
-  allocator2.set_max_nodes_size(kNumNodes);
-  node = system_dic->LookupReverse("1", 1, &allocator2);
-  count = 0;
   for (Node *tmp = node; tmp; tmp = tmp->bnext) {
     ++count;
   }
@@ -1174,43 +1115,43 @@ TEST_F(SystemDictionaryTest, nodes_size) {
 }
 
 TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
-  scoped_ptr<Token> t1(new Token);
-  // "あぼがど"
-  t1->key = "\xe3\x81\x82\xe3\x81\xbc\xe3\x81\x8c\xe3\x81\xa9";
-  // "アボカド"
-  t1->value = "\xe3\x82\xa2\xe3\x83\x9c\xe3\x82\xab\xe3\x83\x89";
-  t1->cost = 1;
-  t1->lid = 0;
-  t1->rid = 2;
-  t1->attributes = Token::SPELLING_CORRECTION;
+  vector<Token> tokens(3);
 
-  scoped_ptr<Token> t2(new Token);
+  // "あぼがど"
+  tokens[0].key = "\xe3\x81\x82\xe3\x81\xbc\xe3\x81\x8c\xe3\x81\xa9";
+  // "アボカド"
+  tokens[0].value = "\xe3\x82\xa2\xe3\x83\x9c\xe3\x82\xab\xe3\x83\x89";
+  tokens[0].cost = 1;
+  tokens[0].lid = 0;
+  tokens[0].rid = 2;
+  tokens[0].attributes = Token::SPELLING_CORRECTION;
+
   // "しゅみれーしょん"
-  t2->key =
+  tokens[1].key =
       "\xe3\x81\x97\xe3\x82\x85\xe3\x81\xbf\xe3\x82\x8c"
       "\xe3\x83\xbc\xe3\x81\x97\xe3\x82\x87\xe3\x82\x93";
   // "シミュレーション"
-  t2->value =
+  tokens[1].value =
       "\xe3\x82\xb7\xe3\x83\x9f\xe3\x83\xa5\xe3\x83\xac"
       "\xe3\x83\xbc\xe3\x82\xb7\xe3\x83\xa7\xe3\x83\xb3";
-  t2->cost = 1;
-  t2->lid = 100;
-  t2->rid = 3;
-  t2->attributes = Token::SPELLING_CORRECTION;
+  tokens[1].cost = 1;
+  tokens[1].lid = 100;
+  tokens[1].rid = 3;
+  tokens[1].attributes = Token::SPELLING_CORRECTION;
 
-  scoped_ptr<Token> t3(new Token);
   // "あきはばら"
-  t3->key = "\xe3\x81\x82\xe3\x81\x8d\xe3\x81\xaf\xe3\x81\xb0\xe3\x82\x89";
+  tokens[2].key =
+      "\xe3\x81\x82\xe3\x81\x8d\xe3\x81\xaf\xe3\x81\xb0\xe3\x82\x89";
   // "秋葉原"
-  t3->value = "\xe7\xa7\x8b\xe8\x91\x89\xe5\x8e\x9f";
-  t3->cost = 1000;
-  t3->lid = 1;
-  t3->rid = 2;
+  tokens[2].value = "\xe7\xa7\x8b\xe8\x91\x89\xe5\x8e\x9f";
+  tokens[2].cost = 1000;
+  tokens[2].lid = 1;
+  tokens[2].rid = 2;
 
   vector<Token *> source_tokens;
-  source_tokens.push_back(t1.get());
-  source_tokens.push_back(t2.get());
-  source_tokens.push_back(t3.get());
+  for (size_t i = 0; i < tokens.size(); ++i) {
+    source_tokens.push_back(&tokens[i]);
+  }
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
   scoped_ptr<SystemDictionary> system_dic(
@@ -1218,21 +1159,11 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  vector<Token *>::const_iterator it;
-  for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
-    Node *node = system_dic->LookupPrefix((*it)->key.c_str(),
-                                          (*it)->key.size(), NULL);
-    bool found = false;
-    while (node) {
-      if (CompareForLookup(node, *it, false)) {
-        found = true;
-      }
-      Node *tmp_node = node;
-      node = node->bnext;
-      delete tmp_node;
-    }
-    EXPECT_TRUE(found) << "Failed to find " << (*it)->key
-                       << ":" << (*it)->value;
+  for (size_t i = 0; i < source_tokens.size(); ++i) {
+    CheckTokenExistenceCallback callback(source_tokens[i]);
+    system_dic->LookupPrefix(source_tokens[i]->key, false, &callback);
+    EXPECT_TRUE(callback.found())
+        << "Token " << i << " was not found: " << PrintToken(*source_tokens[i]);
   }
 }
 
@@ -1331,11 +1262,6 @@ TEST_F(SystemDictionaryTest, TokenAfterSpellningToken) {
 }
 
 TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
-  DictionaryInterface::Limit limit;
-  limit.kana_modifier_insensitive_lookup_enabled = true;
-
-  vector<Token *> source_tokens;
-
   // "かつ"
   const string k0 = "\xE3\x81\x8B\xE3\x81\xA4";
   // "かっこ"
@@ -1347,17 +1273,17 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   // "がっこう"
   const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
 
-  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
-  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
-  scoped_ptr<Token> t2(CreateToken(k2, "cc"));
-  scoped_ptr<Token> t3(CreateToken(k3, "dd"));
-  scoped_ptr<Token> t4(CreateToken(k4, "ee"));
-  source_tokens.push_back(t0.get());
-  source_tokens.push_back(t1.get());
-  source_tokens.push_back(t2.get());
-  source_tokens.push_back(t3.get());
-  source_tokens.push_back(t4.get());
+  scoped_ptr<Token> tokens[5];
+  tokens[0].reset(CreateToken(k0, "aa"));
+  tokens[1].reset(CreateToken(k1, "bb"));
+  tokens[2].reset(CreateToken(k2, "cc"));
+  tokens[3].reset(CreateToken(k3, "dd"));
+  tokens[4].reset(CreateToken(k4, "ee"));
 
+  vector<Token *> source_tokens;
+  for (size_t i = 0; i < arraysize(tokens); ++i) {
+    source_tokens.push_back(tokens[i].get());
+  }
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
@@ -1366,52 +1292,27 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  // Prefix searches
-
-  // "かつこう" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
-  Node *node = system_dic->LookupPrefixWithLimit(k2.c_str(), k2.size(), limit,
-                                                 NULL);
-
-  ASSERT_TRUE(node != NULL) << "no nodes found";
-  EXPECT_TRUE(FindNodeByToken(*t0, *node));
-  EXPECT_TRUE(FindNodeByToken(*t1, *node));
-  EXPECT_TRUE(FindNodeByToken(*t2, *node));
-  EXPECT_TRUE(FindNodeByToken(*t3, *node));
-  EXPECT_TRUE(FindNodeByToken(*t4, *node));
-
-  DeleteNodes(node);
-
-  // "かっこう" -> "かっこ", "かっこう" and "がっこう"
-  node = system_dic->LookupPrefixWithLimit(k3.c_str(), k3.size(), limit,
-                                           NULL);
-
-  ASSERT_TRUE(node != NULL) << "no nodes found";
-  EXPECT_TRUE(FindNodeByToken(*t1, *node));
-  EXPECT_TRUE(FindNodeByToken(*t3, *node));
-  EXPECT_TRUE(FindNodeByToken(*t4, *node));
-
-  // The costs for "かっこ" and "かっこう" should be the same
-  EXPECT_EQ(t1->cost, (FindNodeByToken(*t1, *node))->wcost);
-  EXPECT_EQ(t3->cost, (FindNodeByToken(*t3, *node))->wcost);
-
-  // The cost for "がっこう" should be higher
-  EXPECT_LT(t4->cost, (FindNodeByToken(*t4, *node))->wcost);
-
-  DeleteNodes(node);
+  // Prefix search
+  for (size_t i = 0; i < arraysize(tokens); ++i) {
+    CheckTokenExistenceCallback callback(tokens[i].get());
+    // "かつこう" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
+    system_dic->LookupPrefix(
+        k2, kEnableKanaModiferInsensitiveLookup, &callback);
+    EXPECT_TRUE(callback.found())
+        << "Token " << i << " was not found: " << PrintToken(*tokens[i]);
+  }
 
   // Predictive searches
-
   // "かつ" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
-  node = system_dic->LookupPredictiveWithLimit(k0.c_str(), k0.size(), limit,
-                                               NULL);
+  DictionaryInterface::Limit limit;
+  limit.kana_modifier_insensitive_lookup_enabled = true;
+  Node *node = system_dic->LookupPredictiveWithLimit(
+      k0.c_str(), k0.size(), limit, NULL);
 
   ASSERT_TRUE(node != NULL) << "no nodes found";
-  EXPECT_TRUE(FindNodeByToken(*t0, *node));
-  EXPECT_TRUE(FindNodeByToken(*t1, *node));
-  EXPECT_TRUE(FindNodeByToken(*t2, *node));
-  EXPECT_TRUE(FindNodeByToken(*t3, *node));
-  EXPECT_TRUE(FindNodeByToken(*t4, *node));
-
+  for (size_t i = 0; i < arraysize(tokens); ++i) {
+    EXPECT_TRUE(FindNodeByToken(*tokens[i], *node));
+  }
   DeleteNodes(node);
 
   // "かっこ" -> "かっこ", "かっこう" and "がっこう"
@@ -1419,26 +1320,21 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
                                                NULL);
 
   ASSERT_TRUE(node != NULL) << "no nodes found";
-  EXPECT_TRUE(FindNodeByToken(*t1, *node));
-  EXPECT_TRUE(FindNodeByToken(*t3, *node));
-  EXPECT_TRUE(FindNodeByToken(*t4, *node));
+  EXPECT_TRUE(FindNodeByToken(*tokens[1], *node));
+  EXPECT_TRUE(FindNodeByToken(*tokens[3], *node));
+  EXPECT_TRUE(FindNodeByToken(*tokens[4], *node));
 
   // The costs for "かっこ" and "かっこう" should be the same
-  EXPECT_EQ(t1->cost, (FindNodeByToken(*t1, *node))->wcost);
-  EXPECT_EQ(t3->cost, (FindNodeByToken(*t3, *node))->wcost);
+  EXPECT_EQ(tokens[1]->cost, (FindNodeByToken(*tokens[1], *node))->wcost);
+  EXPECT_EQ(tokens[3]->cost, (FindNodeByToken(*tokens[3], *node))->wcost);
 
   // The cost for "がっこう" should be higher
-  EXPECT_LT(t4->cost, (FindNodeByToken(*t4, *node))->wcost);
+  EXPECT_LT(tokens[4]->cost, (FindNodeByToken(*tokens[4], *node))->wcost);
 
   DeleteNodes(node);
 }
 
 TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
-  DictionaryInterface::Limit limit;
-  limit.kana_modifier_insensitive_lookup_enabled = true;
-
-  vector<Token *> source_tokens;
-
   // "ていすてぃんぐ", "テイスティング"
   scoped_ptr<Token> t0(CreateToken(
       "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
@@ -1449,6 +1345,8 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   scoped_ptr<Token> t1(CreateToken(
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99",
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99"));
+
+  vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
   source_tokens.push_back(t1.get());
 
@@ -1460,24 +1358,16 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  // Prefix searches
-  // "ていすていんぐ"
+  // Lookup |t0| from "ていすていんぐ"
   const string k = "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
       "\xe3\x81\x84\xe3\x82\x93\xe3\x81\x90";
-  Node *node = system_dic->LookupPrefixWithLimit(k.c_str(), k.size(), limit,
-                                                 NULL);
-
-  ASSERT_TRUE(node != NULL) << "no nodes found";
-  EXPECT_TRUE(FindNodeByToken(*t0, *node));
-
-  DeleteNodes(node);
+  CheckTokenExistenceCallback callback(t0.get());
+  system_dic->LookupPrefix(k, kEnableKanaModiferInsensitiveLookup,
+                           &callback);
+  EXPECT_TRUE(callback.found()) << "Not found: " << PrintToken(*t0);
 }
 
 TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
-  DictionaryInterface::Limit limit;
-
-  vector<Token *> source_tokens;
-
   // "かつ"
   const string k0 = "\xE3\x81\x8B\xE3\x81\xA4";
   // "かっこ"
@@ -1494,6 +1384,8 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
   scoped_ptr<Token> t2(CreateToken(k2, "cc"));
   scoped_ptr<Token> t3(CreateToken(k3, "dd"));
   scoped_ptr<Token> t4(CreateToken(k4, "ee"));
+
+  vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
   source_tokens.push_back(t1.get());
   source_tokens.push_back(t2.get());
@@ -1509,25 +1401,35 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
       << "Failed to open dictionary source:" << dic_fn_;
 
   // Prefix search
-
-  // "かっこう" -> "かっこ" and "かっこう"
+  // "かっこう" (k3) -> "かっこ" (k1) and "かっこう" (k3)
   // Make sure "がっこう" is not in the results when searched by "かっこう"
-  Node *node = system_dic->LookupPrefixWithLimit(k3.c_str(), k3.size(), limit,
-                                                 NULL);
-
-  ASSERT_TRUE(node != NULL) << "no nodes found";
-  EXPECT_TRUE(FindNodeByToken(*t1, *node));
-  EXPECT_TRUE(FindNodeByToken(*t3, *node));
-  EXPECT_FALSE(FindNodeByToken(*t4, *node));
-
-  DeleteNodes(node);
+  vector<Token *> to_be_looked_up, not_to_be_looked_up;
+  to_be_looked_up.push_back(t1.get());
+  to_be_looked_up.push_back(t3.get());
+  not_to_be_looked_up.push_back(t0.get());
+  not_to_be_looked_up.push_back(t2.get());
+  not_to_be_looked_up.push_back(t4.get());
+  for (size_t i = 0; i < to_be_looked_up.size(); ++i) {
+    CheckTokenExistenceCallback callback(to_be_looked_up[i]);
+    system_dic->LookupPrefix(
+        k3, kDisableKanaModiferInsensitiveLookup, &callback);
+    EXPECT_TRUE(callback.found())
+        << "Token is not found: " << PrintToken(*to_be_looked_up[i]);
+  }
+  for (size_t i = 0; i < not_to_be_looked_up.size(); ++i) {
+    CheckTokenExistenceCallback callback(not_to_be_looked_up[i]);
+    system_dic->LookupPrefix(
+        k3, kDisableKanaModiferInsensitiveLookup, &callback);
+    EXPECT_FALSE(callback.found())
+        << "Token should not be found: " << PrintToken(*not_to_be_looked_up[i]);
+  }
 
   // Predictive search
   // "かっこ" -> "かっこ" and "かっこう"
   // Make sure "がっこう" is not in the results when searched by "かっこ"
-  node = system_dic->LookupPredictiveWithLimit(k1.c_str(), k1.size(), limit,
-                                               NULL);
-
+  DictionaryInterface::Limit limit;
+  Node *node = system_dic->LookupPredictiveWithLimit(
+      k1.c_str(), k1.size(), limit, NULL);
   ASSERT_TRUE(node != NULL) << "no nodes found";
   EXPECT_TRUE(FindNodeByToken(*t1, *node));
   EXPECT_TRUE(FindNodeByToken(*t3, *node));

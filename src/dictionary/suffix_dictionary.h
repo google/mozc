@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,19 +69,14 @@ class SuffixDictionary : public DictionaryInterface {
                                  NodeAllocatorInterface *allocator) const;
 
   // SuffixDictionary doesn't support Prefix/Revese Lookup.
-  virtual Node *LookupPrefixWithLimit(const char *str, int size,
-                                      const Limit &limit,
-                                      NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const;
+  virtual void LookupPrefix(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const {}
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
 
   // We may implement this if necessary.
-  virtual Node *LookupExact(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const {
-    return NULL;
-  }
+  virtual void LookupExact(StringPiece key, Callback *callback) const {}
 
  private:
   const SuffixToken *const suffix_tokens_;

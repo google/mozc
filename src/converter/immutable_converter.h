@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
+#include "converter/node.h"
 #include "converter/segments.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"

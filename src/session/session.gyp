@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -92,12 +92,7 @@
         'session_base.gyp:session_protocol',
       ],
       'conditions': [
-        ['enable_cloud_sync==1', {
-          'dependencies': [
-            '../sync/sync.gyp:sync',
-          ]
-        }],
-        ['target_platform=="NaCl" and _toolset=="target"', {
+        ['(target_platform=="NaCl" and _toolset=="target") or target_platform=="Android"', {
           'sources!': [
             'session_watch_dog.cc',
           ],

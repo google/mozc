@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -718,17 +718,8 @@ UserDictionarySession::ImportToNewDictionaryFromString(
 }
 
 bool UserDictionarySession::EnsureNonEmptyStorage() {
-  bool has_unsyncable_dictionary = false;
-  for (int i = 0; i < storage_->dictionaries_size(); ++i) {
-    if (!storage_->dictionaries(i).syncable()) {
-      has_unsyncable_dictionary = true;
-      break;
-    }
-  }
-
-  if (has_unsyncable_dictionary) {
-    // The storage already has at least one un-syncable dictionary.
-    // Do nothing.
+  if (storage_->dictionaries_size() > 0) {
+    // The storage already has at least one dictionary. Do nothing.
     return false;
   }
 

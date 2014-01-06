@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ class OssDataManagerTest : public DataManagerTestBase {
                             kLSize,
                             kRSize,
                             IsBoundaryInternal,
-                            "data/dictionary_oss/connection_single_column.txt",
+                            "data_manager/oss/connection_single_column.txt",
                             1,
                             "data/dictionary_oss/dictionary00.txt,"
                             "data/dictionary_oss/dictionary01.txt,"

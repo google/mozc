@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ vars = {
   "clang_helper_in_chromium_revision": "171017",
   "gtest_revision": "645",
   "gmock_revision": "425",
-  "gyp_revision": "1732",
+  "gyp_revision": "1775",
   "jsoncpp_revision": "274",
   "protobuf_revision": "462",
   "wtl_revision": "459",
@@ -40,6 +40,7 @@ vars = {
   "openssl_revision": "164645",
   "jsr305_version": "2.0.2",
   "zlib_revision": "198222",
+  "japanese_usage_dictionary_revision": "10",
 }
 
 deps = {
@@ -54,6 +55,9 @@ deps = {
     "http://gyp.googlecode.com/svn/trunk@" + Var("gyp_revision"),
   "src/third_party/protobuf":
     "http://protobuf.googlecode.com/svn/trunk@" + Var("protobuf_revision"),
+  "src/third_party/japanese_usage_dictionary":
+    "http://japanese-usage-dictionary.googlecode.com/svn/trunk@" +
+    Var("japanese_usage_dictionary_revision"),
 }
 
 deps_os = {

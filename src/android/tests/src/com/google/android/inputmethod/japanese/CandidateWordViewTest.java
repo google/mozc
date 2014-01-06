@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,12 +49,13 @@ import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.SnapScroller;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.MotionEvent;
 import android.view.View;
 
-import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -180,113 +181,121 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     candidateWordView.calculatedLayout = mockLayout;
 
     // onCandidateSelected() is never be called back.
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    replayAll();
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0, Integer.MIN_VALUE, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 0, Integer.MIN_VALUE, 0)));
-    verifyAll();
+    List<MotionEvent> events = new ArrayList<MotionEvent>();
 
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    replayAll();
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0, Integer.MAX_VALUE, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 0, Integer.MAX_VALUE, 0)));
-    verifyAll();
+    try {
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0, Integer.MIN_VALUE, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_UP, 0, Integer.MIN_VALUE, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
 
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    replayAll();
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, Integer.MIN_VALUE, 0, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, Integer.MIN_VALUE, 0, 0)));
-    verifyAll();
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0, Integer.MAX_VALUE, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_UP, 0, Integer.MAX_VALUE, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
 
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    replayAll();
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, Integer.MAX_VALUE, 0, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, Integer.MAX_VALUE, 0, 0)));
-    verifyAll();
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, Integer.MIN_VALUE, 0, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_UP, Integer.MIN_VALUE, 0, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
 
-    // TouchUp on a candidate.
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    candidateSelectListener.onCandidateSelected(
-        ROW_DATA.get(0).getSpanList().get(0).getCandidateWord());
-    replayAll();
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 10, 10, 0)));
-    verifyAll();
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, Integer.MAX_VALUE, 0, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_UP, Integer.MAX_VALUE, 0, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
 
-    // Slide within a candidate.
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    candidateSelectListener.onCandidateSelected(
-        ROW_DATA.get(0).getSpanList().get(0).getCandidateWord());
-    replayAll();
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, 29, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 25, 10, 0)));
-    verifyAll();
+      // TouchUp on a candidate.
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      candidateSelectListener.onCandidateSelected(
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord());
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_UP, 10, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
 
-    // Slide out of a candidate. No selection.
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    replayAll();
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, 30, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 30, 10, 0)));
-    verifyAll();
+      // Slide within a candidate.
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      candidateSelectListener.onCandidateSelected(
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord());
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 20, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 29, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 2000, MotionEvent.ACTION_UP, 25, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
 
-    // Slide out of a candidate, then come back and release. No selection.
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    replayAll();
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, 31, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, 15, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 15, 10, 0)));
-    verifyAll();
+      // Slide out of a candidate. No selection.
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 20, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 30, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 2000, MotionEvent.ACTION_UP, 30, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
 
-    // Must consider scroll value.
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    replayAll();
-    candidateWordView.scrollTo(0, -5);
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 10, 10, 0)));
-    verifyAll();
+      // Slide out of a candidate, then come back and release. No selection.
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 20, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 31, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 2000, MotionEvent.ACTION_MOVE, 15, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 3000, MotionEvent.ACTION_UP, 15, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
 
-    resetAll();
-    expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
-    replayAll();
-    candidateWordView.scrollTo(-5, 0);
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0)));
-    assertTrue(candidateWordView.onTouchEvent(
-        MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 10, 10, 0)));
-    verifyAll();
+      // Must consider scroll value.
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      replayAll();
+      candidateWordView.scrollTo(0, -5);
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_UP, 10, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
+
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      replayAll();
+      candidateWordView.scrollTo(-5, 0);
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_UP, 10, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
+    } finally {
+      for (MotionEvent event : events) {
+        event.recycle();
+      }
+    }
   }
 
   @SmallTest
@@ -372,7 +381,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testGetUpdatedScrollPosition() throws InvocationTargetException {
+  public void testGetUpdatedScrollPosition() {
     class TestData extends Parameter {
       final float candidatePosition;
       final int scrollPosition;
@@ -470,6 +479,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
   }
 
+  @SuppressLint("WrongCall")
   @SmallTest
   public void testOnLayout() {
     CandidateWordView candWordView = new StubCandidateWordView(

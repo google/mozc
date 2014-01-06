@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -155,11 +155,6 @@ bool IsDecimalNumber(StringPiece str) {
 
   return true;
 }
-
-const int kInt32BufferSize = 12;  // "-2147483648\0"
-const int kUInt32BufferSize = 11;  // "4294967295\0"
-const int kInt64BufferSize = 21;  // "-9223372036854775808\0"
-const int kUInt64BufferSize = 21;  // "18446744073709551615\0"
 
 const char kAsciiZero = '0';
 const char kAsciiOne = '1';

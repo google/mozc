@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@
 #include "config/config_handler.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
@@ -93,6 +94,17 @@ class UserDictionaryFileManager {
   Mutex mutex_;
   DISALLOW_COPY_AND_ASSIGN(UserDictionaryFileManager);
 };
+
+void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
+                               Token *token) {
+  token->key = user_pos_token.key;
+  token->value = user_pos_token.value;
+  token->cost = user_pos_token.cost;
+  token->lid = user_pos_token.id;
+  token->rid = user_pos_token.id;
+  token->attributes = Token::USER_DICTIONARY;
+}
+
 }  // namespace
 
 class TokensIndex : public vector<UserPOS::Token *> {
@@ -114,7 +126,6 @@ class TokensIndex : public vector<UserPOS::Token *> {
     Clear();
     set<uint64> seen;
     vector<UserPOS::Token> tokens;
-    int sync_words_count = 0;
 
     if (!suppression_dictionary_->IsLocked()) {
       LOG(ERROR) << "SuppressionDictionary must be locked first";
@@ -126,10 +137,6 @@ class TokensIndex : public vector<UserPOS::Token *> {
           storage.dictionaries(i);
       if (!dic.enabled() || dic.entries_size() == 0) {
         continue;
-      }
-
-      if (dic.syncable()) {
-        sync_words_count += dic.entries_size();
       }
 
       for (size_t j = 0; j < dic.entries_size(); ++j) {
@@ -190,8 +197,6 @@ MOZC_CLANG_POP_WARNING();
 
     usage_stats::UsageStats::SetInteger("UserRegisteredWord",
                                         static_cast<int>(this->size()));
-    usage_stats::UsageStats::SetInteger("UserRegisteredSyncWord",
-                                        sync_words_count);
   }
 
  private:
@@ -228,13 +233,20 @@ class UserDictionaryReloader : public Thread {
   }
 
   virtual void Run() {
-    scoped_ptr<UserDictionaryStorage>
-        storage(
-            new UserDictionaryStorage
-            (Singleton<UserDictionaryFileManager>::get()->GetFileName()));
+    scoped_ptr<UserDictionaryStorage> storage(new UserDictionaryStorage(
+        Singleton<UserDictionaryFileManager>::get()->GetFileName()));
+
     // Load from file
     if (!storage->Load()) {
       return;
+    }
+
+    if (storage->ConvertSyncDictionariesToNormalDictionaries()) {
+      LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
+      if (storage->Lock()) {
+        storage->Save();
+        storage->UnLock();
+      }
     }
 
     if (auto_register_mode_ &&
@@ -326,8 +338,9 @@ Node *UserDictionary::LookupPredictiveWithLimit(
       string value;
       size_t key_length = 0;
       bool has_subtrie = false;
-      if (!limit.begin_with_trie->LookUpPrefix((*it)->key.data() + size, &value,
-                                               &key_length, &has_subtrie)) {
+      if (!limit.begin_with_trie->LookUpPrefix(
+              StringPiece((*it)->key).substr(size),
+              &value, &key_length, &has_subtrie)) {
         continue;
       }
     }
@@ -358,110 +371,92 @@ Node *UserDictionary::LookupPredictive(
   return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
 }
 
-Node *UserDictionary::LookupPrefixWithLimit(
-    const char *str,
-    int size,
-    const Limit &limit,
-    NodeAllocatorInterface *allocator) const {
+// UserDictionary doesn't support kana modifier insensitive lookup.
+void UserDictionary::LookupPrefix(
+    StringPiece key, bool /*use_kana_modifier_insensitive_lookup*/,
+    Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
 
-  if (size == 0) {
+  if (key.empty()) {
     LOG(WARNING) << "string of length zero is passed.";
-    return NULL;
+    return;
   }
-
   if (tokens_->empty()) {
-    return NULL;
+    return;
   }
-
   if (GET_CONFIG(incognito_mode)) {
-    return NULL;
+    return;
   }
 
-
-  DCHECK(allocator != NULL);
-  Node *result_node = NULL;
-  string key(str, size);
-
-  // Look for a starting point of iteration over dictionary contents.
+  // Find the starting point for iteration over dictionary contents.
   UserPOS::Token key_token;
-  key_token.key.assign(key, 0, Util::OneCharLen(key.c_str()));
+  key_token.key.assign(key.data(), Util::OneCharLen(key.data()));
   vector<UserPOS::Token *>::const_iterator it =
       lower_bound(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
+  Token token;
   for (; it != tokens_->end(); ++it) {
     if ((*it)->key > key) {
       break;
     }
-
     if (pos_matcher_->IsSuggestOnlyWord((*it)->id)) {
       continue;
     }
-
     if (!Util::StartsWith(key, (*it)->key)) {
       continue;
     }
-
-    // check the lower limit of key length
-    if ((*it)->key.size() < limit.key_len_lower_limit) {
-      continue;
+    switch (callback->OnKey((*it)->key)) {
+      case Callback::TRAVERSE_DONE:
+        return;
+      case Callback::TRAVERSE_NEXT_KEY:
+        continue;
+      case Callback::TRAVERSE_CULL:
+        LOG(FATAL) << "UserDictionary doesn't support culling.";
+        break;
+      default:
+        break;
     }
-
-    Node *new_node = allocator->NewNode();
-    DCHECK(new_node);
-    new_node->lid = (*it)->id;
-    new_node->rid = (*it)->id;
-    new_node->wcost = (*it)->cost;
-    new_node->key = (*it)->key;
-    new_node->value = (*it)->value;
-    new_node->node_type = Node::NOR_NODE;
-    new_node->attributes |= Node::NO_VARIANTS_EXPANSION;
-    new_node->attributes |= Node::USER_DICTIONARY;
-    new_node->bnext = result_node;
-    result_node = new_node;
+    FillTokenFromUserPOSToken(**it, &token);
+    switch (callback->OnToken((*it)->key, (*it)->key, token)) {
+      case Callback::TRAVERSE_DONE:
+        return;
+      case Callback::TRAVERSE_CULL:
+        LOG(FATAL) << "UserDictionary doesn't support culling.";
+        break;
+      default:
+        break;
+    }
   }
-
-  return result_node;
 }
 
-Node *UserDictionary::LookupPrefix(const char *str, int size,
-                                   NodeAllocatorInterface *allocator) const {
-  return LookupPrefixWithLimit(str, size, empty_limit_, allocator);
-}
-
-Node *UserDictionary::LookupExact(const char *str, int size,
-                                  NodeAllocatorInterface *allocator) const {
+void UserDictionary::LookupExact(StringPiece key, Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
-  if (size == 0 || tokens_->empty() || GET_CONFIG(incognito_mode)) {
-    return NULL;
+  if (key.empty() || tokens_->empty() || GET_CONFIG(incognito_mode)) {
+    return;
   }
-  DCHECK(allocator);
   UserPOS::Token key_token;
-  key_token.key.assign(str, size);
+  key.CopyToString(&key_token.key);
   typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
   pair<TokenIterator, TokenIterator> range =
       equal_range(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  if (range.first == range.second) {
+    return;
+  }
+  if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
+    return;
+  }
 
-  Node *head = NULL;
+  Token token;
   for (; range.first != range.second; ++range.first) {
-    const UserPOS::Token *token = *range.first;
-    if (pos_matcher_->IsSuggestOnlyWord(token->id)) {
+    const UserPOS::Token &user_pos_token = **range.first;
+    if (pos_matcher_->IsSuggestOnlyWord(user_pos_token.id)) {
       continue;
     }
-    Node *node = allocator->NewNode();
-    DCHECK(node);
-    node->lid = token->id;
-    node->rid = token->id;
-    node->wcost = token->cost;
-    node->key = token->key;
-    node->value = token->value;
-    node->node_type = Node::NOR_NODE;
-    node->attributes |= Node::NO_VARIANTS_EXPANSION;
-    node->attributes |= Node::USER_DICTIONARY;
-    node->bnext = head;
-    head = node;
+    FillTokenFromUserPOSToken(user_pos_token, &token);
+    if (callback->OnToken(key, key, token) != Callback::TRAVERSE_CONTINUE) {
+      return;
+    }
   }
-  return head;
 }
 
 Node *UserDictionary::LookupReverse(const char *str, int size,
@@ -513,6 +508,32 @@ bool UserDictionary::Reload() {
   return true;
 }
 
+namespace {
+
+class FindValueCallback : public DictionaryInterface::Callback {
+ public:
+  explicit FindValueCallback(StringPiece value)
+      : value_(value), found_(false) {}
+
+  virtual ResultType OnToken(StringPiece,  // key
+                             StringPiece,  // actual_key
+                             const Token &token) {
+    if (token.value == value_) {
+      found_ = true;
+      return TRAVERSE_DONE;
+    }
+    return TRAVERSE_CONTINUE;
+  }
+
+  bool found() const { return found_; }
+
+ private:
+  const StringPiece value_;
+  bool found_;
+};
+
+}  // namespace
+
 bool UserDictionary::AddToAutoRegisteredDictionary(
     const string &key, const string &value,
     user_dictionary::UserDictionary::PosType pos) {
@@ -520,13 +541,11 @@ bool UserDictionary::AddToAutoRegisteredDictionary(
     return false;
   }
 
-  scoped_ptr<NodeAllocator> allocator(new NodeAllocator);
-  Node *result = LookupPrefix(key.data(), key.size(), allocator.get());
-  for (Node *node = result; node != NULL; node = node->bnext) {
-    if (node->key == key && node->value == value) {
-      // Already registered
-      return false;
-    }
+  FindValueCallback callback(value);
+  LookupExact(key, &callback);
+  if (callback.found()) {
+    // Already registered.
+    return false;
   }
 
   suppression_dictionary_->Lock();

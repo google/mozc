@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -107,9 +107,7 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // for the first time.
   bool Exists() const;
 
-  // Load user dictionary from the file. Note that this method may create or
-  // remove sync dictionary depending on ENABLE_CLOUD_SYNC macro.
-  // Use LoadWithoutChangingSyncDictionary for deterministic unit tests.
+  // Load user dictionary from the file.
   bool Load();
 
   // Loads user dictionary from the file. Usually, it should be able to
@@ -124,22 +122,9 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   //   older format in sync.
   bool LoadWithoutMigration();
 
-  // For deterministic unit test.
-  // Load user dictionary from the file without adding or removing sync
-  // dictionary.
-  // TODO(yukawa): Refactor this design, especially around Load(),
-  //     EnsureSyncDictionaryExists() and
-  //     RemoveUnusedSyncDictionariesIfExist().
-  bool LoadWithoutChangingSyncDictionary();
-
   // Serialzie user dictionary to local file.
   // Need to call Lock() the dictionary before calling Save().
   bool Save();
-
-  // Serialzie user dictionary to local file.
-  // This method doesn't check the size of syncable dictionaries.
-  // Need to call Lock() the dictionary before calling SaveWithoutSizeCheck().
-  bool SaveWithoutSyncableDictionariesSizeCheck();
 
   // Lock the dictionary so that other processes/threads cannot
   // execute mutable operations on this dictionary.
@@ -183,18 +168,18 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // You can obtain the reason of the error of dictionary operation.
   UserDictionaryStorageErrorType GetLastError() const;
 
-  // Add a sync dictionary if |storage| has less sync dictionaries than limit.
-  // Returns true if a new sync dictionary is added, false otherwise.
-  bool EnsureSyncDictionaryExists();
-
-  // Remove all the empty sync dictionaries. This method is introduced as a
-  // temporary workaround against b/6004671.
-  void RemoveUnusedSyncDictionariesIfExist();
-
   // Add new entry to the auto registered dictionary.
   bool AddToAutoRegisteredDictionary(const string &key,
                                      const string &value,
                                      UserDictionary::PosType pos);
+
+  // Converts syncable dictionaries to unsyncable dictionaries.
+  // The name of default sync dictionary is renamed to locale-independent name
+  // like other unsyncable dictionaries.
+  // This method deletes syncable dictionaries which are marked as removed or
+  // don't have any dictionary entries.
+  // Returns true if this method converts some dictionaries.
+  bool ConvertSyncDictionariesToNormalDictionaries();
 
   // return the number of dictionaries with "synclbe" being true.
   static int CountSyncableDictionaries(
@@ -206,25 +191,12 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // maximum number of entries one dictionary can hold
   static size_t max_entry_size();
 
-  // Sync related properties.
-  static size_t max_sync_dictionary_size();
-  static size_t max_sync_entry_size();
-  static size_t max_sync_binary_size();
   static string default_sync_dictionary_name();
 
  private:
-  // Load the data from |file_name_| and updates sync dictionary based on given
-  // flags.
-  // TODO(yukawa): Refactor this design, especially around Load(),
-  //     EnsureSyncDictionaryExists() and
-  //     RemoveUnusedSyncDictionariesIfExist().
-  bool LoadAndUpdateSyncDictionaries(bool ensure_one_sync_dictionary_exists,
-                                     bool remove_empty_sync_dictionaries,
-                                     bool run_migration);
-
-  // Save user dictionary. This method checks the size and the entry number of
-  // syncable dictionaries if checkSyncableDictionariesSize is true.
-  bool SaveImpl(bool checkSyncableDictionariesSize);
+  // Load the data from |file_name_|. This method migrates older file format
+  // based on given flags.
+  bool LoadAndMigrateDictionaries(bool run_migration);
 
   // Return true if this object can accept the given dictionary name.
   // This changes the internal state.

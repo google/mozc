@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,9 +71,7 @@ class TestCallback : public LoudsTrie::Callback {
       return SEARCH_DONE;
     }
     const Expectation &expectation = expectation_list_[current_index_];
-    EXPECT_EQ(expectation.s.compare(0, expectation.s.length(), s, 0, len), 0)
-        << current_index_ << ", "
-        << expectation.s << ", " << string(s, len);
+    EXPECT_EQ(expectation.s, string(s, len)) << current_index_;
     EXPECT_EQ(expectation.len, len) << current_index_;
     EXPECT_EQ(expectation.id, id) << current_index_;
     ++current_index_;

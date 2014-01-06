@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/node_list_builder.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -72,6 +73,49 @@ const int    kMaxCost                           = 32767;
 const int    kMinCost                           = -32767;
 const int    kDefaultNumberCost                 = 3000;
 
+class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
+ public:
+  KeyCorrectedNodeListBuilder(size_t pos,
+                              StringPiece original_lookup_key,
+                              const KeyCorrector *key_corrector,
+                              NodeAllocatorInterface *allocator)
+      : BaseNodeListBuilder(allocator, allocator->max_nodes_size()),
+        pos_(pos),
+        original_lookup_key_(original_lookup_key),
+        key_corrector_(key_corrector),
+        tail_(NULL) {}
+
+  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                             const Token &token) {
+    const size_t offset =
+        key_corrector_->GetOriginalOffset(pos_, token.key.size());
+    if (!KeyCorrector::IsValidPosition(offset) || offset == 0) {
+      return TRAVERSE_NEXT_KEY;
+    }
+    Node *node = NewNodeFromToken(token);
+    node->key.assign(original_lookup_key_.data() + pos_, offset);
+    node->wcost += KeyCorrector::GetCorrectedCostPenalty(node->key);
+
+    // Push back |node| to the end.
+    if (result_ == NULL) {
+      result_ = node;
+    } else {
+      DCHECK(tail_ != NULL);
+      tail_->bnext = node;
+    }
+    tail_ = node;
+    return TRAVERSE_CONTINUE;
+  }
+
+  Node *tail() const { return tail_; }
+
+ private:
+  const size_t pos_;
+  const StringPiece original_lookup_key_;
+  const KeyCorrector *key_corrector_;
+  Node *tail_;
+};
+
 void InsertCorrectedNodes(size_t pos, const string &key,
                           const ConversionRequest &request,
                           const KeyCorrector *key_corrector,
@@ -85,37 +129,17 @@ void InsertCorrectedNodes(size_t pos, const string &key,
   if (str == NULL || length == 0) {
     return;
   }
-
-  DictionaryInterface::Limit limit;
-  limit.kana_modifier_insensitive_lookup_enabled =
-      request.IsKanaModifierInsensitiveConversion();
-  Node *rnode = dictionary->LookupPrefixWithLimit(
-      str, length, limit, lattice->node_allocator());
-  Node *head = NULL;
-  Node *prev = NULL;
-  for (Node *node = rnode; node != NULL; node = node->bnext) {
-    const size_t offset =
-        key_corrector->GetOriginalOffset(pos, node->key.size());
-    if (!KeyCorrector::IsValidPosition(offset) || offset == 0) {
-      continue;
-    }
-    node->key.assign(key, pos, offset);
-    node->wcost += KeyCorrector::GetCorrectedCostPenalty(node->key);
-    if (head == NULL) {
-      head = node;
-    }
-    if (prev != NULL) {
-      prev->bnext = node;
-    }
-    prev = node;
+  KeyCorrectedNodeListBuilder builder(pos, key, key_corrector,
+                                      lattice->node_allocator());
+  dictionary->LookupPrefix(
+      StringPiece(str, length),
+      request.IsKanaModifierInsensitiveConversion(),
+      &builder);
+  if (builder.tail() != NULL) {
+    builder.tail()->bnext = NULL;
   }
-
-  if (prev != NULL) {
-    prev->bnext = NULL;
-  }
-
-  if (head != NULL) {
-    lattice->Insert(pos, head);
+  if (builder.result() != NULL) {
+    lattice->Insert(pos, builder.result());
   }
 }
 
@@ -710,6 +734,30 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
   return modified;
 }
 
+namespace {
+
+class NodeListBuilderWithCacheEnabled : public NodeListBuilderForLookupPrefix {
+ public:
+  NodeListBuilderWithCacheEnabled(NodeAllocatorInterface *allocator,
+                                  size_t min_key_length)
+      : NodeListBuilderForLookupPrefix(allocator,
+                                       allocator->max_nodes_size(),
+                                       min_key_length) {
+    DCHECK(allocator);
+  }
+
+  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                             const Token &token) {
+    Node *node = NewNodeFromToken(token);
+    node->attributes |= Node::ENABLE_CACHE;
+    node->raw_wcost = node->wcost;
+    PrependNode(node);
+    return (limit_ <= 0) ? TRAVERSE_DONE : TRAVERSE_CONTINUE;
+  }
+};
+
+}  // namespace
+
 Node *ImmutableConverterImpl::Lookup(const int begin_pos,
                                      const int end_pos,
                                      const ConversionRequest &request,
@@ -727,26 +775,26 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
     result_node = dictionary_->LookupReverse(begin, len,
                                              lattice->node_allocator());
   } else {
-    DictionaryInterface::Limit limit;
-    limit.kana_modifier_insensitive_lookup_enabled =
-        request.IsKanaModifierInsensitiveConversion();
     if (is_prediction && !FLAGS_disable_lattice_cache) {
-      limit.key_len_lower_limit = lattice->cache_info(begin_pos) + 1;
-
-      result_node = dictionary_->LookupPrefixWithLimit(
-          begin, len, limit, lattice->node_allocator());
-
-      // add ENABLE_CACHE attribute and set raw_wcost
-      for (Node *node = result_node; node != NULL; node = node->bnext) {
-        node->attributes |= Node::ENABLE_CACHE;
-        node->raw_wcost = node->wcost;
-      }
-
+      NodeListBuilderWithCacheEnabled builder(
+          lattice->node_allocator(),
+          lattice->cache_info(begin_pos) + 1);
+      dictionary_->LookupPrefix(
+          StringPiece(begin, len),
+          request.IsKanaModifierInsensitiveConversion(),
+          &builder);
+      result_node = builder.result();
       lattice->SetCacheInfo(begin_pos, len);
     } else {
-      // when cache feature is not used, look up normally
-      result_node = dictionary_->LookupPrefixWithLimit(
-          begin, len, limit, lattice->node_allocator());
+      // When cache feature is not used, look up normally
+      BaseNodeListBuilder builder(
+          lattice->node_allocator(),
+          lattice->node_allocator()->max_nodes_size());
+      dictionary_->LookupPrefix(
+          StringPiece(begin, len),
+          request.IsKanaModifierInsensitiveConversion(),
+          &builder);
+      result_node = builder.result();
     }
   }
   return AddCharacterTypeBasedNodes(begin, end, lattice, result_node);

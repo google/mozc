@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,80 @@ mozc.USER_DICTIONARY_ENTRY_ITEM_INFO_ = [
     inputElementType: 'text'
   }
 ];
+
+/**
+ * Dictionary tool error messages.
+ * @const
+ * @type {!Object.<string, string>}
+ * @private
+ */
+mozc.DICTIONARY_TOOL_STATUS_ERRORS_ = {
+  'FILE_NOT_FOUND':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorFileNotFound'),
+  'INVALID_FILE_FORMAT':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorInvalidFileFormat'),
+  'FILE_SIZE_LIMIT_EXCEEDED':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorFileSizeLimitExceeded'),
+  'DICTIONARY_SIZE_LIMIT_EXCEEDED':
+      chrome.i18n.getMessage(
+          'dictionaryToolStatusErrorDictionarySizeLimitExceeded'),
+  'ENTRY_SIZE_LIMIT_EXCEEDED':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorEntrySizeLimitExceeded'),
+  'DICTIONARY_NAME_EMPTY':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorDictionaryNameEmpty'),
+  'DICTIONARY_NAME_TOO_LONG':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorDictionaryNameTooLong'),
+  'DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER':
+      chrome.i18n.getMessage(
+          'dictionaryToolStatusErrorDictionaryNameContainsInvalidCharacter'),
+  'DICTIONARY_NAME_DUPLICATED':
+      chrome.i18n.getMessage(
+          'dictionaryToolStatusErrorDictionaryNameDuplicated'),
+  'READING_EMPTY':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorReadingEmpty'),
+  'READING_TOO_LONG':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorReadingTooLong'),
+  'READING_CONTAINS_INVALID_CHARACTER':
+      chrome.i18n.getMessage(
+          'dictionaryToolStatusErrorReadingContainsInvalidCharacter'),
+  'WORD_EMPTY': chrome.i18n.getMessage('dictionaryToolStatusErrorWordEmpty'),
+  'WORD_TOO_LONG':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorWordTooLong'),
+  'WORD_CONTAINS_INVALID_CHARACTER':
+      chrome.i18n.getMessage(
+          'dictionaryToolStatusErrorWordContainsInvalidCharacter'),
+  'IMPORT_TOO_MANY_WORDS':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorImportTooManyWords'),
+  'IMPORT_INVALID_ENTRIES':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorImportInvalidEntries'),
+  'NO_UNDO_HISTORY':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorNoUndoHistory'),
+  'EMPTY_FILE':
+      chrome.i18n.getMessage('dictionaryToolStatusErrorEmptyFile')
+};
+
+/**
+ * Dictionary tool error message titles.
+ * @const
+ * @type {!Object.<string, string>}
+ * @private
+ */
+mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_ = {
+  CREATE_DICTIONARY:
+      chrome.i18n.getMessage('dictionaryToolStatusErrorTitleCreateDictionary'),
+  DELETE_DICTIONARY:
+      chrome.i18n.getMessage('dictionaryToolStatusErrorTitleDeleteDictionary'),
+  RENAME_DICTIONARY:
+      chrome.i18n.getMessage('dictionaryToolStatusErrorTitleRenameDictionary'),
+  EDIT_ENTRY:
+      chrome.i18n.getMessage('dictionaryToolStatusErrorTitleEditEntry'),
+  DELETE_ENTRY:
+      chrome.i18n.getMessage('dictionaryToolStatusErrorTitleDeleteEntry'),
+  ADD_ENTRY:
+      chrome.i18n.getMessage('dictionaryToolStatusErrorTitleAddEntry'),
+  IMPORT_DATA:
+      chrome.i18n.getMessage('dictionaryToolStatusErrorTitleImportData')
+};
 
 /**
  * An empty constructor.
@@ -199,7 +273,6 @@ mozc.DictionaryTool.prototype.onDictionaryToolOpenButtonClicked = function() {
         this.userDictionarySessionId_ = response.session_id;
       }
       var command = this.createUserDictionaryCommandWithId_('LOAD');
-      command.ensure_non_empty_storage = mozc.ENABLE_SIMPLE_DICTIONARY_TOOL_;
       this.sendUserDictionaryCommand_(
         command,
         this.loadStorage_.bind(
@@ -227,16 +300,25 @@ mozc.DictionaryTool.prototype.getDictionaryName_ = function(index) {
     return null;
   }
   var dictionaryName = this.dictionaries_[index].name;
-  // 'Sync Dictionary' is the default name of sync-able dictionary defined in
-  // user_dictionary_storage.cc.
-  if (dictionaryName == 'Sync Dictionary') {
-    dictionaryName =
-        chrome.i18n.getMessage('dictionaryToolSyncableDictionaryName');
-  }
   if (!dictionaryName) {
     return null;
   }
   return dictionaryName;
+};
+
+/**
+ * Returns the dictionary index of the name.
+ * @param {string} name The name of the dictionary.
+ * @return {number} The found dictionary index or NaN
+ * @private
+ */
+mozc.DictionaryTool.prototype.getDictionaryIndexByName_ = function(name) {
+  for (var i = 0; i < this.dictionaries_.length; ++i) {
+    if (this.dictionaries_[i].name == name) {
+      return i;
+    }
+  }
+  return NaN;
 };
 
 /**
@@ -253,12 +335,10 @@ mozc.DictionaryTool.prototype.updateDictionaryList_ = function() {
   for (var i = 0; i < this.dictionaries_.length; ++i) {
     var dictionaryName = this.getDictionaryName_(i) || '';
     var selected = this.getSelectedDictionaryIndex_() == i;
-    var deletable = !this.dictionaries_[i].syncable;
     dictionaryList.appendChild(
         this.createUserDictionaryListItemElement_(i,
                                                   dictionaryName,
-                                                  selected,
-                                                  deletable));
+                                                  selected));
   }
   dictionaryList.appendChild(this.createUserDictionaryListNewItemElement_());
 };
@@ -277,12 +357,11 @@ mozc.DictionaryTool.prototype.updateDictionaryList_ = function() {
  * @param {number} index Index of the dictionary.
  * @param {string} dictionaryName The name of the dictionary.
  * @param {boolean} selected The dictionary is selected or not.
- * @param {boolean} deletable The dictionary is deletable or not.
  * @return {!Element} Created element.
  * @private
  */
 mozc.DictionaryTool.prototype.createUserDictionaryListItemElement_ =
-    function(index, dictionaryName, selected, deletable) {
+    function(index, dictionaryName, selected) {
   var dictionaryDiv = this.document_.createElement('div');
   dictionaryDiv.id = 'dictionary_tool_dictionary_' + index;
   dictionaryDiv.classList.add('dictionary_tool_dictionary');
@@ -305,13 +384,11 @@ mozc.DictionaryTool.prototype.createUserDictionaryListItemElement_ =
       'dictionary_tool_dictionary_delete_button');
   dictionaryDeleteButtonDiv.appendChild(dictionaryDeleteButton);
   dictionaryDiv.appendChild(dictionaryNameAreaDiv);
-  if (deletable) {
-    dictionaryDiv.appendChild(dictionaryDeleteButtonDiv);
-    dictionaryDeleteButton.addEventListener(
-        'click',
-        this.onDictionaryToolDictionaryDeleteButtonClicked_.bind(this, index),
-        true);
-  }
+  dictionaryDiv.appendChild(dictionaryDeleteButtonDiv);
+  dictionaryDeleteButton.addEventListener(
+      'click',
+      this.onDictionaryToolDictionaryDeleteButtonClicked_.bind(this, index),
+      true);
   if (selected) {
     dictionaryDiv.classList.add('dictionary_tool_dictionary_selected');
   }
@@ -344,6 +421,10 @@ mozc.DictionaryTool.prototype.createUserDictionaryListNewItemElement_ =
                                 this.onDictionaryNewNameInputKeyDown_.bind(
                                     this),
                                 true);
+  inputElement.addEventListener('input',
+                                this.onDictionaryNameInputChanged_.bind(
+                                    this, inputElement, NaN),
+                                true);
   inputElement.placeholder =
       chrome.i18n.getMessage('dictionaryToolNewDictionaryNamePlaceholder');
   dictionaryNameAreaDiv.appendChild(inputElement);
@@ -363,6 +444,9 @@ mozc.DictionaryTool.prototype.onDictionaryNewNameInputBlur_ =
   if (!dictName) {
     return;
   }
+  if (!isNaN(this.getDictionaryIndexByName_(dictName))) {
+    return;
+  }
   var command =
       this.createUserDictionaryCommandWithId_('CREATE_DICTIONARY');
   command.dictionary_name = dictName;
@@ -374,8 +458,10 @@ mozc.DictionaryTool.prototype.onDictionaryNewNameInputBlur_ =
     */
     (function(response) {
       if (response.status != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-        this.showDictionaryToolError_(response.status,
-                                      inputElement.select.bind(inputElement));
+        this.showDictionaryToolError_(
+            mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.CREATE_DICTIONARY,
+            response.status,
+            inputElement.select.bind(inputElement));
       } else {
         this.sendSaveUserDictionaryAndReloadCommand_();
         // TODO(horo): getStorage_ is a heavy operation. We shoud only
@@ -403,6 +489,26 @@ mozc.DictionaryTool.prototype.onDictionaryNewNameInputKeyDown_ =
       dictionaryList.focus();
     }
   }
+};
+
+/**
+ * Called when the value of the dictionary name element is changed. This
+ * function validates the dictionary name and change the background color of the
+ * element.
+ * @param {!Element} inputElement The dictionary name input element.
+ * @param {number} index The index of the dictionary. If the dictionary name
+ *     element is for the new dictionary this value is NaN.
+ * @private
+ */
+mozc.DictionaryTool.prototype.onDictionaryNameInputChanged_ =
+    function(inputElement, index) {
+  var dictName = inputElement.value;
+  var foundIndex = this.getDictionaryIndexByName_(dictName);
+  var valid = isNaN(foundIndex);
+  if (!(isNaN(index) || isNaN(foundIndex))) {
+    valid = (foundIndex == index);
+  }
+  inputElement.setCustomValidity(valid ? '' : ' ');
 };
 
 /**
@@ -575,7 +681,7 @@ mozc.DictionaryTool.prototype.onDictionaryToolDictionaryNameAreaClicked_ =
 mozc.DictionaryTool.prototype.insertDictionaryNameInputElement_ =
     function(index) {
   var dictionary = this.dictionaries_[index];
-  if (!dictionary || dictionary.syncable) {
+  if (!dictionary) {
     return;
   }
   var dictionaryDiv =
@@ -603,6 +709,10 @@ mozc.DictionaryTool.prototype.insertDictionaryNameInputElement_ =
                                 true);
   inputElement.addEventListener('keydown',
                                 this.onDictionaryNameInputKeyDown_.bind(this),
+                                true);
+  inputElement.addEventListener('input',
+                                this.onDictionaryNameInputChanged_.bind(
+                                    this, inputElement, index),
                                 true);
   inputElement.value = dictionary.name || '';
   nameAreaDiv.appendChild(inputElement);
@@ -637,12 +747,12 @@ mozc.DictionaryTool.prototype.onDictionaryNameInputBlur_ =
   }
   var nameDiv = nameAreaDiv.getElementsByClassName(
                     'dictionary_tool_dictionary_name')[0];
-  nameDiv.innerText = newName;
   nameAreaDiv.classList.remove('dictionary_tool_dictionary_name_area_selected');
   nameAreaDiv.removeChild(inputElement);
-  if (newName == originalName) {
+  if (!newName || !isNaN(this.getDictionaryIndexByName_(newName))) {
     return;
   }
+  nameDiv.innerText = newName;
   var command =
       this.createUserDictionaryCommandWithId_('RENAME_DICTIONARY');
   command.dictionary_id = dictionary.id;
@@ -655,7 +765,9 @@ mozc.DictionaryTool.prototype.onDictionaryNameInputBlur_ =
     */
     (function(response) {
       if (response.status != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-        this.showDictionaryToolError_(response.status);
+        this.showDictionaryToolError_(
+            mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.RENAME_DICTIONARY,
+            response.status);
       } else {
         this.sendSaveUserDictionaryAndReloadCommand_();
         dictionary.name = newName;
@@ -712,7 +824,9 @@ mozc.DictionaryTool.prototype.onDictionaryToolDictionaryDeleteButtonClicked_ =
           */
           (function(response) {
             if (response.status != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-              this.showDictionaryToolError_(response.status);
+              this.showDictionaryToolError_(
+                  mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.DELETE_DICTIONARY,
+                  response.status);
             } else {
               this.sendSaveUserDictionaryAndReloadCommand_();
               // TODO(horo): loadStorage_ is a heavy operation. We shoud only
@@ -747,7 +861,7 @@ mozc.DictionaryTool.prototype.onDictionaryToolExportButtonClicked = function() {
   var blob = new Blob([data]);
   var a = this.document_.createElement('a');
   a.href = this.window_.URL.createObjectURL(blob);
-  a.download = 'japanese_user_dictionary.txt';
+  a.download = this.dictionaries_[dictIndex].name + '.txt';
   a.style.display = 'none';
   this.document_.body.appendChild(a);
   a.click();
@@ -927,6 +1041,13 @@ mozc.DictionaryTool.prototype.insertDictionaryEntryInputElements_ =
                                                  this.posList_[j].type));
       }
     }
+    if (itemInfo.type == mozc.USER_DICTIONARY_ENTRY_ITEM_TYPE_.READING) {
+      inputElement.addEventListener('input',
+                                    this.onDictionaryReadingInputChanged.bind(
+                                        this,
+                                        inputElement),
+                                    true);
+    }
     inputElement.value = entry[itemInfo.type];
     entrySubElements[itemInfo.type].appendChild(inputElement);
   }
@@ -1090,8 +1211,15 @@ mozc.DictionaryTool.prototype.onDictionaryEntryBlur_ = function(event) {
     * @param {!mozc.UserDictionaryCommandStatus} response
     */
     (function(response) {
-      if (response.status != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-        this.showDictionaryToolError_(response.status);
+      if ((response.status != 'USER_DICTIONARY_COMMAND_SUCCESS') &&
+          (response.status != 'READING_CONTAINS_INVALID_CHARACTER') &&
+          (response.status != 'READING_EMPTY') &&
+          (response.status != 'WORD_EMPTY')) {
+        // We ignore READING_CONTAINS_INVALID_CHARACTER, READING_EMPTY and
+        // WORD_EMPTY error to improve user experience.
+        this.showDictionaryToolError_(
+            mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.EDIT_ENTRY,
+            response.status);
       }
       this.sendSaveUserDictionaryAndReloadCommand_();
       var command = this.createUserDictionaryCommandWithId_('GET_ENTRY');
@@ -1151,7 +1279,9 @@ mozc.DictionaryTool.prototype.onDictionaryEntryDeleteClick_ = function(event) {
     */
     (function(response) {
       if (response.status != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-        this.showDictionaryToolError_(response.status);
+        this.showDictionaryToolError_(
+            mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.DELETE_ENTRY,
+            response.status);
         this.loadStorage_();
       } else {
         this.sendSaveUserDictionaryAndReloadCommand_();
@@ -1176,29 +1306,33 @@ mozc.DictionaryTool.prototype.onDictionaryEntryDeleteClick_ = function(event) {
     entryElem.dictionaryEntryIndex = i - 1;
     entryElem.id = 'dictionary_tool_entry_' + (i - 1);
   }
+  if (this.dictionaries_[dictIndex].entries.length == 0) {
+    this.optionPage_.disableElementById('export_dictionary_button');
+  }
 };
 
 /**
  * Shows dictionary tool error. The dictionary tool dialog must be the active
  * dialog when this method is called.
+ * @param {string} title The title of the dialog box.
  * @param {string=} opt_status Status string of dictionary tool.
  * @param {!function()=} opt_callback Function to be called when closed.
  * @private
  */
 mozc.DictionaryTool.prototype.showDictionaryToolError_ =
-    function(opt_status, opt_callback) {
+    function(title, opt_status, opt_callback) {
   var message = '';
   if (!opt_status) {
-    message = chrome.i18n.getMessage('dictionaryToolStatuErrorGeneral');
+    message = chrome.i18n.getMessage('dictionaryToolStatusErrorGeneral');
   } else {
     message = mozc.DICTIONARY_TOOL_STATUS_ERRORS_[opt_status];
     if (!message) {
-      message = chrome.i18n.getMessage('dictionaryToolStatuErrorGeneral') +
+      message = chrome.i18n.getMessage('dictionaryToolStatusErrorGeneral') +
                 '[' + opt_status + ']';
     }
   }
   this.optionPage_.showAlert('dictionary_tool_page',
-                             'Error',
+                             title,
                              message,
                              opt_callback);
 };
@@ -1221,6 +1355,7 @@ mozc.DictionaryTool.prototype.updateDictionaryContent_ = function() {
       currentArea.removeChild(entryElem);
     }
     this.optionPage_.disableElementById('export_dictionary_button');
+    this.optionPage_.disableElementById('import_dictionary_button');
     this.optionPage_.disableElementById('dictionary_tool_reading_new_input');
     this.optionPage_.disableElementById('dictionary_tool_word_new_input');
     this.optionPage_.disableElementById('dictionary_tool_category_new_select');
@@ -1233,6 +1368,7 @@ mozc.DictionaryTool.prototype.updateDictionaryContent_ = function() {
   } else {
     this.optionPage_.disableElementById('export_dictionary_button');
   }
+  this.optionPage_.enableElementById('import_dictionary_button');
   this.optionPage_.enableElementById('dictionary_tool_reading_new_input');
   this.optionPage_.enableElementById('dictionary_tool_word_new_input');
   this.optionPage_.enableElementById('dictionary_tool_category_new_select');
@@ -1316,6 +1452,27 @@ mozc.DictionaryTool.prototype.createUserDictionaryEntryElement_ =
 };
 
 /**
+ * Called when the value of the reading input element is changed. This function
+ * validates the reading and change the background color of the element.
+ * @param {!Element} inputElement The reading input element.
+ * @param {Event} event Event object passed from browser.
+ */
+mozc.DictionaryTool.prototype.onDictionaryReadingInputChanged =
+    function(inputElement, event) {
+  this.naclMozc_.isValidReading(inputElement.value,
+      /**
+      * @this {!mozc.DictionaryTool}
+      * @param {!mozc.Event} response
+      */
+      (function(response) {
+        if (inputElement.value != response.data) {
+          return;
+        }
+        inputElement.setCustomValidity(response.result ? '' : ' ');
+      }).bind(this));
+};
+
+/**
  * Called when dictionary tool new entry input element lost focus.
  * If the new reading and the new word are not empty this method creates a new
  * entry in the selected dictionary.
@@ -1349,35 +1506,48 @@ mozc.DictionaryTool.prototype.onDictionaryNewEntryLostFocus = function(event) {
   if (newReading == '' || newWord == '') {
     return;
   }
-  // We don't reset the value of dictionary_tool_category_new_select to help the
-  // user who want to add the same category entries.
-  newReadingInput.value = '';
-  newWordInput.value = '';
-  newCommentInput.value = '';
-  var command = this.createUserDictionaryCommandWithId_('ADD_ENTRY');
-  command.dictionary_id = dictionaryId;
-  command.entry = /** @type {!mozc.UserDictionaryEntry} */ ({
-    'key': newReading,
-    'value': newWord,
-    'comment': newComment,
-    'pos': newCategory
-  });
-  this.sendUserDictionaryCommand_(
-      command,
+  this.naclMozc_.isValidReading(newReading,
       /**
       * @this {!mozc.DictionaryTool}
-      * @param {!mozc.UserDictionaryCommandStatus} response
+      * @param {!mozc.Event} response
       */
       (function(response) {
-        if (response.status != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-          this.showDictionaryToolError_(response.status);
-        } else {
-          this.sendSaveUserDictionaryAndReloadCommand_();
-          // TODO(horo): loadStorage_ is a heavy operation. We shoud only update
-          // the added entry.
-          this.loadStorage_(newReadingInput.focus.bind(newReadingInput));
+        if (!response.result) {
+          return;
         }
+        // We don't reset the value of dictionary_tool_category_new_select to
+        // help the user who want to add the same category entries.
+        newReadingInput.value = '';
+        newWordInput.value = '';
+        newCommentInput.value = '';
+        var command = this.createUserDictionaryCommandWithId_('ADD_ENTRY');
+        command.dictionary_id = dictionaryId;
+        command.entry = /** @type {!mozc.UserDictionaryEntry} */ ({
+          'key': newReading,
+          'value': newWord,
+          'comment': newComment,
+          'pos': newCategory
+        });
+        this.sendUserDictionaryCommand_(
+            command,
+            /**
+            * @this {!mozc.DictionaryTool}
+            * @param {!mozc.UserDictionaryCommandStatus} response
+            */
+            (function(response) {
+              if (response.status != 'USER_DICTIONARY_COMMAND_SUCCESS') {
+                this.showDictionaryToolError_(
+                    mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.ADD_ENTRY,
+                    response.status);
+              } else {
+                this.sendSaveUserDictionaryAndReloadCommand_();
+                // TODO(horo): loadStorage_ is a heavy operation. We shoud only
+                // update the added entry.
+                this.loadStorage_(newReadingInput.focus.bind(newReadingInput));
+              }
+            }).bind(this));
       }).bind(this));
+
 };
 
 /**
@@ -1431,95 +1601,6 @@ mozc.DictionaryTool.prototype.sendSaveUserDictionaryAndReloadCommand_ =
 };
 
 /**
- * Called when the user selects a file to import to user dictionary.
- * This method opens dictionary import dialog.
- * @private
- */
-mozc.DictionaryTool.prototype.onDictionaryImportFileChanged_ = function() {
-  this.openDictionaryImportDialog_();
-};
-
-/**
- * Opens dictionary import dialog.
- * @private
- */
-mozc.DictionaryTool.prototype.openDictionaryImportDialog_ = function() {
-  // dictionary_import_select element has "Import as a new dictionary" option
-  // which value is -1 and the options of the dictionary name in dictionaries_
-  // which values are the indexes in it.
-  var dictionarySelect =
-      this.document_.getElementById('dictionary_import_select');
-  while (dictionarySelect.hasChildNodes()) {
-    dictionarySelect.removeChild(dictionarySelect.firstChild);
-  }
-  dictionarySelect.appendChild(this.optionPage_.createOptionElement(
-      chrome.i18n.getMessage('dictionaryImportNewDictionary'),
-      '-1'));
-  for (var i = 0; i < this.dictionaries_.length; ++i) {
-    var dictionaryName = this.getDictionaryName_(i);
-    if (!dictionaryName) {
-      dictionaryName = '';
-    }
-    dictionarySelect.appendChild(this.optionPage_.createOptionElement(
-        dictionaryName, i.toString()));
-  }
-  this.optionPage_.enableElementById('dictionary_import_select');
-  this.optionPage_.enableElementById('dictionary_import_ok');
-  this.optionPage_.enableElementById('dictionary_import_cancel');
-
-  this.optionPage_.setChildNodesUnfocusableByTabKeyById('dictionary_tool_page');
-  this.optionPage_.pushEscapeKeyHandler(
-      this.onDictionaryImportCancelClicked.bind(this));
-  this.document_.getElementById('dictionary_import_overlay').style.visibility =
-      'visible';
-  this.document_.getElementById('dictionary_import_select').focus();
-};
-
-/**
- * Returns the dictionary of the specified name.
- * @param {string} name Name of the dictionary.
- * @return {mozc.UserDictionary} The dictionary object or null when not found.
- * @private
- */
-mozc.DictionaryTool.prototype.findDictionaryByName_ = function(name) {
-  for (var i = 0; i < this.dictionaries_.length; ++i) {
-    if (this.dictionaries_[i].name == name) {
-      return this.dictionaries_[i];
-    }
-  }
-  return null;
-};
-
-/**
- * Returns a name for a new dictionary based on the file name.
- * @param {string} fileName the file name.
- * @return {string} A name for a new dictionary.
- * @private
- */
-mozc.DictionaryTool.prototype.createDictionaryNameByFileName_ =
-    function(fileName) {
-  // Strip extension
-  var dotPos = fileName.indexOf('.');
-  if (dotPos > 1) {
-    fileName = fileName.substring(0, dotPos);
-  }
-  if (!this.findDictionaryByName_(fileName)) {
-    // No-dupped dictionary name.
-    return fileName;
-  }
-  // The names extracted from file name is dupped. So look for alternative names
-  // by adding number suffix, such as "pathname (1)".
-  var suffix = 1;
-  while (true) {
-    var candidate = fileName + ' (' + suffix + ')';
-    if (!this.findDictionaryByName_(candidate)) {
-      return candidate;
-    }
-    ++suffix;
-  }
-};
-
-/**
  * Returns true if charCode is non-character code.
  * @param {number} charCode The code of a character.
  * @return {boolean} Whether the charCode is non-character code.
@@ -1549,42 +1630,21 @@ mozc.DictionaryTool.prototype.hasUnicodeNonCharacter_ = function(text) {
 };
 
 /**
- * Closes the dictionary import dialog.
- * @private
- */
-mozc.DictionaryTool.prototype.closeDictionaryImportDialog_ = function() {
-  this.optionPage_.popEscapeKeyHandler();
-  this.optionPage_.setChildNodesFocusableByTabKeyById('dictionary_tool_page');
-  this.document_.getElementById('dictionary_import_overlay').style.visibility =
-      'hidden';
-};
-
-/**
- * Called when dictionary_import_ok button is clicked.
+ * Called when the user selects a file to import to user dictionary.
  * This method loads the user specified file using FileReader and sends
  * IMPORT_DATA user dictionary command with the read data to NaCl module and
  * closes the dictionary import dialog.
+ * @private
  */
-mozc.DictionaryTool.prototype.onDictionaryImportOkClicked = function() {
-  this.optionPage_.disableElementById('dictionary_import_select');
-  this.optionPage_.disableElementById('dictionary_import_ok');
-  this.optionPage_.disableElementById('dictionary_import_cancel');
-
-  var selectedDictionaryIndex = parseInt(
-      this.document_.getElementById('dictionary_import_select').value,
-      10);
+mozc.DictionaryTool.prototype.onDictionaryImportFileChanged_ = function() {
+  var selectedDictionaryIndex = this.getSelectedDictionaryIndex_();
+  if (isNaN(selectedDictionaryIndex)) {
+    return;
+  }
   var fileInput = this.document_.getElementById('dictionary_import_file');
   var file = fileInput.files[0];
   var importCommand = this.createUserDictionaryCommandWithId_('IMPORT_DATA');
-  if (selectedDictionaryIndex < 0) {
-    // If the user selects "Import as a new dictionary" option,
-    // selectedDictionaryIndex is -1.
-    importCommand.dictionary_name =
-        this.createDictionaryNameByFileName_(file.name);
-  } else {
-    importCommand.dictionary_id =
-        this.dictionaries_[selectedDictionaryIndex].id;
-  }
+  importCommand.dictionary_id = this.dictionaries_[selectedDictionaryIndex].id;
   var reader = new FileReader();
   reader.addEventListener('load',
       /**
@@ -1593,22 +1653,21 @@ mozc.DictionaryTool.prototype.onDictionaryImportOkClicked = function() {
       */
       (function(event) {
         if (!event || !event.target) {
-          this.closeDictionaryImportDialog_();
-          this.showDictionaryToolError_('FILE_NOT_FOUND');
+          this.showDictionaryToolError_(
+              mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.IMPORT_DATA,
+              'FILE_NOT_FOUND');
           return;
         } else if (this.hasUnicodeNonCharacter_(event.target.result)) {
           // NaCl module can't handle non-character. So we reject the file which
           // contains non-character here.
-          this.closeDictionaryImportDialog_();
-          // showDictionaryToolError_ must be called after
-          // closeDictionaryImportDialog_ is called because the dictionary tool
-          // dialog must be the active dialog when showDictionaryToolError_ is
-          // called.
-          this.showDictionaryToolError_('INVALID_FILE_FORMAT');
+          this.showDictionaryToolError_(
+              mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.IMPORT_DATA,
+              'INVALID_FILE_FORMAT');
           return;
         } else if (event.target.result == '') {
-          this.closeDictionaryImportDialog_();
-          this.showDictionaryToolError_('EMPTY_FILE');
+          this.showDictionaryToolError_(
+              mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.IMPORT_DATA,
+              'EMPTY_FILE');
           return;
         }
         importCommand.data = event.target.result;
@@ -1632,25 +1691,13 @@ mozc.DictionaryTool.prototype.onDictionaryImportOkClicked = function() {
                 }
                 this.updateDictionaryList_();
                 this.updateDictionaryContent_();
-                this.closeDictionaryImportDialog_();
                 if (importStatus != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-                  // showDictionaryToolError_ must be called after
-                  // closeDictionaryImportDialog_ is called because the
-                  // dictionary tool dialog must be the active dialog when
-                  // showDictionaryToolError_ is called.
-                  this.showDictionaryToolError_(importStatus);
+                  this.showDictionaryToolError_(
+                      mozc.DICTIONARY_TOOL_STATUS_ERROR_TITLES_.IMPORT_DATA,
+                      importStatus);
                 }
               }).bind(this));
             }).bind(this));
       }).bind(this), true);
   reader.readAsText(file);
 };
-
-/**
- * Called when dictionary_import_cancel button is clicked.
- * This method closes the dictionary import dialog.
- */
-mozc.DictionaryTool.prototype.onDictionaryImportCancelClicked = function() {
-  this.closeDictionaryImportDialog_();
-};
-

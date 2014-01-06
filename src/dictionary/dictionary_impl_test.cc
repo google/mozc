@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
@@ -101,14 +102,101 @@ class DictionaryImplTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
   }
+
+  class CheckKeyValueExistenceCallback : public DictionaryInterface::Callback {
+   public:
+    CheckKeyValueExistenceCallback(StringPiece key, StringPiece value)
+        : key_(key), value_(value), found_(false) {}
+
+    virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                               const Token &token) {
+      if (token.key == key_ && token.value == value_) {
+        found_ = true;
+        return TRAVERSE_DONE;
+      }
+      return TRAVERSE_CONTINUE;
+    }
+
+    bool found() const { return found_; }
+
+   private:
+    const StringPiece key_, value_;
+    bool found_;
+  };
+
+  class CheckSpellingExistenceCallback : public DictionaryInterface::Callback {
+   public:
+    CheckSpellingExistenceCallback(StringPiece key, StringPiece value)
+        : key_(key), value_(value), found_(false) {}
+
+    virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                               const Token &token) {
+      if (token.key == key_ && token.value == value_ &&
+          (token.attributes & Token::SPELLING_CORRECTION)) {
+        found_ = true;
+        return TRAVERSE_DONE;
+      }
+      return TRAVERSE_CONTINUE;
+    }
+
+    bool found() const { return found_; }
+
+   private:
+    const StringPiece key_, value_;
+    bool found_;
+  };
+
+  class CheckZipCodeExistenceCallback : public DictionaryInterface::Callback {
+   public:
+    explicit CheckZipCodeExistenceCallback(StringPiece key, StringPiece value,
+                                           const POSMatcher *pos_matcher)
+        : key_(key), value_(value), pos_matcher_(pos_matcher), found_(false) {}
+
+    virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                               const Token &token) {
+      if (token.key == key_ && token.value == value_ &&
+          pos_matcher_->IsZipcode(token.lid)) {
+        found_ = true;
+        return TRAVERSE_DONE;
+      }
+      return TRAVERSE_CONTINUE;
+    }
+
+    bool found() const { return found_; }
+
+   private:
+    const StringPiece key_, value_;
+    const POSMatcher *pos_matcher_;
+    bool found_;
+  };
+
+  class CheckEnglishT13nCallback : public DictionaryInterface::Callback {
+   public:
+    CheckEnglishT13nCallback(StringPiece key, StringPiece value)
+        : key_(key), value_(value), found_(false) {}
+
+    virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                               const Token &token) {
+      if (token.key == key_ && token.value == value_ &&
+          Util::IsEnglishTransliteration(token.value)) {
+        found_ = true;
+        return TRAVERSE_DONE;
+      }
+      return TRAVERSE_CONTINUE;
+    }
+
+    bool found() const { return found_; }
+
+   private:
+    const StringPiece key_, value_;
+    bool found_;
+  };
 };
 
 TEST_F(DictionaryImplTest, WordSuppressionTest) {
   scoped_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
   SuppressionDictionary *s = data->suppression_dictionary.get();
-
-  NodeAllocator allocator;
 
   // "ぐーぐるは"
   const char kQuery[] =
@@ -122,86 +210,68 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
     s->Clear();
     s->AddEntry(kKey, kValue);
     s->UnLock();
-    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
-    bool found = false;
-    for (; node != NULL; node = node->bnext) {
-      if (node->key == kKey && node->value == kValue) {
-        found = true;
-      }
-    }
-    EXPECT_FALSE(found);
+    CheckKeyValueExistenceCallback callback(kKey, kValue);
+    d->LookupPrefix(kQuery, false, &callback);
+    EXPECT_FALSE(callback.found());
   }
   {
     s->Lock();
     s->Clear();
     s->UnLock();
-    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
-    bool found = false;
-    for (; node != NULL; node = node->bnext) {
-      if (node->key == kKey && node->value == kValue) {
-        found = true;
-      }
-    }
-    EXPECT_TRUE(found);
+    CheckKeyValueExistenceCallback callback(kKey, kValue);
+    d->LookupPrefix(kQuery, false, &callback);
+    EXPECT_TRUE(callback.found());
   }
 }
 
 TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   scoped_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
-  NodeAllocator allocator;
 
-  // "しゅみれーしょん"
-  const char kQuery[] = "\xE3\x81\x97\xE3\x82\x85\xE3\x81\xBF"
-      "\xE3\x82\x8C\xE3\x83\xBC\xE3\x81\x97\xE3\x82\x87\xE3\x82\x93";
-
+  // "あぼがど" -> "アボカド", which is in the test dictionary.
+  const char kKey[] = "\xE3\x81\x82\xE3\x81\xBC\xE3\x81\x8C\xE3\x81\xA9";
+  const char kValue[] = "\xE3\x82\xA2\xE3\x83\x9C\xE3\x82\xAB\xE3\x83\x89";
   {
     config::Config config;
     config.set_use_spelling_correction(true);
     config::ConfigHandler::SetConfig(config);
 
-    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
-    for (; node != NULL; node = node->bnext) {
-      if (node->attributes & Node::SPELLING_CORRECTION) {
-        EXPECT_TRUE(GET_CONFIG(use_spelling_correction));
-      }
-    }
+    CheckSpellingExistenceCallback callback(kKey, kValue);
+    d->LookupPrefix(kKey, false, &callback);
+    EXPECT_TRUE(callback.found());
 
     config.set_use_spelling_correction(false);
     config::ConfigHandler::SetConfig(config);;
-    node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
-    for (; node != NULL; node = node->bnext) {
-      EXPECT_FALSE(node->attributes & Node::SPELLING_CORRECTION);
-    }
+
+    CheckSpellingExistenceCallback callback2(kKey, kValue);
+    d->LookupPrefix(kKey, false, &callback2);
+    EXPECT_FALSE(callback2.found());
   }
 }
 
 TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   scoped_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
-  NodeAllocator allocator;
 
-  const char kQuery[] = "154-0000";
-
+  // "100-0000" -> "東京都千代田区", which is in the test dictionary.
+  const char kKey[] = "100-0000";
+  const char kValue[] = "\xE6\x9D\xB1\xE4\xBA\xAC\xE9\x83\xBD\xE5\x8D"
+                        "\x83\xE4\xBB\xA3\xE7\x94\xB0\xE5\x8C\xBA";
   {
     config::Config config;
     config.set_use_zip_code_conversion(true);
     config::ConfigHandler::SetConfig(config);
 
-    const POSMatcher *pos_matcher = data->pos_matcher;
-    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
-    for (; node != NULL; node = node->bnext) {
-      if (pos_matcher->IsZipcode(node->lid)) {
-        EXPECT_TRUE(GET_CONFIG(use_zip_code_conversion));
-      }
-    }
+    CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
+    d->LookupPrefix(kKey, false, &callback);
+    EXPECT_TRUE(callback.found());
 
     config.set_use_zip_code_conversion(false);
     config::ConfigHandler::SetConfig(config);;
-    node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
-    for (; node != NULL; node = node->bnext) {
-      EXPECT_FALSE(pos_matcher->IsZipcode(node->lid));
-    }
+
+    CheckZipCodeExistenceCallback callback2(kKey, kValue, data->pos_matcher);
+    d->LookupPrefix(kKey, false, &callback2);
+    EXPECT_FALSE(callback2.found());
   }
 }
 
@@ -210,28 +280,25 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   DictionaryInterface *d = data->dictionary.get();
   NodeAllocator allocator;
 
-  // "いんたーねっと"
-  const char kQuery[] = "\xE3\x81\x84\xE3\x82\x93\xE3\x81\x9F"
-      "\xE3\x83\xBC\xE3\x81\xAD\xE3\x81\xA3\xE3\x81\xA8";
-
+  // "ぐーぐる" -> "Google"
+  const char kKey[] =
+      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+  const char kValue[] = "Google";
   {
     config::Config config;
     config.set_use_t13n_conversion(true);
     config::ConfigHandler::SetConfig(config);
 
-    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
-    for (; node != NULL; node = node->bnext) {
-      if (Util::IsEnglishTransliteration(node->value)) {
-        EXPECT_TRUE(GET_CONFIG(use_t13n_conversion));
-      }
-    }
+    CheckEnglishT13nCallback callback(kKey, kValue);
+    d->LookupPrefix(kKey, false, &callback);
+    EXPECT_TRUE(callback.found());
 
     config.set_use_t13n_conversion(false);
     config::ConfigHandler::SetConfig(config);;
-    node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
-    for (; node != NULL; node = node->bnext) {
-      EXPECT_FALSE(Util::IsEnglishTransliteration(node->value));
-    }
+
+    CheckEnglishT13nCallback callback2(kKey, kValue);
+    d->LookupPrefix(kKey, false, &callback2);
+    EXPECT_FALSE(callback2.found());
   }
 }
 

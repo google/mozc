@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,6 @@ namespace session {
 class SessionObserverInterface;
 }  // namespace session
 
-namespace sync {
-class SyncHandler;
-}  // namespace sync
-
 class SessionHandlerInterface {
  public:
   SessionHandlerInterface() {}
@@ -64,9 +60,6 @@ class SessionHandlerInterface {
 
   virtual void AddObserver(
       session::SessionObserverInterface *observer) ABSTRACT;
-
-  // This class doesn't take an ownership of |*sync_handler|.
-  virtual void SetSyncHandler(sync::SyncHandler *sync_handler) ABSTRACT;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerInterface);

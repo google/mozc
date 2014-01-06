@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 #include "base/system_util.h"
 #include "base/trie.h"
 #include "converter/node.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
@@ -138,6 +139,16 @@ inline void FillNode(const uint16 suggestion_only_word_id,
   node->bnext = NULL;
 }
 
+// A version of the above function for Token.
+inline void FillToken(const uint16 suggestion_only_word_id,
+                      StringPiece key, Token *token) {
+  key.CopyToString(&token->key);
+  token->value = token->key;
+  token->cost = 10000;
+  token->lid = token->rid = suggestion_only_word_id;
+  token->attributes = Token::NONE;
+}
+
 class NodeListBuilder : public LoudsTrie::Callback {
  public:
   NodeListBuilder(const int original_key_len,
@@ -171,9 +182,9 @@ class NodeListBuilder : public LoudsTrie::Callback {
       string trie_value;
       size_t key_length = 0;
       bool has_subtrie = false;
-      if (!begin_with_trie_->LookUpPrefix(value.data() + original_key_len_,
-                                          &trie_value,
-                                          &key_length, &has_subtrie)) {
+      if (!begin_with_trie_->LookUpPrefix(
+              StringPiece(value).substr(original_key_len_),
+              &trie_value, &key_length, &has_subtrie)) {
         return SEARCH_CONTINUE;
       }
     }
@@ -245,39 +256,29 @@ Node *ValueDictionary::LookupPredictive(
   return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
 }
 
-// Value dictionary is intended to use for prediction,
-// so we don't support LookupPrefix
-Node *ValueDictionary::LookupPrefixWithLimit(
-    const char *str, int size,
-    const Limit &limit,
-    NodeAllocatorInterface *allocator) const {
-  return NULL;
-}
+void ValueDictionary::LookupPrefix(
+    StringPiece key, bool use_kana_modifier_insensitive_lookup,
+    Callback *callback) const {}
 
-Node *ValueDictionary::LookupPrefix(
-    const char *str, int size,
-    NodeAllocatorInterface *allocator) const {
-  return NULL;
-}
-
-Node *ValueDictionary::LookupExact(const char *str, int size,
-                                   NodeAllocatorInterface *allocator) const {
-  if (size == 0) {
+void ValueDictionary::LookupExact(StringPiece key, Callback *callback) const {
+  if (key.empty()) {
     // For empty string, return NULL for compatibility reason; see the comment
     // above.
-    return NULL;
+    return;
   }
   DCHECK(value_trie_.get() != NULL);
-  DCHECK(allocator != NULL);
 
   string lookup_key_str;
-  codec_->EncodeValue(StringPiece(str, size), &lookup_key_str);
+  codec_->EncodeValue(key, &lookup_key_str);
   if (value_trie_->ExactSearch(lookup_key_str) == -1) {
-    return NULL;
+    return;
   }
-  Node *node = allocator->NewNode();
-  FillNode(suggestion_only_word_id_, str, size, node);
-  return node;
+  if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
+    return;
+  }
+  Token token;
+  FillToken(suggestion_only_word_id_, key, &token);
+  callback->OnToken(key, key, token);
 }
 
 Node *ValueDictionary::LookupReverse(const char *str, int size,

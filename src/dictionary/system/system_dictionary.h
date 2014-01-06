@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,72 +62,6 @@ class ReverseLookupIndex;
 
 class SystemDictionary : public DictionaryInterface {
  public:
-  // Callback interface for dictionary traversal (currently implemented only for
-  // prefix search). Each method is called in the following manner:
-  //
-  // for (each key found) {
-  //   OnKey(key);
-  //   OnActualKey(key, actual_key, key != actual_key);
-  //   for (each token in the token array for the key) {
-  //     OnToken(key, actual_key, token);
-  //   }
-  // }
-  //
-  // Using the return value of each call of the three methods, you can tell the
-  // traverser how to proceed. The meanings of the four values are as follows:
-  //   1) TRAVERSE_DONE
-  //       Quit the traversal, i.e., no more callbacks for keys and/or tokens.
-  //   2) TRAVERSE_NEXT_KEY
-  //       Finish the traversal for the current key and search for the next key.
-  //       If returned from OnToken(), the remaining tokens are discarded.
-  //   3) TRAVERSE_CULL
-  //       Similar to TRAVERSE_NEXT_KEY, finish the traversal for the current
-  //       key but search for the next key by using search culling. Namely,
-  //       traversal of the subtree starting with the current key is skipped,
-  //       which is the difference from TRAVERSE_NEXT_KEY.
-  //   4) TRAVERSE_CONTINUE
-  //       Continue the traversal for the current key or tokens, namely:
-  //         - If returned from OnKey(), OnActualKey() will be called back.
-  //         - If returned from OnActualKey(), a series of OnToken()'s will be
-  //           called back.
-  //         - If returned from OnToken(), OnToken() will be called back again
-  //           with the next token, provided that it exists. Proceed to the next
-  //           key if there's no more token.
-  class Callback {
-   public:
-    enum ResultType {
-      TRAVERSE_DONE,
-      TRAVERSE_NEXT_KEY,
-      TRAVERSE_CULL,
-      TRAVERSE_CONTINUE,
-    };
-
-    virtual ~Callback() {
-    }
-
-    // Called back when key is found.
-    virtual ResultType OnKey(const string &key) {
-      return TRAVERSE_CONTINUE;
-    }
-
-    // Called back when actual key is decoded. The third argument is guaranteed
-    // to be (key != actual_key) but computed in an efficient way.
-    virtual ResultType OnActualKey(
-        const string &key, const string &actual_key, bool is_expanded) {
-      return TRAVERSE_CONTINUE;
-    }
-
-    // Called back when a token is decoded.
-    virtual ResultType OnToken(const string &key,
-                               const string &expanded_key,
-                               const TokenInfo &token_info) {
-      return TRAVERSE_CONTINUE;
-    }
-
-   protected:
-    Callback() {}
-  };
-
   // System dictionary options represented as bitwise enum.
   enum Options {
     NONE = 0,
@@ -135,6 +69,51 @@ class SystemDictionary : public DictionaryInterface {
     // from the id in value trie to the id in key trie.
     // That consumes more memory but we can perform reverse lookup more quickly.
     ENABLE_REVERSE_LOOKUP_INDEX = 1,
+  };
+
+  // Builder class for system dictionary
+  // Usage:
+  //   SystemDictionary::Builder builder(filename);
+  //   builder.SetOptions(SystemDictionary::NONE);
+  //   builder.SetCodec(NULL);
+  //   SystemDictionary *dictionry = builder.Build();
+  class Builder {
+   public:
+    // Creates Builder from filename
+    explicit Builder(const string &filename);
+    // Creates Builder from image
+    Builder(const char *ptr, int len);
+    ~Builder();
+
+    // Sets options (default: NONE)
+    void SetOptions(Options options);
+
+    // Sets codec (default: NULL)
+    // Uses default codec if this is NULL
+    void SetCodec(const SystemDictionaryCodecInterface *codec);
+
+    // Builds and returns system dictionary.
+    SystemDictionary *Build();
+
+   private:
+    enum InputType {
+      FILENAME,
+      IMAGE,
+    };
+
+    InputType type_;
+
+    // For InputType::FILENAME
+    const string filename_;
+
+    // For InputTYpe::IMAGE
+    const char *ptr_;
+    const int len_;
+
+    Options options_;
+    const SystemDictionaryCodecInterface *codec_;
+
+    DISALLOW_COPY_AND_ASSIGN(Builder);
   };
 
   struct ReverseLookupResult {
@@ -149,6 +128,7 @@ class SystemDictionary : public DictionaryInterface {
 
   virtual ~SystemDictionary();
 
+  // TODO(team): Use builder instead of following static methods.
   static SystemDictionary *CreateSystemDictionaryFromFile(
       const string &filename);
 
@@ -172,20 +152,13 @@ class SystemDictionary : public DictionaryInterface {
                                  NodeAllocatorInterface *allocator) const;
 
   // Prefix lookup
-  virtual Node *LookupPrefixWithLimit(const char *str, int size,
-                                      const Limit &limit,
-                                      NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const;
-  // TODO(noriyukit): We may want to define this method as a part of
-  // DictionaryInterface for general purpose prefix search.
-  void LookupPrefixWithCallback(const StringPiece key,
-                                bool use_kana_modifier_insensitive_lookup,
-                                Callback *callback) const;
+  virtual void LookupPrefix(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const;
 
   // Exact lookup
-  virtual Node *LookupExact(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const;
+  virtual void LookupExact(StringPiece key, Callback *callback) const;
+
   // Value to key prefix lookup
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
@@ -210,7 +183,7 @@ class SystemDictionary : public DictionaryInterface {
     FilterInfo() : conditions(NONE), value_id(-1) {}
   };
 
-  SystemDictionary();
+  explicit SystemDictionary(const SystemDictionaryCodecInterface *codec);
 
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 

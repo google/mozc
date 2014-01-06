@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "converter/lattice.h"
 
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -38,14 +39,12 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
-#include "dictionary/pos_matcher.h"
 
 DEFINE_bool(disable_lattice_cache,
             false,
             "do not use cache feature for lattice");
 
 namespace mozc {
-
 namespace {
 
 Node *InitBOSNode(Lattice *lattice, uint16 length) {
@@ -137,6 +136,7 @@ string GetCommonPrefix(const string &str1, const string &str2) {
   }
   return common_prefix;
 }
+
 }  // namespace
 
 struct LatticeDisplayNodeInfo {
@@ -145,7 +145,7 @@ struct LatticeDisplayNodeInfo {
   string display_node_str_;
 };
 
-Lattice::Lattice() : node_allocator_(new NodeAllocator) {}
+Lattice::Lattice() : history_end_pos_(0), node_allocator_(new NodeAllocator) {}
 
 Lattice::~Lattice() {}
 
@@ -165,9 +165,9 @@ Node *Lattice::end_nodes(size_t pos) const {
   return end_nodes_[pos];
 }
 
-void Lattice::SetKey(const string &key) {
+void Lattice::SetKey(StringPiece key) {
   Clear();
-  key_ = key;
+  key.CopyToString(&key_);
   const size_t size = key.size();
   begin_nodes_.resize(size + 4);
   end_nodes_.resize(size + 4);
@@ -236,7 +236,7 @@ void Lattice::Clear() {
 }
 
 void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
-                                         const string &str) {
+                                  const string &str) {
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
   info->display_node_begin_pos_ = begin_pos;
   info->display_node_end_pos_ = end_pos;
@@ -483,4 +483,5 @@ string Lattice::DebugString() const {
 
   return os.str();
 }
+
 }  // namespace mozc

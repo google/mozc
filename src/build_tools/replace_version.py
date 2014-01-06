@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,15 +51,16 @@ def ParseOptions():
     An options data.
   """
   parser = optparse.OptionParser()
-  parser.add_option("--version_file", dest="version_file")
-  parser.add_option("--output", dest="output")
-  parser.add_option("--input", dest="input")
+  parser.add_option('--version_file', dest='version_file')
+  parser.add_option('--output', dest='output')
+  parser.add_option('--input', dest='input')
+  parser.add_option('--branding', dest='branding')
 
   (options, unused_args) = parser.parse_args()
   return options
 
 
-def GetBrandingName(version):
+def GetBrandingName(version, branding):
   """Returns the branding name dictionary."""
   branding_name = {
       'APP_NAME_JA': 'Mozc',
@@ -68,6 +69,16 @@ def GetBrandingName(version):
       'DEV_CHANNEL': 'false',
       'OFFICIAL_BUILD': 'false',
   }
+  if branding == 'GoogleJapaneseInput':
+    branding_name['BRANDING'] = 'GoogleJapaneseInput'
+    branding_name['OFFICIAL_BUILD'] = 'true'
+    if version.IsDevChannel():
+      branding_name['APP_NAME_JA'] = 'Google 日本語入力 開発版'
+      branding_name['APP_NAME_EN'] = 'Google Japanese Input Dev Channel'
+      branding_name['DEV_CHANNEL'] = 'true'
+    else:
+      branding_name['APP_NAME_JA'] = 'Google 日本語入力'
+      branding_name['APP_NAME_EN'] = 'Google Japanese Input'
   return branding_name
 
 
@@ -75,17 +86,20 @@ def main():
   """The main function."""
   options = ParseOptions()
   if options.version_file is None:
-    logging.error("--version_file is not specified.")
+    logging.error('--version_file is not specified.')
     exit(-1)
   if options.output is None:
-    logging.error("--output is not specified.")
+    logging.error('--output is not specified.')
     exit(-1)
   if options.input is None:
-    logging.error("--input is not specified.")
+    logging.error('--input is not specified.')
+    exit(-1)
+  if options.branding is None:
+    logging.error('--branding is not specified.')
     exit(-1)
 
   version = mozc_version.MozcVersion(options.version_file)
-  branding_name = GetBrandingName(version)
+  branding_name = GetBrandingName(version, options.branding)
   with open(options.input) as f:
     result = f.read()
   result = version.GetVersionInFormat(result)

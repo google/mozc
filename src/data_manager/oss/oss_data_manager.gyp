@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,7 @@
       '<(platform_data_dir)/dictionary09.txt',
       '<(platform_data_dir)/reading_correction.tsv',
     ],
+    'gen_test_dictionary': 'false',
   },
   # This 'includes' defines the following targets:
   #   - oss_data_manager  (type: static_library)

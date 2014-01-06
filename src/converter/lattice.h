@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,25 +30,28 @@
 #ifndef MOZC_CONVERTER_LATTICE_H_
 #define MOZC_CONVERTER_LATTICE_H_
 
-#include <sstream>  // For DebugString()
 #include <string>
 #include <vector>
+
 #include "base/port.h"
-#include "base/freelist.h"
 #include "base/scoped_ptr.h"
-#include "converter/node.h"
+#include "base/string_piece.h"
 
 namespace mozc {
 
-class NodeAllocatorInterface;
+struct Node;
 class NodeAllocator;
+class NodeAllocatorInterface;
 
 class Lattice {
  public:
+  Lattice();
+  ~Lattice();
+
   NodeAllocatorInterface *node_allocator() const;
 
   // set key and initalizes lattice with key.
-  void SetKey(const string &key);
+  void SetKey(StringPiece key);
 
   // return key.
   const string& key() const;
@@ -110,12 +113,9 @@ class Lattice {
   // Dump the best path and the path that contains the designated string.
   string DebugString() const;
 
-  Lattice();
-  virtual ~Lattice();
-
   // Set the node info that should be used in DebugString() (For debug use).
   static void SetDebugDisplayNode(size_t start_pos, size_t end_pos,
-                             const string &str);
+                                  const string &str);
 
   // Reset the debug info.
   static void ResetDebugDisplayNode();
@@ -133,6 +133,7 @@ class Lattice {
   // (1 <= k <= len) is already looked up.
   vector<size_t> cache_info_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_LATTICE_H_

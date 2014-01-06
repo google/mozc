@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1278,8 +1278,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                           suggegstion_filter.get()),
                       new UserHistoryPredictor(dictionary.get(),
                                                data_manager.GetPOSMatcher(),
-                                               suppression_dictionary.get()),
-                      NULL),
+                                               suppression_dictionary.get())),
                   new RewriterImpl(converter.get(),
                                    &data_manager,
                                    pos_group.get(),

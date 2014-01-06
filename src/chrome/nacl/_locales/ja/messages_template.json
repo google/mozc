@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -186,78 +186,6 @@
   "configDialogOk": {
     "message": "OK"
   },
-  "configSyncConfigCancel": {
-    "message": "キャンセル"
-  },
-  "configSyncConfigOk": {
-    "message": "OK"
-  },
-  "configSyncStartSync": {
-    "message": "同期する..."
-  },
-  "configSyncStopSync": {
-    "message": "同期の解除"
-  },
-  "configSyncNotSyncedYet": {
-    "message": "同期されていません"
-  },
-  "configSyncLastSyncedTime": {
-    "message": "最終同期時刻: "
-  },
-  "configSyncWaiting": {
-    "message": "サーバの状態を確認しています.. この処理は最大2分かかります"
-  },
-  "configSyncDuringSync": {
-    "message": "同期中です"
-  },
-  "configSyncNoSync": {
-    "message": "同期機能：オフ"
-  },
-  "configSyncCustomization": {
-    "message": "詳細設定..."
-  },
-  "configSyncAdvancedSettings": {
-    "message": "同期の詳細設定"
-  },
-  "configSyncDescription": {
-    "message": "設定や同期用ユーザー辞書を、異なるコンピュータ間で安全に同期します。同期済みのデータは <a href=\"https://www.google.com/settings/dashboard\" target=\"_blank\">Google ダッシュボード</a> から削除できます。"
-  },
-  "configSyncTitle": {
-    "message": "同期"
-  },
-  "configSyncAdvancedSettingsMessage": {
-    "message": "同期するデータ タイプを選択"
-  },
-  "configUseConfigSync": {
-    "message": "設定"
-  },
-  "configUseUserDictionarySync": {
-    "message": "ユーザー辞書"
-  },
-  "configSyncAuthorizationFail": {
-    "message": "認証に失敗しました。"
-  },
-  "configSyncUserDictionaryNumEntryExceeded": {
-    "message": "単語数の上限を超えたため同期用辞書をセーブできません。"
-  },
-  "configSyncUserDictionaryByteSizeExceeded": {
-    "message": "ファイルサイズの上限を超えたため同期用辞書をセーブできません。"
-  },
-  "configSyncUserDictionaryNumDictionaryExceeded": {
-    "message": "同期用辞書の数が上限を超えたため辞書をセーブできません。"
-  },
-  "configSyncUnknownErrorFound": {
-    "message": "未知のエラーです。"
-  },
-  "configSyncAuthorizationError": {
-    "message": "認証失敗"
-  },
-  "configSyncDictionaryError": {
-    "message": "辞書同期エラー"
-  },
-  "configSyncUnknownError": {
-    "message": "未知の同期エラー"
-  },
   "configDictionaryToolTitle": {
     "message": "ユーザー辞書"
   },
@@ -271,7 +199,7 @@
     "message": "ユーザー辞書"
   },
   "dictionaryToolDictionaryListTitle": {
-    "message": "辞書一覧"
+    "message": "辞書"
   },
   "dictionaryToolReadingTitle": {
     "message": "よみ"
@@ -285,11 +213,14 @@
   "dictionaryToolCommentTitle": {
     "message": "コメント"
   },
+  "dictionaryToolMenuTitle": {
+    "message": "辞書管理"
+  },
   "dictionaryToolExportButton": {
     "message": "エクスポート"
   },
   "dictionaryToolImportButton": {
-    "message": "インポート"
+    "message": "インポート..."
   },
   "dictionaryToolDoneButton": {
     "message": "完了"
@@ -312,9 +243,6 @@
   "dictionaryToolNewDictionaryNamePlaceholder": {
     "message": "新規辞書"
   },
-  "dictionaryToolSyncableDictionaryName": {
-    "message": "同期用辞書"
-  },
   "dictionaryToolDeleteDictionaryConfirm": {
     "message": "$dictName$を削除しますか?",
     "placeholders": {
@@ -324,77 +252,86 @@
       }
     }
   },
-  "dictionaryToolStatuErrorGeneral": {
+  "dictionaryToolStatusErrorGeneral": {
     "message": "操作を実行できません。"
   },
-  "dictionaryToolStatuErrorFileNotFound": {
+  "dictionaryToolStatusErrorFileNotFound": {
     "message": "ファイルを開けません。"
   },
-  "dictionaryToolStatuErrorInvalidFileFormat": {
+  "dictionaryToolStatusErrorInvalidFileFormat": {
     "message": "ファイルを読み込めません。"
   },
-  "dictionaryToolStatuErrorEmptyFile": {
+  "dictionaryToolStatusErrorEmptyFile": {
     "message": "空のファイルです。"
   },
-  "dictionaryToolStatuErrorFileSizeLimitExceeded": {
+  "dictionaryToolStatusErrorFileSizeLimitExceeded": {
     "message": "ファイルが大きすぎます。"
   },
-  "dictionaryToolStatuErrorDictionarySizeLimitExceeded": {
+  "dictionaryToolStatusErrorDictionarySizeLimitExceeded": {
     "message": "これ以上辞書を作成できません。"
   },
-  "dictionaryToolStatuErrorEntrySizeLimitExceeded": {
+  "dictionaryToolStatusErrorEntrySizeLimitExceeded": {
     "message": "一つの辞書に含む単語が多すぎます。"
   },
-  "dictionaryToolStatuErrorDictionaryNameEmpty": {
+  "dictionaryToolStatusErrorDictionaryNameEmpty": {
     "message": "辞書名を入力してください。"
   },
-  "dictionaryToolStatuErrorDictionaryNameTooLong": {
+  "dictionaryToolStatusErrorDictionaryNameTooLong": {
     "message": "辞書名が長すぎます。"
   },
-  "dictionaryToolStatuErrorDictionaryNameContainsInvalidCharacter": {
+  "dictionaryToolStatusErrorDictionaryNameContainsInvalidCharacter": {
     "message": "辞書名に使用できない文字が含まれています。"
   },
-  "dictionaryToolStatuErrorDictionaryNameDuplicated": {
+  "dictionaryToolStatusErrorDictionaryNameDuplicated": {
     "message": "その辞書名はすでに使われています。"
   },
-  "dictionaryToolStatuErrorReadingEmpty": {
+  "dictionaryToolStatusErrorReadingEmpty": {
     "message": "よみを入力してください。"
   },
-  "dictionaryToolStatuErrorReadingTooLong": {
+  "dictionaryToolStatusErrorReadingTooLong": {
     "message": "よみが長すぎます。"
   },
-  "dictionaryToolStatuErrorReadingContainsInvalidCharacter": {
-    "message": "よみに使用できない文字が含まれています。"
+  "dictionaryToolStatusErrorReadingContainsInvalidCharacter": {
+    "message": "よみに使用できない文字が含まれています。 Ascii文字、ひらがな、濁点(゛)、半濁点(゜)、中点(・)、長音符(ー)、読点(、)、句点(。)、括弧(「」『』)、波ダッシュ(〜)をよみに使用できます。"
   },
-  "dictionaryToolStatuErrorWordEmpty": {
+  "dictionaryToolStatusErrorWordEmpty": {
     "message": "単語を入力してください。"
   },
-  "dictionaryToolStatuErrorWordTooLong": {
+  "dictionaryToolStatusErrorWordTooLong": {
     "message": "単語が長すぎます。"
   },
-  "dictionaryToolStatuErrorWordContainsInvalidCharacter": {
+  "dictionaryToolStatusErrorWordContainsInvalidCharacter": {
     "message": "単語に使用できない文字が含まれています。"
   },
-  "dictionaryToolStatuErrorImportTooManyWords": {
+  "dictionaryToolStatusErrorImportTooManyWords": {
     "message": "インポートする単語が多すぎます。"
   },
-  "dictionaryToolStatuErrorImportInvalidEntries": {
+  "dictionaryToolStatusErrorImportInvalidEntries": {
     "message": "インポートできない単語がありました。"
   },
-  "dictionaryToolStatuErrorNoUndoHistory": {
+  "dictionaryToolStatusErrorNoUndoHistory": {
     "message": "これ以上操作を取り消せません。"
   },
-  "dictionaryImportTitle": {
-    "message": "インポート先辞書の選択"
+  "dictionaryToolStatusErrorTitleCreateDictionary": {
+    "message": "新規辞書エラー"
   },
-  "dictionaryImportNewDictionary": {
-    "message": "新規辞書にインポート"
+  "dictionaryToolStatusErrorTitleDeleteDictionary": {
+    "message": "辞書削除エラー"
   },
-  "dictionaryImportCancel": {
-    "message": "キャンセル"
+  "dictionaryToolStatusErrorTitleRenameDictionary": {
+    "message": "辞書名変更エラー"
   },
-  "dictionaryImportOk": {
-    "message": "OK"
+  "dictionaryToolStatusErrorTitleEditEntry": {
+    "message": "単語編集エラー"
+  },
+  "dictionaryToolStatusErrorTitleDeleteEntry": {
+    "message": "単語削除エラー"
+  },
+  "dictionaryToolStatusErrorTitleAddEntry": {
+    "message": "単語追加エラー"
+  },
+  "dictionaryToolStatusErrorTitleImportData": {
+    "message": "インポートエラー"
   },
   "configUploadUsageStats": {
     "message": "使用統計データや障害レポートを Google に自動送信する"

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,13 +28,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""One-line documentation for gen_number_suffix_array module.
-
-A detailed description of gen_number_suffix_array.
-"""
+"""Generate embedded counter suffix data."""
 
 import codecs
-import logging
 import optparse
 import sys
 
@@ -42,7 +38,6 @@ from build_tools import code_generator_util
 
 
 def ReadCounterSuffixPosIds(id_file):
-  logging.info('Reading POS IDs from %s', id_file)
   pos_ids = set()
   with codecs.open(id_file, 'r', encoding='utf-8') as stream:
     stream = code_generator_util.ParseColumnStream(stream, num_column=2)
@@ -61,7 +56,6 @@ def ReadCounterSuffixes(dictionary_files, ids):
     # reading_correction.tsv in a cleaner way in the whole build system.
     if 'reading_correction.tsv' in filename:
       continue
-    logging.info('Reading dictionary from %s', filename)
     with codecs.open(filename, 'r', encoding='utf-8') as stream:
       stream = code_generator_util.ParseColumnStream(stream, num_column=5,
                                                      delimiter='\t')
@@ -90,7 +84,6 @@ def ParseOptions():
 
 
 def main():
-  logging.basicConfig(level=logging.INFO)
   options, args = ParseOptions()
   ids = ReadCounterSuffixPosIds(options.id_file)
   suffixes = ReadCounterSuffixes(args, ids)

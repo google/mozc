@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -840,11 +840,19 @@ class MozcDrawableConverter(object):
 
 
 def ConvertFiles(svg_dir, output_dir):
+  """Converts SVG files into MechaMozc specific *pic* files.
+
+  Args:
+    svg_dir: Path to a directory which has svg files (recursively).
+    output_dir: Path of the destination directory.
+  """
+  logging.info('Start SVG conversion. From:%s, To:%s', svg_dir, output_dir)
   # Ensure that the output directory exists.
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
   converter = MozcDrawableConverter()
+  number_of_conversion = 0
   for dirpath, dirnames, filenames in os.walk(svg_dir):
     for filename in filenames:
       basename, ext = os.path.splitext(filename)
@@ -865,7 +873,7 @@ def ConvertFiles(svg_dir, output_dir):
         # 'keyboard_fold_tab_down.svg.' Just skip it, too.
         continue
 
-      logging.info('Converting %s...', filename)
+      logging.debug('Converting %s...', filename)
 
       if basename.endswith('_center'):
         # Process '_center.svg' file with '_release.svg' file to make
@@ -898,6 +906,8 @@ def ConvertFiles(svg_dir, output_dir):
 
       with open(pic_file, 'wb') as stream:
         stream.write(pic_data)
+      number_of_conversion += 1
+  logging.info('%d files are converted.', number_of_conversion)
 
 
 def ParseOptions():
@@ -906,6 +916,9 @@ def ParseOptions():
                     help='Path to a directory containing .svg files.')
   parser.add_option('--output_dir', dest='output_dir',
                     help='Path to the output directory,')
+  parser.add_option('--verbose', '-v', dest='verbose',
+                    action='store_true', default=False,
+                    help='Shows verbose message.')
   return parser.parse_args()[0]
 
 
@@ -914,6 +927,8 @@ def main():
   logging.getLogger().addFilter(util.ColoredLoggingFilter())
 
   options = ParseOptions()
+  if options.verbose:
+    logging.getLogger().setLevel(logging.DEBUG)
   ConvertFiles(options.svg_dir, options.output_dir)
 
 

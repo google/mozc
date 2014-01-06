@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,6 @@ class Engine : public EngineInterface {
   // Predictor factory is used to select DefaultPredictor and MobilePredictor.
   void Init(const DataManagerInterface *data_manager,
             PredictorInterface *(*predictor_factory)(PredictorInterface *,
-                                                     PredictorInterface *,
                                                      PredictorInterface *));
 
   virtual ConverterInterface *GetConverter() const { return converter_.get(); }

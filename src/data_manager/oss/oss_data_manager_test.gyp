@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@
       'type': 'none',
       'variables': {
         'test_data': [
-          '../../<(test_data_subdir)/connection_single_column.txt',
+          '<(gen_out_dir)/connection_single_column.txt',
           '../../<(test_data_subdir)/dictionary00.txt',
           '../../<(test_data_subdir)/dictionary01.txt',
           '../../<(test_data_subdir)/dictionary02.txt',

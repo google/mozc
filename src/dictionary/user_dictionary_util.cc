@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,8 +64,6 @@ const size_t kMaxDictionaryNameSize = 300;
 // The limits of dictionary/entry size.
 const size_t kMaxDictionarySize = 100;
 const size_t kMaxEntrySize = 1000000;
-const size_t kMaxSyncDictionarySize = 1;
-const size_t kMaxSyncEntrySize = 10000;
 }  // namespace
 
 size_t UserDictionaryUtil::max_dictionary_size() {
@@ -74,14 +72,6 @@ size_t UserDictionaryUtil::max_dictionary_size() {
 
 size_t UserDictionaryUtil::max_entry_size() {
   return kMaxEntrySize;
-}
-
-size_t UserDictionaryUtil::max_sync_dictionary_size() {
-  return kMaxSyncDictionarySize;
-}
-
-size_t UserDictionaryUtil::max_sync_entry_size() {
-  return kMaxSyncEntrySize;
 }
 
 bool UserDictionaryUtil::IsValidEntry(
@@ -190,9 +180,7 @@ bool UserDictionaryUtil::IsStorageFull(
 
 bool UserDictionaryUtil::IsDictionaryFull(
     const user_dictionary::UserDictionary &dictionary) {
-  const size_t max_entry_size = dictionary.syncable() ?
-      kMaxSyncEntrySize : kMaxEntrySize;
-  return dictionary.entries_size() >= max_entry_size;
+  return dictionary.entries_size() >= kMaxEntrySize;
 }
 
 const user_dictionary::UserDictionary *
@@ -658,12 +646,6 @@ bool UserDictionaryUtil::DeleteDictionary(
 
   if (index < 0) {
     LOG(ERROR) << "Invalid dictionary id: " << dictionary_id;
-    return false;
-  }
-
-  // Do not delete sync dictionary.
-  if (storage->dictionaries(index).syncable()) {
-    LOG(ERROR) << "Cannot delete sync dictionary";
     return false;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include "base/version.h"
 #include "converter/boundary_struct.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
+#include "data_manager/packed/system_dictionary_format_version.h"
 #include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -52,9 +53,6 @@
 
 namespace mozc {
 namespace packed {
-namespace {
-const int kSystemDictionaryFormatVersion = 2;
-}
 
 SystemDictionaryDataPacker::SystemDictionaryDataPacker(const string &version) {
   system_dictionary_.reset(new SystemDictionaryData());

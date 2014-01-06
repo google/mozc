@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1027,7 +1027,11 @@ void Util::SetRandomSeed(uint32 seed) {
 namespace {
 class ClockImpl : public Util::ClockInterface {
  public:
+#ifndef __native_client__
   ClockImpl() {}
+#else  // __native_client__
+  ClockImpl() : timezone_offset_sec_(0) {}
+#endif  // __native_client__
   virtual ~ClockImpl() {}
 
   virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) {
@@ -1073,7 +1077,12 @@ class ClockImpl : public Util::ClockInterface {
     if (_localtime64_s(output, &modified_sec) != 0) {
       return false;
     }
-#else
+#elif defined(__native_client__)
+    const time_t localtime_sec = modified_sec + timezone_offset_sec_;
+    if (gmtime_r(&localtime_sec, output) == NULL) {
+      return false;
+    }
+#else  // !OS_WIN && !__native_client__
     if (localtime_r(&modified_sec, output) == NULL) {
       return false;
     }
@@ -1133,6 +1142,15 @@ class ClockImpl : public Util::ClockInterface {
 #error "Not supported platform"
 #endif  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
   }
+
+#ifdef __native_client__
+  virtual void SetTimezoneOffset(int32 timezone_offset_sec) {
+    timezone_offset_sec_ = timezone_offset_sec;
+  }
+
+ private:
+  int32 timezone_offset_sec_;
+#endif  // __native_client__
 };
 
 Util::ClockInterface *g_clock_handler = NULL;
@@ -1182,6 +1200,12 @@ void Util::Sleep(uint32 msec) {
   usleep(msec * 1000);
 #endif  // OS_WIN
 }
+
+#ifdef __native_client__
+void Util::SetTimezoneOffset(int32 timezone_offset_sec) {
+  return GetClockHandler()->SetTimezoneOffset(timezone_offset_sec);
+}
+#endif  // __native_client__
 
 namespace {
 

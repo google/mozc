@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,13 +64,14 @@ const size_t kDefaultTotalBytesLimit = 512 << 20;
 // saved correctly. Please make the dictionary size smaller"
 const size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
-const size_t kCloudSyncBytesLimit = 1 << 19;  // 0.5MB
-// TODO(mukai): translate the name.
-const char kSyncDictionaryName[] = "Sync Dictionary";
-
 // "自動登録単語";
 const char kAutoRegisteredDictionaryName[] =
   "\xE8\x87\xAA\xE5\x8B\x95\xE7\x99\xBB\xE9\x8C\xB2\xE5\x8D\x98\xE8\xAA\x9E";
+
+const char kDefaultSyncDictionaryName[] = "Sync Dictionary";
+// "同期用辞書"
+const char *kDictionaryNameConvertedFromSyncableDictionary =
+    "\xE5\x90\x8C\xE6\x9C\x9F\xE7\x94\xA8\xE8\xBE\x9E\xE6\x9B\xB8";
 
 }  // namespace
 
@@ -141,10 +142,7 @@ bool UserDictionaryStorage::LoadInternal(bool run_migration) {
   return true;
 }
 
-bool UserDictionaryStorage::LoadAndUpdateSyncDictionaries(
-    bool ensure_one_sync_dictionary_exists,
-    bool remove_empty_sync_dictionaries,
-    bool run_migration) {
+bool UserDictionaryStorage::LoadAndMigrateDictionaries(bool run_migration) {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   bool result = false;
@@ -157,14 +155,6 @@ bool UserDictionaryStorage::LoadAndUpdateSyncDictionaries(
     VLOG(1) << "User dictionary file has not been created.";
     last_error_type_ = FILE_NOT_EXISTS;
     result = false;
-  }
-
-  if (ensure_one_sync_dictionary_exists && !EnsureSyncDictionaryExists()) {
-    return false;
-  }
-
-  if (remove_empty_sync_dictionaries) {
-    RemoveUnusedSyncDictionariesIfExist();
   }
 
   // Check dictionary id here. if id is 0, assign random ID.
@@ -186,38 +176,11 @@ const bool kRunMigration = true;
 }  // namespace
 
 bool UserDictionaryStorage::Load() {
-#ifdef ENABLE_CLOUD_SYNC
-  // Create sync dictionary when cloud sync feature is available.
-  return LoadAndUpdateSyncDictionaries(true, false, kRunMigration);
-#else
-  // Do not automatically create sync dictionary.
-  // Remove empty sync dictionaries instead.
-  return LoadAndUpdateSyncDictionaries(false, true, kRunMigration);
-#endif  // ENABLE_CLOUD_SYNC
+  return LoadAndMigrateDictionaries(kRunMigration);
 }
 
 bool UserDictionaryStorage::LoadWithoutMigration() {
-#ifdef ENABLE_CLOUD_SYNC
-  // Create sync dictionary when cloud sync feature is available.
-  return LoadAndUpdateSyncDictionaries(true, false, !kRunMigration);
-#else
-  // Do not automatically create sync dictionary.
-  // Remove empty sync dictionaries instead.
-  return LoadAndUpdateSyncDictionaries(false, true, !kRunMigration);
-#endif  // ENABLE_CLOUD_SYNC
-}
-
-// TODO(peria): Clean up this method, as it isn't used from anywhere.
-bool UserDictionaryStorage::LoadWithoutChangingSyncDictionary() {
-  return LoadAndUpdateSyncDictionaries(false, false, kRunMigration);
-}
-
-bool UserDictionaryStorage::Save() {
-  return SaveImpl(true);
-}
-
-bool UserDictionaryStorage::SaveWithoutSyncableDictionariesSizeCheck() {
-  return SaveImpl(false);
+  return LoadAndMigrateDictionaries(!kRunMigration);
 }
 
 namespace {
@@ -242,7 +205,7 @@ bool SerializeUserDictionaryStorageToOstream(
 
 }  // namespace
 
-bool UserDictionaryStorage::SaveImpl(bool checkSyncableDictionariesSize) {
+bool UserDictionaryStorage::Save() {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   {
@@ -252,26 +215,6 @@ bool UserDictionaryStorage::SaveImpl(bool checkSyncableDictionariesSize) {
                  << "Call Lock() before saving the dictionary";
       last_error_type_ = SYNC_FAILURE;
       return false;
-    }
-  }
-
-  if (checkSyncableDictionariesSize) {
-    size_t sync_binary_size_total = 0;
-    for (size_t i = 0; i < dictionaries_size(); ++i) {
-      const UserDictionary &dict = dictionaries(i);
-      if (!dict.syncable()) {
-        continue;
-      }
-      if (dict.entries_size() > UserDictionaryUtil::max_sync_entry_size()) {
-        LOG(ERROR) << "Sync dictionary has too many entries";
-        return false;
-      }
-
-      sync_binary_size_total += dict.SerializeAsString().size();
-      if (sync_binary_size_total > kCloudSyncBytesLimit) {
-        LOG(ERROR) << "Sync dictionary is too large";
-        return false;
-      }
     }
   }
 
@@ -415,10 +358,6 @@ bool UserDictionaryStorage::CopyDictionary(uint64 dic_id,
     LOG(ERROR) << "Invalid dictionary id: " << dic_id;
     return false;
   }
-  if (dic->syncable()) {
-    LOG(ERROR) << "Cannot copy a sync dictionary.";
-    return false;
-  }
 
   UserDictionary *new_dic = add_dictionaries();
   new_dic->CopyFrom(*dic);
@@ -462,12 +401,6 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
     return true;
   }
 
-  if (dic->syncable()) {
-    last_error_type_ = INVALID_DICTIONARY_ID;
-    LOG(ERROR) << "Renaming sync dictionary is not allowed.";
-    return false;
-  }
-
   for (int i = 0; i < dictionaries_size(); ++i) {
     if (dic_name == dictionaries(i).name()) {
       last_error_type_ = DUPLICATED_DICTIONARY_NAME;
@@ -507,47 +440,7 @@ UserDictionaryStorage::GetLastError() const {
   return last_error_type_;
 }
 
-bool UserDictionaryStorage::EnsureSyncDictionaryExists() {
-  if (CountSyncableDictionaries(*this) > 0) {
-    VLOG(1) << "storage already has a sync dictionary.";
-    return true;
-  }
-  UserDictionary *dic = add_dictionaries();
-  if (dic == NULL) {
-    LOG(ERROR) << "cannot add a new dictionary.";
-    return false;
-  }
-
-  dic->set_name(kSyncDictionaryName);
-  dic->set_syncable(true);
-  dic->set_id(UserDictionaryUtil::CreateNewDictionaryId(*this));
-
-  return true;
-}
-
-void UserDictionaryStorage::RemoveUnusedSyncDictionariesIfExist() {
-  if (CountSyncableDictionaries(*this) == 0) {
-    // Nothing to do.
-    return;
-  }
-
-  vector<UserDictionaryStorage::UserDictionary> copied_dictionaries;
-  for (size_t i = 0; i < dictionaries_size(); ++i) {
-    const UserDictionary &dict = dictionaries(i);
-    if (dict.syncable() && dict.entries_size() == 0) {
-      continue;
-    }
-    copied_dictionaries.push_back(dict);
-  }
-
-  clear_dictionaries();
-
-  for (size_t i = 0; i < copied_dictionaries.size(); ++i) {
-    add_dictionaries()->CopyFrom(copied_dictionaries[i]);
-  }
-}
-
-  // Add new entry to the auto registered dictionary.
+// Add new entry to the auto registered dictionary.
 bool UserDictionaryStorage::AddToAutoRegisteredDictionary(
     const string &key, const string &value, UserDictionary::PosType pos) {
   if (!Lock()) {
@@ -613,6 +506,58 @@ bool UserDictionaryStorage::AddToAutoRegisteredDictionary(
   return true;
 }
 
+bool UserDictionaryStorage::ConvertSyncDictionariesToNormalDictionaries() {
+  if (CountSyncableDictionaries(*this) == 0) {
+    return false;
+  }
+
+  for (int dictionary_index = dictionaries_size() - 1;
+       dictionary_index >= 0; --dictionary_index) {
+    UserDictionary *dic = mutable_dictionaries(dictionary_index);
+    if (!dic->syncable()) {
+      continue;
+    }
+
+    // Delete removed entries.
+    for (int i = dic->entries_size() - 1; i >= 0; --i) {
+      if (dic->entries(i).removed()) {
+        for (int j = i + 1; j < dic->entries_size(); ++j) {
+          dic->mutable_entries()->SwapElements(j - 1, j);
+        }
+        dic->mutable_entries()->RemoveLast();
+      }
+    }
+
+    // Delete removed or unused sync dictionaries.
+    if (dic->removed() || dic->entries_size() == 0) {
+      for (int i = dictionary_index + 1; i < dictionaries_size(); ++i) {
+        mutable_dictionaries()->SwapElements(i - 1, i);
+      }
+      mutable_dictionaries()->RemoveLast();
+      continue;
+    }
+
+    if (dic->name() == default_sync_dictionary_name()) {
+      string new_dictionary_name =
+          kDictionaryNameConvertedFromSyncableDictionary;
+      int index = 0;
+      while (UserDictionaryUtil::ValidateDictionaryName(
+                 *this, new_dictionary_name)
+             != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
+        ++index;
+        new_dictionary_name = Util::StringPrintf(
+            "%s_%d", kDictionaryNameConvertedFromSyncableDictionary, index);
+      }
+      dic->set_name(new_dictionary_name);
+    }
+    dic->set_syncable(false);
+  }
+
+  DCHECK_EQ(0, CountSyncableDictionaries(*this));
+
+  return true;
+}
+
 // static
 int UserDictionaryStorage::CountSyncableDictionaries(
     const user_dictionary::UserDictionaryStorage &storage) {
@@ -665,21 +610,8 @@ bool UserDictionaryStorage::IsValidDictionaryName(const string &name) {
   // Should never reach here.
 }
 
-// static methods around sync dictionary properties.
-size_t UserDictionaryStorage::max_sync_dictionary_size() {
-  return UserDictionaryUtil::max_sync_dictionary_size();
-}
-
-size_t UserDictionaryStorage::max_sync_entry_size() {
-  return UserDictionaryUtil::max_sync_entry_size();
-}
-
-size_t UserDictionaryStorage::max_sync_binary_size() {
-  return kCloudSyncBytesLimit;
-}
-
 string UserDictionaryStorage::default_sync_dictionary_name() {
-  return string(kSyncDictionaryName);
+  return string(kDefaultSyncDictionaryName);
 }
 
 }  // namespace mozc

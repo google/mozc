@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -119,9 +119,6 @@ class DictionaryTool : public QMainWindow,
 
   // Returns information on the current dictionary.
   DictionaryInfo current_dictionary() const;
-
-  // Returns true if the current dictionary is sync dictionary.
-  bool IsCurrentDictionaryForSync() const;
 
   // Save content of the current dictionary to the UserDictionaryStorage
   void SyncToStorage();

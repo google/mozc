@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -117,22 +117,6 @@ mozc.OPTION_TITLES_ = [
     name: chrome.i18n.getMessage('configOssCreditsDescription')
   },
   {
-    id: 'sync_advanced_settings_title',
-    name: chrome.i18n.getMessage('configSyncAdvancedSettings')
-  },
-  {
-    id: 'sync_advanced_settings_message',
-    name: chrome.i18n.getMessage('configSyncAdvancedSettingsMessage')
-  },
-  {
-    id: 'sync_description',
-    name: chrome.i18n.getMessage('configSyncDescription')
-  },
-  {
-    id: 'sync_title',
-    name: chrome.i18n.getMessage('configSyncTitle')
-  },
-  {
     id: 'clear_history_title',
     name: chrome.i18n.getMessage('configClearHistoryTitle')
   },
@@ -181,8 +165,8 @@ mozc.OPTION_TITLES_ = [
     name: chrome.i18n.getMessage('dictionaryToolCommentTitle')
   },
   {
-    id: 'dictionary_import_title',
-    name: chrome.i18n.getMessage('dictionaryImportTitle')
+    id: 'dictionary_tool_dictionary_menu_title',
+    name: chrome.i18n.getMessage('dictionaryToolMenuTitle')
   }
 ];
 
@@ -373,25 +357,6 @@ mozc.OPTION_BUTTONS_ = [
     name: chrome.i18n.getMessage('configClearHistoryCancelButton')
   },
   {
-    id: 'sync_config_cancel',
-    name: chrome.i18n.getMessage('configSyncConfigCancel')
-  },
-  {
-    id: 'sync_config_ok',
-    name: chrome.i18n.getMessage('configSyncConfigOk')
-  },
-  {
-    id: 'sync_config_close'
-  },
-  {
-    id: 'sync_toggle_button',
-    name: chrome.i18n.getMessage('configSyncStartSync')
-  },
-  {
-    id: 'sync_customization_button',
-    name: chrome.i18n.getMessage('configSyncCustomization')
-  },
-  {
     id: 'dictionary_tool_open_button',
     name: chrome.i18n.getMessage('configDictionaryToolButton')
   },
@@ -409,114 +374,8 @@ mozc.OPTION_BUTTONS_ = [
   },
   {
     id: 'dictionary_tool_close'
-  },
-  {
-    id: 'dictionary_import_ok',
-    name: chrome.i18n.getMessage('dictionaryImportOk')
-  },
-  {
-    id: 'dictionary_import_cancel',
-    name: chrome.i18n.getMessage('dictionaryImportCancel')
-  },
-  {
-    id: 'dictionary_import_close'
   }
 ];
-
-/**
- * Option sync checkbox information data.
- * @const
- * @type {!Array.<!Object>}
- * @private
- */
-mozc.OPTION_SYNC_CHECKBOXES_ = [
-  {
-    id: 'sync_settings',
-    syncConfigId: 'use_config_sync',
-    name: chrome.i18n.getMessage('configUseConfigSync')
-  },
-  {
-    id: 'sync_user_dictionary',
-    configId: 'use_user_dictionary_sync',
-    name: chrome.i18n.getMessage('configUseUserDictionarySync')
-  }
-];
-
-/**
- * Dictionary tool error messages.
- * @const
- * @type {!Object.<string, string>}
- * @private
- */
-mozc.DICTIONARY_TOOL_STATUS_ERRORS_ = {
-  'FILE_NOT_FOUND':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorFileNotFound'),
-  'INVALID_FILE_FORMAT':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorInvalidFileFormat'),
-  'FILE_SIZE_LIMIT_EXCEEDED':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorFileSizeLimitExceeded'),
-  'DICTIONARY_SIZE_LIMIT_EXCEEDED':
-      chrome.i18n.getMessage(
-          'dictionaryToolStatuErrorDictionarySizeLimitExceeded'),
-  'ENTRY_SIZE_LIMIT_EXCEEDED':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorEntrySizeLimitExceeded'),
-  'DICTIONARY_NAME_EMPTY':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorDictionaryNameEmpty'),
-  'DICTIONARY_NAME_TOO_LONG':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorDictionaryNameTooLong'),
-  'DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER':
-      chrome.i18n.getMessage(
-          'dictionaryToolStatuErrorDictionaryNameContainsInvalidCharacter'),
-  'DICTIONARY_NAME_DUPLICATED':
-      chrome.i18n.getMessage(
-          'dictionaryToolStatuErrorDictionaryNameDuplicated'),
-  'READING_EMPTY':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorReadingEmpty'),
-  'READING_TOO_LONG':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorReadingTooLong'),
-  'READING_CONTAINS_INVALID_CHARACTER':
-      chrome.i18n.getMessage(
-          'dictionaryToolStatuErrorReadingContainsInvalidCharacter'),
-  'WORD_EMPTY': chrome.i18n.getMessage('dictionaryToolStatuErrorWordEmpty'),
-  'WORD_TOO_LONG':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorWordTooLong'),
-  'WORD_CONTAINS_INVALID_CHARACTER':
-      chrome.i18n.getMessage(
-          'dictionaryToolStatuErrorWordContainsInvalidCharacter'),
-  'IMPORT_TOO_MANY_WORDS':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorImportTooManyWords'),
-  'IMPORT_INVALID_ENTRIES':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorImportInvalidEntries'),
-  'NO_UNDO_HISTORY':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorNoUndoHistory'),
-  'EMPTY_FILE':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorEmptyFile')
-};
-
-/**
- * The refresh interval of sync status in milliseconds.
- * @type {number}
- * @private
- */
-mozc.SYNC_STATUS_REFRESH_INTERVAL_ = 3000;
-
-/**
- * Cloud sync feature is only available in official dev channel.
- * @type {boolean}
- * @private
- */
-mozc.ENABLE_CLOUD_SYNC_ = mozc.VERSION_.DEV && mozc.VERSION_.OFFICIAL;
-
-
-/**
- * In Official Stable NaCl Mozc we use simple UI version dictionary tool.
- * In simple UI version the user can only have one user dictionary named
- * "user dictionary".
- * @type {boolean}
- * @private
- */
-mozc.ENABLE_SIMPLE_DICTIONARY_TOOL_ = !mozc.VERSION_.DEV &&
-                                      mozc.VERSION_.OFFICIAL;
 
 /**
  * An empty constructor.
@@ -560,28 +419,6 @@ mozc.OptionPage = function(naclMozc, optionWindow) {
   this.console_ = optionWindow.console;
 
   /**
-   * Timer ID which is used to refresh sync status.
-   * @type {undefined|number}
-   * @private
-   */
-  this.timeoutID_ = undefined;
-
-  /**
-   * The last synced time which is acquired from NaCl module using
-   * getCloudSyncStatus().
-   * @type {number}
-   * @private
-   */
-  this.lastSyncedTimestamp_ = 0;
-
-  /**
-   * Whether cloud sync is enabled or not.
-   * @type {boolean}
-   * @private
-   */
-  this.syncEnabled_ = false;
-
-  /**
    * Stack of Esc key handlers. An Esc key handler is pushed to it when an
    * dialog　box is opend and the handler will be popped when the dialog box is
    * closed. It is used to close the dialog when the user presses Esc key.
@@ -615,19 +452,9 @@ mozc.OptionPage.prototype.initialize = function() {
       this.dictionaryTool_.setPosList(message['posList']);
       this.naclMozc_.getConfig((function(response) {
         this.onConfigLoaded_(response);
-        if (mozc.ENABLE_CLOUD_SYNC_) {
-          this.naclMozc_.getCloudSyncStatus((function(res) {
-            this.displaySyncStatus_(res);
-            this.document_.body.style.visibility = 'visible';
-          }).bind(this));
-        } else {
-          this.document_.body.style.visibility = 'visible';
-        }
+        this.document_.body.style.visibility = 'visible';
       }).bind(this));
     }).bind(this));
-    if (mozc.ENABLE_CLOUD_SYNC_) {
-      this.updateSyncStatus_();
-    }
     // Outputs the version information to JavaScript console.
     this.naclMozc_.getVersionInfo((function(message) {
       this.console_.log(JSON.stringify(message));
@@ -640,10 +467,6 @@ mozc.OptionPage.prototype.initialize = function() {
  * @private
  */
 mozc.OptionPage.prototype.unload_ = function() {
-  if (this.timeoutID_ != undefined) {
-    clearTimeout(this.timeoutID_);
-    this.timeoutID_ = undefined;
-  }
   this.window_ = null;
   this.naclMozc_ = null;
   this.document_ = null;
@@ -774,19 +597,6 @@ mozc.OptionPage.prototype.initPages_ = function() {
                                    true);
   }
 
-  // A sync checkbox (id:'CHECK_BOX_ID') has a label (id:'CHECK_BOX_ID_label').
-  // <span>
-  //   <input type='checkbox' id='CHECK_BOX_ID'>
-  //   <span>
-  //     <label for='CHECK_BOX_ID' id='CHECK_BOX_ID_label'>...</label>
-  //   </span>
-  // </span>
-  for (var i = 0; i < mozc.OPTION_SYNC_CHECKBOXES_.length; ++i) {
-    var optionCheckbox = mozc.OPTION_SYNC_CHECKBOXES_[i];
-    this.document_.getElementById(optionCheckbox.id + '_label').innerHTML =
-        optionCheckbox.name;
-  }
-
   // Disables clear_history_ok button according to check boxes in Clear History
   // dialog.
   this.document_.getElementById('clear_history_conversion_history')
@@ -804,12 +614,18 @@ mozc.OptionPage.prototype.initPages_ = function() {
           this.dictionaryTool_.onDictionaryToolDictionaryListKeyDown.bind(
               this.dictionaryTool_),
           true);
-  this.document_.getElementById('dictionary_tool_reading_new_input')
-      .addEventListener(
-          'blur',
-          this.dictionaryTool_.onDictionaryNewEntryLostFocus.bind(
-              this.dictionaryTool_),
-          true);
+  var newReadingInput =
+      this.document_.getElementById('dictionary_tool_reading_new_input');
+  newReadingInput.addEventListener(
+      'input',
+      this.dictionaryTool_.onDictionaryReadingInputChanged.bind(
+          this.dictionaryTool_, newReadingInput),
+      true);
+  newReadingInput.addEventListener(
+      'blur',
+      this.dictionaryTool_.onDictionaryNewEntryLostFocus.bind(
+          this.dictionaryTool_),
+      true);
   this.document_.getElementById('dictionary_tool_word_new_input')
       .addEventListener(
           'blur',
@@ -829,21 +645,6 @@ mozc.OptionPage.prototype.initPages_ = function() {
               this.dictionaryTool_),
           true);
 
-  // Removes cloud_sync_div if cloud sync is not enabled.
-  if (!mozc.ENABLE_CLOUD_SYNC_) {
-    this.document_.getElementById('settings_div').removeChild(
-      this.document_.getElementById('cloud_sync_div'));
-  }
-
-  // Hides menu of user dictionary if simple dictionary tool is enabled.
-  if (mozc.ENABLE_SIMPLE_DICTIONARY_TOOL_) {
-    this.document_.getElementById(
-        'dictionary_tool_dictionary_list_area').style.display = 'none';
-    this.document_.getElementById('dictionary_tool_page').style.width = '600px';
-    this.document_.getElementById('dictionary_tool_content_area').style.width =
-        '560px';
-  }
-
   this.document_.addEventListener(
       'keydown', this.onKeyDown_.bind(this), false);
 };
@@ -859,26 +660,6 @@ mozc.OptionPage.prototype.onConfigLoaded_ = function(response) {
     return;
   }
   var config = response['output']['config'];
-
-  // Custom keymap option is available only when custom_keymap_table exists or
-  // session_keymap is already set to 'CUSTOM'.
-  // This is because the user can't edit custom keymap table in NaCl Mozc.
-  // It can be downloaded form the sync server if the user has already uploaded
-  // from other platform's Mozc.
-  var session_keymap_select = this.document_.getElementById('session_keymap');
-  var session_keymap_custom =
-      this.document_.getElementById('session_keymap_custom');
-  if (config['custom_keymap_table'] || config['session_keymap'] == 'CUSTOM') {
-    if (!session_keymap_custom) {
-      session_keymap_custom = this.createOptionElement(
-          chrome.i18n.getMessage('configSessionKeymapCustom'),
-          'CUSTOM');
-      session_keymap_custom.id = 'session_keymap_custom';
-      session_keymap_select.appendChild(session_keymap_custom);
-    }
-  } else if (session_keymap_custom) {
-    session_keymap_select.removeChild(session_keymap_custom);
-  }
 
   for (var i = 0; i < mozc.OPTION_CHECKBOXES_.length; ++i) {
     var optionCheckbox = mozc.OPTION_CHECKBOXES_[i];
@@ -913,8 +694,6 @@ mozc.OptionPage.prototype.onConfigLoaded_ = function(response) {
                 mozc.DEFAULT_CONFIG_[optionNumber.configId];
     this.document_.getElementById(optionNumber.id).value = value;
   }
-
-  this.syncEnabled_ = !!config['sync_config'];
 };
 
 /**
@@ -1286,16 +1065,6 @@ mozc.OptionPage.prototype.onButtonClick_ = function(buttonId) {
     this.onClearHistoryOkClicked_();
   } else if (buttonId == 'clear_history_cancel') {
     this.onClearHistoryCancelClicked_();
-  } else if (buttonId == 'sync_config_cancel') {
-    this.onSyncConfigCancelClicked_();
-  } else if (buttonId == 'sync_config_ok') {
-    this.onSyncConfigOkClicked_();
-  } else if (buttonId == 'sync_config_close') {
-    this.onSyncConfigCancelClicked_();
-  } else if (buttonId == 'sync_toggle_button') {
-    this.onSyncToggleButtonClicked_();
-  } else if (buttonId == 'sync_customization_button') {
-    this.onSyncCustomizationButtonClicked_();
   } else if (buttonId == 'dictionary_tool_open_button') {
     this.dictionaryTool_.onDictionaryToolOpenButtonClicked();
   } else if (buttonId == 'dictionary_tool_done_button') {
@@ -1306,12 +1075,6 @@ mozc.OptionPage.prototype.onButtonClick_ = function(buttonId) {
     this.dictionaryTool_.onDictionaryToolExportButtonClicked();
   } else if (buttonId == 'import_dictionary_button') {
     this.dictionaryTool_.onDictionaryToolImportButtonClicked();
-  } else if (buttonId == 'dictionary_import_close') {
-    this.dictionaryTool_.onDictionaryImportCancelClicked();
-  } else if (buttonId == 'dictionary_import_ok') {
-    this.dictionaryTool_.onDictionaryImportOkClicked();
-  } else if (buttonId == 'dictionary_import_cancel') {
-    this.dictionaryTool_.onDictionaryImportCancelClicked();
   }
 };
 
@@ -1374,284 +1137,6 @@ mozc.OptionPage.prototype.onClearHistoryCancelClicked_ = function() {
   this.popEscapeKeyHandler();
   this.hideOverlayElementById('clear_history_overlay');
   this.document_.getElementById('clear_history_open').focus();
-};
-
-/**
- * Updates the cloud sync status and closes the sync dialog.
- * @param {!function()=} opt_callback Function to be called when finished.
- * @private
- */
-mozc.OptionPage.prototype.updateSyncStatusAndCloseSyncDialog_ =
-    function(opt_callback) {
-  this.naclMozc_.getCloudSyncStatus((function(res) {
-    this.displaySyncStatus_(res);
-    this.popEscapeKeyHandler();
-    this.hideOverlayElementById('sync_config_overlay');
-    this.document_.getElementById('sync_customization_button').focus();
-    if (opt_callback) {
-      opt_callback();
-    }
-  }).bind(this));
-};
-
-/**
- * Called when sync_config_cancel button or sync_config_close button is clicked
- * or the user presses Esc key while sycn dialog is opened.
- * This method closes the sync dialog.
- * @private
- */
-mozc.OptionPage.prototype.onSyncConfigCancelClicked_ = function() {
-  this.updateSyncStatusAndCloseSyncDialog_();
-};
-
-/**
- * Called when sync_config_ok button is clicked.
- * This method starts sync if sync_settings or sync_user_dictionary is checked.
- * @private
- */
-mozc.OptionPage.prototype.onSyncConfigOkClicked_ = function() {
-  if (!this.document_.getElementById('sync_settings').checked &&
-      !this.document_.getElementById('sync_user_dictionary').checked) {
-    // Stop sync.
-    this.naclMozc_.getConfig((function(response) {
-      var config = response['output']['config'];
-      delete config['sync_config'];
-      this.syncEnabled_ = false;
-      this.naclMozc_.setConfig(
-          config,
-          this.naclMozc_.addAuthCode.bind(
-              this.naclMozc_,
-              {'access_token': ''},
-              this.updateSyncStatusAndCloseSyncDialog_.bind(this, undefined)));
-    }).bind(this));
-    return;
-  }
-  this.naclMozc_.getConfig((function(response) {
-    var config = response['output']['config'];
-    if (!config['sync_config']) {
-      config['sync_config'] = {};
-    }
-    config['sync_config']['use_config_sync'] =
-        this.document_.getElementById('sync_settings').checked;
-    config['sync_config']['use_user_dictionary_sync'] =
-        this.document_.getElementById('sync_user_dictionary').checked;
-    this.syncEnabled_ = true;
-    this.naclMozc_.setConfig(
-        config,
-        (function() {
-          this.naclMozc_.sendReload();
-          this.getAuthTokenAndStartCloudSync_(
-              this.naclMozc_.getCloudSyncStatus.bind(
-                  this.naclMozc_,
-                  this.updateSyncStatusAndCloseSyncDialog_.bind(this,
-                                                                undefined)));
-        }).bind(this));
-  }).bind(this));
-};
-
-/**
- * Gets the auth token and starts cloud sync.
- * @param {!function(Object)=} opt_callback Function to be called with results
- *     of START_CLOUD_SYNC.
- * @private
- */
-mozc.OptionPage.prototype.getAuthTokenAndStartCloudSync_ =
-    function(opt_callback) {
-  chrome.identity.getAuthToken(
-      {interactive: true},
-      /** @param {string=} opt_token */
-      (function(opt_token) {
-        this.naclMozc_.addAuthCode(
-            {'access_token': opt_token ? opt_token : ''},
-            this.naclMozc_.startCloudSync.bind(this.naclMozc_, opt_callback));
-      }).bind(this));
-};
-
-/**
- * Called when sync_toggle_button button is clicked.
- * This method opens sync dialog if the current sync status is NOSYNC.
- * Otherwise this method stops sync.
- * @private
- */
-mozc.OptionPage.prototype.onSyncToggleButtonClicked_ = function() {
-  this.disableElementById('sync_toggle_button');
-  this.disableElementById('sync_customization_button');
-  if (!this.syncEnabled_) {
-    // Show sync config dialog.
-    this.pushEscapeKeyHandler(this.onSyncConfigCancelClicked_.bind(this));
-    this.document_.getElementById('sync_settings').checked = true;
-    this.document_.getElementById('sync_user_dictionary').checked = true;
-    this.showOverlayElementById('sync_config_overlay');
-    this.document_.getElementById('sync_config_cancel').focus();
-  } else {
-    // Stop sync.
-    this.naclMozc_.getConfig((function(response) {
-      var config = response['output']['config'];
-      delete config['sync_config'];
-      this.syncEnabled_ = false;
-      this.naclMozc_.setConfig(
-          config,
-          this.naclMozc_.addAuthCode.bind(
-              this.naclMozc_,
-              {'access_token': ''},
-              this.naclMozc_.getCloudSyncStatus.bind(
-                  this.naclMozc_,
-                  this.displaySyncStatus_.bind(this))));
-    }).bind(this));
-  }
-};
-
-/**
- * Called when sync_customization_button button is clicked.
- * This method opens sync dialog.
- * @private
- */
-mozc.OptionPage.prototype.onSyncCustomizationButtonClicked_ = function() {
-  this.disableElementById('sync_toggle_button');
-  this.disableElementById('sync_customization_button');
-  this.naclMozc_.getConfig((function(response) {
-    this.pushEscapeKeyHandler(this.onSyncConfigCancelClicked_.bind(this));
-    var sync_config = response['output']['config']['sync_config'];
-    this.document_.getElementById('sync_settings').checked =
-        sync_config && sync_config['use_config_sync'];
-    this.document_.getElementById('sync_user_dictionary').checked =
-        sync_config && sync_config['use_user_dictionary_sync'];
-    this.showOverlayElementById('sync_config_overlay');
-    this.document_.getElementById('sync_config_cancel').focus();
-  }).bind(this));
-};
-
-/**
- * Updates the sync status. This function is first called from initialize method
- * of OptionPage and periodically called using setTimeout.
- * @private
- */
-mozc.OptionPage.prototype.updateSyncStatus_ = function() {
-  this.naclMozc_.getCloudSyncStatus(
-    (function(response) {
-      if (this.isUnloaded()) {
-        return;
-      }
-      this.timeoutID_ = setTimeout(this.updateSyncStatus_.bind(this),
-                                   mozc.SYNC_STATUS_REFRESH_INTERVAL_);
-      this.displaySyncStatus_(response);
-    }).bind(this));
-};
-
-/**
- * Returns the 'yyyy/MM/dd hh:mm:ss' formatted string of the date object.
- * @param {!Date} date Date object to be formatted into a string.
- * @return {string} The formatted string.
- * @private
- */
-mozc.OptionPage.prototype.getFormattedDateTimeString_ = function(date) {
-  var year = date.getFullYear();
-  var month = date.getMonth() + 1;
-  var day = date.getDate();
-  var hour = date.getHours();
-  var min = date.getMinutes();
-  var sec = date.getSeconds();
-  if (month < 10) month = '0' + month;
-  if (day < 10) day = '0' + day;
-  if (hour < 10) hour = '0' + hour;
-  if (min < 10) min = '0' + min;
-  if (sec < 10) sec = '0' + sec;
-  return year + '/' + month + '/' + day + ' ' + hour + ':' + min + ':' + sec;
-};
-
-/**
- * Displays sync status which is acquired from NaCl module using
- * getCloudSyncStatus.
- * @param {!Object} response Response data of GET_CLOUD_SYNC_STATUS from NaCl
- * module.
- * @private
- */
-mozc.OptionPage.prototype.displaySyncStatus_ = function(response) {
-  var sync_status_div = this.document_.getElementById('sync_status');
-  if (!response['output'] ||
-      !response['output']['cloud_sync_status']) {
-    sync_status_div.innerHTML = '';
-    return;
-  }
-  var cloud_sync_status = response['output']['cloud_sync_status'];
-  var sync_global_status = cloud_sync_status['global_status'];
-  var sync_message = '';
-  this.document_.getElementById('sync_toggle_button').value =
-      this.syncEnabled_ ?
-      chrome.i18n.getMessage('configSyncStopSync') :
-      chrome.i18n.getMessage('configSyncStartSync');
-  if (!this.syncEnabled_ || sync_global_status == 'NOSYNC') {
-    this.enableElementById('sync_toggle_button');
-    this.disableElementById('sync_customization_button');
-    this.hideElementById_('sync_customization_button');
-  } else {
-    this.showElementById_('sync_customization_button');
-    if (sync_global_status == 'SYNC_SUCCESS' ||
-        sync_global_status == 'SYNC_FAILURE') {
-      var lastSyncedTimestamp = cloud_sync_status['last_synced_timestamp'];
-      if (!lastSyncedTimestamp) {
-        sync_message += chrome.i18n.getMessage('configSyncNotSyncedYet');
-      } else {
-        sync_message += chrome.i18n.getMessage('configSyncLastSyncedTime');
-        sync_message += this.getFormattedDateTimeString_(
-            new Date(lastSyncedTimestamp * 1000));
-      }
-      if (this.lastSyncedTimestamp_ != lastSyncedTimestamp) {
-        this.lastSyncedTimestamp_ = lastSyncedTimestamp;
-        this.naclMozc_.getConfig(this.onConfigLoaded_.bind(this));
-      }
-      this.enableElementById('sync_toggle_button');
-      this.enableElementById('sync_customization_button');
-    } else if (sync_global_status == 'WAITSYNC') {
-      sync_message += chrome.i18n.getMessage('configSyncWaiting');
-      this.disableElementById('sync_toggle_button');
-      this.disableElementById('sync_customization_button');
-    } else if (sync_global_status == 'INSYNC') {
-      sync_message += chrome.i18n.getMessage('configSyncDuringSync');
-      this.disableElementById('sync_toggle_button');
-      this.disableElementById('sync_customization_button');
-    }
-  }
-  var tooltip = '';
-  if (cloud_sync_status['sync_errors'] &&
-      cloud_sync_status['sync_errors'].length) {
-    for (var i = 0; i < cloud_sync_status['sync_errors'].length; ++i) {
-      if (i) {
-        tooltip += '\n';
-      }
-      var error_code = cloud_sync_status['sync_errors'][i]['error_code'];
-      if (error_code == 'AUTHORIZATION_FAIL') {
-        tooltip += chrome.i18n.getMessage('configSyncAuthorizationFail');
-      } else if (error_code == 'USER_DICTIONARY_NUM_ENTRY_EXCEEDED') {
-        tooltip +=
-            chrome.i18n.getMessage('configSyncUserDictionaryNumEntryExceeded');
-      } else if (error_code == 'USER_DICTIONARY_BYTESIZE_EXCEEDED') {
-        tooltip +=
-            chrome.i18n.getMessage('configSyncUserDictionaryByteSizeExceeded');
-      } else if (error_code == 'USER_DICTIONARY_NUM_DICTIONARY_EXCEEDED') {
-        tooltip +=
-            chrome.i18n.getMessage(
-                'configSyncUserDictionaryNumDictionaryExceeded');
-      } else {
-        tooltip += chrome.i18n.getMessage('configSyncUnknownErrorFound');
-      }
-    }
-    sync_message += ' ';
-    var last_error_code = cloud_sync_status['sync_errors'][0]['error_code'];
-      if (last_error_code == 'AUTHORIZATION_FAIL') {
-        sync_message += chrome.i18n.getMessage('configSyncAuthorizationError');
-      } else if (last_error_code == 'USER_DICTIONARY_NUM_ENTRY_EXCEEDED' ||
-                 last_error_code == 'USER_DICTIONARY_BYTESIZE_EXCEEDED' ||
-                 last_error_code == 'USER_DICTIONARY_NUM_DICTIONARY_EXCEEDED') {
-        sync_message += chrome.i18n.getMessage('configSyncDictionaryError');
-      } else {
-        sync_message += chrome.i18n.getMessage('configSyncUnknownError');
-      }
-  }
-  if (sync_status_div.innerHTML != sync_message) {
-    sync_status_div.innerHTML = sync_message;
-  }
-  sync_status_div.title = tooltip;
 };
 
 /**

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -68,11 +70,15 @@ bool IsEnabled(const mozc::commands::Request &request) {
   DCHECK_EQ(mozc::commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR,
             request.language_aware_input());
 
-  bool enabled = false;
-#if !defined(OS_ANDROID) && defined(CHANNEL_DEV)
-  enabled = true;
-#endif
-  return enabled;
+  if (!GET_CONFIG(use_spelling_correction)) {
+    return false;
+  }
+
+#ifdef OS_ANDROID
+  return false;
+#else  // OS_ANDROID
+  return true;
+#endif  // OS_ANDROID
 }
 
 }  // namespace

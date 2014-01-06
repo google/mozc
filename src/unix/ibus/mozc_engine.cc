@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -384,11 +384,10 @@ gboolean MozcEngine::ProcessKeyEvent(
   VLOG(2) << key.DebugString();
   if (!property_handler_->IsActivated() &&
       !config::ImeSwitchUtil::IsDirectModeCommand(key)) {
-    // We DO consume keys that should be handled even when in the DIRECT
-    // mode such as (default) Henkan key to enable Mozc.
     return FALSE;
   }
 
+  key.set_activated(property_handler_->IsActivated());
   key.set_mode(property_handler_->GetOriginalCompositionMode());
 
   commands::Context context;

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1206,7 +1206,6 @@ TEST_F(SessionTest, Conversion) {
   // "あいうえお"
   EXPECT_EQ(kAiueo, key);
 }
-
 
 TEST_F(SessionTest, SegmentWidthShrink) {
   scoped_ptr<Session> session(new Session(engine_.get()));

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 
 namespace mozc {
 
-// Utility class to read connection.txt.
+// Utility class to read connection_single_column.txt.
 // Usage:
 // for (ConnectionFileReader reader(filename); !reader.done(); reader.Next()) {
 //   int rid = reader.rid_of_left_node();

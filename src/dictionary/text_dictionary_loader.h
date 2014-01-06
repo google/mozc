@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,11 @@ class TextDictionaryLoader {
   // Clears the loaded tokens.
   void Clear();
 
+  // Adds a token.  The ownership is taken by the loader.
+  void AddToken(Token *token) {
+    tokens_.push_back(token);
+  }
+
   const vector<Token *> &tokens() const {
     return tokens_;
   }
@@ -76,22 +81,27 @@ class TextDictionaryLoader {
   // instance or when Clear() is called.
   void CollectTokens(vector<Token *> *res);
 
- private:
-  FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);
+ protected:
+  // Allows derived classes to implement custom filtering rules.
+  virtual Token *ParseTSV(const vector<StringPiece> &columns) const;
 
-  // Encode special information into |token| with the |label|.
+  const POSMatcher *pos_matcher_;
+
+ private:
+  // Encodes special information into |token| with the |label|.
   // Currently, label must be:
   //   - empty string,
   //   - "SPELLING_CORRECITON",
   //   - "ZIP_CODE", or
   //   - "ENGLISH".
   // Otherwise, the method returns false.
-  bool RewriteSpecialToken(Token *token, StringPiece label);
+  bool RewriteSpecialToken(Token *token, StringPiece label) const;
 
-  Token *ParseTSV(const string &line);
+  Token *ParseTSVLine(StringPiece line) const;
 
-  const POSMatcher *pos_matcher_;
   vector<Token *> tokens_;
+
+  FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);
 };
 
 }  // namespace mozc

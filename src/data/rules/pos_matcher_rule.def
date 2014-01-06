@@ -85,3 +85,18 @@ AdverbSegmentSuffix ^助詞,*,*,*,*,*,(から|で|と|に|にて|の|へ|を)$
 
 # 並立助詞
 ParallelMarker ^助詞,並立助詞
+
+# ます助動詞
+MasuSuffix 助動詞,*,*,*,特殊・(マス|タイ)
+
+# て助動詞/助詞
+TeSuffix (助詞,接続助詞,*,*,*,*,て|助動詞,*,*,*,特殊・タ,|動詞,非自立,*,*,一段,*,てる|動詞,非自立,*,*,五段・ワ行促音便,*,ちゃう)
+
+# カ行音便 タ接続 "書い"-て "書い"-た
+# This rule is used for removing candidate "書います/書いたい"
+KagyoTaConnectionVerb ^動詞,(非自立|自立),*,*,五段・カ行(促音便|イ音便),連用タ接続
+
+# ワ行促音便 連用形 "買っ" -て "買っ"-た
+# This rule is used for removing candidate "買いた"
+# Do not match ウ音便, because "吸うた" is acceptable.
+WagyoRenyoConnectionVerb ^動詞,(非自立|自立),*,*,五段・ワ行促音便,連用形

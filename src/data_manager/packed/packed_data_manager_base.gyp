@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
       'toolsets': [ 'host', 'target' ],
       'sources': [
         'packed_data_manager.cc',
+        'system_dictionary_format_version.h',
       ],
       'dependencies': [
         '../../base/base.gyp:base',
@@ -78,6 +79,7 @@
       'toolsets': [ 'host', 'target' ],
       'sources': [
         'system_dictionary_data_packer.cc',
+        'system_dictionary_format_version.h',
       ],
       'dependencies': [
         'system_dictionary_data_protocol',

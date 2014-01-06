@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,9 +51,6 @@
 #include "config/config_handler.h"
 #include "config/stats_config_util.h"
 #include "gui/base/win_util.h"
-#ifdef ENABLE_CLOUD_SYNC
-#include "gui/config_dialog/auth_dialog.h"
-#endif  // ENABLE_CLOUD_SYNC
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
 #include "ipc/ipc.h"
@@ -114,23 +111,13 @@ ConfigDialog::ConfigDialog()
 #endif  // OS_LINUX
 #endif  // NO_LOGGING
 
-#ifndef ENABLE_CLOUD_SYNC
-  syncDescriptionLabel->setVisible(false);
-  syncStatusLabel->setVisible(false);
-  syncButtonsLayoutWidget->setVisible(false);
-  syncHeaderLayoutWidget->setVisible(false);
-#endif  // !ENABLE_CLOUD_SYNC
-
 #ifndef ENABLE_CLOUD_HANDWRITING
   cloudHandwritingCheckBox->setVisible(false);
   cloudServersLayoutWidget->setVisible(false);
-#endif  // !ENABLE_CLOUD_HANDWRITING
-
-#if !defined(ENABLE_CLOUD_SYNC) && !defined(ENABLE_CLOUD_HANDWRITING)
   // Hide "Cloud" tab when all the cloud features are not available.
   const int kCloudTabIndex = 5;
   configDialogTabWidget->removeTab(kCloudTabIndex);
-#endif  // !ENABLE_CLOUD_SYNC && !ENABLE_CLOUD_HANDWRITING
+#endif  // !ENABLE_CLOUD_HANDWRITING
 
   suggestionsSizeSpinBox->setRange(1, 9);
 
@@ -280,16 +267,6 @@ ConfigDialog::ConfigDialog()
                    SIGNAL(clicked()),
                    this,
                    SLOT(LaunchAdministrationDialog()));
-#ifdef ENABLE_CLOUD_SYNC
-  QObject::connect(syncToggleButton,
-                   SIGNAL(clicked()),
-                   this,
-                   SLOT(SyncToggleButtonClicked()));
-  QObject::connect(syncCustomizationButton,
-                   SIGNAL(clicked()),
-                   this,
-                   SLOT(LaunchSyncCustomizationDialog()));
-#endif  // ENABLE_CLOUD_SYNC
 
   // Event handlers to enable 'Apply' button.
   Connect(findChildren<QPushButton *>(), SIGNAL(clicked()), this,
@@ -358,24 +335,6 @@ ConfigDialog::ConfigDialog()
   usageStatsCheckBox->setVisible(false);
 #endif  // OS_LINUX
 
-#ifdef ENABLE_CLOUD_SYNC
-  sync_customize_dialog_.reset(new SyncCustomizeDialog(this));
-  sync_running_ = false;
-  // We do not wait with NamedEventListener to update the sync status,
-  // but just do polling every second with QTimer.  If we introduce
-  // NamedEventListener in a watcher thread, the main thread has to
-  // cancel the listener when the window is closed.  That case would
-  // cause another tricky threading issue.
-  timer_.reset(new QTimer(this));
-  QObject::connect(
-      timer_.get(), SIGNAL(timeout()), this, SLOT(UpdateSyncStatus()));
-  timer_->start(1000);
-  last_synced_timestamp_ = 0;
-  // all sync buttons are not enabled for the first time.
-  syncCustomizationButton->setEnabled(false);
-  syncToggleButton->setEnabled(false);
-#endif  // ENABLE_CLOUD_SYNC
-
   Reload();
 
 #ifdef OS_WIN
@@ -390,9 +349,6 @@ ConfigDialog::ConfigDialog()
 }
 
 ConfigDialog::~ConfigDialog() {
-#ifdef ENABLE_CLOUD_SYNC
-  timer_->stop();
-#endif  // ENABLE_CLOUD_SYNC
 }
 
 bool ConfigDialog::SetConfig(const config::Config &config) {
@@ -453,7 +409,7 @@ bool ConfigDialog::Update() {
   }
 
 
-#if defined(OS_WIN) || defined(OS_LINUX)
+#if defined(OS_WIN)
   if ((initial_preedit_method_ !=
        static_cast<int>(config.preedit_method())) ||
       (initial_use_keyboard_to_change_preedit_method_ !=
@@ -465,7 +421,7 @@ bool ConfigDialog::Update() {
     initial_use_keyboard_to_change_preedit_method_ =
         config.use_keyboard_to_change_preedit_method();
   }
-#endif  // OS_WIN or OS_LINUX
+#endif  // OS_WIN
 
 #ifdef OS_WIN
   if (initial_use_mode_indicator_ != config.use_mode_indicator()) {
@@ -656,16 +612,6 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   SET_COMBOBOX(yenSignComboBox, YenSignCharacter, yen_sign_character);
 
   characterFormEditor->Load(config);
-#ifdef ENABLE_CLOUD_SYNC
-  sync_customize_dialog_->Load(config);
-  if (config.has_sync_config()) {
-    sync_running_ = true;
-    syncStatusLabel->setText(tr("Checking sync status"));
-  } else {
-    syncStatusLabel->setText(tr("Sync is not enabled"));
-  }
-  UpdateSyncToggleButtonText();
-#endif  // ENABLE_CLOUD_SYNC
   SET_CHECKBOX(cloudHandwritingCheckBox, allow_cloud_handwriting);
 
 #ifdef OS_MACOSX
@@ -766,9 +712,6 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_COMBOBOX(yenSignComboBox, YenSignCharacter, yen_sign_character);
 
   characterFormEditor->Save(config);
-#ifdef ENABLE_CLOUD_SYNC
-  sync_customize_dialog_->Save(sync_running_, config);
-#endif  // ENABLE_CLOUD_SYNC
 #ifdef ENABLE_CLOUD_HANDWRITING
   GET_CHECKBOX(cloudHandwritingCheckBox, allow_cloud_handwriting);
 #endif  // ENABLE_CLOUD_HANDWRITING
@@ -939,7 +882,6 @@ void ConfigDialog::ResetToDefaults() {
              "The following items are not reset with this operation.\n"
              " - Personalization data\n"
              " - Input history\n"
-             " - Sync settings\n"
              " - Usage statistics and crash reports\n"
              " - Administrator settings"),
           QMessageBox::Ok | QMessageBox::Cancel,
@@ -949,11 +891,6 @@ void ConfigDialog::ResetToDefaults() {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     ConvertFromProto(config);
-#ifdef ENABLE_CLOUD_SYNC
-    if (sync_running_) {
-      StopSyncForcely();
-    }
-#endif  // ENABLE_CLOUD_SYNC
   }
 }
 
@@ -963,258 +900,9 @@ void ConfigDialog::LaunchAdministrationDialog() {
 #endif  // OS_WIN
 }
 
-void ConfigDialog::SyncToggleButtonClicked() {
-#ifdef ENABLE_CLOUD_SYNC
-  SyncToggleButtonClickedImpl();
-#endif  // ENABLE_CLOUD_SYNC
-}
-
-void ConfigDialog::LaunchSyncCustomizationDialog() {
-#ifdef ENABLE_CLOUD_SYNC
-  LaunchSyncCustomizationDialogImpl();
-#endif  // ENABLE_CLOUD_SYNC
-}
-
-void ConfigDialog::UpdateSyncStatus() {
-#ifdef ENABLE_CLOUD_SYNC
-  UpdateSyncStatusImpl();
-#endif  // ENABLE_CLOUD_SYNC
-}
-
 void ConfigDialog::EnableApplyButton() {
   configDialogButtonBox->button(QDialogButtonBox::Apply)->setEnabled(true);
 }
-
-#ifdef ENABLE_CLOUD_SYNC
-void ConfigDialog::UpdateSyncToggleButtonText() {
-  if (sync_running_) {
-    syncToggleButton->setText(tr("Stop Sync"));
-  } else {
-    syncToggleButton->setText(tr("Start Sync"));
-  }
-}
-
-void ConfigDialog::SyncToggleButtonClickedImpl() {
-  if (sync_running_) {
-    StopSync();
-  } else {
-    LaunchAuthDialog();
-  }
-}
-
-void ConfigDialog::StopSync() {
-  if (QMessageBox::Cancel ==
-      QMessageBox::question(
-          this,
-          tr("Stop sync and reset the auth token"),
-          tr("You are trying to stop sync and reset the auth token. "
-             "To restart sync, you will need to get a new auth token.\n"
-             "Do you really want to continue?"),
-          QMessageBox::Ok | QMessageBox::Cancel,
-          QMessageBox::Cancel)) {
-    return;
-  }
-
-  StopSyncForcely();
-}
-
-void ConfigDialog::StopSyncForcely() {
-  // To stop the current synchronization, it resets the authorization code.
-  commands::Input::AuthorizationInfo auth_info;
-  auth_info.set_auth_code("");
-  if (!client_->AddAuthCode(auth_info)) {
-    LOG(WARNING) << "Sending auth code failed";
-    return;
-  }
-  sync_running_ = false;
-  UpdateSyncToggleButtonText();
-}
-
-void ConfigDialog::LaunchAuthDialog() {
-  string auth_code;
-  if (!gui::AuthDialog::Show(this, &auth_code)) {
-    LOG(WARNING) << "Canceled.  Do nothing";
-    return;
-  }
-
-  // The default configuration at the starting timing will be "all".
-  config::Config mock_config;
-  config::SyncConfig *sync_config = mock_config.mutable_sync_config();
-  sync_config->set_use_config_sync(true);
-  sync_config->set_use_user_dictionary_sync(true);
-  sync_config->set_use_user_history_sync(true);
-  sync_config->set_use_learning_preference_sync(true);
-  sync_config->set_use_contact_list_sync(true);
-
-  // Store the current config for the rollback when failed.
-  config::Config current_config;
-  sync_customize_dialog_->Save(false, &current_config);
-  sync_customize_dialog_->Load(mock_config);
-
-  // Then ask users to customize the sync configuration.
-  if (QDialog::Accepted != sync_customize_dialog_->exec()) {
-    LOG(WARNING) << "Canceled during sync customization. "
-                 << "It means do not activate sync.";
-    // Rollback the config.
-    sync_customize_dialog_->Load(current_config);
-    return;
-  }
-
-  sync_running_ = true;
-  // Before starting sync, the sync customization should be applied.
-  // WARNING: the whole configuration (items other than sync) should
-  // be applied at the same time.
-  Update();
-
-  commands::Input::AuthorizationInfo auth_info;
-  auth_info.set_auth_code(auth_code);
-  if (!client_->AddAuthCode(auth_info)) {
-    LOG(WARNING) << "Sending auth code failed";
-    return;
-  }
-  if (!client_->StartCloudSync()) {
-    LOG(WARNING) << "Cloud sync is failed to start";
-  }
-  UpdateSyncToggleButtonText();
-  // It does not wait for the end of cloud sync.
-}
-
-void ConfigDialog::LaunchSyncCustomizationDialogImpl() {
-  // Store the current config for the rollback when failed.
-  config::Config current_config;
-  sync_customize_dialog_->Save(true, &current_config);
-  if (QDialog::Accepted == sync_customize_dialog_->exec()) {
-    // Before starting sync, the sync customization should be applied.
-    // WARNING: the whole configuration (items other than sync) should
-    // be applied at the same time.
-    Update();
-    if (!client_->StartCloudSync()) {
-      LOG(WARNING) << "Cloud sync is failed to start";
-    }
-  } else {
-    sync_customize_dialog_->Load(current_config);
-  }
-}
-
-void ConfigDialog::AddLastSyncedDateTime(
-    uint64 timestamp, QString *output) const {
-  // 0 is default value, and means to have no sync before.
-  if (timestamp == 0) {
-    output->append(tr("Not synced yet"));
-    return;
-  }
-
-  output->append(tr("Last synced time: "));
-  const int time_offset = Util::GetTime() - timestamp;
-  QDateTime datetime = QDateTime::currentDateTime().addSecs(-time_offset);
-  output->append(datetime.toString("yyyy/MM/dd hh:mm:ss"));
-}
-
-void ConfigDialog::UpdateSyncStatusImpl() {
-  // This method always updates the sync status even when sync is not
-  // running.  That's because we should change the message to "not
-  // enabled" when the user explicitly turns off sync feature.
-  QString sync_message;
-  commands::CloudSyncStatus cloud_sync_status;
-  client_->GetCloudSyncStatus(&cloud_sync_status);
-  if (sync_running_) {
-    DLOG(INFO) << cloud_sync_status.DebugString();
-  } else {
-    // The default status is 'NOSYNC'.  Only changed via IPC when sync
-    // is running.
-    cloud_sync_status.set_global_status(commands::CloudSyncStatus::NOSYNC);
-  }
-
-  commands::CloudSyncStatus::SyncGlobalStatus sync_global_status =
-      cloud_sync_status.global_status();
-
-  syncCustomizationButton->setEnabled(true);
-  syncToggleButton->setEnabled(true);
-
-  switch (sync_global_status) {
-    case commands::CloudSyncStatus::SYNC_SUCCESS:
-    case commands::CloudSyncStatus::SYNC_FAILURE: {
-      uint64 last_synced_timestamp = cloud_sync_status.last_synced_timestamp();
-      AddLastSyncedDateTime(last_synced_timestamp, &sync_message);
-      if (last_synced_timestamp_ != last_synced_timestamp) {
-        Reload();
-        last_synced_timestamp_ = last_synced_timestamp;
-      }
-      break;
-    }
-    case commands::CloudSyncStatus::WAITSYNC:
-      sync_message = tr("Waiting for server to be ready");
-      syncCustomizationButton->setEnabled(false);
-      syncToggleButton->setEnabled(false);
-      break;
-    case commands::CloudSyncStatus::INSYNC:
-      sync_message = tr("During synchronization");
-      syncCustomizationButton->setEnabled(false);
-      syncToggleButton->setEnabled(false);
-      break;
-    case commands::CloudSyncStatus::NOSYNC:
-      sync_message = tr("Sync is not enabled");
-      sync_running_ = false;
-      syncCustomizationButton->setEnabled(false);
-      break;
-  }
-
-  QString tooltip;
-  // Check error messages in sync.
-  if (cloud_sync_status.sync_errors_size() > 0) {
-    for (size_t i = 0; i < cloud_sync_status.sync_errors_size(); ++i) {
-      if (i > 0) {
-        tooltip += "\n";
-      }
-
-      switch (cloud_sync_status.sync_errors(i).error_code()) {
-        case commands::CloudSyncStatus::AUTHORIZATION_FAIL:
-          tooltip += tr("Authorization failed.");
-          break;
-        case commands::CloudSyncStatus::USER_DICTIONARY_NUM_ENTRY_EXCEEDED:
-          tooltip += tr("Cannot save dictionaries because Sync Dictionary "
-                        "exceeds its entry size limit.");
-          break;
-        case commands::CloudSyncStatus::USER_DICTIONARY_BYTESIZE_EXCEEDED:
-          tooltip += tr("Cannot save dictionaries because Sync Dictionary "
-                        "exceeds its binary size limit.");
-          break;
-        case commands::CloudSyncStatus::USER_DICTIONARY_NUM_DICTIONARY_EXCEEDED:
-          tooltip += tr("Cannot save dictionaries because the number of "
-                        "dictionaries for sync exceeds its limit.");
-          break;
-        default:
-          tooltip += tr("Unknown error was found.");
-          LOG(WARNING) << "Unknown error ("
-                       << cloud_sync_status.sync_errors(i).error_code()
-                       << ") was found in cloud sync errors.";
-          break;
-      }
-    }
-
-    sync_message += "  ";
-    // Display the first error category obviously.
-    switch (cloud_sync_status.sync_errors(0).error_code()) {
-      case commands::CloudSyncStatus::AUTHORIZATION_FAIL:
-        sync_message += tr("Authorization error");
-        break;
-      case commands::CloudSyncStatus::USER_DICTIONARY_NUM_ENTRY_EXCEEDED:
-      case commands::CloudSyncStatus::USER_DICTIONARY_BYTESIZE_EXCEEDED:
-      case commands::CloudSyncStatus::USER_DICTIONARY_NUM_DICTIONARY_EXCEEDED:
-        sync_message += tr("Dictionary sync error");
-        break;
-      default:
-        sync_message += tr("Unknown sync error");
-        break;
-    }
-  }
-
-  UpdateSyncToggleButtonText();
-  syncStatusLabel->setText(sync_message);
-  syncStatusLabel->setToolTip(tooltip);
-}
-
-#endif  // ENABLE_CLOUD_SYNC
 
 // Catch MouseButtonRelease event to toggle the CheckBoxes
 bool ConfigDialog::eventFilter(QObject *obj, QEvent *event) {

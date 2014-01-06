@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -439,52 +439,6 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
     }
 
     const size_t size = min(UserDictionaryStorage::max_entry_size(),
-                            kSize[i]);
-    EXPECT_EQ(size, user_dic.entries_size());
-    for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ(entries[j].key, user_dic.entries(j).key());
-      EXPECT_EQ(entries[j].value, user_dic.entries(j).value());
-      EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
-                user_dic.entries(j).pos());
-    }
-  }
-}
-
-TEST(UserDictionaryImporter, ImportFromIteratorSyncableTest) {
-  TestInputIterator iter;
-  UserDictionaryStorage::UserDictionary user_dic;
-
-  // Target is sync dictionary.
-  user_dic.set_syncable(true);
-  static const size_t kSize[] = { 10, 100, 1000, 5000, 12000 };
-  for (size_t i = 0; i < arraysize(kSize); ++i) {
-    vector<UserDictionaryImporter::RawEntry> entries;
-    for (size_t j = 0; j < kSize[i]; ++j) {
-      UserDictionaryImporter::RawEntry entry;
-      const string key = "key" + NumberUtil::SimpleItoa(static_cast<uint32>(j));
-      const string value =
-          "value" + NumberUtil::SimpleItoa(static_cast<uint32>(j));
-      entry.key = key;
-      entry.value = value;
-      // entry.set_pos("名詞");
-      entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
-      entries.push_back(entry);
-    }
-
-    iter.set_available(true);
-    iter.set_entries(&entries);
-
-    // In case of sync dictionary, the upper limit is
-    // max_sync_entry_size instead of max_entry_size.
-    if (kSize[i] <= UserDictionaryStorage::max_sync_entry_size()) {
-      EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
-                UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
-    } else {
-      EXPECT_EQ(UserDictionaryImporter::IMPORT_TOO_MANY_WORDS,
-                UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
-    }
-
-    const size_t size = min(UserDictionaryStorage::max_sync_entry_size(),
                             kSize[i]);
     EXPECT_EQ(size, user_dic.entries_size());
     for (size_t j = 0; j < size; ++j) {

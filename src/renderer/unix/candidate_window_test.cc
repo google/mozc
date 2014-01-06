@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -289,6 +289,10 @@ class CandidateWindowTest : public testing::Test {
                 GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_PRESS_MASK));
     EXPECT_CALL(*testkit->gtk_mock,
                 GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_RELEASE_MASK));
+    EXPECT_CALL(*testkit->gtk_mock, GtkWidgetRealize(kDummyWindow));
+    EXPECT_CALL(*testkit->gtk_mock,
+                GdkWindowSetTypeHint(kDummyWindow,
+                                     GDK_WINDOW_TYPE_HINT_POPUP_MENU));
   }
 
   template <class TargetMockType>

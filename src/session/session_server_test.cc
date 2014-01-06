@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -81,10 +81,6 @@ TEST_F(SessionServerTest, SetSchedulerJobTest) {
       job_recorder->job_settings();
   EXPECT_LE(2, job_settings.size());
   EXPECT_TRUE(FindJobByName(job_settings, "UsageStatsTimer"));
-#ifdef ENABLE_CLOUD_SYNC
-  EXPECT_LE(3, job_settings.size());
-  EXPECT_TRUE(FindJobByName(job_settings, "CloudSync"));
-#endif  // ENABLE_CLOUD_SYNC
   EXPECT_TRUE(FindJobByName(job_settings, "SaveCachedStats"));
   Scheduler::SetSchedulerHandler(NULL);
 }

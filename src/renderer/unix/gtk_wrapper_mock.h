@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,9 @@ class GtkWrapperMock : public GtkWrapperInterface {
   MOCK_METHOD3(GtkWindowMove, void(GtkWidget *window, int x, int y));
   MOCK_METHOD3(GtkWindowResize, void(GtkWidget *window, int width, int height));
   MOCK_METHOD2(GtkWidgetAddEvents, void(GtkWidget *widget, gint events));
+  MOCK_METHOD1(GtkWidgetRealize, void(GtkWidget *widget));
+  MOCK_METHOD2(GdkWindowSetTypeHint, void(GtkWidget *widget,
+                                          GdkWindowTypeHint hint));
 };
 
 }  // namespace gtk

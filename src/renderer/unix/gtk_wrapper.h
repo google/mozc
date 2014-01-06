@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -76,6 +76,9 @@ class GtkWrapper : public GtkWrapperInterface {
   virtual void GtkWindowMove(GtkWidget *window, int x, int y);
   virtual void GtkWindowResize(GtkWidget *window, int width, int height);
   virtual void GtkWidgetAddEvents(GtkWidget *widget, gint events);
+  virtual void GtkWidgetRealize(GtkWidget *widget);
+  virtual void GdkWindowSetTypeHint(GtkWidget *widget,
+                                    GdkWindowTypeHint hint);
 };
 
 }  // namespace gtk

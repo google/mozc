@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "dictionary/suffix_dictionary.h"
 
+#include "base/scoped_ptr.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
@@ -54,10 +55,6 @@ TEST(SuffixDictionaryTest, BasicTest) {
   }
 
   NodeAllocator allocator;
-
-  // doesn't support prefix/reverse lookup.
-  EXPECT_TRUE(NULL == d->LookupPrefix("test", 4, &allocator));
-  EXPECT_TRUE(NULL == d->LookupReverse("test", 4, &allocator));
 
   // only support predictive lookup.
   // Also, SuffixDictionary returns non-NULL value even

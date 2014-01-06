@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@
 
 #include "rewriter/rewriter_interface.h"
 #include "converter/segments.h"
-#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 class ConversionRequest;

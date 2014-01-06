@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -432,7 +432,6 @@ void Segments::set_user_history_enabled(bool user_history_enabled) {
 bool Segments::user_history_enabled() const {
   return user_history_enabled_;
 }
-
 
 const Segment &Segments::segment(size_t i) const {
   return *segments_[i];

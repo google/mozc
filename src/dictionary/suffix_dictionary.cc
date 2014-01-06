@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -131,19 +131,6 @@ Node *SuffixDictionary::LookupPredictiveWithLimit(
 }
 
 // SuffixDictionary doesn't support Prefix/Revese Lookup.
-Node *SuffixDictionary::LookupPrefixWithLimit(
-    const char *str, int size,
-    const Limit &limit,
-    NodeAllocatorInterface *allocator) const {
-  return NULL;
-}
-
-Node *SuffixDictionary::LookupPrefix(
-    const char *str, int size,
-    NodeAllocatorInterface *allocator) const {
-  return NULL;
-}
-
 Node *SuffixDictionary::LookupReverse(
     const char *str, int size,
     NodeAllocatorInterface *allocator) const {

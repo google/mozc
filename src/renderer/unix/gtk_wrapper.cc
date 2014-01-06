@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -142,6 +142,15 @@ bool GtkWrapper::GtkWindowIsActive(GtkWidget *window) {
 
 void GtkWrapper::GtkWidgetAddEvents(GtkWidget *widget, gint events) {
   gtk_widget_add_events(widget, events);
+}
+
+void GtkWrapper::GtkWidgetRealize(GtkWidget *widget) {
+  gtk_widget_realize(widget);
+}
+
+void GtkWrapper::GdkWindowSetTypeHint(GtkWidget *widget,
+                                      GdkWindowTypeHint hint) {
+  gdk_window_set_type_hint(widget->window, hint);
 }
 
 }  // namespace gtk

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include "converter/node_allocator.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"
@@ -188,7 +189,6 @@ TEST_F(ValueDictionaryTest, LookupPredictiveWithLimit) {
 }
 
 TEST_F(ValueDictionaryTest, LookupExact) {
-  NodeAllocator allocator;
   // "うぃー"
   AddToken("\xE3\x81\x86\xE3\x81\x83\xE3\x83\xBC", "we");
   // "うぉー"
@@ -200,26 +200,10 @@ TEST_F(ValueDictionaryTest, LookupExact) {
   scoped_ptr<ValueDictionary> dictionary(
       ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
                                                      dict_name_));
-
-  const string lookup_key = "war";
-  Node *node = dictionary->LookupExact(
-      lookup_key.c_str(), lookup_key.size(), &allocator);
-  bool we_found = false;
-  bool war_found = false;
-  bool word_found = false;
-  while (node) {
-    if (node->value == "we") {
-      we_found = true;
-    } else if (node->value == "war") {
-      war_found = true;
-    } else if (node->value == "word") {
-      word_found = true;
-    }
-    node = node->bnext;
-  }
-  EXPECT_FALSE(we_found);
-  EXPECT_TRUE(war_found);
-  EXPECT_FALSE(word_found);
+  CollectTokenCallback callback;
+  dictionary->LookupExact("war", &callback);
+  ASSERT_EQ(1, callback.tokens().size());
+  EXPECT_EQ("war", callback.tokens()[0].value);
 }
 
 }  // namespace dictionary

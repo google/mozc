@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -112,6 +112,8 @@ message UserDictionary {
 
     // set true if this entry is removed.
     // This flag is used for cloud sync feature.
+    // Cloud sync feature is already deprecated and this flag is only
+    // used to convert sync dictionary to normal dictionary.
     optional bool  removed  = 10 [ default = false ];
 
     // set true if this entry is automatically registered
@@ -123,9 +125,13 @@ message UserDictionary {
 
   // set true if this dictionary is removed.
   // This flag is used for cloud sync feature.
+  // Cloud sync feature is already deprecated and this flag is only
+  // used to convert sync dictionary to normal dictionary.
   optional bool removed = 5 [ default = false ];
 
   // This flag is used for cloud sync feature.
+  // Cloud sync feature is already deprecated and this flag is only
+  // used to convert sync dictionary to normal dictionary.
   optional bool syncable = 6 [ default = false ];
 };
 

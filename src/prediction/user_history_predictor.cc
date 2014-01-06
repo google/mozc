@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1874,7 +1874,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
       string value;
       size_t key_length = 0;
       bool has_subtrie = false;
-      if (!key_expanded->LookUpPrefix(target.data(), &value,
+      if (!key_expanded->LookUpPrefix(target, &value,
                                       &key_length, &has_subtrie)) {
         return NO_MATCH;
       } else if (value == target && value == input_key) {

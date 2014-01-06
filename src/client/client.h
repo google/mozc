@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -134,12 +134,6 @@ class Client : public ClientInterface {
 
   bool NoOperation();
   bool PingServer() const;
-
-  // these methods are expected to be called from
-  // the converter process.
-  bool StartCloudSync();
-  bool GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status);
-  bool AddAuthCode(const commands::Input::AuthorizationInfo &auth_info);
 
   void Reset();
 

@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
           'auto_partial_suggestion.txt',
           'b7132535_scenario.txt',
           'b7321313_scenario.txt',
+          'b7548679_scenario.txt',
           'b8703702_scenario.txt',
           'change_request.txt',
           'clear_user_prediction.txt',

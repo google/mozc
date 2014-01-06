@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,6 @@
 #include "base/hash_tables.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -92,6 +91,14 @@ SystemDictionaryBuilder::SystemDictionaryBuilder()
       key_trie_builder_(new LoudsTrieBuilder),
       token_array_builder_(new BitVectorBasedArrayBuilder),
       codec_(SystemDictionaryCodecFactory::GetCodec()) {}
+
+// This class does not have the ownership of |codec|.
+SystemDictionaryBuilder::SystemDictionaryBuilder(
+    const SystemDictionaryCodecInterface *codec)
+    : value_trie_builder_(new LoudsTrieBuilder),
+      key_trie_builder_(new LoudsTrieBuilder),
+      token_array_builder_(new BitVectorBasedArrayBuilder),
+      codec_(codec) {}
 
 SystemDictionaryBuilder::~SystemDictionaryBuilder() {}
 
