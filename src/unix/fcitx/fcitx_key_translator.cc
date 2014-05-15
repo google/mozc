@@ -491,7 +491,7 @@ bool KeyTranslator::IsKanaAvailable(uint32 keyval,
     // to return an appropriate string. See the following IBus issue for
     // details: http://code.google.com/p/ibus/issues/detail?id=52
     if (keyval == '\\' && layout_is_jp) {
-      if (keycode == 132) {
+      if (keycode == 132 || keycode == 133) {
         *out = "\xe3\x83\xbc";  // "ー"
       } else {
         *out = "\xe3\x82\x8d";  // "ろ"
