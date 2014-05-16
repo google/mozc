@@ -32,7 +32,6 @@ package org.mozc.android.inputmethod.japanese.view;
 import static org.easymock.EasyMock.expect;
 
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -50,10 +49,11 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     Resources resources = createMock(MockResources.class);
     DrawableCache drawableCache = new DrawableCache(new MozcDrawableFactory(resources));
 
-    // For invalid resource id (0), getDrawable returns null without looking up resources.
+    // For invalid resource id (0), getDrawable returns {@code Optional.<Drawable>absent()} without
+    // looking up resources.
     replayAll();
 
-    assertNull(drawableCache.getDrawable(0));
+    assertFalse(drawableCache.getDrawable(0).isPresent());
 
     verifyAll();
 
@@ -64,7 +64,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     expect(resources.getDrawable(1)).andReturn(drawable);
     replayAll();
 
-    assertSame(drawable, drawableCache.getDrawable(1));
+    assertSame(drawable, drawableCache.getDrawable(1).get());
 
     verifyAll();
 
@@ -72,7 +72,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     resetAll();
     replayAll();
 
-    assertSame(drawable, drawableCache.getDrawable(1));
+    assertSame(drawable, drawableCache.getDrawable(1).get());
 
     verifyAll();
 
@@ -83,7 +83,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     expect(resources.getDrawable(1)).andReturn(drawable);
     replayAll();
 
-    assertSame(drawable, drawableCache.getDrawable(1));
+    assertSame(drawable, drawableCache.getDrawable(1).get());
 
     verifyAll();
   }
@@ -97,7 +97,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     expect(resources.getDrawable(1)).andReturn(drawable);
     replayAll();
 
-    assertSame(drawable, drawableCache.getDrawable(1));
+    assertSame(drawable, drawableCache.getDrawable(1).get());
 
     verifyAll();
 
@@ -107,7 +107,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     drawableCache.setSkinType(SkinType.ORANGE_LIGHTGRAY);
-    assertSame(drawable, drawableCache.getDrawable(1));
+    assertSame(drawable, drawableCache.getDrawable(1).get());
 
     verifyAll();
 
@@ -119,7 +119,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     drawableCache.setSkinType(SkinType.TEST);
-    assertSame(drawable, drawableCache.getDrawable(1));
+    assertSame(drawable, drawableCache.getDrawable(1).get());
 
     verifyAll();
   }

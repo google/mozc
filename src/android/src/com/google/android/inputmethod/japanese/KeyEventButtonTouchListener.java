@@ -37,7 +37,6 @@ import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventContext;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState;
-import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -46,7 +45,6 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 
 import java.util.Collections;
-import java.util.EnumSet;
 
 /**
  * This class is an event listener for a view which sends a key to MozcServer.
@@ -102,7 +100,11 @@ public class KeyEventButtonTouchListener implements OnTouchListener {
         new KeyEntity(sourceId, keyCode, KeyEntity.INVALID_KEY_CODE, 0, null, null, false, null);
     Flick flick = new Flick(Direction.CENTER, keyEntity);
     KeyState keyState =
-        new KeyState(EnumSet.of(MetaState.UNMODIFIED), null, Collections.singletonList(flick));
+        new KeyState("",
+                     Collections.<KeyState.MetaState>emptySet(),
+                     Collections.<KeyState.MetaState>emptySet(),
+                     Collections.<KeyState.MetaState>emptySet(),
+                     Collections.singletonList(flick));
     // Now, we support repetable keys only.
     return new Key(0, 0, button.getWidth(), button.getHeight(), 0, 0,
                    true, false, false, Stick.EVEN, Collections.singletonList(keyState));
@@ -113,7 +115,8 @@ public class KeyEventButtonTouchListener implements OnTouchListener {
     Key key = createKey(button, sourceId, keyCode);
     View parent = View.class.cast(button.getParent());
     return new KeyEventContext(
-        key, 0, x, y, parent.getWidth(), parent.getHeight(), 0, MetaState.UNMODIFIED);
+        key, 0, x, y, parent.getWidth(), parent.getHeight(), 0,
+        Collections.<KeyState.MetaState>emptySet());
   }
 
   /**

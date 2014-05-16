@@ -174,8 +174,12 @@ message Candidates {
     optional Annotation annotation = 7;
     optional int32 information_id = 10;
   };
-  // The position on the preedit.  The number represents the left edge
-  // of the candidate window.
+  // The position on the composition in character counted by Util::CharsLen.
+  // The number represents the left edge of the candidate window.  For example,
+  // if the composition is "あいう" and the cursor is the position is between
+  // "あ" and "い" (e.g. "あ|いう"), the number should be 1.
+  // Note, Util::CharsLen does not take care of IVS or combining character
+  // so much.  Thus CharsLen's behavoir on those characters might be changed.
   required uint32 position = 6;
 
   // Nested candidates aka cascading window.

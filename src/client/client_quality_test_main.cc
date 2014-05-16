@@ -27,17 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
+#include <iostream>  // NOLINT
 #include <map>
 #include <numeric>  // accumulate
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/logging.h"
 #include "base/multifile.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "evaluation/scorer.h"

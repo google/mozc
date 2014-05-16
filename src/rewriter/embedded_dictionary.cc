@@ -54,13 +54,13 @@ struct CompilerToken {
 
 struct TokenCompare {
   bool operator()(const EmbeddedDictionary::Token &s1,
-                  const EmbeddedDictionary::Token &s2) {
+                  const EmbeddedDictionary::Token &s2) const {
     return (strcmp(s1.key, s2.key) < 0);
   }
 };
 
 struct CompareByCost {
-  bool operator()(const CompilerToken &t1, const CompilerToken &t2) {
+  bool operator()(const CompilerToken &t1, const CompilerToken &t2) const {
     return (t1.cost < t2.cost);
   }
 };

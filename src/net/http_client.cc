@@ -41,8 +41,9 @@
 #endif
 #endif  // MOZC_ENABLE_HTTP_CLIENT
 
-#include "base/base.h"
+#include "base/compiler_specific.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/stopwatch.h"
 #include "base/util.h"
@@ -114,7 +115,7 @@ class ScopedHINTERNET {
 
   HINTERNET get() {
     return internet_;
-  };
+  }
 
  private:
   HINTERNET internet_;
@@ -630,7 +631,7 @@ const HTTPClientInterface &GetHTTPClient() {
   }
   return *g_http_connection_handler;
 }
-} // namespace
+}  // namespace
 
 void HTTPClient::SetHTTPClientHandler(
     const HTTPClientInterface *handler) {

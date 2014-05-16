@@ -31,7 +31,8 @@
 
 #include <limits>
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 
 namespace mozc {
@@ -72,7 +73,7 @@ TypingModel::TypingModel(const char *characters,
   }
 }
 
-int TypingModel::GetCost(const StringPiece key) const {
+int TypingModel::GetCost(StringPiece key) const {
   size_t index = GetIndex(key);
   if (index >= cost_table_size_) {
     return kInfinity;
@@ -81,7 +82,7 @@ int TypingModel::GetCost(const StringPiece key) const {
   return cost_index == kNoData ? kInfinity : mapping_table_[cost_index];
 }
 
-size_t TypingModel::GetIndex(const StringPiece key) const {
+size_t TypingModel::GetIndex(StringPiece key) const {
   const unsigned int radix = characters_size_ + 1;
   size_t index = 0;
   for (size_t i = 0; i < key.length(); ++i) {

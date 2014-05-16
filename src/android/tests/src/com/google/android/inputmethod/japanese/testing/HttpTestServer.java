@@ -142,7 +142,8 @@ public class HttpTestServer implements Closeable, Runnable {
   }
 
   private void writeHeaders(
-      BufferedWriter writer, String method, String path, Map<String, String> headers)
+      BufferedWriter writer, String method, @SuppressWarnings("unused") String path,
+      Map<String, String> headers)
           throws IOException {
     if (method.equals("GET") || method.equals("HEAD")) {
       writer.write(COMMON_HEADER);

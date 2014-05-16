@@ -31,12 +31,11 @@
 #define MOZC_STORAGE_LRU_CACHE_H_
 
 #include <cstring>
-#include <list>
 #include <map>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace storage {

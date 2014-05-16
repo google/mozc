@@ -73,8 +73,6 @@ const size_t kMaxRerankSize = 5;
 
 const char kFileName[] = "user://segment.db";
 
-LRUStorage *g_lru_storage = NULL;
-
 // Temporarily disable unused private field warning against
 // FeatureValue::reserved_ from Clang.
 // We use MOZC_CLANG_HAS_WARNING to check whether "-Wunused-private-field" is
@@ -525,7 +523,6 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
       pos_matcher_(pos_matcher),
       pos_group_(pos_group) {
   Reload();
-  g_lru_storage = storage_.get();
 
   CHECK_EQ(sizeof(uint32), sizeof(FeatureValue));
   CHECK_EQ(sizeof(uint32), sizeof(KeyTriggerValue));
@@ -705,7 +702,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   // even if the candiate was the top (default) candidate,
   // ERANKED will be set when user changes the ranking
   const bool force_insert =
-      (candidate.attributes & Segment::Candidate::RERANKED);
+      ((candidate.attributes & Segment::Candidate::RERANKED) != 0);
 
   // Compare the POS group and Functional value.
   // if "is_replaceable" is true, it means that  the target candidate can
@@ -829,7 +826,6 @@ bool UserSegmentHistoryRewriter::Reload() {
                               kValueSize, kLRUSize, kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserSegmentHistoryRewriter";
     storage_.reset(NULL);
-    g_lru_storage = NULL;
     return false;
   }
 
@@ -1031,11 +1027,6 @@ void UserSegmentHistoryRewriter::Clear() {
     VLOG(1) << "Clearing user segment data";
     storage_->Clear();
   }
-}
-
-// static
-LRUStorage *UserSegmentHistoryRewriter::GetStorage() {
-  return g_lru_storage;
 }
 
 bool UserSegmentHistoryRewriter::IsPunctuation(

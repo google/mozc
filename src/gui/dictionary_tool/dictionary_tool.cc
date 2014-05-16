@@ -194,18 +194,22 @@ class MultiByteTextLineIterator
   }
 
   bool IsAvailable() const {
-    return *(ifs_.get());
+    // This means that neither failbit nor badbit is set.
+    // TODO(yukawa): Consider to remove |ifs_->eof()|. Furthermore, we should
+    // replace IsAvailable() with something easier to understand, e.g.,
+    // Done() or HasNext().
+    return ifs_->good() || ifs_->eof();
   }
 
   bool Next(string *line)  {
-    if (!*(ifs_.get())) {
+    if (!ifs_->good()) {
       return false;
     }
 
     // Can't use getline as getline doesn't support CR only text.
     char ch;
     string output_line;
-    while (*(ifs_.get())) {
+    while (ifs_->good()) {
       ifs_->get(ch);
       if (output_line.empty() && ch == '\n') {
         continue;
@@ -241,6 +245,8 @@ class MultiByteTextLineIterator
   }
 
   void Reset() {
+    // Clear state bit (eofbit, failbit, badbit).
+    ifs_->clear();
     ifs_->seekg(0, ios_base::beg);
     first_line_ = true;
   }

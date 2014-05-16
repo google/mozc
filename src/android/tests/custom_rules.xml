@@ -42,7 +42,7 @@
            output="manifest.package"/>
     <if>
       <condition>
-        <equals arg1="${build_type}" arg2="Release_Android"/>
+        <equals arg1="${build_type}" arg2="Release"/>
       </condition>
       <then>
         <!-- If we could have an obfuscation stage here, it would be a good

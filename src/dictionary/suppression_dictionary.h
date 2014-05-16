@@ -38,8 +38,6 @@
 
 namespace mozc {
 
-struct Node;
-
 class SuppressionDictionary {
  public:
   SuppressionDictionary();
@@ -75,10 +73,6 @@ class SuppressionDictionary {
   // this function always return false.
   // Lock() and SuppressWord() must be called synchronously.
   bool SuppressEntry(const string &key, const string &value) const;
-
-  // Suppress node from a linked list of nodes.
-  // Return new (modified) linked list.
-  Node *SuppressNodes(Node *node) const;
 
  private:
   set<string> dic_;

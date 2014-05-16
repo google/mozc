@@ -29,6 +29,9 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+
 import android.graphics.drawable.Drawable;
 import android.util.SparseArray;
 
@@ -42,7 +45,9 @@ import java.lang.ref.WeakReference;
  *
  */
 public class WeakDrawableCache {
+
   private static class WeakEntry extends WeakReference<Drawable> {
+
     final Integer key;
     WeakEntry(Integer key, Drawable value, ReferenceQueue<? super Drawable> queue) {
       super(value, queue);
@@ -67,6 +72,8 @@ public class WeakDrawableCache {
    * Put the {@code drawable} to this cache whose resource id is {@code key}.
    */
   public void put(Integer key, Drawable value) {
+    Preconditions.checkNotNull(key);
+    Preconditions.checkNotNull(value);
     cleanUp();
     map.put(key, new WeakEntry(key, value, queue));
   }
@@ -75,10 +82,11 @@ public class WeakDrawableCache {
    * Returns {@code Drawable} instance for the {@code key}, or {@code null} if this doesn't
    * contain the corresponding {@code Drawable}.
    */
-  public Drawable get(Integer key) {
+  public Optional<Drawable> get(Integer key) {
     cleanUp();
-    WeakEntry entry = map.get(key);
-    return entry == null ? null : entry.get();
+    WeakEntry entry = map.get(Preconditions.checkNotNull(key));
+    // entry.get() may return null.
+    return Optional.fromNullable(entry == null ? null : entry.get());
   }
 
   /**

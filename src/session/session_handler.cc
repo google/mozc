@@ -29,14 +29,16 @@
 
 // Session Handler of Mozc server.
 // Migrated from ipc/interpreter and session/session_manager
+
 #include "session/session_handler.h"
 
 #include <algorithm>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/init.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/process.h"
 #include "base/singleton.h"
 #include "base/stopwatch.h"
@@ -120,6 +122,19 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
   // android version supports base/process.cc
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   return true;
+}
+
+bool IsCarrierEmoji(const string &utf8_str) {
+  if (Util::CharsLen(utf8_str) != 1) {
+    return false;
+  }
+  const char *utf8_begin = utf8_str.c_str();
+  size_t mblen = 0;
+  const uint32 ucs4_val = static_cast<uint32>(
+      Util::UTF8ToUCS4(utf8_begin, utf8_begin + utf8_str.size(), &mblen));
+  const uint32 kMinEmojiPuaCodePoint = 0xFE000;
+  const uint32 kMaxEmojiPuaCodePoint = 0xFEEA0;
+  return kMinEmojiPuaCodePoint <= ucs4_val && ucs4_val <= kMaxEmojiPuaCodePoint;
 }
 }  // namespace
 
@@ -359,8 +374,19 @@ bool SessionHandler::InsertToStorage(commands::Command *command) {
 
   for (int i = 0; i < storage_entry.value_size(); ++i) {
     const string &value = storage_entry.value(i);
-    storage->Insert(value, value.data());
+    storage->Insert(value, value.c_str());
   }
+
+  if (storage_entry.type() == commands::GenericStorageEntry::EMOJI_HISTORY) {
+    for (int i = 0; i < storage_entry.value_size(); ++i) {
+      if (IsCarrierEmoji(storage_entry.value(i))) {
+        UsageStats::IncrementCount("CommitCarrierEmoji");
+      } else {
+        UsageStats::IncrementCount("CommitUnicodeEmoji");
+      }
+    }
+  }
+
   return true;
 }
 

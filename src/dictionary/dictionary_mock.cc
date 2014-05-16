@@ -38,98 +38,15 @@
 #include "base/stl_util.h"
 #include "base/string_piece.h"
 #include "base/util.h"
-#include "converter/node.h"
-#include "converter/node_allocator.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/node_list_builder.h"
 
 namespace mozc {
 namespace {
 
 const int kDummyPosId = 1;
 
-uint8 ConvertNodeAttrToTokenAttr(uint32 node_attributes) {
-  uint8 attr = Token::NONE;
-  if (node_attributes & Node::SPELLING_CORRECTION) {
-    attr |= Token::SPELLING_CORRECTION;
-  }
-  if (node_attributes & Node::USER_DICTIONARY) {
-    attr |= Token::USER_DICTIONARY;
-  }
-  return attr;
-}
-
-typedef list<DictionaryMock::NodeData> NodeDataList;
-
-static Node *LookupInternal(const map<string, NodeDataList> &dic,
-                            const char *str,
-                            size_t size, NodeAllocatorInterface *allocator,
-                            bool is_prefix_search) {
-  CHECK(str);
-
-  const StringPiece lookup_str(str, size);
-  Node *cur_node = NULL;
-
-  size_t start_len;
-  if (is_prefix_search) {
-    start_len = 1;
-  } else {
-    start_len = lookup_str.length();
-  }
-  const size_t end_len = lookup_str.size();
-
-  for (size_t i = start_len; i <= end_len; ++i) {
-    const string prefix(str, i);
-    map<string, NodeDataList>::const_iterator iter = dic.find(prefix);
-    if (iter == dic.end()) {
-      continue;
-    }
-
-    const NodeDataList &node_list = iter->second;
-    NodeDataList::const_iterator it_list = node_list.begin();
-    for (; it_list != node_list.end(); ++it_list) {
-      const DictionaryMock::NodeData &node_data = *it_list;
-      if (node_data.lookup_str == prefix) {
-        Node *new_node = NULL;
-        if (allocator != NULL) {
-          new_node = allocator->NewNode();
-        } else {
-          // for test
-          new_node = new Node();
-        }
-        new_node->key = node_data.key;
-        new_node->value = node_data.value;
-        new_node->attributes = node_data.attributes;
-        // As for now, we don't have an interface to change rid/lid.
-        // TODO(manabe): Implement it when need be.
-        new_node->rid = kDummyPosId;
-        new_node->lid = kDummyPosId;
-        new_node->bnext = cur_node;
-        cur_node = new_node;
-      }
-    }
-  }
-  return cur_node;
-}
-
-bool HasValueInternal(const map<string, list<DictionaryMock::NodeData> > &dic,
-                      const StringPiece value) {
-  typedef list<DictionaryMock::NodeData> NodeDataList;
-  for (map<string, NodeDataList>::const_iterator map_it = dic.begin();
-       map_it != dic.end(); ++map_it) {
-    const NodeDataList &l = map_it->second;
-    for (NodeDataList::const_iterator list_it = l.begin();
-         list_it != l.end(); ++list_it) {
-      if (list_it->value == value) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-bool HasValueInternalForToken(const map<string, vector<Token *> > &dic,
-                              const StringPiece value) {
+bool HasValueInternal(const map<string, vector<Token *> > &dic,
+                      StringPiece value) {
   typedef vector<Token *> TokenPtrVector;
   for (map<string, vector<Token *> >::const_iterator map_it = dic.begin();
        map_it != dic.end(); ++map_it) {
@@ -144,16 +61,14 @@ bool HasValueInternalForToken(const map<string, vector<Token *> > &dic,
 }
 
 Token *CreateToken(const string &str, const string &key, const string &value,
-                   uint32 attributes) {
+                   Token::AttributesBitfield attributes) {
   scoped_ptr<Token> token(new Token());
   token->key = key;
   token->value = value;
   // TODO(noriyukit): Currently, we cannot set cost and POS IDs.
   token->cost = 0;
   token->lid = token->rid = kDummyPosId;
-  // TODO(noriyukit): Now we can directly take Token's attribute in
-  // |attributes|.
-  token->attributes = ConvertNodeAttrToTokenAttr(attributes);
+  token->attributes = attributes;
   return token.release();
 }
 
@@ -173,34 +88,41 @@ DictionaryMock::DictionaryMock() {
 DictionaryMock::~DictionaryMock() {
   DeletePtrs(&prefix_dictionary_);
   DeletePtrs(&exact_dictionary_);
+  DeletePtrs(&reverse_dictionary_);
+  DeletePtrs(&predictive_dictionary_);
 }
 
-bool DictionaryMock::HasValue(const StringPiece value) const {
+bool DictionaryMock::HasValue(StringPiece value) const {
   return HasValueInternal(predictive_dictionary_, value) ||
-         HasValueInternalForToken(prefix_dictionary_, value) ||
+         HasValueInternal(prefix_dictionary_, value) ||
          HasValueInternal(reverse_dictionary_, value) ||
-         HasValueInternalForToken(exact_dictionary_, value);
+         HasValueInternal(exact_dictionary_, value);
 }
 
-Node *DictionaryMock::LookupPredictiveWithLimit(
-    const char *str, int size,
-    const Limit &limit,
-    NodeAllocatorInterface *allocator) const {
-  // DictionaryMock doesn't support a limitation
-  return LookupPredictive(str, size, allocator);
-}
-
-Node *DictionaryMock::LookupPredictive(
-    const char *str, int size,
-    NodeAllocatorInterface *allocator) const {
-  CHECK_GT(size, 0);
-  return LookupInternal(predictive_dictionary_, str,
-                        static_cast<size_t>(size), allocator, false);
+void DictionaryMock::LookupPredictive(
+    StringPiece key,
+    bool,  // use_kana_modifier_insensitive_lookup
+    Callback *callback) const {
+  map<string, vector<Token *> >::const_iterator vector_iter =
+      predictive_dictionary_.find(key.as_string());
+  if (vector_iter == predictive_dictionary_.end()) {
+    return;
+  }
+  if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE ||
+      callback->OnActualKey(key, key, false) != Callback::TRAVERSE_CONTINUE) {
+    return;
+  }
+  for (vector<Token *>::const_iterator iter = vector_iter->second.begin();
+       iter != vector_iter->second.end(); ++iter) {
+    if (callback->OnToken(key, key, **iter) != Callback::TRAVERSE_CONTINUE) {
+      return;
+    }
+  }
 }
 
 void DictionaryMock::LookupPrefix(
     StringPiece key,
-    bool /*use_kana_modifier_insensitive_lookup*/,
+    bool,  // use_kana_modifier_insensitive_lookup
     Callback *callback) const {
   CHECK(!key.empty());
 
@@ -262,46 +184,57 @@ void DictionaryMock::LookupExact(StringPiece key, Callback *callback) const {
   }
 }
 
-Node *DictionaryMock::LookupReverse(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const {
-  CHECK_GT(size, 0);
-  return LookupInternal(reverse_dictionary_, str,
-                        static_cast<size_t>(size), allocator, true);
-}
+void DictionaryMock::LookupReverse(StringPiece str,
+                                   NodeAllocatorInterface *allocator,
+                                   Callback *callback) const {
+  CHECK(!str.empty());
 
-DictionaryMock::NodeData::NodeData(const string &lookup_str,
-                                   const string &key, const string &value,
-                                   uint32 attributes) {
-  this->lookup_str = lookup_str;
-  this->key = key;
-  this->value = value;
-  this->attributes = attributes;
+  for (int i = 1; i <= str.size(); ++i) {
+    StringPiece prefix = str.substr(0, i);
+
+    map<string, vector<Token *> >::const_iterator iter =
+        reverse_dictionary_.find(prefix.as_string());
+    if (iter == reverse_dictionary_.end()) {
+      continue;
+    }
+
+    if (callback->OnKey(prefix) != Callback::TRAVERSE_CONTINUE) {
+      return;
+    }
+    for (vector<Token *>::const_iterator token_iter = iter->second.begin();
+         token_iter != iter->second.end(); ++token_iter) {
+      if (callback->OnToken(prefix, prefix, **token_iter) !=
+          Callback::TRAVERSE_CONTINUE) {
+        return;
+      }
+    }
+  }
 }
 
 void DictionaryMock::AddLookupPredictive(const string &str,
                                          const string &key, const string &value,
-                                         uint32 attributes) {
-  NodeData node_data(str, key, value, attributes);
-  predictive_dictionary_[str].push_back(node_data);
+                                         Token::AttributesBitfield attributes) {
+  predictive_dictionary_[str].push_back(
+      CreateToken(str, key, value, attributes));
 }
 
 void DictionaryMock::AddLookupPrefix(const string &str,
                                      const string &key, const string &value,
-                                     uint32 attributes) {
+                                     Token::AttributesBitfield attributes) {
   prefix_dictionary_[str].push_back(
       CreateToken(str, key, value, attributes));
 }
 
 void DictionaryMock::AddLookupReverse(const string &str,
                                       const string &key, const string &value,
-                                      uint32 attributes) {
-  NodeData node_data(str, key, value, attributes);
-  reverse_dictionary_[str].push_back(node_data);
+                                      Token::AttributesBitfield attributes) {
+  reverse_dictionary_[str].push_back(
+      CreateToken(str, key, value, attributes));
 }
 
 void DictionaryMock::AddLookupExact(const string &str,
                                     const string &key, const string &value,
-                                    uint32 attributes) {
+                                    Token::AttributesBitfield attributes) {
   exact_dictionary_[str].push_back(
       CreateToken(str, key, value, attributes));
 }

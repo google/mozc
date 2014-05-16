@@ -76,7 +76,7 @@ class MutexTestSleepThread : public Thread {
   int sleep_;
 };
 
-TEST(MutexTest, MutexBasicTest) {
+TEST(MutexTest, MutexBasicTest) NO_THREAD_SAFETY_ANALYSIS {
   g_counter = 0;
   Mutex mutex;
   MutexTestThread t(&mutex, 1, 1000);
@@ -92,7 +92,7 @@ TEST(MutexTest, MutexBasicTest) {
   t.Join();  // make sure that the thread no longer uses the mutex
 }
 
-TEST(MutexTest, TryLockTest) {
+TEST(MutexTest, TryLockTest) NO_THREAD_SAFETY_ANALYSIS {
   {  // Get a lock by TryLock.
     g_counter = 0;
     Mutex mutex;

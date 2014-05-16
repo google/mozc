@@ -29,7 +29,6 @@
 
 #include "engine/oss_engine_factory.h"
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"

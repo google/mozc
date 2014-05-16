@@ -33,6 +33,7 @@ import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -78,7 +79,7 @@ public class PreferenceUtil {
       // Write back to with the appropriate preference key.
       SharedPreferences sharedPreferences = preference.getSharedPreferences();
       boolean isLandscapeKeyboardSettingActive = isLandscapeKeyboardSettingActive(
-          sharedPreferences, preference.getContext().getResources().getConfiguration());
+          sharedPreferences, preference.getContext().getResources().getConfiguration().orientation);
       sharedPreferences.edit()
           .putString(
               isLandscapeKeyboardSettingActive
@@ -168,13 +169,14 @@ public class PreferenceUtil {
   }
 
   static boolean isLandscapeKeyboardSettingActive(SharedPreferences sharedPreferences,
-                                                  Configuration configuration) {
+                                                  int deviceOrientation) {
+    Preconditions.checkNotNull(sharedPreferences);
     if (sharedPreferences.getBoolean(PREF_USE_PORTRAIT_KEYBOARD_SETTINGS_FOR_LANDSCAPE_KEY, true)) {
       // Always use portrait configuration.
       return false;
     }
 
-    return configuration.orientation == Configuration.ORIENTATION_LANDSCAPE;
+    return deviceOrientation == Configuration.ORIENTATION_LANDSCAPE;
   }
 
   /**
@@ -205,7 +207,7 @@ public class PreferenceUtil {
     // Initialize the value based on the current orientation.
     SharedPreferences sharedPreferences = preference.getSharedPreferences();
     boolean isLandscapeKeyboardSettingActive = isLandscapeKeyboardSettingActive(
-        sharedPreferences, preference.getContext().getResources().getConfiguration());
+        sharedPreferences, preference.getContext().getResources().getConfiguration().orientation);
     KeyboardLayoutPreference.class.cast(preference).setValue(
         getKeyboardLayout(sharedPreferences,
                           isLandscapeKeyboardSettingActive
@@ -333,6 +335,7 @@ public class PreferenceUtil {
    *
    * {@code defaultValue} is used as {@code conversionRecoveryValue}
    */
+  @SuppressWarnings("javadoc")
   public static <T extends Enum<T>> T getEnum(
       SharedPreferences sharedPreference, String key, Class<T> type, T defaultValue) {
     return getEnum(sharedPreference, key, type, defaultValue, defaultValue);

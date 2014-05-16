@@ -41,7 +41,7 @@
 
 /**
  * Namespace for this extension.
- * @suppress {duplicate}
+ * @suppress {const|duplicate}
  */
 var mozc = window.mozc || {};
 

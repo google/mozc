@@ -31,6 +31,8 @@ package org.mozc.android.inputmethod.japanese.view;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -67,9 +69,9 @@ import java.io.InputStream;
  *
  */
 public class MozcDrawableFactory {
+
   private static final int DRAWABLE_PICTURE = 1;
   private static final int DRAWABLE_STATE_LIST = 2;
-  private static final int DRAWABLE_ANIMATION = 3;
 
   private static final int COMMAND_PICTURE_EOP = 0;
   private static final int COMMAND_PICTURE_DRAW_PATH = 1;
@@ -79,6 +81,8 @@ public class MozcDrawableFactory {
   private static final int COMMAND_PICTURE_DRAW_RECT = 5;
   private static final int COMMAND_PICTURE_DRAW_CIRCLE = 6;
   private static final int COMMAND_PICTURE_DRAW_ELLIPSE = 7;
+  private static final int COMMAND_PICTURE_DRAW_GROUP_START = 8;
+  private static final int COMMAND_PICTURE_DRAW_GROUP_END = 9;
 
   private static final int COMMAND_PICTURE_PATH_EOP = 0;
   private static final int COMMAND_PICTURE_PATH_MOVE = 1;
@@ -108,31 +112,28 @@ public class MozcDrawableFactory {
   private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
 
   public MozcDrawableFactory(Resources resources) {
-    this.resources = resources;
+    this.resources = Preconditions.checkNotNull(resources);
   }
 
   // TODO(hidehiko): Add test to make sure getDrawable returns diffenent instances for
   // the same resourceId when the current skinType gets different.
   public void setSkinType(SkinType skinType) {
-    if (skinType == null) {
-      throw new NullPointerException();
-    }
-    if (this.skinType != skinType) {
+    if (this.skinType != Preconditions.checkNotNull(skinType)) {
       this.skinType = skinType;
       // Invalidate cache.
       cacheMap.clear();
     }
   }
 
-  public Drawable getDrawable(int resourceId) {
+  public Optional<Drawable> getDrawable(int resourceId) {
     if (!resources.getResourceTypeName(resourceId).equalsIgnoreCase("raw")) {
       // For non-"raw" resources, just delegate loading to Resources.
-      return resources.getDrawable(resourceId);
+      return Optional.fromNullable(resources.getDrawable(resourceId));
     }
 
     Integer key = Integer.valueOf(resourceId);
-    Drawable drawable = cacheMap.get(key);
-    if (drawable == null) {
+    Optional<Drawable> drawable = cacheMap.get(key);
+    if (!drawable.isPresent()) {
       InputStream stream = resources.openRawResource(resourceId);
       try {
         boolean success = false;
@@ -146,27 +147,28 @@ public class MozcDrawableFactory {
         MozcLog.e("Failed to parse file", e);
       }
 
-      if (drawable != null) {
-        cacheMap.put(key, drawable);
+      if (drawable.isPresent()) {
+        cacheMap.put(key, drawable.get());
       }
     }
     return drawable;
   }
 
-  private static Drawable createDrawable(DataInputStream stream, SkinType skinType)
+  private static Optional<Drawable> createDrawable(DataInputStream stream, SkinType skinType)
       throws IOException {
+    Preconditions.checkNotNull(stream);
+    Preconditions.checkNotNull(skinType);
+
     byte tag = stream.readByte();
     switch (tag) {
       case DRAWABLE_PICTURE:
-        return createPictureDrawable(stream, skinType);
+        return Optional.<Drawable>of(createPictureDrawable(stream, skinType));
       case DRAWABLE_STATE_LIST:
-        return createStateListDrawable(stream, skinType);
-      case DRAWABLE_ANIMATION:
-        return createEmojiAnimationDrawable(stream, skinType);
+        return Optional.<Drawable>of(createStateListDrawable(stream, skinType));
       default:
         MozcLog.e("Unknown tag: " + tag);
     }
-    return null;
+    return Optional.absent();
   }
 
   // Note, PictureDrawable may cause runtime slowness.
@@ -340,6 +342,25 @@ public class MozcDrawableFactory {
           }
           break;
         }
+        case COMMAND_PICTURE_DRAW_GROUP_START: {
+          float m11 = readCompressedFloat(stream);
+          float m21 = readCompressedFloat(stream);
+          float m31 = readCompressedFloat(stream);
+          float m12 = readCompressedFloat(stream);
+          float m22 = readCompressedFloat(stream);
+          float m32 = readCompressedFloat(stream);
+          float m13 = readCompressedFloat(stream);
+          float m23 = readCompressedFloat(stream);
+          float m33 = readCompressedFloat(stream);
+          Matrix matrix = new Matrix();
+          matrix.setValues(new float[] {m11, m12, m13, m21, m22, m23, m31, m32, m33});
+          canvas.save();
+          canvas.concat(matrix);
+          break;
+        }
+        case COMMAND_PICTURE_DRAW_GROUP_END:
+          canvas.restore();
+          break;
         default:
           MozcLog.e("unknown command " + command);
       }
@@ -397,7 +418,7 @@ public class MozcDrawableFactory {
           break;
         }
         case COMMAND_PICTURE_PAINT_SHADER: {
-          paint.setShader(createShader(stream));
+          paint.setShader(createShader(stream).orNull());
           break;
         }
         default:
@@ -406,7 +427,7 @@ public class MozcDrawableFactory {
     }
   }
 
-  private static Shader createShader(DataInputStream stream) throws IOException {
+  private static Optional<Shader> createShader(DataInputStream stream) throws IOException {
     int tag = stream.readByte();
     switch (tag) {
       case COMMAND_PICTURE_SHADER_LINEAR_GRADIENT: {
@@ -423,7 +444,8 @@ public class MozcDrawableFactory {
         for (int i = 0; i < length; ++i) {
           points[i] = readCompressedFloat(stream);
         }
-        return new LinearGradient(x1, y1, x2, y2, colors, points, TileMode.CLAMP);
+        return Optional.<Shader>of(
+            new LinearGradient(x1, y1, x2, y2, colors, points, TileMode.CLAMP));
       }
       case COMMAND_PICTURE_SHADER_RADIAL_GRADIENT: {
         float x = readCompressedFloat(stream);
@@ -433,6 +455,7 @@ public class MozcDrawableFactory {
         if (stream.readByte() != 0) {
           float m11 = readCompressedFloat(stream);
           float m21 = readCompressedFloat(stream);
+          @SuppressWarnings("unused")
           float m12 = readCompressedFloat(stream);
           float m22 = readCompressedFloat(stream);
           float m13 = readCompressedFloat(stream);
@@ -453,12 +476,12 @@ public class MozcDrawableFactory {
         if (matrix != null) {
           gradient.setLocalMatrix(matrix);
         }
-        return gradient;
+        return Optional.<Shader>of(gradient);
       }
       default:
         MozcLog.e("Unknown shader type: " + tag);
     }
-    return null;
+    return Optional.absent();
   }
 
   private static Path createPath(DataInputStream stream) throws IOException {
@@ -566,8 +589,8 @@ public class MozcDrawableFactory {
     StateListDrawable result = new StateListDrawable();
     for (int i = 0; i < length; ++i) {
       int[] stateList = createStateList(stream);
-      Drawable drawable = createDrawable(stream, skinType);
-      result.addState(stateList, drawable);
+      Optional<Drawable> drawable = createDrawable(stream, skinType);
+      result.addState(stateList, drawable.orNull());
     }
     return result;
   }
@@ -580,18 +603,6 @@ public class MozcDrawableFactory {
     int[] result = new int[length];
     for (int i = 0; i < length; ++i) {
       result[i] = stream.readInt();
-    }
-    return result;
-  }
-
-  private static EmojiAnimationDrawable createEmojiAnimationDrawable(
-      DataInputStream stream, SkinType skinType) throws IOException {
-    int length = stream.readUnsignedByte();
-    EmojiAnimationDrawable result = new EmojiAnimationDrawable();
-    for (int i = 0; i < length; ++i) {
-      int duration = stream.readUnsignedShort();
-      Drawable frame = createDrawable(stream, skinType);
-      result.addFrame(frame, duration);
     }
     return result;
   }

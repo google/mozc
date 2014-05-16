@@ -232,7 +232,7 @@ public class ZipFileUtil {
     }
     switch (zipEntry.getMethod()) {
       case ZipEntry.DEFLATED:
-        return getBufferDelfated(zipFile, zipEntry);
+        return getBufferDeflated(zipFile, zipEntry);
       case ZipEntry.STORED:
         return getBufferStored(zipFile, zipEntry);
       default:
@@ -256,7 +256,7 @@ public class ZipFileUtil {
     }
   }
 
-  private static ByteBuffer getBufferDelfated(ZipFile zipFile, ZipEntry entry) throws IOException {
+  private static ByteBuffer getBufferDeflated(ZipFile zipFile, ZipEntry entry) throws IOException {
     int size = (int) entry.getSize();
     ByteBuffer buffer = ByteBuffer.allocateDirect(size);
     ReadableByteChannel inputChannel = Channels.newChannel(zipFile.getInputStream(entry));

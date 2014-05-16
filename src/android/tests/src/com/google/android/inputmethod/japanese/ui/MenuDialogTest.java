@@ -34,10 +34,11 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.notNull;
 import static org.easymock.EasyMock.same;
 
+import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
-import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogAdapter;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListenerHandler;
+import com.google.common.base.Optional;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -48,6 +49,7 @@ import android.test.mock.MockContext;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Test for MenuDialog.
@@ -69,14 +71,21 @@ public class MenuDialogTest extends InstrumentationTestCaseWithMock{
     Context context = createMock(MockContext.class);
     MenuDialogListener listener = createMock(MenuDialogListener.class);
     DialogInterface dialog = createMock(DialogInterface.class);
-    MenuDialogListenerHandler handler = new MenuDialogListenerHandler(context, listener);
+    int[] indexToIdTable = new int[] {
+        R.string.menu_item_input_method,
+        R.string.menu_item_preferences,
+        R.string.menu_item_voice_input,
+        R.string.menu_item_mushroom,
+    };
+    MenuDialogListenerHandler handler =
+        new MenuDialogListenerHandler(context, indexToIdTable, Optional.of(listener));
 
     // Test for onShow.
     resetAll();
     listener.onShow(same(context));
     replayAll();
 
-    handler.onShow(dialog);
+    handler.onShow();
 
     verifyAll();
 
@@ -94,7 +103,7 @@ public class MenuDialogTest extends InstrumentationTestCaseWithMock{
     listener.onShowInputMethodPickerSelected(same(context));
     replayAll();
 
-    handler.onClick(dialog, MenuDialog.INPUT_METHOD_PICKER_INDEX);
+    handler.onClick(dialog, 0);
 
     verifyAll();
 
@@ -103,7 +112,16 @@ public class MenuDialogTest extends InstrumentationTestCaseWithMock{
     listener.onLaunchPreferenceActivitySelected(same(context));
     replayAll();
 
-    handler.onClick(dialog, MenuDialog.PREFERENCE_INDEX);
+    handler.onClick(dialog, 1);
+
+    verifyAll();
+
+    // Test for onLaunchVoiceInputActivitySelected.
+    resetAll();
+    listener.onLaunchVoiceInputActivitySelected(same(context));
+    replayAll();
+
+    handler.onClick(dialog, 2);
 
     verifyAll();
 
@@ -112,49 +130,58 @@ public class MenuDialogTest extends InstrumentationTestCaseWithMock{
     listener.onShowMushroomSelectionDialogSelected(same(context));
     replayAll();
 
-    handler.onClick(dialog, MenuDialog.MUSHROOM_INDEX);
+    handler.onClick(dialog, 3);
 
     verifyAll();
   }
 
   @SmallTest
-  public void testMenuDialogAdapter() {
+  public void testEnableAndDisableMenu() {
     Context context = createMock(MockContext.class);
-    // This is not necessary for the testing, but invoked in the constructor of ArrayAdapter.
-    expect(context.getSystemService(notNull(String.class))).andStubReturn(null);
-    replayAll();
 
-    MenuDialogAdapter adapter = new MenuDialogAdapter(context, new String[0]);
-    // As Mushroom item should change the state, areAllItemsEnabled should always return false.
-    assertFalse(adapter.areAllItemsEnabled());
-
-    // Test for input method picker item and preference item.
-    assertTrue(adapter.isEnabled(MenuDialog.INPUT_METHOD_PICKER_INDEX));
-    assertTrue(adapter.isEnabled(MenuDialog.PREFERENCE_INDEX));
-
+    // If no mushroom-aware application is installed, Mushroom should be disabled.
     resetAll();
-
-    // Test for Mushroom item.
-    // If no mushroom-aware application is installed, it should be disabled.
     PackageManager packageManager = createMock(PackageManager.class);
     expect(packageManager.queryIntentActivities(notNull(Intent.class), eq(0)))
         .andStubReturn(Collections.<ResolveInfo>emptyList());
     expect(context.getPackageManager()).andStubReturn(packageManager);
     replayAll();
-
-    assertFalse(adapter.isEnabled(MenuDialog.MUSHROOM_INDEX));
-
+    {  // Voice: Off, Mushroom: On
+      List<Integer> result = MenuDialog.getEnabledMenuIds(context, true);
+      assertEquals(3, result.size());
+      assertEquals(R.string.menu_item_input_method, result.get(0).intValue());
+      assertEquals(R.string.menu_item_preferences, result.get(1).intValue());
+      assertEquals(R.string.menu_item_voice_input, result.get(2).intValue());
+    }
+    {  // Voice: Off, Mushroom: Off
+      List<Integer> result = MenuDialog.getEnabledMenuIds(context, false);
+      assertEquals(2, result.size());
+      assertEquals(R.string.menu_item_input_method, result.get(0).intValue());
+      assertEquals(R.string.menu_item_preferences, result.get(1).intValue());
+    }
     verifyAll();
 
-    // If a mushroom-aware application is installed, it should be enabled.
+    // If a mushroom-aware application is installed, Mushroom should be enabled.
     resetAll();
     expect(packageManager.queryIntentActivities(notNull(Intent.class), eq(0)))
         .andStubReturn(Collections.singletonList(new ResolveInfo()));
     expect(context.getPackageManager()).andStubReturn(packageManager);
     replayAll();
-
-    assertTrue(adapter.isEnabled(MenuDialog.MUSHROOM_INDEX));
-
+    {  // Voice: On, Mushroom: On
+      List<Integer> result = MenuDialog.getEnabledMenuIds(context, true);
+      assertEquals(4, result.size());
+      assertEquals(R.string.menu_item_input_method, result.get(0).intValue());
+      assertEquals(R.string.menu_item_preferences, result.get(1).intValue());
+      assertEquals(R.string.menu_item_voice_input, result.get(2).intValue());
+      assertEquals(R.string.menu_item_mushroom, result.get(3).intValue());
+    }
+    {  // Voice: Off, Mushroom: On
+      List<Integer> result = MenuDialog.getEnabledMenuIds(context, false);
+      assertEquals(3, result.size());
+      assertEquals(R.string.menu_item_input_method, result.get(0).intValue());
+      assertEquals(R.string.menu_item_preferences, result.get(1).intValue());
+      assertEquals(R.string.menu_item_mushroom, result.get(2).intValue());
+    }
     verifyAll();
   }
 }

@@ -47,8 +47,7 @@ import java.net.UnknownHostException;
 /**
  */
 public class SocketSessionHandlerTest extends TestCase {
-  public void testSessionHandlerSocket()
-      throws InterruptedException, UnknownHostException, IOException {
+  public void testSessionHandlerSocket() throws UnknownHostException, IOException {
     final InetAddress host = InetAddress.getByName("localhost");
     final ServerSocket serverSocket = new ServerSocket(0);
     final int port = serverSocket.getLocalPort();

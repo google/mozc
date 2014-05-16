@@ -31,14 +31,16 @@
 #define MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_
 
 #include <string>
+
 #include "base/port.h"
+#include "base/string_piece.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 
 namespace mozc {
 
-// An utilitiy class for importing user dictionary
-// from different devices, including text files and MS-IME,
-// Kotoeri, and ATOK(optional) user dictionaries.
+// An utilitiy class for importing user dictionary from different devices,
+// including text files and MS-IME, Kotoeri, and ATOK(optional) user
+// dictionaries.
 class UserDictionaryImporter {
  public:
   // A raw entry to be read.
@@ -56,61 +58,46 @@ class UserDictionaryImporter {
     }
   };
 
-  // An abstract class for representing an input device
-  // for user dictionary. It could be possible to import
-  // dictionary from docs/spreadsheet.
+  // An abstract class for representing an input device for user dictionary.
+  // It runs over only valid lines which show entries in input.
   class InputIteratorInterface {
    public:
     InputIteratorInterface() {}
     virtual ~InputIteratorInterface() {}
 
-    // return true the input iterator is available
+    // Return true if the input iterator is available.
     virtual bool IsAvailable() const = 0;
 
-    // return true if entry is read successfully.
-    // Next method doesn't nee to convert the POS of entry.
+    // Return true if entry is read successfully.
+    // Next method doesn't have to convert the POS of entry.
     virtual bool Next(RawEntry *raw_entry) = 0;
 
    private:
     DISALLOW_COPY_AND_ASSIGN(InputIteratorInterface);
   };
 
-  // An abstract class for reading a text file per line.
-  // As we'd like to use QTextFileStream to load UTF16 files,
-  // make an interface class for reading text per line.
+  // An abstract class for reading a text file per line.  It runs over
+  // all lines, e.g. comment lines.
+  // As we'd like to use QTextFileStream to load UTF16 files, make an
+  // interface class for reading text per line.
   class TextLineIteratorInterface {
    public:
     TextLineIteratorInterface() {}
     virtual ~TextLineIteratorInterface() {}
 
-    // return true text line iterator is available
+    // Return true text line iterator is available.
     virtual bool IsAvailable() const = 0;
 
-    // Read a line in UTF-8.
-    // The TextLineIteratorInterface class takes a responsibility
-    // of character set conversion. "line" must always be stored in UTF-8.
+    // Read a line and convert its encoding to UTF-8.
+    // The TextLineIteratorInterface class takes a responsibility of character
+    // set conversion. |line| must always be stored in UTF-8.
     virtual bool Next(string *line) = 0;
 
-    // Reset the current position
+    // Reset the current position.
     virtual void Reset() = 0;
 
    private:
     DISALLOW_COPY_AND_ASSIGN(TextLineIteratorInterface);
-  };
-
-  // A Wrapper for istream. Istream must be written in UTF-8 or Shift-JIS
-  class IStreamTextLineIterator : public TextLineIteratorInterface {
-   public:
-    explicit IStreamTextLineIterator(istream *is);
-    virtual ~IStreamTextLineIterator();
-
-    virtual bool IsAvailable() const;
-    virtual bool Next(string *line);
-    virtual void Reset();
-
-   private:
-    istream *is_;
-    DISALLOW_COPY_AND_ASSIGN(IStreamTextLineIterator);
   };
 
   // A wrapper for string. The string should contain utf-8 characters.
@@ -120,7 +107,7 @@ class UserDictionaryImporter {
   // string until this iterator is destroyed.
   class StringTextLineIterator : public TextLineIteratorInterface {
    public:
-    explicit StringTextLineIterator(const string &data);
+    explicit StringTextLineIterator(StringPiece data);
     virtual ~StringTextLineIterator();
 
     virtual bool IsAvailable() const;
@@ -128,8 +115,8 @@ class UserDictionaryImporter {
     virtual void Reset();
 
    private:
-    const string &data_;
-    int position_;
+    const StringPiece data_;
+    size_t position_;
     DISALLOW_COPY_AND_ASSIGN(StringTextLineIterator);
   };
 
@@ -143,11 +130,11 @@ class UserDictionaryImporter {
     NUM_IMES        = 5,
   };
 
-  // GuessIMEType from the first line of IME file
-  // return "NUM_IMES" if the format is unknown
-  static IMEType GuessIMEType(const string &line);
+  // Guess IME type from the first line of IME file.
+  // Return "NUM_IMES" if the format is unknown.
+  static IMEType GuessIMEType(StringPiece line);
 
-  // return the final IME type from user_ime_type and guessed_ime_type
+  // Return the final IME type from user_ime_type and guessed_ime_type.
   static IMEType DetermineFinalIMEType(IMEType user_ime_type,
                                        IMEType guessed_ime_type);
 
@@ -160,14 +147,13 @@ class UserDictionaryImporter {
     NUM_ENCODINGS        = 4
   };
 
-  // Guess Encoding Type of string
-  static EncodingType GuessEncodingType(const char *str, size_t size);
+  // Guess encoding type of a string.
+  static EncodingType GuessEncodingType(StringPiece str);
 
-  // Guess Encoding Type of file
+  // Guess encoding type of a file.
   static EncodingType GuessFileEncodingType(const string &filename);
 
-  // A special input iterator for reading entries from
-  // TextLineIteratorInterface.
+  // A special input iterator to read entries from TextLineIteratorInterface.
   class TextInputIterator : public InputIteratorInterface {
    public:
     TextInputIterator(IMEType ime_type,
@@ -195,27 +181,29 @@ class UserDictionaryImporter {
     IMPORT_UNKNOWN_ERROR
   };
 
-  // Convert POS's of other IME's into Mozc's IME.
+  // Convert POS's of other IME's into Mozc's.
   static bool ConvertEntry(
       const RawEntry &from, user_dictionary::UserDictionary::Entry *to);
 
-  // Import from Iterator. This is the most generic interface
+  // Import a dictionary from InputIteratorInterface.
+  // This is the most generic interface.
   static ErrorType ImportFromIterator(
-      UserDictionaryImporter::InputIteratorInterface *iter,
+      InputIteratorInterface *iter,
       user_dictionary::UserDictionary *dic);
 
-  // Import from TextLineIterator
+  // Import a dictionary from TextLineIterator.
   static ErrorType ImportFromTextLineIterator(
-      UserDictionaryImporter::IMEType ime_type,
-      UserDictionaryImporter::TextLineIteratorInterface *iter,
+      IMEType ime_type,
+      TextLineIteratorInterface *iter,
       user_dictionary::UserDictionary *dic);
 
-  // Import from MS-IME's user dictionary directly.
+  // Import a dictionary from MS-IME's user dictionary.
   // Only available on Windows
   static ErrorType ImportFromMSIME(user_dictionary::UserDictionary *dic);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserDictionaryImporter);
 };
+
 }  // namespace mozc
 #endif  // MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_

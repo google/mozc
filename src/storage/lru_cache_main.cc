@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include <iostream>
-#include "base/base.h"
-#include "base/util.h"
 #include "storage/lru_cache.h"
+
+#include <string>
+#include <iostream>  // NOLINT
+
+#include "base/flags.h"
+#include "base/util.h"
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);

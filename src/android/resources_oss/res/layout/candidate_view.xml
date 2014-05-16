@@ -71,7 +71,8 @@
                 android:minHeight="0dip"
                 android:minWidth="0dip"
                 android:textOff=""
-                android:textOn="" />
+                android:textOn=""
+                android:contentDescription="@string/cd_keyboard_fold_button" />
         </view>
 
         <org.mozc.android.inputmethod.japanese.ui.ScrollGuideView

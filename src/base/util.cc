@@ -719,7 +719,7 @@ bool Util::SplitLastChar32(StringPiece s,
     return false;
   }
   const StringPiece::difference_type len = distance(s.rbegin(), it) + 1;
-  StringPiece last_piece = s.substr(s.size() - len);
+  const StringPiece last_piece = s.substr(s.size() - len);
   StringPiece result_piece;
   if (!SplitFirstChar32(last_piece, last_char32, &result_piece)) {
     return false;
@@ -847,7 +847,7 @@ int Util::WideToUTF8(const wstring &input, string *output) {
 #endif  // OS_WIN
 
 StringPiece Util::SubStringPiece(
-    const StringPiece src, const size_t start, const size_t length) {
+    StringPiece src, size_t start, size_t length) {
   size_t l = start;
   const char *substr_begin = src.data();
   while (l > 0) {
@@ -866,23 +866,21 @@ StringPiece Util::SubStringPiece(
   return StringPiece(substr_begin, substr_end - substr_begin);
 }
 
-void Util::SubString(const StringPiece src,
-                     const size_t start,
-                     const size_t length,
+void Util::SubString(StringPiece src, size_t start, size_t length,
                      string *result) {
   DCHECK(result);
   const StringPiece substr = SubStringPiece(src, start, length);
   substr.CopyToString(result);
 }
 
-bool Util::StartsWith(const StringPiece str, const StringPiece prefix) {
+bool Util::StartsWith(StringPiece str, StringPiece prefix) {
   if (str.size() < prefix.size()) {
     return false;
   }
   return (0 == memcmp(str.data(), prefix.data(), prefix.size()));
 }
 
-bool Util::EndsWith(const StringPiece str, const StringPiece suffix) {
+bool Util::EndsWith(StringPiece str, StringPiece suffix) {
   if (str.size() < suffix.size()) {
     return false;
   }
@@ -908,7 +906,7 @@ bool Util::IsUTF16BOM(const string &line) {
   return false;
 }
 
-bool Util::IsAndroidPuaEmoji(const StringPiece s) {
+bool Util::IsAndroidPuaEmoji(StringPiece s) {
   static const char kUtf8MinAndroidPuaEmoji[] = "\xf3\xbe\x80\x80";
   static const char kUtf8MaxAndroidPuaEmoji[] = "\xf3\xbe\xba\xa0";
   return (s.size() == 4 &&
@@ -1222,14 +1220,14 @@ void EscapeInternal(char input, const string &prefix, string *output) {
 // Load  Rules
 #include "base/japanese_util_rule.h"
 
-void Util::HiraganaToKatakana(const StringPiece input, string *output) {
+void Util::HiraganaToKatakana(StringPiece input, string *output) {
   TextConverter::Convert(hiragana_to_katakana_da,
                          hiragana_to_katakana_table,
                          input,
                          output);
 }
 
-void Util::HiraganaToHalfwidthKatakana(const StringPiece input,
+void Util::HiraganaToHalfwidthKatakana(StringPiece input,
                                        string *output) {
   // combine two rules
   string tmp;
@@ -1241,14 +1239,14 @@ void Util::HiraganaToHalfwidthKatakana(const StringPiece input,
                          tmp, output);
 }
 
-void Util::HiraganaToRomanji(const StringPiece input, string *output) {
+void Util::HiraganaToRomanji(StringPiece input, string *output) {
   TextConverter::Convert(hiragana_to_romanji_da,
                          hiragana_to_romanji_table,
                          input,
                          output);
 }
 
-void Util::HalfWidthAsciiToFullWidthAscii(const StringPiece input,
+void Util::HalfWidthAsciiToFullWidthAscii(StringPiece input,
                                           string *output) {
   TextConverter::Convert(halfwidthascii_to_fullwidthascii_da,
                          halfwidthascii_to_fullwidthascii_table,
@@ -1256,7 +1254,7 @@ void Util::HalfWidthAsciiToFullWidthAscii(const StringPiece input,
                          output);
 }
 
-void Util::FullWidthAsciiToHalfWidthAscii(const StringPiece input,
+void Util::FullWidthAsciiToHalfWidthAscii(StringPiece input,
                                           string *output) {
   TextConverter::Convert(fullwidthascii_to_halfwidthascii_da,
                          fullwidthascii_to_halfwidthascii_table,
@@ -1264,7 +1262,7 @@ void Util::FullWidthAsciiToHalfWidthAscii(const StringPiece input,
                          output);
 }
 
-void Util::HiraganaToFullwidthRomanji(const StringPiece input, string *output) {
+void Util::HiraganaToFullwidthRomanji(StringPiece input, string *output) {
   string tmp;
   TextConverter::Convert(hiragana_to_romanji_da,
                          hiragana_to_romanji_table,
@@ -1276,21 +1274,21 @@ void Util::HiraganaToFullwidthRomanji(const StringPiece input, string *output) {
                          output);
 }
 
-void Util::RomanjiToHiragana(const StringPiece input, string *output) {
+void Util::RomanjiToHiragana(StringPiece input, string *output) {
   TextConverter::Convert(romanji_to_hiragana_da,
                          romanji_to_hiragana_table,
                          input,
                          output);
 }
 
-void Util::KatakanaToHiragana(const StringPiece input, string *output) {
+void Util::KatakanaToHiragana(StringPiece input, string *output) {
   TextConverter::Convert(katakana_to_hiragana_da,
                          katakana_to_hiragana_table,
                          input,
                          output);
 }
 
-void Util::HalfWidthKatakanaToFullWidthKatakana(const StringPiece input,
+void Util::HalfWidthKatakanaToFullWidthKatakana(StringPiece input,
                                                 string *output) {
   TextConverter::Convert(halfwidthkatakana_to_fullwidthkatakana_da,
                          halfwidthkatakana_to_fullwidthkatakana_table,
@@ -1298,7 +1296,7 @@ void Util::HalfWidthKatakanaToFullWidthKatakana(const StringPiece input,
                          output);
 }
 
-void Util::FullWidthKatakanaToHalfWidthKatakana(const StringPiece input,
+void Util::FullWidthKatakanaToHalfWidthKatakana(StringPiece input,
                                                 string *output) {
   TextConverter::Convert(fullwidthkatakana_to_halfwidthkatakana_da,
                          fullwidthkatakana_to_halfwidthkatakana_table,
@@ -1306,14 +1304,14 @@ void Util::FullWidthKatakanaToHalfWidthKatakana(const StringPiece input,
                          output);
 }
 
-void Util::FullWidthToHalfWidth(const StringPiece input, string *output) {
+void Util::FullWidthToHalfWidth(StringPiece input, string *output) {
   string tmp;
   FullWidthAsciiToHalfWidthAscii(input, &tmp);
   output->clear();
   FullWidthKatakanaToHalfWidthKatakana(tmp, output);
 }
 
-void Util::HalfWidthToFullWidth(const StringPiece input, string *output) {
+void Util::HalfWidthToFullWidth(StringPiece input, string *output) {
   string tmp;
   HalfWidthAsciiToFullWidthAscii(input, &tmp);
   output->clear();
@@ -1784,7 +1782,7 @@ Util::ScriptType Util::GetScriptTypeWithoutSymbols(const string &str) {
 }
 
 // return true if all script_type in str is "type"
-bool Util::IsScriptType(const StringPiece str, Util::ScriptType type) {
+bool Util::IsScriptType(StringPiece str, Util::ScriptType type) {
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     const char32 w = iter.Get();
     // Exception: 30FC (PROLONGEDSOUND MARK is categorized as HIRAGANA as well)
@@ -1796,7 +1794,7 @@ bool Util::IsScriptType(const StringPiece str, Util::ScriptType type) {
 }
 
 // return true if the string contains script_type char
-bool Util::ContainsScriptType(const StringPiece str, ScriptType type) {
+bool Util::ContainsScriptType(StringPiece str, ScriptType type) {
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     if (type == GetScriptType(iter.Get())) {
       return true;

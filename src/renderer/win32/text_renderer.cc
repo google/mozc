@@ -29,7 +29,20 @@
 
 #include "renderer/win32/text_renderer.h"
 
+#define _ATL_NO_AUTOMATIC_NAMESPACE
+#define _WTL_NO_AUTOMATIC_NAMESPACE
+// Workaround against KB813540
+#include <atlbase_mozc.h>
+#include <atlcom.h>
+#include <objbase.h>
+#include <d2d1.h>
+#include <dwrite.h>
+
+#include <memory>
+
 #include "base/logging.h"
+#include "base/system_util.h"
+#include "base/win_util.h"
 #include "renderer/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 
@@ -37,6 +50,7 @@ namespace mozc {
 namespace renderer {
 namespace win32 {
 
+using ATL::CComPtr;
 using WTL::CDC;
 using WTL::CDCHandle;
 using WTL::CFont;
@@ -50,180 +64,532 @@ using ::mozc::renderer::RendererStyleHandler;
 
 namespace {
 
-// Font color scheme
-const COLORREF kShortcutColor = RGB(0x61, 0x61, 0x61);
-const COLORREF kDefaultColor = RGB(0x00, 0x00, 0x00);
-const COLORREF kDescriptionColor = RGB(0x88, 0x88, 0x88);
-const COLORREF kFooterIndexColor = RGB(0x4c, 0x4c, 0x4c);
-const COLORREF kFooterLabelColor = RGB(0x4c, 0x4c, 0x4c);
-const COLORREF kFooterSubLabelColor = RGB(0xA7, 0xA7, 0xA7);
-
-}  // namespace
-
-struct TextRenderer::FontInfo {
-  FontInfo() : color(0), style(0) {}
-  COLORREF color;
-  DWORD style;
-  CFont font;
-};
-
-TextRenderer::TextRenderer()
-  : fonts_(new FontInfo[SIZE_OF_FONT_TYPE]) {
-  mem_dc_.CreateCompatibleDC();
-}
-
-TextRenderer::~TextRenderer() {}
-
-void TextRenderer::Init() {
-  // delete old fonts
-  for (size_t i = 0; i < SIZE_OF_FONT_TYPE; ++i) {
-    if (!fonts_[i].font.IsNull()) {
-      fonts_[i].font.DeleteObject();
-    }
+COLORREF GetTextColor(TextRenderer::FONT_TYPE type) {
+  switch (type) {
+    case TextRenderer::FONTSET_SHORTCUT:
+      return RGB(0x61, 0x61, 0x61);
+    case TextRenderer::FONTSET_CANDIDATE:
+      return RGB(0x00, 0x00, 0x00);
+    case TextRenderer::FONTSET_DESCRIPTION:
+      return RGB(0x88, 0x88, 0x88);
+    case TextRenderer::FONTSET_FOOTER_INDEX:
+      return RGB(0x4c, 0x4c, 0x4c);
+    case TextRenderer::FONTSET_FOOTER_LABEL:
+      return RGB(0x4c, 0x4c, 0x4c);
+    case TextRenderer::FONTSET_FOOTER_SUBLABEL:
+      return RGB(0xA7, 0xA7, 0xA7);
   }
-
-  CLogFont main_font;
-  // TODO(yukawa): verify the font can render U+005C as a yen sign.
-  //               (http://b/1992773)
-  main_font.SetMessageBoxFont();
-  main_font.MakeLarger(3);
-  main_font.lfWeight = FW_NORMAL;
-  fonts_[FONTSET_CANDIDATE].font.CreateFontIndirectW(&main_font);
-  main_font.lfWeight = FW_BOLD;
-  fonts_[FONTSET_SHORTCUT].font.CreateFontIndirectW(&main_font);
-
-  CLogFont smaller_font;
-  // TODO(yukawa): to confirm the font can render Yen-mark. (http://b/1992773)
-  smaller_font.SetMessageBoxFont();
-  smaller_font.lfWeight = FW_NORMAL;
-  fonts_[FONTSET_DESCRIPTION].font.CreateFontIndirectW(&smaller_font);
-  fonts_[FONTSET_FOOTER_INDEX].font.CreateFontIndirectW(&smaller_font);
-  fonts_[FONTSET_FOOTER_LABEL].font.CreateFontIndirectW(&smaller_font);
-  fonts_[FONTSET_FOOTER_SUBLABEL].font.CreateFontIndirectW(&smaller_font);
-
-  const DWORD common_style = DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
-  fonts_[FONTSET_CANDIDATE].style = DT_LEFT | common_style;
-  fonts_[FONTSET_DESCRIPTION].style = DT_LEFT | common_style;
-  fonts_[FONTSET_FOOTER_INDEX].style = DT_RIGHT | common_style;
-  fonts_[FONTSET_FOOTER_LABEL].style = DT_CENTER | common_style;
-  fonts_[FONTSET_FOOTER_SUBLABEL].style = DT_CENTER | common_style;
-  fonts_[FONTSET_SHORTCUT].style = DT_CENTER | common_style;
-
-  fonts_[FONTSET_CANDIDATE].color = kDefaultColor;
-  fonts_[FONTSET_DESCRIPTION].color = kDescriptionColor;
-  fonts_[FONTSET_FOOTER_INDEX].color = kFooterIndexColor;
-  fonts_[FONTSET_FOOTER_LABEL].color = kFooterLabelColor;
-  fonts_[FONTSET_FOOTER_SUBLABEL].color = kFooterSubLabelColor;
-  fonts_[FONTSET_SHORTCUT].color = kShortcutColor;
 
   // TODO(horo): Not only infolist fonts but also candidate fonts
   //             should be created from RendererStyle
   RendererStyle style;
   RendererStyleHandler::GetRendererStyle(&style);
-  const RendererStyle::InfolistStyle infostyle = style.infolist_style();
+  const auto &infostyle = style.infolist_style();
+  switch (type) {
+    case TextRenderer::FONTSET_INFOLIST_CAPTION:
+      return RGB(infostyle.caption_style().foreground_color().r(),
+                 infostyle.caption_style().foreground_color().g(),
+                 infostyle.caption_style().foreground_color().b());
+    case TextRenderer::FONTSET_INFOLIST_TITLE:
+      return RGB(infostyle.title_style().foreground_color().r(),
+                 infostyle.title_style().foreground_color().g(),
+                 infostyle.title_style().foreground_color().b());
+    case TextRenderer::FONTSET_INFOLIST_DESCRIPTION:
+      return RGB(infostyle.description_style().foreground_color().r(),
+                 infostyle.description_style().foreground_color().g(),
+                 infostyle.description_style().foreground_color().b());
+  }
 
-  CLogFont tmp_font;
-  tmp_font.SetMessageBoxFont();
-
-  // Negative |lfHeight| means the character height.
-  // See http://support.microsoft.com/kb/32667/en for details.
-  tmp_font.lfHeight = -infostyle.caption_style().font_size();
-  fonts_[FONTSET_INFOLIST_CAPTION].font.CreateFontIndirectW(&tmp_font);
-  fonts_[FONTSET_INFOLIST_CAPTION].style = DT_LEFT | DT_VCENTER |
-      DT_SINGLELINE | DT_NOPREFIX;
-  fonts_[FONTSET_INFOLIST_CAPTION].color = RGB(
-      infostyle.caption_style().foreground_color().r(),
-      infostyle.caption_style().foreground_color().g(),
-      infostyle.caption_style().foreground_color().b());
-
-  // Negative |lfHeight| means the character height.
-  // See http://support.microsoft.com/kb/32667/en for details.
-  tmp_font.lfHeight = -infostyle.title_style().font_size();
-  fonts_[FONTSET_INFOLIST_TITLE].font.CreateFontIndirectW(&tmp_font);
-  fonts_[FONTSET_INFOLIST_TITLE].style = DT_LEFT | DT_SINGLELINE |
-      DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
-  fonts_[FONTSET_INFOLIST_TITLE].color = RGB(
-      infostyle.title_style().foreground_color().r(),
-      infostyle.title_style().foreground_color().g(),
-      infostyle.title_style().foreground_color().b());
-
-  // Negative |lfHeight| means the character height.
-  // See http://support.microsoft.com/kb/32667/en for details.
-  tmp_font.lfHeight = -infostyle.description_style().font_size();
-  fonts_[FONTSET_INFOLIST_DESCRIPTION].font.CreateFontIndirectW(&tmp_font);
-  fonts_[FONTSET_INFOLIST_DESCRIPTION].style = DT_LEFT | DT_NOPREFIX |
-      DT_WORDBREAK | DT_EDITCONTROL;
-  fonts_[FONTSET_INFOLIST_DESCRIPTION].color = RGB(
-      infostyle.description_style().foreground_color().r(),
-      infostyle.description_style().foreground_color().g(),
-      infostyle.description_style().foreground_color().b());
+  LOG(DFATAL) << "Unknown type: " << type;
+  return RGB(0, 0, 0);
 }
 
-// Retrive the font handle
-CFontHandle TextRenderer::GetFont(FONT_TYPE font_type) const {
-  DCHECK(0 <= font_type && font_type < SIZE_OF_FONT_TYPE);
-  return fonts_[font_type].font.m_hFont;
+CLogFont GetLogFont(TextRenderer::FONT_TYPE type) {
+  switch (type) {
+    case TextRenderer::FONTSET_SHORTCUT: {
+      CLogFont font;
+      font.SetMessageBoxFont();
+      font.MakeLarger(3);
+      font.lfWeight = FW_BOLD;
+      return font;
+    }
+    case TextRenderer::FONTSET_CANDIDATE: {
+      CLogFont font;
+      font.SetMessageBoxFont();
+      font.MakeLarger(3);
+      font.lfWeight = FW_NORMAL;
+      return font;
+    }
+    case TextRenderer::FONTSET_DESCRIPTION:
+    case TextRenderer::FONTSET_FOOTER_INDEX:
+    case TextRenderer::FONTSET_FOOTER_LABEL:
+    case TextRenderer::FONTSET_FOOTER_SUBLABEL: {
+      CLogFont font;
+      font.SetMessageBoxFont();
+      font.lfWeight = FW_NORMAL;
+      return font;
+    }
+  }
+
+  // TODO(horo): Not only infolist fonts but also candidate fonts
+  //             should be created from RendererStyle
+  RendererStyle style;
+  RendererStyleHandler::GetRendererStyle(&style);
+  const auto &infostyle = style.infolist_style();
+  switch (type) {
+    case TextRenderer::FONTSET_INFOLIST_CAPTION: {
+      CLogFont font;
+      font.SetMessageBoxFont();
+      font.lfHeight = -infostyle.caption_style().font_size();
+      return font;
+    }
+    case TextRenderer::FONTSET_INFOLIST_TITLE: {
+      CLogFont font;
+      font.SetMessageBoxFont();
+      font.lfHeight = -infostyle.title_style().font_size();
+      return font;
+    }
+    case TextRenderer::FONTSET_INFOLIST_DESCRIPTION: {
+      CLogFont font;
+      font.SetMessageBoxFont();
+      font.lfHeight = -infostyle.description_style().font_size();
+      return font;
+    }
+  }
+
+  LOG(DFATAL) << "Unknown type: " << type;
+  CLogFont font;
+  font.SetMessageBoxFont();
+  return font;
 }
 
-// Retrive the font color
-COLORREF TextRenderer::GetFontColor(FONT_TYPE font_type) const {
-  DCHECK(0 <= font_type && font_type < SIZE_OF_FONT_TYPE);
-  return fonts_[font_type].color;
+DWORD GetGdiDrawTextStyle(TextRenderer::FONT_TYPE type) {
+  switch (type) {
+    case TextRenderer::FONTSET_CANDIDATE:
+      return DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+    case TextRenderer::FONTSET_DESCRIPTION:
+      return DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+    case TextRenderer::FONTSET_FOOTER_INDEX:
+      return DT_RIGHT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+    case TextRenderer::FONTSET_FOOTER_LABEL:
+      return DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+    case TextRenderer::FONTSET_FOOTER_SUBLABEL:
+      return DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+    case TextRenderer::FONTSET_SHORTCUT:
+      return DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+    case TextRenderer::FONTSET_INFOLIST_CAPTION:
+      return DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+    case TextRenderer::FONTSET_INFOLIST_TITLE:
+      return DT_LEFT | DT_SINGLELINE | DT_WORDBREAK | DT_EDITCONTROL |
+          DT_NOPREFIX;
+    case TextRenderer::FONTSET_INFOLIST_DESCRIPTION:
+      return DT_LEFT | DT_WORDBREAK | DT_EDITCONTROL | DT_NOPREFIX;
+    default:
+      LOG(DFATAL) << "Unknown type: " << type;
+      return 0;
+  }
 }
 
-// Retrive the font style
-DWORD TextRenderer::GetFontStyle(FONT_TYPE font_type) const {
-  DCHECK(0 <= font_type && font_type < SIZE_OF_FONT_TYPE);
-  return fonts_[font_type].style;
-}
+class GdiTextRenderer : public TextRenderer {
+ public:
+  GdiTextRenderer()
+      : render_info_(new RenderInfo[SIZE_OF_FONT_TYPE]) {
+    mem_dc_.CreateCompatibleDC();
+    OnThemeChanged();
+  }
 
-// Retrive the bounding box for a given string.
-Size TextRenderer::MeasureString(
-    FONT_TYPE font_type, const wstring &str) const {
-  mem_dc_.SelectFont(GetFont(font_type));
-  CRect rect;
-  mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
-                    DT_NOPREFIX | DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
-  return Size(rect.Width(), rect.Height());
-}
+  virtual ~GdiTextRenderer() {
+  }
 
-Size TextRenderer::MeasureStringMultiLine(
-    FONT_TYPE font_type, const wstring &str, const int width) const {
-  mem_dc_.SelectFont(GetFont(font_type));
-  CRect rect(0, 0, width, 0);
-  mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
-      DT_NOPREFIX | DT_LEFT | DT_WORDBREAK | DT_CALCRECT);
-  return Size(rect.Width(), rect.Height());
-}
+ private:
+  // TextRenderer overrides:
+  virtual void OnThemeChanged() {
+    // delete old fonts
+    for (size_t i = 0; i < SIZE_OF_FONT_TYPE; ++i) {
+      if (!render_info_[i].font.IsNull()) {
+        render_info_[i].font.DeleteObject();
+      }
+    }
 
-void TextRenderer::RenderText(CDCHandle dc, const wstring &text,
-                              const Rect &rect, FONT_TYPE font_type) const {
-  const CFontHandle old_font = dc.SelectFont(GetFont(font_type));
-  CRect temp_rect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
-  const COLORREF previous_color = dc.SetTextColor(GetFontColor(font_type));
-  dc.DrawTextW(text.c_str(), text.size(), &temp_rect,
-               GetFontStyle(font_type));
-  dc.SelectFont(old_font);
-  dc.SetTextColor(previous_color);
-}
+    for (size_t i = 0; i < SIZE_OF_FONT_TYPE; ++i) {
+      const auto font_type = static_cast<FONT_TYPE>(i);
+      const auto &log_font = GetLogFont(font_type);
+      render_info_[i].style = GetGdiDrawTextStyle(font_type);
+      render_info_[i].font.CreateFontIndirectW(&log_font);
+      render_info_[i].color = GetTextColor(font_type);
+    }
+  }
 
-void TextRenderer::RenderText(CDCHandle dc,
+  virtual Size MeasureString(FONT_TYPE font_type, const wstring &str) const {
+    const auto previous_font = mem_dc_.SelectFont(render_info_[font_type].font);
+    CRect rect;
+    mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
+                      DT_NOPREFIX | DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
+    mem_dc_.SelectFont(previous_font);
+    return Size(rect.Width(), rect.Height());
+  }
+
+  virtual Size MeasureStringMultiLine(
+      FONT_TYPE font_type, const wstring &str, const int width) const {
+    const auto previous_font = mem_dc_.SelectFont(render_info_[font_type].font);
+    CRect rect(0, 0, width, 0);
+    mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
+                      DT_NOPREFIX | DT_LEFT | DT_WORDBREAK | DT_CALCRECT);
+    mem_dc_.SelectFont(previous_font);
+    return Size(rect.Width(), rect.Height());
+  }
+
+  virtual void RenderText(CDCHandle dc,
+                          const wstring &text,
+                          const Rect &rect,
+                          FONT_TYPE font_type) const {
+    vector<TextRenderingInfo> infolist;
+    infolist.push_back(TextRenderingInfo(text, rect));
+    RenderTextList(dc, infolist, font_type);
+  }
+
+  virtual void RenderTextList(CDCHandle dc,
                               const vector<TextRenderingInfo> &display_list,
                               FONT_TYPE font_type) const {
-  const CFontHandle old_font = dc.SelectFont(GetFont(font_type));
-  const COLORREF previous_color =
-      dc.SetTextColor(GetFontColor(font_type));
-  for (vector<TextRenderingInfo>::const_iterator it = display_list.begin();
-       it != display_list.end(); ++it) {
-    const TextRenderingInfo &rendering_info = *it;
-    CRect temp_rect(rendering_info.rect.Left(), rendering_info.rect.Top(),
-                    rendering_info.rect.Right(), rendering_info.rect.Bottom());
-    const wstring &text = rendering_info.text;
-    dc.DrawTextW(text.c_str(), text.size(), &temp_rect,
-                 GetFontStyle(font_type));
+    const auto &render_info = render_info_[font_type];
+    const auto old_font = dc.SelectFont(render_info.font);
+    const auto previous_color = dc.SetTextColor(render_info.color);
+    for (auto it = display_list.begin(); it != display_list.end(); ++it) {
+      const auto &info = *it;
+      CRect rect(info.rect.Left(), info.rect.Top(),
+                 info.rect.Right(), info.rect.Bottom());
+      const auto &text = info.text;
+      dc.DrawTextW(text.data(), text.size(), &rect, render_info.style);
+    }
+    dc.SetTextColor(previous_color);
+    dc.SelectFont(old_font);
   }
-  dc.SetTextColor(previous_color);
-  dc.SelectFont(old_font);
+
+  struct RenderInfo {
+    RenderInfo() : color(0), style(0) {}
+    COLORREF color;
+    DWORD style;
+    CFont font;
+  };
+  unique_ptr<RenderInfo[]> render_info_;
+  mutable CDC mem_dc_;
+
+  DISALLOW_COPY_AND_ASSIGN(GdiTextRenderer);
+};
+
+const D2D1_DRAW_TEXT_OPTIONS kD2D1DrawTextOptions =
+    static_cast<D2D1_DRAW_TEXT_OPTIONS>(4);
+
+class DirectWriteTextRenderer : public TextRenderer {
+ public:
+  static DirectWriteTextRenderer *Create() {
+    const auto d2d1 = WinUtil::LoadSystemLibrary(L"d2d1.dll");
+    const auto d2d1_create_factory  =
+        reinterpret_cast<D2D1CreateFactoryPtr>(
+            ::GetProcAddress(d2d1, "D2D1CreateFactory"));
+    if (d2d1_create_factory == nullptr) {
+      return nullptr;
+    }
+
+    const auto dwrite = WinUtil::LoadSystemLibrary(L"dwrite.dll");
+    const auto dwrite_create_factory  =
+        reinterpret_cast<DWriteCreateFactoryPtr>(
+            ::GetProcAddress(dwrite, "DWriteCreateFactory"));
+    if (dwrite_create_factory == nullptr) {
+      return nullptr;
+    }
+
+    HRESULT hr = S_OK;
+    CComPtr<ID2D1Factory> d2d_factory;
+    hr = d2d1_create_factory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
+                             __uuidof(ID2D1Factory),
+                             nullptr,
+                             reinterpret_cast<void **>(&d2d_factory));
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    CComPtr<IDWriteFactory> dwrite_factory;
+    hr = dwrite_create_factory(
+        DWRITE_FACTORY_TYPE_SHARED,
+        __uuidof(IDWriteFactory),
+        reinterpret_cast<IUnknown **>(&dwrite_factory));
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    CComPtr<IDWriteGdiInterop> interop;
+    hr = dwrite_factory->GetGdiInterop(&interop);
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    const auto kernel32 = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
+    const auto get_user_default_locale_name =
+        reinterpret_cast<GetUserDefaultLocaleNamePtr>(
+            ::GetProcAddress(kernel32, "GetUserDefaultLocaleName"));
+    if (get_user_default_locale_name == nullptr) {
+      return nullptr;
+    }
+    return new DirectWriteTextRenderer(
+        d2d_factory, dwrite_factory, interop, get_user_default_locale_name);
+  }
+  virtual ~DirectWriteTextRenderer() {
+  }
+
+ private:
+  typedef int (WINAPI *GetUserDefaultLocaleNamePtr)(LPWSTR locale_name,
+                                                    int locale_name_buffer_len);
+
+  typedef HRESULT (WINAPI *D2D1CreateFactoryPtr)(
+      D2D1_FACTORY_TYPE factory_type,
+      const IID &iid,
+      const D2D1_FACTORY_OPTIONS *factory_options,
+      void **factory);
+
+  typedef HRESULT (WINAPI *DWriteCreateFactoryPtr)(
+      DWRITE_FACTORY_TYPE factory_type,
+      const IID &iid,
+      IUnknown **factory);
+
+  DirectWriteTextRenderer(
+      ID2D1Factory *d2d2_factory,
+      IDWriteFactory *dwrite_factory,
+      IDWriteGdiInterop *dwrite_interop,
+      GetUserDefaultLocaleNamePtr get_user_default_locale_name)
+      : d2d2_factory_(d2d2_factory),
+        dwrite_factory_(dwrite_factory),
+        dwrite_interop_(dwrite_interop),
+        get_user_default_locale_name_(get_user_default_locale_name) {
+    OnThemeChanged();
+  }
+
+  // TextRenderer overrides:
+  virtual void OnThemeChanged() {
+    // delete old fonts
+    render_info_.clear();
+    render_info_.resize(SIZE_OF_FONT_TYPE);
+
+    for (size_t i = 0; i < SIZE_OF_FONT_TYPE; ++i) {
+      const auto font_type = static_cast<FONT_TYPE>(i);
+      const auto &log_font = GetLogFont(font_type);
+      render_info_[i].color = GetTextColor(font_type);
+      render_info_[i].format = CreateFormat(log_font);
+      render_info_[i].format_to_render = CreateFormat(log_font);
+      const auto style = GetGdiDrawTextStyle(font_type);
+      const auto render_font = render_info_[i].format_to_render;
+      if ((style & DT_VCENTER) == DT_VCENTER) {
+        render_font->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+      }
+      if ((style & DT_LEFT) == DT_LEFT) {
+        render_font->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+      }
+      if ((style & DT_CENTER) == DT_CENTER) {
+        render_font->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+      }
+      if ((style & DT_LEFT) == DT_RIGHT) {
+        render_font->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+      }
+    }
+  }
+
+  // Retrieves the bounding box for a given string.
+  virtual Size MeasureString(FONT_TYPE font_type, const wstring &str) const {
+    return MeasureStringImpl(font_type, str, 0, false);
+  }
+
+  virtual Size MeasureStringMultiLine(FONT_TYPE font_type, const wstring &str,
+                                      const int width) const {
+    return MeasureStringImpl(font_type, str, width, true);
+  }
+
+  virtual void RenderText(CDCHandle dc, const wstring &text,
+                          const Rect &rect, FONT_TYPE font_type) const {
+    vector<TextRenderingInfo> infolist;
+    infolist.push_back(TextRenderingInfo(text, rect));
+    RenderTextList(dc, infolist, font_type);
+  }
+
+  virtual void RenderTextList(CDCHandle dc,
+                              const vector<TextRenderingInfo> &display_list,
+                              FONT_TYPE font_type) const {
+    CreateRenderTargetIfNecessary();
+    if (dc_render_target_ == nullptr) {
+      return;
+    }
+    CRect total_rect;
+    for (size_t i = 0; i < display_list.size(); ++i) {
+      const auto &item = display_list[i];
+      total_rect.right = max(total_rect.right, item.rect.Right());
+      total_rect.bottom = max(total_rect.right, item.rect.Bottom());
+    }
+    HRESULT hr = S_OK;
+    hr = dc_render_target_->BindDC(dc, &total_rect);
+    if (FAILED(hr)) {
+      return;
+    }
+    CComPtr<ID2D1SolidColorBrush> brush;
+    hr = dc_render_target_->CreateSolidColorBrush(
+        ToD2DColor(render_info_[font_type].color),
+        &brush);
+    if (FAILED(hr)) {
+      return;
+    }
+    D2D1_DRAW_TEXT_OPTIONS option = D2D1_DRAW_TEXT_OPTIONS_NONE;
+    if (SystemUtil::IsWindows8_1OrLater()) {
+      option |= kD2D1DrawTextOptions;
+    }
+    dc_render_target_->BeginDraw();
+    dc_render_target_->SetTransform(D2D1::Matrix3x2F::Identity());
+    for (size_t i = 0; i < display_list.size(); ++i) {
+      const auto &item = display_list[i];
+      const D2D1_RECT_F render_rect = {
+        item.rect.Left(), item.rect.Top(), item.rect.Right(),
+        item.rect.Bottom(),
+      };
+      dc_render_target_->DrawText(item.text.data(),
+                                  item.text.size(),
+                                  render_info_[font_type].format_to_render,
+                                  render_rect,
+                                  brush,
+                                  option);
+    }
+    hr = dc_render_target_->EndDraw();
+    if (hr == D2DERR_RECREATE_TARGET) {
+      dc_render_target_.Release();
+    }
+  }
+
+  Size MeasureStringImpl(FONT_TYPE font_type, const wstring &str,
+                         const int width, bool use_width) const {
+    HRESULT hr = S_OK;
+    const FLOAT kLayoutLimit = 100000.0f;
+    CComPtr<IDWriteTextLayout> layout;
+    hr = dwrite_factory_->CreateTextLayout(str.data(),
+                                           str.size(),
+                                           render_info_[font_type].format,
+                                           (use_width ? width : kLayoutLimit),
+                                           kLayoutLimit,
+                                           &layout);
+    if (FAILED(hr)) {
+      return Size();
+    }
+    DWRITE_TEXT_METRICS metrix = {};
+    hr = layout->GetMetrics(&metrix);
+    if (FAILED(hr)) {
+      return Size();
+    }
+    return Size(ceilf(metrix.widthIncludingTrailingWhitespace),
+                ceilf(metrix.height));
+  }
+
+  static D2D1_COLOR_F ToD2DColor(COLORREF color_ref) {
+    D2D1_COLOR_F color;
+    color.a = 1.0;
+    color.r = GetRValue(color_ref) / 255.0f;
+    color.g = GetGValue(color_ref) / 255.0f;
+    color.b = GetBValue(color_ref) / 255.0f;
+    return color;
+  }
+
+  CComPtr<IDWriteTextFormat> CreateFormat(CLogFont logfont) {
+    HRESULT hr = S_OK;
+    CComPtr<IDWriteFont> font;
+    hr = dwrite_interop_->CreateFontFromLOGFONT(&logfont, &font);
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    CComPtr<IDWriteFontFamily> font_family;
+    hr = font->GetFontFamily(&font_family);
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    CComPtr<IDWriteLocalizedStrings> localized_family_names;
+    hr = font_family->GetFamilyNames(&localized_family_names);
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    UINT32 length = 0;
+    hr = localized_family_names->GetStringLength(0, &length);
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    length += 1;  // for NUL.
+    unique_ptr<wchar_t[]> family_name(new wchar_t[length]);
+    hr = localized_family_names->GetString(0, family_name.get(), length);
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    auto font_size = logfont.lfHeight;
+    if (font_size < 0) {
+      font_size = -font_size;
+    } else {
+      DWRITE_FONT_METRICS font_metrix = {};
+      font->GetMetrics(&font_metrix);
+      const auto cell_height =
+          static_cast<float>(font_metrix.ascent + font_metrix.descent) /
+          font_metrix.designUnitsPerEm;
+      font_size /= cell_height;
+    }
+
+    wchar_t locale_name[LOCALE_NAME_MAX_LENGTH] = {};
+    if (get_user_default_locale_name_(locale_name, arraysize(locale_name))
+        == 0) {
+      return nullptr;
+    }
+
+    CComPtr<IDWriteTextFormat> format;
+    hr = dwrite_factory_->CreateTextFormat(family_name.get(),
+                                           nullptr,
+                                           font->GetWeight(),
+                                           font->GetStyle(),
+                                           font->GetStretch(),
+                                           font_size,
+                                           locale_name,
+                                           &format);
+    return format;
+  }
+
+  void CreateRenderTargetIfNecessary() const {
+    if (dc_render_target_) {
+      return;
+    }
+    const auto property = D2D1::RenderTargetProperties(
+        D2D1_RENDER_TARGET_TYPE_DEFAULT,
+        D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
+        0,
+        0,
+        D2D1_RENDER_TARGET_USAGE_NONE,
+        D2D1_FEATURE_LEVEL_DEFAULT);
+    d2d2_factory_->CreateDCRenderTarget(&property, &dc_render_target_);
+  }
+
+  struct RenderInfo {
+    RenderInfo() : color(0) {}
+    COLORREF color;
+    CComPtr<IDWriteTextFormat> format;
+    CComPtr<IDWriteTextFormat> format_to_render;
+  };
+
+  CComPtr<ID2D1Factory> d2d2_factory_;
+  CComPtr<IDWriteFactory> dwrite_factory_;
+  mutable CComPtr<ID2D1DCRenderTarget> dc_render_target_;
+  CComPtr<IDWriteGdiInterop> dwrite_interop_;
+  vector<RenderInfo> render_info_;
+  GetUserDefaultLocaleNamePtr get_user_default_locale_name_;
+
+  DISALLOW_COPY_AND_ASSIGN(DirectWriteTextRenderer);
+};
+
+}  // namespace
+
+TextRenderer::~TextRenderer() {
+}
+
+// static
+TextRenderer *TextRenderer::Create() {
+  auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
+  if (dwrite_text_renderer != nullptr) {
+    return dwrite_text_renderer;
+  }
+  return new GdiTextRenderer();
 }
 
 }  // namespace win32

@@ -69,7 +69,6 @@ const char *kKeyMapStatus[] = {
   "Prediction",
 };
 
-const char kAbortCommand[] = "Abort";
 const char kInsertCharacterCommand[] = "InsertCharacter";
 const char kIMEOnCommand[] = "IMEOn";
 const char kIMEOffCommand[] = "IMEOff";
@@ -90,7 +89,6 @@ enum {
 class KeyMapValidator {
  public:
   KeyMapValidator() {
-    invisible_commands_.insert(kAbortCommand);
     invisible_commands_.insert(kInsertCharacterCommand);
     invisible_commands_.insert(kReportBugCommand);
     // Old command name.
@@ -154,12 +152,6 @@ class KeyMapValidator {
     if (fields.size() < 3) {
       return false;
     }
-
-#ifndef _DEBUG
-    if (fields[2] == kAbortCommand) {
-      return false;
-    }
-#endif
 
 #ifdef NO_LOGGING
     if (fields[2] == kReportBugCommand) {

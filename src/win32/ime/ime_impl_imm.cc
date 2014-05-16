@@ -46,14 +46,15 @@
 #include "base/update_util.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
+#include "win32/base/browser_info.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
+#include "win32/base/focus_hierarchy_observer.h"
 #include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/immdev.h"
 #include "win32/base/input_state.h"
 #include "win32/base/string_util.h"
 #include "win32/base/surrogate_pair_observer.h"
-#include "win32/base/win32_window_util.h"
 #include "win32/ime/ime_candidate_info.h"
 #include "win32/ime/ime_composition_string.h"
 #include "win32/ime/ime_core.h"
@@ -168,19 +169,6 @@ static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
   }
 }
 
-bool IsSuppressSuggestionTarget(HIMC himc) {
-  if (himc == nullptr) {
-    return false;
-  }
-  const INPUTCONTEXT *context = ::ImmLockIMC(himc);
-  if (context == nullptr) {
-    return false;
-  }
-  const HWND attached_window = context->hWnd;
-  ::ImmUnlockIMC(himc);
-  return mozc::win32::WindowUtil::IsSuppressSuggestionWindow(attached_window);
-}
-
 int32 GetContextRevision() {
   if (g_context_revision_tls_index == kInvalidTlsIndex) {
     return 0;
@@ -208,15 +196,17 @@ void FillContext(HIMC himc, mozc::commands::Context *context) {
     return;
   }
   const INPUTCONTEXT *input_context = ::ImmLockIMC(himc);
-
+  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
+      private_context(input_context->hPrivate);
   const HWND attached_window = input_context->hWnd;
   ::ImmUnlockIMC(himc);
 
-  if (mozc::win32::WindowUtil::IsInChromeOmnibox(attached_window)) {
-    context->add_experimental_features("chrome_omnibox");
-  }
-  if (mozc::win32::WindowUtil::IsInGoogleSearchBox(attached_window)) {
-    context->add_experimental_features("google_search_box");
+  const auto &focus_hierarchy_observer =
+      *private_context->focus_hierarchy_observer;
+  if (focus_hierarchy_observer.IsAbailable()) {
+    if (mozc::win32::BrowserInfo::IsOnChromeOmnibox(focus_hierarchy_observer)) {
+      context->add_experimental_features("chrome_omnibox");
+    }
   }
 }
 
@@ -252,6 +242,9 @@ BOOL OnDllProcessAttach(HINSTANCE instance, bool static_loading) {
       &g_critical_section_for_breakpad);
 #endif  // USE_BREAKPAD
 
+  BrowserInfo::OnDllProcessAttach(instance, static_loading);
+  FocusHierarchyObserver::OnDllProcessAttach(instance, static_loading);
+
   if (!UIWindowManager::OnDllProcessAttach(instance, static_loading)) {
     return FALSE;
   }
@@ -269,6 +262,8 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
   }
 
   UIWindowManager::OnDllProcessDetach(instance, process_shutdown);
+  FocusHierarchyObserver::OnDllProcessDetach(instance, process_shutdown);
+  BrowserInfo::OnDllProcessDetach(instance, process_shutdown);
 
   g_instance = nullptr;
 
@@ -562,14 +557,11 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
   // Make an snapshot of |private_context->ime_behavior|, which
   // cannot be substituted for by const reference.
   mozc::win32::InputBehavior behavior = *private_context->ime_behavior;
-  // TODO(komatsu): Delete this suppress_suggestion when
-  // experimental_features has replaced it.
   mozc::commands::Context mozc_context;
-  mozc_context.set_suppress_suggestion(IsSuppressSuggestionTarget(himc));
   FillContext(himc, &mozc_context);
 
   ime_state.logical_conversion_mode = context->fdwConversion;
-  ime_state.open = context->fOpen;
+  ime_state.open = (context->fOpen != FALSE);
   mozc::win32::InputState next_state;
   mozc::commands::Output temporal_output;
   const mozc::win32::KeyEventHandlerResult result =
@@ -835,6 +827,9 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
     private_context->ui_visibility_tracker->OnFocus();
   }
 
+  // Sync initial focus hierarchy.
+  private_context->focus_hierarchy_observer->SyncFocusHierarchy();
+
   // Send the local status to the server when IME is ON.
   if (context->fOpen) {
     if ((context->fdwInit & INIT_CONVERSION) != INIT_CONVERSION) {
@@ -920,7 +915,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   const mozc::win32::KeyboardStatus keyboard_status(key_state);
   mozc::win32::InputState ime_state = *private_context->ime_state;
   ime_state.logical_conversion_mode = context->fdwConversion;
-  ime_state.open = context->fOpen;
+  ime_state.open = (context->fOpen != FALSE);
   mozc::win32::InputState next_state;
   const BYTE raw_scan_code = static_cast<BYTE>(scan_code & 0xff);
   const bool is_key_down = ((scan_code & 0x8000) == 0);
@@ -998,10 +993,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
     should_be_sent_to_server = true;
   } else {
     mozc::win32::InputBehavior behavior = *private_context->ime_behavior;
-    // TODO(komatsu): Delete this suppress_suggestion when
-    // experimental_features has replaced it.
     mozc::commands::Context mozc_context;
-    mozc_context.set_suppress_suggestion(IsSuppressSuggestionTarget(himc));
     FillContext(himc, &mozc_context);
 
     // Update |mozc_context| with surrounding text information when available.

@@ -27,8 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/session_converter.h"
+
 #include <string>
-#include "base/base.h"
+
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -39,7 +41,6 @@
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "session/commands.pb.h"
-#include "session/session_converter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 

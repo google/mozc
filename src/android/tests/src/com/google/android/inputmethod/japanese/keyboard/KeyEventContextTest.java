@@ -35,6 +35,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchA
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 
 import android.test.suitebuilder.annotation.SmallTest;
+
 import junit.framework.TestCase;
 
 import java.util.Arrays;
@@ -67,11 +68,13 @@ public class KeyEventContextTest extends TestCase {
     modifiedLeftEntity = new KeyEntity(4, 'd', 'D', 0, null, false, null);
 
     defaultState = new KeyState(
-        EnumSet.of(MetaState.UNMODIFIED), null,
+        "", Collections.<MetaState>emptySet(),
+        Collections.<MetaState>emptySet(), Collections.<MetaState>emptySet(),
         Arrays.asList(new Flick(Flick.Direction.CENTER, defaultEntity),
                       new Flick(Flick.Direction.LEFT, leftFlickEntity)));
     modifiedState = new KeyState(
-        EnumSet.of(MetaState.CAPS_LOCK), null,
+        "", EnumSet.of(MetaState.CAPS_LOCK), Collections.<MetaState>emptySet(),
+        EnumSet.of(MetaState.CAPS_LOCK),
         Arrays.asList(new Flick(Flick.Direction.CENTER, modifiedCenterEntity),
                       new Flick(Flick.Direction.LEFT, modifiedLeftEntity)));
 
@@ -113,7 +116,7 @@ public class KeyEventContextTest extends TestCase {
     assertFalse(KeyEventContext.isFlickable(
         new Key(0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN,
                 Collections.<KeyState>emptyList()),
-        MetaState.UNMODIFIED));
+        Collections.<MetaState>emptySet()));
 
     // If the key doesn't have flick related data other than CENTER, it is not flickable.
     KeyEntity dummyKeyEntity =
@@ -122,41 +125,47 @@ public class KeyEventContextTest extends TestCase {
     assertFalse(KeyEventContext.isFlickable(
         new Key(0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN,
                 Collections.singletonList(
-                    new KeyState(EnumSet.of(MetaState.UNMODIFIED), null,
+                    new KeyState("",
+                                 Collections.<MetaState>emptySet(),
+                                 Collections.<MetaState>emptySet(),
+                                 Collections.<MetaState>emptySet(),
                                  Collections.singletonList(center)))),
-        MetaState.UNMODIFIED));
+        Collections.<MetaState>emptySet()));
 
     // If the key has flick related data other than CENTER, it is flickable.
     Flick left = new Flick(Flick.Direction.LEFT, dummyKeyEntity);
     assertTrue(KeyEventContext.isFlickable(
         new Key(0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN,
                 Collections.singletonList(
-                    new KeyState(EnumSet.of(MetaState.UNMODIFIED), null,
+                    new KeyState("",
+                                 Collections.<MetaState>emptySet(),
+                                 Collections.<MetaState>emptySet(),
+                                 Collections.<MetaState>emptySet(),
                                  Arrays.asList(center, left)))),
-        MetaState.UNMODIFIED));
+        Collections.<MetaState>emptySet()));
   }
 
   @SmallTest
   public void testGetKeyEntity() {
     assertSame(defaultEntity,
                KeyEventContext.getKeyEntity(
-                   modifiableKey, MetaState.UNMODIFIED, Flick.Direction.CENTER));
+                   modifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.CENTER));
     assertSame(leftFlickEntity,
                KeyEventContext.getKeyEntity(
-                   modifiableKey, MetaState.UNMODIFIED, Flick.Direction.LEFT));
+                   modifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.LEFT));
     assertSame(modifiedCenterEntity,
                KeyEventContext.getKeyEntity(
-                   modifiableKey, MetaState.CAPS_LOCK, Flick.Direction.CENTER));
+                   modifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.CENTER));
     assertSame(modifiedLeftEntity,
                KeyEventContext.getKeyEntity(
-                   modifiableKey, MetaState.CAPS_LOCK, Flick.Direction.LEFT));
+                   modifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.LEFT));
 
     // If a key entity for the flick direction is not specified,
     // null should be returned.
     assertNull(KeyEventContext.getKeyEntity(
-        modifiableKey, MetaState.UNMODIFIED, Flick.Direction.RIGHT));
+        modifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.RIGHT));
     assertNull(KeyEventContext.getKeyEntity(
-        modifiableKey, MetaState.CAPS_LOCK, Flick.Direction.RIGHT));
+        modifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.RIGHT));
 
     Key unmodifiableKey = new Key(0, 0, 0, 0, 0, 0, false, false, false, Stick.EVEN,
                                   Collections.singletonList(defaultState));
@@ -164,28 +173,30 @@ public class KeyEventContextTest extends TestCase {
     // If a key doesn't have modified state, default state should be used as its fall back.
     assertSame(defaultEntity,
                KeyEventContext.getKeyEntity(
-                   unmodifiableKey, MetaState.UNMODIFIED, Flick.Direction.CENTER));
+                   unmodifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.CENTER));
     assertSame(leftFlickEntity,
                KeyEventContext.getKeyEntity(
-                   unmodifiableKey, MetaState.UNMODIFIED, Flick.Direction.LEFT));
+                   unmodifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.LEFT));
     assertSame(defaultEntity,
                KeyEventContext.getKeyEntity(
-                   unmodifiableKey, MetaState.CAPS_LOCK, Flick.Direction.CENTER));
+                   unmodifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.CENTER));
     assertSame(leftFlickEntity,
                KeyEventContext.getKeyEntity(
-                   unmodifiableKey, MetaState.CAPS_LOCK, Flick.Direction.LEFT));
+                   unmodifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.LEFT));
 
     // If both state is not specified, null should be returned.
     Key spacer = new Key(0, 0, 0, 0, 0, 0, false, false, false, Stick.EVEN,
                          Collections.<KeyState>emptyList());
-    assertNull(KeyEventContext.getKeyEntity(spacer, MetaState.UNMODIFIED, Flick.Direction.CENTER));
-    assertNull(KeyEventContext.getKeyEntity(spacer, MetaState.CAPS_LOCK, Flick.Direction.CENTER));
+    assertNull(KeyEventContext.getKeyEntity(spacer, Collections.<MetaState>emptySet(),
+                                            Flick.Direction.CENTER));
+    assertNull(KeyEventContext.getKeyEntity(spacer, EnumSet.of(MetaState.CAPS_LOCK),
+                                            Flick.Direction.CENTER));
   }
 
   @SmallTest
   public void testGetKeyCode() {
     KeyEventContext keyEventContext =
-        new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1, Collections.<MetaState>emptySet());
     assertEquals('a', keyEventContext.getKeyCode());
     keyEventContext.flickDirection = Flick.Direction.LEFT;
     assertEquals('b', keyEventContext.getKeyCode());
@@ -199,7 +210,8 @@ public class KeyEventContextTest extends TestCase {
   @SmallTest
   public void testGetLongPressKeyCode() {
     KeyEventContext keyEventContext =
-        new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1,
+                            Collections.<MetaState>emptySet());
     assertEquals('A', keyEventContext.getLongPressKeyCode());
     keyEventContext.longPressSent = true;
     assertEquals(KeyEntity.INVALID_KEY_CODE, keyEventContext.getLongPressKeyCode());
@@ -208,7 +220,8 @@ public class KeyEventContextTest extends TestCase {
   @SmallTest
   public void testGetPressedKeyCode() {
     KeyEventContext keyEventContext =
-        new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1,
+                            Collections.<MetaState>emptySet());
     assertEquals('a', keyEventContext.getPressedKeyCode());
     keyEventContext.flickDirection = Flick.Direction.LEFT;
     assertEquals('a', keyEventContext.getPressedKeyCode());
@@ -221,18 +234,38 @@ public class KeyEventContextTest extends TestCase {
 
   @SmallTest
   public void testGetNextMetaState() {
-    assertNull(new KeyEventContext(
-        modifiableKey, 0, 0, 0, 100, 100, 1, MetaState.UNMODIFIED).getNextMetaState());
-
-    KeyState capsLockState = new KeyState(
-        EnumSet.of(MetaState.UNMODIFIED), MetaState.CAPS_LOCK,
+    KeyState onUnmodified = new KeyState(
+        "",
+        Collections.<MetaState>emptySet(),
+        EnumSet.of(MetaState.SHIFT),
+        Collections.<MetaState>emptySet(),
+        Collections.singletonList(new Flick(Flick.Direction.CENTER, defaultEntity)));
+    KeyState onShift = new KeyState(
+        "",
+        EnumSet.of(MetaState.SHIFT),
+        EnumSet.of(MetaState.CAPS_LOCK),
+        EnumSet.of(MetaState.SHIFT),
+        Collections.singletonList(new Flick(Flick.Direction.CENTER, defaultEntity)));
+    KeyState onCapsLock = new KeyState(
+        "",
+        EnumSet.of(MetaState.CAPS_LOCK),
+        Collections.<MetaState>emptySet(),
+        EnumSet.of(MetaState.CAPS_LOCK),
         Collections.singletonList(new Flick(Flick.Direction.CENTER, defaultEntity)));
     Key capsLockKey = new Key(0, 0, 10, 10, 0, 0, false, true, false, Stick.EVEN,
-                              Collections.singletonList(capsLockState));
-    assertSame(
-        MetaState.CAPS_LOCK,
-        new KeyEventContext(capsLockKey, 0, 0, 0, 100, 100, 1, MetaState.UNMODIFIED)
-            .getNextMetaState());
+                              Arrays.asList(onUnmodified, onShift, onCapsLock));
+    assertEquals(
+        EnumSet.of(MetaState.SHIFT),
+        new KeyEventContext(capsLockKey, 0, 0, 0, 100, 100, 1, Collections.<MetaState>emptySet())
+            .getNextMetaStates(Collections.<MetaState>emptySet()));
+    assertEquals(
+        EnumSet.of(MetaState.CAPS_LOCK),
+        new KeyEventContext(capsLockKey, 0, 0, 0, 100, 100, 1, EnumSet.of(MetaState.SHIFT))
+            .getNextMetaStates(EnumSet.of(MetaState.SHIFT)));
+    assertEquals(
+        Collections.<MetaState>emptySet(),
+        new KeyEventContext(capsLockKey, 0, 0, 0, 100, 100, 1, EnumSet.of(MetaState.CAPS_LOCK))
+            .getNextMetaStates(EnumSet.of(MetaState.CAPS_LOCK)));
   }
 
   @SmallTest
@@ -240,12 +273,12 @@ public class KeyEventContextTest extends TestCase {
     Key key = new Key(0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN,
                       Collections.<KeyState>emptyList());
     KeyEventContext keyEventContext =
-        new KeyEventContext(key, 0, 0, 0, 100, 100, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(key, 0, 0, 0, 100, 100, 1, Collections.<MetaState>emptySet());
     assertFalse(keyEventContext.isMetaStateToggleEvent());
     Key modifierKey = new Key(0, 0, 30, 50, 0, 0, false, true, false, Stick.EVEN,
                               Collections.<KeyState>emptyList());
     KeyEventContext modifierKeyEventContext =
-        new KeyEventContext(modifierKey, 0, 0, 0, 100, 100, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(modifierKey, 0, 0, 0, 100, 100, 1, Collections.<MetaState>emptySet());
     assertTrue(modifierKeyEventContext.isMetaStateToggleEvent());
     modifierKeyEventContext.longPressSent = true;
     assertFalse(modifierKeyEventContext.isMetaStateToggleEvent());
@@ -257,7 +290,8 @@ public class KeyEventContextTest extends TestCase {
   @SmallTest
   public void testGetCurrentPopUp() {
     KeyEventContext keyEventContext =
-        new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1,
+                            Collections.<MetaState>emptySet());
     assertSame(defaultPopUp, keyEventContext.getCurrentPopUp());
     keyEventContext.flickDirection = Flick.Direction.LEFT;
     assertSame(leftPopUp, keyEventContext.getCurrentPopUp());
@@ -277,7 +311,10 @@ public class KeyEventContextTest extends TestCase {
     KeyEntity downEntity = new KeyEntity(5, 'e', 'E', 0, null, false, null);
 
     KeyState keyState = new KeyState(
-        EnumSet.of(MetaState.UNMODIFIED), null,
+        "",
+        Collections.<MetaState>emptySet(),
+        Collections.<MetaState>emptySet(),
+        Collections.<MetaState>emptySet(),
         Arrays.asList(new Flick(Flick.Direction.CENTER, centerEntity),
                       new Flick(Flick.Direction.LEFT, leftEntity),
                       new Flick(Flick.Direction.UP, upEntity),
@@ -287,7 +324,7 @@ public class KeyEventContextTest extends TestCase {
     Key key = new Key(0, 0, 16, 16, 0, 0, false, false, false, Stick.EVEN,
                       Collections.singletonList(keyState));
     KeyEventContext keyEventContext =
-        new KeyEventContext(key, 0, 8, 8, 64, 64, 50, MetaState.UNMODIFIED);
+        new KeyEventContext(key, 0, 8, 8, 64, 64, 50, Collections.<MetaState>emptySet());
 
     assertEquals(Flick.Direction.CENTER, keyEventContext.flickDirection);
     assertEquals(
@@ -374,7 +411,10 @@ public class KeyEventContextTest extends TestCase {
   public void testUpdateNonFlickable() {
     KeyEntity keyEntity = new KeyEntity(256, 'a', 'A', 0, null, false, null);
     KeyState keyState = new KeyState(
-        EnumSet.of(MetaState.UNMODIFIED), null,
+        "",
+        Collections.<MetaState>emptySet(),
+        Collections.<MetaState>emptySet(),
+        Collections.<MetaState>emptySet(),
         Collections.singletonList(new Flick(Flick.Direction.CENTER, keyEntity)));
     Key key = new Key(0, 0, 10, 10, 0, 0, false, false, false, Stick.EVEN,
                       Collections.singletonList(keyState));
@@ -382,7 +422,7 @@ public class KeyEventContextTest extends TestCase {
     // For unflickable keys, moving inside the key's region is NOT a flick action
     // regardless of the flick's threshold.
     KeyEventContext keyEventContext =
-        new KeyEventContext(key, 0, 5, 5, 100, 100, 9, MetaState.UNMODIFIED);
+        new KeyEventContext(key, 0, 5, 5, 100, 100, 9, Collections.<MetaState>emptySet());
     assertFalse(keyEventContext.update(5, 5, TouchAction.TOUCH_DOWN, 0));
 
     assertEquals(Flick.Direction.CENTER, keyEventContext.flickDirection);

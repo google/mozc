@@ -36,8 +36,8 @@
 #include <cstddef>
 #include <string>
 
-#include "base/init.h"
 #include "base/crash_report_handler.h"
+#include "base/init.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"

@@ -76,8 +76,8 @@ class UserDictionarySessionHandler {
                                  UserDictionaryCommandStatus *status);
   void GetEntrySize(const UserDictionaryCommand &command,
                     UserDictionaryCommandStatus *status);
-  void GetEntry(const UserDictionaryCommand &command,
-                UserDictionaryCommandStatus *status);
+  void GetEntries(const UserDictionaryCommand &command,
+                  UserDictionaryCommandStatus *status);
 
   void CheckNewDictionaryAvailability(const UserDictionaryCommand &command,
                                       UserDictionaryCommandStatus *status);

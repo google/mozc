@@ -33,6 +33,8 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateL
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +50,8 @@ import java.util.ListIterator;
  *
  */
 public class SymbolCandidateLayouter implements CandidateLayouter {
-  private SpanFactory spanFactory;
+
+  private Optional<SpanFactory> spanFactory = Optional.absent();
 
   /** The minimum width for each column. */
   private float minColumnWidth;
@@ -89,20 +92,21 @@ public class SymbolCandidateLayouter implements CandidateLayouter {
   }
 
   @Override
-  public CandidateLayout layout(CandidateList candidateList) {
+  public Optional<CandidateLayout> layout(CandidateList candidateList) {
+    Preconditions.checkNotNull(candidateList);
     if (viewWidth <= 0 || rowHeight <= 0 || minColumnWidth <= 0 ||
         candidateList == null || candidateList.getCandidatesCount() == 0 ||
-        spanFactory == null) {
-      return null;
+        !spanFactory.isPresent()) {
+      return Optional.absent();
     }
 
     int numColumns = getNumColumns(viewWidth, minColumnWidth);
-    List<Row> rowList = buildRowList(candidateList, spanFactory, numColumns);
+    List<Row> rowList = buildRowList(candidateList, spanFactory.get(), numColumns);
     for (Row row : rowList) {
       layoutSpanList(row.getSpanList(), viewWidth, numColumns);
     }
     layoutRowList(rowList, rowHeight);
-    return new CandidateLayout(rowList, viewWidth, rowHeight * rowList.size());
+    return Optional.of(new CandidateLayout(rowList, viewWidth, rowHeight * rowList.size()));
   }
 
   private static int getNumColumns(int viewWidth, float minColumnWidth) {
@@ -113,9 +117,8 @@ public class SymbolCandidateLayouter implements CandidateLayouter {
   /** Builds a list of {@code Row}s from candidate word list. */
   static List<Row> buildRowList(
       CandidateList candidateList, SpanFactory spanFactory, int numColumns) {
-    if (candidateList == null) {
-      return null;
-    }
+    Preconditions.checkNotNull(candidateList);
+    Preconditions.checkNotNull(spanFactory);
 
     List<Row> rowList = new ArrayList<Row>(
         (candidateList.getCandidatesCount() + numColumns - 1) / numColumns);
@@ -135,6 +138,7 @@ public class SymbolCandidateLayouter implements CandidateLayouter {
 
   /** Sets the left and right position to all spans. */
   static void layoutSpanList(List<Span> spanList, int viewWidth, int numColumns) {
+    Preconditions.checkNotNull(spanList);
     float left = 0;
     for (ListIterator<Span> iter = spanList.listIterator(); iter.hasNext(); ) {
       Span span = iter.next();
@@ -148,6 +152,7 @@ public class SymbolCandidateLayouter implements CandidateLayouter {
 
   /** Sets the top, height and width to all rows. */
   static void layoutRowList(List<Row> rowList, int rowHeight) {
+    Preconditions.checkNotNull(rowList);
     // The pageHeight will be divided evenly to the each row.
     for (ListIterator<Row> iter = rowList.listIterator(); iter.hasNext(); ) {
       int index = iter.nextIndex();
@@ -163,6 +168,6 @@ public class SymbolCandidateLayouter implements CandidateLayouter {
    * @param spanFactory the spanFactory to set
    */
   public void setSpanFactory(SpanFactory spanFactory) {
-    this.spanFactory = spanFactory;
+    this.spanFactory =  Optional.of(Preconditions.checkNotNull(spanFactory));
   }
 }

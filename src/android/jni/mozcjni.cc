@@ -85,7 +85,9 @@ void Initialize(
   SystemUtil::SetUserProfileDirectory(user_profile_directory);
 
   // Initialize Java native callback proxies.
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
   JavaEncryptorProxy::SetJavaVM(vm);
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 #ifdef MOZC_ENABLE_HTTP_CLIENT
   JavaHttpClientProxy::SetJavaVM(vm);
 #endif  // MOZC_ENABLE_HTTP_CLIENT
@@ -125,6 +127,14 @@ jbyteArray JNICALL evalCommand(JNIEnv *env,
 
   // Use JNI_ABORT because in_bytes is read only.
   env->ReleaseByteArrayElements(in_bytes_array, in_bytes, JNI_ABORT);
+
+  // Remove candidates field.
+  // On Android all_candidate_words is always used instead and
+  // candiadtes field is ignored.
+  // Parsing protobuf message is expensive so remove such unused field.
+  // This is quick hack. Ideally also removing the logic where the candidate
+  // field is filled but currently simple solusion is employed.
+  command.mutable_output()->clear_candidates();
 
   const int out_size = command.ByteSize();
   jbyteArray out_bytes_array = env->NewByteArray(out_size);
@@ -203,7 +213,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
   mozc::jni::JavaEncryptorProxy::SetJavaVM(NULL);
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 #ifdef MOZC_ENABLE_HTTP_CLIENT
   mozc::jni::JavaHttpClientProxy::SetJavaVM(NULL);
 #endif  // MOZC_ENABLE_HTTP_CLIENT

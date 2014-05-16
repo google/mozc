@@ -64,10 +64,13 @@
 #include "win32/tip/tip_keyevent_handler.h"
 #include "win32/tip/tip_lang_bar.h"
 #include "win32/tip/tip_lang_bar_menu.h"
+#include "win32/tip/tip_linguistic_alternates.h"
+#include "win32/tip/tip_preferred_touch_keyboard.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_reconvert_function.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_resource.h"
+#include "win32/tip/tip_search_candidate_provider.h"
 #include "win32/tip/tip_status.h"
 #include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_handler.h"
@@ -155,124 +158,6 @@ const GUID kTipFunctionProvider = {
 #ifndef TF_TMF_IMMERSIVEMODE
 #define TF_TMF_IMMERSIVEMODE  0x40000000
 #endif  // !TF_TMF_IMMERSIVEMODE
-
-// SPI_GETTHREADLOCALINPUTSETTINGS is available on Windows 8 SDK and later.
-#ifndef SPI_SETTHREADLOCALINPUTSETTINGS
-#define SPI_SETTHREADLOCALINPUTSETTINGS 0x104F
-#endif  // SPI_SETTHREADLOCALINPUTSETTINGS
-
-// ITfFnGetPreferredTouchKeyboardLayout is available on Windows 8 SDK and later.
-#ifndef TKBL_UNDEFINED
-#define TKBL_UNDEFINED                             0x0000
-#define TKBL_CLASSIC_TRADITIONAL_CHINESE_PHONETIC  0x0404
-#define TKBL_CLASSIC_TRADITIONAL_CHINESE_CHANGJIE  0xF042
-#define TKBL_CLASSIC_TRADITIONAL_CHINESE_DAYI      0xF043
-#define TKBL_OPT_JAPANESE_ABC                      0x0411
-#define TKBL_OPT_KOREAN_HANGUL_2_BULSIK            0x0412
-#define TKBL_OPT_SIMPLIFIED_CHINESE_PINYIN         0x0804
-#define TKBL_OPT_TRADITIONAL_CHINESE_PHONETIC      0x0404
-
-enum TKBLayoutType {
-  TKBLT_UNDEFINED = 0,
-  TKBLT_CLASSIC = 1,
-  TKBLT_OPTIMIZED = 2
-};
-
-// {5F309A41-590A-4ACC-A97F-D8EFFF13FDFC}
-const IID IID_ITfFnGetPreferredTouchKeyboardLayout = {
-  0x5f309a41, 0x590a, 0x4acc, {0xa9, 0x7f, 0xd8, 0xef, 0xff, 0x13, 0xfd, 0xfc}
-};
-
-// Note: "5F309A41-590A-4ACC-A97F-D8EFFF13FDFC" is equivalent to
-// IID_ITfFnGetPreferredTouchKeyboardLayout
-struct __declspec(uuid("5F309A41-590A-4ACC-A97F-D8EFFF13FDFC"))
-ITfFnGetPreferredTouchKeyboardLayout : public ITfFunction {
- public:
-  virtual HRESULT STDMETHODCALLTYPE GetLayout(TKBLayoutType *layout_type,
-                                              WORD *preferred_layout_id) = 0;
-};
-#endif  // !TKBL_UNDEFINED
-
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kGetPreferredTouchKeyboardLayoutFunctionDisplayName[] =
-    L"Google Japanese Input: GetPreferredTouchKeyboardLayout Function";
-#else
-const wchar_t kGetPreferredTouchKeyboardLayoutFunctionDisplayName[] =
-    L"Mozc: GetPreferredTouchKeyboardLayout Function";
-#endif
-
-class ITfFnGetPreferredTouchKeyboardLayoutImpl
-    : public ITfFnGetPreferredTouchKeyboardLayout {
- public:
-  static ITfFnGetPreferredTouchKeyboardLayout *New() {
-    return new ITfFnGetPreferredTouchKeyboardLayoutImpl();
-  }
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfFunction)) {
-      *object = static_cast<ITfFunction *>(this);
-    } else if (IsEqualIID(interface_id,
-                          IID_ITfFnGetPreferredTouchKeyboardLayout)) {
-      *object = static_cast<ITfFnGetPreferredTouchKeyboardLayout *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
-
- private:
-  ITfFnGetPreferredTouchKeyboardLayoutImpl() {}
-
-  // The ITfFunction interface method.
-  virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR *name) {
-    if (name == nullptr) {
-      return E_INVALIDARG;
-    }
-    *name =
-        CComBSTR(kGetPreferredTouchKeyboardLayoutFunctionDisplayName).Detach();
-    return S_OK;
-  }
-
-  // ITfFnGetPreferredTouchKeyboardLayout
-  virtual HRESULT STDMETHODCALLTYPE GetLayout(TKBLayoutType *layout_type,
-                                              WORD *preferred_layout_id) {
-    if (layout_type != nullptr) {
-      *layout_type = TKBLT_OPTIMIZED;
-    }
-    if (preferred_layout_id != nullptr) {
-      *preferred_layout_id = TKBL_OPT_JAPANESE_ABC;
-    }
-    return S_OK;
-  }
-
-  TipRefCount ref_count_;
-
-  DISALLOW_COPY_AND_ASSIGN(ITfFnGetPreferredTouchKeyboardLayoutImpl);
-};
 
 HRESULT SpawnTool(const string &command) {
   if (!Process::SpawnMozcProcess(kMozcTool, "--mode=" + command)) {
@@ -630,7 +515,7 @@ class TipTextServiceImpl
       empty_context_cookie_(TF_INVALID_COOKIE),
       input_attribute_(TF_INVALID_GUIDATOM),
       converted_attribute_(TF_INVALID_GUIDATOM),
-      thread_context_(new TipThreadContext),
+      thread_context_(nullptr),
       task_window_handle_(nullptr),
       renderer_callback_window_handle_(nullptr) {}
 
@@ -762,6 +647,7 @@ class TipTextServiceImpl
 
     TipUiHandler::OnDeactivate(this);
 
+    thread_context_.reset(nullptr);
     StorePointerForCurrentThread(nullptr);
 
     return S_OK;
@@ -773,6 +659,7 @@ class TipTextServiceImpl
       // unloaded. In such case, we can do nothing safely. b/7915484.
       return S_OK;  // the returned value will be ignored according to the MSDN.
     }
+    thread_context_.reset(new TipThreadContext());
     StorePointerForCurrentThread(this);
 
     HRESULT result = E_UNEXPECTED;
@@ -898,6 +785,9 @@ class TipTextServiceImpl
           TipStatus::IsOpen(thread_mgr), native_mode);
     }
 
+    // Initialize focus hierarchy observer.
+    thread_context_->InitializeFocusHierarchyObserver();
+
     // Emulate document changed event against the current document manager.
     {
       CComPtr<ITfDocumentMgr> document_mgr;
@@ -1012,9 +902,22 @@ class TipTextServiceImpl
   // ITfThreadFocusSink
   virtual HRESULT STDMETHODCALLTYPE OnSetThreadFocus() {
     EnsureKanaLockUnlocked();
+    // While ITfThreadMgrEventSink::OnSetFocus notifies the logical focus inside
+    // the application, ITfThreadFocusSink notifies the OS-level keyboard focus
+    // events. In both cases, Mozc's UI visibility should be updated.
+    CComPtr<ITfDocumentMgr> document_manager;
+    if (FAILED(thread_mgr_->GetFocus(&document_manager))) {
+      return S_OK;
+    }
+    if (!document_manager) {
+      return S_OK;
+    }
+    TipUiHandler::OnFocusChange(this, document_manager);
     return S_OK;
   }
   virtual HRESULT STDMETHODCALLTYPE OnKillThreadFocus() {
+    // See the comment in OnSetThreadFocus().
+    TipUiHandler::OnFocusChange(this, nullptr);
     return S_OK;
   }
 
@@ -1146,15 +1049,20 @@ class TipTextServiceImpl
     *unknown = nullptr;
     if (::IsEqualGUID(IID_ITfFnReconversion, iid)) {
       *unknown = TipReconvertFunction::New(this);
-      (*unknown)->AddRef();
-      return S_OK;
+    } else if (::IsEqualGUID(TipLinguisticAlternates::GetIID(), iid)) {
+      *unknown = TipLinguisticAlternates::New(this);
+    } else if (::IsEqualGUID(TipSearchCandidateProvider::GetIID(), iid)) {
+      *unknown = TipSearchCandidateProvider::New();
+    } else if (::IsEqualGUID(TipPreferredTouchKeyboard::GetIID(), iid)) {
+      *unknown = TipPreferredTouchKeyboard::New();
+    } else {
+      return E_NOINTERFACE;
     }
-    if (::IsEqualGUID(IID_ITfFnGetPreferredTouchKeyboardLayout, iid)) {
-      *unknown = ITfFnGetPreferredTouchKeyboardLayoutImpl::New();
-      (*unknown)->AddRef();
-      return S_OK;
+    if (*unknown == nullptr) {
+      return E_FAIL;
     }
-    return E_NOINTERFACE;
+    (*unknown)->AddRef();
+    return S_OK;
   }
 
   // ITfCompartmentEventSink

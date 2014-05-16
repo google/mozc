@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese.keyboard;
 
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
+import com.google.common.base.Objects;
 
 /**
  * A class corresponding to a {@code &lt;KeyEntity&gt;} element in xml resource files.
@@ -109,5 +110,16 @@ public class KeyEntity {
 
   public PopUp getPopUp() {
     return popUp;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+                  .add("sourceId", sourceId)
+                  .add("keyCode", keyCode)
+                  .add("longPressKeyCode", longPressKeyCode)
+                  .add("keyIconResourceId", keyIconResourceId)
+                  .add("keyCharacter", keyCharacter)
+                  .toString();
   }
 }

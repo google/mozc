@@ -32,11 +32,11 @@
 #include <cstring>
 #include <string>
 
+#include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -191,6 +191,13 @@ class DictionaryImplTest : public ::testing::Test {
     const StringPiece key_, value_;
     bool found_;
   };
+
+  // Pair of DictionaryInterface's lookup method and query text.
+  struct LookupMethodAndQuery {
+    void (DictionaryInterface::*lookup_method)(
+        StringPiece, bool, DictionaryInterface::Callback *) const;
+    const char *query;
+  };
 };
 
 TEST_F(DictionaryImplTest, WordSuppressionTest) {
@@ -198,28 +205,39 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   DictionaryInterface *d = data->dictionary.get();
   SuppressionDictionary *s = data->suppression_dictionary.get();
 
-  // "ぐーぐるは"
-  const char kQuery[] =
-      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\xAF";
   const char kKey[] =
       "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";  // "ぐーぐる"
   const char kValue[] =
       "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB";  // "グーグル"
-  {
-    s->Lock();
-    s->Clear();
-    s->AddEntry(kKey, kValue);
-    s->UnLock();
+
+  const LookupMethodAndQuery kTestPair[] = {
+    // "ぐーぐるは"
+    {&DictionaryInterface::LookupPrefix,
+     "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\xAF"},
+    // "ぐーぐ"
+    {&DictionaryInterface::LookupPredictive,
+     "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90"},
+  };
+
+  // First add (kKey, kValue) to the suppression dictionary; thus it should not
+  // be looked up.
+  s->Lock();
+  s->Clear();
+  s->AddEntry(kKey, kValue);
+  s->UnLock();
+  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
-    d->LookupPrefix(kQuery, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
     EXPECT_FALSE(callback.found());
   }
-  {
-    s->Lock();
-    s->Clear();
-    s->UnLock();
+
+  // Clear the suppression dictionary; thus it should now be looked up.
+  s->Lock();
+  s->Clear();
+  s->UnLock();
+  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
-    d->LookupPrefix(kQuery, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
     EXPECT_TRUE(callback.found());
   }
 }
@@ -231,21 +249,32 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   // "あぼがど" -> "アボカド", which is in the test dictionary.
   const char kKey[] = "\xE3\x81\x82\xE3\x81\xBC\xE3\x81\x8C\xE3\x81\xA9";
   const char kValue[] = "\xE3\x82\xA2\xE3\x83\x9C\xE3\x82\xAB\xE3\x83\x89";
-  {
-    config::Config config;
-    config.set_use_spelling_correction(true);
-    config::ConfigHandler::SetConfig(config);
 
+  const LookupMethodAndQuery kTestPair[] = {
+    // "あぼがど"
+    {&DictionaryInterface::LookupPrefix, kKey},
+    // "あぼ"
+    {&DictionaryInterface::LookupPredictive, "\xE3\x81\x82\xE3\x81\xBC"},
+  };
+
+  // The spelling correction entry (kKey, kValue) should be found if spelling
+  // correction flag is set in the config.
+  config::Config config;
+  config.set_use_spelling_correction(true);
+  config::ConfigHandler::SetConfig(config);
+  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
-    d->LookupPrefix(kKey, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
     EXPECT_TRUE(callback.found());
+  }
 
-    config.set_use_spelling_correction(false);
-    config::ConfigHandler::SetConfig(config);;
-
-    CheckSpellingExistenceCallback callback2(kKey, kValue);
-    d->LookupPrefix(kKey, false, &callback2);
-    EXPECT_FALSE(callback2.found());
+  // Without the flag, it should be suppressed.
+  config.set_use_spelling_correction(false);
+  config::ConfigHandler::SetConfig(config);;
+  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+    CheckSpellingExistenceCallback callback(kKey, kValue);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    EXPECT_FALSE(callback.found());
   }
 }
 
@@ -257,21 +286,30 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   const char kKey[] = "100-0000";
   const char kValue[] = "\xE6\x9D\xB1\xE4\xBA\xAC\xE9\x83\xBD\xE5\x8D"
                         "\x83\xE4\xBB\xA3\xE7\x94\xB0\xE5\x8C\xBA";
-  {
-    config::Config config;
-    config.set_use_zip_code_conversion(true);
-    config::ConfigHandler::SetConfig(config);
 
+  const LookupMethodAndQuery kTestPair[] = {
+    {&DictionaryInterface::LookupPrefix, kKey},
+    {&DictionaryInterface::LookupPredictive, "100"},
+  };
+
+  // The zip code entry (kKey, kValue) should be found if the flag is set in the
+  // config.
+  config::Config config;
+  config.set_use_zip_code_conversion(true);
+  config::ConfigHandler::SetConfig(config);
+  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
-    d->LookupPrefix(kKey, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
     EXPECT_TRUE(callback.found());
+  }
 
-    config.set_use_zip_code_conversion(false);
-    config::ConfigHandler::SetConfig(config);;
-
-    CheckZipCodeExistenceCallback callback2(kKey, kValue, data->pos_matcher);
-    d->LookupPrefix(kKey, false, &callback2);
-    EXPECT_FALSE(callback2.found());
+  // Without the flag, it should be suppressed.
+  config.set_use_zip_code_conversion(false);
+  config::ConfigHandler::SetConfig(config);;
+  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+    CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    EXPECT_FALSE(callback.found());
   }
 }
 
@@ -284,21 +322,31 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   const char kKey[] =
       "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
   const char kValue[] = "Google";
-  {
-    config::Config config;
-    config.set_use_t13n_conversion(true);
-    config::ConfigHandler::SetConfig(config);
 
+  const LookupMethodAndQuery kTestPair[] = {
+    {&DictionaryInterface::LookupPrefix, kKey},
+    // "ぐー"
+    {&DictionaryInterface::LookupPredictive, "\xE3\x81\x90\xE3\x83\xBC"},
+  };
+
+  // The T13N entry (kKey, kValue) should be found if the flag is set in the
+  // config.
+  config::Config config;
+  config.set_use_t13n_conversion(true);
+  config::ConfigHandler::SetConfig(config);
+  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
-    d->LookupPrefix(kKey, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
     EXPECT_TRUE(callback.found());
+  }
 
-    config.set_use_t13n_conversion(false);
-    config::ConfigHandler::SetConfig(config);;
-
-    CheckEnglishT13nCallback callback2(kKey, kValue);
-    d->LookupPrefix(kKey, false, &callback2);
-    EXPECT_FALSE(callback2.found());
+  // Without the flag, it should be suppressed.
+  config.set_use_t13n_conversion(false);
+  config::ConfigHandler::SetConfig(config);;
+  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+    CheckEnglishT13nCallback callback(kKey, kValue);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    EXPECT_FALSE(callback.found());
   }
 }
 

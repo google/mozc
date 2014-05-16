@@ -33,26 +33,39 @@ import static android.test.MoreAsserts.assertContentsInOrder;
 import static android.test.MoreAsserts.assertEmpty;
 import static org.easymock.EasyMock.expect;
 
+import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary.Entry;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary.PosType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand.CommandType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus.Builder;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus.Status;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryStorage;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
+import android.content.Context;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 /**
  */
@@ -899,6 +912,94 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   }
 
   @SmallTest
+  public void testExportUserDictionary() throws IOException {
+    class MockSessionExecutor extends SessionExecutor {
+
+      private final int entrySize;
+
+      MockSessionExecutor(int entrySize) {
+        this.entrySize = entrySize;
+      }
+
+      @Override
+      public UserDictionaryCommandStatus sendUserDictionaryCommand(UserDictionaryCommand command) {
+        Preconditions.checkArgument(command.getSessionId() == 100L);
+        Preconditions.checkArgument(command.getDictionaryId() == 500L);
+        if (command.getType() == CommandType.GET_ENTRY_SIZE) {
+          return UserDictionaryCommandStatus.newBuilder()
+              .setEntrySize(entrySize)
+              .setStatus(Status.USER_DICTIONARY_COMMAND_SUCCESS)
+              .build();
+        } else if (command.getType() == CommandType.GET_ENTRIES) {
+          Builder builder = UserDictionaryCommandStatus.newBuilder()
+              .setStatus(Status.USER_DICTIONARY_COMMAND_SUCCESS);
+          for (int index : command.getEntryIndexList()) {
+            Preconditions.checkElementIndex(index, entrySize);
+            builder.addEntries(Entry.newBuilder()
+                .setKey("よみ" + index)
+                .setValue("漢字" + index)
+                .setPos(PosType.SYMBOL)
+                .setComment("comment" + index)
+                .build());
+          }
+          return builder.build();
+        }
+        return UserDictionaryCommandStatus.newBuilder().setStatus(Status.INVALID_ARGUMENT).build();
+      }
+    }
+
+    Context context = getInstrumentation().getTargetContext();
+    Resources resources = context.getResources();
+    File tempDirectory = MozcUtil.getUserDictionaryExportTempDirectory(context);
+    Configuration config = resources.getConfiguration();
+    Locale originalLocale = config.locale;
+
+    try {
+      for (Locale testLocale : new Locale[] {Locale.JAPANESE, Locale.ENGLISH}) {
+        config.locale = testLocale;
+        resources.updateConfiguration(config, resources.getDisplayMetrics());
+
+        for (int entrySize : new int[] {0, 1, 10, 11, 100, 101, 1000, 1001, 10000}) {
+          SessionExecutor executor = new MockSessionExecutor(entrySize);
+          UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
+          model.sessionId = 100L;
+          model.selectedDictionaryId = 500L;
+
+          Optional<File> exportFile = model.createExportFile(resources, "test", tempDirectory);
+          assertTrue(exportFile.isPresent());
+
+          ZipInputStream zipStream = null;
+          BufferedReader reader = null;
+          try {
+            zipStream = new ZipInputStream(new FileInputStream(exportFile.get()));
+            ZipEntry zipEntry = zipStream.getNextEntry();
+            assertEquals("test.txt", zipEntry.getName());
+
+            reader = new BufferedReader(new InputStreamReader(zipStream));
+            for (int i = 0; i < entrySize; ++i) {
+              String line = reader.readLine();
+              assertEquals("よみ" + i + "\t漢字" + i + "\t記号\tcomment" + i, line);
+            }
+            assertNull(reader.readLine());
+          } finally {
+            if (reader != null) {
+              MozcUtil.closeIgnoringIOException(reader);
+            }
+            if (zipStream != null) {
+              MozcUtil.closeIgnoringIOException(zipStream);
+            }
+          }
+        }
+      }
+    } finally {
+      config.locale = originalLocale;
+      resources.updateConfiguration(config, resources.getDisplayMetrics());
+      MozcUtil.deleteDirectoryContents(tempDirectory);
+      tempDirectory.delete();
+    }
+  }
+
+  @SmallTest
   public void testGetEntryList() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
@@ -931,14 +1032,14 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     resetAll();
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
-            .setType(CommandType.GET_ENTRY)
+            .setType(CommandType.GET_ENTRIES)
             .setSessionId(100L)
             .setDictionaryId(500L)
             .addEntryIndex(5)
             .build()))
         .andReturn(UserDictionaryCommandStatus.newBuilder()
             .setStatus(Status.USER_DICTIONARY_COMMAND_SUCCESS)
-            .setEntry(Entry.newBuilder()
+            .addEntries(Entry.newBuilder()
                 .setKey("key")
                 .setValue("value")
                 .setPos(PosType.NOUN))
@@ -967,14 +1068,14 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     resetAll();
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
-            .setType(CommandType.GET_ENTRY)
+            .setType(CommandType.GET_ENTRIES)
             .setSessionId(100L)
             .setDictionaryId(500L)
             .addEntryIndex(10)
             .build()))
         .andReturn(UserDictionaryCommandStatus.newBuilder()
             .setStatus(Status.USER_DICTIONARY_COMMAND_SUCCESS)
-            .setEntry(Entry.newBuilder()
+            .addEntries(Entry.newBuilder()
                 .setKey("key")
                 .setValue("value")
                 .setPos(PosType.NOUN))

@@ -64,7 +64,7 @@ class ConverterMock : public ConverterInterface {
   void SetCommitPartialSuggestionSegmentValue(Segments *segments, bool result);
   void SetFocusSegmentValue(Segments *segments, bool result);
   void SetFreeSegmentValue(Segments *segments, bool result);
-  void SetCommitFirstSegment(Segments *segments, bool result);
+  void SetCommitSegments(Segments *segments, bool result);
   void SetResizeSegment1(Segments *segments, bool result);
   void SetResizeSegment2(Segments *segments, bool result);
 
@@ -100,7 +100,7 @@ class ConverterMock : public ConverterInterface {
   void GetFocusSegmentValue(Segments *segments, size_t *segment_index,
                             int *candidate_index);
   void GetFreeSegmentValue(Segments *segments, size_t *segment_index);
-  void GetCommitFirstSegment(Segments *segments, size_t *candidate_index);
+  void GetCommitSegments(Segments *segments, vector<size_t> *candidate_index);
   void GetResizeSegment1(Segments *segments, size_t *segment_index,
                         int *offset_length);
   void GetResizeSegment2(Segments *segments, size_t *start_segment_index,
@@ -151,8 +151,8 @@ class ConverterMock : public ConverterInterface {
                          int candidate_index) const;
   bool FreeSegmentValue(Segments *segments,
                         size_t segment_index) const;
-  bool CommitFirstSegment(Segments *segments,
-                          size_t candidate_index) const;
+  bool CommitSegments(Segments *segments,
+                      const vector<size_t> &candidate_index) const;
   bool ResizeSegment(Segments *segments,
                      const ConversionRequest &request,
                      size_t segment_index,
@@ -179,6 +179,7 @@ class ConverterMock : public ConverterInterface {
     string key;
     size_t segment_index;
     int candidate_index;
+    vector<size_t> candidate_index_list;
     int offset_length;
     size_t start_segment_index;
     size_t segments_size;
@@ -209,7 +210,7 @@ class ConverterMock : public ConverterInterface {
   mutable ConverterInput commitpartialsuggestionsegmentvalue_input_;
   mutable ConverterInput focussegmentvalue_input_;
   mutable ConverterInput freesegmentvalue_input_;
-  mutable ConverterInput submitfirstsegment_input_;
+  mutable ConverterInput submitsegments_input_;
   mutable ConverterInput resizesegment1_input_;
   mutable ConverterInput resizesegment2_input_;
 
@@ -233,7 +234,7 @@ class ConverterMock : public ConverterInterface {
   ConverterOutput commitpartialsuggestionsegmentvalue_output_;
   ConverterOutput focussegmentvalue_output_;
   ConverterOutput freesegmentvalue_output_;
-  ConverterOutput submitfirstsegment_output_;
+  ConverterOutput submitsegments_output_;
   ConverterOutput resizesegment1_output_;
   ConverterOutput resizesegment2_output_;
 };

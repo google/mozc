@@ -328,9 +328,9 @@ bool ExecCommand(const ConverterInterface &converter,
                                        atoi32(fields[2].c_str()));
   } else if (func == "commitfirstsegment") {
     CHECK_FIELDS_LENGTH(2);
-    return converter.CommitFirstSegment(segments,
-                                        atoi32(fields[1].c_str()));
-
+    vector<size_t> singleton_vector;
+    singleton_vector.push_back(static_cast<size_t>(atoi32(fields[1].c_str())));
+    return converter.CommitSegments(segments, singleton_vector);
   } else if (func == "freesegmentvalue" || func == "free") {
     CHECK_FIELDS_LENGTH(2);
     return converter.FreeSegmentValue(segments,

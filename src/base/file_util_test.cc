@@ -144,7 +144,8 @@ TEST_F(FileUtilTest, Unlink) {
   for (size_t i = 0; i < arraysize(kTestAttributeList); ++i) {
     SCOPED_TRACE(Util::StringPrintf("AttributeTest %zd", i));
     CreateTestFile(filepath, "attribute_test");
-    EXPECT_TRUE(::SetFileAttributesW(wfilepath.c_str(), kTestAttributeList[i]));
+    EXPECT_NE(FALSE,
+              ::SetFileAttributesW(wfilepath.c_str(), kTestAttributeList[i]));
     EXPECT_TRUE(FileUtil::FileExists(filepath));
     EXPECT_TRUE(FileUtil::Unlink(filepath));
     EXPECT_FALSE(FileUtil::FileExists(filepath));
@@ -167,26 +168,30 @@ TEST_F(FileUtilTest, HideFile) {
   CreateTestFile(filename, "test data");
   EXPECT_TRUE(FileUtil::FileExists(filename));
 
-  EXPECT_TRUE(::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL));
+  EXPECT_NE(FALSE,
+            ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL));
   EXPECT_TRUE(FileUtil::HideFile(filename));
   EXPECT_EQ(FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
             FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
             ::GetFileAttributesW(wfilename.c_str()));
 
-  EXPECT_TRUE(::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_ARCHIVE));
+  EXPECT_NE(FALSE,
+            ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_ARCHIVE));
   EXPECT_TRUE(FileUtil::HideFile(filename));
   EXPECT_EQ(FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
             FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_ARCHIVE,
             ::GetFileAttributesW(wfilename.c_str()));
 
-  EXPECT_TRUE(::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL));
+  EXPECT_NE(FALSE,
+            ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL));
   EXPECT_TRUE(FileUtil::HideFileWithExtraAttributes(filename,
                                                     FILE_ATTRIBUTE_TEMPORARY));
   EXPECT_EQ(FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
             FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_TEMPORARY,
             ::GetFileAttributesW(wfilename.c_str()));
 
-  EXPECT_TRUE(::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_ARCHIVE));
+  EXPECT_NE(FALSE,
+            ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_ARCHIVE));
   EXPECT_TRUE(FileUtil::HideFileWithExtraAttributes(filename,
                                                     FILE_ATTRIBUTE_TEMPORARY));
   EXPECT_EQ(FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
@@ -270,16 +275,18 @@ TEST_F(FileUtilTest, CopyFile) {
     wstring wfrom, wto;
     Util::UTF8ToWide(from.c_str(), &wfrom);
     Util::UTF8ToWide(to.c_str(), &wto);
-    EXPECT_TRUE(::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
-    EXPECT_TRUE(::SetFileAttributesW(wto.c_str(), kData.to_attributes));
+    EXPECT_NE(FALSE,
+              ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
+    EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
 
     EXPECT_TRUE(FileUtil::CopyFile(from, to));
     EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wfrom.c_str()));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));
 
-    EXPECT_TRUE(::SetFileAttributesW(wfrom.c_str(), FILE_ATTRIBUTE_NORMAL));
-    EXPECT_TRUE(::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL));
+    EXPECT_NE(FALSE,
+              ::SetFileAttributesW(wfrom.c_str(), FILE_ATTRIBUTE_NORMAL));
+    EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL));
   }
 #endif  // OS_WIN
 
@@ -357,8 +364,9 @@ TEST_F(FileUtilTest, AtomicRename) {
     wstring wfrom, wto;
     Util::UTF8ToWide(from.c_str(), &wfrom);
     Util::UTF8ToWide(to.c_str(), &wto);
-    EXPECT_TRUE(::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
-    EXPECT_TRUE(::SetFileAttributesW(wto.c_str(), kData.to_attributes));
+    EXPECT_NE(FALSE,
+              ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
+    EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
 
     EXPECT_TRUE(FileUtil::AtomicRename(from, to));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));

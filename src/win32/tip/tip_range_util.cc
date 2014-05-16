@@ -35,6 +35,7 @@
 #include <atlbase_mozc.h>
 #include <atlcom.h>
 
+#include <limits>
 #include <memory>
 
 namespace mozc {
@@ -46,6 +47,10 @@ using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ATL::CComVariant;
 using std::unique_ptr;
+
+#ifdef min
+#undef min
+#endif  // min
 
 // GUID_PROP_INPUTSCOPE
 GUID kGuidPropInputscope = {
@@ -221,6 +226,43 @@ bool TipRangeUtil::IsRangeCovered(TfEditCookie edit_cookie,
   }
 
   return true;
+}
+
+HRESULT TipRangeUtil::GetTextExt(ITfContextView *context_view,
+                                 TfEditCookie read_cookie,
+                                 ITfRange *range,
+                                 RECT *rect,
+                                 bool *clipped) {
+  BOOL clipped_result = FALSE;
+  HRESULT hr = context_view->GetTextExt(
+      read_cookie, range, rect, &clipped_result);
+  if (clipped != nullptr) {
+    *clipped = (clipped_result != FALSE);
+  }
+  // Due to a bug of TSF subsystem, as of Windows 8.1 and prior,
+  // ITfContextView::GetTextExt never returns TF_E_NOLAYOUT even when an
+  // application returns TS_E_NOLAYOUT in ITextStoreACP::GetTextExt. Since this
+  // bug is specific to ITfContextView::GetTextExt, a possible workaround is
+  // to also see the returned value of ITfContextView::GetRangeFromPoint.
+  // If the attached application implements ITextStoreACP::GetACPFromPoint
+  // consistently with ITfContextView::GetTextExt,, we can suspect if E_FAIL
+  // returned from ITfContextView::GetTextExt comes from TF_E_NOLAYOUT.
+  if (hr == E_FAIL) {
+    // Depending on the internal design of an application, the implementation of
+    // ITextStoreACP::GetACPFromPoint can easily be computationally expensive.
+    // This is why we should carefully choose parameters passed to
+    // ITfContextView::GetRangeFromPoint here.
+    const POINT dummy_point = {
+       numeric_limits<LONG>::min(), numeric_limits<LONG>::min()
+    };
+    CComPtr<ITfRange> dummy_range;
+    const HRESULT next_hr = context_view->GetRangeFromPoint(
+         read_cookie, &dummy_point, 0, &dummy_range);
+    if (next_hr == TF_E_NOLAYOUT) {
+      hr = TF_E_NOLAYOUT;
+    }
+  }
+  return hr;
 }
 
 }  // namespace tsf

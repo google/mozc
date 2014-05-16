@@ -34,18 +34,30 @@ import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary.Entry;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary.PosType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand.Builder;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand.CommandType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus.Status;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryStorage;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
+import android.content.res.Resources;
 import android.net.Uri;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.AbstractList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 /**
  */
@@ -53,7 +65,9 @@ public class UserDictionaryToolModel {
   private final SessionExecutor sessionExecutor;
   @VisibleForTesting long sessionId;
 
+  /** User dictionary storage which only contains dictionary id / name. */
   @VisibleForTesting UserDictionaryStorage storage = null;
+
   @VisibleForTesting long selectedDictionaryId = 0;
 
   // TODO(hidehiko): Move this bit into the server side.
@@ -404,6 +418,76 @@ public class UserDictionaryToolModel {
     return status.getStatus();
   }
 
+  public Optional<File> createExportFile(
+      Resources resources, String dictionaryName, File tempDirectory) {
+    Preconditions.checkNotNull(resources);
+    Preconditions.checkNotNull(dictionaryName);
+    Preconditions.checkNotNull(tempDirectory);
+    Preconditions.checkArgument(dictionaryName.length() > 0);
+    Preconditions.checkArgument(tempDirectory.isDirectory());
+
+    File exportFile = null;
+    ZipOutputStream zipStream = null;
+    try {
+      exportFile = File.createTempFile("export_temp_", ".zip", tempDirectory);
+      exportFile.deleteOnExit();
+      zipStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(exportFile)));
+      zipStream.putNextEntry(new ZipEntry(dictionaryName + ".txt"));
+
+      int entrySize = getEntrySize();
+      int fetchSize = 1000;
+      int queryNum = (int) Math.ceil((double) entrySize / fetchSize);
+      for (int i = 0; i < queryNum; ++i) {
+        String exportString = getSelectedDictionaryAsString(
+            resources, i * fetchSize, Math.min((i + 1) * fetchSize, entrySize));
+        // getBytes() always returns UTF-8 encoded byte stream because the default charset on
+        // Android is always UTF-8 and is immutable.
+        zipStream.write(exportString.getBytes());
+      }
+      zipStream.close();
+    } catch (IOException e) {
+      MozcLog.e("Failed to prepare export data. " + e.getMessage());
+      if (zipStream != null){
+        MozcUtil.closeIgnoringIOException(zipStream);
+      }
+      if (exportFile != null) {
+        exportFile.delete();
+      }
+      return Optional.absent();
+    }
+    return Optional.of(exportFile);
+  }
+
+  /**
+   * Dump dictionary entries of which the index is in [beginIndex, endIndex) as string.
+   */
+  private String getSelectedDictionaryAsString(Resources resources, int beginIndex, int endIndex) {
+    int entrySize = getEntrySize();
+    Preconditions.checkElementIndex(beginIndex, endIndex);
+    Preconditions.checkArgument(endIndex <= entrySize);
+    StringBuilder builder = new StringBuilder();
+
+    Map<PosType, String> posNameCache = new EnumMap<PosType, String>(PosType.class);
+    for (Entry entry : getEntriesInternal(beginIndex, endIndex)) {
+      String posName = posNameCache.get(entry.getPos());
+      if (posName == null) {
+        posName = resources.getString(
+            UserDictionaryUtil.getPosStringResourceIdForDictionaryExport(entry.getPos()));
+        posNameCache.put(entry.getPos(), posName);
+      }
+
+      builder.append(entry.getKey());
+      builder.append('\t');
+      builder.append(entry.getValue());
+      builder.append('\t');
+      builder.append(posName);
+      builder.append('\t');
+      builder.append(entry.getComment());
+      builder.append('\n');
+    }
+    return builder.toString();
+  }
+
   private Status updateStorage() {
     UserDictionaryCommand command = UserDictionaryCommand.newBuilder()
         .setType(CommandType.GET_USER_DICTIONARY_NAME_LIST)
@@ -433,21 +517,9 @@ public class UserDictionaryToolModel {
 
       @Override
       public int size() {
-        if (selectedDictionaryId == 0) {
-          return 0;
-        }
-        UserDictionaryCommand command = UserDictionaryCommand.newBuilder()
-            .setType(CommandType.GET_ENTRY_SIZE)
-            .setSessionId(sessionId)
-            .setDictionaryId(selectedDictionaryId)
-            .build();
-        UserDictionaryCommandStatus status = sessionExecutor.sendUserDictionaryCommand(command);
-        if (status.getStatus() != Status.USER_DICTIONARY_COMMAND_SUCCESS) {
-          MozcLog.e("Unknown failure: " + status.getStatus());
-          throw new RuntimeException("Unknown failure");
-        }
-        return status.getEntrySize();
-      }};
+        return getEntrySize();
+      }
+    };
   }
 
   public void setEditTargetIndex(int editTargetIndex) {
@@ -465,19 +537,44 @@ public class UserDictionaryToolModel {
     return getEntryInternal(editTargetIndex);
   }
 
-  private Entry getEntryInternal(int index) {
+  private int getEntrySize() {
+    if (selectedDictionaryId == 0) {
+      return 0;
+    }
     UserDictionaryCommand command = UserDictionaryCommand.newBuilder()
-        .setType(CommandType.GET_ENTRY)
+        .setType(CommandType.GET_ENTRY_SIZE)
         .setSessionId(sessionId)
         .setDictionaryId(selectedDictionaryId)
-        .addEntryIndex(index)
         .build();
     UserDictionaryCommandStatus status = sessionExecutor.sendUserDictionaryCommand(command);
     if (status.getStatus() != Status.USER_DICTIONARY_COMMAND_SUCCESS) {
       MozcLog.e("Unknown failure: " + status.getStatus());
       throw new RuntimeException("Unknown failure");
     }
-    return status.getEntry();
+    return status.getEntrySize();
+  }
+
+  private Entry getEntryInternal(int index) {
+    return getEntriesInternal(index, index + 1).get(0);
+  }
+
+  /**
+   * Returns dictionary entries of which the index is in [beginIndex, endIndex).
+   */
+  private List<Entry> getEntriesInternal(int beginIndex, int endIndex) {
+    Builder builder = UserDictionaryCommand.newBuilder()
+        .setType(CommandType.GET_ENTRIES)
+        .setSessionId(sessionId)
+        .setDictionaryId(selectedDictionaryId);
+    for (int i = beginIndex; i < endIndex; ++i) {
+        builder.addEntryIndex(i);
+    }
+    UserDictionaryCommandStatus status = sessionExecutor.sendUserDictionaryCommand(builder.build());
+    if (status.getStatus() != Status.USER_DICTIONARY_COMMAND_SUCCESS) {
+      MozcLog.e("Unknown failure: " + status.getStatus());
+      throw new RuntimeException("Unknown failure");
+    }
+    return status.getEntriesList();
   }
 
   /**
@@ -597,8 +694,10 @@ public class UserDictionaryToolModel {
   }
 
   private void clearZipFile() {
-    MozcUtil.closeIgnoringIOException(zipFile);
-    zipFile = null;
+    if (zipFile != null) {
+      MozcUtil.closeIgnoringIOException(zipFile);
+      zipFile = null;
+    }
   }
 
   /**

@@ -88,9 +88,6 @@ mozc.KEY_CODE_MAP_JP_ = {
   'KeyP': ['p', 'P', '\u305B', '\u305B'],  // 'せ', 'せ'
   'BracketLeft': ['@', '`', '\u309B', '\u309B'],  // '゛', '゛'
   'BracketRight': ['[', '{', '\u309C', '\u300C'],  // '゜', '「'
-  // 'BlacketRight' is typographical error which is used in Chrome 28.
-  // TODO(horo): In Chrome 29 this error will be fixed and we should remove it.
-  'BlacketRight': ['[', '{', '\u309C', '\u300C'],  // '゜', '「'
 
   'KeyA': ['a', 'A', '\u3061', '\u3061'],  // 'ち', 'ち'
   'KeyS': ['s', 'S', '\u3068', '\u3068'],  // 'と', 'と'
@@ -127,9 +124,6 @@ mozc.KEY_CODE_MAP_JP_ = {
  */
 mozc.KEY_CODE_MAP_US_ = {
   'Backquote': ['`', '~', '\u308D', '\u308D'],  // 'ろ', 'ろ'
-  // 'BackQuote' is used before Chrome 33.
-  // TODO(hsumita): Remove this.
-  'BackQuote': ['`', '~', '\u308D', '\u308D'],  // 'ろ', 'ろ'
   'Digit1': ['1', '!', '\u306C', '\u306C'],  // 'ぬ', 'ぬ'
   'Digit2': ['2', '@', '\u3075', '\u3075'],  // 'ふ', 'ふ'
   'Digit3': ['3', '#', '\u3042', '\u3041'],  // 'あ', 'ぁ'
@@ -155,9 +149,6 @@ mozc.KEY_CODE_MAP_US_ = {
   'KeyP': ['p', 'P', '\u305B', '\u305B'],  // 'せ', 'せ'
   'BracketLeft': ['[', '{', '\u309B', '\u309B'],  // '゛', '゛'
   'BracketRight': [']', '}', '\u309C', '\u300C'],  // '゜', '「'
-  // 'BlacketRight' is typographical error which is used in Chrome 28.
-  // TODO(horo): In Chrome 29 this error will be fixed and we should remove it.
-  'BlacketRight': [']', '}', '\u309C', '\u300C'],  // '゜', '「'
   'Backslash': ['\\', '|', '\u3080', '\u300D'],  // 'む', '」'
 
   'KeyA': ['a', 'A', '\u3061', '\u3061'],  // 'ち', 'ち'
@@ -196,18 +187,13 @@ mozc.KEY_CODE_MAP_US_ = {
  */
 mozc.SPECIAL_KEY_CODE_MAP_JP_ = {
   'Escape': 'ESCAPE',
-  // 'Esc' is used before Chrome 33
-  // TODO(hsumita): Remove this.
-  'Esc': 'ESCAPE',
   'Backspace': 'BACKSPACE',
   'Tab': 'TAB',
   'Enter': 'ENTER',
   'NumpadMultiply': 'MULTIPLY',
   'Space': 'SPACE',
   'CapsLock': 'CAPS_LOCK',
-  'Convert': 'HENKAN',
   'KanaMode': 'KANA',
-  'NoConvert': 'MUHENKAN',
   'PageUp': 'PAGE_UP',
   'End': 'END',
   'Delete': 'DEL',
@@ -243,18 +229,13 @@ mozc.SPECIAL_KEY_CODE_MAP_JP_ = {
  */
 mozc.SPECIAL_KEY_CODE_MAP_US_ = {
   'Escape': 'ESCAPE',
-  // 'Esc' is used before Chrome 33.
-  // TODO(hsumita): Remove this.
-  'Esc': 'ESCAPE',
   'Backspace': 'BACKSPACE',
   'Tab': 'TAB',
   'Enter': 'ENTER',
   'NumpadMultiply': 'MULTIPLY',
   'Space': 'SPACE',
   'CapsLock': 'CAPS_LOCK',
-  'Convert': 'HENKAN',
   'KanaMode': 'KANA',
-  'NoConvert': 'MUHENKAN',
   'PageUp': 'PAGE_UP',
   'End': 'END',
   'Delete': 'DEL',

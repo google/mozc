@@ -32,6 +32,8 @@ package org.mozc.android.inputmethod.japanese.ui;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
@@ -56,14 +58,14 @@ public class SideFrameStubProxy {
 
   @VisibleForTesting public boolean inflated = false;
 
-  private View currentView = null;
+  private Optional<View> currentView = Optional.absent();
 
-  private ImageView adjustButton = null;
+  private Optional<ImageView> adjustButton = Optional.absent();
   private int inputFrameHeight = 0;
-  private OnClickListener buttonOnClickListener = null;
+  private Optional<OnClickListener> buttonOnClickListener = Optional.absent();
 
-  private View dropshadowShort = null;
-  private View dropshadowLong = null;
+  private Optional<View> dropshadowShort = Optional.absent();
+  private Optional<View> dropshadowLong = Optional.absent();
   private int dropShadowShortVisibility = View.GONE;
   private int dropShadowShortLayoutHeight = 0;
   private int dropShadowLongLayoutHeight = 0;
@@ -84,29 +86,31 @@ public class SideFrameStubProxy {
     return gradientDrawable;
   }
 
-  public void initialize(View view, int stubId, int frameId,
-                         final int dropShadowShortTopId, final int dropShadowLongTopId,
-                         final int adjustButtonId, final int adjustButtonResouceId,
-                         final float dropShadowGradientCenterX,
-                         final int dropshadowShortId, final int dropshadowLongId) {
+  public void initialize(View view, int stubId, final int dropShadowShortTopId,
+                         final int dropShadowLongTopId, final int adjustButtonId,
+                         final int adjustButtonResouceId, final float dropShadowGradientCenterX,
+                         final int dropshadowShortId,
+                         final int dropshadowLongId) {
     ViewStub viewStub = ViewStub.class.cast(view.findViewById(stubId));
-    currentView = viewStub;
+    currentView = Optional.<View>of(viewStub);
 
     viewStub.setOnInflateListener(new OnInflateListener() {
 
+      @SuppressWarnings("deprecation")
       @Override
       public void onInflate(ViewStub stub, View view) {
         inflated = true;
 
-        currentView = view;
-        currentView.setVisibility(View.VISIBLE);
-        dropshadowShort = view.findViewById(dropshadowShortId);
-        dropshadowLong = view.findViewById(dropshadowLongId);
-        adjustButton = ImageView.class.cast(view.findViewById(adjustButtonId));
-        adjustButton.setOnClickListener(buttonOnClickListener);
+        currentView = Optional.of(view);
+        currentView.get().setVisibility(View.VISIBLE);
+        dropshadowShort = Optional.of(view.findViewById(dropshadowShortId));
+        dropshadowLong = Optional.of(view.findViewById(dropshadowLongId));
+        adjustButton = Optional.of(ImageView.class.cast(view.findViewById(adjustButtonId)));
+        adjustButton.get().setOnClickListener(buttonOnClickListener.orNull());
         Resources resources = view.getResources();
         MozcDrawableFactory drawableFactory = new MozcDrawableFactory(resources);
-        adjustButton.setImageDrawable(drawableFactory.getDrawable(adjustButtonResouceId));
+        adjustButton.get().setImageDrawable(
+            drawableFactory.getDrawable(adjustButtonResouceId).orNull());
 
         // Create dropshadow corner drawable.
         // Because resource xml cannot set gradientRadius in dip style, code it.
@@ -126,19 +130,23 @@ public class SideFrameStubProxy {
   }
 
   public void setButtonOnClickListener(OnClickListener onClickListener) {
-    buttonOnClickListener = onClickListener;
+    buttonOnClickListener = Optional.of(Preconditions.checkNotNull(onClickListener));
   }
 
   public void setFrameVisibility(int visibility) {
-    currentView.setVisibility(visibility);
+    if (currentView.isPresent()) {
+      currentView.get().setVisibility(visibility);
+    }
   }
 
   private void resetAdjustButtonBottomMarginInternal(int inputFrameHeight) {
-    ImageView imageView = ImageView.class.cast(adjustButton);
-    FrameLayout.LayoutParams layoutParams = FrameLayout.LayoutParams.class.cast(
-        imageView.getLayoutParams());
-    layoutParams.bottomMargin = (inputFrameHeight - layoutParams.height) / 2;
-    imageView.setLayoutParams(layoutParams);
+    if (adjustButton.isPresent()) {
+      ImageView imageView = ImageView.class.cast(adjustButton.get());
+      FrameLayout.LayoutParams layoutParams = FrameLayout.LayoutParams.class.cast(
+          imageView.getLayoutParams());
+      layoutParams.bottomMargin = (inputFrameHeight - layoutParams.height) / 2;
+      imageView.setLayoutParams(layoutParams);
+    }
   }
 
   public void resetAdjustButtonBottomMargin(int inputFrameHeight) {
@@ -149,8 +157,11 @@ public class SideFrameStubProxy {
   }
 
   private void flipDropShadowVisibilityInternal(int shortVisibility) {
-    dropshadowShort.setVisibility(shortVisibility);
-    dropshadowLong.setVisibility(shortVisibility == View.VISIBLE ? View.INVISIBLE : View.VISIBLE);
+    if (dropshadowShort.isPresent() && dropshadowLong.isPresent()) {
+      dropshadowShort.get().setVisibility(shortVisibility);
+      dropshadowLong.get().setVisibility(
+          shortVisibility == View.VISIBLE ? View.INVISIBLE : View.VISIBLE);
+    }
   }
 
   public void flipDropShadowVisibility(int shortVisibility) {
@@ -162,8 +173,10 @@ public class SideFrameStubProxy {
   }
 
   private void setDropShadowHeightInternal(int shortHeight, int longHeight) {
-    setLayoutHeight(dropshadowShort, shortHeight);
-    setLayoutHeight(dropshadowLong, longHeight);
+    if (dropshadowShort.isPresent() && dropshadowLong.isPresent()) {
+      setLayoutHeight(dropshadowShort.get(), shortHeight);
+      setLayoutHeight(dropshadowLong.get(), longHeight);
+    }
   }
 
   public void setDropShadowHeight(int shortHeight, int longHeight) {
@@ -176,9 +189,9 @@ public class SideFrameStubProxy {
   }
 
   public void startDropShadowAnimation(Animation shortAnimation, Animation longAnimation) {
-    if (inflated) {
-      dropshadowShort.startAnimation(shortAnimation);
-      dropshadowLong.startAnimation(longAnimation);
+    if (inflated && dropshadowShort.isPresent() && dropshadowLong.isPresent()) {
+      dropshadowShort.get().startAnimation(Preconditions.checkNotNull(shortAnimation));
+      dropshadowLong.get().startAnimation(Preconditions.checkNotNull(longAnimation));
     }
   }
 }

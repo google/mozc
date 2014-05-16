@@ -110,28 +110,14 @@
       ],
     }],
     # Workarounds related with clang.
-    ['clang==1', {
-      'conditions': [
-        ['OS=="linux"', {
-          'cflags': [
-            # Temporal workaround against following false warning in Clang.
-            # http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-June/022477.html
-            '-Wno-uninitialized',
-            # Suppress uncontrolable warnings on Qt 4.7.1 source code.
-            '-Wno-unused-private-field',
-          ],
-        }],
-        ['OS=="mac"', {
-          'xcode_settings': {
-            'WARNING_CFLAGS+': [
-              # Temporal workaround against following false warning in Clang.
-              # http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-June/022477.html
-              '-Wno-uninitialized',
-              # Suppress uncontrolable warnings on Qt 4.7.1 source code.
-              '-Wno-unused-private-field',
-            ],
-          },
-        }],
+    ['(_toolset=="target" and compiler_target=="clang") or '
+     '(_toolset=="host" and compiler_host=="clang")', {
+      'cflags': [
+        # Temporal workaround against following false warning in Clang.
+        # http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-June/022477.html
+        '-Wno-uninitialized',
+        # Suppress uncontrolable warnings on Qt 4.7.1 source code.
+        '-Wno-unused-private-field',
       ],
     }],
   ],

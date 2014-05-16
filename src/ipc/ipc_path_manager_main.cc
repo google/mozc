@@ -27,11 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include "base/base.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "ipc/ipc_path_manager.h"
+
+#include <string>
+
+#include "base/flags.h"
+#include "base/logging.h"
+#include "base/port.h"
+#include "base/util.h"
 
 DEFINE_bool(client, false, "client mode");
 DEFINE_bool(server, false, "server mode");

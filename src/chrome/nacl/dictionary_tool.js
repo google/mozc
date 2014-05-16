@@ -1222,7 +1222,7 @@ mozc.DictionaryTool.prototype.onDictionaryEntryBlur_ = function(event) {
             response.status);
       }
       this.sendSaveUserDictionaryAndReloadCommand_();
-      var command = this.createUserDictionaryCommandWithId_('GET_ENTRY');
+      var command = this.createUserDictionaryCommandWithId_('GET_ENTRIES');
       command.dictionary_id = this.dictionaries_[dictIndex].id;
       command.entry_index = [index];
       this.sendUserDictionaryCommand_(
@@ -1232,12 +1232,12 @@ mozc.DictionaryTool.prototype.onDictionaryEntryBlur_ = function(event) {
         * @param {!mozc.UserDictionaryCommandStatus} response
         */
         (function(response) {
-          if (response.entry == undefined) {
-            console.error('GET_ENTRY error');
+          if (response.entries == undefined || response.entries.length != 1) {
+            console.error('GET_ENTRIES error');
             return;
           }
-          this.dictionaries_[dictIndex].entries[index] = response.entry;
-          var entry = response.entry;
+          var entry = response.entries[0];
+          this.dictionaries_[dictIndex].entries[index] = entry;
           entry.key = entry.key || '';
           entry.value = entry.value || '';
           entry.pos = entry.pos || 'NOUN';

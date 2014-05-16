@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese.ui;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
+import com.google.common.base.Optional;
 
 /**
  * Layouts the candidates to the view.
@@ -52,5 +53,5 @@ public interface CandidateLayouter {
   public int getPageHeight();
 
   /** Layouts the given {@code candidateList}. */
-  public CandidateLayout layout(CandidateList candidateList);
+  public Optional<CandidateLayout> layout(CandidateList candidateList);
 }

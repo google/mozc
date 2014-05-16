@@ -235,8 +235,8 @@ bool UnquoteString(const string &input, string *output) {
   result.reserve(input.size());
 
   bool escape = false;
-  for (string::const_iterator i = ++input.begin(), end = --input.end();
-       i != end; ++i) {
+  for (string::const_iterator i = ++input.begin(), e = --input.end();
+       i != e; ++i) {
     if (escape) {
       char c = *i;
       switch (*i) {

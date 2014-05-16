@@ -92,11 +92,10 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
 InfolistWindow::InfolistWindow()
     : candidates_(new commands::Candidates),
       metrics_changed_(false),
-      text_renderer_(new TextRenderer),
+      text_renderer_(TextRenderer::Create()),
       style_(new RendererStyle),
       visible_(false),
       send_command_interface_(nullptr) {
-  text_renderer_->Init();
   mozc::renderer::RendererStyleHandler::GetRendererStyle(style_.get());
 }
 
@@ -337,7 +336,7 @@ void InfolistWindow::DelayShow(UINT mseconds) {
   visible_ = true;
   KillTimer(kIdDelayShowHideTimer);
   if (mseconds <= 0) {
-    const bool current_visible = IsWindowVisible();
+    const bool current_visible = (IsWindowVisible() != FALSE);
     SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0,
         SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
     SendMessageW(WM_NCACTIVATE, FALSE);
@@ -354,7 +353,7 @@ void InfolistWindow::DelayHide(UINT mseconds) {
   visible_ = false;
   KillTimer(kIdDelayShowHideTimer);
   if (mseconds <= 0) {
-    const bool current_visible = IsWindowVisible();
+    const bool current_visible = (IsWindowVisible() != FALSE);
     ShowWindow(SW_HIDE);
     if (current_visible) {
       SendUsageStatsEvent(send_command_interface_,
@@ -370,7 +369,7 @@ void InfolistWindow::UpdateLayout(const commands::Candidates &candidates) {
 
   // If we detect any change of font parameters, update text renderer
   if (metrics_changed_) {
-    text_renderer_->Init();
+    text_renderer_->OnThemeChanged();
     metrics_changed_ = false;
   }
 }

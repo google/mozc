@@ -257,6 +257,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'session.gyp:random_keyevents_generator',
+        'session_base.gyp:session_protocol',
       ],
       'variables': {
         'test_size': 'large',

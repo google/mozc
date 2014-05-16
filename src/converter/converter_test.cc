@@ -34,6 +34,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -97,11 +98,11 @@ class StubPredictor : public PredictorInterface {
   virtual bool PredictForRequest(const ConversionRequest &request,
                                  Segments *segments) const {
     return true;
-  };
+  }
 
   virtual const string &GetPredictorName() const {
     return predictor_name_;
-  };
+  }
 
  private:
   const string predictor_name_;
@@ -110,7 +111,7 @@ class StubPredictor : public PredictorInterface {
 class StubRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request, Segments *segments) const {
     return true;
-  };
+  }
 };
 
 SuffixDictionary *CreateSuffixDictionaryFromDataManager(
@@ -452,8 +453,8 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     const Segment &segment = segments.conversion_segment(0);
     EXPECT_EQ(Segment::FIXED_VALUE, segment.segment_type());
     EXPECT_EQ("2", segment.candidate(0).value);
-    EXPECT_TRUE(
-        segment.candidate(0).attributes & Segment::Candidate::RERANKED);
+    EXPECT_NE(0,
+              segment.candidate(0).attributes & Segment::Candidate::RERANKED);
   }
   {
     // Make the segment SUBMITTED
@@ -472,12 +473,12 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     const Segment &segment = segments.conversion_segment(0);
     EXPECT_EQ(Segment::FIXED_VALUE, segment.segment_type());
     EXPECT_EQ("3", segment.candidate(0).value);
-    EXPECT_FALSE(
-        segment.candidate(0).attributes & Segment::Candidate::RERANKED);
+    EXPECT_EQ(0,
+              segment.candidate(0).attributes & Segment::Candidate::RERANKED);
   }
 }
 
-TEST_F(ConverterTest, CommitFirstSegment) {
+TEST_F(ConverterTest, CommitSegments) {
   scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
@@ -521,17 +522,46 @@ TEST_F(ConverterTest, CommitFirstSegment) {
     candidate->key = "\xE3\x81\x84\xE3\x81\x8F";
   }
 
-  converter->CommitFirstSegment(&segments, 0);
+  // Test "CommitFirstSegment" feature.
+  {
+    // Commit 1st segment.
+    vector<size_t> index_list;
+    index_list.push_back(0);
+    converter->CommitSegments(&segments, index_list);
 
-  EXPECT_EQ(2, segments.history_segments_size());
-  EXPECT_EQ(1, segments.conversion_segments_size());
-  EXPECT_EQ(Segment::HISTORY, segments.history_segment(0).segment_type());
-  EXPECT_EQ(Segment::SUBMITTED, segments.history_segment(1).segment_type());
+    EXPECT_EQ(2, segments.history_segments_size());
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(Segment::HISTORY, segments.history_segment(0).segment_type());
+    EXPECT_EQ(Segment::SUBMITTED, segments.history_segment(1).segment_type());
 
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 3000, 1, 3000, 3000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 3000, 1, 3000, 3000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 1000, 1, 1000, 1000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 3);
+    EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 3000, 1, 3000, 3000);
+    EXPECT_TIMING_STATS("SubmittedLengthx1000", 3000, 1, 3000, 3000);
+    EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 1000, 1, 1000, 1000);
+    EXPECT_COUNT_STATS("SubmittedTotalLength", 3);
+  }
+
+  // Reset the test data.
+  segments.mutable_history_segment(1)->set_segment_type(Segment::FREE);
+
+  // Test "CommitHeadToFocusedSegment" feature.
+  {
+    // Commit 1st and 2nd segments.
+    vector<size_t> index_list;
+    index_list.push_back(0);
+    index_list.push_back(0);
+    converter->CommitSegments(&segments, index_list);
+
+    EXPECT_EQ(3, segments.history_segments_size());
+    EXPECT_EQ(0, segments.conversion_segments_size());
+    EXPECT_EQ(Segment::HISTORY, segments.history_segment(0).segment_type());
+    EXPECT_EQ(Segment::SUBMITTED, segments.history_segment(1).segment_type());
+    EXPECT_EQ(Segment::SUBMITTED, segments.history_segment(2).segment_type());
+
+    EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 8000, 3, 2000, 3000);
+    EXPECT_TIMING_STATS("SubmittedLengthx1000", 8000, 2, 3000, 5000);
+    EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 3000, 2, 1000, 2000);
+    EXPECT_COUNT_STATS("SubmittedTotalLength", 8);
+  }
 }
 
 TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
@@ -568,8 +598,8 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
       EXPECT_EQ(Segment::SUBMITTED, segment.segment_type());
       EXPECT_EQ("2", segment.candidate(0).value);
       EXPECT_EQ("left2", segment.key());
-      EXPECT_TRUE(
-          segment.candidate(0).attributes & Segment::Candidate::RERANKED);
+      EXPECT_NE(0,
+                segment.candidate(0).attributes & Segment::Candidate::RERANKED);
     }
     {
       // The head segment of the conversion segments uses |new_segment_key|.
@@ -655,8 +685,8 @@ TEST_F(ConverterTest, CommitPartialSuggestionUsageStats) {
     // "かつこうに"
     EXPECT_EQ("\xe3\x81\x8b\xe3\x81\xa4\xe3\x81\x93\xe3\x81\x86\xe3\x81\xab",
               segment.key());
-    EXPECT_TRUE(
-        segment.candidate(0).attributes & Segment::Candidate::RERANKED);
+    EXPECT_NE(0,
+              segment.candidate(0).attributes & Segment::Candidate::RERANKED);
   }
   {
     // The head segment of the conversion segments uses |new_segment_key|.
@@ -737,8 +767,8 @@ TEST_F(ConverterTest, CommitAutoPartialSuggestionUsageStats) {
     // "かつこうに"
     EXPECT_EQ("\xe3\x81\x8b\xe3\x81\xa4\xe3\x81\x93\xe3\x81\x86\xe3\x81\xab",
               segment.key());
-    EXPECT_TRUE(
-        segment.candidate(0).attributes & Segment::Candidate::RERANKED);
+    EXPECT_NE(0,
+              segment.candidate(0).attributes & Segment::Candidate::RERANKED);
   }
   {
     // The head segment of the conversion segments uses |new_segment_key|.
@@ -1129,18 +1159,18 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
   meta_candidate2->consumed_key_size = original_consumed_key_size;
 
   ConverterImpl::MaybeSetConsumedKeySizeToSegment(consumed_key_size, &segment);
-  EXPECT_TRUE(segment.candidate(0).attributes &
-              Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+  EXPECT_NE(0, (segment.candidate(0).attributes &
+                Segment::Candidate::PARTIALLY_KEY_CONSUMED));
   EXPECT_EQ(consumed_key_size, segment.candidate(0).consumed_key_size);
-  EXPECT_TRUE(segment.candidate(1).attributes &
-              Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+  EXPECT_NE(0, (segment.candidate(1).attributes &
+                Segment::Candidate::PARTIALLY_KEY_CONSUMED));
   EXPECT_EQ(original_consumed_key_size,
             segment.candidate(1).consumed_key_size);
-  EXPECT_TRUE(segment.meta_candidate(0).attributes &
-              Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+  EXPECT_NE(0, (segment.meta_candidate(0).attributes &
+                Segment::Candidate::PARTIALLY_KEY_CONSUMED));
   EXPECT_EQ(consumed_key_size, segment.meta_candidate(0).consumed_key_size);
-  EXPECT_TRUE(segment.meta_candidate(1).attributes &
-              Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+  EXPECT_NE(0, (segment.meta_candidate(1).attributes &
+                Segment::Candidate::PARTIALLY_KEY_CONSUMED));
   EXPECT_EQ(original_consumed_key_size,
             segment.meta_candidate(1).consumed_key_size);
 }
@@ -1180,7 +1210,7 @@ TEST_F(ConverterTest, Predict_SetKey) {
   scoped_ptr<ConverterAndData> converter_and_data(
       CreateStubbedConverterAndData());
   ConverterImpl *converter = converter_and_data->converter.get();
-  ASSERT_TRUE(converter);
+  ASSERT_NE(nullptr, converter);
 
   // Note that TearDown method will reset above stubs.
 
@@ -1218,14 +1248,14 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       // "てすと"
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
       "<>!?",
-      (Node::USER_DICTIONARY | Node::NO_VARIANTS_EXPANSION));
+      Token::USER_DICTIONARY);
   mock_user_dictionary->AddLookupPrefix(
       // "てすと"
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
       // "てすと"
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
       "<>!?",
-      (Node::USER_DICTIONARY | Node::NO_VARIANTS_EXPANSION));
+      Token::USER_DICTIONARY);
   scoped_ptr<SuppressionDictionary> suppression_dictionary(
       new SuppressionDictionary);
 

@@ -29,13 +29,14 @@
 
 #include "session/generic_storage_manager.h"
 
+#include <cstring>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "storage/lru_storage.h"
@@ -131,7 +132,7 @@ GenericStorageInterface *GenericStorageManagerFactory::GetStorage(
 GenericLruStorage::GenericLruStorage(
     const char *file_name, size_t value_size, size_t size, uint32 seed)
     : file_name_(file_name), value_size_(value_size),
-      size_(size), seed_(seed) {
+      size_(size), seed_(seed), value_buffer_(new char[value_size + 1]) {
 }
 
 GenericLruStorage::~GenericLruStorage() {
@@ -149,7 +150,7 @@ bool GenericLruStorage::EnsureStorage() {
       ConfigFileStream::GetFileName(file_name_);
   if (!new_storage->OpenOrCreate(filename.data(), value_size_, size_, seed_)) {
     return false;
-  };
+  }
   lru_storage_.swap(new_storage);
   return true;
 }
@@ -158,7 +159,15 @@ bool GenericLruStorage::Insert(const string &key, const char *value) {
   if (!EnsureStorage()) {
     return false;
   }
-  return lru_storage_->Insert(key, value);
+  const size_t value_size = strnlen(value, value_size_ + 1);
+  if (value_size > value_size_) {
+    LOG(DFATAL) << "Too long value: [" << value << "] size: " << value_size;
+    return false;
+  }
+  // LRUStorage only accepts fixed-length value, so we should allocate enough
+  // memory to avoid illegal access.
+  memcpy(value_buffer_.get(), value, value_size + 1);
+  return lru_storage_->Insert(key, value_buffer_.get());
 }
 
 const char *GenericLruStorage::Lookup(const string &key) {

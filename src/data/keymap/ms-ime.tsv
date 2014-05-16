@@ -2,7 +2,6 @@ status	key	command
 Composition	ASCII	InsertCharacter
 Composition	Backspace	Backspace
 Composition	Ctrl a	MoveCursorToBeginning
-Composition	Ctrl Alt F11	Abort
 Composition	Ctrl Backspace	Backspace
 Composition	Ctrl d	MoveCursorRight
 Composition	Ctrl Down	MoveCursorToEnd
@@ -61,7 +60,6 @@ Composition	Space	Convert
 Composition	Tab	PredictAndConvert
 Conversion	Backspace	Cancel
 Conversion	Ctrl a	SegmentFocusFirst
-Conversion	Ctrl Alt F11	Abort
 Conversion	Ctrl Backspace	Cancel
 Conversion	Ctrl d	SegmentFocusRight
 Conversion	Ctrl Down	CommitOnlyFirstSegment
@@ -136,7 +134,6 @@ DirectInput	Katakana	IMEOn
 DirectInput	ON	IMEOn
 Precomposition	ASCII	InsertCharacter
 Precomposition	Backspace	Revert
-Precomposition	Ctrl Alt F11	Abort
 Precomposition	Ctrl Backspace	Undo
 Precomposition	Ctrl Shift Space	InsertFullSpace
 Precomposition	Eisu	ToggleAlphanumericMode

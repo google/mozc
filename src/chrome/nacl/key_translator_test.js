@@ -316,3 +316,14 @@ function testBackquoteKey_JP_KANA() {
   assertObjectEquals({}, keyDown('ShiftLeft', 'Shift'));
   assertObjectEquals({modifier_keys: ['SHIFT']}, keyDown('Backquote', ''));
 }
+
+function testConvertAndNoConvertKey_US() {
+  assertObjectEquals({}, keyDown('Convert', '`'));
+  assertObjectEquals({}, keyDown('NoConvert', '`'));
+}
+
+function testConvertAndNoConvertKey_JP() {
+  setKeyboardLayout('jp');
+  assertObjectEquals({}, keyDown('Convert', '`'));
+  assertObjectEquals({}, keyDown('NoConvert', '`'));
+}

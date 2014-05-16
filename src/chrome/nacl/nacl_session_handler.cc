@@ -171,9 +171,14 @@ class MozcSessionHandlerThread : public Thread {
   virtual void Run() {
     Util::SetRandomSeed(static_cast<uint32>(Util::GetTime()));
     RegisterPepperInstanceForHTTPClient(instance_);
-    PepperFileUtil::Initialize(instance_, kFileIoFileSystemExpectedSize);
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-    if (!LoadBigDictionary(&big_dictionary_version_)) {
+    const bool filesystem_available =
+        PepperFileUtil::Initialize(instance_, kFileIoFileSystemExpectedSize);
+    if (!filesystem_available) {
+      // Pepper file system is not available, so ignore the big dictionary and
+      // use the small dictionary.
+      LoadDictionary();
+    } else if (!LoadBigDictionary(&big_dictionary_version_)) {
       LOG(ERROR) << "LoadBigDictionary error";
       StartDownloadDictionary();
       LoadDictionary();
@@ -185,6 +190,7 @@ class MozcSessionHandlerThread : public Thread {
       StartDownloadDictionary();
     }
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
+    PepperFileUtil::Initialize(instance_, kFileIoFileSystemExpectedSize);
     LoadDictionary();
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
     user_pos_.reset(

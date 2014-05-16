@@ -33,14 +33,9 @@
 #include <sstream>  // For DebugString()
 #include <string>
 
-#include "base/base.h"
 #include "base/freelist.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/util.h"
-#include "converter/node.h"
-#include "converter/node_allocator.h"
-#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 namespace {
@@ -586,7 +581,6 @@ void Segments::clear_conversion_segments() {
   for (size_t i = size; i < segments_size(); ++i) {
     pool_->Release(mutable_segment(i));
   }
-  clear_revert_entries();
   resized_ = false;
   segments_.resize(size);
 }

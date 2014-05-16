@@ -27,11 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
+#include "ipc/named_event.h"
+
+#include <string>
+
+#include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "ipc/named_event.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -136,4 +139,4 @@ TEST(NamedEventTest, NamedEventPathLengthTest) {
 #endif  // OS_WIN
 }
 }  // namespace
-}  // mozc
+}  // namespace mozc

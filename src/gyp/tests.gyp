@@ -62,6 +62,7 @@
           'dependencies': [
             '../win32/base/win32_base.gyp:win32_base_all_test',
             '../win32/ime/ime.gyp:ime_all_test',
+            '../win32/tip/tip.gyp:tip_all_test',
           ],
         }],
         ['OS=="mac"', {
@@ -69,7 +70,7 @@
             '../mac/mac.gyp:mac_all_test',
           ],
         }],
-        ['OS=="linux"', {
+        ['target_platform=="Linux"', {
           'dependencies': [
             '../unix/emacs/emacs.gyp:emacs_all_test',
           ],

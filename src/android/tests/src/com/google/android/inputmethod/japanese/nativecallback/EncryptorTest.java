@@ -56,6 +56,7 @@ public class EncryptorTest extends TestCase {
   private static final int BLOCK_SIZE = 16;
 
   // Ported from Util::GetSecureRandomSequence in base/util.cc
+  @SuppressWarnings("resource")
   private static byte[] getSecureRandomSequence(int size) throws IOException {
     byte[] buffer = new byte[size];
     FileInputStream inputStream = new FileInputStream("/dev/urandom");

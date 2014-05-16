@@ -27,13 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
-#include <string>
-
-#include "base/base.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "ipc/process_watch_dog.h"
+
+#include <iostream>  // NOLINT
+#include <string>
+#include <vector>
+
+#include "base/flags.h"
+#include "base/logging.h"
+#include "base/port.h"
+#include "base/util.h"
 
 DEFINE_int32(timeout, -1, "set timeout");
 

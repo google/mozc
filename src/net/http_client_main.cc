@@ -27,12 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include <iostream>
-
-#include "base/base.h"
-#include "base/file_stream.h"
 #include "net/http_client.h"
+
+#include <iostream>  // NOLINT
+#include <string>
+
+#include "base/file_stream.h"
+#include "base/flags.h"
+#include "base/port.h"
 #include "net/proxy_manager.h"
 
 DEFINE_string(url, "", "url");

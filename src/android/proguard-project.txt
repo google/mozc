@@ -44,6 +44,9 @@
 
 # Can be accessed via reflection.
 -keep public class * extends android.app.Fragment
+-keepclassmembers class * extends org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory$ImeSwitcher {
+    <methods>;
+}
 
 # The classes in nativecallback package must keep original class name and method name
 # in order to be called back from native layer.

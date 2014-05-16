@@ -32,14 +32,15 @@
 #include <algorithm>
 #include <cctype>
 #include <climits>
-#include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/stl_util.h"
+#include "base/string_piece.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -48,10 +49,11 @@
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
+#include "converter/node.h"
+#include "converter/node_list_builder.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/node_list_builder.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -772,8 +774,12 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
   lattice->node_allocator()->set_max_nodes_size(8192);
   Node *result_node = NULL;
   if (is_reverse) {
-    result_node = dictionary_->LookupReverse(begin, len,
-                                             lattice->node_allocator());
+    BaseNodeListBuilder builder(
+        lattice->node_allocator(),
+        lattice->node_allocator()->max_nodes_size());
+    dictionary_->LookupReverse(
+        StringPiece(begin, len), lattice->node_allocator(), &builder);
+    result_node = builder.result();
   } else {
     if (is_prediction && !FLAGS_disable_lattice_cache) {
       NodeListBuilderWithCacheEnabled builder(
@@ -1178,6 +1184,55 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
   }
 }
 
+namespace {
+
+// Adds penalty for predictive nodes when building a node list.
+class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
+ public:
+  NodeListBuilderForPredictiveNodes(NodeAllocatorInterface *allocator,
+                                    int limit, const POSMatcher *pos_matcher)
+      : BaseNodeListBuilder(allocator, limit), pos_matcher_(pos_matcher) {}
+
+  virtual ~NodeListBuilderForPredictiveNodes() {}
+
+  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                             const Token &token) {
+    Node *node = NewNodeFromToken(token);
+    const int kPredictiveNodeDefaultPenalty = 900;  // ~= -500 * log(1/6)
+    int additional_cost = kPredictiveNodeDefaultPenalty;
+
+    // Bonus for suffix word.
+    if (pos_matcher_->IsSuffixWord(node->rid) &&
+        pos_matcher_->IsSuffixWord(node->lid)) {
+      const int kSuffixWordBonus = 700;
+      additional_cost -= kSuffixWordBonus;
+    }
+
+    // Penalty for unique noun word.
+    if (pos_matcher_->IsUniqueNoun(node->rid) ||
+        pos_matcher_->IsUniqueNoun(node->lid)) {
+      const int kUniqueNounPenalty = 500;
+      additional_cost += kUniqueNounPenalty;
+    }
+
+    // Penalty for number.
+    if (pos_matcher_->IsNumber(node->rid) ||
+        pos_matcher_->IsNumber(node->lid)) {
+      const int kNumberPenalty = 4000;
+      additional_cost += kNumberPenalty;
+    }
+
+    node->wcost += additional_cost;
+    PrependNode(node);
+    return (limit_ <= 0) ? TRAVERSE_DONE : TRAVERSE_CONTINUE;
+  }
+
+ private:
+  const POSMatcher *pos_matcher_;
+};
+
+}  // namespace
+
 // Add predictive nodes from conversion key.
 void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     const Segments &segments, const ConversionRequest &request,
@@ -1197,11 +1252,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     return;
   }
 
-  DictionaryInterface::Limit limit;
-  limit.kana_modifier_insensitive_lookup_enabled =
-      request.IsKanaModifierInsensitiveConversion();
-
-  // predictive search from suffix dictionary
+  // Predictive search from suffix dictionary.
   // (search words with between 1 and 6 characters)
   {
     const size_t kMaxSuffixLookupKey = 6;
@@ -1213,15 +1264,20 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
       pos -= conversion_key_chars[
           conversion_key_chars.size() - suffix_len].size();
       DCHECK_GE(key.size(), pos);
-
-      const size_t str_len = key.size() - pos;
-      Node *result_node = suffix_dictionary_->LookupPredictiveWithLimit(
-          key.data() + pos, str_len, limit, lattice->node_allocator());
-      AddPredictiveNodes(suffix_len, pos, lattice, result_node);
+      NodeListBuilderForPredictiveNodes builder(
+          lattice->node_allocator(),
+          lattice->node_allocator()->max_nodes_size(),
+          pos_matcher_);
+      suffix_dictionary_->LookupPredictive(
+          StringPiece(key.data() + pos, key.size() - pos),
+          request.IsKanaModifierInsensitiveConversion(), &builder);
+      if (builder.result() != NULL) {
+        lattice->Insert(pos, builder.result());
+      }
     }
   }
 
-  // predictive search from system dictionary
+  // Predictive search from system dictionary.
   // (search words with between 5 and 8 characters)
   {
     const size_t kMinSystemLookupKey = 5;
@@ -1239,54 +1295,18 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
         continue;
       }
 
-      const size_t str_len = key.size() - pos;
-      Node *result_node = dictionary_->LookupPredictiveWithLimit(
-          key.data() + pos, str_len, limit, lattice->node_allocator());
-      AddPredictiveNodes(suffix_len, pos, lattice, result_node);
+      NodeListBuilderForPredictiveNodes builder(
+          lattice->node_allocator(),
+          lattice->node_allocator()->max_nodes_size(),
+          pos_matcher_);
+      dictionary_->LookupPredictive(
+          StringPiece(key.data() + pos, key.size() - pos),
+          request.IsKanaModifierInsensitiveConversion(), &builder);
+      if (builder.result() != NULL) {
+        lattice->Insert(pos, builder.result());
+      }
     }
   }
-}
-
-void ImmutableConverterImpl::AddPredictiveNodes(const size_t &len,
-                                                const size_t &pos,
-                                                Lattice *lattice,
-                                                Node *result_node) const {
-  if (result_node == NULL) {
-    return;
-  }
-
-  // add penalty cost to each nodes
-  for (Node* rnode = result_node; rnode != NULL; rnode = rnode->bnext) {
-    // add penalty to predictive nodes
-    const int kPredictiveNodeDefaultPenalty = 900;  // =~ -500 * log(1/6)
-    int additional_cost = kPredictiveNodeDefaultPenalty;
-
-    // bonus for suffix word
-    if (pos_matcher_->IsSuffixWord(rnode->rid)
-        && pos_matcher_->IsSuffixWord(rnode->lid)) {
-      const int kSuffixWordBonus = 700;
-      additional_cost -= kSuffixWordBonus;
-    }
-
-    // penalty for unique noun word
-    if (pos_matcher_->IsUniqueNoun(rnode->rid)
-        || pos_matcher_->IsUniqueNoun(rnode->lid)) {
-      const int kUniqueNounPenalty = 500;
-      additional_cost += kUniqueNounPenalty;
-    }
-
-    // penalty for number
-    if (pos_matcher_->IsNumber(rnode->rid)
-        || pos_matcher_->IsNumber(rnode->lid)) {
-      const int kNumberPenalty = 4000;
-      additional_cost += kNumberPenalty;
-    }
-
-    rnode->wcost += additional_cost;
-  }
-
-  // insert nodes
-  lattice->Insert(pos, result_node);
 }
 
 bool ImmutableConverterImpl::MakeLattice(
@@ -1362,8 +1382,7 @@ bool ImmutableConverterImpl::MakeLattice(
   if (is_reverse) {
     // Reverse lookup for each prefix string in key is slow with current
     // implementation, so run it for them at once and cache the result.
-    dictionary_->PopulateReverseLookupCache(
-        key.c_str(), key.size(), lattice->node_allocator());
+    dictionary_->PopulateReverseLookupCache(key, lattice->node_allocator());
   }
 
   bool is_valid_lattice = true;

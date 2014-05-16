@@ -691,6 +691,103 @@ bool OnOutputReceivedImpl(TipTextService *text_service,
   return SUCCEEDED(edit_session_result);
 }
 
+// This class is an implementation class for the ITfEditSession classes, which
+// is an observer for exclusively updating the text store of a TSF thread
+// manager.
+class SyncGetTextEditSessionImpl : public ITfEditSession {
+ public:
+  SyncGetTextEditSessionImpl(TipTextService *text_service, ITfRange *range)
+      : text_service_(text_service),
+        range_(range) {
+  }
+  ~SyncGetTextEditSessionImpl() {}
+
+  // The IUnknown interface methods.
+  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
+    return QueryInterfaceImpl(this, interface_id, object);
+  }
+
+  STDMETHODIMP_(ULONG) AddRef() {
+    return ref_count_.AddRefImpl();
+  }
+
+  STDMETHODIMP_(ULONG) Release() {
+    const ULONG count = ref_count_.ReleaseImpl();
+    if (count == 0) {
+      delete this;
+    }
+    return count;
+  }
+
+  // The ITfEditSession interface method.
+  // This function is called back by the TSF thread manager when an edit
+  // request is granted.
+  virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
+    TipRangeUtil::GetText(range_, read_cookie, &text_);
+    return S_OK;
+  }
+
+  const wstring &text() const {
+    return text_;
+  }
+
+ private:
+  TipRefCount ref_count_;
+  CComPtr<TipTextService> text_service_;
+  CComPtr<ITfRange> range_;
+  wstring text_;
+
+  DISALLOW_COPY_AND_ASSIGN(SyncGetTextEditSessionImpl);
+};
+
+// This class is an implementation class for the ITfEditSession classes, which
+// is an observer for exclusively updating the text store of a TSF thread
+// manager.
+class AsyncSetTextEditSessionImpl : public ITfEditSession {
+ public:
+  AsyncSetTextEditSessionImpl(TipTextService *text_service,
+                              const wstring &text,
+                              ITfRange *range)
+      : text_service_(text_service),
+        text_(text),
+        range_(range) {
+  }
+  ~AsyncSetTextEditSessionImpl() {}
+
+  // The IUnknown interface methods.
+  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
+    return QueryInterfaceImpl(this, interface_id, object);
+  }
+
+  STDMETHODIMP_(ULONG) AddRef() {
+    return ref_count_.AddRefImpl();
+  }
+
+  STDMETHODIMP_(ULONG) Release() {
+    const ULONG count = ref_count_.ReleaseImpl();
+    if (count == 0) {
+      delete this;
+    }
+    return count;
+  }
+
+  // The ITfEditSession interface method.
+  // This function is called back by the TSF thread manager when an edit
+  // request is granted.
+  virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
+    range_->SetText(write_cookie, 0, text_.data(), text_.size());
+    return S_OK;
+  }
+
+ private:
+  TipRefCount ref_count_;
+  CComPtr<TipTextService> text_service_;
+  const wstring text_;
+  CComPtr<ITfRange> range_;
+
+  DISALLOW_COPY_AND_ASSIGN(AsyncSetTextEditSessionImpl);
+};
+
 }  // namespace
 
 bool TipEditSession::OnOutputReceivedSync(TipTextService *text_service,
@@ -993,6 +1090,52 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
   }
 
   return OnSwitchInputModeAsync(text_service, context, true, native_mode);
+}
+
+bool TipEditSession::GetTextSync(TipTextService *text_service,
+                                 ITfRange *range,
+                                 wstring *text) {
+  CComPtr<ITfContext> context;
+  if (FAILED(range->GetContext(&context))) {
+    return false;
+  }
+  CComPtr<SyncGetTextEditSessionImpl> get_text(
+      new SyncGetTextEditSessionImpl(text_service, range));
+
+  HRESULT hr = S_OK;
+  HRESULT hr_session = S_OK;
+  hr = context->RequestEditSession(text_service->GetClientID(),
+                                   get_text,
+                                   TF_ES_SYNC | TF_ES_READ,
+                                   &hr_session);
+  if (FAILED(hr)) {
+    return false;
+  }
+  *text = get_text->text();
+  return true;
+}
+
+// static
+bool TipEditSession::SetTextAsync(TipTextService *text_service,
+                                  const wstring &text,
+                                  ITfRange *range) {
+  CComPtr<ITfContext> context;
+  if (FAILED(range->GetContext(&context))) {
+    return false;
+  }
+  CComPtr<AsyncSetTextEditSessionImpl> set_text(
+      new AsyncSetTextEditSessionImpl(text_service, text, range));
+
+  HRESULT hr = S_OK;
+  HRESULT hr_session = S_OK;
+  hr = context->RequestEditSession(text_service->GetClientID(),
+                                   set_text,
+                                   TF_ES_ASYNCDONTCARE | TF_ES_READWRITE,
+                                   &hr_session);
+  if (FAILED(hr)) {
+    return false;
+  }
+  return true;
 }
 
 }  // namespace tsf

@@ -27,11 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "net/jsonpath.h"
+
 #include <string>
 #include <vector>
-#include "base/base.h"
-#include "base/util.h"
-#include "net/jsonpath.h"
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -187,5 +187,6 @@ TEST_F(JsonPathTest, SliceTest) {
   EXPECT_EQ("4 5 6", Parse(kInput, "$.a[4:-3:1]"));
   EXPECT_EQ("0 1 2 3 4 2 3 4 5 6", Parse(kInput, "$.a[0:3,3:5,2:-3]"));
 }
-}  // net
-}  // mozc
+
+}  // namespace net
+}  // namespace mozc

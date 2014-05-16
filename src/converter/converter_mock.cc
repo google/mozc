@@ -31,8 +31,8 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 
@@ -170,10 +170,10 @@ void ConverterMock::SetFreeSegmentValue(Segments *segments, bool result) {
   freesegmentvalue_output_.return_value = result;
 }
 
-void ConverterMock::SetCommitFirstSegment(Segments *segments, bool result) {
-  submitfirstsegment_output_.initialized = true;
-  submitfirstsegment_output_.segments.CopyFrom(*segments);
-  submitfirstsegment_output_.return_value = result;
+void ConverterMock::SetCommitSegments(Segments *segments, bool result) {
+  submitsegments_output_.initialized = true;
+  submitsegments_output_.segments.CopyFrom(*segments);
+  submitsegments_output_.return_value = result;
 }
 
 void ConverterMock::SetResizeSegment1(Segments *segments, bool result) {
@@ -296,10 +296,10 @@ void ConverterMock::GetFreeSegmentValue(Segments *segments,
   *segment_index = freesegmentvalue_input_.segment_index;
 }
 
-void ConverterMock::GetCommitFirstSegment(Segments *segments,
-                                          size_t *candidate_index) {
-  segments->CopyFrom(submitfirstsegment_input_.segments);
-  *candidate_index = submitfirstsegment_input_.candidate_index;
+void ConverterMock::GetCommitSegments(Segments *segments,
+                                      vector<size_t> *candidate_index) {
+  segments->CopyFrom(submitsegments_input_.segments);
+  *candidate_index = submitsegments_input_.candidate_index_list;
 }
 
 void ConverterMock::GetResizeSegment1(Segments *segments, size_t *segment_index,
@@ -607,17 +607,18 @@ bool ConverterMock::FreeSegmentValue(Segments *segments,
   }
 }
 
-bool ConverterMock::CommitFirstSegment(Segments *segments,
-                                       size_t candidate_index) const {
-  VLOG(2) << "mock function: CommitFirstSegment";
-  submitfirstsegment_input_.segments.CopyFrom(*segments);
-  submitfirstsegment_input_.candidate_index = candidate_index;
+bool ConverterMock::CommitSegments(
+    Segments *segments,
+    const vector<size_t> &candidate_index) const {
+  VLOG(2) << "mock function: CommitSegments";
+  submitsegments_input_.segments.CopyFrom(*segments);
+  submitsegments_input_.candidate_index_list = candidate_index;
 
-  if (!submitfirstsegment_output_.initialized) {
+  if (!submitsegments_output_.initialized) {
     return false;
   } else {
-    segments->CopyFrom(submitfirstsegment_output_.segments);
-    return submitfirstsegment_output_.return_value;
+    segments->CopyFrom(submitsegments_output_.segments);
+    return submitsegments_output_.return_value;
   }
 }
 

@@ -29,14 +29,23 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
-import java.util.EnumMap;
+import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 
 /**
  * This is a model class of a key, corresponding to a {@code &lt;Key&gt;} element
  * in a xml resource file.
- * 
+ *
  * Here is a list this class supports.
  * <ul>
  *   <li> {@code keyBackground}: an background image for the key.
@@ -50,10 +59,10 @@ import java.util.List;
  *   <li> {@code isModifier}: whether the key is modifier (e.g. shift key).
  *   <li> {@code isSticky}: whether the key behaves sticky (e.g. caps lock).
  * </ul>
- * 
+ *
  * The {@code &lt;Key&gt;} element can have (at most) two {@code &lt;KeyState&gt;} elements.
  * See also KeyState class for details.
- * 
+ *
  */
 public class Key {
   /**
@@ -79,9 +88,12 @@ public class Key {
   private final boolean isModifier;
   private final boolean isSticky;
   private final Stick stick;
-  private final EnumMap<KeyState.MetaState, KeyState> keyStateMap;
+  // Default KeyState.
+  // Absent if this is a spacer.
+  private final Optional<KeyState> defaultKeyState;
+  private final List<KeyState> keyStateList;
 
-  public Key(int x, int y, int width, int height, int horizontalGap, 
+  public Key(int x, int y, int width, int height, int horizontalGap,
              int edgeFlags, boolean isRepeatable, boolean isModifier, boolean isSticky,
              Stick stick, List<? extends KeyState> keyStateList) {
     this.x = x;
@@ -95,15 +107,29 @@ public class Key {
     this.isSticky = isSticky;
     this.stick = stick;
 
-    this.keyStateMap =
-        new EnumMap<KeyState.MetaState, KeyState>(KeyState.MetaState.class);
+    List<KeyState> tmpKeyStateList = null;  // Lazy creation.
+    Optional<KeyState> defaultKeyState = Optional.absent();
     for (KeyState keyState : keyStateList) {
-      for (KeyState.MetaState metaState : keyState.getMetaStateSet()) {
-        if (this.keyStateMap.put(metaState, keyState) != null) {
-          throw new IllegalArgumentException("Found duplicate meta state: " + metaState);
+      Set<KeyState.MetaState> metaStateSet = keyState.getMetaStateSet();
+      if (metaStateSet.isEmpty()) {
+        if (defaultKeyState.isPresent()) {
+          throw new IllegalArgumentException("Found duplicate default meta state");
         }
+        defaultKeyState = Optional.of(keyState);
+        continue;
       }
+      if (tmpKeyStateList == null) {
+        tmpKeyStateList = new ArrayList<KeyState>();
+      }
+      tmpKeyStateList.add(keyState);
     }
+    if (!defaultKeyState.isPresent() && tmpKeyStateList != null) {
+      throw new IllegalArgumentException("Default KeyState is mandatory for non-spacer.");
+    }
+    this.defaultKeyState = defaultKeyState;
+    this.keyStateList = tmpKeyStateList == null
+        ? Collections.<KeyState>emptyList()
+        : Collections.unmodifiableList(tmpKeyStateList);
   }
 
   public int getX() {
@@ -146,11 +172,58 @@ public class Key {
     return stick;
   }
 
-  public KeyState getKeyState(KeyState.MetaState metaState) {
-    return keyStateMap.get(metaState);
+  /**
+   * Returns {@code KeyState} at least one of which the metaState is in given {@code metaStates}.
+   * <p>
+   * For example, if there are following {@code KeyState}s (registered in this order);
+   * <ul>
+   * <li>KeyState1 : metaStates=A|B
+   * <li>KeyState2 : metaStates=C
+   * <li>KeyState3 : metaStates=null (default)
+   * </ul>
+   * <ul>
+   * <li>metaStates=A gets KeyState1
+   * <li>metaStates=A|B gets KeyState1
+   * <li>metaStates=D gets KeyState3 as default
+   * <li>metaStates=A|C gets KeyState1 as it is registered earlier than KeyState2.
+   * </ul>
+   */
+  public Optional<KeyState> getKeyState(Set<KeyState.MetaState> metaStates) {
+    Preconditions.checkNotNull(metaStates);
+
+    for (KeyState state : keyStateList) {
+      if (!Sets.intersection(state.getMetaStateSet(), metaStates).isEmpty()) {
+        return Optional.of(state);
+      }
+    }
+    return defaultKeyState;
   }
 
   public boolean isSpacer() {
-    return keyStateMap.isEmpty();
+    return !defaultKeyState.isPresent();
+  }
+
+  @Override
+  public String toString() {
+    ToStringHelper helper = Objects.toStringHelper(this);
+    helper.add("defaultKeyState",
+               defaultKeyState.isPresent() ? defaultKeyState.get().toString() : "empty");
+    for (KeyState entry : keyStateList) {
+      helper.addValue(entry.toString());
+    }
+    return helper.toString();
+  }
+
+  /**
+   * Gets all the {@code KeyState}s, including default one.
+   */
+  public Iterable<KeyState> getKeyStates() {
+    if (defaultKeyState.isPresent()) {
+      return Iterables.concat(keyStateList,
+                              Collections.singletonList(defaultKeyState.get()));
+    } else {
+      // Spacer
+      return Collections.emptySet();
+    }
   }
 }

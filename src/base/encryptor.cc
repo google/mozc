@@ -29,7 +29,6 @@
 
 #include "base/encryptor.h"
 
-
 #if defined(OS_WIN)
 #include <windows.h>
 #include <wincrypt.h>
@@ -40,55 +39,22 @@
 #include <string.h>
 #endif  // platforms (OS_WIN, OS_MACOSX, ...)
 
-#ifdef HAVE_OPENSSL
-#include <openssl/sha.h>   // Use default openssl
-#include <openssl/aes.h>
-#endif  // HAVE_OPENSSL
-
-#ifdef OS_ANDROID
-#include "base/android_jni_proxy.h"
-#endif  // OS_ANDROID
-
 #include "base/logging.h"
 #include "base/password_manager.h"
+#include "base/unverified_aes256.h"
+#include "base/unverified_sha1.h"
 #include "base/util.h"
 
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
 #endif  // OS_MACOSX
 
-#include <string>
+using ::mozc::internal::UnverifiedSHA1;
 
 namespace mozc {
 namespace {
 
-#if defined(OS_ANDROID)
-using jni::JavaEncryptorProxy;
-const size_t kBlockSize = JavaEncryptorProxy::kBlockSizeInBytes;
-const size_t kKeySize = JavaEncryptorProxy::kKeySizeInBits;
-#elif defined(OS_WIN)
-const size_t kBlockSize = 16;  // 128bit
-const size_t kKeySize = 256;   // key length in bit
-// Use CBC mode:
-// CBC has been the most commonly used mode of operation.
-// See http://en.wikipedia.org/wiki/Block_cipher_modes_of_operation
-const DWORD kCryptMode = CRYPT_MODE_CBC;   // crypt mode (CBC)
-// Use PKCS5 padding:
-// See http://www.chilkatsoft.com/faq/PKCS5_Padding.html
-const DWORD kPaddingMode = PKCS5_PADDING;  // padding mode
-#elif defined(HAVE_OPENSSL)
-const size_t kBlockSize = AES_BLOCK_SIZE;
-const size_t kKeySize = 256;   // key length in bit
-
-// Return SHA1 digest
-string HashSHA1(const string &data) {
-  uint8 buf[SHA_DIGEST_LENGTH];   // 160bit
-  SHA1(reinterpret_cast<const uint8 *>(data.data()), data.size(), buf);
-  string result(reinterpret_cast<char *>(buf), SHA_DIGEST_LENGTH);
-  return result;
-}
-
-// By using OpenSSL's SHA1, emulate Microsoft's CryptDerivePassword API
+// By using SHA1, emulate Microsoft's CryptDerivePassword API
 // http://msdn.microsoft.com/en-us/library/aa379916.aspx
 // says:
 // Let n be the required derived key length, in bytes.
@@ -127,7 +93,7 @@ string GetMSCryptDeriveKeyWithSHA1(const string &password,
   memset(buf2, 0x5c, sizeof(buf2));
 
   // Step 3 & 4
-  const string hash = HashSHA1(password + salt);
+  const string hash = UnverifiedSHA1::MakeDigest(password + salt);
   for (size_t i = 0; i < hash.size(); ++i) {
     buf1[i] ^= static_cast<uint8>(hash[i]);
     buf2[i] ^= static_cast<uint8>(hash[i]);
@@ -137,29 +103,27 @@ string GetMSCryptDeriveKeyWithSHA1(const string &password,
   const string result1(reinterpret_cast<const char *>(buf1), sizeof(buf1));
   const string result2(reinterpret_cast<const char *>(buf2), sizeof(buf2));
 
-  return HashSHA1(result1) + HashSHA1(result2);
+  return (UnverifiedSHA1::MakeDigest(result1) +
+          UnverifiedSHA1::MakeDigest(result2));
 }
-#else
-// None of OS_ANDROID/OS_WIN/HAVE_OPENSSL is defined.
-#error "Encryptor does not support your platform."
-#endif
+
+const size_t kBlockSize = 16;  // 128 bit
+const size_t kKeySize = 32;   // 256 bit key length
 
 }  // namespace
 
-struct KeyData {
-#if defined(OS_ANDROID)
-  uint8 key[kKeySize / 8];
-#elif defined(OS_WIN)
-  HCRYPTPROV prov;
-  HCRYPTHASH hash;
-  HCRYPTKEY  key;
-#elif defined(HAVE_OPENSSL)
-  AES_KEY encrypt_key;
-  AES_KEY decrypt_key;
-#else
-// None of OS_ANDROID/OS_WIN/HAVE_OPENSSL is defined.
-#error "Encryptor does not support your platform."
-#endif
+// TODO(yukawa): Consider to maintain these data directly in Encryptor::Key or
+// completely rewrite Encryptor::Key once encryptor_legacy.cc is deprecated.
+struct Encryptor::Key::InternalData {
+  uint8 key[kKeySize];
+  uint8 iv[kBlockSize];
+  bool is_available;
+
+  InternalData()
+      : is_available(false) {
+    memset(key, '\0', arraysize(key));
+    memset(iv, '\0', arraysize(iv));
+  }
 };
 
 size_t Encryptor::Key::block_size() const {
@@ -167,19 +131,19 @@ size_t Encryptor::Key::block_size() const {
 }
 
 const uint8 *Encryptor::Key::iv() const {
-  return iv_.get();
+  return data_->iv;
 }
 
 size_t Encryptor::Key::iv_size() const {
-  return block_size();   // the same as block size
+  return kBlockSize;   // the same as block size
 }
 
 size_t Encryptor::Key::key_size() const {
-  return kKeySize;
+  return kKeySize * 8;
 }
 
 bool Encryptor::Key::IsAvailable() const {
-  return is_available_;
+  return data_->is_available;
 }
 
 size_t Encryptor::Key::GetEncryptedSize(size_t size) const {
@@ -190,117 +154,10 @@ size_t Encryptor::Key::GetEncryptedSize(size_t size) const {
   return (size / block_size() + 1) * block_size();
 }
 
-KeyData *Encryptor::Key::GetKeyData() const {
-  return data_.get();
-}
-
-#ifdef OS_WIN
 bool Encryptor::Key::DeriveFromPassword(const string &password,
                                         const string &salt,
                                         const uint8 *iv) {
-  if (is_available_) {
-    LOG(WARNING) << "key is already set";
-    return false;
-  }
-
-  if (password.empty()) {
-    LOG(WARNING) << "password is empty";
-    return false;
-  }
-
-  // http://support.microsoft.com/kb/238187/en-us/
-  // First, AcquireContext. if it failed, make a
-  // key with CRYPT_NEWKEYSET flag
-  if (!::CryptAcquireContext(&(GetKeyData()->prov),
-                             NULL,
-                             NULL,  // use default
-                             PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
-    if (NTE_BAD_KEYSET == ::GetLastError()) {
-      if (!::CryptAcquireContext(&(GetKeyData()->prov),
-                                 NULL,
-                                 NULL,  // use default
-                                 PROV_RSA_AES,
-                                 CRYPT_NEWKEYSET)) {
-        LOG(ERROR) << "CryptAcquireContext failed: " << ::GetLastError();
-        return false;
-      }
-    } else {
-      LOG(ERROR) << "CryptAcquireContext failed: " << ::GetLastError();
-      return false;
-    }
-  }
-
-  // Create Hash
-  if (!::CryptCreateHash(GetKeyData()->prov, CALG_SHA1, 0, 0,
-                         &(GetKeyData()->hash))) {
-    LOG(ERROR) << "CryptCreateHash failed: " << ::GetLastError();
-    ::CryptReleaseContext(GetKeyData()->prov, 0);
-    return false;
-  }
-
-  // Set password + salt
-  const string final_password = password + salt;
-  if (!::CryptHashData(GetKeyData()->hash,
-                       const_cast<BYTE *>(
-                           reinterpret_cast<const BYTE *>(
-                               final_password.data())),
-                       final_password.size(), 0)) {
-    LOG(ERROR) << "CryptHashData failed: " << ::GetLastError();
-    ::CryptReleaseContext(GetKeyData()->prov, 0);
-    ::CryptDestroyHash(GetKeyData()->hash);
-    return false;
-  }
-
-  // Set algorithm
-  if (!::CryptDeriveKey(GetKeyData()->prov,
-                        CALG_AES_256,
-                        GetKeyData()->hash,
-                        (key_size() << 16),
-                        &(GetKeyData()->key))) {
-    LOG(ERROR) << "CryptDeriveKey failed: "<< ::GetLastError();
-    ::CryptReleaseContext(GetKeyData()->prov, 0);
-    ::CryptDestroyHash(GetKeyData()->hash);
-    return false;
-  }
-
-  // Set IV
-  if (iv != NULL) {
-    memcpy(iv_.get(), iv, iv_size());
-  } else {
-    memset(iv_.get(), '\0', iv_size());
-  }
-
-  // Set padding mode, IV, CBC
-  if (!::CryptSetKeyParam(GetKeyData()->key,
-                          KP_PADDING,
-                          const_cast<BYTE *>(
-                              reinterpret_cast<const BYTE *>(
-                                  &kPaddingMode)), 0) ||
-      !::CryptSetKeyParam(GetKeyData()->key,
-                          KP_MODE,
-                          const_cast<BYTE *>(
-                              reinterpret_cast<const BYTE *>(
-                                  &kCryptMode)), 0) ||
-      !::CryptSetKeyParam(GetKeyData()->key,
-                          KP_IV,
-                          iv_.get(), 0)) {
-    LOG(ERROR) << "CryptSetKeyParam failed" << ::GetLastError();
-    ::CryptReleaseContext(GetKeyData()->prov, 0);
-    ::CryptDestroyKey(GetKeyData()->key);
-    ::CryptDestroyHash(GetKeyData()->hash);
-    return false;
-  }
-
-  is_available_ = true;
-
-  return true;
-}
-#else  // OS_WIN
-
-bool Encryptor::Key::DeriveFromPassword(const string &password,
-                                        const string &salt,
-                                        const uint8 *iv) {
-  if (is_available_) {
+  if (IsAvailable()) {
     LOG(WARNING) << "key is already set";
     return false;
   }
@@ -311,55 +168,28 @@ bool Encryptor::Key::DeriveFromPassword(const string &password,
   }
 
   if (iv != NULL) {
-    memcpy(iv_.get(), iv, iv_size());
+    memcpy(data_->iv, iv, iv_size());
   } else {
-    memset(iv_.get(), '\0', iv_size());
+    memset(data_->iv, '\0', iv_size());
   }
 
-#ifdef OS_ANDROID
-  size_t size = sizeof(GetKeyData()->key);
-  if (!JavaEncryptorProxy::DeriveFromPassword(
-          password, salt, GetKeyData()->key, &size)) {
-    LOG(WARNING) << "Failed to generate key.";
-    return false;
-  }
-  if (size != sizeof(GetKeyData()->key)) {
-    LOG(WARNING) << "Key size is changed: " << size;
-    return false;
-  }
-#else
   const string key = GetMSCryptDeriveKeyWithSHA1(password, salt);
   DCHECK_EQ(40, key.size());   // SHA1 is 160bit hash, so 160*2/8 = 40byte
 
-  AES_set_encrypt_key(reinterpret_cast<const uint8 *>(key.data()),
-                      key_size(),
-                      &(GetKeyData()->encrypt_key));
-  AES_set_decrypt_key(reinterpret_cast<const uint8 *>(key.data()),
-                      key_size(),
-                      &(GetKeyData()->decrypt_key));
-#endif  // OS_ANDROID
+  // Store the session key.
+  // NOTE: key_size() returns size in bit for historical reasons.
+  memcpy(data_->key, key.data(), key_size() / 8);
 
-  is_available_ = true;
+  data_->is_available = true;
 
   return true;
 }
-#endif   // OS_WIN
 
 Encryptor::Key::Key()
-    : data_(new KeyData),
-      iv_(new uint8[kBlockSize]),
-      is_available_(false) {
-  memset(iv_.get(), '\0', iv_size());
+    : data_(new Encryptor::Key::InternalData) {
 }
 
 Encryptor::Key::~Key() {
-#ifdef OS_WIN
-  if (is_available_) {
-    ::CryptDestroyKey(GetKeyData()->key);
-    ::CryptDestroyHash(GetKeyData()->hash);
-    ::CryptReleaseContext(GetKeyData()->prov, 0);
-  }
-#endif
 }
 
 bool Encryptor::EncryptString(const Encryptor::Key &key, string *data) {
@@ -408,26 +238,6 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
 
   const size_t enc_size = key.GetEncryptedSize(*buf_size);
 
-#if defined(OS_ANDROID)
-  if (!JavaEncryptorProxy::Encrypt(
-          key.GetKeyData()->key, key.iv(), enc_size, buf, buf_size)) {
-    LOG(ERROR) << "CryptEncrypt failed";
-    return false;
-  }
-  return true;
-#elif defined(OS_WIN)
-  uint32 size = *buf_size;
-  if (!::CryptEncrypt(key.GetKeyData()->key,
-                      0, TRUE, 0,
-                      reinterpret_cast<BYTE *>(buf),
-                      reinterpret_cast<DWORD *>(&size),
-                      static_cast<DWORD>(enc_size))) {
-    LOG(ERROR) << "CryptEncrypt failed: " << ::GetLastError();
-    return false;
-  }
-  *buf_size = enc_size;
-  return true;
-#elif defined(HAVE_OPENSSL)
   // perform PKCS#5 padding
   const size_t padding_size = enc_size - *buf_size;
   const uint8 padding_value = static_cast<uint8>(padding_size);
@@ -435,21 +245,13 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
     buf[i] = static_cast<char>(padding_value);
   }
 
-  // iv is used inside AES_cbc_encrypt, so must copy it.
-  scoped_ptr<uint8[]> iv(new uint8[key.iv_size()]);
-  memcpy(iv.get(), key.iv(), key.iv_size());  // copy iv
-
-  AES_cbc_encrypt(reinterpret_cast<const uint8 *>(buf),
-                  reinterpret_cast<uint8 *>(buf),
-                  enc_size, &(key.GetKeyData()->encrypt_key),
-                  iv.get(), AES_ENCRYPT);
+  // For historical reasons, we are using AES256/CBC for obfuscation.
+  internal::UnverifiedAES256::TransformCBC(key.data_->key,
+                                           key.data_->iv,
+                                           reinterpret_cast<uint8 *>(buf),
+                                           enc_size / kBlockSize);
   *buf_size = enc_size;
   return true;
-#else
-// None of OS_ANDROID/OS_WIN/HAVE_OPENSSL is defined.
-#error "Encryptor does not support your platform."
-  return false;
-#endif
 }
 
 bool Encryptor::DecryptArray(const Encryptor::Key &key,
@@ -469,40 +271,20 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
     return false;
   }
 
-#if defined(OS_ANDROID)
-  if (!JavaEncryptorProxy::Decrypt(
-          key.GetKeyData()->key, key.iv(), *buf_size, buf, buf_size)) {
-    LOG(ERROR) << "CryptDecrypt failed";
-    return false;
-  }
-  return true;
-#elif defined(OS_WIN)
-  DWORD size = static_cast<DWORD>(*buf_size);
-  if (!::CryptDecrypt(key.GetKeyData()->key,
-                      0, TRUE, 0,
-                      reinterpret_cast<uint8 *>(buf),
-                      &size)) {
-    LOG(ERROR) << "CryptDecrypt failed: " << ::GetLastError();
-    return false;
-  }
-
-  *buf_size = size;
-  return true;
-#elif defined(HAVE_OPENSSL)
   size_t size = *buf_size;
-  // iv is used inside AES_cbc_encrypt, so must copy it.
-  scoped_ptr<uint8[]> iv(new uint8[key.iv_size()]);
-  memcpy(iv.get(), key.iv(), key.iv_size());  // copy iv
 
-  AES_cbc_encrypt(reinterpret_cast<const uint8 *>(buf),
-                  reinterpret_cast<uint8 *>(buf), size,
-                  &(key.GetKeyData()->decrypt_key), iv.get(), AES_DECRYPT);
+  // For historical reasons, we are using AES256/CBC for obfuscation.
+  internal::UnverifiedAES256::InverseTransformCBC(
+      key.data_->key,
+      key.data_->iv,
+      reinterpret_cast<uint8 *>(buf),
+      size / kBlockSize);
 
   // perform PKCS#5 un-padding
   // see. http://www.chilkatsoft.com/faq/PKCS5_Padding.html
   const uint8 padding_value = static_cast<uint8>(buf[size - 1]);
   const size_t padding_size = static_cast<size_t>(padding_value);
-  if (padding_value == 0x00 || padding_value > AES_BLOCK_SIZE) {
+  if (padding_value == 0x00 || padding_value > kBlockSize) {
     LOG(ERROR) << "Cannot find PKCS#5 padding values: ";
     return false;
   }
@@ -520,11 +302,6 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
   }
   *buf_size -= padding_size;   // remove padding part
   return true;
-#else
-// None of OS_ANDROID/OS_WIN/HAVE_OPENSSL is defined.
-#error "Encryptor does not support your platform."
-  return false;
-#endif
 }
 
 // Protect|Unprotect Data

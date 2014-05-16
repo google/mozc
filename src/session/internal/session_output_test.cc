@@ -27,14 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/internal/session_output.h"
+
 #include <string>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 #include "session/internal/candidate_list.h"
-#include "session/internal/session_output.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

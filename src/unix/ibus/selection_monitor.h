@@ -49,9 +49,9 @@ struct SelectionInfo {
 class SelectionMonitorInterface {
  public:
   virtual ~SelectionMonitorInterface();
-  virtual SelectionInfo GetSelectionInfo() ABSTRACT;
-  virtual void StartMonitoring() ABSTRACT;
-  virtual void QueryQuit() ABSTRACT;
+  virtual SelectionInfo GetSelectionInfo() = 0;
+  virtual void StartMonitoring() = 0;
+  virtual void QueryQuit() = 0;
 };
 
 class SelectionMonitorFactory {

@@ -38,11 +38,11 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/bitarray.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
+#include "base/port.h"
 
 namespace mozc {
 
@@ -123,6 +123,8 @@ class StateTable {
   vector<string> idarray_;
   vector<uint16> compressed_table_;
   size_t compressed_size_;
+
+  DISALLOW_COPY_AND_ASSIGN(StateTable);
 };
 }  // namespace
 

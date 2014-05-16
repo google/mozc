@@ -45,6 +45,7 @@
 #include "base/hash_tables.h"
 #include "base/util.h"
 #include "renderer/table_layout.h"
+#include "renderer/win32/text_renderer.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "renderer/window_util.h"
 #include "session/commands.pb.h"
@@ -52,6 +53,7 @@
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_private_context.h"
+#include "win32/tip/tip_range_util.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_delegate.h"
@@ -116,6 +118,10 @@ volatile DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 struct RenderingInfo {
   CRect target_rect;
   Output output;
+  bool has_target_rect;
+  RenderingInfo()
+      : has_target_rect(false) {
+  }
 };
 
 size_t GetTargetPos(const commands::Output &output) {
@@ -154,10 +160,12 @@ bool FillRenderInfo(TipTextService *text_service,
   TipPrivateContext *private_context =
       text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
-    return nullptr;
+    return false;
   }
 
   info->output.Clear();
+  info->target_rect = CRect();
+  info->has_target_rect = false;
   const Output &output = private_context->last_output();
 
   CComPtr<ITfCompositionView> composition_view =
@@ -207,15 +215,18 @@ bool FillRenderInfo(TipTextService *text_service,
   }
 
   RECT text_rect = {};
-  BOOL clipped = FALSE;
-  if (FAILED(context_view->GetTextExt(read_cookie, target_range,
-                                      &text_rect, &clipped))) {
+  bool clipped = false;
+  const HRESULT hr = TipRangeUtil::GetTextExt(
+      context_view, read_cookie, target_range, &text_rect, &clipped);
+  if (SUCCEEDED(hr)) {
+    info->target_rect = text_rect;
+    info->has_target_rect = true;
+  } else if (hr == TF_E_NOLAYOUT) {
+    // This is not a fatal error but |text_rect| is not available yet.
+  } else {
     return false;
   }
-
-  *info->target_rect = text_rect;
   info->output.CopyFrom(output);
-
   return true;
 }
 
@@ -265,6 +276,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
             text_service, context,
             TipUiElementDelegateFactory::kImmersiveCandidateWindow)),
         working_area_(renderer::win32::WorkingAreaFactory::Create()),
+        text_renderer_(renderer::win32::TextRenderer::Create()),
         window_(window_handle),
         window_visible_(false) {
   }
@@ -335,7 +347,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   // Returns true when handled.
   bool HandleMouseEvent(
       UINT nFlags, const CPoint &point, bool select_candidate) {
-    const Candidates candidates = rendering_info_.output.candidates();
+    const Candidates candidates = output_.candidates();
     for (size_t i = 0; i < candidates.candidate_size(); ++i) {
       const Candidate &candidate = candidates.candidate(i);
 
@@ -381,19 +393,16 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   }
 
   void Render(const RenderingInfo &info) {
-    if (!info.output.has_candidates()) {
-      HideWindow();
-      return;
-    }
-
+    // Should be compared here before |output_| is synced to |info.output|.
     const bool content_changed =
-        (rendering_info_.target_rect != info.target_rect) ||
-        (rendering_info_.output.SerializeAsString() !=
-         info.output.SerializeAsString());
+        (target_rect_ != info.target_rect) ||
+        (output_.SerializeAsString() != info.output.SerializeAsString());
 
-    rendering_info_.target_rect = info.target_rect;
-    rendering_info_.output.CopyFrom(info.output);
-    RenderImpl(info);
+    output_.CopyFrom(info.output);
+    if (info.has_target_rect) {
+      target_rect_ = info.target_rect;
+      RenderImpl();
+    }
 
     BOOL shown = FALSE;
     delegate_->IsShown(&shown);
@@ -438,21 +447,25 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   }
 
  private:
-  void RenderImpl(const RenderingInfo &info) {
+  void RenderImpl() {
+    if (!output_.has_candidates()) {
+      return;
+    }
     CSize size;
     int left_offset = 0;
     CBitmap bitmap(TipUiRendererImmersive::Render(
-        info.output.candidates(), &table_layout_, &size, &left_offset));
-    const CPoint target_point(info.target_rect.left, info.target_rect.bottom);
+        output_.candidates(), text_renderer_.get(), &table_layout_,
+        &size, &left_offset));
+    const CPoint target_point(target_rect_.left, target_rect_.bottom);
     Rect new_position(target_point.x - left_offset,
                       target_point.y,
                       size.cx,
                       size.cy);
     {
-      const Rect preedit_rect(info.target_rect.left,
-                              info.target_rect.top,
-                              info.target_rect.Width(),
-                              info.target_rect.Height());
+      const Rect preedit_rect(target_rect_.left,
+                              target_rect_.top,
+                              target_rect_.Width(),
+                              target_rect_.Height());
       const Size window_size(size.cx, size.cy);
       const Point zero_point_offset(left_offset, 0);
       Rect working_area;
@@ -572,10 +585,12 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   CComPtr<ITfContext> context_;
   unique_ptr<TipUiElementDelegate> delegate_;
   unique_ptr<renderer::win32::WorkingAreaInterface> working_area_;
+  unique_ptr<renderer::win32::TextRenderer> text_renderer_;
   CWindow window_;
   bool window_visible_;
   TableLayout table_layout_;
-  RenderingInfo rendering_info_;
+  CRect target_rect_;
+  Output output_;
   DISALLOW_COPY_AND_ASSIGN(TipImmersiveUiElementImpl);
 };
 
@@ -716,8 +731,9 @@ HRESULT STDMETHODCALLTYPE
     TipImmersiveUiElementImpl::UpdateUiEditSession::DoEditSession(
     TfEditCookie read_cookie) {
   RenderingInfo info;
-  FillRenderInfo(text_service_, context_, read_cookie, &info);
-  ui_element_->Render(info);
+  if (FillRenderInfo(text_service_, context_, read_cookie, &info)) {
+    ui_element_->Render(info);
+  }
   return S_OK;
 }
 

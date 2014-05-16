@@ -29,13 +29,15 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
+import com.google.common.base.Optional;
+
 import android.graphics.BlurMaskFilter;
+import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Paint.Style;
+import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 
@@ -44,6 +46,7 @@ import android.graphics.Shader.TileMode;
  *
  */
 public class PopUpFrameWindowDrawable extends BaseBackgroundDrawable {
+
   private final int frameWidth;
 
   private final int topColor;
@@ -56,7 +59,7 @@ public class PopUpFrameWindowDrawable extends BaseBackgroundDrawable {
   private final Rect innerFrameRect = new Rect();
   private final Paint paint = new Paint();
   private final BlurMaskFilter blurMaskFilter;
-  private Shader shader;
+  private Optional<Shader> shader = Optional.absent();
 
   public PopUpFrameWindowDrawable(
       int leftPadding, int topPadding, int rightPadding, int bottomPadding,
@@ -89,10 +92,10 @@ public class PopUpFrameWindowDrawable extends BaseBackgroundDrawable {
     canvas.drawRect(outerFrameRect, paint);
 
     // Draw the main part of the frame.
-    if (shader != null) {
+    if (shader.isPresent()) {
       paint.reset();
       paint.setAntiAlias(true);
-      paint.setShader(shader);
+      paint.setShader(shader.get());
       canvas.drawRect(outerFrameRect, paint);
     }
 
@@ -126,7 +129,7 @@ public class PopUpFrameWindowDrawable extends BaseBackgroundDrawable {
     innerFrameRect.set(
         canvasRect.left + frameWidth, canvasRect.top + frameWidth,
         canvasRect.right - frameWidth, canvasRect.bottom - frameWidth);
-    shader = new LinearGradient(
-        0, canvasRect.top, 0, canvasRect.bottom, topColor, bottomColor, TileMode.CLAMP);
+    shader = Optional.<Shader>of(new LinearGradient(
+        0, canvasRect.top, 0, canvasRect.bottom, topColor, bottomColor, TileMode.CLAMP));
   }
 }

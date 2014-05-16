@@ -57,9 +57,9 @@ TEST(GenericStorageManagerFactoryTest, GetStorage) {
       GenericStorageManagerFactory::GetStorage(
           (commands::GenericStorageEntry::StorageType)(100));
 
-  EXPECT_TRUE(symbol);
-  EXPECT_TRUE(emoticon);
-  EXPECT_FALSE(invalid);
+  EXPECT_NE(nullptr, symbol);
+  EXPECT_NE(nullptr, emoticon);
+  EXPECT_EQ(nullptr, invalid);
   EXPECT_NE(symbol, emoticon);
 }
 

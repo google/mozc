@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace handwriting {
@@ -59,10 +59,10 @@ class HandwritingInterface {
   virtual ~HandwritingInterface() {}
 
   virtual HandwritingStatus Recognize(
-      const Strokes &strokes, vector<string> *candidates) const ABSTRACT;
+      const Strokes &strokes, vector<string> *candidates) const = 0;
 
   virtual HandwritingStatus Commit(const Strokes &strokes,
-                                   const string &result) ABSTRACT;
+                                   const string &result) = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(HandwritingInterface);
@@ -79,8 +79,7 @@ class HandwritingManager {
   static HandwritingStatus Commit(const Strokes &strokes, const string &result);
 
  private:
-  HandwritingManager() {}
-  virtual ~HandwritingManager() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(HandwritingManager);
 };
 
 }  // namespace handwriting

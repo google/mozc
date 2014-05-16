@@ -57,7 +57,7 @@ void SetCandidate(const ReadingCorrectionItem *item,
 
 struct ReadingCorrectionItemCompare {
   bool operator()(const ReadingCorrectionItem &s1,
-                  const ReadingCorrectionItem &s2) {
+                  const ReadingCorrectionItem &s2) const {
     return (strcmp(s1.error, s2.error) < 0);
   }
 };

@@ -31,15 +31,17 @@ package org.mozc.android.inputmethod.japanese.model;
 
 import org.mozc.android.inputmethod.japanese.EmoticonData;
 import org.mozc.android.inputmethod.japanese.SymbolData;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MajorCategory;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MinorCategory;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiData;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import org.mozc.android.inputmethod.japanese.emoji.EmojiUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.Annotation;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -53,15 +55,20 @@ import java.util.Map;
  */
 public class SymbolCandidateStorage {
 
+  /** Interface to handle symbol history data. */
   public interface SymbolHistoryStorage {
-    public List<String> getAllHistory(MajorCategory majorCategory);
-    public void addHistory(MajorCategory majorCategory, String value);
+    public List<String> getAllHistory(SymbolMajorCategory majorCategory);
+    public void addHistory(SymbolMajorCategory majorCategory, String value);
   }
 
   /** Set of names of Emoji based on carriers. */
   private static class EmojiDescriptionSet {
-    static final EmojiDescriptionSet NULL_INSTANCE =
-        new EmojiDescriptionSet(null, null, null, null, null);
+    static final EmojiDescriptionSet NULL_INSTANCE;
+    static {
+        String[] empty = new String[0];
+        NULL_INSTANCE = new EmojiDescriptionSet(empty, empty, empty, empty, empty);
+    }
+
     final String[] faceDescription;
     final String[] foodDescription;
     final String[] activityDescription;
@@ -73,11 +80,11 @@ public class SymbolCandidateStorage {
                         String[] activityDescription,
                         String[] cityDescription,
                         String[] natureDescription) {
-      this.faceDescription = faceDescription;
-      this.foodDescription = foodDescription;
-      this.activityDescription = activityDescription;
-      this.cityDescription = cityDescription;
-      this.natureDescription = natureDescription;
+      this.faceDescription = Preconditions.checkNotNull(faceDescription);
+      this.foodDescription = Preconditions.checkNotNull(foodDescription);
+      this.activityDescription = Preconditions.checkNotNull(activityDescription);
+      this.cityDescription = Preconditions.checkNotNull(cityDescription);
+      this.natureDescription = Preconditions.checkNotNull(natureDescription);
     }
   }
 
@@ -106,7 +113,8 @@ public class SymbolCandidateStorage {
   }
 
   /** Map from the carrier to its Emoji description set. */
-  private static final Map<EmojiProviderType, EmojiDescriptionSet> EMOJI_DESCRIPTION_SET_MAP;
+  private static final Map<EmojiProviderType, EmojiDescriptionSet>
+      CARRIER_EMOJI_DESCRIPTION_SET_MAP;
   static {
     EnumMap<EmojiProviderType, EmojiDescriptionSet> map =
         new EnumMap<EmojiProviderType, EmojiDescriptionSet>(EmojiProviderType.class);
@@ -128,59 +136,84 @@ public class SymbolCandidateStorage {
                                     EmojiData.KDDI_ACTIVITY_NAME,
                                     EmojiData.KDDI_CITY_NAME,
                                     EmojiData.KDDI_NATURE_NAME));
-    EMOJI_DESCRIPTION_SET_MAP = Collections.unmodifiableMap(map);
+    CARRIER_EMOJI_DESCRIPTION_SET_MAP = Collections.unmodifiableMap(map);
   }
 
   private final SymbolHistoryStorage symbolHistoryStorage;
+  private boolean isUnicodeEmojiEnabled = false;
+  private boolean isCarrierEmojiEnabled = false;
   private EmojiProviderType emojiProviderType = EmojiProviderType.NONE;
-  private EmojiDescriptionSet emojiDescriptionSet = EmojiDescriptionSet.NULL_INSTANCE;
-  private Map<String, String> emojiDescriptionMap = null;
+  private EmojiDescriptionSet carrierEmojiDescriptionSet = EmojiDescriptionSet.NULL_INSTANCE;
+  private Map<String, String> emojiDescriptionMap = Collections.emptyMap();
 
   public SymbolCandidateStorage(SymbolHistoryStorage symbolHistoryStorage) {
-    this.symbolHistoryStorage = symbolHistoryStorage;
+    this.symbolHistoryStorage = Preconditions.checkNotNull(symbolHistoryStorage);
+    setEmojiProviderTypeInternal(EmojiProviderType.NONE);
+  }
+
+  public void setEmojiEnabled(boolean isUnicodeEmojiEnabled, boolean isCarrierEmojiEnabled) {
+    this.isUnicodeEmojiEnabled = isUnicodeEmojiEnabled;
+    this.isCarrierEmojiEnabled = isCarrierEmojiEnabled;
   }
 
   public void setEmojiProviderType(EmojiProviderType emojiProviderType) {
-    Preconditions.checkNotNull(emojiProviderType);
-
-    if (this.emojiProviderType == emojiProviderType) {
+    if (this.emojiProviderType == Preconditions.checkNotNull(emojiProviderType)) {
       // No change.
       return;
     }
+    setEmojiProviderTypeInternal(emojiProviderType);
+  }
 
-    // Update description data, too.
-    EmojiDescriptionSet emojiDescriptionSet = EMOJI_DESCRIPTION_SET_MAP.get(emojiProviderType);
+  private void setEmojiProviderTypeInternal(EmojiProviderType emojiProviderType) {
+    EmojiDescriptionSet carrierEmojiDescriptionSet =
+        CARRIER_EMOJI_DESCRIPTION_SET_MAP.get(emojiProviderType);
     this.emojiProviderType = emojiProviderType;
-    this.emojiDescriptionSet = (emojiDescriptionSet == null)
-        ? EmojiDescriptionSet.NULL_INSTANCE : emojiDescriptionSet;
-    emojiDescriptionMap = createEmojiDescriptionMap(emojiDescriptionSet);
+    if (carrierEmojiDescriptionSet == null) {
+      this.carrierEmojiDescriptionSet = EmojiDescriptionSet.NULL_INSTANCE;
+      this.emojiDescriptionMap = createEmojiDescriptionMap(Optional.<EmojiDescriptionSet>absent());
+    } else {
+      this.carrierEmojiDescriptionSet = carrierEmojiDescriptionSet;
+      this.emojiDescriptionMap = createEmojiDescriptionMap(Optional.of(carrierEmojiDescriptionSet));
+    }
   }
 
   private static Map<String, String> createEmojiDescriptionMap(
-      EmojiDescriptionSet emojiDescriptionSet) {
-    if (emojiDescriptionSet == null) {
-      return null;
-    }
+      Optional<EmojiDescriptionSet> carrierEmojiDescriptionSet) {
+    Preconditions.checkNotNull(carrierEmojiDescriptionSet);
 
     Map<String, String> map = new HashMap<String, String>();
+
     createEmojiDescriptionMapInternal(
-        EmojiData.FACE_VALUES, emojiDescriptionSet.faceDescription, map);
+        EmojiData.FACE_VALUES, EmojiData.UNICODE_FACE_NAME, map);
     createEmojiDescriptionMapInternal(
-        EmojiData.FOOD_VALUES, emojiDescriptionSet.foodDescription, map);
+        EmojiData.FOOD_VALUES, EmojiData.UNICODE_FOOD_NAME, map);
     createEmojiDescriptionMapInternal(
-        EmojiData.ACTIVITY_VALUES, emojiDescriptionSet.activityDescription, map);
+        EmojiData.ACTIVITY_VALUES, EmojiData.UNICODE_ACTIVITY_NAME, map);
     createEmojiDescriptionMapInternal(
-        EmojiData.CITY_VALUES, emojiDescriptionSet.cityDescription, map);
+        EmojiData.CITY_VALUES, EmojiData.UNICODE_CITY_NAME, map);
     createEmojiDescriptionMapInternal(
-        EmojiData.NATURE_VALUES, emojiDescriptionSet.natureDescription, map);
+        EmojiData.NATURE_VALUES, EmojiData.UNICODE_NATURE_NAME, map);
+
+    if (carrierEmojiDescriptionSet.isPresent()) {
+      EmojiDescriptionSet descriptionSet = carrierEmojiDescriptionSet.get();
+      createEmojiDescriptionMapInternal(
+          EmojiData.FACE_PUA_VALUES, descriptionSet.faceDescription, map);
+      createEmojiDescriptionMapInternal(
+          EmojiData.FOOD_PUA_VALUES, descriptionSet.foodDescription, map);
+      createEmojiDescriptionMapInternal(
+          EmojiData.ACTIVITY_PUA_VALUES, descriptionSet.activityDescription, map);
+      createEmojiDescriptionMapInternal(
+          EmojiData.CITY_PUA_VALUES, descriptionSet.cityDescription, map);
+      createEmojiDescriptionMapInternal(
+          EmojiData.NATURE_PUA_VALUES, descriptionSet.natureDescription, map);
+    }
+
     return Collections.unmodifiableMap(map);
   }
 
   private static void createEmojiDescriptionMapInternal(
       String[] values, String[] descriptions, Map<String, String> map) {
-    if (values.length != descriptions.length) {
-      throw new IllegalArgumentException();
-    }
+    Preconditions.checkArgument(values.length == descriptions.length);
 
     for (int i = 0; i < descriptions.length; ++i) {
       String description = descriptions[i];
@@ -191,11 +224,11 @@ public class SymbolCandidateStorage {
   }
 
   /** @return the {@link CandidateList} instance for the given {@code minorCategory}. */
-  public CandidateList getCandidateList(MinorCategory minorCategory) {
+  public CandidateList getCandidateList(SymbolMinorCategory minorCategory) {
     switch (minorCategory) {
       // SYMBOL major category candidates.
       case SYMBOL_HISTORY:
-        return toCandidateList(symbolHistoryStorage.getAllHistory(MajorCategory.SYMBOL));
+        return toCandidateList(symbolHistoryStorage.getAllHistory(SymbolMajorCategory.SYMBOL));
       case SYMBOL_GENERAL:
         return toCandidateList(Arrays.asList(SymbolData.GENERAL_VALUES));
       case SYMBOL_HALF:
@@ -209,7 +242,7 @@ public class SymbolCandidateStorage {
 
       // EMOTICON major category candidates.
       case EMOTICON_HISTORY:
-        return toCandidateList(symbolHistoryStorage.getAllHistory(MajorCategory.EMOTICON));
+        return toCandidateList(symbolHistoryStorage.getAllHistory(SymbolMajorCategory.EMOTICON));
       case EMOTICON_SMILE:
         return toCandidateList(Arrays.asList(EmoticonData.SMILE_VALUES));
       case EMOTICON_SWEAT:
@@ -223,19 +256,34 @@ public class SymbolCandidateStorage {
 
       // EMOJI major category candidates.
       case EMOJI_HISTORY:
-        return toCandidateList(
-            symbolHistoryStorage.getAllHistory(MajorCategory.EMOJI), emojiDescriptionMap);
+        return toEmojiCandidateListForHistory(
+            symbolHistoryStorage.getAllHistory(SymbolMajorCategory.EMOJI),
+            emojiDescriptionMap, isCarrierEmojiEnabled);
       case EMOJI_FACE:
-        return toEmojiCandidateList(EmojiData.FACE_VALUES, emojiDescriptionSet.faceDescription);
+        return toEmojiCandidateList(
+            EmojiData.FACE_VALUES, EmojiData.UNICODE_FACE_NAME,
+            EmojiData.FACE_PUA_VALUES, carrierEmojiDescriptionSet.faceDescription,
+            isUnicodeEmojiEnabled, isCarrierEmojiEnabled);
       case EMOJI_FOOD:
-        return toEmojiCandidateList(EmojiData.FOOD_VALUES, emojiDescriptionSet.foodDescription);
+        return toEmojiCandidateList(
+            EmojiData.FOOD_VALUES, EmojiData.UNICODE_FOOD_NAME,
+            EmojiData.FOOD_PUA_VALUES, carrierEmojiDescriptionSet.foodDescription,
+            isUnicodeEmojiEnabled, isCarrierEmojiEnabled);
       case EMOJI_ACTIVITY:
         return toEmojiCandidateList(
-            EmojiData.ACTIVITY_VALUES, emojiDescriptionSet.activityDescription);
+            EmojiData.ACTIVITY_VALUES, EmojiData.UNICODE_ACTIVITY_NAME,
+            EmojiData.ACTIVITY_PUA_VALUES, carrierEmojiDescriptionSet.activityDescription,
+            isUnicodeEmojiEnabled, isCarrierEmojiEnabled);
       case EMOJI_CITY:
-        return toEmojiCandidateList(EmojiData.CITY_VALUES, emojiDescriptionSet.cityDescription);
+        return toEmojiCandidateList(
+            EmojiData.CITY_VALUES, EmojiData.UNICODE_CITY_NAME,
+            EmojiData.CITY_PUA_VALUES, carrierEmojiDescriptionSet.cityDescription,
+            isUnicodeEmojiEnabled, isCarrierEmojiEnabled);
       case EMOJI_NATURE:
-        return toEmojiCandidateList(EmojiData.NATURE_VALUES, emojiDescriptionSet.natureDescription);
+        return toEmojiCandidateList(
+            EmojiData.NATURE_VALUES, EmojiData.UNICODE_NATURE_NAME,
+            EmojiData.NATURE_PUA_VALUES, carrierEmojiDescriptionSet.natureDescription,
+            isUnicodeEmojiEnabled, isCarrierEmojiEnabled);
     }
 
     throw new IllegalArgumentException("Unknown minor category: " + minorCategory.toString());
@@ -243,14 +291,38 @@ public class SymbolCandidateStorage {
 
   /** Just short cut of {@code toCandidateList(values, null)}. */
   private static CandidateList toCandidateList(List<String> values) {
-    return toCandidateList(values, null);
+    return toCandidateList(values, Optional.<Map<String, String>>absent());
   }
 
-  /** Build the {@link CandidateList} based on the given values and emojiDescriptionMap. */
-  // Package private for testing.
+  /**
+   * Builds the {@link CandidateList} based on the given values and emojiDescriptionMap.
+   *
+   * If {@code isCarrierEmojiEnabled} is {@code false}, this method ignores carrier emoji not to
+   * allow users to input it on the focused text edit. Otherwise some application
+   * (e.g. GoogleQuickSearchBox) crashes when they receives carrier emoji.
+   */
+  private static CandidateList toEmojiCandidateListForHistory(
+      List<String> values, Map<String, String> emojiDescriptionMap, boolean isCarrierEmojiEnabled) {
+    if (isCarrierEmojiEnabled) {
+      return toCandidateList(values, Optional.of(emojiDescriptionMap));
+    }
+
+    List<String> valuesWithoutCarrierEmoji = new ArrayList<String>(values.size());
+    for (String value : values) {
+      if (value.codePointCount(0, value.length()) != 1 ||
+          !EmojiUtil.isCarrierEmoji(value.codePointAt(0))) {
+        valuesWithoutCarrierEmoji.add(value);
+      }
+    }
+    return toCandidateList(valuesWithoutCarrierEmoji, Optional.of(emojiDescriptionMap));
+  }
+
+  /** Builds the {@link CandidateList} based on the given values and emojiDescriptionMap. */
+  @VisibleForTesting
   static CandidateList toCandidateList(
-      List<String> values, Map<String, String> emojiDescriptionMap) {
-    if (values.isEmpty()) {
+      List<String> values, Optional<Map<String, String>> emojiDescriptionMap) {
+    Preconditions.checkNotNull(emojiDescriptionMap);
+    if (Preconditions.checkNotNull(values).isEmpty()) {
       return CandidateList.getDefaultInstance();
     }
 
@@ -261,9 +333,9 @@ public class SymbolCandidateStorage {
       wordBuilder.setValue(value);
       wordBuilder.setId(index);
       wordBuilder.setIndex(index);
-      Annotation annotation = getAnnotation(value, emojiDescriptionMap);
-      if (annotation != null) {
-        wordBuilder.setAnnotation(annotation);
+      Optional<Annotation> annotation = getAnnotation(value, emojiDescriptionMap);
+      if (annotation.isPresent()) {
+        wordBuilder.setAnnotation(annotation.get());
       }
       builder.addCandidates(wordBuilder);
       ++index;
@@ -271,7 +343,8 @@ public class SymbolCandidateStorage {
     return builder.build();
   }
 
-  private static Annotation getAnnotation(String value, Map<String, String> emojiDescriptionMap) {
+  private static Optional<Annotation> getAnnotation(
+      String value, Optional<Map<String, String>> emojiDescriptionMap) {
     // We do not use resource to store the string below because
     // there are no needs to translate the description.
     // In addition we cannot access the resource from here
@@ -281,16 +354,16 @@ public class SymbolCandidateStorage {
     {
       String description = DESCRIPTION_MAP.get(value);
       if (description != null) {
-        return Annotation.newBuilder().setDescription(description).build();
+        return Optional.of(Annotation.newBuilder().setDescription(description).build());
       }
     }
 
     // Emoji specialized annotation. Note that the given map depends on the current provider type.
     // This is just only for history annotation.
-    if (emojiDescriptionMap != null){
-      String description = emojiDescriptionMap.get(value);
+    if (emojiDescriptionMap.isPresent()){
+      String description = emojiDescriptionMap.get().get(value);
       if (description != null) {
-        return Annotation.newBuilder().setDescription(description).build();
+        return Optional.of(Annotation.newBuilder().setDescription(description).build());
       }
     }
 
@@ -300,21 +373,40 @@ public class SymbolCandidateStorage {
     // (it is basically the same as here but length check is omitted)
     // but the engine's criteria seems too aggressive for our purpose.
     if (value.length() == 1 && value.charAt(0) <= 0x7F) {
-      return HALFWIDTH_ANNOTATION;
+      return Optional.of(HALFWIDTH_ANNOTATION);
     }
 
     // No description is available.
-    return null;
+    return Optional.absent();
   }
 
-  // Package private for testing.
-  static CandidateList toEmojiCandidateList(String[] values, String[] descriptions) {
-    if (descriptions == null) {
-      return CandidateList.getDefaultInstance();
-    }
-
+  private static CandidateList toEmojiCandidateList(
+      String[] unicodeEmojiValues, String[] unicodeEmojiDescriptions,
+      String[] carrierEmojiValues, String[] carrierEmojiDescriptions,
+      boolean isUnicodeEmojiEnabled, boolean isCarrierEmojiEnabled) {
     CandidateList.Builder builder = CandidateList.newBuilder();
     int index = 0;
+
+    if (isUnicodeEmojiEnabled) {
+      index += addEmojiCandidateListToBuilder(
+          builder, index, unicodeEmojiValues, unicodeEmojiDescriptions);
+    }
+    if (isCarrierEmojiEnabled) {
+      index += addEmojiCandidateListToBuilder(
+          builder, index, carrierEmojiValues, carrierEmojiDescriptions);
+    }
+
+    if (index == 0) {
+      // No values are available.
+      return CandidateList.getDefaultInstance();
+    }
+    return builder.build();
+  }
+
+  /** @return The number of added candidates. */
+  private static int addEmojiCandidateListToBuilder(
+      CandidateList.Builder builder, int startIndex, String[] values, String[] descriptions) {
+    int index = startIndex;
     for (int i = 0; i < descriptions.length; ++i) {
       String description = descriptions[i];
       if (description == null) {
@@ -331,11 +423,6 @@ public class SymbolCandidateStorage {
               .setDescription(description)));
       ++index;
     }
-
-    if (index == 0) {
-      // No values are available.
-      return CandidateList.getDefaultInstance();
-    }
-    return builder.build();
+    return index - startIndex;
   }
 }

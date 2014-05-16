@@ -38,13 +38,11 @@
 #include <string>
 
 #include "base/const.h"
-#include "base/crash_report_util.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/process.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "base/win_util.h"
 #include "third_party/breakpad/src/client/windows/handler/exception_handler.h"
 
 namespace {
@@ -83,13 +81,6 @@ int g_reference_count = 0;
 CRITICAL_SECTION *g_critical_section = NULL;
 
 google_breakpad::ExceptionHandler *g_handler = NULL;
-
-struct CrashStateInformation {
-  bool invalid_process_heap_detected;
-  bool loader_lock_detected;
-};
-
-CrashStateInformation g_crash_state_info = { false, false };
 
 // Returns the name of the build mode.
 std::wstring GetBuildMode() {
@@ -239,21 +230,6 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
   return false;
 }
 
-void UpdateCrashStateInformation() {
-  __try {                                              // NOLINT
-    g_crash_state_info.invalid_process_heap_detected =
-        (::HeapValidate(::GetProcessHeap(), 0, NULL) == FALSE);
-  } __except (EXCEPTION_EXECUTE_HANDLER) {             // NOLINT
-                                                       // ignore exception
-  }
-  __try {                                              // NOLINT
-    mozc::WinUtil::IsDLLSynchronizationHeld(
-        &g_crash_state_info.loader_lock_detected);
-  } __except (EXCEPTION_EXECUTE_HANDLER) {             // NOLINT
-                                                       // ignore exception
-  }
-}
-
 bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
                    MDRawAssertionInfo *assertion) {
   if (exinfo == NULL) {
@@ -267,12 +243,10 @@ bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
 
   // Make sure it's our module which cause the crash.
   if (IsAddressInCurrentModule(exinfo->ExceptionRecord->ExceptionAddress)) {
-    UpdateCrashStateInformation();
     return true;
   }
 
   if (IsCurrentModuleInStack(exinfo->ContextRecord)) {
-    UpdateCrashStateInformation();
     return true;
   }
 
@@ -289,8 +263,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
   DCHECK_GE(g_reference_count, 0);
   ++g_reference_count;
   if (g_reference_count == 1 && g_handler == NULL) {
-    const string acrashdump_directory =
-        CrashReportUtil::GetCrashReportDirectory();
+    const string acrashdump_directory = SystemUtil::GetCrashReportDirectory();
     // create a crash dump directory if not exist.
     if (!FileUtil::FileExists(acrashdump_directory)) {
       FileUtil::CreateDirectory(acrashdump_directory);
@@ -312,8 +285,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
         kCrashDumpType,
         GetCrashHandlerPipeName().c_str(),
         GetCustomInfo());
-    g_handler->RegisterAppMemory(&g_crash_state_info,
-                                 sizeof(g_crash_state_info));
+
 #ifdef DEBUG
     g_handler->set_handle_debug_exceptions(true);
 #endif  // DEBUG
@@ -346,7 +318,7 @@ void CrashReportHandler::SetCriticalSection(
 
 }  // namespace mozc
 
-#else
+#else  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD
 
 namespace mozc {
 
@@ -372,4 +344,4 @@ void CrashReportHandler::SetCriticalSection(
 
 }  // namespace mozc
 
-#endif
+#endif  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD

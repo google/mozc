@@ -56,16 +56,5 @@
         '../storage/storage.gyp:storage',
       ],
     },
-    {
-      'target_name': 'install_gen_suggestion_filter_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_suggestion_filter_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ]
-    },
   ],
 }

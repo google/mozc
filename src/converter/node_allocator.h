@@ -30,7 +30,7 @@
 #ifndef MOZC_CONVERTER_NODE_ALLOCATOR_H_
 #define MOZC_CONVERTER_NODE_ALLOCATOR_H_
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/freelist.h"
 #include "base/logging.h"
 #include "converter/node.h"
@@ -63,6 +63,8 @@ class NodeAllocator : public NodeAllocatorInterface {
  private:
   FreeList<Node> node_freelist_;
   size_t node_count_;
+
+  DISALLOW_COPY_AND_ASSIGN(NodeAllocator);
 };
 
 }  // namespace mozc

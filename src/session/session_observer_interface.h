@@ -32,7 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_OBSERVER_INTERFACE_H_
 #define MOZC_SESSION_SESSION_OBSERVER_INTERFACE_H_
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace commands {
@@ -46,8 +46,8 @@ class SessionObserverInterface {
   SessionObserverInterface() {}
   virtual ~SessionObserverInterface() {}
 
-  virtual void EvalCommandHandler(const commands::Command &command) ABSTRACT;
-  virtual void Reload() ABSTRACT;
+  virtual void EvalCommandHandler(const commands::Command &command) = 0;
+  virtual void Reload() = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionObserverInterface);

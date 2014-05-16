@@ -29,14 +29,16 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
+import com.google.common.base.Optional;
+
 import android.graphics.BlurMaskFilter;
+import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.BlurMaskFilter.Blur;
-import android.graphics.Paint.Style;
 import android.graphics.Shader.TileMode;
 
 /**
@@ -44,7 +46,8 @@ import android.graphics.Shader.TileMode;
  *
  */
 public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
-  private final int BLUR_SIZE = 3;
+
+  private static final int BLUR_SIZE = 3;
 
   private final int roundSize;
 
@@ -53,7 +56,7 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
 
   private final Paint basePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-  private final Paint highlightPaint;
+  private final Optional<Paint> highlightPaint;
 
   private final RectF baseBound = new RectF();
   private final RectF shadowBound = new RectF();
@@ -70,10 +73,10 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
     shadowPaint.setStyle(Style.FILL);
     shadowPaint.setMaskFilter(new BlurMaskFilter(BLUR_SIZE, Blur.NORMAL));
     if ((highlightColor & 0xFF000000) != 0) {
-      highlightPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-      highlightPaint.setColor(highlightColor);
+      highlightPaint = Optional.of(new Paint(Paint.ANTI_ALIAS_FLAG));
+      highlightPaint.get().setColor(highlightColor);
     } else {
-      highlightPaint = null;
+      highlightPaint = Optional.absent();
     }
   }
 
@@ -88,10 +91,10 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
     canvas.drawRoundRect(baseBound, roundSize, roundSize, basePaint);
 
     // Draw 1-px height highlight at the top of key if necessary.
-    if (highlightPaint != null) {
+    if (highlightPaint.isPresent()) {
       canvas.drawRect(baseBound.left + roundSize, baseBound.top,
                       baseBound.right - roundSize, baseBound.top + 1,
-                      highlightPaint);
+                      highlightPaint.get());
     }
   }
 

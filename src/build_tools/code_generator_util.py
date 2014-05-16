@@ -32,7 +32,6 @@
 
 __author__ = "hidehiko"
 
-import string
 import struct
 import types
 
@@ -50,7 +49,7 @@ def ToCppStringLiteral(s):
     return '"%s"' % ''.join(r'\x%02X' % ord(c) for c in s)
 
 
-def FormatWithCppEscape(format, *args):
+def FormatWithCppEscape(format_text, *args):
   """Returns a string filling format with args."""
   literal_list = []
   for arg in args:
@@ -58,7 +57,7 @@ def FormatWithCppEscape(format, *args):
       arg = ToCppStringLiteral(arg)
     literal_list.append(arg)
 
-  return format % tuple(literal_list)
+  return format_text % tuple(literal_list)
 
 
 def WriteCppDataArray(data, variable_name, target_compiler, stream):
@@ -122,10 +121,15 @@ def WriteCppDataArray(data, variable_name, target_compiler, stream):
   stream.write('const size_t k%s_size = %d;\n' % (variable_name, len(data)))
 
 
-def ToJavaSurrogatePairStringLiteral(codepoint):
-  """Returns surrogate pair string literal."""
-  [u0, l0, u1, l1] = unichr(codepoint).encode('utf-16be')
-  return r'"\u%02X%02X\u%02X%02X"' % (ord(u0), ord(l0), ord(u1), ord(l1))
+def ToJavaStringLiteral(codepoint):
+  """Returns string literal with surrogate pair support."""
+  utf16_string = unichr(codepoint).encode('utf-16be')
+  if len(utf16_string) == 2:
+    (u0, l0) = utf16_string
+    return r'"\u%02X%02X"' % (ord(u0), ord(l0))
+  else:
+    (u0, l0, u1, l1) = utf16_string
+    return r'"\u%02X%02X\u%02X%02X"' % (ord(u0), ord(l0), ord(u1), ord(l1))
 
 
 def SkipLineComment(stream, comment_prefix='#'):

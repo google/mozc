@@ -40,9 +40,10 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
-bool IsTokenEqaulImpl(const Token &expected, const Token &actual) {
+bool IsTokenEqualImpl(const Token &expected, const Token &actual) {
   return expected.key == actual.key &&
          expected.value == actual.value &&
+         expected.cost == actual.cost &&
          expected.lid == actual.lid &&
          expected.rid == actual.rid &&
          expected.attributes == actual.attributes;
@@ -66,17 +67,58 @@ DictionaryInterface::Callback::ResultType
 CheckTokenExistenceCallback::OnToken(StringPiece,  // key
                                      StringPiece,  // actual_key
                                      const Token &token) {
-  if (IsTokenEqaulImpl(*target_token_, token)) {
+  if (IsTokenEqualImpl(*target_token_, token)) {
     found_ = true;
     return TRAVERSE_DONE;
   }
   return TRAVERSE_CONTINUE;
 }
 
+CheckMultiTokensExistenceCallback::CheckMultiTokensExistenceCallback(
+    const vector<Token *> &tokens) : found_count_(0) {
+  for (size_t i = 0; i < tokens.size(); ++i) {
+    result_[tokens[i]] = false;
+  }
+}
+
+bool CheckMultiTokensExistenceCallback::IsFound(const Token *token) const {
+  map<const Token *, bool>::const_iterator iter = result_.find(token);
+  if (iter == result_.end()) {
+    return false;
+  }
+  return iter->second;
+}
+
+bool CheckMultiTokensExistenceCallback::AreAllFound() const {
+  for (map<const Token *, bool>::const_iterator iter = result_.begin();
+       iter != result_.end(); ++iter) {
+    if (!iter->second) {
+      return false;
+    }
+  }
+  return true;
+}
+
+DictionaryInterface::Callback::ResultType
+CheckMultiTokensExistenceCallback::OnToken(StringPiece,  // key
+                                           StringPiece,  // actual_key
+                                           const Token &token) {
+  for (map<const Token *, bool>::iterator iter = result_.begin();
+       iter != result_.end(); ++iter) {
+    if (!iter->second && IsTokenEqualImpl(*iter->first, token)) {
+      iter->second = true;
+      ++found_count_;
+      break;
+    }
+  }
+  return found_count_ == result_.size() ? TRAVERSE_DONE : TRAVERSE_CONTINUE;
+}
+
 string PrintToken(const Token &token) {
-  return Util::StringPrintf("{%s, %s, %d, %d, %d}",
-                            token.key.c_str(), token.value.c_str(),
-                            token.lid, token.rid, token.attributes);
+  return Util::StringPrintf(
+      "{key:%s, val:%s, cost:%d, lid:%d, rid:%d, attr:%d}",
+      token.key.c_str(), token.value.c_str(), token.cost,
+      token.lid, token.rid, token.attributes);
 }
 
 string PrintTokens(const vector<Token> &tokens) {
@@ -97,11 +139,11 @@ string PrintTokens(const vector<Token *> &token_ptrs) {
 
 namespace internal {
 
-::testing::AssertionResult IsTokenEqaul(
+::testing::AssertionResult IsTokenEqual(
      const char *,  // expected_expr
      const char *,  // actual_expr
      const Token &expected, const Token &actual) {
-  if (IsTokenEqaulImpl(expected, actual)) {
+  if (IsTokenEqualImpl(expected, actual)) {
     return ::testing::AssertionSuccess();
   }
   return ::testing::AssertionFailure()
@@ -110,7 +152,7 @@ namespace internal {
           << "Actual: " << PrintToken(actual);
 }
 
-::testing::AssertionResult AreTokensEqaulUnordered(
+::testing::AssertionResult AreTokensEqualUnordered(
      const char *,  // expected_expr
      const char *,  // actual_expr
      const vector<Token *> &expected,

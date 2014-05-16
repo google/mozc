@@ -204,13 +204,15 @@ TEST_F(ConverterMockTest, SetFreeSegmentValue) {
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
-TEST_F(ConverterMockTest, SetCommitFirstSegment) {
+TEST_F(ConverterMockTest, SetCommitSegments) {
   ConverterInterface *converter = GetMock();
 
   Segments output, expect;
-  SetSegments(&expect, "CommitFirstSegment");
-  GetMock()->SetCommitFirstSegment(&expect, true);
-  EXPECT_TRUE(converter->CommitFirstSegment(&output, 1));
+  SetSegments(&expect, "CommitSegments");
+  GetMock()->SetCommitSegments(&expect, true);
+  vector<size_t> singleton_vector;
+  singleton_vector.push_back(1);
+  EXPECT_TRUE(converter->CommitSegments(&output, singleton_vector));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -451,22 +453,27 @@ TEST_F(ConverterMockTest, GetFreeSegmentValue) {
   EXPECT_EQ(input_idx, last_idx);
 }
 
-TEST_F(ConverterMockTest, GetCommitFirstSegment) {
+TEST_F(ConverterMockTest, GetCommitSegments) {
   ConverterInterface *converter = GetMock();
 
   Segments input;
-  size_t input_idx = 1;
-  SetSegments(&input, "CommitFirstSegment");
+  size_t input_idx1 = 1;
+  size_t input_idx2 = 2;
+  SetSegments(&input, "CommitSegments");
   const string input_str = input.DebugString();
-  converter->CommitFirstSegment(&input, input_idx);
+  vector<size_t> index_list;
+  index_list.push_back(input_idx1);
+  index_list.push_back(input_idx2);
+  converter->CommitSegments(&input, index_list);
 
   Segments last_segment;
-  size_t last_idx;
-  GetMock()->GetCommitFirstSegment(&last_segment, &last_idx);
+  vector<size_t> last_idx;
+  GetMock()->GetCommitSegments(&last_segment, &last_idx);
   const string last_segment_str = last_segment.DebugString();
 
   EXPECT_EQ(input_str, last_segment_str);
-  EXPECT_EQ(input_idx, last_idx);
+  EXPECT_EQ(input_idx1, last_idx[0]);
+  EXPECT_EQ(input_idx2, last_idx[1]);
 }
 
 TEST_F(ConverterMockTest, GetResizeSegment1) {

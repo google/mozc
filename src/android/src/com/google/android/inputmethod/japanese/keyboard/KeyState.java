@@ -29,9 +29,15 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -46,13 +52,44 @@ import java.util.Set;
  */
 public class KeyState {
   public enum MetaState {
-    UNMODIFIED(0, false), SHIFT(1, true), CAPS_LOCK(2, false), ALT(4, false);
+    SHIFT(1, true),
+    CAPS_LOCK(2, false),
+    ALT(4, false),
+
+    // Actions
+    // c.f, http://developer.android.com/reference/android/view/inputmethod/EditorInfo.html
+    // TODO(matsuzakit): Implement me.
+    ACTION_DONE(8, false),
+    ACTION_GO(16, false),
+    ACTION_NEXT(32, false),
+    ACTION_NONE(64, false),
+    ACTION_PREVIOUS(128, false),
+    ACTION_SEARCH(256, false),
+    ACTION_SEND(512, false),
+
+    // Text variation
+    // c.f., http://developer.android.com/reference/android/text/InputType.html
+    // Raw InputType uses 30 bits field so directly representing it into a flag is impossible.
+    // Therefore only some important ones are listed up here.
+    // TYPE_TEXT_VARIATION_URI
+    VARIATION_URI(1024, false),
+    // TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS, TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+    VARIATION_EMAIL_ADDRESS(2048, false),
+
+    // Set if Globe button is enabled by preference.
+    // TODO(matsuzakit): Implement me.
+    GLOBE(4096, false),
+
+    // Set if there is composition string.
+    // TODO(matsuzakit): Implement me. This is mandatory when implementing ACTION_*.
+    COMPOSING(8192, false),
+    ;
 
     private final int bitFlag;
 
     /**
-     * If this flag is set to {@code true}, the meta state of the keyboard should be
-     * automatically set back to {@code UNMODIFIED} when a user type a key under this state.
+     * If this flag is set to {@code true}, the flag should be removed from the meta states
+     * when a user type a key under this state.
      */
     final boolean isOneTimeMetaState;
 
@@ -69,16 +106,62 @@ public class KeyState {
       }
       throw new IllegalArgumentException("Corresponding MetaState is not found: " + bitFlag);
     }
+
+    // MetaStates for character type.
+    public static final Set<MetaState> CHAR_TYPE_EXCLUSIVE_GROUP =
+        Sets.immutableEnumSet(MetaState.SHIFT, MetaState.CAPS_LOCK, MetaState.ALT);
+    // MetaStates for actions.
+    public static final Set<MetaState> ACTION_EXCLUSIVE_GROUP =
+        Sets.immutableEnumSet(EnumSet.range(MetaState.ACTION_DONE, MetaState.ACTION_SEND));
+    // MetaStates for text variations.
+    public static final Set<MetaState> VARIATION_EXCLUSIVE_GROUP =
+        Sets.immutableEnumSet(MetaState.VARIATION_URI, MetaState.VARIATION_EMAIL_ADDRESS);
+    @SuppressWarnings("unchecked")
+    private static final Collection<Set<MetaState>> EXCLUSIVE_GROUP =
+        Arrays.<Set<MetaState>>asList(CHAR_TYPE_EXCLUSIVE_GROUP,
+                                      ACTION_EXCLUSIVE_GROUP,
+                                      VARIATION_EXCLUSIVE_GROUP);
+
+    /**
+     * Checks if {@code testee} is valid set.
+     * <p>
+     * Note that this check might be a little bit heavy.
+     * Do not call from chokepoint.
+     */
+    public static boolean isValidSet(Set<MetaState> testee) {
+      // Set#retainAll can make the implementation simpler, but it requires instantiation of
+      // (Enum)Set for each iteration.
+      for (Set<MetaState> exclusiveGroup : EXCLUSIVE_GROUP) {
+        int count = 0;
+        for (MetaState metaState : exclusiveGroup) {
+          if (testee.contains(metaState)) {
+            ++count;
+            if (count >= 2) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
   }
 
-  private final EnumSet<MetaState> metaStateSet;
-  private final MetaState nextMetaState;
+  private final String contentDescription;
+  private final Set<MetaState> metaState;
+  private final Set<MetaState> nextAddMetaStates;
+  private final Set<MetaState> nextRemoveMetaStates;
   private final EnumMap<Flick.Direction, Flick> flickMap;
 
-  public KeyState(Set<MetaState> metaStateSet, MetaState nextMetaState,
+  public KeyState(String contentDescription,
+                  Set<MetaState> metaStates,
+                  Set<MetaState> nextAddMetaStates,
+                  Set<MetaState> nextRemoveMetaStates,
                   Collection<? extends Flick> flickCollection) {
-    this.metaStateSet = EnumSet.copyOf(metaStateSet);
-    this.nextMetaState = nextMetaState;
+    this.contentDescription = Preconditions.checkNotNull(contentDescription);
+    Preconditions.checkNotNull(metaStates);
+    this.metaState = Sets.newEnumSet(metaStates, MetaState.class);
+    this.nextAddMetaStates = nextAddMetaStates;
+    this.nextRemoveMetaStates = nextRemoveMetaStates;
     this.flickMap = new EnumMap<Flick.Direction, Flick>(Flick.Direction.class);
     for (Flick flick : flickCollection) {
       if (this.flickMap.put(flick.getDirection(), flick) != null) {
@@ -88,15 +171,38 @@ public class KeyState {
     }
   }
 
-  public Set<MetaState> getMetaStateSet() {
-    return metaStateSet;
+  public String getContentDescription() {
+    return contentDescription;
   }
 
-  public MetaState getNextMetaState() {
-    return nextMetaState;
+  public Set<MetaState> getMetaStateSet() {
+    return metaState;
+  }
+
+  /**
+   * Gets next MetaState.
+   * <p>
+   * First, flags in {@code nextRemoveMetaState} are removed from {@code originalMetaState}.
+   * Then, flags in {@code nextAddMetaState} are added into {@code originalMetaState}.
+   * <p>
+   * The result is "valid" in the light of {@code MetaState#isValidSet(Set)}.
+   */
+  public Set<MetaState> getNextMetaStates(Set<MetaState> originalMetaStates) {
+    return Sets.union(Sets.difference(originalMetaStates,
+                                      nextRemoveMetaStates), nextAddMetaStates).immutableCopy();
   }
 
   public Flick getFlick(Flick.Direction direction) {
     return flickMap.get(direction);
+  }
+
+  @Override
+  public String toString() {
+    Objects.ToStringHelper helper = Objects.toStringHelper(this);
+    helper.add("metaStates", metaState.toString());
+    for (Map.Entry<Flick.Direction, Flick> entry : flickMap.entrySet()) {
+      helper.add("flickMap(" + entry.getKey().toString() + ")", entry.getValue().toString());
+    }
+    return helper.toString();
   }
 }

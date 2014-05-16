@@ -84,6 +84,25 @@ uint32 GetDuration(uint64 base_value) {
   }
   return result;
 }
+
+bool IsSessionIndependentCommand(commands::Input::CommandType type) {
+  switch (type) {
+    case commands::Input::NO_OPERATION:
+    case commands::Input::SET_CONFIG:
+    case commands::Input::GET_CONFIG:
+    case commands::Input::SET_IMPOSED_CONFIG:
+    case commands::Input::CLEAR_USER_HISTORY:
+    case commands::Input::CLEAR_USER_PREDICTION:
+    case commands::Input::CLEAR_UNUSED_USER_PREDICTION:
+    case commands::Input::CLEAR_STORAGE:
+    case commands::Input::READ_ALL_FROM_STORAGE:
+    case commands::Input::RELOAD:
+    case commands::Input::SEND_USER_DICTIONARY_COMMAND:
+      return true;
+    default:
+      return false;
+  }
+}
 }  // namespace
 
 SessionUsageObserver::SessionUsageObserver() {
@@ -267,6 +286,9 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
 
 void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
                                                  SessionState *state) {
+  // TODO(hsumita): Extract GetEnumValueName and CamelCaseString as public
+  //                method from SessionUsageStatsUtil and use it.
+
   switch (input.command().usage_stats_event()) {
     case commands::SessionCommand::INFOLIST_WINDOW_SHOW:
       if (!state->has_start_infolist_window_time()) {
@@ -293,6 +315,18 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
       break;
     case commands::SessionCommand::CHARACTER_PALETTE_COMMIT_EVENT:
       UsageStats::IncrementCount("CharacterPaletteCommit");
+      break;
+    case commands::SessionCommand::SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE stats must have int value.";
+      UsageStats::SetInteger("SoftwareKeyboardLayoutLandscape",
+                             input.command().usage_stats_event_int_value());
+      break;
+    case commands::SessionCommand::SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT stats must have int value.";
+      UsageStats::SetInteger("SoftwareKeyboardLayoutPortrait",
+                             input.command().usage_stats_event_int_value());
       break;
     default:
       LOG(WARNING) << "client side usage stats event has invalid category";
@@ -405,8 +439,8 @@ void SessionUsageObserver::EvalCommandHandler(
     return;
   }
 
-  // NOP event usually has no session ID.
-  if (input.type() == commands::Input::NO_OPERATION) {
+  // Session independent command usually has no session ID.
+  if (IsSessionIndependentCommand(input.type())) {
     return;
   } else if (!input.has_id()) {
     LOG(WARNING) << "no id";

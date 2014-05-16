@@ -66,12 +66,6 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
 
   virtual void Clear();
 
-  // Return the current active storage.
-  // UserSegmentHistoryRewriter is basically singleton in converter thread.
-  // GetStorage() returns the current active storage managed by converter.
-  // TODO(taku): This design is ad-hoc. Needs refactoring.
-  static mozc::storage::LRUStorage *GetStorage();
-
  private:
   bool IsAvailable(const Segments &segments) const;
   bool GetScore(const Segments &segments,

@@ -54,6 +54,7 @@
    -->
 <Keyboard
     xmlns:mozc="http://schemas.android.com/apk/res-auto"
+    mozc:keyboardContentDescription="@string/cd_keyboard_kana"
     mozc:keyBackground="twelvekeysRegular"
     mozc:keyWidth="21.8%p" mozc:keyHeight="24%p"
     mozc:horizontalGap="0dip" mozc:verticalGap="0dip"
@@ -63,7 +64,7 @@
   <Row>
     <Key mozc:keyBackground="twelvekeysFunction"
          mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_undo">
         <Flick>
           <KeyEntity mozc:sourceId="1"
                      mozc:keyCode="@integer/key_undo"
@@ -74,7 +75,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_a">
         <Flick>
           <KeyEntity mozc:sourceId="2"
                      mozc:keyCode="@integer/uchar_digit_one"
@@ -118,7 +119,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_ka">
         <Flick>
           <KeyEntity mozc:sourceId="7"
                      mozc:keyCode="@integer/uchar_digit_two"
@@ -162,7 +163,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_sa">
         <Flick>
           <KeyEntity mozc:sourceId="12"
                      mozc:keyCode="@integer/uchar_digit_three"
@@ -207,7 +208,7 @@
     </Key>
     <Key mozc:keyBackground="twelvekeysFunction"
          mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_backspace">
         <Flick>
           <KeyEntity mozc:sourceId="17"
                      mozc:keyCode="@integer/uchar_backspace"
@@ -221,7 +222,7 @@
   <Row>
     <Key mozc:keyBackground="twelvekeysFunction"
          mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="left" mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_left">
         <Flick>
           <KeyEntity mozc:sourceId="18"
                      mozc:keyCode="@integer/key_left"
@@ -232,7 +233,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_ta">
         <Flick>
           <KeyEntity mozc:sourceId="19"
                      mozc:keyCode="@integer/uchar_digit_four"
@@ -276,7 +277,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_na">
         <Flick>
           <KeyEntity mozc:sourceId="24"
                      mozc:keyCode="@integer/uchar_digit_five"
@@ -320,7 +321,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_ha">
         <Flick>
           <KeyEntity mozc:sourceId="29"
                      mozc:keyCode="@integer/uchar_digit_six"
@@ -365,7 +366,7 @@
     </Key>
     <Key mozc:keyBackground="twelvekeysFunction"
          mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_right">
         <Flick>
           <KeyEntity mozc:sourceId="34"
                      mozc:keyCode="@integer/key_right"
@@ -379,7 +380,7 @@
   <Row>
     <Key mozc:keyBackground="twelvekeysFunction"
          mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_symbol">
         <Flick>
           <KeyEntity mozc:sourceId="35"
                      mozc:keyCode="@integer/key_symbol"
@@ -390,7 +391,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_ma">
         <Flick>
           <KeyEntity mozc:sourceId="36"
                      mozc:keyCode="@integer/uchar_digit_seven"
@@ -434,7 +435,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_ya">
         <Flick>
           <KeyEntity mozc:sourceId="41"
                      mozc:keyCode="@integer/uchar_digit_eight"
@@ -481,7 +482,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_ra">
         <Flick>
           <KeyEntity mozc:sourceId="44"
                      mozc:keyCode="@integer/uchar_digit_nine"
@@ -524,12 +525,13 @@
         </Flick>
       </KeyState>
     </Key>
-    <Key mozc:keyBackground="twelvekeysFunction"
-         mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
-      <KeyState>
+    <Key mozc:keyBackground="twelvekeysFunctionWithThreeDots"
+         mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="right">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_space">
         <Flick>
           <KeyEntity mozc:sourceId="49"
                      mozc:keyCode="@integer/uchar_space"
+                     mozc:longPressKeyCode="@integer/key_ime_picker_dialog"
                      mozc:keyIcon="@raw/twelvekeys__function__space__icon">
             <PopUp mozc:popUpIcon="@raw/qwerty__function__space__popup" />
           </KeyEntity>
@@ -538,9 +540,9 @@
     </Key>
   </Row>
   <Row>
-    <Key mozc:keyBackground="twelvekeysFunction"
+    <Key mozc:keyBackground="twelvekeysFunctionWithThreeDots"
          mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_chartype_to_abc">
         <Flick>
           <KeyEntity mozc:sourceId="50"
                      mozc:keyCode="@integer/key_chartype_to_abc"
@@ -552,7 +554,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_modifier">
         <Flick>
           <KeyEntity mozc:sourceId="51"
                      mozc:keyCode="@integer/uchar_asterisk"
@@ -587,7 +589,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_line_wa">
         <Flick>
           <KeyEntity mozc:sourceId="52"
                      mozc:keyCode="@integer/uchar_digit_zero"
@@ -633,7 +635,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_kana_punctuation">
         <Flick>
           <KeyEntity mozc:sourceId="56"
                      mozc:keyCode="@integer/uchar_number_sign"
@@ -679,8 +681,8 @@
       </KeyState>
     </Key>
     <Key mozc:keyBackground="twelvekeysFunction"
-         mozc:keyWidth="17.3%p" mozc:isRepeatable="true" mozc:keyEdgeFlags="right">
-      <KeyState>
+         mozc:keyWidth="17.3%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_linefeed">
         <Flick>
           <KeyEntity mozc:sourceId="60"
                      mozc:keyCode="@integer/uchar_linefeed"

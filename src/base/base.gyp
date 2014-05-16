@@ -41,7 +41,6 @@
       'sources': [
         'clock_mock.cc',
         'cpu_stats.cc',
-        'crash_report_util.cc',
         'iconv.cc',
         'process.cc',
         'process_mutex.cc',
@@ -99,7 +98,6 @@
         ['target_platform=="NaCl" and _toolset=="target"', {
           'sources!': [
             'crash_report_handler.cc',
-            'crash_report_util.cc',
             'process.cc',
           ],
         }],
@@ -223,6 +221,17 @@
       ],
     },
     {
+      'target_name': 'obfuscator_support',
+      'type': 'static_library',
+      'sources': [
+        'unverified_aes256.cc',
+        'unverified_sha1.cc',
+      ],
+      'dependencies': [
+        'base',
+      ],
+    },
+    {
       'target_name': 'encryptor',
       'type': 'static_library',
       'sources': [
@@ -231,8 +240,18 @@
       ],
       'dependencies': [
         'base',
+        'obfuscator_support',
       ],
       'conditions': [
+        ['use_legacy_encryptor==1', {
+          # Use legacy implementation.
+          'sources!': [
+            'encryptor.cc',
+          ],
+          'sources': [
+            'encryptor_legacy.cc',
+          ],
+        }],
         ['OS=="win"', {
           'link_settings': {
             'msvs_settings': {
@@ -244,7 +263,7 @@
             },
           },
         }],
-        ['OS=="mac"', {
+        ['use_legacy_encryptor==1 and OS=="mac"', {
           'defines': [
             'HAVE_OPENSSL=1',
           ],
@@ -254,7 +273,8 @@
             ],
           },
         }],
-        ['OS=="linux" and target_platform!="Android" and '
+        ['use_legacy_encryptor==1 and '
+         'OS=="linux" and target_platform!="Android" and '
          'not (target_platform=="NaCl" and _toolset=="target")', {
           'cflags': [
             '<!@(<(pkg_config_command) --cflags-only-other openssl)',
@@ -274,12 +294,13 @@
             ],
           },
         }],
-        ['target_platform=="Android"', {
+        ['use_legacy_encryptor==1 and target_platform=="Android"', {
           'dependencies': [
             'jni_proxy'
           ],
         }],
-        ['target_platform=="NaCl" and _toolset=="target"', {
+        ['use_legacy_encryptor==1 and '
+         'target_platform=="NaCl" and _toolset=="target"', {
           'dependencies': [
             'openssl_crypto_aes',
             'openssl_config',
@@ -364,18 +385,6 @@
             'gen_config_file_stream_data.py',
           ],
         },
-      ],
-    },
-    {
-      'target_name': 'task',
-      'type': 'static_library',
-      'sources': [
-        'task_manager.cc',
-        'task_runner.cc',
-        'task_token.cc',
-      ],
-      'dependencies': [
-        'base',
       ],
     },
     {

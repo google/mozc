@@ -32,32 +32,35 @@
 #ifndef MOZC_SESSION_SESSION_INTERFACE_H_
 #define MOZC_SESSION_SESSION_INTERFACE_H_
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
+
 namespace commands {
 class ApplicationInfo;
 class Capability;
 class Command;
 class Request;
 }  // namespace commands
+
 namespace composer {
 class Table;
 }  // namespace composer
+
 namespace session {
 class SessionInterface {
  public:
   virtual ~SessionInterface() {}
 
-  virtual bool SendKey(commands::Command *command) ABSTRACT;
+  virtual bool SendKey(commands::Command *command) = 0;
 
   // Check if the input key event will be consumed by the session.
-  virtual bool TestSendKey(commands::Command *command) ABSTRACT;
+  virtual bool TestSendKey(commands::Command *command) = 0;
 
   // Perform the SEND_COMMAND command defined commands.proto.
-  virtual bool SendCommand(commands::Command *command) ABSTRACT;
+  virtual bool SendCommand(commands::Command *command) = 0;
 
-  virtual void ReloadConfig() ABSTRACT;
+  virtual void ReloadConfig() = 0;
 
   // Set Request. Currently, this is especial for session::Session.
   virtual void SetRequest(const commands::Request *request) {}
@@ -67,22 +70,23 @@ class SessionInterface {
 
   // Set client capability for this session.  Used by unittest.
   virtual void set_client_capability(
-      const commands::Capability &capability) ABSTRACT;
+      const commands::Capability &capability) = 0;
 
   // Set application information for this session.
   virtual void set_application_info(const commands::ApplicationInfo
-                                    &application_info) ABSTRACT;
+                                    &application_info) = 0;
 
   // Get application information
-  virtual const commands::ApplicationInfo &application_info() const ABSTRACT;
+  virtual const commands::ApplicationInfo &application_info() const = 0;
 
   // Return the time when this instance was created.
-  virtual uint64 create_session_time() const ABSTRACT;
+  virtual uint64 create_session_time() const = 0;
 
   // return 0 (default value) if no command is executed in this session.
-  virtual uint64 last_command_time() const ABSTRACT;
+  virtual uint64 last_command_time() const = 0;
 };
 
 }  // namespace session
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_SESSION_INTERFACE_H_

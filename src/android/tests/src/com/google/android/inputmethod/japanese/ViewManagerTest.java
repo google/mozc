@@ -34,12 +34,15 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.same;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
+import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.MozcView.HeightLinearInterpolationListener;
 import org.mozc.android.inputmethod.japanese.ViewManager.ViewManagerEventListener;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import org.mozc.android.inputmethod.japanese.emoji.EmojiUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.Key;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
@@ -68,13 +71,17 @@ import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWith
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
+import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.base.Optional;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService.Insets;
+import android.os.Build;
 import android.os.Bundle;
 import android.test.MoreAsserts;
 import android.test.mock.MockContext;
@@ -95,12 +102,24 @@ import java.util.Map;
 /**
  */
 public class ViewManagerTest extends InstrumentationTestCaseWithMock {
+
+  private ViewManager createViewManager(Context context) {
+    return createViewManagerWithEventListener(context, createNiceMock(ViewEventListener.class));
+  }
+
+  private ViewManager createViewManagerWithEventListener(
+      Context context, ViewEventListener listener) {
+    return new ViewManager(
+        context, listener, createNiceMock(SymbolHistoryStorage.class),
+        createNiceMock(ImeSwitcher.class), createNiceMock(MenuDialogListener.class));
+  }
+
   @SmallTest
   public void testViewManagerEventListener() {
     ViewEventListener viewEventListener = createNiceMock(ViewEventListener.class);
     replayAll();
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager = new ViewManager(context, viewEventListener, null, null);
+    ViewManager viewManager = createViewManagerWithEventListener(context, viewEventListener);
     ViewManagerEventListener viewManagerEventListener =
         ViewManagerEventListener.class.cast(viewManager.eventListener);
 
@@ -153,8 +172,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testCreateInputViewReturnsDifferentInstance() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     replayAll();
 
     View inputView1 = viewManager.createMozcView(context);
@@ -167,8 +185,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testCreateInputView() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     replayAll();
 
     MozcView mozcView = viewManager.createMozcView(context);
@@ -192,10 +209,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testRender_nullOutput() {
-    ViewManager viewManager = new ViewManager(getInstrumentation().getTargetContext(),
-                                              createNiceMock(ViewEventListener.class),
-                                              null,
-                                              null);
+    ViewManager viewManager = createViewManager(getInstrumentation().getTargetContext());
     replayAll();
 
     viewManager.render(null);
@@ -205,10 +219,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testRender_noCandidateView() {
-    ViewManager viewManager = new ViewManager(getInstrumentation().getTargetContext(),
-                                              createNiceMock(ViewEventListener.class),
-                                              null,
-                                              null);
+    ViewManager viewManager = createViewManager(getInstrumentation().getTargetContext());
     replayAll();
 
     // Render with no CandidateView
@@ -227,9 +238,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testRender_noRequestSuggest() {
-    Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(getInstrumentation().getTargetContext());
     MozcView mozcView = createViewMock(MozcView.class);
     viewManager.mozcView = mozcView;
 
@@ -248,11 +257,11 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     verifyAll();
   }
 
+  @SuppressLint("WrongCall")
   @MediumTest
   public void testRender_withCandidate() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     replayAll();
 
     // Render with CandidateView
@@ -280,21 +289,21 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   public void testSetEditorInfo() {
     Context context = getInstrumentation().getTargetContext();
     MozcView mozcView = createViewMock(MozcView.class);
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     viewManager.mozcView = mozcView;
 
     class TestData extends Parameter {
       final boolean allowEmoji;
-      final boolean expectEnableEmoji;
+      final boolean expectCarrierEnableEmoji;
 
-      TestData(boolean allowEmoji, boolean expectEnableEmoji) {
+      TestData(boolean allowEmoji, boolean expectCarrierEmojiEnabled) {
         this.allowEmoji = allowEmoji;
-        this.expectEnableEmoji = expectEnableEmoji;
+        this.expectCarrierEnableEmoji = expectCarrierEmojiEnabled;
       }
     }
     TestData[] testDataList = {
-        new TestData(true, true), new TestData(false, false)
+        new TestData(true, true),
+        new TestData(false, false),
     };
 
     for (TestData testData : testDataList) {
@@ -304,10 +313,14 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
       editorInfo.extras = bundle;
 
       resetAll();
-      mozcView.setEmojiEnabled(testData.expectEnableEmoji);
+      mozcView.setEmojiEnabled(
+          EmojiUtil.isUnicodeEmojiAvailable(Build.VERSION.SDK_INT),
+          testData.expectCarrierEnableEmoji);
       expect(mozcView.getKeyboardSize()).andReturn(new Rect(0, 0, 100, 200));
       expect(mozcView.getResources()).andReturn(context.getResources());
       expect(mozcView.getInputFrameHeight()).andStubReturn(200);
+      mozcView.setEditorInfo(editorInfo);
+      mozcView.setPasswordField(false);
       mozcView.setJapaneseKeyboard(isA(JapaneseKeyboard.class));
       replayAll();
 
@@ -320,8 +333,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testHideSubInputView() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     MozcView mozcView = viewManager.createMozcView(context);
     SymbolInputView symbolInputView = mozcView.getSymbolInputView();
 
@@ -366,7 +378,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   public void testJapaneseKeyboardSwitchEventCallback() {
     Context context = getInstrumentation().getTargetContext();
     ViewEventListener eventListener = createMock(ViewEventListener.class);
-    ViewManager viewManager = new ViewManager(context, eventListener, null, null);
+    ViewManager viewManager = createViewManagerWithEventListener(context, eventListener);
 
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
                  viewManager.getJapaneseKeyboardSpecification());
@@ -391,8 +403,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     Context context = getInstrumentation().getTargetContext();
     Resources resources = context.getResources();
 
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     replayAll();
     MozcView mozcView = viewManager.createMozcView(context);
     JapaneseKeyboardView keyboardView = mozcView.getKeyboardView();
@@ -530,8 +541,8 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     ViewEventListener listener = createMock(ViewEventListener.class);
     List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
     listener.onShowMenuDialog(touchEventList);
+    ViewManager viewManager = createViewManagerWithEventListener(context, listener);
     replayAll();
-    ViewManager viewManager = new ViewManager(context, listener, null, null);
     viewManager.onKey(
         context.getResources().getInteger(R.integer.key_menu_dialog), touchEventList);
     verifyAll();
@@ -540,8 +551,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetJapaneseKeyboardStyleForUninitializedKeyboardViewDefault() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
 
     // Make sure keyboard by createInputView is 12keys-kana keyboard by default.
     MozcView mozcView = viewManager.createMozcView(context);
@@ -553,8 +563,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetKeyboardLayoutForUninitializedInputView() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
 
     // Set MobileInputStyle before creating InputView.
     viewManager.setKeyboardLayout(KeyboardLayout.QWERTY);
@@ -569,8 +578,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetTwelveKeyInputStyleForUninitializedInputView() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
 
     // Set TwelveKeysInputStyle before creating InputView.
     viewManager.setInputStyle(InputStyle.FLICK);
@@ -584,10 +592,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testSetKeyboardLayoutWithNull() {
-    ViewManager viewManager = new ViewManager(getInstrumentation().getTargetContext(),
-                                              createNiceMock(ViewEventListener.class),
-                                              null,
-                                              null);
+    ViewManager viewManager = createViewManager(getInstrumentation().getTargetContext());
     try {
       viewManager.setKeyboardLayout(null);
       fail("NullPointerException is expected.");
@@ -605,7 +610,9 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
         .withConstructor(AssetManager.class)
         .withArgs(getInstrumentation().getTargetContext().getAssets())
         .createMock();
-    ViewManager viewManager = new ViewManager(context, listener, null, null, guesser);
+    ViewManager viewManager = new ViewManager(
+        context, listener, createNiceMock(SymbolHistoryStorage.class),
+        createMock(ImeSwitcher.class), createNiceMock(MenuDialogListener.class), guesser);
     viewManager.createMozcView(context);
     KeyboardSpecification keyboardSpecification =
         JapaneseSoftwareKeyboardModel.class.cast(
@@ -617,6 +624,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     class TestData {
       final int keyCode;
+      final List<ProbableKeyEvent> probableKeyEvents;
       final boolean expectInvokeGuesser;
       final ProtoCommands.KeyEvent expectKeyEvent;
       final int expectKeyCode;
@@ -624,6 +632,9 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
                boolean expectInvokeGuesser,
                ProtoCommands.KeyEvent expectKeyEvent, int expectKeyCode) {
         this.keyCode = keyCode;
+        this.probableKeyEvents =
+            probableKeyEvents == null ? Collections.<ProbableKeyEvent>emptyList()
+                                      : Arrays.asList(probableKeyEvents);
         this.expectInvokeGuesser = expectInvokeGuesser;
         this.expectKeyEvent = expectKeyEvent;
         this.expectKeyCode = expectKeyCode;
@@ -641,7 +652,8 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
         new TestData(resources.getInteger(R.integer.key_enter),
                      null,
                      false,
-                     ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.ENTER).build(),
+                     ProtoCommands.KeyEvent.newBuilder()
+                         .setSpecialKey(SpecialKey.VIRTUAL_ENTER).build(),
                      KeyEvent.KEYCODE_ENTER),
         // Delete.
         new TestData(resources.getInteger(R.integer.key_backspace),
@@ -654,13 +666,15 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
         new TestData(resources.getInteger(R.integer.key_left),
                      null,
                      false,
-                     ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.LEFT).build(),
+                     ProtoCommands.KeyEvent.newBuilder()
+                         .setSpecialKey(SpecialKey.VIRTUAL_LEFT).build(),
                      KeyEvent.KEYCODE_DPAD_LEFT),
         // Right.
         new TestData(resources.getInteger(R.integer.key_right),
                      null,
                      false,
-                     ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.RIGHT).build(),
+                     ProtoCommands.KeyEvent.newBuilder()
+                         .setSpecialKey(SpecialKey.VIRTUAL_RIGHT).build(),
                      KeyEvent.KEYCODE_DPAD_RIGHT),
         // Normal character with no correction stats.
         new TestData('a',
@@ -692,7 +706,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
                           eq(keyboardSpecification), eq(touchEventList));
       if (testData.expectInvokeGuesser) {
         expect(guesser.getProbableKeyEvents(touchEventList))
-            .andReturn(testData.expectKeyEvent.getProbableKeyEventList());
+            .andReturn(testData.probableKeyEvents);
       }
       replayAll();
       viewManager.onKey(testData.keyCode, touchEventList);
@@ -704,7 +718,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   public void testCreateKeyEventForInvalidKeyCode() {
     Context context = getInstrumentation().getTargetContext();
     ViewEventListener listener = createNiceMock(ViewEventListener.class);
-    ViewManager viewManager = new ViewManager(context, listener, null, null);
+    ViewManager viewManager = createViewManagerWithEventListener(context, listener);
     viewManager.createMozcView(context);
     // Invalid Keycode.
     resetAll();
@@ -717,7 +731,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   public void testOnKeyForSwitchingKeyboard() {
     Context context = getInstrumentation().getTargetContext();
     ViewEventListener listener = createMock(ViewEventListener.class);
-    ViewManager viewManager = new ViewManager(context, listener, null, null);
+    ViewManager viewManager = createViewManagerWithEventListener(context, listener);
     MozcView mozcView = viewManager.createMozcView(context);
 
     Resources resources = context.getResources();
@@ -749,15 +763,13 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     Context context = getInstrumentation().getTargetContext();
     List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
     ViewEventListener listener = createNiceMock(ViewEventListener.class);
-    ViewManager viewManager = createMockBuilder(ViewManager.class)
-        .withConstructor(Context.class, ViewEventListener.class,
-                         SymbolHistoryStorage.class, MenuDialogListener.class)
-        .withArgs(context, listener, null, null)
-        .createMock();
+    ViewManager viewManager = createViewManagerWithEventListener(context, listener);
     resetAll();
-    viewManager.onKey('1', touchEventList);
+    listener.onKeyEvent(
+        eq(ProtoCommands.KeyEvent.newBuilder().setKeyCode('1').build()),
+        anyObject(KeyEventInterface.class),
+        anyObject(KeyboardSpecification.class), same(touchEventList));
     replayAll();
-
     KeyboardActionListener keyboardActionListener = viewManager.new KeyboardActionAdapter();
     keyboardActionListener.onKey('1', touchEventList);
 
@@ -768,7 +780,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   public void testKeyboardActionAdapter_onPress() {
     Context context = getInstrumentation().getTargetContext();
     ViewEventListener listener = createMock(ViewEventListener.class);
-    ViewManager viewManager = new ViewManager(context, listener, null, null);
+    ViewManager viewManager = createViewManagerWithEventListener(context, listener);
 
     KeyboardActionListener keyboardActionListener = viewManager.new KeyboardActionAdapter();
 
@@ -789,7 +801,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   public void testSimpleOnKey() {
     Context context = getInstrumentation().getTargetContext();
     ViewEventListener listener = createMock(ViewEventListener.class);
-    ViewManager viewManager = new ViewManager(context, listener, null, null);
+    ViewManager viewManager = createViewManagerWithEventListener(context, listener);
     viewManager.createMozcView(context);
     KeyboardSpecification keyboardSpecification =
         JapaneseSoftwareKeyboardModel.class.cast(viewManager.japaneseSoftwareKeyboardModel)
@@ -811,7 +823,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   public void testRender_visibility() {
     Context context = getInstrumentation().getTargetContext();
     ViewEventListener listener = createMock(ViewEventListener.class);
-    ViewManager viewManager = new ViewManager(context, listener, null, null);
+    ViewManager viewManager = createViewManagerWithEventListener(context, listener);
 
     // Rendering null. Just making sure that this shouldn't fail.
     viewManager.render(null);
@@ -856,8 +868,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testReset() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
 
     MozcView mozcView = viewManager.createMozcView(context);
     // TODO(matsuzakit): The lines from the beginning of the method to here should be
@@ -874,7 +885,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
           new KeyEventContext(
               new Key(0, 0, 0, 0, 0, 0, false, false, false,
                       Stick.EVEN, Collections.<KeyState>emptyList()),
-              0, 0, 0, 0, 0, 0, MetaState.UNMODIFIED);
+              0, 0, 0, 0, 0, 0, Collections.<MetaState>emptySet());
       keyEventContextMap.put(0, keyEventContext);
     }
 
@@ -882,8 +893,8 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     mozcView.getSymbolInputView().startInAnimation();
 
     MenuDialog menuDialog = createMockBuilder(MenuDialog.class)
-        .withConstructor(Context.class, MenuDialogListener.class)
-        .withArgs(context, null)
+        .withConstructor(Context.class, Optional.class, boolean.class)
+        .withArgs(context, Optional.of(createNiceMock(MenuDialogListener.class)), false)
         .createMock();
     resetAll();
     viewManager.menuDialog = menuDialog;
@@ -926,8 +937,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     };
 
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     Window window = createMockBuilder(Window.class)
         .withConstructor(Context.class)
         .withArgs(context)
@@ -984,8 +994,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetFullscreenMode() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     MozcView mozcView = viewManager.createMozcView(context);
 
     for (boolean fullscreenMode : new boolean[] {true, false}) {
@@ -998,8 +1007,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetEmojiProviderType() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     MozcView mozcView = createViewMock(MozcView.class);
     viewManager.mozcView = mozcView;
 
@@ -1018,8 +1026,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetNarrowMode() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     MozcView mozcView = viewManager.createMozcView(context);
 
     // viewManager to mozcView.
@@ -1032,8 +1039,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetPopupEnabled() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     MozcView mozcView = viewManager.createMozcView(context);
 
     // viewManager to mozcView.
@@ -1046,8 +1052,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetFlickSensitivity() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     MozcView mozcView = viewManager.createMozcView(context);
 
     viewManager.setFlickSensitivity(10);
@@ -1059,13 +1064,80 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetSkinType() {
     Context context = getInstrumentation().getTargetContext();
-    ViewManager viewManager =
-        new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
+    ViewManager viewManager = createViewManager(context);
     MozcView mozcView = viewManager.createMozcView(context);
 
     viewManager.setSkinType(SkinType.ORANGE_LIGHTGRAY);
     assertEquals(SkinType.ORANGE_LIGHTGRAY, mozcView.getSkinType());
     viewManager.setSkinType(SkinType.TEST);
     assertEquals(SkinType.TEST, mozcView.getSkinType());
+  }
+
+  public void testMaybeTransitToNarrowMode() {
+    Context context = getInstrumentation().getTargetContext();
+    ViewManager viewManager = createViewManager(context);
+
+    class TestData extends Parameter {
+      final Command command;
+      final KeyEventInterface keyEventInterface;
+      final boolean expectation;
+      public TestData(Command command, KeyEventInterface keyEventInterface, boolean expectation) {
+        this.command = command;
+        this.keyEventInterface = keyEventInterface;
+        this.expectation = expectation;
+      }
+    }
+    KeyEventInterface softwareEvent = new KeyEventInterface() {
+      @Override
+      public KeyEvent getNativeEvent() {
+        return null;
+      }
+      @Override
+      public int getKeyCode() {
+        return 0;
+      }
+    };
+    KeyEventInterface hardwareEvent = new KeyEventInterface() {
+      @Override
+      public KeyEvent getNativeEvent() {
+        return new KeyEvent(0, 0);
+      }
+      @Override
+      public int getKeyCode() {
+        return 0;
+      }
+    };
+    Command noKey = Command.newBuilder().setInput(Input.getDefaultInstance()).buildPartial();
+    Command noKeyCode = Command.newBuilder()
+        .setInput(Input.newBuilder()
+            .setKey(ProtoCommands.KeyEvent.getDefaultInstance())
+            .buildPartial())
+        .buildPartial();
+    Command withModifier = Command.newBuilder()
+        .setInput(Input.newBuilder()
+            .setKey(ProtoCommands.KeyEvent.newBuilder()
+                .setKeyCode(0)
+                .setModifiers(0))
+            .buildPartial())
+        .buildPartial();
+    Command printable = Command.newBuilder()
+        .setInput(Input.newBuilder()
+            .setKey(ProtoCommands.KeyEvent.newBuilder()
+                .setKeyCode(0))
+            .buildPartial())
+        .buildPartial();
+    TestData[] testDataList = new TestData[] {
+        new TestData(noKey, hardwareEvent, false),
+        new TestData(noKeyCode, hardwareEvent, false),
+        new TestData(withModifier, hardwareEvent, false),
+        new TestData(printable, null, false),
+        new TestData(printable, softwareEvent, false),
+        new TestData(printable, hardwareEvent, true),
+    };
+    for (TestData testData : testDataList) {
+      viewManager.setNarrowMode(false);
+      viewManager.maybeTransitToNarrowMode(testData.command, testData.keyEventInterface);
+      assertEquals(testData.expectation, viewManager.isNarrowMode());
+    }
   }
 }

@@ -65,18 +65,10 @@
         ['OS=="mac"', {
           'sources': ['<@(zinnia_sources)'],
           'defines': ['HAVE_CONFIG_H'],
-          'xcode_settings': {
-            'conditions': [
-              ['clang==1', {
-                'WARNING_CFLAGS+': [
-                  '-Wno-tautological-compare',
-                ],
-              }],
-            ],
-          },
         }],
-        ['clang==1', {
-          'cflags+': [
+        ['(_toolset=="target" and compiler_target=="clang") or '
+         '(_toolset=="host" and compiler_host=="clang")', {
+          'cflags': [
             '-Wno-missing-field-initializers',
             '-Wno-tautological-compare',
           ],

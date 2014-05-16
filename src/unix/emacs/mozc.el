@@ -135,6 +135,161 @@
 
 
 
+;;;; Keymap
+
+(defvar mozc-mode-map
+  (let ((map (make-sparse-keymap)))
+    (prog1 map
+      ;; Leave single key bindings bound to specific commands as it is.
+      ;; \M-x and \C-\\, which are single key binding, are usually bound to
+      ;; `execute-extended-command' and `toggle-input-method' respectively.
+      ;; Do not change those key bindings so users can disable mozc-mode.
+      (mapc (lambda (command)
+              (mapc
+               (lambda (key-sequence)
+                 (and (= (length key-sequence) 1)
+                      (integerp (aref key-sequence 0))
+                      (define-key map key-sequence command)))
+               (where-is-internal command global-map)))
+            '(execute-extended-command toggle-input-method))
+
+      ;; Ignore some of special events which are not user's input events and
+      ;; should be handled by the default event handlers.
+      (mapc (lambda (event)
+              (define-key map (vector event) nil))
+            '(delete-frame
+              iconify-frame
+              make-frame-visible
+              select-window
+              switch-frame))
+
+      ;; Hook all other input events.
+      ;; NOTE: It's possible that there is no key binding to disable mozc-mode
+      ;; since this key map hooks all key events except for above ones.
+      ;; Though it usually doesn't matter since Mozc server usually doesn't
+      ;; consume \M-x nor \C-\\.
+      (define-key map [t] #'mozc-handle-event)))
+  "Keymap for function `mozc-mode'.")
+
+(defconst mozc-empty-map (make-sparse-keymap)
+  "Empty keymap to disable Mozc keymap.
+This keymap is needed for `mozc-fall-back-on-default-binding'.")
+
+(defsubst mozc-enable-keymap ()
+  "Enable Mozc keymap again."
+  (setcdr (assq 'mozc-mode minor-mode-map-alist)
+          mozc-mode-map))
+
+(defsubst mozc-disable-keymap ()
+  "Disable Mozc keymap temporarily."
+  (setcdr (assq 'mozc-mode minor-mode-map-alist)
+          mozc-empty-map))
+
+
+
+;;;; External interfaces
+
+;; Mode variables
+(defvar mozc-mode nil
+  "Mode variable of function `mozc-mode'.
+Non-nil means function `mozc-mode' is enabled.")
+(make-variable-buffer-local 'mozc-mode)
+
+(defvar mozc-mode-hook nil
+  "A list of hooks called by the command `mozc-mode'.")
+
+;; Mode functions
+(defun mozc-mode (&optional arg)
+  "Minor mode to input Japanese text with Mozc.
+Toggle the mode if ARG is not given, or enable/disable the mode
+according to ARG.
+
+Hooks in `mozc-mode-hook' are run when the mode gets enabled.
+
+Return non-nil when enabled, otherwise nil.
+
+
+Tips for customizations
+
+By the design policy, Mozc maintains most of user settings on
+the server side.  Clients, including mozc.el, of Mozc do not
+have many user settings on their side.
+
+You can change a variety of user settings through a GUI command
+line tool 'mozc_tool' which must be shipped with the mozc server.
+The command line tool may be installed to /usr/lib/mozc or /usr/lib
+directory.
+You need a command line option '--mode=config_dialog' as the
+following.
+
+  $ /usr/lib/mozc/mozc_tool --mode=config_dialog
+
+Then, it shows a GUI dialog to edit your user settings.
+
+Note these settings are effective for all the clients of Mozc,
+not limited to mozc.el.
+
+Only the customizable item on mozc.el side is the key map for kana
+input.  When you've chosen kana input rather than roman input,
+a kana key map is effective, and you can customize it.
+
+There are two built-in kana key maps, one for 106 JP keyboards and
+one for 101 US keyboards.  You can choose one of them by setting
+`mozc-keymap-kana' variable.
+
+  ;; for 106 JP keyboards
+  (setq mozc-keymap-kana mozc-keymap-kana-106jp)
+
+  ;; for 101 US keyboards
+  (setq mozc-keymap-kana mozc-keymap-kana-101us)
+
+For advanced users, there are APIs for more detailed customization
+or even creating your own key map.
+See `mozc-keymap-get-entry', `mozc-keymap-put-entry',
+`mozc-keymap-remove-entry', and `mozc-keymap-make-keymap' and
+`mozc-keymap-make-keymap-from-flat-list'."
+  (interactive (list current-prefix-arg))
+  ;; Process the argument.
+  (setq mozc-mode
+        (if (null arg)
+            (not mozc-mode)
+          (> (prefix-numeric-value arg) 0)))
+
+  (if (not mozc-mode)
+      ;; disabled
+      (mozc-clean-up-session)
+    ;; enabled
+    ;; Put the keymap at the top of the list of minor mode keymaps.
+    (setq minor-mode-map-alist
+          (cons (cons 'mozc-mode mozc-mode-map)
+                (assq-delete-all 'mozc-mode minor-mode-map-alist)))
+    ;; Run minor mode hooks.
+    (run-hooks 'mozc-mode-hook)
+    ;; Create a new session.
+    (mozc-session-create t))
+
+  mozc-mode)
+
+(defun mozc-abort ()
+  "Disable function `mozc-mode' abnormally."
+  (setq mozc-mode nil))
+
+;; Mode line
+(defcustom mozc-mode-string nil
+  "Mode line string shown when function `mozc-mode' is enabled.
+Since LEIM shows another mode line indicator, the default value is nil.
+If you don't want to use LEIM, you might want to specify a mode line
+string, for instance, \" [Mozc]\"."
+  :type '(choice (const :tag "No indicator" nil)
+                 (string :tag "Show an indicator"))
+  :group 'mozc)
+
+(setq minor-mode-alist
+      (cons '(mozc-mode mozc-mode-string)
+            (assq-delete-all 'mozc-mode minor-mode-alist)))
+
+
+
 ;;;; Macros
 
 (defmacro mozc-with-undo-list-unchanged (&rest body)
@@ -159,110 +314,6 @@ the Emacs version.  `char-valid-p' is deprecated since Emacs 23."
   (if (fboundp #'characterp)
       `(characterp ,object)
     `(char-valid-p ,object)))
-
-
-
-;;;; External interfaces
-
-;; Mode variables
-(defvar mozc-mode nil
-  "Mode variable of mozc-mode.  Non-nil means mozc-mode is enabled.")
-(make-variable-buffer-local 'mozc-mode)
-
-(defvar mozc-mode-hook nil
-  "A list of hooks called by the command `mozc-mode'.")
-
-;; Mode functions
-(defun mozc-mode (&optional arg)
-  "Minor mode to input Japanese text with Mozc.
-Toggle the mode if ARG is not given, or enable/disable the mode
-according to ARG.
-
-Hooks in `mozc-mode-hook' are run when the mode gets enabled.
-
-Return non-nil when enabled, otherwise nil."
-  (interactive (list current-prefix-arg))
-  ;; Process the argument.
-  (setq mozc-mode
-        (if (null arg)
-            (not mozc-mode)
-          (> (prefix-numeric-value arg) 0)))
-
-  (if (not mozc-mode)
-      ;; disabled
-      (mozc-clean-up-session)
-    ;; enabled
-    ;; Put the keymap at the top of the list of minor mode keymaps.
-    (setq minor-mode-map-alist
-          (cons (cons 'mozc-mode mozc-mode-map)
-                (assq-delete-all 'mozc-mode minor-mode-map-alist)))
-    ;; Run minor mode hooks.
-    (run-hooks 'mozc-mode-hook)
-    ;; Create a new session.
-    (mozc-session-create t))
-
-  mozc-mode)
-
-(defsubst mozc-abort ()
-  "Disable mozc-mode abnormally."
-  (setq mozc-mode nil))
-
-;; Mode line
-(defcustom mozc-mode-string nil
-  "Mode line string shown when mozc-mode is enabled.
-Since LEIM shows another mode line indicator, the default value is nil.
-If you don't want to use LEIM, you might want to specify a mode line
-string, for instance, \" [Mozc]\"."
-  :type '(choice (const :tag "No indicator" nil)
-                 (string :tag "Show an indicator"))
-  :group 'mozc)
-
-(setq minor-mode-alist
-      (cons '(mozc-mode mozc-mode-string)
-            (assq-delete-all 'mozc-mode minor-mode-alist)))
-
-
-
-;;;; Keymap
-
-(defvar mozc-mode-map
-  (let ((map (make-sparse-keymap)))
-    ;; Leave single key bindings bound to specific commands as it is.
-    ;; \M-x and \C-\\, which are single key binding, are usually bound to
-    ;; `execute-extended-command' and `toggle-input-method' respectively.
-    ;; Do not change those key bindings so users can disable mozc-mode.
-    (mapc
-     (lambda (command)
-       (mapc
-        (lambda (key-sequence)
-          (and (= (length key-sequence) 1)
-               (integerp (aref key-sequence 0))
-               (define-key map key-sequence command)))
-        (where-is-internal command global-map)))
-     '(execute-extended-command toggle-input-method))
-
-    ;; Hook all other input events.
-    ;; NOTE: It's possible that there is no key binding to disable mozc-mode
-    ;; since this key map hooks all key events except for above ones.
-    ;; Though it usually doesn't matter since Mozc server usually doesn't
-    ;; consume \M-x nor \C-\\.
-    (define-key map [t] 'mozc-handle-event)
-    map)
-  "Keymap for mozc-mode.")
-
-(defconst mozc-empty-map (make-sparse-keymap)
-  "Empty keymap to disable Mozc keymap.
-This keymap is needed for `mozc-fall-back-on-default-binding'.")
-
-(defsubst mozc-enable-keymap ()
-  "Enable Mozc keymap again."
-  (setcdr (assq 'mozc-mode minor-mode-map-alist)
-          mozc-mode-map))
-
-(defsubst mozc-disable-keymap ()
-  "Disable Mozc keymap temporarily."
-  (setcdr (assq 'mozc-mode minor-mode-map-alist)
-          mozc-empty-map))
 
 
 
@@ -415,13 +466,13 @@ back and treated as if it's the first event of a next key sequence."
 
 ;;;; Cleanup
 
-(defsubst mozc-clean-up-session ()
+(defun mozc-clean-up-session ()
   "Clean up all changes on the current buffer and destroy the current session."
   (mozc-clean-up-changes-on-buffer)
   (mozc-session-delete)
   (mozc-clear-cached-header-line-height))
 
-(defsubst mozc-clean-up-changes-on-buffer ()
+(defun mozc-clean-up-changes-on-buffer ()
   "Clean up all changes on the current buffer.
 Clean up the preedit and candidate window."
   (mozc-preedit-clean-up)
@@ -518,6 +569,107 @@ REGIONS must be a list of regions."
 
 
 
+;;;; Utilities for position and window coordinates
+
+(defvar mozc-cached-header-line-height nil
+  "Cached height of the header line.")
+
+(defun mozc-posn-at-point (&optional pos window)
+  "Return the same position information as `posn-at-point'.
+The arguments POS and WINDOW are the same ones to `posn-at-point'.
+
+The difference is that, while `posn-at-point' returns position information
+at the previous point when it's on a terminal and the point is at the beginning
+of a wrapped line, this function returns the position information exactly
+at the point.
+
+For example, suppose the following line in the buffer and the point is at 'd'
+\(the beginning of character 'd'),
+    ....... abc[wrap]
+    def...
+\(cdr (posn-actual-col-row (posn-at-point AT_D))) is the same number at 'c' on
+a terminal.
+
+In a word, this function is a fixed version of `posn-at-point'."
+  (let ((posn (posn-at-point pos window)))
+    (if window-system
+        posn
+      (let* ((pos (cond ((numberp pos) pos)
+                        ((markerp pos) (marker-position pos))
+                        (t (point))))
+             (posn-next (posn-at-point (1+ pos) window))
+             (row (cdr (posn-actual-col-row posn)))
+             (row-next (cdr (posn-actual-col-row posn-next))))
+        (if (or (= pos (line-end-position))
+                (listp row)
+                (listp row-next)
+                (= row row-next)
+                (eq (car (posn-actual-col-row posn-next)) 0))
+            posn
+          ;; On a terminal, row and y-position at the beginning of
+          ;; a continued line are the ones at the previous position.
+          ;; Use the ones at the next position.
+          (setcar (nthcdr 5 posn) pos)  ; point
+          (setcar (nth 6 posn) 0)  ; col
+          (setcdr (nth 6 posn) (cdr (nth 6 posn-next)))  ; row
+          (setcar (nth 2 posn) 0)  ; x
+          (setcdr (nth 2 posn) (cdr (nth 2 posn-next)))  ; y
+          posn)))))
+
+(defsubst mozc-posn-col (position)
+  "Return the column in POSITION."
+  (car (posn-actual-col-row position)))
+
+(defsubst mozc-posn-row (position)
+  "Return the row in POSITION."
+  (cdr (posn-actual-col-row position)))
+
+(defsubst mozc-posn-x (position)
+  "Return the x coordinate in POSITION."
+  (car (posn-x-y position)))
+
+(defsubst mozc-posn-y (position)
+  "Return the y coordinate in POSITION.
+
+This function returns y offset from the top of the buffer area including
+the header line.  This definition could be changed in future.
+
+Note: On Emacs 22 and 23, y offset, returned by `posn-at-point' and taken
+by `posn-at-x-y', is relative to the top of the buffer area including
+the header line.
+However, on Emacs 24, y offset returned by `posn-at-point' is relative to
+the text area excluding the header line, while y offset taken by
+`posn-at-x-y' is relative to the buffer area including the header line.
+This asymmetry is by design according to GNU Emacs team.
+
+This function fixes the asymmetry between them on Emacs 24 and later versions.
+This hack could be moved to mozc-posn-at-x-y in a future version."
+  (let ((y (cdr (posn-x-y position))))
+    (if (or (null header-line-format) (<= emacs-major-version 23))
+        y
+      (+ y (or mozc-cached-header-line-height
+               (setq mozc-cached-header-line-height (mozc-header-line-height))
+               0)))))
+
+(defsubst mozc-window-width (&optional window)
+  "Return the width of WINDOW in pixel.
+WINDOW defaults to the selected window."
+  (let ((rect (window-inside-pixel-edges window)))
+    (- (third rect) (first rect))))
+
+(defun mozc-header-line-height ()
+  "Return the height of the header line.
+If there is no header line, return nil."
+  (let ((posn (posn-at-x-y 0 0)))
+    (if (eq (posn-area posn) 'header-line)
+        (cdr (posn-object-width-height posn)))))
+
+(defun mozc-clear-cached-header-line-height ()
+  "Clear the cached height of the header line."
+  (setq mozc-cached-header-line-height nil))
+
+
+
 ;;;; Preedit
 
 (defvar mozc-preedit-in-session-flag nil
@@ -531,6 +683,12 @@ REGIONS must be a list of regions."
 (defvar mozc-preedit-posn-origin nil
   "Position information at the insertion point in the current buffer.")
 (make-variable-buffer-local 'mozc-preedit-posn-origin)
+
+(defvar mozc-preedit-style nil
+  "Visual style of preedit.
+This variable must be a list of enabled styles or nil.
+Supported styles are:
+fence -- put vertical bars at both ends of preedit")
 
 (defun mozc-preedit-init ()
   "Initialize a new preedit session.
@@ -550,7 +708,7 @@ The preedit shows up at the current point."
   (setq mozc-preedit-point-origin nil
         mozc-preedit-in-session-flag nil))
 
-(defsubst mozc-preedit-clear ()
+(defun mozc-preedit-clear ()
   "Clear the current preedit.
 This function expects an update just after this call.
 If you want to finish a preedit session, call `mozc-preedit-clean-up'."
@@ -680,12 +838,6 @@ and return the same text as is."
         text)
     text))
 
-(defvar mozc-preedit-style nil
-  "Visual style of preedit.
-This variable must be a list of enabled styles or nil.
-Supported styles are:
-fence -- put vertical bars at both ends of preedit")
-
 (defface mozc-preedit-selected-face
   '((((type graphic x w32) (class color) (background dark))
      (:foreground "white" :background "brown"))
@@ -732,7 +884,7 @@ The table is an alist from types of candidate windows to alist of methods.
 Each type of candidate windows must support 3 methods; clean-up, clear and
 update.")
 
-(defsubst mozc-candidate-dispatch (method &rest args)
+(defun mozc-candidate-dispatch (method &rest args)
   "Dispatch a method call according to `mozc-candidate-style'.
 METHOD is one of symbols `clean-up', `clear' and `update'.  For ARGS, see
 `mozc-candidate-clean-up', `mozc-candidate-clear' and `mozc-candidate-update'
@@ -747,17 +899,17 @@ respectively."
         (apply func args)
       (signal 'mozc-internal-error (list mozc-candidate-style method args)))))
 
-(defsubst mozc-candidate-clean-up ()
+(defun mozc-candidate-clean-up ()
   "Clean up the current candidate session."
   (mozc-candidate-dispatch 'clean-up))
 
-(defsubst mozc-candidate-clear ()
+(defun mozc-candidate-clear ()
   "Clear the current candidate window.
 This function expects an update just after this call.
 If you want to finish a candidate session, call `mozc-candidate-clean-up'."
   (mozc-candidate-dispatch 'clear))
 
-(defsubst mozc-candidate-update (candidates)
+(defun mozc-candidate-update (candidates)
   "Update the candidate window.
 CANDIDATES must be the candidates field in a response protobuf."
   (mozc-candidate-dispatch 'update candidates))
@@ -765,6 +917,10 @@ CANDIDATES must be the candidates field in a response protobuf."
 
 
 ;;;; Candidate window (echo area version)
+
+(defvar mozc-cand-echo-area-placeholder-region nil
+  "A region which is temporarily added for showing a candidate list.")
+(make-variable-buffer-local 'mozc-cand-echo-area-placeholder-region)
 
 (defun mozc-cand-echo-area-clean-up ()
   "Clean up the current candidate session."
@@ -831,10 +987,6 @@ Return a string formatted to suit for the echo area."
                          'face 'mozc-cand-echo-area-annotation-face)))))
       (mozc-protobuf-get candidates 'candidate)))))
 
-(defvar mozc-cand-echo-area-placeholder-region nil
-  "A region which is temporarily added for showing a candidate list.")
-(make-variable-buffer-local 'mozc-cand-echo-area-placeholder-region)
-
 (defface mozc-cand-echo-area-focused-face
   '((((type graphic x w32) (class color) (background dark))
      (:foreground "black" :background "orange"))
@@ -885,6 +1037,41 @@ candidates in the echo area candidate window."
 
 
 ;;;; Candidate window (overlay version)
+
+(defvar mozc-cand-overlay-placeholder-regions nil
+  "Regions which are temporarily added for showing candidate windows.")
+(make-variable-buffer-local 'mozc-cand-overlay-placeholder-regions)
+
+(defvar mozc-cand-overlay-overlays nil
+  "Overlays which are put for showing candidate windows.")
+(make-variable-buffer-local 'mozc-cand-overlay-overlays)
+
+(defsubst mozc-cand-overlay-make-overlay (beg end)
+  "Create a new overlay with the range from BEG to END.
+`mozc-cand-overlay-delete-overlays' removes all overlays created by
+this function."
+  (let ((overlay (make-overlay beg end)))
+    (push overlay mozc-cand-overlay-overlays)
+    overlay))
+
+(defsubst mozc-cand-overlay-put-text (overlay text &optional face)
+  "Change the display property of OVERLAY to TEXT.
+Optionally change the face property of OVERLAY to FACE."
+  (overlay-put overlay 'display text)
+  (when face
+    (overlay-put overlay 'face face)))
+
+(defsubst mozc-cand-overlay-put-space (overlay width &optional face)
+  "Change the display property of OVERLAY to space of WIDTH pixel in width.
+Optionally change the face property of OVERLAY to FACE."
+  (overlay-put overlay 'display `(space . (:width (,(max 0 width)))))
+  (when face
+    (overlay-put overlay 'face face)))
+
+(defun mozc-cand-overlay-delete-overlays ()
+  "Remove overlays used for showing candidate windows."
+  (mapc #'delete-overlay mozc-cand-overlay-overlays)
+  (setq mozc-cand-overlay-overlays nil))
 
 (defun mozc-cand-overlay-clean-up ()
   "Clean up the current candidate session.
@@ -1170,41 +1357,6 @@ This function may change the point."
     (let ((overlay (mozc-cand-overlay-make-overlay (+ p1 5) p2)))
       (mozc-cand-overlay-put-space overlay (- p2x x2)))))
 
-(defvar mozc-cand-overlay-overlays nil
-  "Overlays which are put for showing candidate windows.")
-(make-variable-buffer-local 'mozc-cand-overlay-overlays)
-
-(defsubst mozc-cand-overlay-make-overlay (beg end)
-  "Create a new overlay with the range from BEG to END.
-`mozc-cand-overlay-delete-overlays' removes all overlays created by
-this function."
-  (let ((overlay (make-overlay beg end)))
-    (push overlay mozc-cand-overlay-overlays)
-    overlay))
-
-(defsubst mozc-cand-overlay-put-text (overlay text &optional face)
-  "Change the display property of OVERLAY to TEXT.
-Optionally change the face property of OVERLAY to FACE."
-  (overlay-put overlay 'display text)
-  (when face
-    (overlay-put overlay 'face face)))
-
-(defsubst mozc-cand-overlay-put-space (overlay width &optional face)
-  "Change the display property of OVERLAY to space of WIDTH pixel in width.
-Optionally change the face property of OVERLAY to FACE."
-  (overlay-put overlay 'display `(space . (:width (,(max 0 width)))))
-  (when face
-    (overlay-put overlay 'face face)))
-
-(defun mozc-cand-overlay-delete-overlays ()
-  "Remove overlays used for showing candidate windows."
-  (mapc #'delete-overlay mozc-cand-overlay-overlays)
-  (setq mozc-cand-overlay-overlays nil))
-
-(defvar mozc-cand-overlay-placeholder-regions nil
-  "Regions which are temporarily added for showing candidate windows.")
-(make-variable-buffer-local 'mozc-cand-overlay-placeholder-regions)
-
 (defface mozc-cand-overlay-focused-face
   '((((type graphic x w32) (class color) (background dark))
      (:foreground "#191970" :background "#ffa500"))
@@ -1247,111 +1399,10 @@ Optionally change the face property of OVERLAY to FACE."
 
 
 
-;;;; Utilities for position and window coordinates
-
-(defvar mozc-cached-header-line-height nil
-  "Cached height of the header line.")
-
-(defun mozc-posn-at-point (&optional pos window)
-  "Return the same position information as `posn-at-point'.
-The arguments POS and WINDOW are the same ones to `posn-at-point'.
-
-The difference is that, while `posn-at-point' returns position information
-at the previous point when it's on a terminal and the point is at the beginning
-of a wrapped line, this function returns the position information exactly
-at the point.
-
-For example, suppose the following line in the buffer and the point is at 'd'
-\(the beginning of character 'd'),
-    ....... abc[wrap]
-    def...
-\(cdr (posn-actual-col-row (posn-at-point AT_D))) is the same number at 'c' on
-a terminal.
-
-In a word, this function is a fixed version of `posn-at-point'."
-  (let ((posn (posn-at-point pos window)))
-    (if window-system
-        posn
-      (let* ((pos (cond ((numberp pos) pos)
-                        ((markerp pos) (marker-position pos))
-                        (t (point))))
-             (posn-next (posn-at-point (1+ pos) window))
-             (row (cdr (posn-actual-col-row posn)))
-             (row-next (cdr (posn-actual-col-row posn-next))))
-        (if (or (= pos (line-end-position))
-                (listp row)
-                (listp row-next)
-                (= row row-next)
-                (eq (car (posn-actual-col-row posn-next)) 0))
-            posn
-          ;; On a terminal, row and y-position at the beginning of
-          ;; a continued line are the ones at the previous position.
-          ;; Use the ones at the next position.
-          (setcar (nthcdr 5 posn) pos)  ; point
-          (setcar (nth 6 posn) 0)  ; col
-          (setcdr (nth 6 posn) (cdr (nth 6 posn-next)))  ; row
-          (setcar (nth 2 posn) 0)  ; x
-          (setcdr (nth 2 posn) (cdr (nth 2 posn-next)))  ; y
-          posn)))))
-
-(defsubst mozc-posn-col (position)
-  "Return the column in POSITION."
-  (car (posn-actual-col-row position)))
-
-(defsubst mozc-posn-row (position)
-  "Return the row in POSITION."
-  (cdr (posn-actual-col-row position)))
-
-(defsubst mozc-posn-x (position)
-  "Return the x coordinate in POSITION."
-  (car (posn-x-y position)))
-
-(defsubst mozc-posn-y (position)
-  "Return the y coordinate in POSITION.
-
-This function returns y offset from the top of the buffer area including
-the header line.  This definition could be changed in future.
-
-Note: On Emacs 22 and 23, y offset, returned by `posn-at-point' and taken
-by `posn-at-x-y', is relative to the top of the buffer area including
-the header line.
-However, on Emacs 24, y offset returned by `posn-at-point' is relative to
-the text area excluding the header line, while y offset taken by
-`posn-at-x-y' is relative to the buffer area including the header line.
-This asymmetry is by design according to GNU Emacs team.
-
-This function fixes the asymmetry between them on Emacs 24 and later versions.
-This hack could be moved to mozc-posn-at-x-y in a future version."
-  (let ((y (cdr (posn-x-y position))))
-    (if (or (null header-line-format) (<= emacs-major-version 23))
-        y
-      (+ y (or mozc-cached-header-line-height
-               (setq mozc-cached-header-line-height (mozc-header-line-height))
-               0)))))
-
-(defsubst mozc-window-width (&optional window)
-  "Return the width of WINDOW in pixel.
-WINDOW defaults to the selected window."
-  (let ((rect (window-inside-pixel-edges window)))
-    (- (third rect) (first rect))))
-
-(defun mozc-header-line-height ()
-  "Return the height of the header line.
-If there is no header line, return nil."
-  (let ((posn (posn-at-x-y 0 0)))
-    (if (eq (posn-area posn) 'header-line)
-        (cdr (posn-object-width-height posn)))))
-
-(defun mozc-clear-cached-header-line-height ()
-  "Clear the cached height of the header line."
-  (setq mozc-cached-header-line-height nil))
-
-
-
 ;;;; Buffer local session management
 
 (defvar mozc-session-process nil
-  "Buffer local process object to compare with `mozc-helper-process'.
+  "Buffer local copy of the return value of function `mozc-helper-process'.
 If both process objects are identical, it means the helper process is running
 as expected.  If not, it means the helper process has restarted or crashed.
 In this case, need to re-create a Mozc session.")
@@ -1397,13 +1448,13 @@ create a new session."
 (defun mozc-session-delete ()
   "Delete a current Mozc session."
   (when (and mozc-session-id mozc-session-process
-             (eq mozc-session-process mozc-helper-process))
+             (eq mozc-session-process (mozc-helper-process)))
     ;; Just try to delete the session.  Ignore any error.
     (mozc-session-execute-command 'DeleteSession))
   (setq mozc-session-id nil)
   (setq mozc-session-process nil))
 
-(defsubst mozc-session-sendkey (key-list)
+(defun mozc-session-sendkey (key-list)
   "Send a key event to the helper process and return the resulting protobuf.
 The resulting protocol buffer, which is represented as alist, is
 mozc::commands::Output in C++.  Return nil on error.
@@ -1509,6 +1560,10 @@ This string may be a part of a complete message, or an empty string.
 This is the temporary buffer to receive a complete message.
 A single message may be sent in several bunches.")
 
+(defun mozc-helper-process ()
+  "Return the process object currently running."
+  mozc-helper-process)
+
 (defun mozc-helper-process-start (&optional forcep)
   "Start the helper process if not running or not under the control.
 If FORCEP is non-nil, stop the process (if running) and (re)start
@@ -1521,7 +1576,7 @@ Return the process object on success.  Otherwise return nil."
   (unless mozc-helper-process
     (message "mozc.el: Starting mozc-helper-process...")
     (condition-case nil
-        (let* ((process-connection-type nil)  ; We don't need pty. Use pipe.
+        (let* ((process-connection-type nil)  ; We don't need pty.  Use pipe.
                (proc (apply #'start-process "mozc-helper-process" nil
                             mozc-helper-program-name
                             mozc-helper-program-args)))
@@ -1576,7 +1631,7 @@ version           -- should be version string"
     (setq mozc-helper-process nil)))
 
 (defun mozc-helper-process-sentinel (proc message)
-  "Invalidate `mozc-helper-process' if PROC is not running normally.
+  "Invalidate variable `mozc-helper-process' if PROC is not running normally.
 Current implementation throws MESSAGE away."
   (when (eq proc mozc-helper-process)
     (case (process-status proc)
@@ -1610,7 +1665,7 @@ Each message must end with newline.  Messages are stored in the queue
       ;; Keep it in the raw buffer.  The last part can be "" (empty string).
       (setq mozc-helper-process-string-buf incomplete-string))))
 
-(defsubst mozc-helper-process-send-sexpr (&rest args)
+(defun mozc-helper-process-send-sexpr (&rest args)
   "Send S-expressions ARGS to the helper process.
 A message sent to the process is a list of ARGS and formatted in
 a single line."
@@ -1692,7 +1747,7 @@ and LIST.  The default value of N is 1."
       (setcdr pre-boundary nil)  ; Drop the rest of list.
       (cons list post-boundary))))
 
-(defsubst mozc-string-match-p (regexp string &optional start)
+(defun mozc-string-match-p (regexp string &optional start)
   "Same as `string-match' except this function never change the match data.
 REGEXP, STRING and optional START are the same as for `string-match'.
 
@@ -1889,10 +1944,10 @@ CONDITIONS is a list of error conditions and shouldn't include symbol `error',
 
 ;;;; LEIM (Library of Emacs Input Method)
 
-(require 'mule)
+(require 'mule nil t)
 
 (defun mozc-leim-activate (input-method)
-  "Activate mozc-mode via LEIM.
+  "Activate function `mozc-mode' via LEIM.
 INPUT-METHOD is not used."
   (let ((new 'deactivate-current-input-method-function)
         (old 'inactivate-current-input-method-function))
@@ -1902,22 +1957,34 @@ INPUT-METHOD is not used."
   (mozc-mode t))
 
 (defun mozc-leim-deactivate ()
-  "Deactivate mozc-mode via LEIM."
+  "Deactivate function `mozc-mode' via LEIM."
   (mozc-mode nil))
 
 (defcustom mozc-leim-title "[Mozc]"
-  "Mode line string shown when mozc-mode is enabled.
+  "Mode line string shown when function `mozc-mode' is enabled.
 This indicator is not shown when you don't use LEIM."
   :type '(choice (const :tag "No indicator" nil)
                  (string :tag "Show an indicator"))
   :group 'mozc)
 
-(register-input-method
- "japanese-mozc"
- "Japanese"
- #'mozc-leim-activate
- mozc-leim-title
- "Japanese input method with Mozc/Google Japanese Input.")
+(defun mozc-leim-register-input-method ()
+  "Register function `mozc-mode' as an input method of LEIM.
+Do nothing if LEIM is not available."
+  (if (fboundp #'register-input-method)
+      (register-input-method
+       "japanese-mozc"
+       "Japanese"
+       #'mozc-leim-activate
+       mozc-leim-title
+       "Japanese input method with Mozc.")))
+
+;; Register mozc-mode as an input method after the init file has been read
+;; so the user has a chance to specify `mozc-leim-title' in the init file
+;; after loading this file.
+(add-hook 'emacs-startup-hook #'mozc-leim-register-input-method)
+;; In the case that `emacs-startup-hook' has already been run, especially
+;; when the user loads this file interactively, register immediately.
+(mozc-leim-register-input-method)
 
 
 

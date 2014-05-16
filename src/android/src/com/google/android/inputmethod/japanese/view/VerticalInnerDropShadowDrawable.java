@@ -29,6 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
+import com.google.common.base.Optional;
+
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -41,8 +43,8 @@ import android.graphics.Shader.TileMode;
 public class VerticalInnerDropShadowDrawable extends BaseBackgroundDrawable {
 
   private final int shadowSize;
-  private LinearGradient topShadow = null;
-  private LinearGradient bottomShadow = null;
+  private Optional<LinearGradient> topShadow = Optional.absent();
+  private Optional<LinearGradient> bottomShadow = Optional.absent();
   private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
   public VerticalInnerDropShadowDrawable(
@@ -59,13 +61,13 @@ public class VerticalInnerDropShadowDrawable extends BaseBackgroundDrawable {
     }
 
     Rect rect = getCanvasRect();
-    if (topShadow != null) {
-      paint.setShader(topShadow);
+    if (topShadow.isPresent()) {
+      paint.setShader(topShadow.get());
       canvas.drawRect(rect, paint);
     }
 
-    if (bottomShadow != null) {
-      paint.setShader(bottomShadow);
+    if (bottomShadow.isPresent()) {
+      paint.setShader(bottomShadow.get());
       canvas.drawRect(rect, paint);
     }
   }
@@ -74,17 +76,17 @@ public class VerticalInnerDropShadowDrawable extends BaseBackgroundDrawable {
   protected void onBoundsChange(Rect bounds) {
     super.onBoundsChange(bounds);
     if (isCanvasRectEmpty()) {
-      topShadow = null;
-      bottomShadow = null;
+      topShadow = Optional.absent();
+      bottomShadow = Optional.absent();
       return;
     }
 
     Rect canvasRect = getCanvasRect();
-    topShadow = new LinearGradient(
+    topShadow = Optional.of(new LinearGradient(
         0, canvasRect.top, 0, Math.min(canvasRect.bottom, canvasRect.top + shadowSize),
-        0xA6000000, 0x00000000, TileMode.CLAMP);
-    bottomShadow = new LinearGradient(
+        0xA6000000, 0x00000000, TileMode.CLAMP));
+    bottomShadow = Optional.of(new LinearGradient(
         0, Math.max(canvasRect.top, canvasRect.bottom - shadowSize), 0, canvasRect.bottom,
-        0x00000000, 0xA6000000, TileMode.CLAMP);
+        0x00000000, 0xA6000000, TileMode.CLAMP));
   }
 }

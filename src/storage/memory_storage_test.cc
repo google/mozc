@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <map>
-
-#include "base/base.h"
-#include "base/scoped_ptr.h"
 #include "storage/memory_storage.h"
+
+#include <map>
+#include <string>
+
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 

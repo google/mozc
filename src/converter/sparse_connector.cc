@@ -31,8 +31,8 @@
 
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/stl_util.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 

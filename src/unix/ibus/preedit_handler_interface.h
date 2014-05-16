@@ -45,7 +45,7 @@ class PreeditHandlerInterface {
   virtual ~PreeditHandlerInterface() {}
 
   virtual bool Update(IBusEngine *engine,
-                      const commands::Output &output) ABSTRACT;
+                      const commands::Output &output) = 0;
 };
 
 }  // namespace ibus

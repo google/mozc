@@ -33,7 +33,8 @@
 #define MOZC_SESSION_SESSION_OBSERVER_HANDLER_H_
 
 #include <vector>
-#include "base/base.h"
+
+#include "base/port.h"
 
 namespace mozc {
 namespace commands {

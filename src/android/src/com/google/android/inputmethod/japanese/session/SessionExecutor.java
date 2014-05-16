@@ -31,6 +31,7 @@ package org.mozc.android.inputmethod.japanese.session;
 
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.MozcLog;
+import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Capability;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Capability.TextDeletionCapabilityType;
@@ -47,13 +48,17 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.Spe
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionCommand;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionCommand.UsageStatsEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -269,6 +274,7 @@ public class SessionExecutor {
      */
     private static final Set<CommandType> SESSION_INDEPENDENT_COMMAND_TYPE_SET =
         Collections.unmodifiableSet(EnumSet.of(
+            CommandType.NO_OPERATION,
             CommandType.SET_CONFIG,
             CommandType.GET_CONFIG,
             CommandType.SET_IMPOSED_CONFIG,
@@ -556,6 +562,30 @@ public class SessionExecutor {
     callbackHandler = new CallbackHandler(Looper.getMainLooper());
   }
 
+  private static void waitForQueueForEmpty(Handler handler) {
+    final CountDownLatch synchronizer = new CountDownLatch(1);
+    handler.post(new Runnable() {
+      @Override
+      public void run() {
+        synchronizer.countDown();
+      }
+    });
+    try {
+      synchronizer.await();
+    } catch (InterruptedException exception) {
+      MozcLog.w("waitForQueueForEmpty is interrupted.");
+    }
+  }
+
+  /**
+   * Blocks until both incoming and outgoing queues become empty, for testing.
+   */
+  @VisibleForTesting
+  public void waitForAllQueuesForEmpty() {
+    waitForQueueForEmpty(handler);
+    waitForQueueForEmpty(callbackHandler);
+  }
+
   /**
    * Resets the instance by setting {@code SessionHandler} created by the given {@code factory}.
    */
@@ -646,13 +676,14 @@ public class SessionExecutor {
   /**
    * Sends {@code SWITCH_INPUT_MODE} command to the server asynchronously.
    */
-  public void switchInputMode(CompositionMode mode) {
+  public void switchInputMode(KeyEventInterface triggeringKeyEvent, CompositionMode mode,
+                              EvaluationCallback callback) {
     Input.Builder inputBuilder = Input.newBuilder()
         .setType(CommandType.SEND_COMMAND)
         .setCommand(SessionCommand.newBuilder()
             .setType(SessionCommand.CommandType.SWITCH_INPUT_MODE)
             .setCompositionMode(mode));
-    evaluateAsynchronously(inputBuilder, null, null);
+    evaluateAsynchronously(inputBuilder, triggeringKeyEvent, callback);
   }
 
   /**
@@ -738,15 +769,41 @@ public class SessionExecutor {
     evaluateAsynchronously(inputBuilder, null, callback);
   }
 
-  public void usageStatsEvent(List<? extends TouchEvent> touchEventList) {
-    if (touchEventList.isEmpty()) {
+  public void preferenceUsageStatsEvent(SharedPreferences sharedPreferences) {
+    Preconditions.checkNotNull(sharedPreferences);
+
+    ClientSidePreference landscapePreference =
+        new ClientSidePreference(sharedPreferences, Configuration.ORIENTATION_LANDSCAPE);
+    evaluateAsynchronously(
+        Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE)
+                .setUsageStatsEventIntValue(landscapePreference.getKeyboardLayout().getId())),
+        null, null);
+
+    ClientSidePreference portraitPreference =
+        new ClientSidePreference(sharedPreferences, Configuration.ORIENTATION_PORTRAIT);
+    evaluateAsynchronously(
+        Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT)
+                .setUsageStatsEventIntValue(portraitPreference.getKeyboardLayout().getId())),
+        null, null);
+  }
+
+  public void touchEventUsageStatsEvent(List<? extends TouchEvent> touchEventList) {
+    if (Preconditions.checkNotNull(touchEventList).isEmpty()) {
       return;
     }
 
     Input.Builder inputBuilder = Input.newBuilder()
         .setType(CommandType.SEND_COMMAND)
-        .setCommand(
-            SessionCommand.newBuilder().setType(SessionCommand.CommandType.USAGE_STATS_EVENT))
+        .setCommand(SessionCommand.newBuilder()
+            .setType(SessionCommand.CommandType.USAGE_STATS_EVENT))
         .addAllTouchEvents(touchEventList);
     evaluateAsynchronously(inputBuilder, null, null);
   }

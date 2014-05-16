@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+ Copyright 2010-2014, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<!--
+Preprocesses for this file;
+- Imported .ai file into Inkscape.
+- Combine all pathes into one (Path > Combine).
+- Export as optimized .svg.
+- Removed following elements manually.
+  - metadata
+  - defs
+- Removed ignorable <g> elements.
+- Added id attribute.
+-->
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" height="123.94037" width="126.05875" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><g transform="matrix(1.25,0,0,-1.25,0,123.94037)"><g transform="translate(29.0244,46.3398)"><path id="" fill-rule="nonzero" fill="#373535" d="m0,0c-7.104,7.109-7.104,18.632,0,25.736,7.109,7.109,18.623,7.103,25.734,0,7.105-7.104,7.105-18.623,0-25.736-7.111-7.104-18.63-7.104-25.734,0m53.585-18.533-12.165,12.168c-1.07,1.068-3.008,0.967-4.95-0.045l-5.308,5.305c6.914,9.032,6.262,22.001-2.002,30.267-8.999,8.995-23.588,8.995-32.588,0-8.994-9-8.994-23.589,0-32.588,8.269-8.263,21.237-8.916,30.271-2l5.305-5.304c-1.011-1.946-1.115-3.881-0.046-4.952l12.166-12.168c1.537-1.535,4.875-0.691,7.44,1.883,2.571,2.569,3.416,5.899,1.877,7.434"/></g></g></svg>

@@ -33,6 +33,8 @@ import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecificat
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardParser;
 import org.mozc.android.inputmethod.japanese.keyboard.Row;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
@@ -69,7 +71,10 @@ public class JapaneseKeyboardParser extends KeyboardParser {
   }
 
   @Override
-  protected Keyboard buildKeyboard(List<Row> rowList, float flickThreshold) {
-    return new JapaneseKeyboard(rowList, flickThreshold, specification);
+  protected Keyboard buildKeyboard(Optional<String> contentDescription,
+                                   List<Row> rowList, float flickThreshold) {
+    return new JapaneseKeyboard(Preconditions.checkNotNull(contentDescription),
+                                Preconditions.checkNotNull(rowList), flickThreshold,
+                                specification);
   }
 }

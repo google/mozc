@@ -37,6 +37,7 @@ import org.mozc.android.inputmethod.japanese.view.PopUpFrameWindowDrawable;
 import org.mozc.android.inputmethod.japanese.view.RectKeyDrawable;
 import org.mozc.android.inputmethod.japanese.view.RoundRectKeyDrawable;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.ThreeDotsIconDrawable;
 import org.mozc.android.inputmethod.japanese.view.TriangularHighlightDrawable;
 import org.mozc.android.inputmethod.japanese.view.TriangularHighlightDrawable.HighlightDirection;
 
@@ -76,10 +77,12 @@ public class BackgroundDrawableFactory {
     // Key background for twelvekeys layout.
     TWELVEKEYS_REGULAR_KEY_BACKGROUND,
     TWELVEKEYS_FUNCTION_KEY_BACKGROUND,
+    TWELVEKEYS_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS,
 
     // Key background for qwerty layout.
     QWERTY_REGULAR_KEY_BACKGROUND,
     QWERTY_FUNCTION_KEY_BACKGROUND,
+    QWERTY_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS,
     QWERTY_FUNCTION_KEY_LIGHT_ON_BACKGROUND,
     QWERTY_FUNCTION_KEY_LIGHT_OFF_BACKGROUND,
 
@@ -105,11 +108,19 @@ public class BackgroundDrawableFactory {
   private static final float TWELVEKEYS_TOP_OFFSET = 0;
   private static final float TWELVEKEYS_RIGHT_OFFSET = 1.0f;
   private static final float TWELVEKEYS_BOTTOM_OFFSET = 1.0f;
+  private static final float TWELVEKEYS_THREEDOTS_BOTTOM_OFFSET = 3.0f;
+  private static final float TWELVEKEYS_THREEDOTS_RIGHT_OFFSET = 5.0f;
+  private static final float TWELVEKEYS_THREEDOTS_WIDTH = 2.0f;
+  private static final float TWELVEKEYS_THREEDOTS_SPAN = 2.0f;
 
   private static final float QWERTY_LEFT_OFFSET = 2.0f;
   private static final float QWERTY_TOP_OFFSET = 1.0f;
   private static final float QWERTY_RIGHT_OFFSET = 2.0f;
   private static final float QWERTY_BOTTOM_OFFSET = 3.0f;
+  private static final float QWERTY_THREEDOTS_BOTTOM_OFFSET = 3.0f;
+  private static final float QWERTY_THREEDOTS_RIGHT_OFFSET = 5.0f;
+  private static final float QWERTY_THREEDOTS_WIDTH = 2.0f;
+  private static final float QWERTY_THREEDOTS_SPAN = 2.0f;
   private static final float QWERTY_LIGHT_TOP_OFFSET = 2.0f;
   private static final float QWERTY_LIGHT_RIGHT_OFFSET = 2.0f;
   private static final float QWERTY_LIGHT_RADIUS = 2.25f;
@@ -204,6 +215,38 @@ public class BackgroundDrawableFactory {
                 skinType.twelvekeysLayoutReleasedFunctionKeyDarkShadeColor,
                 skinType.twelvekeysLayoutReleasedFunctionKeyShadowColor));
 
+      case TWELVEKEYS_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS:
+        return new LayerDrawable(new Drawable[] {
+            createPressableDrawable(
+                new RectKeyDrawable(
+                    (int) (TWELVEKEYS_LEFT_OFFSET * density),
+                    (int) (TWELVEKEYS_TOP_OFFSET * density),
+                    (int) (TWELVEKEYS_RIGHT_OFFSET * density),
+                    (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
+                    skinType.twelvekeysLayoutPressedFunctionKeyTopColor,
+                    skinType.twelvekeysLayoutPressedFunctionKeyBottomColor,
+                    skinType.twelvekeysLayoutPressedFunctionKeyHighlightColor,
+                    skinType.twelvekeysLayoutPressedFunctionKeyLightShadeColor,
+                    skinType.twelvekeysLayoutPressedFunctionKeyDarkShadeColor,
+                    skinType.twelvekeysLayoutPressedFunctionKeyShadowColor),
+                new RectKeyDrawable(
+                    (int) (TWELVEKEYS_LEFT_OFFSET * density),
+                    (int) (TWELVEKEYS_TOP_OFFSET * density),
+                    (int) (TWELVEKEYS_RIGHT_OFFSET * density),
+                    (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
+                    skinType.twelvekeysLayoutReleasedFunctionKeyTopColor,
+                    skinType.twelvekeysLayoutReleasedFunctionKeyBottomColor,
+                    skinType.twelvekeysLayoutReleasedFunctionKeyHighlightColor,
+                    skinType.twelvekeysLayoutReleasedFunctionKeyLightShadeColor,
+                    skinType.twelvekeysLayoutReleasedFunctionKeyDarkShadeColor,
+                    skinType.twelvekeysLayoutReleasedFunctionKeyShadowColor)),
+            new ThreeDotsIconDrawable(
+                (int) ((TWELVEKEYS_BOTTOM_OFFSET + TWELVEKEYS_THREEDOTS_BOTTOM_OFFSET) * density),
+                (int) ((TWELVEKEYS_RIGHT_OFFSET + TWELVEKEYS_THREEDOTS_RIGHT_OFFSET) * density),
+                skinType.threeDotsColor,
+                (int) (TWELVEKEYS_THREEDOTS_WIDTH * density),
+                (int) (TWELVEKEYS_THREEDOTS_SPAN * density))});
+
       case QWERTY_REGULAR_KEY_BACKGROUND:
         return createPressableDrawable(
             new RoundRectKeyDrawable(
@@ -249,6 +292,36 @@ public class BackgroundDrawableFactory {
                 skinType.qwertyLayoutReleasedFunctionKeyBottomColor,
                 skinType.qwertyLayoutReleasedFunctionKeyHighlightColor,
                 skinType.qwertyLayoutReleasedFunctionKeyShadowColor));
+
+      case QWERTY_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS:
+        return new LayerDrawable(new Drawable[] {
+            createPressableDrawable(
+                new RoundRectKeyDrawable(
+                    (int) (QWERTY_LEFT_OFFSET * density),
+                    (int) (QWERTY_TOP_OFFSET * density),
+                    (int) (QWERTY_RIGHT_OFFSET * density),
+                    (int) (QWERTY_BOTTOM_OFFSET * density),
+                    (int) (skinType.qwertyKeyRoundRadius * density),
+                    skinType.qwertyLayoutPressedFunctionKeyTopColor,
+                    skinType.qwertyLayoutPressedFunctionKeyBottomColor,
+                    skinType.qwertyLayoutPressedFunctionKeyHighlightColor,
+                    skinType.qwertyLayoutPressedFunctionKeyShadowColor),
+                new RoundRectKeyDrawable(
+                    (int) (QWERTY_LEFT_OFFSET * density),
+                    (int) (QWERTY_TOP_OFFSET * density),
+                    (int) (QWERTY_RIGHT_OFFSET * density),
+                    (int) (QWERTY_BOTTOM_OFFSET * density),
+                    (int) (skinType.qwertyKeyRoundRadius * density),
+                    skinType.qwertyLayoutReleasedFunctionKeyTopColor,
+                    skinType.qwertyLayoutReleasedFunctionKeyBottomColor,
+                    skinType.qwertyLayoutReleasedFunctionKeyHighlightColor,
+                    skinType.qwertyLayoutReleasedFunctionKeyShadowColor)),
+            new ThreeDotsIconDrawable(
+                (int) ((QWERTY_BOTTOM_OFFSET + QWERTY_THREEDOTS_BOTTOM_OFFSET) * density),
+                (int) ((QWERTY_RIGHT_OFFSET + QWERTY_THREEDOTS_RIGHT_OFFSET) * density),
+                skinType.threeDotsColor,
+                (int) (QWERTY_THREEDOTS_WIDTH * density),
+                (int) (QWERTY_THREEDOTS_SPAN * density))});
 
       case QWERTY_FUNCTION_KEY_LIGHT_ON_BACKGROUND:
         return new LayerDrawable(new Drawable[] {

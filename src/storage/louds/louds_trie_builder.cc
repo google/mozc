@@ -32,8 +32,8 @@
 #include <algorithm>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "storage/louds/bit_stream.h"
 
 namespace mozc {

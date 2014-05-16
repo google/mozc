@@ -28,12 +28,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 vars = {
-  "breakpad_revision": "1217",
-  "clang_helper_in_chromium_revision": "171017",
-  "gtest_revision": "645",
-  "gmock_revision": "425",
-  "gyp_revision": "1775",
-  "jsoncpp_revision": "274",
+  "breakpad_revision": "1238",
+  "gtest_revision": "681",
+  "gmock_revision": "471",
+  "gyp_revision": "1875",
+  "jsoncpp_revision": "276",
   "protobuf_revision": "462",
   "wtl_revision": "459",
   "zinnia_revision": "16",
@@ -73,17 +72,11 @@ deps_os = {
       Var("zinnia_revision"),
   },
   "mac": {
-    "src/third_party/clang/scripts":
-      "https://src.chromium.org/chrome/trunk/src/tools/clang/scripts@" +
-      Var("clang_helper_in_chromium_revision"),
     "src/third_party/zinnia/v0_04":
       "http://svn.code.sf.net/p/zinnia/code@" +
        Var("zinnia_revision"),
   },
   "unix": {
-    "src/third_party/clang/scripts":
-      "https://src.chromium.org/chrome/trunk/src/tools/clang/scripts@" +
-      Var("clang_helper_in_chromium_revision"),
     "src/third_party/findbug":
       # We need only a jar file so avoiding to sync entire tree.
       # Findbug project keeps release-jar files in their repository.

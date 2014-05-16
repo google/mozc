@@ -44,7 +44,7 @@
 //       prefix searches. If you have called
 //       AddLookupPrefix("きょうと", "きょうと", "京都"), you will get a result
 //       calling LookupPrefix("きょうとだいがく", ...).
-//       Nodes returned by these methods all have the "lid" and "rid" with the
+//       Tokens looked up by these methods all have the "lid" and "rid" with the
 //       value 1.
 // TODO(manabe): An interface to change "lid"/"rid".
 
@@ -59,37 +59,26 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
 
 namespace mozc {
 
 // These structures are defined in converter
-struct Node;
 class NodeAllocatorInterface;
 
 class DictionaryMock : public DictionaryInterface {
  public:
-  struct NodeData {
-    string lookup_str;
-    string key;
-    string value;
-    uint32 attributes;
-    NodeData(const string &lookup_str,
-             const string &key, const string &value,
-             uint32 attributes);
-  };
-
   DictionaryMock();
   virtual ~DictionaryMock();
 
-  virtual bool HasValue(const StringPiece value) const;
+  virtual bool HasValue(StringPiece value) const;
 
-  // DictionaryMock doesn't support a limitation
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size, const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
-
-  virtual Node *LookupPredictive(
-      const char *str, int size, NodeAllocatorInterface *allocator) const;
+  // DictionaryMock doesn't support a limitation.  Note also that only the
+  // tokens whose keys exactly match the registered key are looked up; see the
+  // comment of AddLookupPredictive.
+  virtual void LookupPredictive(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const;
 
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
@@ -97,10 +86,10 @@ class DictionaryMock : public DictionaryInterface {
 
   virtual void LookupExact(StringPiece key, Callback *callback) const;
 
-  // For reverse lookup, the reading is stored in Node::value and the word
-  // is stored in Node::key.
-  virtual Node *LookupReverse(const char *str, int size,
-                              NodeAllocatorInterface *allocator) const;
+  // For reverse lookup, the reading is stored in Token::value and the word
+  // is stored in Token::key. This mock method doesn't use |*allocator|.
+  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
+                             Callback *callback) const;
 
   // Adds a string-result pair to the predictive search result.
   // LookupPrefix will return the result only when the search key exactly
@@ -109,34 +98,34 @@ class DictionaryMock : public DictionaryInterface {
   // spelling correction. (This applies to other types of searches.)
   void AddLookupPredictive(const string &str,
                            const string &key, const string &value,
-                           const uint32 node_type);
+                           Token::AttributesBitfield token_attributes);
 
-  // Adds a string-node pair to the prefix search result.
+  // Adds a string-token pair to the prefix search result.
   // LookupPrefix will return the result when the left part of the search key
   // partially matches the string registered by this function.
   void AddLookupPrefix(const string &str,
                        const string &key, const string &value,
-                       const uint32 node_type);
+                       Token::AttributesBitfield token_attributes);
 
-  // Adds a string-node pair to the reverse search result.
+  // Adds a string-token pair to the reverse search result.
   // Same as AddLookupPrefix, but they have different dictionaries
   // internally.
   void AddLookupReverse(const string &str,
                         const string &key, const string &value,
-                        const uint32 node_type);
+                        Token::AttributesBitfield token_attributes);
 
-  // Adds a string-node pair to the exact search result.
+  // Adds a string-token pair to the exact search result.
   // Same as AddLookupPrefix, but they have different dictionaries
   // internally.
   void AddLookupExact(const string &str,
                       const string &key, const string &value,
-                      const uint32 node_type);
+                      Token::AttributesBitfield token_attributes);
 
  private:
-  map<string, list<NodeData> > predictive_dictionary_;
-  map<string, list<NodeData> > reverse_dictionary_;
+  map<string, vector<Token *> > reverse_dictionary_;
   map<string, vector<Token *> > prefix_dictionary_;
   map<string, vector<Token *> > exact_dictionary_;
+  map<string, vector<Token *> > predictive_dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryMock);
 };

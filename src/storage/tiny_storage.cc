@@ -36,13 +36,13 @@
 #include <cstring>
 #include <map>
 #include <string>
-#include "base/base.h"
+
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace storage {
@@ -103,6 +103,8 @@ class TinyStorageImpl : public StorageInterface {
   string filename_;
   bool should_sync_;
   map<string, string> dic_;
+
+  DISALLOW_COPY_AND_ASSIGN(TinyStorageImpl);
 };
 
 TinyStorageImpl::TinyStorageImpl() : should_sync_(true) {

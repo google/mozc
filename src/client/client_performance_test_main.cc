@@ -29,13 +29,15 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
+#include <iostream>  // NOLINT
 #include <iterator>
 #include <vector>
 #include <string>
-#include "base/base.h"
+
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/stopwatch.h"
 #include "base/util.h"

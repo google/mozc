@@ -32,6 +32,8 @@
 
 #include <string>
 
+#include "base/port.h"
+
 namespace mozc {
 class ProxyManagerInterface;
 
@@ -54,8 +56,7 @@ class ProxyManager {
   static void SetProxyManager(ProxyManagerInterface *proxy_manager);
 
  private:
-  ProxyManager() {}
-  virtual ~ProxyManager() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ProxyManager);
 };
 
 // Implements ProxyManager implementation.
@@ -75,5 +76,7 @@ class DummyProxyManager : public ProxyManagerInterface {
   virtual bool GetProxyData(
       const string &url, string *hostdata, string *authdata);
 };
-}
+
+}  // namespace mozc
+
 #endif  // MOZC_NET_PROXY_MANAGER_H_

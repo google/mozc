@@ -35,10 +35,8 @@ namespace {
 }
 
 DEFINE_string(output, "", "header filename for chromeos segmenter");
-DECLARE_bool(logtostderr);
 
 int main(int argc, char **argv) {
-  FLAGS_logtostderr = true;
   InitGoogle(argv[0], &argc, &argv, true);
   mozc::SegmenterBitarrayGenerator::GenerateBitarray(
       kLSize, kRSize, &IsBoundaryInternal, FLAGS_output);

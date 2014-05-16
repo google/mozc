@@ -40,7 +40,6 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/string_piece.h"
-#include "base/trie.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
@@ -51,7 +50,6 @@
 
 namespace mozc {
 
-class NodeAllocatorInterface;
 class DictionaryFile;
 struct Token;
 
@@ -142,14 +140,12 @@ class SystemDictionary : public DictionaryInterface {
       const char *ptr, int len, Options options);
 
   // Implementation of DictionaryInterface.
-  virtual bool HasValue(const StringPiece value) const;
+  virtual bool HasValue(StringPiece value) const;
 
   // Predictive lookup
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size, const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupPredictive(const char *str, int size,
-                                 NodeAllocatorInterface *allocator) const;
+  virtual void LookupPredictive(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const;
 
   // Prefix lookup
   virtual void LookupPrefix(
@@ -160,11 +156,12 @@ class SystemDictionary : public DictionaryInterface {
   virtual void LookupExact(StringPiece key, Callback *callback) const;
 
   // Value to key prefix lookup
-  virtual Node *LookupReverse(const char *str, int size,
-                              NodeAllocatorInterface *allocator) const;
+  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
+                             Callback *callback) const;
   virtual void PopulateReverseLookupCache(
-      const char *str, int size, NodeAllocatorInterface *allocator) const;
-  virtual void ClearReverseLookupCache(NodeAllocatorInterface *allocator) const;
+      StringPiece str, NodeAllocatorInterface *allocator) const;
+  virtual void ClearReverseLookupCache(
+      NodeAllocatorInterface *allocator) const;
 
  private:
   FRIEND_TEST(SystemDictionaryTest, TokenAfterSpellningToken);
@@ -187,41 +184,34 @@ class SystemDictionary : public DictionaryInterface {
 
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 
-  // Allocates nodes from |allocator| and append them to |node|.
-  // Token info will be filled using |tokens_key|, |actual_key| and |tokens|
+  // Calls |callback| with token info, which is filled using |tokens_key|,
+  // |actual_key| and |encoded_tokens_ptr|.
   // |tokens_key| is a key used for look up.
-  // |actual_key| is a node's key.
+  // |actual_key| is a token's key.
   // They may be different when we perform ambiguous search.
-  Node *AppendNodesFromTokens(
+  void RegisterTokens(
       const FilterInfo &filter,
       const string &tokens_key,
       const string &actual_key,
-      const uint8 *,
-      Node *node,
-      NodeAllocatorInterface *allocator,
-      int *limit) const;
+      const uint8 *encoded_tokens_ptr,
+      Callback *callback) const;
 
   bool IsBadToken(const FilterInfo &filter, const TokenInfo &token_info) const;
 
-  Node *GetReverseLookupNodesForT13N(const StringPiece value,
-                                     NodeAllocatorInterface *allocator,
-                                     int *limit) const;
+  void RegisterReverseLookupTokensForT13N(StringPiece value,
+                                          Callback *callback) const;
 
-  Node *GetReverseLookupNodesForValue(const StringPiece value,
-                                      NodeAllocatorInterface *allocator,
-                                      int *limit) const;
+  void RegisterReverseLookupTokensForValue(StringPiece value,
+                                           NodeAllocatorInterface *allocator,
+                                           Callback *callback) const;
 
   void ScanTokens(const set<int> &id_set,
                   multimap<int, ReverseLookupResult> *reverse_results) const;
 
-  Node *GetNodesFromReverseLookupResults(
+  void RegisterReverseLookupResults(
       const set<int> &id_set,
       const multimap<int, ReverseLookupResult> &reverse_results,
-      NodeAllocatorInterface *allocator,
-      int *limit) const;
-
-  const storage::louds::KeyExpansionTable &GetExpansionTableBySetting(
-      const Limit &limit) const;
+      Callback *callback) const;
 
   void InitReverseLookupIndex();
 
@@ -234,7 +224,6 @@ class SystemDictionary : public DictionaryInterface {
 
   const uint32 *frequent_pos_;
   const SystemDictionaryCodecInterface *codec_;
-  const Limit empty_limit_;
   storage::louds::KeyExpansionTable hiragana_expansion_table_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);

@@ -30,7 +30,7 @@
 #ifndef MOZC_CONVERTER_SEGMENTER_INTERFACE_H_
 #define MOZC_CONVERTER_SEGMENTER_INTERFACE_H_
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 

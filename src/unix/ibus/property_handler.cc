@@ -75,6 +75,16 @@ bool GetDisabled(IBusEngine *engine) {
   return disabled;
 }
 
+// Some users expect that Mozc is turned off by default on IBus 1.5.0 and later.
+// https://code.google.com/p/mozc/issues/detail?id=201
+// On IBus 1.4.x, IBus expects that an IME should always be turned on and
+// IME on/off keys are handled by IBus itself rather than each IME.
+#if IBUS_CHECK_VERSION(1, 5, 0)
+const bool kActivatedOnLaunch = false;
+#else
+const bool kActivatedOnLaunch = true;
+#endif  // IBus>=1.5.0
+
 }  // namespace
 
 PropertyHandler::PropertyHandler(MessageTranslatorInterface *translator,
@@ -85,8 +95,19 @@ PropertyHandler::PropertyHandler(MessageTranslatorInterface *translator,
       client_(client),
       translator_(translator),
       original_composition_mode_(kMozcEngineInitialCompositionMode),
-      is_activated_(true),
+      is_activated_(kActivatedOnLaunch),
       is_disabled_(false) {
+  commands::SessionCommand command;
+  if (is_activated_) {
+    command.set_type(commands::SessionCommand::TURN_ON_IME);
+  } else {
+    command.set_type(commands::SessionCommand::TURN_OFF_IME);
+  }
+  command.set_composition_mode(original_composition_mode_);
+  commands::Output output;
+  if (!client->SendCommand(command, &output)) {
+    LOG(ERROR) << "SendCommand failed";
+  }
 
   AppendCompositionPropertyToPanel();
   AppendToolPropertyToPanel();
@@ -132,6 +153,10 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   IBusPropList *sub_prop_list = ibus_prop_list_new();
 
   // Create items for the radio menu.
+  const commands::CompositionMode initial_mode = is_activated_ ?
+      original_composition_mode_ :
+      kMozcEnginePropertyIMEOffState->composition_mode;
+
   string icon_path_for_panel;
   const char *mode_symbol = NULL;
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
@@ -139,7 +164,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
     IBusText *label = ibus_text_new_from_string(
         translator_->MaybeTranslate(entry.label).c_str());
     IBusPropState state = PROP_STATE_UNCHECKED;
-    if (entry.composition_mode == kMozcEngineInitialCompositionMode) {
+    if (entry.composition_mode == initial_mode) {
       state = PROP_STATE_CHECKED;
       icon_path_for_panel = GetIconPath(entry.icon);
       mode_symbol = entry.label_for_panel;

@@ -41,6 +41,8 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.Buffer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 /**
@@ -81,12 +83,17 @@ class LocalSessionHandler implements SessionHandler {
           ZipFileUtil.getBuffer(zipfile, CONNECTION_DATA_FILE_NAME);
 
       // Get Java package's version name, to check the version consistency with libmozc.so
+      // Note that obtained version name is suffixed by android architecture (e.g., -arm).
       String versionName =
           context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+      Matcher matcher = Pattern.compile("^(\\d+\\.\\d+\\.\\d+\\.\\d+)-\\w+$").matcher(versionName);
+      if (!matcher.matches()) {
+        throw new RuntimeException("Invalid version name: " + versionName);
+      }
 
       // Load the shared object.
       MozcJNI.load(userProfileDirectory.getAbsolutePath(),
-                   dictionaryBuffer, connectionDataBuffer, versionName);
+                   dictionaryBuffer, connectionDataBuffer, matcher.group(1));
     } catch (IOException e) {
       MozcLog.e("Failed to load system dictionary.", e);
       throw new RuntimeException(e);

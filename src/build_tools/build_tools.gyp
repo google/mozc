@@ -53,38 +53,7 @@
       'toolsets': ['host'],
       'dependencies': [
         'primitive_tools/primitive_tools.gyp:primitive_tools',
-        '../data_manager/oss/oss_data_manager.gyp:install_gen_oss_segmenter_bitarray_main',
-        '../data_manager/testing/mock_data_manager.gyp:install_gen_mock_segmenter_bitarray_main',
         '../dictionary/dictionary.gyp:install_gen_system_dictionary_data_main',
-        '../prediction/prediction_base.gyp:install_gen_suggestion_filter_main',
-        '../rewriter/rewriter_base.gyp:install_gen_collocation_data_main',
-        '../rewriter/rewriter_base.gyp:install_gen_collocation_suppression_data_main',
-        '../rewriter/rewriter_base.gyp:install_gen_symbol_rewriter_dictionary_main',
-        '../rewriter/rewriter_base.gyp:install_gen_usage_rewriter_dictionary_main',
-      ],
-      'conditions': [
-        ['target_platform=="Android"', {
-          'dependencies': [
-            ':make_standalone_toolchain',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'make_standalone_toolchain',
-      'toolsets': ['host'],
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'make_standalone_toolchain',
-          'inputs': ['build_tools.gyp'],
-          'outputs': ['dummy_make_standalone_toolchain'],
-          'action': [
-            '<(android_ndk_home)/build/tools/make-standalone-toolchain.sh',
-            '--arch=<(android_arch)',
-            '--install-dir=<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)',
-          ],
-        },
       ],
     },
   ],

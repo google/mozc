@@ -162,6 +162,7 @@ public class MozcMatcher {
           .append(")");
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public boolean matches(Object arg) {
       if (!(arg instanceof Canvas)) {

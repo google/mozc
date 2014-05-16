@@ -32,11 +32,12 @@
 #ifndef MOZC_SESSION_REQUEST_TEST_UTIL_H_
 #define MOZC_SESSION_REQUEST_TEST_UTIL_H_
 
-#include "base/base.h"
-#include "session/commands.pb.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace commands {
+
+class Request;
 
 class RequestForUnitTest {
  public:

@@ -33,8 +33,6 @@ import org.mozc.android.inputmethod.japanese.JapaneseKeyboard;
 import org.mozc.android.inputmethod.japanese.KeyboardSpecificationName;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
-import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
-import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchPosition;
@@ -222,7 +220,6 @@ public class ProbableKeyEventGuesser {
           statsFileAccessor,
           japaneseKeyboard,
           configuration,
-          formattedKeyboardNameToStats,
           new UpdateStatsListener() {
             @Override
             public void updateStats(final String formattedKeyboardName,
@@ -242,7 +239,6 @@ public class ProbableKeyEventGuesser {
     StatisticsLoader(StatsFileAccessor statsFileAccessor,
         JapaneseKeyboard japaneseKeyboard,
         Configuration configuration,
-        Map<String, SparseArray<float[]>> formattedKeyboardNameToStats,
         UpdateStatsListener updateStatsListener) {
       this.statsFileAccessor = Preconditions.checkNotNull(statsFileAccessor);
       this.japaneseKeyboard = Preconditions.checkNotNull(japaneseKeyboard);
@@ -563,41 +559,6 @@ public class ProbableKeyEventGuesser {
   }
 
   /**
-   * Returns a {@link SparseArray} mapping from souce_id to keyCode.
-   *
-   * Cached one is used if what we want is already cached.
-   *
-   * TODO(matsuzakit): Move this method to JapaneseKeyboard.
-   */
-  SparseIntArray getKeycodeMapper() {
-    SparseIntArray result =
-        formattedKeyboardNameToKeycodeMapper.get(formattedKeyboardName.get());
-    if (result != null) {
-      return result;
-    }
-    result = new SparseIntArray(MAX_KEY_NUMBER_IN_KEYBOARD);
-    for (Row row : japaneseKeyboard.get().getRowList()) {
-      for (Key key : row.getKeyList()) {
-        for (MetaState metaState : MetaState.values()) {
-          KeyState keyState = key.getKeyState(metaState);
-          if (keyState == null) {
-            continue;
-          }
-          for (Direction direction : Direction.values()) {
-            Flick flick = keyState.getFlick(direction);
-            if (flick != null) {
-              KeyEntity keyEntity = flick.getKeyEntity();
-              result.put(keyEntity.getSourceId(), keyEntity.getKeyCode());
-            }
-          }
-        }
-      }
-    }
-    formattedKeyboardNameToKeycodeMapper.put(formattedKeyboardName.get(), result);
-    return result;
-  }
-
-  /**
    * Returns a SparseArray which maps from keyCode to likelihood.
    *
    * @return a SparseArray (non-null). The size might be 0. Its values are not NaN.
@@ -605,14 +566,16 @@ public class ProbableKeyEventGuesser {
   private SparseArray<Double> getLikelihoodArray(SparseArray<float[]> eventStatistics,
                                                  float firstX, float firstY,
                                                  float deltaX, float deltaY) {
+    Preconditions.checkState(japaneseKeyboard.isPresent());
+
     SparseArray<Double> result = new SparseArray<Double>(eventStatistics.size());
-    SparseIntArray keycodeMapper = getKeycodeMapper();
+    JapaneseKeyboard japaneseKeyboard = this.japaneseKeyboard.get();
     for (int i = 0; i < eventStatistics.size(); ++i) {
       int sourceId = eventStatistics.keyAt(i);
-      Integer keyCode = keycodeMapper.get(sourceId);
+      int keyCode = japaneseKeyboard.getKeyCode(sourceId);
       // Special key or non-existent-key.
       // Don't produce probable key events.
-      if (keyCode == null || keyCode <= 0) {
+      if (keyCode <= 0) {
         continue;
       }
       double likelihood =

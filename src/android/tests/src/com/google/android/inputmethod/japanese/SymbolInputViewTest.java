@@ -34,11 +34,10 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MajorCategory;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MinorCategory;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
+import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
@@ -60,10 +59,9 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testMajorCategoryButtonClickListener() {
-    Context context = getInstrumentation().getTargetContext();
     SymbolInputView symbolInputView = createViewMock(SymbolInputView.class);
 
-    for (MajorCategory majorCategory : MajorCategory.values()) {
+    for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
       resetAll();
       symbolInputView.setMajorCategory(majorCategory);
       replayAll();
@@ -93,43 +91,15 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     dialog.show();
     replayAll();
 
-    symbolInputView.new MajorCategoryButtonClickListener(MajorCategory.EMOJI).onClick(null);
+    symbolInputView.new MajorCategoryButtonClickListener(SymbolMajorCategory.EMOJI).onClick(null);
 
     verifyAll();
     assertSame(EmojiProviderType.NONE, symbolInputView.emojiProviderType);
   }
 
-  @SmallTest
-  public void testMajorCategoryGetMajorCategory() {
-    for (MinorCategory minorCategory : MinorCategory.values()) {
-      if (minorCategory.name().startsWith("EMOTICON")) {
-        assertEquals(MajorCategory.EMOTICON, MajorCategory.findMajorCategory(minorCategory));
-      } else if (minorCategory.name().startsWith("SYMBOL")) {
-        assertEquals(MajorCategory.SYMBOL, MajorCategory.findMajorCategory(minorCategory));
-      } else if (minorCategory.name().startsWith("EMOJI")) {
-        assertEquals(MajorCategory.EMOJI, MajorCategory.findMajorCategory(minorCategory));
-      } else {
-        fail("Unexpected category name");
-      }
-    }
-  }
-
-  @SmallTest
-  public void testMajorCategoryGetMinorCategoryByRelativeIndex() {
-    assertEquals(
-        MinorCategory.EMOJI_FACE,
-        MajorCategory.EMOJI.getMinorCategoryByRelativeIndex(MinorCategory.EMOJI_HISTORY, +1));
-    assertEquals(
-        MinorCategory.EMOJI_HISTORY,
-        MajorCategory.EMOJI.getMinorCategoryByRelativeIndex(MinorCategory.EMOJI_HISTORY, 0));
-    assertEquals(
-        MinorCategory.EMOJI_NATURE,
-        MajorCategory.EMOJI.getMinorCategoryByRelativeIndex(MinorCategory.EMOJI_HISTORY, -1));
-  }
-
   private void checkConsistency(SymbolInputView view) {
-    MajorCategory major = view.currentMajorCategory;
-    for (MajorCategory category : MajorCategory.values()) {
+    SymbolMajorCategory major = view.currentMajorCategory;
+    for (SymbolMajorCategory category : SymbolMajorCategory.values()) {
       // Check if only the selected major category's button is "selected" and "enabled".
       View majorCategoryButton = view.getMajorCategoryButton(category);
       assertEquals(category == major, majorCategoryButton.isSelected());
@@ -141,7 +111,7 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
   public void testSetMajorCategoryWithEmptyHistory() {
     SymbolInputView view = new SymbolInputView(getInstrumentation().getTargetContext());
     SymbolHistoryStorage historyStorage = createMock(SymbolHistoryStorage.class);
-    expect(historyStorage.getAllHistory(isA(MajorCategory.class)))
+    expect(historyStorage.getAllHistory(isA(SymbolMajorCategory.class)))
         .andStubReturn(Collections.<String>emptyList());
     replayAll();
     view.setSymbolCandidateStorage(new SymbolCandidateStorage(historyStorage));
@@ -153,7 +123,7 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
 
     checkConsistency(view);
 
-    for (MajorCategory category : MajorCategory.values()) {
+    for (SymbolMajorCategory category : SymbolMajorCategory.values()) {
       resetAll();
       expect(historyStorage.getAllHistory(category)).andReturn(Collections.<String>emptyList());
       listener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
@@ -171,7 +141,7 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
   public void testSetMajorCategoryWithHistory() {
     SymbolInputView view = new SymbolInputView(getInstrumentation().getTargetContext());
     SymbolHistoryStorage historyStorage = createMock(SymbolHistoryStorage.class);
-    expect(historyStorage.getAllHistory(isA(MajorCategory.class)))
+    expect(historyStorage.getAllHistory(isA(SymbolMajorCategory.class)))
         .andStubReturn(Collections.<String>emptyList());
     replayAll();
     view.setSymbolCandidateStorage(new SymbolCandidateStorage(historyStorage));
@@ -181,7 +151,7 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     ViewEventListener listener = createMock(ViewEventListener.class);
     view.setViewEventListener(listener, null);
     checkConsistency(view);
-    for (final MajorCategory category : MajorCategory.values()) {
+    for (final SymbolMajorCategory category : SymbolMajorCategory.values()) {
       resetAll();
       expect(historyStorage.getAllHistory(category))
           .andReturn(Collections.singletonList(category.name()));
@@ -201,19 +171,19 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
   public void testSymbolCandidateSelectListener() {
     SymbolInputView view = new SymbolInputView(getInstrumentation().getTargetContext());
     SymbolHistoryStorage historyStorage = createMock(SymbolHistoryStorage.class);
-    expect(historyStorage.getAllHistory(isA(MajorCategory.class)))
+    expect(historyStorage.getAllHistory(isA(SymbolMajorCategory.class)))
         .andStubReturn(Collections.<String>emptyList());
     replayAll();
     view.setSymbolCandidateStorage(new SymbolCandidateStorage(historyStorage));
 
     view.inflateSelf();
-    view.setMajorCategory(MajorCategory.EMOTICON);
+    view.setMajorCategory(SymbolMajorCategory.EMOTICON);
 
     ViewEventListener viewEventListener = createMock(ViewEventListener.class);
     view.setViewEventListener(viewEventListener, null);
 
     resetAll();
-    viewEventListener.onSymbolCandidateSelected(MajorCategory.EMOTICON, "(^_^)");
+    viewEventListener.onSymbolCandidateSelected(SymbolMajorCategory.EMOTICON, "(^_^)", true);
     replayAll();
 
     view.new SymbolCandidateSelectListener().onCandidateSelected(
@@ -227,40 +197,48 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     Context context = getInstrumentation().getTargetContext();
     SymbolInputView view = new SymbolInputView(context);
     SymbolHistoryStorage historyStorage = createMock(SymbolHistoryStorage.class);
-    expect(historyStorage.getAllHistory(isA(MajorCategory.class)))
+    expect(historyStorage.getAllHistory(isA(SymbolMajorCategory.class)))
         .andStubReturn(Collections.<String>emptyList());
     replayAll();
     view.setSymbolCandidateStorage(new SymbolCandidateStorage(historyStorage));
     view.inflateSelf();
 
     class TestData extends Parameter {
-      private final boolean isEmojiEnabled;
-      private final MajorCategory majorCategory;
+      private final boolean isUnicodeEmojiEnabled;
+      private final boolean isCarrierEmojiEnabled;
+      private final SymbolMajorCategory majorCategory;
       private final int expectedEmojiDisabledMessageViewVisibility;
 
-      TestData(boolean isEmojiEnabled, MajorCategory majorCategory,
-               int expectedEmojiDisabledMessageViewVisibility) {
-        this.isEmojiEnabled = isEmojiEnabled;
+      TestData(boolean isUnicodeEmojiEnabled, boolean isCarrierEmojiEnabled,
+               SymbolMajorCategory majorCategory, int expectedEmojiDisabledMessageViewVisibility) {
+        this.isUnicodeEmojiEnabled = isUnicodeEmojiEnabled;
+        this.isCarrierEmojiEnabled = isCarrierEmojiEnabled;
         this.majorCategory = majorCategory;
         this.expectedEmojiDisabledMessageViewVisibility =
             expectedEmojiDisabledMessageViewVisibility;
       }
     }
     TestData[] testDataList = {
-        new TestData(true, MajorCategory.SYMBOL, View.GONE),
-        new TestData(true, MajorCategory.EMOTICON, View.GONE),
-        new TestData(true, MajorCategory.EMOJI, View.GONE),
-        new TestData(false, MajorCategory.SYMBOL, View.GONE),
-        new TestData(false, MajorCategory.EMOTICON, View.GONE),
-        new TestData(false, MajorCategory.EMOJI, View.VISIBLE),
+        new TestData(true, true, SymbolMajorCategory.SYMBOL, View.GONE),
+        new TestData(true, true, SymbolMajorCategory.EMOTICON, View.GONE),
+        new TestData(true, true, SymbolMajorCategory.EMOJI, View.GONE),
+        new TestData(true, false, SymbolMajorCategory.SYMBOL, View.GONE),
+        new TestData(true, false, SymbolMajorCategory.EMOTICON, View.GONE),
+        new TestData(true, false, SymbolMajorCategory.EMOJI, View.GONE),
+        new TestData(false, true, SymbolMajorCategory.SYMBOL, View.GONE),
+        new TestData(false, true, SymbolMajorCategory.EMOTICON, View.GONE),
+        new TestData(false, true, SymbolMajorCategory.EMOJI, View.GONE),
+        new TestData(false, false, SymbolMajorCategory.SYMBOL, View.GONE),
+        new TestData(false, false, SymbolMajorCategory.EMOTICON, View.GONE),
+        new TestData(false, false, SymbolMajorCategory.EMOJI, View.VISIBLE),
     };
 
     for (TestData testData : testDataList) {
-      view.setEmojiEnabled(testData.isEmojiEnabled);
+      view.setEmojiEnabled(testData.isUnicodeEmojiEnabled, testData.isCarrierEmojiEnabled);
       view.setMajorCategory(testData.majorCategory);
       // Now, the emoji major-category button is always clickable.
       assertTrue(testData.toString(),
-                 view.getMajorCategoryButton(MajorCategory.EMOJI).isClickable());
+                 view.getMajorCategoryButton(SymbolMajorCategory.EMOJI).isClickable());
       assertEquals(testData.toString(),
                    testData.expectedEmojiDisabledMessageViewVisibility,
                    view.getEmojiDisabledMessageView().getVisibility());

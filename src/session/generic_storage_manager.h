@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_STORAGE_GENERIC_STORAGE_MANAGER_H_
-#define MOZC_STORAGE_GENERIC_STORAGE_MANAGER_H_
+#ifndef MOZC_SESSION_GENERIC_STORAGE_MANAGER_H_
+#define MOZC_SESSION_GENERIC_STORAGE_MANAGER_H_
 
 #include "base/port.h"
 #include "base/scoped_ptr.h"
@@ -80,6 +80,7 @@ class GenericStorageInterface {
 
   // Inserts new entry.
   // If something goes wrong, returns false.
+  // value should be terminated by '\0'.
   virtual bool Insert(const string &key, const char *value) = 0;
   // Looks up the value.
   // If something goes wrong, returns NULL.
@@ -123,10 +124,12 @@ class GenericLruStorage : public GenericStorageInterface {
   const size_t value_size_;
   const size_t size_;
   const uint32 seed_;
+  // Temporary buffer to insert a value into this storage.
+  scoped_ptr<char[]> value_buffer_;
 
   DISALLOW_COPY_AND_ASSIGN(GenericLruStorage);
 };
 
 }  // namespace mozc
 
-#endif  // MOZC_STORAGE_GENERIC_STORAGE_MANAGER_H_
+#endif  // MOZC_SESSION_GENERIC_STORAGE_MANAGER_H_

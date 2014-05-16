@@ -38,6 +38,7 @@ import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
+import com.google.common.base.Optional;
 
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -64,7 +65,7 @@ public class PopUpPreviewTest extends InstrumentationTestCaseWithMock {
         .withConstructor(MozcDrawableFactory.class)
         .withArgs(new MozcDrawableFactory(new MockResources()))
         .createMock();
-    expect(cache.getDrawable(iconResourceId)).andStubReturn(icon);
+    expect(cache.getDrawable(iconResourceId)).andStubReturn(Optional.of(icon));
 
     int popupWidth = 40;
     int popupHeight = 80;

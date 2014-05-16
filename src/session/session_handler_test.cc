@@ -68,9 +68,11 @@ class SessionHandlerTest : public SessionHandlerTestBase {
   virtual void SetUp() {
     SessionHandlerTestBase::SetUp();
     Util::SetClockHandler(NULL);
+    GenericStorageManagerFactory::SetGenericStorageManager(NULL);
   }
 
   virtual void TearDown() {
+    GenericStorageManagerFactory::SetGenericStorageManager(NULL);
     Util::SetClockHandler(NULL);
     SessionHandlerTestBase::TearDown();
   }
@@ -457,6 +459,38 @@ TEST_F(SessionHandlerTest, StorageTest) {
         command.output().storage_entry().type());
     EXPECT_EQ(1, mock_storage.clear_count);
   }
+}
+
+TEST_F(SessionHandlerTest, EmojiUsageStatsTest) {
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
+
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::INSERT_TO_STORAGE);
+  commands::GenericStorageEntry *storage_entry =
+      command.mutable_input()->mutable_storage_entry();
+  storage_entry->set_type(commands::GenericStorageEntry::EMOJI_HISTORY);
+  storage_entry->mutable_key()->assign("dummy key");
+
+  // Carrier emoji "BLACK SUN WITH RAYS"
+  storage_entry->mutable_value()->Clear();
+  storage_entry->mutable_value()->Add()->assign("\xF3\xBE\x80\x80");
+  EXPECT_TRUE(handler.EvalCommand(&command));
+  EXPECT_COUNT_STATS("CommitCarrierEmoji", 1);
+  EXPECT_COUNT_STATS("CommitUnicodeEmoji", 0);
+
+  storage_entry->mutable_value()->Clear();
+  // Carrier emoji "BLACK SUN WITH RAYS"
+  storage_entry->mutable_value()->Add()->assign("\xF3\xBE\x80\x80");
+  // Carrier emoji "GOOGLE"
+  storage_entry->mutable_value()->Add()->assign("\xF3\xBE\xBA\xA0");
+  // Unicode emoji "BLACK SUN WITH RAYS"
+  storage_entry->mutable_value()->Add()->assign("\xE2\x98\x80");
+  // Unicode emoji "RABBIT FACE"
+  storage_entry->mutable_value()->Add()->assign("\xF0\x9F\x90\xB0");
+  EXPECT_TRUE(handler.EvalCommand(&command));
+  EXPECT_COUNT_STATS("CommitCarrierEmoji", 3);
+  EXPECT_COUNT_STATS("CommitUnicodeEmoji", 2);
 }
 
 }  // namespace mozc

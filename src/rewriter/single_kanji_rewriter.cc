@@ -89,7 +89,8 @@ class NounPrefixDictionary {
 };
 
 struct SingleKanjiListCompare {
-  bool operator() (const SingleKanjiList &lhs, const SingleKanjiList &rhs) {
+  bool operator()(const SingleKanjiList &lhs,
+                  const SingleKanjiList &rhs) const {
     return (strcmp(lhs.key, rhs.key) < 0);
   }
 };
@@ -112,7 +113,8 @@ bool LookupKanjiList(const string &key, vector<string> *kanji_list) {
 }
 
 struct KanjiVariantItemCompare {
-  bool operator() (const KanjiVariantItem &lhs, const KanjiVariantItem &rhs) {
+  bool operator()(const KanjiVariantItem &lhs,
+                  const KanjiVariantItem &rhs) const {
     return (strcmp(lhs.target, rhs.target) < 0);
   }
 };

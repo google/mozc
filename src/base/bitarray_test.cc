@@ -90,8 +90,8 @@ TEST(BitArray, BitArrayTest) {
 
     // verify
     for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ(static_cast<bool>(target[j]), BitArray::GetValue(data, j));
-      EXPECT_EQ(static_cast<bool>(target[j]), array.get(j));
+      EXPECT_EQ((target[j] != 0), BitArray::GetValue(data, j));
+      EXPECT_EQ((target[j] != 0), array.get(j));
     }
   }
 }

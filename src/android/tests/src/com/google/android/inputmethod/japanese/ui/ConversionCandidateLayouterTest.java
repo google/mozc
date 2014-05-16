@@ -35,6 +35,7 @@ import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
 import org.mozc.android.inputmethod.japanese.ui.ConversionCandidateLayouter.ChunkMetrics;
+import com.google.common.base.Optional;
 
 import junit.framework.TestCase;
 
@@ -53,7 +54,7 @@ public class ConversionCandidateLayouterTest extends TestCase {
     @Override
     int getNumChunks(Span span) {
       // Inject the number of consuming chunks by value text for testing.
-      return Integer.parseInt(span.getCandidateWord().getValue());
+      return Integer.parseInt(span.getCandidateWord().get().getValue());
     }
   };
 
@@ -163,7 +164,7 @@ public class ConversionCandidateLayouterTest extends TestCase {
         int index = 0;
         for (Row row : rowList) {
           for (Span span : row.getSpanList()) {
-            assertEquals(index++, span.getCandidateWord().getId());
+            assertEquals(index++, span.getCandidateWord().get().getId());
           }
         }
       }
@@ -171,7 +172,7 @@ public class ConversionCandidateLayouterTest extends TestCase {
   }
 
   private static Span createSpan(String value) {
-    return new Span(CandidateWord.newBuilder().setValue(value).build(), 0, 0,
+    return new Span(Optional.of(CandidateWord.newBuilder().setValue(value).build()), 0, 0,
                     Collections.<String>emptyList());
   }
 

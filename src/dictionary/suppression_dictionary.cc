@@ -31,7 +31,6 @@
 
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "converter/node.h"
 
 namespace mozc {
 namespace {
@@ -118,35 +117,6 @@ bool SuppressionDictionary::SuppressEntry(
   }
 
   return false;
-}
-
-Node *SuppressionDictionary::SuppressNodes(Node *node) const {
-  // In almost all cases, user don't use suppression feature.
-  if (IsEmpty()) {
-    return node;
-  }
-
-  Node *head = NULL;
-  Node *prev = NULL;
-
-  for (Node *n = node; n != NULL; n = n->bnext) {
-    if (SuppressEntry(n->key, n->value)) {
-      continue;
-    }
-    if (head == NULL) {
-      head = n;
-    }
-    if (prev != NULL) {
-      prev->bnext = n;
-    }
-    prev = n;
-  }
-
-  if (prev != NULL) {
-    prev->bnext = NULL;
-  }
-
-  return head;
 }
 
 SuppressionDictionary::SuppressionDictionary()

@@ -32,10 +32,11 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "base/util.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 namespace session {

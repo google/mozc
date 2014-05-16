@@ -43,7 +43,6 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/win_util.h"
 
 namespace mozc {
@@ -89,82 +88,6 @@ wstring WindowUtil::GetWindowClassName(HWND window_handle) {
     return L"";
   }
   return wstring(buffer, num_copied_without_null);
-}
-
-// static
-bool WindowUtil::IsSuppressSuggestionWindow(HWND window_handle) {
-  return (IsInChromeOmnibox(window_handle) ||
-          IsInGoogleSearchBox(window_handle));
-}
-
-// static
-bool WindowUtil::IsInChromeOmnibox(HWND window_handle) {
-  if (!::IsWindow(window_handle)) {
-    return false;
-  }
-
-  const wstring &class_name = GetWindowClassName(window_handle);
-  if (class_name.empty()) {
-    return false;
-  }
-
-  // b/7508193
-  const wchar_t kChromeOmnibox[] = L"Chrome_OmniboxView";
-  if (class_name == kChromeOmnibox) {
-    return true;
-  }
-  return false;
-}
-
-// static
-bool WindowUtil::IsInGoogleSearchBox(HWND window_handle) {
-  if (!::IsWindow(window_handle)) {
-    return false;
-  }
-  const HWND root_window_handle = ::GetAncestor(window_handle, GA_ROOT);
-  if (!::IsWindow(root_window_handle)) {
-    return false;
-  }
-  const wstring &class_name = GetWindowClassName(window_handle);
-  if (class_name.empty()) {
-    return false;
-  }
-
-  // b/7098463
-  const wchar_t *kBrowserWindowClasses[] = {
-      L"Chrome_RenderWidgetHostHWND",
-      L"MozillaWindowClass",
-      L"Internet Explorer_Server",
-      L"OperaWindowClass",
-  };
-
-  bool is_browser = false;
-  for (size_t i = 0; i < arraysize(kBrowserWindowClasses); ++i) {
-    if (kBrowserWindowClasses[i] == class_name) {
-      is_browser = true;
-      break;
-    }
-  }
-  if (!is_browser) {
-    return false;
-  }
-  string root_title;
-  mozc::Util::WideToUTF8(SafeGetWindowText(root_window_handle),
-                         &root_title);
-
-  const char kGoogleSearchJa[] = "- Google \xE6\xA4\x9C\xE7\xB4\xA2 -";
-  const char kGoogleSearchEn[] = "- Google Search -";
-  const char kGoogleSearchPrefix[] = "Google - ";
-  if (root_title.find(kGoogleSearchJa) != string::npos) {
-    return true;
-  }
-  if (root_title.find(kGoogleSearchEn) != string::npos) {
-    return true;
-  }
-  if (mozc::Util::StartsWith(root_title, kGoogleSearchPrefix)) {
-    return true;
-  }
-  return false;
 }
 
 // static

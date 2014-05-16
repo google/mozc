@@ -201,101 +201,50 @@ bool FillWindowHandle(ITfContext *context, ApplicationInfo *app_info) {
   return true;
 }
 
-// This function updates RendererCommand::CharacterPosition to emulate
-// IMM32-based client. Ideally we'd better to define new field for TSF Mozc
-// into which the result of ITfContextView::GetTextExt is stored.
-// TODO(yukawa): Replace FillCharPosition with a one designed for TSF.
-bool FillCharPosition(TipPrivateContext *private_context,
-                      ITfContext *context,
-                      TfEditCookie read_cookie,
-                      ApplicationInfo *app_info) {
-  if (private_context == nullptr) {
-    return false;
-  }
-
-  if (!app_info->has_target_window_handle()) {
-    return false;
-  }
-
-  const HWND window_handle =
-      reinterpret_cast<HWND>(app_info->target_window_handle());
-
+CComPtr<ITfRange> GetCompositionRange(ITfContext *context,
+                                      TfEditCookie read_cookie) {
   CComPtr<ITfCompositionView> composition_view =
-    TipCompositionUtil::GetComposition(context, read_cookie);
+      TipCompositionUtil::GetComposition(context, read_cookie);
   if (!composition_view) {
-    return false;
+    return nullptr;
   }
 
   CComPtr<ITfRange> composition_range;
   if (FAILED(composition_view->GetRange(&composition_range))) {
-    return false;
+    return nullptr;
   }
-  if (!composition_range) {
-    return false;
-  }
-
-  CComPtr<ITfRange> target_range;
-  if (FAILED(composition_range->Clone(&target_range))) {
-    return false;
-  }
-
-  const commands::Output &output = private_context->last_output();
-  LONG shifted = 0;
-  if (FAILED(target_range->Collapse(read_cookie, TF_ANCHOR_START))) {
-    return false;
-  }
-  const size_t target_pos = GetTargetPos(output);
-  if (FAILED(target_range->ShiftStart(
-          read_cookie, target_pos, &shifted, nullptr))) {
-    return false;
-  }
-  if (FAILED(target_range->ShiftEnd(
-          read_cookie, target_pos + 1, &shifted, nullptr))) {
-    return false;
-  }
-
-  CComPtr<ITfContextView> context_view;
-  if (FAILED(context->GetActiveView(&context_view)) || !context_view) {
-    return false;
-  }
-
-  RECT document_rect = {};
-  if (FAILED(context_view->GetScreenExt(&document_rect))) {
-    return false;
-  }
-
-  RECT text_rect = {};
-  BOOL clipped = FALSE;
-  if (FAILED(context_view->GetTextExt(read_cookie, target_range,
-                                      &text_rect, &clipped))) {
-    return false;
-  }
-
-  RendererCommand::Point *top_left=
-      app_info->mutable_composition_target()->mutable_top_left();
-  top_left->set_x(text_rect.left);
-  top_left->set_y(text_rect.top);
-  app_info->mutable_composition_target()->set_position(0);
-  app_info->mutable_composition_target()->set_line_height(
-      text_rect.bottom - text_rect.top);
-
-  RendererCommand::Rectangle *area=
-      app_info->mutable_composition_target()->mutable_document_area();
-  area->set_left(document_rect.left);
-  area->set_top(document_rect.top);
-  area->set_right(document_rect.right);
-  area->set_bottom(document_rect.bottom);
-
-  return true;
+  return composition_range;
 }
 
-bool FillCharPositionFromCaret(TipPrivateContext *private_context,
-                               ITfContext *context,
-                               TfEditCookie read_cookie,
-                               ApplicationInfo *app_info) {
+CComPtr<ITfRange> GetSelectionRange(ITfContext *context,
+                                    TfEditCookie read_cookie) {
+  CComPtr<ITfRange> selection_range;
+  TfActiveSelEnd sel_end = TF_AE_NONE;
+  if (FAILED(TipRangeUtil::GetDefaultSelection(
+          context, read_cookie, &selection_range, &sel_end))) {
+    return nullptr;
+  }
+  return selection_range;
+}
+
+// This function updates RendererCommand::CharacterPosition to emulate
+// IMM32-based client. Ideally we'd better to define new field for TSF Mozc
+// into which the result of ITfContextView::GetTextExt is stored.
+// TODO(yukawa): Replace FillCharPosition with new one designed for TSF.
+bool FillCharPosition(TipPrivateContext *private_context,
+                      ITfContext *context,
+                      TfEditCookie read_cookie,
+                      bool has_composition,
+                      ApplicationInfo *app_info,
+                      bool *no_layout) {
   if (private_context == nullptr) {
     return false;
   }
+  bool dummy_no_layout = false;
+  if (no_layout == nullptr) {
+    no_layout = &dummy_no_layout;
+  }
+  *no_layout = false;
 
   if (!app_info->has_target_window_handle()) {
     return false;
@@ -304,15 +253,14 @@ bool FillCharPositionFromCaret(TipPrivateContext *private_context,
   const HWND window_handle =
       reinterpret_cast<HWND>(app_info->target_window_handle());
 
-  CComPtr<ITfRange> selection_range;
-  TfActiveSelEnd sel_end = TF_AE_NONE;
-  if (FAILED(TipRangeUtil::GetDefaultSelection(
-          context, read_cookie, &selection_range, &sel_end))) {
+  CComPtr<ITfRange> range =
+      has_composition ? GetCompositionRange(context, read_cookie)
+                      : GetSelectionRange(context, read_cookie);
+  if (!range) {
     return false;
   }
-
   CComPtr<ITfRange> target_range;
-  if (FAILED(selection_range->Clone(&target_range))) {
+  if (FAILED(range->Clone(&target_range))) {
     return false;
   }
   if (!target_range) {
@@ -345,9 +293,16 @@ bool FillCharPositionFromCaret(TipPrivateContext *private_context,
   }
 
   RECT text_rect = {};
-  BOOL clipped = FALSE;
-  if (FAILED(context_view->GetTextExt(read_cookie, target_range,
-                                      &text_rect, &clipped))) {
+  bool clipped = false;
+  const HRESULT hr = TipRangeUtil::GetTextExt(
+      context_view, read_cookie, target_range, &text_rect, &clipped);
+  if (hr == TF_E_NOLAYOUT) {
+    // This is not a critical error but the layout information is not available.
+    *no_layout = true;
+    return true;
+  }
+  if (FAILED(hr)) {
+    // Any other errors are unexpected.
     return false;
   }
 
@@ -372,12 +327,12 @@ bool FillCharPositionFromCaret(TipPrivateContext *private_context,
 void UpdateCommand(TipTextService *text_service,
                    ITfContext *context,
                    TfEditCookie read_cookie,
-                   RendererCommand *command) {
+                   RendererCommand *command,
+                   bool *no_layout) {
   command->Clear();
   command->set_type(RendererCommand::UPDATE);
 
-  TipPrivateContext *private_context =
-      text_service->GetPrivateContext(context);
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
   if (private_context != nullptr) {
     command->mutable_output()->CopyFrom(private_context->last_output());
     private_context->GetUiElementManager()->OnUpdate(text_service, context);
@@ -395,11 +350,8 @@ void UpdateCommand(TipTextService *text_service,
   FillVisibility(ui_element_manager, private_context, command);
   FillWindowHandle(context, app_info);
   FillCaretInfo(app_info);
-  if (command->output().has_preedit()) {
-    FillCharPosition(private_context, context, read_cookie, app_info);
-  } else {
-    FillCharPositionFromCaret(private_context, context, read_cookie, app_info);
-  }
+  FillCharPosition(private_context, context, read_cookie,
+                   command->output().has_preedit(), app_info, no_layout);
 
   if (private_context != nullptr) {
     const TipInputModeManager *input_mode_manager =
@@ -413,6 +365,15 @@ void UpdateCommand(TipTextService *text_service,
       info->mutable_status()->set_mode(static_cast<CompositionMode>(
           input_mode_manager->GetEffectiveConversionMode()));
     }
+  }
+
+  // Regardless of the value of |command->visible()| here, we should hide
+  // all the UI elements whenever the current threads is not focused.
+  BOOL thread_focus = FALSE;
+  const HRESULT hr =
+      text_service->GetThreadManager()->IsThreadFocus(&thread_focus);
+  if (SUCCEEDED(hr) && (thread_focus == FALSE)) {
+    command->set_visible(false);
   }
 }
 
@@ -460,8 +421,11 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
   // request is granted.
   virtual HRESULT STDMETHODCALLTYPE DoEditSession(TfEditCookie edit_cookie) {
     RendererCommand command;
-    UpdateCommand(text_service_, context_, edit_cookie, &command);
-    Win32RendererClient::OnUpdated(command);
+    bool no_layout = false;
+    UpdateCommand(text_service_, context_, edit_cookie, &command, &no_layout);
+    if (!no_layout || !command.visible()) {
+      Win32RendererClient::OnUpdated(command);
+    }
     return S_OK;
   }
 
@@ -608,8 +572,11 @@ bool TipUiHandlerConventional::Update(TipTextService *text_service,
   const bool open = input_mode_manager->GetEffectiveOpenClose();
   const CompositionMode mozc_mode = static_cast<CompositionMode>(
       input_mode_manager->GetEffectiveConversionMode());
-  UpdateCommand(text_service, context, read_cookie, &command);
-  Win32RendererClient::OnUpdated(command);
+  bool no_layout = false;
+  UpdateCommand(text_service, context, read_cookie, &command, &no_layout);
+  if (!no_layout || !command.visible()) {
+    Win32RendererClient::OnUpdated(command);
+  }
   if (open) {
     text_service->UpdateLangbar(true, mozc_mode);
   } else {

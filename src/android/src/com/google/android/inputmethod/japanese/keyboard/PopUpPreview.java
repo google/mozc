@@ -164,6 +164,7 @@ public class PopUpPreview {
   /**
    * Shows the popup preview of the given {@code key} and {@code popup} if needed.
    */
+  @SuppressWarnings("deprecation")
   protected void showIfNecessary(Key key, PopUp popup) {
     if (key == null || popup == null) {
       // No images to be rendered.
@@ -172,7 +173,7 @@ public class PopUpPreview {
     }
 
     // Set images.
-    popupView.setImageDrawable(drawableCache.getDrawable(popup.getPopUpIconResourceId()));
+    popupView.setImageDrawable(drawableCache.getDrawable(popup.getPopUpIconResourceId()).orNull());
     popupView.setBackgroundDrawable(
         backgroundDrawableFactory.getDrawable(DrawableType.POPUP_BACKGROUND_WINDOW));
     popupView.setPadding(padding, padding, padding, padding);
@@ -220,6 +221,7 @@ public class PopUpPreview {
     hidePopupView();
   }
 
+  @SuppressWarnings("deprecation")
   private void hidePopupView() {
     popupView.setVisibility(View.GONE);
     popupView.setImageDrawable(null);

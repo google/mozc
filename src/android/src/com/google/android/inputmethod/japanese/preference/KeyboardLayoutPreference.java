@@ -299,6 +299,7 @@ public class KeyboardLayoutPreference extends Preference {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private static void updateBackground(View view, int position, int activePosition) {
     if (position == activePosition) {
       view.setBackgroundResource(android.R.drawable.dialog_frame);

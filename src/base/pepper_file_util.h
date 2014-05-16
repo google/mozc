@@ -68,7 +68,7 @@ class PepperFileSystemInterface {
 class PepperFileUtil {
  public:
   // Initializes PepperFileUtil.
-  static void Initialize(pp::Instance *instance, int64 expected_size);
+  static bool Initialize(pp::Instance *instance, int64 expected_size);
 
   // Sets mock for unit testing.
   static void SetPepperFileSystemInterfaceForTest(

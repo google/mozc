@@ -29,6 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.resources.R;
 
@@ -43,14 +44,17 @@ import android.util.TypedValue;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.util.Collections;
 
 /**
  */
 public class KeyboardParserTest extends InstrumentationTestCase {
+
   private static int getDefaultKeyCode(Keyboard keyboard, int rowIndex, int colIndex) {
     Row row = keyboard.getRowList().get(rowIndex);
     Key key = row.getKeyList().get(colIndex);
-    KeyState keyState = key.getKeyState(MetaState.UNMODIFIED);
+    // Expecting corresponding KeyState is always found.
+    KeyState keyState = key.getKeyState(Collections.<MetaState>emptySet()).get();
     return keyState.getFlick(Flick.Direction.CENTER).getKeyEntity().getKeyCode();
   }
 
@@ -193,7 +197,8 @@ public class KeyboardParserTest extends InstrumentationTestCase {
     // A key to change keyboard-layout should have longPressKeycode.
     MoreAsserts.assertNotEqual(
         KeyEntity.INVALID_KEY_CODE,
-        keyboard.getRowList().get(4).getKeyList().get(0).getKeyState(KeyState.MetaState.UNMODIFIED)
+        keyboard.getRowList().get(4).getKeyList().get(0)
+            .getKeyState(Collections.<MetaState>emptySet()).get()
             .getFlick(Flick.Direction.CENTER).getKeyEntity().getLongPressKeyCode());
 
     // Heights of rows are inherited from Keyboard element.
@@ -218,15 +223,19 @@ public class KeyboardParserTest extends InstrumentationTestCase {
       assertEquals(keyWidth, row.getKeyList().get(3).getWidth());
     }
 
-    // All right side keys have isRepeatable attribute.
+    // All right side keys (except for space key) have isRepeatable attribute.
     for (Row row : keyboard.getRowList().subList(1, 5)) {
-      assertTrue(row.getKeyList().get(4).isRepeatable());
+      Key key = row.getKeyList().get(4);
+      boolean isSpace = key.getKeyState(Collections.<MetaState>emptySet()).get()
+                           .getFlick(Direction.CENTER).getKeyEntity().getKeyCode() == ' ';
+      assertEquals(!isSpace, key.isRepeatable());
     }
 
     // All keys should have popup.
     for (Row row : keyboard.getRowList().subList(1, 5)) {
       for (Key key : row.getKeyList()) {
-        Flick flick = key.getKeyState(MetaState.UNMODIFIED).getFlick(Flick.Direction.CENTER);
+        Flick flick = key.getKeyState(Collections.<MetaState>emptySet()).get()
+            .getFlick(Flick.Direction.CENTER);
         assertNotNull(flick.getKeyEntity().getPopUp());
       }
     }

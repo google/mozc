@@ -27,13 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "ipc/ipc.h"
+
 #include <algorithm>
 #include <vector>
-#include "base/base.h"
+
+#include "base/flags.h"
+#include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "ipc/ipc.h"
 #include "ipc/ipc_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -66,7 +69,7 @@ class MultiConnections: public mozc::Thread {
  public:
 #ifdef OS_MACOSX
   MultiConnections()
-      : mach_port_manager_(NULL) { }
+      : mach_port_manager_(NULL) {}
 
   void SetMachPortManager(mozc::MachPortManagerInterface *manager) {
     mach_port_manager_ = manager;
@@ -93,8 +96,8 @@ class MultiConnections: public mozc::Thread {
     }
   }
 
-#ifdef OS_MACOSX
  private:
+#ifdef OS_MACOSX
   mozc::MachPortManagerInterface *mach_port_manager_;
 #endif
 };
@@ -118,7 +121,7 @@ class EchoServer: public mozc::IPCServer {
     return true;
   }
 };
-}
+}  // namespace
 
 TEST(IPCTest, IPCTest) {
   mozc::SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);

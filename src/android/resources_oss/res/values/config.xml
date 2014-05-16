@@ -80,7 +80,8 @@
   <!-- Configurations for key event timing (in milliseconds). -->
   <integer name="config_repeat_key_delay">400</integer>
   <integer name="config_repeat_key_interval">50</integer>
-  <integer name="config_long_press_key_delay">800</integer>
+  <integer name="config_long_press_key_delay">300</integer>
+  <integer name="config_long_press_key_delay_accessibility">3000</integer>
 
   <integer name="config_popup_dismiss_delay">150</integer>
 

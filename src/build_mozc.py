@@ -112,10 +112,11 @@ def GetBuildBaseName(options, target_platform):
   build_base = ''
 
   generator = GetGeneratorName(options.ensure_value('gyp_generator', None))
-  if generator == 'ninja':
-    build_base = 'out'
-  elif generator == 'msvs':
-    build_base = 'out_win'
+  if target_platform == 'Windows':
+    if generator == 'ninja':
+      build_base = 'out_win'
+    else:
+      build_base = 'out_win_msvs'
   elif target_platform == 'Mac':
     build_base = 'out_mac'
   elif target_platform == 'Linux':
@@ -342,12 +343,6 @@ def ParseGypOptions(args=None, values=None):
   parser.add_option('--qtdir', dest='qtdir',
                     default=os.getenv('QTDIR', None),
                     help='Qt base directory to be used.')
-  parser.add_option('--channel_dev', action='store', dest='channel_dev',
-                    type='int',
-                    help='Pass --channel_dev=1 if you need to build mozc with '
-                    'the CHANNEL_DEV macro enabled. Pass 0 if you don\'t need '
-                    'the macro. If --channel_dev= flag is not passed, Mozc '
-                    'version is used to deretmine if the macro is necessary.')
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
@@ -375,10 +370,16 @@ def ParseGypOptions(args=None, values=None):
   # Android
   parser.add_option('--android_arch', dest='android_arch',
                     type='choice',
-                    choices=('arm', 'x86', 'mips'),
+                    choices=('arm', 'x86', 'mips',
+                            ),
                     default='arm',
                     help='[Android build only] Android architecture '
                     '(arm, x86, mips)')
+  parser.add_option('--android_stl', dest='android_stl',
+                    type='choice',
+                    choices=('stlport', 'gnustl', 'libcxx'),
+                    default='stlport',
+                    help='[Android build only] Standard C++ library')
   parser.add_option('--android_application_id', dest='android_application_id',
                     default='org.mozc.android.inputmethod.japanese',
                     help='[Android build only] Android\'s application id'
@@ -509,7 +510,7 @@ def ExpandMetaTarget(options, meta_target_name):
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:DiskImage']
   elif target_platform == 'Windows':
-    targets = ['out/%s:mozc_win32_build32' % options.configuration]
+    targets = ['out_win/%s:mozc_win32_build32' % options.configuration]
     build_dir = os.path.abspath(os.path.join(
         GetBuildBaseName(options, target_platform),
         '%sDynamic' % options.configuration))
@@ -518,9 +519,9 @@ def ExpandMetaTarget(options, meta_target_name):
     if os.path.exists(qtcore_dll) or os.path.exists(qtcored_dll):
       # This means that Mozc is configured to use DLL versioin of Qt.
       # Let's build Mozc with DLL version of C++ runtime for the compatibility.
-      targets += [
-          'out/%sDynamic:mozc_win32_build32_dynamic' % options.configuration]
-    targets.append('out/%s_x64:mozc_win32_build64' % options.configuration)
+      targets += ['out_win/%sDynamic:mozc_win32_build32_dynamic'
+                  % options.configuration]
+    targets.append('out_win/%s_x64:mozc_win32_build64' % options.configuration)
   elif target_platform == 'NaCl':
     targets = [SRC_DIR + '/chrome/nacl/nacl_extension.gyp:nacl_mozc']
 
@@ -540,6 +541,15 @@ def ParseBuildOptions(args=None, values=None):
                     default='Debug', help='specify the build configuration.')
 
   (options, args) = parser.parse_args(args, values)
+
+  # Debug_Android and Release_Android have been deprecated.
+  # As migration process, throw exception with description.
+  # TODO(matsuzakit): Remove this block later.
+  if (options.configuration == 'Debug_Android'
+      or options.configuration == 'Release_Android'):
+    raise RuntimeError('%s has been deprecated. Use Debug or Release instead.'
+                       % options.configuration)
+
   targets = []
   for arg in args:
     targets.extend(ExpandMetaTarget(options, arg))
@@ -617,12 +627,11 @@ def AddPythonPathToEnvironmentFilesForWindows(out_dir):
 def GypMain(options, unused_args, _):
   """The main function for the 'gyp' command."""
   # Generate a version definition file.
-  # The version file is used in this method to check if this is dev channel.
   logging.info('Generating version definition file...')
   template_path = '%s/%s' % (SRC_DIR, options.version_file)
   version_path = '%s/mozc_version.txt' % SRC_DIR
   GenerateVersionFile(template_path, version_path, options.target_platform,
-                      options.channel_dev, options.android_application_id,
+                      options.android_application_id,
                       options.android_arch)
   version = GetMozcVersion()
   target_platform = version.GetTargetPlatform()
@@ -736,6 +745,7 @@ def GypMain(options, unused_args, _):
 
   gyp_options.extend(['-D', 'android_home=%s' % android_home])
   gyp_options.extend(['-D', 'android_arch=%s' % options.android_arch])
+  gyp_options.extend(['-D', 'android_stl=%s' % options.android_stl])
   gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
   gyp_options.extend(['-D', 'android_application_id=%s' %
                        options.android_application_id])
@@ -768,12 +778,7 @@ def GypMain(options, unused_args, _):
 
   gyp_options.extend(['-D', 'mac_dir=%s' % mac_dir])
 
-  # Check the version and determine if the building version is dev-channel or
-  # not. Note that if --channel_dev is explicitly set, we don't check the
-  # version number.
-  if options.channel_dev is None:
-    options.channel_dev = version.IsDevChannel()
-  if options.channel_dev:
+  if version.IsDevChannel():
     gyp_options.extend(['-D', 'channel_dev=1'])
 
   def SetCommandLineForFeature(option_name, windows=False, mac=False,
@@ -818,7 +823,7 @@ def GypMain(options, unused_args, _):
                         '%s=%s' % (enable_option_name, 1 if enabled else 0)])
 
   is_official = (options.branding == 'GoogleJapaneseInput')
-  is_official_dev = (is_official and options.channel_dev)
+  is_official_dev = (is_official and version.IsDevChannel())
 
   SetCommandLineForFeature(option_name='cloud_handwriting',
                            linux=is_official_dev,
@@ -908,11 +913,15 @@ def GypMain(options, unused_args, _):
       PrintErrorAndExit('The directory specified with --nacl_sdk_root does not '
                         'exist: %s' % options.nacl_sdk_root)
     gyp_options.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
-    gyp_options.extend(['-D', 'clang=1'])
 
   if options.server_dir:
     gyp_options.extend([
         '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
+
+  # TODO(yukawa): Use ninja on other platforms.
+  if IsWindows() and generator == 'ninja':
+    gyp_options.extend(['--generator-output=.'])
+    gyp_options.extend(['-G', 'output_dir=out_win'])
 
   # Run GYP.
   logging.info('Running GYP...')
@@ -927,7 +936,7 @@ def GypMain(options, unused_args, _):
 
   # For internal Ninja build on Windows, set up environment files
   if IsWindows() and generator == 'ninja':
-    out_dir = os.path.join(GetTopLevelSourceDirectoryName(), 'out')
+    out_dir = os.path.join(GetTopLevelSourceDirectoryName(), 'out_win')
     AddPythonPathToEnvironmentFilesForWindows(out_dir)
 
   # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
@@ -971,8 +980,8 @@ def BuildToolsMain(options, unused_args, original_directory_name):
   # Build targets in this order.
   if IsWindows():
     build_tools_targets = [
-        'out/%s:primitive_tools' % options.configuration,
-        'out/%s:build_tools' % options.configuration,
+        'out_win/%s:primitive_tools' % options.configuration,
+        'out_win/%s:build_tools' % options.configuration,
     ]
   else:
     gyp_files = [
@@ -1224,6 +1233,9 @@ def RunTestsOnAndroid(options, build_args, original_directory_name):
 
     # Run native and Java tests.
     android_gyp = os.path.join(SRC_DIR, 'android', 'android.gyp')
+    # run_java_test must be executed after run_native_test
+    # because package manager, which is mandatory to run Java tests,
+    # requires minutes to get ready.
     for target in ('run_native_test', 'run_java_test'):
       (build_options, build_targets) = ParseBuildOptions(
           build_args + ['%s:%s' % (android_gyp, target)])
@@ -1304,7 +1316,7 @@ def RunTestsMain(options, args, original_directory_name):
     # TODO(yukawa): Change the notation rule of 'targets' to reduce the gap
     # between Ninja and make.
     if target_platform == 'Windows':
-      targets.append('out/%s:unittests' % options.configuration)
+      targets.append('out_win/%s:unittests' % options.configuration)
     else:
       targets.append('%s/gyp/tests.gyp:unittests' % SRC_DIR)
 

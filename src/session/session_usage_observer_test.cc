@@ -193,6 +193,43 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   }
 }
 
+TEST_F(SessionUsageObserverTest, ClientSideStatsSoftwareKeyboardLayout) {
+  SessionUsageObserver observer;
+
+  // create session
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
+  command.mutable_input()->set_id(1);
+  command.mutable_output()->set_id(1);
+  observer.EvalCommandHandler(command);
+
+  EXPECT_STATS_NOT_EXIST("SoftwareKeyboardLayoutLandscape");
+  EXPECT_STATS_NOT_EXIST("SoftwareKeyboardLayoutPortrait");
+
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+  commands::SessionCommand *session_command =
+      command.mutable_input()->mutable_command();
+  session_command->set_type(commands::SessionCommand::USAGE_STATS_EVENT);
+  session_command->set_usage_stats_event(
+      commands::SessionCommand::SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE);
+  session_command->set_usage_stats_event_int_value(1);
+  observer.EvalCommandHandler(command);
+  EXPECT_INTEGER_STATS("SoftwareKeyboardLayoutLandscape", 1);
+  EXPECT_STATS_NOT_EXIST("SoftwareKeyboardLayoutPortrait");
+
+  session_command->set_usage_stats_event_int_value(2);
+  observer.EvalCommandHandler(command);
+  EXPECT_INTEGER_STATS("SoftwareKeyboardLayoutLandscape", 2);
+  EXPECT_STATS_NOT_EXIST("SoftwareKeyboardLayoutPortrait");
+
+  session_command->set_usage_stats_event(
+      commands::SessionCommand::SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT);
+  session_command->set_usage_stats_event_int_value(3);
+  observer.EvalCommandHandler(command);
+  EXPECT_INTEGER_STATS("SoftwareKeyboardLayoutLandscape", 2);
+  EXPECT_INTEGER_STATS("SoftwareKeyboardLayoutPortrait", 3);
+}
+
 TEST_F(SessionUsageObserverTest, LogTouchEvent) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 

@@ -34,13 +34,22 @@
 
 #include <string>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "converter/segments.h"
-#include "composer/composer.h"
-#include "session/commands.pb.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 class ConverterInterface;
+
+namespace commands {
+class Context;
+class Output;
+class Request;
+}
+
+namespace composer {
+class Composer;
+}
 
 namespace session {
 class CandidateList;
@@ -86,7 +95,7 @@ class SessionConverterInterface {
 
   // Update OperationPreferences.
   virtual void SetOperationPreferences(const OperationPreferences &preferences)
-      ABSTRACT;
+      = 0;
 
   typedef int States;
   enum State {
@@ -98,72 +107,72 @@ class SessionConverterInterface {
   };
 
   // Check if the current state is in the state bitmap.
-  virtual bool CheckState(States) const ABSTRACT;
+  virtual bool CheckState(States) const = 0;
 
   // Indicate if the conversion session is active or not.  In general,
   // Convert functions make it active and Cancel, Reset and Commit
   // functions make it deactive.
-  virtual bool IsActive() const ABSTRACT;
+  virtual bool IsActive() const = 0;
 
   // Return the default conversion preferences to be used for custom
   // conversion.
-  virtual const ConversionPreferences &conversion_preferences() const ABSTRACT;
+  virtual const ConversionPreferences &conversion_preferences() const = 0;
 
   // Gets the selected candidate. If no candidate is selected, returns NULL.
   virtual const Segment::Candidate *
-  GetSelectedCandidateOfFocusedSegment() const ABSTRACT;
+  GetSelectedCandidateOfFocusedSegment() const = 0;
 
   // Send a conversion request to the converter.
-  virtual bool Convert(const composer::Composer &composer) ABSTRACT;
+  virtual bool Convert(const composer::Composer &composer) = 0;
   virtual bool ConvertWithPreferences(
       const composer::Composer &composer,
-      const ConversionPreferences &preferences) ABSTRACT;
+      const ConversionPreferences &preferences) = 0;
 
   // Get reading text (e.g. from "猫" to "ねこ").
-  virtual bool GetReadingText(const string &str, string *reading) ABSTRACT;
+  virtual bool GetReadingText(const string &str, string *reading) = 0;
 
   // Send a transliteration request to the converter.
   virtual bool ConvertToTransliteration(
       const composer::Composer &composer,
-      transliteration::TransliterationType type) ABSTRACT;
+      transliteration::TransliterationType type) = 0;
 
   // Convert the current composition to half-width characters.
   // NOTE(komatsu): This function might be merged to ConvertToTransliteration.
-  virtual bool ConvertToHalfWidth(const composer::Composer &composer) ABSTRACT;
+  virtual bool ConvertToHalfWidth(const composer::Composer &composer) = 0;
 
   // Switch the composition to Hiragana, full-width Katakana or
   // half-width Katakana by rotation.
-  virtual bool SwitchKanaType(const composer::Composer &composer) ABSTRACT;
+  virtual bool SwitchKanaType(const composer::Composer &composer) = 0;
 
   // Send a suggestion request to the converter.
-  virtual bool Suggest(const composer::Composer &composer) ABSTRACT;
+  virtual bool Suggest(const composer::Composer &composer) = 0;
   virtual bool SuggestWithPreferences(
       const composer::Composer &composer,
-      const ConversionPreferences &preferences) ABSTRACT;
+      const ConversionPreferences &preferences) = 0;
 
   // Send a prediction request to the converter.
-  virtual bool Predict(const composer::Composer &composer) ABSTRACT;
+  virtual bool Predict(const composer::Composer &composer) = 0;
   virtual bool PredictWithPreferences(
       const composer::Composer &composer,
-      const ConversionPreferences &preferences) ABSTRACT;
+      const ConversionPreferences &preferences) = 0;
 
   // Send a prediction request to the converter.
   // The result is added at the tail of existing candidate list as "suggestion"
   // candidates.
-  virtual bool ExpandSuggestion(const composer::Composer &composer) ABSTRACT;
+  virtual bool ExpandSuggestion(const composer::Composer &composer) = 0;
   virtual bool ExpandSuggestionWithPreferences(
       const composer::Composer &composer,
-      const ConversionPreferences &preferences) ABSTRACT;
+      const ConversionPreferences &preferences) = 0;
 
   // Clear conversion segments, but keep the context.
-  virtual void Cancel() ABSTRACT;
+  virtual void Cancel() = 0;
 
   // Clear conversion segments and the context.
-  virtual void Reset() ABSTRACT;
+  virtual void Reset() = 0;
 
   // Fix the conversion with the current status.
   virtual void Commit(const composer::Composer &composer,
-                      const commands::Context &context) ABSTRACT;
+                      const commands::Context &context) = 0;
 
   // Fix the suggestion candidate.  True is returned if the selected
   // candidate is successfully committed.
@@ -171,7 +180,7 @@ class SessionConverterInterface {
       size_t index,
       const composer::Composer &composer,
       const commands::Context &context,
-      size_t *committed_key_size) ABSTRACT;
+      size_t *committed_key_size) = 0;
 
   // Select a candidate and commit the selected candidate.  True is
   // returned if the selected candidate is successfully committed.
@@ -179,75 +188,83 @@ class SessionConverterInterface {
       int id,
       const composer::Composer &composer,
       const commands::Context &context,
-      size_t *committed_key_size) ABSTRACT;
+      size_t *committed_key_size) = 0;
 
   // Fix only the conversion of the first segment, and keep the rest.
   // The caller should delete characters from composer based on returned
   // |committed_key_size|.
   virtual void CommitFirstSegment(const composer::Composer &composer,
                                   const commands::Context &context,
-                                  size_t *committed_key_size) ABSTRACT;
+                                  size_t *committed_key_size) = 0;
+
+  // Fix only the [0, focused] conversion segments, and keep the rest.
+  // The caller should delete characters from composer based on returned
+  // |committed_key_size|.
+  virtual void CommitHeadToFocusedSegments(
+      const composer::Composer &composer,
+      const commands::Context &context,
+      size_t *committed_key_size) = 0;
 
   // Commit the preedit string represented by Composer.
   virtual void CommitPreedit(const composer::Composer &composer,
-                             const commands::Context &context) ABSTRACT;
+                             const commands::Context &context) = 0;
 
   // Commit prefix of the preedit string represented by Composer.
   // The caller should delete characters from composer based on returned
   // |commited_size|.
   virtual void CommitHead(size_t count,
                           const composer::Composer &composer,
-                          size_t *commited_size) ABSTRACT;
+                          size_t *commited_size) = 0;
 
   // Revert the last "Commit" operation
-  virtual void Revert() ABSTRACT;
+  virtual void Revert() = 0;
 
   // Move the focus of segments.
-  virtual void SegmentFocusRight() ABSTRACT;
-  virtual void SegmentFocusLast() ABSTRACT;
-  virtual void SegmentFocusLeft() ABSTRACT;
-  virtual void SegmentFocusLeftEdge() ABSTRACT;
+  virtual void SegmentFocusRight() = 0;
+  virtual void SegmentFocusLast() = 0;
+  virtual void SegmentFocusLeft() = 0;
+  virtual void SegmentFocusLeftEdge() = 0;
 
   // Resize the focused segment.
-  virtual void SegmentWidthExpand(const composer::Composer &composer) ABSTRACT;
-  virtual void SegmentWidthShrink(const composer::Composer &composer) ABSTRACT;
+  virtual void SegmentWidthExpand(const composer::Composer &composer) = 0;
+  virtual void SegmentWidthShrink(const composer::Composer &composer) = 0;
 
   // Move the focus of candidates.
-  virtual void CandidateNext(const composer::Composer &composer) ABSTRACT;
-  virtual void CandidateNextPage() ABSTRACT;
-  virtual void CandidatePrev() ABSTRACT;
-  virtual void CandidatePrevPage() ABSTRACT;
+  virtual void CandidateNext(const composer::Composer &composer) = 0;
+  virtual void CandidateNextPage() = 0;
+  virtual void CandidatePrev() = 0;
+  virtual void CandidatePrevPage() = 0;
   // Move the focus to the candidate represented by the id.
   virtual void CandidateMoveToId(
-      int id, const composer::Composer &composer) ABSTRACT;
+      int id, const composer::Composer &composer) = 0;
   // Move the focus to the index from the beginning of the current page.
-  virtual void CandidateMoveToPageIndex(size_t index) ABSTRACT;
+  virtual void CandidateMoveToPageIndex(size_t index) = 0;
   // Move the focus to the candidate represented by the shortcut.  If
   // the shortcut is not bound with any candidate, false is returned.
-  virtual bool CandidateMoveToShortcut(char shortcut) ABSTRACT;
+  virtual bool CandidateMoveToShortcut(char shortcut) = 0;
 
   // Operation for the candidate list.
-  virtual void SetCandidateListVisible(bool visible) ABSTRACT;
+  virtual void SetCandidateListVisible(bool visible) = 0;
 
   // Fill protocol buffers and update internal status.
   virtual void PopOutput(
-      const composer::Composer &composer, commands::Output *output) ABSTRACT;
+      const composer::Composer &composer, commands::Output *output) = 0;
 
   // Fill protocol buffers
   virtual void FillOutput(
       const composer::Composer &composer,
-      commands::Output *output) const ABSTRACT;
+      commands::Output *output) const = 0;
 
   // Set setting by the request.
   // Currently this is especially for SessionConverter.
-  virtual void SetRequest(const commands::Request *request) ABSTRACT;
+  virtual void SetRequest(const commands::Request *request) = 0;
 
   // Update the internal state by the context.
-  virtual void OnStartComposition(const commands::Context &context) ABSTRACT;
+  virtual void OnStartComposition(const commands::Context &context) = 0;
 
   // Clone instance.
   // Callee object doesn't have the ownership of the cloned instance.
-  virtual SessionConverterInterface *Clone() const ABSTRACT;
+  virtual SessionConverterInterface *Clone() const = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionConverterInterface);

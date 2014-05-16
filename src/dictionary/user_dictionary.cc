@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary.h"
 
 #include <algorithm>
+#include <limits>
 #include <set>
 #include <string>
 
@@ -42,8 +43,6 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/node.h"
-#include "converter/node_allocator.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -279,7 +278,6 @@ UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
       user_pos_(user_pos),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
-      empty_limit_(Limit()),
       tokens_(new TokensIndex(user_pos_.get(), suppression_dictionary)),
       mutex_(new ReaderWriterMutex) {
   DCHECK(user_pos_.get());
@@ -293,7 +291,7 @@ UserDictionary::~UserDictionary() {
   delete tokens_;
 }
 
-bool UserDictionary::HasValue(const StringPiece value) const {
+bool UserDictionary::HasValue(StringPiece value) const {
   // TODO(noriyukit): Currently, we don't support HasValue() for user dictionary
   // because we need to search tokens linearly, which might be slow in extreme
   // cases where 100K entries exist.  Note: HasValue() method is used only in
@@ -301,74 +299,53 @@ bool UserDictionary::HasValue(const StringPiece value) const {
   return false;
 }
 
-Node *UserDictionary::LookupPredictiveWithLimit(
-    const char *str, int size, const Limit &limit,
-    NodeAllocatorInterface *allocator) const {
+void UserDictionary::LookupPredictive(
+    StringPiece key,
+    bool,  // use_kana_modifier_insensitive_lookup
+    Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
 
-  if (size == 0) {
+  if (key.empty()) {
     VLOG(2) << "string of length zero is passed.";
-    return NULL;
+    return;
   }
-
   if (tokens_->empty()) {
-    return NULL;
+    return;
   }
-
   if (GET_CONFIG(incognito_mode)) {
-    return NULL;
+    return;
   }
 
-  DCHECK(allocator != NULL);
-  Node *result_node = NULL;
-  string key(str, size);
-
-  // Look for a starting point of iteration over dictionary contents.
+  // Find the starting point of iteration over dictionary contents.
   UserPOS::Token key_token;
-  key_token.key = key;
+  key.CopyToString(&key_token.key);
   vector<UserPOS::Token *>::const_iterator it =
       lower_bound(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
+  Token token;
   for (; it != tokens_->end(); ++it) {
     if (!Util::StartsWith((*it)->key, key)) {
       break;
     }
-    // check begin with
-    if (limit.begin_with_trie != NULL) {
-      string value;
-      size_t key_length = 0;
-      bool has_subtrie = false;
-      if (!limit.begin_with_trie->LookUpPrefix(
-              StringPiece((*it)->key).substr(size),
-              &value, &key_length, &has_subtrie)) {
+    switch (callback->OnKey((*it)->key)) {
+      case Callback::TRAVERSE_DONE:
+        return;
+      case Callback::TRAVERSE_NEXT_KEY:
+      case Callback::TRAVERSE_CULL:
         continue;
-      }
+      default:
+        break;
     }
-
-    Node *new_node = allocator->NewNode();
-    DCHECK(new_node);
+    FillTokenFromUserPOSToken(**it, &token);
+    // Override POS IDs for suggest only words.
     if (pos_matcher_->IsSuggestOnlyWord((*it)->id)) {
-      new_node->lid = pos_matcher_->GetUnknownId();
-      new_node->rid = pos_matcher_->GetUnknownId();
-    } else {
-      new_node->lid = (*it)->id;
-      new_node->rid = (*it)->id;
+      token.lid = token.rid = pos_matcher_->GetUnknownId();
     }
-    new_node->wcost = (*it)->cost;
-    new_node->key = (*it)->key;
-    new_node->value = (*it)->value;
-    new_node->node_type = Node::NOR_NODE;
-    new_node->attributes |= Node::NO_VARIANTS_EXPANSION;
-    new_node->attributes |= Node::USER_DICTIONARY;
-    new_node->bnext = result_node;
-    result_node = new_node;
+    if (callback->OnToken((*it)->key, (*it)->key, token) ==
+        Callback::TRAVERSE_DONE) {
+      return;
+    }
   }
-  return result_node;
-}
-
-Node *UserDictionary::LookupPredictive(
-    const char *str, int size, NodeAllocatorInterface *allocator) const {
-  return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
 }
 
 // UserDictionary doesn't support kana modifier insensitive lookup.
@@ -459,13 +436,12 @@ void UserDictionary::LookupExact(StringPiece key, Callback *callback) const {
   }
 }
 
-Node *UserDictionary::LookupReverse(const char *str, int size,
-                                    NodeAllocatorInterface *allocator) const {
+void UserDictionary::LookupReverse(StringPiece str,
+                                   NodeAllocatorInterface *allocator,
+                                   Callback *callback) const {
   if (GET_CONFIG(incognito_mode)) {
-    return NULL;
+    return;
   }
-
-  return NULL;
 }
 
 bool UserDictionary::LookupComment(StringPiece key, StringPiece value,

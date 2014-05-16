@@ -58,20 +58,24 @@ public class MozcDrawableFactoryTest extends InstrumentationTestCaseWithMock {
 
     // Symbol icon contains path and circle.
     assertTrue(
-        factory.getDrawable(R.raw.twelvekeys__function__symbol__icon) instanceof PictureDrawable);
+        factory.getDrawable(R.raw.twelvekeys__function__symbol__icon).get()
+            instanceof PictureDrawable);
     // For polyline.
     assertTrue(
-        factory.getDrawable(R.raw.twelvekeys__kana__support__12_left) instanceof PictureDrawable);
+        factory.getDrawable(R.raw.twelvekeys__kana__support__12_left).get()
+            instanceof PictureDrawable);
     // For polygon.
     assertTrue(
-        factory.getDrawable(R.raw.twelvekeys__function__space__icon) instanceof PictureDrawable);
+        factory.getDrawable(R.raw.twelvekeys__function__space__icon).get()
+            instanceof PictureDrawable);
     // For rectangle.
     assertTrue(
-        factory.getDrawable(R.raw.symbol__function__close) instanceof PictureDrawable);
+        factory.getDrawable(R.raw.symbol__function__close).get()
+            instanceof PictureDrawable);
 
     // For StateListDrawable.
     assertTrue(
-        factory.getDrawable(R.raw.twelvekeys__kana__support__01_center)
+        factory.getDrawable(R.raw.twelvekeys__kana__support__01_center).get()
             instanceof StateListDrawable);
   }
 
@@ -85,7 +89,7 @@ public class MozcDrawableFactoryTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     MozcDrawableFactory factory = new MozcDrawableFactory(resources);
-    assertSame(drawable, factory.getDrawable(1));
+    assertSame(drawable, factory.getDrawable(1).get());
 
     verifyAll();
   }

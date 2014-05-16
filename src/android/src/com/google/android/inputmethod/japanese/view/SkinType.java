@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese.view;
 
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.base.Preconditions;
 
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
@@ -101,10 +102,15 @@ public enum SkinType {
       // Symbol candidate background config.
       0xFFFEFEFE, 0xFFECECEC, 0xFFFFFFFF, 0x7C666666,
 
+      // Three dots
+      0xFFDDDDDD,
+
       // Window background resource.
       R.drawable.window__background) {
     @Override
     public void apply(Paint paint, int category) {
+      Preconditions.checkNotNull(paint);
+
       // At the moment, caller has responsibility to reset paint.
       // TODO(hidehiko): move all style based logic from MozcDrawableFactory to here.
       switch (category) {
@@ -235,10 +241,15 @@ public enum SkinType {
       // Symbol candidate background config.
       0xFFFEFEFE, 0xFFECECEC, 0xFFFFFFFF, 0x7C666666,
 
+      // Three dots
+      0xFFDDDDDD,
+
       // Window background resource.
       R.drawable.window__background) {
     @Override
     public void apply(Paint paint, int category) {
+      Preconditions.checkNotNull(paint);
+
       // At the moment, caller has responsibility to reset paint.
       // TODO(hidehiko): move all style based logic from MozcDrawableFactory to here.
       switch (category) {
@@ -369,10 +380,15 @@ public enum SkinType {
       // Symbol candidate background config.
       0xFFFEFEFE, 0xFFECECEC, 0xFFFFFFFF, 0x7C666666,
 
+      // Three dots
+      0xFFF7F7F7,
+
       // Window background resource.
       R.drawable.window_background_black) {
     @Override
     public void apply(Paint paint, int category) {
+      Preconditions.checkNotNull(paint);
+
       // At the moment, caller has responsibility to reset paint.
       // TODO(hidehiko): move all style based logic from MozcDrawableFactory to here.
       switch (category) {
@@ -448,7 +464,7 @@ public enum SkinType {
   TEST(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) {
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) {
     @Override
     public void apply(Paint paint, int category) {
       // Do nothing.
@@ -573,6 +589,8 @@ public enum SkinType {
   public final int symbolCandidateBackgroundHighlightColor;
   public final int symbolCandidateBackgroundBorderColor;
 
+  public final int threeDotsColor;
+
   public final int windowBackgroundResourceId;
 
   public abstract void apply(Paint paint, int category);
@@ -657,6 +675,7 @@ public enum SkinType {
       int symbolCandidateBackgroundBottomColor,
       int symbolCandidateBackgroundHighlightColor,
       int symbolCandidateBackgroundBorderColor,
+      int threeDotsColor,
       int windowBackgroundResourceId) {
     this.twelvekeysLayoutReleasedKeyTopColor = twelvekeysLayoutReleasedKeyTopColor;
     this.twelvekeysLayoutReleasedKeyBottomColor = twelvekeysLayoutReleasedKeyBottomColor;
@@ -708,12 +727,14 @@ public enum SkinType {
 
     this.qwertyLayoutReleasedFunctionKeyTopColor = qwertyLayoutReleasedFunctionKeyTopColor;
     this.qwertyLayoutReleasedFunctionKeyBottomColor = qwertyLayoutReleasedFunctionKeyBottomColor;
-    this.qwertyLayoutReleasedFunctionKeyHighlightColor = qwertyLayoutReleasedFunctionKeyHighlightColor;
+    this.qwertyLayoutReleasedFunctionKeyHighlightColor =
+        qwertyLayoutReleasedFunctionKeyHighlightColor;
     this.qwertyLayoutReleasedFunctionKeyShadowColor = qwertyLayoutReleasedFunctionKeyShadowColor;
 
     this.qwertyLayoutPressedFunctionKeyTopColor = qwertyLayoutPressedFunctionKeyTopColor;
     this.qwertyLayoutPressedFunctionKeyBottomColor = qwertyLayoutPressedFunctionKeyBottomColor;
-    this.qwertyLayoutPressedFunctionKeyHighlightColor = qwertyLayoutPressedFunctionKeyHighlightColor;
+    this.qwertyLayoutPressedFunctionKeyHighlightColor =
+        qwertyLayoutPressedFunctionKeyHighlightColor;
     this.qwertyLayoutPressedFunctionKeyShadowColor = qwertyLayoutPressedFunctionKeyShadowColor;
 
     this.flickBaseColor = flickBaseColor;
@@ -764,6 +785,8 @@ public enum SkinType {
     this.symbolCandidateBackgroundBottomColor = symbolCandidateBackgroundBottomColor;
     this.symbolCandidateBackgroundHighlightColor = symbolCandidateBackgroundHighlightColor;
     this.symbolCandidateBackgroundBorderColor = symbolCandidateBackgroundBorderColor;
+
+    this.threeDotsColor = threeDotsColor;
 
     this.windowBackgroundResourceId = windowBackgroundResourceId;
   }

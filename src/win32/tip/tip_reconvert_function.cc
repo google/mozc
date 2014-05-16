@@ -37,7 +37,14 @@
 #include <atlcom.h>
 #include <Ctffunc.h>
 
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_edit_session.h"
+#include "win32/tip/tip_query_provider.h"
+#include "win32/tip/tip_range_util.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
@@ -48,6 +55,7 @@ namespace tsf {
 
 using ATL::CComBSTR;
 using ATL::CComPtr;
+using std::unique_ptr;
 
 namespace {
 
@@ -57,6 +65,25 @@ const wchar_t kReconvertFunctionDisplayName[] =
 #else
 const wchar_t kReconvertFunctionDisplayName[] = L"Mozc: Reconversion Function";
 #endif
+
+class CandidateListCallbackImpl : public TipCandidateListCallback {
+ public:
+  CandidateListCallbackImpl(TipTextService *text_service, ITfRange *range)
+      : text_service_(text_service),
+        range_(range) {
+  }
+
+ private:
+  // TipCandidateListCallback overrides:
+  virtual void OnFinalize(size_t index, const wstring &candidate) {
+    TipEditSession::SetTextAsync(text_service_, candidate, range_);
+  }
+
+  CComPtr<TipTextService> text_service_;
+  CComPtr<ITfRange> range_;
+
+  DISALLOW_COPY_AND_ASSIGN(CandidateListCallbackImpl);
+};
 
 class ReconvertFunctionImpl : public ITfFnReconversion {
  public:
@@ -166,8 +193,24 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
     if (candidate_list == nullptr) {
       return E_INVALIDARG;
     }
-    *candidate_list = nullptr;
-    return E_NOTIMPL;
+    unique_ptr<TipQueryProvider> provider(TipQueryProvider::Create());
+    if (!provider) {
+      return E_FAIL;
+    }
+    wstring query;
+    if (!TipEditSession::GetTextSync(text_service_, range, &query)) {
+      return E_FAIL;
+    }
+    std::vector<wstring> candidates;
+    if (!provider->Query(query,
+                         TipQueryProvider::kReconversion,
+                         &candidates)) {
+      return E_FAIL;
+    }
+    auto *callback = new CandidateListCallbackImpl(text_service_, range);
+    *candidate_list = TipCandidateList::New(candidates, callback);
+    (*candidate_list)->AddRef();
+    return S_OK;
   }
 
   virtual HRESULT STDMETHODCALLTYPE Reconvert(ITfRange *range) {

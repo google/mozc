@@ -109,10 +109,14 @@
       ],
       'conditions': [
         ['target_platform!="Android"', {
+          'dependencies': [
+            'gen_usage_rewriter_dictionary_main#host',
+          ],
           'actions': [
             {
               'action_name': 'gen_usage_rewriter_data',
               'variables': {
+                'generator': '<(PRODUCT_DIR)/gen_usage_rewriter_dictionary_main<(EXECUTABLE_SUFFIX)',
                 'usage_data_file': [
                   '<(DEPTH)/third_party/japanese_usage_dictionary/usage_dict.txt',
                 ],
@@ -121,6 +125,7 @@
                 ],
               },
               'inputs': [
+                '<(generator)',
                 '<@(usage_data_file)',
                 '<@(cforms_file)',
               ],
@@ -128,10 +133,9 @@
                 '<(gen_out_dir)/usage_rewriter_data.h',
               ],
               'action': [
-                '<(mozc_build_tools_dir)/gen_usage_rewriter_dictionary_main',
+                '<(generator)',
                 '--usage_data_file=<@(usage_data_file)',
                 '--cforms_file=<@(cforms_file)',
-                '--logtostderr',
                 '--output=<(gen_out_dir)/usage_rewriter_data.h',
               ],
             },
@@ -163,17 +167,6 @@
       ],
     },
     {
-      'target_name': 'install_gen_collocation_data_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_collocation_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ]
-    },
-    {
       'target_name': 'gen_collocation_suppression_data_main',
       'type': 'executable',
       'toolsets': ['host'],
@@ -183,17 +176,6 @@
       'dependencies': [
         'gen_existence_data',
       ],
-    },
-    {
-      'target_name': 'install_gen_collocation_suppression_data_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_collocation_suppression_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ]
     },
     {
       'target_name': 'gen_symbol_rewriter_dictionary_main',
@@ -212,17 +194,6 @@
       ],
     },
     {
-      'target_name': 'install_gen_symbol_rewriter_dictionary_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_symbol_rewriter_dictionary_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ]
-    },
-    {
       'target_name': 'gen_usage_rewriter_dictionary_main',
       'type': 'executable',
       'toolsets': ['host'],
@@ -231,17 +202,6 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'install_gen_usage_rewriter_dictionary_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_usage_rewriter_dictionary_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
       ],
     },
   ],

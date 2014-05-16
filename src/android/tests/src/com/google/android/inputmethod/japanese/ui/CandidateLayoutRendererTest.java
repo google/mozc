@@ -33,7 +33,6 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.getCurrentArguments;
 import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.isNull;
 import static org.easymock.EasyMock.same;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
@@ -42,10 +41,12 @@ import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWith
 import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
-import org.mozc.android.inputmethod.japanese.view.EmojiRenderHelper;
+import org.mozc.android.inputmethod.japanese.view.CarrierEmojiRenderHelper;
+import com.google.common.base.Optional;
 
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.test.mock.MockResources;
 import android.view.View;
 
 import org.easymock.IAnswer;
@@ -82,8 +83,9 @@ public class CandidateLayoutRendererTest extends InstrumentationTestCaseWithMock
 
         for (int j = 0; j < 5; ++j) {
           // Insert a null candidate word span
-          CandidateWord candidateWord = (i == 2 && j == 0) ? null :
-              candidateList.getCandidates(index++);
+          Optional<CandidateWord> candidateWord = (i == 2 && j == 0)
+              ? Optional.<CandidateWord>absent()
+              : Optional.of(candidateList.getCandidates(index++));
           Span span = new Span(candidateWord, 0, 0, Collections.<String>emptyList());
           span.setLeft(j * 10);
           span.setRight((j + 1) * 10);
@@ -95,57 +97,57 @@ public class CandidateLayoutRendererTest extends InstrumentationTestCaseWithMock
 
     // Set up the testee instance and mocks.
     View targetView = createViewMock(View.class);
+    resetAll();
+    expect(targetView.getResources()).andStubReturn(new MockResources());
+    replayAll();
     CandidateLayoutRenderer renderer = createMockBuilder(CandidateLayoutRenderer.class)
         .withConstructor(View.class)
         .withArgs(targetView)
         .addMockedMethod("drawSpan")
         .createMock();
 
-    // Inject EmojiRenderHelper mock.
-    resetAll();
-    EmojiRenderHelper emojiRenderHelper = createMockBuilder(EmojiRenderHelper.class)
+    // Inject CarrierEmojiRenderHelper mock.
+    CarrierEmojiRenderHelper carrierEmojiRenderHelper =
+        createMockBuilder(CarrierEmojiRenderHelper.class)
         .withConstructor(View.class)
         .withArgs(targetView)
         .createMock();
-    VisibilityProxy.setField(renderer, "emojiRenderHelper", emojiRenderHelper);
+    VisibilityProxy.setField(renderer, "carrierEmojiRenderHelper", carrierEmojiRenderHelper);
 
     Canvas canvas = createMock(Canvas.class);
     resetAll();
 
-    // Set CandidateList should affect to the emojiRenderHelper.
-    emojiRenderHelper.setCandidateList(same(candidateList));
+    // Set CandidateList should affect to the carrierEmojiRenderHelper.
+    carrierEmojiRenderHelper.setCandidateList(Optional.of(candidateList));
     replayAll();
 
-    renderer.setCandidateList(candidateList);
+    renderer.setCandidateList(Optional.of(candidateList));
 
     verifyAll();
     // The focused index should also be updated.
     assertEquals(6, renderer.focusedIndex);
 
     resetAll();
-    emojiRenderHelper.setCandidateList(isNull(CandidateList.class));
+    carrierEmojiRenderHelper.setCandidateList(Optional.<CandidateList>absent());
     replayAll();
 
-    renderer.setCandidateList(null);
+    renderer.setCandidateList(Optional.<CandidateList>absent());
 
     verifyAll();
     assertEquals(-1, renderer.focusedIndex);
 
     resetAll();
     // Set the candidateList again.
-    emojiRenderHelper.setCandidateList(same(candidateList));
+    carrierEmojiRenderHelper.setCandidateList(Optional.of(candidateList));
     replayAll();
 
-    renderer.setCandidateList(candidateList);
+    renderer.setCandidateList(Optional.of(candidateList));
 
     verifyAll();
     assertEquals(6, renderer.focusedIndex);
 
     // Then render the layout to the canvas.
     resetAll();
-
-    // The onPreDraw() should be invoked.
-    emojiRenderHelper.onPreDraw();
 
     // Dummy clip of the canvas. It's (15, 15) - (35, 35).
     expect(canvas.getClipBounds(isA(Rect.class))).andStubAnswer(new IAnswer<Boolean>() {
@@ -179,9 +181,6 @@ public class CandidateLayoutRendererTest extends InstrumentationTestCaseWithMock
         same(canvas), same(rowList.get(3)), same(rowList.get(3).getSpanList().get(2)), eq(false));
     renderer.drawSpan(
         same(canvas), same(rowList.get(3)), same(rowList.get(3).getSpanList().get(3)), eq(false));
-
-    // After all the rendering process, onPostDraw should be invoked.
-    emojiRenderHelper.onPostDraw();
 
     replayAll();
 

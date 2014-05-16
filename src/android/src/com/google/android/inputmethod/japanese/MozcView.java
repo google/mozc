@@ -30,12 +30,13 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.LayoutParamsAnimator.InterpolationListener;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
@@ -68,10 +69,14 @@ import android.view.animation.AnimationSet;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.EditorInfo;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+
+import java.util.Collections;
+import java.util.EnumSet;
 
 /**
  * Root {@code View} of the MechaMozc.
@@ -92,7 +97,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   }
 
   static class DefaultInsetsCalculator implements InsetsCalculator {
-    static void setInsetsDefault(MozcView mozcView, int contentViewWidth, int contentViewHeight,
+    static void setInsetsDefault(MozcView mozcView, int contentViewHeight,
                                  Insets outInsets) {
       outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_CONTENT;
       outInsets.contentTopInsets = contentViewHeight - mozcView.getVisibleViewHeight();
@@ -107,7 +112,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     @Override
     public void setInsets(MozcView mozcView, int contentViewWidth, int contentViewHeight,
                           Insets outInsets) {
-      setInsetsDefault(mozcView, contentViewWidth, contentViewHeight, outInsets);
+      setInsetsDefault(mozcView, contentViewHeight, outInsets);
     }
   }
 
@@ -131,7 +136,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     public void setInsets(MozcView mozcView, int contentViewWidth, int contentViewHeight,
                           Insets outInsets) {
       if (!isFloatingMode(mozcView)) {
-        DefaultInsetsCalculator.setInsetsDefault(mozcView, contentViewWidth, contentViewHeight,
+        DefaultInsetsCalculator.setInsetsDefault(mozcView, contentViewHeight,
                                                  outInsets);
         return;
       }
@@ -199,8 +204,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
         ViewEventListener eventListener, View keyboardView,
         long foldDuration, Interpolator foldKeyboardViewInterpolator,
         long expandDuration, Interpolator expandKeyboardViewInterpolator,
-        LayoutParamsAnimator layoutParamsAnimator,
-        float snapVelocityThreshold) {
+        LayoutParamsAnimator layoutParamsAnimator) {
       this.eventListener = eventListener;
       this.keyboardView = keyboardView;
       this.foldDuration = foldDuration;
@@ -250,8 +254,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   private final DimensionPixelSize dimensionPixelSize = new DimensionPixelSize(getResources());
   private final SideFrameStubProxy leftFrameStubProxy = new SideFrameStubProxy();
   private final SideFrameStubProxy rightFrameStubProxy = new SideFrameStubProxy();
-
-  private MozcDrawableFactory mozcDrawableFactory = new MozcDrawableFactory(getResources());
+  private final MozcDrawableFactory mozcDrawableFactory = new MozcDrawableFactory(getResources());
 
   @VisibleForTesting boolean fullscreenMode = false;
   boolean narrowMode = false;
@@ -325,9 +328,10 @@ public class MozcView extends LinearLayout implements MemoryManageable {
             0xFF858087, 0xFF67645F, 0, 0xFF1E1E1E));
   }
 
+  @SuppressWarnings("deprecation")
   private void setupImageButton(ImageView view, int resourceID) {
     float density = getResources().getDisplayMetrics().density;
-    view.setImageDrawable(mozcDrawableFactory.getDrawable(resourceID));
+    view.setImageDrawable(mozcDrawableFactory.getDrawable(resourceID).orNull());
     view.setBackgroundDrawable(createButtonBackgroundDrawable(density));
     view.setPadding(0, 0, 0, 0);
   }
@@ -363,15 +367,15 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     setupImageButton(getHardwareCompositionButton(), R.raw.qwerty__function__kana__icon);
 
     leftFrameStubProxy.initialize(this,
-                                  R.id.stub_left_frame, R.id.left_frame,
-                                  R.id.dropshadow_left_short_top, R.id.dropshadow_left_long_top,
-                                  R.id.left_adjust_button, R.raw.adjust_arrow_left, 1.0f,
-                                  R.id.left_dropshadow_short, R.id.left_dropshadow_long);
+                                  R.id.stub_left_frame, R.id.dropshadow_left_short_top,
+                                  R.id.dropshadow_left_long_top, R.id.left_adjust_button,
+                                  R.raw.adjust_arrow_left, 1.0f, R.id.left_dropshadow_short,
+                                  R.id.left_dropshadow_long);
     rightFrameStubProxy.initialize(this,
-                                   R.id.stub_right_frame, R.id.right_frame,
-                                   R.id.dropshadow_right_short_top, R.id.dropshadow_right_long_top,
-                                   R.id.right_adjust_button, R.raw.adjust_arrow_right, 0.0f,
-                                   R.id.right_dropshadow_short, R.id.right_dropshadow_long);
+                                   R.id.stub_right_frame, R.id.dropshadow_right_short_top,
+                                   R.id.dropshadow_right_long_top, R.id.right_adjust_button,
+                                   R.raw.adjust_arrow_right, 0.0f, R.id.right_dropshadow_short,
+                                   R.id.right_dropshadow_long);
   }
 
   public void setEventListener(final ViewEventListener viewEventListener,
@@ -407,8 +411,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
                     expandOvershootDurationRate, 1 + expandOvershootRate / 1e6f)
                 .add(new AccelerateDecelerateInterpolator(), 1e6f - expandOvershootDurationRate, 1)
                 .build(),
-        new LayoutParamsAnimator(new Handler(Looper.myLooper())),
-        resources.getInteger(R.integer.input_frame_snap_velocity_threshold) / 1e3f));
+        new LayoutParamsAnimator(new Handler(Looper.myLooper()))));
 
     getSymbolInputView().setViewEventListener(
         viewEventListener,
@@ -457,9 +460,20 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     getKeyboardView().setJapaneseKeyboard(keyboard);
   }
 
-  public void setEmojiEnabled(boolean emojiEnabled) {
+  public void setEmojiEnabled(boolean unicodeEmojiEnabled, boolean carrierEmojiEnabled) {
     checkInflated();
-    getSymbolInputView().setEmojiEnabled(emojiEnabled);
+    getSymbolInputView().setEmojiEnabled(unicodeEmojiEnabled, carrierEmojiEnabled);
+  }
+
+  public void setPasswordField(boolean isPasswordField) {
+    checkInflated();
+    getSymbolInputView().setPasswordField(isPasswordField);
+    getKeyboardView().setPasswordField(isPasswordField);
+  }
+
+  public void setEditorInfo(EditorInfo editorInfo) {
+    checkInflated();
+    getKeyboardView().setEditorInfo(editorInfo);
   }
 
   public void setFlickSensitivity(int flickSensitivity) {
@@ -547,6 +561,11 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     SymbolInputView symbolInputView = getSymbolInputView();
     symbolInputView.clearAnimation();
     symbolInputView.setVisibility(View.GONE);
+
+    // Reset *all* metastates.
+    // Expecting metastates will be set next initialization.
+    getKeyboardView().updateMetaStates(Collections.<MetaState>emptySet(),
+                                       EnumSet.allOf(MetaState.class));
 
     resetFullscreenMode();
     setLayoutAdjustmentAndNarrowMode(layoutAdjustment, narrowMode);
@@ -700,11 +719,11 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     switch (compositionMode) {
       case HIRAGANA:
         getHardwareCompositionButton().setImageDrawable(
-            mozcDrawableFactory.getDrawable(R.raw.qwerty__function__kana__icon));
+            mozcDrawableFactory.getDrawable(R.raw.qwerty__function__kana__icon).orNull());
         break;
       default:
         getHardwareCompositionButton().setImageDrawable(
-            mozcDrawableFactory.getDrawable(R.raw.qwerty__function__alphabet__icon));
+            mozcDrawableFactory.getDrawable(R.raw.qwerty__function__alphabet__icon).orNull());
         break;
     }
   }

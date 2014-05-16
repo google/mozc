@@ -79,7 +79,7 @@ class TextDictionaryLoader {
   // Appends the tokens owned by this instance to |res|.  Note that the appended
   // tokens are still owned by this instance and deleted on destruction of this
   // instance or when Clear() is called.
-  void CollectTokens(vector<Token *> *res);
+  void CollectTokens(vector<Token *> *res) const;
 
  protected:
   // Allows derived classes to implement custom filtering rules.
@@ -88,6 +88,11 @@ class TextDictionaryLoader {
   const POSMatcher *pos_matcher_;
 
  private:
+  static void LoadReadingCorrectionTokens(
+      const string &reading_correction_filename,
+      const vector<Token *> &ref_sorted_tokens,
+      int *limit, vector<Token *> *tokens);
+
   // Encodes special information into |token| with the |label|.
   // Currently, label must be:
   //   - empty string,

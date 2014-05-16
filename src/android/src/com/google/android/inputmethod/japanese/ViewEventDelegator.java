@@ -30,10 +30,10 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MajorCategory;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
+import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 
@@ -51,12 +51,13 @@ import java.util.List;
  *     public void onFireFeedbackEvent(FeedbackEvent event) {
  *       // Disables all the feedback event.
  *     }
- *   }
+ *   })
  * }
  * }
  * </pre>
  *
  */
+@SuppressWarnings("javadoc")
 public abstract class ViewEventDelegator implements ViewEventListener {
   private final ViewEventListener delegated;
 
@@ -82,8 +83,9 @@ public abstract class ViewEventDelegator implements ViewEventListener {
   }
 
   @Override
-  public void onSymbolCandidateSelected(MajorCategory majorCategory, String candidate) {
-    delegated.onSymbolCandidateSelected(majorCategory, candidate);
+  public void onSymbolCandidateSelected(SymbolMajorCategory majorCategory, String candidate,
+                                        boolean updateHistory) {
+    delegated.onSymbolCandidateSelected(majorCategory, candidate, updateHistory);
   }
 
   @Override

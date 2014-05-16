@@ -31,7 +31,8 @@
 
 #include <string>
 #include <vector>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/thread.h"
 #include "converter/connector_interface.h"
@@ -44,7 +45,7 @@ namespace converter {
 namespace {
 class TestConnector : public ConnectorInterface {
  public:
-  TestConnector(int offset) : offset_(offset) {}
+  explicit TestConnector(int offset) : offset_(offset) {}
   ~TestConnector() {}
 
   int GetTransitionCost(uint16 rid, uint16 lid) const {
@@ -63,7 +64,7 @@ const int kCacheSize = 256;
 
 class CachedConnectorThread : public Thread {
  public:
-  CachedConnectorThread(int offset) : offset_(offset) {}
+  explicit CachedConnectorThread(int offset) : offset_(offset) {}
 
   void Run() {
     // Create the connector in the new thread

@@ -30,17 +30,18 @@
 #ifndef MOZC_ENGINE_MOCK_CONVERTER_ENGINE_H_
 #define MOZC_ENGINE_MOCK_CONVERTER_ENGINE_H_
 
-#include "base/base.h"
-#include "converter/converter_mock.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "engine/engine_interface.h"
-#include "engine/user_data_manager_mock.h"
 
 namespace mozc {
 
 class ConverterInterface;
+class ConverterMock;
 class PredictorInterface;
 class SuppressionDictionary;
 class UserDataManagerInterface;
+class UserDataManagerMock;
 
 // Engine class with mock converter.
 class MockConverterEngine : public EngineInterface {

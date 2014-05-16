@@ -32,12 +32,11 @@
 #include <algorithm>
 #include <climits>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/connector_interface.h"
@@ -72,7 +71,6 @@ size_t GetSegmentIndex(const Segments *segments,
 void SetKey(Segments *segments, const string &key) {
   segments->set_max_history_segments_size(4);
   segments->clear_conversion_segments();
-  segments->clear_revert_entries();
 
   mozc::Segment *seg = segments->add_segment();
   DCHECK(seg);
@@ -178,13 +176,13 @@ bool TryNormalizingKeyAsMathExpression(StringPiece s, string *key) {
       continue;
     }
     switch (iter.Get()) {
-      case 0x002B: case 0xFF0B: // "+", "＋"
+      case 0x002B: case 0xFF0B:  // "+", "＋"
         key->append(1, '+');
         break;
-      case 0x002D: case 0x30FC: // "-", "ー"
+      case 0x002D: case 0x30FC:  // "-", "ー"
         key->append(1, '-');
         break;
-      case 0x002A: case 0xFF0A: case 0x00D7: // "*", "＊", "×"
+      case 0x002A: case 0xFF0A: case 0x00D7:  // "*", "＊", "×"
         key->append(1, '*');
         break;
       case 0x002F: case 0xFF0F: case 0x30FB: case 0x00F7:
@@ -643,15 +641,21 @@ bool ConverterImpl::FreeSegmentValue(Segments *segments,
   return immutable_converter_->Convert(segments);
 }
 
-bool ConverterImpl::CommitFirstSegment(Segments *segments,
-                                       size_t candidate_index) const {
+bool ConverterImpl::CommitSegments(
+    Segments *segments,
+    const vector<size_t> &candidate_index) const {
   const size_t conversion_segment_index = segments->history_segments_size();
-  if (CommitSegmentValueInternal(segments, 0, candidate_index,
-                                 Segment::SUBMITTED)) {
-    CommitUsageStats(segments, conversion_segment_index, 1);
-    return true;
+  for (size_t i = 0; i < candidate_index.size(); ++i) {
+    // 2nd argument must always be 0 because on each iteration
+    // 1st segment is submitted.
+    // Using 0 means submitting 1st segment iteratively.
+    if (!CommitSegmentValueInternal(segments, 0, candidate_index[i],
+                                    Segment::SUBMITTED)) {
+      return false;
+    }
   }
-  return false;
+  CommitUsageStats(segments, conversion_segment_index, candidate_index.size());
+  return true;
 }
 
 bool ConverterImpl::ResizeSegment(Segments *segments,

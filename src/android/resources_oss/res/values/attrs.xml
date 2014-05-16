@@ -44,15 +44,19 @@
   </declare-styleable>
 
   <declare-styleable name="Keyboard">
+    <attr name="keyboardContentDescription" format="string" />
+
     <attr name="flickThreshold" format="dimension" />
 
     <attr name="keyBackground">
       <enum name="twelvekeysRegular" value="0" />
       <enum name="twelvekeysFunction" value="1" />
-      <enum name="qwertyRegular" value="2" />
-      <enum name="qwertyFunction" value="3" />
-      <enum name="qwertyFunctionLightOn" value="4" />
-      <enum name="qwertyFunctionLightOff" value="5" />
+      <enum name="twelvekeysFunctionWithThreeDots" value="2" />
+      <enum name="qwertyRegular" value="3" />
+      <enum name="qwertyFunction" value="4" />
+      <enum name="qwertyFunctionWithThreeDots" value="5" />
+      <enum name="qwertyFunctionLightOn" value="6" />
+      <enum name="qwertyFunctionLightOff" value="7" />
     </attr>
 
     <attr name="keyWidth" format="dimension|fraction" />
@@ -90,6 +94,7 @@
   </declare-styleable>
 
   <declare-styleable name="KeyState">
+    <attr name="contentDescription" format="string" />
     <!-- We now support four meta states here; shift, caps_lock, alt and unmodified.
          Please also see KeyState.MetaState for more details.
       -->
@@ -100,17 +105,34 @@
       <flag name="shift" value="1" />
       <flag name="capsLock" value="2" />
       <flag name="alt" value="4" />
+
+      <flag name="action_done" value="8" />
+      <flag name="action_go" value="16" />
+      <flag name="action_next" value="32" />
+      <flag name="action_none" value="64" />
+      <flag name="action_previous" value="128" />
+      <flag name="action_search" value="256" />
+      <flag name="action_send" value="512" />
+
+      <flag name="variation_uri" value="1024" />
+      <flag name="variation_email_address" value="2048" />
+
+      <flag name="globe" value="4096" />
+
+      <flag name="composing" value="8192" />
     </attr>
     <attr name="nextMetaState">
-      <!-- Unlike the case of metaState attribute, we need to set exactly one nextMetaState
-           attribute for each modifier Key's KeyState.
-        -->
-      <enum name="unmodified" value="0" />
-      <enum name="shift" value="1" />
-      <enum name="capsLock" value="2" />
-      <enum name="alt" value="4" />
+      <!-- TODO(matsuzakit): Rename to nextAddedMetaStates -->
+      <flag name="shift" value="1" />
+      <flag name="capsLock" value="2" />
+      <flag name="alt" value="4" />
     </attr>
-  </declare-styleable>
+    <attr name="nextRemovedMetaStates">
+      <flag name="shift" value="1" />
+      <flag name="capsLock" value="2" />
+      <flag name="alt" value="4" />
+    </attr>
+    </declare-styleable>
 
   <declare-styleable name="Flick">
     <attr name="direction">

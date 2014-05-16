@@ -27,15 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "net/json_util.h"
+
 #include <string>
 #include <vector>
 
-#include "net/json_util.h"
-
-#include "base/base.h"
+#include "base/port.h"
 #include "base/util.h"
-#include "net/jsoncpp.h"
 #include "net/json_util_test.pb.h"
+#include "net/jsoncpp.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
 

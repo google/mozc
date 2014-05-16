@@ -48,6 +48,7 @@ namespace win32 {
 class IndicatorVisibilityTracker;
 struct InputBehavior;
 struct InputState;
+class FocusHierarchyObserver;
 class SurrogatePairObserver;
 class UIVisibilityTracker;
 class VKBackBasedDeleter;
@@ -67,6 +68,7 @@ struct PrivateContext {
   mozc::commands::Output *last_output;
   VKBackBasedDeleter *deleter;
   SurrogatePairObserver *surrogate_pair_observer;
+  FocusHierarchyObserver *focus_hierarchy_observer;
 };
 
 // This class is a temporal solution of b/3021166

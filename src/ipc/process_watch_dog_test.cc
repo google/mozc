@@ -29,9 +29,8 @@
 
 #include "ipc/process_watch_dog.h"
 
-#include "base/base.h"
 #include "base/logging.h"
-#include "base/process.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -44,7 +43,7 @@ class TestProcessWatchDog : public ProcessWatchDog {
  public:
   void Signaled(ProcessWatchDog::SignalType type) {
     EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
-    uint64 diff = Util::GetTime() - g_current_time;
+    const uint64 diff = Util::GetTime() - g_current_time;
     EXPECT_EQ(2, diff);   // allow 1-sec error
   }
 };

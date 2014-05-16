@@ -34,9 +34,8 @@
 
 #include <map>
 #include <string>
-#include <utility>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "composer/table.h"
 #include "session/common.h"
@@ -64,6 +63,7 @@ class Stopwatch;
 
 namespace commands {
 class Command;
+class Request;
 }  // namespace commands
 
 namespace session {
@@ -99,7 +99,7 @@ class SessionHandler : public SessionHandlerInterface {
  private:
   FRIEND_TEST(SessionHandlerTest, StorageTest);
 
-  typedef mozc::storage::LRUCache<SessionID, session::SessionInterface*>
+  typedef mozc::storage::LRUCache<SessionID, session::SessionInterface *>
       SessionMap;
   typedef SessionMap::Element SessionElement;
 

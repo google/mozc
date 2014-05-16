@@ -29,8 +29,10 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
-import org.mozc.android.inputmethod.japanese.R;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
+import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
@@ -55,6 +57,7 @@ public class SymbolMajorCategoryButtonDrawableFactory {
   }
 
   private static class LeftButtonPathFactory implements PathFactory {
+
     private final float round;
 
     LeftButtonPathFactory(float round) {
@@ -63,6 +66,7 @@ public class SymbolMajorCategoryButtonDrawableFactory {
 
     @Override
     public Path newInstance(Rect bounds) {
+      Preconditions.checkNotNull(bounds);
       float left = bounds.left;
       float top = bounds.top;
       float right = bounds.right - 2;
@@ -80,8 +84,10 @@ public class SymbolMajorCategoryButtonDrawableFactory {
   }
 
   private static class CenterButtonPathFactory implements PathFactory {
+
     @Override
     public Path newInstance(Rect bounds) {
+      Preconditions.checkNotNull(bounds);
       float left = bounds.left;
       float top = bounds.top;
       float right = bounds.right - 2;
@@ -102,6 +108,7 @@ public class SymbolMajorCategoryButtonDrawableFactory {
 
     @Override
     public Path newInstance(Rect bounds) {
+      Preconditions.checkNotNull(bounds);
       float left = bounds.left;
       float top = bounds.top;
       float right = bounds.right - 1;
@@ -119,18 +126,19 @@ public class SymbolMajorCategoryButtonDrawableFactory {
   }
 
   private static class ButtonDrawable extends BaseBackgroundDrawable {
+
     private final PathFactory pathFactory;
     private final int topColor;
     private final int bottomColor;
     private final int shadowColor;
 
     private final Paint paint = new Paint();
-    private Path path = null;
-    private Shader shader = null;
+    private Optional<Path> path = Optional.absent();
+    private Optional<Shader> shader = Optional.absent();
 
     ButtonDrawable(PathFactory pathFactory, int topColor, int bottomColor, int shadowColor) {
       super(0, 0, 0, 0);  // No padding.
-      this.pathFactory = pathFactory;
+      this.pathFactory = Preconditions.checkNotNull(pathFactory);
       this.topColor = topColor;
       this.bottomColor = bottomColor;
       this.shadowColor = shadowColor;
@@ -138,7 +146,7 @@ public class SymbolMajorCategoryButtonDrawableFactory {
 
     @Override
     public void draw(Canvas canvas) {
-      if (path == null) {
+      if (!path.isPresent()) {
         return;
       }
 
@@ -150,7 +158,7 @@ public class SymbolMajorCategoryButtonDrawableFactory {
         int saveCount = canvas.save();
         try {
           canvas.translate(1, 1);
-          canvas.drawPath(path, paint);
+          canvas.drawPath(path.get(), paint);
         } finally {
           canvas.restoreToCount(saveCount);
         }
@@ -158,8 +166,10 @@ public class SymbolMajorCategoryButtonDrawableFactory {
 
       paint.reset();
       paint.setAntiAlias(true);
-      paint.setShader(shader);
-      canvas.drawPath(path, paint);
+      if (shader.isPresent()) {
+        paint.setShader(shader.get());
+      }
+      canvas.drawPath(path.get(), paint);
     }
 
     @Override
@@ -167,23 +177,24 @@ public class SymbolMajorCategoryButtonDrawableFactory {
       super.onBoundsChange(bounds);
 
       if (isCanvasRectEmpty()) {
-        path = null;
-        shader = null;
+        path = Optional.absent();
+        shader = Optional.absent();
         return;
       }
 
-      path = pathFactory.newInstance(bounds);
-      shader = new LinearGradient(
-          0, bounds.top, 0, bounds.bottom - 1, topColor, bottomColor, TileMode.CLAMP);
+      path = Optional.of(pathFactory.newInstance(bounds));
+      shader = Optional.<Shader>of(new LinearGradient(
+          0, bounds.top, 0, bounds.bottom - 1, topColor, bottomColor, TileMode.CLAMP));
     }
   }
 
   private static class EmojiDisableIconDrawable extends BaseBackgroundDrawable {
+
     private final Drawable sourceDrawable;
 
     EmojiDisableIconDrawable(Drawable sourceDrawable) {
       super(0, 0, 0, 0);
-      this.sourceDrawable = sourceDrawable;
+      this.sourceDrawable = Preconditions.checkNotNull(sourceDrawable);
     }
 
     @Override
@@ -221,7 +232,7 @@ public class SymbolMajorCategoryButtonDrawableFactory {
       MozcDrawableFactory factory, int topColor, int bottomColor,
       int pressedTopColor, int pressedBottomColor, int shadowColor,
       float round) {
-    this.factory = factory;
+    this.factory = Preconditions.checkNotNull(factory);
     this.topColor = topColor;
     this.bottomColor = bottomColor;
     this.pressedTopColor = pressedTopColor;
@@ -254,7 +265,7 @@ public class SymbolMajorCategoryButtonDrawableFactory {
     }
     return new LayerDrawable(new Drawable[] {
         drawable,
-        new EmojiDisableIconDrawable(factory.getDrawable(R.raw.emoji_disable_icon)),
+        new EmojiDisableIconDrawable(factory.getDrawable(R.raw.emoji_disable_icon).orNull()),
     });
   }
 }

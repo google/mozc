@@ -27,16 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/session_handler.h"
+
 #include <algorithm>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_util.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "engine/engine_factory.h"
 #include "session/commands.pb.h"
 #include "session/random_keyevents_generator.h"
-#include "session/session_handler.h"
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/gunit.h"
 

@@ -27,13 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/key_parser.h"
+
 #include <string>
 #include <utility>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "session/commands.pb.h"
 #include "session/key_event_util.h"
-#include "session/key_parser.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

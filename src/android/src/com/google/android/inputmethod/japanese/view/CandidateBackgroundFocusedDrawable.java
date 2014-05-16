@@ -36,13 +36,15 @@ import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Drawable to render a candidate background.
  *
  */
 public class CandidateBackgroundFocusedDrawable extends BaseBackgroundDrawable {
+
   private static final int SHADOW_PIXELS = 3;
 
   private final int topColor;
@@ -55,8 +57,8 @@ public class CandidateBackgroundFocusedDrawable extends BaseBackgroundDrawable {
   private int bottom;
 
   /** Cached Paint instance to reuse for performance reason. */
-  private Paint paint = new Paint();
-  private Shader[] shaderList = new Shader[3];
+  private final Paint paint = new Paint();
+  private final List<Shader> shaderList = new ArrayList<Shader>(3);
 
   public CandidateBackgroundFocusedDrawable(
       int leftPadding, int topPadding, int rightPadding, int bottomPadding,
@@ -81,12 +83,10 @@ public class CandidateBackgroundFocusedDrawable extends BaseBackgroundDrawable {
     int bottom = this.bottom;
 
     for (Shader shader : shaderList) {
-      if (shader != null) {
-        paint.reset();
-        paint.setAntiAlias(true);
-        paint.setShader(shader);
-        canvas.drawRect(left, top, right, bottom, paint);
-      }
+      paint.reset();
+      paint.setAntiAlias(true);
+      paint.setShader(shader);
+      canvas.drawRect(left, top, right, bottom, paint);
     }
   }
 
@@ -94,8 +94,9 @@ public class CandidateBackgroundFocusedDrawable extends BaseBackgroundDrawable {
   protected void onBoundsChange(Rect rect) {
     super.onBoundsChange(rect);
 
+    shaderList.clear();
+
     if (isCanvasRectEmpty()) {
-      Arrays.fill(shaderList, null);
       return;
     }
 
@@ -105,20 +106,20 @@ public class CandidateBackgroundFocusedDrawable extends BaseBackgroundDrawable {
     right = canvasRect.right;
     bottom = canvasRect.bottom;
     // Shader filling with simple gradient color.
-    shaderList[0] = new LinearGradient(0, top, 0, bottom, topColor, bottomColor, TileMode.CLAMP);
+    shaderList.add(new LinearGradient(0, top, 0, bottom, topColor, bottomColor, TileMode.CLAMP));
 
     // Shader rendering top/bottom edge gradient shadows.
     float verticalShadowStep0 = (SHADOW_PIXELS + 1) / (float) (bottom - top);
     float verticalShadowStep1 = 1.0f - verticalShadowStep0;
-    shaderList[1] = new LinearGradient(0, top, 0, bottom,
+    shaderList.add(new LinearGradient(0, top, 0, bottom,
         new int[]{shadowColor, 0, 0, shadowColor},
-        new float[]{0.0f, verticalShadowStep0, verticalShadowStep1, 1.0f}, TileMode.CLAMP);
+        new float[]{0.0f, verticalShadowStep0, verticalShadowStep1, 1.0f}, TileMode.CLAMP));
 
     // Shader rendering left/right edge gradient shadows.
     float horizontalShadowStep0 = (SHADOW_PIXELS + 1) / (float) (right - left);
     float horizontalShadowStep1 = 1.0f - horizontalShadowStep0;
-    shaderList[2] = new LinearGradient(left, 0, right, 0,
+    shaderList.add(new LinearGradient(left, 0, right, 0,
         new int[]{shadowColor, 0, 0, shadowColor},
-        new float[]{0.0f, horizontalShadowStep0, horizontalShadowStep1, 1.0f}, TileMode.CLAMP);
+        new float[]{0.0f, horizontalShadowStep0, horizontalShadowStep1, 1.0f}, TileMode.CLAMP));
   }
 }

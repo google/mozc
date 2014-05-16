@@ -41,6 +41,7 @@
 namespace mozc {
 namespace jni {
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
 // Proxy to invoke
 // org.mozc.android.inputmethod.japanese.nativecallback.Encryptor from
 // mozc server.
@@ -81,6 +82,7 @@ class JavaEncryptorProxy {
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(JavaEncryptorProxy);
 };
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
 class JavaHttpClientProxy {
  public:

@@ -57,7 +57,7 @@
                    android:targetPackage="@ANDROID_APPLICATION_ID@"
                    android:label="Tests for org.mozc.android.inputmethod.japanese"/>
 
-  <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="18" />
+  <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="19" />
   <!-- Google Japanese Input (the main code) requires the following permissions. -->
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <uses-permission android:name="android.permission.INTERNET" />

@@ -57,7 +57,6 @@ const uint32 kLRUSize = 5000;
 const uint32 kSeedValue = 0x761fea81;
 
 const char kFileName[] = "user://boundary.db";
-LRUStorage *g_lru_storage = NULL;
 
 enum { INSERT, RESIZE };
 
@@ -113,7 +112,6 @@ UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
     : parent_converter_(parent_converter),
       storage_(new LRUStorage) {
   DCHECK(parent_converter_);
-  g_lru_storage = storage_.get();
   Reload();
 }
 
@@ -203,7 +201,6 @@ bool UserBoundaryHistoryRewriter::Reload() {
                               kValueSize, kLRUSize, kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserBoundaryHistoryRewriter";
     storage_.reset(NULL);
-    g_lru_storage = NULL;
     return false;
   }
 
@@ -333,8 +330,4 @@ void UserBoundaryHistoryRewriter::Clear() {
   }
 }
 
-// static
-LRUStorage *UserBoundaryHistoryRewriter::GetStorage() {
-  return g_lru_storage;
-}
 }  // namespace mozc

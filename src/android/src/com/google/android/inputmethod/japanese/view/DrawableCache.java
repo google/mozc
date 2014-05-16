@@ -30,6 +30,8 @@
 package org.mozc.android.inputmethod.japanese.view;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.graphics.drawable.Drawable;
 import android.util.SparseArray;
@@ -39,16 +41,17 @@ import android.util.SparseArray;
  *
  */
 public class DrawableCache {
+
   private final SparseArray<Drawable> cacheMap = new SparseArray<Drawable>(128);
   private final MozcDrawableFactory mozcDrawableFactory;
   private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
 
   public DrawableCache(MozcDrawableFactory mozcDrawableFactory) {
-    this.mozcDrawableFactory = mozcDrawableFactory;
+    this.mozcDrawableFactory = Preconditions.checkNotNull(mozcDrawableFactory);
   }
 
   public void setSkinType(SkinType skinType) {
-    if (this.skinType == skinType) {
+    if (this.skinType == Preconditions.checkNotNull(skinType)) {
       return;
     }
 
@@ -62,20 +65,21 @@ public class DrawableCache {
    * If not found, tries to load {@code Drawable} instance from resources given via the constructor,
    * stores it into this instance, and returns it.
    */
-  public Drawable getDrawable(int resourceId) {
+  public Optional<Drawable> getDrawable(int resourceId) {
     if (resourceId == 0) {
       // 0 is invalid resource id.
-      return null;
+      return Optional.<Drawable>absent();
     }
 
     Integer key = Integer.valueOf(resourceId);
-    Drawable drawable = cacheMap.get(key);
-    if (drawable == null) {
+    Optional<Drawable> drawable = Optional.fromNullable(cacheMap.get(key));
+    if (!drawable.isPresent()) {
       drawable = mozcDrawableFactory.getDrawable(resourceId);
-      if (drawable == null) {
+      if (drawable.isPresent()) {
+        cacheMap.put(key, drawable.get());
+      } else {
         MozcLog.e("Failed to load: " + resourceId);
       }
-      cacheMap.put(key, drawable);
     }
     return drawable;
   }

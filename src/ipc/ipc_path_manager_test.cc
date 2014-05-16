@@ -27,9 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "ipc/ipc_path_manager.h"
+
+#include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/process_mutex.h"
@@ -39,7 +42,6 @@
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
-#include "ipc/ipc_path_manager.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -141,7 +143,7 @@ TEST_F(IPCPathManagerTest, ReloadTest) {
 
   // Modify the saved file explicitly.
   EXPECT_TRUE(manager->path_mutex_->UnLock());
-  Util::Sleep(1000 /* msec */);
+  Util::Sleep(1000);  // msec
   string filename = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), ".reload_test.ipc");
   OutputFileStream outf(filename.c_str());

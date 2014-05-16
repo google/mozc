@@ -50,10 +50,10 @@
 namespace mozc {
 namespace {
 
+#ifdef OS_WIN
 const wchar_t kElevatedProcessDisabledName[]
 = L"elevated_process_disabled";
 
-#ifdef OS_WIN
 // Returns true if both array have the same content.
 template <typename T, size_t ArraySize>
 bool AreEqualArray(const T (&lhs)[ArraySize], const T (&rhs)[ArraySize]) {

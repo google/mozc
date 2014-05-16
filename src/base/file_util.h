@@ -38,7 +38,7 @@
 
 #include "base/port.h"
 
-// Ad-hoc workadound against macro problem on Windows.
+// Ad-hoc workaround against macro problem on Windows.
 // On Windows, following macros, defined when you include <Windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
@@ -97,11 +97,10 @@ class FileUtil {
   // Returns true if the file is renamed successfully.
   static bool AtomicRename(const string &from, const string &to);
 
+  // Joins the given two path components using the OS-specific path delimiter.
   static string JoinPath(const string &path1, const string &path2);
-#ifndef SWIG
   static void JoinPath(const string &path1, const string &path2,
                        string *output);
-#endif  // SWIG
 
   static string Basename(const string &filename);
   static string Dirname(const string &filename);

@@ -29,18 +29,15 @@
 
 #include "session/session_watch_dog.h"
 
-#ifdef OS_WIN
-#include <windows.h>
-#endif  // OS_WIN
-
 #include <algorithm>
 #include <cstring>
 #include <numeric>
 #include <string>
 
-#include "base/base.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/unnamed_event.h"
 #include "base/util.h"
@@ -167,10 +164,9 @@ void SessionWatchDog::Run() {
               << current_process_cpu_load / number_of_processors;
       // subtract the CPU load of my process from total CPU load.
       // This is required for running stress test.
-      cpu_loads[cpu_loads_index++] =
-          max(0.0f,
-              total_cpu_load -
-              current_process_cpu_load / number_of_processors);
+      const float extracted_cpu_load =
+          total_cpu_load - current_process_cpu_load / number_of_processors;
+      cpu_loads[cpu_loads_index++] = max(0.0f, extracted_cpu_load);
     }
 
     DCHECK_GT(cpu_loads_index, 0);

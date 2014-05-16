@@ -27,13 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
-#include "base/base.h"
-#include "transliteration/transliteration.h"
-#include "composer/composition_interface.h"
 #include "composer/composer.h"
+
+#include <iostream>  // NOLINT
+#include <string>
+
+#include "base/flags.h"
+#include "base/scoped_ptr.h"
+#include "composer/composition_interface.h"
 #include "composer/table.h"
 #include "session/commands.pb.h"
+#include "transliteration/transliteration.h"
 
 DEFINE_string(table, "system://romanji-hiragana.tsv",
               "preedit conversion table file.");

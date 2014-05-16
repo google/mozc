@@ -48,6 +48,7 @@ import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.SnapScroller;
+import com.google.common.base.Optional;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -77,7 +78,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
 
   public static Span createNullCandidateWordSpan(int left, int right) {
     Span span = new Span(
-        null, 0, 0, Collections.<String>emptyList());
+        Optional.<CandidateWord>absent(), 0, 0, Collections.<String>emptyList());
     span.setLeft(left);
     span.setRight(right);
     return span;
@@ -223,7 +224,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
       candidateSelectListener.onCandidateSelected(
-          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord());
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get());
       replayAll();
       events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
@@ -235,7 +236,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
       candidateSelectListener.onCandidateSelected(
-          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord());
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get());
       replayAll();
       events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 20, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
@@ -314,7 +315,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
         getInstrumentation().getTargetContext(), Orientation.VERTICAL);
     CandidateLayouter layouter = createMock(CandidateLayouter.class);
     expect(layouter.layout(isA(CandidateList.class)))
-        .andReturn(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport()));
+        .andReturn(Optional.of(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport())));
     candidateWordView.layouter = layouter;
     expect(layouter.getPageHeight()).andReturn(50);
     replayAll();
@@ -334,7 +335,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
         getInstrumentation().getTargetContext(), Orientation.VERTICAL);
     CandidateLayouter layouter = createMock(CandidateLayouter.class);
     expect(layouter.layout(isA(CandidateList.class)))
-        .andStubReturn(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport()));
+        .andStubReturn(Optional.of(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport())));
     expect(layouter.getPageHeight()).andStubReturn(50);
     candidateWordView.layouter = layouter;
     replayAll();
@@ -356,7 +357,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
         getInstrumentation().getTargetContext(), Orientation.VERTICAL);
     CandidateLayouter layouter = createMock(CandidateLayouter.class);
     expect(layouter.layout(isA(CandidateList.class)))
-        .andStubReturn(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport()));
+        .andStubReturn(Optional.of(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport())));
     expect(layouter.getPageHeight()).andReturn(50);
     candidateWordView.layouter = layouter;
 
@@ -510,7 +511,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     resetAll();
     expect(layouter.setViewSize(320, 240)).andReturn(true);
     expect(layouter.layout(same(CANDIDATE_LIST)))
-        .andReturn(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport()));
+        .andReturn(Optional.of(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport())));
     expect(layouter.getPageHeight()).andReturn(50);
     replayAll();
 

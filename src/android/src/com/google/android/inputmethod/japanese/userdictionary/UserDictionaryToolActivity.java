@@ -43,12 +43,15 @@ import org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryUtil.D
 import org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryUtil.WordRegisterDialog;
 import org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryUtil.WordRegisterDialogListener;
 import org.mozc.android.inputmethod.japanese.util.ZipFileUtil;
+import com.google.common.base.Optional;
 
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
@@ -70,6 +73,7 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -78,6 +82,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import javax.annotation.Nullable;
 
 /**
  * Activity implementation for user dictionary tool.
@@ -94,7 +100,7 @@ public class UserDictionaryToolActivity extends Activity {
     }
 
     @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, @Nullable View convertView, ViewGroup parent) {
       // We'll use customized view for each entry.
       // The view should have
       // - Check box (to indicate if the entry is selected or not for deletion)
@@ -152,10 +158,11 @@ public class UserDictionaryToolActivity extends Activity {
   private static final int IMPORT_DICTIONARY_SELECTION_DIALOG_ID = 5;
 
   private UserDictionaryToolModel model;
-  private ActionBarHelper actionBarHelper = UserDictionaryActionBarHelperFactory.newInstance(this);
+  private final ActionBarHelper actionBarHelper =
+      UserDictionaryActionBarHelperFactory.newInstance(this);
   private ToastManager toastManager;
-  private Set<Dialog> visibleDialogSet = new HashSet<Dialog>();
-  private OnDismissListener dialogDismissListener = new OnDismissListener() {
+  private final Set<Dialog> visibleDialogSet = new HashSet<Dialog>();
+  private final OnDismissListener dialogDismissListener = new OnDismissListener() {
     @Override
     public void onDismiss(DialogInterface dialog) {
       visibleDialogSet.remove(dialog);
@@ -343,7 +350,9 @@ public class UserDictionaryToolActivity extends Activity {
           R.string.user_dictionary_tool_error_import_cannot_read_import_source);
       model.resetImportState();
     } finally {
-      MozcUtil.closeIgnoringIOException(zipFile);
+      if (zipFile != null) {
+        MozcUtil.closeIgnoringIOException(zipFile);
+      }
     }
   }
 
@@ -393,27 +402,35 @@ public class UserDictionaryToolActivity extends Activity {
   //   Replace them when we get rid of support for the older devices.
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()) {
-      case R.id.user_dictionary_tool_menu_add_entry:
+    int id = item.getItemId();
+    if (id == R.id.user_dictionary_tool_menu_add_entry) {
         maybeShowAddEntryDialog();
         return true;
-      case R.id.user_dictionary_tool_menu_delete_entry:
-        maybeDeleteEntry();
-        return true;
-      case R.id.user_dictionary_tool_menu_undo:
-        runUndo();
-        return true;
-      case R.id.user_dictionary_tool_menu_create_dictionary:
-        maybeShowCreateDictionaryDialog();
-        return true;
-      case R.id.user_dictionary_tool_menu_rename_dictionary:
-        showDialogInternal(RENAME_DICTIONARY_DIALOG_ID);
-        return true;
-      case R.id.user_dictionary_tool_menu_delete_dictionary:
-        deleteDictionary();
-        return true;
     }
-
+    if (id == R.id.user_dictionary_tool_menu_delete_entry) {
+      maybeDeleteEntry();
+      return true;
+    }
+    if (id == R.id.user_dictionary_tool_menu_undo) {
+      runUndo();
+      return true;
+    }
+    if (id == R.id.user_dictionary_tool_menu_create_dictionary) {
+      maybeShowCreateDictionaryDialog();
+      return true;
+    }
+    if (id == R.id.user_dictionary_tool_menu_rename_dictionary) {
+      showDialogInternal(RENAME_DICTIONARY_DIALOG_ID);
+      return true;
+    }
+    if (id == R.id.user_dictionary_tool_menu_delete_dictionary) {
+      deleteDictionary();
+      return true;
+    }
+    if (id == R.id.user_dictionary_tool_menu_export_dictionary) {
+      startActivityForDictionaryExport();
+      return true;
+    }
     return false;
   }
 
@@ -485,6 +502,43 @@ public class UserDictionaryToolActivity extends Activity {
     }
     updateDictionaryNameSpinner();
     updateEntryList();
+  }
+
+  private void startActivityForDictionaryExport() {
+    int index = model.getSelectedDictionaryIndex();
+    String dictionaryName = model.getDictionaryNameList().get(index);
+    Context context = getApplicationContext();
+
+    Intent intent = new Intent(Intent.ACTION_SEND);
+    intent.setType("application/zip");
+    intent.putExtra(Intent.EXTRA_SUBJECT, dictionaryName + ".zip");
+    if (getPackageManager().queryIntentActivities(
+            intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
+      toastManager.showMessageShortly(
+          R.string.user_dictionary_tool_error_export_no_exportable_applications);
+      return;
+    }
+
+    // "export" is used as filename in the .zip file.
+    // Ideally we want to pass dictionaryName instead but java.util.zip.ZipOutputStream cannot
+    // handle non-ASCII filename correctly.
+    // If we become able to switch to org.apache.tools.zip.ZipOutputStream, which accepts non-ASCII,
+    // get rid of this workaround.
+    Optional<File> exportFile = model.createExportFile(
+        context.getResources(), "export",
+        MozcUtil.getUserDictionaryExportTempDirectory(context));
+    if (!exportFile.isPresent()) {
+      toastManager.showMessageShortly(R.string.user_dictionary_tool_error_export_failed_to_export);
+      return;
+    }
+
+    intent.putExtra(Intent.EXTRA_STREAM, Uri.parse(
+        "content://"
+            + context.getResources().getString(R.string.user_dictionary_tool_export_provider_name)
+            + "/"
+            + exportFile.get().getAbsolutePath()));
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    startActivity(intent);
   }
 
   @SuppressWarnings("deprecation")

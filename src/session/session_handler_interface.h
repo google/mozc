@@ -32,8 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
 #define MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
 
-#include "base/base.h"
-#include "session/common.h"
+#include "base/port.h"
 
 namespace mozc {
 
@@ -51,15 +50,15 @@ class SessionHandlerInterface {
   virtual ~SessionHandlerInterface() {}
 
   // Returns true if SessionHandle is available.
-  virtual bool IsAvailable() const ABSTRACT;
+  virtual bool IsAvailable() const = 0;
 
-  virtual bool EvalCommand(commands::Command *command) ABSTRACT;
+  virtual bool EvalCommand(commands::Command *command) = 0;
 
   // Starts watch dog timer to cleanup sessions.
-  virtual bool StartWatchDog() ABSTRACT;
+  virtual bool StartWatchDog() = 0;
 
   virtual void AddObserver(
-      session::SessionObserverInterface *observer) ABSTRACT;
+      session::SessionObserverInterface *observer) = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerInterface);

@@ -179,7 +179,7 @@ class Util {
 
   static size_t CharsLen(const char *src, size_t size);
 
-  static size_t CharsLen(const StringPiece str) {
+  static size_t CharsLen(StringPiece str) {
     return CharsLen(str.data(), str.size());
   }
 
@@ -224,25 +224,23 @@ class Util {
   // Extracts a substring range, where both start and length are in terms of
   // UTF8 size. Note that the returned string piece refers to the same memory
   // block as the input.
-  static StringPiece SubStringPiece(const StringPiece src,
-                                    const size_t start, const size_t length);
+  static StringPiece SubStringPiece(StringPiece src,
+                                    size_t start, size_t length);
 
-  static void SubString(const StringPiece src,
-                        const size_t start, const size_t length,
+  static void SubString(StringPiece src, size_t start, size_t length,
                         string *result);
 
-  static string SubString(const StringPiece src,
-                          const size_t start, const size_t length) {
+  static string SubString(StringPiece src, size_t start, size_t length) {
     string result;
     SubString(src, start, length, &result);
     return result;
   }
 
   // Determines whether the beginning of |str| matches |prefix|.
-  static bool StartsWith(const StringPiece str, const StringPiece prefix);
+  static bool StartsWith(StringPiece str, StringPiece prefix);
 
   // Determines whether the end of |str| matches |suffix|.
-  static bool EndsWith(const StringPiece str, const StringPiece suffix);
+  static bool EndsWith(StringPiece str, StringPiece suffix);
 
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static void StripUTF8BOM(string *line);
@@ -252,14 +250,12 @@ class Util {
 
   // Returns true if the given |s| has only one ucs4 character, and it is
   // in the range of Android Emoji PUA.
-  static bool IsAndroidPuaEmoji(const StringPiece s);
+  static bool IsAndroidPuaEmoji(StringPiece s);
 
-#ifndef SWIG
   // C++ string version of sprintf.
   static string StringPrintf(const char *format, ...)
       // Tell the compiler to do printf format string checking.
       PRINTF_ATTRIBUTE(1, 2);
-#endif  // SWIG
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
@@ -267,19 +263,15 @@ class Util {
 
   // 32bit Fingerprint
   static uint32 Fingerprint32(const string &key);
-#ifndef SWIG
   static uint32 Fingerprint32(const char *str, size_t length);
   static uint32 Fingerprint32(const char *str);
-#endif  // SWIG
 
   static uint32 Fingerprint32WithSeed(const string &key,
                                       uint32 seed);
-#ifndef SWIG
   static uint32 Fingerprint32WithSeed(const char *str,
                                       size_t length, uint32 seed);
   static uint32 Fingerprint32WithSeed(const char *str,
                                       uint32 seed);
-#endif  // SWIG
   static uint32 Fingerprint32WithSeed(uint32 num, uint32 seed);
 
   // 64bit Fingerprint
@@ -365,64 +357,42 @@ class Util {
   static void Sleep(uint32 msec);
 
   // Japanese utilities for character form transliteration.
-  static void HiraganaToKatakana(const StringPiece input, string *output);
-  static void HiraganaToHalfwidthKatakana(const StringPiece input,
-                                          string *output);
-  static void HiraganaToRomanji(const StringPiece input, string *output);
-  static void HalfWidthAsciiToFullWidthAscii(const StringPiece input,
-                                             string *output);
-  static void FullWidthAsciiToHalfWidthAscii(const StringPiece input,
-                                             string *output);
-  static void HiraganaToFullwidthRomanji(const StringPiece input,
-                                         string *output);
-  static void RomanjiToHiragana(const StringPiece input, string *output);
-  static void KatakanaToHiragana(const StringPiece input, string *output);
-  static void HalfWidthKatakanaToFullWidthKatakana(const StringPiece input,
+  static void HiraganaToKatakana(StringPiece input, string *output);
+  static void HiraganaToHalfwidthKatakana(StringPiece input, string *output);
+  static void HiraganaToRomanji(StringPiece input, string *output);
+  static void HalfWidthAsciiToFullWidthAscii(StringPiece input, string *output);
+  static void FullWidthAsciiToHalfWidthAscii(StringPiece input, string *output);
+  static void HiraganaToFullwidthRomanji(StringPiece input, string *output);
+  static void RomanjiToHiragana(StringPiece input, string *output);
+  static void KatakanaToHiragana(StringPiece input, string *output);
+  static void HalfWidthKatakanaToFullWidthKatakana(StringPiece input,
                                                    string *output);
-  static void FullWidthKatakanaToHalfWidthKatakana(const StringPiece input,
+  static void FullWidthKatakanaToHalfWidthKatakana(StringPiece input,
                                                    string *output);
-  static void FullWidthToHalfWidth(const StringPiece input, string *output);
-  static void HalfWidthToFullWidth(const StringPiece input, string *output);
+  static void FullWidthToHalfWidth(StringPiece input, string *output);
+  static void HalfWidthToFullWidth(StringPiece input, string *output);
 
-#ifdef SWIG
-  // Since StringPiece is not supported by SWIG, provide overloads for string
-  // versions.
-  static void HiraganaToKatakana(const string &input, string *output) {
-    HiraganaToKatakana(StringPiece(input), output);
-  }
-  static void RomanjiToHiragana(const string &input, string *output) {
-    RomanjiToHiragana(StringPiece(input), output);
-  }
-  static void KatakanaToHiragana(const string &input, string *output) {
-    KatakanaToHiragana(StringPiece(input), output);
-  }
-#endif  // SWIG
-
-  // return true if all chars in input are both defined
+  // Returns true if all chars in input are both defined
   // in full width and half-width-katakana area
   static bool IsFullWidthSymbolInHalfWidthKatakana(const string &input);
 
-  // return true if all chars are defiend in
-  // half-width-katakana area.
+  // Returns true if all chars are defiend in half-width-katakana area.
   static bool IsHalfWidthKatakanaSymbol(const string &input);
 
-  // return true if one or more Kana-symbol characters are
-  // in the input.
+  // Returns true if one or more Kana-symbol characters are in the input.
   static bool IsKanaSymbolContained(const string &input);
 
-  // return true if |input| looks like a pure English word.
+  // Returns true if |input| looks like a pure English word.
   static bool IsEnglishTransliteration(const string &input);
 
   static void NormalizeVoicedSoundMark(StringPiece input, string *output);
 
-  // return true if key is an open bracket.
-  // if key is an open bracket, corresponding close bracket is
-  // assigned
+  // Returns true if key is an open bracket.  If key is an open bracket,
+  // corresponding close bracket is assigned.
   static bool IsOpenBracket(const string &key, string *close_bracket);
 
-  // return true if key is a close bracket.
-  // if key is a close bracket, corresponding open bracket is
-  // assigned.
+  // Returns true if key is a close bracket.  If key is a close bracket,
+  // corresponding open bracket is assigned.
   static bool IsCloseBracket(const string &key, string *open_bracket);
 
   // Code converter
@@ -496,10 +466,10 @@ class Util {
   static ScriptType GetScriptTypeWithoutSymbols(const string &str);
 
   // return true if all script_type in str is "type"
-  static bool IsScriptType(const StringPiece str, ScriptType type);
+  static bool IsScriptType(StringPiece str, ScriptType type);
 
   // return true if the string contains script_type char
-  static bool ContainsScriptType(const StringPiece str, ScriptType type);
+  static bool ContainsScriptType(StringPiece str, ScriptType type);
 
   // See 'Unicode Standard Annex #11: EAST ASIAN WIDTH'
   // http://www.unicode.org/reports/tr11/
@@ -610,7 +580,7 @@ class MultiDelimiter {
 
   bool Contains(char c) const {
     const unsigned char uc = static_cast<unsigned char>(c);
-    return lookup_table_[uc >> 3] & (1 << (uc & 0x07));
+    return (lookup_table_[uc >> 3] & (1 << (uc & 0x07))) != 0;
   }
 
  private:

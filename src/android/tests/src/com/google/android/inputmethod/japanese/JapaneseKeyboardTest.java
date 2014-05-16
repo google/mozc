@@ -30,6 +30,8 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
+import org.mozc.android.inputmethod.japanese.keyboard.ProbableKeyEventGuesser;
+import org.mozc.android.inputmethod.japanese.resources.R;
 
 import android.app.Instrumentation;
 import android.content.res.Configuration;
@@ -100,5 +102,20 @@ public class JapaneseKeyboardTest extends InstrumentationTestCase {
                      matcher.group(5));
       }
     }
+  }
+
+  @SmallTest
+  public void testGetKeycodeMapper() {
+    ProbableKeyEventGuesser guesser =
+        new ProbableKeyEventGuesser(getInstrumentation().getTargetContext().getAssets());
+    Configuration configuration = new Configuration();
+    configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
+    guesser.setConfiguration(configuration);
+    Resources resources = getInstrumentation().getTargetContext().getResources();
+
+    JapaneseKeyboard godanKana = JapaneseKeyboardTest.createJapaneseKeyboard(
+        KeyboardSpecification.GODAN_KANA, getInstrumentation());
+    assertEquals(resources.getInteger(R.integer.uchar_digit_two), godanKana.getKeyCode(10));
+    assertEquals(Integer.MIN_VALUE, godanKana.getKeyCode(123456));  // No corresponding key,
   }
 }

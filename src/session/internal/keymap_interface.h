@@ -32,9 +32,7 @@
 #ifndef MOZC_SESSION_INTERNAL_KEYMAP_INTERFACE_H_
 #define MOZC_SESSION_INTERNAL_KEYMAP_INTERFACE_H_
 
-#include <map>
-
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace commands {
@@ -81,7 +79,6 @@ enum Commands {
   LAUNCH_WORD_REGISTER_DIALOG,
   REVERT,  // revert last operation (preedit still remains)
   UNDO,    // undo last operation (preedit is restored)
-  ABORT,   // Abort the server.  The process is killed.
   RECONVERT,
 
   // For ZeroQuerySuggestion
@@ -139,7 +136,6 @@ enum Commands {
   INPUT_MODE_HALF_KATAKANA,
   INPUT_MODE_FULL_ALPHANUMERIC,
   INPUT_MODE_HALF_ALPHANUMERIC,
-  ABORT,  // Abort the server.  The process is killed.
 };
 };
 
@@ -193,7 +189,6 @@ enum Commands {
   INPUT_MODE_HALF_ALPHANUMERIC,
   DELETE_SELECTED_CANDIDATE,
   REPORT_BUG,
-  ABORT,  // Abort the server.  The process is killed.
 };
 };
 

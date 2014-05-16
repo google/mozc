@@ -240,7 +240,7 @@ CandidateWindow::CandidateWindow()
       footer_logo_display_size_(0, 0),
       metrics_changed_(false),
       mouse_moving_(true),
-      text_renderer_(new TextRenderer),
+      text_renderer_(TextRenderer::Create()),
       table_layout_(new TableLayout),
       send_command_interface_(nullptr) {
   double scale_factor_x = 1.0;
@@ -276,8 +276,6 @@ CandidateWindow::CandidateWindow()
   }
 
   indicator_width_ = kIndicatorWidthInDefaultDPI * scale_factor_x;
-
-  text_renderer_->Init();
 }
 
 CandidateWindow::~CandidateWindow() {}
@@ -454,7 +452,7 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
 
   // If we detect any change of font parameters, update text renderer
   if (metrics_changed_) {
-    text_renderer_->Init();
+    text_renderer_->OnThemeChanged();
     metrics_changed_ = false;
   }
 
@@ -678,7 +676,7 @@ void CandidateWindow::DrawCells(CDCHandle dc) {
           table_layout_->GetCellRect(i, column_type);
       display_list.push_back(TextRenderingInfo(display_string, text_rect));
     }
-    text_renderer_->RenderText(dc, display_list, font_type);
+    text_renderer_->RenderTextList(dc, display_list, font_type);
   }
 }
 

@@ -2,7 +2,6 @@ status	key	command
 Composition	Backspace	Backspace
 Composition	Ctrl [	Cancel
 Composition	Ctrl @	ConvertToHalfAlphanumeric
-Composition	Ctrl Alt F11	Abort
 Composition	Ctrl g	Delete
 Composition	Ctrl h	Backspace
 Composition	Ctrl i	ConvertToFullKatakana
@@ -45,7 +44,6 @@ Composition	Tab	PredictAndConvert
 Conversion	Backspace	Cancel
 Conversion	Ctrl [	Cancel
 Conversion	Ctrl @	ConvertToHalfAlphanumeric
-Conversion	Ctrl Alt F11	Abort
 Conversion	Ctrl h	Cancel
 Conversion	Ctrl i	ConvertToFullKatakana
 Conversion	Ctrl k	SegmentWidthShrink
@@ -95,7 +93,6 @@ DirectInput	Muhenkan	IMEOn
 DirectInput	ON	IMEOn
 DirectInput	Shift Henkan	Reconvert
 Precomposition	Backspace	Revert
-Precomposition	Ctrl Alt F11	Abort
 Precomposition	Ctrl Backspace	Undo
 Precomposition	Ctrl F12	LaunchConfigDialog
 Precomposition	Ctrl F7	LaunchWordRegisterDialog

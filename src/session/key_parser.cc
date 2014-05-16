@@ -36,8 +36,8 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
@@ -172,6 +172,10 @@ class KeyParserData {
     keycode_map_["equals"] = KeyEvent::EQUALS;
     keycode_map_["comma"] = KeyEvent::COMMA;
     keycode_map_["clear"] = KeyEvent::CLEAR;
+
+    keycode_map_["virtualleft"] = KeyEvent::VIRTUAL_LEFT;
+    keycode_map_["virtualright"] = KeyEvent::VIRTUAL_RIGHT;
+    keycode_map_["virtualenter"] = KeyEvent::VIRTUAL_ENTER;
 
     // Meant to be used for any other special keys.
     keycode_map_["undefinedkey"] = KeyEvent::UNDEFINED_KEY;

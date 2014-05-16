@@ -1610,7 +1610,7 @@ TEST_F(SessionTest, CommitSegment) {
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(2, 0);
 
-  GetConverterMock()->SetCommitFirstSegment(&segments, true);
+  GetConverterMock()->SetCommitSegments(&segments, true);
 
   command.Clear();
   session->CommitSegment(&command);
@@ -1657,7 +1657,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
 
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(1, 0);
-  GetConverterMock()->SetCommitFirstSegment(&segments, true);
+  GetConverterMock()->SetCommitSegments(&segments, true);
 
   command.Clear();
   session->CommitSegment(&command);
@@ -2729,26 +2729,24 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
 
-    // Move to third segment and do the same thing.
-    command.Clear();
-    session->SegmentFocusRight(&command);
+    // Move to second segment and do the same thing.
     command.Clear();
     session->SegmentFocusRight(&command);
     command.Clear();
     command.mutable_input()->mutable_command()->set_id(1);
     session->CommitCandidate(&command);
-    // "cand3-2" is focused
+    // "cand2-2" is focused
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
-    EXPECT_RESULT("cand1-1", command);
+    EXPECT_RESULT("cand1-1cand2-2", command);
     EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
 
     command.Clear();
     session->Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-7, command.output().deletion_range().offset());
-    EXPECT_EQ(7, command.output().deletion_range().length());
-    // "cand3-1" is focused
+    EXPECT_EQ(-14, command.output().deletion_range().offset());
+    EXPECT_EQ(14, command.output().deletion_range().length());
+    // "cand2-1" is focused
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
   }
@@ -7104,7 +7102,7 @@ TEST_F(SessionTest, AutoConversion) {
     for (int kana_mode = 0; kana_mode < 2; ++kana_mode) {
       for (int onoff = 0; onoff < 2; ++onoff) {
         for (int pattern = 0; pattern <= 16; ++pattern) {
-          config.set_use_auto_conversion(static_cast<bool>(onoff));
+          config.set_use_auto_conversion(onoff != 0);
           config.set_auto_conversion_key(pattern);
           config::ConfigHandler::SetConfig(config);
 
@@ -7508,6 +7506,145 @@ TEST_F(SessionTest, KeitaiInput_flick) {
         "\xE3\x81\x86",
         command.output().preedit().segment(0).value());
   }
+}
+
+TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
+  scoped_ptr<Session> session(new Session(engine_.get()));
+  InitSessionToPrecomposition(session.get());
+
+  ConversionRequest request;
+  SetComposer(session.get(), &request);
+
+  commands::Command command;
+  InsertCharacterChars("nekonoshippowonuita", session.get(), &command);
+
+  {  // Segments as conversion result.
+    Segments segments;
+    Segment *segment;
+    Segment::Candidate *candidate;
+
+    segment = segments.add_segment();
+    // "ねこの"
+    segment->set_key("\xE3\x81\xAD\xE3\x81\x93\xE3\x81\xAE");
+    candidate = segment->add_candidate();
+    // "猫の"
+    candidate->value = "\xE7\x8C\xAB\xE3\x81\xAE";
+
+    segment = segments.add_segment();
+    // "しっぽを"
+    segment->set_key("\xE3\x81\x97\xE3\x81\xA3\xE3\x81\xBD\xE3\x82\x92");
+    candidate = segment->add_candidate();
+    // "しっぽを"
+    candidate->value = "\xE3\x81\x97\xE3\x81\xA3\xE3\x81\xBD\xE3\x82\x92";
+
+    segment = segments.add_segment();
+    // "ぬいた"
+    segment->set_key("\xE3\x81\xAC\xE3\x81\x84\xE3\x81\x9F");
+    candidate = segment->add_candidate();
+    // "抜いた"
+    candidate->value = "\xE6\x8A\x9C\xE3\x81\x84\xE3\x81\x9F";
+
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  }
+
+  command.Clear();
+  session->Convert(&command);
+  // "[猫の]|しっぽを|抜いた"
+
+  command.Clear();
+  session->SegmentFocusRight(&command);
+  // "猫の|[しっぽを]|抜いた"
+
+  {  // Segments as result of CommitHeadToFocusedSegments
+    Segments segments;
+    Segment *segment;
+    Segment::Candidate *candidate;
+
+    segment = segments.add_segment();
+    // "ぬいた"
+    segment->set_key("\xE3\x81\xAC\xE3\x81\x84\xE3\x81\x9F");
+    candidate = segment->add_candidate();
+    // "抜いた"
+    candidate->value = "\xE6\x8A\x9C\xE3\x81\x84\xE3\x81\x9F";
+
+    GetConverterMock()->SetCommitSegments(&segments, true);
+  }
+
+  command.Clear();
+  command.mutable_input()->mutable_command()->set_id(0);
+  ASSERT_TRUE(session->CommitCandidate(&command));
+  // "抜いた"
+  EXPECT_PREEDIT("\xE6\x8A\x9C\xE3\x81\x84\xE3\x81\x9F", command);
+  // "抜いた" "ぬいた"
+  EXPECT_SINGLE_SEGMENT_AND_KEY("\xE6\x8A\x9C\xE3\x81\x84\xE3\x81\x9F",
+                                "\xE3\x81\xAC\xE3\x81\x84\xE3\x81\x9F",
+                                command);
+  // "猫のしっぽを"
+  EXPECT_RESULT("\xE7\x8C\xAB\xE3\x81\xAE"
+                "\xE3\x81\x97\xE3\x81\xA3\xE3\x81\xBD\xE3\x82\x92", command);
+}
+
+TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
+  scoped_ptr<Session> session(new Session(engine_.get()));
+  InitSessionToPrecomposition(session.get());
+
+  ConversionRequest request;
+  SetComposer(session.get(), &request);
+
+  commands::Command command;
+  InsertCharacterChars("nekonoshippowonuita", session.get(), &command);
+
+  {  // Segments as conversion result.
+    Segments segments;
+    Segment *segment;
+    Segment::Candidate *candidate;
+
+    segment = segments.add_segment();
+    // "ねこの"
+    segment->set_key("\xE3\x81\xAD\xE3\x81\x93\xE3\x81\xAE");
+    candidate = segment->add_candidate();
+    // "猫の"
+    candidate->value = "\xE7\x8C\xAB\xE3\x81\xAE";
+
+    segment = segments.add_segment();
+    // "しっぽを"
+    segment->set_key("\xE3\x81\x97\xE3\x81\xA3\xE3\x81\xBD\xE3\x82\x92");
+    candidate = segment->add_candidate();
+    // "しっぽを"
+    candidate->value = "\xE3\x81\x97\xE3\x81\xA3\xE3\x81\xBD\xE3\x82\x92";
+
+    segment = segments.add_segment();
+    // "ぬいた"
+    segment->set_key("\xE3\x81\xAC\xE3\x81\x84\xE3\x81\x9F");
+    candidate = segment->add_candidate();
+    // "抜いた"
+    candidate->value = "\xE6\x8A\x9C\xE3\x81\x84\xE3\x81\x9F";
+
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  }
+
+  command.Clear();
+  session->Convert(&command);
+  // "[猫の]|しっぽを|抜いた"
+
+  command.Clear();
+  session->SegmentFocusRight(&command);
+  session->SegmentFocusRight(&command);
+  // "猫の|しっぽを|[抜いた]"
+
+  {  // Segments as result of CommitHeadToFocusedSegments
+    Segments segments;
+    GetConverterMock()->SetCommitSegments(&segments, true);
+  }
+
+  command.Clear();
+  command.mutable_input()->mutable_command()->set_id(0);
+  ASSERT_TRUE(session->CommitCandidate(&command));
+  EXPECT_FALSE(command.output().has_preedit());
+  // "猫のしっぽを抜いた"
+  EXPECT_RESULT("\xE7\x8C\xAB\xE3\x81\xAE"
+                "\xE3\x81\x97\xE3\x81\xA3\xE3\x81\xBD\xE3\x82\x92"
+                "\xE6\x8A\x9C\xE3\x81\x84\xE3\x81\x9F" , command);
 }
 
 TEST_F(SessionTest, CommitCandidate_suggestion) {

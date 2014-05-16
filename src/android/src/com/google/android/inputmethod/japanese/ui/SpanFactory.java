@@ -31,6 +31,9 @@ package org.mozc.android.inputmethod.japanese.ui;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import android.graphics.Paint;
 
@@ -51,7 +54,7 @@ public class SpanFactory {
   private final Paint descriptionPaint = new Paint();
 
   /** Delimiter characters for descriptions. */
-  private String descriptionDelimiter = null;
+  private Optional<String> descriptionDelimiter = Optional.absent();
 
   public void setValueTextSize(float valueTextSize) {
     valuePaint.setTextSize(valueTextSize);
@@ -62,13 +65,16 @@ public class SpanFactory {
   }
 
   public void setDescriptionDelimiter(String descriptionDelimiter) {
-    this.descriptionDelimiter = descriptionDelimiter;
+    this.descriptionDelimiter = Optional.of(Preconditions.checkNotNull(descriptionDelimiter));
   }
 
   public Span newInstance(CandidateWord candidateWord) {
+    Preconditions.checkNotNull(candidateWord);
+
     float valueWidth = valuePaint.measureText(candidateWord.getValue());
-    List<String> splitDescriptionList = splitDescription(
-        candidateWord.getAnnotation().getDescription(), descriptionDelimiter);
+    String description = candidateWord.getAnnotation().getDescription();
+    List<String> splitDescriptionList = splitDescription(Strings.nullToEmpty(description),
+                                                         descriptionDelimiter);
     float descriptionWidth = 0;
     for (String line : splitDescriptionList) {
       float width = descriptionPaint.measureText(line);
@@ -76,23 +82,24 @@ public class SpanFactory {
         descriptionWidth = width;
       }
     }
-    return new Span(candidateWord, valueWidth, descriptionWidth, splitDescriptionList);
+    return new Span(Optional.of(candidateWord), valueWidth, descriptionWidth,
+                    splitDescriptionList);
   }
 
   private static List<String> splitDescription(
-      String description, String descriptionDelimiter) {
-    if (description == null || description.length() == 0) {
+      String description, Optional<String> descriptionDelimiter) {
+    if (description.length() == 0) {
       // No description is available.
       return Collections.emptyList();
     }
 
-    if (descriptionDelimiter == null) {
+    if (!descriptionDelimiter.isPresent()) {
       // If the delimiter is not set, return the description as is.
       return Collections.singletonList(description);
     }
 
     // Split the description by delimiter.
-    StringTokenizer tokenizer = new StringTokenizer(description, descriptionDelimiter);
+    StringTokenizer tokenizer = new StringTokenizer(description, descriptionDelimiter.get());
     List<String> result = new ArrayList<String>();
     while (tokenizer.hasMoreTokens()) {
       String token = tokenizer.nextToken();

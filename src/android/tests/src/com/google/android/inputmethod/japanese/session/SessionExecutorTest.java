@@ -39,6 +39,8 @@ import static org.easymock.EasyMock.same;
 
 import org.mozc.android.inputmethod.japanese.KeycodeConverter;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
+import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
+import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
@@ -59,6 +61,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Result;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Result.ResultType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionCommand;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionCommand.UsageStatsEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus;
@@ -75,9 +78,11 @@ import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
@@ -583,7 +588,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
         isNull(EvaluationCallback.class));
     replayAll();
 
-    executor.switchInputMode(CompositionMode.DIRECT);
+    executor.switchInputMode(null, CompositionMode.DIRECT, null);
 
     verifyAll();
   }
@@ -723,22 +728,82 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testUsageStatsEvent() {
+  public void testPreferenceUsageStatsEvent() {
     SessionExecutor executor = createSessionExecutorMock();
 
-    List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
-    EvaluationCallback evaluationCallback = createNiceMock(EvaluationCallback.class);
+    Context context = getInstrumentation().getContext();
+    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+    assertNotNull(sharedPreferences);
+
+    sharedPreferences.edit()
+        .putString(PreferenceUtil.PREF_LANDSCAPE_KEYBOARD_LAYOUT_KEY, KeyboardLayout.GODAN.name())
+        .putString(PreferenceUtil.PREF_PORTRAIT_KEYBOARD_LAYOUT_KEY, KeyboardLayout.QWERTY.name())
+        .putBoolean(PreferenceUtil.PREF_USE_PORTRAIT_KEYBOARD_SETTINGS_FOR_LANDSCAPE_KEY, false)
+        .commit();
+
+    resetAll();
     executor.evaluateAsynchronously(
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.SEND_COMMAND)
-            .setCommand(
-                SessionCommand.newBuilder().setType(SessionCommand.CommandType.USAGE_STATS_EVENT))
+            .setCommand(SessionCommand.newBuilder()
+                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE)
+                .setUsageStatsEventIntValue(KeyboardLayout.GODAN.getId()))),
+        isNull(KeyEventInterface.class), isNull(EvaluationCallback.class));
+    executor.evaluateAsynchronously(
+        matchesBuilder(Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT)
+                .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
+        isNull(KeyEventInterface.class), isNull(EvaluationCallback.class));
+    replayAll();
+    executor.preferenceUsageStatsEvent(sharedPreferences);
+    verifyAll();
+
+    sharedPreferences.edit()
+        .putBoolean(PreferenceUtil.PREF_USE_PORTRAIT_KEYBOARD_SETTINGS_FOR_LANDSCAPE_KEY, true)
+        .commit();
+
+    resetAll();
+    executor.evaluateAsynchronously(
+        matchesBuilder(Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE)
+                .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
+        isNull(KeyEventInterface.class), isNull(EvaluationCallback.class));
+    executor.evaluateAsynchronously(
+        matchesBuilder(Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT)
+                .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
+        isNull(KeyEventInterface.class), isNull(EvaluationCallback.class));
+    replayAll();
+    executor.preferenceUsageStatsEvent(sharedPreferences);
+    verifyAll();
+  }
+
+  @SmallTest
+  public void testTouchEventUsageStatsEvent() {
+    SessionExecutor executor = createSessionExecutorMock();
+
+    List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
+    executor.evaluateAsynchronously(
+        matchesBuilder(Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT))
             .addAllTouchEvents(touchEventList)),
         isNull(KeyEventInterface.class),
         isNull(EvaluationCallback.class));
     replayAll();
 
-    executor.usageStatsEvent(touchEventList);
+    executor.touchEventUsageStatsEvent(touchEventList);
 
     verifyAll();
   }

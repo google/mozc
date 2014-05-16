@@ -47,11 +47,9 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/node.h"
-#include "converter/node_allocator.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
+#include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/node_list_builder.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
@@ -63,6 +61,8 @@
 #include "usage_stats/usage_stats_testing_util.h"
 
 DECLARE_string(test_tmpdir);
+
+using mozc::dictionary::CollectTokenCallback;
 
 namespace mozc {
 namespace {
@@ -230,22 +230,6 @@ class UserDictionaryTest : public ::testing::Test {
     uint16 rid;
   };
 
-  static void TestLookupPredictiveHelper(const Entry *expected,
-                                         size_t expected_size,
-                                         const char *key,
-                                         size_t key_size,
-                                         const UserDictionary &dic) {
-    NodeAllocator allocator;
-    Node *node = dic.LookupPredictive(key, key_size, &allocator);
-
-    if (expected == NULL || expected_size == 0) {
-      EXPECT_TRUE(NULL == node);
-    } else {
-      ASSERT_TRUE(NULL != node);
-      CompareEntries(expected, expected_size, node);
-    }
-  }
-
   class EntryCollector : public DictionaryInterface::Callback {
    public:
     virtual ResultType OnToken(StringPiece,  // key
@@ -267,6 +251,21 @@ class UserDictionaryTest : public ::testing::Test {
    private:
     vector<Entry> entries_;
   };
+
+  static void TestLookupPredictiveHelper(const Entry *expected,
+                                         size_t expected_size,
+                                         StringPiece key,
+                                         const UserDictionary &dic) {
+    EntryCollector collector;
+    dic.LookupPredictive(key, false, &collector);
+
+    if (expected == NULL || expected_size == 0) {
+      EXPECT_TRUE(collector.entries().empty());
+    } else {
+      ASSERT_FALSE(collector.entries().empty());
+      CompareEntries(expected, expected_size, collector.entries());
+    }
+  }
 
   static void TestLookupPrefixHelper(const Entry *expected,
                                      size_t expected_size,
@@ -319,27 +318,9 @@ class UserDictionaryTest : public ::testing::Test {
   }
 
   static void CompareEntries(const Entry *expected, size_t expected_size,
-                             const Node *node) {
-    const string expected_encode = EncodeEntries(expected, expected_size);
-
-    vector<string> actual_encode_items;
-    for ( ; node != NULL; node = node->bnext) {
-      actual_encode_items.push_back(node->key + "\t" +
-                                    node->value + "\t" +
-                                    NumberUtil::SimpleItoa(node->lid) + "\t" +
-                                    NumberUtil::SimpleItoa(node->rid) + "\n");
-    }
-    sort(actual_encode_items.begin(), actual_encode_items.end());
-    string actual_encode;
-    Util::JoinStrings(actual_encode_items, "", &actual_encode);
-
-    EXPECT_EQ(expected_encode, actual_encode);
-  }
-
-  static void CompareEntries(const Entry *expected, size_t expected_size,
                              const vector<Entry> &actual) {
     const string expected_encoded = EncodeEntries(expected, expected_size);
-    const string actual_encoded = EncodeEntries(actual.data(), actual.size());
+    const string actual_encoded = EncodeEntries(&actual[0], actual.size());
     EXPECT_EQ(expected_encoded, actual_encoded);
   }
 
@@ -410,7 +391,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
     { "starting", "starting", 220, 220 },
   };
   TestLookupPredictiveHelper(kExpected0, arraysize(kExpected0),
-                             "start", 5, *dic.get());
+                             "start", *dic.get());
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
@@ -425,13 +406,13 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
     { "starting", "starting", 220, 220 },
   };
   TestLookupPredictiveHelper(kExpected1, arraysize(kExpected1),
-                             "st", 2, *dic.get());
+                             "st", *dic.get());
 
   // Invalid input values should be just ignored.
-  TestLookupPredictiveHelper(NULL, 0, "", 0, *dic.get());
-  TestLookupPredictiveHelper(NULL, 0, "\xE6\xB0\xB4\xE9\x9B\xB2",  // "水雲"
-                             strlen("\xE6\xB0\xB4\xE9\x9B\xB2"), *dic.get());
-
+  TestLookupPredictiveHelper(NULL, 0, "", *dic.get());
+  TestLookupPredictiveHelper(NULL, 0,
+                             "\xE6\xB0\xB4\xE9\x9B\xB2",  // "水雲"
+                             *dic.get());
 
   // Make a change to the dictionary file and load it again.
   {
@@ -440,64 +421,18 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
     dic->Load(storage);
   }
 
-  // A normal lookup.
+  // A normal lookup again.
   const Entry kExpected2[] = {
     { "end", "end", 200, 200 },
     { "ended", "ended", 210, 210 },
     { "ending", "ending", 220, 220 },
   };
   TestLookupPredictiveHelper(kExpected2, arraysize(kExpected2),
-                         "end", 3, *dic.get());
+                             "end", *dic.get());
 
-  // Lookup for entries which are gone should returns empty result.
-  TestLookupPredictiveHelper(NULL, 0, "start", 5, *dic.get());
-  TestLookupPredictiveHelper(NULL, 0, "st", 2, *dic.get());
-}
-
-TEST_F(UserDictionaryTest, TestLookupPredictiveWithLimit) {
-  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
-  // Wait for async reload called from the constructor.
-  dic->WaitForReloader();
-
-  {
-    UserDictionaryStorage storage("");
-    UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
-    dic->Load(storage);
-  }
-
-  {
-    NodeAllocator allocator;
-    DictionaryInterface::Limit limit;
-    Trie<string> trie;
-    trie.AddEntry("m", "");
-    trie.AddEntry("n", "");
-    limit.begin_with_trie = &trie;
-
-    const string key = "sta";
-    Node *node = dic->LookupPredictiveWithLimit(
-        key.data(), key.size(), limit, &allocator);
-    const Entry kExpected[] = {
-      { "stamp", "stamp", 100, 100 },
-      { "stand", "stand", 200, 200 },
-      { "standed", "standed", 210, 210 },
-      { "standing", "standing", 220, 220 },
-    };
-    CompareEntries(kExpected, arraysize(kExpected), node);
-  }
-
-  {
-    NodeAllocator allocator;
-    DictionaryInterface::Limit limit;
-    const string key = "stan";
-    Node *node = dic->LookupPredictiveWithLimit(
-        key.data(), key.size(), limit, &allocator);
-    const Entry kExpected[] = {
-      { "stand", "stand", 200, 200 },
-      { "standed", "standed", 210, 210 },
-      { "standing", "standing", 220, 220 },
-    };
-    CompareEntries(kExpected, arraysize(kExpected), node);
-  }
+  // Entries in the dictionary before reloading cannot be looked up.
+  TestLookupPredictiveHelper(NULL, 0, "start", *dic.get());
+  TestLookupPredictiveHelper(NULL, 0, "st", *dic.get());
 }
 
 TEST_F(UserDictionaryTest, TestLookupPrefix) {
@@ -643,18 +578,22 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
     dic->Load(storage);
   }
 
-  NodeAllocator allocator;
-
   TestLookupPrefixHelper(NULL, 0, "start", 4, *dic);
-  EXPECT_EQ(NULL, dic->LookupPredictive("s", 1, &allocator));
+  TestLookupPredictiveHelper(NULL, 0, "s", *dic);
 
   config.set_incognito_mode(false);
   config::ConfigHandler::SetConfig(config);
 
-  EntryCollector collector;
-  dic->LookupPrefix("start", false, &collector);
-  EXPECT_FALSE(collector.entries().empty());
-  EXPECT_FALSE(NULL == dic->LookupPredictive("s", 1, &allocator));
+  {
+    EntryCollector collector;
+    dic->LookupPrefix("start", false, &collector);
+    EXPECT_FALSE(collector.entries().empty());
+  }
+  {
+    EntryCollector collector;
+    dic->LookupPredictive("s", false, &collector);
+    EXPECT_FALSE(collector.entries().empty());
+  }
 }
 
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
@@ -693,13 +632,12 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     dic->WaitForReloader();
     dic->SetUserDictionaryName(filename);
 
-    NodeAllocator allocator;
     for (int i = 0; i < 32; ++i) {
       random_shuffle(keys.begin(), keys.end());
       dic->Reload();
       for (int i = 0; i < 1000; ++i) {
-        BaseNodeListBuilder builder(&allocator, allocator.max_nodes_size());
-        dic->LookupPrefix(keys[i], false, &builder);
+        CollectTokenCallback callback;
+        dic->LookupPrefix(keys[i], false, &callback);
       }
     }
     dic->WaitForReloader();
@@ -907,26 +845,23 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     user_dic->Load(storage);
   }
 
-  NodeAllocator allocator;
-
   {
     const char kKey[] = "key0123";
-    BaseNodeListBuilder builder(&allocator, allocator.max_nodes_size());
-    user_dic->LookupPrefix(kKey, false, &builder);
-    const Node *node = builder.result();
-    CHECK(node);
-    for (; node != NULL; node = node->bnext) {
-      EXPECT_TRUE("suggest_only" != node->value && "default" == node->value);
+    CollectTokenCallback callback;
+    user_dic->LookupPrefix(kKey, false, &callback);
+    const vector<Token> &tokens = callback.tokens();
+    for (size_t i = 0; i < tokens.size(); ++i) {
+      EXPECT_EQ("default", tokens[i].value);
     }
   }
-
   {
     const char kKey[] = "key";
-    const Node *node = user_dic->LookupPredictive(kKey, strlen(kKey),
-                                                  &allocator);
-    CHECK(node);
-    for (; node != NULL; node = node->bnext) {
-      EXPECT_TRUE("suggest_only" == node->value || "default" == node->value);
+    CollectTokenCallback callback;
+    user_dic->LookupPredictive(kKey, false, &callback);
+    const vector<Token> &tokens = callback.tokens();
+    for (size_t i = 0; i < tokens.size(); ++i) {
+      EXPECT_TRUE(tokens[i].value == "suggest_only" ||
+                  tokens[i].value == "default");
     }
   }
 

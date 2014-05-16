@@ -31,7 +31,8 @@
 #define MOZC_STORAGE_STORAGE_INTERFACE_H_
 
 #include <string>
-#include "base/base.h"
+
+#include "base/port.h"
 
 namespace mozc {
 namespace storage {

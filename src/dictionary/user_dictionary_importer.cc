@@ -57,6 +57,7 @@ using user_dictionary::UserDictionary;
 using user_dictionary::UserDictionaryCommandStatus;
 
 namespace {
+
 uint64 EntryFingerprint(const UserDictionary::Entry &entry) {
   DCHECK_LE(0, entry.pos());
 MOZC_CLANG_PUSH_WARNING();
@@ -87,8 +88,8 @@ struct POSMap {
 // Include actual POS mapping rules defined outside the file.
 #include "dictionary/pos_map.h"
 
-// A functor for searching an array of POSMap for the given POS. The
-// class is used with std::lower_bound().
+// A functor for searching an array of POSMap for the given POS. The class is
+// used with std::lower_bound().
 class POSMapCompare {
  public:
   bool operator() (const POSMap &l_pos_map, const POSMap &r_pos_map) const {
@@ -96,10 +97,10 @@ class POSMapCompare {
   }
 };
 
-// Converts POS of a third party IME to that of Mozc using the given
-// mapping.
+// Convert POS of a third party IME to that of Mozc using the given mapping.
 bool ConvertEntryInternal(
-    const POSMap *pos_map, size_t map_size,
+    const POSMap *pos_map,
+    size_t map_size,
     const UserDictionaryImporter::RawEntry &from,
     UserDictionary::Entry *to) {
   if (to == NULL) {
@@ -117,12 +118,11 @@ bool ConvertEntryInternal(
   string pos;
   NormalizePOS(from.pos, &pos);
 
-  // ATOK's POS has a special marker for distinguishing
-  // auto-registered words/manually-registered words.
-  // remove the mark here.
-  if (!pos.empty() &&
-      (pos[pos.size() - 1] == '$' ||
-       pos[pos.size() - 1] == '*')) {
+  // ATOK's POS has a special marker for distinguishing auto-registered
+  // words/manually-registered words. Remove the mark here.
+  // TODO(yukawa): Use string::back once C++11 is enabled on Mac.
+  if (!pos.empty() && (*pos.rbegin() == '$' || *pos.rbegin() == '*')) {
+    // TODO(matsuzakit): Use pop_back instead when C++11 is ready on Android.
     pos.resize(pos.size() - 1);
   }
 
@@ -138,10 +138,6 @@ bool ConvertEntryInternal(
     LOG(WARNING) << "Invalid POS is passed: " << from.pos;
     return false;
   }
-
-  // Enpty Mozc POS means that words of the POS should be ignored
-  // in Mozc. Set all arguments to an empty string.
-  // const POSMap &map_rule = pos_map[index];
   if (!UserDictionary::PosType_IsValid(found->mozc_pos)) {
     to->clear_key();
     to->clear_value();
@@ -153,17 +149,17 @@ bool ConvertEntryInternal(
   to->set_value(from.value);
   to->set_pos(found->mozc_pos);
 
-  // normalize reading
+  // Normalize reading.
   string normalized_key;
   UserDictionaryUtil::NormalizeReading(to->key(), &normalized_key);
   to->set_key(normalized_key);
 
-  // copy comment
+  // Copy comment.
   if (!from.comment.empty()) {
     to->set_comment(from.comment);
   }
 
-  // validation
+  // Validation.
   if (UserDictionaryUtil::ValidateEntry(*to) !=
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
     return false;
@@ -171,6 +167,7 @@ bool ConvertEntryInternal(
 
   return true;
 }
+
 }  // namespace
 
 #if defined(OS_WIN) && defined(HAS_MSIME_HEADER)
@@ -181,6 +178,7 @@ const size_t kBufferSize = 256;
 // ProgID of MS-IME Japanese.
 const wchar_t kVersionIndependentProgIdForMSIME[] = L"MSIME.Japan";
 
+// Interface identifier of user dictionary in MS-IME.
 // {019F7153-E6DB-11d0-83C3-00C04FDDB82E}
 const GUID kIidIFEDictionary = {
   0x19f7153, 0xe6db, 0x11d0, {0x83, 0xc3, 0x0, 0xc0, 0x4f, 0xdd, 0xb8, 0x2e}
@@ -361,6 +359,7 @@ class MSIMEImportIterator
   ULONG size_;
   ULONG index_;
 };
+
 }  // namespace
 #endif  // OS_WIN && HAS_MSIME_HEADER
 
@@ -371,26 +370,23 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromMSIME(
   MSIMEImportIterator iter;
   return ImportFromIterator(&iter, user_dic);
 #endif  // OS_WIN && HAS_MSIME_HEADER
-  return UserDictionaryImporter::IMPORT_NOT_SUPPORTED;
+  return IMPORT_NOT_SUPPORTED;
 }
 
-UserDictionaryImporter::ErrorType
-UserDictionaryImporter::ImportFromIterator(
-    UserDictionaryImporter::InputIteratorInterface *iter,
-    UserDictionary *user_dic) {
+UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
+    InputIteratorInterface *iter, UserDictionary *user_dic) {
   if (iter == NULL || user_dic == NULL) {
     LOG(ERROR) << "iter or user_dic is NULL";
-    return UserDictionaryImporter::IMPORT_FATAL;
+    return IMPORT_FATAL;
   }
 
-  const int max_size = static_cast<int>(UserDictionaryUtil::max_entry_size());
+  const size_t max_size = UserDictionaryUtil::max_entry_size();
 
-  UserDictionaryImporter::ErrorType ret =
-      UserDictionaryImporter::IMPORT_NO_ERROR;
+  ErrorType ret = IMPORT_NO_ERROR;
 
-  set<uint64> dup_set;
+  set<uint64> existent_entries;
   for (size_t i = 0; i < user_dic->entries_size(); ++i) {
-    dup_set.insert(EntryFingerprint(user_dic->entries(i)));
+    existent_entries.insert(EntryFingerprint(user_dic->entries(i)));
   }
 
   UserDictionary::Entry entry;
@@ -398,25 +394,25 @@ UserDictionaryImporter::ImportFromIterator(
   while (iter->Next(&raw_entry)) {
     if (user_dic->entries_size() >= max_size) {
       LOG(WARNING) << "Too many words in one dictionary";
-      return UserDictionaryImporter::IMPORT_TOO_MANY_WORDS;
+      return IMPORT_TOO_MANY_WORDS;
     }
 
     if (raw_entry.key.empty() &&
         raw_entry.value.empty() &&
         raw_entry.comment.empty()) {
-      // Empty entry is just skipped. It could be annoying
-      // if we show an warning dialog when these empty candidates exist.
+      // Empty entry is just skipped. It could be annoying if we show a
+      // warning dialog when these empty candidates exist.
       continue;
     }
 
-    if (!UserDictionaryImporter::ConvertEntry(raw_entry, &entry)) {
+    if (!ConvertEntry(raw_entry, &entry)) {
       LOG(WARNING) << "Entry is not valid";
-      ret = UserDictionaryImporter::IMPORT_INVALID_ENTRIES;
+      ret = IMPORT_INVALID_ENTRIES;
       continue;
     }
 
-    //  don't register words if it is aleady in the current dictionary
-    if (!dup_set.insert(EntryFingerprint(entry)).second) {
+    // Don't register words if it is aleady in the current dictionary.
+    if (!existent_entries.insert(EntryFingerprint(entry)).second) {
       continue;
     }
 
@@ -430,40 +426,21 @@ UserDictionaryImporter::ImportFromIterator(
 
 UserDictionaryImporter::ErrorType
 UserDictionaryImporter::ImportFromTextLineIterator(
-    UserDictionaryImporter::IMEType ime_type,
-    UserDictionaryImporter::TextLineIteratorInterface *iter,
+    IMEType ime_type,
+    TextLineIteratorInterface *iter,
     UserDictionary *user_dic) {
   TextInputIterator text_iter(ime_type, iter);
-  if (text_iter.ime_type() == UserDictionaryImporter::NUM_IMES) {
-    return UserDictionaryImporter::IMPORT_NOT_SUPPORTED;
+  if (text_iter.ime_type() == NUM_IMES) {
+    return IMPORT_NOT_SUPPORTED;
   }
 
-  return UserDictionaryImporter::ImportFromIterator(&text_iter, user_dic);
-}
-
-UserDictionaryImporter::IStreamTextLineIterator::IStreamTextLineIterator(
-    istream *is) : is_(is) {}
-
-UserDictionaryImporter::IStreamTextLineIterator::~IStreamTextLineIterator() {}
-
-bool UserDictionaryImporter::IStreamTextLineIterator::IsAvailable() const {
-  return is_->good();
-}
-
-bool UserDictionaryImporter::IStreamTextLineIterator::Next(string *line) {
-  return !getline(*is_, *line).fail();
-}
-
-void UserDictionaryImporter::IStreamTextLineIterator::Reset() {
-  is_->seekg(0, ios_base::beg);
+  return ImportFromIterator(&text_iter, user_dic);
 }
 
 UserDictionaryImporter::StringTextLineIterator::StringTextLineIterator(
-    const string &data) : data_(data), position_(0) {
-}
+    StringPiece data) : data_(data, 0), position_(0) {}
 
-UserDictionaryImporter::StringTextLineIterator::~StringTextLineIterator() {
-}
+UserDictionaryImporter::StringTextLineIterator::~StringTextLineIterator() {}
 
 bool UserDictionaryImporter::StringTextLineIterator::IsAvailable() const {
   return position_ < data_.length();
@@ -474,16 +451,21 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(string *line) {
     return false;
   }
 
-  for (int i = position_; i < data_.length(); ++i) {
+  const StringPiece crlf("\r\n");
+  for (size_t i = position_; i < data_.length(); ++i) {
     if (data_[i] == '\n' || data_[i] == '\r') {
-      line->assign(data_, position_, i - position_);
+      const StringPiece next_line = data_.substr(position_, i - position_);
+      next_line.CopyToString(line);
       // Handles CR/LF issue.
-      position_ = data_.compare(i, 2, "\r\n", 2) == 0 ? (i + 2) : (i + 1);
+      const StringPiece possible_crlf = data_.substr(i, 2);
+      position_ = possible_crlf.compare(crlf) == 0 ? (i + 2) : (i + 1);
       return true;
     }
   }
 
-  line->assign(data_, position_, data_.size() - position_);
+  const StringPiece next_line =
+      data_.substr(position_, data_.size() - position_);
+  next_line.CopyToString(line);
   position_ = data_.length();
   return true;
 }
@@ -493,19 +475,18 @@ void UserDictionaryImporter::StringTextLineIterator::Reset() {
 }
 
 UserDictionaryImporter::TextInputIterator::TextInputIterator(
-    UserDictionaryImporter::IMEType ime_type,
-    UserDictionaryImporter::TextLineIteratorInterface *iter)
+    IMEType ime_type,
+    TextLineIteratorInterface *iter)
     : ime_type_(NUM_IMES), iter_(iter) {
   CHECK(iter_);
   if (!iter_->IsAvailable()) {
     return;
   }
 
-  UserDictionaryImporter::IMEType guessed_type =
-      UserDictionaryImporter::NUM_IMES;
+  IMEType guessed_type = NUM_IMES;
   string line;
   if (iter_->Next(&line)) {
-    guessed_type = UserDictionaryImporter::GuessIMEType(line);
+    guessed_type = GuessIMEType(line);
     iter_->Reset();
   }
 
@@ -513,13 +494,14 @@ UserDictionaryImporter::TextInputIterator::TextInputIterator(
 
   VLOG(1) << "Setting type to: " << static_cast<int>(ime_type_);
 }
+
 UserDictionaryImporter::TextInputIterator::~TextInputIterator() {}
 
 bool UserDictionaryImporter::TextInputIterator::IsAvailable() const {
   DCHECK(iter_);
   return (iter_->IsAvailable() &&
-          ime_type_ != UserDictionaryImporter::IME_AUTO_DETECT &&
-          ime_type_ != UserDictionaryImporter::NUM_IMES);
+          ime_type_ != IME_AUTO_DETECT &&
+          ime_type_ != NUM_IMES);
 }
 
 bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
@@ -539,23 +521,15 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
   string line;
   while (iter_->Next(&line)) {
     Util::ChopReturns(&line);
+    // Skip empty lines.
     if (line.empty()) {
       continue;
     }
-
-    if (line[0] == '!' &&
-        (ime_type_ == UserDictionaryImporter::MSIME ||
-         ime_type_ == UserDictionaryImporter::ATOK)) {
-      continue;
-    }
-
-    if (line[0] == '#' &&
-        ime_type_ == UserDictionaryImporter::MOZC) {
-      continue;
-    }
-
-    if (ime_type_ == UserDictionaryImporter::KOTOERI &&
-        line.find("//") == 0) {
+    // Skip comment lines.
+    // TODO(yukawa): Use string::front once C++11 is enabled on Mac.
+    if (((ime_type_ == MSIME || ime_type_ == ATOK) && line[0] == '!') ||
+        (ime_type_ == MOZC && line[0] == '#') ||
+        (ime_type_ == KOTOERI && line.find("//") == 0)) {
       continue;
     }
 
@@ -563,12 +537,12 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
 
     vector<string> values;
     switch (ime_type_) {
-      case UserDictionaryImporter::MSIME:
-      case UserDictionaryImporter::ATOK:
-      case UserDictionaryImporter::MOZC:
+      case MSIME:
+      case ATOK:
+      case MOZC:
         Util::SplitStringAllowEmpty(line, "\t", &values);
         if (values.size() < 3) {
-          continue;  // ignore this line
+          continue;  // Ignore this line.
         }
         entry->key = values[0];
         entry->value = values[1];
@@ -578,10 +552,10 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
         }
         return true;
         break;
-      case UserDictionaryImporter::KOTOERI:
+      case KOTOERI:
         Util::SplitCSV(line, &values);
         if (values.size() < 3) {
-          continue;  // ignore this line
+          continue;  // Ignore this line.
         }
         entry->key = values[0];
         entry->value = values[1];
@@ -603,16 +577,16 @@ bool UserDictionaryImporter::ConvertEntry(
 }
 
 UserDictionaryImporter::IMEType
-UserDictionaryImporter::GuessIMEType(const string &line) {
+UserDictionaryImporter::GuessIMEType(StringPiece line) {
   if (line.empty()) {
-    return UserDictionaryImporter::NUM_IMES;
+    return NUM_IMES;
   }
 
-  string lower = line;
+  string lower = line.as_string();
   Util::LowerString(&lower);
 
   if (lower.find("!microsoft ime") == 0) {
-    return UserDictionaryImporter::MSIME;
+    return MSIME;
   }
 
   // Old ATOK format (!!DICUT10) is not supported for now
@@ -620,47 +594,43 @@ UserDictionaryImporter::GuessIMEType(const string &line) {
   if (lower.find("!!dicut") == 0 && lower.size() > 7) {
     const string version(lower, 7, lower.size() - 7);
     if (NumberUtil::SimpleAtoi(version) >= 11) {
-      return UserDictionaryImporter::ATOK;
+      return ATOK;
     } else {
-      return UserDictionaryImporter::NUM_IMES;
+      return NUM_IMES;
     }
   }
 
   if (lower.find("!!atok_tango_text_header") == 0) {
-    return UserDictionaryImporter::ATOK;
+    return ATOK;
   }
 
-  if (line[0] == '"' && line[line.size() - 1] == '"' &&
+  if (*line.begin() == '"' && *line.rbegin() == '"' &&
       line.find("\t") == string::npos) {
-    return UserDictionaryImporter::KOTOERI;
+    return KOTOERI;
   }
 
-  if (line[0] == '#' ||
-      line.find("\t") != string::npos) {
-    return UserDictionaryImporter::MOZC;
+  if (*line.begin() == '#' || line.find("\t") != string::npos) {
+    return MOZC;
   }
 
-  return UserDictionaryImporter::NUM_IMES;
+  return NUM_IMES;
 }
 
-  // return the final IME type from user_ime_type and guessed_ime_type
 UserDictionaryImporter::IMEType UserDictionaryImporter::DetermineFinalIMEType(
-    UserDictionaryImporter::IMEType user_ime_type,
-    UserDictionaryImporter::IMEType guessed_ime_type) {
-  UserDictionaryImporter::IMEType result_ime_type
-      = UserDictionaryImporter::NUM_IMES;
+    IMEType user_ime_type, IMEType guessed_ime_type) {
+  IMEType result_ime_type = NUM_IMES;
 
-  if (user_ime_type == UserDictionaryImporter::IME_AUTO_DETECT) {
-    // trust guessed type
+  if (user_ime_type == IME_AUTO_DETECT) {
+    // Trust guessed type.
     result_ime_type = guessed_ime_type;
-  } else if (user_ime_type == UserDictionaryImporter::MOZC) {
+  } else if (user_ime_type == MOZC) {
     // MOZC is compatible with MS-IME and ATOK.
     // Even if the auto detection failed, try to use Mozc format.
-    if (guessed_ime_type != UserDictionaryImporter::KOTOERI) {
+    if (guessed_ime_type != KOTOERI) {
       result_ime_type = user_ime_type;
     }
   } else {
-    // ATOK,MS-IME and Kotoeri can be detected with 100% accuracy.
+    // ATOK, MS-IME and Kotoeri can be detected with 100% accuracy.
     if (guessed_ime_type == user_ime_type) {
       result_ime_type = user_ime_type;
     }
@@ -669,30 +639,29 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::DetermineFinalIMEType(
   return result_ime_type;
 }
 
-
 UserDictionaryImporter::EncodingType
-UserDictionaryImporter::GuessEncodingType(const char *str, size_t size) {
-  // Unicode BOM
-  if (size >= 2 &&
+UserDictionaryImporter::GuessEncodingType(StringPiece str) {
+  // Unicode BOM.
+  if (str.size() >= 2 &&
       ((static_cast<uint8>(str[0]) == 0xFF &&
         static_cast<uint8>(str[1]) == 0xFE) ||
        (static_cast<uint8>(str[0]) == 0xFE &&
         static_cast<uint8>(str[1]) == 0xFF))) {
-    return UserDictionaryImporter::UTF16;
+    return UTF16;
   }
 
-  // UTF-8 BOM
-  if (size >= 3 &&
+  // UTF-8 BOM.
+  if (str.size() >= 3 &&
       static_cast<uint8>(str[0]) == 0xEF &&
       static_cast<uint8>(str[1]) == 0xBB &&
       static_cast<uint8>(str[2]) == 0xBF) {
-    return UserDictionaryImporter::UTF8;
+    return UTF8;
   }
 
-  // Count valid UTF8
-  // TODO(taku): improve the accuracy by making a DFA.
-  const char *begin = str;
-  const char *end = str + size;
+  // Count valid UTF8 characters.
+  // TODO(taku): Improve the accuracy by making a DFA.
+  const char *begin = str.data();
+  const char *end = str.data() + str.size();
   size_t valid_utf8 = 0;
   size_t valid_script = 0;
   while (begin < end) {
@@ -718,14 +687,13 @@ UserDictionaryImporter::GuessEncodingType(const char *str, size_t size) {
     begin += mblen;
   }
 
-  // TODO(taku): no theoretical justification for these
-  // parameters
-  if (1.0 * valid_utf8 / size >= 0.9 &&
-      1.0 * valid_script / size >= 0.5) {
-    return UserDictionaryImporter::UTF8;
+  // TODO(taku): No theoretical justification for these parameters.
+  if (1.0 * valid_utf8 / str.size() >= 0.9 &&
+      1.0 * valid_script / str.size() >= 0.5) {
+    return UTF8;
   }
 
-  return UserDictionaryImporter::SHIFT_JIS;
+  return SHIFT_JIS;
 }
 
 UserDictionaryImporter::EncodingType
@@ -733,10 +701,12 @@ UserDictionaryImporter::GuessFileEncodingType(const string &filename) {
   Mmap mmap;
   if (!mmap.Open(filename.c_str(), "r")) {
     LOG(ERROR) << "cannot open: " << filename;
-    return UserDictionaryImporter::NUM_ENCODINGS;
+    return NUM_ENCODINGS;
   }
   const size_t kMaxCheckSize = 1024;
   const size_t size = min(kMaxCheckSize, static_cast<size_t>(mmap.size()));
-  return GuessEncodingType(mmap.begin(), size);
+  const StringPiece mapped_data(static_cast<const char *>(mmap.begin()), size);
+  return GuessEncodingType(mapped_data);
 }
+
 }  // namespace mozc

@@ -112,10 +112,12 @@ jbyteArray BufferToJByteArray(
   return result;
 }
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
 // Creates jbyteArray instance containing the data.
 jbyteArray StringToJByteArray(JNIEnv *env, const string &data) {
   return BufferToJByteArray(env, data.data(), data.size());
 }
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
 // Copies the contents of the given source to buf, and store the size into
 // buf_size.
@@ -171,6 +173,8 @@ class ScopedJavaLocalFrame {
 const jint kDefaultLocalFrameSize = 16;
 
 mozc::Mutex jvm_mutex;
+
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
 class JavaEncryptorDescriptor {
  public:
   JavaEncryptorDescriptor(JavaVM *jvm) : jvm_(jvm) {
@@ -265,7 +269,7 @@ class JavaEncryptorDescriptor {
   DISALLOW_COPY_AND_ASSIGN(JavaEncryptorDescriptor);
 };
 scoped_ptr<JavaEncryptorDescriptor> encryptor_descriptor;
-
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
 class JavaHttpClientDescriptor {
  public:
@@ -334,6 +338,7 @@ scoped_ptr<JavaHttpClientDescriptor> http_client_descriptor;
 namespace mozc {
 namespace jni {
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
 // static
 bool JavaEncryptorProxy::DeriveFromPassword(
     const string &password, const string &salt, uint8 *buf, size_t *buf_size) {
@@ -434,6 +439,7 @@ void JavaEncryptorProxy::SetJavaVM(JavaVM *jvm) {
   mozc::scoped_lock lock(&jvm_mutex);
   encryptor_descriptor.reset(JavaEncryptorDescriptor::Create(jvm));
 }
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
 // static
 bool JavaHttpClientProxy::Request(HTTPMethodType type,

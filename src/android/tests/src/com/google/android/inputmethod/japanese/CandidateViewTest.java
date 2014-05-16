@@ -42,6 +42,7 @@ import org.mozc.android.inputmethod.japanese.ui.CandidateLayout;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.ScrollGuideView;
+import com.google.common.base.Optional;
 
 import android.graphics.drawable.Drawable;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -126,7 +127,7 @@ public class CandidateViewTest extends InstrumentationTestCaseWithMock {
     CandidateLayout layout = MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport());
     expect(layout.getRowList()).andStubReturn(Collections.<Row>emptyList());
     CandidateLayouter layouter = createMock(CandidateLayouter.class);
-    expect(layouter.layout(isA(CandidateList.class))).andReturn(layout);
+    expect(layouter.layout(isA(CandidateList.class))).andReturn(Optional.of(layout));
     expect(layouter.getPageHeight()).andReturn(100);
     candidateWordView.layouter = layouter;
     replayAll();

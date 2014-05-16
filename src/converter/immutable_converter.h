@@ -32,11 +32,10 @@
 
 #include <string>
 #include <vector>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "converter/connector_interface.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/lattice.h"
-#include "converter/nbest_generator.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 //  for FRIEND_TEST()
@@ -44,12 +43,16 @@
 
 namespace mozc {
 
+struct Node;
 class DictionaryInterface;
 class ImmutableConverterInterface;
+class Lattice;
+class NBestGenerator;
 class POSMatcher;
 class PosGroup;
 class SegmenterInterface;
 class SuggestionFilter;
+class SuppressionDictionary;
 
 class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
@@ -116,10 +119,6 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   void MakeLatticeNodesForPredictiveNodes(
       const Segments &segments, const ConversionRequest &request,
       Lattice *lattice) const;
-  void AddPredictiveNodes(const size_t &len,
-                          const size_t &pos,
-                          Lattice *lattice,
-                          Node *result_node) const;
   // Fixes for "好む" vs "この|無", "大|代" vs "代々" preferences.
   // If the last node ends with "prefix", give an extra
   // wcost penalty. In this case  "無" doesn't tend to appear at

@@ -33,7 +33,6 @@ import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.testing.ActivityInstrumentationTestCase2WithMock;
 import com.google.common.base.Optional;
 
-import android.content.SharedPreferences;
 import android.preference.PreferenceScreen;
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -56,6 +55,7 @@ public class MozcClassicPreferenceActivityTest
   public void testPrepareScreen() {
     MozcClassicPreferenceActivity activity = getActivity();
     // Precondition
+    @SuppressWarnings("deprecation")
     PreferenceScreen preferenceScreen = activity.getPreferenceScreen();
     preferenceScreen.removeAll();
     assertEquals(0, preferenceScreen.getPreferenceCount());
@@ -68,6 +68,7 @@ public class MozcClassicPreferenceActivityTest
     assertTrue(count == preferenceScreen.getPreferenceCount());
   }
 
+  @SuppressWarnings("deprecation")
   @SmallTest
   public void testPrepareScreenSpecialPreferences() {
     MozcClassicPreferenceActivity activity = getActivity();
@@ -82,7 +83,7 @@ public class MozcClassicPreferenceActivityTest
     activity.onResume();
     assertNull(activity.findPreference("pref_tweak_logging_protocol_buffers"));
 
-    SharedPreferences sharedPreferences = activity.getPreferenceManager().getSharedPreferences();
+    activity.getPreferenceManager().getSharedPreferences();
     String usageStatsKey = "pref_other_usage_stats_key";
     // If on dev channel, the preference should be disabled.
     MozcUtil.setDevChannel(Optional.of(true));

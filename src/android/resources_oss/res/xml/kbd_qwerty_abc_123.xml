@@ -31,6 +31,7 @@
 -->
 <Keyboard
     xmlns:mozc="http://schemas.android.com/apk/res-auto"
+    mozc:keyboardContentDescription="@string/cd_keyboard_number"
     mozc:keyBackground="qwertyRegular"
     mozc:keyWidth="10%p" mozc:keyHeight="20.5%"
     mozc:horizontalGap="0.3%p" mozc:verticalGap="4%"
@@ -39,7 +40,7 @@
   <Row mozc:rowEdgeFlags="top" mozc:keyHeight="0dip" mozc:verticalGap="4%p" />
   <Row>
     <Key mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_one">
         <Flick>
           <KeyEntity mozc:sourceId="1"
                      mozc:keyCode="@integer/uchar_digit_one"
@@ -48,7 +49,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_grave_accent"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="2"
                      mozc:keyCode="@integer/uchar_grave_accent"
@@ -59,7 +61,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_two">
         <Flick>
           <KeyEntity mozc:sourceId="3"
                      mozc:keyCode="@integer/uchar_digit_two"
@@ -68,7 +70,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_tilde"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="4"
                      mozc:keyCode="@integer/uchar_tilde"
@@ -79,7 +82,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_three">
         <Flick>
           <KeyEntity mozc:sourceId="5"
                      mozc:keyCode="@integer/uchar_digit_three"
@@ -88,7 +91,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_ampersand"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="6"
                      mozc:keyCode="@integer/uchar_ampersand"
@@ -99,7 +103,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_four">
         <Flick>
           <KeyEntity mozc:sourceId="7"
                      mozc:keyCode="@integer/uchar_digit_four"
@@ -108,7 +112,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_vertical_line"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="8"
                      mozc:keyCode="@integer/uchar_vertical_line"
@@ -119,7 +124,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_five">
         <Flick>
           <KeyEntity mozc:sourceId="9"
                      mozc:keyCode="@integer/uchar_digit_five"
@@ -128,7 +133,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_circumflex_accent"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="10"
                      mozc:keyCode="@integer/uchar_circumflex_accent"
@@ -139,7 +145,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_six">
         <Flick>
           <KeyEntity mozc:sourceId="11"
                      mozc:keyCode="@integer/uchar_digit_six"
@@ -148,7 +154,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_plus_sign"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="12"
                      mozc:keyCode="@integer/uchar_plus_sign"
@@ -159,7 +166,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_seven">
         <Flick>
           <KeyEntity mozc:sourceId="13"
                      mozc:keyCode="@integer/uchar_digit_seven"
@@ -168,7 +175,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_hyphen_minus"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="14"
                      mozc:keyCode="@integer/uchar_hyphen_minus"
@@ -179,7 +187,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_eight">
         <Flick>
           <KeyEntity mozc:sourceId="15"
                      mozc:keyCode="@integer/uchar_digit_eight"
@@ -188,7 +196,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_asterisk"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="16"
                      mozc:keyCode="@integer/uchar_asterisk"
@@ -199,7 +208,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_nine">
         <Flick>
           <KeyEntity mozc:sourceId="17"
                      mozc:keyCode="@integer/uchar_digit_nine"
@@ -208,7 +217,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_solidus"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="18"
                      mozc:keyCode="@integer/uchar_solidus"
@@ -219,7 +229,7 @@
       </KeyState>
     </Key>
     <Key mozc:keyEdgeFlags="right">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_zero">
         <Flick>
           <KeyEntity mozc:sourceId="19"
                      mozc:keyCode="@integer/uchar_digit_zero"
@@ -228,7 +238,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_equals_sign"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="20"
                      mozc:keyCode="@integer/uchar_equals_sign"
@@ -242,7 +253,7 @@
   <Row>
     <Spacer mozc:horizontalGap="5%p" />
     <Key mozc:keyEdgeFlags="left" >
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_commercial_at">
         <Flick>
           <KeyEntity mozc:sourceId="21"
                      mozc:keyCode="@integer/uchar_commercial_at"
@@ -251,7 +262,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_reverse_solidus"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="22"
                      mozc:keyCode="@integer/uchar_reverse_solidus"
@@ -262,7 +274,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_number_sign">
         <Flick>
           <KeyEntity mozc:sourceId="23"
                      mozc:keyCode="@integer/uchar_number_sign"
@@ -271,7 +283,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_less_than_sign"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="24"
                      mozc:keyCode="@integer/uchar_less_than_sign"
@@ -282,7 +295,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_ampersand">
         <Flick>
           <KeyEntity mozc:sourceId="25"
                      mozc:keyCode="@integer/uchar_ampersand"
@@ -291,7 +304,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_greater_than_sign"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="26"
                      mozc:keyCode="@integer/uchar_greater_than_sign"
@@ -302,7 +316,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_hyphen_minus">
         <Flick>
           <KeyEntity mozc:sourceId="27"
                      mozc:keyCode="@integer/uchar_hyphen_minus"
@@ -311,7 +325,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_left_square_bracket"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="28"
                      mozc:keyCode="@integer/uchar_left_square_bracket"
@@ -322,7 +337,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_solidus">
         <Flick>
           <KeyEntity mozc:sourceId="29"
                      mozc:keyCode="@integer/uchar_solidus"
@@ -331,7 +346,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_right_square_bracket"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="30"
                      mozc:keyCode="@integer/uchar_right_square_bracket"
@@ -342,7 +358,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_dollar_sign">
         <Flick>
           <KeyEntity mozc:sourceId="31"
                      mozc:keyCode="@integer/uchar_dollar_sign"
@@ -351,7 +367,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_left_curly_bracket"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="32"
                      mozc:keyCode="@integer/uchar_left_curly_bracket"
@@ -362,7 +379,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_percent_sign">
         <Flick>
           <KeyEntity mozc:sourceId="33"
                      mozc:keyCode="@integer/uchar_percent_sign"
@@ -371,7 +388,8 @@
           </KeyEntity>
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_right_curly_bracket"
+                mozc:metaState="alt">
         <Flick>
           <KeyEntity mozc:sourceId="34"
                      mozc:keyCode="@integer/uchar_right_curly_bracket"
@@ -382,7 +400,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_left_parenthesis">
         <Flick>
           <KeyEntity mozc:sourceId="35"
                      mozc:keyCode="@integer/uchar_left_parenthesis"
@@ -393,7 +411,7 @@
       </KeyState>
     </Key>
     <Key mozc:keyEdgeFlags="right" >
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_right_parenthesis">
         <Flick>
           <KeyEntity mozc:sourceId="36"
                      mozc:keyCode="@integer/uchar_right_parenthesis"
@@ -409,7 +427,8 @@
     <Key
          mozc:keyWidth="13%p" mozc:keyEdgeFlags="left"
          mozc:isModifier="true" mozc:isSticky="true">
-      <KeyState mozc:nextMetaState="alt"
+      <KeyState mozc:contentDescription="@string/cd_key_alt"
+                mozc:nextMetaState="alt"
                 mozc:keyBackground="qwertyFunctionLightOff" >
         <Flick>
           <KeyEntity mozc:sourceId="37"
@@ -417,7 +436,8 @@
                      mozc:keyIcon="@raw/qwerty__function__alt__icon" />
         </Flick>
       </KeyState>
-      <KeyState mozc:metaState="alt" mozc:nextMetaState="unmodified"
+      <KeyState mozc:contentDescription="@string/cd_key_alt_unmodified"
+                mozc:metaState="alt" mozc:nextRemovedMetaStates="alt"
                 mozc:keyBackground="qwertyFunctionLightOn" >
         <Flick>
           <KeyEntity mozc:sourceId="38"
@@ -428,7 +448,7 @@
     </Key>
     <Spacer mozc:horizontalGap="2%p" mozc:stick="right" />
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_exclamation_mark">
         <Flick>
           <KeyEntity mozc:sourceId="39"
                      mozc:keyCode="@integer/uchar_exclamation_mark"
@@ -439,7 +459,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_question_mark">
         <Flick>
           <KeyEntity mozc:sourceId="40"
                      mozc:keyCode="@integer/uchar_question_mark"
@@ -450,7 +470,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_apostrophe">
         <Flick>
           <KeyEntity mozc:sourceId="41"
                      mozc:keyCode="@integer/uchar_apostrophe"
@@ -461,7 +481,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_quotation_mark">
         <Flick>
           <KeyEntity mozc:sourceId="42"
                      mozc:keyCode="@integer/uchar_quotation_mark"
@@ -472,7 +492,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_colon">
         <Flick>
           <KeyEntity mozc:sourceId="43"
                      mozc:keyCode="@integer/uchar_colon"
@@ -483,7 +503,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_semicolon">
         <Flick>
           <KeyEntity mozc:sourceId="44"
                      mozc:keyCode="@integer/uchar_semicolon"
@@ -494,7 +514,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_low_line">
         <Flick>
           <KeyEntity mozc:sourceId="45"
                      mozc:keyCode="@integer/uchar_low_line"
@@ -507,7 +527,7 @@
     <Spacer mozc:horizontalGap="2%p" mozc:stick="left" />
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="13%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_backspace">
         <Flick>
           <KeyEntity mozc:sourceId="46"
                      mozc:keyCode="@integer/key_backspace"
@@ -519,9 +539,9 @@
     </Key>
   </Row>
   <Row>
-    <Key mozc:keyBackground="qwertyFunction"
+    <Key mozc:keyBackground="qwertyFunctionWithThreeDots"
          mozc:keyWidth="26%p" mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_chartype_to_abc">
         <Flick>
           <KeyEntity mozc:sourceId="47"
                      mozc:keyCode="@integer/key_chartype_to_abc"
@@ -534,7 +554,7 @@
     </Key>
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="10%p">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_comma">
         <Flick>
           <KeyEntity mozc:sourceId="48"
                      mozc:keyCode="@integer/uchar_comma"
@@ -544,12 +564,13 @@
         </Flick>
       </KeyState>
     </Key>
-    <Key mozc:keyBackground="qwertyFunction"
+    <Key mozc:keyBackground="qwertyFunctionWithThreeDots"
          mozc:keyWidth="21%p">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_space">
         <Flick>
           <KeyEntity mozc:sourceId="49"
                      mozc:keyCode="@integer/uchar_space"
+                     mozc:longPressKeyCode="@integer/key_ime_picker_dialog"
                      mozc:keyIcon="@raw/qwerty__function__space__icon">
             <PopUp mozc:popUpIcon="@raw/qwerty__function__space__popup" />
           </KeyEntity>
@@ -558,7 +579,7 @@
     </Key>
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="10%p">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_full_stop">
         <Flick>
           <KeyEntity mozc:sourceId="50"
                      mozc:keyCode="@integer/uchar_full_stop"
@@ -571,7 +592,7 @@
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="10%p"
          mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_left">
         <Flick>
           <KeyEntity mozc:sourceId="55"
                      mozc:keyCode="@integer/key_left"
@@ -584,7 +605,7 @@
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="10%p"
          mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_right">
         <Flick>
           <KeyEntity mozc:sourceId="56"
                      mozc:keyCode="@integer/key_right"
@@ -596,7 +617,7 @@
     </Key>
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="13%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_linefeed">
         <Flick>
           <KeyEntity mozc:sourceId="52"
                      mozc:keyCode="@integer/uchar_linefeed"

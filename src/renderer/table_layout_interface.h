@@ -50,7 +50,7 @@ class TableLayoutInterface {
   virtual void EnsureFooterSize(const Size &size_in_pixels) = 0;
   virtual void EnsureHeaderSize(const Size &size_in_pixels) = 0;
   virtual void FreezeLayout() = 0;
-  virtual int IsLayoutFrozen() const = 0;
+  virtual bool IsLayoutFrozen() const = 0;
   virtual Rect GetCellRect(int row, int column) const = 0;
   virtual Size GetTotalSize() const = 0;
   virtual Rect GetHeaderRect() const = 0;

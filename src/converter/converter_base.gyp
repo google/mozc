@@ -83,14 +83,23 @@
       ],
     },
     {
+      'target_name': 'lattice',
+      'type': 'static_library',
+      'sources': [
+        'lattice.cc',
+        'node_allocator.h',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
+    {
       'target_name': 'segments',
       'type': 'static_library',
       'sources': [
         '<(gen_out_mozc_dir)/dictionary/pos_matcher.h',
         'candidate_filter.cc',
-        'lattice.cc',
         'nbest_generator.cc',
-        'node_allocator.h',
         'segments.cc',
       ],
       'dependencies': [
@@ -98,6 +107,7 @@
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction_base.gyp:suggestion_filter',
         '../transliteration/transliteration.gyp:transliteration',
+        'lattice',
       ],
     },
     {

@@ -131,7 +131,9 @@ const char *kScenarioFileList[] = {
   DATA_DIR "b7132535_scenario.txt",
   DATA_DIR "b7321313_scenario.txt",
   DATA_DIR "b7548679_scenario.txt",
+  DATA_DIR "b8690065_scenario.txt",
   DATA_DIR "b8703702_scenario.txt",
+  DATA_DIR "b12751061_scenario.txt",
   DATA_DIR "change_request.txt",
   DATA_DIR "clear_user_prediction.txt",
   DATA_DIR "commit.txt",
@@ -147,12 +149,11 @@ const char *kScenarioFileList[] = {
   DATA_DIR "convert_from_hiragana_to_t13n.txt",
   DATA_DIR "delete_history.txt",
   DATA_DIR "desktop_t13n_candidates.txt",
-#if !defined(OS_MACOSX) && !defined(OS_ANDROID)
-  // "InputModeX" commands are not supported on Mac and Android.
+#if !defined(OS_MACOSX)
+  // "InputModeX" commands are not supported on Mac.
   // Mac: We do not have the way to change the mode indicator from IME.
-  // Android: Input mode change is performed by changing software keyboard.
   DATA_DIR "input_mode.txt",
-#endif
+#endif  // !OS_MACOSX
   DATA_DIR "insert_characters.txt",
   DATA_DIR "mobile_qwerty_transliteration_scenario.txt",
   DATA_DIR "mobile_t13n_candidates.txt",

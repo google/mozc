@@ -31,7 +31,8 @@
 #define MOZC_CONVERTER_GEN_SEGMENTER_BITARRAY_H_
 
 #include <string>
-#include "base/base.h"
+
+#include "base/port.h"
 
 namespace mozc {
 

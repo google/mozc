@@ -35,8 +35,8 @@
 #include <limits>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -768,22 +768,40 @@ bool SessionConverter::CommitSuggestionById(
   return CommitSuggestionInternal(composer, context, consumed_key_size);
 }
 
-void SessionConverter::CommitFirstSegment(const composer::Composer &composer,
-                                          const commands::Context &context,
-                                          size_t *consumed_key_size) {
+void SessionConverter::CommitHeadToFocusedSegments(
+    const composer::Composer &composer,
+    const commands::Context &context,
+    size_t *consumed_key_size) {
+  CommitSegmentsInternal(
+      composer, context, segment_index_ + 1, consumed_key_size);
+}
+
+void SessionConverter::CommitFirstSegment(
+    const composer::Composer &composer,
+    const commands::Context &context,
+    size_t *consumed_key_size) {
+  CommitSegmentsInternal(composer, context, 1, consumed_key_size);
+}
+
+void SessionConverter::CommitSegmentsInternal(
+    const composer::Composer &composer,
+    const commands::Context &context,
+    size_t segments_to_commit,
+    size_t *consumed_key_size) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
+  DCHECK(segments_->conversion_segments_size() >= segments_to_commit);
   ResetResult();
   candidate_list_visible_ = false;
   *consumed_key_size = 0;
 
   // If the number of segments is one, just call Commit.
-  if (segments_->conversion_segments_size() == 1) {
+  if (segments_->conversion_segments_size() == segments_to_commit) {
     Commit(composer, context);
     return;
   }
 
   // Store the first conversion segment to the result.
-  if (!UpdateResult(0, 1, NULL)) {
+  if (!UpdateResult(0, segments_to_commit, NULL)) {
     // If the selected candidate of the first segment has the command
     // attribute, Cancel is performed instead of Commit.
     Cancel();
@@ -791,26 +809,32 @@ void SessionConverter::CommitFirstSegment(const composer::Composer &composer,
     return;
   }
 
-  // Get the first conversion segment and the selected candidate.
-  Segment *first_segment = segments_->mutable_conversion_segment(0);
-  if (first_segment == NULL) {
-    LOG(ERROR) << "There is no segment.";
-    return;
+  vector<size_t> candidate_ids;
+  for (size_t i = 0; i < segments_to_commit; ++i) {
+    // Get the i-th (0 origin) conversion segment and the selected candidate.
+    Segment *segment = segments_->mutable_conversion_segment(i);
+    if (segment == NULL) {
+      LOG(ERROR) << "There is no segment on position " << i;
+      return;
+    }
+
+    // Accumulate the size of i-th segment's key.
+    // The caller will remove corresponding characters from the composer.
+    *consumed_key_size += Util::CharsLen(segment->key());
+
+    // Collect candidate's id for each segment.
+    candidate_ids.push_back(GetCandidateIndexForConverter(i));
   }
+  converter_->CommitSegments(segments_.get(), candidate_ids);
 
-  // Set the size of 1st segment's key.
-  // The caller will remove corresponding characters from the composer.
-  *consumed_key_size = Util::CharsLen(first_segment->key());
+  // Commit the [0, segments_to_commit - 1] conversion segment.
+  CommitUsageStatsWithSegmentsSize(state_, context, segments_to_commit);
 
-  // Adjust the segment_index, since the first segment disappeared.
-  if (segment_index_ > 0) {
-    --segment_index_;
-  }
-
-  // Commit the first conversion segment only.
-  CommitUsageStatsWithSegmentsSize(state_, context, 1);
-  converter_->CommitFirstSegment(segments_.get(),
-                                 candidate_list_->focused_id());
+  // Adjust the segment_index, since the [0, segment_to_commit - 1] segments
+  // disappeared.
+  // Note that segment_index_ is unsigned.
+  segment_index_ = segment_index_ > segments_to_commit
+      ? segment_index_ - segments_to_commit : 0;
   UpdateCandidateList();
 }
 
@@ -1429,6 +1453,11 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
     position += Util::CharsLen(GetSelectedCandidate(i).value);
   }
 
+  // Temporarily added to see if this condition is really satisfied in the
+  // real world or not.
+#ifdef CHANNEL_DEV
+  CHECK_LT(0, segments_->conversion_segments_size());
+#endif  // CHANNEL_DEV
   const Segment &segment = segments_->conversion_segment(segment_index_);
   SessionOutput::FillCandidates(
       segment, *candidate_list_, position, candidates);

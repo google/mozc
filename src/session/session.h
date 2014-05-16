@@ -92,8 +92,6 @@ class Session : public SessionInterface {
   bool EchoBack(mozc::commands::Command *command);
   bool EchoBackAndClearUndoContext(mozc::commands::Command *command);
   bool DoNothing(mozc::commands::Command *command);
-  // Kill itself without any finalization.  It only works on debug builds.
-  bool Abort(mozc::commands::Command *command);
 
   // Tries deleting the focused candidate from the user prediction history. If
   // that candidate, as a key value pair, doesn't exist in the user history,
@@ -314,6 +312,10 @@ class Session : public SessionInterface {
   // Calls SessionConverter::ConmmitFirstSegment() and deletes characters
   // from the composer.
   void CommitFirstSegmentInternal(const commands::Context &context);
+
+  // Calls SessionConverter::ConmmitHeadToFocusedSegments()
+  // and deletes characters from the composer.
+  void CommitHeadToFocusedSegmentsInternal(const commands::Context &context);
 
   // Commits without SessionConverter.
   void CommitCompositionDirectly(commands::Command *command);

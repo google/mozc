@@ -44,6 +44,8 @@ struct TokenInfo;
 // TODO(hidehiko): Use StringPiece.
 class SystemDictionaryCodecInterface {
  public:
+  virtual ~SystemDictionaryCodecInterface() {}
+
   // Get section name functions are expected not to be called so often
 
   // Return section name for key trie
@@ -101,7 +103,6 @@ class SystemDictionaryCodecInterface {
 
  protected:
   SystemDictionaryCodecInterface() {}
-  virtual ~SystemDictionaryCodecInterface() {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SystemDictionaryCodecInterface);

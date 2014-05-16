@@ -105,6 +105,16 @@ class TipEditSession {
   static bool SwitchInputModeAsync(TipTextService *text_service,
                                    uint32 mozc_mode);
 
+  // Begins a sync edit session to retrieve the text from |range|.
+  static bool GetTextSync(TipTextService *text_service,
+                          ITfRange *range,
+                          wstring *text);
+
+  // Begins an async edit session to set |text| to |range|.
+  static bool SetTextAsync(TipTextService *text_service,
+                           const wstring &text,
+                           ITfRange *range);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipEditSession);
 };

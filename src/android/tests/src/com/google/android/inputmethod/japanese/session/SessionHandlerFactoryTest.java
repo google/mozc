@@ -36,7 +36,6 @@ import android.test.suitebuilder.annotation.SmallTest;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 
 /**
  */
@@ -54,7 +53,7 @@ public class SessionHandlerFactoryTest extends InstrumentationTestCase {
     @Override
     public void run() {
       try {
-        Socket socket = serverSocket.accept();
+        serverSocket.accept();
       } catch (IOException e) {
         // Do nothing.
       }

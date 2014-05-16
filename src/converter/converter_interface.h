@@ -152,11 +152,14 @@ class ConverterInterface {
   virtual bool FreeSegmentValue(Segments *segments,
                                 size_t segment_index) const = 0;
 
-  // Commit the first segment and move the candidate
-  // into history segment temporally.
+  // Commit segments of which the range is [0, candidate_index.size()]
+  // and move the candidates into history segment temporally.
   // Session can use this method for PartialCommit.
-  virtual bool CommitFirstSegment(Segments *segments,
-                                  size_t candidate_index) const = 0;
+  // |candidate_index| is a vector containing candidate index.
+  // candidate_index[0] corresponds to the index of the candidate of
+  // 1st segment.
+  virtual bool CommitSegments(Segments *segments,
+                              const vector<size_t> &candidate_index) const = 0;
 
   // Resize segment_index-th segment by offset_length.
   // offset_lenth can be negative.

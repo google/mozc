@@ -29,7 +29,6 @@
 
 #include "engine/engine_factory.h"
 
-#include "base/base.h"
 #include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
 #include "testing/base/public/gunit.h"
