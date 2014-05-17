@@ -216,6 +216,7 @@ void FcitxMozc::reset()
     else {
         FcitxUISetStatusVisable(instance, "mozc-tool", true);
         FcitxUISetStatusVisable(instance, "mozc-composition-mode", true);
+        connection_->UpdatePreeditMethod();
     }
 }
 
@@ -239,13 +240,14 @@ bool FcitxMozc::paging(bool prev)
 // This function is called from SCIM framework when the ic gets focus.
 void FcitxMozc::init()
 {
-    VLOG ( 1 ) << "focus_in";
+    VLOG ( 1 ) << "init";
     boolean flag = true;
     FcitxInstanceSetContext(instance, CONTEXT_DISABLE_AUTOENG, &flag);
     FcitxInstanceSetContext(instance, CONTEXT_DISABLE_QUICKPHRASE, &flag);
     FcitxInstanceSetContext(instance, CONTEXT_IM_KEYBOARD_LAYOUT, "jp");
     FcitxInstanceSetContext(instance, "CONTEXT_DISABLE_AUTO_FIRST_CANDIDATE_HIGHTLIGHT", &flag);
 
+    connection_->UpdatePreeditMethod();
     DrawAll();
 }
 

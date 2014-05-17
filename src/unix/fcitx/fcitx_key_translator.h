@@ -37,7 +37,7 @@
 
 #include <fcitx-config/hotkey.h>
 
-#include "base/base.h"  // for DISALLOW_COPY_AND_ASSIGN.
+#include "base/port.h"
 #include "session/commands.pb.h"
 #include <fcitx/ime.h>
 

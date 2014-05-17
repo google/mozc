@@ -35,7 +35,7 @@
 #include <fcitx-config/hotkey.h>
 #include <fcitx/instance.h>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "session/commands.pb.h"
 #include "unix/fcitx/fcitx_key_event_handler.h"
 
@@ -83,6 +83,7 @@ class MozcConnectionInterface {
                                  mozc::commands::Output *out,
                                  string *out_error) const = 0;
   virtual mozc::client::ClientInterface* GetClient() = 0;
+  virtual void UpdatePreeditMethod() = 0;
 };
 
 class MozcConnection : public MozcConnectionInterface {
@@ -124,6 +125,8 @@ class MozcConnection : public MozcConnectionInterface {
                                  string *out_error) const;
 
   virtual mozc::client::ClientInterface* GetClient();
+
+  virtual void UpdatePreeditMethod();
 
  private:
   friend class MozcConnectionTest;

@@ -34,7 +34,7 @@
 #include <fcitx/instance.h>
 #include <fcitx/module/clipboard/fcitx-clipboard.h>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/logging.h"
 #include "base/util.h"
 

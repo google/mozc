@@ -34,7 +34,7 @@
 #include <fcitx/candidate.h>
 #include <fcitx-config/hotkey.h>
 #include <libintl.h>
-#include "base/base.h"  // for DISALLOW_COPY_AND_ASSIGN.
+#include "base/port.h"
 #include "base/run_level.h"
 #include "session/commands.pb.h"
 #include "client/client_interface.h"

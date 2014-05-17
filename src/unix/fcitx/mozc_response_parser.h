@@ -31,7 +31,7 @@
 #ifndef MOZC_UNIX_FCITX_MOZC_RESPONSE_PARSER_H_
 #define MOZC_UNIX_FCITX_MOZC_RESPONSE_PARSER_H_
 
-#include "base/base.h"  // for DISALLOW_COPY_AND_ASSIGN.
+#include "base/port.h"
 
 namespace mozc
 {

@@ -64,10 +64,8 @@ MozcConnection::MozcConnection(
   client->SetIPCClientFactory(client_factory_.get());
   client_.reset(client);
 
-  mozc::config::Config config;
-  if (client_->EnsureConnection() &&
-      client_->GetConfig(&config) && config.has_preedit_method()) {
-    preedit_method_ = config.preedit_method();
+  if (client_->EnsureConnection()) {
+    UpdatePreeditMethod();
   }
   VLOG(1)
       << "Current preedit method is "
@@ -77,6 +75,16 @@ MozcConnection::MozcConnection(
 MozcConnection::~MozcConnection() {
   client_->SyncData();
   VLOG(1) << "MozcConnection is destroyed";
+}
+
+void MozcConnection::UpdatePreeditMethod() {
+  mozc::config::Config config;
+  if (!client_->GetConfig(&config)) {
+    LOG(ERROR) << "GetConfig failed";
+    return;
+  }
+  preedit_method_ = config.has_preedit_method() ?
+      config.preedit_method() : config::Config::ROMAN;
 }
 
 bool MozcConnection::TrySendKeyEvent(
