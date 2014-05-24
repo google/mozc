@@ -30,10 +30,13 @@
 #ifndef MOZC_UNIX_FCITX_FCITX_MOZC_H_
 #define MOZC_UNIX_FCITX_FCITX_MOZC_H_
 
+#include <memory>
+
 #include <fcitx/instance.h>
 #include <fcitx/candidate.h>
 #include <fcitx-config/hotkey.h>
 #include <libintl.h>
+
 #include "base/port.h"
 #include "base/run_level.h"
 #include "session/commands.pb.h"
@@ -146,11 +149,11 @@ private:
 
     FcitxInstance* instance;
     FcitxInputState* input;
-    const scoped_ptr<MozcConnectionInterface> connection_;
-    const scoped_ptr<MozcResponseParser> parser_;
+    const std::unique_ptr<MozcConnectionInterface> connection_;
+    const std::unique_ptr<MozcResponseParser> parser_;
 
     // Strings and a window currently displayed on FCITX UI.
-    scoped_ptr<const PreeditInfo> preedit_info_;
+    std::unique_ptr<const PreeditInfo> preedit_info_;
     std::string aux_;  // error tooltip, or candidate window title.
     string url_;  // URL to be opened by a browser.
     mozc::commands::CompositionMode composition_mode_;

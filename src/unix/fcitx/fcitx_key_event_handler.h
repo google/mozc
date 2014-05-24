@@ -32,9 +32,9 @@
 #define MOZC_UNIX_FCITX_KEY_EVENT_HANDLER_H_
 
 #include <set>
+#include <memory>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "config/config.pb.h"
 #include "session/commands.pb.h"
 #include "unix/fcitx/fcitx_key_translator.h"
@@ -62,7 +62,7 @@ class KeyEventHandler {
   bool ProcessModifiers(bool is_key_up, uint32 keyval,
                         commands::KeyEvent *key_event);
 
-  scoped_ptr<KeyTranslator> key_translator_;
+  std::unique_ptr<KeyTranslator> key_translator_;
   // Non modifier key is pressed or not after all keys are released.
   bool is_non_modifier_key_pressed_;
   // Currently pressed modifier keys.  It is set of keyval.

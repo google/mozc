@@ -32,6 +32,8 @@
 #define MOZC_UNIX_FCITX_MOZC_CONNECTION_H_
 
 #include <string>
+#include <memory>
+
 #include <fcitx-config/hotkey.h>
 #include <fcitx/instance.h>
 
@@ -133,12 +135,12 @@ class MozcConnection : public MozcConnectionInterface {
   MozcConnection(mozc::client::ServerLauncherInterface *server_launcher,
                  mozc::IPCClientFactoryInterface *client_factory);
 
-  const scoped_ptr<KeyEventHandler> handler_;
+  const std::unique_ptr<KeyEventHandler> handler_;
   mozc::config::Config::PreeditMethod preedit_method_;
   // Keep definition order of client_factory_ and client_.
   // We should delete client_ before deleting client_factory_.
-  scoped_ptr<mozc::IPCClientFactoryInterface> client_factory_;
-  scoped_ptr<mozc::client::ClientInterface> client_;
+  std::unique_ptr<mozc::IPCClientFactoryInterface> client_factory_;
+  std::unique_ptr<mozc::client::ClientInterface> client_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcConnection);
 };
