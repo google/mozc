@@ -28,9 +28,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// workaround
-#define _FCITX_LOG_H_
-
 #include "unix/fcitx/mozc_connection.h"
 
 #include <string>
