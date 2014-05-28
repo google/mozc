@@ -297,14 +297,14 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::BAD_CANDIDATE;
   }
 
-  // don't drop personal names aggressivly.
-  // We have to show personal names even if they are minor enough.
+  // Don't drop personal names aggressivly.
+  // We have to show personal names even if they are too minor.
   // We basically ignores the cost threadshould. Filter candidate
-  // only with StructureCost
+  // only by structure cost.
   int cost_offset = kCostOffset;
   if (candidate->lid == pos_matcher_->GetLastNameId() ||
       candidate->lid == pos_matcher_->GetFirstNameId()) {
-    cost_offset = INT_MAX;
+    cost_offset = INT_MAX - top_cost;
   }
 
   // Filters out candidates with higher cost.
