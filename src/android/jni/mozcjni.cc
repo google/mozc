@@ -84,11 +84,8 @@ void Initialize(
   // First of all, set the user profile directory.
   SystemUtil::SetUserProfileDirectory(user_profile_directory);
 
-  // Initialize Java native callback proxies.
-#ifdef MOZC_USE_LEGACY_ENCRYPTOR
-  JavaEncryptorProxy::SetJavaVM(vm);
-#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 #ifdef MOZC_ENABLE_HTTP_CLIENT
+  // Initialize Java native callback proxy.
   JavaHttpClientProxy::SetJavaVM(vm);
 #endif  // MOZC_ENABLE_HTTP_CLIENT
 
@@ -213,9 +210,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
-#ifdef MOZC_USE_LEGACY_ENCRYPTOR
-  mozc::jni::JavaEncryptorProxy::SetJavaVM(NULL);
-#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 #ifdef MOZC_ENABLE_HTTP_CLIENT
   mozc::jni::JavaHttpClientProxy::SetJavaVM(NULL);
 #endif  // MOZC_ENABLE_HTTP_CLIENT
