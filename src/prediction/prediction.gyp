@@ -55,7 +55,6 @@
         '../rewriter/rewriter.gyp:rewriter',
         '../session/session_base.gyp:request_test_util',
         '../session/session_base.gyp:session_protocol',
-        '../storage/storage.gyp:encrypted_string_storage',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'gen_zero_query_number_data#host',

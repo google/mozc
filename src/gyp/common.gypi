@@ -245,9 +245,6 @@
     # This option is only for Linux.
     'use_libibus%': 0,
 
-    # use the previous implementation of encryptor.
-    'use_legacy_encryptor%': 0,
-
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
 
@@ -373,9 +370,6 @@
           }],
           ['enable_mode_indicator==1', {
             'defines': ['MOZC_ENABLE_MODE_INDICATOR'],
-          }],
-          ['use_legacy_encryptor==1', {
-            'defines': ['MOZC_USE_LEGACY_ENCRYPTOR'],
           }],
         ],
       },

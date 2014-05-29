@@ -41,49 +41,6 @@
 namespace mozc {
 namespace jni {
 
-#ifdef MOZC_USE_LEGACY_ENCRYPTOR
-// Proxy to invoke
-// org.mozc.android.inputmethod.japanese.nativecallback.Encryptor from
-// mozc server.
-// To use this class, it is necessary to set JavaVM instance via SetJavaVM.
-class JavaEncryptorProxy {
- public:
-  static const size_t kBlockSizeInBytes = 16;
-  // (kKeySizeInBits % 8) must be 0.
-  static const size_t kKeySizeInBits = 256;
-
-  // Creates encryption key from the given password and salt.
-  // buf_size is the capacity of buf.
-  // Returns true if the method is finished successfully, and stores the result
-  // into buf. Otherwise returns false.
-  // The size of buf needs to be 256 (or greater) [bytes].
-  static bool DeriveFromPassword(const string &password, const string &salt,
-                                 uint8 *buf, size_t *buf_size);
-
-  // Encrypts the buf's contents and stores back the result into buf.
-  // The size of key must be 256, and the size of iv must be 16 [bytes].
-  // max_buf_size is the capacity of the buf, and buf_size is a pointer
-  // to the current contents size of the buf.
-  // Returns true if the method is completed successfully, and stores the
-  // result to buf, and its size to buf_size.
-  static bool Encrypt(const uint8 *key, const uint8 *iv, size_t max_buf_size,
-                      char *buf, size_t *buf_size);
-
-  // Decrypts the buf's contents and stores back the result into buf.
-  // The size of key must be 256, and the size of iv must be 16 [bytes].
-  // max_buf_size is the capacity of the buf, and buf_size is a pointer
-  // to the current contents size of the buf.
-  // Returns true if the method is completed successfully, and stores the
-  // result to buf, and its size to buf_size.
-  static bool Decrypt(const uint8 *key, const uint8 *iv, size_t max_buf_size,
-                      char *buf, size_t *buf_size);
-
-  static void SetJavaVM(JavaVM *jvm);
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(JavaEncryptorProxy);
-};
-#endif  // MOZC_USE_LEGACY_ENCRYPTOR
-
 class JavaHttpClientProxy {
  public:
   static bool Request(HTTPMethodType type,

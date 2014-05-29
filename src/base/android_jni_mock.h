@@ -41,33 +41,6 @@
 namespace mozc {
 namespace jni {
 
-#ifdef MOZC_USE_LEGACY_ENCRYPTOR
-class MockJavaEncryptor {
- public:
-  MockJavaEncryptor() {
-  }
-  virtual ~MockJavaEncryptor() {
-  }
-
-  // Following methods are interfaces to emulate the behavior of Encryptor
-  // class (in Java). Do nothing by default.
-  virtual jbyteArray DeriveFromPassword(jbyteArray password, jbyteArray salt) {
-    return NULL;
-  }
-
-  virtual jbyteArray Encrypt(jbyteArray data, jbyteArray key, jbyteArray iv) {
-    return NULL;
-  }
-
-  virtual jbyteArray Decrypt(jbyteArray data, jbyteArray key, jbyteArray iv) {
-    return NULL;
-  }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(MockJavaEncryptor);
-};
-#endif  // MOZC_USE_LEGACY_ENCRYPTOR
-
 class MockJavaHttpClient {
  public:
   MockJavaHttpClient() {
@@ -120,14 +93,6 @@ class MockJNIEnv {
   void SetByteArrayRegion(
       jbyteArray array, jsize start, jsize len, const jbyte *buf);
 
-#ifdef MOZC_USE_LEGACY_ENCRYPTOR
-  // Register mocked encryptor. This method takes the ownership of
-  // mock_encryptor instance.
-  void RegisterMockJavaEncryptor(MockJavaEncryptor *mock_encryptor) {
-    mock_encryptor_.reset(mock_encryptor);
-  }
-#endif  // MOZC_USE_LEGACY_ENCRYPTOR
-
   // Register mocked http client. This method takes the ownership of
   // mock_http_client instance.
   void RegisterMockJavaHttpClient(MockJavaHttpClient *mock_http_client) {
@@ -141,15 +106,6 @@ class MockJNIEnv {
  private:
   JNIEnv env_;
   map<jbyteArray, pair<jsize, jbyte*> > byte_array_map_;
-
-#ifdef MOZC_USE_LEGACY_ENCRYPTOR
-  // Encryptor's mock injecting point.
-  scoped_ptr<MockJavaEncryptor> mock_encryptor_;
-  _jclass mock_encryptor_class_;
-  MockJMethodId mock_derive_from_password_;
-  MockJMethodId mock_encrypt_;
-  MockJMethodId mock_decrypt_;
-#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
   // Http client's mock injecting point.
   scoped_ptr<MockJavaHttpClient> mock_http_client_;
