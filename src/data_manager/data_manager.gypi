@@ -251,33 +251,44 @@
           'variables': {
             'input_files%': '<(dictionary_files)',
             'gen_test_dictionary_flag': '<(gen_test_dictionary)',
+            'additional_inputs': [],
+            'additional_actions': [],
+            'conditions': [
+              ['enable_two_pass_build==0', {
+                'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
+                'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
+              }, {  # else
+                # Use the pre-built binariy when 2-pass build is enabled.
+                'generator': '<(mozc_build_tools_dir)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
+              }],
+              ['use_packed_dictionary==1', {
+                'additional_inputs': [
+                  '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
+                ],
+                'additional_actions': [
+                  '--dataset=<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)',
+                ],
+              }],
+            ],
           },
           'inputs': [
             '<@(input_files)',
+            '<@(additional_inputs)',
           ],
           'outputs': [
             '<(gen_out_dir)/embedded_dictionary_data.h',
           ],
           'action': [
             # Use the pre-built version. See comments in mozc.gyp for why.
-            '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
+            '<(generator)',
             '--input=<(input_files)',
             '--make_header',
             '--gen_test_dictionary=<(gen_test_dictionary_flag)',
             '--output=<(gen_out_dir)/embedded_dictionary_data.h',
+            '<@(additional_actions)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/embedded_dictionary_data.h.'),
-          'conditions': [
-            ['use_packed_dictionary==1', {
-              'inputs': [
-                '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
-              ],
-              'action': [
-                '--dataset=<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)',
-              ],
-            }],
-          ],
         },
       ],
     },
@@ -333,6 +344,19 @@
       'target_name': 'gen_separate_dictionary_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'variables': {
+        'additional_inputs%': [],
+        'conditions': [
+          # Use the pre-built binariy when 2-pass build is enabled.
+          ['enable_two_pass_build==0', {
+            'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
+            'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
+          }, {  # else
+            # Use the pre-built binariy when 2-pass build is enabled.
+            'generator': '<(mozc_build_tools_dir)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
+          }],
+        ],
+      },
       'actions': [
         {
           'action_name': 'gen_separate_dictionary_data',
@@ -341,12 +365,13 @@
           },
           'inputs': [
             '<@(input_files)',
+            '<@(additional_inputs)',
           ],
           'outputs': [
             '<(gen_out_dir)/system.dictionary',
           ],
           'action': [
-            '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
+            '<(generator)',
             '--input=<(input_files)',
             '--output=<(gen_out_dir)/system.dictionary',
           ],

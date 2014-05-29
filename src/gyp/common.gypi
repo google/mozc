@@ -34,6 +34,9 @@
 # http://src.chromium.org/viewvc/chrome/trunk/src/build/common.gypi
 {
   'variables': {
+    # Set 1 when using two-pass build
+    'enable_two_pass_build%': 0,
+
 
     # Top directory of third party libraries.
     'third_party_dir': '<(DEPTH)/third_party',
@@ -148,6 +151,7 @@
         ],
       }],
       ['OS=="mac"', {
+        'enable_two_pass_build': 1,
         'compiler_target': 'clang',
         'compiler_target_version_int': 303,  # Clang 3.3 or higher
         'compiler_host': 'clang',

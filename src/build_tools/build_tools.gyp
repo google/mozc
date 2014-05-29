@@ -46,14 +46,40 @@
 # target machine.
 
 {
+  'variables': {
+    'relative_dir': 'build_tools',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+  },
   'targets': [
     {
       'target_name': 'build_tools',
       'type': 'none',
       'toolsets': ['host'],
-      'dependencies': [
-        'primitive_tools/primitive_tools.gyp:primitive_tools',
-        '../dictionary/dictionary.gyp:install_gen_system_dictionary_data_main',
+      'conditions': [
+        ['enable_two_pass_build==1', {
+          'dependencies': [
+            '../protobuf/protobuf.gyp:install_protoc',
+            '../dictionary/dictionary.gyp:install_gen_system_dictionary_data_main',
+          ],
+        }, {  # else
+          'actions': [
+            {
+              'action_name': 'show_message',
+              'inputs': [
+                'build_tools.gyp',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/dummy_output_file',
+              ],
+              'action': [
+                'python',
+                '-c',
+                '"build_tools is deprecated!"',
+              ],
+              'message': 'build_tools is deprecated!',
+            },
+          ],
+        }],
       ],
     },
   ],

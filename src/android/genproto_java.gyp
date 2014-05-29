@@ -56,11 +56,15 @@
     # Android SDK
     'sdk_gen_dir': 'gen',
     'sdk_protobuf_gen_dir': 'protobuf/gen',
+    'wrapper_path': '<(DEPTH)/build_tools/protoc_wrapper.py',
+    'protoc_command': 'protoc<(EXECUTABLE_SUFFIX)',
+    'additional_inputs': ['<(PRODUCT_DIR)/<(protoc_command)'],
     'genproto_java_common': [
-      'python', '../build_tools/protoc_wrapper.py',
+      'python',
+      '<(wrapper_path)',
       '--project_root=<(DEPTH)',
-      '--protoc_command=protoc<(EXECUTABLE_SUFFIX)',
-      '--protoc_dir=<(mozc_build_tools_dir)',
+      '--protoc_command=<(protoc_command)',
+      '--protoc_dir=<(PRODUCT_DIR)',
     ],
   },
   'targets': [
@@ -97,18 +101,24 @@
     {
       'target_name': 'adt_genproto_java_descriptor',
       'type': 'none',
+      'variables': {
+        'proto_files': [
+          '<(protobuf_root)/src/google/protobuf/descriptor.proto',
+        ],
+      },
       'actions': [
         {
           'action_name': 'genproto_descriptor',
           'inputs': [
-            '<(protobuf_root)/src/google/protobuf/descriptor.proto',
+            '<@(proto_files)',
+            '<@(additional_inputs)',
           ],
           'outputs': [
             '<(adt_protobuf_gen_dir)/com/google/protobuf/DescriptorProtos.java',
           ],
           'action': [
             '<@(genproto_java_common)',
-            '--proto=<(_inputs)',
+            '--proto=<(proto_files)',
             '--proto_path=<(protobuf_root)',
             '--java_out=<(DEPTH)/<(relative_dir)/<(adt_protobuf_gen_dir)',
           ],
@@ -128,18 +138,24 @@
     {
       'target_name': 'adt_genproto_java_config',
       'type': 'none',
+      'variables': {
+        'proto_files': [
+          '../config/config.proto',
+        ],
+      },
       'actions': [
         {
           'action_name': 'genproto_config',
           'inputs': [
-            '../config/config.proto',
+            '<@(proto_files)',
+            '<@(additional_inputs)',
           ],
           'outputs': [
             '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoConfig.java',
           ],
           'action': [
             '<@(genproto_java_common)',
-            '--proto=<(_inputs)',
+            '--proto=<(proto_files)',
             '--java_out=<(DEPTH)/<(relative_dir)/<(adt_gen_dir)',
           ],
         },
@@ -158,18 +174,24 @@
     {
       'target_name': 'adt_genproto_java_user_dictionary_storage',
       'type': 'none',
+      'variables': {
+        'proto_files': [
+          '../dictionary/user_dictionary_storage.proto',
+        ],
+      },
       'actions': [
         {
           'action_name': 'genproto_user_dictionary_storage',
           'inputs': [
-            '../dictionary/user_dictionary_storage.proto',
+            '<@(proto_files)',
+            '<@(additional_inputs)',
           ],
           'outputs': [
             '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoUserDictionaryStorage.java',
           ],
           'action': [
             '<@(genproto_java_common)',
-            '--proto=<(_inputs)',
+            '--proto=<(proto_files)',
             '--java_out=<(DEPTH)/<(relative_dir)/<(adt_gen_dir)',
           ],
         },
@@ -189,12 +211,18 @@
     {
       'target_name': 'adt_genproto_java_session',
       'type': 'none',
+      'variables': {
+        'proto_files': [
+          '../session/candidates.proto',
+          '../session/commands.proto',
+        ],
+      },
       'actions': [
         {
           'action_name': 'genproto_session',
           'inputs': [
-            '../session/candidates.proto',
-            '../session/commands.proto',
+            '<@(proto_files)',
+            '<@(additional_inputs)',
           ],
           'outputs': [
             '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoCandidates.java',
@@ -202,7 +230,7 @@
           ],
           'action': [
             '<@(genproto_java_common)',
-            '--proto=<(_inputs)',
+            '--proto=<(proto_files)',
             '--java_out=<(DEPTH)/<(relative_dir)/<(adt_gen_dir)',
           ],
         },
