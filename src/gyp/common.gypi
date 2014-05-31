@@ -225,7 +225,10 @@
 
     # Represents the directory where the source code of protobuf is
     # extracted. This value is ignored when 'use_libprotobuf' is 1.
-    'protobuf_root': '<(additional_third_party_dir)/protobuf',
+    'protobuf_root': '<(third_party_dir)/protobuf',
+
+    # For Android
+    'protobuf_java_root': '<(third_party_dir)/protobuf/java/src/main',
 
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
