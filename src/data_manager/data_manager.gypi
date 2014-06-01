@@ -245,6 +245,13 @@
       'target_name': 'gen_embedded_dictionary_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'conditions': [
+        ['enable_two_pass_build==0', {
+          'dependencies': [
+            '<(DEPTH)/dictionary/dictionary.gyp:gen_system_dictionary_data_main#host',
+          ],
+        }],
+      ],
       'actions': [
         {
           'action_name': 'gen_embedded_dictionary_data_for_<(dataset_tag)',
@@ -344,6 +351,13 @@
       'target_name': 'gen_separate_dictionary_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'conditions': [
+        ['enable_two_pass_build==0', {
+          'dependencies': [
+            '<(DEPTH)/dictionary/dictionary.gyp:gen_system_dictionary_data_main#host',
+          ],
+        }],
+      ],
       'variables': {
         'additional_inputs%': [],
         'conditions': [

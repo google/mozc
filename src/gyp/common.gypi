@@ -151,7 +151,6 @@
         ],
       }],
       ['OS=="mac"', {
-        'enable_two_pass_build': 1,
         'compiler_target': 'clang',
         'compiler_target_version_int': 303,  # Clang 3.3 or higher
         'compiler_host': 'clang',

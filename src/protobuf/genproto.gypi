@@ -47,6 +47,13 @@
       }],
     ],
   },
+  'conditions': [
+    ['use_libprotobuf==0 and enable_two_pass_build==0', {
+      'dependencies': [
+        '<(DEPTH)/protobuf/protobuf.gyp:protoc#host',
+      ],
+    }],
+  ],
   'rules': [
     {
       'rule_name': 'genproto',
