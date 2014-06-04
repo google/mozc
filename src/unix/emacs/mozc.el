@@ -408,7 +408,7 @@ Key code and symbols are renamed so that the helper process understands them."
                  ('kp-9 'numpad9)
                  ('kp-delete 'delete)  ; .
                  ('kp-insert 'insert)  ; 0
-                 ('kp-end 'right)      ; 1
+                 ('kp-end 'end)        ; 1
                  ('kp-down 'down)      ; 2
                  ('kp-next 'pagedown)  ; 3
                  ('kp-left 'left)      ; 4
