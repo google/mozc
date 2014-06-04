@@ -250,8 +250,6 @@ MozcEngine::MozcEngine()
 #ifdef ENABLE_GTK_RENDERER
       gtk_candidate_window_handler_(new GtkCandidateWindowHandler(
           new renderer::RendererClient())),
-#else
-      gtk_candidate_window_handler_(NULL),
 #endif  // ENABLE_GTK_RENDERER
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
       preedit_method_(config::Config::ROMAN) {
