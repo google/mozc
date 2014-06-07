@@ -148,7 +148,6 @@
           'outputs': ['dummy_run_test'],
           'action': [
             'python', 'run_android_test.py',
-            '--android_devices=$(ANDROID_DEVICES)',
             '--android_home=<(android_home)',
             '--run_java_test',
             '--app_package_name=<(app_package_name)',
@@ -725,7 +724,6 @@
           'outputs': ['dummy_run_native_small_test'],
           'action': [
             'python', 'run_android_test.py',
-            '--android_devices=$(ANDROID_DEVICES)',
             '--android_home=<(android_home)',
             '--mozc_connection_data_file=<(connection_data)',
             '--mozc_connection_text_data_file=<(connection_text_data)',

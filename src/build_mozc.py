@@ -1032,7 +1032,7 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
                 'BUILDTYPE=%s' % options.configuration]
   if hasattr(options, 'android_device'):
     # Only for android testing.
-    build_args.append('ANDROID_DEVICES=%s' % options.android_device)
+    os.environ['ANDROID_DEVICES'] = options.android_device
 
   build_args.append('builddir_name=%s' %
                     GetBuildBaseName(options,

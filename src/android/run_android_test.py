@@ -75,7 +75,9 @@ def ParseArgs():
   parser.add_option('--run_java_test', dest='run_java_test', default=False,
                     action='store_true',
                     help='Runs JUnit tests. [JAVA] options are used.')
-  parser.add_option('--android_devices', dest='android_devices', default='',
+  android_devices_default = os.environ.get('ANDROID_DEVICES', '')
+  parser.add_option('--android_devices', dest='android_devices',
+                    default=android_devices_default,
                     help='[JAVA][NATIVE] Comma separated serial numbers '
                     'on which devices the tests run. '
                     'If not specified all the available devices are used.')
