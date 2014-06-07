@@ -46,8 +46,7 @@
         '--toolchain_root=<(nacl_sdk_root)/toolchain/linux_x86_pnacl',
         '--input=<(RULE_INPUT_PATH)',
         '--output_base=<(PRODUCT_DIR)/<(RULE_INPUT_ROOT)',
-        # Strips the binaries in Release build.
-        '$(if $(filter Release,<(CONFIGURATION_NAME)),--strip,)',
+        '--configuration=<(CONFIGURATION_NAME)',
       ],
     },
   ],
