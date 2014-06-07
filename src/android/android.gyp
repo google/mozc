@@ -665,7 +665,7 @@
       'ldflags': [
          # -s: Strip unused symbols
          # --version-script: Remove almost all exportable symbols
-         '-Wl,-s,--version-script,<(relative_dir)/libmozc.map',
+         '-Wl,-s,--version-script,<(abs_depth)/<(relative_dir)/libmozc.map',
       ],
       'conditions': [
         ['branding=="GoogleJapaneseInput"', {
