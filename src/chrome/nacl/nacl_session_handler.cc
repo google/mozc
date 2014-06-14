@@ -352,7 +352,7 @@ class MozcSessionHandlerThread : public Thread {
   //   0x2-: BigDictionary version miss match.
   //   0x-*: Status of the downloader.
   int GetBigDictionaryState() {
-    if (big_dictionary_version_ == Version::GetMozcVersion()) {
+    if (big_dictionary_version_ == Version::GetMozcNaclDictionaryVersion()) {
       return 0;
     }
     int status = 0;
