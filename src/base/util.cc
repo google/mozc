@@ -547,7 +547,7 @@ void Util::StripWhiteSpaces(const string &input, string *output) {
   for (; start < input.size() && isspace(input[start]); ++start) {}
   for (; end > start && isspace(input[end]); --end) {}
 
-  if (end > start) {
+  if (end >= start) {
     output->assign(input.data() + start, end - start + 1);
   }
 }

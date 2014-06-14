@@ -550,6 +550,14 @@ TEST(UtilTest, StripWhiteSpaces) {
     Util::StripWhiteSpaces(input, &output);
     EXPECT_TRUE(output.empty());
   }
+
+  // one character.
+  {
+    const string input = "a";
+    string output;
+    Util::StripWhiteSpaces(input, &output);
+    EXPECT_EQ("a", output);
+  }
 }
 
 TEST(UtilTest, SplitStringToUtf8Chars) {
