@@ -637,9 +637,6 @@ const StringPiece SkipWhiteSpace(StringPiece str) {
   return StringPiece(str, i);
 }
 
-// TODO(yukawa): this should be moved into ports.h
-const uint64 kUInt64Max = 0xFFFFFFFFFFFFFFFFull;
-
 // There is an informative discussion about the overflow detection in
 // "Hacker's Delight" (http://www.hackersdelight.org/basics.pdf)
 //   2-12 'Overflow Detection'
@@ -648,7 +645,7 @@ const uint64 kUInt64Max = 0xFFFFFFFFFFFFFFFFull;
 // return false when an integer overflow happens.
 bool AddAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
   *output = arg1 + arg2;
-  if (arg2 > (kUInt64Max - arg1)) {
+  if (arg2 > (kuint64max - arg1)) {
     // overflow happens
     return false;
   }
@@ -659,7 +656,7 @@ bool AddAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
 // return false when an integer overflow happens.
 bool MultiplyAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
   *output = arg1 * arg2;
-  if (arg1 != 0 && arg2 > (kUInt64Max / arg1)) {
+  if (arg1 != 0 && arg2 > (kuint64max / arg1)) {
     // overflow happens
     return false;
   }
@@ -1000,7 +997,7 @@ bool ReduceNumberLessThan10000(vector<uint64>::const_iterator *begin,
 //   "一十二百" = [1, 10, 2, 100] => error
 bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
                                    uint64 *output) {
-  uint64 last_base = kUInt64Max;
+  uint64 last_base = kuint64max;
   vector<uint64>::const_iterator begin = numbers.begin();
   *output = 0;
   do {
