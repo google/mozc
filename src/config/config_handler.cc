@@ -148,17 +148,14 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
   stored_config_.mutable_general_config()->set_upload_usage_stats(true);
 #endif  // CHANNEL_DEV && OS_ANDROID
 
-  // Enable Unicode emoji conversion in default on specific platforms.
-  // NaCl Mozc or Windows 8 or Mac 10.7(Lion) or later.
-#ifdef __native_client__
+  // Disable Unicode emoji conversion by default on specific platforms.
   bool use_emoji_conversion_default = true;
-#else  // __native_client__
-  bool use_emoji_conversion_default = false;
-  if (SystemUtil::MacOSVersionIsGreaterOrEqual(10, 7, 0) ||
-      SystemUtil::IsWindows8OrLater()) {
-    use_emoji_conversion_default = true;
+  if (!SystemUtil::IsWindows8OrLater()) {
+    use_emoji_conversion_default = false;
   }
-#endif  // __native_client__
+#ifdef OS_ANDROID
+  use_emoji_conversion_default = false;
+#endif
 
   if (use_emoji_conversion_default &&
       !stored_config_.has_use_emoji_conversion()) {
