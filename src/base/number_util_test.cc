@@ -362,15 +362,17 @@ TEST(NumberUtilTest, SafeStrToDouble) {
                                              // of max of double
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("-1.7976931348623158e308", &value));
   EXPECT_EQ(-1.7976931348623158e308, value);
-  // GCC accepts hexadecimal number, but VisualC++ does not.
-#ifndef _MSC_VER
-#ifdef OS_ANDROID
-  // strtod in android OS doesn't accept 0x1234, so skip the following test.
+
+  // We don't strongly assert that a hexadecimal number can be accepted with
+  // Visual C++ and NDK.
+#if defined(_MSC_VER) || defined(OS_ANDROID)
+  if (NumberUtil::SafeStrToDouble("0x1234", &value)) {
+    EXPECT_EQ(static_cast<double>(0x1234), value);
+  }
 #else
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0x1234", &value));
   EXPECT_EQ(static_cast<double>(0x1234), value);
-#endif  // not OS_ANDROID
-#endif
+#endif  // _MSC_VER, or OS_ANDROID, or else.
 
   EXPECT_FALSE(
       NumberUtil::SafeStrToDouble("1.7976931348623159e308",
@@ -379,15 +381,6 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("3e", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble(".", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("", &value));
-#ifdef _MSC_VER
-  EXPECT_FALSE(NumberUtil::SafeStrToDouble("0x1234", &value));
-#endif
-#ifdef OS_ANDROID
-  // We do the same test done above, because;
-  // 1) the tool to exclude ifdef blocks doesn't support 'or' condition, and
-  // 2) it's better to keep the test for _MSC_VER in open source code.
-  EXPECT_FALSE(NumberUtil::SafeStrToDouble("0x1234", &value));
-#endif
 
   // Test for StringPiece input.
   const char *kString = "0.01 3.1415 double";
@@ -420,15 +413,16 @@ TEST(NumberUtilTest, SafeStrToFloat) {
   EXPECT_EQ(0.0, value);
   EXPECT_TRUE(NumberUtil::SafeStrToFloat("0.0", &value));
   EXPECT_EQ(0.0, value);
-  // GCC accepts hexadecimal number, but VisualC++ does not.
-#ifndef _MSC_VER
-#ifdef OS_ANDROID
-  // strtod in android OS doesn't accept 0x1234, so skip the following test.
+  // We don't strongly assert that a hexadecimal number can be accepted with
+  // Visual C++ and NDK.
+#if defined(_MSC_VER) || defined(OS_ANDROID)
+  if (NumberUtil::SafeStrToFloat("0x1234", &value)) {
+    EXPECT_EQ(static_cast<float>(0x1234), value);
+  }
 #else
   EXPECT_TRUE(NumberUtil::SafeStrToFloat("0x1234", &value));
   EXPECT_EQ(static_cast<float>(0x1234), value);
-#endif  // not OS_ANDROID
-#endif
+#endif  // _MSC_VER, or OS_ANDROID, or else.
 
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("3.4028236e38",  // overflow
                                           &value));
@@ -436,15 +430,6 @@ TEST(NumberUtilTest, SafeStrToFloat) {
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("3e", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToFloat(".", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("", &value));
-#ifdef _MSC_VER
-  EXPECT_FALSE(NumberUtil::SafeStrToFloat("0x1234", &value));
-#endif
-#ifdef OS_ANDROID
-  // We do the same test done above, because;
-  // 1) the tool to exclude ifdef blocks doesn't support 'or' condition, and
-  // 2) it's better to keep the test for _MSC_VER in open source code.
-  EXPECT_FALSE(NumberUtil::SafeStrToFloat("0x1234", &value));
-#endif
 
   // Test for StringPiece input.
   const char *kString = "0.01 3.14 float";
