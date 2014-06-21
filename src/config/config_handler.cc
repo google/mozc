@@ -144,12 +144,9 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 #endif  // OS_MACOSX
   }
 
-#ifdef OS_ANDROID
-#ifdef CHANNEL_DEV
-  stored_config_.mutable_general_config()
-      ->set_upload_usage_stats(true);
-#endif  // CHANNEL_DEV
-#endif  // OS_ANDROID
+#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
+  stored_config_.mutable_general_config()->set_upload_usage_stats(true);
+#endif  // CHANNEL_DEV && OS_ANDROID
 
   // Enable Unicode emoji conversion in default on specific platforms.
   // NaCl Mozc or Windows 8 or Mac 10.7(Lion) or later.
