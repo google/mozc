@@ -150,10 +150,11 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 
   // Disable Unicode emoji conversion by default on specific platforms.
   bool use_emoji_conversion_default = true;
+#if defined(OS_WIN)
   if (!SystemUtil::IsWindows8OrLater()) {
     use_emoji_conversion_default = false;
   }
-#ifdef OS_ANDROID
+#elif defined(OS_ANDROID)
   use_emoji_conversion_default = false;
 #endif
 
