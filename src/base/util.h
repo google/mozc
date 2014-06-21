@@ -226,7 +226,11 @@ class Util {
   // block as the input.
   static StringPiece SubStringPiece(StringPiece src,
                                     size_t start, size_t length);
+  // This version extracts the substring to the end.
+  static StringPiece SubStringPiece(StringPiece src, size_t start);
 
+  // Extracts a substring of length |length| starting at |start|.
+  // Note: |start| is the start position in UTF8, not byte position.
   static void SubString(StringPiece src, size_t start, size_t length,
                         string *result);
 

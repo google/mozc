@@ -865,6 +865,28 @@ TEST(UtilTest, SubStringPiece) {
   EXPECT_LE(src.data(), result.data());
 }
 
+TEST(UtilTest, SubStringPiece2) {
+  // "私はGoogleです"
+  const string src =
+      "\xE7\xA7\x81\xE3\x81\xAF\x47\x6F\x6F\x67\x6C\x65"
+      "\xE3\x81\xA7\xE3\x81\x99";
+
+  StringPiece result;
+
+  result = Util::SubStringPiece(src, 0);
+  EXPECT_EQ(src, result);
+
+  result = Util::SubStringPiece(src, 5);
+  // "gleです"
+  EXPECT_EQ("\x67\x6C\x65\xE3\x81\xA7\xE3\x81\x99", result);
+
+  result = Util::SubStringPiece(src, 10);
+  EXPECT_TRUE(result.empty());
+
+  result = Util::SubStringPiece(src, 13);
+  EXPECT_TRUE(result.empty());
+}
+
 TEST(UtilTest, SubString) {
   // "私の名前は中野です"
   const string src = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81"
