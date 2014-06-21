@@ -227,23 +227,14 @@ bool GetSurroundingText(FcitxInstance* instance,
         return false;
     }
 
-    const uint32 selection_start = min(cursor_pos, anchor_pos);
-    const uint32 selection_length = abs(info->relative_selected_length);
-
-    if (selection_start > surrounding_text.length()) {
-        return false;
-    }
-    if (selection_start + selection_length > surrounding_text.length()) {
-        return false;
-    }
-
-    info->preceding_text = surrounding_text.substr(0, selection_start);
-    Util::SubString(surrounding_text,
-                    selection_start,
-                    selection_length,
-                    &info->selection_text);
-    info->following_text = surrounding_text.substr(
-        selection_start + selection_length);
+    const size_t selection_start = min(cursor_pos, anchor_pos);
+    const size_t selection_length = abs(info->relative_selected_length);
+    Util::SubStringPiece(surrounding_text, 0, selection_start)
+       .CopyToString(&info->preceding_text);
+    Util::SubStringPiece(surrounding_text, selection_start, selection_length)
+       .CopyToString(&info->selection_text);
+    Util::SubStringPiece(surrounding_text, selection_start + selection_length)
+       .CopyToString(&info->following_text);
     return true;
 }
 

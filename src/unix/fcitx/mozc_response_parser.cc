@@ -43,11 +43,6 @@
 
 namespace {
 
-// Returns true if the candidate window contains only suggestions.
-bool IsSuggestion(const mozc::commands::Candidates &candidates) {
-    return !candidates.has_focused_index();
-}
-
 // Returns a position that determines a preedit cursor position _AND_ top-left
 // position of a candidate window. Note that we can't set these two positions
 // independently. That's a SCIM's limitation.
