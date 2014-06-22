@@ -234,12 +234,22 @@ bool GetSurroundingText(IBusEngine *engine,
   return true;
 }
 
+std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
+  std::unique_ptr<client::ClientInterface> client(
+      client::ClientFactory::NewClient());
+  // Currently client capability is fixed.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  client->set_client_capability(capability);
+  return client;
+}
+
 }  // namespace
 
 MozcEngine::MozcEngine()
     : last_sync_time_(Util::GetTime()),
       key_event_handler_(new KeyEventHandler),
-      client_(client::ClientFactory::NewClient()),
+      client_(CreateAndConfigureClient()),
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
       selection_monitor_(SelectionMonitorFactory::Create(1024)),
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
@@ -252,10 +262,6 @@ MozcEngine::MozcEngine()
 #endif  // ENABLE_GTK_RENDERER
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
       preedit_method_(config::Config::ROMAN) {
-  // Currently client capability is fixed.
-  commands::Capability capability;
-  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
-  client_->set_client_capability(capability);
 
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
   if (selection_monitor_.get() != NULL) {
