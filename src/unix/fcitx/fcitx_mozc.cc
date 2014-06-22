@@ -133,10 +133,6 @@ FcitxMozc::FcitxMozc ( FcitxInstance* inst,
     InitializeBar();
     InitializeMenu();
     SetCompositionMode( mozc::commands::HIRAGANA );
-
-    commands::Capability capability;
-    capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
-    GetClient()->set_client_capability(capability);
 }
 
 FcitxMozc::~FcitxMozc()

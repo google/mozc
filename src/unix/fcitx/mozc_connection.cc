@@ -48,6 +48,15 @@ namespace fcitx {
 MozcConnectionInterface::~MozcConnectionInterface() {
 }
 
+mozc::client::ClientInterface* CreateAndConfigureClient() {
+  mozc::client::ClientInterface *client = client::ClientFactory::NewClient();
+  // Currently client capability is fixed.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  client->set_client_capability(capability);
+  return client;
+}
+
 MozcConnection::MozcConnection(
     mozc::client::ServerLauncherInterface *server_launcher,
     mozc::IPCClientFactoryInterface *client_factory)
@@ -55,8 +64,7 @@ MozcConnection::MozcConnection(
       preedit_method_(mozc::config::Config::ROMAN),
       client_factory_(client_factory) {
   VLOG(1) << "MozcConnection is created";
-  mozc::client::ClientInterface *client =
-      mozc::client::ClientFactory::NewClient();
+  mozc::client::ClientInterface *client = CreateAndConfigureClient();
   client->SetServerLauncher(server_launcher);
   client->SetIPCClientFactory(client_factory_.get());
   client_.reset(client);
