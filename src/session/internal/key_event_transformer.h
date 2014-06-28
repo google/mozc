@@ -39,16 +39,9 @@
 #include "base/port.h"
 #include "base/singleton.h"
 #include "config/config.pb.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
-namespace commands {
-class KeyEvent;
-}  // namespace commands
-
-namespace config {
-class Config;
-}  // namespace config
-
 namespace session {
 
 class KeyEventTransformer {
