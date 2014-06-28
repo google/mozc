@@ -126,8 +126,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   output.mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(input.DebugString(), output.DebugString());
 
-#ifdef OS_ANDROID
-#ifdef CHANNEL_DEV
+#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
   input.Clear();
   EXPECT_FALSE(input.general_config().has_upload_usage_stats());
   EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
@@ -145,8 +144,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
-#endif  // CHANNEL_DEV
-#endif  // OS_ANDROID
+#endif  // OS_ANDROID && CHANNEL_DEV
 }
 
 TEST_F(ConfigHandlerTest, SetImposedConfig) {
@@ -342,11 +340,9 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
               testcases[i].conversion_character_form);
   }
 
-#ifdef OS_ANDROID
-#ifdef CHANNEL_DEV
+#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
-#endif  // CHANNEL_DEV
-#endif  // OS_ANDROID
+#endif  // OS_ANDROID && CHANNEL_DEV
 }
 }  // namespace mozc
