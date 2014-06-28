@@ -300,12 +300,9 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   AddCharacterFormRule("<>=+-/*", kFullWidth, kLastForm, config);
   AddCharacterFormRule("?!", kFullWidth, kLastForm, config);
 
-#ifdef OS_ANDROID
-#ifdef CHANNEL_DEV
-  config->mutable_general_config()
-      ->set_upload_usage_stats(true);
-#endif  // CHANNEL_DEV
-#endif  // OS_ANDROID
+#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
+  config->mutable_general_config()->set_upload_usage_stats(true);
+#endif  // CHANNEL_DEV && OS_ANDROID
 
   if (SystemUtil::MacOSVersionIsGreaterOrEqual(10, 7, 0) ||
       SystemUtil::IsWindows8OrLater()) {
