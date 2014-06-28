@@ -268,7 +268,8 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
         FileUtil::JoinPath(KDataDir, file_name));
     const string &dest_path = FileUtil::JoinPath(
         SystemUtil::GetUserProfileDirectory(), file_name);
-    ASSERT_TRUE(FileUtil::CopyFile(src_path, dest_path));
+    ASSERT_TRUE(FileUtil::CopyFile(src_path, dest_path))
+        << "Copy failed: " << src_path << " to " << dest_path;
 
     ScopedSetConfigFileName scoped_config_file_name(
         "user://" + string(file_name));

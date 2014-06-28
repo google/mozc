@@ -61,6 +61,19 @@ void AddCharacterFormRule(const char *group,
   rule->set_conversion_character_form(conversion_form);
 }
 
+bool GetPlatformSpecificDefaultEmojiSetting() {
+  // Disable Unicode emoji conversion by default on specific platforms.
+  bool use_emoji_conversion_default = true;
+#if defined(OS_WIN)
+  if (!SystemUtil::IsWindows8OrLater()) {
+    use_emoji_conversion_default = false;
+  }
+#elif defined(OS_ANDROID)
+  use_emoji_conversion_default = false;
+#endif
+  return use_emoji_conversion_default;
+}
+
 class ConfigHandlerImpl {
  public:
   ConfigHandlerImpl() {
@@ -146,17 +159,7 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
   stored_config_.mutable_general_config()->set_upload_usage_stats(true);
 #endif  // CHANNEL_DEV && OS_ANDROID
 
-  // Disable Unicode emoji conversion by default on specific platforms.
-  bool use_emoji_conversion_default = true;
-#if defined(OS_WIN)
-  if (!SystemUtil::IsWindows8OrLater()) {
-    use_emoji_conversion_default = false;
-  }
-#elif defined(OS_ANDROID)
-  use_emoji_conversion_default = false;
-#endif
-
-  if (use_emoji_conversion_default &&
+  if (GetPlatformSpecificDefaultEmojiSetting() &&
       !stored_config_.has_use_emoji_conversion()) {
     stored_config_.set_use_emoji_conversion(true);
   }
@@ -301,8 +304,7 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   config->mutable_general_config()->set_upload_usage_stats(true);
 #endif  // OS_ANDROID && CHANNEL_DEV
 
-  if (SystemUtil::MacOSVersionIsGreaterOrEqual(10, 7, 0) ||
-      SystemUtil::IsWindows8OrLater()) {
+  if (GetPlatformSpecificDefaultEmojiSetting()) {
     config->set_use_emoji_conversion(true);
   }
 }
