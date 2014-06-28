@@ -45,12 +45,10 @@
 #include "config/config.pb.h"
 
 namespace mozc {
-
 namespace config {
-
 namespace {
 
-static const char kFileNamePrefix[] = "user://config";
+const char kFileNamePrefix[] = "user://config";
 
 void AddCharacterFormRule(const char *group,
                           const Config::CharacterForm preedit_form,
@@ -247,7 +245,7 @@ const Config &ConfigHandler::GetConfig() {
   return GetConfigHandlerImpl()->GetConfig();
 }
 
-// return current Config
+// Returns current Config
 bool ConfigHandler::GetConfig(Config *config) {
   return GetConfigHandlerImpl()->GetConfig(config);
 }
@@ -256,17 +254,16 @@ const Config &ConfigHandler::GetStoredConfig() {
   return GetConfigHandlerImpl()->GetStoredConfig();
 }
 
-// return Stored Config
+// Returns Stored Config
 bool ConfigHandler::GetStoredConfig(Config *config) {
   return GetConfigHandlerImpl()->GetStoredConfig(config);
 }
 
-// set config
 bool ConfigHandler::SetConfig(const Config &config) {
   return GetConfigHandlerImpl()->SetConfig(config);
 }
 
-// set overriding config
+// Sets overriding config
 void ConfigHandler::SetImposedConfig(const Config &config) {
   GetConfigHandlerImpl()->SetImposedConfig(config);
 }
@@ -302,7 +299,7 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
 
 #if defined(OS_ANDROID) && defined(CHANNEL_DEV)
   config->mutable_general_config()->set_upload_usage_stats(true);
-#endif  // CHANNEL_DEV && OS_ANDROID
+#endif  // OS_ANDROID && CHANNEL_DEV
 
   if (SystemUtil::MacOSVersionIsGreaterOrEqual(10, 7, 0) ||
       SystemUtil::IsWindows8OrLater()) {
@@ -333,5 +330,4 @@ void ConfigHandler::SetMetaData(Config *config) {
 }
 
 }  // namespace config
-
 }  // namespace mozc
