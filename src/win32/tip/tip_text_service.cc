@@ -64,7 +64,6 @@
 #include "win32/tip/tip_keyevent_handler.h"
 #include "win32/tip/tip_lang_bar.h"
 #include "win32/tip/tip_lang_bar_menu.h"
-#include "win32/tip/tip_linguistic_alternates.h"
 #include "win32/tip/tip_preferred_touch_keyboard.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_reconvert_function.h"
@@ -1049,8 +1048,6 @@ class TipTextServiceImpl
     *unknown = nullptr;
     if (::IsEqualGUID(IID_ITfFnReconversion, iid)) {
       *unknown = TipReconvertFunction::New(this);
-    } else if (::IsEqualGUID(TipLinguisticAlternates::GetIID(), iid)) {
-      *unknown = TipLinguisticAlternates::New(this);
     } else if (::IsEqualGUID(TipSearchCandidateProvider::GetIID(), iid)) {
       *unknown = TipSearchCandidateProvider::New();
     } else if (::IsEqualGUID(TipPreferredTouchKeyboard::GetIID(), iid)) {
