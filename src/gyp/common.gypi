@@ -622,7 +622,7 @@
       '<@(additional_defines)',
     ],
     'include_dirs': [
-      '<(DEPTH)',
+      '<(abs_depth)',
       '<(SHARED_INTERMEDIATE_DIR)',
     ],
     'target_conditions': [
