@@ -3,7 +3,7 @@
 _bldtype=Debug
 pkgdir=
 
-for mofile in out_linux/Debug/obj/gen/unix/fcitx/po/*.mo
+for mofile in out_linux/Debug/gen/unix/fcitx/po/*.mo
 do
     filename=`basename $mofile`
     lang=${filename/.mo/}

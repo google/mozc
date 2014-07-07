@@ -64,6 +64,7 @@
             '<(gen_out_dir)/po/zh_CN.mo',
             '<(gen_out_dir)/po/zh_TW.mo',
             '<(gen_out_dir)/po/ja.mo',
+            '<(gen_out_dir)/po/de.mo',
           ],
           'action': [
             'sh',
