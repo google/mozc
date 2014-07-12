@@ -47,6 +47,7 @@
   'variables': {
     'app_package_name': '<(android_application_id)',
     'relative_dir': 'android',
+    'abs_android_dir': '<(abs_depth)/<(relative_dir)',
     # Actions with an existing input and non-existing output behave like
     # phony rules.  Nothing matters for an input but its existence, so
     # we use 'android.gyp' as a dummy input since it must exist.
@@ -652,7 +653,7 @@
       'sources': [
         'jni/mozcjni.cc',
       ],
-      'product_dir': '<(relative_dir)/libs/<(abi)',
+      'product_dir': '<(abs_android_dir)/libs/<(abi)',
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary.gyp:dictionary',
@@ -665,7 +666,7 @@
       'ldflags': [
          # -s: Strip unused symbols
          # --version-script: Remove almost all exportable symbols
-         '-Wl,-s,--version-script,<(abs_depth)/<(relative_dir)/libmozc.map',
+         '-Wl,-s,--version-script,<(abs_android_dir)/libmozc.map',
       ],
       'conditions': [
         ['branding=="GoogleJapaneseInput"', {
@@ -685,7 +686,7 @@
       'sources': [
         'tests/jni/jnitestingbackdoor.cc',
       ],
-      'product_dir': '<(relative_dir)/tests/libs/<(abi)',
+      'product_dir': '<(abs_android_dir)/tests/libs/<(abi)',
       'dependencies': [
         '../base/base.gyp:base',
         '../net/net.gyp:http_client',
