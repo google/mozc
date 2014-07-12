@@ -46,11 +46,11 @@
       'dependencies': [
         '../../base/base.gyp:crash_report_handler',
         '../../client/client.gyp:client',
-        '../../config/config.gyp:genproto_config',
+        '../../config/config.gyp:config_protocol',
         '../../config/config.gyp:stats_config_util',
         '../../ipc/ipc.gyp:ipc',
         '../../renderer/renderer.gyp:renderer_client',
-        '../../session/session_base.gyp:genproto_session',
+        '../../session/session_base.gyp:session_protocol',
         '../base/win32_base.gyp:ime_base',
         '../base/win32_base.gyp:win32_file_verifier',
         'gen_mozc_broker_resource_header',
