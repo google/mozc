@@ -930,7 +930,9 @@ def GypMain(options, unused_args, _):
     gyp_options.extend(['--generator-output=.'])
 
   # Enable cross-compile
-  os.environ['GYP_CROSSCOMPILE'] = '1'
+  # TODO(yukawa): Enable GYP_CROSSCOMPILE for Windows.
+  if not IsWindows():
+    os.environ['GYP_CROSSCOMPILE'] = '1'
 
   # Run GYP.
   logging.info('Running GYP...')
