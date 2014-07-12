@@ -1,0 +1,32 @@
+# Set up 12-key flick input.
+SEND_KEY	ON
+SET_MOBILE_REQUEST
+RESET_CONTEXT
+UPDATE_MOBILE_KEYBOARD	FLICK_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Type すずき and hit space to convert it.
+SEND_KEYS	ee*a
+EXPECT_PREEDIT	すずき
+SEND_KEY	SPACE
+EXPECT_PREEDIT	鈴木
+
+# The user doesn't select 鈴木 nor hit space key to commit it.  Instead, just
+# continue typing a next character あ.  Then, 鈴木 should be committed
+# automatically.
+SEND_KEYS	1
+EXPECT_PREEDIT	あ
+EXPECT_RESULT	鈴木
+
+# Zero query suggestion should not be triggered for this user behavior.
+# Note: 、 and 。 come from suffix prediction so use them to check if zero
+# query suggestion was triggered or not.
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	、
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	。
+
+# Suggestion for あ is shown.  If a candidate is selected, the exactly same
+# value which the user sees should be committed.  In b/16123009, a different
+# value that comes from zero query suggestion was committed.
+EXPECT_IN_ALL_CANDIDATE_WORDS	亜
+SUBMIT_CANDIDATE_BY_VALUE	亜
+EXPECT_RESULT	亜

@@ -39,6 +39,7 @@
       'variables': {
         'test_data': [
           'auto_partial_suggestion.txt',
+          'b16123009_scenario.txt',
           'b7132535_scenario.txt',
           'b7321313_scenario.txt',
           'b7548679_scenario.txt',

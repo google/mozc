@@ -160,7 +160,10 @@ class Session : public SessionInterface {
   bool ConvertPrevPage(mozc::commands::Command *command);
   bool ConvertCancel(mozc::commands::Command *command);
   bool PredictAndConvert(mozc::commands::Command *command);
+  // Note: Commit() also triggers zero query suggestion.
+  // TODO(team): Rename this method to CommitWithZeroQuerySuggest.
   bool Commit(mozc::commands::Command *command);
+  bool CommitNotTriggeringZeroQuerySuggest(commands::Command *command);
   bool CommitFirstSuggestion(mozc::commands::Command *command);
   // Select a candidate located by input.command.id and commit.
   bool CommitCandidate(mozc::commands::Command *command);
@@ -323,6 +326,8 @@ class Session : public SessionInterface {
   void CommitRawTextDirectly(commands::Command *command);
   void CommitStringDirectly(const string &key, const string &preedit,
                             commands::Command *command);
+  bool CommitInternal(commands::Command *command,
+                      bool trigger_zero_query_suggest);
 
   // Calls SessionConverter::Suggest if the condition is applicable to
   // call it.  True is returned when SessionConverter::Suggest is
