@@ -39,13 +39,13 @@
       'variables': {
         'test_data': [
           'auto_partial_suggestion.txt',
+          'b12751061_scenario.txt',
           'b16123009_scenario.txt',
           'b7132535_scenario.txt',
           'b7321313_scenario.txt',
           'b7548679_scenario.txt',
           'b8690065_scenario.txt',
           'b8703702_scenario.txt',
-          'b12751061_scenario.txt',
           'change_request.txt',
           'clear_user_prediction.txt',
           'commit.txt',
@@ -74,6 +74,7 @@
           'segment_focus.txt',
           'segment_width.txt',
           'twelvekeys_switch_inputmode_scenario.txt',
+          'twelvekeys_toggle_flick_alphabet_scenario.txt',
           'twelvekeys_toggle_hiragana_preedit_scenario.txt',
           'undo.txt',
         ],
