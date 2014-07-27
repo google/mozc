@@ -125,7 +125,7 @@ class UserDictionaryUtil {
       // On Android 2.1, com.android.internal.app.AlertController wrongly checks the message
       // for the availability of button view. So without the dummy message,
       // getButton(BUTTON_POSITIVE) used in onCreate would return null.
-      setButton(DialogInterface.BUTTON_POSITIVE, context.getText(android.R.string.yes),
+      setButton(DialogInterface.BUTTON_POSITIVE, context.getText(android.R.string.ok),
                 Message.obtain());
       setButton(DialogInterface.BUTTON_NEGATIVE, context.getText(android.R.string.cancel),
                 DialogInterface.OnClickListener.class.cast(null));
