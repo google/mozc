@@ -355,12 +355,14 @@ static char *yyTracePrompt = 0;
 ** Outputs:
 ** None.
 */
+/* This function is not used anywhere.
 void ParseTrace(FILE *TraceFILE, char *zTracePrompt){
   yyTraceFILE = TraceFILE;
   yyTracePrompt = zTracePrompt;
   if( yyTraceFILE==0 ) yyTracePrompt = 0;
   else if( yyTracePrompt==0 ) yyTraceFILE = 0;
 }
+*/
 #endif /* NDEBUG */
 
 #ifndef NDEBUG
