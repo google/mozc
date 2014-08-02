@@ -137,6 +137,7 @@
 
 ;;;; Keymap
 
+;;;###autoload
 (defvar mozc-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
@@ -190,6 +191,7 @@ This keymap is needed for `mozc-fall-back-on-default-binding'.")
 ;;;; External interfaces
 
 ;; Mode variables
+;;;###autoload
 (defvar mozc-mode nil
   "Mode variable of function `mozc-mode'.
 Non-nil means function `mozc-mode' is enabled.")
@@ -199,6 +201,7 @@ Non-nil means function `mozc-mode' is enabled.")
   "A list of hooks called by the command `mozc-mode'.")
 
 ;; Mode functions
+;;;###autoload
 (defun mozc-mode (&optional arg)
   "Minor mode to input Japanese text with Mozc.
 Toggle the mode if ARG is not given, or enable/disable the mode
@@ -1777,15 +1780,18 @@ The preedit method is taken from the server side configuration.")
                       (symbol-value keymap-name))))
     (and (hash-table-p keymap) keymap)))
 
+;;;###autoload
 (defun mozc-keymap-make-keymap ()
   "Create a new empty keymap and return it."
   (make-hash-table :size 128 :test #'eq))
 
+;;;###autoload
 (defun mozc-keymap-make-keymap-from-flat-list (list)
   "Create a new keymap and fill it with entries in LIST.
 LIST must be a flat list which contains keys and mapped strings alternately."
   (mozc-keymap-fill-entries-from-flat-list (mozc-keymap-make-keymap) list))
 
+;;;###autoload
 (defun mozc-keymap-fill-entries-from-flat-list (keymap list)
   "Fill KEYMAP with entries in LIST and return KEYMAP.
 KEYMAP must be a key table from keycodes to mapped strings.
@@ -1795,6 +1801,7 @@ LIST must be a flat list which contains keys and mapped strings alternately."
     (mozc-keymap-put-entry keymap (car list) (cadr list))
     (mozc-keymap-fill-entries-from-flat-list keymap (cddr list))))
 
+;;;###autoload
 (defun mozc-keymap-get-entry (keymap keycode &optional default)
   "Return a mapped string if the entry for the keycode exists.
 Otherwise, the default value, which must be a string.
@@ -1805,6 +1812,7 @@ DEFAULT is returned if it's a string and no entry for KEYCODE is found."
                     (gethash keycode keymap default))))
     (and (stringp value) value)))
 
+;;;###autoload
 (defun mozc-keymap-put-entry (keymap keycode mapped-string)
   "Add a new key mapping to a keymap.
 KEYMAP must be a key table from keycodes to mapped strings.
@@ -1815,6 +1823,7 @@ MAPPED-STRING must be a string representing a preedit string to be inserted."
     (puthash keycode mapped-string keymap)
     (cons keycode mapped-string)))
 
+;;;###autoload
 (defun mozc-keymap-remove-entry (keymap keycode)
   "Remove an entry from a keymap.  If no entry for keycode exists, do nothing.
 KEYMAP must be a key table from keycodes to mapped strings.
@@ -1822,6 +1831,7 @@ KEYCODE must be an integer representing a key code to remove."
   (when (hash-table-p keymap)
     (remhash keycode keymap)))
 
+;;;###autoload
 (defvar mozc-keymap-kana-106jp
   (mozc-keymap-make-keymap-from-flat-list
    '(;; 1st row
@@ -1865,6 +1875,7 @@ KEYCODE must be an integer representing a key code to remove."
      ?F "\u308e" ?T "\u30f5" ?* "\u30f6"))
   "Key mapping from key codes to Kana strings based on 106-JP keyboard.")
 
+;;;###autoload
 (defvar mozc-keymap-kana-101us
   (mozc-keymap-make-keymap-from-flat-list
    '(;; 1st row
@@ -1906,6 +1917,7 @@ KEYCODE must be an integer representing a key code to remove."
      ?F "\u308e" ?V "\u3090" ?+ "\u3091" ?T "\u30f5" ?\" "\u30f6"))
   "Key mapping from key codes to Kana strings based on 101-US keyboard.")
 
+;;;###autoload
 (defvar mozc-keymap-kana mozc-keymap-kana-106jp
   "The default key mapping for Kana input method.")
 
