@@ -34,7 +34,7 @@ vars = {
   "gyp_revision": "1957",
   "jsoncpp_revision": "3a0c4fcc82d25d189b8107e07462effbab9f8e1b",
   "protobuf_revision": "488",
-  "wtl_revision": "459",
+  "wtl_revision": "587",
   "zinnia_revision": "16",
   "jsr305_version": "2.0.2",
   "zlib_revision": "198222",
