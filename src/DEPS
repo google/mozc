@@ -32,7 +32,7 @@ vars = {
   "gtest_revision": "692",
   "gmock_revision": "485",
   "gyp_revision": "1957",
-  "jsoncpp_revision": "276",
+  "jsoncpp_revision": "3a0c4fcc82d25d189b8107e07462effbab9f8e1b",
   "protobuf_revision": "462",
   "wtl_revision": "459",
   "zinnia_revision": "16",
@@ -43,7 +43,7 @@ vars = {
 
 deps = {
   "src/third_party/jsoncpp":
-    "http://svn.code.sf.net/p/jsoncpp/code/trunk/jsoncpp@" +
+    "https://github.com/open-source-parsers/jsoncpp.git@" +
     Var("jsoncpp_revision"),
   "src/third_party/gmock":
     "http://googlemock.googlecode.com/svn/trunk@" + Var("gmock_revision"),
