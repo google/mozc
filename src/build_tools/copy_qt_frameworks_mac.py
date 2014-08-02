@@ -69,12 +69,17 @@ def main():
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
 
-  # Copies QtCore
+  # Copies QtCore.  For codesign, Info.plist should be copied to Resources/.
   CopyFiles(['%s/lib/QtCore.framework/Versions/4/QtCore' % qtdir],
            '%s/QtCore.framework/Versions/4/QtCore' % target)
-  # Copies QtGui
+  CopyFiles(['%s/lib/QtCore.framework/Contents/Info.plist' % qtdir],
+            '%s/QtCore.framework/Resources/' % target)
+
+  # Copies QtGui.  For codesign, Info.plist should be copied to Resources/.
   CopyFiles(['%s/lib/QtGui.framework/Versions/4/QtGui' % qtdir],
            '%s/QtGui.framework/Versions/4/QtGui' % target)
+  CopyFiles(['%s/lib/QtGui.framework/Contents/Info.plist' % qtdir],
+            '%s/QtGui.framework/Resources/' % target)
 
   # Copies Resources of QtGui
   CopyFiles(['%s/lib/QtGui.framework/Versions/4/Resources' % qtdir],
