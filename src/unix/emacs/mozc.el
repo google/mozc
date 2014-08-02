@@ -1,6 +1,9 @@
-;; Copyright 2010-2014, Google Inc.
-;; All rights reserved.
-;;
+;;; mozc.el --- minor mode to input Japanese with Mozc
+
+;; Copyright 2008-2014 Google Inc. All Rights Reserved.
+
+;; Keywords: mule, multilingual, input method
+
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are
 ;; met:
@@ -26,8 +29,6 @@
 ;; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-;; Keywords: mule, multilingual, input method
 
 ;;; Commentary:
 
