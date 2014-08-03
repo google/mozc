@@ -64,7 +64,7 @@ deps_os = {
       "http://google-breakpad.googlecode.com/svn/trunk@" +
       Var("breakpad_revision"),
     "src/third_party/wtl/files/include":
-      "http://svn.code.sf.net/p/wtl/code/trunk/wtl/include@" +
+      "http://svn.code.sf.net/p/wtl/code/trunk/wtl/Include@" +
       Var("wtl_revision"),
     "src/third_party/zinnia/v0_04":
       "http://svn.code.sf.net/p/zinnia/code@" +
