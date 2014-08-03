@@ -181,7 +181,7 @@
           'type': 'loadable_module',
           'mac_bundle': 1,
           'sources': [
-            'ActivatePane/ActivatePane.m',
+            'ActivatePane/ActivatePane.mm',
           ],
           'dependencies': [
             'gen_client_info_plist',
@@ -193,7 +193,6 @@
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/ActivatePane/Info.plist',
-            'GCC_C_LANGUAGE_STANDARD': 'c99',
           },
           'link_settings': {
             'libraries': [
@@ -207,7 +206,7 @@
           'type': 'loadable_module',
           'mac_bundle': 1,
           'sources': [
-            'DevConfirmPane/DevConfirmPane.m',
+            'DevConfirmPane/DevConfirmPane.mm',
           ],
           'mac_bundle_resources': [
             'DevConfirmPane/DevConfirmPane.xib',
@@ -216,7 +215,6 @@
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': 'DevConfirmPane/Info.plist',
-            'GCC_C_LANGUAGE_STANDARD': 'c99',
           },
           'link_settings': {
             'libraries': [
