@@ -820,7 +820,6 @@
         ],
         'mac_framework_dirs': [
           '<(mac_dir)/Releases/GoogleBreakpad',
-          '<(DEPTH)/mozc_build_tools/mac',
         ],
         'xcode_settings': {
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
