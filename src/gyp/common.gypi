@@ -812,6 +812,12 @@
         'defines': [
           'OS_MACOSX',
         ],
+        'make_global_settings': [
+          ['CC', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang'],
+          ['CXX', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
+          ['LINK', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
+          ['LDPLUSPLUS', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
+        ],
         'mac_framework_dirs': [
           '<(mac_dir)/Releases/GoogleBreakpad',
           '<(DEPTH)/mozc_build_tools/mac',
@@ -826,8 +832,6 @@
           'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
           'SDKROOT': 'macosx<(mac_sdk)',
           'PYTHONPATH': '<(abs_depth)/',
-          'CC': '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang',
-          'LDPLUSPLUS': '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++',
           'CLANG_WARN_CXX0X_EXTENSIONS': 'NO',
           'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0',
           'WARNING_CFLAGS': [
@@ -835,8 +839,10 @@
             '-Wno-covered-switch-default',
             '-Wno-unnamed-type-template-args',
           ],
+          'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
+          'CLANG_CXX_LIBRARY': 'libc++',
           'OTHER_CPLUSPLUSFLAGS': [
-            '$(inherited)', '-std=gnu++11',
+            '$(inherited)',
           ],
         },
         'link_settings': {
