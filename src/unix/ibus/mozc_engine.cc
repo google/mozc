@@ -262,7 +262,6 @@ MozcEngine::MozcEngine()
 #endif  // ENABLE_GTK_RENDERER
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
       preedit_method_(config::Config::ROMAN) {
-
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
   if (selection_monitor_.get() != NULL) {
     selection_monitor_->StartMonitoring();
