@@ -40,8 +40,10 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	〜	にょろ なみ から ー - ~ きごう より	波ダッシュ		GENERAL
 記号	‖	| || たてぼう たてせん きごう	縦線		SYMBOL
 記号	｜	| たてぼう たてせん きごう	縦線		GENERAL
-句読点	…	。。。 .  ... ・・・  ・ てん きごう あまり さんてん	三点リーダ		SYMBOL OTHER
-句読点	‥	。。 .. ・・  ・ てん など きごう 	二点リーダ		SYMBOL OTHER
+句読点	…	。。。 .  ... ・・・  ・ てん きごう あまり さんてん さんてんりーだ	三点リーダ		SYMBOL OTHER
+句読点	‥	。。 .. ・・  ・ てん など きごう にてんりーだ	二点リーダ		SYMBOL OTHER
+句読点	︙	。。。 . ... ・・・ ・ … : てん きごう さんてん さんてんりーだ	三点リーダ (縦)		SYMBOL OTHER
+句読点	︰	。。 .. ・・ ・ ‥ : てん など きごう にてんりーだ	二点リーダ (縦)		SYMBOL OTHER
 括弧開	‘	ばっくくおーと ばっくくぉーと ' " きごう	左シングル引用符		GENERAL PARENTHESIS
 括弧閉	’	くおーと くおーてーしょん くぉーと くぉーてーしょん ' " きごう	右シングル引用符		GENERAL PARENTHESIS
 括弧開	“	" ' だぶるくおーと だぶるくおーてーしょん くぉーと だぶるくぉーてしょん きごう	左ダブル引用符		PARENTHESIS
@@ -186,7 +188,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	∵	すうがく なぜならば けいさん きごう さんかく てん	なぜならば		SYMBOL
 記号	∫	すうがく いんてぐらる せきぶん けいさん きごう	積分記号		SYMBOL
 記号	∬	すうがく いんてぐらる せきぶん にじゅうせきぶん けいさん きごう	二重積分記号		SYMBOL
-記号	⊕	すうがく ちょくわ えっくすおあ けいさん きごう	直和		SYMBOL
+記号	⊕	すうがく ちょくわ えっくすおあ けいさん + きごう	直和		SYMBOL
 記号	∅	すうがく くうしゅうごう	空集合		SYMBOL		U+2205
 記号	Å	おんぐすとろーむ たんい A きごう	オングストローム		SYMBOL
 記号	‰	ぱーみる  たんい きごう	単位		SYMBOL
