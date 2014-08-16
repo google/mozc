@@ -34,9 +34,11 @@
 
 #include <string>
 
+#include "base/port.h"
+#include "config/config.pb.h"
+
 namespace mozc {
 namespace config {
-class Config;
 
 enum {
   CONFIG_VERSION = 1,
@@ -98,10 +100,11 @@ class ConfigHandler {
   // Utilitiy function to put config meta data
   static void SetMetaData(Config *config);
 
-  // Do not allow instantiation
+  // Get default keymap for each platform.
+  static Config::SessionKeymap GetDefaultKeyMap();
+
  private:
-  ConfigHandler() {}
-  virtual ~ConfigHandler() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ConfigHandler);
 };
 
 // macro for config field

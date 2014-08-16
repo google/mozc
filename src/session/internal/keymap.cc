@@ -97,7 +97,8 @@ bool KeyMapManager::ReloadWithKeymap(
     const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
     if (custom_keymap_table.empty()) {
       LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-      const char *default_keymapfile = GetKeyMapFileName(GetDefaultKeyMap());
+      const char *default_keymapfile = GetKeyMapFileName(
+          config::ConfigHandler::GetDefaultKeyMap());
       return LoadFile(default_keymapfile);
     }
 #ifndef NO_LOGGING
@@ -118,7 +119,8 @@ bool KeyMapManager::ReloadWithKeymap(
     return true;
   }
 
-  const char *default_keymapfile = GetKeyMapFileName(GetDefaultKeyMap());
+  const char *default_keymapfile = GetKeyMapFileName(
+      config::ConfigHandler::GetDefaultKeyMap());
   return LoadFile(default_keymapfile);
 }
 
@@ -141,7 +143,8 @@ const char *KeyMapManager::GetKeyMapFileName(
       // should not appear here.
       LOG(ERROR) << "Keymap type: " << keymap
                  << " appeared at key map initialization.";
-      const config::Config::SessionKeymap default_keymap = GetDefaultKeyMap();
+      const config::Config::SessionKeymap default_keymap =
+          config::ConfigHandler::GetDefaultKeyMap();
       DCHECK(default_keymap == config::Config::ATOK ||
              default_keymap == config::Config::MOBILE ||
              default_keymap == config::Config::MSIME ||
@@ -150,15 +153,6 @@ const char *KeyMapManager::GetKeyMapFileName(
       // should never make loop.
       return GetKeyMapFileName(default_keymap);
   }
-}
-
-// static
-config::Config::SessionKeymap KeyMapManager::GetDefaultKeyMap() {
-#ifdef OS_MACOSX
-  return config::Config::KOTOERI;
-#else  // OS_MACOSX
-  return config::Config::MSIME;
-#endif  // OS_MACOSX
 }
 
 bool KeyMapManager::LoadFile(const char *filename) {

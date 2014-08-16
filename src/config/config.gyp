@@ -35,6 +35,7 @@
     {
       'target_name': 'config_handler',
       'type': 'static_library',
+      'hard_dependency': 1,
       'sources': [
         'config_handler.cc',
       ],
