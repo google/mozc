@@ -549,7 +549,7 @@
             {
               'action_name': 'generate',
               'inputs': [
-                '$(BUILT_PRODUCTS_DIR)/ActivePane.bundle',
+                '$(BUILT_PRODUCTS_DIR)/ActivatePane.bundle',
                 '$(BUILT_PRODUCTS_DIR)/<(branding).app',
                 '$(BUILT_PRODUCTS_DIR)/Uninstall<(branding).app',
                 '<(gen_out_dir)/<(branding).pkgproj',
