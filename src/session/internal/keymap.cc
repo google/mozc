@@ -63,8 +63,7 @@ const bool kInputModeXCommandSupported = false;
 #else
 const bool kInputModeXCommandSupported = true;
 #endif
-
-}  // anonymous namespace
+}  // namespace
 
 KeyMapManager::KeyMapManager()
     : keymap_(config::Config::NONE) {
@@ -368,32 +367,29 @@ void KeyMapManager::RegisterConversionCommand(
 
 void KeyMapManager::InitCommandData() {
   RegisterDirectCommand("IMEOn", DirectInputState::IME_ON);
-  // Support InputMode command only on Windows for now.
-  // TODO(toshiyuki): delete #ifdef when we support them on Mac, and
-  // activate SessionTest.InputModeConsumedForTestSendKey.
-#ifdef OS_WIN
-  RegisterDirectCommand("InputModeHiragana",
-                        DirectInputState::INPUT_MODE_HIRAGANA);
-  RegisterDirectCommand("InputModeFullKatakana",
-                        DirectInputState::INPUT_MODE_FULL_KATAKANA);
-  RegisterDirectCommand("InputModeHalfKatakana",
-                        DirectInputState::INPUT_MODE_HALF_KATAKANA);
-  RegisterDirectCommand("InputModeFullAlphanumeric",
-                        DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC);
-  RegisterDirectCommand("InputModeHalfAlphanumeric",
-                        DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC);
-#else
-  RegisterDirectCommand("InputModeHiragana",
-                        DirectInputState::NONE);
-  RegisterDirectCommand("InputModeFullKatakana",
-                        DirectInputState::NONE);
-  RegisterDirectCommand("InputModeHalfKatakana",
-                        DirectInputState::NONE);
-  RegisterDirectCommand("InputModeFullAlphanumeric",
-                        DirectInputState::NONE);
-  RegisterDirectCommand("InputModeHalfAlphanumeric",
-                        DirectInputState::NONE);
-#endif  // OS_WIN
+  if (kInputModeXCommandSupported) {
+    RegisterDirectCommand("InputModeHiragana",
+                          DirectInputState::INPUT_MODE_HIRAGANA);
+    RegisterDirectCommand("InputModeFullKatakana",
+                          DirectInputState::INPUT_MODE_FULL_KATAKANA);
+    RegisterDirectCommand("InputModeHalfKatakana",
+                          DirectInputState::INPUT_MODE_HALF_KATAKANA);
+    RegisterDirectCommand("InputModeFullAlphanumeric",
+                          DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC);
+    RegisterDirectCommand("InputModeHalfAlphanumeric",
+                          DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC);
+  } else {
+    RegisterDirectCommand("InputModeHiragana",
+                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeFullKatakana",
+                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeHalfKatakana",
+                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeFullAlphanumeric",
+                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeHalfAlphanumeric",
+                          DirectInputState::NONE);
+  }
   RegisterDirectCommand("Reconvert",
                         DirectInputState::RECONVERT);
 
