@@ -303,6 +303,7 @@
           'action_name': 'gen_config_file_stream_data',
           'inputs': [
             '../data/keymap/atok.tsv',
+            '../data/keymap/chromeos.tsv',
             '../data/keymap/kotoeri.tsv',
             '../data/keymap/mobile.tsv',
             '../data/keymap/ms-ime.tsv',

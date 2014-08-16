@@ -114,6 +114,9 @@
   "configSessionKeymapAtok": {
     "message": "ATOK"
   },
+  "configSessionKeymapChromeOs": {
+    "message": "Chrome OS"
+  },
   "configSessionKeymapMsIme": {
     "message": "MS-IME"
   },

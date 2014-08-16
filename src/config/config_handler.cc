@@ -331,6 +331,8 @@ void ConfigHandler::SetMetaData(Config *config) {
 Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
 #if defined(OS_MACOSX)
   return config::Config::KOTOERI;
+#elif defined(__native_client__)  // OS_MACOSX
+  return config::Config::CHROMEOS;
 #else  // OS_MACOSX or __native_client__
   return config::Config::MSIME;
 #endif  // OS_MACOSX or __native_client__

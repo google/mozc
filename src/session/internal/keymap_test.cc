@@ -64,6 +64,10 @@ class KeyMapTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
   }
+
+  bool isInputModeXCommandSupported() const {
+    return KeyMapManager::kInputModeXCommandSupported;
+  }
 };
 
 TEST_F(KeyMapTest, AddRule) {
@@ -272,6 +276,8 @@ TEST_F(KeyMapTest, GetKeyMapFileName) {
                KeyMapManager::GetKeyMapFileName(config::Config::MSIME));
   EXPECT_STREQ("system://kotoeri.tsv",
                KeyMapManager::GetKeyMapFileName(config::Config::KOTOERI));
+  EXPECT_STREQ("system://chromeos.tsv",
+               KeyMapManager::GetKeyMapFileName(config::Config::CHROMEOS));
   EXPECT_STREQ("user://keymap.tsv",
                KeyMapManager::GetKeyMapFileName(config::Config::CUSTOM));
 }
@@ -644,6 +650,32 @@ TEST_F(KeyMapTest, ShortcutKeysWithCapsLock_Issue5627459) {
   // "Ctrl CAPS h" means that Ctrl, Shift and H key are pressed.
   KeyParser::ParseKey("Ctrl CAPS h", &key_event);
   EXPECT_FALSE(manager->GetCommandComposition(key_event, &composition_command));
+}
+
+// InputModeX is not supported on MacOSX.
+TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOs_Issue13947207) {
+  if (!isInputModeXCommandSupported()) {
+    return;
+  }
+
+  KeyMapManager manager;
+  config::Config::SessionKeymap keymap_setting;
+  commands::KeyEvent key_event;
+  ConversionState::Commands conv_command;
+
+  {  // MSIME
+    keymap_setting = config::Config::MSIME;
+    manager.ReloadWithKeymap(keymap_setting);
+    KeyParser::ParseKey("Hiragana", &key_event);
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
+    EXPECT_EQ(ConversionState::INPUT_MODE_HIRAGANA, conv_command);
+  }
+  {  // CHROMEOS
+    keymap_setting = config::Config::CHROMEOS;
+    manager.ReloadWithKeymap(keymap_setting);
+    KeyParser::ParseKey("Hiragana", &key_event);
+    EXPECT_FALSE(manager.GetCommandConversion(key_event, &conv_command));
+  }
 }
 
 }  // namespace keymap

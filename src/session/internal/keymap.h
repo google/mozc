@@ -125,6 +125,8 @@ class KeyMapManager {
   static const char *GetKeyMapFileName(config::Config::SessionKeymap keymap);
 
  private:
+  friend class KeyMapTest;
+
   void InitCommandData();
 
   bool ParseCommandDirect(const string &command_string,
@@ -143,6 +145,8 @@ class KeyMapManager {
                                   CompositionState::Commands command);
   void RegisterConversionCommand(const string &command_string,
                                  ConversionState::Commands command);
+
+  static const bool kInputModeXCommandSupported;
 
   config::Config::SessionKeymap keymap_;
   map<string, DirectInputState::Commands> command_direct_map_;

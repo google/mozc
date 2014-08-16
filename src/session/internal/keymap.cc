@@ -57,13 +57,14 @@ static const char kATOKKeyMapFile[] = "system://atok.tsv";
 static const char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
 static const char kCustomKeyMapFile[] = "user://keymap.tsv";
 static const char kMobileKeyMapFile[] = "system://mobile.tsv";
+static const char kChromeOsKeyMapFile[] = "system://chromeos.tsv";
+}  // namespace
 
 #if defined(OS_MACOSX)
-const bool kInputModeXCommandSupported = false;
+const bool KeyMapManager::kInputModeXCommandSupported = false;
 #else
-const bool kInputModeXCommandSupported = true;
-#endif
-}  // namespace
+const bool KeyMapManager::kInputModeXCommandSupported = true;
+#endif  // OS_MACOSX
 
 KeyMapManager::KeyMapManager()
     : keymap_(config::Config::NONE) {
@@ -136,6 +137,8 @@ const char *KeyMapManager::GetKeyMapFileName(
       return kMSIMEKeyMapFile;
     case config::Config::KOTOERI:
       return kKotoeriKeyMapFile;
+    case config::Config::CHROMEOS:
+      return kChromeOsKeyMapFile;
     case config::Config::CUSTOM:
       return kCustomKeyMapFile;
     case config::Config::NONE:
@@ -149,6 +152,7 @@ const char *KeyMapManager::GetKeyMapFileName(
              default_keymap == config::Config::MOBILE ||
              default_keymap == config::Config::MSIME ||
              default_keymap == config::Config::KOTOERI ||
+             default_keymap == config::Config::CHROMEOS ||
              default_keymap == config::Config::CUSTOM);
       // should never make loop.
       return GetKeyMapFileName(default_keymap);
