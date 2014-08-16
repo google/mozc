@@ -584,7 +584,6 @@ bool RequestInternal(HTTPMethodType type,
 #endif  // defined(HAVE_CURL)
 #else  // defined(MOZC_ENABLE_HTTP_CLIENT)
 // MOZC_ENABLE_HTTP_CLIENT is not defined
-MOZC_COMPILE_MESSAGE("HTTPClient is disabled.");
 bool RequestInternal(HTTPMethodType type,
                      const string &url,
                      const char *post_data,
