@@ -51,12 +51,12 @@
 <context>
     <name>mozc::gui::AboutDialog</name>
     <message>
-        <location filename="about_dialog.cc" line="135"/>
+        <location filename="about_dialog.cc" line="137"/>
         <source>New version is available</source>
         <translation>新しい Mozcがあります</translation>
     </message>
     <message>
-        <location filename="about_dialog.cc" line="146"/>
+        <location filename="about_dialog.cc" line="148"/>
         <source>You are using the latest version</source>
         <translation>最新版の Mozcです</translation>
     </message>
