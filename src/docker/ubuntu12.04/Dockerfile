@@ -63,7 +63,7 @@ RUN cd nacl_sdk && ./naclsdk install pepper_27
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
 # env setup
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10b
 ENV ANDROID_HOME /home/mozc_builder/work/adt-bundle-linux-x86_64-20140321/sdk
 ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_27
 ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}:/home/mozc_builder/work/depot_tools
