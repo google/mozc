@@ -54,7 +54,7 @@ USER mozc_builder
 RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 ## Android SDK/NDK
-RUN curl -L http://dl.google.com/android/ndk/android-ndk32-r10-linux-x86_64.tar.bz2 | tar -xj
+RUN curl -L http://dl.google.com/android/ndk/android-ndk32-r10b-linux-x86_64.tar.bz2 | tar -xj
 RUN curl -LO http://dl.google.com/android/adt/22.6.2/adt-bundle-linux-x86_64-20140321.zip && unzip adt-bundle-linux-x86_64-20140321.zip && rm adt-bundle-linux-x86_64-20140321.zip
 ## NaCl SDK
 RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip
