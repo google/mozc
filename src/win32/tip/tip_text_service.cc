@@ -69,7 +69,6 @@
 #include "win32/tip/tip_reconvert_function.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_resource.h"
-#include "win32/tip/tip_search_candidate_provider.h"
 #include "win32/tip/tip_status.h"
 #include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_handler.h"
@@ -1048,8 +1047,6 @@ class TipTextServiceImpl
     *unknown = nullptr;
     if (::IsEqualGUID(IID_ITfFnReconversion, iid)) {
       *unknown = TipReconvertFunction::New(this);
-    } else if (::IsEqualGUID(TipSearchCandidateProvider::GetIID(), iid)) {
-      *unknown = TipSearchCandidateProvider::New();
     } else if (::IsEqualGUID(TipPreferredTouchKeyboard::GetIID(), iid)) {
       *unknown = TipPreferredTouchKeyboard::New();
     } else {
