@@ -34,4 +34,4 @@
 
 #include "google/protobuf/io/coded_stream.h"
 
-#endif  // MOZC_BASE_PROTOBUF_MESSAGE_H_
+#endif  // MOZC_BASE_PROTOBUF_CODED_STREAM_H_

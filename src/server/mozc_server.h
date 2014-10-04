@@ -52,4 +52,4 @@ class MozcServer {
 }  // namespace server
 }  // namespace mozc
 
-#endif  // IME_MOZC_SERVER_MOZC_SERVER_H_
+#endif  // MOZC_SERVER_MOZC_SERVER_H_

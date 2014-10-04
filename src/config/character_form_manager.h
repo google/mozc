@@ -153,4 +153,4 @@ class CharacterFormManager {
 }  // namespace config
 }  // namespace mozc
 
-#endif  //  MOZC_CONFIG_CHARACTER_FORM_MANAGER_H_
+#endif  // MOZC_CONFIG_CHARACTER_FORM_MANAGER_H_

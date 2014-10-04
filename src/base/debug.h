@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_DEBUG_H
-#define MOZC_DEBUG_H
+#ifndef MOZC_BASE_DEBUG_H_
+#define MOZC_BASE_DEBUG_H_
 
 #include "base/port.h"
 
@@ -48,4 +48,4 @@ class Debug {
 
 }  // namespace mozc
 
-#endif  // MOZC_BASE_WIN_UTIL_H
+#endif  // MOZC_BASE_DEBUG_H_

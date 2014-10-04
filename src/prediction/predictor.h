@@ -125,4 +125,4 @@ class MobilePredictor : public BasePredictor {
 
 }  // namespace mozc
 
-#endif  // MOZC_PREDICTION_INTERFACE_H_
+#endif  // MOZC_PREDICTION_PREDICTOR_H_
