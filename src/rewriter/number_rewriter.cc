@@ -225,21 +225,34 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
                                 const Segment::Candidate &result_cand,
                                 Segment::Candidate *cand) {
   DCHECK(cand);
+  cand->key = base_cand.key;
+  cand->value = result_cand.value;
+  cand->content_key = base_cand.content_key;
+  cand->content_value = result_cand.content_value;
+  cand->consumed_key_size = base_cand.consumed_key_size;
+  cand->cost = base_cand.cost;
   cand->lid = base_cand.lid;
   cand->rid = base_cand.rid;
-  cand->cost = base_cand.cost;
-  cand->value = result_cand.value;
-  cand->content_value = result_cand.content_value;
-  cand->key = base_cand.key;
-  cand->content_key = base_cand.content_key;
   cand->style = result_cand.style;
-  cand->description = result_cand.description;
+
+  if (base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+    // "<部分確定>"
+    cand->description.assign("<\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A>");
+    if (!result_cand.description.empty()) {
+      cand->description.append(1, '\n').append(result_cand.description);
+    }
+  } else {
+    cand->description.assign(result_cand.description);
+  }
+
   // Don't want to have FULL_WIDTH form for Hex/Oct/BIN..etc.
   if (cand->style == NumberUtil::NumberString::NUMBER_HEX ||
       cand->style == NumberUtil::NumberString::NUMBER_OCT ||
       cand->style == NumberUtil::NumberString::NUMBER_BIN) {
     cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   }
+  cand->attributes |=
+      base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
 }
 
 void InsertCandidate(Segment *segment,

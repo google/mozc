@@ -1179,4 +1179,46 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
   EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
 }
 
+TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  // "部分確定"
+  const char kBubun[] = "<\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A>";
+  Segments segments;
+  {
+    Segment *seg = segments.push_back_segment();
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->lid = pos_matcher_->GetNumberId();
+    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->key = "090";
+    candidate->value = "090";
+    candidate->content_key = "090";
+    candidate->content_value = "090";
+    candidate->description = kBubun;
+    candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->consumed_key_size = 3;
+  }
+  {
+    Segment *seg = segments.push_back_segment();
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->key = "-";
+    candidate->value = "-";
+    candidate->content_key = "-";
+    candidate->content_value = "-";
+  }
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+
+  ASSERT_EQ(2, segments.conversion_segments_size());
+  const Segment &seg = segments.conversion_segment(0);
+  ASSERT_LE(2, seg.candidates_size());
+  for (size_t i = 0; i < seg.candidates_size(); ++i) {
+    const Segment::Candidate &candidate = seg.candidate(i);
+    EXPECT_TRUE(Util::StartsWith(candidate.description, kBubun));
+    EXPECT_TRUE(
+        candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+  }
+}
+
 }  // namespace mozc
