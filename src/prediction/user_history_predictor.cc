@@ -965,7 +965,7 @@ bool UserHistoryPredictor::LookupEntry(
     string key = entry->key();
     string value = entry->value();
     const Entry *current_entry = entry;
-    set<uint64> seen;
+    set<uint32> seen;
     seen.insert(EntryFingerprint(*current_entry));
     // Until target entry gets longer than input_key.
     while (key.size() <= input_key.size()) {
