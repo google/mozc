@@ -1641,11 +1641,9 @@ void UserHistoryPredictor::Finish(Segments *segments) {
     const string &last_value =
         segments->history_segment(
             segments->history_segments_size() - 1).candidate(0).value;
-    // Check that value in head element of LRU ends with the candidate value
-    // in history segments.
-    if (last_value.size() <= entry->value().size() &&
-        entry->value().substr(entry->value().size() - last_value.size(),
-                              last_value.size()) == last_value) {
+    // Check if the head value in LRU ends with the candidate value in history
+    // segments.
+    if (Util::EndsWith(entry->value(), last_value)) {
       const Segment::Candidate &candidate =
           segments->conversion_segment(0).candidate(0);
       const string key = entry->key() + candidate.key;
