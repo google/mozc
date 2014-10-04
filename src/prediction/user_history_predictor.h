@@ -207,7 +207,7 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorRevertTest);
   FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorClearTest);
   FRIEND_TEST(UserHistoryPredictorTest,
-              UserHistoryPredictorTailingPunctuation);
+              UserHistoryPredictorTrailingPunctuation);
   FRIEND_TEST(UserHistoryPredictorTest,
               UserHistoryPredictorPreceedingPunctuation);
   FRIEND_TEST(UserHistoryPredictorTest, StartsWithPunctuations);

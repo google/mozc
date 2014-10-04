@@ -1,10 +1,10 @@
 MAJOR=1
 MINOR=15
-BUILD=1877
+BUILD=1878
 REVISION=102
 # ANDROID_VERSION_CODE should be the number of update times.
 # It must at least increase when the build updates.
-ANDROID_VERSION_CODE=1877
+ANDROID_VERSION_CODE=1878
 # NACL_DICTIONARY_VERSION is the target version of the system dictionary to be
 # downloaded by NaCl Mozc.
 NACL_DICTIONARY_VERSION=4

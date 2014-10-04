@@ -938,7 +938,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
   }
 }
 
-TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTailingPunctuation) {
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
   predictor->WaitForSyncer();
   predictor->ClearAllHistory();
@@ -947,11 +947,11 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTailingPunctuation) {
   Segments segments;
 
   // "わたしのなまえはなかのです"
-  MakeSegmentsForConversion
-      ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
-       "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
-       "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7"
-       "\xE3\x81\x99", &segments);
+  MakeSegmentsForConversion(
+      "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
+      "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
+      "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7"
+      "\xE3\x81\x99", &segments);
 
   // "私の名前は中野です"
   AddCandidate(
