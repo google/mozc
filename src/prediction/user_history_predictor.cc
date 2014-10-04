@@ -1737,7 +1737,7 @@ void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
   MakeLearningSegments(*segments, &learning_segments);
 
   string all_key, all_value;
-  set<uint64> seen;
+  set<uint32> seen;
   bool this_was_seen = false;
   const size_t history_segments_size =
       learning_segments.history_segments_size();
