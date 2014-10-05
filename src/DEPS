@@ -32,7 +32,7 @@ vars = {
   "gtest_revision": "692",
   "gmock_revision": "485",
   "gyp_revision": "1987",
-  "jsoncpp_revision": "3a0c4fcc82d25d189b8107e07462effbab9f8e1b",
+  "jsoncpp_revision": "11086dd6a7eba04289944367ca82cea71299ed70",
   "protobuf_revision": "512",
   "wtl_revision": "587",
   "zinnia_revision": "16",
