@@ -35,15 +35,15 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN dpkg --add-architecture i386
 RUN apt-get update
 ## Common packages for linux build environment
-RUN apt-get install -y g++ python pkg-config subversion git curl bzip2 unzip make
+RUN apt install -y g++ python pkg-config subversion git curl bzip2 unzip make
 ## Packages for linux desktop version
-RUN apt-get install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
+RUN apt install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
-RUN apt-get install -y ant openjdk-6-jdk libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386
+RUN apt install -y ant openjdk-6-jdk libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386
 ## Packages for NaCl
-RUN apt-get install -y libc6:i386 libstdc++6:i386
+RUN apt install -y libc6:i386 libstdc++6:i386
 ## For emacsian
-RUN apt-get install -y emacs
+RUN apt install -y emacs
 
 ENV HOME /home/mozc_builder
 RUN useradd --create-home --shell /bin/bash --base-dir /home mozc_builder
