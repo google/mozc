@@ -1626,14 +1626,15 @@ void UserHistoryPredictor::Finish(Segments *segments) {
   // the long sentence user input before.
   // This is a fix for http://b/issue?id=2216838
   if (dic_->Head() != NULL &&
+      dic_->Head()->value.last_access_time() + 5 > last_access_time &&
+      // Check if the current value is a punctuation.
       segments->conversion_segments_size() == 1 &&
-      segments->history_segments_size() > 0 &&
       segments->conversion_segment(0).candidates_size() > 0 &&
+      IsPunctuation(segments->conversion_segment(0).candidate(0).value) &&
+      // Check if the previous value looks like a sentence.
+      segments->history_segments_size() > 0 &&
       segments->history_segment(
-          segments->history_segments_size() - 1).candidates_size() > 0 &&
-      IsPunctuation(
-          segments->conversion_segment(0).candidate(0).value) &&
-      dic_->Head()->value.last_access_time() + 5 > last_access_time) {
+          segments->history_segments_size() - 1).candidates_size() > 0) {
     const Entry *entry = &(dic_->Head()->value);
     DCHECK(entry);
     const string &last_value =
