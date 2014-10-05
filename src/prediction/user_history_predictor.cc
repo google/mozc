@@ -1631,8 +1631,6 @@ void UserHistoryPredictor::Finish(Segments *segments) {
       segments->conversion_segment(0).candidates_size() > 0 &&
       segments->history_segment(
           segments->history_segments_size() - 1).candidates_size() > 0 &&
-      Util::CharsLen(
-          segments->conversion_segment(0).candidate(0).value) == 1 &&
       IsPunctuation(
           segments->conversion_segment(0).candidate(0).value) &&
       dic_->Head()->value.last_access_time() + 5 > last_access_time) {
