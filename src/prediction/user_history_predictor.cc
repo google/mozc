@@ -1772,7 +1772,7 @@ void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
            last_access_time, segments);
   }
 
-  // insert all_key/all_value
+  // Insert all_key/all_value
   if (learning_segments.conversion_segments_size() > 1 &&
       !all_key.empty() && !all_value.empty()) {
     Insert(all_key, all_value, "",
@@ -1780,24 +1780,24 @@ void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
            0, last_access_time, segments);
   }
 
-  // make a link from the right most history_segment to
-  // the left most segment or entire user input.
+  // Make a link from the last history_segment to the first conversion segment
+  // or to the entire user input.
   if (learning_segments.history_segments_size() > 0 &&
       learning_segments.conversion_segments_size() > 0) {
-    Entry *history_entry =
-        dic_->MutableLookupWithoutInsert(
-            LearningSegmentFingerprint(
-                learning_segments.history_segment(
-                    segments->history_segments_size() - 1)));
-
+    const SegmentForLearning &history_segment =
+        learning_segments.history_segment(
+            segments->history_segments_size() - 1);
+    const SegmentForLearning &conversion_segment =
+        learning_segments.conversion_segment(0);
+    Entry *history_entry = dic_->MutableLookupWithoutInsert(
+        LearningSegmentFingerprint(history_segment));
     NextEntry next_entry;
     if (segments->request_type() == Segments::CONVERSION) {
-      next_entry.set_entry_fp(
-          LearningSegmentFingerprint(learning_segments.conversion_segment(0)));
+      next_entry.set_entry_fp(LearningSegmentFingerprint(conversion_segment));
       InsertNextEntry(next_entry, history_entry);
     }
 
-    // entire user input or SUGGESTION
+    // Entire user input or SUGGESTION
     if (segments->request_type() != Segments::CONVERSION ||
         learning_segments.conversion_segments_size() > 1) {
       next_entry.set_entry_fp(Fingerprint(all_key, all_value));
