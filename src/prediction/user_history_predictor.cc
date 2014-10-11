@@ -910,10 +910,10 @@ bool UserHistoryPredictor::LookupEntry(
   const Entry *last_entry = NULL;
 
   // last_access_time of the left-closest content word.
-  uint32 left_last_access_time = 0;
+  uint64 left_last_access_time = 0;
 
   // last_access_time of the left-most content word.
-  uint32 left_most_last_access_time = 0;
+  uint64 left_most_last_access_time = 0;
 
   // Example: [a|B|c|D]
   // a,c: functional word
@@ -1438,7 +1438,7 @@ void UserHistoryPredictor::InsertNextEntry(
     target_next_entry = entry->add_next_entries();
   } else {
     // Otherwise, find the oldest next_entry.
-    uint32 last_access_time = UINT_MAX;
+    uint64 last_access_time = kuint64max;
     for (int i = 0; i < entry->next_entries_size(); ++i) {
       // already has the same id
       if (next_entry.entry_fp() == entry->next_entries(i).entry_fp()) {
@@ -1508,7 +1508,7 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
     return;
   }
 
-  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
+  const uint64 last_access_time = Util::GetTime();
   const uint32 dic_key = Fingerprint("", "", type);
 
   CHECK(dic_.get());
@@ -1530,7 +1530,7 @@ void UserHistoryPredictor::Insert(const string &key,
                                   const string &description,
                                   bool is_suggestion_selected,
                                   uint32 next_fp,
-                                  uint32 last_access_time,
+                                  uint64 last_access_time,
                                   Segments *segments) {
   if (key.empty() || value.empty() ||
       key.size() > kMaxStringLength ||
@@ -1618,7 +1618,7 @@ void UserHistoryPredictor::Finish(Segments *segments) {
   }
 
   const bool is_suggestion = segments->request_type() != Segments::CONVERSION;
-  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
+  const uint64 last_access_time = Util::GetTime();
 
   // If user inputs a punctuation just after some long sentence,
   // we make a new candidate by concatinating the top element in LRU and
@@ -1728,7 +1728,7 @@ void UserHistoryPredictor::MakeLearningSegments(
 }
 
 void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
-                                         uint32 last_access_time,
+                                         uint64 last_access_time,
                                          Segments *segments) {
   SegmentsForLearning learning_segments;
   MakeLearningSegments(*segments, &learning_segments);

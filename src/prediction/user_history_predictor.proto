@@ -49,7 +49,7 @@ message UserHistory {
     // how many times the candidate is selected via conversion
     optional uint32 conversion_freq = 5 [ default = 0 ];
 
-    optional uint32 last_access_time = 4 [ default = 0 ];
+    optional uint64 last_access_time = 4 [ default = 0 ];
 
     // list entries which were input just after this entry.
     repeated NextEntry next_entries = 7;

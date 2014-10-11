@@ -445,7 +445,7 @@ class UserHistoryPredictor : public PredictorInterface {
       EntryPriorityQueue *results) const;
 
   void InsertHistory(bool is_suggestion_selected,
-                     uint32 last_access_time,
+                     uint64 last_access_time,
                      Segments *segments);
 
   // insert |key,value,description| to the internal dictionary database.
@@ -457,7 +457,7 @@ class UserHistoryPredictor : public PredictorInterface {
               const string &description,
               bool is_suggestion_selected,
               uint32 next_fp,
-              uint32 last_access_time,
+              uint64 last_access_time,
               Segments *segments);
 
   // Insert event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
