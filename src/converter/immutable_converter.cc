@@ -351,13 +351,12 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
     Segment::Candidate *new_candidate = segment->add_candidate();
     DCHECK(new_candidate);
 
-    string katakana_value;
-    Util::HiraganaToKatakana(segment->candidate(0).content_key,
-                             &katakana_value);
-
     new_candidate->CopyFrom(*top_candidate);
-    new_candidate->value = katakana_value + top_candidate->functional_value();
-    new_candidate->content_value = katakana_value;
+    Util::HiraganaToKatakana(segment->candidate(0).content_key,
+                             &new_candidate->content_value);
+    Util::ConcatStrings(new_candidate->content_value,
+                        top_candidate->functional_value(),
+                        &new_candidate->value);
     new_candidate->cost = last_candidate->cost + 1;
     new_candidate->wcost = last_candidate->wcost + 1;
     new_candidate->structure_cost = last_candidate->structure_cost + 1;

@@ -136,8 +136,9 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           Segment::Candidate *new_candidate = seg->insert_candidate(i + j + 1);
           DCHECK(new_candidate);
           new_candidate->Init();
-          new_candidate->value = variants[j] +
-              original_candidate->functional_value();
+          Util::ConcatStrings(variants[j],
+                              original_candidate->functional_value(),
+                              &new_candidate->value);
           new_candidate->key = original_candidate->key;
           new_candidate->content_value = variants[j];
           new_candidate->content_key = original_candidate->content_key;

@@ -134,6 +134,7 @@ class Util {
   static void JoinStringPieces(const vector<StringPiece> &str,
                                const char *delm,
                                string *output);
+  static void ConcatStrings(StringPiece s1, StringPiece s2, string *output);
 
   static void AppendStringWithDelimiter(StringPiece delimiter,
                                         StringPiece append_string,
