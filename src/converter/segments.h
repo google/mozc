@@ -34,9 +34,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
+#include "base/string_piece.h"
 #include "converter/lattice.h"
 
 namespace mozc {
@@ -207,12 +209,12 @@ class Segment {
     // Returns functional key.
     // functional_key =
     // key.substr(content_key.size(), key.size() - content_key.size());
-    string functional_key() const;
+    StringPiece functional_key() const;
 
     // Returns functional value.
     // functional_value =
     // value.substr(content_value.size(), value.size() - content_value.size());
-    string functional_value() const;
+    StringPiece functional_value() const;
 
     void CopyFrom(const Candidate &src);
     bool IsValid() const;
