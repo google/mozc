@@ -220,7 +220,7 @@ class Segment {
   };
 
   Segment();
-  virtual ~Segment();
+  ~Segment();
 
   SegmentType segment_type() const;
   void set_segment_type(const SegmentType &segment_type);
