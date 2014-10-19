@@ -107,4 +107,4 @@ class UsageStats {
 };
 }  // namespace usage_stats
 }  // namespace mozc
-#endif  // GOOCLECLIENT_IME_MOZC_USAGE_STATS_USAGE_STATS_H_
+#endif  // MOZC_USAGE_STATS_USAGE_STATS_H_
