@@ -773,81 +773,81 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
 <context>
     <name>mozc::gui::KeyMapEditorDialog</name>
     <message>
-        <location filename="keymap_editor.cc" line="223"/>
+        <location filename="keymap_editor.cc" line="218"/>
         <source>New entry</source>
         <translation>エントリーを追加</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="225"/>
+        <location filename="keymap_editor.cc" line="220"/>
         <source>Remove selected entries</source>
         <translation>選択されたエントリーを削除</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="229"/>
+        <location filename="keymap_editor.cc" line="224"/>
         <source>Import predefined mapping</source>
         <translation>定義済みのキーマップからインポート</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="233"/>
+        <location filename="keymap_editor.cc" line="228"/>
         <source>ATOK</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="234"/>
+        <location filename="keymap_editor.cc" line="229"/>
         <source>MS-IME</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="235"/>
+        <location filename="keymap_editor.cc" line="230"/>
         <source>Kotoeri</source>
         <translation>ことえり</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="239"/>
+        <location filename="keymap_editor.cc" line="234"/>
         <source>Import from file...</source>
         <translation>インポート...</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="241"/>
+        <location filename="keymap_editor.cc" line="236"/>
         <source>Export to file...</source>
         <translation>エクスポート...</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="282"/>
+        <location filename="keymap_editor.cc" line="277"/>
         <source>Mozc keymap editor</source>
         <translation>Mozc キー設定</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="286"/>
+        <location filename="keymap_editor.cc" line="281"/>
         <source>Mode</source>
         <translation>モード</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="286"/>
+        <location filename="keymap_editor.cc" line="281"/>
         <source>Key</source>
         <translation>入力キー</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="286"/>
+        <location filename="keymap_editor.cc" line="281"/>
         <source>Command</source>
         <translation>コマンド</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="371"/>
+        <location filename="keymap_editor.cc" line="370"/>
         <source>Current keymap table is empty. You might want to import a pre-defined keymap table first.</source>
         <translation>有効なキーマップがありません。定義済みのキーマップをインポートするか、有効なキーマップを追加してください。</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="411"/>
+        <location filename="keymap_editor.cc" line="410"/>
         <source>Invalid key:
 %1</source>
         <translation>無効な入力キーです:
 %1</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="430"/>
-        <source>The keymaps for IME ON and Reconversion will be applied after new applications.</source>
-        <translation>IME の有効化と再変換に対するキー設定は、新しいアプリケーションから有効になります。</translation>
+        <location filename="keymap_editor.cc" line="429"/>
+        <source>Changes of keymaps for direct input mode will apply only to applications that are launched after making your modifications.</source>
+        <translation>直接入力モードに対するキーマップの変更は、新しいアプリケーションから有効になります。</translation>
     </message>
     <message>
         <location filename="keymap_editor.cc" line="466"/>

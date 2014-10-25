@@ -70,9 +70,9 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
 
  private:
   string invisible_keymap_table_;
-  // This is used for deciding whether the user has changed the settings for
-  // ime switch or not.
-  set<string> ime_switch_keymap_;
+  // This is used for deciding whether the user has changed the settings that
+  // are valid only for new applications.
+  set<string> direct_mode_commands_;
   scoped_ptr<QAction *[]> actions_;
   scoped_ptr<QAction *[]> import_actions_;
   scoped_ptr<ComboBoxDelegate> status_delegate_;
