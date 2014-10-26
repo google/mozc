@@ -756,6 +756,8 @@ def GypMain(options, unused_args, _):
                       options.android_application_id])
   gyp_options.extend(['-D', 'build_base=%s' %
                       GetBuildBaseName(options, target_platform)])
+  gyp_options.extend(['-D', 'build_short_base=%s' %
+                      GetBuildShortBaseName(options, target_platform)])
 
   disable_unittest_if_not_available = True
   if disable_unittest_if_not_available:
@@ -1346,8 +1348,6 @@ def CleanBuildFilesAndDirectories(options, unused_args):
       directory_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                     '*.xcodeproj')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
-  # Collect stuff in the top-level directory.
-  directory_names.append('mozc_build_tools')
 
   short_basename = GetBuildShortBaseName(options,
                                          GetMozcVersion().GetTargetPlatform())

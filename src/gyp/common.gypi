@@ -208,11 +208,7 @@
       '4996',
     ],
 
-    # We wanted to have this directory under the build output directory
-    # (ex. 'out' for Linux), but there is no variable defined for the top
-    # level source directory, hence we create the directory in the top
-    # level source directory.
-    'mozc_build_tools_dir': '<(abs_depth)/mozc_build_tools/<(OS)',
+    'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',
     'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
     'branding%': 'Mozc',
     # use_qt is 'YES' only if you want to use GUI binaries.
