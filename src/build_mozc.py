@@ -970,7 +970,6 @@ def GypMain(options, unused_args, _):
         GetBuildScriptDirectoryName(), 'build_tools', 'copy_dll_and_symbol.py')
     copy_modes = [
         {'configuration': 'DebugDynamic', 'basenames': 'QtCored4;QtGuid4'},
-        {'configuration': 'OptimizeDynamic', 'basenames': 'QtCore4;QtGui4'},
         {'configuration': 'ReleaseDynamic', 'basenames': 'QtCore4;QtGui4'}]
     for mode in copy_modes:
       copy_commands = [
@@ -1341,7 +1340,7 @@ def CleanBuildFilesAndDirectories(options, unused_args):
                       '*.vcxproj.filters', '*.vcxproj.user', 'gen_*_files.xml']:
         file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                  pattern)))
-      for build_type in ['Debug', 'Optimize', 'Release']:
+      for build_type in ['Debug', 'Release']:
         directory_names.append(os.path.join(gyp_directory_name,
                                             build_type))
     elif IsMac():

@@ -455,7 +455,7 @@
           },
         },
       },
-      'Win_Static_Optimize_CRT_Base': {
+      'Win_Static_Release_CRT_Base': {
         'abstract': 1,
         'msvs_settings': {
           'VCCLCompilerTool': {
@@ -471,7 +471,7 @@
           },
         },
       },
-      'Win_Dynamic_Optimize_CRT_Base': {
+      'Win_Dynamic_Release_CRT_Base': {
         'abstract': 1,
         'msvs_settings': {
           'VCCLCompilerTool': {
@@ -517,11 +517,14 @@
           }],
         ],
       },
-      'Optimize_Base': {
+      'Release_Base': {
         'abstract': 1,
         'defines': [
           'NDEBUG',
           'QT_NO_DEBUG',
+          'NO_LOGGING',
+          'IGNORE_HELP_FLAG',
+          'IGNORE_INVALID_FLAG'
         ],
         'xcode_settings': {
           'DEAD_CODE_STRIPPING': 'YES',  # -Wl,-dead_strip
@@ -545,25 +548,6 @@
             # are built with /O2.  We use the same optimization option between
             # Mozc and Qt just in case warning C4748 is true.
             'Optimization': '<(win_optimization_release)',
-          },
-        },
-        'conditions': [
-          ['OS=="linux"', {
-            'cflags': [
-              '<@(release_extra_cflags)',
-            ],
-          }],
-        ],
-      },
-      'Release_Base': {
-        'abstract': 1,
-        'defines': [
-          'NO_LOGGING',
-          'IGNORE_HELP_FLAG',
-          'IGNORE_INVALID_FLAG'
-        ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
             'WholeProgramOptimization': 'true',
           },
           'VCLibrarianTool': {
@@ -577,6 +561,13 @@
             'AdditionalOptions': ['/PDBALTPATH:%_PDB%'],
           },
         },
+        'conditions': [
+          ['OS=="linux"', {
+            'cflags': [
+              '<@(release_extra_cflags)',
+            ],
+          }],
+        ],
       },
       #
       # Concrete configurations
@@ -584,31 +575,22 @@
       'Debug': {
         'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
       },
-      'Optimize': {
-        'inherit_from': ['Common_Base', 'x86_Base', 'Optimize_Base', 'Win_Static_Optimize_CRT_Base'],
-      },
       'Release': {
-        'inherit_from': ['Optimize', 'Release_Base'],
+        'inherit_from': ['Common_Base', 'x86_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
       },
       'conditions': [
         ['OS=="win"', {
           'DebugDynamic': {
             'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base', 'Win_Dynamic_Debug_CRT_Base'],
           },
-          'OptimizeDynamic': {
-            'inherit_from': ['Common_Base', 'x86_Base', 'Optimize_Base', 'Win_Dynamic_Optimize_CRT_Base'],
-          },
           'ReleaseDynamic': {
-            'inherit_from': ['OptimizeDynamic', 'Release_Base'],
+            'inherit_from': ['Common_Base', 'x86_Base', 'Release_Base', 'Win_Dynamic_Release_CRT_Base'],
           },
           'Debug_x64': {
             'inherit_from': ['Common_Base', 'x64_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
           },
-          'Optimize_x64': {
-            'inherit_from': ['Common_Base', 'x64_Base', 'Optimize_Base', 'Win_Static_Optimize_CRT_Base'],
-          },
           'Release_x64': {
-            'inherit_from': ['Optimize_x64', 'Release_Base'],
+            'inherit_from': ['Common_Base', 'x64_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
           },
         }],
       ],
