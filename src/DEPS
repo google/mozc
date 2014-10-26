@@ -33,7 +33,7 @@ vars = {
   "gmock_revision": "485",
   "gyp_revision": "1987",
   "jsoncpp_revision": "11086dd6a7eba04289944367ca82cea71299ed70",
-  "protobuf_revision": "512",
+  "protobuf_revision": "172019c40bf548908ab09bfd276074c929d48415",
   "wtl_revision": "587",
   "zinnia_revision": "16",
   "jsr305_version": "2.0.2",
@@ -52,7 +52,7 @@ deps = {
   "src/third_party/gyp":
     "http://gyp.googlecode.com/svn/trunk@" + Var("gyp_revision"),
   "src/third_party/protobuf":
-    "http://protobuf.googlecode.com/svn/trunk@" + Var("protobuf_revision"),
+    "https://github.com/google/protobuf.git@" + Var("protobuf_revision"),
   "src/third_party/japanese_usage_dictionary":
     "http://japanese-usage-dictionary.googlecode.com/svn/trunk@" +
     Var("japanese_usage_dictionary_revision"),
