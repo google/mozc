@@ -753,9 +753,9 @@ def GypMain(options, unused_args, _):
   gyp_options.extend(['-D', 'android_stl=%s' % options.android_stl])
   gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
   gyp_options.extend(['-D', 'android_application_id=%s' %
-                       options.android_application_id])
+                      options.android_application_id])
   gyp_options.extend(['-D', 'build_base=%s' %
-                       GetBuildBaseName(options, target_platform)])
+                      GetBuildBaseName(options, target_platform)])
 
   disable_unittest_if_not_available = True
   if disable_unittest_if_not_available:
