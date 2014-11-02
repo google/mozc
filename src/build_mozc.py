@@ -133,6 +133,7 @@ def GetBuildShortBaseName(options, target_platform):
 
 def GetBuildBaseName(options, target_platform):
   build_base = GetBuildShortBaseName(options, target_platform)
+
   # On Linux, seems there is no way to specify the build_base directory
   # inside common.gypi
   if IsWindows() or IsMac():
@@ -145,8 +146,6 @@ def GetGeneratorName(generator):
   """Gets the generator name based on the platform."""
   if generator:
     return generator
-  elif IsWindows():
-    return 'ninja'
   elif IsMac():
     return 'xcode'
   else:
@@ -927,9 +926,9 @@ def GypMain(options, unused_args, _):
 
   # TODO(yukawa): Use ninja on OSX.
   if generator == 'ninja':
+    gyp_options.extend(['--generator-output=.'])
     short_basename = GetBuildShortBaseName(options, target_platform)
     gyp_options.extend(['-G', 'output_dir=%s' % short_basename])
-    gyp_options.extend(['--generator-output=.'])
 
   # Enable cross-compile
   # TODO(yukawa): Enable GYP_CROSSCOMPILE for Windows.
@@ -1018,6 +1017,7 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
     target_names.append(target_name)
 
   ninja = 'ninja'
+
   if hasattr(options, 'android_device'):
     # Only for android testing.
     os.environ['ANDROID_DEVICES'] = options.android_device
@@ -1315,9 +1315,8 @@ def RunTestsMain(options, args, original_directory_name):
   if target_platform == 'Android':
     RunTestsOnAndroid(options, build_options, original_directory_name)
   else:
-    RunTests(GetBuildShortBaseName(options, target_platform),
-             options.configuration, options.test_jobs)
-
+    RunTests(GetBuildBaseName(options, target_platform), options.configuration,
+             options.test_jobs)
 
 def CleanBuildFilesAndDirectories(options, unused_args):
   """Cleans build files and directories."""
@@ -1342,10 +1341,10 @@ def CleanBuildFilesAndDirectories(options, unused_args):
                                                     '*.xcodeproj')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
 
-  short_basename = GetBuildShortBaseName(options,
-                                         GetMozcVersion().GetTargetPlatform())
-  if short_basename:
-    directory_names.append(os.path.join(SRC_DIR, short_basename))
+  target_platform = GetBuildBaseName(options,
+                                     GetMozcVersion().GetTargetPlatform())
+  if target_platform:
+    directory_names.append(target_platform)
 
   if IsLinux():
     # Remove auto-generated files.
