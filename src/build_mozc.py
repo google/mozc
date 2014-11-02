@@ -986,22 +986,16 @@ def GypMain(options, unused_args, _):
 
 def BuildToolsMain(options, unused_args, original_directory_name):
   """The main function for 'build_tools' command."""
+  if not IsWindows():
+    logging.info('build_tools is deprecated on this platform.')
+    return
+
   build_tools_dir = os.path.join(GetRelPath(os.getcwd(),
                                             original_directory_name),
                                  SRC_DIR, 'build_tools')
-  # Build targets in this order.
-  if IsWindows():
-    build_tools_targets = [
-        'out_win/%s:build_tools' % options.configuration,
-    ]
-  else:
-    gyp_files = [
-        os.path.join(build_tools_dir, 'build_tools.gyp')
-    ]
-    build_tools_targets = []
-    for gyp_file in gyp_files:
-      (target, _) = os.path.splitext(os.path.basename(gyp_file))
-      build_tools_targets += ['%s:%s' % (gyp_file, target)]
+  build_tools_targets = [
+      'out_win/%s:build_tools' % options.configuration,
+  ]
 
   for build_tools_target in build_tools_targets:
     BuildMain(options, [build_tools_target], original_directory_name)
