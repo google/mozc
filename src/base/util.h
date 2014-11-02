@@ -408,7 +408,6 @@ class Util {
 
   static void UTF8ToSJIS(const string &input, string *output);
   static void SJISToUTF8(const string &input, string *output);
-  static bool ToUTF8(const char *from, const string &input, string *output);
 
   static void EncodeURI(const string &input, string *output);
   static void DecodeURI(const string &input, string *output);
