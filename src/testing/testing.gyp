@@ -199,12 +199,6 @@
                   'action': ['$(TargetPath)'],
                 },
               }],
-              ['OS=="mac"', {
-                'run_as': {
-                  'working_directory': '${BUILT_PRODUCTS_DIR}',
-                  'action': ['${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}'],
-                },
-              }],
             ],
           }],
         ],
