@@ -1825,7 +1825,6 @@ void UserHistoryPredictor::Revert(Segments *segments) {
   }
 }
 
-// type
 // static
 UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
     const string &lstr, const string &rstr) {

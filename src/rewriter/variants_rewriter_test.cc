@@ -788,4 +788,5 @@ TEST_F(VariantsRewriterTest, Capability) {
   const ConversionRequest request;
   EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
 }
+
 }  // namespace mozc

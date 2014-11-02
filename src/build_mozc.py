@@ -1028,8 +1028,8 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
     # Only for android testing.
     os.environ['ANDROID_DEVICES'] = options.android_device
 
-  short_basename =  GetBuildShortBaseName(options,
-                                          GetMozcVersion().GetTargetPlatform())
+  short_basename = GetBuildShortBaseName(options,
+                                         GetMozcVersion().GetTargetPlatform())
   make_command = ninja
   build_args = ['-j %s' % options.jobs,
                 '-C', '%s/%s' % (short_basename, options.configuration)]

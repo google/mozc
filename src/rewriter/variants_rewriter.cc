@@ -319,7 +319,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   // Meta Candidate
   for (size_t i = 0; i < seg->meta_candidates_size(); ++i) {
     Segment::Candidate *candidate =
-        seg->mutable_candidate(-static_cast<int>(i)-1);
+        seg->mutable_candidate(-static_cast<int>(i) - 1);
     DCHECK(candidate);
     if (candidate->attributes & Segment::Candidate::NO_EXTRA_DESCRIPTION) {
       continue;
