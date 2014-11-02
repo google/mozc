@@ -139,4 +139,4 @@ class RendererClient : public RendererInterface {
 };
 }  // renderer
 }  // mozc
-#endif  // _MOZC_RENDERER_RENDERER_CLIENT_H_
+#endif  // MOZC_RENDERER_RENDERER_CLIENT_H_
