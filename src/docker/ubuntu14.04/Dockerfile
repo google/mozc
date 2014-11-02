@@ -39,7 +39,7 @@ RUN apt install -y g++ python pkg-config subversion git curl bzip2 unzip make
 ## Packages for linux desktop version
 RUN apt install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
-RUN apt install -y ant openjdk-6-jdk libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386
+RUN apt install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless ant libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386
 ## Packages for NaCl
 RUN apt install -y libc6:i386 libstdc++6:i386
 ## For emacsian
@@ -62,7 +62,6 @@ RUN cd nacl_sdk && ./naclsdk install pepper_27
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
 # env setup
-ENV JAVA_HOME /usr/lib/jvm/java-6-openjdk-amd64
 ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10c
 ENV ANDROID_HOME /home/mozc_builder/work/adt-bundle-linux-x86_64-20140321/sdk
 ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_27

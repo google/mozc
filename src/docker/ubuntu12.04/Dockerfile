@@ -38,9 +38,7 @@ RUN apt-get install -y g++ python pkg-config subversion git curl bzip2 unzip mak
 ## Packages for linux desktop version
 RUN apt-get install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
-### Use --no-install-recommends for locked down environment.
-### See https://github.com/dotcloud/docker/issues/963#issuecomment-41173568
-RUN apt-get install -y --no-install-recommends openjdk-6-jdk ant ia32-libs ia32-libs-multiarch
+RUN apt-get install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless ant ia32-libs ia32-libs-multiarch
 ## Packages for NaCl
 RUN apt-get install -y libc6:i386 libstdc++6:i386 libstdc++6-4.4-dev
 ## For emacsian
