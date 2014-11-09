@@ -11,12 +11,12 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	゛	だくてん " てん てんてん きごう	濁点		OTHER
 記号	゜	はんだくてん まる ' てん きごう	半濁点		OTHER
 記号	"	" だぶるくおーと だぶるくおーてーしょん くぉーと だぶるくぉーてしょん きごう	ダブルクオーテーション		GENERAL
-記号	´	' あきゅーと きごう	アキュートアクセント
-記号	'	' あぽすとろふぃ くぉーと きごう	アポストロフィ	GENERAL
+記号	´	あきゅーと きごう '	アキュートアクセント
+記号	'	あぽすとろふぃ くぉーと きごう '	アポストロフィ		GENERAL
 記号	¨	うむらうと とれま きごう	ウムラウト／トレマ
 記号	｀	` ぐらーぶ きごう	グラーブアクセント
 記号	˝	だぶるあきゅーと	ダブルアキュート
-記号	~	ちるだ きごう	チルダ	GENERAL
+記号	~	ちるだ きごう	チルダ		GENERAL
 記号	¯	まくろん きごう	マクロン
 記号	＾	^ きごう	ハット		GENERAL
 記号	￣	~ きごう うえ	オーバライン
@@ -155,10 +155,10 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	☝	うえへ ↑	上向き指差し		SYMBOL
 記号	☟	したへ ↓	下向き指差し		SYMBOL
 記号	〓	げた きごう	げた記号		OTHER
-記号	∈	すうがく しゅうごう  けいさん きごう ふくむ	属する		SYMBOL
-記号	∉	すうがく しゅうごう  けいさん きごう ふくまない	属さない		SYMBOL
-記号	∋	すうがく しゅうごう  けいさん きごう ふくむ	元として含む		SYMBOL
-記号	∌	すうがく しゅうごう  けいさん きごう ふくまない	元として含まない		SYMBOL
+記号	∈	すうがく しゅうごう  けいさん きごう ぞくする ふくむ	属する		SYMBOL
+記号	∉	すうがく しゅうごう  けいさん きごう ぞくさない ふくまない	属さない		SYMBOL
+記号	∋	すうがく しゅうごう  けいさん きごう ぞくする ふくむ	元として含む		SYMBOL
+記号	∌	すうがく しゅうごう  けいさん きごう ぞくさない ふくまない	元として含まない		SYMBOL
 記号	⊆	すうがく  しゅうごう  けいさん きごう	部分集合		SYMBOL
 記号	⊇	すうがく しゅうごう  けいさん きごう	上位集合		SYMBOL
 記号	⊂	すうがく  しゅうごう  けいさん きごう	真部分集合		SYMBOL
@@ -243,6 +243,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 アルファベット	π	ぎりしゃ ぱい	ギリシャ文字	小文字
 アルファベット	ρ	ぎりしゃ ろー	ギリシャ文字	小文字
 アルファベット	σ	ぎりしゃ しぐま	ギリシャ文字	小文字
+アルファベット	ς 	ぎりしゃ しぐま	ギリシャ文字	小文字			U+03C2
 アルファベット	τ	ぎりしゃ たう	ギリシャ文字	小文字
 アルファベット	υ	ぎりしゃ ゆぷしろん いぷしろん うぷしろん	ギリシャ文字	小文字
 アルファベット	φ	ぎりしゃ ふぁい	ギリシャ文字	小文字
@@ -446,7 +447,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 数	ⅹ	きごう ろーま	ローマ数字	小文字	SYMBOL	number rewriter
 記号	∑	すうがく しぐま けいさん	シグマ		SYMBOL
 記号	∟	すうがく ちょっかく	直角		SYMBOL
-記号	∮	すうがく いんてぐらる せきぶん へいろせきぶん けいさん ふぁい けいろせきぶん	閉路積分記号		SYMBOL
+記号	∮	すうがく いんてぐらる せきぶん へいろせきぶん けいさん ふぁい けいろせきぶん しゅうかいせきぶん	閉路積分記号		SYMBOL
+記号	ℵ	あれふ			SYMBOL		U+2135
 数	①	きごう まる1 まるいち	丸数字		SYMBOL	number rewriter
 数	②	きごう まる2 まるに	丸数字		SYMBOL	number rewriter
 数	③	きごう まる3 まるさん	丸数字		SYMBOL	number rewriter
@@ -752,6 +754,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 アルファベット	Æ	a A ae AE にじゅうぼいん ごうじ	二重母音 合字
 アルファベット	æ	a A ae AE にじゅうぼいん ごうじ	二重母音 合字
 アルファベット	ß	s S ss SS ごうじ	合字
+記号	ʬ	ww ばいらびあるぱーかっしぶ			OTHER	機種依存文字	U+02AC
 記号	₠	つうか たんい おうしゅうつうかたんい えきゅー　きゅうゆーろ　えきゅーきごう　きゅうゆーろきごう	通貨記号	エキュー	OTHER	機種依存文字	U+20A0
 記号	₡	つうか たんい ころん ころんきごう	通貨記号	コロン	OTHER	機種依存文字	U+20A1
 記号	₢	つうか たんい くるぜいろ くるぜいろきごう	通貨記号	クルゼイロ	OTHER	機種依存文字	U+20A2
