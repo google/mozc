@@ -29,8 +29,8 @@
 
 vars = {
   "breakpad_revision": "1391",
-  "gtest_revision": "692",
-  "gmock_revision": "485",
+  "gtest_revision": "700",
+  "gmock_revision": "501",
   "gyp_revision": "1987",
   "jsoncpp_revision": "11086dd6a7eba04289944367ca82cea71299ed70",
   "protobuf_revision": "172019c40bf548908ab09bfd276074c929d48415",
