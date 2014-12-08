@@ -38,7 +38,6 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.Mod
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.SpecialKey;
 import org.mozc.android.inputmethod.japanese.testing.MozcPreferenceUtil;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
-import org.mozc.android.inputmethod.japanese.util.KeyEventSourceAccessor;
 import com.google.common.base.Optional;
 
 import android.content.SharedPreferences;
@@ -93,7 +92,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
     {
       KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertEquals(keyEvent.getUnicodeChar(), mozcKeyEvent.getKeyCode());
@@ -104,7 +103,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
     {
       KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SPACE);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertFalse(mozcKeyEvent.hasKeyCode());
@@ -116,7 +115,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
     {
       KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertFalse(mozcKeyEvent.hasKeyCode());
@@ -129,7 +128,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
     {
       KeyEvent keyEvent = new KeyEventMock(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A,
                                            KeyEvent.META_SHIFT_ON, 'A');
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertEquals(keyEvent.getUnicodeChar(), mozcKeyEvent.getKeyCode());
@@ -143,7 +142,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
     {
       KeyEvent keyEvent = new KeyEventMock(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A,
                                            KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON, 0);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertEquals('a', mozcKeyEvent.getKeyCode());
@@ -162,7 +161,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
       KeyEvent keyEvent = new KeyEventMock(
           KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A,
           KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON | KeyEvent.META_CTRL_ON, 0);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertEquals('a', mozcKeyEvent.getKeyCode());
@@ -181,7 +180,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
     {
       KeyEvent keyEvent = new KeyEventMock(
           KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_GRAVE, KeyEvent.META_ALT_ON, 0);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
       assertEquals(Optional.of(CompositionSwitchMode.TOGGLE),
                    keyboardSpecification.getCompositionSwitchMode(keyEvent));
     }
@@ -882,7 +881,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
           return testData.expectKeyCode;
         }
       };
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       if (testData.expectKeyCode == 0 && testData.expectSpecialKey == null) {
@@ -921,7 +920,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
         HardwareKeyboardSpecification.TWELVEKEY;
 
     KeyEvent keyEventA = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A);
-    KeyEventSourceAccessor.setSource(keyEventA, InputDevice.SOURCE_KEYBOARD);
+    keyEventA.setSource(InputDevice.SOURCE_KEYBOARD);
     assertEquals(keyEventA.getUnicodeChar(),
                  keyboardSpecification.getMozcKeyEvent(keyEventA).getKeyCode());
 
@@ -951,7 +950,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
     for (TestData testData : testDataList) {
       KeyEvent keyEvent  = new KeyEvent(KeyEvent.ACTION_DOWN, testData.keyCode);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
       assertEquals(testData.toString(), testData.expectMozcKeyCode,
                    keyboardSpecification.getMozcKeyEvent(keyEvent).getKeyCode());
       KeyEventInterface keyEventInterface = keyboardSpecification.getKeyEventInterface(keyEvent);
@@ -961,7 +960,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
     {
       KeyEvent keyEvent  = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_POUND);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
       assertEquals(SpecialKey.ENTER,
                    keyboardSpecification.getMozcKeyEvent(keyEvent).getSpecialKey());
       KeyEventInterface keyEventInterface = keyboardSpecification.getKeyEventInterface(keyEvent);
@@ -971,7 +970,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
     {
       KeyEvent keyEvent  = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER);
-      KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
       assertEquals(SpecialKey.ENTER,
                    keyboardSpecification.getMozcKeyEvent(keyEvent).getSpecialKey());
       KeyEventInterface keyEventInterface = keyboardSpecification.getKeyEventInterface(keyEvent);
@@ -981,7 +980,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
     // No corresponding entry.
     KeyEvent keyEvent = new KeyEvent(0, 0);
-    KeyEventSourceAccessor.setSource(keyEvent, InputDevice.SOURCE_KEYBOARD);
+    keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
     assertFalse(keyboardSpecification.getCompositionSwitchMode(keyEvent).isPresent());
 
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,

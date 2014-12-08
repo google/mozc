@@ -42,7 +42,6 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchE
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
-import org.mozc.android.inputmethod.japanese.util.KeyEventSourceAccessor;
 import com.google.common.base.Optional;
 
 import android.content.res.Configuration;
@@ -126,7 +125,7 @@ public class KeyEventScenarioTest extends InstrumentationTestCase {
   private void hardwareKeyEvent(int keyCode, int metaState, int scanCode, int source) {
     KeyEvent keyEvent = new KeyEvent(0, 0, 0, keyCode, 0, metaState,
                                      KeyCharacterMap.VIRTUAL_KEYBOARD, scanCode);
-    KeyEventSourceAccessor.setSource(keyEvent, source);
+    keyEvent.setSource(source);
     service.onKeyDownInternal(keyEvent.getKeyCode(), keyEvent,
                               getDefaultDeviceConfiguration());
     service.onKeyUp(keyEvent.getKeyCode(), keyEvent);
@@ -137,7 +136,7 @@ public class KeyEventScenarioTest extends InstrumentationTestCase {
         KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
     KeyEvent[] events = keyCharacterMap.getEvents(text.toCharArray());
     for (KeyEvent event : events) {
-      KeyEventSourceAccessor.setSource(event, InputDevice.SOURCE_KEYBOARD);
+      event.setSource(InputDevice.SOURCE_KEYBOARD);
       switch (event.getAction()) {
         case KeyEvent.ACTION_DOWN:
           service.onKeyDownInternal(event.getKeyCode(), event,
