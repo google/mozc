@@ -168,6 +168,11 @@
               'cflags': [
                 '-Wno-conversion-null',  # coded_stream.cc uses NULL to bool.
                 '-Wno-unused-function',
+                # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
+                # TODO(komatsu): Update the following two lines when we stop
+                # supporting GCC 4.6 or GCC itself.
+                '-Wno-unknown-warning',
+                '-Wno-unused-local-typedefs',  # only GCC 4.8 or later
               ],
             }],
             ['OS=="win"', {
@@ -215,6 +220,11 @@
             ['use_libprotobuf!=1', {
               'cflags': [
                 '-Wno-unused-result',  # protoc has unused result.
+                # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
+                # TODO(komatsu): Update the following two lines when we stop
+                # supporting GCC 4.6 or GCC itself.
+                '-Wno-unknown-warning',
+                '-Wno-unused-local-typedefs',  # only GCC 4.8 or later
               ],
               'sources': ['<@(protoc_sources)'],
             }],
