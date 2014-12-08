@@ -192,9 +192,6 @@
           'defines': [
             'GOOGLE_PROTOBUF_NO_RTTI'
           ],
-          'dependencies': [
-            '../android/android_base.gyp:android_pthread_once',
-          ],
         }],
         ['use_packed_dictionary==1', {
           'dependencies': [

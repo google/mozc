@@ -43,12 +43,5 @@
         'jni/sysconf.cc',
       ],
     },
-    {
-      'target_name': 'android_pthread_once',
-      'type': 'static_library',
-      'sources': [
-        'jni/pthread_once.c',
-      ],
-    },
   ],
 }
