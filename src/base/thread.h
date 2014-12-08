@@ -34,54 +34,6 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 
-// Definition of TLS (Thread Local Storage) keyword.
-#ifndef TLS_KEYWORD
-
-#if defined(OS_WIN) && defined(_MSC_VER)
-// Use VC's keyword on Windows.
-//
-// On Windows XP, thread local has a limitation. Since thread local
-// is now used inside converter and converter is a stand alone program,
-// it's not a issue at this moment.
-//
-// http://msdn.microsoft.com/en-us/library/9w1sdazb.aspx
-// Thread-local variables work for EXEs and DLLs that are statically
-// linked to the main executable (directly or via another DLL) -
-// i.e. the DLL has to load before the main executable code starts
-// running.
-#define TLS_KEYWORD __declspec(thread)
-#define HAVE_TLS 1
-#endif // OS_WIN && _MSC_VER
-
-// Andorid NDK and NaCl don't support TLS.
-#if defined(OS_LINUX) && !defined(OS_ANDROID) && \
-    !defined(__native_client__) && (defined(__GNUC__) || defined(__clang__))
-// GCC and Clang support TLS.
-#define TLS_KEYWORD __thread
-#define HAVE_TLS 1
-#endif  // OS_LINUX && !OS_ANDROID && (__GNUC__ || __clang__)
-
-
-#if defined(OS_MACOSX) && MOZC_GCC_VERSION_GE(4, 5)
-// GCC 4.5 and later can *emulate* TLS on Mac even though it is
-// expensive operation.
-#define TLS_KEYWORD __thread
-#define HAVE_TLS 1
-#endif  // OS_MACOSX && GCC 4.5 and later
-
-#endif  // !TLS_KEYWORD
-
-#ifndef TLS_KEYWORD
-// If TLS is not available, define TLS_KEYWORD as a dummy keyword.
-#define TLS_KEYWORD
-#endif  // !TLS_KEYWORD
-
-// Hereafter, we can use TLS_KEYWORD like a keyword.
-#ifndef TLS_KEYWORD
-#error TLS_KEYWORD should be defined here.
-#endif  // !TLS_KEYWORD
-
-
 namespace mozc {
 
 struct ThreadInternalState;
