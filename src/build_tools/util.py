@@ -99,7 +99,7 @@ def RunOrDie(argv):
 
 def RemoveFile(file_name):
   """Removes the specified file."""
-  if not os.path.isfile(file_name):
+  if not (os.path.isfile(file_name) or os.path.islink(file_name)):
     return  # Do nothing if not exist.
   if IsWindows():
     # Read-only files cannot be deleted on Windows.
