@@ -869,7 +869,7 @@ def GypMain(options, unused_args, _):
   else:
     gyp_options.extend(['-D', 'use_dynamically_linked_qt=0'])
 
-  if options.use_zinnia:
+  if options.use_zinnia and target_platform not in ['Android', 'NaCl']:
     gyp_options.extend(['-D', 'use_zinnia=YES'])
   else:
     gyp_options.extend(['-D', 'use_zinnia=NO'])
