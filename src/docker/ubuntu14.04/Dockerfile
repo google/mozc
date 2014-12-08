@@ -53,7 +53,7 @@ USER mozc_builder
 RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 ## Android SDK/NDK
-RUN curl -L http://dl.google.com/android/ndk/android-ndk-r10c-linux-x86_64.bin -O && chmod u+x android-ndk-r10c-linux-x86_64.bin && ./android-ndk-r10c-linux-x86_64.bin && rm android-ndk-r10c-linux-x86_64.bin
+RUN curl -L http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin -O && chmod u+x android-ndk-r10d-linux-x86_64.bin && ./android-ndk-r10d-linux-x86_64.bin && rm android-ndk-r10d-linux-x86_64.bin
 RUN curl -LO http://dl.google.com/android/adt/22.6.2/adt-bundle-linux-x86_64-20140321.zip && unzip adt-bundle-linux-x86_64-20140321.zip && rm adt-bundle-linux-x86_64-20140321.zip
 ## NaCl SDK
 RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip
@@ -62,7 +62,7 @@ RUN cd nacl_sdk && ./naclsdk install pepper_27
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
 # env setup
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10c
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10d
 ENV ANDROID_HOME /home/mozc_builder/work/adt-bundle-linux-x86_64-20140321/sdk
 ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_27
 ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}:/home/mozc_builder/work/depot_tools
