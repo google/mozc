@@ -161,7 +161,7 @@ public class InOutAnimatedFrameLayoutTest extends InstrumentationTestCaseWithMoc
     for (int nextVisibility : nextVisibilities) {
       int currentVisibility = view.getVisibility();
       resetAll();
-      onVisibilityChangeListener.onVisibilityChange(currentVisibility, nextVisibility);
+      onVisibilityChangeListener.onVisibilityChange();
       replayAll();
 
       view.setVisibility(nextVisibility);

@@ -580,7 +580,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
     replayAll();
 
-    onVisibilityChangeListener.onVisibilityChange(View.GONE, View.GONE);
+    onVisibilityChangeListener.onVisibilityChange();
 
     verifyAll();
   }

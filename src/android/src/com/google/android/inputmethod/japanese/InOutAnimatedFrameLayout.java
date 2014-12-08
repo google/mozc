@@ -78,14 +78,9 @@ public abstract class InOutAnimatedFrameLayout extends FrameLayout {
 
   /**
    * An event listener for visibility change.
-   * This interface (and relating methods) is an alternative of
-   * View#onVisibilityChanged method,
-   * which is introduced since API Level 8 (==Android 2.2).
-   * TODO(yoichio): Get rid of this interface when we can end to support API Level 7
-   * (==2.1) and replace with View#onVisibilityChanged.
    */
   public interface VisibilityChangeListener {
-    public void onVisibilityChange(int oldvisibility, int newvisibility);
+    public void onVisibilityChange();
   }
 
   /** Animation used when this view is shown. */
@@ -203,11 +198,10 @@ public abstract class InOutAnimatedFrameLayout extends FrameLayout {
   }
 
   @Override
-  public void setVisibility(int visibility){
-    int oldvisibility = getVisibility();
-    super.setVisibility(visibility);
-    if (oldvisibility != visibility && onVisibilityChangeListener != null) {
-      onVisibilityChangeListener.onVisibilityChange(oldvisibility, visibility);
+  protected void onVisibilityChanged(View changedView, int visibility) {
+    super.onVisibilityChanged(changedView, visibility);
+    if (onVisibilityChangeListener != null) {
+      onVisibilityChangeListener.onVisibilityChange();
     }
   }
 

@@ -246,7 +246,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   final InOutAnimatedFrameLayout.VisibilityChangeListener onVisibilityChangeListener =
       new InOutAnimatedFrameLayout.VisibilityChangeListener() {
         @Override
-        public void onVisibilityChange(int oldvisibility, int newvisibility) {
+        public void onVisibilityChange() {
           updateInputFrameHeight();
         }
       };
