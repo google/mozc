@@ -60,11 +60,9 @@ import android.provider.Settings;
  * The same information might be stored in both SharedPreference and Config.
  * In this case SharedPreference is the master and Config is just a copy.
  *
- * Note: Seems like due to the bug of Android 2.1, it is necessary to put this class
- *   into the same package as MozcService.
- *
  */
 public class MozcBasePreferenceActivity extends PreferenceActivity {
+
   private static class ImeEnableDialogClickListener implements OnClickListener {
     private final Context context;
 

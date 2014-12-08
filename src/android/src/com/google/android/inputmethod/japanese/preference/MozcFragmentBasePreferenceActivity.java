@@ -41,9 +41,6 @@ import java.util.List;
 /**
  * Fragment based preference UI for API Level &gt;= 11.
  *
- * Deprecated APIs (which {@link MozcClassicPreferenceActivity} uses) are not used.
- * Instead newly introduced ones are used.
- *
  */
 public abstract class MozcFragmentBasePreferenceActivity extends MozcBasePreferenceActivity {
   private final PreferencePage preferencePage;

@@ -29,23 +29,43 @@
 
 package org.mozc.android.inputmethod.japanese.preference;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+
 /**
- * "Software keyboard advanced setting page" for the Classic preference UI
- * on Android with API Level &lt; 11.
+ * A proxy activity forwarding to another activity.
+ *
+ * This activity is used to switch target activity based on runtime configuration.
+ * For example,
+ * <ul>
+ * <li>"Modern" preference screen vs "Classic" one, based on API level.
+ * </ul>
+ * This can be done by using string resources (defining destination activity by
+ * string resources in preference XML file) except for launching from home screen,
+ * which sees AndroidManifest.xml which cannot refer string resources.
+ * In fact the initial motivation to introduce this class is to launch appropriate
+ * preference activity from home screen.
+ *
+ * It is found that switching based on string resource is hard to test because
+ * precise control is impossible.
+ * Now {@link org.mozc.android.inputmethod.japanese.DependencyFactory.Dependency}
+ * has been introduced so switching feature becomes dependent on it.
  *
  */
-public class MozcClassicSoftwareKeyboardAdvancedSettingsPreferenceActivity
-    extends MozcClassicBasePreferenceActivity {
-  public MozcClassicSoftwareKeyboardAdvancedSettingsPreferenceActivity() {
-    super(PreferencePage.SOFTWARE_KEYBOARD);
-  }
+public abstract class MozcProxyActivity extends Activity {
 
   @Override
-  protected void onPause() {
-    super.onPause();
-    // Probably, it'll be slightly confusing if the software keyboard advanced settings preference
-    // is shown when a user restart the task.
-    // So, finish the activity here.
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    startActivity(getForwardIntent());
     finish();
   }
+
+  /**
+   * Returns an Intent to move to the destination activity.
+   *
+   * Called from {@link #onCreate(Bundle)}.
+   */
+  protected abstract Intent getForwardIntent();
 }

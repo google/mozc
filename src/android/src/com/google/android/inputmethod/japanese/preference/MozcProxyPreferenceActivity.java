@@ -29,12 +29,22 @@
 
 package org.mozc.android.inputmethod.japanese.preference;
 
+import org.mozc.android.inputmethod.japanese.DependencyFactory;
+
+import android.app.Activity;
+import android.content.Intent;
+
 /**
- * Main Activity class for the Classic preference UI on Android with API Level &lt; 11.
- *
+ * Proxy activity forwarding to preference screen based on
+ * {@link org.mozc.android.inputmethod.japanese.DependencyFactory.Dependency}.
  */
-public class MozcClassicPreferenceActivity extends MozcClassicBasePreferenceActivity {
-  public MozcClassicPreferenceActivity() {
-    super(PreferencePage.FLAT);
+public class MozcProxyPreferenceActivity extends MozcProxyActivity {
+
+  @Override
+  protected Intent getForwardIntent() {
+    Class<? extends Activity> destinationActivity =
+        DependencyFactory.getDependency(getApplicationContext()).getPreferenceActivityClass();
+    return new Intent(this, destinationActivity);
   }
+
 }

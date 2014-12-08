@@ -52,7 +52,7 @@
     </service>
 
     <!-- Preference -->
-    <activity android:name="org.mozc.android.inputmethod.japanese.MozcProxyPreferenceActivity"
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcProxyPreferenceActivity"
               android:label="@string/app_full_name">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -62,10 +62,6 @@
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentPreferenceActivity"
               android:launchMode="singleTask" />
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentSoftwareKeyboardAdvancedSettingsPreferenceActivity"
-              android:launchMode="singleTop" />
-    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity"
-              android:launchMode="singleTask" />
-    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcClassicSoftwareKeyboardAdvancedSettingsPreferenceActivity"
               android:launchMode="singleTop" />
 
     <activity android:name="org.mozc.android.inputmethod.japanese.FirstTimeLaunchActivity" />
