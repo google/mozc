@@ -29,6 +29,16 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
+
 <input-method xmlns:android="http://schemas.android.com/apk/res/android"
-              android:settingsActivity="org.mozc.android.inputmethod.japanese.MozcProxyPreferenceActivity"
-              android:name="@string/mozc_preference" />
+    android:isDefault="@bool/im_is_default"
+    android:settingsActivity="org.mozc.android.inputmethod.japanese.MozcProxyPreferenceActivity" >
+
+    <subtype
+        android:icon="@drawable/application_icon"
+        android:imeSubtypeExtraValue="EmojiCapable"
+        android:imeSubtypeLocale="ja_JP"
+        android:imeSubtypeMode="keyboard"
+        android:label="@string/subtype_ja" />
+
+</input-method>
