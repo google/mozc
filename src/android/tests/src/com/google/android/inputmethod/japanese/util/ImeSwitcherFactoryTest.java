@@ -34,7 +34,6 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.same;
 
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
@@ -60,7 +59,6 @@ import java.util.Map;
 public class ImeSwitcherFactoryTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
-  @ApiLevel(ImeSwitcherFactory.SUBTYPE_TARGTET_API_LEVEL)
   public void testIsVoiceImeAvailable() {
     class TestData extends Parameter {
       final Map<InputMethodInfo, List<InputMethodSubtype>> availableImes;
@@ -91,16 +89,22 @@ public class ImeSwitcherFactoryTest extends InstrumentationTestCaseWithMock {
         new ComponentName(googleIme2.getPackageName(), googleIme2.getServiceName())
             .flattenToShortString();
 
+    @SuppressWarnings("deprecation")
     InputMethodSubtype jaKeyboardAux =
         new InputMethodSubtype(0, 0, "ja", "keyboard", "", true, false);
+    @SuppressWarnings("deprecation")
     InputMethodSubtype jaVoiceNonaux =
         new InputMethodSubtype(0, 0, "ja", "voice", "", false, false);
+    @SuppressWarnings("deprecation")
     InputMethodSubtype jaVoiceAux =
         new InputMethodSubtype(0, 0, "ja", "voice", "", true, false);
+    @SuppressWarnings("deprecation")
     InputMethodSubtype enKeyboardAux =
         new InputMethodSubtype(0, 0, "en", "keyboard", "", true, false);
+    @SuppressWarnings("deprecation")
     InputMethodSubtype enVoiceNonaux =
         new InputMethodSubtype(0, 0, "en", "voice", "", false, false);
+    @SuppressWarnings("deprecation")
     InputMethodSubtype enVoiceAux =
         new InputMethodSubtype(0, 0, "en", "voice", "", true, false);
 
@@ -158,10 +162,5 @@ public class ImeSwitcherFactoryTest extends InstrumentationTestCaseWithMock {
       switcher.switchToVoiceIme(testData.locale);
       verifyAll();
     }
-  }
-
-  @SmallTest
-  public void testSmokeTest() {
-    ImeSwitcherFactory.getImeSwitcher(new InputMethodService());
   }
 }
