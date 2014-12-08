@@ -111,7 +111,6 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
   public void testLaunchPreferenceActivitySelected() {
     final ViewManagerInterface stubViewManager = createNiceMock(ViewManagerInterface.class);
     final Activity stubPreferenceActivity = createNiceMock(Activity.class);
-    final Activity stubSoftwareKeyboardAdvancedSettingActivity = createNiceMock(Activity.class);
 
     Context context = createNiceMock(Context.class);
     String packageName = "test.package.name";
@@ -130,13 +129,6 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
             @Override
             public Class<? extends Activity> getPreferenceActivityClass() {
               return stubPreferenceActivity.getClass();
-            }
-
-            @Override
-            public Optional<Class<? extends Activity>>
-                getSoftwareKeyboardAdvancedSettingActivityClass() {
-              return Optional.<Class<? extends Activity>>of(
-                  stubSoftwareKeyboardAdvancedSettingActivity.getClass());
             }
 
             @Override

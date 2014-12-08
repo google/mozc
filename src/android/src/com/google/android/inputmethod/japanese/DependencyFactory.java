@@ -30,10 +30,7 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
-import org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity;
-import org.mozc.android.inputmethod.japanese.preference.MozcClassicSoftwareKeyboardAdvancedSettingsPreferenceActivity;
 import org.mozc.android.inputmethod.japanese.preference.MozcFragmentPreferenceActivity;
-import org.mozc.android.inputmethod.japanese.preference.MozcFragmentSoftwareKeyboardAdvancedSettingsPreferenceActivity;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
 import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
 import com.google.common.annotations.VisibleForTesting;
@@ -56,12 +53,6 @@ import android.os.Build;
 public class DependencyFactory {
 
   /**
-   * Minimum SDK Level since fragment preference is available.
-   */
-  public static final int FRAGMENT_PREF_MIN_SDK_LEVEL = 11;
-
-
-  /**
    * Dependencies.
    */
   public interface Dependency {
@@ -81,18 +72,14 @@ public class DependencyFactory {
      */
     public Class<? extends Activity> getPreferenceActivityClass();
 
-    /**
-     * Returns a class for software keyboard advanced setting activity.
-     */
-    public Optional<Class<? extends Activity>> getSoftwareKeyboardAdvancedSettingActivityClass();
-
     public boolean isWelcomeActivityPreferrable();
   }
 
   /**
-   * Base dependency for touch UI configuration.
+   * Dependency for standard (with fragment) UI.
    */
-  private abstract static class TouchBaseDependency implements Dependency {
+  @VisibleForTesting
+  static final Dependency TOUCH_FRAGMENT_PREF = new Dependency() {
 
     @Override
     public ViewManagerInterface createViewManager(Context context, ViewEventListener listener,
@@ -107,42 +94,13 @@ public class DependencyFactory {
     }
 
     @Override
-    public boolean isWelcomeActivityPreferrable() {
-      return true;
-    }
-  }
-
-  /**
-   * Dependency for classic UI.
-   */
-  @VisibleForTesting
-  static final Dependency TOUCH_CLASSIC_PREF = new TouchBaseDependency() {
-    @Override
-    public Class<? extends Activity> getPreferenceActivityClass() {
-      return MozcClassicPreferenceActivity.class;
-    }
-
-    @Override
-    public Optional<Class<? extends Activity>> getSoftwareKeyboardAdvancedSettingActivityClass() {
-      return Optional.<Class<? extends Activity>>of(
-          MozcClassicSoftwareKeyboardAdvancedSettingsPreferenceActivity.class);
-    }
-  };
-
-  /**
-   * Dependency for modern (==fragment available) UI.
-   */
-  @VisibleForTesting
-  static final Dependency TOUCH_FRAGMENT_PREF = new TouchBaseDependency() {
-    @Override
     public Class<? extends Activity> getPreferenceActivityClass() {
       return MozcFragmentPreferenceActivity.class;
     }
 
     @Override
-    public Optional<Class<? extends Activity>> getSoftwareKeyboardAdvancedSettingActivityClass() {
-      return Optional.<Class<? extends Activity>>of(
-          MozcFragmentSoftwareKeyboardAdvancedSettingsPreferenceActivity.class);
+    public boolean isWelcomeActivityPreferrable() {
+      return true;
     }
   };
 
@@ -161,9 +119,7 @@ public class DependencyFactory {
     if (dependencyForTesting.isPresent()) {
       return dependencyForTesting.get();
     }
-    return Build.VERSION.SDK_INT >= FRAGMENT_PREF_MIN_SDK_LEVEL
-           ? TOUCH_FRAGMENT_PREF
-           : TOUCH_CLASSIC_PREF;
+    return TOUCH_FRAGMENT_PREF;
   }
 
   private DependencyFactory() {}

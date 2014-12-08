@@ -59,7 +59,6 @@
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
-    <activity android:name="org.mozc.android.inputmethod.japanese.MozcProxySoftwareKeyboardAdvancedSettingActivity" />
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentPreferenceActivity"
               android:launchMode="singleTask" />
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentSoftwareKeyboardAdvancedSettingsPreferenceActivity"
