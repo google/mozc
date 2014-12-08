@@ -85,7 +85,7 @@ public class MenuDialogTest extends InstrumentationTestCaseWithMock{
     listener.onShow(same(context));
     replayAll();
 
-    handler.onShow();
+    handler.onShow(dialog);
 
     verifyAll();
 

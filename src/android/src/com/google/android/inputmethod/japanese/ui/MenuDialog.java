@@ -43,6 +43,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnDismissListener;
+import android.content.DialogInterface.OnShowListener;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.IBinder;
@@ -84,7 +85,8 @@ public class MenuDialog {
    * Internal implementation of callback invocation dispatching.
    */
   @VisibleForTesting
-  static class MenuDialogListenerHandler implements OnClickListener, OnDismissListener {
+  static class MenuDialogListenerHandler
+      implements OnClickListener, OnDismissListener, OnShowListener {
     private final Context context;
     /** Table to convert from a menu item index to a string resource id. */
     private final int[] indexToIdTable;
@@ -97,8 +99,8 @@ public class MenuDialog {
       this.listener = Preconditions.checkNotNull(listener);
     }
 
-    // TODO(hidehiko): use DialogInterface.OnShowListener when we get rid of API level 7.
-    public void onShow() {
+    @Override
+    public void onShow(DialogInterface dialog) {
       if (!listener.isPresent()) {
         return;
       }
@@ -167,12 +169,10 @@ public class MenuDialog {
         .setItems(menuTextList, listenerHandler)
         .create();
     dialog.setOnDismissListener(listenerHandler);
+    dialog.setOnShowListener(listenerHandler);
   }
 
   public void show() {
-    // Note that unfortunately, we don't have a callback which is invoked when the dialog is
-    // shown on API level 7. So, instead, we manually invoke the method here.
-    listenerHandler.onShow();
     dialog.show();
   }
 
