@@ -44,7 +44,6 @@ import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecificat
 import org.mozc.android.inputmethod.japanese.LayoutParamsAnimator.InterpolationListener;
 import org.mozc.android.inputmethod.japanese.MozcView.DimensionPixelSize;
 import org.mozc.android.inputmethod.japanese.MozcView.HeightLinearInterpolationListener;
-import org.mozc.android.inputmethod.japanese.MozcView.InsetsCalculator;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
@@ -59,7 +58,6 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateW
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.resources.R;
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
@@ -67,7 +65,6 @@ import org.mozc.android.inputmethod.japanese.ui.SideFrameStubProxy;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.base.Optional;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
@@ -755,7 +752,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     class TestData extends Parameter {
       final boolean fullscreenMode;
       final boolean narrowMode;
-      final InsetsCalculator insetsCalculator;
+      final boolean isFloatable;
 
       final int expectResourceId;
 
@@ -763,17 +760,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
                int expectedResourceId) {
         this.fullscreenMode = fullscreenMode;
         this.narrowMode = narrowMode;
-        this.insetsCalculator = new InsetsCalculator() {
-          @Override
-          public void setInsets(
-              MozcView mozcView, int contentViewWidth, int contentViewHeight, Insets outInsets) {
-          }
-
-          @Override
-          public boolean isFloatingMode(MozcView mozcView) {
-            return isFloatable;
-          }
-        };
+        this.isFloatable = isFloatable;
         this.expectResourceId = expectedResourceId;
       }
     }
@@ -791,7 +778,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
       resetAll();
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
-      VisibilityProxy.setField(mozcView, "insetsCalculator", testData.insetsCalculator);
+      expect(mozcView.isFloatingMode()).andStubReturn(testData.isFloatable);
       bottomBackground.setBackgroundResource(testData.expectResourceId);
 
       replayAll();
@@ -802,37 +789,34 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testDefaultInsetsCalculator() {
+  public void testInsetsCalculator_static() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethod("getVisibleViewHeight")
+        .addMockedMethods("getVisibleViewHeight", "isFloatingMode")
         .createMock();
-    InsetsCalculator insetsCalculator = new MozcView.DefaultInsetsCalculator();
     int visibleViewHeight = 240;
     int contentViewWidth = 800;
     int contentViewHeight = 400;
     expect(mozcView.getVisibleViewHeight()).andStubReturn(visibleViewHeight);
+    expect(mozcView.isFloatingMode()).andStubReturn(false);
     replayAll();
 
-    assertFalse(insetsCalculator.isFloatingMode(mozcView));
     Insets outInsets = new Insets();
-    insetsCalculator.setInsets(mozcView, contentViewWidth, contentViewHeight, outInsets);
+    mozcView.setInsets(contentViewWidth, contentViewHeight, outInsets);
     assertEquals(Insets.TOUCHABLE_INSETS_CONTENT, outInsets.touchableInsets);
     assertEquals(contentViewHeight - visibleViewHeight, outInsets.contentTopInsets);
     assertEquals(contentViewHeight - visibleViewHeight, outInsets.visibleTopInsets);
   }
 
   @SmallTest
-  @ApiLevel(11)
-  @TargetApi(11)
-  public void testRegionInsetsCalculator() {
+  public void testInsetsCalculator_floating() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("getVisibleViewHeight", "getResources", "getSideAdjustedWidth")
+        .addMockedMethods("getVisibleViewHeight", "getResources", "getSideAdjustedWidth",
+                          "isFloatingMode")
         .createMock();
     Resources resources = createMockBuilder(MockResources.class)
         .addMockedMethods("getDisplayMetrics", "getDimensionPixelSize")
         .createMock();
 
-    InsetsCalculator insetsCalculator = new MozcView.RegionInsetsCalculator();
     int visibleViewHeight = 240;
     int contentViewWidth = 800;
     int contentViewHeight = 400;
@@ -847,6 +831,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     expect(resources.getDimensionPixelSize(anyInt())).andStubReturn(0);
     expect(mozcView.getVisibleViewHeight()).andStubReturn(visibleViewHeight);
     expect(mozcView.getSideAdjustedWidth()).andStubReturn(width);
+    expect(mozcView.isFloatingMode()).andStubReturn(true);
 
     replayAll();
 
@@ -854,23 +839,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     VisibilityProxy.setField(mozcView, "dimensionPixelSize", dimensionPixelSize);
 
     {
-      mozcView.layoutAdjustment = LayoutAdjustment.FILL;
-      assertFalse(insetsCalculator.isFloatingMode(mozcView));
-
-      Insets outInsets = new Insets();
-      insetsCalculator.setInsets(mozcView, contentViewWidth, contentViewHeight, outInsets);
-      assertEquals(Insets.TOUCHABLE_INSETS_CONTENT, outInsets.touchableInsets);
-      assertEquals(contentViewHeight - visibleViewHeight, outInsets.contentTopInsets);
-      assertEquals(contentViewHeight - visibleViewHeight, outInsets.visibleTopInsets);
-    }
-
-    {
       mozcView.layoutAdjustment = LayoutAdjustment.LEFT;
       mozcView.narrowMode = false;
-      assertTrue(insetsCalculator.isFloatingMode(mozcView));
 
       Insets outInsets = new Insets();
-      insetsCalculator.setInsets(mozcView, contentViewWidth, contentViewHeight, outInsets);
+      mozcView.setInsets(contentViewWidth, contentViewHeight, outInsets);
       assertEquals(Insets.TOUCHABLE_INSETS_REGION, outInsets.touchableInsets);
       Rect bounds = outInsets.touchableRegion.getBounds();
       assertEquals(0, bounds.left);
@@ -884,10 +857,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     {
       mozcView.layoutAdjustment = LayoutAdjustment.RIGHT;
       mozcView.narrowMode = false;
-      assertTrue(insetsCalculator.isFloatingMode(mozcView));
 
       Insets outInsets = new Insets();
-      insetsCalculator.setInsets(mozcView, contentViewWidth, contentViewHeight, outInsets);
+      mozcView.setInsets(contentViewWidth, contentViewHeight, outInsets);
       assertEquals(Insets.TOUCHABLE_INSETS_REGION, outInsets.touchableInsets);
       Rect bounds = outInsets.touchableRegion.getBounds();
       assertEquals(contentViewWidth - width, bounds.left);

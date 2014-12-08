@@ -48,13 +48,11 @@ import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService.Insets;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -84,76 +82,6 @@ import java.util.EnumSet;
  *
  */
 public class MozcView extends LinearLayout implements MemoryManageable {
-
-  /**
-   * Decides insets.
-   * Insets.touchableRegion needs API Level 11. So we split it to RegionInsetsCalculator
-   * which is used under reflection.
-   */
-  static interface InsetsCalculator {
-    boolean isFloatingMode(MozcView mozcView);
-    void setInsets(MozcView mozcView, int contentViewWidth, int contentViewHeight,
-                   Insets outInsets);
-  }
-
-  static class DefaultInsetsCalculator implements InsetsCalculator {
-    static void setInsetsDefault(MozcView mozcView, int contentViewHeight,
-                                 Insets outInsets) {
-      outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_CONTENT;
-      outInsets.contentTopInsets = contentViewHeight - mozcView.getVisibleViewHeight();
-      outInsets.visibleTopInsets = outInsets.contentTopInsets;
-    }
-
-    @Override
-    public boolean isFloatingMode(MozcView mozcView) {
-      return false;
-    }
-
-    @Override
-    public void setInsets(MozcView mozcView, int contentViewWidth, int contentViewHeight,
-                          Insets outInsets) {
-      setInsetsDefault(mozcView, contentViewHeight, outInsets);
-    }
-  }
-
-  /**
-   * Sets regional Inset to transparent background.
-   *
-   * public accessibility for easier invocation via reflection.
-   */
-  @TargetApi(11)
-  public static class RegionInsetsCalculator implements InsetsCalculator {
-    @Override
-    public boolean isFloatingMode(MozcView mozcView) {
-      Resources resources = mozcView.getResources();
-      return mozcView.layoutAdjustment != LayoutAdjustment.FILL
-          && !mozcView.narrowMode
-          && resources.getDisplayMetrics().widthPixels
-              >= mozcView.dimensionPixelSize.imeWindowRegionInsetThreshold;
-    }
-
-    @Override
-    public void setInsets(MozcView mozcView, int contentViewWidth, int contentViewHeight,
-                          Insets outInsets) {
-      if (!isFloatingMode(mozcView)) {
-        DefaultInsetsCalculator.setInsetsDefault(mozcView, contentViewHeight,
-                                                 outInsets);
-        return;
-      }
-      mozcView.getResources();
-      int height = mozcView.getVisibleViewHeight();
-      int width = mozcView.getSideAdjustedWidth();
-      int left =
-          mozcView.layoutAdjustment == LayoutAdjustment.RIGHT ? (contentViewWidth - width) : 0;
-
-      outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_REGION;
-      outInsets.touchableRegion.set(
-          left, contentViewHeight - height, left + width, contentViewHeight);
-      outInsets.contentTopInsets = contentViewHeight;
-      outInsets.visibleTopInsets = contentViewHeight;
-      return;
-    }
-  }
 
   static class DimensionPixelSize {
     final int imeWindowPartialWidth;
@@ -240,7 +168,6 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   private static final float NARROW_MODE_BUTTON_TOP_OFFSET = 1.0f;
   private static final float NARROW_MODE_BUTTON_RIGHT_OFFSET = 2.0f;
   private static final float NARROW_MODE_BUTTON_BOTTOM_OFFSET = 3.0f;
-  private static final InsetsCalculator insetsCalculator;
 
   @VisibleForTesting
   final InOutAnimatedFrameLayout.VisibilityChangeListener onVisibilityChangeListener =
@@ -271,36 +198,6 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   @VisibleForTesting Animation dropShadowSymbolInputViewInAnimation;
   @VisibleForTesting Animation dropShadowSymbolInputViewOutAnimation;
   @VisibleForTesting boolean isDropShadowExpanded = false;
-
-  static {
-    // API Level 11 is Build.VERSION_CODES.HONEYCOMB.
-    // When right/left adjustment mode, outInsets uses touchableRegion to cut out IME rectangle.
-    // Because only after API.11(HONEYCOMB) supports touchableRegion, filter it.
-    InsetsCalculator tmpCalculator = null;
-    if (Build.VERSION.SDK_INT >= 11) {
-      // Try to create RegsionInsetsCalculator if the API level is high enough.
-      try {
-        Class<?> clazz = Class.forName(new StringBuilder(MozcView.class.getCanonicalName())
-            .append('$')
-            .append("RegionInsetsCalculator")
-            .toString());
-        tmpCalculator = InsetsCalculator.class.cast(clazz.newInstance());
-      } catch (ClassNotFoundException e) {
-        MozcLog.e(e.getMessage(), e);
-      } catch (IllegalArgumentException e) {
-        MozcLog.e(e.getMessage(), e);
-      } catch (IllegalAccessException e) {
-        MozcLog.e(e.getMessage(), e);
-      } catch (InstantiationException e) {
-        MozcLog.e(e.getMessage(), e);
-      }
-    }
-
-    if (tmpCalculator == null) {
-      tmpCalculator = new DefaultInsetsCalculator();
-    }
-    insetsCalculator = tmpCalculator;
-  }
 
   public MozcView(Context context) {
     super(context);
@@ -816,18 +713,40 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     // If fullscreenMode, background should not show original window.
     // If narrowMode, it is always full-width.
     // If isFloatingMode, background should be transparent.
-    int resourceId = (fullscreenMode || (!narrowMode && !insetsCalculator.isFloatingMode(this))) ?
+    int resourceId = (fullscreenMode || (!narrowMode && !isFloatingMode())) ?
         R.color.input_frame_background : 0;
     getBottomBackground().setBackgroundResource(resourceId);
+  }
+
+  @VisibleForTesting
+  boolean isFloatingMode() {
+    return layoutAdjustment != LayoutAdjustment.FILL
+        && !narrowMode
+        && getResources().getDisplayMetrics().widthPixels
+            >= dimensionPixelSize.imeWindowRegionInsetThreshold;
   }
 
   /**
    * This function is called to compute insets.
    */
   public void setInsets(int contentViewWidth, int contentViewHeight, Insets outInsets) {
-    insetsCalculator.setInsets(this, contentViewWidth, contentViewHeight, outInsets);
-  }
+    if (!isFloatingMode()) {
+      outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_CONTENT;
+      outInsets.contentTopInsets = contentViewHeight - getVisibleViewHeight();
+      outInsets.visibleTopInsets = outInsets.contentTopInsets;
+      return;
+    }
+    int height = getVisibleViewHeight();
+    int width = getSideAdjustedWidth();
+    int left = layoutAdjustment == LayoutAdjustment.RIGHT ? (contentViewWidth - width) : 0;
 
+    outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_REGION;
+    outInsets.touchableRegion.set(
+        left, contentViewHeight - height, left + width, contentViewHeight);
+    outInsets.contentTopInsets = contentViewHeight;
+    outInsets.visibleTopInsets = contentViewHeight;
+    return;
+  }
 
   void expandDropShadowAndBackground() {
     leftFrameStubProxy.flipDropShadowVisibility(INVISIBLE);
