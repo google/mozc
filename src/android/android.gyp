@@ -98,17 +98,23 @@
     }],
     ['android_arch=="arm"', {
       'variables': {
-        'abi': 'armeabi',
+        'abi': 'armeabi-v7a',
+        'toolchain': 'arm-linux-androideabi-4.6',
+        'platform': 'android-14',
       },
     }],
     ['android_arch=="x86"', {
       'variables': {
         'abi': 'x86',
+        'toolchain': 'x86-4.6',
+        'platform': 'android-14',
       },
     }],
     ['android_arch=="mips"', {
       'variables': {
         'abi': 'mips',
+        'toolchain': 'mipsel-linux-android-4.6',
+        'platform': 'android-14',
       },
     }],
   ],
@@ -386,9 +392,10 @@
         'make_standalone_toolchain_commands': [
           'bash',
           '<(android_ndk_home)/build/tools/make-standalone-toolchain.sh',
-          '--arch=<(android_arch)',
+          '--toolchain=<(toolchain)',
           '--stl=<(android_stl)',
           '--install-dir=<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)',
+          '--platform=<(platform)',
         ],
         'make_standalone_toolchain_result': '<!(<(make_standalone_toolchain_commands))',
       },
