@@ -54,16 +54,8 @@ public class ActivityInstrumentationTestCase2WithMock<T extends Activity>
   private EasyMockSupport mockSupport;
   private InstrumentationMockUtil mockUtil;
 
-  @SuppressWarnings("deprecation")
   public ActivityInstrumentationTestCase2WithMock(Class<T> activityClass) {
-    // Note: We call deprecated constructor intentionally here,
-    // because our min target is API level 7.
-    // The first parameter of the constructor of the super class is ignored on 2.2 or later,
-    // but used on 2.1. Probably, the right way to get the package name is by using PackageManager.
-    // However, here, it is impossible to do it. Thus, we hard-code the package name here.
-    // Eventually we should switch to the new framework and the following code should be cleaned
-    // at that time.
-    super("org.mozc.android.inputmethod.japanese", activityClass);
+    super(activityClass);
   }
 
   @Override
