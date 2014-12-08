@@ -476,9 +476,7 @@ public class KeyboardView extends View implements MemoryManageable {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    // Note: Once we get rid of supporting API Level 7 or lower, we can switch this
-    // to event.getActionMasked().
-    switch (event.getAction() & MotionEvent.ACTION_MASK) {
+    switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN:
       case MotionEvent.ACTION_POINTER_DOWN:
         onDown(event);
