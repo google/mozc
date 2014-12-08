@@ -1193,7 +1193,7 @@ def RunTestsOnAndroid(options, build_args, original_directory_name):
                          in android_util.GetAvailableEmulatorPorts(android_home)
                          if i >= int(options.android_min_port)]
       if GetMozcVersion().GetAndroidArch() == 'arm':
-        acceptable_abi = ['armeabi', 'armeabi-v7a']
+        acceptable_abi = ['armeabi-v7a']
       else:
         acceptable_abi = [GetMozcVersion().GetAndroidArch()]
       avd_names = [i for i in android_util.GetAvdNames(android_sdk_home)

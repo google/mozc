@@ -357,7 +357,15 @@
                 ],
                 'conditions': [
                   ['android_arch=="arm"', {
+                    'ldflags+': [
+                      # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
+                      '-march=armv7-a',
+                    ],
                     'cflags': [
+                      # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
+                      '-march=armv7-a',
+                      '-mfloat-abi=softfp',
+                      '-mfpu=vfpv3-d16',
                       '-mthumb',  # Force thumb interaction set for smaller file size.
                     ],
                   }],

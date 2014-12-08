@@ -309,8 +309,8 @@ public final class MozcUtil {
     // Version code format:
     // 00000BBBBB or
     // 0005BBBBBA
-    // A: ABI (0: Fat, 5: x86, 4: armeabi-v7a, 3: armeabi, 1:mips)
-    // B: Build number
+    // A: ABI (0: Fat, 5: x86, 2: armeabi-v7a, 1:mips)
+    // B: ANDROID_VERSION_CODE
     Preconditions.checkNotNull(context);
     int rawVersionCode = getVersionCode(context);
     String versionCode = Integer.toString(getVersionCode(context));

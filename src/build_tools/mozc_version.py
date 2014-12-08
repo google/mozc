@@ -165,7 +165,7 @@ def _GetAndroidVersionCode(base_version_code, arch):
 
   Version code format:
    0005BBBBBA
-   A: ABI (0: Fat, 5: x86, 4: armeabi-v7a, 3: armeabi, 1:mips)
+   A: ABI (0: Fat, 5: x86, 2: armeabi-v7a, 1:mips)
    B: ANDROID_VERSION_CODE
 
   Note:
@@ -176,20 +176,13 @@ def _GetAndroidVersionCode(base_version_code, arch):
     Therefore version-check rule like "Version code of update must be greater
     than that of previous" cannot be introduced.
   """
-  if arch == 'x86':
-    abi_code = 5
-  elif arch == 'arm':
-    # abi_code 3 is for armeabi and 4 is for armeabi-v7a.
-    # Currently armeabi-v7a is not supported.
-    # Note for future improvement:
-    # armeabi-v7a's version code must be greater than armeabi's.
-    # By this v7a's apk is prioritized on the Play.
-    # Without this all the ARM devices download armeabi version
-    # because armeabi can be run on all of them (including v7a).
-    abi_code = 3
-  elif arch == 'mips':
-    abi_code = 1
-  else:
+  arch_to_abi_code = {
+      'x86': 5,
+      'arm': 2,
+      'mips': 1,
+  }
+  abi_code = arch_to_abi_code.get(arch)
+  if abi_code is None:
     raise RuntimeError('Unexpected architecture; %s' % arch)
   if base_version_code >= 10000:
     raise RuntimeError('Version code is greater than 10000. '
