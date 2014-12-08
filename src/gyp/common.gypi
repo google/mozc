@@ -158,7 +158,7 @@
       }],
       ['target_platform=="Android"', {
         'compiler_target': 'gcc',
-        'compiler_target_version_int': 406,  # GCC 4.6 or higher
+        'compiler_target_version_int': 409,  # GCC 4.9 or higher
         'compiler_host': 'gcc',
         'compiler_host_version_int': 406,  # GCC 4.6 or higher
       }],

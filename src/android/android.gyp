@@ -99,21 +99,21 @@
     ['android_arch=="arm"', {
       'variables': {
         'abi': 'armeabi-v7a',
-        'toolchain': 'arm-linux-androideabi-4.6',
+        'toolchain': 'arm-linux-androideabi-4.9',
         'platform': 'android-14',
       },
     }],
     ['android_arch=="x86"', {
       'variables': {
         'abi': 'x86',
-        'toolchain': 'x86-4.6',
+        'toolchain': 'x86-4.9',
         'platform': 'android-14',
       },
     }],
     ['android_arch=="mips"', {
       'variables': {
         'abi': 'mips',
-        'toolchain': 'mipsel-linux-android-4.6',
+        'toolchain': 'mipsel-linux-android-4.9',
         'platform': 'android-14',
       },
     }],
