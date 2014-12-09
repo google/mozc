@@ -95,27 +95,6 @@
       ],
     },
     {
-      'target_name': 'install',
-      'type': 'none',
-      'dependencies': [
-        'apk',
-      ],
-      'actions': [
-        {
-          'action_name': 'install',
-          'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_install'],
-          'ninja_use_console': 1,
-          'action': [
-            'ant',
-            'install',
-            '-Dgyp.build_type=<(CONFIGURATION_NAME)',
-            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
-          ],
-        },
-      ],
-    },
-    {
       'target_name': 'apk',
       'type': 'none',
       'dependencies': [
