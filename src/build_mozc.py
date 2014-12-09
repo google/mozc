@@ -1367,7 +1367,7 @@ def CleanBuildFilesAndDirectories(options, unused_args):
     # In addition, remove resources/res/raw directory, which contains
     # generated .pic files.
     directory_names.append(
-        os.path.join(SRC_DIR, 'android', 'resources', 'res', 'raw'))
+        os.path.join(SRC_DIR, 'android', 'resources_oss', 'res', 'raw'))
 
   # Remove files.
   for file_name in file_names:
