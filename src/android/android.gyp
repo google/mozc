@@ -100,6 +100,7 @@
       'type': 'none',
       'dependencies': [
         'sdk_apk_dependencies',
+        'userfeedback/userfeedback.gyp:userfeedback_project',
       ],
       'actions': [
         {
@@ -158,6 +159,7 @@
         'mozc',
         'gen_mozc_drawable',
         'guava_library',
+        'userfeedback/userfeedback.gyp:userfeedback_project',
         'support_libraries',
       ],
     },
