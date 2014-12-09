@@ -1356,7 +1356,7 @@ def CleanBuildFilesAndDirectories(options, unused_args):
     android_library_projects = [
         '',
         'protobuf',
-        'resources_oss',
+        'static_resources/resources_oss',
         'tests',
         ]
     android_generated_dirs = ['bin', 'gen', 'obj', 'libs', 'gen_for_adt']
@@ -1367,7 +1367,8 @@ def CleanBuildFilesAndDirectories(options, unused_args):
     # In addition, remove resources/res/raw directory, which contains
     # generated .pic files.
     directory_names.append(
-        os.path.join(SRC_DIR, 'android', 'resources_oss', 'res', 'raw'))
+        os.path.join(SRC_DIR, 'android', 'static_resources/resources_oss',
+                     'res', 'raw'))
 
   # Remove files.
   for file_name in file_names:

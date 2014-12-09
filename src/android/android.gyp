@@ -94,7 +94,7 @@
         'native_test_small_targets': [
           'oss_data_manager_test',
         ],
-        'resources_project_path': 'resources_oss',
+        'resources_project_path': 'static_resources/resources_oss',
       },
     }],
     ['android_arch=="arm"', {
