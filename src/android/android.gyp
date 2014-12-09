@@ -62,6 +62,7 @@
           'action_name': 'build_java_test',
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_java_test'],
+           # TODO(komatsu): use ant.gypi when the build rule is moved to tests/.
           'ninja_use_console': 1,
           'action': [
             '../build_tools/run_after_chdir.py', 'tests',
@@ -121,14 +122,7 @@
           #   'bin/GoogleJapaneseInput-unsigned.apk'
           # depending on CONFIGURATION_NAME and/or key.store.
           'outputs': ['dummy_apk'],
-          'ninja_use_console': 1,
-          'action': [
-            'ant',
-            'apk',
-            '-Dgyp.build_type=<(CONFIGURATION_NAME)',
-            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
-            '-Dsdk.dir=<(android_home)',
-          ],
+          'includes': ['ant.gypi'],
         },
       ],
     },
