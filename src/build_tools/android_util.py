@@ -59,6 +59,10 @@ class AndroidUtilSubprocessError(Error):
   """Subrocess which is invoked by this script throws error."""
 
 
+class AndroidEmulatorConditionError(Error):
+  """Emulator relating error."""
+
+
 def GetApkProperties(apk_path):
   """Gets the properties of an apk.
 
@@ -371,14 +375,59 @@ class AndroidDevice(object):
 class Emulator(object):
   """An emulator and emulator related stuff."""
 
+  @staticmethod
+  def LaunchAll(android_sdk_home, avd_configs, android_home,
+                android_min_port=0):
+    """Creates and launches Emulator instances.
+
+    Args:
+      android_sdk_home: Path to android sdk home, containing .android directory.
+      avd_configs: A list of dictionaries which contains parameters
+                   for emulator.
+      android_home: A string pointing the root directory of the SDK.
+      android_min_port: Minimum number of using port.
+
+    Raises:
+      AndroidEmulatorConditionError: No availabe ports.
+
+    Returns:
+      A list of Emulator instantces.
+    """
+    available_ports = [i for i
+                       in GetAvailableEmulatorPorts(android_home)
+                       if i >= android_min_port]
+    if len(available_ports) < len(avd_configs):
+      raise AndroidEmulatorConditionError(
+          'available_ports (%d) is smaller than'
+          ' avd_configs (%d)'
+          % (len(available_ports), len(avd_configs)))
+
+    emulators = []
+
+    # Invokes all the available emulators.
+    def LaunchAndWait(avd_name, port_number):
+      emulator = Emulator(android_sdk_home, avd_name, android_home)
+      logging.info('Launching %s at port %d', avd_name, port_number)
+      emulator.Launch(port_number)
+      logging.info('Waiting for %s', avd_name)
+      emulator.GetAndroidDevice(android_home).WaitForDevice()
+      emulators.append(emulator)
+      logging.info('Successfully launched %s', avd_name)
+
+    # TODO(matsuzakit): Use multiprocessing.
+    for avd_config in avd_configs:
+      SetUpTestingSdkHomeDirectory(android_sdk_home,
+                                   android_home,
+                                   avd_config)
+      LaunchAndWait(avd_config['--name'], available_ports.pop())
+
+    return emulators
+
   def __init__(self, android_sdk_home, avd_name, android_home):
     """Create an Emulator instance.
 
     After instantiation, an emulator process is not lauched.
     To launch the process, call Launch method.
-    If you are using template SDK home directory, set up temporary
-    SDK home by SetUpTestingSdkHomeDirectory before creating an Emulator
-    instance.
     Args:
       android_sdk_home: Path to android sdk home, containing .android directory.
       avd_name: Name of an avd to use.

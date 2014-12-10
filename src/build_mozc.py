@@ -47,7 +47,6 @@ import os
 import re
 import sys
 
-from build_tools import android_util
 from build_tools import mozc_version
 from build_tools.android_util import Emulator
 from build_tools.mozc_version import GenerateVersionFile
@@ -1182,11 +1181,7 @@ def RunTestsOnAndroid(options, build_args, original_directory_name):
     if options.android_device:
       serialnumbers.append(options.android_device)
     else:
-      # Set up the environment.
-      # Copy ANDROID_SDK_HOME directory.
-      # Copied directory will be overwritten by StartAndroidEmulator
-      # (inflating compressed file and being added emulator's temp files).
-      # Thus this setup must be done only once.
+      # Temporary AVDs are created beneath android_sdk_home.
       android_sdk_home = os.path.join(
           GetBuildBaseName(options, GetMozcVersion().GetTargetPlatform()),
           options.configuration,
@@ -1239,29 +1234,9 @@ def RunTestsOnAndroid(options, build_args, original_directory_name):
       else:
         avd_configs = []
 
-      for avd_config in avd_configs:
-        android_util.SetUpTestingSdkHomeDirectory(android_sdk_home,
-                                                  android_home,
-                                                  avd_config)
-      available_ports = [i for i
-                         in android_util.GetAvailableEmulatorPorts(android_home)
-                         if i >= int(options.android_min_port)]
-      if len(available_ports) < len(avd_configs):
-        PrintErrorAndExit('available_ports (%d) is smaller than'
-                          ' avd_configs (%d)'
-                          % (len(available_ports), len(avd_configs)))
-      emulators = []
-      # Invokes all the available emulators.
-      for avd_name in (avd_config['--name'] for avd_config in avd_configs):
-        emulator = Emulator(android_sdk_home, avd_name, android_home)
-        logging.info('Launching %s at port %d', avd_name, available_ports[0])
-        emulator.Launch(available_ports[0])
-        logging.info('Waiting for %s', avd_name)
-        emulator.GetAndroidDevice(android_home).WaitForDevice()
-        available_ports = available_ports[1:]
-        emulators.append(emulator)
-        serialnumbers.append(emulator.serial)
-        logging.info('Successfully launched %s', avd_name)
+      emulators = Emulator.LaunchAll(android_sdk_home, avd_configs,
+                                     android_home)
+      serialnumbers.extend([emulator.serial for emulator in emulators])
 
     # Run native and Java tests.
     android_gyp = os.path.join(SRC_DIR, 'android', 'android.gyp')
