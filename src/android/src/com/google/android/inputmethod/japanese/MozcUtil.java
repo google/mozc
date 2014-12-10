@@ -303,7 +303,7 @@ public final class MozcUtil {
    *
    * ABI independent version code is equivalent to "Build number" of Mozc project.
    *
-   * <p>Must be consistent with split_abi.py
+   * <p>Must be consistent with mozc_version.py
    */
   public static int getAbiIndependentVersionCode(Context context) {
     // Version code format:
