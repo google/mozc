@@ -42,8 +42,6 @@ import glob
 import logging
 import os
 import re
-import shutil
-import stat
 import subprocess
 import sys
 import zipfile
@@ -411,19 +409,12 @@ class Emulator(object):
     self._port_number = port_number
     self.serial = 'emulator-%s' % port_number
 
-    # Old Android OS emulator lacks hw.cpu.arch property.
-    # Use armeabi as default.
-    hw_cpu_arch = self._avd_properties.get('hw.cpu.arch', 'armeabi')
-    if hw_cpu_arch == 'x86':
-      emulator = 'emulator-x86'
-    else:
-      emulator = 'emulator-arm'
-    logging.info('hw.cpu.arch is %s so using %s', hw_cpu_arch, emulator)
-
     args = [
         os.path.join(self._android_home, 'tools', emulator),
         '-avd', self._avd_name,
         '-port', str(self._port_number),
+        '-no-snapshot-load',  # Should do full-boot.
+        '-no-snapshot-save',
         '-no-window',  # For headless environment.
         '-prop', 'mozc.avd_name=%s' % self._avd_name,
         '-verbose',
@@ -436,25 +427,6 @@ class Emulator(object):
     self._process = subprocess.Popen(args, env=env)
     if self._process.poll() is not None:
       raise AndroidUtilSubprocessError('Emulator launch fails.')
-
-  def CreateBlankSdCard(self, size_bytes):
-    """Creates blank SD card.
-
-    Args:
-      size_bytes: The size of the SD card (bytes).
-    Raises:
-      AndroidUtilSubprocessError: if fails on mksdcard command.
-    """
-    if self._process:
-      raise AndroidUtilSubprocessError(
-          'Emulator process for %s has been launched already '
-          'so SD card creation fails.' % self.serial)
-    sdcard_path = os.path.join(self._avd_dir, 'sdcard.img')
-    args = [os.path.join(self._android_home, 'tools', 'mksdcard'),
-            str(size_bytes), sdcard_path]
-    logging.info('Creating SD card: %s', args)
-    if subprocess.call(args):
-      raise AndroidUtilSubprocessError('SD card creation fails.')
 
   def CopyTreeToSdCard(self, host_src_dir, sd_dest_dir):
     """Copies tree from host to SD card.
@@ -512,103 +484,34 @@ def GetAvailableEmulatorPorts(android_home):
   return [port for port in xrange(5554, 5586, 2) if port not in used_ports]
 
 
-def _GetFixedAvdIni(original_file, ini_file_path):
-  """Fixes corrupt .ini file.
-
-  Typically .ini files in template sdk home directory have corrupt or no path=
-  entry. This method fixes it.
-  Args:
-    original_file: File object which represents original ini file content.
-    ini_file_path: Path to ini file to be fixed.
-  Returns:
-    Fixed content.
-  """
-  result = [line for line in original_file if not line.startswith('path=')]
-  avd_name = os.path.splitext(ini_file_path)[0]
-  avd_relative_path = os.path.join(os.path.basename(ini_file_path),
-                                   '%s.avd' % avd_name)
-  # path entry needs absolute path.
-  result.append('path=%s\n' % os.path.abspath(avd_relative_path))
-  return ''.join(result)
-
-
-def _CopyPregeneratedFileToSdkHome(dest_android_sdk_home, avd_name,
-                                   android_home):
-  """Copy pregenerated files if possible.
-
-  Currently only userdata-qemu.img is copied.
-  The file is mandatory for successfull launch of an emulator.
-  If the file doesn't exist, the emulator stucks.
-  sdcard.img is not copied because pregenerated one is smaller than
-  our expectation and can be created by CreateBlankSdCard method.
+def SetUpTestingSdkHomeDirectory(dest_android_sdk_home,
+                                 android_home,
+                                 options):
+  """Creates AVD in testing sdk home directory based on given options.
 
   Args:
-    dest_android_sdk_home: Path to Android SDK home, which contains .android
-                           directory.
-    avd_name: Name of AVD.
-    android_home: Root direcotry of the SDK.
-  Returns:
-    True if pregenerated file(s) is/are successfully copied.
+    dest_android_sdk_home: testing sdk home
+    android_home: SDK's home (e.g, /home/me/android-sdk-linux_x86)
+    options: dictionary which is passed to `android create avd' command
+
+  Raises:
+    AndroidUtilSubprocessError: thrown when AVD creation fails.
   """
-  avd_dir = os.path.join(dest_android_sdk_home,
-                         '.android', 'avd', '%s.avd' % avd_name)
-  # Expecting image.sysdir.1 points system image.
-  system_image_relative = GetAvdProperties(
-      dest_android_sdk_home, avd_name)['image.sysdir.1']
-  system_image_dir = os.path.join(android_home, system_image_relative)
-  userdata_qemu_path = os.path.join(system_image_dir, 'pregenerated',
-                                    'userdata-qemu.img')
-  if os.path.exists(userdata_qemu_path):
-    shutil.copy(userdata_qemu_path, avd_dir)
-    _MakeFileWritableRecursively(avd_dir)
-    logging.info('%s is copied to %s.', userdata_qemu_path, avd_dir)
-    return True
-  else:
-    logging.warning('%s is not found.', userdata_qemu_path)
-    return False
+  # Make sure destination directory.
+  avd_dir = os.path.join(dest_android_sdk_home, '.android', 'avd')
+  if not os.path.exists(avd_dir):
+    os.makedirs(avd_dir)
 
-
-def _RewriteIni(ini_file_path, open_read=open, open_write=open):
-  # Overwrite .ini file by fixed content.
-  # Mocking open function makes test framework panic
-  # so making it injectable.
-  with open_read(ini_file_path, 'r') as f:
-    content = _GetFixedAvdIni(f, ini_file_path)
-  with open_write(ini_file_path, 'w') as f:
-    f.write(content)
-
-
-def SetUpTestingSdkHomeDirectory(template_android_sdk_home,
-                                 dest_android_sdk_home,
-                                 android_home):
-  """Sets up sdk home directory to minimum required level.
-
-  This method copies files from template directory to target.
-  And fixes (intentionally) corrupt config.ini file and
-  copies pregenerated files from sdk root.
-  This method doesn't set up SD card, which is not mandatory to launch an
-  emulator.
-  If using normal sdk home, this method should not be used.
-  If using template sd home, invoke this before creating an Emulator.
-  Args:
-    template_android_sdk_home: path to template android sdk home directory.
-    dest_android_sdk_home: path to newly created sdk home directory basing on
-        template_android_sdk_home
-    android_home: A string pointing the root directory of the SDK.
-  """
-  # Copy entire tree.
-  if os.path.exists(dest_android_sdk_home):
-    shutil.rmtree(dest_android_sdk_home)
-  shutil.copytree(template_android_sdk_home, dest_android_sdk_home)
-  # Fix ${avd_name}.ini files' "path" property.
-  target_avd_dir = os.path.abspath(os.path.join(dest_android_sdk_home,
-                                                '.android', 'avd'))
-  _MakeFileWritableRecursively(dest_android_sdk_home)
-  for ini_file_path in glob.glob(os.path.join(target_avd_dir, '*.ini')):
-    _RewriteIni(ini_file_path)
-    avd_name = os.path.splitext(os.path.basename(ini_file_path))[0]
-    _CopyPregeneratedFileToSdkHome(dest_android_sdk_home, avd_name,
-                                   android_home)
+  args = [os.path.join(android_home, 'tools', 'android'),
+          'create', 'avd',
+          '--force',
+          '--sdcard', '512M',]
+  for key, value in options.iteritems():
+    args.extend([key, value])
+  env = {'ANDROID_SDK_HOME': os.path.abspath(dest_android_sdk_home)}
+  logging.info('Creating AVD: %s', args)
+  if subprocess.call(args, env=env):
+    raise AndroidUtilSubprocessError('AVD creation fails.')
 
 
 def GetAvdNames(android_sdk_home):
@@ -618,13 +521,6 @@ def GetAvdNames(android_sdk_home):
   for ini_file_path in glob.glob(ini_file_glob):
     result.append(os.path.splitext(os.path.basename(ini_file_path))[0])
   return result
-
-
-def _MakeFileWritableRecursively(path):
-  for dir_path, _, filelist in os.walk(path):
-    for filename in filelist:
-      path = os.path.join(dir_path, filename)
-      os.chmod(path, os.lstat(path).st_mode | stat.S_IWRITE)
 
 
 def GetAvdProperties(android_sdk_home, avd_name, my_open=open):

@@ -1187,36 +1187,73 @@ def RunTestsOnAndroid(options, build_args, original_directory_name):
       # Copied directory will be overwritten by StartAndroidEmulator
       # (inflating compressed file and being added emulator's temp files).
       # Thus this setup must be done only once.
-      android_sdk_home_original = os.path.join(
-          SRC_DIR, 'android', 'android_sdk_home')
       android_sdk_home = os.path.join(
           GetBuildBaseName(options, GetMozcVersion().GetTargetPlatform()),
           options.configuration,
           'android_sdk_home')
       android_home = GetAndroidHome(options)
-      android_util.SetUpTestingSdkHomeDirectory(android_sdk_home_original,
-                                                android_sdk_home,
-                                                android_home)
+
+      android_arch = GetMozcVersion().GetAndroidArch()
+      if android_arch == 'arm':
+        avd_configs = [
+            {'--name': 'Nexus5-ApiL-arm-WVGA800',
+             '--target': 'android-21',
+             '--abi': 'default/armeabi-v7a',
+             '--device': 'Nexus 5',
+             '--skin': 'WVGA800'},
+            {'--name': 'Nexus10-ApiL-arm-WXGA800',
+             '--target': 'android-21',
+             '--abi': 'default/armeabi-v7a',
+             '--device': 'Nexus 10',
+             '--skin': 'WXGA800'},]
+      elif android_arch == 'x86':
+        avd_configs = [
+            {'--name': 'Nexus5-ApiL-x86-WVGA800',
+             '--target': 'android-21',
+             '--abi': 'default/x86',
+             '--device': 'Nexus 5',
+             '--skin': 'WVGA800'},
+            {'--name': 'Nexus10-ApiL-x86-WXGA800',
+             '--target': 'android-21',
+             '--abi': 'default/x86',
+             '--device': 'Nexus 10',
+             '--skin': 'WXGA800'},]
+      elif android_arch == 'mips':
+        avd_configs = [
+            {'--name': 'NexusS-Api15-mips-WVGA800',
+             '--target': 'android-15',
+             '--abi': 'default/mips',
+             '--device': 'Nexus S',
+             '--skin': 'WVGA800'},
+            # As of 2014-05-27, the latest target of MIPS is 17.
+            {'--name': 'Nexus5-Api17-mips-WVGA800',
+             '--target': 'android-17',
+             '--abi': 'default/mips',
+             '--device': 'Nexus 5',
+             '--skin': 'WVGA800'},
+            {'--name': 'Nexus10-Api17-mips-WXGA800',
+             '--target': 'android-17',
+             '--abi': 'default/mips',
+             '--device': 'Nexus 10',
+             '--skin': 'WXGA800'},]
+      else:
+        avd_configs = []
+
+      for avd_config in avd_configs:
+        android_util.SetUpTestingSdkHomeDirectory(android_sdk_home,
+                                                  android_home,
+                                                  avd_config)
       available_ports = [i for i
                          in android_util.GetAvailableEmulatorPorts(android_home)
                          if i >= int(options.android_min_port)]
-      if GetMozcVersion().GetAndroidArch() == 'arm':
-        acceptable_abi = ['armeabi-v7a']
-      else:
-        acceptable_abi = [GetMozcVersion().GetAndroidArch()]
-      avd_names = [i for i in android_util.GetAvdNames(android_sdk_home)
-                   if android_util.GetAvdProperties(
-                       android_sdk_home, i)['abi.type'] in acceptable_abi]
-      logging.info('Launching following AVDs; %s', avd_names)
-      if len(available_ports) < len(avd_names):
-        PrintErrorAndExit('available_ports (%d) is smaller than avd_names (%d)'
-                          % (len(available_ports), len(avd_names)))
+      if len(available_ports) < len(avd_configs):
+        PrintErrorAndExit('available_ports (%d) is smaller than'
+                          ' avd_configs (%d)'
+                          % (len(available_ports), len(avd_configs)))
       emulators = []
       # Invokes all the available emulators.
-      for avd_name in avd_names:
+      for avd_name in (avd_config['--name'] for avd_config in avd_configs):
         emulator = Emulator(android_sdk_home, avd_name, android_home)
-        logging.info('Creating SD card for %s', avd_name)
-        emulator.CreateBlankSdCard(300 * 1024 * 1024)
         logging.info('Launching %s at port %d', avd_name, available_ports[0])
         emulator.Launch(available_ports[0])
         logging.info('Waiting for %s', avd_name)
