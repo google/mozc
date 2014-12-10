@@ -146,8 +146,8 @@ def _CollectBadgingProperties(apk_path, props):
                                          output, re.MULTILINE)
   props['version_code'] = int(re.search(r'versionCode=\'(\d+)\'',
                                         output).group(1))
-  props['version_name'] = re.search(r'versionName=\'(\d+\.\d+\.\d+\.\d+)\'',
-                                    output).group(1)
+  props['version_name'] = re.search(
+      r'versionName=\'(\d+\.\d+\.\d+\.\d+(?:-\w+)?)\'', output).group(1)
 
 
 def _CollectSignatureProperties(apk_path, props):
