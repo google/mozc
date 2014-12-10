@@ -234,8 +234,11 @@ def GetTopLevelSourceDirectoryName():
   num_components = len(SRC_DIR.split('/'))
   return os.path.join(script_file_directory_name, *(['..'] * num_components))
 
-
-
+def GetAdditionalThirdPartyDir():
+  """Returns the addtitional third party dir."""
+  additional_third_party_path = 'third_party'
+  return os.path.abspath(os.path.join(GetTopLevelSourceDirectoryName(),
+                                      additional_third_party_path))
 
 def GetAndroidHome(options):
   """Gets the root directory of the SDK from options, ANDROID_HOME or PATH."""
@@ -703,6 +706,8 @@ def GypMain(options, unused_args, _):
 
   mozc_root = os.path.abspath(GetTopLevelSourceDirectoryName())
   gyp_options.extend(['-D', 'abs_depth=%s' % mozc_root])
+  gyp_options.extend(['-D', ('additional_third_party_dir=%s'
+                             % GetAdditionalThirdPartyDir())])
 
   gyp_options.extend(['-D', 'python_executable=%s' % sys.executable])
 
@@ -913,11 +918,14 @@ def GypMain(options, unused_args, _):
     gyp_options.extend(['-D', 'pkg_config_command='])
 
   if target_platform == 'NaCl':
-    if os.path.isdir(options.nacl_sdk_root):
+    if options.nacl_sdk_root:
       nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
     else:
-      PrintErrorAndExit('The directory specified with --nacl_sdk_root does not '
-                        'exist: %s' % options.nacl_sdk_root)
+      nacl_sdk_root = os.path.abspath(os.path.join(GetAdditionalThirdPartyDir(),
+                                                   'nacl_sdk', 'pepper_27'))
+    if not os.path.isdir(nacl_sdk_root):
+      PrintErrorAndExit('The nacl_sdk_root directory (%s) does not exist.'
+                        % options.nacl_sdk_root)
     gyp_options.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
 
   if options.server_dir:

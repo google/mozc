@@ -37,12 +37,11 @@
     # Set 1 when using two-pass build
     'enable_two_pass_build%': 0,
 
-
     # Top directory of third party libraries.
     'third_party_dir': '<(DEPTH)/third_party',
 
     # Top directory of additional third party libraries.
-    'additional_third_party_dir': '<(DEPTH)/third_party',
+    'additional_third_party_dir%': '<(abs_depth)/third_party',
 
     # Compiler to build binaries that run in the target environment.
     # e.g. "clang", "gcc", "msvs".
@@ -223,7 +222,7 @@
     'protobuf_root': '<(third_party_dir)/protobuf',
 
     # For Android
-    'protobuf_java_root': '<(third_party_dir)/protobuf/java/src/main',
+    'protobuf_java_root': '<(additional_third_party_dir)/protobuf/java/src/main',
 
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.

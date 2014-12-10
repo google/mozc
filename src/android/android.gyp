@@ -99,6 +99,7 @@
       'target_name': 'apk',
       'type': 'none',
       'dependencies': [
+        'protobuf/protobuf.gyp:protobuf_java',
         'sdk_apk_dependencies',
         'userfeedback/userfeedback.gyp:userfeedback_project',
       ],
@@ -111,11 +112,6 @@
             'project.properties',
             'ant.properties',
             'proguard-project.txt',
-            # Protocol Buffer
-            'protobuf/AndroidManifest.xml',
-            'protobuf/build.xml',
-            'protobuf/project.properties',
-            'protobuf/ant.properties',
           ],
           # The actual output is one of
           #   'bin/GoogleJapaneseInput-debug.apk'
