@@ -297,7 +297,7 @@ class AndroidDevice(object):
     Returns:
       True if given abi is executable on this device.
     """
-    return abi in (self._GetProperty(key) for key
+    return abi in (self.GetProperty(key) for key
                    in ['ro.product.cpu.abi', 'ro.product.cpu.abi2'])
 
   def _RunCommand(self, *command):
@@ -326,15 +326,15 @@ class AndroidDevice(object):
   def _GetAvdName(self):
     if not self._avd_name:
       # [mozc.avd_name] property is set by build_mozc.py
-      self._avd_name = self._GetProperty('mozc.avd_name')
+      self._avd_name = self.GetProperty('mozc.avd_name')
       # If the property is not available (e.g. on real device or an emulator
       # instance launched not from build_mozc.py),
       # use [ro.build.display.id].
       if not self._avd_name:
-        self._avd_name = self._GetProperty('ro.build.display.id')
+        self._avd_name = self.GetProperty('ro.build.display.id')
     return self._avd_name
 
-  def _GetProperty(self, key):
+  def GetProperty(self, key):
     return self._RunCommand('getprop', key).rstrip()
 
   @staticmethod

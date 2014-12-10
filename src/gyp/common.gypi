@@ -343,10 +343,26 @@
           ['target_platform=="Android"', {
             'defines': ['NO_USAGE_REWRITER'],
             'target_conditions' : [
+              ['_toolset=="target" and _type=="executable"', {
+                # For unittest:
+                # Android 5.0+ requires standalone native executables to be PIE.
+                # See crbug.com/373219.
+                'ldflags': [
+                  '-pie',
+                ],
+              }],
               ['_toolset=="target"', {
                 'defines': [
                   'OS_ANDROID',
                   'MOZC_ANDROID_APPLICATION_ID="<(android_application_id)"',
+                ],
+                'cflags': [
+                  # For unittest:
+                  # Android 5.0+ requires standalone native executables to be
+                  # PIE. Note that we can specify this option even for ICS
+                  # unless we ship a standalone native executable.
+                  # See crbug.com/373219.
+                  '-fPIE',
                 ],
                 'ldflags!': [  # Remove all libraries for GNU/Linux.
                   '<@(linux_ldflags)',

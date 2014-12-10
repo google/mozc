@@ -344,6 +344,9 @@ class AndroidDevice(android_util.AndroidDevice):
       self.GetLogger().info('ABI %s is not compatible with built executables.',
                             abi)
       return []
+    if int(self.GetProperty('ro.build.version.sdk')) <= 15:
+      self.GetLogger().info('The device does not support PIE so skip testing.')
+      return []
     try:
       error_messages = []
       self.SetUpTest(options.remote_device, options.remote_mount_point,
