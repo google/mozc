@@ -401,7 +401,6 @@ class Emulator(object):
     ports = GetAvailableEmulatorPorts(android_home)
     if not ports:
       raise AndroidEmulatorConditionError('No ports for ADB are available')
-
     for avd_config in avd_configs:
       SetUpTestingSdkHomeDirectory(android_sdk_home,
                                    android_home,
@@ -476,7 +475,7 @@ class Emulator(object):
     self.serial = 'emulator-%s' % self._port_number
 
     args = [
-        os.path.join(self._android_home, 'tools', emulator),
+        os.path.join(self._android_home, 'tools', 'emulator'),
         '-avd', self._avd_name,
         '-port', str(self._port_number),
         '-no-snapshot-load',  # Should do full-boot.
