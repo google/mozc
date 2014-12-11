@@ -554,13 +554,15 @@ def GetAvailableEmulatorPorts(android_home):
 
 def SetUpTestingSdkHomeDirectory(dest_android_sdk_home,
                                  android_home,
-                                 options):
+                                 options,
+                                 my_open=open):
   """Creates AVD in testing sdk home directory based on given options.
 
   Args:
     dest_android_sdk_home: testing sdk home
     android_home: SDK's home (e.g, /home/me/android-sdk-linux_x86)
     options: dictionary which is passed to `android create avd' command
+    my_open: For testing purpose
 
   Raises:
     AndroidUtilSubprocessError: thrown when AVD creation fails.
@@ -580,6 +582,12 @@ def SetUpTestingSdkHomeDirectory(dest_android_sdk_home,
   logging.info('Creating AVD: %s', args)
   if subprocess.call(args, env=env):
     raise AndroidUtilSubprocessError('AVD creation fails.')
+
+  # Suppress usage stats dialog.
+  ddmscfg_path = os.path.join(dest_android_sdk_home, '.android', 'ddms.cfg')
+  with my_open(ddmscfg_path, 'w') as f:
+    f.write('pingOptIn=false\n')
+    f.write('pingId=0\n')
 
 
 def GetAvdNames(android_sdk_home):
