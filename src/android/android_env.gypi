@@ -27,23 +27,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# TARGETS:
-#   install  = Installs the apk package into a real device or an emulator.
-#   apk      = Builds the apk package.
-#   run_test = Installs the apk package and runs the Java test suite.
-#   run_native_small_test = Builds and runs C++ unit tests (small size).
-#   run_native_large_test = Builds and runs C++ unit tests (large size).
-#   adt_apk_dependencies  = Prepares everything ADT needs.
-#
-# NOTES:
-# The apk package will be the release or debug version depending on -c option
-# of build_mozc.py (Debug or Release).
-#
-# For signing, neither key.store nor key.alias in project.properties is set,
-# and the default debug key is used.  You need to set them in local.properties
-# (recommended) or project.properties when you need to sign the package with
-# the release key.
-
 {
   'variables': {
     'app_package_name': '<(android_application_id)',
@@ -76,7 +59,7 @@
   },
   'conditions': [
     ['branding=="GoogleJapaneseInput"', {
-    }, {
+    }, {  # 'branding!="GoogleJapaneseInput"'
       'variables': {
         # Currently dexmaker* and easymock* properties are not used.
         # TODO(matsuzakit): Support Java-side unit test.

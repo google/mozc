@@ -62,7 +62,7 @@
           'action_name': 'build_java_test',
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_java_test'],
-           # TODO(komatsu): use ant.gypi when the build rule is moved to tests/.
+          # TODO(komatsu): use ant.gypi when the build rule is moved to tests/.
           'ninja_use_console': 1,
           'action': [
             '../build_tools/run_after_chdir.py', 'tests',
@@ -241,7 +241,7 @@
                 'action': [
                   # Note that multiple output files cannot be handled
                   # by copy_file script.
-                  '<@(copy_file)', '<@(_inputs)', '<(_outputs)',
+                  '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
                 ],
               },
             ],
@@ -267,7 +267,7 @@
                 'action': [
                   # Note that multiple output files cannot be handled
                   # by copy_file script.
-                  '<@(copy_file)', '<@(_inputs)', '<(_outputs)',
+                  '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
                 ],
               },
             ],
