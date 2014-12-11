@@ -44,7 +44,6 @@ import os
 import shutil
 import sys
 
-from copy_file import CopyFiles
 from util import PrintErrorAndExit
 from util import RunOrDie
 
