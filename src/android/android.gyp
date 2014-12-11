@@ -101,7 +101,7 @@
       'dependencies': [
         'protobuf/protobuf.gyp:protobuf_java',
         'sdk_apk_dependencies',
-        'userfeedback/userfeedback.gyp:userfeedback_project',
+        'userfeedback/userfeedback.gyp:userfeedback',
       ],
       'actions': [
         {
