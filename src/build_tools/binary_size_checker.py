@@ -48,10 +48,9 @@ import sys
 # in Megabytes.
 EXPECTED_MAXIMUM_SIZES = {
     # Distribution package files:
-    # TODO(team): We should target 55MB or less.
-    'GoogleJapaneseInput.dmg': 60,
-    'GoogleJapaneseInput32.msi': 60,
-    'GoogleJapaneseInput64.msi': 60,
+    'GoogleJapaneseInput.dmg': 65,
+    'GoogleJapaneseInput32.msi': 65,
+    'GoogleJapaneseInput64.msi': 65,
     }
 
 
