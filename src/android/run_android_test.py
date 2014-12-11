@@ -38,17 +38,16 @@ script.
 
 __author__ = "hidehiko"
 
-from build_tools.test_tools import gtest_report
-from build_tools import android_util
 import errno
 import logging
 import multiprocessing
 import optparse
 import os
 import subprocess
-import sys
 import time
 from xml.etree import cElementTree as ElementTree
+from build_tools import android_util
+from build_tools.test_tools import gtest_report
 
 
 def FindTestBinaries(test_dir):
@@ -69,9 +68,6 @@ def FindTestBinaries(test_dir):
 def ParseArgs():
   """Parses command line options and returns them."""
   parser = optparse.OptionParser()
-  # Assume the parent directory is the Mozc root directory.
-  program_dir = os.path.dirname(sys.argv[0])
-  parent_dir = os.path.join(*os.path.split(program_dir)[:-1]) or '..'
   parser.add_option('--run_java_test', dest='run_java_test', default=False,
                     action='store_true',
                     help='Runs JUnit tests. [JAVA] options are used.')
@@ -92,8 +88,6 @@ def ParseArgs():
                     default='org.mozc.android.inputmethod.japanese',
                     help='[JAVA] Testee project\'s package name. '
                     'This is used to find test reporting XML file.')
-  parser.add_option('--mozc_root_dir', dest='mozc_root_dir', default=parent_dir,
-                    help='[NATIVE] The root directory of Mozc project')
   parser.add_option('--remote_dir', dest='remote_dir',
                     default='/sdcard/mozctest',
                     help='[NATIVE] Working directory on '
@@ -112,28 +106,22 @@ def ParseArgs():
                     help='[JAVA][NATIVE] ABI of built test executables.')
   parser.add_option('--mozc_dictionary_data_file',
                     dest='mozc_dictionary_data_file', default=None,
-                    help='[NATIVE] The relative path from mozc_root_dir to '
-                    'the system.dictionary file.')
+                    help='[NATIVE] Path to system.dictionary file.')
   parser.add_option('--mozc_connection_data_file',
                     dest='mozc_connection_data_file', default=None,
-                    help='[NATIVE] The relative path from mozc_root_dir to '
-                    'the connection.data file.')
+                    help='[NATIVE] Path to connection.data file.')
   parser.add_option('--mozc_connection_text_data_file',
                     dest='mozc_connection_text_data_file', default=None,
-                    help='[NATIVE] The relative path from mozc_root_dir to '
-                    'the connection_single_column.txt file.')
+                    help='[NATIVE] Path to connection_single_column.txt file.')
   parser.add_option('--mozc_test_connection_data_file',
                     dest='mozc_test_connection_data_file', default=None,
-                    help='[NATIVE] The relative path from mozc_root_dir to '
-                    'the test_connection.data file.')
+                    help='[NATIVE] Path to test_connection.data file.')
   parser.add_option('--mozc_test_connection_text_data_file',
                     dest='mozc_test_connection_text_data_file', default=None,
-                    help='[NATIVE] The relative path from mozc_root_dir to '
-                    'the connection_single_column.txt file.')
+                    help='[NATIVE] Path to connection_single_column.txt file.')
   parser.add_option('--mozc_data_dir',
                     dest='mozc_data_dir', default=None,
-                    help='[NATIVE] The relative path from mozc_root_dir to '
-                    'the data directory.')
+                    help='[NATIVE] Path to data directory.')
   parser.add_option('--output_report_dir', dest='output_report_dir',
                     default=None,
                     help='[JAVA][NATIVE] Path to output gtest '
@@ -288,7 +276,7 @@ class AndroidDevice(android_util.AndroidDevice):
       if remote_report_path:
         self._RunCommand('rm', remote_report_path)
 
-  def SetUpTest(self, device, mount_point, host_dir, remote_dir,
+  def SetUpTest(self, device, mount_point, remote_dir,
                 dictionary_data, connection_data, connection_text_data,
                 test_connection_data, test_connection_text_data,
                 mozc_data_dir):
@@ -304,25 +292,25 @@ class AndroidDevice(android_util.AndroidDevice):
     # data is set at jni loading time, but it is necessary to somehow
     # set the data in native tests. So, copy the dictionary data to the
     # emulator.
-    self.CopyFile(host_path=os.path.join(host_dir, dictionary_data),
+    self.CopyFile(host_path=dictionary_data,
                   remote_path=os.path.join(remote_dir,
                                            'embedded_data', 'dictionary_data'),
                   operation='push')
-    self.CopyFile(host_path=os.path.join(host_dir, connection_data),
+    self.CopyFile(host_path=connection_data,
                   remote_path=os.path.join(remote_dir,
                                            'embedded_data', 'connection_data'),
                   operation='push')
-    self.CopyFile(host_path=os.path.join(host_dir, connection_text_data),
+    self.CopyFile(host_path=connection_text_data,
                   remote_path=os.path.join(remote_dir,
                                            'data_manager', 'android',
                                            'connection_single_column.txt'),
                   operation='push')
-    self.CopyFile(host_path=os.path.join(host_dir, test_connection_data),
+    self.CopyFile(host_path=test_connection_data,
                   remote_path=os.path.join(remote_dir,
                                            'data_manager', 'testing',
                                            'connection_data.data'),
                   operation='push')
-    self.CopyFile(host_path=os.path.join(host_dir, test_connection_text_data),
+    self.CopyFile(host_path=test_connection_text_data,
                   remote_path=os.path.join(remote_dir,
                                            'data_manager', 'testing',
                                            'connection_single_column.txt'),
@@ -331,7 +319,7 @@ class AndroidDevice(android_util.AndroidDevice):
     # We want only test data and they are in mozc_data_dir/data.
     # TODO(matsuzakit): Split generated .h files and test data
     #                   into separate directories.
-    self.CopyFile(host_path=os.path.join(host_dir, mozc_data_dir, 'data'),
+    self.CopyFile(host_path=os.path.join(mozc_data_dir, 'data'),
                   remote_path=os.path.join(remote_dir, 'data'),
                   operation='push')
 
@@ -350,7 +338,7 @@ class AndroidDevice(android_util.AndroidDevice):
     try:
       error_messages = []
       self.SetUpTest(options.remote_device, options.remote_mount_point,
-                     options.mozc_root_dir, options.remote_dir,
+                     options.remote_dir,
                      options.mozc_dictionary_data_file,
                      options.mozc_connection_data_file,
                      options.mozc_connection_text_data_file,
