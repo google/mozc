@@ -38,6 +38,7 @@ TODO(matsuzakit): Split to smaller modules (APK, AndroidDevice and Emulator).
 
 __author__ = "matsuzakit"
 
+import fcntl
 import glob
 import logging
 import os
@@ -45,6 +46,10 @@ import re
 import subprocess
 import sys
 import zipfile
+
+
+# Directory to store lock files.
+LOCK_DIR = '/tmp/.android_util'
 
 
 class Error(Exception):
@@ -376,8 +381,7 @@ class Emulator(object):
   """An emulator and emulator related stuff."""
 
   @staticmethod
-  def LaunchAll(android_sdk_home, avd_configs, android_home,
-                android_min_port=0):
+  def LaunchAll(android_sdk_home, avd_configs, android_home):
     """Creates and launches Emulator instances.
 
     Args:
@@ -385,7 +389,6 @@ class Emulator(object):
       avd_configs: A list of dictionaries which contains parameters
                    for emulator.
       android_home: A string pointing the root directory of the SDK.
-      android_min_port: Minimum number of using port.
 
     Raises:
       AndroidEmulatorConditionError: No availabe ports.
@@ -393,33 +396,24 @@ class Emulator(object):
     Returns:
       A list of Emulator instantces.
     """
-    available_ports = [i for i
-                       in GetAvailableEmulatorPorts(android_home)
-                       if i >= android_min_port]
-    if len(available_ports) < len(avd_configs):
-      raise AndroidEmulatorConditionError(
-          'available_ports (%d) is smaller than'
-          ' avd_configs (%d)'
-          % (len(available_ports), len(avd_configs)))
-
     emulators = []
 
-    # Invokes all the available emulators.
-    def LaunchAndWait(avd_name, port_number):
-      emulator = Emulator(android_sdk_home, avd_name, android_home)
-      logging.info('Launching %s at port %d', avd_name, port_number)
-      emulator.Launch(port_number)
-      logging.info('Waiting for %s', avd_name)
-      emulator.GetAndroidDevice(android_home).WaitForDevice()
-      emulators.append(emulator)
-      logging.info('Successfully launched %s', avd_name)
+    ports = GetAvailableEmulatorPorts(android_home)
+    if not ports:
+      raise AndroidEmulatorConditionError('No ports for ADB are available')
 
-    # TODO(matsuzakit): Use multiprocessing.
     for avd_config in avd_configs:
       SetUpTestingSdkHomeDirectory(android_sdk_home,
                                    android_home,
                                    avd_config)
-      LaunchAndWait(avd_config['--name'], available_ports.pop())
+      avd_name = avd_config['--name']
+      emulator = Emulator(android_sdk_home, avd_name, android_home)
+      emulator.Launch()
+      emulators.append(emulator)
+
+    for emulator in emulators:
+      emulator.GetAndroidDevice(android_home).WaitForDevice()
+      logging.info('Emulator %s gets ready.', emulator.serial)
 
     return emulators
 
@@ -442,21 +436,44 @@ class Emulator(object):
     # _process can be used for checking whether emulator process has been
     # launched or not.
     self._process = None
+    self._port_number = None
+    self._lock_fd = None
 
-  def Launch(self, port_number):
+  def _LockPort(self, port_number):
+    """Trys to lock given port_number using lock file."""
+    if not os.path.exists(LOCK_DIR):
+      os.makedirs(LOCK_DIR)
+    if self._port_number:
+      raise AndroidUtilSubprocessError('Locked twice.')
+    self._lock_fd = open(os.path.join(LOCK_DIR, 'port%d.lock' % port_number),
+                         'w')
+    try:
+      fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+      logging.info('Port %d is alredy used.', port_number)
+      self._lock_fd.close()
+      return False
+    return True
+
+  def Launch(self):
     """Launhes an emulator process.
 
-    Args:
-      port_number: Port number to be used by newly launched emulator.
-          c.f.  GetAvailableEmulatorPorts().
     Raises:
       AndroidUtilSubprocessError: If fails on launching a process.
     """
     if self._process:
       raise AndroidUtilSubprocessError(
           'Emulator process has been launched already.')
-    self._port_number = port_number
-    self.serial = 'emulator-%s' % port_number
+
+    ports = GetAvailableEmulatorPorts(self._android_home)
+    for port in ports:
+      if self._LockPort(port):
+        self._port_number = port
+        break
+    if not self._port_number:
+      raise AndroidUtilSubprocessError('No available port.')
+
+    self.serial = 'emulator-%s' % self._port_number
 
     args = [
         os.path.join(self._android_home, 'tools', emulator),
@@ -514,6 +531,8 @@ class Emulator(object):
           'Emulator process has not been launched.')
     self._process.terminate()
     self._process = None
+    fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
+    self._lock_fd.close()
 
 
 def GetAvailableEmulatorPorts(android_home):

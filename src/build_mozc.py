@@ -48,7 +48,6 @@ import re
 import sys
 
 from build_tools import mozc_version
-from build_tools.android_util import Emulator
 from build_tools.mozc_version import GenerateVersionFile
 from build_tools.test_tools import test_launcher
 from build_tools.util import CheckFileOrDie
@@ -66,6 +65,11 @@ from build_tools.util import RemoveDirectoryRecursively
 from build_tools.util import RemoveFile
 from build_tools.util import RunOrDie
 from build_tools.util import RunOrDieError
+
+if not IsWindows():
+  # android_util depends on fcntl module which doesn't exist in Windows.
+  # pylint: disable=g-import-not-at-top
+  from build_tools.android_util import Emulator
 
 SRC_DIR = '.'
 # We need to obtain the absolute path of this script before we
@@ -587,10 +591,6 @@ def ParseRunTestsOptions(args=None, values=None):
                     help='[Android build only] specify which emulator/device '
                     'you test on. '
                     'If not specified emulators are launched and used.')
-  parser.add_option('--android_min_port', dest='android_min_port',
-                    default='5554',
-                    help='Minimum port number of emulators which will be '
-                    'launched by this script (inclusive).')
 
   return parser.parse_args(args, values)
 
