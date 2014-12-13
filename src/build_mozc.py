@@ -380,8 +380,7 @@ def ParseGypOptions(args=None, values=None):
   # Android
   parser.add_option('--android_arch', dest='android_arch',
                     type='choice',
-                    choices=('arm', 'x86', 'mips',
-                            ),
+                    choices=('arm', 'x86', 'mips', 'arm64', 'x86_64', 'mips64'),
                     default='arm',
                     help='[Android build only] Android architecture '
                     '(arm, x86, mips)')

@@ -899,6 +899,21 @@
             'toolchain_prefix': 'mipsel-linux-android',
           },
         }],
+        ['android_arch=="arm64"', {
+          'variables': {
+            'toolchain_prefix': 'aarch64-linux-android',
+          },
+        }],
+        ['android_arch=="x86_64"', {
+          'variables': {
+            'toolchain_prefix': 'x86_64-linux-android',
+          },
+        }],
+        ['android_arch=="mips64"', {
+          'variables': {
+            'toolchain_prefix': 'mips64el-linux-android',
+          },
+        }],
       ],
       # To use clang only CC and CXX should point clang directly.
       # c.f., https://android.googlesource.com/platform/ndk/+/tools_ndk_r9d/docs/text/STANDALONE-TOOLCHAIN.text

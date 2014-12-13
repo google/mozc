@@ -165,7 +165,7 @@ def _GetAndroidVersionCode(base_version_code, arch):
 
   Version code format:
    0005BBBBBA
-   A: ABI (0: Fat, 5: x86, 2: armeabi-v7a, 1:mips)
+   A: ABI (0: Fat, 6: x86_64, 5:arm64, 4:mips64, 3: x86, 2: armeabi-v7a, 1:mips)
    B: ANDROID_VERSION_CODE
 
   Note:
@@ -177,7 +177,10 @@ def _GetAndroidVersionCode(base_version_code, arch):
     than that of previous" cannot be introduced.
   """
   arch_to_abi_code = {
-      'x86': 5,
+      'x86_64': 6,
+      'arm64': 5,
+      'mips64': 4,
+      'x86': 3,
       'arm': 2,
       'mips': 1,
   }

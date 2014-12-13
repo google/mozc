@@ -102,5 +102,26 @@
         'platform': 'android-14',
       },
     }],
+    ['android_arch=="arm64"', {
+      'variables': {
+        'abi': 'arm64-v8a',
+        'toolchain': 'aarch64-linux-android-4.9',
+        'platform': 'android-21',
+      },
+    }],
+    ['android_arch=="x86_64"', {
+      'variables': {
+        'abi': 'x86_64',
+        'toolchain': 'x86_64-4.9',
+        'platform': 'android-21',
+      },
+    }],
+    ['android_arch=="mips64"', {
+      'variables': {
+        'abi': 'mips64',
+        'toolchain': 'mips64el-linux-android-4.9',
+        'platform': 'android-21',
+      },
+    }],
   ],
 }
