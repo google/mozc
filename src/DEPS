@@ -33,7 +33,7 @@ vars = {
   "gmock_revision": "501",
   "gyp_revision": "2012",
   "jsoncpp_revision": "11086dd6a7eba04289944367ca82cea71299ed70",
-  "protobuf_revision": "172019c40bf548908ab09bfd276074c929d48415",
+  "protobuf_revision": "bba83652e1be610bdb7ee1566ad18346d98b843c",
   "wtl_revision": "587",
   "zinnia_revision": "16",
   "jsr305_version": "2.0.2",
