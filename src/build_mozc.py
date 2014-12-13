@@ -389,6 +389,11 @@ def ParseGypOptions(args=None, values=None):
                     choices=('stlport', 'gnustl', 'libcxx'),
                     default='stlport',
                     help='[Android build only] Standard C++ library')
+  parser.add_option('--android_compiler', dest='android_compiler',
+                    type='choice',
+                    choices=('gcc', 'clang'),
+                    default='gcc',
+                    help='[Android build only] Compiler')
   parser.add_option('--android_application_id', dest='android_application_id',
                     default='org.mozc.android.inputmethod.japanese',
                     help='[Android build only] Android\'s application id'
@@ -752,7 +757,11 @@ def GypMain(options, unused_args, _):
 
   gyp_options.extend(['-D', 'android_home=%s' % android_home])
   gyp_options.extend(['-D', 'android_arch=%s' % options.android_arch])
+  if options.android_compiler == 'clang' and options.android_stl != 'libcxx':
+    raise ValueError(
+        'Only libc++ is supported with Clang. Use --android_stl=libcxx')
   gyp_options.extend(['-D', 'android_stl=%s' % options.android_stl])
+  gyp_options.extend(['-D', 'android_compiler=%s' % options.android_compiler])
   gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
   gyp_options.extend(['-D', 'android_application_id=%s' %
                       options.android_application_id])

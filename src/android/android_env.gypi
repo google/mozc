@@ -81,42 +81,84 @@
         'resources_project_path': 'static_resources/resources_oss',
       },
     }],
-    ['android_arch=="arm"', {
+    ['android_arch=="arm" and android_compiler=="gcc"', {
       'variables': {
         'abi': 'armeabi-v7a',
         'toolchain': 'arm-linux-androideabi-4.9',
         'platform': 'android-14',
       },
     }],
-    ['android_arch=="x86"', {
+    ['android_arch=="arm" and android_compiler=="clang"', {
+      'variables': {
+        'abi': 'armeabi-v7a',
+        'toolchain': 'arm-linux-androideabi-clang3.5',
+        'platform': 'android-14',
+      },
+    }],
+    ['android_arch=="x86" and android_compiler=="gcc"', {
       'variables': {
         'abi': 'x86',
         'toolchain': 'x86-4.9',
         'platform': 'android-14',
       },
     }],
-    ['android_arch=="mips"', {
+    ['android_arch=="x86" and android_compiler=="clang"', {
+      'variables': {
+        'abi': 'x86',
+        'toolchain': 'x86-clang3.5',
+        'platform': 'android-14',
+      },
+    }],
+    ['android_arch=="mips" and android_compiler=="gcc"', {
       'variables': {
         'abi': 'mips',
         'toolchain': 'mipsel-linux-android-4.9',
         'platform': 'android-14',
       },
     }],
-    ['android_arch=="arm64"', {
+    ['android_arch=="mips" and android_compiler=="clang"', {
+      'variables': {
+        'abi': 'mips',
+        'toolchain': 'mipsel-linux-android-clang3.5',
+        'platform': 'android-14',
+      },
+    }],
+    ['android_arch=="arm64" and android_compiler=="gcc"', {
       'variables': {
         'abi': 'arm64-v8a',
         'toolchain': 'aarch64-linux-android-4.9',
         'platform': 'android-21',
       },
     }],
-    ['android_arch=="x86_64"', {
+    ['android_arch=="arm64" and android_compiler=="clang"', {
+      'variables': {
+        'abi': 'arm64-v8a',
+        'toolchain': 'aarch64-linux-android-clang3.5',
+        'platform': 'android-21',
+      },
+    }],
+    ['android_arch=="x86_64" and android_compiler=="gcc"', {
       'variables': {
         'abi': 'x86_64',
         'toolchain': 'x86_64-4.9',
         'platform': 'android-21',
       },
     }],
-    ['android_arch=="mips64"', {
+    ['android_arch=="x86_64" and android_compiler=="clang"', {
+      'variables': {
+        'abi': 'x86_64',
+        'toolchain': 'x86_64-clang3.5',
+        'platform': 'android-21',
+      },
+    }],
+    ['android_arch=="mips64" and android_compiler=="gcc"', {
+      'variables': {
+        'abi': 'mips64',
+        'toolchain': 'mips64el-linux-android-4.9',
+        'platform': 'android-21',
+      },
+    }],
+    ['android_arch=="mips64" and android_compiler=="clang"', {
       'variables': {
         'abi': 'mips64',
         'toolchain': 'mips64el-linux-android-4.9',

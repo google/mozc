@@ -155,7 +155,13 @@
         'compiler_host': 'clang',
         'compiler_host_version_int': 303,  # Clang 3.3 or higher
       }],
-      ['target_platform=="Android"', {
+      ['target_platform=="Android" and android_compiler=="clang"', {
+        'compiler_target': 'clang',
+        'compiler_target_version_int': 305,  # Clang 3.5 or higher
+        'compiler_host': 'gcc',
+        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+      }],
+      ['target_platform=="Android" and android_compiler=="gcc"', {
         'compiler_target': 'gcc',
         'compiler_target_version_int': 409,  # GCC 4.9 or higher
         'compiler_host': 'gcc',
@@ -914,13 +920,25 @@
             'toolchain_prefix': 'mips64el-linux-android',
           },
         }],
+        ['android_compiler=="gcc"', {
+          'variables': {
+            'c_compiler': 'gcc',
+            'cxx_compiler': 'g++',
+          }
+        }],
+        ['android_compiler=="clang"', {
+          'variables': {
+            'c_compiler': 'clang',
+            'cxx_compiler': 'clang++',
+          }
+        }],
       ],
       # To use clang only CC and CXX should point clang directly.
       # c.f., https://android.googlesource.com/platform/ndk/+/tools_ndk_r9d/docs/text/STANDALONE-TOOLCHAIN.text
       'make_global_settings': [
         ['AR', '<(ndk_bin_dir)/<(toolchain_prefix)-ar'],
-        ['CC', '<(ndk_bin_dir)/<(toolchain_prefix)-gcc'],
-        ['CXX', '<(ndk_bin_dir)/<(toolchain_prefix)-g++'],
+        ['CC', '<(ndk_bin_dir)/<(toolchain_prefix)-<(c_compiler)'],
+        ['CXX', '<(ndk_bin_dir)/<(toolchain_prefix)-<(cxx_compiler)'],
         ['LD', '<(ndk_bin_dir)/<(toolchain_prefix)-ld'],
         ['NM', '<(ndk_bin_dir)/<(toolchain_prefix)-nm'],
         ['READELF', '<(ndk_bin_dir)/<(toolchain_prefix)-readelf'],
