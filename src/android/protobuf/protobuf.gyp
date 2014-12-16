@@ -46,7 +46,6 @@
           ],
           'outputs': [
             'bin/classes.jar',
-            'gen/com/google/userfeedback/android/api/R.java',
           ],
           'includes': ['../ant.gypi'],
         },
