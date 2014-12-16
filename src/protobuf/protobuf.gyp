@@ -32,12 +32,18 @@
     # We accept following warnings come from protobuf.
     # This list should be revised when protobuf is updated.
     'msvc_disabled_warnings_for_protoc': [
+      # 'witch statement contains 'default' but no 'case' labels
+      # http://msdn.microsoft.com/en-us/library/te26h1tz.aspx
+      '4065',
       # unary minus operator applied to unsigned type, result still unsigned.
       # http://msdn.microsoft.com/en-us/library/4kh09110.aspx
       '4146',
       # 'this' : used in base member initializer list
       # http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
       '4355',
+      # 'function' : not all control paths return a value
+      # http://msdn.microsoft.com/en-us/library/6deaf4k9.aspx
+      '4715',
       # 'type' : forcing value to bool 'true' or 'false'
       # (performance warning)
       # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
@@ -166,6 +172,8 @@
              '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
                 '-Wno-conversion-null',  # coded_stream.cc uses NULL to bool.
+                '-Wno-maybe-uninitialized',
+                '-Wno-return-type',
                 '-Wno-unused-function',
                 # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
                 # TODO(komatsu): Update the following two lines when we stop
