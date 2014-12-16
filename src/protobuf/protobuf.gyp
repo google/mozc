@@ -158,26 +158,19 @@
               '<(protobuf_root)/src',
             ],
           },
-          'xcode_settings': {
-            'WARNING_CFLAGS': [
-              '-Wno-error',
-              # For GetEnumNumber in wire_format.cc:60.
-              '-Wno-unused-function',
-            ],
-          },
           'msvs_disabled_warnings': [
             '<@(msvc_disabled_warnings_for_protoc)',
           ],
           'conditions': [
             ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
-             '(_toolset=="host" and (compiler_host=="clang" or compiler_target=="gcc"))', {
+             '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
                 '-Wno-conversion-null',  # coded_stream.cc uses NULL to bool.
                 '-Wno-unused-function',
                 # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
                 # TODO(komatsu): Update the following two lines when we stop
                 # supporting GCC 4.6 or GCC itself.
-                '-Wno-unknown-warning',
+                '-Wno-unknown-warning-option',
                 '-Wno-unused-local-typedefs',  # only GCC 4.8 or later
               ],
             }],
@@ -225,15 +218,15 @@
           ],
           'conditions': [
             ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
-             '(_toolset=="host" and (compiler_host=="clang" or compiler_target=="gcc"))', {
-               'cflags': [
-                 '-Wno-unused-result',  # protoc has unused result.
-                 # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
-                 # TODO(komatsu): Update the following two lines when we stop
-                 # supporting GCC 4.6 or GCC itself.
-                 '-Wno-unknown-warning',
-                 '-Wno-unused-local-typedefs',  # only GCC 4.8 or later
-               ],
+             '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
+              'cflags': [
+                '-Wno-unused-result',  # protoc has unused result.
+                # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
+                # TODO(komatsu): Update the following two lines when we stop
+                # supporting GCC 4.6 or GCC itself.
+                '-Wno-unknown-warning-option',
+                '-Wno-unused-local-typedefs',  # only GCC 4.8 or later
+              ],
             }],
             ['OS=="win"', {
               'defines!': [
