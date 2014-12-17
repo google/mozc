@@ -125,14 +125,6 @@ jbyteArray JNICALL evalCommand(JNIEnv *env,
   // Use JNI_ABORT because in_bytes is read only.
   env->ReleaseByteArrayElements(in_bytes_array, in_bytes, JNI_ABORT);
 
-  // Remove candidates field.
-  // On Android all_candidate_words is always used instead and
-  // candiadtes field is ignored.
-  // Parsing protobuf message is expensive so remove such unused field.
-  // This is quick hack. Ideally also removing the logic where the candidate
-  // field is filled but currently simple solusion is employed.
-  command.mutable_output()->clear_candidates();
-
   const int out_size = command.ByteSize();
   jbyteArray out_bytes_array = env->NewByteArray(out_size);
   jbyte *out_bytes = env->GetByteArrayElements(out_bytes_array, &is_copy);
