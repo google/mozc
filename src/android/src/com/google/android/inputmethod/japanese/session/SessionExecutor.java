@@ -743,13 +743,7 @@ public class SessionExecutor {
       default:
         event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_GE10;
     }
-    evaluateAsynchronously(
-        Input.newBuilder()
-        .setType(CommandType.SEND_COMMAND)
-        .setCommand(SessionCommand.newBuilder()
-            .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
-            .setUsageStatsEvent(event)),
-        null, null);
+    sendUsageStatsEvent(event);
   }
   /**
    * Sends {@code RESET_CONTEXT} command to the server asynchronously.
@@ -999,5 +993,15 @@ public class SessionExecutor {
     KeyEventCallBackContext context = new KeyEventCallBackContext(
         triggeringKeyEvent, callback, callbackHandler);
     handler.sendMessage(handler.obtainMessage(ExecutorMainCallback.PASS_TO_CALLBACK, context));
+  }
+
+  public void sendUsageStatsEvent(UsageStatsEvent event) {
+    evaluateAsynchronously(
+        Input.newBuilder()
+        .setType(CommandType.SEND_COMMAND)
+        .setCommand(SessionCommand.newBuilder()
+            .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+            .setUsageStatsEvent(event)),
+        null, null);
   }
 }

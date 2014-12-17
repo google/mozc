@@ -60,6 +60,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.Cros
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpaceOnAlphanumeric;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpecialRomanjiTable;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionCommand;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionCommand.UsageStatsEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config.SelectionShortcut;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config.SessionKeymap;
@@ -281,6 +282,11 @@ public class MozcService extends InputMethodService {
     @Override
     public void onFireFeedbackEvent(FeedbackEvent event) {
       feedbackManager.fireFeedback(event);
+      if (event.equals(FeedbackEvent.INPUTVIEW_EXPAND)) {
+        sessionExecutor.sendUsageStatsEvent(UsageStatsEvent.KEYBOARD_EXPAND_EVENT);
+      } else if (event.equals(FeedbackEvent.INPUTVIEW_FOLD)) {
+        sessionExecutor.sendUsageStatsEvent(UsageStatsEvent.KEYBOARD_FOLD_EVENT);
+      }
     }
 
     @Override

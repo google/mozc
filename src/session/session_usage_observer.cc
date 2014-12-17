@@ -361,6 +361,12 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
     case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_GE10:
       UsageStats::IncrementCount("SubmittedCandidateRowGE10");
       break;
+    case commands::SessionCommand::KEYBOARD_FOLD_EVENT:
+      UsageStats::IncrementCount("KeyboardFoldEvent");
+      break;
+    case commands::SessionCommand::KEYBOARD_EXPAND_EVENT:
+      UsageStats::IncrementCount("KeyboardExpandEvent");
+      break;
     default:
       LOG(WARNING) << "client side usage stats event has invalid category";
       break;

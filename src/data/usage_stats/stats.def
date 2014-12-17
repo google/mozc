@@ -538,6 +538,9 @@ SubmittedCandidateRow7
 SubmittedCandidateRow8
 SubmittedCandidateRow9
 SubmittedCandidateRowGE10
+# The count of the fold/expand keyboard event.
+KeyboardFoldEvent
+KeyboardExpandEvent
 
 # for windows
 
