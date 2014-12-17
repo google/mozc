@@ -109,14 +109,14 @@ void Candidate::set_subcandidate_list(CandidateList *subcandidate_list) {
 }
 
 
-static const size_t kPageSize = 9;
+static const size_t kDefaultPageSize = 9;
 
 CandidateList::CandidateList(const bool rotate)
     : rotate_(rotate),
-      page_size_(kPageSize),
+      page_size_(kDefaultPageSize),
       focused_index_(0),
       focused_(false),
-      candidate_pool_(new ObjectPool<Candidate>(kPageSize)),
+      candidate_pool_(new ObjectPool<Candidate>(kDefaultPageSize)),
       candidates_(new vector<Candidate *>),
       next_available_id_(0),
       added_candidates_(new map<uint64, int>),

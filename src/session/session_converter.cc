@@ -112,6 +112,7 @@ SessionConverter::SessionConverter(const ConverterInterface *converter,
   conversion_preferences_.request_suggestion = true;
   operation_preferences_.use_cascading_window = true;
   operation_preferences_.candidate_shortcuts.clear();
+  candidate_list_->set_page_size(request->candidate_page_size());
 }
 
 SessionConverter::~SessionConverter() {}
@@ -1552,6 +1553,7 @@ void SessionConverter::FillAllCandidateWords(
 
 void SessionConverter::SetRequest(const commands::Request *request) {
   request_ = request;
+  candidate_list_->set_page_size(request->candidate_page_size());
 }
 
 void SessionConverter::OnStartComposition(const commands::Context &context) {

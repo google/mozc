@@ -765,6 +765,9 @@ message Request {
   }
   optional LanguageAwareInputBehavior language_aware_input = 14
       [default = DEFAULT_LANGUAGE_AWARE_BEHAVIOR];
+
+  // Page size of the candidate list.
+  optional int32 candidate_page_size = 15 [default = 9];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.

@@ -219,7 +219,7 @@ message Candidates {
     COMPOSITION = 1;
   }
   optional CandidateWindowLocation window_location = 17;
+
+  // The number of candidates per page.
+  optional uint32 page_size = 18 [ default = 9 ];
 };
-
-
-

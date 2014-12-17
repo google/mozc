@@ -132,6 +132,7 @@ TEST(SessionOutputTest, FillCandidates) {
   }
 
   candidate_list.set_focused(true);
+  candidate_list.set_page_size(9);
   candidate_list.AddCandidate(0, "0");
   candidate_list.AddCandidate(1, "1");
   candidate_list.AddSubCandidateList(&subcandidate_list);
@@ -141,8 +142,9 @@ TEST(SessionOutputTest, FillCandidates) {
   subcandidate_list.AddCandidate(3, "3");
   subcandidate_list.AddCandidate(4, "4");
 
-  // Focused index = 0
+  // Focused index = 0. page_size = 9.
   SessionOutput::FillCandidates(segment, candidate_list, 0, &candidates_proto);
+  EXPECT_EQ(9, candidates_proto.page_size());
   EXPECT_EQ(3, candidates_proto.candidate_size());
   EXPECT_EQ(0, candidates_proto.position());
   EXPECT_TRUE(candidates_proto.has_focused_index());
@@ -152,10 +154,12 @@ TEST(SessionOutputTest, FillCandidates) {
   EXPECT_EQ(kSubcandidateList, candidates_proto.candidate(2).value());
   EXPECT_FALSE(candidates_proto.has_subcandidates());
 
-  // Focused index = 2 with a subcandidate list.
+  // Focused index = 2 with a subcandidate list. page_size = 5.
   candidates_proto.Clear();
   candidate_list.MoveToId(3);
+  candidate_list.set_page_size(5);
   SessionOutput::FillCandidates(segment, candidate_list, 1, &candidates_proto);
+  EXPECT_EQ(5, candidates_proto.page_size());
   EXPECT_EQ(3, candidates_proto.candidate_size());
   EXPECT_EQ(1, candidates_proto.position());
   EXPECT_TRUE(candidates_proto.has_focused_index());
