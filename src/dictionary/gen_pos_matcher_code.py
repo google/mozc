@@ -70,6 +70,7 @@ def OutputPosMatcherData(pos_matcher, output):
         % { 'id': pos_matcher.GetId(rule_name),
             'rule_name': rule_name,
             'original_pattern': pos_matcher.GetOriginalPattern(rule_name) })
+  output.write('  static_cast<uint16>(0xFFFF),\n')
   output.write('};\n')
 
   # Generate arrays of ranges each of which will be an element of kRangeTable[].
@@ -91,9 +92,10 @@ def OutputPosMatcherData(pos_matcher, output):
   # Generate kRangeTable[].
   output.write(
       'const ::mozc::POSMatcher::Range *const kRangeTables[%d] = {\n'
-      % len(pos_matcher.GetRuleNameList()))
+      % (len(pos_matcher.GetRuleNameList()) + 1))
   for rule_name in pos_matcher.GetRuleNameList():
     output.write('  kRangeTable_%s,\n' % rule_name)
+  output.write('  NULL,\n')
   output.write('};\n')
 
 
@@ -113,8 +115,8 @@ def OutputPosMatcherHeader(pos_matcher, output):
       'class POSMatcher {\n'
       ' public:\n'
       '  struct Range {\n'
-      '    const uint16 lower;\n'
-      '    const uint16 upper;\n'
+      '    uint16 lower;\n'
+      '    uint16 upper;\n'
       '  };\n')
 
   # Helper function to generate Get<RuleName>Id() method from rule name and its

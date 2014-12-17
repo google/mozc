@@ -51,8 +51,11 @@ namespace {
 bool OutputData(const string &file_path) {
   packed::SystemDictionaryDataPacker packer(Version::GetMozcVersion());
   packer.SetPosTokens(kPOSToken, arraysize(kPOSToken));
-  packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable),
-                           kRangeTables, arraysize(kRangeTables));
+  // The following two arrays contain sentinel elements but the packer doesn't
+  // expect them.  So, pass the shinked ranges of the arrays.  Note that
+  // sentinel elements are not necessary at runtime.
+  packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
+                           kRangeTables, arraysize(kRangeTables) - 1);
   return packer.Output(file_path, false);
 }
 
