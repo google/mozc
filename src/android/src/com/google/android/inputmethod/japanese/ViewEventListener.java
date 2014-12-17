@@ -36,6 +36,7 @@ import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.C
 import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
+import com.google.common.base.Optional;
 
 import java.util.List;
 
@@ -68,8 +69,9 @@ public interface ViewEventListener {
    * Called when a conversion candidate is selected.
    *
    * @param candidateId the id which Candidate and CandidateWord has.
+   * @param rowIndex index of row in which the candidate is. If absent no stats are sent.
    */
-  public void onConversionCandidateSelected(int candidateId);
+  public void onConversionCandidateSelected(int candidateId, Optional<Integer> rowIndex);
 
   /**
    * Called when a candidate on symbol input view is selected.

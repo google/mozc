@@ -36,6 +36,8 @@ import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.C
 import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import java.util.List;
 
@@ -78,8 +80,8 @@ public abstract class ViewEventDelegator implements ViewEventListener {
   }
 
   @Override
-  public void onConversionCandidateSelected(int candidateId) {
-    delegated.onConversionCandidateSelected(candidateId);
+  public void onConversionCandidateSelected(int candidateId, Optional<Integer> rowIndex) {
+    delegated.onConversionCandidateSelected(candidateId, Preconditions.checkNotNull(rowIndex));
   }
 
   @Override

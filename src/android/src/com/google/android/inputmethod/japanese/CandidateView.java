@@ -44,6 +44,7 @@ import org.mozc.android.inputmethod.japanese.ui.ScrollGuideView;
 import org.mozc.android.inputmethod.japanese.ui.SpanFactory;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.Context;
@@ -73,8 +74,9 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     }
 
     @Override
-    public void onCandidateSelected(CandidateWord candidateWord) {
-      viewEventListener.onConversionCandidateSelected(candidateWord.getId());
+    public void onCandidateSelected(CandidateWord candidateWord, Optional<Integer> rowIndex) {
+      viewEventListener.onConversionCandidateSelected(candidateWord.getId(),
+                                                      Preconditions.checkNotNull(rowIndex));
     }
   }
 

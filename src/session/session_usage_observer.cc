@@ -328,6 +328,39 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
       UsageStats::SetInteger("SoftwareKeyboardLayoutPortrait",
                              input.command().usage_stats_event_int_value());
       break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_0:
+      UsageStats::IncrementCount("SubmittedCandidateRow0");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_1:
+      UsageStats::IncrementCount("SubmittedCandidateRow1");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_2:
+      UsageStats::IncrementCount("SubmittedCandidateRow2");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_3:
+      UsageStats::IncrementCount("SubmittedCandidateRow3");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_4:
+      UsageStats::IncrementCount("SubmittedCandidateRow4");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_5:
+      UsageStats::IncrementCount("SubmittedCandidateRow5");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_6:
+      UsageStats::IncrementCount("SubmittedCandidateRow6");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_7:
+      UsageStats::IncrementCount("SubmittedCandidateRow7");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_8:
+      UsageStats::IncrementCount("SubmittedCandidateRow8");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_9:
+      UsageStats::IncrementCount("SubmittedCandidateRow9");
+      break;
+    case commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_GE10:
+      UsageStats::IncrementCount("SubmittedCandidateRowGE10");
+      break;
     default:
       LOG(WARNING) << "client side usage stats event has invalid category";
       break;

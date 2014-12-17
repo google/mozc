@@ -526,6 +526,18 @@ CharacterPaletteCommit
 SoftwareKeyboardLayoutLandscape
 # Selected software keyboard layout for portrait.
 SoftwareKeyboardLayoutPortrait
+# The count of submitted candidate in n-th row (0-origin)
+SubmittedCandidateRow0
+SubmittedCandidateRow1
+SubmittedCandidateRow2
+SubmittedCandidateRow3
+SubmittedCandidateRow4
+SubmittedCandidateRow5
+SubmittedCandidateRow6
+SubmittedCandidateRow7
+SubmittedCandidateRow8
+SubmittedCandidateRow9
+SubmittedCandidateRowGE10
 
 # for windows
 

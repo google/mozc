@@ -53,6 +53,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 
@@ -689,15 +690,67 @@ public class SessionExecutor {
   /**
    * Sends {@code SUBMIT_CANDIDATE} command to the server asynchronously.
    */
-  public void submitCandidate(int candidateId, EvaluationCallback callback) {
+  public void submitCandidate(int candidateId, Optional<Integer> rowIndex,
+      EvaluationCallback callback) {
+    Preconditions.checkNotNull(rowIndex);
     Input.Builder inputBuilder = Input.newBuilder()
         .setType(CommandType.SEND_COMMAND)
         .setCommand(SessionCommand.newBuilder()
             .setType(SessionCommand.CommandType.SUBMIT_CANDIDATE)
             .setId(candidateId));
     evaluateAsynchronously(inputBuilder, null, callback);
+
+    if (rowIndex.isPresent()) {
+      candidateSubmissionStatsEvent(rowIndex.get());
+    }
   }
 
+  private void candidateSubmissionStatsEvent(int rowIndex) {
+    Preconditions.checkArgument(rowIndex >= 0);
+
+    UsageStatsEvent event;
+    switch (rowIndex) {
+      case 0:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_0;
+        break;
+      case 1:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_1;
+        break;
+      case 2:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_2;
+        break;
+      case 3:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_3;
+        break;
+      case 4:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_4;
+        break;
+      case 5:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_5;
+        break;
+      case 6:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_6;
+        break;
+      case 7:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_7;
+        break;
+      case 8:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_8;
+        break;
+      case 9:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_9;
+        break;
+      default:
+        event = UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_GE10;
+    }
+    evaluateAsynchronously(
+        Input.newBuilder()
+        .setType(CommandType.SEND_COMMAND)
+        .setCommand(SessionCommand.newBuilder()
+            .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+            .setUsageStatsEvent(event)),
+        null, null);
+  }
   /**
    * Sends {@code RESET_CONTEXT} command to the server asynchronously.
    */

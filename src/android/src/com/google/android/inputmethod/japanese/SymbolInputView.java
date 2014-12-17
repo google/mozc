@@ -117,7 +117,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   // TODO(hidehiko): make this class static.
   class SymbolCandidateSelectListener implements CandidateSelectListener {
     @Override
-    public void onCandidateSelected(CandidateWord candidateWord) {
+    public void onCandidateSelected(CandidateWord candidateWord, Optional<Integer> row) {
       if (viewEventListener != null) {
         // If we are on password field, history shouldn't be updated to protect privacy.
         viewEventListener.onSymbolCandidateSelected(

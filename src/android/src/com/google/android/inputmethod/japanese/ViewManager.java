@@ -94,12 +94,12 @@ public class ViewManager implements ViewManagerInterface {
     }
 
     @Override
-    public void onConversionCandidateSelected(int candidateId) {
+    public void onConversionCandidateSelected(int candidateId, Optional<Integer> rowIndex) {
       // Restore the keyboard frame if hidden.
       if (mozcView != null) {
         mozcView.resetKeyboardFrameVisibility();
       }
-      super.onConversionCandidateSelected(candidateId);
+      super.onConversionCandidateSelected(candidateId, rowIndex);
     }
   }
 

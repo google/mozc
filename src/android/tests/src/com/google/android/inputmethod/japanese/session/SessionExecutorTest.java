@@ -74,6 +74,7 @@ import org.mozc.android.inputmethod.japanese.stresstest.StressTest;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.MemoryLogger;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 
@@ -605,9 +606,17 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setId(3))),
         isNull(KeyEventInterface.class),
         same(evaluationCallback));
+    executor.evaluateAsynchronously(
+        matchesBuilder(Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+                .setUsageStatsEvent(UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_GE10))),
+        isNull(KeyEventInterface.class),
+        isNull(EvaluationCallback.class));
     replayAll();
 
-    executor.submitCandidate(3, evaluationCallback);
+    executor.submitCandidate(3, Optional.<Integer>of(100), evaluationCallback);
 
     verifyAll();
   }

@@ -128,12 +128,15 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     @Nullable
     private CandidateWord pressedCandidate;
     private final RectF candidateRect = new RectF();
+    private Optional<Integer> pressedRowIndex = Optional.absent();
 
     public CandidateWordGestureDetector(Context context) {
       gestureDetector = new GestureDetector(context, new CandidateWordViewGestureListener());
     }
 
-    private void pressCandidate(Row row, Span span) {
+    private void pressCandidate(int rowIndex, Span span) {
+      Row row = calculatedLayout.getRowList().get(rowIndex);
+      pressedRowIndex = Optional.of(rowIndex);
       pressedCandidate = span.getCandidateWord().orNull();
       // TODO(yamaguchi):maybe better to make this rect larger by several pixels to avoid that
       // users fail to select a candidate by unconscious small movement of tap point.
@@ -145,6 +148,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
 
     private void releaseCandidate() {
       pressedCandidate = null;
+      pressedRowIndex = Optional.absent();
     }
 
     CandidateWord getPressedCandidate() {
@@ -166,7 +170,8 @@ abstract class CandidateWordView extends View implements MemoryManageable {
       if (calculatedLayout == null) {
         return false;
       }
-      for (Row row : calculatedLayout.getRowList()) {
+      for (int rowIndex = 0; rowIndex < calculatedLayout.getRowList().size(); ++rowIndex) {
+        Row row = calculatedLayout.getRowList().get(rowIndex);
         if (scrolledY < row.getTop()) {
           break;
         }
@@ -180,7 +185,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
           if (scrolledX >= span.getRight()) {
             continue;
           }
-          pressCandidate(row, span);
+          pressCandidate(rowIndex, span);
           invalidate();
           return true;
         }
@@ -225,7 +230,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
         case MotionEvent.ACTION_UP:
           if (pressedCandidate != null) {
             if (candidateRect.contains(scrolledX, scrolledY) && candidateSelectListener != null) {
-              candidateSelectListener.onCandidateSelected(pressedCandidate);
+              candidateSelectListener.onCandidateSelected(pressedCandidate, pressedRowIndex);
             }
             releaseCandidate();
             invalidate();

@@ -41,6 +41,7 @@ import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
+import com.google.common.base.Optional;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -187,7 +188,7 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     view.new SymbolCandidateSelectListener().onCandidateSelected(
-        CandidateWord.newBuilder().setValue("(^_^)").buildPartial());
+        CandidateWord.newBuilder().setValue("(^_^)").buildPartial(), Optional.<Integer>absent());
 
     verifyAll();
   }

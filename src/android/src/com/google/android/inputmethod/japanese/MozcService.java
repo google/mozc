@@ -219,8 +219,8 @@ public class MozcService extends InputMethodService {
   // Package private for testing.
   class MozcEventListener implements ViewEventListener {
     @Override
-    public void onConversionCandidateSelected(int candidateId) {
-      sessionExecutor.submitCandidate(candidateId, renderResultCallback);
+    public void onConversionCandidateSelected(int candidateId, Optional<Integer> rowIndex) {
+      sessionExecutor.submitCandidate(candidateId, rowIndex, renderResultCallback);
       feedbackManager.fireFeedback(FeedbackEvent.CANDIDATE_SELECTED);
     }
 

@@ -1532,7 +1532,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     feedbackListener.onSound(AudioManager.FX_KEY_CLICK, 0.5f);
     feedbackListener.onVibrate(100L);
 
-    sessionExecutor.submitCandidate(eq(0), isA(EvaluationCallback.class));
+    sessionExecutor.submitCandidate(eq(0), eq(Optional.<Integer>absent()),
+                                    isA(EvaluationCallback.class));
     replayAll();
 
     // Invoke onConversionCandidateSelected.

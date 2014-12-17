@@ -137,10 +137,10 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     resetAllToDefault();
 
-    viewEventListener.onConversionCandidateSelected(0);
+    viewEventListener.onConversionCandidateSelected(0, Optional.<Integer>absent());
     replayAll();
 
-    viewManagerEventListener.onConversionCandidateSelected(0);
+    viewManagerEventListener.onConversionCandidateSelected(0, Optional.<Integer>absent());
 
     verifyAll();
 

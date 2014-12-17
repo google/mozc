@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
+import com.google.common.base.Optional;
 
 /**
  * Callback interface to handle candidate selection.
@@ -39,6 +40,9 @@ public interface CandidateSelectListener {
 
   /**
    * Called {@code onCandidateSelected}, when a candidate is selected by user's action.
+   *
+   * @param candidateWord selected word
+   * @param rowIndex index of row in which the selected word is. If absent no stats are sent.
    */
-  public void onCandidateSelected(CandidateWord candidateWord);
+  public void onCandidateSelected(CandidateWord candidateWord, Optional<Integer> rowIndex);
 }

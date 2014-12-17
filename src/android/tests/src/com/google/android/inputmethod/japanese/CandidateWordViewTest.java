@@ -224,7 +224,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
       candidateSelectListener.onCandidateSelected(
-          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get());
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get(), Optional.<Integer>of(0));
       replayAll();
       events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
@@ -236,7 +236,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
       candidateSelectListener.onCandidateSelected(
-          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get());
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get(), Optional.<Integer>of(0));
       replayAll();
       events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 20, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
