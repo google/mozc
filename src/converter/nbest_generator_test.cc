@@ -331,4 +331,105 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
               result_segment.candidate(0).value);
   }
 }
+
+TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
+  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter);
+  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
+
+  Segments segments;
+  segments.set_request_type(Segments::PREDICTION);
+  // "とうきょうかなごやにいきたい"
+  const string kInput =
+      "\xe3\x81\xa8\xe3\x81\x86\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86"
+      "\xe3\x81\x8b\xe3\x81\xaa\xe3\x81\x94\xe3\x82\x84\xe3\x81\xab"
+      "\xe3\x81\x84\xe3\x81\x8d\xe3\x81\x9f\xe3\x81\x84";
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::FREE);
+    segment->set_key(kInput);
+  }
+
+  Lattice lattice;
+  lattice.SetKey(kInput);
+  const ConversionRequest request;
+  converter->MakeLattice(request, &segments, &lattice);
+
+  vector<uint16> group;
+  converter->MakeGroup(segments, &group);
+  converter->Viterbi(segments, &lattice);
+
+  scoped_ptr<NBestGenerator> nbest_generator(
+      data_and_converter->CreateNBestGenerator(&lattice));
+
+  const bool kSingleSegment = true;  // For realtime conversion
+  const Node *begin_node = lattice.bos_nodes();
+  const Node *end_node = GetEndNode(
+      *converter, segments, *begin_node, group, kSingleSegment);
+
+  nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
+  Segment result_segment;
+  GatherCandidates(
+      10, Segments::PREDICTION, nbest_generator.get(), &result_segment);
+  ASSERT_LE(1, result_segment.candidates_size());
+
+  const Segment::Candidate &top_cand = result_segment.candidate(0);
+  EXPECT_EQ(kInput, top_cand.key);
+  // "東京か名古屋に行きたい
+  EXPECT_EQ("\xe6\x9d\xb1\xe4\xba\xac\xe3\x81\x8b\xe5\x90\x8d\xe5\x8f\xa4"
+            "\xe5\xb1\x8b\xe3\x81\xab\xe8\xa1\x8c\xe3\x81\x8d\xe3\x81\x9f"
+            "\xe3\x81\x84",
+            top_cand.value);
+
+  vector<StringPiece> keys, values, content_keys, content_values;
+  for (Segment::Candidate::InnerSegmentIterator iter(&top_cand);
+       !iter.Done(); iter.Next()) {
+    keys.push_back(iter.GetKey());
+    values.push_back(iter.GetValue());
+    content_keys.push_back(iter.GetContentKey());
+    content_values.push_back(iter.GetContentValue());
+  }
+  ASSERT_EQ(3, keys.size());
+  ASSERT_EQ(3, values.size());
+  ASSERT_EQ(3, content_keys.size());
+  ASSERT_EQ(3, content_values.size());
+
+  // Inner segment 0
+  // "とうきょうか"
+  EXPECT_EQ("\xe3\x81\xa8\xe3\x81\x86\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86"
+            "\xe3\x81\x8b", keys[0]);
+  // "東京か"
+  EXPECT_EQ("\xe6\x9d\xb1\xe4\xba\xac\xe3\x81\x8b", values[0]);
+  // "とうきょう"
+  EXPECT_EQ("\xe3\x81\xa8\xe3\x81\x86\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86",
+            content_keys[0]);
+  // "東京"
+  EXPECT_EQ("\xe6\x9d\xb1\xe4\xba\xac", content_values[0]);
+
+  // Inner segment 1
+  // "なごやに"
+  EXPECT_EQ("\xe3\x81\xaa\xe3\x81\x94\xe3\x82\x84\xe3\x81\xab", keys[1]);
+  // "名古屋に"
+  EXPECT_EQ("\xe5\x90\x8d\xe5\x8f\xa4\xe5\xb1\x8b\xe3\x81\xab", values[1]);
+  // "なごや"
+  EXPECT_EQ("\xe3\x81\xaa\xe3\x81\x94\xe3\x82\x84", content_keys[1]);
+  // "名古屋"
+  EXPECT_EQ("\xe5\x90\x8d\xe5\x8f\xa4\xe5\xb1\x8b", content_values[1]);
+
+  // Inner segment 2: In the original segment, "行きたい" has the form
+  // "行き" (content word) + "たい" (functional).  However, since "行き" is
+  // Yougen, our rule for inner segment boundary doesn't handle it as a content
+  // value.  Thus, "行きたい" becomes the content value.
+  // "いきたい"
+  EXPECT_EQ("\xe3\x81\x84\xe3\x81\x8d\xe3\x81\x9f\xe3\x81\x84", keys[2]);
+  // "行きたい"
+  EXPECT_EQ("\xe8\xa1\x8c\xe3\x81\x8d\xe3\x81\x9f\xe3\x81\x84", values[2]);
+  // "いきたい"
+  EXPECT_EQ("\xe3\x81\x84\xe3\x81\x8d\xe3\x81\x9f\xe3\x81\x84",
+            content_keys[2]);
+  // "行きたい"
+  EXPECT_EQ("\xe8\xa1\x8c\xe3\x81\x8d\xe3\x81\x9f\xe3\x81\x84",
+            content_values[2]);
+}
+
 }  // namespace mozc

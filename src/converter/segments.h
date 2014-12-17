@@ -170,13 +170,60 @@ class Segment {
     // The style is defined in enum |Command|.
     Command command;
 
-    // Boundary information for realtime conversion.
-    // This will be set only for realtime conversion result candidates.
-    // This contains inner segment size for key and value.
-    // If the candidate key and value are
-    // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
-    // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
-    vector<pair<int, int> > inner_segment_boundary;
+    // Boundary information for realtime conversion.  This will be set only for
+    // realtime conversion result candidates.  Each element is the encoded
+    // lengths of key, value, content key and content value.
+    vector<uint32> inner_segment_boundary;
+
+    static bool EncodeLengths(size_t key_len, size_t value_len,
+                              size_t content_key_len,
+                              size_t content_value_len,
+                              uint32 *result);
+
+    // This function ignores error, so be careful when using this.
+    static uint32 EncodeLengths(size_t key_len, size_t value_len,
+                                size_t content_key_len,
+                                size_t content_value_len) {
+      uint32 result;
+      EncodeLengths(key_len, value_len, content_key_len, content_value_len,
+                    &result);
+      return result;
+    }
+
+    // Inserts a new element to |inner_segment_boundary|.  If one of four
+    // lengths is longer than 255, this method returns false.
+    bool PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
+                                      size_t content_key_len,
+                                      size_t content_value_len);
+
+    // Iterates inner segments.  Usage example:
+    // for (InnerSegmentIterator iter(&cand); !iter.Done(); iter.Next()) {
+    //   StringPiece s = iter.GetContentKey();
+    //   ...
+    // }
+    class InnerSegmentIterator {
+     public:
+      explicit InnerSegmentIterator(const Candidate *candidate)
+          : candidate_(candidate), key_offset_(candidate->key.data()),
+            value_offset_(candidate->value.data()),
+            index_(0) {}
+
+      bool Done() const {
+        return index_ == candidate_->inner_segment_boundary.size();
+      }
+
+      void Next();
+      StringPiece GetKey() const;
+      StringPiece GetValue() const;
+      StringPiece GetContentKey() const;
+      StringPiece GetContentValue() const;
+
+     private:
+      const Candidate *candidate_;
+      const char *key_offset_;
+      const char *value_offset_;
+      size_t index_;
+    };
 
     void Init() {
       key.clear();

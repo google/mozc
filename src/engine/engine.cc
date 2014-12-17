@@ -136,7 +136,8 @@ Engine::~Engine() {}
 void Engine::Init(
     const DataManagerInterface *data_manager,
     PredictorInterface *(*predictor_factory)(PredictorInterface *,
-                                             PredictorInterface *)) {
+                                             PredictorInterface *),
+    bool enable_content_word_learning) {
   CHECK(data_manager);
   CHECK(predictor_factory);
 
@@ -225,7 +226,8 @@ void Engine::Init(
     PredictorInterface *user_history_predictor =
         new UserHistoryPredictor(dictionary_.get(),
                                  data_manager->GetPOSMatcher(),
-                                 suppression_dictionary_.get());
+                                 suppression_dictionary_.get(),
+                                 enable_content_word_learning);
     CHECK(user_history_predictor);
 
     predictor_ = (*predictor_factory)(dictionary_predictor,

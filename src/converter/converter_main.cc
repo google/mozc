@@ -168,20 +168,22 @@ string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
   if (cand.inner_segment_boundary.empty()) {
     return "";
   }
-  vector<StringPiece> pieces;
-  const char *boundary_begin = cand.value.data();
-  const char *boundary_end = boundary_begin;
-  for (size_t i = 0; i < cand.inner_segment_boundary.size(); ++i) {
-    for (int j = 0; j < cand.inner_segment_boundary[i].second; ++j) {
-      boundary_end += Util::OneCharLen(boundary_end);
-    }
-    pieces.push_back(StringPiece(boundary_begin,
-                                 boundary_end - boundary_begin));
-    boundary_begin = boundary_end;
+  vector<string> pieces;
+  for (Segment::Candidate::InnerSegmentIterator iter(&cand);
+       !iter.Done(); iter.Next()) {
+    string s = "<";
+    iter.GetKey().AppendToString(&s);
+    s.append(", ");
+    iter.GetValue().AppendToString(&s);
+    s.append(", ");
+    iter.GetContentKey().AppendToString(&s);
+    s.append(", ");
+    iter.GetContentValue().AppendToString(&s);
+    s.append(1, '>');
+    pieces.push_back(s);
   }
-  CHECK_EQ(cand.value.data() + cand.value.size(), boundary_begin);
   string s;
-  Util::JoinStringPieces(pieces, " | ", &s);
+  Util::JoinStrings(pieces, " | ", &s);
   return s;
 }
 

@@ -128,12 +128,12 @@ class ImmutableConverterMock : public ImmutableConverterInterface {
                       "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf"
                       "\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae\xe3\x81\xa7"
                       "\xe3\x81\x99");
-    // "わたしの, 私の"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 2));
-    // "なまえは, 名前は"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 3));
-    // "なかのです, 中野です"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(5, 4));
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    // "なまえは, 名前は", "なまえ, 名前"
+    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    // "なかのです, 中野です", "なかの, 中野"
+    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
   }
 
   virtual bool ConvertForRequest(

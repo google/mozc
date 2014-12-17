@@ -40,7 +40,8 @@ EngineInterface *PackedEngineFactory::Create() {
   Engine *engine = new Engine;
   DCHECK(engine);
   engine->Init(packed::GetPackedDataManager(),
-               DefaultPredictor::CreateDefaultPredictor);
+               DefaultPredictor::CreateDefaultPredictor,
+               false);
   return engine;
 }
 

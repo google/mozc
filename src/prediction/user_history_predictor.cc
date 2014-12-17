@@ -379,11 +379,13 @@ class UserHistoryPredictorSyncer : public Thread {
 UserHistoryPredictor::UserHistoryPredictor(
     const DictionaryInterface *dictionary,
     const POSMatcher *pos_matcher,
-    const SuppressionDictionary *suppression_dictionary)
+    const SuppressionDictionary *suppression_dictionary,
+    bool enable_content_word_learning)
     : dictionary_(dictionary),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
       predictor_name_("UserHistoryPredictor"),
+      content_word_learning_enabled_(enable_content_word_learning),
       updated_(false),
       dic_(new DicCache(UserHistoryPredictor::cache_size())) {
   AsyncLoad();  // non-blocking
@@ -1695,6 +1697,8 @@ void UserHistoryPredictor::MakeLearningSegments(
     DCHECK_LE(1, segment.candidates_size());
     learning_segment.key = segment.candidate(0).key;
     learning_segment.value = segment.candidate(0).value;
+    learning_segment.content_key = segment.candidate(0).content_key;
+    learning_segment.content_value = segment.candidate(0).content_value;
     learning_segment.description = GetDescription(segment.candidate(0));
     learning_segments->push_back_history_segment(learning_segment);
   }
@@ -1705,24 +1709,20 @@ void UserHistoryPredictor::MakeLearningSegments(
       SegmentForLearning learning_segment;
       learning_segment.key = candidate.key;
       learning_segment.value = candidate.value;
+      learning_segment.content_key = candidate.content_key;
+      learning_segment.content_value = candidate.content_value;
       learning_segment.description = GetDescription(candidate);
       learning_segments->push_back_conversion_segment(learning_segment);
     } else {
-      int key_start_pos = 0, value_start_pos = 0;
-      for (size_t j = 0; j < candidate.inner_segment_boundary.size(); ++j) {
-        const int key_len = candidate.inner_segment_boundary[j].first;
-        const int value_len = candidate.inner_segment_boundary[j].second;
-        SegmentForLearning learning_segment;
-        Util::SubString(candidate.key, key_start_pos,
-                        key_len, &learning_segment.key);
-        Util::SubString(candidate.value, value_start_pos,
-                        value_len, &learning_segment.value);
+      SegmentForLearning learning_segment;
+      for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
+           !iter.Done(); iter.Next()) {
+        iter.GetKey().CopyToString(&learning_segment.key);
+        iter.GetValue().CopyToString(&learning_segment.value);
+        iter.GetContentKey().CopyToString(&learning_segment.content_key);
+        iter.GetContentValue().CopyToString(&learning_segment.content_value);
         learning_segments->push_back_conversion_segment(learning_segment);
-        key_start_pos += key_len;
-        value_start_pos += value_len;
       }
-      DCHECK_EQ(key_start_pos, Util::CharsLen(candidate.key));
-      DCHECK_EQ(value_start_pos, Util::CharsLen(candidate.value));
     }
   }
 }
@@ -1770,6 +1770,15 @@ void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
            segment.description,
            is_suggestion_selected, next_fp_to_set,
            last_access_time, segments);
+    if (content_word_learning_enabled_ &&
+        segment.content_key != segment.key &&
+        segment.content_value != segment.value) {
+      Insert(segment.content_key,
+             segment.content_value,
+             segment.description,
+             is_suggestion_selected, 0,
+             last_access_time, segments);
+    }
   }
 
   // Insert all_key/all_value

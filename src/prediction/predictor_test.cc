@@ -293,7 +293,8 @@ TEST_F(PredictorTest, CallPredictorsForMobilePartialPrediction) {
           new UserHistoryPredictor(
               &dictionary_mock,
               UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-              Singleton<SuppressionDictionary>::get())));
+              Singleton<SuppressionDictionary>::get(),
+              true)));
   Segments segments;
   {
     segments.set_request_type(Segments::PARTIAL_PREDICTION);

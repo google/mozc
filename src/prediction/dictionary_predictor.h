@@ -129,7 +129,7 @@ class DictionaryPredictor : public PredictorInterface {
     // If the candidate key and value are
     // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
     // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
-    vector<pair<int, int> > inner_segment_boundary;
+    vector<uint32> inner_segment_boundary;
     uint32 candidate_attributes;
     size_t consumed_key_size;
   };

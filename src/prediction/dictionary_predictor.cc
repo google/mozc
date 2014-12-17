@@ -1063,16 +1063,29 @@ bool DictionaryPredictor::PushBackTopConversionResult(
   // construct it manually here.
   // TODO(noriyukit): This is code duplicate in converter/nbest_generator.cc and
   // we should refactor code after finding more good design.
+  bool inner_segment_boundary_success = true;
   for (size_t i = 0; i < tmp_segments.conversion_segments_size(); ++i) {
     const Segment &segment = tmp_segments.conversion_segment(i);
     const Segment::Candidate &candidate = segment.candidate(0);
     result->value.append(candidate.value);
     result->wcost += candidate.cost;
-    result->inner_segment_boundary.push_back(
-        make_pair(Util::CharsLen(candidate.key),
-                  Util::CharsLen(candidate.value)));
-  }
 
+    uint32 encoded_lengths;
+    if (inner_segment_boundary_success &&
+        Segment::Candidate::EncodeLengths(candidate.key.size(),
+                                          candidate.value.size(),
+                                          candidate.content_key.size(),
+                                          candidate.content_value.size(),
+                                          &encoded_lengths)) {
+      result->inner_segment_boundary.push_back(encoded_lengths);
+    } else {
+      inner_segment_boundary_success = false;
+    }
+  }
+  if (!inner_segment_boundary_success) {
+    LOG(WARNING) << "Failed to construct inner segment boundary";
+    result->inner_segment_boundary.clear();
+  }
   return true;
 }
 

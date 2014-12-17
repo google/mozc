@@ -238,7 +238,7 @@ class ConverterTest : public ::testing::Test {
   EngineInterface *CreateEngineWithMobilePredictor() {
     Engine *engine = new Engine;
     testing::MockDataManager data_manager;
-    engine->Init(&data_manager, MobilePredictor::CreateMobilePredictor);
+    engine->Init(&data_manager, MobilePredictor::CreateMobilePredictor, true);
     return engine;
   }
 
@@ -1308,7 +1308,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                           suggegstion_filter.get()),
                       new UserHistoryPredictor(dictionary.get(),
                                                data_manager.GetPOSMatcher(),
-                                               suppression_dictionary.get())),
+                                               suppression_dictionary.get(),
+                                               false)),
                   new RewriterImpl(converter.get(),
                                    &data_manager,
                                    pos_group.get(),

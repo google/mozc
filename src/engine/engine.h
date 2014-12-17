@@ -61,7 +61,8 @@ class Engine : public EngineInterface {
   // Predictor factory is used to select DefaultPredictor and MobilePredictor.
   void Init(const DataManagerInterface *data_manager,
             PredictorInterface *(*predictor_factory)(PredictorInterface *,
-                                                     PredictorInterface *));
+                                                     PredictorInterface *),
+            bool enable_content_word_learning);
 
   virtual ConverterInterface *GetConverter() const { return converter_.get(); }
   virtual PredictorInterface *GetPredictor() const { return predictor_; }

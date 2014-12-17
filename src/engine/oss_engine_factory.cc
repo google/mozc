@@ -41,9 +41,9 @@ EngineInterface *OssEngineFactory::Create() {
   DCHECK(engine);
   const oss::OssDataManager data_manager;
 #ifdef OS_ANDROID
-  engine->Init(&data_manager, MobilePredictor::CreateMobilePredictor);
+  engine->Init(&data_manager, MobilePredictor::CreateMobilePredictor, true);
 #else  // OS_ANDROID
-  engine->Init(&data_manager, DefaultPredictor::CreateDefaultPredictor);
+  engine->Init(&data_manager, DefaultPredictor::CreateDefaultPredictor, false);
 #endif  // OS_ANDROID
   return engine;
 }

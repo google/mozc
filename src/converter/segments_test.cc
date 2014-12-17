@@ -290,7 +290,7 @@ TEST_F(CandidateTest, CopyFrom) {
   src.attributes = 6;
   src.style = NumberUtil::NumberString::NUMBER_CIRCLED;
   src.command = Segment::Candidate::DISABLE_PRESENTATION_MODE;
-  src.inner_segment_boundary.push_back(pair<int, int>(1, 3));
+  src.PushBackInnerSegmentBoundary(1, 3, 5, 7);
 
   dest.CopyFrom(src);
 
@@ -339,15 +339,20 @@ TEST_F(CandidateTest, IsValid) {
   EXPECT_TRUE(c.IsValid());  // Empty inner_segment_boundary
 
   // Valid inner_segment_boundary.
-  c.inner_segment_boundary.push_back(pair<int, int>(1, 3));
-  c.inner_segment_boundary.push_back(pair<int, int>(2, 2));
+  c.inner_segment_boundary.push_back(
+      Segment::Candidate::EncodeLengths(1, 3, 8, 8));
+  c.inner_segment_boundary.push_back(
+      Segment::Candidate::EncodeLengths(2, 2, 3, 3));
   EXPECT_TRUE(c.IsValid());
 
   // Invalid inner_segment_boundary.
   c.inner_segment_boundary.clear();
-  c.inner_segment_boundary.push_back(pair<int, int>(1, 1));
-  c.inner_segment_boundary.push_back(pair<int, int>(2, 2));
-  c.inner_segment_boundary.push_back(pair<int, int>(3, 3));
+  c.inner_segment_boundary.push_back(
+      Segment::Candidate::EncodeLengths(1, 1, 2, 2));
+  c.inner_segment_boundary.push_back(
+      Segment::Candidate::EncodeLengths(2, 2, 3, 3));
+  c.inner_segment_boundary.push_back(
+      Segment::Candidate::EncodeLengths(3, 3, 4, 4));
   EXPECT_FALSE(c.IsValid());
 }
 
@@ -510,6 +515,54 @@ TEST_F(CandidateTest, functional_value) {
   candidate.value = "";
   candidate.content_value = "";
   EXPECT_EQ("", candidate.functional_value());
+}
+
+TEST_F(CandidateTest, InnerSegmentIterator) {
+  {
+    // For empty inner_segment_boundary, the initial state is done.
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.key = "testfoobar";
+    candidate.value = "redgreenblue";
+    Segment::Candidate::InnerSegmentIterator iter(&candidate);
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    //           key: test | foobar
+    //         value:  red | greenblue
+    //   content key: test | foo
+    // content value:  red | green
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.key = "testfoobar";
+    candidate.value = "redgreenblue";
+    candidate.PushBackInnerSegmentBoundary(4, 3, 4, 3);
+    candidate.PushBackInnerSegmentBoundary(6, 9, 3, 5);
+    vector<StringPiece> keys, values, content_keys, content_values;
+    for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
+         !iter.Done(); iter.Next()) {
+      keys.push_back(iter.GetKey());
+      values.push_back(iter.GetValue());
+      content_keys.push_back(iter.GetContentKey());
+      content_values.push_back(iter.GetContentValue());
+    }
+
+    ASSERT_EQ(2, keys.size());
+    EXPECT_EQ("test", keys[0]);
+    EXPECT_EQ("foobar", keys[1]);
+
+    ASSERT_EQ(2, values.size());
+    EXPECT_EQ("red", values[0]);
+    EXPECT_EQ("greenblue", values[1]);
+
+    ASSERT_EQ(2, content_keys.size());
+    EXPECT_EQ("test", content_keys[0]);
+    EXPECT_EQ("foo", content_keys[1]);
+
+    ASSERT_EQ(2, content_values.size());
+    EXPECT_EQ("red", content_values[0]);
+    EXPECT_EQ("green", content_values[1]);
+  }
 }
 
 TEST_F(SegmentTest, CopyFrom) {

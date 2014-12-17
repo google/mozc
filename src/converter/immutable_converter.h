@@ -78,6 +78,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   friend class NBestGeneratorTest;
   FRIEND_TEST(NBestGeneratorTest, MultiSegmentConnectionTest);
   FRIEND_TEST(NBestGeneratorTest, SingleSegmentConnectionTest);
+  FRIEND_TEST(NBestGeneratorTest, InnerSegmentBoundary);
 
   enum InsertCandidatesType {
     MULTI_SEGMENTS,  // Normal conversion ("私の|名前は|中野です")

@@ -63,7 +63,8 @@ EngineInterface *ChromeOsEngineFactory::Create() {
   Engine *engine = new Engine;
   DCHECK(engine);
   ScopedDataManager data_manager(chromeos::CreateDataManager());
-  engine->Init(data_manager.Get(), DefaultPredictor::CreateDefaultPredictor);
+  engine->Init(data_manager.Get(), DefaultPredictor::CreateDefaultPredictor,
+               false);
   return engine;
 }
 
