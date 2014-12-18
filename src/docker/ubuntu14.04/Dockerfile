@@ -52,20 +52,26 @@ USER mozc_builder
 # SDK setup
 RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
+
 ## Android SDK/NDK
 RUN curl -L http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin -O && chmod u+x android-ndk-r10d-linux-x86_64.bin && ./android-ndk-r10d-linux-x86_64.bin && rm android-ndk-r10d-linux-x86_64.bin
-RUN curl -LO http://dl.google.com/android/adt/22.6.2/adt-bundle-linux-x86_64-20140321.zip && unzip adt-bundle-linux-x86_64-20140321.zip && rm adt-bundle-linux-x86_64-20140321.zip
+RUN curl -L http://dl.google.com/android/android-sdk_r24.0.2-linux.tgz | tar -zx
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10d
+ENV ANDROID_HOME /home/mozc_builder/work/android-sdk-linux
+ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
+RUN echo y | android update sdk --all --force --no-ui --filter android-19
+RUN echo y | android update sdk --all --force --no-ui --filter build-tools-21.0.2
+RUN echo y | android update sdk --all --force --no-ui --filter extra-android-support
+RUN echo y | android update sdk --all --force --no-ui --filter platform-tool
+
 ## NaCl SDK
 RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip
 RUN cd nacl_sdk && ./naclsdk install pepper_27
+ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_27
+
 ## depot_tools
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-
-# env setup
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10d
-ENV ANDROID_HOME /home/mozc_builder/work/adt-bundle-linux-x86_64-20140321/sdk
-ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_27
-ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}:/home/mozc_builder/work/depot_tools
+ENV PATH $PATH:/home/mozc_builder/work/depot_tools
 
 # check out Mozc source
 RUN mkdir -p /home/mozc_builder/work/mozc
