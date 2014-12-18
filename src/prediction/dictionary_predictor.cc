@@ -555,25 +555,29 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
 
 void DictionaryPredictor::SetDebugDescription(PredictionTypes types,
                                               string *description) {
+  string debug_desc;
   if (types & UNIGRAM) {
-    Util::AppendStringWithDelimiter(" ", "Unigram", description);
+    debug_desc.append(1, 'U');
   }
   if (types & BIGRAM) {
-    Util::AppendStringWithDelimiter(" ", "Bigram", description);
+    debug_desc.append(1, 'B');
   }
   if (types & REALTIME_TOP) {
-    Util::AppendStringWithDelimiter(" ", "Realtime Top", description);
+    debug_desc.append("R1");
   } else if (types & REALTIME) {
-    Util::AppendStringWithDelimiter(" ", "Realtime", description);
+    debug_desc.append(1, 'R');
   }
   if (types & SUFFIX) {
-    Util::AppendStringWithDelimiter(" ", "Suffix", description);
+    debug_desc.append(1, 'S');
   }
   if (types & ENGLISH) {
-    Util::AppendStringWithDelimiter(" ", "English", description);
+    debug_desc.append(1, 'E');
   }
   // Note that description for TYPING_CORRECTION is omitted
   // because it is appended by SetDescription.
+  if (!debug_desc.empty()) {
+    Util::AppendStringWithDelimiter(" ", debug_desc, description);
+  }
 }
 
 // return transition_cost[rid][result.lid] + result.wcost (+ penalties).
