@@ -236,8 +236,7 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
   cand->style = result_cand.style;
 
   if (base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-    // "<部分確定>"
-    cand->description.assign("<\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A>");
+    cand->description.assign("\xE9\x83\xA8\xE5\x88\x86");  // "部分"
     if (!result_cand.description.empty()) {
       cand->description.append(1, '\n').append(result_cand.description);
     }
