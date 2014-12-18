@@ -3051,7 +3051,7 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
         TestableDictionaryPredictor::UNIGRAM |
         TestableDictionaryPredictor::ENGLISH;
     DictionaryPredictor::SetDebugDescription(types, &description);
-    EXPECT_EQ("Unigram English", description);
+    EXPECT_EQ("UE", description);
   }
   {
     string description = "description";
@@ -3059,7 +3059,7 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
         TestableDictionaryPredictor::REALTIME |
         TestableDictionaryPredictor::BIGRAM;
     DictionaryPredictor::SetDebugDescription(types, &description);
-    EXPECT_EQ("description Bigram Realtime", description);
+    EXPECT_EQ("description BR", description);
   }
   {
     string description;
@@ -3068,7 +3068,7 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
         TestableDictionaryPredictor::REALTIME |
         TestableDictionaryPredictor::SUFFIX;
     DictionaryPredictor::SetDebugDescription(types, &description);
-    EXPECT_EQ("Bigram Realtime Suffix", description);
+    EXPECT_EQ("BRS", description);
   }
 }
 
