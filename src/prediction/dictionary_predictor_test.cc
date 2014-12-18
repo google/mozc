@@ -3031,16 +3031,14 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
     string description;
     DictionaryPredictor::SetDescription(
         TestableDictionaryPredictor::TYPING_CORRECTION, 0, &description);
-    // "<入力補正>"
-    EXPECT_EQ("<\xE5\x85\xA5\xE5\x8A\x9B\xE8\xA3\x9C\xE6\xAD\xA3>",
-              description);
+    // "補正"
+    EXPECT_EQ("\xE8\xA3\x9C\xE6\xAD\xA3", description);
 
     description.clear();
     DictionaryPredictor::SetDescription(
         0, Segment::Candidate::AUTO_PARTIAL_SUGGESTION, &description);
-    // "<部分確定>"
-    EXPECT_EQ("<\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A>",
-              description);
+    // "部分"
+    EXPECT_EQ("\xE9\x83\xA8\xE5\x88\x86", description);
   }
 }
 

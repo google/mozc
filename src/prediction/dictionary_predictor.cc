@@ -538,17 +538,17 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
                                          uint32 attributes,
                                          string *description) {
   if (types & TYPING_CORRECTION) {
-    // <入力補正>
+    // "補正"
     Util::AppendStringWithDelimiter(
         " ",
-        "<" "\xE5\x85\xA5\xE5\x8A\x9B\xE8\xA3\x9C\xE6\xAD\xA3" ">",
+        "\xE8\xA3\x9C\xE6\xAD\xA3",
         description);
   }
   if (attributes & Segment::Candidate::AUTO_PARTIAL_SUGGESTION) {
-    // <部分確定>
+    // "部分"
     Util::AppendStringWithDelimiter(
         " ",
-        "<" "\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A" ">",
+        "\xE9\x83\xA8\xE5\x88\x86",
         description);
   }
 }
