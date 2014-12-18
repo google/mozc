@@ -133,4 +133,35 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
   }
 }
 
+TEST_F(RewriterTest, EmoticonsAboveSymbols) {
+  // "かおもじ"
+  const char kKey[] = "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98";
+  const char kEmoticon[] = "^^;";
+  // "☹": A platform-dependent symbol
+  const char kSymbol[] = "\xE2\x98\xB9";
+
+  const ConversionRequest request;
+  Segments segments;
+  Segment *seg = segments.push_back_segment();
+  Segment::Candidate *candidate = seg->add_candidate();
+  seg->set_key(kKey);
+  candidate->value = kKey;
+  EXPECT_EQ(1, seg->candidates_size());
+  EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
+  EXPECT_LT(1, seg->candidates_size());
+
+  int emoticon_index = -1;
+  int symbol_index = -1;
+  for (size_t i = 0; i < seg->candidates_size(); ++i) {
+    if (seg->candidate(i).value == kEmoticon) {
+      emoticon_index = i;
+    } else if (seg->candidate(i).value == kSymbol) {
+      symbol_index = i;
+    }
+  }
+  EXPECT_NE(-1, emoticon_index);
+  EXPECT_NE(-1, symbol_index);
+  EXPECT_LT(emoticon_index, symbol_index);
+}
+
 }  // namespace mozc

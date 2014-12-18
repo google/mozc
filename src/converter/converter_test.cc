@@ -988,38 +988,6 @@ TEST_F(ConverterTest, Regression5502496) {
   EXPECT_TRUE(found);
 }
 
-TEST_F(ConverterTest, EmoticonsAboveSymbols) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  ConverterInterface *converter = engine->GetConverter();
-  Segments segments;
-
-  // "かおもじ"
-  const char kKey[] = "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98";
-
-  const char kEmoticon[] = "^^;";
-  // "☹": A platform-dependent symbol
-  const char kSymbol[] = "\xE2\x98\xB9";
-
-  EXPECT_TRUE(converter->StartConversion(
-      &segments, kKey));
-  EXPECT_EQ(1, segments.conversion_segments_size());
-  const Segment &segment = segments.conversion_segment(0);
-  bool found_emoticon = false;
-  bool found_symbol = false;
-
-  for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    if (segment.candidate(i).value == kEmoticon) {
-      found_emoticon = true;
-    } else if (segment.candidate(i).value == kSymbol) {
-      found_symbol = true;
-    }
-    if (found_symbol) {
-      break;
-    }
-  }
-  EXPECT_TRUE(found_emoticon);
-}
-
 TEST_F(ConverterTest, StartSuggestionForRequest) {
   commands::Request client_request;
   client_request.set_mixed_conversion(true);
