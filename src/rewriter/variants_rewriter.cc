@@ -328,6 +328,10 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   }
 
   // Regular Candidate
+  string default_value, alternative_value;
+  string default_content_value, alternative_content_value;
+  vector<uint32> default_inner_segment_boundary;
+  vector<uint32> alternative_inner_segment_boundary;
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
     Segment::Candidate *original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
@@ -344,25 +348,15 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
-    string default_value, alternative_value;
-    if (!CharacterFormManager::GetCharacterFormManager()->
-        ConvertConversionStringWithAlternative(
-            original_candidate->value,
-            &default_value, &alternative_value)) {
+    if (!GenerateAlternatives(*original_candidate,
+                              &default_value,
+                              &alternative_value,
+                              &default_content_value,
+                              &alternative_content_value,
+                              &default_inner_segment_boundary,
+                              &alternative_inner_segment_boundary)) {
       SetDescriptionForCandidate(*pos_matcher_, original_candidate);
-      VLOG(1) << "ConvertConversionStringWithAlternative failed";
       continue;
-    }
-
-    string default_content_value, alternative_content_value;
-    if (original_candidate->value != original_candidate->content_value) {
-      CharacterFormManager::GetCharacterFormManager()->
-          ConvertConversionStringWithAlternative(
-              original_candidate->content_value,
-              &default_content_value, &alternative_content_value);
-    } else {
-      default_content_value = default_value;
-      alternative_content_value = alternative_value;
     }
 
     CharacterFormManager::FormType default_form
@@ -425,12 +419,107 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       // Rewrite original to default
       original_candidate->value = default_value;
       original_candidate->content_value = default_content_value;
+      original_candidate->inner_segment_boundary.swap(
+          default_inner_segment_boundary);
       SetDescription(*pos_matcher_,
                      default_description_type, original_candidate);
     }
     modified = true;
   }
   return modified;
+}
+
+// Try generating default and alternative character forms.  Inner segment
+// boundary is taken into account.  When no rewrite happens, false is returned.
+bool VariantsRewriter::GenerateAlternatives(
+    const Segment::Candidate &original,
+    string *default_value,
+    string *alternative_value,
+    string *default_content_value,
+    string *alternative_content_value,
+    vector<uint32> *default_inner_segment_boundary,
+    vector<uint32> *alternative_inner_segment_boundary) const {
+  default_value->clear();
+  alternative_value->clear();
+  default_content_value->clear();
+  alternative_content_value->clear();
+  default_inner_segment_boundary->clear();
+  alternative_inner_segment_boundary->clear();
+
+  const config::CharacterFormManager *manager =
+      CharacterFormManager::GetCharacterFormManager();
+
+  // TODO(noriyukit): Some rewriter may rewrite key and/or value and make the
+  // inner segment boundary inconsistent.  Ideally, it should always be valid.
+  // Accessing inner segments with broken boundary information is very
+  // dangerous. So here checks the validity.  For invalid candidate, inner
+  // segment boundary is ignored.
+  const bool is_valid = original.IsValid();
+  VLOG_IF(2, !is_valid) << "Invalid candidate: " << original.DebugString();
+  if (original.inner_segment_boundary.empty() || !is_valid) {
+    if (!manager->ConvertConversionStringWithAlternative(original.value,
+                                                         default_value,
+                                                         alternative_value)) {
+      return false;
+    }
+    if (original.value != original.content_value) {
+      manager->ConvertConversionStringWithAlternative(
+          original.content_value, default_content_value,
+          alternative_content_value);
+    } else {
+      default_content_value->assign(*default_value);
+      alternative_content_value->assign(*alternative_value);
+    }
+    return true;
+  }
+
+  // When inner segment boundary is present, rewrite each inner segment.  If at
+  // least one inner segment is rewritten, the whole segment is considered
+  // rewritten.
+  bool at_least_one_modified = false;
+  string tmp, inner_default_value, inner_alternative_value;
+  string inner_default_content_value, inner_alternative_content_value;
+  for (Segment::Candidate::InnerSegmentIterator iter(&original);
+       !iter.Done(); iter.Next()) {
+    iter.GetValue().CopyToString(&tmp);
+    inner_default_value.clear();
+    inner_alternative_value.clear();
+    if (!manager->ConvertConversionStringWithAlternative(
+            tmp, &inner_default_value, &inner_alternative_value)) {
+      iter.GetValue().CopyToString(&inner_default_value);
+      iter.GetValue().CopyToString(&inner_alternative_value);
+    } else {
+      at_least_one_modified = true;
+    }
+    if (iter.GetValue() != iter.GetContentValue()) {
+      inner_default_content_value.clear();
+      inner_alternative_content_value.clear();
+      iter.GetContentValue().CopyToString(&tmp);
+      manager->ConvertConversionStringWithAlternative(
+          tmp, &inner_default_content_value,
+          &inner_alternative_content_value);
+    } else {
+      inner_default_content_value = inner_default_value;
+      inner_alternative_content_value = inner_alternative_value;
+    }
+    default_value->append(inner_default_value);
+    alternative_value->append(inner_alternative_value);
+    default_content_value->append(inner_default_content_value);
+    alternative_content_value->append(inner_alternative_content_value);
+    default_inner_segment_boundary->push_back(
+        Segment::Candidate::EncodeLengths(
+            iter.GetKey().size(),
+            inner_default_value.size(),
+            iter.GetContentKey().size(),
+            inner_default_content_value.size()));
+    alternative_inner_segment_boundary->push_back(
+        Segment::Candidate::EncodeLengths(
+            iter.GetKey().size(),
+            inner_alternative_value.size(),
+            iter.GetContentKey().size(),
+            inner_alternative_content_value.size()));
+  }
+  return at_least_one_modified;
 }
 
 void VariantsRewriter::Finish(const ConversionRequest &request,

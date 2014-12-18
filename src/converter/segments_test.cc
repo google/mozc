@@ -342,7 +342,7 @@ TEST_F(CandidateTest, IsValid) {
   c.inner_segment_boundary.push_back(
       Segment::Candidate::EncodeLengths(1, 3, 8, 8));
   c.inner_segment_boundary.push_back(
-      Segment::Candidate::EncodeLengths(2, 2, 3, 3));
+      Segment::Candidate::EncodeLengths(2, 2, 3, 5));
   EXPECT_TRUE(c.IsValid());
 
   // Invalid inner_segment_boundary.

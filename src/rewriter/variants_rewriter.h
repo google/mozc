@@ -31,6 +31,9 @@
 #define MOZC_REWRITER_VARIANTS_REWRITER_H_
 
 #include <string>
+#include <vector>
+
+#include "base/port.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -99,6 +102,14 @@ class VariantsRewriter : public RewriterInterface {
                              int description_type,
                              Segment::Candidate *candidate);
   bool RewriteSegment(RewriteType type, Segment *seg) const;
+  bool GenerateAlternatives(
+      const Segment::Candidate &original,
+      string *default_value,
+      string *alternative_value,
+      string *default_content_value,
+      string *alternative_content_value,
+      vector<uint32> *default_inner_segment_boundary,
+      vector<uint32> *alternative_inner_segment_boundary) const;
 
   const POSMatcher *pos_matcher_;
 };
