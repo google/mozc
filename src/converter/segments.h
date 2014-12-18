@@ -102,6 +102,7 @@ class Segment {
       //   1. Type "やんしょん" and submit "マンション" (annotated with "補正").
       //   2. Type "まんしょん".
       //   3. "マンション" (annotated with "補正") is shown as a candidate
+      //      regardless of a user's correct typing.
       TYPING_CORRECTION = 1 << 12,
       // Auto partial suggestion candidate.
       // - Special description should be shown when the candidate is created
