@@ -47,6 +47,7 @@ import android.content.DialogInterface.OnShowListener;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.IBinder;
+import android.view.InflateException;
 
 import java.util.Collections;
 import java.util.List;
@@ -140,7 +141,7 @@ public class MenuDialog {
     }
   }
 
-  private final AlertDialog dialog;
+  private final Optional<AlertDialog> dialog;
   private final MenuDialogListenerHandler listenerHandler;
 
   public MenuDialog(
@@ -164,24 +165,39 @@ public class MenuDialog {
 
     listenerHandler = new MenuDialogListenerHandler(
         context, indexToIdTable, listener);
-    dialog = new AlertDialog.Builder(context)
-        .setTitle(R.string.menu_dialog_title)
-        .setItems(menuTextList, listenerHandler)
-        .create();
-    dialog.setOnDismissListener(listenerHandler);
-    dialog.setOnShowListener(listenerHandler);
+
+    AlertDialog tempDialog = null;
+    try {
+      tempDialog = new AlertDialog.Builder(context)
+          .setTitle(R.string.menu_dialog_title)
+          .setItems(menuTextList, listenerHandler)
+          .create();
+      tempDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+      tempDialog.getWindow().getAttributes().dimAmount = 0.60f;
+      tempDialog.setOnDismissListener(listenerHandler);
+      tempDialog.setOnShowListener(listenerHandler);
+    } catch (InflateException e) {
+      // Ignore the exception.
+    }
+    dialog = Optional.fromNullable(tempDialog);
   }
 
   public void show() {
-    dialog.show();
+    if (dialog.isPresent()) {
+      dialog.get().show();
+    }
   }
 
   public void dismiss() {
-    dialog.dismiss();
+    if (dialog.isPresent()) {
+      dialog.get().dismiss();
+    }
   }
 
   public void setWindowToken(IBinder windowToken) {
-    MozcUtil.setWindowToken(Preconditions.checkNotNull(windowToken), dialog);
+    if (dialog.isPresent()) {
+      MozcUtil.setWindowToken(Preconditions.checkNotNull(windowToken), dialog.get());
+    }
   }
 
   @VisibleForTesting

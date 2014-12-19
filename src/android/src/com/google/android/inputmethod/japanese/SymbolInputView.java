@@ -78,6 +78,7 @@ import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.Gravity;
+import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -162,8 +163,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
           // If a user selects a provider, the dialog handler will set major category
           // to EMOJI automatically. If s/he cancels, nothing will be happened.
           emojiProviderDialog.show();
+          return;
         }
-        return;
       }
 
       setMajorCategory(majorCategory);
@@ -932,11 +933,15 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     }
 
     EmojiProviderDialogListener listener = new EmojiProviderDialogListener(context);
-    AlertDialog dialog = new AlertDialog.Builder(context)
-        .setTitle(R.string.pref_emoji_provider_type_title)
-        .setItems(R.array.pref_emoji_provider_type_entries, listener)
-        .create();
-    this.emojiProviderDialog = dialog;
+    try {
+      AlertDialog dialog = new AlertDialog.Builder(context)
+          .setTitle(R.string.pref_emoji_provider_type_title)
+          .setItems(R.array.pref_emoji_provider_type_entries, listener)
+          .create();
+      this.emojiProviderDialog = Optional.of(dialog);
+    } catch (InflateException e) {
+      // Ignore the exception.
+    }
   }
 
   /**
