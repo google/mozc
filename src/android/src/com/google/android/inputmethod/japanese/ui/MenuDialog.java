@@ -48,6 +48,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.IBinder;
 import android.view.InflateException;
+import android.view.WindowManager;
 
 import java.util.Collections;
 import java.util.List;

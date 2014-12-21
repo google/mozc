@@ -938,7 +938,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
           .setTitle(R.string.pref_emoji_provider_type_title)
           .setItems(R.array.pref_emoji_provider_type_entries, listener)
           .create();
-      this.emojiProviderDialog = Optional.of(dialog);
+      this.emojiProviderDialog = dialog;
     } catch (InflateException e) {
       // Ignore the exception.
     }
