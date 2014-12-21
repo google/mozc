@@ -116,6 +116,7 @@ public enum HardwareKeyboardSpecification {
    */
   @VisibleForTesting
   static boolean isPrintable(int codepoint) {
+    Preconditions.checkArgument(codepoint >= 0);
     if (Character.isISOControl(codepoint)) {
       return false;
     }

@@ -47,6 +47,7 @@ import android.test.InstrumentationTestCase;
 import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.InputDevice;
+import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
 import java.util.Collections;
@@ -99,6 +100,18 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
       KeyEventInterface keyEventInterface = keyboardSpecification.getKeyEventInterface(keyEvent);
       assertEquals(keyEvent, keyEventInterface.getNativeEvent());
+    }
+
+    {
+      KeyEvent keyEvent = new KeyEventMock(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_GRAVE,
+          0, '`' | KeyCharacterMap.COMBINING_ACCENT);
+      keyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
+
+      ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
+      assertEquals('`', mozcKeyEvent.getKeyCode());
+
+      KeyEventInterface keyEventInterface = keyboardSpecification.getKeyEventInterface(keyEvent);
+      assertEquals(keyEvent, keyEventInterface.getNativeEvent().orNull());
     }
 
     {

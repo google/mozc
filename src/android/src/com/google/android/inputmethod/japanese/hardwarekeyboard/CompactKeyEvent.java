@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.hardwarekeyboard;
 import org.mozc.android.inputmethod.japanese.hardwarekeyboard.KeyEventMapperFactory.KeyEventMapper;
 import com.google.common.base.Preconditions;
 
+import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
 /**
@@ -42,13 +43,18 @@ class CompactKeyEvent {
   private int keyCode;
   private int metaState;
   private int unicodeCharacter;
+  private int combiningAccent;
   private int scanCode;
 
   public CompactKeyEvent(KeyEvent keyEvent) {
     Preconditions.checkNotNull(keyEvent);
     keyCode = keyEvent.getKeyCode();
     metaState = keyEvent.getMetaState();
-    unicodeCharacter = keyEvent.getUnicodeChar();
+    int flagedCodepoint = keyEvent.getUnicodeChar();
+    // TODO(team): Come up with a better definition of the "character" when
+    // KeyCharacterMap.COMBINING_ACCENT bit is set.
+    unicodeCharacter = flagedCodepoint & KeyCharacterMap.COMBINING_ACCENT_MASK;
+    combiningAccent = flagedCodepoint & KeyCharacterMap.COMBINING_ACCENT_MASK;
     scanCode = keyEvent.getScanCode();
   }
 
@@ -74,6 +80,14 @@ class CompactKeyEvent {
 
   void setMetaState(int metaState) {
     this.metaState = metaState;
+  }
+
+  public int getCombiningAccent() {
+    return combiningAccent;
+  }
+
+  public int getDeadChar(int character) {
+    return KeyCharacterMap.getDeadChar(combiningAccent, character);
   }
 
   public int getUnicodeCharacter() {
