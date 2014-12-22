@@ -200,7 +200,7 @@ public class ConversionCandidateLayouterTest extends TestCase {
     ConversionCandidateLayouter.layoutSpanList(spanList, 180, 18, DUMMY_CHUNK_METRICS, new int[18]);
 
     // The remaining chunks will be assigned to the spans.
-    float[] expectedXCoord = {0, 30, 60, 100, 140, 180};
+    float[] expectedXCoord = {0, 40, 80, 120, 150, 180};
     for (int i = 0; i < spanList.size(); ++i) {
       assertEquals(expectedXCoord[i], spanList.get(i).getLeft());
       assertEquals(expectedXCoord[i + 1], spanList.get(i).getRight());

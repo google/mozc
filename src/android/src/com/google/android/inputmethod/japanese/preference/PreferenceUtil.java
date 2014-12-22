@@ -33,6 +33,7 @@ import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.Context;
@@ -45,6 +46,9 @@ import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Utilities for Mozc preferences.
  *
@@ -56,7 +60,14 @@ public class PreferenceUtil {
     public Preference findPreference(CharSequence key);
   }
 
-  private static class PreferenceManagerInterfaceImpl implements PreferenceManagerInterface {
+  /** Simple {@code PreferenceManager} wrapper for testing purpose.
+   *  This interface wraps static method so no constructor is required.
+   */
+  public interface PreferenceManagerStaticInterface {
+    public void setDefaultValues(Context context, int id, boolean readAgain);
+  }
+
+  static class PreferenceManagerInterfaceImpl implements PreferenceManagerInterface {
     private final PreferenceManager preferenceManager;
 
     PreferenceManagerInterfaceImpl(PreferenceManager preferenceManager) {
@@ -67,6 +78,24 @@ public class PreferenceUtil {
     public Preference findPreference(CharSequence key) {
       return preferenceManager.findPreference(key);
     }
+  }
+
+  private static Optional<PreferenceManagerStaticInterface> defaultPreferenceManagerStatic =
+      Optional.absent();
+
+  public static PreferenceManagerStaticInterface getDefaultPreferenceManagerStatic() {
+    // As construction cost of defaultPrereferenceManagerStatic is cheap and it is invariant,
+    // no lock mechanism is employed here.
+    if (!defaultPreferenceManagerStatic.isPresent()) {
+      defaultPreferenceManagerStatic = Optional.<PreferenceManagerStaticInterface>of(
+          new PreferenceManagerStaticInterface() {
+            @Override
+            public void setDefaultValues(Context context, int id, boolean readAgain) {
+              PreferenceManager.setDefaultValues(context, id, readAgain);
+            }
+          });
+    }
+    return defaultPreferenceManagerStatic.get();
   }
 
   static class CurrentKeyboardLayoutPreferenceChangeListener implements OnPreferenceChangeListener {
@@ -133,10 +162,10 @@ public class PreferenceUtil {
       "pref_portrait_fullscreen_key";
   public static final String PREF_LANDSCAPE_FULLSCREEN_KEY =
       "pref_landscape_fullscreen_key";
-  public static final String PREF_SKIN_TYPE = "pref_skin_type_key";
-  public static final String PREF_HARDWARE_KEYMAP = "pref_hardware_keymap";
 
   // Keys for generic preferences.
+  public static final String PREF_HARDWARE_KEYMAP = "pref_hardware_keymap";
+  public static final String PREF_VOICE_INPUT_KEY = "pref_voice_input_key";
   public static final String PREF_HAPTIC_FEEDBACK_KEY = "pref_haptic_feedback_key";
   public static final String PREF_HAPTIC_FEEDBACK_DURATION_KEY =
       "pref_haptic_feedback_duration_key";
@@ -159,6 +188,10 @@ public class PreferenceUtil {
   public static final String PREF_OTHER_INCOGNITO_MODE_KEY = "pref_other_anonimous_mode_key";
   public static final String PREF_OTHER_USAGE_STATS_KEY = "pref_other_usage_stats_key";
   public static final String PREF_ABOUT_VERSION = "pref_about_version";
+  public static final String PREF_LAUNCHER_ICON_VISIBILITY_KEY = "pref_launcher_icon_visibility";
+  // Application lifecycle
+  public static final String PREF_LAST_LAUNCH_ABI_INDEPENDENT_VERSION_CODE =
+      "pref_last_launch_abi_independent_version_code";
 
   private static final OnPreferenceChangeListener
       CURRENT_KEYBOARD_LAYOUT_PREFERENCE_CHANGE_LISTENER =
@@ -168,8 +201,8 @@ public class PreferenceUtil {
   private PreferenceUtil() {
   }
 
-  static boolean isLandscapeKeyboardSettingActive(SharedPreferences sharedPreferences,
-                                                  int deviceOrientation) {
+  public static boolean isLandscapeKeyboardSettingActive(
+      SharedPreferences sharedPreferences, int deviceOrientation) {
     Preconditions.checkNotNull(sharedPreferences);
     if (sharedPreferences.getBoolean(PREF_USE_PORTRAIT_KEYBOARD_SETTINGS_FOR_LANDSCAPE_KEY, true)) {
       // Always use portrait configuration.
@@ -339,5 +372,26 @@ public class PreferenceUtil {
   public static <T extends Enum<T>> T getEnum(
       SharedPreferences sharedPreference, String key, Class<T> type, T defaultValue) {
     return getEnum(sharedPreference, key, type, defaultValue, defaultValue);
+  }
+
+  public static void setDefaultValues(PreferenceManagerStaticInterface preferenceManager,
+                                      Context context, boolean isDebug, boolean useUsageStats) {
+    Preconditions.checkNotNull(preferenceManager);
+    Preconditions.checkNotNull(context);
+    Set<Integer> preferenceResources = new HashSet<Integer>();
+    // Collect all the preferences resource ids from possible preference pages,
+    // removing duplication.
+    for (PreferencePage page : PreferencePage.values()) {
+      for (int id : PreferencePage.getResourceIdList(page, isDebug, useUsageStats)) {
+        preferenceResources.add(id);
+      }
+    }
+    for (int id : preferenceResources) {
+      // 'true' here means the preferences which have not set yet are *always* set here.
+      // This doesn't mean *Reset all the preferences*.
+      // (if 'false' the process will be done once on the first launch
+      //  so even if new preferences are added their default values will not be set here)
+      preferenceManager.setDefaultValues(context, id, true);
+    }
   }
 }

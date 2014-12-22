@@ -35,7 +35,6 @@
     android:orientation="vertical" >
 
     <TextView
-        style="@style/MozcDialogTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingLeft="8dip"

@@ -39,7 +39,6 @@
     android:paddingTop="9dip" >
 
     <TextView
-        style="@style/MozcDialogTextView"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="8dip"
@@ -57,7 +56,6 @@
     </EditText>
 
     <TextView
-        style="@style/MozcDialogTextView"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="8dip"
@@ -72,7 +70,6 @@
         android:selectAllOnFocus="true" />
 
     <TextView
-        style="@style/MozcDialogTextView"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="8dip"

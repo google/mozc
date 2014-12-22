@@ -37,6 +37,7 @@ import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboardSp
 import org.mozc.android.inputmethod.japanese.preference.KeyboardPreviewDrawable.BitmapCache;
 import org.mozc.android.inputmethod.japanese.preference.KeyboardPreviewDrawable.CacheReferenceKey;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import org.mozc.android.inputmethod.japanese.util.LauncherIconManagerFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 
@@ -155,12 +156,13 @@ public class MozcBasePreferenceActivity extends PreferenceActivity {
   @VisibleForTesting
   void onPostResumeInternal(ApplicationInitializer initializer) {
     Context context = getApplicationContext();
-    boolean omitWelcomeActivity = false;
     Optional<Intent> forwardIntent = initializer.initialize(
-        omitWelcomeActivity,
+        MozcUtil.isSystemApplication(context),
         MozcUtil.isDevChannel(context),
         DependencyFactory.getDependency(getApplicationContext()).isWelcomeActivityPreferrable(),
-        MozcUtil.getAbiIndependentVersionCode(context));
+        MozcUtil.getAbiIndependentVersionCode(context),
+        LauncherIconManagerFactory.getDefaultInstance(),
+        PreferenceUtil.getDefaultPreferenceManagerStatic());
     if (forwardIntent.isPresent()) {
       startActivity(forwardIntent.get());
     } else {

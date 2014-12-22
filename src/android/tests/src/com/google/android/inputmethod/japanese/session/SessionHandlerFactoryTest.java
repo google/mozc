@@ -29,6 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese.session;
 
+import com.google.common.base.Optional;
+
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.test.InstrumentationTestCase;
@@ -81,14 +83,6 @@ public class SessionHandlerFactoryTest extends InstrumentationTestCase {
   }
 
   @SmallTest
-  public void testCreateSessionHandler_nullParameter() {
-    // SessionHandler instance for null parameter.
-    assertEquals(
-        LocalSessionHandler.class,
-        new SessionHandlerFactory(SharedPreferences.class.cast(null)).create().getClass());
-  }
-
-  @SmallTest
   public void testCreateSessionHandler_appropriateParameter() {
       // SessionHandlerSocketClient for appropriate preference.
     SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -99,7 +93,7 @@ public class SessionHandlerFactoryTest extends InstrumentationTestCase {
                      Integer.toString(PORT));
     editor.commit();
     assertEquals(SocketSessionHandler.class,
-                 new SessionHandlerFactory(sharedPreferences).create().getClass());
+                 new SessionHandlerFactory(Optional.of(sharedPreferences)).create().getClass());
   }
 
   @SmallTest
@@ -113,7 +107,7 @@ public class SessionHandlerFactoryTest extends InstrumentationTestCase {
                      Integer.toString(PORT));
     editor.commit();
     assertEquals(LocalSessionHandler.class,
-                 new SessionHandlerFactory(sharedPreferences).create().getClass());
+                 new SessionHandlerFactory(Optional.of(sharedPreferences)).create().getClass());
   }
 
   @SmallTest
@@ -127,6 +121,6 @@ public class SessionHandlerFactoryTest extends InstrumentationTestCase {
                      "MALFORMED");
     editor.commit();
     assertEquals(LocalSessionHandler.class,
-                 new SessionHandlerFactory(sharedPreferences).create().getClass());
+                 new SessionHandlerFactory(Optional.of(sharedPreferences)).create().getClass());
   }
 }

@@ -76,9 +76,6 @@ public class MenuDialog {
     /** Invoked when "Launch Preference Activity" item is selected. */
     public void onLaunchPreferenceActivitySelected(Context context);
 
-    /** Invoked when "Voice input" item is selected. */
-    public void onLaunchVoiceInputActivitySelected(Context context);
-
     /** Invoked when "Launch Mushroom" item is selected. */
     public void onShowMushroomSelectionDialogSelected(Context context);
   }
@@ -130,9 +127,6 @@ public class MenuDialog {
         case R.string.menu_item_preferences:
           listener.get().onLaunchPreferenceActivitySelected(context);
           break;
-        case R.string.menu_item_voice_input:
-          listener.get().onLaunchVoiceInputActivitySelected(context);
-          break;
         case R.string.menu_item_mushroom:
           listener.get().onShowMushroomSelectionDialogSelected(context);
           break;
@@ -145,8 +139,7 @@ public class MenuDialog {
   private final Optional<AlertDialog> dialog;
   private final MenuDialogListenerHandler listenerHandler;
 
-  public MenuDialog(
-      Context context, Optional<MenuDialogListener> listener, boolean isVoiceInputEnabled) {
+  public MenuDialog(Context context, Optional<MenuDialogListener> listener) {
     Preconditions.checkNotNull(context);
     Preconditions.checkNotNull(listener);
 
@@ -154,7 +147,7 @@ public class MenuDialog {
     String appName = resources.getString(R.string.app_name);
 
     // R.string.menu_item_* resources needs to be formatted.
-    List<Integer> menuItemIds = getEnabledMenuIds(context, isVoiceInputEnabled);
+    List<Integer> menuItemIds = getEnabledMenuIds(context);
     int menuNum = menuItemIds.size();
     String[] menuTextList = new String[menuNum];
     int[] indexToIdTable = new int[menuNum];
@@ -202,7 +195,7 @@ public class MenuDialog {
   }
 
   @VisibleForTesting
-  static List<Integer> getEnabledMenuIds(Context context, boolean isVoiceInputEnabled) {
+  static List<Integer> getEnabledMenuIds(Context context) {
     // "Mushroom" item is enabled only when Mushroom-aware applications are available.
     PackageManager packageManager = Preconditions.checkNotNull(context).getPackageManager();
     boolean isMushroomEnabled = !MushroomUtil.getMushroomApplicationList(packageManager).isEmpty();
@@ -210,9 +203,6 @@ public class MenuDialog {
     List<Integer> menuItemIds = Lists.newArrayListWithCapacity(4);
     menuItemIds.add(R.string.menu_item_input_method);
     menuItemIds.add(R.string.menu_item_preferences);
-    if (isVoiceInputEnabled) {
-      menuItemIds.add(R.string.menu_item_voice_input);
-    }
     if (isMushroomEnabled) {
       menuItemIds.add(R.string.menu_item_mushroom);
     }

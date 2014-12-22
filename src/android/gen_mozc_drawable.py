@@ -70,6 +70,7 @@ CMD_PICTURE_DRAW_CIRCLE = 6
 CMD_PICTURE_DRAW_ELLIPSE = 7
 CMD_PICTURE_DRAW_GROUP_START = 8
 CMD_PICTURE_DRAW_GROUP_END = 9
+CMD_PICTURE_DRAW_TEXT = 10
 
 CMD_PICTURE_PATH_EOP = 0
 CMD_PICTURE_PATH_MOVE = 1
@@ -88,6 +89,20 @@ CMD_PICTURE_PAINT_STROKE_WIDTH = 4
 CMD_PICTURE_PAINT_STROKE_CAP = 5
 CMD_PICTURE_PAINT_STROKE_JOIN = 6
 CMD_PICTURE_PAINT_SHADER = 7
+CMD_PICTURE_PAINT_FONT_SIZE = 8
+CMD_PICTURE_PAINT_TEXT_ANCHOR = 9
+CMD_PICTURE_PAINT_DOMINANT_BASELINE = 10
+CMD_PICTURE_PAINT_FONT_WEIGHT = 11
+
+CMD_PICTURE_PAINT_TEXT_ANCHOR_START = 0
+CMD_PICTURE_PAINT_TEXT_ANCHOR_MIDDLE = 1
+CMD_PICTURE_PAINT_TEXT_ANCHOR_END = 2
+
+CMD_PICTURE_PAINT_DOMINANTE_BASELINE_AUTO = 0
+CMD_PICTURE_PAINT_DOMINANTE_BASELINE_CENTRAL = 1
+
+CMD_PICTURE_PAINT_FONT_WEIGHT_NORMAL = 0
+CMD_PICTURE_PAINT_FONT_WEIGHT_BOLD = 1
 
 CMD_PICTURE_SHADER_LINEAR_GRADIENT = 1
 CMD_PICTURE_SHADER_RADIAL_GRADIENT = 2
@@ -99,19 +114,22 @@ STYLE_CATEGORY_KEYICON_GUIDE_LIGHT = 2
 STYLE_CATEGORY_KEYICON_MAIN_HIGHLIGHT = 3
 STYLE_CATEGORY_KEYICON_GUIDE_HIGHLIGHT = 4
 STYLE_CATEGORY_KEYICON_BOUND = 5
-STYLE_CATEGORY_KEYICON_FUNCTION = 6
-STYLE_CATEGORY_KEYICON_FUNCTION_DARK = 7
-STYLE_CATEGORY_KEYICON_QWERTY_SHIFT_ON_ARROW = 8
-STYLE_CATEGORY_KEYICON_QWERTY_CAPS_ON_ARROW = 9
-STYLE_CATEGORY_KEYPOPUP_HIGHLIGHT = 10
-STYLE_CATEGORY_KEYICON_POPUP_FUNCTION = 11
-STYLE_CATEGORY_KEYICON_POPUP_FUNCTION_DARK = 12
+STYLE_CATEGORY_KEYICON_TWELVEKEYS_FUNCTION = 6
+STYLE_CATEGORY_KEYICON_TWELVEKEYS_GLOBE = 7
+STYLE_CATEGORY_KEYICON_QWERTY_FUNCTION = 8
+STYLE_CATEGORY_KEYICON_FUNCTION_DARK = 9
+STYLE_CATEGORY_KEYICON_ENTER = 10
+STYLE_CATEGORY_KEYICON_ENTER_CIRCLE = 11
+STYLE_CATEGORY_KEYICON_QWERTY_SHIFT_ON_ARROW = 12
+STYLE_CATEGORY_KEYPOPUP_HIGHLIGHT = 13
 # We may be able to reuse same resources for symbol major/minor icons.
-STYLE_CATEGORY_SYMBOL_MAJOR = 13
-STYLE_CATEGORY_SYMBOL_MAJOR_SELECTED = 14
-STYLE_CATEGORY_SYMBOL_MINOR = 15
-STYLE_CATEGORY_SYMBOL_MINOR_SELECTED = 16
-STYLE_CATEGORY_KEYBOARD_FOLDING_BUTTON_BACKGROUND = 17
+STYLE_CATEGORY_SYMBOL_MAJOR = 14
+STYLE_CATEGORY_SYMBOL_MAJOR_SELECTED = 15
+STYLE_CATEGORY_SYMBOL_MAJOR_EMOJI_DISABLE_CIRCLE = 16
+STYLE_CATEGORY_SYMBOL_MINOR = 17
+STYLE_CATEGORY_SYMBOL_MINOR_SELECTED = 18
+STYLE_CATEGORY_KEYBOARD_FOLDING_BUTTON_BACKGROUND_DEFAULT = 19
+STYLE_CATEGORY_KEYBOARD_FOLDING_BUTTON_BACKGROUND_SCROLLED = 20
 
 # We'll check the category id by reverse sorted order, to resolve prefix match
 # confliction.
@@ -124,23 +142,28 @@ STYLE_CATEGORY_MAP = sorted(
         ('style-keyicon-guide-highlight',
          STYLE_CATEGORY_KEYICON_GUIDE_HIGHLIGHT),
         ('style-keyicon-bound', STYLE_CATEGORY_KEYICON_BOUND),
-        ('style-keyicon-function', STYLE_CATEGORY_KEYICON_FUNCTION),
+        ('style-keyicon-twelvekeys-function',
+         STYLE_CATEGORY_KEYICON_TWELVEKEYS_FUNCTION),
+        ('style-keyicon-twelvekeys-globe',
+         STYLE_CATEGORY_KEYICON_TWELVEKEYS_GLOBE),
+        ('style-keyicon-qwerty-function',
+         STYLE_CATEGORY_KEYICON_QWERTY_FUNCTION),
         ('style-keyicon-function-dark', STYLE_CATEGORY_KEYICON_FUNCTION_DARK),
+        ('style-keyicon-enter', STYLE_CATEGORY_KEYICON_ENTER),
+        ('style-keyicon-enter-circle', STYLE_CATEGORY_KEYICON_ENTER_CIRCLE),
         ('style-keyicon-qwerty-shift-on-arrow',
          STYLE_CATEGORY_KEYICON_QWERTY_SHIFT_ON_ARROW),
-        ('style-keyicon-qwerty-caps-on-arrow',
-         STYLE_CATEGORY_KEYICON_QWERTY_CAPS_ON_ARROW),
         ('style-keypopup-highlight', STYLE_CATEGORY_KEYPOPUP_HIGHLIGHT),
-        ('style-keyicon-popup-function',
-         STYLE_CATEGORY_KEYICON_POPUP_FUNCTION),
-        ('style-keyicon-popup-function-dark',
-         STYLE_CATEGORY_KEYICON_POPUP_FUNCTION_DARK),
         ('style-symbol-major', STYLE_CATEGORY_SYMBOL_MAJOR),
         ('style-symbol-major-selected', STYLE_CATEGORY_SYMBOL_MAJOR_SELECTED),
+        ('style-symbol-major-emoji-disable-circle',
+         STYLE_CATEGORY_SYMBOL_MAJOR_EMOJI_DISABLE_CIRCLE),
         ('style-symbol-minor', STYLE_CATEGORY_SYMBOL_MINOR),
         ('style-symbol-minor-selected', STYLE_CATEGORY_SYMBOL_MINOR_SELECTED),
-        ('style-keyboard-folding-button-background',
-         STYLE_CATEGORY_KEYBOARD_FOLDING_BUTTON_BACKGROUND),
+        ('style-keyboard-folding-button-background-default',
+         STYLE_CATEGORY_KEYBOARD_FOLDING_BUTTON_BACKGROUND_DEFAULT),
+        ('style-keyboard-folding-button-background-scrolled',
+         STYLE_CATEGORY_KEYBOARD_FOLDING_BUTTON_BACKGROUND_SCROLLED),
     ],
     reverse=True)
 
@@ -150,11 +173,11 @@ STYLE_CATEGORY_MAP = sorted(
 #
 # Format of StateListDrawable:
 # 2, [[state_list], drawable]
-COLOR_PATTERN = re.compile(r'#([0-9A-Fa-f]{6})')
+COLOR_PATTERN = re.compile(r'#([0-9A-Fa-f]{3,8}(?![0-9A-Fa-f]))')
 PIXEL_PATTERN = re.compile(r'(\d+)(?:px)?')
 FLOAT_PATTERN = re.compile(r'^\s*,?\s*([+-]?\d+(?:\.\d*)?(:?e[+-]\d+)?)')
 SHADER_PATTERN = re.compile(r'url\(#(.*)\)')
-TRANSFORM_PATTERN = re.compile(r'(matrix|translate)\((.*)\)')
+TRANSFORM_PATTERN = re.compile(r'(matrix|translate|scale)\((.*)\)')
 MATRIX_PATTERN = re.compile(r'matrix\((.*)\)')
 STOP_COLOR_PATTERN = re.compile(r'stop-color:(.*)')
 
@@ -162,14 +185,16 @@ NO_SHADOW = 0
 HAS_SHADOW = 1
 HAS_BELOW_SHADOW = 2
 
+
 class _OutputStream(object):
   """Simple wrapper of output stream by by packing value in big endian."""
+
   def __init__(self, output):
     self.output = output
 
   def WriteByte(self, value):
     if not (0 <= value <= 255):
-      logging.critical('overflow')
+      logging.critical('overflow byte')
       sys.exit(1)
     self.output.write(struct.pack('>B', value & 0xFF))
 
@@ -187,15 +212,21 @@ class _OutputStream(object):
     # so we can compress the data by using fixed-precision values.
     self.output.write(struct.pack('>f', value))
 
+  def WriteString(self, value):
+    utf8_string = value.encode('utf-8')
+    self.WriteInt16(len(utf8_string))
+    self.output.write(utf8_string)
+
   def __enter__(self):
     self.output.__enter__()
 
-  def __exit__(self):
-    self.output.__exit__()
+  def __exit__(self, exec_type, exec_value, traceback):
+    self.output.__exit__(exec_type, exec_value, traceback)
 
 
 class MozcDrawableConverter(object):
   """Converter from .svg file to .pic file."""
+
   def __init__(self):
     pass
 
@@ -209,12 +240,22 @@ class MozcDrawableConverter(object):
     if not m:
       return None
 
-    c = int(m.group(1), 16)
-    if c < 0 or 0x1000000 <= c:
+    c_str = m.group(1)
+    if 3 <= len(c_str) <= 4:
+      expanded_c_str = ''
+      for ch in c_str:
+        expanded_c_str = expanded_c_str + ch + ch
+      c_str = expanded_c_str
+    if len(c_str) == 6:
+      c_str = 'FF' + c_str
+    if len(c_str) != 8:
+      logging.critical('Invalid color format.')
+      sys.exit(1)
+    c = int(c_str, 16)
+    if c < 0 or 0x100000000 <= c:
       logging.critical('Out of color range: %s', color)
       sys.exit(1)
-    # Set alpha.
-    return c | 0xFF000000
+    return c
 
   def _ParseShader(self, color, shader_map):
     """Parses shader attribute and returns a shader name from the given map."""
@@ -278,77 +319,104 @@ class MozcDrawableConverter(object):
       y1 = float(node.get('y1'))
       x2 = float(node.get('x2'))
       y2 = float(node.get('y2'))
-      gradientTransform = node.get('gradientTransform')
-      if gradientTransform:
-        m = MATRIX_PATTERN.match(gradientTransform)
-        (m11, m21, m12, m22, m13, m23) = self._ParseFloatList(m.group(1))
+      gradient_transform = node.get('gradientTransform')
+      if gradient_transform:
+        m = MATRIX_PATTERN.match(gradient_transform)
+        (m11, m21, m12, m22, m13, m23) = tuple(self._ParseFloatList(m.group(1)))
         (x1, y1) = (m11 * x1 + m12 * y1 + m13, m21 * x1 + m22 * y1 + m23)
         (x2, y2) = (m11 * x2 + m12 * y2 + m13, m21 * x2 + m22 * y2 + m23)
 
       color_list = self._ParseStopList(node)
-      return { element_id: ('linear', x1, y1, x2, y2, color_list) }
+      return {element_id: ('linear', x1, y1, x2, y2, color_list)}
 
     if node.tag == '{http://www.w3.org/2000/svg}radialGradient':
       element_id = node.get('id')
       cx = float(node.get('cx'))
       cy = float(node.get('cy'))
       r = float(node.get('r'))
-      gradientTransform = node.get('gradientTransform')
-      if gradientTransform:
-        m = MATRIX_PATTERN.match(gradientTransform)
+      gradient_transform = node.get('gradientTransform')
+      if gradient_transform:
+        m = MATRIX_PATTERN.match(gradient_transform)
         matrix = self._ParseFloatList(m.group(1))
       else:
         matrix = None
 
       color_list = self._ParseStopList(node)
-      return { element_id: ('radial', cx, cy, r, matrix, color_list) }
+      return {element_id: ('radial', cx, cy, r, matrix, color_list)}
 
     return {}
 
   def _ParseStyle(self, node, has_shadow, shader_map):
     """Parses style attribute of the given node."""
-    result = {}
+    common_map = {}
+    # Default fill color is black (SVG's spec)
+    fill_map = {'style': 'fill', 'color': 0xFF000000, 'shadow': has_shadow}
+    # Default stroke color is none (SVG's spec)
+    stroke_map = {'style': 'stroke', 'shadow': has_shadow}
+
+    # Special warning for font-size.
+    # Inkscape often unexpectedly converts from sytle to font-size attribute.
+    if node.get('font-size', ''):
+      logging.warning('font-size attribute is not supported.')
+
     for attr in node.get('style', '').split(';'):
       attr = attr.strip()
       if not attr:
         continue
       command, arg = attr.split(':')
       if command == 'fill' or command == 'stroke':
-        shader = self._ParseShader(arg, shader_map)
-        color = self._ParseColor(arg)
-
-        if shader is None and color is None:
-          if arg != 'none':
-            logging.error('Unknown pattern: %s', arg)
+        paint_map = fill_map if command == 'fill' else stroke_map
+        if arg == 'none':
+          paint_map.pop('color', None)
+          paint_map.pop('shader', None)
           continue
 
-        paint_map = {}
+        shader = self._ParseShader(arg, shader_map)
+        color = self._ParseColor(arg)
+        if shader is None and color is None:
+          if arg != 'none':
+            logging.critical('Unknown pattern: %s', arg)
+            sys.exit(1)
+          continue
+
         paint_map['style'] = command
         if shader is not None:
           paint_map['shader'] = shader
         if color is not None:
           paint_map['color'] = color
-        paint_map['shadow'] = has_shadow
-
-        result[command] = paint_map
         continue
 
       if command == 'stroke-width':
-        paint_map = result['stroke']
-        paint_map['stroke-width'] = float(arg)
+        stroke_map['stroke-width'] = float(arg)
         continue
 
       if command == 'stroke-linecap':
-        paint_map = result['stroke']
-        paint_map['stroke-linecap'] = arg
+        stroke_map['stroke-linecap'] = arg
         continue
 
       if command == 'stroke-linejoin':
-        paint_map = result['stroke']
-        paint_map['stroke-linejoin'] = arg
+        stroke_map['stroke-linejoin'] = arg
         continue
 
-    return sorted(result.values(), key=lambda e: e['style'])
+      # font relating attributes are common to all commands.
+      if command == 'font-size':
+        common_map['font-size'] = self._ParsePixel(arg)
+      if command == 'text-anchor':
+        common_map['text-anchor'] = arg
+      if command == 'dominant-baseline':
+        common_map['dominant-baseline'] = arg
+      if command == 'font-weight':
+        common_map['font-weight'] = arg
+
+    # 'fill' comes first in order to draw 'fill' first (SVG specification).
+    result = []
+    if 'color' in fill_map or 'shader' in fill_map:
+      fill_map.update(common_map)
+      result.append(fill_map)
+    if 'color' in stroke_map or 'shader' in stroke_map:
+      stroke_map.update(common_map)
+      result.append(stroke_map)
+    return result
 
   def _ParseStopList(self, parent_node):
     result = []
@@ -390,7 +458,8 @@ class MozcDrawableConverter(object):
       output.WriteFloat(2.)
       output.WriteInt32(0xFF292929)
 
-  def _ConvertStyle(self, style, output):
+  def _ConvertStyleCommand(self, style, output):
+    """Converts style attribute."""
     if style == 'fill':
       output.WriteByte(CMD_PICTURE_PAINT_STYLE)
       output.WriteByte(0)
@@ -490,29 +559,82 @@ class MozcDrawableConverter(object):
     logging.critical('unknown stroke-linejoin: %s', stroke_linejoin)
     sys.exit(1)
 
-  def _ConvertStyleMap(self, style_map, output):
-    self._ConvertStyle(style_map['style'], output)
-    self._MaybeConvertColor(style_map.get('color'), output)
-    self._MaybeConvertShader(style_map.get('shader'), output)
-    self._MaybeConvertShadow(style_map['shadow'], output)
-    self._MaybeConvertStrokeWidth(style_map.get('stroke-width'), output)
-    self._MaybeConvertStrokeLinecap(style_map.get('stroke-linecap'), output)
-    self._MaybeConvertStrokeLinejoin(style_map.get('stroke-linejoin'), output)
-    output.WriteByte(CMD_PICTURE_PAINT_EOP)
+  def _MaybeConvertFontSize(self, font_size, output):
+    if font_size is None:
+      return
+    output.WriteByte(CMD_PICTURE_PAINT_FONT_SIZE)
+    output.WriteFloat(font_size)
+    return
 
-  def _ConvertStyleList(self, style_list, output):
-    output.WriteByte(len(style_list))
-    for style_map in style_list:
-      self._ConvertStyleMap(style_map, output)
+  def _MaybeConvertTextAnchor(self, text_anchor, output):
+    if text_anchor is None:
+      return
+    output.WriteByte(CMD_PICTURE_PAINT_TEXT_ANCHOR)
+    if text_anchor == 'start':
+      output.WriteByte(CMD_PICTURE_PAINT_TEXT_ANCHOR_START)
+    elif text_anchor == 'middle':
+      output.WriteByte(CMD_PICTURE_PAINT_TEXT_ANCHOR_MIDDLE)
+    elif text_anchor == 'end':
+      output.WriteByte(CMD_PICTURE_PAINT_TEXT_ANCHOR_END)
+    else:
+      logging.critical('text-anchor is invalid (%s)', text_anchor)
+      sys.exit(1)
+    return
 
-  def _ConvertStyleCategory(self, style_category, output):
-    output.WriteByte(1)
+  def _MaybeConvertDominantBaseline(self, baseline, output):
+    if baseline is None:
+      return
+    output.WriteByte(CMD_PICTURE_PAINT_DOMINANT_BASELINE)
+    if baseline == 'auto':
+      output.WriteByte(CMD_PICTURE_PAINT_DOMINANTE_BASELINE_AUTO)
+    elif baseline == 'central':
+      output.WriteByte(CMD_PICTURE_PAINT_DOMINANTE_BASELINE_CENTRAL)
+    else:
+      logging.critical('dominant-baseline is invalid (%s)', baseline)
+      sys.exit(1)
+    return
+
+  def _MaybeConvertFontWeight(self, weight, output):
+    if weight is None:
+      return
+    output.WriteByte(CMD_PICTURE_PAINT_FONT_WEIGHT)
+    if weight == 'normal':
+      output.WriteByte(CMD_PICTURE_PAINT_FONT_WEIGHT_NORMAL)
+    elif weight == 'bold':
+      output.WriteByte(CMD_PICTURE_PAINT_FONT_WEIGHT_BOLD)
+    else:
+      logging.critical('font-weight is invalid (%s)', weight)
+      sys.exit(1)
+    return
+
+  def _MaybeConvertStyleCategory(self, style_category, output):
+    if style_category is None:
+      return
     for id_prefix, category in STYLE_CATEGORY_MAP:
       if style_category.startswith(id_prefix):
         output.WriteByte(STYLE_CATEGORY_TAG + category)
         return
     logging.critical('unknown style_category: "%s"', style_category)
     sys.exit(1)
+
+  def _ConvertStyle(self, style_category, style_list, output):
+    style_len = len(style_list)
+    output.WriteByte(style_len)
+    for style_map in style_list:
+      self._ConvertStyleCommand(style_map['style'], output)
+      self._MaybeConvertColor(style_map.get('color'), output)
+      self._MaybeConvertShader(style_map.get('shader'), output)
+      self._MaybeConvertShadow(style_map['shadow'], output)
+      self._MaybeConvertStrokeWidth(style_map.get('stroke-width'), output)
+      self._MaybeConvertStrokeLinecap(style_map.get('stroke-linecap'), output)
+      self._MaybeConvertStrokeLinejoin(style_map.get('stroke-linejoin'), output)
+      self._MaybeConvertFontSize(style_map.get('font-size'), output)
+      self._MaybeConvertTextAnchor(style_map.get('text-anchor'), output)
+      self._MaybeConvertDominantBaseline(style_map.get('dominant-baseline'),
+                                         output)
+      self._MaybeConvertFontWeight(style_map.get('font-weight'), output)
+      self._MaybeConvertStyleCategory(style_category, output)
+      output.WriteByte(CMD_PICTURE_PAINT_EOP)
 
   def _ConvertPath(self, node, output):
     path = node.get('d')
@@ -650,10 +772,7 @@ class MozcDrawableConverter(object):
       self, node, style_category, has_shadow, shader_map, output):
     style_list = self._ParseStyle(node, has_shadow, shader_map)
     self._ConvertPath(node, output)
-    if style_category is not None:
-      self._ConvertStyleCategory(style_category, output)
-    else:
-      self._ConvertStyleList(style_list, output)
+    self._ConvertStyle(style_category, style_list, output)
 
   def _ConvertPolylineElement(
       self, node, style_category, has_shadow, shader_map, output):
@@ -667,10 +786,7 @@ class MozcDrawableConverter(object):
     output.WriteByte(len(point_list))
     for coord in point_list:
       output.WriteFloat(coord)
-    if style_category is not None:
-      self._ConvertStyleCategory(style_category, output)
-    else:
-      self._ConvertStyleList(style_list, output)
+    self._ConvertStyle(style_category, style_list, output)
 
   def _ConvertPolygonElement(
       self, node, style_category, has_shadow, shader_map, output):
@@ -681,10 +797,7 @@ class MozcDrawableConverter(object):
     output.WriteByte(len(point_list))
     for coord in point_list:
       output.WriteFloat(coord)
-    if style_category is not None:
-      self._ConvertStyleCategory(style_category, output)
-    else:
-      self._ConvertStyleList(style_list, output)
+    self._ConvertStyle(style_category, style_list, output)
 
   def _ConvertLineElement(
       self, node, style_category, has_shadow, shader_map, output):
@@ -698,10 +811,7 @@ class MozcDrawableConverter(object):
     output.WriteFloat(y1)
     output.WriteFloat(x2)
     output.WriteFloat(y2)
-    if style_category is not None:
-      self._ConvertStyleCategory(style_category, output)
-    else:
-      self._ConvertStyleList(style_list, output)
+    self._ConvertStyle(style_category, style_list, output)
 
   def _ConvertCircleElement(
       self, node, style_category, has_shadow, shader_map, output):
@@ -713,10 +823,7 @@ class MozcDrawableConverter(object):
     output.WriteFloat(cx)
     output.WriteFloat(cy)
     output.WriteFloat(r)
-    if style_category is not None:
-      self._ConvertStyleCategory(style_category, output)
-    else:
-      self._ConvertStyleList(style_list, output)
+    self._ConvertStyle(style_category, style_list, output)
 
   def _ConvertEllipseElement(
       self, node, style_category, has_shadow, shader_map, output):
@@ -730,10 +837,7 @@ class MozcDrawableConverter(object):
     output.WriteFloat(cy)
     output.WriteFloat(rx)
     output.WriteFloat(ry)
-    if style_category is not None:
-      self._ConvertStyleCategory(style_category, output)
-    else:
-      self._ConvertStyleList(style_list, output)
+    self._ConvertStyle(style_category, style_list, output)
 
   def _ConvertRectElement(
       self, node, style_category, has_shadow, shader_map, output):
@@ -747,14 +851,39 @@ class MozcDrawableConverter(object):
     output.WriteFloat(y)
     output.WriteFloat(w)
     output.WriteFloat(h)
-    if style_category is not None:
-      self._ConvertStyleCategory(style_category, output)
-    else:
-      self._ConvertStyleList(style_list, output)
+    self._ConvertStyle(style_category, style_list, output)
+
+  def _ConvertTextElement(
+      self, node, style_category, has_shadow, shader_map, output):
+    """Converts text element.
+
+    The text element must not have any children.
+
+    Args:
+      node: node
+      style_category: style_category(optional)
+      has_shadow: shadow value
+      shader_map: shader map
+      output: output stream
+    """
+    if not node.text:
+      # Ignore empty text node
+      return
+
+    style_list = self._ParseStyle(node, has_shadow, shader_map)
+    x = float(node.get('x', 0))
+    y = float(node.get('y', 0))
+    output.WriteByte(CMD_PICTURE_DRAW_TEXT)
+    output.WriteFloat(x)
+    output.WriteFloat(y)
+    if node:
+      logging.critical('<text> with children is not supported.')
+      sys.exit(1)
+    output.WriteString(node.text)
+    self._ConvertStyle(style_category, style_list, output)
 
   def _ConvertGroupElement(
       self, node, style_category, has_shadow, shader_map, output):
-
     transform = node.get('transform')
     if transform:
       # Output order of 3x3 matrix;
@@ -793,6 +922,25 @@ class MozcDrawableConverter(object):
         output.WriteFloat(0)
         output.WriteFloat(tx)
         output.WriteFloat(ty)
+        output.WriteFloat(1)
+      elif transformation == 'scale':
+        parsed_coords = tuple(self._ParseFloatList(coords))
+        if len(parsed_coords) != 1 and len(parsed_coords) != 2:
+          logging.critical('Invalid argument for scale: %s', coords)
+          sys.exit(1)
+        sx = parsed_coords[0]
+        if len(parsed_coords) == 1:
+          sy = sx
+        else:
+          sy = parsed_coords[1]
+        output.WriteFloat(sx)
+        output.WriteFloat(0)
+        output.WriteFloat(0)
+        output.WriteFloat(0)
+        output.WriteFloat(sy)
+        output.WriteFloat(0)
+        output.WriteFloat(0)
+        output.WriteFloat(0)
         output.WriteFloat(1)
       else:
         # Never reach here. Just in case.
@@ -855,17 +1003,26 @@ class MozcDrawableConverter(object):
           node, style_category, has_shadow, shader_map, output)
       return
 
+    if node.tag == '{http://www.w3.org/2000/svg}text':
+      self._ConvertTextElement(
+          node, style_category, has_shadow, shader_map, output)
+      return
+
     if node.tag in ['{http://www.w3.org/2000/svg}g',
                     '{http://www.w3.org/2000/svg}svg']:
       self._ConvertGroupElement(
           node, style_category, has_shadow, shader_map, output)
       return
 
+    # Ignore following tags.
     if node.tag in ['{http://www.w3.org/2000/svg}linearGradient',
-                    '{http://www.w3.org/2000/svg}radialGradient']:
+                    '{http://www.w3.org/2000/svg}radialGradient',
+                    '{http://www.w3.org/2000/svg}metadata',
+                    '{http://www.w3.org/2000/svg}defs',]:
       return
 
-    logging.warning('Unknown element: %s', node.tag)
+    logging.critical('Unknown element: %s', node.tag)
+    sys.exit(1)
 
   def _OutputEOP(self, output):
     output.WriteByte(CMD_PICTURE_EOP)
@@ -899,21 +1056,22 @@ class MozcDrawableConverter(object):
     return output.output.getvalue()
 
 
-def ConvertFiles(svg_dir, output_dir):
+def ConvertFiles(svg_paths, output_dir):
   """Converts SVG files into MechaMozc specific *pic* files.
 
   Args:
-    svg_dir: Path to a directory which has svg files (recursively).
+    svg_paths: Comma separated paths to a directory/zip which has svg files
+               (recursively).
     output_dir: Path of the destination directory.
   """
-  logging.debug('Start SVG conversion. From:%s, To:%s', svg_dir, output_dir)
+  logging.debug('Start SVG conversion. From:%s, To:%s', svg_paths, output_dir)
   # Ensure that the output directory exists.
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
   converter = MozcDrawableConverter()
   number_of_conversion = 0
-  for dirpath, dirnames, filenames in os.walk(svg_dir):
+  for dirpath, _, filenames in util.WalkFileContainers(svg_paths):
     for filename in filenames:
       basename, ext = os.path.splitext(filename)
       if ext != '.svg':
@@ -971,11 +1129,16 @@ def ConvertFiles(svg_dir, output_dir):
 
 
 def ParseOptions():
+  """Parses options."""
   parser = optparse.OptionParser()
-  parser.add_option('--svg_dir', dest='svg_dir',
-                    help='Path to a directory containing .svg files.')
+  parser.add_option('--svg_paths', dest='svg_paths',
+                    help='Comma separated paths to a directory or'
+                    ' a .zip file containing .svg files.')
   parser.add_option('--output_dir', dest='output_dir',
                     help='Path to the output directory,')
+  parser.add_option('--build_log', dest='build_log',
+                    help='(Optional) Path to build log to generate.'
+                    ' If set, nothing will be sent to stderr.')
   parser.add_option('--verbose', '-v', dest='verbose',
                     action='store_true', default=False,
                     help='Shows verbose message.')
@@ -987,9 +1150,12 @@ def main():
   logging.getLogger().addFilter(util.ColoredLoggingFilter())
 
   options = ParseOptions()
-  if options.verbose:
+  if options.build_log:
+    logging.getLogger().handlers = []
+    logging.getLogger().addHandler(logging.FileHandler(options.build_log, 'w'))
+  if options.verbose or options.build_log:
     logging.getLogger().setLevel(logging.DEBUG)
-  ConvertFiles(options.svg_dir, options.output_dir)
+  ConvertFiles(options.svg_paths, options.output_dir)
 
 
 if __name__ == '__main__':

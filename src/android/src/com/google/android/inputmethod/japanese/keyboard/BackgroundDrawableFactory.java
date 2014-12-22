@@ -29,19 +29,25 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.CandidateBackgroundDrawable;
 import org.mozc.android.inputmethod.japanese.view.CandidateBackgroundFocusedDrawable;
 import org.mozc.android.inputmethod.japanese.view.CenterCircularHighlightDrawable;
-import org.mozc.android.inputmethod.japanese.view.LightIconDrawable;
-import org.mozc.android.inputmethod.japanese.view.PopUpFrameWindowDrawable;
+import org.mozc.android.inputmethod.japanese.view.DummyDrawable;
+import org.mozc.android.inputmethod.japanese.view.QwertySpaceKeyDrawable;
 import org.mozc.android.inputmethod.japanese.view.RectKeyDrawable;
 import org.mozc.android.inputmethod.japanese.view.RoundRectKeyDrawable;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import org.mozc.android.inputmethod.japanese.view.ThreeDotsIconDrawable;
 import org.mozc.android.inputmethod.japanese.view.TriangularHighlightDrawable;
 import org.mozc.android.inputmethod.japanese.view.TriangularHighlightDrawable.HighlightDirection;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
+import android.content.res.Resources;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
 
@@ -83,8 +89,14 @@ public class BackgroundDrawableFactory {
     QWERTY_REGULAR_KEY_BACKGROUND,
     QWERTY_FUNCTION_KEY_BACKGROUND,
     QWERTY_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS,
-    QWERTY_FUNCTION_KEY_LIGHT_ON_BACKGROUND,
-    QWERTY_FUNCTION_KEY_LIGHT_OFF_BACKGROUND,
+    QWERTY_FUNCTION_KEY_SPACE_WITH_THREEDOTS,
+
+    // Separator on keyboard.
+    KEYBOARD_SEPARATOR_TOP,
+    KEYBOARD_SEPARATOR_CENTER,
+    KEYBOARD_SEPARATOR_BOTTOM,
+
+    TRNASPARENT,
 
     // Highlight for flicking.
     TWELVEKEYS_CENTER_FLICK,
@@ -104,366 +116,327 @@ public class BackgroundDrawableFactory {
 
   // According to the original design mock, the pressed key background contains some padding.
   // Here are hardcoded parameters.
-  private static final float TWELVEKEYS_LEFT_OFFSET = 0.5f;
-  private static final float TWELVEKEYS_TOP_OFFSET = 0;
-  private static final float TWELVEKEYS_RIGHT_OFFSET = 1.0f;
-  private static final float TWELVEKEYS_BOTTOM_OFFSET = 1.0f;
+  public static final float POPUP_WINDOW_PADDING = 7.0f;
+
   private static final float TWELVEKEYS_THREEDOTS_BOTTOM_OFFSET = 3.0f;
   private static final float TWELVEKEYS_THREEDOTS_RIGHT_OFFSET = 5.0f;
   private static final float TWELVEKEYS_THREEDOTS_WIDTH = 2.0f;
   private static final float TWELVEKEYS_THREEDOTS_SPAN = 2.0f;
 
-  private static final float QWERTY_LEFT_OFFSET = 2.0f;
-  private static final float QWERTY_TOP_OFFSET = 1.0f;
-  private static final float QWERTY_RIGHT_OFFSET = 2.0f;
-  private static final float QWERTY_BOTTOM_OFFSET = 3.0f;
   private static final float QWERTY_THREEDOTS_BOTTOM_OFFSET = 3.0f;
   private static final float QWERTY_THREEDOTS_RIGHT_OFFSET = 5.0f;
   private static final float QWERTY_THREEDOTS_WIDTH = 2.0f;
   private static final float QWERTY_THREEDOTS_SPAN = 2.0f;
-  private static final float QWERTY_LIGHT_TOP_OFFSET = 2.0f;
-  private static final float QWERTY_LIGHT_RIGHT_OFFSET = 2.0f;
-  private static final float QWERTY_LIGHT_RADIUS = 2.25f;
-
-  private static final float POPUP_WINDOW_PADDING = 7.0f;
-  private static final float POPUP_FRAME_BORDER_WIDTH = 5.0f;
-  private static final float POPUP_SHADOW_SIZE = 1.5f;
 
   private static final float CANDIDATE_BACKGROUND_PADDING = 0.0f;
   private static final float SYMBOL_CANDIDATE_BACKGROUND_PADDING = 0.0f;
 
+  private final Resources resources;
   private final float density;
   private final Map<DrawableType, Drawable> drawableMap =
       new EnumMap<DrawableType, Drawable>(DrawableType.class);
-  private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
+  private Skin skin = Skin.getFallbackInstance();
 
-  public BackgroundDrawableFactory(float density) {
-    this.density = density;
+  public BackgroundDrawableFactory(Resources resources) {
+    this.resources = Preconditions.checkNotNull(resources);
+    density = resources.getDisplayMetrics().density;
   }
 
   public Drawable getDrawable(DrawableType drawableType) {
-    if (drawableType == null) {
-      return null;
-    }
-
-    Drawable result = drawableMap.get(drawableType);
+    Drawable result = drawableMap.get(Preconditions.checkNotNull(drawableType));
     if (result == null) {
       result = createBackgroundDrawable(drawableType);
       drawableMap.put(drawableType, result);
     }
-
     return result;
   }
 
-  public void setSkinType(SkinType skinType) {
-    if (this.skinType == skinType) {
+  public void setSkin(Skin skin) {
+    Preconditions.checkNotNull(skin);
+    if (this.skin.equals(skin)) {
       return;
     }
-    this.skinType = skinType;
+    this.skin = skin;
     drawableMap.clear();
   }
 
   private Drawable createBackgroundDrawable(DrawableType drawableType) {
-    switch (drawableType) {
+    switch (Preconditions.checkNotNull(drawableType)) {
       case TWELVEKEYS_REGULAR_KEY_BACKGROUND:
         return createPressableDrawable(
             new RectKeyDrawable(
-                (int) (TWELVEKEYS_LEFT_OFFSET * density),
-                (int) (TWELVEKEYS_TOP_OFFSET * density),
-                (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-                (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-                skinType.twelvekeysLayoutPressedKeyTopColor,
-                skinType.twelvekeysLayoutPressedKeyBottomColor,
-                skinType.twelvekeysLayoutPressedKeyHighlightColor,
-                skinType.twelvekeysLayoutPressedKeyLightShadeColor,
-                skinType.twelvekeysLayoutPressedKeyDarkShadeColor,
-                skinType.twelvekeysLayoutPressedKeyShadowColor),
-            new RectKeyDrawable(
-                (int) (TWELVEKEYS_LEFT_OFFSET * density),
-                (int) (TWELVEKEYS_TOP_OFFSET * density),
-                (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-                (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-                skinType.twelvekeysLayoutReleasedKeyTopColor,
-                skinType.twelvekeysLayoutReleasedKeyBottomColor,
-                skinType.twelvekeysLayoutReleasedKeyHighlightColor,
-                skinType.twelvekeysLayoutReleasedKeyLightShadeColor,
-                skinType.twelvekeysLayoutReleasedKeyDarkShadeColor,
-                skinType.twelvekeysLayoutReleasedKeyShadowColor));
+                (int) (skin.twelvekeysLeftOffsetDimension),
+                (int) (skin.twelvekeysTopOffsetDimension),
+                (int) (skin.twelvekeysRightOffsetDimension),
+                (int) (skin.twelvekeysBottomOffsetDimension),
+                skin.twelvekeysLayoutPressedKeyTopColor,
+                skin.twelvekeysLayoutPressedKeyBottomColor,
+                skin.twelvekeysLayoutPressedKeyHighlightColor,
+                skin.twelvekeysLayoutPressedKeyLightShadeColor,
+                skin.twelvekeysLayoutPressedKeyDarkShadeColor,
+                skin.twelvekeysLayoutPressedKeyShadowColor),
+            Optional.<Drawable>of(new RectKeyDrawable(
+                (int) (skin.twelvekeysLeftOffsetDimension),
+                (int) (skin.twelvekeysTopOffsetDimension),
+                (int) (skin.twelvekeysRightOffsetDimension),
+                (int) (skin.twelvekeysBottomOffsetDimension),
+                skin.twelvekeysLayoutReleasedKeyTopColor,
+                skin.twelvekeysLayoutReleasedKeyBottomColor,
+                skin.twelvekeysLayoutReleasedKeyHighlightColor,
+                skin.twelvekeysLayoutReleasedKeyLightShadeColor,
+                skin.twelvekeysLayoutReleasedKeyDarkShadeColor,
+                skin.twelvekeysLayoutReleasedKeyShadowColor)));
 
       case TWELVEKEYS_FUNCTION_KEY_BACKGROUND:
         return createPressableDrawable(
             new RectKeyDrawable(
-                (int) (TWELVEKEYS_LEFT_OFFSET * density),
-                (int) (TWELVEKEYS_TOP_OFFSET * density),
-                (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-                (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-                skinType.twelvekeysLayoutPressedFunctionKeyTopColor,
-                skinType.twelvekeysLayoutPressedFunctionKeyBottomColor,
-                skinType.twelvekeysLayoutPressedFunctionKeyHighlightColor,
-                skinType.twelvekeysLayoutPressedFunctionKeyLightShadeColor,
-                skinType.twelvekeysLayoutPressedFunctionKeyDarkShadeColor,
-                skinType.twelvekeysLayoutPressedFunctionKeyShadowColor),
-            new RectKeyDrawable(
-                (int) (TWELVEKEYS_LEFT_OFFSET * density),
-                (int) (TWELVEKEYS_TOP_OFFSET * density),
-                (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-                (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-                skinType.twelvekeysLayoutReleasedFunctionKeyTopColor,
-                skinType.twelvekeysLayoutReleasedFunctionKeyBottomColor,
-                skinType.twelvekeysLayoutReleasedFunctionKeyHighlightColor,
-                skinType.twelvekeysLayoutReleasedFunctionKeyLightShadeColor,
-                skinType.twelvekeysLayoutReleasedFunctionKeyDarkShadeColor,
-                skinType.twelvekeysLayoutReleasedFunctionKeyShadowColor));
+                (int) (skin.twelvekeysLeftOffsetDimension),
+                (int) (skin.twelvekeysTopOffsetDimension),
+                (int) (skin.twelvekeysRightOffsetDimension),
+                (int) (skin.twelvekeysBottomOffsetDimension),
+                skin.twelvekeysLayoutPressedFunctionKeyTopColor,
+                skin.twelvekeysLayoutPressedFunctionKeyBottomColor,
+                skin.twelvekeysLayoutPressedFunctionKeyHighlightColor,
+                skin.twelvekeysLayoutPressedFunctionKeyLightShadeColor,
+                skin.twelvekeysLayoutPressedFunctionKeyDarkShadeColor,
+                skin.twelvekeysLayoutPressedFunctionKeyShadowColor),
+            Optional.<Drawable>of(new RectKeyDrawable(
+                (int) (skin.twelvekeysLeftOffsetDimension),
+                (int) (skin.twelvekeysTopOffsetDimension),
+                (int) (skin.twelvekeysRightOffsetDimension),
+                (int) (skin.twelvekeysBottomOffsetDimension),
+                skin.twelvekeysLayoutReleasedFunctionKeyTopColor,
+                skin.twelvekeysLayoutReleasedFunctionKeyBottomColor,
+                skin.twelvekeysLayoutReleasedFunctionKeyHighlightColor,
+                skin.twelvekeysLayoutReleasedFunctionKeyLightShadeColor,
+                skin.twelvekeysLayoutReleasedFunctionKeyDarkShadeColor,
+                skin.twelvekeysLayoutReleasedFunctionKeyShadowColor)));
 
       case TWELVEKEYS_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS:
         return new LayerDrawable(new Drawable[] {
             createPressableDrawable(
                 new RectKeyDrawable(
-                    (int) (TWELVEKEYS_LEFT_OFFSET * density),
-                    (int) (TWELVEKEYS_TOP_OFFSET * density),
-                    (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-                    (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-                    skinType.twelvekeysLayoutPressedFunctionKeyTopColor,
-                    skinType.twelvekeysLayoutPressedFunctionKeyBottomColor,
-                    skinType.twelvekeysLayoutPressedFunctionKeyHighlightColor,
-                    skinType.twelvekeysLayoutPressedFunctionKeyLightShadeColor,
-                    skinType.twelvekeysLayoutPressedFunctionKeyDarkShadeColor,
-                    skinType.twelvekeysLayoutPressedFunctionKeyShadowColor),
-                new RectKeyDrawable(
-                    (int) (TWELVEKEYS_LEFT_OFFSET * density),
-                    (int) (TWELVEKEYS_TOP_OFFSET * density),
-                    (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-                    (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-                    skinType.twelvekeysLayoutReleasedFunctionKeyTopColor,
-                    skinType.twelvekeysLayoutReleasedFunctionKeyBottomColor,
-                    skinType.twelvekeysLayoutReleasedFunctionKeyHighlightColor,
-                    skinType.twelvekeysLayoutReleasedFunctionKeyLightShadeColor,
-                    skinType.twelvekeysLayoutReleasedFunctionKeyDarkShadeColor,
-                    skinType.twelvekeysLayoutReleasedFunctionKeyShadowColor)),
+                    (int) (skin.twelvekeysLeftOffsetDimension),
+                    (int) (skin.twelvekeysTopOffsetDimension),
+                    (int) (skin.twelvekeysRightOffsetDimension),
+                    (int) (skin.twelvekeysBottomOffsetDimension),
+                    skin.twelvekeysLayoutPressedFunctionKeyTopColor,
+                    skin.twelvekeysLayoutPressedFunctionKeyBottomColor,
+                    skin.twelvekeysLayoutPressedFunctionKeyHighlightColor,
+                    skin.twelvekeysLayoutPressedFunctionKeyLightShadeColor,
+                    skin.twelvekeysLayoutPressedFunctionKeyDarkShadeColor,
+                    skin.twelvekeysLayoutPressedFunctionKeyShadowColor),
+                Optional.<Drawable>of(new RectKeyDrawable(
+                    (int) (skin.twelvekeysLeftOffsetDimension),
+                    (int) (skin.twelvekeysTopOffsetDimension),
+                    (int) (skin.twelvekeysRightOffsetDimension),
+                    (int) (skin.twelvekeysBottomOffsetDimension),
+                    skin.twelvekeysLayoutReleasedFunctionKeyTopColor,
+                    skin.twelvekeysLayoutReleasedFunctionKeyBottomColor,
+                    skin.twelvekeysLayoutReleasedFunctionKeyHighlightColor,
+                    skin.twelvekeysLayoutReleasedFunctionKeyLightShadeColor,
+                    skin.twelvekeysLayoutReleasedFunctionKeyDarkShadeColor,
+                    skin.twelvekeysLayoutReleasedFunctionKeyShadowColor))),
             new ThreeDotsIconDrawable(
-                (int) ((TWELVEKEYS_BOTTOM_OFFSET + TWELVEKEYS_THREEDOTS_BOTTOM_OFFSET) * density),
-                (int) ((TWELVEKEYS_RIGHT_OFFSET + TWELVEKEYS_THREEDOTS_RIGHT_OFFSET) * density),
-                skinType.threeDotsColor,
+                (int) (skin.twelvekeysBottomOffsetDimension
+                    + TWELVEKEYS_THREEDOTS_BOTTOM_OFFSET * density),
+                (int) (skin.twelvekeysRightOffsetDimension
+                    + TWELVEKEYS_THREEDOTS_RIGHT_OFFSET * density),
+                skin.threeDotsColor,
                 (int) (TWELVEKEYS_THREEDOTS_WIDTH * density),
                 (int) (TWELVEKEYS_THREEDOTS_SPAN * density))});
 
       case QWERTY_REGULAR_KEY_BACKGROUND:
         return createPressableDrawable(
             new RoundRectKeyDrawable(
-                (int) (QWERTY_LEFT_OFFSET * density),
-                (int) (QWERTY_TOP_OFFSET * density),
-                (int) (QWERTY_RIGHT_OFFSET * density),
-                (int) (QWERTY_BOTTOM_OFFSET * density),
-                (int) (skinType.qwertyKeyRoundRadius * density),
-                skinType.qwertyLayoutPressedKeyTopColor,
-                skinType.qwertyLayoutPressedKeyBottomColor,
-                skinType.qwertyLayoutPressedKeyHighlightColor,
-                skinType.qwertyLayoutPressedKeyShadowColor),
-            new RoundRectKeyDrawable(
-                (int) (QWERTY_LEFT_OFFSET * density),
-                (int) (QWERTY_TOP_OFFSET * density),
-                (int) (QWERTY_RIGHT_OFFSET * density),
-                (int) (QWERTY_BOTTOM_OFFSET * density),
-                (int) (skinType.qwertyKeyRoundRadius * density),
-                skinType.qwertyLayoutReleasedKeyTopColor,
-                skinType.qwertyLayoutReleasedKeyBottomColor,
-                skinType.qwertyLayoutReleasedKeyHighlightColor,
-                skinType.qwertyLayoutReleasedKeyShadowColor));
+                (int) (skin.qwertyLeftOffsetDimension),
+                (int) (skin.qwertyTopOffsetDimension),
+                (int) (skin.qwertyRightOffsetDimension),
+                (int) (skin.qwertyBottomOffsetDimension),
+                (int) (skin.qwertyRoundRadiusDimension),
+                skin.qwertyLayoutPressedKeyTopColor,
+                skin.qwertyLayoutPressedKeyBottomColor,
+                skin.qwertyLayoutPressedKeyHighlightColor,
+                skin.qwertyLayoutPressedKeyShadowColor),
+            Optional.<Drawable>of(new RoundRectKeyDrawable(
+                (int) (skin.qwertyLeftOffsetDimension),
+                (int) (skin.qwertyTopOffsetDimension),
+                (int) (skin.qwertyRightOffsetDimension),
+                (int) (skin.qwertyBottomOffsetDimension),
+                (int) (skin.qwertyRoundRadiusDimension),
+                skin.qwertyLayoutReleasedKeyTopColor,
+                skin.qwertyLayoutReleasedKeyBottomColor,
+                skin.qwertyLayoutReleasedKeyHighlightColor,
+                skin.qwertyLayoutReleasedKeyShadowColor)));
 
       case QWERTY_FUNCTION_KEY_BACKGROUND:
         return createPressableDrawable(
             new RoundRectKeyDrawable(
-                (int) (QWERTY_LEFT_OFFSET * density),
-                (int) (QWERTY_TOP_OFFSET * density),
-                (int) (QWERTY_RIGHT_OFFSET * density),
-                (int) (QWERTY_BOTTOM_OFFSET * density),
-                (int) (skinType.qwertyKeyRoundRadius * density),
-                skinType.qwertyLayoutPressedFunctionKeyTopColor,
-                skinType.qwertyLayoutPressedFunctionKeyBottomColor,
-                skinType.qwertyLayoutPressedFunctionKeyHighlightColor,
-                skinType.qwertyLayoutPressedFunctionKeyShadowColor),
-            new RoundRectKeyDrawable(
-                (int) (QWERTY_LEFT_OFFSET * density),
-                (int) (QWERTY_TOP_OFFSET * density),
-                (int) (QWERTY_RIGHT_OFFSET * density),
-                (int) (QWERTY_BOTTOM_OFFSET * density),
-                (int) (skinType.qwertyKeyRoundRadius * density),
-                skinType.qwertyLayoutReleasedFunctionKeyTopColor,
-                skinType.qwertyLayoutReleasedFunctionKeyBottomColor,
-                skinType.qwertyLayoutReleasedFunctionKeyHighlightColor,
-                skinType.qwertyLayoutReleasedFunctionKeyShadowColor));
+                (int) (skin.qwertyLeftOffsetDimension),
+                (int) (skin.qwertyTopOffsetDimension),
+                (int) (skin.qwertyRightOffsetDimension),
+                (int) (skin.qwertyBottomOffsetDimension),
+                (int) (skin.qwertyRoundRadiusDimension),
+                skin.qwertyLayoutPressedFunctionKeyTopColor,
+                skin.qwertyLayoutPressedFunctionKeyBottomColor,
+                skin.qwertyLayoutPressedFunctionKeyHighlightColor,
+                skin.qwertyLayoutPressedFunctionKeyShadowColor),
+            Optional.<Drawable>of(new RoundRectKeyDrawable(
+                (int) (skin.qwertyLeftOffsetDimension),
+                (int) (skin.qwertyTopOffsetDimension),
+                (int) (skin.qwertyRightOffsetDimension),
+                (int) (skin.qwertyBottomOffsetDimension),
+                (int) (skin.qwertyRoundRadiusDimension),
+                skin.qwertyLayoutReleasedFunctionKeyTopColor,
+                skin.qwertyLayoutReleasedFunctionKeyBottomColor,
+                skin.qwertyLayoutReleasedFunctionKeyHighlightColor,
+                skin.qwertyLayoutReleasedFunctionKeyShadowColor)));
 
       case QWERTY_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS:
         return new LayerDrawable(new Drawable[] {
             createPressableDrawable(
                 new RoundRectKeyDrawable(
-                    (int) (QWERTY_LEFT_OFFSET * density),
-                    (int) (QWERTY_TOP_OFFSET * density),
-                    (int) (QWERTY_RIGHT_OFFSET * density),
-                    (int) (QWERTY_BOTTOM_OFFSET * density),
-                    (int) (skinType.qwertyKeyRoundRadius * density),
-                    skinType.qwertyLayoutPressedFunctionKeyTopColor,
-                    skinType.qwertyLayoutPressedFunctionKeyBottomColor,
-                    skinType.qwertyLayoutPressedFunctionKeyHighlightColor,
-                    skinType.qwertyLayoutPressedFunctionKeyShadowColor),
-                new RoundRectKeyDrawable(
-                    (int) (QWERTY_LEFT_OFFSET * density),
-                    (int) (QWERTY_TOP_OFFSET * density),
-                    (int) (QWERTY_RIGHT_OFFSET * density),
-                    (int) (QWERTY_BOTTOM_OFFSET * density),
-                    (int) (skinType.qwertyKeyRoundRadius * density),
-                    skinType.qwertyLayoutReleasedFunctionKeyTopColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyBottomColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyHighlightColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyShadowColor)),
+                    (int) (skin.qwertyLeftOffsetDimension),
+                    (int) (skin.qwertyTopOffsetDimension),
+                    (int) (skin.qwertyRightOffsetDimension),
+                    (int) (skin.qwertyBottomOffsetDimension),
+                    (int) (skin.qwertyRoundRadiusDimension),
+                    skin.qwertyLayoutPressedFunctionKeyTopColor,
+                    skin.qwertyLayoutPressedFunctionKeyBottomColor,
+                    skin.qwertyLayoutPressedFunctionKeyHighlightColor,
+                    skin.qwertyLayoutPressedFunctionKeyShadowColor),
+                Optional.<Drawable>of(new RoundRectKeyDrawable(
+                    (int) (skin.qwertyLeftOffsetDimension),
+                    (int) (skin.qwertyTopOffsetDimension),
+                    (int) (skin.qwertyRightOffsetDimension),
+                    (int) (skin.qwertyBottomOffsetDimension),
+                    (int) (skin.qwertyRoundRadiusDimension),
+                    skin.qwertyLayoutReleasedFunctionKeyTopColor,
+                    skin.qwertyLayoutReleasedFunctionKeyBottomColor,
+                    skin.qwertyLayoutReleasedFunctionKeyHighlightColor,
+                    skin.qwertyLayoutReleasedFunctionKeyShadowColor))),
             new ThreeDotsIconDrawable(
-                (int) ((QWERTY_BOTTOM_OFFSET + QWERTY_THREEDOTS_BOTTOM_OFFSET) * density),
-                (int) ((QWERTY_RIGHT_OFFSET + QWERTY_THREEDOTS_RIGHT_OFFSET) * density),
-                skinType.threeDotsColor,
+                (int) (skin.qwertyBottomOffsetDimension
+                    + (QWERTY_THREEDOTS_BOTTOM_OFFSET * density)),
+                (int) (skin.qwertyRightOffsetDimension
+                    + (QWERTY_THREEDOTS_RIGHT_OFFSET * density)),
+                skin.threeDotsColor,
                 (int) (QWERTY_THREEDOTS_WIDTH * density),
                 (int) (QWERTY_THREEDOTS_SPAN * density))});
 
-      case QWERTY_FUNCTION_KEY_LIGHT_ON_BACKGROUND:
+      case QWERTY_FUNCTION_KEY_SPACE_WITH_THREEDOTS:
         return new LayerDrawable(new Drawable[] {
             createPressableDrawable(
-                new RoundRectKeyDrawable(
-                    (int) (QWERTY_LEFT_OFFSET * density),
-                    (int) (QWERTY_TOP_OFFSET * density),
-                    (int) (QWERTY_RIGHT_OFFSET * density),
-                    (int) (QWERTY_BOTTOM_OFFSET * density),
-                    (int) (skinType.qwertyKeyRoundRadius * density),
-                    skinType.qwertyLayoutPressedFunctionKeyTopColor,
-                    skinType.qwertyLayoutPressedFunctionKeyBottomColor,
-                    skinType.qwertyLayoutPressedFunctionKeyHighlightColor,
-                    skinType.qwertyLayoutPressedFunctionKeyShadowColor),
-                new RoundRectKeyDrawable(
-                    (int) (QWERTY_LEFT_OFFSET * density),
-                    (int) (QWERTY_TOP_OFFSET * density),
-                    (int) (QWERTY_RIGHT_OFFSET * density),
-                    (int) (QWERTY_BOTTOM_OFFSET * density),
-                    (int) (skinType.qwertyKeyRoundRadius * density),
-                    skinType.qwertyLayoutReleasedFunctionKeyTopColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyBottomColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyHighlightColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyShadowColor)),
-            new LightIconDrawable(
-                (int) ((QWERTY_TOP_OFFSET + QWERTY_LIGHT_TOP_OFFSET + QWERTY_LIGHT_RADIUS)
-                          * density),
-                (int) ((QWERTY_RIGHT_OFFSET + QWERTY_LIGHT_RIGHT_OFFSET + QWERTY_LIGHT_RADIUS)
-                          * density),
-                skinType.qwertyLightOnSignLightColor,
-                skinType.qwertyLightOnSignDarkColor,
-                skinType.qwertyLightOnSignShadeColor,
-                (int) (QWERTY_LIGHT_RADIUS * density))
-            });
+                new QwertySpaceKeyDrawable(
+                    (int) (skin.qwertySpaceKeyHeightDimension),
+                    (int) (skin.qwertySpaceKeyHorizontalOffsetDimension),
+                    (int) (skin.qwertyTopOffsetDimension),
+                    (int) (skin.qwertySpaceKeyHorizontalOffsetDimension),
+                    (int) (skin.qwertyBottomOffsetDimension),
+                    (int) (skin.qwertySpaceKeyRoundRadiusDimension),
+                    skin.qwertyLayoutPressedSpaceKeyTopColor,
+                    skin.qwertyLayoutPressedSpaceKeyBottomColor,
+                    skin.qwertyLayoutPressedSpaceKeyHighlightColor,
+                    skin.qwertyLayoutPressedSpaceKeyShadowColor),
+                Optional.<Drawable>of(new QwertySpaceKeyDrawable(
+                    (int) (skin.qwertySpaceKeyHeightDimension),
+                    (int) (skin.qwertySpaceKeyHorizontalOffsetDimension),
+                    (int) (skin.qwertyTopOffsetDimension),
+                    (int) (skin.qwertySpaceKeyHorizontalOffsetDimension),
+                    (int) (skin.qwertyBottomOffsetDimension),
+                    (int) (skin.qwertySpaceKeyRoundRadiusDimension),
+                    skin.qwertyLayoutReleasedSpaceKeyTopColor,
+                    skin.qwertyLayoutReleasedSpaceKeyBottomColor,
+                    skin.qwertyLayoutReleasedSpaceKeyHighlightColor,
+                    skin.qwertyLayoutReleasedSpaceKeyShadowColor))),
+            new ThreeDotsIconDrawable(
+                (int) (skin.qwertyBottomOffsetDimension
+                    + (QWERTY_THREEDOTS_BOTTOM_OFFSET * density)),
+                (int) (skin.qwertySpaceKeyHorizontalOffsetDimension
+                    + (QWERTY_THREEDOTS_RIGHT_OFFSET * density)),
+                skin.threeDotsColor,
+                (int) (QWERTY_THREEDOTS_WIDTH * density),
+                (int) (QWERTY_THREEDOTS_SPAN * density))});
 
-      case QWERTY_FUNCTION_KEY_LIGHT_OFF_BACKGROUND:
-        return new LayerDrawable(new Drawable[] {
-            createPressableDrawable(
-                new RoundRectKeyDrawable(
-                    (int) (QWERTY_LEFT_OFFSET * density),
-                    (int) (QWERTY_TOP_OFFSET * density),
-                    (int) (QWERTY_RIGHT_OFFSET * density),
-                    (int) (QWERTY_BOTTOM_OFFSET * density),
-                    (int) (skinType.qwertyKeyRoundRadius * density),
-                    skinType.qwertyLayoutPressedFunctionKeyTopColor,
-                    skinType.qwertyLayoutPressedFunctionKeyBottomColor,
-                    skinType.qwertyLayoutPressedFunctionKeyHighlightColor,
-                    skinType.qwertyLayoutPressedFunctionKeyShadowColor),
-                new RoundRectKeyDrawable(
-                    (int) (QWERTY_LEFT_OFFSET * density),
-                    (int) (QWERTY_TOP_OFFSET * density),
-                    (int) (QWERTY_RIGHT_OFFSET * density),
-                    (int) (QWERTY_BOTTOM_OFFSET * density),
-                    (int) (skinType.qwertyKeyRoundRadius * density),
-                    skinType.qwertyLayoutReleasedFunctionKeyTopColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyBottomColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyHighlightColor,
-                    skinType.qwertyLayoutReleasedFunctionKeyShadowColor)),
-            new LightIconDrawable(
-                (int) ((QWERTY_TOP_OFFSET + QWERTY_LIGHT_TOP_OFFSET + QWERTY_LIGHT_RADIUS)
-                          * density),
-                (int) ((QWERTY_RIGHT_OFFSET + QWERTY_LIGHT_RIGHT_OFFSET + QWERTY_LIGHT_RADIUS)
-                          * density),
-                skinType.qwertyLightOffSignLightColor,
-                skinType.qwertyLightOffSignDarkColor,
-                skinType.qwertyLightOffSignShadeColor,
-                (int) (QWERTY_LIGHT_RADIUS * density))
-            });
+      case KEYBOARD_SEPARATOR_TOP:
+        return new InsetDrawable(
+            new ColorDrawable(skin.keyboardSeparatorColor), 0,
+                              resources.getDimensionPixelSize(R.dimen.keyboard_separator_padding),
+                              0, 0);
+
+      case KEYBOARD_SEPARATOR_CENTER:
+        return new ColorDrawable(skin.keyboardSeparatorColor);
+
+      case KEYBOARD_SEPARATOR_BOTTOM:
+        return new InsetDrawable(
+            new ColorDrawable(skin.keyboardSeparatorColor), 0, 0, 0,
+            resources.getDimensionPixelSize(R.dimen.keyboard_separator_padding));
+
+      case TRNASPARENT:
+        return DummyDrawable.getInstance();
 
       case TWELVEKEYS_CENTER_FLICK:
         return new CenterCircularHighlightDrawable(
-            (int) (TWELVEKEYS_LEFT_OFFSET * density),
-            (int) (TWELVEKEYS_TOP_OFFSET * density),
-            (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-            (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-            skinType.flickBaseColor,
-            skinType.flickShadeColor);
+            (int) (skin.twelvekeysLeftOffsetDimension),
+            (int) (skin.twelvekeysTopOffsetDimension),
+            (int) (skin.twelvekeysRightOffsetDimension),
+            (int) (skin.twelvekeysBottomOffsetDimension),
+            skin.flickBaseColor,
+            skin.flickShadeColor);
 
       case TWELVEKEYS_LEFT_FLICK:
         return new TriangularHighlightDrawable(
-            (int) (TWELVEKEYS_LEFT_OFFSET * density),
-            (int) (TWELVEKEYS_TOP_OFFSET * density),
-            (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-            (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-            skinType.flickBaseColor,
-            skinType.flickShadeColor,
+            (int) (skin.twelvekeysLeftOffsetDimension),
+            (int) (skin.twelvekeysTopOffsetDimension),
+            (int) (skin.twelvekeysRightOffsetDimension),
+            (int) (skin.twelvekeysBottomOffsetDimension),
+            skin.flickBaseColor,
+            skin.flickShadeColor,
             HighlightDirection.LEFT);
 
       case TWELVEKEYS_UP_FLICK:
         return new TriangularHighlightDrawable(
-            (int) (TWELVEKEYS_LEFT_OFFSET * density),
-            (int) (TWELVEKEYS_TOP_OFFSET * density),
-            (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-            (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-            skinType.flickBaseColor,
-            skinType.flickShadeColor,
+            (int) (skin.twelvekeysLeftOffsetDimension),
+            (int) (skin.twelvekeysTopOffsetDimension),
+            (int) (skin.twelvekeysRightOffsetDimension),
+            (int) (skin.twelvekeysBottomOffsetDimension),
+            skin.flickBaseColor,
+            skin.flickShadeColor,
             HighlightDirection.UP);
 
       case TWELVEKEYS_RIGHT_FLICK:
         return new TriangularHighlightDrawable(
-            (int) (TWELVEKEYS_LEFT_OFFSET * density),
-            (int) (TWELVEKEYS_TOP_OFFSET * density),
-            (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-            (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-            skinType.flickBaseColor,
-            skinType.flickShadeColor,
+            (int) (skin.twelvekeysLeftOffsetDimension),
+            (int) (skin.twelvekeysTopOffsetDimension),
+            (int) (skin.twelvekeysRightOffsetDimension),
+            (int) (skin.twelvekeysBottomOffsetDimension),
+            skin.flickBaseColor,
+            skin.flickShadeColor,
             HighlightDirection.RIGHT);
 
       case TWELVEKEYS_DOWN_FLICK:
         return new TriangularHighlightDrawable(
-            (int) (TWELVEKEYS_LEFT_OFFSET * density),
-            (int) (TWELVEKEYS_TOP_OFFSET * density),
-            (int) (TWELVEKEYS_RIGHT_OFFSET * density),
-            (int) (TWELVEKEYS_BOTTOM_OFFSET * density),
-            skinType.flickBaseColor,
-            skinType.flickShadeColor,
+            (int) (skin.twelvekeysLeftOffsetDimension),
+            (int) (skin.twelvekeysTopOffsetDimension),
+            (int) (skin.twelvekeysRightOffsetDimension),
+            (int) (skin.twelvekeysBottomOffsetDimension),
+            skin.flickBaseColor,
+            skin.flickShadeColor,
             HighlightDirection.DOWN);
 
       case POPUP_BACKGROUND_WINDOW:
-        // TODO(hidehiko): add a flag to control popup style in SkinType.
-        return skinType == SkinType.ORANGE_LIGHTGRAY
-            ? new PopUpFrameWindowDrawable(
-                  (int) (POPUP_WINDOW_PADDING * density),
-                  (int) (POPUP_WINDOW_PADDING * density),
-                  (int) (POPUP_WINDOW_PADDING * density),
-                  (int) (POPUP_WINDOW_PADDING * density),
-                  (int) (POPUP_FRAME_BORDER_WIDTH * density),
-                  POPUP_SHADOW_SIZE * density,
-                  skinType.popupFrameWindowTopColor,
-                  skinType.popupFrameWindowBottomColor,
-                  skinType.popupFrameWindowBorderColor,
-                  skinType.popupFrameWindowInnerPaneColor)
-            : new RoundRectKeyDrawable(
-                  (int) (POPUP_WINDOW_PADDING * density),
-                  (int) (POPUP_WINDOW_PADDING * density),
-                  (int) (POPUP_WINDOW_PADDING * density),
-                  (int) (POPUP_WINDOW_PADDING * density),
-                  (int) (skinType.qwertyKeyRoundRadius * density),
-                  skinType.popupFrameWindowTopColor,
-                  skinType.popupFrameWindowBottomColor,
-                  0,  // No highlight.
-                  skinType.popupFrameWindowShadowColor);
+        return
+            new RoundRectKeyDrawable(
+                (int) (POPUP_WINDOW_PADDING * density),
+                (int) (POPUP_WINDOW_PADDING * density),
+                (int) (POPUP_WINDOW_PADDING * density),
+                (int) (POPUP_WINDOW_PADDING * density),
+                (int) (skin.qwertyRoundRadiusDimension),
+                skin.popupFrameWindowTopColor,
+                skin.popupFrameWindowBottomColor,
+                0,  // No highlight.
+                skin.popupFrameWindowShadowColor);
+
       case CANDIDATE_BACKGROUND:
         return createFocusableDrawable(
             new CandidateBackgroundFocusedDrawable(
@@ -471,18 +444,19 @@ public class BackgroundDrawableFactory {
                 (int) (CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (CANDIDATE_BACKGROUND_PADDING * density),
-                skinType.candidateBackgroundFocusedTopColor,
-                skinType.candidateBackgroundFocusedBottomColor,
-                skinType.candidateBackgroundFocusedShadowColor),
-            new CandidateBackgroundDrawable(
+                skin.candidateBackgroundFocusedTopColor,
+                skin.candidateBackgroundFocusedBottomColor,
+                skin.candidateBackgroundFocusedShadowColor),
+            Optional.<Drawable>of(new CandidateBackgroundDrawable(
                 (int) (CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (CANDIDATE_BACKGROUND_PADDING * density),
-                skinType.candidateBackgroundTopColor,
-                skinType.candidateBackgroundBottomColor,
-                skinType.candidateBackgroundHighlightColor,
-                skinType.candidateBackgroundBorderColor));
+                skin.candidateBackgroundTopColor,
+                skin.candidateBackgroundBottomColor,
+                skin.candidateBackgroundHighlightColor,
+                skin.candidateBackgroundBorderColor)));
+
       case SYMBOL_CANDIDATE_BACKGROUND:
         return createFocusableDrawable(
             new CandidateBackgroundFocusedDrawable(
@@ -490,18 +464,18 @@ public class BackgroundDrawableFactory {
                 (int) (SYMBOL_CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (SYMBOL_CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (SYMBOL_CANDIDATE_BACKGROUND_PADDING * density),
-                skinType.candidateBackgroundFocusedTopColor,
-                skinType.candidateBackgroundFocusedBottomColor,
-                skinType.candidateBackgroundFocusedShadowColor),
-            new CandidateBackgroundDrawable(
+                skin.candidateBackgroundFocusedTopColor,
+                skin.candidateBackgroundFocusedBottomColor,
+                skin.candidateBackgroundFocusedShadowColor),
+            Optional.<Drawable>of(new CandidateBackgroundDrawable(
                 (int) (SYMBOL_CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (SYMBOL_CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (SYMBOL_CANDIDATE_BACKGROUND_PADDING * density),
                 (int) (SYMBOL_CANDIDATE_BACKGROUND_PADDING * density),
-                skinType.symbolCandidateBackgroundTopColor,
-                skinType.symbolCandidateBackgroundBottomColor,
-                skinType.symbolCandidateBackgroundHighlightColor,
-                skinType.symbolCandidateBackgroundBorderColor));
+                skin.symbolCandidateBackgroundTopColor,
+                skin.symbolCandidateBackgroundBottomColor,
+                skin.symbolCandidateBackgroundHighlightColor,
+                skin.symbolCandidateBackgroundBorderColor)));
     }
 
     throw new IllegalArgumentException("Unknown drawable type: " + drawableType);
@@ -509,29 +483,32 @@ public class BackgroundDrawableFactory {
 
   // TODO(hidehiko): Move this method to the somewhere in view package.
   public static Drawable createPressableDrawable(
-      Drawable pressedDrawable, Drawable releasedDrawable) {
+      Drawable pressedDrawable, Optional<Drawable> releasedDrawable) {
     return createTwoStateDrawable(
-        android.R.attr.state_pressed, pressedDrawable, releasedDrawable);
+        android.R.attr.state_pressed, Preconditions.checkNotNull(pressedDrawable),
+        Preconditions.checkNotNull(releasedDrawable));
   }
 
   public static Drawable createFocusableDrawable(
-      Drawable focusedDrawable, Drawable unfocusedDrawable) {
+      Drawable focusedDrawable, Optional<Drawable> unfocusedDrawable) {
     return createTwoStateDrawable(
-        android.R.attr.state_focused, focusedDrawable, unfocusedDrawable);
+        android.R.attr.state_focused, Preconditions.checkNotNull(focusedDrawable),
+        Preconditions.checkNotNull(unfocusedDrawable));
   }
 
   public static Drawable createSelectableDrawable(
-      Drawable selectedDrawable, Drawable unselectedDrawable) {
+      Drawable selectedDrawable, Optional<Drawable> unselectedDrawable) {
     return createTwoStateDrawable(
-        android.R.attr.state_selected, selectedDrawable, unselectedDrawable);
+        android.R.attr.state_selected, Preconditions.checkNotNull(selectedDrawable),
+        Preconditions.checkNotNull(unselectedDrawable));
   }
 
   private static Drawable createTwoStateDrawable(
-      int state, Drawable enabledDrawable, Drawable disabledDrawable) {
+      int state, Drawable enabledDrawable, Optional<Drawable> disabledDrawable) {
     StateListDrawable drawable = new StateListDrawable();
     drawable.addState(new int[] { state }, enabledDrawable);
-    if (disabledDrawable != null) {
-      drawable.addState(EMPTY_STATE, disabledDrawable);
+    if (disabledDrawable.isPresent()) {
+      drawable.addState(EMPTY_STATE, disabledDrawable.get());
     }
     return drawable;
   }

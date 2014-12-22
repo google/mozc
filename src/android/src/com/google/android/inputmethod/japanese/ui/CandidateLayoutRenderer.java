@@ -29,12 +29,12 @@
 
 package org.mozc.android.inputmethod.japanese.ui;
 
-import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
 import org.mozc.android.inputmethod.japanese.view.CarrierEmojiRenderHelper;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -42,17 +42,18 @@ import com.google.common.base.Preconditions;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.StaticLayout;
 import android.text.TextPaint;
-import android.util.FloatMath;
-import android.view.View;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Renders the {@link CandidateLayout} instance to the {@link Canvas}.
@@ -102,6 +103,11 @@ public class CandidateLayoutRenderer {
      * won't be overlapped).
      */
     EXCLUSIVE,
+
+    /**
+     * Like View.GONE, the descriptor is not shown and doesn't occupy any are.
+     */
+    GONE,
   }
 
   private static final int[] STATE_EMPTY = {};
@@ -110,9 +116,14 @@ public class CandidateLayoutRenderer {
   // Should not edit its contents.
   private static final int[] STATE_FOCUSED = { android.R.attr.state_focused };
 
-  private final CarrierEmojiRenderHelper carrierEmojiRenderHelper;
+  /** Locale field for {@link Paint#setTextLocale(Locale)}. */
+  private static final Optional<Locale> TEXT_LOCALE = (Build.VERSION.SDK_INT >= 17)
+      ? Optional.of(Locale.JAPAN) : Optional.<Locale>absent();
+
   private final TextPaint valuePaint = createTextPaint(true, Color.BLACK, Align.LEFT);
+  private final TextPaint focusedValuePaint = createTextPaint(true, Color.BLACK, Align.LEFT);
   private final TextPaint descriptionPaint = createTextPaint(true, Color.GRAY, Align.RIGHT);
+  private final Paint separatorPaint = new Paint();
 
   /**
    * The cache of Rect instance for the clip used in drawCandidateList method to reduce the
@@ -130,18 +141,21 @@ public class CandidateLayoutRenderer {
   private ValueScalingPolicy valueScalingPolicy = ValueScalingPolicy.UNIFORM;
   private DescriptionLayoutPolicy descriptionLayoutPolicy = DescriptionLayoutPolicy.OVERLAY;
 
-  private Optional<Drawable> spanBackgroundDrawable;
+  private Optional<Drawable> spanBackgroundDrawable = Optional.absent();
   @VisibleForTesting int focusedIndex = -1;
 
-  public CandidateLayoutRenderer(View targetView) {
-    carrierEmojiRenderHelper = new CarrierEmojiRenderHelper(Preconditions.checkNotNull(targetView));
+  public CandidateLayoutRenderer() {
   }
 
+  @SuppressLint("NewApi")
   private static TextPaint createTextPaint(boolean antiAlias, int color, Align align) {
     TextPaint textPaint = new TextPaint();
     textPaint.setAntiAlias(antiAlias);
     textPaint.setColor(color);
     textPaint.setTextAlign(Preconditions.checkNotNull(align));
+    if (TEXT_LOCALE.isPresent()) {
+      textPaint.setTextLocale(TEXT_LOCALE.get());
+    }
     return textPaint;
   }
 
@@ -151,10 +165,16 @@ public class CandidateLayoutRenderer {
     return (index == focusedIndex) || (index == pressedCandidateIndex);
   }
 
+  public void setSkin(Skin skin) {
+    Preconditions.checkNotNull(skin);
+    valuePaint.setColor(skin.candidateValueTextColor);
+    focusedValuePaint.setColor(skin.candidateValueFocusedTextColor);
+    descriptionPaint.setColor(skin.candidateDescriptionTextColor);
+  }
+
   public void setValueTextSize(float valueTextSize) {
     this.valueTextSize = valueTextSize;
     this.valuePaint.setTextSize(valueTextSize);
-    this.carrierEmojiRenderHelper.setCandidateTextSize(valueTextSize);
   }
 
   public void setValueHorizontalPadding(float valueHorizontalPadding) {
@@ -182,11 +202,6 @@ public class CandidateLayoutRenderer {
     this.descriptionLayoutPolicy = Preconditions.checkNotNull(descriptionLayoutPolicy);
   }
 
-  public void setEmojiProviderType(EmojiProviderType emojiProviderType) {
-    this.carrierEmojiRenderHelper.setEmojiProviderType(
-        Preconditions.checkNotNull(emojiProviderType));
-  }
-
   public void setSpanBackgroundDrawable(Optional<Drawable> drawable) {
     this.spanBackgroundDrawable = Preconditions.checkNotNull(drawable);
   }
@@ -196,31 +211,22 @@ public class CandidateLayoutRenderer {
     focusedIndex = (candidateList.isPresent() && candidateList.get().hasFocusedIndex())
         ? candidateList.get().getFocusedIndex()
         : -1;
-    carrierEmojiRenderHelper.setCandidateList(candidateList);
   }
 
-  /**
-   * In order to support emoji rendering, the client of this class must invoke this method
-   * in its onAttachedToWindow method.
-   */
-  public void onAttachedToWindow() {
-    carrierEmojiRenderHelper.onAttachedToWindow();
+  public void setSeparatorWidth(float separatorWidth) {
+    separatorPaint.setStrokeWidth(separatorWidth);
   }
 
-  /**
-   * In order to support emoji rendering, the client of this class must invoke this method
-   * in its onDeachedFromWindow method.
-   */
-  @SuppressLint("MissingSuperCall")
-  public void onDetachedFromWindow() {
-    carrierEmojiRenderHelper.onDetachedFromWindow();
+  public void setSeparatorColor(int color) {
+    separatorPaint.setColor(color);
   }
 
   /**
    * Renders the {@code candidateLayout} to the given {@code canvas}.
    */
   public void drawCandidateLayout(
-      Canvas canvas, CandidateLayout candidateLayout, int pressedCandidateIndex) {
+      Canvas canvas, CandidateLayout candidateLayout, int pressedCandidateIndex,
+      CarrierEmojiRenderHelper carrierEmojiRenderHelper) {
     Preconditions.checkNotNull(canvas);
     Preconditions.checkNotNull(candidateLayout);
 
@@ -237,6 +243,10 @@ public class CandidateLayoutRenderer {
         continue;
       }
 
+      float separatorMargin = row.getHeight() * 0.2f;
+      float separatorTop = row.getTop() + separatorMargin;
+      float separatorBottom = row.getTop() + row.getHeight() - separatorMargin;
+
       for (Span span : row.getSpanList()) {
         if (span.getLeft() > clipBounds.right) {
           break;
@@ -244,16 +254,23 @@ public class CandidateLayoutRenderer {
         if (span.getRight() < clipBounds.left) {
           continue;
         }
-
-        if (span.getCandidateWord().isPresent()) {
-          drawSpan(canvas, row, span,
-                   isFocused(span.getCandidateWord().get(), focusedIndex, pressedCandidateIndex));
+        // Even if span.getCandidateWord() is absent, draw the span in order to draw the background.
+        drawSpan(canvas, row, span,
+                 span.getCandidateWord().isPresent()
+                     && isFocused(span.getCandidateWord().get(),
+                                  focusedIndex, pressedCandidateIndex),
+                 carrierEmojiRenderHelper);
+        if (span.getLeft() != 0f) {
+          float separatorX = span.getLeft();
+          canvas.drawLine(separatorX, separatorTop, separatorX, separatorBottom, separatorPaint);
         }
       }
     }
   }
 
-  @VisibleForTesting void drawSpan(Canvas canvas, Row row, Span span, boolean isFocused) {
+  @VisibleForTesting void drawSpan(
+      Canvas canvas, Row row, Span span, boolean isFocused,
+      CarrierEmojiRenderHelper carrierEmojiRenderHelper) {
     drawSpanBackground(
         Preconditions.checkNotNull(canvas), Preconditions.checkNotNull(row), span, isFocused);
     if (!span.getCandidateWord().isPresent()) {
@@ -261,15 +278,9 @@ public class CandidateLayoutRenderer {
     }
 
     if (carrierEmojiRenderHelper.isRenderableEmoji(span.getCandidateWord().get().getValue())) {
-      drawCarrierEmoji(canvas, row, span);
-      if (descriptionLayoutPolicy == DescriptionLayoutPolicy.OVERLAY) {
-        // Hack: This is a quick hack to keep the current behavior (especially on SymbolInputView).
-        // TODO(hidehiko): Remove this hack from here, instead, do not attach the description
-        //   to the candidate.
-        return;
-      }
+      drawCarrierEmoji(canvas, row, span, carrierEmojiRenderHelper);
     } else {
-      drawText(canvas, row, span);
+      drawText(canvas, row, span, isFocused);
     }
 
     drawDescription(canvas, row, span);
@@ -289,7 +300,8 @@ public class CandidateLayoutRenderer {
     spanBackgroundDrawable.draw(canvas);
   }
 
-  private void drawCarrierEmoji(Canvas canvas, Row row, Span span) {
+  private void drawCarrierEmoji(
+      Canvas canvas, Row row, Span span, CarrierEmojiRenderHelper carrierEmojiRenderHelper) {
     Preconditions.checkState(span.getCandidateWord().isPresent());
 
     float descriptionWidth = (descriptionLayoutPolicy == DescriptionLayoutPolicy.EXCLUSIVE)
@@ -300,7 +312,7 @@ public class CandidateLayoutRenderer {
     carrierEmojiRenderHelper.drawEmoji(canvas, span.getCandidateWord().get(), centerX, centerY);
   }
 
-  private void drawText(Canvas canvas, Row row, Span span) {
+  private void drawText(Canvas canvas, Row row, Span span, boolean isFocused) {
     Preconditions.checkState(span.getCandidateWord().isPresent());
 
     String valueText = span.getCandidateWord().get().getValue();
@@ -308,25 +320,26 @@ public class CandidateLayoutRenderer {
       // No value is available.
       return;
     }
-
-    if (!span.getCachedLayout().isPresent()) {
+    // Calculate layout or get cached one.
+    // If isFocused is true, special paint should be applied.
+    // The resulting drawing is so special that it will not re reused.
+    // Therefore if isFocused is true cache is not used and always calculate the layout.
+    // In this case calculated layout is not cached.
+    Layout layout;
+    if (!isFocused && span.getCachedLayout().isPresent()) {
+      layout = span.getCachedLayout().get();
+    } else {
       // Set the scaling of the text.
       float descriptionWidth = (descriptionLayoutPolicy == DescriptionLayoutPolicy.EXCLUSIVE)
           ? span.getDescriptionWidth() : 0;
+      // Ensure that StaticLayout instance has positive width.
       float displayValueWidth =
-          span.getWidth() - valueHorizontalPadding * 2 - descriptionWidth;
+          Math.max(1f, span.getWidth() - valueHorizontalPadding * 2 - descriptionWidth);
       float textScale = Math.min(1f, displayValueWidth / span.getValueWidth());
-      TextPaint valuePaint = this.valuePaint;
+      TextPaint textPaint = isFocused ? this.focusedValuePaint : this.valuePaint;
       if (valueScalingPolicy == ValueScalingPolicy.HORIZONTAL) {
-        valuePaint.setTextSize(valueTextSize);
-        valuePaint.setTextScaleX(textScale);
-        // The scaled rendered text sometimes exceeds the available width for some reasons.
-        // In this case, the candidate word is unexpectedly rendered in two lines.
-        // To avoid this situation, textScale is gradually reduced to fit the available width.
-        for (int i = 0; valuePaint.measureText(valueText) > displayValueWidth && i < 10; ++i) {
-          textScale *= 0.97;
-          valuePaint.setTextScaleX(textScale);
-        }
+        textPaint.setTextSize(valueTextSize);
+        textPaint.setTextScaleX(textScale);
       } else {
         // Calculate the max limit of the "text size", in which we can render the candidate text
         // inside the given span.
@@ -334,19 +347,25 @@ public class CandidateLayoutRenderer {
         // Adjustment by font size can keep aspect ratio,
         // which is important for Emoticon especially.
         // Calculate the width with the default text size.
-        valuePaint.setTextSize(valueTextSize * textScale);
+        textPaint.setTextSize(valueTextSize * textScale);
       }
-
-      // Layout the text. In order to avoid unexpected line breaking, we include the horizontal
-      // padding (on both sides) into the width for the layout. It should be safe,
-      // because the Alignment is ALIGN_CENTER, so that having the padding should have
-      // no bad effect.
-      span.setCachedLayout(new StaticLayout(
-          valueText, new TextPaint(valuePaint),
-          (int) FloatMath.ceil(span.getWidth() - descriptionWidth),
-          Alignment.ALIGN_CENTER, 1, 0, false));
+      // Layout's width is theoretically `span.getWidth() - descriptionWidth`.
+      // However because of the spec of Paint#setTextScaleX() and Paint#setTextSize(),
+      // Paint#measureText() might return larger width than what both above methods expect it to be.
+      // As a workaround, if theoretical width is smaller than the result of Paint#measureText(),
+      // employ the width returned by Paint#measureText().
+      // This workaround is to avoid from unexpected line-break.
+      // NOTE: Canvas#scale() cannot be used here because we have to use StaticLayout to draw
+      //       Emoji and StaticLayout requires width in its constructor.
+      layout = new StaticLayout(
+          valueText, new TextPaint(textPaint),
+          (int) Math.ceil(Math.max(span.getWidth() - descriptionWidth,
+                                   textPaint.measureText(valueText))),
+          Alignment.ALIGN_CENTER, 1, 0, false);
+      if (!isFocused) {
+        span.setCachedLayout(layout);
+      }
     }
-    Layout layout = span.getCachedLayout().get();
 
     // Actually render the image to the canvas.
     int saveCount = canvas.save();
@@ -360,19 +379,25 @@ public class CandidateLayoutRenderer {
 
   private void drawDescription(Canvas canvas, Row row, Span span) {
     List<String> descriptionList = span.getSplitDescriptionList();
-    if (span.getDescriptionWidth() <= 0 || descriptionList.isEmpty()) {
-      // No description available.
+    if (span.getDescriptionWidth() <= 0 || descriptionList.isEmpty()
+        || descriptionLayoutPolicy == DescriptionLayoutPolicy.GONE) {
+      // No description available or the layout policy is GONE.
       return;
     }
 
     // Set the x-orientation scale based on the description's width to fit the span's region.
     TextPaint descriptionPaint = this.descriptionPaint;
     descriptionPaint.setTextSize(descriptionTextSize);
+    float centerOrRight;
     if (descriptionLayoutPolicy == DescriptionLayoutPolicy.OVERLAY) {
       float displayWidth = span.getWidth() - descriptionHorizontalPadding * 2;
       descriptionPaint.setTextScaleX(Math.min(1f, displayWidth / span.getDescriptionWidth()));
+      descriptionPaint.setTextAlign(Align.CENTER);
+      centerOrRight = (span.getLeft() + span.getRight()) / 2f;
     } else {
       descriptionPaint.setTextScaleX(1f);
+      descriptionPaint.setTextAlign(Align.RIGHT);
+      centerOrRight = span.getRight() - descriptionHorizontalPadding;
     }
 
     // Render first "N" description lines based on the layout height.
@@ -383,9 +408,8 @@ public class CandidateLayoutRenderer {
 
     float top = row.getTop() + row.getHeight()
         - descriptionVerticalPadding - descriptionTextSize * (numDescriptionLines - 1);
-    float right = span.getRight() - descriptionHorizontalPadding;
     for (String description : descriptionList.subList(0, numDescriptionLines)) {
-      canvas.drawText(description, right, top, descriptionPaint);
+      canvas.drawText(description, centerOrRight, top, descriptionPaint);
       top += descriptionTextSize;
     }
   }

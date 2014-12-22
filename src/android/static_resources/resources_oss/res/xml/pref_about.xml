@@ -72,6 +72,12 @@
           android:targetClass="org.mozc.android.inputmethod.japanese.preference.MiniBrowserActivity"
           android:data="@string/pref_oss_credits_url" />
     </Preference>
+
+    <CheckBoxPreference
+        android:defaultValue="@bool/show_launcher_icon"
+        android:key="pref_launcher_icon_visibility"
+        android:summary="@string/pref_launcher_icon_visibility_description"
+        android:title="@string/pref_launcher_icon_visibility_title" />
   </PreferenceCategory>
 </PreferenceScreen>
 

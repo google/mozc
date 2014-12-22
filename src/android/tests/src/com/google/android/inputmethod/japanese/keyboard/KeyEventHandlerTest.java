@@ -29,12 +29,14 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import com.google.common.base.Optional;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -46,8 +48,11 @@ import java.util.Collections;
 /**
  */
 public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
+
   private static Key createDummyKey(int keyCode, int longPressKeyCode, boolean isRepeatable) {
-    KeyEntity keyEntity = new KeyEntity(1, keyCode, longPressKeyCode, 0, null, false, null);
+    KeyEntity keyEntity = new KeyEntity(
+        1, keyCode, longPressKeyCode, true, 0,
+        Optional.<String>absent(), false, Optional.<PopUp>absent(), 0, 0, 0, 0);
     Flick flick = new Flick(Direction.CENTER, keyEntity);
     KeyState keyState =
         new KeyState("",
@@ -55,7 +60,8 @@ public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
                      Collections.<MetaState>emptySet(),
                      Collections.<MetaState>emptySet(),
                      Collections.singletonList(flick));
-    return new Key(0, 0, 0, 0, 0, 0, isRepeatable, false, false, Stick.EVEN,
+    return new Key(0, 0, 0, 0, 0, 0, isRepeatable, false, Stick.EVEN,
+                   DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                    Collections.singletonList(keyState));
   }
 
@@ -94,8 +100,16 @@ public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testHandlerMessage_longPressKey() {
+  public void testHandlerMessage_longPressKey_withoutCallback() {
     KeyboardActionListener keyboardActionListener = createMock(KeyboardActionListener.class);
+    Key key = createDummyKey('a', 'A', false);
+    KeyEventContext keyEventContext = createDummyKeyEventContext(key);
+    KeyEventHandler keyEventHandler =
+        new KeyEventHandler(Looper.myLooper(), keyboardActionListener, 0, 0, 0);
+    Handler handler = keyEventHandler.handler;
+    Message message = handler.obtainMessage(
+        KeyEventHandler.LONG_PRESS_KEY, 0, 0, keyEventContext);
+
     keyboardActionListener.onKey(
         'A',
         Collections.singletonList(TouchEvent.newBuilder()
@@ -105,18 +119,40 @@ public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
             .build()));
     replayAll();
 
+    keyEventHandler.handleMessage(message);
+
+    verifyAll();
+    assertTrue(keyEventContext.pastLongPressSentTimeout);
+    assertFalse(handler.hasMessages(KeyEventHandler.LONG_PRESS_KEY, keyEventContext));
+  }
+
+  @SmallTest
+  public void testHandlerMessage_longPressKey_withCallback() {
+    KeyboardActionListener keyboardActionListener = createMock(KeyboardActionListener.class);
     Key key = createDummyKey('a', 'A', false);
     KeyEventContext keyEventContext = createDummyKeyEventContext(key);
-
     KeyEventHandler keyEventHandler =
         new KeyEventHandler(Looper.myLooper(), keyboardActionListener, 0, 0, 0);
     Handler handler = keyEventHandler.handler;
     Message message = handler.obtainMessage(
-        KeyEventHandler.LONG_PRESS_KEY, 'A', 0, keyEventContext);
+        KeyEventHandler.LONG_PRESS_KEY, 0, 0, keyEventContext);
+    Runnable callback = createMock(Runnable.class);
+    keyEventContext.longPressCallback = Optional.of(callback);
+
+    keyboardActionListener.onKey(
+        'A',
+        Collections.singletonList(TouchEvent.newBuilder()
+            .setSourceId(1)
+            .addStroke(KeyEventContext.createTouchPosition(
+                TouchAction.TOUCH_DOWN, 0, 0, 100, 60, 0))
+            .build()));
+    callback.run();
+    replayAll();
+
     keyEventHandler.handleMessage(message);
 
     verifyAll();
-    assertTrue(keyEventContext.longPressSent);
+    assertTrue(keyEventContext.pastLongPressSentTimeout);
     assertFalse(handler.hasMessages(KeyEventHandler.LONG_PRESS_KEY, keyEventContext));
   }
 

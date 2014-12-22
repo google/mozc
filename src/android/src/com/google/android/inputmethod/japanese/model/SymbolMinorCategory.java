@@ -35,32 +35,59 @@ import org.mozc.android.inputmethod.japanese.resources.R;
  * Symbol's minor category to which the candidates belong.
  */
 public enum SymbolMinorCategory {
-  SYMBOL_HISTORY(R.string.symbol_minor_symbol_history_title),
-  SYMBOL_GENERAL(R.string.symbol_minor_symbol_general_title),
-  SYMBOL_HALF(R.string.symbol_minor_symbol_half_title),
-  SYMBOL_PARENTHESIS(R.string.symbol_minor_symbol_parenthesis_title),
-  SYMBOL_ARROW(R.string.symbol_minor_symbol_arrow_title),
-  SYMBOL_MATH(R.string.symbol_minor_symbol_math_title),
-  EMOTICON_HISTORY(R.string.symbol_minor_emoticon_history_title),
-  EMOTICON_SMILE(R.string.symbol_minor_emoticon_smile_title),
-  EMOTICON_SWEAT(R.string.symbol_minor_emoticon_sweat_title),
-  EMOTICON_SURPRISE(R.string.symbol_minor_emoticon_surprise_title),
-  EMOTICON_SADNESS(R.string.symbol_minor_emoticon_sadness_title),
-  EMOTICON_DISPLEASURE(R.string.symbol_minor_emoticon_displeasure_title),
-  EMOJI_HISTORY(R.string.symbol_minor_emoji_history_title),
-  EMOJI_FACE(R.string.symbol_minor_emoji_face_title),
-  EMOJI_FOOD(R.string.symbol_minor_emoji_food_title),
-  EMOJI_ACTIVITY(R.string.symbol_minor_emoji_activity_title),
-  EMOJI_CITY(R.string.symbol_minor_emoji_city_title),
-  EMOJI_NATURE(R.string.symbol_minor_emoji_nature_title)
+  NUMBER(SymbolMinorCategory.INVALID_RESOURCE_ID, SymbolMinorCategory.INVALID_RESOURCE_ID,
+         SymbolMinorCategory.INVALID_RESOURCE_ID),
+  SYMBOL_HISTORY(R.raw.symbol__minor__history, R.dimen.symbol_minor_default_height,
+                 R.string.cd_symbol_window_minor_history),
+  SYMBOL_GENERAL(R.raw.symbol__minor__general, R.dimen.symbol_minor_default_height,
+                 R.string.cd_symbol_window_minor_symbol_general),
+  SYMBOL_HALF(R.raw.symbol__minor__fullhalf, R.dimen.symbol_minor_default_height,
+              R.string.cd_symbol_window_minor_symbol_half),
+  SYMBOL_PARENTHESIS(R.raw.symbol__minor__parenthesis, R.dimen.symbol_minor_default_height,
+                     R.string.cd_symbol_window_minor_symbol_parenthesis),
+  SYMBOL_ARROW(R.raw.symbol__minor__arrow, R.dimen.symbol_minor_default_height,
+               R.string.cd_symbol_window_minor_symbol_arrow),
+  SYMBOL_MATH(R.raw.symbol__minor__math, R.dimen.symbol_minor_default_height,
+              R.string.cd_symbol_window_minor_symbol_math),
+  EMOTICON_HISTORY(R.raw.symbol__minor__history, R.dimen.symbol_minor_default_height,
+                   R.string.cd_symbol_window_minor_history),
+  EMOTICON_SMILE(R.raw.symbol__minor__smile, R.dimen.symbol_minor_emoticon_height,
+                 R.string.cd_symbol_window_minor_emoticon_smile),
+  EMOTICON_SWEAT(R.raw.symbol__minor__sweat, R.dimen.symbol_minor_emoticon_height,
+                 R.string.cd_symbol_window_minor_emoticon_sweat),
+  EMOTICON_SURPRISE(R.raw.symbol__minor__surprise, R.dimen.symbol_minor_emoticon_height,
+                    R.string.cd_symbol_window_minor_emoticon_surprise),
+  EMOTICON_SADNESS(R.raw.symbol__minor__sadness, R.dimen.symbol_minor_emoticon_height,
+                   R.string.cd_symbol_window_minor_emoticon_sadness),
+  EMOTICON_DISPLEASURE(R.raw.symbol__minor__displeasure, R.dimen.symbol_minor_emoticon_height,
+                       R.string.cd_symbol_window_minor_emoticon_displeasure),
+  EMOJI_HISTORY(R.raw.symbol__minor__history, R.dimen.symbol_minor_default_height,
+                R.string.cd_symbol_window_minor_history),
+  EMOJI_FACE(R.raw.symbol__minor__face, R.dimen.symbol_minor_default_height,
+             R.string.cd_symbol_window_minor_emoji_face),
+  EMOJI_FOOD(R.raw.symbol__minor__food, R.dimen.symbol_minor_default_height,
+             R.string.cd_symbol_window_minor_emoji_food),
+  EMOJI_ACTIVITY(R.raw.symbol__minor__activity, R.dimen.symbol_minor_default_height,
+                 R.string.cd_symbol_window_minor_emoji_activity),
+  EMOJI_CITY(R.raw.symbol__minor__city, R.dimen.symbol_minor_default_height,
+             R.string.cd_symbol_window_minor_emoji_city),
+  EMOJI_NATURE(R.raw.symbol__minor__nature, R.dimen.symbol_minor_default_height,
+               R.string.cd_symbol_window_minor_emoji_nature)
   ;
 
-  public final int textResourceId;
+  public static final int INVALID_RESOURCE_ID = 0;
+  public final int drawableResourceId;
+  public final int maxImageHeightResourceId;
+  public final int contentDescriptionResourceId;
 
   /**
-   * @param textResourceId the resource id of the corresponding text title.
+   * @param drawableResourceId the resource id of the corresponding drawable.
+   * @param contentDescriptionResourceId the resource id of the corresponding content description.
    */
-  SymbolMinorCategory(int textResourceId) {
-    this.textResourceId = textResourceId;
+  SymbolMinorCategory(int drawableResourceId, int maxImageHeightResourceId,
+                      int contentDescriptionResourceId) {
+    this.drawableResourceId = drawableResourceId;
+    this.maxImageHeightResourceId = maxImageHeightResourceId;
+    this.contentDescriptionResourceId = contentDescriptionResourceId;
   }
 }

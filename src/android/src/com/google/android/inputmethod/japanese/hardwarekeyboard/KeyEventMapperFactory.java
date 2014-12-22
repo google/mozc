@@ -53,7 +53,6 @@ class KeyEventMapperFactory {
   }
 
   public static final KeyEventMapper DEFAULT_KEYBOARD_MAPPER = new DefaultKeyboardMapper();
-  public static final KeyEventMapper TWELVEKEY_KEYBOARD_MAPPER = new TwelvekeyKeyboardMapper();
   public static final KeyEventMapper JAPANESE_KEYBOARD_MAPPER = new JapaneseKeyboardMapper();
 
   /**
@@ -65,25 +64,6 @@ class KeyEventMapperFactory {
     public void applyMapping(CompactKeyEvent keyEvent) {
       keyEvent.setKeyCode(doKeyLayoutMappingForOldAndroids(keyEvent.getKeyCode(),
                                                            keyEvent.getScanCode()));
-    }
-  }
-
-  /**
-   * Similar to DefaultKeyboardMapper but additional conversion for POUND and CENTER keys.
-   */
-  private static class TwelvekeyKeyboardMapper implements KeyEventMapper {
-    static void doKeyCharacterMapping(CompactKeyEvent keyEvent) {
-      int originalKeyCode = keyEvent.getKeyCode();
-      if (originalKeyCode == KeyEvent.KEYCODE_POUND
-          || originalKeyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
-        keyEvent.setKeyCode(KeyEvent.KEYCODE_ENTER);
-      }
-    }
-    @Override
-    public void applyMapping(CompactKeyEvent keyEvent) {
-      keyEvent.setKeyCode(doKeyLayoutMappingForOldAndroids(keyEvent.getKeyCode(),
-                                                           keyEvent.getScanCode()));
-      doKeyCharacterMapping(keyEvent);
     }
   }
 

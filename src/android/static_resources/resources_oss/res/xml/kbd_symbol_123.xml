@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2014, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+  <!--
+    The current keycode mapping to flick direction and tapping action is as follows;
+     +=======+===========+===========+===========+=======+
+     |       |           |           |           |       |
+     |  '+'  |    '1'    |    '2'    |    '3'    | 'BS'  |
+     |       |           |           |           |       |
+     +=======+===========+===========+===========+=======+
+     |       |           |           |           |       |
+     |  '-'  |    '4'    |    '5'    |    '6'    |  '/'  |
+     |       |           |           |           |       |
+     +=======+===========+===========+===========+=======|
+     |       |           |           |           |       |
+     |  ','  |    '7'    |    '8'    |    '9'    |  '='  |
+     |       |           |           |           |       |
+     +=======+===========+===========+===========+=======+
+     |       |           |           |           |       |
+     |  '.'  |    '*'    |    '0'    |    '#'    | 'SPC' |
+     |       |           |           |           |       |
+     +=======+===========+===========+===========+=======+
+   -->
+<Keyboard
+    xmlns:mozc="http://schemas.android.com/apk/res-auto"
+    mozc:keyboardContentDescription="@string/cd_keyboard_number"
+    mozc:keyBackground="twelvekeysRegular"
+    mozc:keyWidth="17.3%p" mozc:keyHeight="25%p" mozc:keyHorizontalLayoutWeight="1"
+    mozc:horizontalGap="0dip" mozc:verticalGap="0dip"
+    mozc:popUpHeight="@dimen/key_preview_height"
+    mozc:popUpIconHeight="@dimen/key_preview_icon_height"
+    mozc:popUpXOffset="0dip" mozc:popUpYOffset="@dimen/mini_keyboard_vertical_correction">
+  <Row>
+    <Key mozc:keyBackground="twelvekeysFunction"
+         mozc:keyHorizontalLayoutWeight="0" mozc:keyEdgeFlags="left">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_plus_sign">
+        <Flick>
+          <KeyEntity mozc:sourceId="1"
+                     mozc:keyCode="@integer/uchar_plus_sign"
+                     mozc:keyIcon="@raw/twelvekeys__number__function__plus_sign">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__plus_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:keyWidth="@dimen/keyboard_separator_width" mozc:keyHorizontalLayoutWeight="0"
+            mozc:keyBackground="keyboardSeparatorTop"/>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_one">
+        <Flick>
+          <KeyEntity mozc:sourceId="2"
+                     mozc:keyCode="@integer/uchar_digit_one"
+                     mozc:keyIcon="@raw/twelvekeys__number__one">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__one" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_two">
+        <Flick>
+          <KeyEntity mozc:sourceId="3"
+                     mozc:keyCode="@integer/uchar_digit_two"
+                     mozc:keyIcon="@raw/twelvekeys__number__two">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__two" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_three">
+        <Flick>
+          <KeyEntity mozc:sourceId="4"
+                     mozc:keyCode="@integer/uchar_digit_three"
+                     mozc:keyIcon="@raw/twelvekeys__number__three">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__three" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:keyWidth="@dimen/keyboard_separator_width" mozc:keyHorizontalLayoutWeight="0"
+            mozc:keyBackground="keyboardSeparatorTop"/>
+    <Key mozc:keyBackground="twelvekeysFunction"
+         mozc:keyHorizontalLayoutWeight="0"
+         mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_backspace">
+        <Flick>
+          <KeyEntity mozc:sourceId="5"
+                     mozc:keyCode="@integer/key_backspace"
+                     mozc:keyIcon="@raw/twelvekeys__function__delete__icon"
+                     mozc:iconWidth="@dimen/unlimited"
+                     mozc:iconHeight="@dimen/default_function_icon_height" />
+        </Flick>
+      </KeyState>
+    </Key>
+  </Row>
+  <Row>
+    <Key mozc:keyBackground="twelvekeysFunction"
+         mozc:keyHorizontalLayoutWeight="0" mozc:keyEdgeFlags="left">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_hyphen_minus">
+        <Flick>
+          <KeyEntity mozc:sourceId="6"
+                     mozc:keyCode="@integer/uchar_hyphen_minus"
+                     mozc:keyIcon="@raw/twelvekeys__number__function__hyphen_minus">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__hyphen_minus" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:keyWidth="@dimen/keyboard_separator_width" mozc:keyHorizontalLayoutWeight="0"
+            mozc:keyBackground="keyboardSeparatorCenter"/>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_four">
+        <Flick>
+          <KeyEntity mozc:sourceId="7"
+                     mozc:keyCode="@integer/uchar_digit_four"
+                     mozc:keyIcon="@raw/twelvekeys__number__four">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__four" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_five">
+        <Flick>
+          <KeyEntity mozc:sourceId="8"
+                     mozc:keyCode="@integer/uchar_digit_five"
+                     mozc:keyIcon="@raw/twelvekeys__number__five">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__five" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_six">
+        <Flick>
+          <KeyEntity mozc:sourceId="9"
+                     mozc:keyCode="@integer/uchar_digit_six"
+                     mozc:keyIcon="@raw/twelvekeys__number__six">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__six" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:keyWidth="@dimen/keyboard_separator_width" mozc:keyHorizontalLayoutWeight="0"
+            mozc:keyBackground="keyboardSeparatorCenter"/>
+    <Key mozc:keyBackground="twelvekeysFunction"
+         mozc:keyHorizontalLayoutWeight="0" mozc:keyEdgeFlags="right">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_solidus">
+        <Flick>
+          <KeyEntity mozc:sourceId="10"
+                     mozc:keyCode="@integer/uchar_solidus"
+                     mozc:keyIcon="@raw/twelvekeys__number__function__solidus">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__solidus" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+  </Row>
+  <Row>
+    <Key mozc:keyBackground="twelvekeysFunction"
+         mozc:keyHorizontalLayoutWeight="0" mozc:keyEdgeFlags="left">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_comma">
+        <Flick>
+          <KeyEntity mozc:sourceId="11"
+                     mozc:keyCode="@integer/uchar_comma"
+                     mozc:keyIcon="@raw/twelvekeys__number__function__comma">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__comma" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:keyWidth="@dimen/keyboard_separator_width" mozc:keyHorizontalLayoutWeight="0"
+            mozc:keyBackground="keyboardSeparatorCenter"/>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_seven">
+        <Flick>
+          <KeyEntity mozc:sourceId="12"
+                     mozc:keyCode="@integer/uchar_digit_seven"
+                     mozc:keyIcon="@raw/twelvekeys__number__seven">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__seven" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_eight">
+        <Flick>
+          <KeyEntity mozc:sourceId="13"
+                     mozc:keyCode="@integer/uchar_digit_eight"
+                     mozc:keyIcon="@raw/twelvekeys__number__eight">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__eight" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_nine">
+        <Flick>
+          <KeyEntity mozc:sourceId="14"
+                     mozc:keyCode="@integer/uchar_digit_nine"
+                     mozc:keyIcon="@raw/twelvekeys__number__nine">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__nine" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:keyWidth="@dimen/keyboard_separator_width" mozc:keyHorizontalLayoutWeight="0"
+            mozc:keyBackground="keyboardSeparatorCenter"/>
+    <Key mozc:keyBackground="twelvekeysFunction"
+         mozc:keyHorizontalLayoutWeight="0" mozc:keyEdgeFlags="right">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_equals_sign">
+        <Flick>
+          <KeyEntity mozc:sourceId="15"
+                     mozc:keyCode="@integer/uchar_equals_sign"
+                     mozc:keyIcon="@raw/twelvekeys__number__function__equals_sign">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__equals_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+  </Row>
+  <Row>
+    <Key mozc:keyBackground="twelvekeysFunction"
+         mozc:keyHorizontalLayoutWeight="0" mozc:keyEdgeFlags="left">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_full_stop">
+        <Flick>
+          <KeyEntity mozc:sourceId="16"
+                     mozc:keyCode="@integer/uchar_full_stop"
+                     mozc:keyIcon="@raw/twelvekeys__number__function__full_stop">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__full_stop" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:keyWidth="@dimen/keyboard_separator_width" mozc:keyHorizontalLayoutWeight="0"
+            mozc:keyBackground="keyboardSeparatorBottom"/>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_asterisk">
+        <Flick>
+          <KeyEntity mozc:sourceId="17"
+                     mozc:keyCode="@integer/uchar_asterisk"
+                     mozc:keyIcon="@raw/twelvekeys__number__asterisk">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__asterisk" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_digit_zero">
+        <Flick>
+          <KeyEntity mozc:sourceId="18"
+                     mozc:keyCode="@integer/uchar_digit_zero"
+                     mozc:keyIcon="@raw/twelvekeys__number__zero">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__zero" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_number_sign">
+        <Flick>
+          <KeyEntity mozc:sourceId="19"
+                     mozc:keyCode="@integer/uchar_number_sign"
+                     mozc:keyIcon="@raw/twelvekeys__number__number_sign">
+            <PopUp mozc:popUpIcon="@raw/optional__twelvekeys__popup__number_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:keyWidth="@dimen/keyboard_separator_width" mozc:keyHorizontalLayoutWeight="0"
+            mozc:keyBackground="keyboardSeparatorBottom"/>
+    <Key mozc:keyBackground="twelvekeysFunction"
+         mozc:keyHorizontalLayoutWeight="0" mozc:keyEdgeFlags="right">
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_space">
+        <Flick>
+          <KeyEntity mozc:sourceId="20"
+                     mozc:keyCode="@integer/uchar_space"
+                     mozc:keyIcon="@raw/twelvekeys__function__space__icon"
+                     mozc:iconWidth="@dimen/unlimited"
+                     mozc:iconHeight="@dimen/default_function_icon_height" />
+        </Flick>
+      </KeyState>
+    </Key>
+  </Row>
+  <!-- Next sourceId: 21 -->
+</Keyboard>

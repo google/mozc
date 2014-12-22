@@ -34,15 +34,17 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.getCurrentArguments;
 import static org.easymock.EasyMock.isA;
 
+import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
+import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.testing.MockResourcesWithDisplayMetrics;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import com.google.common.base.Optional;
 
+import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -60,17 +62,19 @@ public class PopUpPreviewTest extends InstrumentationTestCaseWithMock {
   public void testShow() {
     Drawable icon = new ColorDrawable();
     int iconResourceId = 1;
+    int longTapIconResourceId = 2;
 
+    Resources resources = getInstrumentation().getTargetContext().getResources();
     DrawableCache cache = createMockBuilder(DrawableCache.class)
-        .withConstructor(MozcDrawableFactory.class)
-        .withArgs(new MozcDrawableFactory(new MockResources()))
+        .withConstructor(Resources.class)
+        .withArgs(resources)
         .createMock();
     expect(cache.getDrawable(iconResourceId)).andStubReturn(Optional.of(icon));
 
-    int popupWidth = 40;
     int popupHeight = 80;
-    PopUp popup = new PopUp(iconResourceId, popupWidth, popupHeight, 0, -30);
-    Key key = new Key(5, 10, 30, 20, 0, 0, false, false, false, Stick.EVEN,
+    PopUp popup = new PopUp(iconResourceId, longTapIconResourceId, popupHeight, 0, -30, 10, 10);
+    Key key = new Key(5, 10, 30, 20, 0, 0, false, false, Stick.EVEN,
+                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                       Collections.<KeyState>emptyList());
 
     final int parentLocationX = 100;
@@ -93,33 +97,34 @@ public class PopUpPreviewTest extends InstrumentationTestCaseWithMock {
 
     replayAll();
 
-    PopUpPreview preview = new PopUpPreview(mockView, new BackgroundDrawableFactory(1f), cache);
-    ImageView popupView = preview.popupView;
+    PopUpPreview preview =
+        new PopUpPreview(mockView, new BackgroundDrawableFactory(resources), cache);
+    ImageView popupView = preview.popUp.getContentView();
 
-    preview.showIfNecessary(null, popup);
-    assertEquals(View.GONE, popupView.getVisibility());
-    assertNull(popupView.getDrawable());
-    assertNull(popupView.getBackground());
-
-    preview.showIfNecessary(key, null);
+    preview.showIfNecessary(key, Optional.<PopUp>absent(), false);
     assertEquals(View.GONE, popupView.getVisibility());
     assertNull(popupView.getDrawable());
     assertNull(popupView.getBackground());
 
     FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(0, 0);
     popupView.setLayoutParams(layoutParams);
-    preview.showIfNecessary(key, popup);
+    preview.showIfNecessary(key, Optional.of(popup), false);
     verifyAll();
     assertEquals(View.VISIBLE, popupView.getVisibility());
     assertSame(icon, popupView.getDrawable());
     assertNotNull(popupView.getBackground());
-    assertEquals(popupWidth, layoutParams.width);
-    assertEquals(popupHeight, layoutParams.height);
-    assertEquals(key.getX() + key.getWidth() / 2 + popup.getXOffset() - popup.getWidth() / 2
+    float density = resources.getDisplayMetrics().density;
+    int popupWindowPadding = (int) (BackgroundDrawableFactory.POPUP_WINDOW_PADDING * density);
+    assertEquals(Math.min(key.getWidth(),
+                          resources.getDimensionPixelSize(R.dimen.popup_width_limitation))
+                     + popupWindowPadding * 2,
+                 layoutParams.width);
+    assertEquals(popupHeight + popupWindowPadding * 2, layoutParams.height);
+    assertEquals(key.getX() + key.getWidth() / 2 + popup.getXOffset() - layoutParams.width / 2
                      + parentLocationX,
                  layoutParams.leftMargin);
     assertEquals(key.getY() + key.getHeight() / 2 + popup.getYOffset() - popup.getHeight() / 2
-                     + parentLocationY,
+                     + parentLocationY - popupWindowPadding,
                  layoutParams.topMargin);
     assertEquals(0, layoutParams.rightMargin);
     assertEquals(0, layoutParams.bottomMargin);
@@ -127,12 +132,53 @@ public class PopUpPreviewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testDismiss() {
-    PopUpPreview preview =
-        new PopUpPreview(new View(getInstrumentation().getTargetContext()), null, null);
+    PopUpPreview preview = new PopUpPreview(
+            new View(getInstrumentation().getTargetContext()),
+            new BackgroundDrawableFactory(new MockResourcesWithDisplayMetrics()),
+            new DrawableCache(new MockResourcesWithDisplayMetrics()));
     preview.dismiss();
-    ImageView popupView = preview.popupView;
+    ImageView popupView = preview.popUp.getContentView();
     assertEquals(View.GONE, popupView.getVisibility());
     assertNull(popupView.getDrawable());
     assertNull(popupView.getBackground());
+  }
+
+  @SmallTest
+  public void testShowIfNecessaryWithInvalidResourceId() {
+    Drawable icon = new ColorDrawable();
+    int invalidResourceId = 0;
+    int validResourceId = 1;
+
+    DrawableCache cache = createMockBuilder(DrawableCache.class)
+        .withConstructor(Resources.class)
+        .withArgs(new MockResourcesWithDisplayMetrics())
+        .createMock();
+    expect(cache.getDrawable(invalidResourceId)).andStubReturn(Optional.<Drawable>absent());
+    expect(cache.getDrawable(validResourceId)).andStubReturn(Optional.of(icon));
+
+    PopUpPreview preview = new PopUpPreview(
+        new View(getInstrumentation().getTargetContext()),
+        new BackgroundDrawableFactory(new MockResourcesWithDisplayMetrics()), cache);
+    ImageView popupView = preview.popUp.getContentView();
+
+    replayAll();
+
+    for (boolean useValidIconResourceId : new boolean[] {false, true}) {
+      for (boolean useValidLongTapIconResourceId : new boolean[] {false, true}) {
+        int iconId = useValidIconResourceId ? validResourceId : invalidResourceId;
+        int longTapIconId = useValidLongTapIconResourceId ? validResourceId : invalidResourceId;
+        Key key = new Key(
+            10, 10, 10, 10, 0, 0, false, false, Stick.EVEN,
+            DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, Collections.<KeyState>emptyList());
+
+        preview.showIfNecessary(
+            key, Optional.of(new PopUp(iconId, longTapIconId, 10, 0, 0, 10, 10)), false);
+        assertEquals(useValidIconResourceId, popupView.getVisibility() == View.VISIBLE);
+
+        preview.showIfNecessary(
+            key, Optional.of(new PopUp(iconId, longTapIconId, 10, 0, 0, 10, 10)), true);
+        assertEquals(useValidLongTapIconResourceId, popupView.getVisibility() == View.VISIBLE);
+      }
+    }
   }
 }

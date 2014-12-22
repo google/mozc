@@ -39,9 +39,7 @@
   <integer name="key_right">-12</integer>
   <integer name="key_down">-13</integer>
   <integer name="key_chartype_to_kana">-14</integer>
-  <integer name="key_chartype_to_123">-15</integer>
   <integer name="key_chartype_to_abc">-16</integer>
-  <integer name="key_chartype_to_kana_123">-23</integer>
   <integer name="key_chartype_to_abc_123">-24</integer>
 
   <integer name="key_undo">-18</integer>
@@ -50,7 +48,9 @@
   <integer name="key_capslock">-21</integer>
   <integer name="key_menu_dialog">-22</integer>
   <integer name="key_ime_picker_dialog">-25</integer>
-  <!-- Next available value is -26. -->
+  <integer name="key_globe">-26</integer>
+  <integer name="key_symbol_emoji">-27</integer>
+  <!-- Next available value is -28. -->
 
   <!-- Deprecate : Use uchar_backspace -->
   <integer name="key_backspace">8</integer>

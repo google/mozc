@@ -30,26 +30,8 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <resources>
-
     <string name="app_name">Mozc</string>
     <string name="app_full_name">Mozc for Android</string>
     <string name="developer_organization">Mozc Project Team</string>
     <string name="mozc_preference">Preferences for Mozc</string>
-    <string name="pref_about_terms_of_service_url">http://code.google.com/p/mozc/</string>
-    <string name="pref_about_privacy_policy_url">http://code.google.com/p/mozc/</string>
-    <!--
-    MiniBrowser can access only the url which matches below pattern.
-    This restriction is introduced in order not to show unexpected website in "EULA" activity.
-    By default no restriction is applied in order to avoid from breaking existing implemntation.
-    -->
-    <string name="pref_url_restriction_regex">.*</string>
-    <string name="user_dictionary_tool_export_provider_name">org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryExportProvider</string>
-
-    <!--
-      If you developer want to activate usage stats collection feature, turn the property on
-      and change the URL in usage_stats/upload_util.cc.
-      However usually you don't need the feature so please keep this false as long as possible.
-    -->
-    <bool name="sending_information_features_enabled">false</bool>
-
 </resources>

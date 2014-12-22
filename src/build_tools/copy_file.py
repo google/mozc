@@ -32,9 +32,7 @@
 
 This script provides more features than 'copies' rule of GYP.
 1. The destination file name can be different from the original name.
-2. Changes the last update time according to a reference file.
-(This is the same as `touch -r REFERENCE_FILE'.)
-3. Is able to copy directories recursively.
+2. Is able to copy directories recursively.
 """
 
 __author__ = "yukishiino"
@@ -59,79 +57,90 @@ def _ErrorExit(message):
 
 
 def CopyFiles(src_list, dst, src_base='',
-              preserve=False, recursive=False, reference=None,
+              preserve=False, recursive=False,
               ignore_existence_check=False):
   """Copy files like 'cp' command on Unix.
 
   Args:
     src_list: List of files to be copied.
     dst: The destination file or directory.
-    src_base: The base directory which holds |src_list|.
+    src_base: Base directory of the source files.
+       The following path is copied to the destination.
+       e.g. src: a/b/c/d/e.txt , base_dir: a/b/ -> dest: c/d/e.txt
     preserve: Preserves last update time.  Permissions for files are always
         copied.
     recursive: Copies files recursively.
-    reference: Last update time in the form of (atime, mtime) to be copied
-        to files.  The reference time is prioritized over preserving.
     ignore_existence_check: Ignores existence check for src files.
   """
   if not src_list:
     return
 
-  def _CopyFile(src_file, dst_file):
-    if os.path.isdir(dst_file):
-      _ErrorExit('An unexpected dir `%s\' exists' % dst_file)
-    if ignore_existence_check and not os.path.exists(src_file):
-      # Skip non-existent src.
-      return
-    shutil.copy(src_file, dst_file)
-    _CopyUpdateTimeAndPermission(src_file, dst_file)
+  def _MakeDirs(dir):
+    if not os.path.exists(dir):
+      os.makedirs(dir)
 
-  def _CopyDir(src_dir, dst_dir, file_list=None):
-    if file_list is None:
-      file_list = os.listdir(src_dir)
-    for filename in file_list:
+  def _CopyDir(src_dir, dst_dir):
+    _MakeDirs(dst_dir)
+
+    for filename in os.listdir(src_dir):
       src = os.path.join(src_dir, filename)
-      dst = os.path.join(dst_dir, filename)
-      _Copy(src, dst)
+      _Copy(src, dst_dir)
 
   def _Copy(src, dst):
-    if os.path.isdir(src):
-      if not recursive:
-        _ErrorExit('Cannot copy a directory `%s\'' % src)
-      if not os.path.isdir(dst):
-        os.mkdir(dst)
-        _CopyDir(src, dst)
-        _CopyUpdateTimeAndPermission(src, dst)
-      else:
-        _CopyDir(src, dst)
-    else:
-      _CopyFile(src, dst)
+    if os.path.isdir(dst):
+      dst = os.path.join(dst, os.path.basename(src))
 
-  def _CopyUpdateTimeAndPermission(src, dst):
+    if os.path.isdir(src):
+      _CopyDir(src, dst)
+    else:
+      shutil.copy(src, dst)
+
+    # Copy update time and permission
     if preserve:
       shutil.copystat(src, dst)
-    if reference:
-      os.utime(dst, reference)
     # Changes the file writable so we can overwrite it later.
     os.chmod(dst, os.stat(dst).st_mode | stat.S_IWRITE)
 
-  # Create the parent directory of dst.
-  dst_parent = os.path.abspath(os.path.dirname(dst))
-  if dst_parent and not os.path.exists(dst_parent):
-    os.makedirs(dst_parent)
+  def _ErrorCheck(src, src_base):
+    if not os.path.exists(src):
+      if ignore_existence_check:
+        return False
+      else:
+        _ErrorExit('No such file or directory: "%s"' % src)
 
-  if len(src_list) is 1:
-    src = os.path.join(src_base, src_list[0])
-    if os.path.isdir(dst):
-      dst = os.path.join(dst, os.path.basename(os.path.abspath(src)))
-    _Copy(src, dst)
-  else:  # len(src_list) > 1
-    if not os.path.isdir(dst):
-      os.mkdir(dst)
-    for src in src_list:
-      src = os.path.abspath(os.path.join(src_base, src))
-      (src_dir, src_file) = os.path.split(src)
-      _CopyDir(src_dir, dst, [src_file])
+    if os.path.isdir(src) and not recursive:
+      _ErrorExit('Cannot copy a directory: "%s"' % src)
+
+    if not src.startswith(src_base):
+      _ErrorExit('Source file does not start with src_base: "%s"' % src)
+
+    return True
+
+  dst = os.path.abspath(dst)
+  if src_base:
+    src_base = os.path.abspath(src_base)
+
+  # dst may be a file instead of a directory.
+  if len(src_list) == 1 and not os.path.exists(dst) and not src_base:
+    src = os.path.abspath(src_list[0])
+    if _ErrorCheck(src, src_base):
+      _MakeDirs(os.path.dirname(dst))
+      _Copy(src, dst)
+    return
+
+  # dst should be a directory here.
+  for src in src_list:
+    src = os.path.abspath(src)
+
+    if src_base:
+      dst_dir = os.path.join(dst,
+                             os.path.relpath(os.path.dirname(src), src_base))
+    else:
+      dst_dir = dst
+
+    if _ErrorCheck(src, src_base):
+      _MakeDirs(dst_dir)
+      _Copy(src, dst_dir)
 
 
 def _GetUpdateTime(filename):
@@ -151,14 +160,15 @@ def _GetUpdateTime(filename):
 def main():
   parser = optparse.OptionParser(
       usage='Usage: %prog [OPTION]... SOURCE... DEST')
+  parser.add_option('--src_base', dest='src_base', default='',
+                    help=('Base directory of the source files. '
+                          'The following path is copied to the destination.'))
   parser.add_option('--preserve', '-p', dest='preserve',
                     action='store_true', default=False,
                     help='Preserves last update time.')
   parser.add_option('--recursive', '-r', dest='recursive',
                     action='store_true', default=False,
                     help='Copies directories recursively.')
-  parser.add_option('--reference', dest='reference',
-                    help='Uses this file\'s last update time.')
   parser.add_option('--ignore_existence_check', dest='ignore_existence_check',
                     action='store_true', default=False,
                     help='Ignore existence check for src files.')
@@ -167,15 +177,11 @@ def main():
   if len(args) < 2:
     _ErrorExit('The arguments must be source(s) and destination files.')
 
-  reference_time = (_GetUpdateTime(options.reference)
-                    if options.reference else None)
-
   src_list = args[:-1]
   dst = args[-1]
 
-  CopyFiles(src_list, dst,
+  CopyFiles(src_list, dst, src_base=options.src_base,
             preserve=options.preserve, recursive=options.recursive,
-            reference=reference_time,
             ignore_existence_check=options.ignore_existence_check)
 
 

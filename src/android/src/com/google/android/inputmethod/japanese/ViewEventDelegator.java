@@ -30,9 +30,9 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
@@ -40,6 +40,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 /**
  * This class delegates all method calls to a ViewEventListener, passed to the constructor.
@@ -61,6 +63,7 @@ import java.util.List;
  */
 @SuppressWarnings("javadoc")
 public abstract class ViewEventDelegator implements ViewEventListener {
+
   private final ViewEventListener delegated;
 
   public ViewEventDelegator(ViewEventListener delegated) {
@@ -68,20 +71,31 @@ public abstract class ViewEventDelegator implements ViewEventListener {
   }
 
   @Override
-  public void onKeyEvent(ProtoCommands.KeyEvent mozcKeyEvent, KeyEventInterface keyEvent,
-                         KeyboardSpecification keyboardSpecification,
-                         List<? extends TouchEvent> touchEventList) {
+  public void onKeyEvent(@Nullable ProtoCommands.KeyEvent mozcKeyEvent,
+                         @Nullable KeyEventInterface keyEvent,
+                         @Nullable KeyboardSpecification keyboardSpecification,
+                         List<TouchEvent> touchEventList) {
     delegated.onKeyEvent(mozcKeyEvent, keyEvent, keyboardSpecification, touchEventList);
   }
 
   @Override
-  public void onUndo(List<? extends TouchEvent> touchEventList) {
+  public void onUndo(List<TouchEvent> touchEventList) {
     delegated.onUndo(touchEventList);
   }
 
   @Override
   public void onConversionCandidateSelected(int candidateId, Optional<Integer> rowIndex) {
     delegated.onConversionCandidateSelected(candidateId, Preconditions.checkNotNull(rowIndex));
+  }
+
+  @Override
+  public void onPageUp() {
+    delegated.onPageUp();
+  }
+
+  @Override
+  public void onPageDown() {
+    delegated.onPageDown();
   }
 
   @Override
@@ -106,12 +120,12 @@ public abstract class ViewEventDelegator implements ViewEventListener {
   }
 
   @Override
-  public void onShowMenuDialog(List<? extends TouchEvent> touchEventList) {
+  public void onShowMenuDialog(List<TouchEvent> touchEventList) {
     delegated.onShowMenuDialog(touchEventList);
   }
 
   @Override
-  public void onShowSymbolInputView(List<? extends TouchEvent> touchEventList) {
+  public void onShowSymbolInputView(List<TouchEvent> touchEventList) {
     delegated.onShowSymbolInputView(touchEventList);
   }
 
@@ -128,5 +142,16 @@ public abstract class ViewEventDelegator implements ViewEventListener {
   @Override
   public void onActionKey() {
     delegated.onActionKey();
+  }
+
+  @Override
+  public void onNarrowModeChanged(boolean newNarrowMode) {
+    delegated.onNarrowModeChanged(newNarrowMode);
+  }
+
+  @Override
+  public void onUpdateKeyboardLayoutAdjustment(
+      ViewManagerInterface.LayoutAdjustment layoutAdjustment) {
+    delegated.onUpdateKeyboardLayoutAdjustment(layoutAdjustment);
   }
 }

@@ -58,7 +58,7 @@ public class ZipFileUtilTest extends InstrumentationTestCase {
       succeeded = true;
       return expected;
     } finally {
-      MozcUtil.close(zipInputStream, !succeeded);
+      MozcUtil.close(apkFile, !succeeded);
     }
   }
 

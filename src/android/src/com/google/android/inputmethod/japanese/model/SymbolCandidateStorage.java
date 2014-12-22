@@ -226,6 +226,10 @@ public class SymbolCandidateStorage {
   /** @return the {@link CandidateList} instance for the given {@code minorCategory}. */
   public CandidateList getCandidateList(SymbolMinorCategory minorCategory) {
     switch (minorCategory) {
+      // NUMBER major category candidates.
+      case NUMBER:
+        return CandidateList.getDefaultInstance();
+
       // SYMBOL major category candidates.
       case SYMBOL_HISTORY:
         return toCandidateList(symbolHistoryStorage.getAllHistory(SymbolMajorCategory.SYMBOL));

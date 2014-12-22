@@ -35,11 +35,11 @@ import java.util.List;
 
 /**
  * A listener of keyboard actions.
- * 
+ *
  */
 public interface KeyboardActionListener {
   public void onCancel();
   public void onPress(int keycode);
   public void onRelease(int keycode);
-  public void onKey(int primaryCode, List<? extends TouchEvent> touchEventList);
+  public void onKey(int primaryCode, List<TouchEvent> touchEventList);
 }

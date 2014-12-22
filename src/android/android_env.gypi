@@ -78,7 +78,7 @@
         'native_test_small_targets': [
           'oss_data_manager_test',
         ],
-        'resources_project_path': 'static_resources/resources_oss',
+        'font_dir': '<(third_party_dir)/noto_font',
       },
     }],
     ['android_arch=="arm" and android_compiler=="gcc"', {

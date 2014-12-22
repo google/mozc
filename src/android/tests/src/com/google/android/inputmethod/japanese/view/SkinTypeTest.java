@@ -30,21 +30,21 @@
 package org.mozc.android.inputmethod.japanese.view;
 
 import android.graphics.Paint;
-
-import junit.framework.TestCase;
+import android.test.InstrumentationTestCase;
 
 /**
  * Unit test for SkinType.
  */
-public class SkinTypeTest extends TestCase {
+public class SkinTypeTest extends InstrumentationTestCase {
   public void testCategorySupport() {
     // Just make sure that all known categories are supported on all skins.
     Paint paint = new Paint();
     for (SkinType skinType : SkinType.values()) {
-      skinType.apply(paint, SkinType.STYLE_CATEGORY_KEYICON_MAIN);
-      skinType.apply(paint, SkinType.STYLE_CATEGORY_KEYICON_GUIDE);
-      skinType.apply(paint, SkinType.STYLE_CATEGORY_KEYICON_MAIN_HIGHLIGHT);
-      skinType.apply(paint, SkinType.STYLE_CATEGORY_KEYICON_GUIDE_HIGHLIGHT);
+      Skin skin = skinType.getSkin(getInstrumentation().getTargetContext().getResources());
+      skin.apply(paint, Skin.STYLE_CATEGORY_KEYICON_MAIN);
+      skin.apply(paint, Skin.STYLE_CATEGORY_KEYICON_GUIDE);
+      skin.apply(paint, Skin.STYLE_CATEGORY_KEYICON_MAIN_HIGHLIGHT);
+      skin.apply(paint, Skin.STYLE_CATEGORY_KEYICON_GUIDE_HIGHLIGHT);
     }
   }
 }

@@ -34,21 +34,27 @@ import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardFactory;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardView;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
 import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.model.SymbolMinorCategory;
 import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
-import org.mozc.android.inputmethod.japanese.resources.R;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayoutRenderer.DescriptionLayoutPolicy;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayoutRenderer.ValueScalingPolicy;
 import org.mozc.android.inputmethod.japanese.ui.ScrollGuideView;
 import org.mozc.android.inputmethod.japanese.ui.SpanFactory;
 import org.mozc.android.inputmethod.japanese.ui.SymbolCandidateLayouter;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
+import org.mozc.android.inputmethod.japanese.view.MozcImageButton;
+import org.mozc.android.inputmethod.japanese.view.MozcImageView;
 import org.mozc.android.inputmethod.japanese.view.RoundRectKeyDrawable;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import org.mozc.android.inputmethod.japanese.view.SymbolMajorCategoryButtonDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.TabSelectedBackgroundDrawable;
 import com.google.common.annotations.VisibleForTesting;
@@ -62,36 +68,31 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.IBinder;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.view.GestureDetector;
-import android.view.GestureDetector.OnGestureListener;
-import android.view.Gravity;
 import android.view.InflateException;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TabHost.TabSpec;
 import android.widget.TabWidget;
 import android.widget.TextView;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -113,15 +114,18 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   /**
    * Adapter for symbol candidate selection.
-   * Exposed as package private for testing.
    */
   // TODO(hidehiko): make this class static.
-  class SymbolCandidateSelectListener implements CandidateSelectListener {
+  @VisibleForTesting class SymbolCandidateSelectListener implements CandidateSelectListener {
     @Override
     public void onCandidateSelected(CandidateWord candidateWord, Optional<Integer> row) {
-      if (viewEventListener != null) {
+      Preconditions.checkNotNull(candidateWord);
+      // When current major category is NUMBER, CandidateView.ConversionCandidateSelectListener
+      // should handle candidate selection event.
+      Preconditions.checkState(currentMajorCategory != SymbolMajorCategory.NUMBER);
+      if (viewEventListener.isPresent()) {
         // If we are on password field, history shouldn't be updated to protect privacy.
-        viewEventListener.onSymbolCandidateSelected(
+        viewEventListener.get().onSymbolCandidateSelected(
             currentMajorCategory, candidateWord.getValue(), !isPasswordField);
       }
     }
@@ -130,20 +134,18 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   /**
    * Click handler of major category buttons.
    */
-  class MajorCategoryButtonClickListener implements OnClickListener {
+  @VisibleForTesting class MajorCategoryButtonClickListener implements OnClickListener {
     private final SymbolMajorCategory majorCategory;
 
     MajorCategoryButtonClickListener(SymbolMajorCategory majorCategory) {
-      if (majorCategory == null) {
-        throw new NullPointerException("majorCategory should not be null.");
-      }
-      this.majorCategory = majorCategory;
+      this.majorCategory = Preconditions.checkNotNull(majorCategory);
     }
 
     @Override
     public void onClick(View majorCategorySelectorButton) {
-      if (viewEventListener != null) {
-        viewEventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
+      if (viewEventListener.isPresent()) {
+        viewEventListener.get().onFireFeedbackEvent(
+            FeedbackEvent.SYMBOL_INPUTVIEW_MAJOR_CATEGORY_SELECTED);
       }
 
       if (emojiEnabled
@@ -152,17 +154,17 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
         // Ask the user which emoji provider s/he'd like to use.
         // If the user cancels the dialog, do nothing.
         maybeInitializeEmojiProviderDialog(getContext());
-        if (emojiProviderDialog != null) {
+        if (emojiProviderDialog.isPresent()) {
           IBinder token = getWindowToken();
           if (token != null) {
-            MozcUtil.setWindowToken(token, emojiProviderDialog);
+            MozcUtil.setWindowToken(token, emojiProviderDialog.get());
           } else {
             MozcLog.w("Unknown window token.");
           }
 
           // If a user selects a provider, the dialog handler will set major category
           // to EMOJI automatically. If s/he cancels, nothing will be happened.
-          emojiProviderDialog.show();
+          emojiProviderDialog.get().show();
           return;
         }
       }
@@ -171,65 +173,77 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     }
   }
 
-  // Manages the relationship between.
-  static class SymbolTabWidgetViewPagerAdapter extends PagerAdapter
+  private static class SymbolTabWidgetViewPagerAdapter extends PagerAdapter
       implements OnTabChangeListener, OnPageChangeListener {
 
     private static final int HISTORY_INDEX = 0;
 
     private final Context context;
     private final SymbolCandidateStorage symbolCandidateStorage;
-    private final ViewEventListener viewEventListener;
+    private final Optional<ViewEventListener> viewEventListener;
     private final CandidateSelectListener candidateSelectListener;
     private final SymbolMajorCategory majorCategory;
-    private final SkinType skinType;
+    private Skin skin;
     private final EmojiProviderType emojiProviderType;
     private final TabHost tabHost;
     private final ViewPager viewPager;
     private final float candidateTextSize;
     private final float descriptionTextSize;
 
-    private View historyViewCache = null;
+    private Optional<View> historyViewCache = Optional.absent();
     private int scrollState = ViewPager.SCROLL_STATE_IDLE;
+    private boolean feedbackEnabled = true;
 
     SymbolTabWidgetViewPagerAdapter(
         Context context, SymbolCandidateStorage symbolCandidateStorage,
-        ViewEventListener viewEventListener, CandidateSelectListener candidateSelectListener,
-        SymbolMajorCategory majorCategory,
-        SkinType skinType, EmojiProviderType emojiProviderType,
-        TabHost tabHost, ViewPager viewPager,
+        Optional<ViewEventListener> viewEventListener,
+        CandidateSelectListener candidateSelectListener, SymbolMajorCategory majorCategory,
+        Skin skin, EmojiProviderType emojiProviderType, TabHost tabHost, ViewPager viewPager,
         float candidateTextSize, float descriptionTextSize) {
-      Preconditions.checkNotNull(emojiProviderType);
+      this.context = Preconditions.checkNotNull(context);
+      this.symbolCandidateStorage = Preconditions.checkNotNull(symbolCandidateStorage);
+      this.viewEventListener = Preconditions.checkNotNull(viewEventListener);
+      this.candidateSelectListener = Preconditions.checkNotNull(candidateSelectListener);
+      this.majorCategory = Preconditions.checkNotNull(majorCategory);
+      this.skin = Preconditions.checkNotNull(skin);
+      this.emojiProviderType = Preconditions.checkNotNull(emojiProviderType);
+      this.tabHost = Preconditions.checkNotNull(tabHost);
+      this.viewPager = Preconditions.checkNotNull(viewPager);
+      this.candidateTextSize = Preconditions.checkNotNull(candidateTextSize);
+      this.descriptionTextSize = Preconditions.checkNotNull(descriptionTextSize);
+    }
 
-      this.context = context;
-      this.symbolCandidateStorage = symbolCandidateStorage;
-      this.viewEventListener = viewEventListener;
-      this.candidateSelectListener = candidateSelectListener;
-      this.majorCategory = majorCategory;
-      this.skinType = skinType;
-      this.emojiProviderType = emojiProviderType;
-      this.tabHost = tabHost;
-      this.viewPager = viewPager;
-      this.candidateTextSize = candidateTextSize;
-      this.descriptionTextSize = descriptionTextSize;
+    public void setSkin(Skin skin) {
+      Preconditions.checkNotNull(skin);
+      this.skin = skin;
+    }
+
+    public void setFeedbackEnabled(boolean enabled) {
+      feedbackEnabled = enabled;
     }
 
     private void maybeResetHistoryView() {
-      if (viewPager.getCurrentItem() != HISTORY_INDEX && historyViewCache != null) {
+      if (viewPager.getCurrentItem() != HISTORY_INDEX && historyViewCache.isPresent()) {
         resetHistoryView();
       }
     }
 
     private void resetHistoryView() {
+      if (!historyViewCache.isPresent()) {
+        return;
+      }
       CandidateList candidateList =
           symbolCandidateStorage.getCandidateList(majorCategory.minorCategories.get(0));
+      View noHistoryView = historyViewCache.get().findViewById(R.id.symbol_input_no_history);
       if (candidateList.getCandidatesCount() == 0) {
-        historyViewCache.findViewById(R.id.symbol_input_no_history).setVisibility(View.VISIBLE);
+        noHistoryView.setVisibility(View.VISIBLE);
+        TextView.class.cast(historyViewCache.get().findViewById(R.id.symbol_input_no_history_text))
+            .setTextColor(skin.candidateValueTextColor);
       } else {
-        historyViewCache.findViewById(R.id.symbol_input_no_history).setVisibility(View.GONE);
+        noHistoryView.setVisibility(View.GONE);
       }
-      SymbolCandidateView.class.cast(
-          historyViewCache.findViewById(R.id.symbol_input_candidate_view)).update(candidateList);
+      SymbolCandidateView.class.cast(historyViewCache.get().findViewById(
+          R.id.symbol_input_candidate_view)).update(candidateList);
     }
 
     @Override
@@ -250,10 +264,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       tabHost.setOnTabChangedListener(null);
       tabHost.setCurrentTab(position);
       tabHost.setOnTabChangedListener(this);
-
-      if (viewEventListener != null) {
-        viewEventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
-      }
     }
 
     @Override
@@ -265,8 +275,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       }
       viewPager.setCurrentItem(position, false);
 
-      if (viewEventListener != null) {
-        viewEventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
+      if (feedbackEnabled && viewEventListener.isPresent()) {
+        viewEventListener.get().onFireFeedbackEvent(
+            FeedbackEvent.SYMBOL_INPUTVIEW_MINOR_CATEGORY_SELECTED);
       }
     }
 
@@ -293,13 +304,21 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       symbolCandidateView.setCandidateSelectListener(candidateSelectListener);
       symbolCandidateView.setMinColumnWidth(
           context.getResources().getDimension(majorCategory.minColumnWidthResourceId));
-      symbolCandidateView.setSkinType(skinType);
+      symbolCandidateView.setSkin(skin);
       symbolCandidateView.setEmojiProviderType(emojiProviderType);
-      symbolCandidateView.setCandidateTextDimension(candidateTextSize, descriptionTextSize);
+      if (majorCategory.layoutPolicy == DescriptionLayoutPolicy.GONE) {
+        // As it's guaranteed for descriptions not to be shown,
+        // show values using additional space where is reserved for descriptions.
+        // This makes Emoji bigger.
+        symbolCandidateView.setCandidateTextDimension(candidateTextSize + descriptionTextSize, 0);
+      } else {
+        symbolCandidateView.setCandidateTextDimension(candidateTextSize, descriptionTextSize);
+      }
+      symbolCandidateView.setDescriptionLayoutPolicy(majorCategory.layoutPolicy);
 
       // Set candidate contents.
       if (position == HISTORY_INDEX) {
-        historyViewCache = view;
+        historyViewCache = Optional.of(view);
         resetHistoryView();
       } else {
         symbolCandidateView.update(symbolCandidateStorage.getCandidateList(
@@ -309,7 +328,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
       ScrollGuideView scrollGuideView =
           ScrollGuideView.class.cast(view.findViewById(R.id.symbol_input_scroll_guide_view));
-      scrollGuideView.setSkinType(skinType);
+      scrollGuideView.setSkin(skin);
 
       // Connect guide and candidate view.
       scrollGuideView.setScroller(symbolCandidateView.scroller);
@@ -322,70 +341,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     @Override
     public void destroyItem(ViewGroup collection, int position, Object view) {
       if (position == HISTORY_INDEX) {
-        historyViewCache = null;
+        historyViewCache = Optional.absent();
       }
       collection.removeView(View.class.cast(view));
-    }
-  }
-
-  /**
-   * The text view for the minor category tab.
-   * The most thing is as same as base TextView, but if the text is too long to fit in
-   * the view, this view automatically scales the text horizontally. (If there is enough
-   * space, doesn't widen.)
-   */
-  private static class TabTextView extends TextView {
-
-    /** Cached Paint instance to measure the text. */
-    private final Paint paint = new Paint();
-
-    TabTextView(Context context) {
-      super(context);
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-      super.onLayout(changed, left, top, right, bottom);
-      resetTextXSize();
-    }
-
-    private void resetTextXSize() {
-      // Reset the paint instance.
-      Paint paint = this.paint;
-      paint.reset();
-      paint.setAntiAlias(true);
-      paint.setTextSize(getTextSize());
-      paint.setTypeface(getTypeface());
-
-      // Measure the width for each line.
-      CharSequence text = getText().toString();
-      float maxTextWidth = 0;
-      int beginIndex = 0;
-      for (int i = beginIndex; i < text.length(); ++i) {
-        if (text.charAt(i) == '\n') {
-          // Split the line.
-          float textWidth = paint.measureText(text, beginIndex, i);
-          if (textWidth > maxTextWidth) {
-            maxTextWidth = textWidth;
-          }
-          // Exclude '\n'.
-          beginIndex = i + 1;
-        }
-      }
-      {
-        // Last line.
-        float textWidth = paint.measureText(text, beginIndex, text.length());
-        if (textWidth > maxTextWidth) {
-          maxTextWidth = textWidth;
-        }
-      }
-
-      // Calculate scale factory. Note that 0.98f is the heuristic value,
-      // in order to avoid wrapping lines by sub px calculations just in case.
-      float scaleX = (getWidth() - getPaddingLeft() - getPaddingRight()) * 0.98f / maxTextWidth;
-
-      // Cap the scaleX by 1f not to widen.
-      setTextScaleX(Math.min(scaleX, 1f));
     }
   }
 
@@ -396,7 +354,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     private final Context context;
 
     EmojiProviderDialogListener(Context context) {
-      this.context = context;
+      this.context = Preconditions.checkNotNull(context);
     }
 
     @Override
@@ -422,11 +380,10 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    * The differences from CandidateView.CandidateWordViewForConversion are
    * 1) this class scrolls horizontally 2) the layout algorithm is simpler.
    */
-  static class SymbolCandidateView extends CandidateWordView {
+  private static class SymbolCandidateView extends CandidateWordView {
     private static final String DESCRIPTION_DELIMITER = "\n";
 
-    private View scrollGuideView = null;
-    private GestureDetector gestureDetector = null;
+    private Optional<View> scrollGuideView = Optional.absent();
 
     public SymbolCandidateView(Context context) {
       super(context, Orientation.VERTICAL);
@@ -442,7 +399,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     // Shared instance initializer.
     {
-      setBackgroundDrawableType(DrawableType.SYMBOL_CANDIDATE_BACKGROUND);
+      setSpanBackgroundDrawableType(DrawableType.SYMBOL_CANDIDATE_BACKGROUND);
       Resources resources = getResources();
       scroller.setDecayRate(
           resources.getInteger(R.integer.symbol_input_scroller_velocity_decay_rate) / 1000000f);
@@ -452,25 +409,27 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     }
 
     void setCandidateTextDimension(float textSize, float descriptionTextSize) {
-      Preconditions.checkArgument(textSize > 0);
-      Preconditions.checkArgument(descriptionTextSize > 0);
+      Preconditions.checkArgument(textSize >= 0);
+      Preconditions.checkArgument(descriptionTextSize >= 0);
 
       Resources resources = getResources();
 
       float valueHorizontalPadding =
-          resources.getDimension(R.dimen.candidate_horizontal_padding_size);
+          resources.getDimension(R.dimen.symbol_candidate_horizontal_padding_size);
       float descriptionHorizontalPadding =
           resources.getDimension(R.dimen.symbol_description_right_padding);
       float descriptionVerticalPadding =
           resources.getDimension(R.dimen.symbol_description_bottom_padding);
+      float separatorWidth = resources.getDimensionPixelSize(R.dimen.candidate_separator_width);
 
+      carrierEmojiRenderHelper.setCandidateTextSize(textSize);
       candidateLayoutRenderer.setValueTextSize(textSize);
       candidateLayoutRenderer.setValueHorizontalPadding(valueHorizontalPadding);
       candidateLayoutRenderer.setValueScalingPolicy(ValueScalingPolicy.UNIFORM);
       candidateLayoutRenderer.setDescriptionTextSize(descriptionTextSize);
       candidateLayoutRenderer.setDescriptionHorizontalPadding(descriptionHorizontalPadding);
       candidateLayoutRenderer.setDescriptionVerticalPadding(descriptionVerticalPadding);
-      candidateLayoutRenderer.setDescriptionLayoutPolicy(DescriptionLayoutPolicy.OVERLAY);
+      candidateLayoutRenderer.setSeparatorWidth(separatorWidth);
 
       SpanFactory spanFactory = new SpanFactory();
       spanFactory.setValueTextSize(textSize);
@@ -492,32 +451,31 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       updateLayouter();
     }
 
-    void setOnGestureListener(OnGestureListener gestureListener) {
-      if (gestureListener == null) {
-        gestureDetector = null;
-      } else {
-        gestureDetector = new GestureDetector(getContext(), gestureListener);
-      }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-      if (gestureDetector != null && gestureDetector.onTouchEvent(event)) {
-        return true;
-      }
-      return super.onTouchEvent(event);
-    }
-
     @Override
     protected void onDraw(Canvas canvas) {
       super.onDraw(canvas);
-      if (scrollGuideView != null) {
-        scrollGuideView.invalidate();
+      if (scrollGuideView.isPresent()) {
+        scrollGuideView.get().invalidate();
       }
     }
 
     void setScrollIndicator(View scrollGuideView) {
-      this.scrollGuideView = scrollGuideView;
+      this.scrollGuideView = Optional.of(scrollGuideView);
+    }
+
+    @Override
+    protected Drawable getViewBackgroundDrawable(Skin skin) {
+      return Preconditions.checkNotNull(skin).symbolCandidateViewBackgroundDrawable;
+    }
+
+    @Override
+    public void setSkin(Skin skin) {
+      super.setSkin(skin);
+      candidateLayoutRenderer.setSeparatorColor(skin.symbolCandidateBackgroundSeparatorColor);
+    }
+
+    public void setDescriptionLayoutPolicy(DescriptionLayoutPolicy policy) {
+      candidateLayoutRenderer.setDescriptionLayoutPolicy(Preconditions.checkNotNull(policy));
     }
   }
 
@@ -539,59 +497,46 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    */
   static final KeyboardSpecificationName SPEC_NAME =
       new KeyboardSpecificationName("SYMBOL_INPUT_VIEW", 0, 1, 0);
-  // Source ID of the delete button for logging usage stats.
+  // Source ID of the delete/enter button for logging usage stats.
   private static final int DELETE_BUTTON_SOURCE_ID = 1;
-
-  // TODO(hidehiko): move these parameters to skin instance.
-  private static final float BUTTON_CORNOR_RADIUS = 3.5f;  // in dip.
-  private static final float BUTTON_LEFT_OFFSET = 2.0f;
-  private static final float BUTTON_TOP_OFFSET = 2.0f;
-  private static final float BUTTON_RIGHT_OFFSET = 2.0f;
-  private static final float BUTTON_BOTTOM_OFFSET = 2.0f;
-
-  private static final int MAJOR_CATEGORY_TOP_COLOR = 0xFFF5F5F5;
-  private static final int MAJOR_CATEGORY_BOTTOM_COLOR = 0xFFD2D2D2;
-  private static final int MAJOR_CATEGORY_PRESSED_TOP_COLOR = 0xFFAAAAAA;
-  private static final int MAJOR_CATEGORY_PRESSED_BOTTOM_COLOR = 0xFF828282;
-  private static final int MAJOR_CATEGORY_SHADOW_COLOR = 0x57000000;
-
-  // TODO(hidehiko): This parameter is not fixed yet. Needs to revisit again.
-  private static final float SYMBOL_VIEW_MINOR_CATEGORY_TAB_SELECTED_HEIGHT = 6f;
+  private static final int ENTER_BUTTON_SOURCE_ID = 2;
 
   private static final int NUM_TABS = 6;
 
-  private SymbolCandidateStorage symbolCandidateStorage;
+  private Optional<Integer> viewHeight = Optional.absent();
+  private Optional<Integer> numberKeyboardHeight = Optional.absent();
+  private Optional<Float> keyboardHeightScale = Optional.absent();
 
-  @VisibleForTesting SymbolMajorCategory currentMajorCategory;
+  private Optional<SymbolCandidateStorage> symbolCandidateStorage = Optional.absent();
+
+  @VisibleForTesting SymbolMajorCategory currentMajorCategory = SymbolMajorCategory.NUMBER;
   @VisibleForTesting boolean emojiEnabled;
   private boolean isPasswordField;
   @VisibleForTesting EmojiProviderType emojiProviderType = EmojiProviderType.NONE;
 
   @VisibleForTesting SharedPreferences sharedPreferences;
-  @VisibleForTesting AlertDialog emojiProviderDialog;
+  @VisibleForTesting Optional<AlertDialog> emojiProviderDialog = Optional.absent();
 
-  private ViewEventListener viewEventListener;
+  private Optional<ViewEventListener> viewEventListener = Optional.absent();
   private final KeyEventButtonTouchListener deleteKeyEventButtonTouchListener =
       createDeleteKeyEventButtonTouchListener(getResources());
-  private OnClickListener closeButtonClickListener = null;
+  private final KeyEventButtonTouchListener enterKeyEventButtonTouchListener =
+      createEnterKeyEventButtonTouchListener(getResources());
+  private Optional<OnClickListener> closeButtonClickListener = Optional.absent();
+  private Optional<OnClickListener> microphoneButtonClickListener = Optional.absent();
   private final SymbolCandidateSelectListener symbolCandidateSelectListener =
       new SymbolCandidateSelectListener();
 
-  private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
-  private final MozcDrawableFactory mozcDrawableFactory = new MozcDrawableFactory(getResources());
+  private Skin skin = Skin.getFallbackInstance();
   private final SymbolMajorCategoryButtonDrawableFactory majorCategoryButtonDrawableFactory =
-      new SymbolMajorCategoryButtonDrawableFactory(
-          mozcDrawableFactory,
-          MAJOR_CATEGORY_TOP_COLOR,
-          MAJOR_CATEGORY_BOTTOM_COLOR,
-          MAJOR_CATEGORY_PRESSED_TOP_COLOR,
-          MAJOR_CATEGORY_PRESSED_BOTTOM_COLOR,
-          MAJOR_CATEGORY_SHADOW_COLOR,
-          BUTTON_CORNOR_RADIUS * getResources().getDisplayMetrics().density);
+      new SymbolMajorCategoryButtonDrawableFactory(getResources());
   // Candidate text size in dip.
   private float candidateTextSize;
   // Description text size in dip.
   private float desciptionTextSize;
+  private Optional<KeyEventHandler> keyEventHandler = Optional.absent();
+  private boolean isMicrophoneButtonEnabled;
+  private boolean popupEnabled;
 
   public SymbolInputView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
@@ -607,27 +552,28 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   {
     setOutAnimationListener(new OutAnimationAdapter());
-    sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+    sharedPreferences =
+        Preconditions.checkNotNull(PreferenceManager.getDefaultSharedPreferences(getContext()));
   }
 
   private static KeyEventButtonTouchListener createDeleteKeyEventButtonTouchListener(
       Resources resources) {
-    // Use 8 as default value of backspace key code (only for testing).
-    // This code is introduced just for testing purpose due to AndroidMock's limitation.
-    // When we move to EasyMock, we can remove this method.
-    int ucharBackspace = resources == null ? 8 : resources.getInteger(R.integer.uchar_backspace);
-    return new KeyEventButtonTouchListener(DELETE_BUTTON_SOURCE_ID, ucharBackspace);
+    return new KeyEventButtonTouchListener(
+        DELETE_BUTTON_SOURCE_ID, resources.getInteger(R.integer.uchar_backspace));
   }
 
+  private static KeyEventButtonTouchListener createEnterKeyEventButtonTouchListener(
+      Resources resources) {
+    return new KeyEventButtonTouchListener(
+        ENTER_BUTTON_SOURCE_ID, resources.getInteger(R.integer.uchar_linefeed));
+  }
 
   boolean isInflated() {
     return getChildCount() > 0;
   }
 
   void inflateSelf() {
-    if (isInflated()) {
-      throw new IllegalStateException("The symbol input view is already inflated.");
-    }
+    Preconditions.checkState(!isInflated(), "The symbol input view is already inflated.");
 
     // Hack: Because we wrap the real context to inject "retrying" for Drawable loading,
     // LayoutInflater.from(getContext()).getContext() may be different from getContext().
@@ -649,15 +595,110 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    * So, instead, we define another onFinishInflate method and invoke this manually.
    */
   protected void onFinishInflateSelf() {
-    initializeMajorCategoryButtons();
+    if (viewHeight.isPresent() && keyboardHeightScale.isPresent()) {
+      setVerticalDimension(viewHeight.get(), keyboardHeightScale.get());
+    }
+
     initializeMinorCategoryTab();
     initializeCloseButton();
     initializeDeleteButton();
+    initializeEnterButton();
+    initializeMicrophoneButton();
 
-    resetMajorCategoryBackground();
-    resetTabBackground();
+    // Set TouchListener that does nothing. Without this hack, state_pressed event
+    // will be propagated to close / enter key and the drawable will be changed to
+    // state_pressed one unexpectedly. Note that those keys are NOT children of this view.
+    // Setting ClickListener to the key seems to suppress this unexpected highlight, too,
+    // but we want to keep the current TouchListener for the enter key.
+    OnTouchListener doNothingOnTouchListener = new OnTouchListener() {
+      @Override
+      public boolean onTouch(View button, android.view.MotionEvent event) {
+        return true;
+      }
+    };
+    for (int id : new int[] {R.id.button_frame_in_symbol_view,
+                             R.id.symbol_view_backspace_separator,
+                             R.id.symbol_major_category,
+                             R.id.symbol_separator_1,
+                             R.id.symbol_separator_2,
+                             R.id.symbol_separator_3,
+                             R.id.symbol_view_close_button_separator,
+                             R.id.symbol_view_enter_button_separator}) {
+      findViewById(id).setOnTouchListener(doNothingOnTouchListener);
+    }
+
+    KeyboardView keyboardView = KeyboardView.class.cast(findViewById(R.id.number_keyboard));
+    keyboardView.setPopupEnabled(popupEnabled);
+    keyboardView.setKeyEventHandler(new KeyEventHandler(
+        Looper.getMainLooper(),
+        new KeyboardActionListener() {
+          @Override
+          public void onRelease(int keycode) {
+          }
+
+          @Override
+          public void onPress(int keycode) {
+            if (viewEventListener.isPresent()) {
+              viewEventListener.get().onFireFeedbackEvent(FeedbackEvent.KEY_DOWN);
+            }
+          }
+
+          @Override
+          public void onKey(int primaryCode, List<TouchEvent> touchEventList) {
+            if (keyEventHandler.isPresent()) {
+              keyEventHandler.get().sendKey(primaryCode, touchEventList);
+            }
+          }
+
+          @Override
+          public void onCancel() {
+          }
+        },
+        getResources().getInteger(R.integer.config_repeat_key_delay),
+        getResources().getInteger(R.integer.config_repeat_key_interval),
+        getResources().getInteger(R.integer.config_long_press_key_delay)));
+
     enableEmoji(emojiEnabled);
+
+    // Disable h/w acceleration to use a PictureDrawable.
+    for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
+      getMajorCategoryButton(majorCategory).setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+    }
+
+    updateSkinAwareDrawable();
     reset();
+  }
+
+  private static void setLayoutHeight(View view, int height) {
+    ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+    layoutParams.height = height;
+    view.setLayoutParams(layoutParams);
+  }
+
+  public void setVerticalDimension(int symbolInputViewHeight, float keyboardHeightScale) {
+    this.viewHeight = Optional.of(symbolInputViewHeight);
+    this.keyboardHeightScale = Optional.of(keyboardHeightScale);
+
+    Resources resources = getResources();
+    float originalMajorCategoryHeight =
+        resources.getDimension(R.dimen.symbol_view_major_category_height);
+    int majorCategoryHeight = Math.round(originalMajorCategoryHeight * keyboardHeightScale);
+    this.numberKeyboardHeight = Optional.of(
+        symbolInputViewHeight - majorCategoryHeight
+        - resources.getDimensionPixelSize(R.dimen.button_frame_height));
+
+    if (!isInflated()) {
+      return;
+    }
+
+    setLayoutHeight(this, symbolInputViewHeight);
+    setLayoutHeight(getMajorCategoryFrame(), majorCategoryHeight);
+    setLayoutHeight(findViewById(R.id.number_keyboard), numberKeyboardHeight.get());
+    setLayoutHeight(findViewById(R.id.number_keyboard_frame), LayoutParams.WRAP_CONTENT);
+  }
+
+  public int getNumberKeyboardHeight() {
+    return numberKeyboardHeight.get();
   }
 
   private void resetCandidateViewPager() {
@@ -667,33 +708,43 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     ViewPager candidateViewPager = getCandidateViewPager();
     TabHost tabHost = getTabHost();
+    Preconditions.checkState(symbolCandidateStorage.isPresent());
 
     SymbolTabWidgetViewPagerAdapter adapter = new SymbolTabWidgetViewPagerAdapter(
         getContext(),
-        symbolCandidateStorage, viewEventListener, symbolCandidateSelectListener,
-        currentMajorCategory, skinType, emojiProviderType, tabHost, candidateViewPager,
+        symbolCandidateStorage.get(), viewEventListener, symbolCandidateSelectListener,
+        currentMajorCategory, skin, emojiProviderType, tabHost, candidateViewPager,
         candidateTextSize, desciptionTextSize);
     candidateViewPager.setAdapter(adapter);
     candidateViewPager.setOnPageChangeListener(adapter);
     tabHost.setOnTabChangedListener(adapter);
   }
 
-  private void resetMajorCategoryBackground() {
-    View view = findViewById(R.id.symbol_major_category);
+  @SuppressWarnings("deprecation")
+  private void updateMajorCategoryBackgroundSkin() {
+    View view = getMajorCategoryFrame();
     if (view != null) {
-      if (skinType == null) {
-        view.setBackgroundColor(Color.BLACK);
-      } else {
-        view.setBackgroundResource(skinType.windowBackgroundResourceId);
-      }
+      view.setBackgroundDrawable(
+          skin.symbolMajorCategoryBackgroundDrawable.getConstantState().newDrawable());
     }
   }
 
-  private void setMozcDrawable(ImageView imageView, int resourceId) {
-    Optional<Drawable> drawable = mozcDrawableFactory.getDrawable(resourceId);
-    if (drawable.isPresent()) {
-      imageView.setImageDrawable(drawable.get());
+  @SuppressWarnings("deprecation")
+  private void updateMinorCategoryBackgroundSkin() {
+    View view = getMinorCategoryFrame();
+    if (view != null) {
+      view.setBackgroundDrawable(
+          skin.buttonFrameBackgroundDrawable.getConstantState().newDrawable());
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  private void updateNumberKeyboardSkin() {
+    getNumberKeyboardView().setSkin(skin);
+    findViewById(R.id.number_frame).setBackgroundDrawable(
+        skin.windowBackgroundDrawable.getConstantState().newDrawable());
+    findViewById(R.id.button_frame_in_symbol_view).setBackgroundDrawable(
+        skin.buttonFrameBackgroundDrawable.getConstantState().newDrawable());
   }
 
   /**
@@ -701,18 +752,15 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    * It is necessary that the inflation has been done before this method invocation.
    */
   @SuppressWarnings("deprecation")
-  private void initializeMajorCategoryButtons() {
+  private void updateMajorCategoryButtonsSkin() {
+    Resources resources = getResources();
     for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
-      ImageView view = ImageView.class.cast(findViewById(majorCategory.buttonResourceId));
-      if (view == null) {
-        throw new IllegalStateException(
-            "The view corresponding to " + majorCategory.name() + " is not found.");
-      }
+      MozcImageButton view = getMajorCategoryButton(majorCategory);
+      Preconditions.checkState(
+          view != null, "The view corresponding to " + majorCategory.name() + " is not found.");
       view.setOnClickListener(new MajorCategoryButtonClickListener(majorCategory));
-      setMozcDrawable(view, majorCategory.buttonImageResourceId);
-
       switch (majorCategory) {
-        case SYMBOL:
+        case NUMBER:
           view.setBackgroundDrawable(
               majorCategoryButtonDrawableFactory.createLeftButtonDrawable());
           break;
@@ -725,16 +773,16 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
               majorCategoryButtonDrawableFactory.createCenterButtonDrawable());
           break;
       }
+      view.setImageDrawable(skin.getDrawable(resources, majorCategory.buttonImageResourceId));
+      // Update the padding since setBackgroundDrawable() overwrites it.
+      view.setMaxImageHeight(
+          resources.getDimensionPixelSize(majorCategory.maxImageHeightResourceId));
     }
   }
 
   private void initializeMinorCategoryTab() {
-    TabHost tabhost = TabHost.class.cast(findViewById(android.R.id.tabhost));
+    TabHost tabhost = getTabHost();
     tabhost.setup();
-
-    float textSize = getResources().getDimension(R.dimen.symbol_view_minor_category_text_size);
-    int textColor = getResources().getColor(android.R.color.black);
-
     // Create NUM_TABS (= 6) tabs.
     // Note that we may want to change the number of tabs, however due to the limitation of
     // the current TabHost implementation, it is difficult. Fortunately, all major categories
@@ -742,12 +790,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     for (int i = 0; i < NUM_TABS; ++i) {
       // The tab's id is the index of the tab.
       TabSpec tab = tabhost.newTabSpec(String.valueOf(i));
-      TextView textView = new TabTextView(getContext());
-      textView.setTypeface(Typeface.DEFAULT_BOLD);
-      textView.setTextColor(textColor);
-      textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
-      textView.setGravity(Gravity.CENTER);
-      tab.setIndicator(textView);
+      MozcImageView view = new MozcImageView(getContext());
+      view.setSoundEffectsEnabled(false);
+      tab.setIndicator(view);
       // Set dummy view for the content. The actual content will be managed by ViewPager.
       tab.setContent(R.id.symbol_input_dummy);
       tabhost.addTab(tab);
@@ -759,79 +804,84 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   }
 
   @SuppressWarnings("deprecation")
-  private void resetTabBackground() {
+  private void updateTabBackgroundSkin() {
     if (!isInflated()) {
       return;
     }
-
-    float density = getResources().getDisplayMetrics().density;
-
-    TabWidget tabWidget = TabWidget.class.cast(findViewById(android.R.id.tabs));
+    getTabHost().setBackgroundDrawable(
+        skin.windowBackgroundDrawable.getConstantState().newDrawable());
+    TabWidget tabWidget = getTabWidget();
     for (int i = 0; i < tabWidget.getTabCount(); ++i) {
       View view = tabWidget.getChildTabViewAt(i);
-      view.setBackgroundDrawable(createTabBackgroundDrawable(skinType, density));
+      view.setBackgroundDrawable(createTabBackgroundDrawable(skin));
     }
   }
 
-  private static Drawable createTabBackgroundDrawable(SkinType skinType, float density) {
+  private static Drawable createTabBackgroundDrawable(Skin skin) {
+    Preconditions.checkNotNull(skin);
     return new LayerDrawable(new Drawable[] {
         BackgroundDrawableFactory.createSelectableDrawable(
             new TabSelectedBackgroundDrawable(
-                (int) (SYMBOL_VIEW_MINOR_CATEGORY_TAB_SELECTED_HEIGHT * density),
-                skinType.symbolMinorCategoryTabSelectedColor),
-            null),
-        BackgroundDrawableFactory.createPressableDrawable(
-            new ColorDrawable(skinType.symbolMinorCategoryTabPressedColor), null),
+                Math.round(skin.symbolMinorIndicatorHeightDimension),
+                skin.symbolMinorCategoryTabSelectedColor),
+            Optional.<Drawable>absent()),
+        createMinorButtonBackgroundDrawable(skin)
     });
   }
 
-  private void resetTabText() {
+  private void resetTabImageForMinorCategory() {
     if (!isInflated()) {
       return;
     }
-
-    TabWidget tabWidget = TabWidget.class.cast(findViewById(android.R.id.tabs));
+    TabWidget tabWidget = getTabWidget();
     List<SymbolMinorCategory> minorCategoryList = currentMajorCategory.minorCategories;
-    for (int i = 0; i < tabWidget.getChildCount(); ++i) {
-      TextView textView = TextView.class.cast(tabWidget.getChildTabViewAt(i));
-      textView.setText(minorCategoryList.get(i).textResourceId);
+    int definedTabSize = Math.min(minorCategoryList.size(), tabWidget.getChildCount());
+    for (int i = 0; i < definedTabSize; ++i) {
+      MozcImageView view = MozcImageView.class.cast(tabWidget.getChildTabViewAt(i));
+      SymbolMinorCategory symbolMinorCategory = minorCategoryList.get(i);
+      view.setRawId(symbolMinorCategory.drawableResourceId);
+      if (symbolMinorCategory.maxImageHeightResourceId != SymbolMinorCategory.INVALID_RESOURCE_ID) {
+        view.setMaxImageHeight(
+            getResources().getDimensionPixelSize(symbolMinorCategory.maxImageHeightResourceId));
+      }
+      if (symbolMinorCategory.contentDescriptionResourceId
+          != SymbolMinorCategory.INVALID_RESOURCE_ID) {
+        view.setContentDescription(
+            getResources().getString(symbolMinorCategory.contentDescriptionResourceId));
+      }
     }
   }
 
-  private static Drawable createButtonBackgroundDrawable(SkinType skinType, float density) {
+  private static Drawable createMajorButtonBackgroundDrawable(Skin skin) {
+    int padding = Math.round(skin.symbolMajorButtonPaddingDimension);
+    int round = Math.round(skin.symbolMajorButtonRoundDimension);
     return BackgroundDrawableFactory.createPressableDrawable(
         new RoundRectKeyDrawable(
-            (int) (BUTTON_LEFT_OFFSET * density),
-            (int) (BUTTON_TOP_OFFSET * density),
-            (int) (BUTTON_RIGHT_OFFSET * density),
-            (int) (BUTTON_BOTTOM_OFFSET * density),
-            (int) (BUTTON_CORNOR_RADIUS * density),
-            skinType.symbolPressedFunctionKeyTopColor,
-            skinType.symbolPressedFunctionKeyBottomColor,
-            skinType.symbolPressedFunctionKeyHighlightColor,
-            skinType.symbolPressedFunctionKeyShadowColor),
-        new RoundRectKeyDrawable(
-            (int) (BUTTON_LEFT_OFFSET * density),
-            (int) (BUTTON_TOP_OFFSET * density),
-            (int) (BUTTON_RIGHT_OFFSET * density),
-            (int) (BUTTON_BOTTOM_OFFSET * density),
-            (int) (BUTTON_CORNOR_RADIUS * density),
-            skinType.symbolReleasedFunctionKeyTopColor,
-            skinType.symbolReleasedFunctionKeyBottomColor,
-            skinType.symbolReleasedFunctionKeyHighlightColor,
-            skinType.symbolReleasedFunctionKeyShadowColor));
+            padding, padding, padding, padding, round,
+            skin.symbolPressedFunctionKeyTopColor,
+            skin.symbolPressedFunctionKeyBottomColor,
+            skin.symbolPressedFunctionKeyHighlightColor,
+            skin.symbolPressedFunctionKeyShadowColor),
+        Optional.<Drawable>of(new RoundRectKeyDrawable(
+            padding, padding, padding, padding, round,
+            skin.symbolReleasedFunctionKeyTopColor,
+            skin.symbolReleasedFunctionKeyBottomColor,
+            skin.symbolReleasedFunctionKeyHighlightColor,
+            skin.symbolReleasedFunctionKeyShadowColor)));
+  }
+
+  private static Drawable createMinorButtonBackgroundDrawable(Skin skin) {
+    return BackgroundDrawableFactory.createPressableDrawable(
+        new ColorDrawable(skin.symbolMinorCategoryTabPressedColor),
+        Optional.<Drawable>absent());
   }
 
   @SuppressWarnings("deprecation")
   private void initializeCloseButton() {
     ImageView closeButton = ImageView.class.cast(findViewById(R.id.symbol_view_close_button));
-    if (closeButtonClickListener != null) {
-      closeButton.setOnClickListener(closeButtonClickListener);
+    if (closeButtonClickListener.isPresent()) {
+      closeButton.setOnClickListener(closeButtonClickListener.get());
     }
-    closeButton.setBackgroundDrawable(
-        createButtonBackgroundDrawable(skinType, getResources().getDisplayMetrics().density));
-    setMozcDrawable(closeButton, R.raw.symbol__function__close);
-    closeButton.setPadding(2, 2, 2, 2);
   }
 
   /**
@@ -840,37 +890,77 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    */
   @SuppressWarnings("deprecation")
   private void initializeDeleteButton() {
-    ImageView deleteButton = ImageView.class.cast(findViewById(R.id.symbol_view_delete_button));
+    MozcImageView deleteButton =
+        MozcImageView.class.cast(findViewById(R.id.symbol_view_delete_button));
     deleteButton.setOnTouchListener(deleteKeyEventButtonTouchListener);
-    deleteButton.setBackgroundDrawable(
-        createButtonBackgroundDrawable(skinType, getResources().getDisplayMetrics().density));
-    setMozcDrawable(deleteButton, R.raw.symbol__function__delete);
-    deleteButton.setPadding(0, 0, 0, 0);
   }
 
-  TabHost getTabHost() {
+  /** c.f., {@code initializeDeleteButton}. */
+  @SuppressWarnings("deprecation")
+  private void initializeEnterButton() {
+    ImageView enterButton = ImageView.class.cast(findViewById(R.id.symbol_view_enter_button));
+    enterButton.setOnTouchListener(enterKeyEventButtonTouchListener);
+  }
+
+  private void initializeMicrophoneButton() {
+    MozcImageView microphoneButton = getMicrophoneButton();
+    if (microphoneButtonClickListener.isPresent()) {
+      microphoneButton.setOnClickListener(microphoneButtonClickListener.get());
+    }
+    microphoneButton.setVisibility(isMicrophoneButtonEnabled ? VISIBLE : GONE);
+  }
+
+  @SuppressWarnings("deprecation")
+  private void updateSeparatorsSkin() {
+    Resources resources = getResources();
+    int minorPaddingSize = (int) resources.getFraction(
+        R.fraction.symbol_separator_padding_fraction,
+        resources.getDimensionPixelSize(R.dimen.button_frame_height), 0);
+    findViewById(R.id.symbol_view_backspace_separator).setBackgroundDrawable(
+        new InsetDrawable(new ColorDrawable(skin.symbolSeparatorColor),
+                          0, minorPaddingSize, 0, minorPaddingSize));
+    int majorPaddingSize = (int) resources.getFraction(
+        R.fraction.symbol_separator_padding_fraction,
+        resources.getDimensionPixelSize(R.dimen.symbol_view_major_category_height), 0);
+    InsetDrawable separator = new InsetDrawable(
+        new ColorDrawable(skin.symbolSeparatorColor), 0, majorPaddingSize, 0, majorPaddingSize);
+    for (int id : new int[] {R.id.symbol_view_close_button_separator,
+                             R.id.symbol_view_enter_button_separator}) {
+      findViewById(id).setBackgroundDrawable(separator.getConstantState().newDrawable());
+    }
+
+    for (int id : new int[] {R.id.symbol_separator_1,
+                             R.id.symbol_separator_3}) {
+      findViewById(id).setBackgroundDrawable(
+          skin.keyboardFrameSeparatorBackgroundDrawable.getConstantState().newDrawable());
+    }
+    findViewById(R.id.symbol_separator_2).setBackgroundDrawable(
+        skin.symbolSeparatorAboveMajorCategoryBackgroundDrawable
+            .getConstantState().newDrawable());
+  }
+
+  @VisibleForTesting TabHost getTabHost() {
     return TabHost.class.cast(findViewById(android.R.id.tabhost));
   }
 
-  ViewPager getCandidateViewPager() {
+  private ViewPager getCandidateViewPager() {
     return ViewPager.class.cast(findViewById(R.id.symbol_input_candidate_view_pager));
   }
 
-  ImageButton getMajorCategoryButton(SymbolMajorCategory majorCategory) {
-    if (majorCategory == null) {
-      throw new NullPointerException("majorCategory shouldn't be null.");
-    }
-    return ImageButton.class.cast(findViewById(majorCategory.buttonResourceId));
+  @VisibleForTesting MozcImageButton getMajorCategoryButton(SymbolMajorCategory majorCategory) {
+    Preconditions.checkNotNull(majorCategory);
+    return MozcImageButton.class.cast(findViewById(majorCategory.buttonResourceId));
   }
 
-  View getEmojiDisabledMessageView() {
+  @VisibleForTesting View getEmojiDisabledMessageView() {
     return findViewById(R.id.symbol_emoji_disabled_message_view);
   }
 
   public void setEmojiEnabled(boolean unicodeEmojiEnabled, boolean carrierEmojiEnabled) {
     this.emojiEnabled = unicodeEmojiEnabled || carrierEmojiEnabled;
     enableEmoji(this.emojiEnabled);
-    symbolCandidateStorage.setEmojiEnabled(unicodeEmojiEnabled, carrierEmojiEnabled);
+    Preconditions.checkState(symbolCandidateStorage.isPresent());
+    symbolCandidateStorage.get().setEmojiEnabled(unicodeEmojiEnabled, carrierEmojiEnabled);
   }
 
   public void setPasswordField(boolean isPasswordField) {
@@ -883,36 +973,47 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       return;
     }
 
-    ImageButton imageButton = getMajorCategoryButton(SymbolMajorCategory.EMOJI);
+    MozcImageButton imageButton = getMajorCategoryButton(SymbolMajorCategory.EMOJI);
     imageButton.setBackgroundDrawable(
         majorCategoryButtonDrawableFactory.createRightButtonDrawable(enableEmoji));
+    // Update the padding since setBackgroundDrawable() overwrites it.
+    imageButton.setMaxImageHeight(getResources().getDimensionPixelSize(
+        SymbolMajorCategory.EMOJI.maxImageHeightResourceId));
   }
 
-  /**
-   * Resets the status.
-   */
-  void reset() {
-    // the current minor category is also updated in setMajorCategory.
-    setMajorCategory(SymbolMajorCategory.SYMBOL);
+  void resetToMajorCategory(Optional<SymbolMajorCategory> category) {
+    Preconditions.checkNotNull(category);
+    setMajorCategory(category.or(currentMajorCategory));
     deleteKeyEventButtonTouchListener.reset();
+    enterKeyEventButtonTouchListener.reset();
+  }
+
+  @VisibleForTesting void reset() {
+    // the current minor category is also updated in setMajorCategory.
+    resetToMajorCategory(Optional.of(SymbolMajorCategory.NUMBER));
   }
 
   @Override
   public void setVisibility(int visibility) {
     int previousVisibility = getVisibility();
     super.setVisibility(visibility);
-    if (viewEventListener != null
-        && previousVisibility == View.VISIBLE && visibility != View.VISIBLE) {
-      viewEventListener.onCloseSymbolInputView();
+    if (viewEventListener.isPresent()) {
+      if (previousVisibility == View.VISIBLE && visibility != View.VISIBLE) {
+        viewEventListener.get().onCloseSymbolInputView();
+      } else if (previousVisibility != View.VISIBLE && visibility == View.VISIBLE) {
+        viewEventListener.get().onShowSymbolInputView(Collections.<TouchEvent>emptyList());
+      }
     }
   }
 
   void setSymbolCandidateStorage(SymbolCandidateStorage symbolCandidateStorage) {
-    this.symbolCandidateStorage = symbolCandidateStorage;
+    this.symbolCandidateStorage = Optional.of(symbolCandidateStorage);
   }
 
   void setKeyEventHandler(KeyEventHandler keyEventHandler) {
+    this.keyEventHandler = Optional.of(keyEventHandler);
     deleteKeyEventButtonTouchListener.setKeyEventHandler(keyEventHandler);
+    enterKeyEventButtonTouchListener.setKeyEventHandler(keyEventHandler);
   }
 
   void setCandidateTextDimension(float candidateTextSize, float descriptionTextSize) {
@@ -923,12 +1024,19 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     this.desciptionTextSize = descriptionTextSize;
   }
 
+  void setPopupEnabled(boolean popupEnabled) {
+    this.popupEnabled = popupEnabled;
+    if (!isInflated()) {
+      return;
+    }
+    getNumberKeyboardView().setPopupEnabled(popupEnabled);
+  }
+
   /**
    * Initializes EmojiProvider selection dialog, if necessary.
-   * Exposed as protected for testing purpose.
    */
-  protected void maybeInitializeEmojiProviderDialog(Context context) {
-    if (emojiProviderDialog != null) {
+  @VisibleForTesting void maybeInitializeEmojiProviderDialog(Context context) {
+    if (emojiProviderDialog.isPresent()) {
       return;
     }
 
@@ -938,7 +1046,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
           .setTitle(R.string.pref_emoji_provider_type_title)
           .setItems(R.array.pref_emoji_provider_type_entries, listener)
           .create();
-      this.emojiProviderDialog = dialog;
+      this.emojiProviderDialog = Optional.of(dialog);
     } catch (InflateException e) {
       // Ignore the exception.
     }
@@ -950,32 +1058,66 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    * The view is updated.
    * The active minor category is also updated.
    *
+   * This method submit a preedit text except for a {@link SymbolMajorCategory#NUMBER} major
+   * category since this class commit a candidate directly.
+   *
    * @param newCategory the major category to show.
    */
-  protected void setMajorCategory(SymbolMajorCategory newCategory) {
-    if (newCategory == null) {
-      throw new NullPointerException("newCategory must be non-null.");
+  @VisibleForTesting void setMajorCategory(SymbolMajorCategory newCategory) {
+    Preconditions.checkNotNull(newCategory);
+
+    {
+      SymbolCandidateView symbolCandidateView =
+          SymbolCandidateView.class.cast(findViewById(R.id.symbol_input_candidate_view));
+      if (symbolCandidateView != null) {
+        symbolCandidateView.reset();
+      }
     }
+
+    if (newCategory != SymbolMajorCategory.NUMBER && viewEventListener.isPresent()) {
+      viewEventListener.get().onSubmitPreedit();
+    }
+
+    if (newCategory == SymbolMajorCategory.NUMBER) {
+      CandidateView candidateView =
+          CandidateView.class.cast(findViewById(R.id.candidate_view_in_symbol_view));
+      candidateView.clearAnimation();
+      candidateView.setVisibility(View.GONE);
+      candidateView.reset();
+    }
+
     currentMajorCategory = newCategory;
 
-    // Reset the minor category to the default value.
-    resetTabText();
-    resetCandidateViewPager();
-    SymbolMinorCategory minorCategory = currentMajorCategory.getDefaultMinorCategory();
-    if (symbolCandidateStorage.getCandidateList(minorCategory).getCandidatesCount() == 0) {
-      minorCategory = currentMajorCategory.getMinorCategoryByRelativeIndex(minorCategory, 1);
+    if (currentMajorCategory == SymbolMajorCategory.NUMBER) {
+      findViewById(android.R.id.tabhost).setVisibility(View.GONE);
+      findViewById(R.id.number_frame).setVisibility(View.VISIBLE);
+      setNumberKeyboard();
+    } else {
+      findViewById(android.R.id.tabhost).setVisibility(View.VISIBLE);
+      findViewById(R.id.number_frame).setVisibility(View.GONE);
+      updateMinorCategory();
     }
-    int index = newCategory.minorCategories.indexOf(minorCategory);
-    getCandidateViewPager().setCurrentItem(index);
-    getTabHost().setCurrentTab(index);
+
+    // Hide overlapping separator
+    if (currentMajorCategory == SymbolMajorCategory.NUMBER) {
+      findViewById(R.id.symbol_view_close_button_separator).setVisibility(View.INVISIBLE);
+    } else {
+      findViewById(R.id.symbol_view_close_button_separator).setVisibility(View.VISIBLE);
+    }
+
+    if (currentMajorCategory == SymbolMajorCategory.EMOJI) {
+      findViewById(R.id.symbol_view_enter_button_separator).setVisibility(View.INVISIBLE);
+    } else {
+      findViewById(R.id.symbol_view_enter_button_separator).setVisibility(View.VISIBLE);
+    }
 
     // Update visibility relating attributes.
     for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
       // Update major category selector button's look and feel.
-      ImageButton button = getMajorCategoryButton(majorCategory);
+      MozcImageButton button = getMajorCategoryButton(majorCategory);
       if (button != null) {
-        button.setSelected(majorCategory == newCategory);
-        button.setEnabled(majorCategory != newCategory);
+        button.setSelected(majorCategory == currentMajorCategory);
+        button.setEnabled(majorCategory != currentMajorCategory);
       }
     }
 
@@ -983,15 +1125,62 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     if (emojiDisabledMessageView != null) {
       // Show messages about emoji-disabling, if necessary.
       emojiDisabledMessageView.setVisibility(
-          newCategory == SymbolMajorCategory.EMOJI && !emojiEnabled ? View.VISIBLE : View.GONE);
+          currentMajorCategory == SymbolMajorCategory.EMOJI
+          && !emojiEnabled ? View.VISIBLE : View.GONE);
     }
+  }
+
+  private void setNumberKeyboard() {
+    final KeyboardSpecification spec = KeyboardSpecification.SYMBOL_NUMBER;
+    final KeyboardFactory factory = new KeyboardFactory();
+
+    getNumberKeyboardView().addOnLayoutChangeListener(new OnLayoutChangeListener() {
+      @Override
+      public void onLayoutChange(
+          View view, int left, int top, int right, int bottom,
+          int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        if (right - left == 0 || bottom - top == 0) {
+          return;
+        }
+        KeyboardView keyboardView = KeyboardView.class.cast(view);
+        Keyboard keyboard = factory.get(getResources(), spec, right - left, bottom - top);
+        keyboardView.setKeyboard(keyboard);
+        keyboardView.invalidate();
+      }
+    });
+  }
+
+  private void updateMinorCategory() {
+    // Reset the minor category to the default value.
+    resetTabImageForMinorCategory();
+    resetCandidateViewPager();
+    SymbolMinorCategory minorCategory = currentMajorCategory.getDefaultMinorCategory();
+    Preconditions.checkState(symbolCandidateStorage.isPresent());
+    if (symbolCandidateStorage.get().getCandidateList(minorCategory).getCandidatesCount() == 0) {
+      minorCategory = currentMajorCategory.getMinorCategoryByRelativeIndex(minorCategory, 1);
+    }
+    int index = currentMajorCategory.minorCategories.indexOf(minorCategory);
+    getCandidateViewPager().setCurrentItem(index);
+
+    // Disable feedback before setting the current tab programatically.
+    // Background: TabHost.setCurrentTab calls back onTabChanged, in which feedback event is fired.
+    // However, we don't have ways to distinguish if onTabChanged is called through user click
+    // event or by the call of setCurrentTab.  If we don't disable feedback here, the click sound
+    // effect is fired twice; one is from the onClick event on major category tab and the other is
+    // by the call of setCurrentTab here.  See b/17119766.
+    SymbolTabWidgetViewPagerAdapter adapter =
+        SymbolTabWidgetViewPagerAdapter.class.cast(getCandidateViewPager().getAdapter());
+    adapter.setFeedbackEnabled(false);
+    getTabHost().setCurrentTab(index);
+    adapter.setFeedbackEnabled(true);
   }
 
   void setEmojiProviderType(EmojiProviderType emojiProviderType) {
     Preconditions.checkNotNull(emojiProviderType);
 
+    Preconditions.checkState(symbolCandidateStorage.isPresent());
     this.emojiProviderType = emojiProviderType;
-    this.symbolCandidateStorage.setEmojiProviderType(emojiProviderType);
+    this.symbolCandidateStorage.get().setEmojiProviderType(emojiProviderType);
     if (!isInflated()) {
       return;
     }
@@ -999,29 +1188,99 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     resetCandidateViewPager();
   }
 
-  void setViewEventListener(ViewEventListener listener, OnClickListener closeButtonClickListener) {
-    if (listener == null) {
-      throw new NullPointerException("lister must be non-null.");
-    }
-    viewEventListener = listener;
-    this.closeButtonClickListener = closeButtonClickListener;
+  void setEventListener(
+      ViewEventListener viewEventListener, OnClickListener closeButtonClickListener,
+      OnClickListener microphoneButtonClickListener) {
+    this.viewEventListener = Optional.of(viewEventListener);
+    this.closeButtonClickListener = Optional.of(closeButtonClickListener);
+    this.microphoneButtonClickListener = Optional.of(microphoneButtonClickListener);
   }
 
-  void setSkinType(SkinType skinType) {
-    if (this.skinType == skinType) {
+  void setMicrophoneButtonEnabled(boolean enabled) {
+    isMicrophoneButtonEnabled = enabled;
+    if (isInflated()) {
+      getMicrophoneButton().setVisibility(enabled ? VISIBLE : GONE);
+    }
+  }
+
+  void setSkin(Skin skin) {
+    Preconditions.checkNotNull(skin);
+    if (this.skin.equals(skin)) {
       return;
     }
-
-    this.skinType = skinType;
-    mozcDrawableFactory.setSkinType(skinType);
+    this.skin = skin;
+    majorCategoryButtonDrawableFactory.setSkin(skin);
     if (!isInflated()) {
       return;
     }
+    updateSkinAwareDrawable();
+  }
 
-    // Reset the minor category tab, candidate view and major category buttons.
-    resetTabBackground();
-    resetCandidateViewPager();
-    resetMajorCategoryBackground();
+  @SuppressWarnings("deprecation")
+  private void updateSkinAwareDrawable() {
+    updateTabBackgroundSkin();
+    resetTabImageForMinorCategory();
+
+    SymbolTabWidgetViewPagerAdapter adapter =
+        SymbolTabWidgetViewPagerAdapter.class.cast(getCandidateViewPager().getAdapter());
+    if (adapter != null) {
+      adapter.setSkin(skin);
+    }
+    updateMajorCategoryBackgroundSkin();
+    updateMajorCategoryButtonsSkin();
+    updateMinorCategoryBackgroundSkin();
+    updateNumberKeyboardSkin();
+    updateSeparatorsSkin();
+    getMicrophoneButton().setSkin(skin);
+
+    TabWidget tabWidget = TabWidget.class.cast(findViewById(android.R.id.tabs));
+    for (int i = 0; i < tabWidget.getChildCount(); ++i) {
+      MozcImageView.class.cast(tabWidget.getChildTabViewAt(i)).setSkin(skin);
+    }
+
+    // Note delete button shouldn't be applied createMajorButtonBackgroundDrawable as background
+    // as it should show different background (same as minor categories).
+    for (int id : new int[] {R.id.symbol_view_close_button,
+                             R.id.symbol_view_enter_button}) {
+      MozcImageView view = MozcImageView.class.cast(findViewById(id));
+      view.setSkin(skin);
+      view.setBackgroundDrawable(createMajorButtonBackgroundDrawable(skin));
+    }
+    MozcImageView deleteKeyView =
+        MozcImageView.class.cast(findViewById(R.id.symbol_view_delete_button));
+    deleteKeyView.setSkin(skin);
+    deleteKeyView.setBackgroundDrawable(createMinorButtonBackgroundDrawable(skin));
+  }
+
+  private KeyboardView getNumberKeyboardView() {
+    return KeyboardView.class.cast(findViewById(R.id.number_keyboard));
+  }
+
+  private LinearLayout getMajorCategoryFrame() {
+    return LinearLayout.class.cast(findViewById(R.id.symbol_major_category));
+  }
+
+  private LinearLayout getMinorCategoryFrame() {
+    return LinearLayout.class.cast(findViewById(R.id.symbol_minor_category));
+  }
+
+  private TabWidget getTabWidget() {
+    return TabWidget.class.cast(findViewById(android.R.id.tabs));
+  }
+
+  private MozcImageView getMicrophoneButton() {
+    return MozcImageView.class.cast(findViewById(R.id.microphone_button));
+  }
+
+  @Override
+  protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    super.onSizeChanged(w, h, oldw, oldh);
+    // The boundary of Drawable instance which has been set as background
+    // is not updated automatically.
+    // Update the boundary below.
+    if (isInflated()) {
+      updateSkinAwareDrawable();
+    }
   }
 
   @Override

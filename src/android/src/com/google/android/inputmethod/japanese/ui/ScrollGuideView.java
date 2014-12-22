@@ -31,7 +31,7 @@ package org.mozc.android.inputmethod.japanese.ui;
 
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.RectKeyDrawable;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -51,8 +51,8 @@ public class ScrollGuideView extends View {
 
   private final int scrollBarMinimumHeight = getScrollBarMinimumHeight(getResources());
   private Optional<SnapScroller> snapScroller = Optional.absent();
-  private SkinType skinType = SkinType.BLUE_LIGHTGRAY;
-  @VisibleForTesting Drawable scrollBarDrawable = createScrollBarDrawable(skinType);
+  private Skin skin = Skin.getFallbackInstance();
+  @VisibleForTesting Drawable scrollBarDrawable = createScrollBarDrawable(skin);
 
   public ScrollGuideView(Context context) {
     super(context);
@@ -66,13 +66,12 @@ public class ScrollGuideView extends View {
     super(context, attributeSet, defStyle);
   }
 
-  private static Drawable createScrollBarDrawable(SkinType skinType) {
+  private static Drawable createScrollBarDrawable(Skin skin) {
     // TODO(hidehiko): Probably we should rename the RectKeyDrawable,
     //   because this usage is not the key but actually we can reuse the code as is.
-    Preconditions.checkNotNull(skinType);
     return new RectKeyDrawable(1, 0, 1, 1,
-                               skinType.candidateScrollBarTopColor,
-                               skinType.candidateScrollBarBottomColor,
+                               skin.candidateScrollBarTopColor,
+                               skin.candidateScrollBarBottomColor,
                                0, 0, 0, 0);
   }
 
@@ -82,12 +81,15 @@ public class ScrollGuideView extends View {
   }
 
   /** Sets the skin type, and regenerates an indicator drawable if necessary. */
-  public void setSkinType(SkinType skinType) {
-    if (this.skinType == Preconditions.checkNotNull(skinType)) {
+  @SuppressWarnings("deprecation")
+  public void setSkin(Skin skin) {
+    Preconditions.checkNotNull(skin);
+    if (this.skin.equals(skin)) {
       return;
     }
-    this.skinType = skinType;
-    scrollBarDrawable = createScrollBarDrawable(skinType);
+    this.skin = skin;
+    scrollBarDrawable = createScrollBarDrawable(skin);
+    setBackgroundDrawable(skin.scrollBarBackgroundDrawable.getConstantState().newDrawable());
     invalidate();
   }
 

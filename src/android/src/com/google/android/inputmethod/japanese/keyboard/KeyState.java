@@ -30,11 +30,13 @@
 package org.mozc.android.inputmethod.japanese.keyboard;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
@@ -51,6 +53,7 @@ import java.util.Set;
  *
  */
 public class KeyState {
+
   public enum MetaState {
     SHIFT(1, true),
     CAPS_LOCK(2, false),
@@ -76,13 +79,22 @@ public class KeyState {
     // TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS, TYPE_TEXT_VARIATION_EMAIL_ADDRESS
     VARIATION_EMAIL_ADDRESS(2048, false),
 
-    // Set if Globe button is enabled by preference.
-    // TODO(matsuzakit): Implement me.
+    // Set if Globe button should be offered.
+    // c.f., SubtypeImeSwitcher#shouldOfferSwitchingToNextInputMethod()
     GLOBE(4096, false),
+    // !GLOBE
+    NO_GLOBE(8192, false),
 
     // Set if there is composition string.
-    // TODO(matsuzakit): Implement me. This is mandatory when implementing ACTION_*.
-    COMPOSING(8192, false),
+    COMPOSING(16384, false),
+    // Set if the KeyboardView is handling at least one touch event.
+    HANDLING_TOUCH_EVENT(32768, false),
+
+    // DO NOT USE. Theoretically this is package private entry.
+    // "fallback" flag is useful when defining .xml file with logical-OR operator
+    // (e.g. "fallback|composing").
+    // This entry is used just for it.
+    FALLBACK(1073741824, false),
     ;
 
     private final int bitFlag;
@@ -116,11 +128,17 @@ public class KeyState {
     // MetaStates for text variations.
     public static final Set<MetaState> VARIATION_EXCLUSIVE_GROUP =
         Sets.immutableEnumSet(MetaState.VARIATION_URI, MetaState.VARIATION_EMAIL_ADDRESS);
+    // MetaStates for Globe icon.
+    public static final Set<MetaState> GLOBE_EXCLUSIVE_OR_GROUP =
+        Sets.immutableEnumSet(MetaState.GLOBE, MetaState.NO_GLOBE);
     @SuppressWarnings("unchecked")
     private static final Collection<Set<MetaState>> EXCLUSIVE_GROUP =
         Arrays.<Set<MetaState>>asList(CHAR_TYPE_EXCLUSIVE_GROUP,
                                       ACTION_EXCLUSIVE_GROUP,
-                                      VARIATION_EXCLUSIVE_GROUP);
+                                      VARIATION_EXCLUSIVE_GROUP,
+                                      GLOBE_EXCLUSIVE_OR_GROUP);
+    private static final Collection<Set<MetaState>> OR_GROUP =
+        Collections.singleton(GLOBE_EXCLUSIVE_OR_GROUP);
 
     /**
      * Checks if {@code testee} is valid set.
@@ -129,6 +147,8 @@ public class KeyState {
      * Do not call from chokepoint.
      */
     public static boolean isValidSet(Set<MetaState> testee) {
+      Preconditions.checkNotNull(testee);
+
       // Set#retainAll can make the implementation simpler, but it requires instantiation of
       // (Enum)Set for each iteration.
       for (Set<MetaState> exclusiveGroup : EXCLUSIVE_GROUP) {
@@ -140,6 +160,11 @@ public class KeyState {
               return false;
             }
           }
+        }
+      }
+      for (Set<MetaState> orGroup : OR_GROUP) {
+        if (orGroup.isEmpty()) {
+          return false;
         }
       }
       return true;
@@ -160,14 +185,13 @@ public class KeyState {
     this.contentDescription = Preconditions.checkNotNull(contentDescription);
     Preconditions.checkNotNull(metaStates);
     this.metaState = Sets.newEnumSet(metaStates, MetaState.class);
-    this.nextAddMetaStates = nextAddMetaStates;
-    this.nextRemoveMetaStates = nextRemoveMetaStates;
+    this.nextAddMetaStates = Preconditions.checkNotNull(nextAddMetaStates);
+    this.nextRemoveMetaStates = Preconditions.checkNotNull(nextRemoveMetaStates);
     this.flickMap = new EnumMap<Flick.Direction, Flick>(Flick.Direction.class);
-    for (Flick flick : flickCollection) {
-      if (this.flickMap.put(flick.getDirection(), flick) != null) {
-        throw new IllegalArgumentException(
-            "Duplicate flick direction is found: " + flick.getDirection());
-      }
+    for (Flick flick : Preconditions.checkNotNull(flickCollection)) {
+      Preconditions.checkArgument(
+          this.flickMap.put(flick.getDirection(), flick) == null,
+          "Duplicate flick direction is found: " + flick.getDirection());
     }
   }
 
@@ -188,12 +212,12 @@ public class KeyState {
    * The result is "valid" in the light of {@code MetaState#isValidSet(Set)}.
    */
   public Set<MetaState> getNextMetaStates(Set<MetaState> originalMetaStates) {
-    return Sets.union(Sets.difference(originalMetaStates,
+    return Sets.union(Sets.difference(Preconditions.checkNotNull(originalMetaStates),
                                       nextRemoveMetaStates), nextAddMetaStates).immutableCopy();
   }
 
-  public Flick getFlick(Flick.Direction direction) {
-    return flickMap.get(direction);
+  public Optional<Flick> getFlick(Flick.Direction direction) {
+    return Optional.fromNullable(flickMap.get(direction));
   }
 
   @Override

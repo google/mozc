@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.session;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 
@@ -58,7 +59,7 @@ class SocketSessionHandler implements SessionHandler {
   private final InetAddress host;
   private final int port;
   SocketSessionHandler(InetAddress host, int port) {
-    this.host = host;
+    this.host = Preconditions.checkNotNull(host);
     this.port = port;
   }
 
@@ -69,6 +70,8 @@ class SocketSessionHandler implements SessionHandler {
 
   @Override
   public Command evalCommand(Command command) {
+    Preconditions.checkNotNull(command);
+
     // We should be in a worker thread so below invocation is not needed. Just in case.
     MozcUtil.relaxMainthreadStrictMode();
     try {

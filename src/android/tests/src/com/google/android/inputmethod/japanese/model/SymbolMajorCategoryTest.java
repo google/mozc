@@ -50,6 +50,9 @@ public class SymbolMajorCategoryTest extends InstrumentationTestCaseWithMock {
       } else if (minorCategory.name().startsWith("EMOJI")) {
         assertEquals(SymbolMajorCategory.EMOJI,
                      SymbolMajorCategory.findMajorCategory(minorCategory));
+      } else if (minorCategory == SymbolMinorCategory.NUMBER) {
+        assertEquals(SymbolMajorCategory.NUMBER,
+                     SymbolMajorCategory.findMajorCategory(minorCategory));
       } else {
         fail("Unexpected category name");
       }

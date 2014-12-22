@@ -31,6 +31,7 @@ package org.mozc.android.inputmethod.japanese.session;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
+import com.google.common.base.Preconditions;
 
 /**
  * This class logs only input/output protocol buffer Command for MozcJNI.
@@ -44,11 +45,11 @@ class MozcCommandDebugger {
 
   static void inLog(Command inCommand) {
     MozcLog.v("<evaluate>");
-    MozcLog.v(inCommand.getInput().toString());
+    MozcLog.v(Preconditions.checkNotNull(inCommand).getInput().toString());
   }
 
   static void outLog(Command outCommand) {
-    MozcLog.v(outCommand.getOutput().toString());
+    MozcLog.v(Preconditions.checkNotNull(outCommand).getOutput().toString());
     MozcLog.v("</evaluate>");
   }
 }

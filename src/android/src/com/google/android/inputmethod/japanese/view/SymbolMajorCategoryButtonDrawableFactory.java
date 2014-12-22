@@ -34,6 +34,7 @@ import org.mozc.android.inputmethod.japanese.resources.R;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -57,20 +58,23 @@ public class SymbolMajorCategoryButtonDrawableFactory {
   }
 
   private static class LeftButtonPathFactory implements PathFactory {
-
+    private final float padding;
     private final float round;
 
-    LeftButtonPathFactory(float round) {
+    // Padding is applied to left, top and bottom.
+    // Right doesn't have padding in order to center left/right buttons.
+    LeftButtonPathFactory(float padding, float round) {
+      this.padding = padding;
       this.round = round;
     }
 
     @Override
     public Path newInstance(Rect bounds) {
       Preconditions.checkNotNull(bounds);
-      float left = bounds.left;
-      float top = bounds.top;
+      float left = bounds.left + padding;
+      float top = bounds.top + padding;
       float right = bounds.right - 2;
-      float bottom = bounds.bottom - 1;
+      float bottom = bounds.bottom - 1 - padding;
 
       Path path = new Path();
       path.moveTo(right, bottom);
@@ -84,14 +88,20 @@ public class SymbolMajorCategoryButtonDrawableFactory {
   }
 
   private static class CenterButtonPathFactory implements PathFactory {
+    private final float padding;
+
+    // Padding is applied only to top and bottom.
+    CenterButtonPathFactory(float padding) {
+      this.padding = padding;
+    }
 
     @Override
     public Path newInstance(Rect bounds) {
       Preconditions.checkNotNull(bounds);
       float left = bounds.left;
-      float top = bounds.top;
+      float top = bounds.top + padding;
       float right = bounds.right - 2;
-      float bottom = bounds.bottom - 1;
+      float bottom = bounds.bottom - 1 - padding;
 
       Path path = new Path();
       path.addRect(left, top, right, bottom, Direction.CW);
@@ -100,9 +110,13 @@ public class SymbolMajorCategoryButtonDrawableFactory {
   }
 
   private static class RightButtonPathFactory implements PathFactory {
+    private final float padding;
     private final float round;
 
-    RightButtonPathFactory(float round) {
+    // Padding is applied to right, top and bottom.
+    // Left doesn't have padding in order to center left/right buttons.
+    RightButtonPathFactory(float padding, float round) {
+      this.padding = padding;
       this.round = round;
     }
 
@@ -110,9 +124,9 @@ public class SymbolMajorCategoryButtonDrawableFactory {
     public Path newInstance(Rect bounds) {
       Preconditions.checkNotNull(bounds);
       float left = bounds.left;
-      float top = bounds.top;
-      float right = bounds.right - 1;
-      float bottom = bounds.bottom - 1;
+      float top = bounds.top + padding;
+      float right = bounds.right - 1 - padding;
+      float bottom = bounds.bottom - 1 - padding;
 
       Path path = new Path();
       path.moveTo(left, top);
@@ -190,10 +204,14 @@ public class SymbolMajorCategoryButtonDrawableFactory {
 
   private static class EmojiDisableIconDrawable extends BaseBackgroundDrawable {
 
+    private final int size;
     private final Drawable sourceDrawable;
 
-    EmojiDisableIconDrawable(Drawable sourceDrawable) {
+    EmojiDisableIconDrawable(Resources resources, Drawable sourceDrawable) {
       super(0, 0, 0, 0);
+      size = Preconditions.checkNotNull(resources).getDimensionPixelSize(
+          R.dimen.symbol_major_emoji_disable_icon_height);
+      sourceDrawable.setBounds(0, 0, size, size);
       this.sourceDrawable = Preconditions.checkNotNull(sourceDrawable);
     }
 
@@ -201,9 +219,6 @@ public class SymbolMajorCategoryButtonDrawableFactory {
     public void draw(Canvas canvas) {
       Rect bounds = getBounds();
 
-      // Heuristically, the size is 1/3 of the height.
-      int size = bounds.height() / 3;
-      sourceDrawable.setBounds(0, 0, size, size);
 
       int saveCount = canvas.save();
       try {
@@ -216,56 +231,55 @@ public class SymbolMajorCategoryButtonDrawableFactory {
     }
   }
 
-  private final MozcDrawableFactory factory;
+  private Skin skin = Skin.getFallbackInstance();
 
-  private final int topColor;
-  private final int bottomColor;
-  private final int pressedTopColor;
-  private final int pressedBottomColor;
-  private final int shadowColor;
+  private final Resources resources;
 
-  private final PathFactory leftButtonPathFactory;
-  private final PathFactory centerButtonPathFactory;
-  private final PathFactory rightButtonPathFactory;
-
-  public SymbolMajorCategoryButtonDrawableFactory(
-      MozcDrawableFactory factory, int topColor, int bottomColor,
-      int pressedTopColor, int pressedBottomColor, int shadowColor,
-      float round) {
-    this.factory = Preconditions.checkNotNull(factory);
-    this.topColor = topColor;
-    this.bottomColor = bottomColor;
-    this.pressedTopColor = pressedTopColor;
-    this.pressedBottomColor = pressedBottomColor;
-    this.shadowColor = shadowColor;
-
-    this.leftButtonPathFactory = new LeftButtonPathFactory(round);
-    this.centerButtonPathFactory = new CenterButtonPathFactory();
-    this.rightButtonPathFactory = new RightButtonPathFactory(round);
+  public SymbolMajorCategoryButtonDrawableFactory(Resources resources) {
+    this.resources = Preconditions.checkNotNull(resources);
   }
 
   public Drawable createLeftButtonDrawable() {
-    return BackgroundDrawableFactory.createSelectableDrawable(
-        new ButtonDrawable(leftButtonPathFactory, pressedTopColor, pressedBottomColor, 0),
-        new ButtonDrawable(leftButtonPathFactory, topColor, bottomColor, shadowColor));
+    return createSelectableDrawableWithPathFactory(
+        new LeftButtonPathFactory(skin.symbolMajorButtonPaddingDimension,
+                                  skin.symbolMajorButtonRoundDimension));
   }
 
   public Drawable createCenterButtonDrawable() {
-    return BackgroundDrawableFactory.createSelectableDrawable(
-        new ButtonDrawable(centerButtonPathFactory, pressedTopColor, pressedBottomColor, 0),
-        new ButtonDrawable(centerButtonPathFactory, topColor, bottomColor, shadowColor));
+    return createSelectableDrawableWithPathFactory(
+        new CenterButtonPathFactory(skin.symbolMajorButtonPaddingDimension));
   }
 
   public Drawable createRightButtonDrawable(boolean emojiEnabled) {
-    Drawable drawable = BackgroundDrawableFactory.createSelectableDrawable(
-        new ButtonDrawable(rightButtonPathFactory, pressedTopColor, pressedBottomColor, 0),
-        new ButtonDrawable(rightButtonPathFactory, topColor, bottomColor, shadowColor));
+    Drawable drawable = createSelectableDrawableWithPathFactory(
+        new RightButtonPathFactory(skin.symbolMajorButtonPaddingDimension,
+                                   skin.symbolMajorButtonRoundDimension));
     if (emojiEnabled) {
       return drawable;
     }
     return new LayerDrawable(new Drawable[] {
         drawable,
-        new EmojiDisableIconDrawable(factory.getDrawable(R.raw.emoji_disable_icon).orNull()),
+        new EmojiDisableIconDrawable(
+            resources, skin.getDrawable(resources, R.raw.emoji_disable_icon)),
     });
+  }
+
+  private Drawable createSelectableDrawableWithPathFactory(PathFactory pathFactory) {
+    return BackgroundDrawableFactory.createSelectableDrawable(
+        new ButtonDrawable(pathFactory,
+                           skin.symbolMajorButtonSelectedTopColor,
+                           skin.symbolMajorButtonSelectedBottomColor, 0),
+        Optional.<Drawable>of(BackgroundDrawableFactory.createPressableDrawable(
+            new ButtonDrawable(pathFactory,
+                               skin.symbolMajorButtonPressedTopColor,
+                               skin.symbolMajorButtonPressedBottomColor, 0),
+            Optional.<Drawable>of(new ButtonDrawable(pathFactory,
+                                                     skin.symbolMajorButtonTopColor,
+                                                     skin.symbolMajorButtonBottomColor,
+                                                     skin.symbolMajorButtonShadowColor)))));
+  }
+
+  public void setSkin(Skin skin) {
+    this.skin = Preconditions.checkNotNull(skin);
   }
 }

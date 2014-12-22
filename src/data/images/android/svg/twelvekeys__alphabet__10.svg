@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!--
  Copyright 2010-2014, Google Inc.
  All rights reserved.
@@ -30,17 +30,14 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="twelvekeys_x5F__x5F_alphabet_x5F__x5F_10"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="105px" height="87px"
-	 viewBox="0 0 105 87" style="enable-background:new 0 0 105 87;" xml:space="preserve">
-<g id="style-keyicon-main">
-	<path style="fill:#272727;" d=""/>
-</g>
+<svg version="1.1" id="twelvekeys_alphabet_10" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="105px" height="87px" viewBox="0 0 105 87" style="enable-background:new 0 0 105 87;" xml:space="preserve">
 <g id="style-keyicon-main_1_">
-	<path style="fill:#272727;" d=""/>
+  <text x="33" y="43.5" style="font-size:26px;text-anchor:middle;dominant-baseline:central;fill:#272727;">a</text>
 </g>
 <g id="style-keyicon-main_2_">
-	<path style="fill:#272727;" d=""/>
+  <text x="52.5" y="43.5" style="font-size:20px;text-anchor:middle;dominant-baseline:central;fill:#272727;">⇔</text>
+</g>
+<g id="style-keyicon-main_3_">
+  <text x="72" y="43.5" style="font-size:26px;text-anchor:middle;dominant-baseline:central;fill:#272727;">A</text>
 </g>
 </svg>

@@ -30,11 +30,11 @@
 package org.mozc.android.inputmethod.japanese.session;
 
 import static org.mozc.android.inputmethod.japanese.testing.MozcMatcher.matchesBuilder;
+import static org.mozc.android.inputmethod.japanese.testing.MozcMatcher.sameOptional;
 import static org.easymock.EasyMock.anyLong;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.getCurrentArguments;
-import static org.easymock.EasyMock.isNull;
 import static org.easymock.EasyMock.same;
 
 import org.mozc.android.inputmethod.japanese.KeycodeConverter;
@@ -84,6 +84,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.test.mock.MockContext;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
@@ -100,6 +101,7 @@ import java.util.concurrent.CountDownLatch;
  *
  */
 public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
+
   private SessionExecutor createSessionExecutorMock() {
     return createMockBuilder(SessionExecutor.class)
         .addMockedMethods("evaluateSynchronously", "evaluateAsynchronously")
@@ -108,12 +110,13 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
 
   @Override
   protected void tearDown() throws Exception {
-    SessionExecutor.instance = null;
+    SessionExecutor.instance = Optional.absent();
     super.tearDown();
   }
 
   @SmallTest
   public void testGetInstanceInitializedIfNecessary() {
+    Context context = new MockContext();
     SessionHandlerFactory factory = createMockBuilder(SessionHandlerFactory.class)
         .withConstructor(Context.class)
         .withArgs(getInstrumentation().getTargetContext())
@@ -122,7 +125,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     expect(factory.create()).andReturn(mockHandler);
     replayAll();
 
-    SessionExecutor instance = SessionExecutor.getInstanceInitializedIfNecessary(factory, null);
+    SessionExecutor instance = SessionExecutor.getInstanceInitializedIfNecessary(factory, context);
 
     verifyAll();
 
@@ -130,7 +133,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     resetAll();
     replayAll();
 
-    SessionExecutor instance2 = SessionExecutor.getInstanceInitializedIfNecessary(factory, null);
+    SessionExecutor instance2 = SessionExecutor.getInstanceInitializedIfNecessary(factory, context);
 
     verifyAll();
 
@@ -140,12 +143,14 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testCallbackInitializeSessionHandler() {
+    Context context = getInstrumentation().getContext();
     SessionHandler sessionHandler = createMock(SessionHandler.class);
-    sessionHandler.initialize(null);
+    sessionHandler.initialize(context);
     replayAll();
 
     ExecutorMainCallback callback = new ExecutorMainCallback(sessionHandler);
     Message message = new Message();
+    message.obj = Object.class.cast(context);
     message.what = ExecutorMainCallback.INITIALIZE_SESSION_HANDLER;
     assertTrue(callback.handleMessage(message));
 
@@ -300,8 +305,9 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
       Capture<Message> messageCapture = new Capture<Message>();
       expect(callbackHandler.sendMessageAtTime(capture(messageCapture), anyLong())).andReturn(true);
 
-      AsynchronousEvaluationContext context =
-          new AsynchronousEvaluationContext(0, inputBuilder, null, null, callbackHandler);
+      AsynchronousEvaluationContext context = new AsynchronousEvaluationContext(
+          0, inputBuilder, Optional.<KeyEventInterface>absent(),
+          Optional.<EvaluationCallback>absent(), Optional.of(callbackHandler));
       long sessionId = 1;
 
       {
@@ -334,7 +340,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
       Message message = messageCapture.getValue();
       assertEquals(data.expectedWhat, message.what);
       assertSame(context, message.obj);
-      assertNotNull(context.outCommand);
+      assertTrue(context.outCommand.isPresent());
       currentHandler.removeMessages(ExecutorMainCallback.EVALUATE_KEYEVENT_ASYNCHRONOUSLY);
     }
   }
@@ -360,7 +366,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
 
     verifyAll();
     assertEquals(0, countDownLatch.getCount());
-    assertNotNull(context.outCommand);
+    assertTrue(context.outCommand.isPresent());
   }
 
   @SmallTest
@@ -388,7 +394,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
 
     ExecutorMainCallback callback = new ExecutorMainCallback(sessionHandler);
     callback.sessionId = sessionId;
-    callback.request = initialRequest;
+    callback.request = Optional.of(initialRequest);
 
     callback.updateRequest(
         Input.newBuilder().setRequest(diffRequest).addAllTouchEvents(touchEventList));
@@ -417,11 +423,13 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     callbackHandler.cancelTimeStamp = 0;
 
     EvaluationCallback evaluationCallback = createMock(EvaluationCallback.class);
-    evaluationCallback.onCompleted(null, null);
+    evaluationCallback.onCompleted(
+        Optional.<Command>absent(), Optional.<KeyEventInterface>absent());
     replayAll();
 
-    AsynchronousEvaluationContext context =
-        new AsynchronousEvaluationContext(1, null, null, evaluationCallback, callbackHandler);
+    AsynchronousEvaluationContext context = new AsynchronousEvaluationContext(
+        1, Input.newBuilder(), Optional.<KeyEventInterface>absent(),
+        Optional.of(evaluationCallback), Optional.<Handler>of(callbackHandler));
     Message message = callbackHandler.obtainMessage(CallbackHandler.UNSQUASHABLE_OUTPUT, context);
     callbackHandler.handleMessage(message);
 
@@ -444,7 +452,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     SessionExecutor executor = new SessionExecutor();
-    executor.handler = handler;
+    executor.handler = Optional.of(handler);
 
     executor.deleteSession();
 
@@ -460,21 +468,22 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     SessionExecutor executor = new SessionExecutor();
-    executor.handler = handler;
+    executor.handler = Optional.of(handler);
 
     Input.Builder inputBuilder = Input.newBuilder();
     KeyEventInterface keyEvent = KeycodeConverter.getKeyEventInterface(KeyEvent.KEYCODE_A);
 
-    executor.evaluateAsynchronously(inputBuilder, keyEvent, null);
+    executor.evaluateAsynchronously(
+        inputBuilder, Optional.of(keyEvent), Optional.<EvaluationCallback>absent());
 
     verifyAll();
     Message message = messageCapture.getValue();
     assertEquals(ExecutorMainCallback.EVALUATE_KEYEVENT_ASYNCHRONOUSLY, message.what);
     AsynchronousEvaluationContext context = AsynchronousEvaluationContext.class.cast(message.obj);
     assertSame(inputBuilder, context.inputBuilder);
-    assertSame(keyEvent, context.triggeringKeyEvent);
-    assertNull(context.callback);
-    assertNull(context.callbackHandler);
+    assertSame(keyEvent, context.triggeringKeyEvent.get());
+    assertFalse(context.callback.isPresent());
+    assertFalse(context.callbackHandler.isPresent());
   }
 
   @SmallTest
@@ -485,20 +494,21 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     SessionExecutor executor = new SessionExecutor();
-    executor.handler = handler;
+    executor.handler = Optional.of(handler);
 
     Input.Builder inputBuilder = Input.newBuilder();
 
-    executor.evaluateAsynchronously(inputBuilder, null, null);
+    executor.evaluateAsynchronously(
+        inputBuilder, Optional.<KeyEventInterface>absent(), Optional.<EvaluationCallback>absent());
 
     verifyAll();
     Message message = messageCapture.getValue();
     assertEquals(ExecutorMainCallback.EVALUATE_ASYNCHRONOUSLY, message.what);
     AsynchronousEvaluationContext context = AsynchronousEvaluationContext.class.cast(message.obj);
     assertSame(inputBuilder, context.inputBuilder);
-    assertNull(context.triggeringKeyEvent);
-    assertNull(context.callback);
-    assertNull(context.callbackHandler);
+    assertFalse(context.triggeringKeyEvent.isPresent());
+    assertFalse(context.callback.isPresent());
+    assertFalse(context.callbackHandler.isPresent());
   }
 
   @SmallTest
@@ -516,10 +526,10 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
         Message message = Message.class.cast(getCurrentArguments()[0]);
         SynchronousEvaluationContext context =
             SynchronousEvaluationContext.class.cast(message.obj);
-        context.outCommand = Command.newBuilder()
+        context.outCommand = Optional.of(Command.newBuilder()
             .setInput(Input.newBuilder().setType(CommandType.NO_OPERATION).build())
             .setOutput(Output.getDefaultInstance())
-            .build();
+            .build());
         context.evaluationSynchronizer.countDown();
         return Boolean.TRUE;
       }
@@ -528,7 +538,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     SessionExecutor executor = new SessionExecutor();
-    executor.handler = handler;
+    executor.handler = Optional.of(handler);
 
     executor.evaluateSynchronously(Input.getDefaultInstance());
 
@@ -549,8 +559,8 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
             .setType(CommandType.SEND_KEY)
             .setKey(mozcKeyEvent)
             .addAllTouchEvents(touchEventList)),
-        same(triggeringKeyEvent),
-        same(evaluationCallback));
+        sameOptional(triggeringKeyEvent),
+        sameOptional(evaluationCallback));
     replayAll();
 
     executor.sendKey(mozcKeyEvent, triggeringKeyEvent, touchEventList, evaluationCallback);
@@ -567,8 +577,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
             .setType(CommandType.SEND_COMMAND)
             .setCommand(SessionCommand.newBuilder()
                 .setType(SessionCommand.CommandType.SUBMIT))),
-        isNull(KeyEventInterface.class),
-        same(evaluationCallback));
+        same(Optional.<KeyEventInterface>absent()), sameOptional(evaluationCallback));
     replayAll();
 
     executor.submit(evaluationCallback);
@@ -579,17 +588,19 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSwitchInputMode() {
     SessionExecutor executor = createSessionExecutorMock();
+    EvaluationCallback callback = createNiceMock(EvaluationCallback.class);
+
     executor.evaluateAsynchronously(
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.SEND_COMMAND)
             .setCommand(SessionCommand.newBuilder()
                 .setType(SessionCommand.CommandType.SWITCH_INPUT_MODE)
                 .setCompositionMode(CompositionMode.DIRECT))),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), sameOptional(callback));
     replayAll();
 
-    executor.switchInputMode(null, CompositionMode.DIRECT, null);
+    executor.switchInputMode(
+        Optional.<KeyEventInterface>absent(), CompositionMode.DIRECT, callback);
 
     verifyAll();
   }
@@ -604,16 +615,14 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
             .setCommand(SessionCommand.newBuilder()
                 .setType(SessionCommand.CommandType.SUBMIT_CANDIDATE)
                 .setId(3))),
-        isNull(KeyEventInterface.class),
-        same(evaluationCallback));
+        same(Optional.<KeyEventInterface>absent()), sameOptional(evaluationCallback));
     executor.evaluateAsynchronously(
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.SEND_COMMAND)
             .setCommand(SessionCommand.newBuilder()
                 .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
                 .setUsageStatsEvent(UsageStatsEvent.SUBMITTED_CANDIDATE_ROW_GE10))),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.submitCandidate(3, Optional.<Integer>of(100), evaluationCallback);
@@ -629,8 +638,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
             .setType(CommandType.SEND_COMMAND)
             .setCommand(SessionCommand.newBuilder()
                 .setType(SessionCommand.CommandType.RESET_CONTEXT))),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.resetContext();
@@ -649,12 +657,37 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 SessionCommand.newBuilder()
                 .setType(ProtoCommands.SessionCommand.CommandType.MOVE_CURSOR)
                 .setCursorPosition(5))),
-        isNull(KeyEventInterface.class),
-        same(evaluationCallback));
+        same(Optional.<KeyEventInterface>absent()), sameOptional(evaluationCallback));
     replayAll();
 
     executor.moveCursor(5, evaluationCallback);
 
+    verifyAll();
+  }
+
+  @SmallTest
+  public void testPageDownAndUp() {
+    SessionExecutor executor = createSessionExecutorMock();
+    EvaluationCallback evaluationCallback = createNiceMock(EvaluationCallback.class);
+    executor.evaluateAsynchronously(
+        matchesBuilder(Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(ProtoCommands.SessionCommand.CommandType.CONVERT_NEXT_PAGE))),
+        same(Optional.<KeyEventInterface>absent()), sameOptional(evaluationCallback));
+    replayAll();
+    executor.pageDown(evaluationCallback);
+    verifyAll();
+
+    resetAll();
+    executor.evaluateAsynchronously(
+        matchesBuilder(Input.newBuilder()
+            .setType(CommandType.SEND_COMMAND)
+            .setCommand(SessionCommand.newBuilder()
+                .setType(ProtoCommands.SessionCommand.CommandType.CONVERT_PREV_PAGE))),
+        same(Optional.<KeyEventInterface>absent()), sameOptional(evaluationCallback));
+    replayAll();
+    executor.pageUp(evaluationCallback);
     verifyAll();
   }
 
@@ -668,8 +701,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setType(SessionCommand.CommandType.SWITCH_INPUT_FIELD_TYPE))
             .setContext(ProtoCommands.Context.newBuilder()
                 .setInputFieldType(InputFieldType.NORMAL))),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.switchInputFieldType(InputFieldType.NORMAL);
@@ -688,8 +720,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
             .setCommand(SessionCommand.newBuilder()
                 .setType(SessionCommand.CommandType.UNDO_OR_REWIND))
             .addAllTouchEvents(touchEventList)),
-        isNull(KeyEventInterface.class),
-        same(evaluationCallback));
+        same(Optional.<KeyEventInterface>absent()), sameOptional(evaluationCallback));
     replayAll();
 
     executor.undoOrRewind(touchEventList, evaluationCallback);
@@ -707,8 +738,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setType(StorageType.EMOTICON_HISTORY)
                 .setKey("TEST_KEY")
                 .addAllValue(Collections.singletonList(ByteString.copyFromUtf8("TEST_VALUE"))))),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.insertToStorage(
@@ -727,8 +757,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
             .setType(CommandType.SEND_COMMAND)
             .setCommand(
                 SessionCommand.newBuilder().setType(SessionCommand.CommandType.EXPAND_SUGGESTION))),
-        isNull(KeyEventInterface.class),
-        same(evaluationCallback));
+        same(Optional.<KeyEventInterface>absent()), sameOptional(evaluationCallback));
     replayAll();
 
     executor.expandSuggestion(evaluationCallback);
@@ -741,6 +770,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     SessionExecutor executor = createSessionExecutorMock();
 
     Context context = getInstrumentation().getContext();
+    Context targetContext = getInstrumentation().getTargetContext();
     SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     assertNotNull(sharedPreferences);
 
@@ -758,7 +788,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
                 .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE)
                 .setUsageStatsEventIntValue(KeyboardLayout.GODAN.getId()))),
-        isNull(KeyEventInterface.class), isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     executor.evaluateAsynchronously(
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.SEND_COMMAND)
@@ -766,9 +796,9 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
                 .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT)
                 .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
-        isNull(KeyEventInterface.class), isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
-    executor.preferenceUsageStatsEvent(sharedPreferences);
+    executor.preferenceUsageStatsEvent(sharedPreferences, targetContext.getResources());
     verifyAll();
 
     sharedPreferences.edit()
@@ -783,7 +813,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
                 .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE)
                 .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
-        isNull(KeyEventInterface.class), isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     executor.evaluateAsynchronously(
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.SEND_COMMAND)
@@ -791,9 +821,9 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
                 .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT)
                 .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
-        isNull(KeyEventInterface.class), isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
-    executor.preferenceUsageStatsEvent(sharedPreferences);
+    executor.preferenceUsageStatsEvent(sharedPreferences, targetContext.getResources());
     verifyAll();
   }
 
@@ -808,8 +838,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
             .setCommand(SessionCommand.newBuilder()
                 .setType(SessionCommand.CommandType.USAGE_STATS_EVENT))
             .addAllTouchEvents(touchEventList)),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.touchEventUsageStatsEvent(touchEventList);
@@ -823,8 +852,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     executor.evaluateAsynchronously(
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.SYNC_DATA)),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.syncData();
@@ -856,8 +884,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.SET_CONFIG)
             .setConfig(inputConfig)),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.setConfig(inputConfig);
@@ -874,8 +901,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.SET_IMPOSED_CONFIG)
             .setConfig(inputConfig)),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.setImposedConfig(inputConfig);
@@ -971,8 +997,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     executor.evaluateAsynchronously(
         matchesBuilder(Input.newBuilder()
             .setType(CommandType.RELOAD)),
-        isNull(KeyEventInterface.class),
-        isNull(EvaluationCallback.class));
+        same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
     replayAll();
 
     executor.reload();
@@ -1007,7 +1032,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
   public void testStressConversion() throws InterruptedException {
     MemoryLogger memoryLogger = new MemoryLogger("testStressConversion", 100);
 
-    SessionExecutor session = SessionExecutor.getInstance(null);
+    SessionExecutor session = SessionExecutor.getInstance(getInstrumentation().getContext());
     Context context = getInstrumentation().getTargetContext();
     session.reset(new SessionHandlerFactory(context), context);
 
@@ -1025,14 +1050,17 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
       }
       session.sendKey(ProtoCommands.KeyEvent.newBuilder()
                           .setKeyString(composition.toString()).build(),
-                      null, Collections.<TouchEvent>emptyList(), null);
+                      createNiceMock(KeyEventInterface.class), Collections.<TouchEvent>emptyList(),
+                      createNiceMock(EvaluationCallback.class));
       session.sendKey(ProtoCommands.KeyEvent.newBuilder()
                           .setSpecialKey(SpecialKey.SPACE).build(),
-                      null, Collections.<TouchEvent>emptyList(), null);
+                      createNiceMock(KeyEventInterface.class), Collections.<TouchEvent>emptyList(),
+                      createNiceMock(EvaluationCallback.class));
       final CountDownLatch latch = new CountDownLatch(1);
       session.submit(new EvaluationCallback() {
         @Override
-        public void onCompleted(Command command, KeyEventInterface triggeringKeyEvent) {
+        public void onCompleted(
+            Optional<Command> command, Optional<KeyEventInterface> triggeringKeyEvent) {
           latch.countDown();
         }
       });
@@ -1051,7 +1079,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
   public void testStressConversionKao() throws InterruptedException {
     MemoryLogger memoryLogger = new MemoryLogger("testStressConversionKao", 10);
 
-    SessionExecutor session = SessionExecutor.getInstance(null);
+    SessionExecutor session = SessionExecutor.getInstance(getInstrumentation().getContext());
     Context context = getInstrumentation().getTargetContext();
     session.reset(new SessionHandlerFactory(context), context);
 
@@ -1059,14 +1087,17 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     memoryLogger.logMemory("start");
     session.sendKey(ProtoCommands.KeyEvent.newBuilder()
                         .setKeyString(composition.toString()).build(),
-                    null, Collections.<TouchEvent>emptyList(), null);
+                    createNiceMock(KeyEventInterface.class), Collections.<TouchEvent>emptyList(),
+                    createNiceMock(EvaluationCallback.class));
     session.sendKey(ProtoCommands.KeyEvent.newBuilder()
                         .setSpecialKey(SpecialKey.SPACE).build(),
-                    null, Collections.<TouchEvent>emptyList(), null);
+                    createNiceMock(KeyEventInterface.class), Collections.<TouchEvent>emptyList(),
+                    createNiceMock(EvaluationCallback.class));
     final CountDownLatch latch = new CountDownLatch(1);
     session.submit(new EvaluationCallback() {
       @Override
-      public void onCompleted(Command command, KeyEventInterface triggeringKeyEvent) {
+      public void onCompleted(
+          Optional<Command> command, Optional<KeyEventInterface> triggeringKeyEvent) {
         latch.countDown();
       }
     });

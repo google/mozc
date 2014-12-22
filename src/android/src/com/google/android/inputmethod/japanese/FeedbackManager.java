@@ -53,11 +53,35 @@ public class FeedbackManager {
     /**
      * Fired when the input view is expanded (the candidate view is fold).
      */
-    INPUTVIEW_EXPAND(true),
+    INPUTVIEW_EXPAND(true, AudioManager.FX_KEYPRESS_STANDARD),
     /**
      * Fired when the input view is fold (the candidate view is expand).
      */
-    INPUTVIEW_FOLD(true),
+    INPUTVIEW_FOLD(true, AudioManager.FX_KEYPRESS_STANDARD),
+    /**
+     * Fired when the symbol input view is closed.
+     */
+    SYMBOL_INPUTVIEW_CLOSED(true, AudioManager.FX_KEYPRESS_STANDARD),
+    /**
+     * Fired when a minor category is selected.
+     */
+    SYMBOL_INPUTVIEW_MINOR_CATEGORY_SELECTED(true, AudioManager.FX_KEYPRESS_STANDARD),
+    /**
+     * Fired when a major category is selected.
+     */
+    SYMBOL_INPUTVIEW_MAJOR_CATEGORY_SELECTED(true, AudioManager.FX_KEYPRESS_STANDARD),
+    /**
+     * Fired when microphone button is touched.
+     */
+    MICROPHONE_BUTTON_DOWN(true, AudioManager.FX_KEYPRESS_STANDARD),
+    /**
+     * Fired when the hardware composition button in narrow frame is touched.
+     */
+    NARROW_FRAME_HARDWARE_COMPOSITION_BUTTON_DOWN(true, AudioManager.FX_KEYPRESS_STANDARD),
+    /**
+     * Fired when the widen button in narrow frame is touched.
+     */
+    NARROW_FRAME_WIDEN_BUTTON_DOWN(true, AudioManager.FX_KEYPRESS_STANDARD),
     ;
     // Constant value to indicate no sound feedback should be played.
     static final int NO_SOUND = -1;
@@ -103,7 +127,7 @@ public class FeedbackManager {
   private boolean isHapticFeedbackEnabled;
   private long hapticFeedbackDuration = 30;  // 30ms by default.
   private boolean isSoundFeedbackEnabled;
-  private float soundFeedbackVolume = 0.1f;  // System default volume parameter.
+  private float soundFeedbackVolume = 0.4f;  // System default volume parameter.
   @VisibleForTesting final FeedbackListener feedbackListener;
 
   /**

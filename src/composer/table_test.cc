@@ -839,6 +839,20 @@ TEST_F(TableTest, MobileMode) {
     EXPECT_EQ("\xE3\x81\x8D", entry->pending());
   }
 
+  {
+    // To Notouch -> Hiragana mode.
+    request.set_special_romanji_table(
+        mozc::commands::Request::NOTOUCH_TO_HIRAGANA);
+    Table table;
+    table.InitializeWithRequestAndConfig(request, default_config_);
+
+    size_t key_length = 0;
+    bool fixed = false;
+    const mozc::composer::Entry *entry = table.LookUpPrefix("a", &key_length,
+                                                            &fixed);
+    // "き"
+    EXPECT_EQ("\xE3\x81\x8D", entry->pending());
+  }
 }
 
 TEST_F(TableTest, OrderOfAddRule) {
@@ -1047,17 +1061,15 @@ TEST_F(TableTest, TableManager) {
     commands::Request::DEFAULT_TABLE,
     commands::Request::TWELVE_KEYS_TO_HIRAGANA,
     commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII,
-    commands::Request::TWELVE_KEYS_TO_NUMBER,
     commands::Request::FLICK_TO_HIRAGANA,
     commands::Request::FLICK_TO_HALFWIDTHASCII,
-    commands::Request::FLICK_TO_NUMBER,
     commands::Request::TOGGLE_FLICK_TO_HIRAGANA,
     commands::Request::TOGGLE_FLICK_TO_HALFWIDTHASCII,
-    commands::Request::TOGGLE_FLICK_TO_NUMBER,
     commands::Request::GODAN_TO_HIRAGANA,
     commands::Request::QWERTY_MOBILE_TO_HIRAGANA,
-    commands::Request::QWERTY_MOBILE_TO_HIRAGANA_NUMBER,
     commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII,
+    commands::Request::NOTOUCH_TO_HIRAGANA,
+    commands::Request::NOTOUCH_TO_HALFWIDTHASCII,
   };
   static const config::Config::PreeditMethod preedit_method[] = {
     config::Config::ROMAN,

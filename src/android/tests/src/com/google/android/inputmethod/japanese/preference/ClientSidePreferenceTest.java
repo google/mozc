@@ -32,12 +32,14 @@ package org.mozc.android.inputmethod.japanese.preference;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
+import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.MozcPreferenceUtil;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -103,8 +105,11 @@ public class ClientSidePreferenceTest extends InstrumentationTestCase {
         sharedPreferences, PreferenceUtil.PREF_LANDSCAPE_LAYOUT_ADJUSTMENT_KEY,
         LANDSCAPE_LAYOUT_ADJUSTMENT.name());
 
+    Resources resources = getInstrumentation().getTargetContext().getResources();
     MozcPreferenceUtil.updateSharedPreference(
-        sharedPreferences, PreferenceUtil.PREF_SKIN_TYPE, SkinType.BLUE_LIGHTGRAY.name());
+        sharedPreferences,
+        resources.getString(R.string.pref_skin_type_key),
+        SkinType.BLUE_LIGHTGRAY.name());
 
     class TestData extends Parameter {
       final int orientation;
@@ -190,7 +195,7 @@ public class ClientSidePreferenceTest extends InstrumentationTestCase {
       configuration.orientation = testData.orientation;
 
       ClientSidePreference preference =
-          new ClientSidePreference(sharedPreferences, configuration.orientation);
+          new ClientSidePreference(sharedPreferences, resources, configuration.orientation);
       assertEquals(testData.toString(),
                    testData.expectedKeyboardLayout, preference.getKeyboardLayout());
       assertEquals(testData.toString(),

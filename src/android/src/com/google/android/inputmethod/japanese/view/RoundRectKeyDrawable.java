@@ -34,6 +34,7 @@ import com.google.common.base.Optional;
 import android.graphics.BlurMaskFilter;
 import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
@@ -55,7 +56,7 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
   private final int bottomColor;
 
   private final Paint basePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-  private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final Optional<Paint> shadowPaint;
   private final Optional<Paint> highlightPaint;
 
   private final RectF baseBound = new RectF();
@@ -69,10 +70,15 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
     this.topColor = topColor;
     this.bottomColor = bottomColor;
 
-    shadowPaint.setColor(shadowColor);
-    shadowPaint.setStyle(Style.FILL);
-    shadowPaint.setMaskFilter(new BlurMaskFilter(BLUR_SIZE, Blur.NORMAL));
-    if ((highlightColor & 0xFF000000) != 0) {
+    if (Color.alpha(shadowColor) != 0) {
+      shadowPaint = Optional.of(new Paint(Paint.ANTI_ALIAS_FLAG));
+      shadowPaint.get().setColor(shadowColor);
+      shadowPaint.get().setStyle(Style.FILL);
+      shadowPaint.get().setMaskFilter(new BlurMaskFilter(BLUR_SIZE, Blur.NORMAL));
+    } else {
+      shadowPaint = Optional.absent();
+    }
+    if (Color.alpha(highlightColor) != 0) {
       highlightPaint = Optional.of(new Paint(Paint.ANTI_ALIAS_FLAG));
       highlightPaint.get().setColor(highlightColor);
     } else {
@@ -87,7 +93,9 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
     }
 
     // Each qwerty key looks round corner'ed rectangle.
-    canvas.drawRoundRect(shadowBound, roundSize, roundSize, shadowPaint);
+    if (shadowPaint.isPresent()) {
+      canvas.drawRoundRect(shadowBound, roundSize, roundSize, shadowPaint.get());
+    }
     canvas.drawRoundRect(baseBound, roundSize, roundSize, basePaint);
 
     // Draw 1-px height highlight at the top of key if necessary.

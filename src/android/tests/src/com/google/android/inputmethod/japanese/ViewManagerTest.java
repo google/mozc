@@ -31,28 +31,36 @@ package org.mozc.android.inputmethod.japanese;
 
 import static org.mozc.android.inputmethod.japanese.testing.MozcMatcher.matchesKeyEvent;
 import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.same;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.MozcView.HeightLinearInterpolationListener;
 import org.mozc.android.inputmethod.japanese.ViewManager.ViewManagerEventListener;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiUtil;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
+import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Key;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventContext;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardView;
 import org.mozc.android.inputmethod.japanese.keyboard.ProbableKeyEventGuesser;
 import org.mozc.android.inputmethod.japanese.model.JapaneseSoftwareKeyboardModel;
+import org.mozc.android.inputmethod.japanese.model.JapaneseSoftwareKeyboardModel.KeyboardMode;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
+import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
@@ -61,6 +69,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.Candidates
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.Candidates.Candidate;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.ProbableKeyEvent;
@@ -68,12 +77,14 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.Spe
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.testing.MockWindow;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
 import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -93,6 +104,9 @@ import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
+
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -133,7 +147,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     keyboardFrame.setLayoutParams(layoutParams);
 
     // Set the input frame fold button checked.
-    mozcView.getCandidateView().getInputFrameFoldButton().setChecked(true);
+    mozcView.candidateViewManager.keyboardCandidateView.getInputFrameFoldButton().setChecked(true);
 
     resetAllToDefault();
 
@@ -145,7 +159,8 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     verifyAll();
 
     MoreAsserts.assertNotEqual(0, keyboardFrame.getLayoutParams().height);
-    assertFalse(mozcView.getCandidateView().getInputFrameFoldButton().isChecked());
+    assertFalse(
+        mozcView.candidateViewManager.keyboardCandidateView.getInputFrameFoldButton().isChecked());
   }
 
   @SmallTest
@@ -196,15 +211,15 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     assertNotNull(mozcView);
 
     // Keyboard instance is correctly registered.
-    JapaneseKeyboardView japaneseKeyboardView = mozcView.getKeyboardView();
-    assertNotNull(japaneseKeyboardView.getJapaneseKeyboard());
+    KeyboardView keyboardView = mozcView.getKeyboardView();
+    assertTrue(keyboardView.getKeyboard().isPresent());
 
     // Make sure layout params.
-    assertEquals(LayoutParams.MATCH_PARENT, japaneseKeyboardView.getLayoutParams().width);
-    assertEquals(LayoutParams.MATCH_PARENT, japaneseKeyboardView.getLayoutParams().height);
+    assertEquals(LayoutParams.MATCH_PARENT, keyboardView.getLayoutParams().width);
+    assertEquals(LayoutParams.MATCH_PARENT, keyboardView.getLayoutParams().height);
 
     // Check visibility
-    assertEquals(View.GONE, mozcView.getCandidateView().getVisibility());
+    assertFalse(mozcView.candidateViewManager.isKeyboardCandidateViewVisible());
   }
 
   @SmallTest
@@ -266,7 +281,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     // Render with CandidateView
     MozcView mozcView = viewManager.createMozcView(context);
-    CandidateView candidateView = mozcView.getCandidateView();
+    CandidateView candidateView = mozcView.candidateViewManager.keyboardCandidateView;
     assertNotNull(candidateView);
     CandidateView.ConversionCandidateWordView candidateWordView =
         candidateView.getConversionCandidateWordView();
@@ -321,13 +336,50 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
       expect(mozcView.getInputFrameHeight()).andStubReturn(200);
       mozcView.setEditorInfo(editorInfo);
       mozcView.setPasswordField(false);
-      mozcView.setJapaneseKeyboard(isA(JapaneseKeyboard.class));
+      mozcView.setKeyboard(isA(Keyboard.class));
       replayAll();
 
       viewManager.setEditorInfo(editorInfo);
 
       verifyAll();
     }
+  }
+
+  @SmallTest
+  public void testNumberField() {
+    ViewManager viewManager = createViewManager(getInstrumentation().getTargetContext());
+    EditorInfo editorInfo = new EditorInfo();
+
+    editorInfo.inputType = EditorInfo.TYPE_CLASS_DATETIME;
+    viewManager.setEditorInfo(editorInfo);
+    assertEquals(
+        KeyboardMode.NUMBER, viewManager.getActiveSoftwareKeyboardModel().getKeyboardMode());
+    assertEquals(
+        KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+        viewManager.hardwareKeyboard.getKeyboardSpecification());
+
+    editorInfo.inputType = EditorInfo.TYPE_CLASS_NUMBER;
+    viewManager.setEditorInfo(editorInfo);
+    assertEquals(
+        KeyboardMode.NUMBER, viewManager.getActiveSoftwareKeyboardModel().getKeyboardMode());
+    assertEquals(
+        KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+        viewManager.hardwareKeyboard.getKeyboardSpecification());
+
+    editorInfo.inputType = EditorInfo.TYPE_CLASS_PHONE;
+    viewManager.setEditorInfo(editorInfo);
+    assertEquals(
+        KeyboardMode.NUMBER, viewManager.getActiveSoftwareKeyboardModel().getKeyboardMode());
+    assertEquals(
+        KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+        viewManager.hardwareKeyboard.getKeyboardSpecification());
+
+    editorInfo.inputType = EditorInfo.TYPE_CLASS_TEXT;
+    viewManager.setEditorInfo(editorInfo);
+    assertEquals(KeyboardMode.KANA, viewManager.getActiveSoftwareKeyboardModel().getKeyboardMode());
+    assertEquals(
+        KeyboardSpecification.HARDWARE_QWERTY_KANA,
+        viewManager.hardwareKeyboard.getKeyboardSpecification());
   }
 
   @SmallTest
@@ -375,13 +427,13 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testJapaneseKeyboardSwitchEventCallback() {
+  public void testKeyboardSwitchEventCallback() {
     Context context = getInstrumentation().getTargetContext();
     ViewEventListener eventListener = createMock(ViewEventListener.class);
     ViewManager viewManager = createViewManagerWithEventListener(context, eventListener);
 
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
-                 viewManager.getJapaneseKeyboardSpecification());
+                 viewManager.getKeyboardSpecification());
 
     // Make sure that whenever keyboard is changed, the callback should be invoked.
     eventListener.onKeyEvent(null, null, KeyboardSpecification.QWERTY_KANA,
@@ -399,139 +451,157 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testJapaneseKeyboardSwitching() {
+  public void testKeyboardSwitching() {
     Context context = getInstrumentation().getTargetContext();
     Resources resources = context.getResources();
 
     ViewManager viewManager = createViewManager(context);
     replayAll();
     MozcView mozcView = viewManager.createMozcView(context);
-    JapaneseKeyboardView keyboardView = mozcView.getKeyboardView();
+    KeyboardView keyboardView = mozcView.getKeyboardView();
+    HardwareKeyboard hardwareKeyboard = viewManager.hardwareKeyboard;
     List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
 
     // The default keyboard is 12key's-"kana"-toggle mode.
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_123), touchEventList);
-    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_NUMBER,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_kana), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     // The default mode is "kana".
     viewManager.setKeyboardLayout(KeyboardLayout.QWERTY);
     assertEquals(KeyboardSpecification.QWERTY_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_kana_123), touchEventList);
-    assertEquals(KeyboardSpecification.QWERTY_KANA_NUMBER,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_kana), touchEventList);
-    assertEquals(KeyboardSpecification.QWERTY_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
-    assertEquals(KeyboardSpecification.QWERTY_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc_123), touchEventList);
-    assertEquals(KeyboardSpecification.QWERTY_ALPHABET_NUMBER,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
-    assertEquals(KeyboardSpecification.QWERTY_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
 
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_kana), touchEventList);
     assertEquals(KeyboardSpecification.QWERTY_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
+
+    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
+    assertEquals(KeyboardSpecification.QWERTY_ALPHABET,
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
+
+    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
+    assertEquals(KeyboardSpecification.QWERTY_ALPHABET,
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
+
+    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_kana), touchEventList);
+    assertEquals(KeyboardSpecification.QWERTY_KANA,
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     // Make sure we can return back to 12-keys keyboard.
     viewManager.setKeyboardLayout(KeyboardLayout.TWELVE_KEYS);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     // Then set to flick mode.
     viewManager.setInputStyle(InputStyle.FLICK);
     assertEquals(KeyboardSpecification.TWELVE_KEY_FLICK_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_FLICK_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_123), touchEventList);
-    assertEquals(KeyboardSpecification.TWELVE_KEY_FLICK_NUMBER,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     // Return back to flick-kana mode.
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_kana), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_FLICK_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     // Then set to toggle-flick mode.
     viewManager.setInputStyle(InputStyle.TOGGLE_FLICK);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_123), touchEventList);
-    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_NUMBER,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     // Return back to flick-kana mode.
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_kana), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     // Testing for qwerty layout for alphabet mode.
     viewManager.setQwertyLayoutForAlphabet(true);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_QWERTY_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     // Switching the mode should trigger the alphabet keyboard view switching as well.
     viewManager.setQwertyLayoutForAlphabet(false);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.setQwertyLayoutForAlphabet(true);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_QWERTY_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc_123), touchEventList);
-    assertEquals(KeyboardSpecification.QWERTY_ALPHABET_NUMBER,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_QWERTY_ALPHABET,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
-
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_123), touchEventList);
-    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_NUMBER,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_kana), touchEventList);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
 
     viewManager.setQwertyLayoutForAlphabet(false);
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
+    assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
+                 hardwareKeyboard.getKeyboardSpecification());
   }
 
   @SmallTest
@@ -549,15 +619,15 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testSetJapaneseKeyboardStyleForUninitializedKeyboardViewDefault() {
+  public void testSetKeyboardStyleForUninitializedKeyboardViewDefault() {
     Context context = getInstrumentation().getTargetContext();
     ViewManager viewManager = createViewManager(context);
 
     // Make sure keyboard by createInputView is 12keys-kana keyboard by default.
     MozcView mozcView = viewManager.createMozcView(context);
-    JapaneseKeyboardView keyboardView = mozcView.getKeyboardView();
+    KeyboardView keyboardView = mozcView.getKeyboardView();
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
   }
 
   @SmallTest
@@ -570,9 +640,9 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     // Make sure the keyboard instance created via createInputView is not default keyboard.
     MozcView mozcView = viewManager.createMozcView(context);
-    JapaneseKeyboardView keyboardView = mozcView.getKeyboardView();
+    KeyboardView keyboardView = mozcView.getKeyboardView();
     assertEquals(KeyboardSpecification.QWERTY_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
   }
 
   @SmallTest
@@ -585,9 +655,9 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     // Make sure the keyboard instance created via createInputView is not default keyboard.
     MozcView mozcView = viewManager.createMozcView(context);
-    JapaneseKeyboardView keyboardView = mozcView.getKeyboardView();
+    KeyboardView keyboardView = mozcView.getKeyboardView();
     assertEquals(KeyboardSpecification.TWELVE_KEY_FLICK_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
   }
 
   @SmallTest
@@ -612,12 +682,12 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
         .createMock();
     ViewManager viewManager = new ViewManager(
         context, listener, createNiceMock(SymbolHistoryStorage.class),
-        createMock(ImeSwitcher.class), createNiceMock(MenuDialogListener.class), guesser);
+        createMock(ImeSwitcher.class), createNiceMock(MenuDialogListener.class), guesser,
+        new HardwareKeyboard());
     viewManager.createMozcView(context);
     KeyboardSpecification keyboardSpecification =
-        JapaneseSoftwareKeyboardModel.class.cast(
-            viewManager.japaneseSoftwareKeyboardModel)
-                .getKeyboardSpecification();
+        JapaneseSoftwareKeyboardModel.class.cast(viewManager.getActiveSoftwareKeyboardModel())
+            .getKeyboardSpecification();
 
     Resources resources = context.getResources();
     List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
@@ -644,41 +714,41 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     TestData[] testDataList = {
         // White space.
         new TestData(' ',
-                     null,
+                     new ProbableKeyEvent[0],
                      false,
                      ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.SPACE).build(),
                      KeyEvent.KEYCODE_SPACE),
         // Enter.
         new TestData(resources.getInteger(R.integer.key_enter),
-                     null,
+                     new ProbableKeyEvent[0],
                      false,
                      ProtoCommands.KeyEvent.newBuilder()
                          .setSpecialKey(SpecialKey.VIRTUAL_ENTER).build(),
                      KeyEvent.KEYCODE_ENTER),
         // Delete.
         new TestData(resources.getInteger(R.integer.key_backspace),
-                     null,
+                     new ProbableKeyEvent[0],
                      false,
                      ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.BACKSPACE)
                          .build(),
                      KeyEvent.KEYCODE_DEL),
         // Left.
         new TestData(resources.getInteger(R.integer.key_left),
-                     null,
+                     new ProbableKeyEvent[0],
                      false,
                      ProtoCommands.KeyEvent.newBuilder()
                          .setSpecialKey(SpecialKey.VIRTUAL_LEFT).build(),
                      KeyEvent.KEYCODE_DPAD_LEFT),
         // Right.
         new TestData(resources.getInteger(R.integer.key_right),
-                     null,
+                     new ProbableKeyEvent[0],
                      false,
                      ProtoCommands.KeyEvent.newBuilder()
                          .setSpecialKey(SpecialKey.VIRTUAL_RIGHT).build(),
                      KeyEvent.KEYCODE_DPAD_RIGHT),
         // Normal character with no correction stats.
         new TestData('a',
-                     null,
+                     new ProbableKeyEvent[0],
                      true,
                      ProtoCommands.KeyEvent.newBuilder().setKeyCode('a').build(),
                      KeyEvent.KEYCODE_A),
@@ -739,22 +809,40 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     resetAll();
     List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
     listener.onKeyEvent(null, null,
-                        KeyboardSpecification.TWELVE_KEY_TOGGLE_NUMBER, touchEventList);
+                        KeyboardSpecification.TWELVE_KEY_TOGGLE_ALPHABET, touchEventList);
     replayAll();
 
     // Make sure the current keyboard is 12keys-toggle-kana mode before sending a key.
-    JapaneseKeyboardView keyboardView = mozcView.getKeyboardView();
+    KeyboardView keyboardView = mozcView.getKeyboardView();
     assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+                 keyboardView.getKeyboard().get().getSpecification());
 
     // Send key code to switch number keyboard style.
-    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_123), touchEventList);
+    viewManager.onKey(resources.getInteger(R.integer.key_chartype_to_abc), touchEventList);
 
     // Make sure actually keyboard style has been changed.
-    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_NUMBER,
-                 keyboardView.getJapaneseKeyboard().getSpecification());
+    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_ALPHABET,
+                 keyboardView.getKeyboard().get().getSpecification());
 
     // Make sure that the listener can catch the expected events.
+    verifyAll();
+  }
+
+  @SmallTest
+  public void testOnKeyForGlobeButton() {
+    Context context = getInstrumentation().getTargetContext();
+    ImeSwitcher imeSwitcher = createMock(ImeSwitcher.class);
+
+    ViewManager viewManager = new ViewManager(
+        context, createNiceMock(ViewEventListener.class),
+        createNiceMock(SymbolHistoryStorage.class),
+        imeSwitcher, createNiceMock(MenuDialogListener.class));
+
+    expect(imeSwitcher.switchToNextInputMethod(false)).andReturn(Boolean.TRUE);
+
+    replayAll();
+    viewManager.onKey(context.getResources().getInteger(R.integer.key_globe),
+                      Collections.<TouchEvent>emptyList());
     verifyAll();
   }
 
@@ -804,7 +892,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     ViewManager viewManager = createViewManagerWithEventListener(context, listener);
     viewManager.createMozcView(context);
     KeyboardSpecification keyboardSpecification =
-        JapaneseSoftwareKeyboardModel.class.cast(viewManager.japaneseSoftwareKeyboardModel)
+        JapaneseSoftwareKeyboardModel.class.cast(viewManager.getActiveSoftwareKeyboardModel())
             .getKeyboardSpecification();
 
     // Emulate toggling a key.
@@ -883,18 +971,19 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
       // Add dummy KeyEventContext.
       KeyEventContext keyEventContext =
           new KeyEventContext(
-              new Key(0, 0, 0, 0, 0, 0, false, false, false,
-                      Stick.EVEN, Collections.<KeyState>emptyList()),
+              new Key(0, 0, 0, 0, 0, 0, false, false, Stick.EVEN,
+                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+                      Collections.<KeyState>emptyList()),
               0, 0, 0, 0, 0, 0, Collections.<MetaState>emptySet());
       keyEventContextMap.put(0, keyEventContext);
     }
 
-    mozcView.getCandidateView().startInAnimation();
+    mozcView.softwareKeyboardHeightListener.onExpanded();
     mozcView.getSymbolInputView().startInAnimation();
 
     MenuDialog menuDialog = createMockBuilder(MenuDialog.class)
-        .withConstructor(Context.class, Optional.class, boolean.class)
-        .withArgs(context, Optional.of(createNiceMock(MenuDialogListener.class)), false)
+        .withConstructor(Context.class, Optional.class)
+        .withArgs(context, Optional.of(createNiceMock(MenuDialogListener.class)))
         .createMock();
     resetAll();
     viewManager.menuDialog = menuDialog;
@@ -908,9 +997,9 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     assertEquals(View.VISIBLE, mozcView.getKeyboardFrame().getVisibility());
     assertEquals(context.getResources().getDimensionPixelSize(R.dimen.input_frame_height),
                  mozcView.getKeyboardFrame().getLayoutParams().height);
-    assertEquals(View.GONE, mozcView.getCandidateView().getVisibility());
+    assertFalse(mozcView.candidateViewManager.isKeyboardCandidateViewVisible());
     assertEquals(View.GONE, mozcView.getSymbolInputView().getVisibility());
-    assertNull(mozcView.getCandidateView().getAnimation());
+    assertNull(mozcView.candidateViewManager.keyboardCandidateView.getAnimation());
     assertNull(mozcView.getSymbolInputView().getAnimation());
     assertTrue(keyEventContextMap.isEmpty());
   }
@@ -938,7 +1027,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     Context context = getInstrumentation().getTargetContext();
     ViewManager viewManager = createViewManager(context);
-    Window window = createMockBuilder(Window.class)
+    Window window = createMockBuilder(MockWindow.class)
         .withConstructor(Context.class)
         .withArgs(context)
         .createMock();
@@ -1064,15 +1153,17 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetSkinType() {
     Context context = getInstrumentation().getTargetContext();
+    Resources resources = context.getResources();
     ViewManager viewManager = createViewManager(context);
     MozcView mozcView = viewManager.createMozcView(context);
 
-    viewManager.setSkinType(SkinType.ORANGE_LIGHTGRAY);
-    assertEquals(SkinType.ORANGE_LIGHTGRAY, mozcView.getSkinType());
-    viewManager.setSkinType(SkinType.TEST);
-    assertEquals(SkinType.TEST, mozcView.getSkinType());
+    viewManager.setSkin(SkinType.ORANGE_LIGHTGRAY.getSkin(resources));
+    assertEquals(SkinType.ORANGE_LIGHTGRAY.getSkin(resources), mozcView.getSkin());
+    viewManager.setSkin(SkinType.TEST.getSkin(resources));
+    assertEquals(SkinType.TEST.getSkin(resources), mozcView.getSkin());
   }
 
+  @SmallTest
   public void testMaybeTransitToNarrowMode() {
     Context context = getInstrumentation().getTargetContext();
     ViewManager viewManager = createViewManager(context);
@@ -1089,8 +1180,8 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     }
     KeyEventInterface softwareEvent = new KeyEventInterface() {
       @Override
-      public KeyEvent getNativeEvent() {
-        return null;
+      public Optional<KeyEvent> getNativeEvent() {
+        return Optional.absent();
       }
       @Override
       public int getKeyCode() {
@@ -1099,8 +1190,8 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     };
     KeyEventInterface hardwareEvent = new KeyEventInterface() {
       @Override
-      public KeyEvent getNativeEvent() {
-        return new KeyEvent(0, 0);
+      public Optional<KeyEvent> getNativeEvent() {
+        return Optional.of(new KeyEvent(0, 0));
       }
       @Override
       public int getKeyCode() {
@@ -1128,8 +1219,8 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
         .buildPartial();
     TestData[] testDataList = new TestData[] {
         new TestData(noKey, hardwareEvent, false),
-        new TestData(noKeyCode, hardwareEvent, false),
-        new TestData(withModifier, hardwareEvent, false),
+        new TestData(noKeyCode, hardwareEvent, true),
+        new TestData(withModifier, hardwareEvent, true),
         new TestData(printable, null, false),
         new TestData(printable, softwareEvent, false),
         new TestData(printable, hardwareEvent, true),
@@ -1139,5 +1230,202 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
       viewManager.maybeTransitToNarrowMode(testData.command, testData.keyEventInterface);
       assertEquals(testData.expectation, viewManager.isNarrowMode());
     }
+  }
+
+  @SmallTest
+  public void testHandleEmojiKey() {
+    Context context = getInstrumentation().getTargetContext();
+    ViewManager viewManager = createViewManager(context);
+    MozcView mozcView = createViewMockBuilder(MozcView.class)
+        .addMockedMethods("showSymbolInputView", "setLayoutAdjustmentAndNarrowMode")
+        .createNiceMock();
+    viewManager.mozcView = mozcView;
+
+    // Disable input device check.
+    // Otherwise, this feature doesn't work except for keyboards which has Emoji key(s).
+    viewManager.viewLayerKeyEventHandler.disableDeviceCheck = true;
+
+    KeyEvent aDown = new KeyEvent(0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A, 0);
+    KeyEvent aUp = new KeyEvent(0L, 0L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_A, 0);
+    KeyEvent aDownWithAlt = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A, 0, KeyEvent.META_ALT_ON);
+    KeyEvent aUpWithAlt = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_A, 0, KeyEvent.META_ALT_ON);
+    KeyEvent altDown = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ALT_LEFT, 0, KeyEvent.META_ALT_ON);
+    KeyEvent altUp = new KeyEvent(0L, 0L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ALT_LEFT, 0);
+    KeyEvent shiftDown = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT, 0, KeyEvent.META_SHIFT_ON);
+    KeyEvent shiftUp = new KeyEvent(0L, 0L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT, 0);
+    KeyEvent altDownWithShift = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ALT_LEFT, 0, KeyEvent.META_SHIFT_ON);
+    KeyEvent altUpWithShift = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ALT_LEFT, 0, KeyEvent.META_SHIFT_ON);
+    KeyEvent shiftDownWithAlt = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT, 0, KeyEvent.META_ALT_ON);
+    KeyEvent shiftUpWithAlt = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT, 0, KeyEvent.META_ALT_ON);
+    KeyEvent altDownWithAlt = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ALT_LEFT, 0, KeyEvent.META_ALT_ON);
+    KeyEvent altUpWithAlt = new KeyEvent(
+        0L, 0L, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ALT_LEFT, 0, KeyEvent.META_ALT_ON);
+
+
+    class TestData extends Parameter {
+      final KeyEvent[] keyEvents;
+      final boolean expectLaunchEmojiPalette;
+      TestData(KeyEvent[] keyEvents, boolean expectLaunchEmojiPalette) {
+        this.keyEvents = Preconditions.checkNotNull(keyEvents);
+        this.expectLaunchEmojiPalette = expectLaunchEmojiPalette;
+      }
+    }
+    TestData[] testDataArray = new TestData[] {
+        new TestData(new KeyEvent[] {altDown, altUp}, true),
+        new TestData(new KeyEvent[] {shiftDown, shiftUp}, false),
+        new TestData(new KeyEvent[] {aDown, aUp}, false),
+
+        new TestData(new KeyEvent[] {altDown, aDownWithAlt, aUpWithAlt, altUp}, false),
+        new TestData(new KeyEvent[] {aDown, altDown, altUp, aUp}, false),
+        new TestData(new KeyEvent[] {altDown, aDownWithAlt, altUp, aUpWithAlt}, false),
+        new TestData(new KeyEvent[] {aDown, altDown, aUpWithAlt, altUp}, false),
+
+        new TestData(new KeyEvent[] {altDown, shiftDownWithAlt, shiftUpWithAlt, altUp}, false),
+        new TestData(new KeyEvent[] {shiftDown, altDownWithShift, altUpWithShift, shiftUp}, false),
+        new TestData(new KeyEvent[] {altDown, shiftDownWithAlt, altUpWithShift, shiftUp}, false),
+        new TestData(new KeyEvent[] {shiftDown, altDownWithShift, shiftUpWithAlt, altUp}, false),
+
+        new TestData(new KeyEvent[] {altDown, altDownWithAlt, altUpWithAlt, altUp}, false),
+    };
+
+    for (TestData testData : testDataArray) {
+      // Key events except for last one should NOT be consumed by view layer.
+      for (int i = 0; i < testData.keyEvents.length - 1; ++i) {
+        assertFalse(viewManager.isKeyConsumedOnViewAsynchronously(testData.keyEvents[i]));
+      }
+
+      KeyEvent lastKeyEvent = testData.keyEvents[testData.keyEvents.length - 1];
+      if (testData.expectLaunchEmojiPalette) {
+        assertTrue(viewManager.isKeyConsumedOnViewAsynchronously(lastKeyEvent));
+        resetAll();
+        expect(mozcView.showSymbolInputView(Optional.of(SymbolMajorCategory.EMOJI)))
+            .andReturn(true);
+        replayAll();
+        viewManager.consumeKeyOnViewSynchronously(lastKeyEvent);
+        verifyAll();
+      } else {
+        assertFalse(viewManager.isKeyConsumedOnViewAsynchronously(lastKeyEvent));
+        resetAll();
+        replayAll();
+        viewManager.consumeKeyOnViewSynchronously(lastKeyEvent);
+        verifyAll();
+      }
+    }
+  }
+
+  @SmallTest
+  public void testOnKeyDownByHardwareKeyboard() {
+    Context context = getInstrumentation().getTargetContext();
+    HardwareKeyboard hardwareKeyboard = createNiceMock(HardwareKeyboard.class);
+    ViewEventListener listener = createMock(ViewEventListener.class);
+    ViewManager viewManager = new ViewManager(
+        context, listener, createNiceMock(SymbolHistoryStorage.class),
+        createNiceMock(ImeSwitcher.class), createNiceMock(MenuDialogListener.class),
+        new ProbableKeyEventGuesser(context.getAssets()), hardwareKeyboard);
+
+    MozcView mozcView = createViewMockBuilder(MozcView.class)
+        .addMockedMethods("setKeyboard")
+        .createNiceMock();
+    viewManager.mozcView = mozcView;
+
+    KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A);
+    ProtoCommands.KeyEvent mozcKeyEvent =
+        ProtoCommands.KeyEvent.newBuilder().setKeyCode('a').build();
+    KeyEventInterface keyEventInterface = KeycodeConverter.getKeyEventInterface(event);
+    KeyboardSpecification keyboardSpecification = KeyboardSpecification.HARDWARE_QWERTY_KANA;
+
+    resetAll();
+
+    expect(hardwareKeyboard.getCompositionMode()).andStubReturn(CompositionMode.HIRAGANA);
+    expect(hardwareKeyboard.setCompositionModeByKey(event)).andReturn(false);
+    expect(hardwareKeyboard.getMozcKeyEvent(event)).andReturn(mozcKeyEvent);
+    expect(hardwareKeyboard.getKeyEventInterface(event)).andReturn(keyEventInterface);
+    expect(hardwareKeyboard.getKeyboardSpecification()).andReturn(keyboardSpecification);
+    listener.onKeyEvent(
+        same(mozcKeyEvent), same(keyEventInterface), same(keyboardSpecification),
+        eq(Collections.<TouchEvent>emptyList()));
+
+    replayAll();
+    viewManager.onHardwareKeyEvent(event);
+    verifyAll();
+
+    resetAll();
+
+    keyboardSpecification = KeyboardSpecification.HARDWARE_QWERTY_ALPHABET;
+    expect(hardwareKeyboard.getCompositionMode()).andReturn(CompositionMode.HIRAGANA);
+    expect(hardwareKeyboard.setCompositionModeByKey(event)).andReturn(false);
+    expect(hardwareKeyboard.getCompositionMode()).andReturn(CompositionMode.HALF_ASCII);
+    expect(hardwareKeyboard.getMozcKeyEvent(event)).andReturn(mozcKeyEvent);
+    expect(hardwareKeyboard.getKeyEventInterface(event)).andReturn(keyEventInterface);
+    expect(hardwareKeyboard.getKeyboardSpecification()).andReturn(keyboardSpecification);
+    Capture<Keyboard> keyboardCapture = new Capture<Keyboard>();
+    mozcView.setKeyboard(capture(keyboardCapture));
+    listener.onKeyEvent(
+        same(mozcKeyEvent), same(keyEventInterface), same(keyboardSpecification),
+        eq(Collections.<TouchEvent>emptyList()));
+
+    replayAll();
+    viewManager.onHardwareKeyEvent(event);
+    verifyAll();
+    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_ALPHABET,
+                 keyboardCapture.getValue().getSpecification());
+  }
+
+  @SmallTest
+  public void testSwitchHardwareKeyboardCompositionMode() {
+    Context context = getInstrumentation().getTargetContext();
+    ViewEventListener listener = createMock(ViewEventListener.class);
+    ViewManager viewManager = createViewManagerWithEventListener(context, listener);
+
+    // Set KANA as a initial composition mode without MozcView.
+    viewManager.switchHardwareKeyboardCompositionMode(CompositionSwitchMode.KANA);
+
+    MozcView mozcView = createViewMockBuilder(MozcView.class)
+        .addMockedMethods("setKeyboard")
+        .createNiceMock();
+    viewManager.mozcView = mozcView;
+
+    Capture<Keyboard> keyboardCapture = new Capture<Keyboard>();
+
+    // HIRAGANA to HIRAGANA by CompositionSwitchMode.KANA.
+    resetAll();
+    replayAll();
+    viewManager.switchHardwareKeyboardCompositionMode(CompositionSwitchMode.KANA);
+    verifyAll();
+
+    // HIRAGANA to HALF_ASCII by CompositionSwitchMode.HALF_ASCII.
+    resetAll();
+    mozcView.setKeyboard(capture(keyboardCapture));
+    listener.onKeyEvent(EasyMock.<ProtoCommands.KeyEvent>isNull(),
+                        EasyMock.<KeyEventInterface>isNull(),
+                        same(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET),
+                        eq(Collections.<TouchEvent>emptyList()));
+    replayAll();
+    viewManager.switchHardwareKeyboardCompositionMode(CompositionSwitchMode.ALPHABET);
+    verifyAll();
+    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_ALPHABET,
+        keyboardCapture.getValue().getSpecification());
+
+    // HALF_ASCII to HIRAGANA by CompositionSwitchMode.TOGGLE.
+    resetAll();
+    mozcView.setKeyboard(capture(keyboardCapture));
+    listener.onKeyEvent(EasyMock.<ProtoCommands.KeyEvent>isNull(),
+                        EasyMock.<KeyEventInterface>isNull(),
+                        same(KeyboardSpecification.HARDWARE_QWERTY_KANA),
+                        eq(Collections.<TouchEvent>emptyList()));
+    replayAll();
+    viewManager.switchHardwareKeyboardCompositionMode(CompositionSwitchMode.TOGGLE);
+    verifyAll();
+    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
+                 keyboardCapture.getValue().getSpecification());
   }
 }

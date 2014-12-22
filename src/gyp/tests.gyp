@@ -80,9 +80,12 @@
             '../unix/ibus/ibus.gyp:ibus_all_test',
           ],
         }],
+        # Java tests are defined in android/android.gyp:build_java_test.
+        # However asset files (e.g., system.dictionary) are required to run
+        # native tests.
         ['target_platform=="Android"', {
           'dependencies': [
-            '../android/android.gyp:build_java_test',
+            '../android/android.gyp:assets',
           ],
         }],
       ],

@@ -31,7 +31,9 @@ package org.mozc.android.inputmethod.japanese.keyboard;
 
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -59,35 +61,172 @@ import java.util.Set;
 public class KeyboardParser {
 
   /** Attributes for the key dimensions. */
-  private static class KeyAttributes {
+  @VisibleForTesting static class KeyAttributes {
+
+    @VisibleForTesting static class Builder {
+
+      private int width;
+      private int height;
+      private int horizontalLayoutWeight;
+      private int horizontalGap;
+      private int verticalGap;
+      private int defaultIconWidth;
+      private int defaultIconHeight;
+      private int defaultHorizontalPadding;
+      private int defaultVerticalPadding;
+      private DrawableType keyBackgroundDrawableType =
+          DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND;
+      private int edgeFlags;
+      private boolean isRepeatable;
+      private boolean isModifier;
+      private Stick stick = Stick.EVEN;
+      private List<KeyState> keyStateList = Collections.<KeyState>emptyList();
+
+      Builder setWidth(int width) {
+        this.width = width;
+        return this;
+      }
+      Builder setHeight(int height) {
+        this.height = height;
+        return this;
+      }
+      Builder setHorizontalLayoutWeight(int horizontalLayoutWeight) {
+        this.horizontalLayoutWeight = horizontalLayoutWeight;
+        return this;
+      }
+      Builder setHorizontalGap(int horizontalGap) {
+        this.horizontalGap = horizontalGap;
+        return this;
+      }
+      Builder setVerticalGap(int verticalGap) {
+        this.verticalGap = verticalGap;
+        return this;
+      }
+      Builder setDefaultIconWidth(int defaultIconWidth) {
+        this.defaultIconWidth = defaultIconWidth;
+        return this;
+      }
+      Builder setDefaultIconHeight(int defaultIconHeight) {
+        this.defaultIconHeight = defaultIconHeight;
+        return this;
+      }
+      Builder setDefaultHorizontalPadding(int defaultHorizontalPadding) {
+        this.defaultHorizontalPadding = defaultHorizontalPadding;
+        return this;
+      }
+      Builder setDefaultVerticalPadding(int defaultVerticalPadding) {
+        this.defaultVerticalPadding = defaultVerticalPadding;
+        return this;
+      }
+      Builder setKeybackgroundDrawableType(DrawableType type) {
+        this.keyBackgroundDrawableType = Preconditions.checkNotNull(type);
+        return this;
+      }
+      Builder setEdgeFlags(int edgeFlags) {
+        this.edgeFlags = edgeFlags;
+        return this;
+      }
+      Builder setRepeatable(boolean isRepeatable) {
+        this.isRepeatable = isRepeatable;
+        return this;
+      }
+      Builder setModifier(boolean isModifier) {
+        this.isModifier = isModifier;
+        return this;
+      }
+      Builder setStick(Stick stick) {
+        this.stick = Preconditions.checkNotNull(stick);
+        return this;
+      }
+      Builder setKeyStateList(List<KeyState> keyStateList) {
+        this.keyStateList = Preconditions.checkNotNull(keyStateList);
+        return this;
+      }
+      KeyAttributes build() {
+        return new KeyAttributes(this);
+      }
+    }
+
     final int width;
     final int height;
+    final int horizontalLayoutWeight;
     final int horizontalGap;
     final int verticalGap;
-    DrawableType keyBackgroundDrawableType;
+    final int defaultIconWidth;
+    final int defaultIconHeight;
+    final int defaultHorizontalPadding;
+    final int defaultVerticalPadding;
+    final DrawableType keyBackgroundDrawableType;
+    final int edgeFlags;
+    final boolean isRepeatable;
+    final boolean isModifier;
+    final Stick stick;
+    final List<KeyState> keyStateList;
 
-    KeyAttributes(int width, int height, int horizontalGap, int verticalGap,
-                 DrawableType keyBackgroundDrawableType) {
-      this.width = width;
-      this.height = height;
-      this.horizontalGap = horizontalGap;
-      this.verticalGap = verticalGap;
-      this.keyBackgroundDrawableType = keyBackgroundDrawableType;
+    private KeyAttributes(Builder builder) {
+      this.width = builder.width;
+      this.height = builder.height;
+      this.horizontalLayoutWeight = builder.horizontalLayoutWeight;
+      this.horizontalGap = builder.horizontalGap;
+      this.verticalGap = builder.verticalGap;
+      this.defaultIconWidth = builder.defaultIconWidth;
+      this.defaultIconHeight = builder.defaultIconHeight;
+      this.defaultHorizontalPadding = builder.defaultHorizontalPadding;
+      this.defaultVerticalPadding = builder.defaultVerticalPadding;
+      this.keyBackgroundDrawableType =
+          Preconditions.checkNotNull(builder.keyBackgroundDrawableType);
+      this.edgeFlags = builder.edgeFlags;
+      this.isRepeatable = builder.isRepeatable;
+      this.isModifier = builder.isModifier;
+      this.stick = builder.stick;
+      this.keyStateList = builder.keyStateList;
+    }
+
+    static Builder newBuilder() {
+      return new Builder();
+    }
+
+    Builder toBuilder() {
+      return newBuilder()
+          .setWidth(width)
+          .setHeight(height)
+          .setHorizontalLayoutWeight(horizontalLayoutWeight)
+          .setHorizontalGap(horizontalGap)
+          .setVerticalGap(verticalGap)
+          .setDefaultHorizontalPadding(defaultHorizontalPadding)
+          .setDefaultVerticalPadding(defaultVerticalPadding)
+          .setDefaultIconWidth(defaultIconWidth)
+          .setDefaultIconHeight(defaultIconHeight)
+          .setKeybackgroundDrawableType(keyBackgroundDrawableType)
+          .setEdgeFlags(edgeFlags)
+          .setRepeatable(isRepeatable)
+          .setModifier(isModifier)
+          .setStick(stick)
+          .setKeyStateList(keyStateList);
+    }
+
+    Key buildKey(int x, int y, int width) {
+      return new Key(x, y, width, height, horizontalGap, edgeFlags,
+          isRepeatable, isModifier, stick, keyBackgroundDrawableType, keyStateList);
     }
   }
 
   /** Attributes for the popup dimensions. */
   private static class PopUpAttributes {
-    final int popUpWidth;
+
     final int popUpHeight;
     final int popUpXOffset;
     final int popUpYOffset;
+    final int popUpIconWidth;
+    final int popUpIconHeight;
 
-    PopUpAttributes(int popUpWidth, int popUpHeight, int popUpXOffset, int popUpYOffset) {
-      this.popUpWidth = popUpWidth;
+    PopUpAttributes(int popUpHeight, int popUpXOffset, int popUpYOffset,
+                    int popUpIconWidth, int popUpIconHeight) {
       this.popUpHeight = popUpHeight;
       this.popUpXOffset = popUpXOffset;
       this.popUpYOffset = popUpYOffset;
+      this.popUpIconWidth = popUpIconWidth;
+      this.popUpIconHeight = popUpIconHeight;
     }
   }
 
@@ -115,16 +254,47 @@ public class KeyboardParser {
   private static final int ROW_ROW_EDGE_FLAGS_INDEX =
       Arrays.binarySearch(ROW_ATTRIBUTES, R.attr.rowEdgeFlags);
 
+  private static final int[] POPUP_ATTRIBUTES = {
+    R.attr.popUpIcon,
+    R.attr.popUpLongPressIcon,
+    R.attr.popUpHeight,
+    R.attr.popUpXOffset,
+    R.attr.popUpYOffset,
+    R.attr.popUpIconWidth,
+    R.attr.popUpIconHeight,
+  };
+  static {
+    Arrays.sort(POPUP_ATTRIBUTES);
+  }
+  private static final int POPUP_KEY_ICON_INDEX =
+      Arrays.binarySearch(POPUP_ATTRIBUTES, R.attr.popUpIcon);
+  private static final int POPUP_KEY_LONG_PRESS_ICON_INDEX =
+      Arrays.binarySearch(POPUP_ATTRIBUTES, R.attr.popUpLongPressIcon);
+  private static final int POPUP_KEY_HEIGHT_INDEX =
+      Arrays.binarySearch(POPUP_ATTRIBUTES, R.attr.popUpHeight);
+  private static final int POPUP_KEY_X_OFFSET_INDEX =
+      Arrays.binarySearch(POPUP_ATTRIBUTES, R.attr.popUpXOffset);
+  private static final int POPUP_KEY_Y_OFFSET_INDEX =
+      Arrays.binarySearch(POPUP_ATTRIBUTES, R.attr.popUpYOffset);
+  private static final int POPUP_KEY_ICON_WIDTH_INDEX =
+      Arrays.binarySearch(POPUP_ATTRIBUTES, R.attr.popUpIconWidth);
+  private static final int POPUP_KEY_ICON_HEIGHT_INDEX =
+      Arrays.binarySearch(POPUP_ATTRIBUTES, R.attr.popUpIconHeight);
+
   /** Attributes for a {@code <Key>} element. */
   private static final int[] KEY_ATTRIBUTES = {
     R.attr.keyWidth,
     R.attr.keyHeight,
+    R.attr.keyHorizontalLayoutWeight,
     R.attr.horizontalGap,
+    R.attr.defaultIconWidth,
+    R.attr.defaultIconHeight,
+    R.attr.defaultHorizontalPadding,
+    R.attr.defaultVerticalPadding,
     R.attr.keyBackground,
     R.attr.keyEdgeFlags,
     R.attr.isRepeatable,
     R.attr.isModifier,
-    R.attr.isSticky,
   };
   static {
     Arrays.sort(KEY_ATTRIBUTES);
@@ -133,8 +303,18 @@ public class KeyboardParser {
       Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.keyWidth);
   private static final int KEY_KEY_HEIGHT_INDEX =
       Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.keyHeight);
+  private static final int KEY_KEY_HORIZONTAL_LAYOUT_WEIGHT_INDEX =
+      Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.keyHorizontalLayoutWeight);
   private static final int KEY_HORIZONTAL_GAP_INDEX =
       Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.horizontalGap);
+  private static final int KEY_DEFAULT_ICON_WIDTH_INDEX =
+      Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.defaultIconWidth);
+  private static final int KEY_DEFAULT_ICON_HEIGHT_INDEX =
+      Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.defaultIconHeight);
+  private static final int KEY_DEFAULT_HORIZONTAL_PADDING_INDEX =
+      Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.defaultHorizontalPadding);
+  private static final int KEY_DEFAULT_VERTICAL_PADDING_INDEX =
+      Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.defaultVerticalPadding);
   private static final int KEY_KEY_BACKGROUND_INDEX =
       Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.keyBackground);
   private static final int KEY_KEY_EDGE_FLAGS_INDEX =
@@ -143,32 +323,35 @@ public class KeyboardParser {
       Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.isRepeatable);
   private static final int KEY_IS_MODIFIER_INDEX =
       Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.isModifier);
-  private static final int KEY_IS_STICKY_INDEX =
-      Arrays.binarySearch(KEY_ATTRIBUTES, R.attr.isSticky);
 
   /** Attributes for a {@code <Spacer>} element. */
   private static final int[] SPACER_ATTRIBUTES = {
+    R.attr.keyWidth,
     R.attr.keyHeight,
-    R.attr.horizontalGap,
+    R.attr.keyHorizontalLayoutWeight,
     R.attr.keyEdgeFlags,
     R.attr.stick,
+    R.attr.keyBackground,
   };
   static {
     Arrays.sort(SPACER_ATTRIBUTES);
   }
+  private static final int SPACER_KEY_WIDTH_INDEX =
+      Arrays.binarySearch(SPACER_ATTRIBUTES, R.attr.keyWidth);
   private static final int SPACER_KEY_HEIGHT_INDEX =
       Arrays.binarySearch(SPACER_ATTRIBUTES, R.attr.keyHeight);
-  private static final int SPACER_HORIZONTAL_GAP_INDEX =
-      Arrays.binarySearch(SPACER_ATTRIBUTES, R.attr.horizontalGap);
+  private static final int SPACER_KEY_HORIZONTAL_LAYOUT_WEIGHT_INDEX =
+      Arrays.binarySearch(SPACER_ATTRIBUTES, R.attr.keyHorizontalLayoutWeight);
   private static final int SPACER_KEY_EDGE_FLAGS_INDEX =
       Arrays.binarySearch(SPACER_ATTRIBUTES, R.attr.keyEdgeFlags);
   private static final int SPACER_STICK_INDEX =
       Arrays.binarySearch(SPACER_ATTRIBUTES, R.attr.stick);
+  private static final int SPACER_KEY_BACKGROUND_INDEX =
+      Arrays.binarySearch(SPACER_ATTRIBUTES, R.attr.keyBackground);
 
   /** Attributes for a {@code <KeyState>} element. */
   private static final int[] KEY_STATE_ATTRIBUTES = {
     R.attr.contentDescription,
-    R.attr.keyBackground,
     R.attr.metaState,
     R.attr.nextMetaState,
     R.attr.nextRemovedMetaStates,
@@ -178,8 +361,6 @@ public class KeyboardParser {
   }
   private static final int KEY_STATE_CONTENT_DESCRIPTION_INDEX =
       Arrays.binarySearch(KEY_STATE_ATTRIBUTES, R.attr.contentDescription);
-  private static final int KEY_STATE_KEY_BACKGROUND_INDEX =
-      Arrays.binarySearch(KEY_STATE_ATTRIBUTES, R.attr.keyBackground);
   private static final int KEY_STATE_META_STATE_INDEX =
       Arrays.binarySearch(KEY_STATE_ATTRIBUTES, R.attr.metaState);
   private static final int KEY_STATE_NEXT_META_STATE_INDEX =
@@ -192,9 +373,14 @@ public class KeyboardParser {
     R.attr.sourceId,
     R.attr.keyCode,
     R.attr.longPressKeyCode,
+    R.attr.longPressTimeoutTrigger,
     R.attr.keyIcon,
     R.attr.keyCharacter,
     R.attr.flickHighlight,
+    R.attr.horizontalPadding,
+    R.attr.verticalPadding,
+    R.attr.iconWidth,
+    R.attr.iconHeight,
   };
   static {
     Arrays.sort(KEY_ENTITY_ATTRIBUTES);
@@ -205,12 +391,22 @@ public class KeyboardParser {
       Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.keyCode);
   private static final int KEY_ENTITY_LONG_PRESS_KEY_CODE_INDEX =
       Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.longPressKeyCode);
+  private static final int KEY_ENTITY_LONG_PRESS_TIMEOUT_TRIGGER_INDEX =
+      Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.longPressTimeoutTrigger);
   private static final int KEY_ENTITY_KEY_ICON_INDEX =
       Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.keyIcon);
   private static final int KEY_ENTITY_KEY_CHAR_INDEX =
       Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.keyCharacter);
   private static final int KEY_ENTITY_FLICK_HIGHLIGHT_INDEX =
       Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.flickHighlight);
+  private static final int KEY_ENTITY_HORIZONTAL_PADDING_INDEX =
+      Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.horizontalPadding);
+  private static final int KEY_ENTITY_VERTICAL_PADDING_INDEX =
+      Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.verticalPadding);
+  private static final int KEY_ENTITY_ICON_WIDTH_INDEX =
+      Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.iconWidth);
+  private static final int KEY_ENTITY_ICON_HEIGHT_INDEX =
+      Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.iconHeight);
 
   /**
    * Mapping table from enum value in xml to DrawableType by using the enum value as index.
@@ -222,30 +418,33 @@ public class KeyboardParser {
     DrawableType.QWERTY_REGULAR_KEY_BACKGROUND,
     DrawableType.QWERTY_FUNCTION_KEY_BACKGROUND,
     DrawableType.QWERTY_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS,
-    DrawableType.QWERTY_FUNCTION_KEY_LIGHT_ON_BACKGROUND,
-    DrawableType.QWERTY_FUNCTION_KEY_LIGHT_OFF_BACKGROUND,
+    DrawableType.QWERTY_FUNCTION_KEY_SPACE_WITH_THREEDOTS,
+    DrawableType.KEYBOARD_SEPARATOR_TOP,
+    DrawableType.KEYBOARD_SEPARATOR_CENTER,
+    DrawableType.KEYBOARD_SEPARATOR_BOTTOM,
+    DrawableType.TRNASPARENT,
   };
 
   /**
    * @return "sourceId" assigned to {@code value}.
    */
-  static int getSourceId(TypedValue value, @SuppressWarnings("unused") int defaultValue) {
-    if (value == null ||
-        (value.type != TypedValue.TYPE_INT_DEC &&
-         value.type != TypedValue.TYPE_INT_HEX)) {
-      throw new IllegalArgumentException("sourceId is mandatory for KeyEntity.");
-    }
+  private static int getSourceId(TypedValue value, @SuppressWarnings("unused") int defaultValue) {
+    Preconditions.checkNotNull(value);
+    Preconditions.checkArgument(
+        value.type == TypedValue.TYPE_INT_DEC || value.type == TypedValue.TYPE_INT_HEX,
+        "sourceId is mandatory for KeyEntity.");
     return value.data;
   }
 
   /**
    * @return the pixel offsets based on metrics and base
    */
-  static int getDimensionOrFraction(
-      TypedValue value, int base, int defaultValue, DisplayMetrics metrics) {
-    if (value == null) {
+  @VisibleForTesting static int getDimensionOrFraction(
+      Optional<TypedValue> optionalValue, int base, int defaultValue, DisplayMetrics metrics) {
+    if (!optionalValue.isPresent()) {
       return defaultValue;
     }
+    TypedValue value = optionalValue.get();
 
     switch (value.type) {
       case TypedValue.TYPE_DIMENSION:
@@ -258,13 +457,29 @@ public class KeyboardParser {
                                        "  value = " + value.toString());
   }
 
+  @VisibleForTesting static int getFraction(
+      Optional<TypedValue> optionalValue, int base, int defaultValue) {
+    if (!optionalValue.isPresent()) {
+      return defaultValue;
+    }
+    TypedValue value = optionalValue.get();
+
+    if (value.type == TypedValue.TYPE_FRACTION) {
+      return Math.round(TypedValue.complexToFraction(value.data, base, base));
+    }
+
+    throw new IllegalArgumentException(
+        "The type fraction is required.  value = " + value.toString());
+  }
+
   /**
    * @return "codes" assigned to {@code value}
    */
-  static int getCode(TypedValue value, int defaultValue) {
-    if (value == null) {
+  @VisibleForTesting static int getCode(Optional<TypedValue> optionalValue, int defaultValue) {
+    if (!optionalValue.isPresent()) {
       return defaultValue;
     }
+    TypedValue value = optionalValue.get();
 
     if (value.type == TypedValue.TYPE_INT_DEC ||
         value.type == TypedValue.TYPE_INT_HEX) {
@@ -275,20 +490,6 @@ public class KeyboardParser {
     }
 
     return defaultValue;
-  }
-
-  /**
-   * A simple wrapper of {@link CharSequence#toString()}, in order to avoid
-   * {@code NullPointerException}.
-   * @param sequence input character sequence
-   * @return {@code sequence.toString()} if {@code sequence} is not {@code null}.
-   *         Otherwise, {@code null}.
-   */
-  static String toStringOrNull(CharSequence sequence) {
-    if (sequence == null) {
-      return null;
-    }
-    return sequence.toString();
   }
 
   private static void ignoreWhiteSpaceAndComment(XmlPullParser parser)
@@ -302,8 +503,8 @@ public class KeyboardParser {
   private static void assertStartDocument(XmlPullParser parser) throws XmlPullParserException {
     if (parser.getEventType() != XmlPullParser.START_DOCUMENT) {
       throw new IllegalArgumentException(
-          "The start of document is expected, but actually not: " +
-          parser.getPositionDescription());
+          "The start of document is expected, but actually not: "
+              + parser.getPositionDescription());
     }
   }
 
@@ -325,8 +526,8 @@ public class KeyboardParser {
     String actualName = parser.getName();
     if (!actualName.equals(expectedName)) {
       throw new IllegalArgumentException(
-          "Tag <" + expectedName + "> is expected, but found <" + actualName + ">: " +
-          parser.getPositionDescription());
+          "Tag <" + expectedName + "> is expected, but found <" + actualName + ">: "
+              + parser.getPositionDescription());
     }
   }
 
@@ -353,20 +554,16 @@ public class KeyboardParser {
   private final Set<Integer> sourceIdSet = new HashSet<Integer>();
   private final int keyboardWidth;
   private final int keyboardHeight;
+  private final KeyboardSpecification specification;
 
-  public KeyboardParser(Resources resources, XmlResourceParser xmlResourceParser,
-                        int keyboardWidth, int keyboardHeight) {
-    if (resources == null) {
-      throw new NullPointerException("resources shouldn't be null.");
-    }
-    if (xmlResourceParser == null) {
-      throw new NullPointerException("xmlResourceParser shouldn't be null.");
-    }
-
-    this.resources = resources;
-    this.xmlResourceParser = xmlResourceParser;
+  public KeyboardParser(Resources resources,
+                        int keyboardWidth, int keyboardHeight,
+                        KeyboardSpecification specification) {
+    this.resources = Preconditions.checkNotNull(resources);
     this.keyboardWidth = keyboardWidth;
     this.keyboardHeight = keyboardHeight;
+    this.specification = Preconditions.checkNotNull(specification);
+    this.xmlResourceParser = resources.getXml(specification.getXmlLayoutResourceId());
   }
 
   /**
@@ -427,23 +624,38 @@ public class KeyboardParser {
         // The default keyWidth is 10% of the display for width, and 50px for height.
         keyAttributes = parseKeyAttributes(
             attributes,
-            new KeyAttributes(keyboardWidth / 10, 50, 0, 0, null),
+            KeyAttributes.newBuilder()
+                .setWidth(keyboardWidth / 10)
+                .setHeight(50)
+                .setKeybackgroundDrawableType(DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND)
+                .setDefaultIconWidth(keyboardWidth)
+                .setDefaultIconHeight(keyboardHeight)
+                .setDefaultHorizontalPadding(0)
+                .setDefaultVerticalPadding(0)
+                .build(),
             metrics,
             this.keyboardWidth,
             this.keyboardHeight,
             R.styleable.Keyboard_keyWidth,
             R.styleable.Keyboard_keyHeight,
+            R.styleable.Keyboard_keyHorizontalLayoutWeight,
             R.styleable.Keyboard_horizontalGap,
             R.styleable.Keyboard_verticalGap,
+            R.styleable.Keyboard_defaultIconWidth,
+            R.styleable.Keyboard_defaultIconHeight,
+            R.styleable.Keyboard_defaultHorizontalPadding,
+            R.styleable.Keyboard_defaultVerticalPadding,
             R.styleable.Keyboard_keyBackground);
         popUpAttributes = parsePopUpAttributes(
             attributes,
+            new PopUpAttributes(0, 0, 0, 0, 0),
             metrics,
             this.keyboardWidth,
-            R.styleable.Keyboard_popUpWidth,
             R.styleable.Keyboard_popUpHeight,
             R.styleable.Keyboard_popUpXOffset,
-            R.styleable.Keyboard_popUpYOffset);
+            R.styleable.Keyboard_popUpYOffset,
+            R.styleable.Keyboard_popUpIconWidth,
+            R.styleable.Keyboard_popUpIconHeight);
         flickThreshold = parseFlickThreshold(
             attributes, R.styleable.Keyboard_flickThreshold);
         contentDescription = Optional.fromNullable(
@@ -473,7 +685,36 @@ public class KeyboardParser {
     ignoreWhiteSpaceAndComment(parser);
     assertEndDocument(parser);
 
-    return buildKeyboard(contentDescription, rowList, flickThreshold);
+    return new Keyboard(Preconditions.checkNotNull(contentDescription),
+        Preconditions.checkNotNull(rowList), flickThreshold, specification);
+  }
+
+  @VisibleForTesting
+  static List<Key> buildKeyList(List<KeyAttributes> keyAttributesList,
+                                        int y, int rowWidth) {
+    float remainingWidthByWeight = rowWidth;
+    int remainingWeight = 0;
+    for (KeyAttributes attributes : keyAttributesList) {
+      remainingWidthByWeight -= attributes.width;
+      remainingWeight += attributes.horizontalLayoutWeight;
+    }
+
+    List<Key> keyList = new ArrayList<Key>(keyAttributesList.size());
+    float exactX = 0;
+    for (KeyAttributes attributes : keyAttributesList) {
+      int weight = attributes.horizontalLayoutWeight;
+      Preconditions.checkState(remainingWeight >= weight);
+      float widthByWeight = weight > 0 ? remainingWidthByWeight * weight / remainingWeight : 0;
+      remainingWidthByWeight -= widthByWeight;
+      remainingWeight -= weight;
+      int x = Math.round(exactX);
+      Key key =
+          attributes.buildKey(x, y, Math.round(exactX + widthByWeight + attributes.width) - x);
+      keyList.add(key);
+      exactX += widthByWeight + attributes.width;
+    }
+    Preconditions.checkState(remainingWeight == 0);
+    return keyList;
   }
 
   /**
@@ -494,10 +735,10 @@ public class KeyboardParser {
       TypedArray attributes = resources.obtainAttributes(parser, ROW_ATTRIBUTES);
       try {
         verticalGap = getDimensionOrFraction(
-            attributes.peekValue(ROW_VERTICAL_GAP_INDEX),
+            Optional.fromNullable(attributes.peekValue(ROW_VERTICAL_GAP_INDEX)),
             keyboardHeight, defaultKeyAttributes.verticalGap, metrics);
         rowHeight = getDimensionOrFraction(
-            attributes.peekValue(ROW_KEY_HEIGHT_INDEX), keyboardHeight,
+            Optional.fromNullable(attributes.peekValue(ROW_KEY_HEIGHT_INDEX)), keyboardHeight,
             defaultKeyAttributes.height, metrics);
         edgeFlags = attributes.getInt(ROW_ROW_EDGE_FLAGS_INDEX, 0);
       } finally {
@@ -505,8 +746,7 @@ public class KeyboardParser {
       }
     }
 
-    List<Key> keyList = new ArrayList<Key>();
-    int x = 0;
+    List<KeyAttributes> keyAttributesList = new ArrayList<KeyAttributes>(16);  // 16 is heuristic
     while (true) {
       parser.next();
       ignoreWhiteSpaceAndComment(parser);
@@ -515,25 +755,22 @@ public class KeyboardParser {
         break;
       }
       if ("Key".equals(parser.getName())) {
-        Key key = parseKey(x, y, edgeFlags, defaultKeyAttributes, popUpAttributes);
-        keyList.add(key);
-        x += key.getWidth();
+        keyAttributesList.add(parseKey(edgeFlags, defaultKeyAttributes, popUpAttributes));
       } else if ("Spacer".equals(parser.getName())) {
-        Key key = parseSpacer(x, y, edgeFlags, defaultKeyAttributes);
-        keyList.add(key);
-        x += key.getWidth();
+        keyAttributesList.add(parseSpacer(edgeFlags, defaultKeyAttributes));
       }
     }
 
     assertEndTag(parser, "Row");
+    List<Key> keyList = buildKeyList(keyAttributesList, y, keyboardWidth);
     return buildRow(keyList, rowHeight, verticalGap);
   }
 
   /**
    * Parses a {@code Key} element, and returns an instance.
    */
-  private Key parseKey(int x, int y, int edgeFlags,
-                       KeyAttributes defaultKeyAttributes, PopUpAttributes popUpAttributes)
+  private KeyAttributes parseKey(int edgeFlags, KeyAttributes defaultKeyAttributes,
+                                 PopUpAttributes popUpAttributes)
       throws XmlPullParserException, IOException {
     XmlResourceParser parser = this.xmlResourceParser;
     assertStartTag(parser, "Key");
@@ -541,19 +778,20 @@ public class KeyboardParser {
     KeyAttributes keyAttributes;
     boolean isRepeatable;
     boolean isModifier;
-    boolean isSticky;
+    DisplayMetrics metrics = resources.getDisplayMetrics();
     {
       TypedArray attributes = resources.obtainAttributes(parser, KEY_ATTRIBUTES);
       try {
-        DisplayMetrics metrics = resources.getDisplayMetrics();
         keyAttributes = parseKeyAttributes(
             attributes, defaultKeyAttributes, metrics, keyboardWidth, keyboardHeight,
-            KEY_KEY_WIDTH_INDEX, KEY_KEY_HEIGHT_INDEX, KEY_HORIZONTAL_GAP_INDEX, -1,
+            KEY_KEY_WIDTH_INDEX, KEY_KEY_HEIGHT_INDEX, KEY_KEY_HORIZONTAL_LAYOUT_WEIGHT_INDEX,
+            KEY_HORIZONTAL_GAP_INDEX, -1,
+            KEY_DEFAULT_ICON_WIDTH_INDEX, KEY_DEFAULT_ICON_HEIGHT_INDEX,
+            KEY_DEFAULT_HORIZONTAL_PADDING_INDEX, KEY_DEFAULT_VERTICAL_PADDING_INDEX,
             KEY_KEY_BACKGROUND_INDEX);
         edgeFlags |= attributes.getInt(KEY_KEY_EDGE_FLAGS_INDEX, 0);
         isRepeatable = attributes.getBoolean(KEY_IS_REPEATABLE_INDEX, false);
         isModifier = attributes.getBoolean(KEY_IS_MODIFIER_INDEX, false);
-        isSticky = attributes.getBoolean(KEY_IS_STICKY_INDEX, false);
       } finally {
         attributes.recycle();
       }
@@ -568,18 +806,19 @@ public class KeyboardParser {
         break;
       }
 
-      keyStateList.add(
-          parseKeyState(keyAttributes.keyBackgroundDrawableType, popUpAttributes));
+      keyStateList.add(parseKeyState(keyAttributes, popUpAttributes, metrics));
     }
 
     // At the moment, we just accept keys which has default state.
     boolean hasDefault = false;
     boolean hasLongPressKeyCode = false;
     for (KeyState keyState : keyStateList) {
-      if (keyState.getMetaStateSet().isEmpty()) {
+      if (keyState.getMetaStateSet().isEmpty()
+          || keyState.getMetaStateSet().contains(KeyState.MetaState.FALLBACK)) {
         hasDefault = true;
-        if (keyState.getFlick(Flick.Direction.CENTER).getKeyEntity().getLongPressKeyCode() !=
-            KeyEntity.INVALID_KEY_CODE) {
+        Optional<Flick> flick = keyState.getFlick(Flick.Direction.CENTER);
+        Preconditions.checkState(flick.isPresent());
+        if (flick.get().getKeyEntity().getLongPressKeyCode() != KeyEntity.INVALID_KEY_CODE) {
           hasLongPressKeyCode = true;
         }
         break;
@@ -589,23 +828,26 @@ public class KeyboardParser {
       throw new IllegalArgumentException(
           "No default KeyState element is found: " + parser.getPositionDescription());
     }
-
     if (isRepeatable && hasLongPressKeyCode) {
       throw new IllegalArgumentException(
-          "The key has both isRepeatable attribute and longPressKeyCode: " +
-          parser.getPositionDescription());
+          "The key has both isRepeatable attribute and longPressKeyCode: "
+            + parser.getPositionDescription());
     }
 
     assertEndTag(parser, "Key");
-    return new Key(
-        x, y, keyAttributes.width, keyAttributes.height, keyAttributes.horizontalGap,
-        edgeFlags, isRepeatable, isModifier, isSticky, Stick.EVEN, keyStateList);
+    return keyAttributes.toBuilder()
+        .setEdgeFlags(edgeFlags)
+        .setRepeatable(isRepeatable)
+        .setModifier(isModifier)
+        .setStick(Stick.EVEN)
+        .setKeyStateList(keyStateList)
+        .build();
   }
 
   /**
    * Parses a {@code Spacer} element, and returns an instance.
    */
-  private Key parseSpacer(int x, int y, int edgeFlags, KeyAttributes defaultKeyAttributes)
+  private KeyAttributes parseSpacer(int edgeFlags, KeyAttributes defaultKeyAttributes)
       throws XmlPullParserException, IOException {
     XmlResourceParser parser = this.xmlResourceParser;
     DisplayMetrics metrics = resources.getDisplayMetrics();
@@ -618,7 +860,9 @@ public class KeyboardParser {
       try {
         keyAttributes = parseKeyAttributes(
             attributes, defaultKeyAttributes, metrics, keyboardWidth, keyboardHeight,
-            -1, SPACER_KEY_HEIGHT_INDEX, SPACER_HORIZONTAL_GAP_INDEX, -1, -1);
+            SPACER_KEY_WIDTH_INDEX, SPACER_KEY_HEIGHT_INDEX,
+            SPACER_KEY_HORIZONTAL_LAYOUT_WEIGHT_INDEX, -1, -1, -1, -1, -1, -1,
+            SPACER_KEY_BACKGROUND_INDEX);
         edgeFlags |= attributes.getInt(SPACER_KEY_EDGE_FLAGS_INDEX, 0);
         stick = Stick.values()[attributes.getInt(SPACER_STICK_INDEX, 0)];
       } finally {
@@ -630,19 +874,21 @@ public class KeyboardParser {
     assertEndTag(parser, "Spacer");
 
     // Returns a dummy key object.
-    return new Key(
-        x, y, keyAttributes.horizontalGap, keyAttributes.height,
-        0, edgeFlags, false, false, false, stick, Collections.<KeyState>emptyList());
+    return keyAttributes.toBuilder()
+        .setRepeatable(false)
+        .setModifier(false)
+        .setEdgeFlags(edgeFlags)
+        .setStick(stick)
+        .build();
   }
 
-  private KeyState parseKeyState(DrawableType defaultBackgroundDrawableType,
-                                 PopUpAttributes popUpAttributes)
+  private KeyState parseKeyState(KeyAttributes defaultKeyAttributes,
+                                 PopUpAttributes popUpAttributes, DisplayMetrics metrics)
       throws XmlPullParserException, IOException {
     XmlResourceParser parser = this.xmlResourceParser;
     assertStartTag(parser, "KeyState");
 
     String contentDescription;
-    DrawableType backgroundDrawableType;
     Set<KeyState.MetaState> metaStateSet;
     Set<KeyState.MetaState> nextAddMetaState;
     Set<KeyState.MetaState> nextRemoveMetaState;
@@ -651,8 +897,6 @@ public class KeyboardParser {
       try {
         contentDescription = Objects.firstNonNull(
             attributes.getText(KEY_STATE_CONTENT_DESCRIPTION_INDEX), "").toString();
-        backgroundDrawableType = parseKeyBackgroundDrawableType(
-            attributes, KEY_STATE_KEY_BACKGROUND_INDEX, defaultBackgroundDrawableType);
         metaStateSet = parseMetaState(attributes, KEY_STATE_META_STATE_INDEX);
         nextAddMetaState = parseMetaState(attributes, KEY_STATE_NEXT_META_STATE_INDEX);
         nextRemoveMetaState = parseMetaState(attributes, KEY_STATE_NEXT_REMOVED_META_STATES_INDEX);
@@ -669,7 +913,7 @@ public class KeyboardParser {
       if (parser.getEventType() == XmlResourceParser.END_TAG) {
         break;
       }
-      flickList.add(parseFlick(backgroundDrawableType, popUpAttributes));
+      flickList.add(parseFlick(defaultKeyAttributes, popUpAttributes, metrics));
     }
 
     // At the moment, we support only keys which has flick data to the CENTER direction.
@@ -690,8 +934,8 @@ public class KeyboardParser {
                         flickList);
   }
 
-  private Flick parseFlick(DrawableType backgroundDrawableType,
-                           PopUpAttributes popUpAttributes)
+  private Flick parseFlick(KeyAttributes defaultKeyAttributes,
+                           PopUpAttributes popUpAttributes, DisplayMetrics metrics)
       throws XmlPullParserException, IOException {
     XmlResourceParser parser = this.xmlResourceParser;
     assertStartTag(parser, "Flick");
@@ -707,13 +951,13 @@ public class KeyboardParser {
     }
 
     parser.next();
-    KeyEntity entity = parseKeyEntity(backgroundDrawableType, popUpAttributes);
+    KeyEntity entity = parseKeyEntity(defaultKeyAttributes, popUpAttributes, metrics);
 
-    if (entity.getLongPressKeyCode() != KeyEntity.INVALID_KEY_CODE &&
-        direction != Flick.Direction.CENTER) {
+    if (entity.getLongPressKeyCode() != KeyEntity.INVALID_KEY_CODE
+        && direction != Flick.Direction.CENTER) {
       throw new IllegalArgumentException(
-          "longPressKeyCode can be set to only a KenEntity for CENTER direction: " +
-          parser.getPositionDescription());
+          "longPressKeyCode can be set to only a KenEntity for CENTER direction: "
+              + parser.getPositionDescription());
     }
 
     parser.next();
@@ -722,8 +966,8 @@ public class KeyboardParser {
     return new Flick(direction, entity);
   }
 
-  private KeyEntity parseKeyEntity(
-      DrawableType backgroundDrawableType, PopUpAttributes popUpAttributes)
+  private KeyEntity parseKeyEntity(KeyAttributes defaultKeyAttributes,
+                                   PopUpAttributes popUpAttributes, DisplayMetrics metrics)
       throws XmlPullParserException, IOException {
     XmlResourceParser parser = this.xmlResourceParser;
     assertStartTag(parser, "KeyEntity");
@@ -731,11 +975,14 @@ public class KeyboardParser {
     int sourceId;
     int keyCode;
     int longPressKeyCode;
+    boolean longPressTimeoutTrigger;
     int keyIconResourceId;
-    String keyCharacter;
-    @SuppressWarnings("unused")
-    DrawableType keyBackgroundDrawableType;
+    Optional<String> keyCharacter = Optional.absent();
     boolean flickHighlight;
+    int horizontalPadding;
+    int verticalPadding;
+    int iconWidth;
+    int iconHeight;
     {
       TypedArray attributes = resources.obtainAttributes(parser, KEY_ENTITY_ATTRIBUTES);
       try {
@@ -743,15 +990,33 @@ public class KeyboardParser {
         if (!sourceIdSet.add(sourceId)) {
           //  Same sourceId is found.
           throw new IllegalArgumentException(
-              "Duplicataed sourceId is found: " + xmlResourceParser.getPositionDescription());
+              "Duplicataed sourceId (" + sourceId + ") is found: "
+              + xmlResourceParser.getPositionDescription());
         }
         keyCode = getCode(
-            attributes.peekValue(KEY_ENTITY_KEY_CODE_INDEX), KeyEntity.INVALID_KEY_CODE);
-        longPressKeyCode = getCode(attributes.peekValue(KEY_ENTITY_LONG_PRESS_KEY_CODE_INDEX),
-                                   KeyEntity.INVALID_KEY_CODE);
+            Optional.fromNullable(attributes.peekValue(KEY_ENTITY_KEY_CODE_INDEX)),
+            KeyEntity.INVALID_KEY_CODE);
+        longPressKeyCode = getCode(
+            Optional.fromNullable(attributes.peekValue(KEY_ENTITY_LONG_PRESS_KEY_CODE_INDEX)),
+            KeyEntity.INVALID_KEY_CODE);
+        longPressTimeoutTrigger = attributes.getBoolean(KEY_ENTITY_LONG_PRESS_TIMEOUT_TRIGGER_INDEX,
+                                                        true);
         keyIconResourceId = attributes.getResourceId(KEY_ENTITY_KEY_ICON_INDEX, 0);
-        keyCharacter = attributes.getString(KEY_ENTITY_KEY_CHAR_INDEX);
+        keyCharacter = Optional.fromNullable(attributes.getString(KEY_ENTITY_KEY_CHAR_INDEX));
         flickHighlight = attributes.getBoolean(KEY_ENTITY_FLICK_HIGHLIGHT_INDEX, false);
+
+        horizontalPadding = getDimensionOrFraction(
+                Optional.fromNullable(attributes.peekValue(KEY_ENTITY_HORIZONTAL_PADDING_INDEX)),
+                keyboardWidth, defaultKeyAttributes.defaultHorizontalPadding, metrics);
+        verticalPadding = getDimensionOrFraction(
+                Optional.fromNullable(attributes.peekValue(KEY_ENTITY_VERTICAL_PADDING_INDEX)),
+                keyboardHeight, defaultKeyAttributes.defaultVerticalPadding, metrics);
+        iconWidth = getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(KEY_ENTITY_ICON_WIDTH_INDEX)),
+            keyboardWidth, defaultKeyAttributes.defaultIconWidth, metrics);
+        iconHeight = getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(KEY_ENTITY_ICON_HEIGHT_INDEX)),
+            keyboardHeight, defaultKeyAttributes.defaultIconHeight, metrics);
       } finally {
         attributes.recycle();
       }
@@ -760,84 +1025,128 @@ public class KeyboardParser {
     parser.next();
     ignoreWhiteSpaceAndComment(parser);
 
-    PopUp popUp = null;
+    Optional<PopUp> popUp = Optional.absent();
     if (parser.getEventType() == XmlResourceParser.START_TAG) {
-      popUp = parsePopUp(popUpAttributes);
+      popUp = Optional.of(parsePopUp(popUpAttributes));
       parser.next();
       ignoreWhiteSpaceAndComment(parser);
     }
 
     assertEndTag(parser, "KeyEntity");
 
-    return new KeyEntity(sourceId, keyCode, longPressKeyCode, keyIconResourceId, keyCharacter,
-                         backgroundDrawableType, flickHighlight, popUp);
+    return new KeyEntity(sourceId, keyCode, longPressKeyCode, longPressTimeoutTrigger,
+        keyIconResourceId, keyCharacter, flickHighlight, popUp,
+        horizontalPadding, verticalPadding, iconWidth, iconHeight);
   }
 
-  private PopUp parsePopUp(PopUpAttributes popUpAttributes)
+  private PopUp parsePopUp(PopUpAttributes defaultValue)
       throws XmlPullParserException, IOException {
     XmlResourceParser parser = this.xmlResourceParser;
     assertStartTag(parser, "PopUp");
 
+    PopUpAttributes popUpAttributes;
+    TypedArray attributes = resources.obtainAttributes(parser, POPUP_ATTRIBUTES);
     int popUpIconResourceId;
-    {
-      TypedArray attributes = resources.obtainAttributes(parser, R.styleable.PopUp);
-      try {
-        popUpIconResourceId = attributes.getResourceId(R.styleable.PopUp_popUpIcon, 0);
-      } finally {
-        attributes.recycle();
-      }
+    int popUpLongPressIconResourceId;
+    try {
+      popUpAttributes = parsePopUpAttributes(attributes, defaultValue,
+          resources.getDisplayMetrics(),
+          keyboardWidth, POPUP_KEY_HEIGHT_INDEX,
+          POPUP_KEY_X_OFFSET_INDEX, POPUP_KEY_Y_OFFSET_INDEX,
+          POPUP_KEY_ICON_WIDTH_INDEX, POPUP_KEY_ICON_HEIGHT_INDEX);
+      popUpIconResourceId = attributes.getResourceId(POPUP_KEY_ICON_INDEX, 0);
+      popUpLongPressIconResourceId = attributes.getResourceId(POPUP_KEY_LONG_PRESS_ICON_INDEX, 0);
+    } finally {
+      attributes.recycle();
     }
     parser.next();
     assertEndTag(parser, "PopUp");
 
     return new PopUp(popUpIconResourceId,
-                     popUpAttributes.popUpWidth,
+                     popUpLongPressIconResourceId,
                      popUpAttributes.popUpHeight,
                      popUpAttributes.popUpXOffset,
-                     popUpAttributes.popUpYOffset);
+                     popUpAttributes.popUpYOffset,
+                     popUpAttributes.popUpIconWidth,
+                     popUpAttributes.popUpIconHeight);
   }
 
   private float parseFlickThreshold(TypedArray attributes, int index) {
     float flickThreshold = attributes.getDimension(
         index, resources.getDimension(R.dimen.default_flick_threshold));
-    if (flickThreshold <= 0) {
-      throw new IllegalArgumentException(
-          "flickThreshold must be greater than 0.  value = " + flickThreshold);
-    }
+    Preconditions.checkArgument(
+        flickThreshold > 0, "flickThreshold must be greater than 0.  value = " + flickThreshold);
     return flickThreshold;
   }
 
   private static KeyAttributes parseKeyAttributes(
       TypedArray attributes, KeyAttributes defaultValue, DisplayMetrics metrics,
       int keyboardWidth, int keyboardHeight,
-      int keyWidthIndex, int keyHeightIndex, int horizontalGapIndex, int verticalGapIndex,
+      int keyWidthIndex, int keyHeightIndex, int keyHorizontalLayoutWeightIndex,
+      int horizontalGapIndex, int verticalGapIndex,
+      int defaultIconWidthIndex, int defaultIconHeightIndex,
+      int defaultHorizontalPaddingIndex, int defaultVerticalPaddingIndex,
       int keyBackgroundIndex) {
+
     int keyWidth = (keyWidthIndex >= 0)
         ? getDimensionOrFraction(
-              attributes.peekValue(keyWidthIndex), keyboardWidth,
+              Optional.fromNullable(attributes.peekValue(keyWidthIndex)), keyboardWidth,
               defaultValue.width, metrics)
         : defaultValue.width;
     int keyHeight = (keyHeightIndex >= 0)
         ? getDimensionOrFraction(
-              attributes.peekValue(keyHeightIndex), keyboardHeight,
+              Optional.fromNullable(attributes.peekValue(keyHeightIndex)), keyboardHeight,
               defaultValue.height, metrics)
         : defaultValue.height;
+    int keyHorizontalLayoutWeight = (keyHorizontalLayoutWeightIndex >= 0)
+        ? attributes.getInt(keyHorizontalLayoutWeightIndex, defaultValue.horizontalLayoutWeight)
+        : defaultValue.horizontalLayoutWeight;
 
     int horizontalGap = (horizontalGapIndex >= 0)
         ? getDimensionOrFraction(
-              attributes.peekValue(horizontalGapIndex),
+              Optional.fromNullable(attributes.peekValue(horizontalGapIndex)),
               keyboardWidth, defaultValue.horizontalGap, metrics)
         : defaultValue.horizontalGap;
     int verticalGap = (verticalGapIndex >= 0)
         ? getDimensionOrFraction(
-              attributes.peekValue(verticalGapIndex),
+              Optional.fromNullable(attributes.peekValue(verticalGapIndex)),
               keyboardHeight, defaultValue.verticalGap, metrics)
         : defaultValue.verticalGap;
+    int defaultIconWidth = (defaultIconWidthIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(defaultIconWidthIndex)),
+            keyboardWidth, defaultValue.defaultIconWidth, metrics)
+        : defaultValue.defaultIconWidth;
+    int defaultIconHeight = (defaultIconHeightIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(defaultIconHeightIndex)),
+            keyboardHeight, defaultValue.defaultIconHeight, metrics)
+        : defaultValue.defaultIconHeight;
+    int defaultHorizontalPadding = (defaultHorizontalPaddingIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(defaultHorizontalPaddingIndex)),
+            keyboardWidth, defaultValue.defaultHorizontalPadding, metrics)
+        : defaultValue.defaultHorizontalPadding;
+    int defaultVerticalPadding = (defaultVerticalPaddingIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(defaultVerticalPaddingIndex)),
+            keyboardWidth, defaultValue.defaultVerticalPadding, metrics)
+        : defaultValue.defaultVerticalPadding;
 
     DrawableType keyBackgroundDrawableType = parseKeyBackgroundDrawableType(
         attributes, keyBackgroundIndex, defaultValue.keyBackgroundDrawableType);
-    return new KeyAttributes(
-        keyWidth, keyHeight, horizontalGap, verticalGap, keyBackgroundDrawableType);
+    return KeyAttributes.newBuilder()
+        .setWidth(keyWidth)
+        .setHeight(keyHeight)
+        .setHorizontalLayoutWeight(keyHorizontalLayoutWeight)
+        .setHorizontalGap(horizontalGap)
+        .setVerticalGap(verticalGap)
+        .setDefaultHorizontalPadding(defaultHorizontalPadding)
+        .setDefaultVerticalPadding(defaultVerticalPadding)
+        .setDefaultIconWidth(defaultIconWidth)
+        .setDefaultIconHeight(defaultIconHeight)
+        .setKeybackgroundDrawableType(keyBackgroundDrawableType)
+        .build();
   }
 
   private static DrawableType parseKeyBackgroundDrawableType(
@@ -850,17 +1159,37 @@ public class KeyboardParser {
   }
 
   private static PopUpAttributes parsePopUpAttributes(
-      TypedArray attributes, DisplayMetrics metrics, int keyboardWidth,
-      int popUpWidthIndex, int popUpHeightIndex, int popUpXOffsetIndex, int popUpYOffsetIndex) {
-    int popUpWidth = getDimensionOrFraction(
-        attributes.peekValue(popUpWidthIndex), keyboardWidth, 0, metrics);
-    int popUpHeight = getDimensionOrFraction(
-        attributes.peekValue(popUpHeightIndex), keyboardWidth, 0, metrics);
-    int popUpXOffset = getDimensionOrFraction(
-        attributes.peekValue(popUpXOffsetIndex), keyboardWidth, 0, metrics);
-    int popUpYOffset = getDimensionOrFraction(
-        attributes.peekValue(popUpYOffsetIndex), keyboardWidth, 0, metrics);
-    return new PopUpAttributes(popUpWidth, popUpHeight, popUpXOffset, popUpYOffset);
+      TypedArray attributes, PopUpAttributes defaultValue, DisplayMetrics metrics,
+      int keyboardWidth, int popUpHeightIndex,
+      int popUpXOffsetIndex, int popUpYOffsetIndex,
+      int popUpIconWidthIndex, int popUpIconHeightIndex) {
+    int popUpHeight = (popUpHeightIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(popUpHeightIndex)), keyboardWidth,
+            defaultValue.popUpHeight, metrics)
+        : defaultValue.popUpHeight;
+    int popUpXOffset = (popUpXOffsetIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(popUpXOffsetIndex)), keyboardWidth,
+            defaultValue.popUpXOffset, metrics)
+        : defaultValue.popUpXOffset;
+    int popUpYOffset = (popUpYOffsetIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(popUpYOffsetIndex)), keyboardWidth,
+            defaultValue.popUpYOffset, metrics)
+        : defaultValue.popUpYOffset;
+    int popUpIconWidth = (popUpIconWidthIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(popUpIconWidthIndex)), keyboardWidth,
+            defaultValue.popUpIconWidth, metrics)
+        : defaultValue.popUpIconWidth;
+    int popUpIconHeight = (popUpIconHeightIndex >= 0)
+        ? getDimensionOrFraction(
+            Optional.fromNullable(attributes.peekValue(popUpIconHeightIndex)), keyboardWidth,
+            defaultValue.popUpIconHeight, metrics)
+        : defaultValue.popUpIconHeight;
+    return new PopUpAttributes(
+        popUpHeight, popUpXOffset, popUpYOffset, popUpIconWidth, popUpIconHeight);
   }
 
   /**
@@ -889,13 +1218,7 @@ public class KeyboardParser {
     return Flick.Direction.valueOf(attributes.getInt(index, Flick.Direction.CENTER.index));
   }
 
-  protected Keyboard buildKeyboard(
-      Optional<String> contentDescription, List<Row> rowList, float flickThreshold) {
-    return new Keyboard(Preconditions.checkNotNull(contentDescription),
-                        Preconditions.checkNotNull(rowList), flickThreshold);
-  }
-
-  protected Row buildRow(List<Key> keyList, int height, int verticalGap) {
+  private Row buildRow(List<Key> keyList, int height, int verticalGap) {
     return new Row(keyList, height, verticalGap);
   }
 }

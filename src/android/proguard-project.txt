@@ -54,6 +54,11 @@
     public static <methods>;
 }
 
+# Skin's fields are accessed by reflection.
+-keepclassmembers class org.mozc.android.inputmethod.japanese.view.Skin {
+    <fields>;
+}
+
 # Needed for Guava library.
 -libraryjars libs/jsr305.jar
 -dontwarn sun.misc.Unsafe

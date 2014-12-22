@@ -29,10 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.CrossingEdgeBehavior;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpaceOnAlphanumeric;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpecialRomanjiTable;
 import org.mozc.android.inputmethod.japanese.util.ResourcesWrapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
@@ -182,6 +180,9 @@ public final class MozcUtil {
   private static Optional<Boolean> isDevChannel = Optional.<Boolean>absent();
   private static Optional<Boolean> isMozcEnabled = Optional.<Boolean>absent();
   private static Optional<Boolean> isMozcDefaultIme = Optional.<Boolean>absent();
+  private static Optional<Boolean> isSystemApplication = Optional.<Boolean>absent();
+  private static Optional<Boolean> isTouchUI = Optional.<Boolean>absent();
+  private static Optional<Boolean> isUpdatedSystemApplication = Optional.<Boolean>absent();
   private static Optional<Integer> versionCode = Optional.<Integer>absent();
   private static Optional<Long> uptimeMillis = Optional.<Long>absent();
 
@@ -250,6 +251,38 @@ public final class MozcUtil {
     return isDevChannelVersionName(getVersionName(context));
   }
 
+  public static final boolean isSystemApplication(Context context) {
+    Preconditions.checkNotNull(context);
+    if (isSystemApplication.isPresent()) {
+      return isSystemApplication.get();
+    }
+    return checkApplicationFlag(context, ApplicationInfo.FLAG_SYSTEM);
+  }
+
+  /**
+   * For testing purpose.
+   * @param isSystemApplication Optional.absent() if default behavior is preferable
+   */
+  public static final void setSystemApplication(Optional<Boolean> isSystemApplication) {
+    MozcUtil.isSystemApplication = Preconditions.checkNotNull(isSystemApplication);
+  }
+
+  public static final boolean isUpdatedSystemApplication(Context context) {
+    Preconditions.checkNotNull(context);
+    if (isUpdatedSystemApplication.isPresent()) {
+      return isUpdatedSystemApplication.get();
+    }
+    return checkApplicationFlag(context, ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
+  }
+
+  /**
+   * For testing purpose.
+   * @param isUpdatedSystemApplication Optional.absent() if default behavior is preferable
+   */
+  public static final void setUpdatedSystemApplication(
+      Optional<Boolean> isUpdatedSystemApplication) {
+    MozcUtil.isUpdatedSystemApplication = Preconditions.checkNotNull(isUpdatedSystemApplication);
+  }
 
   /**
    * Gets version name.
@@ -437,6 +470,26 @@ public final class MozcUtil {
     return Optional.absent();
   }
 
+  /**
+   * Returns true is touch UI should be shown.
+   */
+  public static boolean isTouchUI(Context context) {
+    Preconditions.checkNotNull(context);
+    if (isTouchUI.isPresent()) {
+      return isTouchUI.get();
+    }
+    return context.getResources().getConfiguration().touchscreen
+               != Configuration.TOUCHSCREEN_NOTOUCH;
+  }
+
+  /**
+   * For testing purpose.
+   *
+   * @param isTouchUI Optional.absent() if default behavior is preferable
+   */
+  public static final void setTouchUI(Optional<Boolean> isTouchUI) {
+    MozcUtil.isTouchUI = Preconditions.checkNotNull(isTouchUI);
+  }
 
   public static long getUptimeMillis() {
     if (uptimeMillis.isPresent()) {
@@ -557,67 +610,100 @@ public final class MozcUtil {
     window.setAttributes(layoutParams);
   }
 
-  public static Request getRequestForKeyboard(
-      KeyboardSpecificationName specName,
-      Optional<SpecialRomanjiTable> romanjiTable,
-      Optional<SpaceOnAlphanumeric> spaceOnAlphanumeric,
-      Optional<Boolean> isKanaModifierInsensitiveConversion,
-      Optional<CrossingEdgeBehavior> crossingEdgeBehavior,
-      Configuration configuration) {
-    Preconditions.checkNotNull(specName);
-    Preconditions.checkNotNull(romanjiTable);
-    Preconditions.checkNotNull(spaceOnAlphanumeric);
-    Preconditions.checkNotNull(isKanaModifierInsensitiveConversion);
-    Preconditions.checkNotNull(crossingEdgeBehavior);
+  private static Request.Builder getRequestBuilderInternal(
+      KeyboardSpecification specification, Configuration configuration) {
+    return Request.newBuilder()
+        .setKeyboardName(
+            specification.getKeyboardSpecificationName().formattedKeyboardName(configuration))
+        .setSpecialRomanjiTable(specification.getSpecialRomanjiTable())
+        .setSpaceOnAlphanumeric(specification.getSpaceOnAlphanumeric())
+        .setKanaModifierInsensitiveConversion(
+            specification.isKanaModifierInsensitiveConversion())
+        .setCrossingEdgeBehavior(specification.getCrossingEdgeBehavior());
+  }
+
+  private static void setHardwareKeyboardRequest(Request.Builder builder, Resources resources) {
+    builder.setMixedConversion(false)
+        .setZeroQuerySuggestion(false)
+        .setUpdateInputModeFromSurroundingText(true)
+        .setAutoPartialSuggestion(false)
+        .setCandidatePageSize(resources.getInteger(R.integer.floating_candidate_candidate_num));
+  }
+
+  public static void setSoftwareKeyboardRequest(Request.Builder builder) {
+    builder.setMixedConversion(true)
+        .setZeroQuerySuggestion(true)
+        .setUpdateInputModeFromSurroundingText(false)
+        .setAutoPartialSuggestion(true);
+  }
+
+  public static Request.Builder getRequestBuilder(
+      Resources resources, KeyboardSpecification specification, Configuration configuration) {
+    Preconditions.checkNotNull(resources);
+    Preconditions.checkNotNull(specification);
     Preconditions.checkNotNull(configuration);
-    Request.Builder builder = Request.newBuilder();
-    builder.setKeyboardName(specName.formattedKeyboardName(configuration));
-    if (romanjiTable.isPresent()) {
-      builder.setSpecialRomanjiTable(romanjiTable.get());
+    Request.Builder builder = getRequestBuilderInternal(specification, configuration);
+    if (specification.isHardwareKeyboard()) {
+      setHardwareKeyboardRequest(builder, resources);
+    } else {
+      setSoftwareKeyboardRequest(builder);
     }
-    if (spaceOnAlphanumeric.isPresent()) {
-      builder.setSpaceOnAlphanumeric(spaceOnAlphanumeric.get());
-    }
-    if (isKanaModifierInsensitiveConversion.isPresent()) {
-      builder.setKanaModifierInsensitiveConversion(
-          isKanaModifierInsensitiveConversion.get().booleanValue());
-    }
-    if (crossingEdgeBehavior.isPresent()) {
-      builder.setCrossingEdgeBehavior(crossingEdgeBehavior.get());
-    }
-    return builder.build();
+    return builder;
   }
 
   @SuppressLint("InlinedApi")
-  public static boolean isPasswordField(EditorInfo editorInfo) {
-    Preconditions.checkNotNull(editorInfo);
-    int inputType = editorInfo.inputType;
+  public static boolean isPasswordField(int inputType) {
     int inputClass = inputType & InputType.TYPE_MASK_CLASS;
     int inputVariation = inputType & InputType.TYPE_MASK_VARIATION;
-    return inputClass == InputType.TYPE_CLASS_TEXT &&
-        (inputVariation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
-        inputVariation == InputType.TYPE_TEXT_VARIATION_PASSWORD ||
-        inputVariation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD);
+    return inputClass == InputType.TYPE_CLASS_TEXT
+        && (inputVariation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            || inputVariation == InputType.TYPE_TEXT_VARIATION_PASSWORD
+            || inputVariation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD);
   }
 
   /**
-   * Returns true if the editor accepts microphone input.
+   * Returns true if voice input is preferred by EditorInfo.inputType.
    *
-   * <p>Some editors sends a special record in privateImeOptions. In such situation transition to
-   * Voice IME should be disabled.
+   * <p>Caller should check that voice input is allowed or not by isVoiceInputAllowed().
    */
-  public static boolean isVoiceInputAllowed(EditorInfo editorInfo) {
+  public static boolean isVoiceInputPreferred(EditorInfo editorInfo) {
     Preconditions.checkNotNull(editorInfo);
-    if (editorInfo.privateImeOptions == null) {
-      return true;
+
+    // Check privateImeOptions to ensure the text field supports voice input.
+    if (editorInfo.privateImeOptions != null) {
+      for (String option : editorInfo.privateImeOptions.split(",")) {
+        if (option.equals(IME_OPTION_NO_MICROPHONE)
+            || option.equals(IME_OPTION_NO_MICROPHONE_COMPAT)) {
+          return false;
+        }
+      }
     }
-    for (String option : editorInfo.privateImeOptions.split(",")) {
-      if (option.equals(IME_OPTION_NO_MICROPHONE) ||
-          option.equals(IME_OPTION_NO_MICROPHONE_COMPAT)) {
-        return false;
+
+    int inputType = editorInfo.inputType;
+    if (isNumberKeyboardPreferred(inputType) || isPasswordField(inputType)) {
+      return false;
+    }
+    if ((inputType & EditorInfo.TYPE_MASK_CLASS) == InputType.TYPE_CLASS_TEXT) {
+      switch (inputType & EditorInfo.TYPE_MASK_VARIATION) {
+        case InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS:
+        case InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS:
+        case InputType.TYPE_TEXT_VARIATION_URI:
+          return false;
+        default:
+          break;
       }
     }
     return true;
+  }
+
+  /** Returns true if number keyboard is preferred by EditorInfo.inputType. */
+  public static boolean isNumberKeyboardPreferred(int inputType) {
+    int typeClass = inputType & InputType.TYPE_MASK_CLASS;
+    // As of API Level 21, following condition equals to "typeClass != InputType.TYPE_CLASS_TEXT".
+    // However type-class might be added in future so safer expression is employed here.
+    return typeClass == InputType.TYPE_CLASS_DATETIME
+        || typeClass == InputType.TYPE_CLASS_NUMBER
+        || typeClass == InputType.TYPE_CLASS_PHONE;
   }
 
   public static String utf8CStyleByteStringToString(ByteString value) {

@@ -59,7 +59,6 @@ import org.easymock.Capture;
 public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithMock {
   private Context context;
   private InputMethodService inputMethodService;
-  private ImeSwitcher imeSwitcher;
   private MenuDialogListener listener;
 
   @Override
@@ -67,8 +66,7 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
     super.setUp();
     context = createMock(MockContext.class);
     inputMethodService = createMock(InputMethodService.class);
-    imeSwitcher = createMock(ImeSwitcher.class);
-    listener = new MozcMenuDialogListenerImpl(inputMethodService, imeSwitcher);
+    listener = new MozcMenuDialogListenerImpl(inputMethodService);
   }
 
   @Override
@@ -112,7 +110,7 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
     final ViewManagerInterface stubViewManager = createNiceMock(ViewManagerInterface.class);
     final Activity stubPreferenceActivity = createNiceMock(Activity.class);
 
-    Context context = createNiceMock(Context.class);
+    Context context = createNiceMock(MockContext.class);
     String packageName = "test.package.name";
 
     try {

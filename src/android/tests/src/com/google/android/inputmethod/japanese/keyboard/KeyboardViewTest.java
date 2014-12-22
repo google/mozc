@@ -29,24 +29,25 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.same;
 
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
-import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.testing.MockResourcesWithDisplayMetrics;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.base.Optional;
 
@@ -58,10 +59,12 @@ import android.os.Looper;
 import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.InputType;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 
@@ -82,7 +85,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
    */
   private static final int STEP_COUNT = 20;
 
-  // Followings are parameters of a dummy key.
+  // The following are parameters of a dummy key.
   private static final int WIDTH = 50;
   private static final int HEIGHT = 30;
   private static final int HORIZONTAL_GAP = 0;
@@ -124,9 +127,15 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     return result;
   }
 
-  static KeyState createKeyState(Set<MetaState> metaState, int keyCode) {
-    KeyEntity entity = new KeyEntity(1, keyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null);
-    Flick flick = new Flick(Flick.Direction.CENTER, entity);
+  private static KeyEntity createInvalidKeyEntity(int sourceId, int keyCode) {
+    return new KeyEntity(
+        sourceId, keyCode, KeyEntity.INVALID_KEY_CODE, true, 0,
+        Optional.<String>absent(), false, Optional.<PopUp>absent(), 0, 0, 0, 0);
+  }
+
+  private static KeyState createKeyStateWithKeyEntity(
+      Set<MetaState> metaState, KeyEntity keyEntity) {
+    Flick flick = new Flick(Flick.Direction.CENTER, keyEntity);
     return new KeyState(
         "",
         metaState,
@@ -135,21 +144,36 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
         Collections.singletonList(flick));
   }
 
-  static Key createKey(int x, int y, int keyCode) {
+  private static KeyState createKeyState(Set<MetaState> metaState, int keyCode) {
+    return createKeyStateWithKeyEntity(metaState, createInvalidKeyEntity(1, keyCode));
+  }
+
+  private static Key createKey(int x, int y, int keyCode) {
     return new Key(
-        x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
+        x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, Stick.EVEN,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
         Collections.singletonList(createKeyState(Collections.<MetaState>emptySet(), keyCode)));
+  }
+
+  private static Key createKeyWithKeyEntity(int x, int y, KeyEntity keyEntity) {
+    return new Key(
+        x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, Stick.EVEN,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+        Collections.singletonList(
+            createKeyStateWithKeyEntity(Collections.<MetaState>emptySet(), keyEntity)));
   }
 
   private static Key createSpacer(int x, int y, Stick stick) {
     return new Key(
-        x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, stick,
+        x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, stick,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
         Collections.<KeyState>emptyList());
   }
 
   private static Key createKeyWithModifiedState(int x, int y, int keyCode, int modifiedKeyCode) {
     return new Key(
-        x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
+        x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, Stick.EVEN,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
         Arrays.asList(createKeyState(Collections.<MetaState>emptySet(), keyCode),
                       createKeyState(EnumSet.of(MetaState.CAPS_LOCK), modifiedKeyCode)));
   }
@@ -157,34 +181,25 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   private static Key createFlickKey(
       int x, int y,
       int centerKeyCode, int leftKeyCode, int rightKeyCode, int upKeyCode, int downKeyCode) {
-    Flick center = new Flick(
-        Flick.Direction.CENTER,
-        new KeyEntity(1, centerKeyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null));
-    Flick left = new Flick(
-        Flick.Direction.LEFT,
-        new KeyEntity(1, leftKeyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null));
-    Flick right = new Flick(
-        Flick.Direction.RIGHT,
-        new KeyEntity(1, rightKeyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null));
-    Flick up = new Flick(
-        Flick.Direction.UP,
-        new KeyEntity(1, upKeyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null));
-    Flick down = new Flick(
-        Flick.Direction.DOWN,
-        new KeyEntity(1, downKeyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null));
+    Flick center = new Flick(Flick.Direction.CENTER, createInvalidKeyEntity(1, centerKeyCode));
+    Flick left = new Flick(Flick.Direction.LEFT, createInvalidKeyEntity(1, leftKeyCode));
+    Flick right = new Flick(Flick.Direction.RIGHT, createInvalidKeyEntity(1, rightKeyCode));
+    Flick up = new Flick(Flick.Direction.UP, createInvalidKeyEntity(1, upKeyCode));
+    Flick down = new Flick(Flick.Direction.DOWN, createInvalidKeyEntity(1, downKeyCode));
     KeyState keyState = new KeyState(
         "",
         Collections.<MetaState>emptySet(),
         Collections.<MetaState>emptySet(),
         Collections.<MetaState>emptySet(),
         Arrays.asList(center, left, right, up, down));
-    return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
+    return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, Stick.EVEN,
+                   DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                    Collections.singletonList(keyState));
   }
 
   private static Key createModifierKey(int x, int y, int keyCode, Set<MetaState> nextAddMetaStates,
                                        Set<MetaState> nextRemoveMetaStates) {
-    KeyEntity entity = new KeyEntity(1, keyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null);
+    KeyEntity entity = createInvalidKeyEntity(1, keyCode);
     Flick flick = new Flick(Flick.Direction.CENTER, entity);
     KeyState keyState = new KeyState(
         "",
@@ -192,7 +207,8 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
         nextAddMetaStates,
         nextRemoveMetaStates,
         Collections.singletonList(flick));
-    return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, true, false, Stick.EVEN,
+    return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, true, Stick.EVEN,
+                   DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                    Collections.singletonList(keyState));
   }
 
@@ -202,7 +218,8 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
    */
   private static Keyboard createDummyKeyboard(Key key) {
     Row row = new Row(Collections.singletonList(key), HEIGHT, VERTICAL_GAP);
-    return new Keyboard(Optional.<String>absent(), Collections.singletonList(row), 1);
+    return new Keyboard(Optional.<String>absent(), Collections.singletonList(row), 1,
+                        KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA);
   }
 
   private KeyEventHandler createKeyEventHandlerMock() {
@@ -217,9 +234,8 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   private KeyboardViewBackgroundSurface createKeyboardViewBackgroundSurfaceMock() {
     return createMockBuilder(KeyboardViewBackgroundSurface.class)
         .withConstructor(BackgroundDrawableFactory.class, DrawableCache.class)
-        .withArgs(new BackgroundDrawableFactory(1f),
-                  new DrawableCache(
-                      new MozcDrawableFactory(getInstrumentation().getContext().getResources())))
+        .withArgs(new BackgroundDrawableFactory(new MockResourcesWithDisplayMetrics()),
+                  new DrawableCache(getInstrumentation().getContext().getResources()))
         .createMock();
   }
 
@@ -240,7 +256,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testFlushPendingKeyEventRecursiveCall() {
-    Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
+    Key targetKey = view.getKeyboard().get().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
         new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
@@ -248,7 +264,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
     keyEventHandler.sendKey(
         keyEventContext.getKeyCode(),
-        Collections.singletonList(keyEventContext.getTouchEvent()));
+        Collections.singletonList(keyEventContext.getTouchEvent().get()));
     expectLastCall().andAnswer(new IAnswer<Void>() {
       @Override
       public Void answer() throws Throwable {
@@ -369,7 +385,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     verifyAll();
     assertEquals(1, keyEventContextMap.size());
-    assertEquals(EnumSet.of(MetaState.CAPS_LOCK), view.metaState);
+    assertEquals(EnumSet.of(MetaState.CAPS_LOCK, MetaState.HANDLING_TOUCH_EVENT), view.metaState);
   }
 
   @SmallTest
@@ -410,7 +426,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOnTouchEvent_release() {
-    Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
+    Key targetKey = view.getKeyboard().get().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
         new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
@@ -483,7 +499,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
       view.setKeyboard(createDummyKeyboard(testData.key));
       view.layout(0, 0, 100, 60);
 
-      Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
+      Key targetKey = view.getKeyboard().get().getRowList().get(0).getKeyList().get(0);
       KeyEventContext keyEventContext =
           new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
@@ -516,7 +532,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   public void testOnTouchEvent_releaseModified() {
     Key key = createKeyWithModifiedState(0, 0, 'a', 'A');
     view.setKeyboard(createDummyKeyboard(key));
-    Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
+    Key targetKey = view.getKeyboard().get().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
         new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, EnumSet.of(MetaState.CAPS_LOCK));
 
@@ -658,7 +674,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOnTouchEvent_releaseModifierOneTime() {
-    Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
+    Key targetKey = view.getKeyboard().get().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
         new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
@@ -735,6 +751,15 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     assertEquals(Flick.Direction.RIGHT,
                  keyEventContextMap.values().iterator().next().flickDirection);
 
+    verifyAll();
+
+    resetAll();
+    keyEventHandler.cancelDelayedKeyEvent(isA(KeyEventContext.class));
+    expectLastCall().anyTimes();
+    // Delayed key event is invoked since the next flick direction is CENTER.
+    keyEventHandler.maybeStartDelayedKeyEvent(isA(KeyEventContext.class));
+    replayAll();
+
     assertTrue(touchEvent(view, MotionEvent.ACTION_MOVE, 25, 15));
     assertEquals(1, keyEventContextMap.size());
     assertEquals(Flick.Direction.CENTER,
@@ -745,7 +770,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOnTouchEvent_cancel() {
-    Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
+    Key targetKey = view.getKeyboard().get().getRowList().get(0).getKeyList().get(0);
     KeyEventContext eventContext =
         new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
@@ -797,7 +822,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       keyboardActionListener.onPress('a');
       keyboardActionListener.onKey(
-          eq(testCase.expectedCode), EasyMock.<List<? extends TouchEvent>>notNull());
+          eq(testCase.expectedCode), EasyMock.<List<TouchEvent>>notNull());
       keyboardActionListener.onRelease('a');
       replayAll();
 
@@ -810,7 +835,6 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
       assertTrue(drag(view, fromX, testCase.toX, fromY, testCase.toY));
       assertTrue(view.keyEventContextMap.isEmpty());
 
-      view.setKeyEventHandler(null);
       verifyAll();
     }
   }
@@ -848,14 +872,15 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   public void testPopUp() {
     final Drawable icon = new ColorDrawable();
     final Drawable flickIcon = new ColorDrawable();
+    final int invalidResourceId = 0;
     final int iconResourceId = 1;
     final int flickIconResourceId = 3;
 
-    PopUp popup = new PopUp(iconResourceId, 40, 40, 0, -30);
-    PopUp flickPopup = new PopUp(flickIconResourceId, 40, 40, 0, -30);
+    PopUp popup = new PopUp(iconResourceId, invalidResourceId, 40, 0, -30, 10, 10);
+    PopUp flickPopup = new PopUp(flickIconResourceId, invalidResourceId, 40, 0, -30, 10, 10);
 
     // Inject drawables as resources.
-    Resources mockResources = new MockResources() {
+    Resources mockResources = new MockResourcesWithDisplayMetrics() {
       @Override
       public Drawable getDrawable(int resourceId) {
         if (resourceId == iconResourceId) {
@@ -867,7 +892,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
         return null;
       }
     };
-    DrawableCache drawableCache = new DrawableCache(new MozcDrawableFactory(mockResources));
+    DrawableCache drawableCache = new DrawableCache(mockResources);
     VisibilityProxy.setField(view, "drawableCache", drawableCache);
 
     int x1 = 0;
@@ -879,7 +904,8 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     Key popupKey = new Key(
         x2, y2,
-        WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
+        WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, Stick.EVEN,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
         Collections.singletonList(new KeyState(
             "",
             Collections.<MetaState>emptySet(),
@@ -888,11 +914,14 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
             Arrays.asList(
                 new Flick(
                     Direction.CENTER,
-                    new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, 0, null, false, popup)),
+                    new KeyEntity(
+                        1, 'a', KeyEntity.INVALID_KEY_CODE, true, 0,
+                        Optional.<String>absent(), false, Optional.of(popup), 0, 0, 0, 0)),
                 new Flick(
                     Direction.LEFT,
-                    new KeyEntity(2, 'b', KeyEntity.INVALID_KEY_CODE, 0, null, false,
-                                  flickPopup))))));
+                    new KeyEntity(
+                        2, 'b', KeyEntity.INVALID_KEY_CODE, true, 0,
+                        Optional.<String>absent(), false, Optional.of(flickPopup), 0, 0, 0, 0))))));
 
     Row row1 = new Row(
         Arrays.asList(createKey(x1, y1, 'c'), createKey(x2, y1, 'd'), createKey(x3, y1, 'e')),
@@ -904,13 +933,15 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
         Arrays.asList(createKey(x1, y3, 'h'), createKey(x2, y3, 'i'), createKey(x3, y3, 'j')),
         HEIGHT, VERTICAL_GAP);
     Keyboard keyboard = new Keyboard(Optional.<String>absent(),
-                                     Arrays.asList(row1, row2, row3), 1);
+                                     Arrays.asList(row1, row2, row3), 1,
+                                     KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA);
     view.setKeyboard(keyboard);
 
     // Set mock preview.
     PopUpPreview mockPopUpPreview = createMockBuilder(PopUpPreview.class)
         .withConstructor(View.class, BackgroundDrawableFactory.class, DrawableCache.class)
-        .withArgs(view, new BackgroundDrawableFactory(1f), drawableCache)
+        .withArgs(view, new BackgroundDrawableFactory(new MockResourcesWithDisplayMetrics()),
+                                                      drawableCache)
         .createMock();
     PopUpPreview.Pool popupPreviewPool = VisibilityProxy.getField(view, "popupPreviewPool");
     VisibilityProxy.<List<PopUpPreview>>getField(
@@ -919,7 +950,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     VisibilityProxy.setField(popupPreviewPool, "dismissHandler", dismissHandler);
 
     // At first, emulate press event.
-    mockPopUpPreview.showIfNecessary(popupKey, popup);
+    mockPopUpPreview.showIfNecessary(popupKey, Optional.of(popup), false);
     replayAll();
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 75, 45));
@@ -927,7 +958,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     // Then, moving to left.
     resetAll();
-    mockPopUpPreview.showIfNecessary(popupKey, flickPopup);
+    mockPopUpPreview.showIfNecessary(popupKey, Optional.of(flickPopup), false);
     replayAll();
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_MOVE, 25, 45));
@@ -935,7 +966,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     // Moving to top.
     resetAll();
-    mockPopUpPreview.showIfNecessary(popupKey, null);
+    mockPopUpPreview.showIfNecessary(popupKey, Optional.<PopUp>absent(), false);
     replayAll();
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_MOVE, 75, 15));
@@ -943,7 +974,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     // Moving to center again.
     resetAll();
-    mockPopUpPreview.showIfNecessary(popupKey, popup);
+    mockPopUpPreview.showIfNecessary(popupKey, Optional.of(popup), false);
     replayAll();
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_MOVE, 75, 45));
@@ -971,6 +1002,109 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 75, 45));
     verifyAll();
+  }
+
+  private void delayedPopupTestImpl(
+      boolean popupEnabled, boolean longPressTimeoutTrigger, boolean popupPresent,
+      boolean expectShowIfNecessaryIsCalled, boolean expectLongPressCallbackIsSet) {
+    // Set up mock drawable cache.
+    MockResources mockResources = new MockResources() {
+      @Override
+      public Drawable getDrawable(int resourceId) {
+        return new ColorDrawable();
+      }
+
+      @Override
+      public DisplayMetrics getDisplayMetrics() {
+        return new DisplayMetrics();
+      }
+    };
+    DrawableCache drawableCache = new DrawableCache(mockResources);
+    VisibilityProxy.setField(view, "drawableCache", drawableCache);
+
+    // Set up a dummy keyboard with one key entity and mock key event handler.
+    view.setPopupEnabled(popupEnabled);
+    Optional<PopUp> popup = Optional.absent();
+    if (popupPresent) {
+      popup = Optional.of(new PopUp(0, 0, 40, 0, -30, 10, 10));
+    }
+    KeyEntity keyEntity = new KeyEntity(
+        1, 'a', 'A', longPressTimeoutTrigger, 0, Optional.<String>absent(), false, popup,
+        0, 0, 0, 0);
+    Key key = createKeyWithKeyEntity(0, 0, keyEntity);
+    view.setKeyboard(createDummyKeyboard(key));
+    KeyEventHandler mockKeyEventHandler = createKeyEventHandlerMock();
+    view.setKeyEventHandler(mockKeyEventHandler);
+
+    // Set up mock popup preview.
+    PopUpPreview mockPopUpPreview = createMockBuilder(PopUpPreview.class)
+        .withConstructor(View.class, BackgroundDrawableFactory.class, DrawableCache.class)
+        .withArgs(view, new BackgroundDrawableFactory(mockResources), drawableCache)
+        .createMock();
+    PopUpPreview.Pool popupPreviewPool = VisibilityProxy.getField(view, "popupPreviewPool");
+    VisibilityProxy.<List<PopUpPreview>>getField(
+        popupPreviewPool, "freeList").add(mockPopUpPreview);
+    Handler dismissHandler = new Handler(Looper.myLooper());
+    VisibilityProxy.setField(popupPreviewPool, "dismissHandler", dismissHandler);
+
+    // Run test scenario.
+    if (expectShowIfNecessaryIsCalled) {
+      mockPopUpPreview.showIfNecessary(key, popup, false);
+    }
+    if (!popupEnabled) {
+      mockPopUpPreview.dismiss();
+    }
+    Capture<KeyEventContext> keyEventContextCapture = new Capture<KeyEventContext>();
+    mockKeyEventHandler.cancelDelayedKeyEvent(isA(KeyEventContext.class));
+    expectLastCall().anyTimes();
+    mockKeyEventHandler.maybeStartDelayedKeyEvent(capture(keyEventContextCapture));
+    mockKeyEventHandler.sendPress('a');
+    replayAll();
+
+    assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 75, 45));
+    verifyAll();
+    KeyEventContext context = keyEventContextCapture.getValue();
+    assertEquals(expectLongPressCallbackIsSet, context.longPressCallback.isPresent());
+  }
+
+  @SmallTest
+  public void testDelayedPopup_PopupEnabled_Trigger_PopupIconPresent() {
+    delayedPopupTestImpl(true, true, true, true, false);
+  }
+
+  @SmallTest
+  public void testDelayedPopup_PopupEnabled_Trigger_PopupIconAbsent() {
+    delayedPopupTestImpl(true, true, false, true, false);
+  }
+
+  @SmallTest
+  public void testDelayedPopup_PopupEnabled_NotTrigger_PopupIconPresent() {
+    delayedPopupTestImpl(true, false, true, true, true);
+  }
+
+  @SmallTest
+  public void testDelayedPopup_PopupEnabled_NotTrigger_PopupIconAbsent() {
+    delayedPopupTestImpl(true, false, false, true, false);
+  }
+
+  @SmallTest
+  public void testDelayedPopup_PopupDisabled_Trigger_PopupIconPresent() {
+    delayedPopupTestImpl(false, true, true, false, false);
+  }
+
+  @SmallTest
+  public void testDelayedPopup_PopupDisabled_Trigger_PopupIconAbsent() {
+    delayedPopupTestImpl(false, true, false, false, false);
+  }
+
+  @SmallTest
+  public void testDelayedPopup_PopupDisabled_NotTrigger_PopupIconPresent() {
+    delayedPopupTestImpl(false, false, true, false, true);
+  }
+
+  @SmallTest
+  public void testDelayedPopup_PopupDisabled_NotTrigger_PopupIconAbsent() {
+    delayedPopupTestImpl(false, false, false, false, false);
   }
 
   // Unfortunately, there are no way to test multi-touch events because we can create neither
@@ -1004,51 +1138,23 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     for (TestCase testCase : testCases) {
       Row row = new Row(Arrays.asList(key1, testCase.spacer, key2), HEIGHT, VERTICAL_GAP);
-      view.setKeyboard(new Keyboard(Optional.<String>absent(), Collections.singletonList(row), 1));
+      view.setKeyboard(new Keyboard(Optional.<String>absent(), Collections.singletonList(row), 1,
+                                    KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA));
 
       // Center of key1.
-      assertSame(key1, view.getKeyByCoord(WIDTH / 2, HEIGHT / 2));
+      assertSame(key1, view.getKeyByCoord(WIDTH / 2, HEIGHT / 2).get());
 
       // Center of key2.
-      assertSame(key2, view.getKeyByCoord(WIDTH * 5 / 2, HEIGHT / 2));
+      assertSame(key2, view.getKeyByCoord(WIDTH * 5 / 2, HEIGHT / 2).get());
 
       // On a spacer.
-      assertSame(testCase.expectedLeftHalf, view.getKeyByCoord(WIDTH * 4 / 3, HEIGHT / 2));
-      assertSame(testCase.expectedRightHalf, view.getKeyByCoord(WIDTH * 5 / 3, HEIGHT / 2));
+      assertSame(testCase.expectedLeftHalf, view.getKeyByCoord(WIDTH * 4 / 3, HEIGHT / 2).get());
+      assertSame(testCase.expectedRightHalf, view.getKeyByCoord(WIDTH * 5 / 3, HEIGHT / 2).get());
 
       // Both outside of the keyboard.
-      assertSame(key1, view.getKeyByCoord(-WIDTH / 2, HEIGHT / 2));
-      assertSame(key2, view.getKeyByCoord(WIDTH * 7 / 2, HEIGHT / 2));
+      assertSame(key1, view.getKeyByCoord(-WIDTH / 2, HEIGHT / 2).get());
+      assertSame(key2, view.getKeyByCoord(WIDTH * 7 / 2, HEIGHT / 2).get());
     }
-  }
-
-  @SmallTest
-  public void testOnTouchEvent_releaseSymbolCusorkeySecondly() {
-    Resources res = view.getContext().getResources();
-    KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
-    int keyCode = res.getInteger(R.integer.key_symbol);
-    resetAll();
-    Key targetKey = createKey(0, 0, keyCode);
-    KeyEventContext keyEventContext =
-        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
-
-    // The listener should receive only onRelease event.
-    keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
-    keyEventHandler.sendRelease(keyCode);
-    replayAll();
-    view.setKeyEventHandler(keyEventHandler);
-
-    // Set pressed condition.
-    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
-    keyEventContextMap.put(0, keyEventContext);
-
-    assertEquals(Flick.Direction.CENTER,
-                 keyEventContextMap.values().iterator().next().flickDirection);
-    assertTrue(touchEvent(view, MotionEvent.ACTION_POINTER_UP, 0, 0));
-    assertTrue(keyEventContextMap.isEmpty());
-
-    view.setKeyEventHandler(null);
-    verifyAll();
   }
 
   @SmallTest
@@ -1067,32 +1173,28 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   @SuppressWarnings("unchecked")
   @SmallTest
   public void testSetSkinType() {
+    Resources resources = getInstrumentation().getTargetContext().getResources();
     KeyboardViewBackgroundSurface keyboardViewBackgroundSurface =
         createKeyboardViewBackgroundSurfaceMock();
     keyboardViewBackgroundSurface.requestUpdateKeyboard(
         isA(Keyboard.class), isA(Set.class));
 
     DrawableCache drawableCache = createMockBuilder(DrawableCache.class)
-        .withConstructor(MozcDrawableFactory.class)
-        .withArgs(new MozcDrawableFactory(new MockResources()))
+        .withConstructor(Resources.class)
+        .withArgs(new MockResourcesWithDisplayMetrics())
         .createMock();
-    drawableCache.setSkinType(SkinType.ORANGE_LIGHTGRAY);
-    expect(drawableCache.getDrawable(SkinType.ORANGE_LIGHTGRAY.windowBackgroundResourceId))
-        .andReturn(Optional.<Drawable>absent());
+    drawableCache.setSkin(SkinType.ORANGE_LIGHTGRAY.getSkin(resources));
 
     BackgroundDrawableFactory backgroundDrawableFactory =
-        createMockBuilder(BackgroundDrawableFactory.class)
-            .withConstructor(Float.TYPE)
-            .withArgs(1f)
-            .createMock();
-    backgroundDrawableFactory.setSkinType(SkinType.ORANGE_LIGHTGRAY);
+        new BackgroundDrawableFactory(createNiceMock(MockResourcesWithDisplayMetrics.class));
+    backgroundDrawableFactory.setSkin(SkinType.ORANGE_LIGHTGRAY.getSkin(resources));
     replayAll();
 
     VisibilityProxy.setField(view, "backgroundSurface", keyboardViewBackgroundSurface);
     VisibilityProxy.setField(view, "drawableCache", drawableCache);
     VisibilityProxy.setField(view, "backgroundDrawableFactory", backgroundDrawableFactory);
 
-    view.setSkinType(SkinType.ORANGE_LIGHTGRAY);
+    view.setSkin(SkinType.ORANGE_LIGHTGRAY.getSkin(resources));
 
     verifyAll();
   }
@@ -1101,20 +1203,21 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   public void testSetKeyboard() {
     KeyboardView view = new KeyboardView(getInstrumentation().getTargetContext());
     Set<MetaState> originalMetaStates = EnumSet.of(
+        MetaState.NO_GLOBE,
         MetaState.CAPS_LOCK,
         MetaState.ACTION_GO,
         MetaState.VARIATION_EMAIL_ADDRESS,
-        MetaState.COMPOSING,
-        MetaState.GLOBE);
+        MetaState.COMPOSING);
     view.updateMetaStates(originalMetaStates, EnumSet.noneOf(MetaState.class));
     assertEquals(originalMetaStates, view.getMetaStates());
-    view.setKeyboard(new Keyboard(Optional.<String>absent(), Collections.<Row>emptyList(), 0f));
+    view.setKeyboard(new Keyboard(Optional.<String>absent(), Collections.<Row>emptyList(), 0f,
+                                  KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA));
     assertEquals(
         EnumSet.of(
+            MetaState.NO_GLOBE,
             MetaState.ACTION_GO,
             MetaState.VARIATION_EMAIL_ADDRESS,
-            MetaState.COMPOSING,
-            MetaState.GLOBE),
+            MetaState.COMPOSING),
         view.getMetaStates());
   }
 
@@ -1135,26 +1238,35 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     // Keep the order. KeyboardView's state is not reset in the iteration.
     TestData[] testDataList = {
-        new TestData(0, 0, EnumSet.noneOf(MetaState.class)),
-        new TestData(EditorInfo.IME_ACTION_DONE, 0, EnumSet.of(MetaState.ACTION_DONE)),
-        new TestData(EditorInfo.IME_ACTION_GO, 0, EnumSet.of(MetaState.ACTION_GO)),
-        new TestData(EditorInfo.IME_ACTION_NEXT, 0, EnumSet.of(MetaState.ACTION_NEXT)),
-        new TestData(EditorInfo.IME_ACTION_NONE, 0, EnumSet.of(MetaState.ACTION_NONE)),
-        new TestData(EditorInfo.IME_ACTION_PREVIOUS, 0, EnumSet.of(MetaState.ACTION_PREVIOUS)),
-        new TestData(EditorInfo.IME_ACTION_SEARCH, 0, EnumSet.of(MetaState.ACTION_SEARCH)),
-        new TestData(EditorInfo.IME_ACTION_SEND, 0, EnumSet.of(MetaState.ACTION_SEND)),
+        new TestData(0, 0, EnumSet.of(MetaState.NO_GLOBE)),
+        new TestData(EditorInfo.IME_ACTION_DONE,
+                     0, EnumSet.of(MetaState.NO_GLOBE, MetaState.ACTION_DONE)),
+        new TestData(EditorInfo.IME_ACTION_GO,
+                     0, EnumSet.of(MetaState.NO_GLOBE, MetaState.ACTION_GO)),
+        new TestData(EditorInfo.IME_ACTION_NEXT,
+                     0, EnumSet.of(MetaState.NO_GLOBE, MetaState.ACTION_NEXT)),
+        new TestData(EditorInfo.IME_ACTION_NONE,
+                     0, EnumSet.of(MetaState.NO_GLOBE, MetaState.ACTION_NONE)),
+        new TestData(EditorInfo.IME_ACTION_PREVIOUS,
+                     0, EnumSet.of(MetaState.NO_GLOBE, MetaState.ACTION_PREVIOUS)),
+        new TestData(EditorInfo.IME_ACTION_SEARCH,
+                     0, EnumSet.of(MetaState.NO_GLOBE, MetaState.ACTION_SEARCH)),
+        new TestData(EditorInfo.IME_ACTION_SEND,
+                     0, EnumSet.of(MetaState.NO_GLOBE, MetaState.ACTION_SEND)),
         new TestData(0, InputType.TYPE_TEXT_VARIATION_URI | InputType.TYPE_CLASS_TEXT,
-                     EnumSet.of(MetaState.VARIATION_URI)),
+                     EnumSet.of(MetaState.NO_GLOBE, MetaState.VARIATION_URI)),
         new TestData(0, InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS | InputType.TYPE_CLASS_TEXT,
-                     EnumSet.of(MetaState.VARIATION_EMAIL_ADDRESS)),
+                     EnumSet.of(MetaState.NO_GLOBE, MetaState.VARIATION_EMAIL_ADDRESS)),
         new TestData(0, InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS | InputType.TYPE_CLASS_TEXT,
-                     EnumSet.of(MetaState.VARIATION_EMAIL_ADDRESS)),
+                     EnumSet.of(MetaState.NO_GLOBE, MetaState.VARIATION_EMAIL_ADDRESS)),
         new TestData(0, InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE | InputType.TYPE_CLASS_TEXT,
-                     EnumSet.noneOf(MetaState.class)),
+                     EnumSet.of(MetaState.NO_GLOBE)),
         new TestData(0, InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS | InputType.TYPE_CLASS_TEXT,
-                     EnumSet.of(MetaState.VARIATION_EMAIL_ADDRESS)),
+                     EnumSet.of(MetaState.NO_GLOBE, MetaState.VARIATION_EMAIL_ADDRESS)),
         new TestData(0, InputType.TYPE_NUMBER_VARIATION_PASSWORD | InputType.TYPE_CLASS_NUMBER,
-                     EnumSet.noneOf(MetaState.class)),
+                     EnumSet.of(MetaState.NO_GLOBE)),
+        new TestData(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_ENTER_ACTION,
+                     0, EnumSet.of(MetaState.NO_GLOBE)),
     };
 
     for (TestData testData : testDataList) {

@@ -39,7 +39,7 @@
         android:title="@string/pref_haptic_feedback_title" />
 
     <org.mozc.android.inputmethod.japanese.preference.SeekbarPreference
-        android:defaultValue="30"
+        android:defaultValue="5"
         android:key="pref_haptic_feedback_duration_key"
         android:title="@string/pref_haptic_feedback_duration_title"
         android:max="250"
@@ -82,19 +82,25 @@
         android:title="@string/pref_fullscreen_title" />
 
     <ListPreference
-        android:defaultValue="BLUE_LIGHTGRAY"
+        android:defaultValue="@string/pref_skin_type_default"
         android:entries="@array/pref_skin_type_entries"
         android:entryValues="@array/pref_skin_type_values"
-        android:key="pref_skin_type_key"
+        android:key="@string/pref_skin_type_key"
         android:summary="@string/pref_skin_type_description"
         android:title="@string/pref_skin_type_title" />
 
     <ListPreference
-        android:defaultValue="JAPANESE109A"
+        android:defaultValue="DEFAULT"
         android:entries="@array/pref_hardware_keymap_entries"
         android:entryValues="@array/pref_hardware_keymap_values"
         android:key="pref_hardware_keymap"
         android:summary="@string/pref_hardware_keymap_description"
         android:title="@string/pref_hardware_title" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="pref_voice_input_key"
+        android:summary="@string/pref_voice_input_description"
+        android:title="@string/pref_voice_input_title" />
   </PreferenceCategory>
 </PreferenceScreen>

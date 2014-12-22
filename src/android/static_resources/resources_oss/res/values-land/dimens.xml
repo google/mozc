@@ -30,13 +30,22 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <resources>
-  <dimen name="pref_inputstyle_description_width">150dip</dimen>
 
-  <dimen name="ime_window_height">@dimen/ime_window_height_landscape</dimen>
-  <dimen name="input_frame_height">165.4dip</dimen>
-  <!-- input_frame_height_width_shadow should be input_drame_height + translucent_border_height -->
-  <dimen name="input_frame_height_with_shadow">168.8dip</dimen>
+    <dimen name="pref_inputstyle_description_width">150dip</dimen>
 
-  <dimen name="symbol_view_minor_category_tab_widget_height">40dip</dimen>
+    <dimen name="ime_window_height">206dip</dimen>
+
+    <dimen name="input_frame_height">166dip</dimen>
+    <!-- symbol_view_height = input_frame_height + (candidate_text_size + candidate_vertical_padding_size * 2) -->
+    <dimen name="symbol_view_height">206dip</dimen>
+    <!-- symbol_view_number_keyboard_height = input_frame_height - symbol_view_major_category_height -->
+    <dimen name="symbol_view_number_keyboard_height">111dip</dimen>
+    <!-- symbol_view_major_category_height = input_frame_height / 4 (3 is for candidate rows, 1 is for major category) -->
+    <dimen name="symbol_view_major_category_height">41.5dip</dimen>
+
+    <dimen name="symbol_view_symbol_min_column_width">67dip</dimen>
+    <dimen name="symbol_view_emoticon_min_column_width">100dip</dimen>
+    <dimen name="symbol_view_emoji_min_column_width">67dip</dimen>
+    <dimen name="symbol_candidate_horizontal_padding_size">10dip</dimen>
 
 </resources>

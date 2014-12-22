@@ -31,6 +31,7 @@ package org.mozc.android.inputmethod.japanese.view;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 /**
  * Selected tab highlight implementation.
@@ -54,6 +55,7 @@ public class TabSelectedBackgroundDrawable extends BaseBackgroundDrawable {
     }
 
     // Paint the rectangle.
-    canvas.drawRect(0, 0, getBounds().right, highlightHeight, paint);
+    Rect bounds = getBounds();
+    canvas.drawRect(0, bounds.bottom - highlightHeight, bounds.right, bounds.bottom, paint);
   }
 }

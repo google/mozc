@@ -1,0 +1,128 @@
+# Roman table for notouch.
+#
+# NOTE:
+#  This rule is basically same as flick-hiragana.
+#  However, we don't want to have raw number transliterated candidates, like
+#  "12" from "あか"
+#  Number only raw input will produce transliterated candidates
+#  via transliteration_rewriter. For example if we have (1, あ) and (2, か),
+#  input "あか" will make candidates "12" in addition to "あか", "赤", etc.
+#  For suppressing such candidates, we use A-J instead of 0-9 as keycode.
+#  This is the only difference between flick-hiragana and notouch-hiragana.
+!		あ	NoTransliteration
+あ*		ぁ
+ぁ*		あ
+_		い	NoTransliteration
+い*		ぃ
+ぃ*		い
+;		う	NoTransliteration
+う*		ぅ
+ぅ*		ゔ
+ゔ*		う
+:		え	NoTransliteration
+え*		ぇ
+ぇ*		え
+@		お	NoTransliteration
+お*		ぉ
+ぉ*		お
+"		か	NoTransliteration
+か*		が
+が*		か
+a		き	NoTransliteration
+き*		ぎ
+ぎ*		き
+b		く	NoTransliteration
+く*		ぐ
+ぐ*		く
+c		け	NoTransliteration
+け*		げ
+げ*		け
+|		こ	NoTransliteration
+こ*		ご
+ご*		こ
+#		さ	NoTransliteration
+さ*		ざ
+ざ*		さ
+d		し	NoTransliteration
+し*		じ
+じ*		し
+e		す	NoTransliteration
+す*		ず
+ず*		す
+f		せ	NoTransliteration
+せ*		ぜ
+ぜ*		せ
+~		そ	NoTransliteration
+そ*		ぞ
+ぞ*		そ
+'		た	NoTransliteration
+た*		だ
+だ*		た
+g		ち	NoTransliteration
+ち*		ぢ
+ぢ*		ち
+h		つ	NoTransliteration
+つ*		っ
+っ*		づ
+づ*		つ
+i		て	NoTransliteration
+て*		で
+で*		て
+$		と	NoTransliteration
+と*		ど
+ど*		と
+[		な	NoTransliteration
+j		に	NoTransliteration
+k		ぬ	NoTransliteration
+l		ね	NoTransliteration
+%		の	NoTransliteration
+]		は	NoTransliteration
+は*		ば
+ば*		ぱ
+ぱ*		は
+m		ひ	NoTransliteration
+ひ*		び
+び*		ぴ
+ぴ*		ひ
+n		ふ	NoTransliteration
+ふ*		ぶ
+ぶ*		ぷ
+ぷ*		ふ
+o		へ	NoTransliteration
+へ*		べ
+べ*		ぺ
+ぺ*		へ
+&		ほ	NoTransliteration
+ほ*		ぼ
+ぼ*		ぽ
+ぽ*		ほ
+<		ま	NoTransliteration
+p		み	NoTransliteration
+q		む	NoTransliteration
+r		め	NoTransliteration
+s		も	NoTransliteration
+=		や	NoTransliteration
+や*		ゃ
+ゃ*		や
+u		ゆ	NoTransliteration
+ゆ*		ゅ
+ゅ*		ゆ
+^		よ	NoTransliteration
+よ*		ょ
+ょ*		よ
+t		「	NoTransliteration
+v		」	NoTransliteration
+>		ら	NoTransliteration
+w		り	NoTransliteration
+x		る	NoTransliteration
+y		れ	NoTransliteration
+z		ろ	NoTransliteration
+*			NoTransliteration
+(		（	NoTransliteration
+)		）	NoTransliteration
+?		わ	NoTransliteration
+わ*		ゎ
+ゎ*		わ
++		を	NoTransliteration
+/		ん	NoTransliteration
+-		ー	NoTransliteration

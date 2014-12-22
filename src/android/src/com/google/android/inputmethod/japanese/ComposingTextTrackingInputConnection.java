@@ -194,4 +194,9 @@ public class ComposingTextTrackingInputConnection implements InputConnection {
     }
     return new ComposingTextTrackingInputConnection(baseConnection);
   }
+
+  @Override
+  public boolean requestCursorUpdates(int cursorUpdateMode) {
+    return baseConnection.requestCursorUpdates(cursorUpdateMode);
+  }
 }

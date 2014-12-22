@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.preference;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import com.google.common.base.Optional;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,9 +43,10 @@ import android.util.Xml;
 /**
  */
 public class ClearConversionHistoryDialogPreferenceTest extends InstrumentationTestCaseWithMock {
+
   private ClearConversionHistoryDialogPreference preference;
   private SessionExecutor mockSessionExecutor;
-  private SessionExecutor originalSessionExecutor;
+  private Optional<SessionExecutor> originalSessionExecutor = Optional.absent();
 
   @Override
   protected void setUp() throws Exception {
@@ -55,14 +57,14 @@ public class ClearConversionHistoryDialogPreferenceTest extends InstrumentationT
     preference = new ClearConversionHistoryDialogPreference(context, attrs);
 
     mockSessionExecutor = createMock(SessionExecutor.class);
-    originalSessionExecutor = SessionExecutor.setInstanceForTest(mockSessionExecutor);
+    originalSessionExecutor = SessionExecutor.setInstanceForTest(Optional.of(mockSessionExecutor));
   }
 
   @Override
   protected void tearDown() throws Exception {
     SessionExecutor.setInstanceForTest(originalSessionExecutor);
 
-    originalSessionExecutor = null;
+    originalSessionExecutor = Optional.absent();
     mockSessionExecutor = null;
     preference = null;
     super.tearDown();
@@ -77,13 +79,14 @@ public class ClearConversionHistoryDialogPreferenceTest extends InstrumentationT
 
   private void doTestOnClick(boolean expectOnClickToFire, int button) {
     resetAll();
+    DialogInterface dialogMock = createNiceMock(DialogInterface.class);
     if (expectOnClickToFire) {
       mockSessionExecutor.clearUserHistory();
       mockSessionExecutor.clearUserPrediction();
     }
     replayAll();
 
-    preference.onClick(null, button);
+    preference.onClick(dialogMock, button);
     verifyAll();
   }
 }

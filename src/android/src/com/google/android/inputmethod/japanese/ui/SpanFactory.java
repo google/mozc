@@ -31,16 +31,14 @@ package org.mozc.android.inputmethod.japanese.ui;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
+import org.mozc.android.inputmethod.japanese.util.CandidateDescriptionUtil;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import android.graphics.Paint;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * Factory to create Span instances based on given CandidateWord instances.
@@ -65,7 +63,7 @@ public class SpanFactory {
   }
 
   public void setDescriptionDelimiter(String descriptionDelimiter) {
-    this.descriptionDelimiter = Optional.of(Preconditions.checkNotNull(descriptionDelimiter));
+    this.descriptionDelimiter = Optional.of(descriptionDelimiter);
   }
 
   public Span newInstance(CandidateWord candidateWord) {
@@ -73,8 +71,8 @@ public class SpanFactory {
 
     float valueWidth = valuePaint.measureText(candidateWord.getValue());
     String description = candidateWord.getAnnotation().getDescription();
-    List<String> splitDescriptionList = splitDescription(Strings.nullToEmpty(description),
-                                                         descriptionDelimiter);
+    List<String> splitDescriptionList = CandidateDescriptionUtil.extractDescriptions(
+        Strings.nullToEmpty(description), descriptionDelimiter);
     float descriptionWidth = 0;
     for (String line : splitDescriptionList) {
       float width = descriptionPaint.measureText(line);
@@ -84,40 +82,5 @@ public class SpanFactory {
     }
     return new Span(Optional.of(candidateWord), valueWidth, descriptionWidth,
                     splitDescriptionList);
-  }
-
-  private static List<String> splitDescription(
-      String description, Optional<String> descriptionDelimiter) {
-    if (description.length() == 0) {
-      // No description is available.
-      return Collections.emptyList();
-    }
-
-    if (!descriptionDelimiter.isPresent()) {
-      // If the delimiter is not set, return the description as is.
-      return Collections.singletonList(description);
-    }
-
-    // Split the description by delimiter.
-    StringTokenizer tokenizer = new StringTokenizer(description, descriptionDelimiter.get());
-    List<String> result = new ArrayList<String>();
-    while (tokenizer.hasMoreTokens()) {
-      String token = tokenizer.nextToken();
-      if (isEligibleDescriptionFragment(token)) {
-        result.add(token);
-      }
-    }
-
-    return result;
-  }
-
-  private static boolean isEligibleDescriptionFragment(String descriptionFragment) {
-    // We'd like to always remove "ひらがな"  because the description fragment frequently
-    // and largely increases the width of a candidate span.
-    // Increased width reduces the number of the candidates which are shown in a screen.
-    // This behavior is especially harmful for zero-query suggestion
-    // because zero-query suggestion mainly shows Hiragana candidates.
-    // TODO(matsuzakit): Such filtering/oprimization should be done in the server side.
-    return !"ひらがな".equals(descriptionFragment);
   }
 }

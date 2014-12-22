@@ -29,7 +29,6 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard;
 import org.mozc.android.inputmethod.japanese.KeyboardSpecificationName;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
@@ -64,8 +63,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nullable;
-
 /**
  * An object which guesses probable key events for typing correction feature.
  *
@@ -90,7 +87,7 @@ public class ProbableKeyEventGuesser {
    */
   @VisibleForTesting
   interface StatsFileAccessor {
-    InputStream openStream(JapaneseKeyboard japaneseKeyboard, Configuration configuration)
+    InputStream openStream(Keyboard keyboard, Configuration configuration)
         throws IOException;
   }
 
@@ -104,8 +101,8 @@ public class ProbableKeyEventGuesser {
     private final List<String> assetFileNames;
 
     StatsFileAccessorImpl(AssetManager assetManager) {
-      this.assetManager = assetManager;
-      this.assetFileNames = getAssetFileNameList(assetManager);
+      this.assetManager = Preconditions.checkNotNull(assetManager);
+      this.assetFileNames = Preconditions.checkNotNull(getAssetFileNameList(assetManager));
     }
 
     private static List<String> getAssetFileNameList(AssetManager assetManager) {
@@ -118,15 +115,17 @@ public class ProbableKeyEventGuesser {
     }
 
     @Override
-    public InputStream openStream(JapaneseKeyboard japaneseKeyboard, Configuration configuration)
+    public InputStream openStream(Keyboard keyboard, Configuration configuration)
         throws IOException {
+      Preconditions.checkNotNull(keyboard);
+      Preconditions.checkNotNull(configuration);
+
       String baseName =
-          japaneseKeyboard.getSpecification().getKeyboardSpecificationName().baseName;
+          keyboard.getSpecification().getKeyboardSpecificationName().baseName;
       String orientation = KeyboardSpecificationName.getDeviceOrientationString(configuration);
       String fileName = String.format("%s_%s.touch_stats", baseName, orientation);
-      if (fileName.indexOf(File.separator) != -1) {
-        throw new IllegalArgumentException("fileName shouldn't include separator.");
-      }
+      Preconditions.checkArgument(
+          fileName.indexOf(File.separator) == -1, "fileName shouldn't include separator.");
       for (String file : assetFileNames) {
         if (file.equals(fileName)) {
           return assetManager.open(fileName);
@@ -157,6 +156,8 @@ public class ProbableKeyEventGuesser {
     @Override
     public double getLikelihood(float firstX, float firstY, float deltaX, float deltaY,
         float[] probableEvent) {
+      Preconditions.checkNotNull(probableEvent);
+
       float sdx = firstX - probableEvent[START_X_AVG];
       float sdy = firstY - probableEvent[START_Y_AVG];
       // Keys that are too far away from user's touch-down position
@@ -198,32 +199,34 @@ public class ProbableKeyEventGuesser {
       void updateStats(String formattedKeyboardName, SparseArray<float[]> stats);
     }
 
-    private final JapaneseKeyboard japaneseKeyboard;
+    private final Keyboard keyboard;
     private final Configuration configuration;
     private final StatsFileAccessor statsFileAccessor;
     private final UpdateStatsListener updateStatsListener;
 
     /**
      * @param statsFileAccessor an accessor for stats files. Must be non-null.
-     * @param japaneseKeyboard a {@link JapaneseKeyboard} to specify the file to be loaded.
+     * @param keyboard a {@link Keyboard} to specify the file to be loaded.
      * @param configuration a {@link Configuration} to specify the file to be loaded
      * @param formattedKeyboardNameToStats a {@link Map} to be updated. Must be non-null.
      * @param updateStatsExecutor an Executor on which the result is propagated
      */
     private StatisticsLoader(
         StatsFileAccessor statsFileAccessor,
-        JapaneseKeyboard japaneseKeyboard,
+        Keyboard keyboard,
         Configuration configuration,
         final Map<String, SparseArray<float[]>> formattedKeyboardNameToStats,
         final Executor updateStatsExecutor) {
       this(
           statsFileAccessor,
-          japaneseKeyboard,
+          keyboard,
           configuration,
           new UpdateStatsListener() {
             @Override
             public void updateStats(final String formattedKeyboardName,
                                     final SparseArray<float[]> stats) {
+              Preconditions.checkNotNull(formattedKeyboardName);
+              Preconditions.checkNotNull(stats);
               updateStatsExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -234,14 +237,13 @@ public class ProbableKeyEventGuesser {
           });
     }
 
-    // For testing purpose.
     @VisibleForTesting
     StatisticsLoader(StatsFileAccessor statsFileAccessor,
-        JapaneseKeyboard japaneseKeyboard,
+        Keyboard keyboard,
         Configuration configuration,
         UpdateStatsListener updateStatsListener) {
       this.statsFileAccessor = Preconditions.checkNotNull(statsFileAccessor);
-      this.japaneseKeyboard = Preconditions.checkNotNull(japaneseKeyboard);
+      this.keyboard = Preconditions.checkNotNull(keyboard);
       this.configuration = Preconditions.checkNotNull(configuration);
       this.updateStatsListener = Preconditions.checkNotNull(updateStatsListener);
     }
@@ -275,7 +277,7 @@ public class ProbableKeyEventGuesser {
       SparseArray<float[]> result = new SparseArray<float[]>(MAX_KEY_NUMBER_IN_KEYBOARD);
       InputStream inputStream = null;
       try {
-        inputStream = statsFileAccessor.openStream(japaneseKeyboard, configuration);
+        inputStream = statsFileAccessor.openStream(keyboard, configuration);
         readStream(new DataInputStream(inputStream), result);
       } catch (IOException e) {
         MozcLog.d("Stream access fails.", e);
@@ -290,7 +292,7 @@ public class ProbableKeyEventGuesser {
         }
       }
       // Successfully loaded the file so call back updateStatsListener.
-      String formattedKeyboardName = japaneseKeyboard.getSpecification()
+      String formattedKeyboardName = keyboard.getSpecification()
           .getKeyboardSpecificationName().formattedKeyboardName(configuration);
       updateStatsListener.updateStats(formattedKeyboardName, result);
     }
@@ -351,14 +353,14 @@ public class ProbableKeyEventGuesser {
   // Invoked from the thread which dataLoadExecutor uses.
   private final Executor dataPropagationExecutor;
 
-  // Current JapaneseKeyboard.
-  private Optional<JapaneseKeyboard> japaneseKeyboard = Optional.absent();
+  // Current Keyboard.
+  private Optional<Keyboard> keyboard = Optional.absent();
 
   // Current Configuration.
   private Optional<Configuration> configuration = Optional.absent();
 
   // Formatted keyboard name.
-  // This can be calculated from japaneseKeyboard and configuration so is derivative variable.
+  // This can be calculated from keyboard and configuration so is derivative variable.
   // Just for cache.
   private Optional<String> formattedKeyboardName = Optional.absent();
 
@@ -410,17 +412,16 @@ public class ProbableKeyEventGuesser {
   }
 
   /**
-   * Sets a {@link JapaneseKeyboard}.
+   * Sets a {@link Keyboard}.
    *
    * This invocation might load a stats data file (typically) asynchronously.
    * Before the loading has finished
    * {@link #getProbableKeyEvents(List)} cannot return any probable key events.
    * @see #getProbableKeyEvents(List)
-   * @param japaneseKeyboard a {@link JapaneseKeyboard} to be set.
-   * If null {@link #getProbableKeyEvents(List)} will return null.
+   * @param keyboard a {@link Keyboard} to be set.
    */
-  public void setJapaneseKeyboard(@Nullable JapaneseKeyboard japaneseKeyboard) {
-    this.japaneseKeyboard = Optional.fromNullable(japaneseKeyboard);
+  public void setKeyboard(Keyboard keyboard) {
+    this.keyboard = Optional.of(keyboard);
     updateFormattedKeyboardName();
     maybeUpdateEventStatistics();
   }
@@ -428,11 +429,11 @@ public class ProbableKeyEventGuesser {
   /**
    * Sets a {@link Configuration}.
    *
-   * Behaves almost the same as {@link #setJapaneseKeyboard(JapaneseKeyboard)}.
+   * Behaves almost the same as {@link #setKeyboard(Keyboard)}.
    * @param configuration a {@link Configuration} to be set.
    */
-  public void setConfiguration(@Nullable Configuration configuration) {
-    this.configuration = Optional.fromNullable(configuration);
+  public void setConfiguration(Optional<Configuration> configuration) {
+    this.configuration = Preconditions.checkNotNull(configuration);
     updateFormattedKeyboardName();
     maybeUpdateEventStatistics();
   }
@@ -441,11 +442,11 @@ public class ProbableKeyEventGuesser {
    * Updates (cached) {@link #formattedKeyboardName}.
    */
   private void updateFormattedKeyboardName() {
-    if (!japaneseKeyboard.isPresent() || !configuration.isPresent()) {
+    if (!keyboard.isPresent() || !configuration.isPresent()) {
       formattedKeyboardName = Optional.absent();
       return;
     }
-    formattedKeyboardName = Optional.of(japaneseKeyboard.get()
+    formattedKeyboardName = Optional.of(keyboard.get()
                                                         .getSpecification()
                                                         .getKeyboardSpecificationName()
                                                         .formattedKeyboardName(
@@ -453,7 +454,7 @@ public class ProbableKeyEventGuesser {
   }
 
   /**
-   * If stats for current JapaneseKeyboard and Configuration has not been loaded,
+   * If stats for current {@code Keyboard} and {@code Configuration} has not been loaded,
    * load and update it asynchronously.
    *
    * Loading queue contains only the latest task.
@@ -461,7 +462,7 @@ public class ProbableKeyEventGuesser {
    */
   private void maybeUpdateEventStatistics() {
     if (!formattedKeyboardName.isPresent()
-        || !japaneseKeyboard.isPresent()
+        || !keyboard.isPresent()
         || !configuration.isPresent()) {
       return;
     }
@@ -471,7 +472,7 @@ public class ProbableKeyEventGuesser {
       }
       dataLoadExecutor.execute(
           new StatisticsLoader(
-              statsFileAccessor, japaneseKeyboard.get(), configuration.get(),
+              statsFileAccessor, keyboard.get(), configuration.get(),
               formattedKeyboardNameToStats,
               dataPropagationExecutor));
     }
@@ -480,25 +481,25 @@ public class ProbableKeyEventGuesser {
   /**
    * Calculates probable key events for given {@code touchEventList}.
    *
-   * A List is returned (null will not be returned).
    * If corresponding stats data has not been loaded yet (file access is done asynchronously),
    * empty list is returned.
    *
    * TODO(matsuzakit): Change the caller side which expects null-return-value,
    *                   before submitting this CL.
    *
-   * @param touchEventList a List of TouchEvents. If null, empty List is returned.
+   * @param touchEventList a List of TouchEvents.
    */
-  public List<ProbableKeyEvent> getProbableKeyEvents(
-      @Nullable List<? extends TouchEvent> touchEventList) {
+  public List<ProbableKeyEvent> getProbableKeyEvents(List<TouchEvent> touchEventList) {
+    Preconditions.checkNotNull(touchEventList);
+
     // This method's responsibility is to pre-check the condition.
     // Calculation itself is done in getProbableKeyEventsInternal method.
-    if (!japaneseKeyboard.isPresent() || !configuration.isPresent()) {
+    if (!keyboard.isPresent() || !configuration.isPresent()) {
       // Keyboard has not been set up.
       return Collections.emptyList();
     }
-    if (touchEventList == null || touchEventList.size() != 1) {
-      // If null || size == 0 , we can do nothing.
+    if (touchEventList.size() != 1) {
+      // If size == 0 , we can do nothing.
       // If size >= 2, this is special situation (saturating touch event) so do nothing.
       return Collections.emptyList();
     }
@@ -507,7 +508,7 @@ public class ProbableKeyEventGuesser {
     if (eventStatistics == null) {
       // No corresponding stats is available. Returning null.
       // The stats we need might be pushed out from the LRU cache because of bulk-updates of
-      // JapaneseKeyboard or Configuration.
+      // Keyboard or Configuration.
       // For such case we invoke maybeUpdateEventStatistics method to load the stats.
       // This is very rare (and usually not happen) but just in case.
       maybeUpdateEventStatistics();
@@ -566,13 +567,14 @@ public class ProbableKeyEventGuesser {
   private SparseArray<Double> getLikelihoodArray(SparseArray<float[]> eventStatistics,
                                                  float firstX, float firstY,
                                                  float deltaX, float deltaY) {
-    Preconditions.checkState(japaneseKeyboard.isPresent());
+    Preconditions.checkNotNull(eventStatistics);
+    Preconditions.checkState(keyboard.isPresent());
 
     SparseArray<Double> result = new SparseArray<Double>(eventStatistics.size());
-    JapaneseKeyboard japaneseKeyboard = this.japaneseKeyboard.get();
+    Keyboard keyboard = this.keyboard.get();
     for (int i = 0; i < eventStatistics.size(); ++i) {
       int sourceId = eventStatistics.keyAt(i);
-      int keyCode = japaneseKeyboard.getKeyCode(sourceId);
+      int keyCode = keyboard.getKeyCode(sourceId);
       // Special key or non-existent-key.
       // Don't produce probable key events.
       if (keyCode <= 0) {

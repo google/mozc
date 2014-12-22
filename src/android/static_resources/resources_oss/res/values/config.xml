@@ -44,8 +44,6 @@
   <integer name="input_frame_expand_overshoot_rate">30000</integer>
   <!-- Overshoot duration rate for expanding input frame in ppm -->
   <integer name="input_frame_expand_overshoot_duration_rate">400000</integer>
-  <!-- The threshold velocity of snapping input window. -->
-  <integer name="input_frame_snap_velocity_threshold">100</integer>
   <!-- Duration for fading in/out of candidate frame (in pixels/sec). -->
   <integer name="candidate_frame_transition_duration">100</integer>
   <!-- Candidate window scroll animation : Velocity decay rate in ppm -->
@@ -57,25 +55,9 @@
   <!-- Symbol input window scroll animation : Minimum velocity in pixels per sec -->
   <integer name="symbol_input_scroller_minimum_velocity">500</integer>
   <!-- Symbol input window : The duration of the animation when a sub-category changes, in ms. -->
-  <integer name="symbol_input_slide_to_next_category_duration">200</integer>
 
-  <!-- Columns per screen in symbol input view (Emoticon). -->
-  <integer name="symbol_input_candidate_columns_emoticon">4</integer>
-  <!-- Columns per screen in symbol input view (Symbol). -->
-  <integer name="symbol_input_candidate_columns_symbol">5</integer>
-  <!-- Columns per screen in symbol input view (Emoji). -->
-  <integer name="symbol_input_candidate_columns_emoji">5</integer>
-  <!-- Rows per screen in symbol input view. -->
-  <integer name="symbol_input_candidate_rows">4</integer>
-  <!-- Transition duration of symbol input (in) -->
-  <integer name="symbol_input_transition_duration_in">200</integer>
-  <!-- Transition duration of symbol input (out) -->
-  <integer name="symbol_input_transition_duration_out">100</integer>
-  <!--  Configurations used by the classed from LatinIME -->
-  <integer name="config_delay_before_preview">0</integer>
-  <integer name="config_delay_after_preview">10</integer>
-  <integer name="config_keyboard_grid_width">8</integer>
-  <integer name="config_keyboard_grid_height">8</integer>
+  <!-- Transition duration of symbol input -->
+  <integer name="symbol_input_transition_duration">50</integer>
 
   <!-- Configurations for key event timing (in milliseconds). -->
   <integer name="config_repeat_key_delay">400</integer>
@@ -87,5 +69,10 @@
 
   <!-- Duration for fading in/out of candidate frame (in pixels/sec). -->
   <integer name="layout_adjustment_transition_duration">200</integer>
+
+  <integer name="floating_candidate_candidate_num">5</integer>
+  <integer name="floating_mode_indicator_in_duration">50</integer>
+  <integer name="floating_mode_indicator_out_duration">100</integer>
+  <integer name="floating_mode_indicator_display_time">420</integer>
 
 </resources>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2014, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<!-- This is intended to be used for:
+     - Nexus7 (2012) (961 x 600 dp, screenHeightDp: 528 dp)
+     - Nexus7 (2013) (960 x 600 dp, screenHeightDp: 528 dp)
+     And larger ones than above.
+-->
+<resources>
+
+  <dimen name="pref_inputstyle_description_width">150dip</dimen>
+
+  <dimen name="key_preview_height">75dip</dimen>
+  <dimen name="key_preview_icon_height">75dip</dimen>
+  <dimen name="popup_width_limitation">75dip</dimen>
+  <dimen name="candidate_text_size">26dip</dimen>
+  <dimen name="candidate_horizontal_padding_size">14dip</dimen>
+  <dimen name="candidate_vertical_padding_size">12dip</dimen>
+  <dimen name="candidate_description_text_size">12dip</dimen>
+  <dimen name="candidate_text_size_aligned_layout">20dip</dimen>
+  <dimen name="candidate_description_text_size_aligned_layout">10dip</dimen>
+  <dimen name="candidate_fold_icon_width">29dip</dimen>
+
+  <!-- symbol_view_major_category_height = input_frame_height / 4 (3 is for candidate rows, 1 is for major category) -->
+  <dimen name="symbol_view_major_category_height">63.75dip</dimen>
+
+  <!--
+       ime_window_height = input_frame_height + (candidate_text_size + candidate_vertical_padding_size * 2) * n
+       n = 2 for portrait. Otherwise n = 1.
+    -->
+  <dimen name="ime_window_height">305dip</dimen>
+  <dimen name="input_frame_height">255dip</dimen>
+  <!-- partial_width >= 7 * (candidate_text_size + candidate_vertical_padding_size * 2) -->
+  <dimen name="ime_window_partial_width">350dip</dimen>
+
+  <dimen name="firsttime_app_name_text_size">32dip</dimen>
+  <dimen name="firsttime_description_text_size">25dip</dimen>
+  <dimen name="firsttime_padding_height">28dip</dimen>
+  <dimen name="firsttime_padding_width">40dip</dimen>
+
+  <!-- 3.5 Rows of candidates -->
+  <!-- (candidate_text_size + candidate_vertical_padding_size * 2) * 3.5
+       + narrow_frame_height -->
+  <dimen name="narrow_ime_window_height">221dip</dimen>
+  <dimen name="narrow_frame_height">46dip</dimen>
+  <!-- symbol_view_height = input_frame_height + (candidate_text_size + candidate_vertical_padding_size * 2) -->
+  <dimen name="symbol_view_height">305dip</dimen>
+  <!-- symbol_view_number_keyboard_height = input_frame_height - symbol_view_major_category_height -->
+  <dimen name="symbol_view_number_keyboard_height">191.25dip</dimen>
+  <!-- button_frame_height = candidate_text_size + candidate_vertical_padding_size * 2 -->
+  <dimen name="button_frame_height">50dip</dimen>
+
+  <!-- Character size of keyboard, depending on the screen size. -->
+  <dimen name="keyboard_godan_default_height">47dip</dimen>
+  <dimen name="keyboard_twelvekeys_default_height">75dip</dimen>
+  <dimen name="keyboard_qwerty_default_height">43dip</dimen>
+
+  <!-- 15% bigger than default. -->
+  <dimen name="symbol_close_button_width">39dip</dimen>
+  <dimen name="symbol_major_emoji_disable_icon_height">18dip</dimen>
+  <dimen name="symbol_major_emoji_height">23dip</dimen>
+  <dimen name="symbol_major_emoticon_height">20dip</dimen>
+  <dimen name="symbol_major_number_height">16dip</dimen>
+  <dimen name="symbol_major_symbol_height">20dip</dimen>
+  <dimen name="symbol_minor_default_height">23dip</dimen>
+  <dimen name="symbol_minor_emoticon_height">18dip</dimen>
+
+  <dimen name="symbol_view_symbol_min_column_width">100dip</dimen>
+  <dimen name="symbol_view_emoticon_min_column_width">145dip</dimen>
+  <dimen name="symbol_view_emoji_min_column_width">100dip</dimen>
+  <dimen name="symbol_candidate_horizontal_padding_size">18dip</dimen>
+
+</resources>

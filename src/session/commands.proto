@@ -586,17 +586,11 @@ message Request {
     // Use special table for 12keys (to half-width ascii).
     TWELVE_KEYS_TO_HALFWIDTHASCII = 11;
 
-    // Use special table for 12keys (to number).
-    TWELVE_KEYS_TO_NUMBER = 12;
-
     // Use special table for flick (to hiragana).
     FLICK_TO_HIRAGANA = 13;
 
     // Use special table for flick (to half-width ascii).
     FLICK_TO_HALFWIDTHASCII = 14;
-
-    // Use special table for flick (to number).
-    FLICK_TO_NUMBER = 15;
 
     // Use special table for both toggle and flick (to hiragana).
     TOGGLE_FLICK_TO_HIRAGANA = 16;
@@ -604,14 +598,8 @@ message Request {
     // Use special table for both toggle and flick (to half-width ascii).
     TOGGLE_FLICK_TO_HALFWIDTHASCII = 17;
 
-    // Use special table for both toggle and flick (to number).
-    TOGGLE_FLICK_TO_NUMBER = 18;
-
     // Use special table for Qwerty (for Mobile) (to hiragana).
     QWERTY_MOBILE_TO_HIRAGANA = 20;
-
-    // Use special table for Qwerty (for Mobile) (to hiragana's number).
-    QWERTY_MOBILE_TO_HIRAGANA_NUMBER = 21;
 
     // Use special table for Qwerty (for Mobile) (to half-width ascii).
     QWERTY_MOBILE_TO_HALFWIDTHASCII = 22;
@@ -622,9 +610,18 @@ message Request {
     // Use special table for Godan (to half-width ascii).
     GODAN_TO_HALFWIDTHASCII = 31;
 
-    // Use special table for Godan (to number).
-    GODAN_TO_NUMBER = 32;
+    // Use special table for Notouch (to hiragana).
+    NOTOUCH_TO_HIRAGANA = 40;
 
+    // Use special table for Notouch (to half-width ascii).
+    NOTOUCH_TO_HALFWIDTHASCII = 41;
+
+    // Obsolete items.
+    OBSOLETE_TWELVE_KEYS_TO_NUMBER = 12;
+    OBSOLETE_FLICK_TO_NUMBER = 15;
+    OBSOLETE_GODAN_TO_NUMBER = 32;
+    OBSOLETE_QWERTY_MOBILE_TO_HIRAGANA_NUMBER = 21;
+    OBSOLETE_TOGGLE_FLICK_TO_NUMBER = 18;
   };
 
   // Use special Romanji table.

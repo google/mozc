@@ -80,24 +80,32 @@ public class MiniBrowserActivity extends Activity {
 
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-      Preconditions.checkNotNull(view);
-      Preconditions.checkNotNull(url);
+      try {
+        Preconditions.checkNotNull(view);
+        Preconditions.checkNotNull(url);
 
-      // Use temporary matcher intentionally.
-      // Regex engine is rather heavy to instantiate so use it as less as possible.
-      if (!Pattern.matches(restrictionPattern, url)) {
-        // If the URL's doesn't match restriction pattern,
-        // delegate the operation to the default browser.
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        if (!packageManager.queryIntentActivities(browserIntent, 0).isEmpty()) {
-          context.startActivity(browserIntent);
+        // Use temporary matcher intentionally.
+        // Regex engine is rather heavy to instantiate so use it as less as possible.
+        if (!Pattern.matches(restrictionPattern, url)) {
+          // If the URL's doesn't match restriction pattern,
+          // delegate the operation to the default browser.
+          Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+          if (!packageManager.queryIntentActivities(browserIntent, 0).isEmpty()) {
+            context.startActivity(browserIntent);
+          }
+          // If no default browser is available, do nothing.
+          return true;
         }
-        // If no default browser is available, do nothing.
+        // Prevent from invoking default browser.
+        // In some special environment default browser is not installed.
+        return false;
+      } catch (Throwable e) {
+        // This method might be called from native layer.
+        // Therefore throwing something from here causes native crash.
+        // To prevent from native crash, catches all here.
+        // At least SecurityException must be caught here for Android-TV.
         return true;
       }
-      // Prevent from invoking default browser.
-      // In some special environment default browser is not installed.
-      return false;
     }
   }
 
@@ -113,6 +121,15 @@ public class MiniBrowserActivity extends Activity {
                               getPackageManager(), this));
     webView.loadUrl(getIntent().getData().toString());
     setContentView(webView);
+  }
+
+  @Override
+  protected void onPause() {
+    // Clear cache in order to show appropriate website even if system locale is changed.
+    if (this.webView.isPresent()) {
+      this.webView.get().clearCache(true);
+    }
+    super.onPause();
   }
 
   @Override

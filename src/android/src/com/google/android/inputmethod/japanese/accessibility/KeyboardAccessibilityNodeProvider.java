@@ -223,7 +223,8 @@ class KeyboardAccessibilityNodeProvider extends AccessibilityNodeProviderCompat 
     if (key.isSpacer()) {
       return UNDEFINED;
     }
-    return getKeyState(key, metaState).getFlick(Direction.CENTER).getKeyEntity().getSourceId();
+    return getKeyState(key, metaState).getFlick(
+        Direction.CENTER).get().getKeyEntity().getSourceId();
   }
 
   private Optional<Integer> getKeyCode(Key key) {
@@ -232,7 +233,7 @@ class KeyboardAccessibilityNodeProvider extends AccessibilityNodeProviderCompat 
       return Optional.absent();
     }
     return Optional.of(getKeyState(key, metaState).getFlick(
-        Direction.CENTER).getKeyEntity().getKeyCode());
+        Direction.CENTER).get().getKeyEntity().getKeyCode());
   }
 
   /**

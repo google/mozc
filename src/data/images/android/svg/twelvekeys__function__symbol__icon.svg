@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
  Copyright 2010-2014, Google Inc.
  All rights reserved.
@@ -29,21 +29,22 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="twelvekeys_x5F__x5F_function_x5F__x5F_symbol_x5F__x5F_icon"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="82px" height="87px"
-	 viewBox="0 0 82 87" style="enable-background:new 0 0 82 87;" xml:space="preserve">
-<g id="style-keyicon-function_3_">
-	<circle style="fill:#DDDDDD;" cx="34.54" cy="29.736" r="2.21"/>
-	<circle style="fill:#DDDDDD;" cx="45.31" cy="29.736" r="2.21"/>
-	<path style="fill:#DDDDDD;" d=""/>
-	<g>
-		<path style="fill-rule:evenodd;clip-rule:evenodd;fill:#DDDDDD;" d=""/>
-	</g>
-</g>
-<g id="style-keyicon-function">
-	<path style="fill:#DDDDDD;" d=""/>
-	<path style="fill:#DDDDDD;" d=""/>
-</g>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:cc="http://creativecommons.org/ns#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     version="1.1"
+     width="68"
+     height="56">
+  <text id="style-keyicon-twelvekeys-function_0" x="26.7228" y="28" style="font-size:30px;dominant-baseline:central">1</text>
+  <text id="style-keyicon-twelvekeys-function_1" x="38.1754" y="28" style="font-size:30px;dominant-baseline:central">2</text>
+  <text id="style-keyicon-twelvekeys-function_2" x="53.1000" y="28" style="font-size:30px;dominant-baseline:central">3</text>
+  <!-- Original size: 114 x 80 -->
+  <g id="style-keyicon-twelvekeys-function_3" transform="matrix(0.597,0,0,0.597,0,4.14035)" fill-rule="nonzero" fill="#37474f">
+    <path d="m24.9,58.967776c-10.459333,0-18.9672032-8.509016-18.9672032-18.967203,0-10.459333,8.5078702-18.968349,18.9672032-18.968349s18.967203,8.509016,18.967203,18.968349c0,10.458187-8.50787,18.967203-18.967203,18.967203m0-42.466059c-12.958212,0-23.5000006,10.540644-23.5000006,23.498856,0,12.957066,10.5417886,23.49771,23.5000006,23.49771s23.500001-10.540644,23.500001-23.49771c0-12.958212-10.541789-23.498856-23.500001-23.498856"/>
+    <path d="m16.354451,37.583921c1.975512,0,3.57768-1.601023,3.57768-3.57768,0-1.975512-1.602168-3.576536-3.57768-3.576536s-3.57768,1.601024-3.57768,3.576536c0,1.976657,1.602168,3.57768,3.57768,3.57768"/>
+    <path d="m33.445434,30.429591c-1.975512,0-3.57768,1.601023-3.57768,3.57768,0,1.975512,1.602168,3.576536,3.57768,3.576536s3.57768-1.601024,3.57768-3.576536c0-1.976657-1.602168-3.57768-3.57768-3.57768"/>
+    <path d="m24.9,53.035286c8.968251,0,11.898879-8.247905,11.898879-8.247905h-23.797758s2.930628,8.247905,11.898879,8.247905"/>
+  </g>
 </svg>

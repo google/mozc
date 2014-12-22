@@ -32,6 +32,8 @@
 <resources>
 
     <bool name="im_is_default">false</bool>
-    <bool name="enable_user_dictionary_tools_activity">true</bool>
+    <!-- Note: User dictionary export is enabled from v16 due to the bug in v14 framework.  -->
+    <!-- See values-v16/bools.xml. -->
+    <bool name="enable_user_dictionary_export">false</bool>
 
 </resources>

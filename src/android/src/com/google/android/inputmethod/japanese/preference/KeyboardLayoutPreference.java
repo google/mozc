@@ -30,9 +30,12 @@
 package org.mozc.android.inputmethod.japanese.preference;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -67,13 +70,13 @@ public class KeyboardLayoutPreference extends Preference {
 
   static class Item {
     final KeyboardLayout keyboardLayout;
-    final int keyboardResourceId;
+    final KeyboardSpecification specification;
     final int titleResId;
     final int descriptionResId;
-    Item(KeyboardLayout keyboardLayout, int keyboardResourceId,
+    Item(KeyboardLayout keyboardLayout, KeyboardSpecification specification,
          int titleResId, int descriptionResId) {
       this.keyboardLayout = keyboardLayout;
-      this.keyboardResourceId = keyboardResourceId;
+      this.specification = specification;
       this.titleResId = titleResId;
       this.descriptionResId = descriptionResId;
     }
@@ -87,7 +90,7 @@ public class KeyboardLayoutPreference extends Preference {
       for (Item item : itemList) {
         drawableMap.put(
             item.keyboardLayout,
-            new KeyboardPreviewDrawable(resources, item.keyboardLayout, item.keyboardResourceId));
+            new KeyboardPreviewDrawable(resources, item.keyboardLayout, item.specification));
       }
     }
 
@@ -136,9 +139,10 @@ public class KeyboardLayoutPreference extends Preference {
       return convertView;
     }
 
-    void setSkinType(SkinType skinType) {
+    void setSkin(Skin skin) {
+      Preconditions.checkNotNull(skin);
       for (KeyboardPreviewDrawable drawable : drawableMap.values()) {
-        drawable.setSkinType(skinType);
+        drawable.setSkin(skin);
       }
     }
   }
@@ -175,17 +179,17 @@ public class KeyboardLayoutPreference extends Preference {
   static final List<Item> itemList = Collections.unmodifiableList(Arrays.asList(
       new Item(
           KeyboardLayout.TWELVE_KEYS,
-          R.xml.kbd_12keys_flick_kana,
+          KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA,
           R.string.pref_keyboard_layout_title_12keys,
           R.string.pref_keyboard_layout_description_12keys),
       new Item(
           KeyboardLayout.QWERTY,
-          R.xml.kbd_qwerty_kana,
+          KeyboardSpecification.QWERTY_KANA,
           R.string.pref_keyboard_layout_title_qwerty,
           R.string.pref_keyboard_layout_description_qwerty),
       new Item(
           KeyboardLayout.GODAN,
-          R.xml.kbd_godan_kana,
+          KeyboardSpecification.GODAN_KANA,
           R.string.pref_keyboard_layout_title_godan,
           R.string.pref_keyboard_layout_description_godan)));
 
@@ -195,8 +199,8 @@ public class KeyboardLayoutPreference extends Preference {
       new OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-          if (key.equals(PreferenceUtil.PREF_SKIN_TYPE)) {
-            updateSkinType();
+          if (key.equals(getContext().getResources().getString(R.string.pref_skin_type_key))) {
+            updateSkin();
           }
         }
       };
@@ -288,7 +292,7 @@ public class KeyboardLayoutPreference extends Preference {
     gallery.setOnItemClickListener(galleryEventListener);
     gallery.setSelection(getActiveIndex());
 
-    updateSkinType();
+    updateSkin();
   }
 
   private static void updateAllItemBackground(AdapterView<?> gallery, int activeIndex) {
@@ -311,7 +315,7 @@ public class KeyboardLayoutPreference extends Preference {
   @Override
   protected void onAttachedToHierarchy(PreferenceManager preferenceManager) {
     super.onAttachedToHierarchy(preferenceManager);
-    updateSkinType();
+    updateSkin();
     getSharedPreferences().registerOnSharedPreferenceChangeListener(
         sharedPreferenceChangeListener);
   }
@@ -323,10 +327,12 @@ public class KeyboardLayoutPreference extends Preference {
     super.onPrepareForRemoval();
   }
 
-  void updateSkinType() {
+  void updateSkin() {
+    Resources resources = getContext().getResources();
     SkinType skinType = PreferenceUtil.getEnum(
         getSharedPreferences(),
-        PreferenceUtil.PREF_SKIN_TYPE, SkinType.class, SkinType.ORANGE_LIGHTGRAY);
-    imageAdapter.setSkinType(skinType);
+        resources.getString(R.string.pref_skin_type_key),
+        SkinType.class, SkinType.valueOf(resources.getString(R.string.pref_skin_type_default)));
+    imageAdapter.setSkin(skinType.getSkin(resources));
   }
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
  Copyright 2010-2014, Google Inc.
  All rights reserved.
@@ -29,18 +29,20 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="qwerty_x5F__x5F_shift_x5F_off"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="70px" height="74px"
-	 viewBox="0 0 70 74" style="enable-background:new 0 0 70 74;" xml:space="preserve">
-<polygon id="shadow_18_" style="fill:#424242;" points="38.035,57.998 38.035,49.298 42.5,49.298 42.5,48.199 34.067,38 33.766,38 
-	25.5,48.333 25.5,49.298 29.967,49.298 29.967,57.998 "/>
-<g id="style-keyicon-function_1_">
-	<path style="fill:#DDDDDD;" d=""/>
-	<path style="fill:#DDDDDD;" d=""/>
-	<path style="fill:#DDDDDD;" d=""/>
-	<path style="fill:#DDDDDD;" d=""/>
-	<path style="fill:#DDDDDD;" d=""/>
-</g>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:cc="http://creativecommons.org/ns#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     version="1.1"
+     width="68"
+     height="56">
+  <!-- Original size: 90 x 90 and matrix(0.98633121,0,0,-1.0114943,29.865734,38.1287) -->
+  <g transform="matrix(0.535680,0,0,-0.549346,25.6399,24.2682)">
+    <path id="style-keyicon-qwerty-function" d="m0,0,0-18.25,30.25,0,0,18.25,21.125,0,-36.25,36.25,-35.25,-36.25,21.125,0z" fill-rule="nonzero" style="fill:#000"/>
+  </g>
+  <!-- Original size: 90 x 90 -->
+  <g transform="matrix(0.543103,0,0,0.543103,9.41972,3.56034)">
+    <path id="style-keyicon-qwerty-function" d="m20.946452,82.85799,48.107096,0,0,5.10709-48.107096,0,0-5.10709z" stroke-width="0.89290297" style="fill:none; stroke:#000;"/>
+  </g>
 </svg>

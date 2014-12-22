@@ -44,10 +44,21 @@ import android.test.suitebuilder.annotation.SmallTest;
  */
 public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Skin.getFallbackInstance().resetDrawableFactory();
+    for (SkinType skinType : SkinType.values()) {
+      skinType.getSkin(
+          getInstrumentation().getTargetContext().getResources()).resetDrawableFactory();
+    }
+ }
+
   @SmallTest
   public void testDrawableCache() {
     Resources resources = createMock(MockResources.class);
-    DrawableCache drawableCache = new DrawableCache(new MozcDrawableFactory(resources));
+    DrawableCache drawableCache = new DrawableCache(resources);
+    drawableCache.setSkin(Skin.getFallbackInstance());
 
     // For invalid resource id (0), getDrawable returns {@code Optional.<Drawable>absent()} without
     // looking up resources.
@@ -91,7 +102,8 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetSkinType() {
     Resources resources = createMock(MockResources.class);
-    DrawableCache drawableCache = new DrawableCache(new MozcDrawableFactory(resources));
+    DrawableCache drawableCache = new DrawableCache(resources);
+    drawableCache.setSkin(SkinType.ORANGE_LIGHTGRAY.getSkin(resources));
     Drawable drawable = new ColorDrawable(Color.BLACK);
     expect(resources.getResourceTypeName(1)).andReturn("drawable");
     expect(resources.getDrawable(1)).andReturn(drawable);
@@ -106,7 +118,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     resetAll();
     replayAll();
 
-    drawableCache.setSkinType(SkinType.ORANGE_LIGHTGRAY);
+    drawableCache.setSkin(SkinType.ORANGE_LIGHTGRAY.getSkin(resources));
     assertSame(drawable, drawableCache.getDrawable(1).get());
 
     verifyAll();
@@ -118,7 +130,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     expect(resources.getDrawable(1)).andReturn(drawable);
     replayAll();
 
-    drawableCache.setSkinType(SkinType.TEST);
+    drawableCache.setSkin(SkinType.TEST.getSkin(resources));
     assertSame(drawable, drawableCache.getDrawable(1).get());
 
     verifyAll();

@@ -73,28 +73,14 @@
     <item>pref_landscape_fullscreen_key</item>
   </string-array>
 
-  <string-array name="pref_skin_type_entries">
-    <item>@string/pref_skin_type_blue_lightgray</item>
-    <item>@string/pref_skin_type_orange_lightgray</item>
-    <item>@string/pref_skin_type_blue_darkgray</item>
-  </string-array>
-
-  <string-array name="pref_skin_type_values">
-    <item>BLUE_LIGHTGRAY</item>
-    <item>ORANGE_LIGHTGRAY</item>
-    <item>BLUE_DARKGRAY</item>
-  </string-array>
-
   <string-array name="pref_hardware_keymap_entries">
     <item>@string/pref_hardware_keymap_default</item>
     <item>@string/pref_hardware_keymap_japanese109A</item>
-    <item>@string/pref_hardware_keymap_twelvekey</item>
   </string-array>
 
   <string-array name="pref_hardware_keymap_values">
     <item>DEFAULT</item>
     <item>JAPANESE109A</item>
-    <item>TWELVEKEY</item>
   </string-array>
 
   <string-array name="pref_dictionary_personalization_entries">

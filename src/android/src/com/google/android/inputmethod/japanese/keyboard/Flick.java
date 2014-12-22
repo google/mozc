@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese.keyboard;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 
 /**
  * A class corresponding to {@code &lt;Flick&gt;} element in xml resource files.
@@ -61,15 +62,10 @@ public class Flick {
 
   private final Flick.Direction direction;
   private final KeyEntity keyEntity;
+
   public Flick(Direction direction, KeyEntity keyEntity) {
-    if (direction == null) {
-      throw new NullPointerException("direction shouldn't be null.");
-    }
-    if (keyEntity == null) {
-      throw new NullPointerException("keyEntity shouldn't be null.");
-    }
-    this.direction = direction;
-    this.keyEntity = keyEntity;
+    this.direction = Preconditions.checkNotNull(direction);
+    this.keyEntity = Preconditions.checkNotNull(keyEntity);
   }
 
   public Direction getDirection() {

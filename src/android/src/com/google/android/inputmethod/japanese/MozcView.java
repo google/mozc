@@ -29,28 +29,33 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import org.mozc.android.inputmethod.japanese.CandidateViewManager.KeyboardCandidateViewHeightListener;
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.LayoutParamsAnimator.InterpolationListener;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
-import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardView;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
+import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
-import org.mozc.android.inputmethod.japanese.resources.R;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.ui.SideFrameStubProxy;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
-import org.mozc.android.inputmethod.japanese.view.RoundRectKeyDrawable;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.MozcImageView;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService.Insets;
 import android.os.Handler;
@@ -63,48 +68,50 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import java.util.Collections;
 import java.util.EnumSet;
+
+import javax.annotation.Nullable;
 
 /**
  * Root {@code View} of the MechaMozc.
  * It is expected that instance methods are used after inflation is done.
  *
  */
-public class MozcView extends LinearLayout implements MemoryManageable {
+public class MozcView extends FrameLayout implements MemoryManageable {
 
+  @VisibleForTesting
   static class DimensionPixelSize {
     final int imeWindowPartialWidth;
     final int imeWindowRegionInsetThreshold;
     final int narrowFrameHeight;
     final int narrowImeWindowHeight;
     final int sideFrameWidth;
-    final int translucentBorderHeight;
+    final int buttonFrameHeight;
     public DimensionPixelSize(Resources resources) {
       imeWindowPartialWidth = resources.getDimensionPixelSize(R.dimen.ime_window_partial_width);
       imeWindowRegionInsetThreshold = resources.getDimensionPixelSize(
           R.dimen.ime_window_region_inset_threshold);
       narrowFrameHeight = resources.getDimensionPixelSize(R.dimen.narrow_frame_height);
       narrowImeWindowHeight = resources.getDimensionPixelSize(R.dimen.narrow_ime_window_height);
-      translucentBorderHeight = resources.getDimensionPixelSize(
-          R.dimen.translucent_border_height);
       sideFrameWidth = resources.getDimensionPixelSize(R.dimen.side_frame_width);
+      buttonFrameHeight = resources.getDimensionPixelSize(R.dimen.button_frame_height);
     }
   }
 
+  @VisibleForTesting
   static class HeightLinearInterpolationListener implements InterpolationListener {
-    @VisibleForTesting final int fromHeight;
-    @VisibleForTesting final int toHeight;
+    final int fromHeight;
+    final int toHeight;
 
     public HeightLinearInterpolationListener(int fromHeight, int toHeight) {
       this.fromHeight = fromHeight;
@@ -121,20 +128,20 @@ public class MozcView extends LinearLayout implements MemoryManageable {
 
   // TODO(hidehiko): Refactor CandidateViewListener along with View structure refactoring.
   class InputFrameFoldButtonClickListener implements OnClickListener {
-    private final ViewEventListener eventListener;
     private final View keyboardView;
+    private final int originalHeight;
     private final long foldDuration;
     private final Interpolator foldKeyboardViewInterpolator;
     private final long expandDuration;
     private final Interpolator expandKeyboardViewInterpolator;
     private final LayoutParamsAnimator layoutParamsAnimator;
     InputFrameFoldButtonClickListener(
-        ViewEventListener eventListener, View keyboardView,
+        View keyboardView, int originalHeight,
         long foldDuration, Interpolator foldKeyboardViewInterpolator,
         long expandDuration, Interpolator expandKeyboardViewInterpolator,
         LayoutParamsAnimator layoutParamsAnimator) {
-      this.eventListener = eventListener;
       this.keyboardView = keyboardView;
+      this.originalHeight = originalHeight;
       this.foldDuration = foldDuration;
       this.foldKeyboardViewInterpolator = foldKeyboardViewInterpolator;
       this.expandDuration = expandDuration;
@@ -144,30 +151,45 @@ public class MozcView extends LinearLayout implements MemoryManageable {
 
     @Override
     public void onClick(View v) {
-      if (keyboardView.getHeight() == getInputFrameHeight()) {
-        eventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_FOLD);
+      if (keyboardView.getHeight() == originalHeight) {
+        if (viewEventListener != null) {
+          viewEventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_FOLD);
+        }
         layoutParamsAnimator.startAnimation(
             keyboardView,
             new HeightLinearInterpolationListener(keyboardView.getHeight(), 0),
             foldKeyboardViewInterpolator, foldDuration, 0);
         CompoundButton.class.cast(v).setChecked(true);
       } else {
-        eventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
+        if (viewEventListener != null) {
+          viewEventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
+        }
         layoutParamsAnimator.startAnimation(
             keyboardView,
-            new HeightLinearInterpolationListener(keyboardView.getHeight(), getInputFrameHeight()),
+            new HeightLinearInterpolationListener(keyboardView.getHeight(), originalHeight),
             expandKeyboardViewInterpolator, expandDuration, 0);
         CompoundButton.class.cast(v).setChecked(false);
       }
     }
   }
 
-  // TODO(hidehiko): Move hard coded parameters to dimens.xml or skin.
-  private static final float NARROW_MODE_BUTTON_CORNOR_RADIUS = 3.5f;  // in dip.
-  private static final float NARROW_MODE_BUTTON_LEFT_OFFSET = 2.0f;
-  private static final float NARROW_MODE_BUTTON_TOP_OFFSET = 1.0f;
-  private static final float NARROW_MODE_BUTTON_RIGHT_OFFSET = 2.0f;
-  private static final float NARROW_MODE_BUTTON_BOTTOM_OFFSET = 3.0f;
+  /** Manages background view height. */
+  @VisibleForTesting
+  class SoftwareKeyboardHeightListener implements KeyboardCandidateViewHeightListener {
+    @Override
+    public void onExpanded() {
+      if (!isNarrowMode()) {
+        changeBottomBackgroundHeight(imeWindowHeight);
+      }
+    }
+
+    @Override
+    public void onCollapse() {
+      if (!isNarrowMode() && getSymbolInputView().getVisibility() != VISIBLE) {
+        resetBottomBackgroundHeight();
+      }
+    }
+  }
 
   @VisibleForTesting
   final InOutAnimatedFrameLayout.VisibilityChangeListener onVisibilityChangeListener =
@@ -181,23 +203,22 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   private final DimensionPixelSize dimensionPixelSize = new DimensionPixelSize(getResources());
   private final SideFrameStubProxy leftFrameStubProxy = new SideFrameStubProxy();
   private final SideFrameStubProxy rightFrameStubProxy = new SideFrameStubProxy();
-  private final MozcDrawableFactory mozcDrawableFactory = new MozcDrawableFactory(getResources());
 
+  @VisibleForTesting ViewEventListener viewEventListener;
   @VisibleForTesting boolean fullscreenMode = false;
-  boolean narrowMode = false;
-  private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
+  @VisibleForTesting boolean narrowMode = false;
+  private boolean buttonFrameVisible = true;
+  private Skin skin = Skin.getFallbackInstance();
   @VisibleForTesting LayoutAdjustment layoutAdjustment = LayoutAdjustment.FILL;
   private int inputFrameHeight = 0;
   @VisibleForTesting int imeWindowHeight = 0;
-  @VisibleForTesting Animation candidateViewInAnimation;
-  @VisibleForTesting Animation candidateViewOutAnimation;
+  @VisibleForTesting int symbolInputViewHeight = 0;
   @VisibleForTesting Animation symbolInputViewInAnimation;
   @VisibleForTesting Animation symbolInputViewOutAnimation;
-  @VisibleForTesting Animation dropShadowCandidateViewInAnimation;
-  @VisibleForTesting Animation dropShadowCandidateViewOutAnimation;
-  @VisibleForTesting Animation dropShadowSymbolInputViewInAnimation;
-  @VisibleForTesting Animation dropShadowSymbolInputViewOutAnimation;
-  @VisibleForTesting boolean isDropShadowExpanded = false;
+  @VisibleForTesting SoftwareKeyboardHeightListener softwareKeyboardHeightListener =
+      new SoftwareKeyboardHeightListener();
+  @VisibleForTesting CandidateViewManager candidateViewManager;
+  @VisibleForTesting boolean allowFloatingCandidateMode;
 
   public MozcView(Context context) {
     super(context);
@@ -207,52 +228,9 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     super(context, attrSet);
   }
 
-  private static Drawable createButtonBackgroundDrawable(float density) {
-    return BackgroundDrawableFactory.createPressableDrawable(
-        new RoundRectKeyDrawable(
-            (int) (NARROW_MODE_BUTTON_LEFT_OFFSET * density),
-            (int) (NARROW_MODE_BUTTON_TOP_OFFSET * density),
-            (int) (NARROW_MODE_BUTTON_RIGHT_OFFSET * density),
-            (int) (NARROW_MODE_BUTTON_BOTTOM_OFFSET * density),
-            (int) (NARROW_MODE_BUTTON_CORNOR_RADIUS * density),
-            0xFFE9E4E4, 0xFFB2ADAD, 0, 0xFF1E1E1E),
-        new RoundRectKeyDrawable(
-            (int) (NARROW_MODE_BUTTON_LEFT_OFFSET * density),
-            (int) (NARROW_MODE_BUTTON_TOP_OFFSET * density),
-            (int) (NARROW_MODE_BUTTON_RIGHT_OFFSET * density),
-            (int) (NARROW_MODE_BUTTON_BOTTOM_OFFSET * density),
-            (int) (NARROW_MODE_BUTTON_CORNOR_RADIUS * density),
-            0xFF858087, 0xFF67645F, 0, 0xFF1E1E1E));
-  }
-
-  @SuppressWarnings("deprecation")
-  private void setupImageButton(ImageView view, int resourceID) {
-    float density = getResources().getDisplayMetrics().density;
-    view.setImageDrawable(mozcDrawableFactory.getDrawable(resourceID).orNull());
-    view.setBackgroundDrawable(createButtonBackgroundDrawable(density));
-    view.setPadding(0, 0, 0, 0);
-  }
-
   private static Animation createAlphaAnimation(float fromAlpha, float toAlpha, long duration) {
     AlphaAnimation animation = new AlphaAnimation(fromAlpha, toAlpha);
     animation.setDuration(duration);
-    return animation;
-  }
-
-  private static Animation createCandidateViewTransitionAnimation(int fromY, int toY,
-                                                                  float fromAlpha, float toAlpha,
-                                                                  long duration) {
-    AnimationSet animation = new AnimationSet(false);
-    animation.setDuration(duration);
-
-    AlphaAnimation alphaAnimation = new AlphaAnimation(fromAlpha, toAlpha);
-    alphaAnimation.setDuration(duration);
-    animation.addAnimation(alphaAnimation);
-
-    TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, fromY, toY);
-    translateAnimation.setInterpolator(new DecelerateInterpolator());
-    translateAnimation.setDuration(duration);
-    animation.addAnimation(translateAnimation);
     return animation;
   }
 
@@ -260,29 +238,19 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   public void onFinishInflate() {
     setKeyboardHeightRatio(100);
 
-    setupImageButton(getWidenButton(), R.raw.hardware__function__close);
-    setupImageButton(getHardwareCompositionButton(), R.raw.qwerty__function__kana__icon);
-
     leftFrameStubProxy.initialize(this,
-                                  R.id.stub_left_frame, R.id.dropshadow_left_short_top,
-                                  R.id.dropshadow_left_long_top, R.id.left_adjust_button,
-                                  R.raw.adjust_arrow_left, 1.0f, R.id.left_dropshadow_short,
-                                  R.id.left_dropshadow_long);
+                                  R.id.stub_left_frame, R.id.left_adjust_button,
+                                  R.raw.adjust_arrow_left);
     rightFrameStubProxy.initialize(this,
-                                   R.id.stub_right_frame, R.id.dropshadow_right_short_top,
-                                   R.id.dropshadow_right_long_top, R.id.right_adjust_button,
-                                   R.raw.adjust_arrow_right, 0.0f, R.id.right_dropshadow_short,
-                                   R.id.right_dropshadow_long);
+                                   R.id.stub_right_frame, R.id.right_adjust_button,
+                                   R.raw.adjust_arrow_right);
+
+    candidateViewManager = new CandidateViewManager(
+        getKeyboardCandidateView(),
+        FloatingCandidateView.class.cast(findViewById(R.id.floating_candidate_view)));
   }
 
-  public void setEventListener(final ViewEventListener viewEventListener,
-                               OnClickListener widenButtonClickListener,
-                               OnClickListener leftAdjustButtonClickListener,
-                               OnClickListener rightAdjustButtonClickListener) {
-    checkInflated();
-
-    // Propagate the given listener into the child views.
-    // Set CandidateViewListener as well here, because it uses viewEventListener.
+  private InputFrameFoldButtonClickListener createFoldButtonListener(View view, int height) {
     Resources resources = getResources();
     int foldOvershootDurationRate =
         resources.getInteger(R.integer.input_frame_fold_overshoot_duration_rate);
@@ -292,50 +260,60 @@ public class MozcView extends LinearLayout implements MemoryManageable {
         resources.getInteger(R.integer.input_frame_expand_overshoot_duration_rate);
     int expandOvershootRate =
         resources.getInteger(R.integer.input_frame_expand_overshoot_rate);
-    getCandidateView().setViewEventListener(
-        viewEventListener,
-        new InputFrameFoldButtonClickListener(
-            viewEventListener, getKeyboardFrame(),
-            resources.getInteger(R.integer.input_frame_fold_duration),
-            SequentialInterpolator.newBuilder()
-                .add(new DecelerateInterpolator(),
-                    foldOvershootDurationRate, -foldOvershootRate / 1e6f)
-                .add(new AccelerateInterpolator(), 1e6f - foldOvershootDurationRate, 1)
-                .build(),
-            resources.getInteger(R.integer.input_frame_expand_duration),
-            SequentialInterpolator.newBuilder()
-                .add(new DecelerateInterpolator(),
-                    expandOvershootDurationRate, 1 + expandOvershootRate / 1e6f)
-                .add(new AccelerateDecelerateInterpolator(), 1e6f - expandOvershootDurationRate, 1)
-                .build(),
-        new LayoutParamsAnimator(new Handler(Looper.myLooper()))));
 
-    getSymbolInputView().setViewEventListener(
+    return new InputFrameFoldButtonClickListener(
+        view, height, resources.getInteger(R.integer.input_frame_fold_duration),
+        SequentialInterpolator.newBuilder()
+            .add(new DecelerateInterpolator(),
+                foldOvershootDurationRate, -foldOvershootRate / 1e6f)
+            .add(new AccelerateInterpolator(), 1e6f - foldOvershootDurationRate, 1)
+            .build(),
+        resources.getInteger(R.integer.input_frame_expand_duration),
+        SequentialInterpolator.newBuilder()
+            .add(new DecelerateInterpolator(),
+                expandOvershootDurationRate, 1 + expandOvershootRate / 1e6f)
+            .add(new AccelerateDecelerateInterpolator(), 1e6f - expandOvershootDurationRate, 1)
+            .build(),
+        new LayoutParamsAnimator(new Handler(Looper.myLooper())));
+  }
+
+  public void setEventListener(final ViewEventListener viewEventListener,
+                               OnClickListener widenButtonClickListener,
+                               OnClickListener leftAdjustButtonClickListener,
+                               OnClickListener rightAdjustButtonClickListener,
+                               OnClickListener microphoneButtonClickListener) {
+    Preconditions.checkNotNull(viewEventListener);
+    Preconditions.checkNotNull(widenButtonClickListener);
+    Preconditions.checkNotNull(leftAdjustButtonClickListener);
+    Preconditions.checkNotNull(rightAdjustButtonClickListener);
+    Preconditions.checkNotNull(microphoneButtonClickListener);
+
+    checkInflated();
+
+    this.viewEventListener = viewEventListener;
+
+    // Propagate the given listener into the child views.
+    // Set CandidateViewListener as well here, because it uses viewEventListener.
+    candidateViewManager.setEventListener(viewEventListener, softwareKeyboardHeightListener);
+
+    getSymbolInputView().setEventListener(
         viewEventListener,
-        /**
-         * Click handler of the close button.
-         */
+        /** Click handler of the close button. */
         new OnClickListener() {
           @Override
           public void onClick(View v) {
             if (viewEventListener != null) {
-              viewEventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_FOLD);
+              viewEventListener.onFireFeedbackEvent(FeedbackEvent.SYMBOL_INPUTVIEW_CLOSED);
             }
-            startSymbolInputViewOutAnimation();
+            hideSymbolInputView();
           }
-        });
+        },
+        microphoneButtonClickListener);
 
-    getHardwareCompositionButton().setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        viewEventListener.onHardwareKeyboardCompositionModeChange(CompositionSwitchMode.TOGGLE);
-      }
-    });
-
-    getWidenButton().setOnClickListener(widenButtonClickListener);
-
+    getNarrowFrame().setEventListener(viewEventListener, widenButtonClickListener);
     leftFrameStubProxy.setButtonOnClickListener(leftAdjustButtonClickListener);
     rightFrameStubProxy.setButtonOnClickListener(rightAdjustButtonClickListener);
+    getMicrophoneButton().setOnClickListener(microphoneButtonClickListener);
   }
 
   public void setKeyEventHandler(KeyEventHandler keyEventHandler) {
@@ -347,14 +325,17 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   }
 
   // TODO(hidehiko): Probably we'd like to remove this method when we decide to move MVC model.
-  public JapaneseKeyboard getJapaneseKeyboard() {
+  @Nullable public Keyboard getKeyboard() {
     checkInflated();
-    return getKeyboardView().getJapaneseKeyboard();
+    return getKeyboardView().getKeyboard().orNull();
   }
 
-  public void setJapaneseKeyboard(JapaneseKeyboard keyboard) {
+  public void setKeyboard(Keyboard keyboard) {
     checkInflated();
-    getKeyboardView().setJapaneseKeyboard(keyboard);
+    getKeyboardView().setKeyboard(keyboard);
+    CompositionMode compositionMode = keyboard.getSpecification().getCompositionMode();
+    getNarrowFrame().setHardwareCompositionButtonImage(compositionMode);
+    candidateViewManager.setHardwareCompositionMode(compositionMode);
   }
 
   public void setEmojiEnabled(boolean unicodeEmojiEnabled, boolean carrierEmojiEnabled) {
@@ -371,6 +352,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   public void setEditorInfo(EditorInfo editorInfo) {
     checkInflated();
     getKeyboardView().setEditorInfo(editorInfo);
+    candidateViewManager.setEditorInfo(editorInfo);
   }
 
   public void setFlickSensitivity(int flickSensitivity) {
@@ -393,6 +375,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   public void setPopupEnabled(boolean popupEnabled) {
     checkInflated();
     getKeyboardView().setPopupEnabled(popupEnabled);
+    getSymbolInputView().setPopupEnabled(popupEnabled);
   }
 
   public boolean isPopupEnabled() {
@@ -400,16 +383,28 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     return getKeyboardView().isPopupEnabled();
   }
 
-  public void setSkinType(SkinType skinType) {
+  @SuppressWarnings("deprecation")
+  public void setSkin(Skin skin) {
+    Preconditions.checkNotNull(skin);
     checkInflated();
-    this.skinType = skinType;
-    getKeyboardView().setSkinType(skinType);
-    getSymbolInputView().setSkinType(skinType);
-    getCandidateView().setSkinType(skinType);
+    this.skin = skin;
+    getKeyboardView().setSkin(skin);
+    getSymbolInputView().setSkin(skin);
+    candidateViewManager.setSkin(skin);
+    getMicrophoneButton().setBackgroundDrawable(BackgroundDrawableFactory.createPressableDrawable(
+        new ColorDrawable(skin.buttonFrameButtonPressedColor), Optional.<Drawable>absent()));
+    getMicrophoneButton().setSkin(skin);
+    leftFrameStubProxy.setSkin(skin);
+    rightFrameStubProxy.setSkin(skin);
+    getButtonFrame().setBackgroundDrawable(
+        skin.buttonFrameBackgroundDrawable.getConstantState().newDrawable());
+    getNarrowFrame().setSkin(skin);
+    getKeyboardFrameSeparator().setBackgroundDrawable(
+        skin.keyboardFrameSeparatorBackgroundDrawable.getConstantState().newDrawable());
   }
 
-  public SkinType getSkinType() {
-    return skinType;
+  public Skin getSkin() {
+    return skin;
   }
 
   /**
@@ -417,6 +412,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
    * or do nothing otherwise.
    * Exposed as a package private method for testing purpose.
    */
+  @VisibleForTesting
   void checkInflated() {
     if (getChildCount() == 0) {
       throw new IllegalStateException("It is necessary to inflate mozc_view.xml");
@@ -425,20 +421,34 @@ public class MozcView extends LinearLayout implements MemoryManageable {
 
   public void setCommand(Command outCommand) {
     checkInflated();
+    candidateViewManager.update(outCommand);
+    updateMetaStatesBasedOnOutput(outCommand.getOutput());
+  }
 
-    CandidateView candidateView = getCandidateView();
-    if (outCommand.getOutput().getAllCandidateWords().getCandidatesCount() > 0) {
-      // Call CandidateView#update only if there are some candidates in the output.
-      // In such case the candidate view will clear its canvas.
-      candidateView.update(outCommand);
-      startCandidateViewInAnimation();
+  // Update COMPOSING metastate.
+  @VisibleForTesting
+  void updateMetaStatesBasedOnOutput(Output output) {
+    Preconditions.checkNotNull(output);
 
+    boolean hasPreedit = output.hasPreedit()
+        && output.getPreedit().getSegmentCount() > 0;
+    if (hasPreedit) {
+      getKeyboardView().updateMetaStates(EnumSet.of(MetaState.COMPOSING),
+                                         Collections.<MetaState>emptySet());
     } else {
-      // We don't call update method here, because it will clear the view's contents during the
-      // animation.
-      // TODO(hidehiko): Clear the candidates when the animation is finished.
-      startCandidateViewOutAnimation();
+      getKeyboardView().updateMetaStates(Collections.<MetaState>emptySet(),
+                                         EnumSet.of(MetaState.COMPOSING));
     }
+  }
+
+  @TargetApi(21)
+  public void setCursorAnchorInfo(CursorAnchorInfo info) {
+    candidateViewManager.setCursorAnchorInfo(info);
+  }
+
+  public void setCursorAnchorInfoEnabled(boolean enabled) {
+    allowFloatingCandidateMode = enabled;
+    candidateViewManager.setAllowFloatingMode(enabled);
   }
 
   public void reset() {
@@ -449,24 +459,21 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     resetKeyboardViewState();
 
     // Reset candidate view.
-    CandidateView candidateView = getCandidateView();
-    candidateView.clearAnimation();
-    candidateView.setVisibility(View.GONE);
-    candidateView.reset();
+    candidateViewManager.reset();
 
     // Reset symbol input view visibility. Set Visibility directly (without animation).
     SymbolInputView symbolInputView = getSymbolInputView();
     symbolInputView.clearAnimation();
     symbolInputView.setVisibility(View.GONE);
 
-    // Reset *all* metastates.
+    // Reset *all* metastates (and set NO_GLOBE as default value).
     // Expecting metastates will be set next initialization.
-    getKeyboardView().updateMetaStates(Collections.<MetaState>emptySet(),
+    getKeyboardView().updateMetaStates(EnumSet.of(MetaState.NO_GLOBE),
                                        EnumSet.allOf(MetaState.class));
 
     resetFullscreenMode();
     setLayoutAdjustmentAndNarrowMode(layoutAdjustment, narrowMode);
-    collapseDropShadowAndBackground();
+    resetBottomBackgroundHeight();
     updateBackgroundColor();
   }
 
@@ -477,29 +484,38 @@ public class MozcView extends LinearLayout implements MemoryManageable {
       return;
     }
 
-    View keyboardFrame = getKeyboardFrame();
+    SymbolInputView symbolInputView = getSymbolInputView();
+    View keyboardFrame;
+    int keyboardFrameHeight;
+    if (symbolInputView.isInflated() && symbolInputView.getVisibility() == View.VISIBLE) {
+      keyboardFrame = getNumberKeyboardFrame();
+      keyboardFrameHeight = symbolInputView.getNumberKeyboardHeight();
+    } else {
+      keyboardFrame = getKeyboardFrame();
+      keyboardFrameHeight = getInputFrameHeight();
+    }
+
     keyboardFrame.setVisibility(View.VISIBLE);
 
     // The height may be changed so reset it here.
     ViewGroup.LayoutParams layoutParams = keyboardFrame.getLayoutParams();
-    int keyboardFrameHeight = getInputFrameHeight();
     if (layoutParams.height != keyboardFrameHeight) {
       layoutParams.height = keyboardFrameHeight;
       keyboardFrame.setLayoutParams(layoutParams);
 
       // Also reset the state of the folding button, which is "conceptually" a part of
       // the keyboard.
-      getCandidateView().setInputFrameFoldButtonChecked(false);
+      candidateViewManager.setInputFrameFoldButtonChecked(false);
     }
   }
 
   public void resetKeyboardViewState() {
     checkInflated();
-
     getKeyboardView().resetState();
   }
 
-  public boolean showSymbolInputView() {
+  public boolean showSymbolInputView(Optional<SymbolMajorCategory> category) {
+    Preconditions.checkNotNull(category);
     checkInflated();
 
     SymbolInputView view = getSymbolInputView();
@@ -509,10 +525,17 @@ public class MozcView extends LinearLayout implements MemoryManageable {
 
     if (!view.isInflated()) {
       view.inflateSelf();
+      CandidateView numberCandidateView =
+          CandidateView.class.cast(view.findViewById(R.id.candidate_view_in_symbol_view));
+      numberCandidateView.setInputFrameFoldButtonOnClickListener(createFoldButtonListener(
+          getNumberKeyboardFrame(), view.getNumberKeyboardHeight()));
+      candidateViewManager.setNumberCandidateView(numberCandidateView);
     }
 
-    view.reset();
+    view.resetToMajorCategory(category);
     startSymbolInputViewInAnimation();
+    candidateViewManager.setNumberMode(true);
+
     return true;
   }
 
@@ -524,41 +547,51 @@ public class MozcView extends LinearLayout implements MemoryManageable {
       return false;
     }
 
+    candidateViewManager.setNumberMode(false);
     startSymbolInputViewOutAnimation();
     return true;
+  }
+
+  private int getButtonFrameHeightIfVisible() {
+    return buttonFrameVisible ? dimensionPixelSize.buttonFrameHeight : 0;
   }
 
   /**
    * Decides input frame height in not fullscreen mode.
    */
-  public int getVisibleViewHeight() {
+  @VisibleForTesting
+  int getVisibleViewHeight() {
     checkInflated();
 
+    boolean isSymbolInputViewVisible = getSymbolInputView().getVisibility() == View.VISIBLE;
     // Means only software keyboard or narrow frame
-    boolean isDefaultView = getCandidateView().getVisibility() != View.VISIBLE
-        && getSymbolInputView().getVisibility() != View.VISIBLE;
+    boolean isDefaultView =
+        !candidateViewManager.isKeyboardCandidateViewVisible() && !isSymbolInputViewVisible;
 
     if (narrowMode) {
       if (isDefaultView) {
         return dimensionPixelSize.narrowFrameHeight;
       } else {
-        return dimensionPixelSize.narrowImeWindowHeight
-            - dimensionPixelSize.translucentBorderHeight;
+        return dimensionPixelSize.narrowImeWindowHeight;
       }
     } else {
       if (isDefaultView) {
-        return getInputFrameHeight();
+        return getInputFrameHeight() + getButtonFrameHeightIfVisible();
       } else {
-        return imeWindowHeight - dimensionPixelSize.translucentBorderHeight;
+        if (isSymbolInputViewVisible) {
+          return symbolInputViewHeight;
+        } else {
+          return imeWindowHeight;
+        }
       }
     }
   }
 
+  @VisibleForTesting
   void updateInputFrameHeight() {
     // input_frame's height depends on fullscreen mode, narrow mode and Candidate/Symbol views.
     if (fullscreenMode) {
-      setLayoutHeight(getBottomFrame(), getVisibleViewHeight()
-          + dimensionPixelSize.translucentBorderHeight);
+      setLayoutHeight(getBottomFrame(), getVisibleViewHeight());
       setLayoutHeight(getKeyboardFrame(), getInputFrameHeight());
     } else {
       if (narrowMode) {
@@ -570,6 +603,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     }
   }
 
+  @VisibleForTesting
   int getSideAdjustedWidth() {
     return dimensionPixelSize.imeWindowPartialWidth + dimensionPixelSize.sideFrameWidth;
   }
@@ -582,27 +616,29 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     return fullscreenMode;
   }
 
+  @VisibleForTesting
   void resetFullscreenMode() {
     if (fullscreenMode) {
       // In fullscreen mode, InputMethodService shows extract view which height is 0 and
       // weight is 0. So our MozcView height should be fixed.
       // If CandidateView or SymbolInputView appears, MozcView height is enlarged to fix them.
-      setLayoutHeight(getOverlayView(), 0);
+      getOverlayView().setVisibility(View.GONE);
       setLayoutHeight(getTextInputFrame(), LayoutParams.WRAP_CONTENT);
-      getCandidateView().setOnVisibilityChangeListener(onVisibilityChangeListener);
+      candidateViewManager.setOnVisibilityChangeListener(Optional.of(onVisibilityChangeListener));
       getSymbolInputView().setOnVisibilityChangeListener(onVisibilityChangeListener);
     } else {
-      setLayoutHeight(getOverlayView(), LayoutParams.MATCH_PARENT);
+      getOverlayView().setVisibility(View.VISIBLE);
       setLayoutHeight(getTextInputFrame(), LayoutParams.MATCH_PARENT);
-      getCandidateView().setOnVisibilityChangeListener(null);
+      candidateViewManager.setOnVisibilityChangeListener(
+          Optional.<InOutAnimatedFrameLayout.VisibilityChangeListener>absent());
       getSymbolInputView().setOnVisibilityChangeListener(null);
     }
-
+    candidateViewManager.setExtractedMode(fullscreenMode);
     updateInputFrameHeight();
     updateBackgroundColor();
   }
 
-  static void setLayoutHeight(View view, int height) {
+  private static void setLayoutHeight(View view, int height) {
     ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
     layoutParams.height = height;
     view.setLayoutParams(layoutParams);
@@ -612,17 +648,8 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     return narrowMode;
   }
 
-  public void setHardwareCompositionButtonImage(CompositionMode compositionMode) {
-    switch (compositionMode) {
-      case HIRAGANA:
-        getHardwareCompositionButton().setImageDrawable(
-            mozcDrawableFactory.getDrawable(R.raw.qwerty__function__kana__icon).orNull());
-        break;
-      default:
-        getHardwareCompositionButton().setImageDrawable(
-            mozcDrawableFactory.getDrawable(R.raw.qwerty__function__alphabet__icon).orNull());
-        break;
-    }
+  public boolean isFloatingCandidateMode() {
+    return candidateViewManager.isFloatingMode();
   }
 
   public Rect getKeyboardSize() {
@@ -678,17 +705,18 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     float descriptionTextSize = layoutAdjustment == LayoutAdjustment.FILL
         ? resources.getDimension(R.dimen.candidate_description_text_size)
         : resources.getDimension(R.dimen.candidate_description_text_size_aligned_layout);
-    getCandidateView().setCandidateTextDimension(candidateTextSize, descriptionTextSize);
+    candidateViewManager.setCandidateTextDimension(candidateTextSize, descriptionTextSize);
     getSymbolInputView().setCandidateTextDimension(candidateTextSize, descriptionTextSize);
-    getConversionCandidateWordContainerView().setCandidateTextDimension(candidateTextSize);
 
     // In narrow mode, hide software keyboard and show narrow status bar.
-    getCandidateView().setNarrowMode(narrowMode);
+    candidateViewManager.setNarrowMode(narrowMode);
     if (narrowMode) {
       getKeyboardFrame().setVisibility(GONE);
+      getButtonFrame().setVisibility(GONE);
       getNarrowFrame().setVisibility(VISIBLE);
     } else {
       getKeyboardFrame().setVisibility(VISIBLE);
+      getButtonFrame().setVisibility(buttonFrameVisible ? VISIBLE : GONE);
       getNarrowFrame().setVisibility(GONE);
       resetKeyboardFrameVisibility();
     }
@@ -709,12 +737,13 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     getForegroundFrame().startAnimation(translateAnimation);
   }
 
+  @VisibleForTesting
   void updateBackgroundColor() {
     // If fullscreenMode, background should not show original window.
     // If narrowMode, it is always full-width.
     // If isFloatingMode, background should be transparent.
-    int resourceId = (fullscreenMode || (!narrowMode && !isFloatingMode())) ?
-        R.color.input_frame_background : 0;
+    int resourceId = (fullscreenMode || (!narrowMode && !isFloatingMode()))
+        ? R.color.input_frame_background : 0;
     getBottomBackground().setBackgroundResource(resourceId);
   }
 
@@ -748,62 +777,29 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     return;
   }
 
-  void expandDropShadowAndBackground() {
-    leftFrameStubProxy.flipDropShadowVisibility(INVISIBLE);
-    rightFrameStubProxy.flipDropShadowVisibility(INVISIBLE);
-    getDropShadowTop().setVisibility(VISIBLE);
-    getResources();
-    setLayoutHeight(getBottomBackground(), imeWindowHeight
-        - (fullscreenMode ? 0 : dimensionPixelSize.translucentBorderHeight));
-    isDropShadowExpanded = true;
-  }
-
-  void collapseDropShadowAndBackground() {
-    leftFrameStubProxy.flipDropShadowVisibility(VISIBLE);
-    rightFrameStubProxy.flipDropShadowVisibility(VISIBLE);
-    getDropShadowTop().setVisibility(fullscreenMode ? VISIBLE : INVISIBLE);
-    getResources();
-    setLayoutHeight(getBottomBackground(), getInputFrameHeight()
-        + (fullscreenMode ? dimensionPixelSize.translucentBorderHeight : 0));
-    isDropShadowExpanded = false;
-  }
-
-  void startDropShadowAnimation(Animation mainAnimation, Animation subAnimation) {
-    leftFrameStubProxy.startDropShadowAnimation(subAnimation, mainAnimation);
-    rightFrameStubProxy.startDropShadowAnimation(subAnimation, mainAnimation);
-    getDropShadowTop().startAnimation(mainAnimation);
-  }
-
-  void startCandidateViewInAnimation() {
-    getCandidateView().startInAnimation();
-    if (!isDropShadowExpanded) {
-      expandDropShadowAndBackground();
-      startDropShadowAnimation(candidateViewInAnimation, dropShadowCandidateViewInAnimation);
+  @VisibleForTesting
+  void changeBottomBackgroundHeight(int targetHeight) {
+    if (getBottomBackground().getHeight() != targetHeight) {
+      setLayoutHeight(getBottomBackground(), targetHeight);
     }
   }
 
-  void startCandidateViewOutAnimation() {
-    getCandidateView().startOutAnimation();
-    if (getSymbolInputView().getVisibility() != VISIBLE && isDropShadowExpanded) {
-      collapseDropShadowAndBackground();
-      startDropShadowAnimation(candidateViewOutAnimation, dropShadowCandidateViewOutAnimation);
-    }
+  @VisibleForTesting
+  void resetBottomBackgroundHeight() {
+    setLayoutHeight(getBottomBackground(), getInputFrameHeight() + getButtonFrameHeightIfVisible());
   }
 
+  @VisibleForTesting
   void startSymbolInputViewInAnimation() {
     getSymbolInputView().startInAnimation();
-    if (!isDropShadowExpanded) {
-      expandDropShadowAndBackground();
-      startDropShadowAnimation(symbolInputViewInAnimation, dropShadowSymbolInputViewInAnimation);
-    }
+    changeBottomBackgroundHeight(symbolInputViewHeight);
   }
 
+  @VisibleForTesting
   void startSymbolInputViewOutAnimation() {
     getSymbolInputView().startOutAnimation();
-    if (getCandidateView().getVisibility() != VISIBLE && isDropShadowExpanded) {
-      collapseDropShadowAndBackground();
-      startDropShadowAnimation(symbolInputViewOutAnimation,
-                               dropShadowSymbolInputViewOutAnimation);
+    if (!candidateViewManager.isKeyboardCandidateViewVisible()) {
+      resetBottomBackgroundHeight();
     }
   }
 
@@ -811,52 +807,34 @@ public class MozcView extends LinearLayout implements MemoryManageable {
    * Reset components depending inputFrameHeight or imeWindowHeight.
    * This should be called when inputFrameHeight and/or imeWindowHeight are updated.
    */
+  @VisibleForTesting
   void resetHeightDependingComponents() {
-    // Create In/Out animation which dropshadows share between CandidateView and SymbolInputView.
-    {
-      CandidateView candidateView = getCandidateView();
-      int windowHeight = imeWindowHeight;
-      int inputFrameHeight = getInputFrameHeight();
-      int candidateViewHeight = windowHeight - inputFrameHeight;
-      long duration = getResources().getInteger(R.integer.candidate_frame_transition_duration);
-      float fromAlpha = 0.0f;
-      float toAlpha = 1.0f;
+    getKeyboardCandidateView().setInputFrameFoldButtonOnClickListener(
+        createFoldButtonListener(getKeyboardFrame(), getInputFrameHeight()));
 
-      candidateViewInAnimation = createCandidateViewTransitionAnimation(
-          candidateViewHeight, 0, fromAlpha, toAlpha, duration);
-      candidateView.setInAnimation(candidateViewInAnimation);
-      dropShadowCandidateViewInAnimation = createAlphaAnimation(
-          1.0f - fromAlpha, 1.0f - toAlpha, duration);
-
-      candidateViewOutAnimation = createCandidateViewTransitionAnimation(
-          0, candidateViewHeight, toAlpha, fromAlpha, duration);
-      candidateView.setOutAnimation(candidateViewOutAnimation);
-      dropShadowCandidateViewOutAnimation = createAlphaAnimation(
-          1.0f - toAlpha, 1.0f - fromAlpha, duration);
+    if (candidateViewManager != null) {
+      candidateViewManager.resetHeightDependingComponents(
+          getResources(), imeWindowHeight, inputFrameHeight);
     }
 
     SymbolInputView symbolInputView = getSymbolInputView();
     {
-      long duration = getResources().getInteger(R.integer.symbol_input_transition_duration_in);
+      long duration = getResources().getInteger(R.integer.symbol_input_transition_duration);
       float fromAlpha = 0.3f;
       float toAlpha = 1.0f;
 
       symbolInputViewInAnimation = createAlphaAnimation(fromAlpha, toAlpha, duration);
       symbolInputView.setInAnimation(symbolInputViewInAnimation);
-      dropShadowSymbolInputViewInAnimation = createAlphaAnimation(
-          1.0f - fromAlpha, 1.0f - toAlpha, duration);
-
       symbolInputViewOutAnimation = createAlphaAnimation(toAlpha, fromAlpha, duration);
       symbolInputView.setOutAnimation(symbolInputViewOutAnimation);
-      dropShadowSymbolInputViewOutAnimation = createAlphaAnimation(
-          1.0f - toAlpha, 1.0f - fromAlpha, duration);
     }
 
-    // Reset drop shadow height.
-    int shortHeight = getInputFrameHeight() + dimensionPixelSize.translucentBorderHeight;
-    int longHeight = imeWindowHeight;
-    leftFrameStubProxy.setDropShadowHeight(shortHeight, longHeight);
-    rightFrameStubProxy.setDropShadowHeight(shortHeight, longHeight);
+    if (symbolInputView.isInflated()) {
+      CandidateView numberCandidateView = CandidateView.class.cast(
+          symbolInputView.findViewById(R.id.candidate_view_in_symbol_view));
+      numberCandidateView.setInputFrameFoldButtonOnClickListener(createFoldButtonListener(
+          getNumberKeyboardFrame(), symbolInputView.getNumberKeyboardHeight()));
+    }
 
     // Reset side adjust buttons height.
     leftFrameStubProxy.resetAdjustButtonBottomMargin(getInputFrameHeight());
@@ -872,85 +850,112 @@ public class MozcView extends LinearLayout implements MemoryManageable {
 
     Resources resources = getResources();
     float heightScale = keyboardHeightRatio * 0.01f;
-    int originalImeWindowHeight = resources.getDimensionPixelSize(R.dimen.ime_window_height);
-    int originalInputFrameHeight = resources.getDimensionPixelSize(R.dimen.input_frame_height);
-    imeWindowHeight = Math.round(originalImeWindowHeight * heightScale);
+    float originalImeWindowHeight = resources.getDimension(R.dimen.ime_window_height);
+    float originalInputFrameHeight = resources.getDimension(R.dimen.input_frame_height);
     inputFrameHeight = Math.round(originalInputFrameHeight * heightScale);
-    // TODO(yoichio): Update SymbolInputView height scale.
-    // getSymbolInputView().setHeightScale(heightScale);
+    int minImeWindowHeight = inputFrameHeight + dimensionPixelSize.buttonFrameHeight;
+    imeWindowHeight =
+        Math.max(Math.round(originalImeWindowHeight * heightScale), minImeWindowHeight);
+    symbolInputViewHeight = Math.min(imeWindowHeight, minImeWindowHeight);
 
     updateInputFrameHeight();
+    getSymbolInputView().setVerticalDimension(symbolInputViewHeight, heightScale);
     resetHeightDependingComponents();
   }
 
-  public int getInputFrameHeight() {
+  @VisibleForTesting
+  int getInputFrameHeight() {
     return inputFrameHeight;
   }
 
-  // Getters of child views.
-  // TODO(hidehiko): Remove (or hide) following methods, in order to split the dependencies to
-  //   those child views from other components.
-  public CandidateView getCandidateView() {
-    return CandidateView.class.cast(findViewById(R.id.candidate_view));
-  }
-
-  public ConversionCandidateWordContainerView getConversionCandidateWordContainerView() {
-    return ConversionCandidateWordContainerView.class.cast(
-        findViewById(R.id.conversion_candidate_word_container_view));
-  }
-
-  public View getKeyboardFrame() {
+  @VisibleForTesting
+  View getKeyboardFrame() {
     return findViewById(R.id.keyboard_frame);
   }
 
-  public JapaneseKeyboardView getKeyboardView() {
-    return JapaneseKeyboardView.class.cast(findViewById(R.id.keyboard_view));
+  View getKeyboardFrameSeparator() {
+    return findViewById(R.id.keyboard_frame_separator);
   }
 
-  public SymbolInputView getSymbolInputView() {
+  private View getNumberKeyboardFrame() {
+    return findViewById(R.id.number_keyboard_frame);
+  }
+
+  @VisibleForTesting
+  KeyboardView getKeyboardView() {
+    return KeyboardView.class.cast(findViewById(R.id.keyboard_view));
+  }
+
+  private CandidateView getKeyboardCandidateView() {
+    return CandidateView.class.cast(findViewById(R.id.candidate_view));
+  }
+
+  @VisibleForTesting
+  SymbolInputView getSymbolInputView() {
     return SymbolInputView.class.cast(findViewById(R.id.symbol_input_view));
   }
 
+  @VisibleForTesting
   View getOverlayView() {
     return findViewById(R.id.overlay_view);
   }
 
+  @VisibleForTesting
   LinearLayout getTextInputFrame() {
     return LinearLayout.class.cast(findViewById(R.id.textinput_frame));
   }
 
-  FrameLayout getNarrowFrame() {
-    return FrameLayout.class.cast(findViewById(R.id.narrow_frame));
+  @VisibleForTesting
+  NarrowFrameView getNarrowFrame() {
+    return NarrowFrameView.class.cast(findViewById(R.id.narrow_frame));
   }
 
-  ImageView getHardwareCompositionButton() {
-    return ImageView.class.cast(findViewById(R.id.hardware_composition_button));
-  }
-
-  ImageView getWidenButton() {
-    return ImageView.class.cast(findViewById(R.id.widen_button));
-  }
-
+  @VisibleForTesting
   View getForegroundFrame() {
     return findViewById(R.id.foreground_frame);
   }
 
-  View getDropShadowTop() {
-    return findViewById(R.id.dropshadow_top);
-  }
-
+  @VisibleForTesting
   View getBottomFrame() {
     return findViewById(R.id.bottom_frame);
   }
 
+  @VisibleForTesting
   View getBottomBackground() {
     return findViewById(R.id.bottom_background);
+  }
+
+  @VisibleForTesting
+  View getButtonFrame() {
+    return findViewById(R.id.button_frame);
+  }
+
+  @VisibleForTesting
+  MozcImageView getMicrophoneButton() {
+    return MozcImageView.class.cast(findViewById(R.id.microphone_button));
   }
 
   @Override
   public void trimMemory() {
     getKeyboardView().trimMemory();
-    getCandidateView().trimMemory();
     getSymbolInputView().trimMemory();
+    candidateViewManager.trimMemory();
+  }
+
+  void setGlobeButtonEnabled(boolean globeButtonEnabled) {
+    getKeyboardView().setGlobeButtonEnabled(globeButtonEnabled);
+  }
+
+  void setMicrophoneButtonEnabled(boolean microphoneButtonEnabled) {
+    if (narrowMode) {
+      buttonFrameVisible = false;
+    } else {
+      buttonFrameVisible = microphoneButtonEnabled;
+      int visibility = buttonFrameVisible ? View.VISIBLE : View.GONE;
+      getButtonFrame().setVisibility(visibility);
+      getMicrophoneButton().setVisibility(visibility);
+      getSymbolInputView().setMicrophoneButtonEnabled(microphoneButtonEnabled);
+      resetBottomBackgroundHeight();
+    }
   }
 }

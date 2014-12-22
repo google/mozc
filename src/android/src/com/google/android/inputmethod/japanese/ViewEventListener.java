@@ -30,15 +30,17 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import com.google.common.base.Optional;
 
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 /**
  * Callback object for view evnets.
@@ -54,16 +56,17 @@ public interface ViewEventListener {
    * @param touchEventList {@code TouchEvent} instances related to this key event for logging
    *        usage stats.
    */
-  public void onKeyEvent(ProtoCommands.KeyEvent mozcKeyEvent, KeyEventInterface keyEvent,
-                         KeyboardSpecification keyboardSpecification,
-                         List<? extends TouchEvent> touchEventList);
+  public void onKeyEvent(@Nullable ProtoCommands.KeyEvent mozcKeyEvent,
+                         @Nullable KeyEventInterface keyEvent,
+                         @Nullable KeyboardSpecification keyboardSpecification,
+                         List<TouchEvent> touchEventList);
 
   /**
    * Called when Undo is fired (by soft keyboard).
    * @param touchEventList {@code TouchEvent} instances related to this undo for logging
    *        usage stats.
    */
-  public void onUndo(List<? extends TouchEvent> touchEventList);
+  public void onUndo(List<TouchEvent> touchEventList);
 
   /**
    * Called when a conversion candidate is selected.
@@ -72,6 +75,12 @@ public interface ViewEventListener {
    * @param rowIndex index of row in which the candidate is. If absent no stats are sent.
    */
   public void onConversionCandidateSelected(int candidateId, Optional<Integer> rowIndex);
+
+  /** Called when page down button is tapped. */
+  public void onPageUp();
+
+  /** Called when page down button is tapped. */
+  public void onPageDown();
 
   /**
    * Called when a candidate on symbol input view is selected.
@@ -102,7 +111,7 @@ public interface ViewEventListener {
    *        for logging usage stats.
    */
   // TODO(matsuzakit): Rename. onFlushTouchEventStats ?
-  public void onShowMenuDialog(List<? extends TouchEvent> touchEventList);
+  public void onShowMenuDialog(List<TouchEvent> touchEventList);
 
   /**
    * Called when the symbol input view is shown.
@@ -110,7 +119,7 @@ public interface ViewEventListener {
    * @param touchEventList {@code TouchEvent} instances which is related to this event
    *        for logging usage stats.
    */
-  public void onShowSymbolInputView(List<? extends TouchEvent> touchEventList);
+  public void onShowSymbolInputView(List<TouchEvent> touchEventList);
 
   /**
    * Called when the symbol input view is closed.
@@ -127,4 +136,15 @@ public interface ViewEventListener {
    * Called when the key for editor action is pressed.
    */
   public void onActionKey();
+
+  /** Called when the narrow mode of the view is changed. */
+  public void onNarrowModeChanged(boolean newNarrowMode);
+
+  /**
+   * Called when the keyboard layout preference should be updated.
+   * <p>
+   * The visible keyboard will also be updated as the result through a callback object.
+   */
+  public void onUpdateKeyboardLayoutAdjustment(
+      ViewManagerInterface.LayoutAdjustment layoutAdjustment);
 }

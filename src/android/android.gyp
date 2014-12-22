@@ -100,6 +100,7 @@
       'type': 'none',
       'dependencies': [
         'protobuf/protobuf.gyp:protobuf_java',
+        'resources/resources.gyp:resources',
         'sdk_apk_dependencies',
         'userfeedback/userfeedback.gyp:userfeedback',
       ],
@@ -153,9 +154,10 @@
         'android_manifest',
         'assets',
         'mozc',
-        'gen_mozc_drawable',
         'guava_library',
         'userfeedback/userfeedback.gyp:userfeedback_project',
+        'subset_font',
+        'resources/resources.gyp:resources_project',
         'support_libraries',
       ],
     },
@@ -219,7 +221,6 @@
         'files': [
           # Copies the copyright and credit info.
           '../data/installer/credits_en.html',
-          '../data/installer/credits_ja.html',
         ],
       }],
     },
@@ -407,7 +408,7 @@
           'outputs': ['dummy_touch_stat_data'],
           'action': [
             'python', 'gen_touch_event_stats.py',
-            '--output_dir', 'assets',
+            '--output_dir', '<(sdk_asset_dir)',
             '--stats_data', '../data/typing/touch_event_stats.csv',
             '--collected_keyboards', 'collected_keyboards.csv',
           ],
@@ -528,22 +529,34 @@
       ],
     },
     {
-      'target_name': 'gen_mozc_drawable',
+      'target_name': 'subset_font',
       'type': 'none',
+      'dependencies': [
+        # TODO(komatsu): Is it better to move android_base.gyp?
+        'resources/resources.gyp:copy_asis_svg',
+        'resources/resources.gyp:transform_template_svg',
+      ],
+      'variables': {
+        'input_font': '<(font_dir)/Noto-Roboto2-Regular.otf',
+        'fonttools_path': '<(third_party_dir)/fontTools/Lib/fontTools',
+      },
       'actions': [
         {
-          'action_name': 'generate_pic_files',
+          'action_name': 'make_subset_font',
           'inputs': [
-            '<(dummy_input_file)',
-            'gen_mozc_drawable.py',
+            '<(input_font)',
+            'gen_subset_font.py',
           ],
           'outputs': [
-            'dummy_gen_mozc_drawable_output',
+            '<(sdk_asset_dir)/subset_font.otf',
           ],
           'action': [
-            'python', 'gen_mozc_drawable.py',
-            '--svg_dir=../data/images/android/svg',
-            '--output_dir=<(resources_project_path)/res/raw',
+            'python',
+            'gen_subset_font.py',
+            '--svg_paths=<(shared_intermediate_mozc_dir)/data/images/android/svg/transformed.zip,<(shared_intermediate_mozc_dir)/data/images/android/svg/asis.zip',
+            '--input_font', '<(input_font)',
+            '--output_font', '<@(_outputs)',
+            '--fonttools_path', '<(fonttools_path)',
           ],
         },
       ],

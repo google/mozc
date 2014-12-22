@@ -31,14 +31,17 @@ package org.mozc.android.inputmethod.japanese.view;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Paint.Align;
 import android.graphics.Paint.Cap;
 import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
@@ -48,13 +51,16 @@ import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PictureDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.os.Build;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 
 /**
  * Factory to create Drawables from raw resources which is in mozc original format.
@@ -68,7 +74,16 @@ import java.io.InputStream;
  * Also, for performance purpose, this class caches the parsed drawable.
  *
  */
-public class MozcDrawableFactory {
+class MozcDrawableFactory {
+
+  private static class MozcStyle {
+    Paint paint = new Paint();
+    int dominantBaseline = COMMAND_PICTURE_PAINT_DOMINANTE_BASELINE_AUTO;
+  }
+
+  /** Locale field for {@link Paint#setTextLocale(Locale)}. */
+  private static final Optional<Locale> TEXT_LOCALE = (Build.VERSION.SDK_INT >= 17)
+      ? Optional.of(Locale.JAPAN) : Optional.<Locale>absent();
 
   private static final int DRAWABLE_PICTURE = 1;
   private static final int DRAWABLE_STATE_LIST = 2;
@@ -83,6 +98,7 @@ public class MozcDrawableFactory {
   private static final int COMMAND_PICTURE_DRAW_ELLIPSE = 7;
   private static final int COMMAND_PICTURE_DRAW_GROUP_START = 8;
   private static final int COMMAND_PICTURE_DRAW_GROUP_END = 9;
+  private static final int COMMAND_PICTURE_DRAW_TEXT = 10;
 
   private static final int COMMAND_PICTURE_PATH_EOP = 0;
   private static final int COMMAND_PICTURE_PATH_MOVE = 1;
@@ -101,31 +117,42 @@ public class MozcDrawableFactory {
   private static final int COMMAND_PICTURE_PAINT_STROKE_CAP = 5;
   private static final int COMMAND_PICTURE_PAINT_STROKE_JOIN = 6;
   private static final int COMMAND_PICTURE_PAINT_SHADER = 7;
+  private static final int COMMAND_PICTURE_PAINT_FONT_SIZE = 8;
+  private static final int COMMAND_PICTURE_PAINT_TEXT_ANCHOR = 9;
+  private static final int COMMAND_PICTURE_PAINT_DOMINANT_BASELINE = 10;
+  private static final int COMMAND_PICTURE_PAINT_FONT_WEIGHT = 11;
+
+  private static final int COMMAND_PICTURE_PAINT_TEXT_ANCHOR_START = 0;
+  private static final int COMMAND_PICTURE_PAINT_TEXT_ANCHOR_MIDDLE = 1;
+  private static final int COMMAND_PICTURE_PAINT_TEXT_ANCHOR_END = 2;
+
+  private static final int COMMAND_PICTURE_PAINT_DOMINANTE_BASELINE_AUTO = 0;
+  @SuppressWarnings("unused")
+  private static final int COMMAND_PICTURE_PAINT_DOMINANTE_BASELINE_CENTRAL = 1;
+
+  @SuppressWarnings("unused")
+  private static final int COMMAND_PICTURE_PAINT_FONT_WEIGHT_NORMAL = 0;
+  private static final int COMMAND_PICTURE_PAINT_FONT_WEIGHT_BOLD = 1;
 
   private static final int COMMAND_PICTURE_SHADER_LINEAR_GRADIENT = 1;
   private static final int COMMAND_PICTURE_SHADER_RADIAL_GRADIENT = 2;
 
   private static final int[] EMPTY_STATE_LIST = {};
 
+  private static final String FONT_PATH = "subset_font.otf";
+
   private final Resources resources;
   private final WeakDrawableCache cacheMap = new WeakDrawableCache();
-  private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
+  private final Skin skin;
+  private static volatile Optional<Typeface> typeface = Optional.absent();
 
-  public MozcDrawableFactory(Resources resources) {
+  MozcDrawableFactory(Resources resources, Skin skin) {
     this.resources = Preconditions.checkNotNull(resources);
+    this.skin = Preconditions.checkNotNull(skin);
+    ensureTypeface(resources.getAssets());
   }
 
-  // TODO(hidehiko): Add test to make sure getDrawable returns diffenent instances for
-  // the same resourceId when the current skinType gets different.
-  public void setSkinType(SkinType skinType) {
-    if (this.skinType != Preconditions.checkNotNull(skinType)) {
-      this.skinType = skinType;
-      // Invalidate cache.
-      cacheMap.clear();
-    }
-  }
-
-  public Optional<Drawable> getDrawable(int resourceId) {
+  Optional<Drawable> getDrawable(int resourceId) {
     if (!resources.getResourceTypeName(resourceId).equalsIgnoreCase("raw")) {
       // For non-"raw" resources, just delegate loading to Resources.
       return Optional.fromNullable(resources.getDrawable(resourceId));
@@ -138,7 +165,7 @@ public class MozcDrawableFactory {
       try {
         boolean success = false;
         try {
-          drawable = createDrawable(new DataInputStream(stream), skinType);
+          drawable = createDrawable(new DataInputStream(stream), skin);
           success = true;
         } finally {
           MozcUtil.close(stream, !success);
@@ -154,17 +181,16 @@ public class MozcDrawableFactory {
     return drawable;
   }
 
-  private static Optional<Drawable> createDrawable(DataInputStream stream, SkinType skinType)
+  private static Optional<Drawable> createDrawable(DataInputStream stream, Skin skin)
       throws IOException {
     Preconditions.checkNotNull(stream);
-    Preconditions.checkNotNull(skinType);
 
     byte tag = stream.readByte();
     switch (tag) {
       case DRAWABLE_PICTURE:
-        return Optional.<Drawable>of(createPictureDrawable(stream, skinType));
+        return Optional.<Drawable>of(createPictureDrawable(stream, skin));
       case DRAWABLE_STATE_LIST:
-        return Optional.<Drawable>of(createStateListDrawable(stream, skinType));
+        return Optional.<Drawable>of(createStateListDrawable(stream, skin));
       default:
         MozcLog.e("Unknown tag: " + tag);
     }
@@ -174,16 +200,18 @@ public class MozcDrawableFactory {
   // Note, PictureDrawable may cause runtime slowness.
   // Instead, we can prepare pre-rendered bit-map drawable, by modifying the interface to take
   // the drawable, which should be faster theoretically.
-  private static PictureDrawable createPictureDrawable(DataInputStream stream, SkinType skinType)
+  private static PictureDrawable createPictureDrawable(DataInputStream stream, Skin skin)
       throws IOException {
+    Preconditions.checkNotNull(stream);
+    Preconditions.checkNotNull(skin);
     // The first eight bytes are width and height (four bytes for each).
     int width = stream.readUnsignedShort();
     int height = stream.readUnsignedShort();
 
     Picture picture = new Picture();
     Canvas canvas = picture.beginRecording(width, height);
-    Paint paint = new Paint();
-    resetPaint(paint);
+    MozcStyle style = new MozcStyle();
+    resetStyle(style);
 
     LOOP: while (true) {
       byte command = stream.readByte();
@@ -195,13 +223,13 @@ public class MozcDrawableFactory {
           Path path = createPath(stream);
           int size = stream.readByte();
           if (size == 0) {
-            resetPaint(paint);
-            canvas.drawPath(path, paint);
+            resetStyle(style);
+            canvas.drawPath(path, style.paint);
           } else {
             for (int i = 0; i < size; ++i) {
-              resetPaint(paint);
-              parsePaint(stream, skinType, paint);
-              canvas.drawPath(path, paint);
+              resetStyle(style);
+              parseStyle(stream, skin, style);
+              canvas.drawPath(path, style.paint);
             }
           }
           break;
@@ -218,16 +246,17 @@ public class MozcDrawableFactory {
 
           int size = stream.readByte();
           if (size == 0) {
-            resetPaint(paint);
+            resetStyle(style);
             for (int i = 0; i < length - 2; i += 2) {
-              canvas.drawLine(points[i], points[i + 1], points[i + 2], points[i + 3], paint);
+              canvas.drawLine(points[i], points[i + 1], points[i + 2], points[i + 3], style.paint);
             }
           } else {
             for (int i = 0; i < size; ++i) {
-              resetPaint(paint);
-              parsePaint(stream, skinType, paint);
+              resetStyle(style);
+              parseStyle(stream, skin, style);
               for (int j = 0; j < length - 2; j += 2) {
-                canvas.drawLine(points[j], points[j + 1], points[j + 2], points[j + 3], paint);
+                canvas.drawLine(points[j], points[j + 1], points[j + 2], points[j + 3],
+                                style.paint);
               }
             }
           }
@@ -254,13 +283,13 @@ public class MozcDrawableFactory {
 
           int size = stream.readUnsignedByte();
           if (size == 0) {
-            resetPaint(paint);
-            canvas.drawPath(path, paint);
+            resetStyle(style);
+            canvas.drawPath(path, style.paint);
           } else {
             for (int i = 0; i < size; ++i) {
-              resetPaint(paint);
-              parsePaint(stream, skinType, paint);
-              canvas.drawPath(path, paint);
+              resetStyle(style);
+              parseStyle(stream, skin, style);
+              canvas.drawPath(path, style.paint);
             }
           }
           break;
@@ -273,13 +302,13 @@ public class MozcDrawableFactory {
 
           int size = stream.readUnsignedByte();
           if (size == 0) {
-            resetPaint(paint);
-            canvas.drawLine(x1, y1, x2, y2, paint);
+            resetStyle(style);
+            canvas.drawLine(x1, y1, x2, y2, style.paint);
           } else {
             for (int i = 0; i < size; ++i) {
-              resetPaint(paint);
-              parsePaint(stream, skinType, paint);
-              canvas.drawLine(x1, y1, x2, y2, paint);
+              resetStyle(style);
+              parseStyle(stream, skin, style);
+              canvas.drawLine(x1, y1, x2, y2, style.paint);
             }
           }
           break;
@@ -292,13 +321,13 @@ public class MozcDrawableFactory {
 
           int size = stream.readUnsignedByte();
           if (size == 0) {
-            resetPaint(paint);
-            canvas.drawRect(x, y, x + w, y + h, paint);
+            resetStyle(style);
+            canvas.drawRect(x, y, x + w, y + h, style.paint);
           } else {
             for (int i = 0; i < size; ++i) {
-              resetPaint(paint);
-              parsePaint(stream, skinType, paint);
-              canvas.drawRect(x, y, x + w, y + h, paint);
+              resetStyle(style);
+              parseStyle(stream, skin, style);
+              canvas.drawRect(x, y, x + w, y + h, style.paint);
             }
           }
           break;
@@ -311,13 +340,13 @@ public class MozcDrawableFactory {
 
           int size = stream.readUnsignedByte();
           if (size == 0) {
-            resetPaint(paint);
-            canvas.drawOval(bound, paint);
+            resetStyle(style);
+            canvas.drawOval(bound, style.paint);
           } else {
             for (int i = 0; i < size; ++i) {
-              resetPaint(paint);
-              parsePaint(stream, skinType, paint);
-              canvas.drawOval(bound, paint);
+              resetStyle(style);
+              parseStyle(stream, skin, style);
+              canvas.drawOval(bound, style.paint);
             }
           }
           break;
@@ -331,13 +360,13 @@ public class MozcDrawableFactory {
 
           int size = stream.readUnsignedByte();
           if (size == 0) {
-            resetPaint(paint);
-            canvas.drawOval(bound, paint);
+            resetStyle(style);
+            canvas.drawOval(bound, style.paint);
           } else {
             for (int i = 0; i < size; ++i) {
-              resetPaint(paint);
-              parsePaint(stream, skinType, paint);
-              canvas.drawOval(bound, paint);
+              resetStyle(style);
+              parseStyle(stream, skin, style);
+              canvas.drawOval(bound, style.paint);
             }
           }
           break;
@@ -361,6 +390,29 @@ public class MozcDrawableFactory {
         case COMMAND_PICTURE_DRAW_GROUP_END:
           canvas.restore();
           break;
+        case COMMAND_PICTURE_DRAW_TEXT: {
+          float x = readCompressedFloat(stream);
+          float y = readCompressedFloat(stream);
+          short stringSize = stream.readShort();
+          byte[] stringBuffer = new byte[stringSize];
+          stream.read(stringBuffer);
+          String string = new String(stringBuffer, Charsets.UTF_8);
+          int size = stream.readByte();
+          if (size == 0) {
+            resetStyle(style);
+            canvas.drawText(string, x, y, style.paint);
+          } else {
+            for (int i = 0; i < size; ++i) {
+              resetStyle(style);
+              parseStyle(stream, skin, style);
+              float drawY = style.dominantBaseline == COMMAND_PICTURE_PAINT_DOMINANTE_BASELINE_AUTO
+                  ? y
+                  : y - (style.paint.ascent() + style.paint.descent()) / 2;
+              canvas.drawText(string, x, drawY, style.paint);
+            }
+          }
+          break;
+        }
         default:
           MozcLog.e("unknown command " + command);
       }
@@ -370,20 +422,42 @@ public class MozcDrawableFactory {
     return new MozcPictureDrawable(picture);
   }
 
-  private static void resetPaint(Paint paint) {
-    paint.reset();
-    paint.setAntiAlias(true);
+  private void ensureTypeface(AssetManager assetManager) {
+    if (!typeface.isPresent()) {
+      synchronized (typeface) {
+        if (!typeface.isPresent()) {
+          try {
+            typeface = Optional.of(Typeface.createFromAsset(assetManager, FONT_PATH));
+          } catch (RuntimeException e) {
+            // Typeface cannot be made. Use default typeface as fallback.
+            MozcLog.e(FONT_PATH + " is not accessible. Use system font.");
+            typeface = Optional.of(Typeface.DEFAULT);
+          }
+        }
+      }
+    }
   }
 
-  private static void parsePaint(DataInputStream stream, SkinType skinType, Paint paint)
+  private static void resetStyle(MozcStyle style) {
+    style.paint.reset();
+    style.paint.setAntiAlias(true);
+    style.paint.setTypeface(typeface.get());
+    if (TEXT_LOCALE.isPresent()) {
+      style.paint.setTextLocale(TEXT_LOCALE.get());
+    }
+    style.dominantBaseline = COMMAND_PICTURE_PAINT_DOMINANTE_BASELINE_AUTO;
+  }
+
+  private static void parseStyle(DataInputStream stream, Skin skin, MozcStyle style)
       throws IOException {
+    Paint paint = style.paint;
     while (true) {
       int tag = stream.readByte() & 0xFF;
       if (tag >= 128) {
         // This is a bit tricky format, but the highest 1-bit means that the style should be
         // based on skin configuration. Delegate the paint to the skin.
-        skinType.apply(paint, tag & 0x7F);
-        return;
+        skin.apply(paint, tag & 0x7F);
+        continue;
       }
 
       switch (tag) {
@@ -419,6 +493,35 @@ public class MozcDrawableFactory {
         }
         case COMMAND_PICTURE_PAINT_SHADER: {
           paint.setShader(createShader(stream).orNull());
+          break;
+        }
+        case COMMAND_PICTURE_PAINT_FONT_SIZE: {
+          paint.setTextSize(readCompressedFloat(stream));
+          break;
+        }
+        case COMMAND_PICTURE_PAINT_TEXT_ANCHOR: {
+          byte value = stream.readByte();
+          switch (value) {
+            case COMMAND_PICTURE_PAINT_TEXT_ANCHOR_START:
+              paint.setTextAlign(Align.LEFT);
+              break;
+            case COMMAND_PICTURE_PAINT_TEXT_ANCHOR_MIDDLE:
+              paint.setTextAlign(Align.CENTER);
+              break;
+            case COMMAND_PICTURE_PAINT_TEXT_ANCHOR_END:
+              paint.setTextAlign(Align.RIGHT);
+              break;
+            default:
+              MozcLog.e("Unknown text-anchor : " + value, new Exception());
+          }
+          break;
+        }
+        case COMMAND_PICTURE_PAINT_DOMINANT_BASELINE: {
+          style.dominantBaseline = stream.readByte();
+          break;
+        }
+        case COMMAND_PICTURE_PAINT_FONT_WEIGHT: {
+          style.paint.setFakeBoldText(stream.readByte() == COMMAND_PICTURE_PAINT_FONT_WEIGHT_BOLD);
           break;
         }
         default:
@@ -584,12 +687,12 @@ public class MozcDrawableFactory {
   }
 
   private static StateListDrawable createStateListDrawable(
-      DataInputStream stream, SkinType skinType) throws IOException {
+      DataInputStream stream, Skin skin) throws IOException {
     int length = stream.readUnsignedByte();
     StateListDrawable result = new StateListDrawable();
     for (int i = 0; i < length; ++i) {
       int[] stateList = createStateList(stream);
-      Optional<Drawable> drawable = createDrawable(stream, skinType);
+      Optional<Drawable> drawable = createDrawable(stream, skin);
       result.addState(stateList, drawable.orNull());
     }
     return result;

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!--
  Copyright 2010-2014, Google Inc.
  All rights reserved.
@@ -30,14 +30,17 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="twelvekeys_x5F__x5F_kana_x5F__x5F_simple_x5F__x5F_12"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="105px" height="87px"
-	 viewBox="0 0 105 87" style="enable-background:new 0 0 105 87;" xml:space="preserve">
+<svg version="1.1" id="twelvekeys_kana_simple_12" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="105px" height="87px" viewBox="0 0 105 87" style="enable-background:new 0 0 105 87;" xml:space="preserve">
 <g id="style-keyicon-main">
-	<path style="fill:#272727;" d=""/>
-	<path style="fill:#272727;" d=""/>
-	<path style="fill:#272727;" d=""/>
-	<path style="fill:#272727;" d=""/>
+    <text x="32.5" y="43.5" style="font-size:30px;text-anchor:middle;dominant-baseline:central;fill:#272727;">、</text>
+</g>
+<g id="style-keyicon-main">
+    <text x="50" y="43.5" style="font-size:30px;text-anchor:middle;dominant-baseline:central;fill:#272727;">。</text>
+</g>
+<g id="style-keyicon-main">
+    <text x="60" y="43.5" style="font-size:30px;text-anchor:middle;dominant-baseline:central;fill:#272727;">？</text>
+</g>
+<g id="style-keyicon-main">
+    <text x="80" y="43.5" style="font-size:30px;text-anchor:middle;dominant-baseline:central;fill:#272727;">！</text>
 </g>
 </svg>

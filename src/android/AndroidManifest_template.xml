@@ -33,15 +33,21 @@
           package="@ANDROID_APPLICATION_ID@"
           android:versionCode="@ANDROID_VERSION_CODE@"
           android:versionName="@MAJOR@.@MINOR@.@BUILD@.@REVISION@-@ANDROID_ARCH@">
-  <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="19" />
+  <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="21" />
 
   <!-- Google Japanese Input (the main code) requires the following permissions. -->
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.VIBRATE" />
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
 
-  <application android:icon="@drawable/application_icon" android:label="@string/app_full_name" >
+  <application android:icon="@drawable/application_icon"
+               android:label="@string/app_full_name"
+               android:allowBackup="false"
+               android:theme="@style/AppThemeSelector" >
     <service android:name="@ANDROID_SERVICE_NAME@"
              android:permission="android.permission.BIND_INPUT_METHOD"
              android:label="@string/app_full_name">
@@ -51,18 +57,32 @@
       <meta-data android:name="android.view.im" android:resource="@xml/method" />
     </service>
 
-    <!-- Preference -->
-    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcProxyPreferenceActivity"
+    <!-- Launcher Icon -->
+    <activity android:name="org.mozc.android.inputmethod.japanese.LauncherActivity"
+              android:enabled="@bool/show_launcher_icon"
               android:label="@string/app_full_name">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
+
+    <receiver android:name="org.mozc.android.inputmethod.japanese.LauncherIconVisibilityInitializer">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        <action android:name="android.intent.action.USER_INITIALIZE" />
+      </intent-filter>
+    </receiver>
+
+    <!-- Preference -->
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcProxyPreferenceActivity" />
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentPreferenceActivity"
-              android:launchMode="singleTask" />
+              android:launchMode="singleTask"
+              android:theme="@style/AppThemeSelectorSettings"/>
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentSoftwareKeyboardAdvancedSettingsPreferenceActivity"
-              android:launchMode="singleTop" />
+              android:launchMode="singleTop"
+              android:theme="@style/AppThemeSelectorSettings"/>
 
     <activity android:name="org.mozc.android.inputmethod.japanese.FirstTimeLaunchActivity" />
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MiniBrowserActivity"
@@ -70,11 +90,11 @@
 
     <!-- User dictionary tool -->
     <activity android:name="org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryToolActivity"
-              android:enabled="@bool/enable_user_dictionary_tools_activity"
               android:label="@string/user_dictionary_tool_app_name"
-              android:theme="@style/MozcLightTheme"
               android:uiOptions="splitActionBarWhenNarrow"
-              android:configChanges="orientation|screenSize">
+              android:configChanges="orientation|screenSize"
+              android:theme="@style/AppThemeSelectorSettings">
+
       <!-- Intent filters to receive a file-sending intent for importing user dictionary data.
            UserDictionaryToolActivity accepts only file scheme.
       -->
@@ -111,10 +131,19 @@
     <activity android:name="org.mozc.android.inputmethod.japanese.mushroom.MushroomSelectionActivity"
               android:launchMode="singleTask"
               android:taskAffinity=".mushroom"
-              android:theme="@style/MozcMushroomDialogTheme"
+              android:theme="@android:style/Theme.DeviceDefault.Light.Dialog"
               android:windowSoftInputMode="stateAlwaysHidden"
               android:excludeFromRecents="true" />
 
+
+    <!-- Input device manager -->
+    <receiver android:name="org.mozc.android.inputmethod.japanese.InputDeviceReceiver">
+      <intent-filter>
+        <action android:name="android.hardware.input.action.QUERY_KEYBOARD_LAYOUTS" />
+      </intent-filter>
+      <meta-data android:name="android.hardware.input.metadata.KEYBOARD_LAYOUTS"
+                 android:resource="@xml/keyboard_layouts" />
+    </receiver>
 
     <!-- Following entry is for unit tests. Do not remove. -->
     <!-- The activity is used for testing views. -->

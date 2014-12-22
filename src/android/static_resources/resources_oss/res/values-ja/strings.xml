@@ -36,6 +36,15 @@
     <string name="pref_software_keyboard_category_title">ソフトウェアキーボードの設定</string>
         <string name="pref_software_keyboard_advanced_settings_title">ソフトウェアキーボードの詳細設定</string>
 
+    <!-- Fragment preference titles -->
+    <string name="pref_fragment_software_keyboard_title">ソフトウェアキーボード</string>
+    <string name="pref_fragment_input_support_title">入力サポート</string>
+    <string name="pref_fragment_conversion_title">変換</string>
+    <string name="pref_fragment_dictionary_title">辞書</string>
+    <string name="pref_fragment_user_feedback_title">ユーザフィードバック</string>
+    <string name="pref_fragment_about_title">概要</string>
+    <string name="pref_fragment_development_title">開発</string>
+
     <string name="pref_software_keyboard_preferences_portrait_title">縦画面のソフトウェアキーボード設定</string>
     <string name="pref_software_keyboard_preferences_landscape_title">横画面のソフトウェアキーボード設定</string>
         <!-- Following entries are for configuration_dependent_preferences -->
@@ -53,8 +62,9 @@
         <string name="pref_popup_feedback_title">キー押下時ポップアップ</string>
     <string name="pref_other_input_support_preference_category_title">その他の入力サポートの設定</string>
         <string name="pref_fullscreen_title">フルスクリーンモード</string>
-        <string name="pref_skin_type_title">スキンの選択</string>
+        <string name="pref_skin_type_title">キーボードテーマの選択</string>
         <string name="pref_hardware_title">ハードウェアキーボードの設定</string>
+        <string name="pref_voice_input_title">音声入力ボタン</string>
     <string name="pref_conversion_category_title">変換の設定</string>
         <string name="pref_layout_adjustment_title">左右寄せ</string>
         <string name="pref_space_character_form_title">常に半角スペースを使う</string>
@@ -76,6 +86,7 @@
         <string name="pref_about_terms_of_service_title">モバイル利用規約</string>
         <string name="pref_about_privacy_policy_title">プライバシーポリシー</string>
         <string name="pref_about_oss_credits_title">オープンソースソフトウェア</string>
+        <string name="pref_launcher_icon_visibility_title">アイコンを表示する</string>
 
     <!-- Preference description -->
     <!-- Configuration Dependent Preferences -->
@@ -100,7 +111,8 @@
         <string name="pref_kana_modifier_insensitive_conversion_description">濁点、半濁点、小文字化を省略しても自動的に補って変換します。ケータイ配列とGodanキーボードの時に有効になります。例)かつこう→学校</string>
         <string name="pref_typing_correction_description">誤入力を検出して、正しいと思われる候補を表示します。例)すんかい→深海</string>
         <string name="pref_emoji_provider_type_description">絵文字を使う際の事業者を選択します。</string>
-        <string name="pref_skin_type_description">ソフトウェアキーボードのスキンを選択します。</string>
+        <string name="pref_skin_type_description">ソフトウェアキーボードのテーマを選択します。</string>
+        <string name="pref_voice_input_description">音声入力ボタンをキーボードに表示します。</string>
     <!-- Hardware Keyboard -->
         <string name="pref_hardware_keymap_description">ハードウェアキーボードの種類を選択します。</string>
     <!-- Dictionary -->
@@ -117,6 +129,7 @@
         <string name="pref_about_terms_of_service_description">モバイル利用規約を表示します(ウェブページ)。</string>
         <string name="pref_about_privacy_policy_description">プライバシーポリシーを表示します(ウェブページ)。</string>
         <string name="pref_about_oss_credits_description">本ソフトウェアはオープンソースソフトウェアを利用しています。</string>
+        <string name="pref_launcher_icon_visibility_description">アプリケーション一覧にアイコンを表示します。</string>
 
     <!-- Preference Values -->
     <string name="pref_input_style_setting_entry_toggle">ケータイ打ち</string>
@@ -135,13 +148,12 @@
     <string name="pref_skin_type_orange_lightgray">オレンジ/ライトグレー</string>
     <string name="pref_skin_type_blue_lightgray">ブルー/ライトグレー</string>
     <string name="pref_skin_type_blue_darkgray">ブルー/ダークグレー</string>
+    <string name="pref_skin_type_material_design_light">マテリアル デザイン(ライト)</string>
+    <string name="pref_skin_type_material_design_dark">マテリアル デザイン(ダーク)</string>
 
     <string name="pref_hardware_keymap_default">システム配列</string>
     <string name="pref_hardware_keymap_japanese109A">日本語109A配列</string>
     <string name="pref_hardware_keymap_twelvekey">ケータイ配列</string>
-
-    <!-- Preference url -->
-    <string name="pref_oss_credits_url">file:///android_asset/credits_ja.html</string>
 
     <string name="pref_layout_adjustment_entry_fill">全幅</string>
     <string name="pref_layout_adjustment_entry_right">右寄せ</string>
@@ -177,32 +189,10 @@
     <string name="symbol_input_no_history">まだ履歴がありません。\n\n右にスライドして\n候補を選んでください。</string>
     <string name="symbol_emoji_disabled_message">この入力先には、\n絵文字を入力できません。</string>
 
-    <string name="symbol_minor_symbol_history_title">履歴</string>
-    <string name="symbol_minor_symbol_general_title">一般\n記号</string>
-    <string name="symbol_minor_symbol_half_title">半角\n全角</string>
-    <string name="symbol_minor_symbol_parenthesis_title">括弧\n罫線</string>
-    <string name="symbol_minor_symbol_arrow_title">矢印\n数字</string>
-    <string name="symbol_minor_symbol_math_title">数式\n単位</string>
-
-    <string name="symbol_minor_emoticon_history_title">履歴</string>
-    <string name="symbol_minor_emoticon_smile_title">喜\n(^^)</string>
-    <string name="symbol_minor_emoticon_sweat_title">焦\n(^^;)</string>
-    <string name="symbol_minor_emoticon_surprise_title">驚\n(゜д゜)</string>
-    <string name="symbol_minor_emoticon_sadness_title">悲\n(T_T)</string>
-    <string name="symbol_minor_emoticon_displeasure_title">怒\n(-_-)</string>
-
-    <string name="symbol_minor_emoji_history_title">履歴</string>
-    <string name="symbol_minor_emoji_face_title">表情\n感情</string>
-    <string name="symbol_minor_emoji_food_title">食事\n遊び</string>
-    <string name="symbol_minor_emoji_activity_title">行事\n生活</string>
-    <string name="symbol_minor_emoji_city_title">街\n仕事</string>
-    <string name="symbol_minor_emoji_nature_title">自然\n図形</string>
-
     <!--  Menu dialog -->
     <string name="menu_dialog_title">入力オプション</string>
     <string name="menu_item_input_method">入力方法の選択</string>
     <string name="menu_item_preferences">%sの設定</string>
-    <string name="menu_item_voice_input">音声入力</string>
     <string name="menu_item_mushroom">マッシュルームの起動</string>
 
     <!-- User Dictionary Tool -->

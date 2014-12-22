@@ -31,6 +31,8 @@ package org.mozc.android.inputmethod.japanese.session;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -48,6 +50,7 @@ import java.net.UnknownHostException;
  *
  */
 public class SessionHandlerFactory {
+
   @VisibleForTesting static final String PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY =
       "pref_tweak_use_socket_session_handler";
   @VisibleForTesting static final String PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY =
@@ -55,25 +58,26 @@ public class SessionHandlerFactory {
   @VisibleForTesting static final String PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY =
       "pref_tweak_socket_session_handler_port";
 
-  private final SharedPreferences sharedPreferences;
+  private final Optional<SharedPreferences> sharedPreferences;
 
   public SessionHandlerFactory(Context context) {
-    this(context == null ? null : PreferenceManager.getDefaultSharedPreferences(context));
+    this(Optional.of(
+        PreferenceManager.getDefaultSharedPreferences(Preconditions.checkNotNull(context))));
   }
 
   /**
    * @param sharedPreferences the preferences. The type to be created is based on the preference.
    */
-  public SessionHandlerFactory(SharedPreferences sharedPreferences) {
-    this.sharedPreferences = sharedPreferences;
+  public SessionHandlerFactory(Optional<SharedPreferences> sharedPreferences) {
+    this.sharedPreferences = Preconditions.checkNotNull(sharedPreferences);
   }
 
   /**
    * Creates a session handler.
    */
   public SessionHandler create() {
-    if (sharedPreferences != null &&
-        sharedPreferences.getBoolean(PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY, false)) {
+    if (sharedPreferences.isPresent()
+        && sharedPreferences.get().getBoolean(PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY, false)) {
       try {
         MozcLog.i("Trying to connect to Mozc server via network");
         // If PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY is enabled,
@@ -81,10 +85,10 @@ public class SessionHandlerFactory {
         // "10.0.2.2" is the host PC's address in emulator environment.
         // 8000 is the server's default port.
         int port =
-            Integer.parseInt(sharedPreferences.getString(
+            Integer.parseInt(sharedPreferences.get().getString(
                 PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY, "8000"));
         InetAddress hostAddress =
-            InetAddress.getByName(sharedPreferences.getString(
+            InetAddress.getByName(sharedPreferences.get().getString(
                 PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY, "10.0.2.2"));
         SocketSessionHandler socketSessionHandler = new SocketSessionHandler(hostAddress, port);
         if (socketSessionHandler.isReachable()) {

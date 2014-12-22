@@ -167,6 +167,7 @@ const char *kScenarioFileList[] = {
   DATA_DIR "segment_focus.txt",
   DATA_DIR "segment_width.txt",
   DATA_DIR "twelvekeys_switch_inputmode_scenario.txt",
+  DATA_DIR "twelvekeys_toggle_flick_alphabet_scenario.txt",
   DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario.txt",
   DATA_DIR "undo.txt",
 #undef DATA_DIR

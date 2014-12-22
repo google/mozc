@@ -32,10 +32,13 @@ package org.mozc.android.inputmethod.japanese.testing;
 import static org.easymock.EasyMock.reportMatcher;
 
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.Message;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.view.KeyEvent;
 
 import org.easymock.Capture;
 import org.easymock.IArgumentMatcher;
@@ -55,6 +58,7 @@ public class MozcMatcher {
    * This subclass hold copied instance instead.
    */
   public static class DeepCopyPaintCapture extends Capture<Paint> {
+
     @Override
     public void setValue(Paint value) {
       // Don't user Paint(Paint) constructor, which doesn't copy the fields.
@@ -69,13 +73,10 @@ public class MozcMatcher {
    * Matcher implementation for protobuf's MessageBuilder.
    */
   private static class MessageBuilderMatcher implements IArgumentMatcher {
-    private Message expected;
+    private final Message expected;
 
     MessageBuilderMatcher(Message.Builder builder) {
-      if (builder == null) {
-        throw new NullPointerException("builder is null.");
-      }
-      this.expected = builder.buildPartial();
+      this.expected = Preconditions.checkNotNull(builder).buildPartial();
     }
 
     @Override
@@ -98,20 +99,22 @@ public class MozcMatcher {
    * Matcher implementation for KeyEvent, which matches action and key code.
    */
   private static class KeyEventMatcher implements IArgumentMatcher {
+
     private final int expectedKeyCode;
-    private final android.view.KeyEvent expectedNativeKeyEvent;
+    private final Optional<android.view.KeyEvent> expectedNativeKeyEvent;
 
     KeyEventMatcher(int expectedKeyCode) {
       this.expectedKeyCode = expectedKeyCode;
-      this.expectedNativeKeyEvent = null;
+      this.expectedNativeKeyEvent = Optional.absent();
     }
     KeyEventMatcher(android.view.KeyEvent expectedNativeKeyEvent) {
       this.expectedKeyCode = android.view.KeyEvent.KEYCODE_UNKNOWN;
-      this.expectedNativeKeyEvent = expectedNativeKeyEvent;
+      this.expectedNativeKeyEvent = Optional.of(expectedNativeKeyEvent);
     }
 
     @Override
     public void appendTo(StringBuffer sb) {
+      Preconditions.checkNotNull(sb);
       sb.append("matchesKeyEvent(");
       sb.appendCodePoint(expectedKeyCode);
       sb.append(")");
@@ -123,26 +126,26 @@ public class MozcMatcher {
         return false;
       }
       KeyEventInterface keyEvent = KeyEventInterface.class.cast(arg);
-      if (expectedNativeKeyEvent != null) {
-        return keyEvent.getNativeEvent() == expectedNativeKeyEvent;
+      if (expectedNativeKeyEvent.isPresent()) {
+        Optional<KeyEvent> nativeEvent = keyEvent.getNativeEvent();
+        return nativeEvent.isPresent() && (nativeEvent.get() == expectedNativeKeyEvent.get());
       }
-      return keyEvent.getNativeEvent() == null && keyEvent.getKeyCode() == expectedKeyCode;
+      return !keyEvent.getNativeEvent().isPresent() && keyEvent.getKeyCode() == expectedKeyCode;
     }
   }
-
 
   /**
    * Matcher implementation for Canvas, which matches expected matrix conversion given by
    * sourcePoints and targetPoints.
    */
   private static class CanvasPointMatcher implements IArgumentMatcher {
-    private float[] sourcePoints;
-    private float[] targetPoints;
+
+    private final float[] sourcePoints;
+    private final float[] targetPoints;
 
     CanvasPointMatcher(float[] sourcePoints, float[] targetPoints) {
-      if (sourcePoints == null || targetPoints == null) {
-        throw new NullPointerException("sourcePoints and targetPoints should not be null.");
-      }
+      Preconditions.checkNotNull(sourcePoints);
+      Preconditions.checkNotNull(targetPoints);
       if (sourcePoints.length != targetPoints.length) {
         throw new IllegalArgumentException(
             "The length of sourcePoints and one of targetPoints shoudld be same. "
@@ -173,6 +176,35 @@ public class MozcMatcher {
       float[] points = sourcePoints.clone();
       canvas.getMatrix().mapPoints(points);
       return Arrays.equals(targetPoints, points);
+    }
+  }
+
+  /**
+   * Matcher implementation for Optional, which contains a same object.
+   */
+  private static class SameOptionalMatcher<T> implements IArgumentMatcher {
+
+    private final T expectedValue;
+
+    SameOptionalMatcher(T value) {
+      this.expectedValue = Preconditions.checkNotNull(value);
+    }
+
+    @Override
+    public void appendTo(StringBuffer buff) {
+      buff.append("matchOptional(")
+          .append(expectedValue)
+          .append(")");
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public boolean matches(Object arg) {
+      if (!(arg instanceof Optional)) {
+        return false;
+      }
+      Optional targetValue = Optional.class.cast(arg);
+      return expectedValue == targetValue.orNull();
     }
   }
 
@@ -210,6 +242,14 @@ public class MozcMatcher {
    */
   public static Canvas matchCanvasPoints(float[] sourcePoints, float[] targetPoints) {
     reportMatcher(new CanvasPointMatcher(sourcePoints, targetPoints));
+    return null;
+  }
+
+  /**
+   * Expects a {@link Optional}, which contains a same object.
+   */
+  public static <T> Optional<T> sameOptional(T value) {
+    reportMatcher(new SameOptionalMatcher<T>(value));
     return null;
   }
 }

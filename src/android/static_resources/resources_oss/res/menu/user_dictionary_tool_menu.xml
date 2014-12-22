@@ -51,7 +51,9 @@
           android:showAsAction="never" />
     <item android:id="@+id/user_dictionary_tool_menu_export_dictionary"
           android:title="@string/user_dictionary_tool_menu_export_dictionary_title"
-          android:showAsAction="never" />
+          android:showAsAction="never"
+          android:enabled="@bool/enable_user_dictionary_export"
+          android:visible="@bool/enable_user_dictionary_export" />
 
     <item android:id="@+id/user_dictionary_tool_menu_undo"
           android:icon="@android:drawable/ic_menu_revert"

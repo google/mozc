@@ -62,8 +62,6 @@ import java.util.Map;
  */
 public class ImeSwitcherFactory {
 
-  static final int SWITCH_NEXT_TARGTET_API_LEVEL = 16;
-
   private static final String GOOGLE_PACKAGE_ID_PREFIX = "com.google.android";
   private static final String VOICE_IME_MODE = "voice";
 
@@ -133,6 +131,13 @@ public class ImeSwitcherFactory {
      * @return true if the switching succeeds
      */
     boolean switchToNextInputMethod(boolean onlyCurrentIme);
+
+    /**
+     * @see InputMethodManager#shouldOfferSwitchingToNextInputMethod(IBinder)
+     *
+     * If not supported the API, returns false.
+     */
+    boolean shouldOfferSwitchingToNextInputMethod();
   }
 
   /**
@@ -222,15 +227,20 @@ public class ImeSwitcherFactory {
     public boolean switchToNextInputMethod(boolean onlyCurrentIme) {
       return false;
     }
+
+    @Override
+    public boolean shouldOfferSwitchingToNextInputMethod() {
+      return false;
+    }
   }
 
   /**
    * A switcher for much later OS where switchToNextInputMethod is available.
    */
-  @TargetApi(SWITCH_NEXT_TARGTET_API_LEVEL)
-  static class NextInputSwitchableImeSwitcher extends SubtypeImeSwitcher {
+  @TargetApi(16)
+  static class ImeSwitcher16 extends SubtypeImeSwitcher {
 
-    public NextInputSwitchableImeSwitcher(InputMethodService inputMethodService) {
+    public ImeSwitcher16(InputMethodService inputMethodService) {
       super(inputMethodService);
     }
 
@@ -241,14 +251,33 @@ public class ImeSwitcherFactory {
     }
   }
 
+  /**
+   * A switcher for much later OS where switchToNextInputMethod is available.
+   */
+  @TargetApi(19)
+  static class ImeSwitcher21 extends ImeSwitcher16 {
+
+    public ImeSwitcher21(InputMethodService inputMethodService) {
+      super(inputMethodService);
+    }
+
+    @Override
+    public boolean shouldOfferSwitchingToNextInputMethod() {
+      return MozcUtil.getInputMethodManager(inputMethodService)
+          .shouldOfferSwitchingToNextInputMethod(getToken());
+    }
+  }
+
   // A constructor of concrete switcher class.
   // Null if reflection fails.
   static final Constructor<? extends ImeSwitcher> switcherConstructor;
 
   static {
     Class<? extends ImeSwitcher> clazz;
-    if (Build.VERSION.SDK_INT >= SWITCH_NEXT_TARGTET_API_LEVEL) {
-      clazz = NextInputSwitchableImeSwitcher.class;
+    if (Build.VERSION.SDK_INT >= 21) {
+      clazz = ImeSwitcher21.class;
+    } else if (Build.VERSION.SDK_INT >= 16) {
+      clazz = ImeSwitcher16.class;
     } else {
       clazz = SubtypeImeSwitcher.class;
     }
