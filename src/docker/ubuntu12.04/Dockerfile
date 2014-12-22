@@ -38,7 +38,7 @@ RUN apt-get install -y g++ python pkg-config subversion git curl bzip2 unzip mak
 ## Packages for linux desktop version
 RUN apt-get install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
-RUN apt-get install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless ant ia32-libs ia32-libs-multiarch
+RUN apt-get install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless ant ia32-libs ia32-libs-multiarch zip
 ## Packages for NaCl
 RUN apt-get install -y libc6:i386 libstdc++6:i386 libstdc++6-4.4-dev
 ## For emacsian

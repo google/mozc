@@ -39,7 +39,7 @@ RUN apt install -y g++ python pkg-config subversion git curl bzip2 unzip make
 ## Packages for linux desktop version
 RUN apt install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
-RUN apt install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless ant libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386
+RUN apt install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless ant libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386 zip
 ## Packages for NaCl
 RUN apt install -y libc6:i386 libstdc++6:i386
 ## For emacsian
