@@ -94,7 +94,6 @@ class RendererServer : public IPCServer {
   scoped_ptr<ParentApplicationWatchDog> watch_dog_;
   scoped_ptr<RendererServerSendCommand> send_command_;
 
-
   DISALLOW_COPY_AND_ASSIGN(RendererServer);
 };
 }  // namespace renderer

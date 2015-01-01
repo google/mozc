@@ -47,6 +47,7 @@
 #include "usage_stats/usage_stats_uploader.h"
 
 #include "data_manager/oss/oss_data_manager.h"
+typedef mozc::oss::OssDataManager DataManagerType;
 
 namespace mozc {
 namespace jni {
@@ -90,10 +91,9 @@ void Initialize(
 #endif  // MOZC_ENABLE_HTTP_CLIENT
 
   // Initialize dictionary data.
-  mozc::oss::OssDataManager::SetDictionaryData(
-      dictionary_address, dictionary_size);
-  mozc::oss::OssDataManager::SetConnectionData(
-      connection_data_address, connection_data_size);
+  DataManagerType::SetDictionaryData(dictionary_address, dictionary_size);
+  DataManagerType::SetConnectionData(connection_data_address,
+                                     connection_data_size);
 
   mozc::Singleton<SessionHandlerSingletonAdapter>::get()->getHandler()
       ->AddObserver(Singleton<session::SessionUsageObserver>::get());
