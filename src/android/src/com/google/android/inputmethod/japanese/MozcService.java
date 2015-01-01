@@ -453,6 +453,12 @@ public class MozcService extends InputMethodService {
    */
   @SuppressLint("HandlerLeak")
   private class SendSyncDataCommandHandler extends Handler {
+
+    /**
+     * "what" value of message. Always use this.
+     */
+    static final int WHAT = 0;
+
     /**
      * The current period of sending SYNC_DATA is 15 mins (as same as desktop version).
      */
@@ -648,6 +654,13 @@ public class MozcService extends InputMethodService {
     if (sessionExecutor != null) {
       sessionExecutor.syncData();
     }
+
+    // Following listeners/handlers have reference to the service.
+    // To free the service instance, remove the listeners/handlers.
+    sharedPreferences.unregisterOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
+    sendSyncDataCommandHandler.removeMessages(SendSyncDataCommandHandler.WHAT);
+    memoryTrimmingHandler.removeMessages(MemoryTrimmingHandler.WHAT);
+
     super.onDestroy();
   }
 
@@ -676,7 +689,7 @@ public class MozcService extends InputMethodService {
 
     // Start sending SYNC_DATA message to mozc server periodically.
     sendSyncDataCommandHandler.sendEmptyMessageDelayed(
-        0, SendSyncDataCommandHandler.SYNC_DATA_COMMAND_PERIOD);
+        SendSyncDataCommandHandler.WHAT, SendSyncDataCommandHandler.SYNC_DATA_COMMAND_PERIOD);
     this.sharedPreferences = sharedPreferences;
   }
 
