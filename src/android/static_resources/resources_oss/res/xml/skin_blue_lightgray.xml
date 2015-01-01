@@ -355,7 +355,7 @@
         android:color="#FF828282" />
     <Color
         android:name="symbolMajorButtonShadowColor"
-        android:color="#57000000" />
+        android:color="#FF1E1E1E" />
     <Color
         android:name="keyboardFoldingButtonBackgroundDefaultColor"
         android:color="#8C676767" />

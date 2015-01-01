@@ -35,14 +35,17 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
+import android.graphics.BlurMaskFilter;
+import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.Path.Direction;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
@@ -141,21 +144,32 @@ public class SymbolMajorCategoryButtonDrawableFactory {
 
   private static class ButtonDrawable extends BaseBackgroundDrawable {
 
+    private static final int BLUR_SIZE = 3;
+
     private final PathFactory pathFactory;
     private final int topColor;
     private final int bottomColor;
-    private final int shadowColor;
 
-    private final Paint paint = new Paint();
+    private final Paint backgroundPaint = new Paint();
+    private final Optional<Paint> shadowPaint;
     private Optional<Path> path = Optional.absent();
-    private Optional<Shader> shader = Optional.absent();
 
     ButtonDrawable(PathFactory pathFactory, int topColor, int bottomColor, int shadowColor) {
       super(0, 0, 0, 0);  // No padding.
       this.pathFactory = Preconditions.checkNotNull(pathFactory);
       this.topColor = topColor;
       this.bottomColor = bottomColor;
-      this.shadowColor = shadowColor;
+
+      backgroundPaint.setAntiAlias(true);
+
+      if (Color.alpha(shadowColor) != 0) {
+        shadowPaint = Optional.of(new Paint());
+        shadowPaint.get().setColor(shadowColor);
+        shadowPaint.get().setStyle(Style.FILL);
+        shadowPaint.get().setMaskFilter(new BlurMaskFilter(BLUR_SIZE, Blur.NORMAL));
+      } else {
+        shadowPaint = Optional.absent();
+      }
     }
 
     @Override
@@ -164,26 +178,17 @@ public class SymbolMajorCategoryButtonDrawableFactory {
         return;
       }
 
-      Paint paint = this.paint;
-      if ((shadowColor & 0xFF000000) != 0) {
-        paint.reset();
-        paint.setAntiAlias(true);
-        paint.setColor(shadowColor);
+      if (shadowPaint.isPresent()) {
         int saveCount = canvas.save();
         try {
-          canvas.translate(1, 1);
-          canvas.drawPath(path.get(), paint);
+          canvas.translate(0, 2);
+          canvas.drawPath(path.get(), shadowPaint.get());
         } finally {
           canvas.restoreToCount(saveCount);
         }
       }
 
-      paint.reset();
-      paint.setAntiAlias(true);
-      if (shader.isPresent()) {
-        paint.setShader(shader.get());
-      }
-      canvas.drawPath(path.get(), paint);
+      canvas.drawPath(path.get(), backgroundPaint);
     }
 
     @Override
@@ -192,12 +197,12 @@ public class SymbolMajorCategoryButtonDrawableFactory {
 
       if (isCanvasRectEmpty()) {
         path = Optional.absent();
-        shader = Optional.absent();
+        backgroundPaint.setShader(null);
         return;
       }
 
       path = Optional.of(pathFactory.newInstance(bounds));
-      shader = Optional.<Shader>of(new LinearGradient(
+      backgroundPaint.setShader(new LinearGradient(
           0, bounds.top, 0, bounds.bottom - 1, topColor, bottomColor, TileMode.CLAMP));
     }
   }

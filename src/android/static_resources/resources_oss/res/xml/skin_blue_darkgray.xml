@@ -355,7 +355,7 @@
         android:color="#FF828282" />
     <Color
         android:name="symbolMajorButtonShadowColor"
-        android:color="#57000000" />
+        android:color="#FF1E1E1E" />
     <Color
         android:name="keyboardFoldingButtonBackgroundDefaultColor"
         android:color="#8C676767" />
@@ -425,7 +425,7 @@
         <inset android:drawable="@drawable/window_background_black" />
     </Drawable>
     <Drawable android:name="narrowFrameBackgroundDrawable" >
-        <color android:color="#524C51" />
+        <inset android:drawable="@drawable/window_background_black" />
     </Drawable>
     <Drawable
         android:name="keyboardFrameSeparatorBackgroundDrawable" >
