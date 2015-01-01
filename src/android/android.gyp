@@ -289,7 +289,6 @@
       'type': 'none',
       'variables': {
         'make_standalone_toolchain_commands': [
-          'bash',
           '<(android_ndk_home)/build/tools/make-standalone-toolchain.sh',
           '--toolchain=<(toolchain)',
           '--stl=<(android_stl)',
