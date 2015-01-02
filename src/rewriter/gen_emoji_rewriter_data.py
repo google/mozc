@@ -126,7 +126,7 @@ def ReadEmojiTsv(stream):
                             kddi_description))
 
     # \xe3\x80\x80 is a full-width space
-    for reading in re.split(r'( |\xe3\x80\x80)+', readings.strip()):
+    for reading in re.split(r'(?: |\xe3\x80\x80)+', readings.strip()):
       token_dict[reading].append(index)
 
   return (emoji_data_list, token_dict)
