@@ -291,6 +291,13 @@ UserDictionary::~UserDictionary() {
   delete tokens_;
 }
 
+bool UserDictionary::HasKey(StringPiece key) const {
+  // TODO(noriyukit): Currently, we don't support HasKey() for user dictionary
+  // because we need to search tokens linearly, which might be slow in extreme
+  // cases where 100K entries exist.
+  return false;
+}
+
 bool UserDictionary::HasValue(StringPiece value) const {
   // TODO(noriyukit): Currently, we don't support HasValue() for user dictionary
   // because we need to search tokens linearly, which might be slow in extreme

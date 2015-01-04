@@ -71,6 +71,8 @@ class DictionaryMock : public DictionaryInterface {
   DictionaryMock();
   virtual ~DictionaryMock();
 
+  virtual bool HasKey(StringPiece key) const;
+
   virtual bool HasValue(StringPiece value) const;
 
   // DictionaryMock doesn't support a limitation.  Note also that only the

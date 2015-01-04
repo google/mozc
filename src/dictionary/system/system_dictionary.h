@@ -140,6 +140,7 @@ class SystemDictionary : public DictionaryInterface {
       const char *ptr, int len, Options options);
 
   // Implementation of DictionaryInterface.
+  virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
 
   // Predictive lookup

@@ -247,6 +247,7 @@ class KeyCheckDictionary : public DictionaryInterface {
       : target_query_(query), received_target_query_(false) {}
   virtual ~KeyCheckDictionary() {}
 
+  virtual bool HasKey(StringPiece key) const { return false; }
   virtual bool HasValue(StringPiece value) const { return false; }
 
   virtual void LookupPredictive(

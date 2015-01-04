@@ -283,6 +283,8 @@ class CallCheckDictionary : public DictionaryInterface {
   CallCheckDictionary() {}
   virtual ~CallCheckDictionary() {}
 
+  MOCK_CONST_METHOD1(HasKey,
+                     bool(StringPiece));
   MOCK_CONST_METHOD1(HasValue,
                      bool(StringPiece));
   MOCK_CONST_METHOD3(LookupPredictive,
@@ -1689,6 +1691,10 @@ class TestSuffixDictionary : public DictionaryInterface {
  public:
   TestSuffixDictionary() {}
   virtual ~TestSuffixDictionary() {}
+
+  virtual bool HasKey(StringPiece value) const {
+    return false;
+  }
 
   virtual bool HasValue(StringPiece value) const {
     return false;

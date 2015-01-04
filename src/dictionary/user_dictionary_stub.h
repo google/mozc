@@ -37,6 +37,9 @@ namespace mozc {
 
 class UserDictionaryStub : public DictionaryInterface {
  public:
+  virtual bool HasKey(StringPiece key) const {
+    return false;
+  }
   virtual bool HasValue(StringPiece value) const {
     return false;
   }

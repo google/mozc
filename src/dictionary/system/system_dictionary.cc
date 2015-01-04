@@ -657,6 +657,12 @@ void SystemDictionary::InitReverseLookupIndex() {
       new ReverseLookupIndex(codec_, token_array_.get()));
 }
 
+bool SystemDictionary::HasKey(StringPiece key) const {
+  string encoded_key;
+  codec_->EncodeKey(key, &encoded_key);
+  return (key_trie_->ExactSearch(encoded_key) != -1);
+}
+
 bool SystemDictionary::HasValue(StringPiece value) const {
   string encoded_value;
   codec_->EncodeValue(value, &encoded_value);

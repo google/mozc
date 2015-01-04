@@ -108,6 +108,14 @@ bool ValueDictionary::OpenDictionaryFile() {
 }
 
 // ValueDictionary is supposed to use the same data with SystemDictionary
+// and SystemDictionary::HasKey should return the same result with
+// ValueDictionary::HasKey.  So we can skip the actual logic of HasKey
+// and return just false.
+bool ValueDictionary::HasKey(StringPiece key) const {
+  return false;
+}
+
+// ValueDictionary is supposed to use the same data with SystemDictionary
 // and SystemDictionary::HasValue should return the same result with
 // ValueDictionary::HasValue.  So we can skip the actual logic of HasValue
 // and return just false.

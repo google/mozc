@@ -62,6 +62,8 @@ class DictionaryImpl : public DictionaryInterface {
 
   virtual ~DictionaryImpl();
 
+  virtual bool HasKey(StringPiece key) const;
+
   virtual bool HasValue(StringPiece value) const;
 
   virtual void LookupPredictive(

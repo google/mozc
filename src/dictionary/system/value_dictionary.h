@@ -69,6 +69,7 @@ class ValueDictionary : public DictionaryInterface {
       const POSMatcher& pos_matcher, const char *ptr, int len);
 
   // Implementation of DictionaryInterface
+  virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
   virtual void LookupPredictive(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,

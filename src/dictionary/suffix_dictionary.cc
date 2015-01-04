@@ -72,6 +72,15 @@ class ComparePrefix {
 
 }  // namespace
 
+bool SuffixDictionary::HasKey(StringPiece key) const {
+  // SuffixDictionary::HasKey() is never called and unnecessary to
+  // implement. To avoid accidental calls of this method, the method simply dies
+  // so that we can immediately notice this unimplemented method during
+  // development.
+  LOG(FATAL) << "bool SuffixDictionary::HasKey() is not implemented";
+  return false;
+}
+
 bool SuffixDictionary::HasValue(StringPiece value) const {
   // SuffixDictionary::HasValue() is never called and unnecessary to
   // implement. To avoid accidental calls of this method, the method simply dies

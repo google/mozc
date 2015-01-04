@@ -70,6 +70,15 @@ DictionaryImpl::~DictionaryImpl() {
   dics_.clear();
 }
 
+bool DictionaryImpl::HasKey(StringPiece key) const {
+  for (size_t i = 0; i < dics_.size(); ++i) {
+    if (dics_[i]->HasKey(key)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool DictionaryImpl::HasValue(StringPiece value) const {
   for (size_t i = 0; i < dics_.size(); ++i) {
     if (dics_[i]->HasValue(value)) {

@@ -55,6 +55,7 @@ class UserDictionary : public DictionaryInterface {
                  SuppressionDictionary *suppression_dictionary);
   virtual ~UserDictionary();
 
+  virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
   // Lookup methods don't support kana modifier insensitive lookup, i.e.,
   // Callback::OnActualKey() is never called.

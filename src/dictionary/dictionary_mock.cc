@@ -45,7 +45,21 @@ namespace {
 
 const int kDummyPosId = 1;
 
-bool HasValueInternal(const map<string, vector<Token *> > &dic,
+bool HasKeyInternal(const map<string, vector<Token *>> &dic, StringPiece key) {
+  typedef vector<Token *> TokenPtrVector;
+  for (map<string, vector<Token *> >::const_iterator map_it = dic.begin();
+       map_it != dic.end(); ++map_it) {
+    const TokenPtrVector &v = map_it->second;
+    for (TokenPtrVector::const_iterator it = v.begin(); it != v.end(); ++it) {
+      if ((*it)->key == key) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool HasValueInternal(const map<string, vector<Token *>> &dic,
                       StringPiece value) {
   typedef vector<Token *> TokenPtrVector;
   for (map<string, vector<Token *> >::const_iterator map_it = dic.begin();
@@ -90,6 +104,13 @@ DictionaryMock::~DictionaryMock() {
   DeletePtrs(&exact_dictionary_);
   DeletePtrs(&reverse_dictionary_);
   DeletePtrs(&predictive_dictionary_);
+}
+
+bool DictionaryMock::HasKey(StringPiece key) const {
+  return HasKeyInternal(predictive_dictionary_, key) ||
+         HasKeyInternal(prefix_dictionary_, key) ||
+         HasKeyInternal(reverse_dictionary_, key) ||
+         HasKeyInternal(exact_dictionary_, key);
 }
 
 bool DictionaryMock::HasValue(StringPiece value) const {

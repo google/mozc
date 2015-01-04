@@ -55,6 +55,7 @@ class SuffixDictionary : public DictionaryInterface {
                    size_t suffix_tokens_size);
   virtual ~SuffixDictionary();
 
+  virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
 
   // Kana modifier insensitive lookup is not supported.
