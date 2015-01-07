@@ -95,6 +95,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputBinding;
@@ -589,6 +590,8 @@ public class MozcService extends InputMethodService {
 
   @VisibleForTesting boolean inputBound = false;
 
+  private int originalWindowAnimationResourceId = 0;
+
   private ApplicationCompatibility applicationCompatibility =
       ApplicationCompatibility.getDefaultInstance();
 
@@ -797,6 +800,10 @@ public class MozcService extends InputMethodService {
     resetContext();
     selectionTracker.onFinishInput();
     applicationCompatibility = ApplicationCompatibility.getDefaultInstance();
+
+    Window window = getWindow().getWindow();
+    window.setWindowAnimations(originalWindowAnimationResourceId);
+
     super.onFinishInput();
   }
 
@@ -906,6 +913,14 @@ public class MozcService extends InputMethodService {
     // the view might be created after onStartInput with *reset* status.
     viewManager.updateGlobeButtonEnabled();
     viewManager.updateMicrophoneButtonEnabled();
+
+    Window window = getWindow().getWindow();
+    originalWindowAnimationResourceId = window.getAttributes().windowAnimations;
+    // Mode indicator is available and narrow frame is NOT available on Lollipop or later.
+    // In this case, we temporary disable window animation to show the mode indicator correctly.
+    if (Build.VERSION.SDK_INT >= 21 && viewManager.isNarrowMode()) {
+      window.setWindowAnimations(0);
+    }
   }
 
   static InputFieldType getInputFieldType(EditorInfo attribute) {
