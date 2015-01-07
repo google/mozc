@@ -89,6 +89,7 @@ import com.google.common.base.Preconditions;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService.Insets;
@@ -1118,10 +1119,14 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     ViewManager viewManager = createViewManager(context);
     MozcView mozcView = viewManager.createMozcView(context);
 
+    Configuration configuration = new Configuration();
+
     // viewManager to mozcView.
-    viewManager.setNarrowMode(true);
+    configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
+    viewManager.onConfigurationChanged(configuration);
     assertTrue(mozcView.isNarrowMode());
-    viewManager.setNarrowMode(false);
+    configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
+    viewManager.onConfigurationChanged(configuration);
     assertFalse(mozcView.isNarrowMode());
   }
 
@@ -1225,10 +1230,29 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
         new TestData(printable, softwareEvent, false),
         new TestData(printable, hardwareEvent, true),
     };
-    for (TestData testData : testDataList) {
-      viewManager.setNarrowMode(false);
-      viewManager.maybeTransitToNarrowMode(testData.command, testData.keyEventInterface);
-      assertEquals(testData.expectation, viewManager.isNarrowMode());
+
+    Configuration configuration = new Configuration();
+    if (Build.VERSION.SDK_INT < 21) {
+      configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
+      for (TestData testData : testDataList) {
+        viewManager.onConfigurationChanged(configuration);
+        viewManager.maybeTransitToNarrowMode(testData.command, testData.keyEventInterface);
+        assertEquals(testData.expectation, viewManager.isNarrowMode());
+      }
+    } else {
+      // ViewManager doesn't take care about key event on Lollipop or later.
+      configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
+      for (TestData testData : testDataList) {
+        viewManager.onConfigurationChanged(configuration);
+        viewManager.maybeTransitToNarrowMode(testData.command, testData.keyEventInterface);
+        assertEquals(false, viewManager.isNarrowMode());
+      }
+      configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
+      for (TestData testData : testDataList) {
+        viewManager.onConfigurationChanged(configuration);
+        viewManager.maybeTransitToNarrowMode(testData.command, testData.keyEventInterface);
+        assertEquals(true, viewManager.isNarrowMode());
+      }
     }
   }
 

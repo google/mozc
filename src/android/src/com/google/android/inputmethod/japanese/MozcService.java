@@ -587,11 +587,6 @@ public class MozcService extends InputMethodService {
   @VisibleForTesting KeyboardSpecification currentKeyboardSpecification =
       KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA;
 
-  // Current HardKeyboardHidden configuration value.
-  // This is updated only when onConfigurationChanged is called and
-  // Configuration.HARDKEYBOARDHIDDEN_* differs to this.
-  private int currentHardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_UNDEFINED;
-
   @VisibleForTesting boolean inputBound = false;
 
   private ApplicationCompatibility applicationCompatibility =
@@ -726,8 +721,6 @@ public class MozcService extends InputMethodService {
       sessionExecutor.setConfig(ConfigUtil.toConfig(sharedPreferences));
       sessionExecutor.preferenceUsageStatsEvent(sharedPreferences, getResources());
     }
-
-    maybeSetNarrowMode(deviceConfiguration);
   }
 
   /**
@@ -1619,31 +1612,6 @@ public class MozcService extends InputMethodService {
     }
   }
 
-  @VisibleForTesting void maybeSetNarrowMode(Configuration configuration) {
-    // If given hardKeyboardHidden is equal to current one, skip updating narrow mode.
-    // In other words, only hardKeyboardHidden flag changes narrow mode automatically.
-    // This behavior is beneficial for a user who want to change narrow/full mode manually
-    // because this method keeps current narrow mode unless hardware keyboard connection is changed.
-    if (viewManager != null && configuration.hardKeyboardHidden != currentHardKeyboardHidden) {
-      currentHardKeyboardHidden = configuration.hardKeyboardHidden;
-      switch (currentHardKeyboardHidden) {
-        case Configuration.HARDKEYBOARDHIDDEN_NO:
-          if (!viewManager.isNarrowMode()) {
-            viewManager.hideSubInputView();
-            viewManager.setNarrowMode(true);
-          }
-          break;
-        case Configuration.HARDKEYBOARDHIDDEN_YES:
-          if (viewManager.isNarrowMode()) {
-            viewManager.setNarrowMode(false);
-          }
-          break;
-        case Configuration.HARDKEYBOARDHIDDEN_UNDEFINED:
-          break;
-      }
-    }
-  }
-
   @VisibleForTesting void onConfigurationChangedInternal(Configuration newConfig) {
     InputConnection inputConnection = getCurrentInputConnection();
     if (inputConnection != null) {
@@ -1680,7 +1648,6 @@ public class MozcService extends InputMethodService {
     propagateClientSidePreference(new ClientSidePreference(
         Preconditions.checkNotNull(PreferenceManager.getDefaultSharedPreferences(this)),
         getResources(), newConfig.orientation));
-    maybeSetNarrowMode(newConfig);
     viewManager.onConfigurationChanged(newConfig);
   }
 

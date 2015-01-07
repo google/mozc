@@ -116,7 +116,9 @@
     <dimen name="firsttime_description_text_size">14dip</dimen>
     <dimen name="firsttime_padding_height">14dip</dimen>
     <dimen name="firsttime_padding_width">20dip</dimen>
-    <dimen name="narrow_ime_window_height">126dip</dimen>
+    <!-- 2 rows of candidates -->
+    <!-- (candidate_text_size + candidate_vertical_padding_size * 2) * 2 -->
+    <dimen name="narrow_candidate_window_height">80dip</dimen>
     <dimen name="narrow_frame_height">41dip</dimen>
 
 

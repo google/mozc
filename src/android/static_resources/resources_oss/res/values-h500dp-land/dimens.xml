@@ -66,10 +66,9 @@
   <dimen name="firsttime_padding_height">28dip</dimen>
   <dimen name="firsttime_padding_width">40dip</dimen>
 
-  <!-- 3.5 Rows of candidates -->
-  <!-- (candidate_text_size + candidate_vertical_padding_size * 2) * 3.5
-       + narrow_frame_height -->
-  <dimen name="narrow_ime_window_height">221dip</dimen>
+  <!-- 2 rows of candidates -->
+  <!-- (candidate_text_size + candidate_vertical_padding_size * 2) * 2 -->
+  <dimen name="narrow_candidate_window_height">100dip</dimen>
   <dimen name="narrow_frame_height">46dip</dimen>
   <!-- symbol_view_height = input_frame_height + (candidate_text_size + candidate_vertical_padding_size * 2) -->
   <dimen name="symbol_view_height">305dip</dimen>

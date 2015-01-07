@@ -53,11 +53,13 @@ import com.google.common.base.Preconditions;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService.Insets;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -101,8 +103,10 @@ public class MozcView extends FrameLayout implements MemoryManageable {
       imeWindowPartialWidth = resources.getDimensionPixelSize(R.dimen.ime_window_partial_width);
       imeWindowRegionInsetThreshold = resources.getDimensionPixelSize(
           R.dimen.ime_window_region_inset_threshold);
-      narrowFrameHeight = resources.getDimensionPixelSize(R.dimen.narrow_frame_height);
-      narrowImeWindowHeight = resources.getDimensionPixelSize(R.dimen.narrow_ime_window_height);
+      narrowFrameHeight = getNarrowFrameHeight(resources);
+      narrowImeWindowHeight =
+          resources.getDimensionPixelSize(R.dimen.narrow_candidate_window_height)
+          + narrowFrameHeight;
       sideFrameWidth = resources.getDimensionPixelSize(R.dimen.side_frame_width);
       buttonFrameHeight = resources.getDimensionPixelSize(R.dimen.button_frame_height);
     }
@@ -199,6 +203,12 @@ public class MozcView extends FrameLayout implements MemoryManageable {
           updateInputFrameHeight();
         }
       };
+
+  /**
+   * Narrow frame is disabled on API 21 or later to respect
+   * {@link Configuration#hardKeyboardHidden}.
+   */
+  @VisibleForTesting static final boolean IS_NARROW_FRAME_ENABLED = Build.VERSION.SDK_INT < 21;
 
   private final DimensionPixelSize dimensionPixelSize = new DimensionPixelSize(getResources());
   private final SideFrameStubProxy leftFrameStubProxy = new SideFrameStubProxy();
@@ -698,7 +708,7 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     rightFrameStubProxy.setFrameVisibility(
         temporaryAdjustment == LayoutAdjustment.LEFT ? VISIBLE : GONE);
 
-    // Set candidate and desciption text size.
+    // Set candidate and description text size.
     float candidateTextSize = layoutAdjustment == LayoutAdjustment.FILL
         ? resources.getDimension(R.dimen.candidate_text_size)
         : resources.getDimension(R.dimen.candidate_text_size_aligned_layout);
@@ -713,7 +723,7 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     if (narrowMode) {
       getKeyboardFrame().setVisibility(GONE);
       getButtonFrame().setVisibility(GONE);
-      getNarrowFrame().setVisibility(VISIBLE);
+      getNarrowFrame().setVisibility(IS_NARROW_FRAME_ENABLED ? VISIBLE : GONE);
     } else {
       getKeyboardFrame().setVisibility(VISIBLE);
       getButtonFrame().setVisibility(buttonFrameVisible ? VISIBLE : GONE);
@@ -933,6 +943,12 @@ public class MozcView extends FrameLayout implements MemoryManageable {
   @VisibleForTesting
   MozcImageView getMicrophoneButton() {
     return MozcImageView.class.cast(findViewById(R.id.microphone_button));
+  }
+
+  @VisibleForTesting
+  static int getNarrowFrameHeight(Resources resources) {
+    return IS_NARROW_FRAME_ENABLED
+        ? resources.getDimensionPixelSize(R.dimen.narrow_frame_height) : 0;
   }
 
   @Override

@@ -1369,6 +1369,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     sessionExecutor.reset(isA(SessionHandlerFactory.class), same(service));
     sessionExecutor.setLogging(anyBoolean());
     sessionExecutor.setImposedConfig(isA(Config.class));
+    expectLastCall().asStub();
     sessionExecutor.updateRequest(isA(Request.class), eq(Collections.<TouchEvent>emptyList()));
     expectLastCall().asStub();
     sessionExecutor.switchInputMode(same(Optional.<KeyEventInterface>absent()),
@@ -1550,7 +1551,6 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
     // On transition from narrow mode to non-narrow mode, submit() should be called.
     resetAll();
-    expect(viewManagerMock.isNarrowMode()).andStubReturn(false);
     expect(viewManagerMock.isFloatingCandidateMode()).andStubReturn(false);
     sessionExecutorMock.submit(same(service.renderResultCallback));
     sessionExecutorMock.setImposedConfig(capture(configCapture));
@@ -1562,7 +1562,6 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
     // On the opposite transition, submit() should not be called.
     resetAll();
-    expect(viewManagerMock.isNarrowMode()).andStubReturn(true);
     expect(viewManagerMock.isFloatingCandidateMode()).andStubReturn(true);
     sessionExecutorMock.setImposedConfig(capture(configCapture));
     replayAll();
@@ -1573,7 +1572,6 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
     // Don't use shortcut keys if floating candidate window is disabled.
     resetAll();
-    expect(viewManagerMock.isNarrowMode()).andStubReturn(true);
     expect(viewManagerMock.isFloatingCandidateMode()).andStubReturn(false);
     sessionExecutorMock.setImposedConfig(capture(configCapture));
     replayAll();
@@ -2227,55 +2225,6 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
     mozcView.findViewById(R.id.hardware_composition_button).performClick();
 
-    verifyAll();
-  }
-
-  @SmallTest
-  public void testMaybeSetNarrowMode() {
-    ViewManager viewManager = createViewManagerMock(
-        getInstrumentation().getTargetContext(),
-        createNiceMock(ViewEventListener.class));
-    MozcService service = createService();
-
-    resetAll();
-    SessionExecutor sessionExecutorMock = createNiceMock(SessionExecutor.class);
-    expect(viewManager.isNarrowMode()).andStubReturn(false);
-    expect(viewManager.isFloatingCandidateMode()).andStubReturn(false);
-    viewManager.onConfigurationChanged(anyObject(Configuration.class));
-    replayAll();
-    invokeOnCreateInternal(
-        service, viewManager, null, getDefaultDeviceConfiguration(), sessionExecutorMock);
-    verifyAll();
-
-    Configuration configuration = new Configuration();
-
-    resetAll();
-    expect(viewManager.isNarrowMode()).andReturn(false);
-    expect(viewManager.hideSubInputView()).andReturn(true);
-    viewManager.setNarrowMode(true);
-    replayAll();
-    configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
-    service.maybeSetNarrowMode(configuration);
-    verifyAll();
-
-    resetAll();
-    expect(viewManager.isNarrowMode()).andReturn(true);
-    viewManager.setNarrowMode(false);
-    replayAll();
-    configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
-    service.maybeSetNarrowMode(configuration);
-    verifyAll();
-
-    resetAll();
-    replayAll();
-    configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
-    service.maybeSetNarrowMode(configuration);
-    verifyAll();
-
-    resetAll();
-    replayAll();
-    configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_UNDEFINED;
-    service.maybeSetNarrowMode(configuration);
     verifyAll();
   }
 

@@ -157,11 +157,6 @@ public interface ViewManagerInterface extends MemoryManageable {
 
   public void setEmojiProviderType(EmojiProviderType emojiProviderType);
 
-  /**
-   * @param isNarrowMode Whether mozc view shows in narrow mode or normal.
-   */
-  public void setNarrowMode(boolean isNarrowMode);
-
   public void maybeTransitToNarrowMode(Command command, KeyEventInterface keyEvent);
 
   public boolean isNarrowMode();
