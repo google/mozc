@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese;
 import org.mozc.android.inputmethod.japanese.InOutAnimatedFrameLayout.VisibilityChangeListener;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
@@ -46,7 +47,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.TranslateAnimation;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 
 /**
@@ -127,12 +127,8 @@ class CandidateViewManager implements MemoryManageable {
   private boolean allowFloatingMode = false;
   private boolean narrowMode = false;
 
-  /**
-   * Cache of {@link CursorAnchorInfo} instance to switch candidate views.
-   * This field is null if and only-if Floating candidate view is NOT available, so we don't mark
-   * this value as {code @Nullable} since this field should NOT be used in that situation.
-   */
-  private CursorAnchorInfo cursorAnchorInfo;
+  /** Cache of {@link CursorAnchorInfoWrapper} instance to switch candidate views. */
+  private CursorAnchorInfoWrapper cursorAnchorInfo = new CursorAnchorInfoWrapper();
 
   private Animation numberCandidateViewInAnimation = NO_ANIMATION;
   private Animation numberCandidateViewOutAnimation = NO_ANIMATION;
@@ -142,9 +138,6 @@ class CandidateViewManager implements MemoryManageable {
       CandidateView keyboardCandidateView, FloatingCandidateView floatingCandidateView) {
     this.keyboardCandidateView = Preconditions.checkNotNull(keyboardCandidateView);
     this.floatingCandidateView = Preconditions.checkNotNull(floatingCandidateView);
-    if (FloatingCandidateView.isAvailable()) {
-      cursorAnchorInfo = new CursorAnchorInfo.Builder().build();
-    }
 
     keyboardCandidateView.setOutAnimationListener(
         new ClearCandidateAnimationListener(keyboardCandidateView));
@@ -307,7 +300,7 @@ class CandidateViewManager implements MemoryManageable {
   }
 
   @TargetApi(21)
-  public void setCursorAnchorInfo(CursorAnchorInfo info) {
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {
     this.cursorAnchorInfo = Preconditions.checkNotNull(info);
     if (candidateMode == CandidateMode.FLOATING) {
       floatingCandidateView.setCursorAnchorInfo(info);

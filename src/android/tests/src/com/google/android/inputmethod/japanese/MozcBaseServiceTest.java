@@ -44,7 +44,7 @@ import org.mozc.android.inputmethod.japanese.DependencyFactory.Dependency;
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackListener;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
-import org.mozc.android.inputmethod.japanese.MozcService.SymbolHistoryStorageImpl;
+import org.mozc.android.inputmethod.japanese.MozcBaseService.SymbolHistoryStorageImpl;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
@@ -131,7 +131,7 @@ import java.util.List;
  * TODO(hidehiko): Remove the hack, after switching.
  *
  */
-public class MozcServiceTest extends InstrumentationTestCaseWithMock {
+public class MozcBaseServiceTest extends InstrumentationTestCaseWithMock {
 
   /**
    * Store registered listeners to unregister them on {@code clearSharedPreferences}.
@@ -139,7 +139,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   private static final List<OnSharedPreferenceChangeListener> sharedPreferenceChangeListeners =
       new ArrayList<OnSharedPreferenceChangeListener>(1);
 
-  private static class AlwaysShownMozcService extends MozcService {
+  private static class AlwaysShownMozcService extends MozcBaseService {
 
     @Override
     public boolean isInputViewShown() {
@@ -171,25 +171,25 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   }
 
   // Consider using createInitializedService() instead of this method.
-  private MozcService createService() {
-    return initializeService(new MozcService());
+  private MozcBaseService createService() {
+    return initializeService(new MozcBaseService());
   }
 
-  private MozcService initializeService(MozcService service) {
+  private MozcBaseService initializeService(MozcBaseService service) {
     service.sendSyncDataCommandHandler = new Handler();
     service.attachBaseContext(getInstrumentation().getTargetContext());
     return service;
   }
 
-  private MozcService createInitializedService(SessionExecutor sessionExecutor) {
-    MozcService service = createService();
+  private MozcBaseService createInitializedService(SessionExecutor sessionExecutor) {
+    MozcBaseService service = createService();
     invokeOnCreateInternal(
         service, null, getSharedPreferences(), getDefaultDeviceConfiguration(), sessionExecutor);
     return service;
   }
 
-  private MozcService initializeMozcService(MozcService service,
-                                            SessionExecutor sessionExecutor) {
+  private MozcBaseService initializeMozcService(MozcBaseService service,
+                                                SessionExecutor sessionExecutor) {
     invokeOnCreateInternal(initializeService(service), null, getSharedPreferences(),
                            getDefaultDeviceConfiguration(), sessionExecutor);
     return service;
@@ -221,7 +221,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     return configuration;
   }
 
-  private static void invokeOnCreateInternal(MozcService service,
+  private static void invokeOnCreateInternal(MozcBaseService service,
                                              ViewManager viewManager,
                                              SharedPreferences sharedPreferences,
                                              Configuration deviceConfiguration,
@@ -271,7 +271,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
     replayAll();
 
-    MozcService service = createService();
+    MozcBaseService service = createService();
 
     // Both sessionExecutor and viewManager is not initialized.
     assertNull(service.sessionExecutor);
@@ -307,7 +307,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOnCreate_viewManager() {
-    MozcService service = createService();
+    MozcBaseService service = createService();
     try {
       invokeOnCreateInternal(service, null, getSharedPreferences(), getDefaultDeviceConfiguration(),
                              createNiceMock(SessionExecutor.class));
@@ -319,7 +319,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOnCreateInputView() {
-    MozcService service = createService();
+    MozcBaseService service = createService();
     // A test which calls onCreateInputView before onCreate is not needed
     // because IMF ensures calling onCreate before onCreateInputView.
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
@@ -335,7 +335,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testKeyboardInitialized() {
-    MozcService service = createService();
+    MozcBaseService service = createService();
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
     KeyboardSpecification defaultSpecification = service.currentKeyboardSpecification;
     sessionExecutor.updateRequest(
@@ -352,7 +352,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testOnFinishInput() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     resetAll();
     sessionExecutor.resetContext();
@@ -374,7 +374,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   public void testOnStartInput_notRestarting() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     Capture<Request> requestCapture = new Capture<Request>();
 
     resetAll();
@@ -407,7 +407,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   public void testOnStartInput_restarting() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     service.selectionTracker = selectionTracker;
     Capture<Request> requestCapture = new Capture<Request>();
 
@@ -438,7 +438,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testOnCompositionModeChange() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     service.currentKeyboardSpecification = KeyboardSpecification.TWELVE_KEY_TOGGLE_ALPHABET;
     resetAll();
@@ -462,7 +462,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSendKeyEventBackToApplication() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     resetAll();
     sessionExecutor.sendKeyEvent(isA(KeyEventInterface.class), isA(EvaluationCallback.class));
@@ -480,7 +480,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
         .addMockedMethod("sendKeyEvent")
         .createMock();
     replayAll();
-    MozcService service = initializeMozcService(new AlwaysShownMozcService(), sessionExecutor);
+    MozcBaseService service = initializeMozcService(new AlwaysShownMozcService(), sessionExecutor);
 
     KeyEvent[] keyEventsPassedToCallback = {
         new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK),
@@ -506,7 +506,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   public void testOnKeyDownByHardwareKeyboard() {
     Context context = getInstrumentation().getTargetContext();
 
-    MozcService service = createMockBuilder(MozcService.class)
+    MozcBaseService service = createMockBuilder(MozcBaseService.class)
         .addMockedMethods("isInputViewShown", "sendKeyWithKeyboardSpecification")
         .createMock();
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
@@ -556,7 +556,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSendKeyWithKeyboardSpecification_switchKeyboardSpecification() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     EvaluationCallback renderResultCallback = service.renderResultCallback;
 
@@ -653,7 +653,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testMetaKeyHandling_b13238551() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     service.currentKeyboardSpecification = KeyboardSpecification.TWELVE_KEY_FLICK_KANA;
     ProtoCommands.KeyEvent mozcKeyEvent = null;
     KeyEventInterface keyEvent = KeycodeConverter.getKeyEventInterface(KeyEvent.KEYCODE_SHIFT_LEFT);
@@ -724,7 +724,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     // mocked method shouldn't be called) so such indirect approach is employed.
     replayAll();
 
-    MozcService service = new MozcService() {
+    MozcBaseService service = new MozcBaseService() {
       @Override
       public InputConnection getCurrentInputConnection() {
         return inputConnection;
@@ -742,7 +742,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testHideWindow() {
     SessionExecutor sessionExecutor = createStrictMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     InputConnection inputConnection = createMock(InputConnection.class);
     // restartInput() can be used to install our InputConnection safely.
     service.onCreateInputMethodInterface().restartInput(inputConnection, new EditorInfo());
@@ -765,7 +765,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testRenderInputConnection_updatingPreedit() {
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
     service.selectionTracker = selectionTracker;
     InputConnection inputConnection = createStrictMock(InputConnection.class);
@@ -811,19 +811,19 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     SpannableStringBuilder sb = spannableStringBuilderCapture.getValue();
     assertEquals("\uD83D\uDC3112", sb.toString());
-    assertEquals(0, sb.getSpanStart(MozcService.SPAN_UNDERLINE));
-    assertEquals(4, sb.getSpanEnd(MozcService.SPAN_UNDERLINE));
-    assertEquals(2, sb.getSpanStart(MozcService.SPAN_PARTIAL_SUGGESTION_COLOR));
-    assertEquals(4, sb.getSpanEnd(MozcService.SPAN_PARTIAL_SUGGESTION_COLOR));
-    assertEquals(0, sb.getSpanStart(MozcService.SPAN_BEFORE_CURSOR));
-    assertEquals(2, sb.getSpanEnd(MozcService.SPAN_BEFORE_CURSOR));
+    assertEquals(0, sb.getSpanStart(MozcBaseService.SPAN_UNDERLINE));
+    assertEquals(4, sb.getSpanEnd(MozcBaseService.SPAN_UNDERLINE));
+    assertEquals(2, sb.getSpanStart(MozcBaseService.SPAN_PARTIAL_SUGGESTION_COLOR));
+    assertEquals(4, sb.getSpanEnd(MozcBaseService.SPAN_PARTIAL_SUGGESTION_COLOR));
+    assertEquals(0, sb.getSpanStart(MozcBaseService.SPAN_BEFORE_CURSOR));
+    assertEquals(2, sb.getSpanEnd(MozcBaseService.SPAN_BEFORE_CURSOR));
   }
 
   @SmallTest
   public void testRenderInputConnection_updatingPreeditAtCursorMiddle() {
     // Updating preedit (cursor is at the middle)
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
     service.selectionTracker = selectionTracker;
     InputConnection inputConnection = createStrictMock(InputConnection.class);
@@ -867,10 +867,10 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     SpannableStringBuilder sb = spannableStringBuilderCapture.getValue();
     assertEquals("012", sb.toString());
-    assertEquals(0, sb.getSpanStart(MozcService.SPAN_UNDERLINE));
-    assertEquals(3, sb.getSpanEnd(MozcService.SPAN_UNDERLINE));
-    assertEquals(0, sb.getSpanStart(MozcService.SPAN_BEFORE_CURSOR));
-    assertEquals(2, sb.getSpanEnd(MozcService.SPAN_BEFORE_CURSOR));
+    assertEquals(0, sb.getSpanStart(MozcBaseService.SPAN_UNDERLINE));
+    assertEquals(3, sb.getSpanEnd(MozcBaseService.SPAN_UNDERLINE));
+    assertEquals(0, sb.getSpanStart(MozcBaseService.SPAN_BEFORE_CURSOR));
+    assertEquals(2, sb.getSpanEnd(MozcBaseService.SPAN_BEFORE_CURSOR));
   }
 
   @SmallTest
@@ -878,7 +878,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     // Updating preedit (cursor is at the middle)
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     InputConnection inputConnection = createStrictMock(InputConnection.class);
     EditorInfo editorInfo = new EditorInfo();
     editorInfo.inputType = InputType.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT;
@@ -924,16 +924,16 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     SpannableStringBuilder sb = spannableStringBuilderCapture.getValue();
     assertEquals("012", sb.toString());
-    assertEquals(0, sb.getSpanStart(MozcService.SPAN_UNDERLINE));
-    assertEquals(3, sb.getSpanEnd(MozcService.SPAN_UNDERLINE));
-    assertEquals(0, sb.getSpanStart(MozcService.SPAN_BEFORE_CURSOR));
-    assertEquals(2, sb.getSpanEnd(MozcService.SPAN_BEFORE_CURSOR));
+    assertEquals(0, sb.getSpanStart(MozcBaseService.SPAN_UNDERLINE));
+    assertEquals(3, sb.getSpanEnd(MozcBaseService.SPAN_UNDERLINE));
+    assertEquals(0, sb.getSpanStart(MozcBaseService.SPAN_BEFORE_CURSOR));
+    assertEquals(2, sb.getSpanEnd(MozcBaseService.SPAN_BEFORE_CURSOR));
   }
 
   @SmallTest
   public void testRenderInputConnection_commit() {
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
     service.selectionTracker = selectionTracker;
 
@@ -981,16 +981,16 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     SpannableStringBuilder sb = spannableStringBuilderCapture.getValue();
     assertEquals("012", sb.toString());
-    assertEquals(0, sb.getSpanStart(MozcService.SPAN_UNDERLINE));
-    assertEquals(3, sb.getSpanEnd(MozcService.SPAN_UNDERLINE));
-    assertEquals(2, sb.getSpanStart(MozcService.SPAN_CONVERT_HIGHLIGHT));
-    assertEquals(3, sb.getSpanEnd(MozcService.SPAN_CONVERT_HIGHLIGHT));
+    assertEquals(0, sb.getSpanStart(MozcBaseService.SPAN_UNDERLINE));
+    assertEquals(3, sb.getSpanEnd(MozcBaseService.SPAN_UNDERLINE));
+    assertEquals(2, sb.getSpanStart(MozcBaseService.SPAN_CONVERT_HIGHLIGHT));
+    assertEquals(3, sb.getSpanEnd(MozcBaseService.SPAN_CONVERT_HIGHLIGHT));
   }
 
   @SmallTest
   public void testRenderInputConnection_directInput() {
     // If mozc service doesn't consume the KeyEvent, delegate it to the sendKeyEvent.
-    MozcService service = createMockBuilder(MozcService.class)
+    MozcBaseService service = createMockBuilder(MozcBaseService.class)
         .addMockedMethods("sendKeyEvent")
         .createMock();
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
@@ -1019,7 +1019,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
    */
   @SmallTest
   public void testRenderInputConnection_switchInputMode() {
-    MozcService service = createInitializedService(createNiceMock(SessionExecutor.class));
+    MozcBaseService service = createInitializedService(createNiceMock(SessionExecutor.class));
     InputConnection inputConnection =
         new InputConnectionWrapper(createNiceMock(InputConnection.class), false) {
       @Override
@@ -1045,7 +1045,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testSendKeyEvent() {
-    MozcService service = createMockBuilder(MozcService.class)
+    MozcBaseService service = createMockBuilder(MozcBaseService.class)
         .addMockedMethods("requestHideSelf", "sendDownUpKeyEvents", "isInputViewShown",
                           "sendDefaultEditorAction", "getCurrentInputConnection")
         .createMock();
@@ -1155,7 +1155,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testSendKeyEventBack() {
-    MozcService service = createMockBuilder(MozcService.class)
+    MozcBaseService service = createMockBuilder(MozcBaseService.class)
         .addMockedMethods("requestHideSelf", "sendDownUpKeyEvents", "isInputViewShown",
                           "sendDefaultEditorAction")
         .createMock();
@@ -1212,7 +1212,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testSendKeyEventEnter() {
-    MozcService service = createMockBuilder(MozcService.class)
+    MozcBaseService service = createMockBuilder(MozcBaseService.class)
         .addMockedMethods("requestHideSelf", "sendDownUpKeyEvents", "isInputViewShown",
                           "sendDefaultEditorAction", "getCurrentInputEditorInfo")
         .createMock();
@@ -1257,7 +1257,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testRenderInputConnection_directInputDeletionRange() {
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
     service.selectionTracker = selectionTracker;
     InputConnection inputConnection = createStrictMock(InputConnection.class);
@@ -1318,7 +1318,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   public void testSwitchKeyboard() throws SecurityException, IllegalArgumentException {
     // Prepare the service.
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     // Prepares the mock.
     resetAll();
@@ -1359,7 +1359,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   // UiThreadTest annotation to handle callback of shared preference.
   @UiThreadTest
   public void testPreferenceInitialization() {
-    MozcService service = createService();
+    MozcBaseService service = createService();
     SharedPreferences sharedPreferences = getSharedPreferences();
     sharedPreferences.edit()
         .putString("pref_portrait_keyboard_layout_key", KeyboardLayout.QWERTY.name())
@@ -1473,7 +1473,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testMozcEventListener_onConversionCandidateSelected() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     // Set feedback listener and force to enable feedbacks.
     resetAll();
@@ -1503,7 +1503,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testMozcEventListener_onSymbolCandidateSelected() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     InputConnection inputConnection = createStrictMock(InputConnection.class);
     service.onCreateInputMethodInterface().restartInput(inputConnection, new EditorInfo());
 
@@ -1542,7 +1542,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testMozcEventListener_onNarrowModeChanged() {
     SessionExecutor sessionExecutorMock = createMock(SessionExecutor.class);
-    MozcService service = initializeMozcService(new MozcService(), sessionExecutorMock);
+    MozcBaseService service = initializeMozcService(new MozcBaseService(), sessionExecutorMock);
     ViewManagerInterface viewManagerMock = createMock(ViewManagerInterface.class);
     service.viewManager = viewManagerMock;
     ViewEventListener viewEventListener = service.new MozcEventListener();
@@ -1584,7 +1584,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testOnUndo() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     resetAll();
     List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
@@ -1599,7 +1599,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testOnSubmitPreedit() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     resetAll();
     sessionExecutor.submit(isA(EvaluationCallback.class));
@@ -1614,7 +1614,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testOnExpandSuggestion() {
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     resetAll();
     sessionExecutor.expandSuggestion(isA(EvaluationCallback.class));
@@ -1630,7 +1630,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     Resources resoureces = getInstrumentation().getTargetContext().getResources();
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
     replayAll();
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
 
     ViewManagerInterface viewManager = service.viewManager;
 
@@ -1990,7 +1990,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   public void testOnSound() {
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
     replayAll();
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     FeedbackListener listener = service.feedbackManager.feedbackListener;
     listener.onSound(AudioManager.FX_KEYPRESS_STANDARD, 0.1f);
     listener.onSound(FeedbackEvent.NO_SOUND, 0.1f);
@@ -2010,7 +2010,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
                   createNiceMock(MenuDialogListener.class))
         .addMockedMethods("onConfigurationChanged")
         .createMock();
-    MozcService service = createService();
+    MozcBaseService service = createService();
     invokeOnCreateInternal(
         service, viewManager, getSharedPreferences(), getDefaultDeviceConfiguration(),
         sessionExecutor);
@@ -2061,7 +2061,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     // Prepare the service.
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     service.selectionTracker = selectionTracker;
 
     resetAll();
@@ -2078,7 +2078,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testOnUpdateSelection_resetContext() {
     // Prepare the service.
-    MozcService service = createMockBuilder(MozcService.class)
+    MozcBaseService service = createMockBuilder(MozcBaseService.class)
         .addMockedMethods("isInputViewShown")
         .createMock();
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
@@ -2111,7 +2111,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testOnUpdateSelection_resetContextInivisibleKeyboard() {
     // Prepare the service.
-    MozcService service = createMockBuilder(MozcService.class)
+    MozcBaseService service = createMockBuilder(MozcBaseService.class)
         .addMockedMethods("isInputViewShown")
         .createMock();
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
@@ -2144,7 +2144,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     // Prepare the service.
     SessionExecutor sessionExecutor = createMock(SessionExecutor.class);
     SelectionTracker selectionTracker = createMock(SelectionTracker.class);
-    MozcService service = createInitializedService(sessionExecutor);
+    MozcBaseService service = createInitializedService(sessionExecutor);
     service.selectionTracker = selectionTracker;
 
     resetAll();
@@ -2193,13 +2193,13 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     for (TestData testData : testDataList) {
       EditorInfo editorInfo = new EditorInfo();
       editorInfo.inputType = testData.inputType;
-      assertEquals(testData.expectedMode, MozcService.getInputFieldType(editorInfo));
+      assertEquals(testData.expectedMode, MozcBaseService.getInputFieldType(editorInfo));
     }
   }
 
   @SmallTest
   public void testOnHardwareKeyboardCompositionModeChange() {
-    MozcService service = initializeService(createMockBuilder(MozcService.class)
+    MozcBaseService service = initializeService(createMockBuilder(MozcBaseService.class)
         .addMockedMethod("isInputViewShown").createMock());
     Context context = getInstrumentation().getTargetContext();
     ViewManager viewManager = createMockBuilder(ViewManager.class)
@@ -2232,7 +2232,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @ApiLevel(17)
   @TargetApi(17)
   public void testHandleGenericMotionEvent() {
-    MozcService service = createMockBuilder(MozcService.class)
+    MozcBaseService service = createMockBuilder(MozcBaseService.class)
         .addMockedMethods("isInputViewShown")
         .createMock();
     ViewEventListener eventListener = createNiceMock(ViewEventListener.class);

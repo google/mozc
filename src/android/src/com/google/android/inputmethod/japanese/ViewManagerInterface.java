@@ -39,6 +39,7 @@ import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.Har
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -49,7 +50,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 
 /**
@@ -179,7 +179,7 @@ public interface ViewManagerInterface extends MemoryManageable {
 
   public void onConfigurationChanged(Configuration newConfig);
 
-  public void setCursorAnchorInfo(CursorAnchorInfo info);
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper info);
 
   public void setCursorAnchorInfoEnabled(boolean enabled);
 

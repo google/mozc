@@ -57,6 +57,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchE
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
@@ -80,7 +81,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 
 import java.util.Collections;
@@ -1160,7 +1160,7 @@ public class ViewManager implements ViewManagerInterface {
   }
 
   @Override
-  public void setCursorAnchorInfo(CursorAnchorInfo cursorAnchorInfo) {
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper cursorAnchorInfo) {
     if (mozcView != null) {
       mozcView.setCursorAnchorInfo(cursorAnchorInfo);
     }

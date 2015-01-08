@@ -38,6 +38,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.base.Optional;
 
@@ -46,7 +47,6 @@ import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 
 /**
@@ -110,7 +110,7 @@ public class CandidateViewManagerTest extends InstrumentationTestCaseWithMock {
     keyboardCandidateView.update(CandidateViewManager.EMPTY_COMMAND);
     keyboardCandidateView.setVisibility(View.GONE);
     floatingCandidateView.setEditorInfo(isA(EditorInfo.class));
-    floatingCandidateView.setCursorAnchorInfo(isA(CursorAnchorInfo.class));
+    floatingCandidateView.setCursorAnchorInfo(isA(CursorAnchorInfoWrapper.class));
     floatingCandidateView.setCandidates(CandidateViewManager.EMPTY_COMMAND);
     floatingCandidateView.setVisibility(View.VISIBLE);
     replayAll();
@@ -149,9 +149,8 @@ public class CandidateViewManagerTest extends InstrumentationTestCaseWithMock {
     assertFalse(candidateViewManager.isFloatingMode());
     EditorInfo editorInfo = new EditorInfo();
     candidateViewManager.setEditorInfo(editorInfo);
-    CursorAnchorInfo cursorAnchorInfo = new CursorAnchorInfo.Builder().build();
+    CursorAnchorInfoWrapper cursorAnchorInfo = new CursorAnchorInfoWrapper();
     candidateViewManager.setCursorAnchorInfo(cursorAnchorInfo);
-
 
     resetAll();
     keyboardCandidateView.enableFoldButton(false);

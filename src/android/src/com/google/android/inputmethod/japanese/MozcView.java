@@ -45,6 +45,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.ui.SideFrameStubProxy;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.view.MozcImageView;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
@@ -73,7 +74,6 @@ import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.TranslateAnimation;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
@@ -452,7 +452,7 @@ public class MozcView extends FrameLayout implements MemoryManageable {
   }
 
   @TargetApi(21)
-  public void setCursorAnchorInfo(CursorAnchorInfo info) {
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {
     candidateViewManager.setCursorAnchorInfo(info);
   }
 

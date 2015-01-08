@@ -34,6 +34,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionM
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionCommand;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.view.MozcImageView;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
@@ -54,7 +55,6 @@ import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationSet;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.ScaleAnimation;
-import android.view.inputmethod.CursorAnchorInfo;
 
 /**
  * Draws mode indicator for floating candidate window.
@@ -105,7 +105,7 @@ public class FloatingModeIndicator {
   private final Animation outAnimation;
   private final int displayTime;
 
-  private CursorAnchorInfo cursorAnchorInfo = new CursorAnchorInfo.Builder().build();
+  private CursorAnchorInfoWrapper cursorAnchorInfo = new CursorAnchorInfoWrapper();
   /** True if the mode indicator is shown and is not hiding. */
   private boolean isVisible = false;
   private boolean hasComposition = false;
@@ -137,7 +137,7 @@ public class FloatingModeIndicator {
     drawRect = new Rect(0, 0, indicatorSize, indicatorSize);
   }
 
-  public void setCursorAnchorInfo(CursorAnchorInfo cursorAnchorInfo) {
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper cursorAnchorInfo) {
     this.cursorAnchorInfo = Preconditions.checkNotNull(cursorAnchorInfo);
   }
 
