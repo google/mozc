@@ -1157,27 +1157,13 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     }
   }
 
-  @SmallTest
-  public void testOnDetachedFromWindow() {
-    KeyboardViewBackgroundSurface keyboardViewBackgroundSurface =
-        createKeyboardViewBackgroundSurfaceMock();
-    keyboardViewBackgroundSurface.reset();
-    replayAll();
-    VisibilityProxy.setField(view, "backgroundSurface", keyboardViewBackgroundSurface);
-
-    view.onDetachedFromWindow();
-
-    verifyAll();
-  }
-
   @SuppressWarnings("unchecked")
   @SmallTest
   public void testSetSkinType() {
     Resources resources = getInstrumentation().getTargetContext().getResources();
     KeyboardViewBackgroundSurface keyboardViewBackgroundSurface =
         createKeyboardViewBackgroundSurfaceMock();
-    keyboardViewBackgroundSurface.requestUpdateKeyboard(
-        isA(Keyboard.class), isA(Set.class));
+    keyboardViewBackgroundSurface.reset(isA(Optional.class), isA(Set.class));
 
     DrawableCache drawableCache = createMockBuilder(DrawableCache.class)
         .withConstructor(Resources.class)
