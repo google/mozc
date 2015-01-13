@@ -54,7 +54,6 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.animation.Animation;
 import android.widget.LinearLayout;
 
@@ -275,8 +274,6 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     scrollGuideView.setScroller(conversionCandidateWordView.scroller);
     conversionCandidateWordView.scrollGuideView = scrollGuideView;
     conversionCandidateWordView.inputFrameFoldButtonView = getInputFrameFoldButton();
-    // To use Canvas#drawPicture(), the view shouldn't be h/w accelerated.
-    getInputFrameFoldButton().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
     reset();
   }

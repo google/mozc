@@ -147,8 +147,6 @@ import java.util.List;
     this.backgroundDrawableFactory = Preconditions.checkNotNull(backgroundDrawableFactory);
     this.drawableCache = Preconditions.checkNotNull(drawableCache);
     ImageView popUpView = new ImageView(Preconditions.checkNotNull(parent).getContext());
-    // To use Canvas#drawPicture(), the view shouldn't be h/w accelerated.
-    popUpView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     popUpView.setVisibility(View.GONE);
     this.popUp = new PopUpLayouter<ImageView>(parent, popUpView);
   }

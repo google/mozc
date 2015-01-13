@@ -660,11 +660,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     enableEmoji(emojiEnabled);
 
-    // Disable h/w acceleration to use a PictureDrawable.
-    for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
-      getMajorCategoryButton(majorCategory).setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-    }
-
     updateSkinAwareDrawable();
     reset();
   }

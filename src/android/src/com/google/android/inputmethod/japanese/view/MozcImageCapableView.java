@@ -35,7 +35,6 @@ import com.google.common.base.Preconditions;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-import android.view.View;
 import android.widget.ImageView;
 
 /**
@@ -67,8 +66,6 @@ public interface MozcImageCapableView {
 
     MozcImageCapableViewDelegate(MozcImageCapableView baseView) {
       this.baseView = Preconditions.checkNotNull(baseView);
-      // Disable h/w acceleration to use a PictureDrawable.
-      baseView.asImageView().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     }
 
     static boolean assertSrcAttribute(Resources resources, AttributeSet attrs) {

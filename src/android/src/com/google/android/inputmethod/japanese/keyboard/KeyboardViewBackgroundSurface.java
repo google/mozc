@@ -44,7 +44,6 @@ import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.Region.Op;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.PictureDrawable;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -147,8 +146,7 @@ import javax.annotation.Nullable;
       if (drawable == null) {
         return;
       }
-      drawDrawableInternal(drawable, x, y, width, height,
-                           height / (float) drawable.getIntrinsicHeight());
+      drawDrawableInternal(drawable, x, y, width, height);
     }
 
     @Override
@@ -163,20 +161,14 @@ import javax.annotation.Nullable;
       int scaledWidth = Math.round(drawable.getIntrinsicWidth() * scale);
       int scaledHeight = Math.round(drawable.getIntrinsicHeight() * scale);
       drawDrawableInternal(drawable, x + (width - scaledWidth) / 2, y + (height - scaledHeight) / 2,
-          scaledWidth, scaledHeight, scale);
+          scaledWidth, scaledHeight);
     }
 
-    private void drawDrawableInternal(Drawable drawable, int x, int y, int width, int height,
-                                      float scale) {
+    private void drawDrawableInternal(Drawable drawable, int x, int y, int width, int height) {
       int saveCount = canvas.save();
       try {
         canvas.translate(x, y);
-        if (drawable.getCurrent() instanceof PictureDrawable) {
-          canvas.scale(scale, scale);
-          drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-        } else {
-          drawable.setBounds(0, 0, width, height);
-        }
+        drawable.setBounds(0, 0, width, height);
         drawable.draw(canvas);
       } finally {
         canvas.restoreToCount(saveCount);

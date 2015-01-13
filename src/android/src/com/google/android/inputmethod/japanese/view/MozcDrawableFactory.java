@@ -31,6 +31,7 @@ package org.mozc.android.inputmethod.japanese.view;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import org.mozc.android.inputmethod.japanese.vectorgraphic.BufferedDrawable;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -53,7 +54,6 @@ import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.PictureDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 
@@ -188,7 +188,7 @@ class MozcDrawableFactory {
     byte tag = stream.readByte();
     switch (tag) {
       case DRAWABLE_PICTURE:
-        return Optional.<Drawable>of(createPictureDrawable(stream, skin));
+        return Optional.<Drawable>of(createBufferedPictureDrawable(stream, skin));
       case DRAWABLE_STATE_LIST:
         return Optional.<Drawable>of(createStateListDrawable(stream, skin));
       default:
@@ -197,10 +197,7 @@ class MozcDrawableFactory {
     return Optional.absent();
   }
 
-  // Note, PictureDrawable may cause runtime slowness.
-  // Instead, we can prepare pre-rendered bit-map drawable, by modifying the interface to take
-  // the drawable, which should be faster theoretically.
-  private static PictureDrawable createPictureDrawable(DataInputStream stream, Skin skin)
+  private static Drawable createBufferedPictureDrawable(DataInputStream stream, Skin skin)
       throws IOException {
     Preconditions.checkNotNull(stream);
     Preconditions.checkNotNull(skin);
@@ -419,7 +416,8 @@ class MozcDrawableFactory {
     }
 
     picture.endRecording();
-    return new MozcPictureDrawable(picture);
+    // H/W accelerated canvas doesn't support Picture so buffering is required.
+    return new BufferedDrawable(new MozcPictureDrawable(picture));
   }
 
   private void ensureTypeface(AssetManager assetManager) {

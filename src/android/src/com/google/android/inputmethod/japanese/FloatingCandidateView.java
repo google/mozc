@@ -491,13 +491,6 @@ public class FloatingCandidateView extends View {
         : new FloatingCandidateViewStub();
   }
 
-  @Override
-  protected void onFinishInflate() {
-    // Use software renderer since hardware renderer doesn't support Paint#setShadowLayer() and
-    // Canvas#drawPicture() which is used by MozcDrawable.
-    this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-  }
-
   public static boolean isAvailable() {
     return Build.VERSION.SDK_INT >= 21;
   }
