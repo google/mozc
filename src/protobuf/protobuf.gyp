@@ -32,18 +32,12 @@
     # We accept following warnings come from protobuf.
     # This list should be revised when protobuf is updated.
     'msvc_disabled_warnings_for_protoc': [
-      # 'witch statement contains 'default' but no 'case' labels
-      # http://msdn.microsoft.com/en-us/library/te26h1tz.aspx
-      '4065',
       # unary minus operator applied to unsigned type, result still unsigned.
       # http://msdn.microsoft.com/en-us/library/4kh09110.aspx
       '4146',
       # 'this' : used in base member initializer list
       # http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
       '4355',
-      # 'function' : not all control paths return a value
-      # http://msdn.microsoft.com/en-us/library/6deaf4k9.aspx
-      '4715',
       # 'type' : forcing value to bool 'true' or 'false'
       # (performance warning)
       # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
@@ -64,7 +58,6 @@
       '<(protobuf_cpp_root)/io/coded_stream.cc',
       '<(protobuf_cpp_root)/io/gzip_stream.cc',
       '<(protobuf_cpp_root)/io/printer.cc',
-      '<(protobuf_cpp_root)/io/strtod.cc',
       '<(protobuf_cpp_root)/io/tokenizer.cc',
       '<(protobuf_cpp_root)/io/zero_copy_stream.cc',
       '<(protobuf_cpp_root)/io/zero_copy_stream_impl.cc',
@@ -102,7 +95,6 @@
       '<(protobuf_cpp_root)/compiler/cpp/cpp_primitive_field.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_service.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_string_field.cc',
-      '<(protobuf_cpp_root)/compiler/java/java_context.cc',
       '<(protobuf_cpp_root)/compiler/java/java_doc_comment.cc',
       '<(protobuf_cpp_root)/compiler/java/java_enum.cc',
       '<(protobuf_cpp_root)/compiler/java/java_enum_field.cc',
@@ -110,15 +102,11 @@
       '<(protobuf_cpp_root)/compiler/java/java_field.cc',
       '<(protobuf_cpp_root)/compiler/java/java_file.cc',
       '<(protobuf_cpp_root)/compiler/java/java_generator.cc',
-      '<(protobuf_cpp_root)/compiler/java/java_generator_factory.cc',
       '<(protobuf_cpp_root)/compiler/java/java_helpers.cc',
-      '<(protobuf_cpp_root)/compiler/java/java_lazy_message_field.cc',
       '<(protobuf_cpp_root)/compiler/java/java_message.cc',
       '<(protobuf_cpp_root)/compiler/java/java_message_field.cc',
-      '<(protobuf_cpp_root)/compiler/java/java_name_resolver.cc',
       '<(protobuf_cpp_root)/compiler/java/java_primitive_field.cc',
       '<(protobuf_cpp_root)/compiler/java/java_service.cc',
-      '<(protobuf_cpp_root)/compiler/java/java_shared_code_generator.cc',
       '<(protobuf_cpp_root)/compiler/java/java_string_field.cc',
       '<(protobuf_cpp_root)/compiler/main.cc',
       '<(protobuf_cpp_root)/compiler/plugin.cc',
@@ -172,8 +160,6 @@
              '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
                 '-Wno-conversion-null',  # coded_stream.cc uses NULL to bool.
-                '-Wno-maybe-uninitialized',
-                '-Wno-return-type',
                 '-Wno-unused-function',
                 # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
                 # TODO(komatsu): Update the following two lines when we stop
