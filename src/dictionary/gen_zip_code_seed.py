@@ -62,7 +62,7 @@ ZIP_CODE_LABEL = 'ZIP_CODE'
 ZIP_CODE_COST = 7000
 
 
-class ZipEntry (object):
+class ZipEntry(object):
   """Container class for zip code entry."""
 
   def __init__(self, zip_code, address):
@@ -153,10 +153,10 @@ class SpecialMergeZip(object):
 
 _SPECIAL_CASES = [
     SpecialMergeZip(u'5900111', u'大阪府', u'堺市中区', [u'三原台']),
-    SpecialMergeZip(u'8710046', u'大分県', u'中津市', [u'金谷',
-                                                       u'西堀端',
-                                                       u'東堀端',
-                                                       u'古金谷']),
+    SpecialMergeZip(u'8710046', u'大分県', u'中津市',
+                    [u'金谷', u'西堀端', u'東堀端', u'古金谷']),
+    SpecialMergeZip(u'9218046', u'石川県', u'金沢市',
+                    [u'大桑町', u'三小牛町']),
     ]
 
 
