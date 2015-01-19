@@ -54,6 +54,18 @@ public class MushroomUtil {
   }
 
   /**
+   * Clears the proxy which is used to communicate between Mushroom activity and MozcService.
+   * <p>
+   * Should be called prior to launching Mushroom activity to avoid contamination of the results.
+   */
+  public static void clearProxy() {
+    MushroomResultProxy resultProxy = MushroomResultProxy.getInstance();
+    synchronized (resultProxy) {
+      resultProxy.clear();
+    }
+  }
+
+  /**
    * @return the List of applications which support Mushroom protocol.
    */
   public static List<ResolveInfo> getMushroomApplicationList(PackageManager packageManager) {

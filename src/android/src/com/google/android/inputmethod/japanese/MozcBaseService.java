@@ -869,13 +869,26 @@ public class MozcBaseService extends InputMethodService {
     MushroomResultProxy resultProxy = MushroomResultProxy.getInstance();
     String result;
     synchronized (resultProxy) {
-      // We need to obtain the result and then clear the all remaining result atomically.
+      // We need to obtain the result.
       result = resultProxy.getReplaceKey(attribute.fieldId);
-      resultProxy.clear();
     }
     if (result != null) {
       // Found the pending mushroom application result to the connecting field. Commit it.
       connection.commitText(result, MozcUtil.CURSOR_POSITION_TAIL);
+      // And clear the proxy.
+      // Previous implementation cleared the proxy even when the replace result is NOT found.
+      // This caused incompatible mushroom issue because the activity transition gets sometimes
+      // like following:
+      //   Mushroom activity -> Intermediate activity -> Original application activity
+      // In this case the intermediate activity unexpectedly consumed the result so nothing
+      // was committed to the application activity.
+      // To fix this issue the proxy is cleared when:
+      // - The result is committed. OR
+      // - Mushroom activity is launched.
+      // NOTE: In the worst case, result data might remain in the proxy.
+      synchronized (resultProxy) {
+        resultProxy.clear();
+      }
     }
   }
 
