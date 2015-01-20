@@ -99,7 +99,8 @@ public interface MozcImageCapableView {
       if (rawId != INVALID_RESOURCE_ID) {
         ImageView view = baseView.asImageView();
         view.setImageDrawable(
-            skin.getDrawable(baseView.asImageView().getContext().getResources(), rawId));
+            skin.getDrawable(baseView.asImageView().getContext().getResources(), rawId)
+                .getConstantState().newDrawable());
         view.invalidate();
       }
     }
