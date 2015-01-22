@@ -33,6 +33,7 @@ import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.ui.PopUpLayouter;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -81,10 +82,10 @@ import java.util.List;
     private final Handler dismissHandler;
 
     Pool(View parent, Looper looper,
-         BackgroundDrawableFactory backgroundDrawableFactory, DrawableCache drawableCache) {
+         BackgroundDrawableFactory backgroundDrawableFactory, Resources resources) {
       this.parent = Preconditions.checkNotNull(parent);
       this.backgroundDrawableFactory = Preconditions.checkNotNull(backgroundDrawableFactory);
-      this.drawableCache = Preconditions.checkNotNull(drawableCache);
+      this.drawableCache = new DrawableCache(Preconditions.checkNotNull(resources));
       this.dismissHandler = new Handler(Preconditions.checkNotNull(looper), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
@@ -134,6 +135,10 @@ import java.util.List;
       freeList.clear();
 
       drawableCache.clear();
+    }
+
+    void setSkin(Skin skin) {
+      drawableCache.setSkin(Preconditions.checkNotNull(skin));
     }
   }
 

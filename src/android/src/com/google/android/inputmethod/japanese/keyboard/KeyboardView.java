@@ -77,7 +77,7 @@ public class KeyboardView extends View implements MemoryManageable {
   private final DrawableCache drawableCache = new DrawableCache(getResources());
   private final PopUpPreview.Pool popupPreviewPool =
       new PopUpPreview.Pool(
-          this, Looper.getMainLooper(), backgroundDrawableFactory, drawableCache);
+          this, Looper.getMainLooper(), backgroundDrawableFactory, getResources());
   private final long popupDismissDelay;
 
   private Optional<Keyboard> keyboard = Optional.absent();
@@ -322,6 +322,7 @@ public class KeyboardView extends View implements MemoryManageable {
   public void setSkin(Skin skin) {
     Preconditions.checkNotNull(skin);
     drawableCache.setSkin(skin);
+    popupPreviewPool.setSkin(skin);
     backgroundDrawableFactory.setSkin(skin);
     if (keyboard.isPresent()) {
       backgroundSurface.reset(this.keyboard, Collections.<MetaState>emptySet());
