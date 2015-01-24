@@ -27,15 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_DATA_MANAGER_PACKED_SYSTEM_DICTIONARY_FORMAT_VERSION_H_
-#define MOZC_DATA_MANAGER_PACKED_SYSTEM_DICTIONARY_FORMAT_VERSION_H_
-
-namespace mozc {
-namespace packed {
-
-const int kSystemDictionaryFormatVersion = 5;
-
-}  // namespace packed
-}  // namespace mozc
-
-#endif  // MOZC_DATA_MANAGER_PACKED_SYSTEM_DICTIONARY_FORMAT_VERSION_H_
+(function() { function a(b){for(var d=e,f=[],c=0;c<b;c++)f.push(g(d));return f}function g(b){var d=h+l++;return m(8,b,d)}function n(b){return m(4,b,void 0)}function m(b,d,f){var c={},k;for(k in d)c[k]=d[k];c.type=b;f&&(c.id=f);return{spec:c}};var l=0,h="";var h="compactkbd-k-",p;p=n({id:"topBar",children:[m(10,{id:"candidateView",widthInWeight:11.2,heightInWeight:.6,numberRowWeight:10},void 0)],condition:"showTitleBar"});
+var e={widthInWeight:1,heightInWeight:1},q=a(10),r=g({widthInWeight:1.2}),s=n({id:"row1",children:[q,r]}),t=g({widthInWeight:1.5}),u=a(8),v=g({widthInWeight:1.7}),w=n({id:"row2",children:[t,u,v]}),x=g({widthInWeight:1.1}),y=a(9),z=g({widthInWeight:1.1}),A=n({id:"row3",children:[x,y,z]}),B=g({widthInWeight:1.1}),C=g({widthInWeight:1}),D=g({widthInWeight:1}),E=g({widthInWeight:5}),F=g({widthInWeight:1}),G=g({widthInWeight:1}),H=g({widthInWeight:1.1});
+google.ime.chrome.inputview.onLayoutLoaded({layoutID:"compactkbd",heightPercentOfWidth:.3,minimumHeight:380,fullHeightInWeight:4.6,children:[p,n({id:"keyboardContainer",children:[m(3,{id:"keyboardView",children:[[s,w,A,n({id:"row4",children:[B,C,D,E,F,G,H]})]],widthPercent:100,heightPercent:100},void 0)]})]}); })()
