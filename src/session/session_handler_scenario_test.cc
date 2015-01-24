@@ -130,6 +130,7 @@ const char *kScenarioFileList[] = {
   DATA_DIR "auto_partial_suggestion.txt",
   DATA_DIR "b12751061_scenario.txt",
   DATA_DIR "b16123009_scenario.txt",
+  DATA_DIR "b18112966_scenario.txt",
   DATA_DIR "b7132535_scenario.txt",
   DATA_DIR "b7321313_scenario.txt",
   DATA_DIR "b7548679_scenario.txt",

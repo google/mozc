@@ -580,9 +580,18 @@ void DictionaryPredictor::SetDebugDescription(PredictionTypes types,
   }
 }
 
-// return transition_cost[rid][result.lid] + result.wcost (+ penalties).
+// Returns cost for |result| when it's transitioned from |rid|.  Suffix penalty
+// is also added for non-realtime results.
 int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
-  int lm_cost = connector_->GetTransitionCost(rid, result.lid) + result.wcost;
+  // Sometimes transition cost is too high and causes a bug like b/18112966.
+  // For example, "接続詞 が" -> "始まる 動詞,五段活用,基本形" has very large cost
+  // and "始まる" is demoted.  To prevent such cases, ImmutableConverter
+  // computes transition from BOS/EOS too; see
+  // ImmutableConverterImpl::MakeLatticeNodesForHistorySegments().
+  // Here, taking the minimum of |cost1| and |cost2| has a similar effect.
+  const int cost1 = connector_->GetTransitionCost(rid, result.lid);
+  const int cost2 = connector_->GetTransitionCost(0, result.lid);
+  int lm_cost = min(cost1, cost2) + result.wcost;
   if (!(result.types & REALTIME)) {
     // Relatime conversion already adds perfix/suffix penalties to the result.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
