@@ -75,12 +75,8 @@ DEFINE_bool(use_mozc_renderer, true,
 
 namespace {
 
-// A key which associates an IBusProperty object with MozcEngineProperty.
-const char kGObjectDataKey[] = "ibus-mozc-aux-data";
-// An ID for a candidate which is not associated with a text.
+// The ID for candidates which are not associated with texts.
 const int32 kBadCandidateId = -1;
-// The ibus-memconf section name in which we're interested.
-const char kMozcSectionName[] = "engine/Mozc";
 
 #ifdef ENABLE_GTK_RENDERER
 const char kMozcPanelSectionName[] = "panel";
