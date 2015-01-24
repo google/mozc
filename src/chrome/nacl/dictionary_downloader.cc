@@ -74,7 +74,6 @@ class DictionaryDownloader::Impl {
   uint32 max_retry_;
   pp::CompletionCallbackFactory<Impl> callback_factory_;
   Mutex mutex_;
-  bool shut_down_;
   DISALLOW_COPY_AND_ASSIGN(Impl);
 };
 
@@ -92,8 +91,7 @@ DictionaryDownloader::Impl::Impl(
       random_delay_(0),
       retry_interval_(0),
       retry_backoff_count_(0),
-      max_retry_(0),
-      shut_down_(false) {
+      max_retry_(0) {
   callback_factory_.Initialize(this);
 }
 
