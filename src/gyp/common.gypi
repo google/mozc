@@ -435,6 +435,7 @@
             'EnableUAC': 'true',
             'UACExecutionLevel': '0',  # level="asInvoker"
             'UACUIAccess': 'false',    # uiAccess="false"
+            'MinimumRequiredVersion': '6.00',
           },
         },
         'msvs_configuration_attributes': {
@@ -677,8 +678,8 @@
           'OS_WIN',
           'UNICODE',
           'WIN32',
-          'WIN32_IE=0x0600',
-          'WINVER=0x0501',
+          'WIN32_IE=0x0800',
+          'WINVER=0x0600',
           'WIN32_LEAN_AND_MEAN',
           '_ATL_ALL_WARNINGS',
           '_ATL_ALLOW_CHAR_UNSIGNED',
@@ -688,8 +689,8 @@
           '_STL_MSVC',
           '_UNICODE',
           '_WIN32',
-          '_WIN32_WINDOWS=0x0501',
-          '_WIN32_WINNT=0x0501',
+          '_WIN32_WINDOWS=0x0600',
+          '_WIN32_WINNT=0x0600',
           '_WINDOWS',
         ],
         'include_dirs': [

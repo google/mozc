@@ -903,62 +903,11 @@ bool SystemUtil::IsPlatformSupported() {
     }
   }
   {
-    // Windows Vista SP1 <= |OSVERSION| < Windows 7: supported
+    // Windows Vista SP2 <= |OSVERSION| < Windows 7: supported
     OSVERSIONINFOEX osvi = {};
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     osvi.dwMajorVersion = 6;
     osvi.dwMinorVersion = 0;
-    osvi.wServicePackMajor = 1;
-    DWORDLONG conditional = 0;
-    VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-    const DWORD typemask = VER_MAJORVERSION | VER_MINORVERSION |
-                           VER_SERVICEPACKMAJOR;
-    if (::VerifyVersionInfo(&osvi, typemask, conditional) != 0) {
-      return true;  // supported
-    }
-  }
-  {
-    // Windows Vista RTM <= |OSVERSION| < Windows Vista SP1: not supported
-    OSVERSIONINFOEX osvi = {};
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 0;
-    osvi.wServicePackMajor = 0;
-    DWORDLONG conditional = 0;
-    VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-    const DWORD typemask = VER_MAJORVERSION | VER_MINORVERSION |
-                           VER_SERVICEPACKMAJOR;
-    if (::VerifyVersionInfo(&osvi, typemask, conditional) != 0) {
-      return false;  // not supported
-    }
-  }
-  {
-    // Windows XP x64/Server 2003 <= |OSVERSION| < Windows Vista RTM: supported
-    // ---
-    // Note: We do not oficially support these platforms but allows users to
-    //   install Mozc into them.  See b/5182031 for the background information.
-    OSVERSIONINFOEX osvi = {};
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 5;
-    osvi.dwMinorVersion = 2;
-    DWORDLONG conditional = 0;
-    VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-    const DWORD typemask = VER_MAJORVERSION | VER_MINORVERSION;
-    if (::VerifyVersionInfo(&osvi, typemask, conditional) != 0) {
-      return true;  // supported
-    }
-  }
-  {
-    // Windows XP SP2 <= |OSVERSION| < Windows XP x64/Server 2003: supported
-    OSVERSIONINFOEX osvi = {};
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 5;
-    osvi.dwMinorVersion = 1;
     osvi.wServicePackMajor = 2;
     DWORDLONG conditional = 0;
     VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
@@ -970,7 +919,7 @@ bool SystemUtil::IsPlatformSupported() {
       return true;  // supported
     }
   }
-  // |OSVERSION| < Windows XP SP2: not supported
+  // |OSVERSION| < Windows Vista SP2: not supported
   return false;  // not support
 #else  // !OS_LINUX && !OS_MACOSX && !OS_WIN
 #error "Unsupported platform".
