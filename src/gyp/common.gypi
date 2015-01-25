@@ -158,28 +158,28 @@
       ['target_platform=="Android" and android_compiler=="clang"', {
         'compiler_target': 'clang',
         'compiler_target_version_int': 305,  # Clang 3.5 or higher
-        'compiler_host': 'gcc',
-        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 305,  # Clang 3.5 or higher
       }],
       ['target_platform=="Android" and android_compiler=="gcc"', {
         'compiler_target': 'gcc',
         'compiler_target_version_int': 409,  # GCC 4.9 or higher
-        'compiler_host': 'gcc',
-        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 305,  # Clang 3.5 or higher
       }],
       ['target_platform=="NaCl"', {
         'compiler_target': 'clang',
         'compiler_target_version_int': 303,  # Clang 3.3 or higher
-        'compiler_host': 'gcc',
-        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 305,  # Clang 3.5 or higher
       }],
       ['target_platform=="Linux"', {
         # enable_gtk_renderer represents if mozc_renderer is supported on Linux
         # or not.
-        'compiler_target': 'gcc',
-        'compiler_target_version_int': 406,  # GCC 4.6 or higher
-        'compiler_host': 'gcc',
-        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+        'compiler_target': 'clang',
+        'compiler_target_version_int': 305,  # Clang 3.5 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 305,  # Clang 3.5 or higher
         'enable_gtk_renderer%': 1,
       }, {  # else
         'enable_gtk_renderer%': 0,
@@ -874,11 +874,21 @@
         ['NM', '<(pnacl_bin_dir)/pnacl-nm'],
         ['READELF', '<(pnacl_bin_dir)/pnacl-readelf'],
         ['AR.host', '<!(which ar)'],
-        ['CC.host', '<!(which gcc)'],
-        ['CXX.host', '<!(which g++)'],
+        ['CC.host', '<!(which clang)'],
+        ['CXX.host', '<!(which clang++)'],
         ['LD.host', '<!(which ld)'],
         ['NM.host', '<!(which nm)'],
         ['READELF.host', '<!(which readelf)'],
+      ],
+    }],
+    ['target_platform=="Linux"', {
+      'make_global_settings': [
+        ['AR', '<!(which ar)'],
+        ['CC', '<!(which clang)'],
+        ['CXX', '<!(which clang++)'],
+        ['LD', '<!(which ld)'],
+        ['NM', '<!(which nm)'],
+        ['READELF', '<!(which readelf)'],
       ],
     }],
     ['target_platform=="Android"', {
@@ -940,8 +950,8 @@
         ['NM', '<(ndk_bin_dir)/<(toolchain_prefix)-nm'],
         ['READELF', '<(ndk_bin_dir)/<(toolchain_prefix)-readelf'],
         ['AR.host', '<!(which ar)'],
-        ['CC.host', '<!(which gcc)'],
-        ['CXX.host', '<!(which g++)'],
+        ['CC.host', '<!(which clang)'],
+        ['CXX.host', '<!(which clang++)'],
         ['LD.host', '<!(which ld)'],
         ['NM.host', '<!(which nm)'],
         ['READELF.host', '<!(which readelf)'],

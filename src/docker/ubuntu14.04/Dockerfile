@@ -35,7 +35,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN dpkg --add-architecture i386
 RUN apt-get update
 ## Common packages for linux build environment
-RUN apt install -y g++ python pkg-config subversion git curl bzip2 unzip make
+RUN apt install -y clang-3.5 python pkg-config subversion git curl bzip2 unzip make
 ## Packages for linux desktop version
 RUN apt install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
