@@ -392,11 +392,6 @@
                       '-mthumb',  # Force thumb interaction set for smaller file size.
                     ],
                   }],
-                  ['android_stl=="stlport"', {
-                    'defines': [
-                      'MOZC_USE_STLPORT',
-                    ],
-                  }],
                 ],
               }],
             ],
