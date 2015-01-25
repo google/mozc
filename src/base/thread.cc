@@ -108,7 +108,7 @@ void Thread::Terminate() {
   }
 }
 
-#else
+#else  // OS_WIN
 // Thread implementation for pthread-based platforms. Currently all the
 // platforms except for Windows use pthread.
 
@@ -258,8 +258,7 @@ void Thread::Terminate() {
 
 #endif  // OS_WIN
 
-Thread::Thread()
-    : state_(new ThreadInternalState) {}
+Thread::Thread() : state_(new ThreadInternalState) {}
 
 Thread::~Thread() {
   Detach();
@@ -267,51 +266,6 @@ Thread::~Thread() {
 
 void Thread::SetJoinable(bool joinable) {
   state_->joinable_ = joinable;
-}
-
-namespace {
-
-#ifdef OS_WIN
-unsigned __stdcall DetachedThreadFuncWin(void *ptr) {
-  scoped_ptr<DetachedThread> p(static_cast<DetachedThread *>(ptr));
-  p->Run();
-  return 0;
-}
-#else
-void *DetachedThreadFuncPosix(void *ptr) {
-  scoped_ptr<DetachedThread> p(static_cast<DetachedThread *>(ptr));
-  p->Run();
-  return 0;
-}
-#endif  // OS_WIN
-
-}  // namespace
-
-DetachedThread::DetachedThread() {}
-
-DetachedThread::~DetachedThread() {}
-
-bool DetachedThread::Start() {
-#ifdef OS_WIN
-  HANDLE handle = reinterpret_cast<HANDLE>(_beginthreadex(
-      NULL, 0, DetachedThreadFuncWin, this, 0, NULL));
-  if (0 == handle) {
-    delete this;
-    return false;
-  }
-  ::CloseHandle(handle);
-  return true;
-#else
-  pthread_attr_t tattr;
-  pthread_attr_init(&tattr);
-  pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);
-  pthread_t thread_id;
-  if (0 != pthread_create(&thread_id, &tattr, DetachedThreadFuncPosix, this)) {
-    delete this;
-    return false;
-  }
-  return true;
-#endif  // OS_WIN
 }
 
 }  // namespace mozc

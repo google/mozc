@@ -30,7 +30,6 @@
 #ifndef MOZC_BASE_THREAD_H_
 #define MOZC_BASE_THREAD_H_
 
-#include "base/compiler_specific.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 
@@ -62,17 +61,6 @@ class Thread {
   scoped_ptr<ThreadInternalState> state_;
 
   DISALLOW_COPY_AND_ASSIGN(Thread);
-};
-
-class DetachedThread {
- public:
-  DetachedThread();
-  virtual ~DetachedThread();
-  bool Start();
-  virtual void Run() = 0;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(DetachedThread);
 };
 
 }  // namespace mozc
