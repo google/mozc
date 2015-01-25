@@ -485,10 +485,10 @@ def ParseGypOptions(args=None, values=None):
                       help='A path to the binary directory of wix.')
 
     # For internal Windows builds, gyp is expected to generate solution files
-    # for Visual Studio 2010, which is a default compiler for Mozc.  However,
+    # for Visual Studio 2013, which is a default compiler for Mozc.  However,
     # you can specify the target version explicitly via 'msvs_version' option
     # as follows.
-    parser.add_option('--msvs_version', dest='msvs_version', default='2010',
+    parser.add_option('--msvs_version', dest='msvs_version', default='2013',
                       help='Specifies the target MSVS version.')
 
   return parser.parse_args(args, values)

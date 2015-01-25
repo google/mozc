@@ -62,11 +62,6 @@
           'GTEST_HAS_TR1_TUPLE=1',
         ],
         'conditions': [
-          ['_toolset=="target" and compiler_target=="msvs" and compiler_target_version_int==1700', {
-            'gtest_defines': [
-              '_VARIADIC_MAX=10',  # for gtest/gmock on VC++ 2012
-            ],
-          }],
           # TODO(yukawa): Get rid of the following workaround when C++11 is
           # enabled on all the platforms.
           ['target_platform!="Windows"', {

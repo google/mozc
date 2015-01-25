@@ -126,18 +126,6 @@
     'conditions': [
       ['OS=="win"', {
         'conditions': [
-          ['MSVS_VERSION=="2010"', {
-            'compiler_target': 'msvs',
-            'compiler_target_version_int': 1600,  # Visual C++ 2010 or higher
-            'compiler_host': 'msvs',
-            'compiler_host_version_int': 1600,  # Visual C++ 2010 or higher
-          }],
-          ['MSVS_VERSION=="2012"', {
-            'compiler_target': 'msvs',
-            'compiler_target_version_int': 1700,  # Visual C++ 2012 or higher
-            'compiler_host': 'msvs',
-            'compiler_host_version_int': 1700,  # Visual C++ 2012 or higher
-          }],
           ['MSVS_VERSION=="2013"', {
             'compiler_target': 'msvs',
             'compiler_target_version_int': 1800,  # Visual C++ 2013 or higher
