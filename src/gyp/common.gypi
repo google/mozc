@@ -34,9 +34,6 @@
 # http://src.chromium.org/viewvc/chrome/trunk/src/build/common.gypi
 {
   'variables': {
-    # Set 1 when using two-pass build
-    'enable_two_pass_build%': 0,
-
     # Top directory of third party libraries.
     'third_party_dir': '<(DEPTH)/third_party',
 

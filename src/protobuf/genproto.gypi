@@ -36,19 +36,14 @@
       ['use_libprotobuf==1', {
         'protoc_wrapper_additional_options': [],
         'additional_inputs': [],
-      }],
-      ['use_libprotobuf==0 and enable_two_pass_build==0', {
+      }, {  # else
         'protoc_wrapper_additional_options': ['--protoc_dir=<(PRODUCT_DIR)'],
         'additional_inputs': ['<(PRODUCT_DIR)/protoc<(EXECUTABLE_SUFFIX)'],
-      }],
-      ['use_libprotobuf==0 and enable_two_pass_build==1', {
-        'protoc_wrapper_additional_options': ['--protoc_dir=<(mozc_build_tools_dir)'],
-        'additional_inputs': [],
       }],
     ],
   },
   'conditions': [
-    ['use_libprotobuf==0 and enable_two_pass_build==0', {
+    ['use_libprotobuf==0', {
       'dependencies': [
         '<(DEPTH)/protobuf/protobuf.gyp:protoc#host',
       ],

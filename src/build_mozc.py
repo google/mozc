@@ -34,7 +34,6 @@
 Typical usage:
 
   % python build_mozc.py gyp
-  % python build_mozc.py build_tools -c Release
   % python build_mozc.py build base/base.gyp:base
 """
 
@@ -201,7 +200,6 @@ def GetGypFileNames(options):
 
   for name in mozc_top_level_names:
     gyp_file_names.extend(glob.glob(name + '/*.gyp'))
-  gyp_file_names.extend(glob.glob('%s/build_tools/*/*.gyp' % SRC_DIR))
   # Include subdirectories of data/test/session/scenario
   gyp_file_names.extend(glob.glob('%s/data/test/session/scenario/*.gyp' %
                                   SRC_DIR))
@@ -998,23 +996,6 @@ def GypMain(options, unused_args, _):
 
 
 
-def BuildToolsMain(options, unused_args, original_directory_name):
-  """The main function for 'build_tools' command."""
-  if not IsWindows():
-    logging.info('build_tools is deprecated on this platform.')
-    return
-
-  build_tools_dir = os.path.join(GetRelPath(os.getcwd(),
-                                            original_directory_name),
-                                 SRC_DIR, 'build_tools')
-  build_tools_targets = [
-      'out_win/%s:build_tools' % options.configuration,
-  ]
-
-  for build_tools_target in build_tools_targets:
-    BuildMain(options, [build_tools_target], original_directory_name)
-
-
 def CanonicalTargetToGypFileAndTargetName(target):
   """Parses the target string."""
   if ':' not in target:
@@ -1424,7 +1405,6 @@ def ShowHelpAndExit():
   print 'Commands: '
   print '  gyp          Generate project files.'
   print '  build        Build the specified target.'
-  print '  build_tools  Build tools used by the build command.'
   print '  runtests     Build all tests and run them.'
   print '  clean        Clean all the build files and directories.'
   print ''
@@ -1450,7 +1430,6 @@ def main():
 
   command_to_procedure = {
       'gyp': (ParseGypOptions, GypMain),
-      'build_tools': (ParseBuildOptions, BuildToolsMain),
       'build': (ParseBuildOptions, BuildMain),
       'runtests': (ParseRunTestsOptions, RunTestsMain),
       'clean': (ParseCleanOptions, CleanMain)}

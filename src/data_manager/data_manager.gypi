@@ -245,12 +245,8 @@
       'target_name': 'gen_embedded_dictionary_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
-      'conditions': [
-        ['enable_two_pass_build==0', {
-          'dependencies': [
-            '<(DEPTH)/dictionary/dictionary.gyp:gen_system_dictionary_data_main#host',
-          ],
-        }],
+      'dependencies': [
+        '<(DEPTH)/dictionary/dictionary.gyp:gen_system_dictionary_data_main#host',
       ],
       'actions': [
         {
@@ -260,14 +256,9 @@
             'gen_test_dictionary_flag': '<(gen_test_dictionary)',
             'additional_inputs': [],
             'additional_actions': [],
+            'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
+            'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
             'conditions': [
-              ['enable_two_pass_build==0', {
-                'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
-                'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
-              }, {  # else
-                # Use the pre-built binariy when 2-pass build is enabled.
-                'generator': '<(mozc_build_tools_dir)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
-              }],
               ['use_packed_dictionary==1', {
                 'additional_inputs': [
                   '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
@@ -351,25 +342,13 @@
       'target_name': 'gen_separate_dictionary_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
-      'conditions': [
-        ['enable_two_pass_build==0', {
-          'dependencies': [
-            '<(DEPTH)/dictionary/dictionary.gyp:gen_system_dictionary_data_main#host',
-          ],
-        }],
+      'dependencies': [
+        '<(DEPTH)/dictionary/dictionary.gyp:gen_system_dictionary_data_main#host',
       ],
       'variables': {
         'additional_inputs%': [],
-        'conditions': [
-          # Use the pre-built binariy when 2-pass build is enabled.
-          ['enable_two_pass_build==0', {
-            'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
-            'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
-          }, {  # else
-            # Use the pre-built binariy when 2-pass build is enabled.
-            'generator': '<(mozc_build_tools_dir)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
-          }],
-        ],
+        'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
+        'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
       },
       'actions': [
         {
