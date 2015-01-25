@@ -36,8 +36,7 @@
 #include <vssym32.h>
 #include <windows.h>
 #include <winuser.h>
-// Workaround against KB813540
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 #include <atlcom.h>
 #include <atlstr.h>
 #include <atlwin.h>

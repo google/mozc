@@ -36,10 +36,9 @@
 #include <Psapi.h>
 #include <Winternl.h>
 
-// Workaround against KB813540
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 
 #include <clocale>
 #include <memory>

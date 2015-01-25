@@ -34,8 +34,7 @@
 #include <rpcsal.h>
 #include <msctf.h>
 #include <ctffunc.h>
-// Workaround against KB813540
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 
 #include "base/port.h"
 #include "session/commands.pb.h"

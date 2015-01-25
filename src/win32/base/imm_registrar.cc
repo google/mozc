@@ -32,8 +32,7 @@
 
 #include <windows.h>
 #include <WinNls32.h>
-// Workaround against KB813540
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 #include <strsafe.h>
 
 #include <iomanip>

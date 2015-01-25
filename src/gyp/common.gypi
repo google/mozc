@@ -684,11 +684,6 @@
         'include_dirs': [
           '<@(msvs_includes)',
           '<(additional_third_party_dir)/wtl/files/include',
-          # Add atl_wrapper dir into the 'include_dirs' so that we can
-          # include the header file as <atlbase_mozc.h>, which
-          # is more lintian-friendly than "atlbase_mozc.h".
-          # See b/5101916 for the background information.
-          '<(DEPTH)/win32/atl_wrapper',
         ],
         'msvs_cygwin_shell': 0,
         'msvs_disabled_warnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX

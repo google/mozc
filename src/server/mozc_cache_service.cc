@@ -31,8 +31,7 @@
 #define PSAPI_VERSION 1  // for <psapi.h>
 #include <windows.h>
 #if !defined(NO_LOGGING)
-// Workaround against KB813540
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 #include <atlstr.h>  // for CString
 #endif  // !NO_LOGGING
 #include <psapi.h>

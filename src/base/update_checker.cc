@@ -33,8 +33,7 @@
 #include <Windows.h>
 #include <tchar.h>
 #include <strsafe.h>
-// Workaround against KB813540
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 #include <atlcom.h>
 
 #include <string>

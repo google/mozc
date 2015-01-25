@@ -35,8 +35,7 @@
 #include <shlobj.h>
 #include <time.h>
 #include <sddl.h>
-// Workaround against KB813540
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 #else
 #include <pwd.h>
 #include <sys/stat.h>
