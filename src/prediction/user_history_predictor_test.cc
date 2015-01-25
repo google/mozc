@@ -1001,6 +1001,92 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
             segments.segment(0).candidate(1).value);
 }
 
+TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  predictor->WaitForSyncer();
+  predictor->ClearAllHistory();
+  predictor->WaitForSyncer();
+
+  Segments segments;
+
+  // Scenario 1: A user have commited "亜" by prediction and then commit "。".
+  // Then, the unigram "亜" is learned but the bigram "亜。" shouldn't.
+  // "あ"
+  MakeSegmentsForPrediction("\xE3\x81\x82", &segments);
+  // "亜"
+  AddCandidate(0, "\xE4\xBA\x9C", &segments);
+  predictor->Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  // "。"
+  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
+  AddCandidate(1, "\xE3\x80\x82", &segments);
+  predictor->Finish(&segments);
+
+  segments.Clear();
+  MakeSegmentsForPrediction("\xE3\x81\x82", &segments);  // "あ"
+  ASSERT_TRUE(predictor->Predict(&segments)) << segments.DebugString();
+  // "亜"
+  EXPECT_EQ("\xE4\xBA\x9C", segments.segment(0).candidate(0).value);
+
+  segments.Clear();
+
+  // Scenario 2: the opposite case to Scenario 1, i.e., "。亜".  Nothing is
+  // suggested from symbol "。".
+  // "。"
+  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
+  // "。"
+  AddCandidate(0, "\xE3\x80\x82", &segments);
+  predictor->Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  // "あ"
+  MakeSegmentsForPrediction("\xE3\x81\x82", &segments);
+  // "亜"
+  AddCandidate(1, "\xE4\xBA\x9C", &segments);
+  predictor->Finish(&segments);
+
+  segments.Clear();
+  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);  // "。"
+  EXPECT_FALSE(predictor->Predict(&segments)) << segments.DebugString();
+
+  segments.Clear();
+
+  // Scenario 3: If the history segment looks like a sentence and committed
+  // value is a punctuation, the concatenated entry is also learned.
+  MakeSegmentsForPrediction(
+      // "おつかれさまです"
+      "\xE3\x81\x8A\xE3\x81\xA4\xE3\x81\x8B\xE3\x82\x8C\xE3\x81\x95"
+      "\xE3\x81\xBE\xE3\x81\xA7\xE3\x81\x99",
+      &segments);
+  AddCandidate(0,
+               // "お疲れ様です"
+               "\xE3\x81\x8A\xE7\x96\xB2\xE3\x82\x8C\xE6\xA7\x98"
+               "\xE3\x81\xA7\xE3\x81\x99",
+               &segments);
+  predictor->Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  // "。"
+  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
+  AddCandidate(1, "\xE3\x80\x82", &segments);
+  predictor->Finish(&segments);
+
+  segments.Clear();
+  // "おつかれ"
+  MakeSegmentsForPrediction("\xE3\x81\x8A\xE3\x81\xA4\xE3\x81\x8B\xE3\x82\x8C",
+                            &segments);
+  ASSERT_TRUE(predictor->Predict(&segments)) << segments.DebugString();
+  // "お疲れ様です"
+  EXPECT_EQ("\xE3\x81\x8A\xE7\x96\xB2\xE3\x82\x8C\xE6\xA7\x98"
+            "\xE3\x81\xA7\xE3\x81\x99",
+            segments.segment(0).candidate(0).value);
+  // "お疲れ様です。"
+  EXPECT_EQ("\xE3\x81\x8A\xE7\x96\xB2\xE3\x82\x8C\xE6\xA7\x98"
+            "\xE3\x81\xA7\xE3\x81\x99\xE3\x80\x82",
+            segments.segment(0).candidate(1).value);
+}
+
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreceedingPunctuation) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
   predictor->WaitForSyncer();

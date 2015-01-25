@@ -132,6 +132,19 @@ bool IsPunctuation(const string &value) {
           value == "\xEF\xBC\x8C" || value == "\xEF\xBC\x8E");
 }
 
+bool IsSentenceLikeCandidate(const Segment::Candidate &candidate) {
+  // A sentence should have a long reading.  Length check is done using key to
+  // absorb length difference in value variation, e.g.,
+  // "〜ください" and "〜下さい".
+  if (candidate.value.empty() || Util::CharsLen(candidate.key) < 8) {
+    return false;
+  }
+  // Our primary target sentence ends with Hiragana, e.g., "〜ます".
+  const ConstChar32ReverseIterator iter(candidate.value);
+  bool ret = Util::GetScriptType(iter.Get()) == Util::HIRAGANA;
+  return ret;
+}
+
 // Return romanaized string.
 string ToRoman(const string &str) {
   string result;
@@ -1636,7 +1649,9 @@ void UserHistoryPredictor::Finish(Segments *segments) {
       // Check if the previous value looks like a sentence.
       segments->history_segments_size() > 0 &&
       segments->history_segment(
-          segments->history_segments_size() - 1).candidates_size() > 0) {
+          segments->history_segments_size() - 1).candidates_size() > 0 &&
+      IsSentenceLikeCandidate(segments->history_segment(
+          segments->history_segments_size() - 1).candidate(0))) {
     const Entry *entry = &(dic_->Head()->value);
     DCHECK(entry);
     const string &last_value =
@@ -1798,6 +1813,12 @@ void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
             segments->history_segments_size() - 1);
     const SegmentForLearning &conversion_segment =
         learning_segments.conversion_segment(0);
+    // Don't learn a link from/to a punctuation.  Note that another piece of
+    // code handles learning for (sentence + punctuation) form; see Finish().
+    if (IsPunctuation(history_segment.value) ||
+        IsPunctuation(conversion_segment.value)) {
+      return;
+    }
     Entry *history_entry = dic_->MutableLookupWithoutInsert(
         LearningSegmentFingerprint(history_segment));
     NextEntry next_entry;
