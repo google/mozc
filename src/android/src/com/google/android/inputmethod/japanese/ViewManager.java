@@ -1160,6 +1160,13 @@ public class ViewManager implements ViewManagerInterface {
   }
 
   @Override
+  public void onStartInputView(EditorInfo editorInfo) {
+    if (mozcView != null) {
+      mozcView.onStartInputView(editorInfo);
+    }
+  }
+
+  @Override
   public void setCursorAnchorInfo(CursorAnchorInfoWrapper cursorAnchorInfo) {
     if (mozcView != null) {
       mozcView.setCursorAnchorInfo(cursorAnchorInfo);

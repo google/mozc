@@ -65,6 +65,7 @@ public class FloatingCandidateView extends View {
   private interface FloatingCandidateViewProxy {
     public void draw(Canvas canvas);
     public void viewSizeChanged(int width, int height);
+    public void onStartInputView(EditorInfo editorInfo);
     public void setCursorAnchorInfo(CursorAnchorInfoWrapper info);
     public void setCandidates(Command outCommand);
     public void setEditorInfo(EditorInfo editorInfo);
@@ -80,6 +81,9 @@ public class FloatingCandidateView extends View {
 
     @Override
     public void viewSizeChanged(int width, int height) {}
+
+    @Override
+    public void onStartInputView(EditorInfo editorInfo) {}
 
     @Override
     public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {}
@@ -223,6 +227,11 @@ public class FloatingCandidateView extends View {
     public void viewSizeChanged(int width, int height) {
       layoutRenderer.setMaxWidth(width - windowHorizontalMargin * 2);
       updateCandidateWindowWithSize(width, height);
+    }
+
+    @Override
+    public void onStartInputView(EditorInfo editorInfo) {
+      modeIndicator.onStartInputView(editorInfo);
     }
 
     /** Sets {@link CursorAnchorInfoWrapper} to update the candidate window position. */
@@ -511,6 +520,10 @@ public class FloatingCandidateView extends View {
   public void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
     super.onSizeChanged(width, height, oldWidth, oldHeight);
     floatingCandidateViewProxy.viewSizeChanged(width, height);
+  }
+
+  public void onStartInputView(EditorInfo editorInfo) {
+    floatingCandidateViewProxy.onStartInputView(editorInfo);
   }
 
   /** Sets {@link CursorAnchorInfoWrapper} to update the candidate window position. */

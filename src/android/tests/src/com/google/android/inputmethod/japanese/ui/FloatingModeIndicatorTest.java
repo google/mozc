@@ -41,8 +41,10 @@ import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWith
 
 import android.annotation.TargetApi;
 import android.os.Handler;
+import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 
 /**
  * Test for FloatingCandidateLayoutRenderer.
@@ -68,46 +70,92 @@ public class FloatingModeIndicatorTest extends InstrumentationTestCaseWithMock {
           .buildPartial())
       .buildPartial();
 
-  private void clearMessages(Handler handler) {
-    handler.removeMessages(FloatingModeIndicator.HIDE_MODE_INDICATOR);
+  private void checkMessages(
+      FloatingModeIndicator modeIndicator, boolean hasHideMessage, boolean hasShowMessage) {
+    Handler handler = modeIndicator.handler;
+    assertEquals(hasHideMessage, handler.hasMessages(FloatingModeIndicator.HIDE_MODE_INDICATOR));
+    assertEquals(hasShowMessage, handler.hasMessages(FloatingModeIndicator.SHOW_MODE_INDICATOR));
   }
 
+  private void checkMessageAndClear(Handler handler, int what) {
+    assertTrue(handler.hasMessages(what));
+    handler.removeMessages(what);
+  }
+
+  private void checkMessageAndInvoke(FloatingModeIndicator modeIndicator, int what) {
+    checkMessageAndClear(modeIndicator.handler, what);
+    modeIndicator.messageCallback.handleWhat(what);
+  }
+
+  @UiThreadTest
   @SmallTest
   public void testBasicBehavior() {
     View parentView = createViewMockBuilder(View.class).createNiceMock();
     FloatingModeIndicator modeIndicator = new FloatingModeIndicator(parentView);
 
-    replayAll();
+    EditorInfo editorInfo = new EditorInfo();
+    editorInfo.packageName = "test_package";
 
     assertEquals(View.GONE, modeIndicator.popup.getContentView().getVisibility());
     assertFalse(modeIndicator.isVisible());
 
-    modeIndicator.setCompositionMode(CompositionMode.HIRAGANA);
-    assertTrue(modeIndicator.isVisible());
-    assertTrue(modeIndicator.handler.hasMessages(FloatingModeIndicator.HIDE_MODE_INDICATOR));
-    clearMessages(modeIndicator.handler);
+    replayAll();
 
+    // Show then hide indicator by onStartInputView().
+    modeIndicator.onStartInputView(editorInfo);
+    assertFalse(modeIndicator.isVisible());
+    checkMessageAndInvoke(modeIndicator, FloatingModeIndicator.SHOW_MODE_INDICATOR);
+    assertTrue(modeIndicator.isVisible());
+    checkMessageAndInvoke(modeIndicator, FloatingModeIndicator.HIDE_MODE_INDICATOR);
+    assertFalse(modeIndicator.isVisible());
+    checkMessages(modeIndicator, false, false);
+
+    // Show indicator by setCompositionMode().
+    modeIndicator.setCompositionMode(CompositionMode.HALF_ASCII);
+    assertFalse(modeIndicator.isVisible());
+    checkMessageAndInvoke(modeIndicator, FloatingModeIndicator.SHOW_MODE_INDICATOR);
+    assertTrue(modeIndicator.isVisible());
+    assertSame(modeIndicator.abcIndicatorDrawable,
+               modeIndicator.popup.getContentView().getDrawable());
+    checkMessages(modeIndicator, true, false);
+
+    // Change the indicator drawable by setCompositionMode().
+    modeIndicator.setCompositionMode(CompositionMode.HIRAGANA);
+    // show() is invoked instead of showWithDelay() since the indicator is already shown.
+    checkMessages(modeIndicator, true, false);
+    assertTrue(modeIndicator.isVisible());
+    assertSame(modeIndicator.kanaIndicatorDrawable,
+               modeIndicator.popup.getContentView().getDrawable());
+    checkMessageAndInvoke(modeIndicator, FloatingModeIndicator.HIDE_MODE_INDICATOR);
+    assertFalse(modeIndicator.isVisible());
+    checkMessages(modeIndicator, false, false);
+
+    // Set composition then indicator is hidden.
     modeIndicator.setCommand(nonEmptyCommand);
     assertFalse(modeIndicator.isVisible());
-    assertFalse(modeIndicator.handler.hasMessages(FloatingModeIndicator.HIDE_MODE_INDICATOR));
-    clearMessages(modeIndicator.handler);
+    checkMessages(modeIndicator, false, false);
 
+    // Change the composition mode. Indicator doesn't appear since we have composition.
     modeIndicator.setCompositionMode(CompositionMode.HALF_ASCII);
     assertFalse(modeIndicator.isVisible());
-    assertFalse(modeIndicator.handler.hasMessages(FloatingModeIndicator.HIDE_MODE_INDICATOR));
-    clearMessages(modeIndicator.handler);
+    checkMessages(modeIndicator, false, false);
 
+    // Clear composition then set composition mode.
     modeIndicator.setCommand(emptyCommand);
-    modeIndicator.setCompositionMode(CompositionMode.HALF_ASCII);
+    modeIndicator.setCompositionMode(CompositionMode.HIRAGANA);
+    checkMessageAndInvoke(modeIndicator, FloatingModeIndicator.SHOW_MODE_INDICATOR);
     assertTrue(modeIndicator.isVisible());
-    assertTrue(modeIndicator.handler.hasMessages(FloatingModeIndicator.HIDE_MODE_INDICATOR));
-    clearMessages(modeIndicator.handler);
+    checkMessages(modeIndicator, true, false);
 
     // SWITCH_INPUT_MODE should be ignored.
     modeIndicator.setCommand(switchInputModeCommand);
     assertTrue(modeIndicator.isVisible());
-    assertFalse(modeIndicator.handler.hasMessages(FloatingModeIndicator.HIDE_MODE_INDICATOR));
-    clearMessages(modeIndicator.handler);
+    checkMessages(modeIndicator, true, false);
+
+    // Invoke remained messages.
+    checkMessageAndInvoke(modeIndicator, FloatingModeIndicator.HIDE_MODE_INDICATOR);
+    assertFalse(modeIndicator.isVisible());
+    checkMessages(modeIndicator, false, false);
 
     verifyAll();
   }

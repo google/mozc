@@ -928,6 +928,7 @@ public class MozcBaseService extends InputMethodService {
       updateImposedConfig();
     }
 
+    viewManager.onStartInputView(attribute);
     viewManager.setTextForActionButton(getTextForImeAction(attribute.imeOptions));
     viewManager.setEditorInfo(attribute);
     // updateXxxxxButtonEnabled cannot be placed in onStartInput because

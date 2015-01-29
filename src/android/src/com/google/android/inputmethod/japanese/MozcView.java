@@ -451,6 +451,10 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     }
   }
 
+  public void onStartInputView(EditorInfo editorInfo) {
+    candidateViewManager.onStartInputView(editorInfo);
+  }
+
   @TargetApi(21)
   public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {
     candidateViewManager.setCursorAnchorInfo(info);

@@ -292,6 +292,10 @@ class CandidateViewManager implements MemoryManageable {
     }
   }
 
+  public void onStartInputView(EditorInfo editorInfo) {
+    floatingCandidateView.onStartInputView(editorInfo);
+  }
+
   public void setEditorInfo(EditorInfo info) {
     this.editorInfo = Preconditions.checkNotNull(info);
     if (candidateMode == CandidateMode.FLOATING) {

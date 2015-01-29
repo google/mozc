@@ -179,6 +179,8 @@ public interface ViewManagerInterface extends MemoryManageable {
 
   public void onConfigurationChanged(Configuration newConfig);
 
+  public void onStartInputView(EditorInfo editorInfo);
+
   public void setCursorAnchorInfo(CursorAnchorInfoWrapper info);
 
   public void setCursorAnchorInfoEnabled(boolean enabled);
