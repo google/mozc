@@ -967,6 +967,7 @@ public class MozcView extends FrameLayout implements MemoryManageable {
   }
 
   void setMicrophoneButtonEnabled(boolean microphoneButtonEnabled) {
+    boolean lastButtonFrameVisible = buttonFrameVisible;
     if (narrowMode) {
       buttonFrameVisible = false;
     } else {
@@ -976,6 +977,9 @@ public class MozcView extends FrameLayout implements MemoryManageable {
       getMicrophoneButton().setVisibility(visibility);
       getSymbolInputView().setMicrophoneButtonEnabled(microphoneButtonEnabled);
       resetBottomBackgroundHeight();
+    }
+    if (lastButtonFrameVisible != buttonFrameVisible) {
+      updateInputFrameHeight();
     }
   }
 }
