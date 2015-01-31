@@ -31,6 +31,7 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
+#include <KtmW32.h>
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -45,7 +46,6 @@
 #include "base/pepper_file_util.h"
 #endif  // MOZC_USE_PEPPER_FILE_IO
 #include "base/scoped_handle.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
 
@@ -168,97 +168,10 @@ bool FileUtil::DirectoryExists(const string &dirname) {
 
 #ifdef OS_WIN
 namespace {
-typedef HANDLE (WINAPI *FPCreateTransaction)(LPSECURITY_ATTRIBUTES,
-                                             LPGUID,
-                                             DWORD,
-                                             DWORD,
-                                             DWORD,
-                                             DWORD,
-                                             LPWSTR);
-typedef BOOL (WINAPI *FPMoveFileTransactedW)(LPCTSTR,
-                                             LPCTSTR,
-                                             LPPROGRESS_ROUTINE,
-                                             LPVOID,
-                                             DWORD,
-                                             HANDLE);
-typedef BOOL (WINAPI *FPGetFileAttributesTransactedW)(LPCTSTR,
-                                                      GET_FILEEX_INFO_LEVELS,
-                                                      LPVOID,
-                                                      HANDLE);
-typedef BOOL (WINAPI *FPSetFileAttributesTransactedW)(LPCTSTR,
-                                                      DWORD,
-                                                      HANDLE);
-typedef BOOL (WINAPI *FPCommitTransaction)(HANDLE);
-
-FPCreateTransaction   g_create_transaction    = nullptr;
-FPMoveFileTransactedW g_move_file_transactedw = nullptr;
-FPGetFileAttributesTransactedW g_get_file_attributes_transactedw = nullptr;
-FPSetFileAttributesTransactedW g_set_file_attributes_transactedw = nullptr;
-FPCommitTransaction   g_commit_transaction    = nullptr;
-
-static once_t g_init_tx_move_file_once = MOZC_ONCE_INIT;
-
-void InitTxMoveFile() {
-  if (!SystemUtil::IsVistaOrLater()) {
-    return;
-  }
-
-  const HMODULE lib_ktmw = WinUtil::LoadSystemLibrary(L"ktmw32.dll");
-  if (lib_ktmw == nullptr) {
-    LOG(ERROR) << "LoadSystemLibrary for ktmw32.dll failed.";
-    return;
-  }
-
-  const HMODULE lib_kernel = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
-  if (lib_kernel == nullptr) {
-    LOG(ERROR) << "LoadSystemLibrary for kernel32.dll failed.";
-    return;
-  }
-
-  g_create_transaction =
-      reinterpret_cast<FPCreateTransaction>
-      (::GetProcAddress(lib_ktmw, "CreateTransaction"));
-
-  g_move_file_transactedw =
-      reinterpret_cast<FPMoveFileTransactedW>
-      (::GetProcAddress(lib_kernel, "MoveFileTransactedW"));
-
-  g_get_file_attributes_transactedw =
-      reinterpret_cast<FPGetFileAttributesTransactedW>
-      (::GetProcAddress(lib_kernel, "GetFileAttributesTransactedW"));
-
-  g_set_file_attributes_transactedw =
-      reinterpret_cast<FPSetFileAttributesTransactedW>
-      (::GetProcAddress(lib_kernel, "SetFileAttributesTransactedW"));
-
-  g_commit_transaction =
-      reinterpret_cast<FPCommitTransaction>
-      (::GetProcAddress(lib_ktmw, "CommitTransaction"));
-
-  LOG_IF(ERROR, g_create_transaction == nullptr)
-      << "CreateTransaction init failed";
-  LOG_IF(ERROR, g_move_file_transactedw == nullptr)
-      << "MoveFileTransactedW init failed";
-  LOG_IF(ERROR, g_get_file_attributes_transactedw == nullptr)
-      << "GetFileAttributesTransactedW init failed";
-  LOG_IF(ERROR, g_set_file_attributes_transactedw == nullptr)
-      << "SetFileAttributesTransactedW init failed";
-  LOG_IF(ERROR, g_commit_transaction == nullptr)
-      << "CommitTransaction init failed";
-}
 
 bool TransactionalMoveFile(const wstring &from, const wstring &to) {
-  CallOnce(&g_init_tx_move_file_once, &InitTxMoveFile);
-
-  if (g_commit_transaction == nullptr || g_move_file_transactedw == nullptr ||
-      g_set_file_attributes_transactedw == nullptr ||
-      g_create_transaction == nullptr) {
-    // Transactional NTFS is not available.
-    return false;
-  }
-
   const DWORD kTimeout = 5000;  // 5 sec.
-  ScopedHandle handle((*g_create_transaction)(
+  ScopedHandle handle(::CreateTransaction(
       nullptr, 0, 0, 0, 0, kTimeout, nullptr));
   const DWORD create_transaction_error = ::GetLastError();
   if (handle.get() == 0) {
@@ -267,37 +180,32 @@ bool TransactionalMoveFile(const wstring &from, const wstring &to) {
   }
 
   WIN32_FILE_ATTRIBUTE_DATA file_attribute_data = {};
-  if (!(*g_get_file_attributes_transactedw)(from.c_str(), GetFileExInfoStandard,
-                                            &file_attribute_data,
-                                            handle.get())) {
+  if (!::GetFileAttributesTransactedW(from.c_str(), GetFileExInfoStandard,
+                                      &file_attribute_data, handle.get())) {
     const DWORD get_file_attributes_error = ::GetLastError();
     LOG(ERROR) << "GetFileAttributesTransactedW failed: "
                << get_file_attributes_error;
     return false;
   }
 
-  if (!(*g_move_file_transactedw)(from.c_str(), to.c_str(),
-                                  nullptr, nullptr,
-                                  MOVEFILE_COPY_ALLOWED |
-                                  MOVEFILE_REPLACE_EXISTING,
-                                  handle.get())) {
+  if (!::MoveFileTransactedW(from.c_str(), to.c_str(), nullptr, nullptr,
+                             MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING,
+                             handle.get())) {
     const DWORD move_file_transacted_error = ::GetLastError();
     LOG(ERROR) << "MoveFileTransactedW failed: "
                << move_file_transacted_error;
     return false;
   }
 
-  if (!(*g_set_file_attributes_transactedw)(
-          to.c_str(),
-          file_attribute_data.dwFileAttributes,
-          handle.get())) {
+  if (!::SetFileAttributesTransactedW(
+          to.c_str(), file_attribute_data.dwFileAttributes, handle.get())) {
     const DWORD set_file_attributes_error = ::GetLastError();
     LOG(ERROR) << "SetFileAttributesTransactedW failed: "
                << set_file_attributes_error;
     return false;
   }
 
-  if (!(*g_commit_transaction)(handle.get())) {
+  if (!::CommitTransaction(handle.get())) {
     const DWORD commit_transaction_error = ::GetLastError();
     LOG(ERROR) << "CommitTransaction failed: " << commit_transaction_error;
     return false;
@@ -307,9 +215,7 @@ bool TransactionalMoveFile(const wstring &from, const wstring &to) {
 }
 
 }  // namespace
-#endif  // OS_WIN
 
-#ifdef OS_WIN
 bool FileUtil::HideFile(const string &filename) {
   return HideFileWithExtraAttributes(filename, 0);
 }

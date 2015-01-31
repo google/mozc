@@ -45,7 +45,6 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/run_level.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "data_manager/user_pos_manager.h"
@@ -531,16 +530,14 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // for Window Aero Glass support
 #ifdef OS_WIN
-  if (SystemUtil::IsVistaOrLater()) {
-    setContentsMargins(0, 0, 0, 0);
-    WinUtil::InstallStyleSheetsFiles(":win_aero_style.qss",
-                                     ":win_style.qss");
-    if (gui::WinUtil::IsCompositionEnabled()) {
-      WinUtil::ExtendFrameIntoClientArea(this);
-      InstallStyleSheet(":win_aero_style.qss");
-    } else {
-      InstallStyleSheet(":win_style.qss");
-    }
+  setContentsMargins(0, 0, 0, 0);
+  WinUtil::InstallStyleSheetsFiles(":win_aero_style.qss",
+                                   ":win_style.qss");
+  if (gui::WinUtil::IsCompositionEnabled()) {
+    WinUtil::ExtendFrameIntoClientArea(this);
+    InstallStyleSheet(":win_aero_style.qss");
+  } else {
+    InstallStyleSheet(":win_style.qss");
   }
 #endif
 

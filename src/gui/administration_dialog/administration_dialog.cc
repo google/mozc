@@ -31,7 +31,6 @@
 
 #include <QtGui/QMessageBox>
 #include "base/run_level.h"
-#include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "server/cache_service_manager.h"
 
@@ -67,12 +66,8 @@ AdministrationDialog::AdministrationDialog() {
 
   usageStatsCheckBox->setChecked(StatsConfigUtil::IsEnabled());
 
-  if (SystemUtil::IsVistaOrLater()) {
-    ElevatedProcessDisabledcheckBox->setChecked
-        (RunLevel::GetElevatedProcessDisabled());
-  } else {
-    ElevatedProcessDisabledcheckBox->setVisible(false);
-  }
+  ElevatedProcessDisabledcheckBox->setChecked(
+      RunLevel::GetElevatedProcessDisabled());
 
   CacheServiceEnabledcheckBox->setChecked(
       CacheServiceManager::IsEnabled() || CacheServiceManager::IsRunning());

@@ -190,10 +190,6 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
     return true;
   }
 
-  if (!mozc::SystemUtil::IsVistaOrLater()) {
-    return true;
-  }
-
   const string temp_path =
       mozc::FileUtil::JoinPath(mozc::SystemUtil::GetServerDirectory(),
                                "delete_me.txt");

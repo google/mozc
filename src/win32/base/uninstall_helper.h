@@ -92,18 +92,8 @@ class UninstallHelper {
 
  private:
   // This function is the main part of RestoreUserIMEEnvironmentMain for
-  // Windows XP.
-  static bool RestoreUserIMEEnvironmentForXP(bool broadcast_change);
-
-  // This function is the main part of RestoreUserIMEEnvironmentMain for
   // Windows Vista and later.
   static bool RestoreUserIMEEnvironmentForVista(bool broadcast_change);
-
-  // Returns true if new preload layouts are successfully determined.
-  static bool GetNewPreloadLayoutsForXP(
-      const vector<KeyboardLayoutInfo> &preload_layouts,
-      const vector<KeyboardLayoutInfo> &installed_layouts,
-      vector<KeyboardLayoutInfo> *new_preloads);
 
   // Returns true if both new enabled profiles and new default profile are
   // successfully determined.
@@ -114,32 +104,15 @@ class UninstallHelper {
       LayoutProfileInfo *new_default,
       vector<LayoutProfileInfo> *removed_profiles);
 
-  // Returns true if the list of keyboard layout in 'Preload' key under HKCU
-  // and 'Keyboard Layouts' key under HKLM are retrieved in successful.
-  // For Windows Vista and later, use GetCurrentProfilesForVista instead.
-  static bool GetKeyboardLayoutsForXP(
-      vector<KeyboardLayoutInfo> *preload_layouts,
-      vector<KeyboardLayoutInfo> *installed_layouts);
-
   // Returns true if the list of keyboard layout and TIP for the current user
   // is retrieved in successful.
   static bool GetCurrentProfilesForVista(
       vector<LayoutProfileInfo> *current_profiles);
 
-  // Returns true if the 'Preload' key for the current user is updated with
-  // the specified list of keyboard layout as |preload_layouts|.
-  static bool UpdatePreloadLayoutsForXP(
-      const vector<KeyboardLayoutInfo> &new_preload_layouts);
-
   // Returns true if the list of keyboard layout and TIP for the current user
   // is updated with the specified list as |profiles_to_be_removed|.
   static bool RemoveProfilesForVista(
       const vector<LayoutProfileInfo> &profiles_to_be_removed);
-
-  // Returns true if |layout| is set as the new default IME.  If |layout| is
-  // substituted by a TIP, this function sets the underlaying TIP to default.
-  static bool SetDefaultForXP(
-      const KeyboardLayoutInfo &layout, bool broadcast_change);
 
   // Returns true if |profile| is set as the new default IME or TIP.
   static bool SetDefaultForVista(
@@ -152,7 +125,6 @@ class UninstallHelper {
   static wstring ComposeProfileStringForVista(
       const vector<LayoutProfileInfo> &profiles);
 
-  FRIEND_TEST(UninstallHelperTest, Issue_2950946);
   FRIEND_TEST(UninstallHelperTest, BasicCaseForVista);
   FRIEND_TEST(UninstallHelperTest, BasicCaseForWin8);
   FRIEND_TEST(UninstallHelperTest, LoadKeyboardProfilesTest);

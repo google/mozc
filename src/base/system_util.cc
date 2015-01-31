@@ -147,29 +147,7 @@ class LocalAppDataDirectoryCache {
     if (in_app_container) {
       return TryGetLocalAppDataForAppContainer(dir);
     }
-    if (SystemUtil::IsVistaOrLater()) {
-      return TryGetLocalAppDataLow(dir);
-    }
-
-    // Windows XP: use "%USERPROFILE%\Local Settings\Application Data"
-
-    // Retrieve the directory "%USERPROFILE%\Local Settings\Application Data",
-    // which is a user directory which serves a data repository for local
-    // applications, to avoid user profiles from being roamed by indexers.
-    wchar_t config[MAX_PATH] = {};
-    const HRESULT result = ::SHGetFolderPathW(
-        nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, &config[0]);
-    if (FAILED(result)) {
-      return result;
-    }
-
-    string buffer;
-    if (Util::WideToUTF8(&config[0], &buffer) == 0) {
-      return E_FAIL;
-    }
-
-    *dir = buffer;
-    return S_OK;
+    return TryGetLocalAppDataLow(dir);
   }
 
   static HRESULT TryGetLocalAppDataForAppContainer(string *dir) {
@@ -205,42 +183,17 @@ class LocalAppDataDirectoryCache {
     }
     dir->clear();
 
-    if (!SystemUtil::IsVistaOrLater()) {
-      return E_NOTIMPL;
-    }
-
-    // Windows Vista: use LocalLow
-    // Call SHGetKnownFolderPath dynamically.
-    // http://msdn.microsoft.com/en-us/library/bb762188(VS.85).aspx
-    // http://msdn.microsoft.com/en-us/library/bb762584(VS.85).aspx
-    // GUID: {A520A1A4-1780-4FF6-BD18-167343C5AF16}
-    const HMODULE hLib = WinUtil::LoadSystemLibrary(L"shell32.dll");
-    if (hLib == nullptr) {
-      return E_NOTIMPL;
-    }
-
-    typedef HRESULT (WINAPI *FPSHGetKnownFolderPath)(
-        const GUID &, DWORD, HANDLE, PWSTR *);
-    FPSHGetKnownFolderPath func = reinterpret_cast<FPSHGetKnownFolderPath>
-        (::GetProcAddress(hLib, "SHGetKnownFolderPath"));
-    if (func == nullptr) {
-      ::FreeLibrary(hLib);
-      return E_NOTIMPL;
-    }
-
     wchar_t *task_mem_buffer = nullptr;
-    const HRESULT result =
-        (*func)(FOLDERID_LocalAppDataLow, 0, nullptr, &task_mem_buffer);
+    const HRESULT result = ::SHGetKnownFolderPath(
+        FOLDERID_LocalAppDataLow, 0, nullptr, &task_mem_buffer);
     if (FAILED(result)) {
       if (task_mem_buffer != nullptr) {
         ::CoTaskMemFree(task_mem_buffer);
       }
-      ::FreeLibrary(hLib);
       return result;
     }
 
     if (task_mem_buffer == nullptr) {
-      ::FreeLibrary(hLib);
       return E_UNEXPECTED;
     }
 
@@ -249,13 +202,10 @@ class LocalAppDataDirectoryCache {
 
     string path;
     if (Util::WideToUTF8(wpath, &path) == 0) {
-      ::FreeLibrary(hLib);
       return E_UNEXPECTED;
     }
 
     *dir = path;
-
-    ::FreeLibrary(hLib);
     return S_OK;
   }
 
@@ -851,15 +801,6 @@ bool SystemUtil::IsPlatformSupported() {
 #else  // !OS_LINUX && !OS_MACOSX && !OS_WIN
 #error "Unsupported platform".
 #endif  // OS_LINUX, OS_MACOSX, OS_WIN
-}
-
-bool SystemUtil::IsVistaOrLater() {
-#ifdef OS_WIN
-  static const bool result = ::IsWindowsVistaOrGreater();
-  return result;
-#else
-  return false;
-#endif  // OS_WIN
 }
 
 bool SystemUtil::IsWindows7OrLater() {

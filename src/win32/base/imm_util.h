@@ -53,10 +53,6 @@ class ImeUtil {
   // in some special situations like CustomAction.
   static bool SetDefault();
 
-  // Enables or disables CUAS (Cicero Unaware Application Support).
-  // Returns true if the operation completed successfully.
-  static bool SetCuasEnabled(bool enable);
-
   // Returns true if cfmon.exe is running.
   // ctfmon.exe is running if TSF (Text Service Framework) is enabled.
   static bool IsCtfmonRunning();

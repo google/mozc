@@ -31,7 +31,6 @@
 #include <CGuid.h>
 
 #include "base/const.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -62,47 +61,6 @@ wstring ToWideString(const string &str) {
 }
 
 }  // namespace
-
-// Test case for b/2950946
-// 1. Install Google Japanese Input into Windows XP.
-// 2. Set Google Japanese Input as the default IME.
-// 3. Uninstall Google Japanese Input.
-//    -> MS-IME should be the default IME.
-TEST(UninstallHelperTest, Issue_2950946) {
-  // Full IMM32 version of Google Japanese Input.
-  KeyboardLayoutInfo gimeja;
-  {
-    gimeja.klid = kJapaneseKLID;
-    gimeja.ime_filename = ToWideString(kIMEFile);
-  }
-  // Built-in MS-IME.
-  KeyboardLayoutInfo msime;
-  {
-    msime.klid = 0xE0010411;
-    msime.ime_filename = L"imjp81.ime";
-  }
-
-  // First entry of |current_preloads| is the default IME.
-  vector<KeyboardLayoutInfo> current_preloads;
-  current_preloads.push_back(gimeja);
-  current_preloads.push_back(msime);
-
-  // |installed_preloads| is sorted by |klid|.
-  vector<KeyboardLayoutInfo> installed_preloads;
-  installed_preloads.push_back(msime);
-  installed_preloads.push_back(gimeja);
-
-  vector<KeyboardLayoutInfo> new_preloads;
-
-  EXPECT_TRUE(UninstallHelper::GetNewPreloadLayoutsForXP(
-      current_preloads,
-      installed_preloads,
-      &new_preloads));
-
-  EXPECT_EQ(1, new_preloads.size());
-  EXPECT_EQ(msime.klid, new_preloads.at(0).klid);
-  EXPECT_EQ(msime.ime_filename, new_preloads.at(0).ime_filename);
-}
 
 TEST(UninstallHelperTest, BasicCaseForVista) {
   // 1. Install Google Japanese Input into Windows Vista.
@@ -234,16 +192,9 @@ TEST(UninstallHelperTest, LoadKeyboardProfilesTest) {
   EXPECT_TRUE(UninstallHelper::GetInstalledProfilesByLanguage(
       kLANGJaJP, &installed_profiles));
 
-  if (SystemUtil::IsVistaOrLater()) {
-    vector<LayoutProfileInfo> current_profiles;
-    EXPECT_TRUE(UninstallHelper::GetCurrentProfilesForVista(
-        &current_profiles));
-  }
-
-  vector<KeyboardLayoutInfo> preload_layouts;
-  vector<KeyboardLayoutInfo> installed_layouts;
-  EXPECT_TRUE(UninstallHelper::GetKeyboardLayoutsForXP(
-      &preload_layouts, &installed_layouts));
+  vector<LayoutProfileInfo> current_profiles;
+  EXPECT_TRUE(UninstallHelper::GetCurrentProfilesForVista(
+      &current_profiles));
 }
 
 TEST(UninstallHelperTest, ComposeProfileStringForVistaTest) {

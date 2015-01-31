@@ -44,7 +44,6 @@
 #include <limits>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/win_util.h"
 #include "win32/base/text_icon.h"
 #include "win32/ime/ime_impl_imm.h"
@@ -407,12 +406,6 @@ HRESULT ImeLangBarMenu::SetEnabled(bool enabled) {
 }
 
 bool ImeLangBarMenu::CanContextMenuDisplay32bppIcon() {
-  // Windows XP does not support a 32-bpp icon for a context menu icon on the
-  // LangBar.  See http://b/2260057 for details.
-  if (!mozc::SystemUtil::IsVistaOrLater()) {
-    return false;
-  }
-
   // We always use a non-theme icon for a context menu icon on the LangBar
   // unless the current display mode is 32-bpp.  We cannot assume we can
   // display a 32-bpp icon for a context menu icon on the LangBar unless the

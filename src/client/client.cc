@@ -873,8 +873,7 @@ bool Client::LaunchTool(const string &mode, const string &extra_arg) {
     // http://b/2415191
     const int result =
         reinterpret_cast<int>(::ShellExecute(0,
-                                             SystemUtil::IsVistaOrLater() ?
-                                             L"runas" : L"open",
+                                             L"runas",
                                              wpath.c_str(),
                                              L"--mode=administration_dialog",
                                              SystemUtil::GetSystemDir(),

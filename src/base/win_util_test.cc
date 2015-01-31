@@ -97,68 +97,66 @@ TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
 }
 
 TEST(WinUtilTest, Win32EqualStringTest) {
-  if (SystemUtil::IsVistaOrLater()) {
-    bool result = false;
+  bool result = false;
 
-    result = false;
-    EXPECT_TRUE(WinUtil::Win32EqualString(
-        L"abc",
-        L"AbC",
-        true,
-        &result));
-    EXPECT_TRUE(result);
+  result = false;
+  EXPECT_TRUE(WinUtil::Win32EqualString(
+      L"abc",
+      L"AbC",
+      true,
+      &result));
+  EXPECT_TRUE(result);
 
-    // case-sensitive
-    EXPECT_TRUE(WinUtil::Win32EqualString(
-        L"abc",
-        L"AbC",
-        false,
-        &result));
+  // case-sensitive
+  EXPECT_TRUE(WinUtil::Win32EqualString(
+      L"abc",
+      L"AbC",
+      false,
+      &result));
+  EXPECT_FALSE(result);
+
+  // Test case in http://b/2977223
+  result = false;
+  EXPECT_TRUE(WinUtil::Win32EqualString(
+      L"abc",
+      L"a" L"\x202c" L"bc",   // U+202C: POP DIRECTIONAL FORMATTING
+      true,
+      &result));
+  EXPECT_FALSE(result);
+
+  // Test case in http://b/2977235
+  result = false;
+  EXPECT_TRUE(WinUtil::Win32EqualString(
+      L"\x01bf",    // U+01BF: LATIN LETTER WYNN
+      L"\x01f7",    // U+01F7: LATIN CAPITAL LETTER WYNN
+      true,
+      &result));
+  EXPECT_TRUE(result);
+
+  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
+  result = false;
+  EXPECT_TRUE(WinUtil::Win32EqualString(
+      L"\x03c2",    // U+03C2: GREEK SMALL LETTER FINAL SIGMA
+      L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
+      true,
+      &result));
+  // Windows XP En/Ja: U+03C2 and U+03A3 are the same caracter.
+  // Windows Vista En/Ja: U+03C2 and U+03A3 are the same caracter.
+  // Windows 7 En/Ja: U+03C2 and U+03A3 are different from each other.
+  if (SystemUtil::IsWindows7OrLater()) {
     EXPECT_FALSE(result);
-
-    // Test case in http://b/2977223
-    result = false;
-    EXPECT_TRUE(WinUtil::Win32EqualString(
-        L"abc",
-        L"a" L"\x202c" L"bc",   // U+202C: POP DIRECTIONAL FORMATTING
-        true,
-        &result));
-    EXPECT_FALSE(result);
-
-    // Test case in http://b/2977235
-    result = false;
-    EXPECT_TRUE(WinUtil::Win32EqualString(
-        L"\x01bf",    // U+01BF: LATIN LETTER WYNN
-        L"\x01f7",    // U+01F7: LATIN CAPITAL LETTER WYNN
-        true,
-        &result));
-    EXPECT_TRUE(result);
-
-    // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-    result = false;
-    EXPECT_TRUE(WinUtil::Win32EqualString(
-        L"\x03c2",    // U+03C2: GREEK SMALL LETTER FINAL SIGMA
-        L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
-        true,
-        &result));
-    // Windows XP En/Ja: U+03C2 and U+03A3 are the same caracter.
-    // Windows Vista En/Ja: U+03C2 and U+03A3 are the same caracter.
-    // Windows 7 En/Ja: U+03C2 and U+03A3 are different from each other.
-    if (SystemUtil::IsWindows7OrLater()) {
-      EXPECT_FALSE(result);
-    } else {
-      EXPECT_TRUE(result);
-    }
-
-    // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-    result = false;
-    EXPECT_TRUE(WinUtil::Win32EqualString(
-        L"\x03c3",    // U+03C3: GREEK SMALL LETTER SIGMA
-        L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
-        true,
-        &result));
+  } else {
     EXPECT_TRUE(result);
   }
+
+  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
+  result = false;
+  EXPECT_TRUE(WinUtil::Win32EqualString(
+      L"\x03c3",    // U+03C3: GREEK SMALL LETTER SIGMA
+      L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
+      true,
+      &result));
+  EXPECT_TRUE(result);
 }
 
 TEST(WinUtilTest, NativeEqualStringTest) {
@@ -257,13 +255,7 @@ TEST(WinUtilTest, CrtEqualStringTest) {
     L"\x01f7",    // U+01F7: LATIN CAPITAL LETTER WYNN
     true,
     &result);
-  if (SystemUtil::IsVistaOrLater()) {
-    EXPECT_TRUE(result);
-  } else {
-    // Unfortunately, this result seems not to be compatible with
-    // Win32EqualString/NativeEqualString on Windows XP.
-    EXPECT_FALSE(result);
-  }
+  EXPECT_TRUE(result);
 
   // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
   result = false;
@@ -339,10 +331,6 @@ TEST(WinUtilTest, AreEqualFileSystemObjectTest) {
 }
 
 TEST(WinUtilTest, GetNtPath) {
-  if (!SystemUtil::IsVistaOrLater()) {
-    return;
-  }
-
   const wstring system_dir = SystemUtil::GetSystemDir();
   const wstring notepad = system_dir + L"\\notepad.exe";
   const wchar_t kThisFileNeverExists[] = L"/this/file/never/exists";
