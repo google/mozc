@@ -42,9 +42,9 @@
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/system/codec_interface.h"
+#include "dictionary/system/key_expansion_table.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
-#include "storage/louds/key_expansion_table.h"
 #include "storage/louds/louds_trie.h"
 // for FRIEND_TEST
 #include "testing/base/public/gunit_prod.h"
@@ -220,7 +220,7 @@ class SystemDictionary : public DictionaryInterface {
   Callback::ResultType LookupPrefixWithKeyExpansionImpl(
       const char *key,
       StringPiece encoded_key,
-      const storage::louds::KeyExpansionTable &table,
+      const KeyExpansionTable &table,
       Callback *callback,
       storage::louds::LoudsTrie::Node node,
       StringPiece::size_type key_pos,
@@ -241,7 +241,7 @@ class SystemDictionary : public DictionaryInterface {
 
   void CollectPredictiveNodesInBfsOrder(
       StringPiece encoded_key,
-      const storage::louds::KeyExpansionTable &table,
+      const KeyExpansionTable &table,
       size_t limit,
       vector<PredictiveLookupSearchState> *result) const;
 
@@ -254,7 +254,7 @@ class SystemDictionary : public DictionaryInterface {
 
   const uint32 *frequent_pos_;
   const SystemDictionaryCodecInterface *codec_;
-  storage::louds::KeyExpansionTable hiragana_expansion_table_;
+  KeyExpansionTable hiragana_expansion_table_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);
 };

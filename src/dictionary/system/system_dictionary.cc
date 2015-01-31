@@ -72,8 +72,6 @@ namespace mozc {
 namespace dictionary {
 
 using mozc::storage::louds::BitVectorBasedArray;
-using mozc::storage::louds::ExpandedKey;
-using mozc::storage::louds::KeyExpansionTable;
 using mozc::storage::louds::LoudsTrie;
 
 namespace {

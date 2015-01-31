@@ -44,6 +44,20 @@
       },
     },
     {
+      'target_name': 'key_expansion_table_test',
+      'type': 'executable',
+      'sources': [
+        'key_expansion_table_test.cc',
+      ],
+      'dependencies': [
+        '../../testing/testing.gyp:gtest_main',
+        'system_dictionary.gyp:key_expansion_table',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'system_dictionary_test',
       'type': 'executable',
       'sources': [
@@ -102,6 +116,7 @@
       'target_name': 'system_dictionary_all_test',
       'type': 'none',
       'dependencies': [
+        'key_expansion_table_test',
         'system_dictionary_builder_test',
         'system_dictionary_codec_test',
         'system_dictionary_test',

@@ -27,18 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "storage/louds/key_expansion_table.h"
+#include "dictionary/system/key_expansion_table.h"
 
 #include "testing/base/public/gunit.h"
 
+namespace mozc {
+namespace dictionary {
 namespace {
 
-using ::mozc::storage::louds::KeyExpansionTable;
-
-class KeyExpansionTableTest : public ::testing::Test {
-};
-
-TEST_F(KeyExpansionTableTest, Test) {
+TEST(KeyExpansionTableTest, Test) {
   KeyExpansionTable table;
   table.Add('b', "d");
 
@@ -64,3 +61,5 @@ TEST_F(KeyExpansionTableTest, Test) {
 }
 
 }  // namespace
+}  // namespace dictionary
+}  // namespace mozc
