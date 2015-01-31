@@ -216,6 +216,17 @@ class SystemDictionary : public DictionaryInterface {
 
   void InitReverseLookupIndex();
 
+  Callback::ResultType LookupPrefixWithKeyExpansionImpl(
+      const char *key,
+      StringPiece encoded_key,
+      const storage::louds::KeyExpansionTable &table,
+      Callback *callback,
+      storage::louds::LoudsTrie::Node node,
+      StringPiece::size_type key_pos,
+      bool is_expanded,
+      char *actual_key_buffer,
+      string *actual_prefix) const;
+
   scoped_ptr<storage::louds::LoudsTrie> key_trie_;
   scoped_ptr<storage::louds::LoudsTrie> value_trie_;
   scoped_ptr<storage::louds::BitVectorBasedArray> token_array_;

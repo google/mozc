@@ -31,6 +31,7 @@
 
 #include <limits>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "storage/louds/key_expansion_table.h"
@@ -96,6 +97,37 @@ class TestCallback : public LoudsTrie::Callback {
   DISALLOW_COPY_AND_ASSIGN(TestCallback);
 };
 
+class RecordCallbackArgs {
+ public:
+  struct CallbackArgs {
+    StringPiece key;
+    size_t prefix_len;
+    const LoudsTrie *trie;
+    LoudsTrie::Node node;
+  };
+
+  explicit RecordCallbackArgs(vector<CallbackArgs> *output) : output_(output) {}
+
+  void operator()(StringPiece key, size_t prefix_len,
+                  const LoudsTrie &trie, LoudsTrie::Node node) {
+    CallbackArgs args;
+    args.key = key;
+    args.prefix_len = prefix_len;
+    args.trie = &trie;
+    args.node = node;
+    output_->push_back(args);
+  }
+
+ private:
+  vector<CallbackArgs> *output_;
+};
+
+LoudsTrie::Node Traverse(const LoudsTrie &trie, StringPiece key) {
+  LoudsTrie::Node node;
+  trie.Traverse(key, &node);
+  return node;
+}
+
 TEST_F(LoudsTrieTest, NodeBasedApis) {
   // Create the following trie (* stands for non-terminal nodes):
   //
@@ -147,6 +179,11 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   EXPECT_EQ("a", trie.RestoreKeyString(0, buf));
   {
     LoudsTrie::Node node;
+    EXPECT_TRUE(trie.MoveToChildByLabel('a', &node));
+    EXPECT_EQ(node_a, node);
+  }
+  {
+    LoudsTrie::Node node;
     EXPECT_TRUE(trie.Traverse("a", &node));
     EXPECT_EQ(node_a, node);
   }
@@ -156,6 +193,11 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   ASSERT_TRUE(trie.IsValidNode(node_b));
   EXPECT_FALSE(trie.IsTerminalNode(node_b));
   EXPECT_EQ('b', trie.GetEdgeLabelToParentNode(node_b));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.MoveToChildByLabel('b', &node));
+    EXPECT_EQ(node_b, node);
+  }
   {
     LoudsTrie::Node node;
     EXPECT_TRUE(trie.Traverse("b", &node));
@@ -174,6 +216,11 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   EXPECT_EQ(node_aa, trie.GetTerminalNodeFromKeyId(1));
   EXPECT_EQ("aa", trie.RestoreKeyString(1, buf));
   {
+    LoudsTrie::Node node = node_a;
+    EXPECT_TRUE(trie.MoveToChildByLabel('a', &node));
+    EXPECT_EQ(node_aa, node);
+  }
+  {
     LoudsTrie::Node node;
     EXPECT_TRUE(trie.Traverse("aa", &node));
     EXPECT_EQ(node_aa, node);
@@ -190,6 +237,11 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   EXPECT_EQ(2, trie.GetKeyIdOfTerminalNode(node_ab));
   EXPECT_EQ(node_ab, trie.GetTerminalNodeFromKeyId(2));
   EXPECT_EQ("ab", trie.RestoreKeyString(2, buf));
+  {
+    LoudsTrie::Node node = node_a;
+    EXPECT_TRUE(trie.MoveToChildByLabel('b', &node));
+    EXPECT_EQ(node_ab, node);
+  }
   {
     LoudsTrie::Node node;
     EXPECT_TRUE(trie.Traverse("ab", &node));
@@ -208,6 +260,11 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   EXPECT_EQ(node_bd, trie.GetTerminalNodeFromKeyId(3));
   EXPECT_EQ("bd", trie.RestoreKeyString(3, buf));
   {
+    LoudsTrie::Node node = node_b;
+    EXPECT_TRUE(trie.MoveToChildByLabel('d', &node));
+    EXPECT_EQ(node_bd, node);
+  }
+  {
     LoudsTrie::Node node;
     EXPECT_TRUE(trie.Traverse("bd", &node));
     EXPECT_EQ(node_bd, node);
@@ -223,6 +280,11 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   EXPECT_FALSE(trie.IsTerminalNode(node_abc));
   EXPECT_EQ('c', trie.GetEdgeLabelToParentNode(node_abc));
   {
+    LoudsTrie::Node node = node_ab;
+    EXPECT_TRUE(trie.MoveToChildByLabel('c', &node));
+    EXPECT_EQ(node_abc, node);
+  }
+  {
     LoudsTrie::Node node;
     EXPECT_TRUE(trie.Traverse("abc", &node));
     EXPECT_EQ(node_abc, node);
@@ -236,6 +298,11 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   EXPECT_EQ(4, trie.GetKeyIdOfTerminalNode(node_abd));
   EXPECT_EQ(node_abd, trie.GetTerminalNodeFromKeyId(4));
   EXPECT_EQ("abd", trie.RestoreKeyString(4, buf));
+  {
+    LoudsTrie::Node node = node_ab;
+    EXPECT_TRUE(trie.MoveToChildByLabel('d', &node));
+    EXPECT_EQ(node_abd, node);
+  }
   {
     LoudsTrie::Node node;
     EXPECT_TRUE(trie.Traverse("abd", &node));
@@ -255,6 +322,11 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   EXPECT_EQ(node_abcd, trie.GetTerminalNodeFromKeyId(5));
   EXPECT_EQ("abcd", trie.RestoreKeyString(5, buf));
   {
+    LoudsTrie::Node node = node_abc;
+    EXPECT_TRUE(trie.MoveToChildByLabel('d', &node));
+    EXPECT_EQ(node_abcd, node);
+  }
+  {
     LoudsTrie::Node node;
     EXPECT_TRUE(trie.Traverse("abcd", &node));
     EXPECT_EQ(node_abcd, node);
@@ -264,10 +336,19 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   EXPECT_FALSE(trie.IsValidNode(trie.MoveToFirstChild(node_abcd)));
   EXPECT_FALSE(trie.IsValidNode(trie.MoveToNextSibling(node_abcd)));
 
+  // Try moving to non-existing nodes by a label.
+  {
+    LoudsTrie::Node node;
+    EXPECT_FALSE(trie.MoveToChildByLabel('x', &node));
+    EXPECT_FALSE(trie.IsValidNode(node));
+  }
+
   // Traverse for some non-existing keys.
-  LoudsTrie::Node node;
-  EXPECT_FALSE(trie.Traverse("x", &node));
-  EXPECT_FALSE(trie.Traverse("xyz", &node));
+  {
+    LoudsTrie::Node node;
+    EXPECT_FALSE(trie.Traverse("x", &node));
+    EXPECT_FALSE(trie.Traverse("xyz", &node));
+  }
 }
 
 TEST_F(LoudsTrieTest, HasKey) {
@@ -347,160 +428,68 @@ TEST_F(LoudsTrieTest, PrefixSearch) {
   builder.Add("ebd");
   builder.Add("\x01\xFF");
   builder.Add("\x01\xFF\xFF");
-
   builder.Build();
 
   LoudsTrie trie;
   trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
 
   {
-    TestCallback callback;
-    callback.AddExpectation(
-        "ab", 2, builder.GetId("ab"), LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation(
-        "abc", 3, builder.GetId("abc"), LoudsTrie::Callback::SEARCH_CONTINUE);
+    const StringPiece kKey = "abc";
+    vector<RecordCallbackArgs::CallbackArgs> actual;
+    trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
-    trie.PrefixSearch("abc", &callback);
-    EXPECT_EQ(2, callback.num_invoked());
+    ASSERT_EQ(2, actual.size());
+
+    // "ab"
+    EXPECT_EQ(kKey, actual[0].key);
+    EXPECT_EQ(2, actual[0].prefix_len);
+    EXPECT_EQ(&trie, actual[0].trie);
+    EXPECT_EQ(Traverse(trie, "ab"), actual[0].node);
+
+    // "abc"
+    EXPECT_EQ(kKey, actual[1].key);
+    EXPECT_EQ(3, actual[1].prefix_len);
+    EXPECT_EQ(&trie, actual[1].trie);
+    EXPECT_EQ(Traverse(trie, "abc"), actual[1].node);
   }
-
   {
-    TestCallback callback;
-    callback.AddExpectation(
-        "ab", 2, builder.GetId("ab"), LoudsTrie::Callback::SEARCH_CONTINUE);
+    const StringPiece kKey = "abxxxxxxx";
+    vector<RecordCallbackArgs::CallbackArgs> actual;
+    trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
-    trie.PrefixSearch("abxxxxxxx", &callback);
-    EXPECT_EQ(1, callback.num_invoked());
+    ASSERT_EQ(1, actual.size());
+
+    // "ab"
+    EXPECT_EQ(kKey, actual[0].key);
+    EXPECT_EQ(2, actual[0].prefix_len);
+    EXPECT_EQ(&trie, actual[0].trie);
+    EXPECT_EQ(Traverse(trie, "ab"), actual[0].node);
   }
-
   {
-    // Make sure that non-ascii characters can be found, too.
-    TestCallback callback;
-    callback.AddExpectation("\x01\xFF", 2, builder.GetId("\x01\xFF"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("\x01\xFF\xFF", 3, builder.GetId("\x01\xFF\xFF"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
+    // Make sure that it works for non-ascii characters too.
+    const StringPiece kKey = "\x01\xFF\xFF";
+    vector<RecordCallbackArgs::CallbackArgs> actual;
+    trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
-    trie.PrefixSearch("\x01\xFF\xFF", &callback);
-    EXPECT_EQ(2, callback.num_invoked());
+    ASSERT_EQ(2, actual.size());
+
+    // "\x01\xFF"
+    EXPECT_EQ(kKey, actual[0].key);
+    EXPECT_EQ(2, actual[0].prefix_len);
+    EXPECT_EQ(&trie, actual[0].trie);
+    EXPECT_EQ(Traverse(trie, "\x01\xFF"), actual[0].node);
+
+    // "\x01\xFF\xFF"
+    EXPECT_EQ(kKey, actual[1].key);
+    EXPECT_EQ(3, actual[1].prefix_len);
+    EXPECT_EQ(&trie, actual[1].trie);
+    EXPECT_EQ(Traverse(trie, "\x01\xFF\xFF"), actual[1].node);
   }
-
-  trie.Close();
-}
-
-TEST_F(LoudsTrieTest, PrefixSearchWithLimit) {
-  LoudsTrieBuilder builder;
-  builder.Add("aa");
-  builder.Add("ab");
-  builder.Add("abc");
-  builder.Add("abcd");
-  builder.Add("abcde");
-  builder.Add("abcdef");
-  builder.Add("abd");
-  builder.Add("ebd");
-
-  builder.Build();
-
-  LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
   {
-    TestCallback callback;
-    callback.AddExpectation("ab", 2, builder.GetId("ab"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_DONE);
-
-    trie.PrefixSearch("abcdef", &callback);
-    EXPECT_EQ(2, callback.num_invoked());
+    vector<RecordCallbackArgs::CallbackArgs> actual;
+    trie.PrefixSearch("xyz", RecordCallbackArgs(&actual));
+    EXPECT_TRUE(actual.empty());
   }
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("ab", 2, builder.GetId("ab"),
-                            LoudsTrie::Callback::SEARCH_DONE);
-
-    trie.PrefixSearch("abdxxx", &callback);
-    EXPECT_EQ(1, callback.num_invoked());
-  }
-
-  trie.Close();
-}
-
-TEST_F(LoudsTrieTest, PrefixSearchWithKeyExpansion) {
-  LoudsTrieBuilder builder;
-  builder.Add("abc");
-  builder.Add("adc");
-  builder.Add("cbc");
-  builder.Add("ddc");
-
-  builder.Build();
-  LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
-  KeyExpansionTable key_expansion_table;
-  key_expansion_table.Add('b', "d");
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("adc", 3, builder.GetId("adc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-
-    trie.PrefixSearchWithKeyExpansion("abc", key_expansion_table, &callback);
-    EXPECT_EQ(2, callback.num_invoked());
-  }
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("adc", 3, builder.GetId("adc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    trie.PrefixSearchWithKeyExpansion("adc", key_expansion_table, &callback);
-    EXPECT_EQ(1, callback.num_invoked());
-  }
-
-  trie.Close();
-}
-
-TEST_F(LoudsTrieTest, PrefixSearchCulling) {
-  LoudsTrieBuilder builder;
-  builder.Add("a");
-  builder.Add("ab");
-  builder.Add("abc");
-  builder.Add("abcd");
-  builder.Add("ae");
-  builder.Add("aec");
-  builder.Add("aecd");
-
-  builder.Build();
-  LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
-  KeyExpansionTable key_expansion_table;
-  key_expansion_table.Add('b', "e");
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("a", 1, builder.GetId("a"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("ab", 2, builder.GetId("ab"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_CULL);
-    // No callback for abcd, but ones for ae... should be found.
-    callback.AddExpectation("ae", 2, builder.GetId("ae"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("aec", 3, builder.GetId("aec"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("aecd", 4, builder.GetId("aecd"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-
-    trie.PrefixSearchWithKeyExpansion("abcd", key_expansion_table, &callback);
-    EXPECT_EQ(6, callback.num_invoked());
-  }
-
-  trie.Close();
 }
 
 TEST_F(LoudsTrieTest, PredictiveSearch) {

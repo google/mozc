@@ -68,6 +68,11 @@ class Louds {
     // Default instance represents the root node (not the super-root).
     Node() : edge_index_(0), node_id_(1) {}
     Node(const Node &n) : edge_index_(n.edge_index_), node_id_(n.node_id_) {}
+    Node& operator=(const Node &n) {
+      edge_index_ = n.edge_index_;
+      node_id_ = n.node_id_;
+      return *this;
+    }
 
     int node_id() const { return node_id_; }
 

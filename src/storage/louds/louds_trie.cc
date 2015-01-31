@@ -92,16 +92,21 @@ void LoudsTrie::Close() {
   edge_character_ = nullptr;
 }
 
+bool LoudsTrie::MoveToChildByLabel(char label, Node *node) const {
+  MoveToFirstChild(node);
+  while (IsValidNode(*node)) {
+    if (GetEdgeLabelToParentNode(*node) == label) {
+      return true;
+    }
+    MoveToNextSibling(node);
+  }
+  return false;
+}
+
 bool LoudsTrie::Traverse(StringPiece key, Node *node) const {
   for (auto iter = key.begin(); iter != key.end(); ++iter) {
-    // Check all the children to find an edge with label |*iter|.
-    for (louds_.MoveToFirstChild(node); ; louds_.MoveToNextSibling(node)) {
-      if (!louds_.IsValidNode(*node)) {
-        return false;
-      }
-      if (GetEdgeLabelToParentNode(*node) == *iter) {
-        break;
-      }
+    if (!MoveToChildByLabel(*iter, node)) {
+      return false;
     }
   }
   return true;
@@ -113,64 +118,6 @@ int LoudsTrie::ExactSearch(StringPiece key) const {
     return GetKeyIdOfTerminalNode(node);
   }
   return -1;
-}
-
-namespace {
-
-// Recursively traverses the trie in DFS order and runs |callback| at terminal
-// nodes.  Returns true if traversal is done to exit recursion.
-bool PrefixSearchWithKeyExpansionImpl(
-    const LoudsTrie &trie,
-    StringPiece key,
-    const KeyExpansionTable &key_expansion_table,
-    LoudsTrie::Callback *callback,
-    LoudsTrie::Node node,
-    char *key_buffer,
-    StringPiece::size_type key_len) {
-  if (trie.IsTerminalNode(node)) {
-    const LoudsTrie::Callback::ResultType result =
-        callback->Run(key_buffer, key_len, trie.GetKeyIdOfTerminalNode(node));
-    switch (result) {
-      case LoudsTrie::Callback::SEARCH_DONE:
-        return true;
-      case LoudsTrie::Callback::SEARCH_CULL:
-        return false;
-      default:
-        break;
-    }
-  }
-
-  if (key_len == key.size()) {
-    return false;
-  }
-
-  const char target_char = key[key_len];
-  const ExpandedKey &chars = key_expansion_table.ExpandKey(target_char);
-  for (trie.MoveToFirstChild(&node); trie.IsValidNode(node);
-       trie.MoveToNextSibling(&node)) {
-    const char c = trie.GetEdgeLabelToParentNode(node);
-    if (chars.IsHit(c)) {
-      key_buffer[key_len] = c;
-      if (PrefixSearchWithKeyExpansionImpl(trie, key, key_expansion_table,
-                                           callback, node,
-                                           key_buffer, key_len + 1)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-}  // namespace
-
-void LoudsTrie::PrefixSearchWithKeyExpansion(
-    StringPiece key, const KeyExpansionTable &key_expansion_table,
-    Callback *callback) const {
-  char key_buffer[kMaxDepth + 1];
-  PrefixSearchWithKeyExpansionImpl(*this, key, key_expansion_table,
-                                   callback,
-                                   Node(),  // Root
-                                   key_buffer, 0);
 }
 
 namespace {

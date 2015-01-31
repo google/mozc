@@ -46,7 +46,7 @@ class LoudsTrie {
   static const size_t kMaxDepth = 256;
 
   // This class stores a traversal state.
-  using Node = Louds::Node;
+  typedef Louds::Node Node;
 
   // Interface which is called back when the result is found.
   class Callback {
@@ -96,7 +96,7 @@ class LoudsTrie {
 
   // Returns true if |node| is a terminal node.
   bool IsTerminalNode(const Node &node) const {
-    return terminal_bit_vector_.Get(node.node_id() - 1);
+    return terminal_bit_vector_.Get(node.node_id() - 1) != 0;
   }
 
   // Returns the label of the edge from |node|'s parent (predecessor) to |node|.
@@ -145,6 +145,10 @@ class LoudsTrie {
     return node;
   }
 
+  // Moves |node| to its child connected by the edge with |label|.  If there's
+  // no edge having |label|, |node| becomes invalid and false is returned.
+  bool MoveToChildByLabel(char label, Node *node) const;
+
   // Traverses a trie for |key|, starting from |node|, and modifies |node| to
   // the destination terminal node.  Here, |node| is not necessarily the root.
   // Returns false if there's no node reachable by |key|.
@@ -164,6 +168,33 @@ class LoudsTrie {
   // method, which is more efficient.
   int ExactSearch(StringPiece key) const;
 
+  // Runs a functor for the prefixes of |key| that exist in the trie.
+  // |callback| needs to have the following signature:
+  //
+  // void(StringPiece key, StringPiece::size_type prefix_len,
+  //      const LoudsTrie &trie, LoudsTrie::Node node)
+  //
+  // where
+  //   key: The original input key (i.e., the same as the input |key|).
+  //   prefix_len: The length of prefix, i.e., key.substr(0, prefix_len)
+  //               is the matched prefix.
+  //   trie: This trie.
+  //   node: The location information, from which key ID can be recovered by
+  //         LoudsTrie::GetKeyIdOfTerminalNode() method.
+  template <typename Func>
+  void PrefixSearch(StringPiece key, Func callback) const {
+    Node node;
+    for (StringPiece::size_type i = 0; i < key.size(); ) {
+      if (!MoveToChildByLabel(key[i], &node)) {
+        return;
+      }
+      ++i;  // Increment here for next loop and call |callback|.
+      if (IsTerminalNode(node)) {
+        callback(key, i, *this, node);
+      }
+    }
+  }
+
   // TODO(noriyukit): The following search methods rely on Callback.  However,
   // this results in the nested callback to implement SystemDictionary's lookup
   // methods (i.e., inside implementations of DictionaryInterface::Callback,
@@ -171,17 +202,6 @@ class LoudsTrie {
   // somewhat inefficient because both requires virtual method calls.
   // Therefore, it'd be better to implement the following search methods
   // directly in system_dictionary.cc using more generic APIs defined above.
-
-  // Searches the trie structure, and invokes callback->Run when for each word
-  // which is a prefix of the key is found.
-  void PrefixSearch(StringPiece key, Callback *callback) const {
-    PrefixSearchWithKeyExpansion(
-        key, KeyExpansionTable::GetDefaultInstance(), callback);
-  }
-
-  void PrefixSearchWithKeyExpansion(
-      StringPiece key, const KeyExpansionTable &key_expansion_table,
-      Callback *callback) const;
 
   // Searches the trie structure, and invokes callback->Run when for each word
   // which begins with key is found.
