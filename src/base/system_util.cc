@@ -34,6 +34,7 @@
 #include <LMCons.h>
 #include <Sddl.h>
 #include <ShlObj.h>
+#include <VersionHelpers.h>
 #else  // OS_WIN
 #include <pwd.h>
 #include <sys/mman.h>
@@ -707,69 +708,6 @@ string SystemUtil::GetDesktopNameAsString() {
 
 #ifdef OS_WIN
 namespace {
-// TODO(yukawa): Use API wrapper so that unit test can emulate any case.
-template<DWORD MajorVersion, DWORD MinorVersion>
-class IsWindowsVerXOrLaterCache {
- public:
-  IsWindowsVerXOrLaterCache()
-    : succeeded_(false),
-      is_ver_x_or_later_(true) {
-    // Examine if this system is greater than or equal to WinNT ver. X
-    {
-      OSVERSIONINFOEX osvi = {};
-      osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-      osvi.dwMajorVersion = MajorVersion;
-      osvi.dwMinorVersion = MinorVersion;
-      DWORDLONG conditional = 0;
-      VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-      VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-      const BOOL result = ::VerifyVersionInfo(
-          &osvi, VER_MAJORVERSION | VER_MINORVERSION, conditional);
-      if (result != FALSE) {
-        succeeded_ = true;
-        is_ver_x_or_later_ = true;
-        return;
-      }
-    }
-
-    // Examine if this system is less than WinNT ver. X
-    {
-      OSVERSIONINFOEX osvi = {};
-      osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-      osvi.dwMajorVersion = MajorVersion;
-      osvi.dwMinorVersion = MinorVersion;
-      DWORDLONG conditional = 0;
-      VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_LESS);
-      VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_LESS);
-      const BOOL result = ::VerifyVersionInfo(
-          &osvi, VER_MAJORVERSION | VER_MINORVERSION, conditional);
-      if (result != FALSE) {
-        succeeded_ = true;
-        is_ver_x_or_later_ = false;
-        return;
-      }
-    }
-
-    // Unexpected situation.
-    succeeded_ = false;
-    is_ver_x_or_later_ = false;
-  }
-  const bool succeeded() const {
-    return succeeded_;
-  }
-  const bool is_ver_x_or_later() const {
-    return is_ver_x_or_later_;
-  }
-
- private:
-  bool succeeded_;
-  bool is_ver_x_or_later_;
-};
-
-typedef IsWindowsVerXOrLaterCache<6, 0> IsWindowsVistaOrLaterCache;
-typedef IsWindowsVerXOrLaterCache<6, 1> IsWindows7OrLaterCache;
-typedef IsWindowsVerXOrLaterCache<6, 2> IsWindows8OrLaterCache;
-typedef IsWindowsVerXOrLaterCache<6, 3> IsWindows8_1OrLaterCache;
 
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class SystemDirectoryCache {
@@ -794,22 +732,11 @@ class SystemDirectoryCache {
   wchar_t path_buffer_[MAX_PATH];
   wchar_t *system_dir_;
 };
+
 }  // namespace
 
 // TODO(team): Support other platforms.
 bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
-  if (!Singleton<IsWindowsVistaOrLaterCache>::get()->succeeded()) {
-    return false;
-  }
-  if (!Singleton<IsWindows7OrLaterCache>::get()->succeeded()) {
-    return false;
-  }
-  if (!Singleton<IsWindows8OrLaterCache>::get()->succeeded()) {
-    return false;
-  }
-  if (!Singleton<IsWindows8_1OrLaterCache>::get()->succeeded()) {
-    return false;
-  }
   if (!Singleton<SystemDirectoryCache>::get()->succeeded()) {
     return false;
   }
@@ -928,8 +855,8 @@ bool SystemUtil::IsPlatformSupported() {
 
 bool SystemUtil::IsVistaOrLater() {
 #ifdef OS_WIN
-  DCHECK(Singleton<IsWindowsVistaOrLaterCache>::get()->succeeded());
-  return Singleton<IsWindowsVistaOrLaterCache>::get()->is_ver_x_or_later();
+  static const bool result = ::IsWindowsVistaOrGreater();
+  return result;
 #else
   return false;
 #endif  // OS_WIN
@@ -937,8 +864,8 @@ bool SystemUtil::IsVistaOrLater() {
 
 bool SystemUtil::IsWindows7OrLater() {
 #ifdef OS_WIN
-  DCHECK(Singleton<IsWindows7OrLaterCache>::get()->succeeded());
-  return Singleton<IsWindows7OrLaterCache>::get()->is_ver_x_or_later();
+  static const bool result = ::IsWindows7OrGreater();
+  return result;
 #else
   return false;
 #endif  // OS_WIN
@@ -946,8 +873,8 @@ bool SystemUtil::IsWindows7OrLater() {
 
 bool SystemUtil::IsWindows8OrLater() {
 #ifdef OS_WIN
-  DCHECK(Singleton<IsWindows8OrLaterCache>::get()->succeeded());
-  return Singleton<IsWindows8OrLaterCache>::get()->is_ver_x_or_later();
+  static const bool result = ::IsWindows8OrGreater();
+  return result;
 #else
   return false;
 #endif  // OS_WIN
@@ -955,8 +882,8 @@ bool SystemUtil::IsWindows8OrLater() {
 
 bool SystemUtil::IsWindows8_1OrLater() {
 #ifdef OS_WIN
-  DCHECK(Singleton<IsWindows8_1OrLaterCache>::get()->succeeded());
-  return Singleton<IsWindows8_1OrLaterCache>::get()->is_ver_x_or_later();
+  static const bool result = ::IsWindows8Point1OrGreater();
+  return result;
 #else
   return false;
 #endif  // OS_WIN
