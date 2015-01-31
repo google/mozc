@@ -120,100 +120,13 @@ int LoudsTrie::ExactSearch(StringPiece key) const {
   return -1;
 }
 
-namespace {
-
-// Traverses the subtree rooted at |node| in DFS order and runs |callback| at
-// each terminal node.  Returns true if traversal should be stopped.
-bool TraverseSubTree(
-    const LoudsTrie &trie,
-    const KeyExpansionTable &key_expansion_table,
-    LoudsTrie::Callback *callback,
-    LoudsTrie::Node node,
-    char *key_buffer,
-    StringPiece::size_type key_len) {
-  if (trie.IsTerminalNode(node)) {
-    const LoudsTrie::Callback::ResultType result =
-        callback->Run(key_buffer, key_len, trie.GetKeyIdOfTerminalNode(node));
-    switch (result) {
-      case LoudsTrie::Callback::SEARCH_DONE:
-        return true;
-      case LoudsTrie::Callback::SEARCH_CULL:
-        return false;
-      default:
-        break;
-    }
-  }
-
-  for (trie.MoveToFirstChild(&node); trie.IsValidNode(node);
-       trie.MoveToNextSibling(&node)) {
-    key_buffer[key_len] = trie.GetEdgeLabelToParentNode(node);
-    if (TraverseSubTree(trie, key_expansion_table, callback, node,
-                        key_buffer, key_len + 1)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Recursively traverses the trie in DFS order until terminal nodes for each
-// expanded key is found.  Then TraverseSubTree() is called at each terminal
-// node.  Returns true if traversal should be stopped.
-bool PredictiveSearchWithKeyExpansionImpl(
-    const LoudsTrie &trie,
-    StringPiece key,
-    const KeyExpansionTable &key_expansion_table,
-    LoudsTrie::Callback *callback,
-    LoudsTrie::Node node,
-    char *key_buffer,
-    StringPiece::size_type key_len) {
-  if (key_len == key.size()) {
-    return TraverseSubTree(trie, key_expansion_table, callback, node,
-                           key_buffer, key_len);
-  }
-
-  const char target_char = key[key_len];
-  const ExpandedKey &chars = key_expansion_table.ExpandKey(target_char);
-  for (trie.MoveToFirstChild(&node); trie.IsValidNode(node);
-       trie.MoveToNextSibling(&node)) {
-    const char c = trie.GetEdgeLabelToParentNode(node);
-    if (chars.IsHit(c)) {
-      key_buffer[key_len] = c;
-      if (PredictiveSearchWithKeyExpansionImpl(trie, key, key_expansion_table,
-                                               callback, node,
-                                               key_buffer, key_len + 1)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-}  // namespace
-
-void LoudsTrie::PredictiveSearchWithKeyExpansion(
-    StringPiece key, const KeyExpansionTable &key_expansion_table,
-    Callback *callback) const {
-  char key_buffer[kMaxDepth + 1];
-  PredictiveSearchWithKeyExpansionImpl(
-      *this, key, key_expansion_table, callback,
-      Node(),  // Root
-      key_buffer, 0);
-}
-
-StringPiece LoudsTrie::RestoreKeyString(int key_id, char *buf) const {
-  // TODO(noriyukit): Check if it's really necessary to handle this case.
-  if (key_id < 0) {
-    return StringPiece();
-  }
-
+StringPiece LoudsTrie::RestoreKeyString(Node node, char *buf) const {
   // Ensure the returned StringPiece is null-terminated.
   char *const buf_end = buf + kMaxDepth;
   *buf_end = '\0';
 
   // Climb up the trie to the root and fill |buf| backward.
   char *ptr = buf_end;
-  Node node;
-  GetTerminalNodeFromKeyId(key_id, &node);
   for (; !louds_.IsRoot(node); louds_.MoveToParent(&node)) {
     *--ptr = GetEdgeLabelToParentNode(node);
   }

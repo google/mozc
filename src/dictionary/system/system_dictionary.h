@@ -44,6 +44,7 @@
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
+#include "storage/louds/key_expansion_table.h"
 #include "storage/louds/louds_trie.h"
 // for FRIEND_TEST
 #include "testing/base/public/gunit_prod.h"
@@ -226,6 +227,23 @@ class SystemDictionary : public DictionaryInterface {
       bool is_expanded,
       char *actual_key_buffer,
       string *actual_prefix) const;
+
+  struct PredictiveLookupSearchState {
+    PredictiveLookupSearchState() : key_pos(0), is_expanded(false) {}
+    PredictiveLookupSearchState(const storage::louds::LoudsTrie::Node &n,
+                                size_t pos, bool expanded)
+        : node(n), key_pos(pos), is_expanded(expanded) {}
+
+    storage::louds::LoudsTrie::Node node;
+    size_t key_pos;
+    bool is_expanded;
+  };
+
+  void CollectPredictiveNodesInBfsOrder(
+      StringPiece encoded_key,
+      const storage::louds::KeyExpansionTable &table,
+      size_t limit,
+      vector<PredictiveLookupSearchState> *result) const;
 
   scoped_ptr<storage::louds::LoudsTrie> key_trie_;
   scoped_ptr<storage::louds::LoudsTrie> value_trie_;

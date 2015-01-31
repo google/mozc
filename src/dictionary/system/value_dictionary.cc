@@ -30,6 +30,7 @@
 #include "dictionary/system/value_dictionary.h"
 
 #include <limits>
+#include <queue>
 #include <string>
 
 #include "base/logging.h"
@@ -135,55 +136,29 @@ inline void FillToken(const uint16 suggestion_only_word_id,
   token->attributes = Token::NONE;
 }
 
-// Converts a value of SystemDictionary::Callback::ResultType to the
-// corresponding value of LoudsTrie::Callback::ResultType.
-inline LoudsTrie::Callback::ResultType ConvertResultType(
-    const DictionaryInterface::Callback::ResultType result) {
-  switch (result) {
-    case DictionaryInterface::Callback::TRAVERSE_DONE:
-      return LoudsTrie::Callback::SEARCH_DONE;
-    case DictionaryInterface::Callback::TRAVERSE_NEXT_KEY:
-    case DictionaryInterface::Callback::TRAVERSE_CONTINUE:
-      return LoudsTrie::Callback::SEARCH_CONTINUE;
-    case DictionaryInterface::Callback::TRAVERSE_CULL:
-      return LoudsTrie::Callback::SEARCH_CULL;
-    default:
-      LOG(DFATAL) << "Enum value " << result << " cannot be converted";
-      return LoudsTrie::Callback::SEARCH_DONE;  // dummy
+inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
+    const LoudsTrie &value_trie,
+    const SystemDictionaryCodecInterface &codec,
+    const uint16 suggestion_only_word_id,
+    const LoudsTrie::Node &node,
+    DictionaryInterface::Callback *callback,
+    char *encoded_value_buffer,
+    string *value,
+    Token *token) {
+  const StringPiece encoded_value =
+      value_trie.RestoreKeyString(node, encoded_value_buffer);
+
+  value->clear();
+  codec.DecodeValue(encoded_value, value);
+  const DictionaryInterface::Callback::ResultType result =
+      callback->OnKey(*value);
+  if (result != DictionaryInterface::Callback::TRAVERSE_CONTINUE) {
+    return result;
   }
+
+  FillToken(suggestion_only_word_id, *value, token);
+  return callback->OnToken(*value, *value, *token);
 }
-
-class PredictiveTraverser : public LoudsTrie::Callback {
- public:
-  PredictiveTraverser(const SystemDictionaryCodecInterface *codec,
-                      const uint16 suggestion_only_word_id,
-                      DictionaryInterface::Callback *callback)
-      : codec_(codec),
-        suggestion_only_word_id_(suggestion_only_word_id),
-        callback_(callback) {}
-  virtual ~PredictiveTraverser() {}
-
-  virtual ResultType Run(const char *key_begin, size_t len, int key_id) {
-    // The decoded key of value trie corresponds to value (surface form).
-    string value;
-    codec_->DecodeValue(StringPiece(key_begin, len), &value);
-    DictionaryInterface::Callback::ResultType result = callback_->OnKey(value);
-    if (result != DictionaryInterface::Callback::TRAVERSE_CONTINUE) {
-      return ConvertResultType(result);
-    }
-    FillToken(suggestion_only_word_id_, value, &token_);
-    result = callback_->OnToken(value, value, token_);
-    return ConvertResultType(result);
-  }
-
- private:
-  const SystemDictionaryCodecInterface *codec_;
-  const uint16 suggestion_only_word_id_;
-  DictionaryInterface::Callback *callback_;
-  Token token_;
-
-  DISALLOW_COPY_AND_ASSIGN(PredictiveTraverser);
-};
 
 }  // namespace
 
@@ -196,11 +171,46 @@ void ValueDictionary::LookupPredictive(
   if (key.empty()) {
     return;
   }
-  string lookup_key_str;
-  codec_->EncodeValue(key, &lookup_key_str);
-  DCHECK(value_trie_.get() != NULL);
-  PredictiveTraverser traverser(codec_, suggestion_only_word_id_, callback);
-  value_trie_->PredictiveSearch(lookup_key_str.c_str(), &traverser);
+  string encoded_key;
+  codec_->EncodeValue(key, &encoded_key);
+
+  LoudsTrie::Node node;
+  if (!value_trie_->Traverse(encoded_key, &node)) {
+    return;
+  }
+
+  char encoded_value_buffer[LoudsTrie::kMaxDepth + 1];
+  string value;
+  value.reserve(key.size() * 2);
+  Token token;
+
+  // Traverse subtree rooted at |node|.
+  queue<LoudsTrie::Node> queue;
+  queue.push(node);
+  do {
+    node = queue.front();
+    queue.pop();
+
+    if (value_trie_->IsTerminalNode(node)) {
+      switch (HandleTerminalNode(*value_trie_, *codec_,
+                                 suggestion_only_word_id_,
+                                 node, callback, encoded_value_buffer,
+                                 &value, &token)) {
+        case Callback::TRAVERSE_DONE:
+          return;
+        case Callback::TRAVERSE_CULL:
+          continue;
+        default:
+          break;
+      }
+    }
+
+    for (value_trie_->MoveToFirstChild(&node);
+         value_trie_->IsValidNode(node);
+         value_trie_->MoveToNextSibling(&node)) {
+      queue.push(node);
+    }
+  } while (!queue.empty());
 }
 
 void ValueDictionary::LookupPrefix(

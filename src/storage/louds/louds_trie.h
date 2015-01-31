@@ -32,7 +32,6 @@
 
 #include "base/port.h"
 #include "base/string_piece.h"
-#include "storage/louds/key_expansion_table.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
@@ -47,32 +46,6 @@ class LoudsTrie {
 
   // This class stores a traversal state.
   typedef Louds::Node Node;
-
-  // Interface which is called back when the result is found.
-  class Callback {
-   public:
-    enum ResultType {
-      // Finishes the current (prefix or predictive) search.
-      SEARCH_DONE,
-
-      // Continues the current (prefix or predictive) search.
-      SEARCH_CONTINUE,
-
-      // Finished the (prefix or predictive) search of the current edge,
-      // but still continues to search for other edges.
-      SEARCH_CULL,
-    };
-
-    virtual ~Callback() {
-    }
-
-    // The callback will be invoked when a target word is found.
-    // "s" may not be null-terminated.
-    virtual ResultType Run(const char *s, size_t len, int key_id) = 0;
-
-   protected:
-    Callback() {}
-  };
 
   LoudsTrie() : edge_character_(nullptr) {}
   ~LoudsTrie() {}
@@ -122,12 +95,24 @@ class LoudsTrie {
     return node;
   }
 
+  // Restores the key string that reaches to |node|.  The caller is
+  // responsible for allocating a buffer for the result StringPiece, which needs
+  // to be passed in |buf|.  The returned StringPiece points to a piece of
+  // |buf|.
+  // REQUIRES: |buf| is longer than kMaxDepth + 1.
+  StringPiece RestoreKeyString(Node node, char *buf) const;
+
   // Restores the key string corresponding to |key_id|.  The caller is
   // responsible for allocating a buffer for the result StringPiece, which needs
   // to be passed in |buf|.  The returned StringPiece points to a piece of
   // |buf|.
   // REQUIRES: |buf| is longer than kMaxDepth + 1.
-  StringPiece RestoreKeyString(int key_id, char *buf) const;
+  StringPiece RestoreKeyString(int key_id, char *buf) const {
+    // TODO(noriyukit): Check if it's necessary to handle negative IDs.
+    return key_id < 0
+        ? StringPiece()
+        : RestoreKeyString(GetTerminalNodeFromKeyId(key_id), buf);
+  }
 
   // Methods for moving node exported from Louds class; see louds.h.
   void MoveToFirstChild(Node *node) const {
@@ -194,25 +179,6 @@ class LoudsTrie {
       }
     }
   }
-
-  // TODO(noriyukit): The following search methods rely on Callback.  However,
-  // this results in the nested callback to implement SystemDictionary's lookup
-  // methods (i.e., inside implementations of DictionaryInterface::Callback,
-  // LoudsTrie::Callback needs to be called; see system_dictionary.cc.  This is
-  // somewhat inefficient because both requires virtual method calls.
-  // Therefore, it'd be better to implement the following search methods
-  // directly in system_dictionary.cc using more generic APIs defined above.
-
-  // Searches the trie structure, and invokes callback->Run when for each word
-  // which begins with key is found.
-  void PredictiveSearch(StringPiece key, Callback *callback) const {
-    PredictiveSearchWithKeyExpansion(
-        key, KeyExpansionTable::GetDefaultInstance(), callback);
-  }
-
-  void PredictiveSearchWithKeyExpansion(
-      StringPiece key, const KeyExpansionTable &key_expansion_table,
-      Callback *callback) const;
 
  private:
   Louds louds_;  // Tree structure representation by LOUDS.

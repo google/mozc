@@ -48,55 +48,6 @@ namespace storage {
 namespace louds {
 namespace {
 
-class LoudsTrieTest : public ::testing::Test {
-};
-
-class TestCallback : public LoudsTrie::Callback {
- public:
-  TestCallback() : current_index_(0), limit_(numeric_limits<size_t>::max()) {
-  }
-
-  void AddExpectation(
-      const string &s, size_t len, int id, ResultType result_type) {
-    expectation_list_.push_back(Expectation());
-    Expectation &expectation = expectation_list_.back();
-    expectation.s = s;
-    expectation.len = len;
-    expectation.id = id;
-    expectation.result_type = result_type;
-  }
-
-  virtual ResultType Run(const char *s, size_t len, int id) {
-    if (current_index_ >= expectation_list_.size()) {
-      ADD_FAILURE() << "Too many invocations: " << expectation_list_.size()
-                    << " vs " << current_index_;
-      // Quit the callback.
-      return SEARCH_DONE;
-    }
-    const Expectation &expectation = expectation_list_[current_index_];
-    EXPECT_EQ(expectation.s, string(s, len)) << current_index_;
-    EXPECT_EQ(expectation.len, len) << current_index_;
-    EXPECT_EQ(expectation.id, id) << current_index_;
-    ++current_index_;
-    return expectation.result_type;
-  }
-
-  size_t num_invoked() const { return current_index_; }
-
- private:
-  struct Expectation {
-    string s;
-    size_t len;
-    int id;
-    ResultType result_type;
-  };
-  vector<Expectation> expectation_list_;
-  size_t current_index_;
-  size_t limit_;
-
-  DISALLOW_COPY_AND_ASSIGN(TestCallback);
-};
-
 class RecordCallbackArgs {
  public:
   struct CallbackArgs {
@@ -128,7 +79,7 @@ LoudsTrie::Node Traverse(const LoudsTrie &trie, StringPiece key) {
   return node;
 }
 
-TEST_F(LoudsTrieTest, NodeBasedApis) {
+TEST(LoudsTrieTest, NodeBasedApis) {
   // Create the following trie (* stands for non-terminal nodes):
   //
   //        *          Key   ID
@@ -351,7 +302,7 @@ TEST_F(LoudsTrieTest, NodeBasedApis) {
   }
 }
 
-TEST_F(LoudsTrieTest, HasKey) {
+TEST(LoudsTrieTest, HasKey) {
   LoudsTrieBuilder builder;
   builder.Add("a");
   builder.Add("abc");
@@ -384,7 +335,7 @@ TEST_F(LoudsTrieTest, HasKey) {
   EXPECT_FALSE(trie.HasKey("bcxyz"));
 }
 
-TEST_F(LoudsTrieTest, ExactSearch) {
+TEST(LoudsTrieTest, ExactSearch) {
   LoudsTrieBuilder builder;
   builder.Add("a");
   builder.Add("abc");
@@ -418,7 +369,7 @@ TEST_F(LoudsTrieTest, ExactSearch) {
   trie.Close();
 }
 
-TEST_F(LoudsTrieTest, PrefixSearch) {
+TEST(LoudsTrieTest, PrefixSearch) {
   LoudsTrieBuilder builder;
   builder.Add("aa");
   builder.Add("ab");
@@ -492,229 +443,7 @@ TEST_F(LoudsTrieTest, PrefixSearch) {
   }
 }
 
-TEST_F(LoudsTrieTest, PredictiveSearch) {
-  LoudsTrieBuilder builder;
-  builder.Add("aa");
-  builder.Add("ab");
-  builder.Add("abc");
-  builder.Add("abcd");
-  builder.Add("abcde");
-  builder.Add("abcdef");
-  builder.Add("abcea");
-  builder.Add("abcef");
-  builder.Add("abd");
-  builder.Add("ebd");
-  builder.Add("\x01\xFF");
-  builder.Add("\x01\xFF\xFF");
-
-  builder.Build();
-  LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcd", 4, builder.GetId("abcd"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcde", 5, builder.GetId("abcde"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcdef", 6, builder.GetId("abcdef"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcea", 5, builder.GetId("abcea"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcef", 5, builder.GetId("abcef"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-
-    trie.PredictiveSearch("abc", &callback);
-    EXPECT_EQ(6, callback.num_invoked());
-  }
-  {
-    TestCallback callback;
-    callback.AddExpectation("aa", 2, builder.GetId("aa"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("ab", 2, builder.GetId("ab"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcd", 4, builder.GetId("abcd"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcde", 5, builder.GetId("abcde"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcdef", 6, builder.GetId("abcdef"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcea", 5, builder.GetId("abcea"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcef", 5, builder.GetId("abcef"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abd", 3, builder.GetId("abd"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-
-    trie.PredictiveSearch("a", &callback);
-    EXPECT_EQ(9, callback.num_invoked());
-  }
-  {
-    // Make sure non-ascii characters can be found.
-    TestCallback callback;
-    callback.AddExpectation("\x01\xFF", 2, builder.GetId("\x01\xFF"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("\x01\xFF\xFF", 3, builder.GetId("\x01\xFF\xFF"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-
-    trie.PredictiveSearch("\x01", &callback);
-    EXPECT_EQ(2, callback.num_invoked());
-  }
-
-  trie.Close();
-}
-
-TEST_F(LoudsTrieTest, PredictiveSearchWithLimit) {
-  LoudsTrieBuilder builder;
-  builder.Add("aa");
-  builder.Add("ab");
-  builder.Add("abc");
-  builder.Add("abcd");
-  builder.Add("abcde");
-  builder.Add("abcdef");
-  builder.Add("abcea");
-  builder.Add("abcef");
-  builder.Add("abd");
-  builder.Add("ebd");
-
-  builder.Build();
-  LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abcd", 4, builder.GetId("abcd"),
-                            LoudsTrie::Callback::SEARCH_DONE);
-
-    trie.PredictiveSearch("abc", &callback);
-    EXPECT_EQ(2, callback.num_invoked());
-  }
-  {
-    TestCallback callback;
-    callback.AddExpectation("aa", 2, builder.GetId("aa"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("ab", 2, builder.GetId("ab"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_DONE);
-
-    trie.PredictiveSearch("a", &callback);
-    EXPECT_EQ(3, callback.num_invoked());
-  }
-
-  trie.Close();
-}
-
-TEST_F(LoudsTrieTest, PredictiveSearchWithKeyExpansion) {
-  LoudsTrieBuilder builder;
-  builder.Add("abc");
-  builder.Add("adc");
-  builder.Add("cbc");
-  builder.Add("ddc");
-
-  builder.Build();
-  LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
-  KeyExpansionTable key_expansion_table;
-  key_expansion_table.Add('b', "d");
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("adc", 3, builder.GetId("adc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-
-    trie.PredictiveSearchWithKeyExpansion(
-        "ab", key_expansion_table, &callback);
-    EXPECT_EQ(2, callback.num_invoked());
-  }
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("adc", 3, builder.GetId("adc"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    trie.PredictiveSearchWithKeyExpansion(
-        "ad", key_expansion_table, &callback);
-    EXPECT_EQ(1, callback.num_invoked());
-  }
-
-  trie.Close();
-}
-
-TEST_F(LoudsTrieTest, PredictiveSearchCulling) {
-  LoudsTrieBuilder builder;
-  builder.Add("a");
-  builder.Add("ab");
-  builder.Add("abc");
-  builder.Add("abcd");
-  builder.Add("ae");
-  builder.Add("aec");
-  builder.Add("aecd");
-
-  builder.Build();
-  LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("a", 1, builder.GetId("a"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("ab", 2, builder.GetId("ab"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_CULL);
-    // No callback for abcd.
-    callback.AddExpectation("ae", 2, builder.GetId("ae"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("aec", 3, builder.GetId("aec"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("aecd", 4, builder.GetId("aecd"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-
-    trie.PredictiveSearch("a", &callback);
-    EXPECT_EQ(6, callback.num_invoked());
-  }
-
-  trie.Close();
-}
-
-TEST_F(LoudsTrieTest, PredictiveSearchCulling2) {
-  LoudsTrieBuilder builder;
-  builder.Add("abc");
-  builder.Add("abcd");
-  builder.Add("abcde");
-  builder.Add("abxy");
-  builder.Add("abxyz");
-
-  builder.Build();
-  LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
-  {
-    TestCallback callback;
-    callback.AddExpectation("abc", 3, builder.GetId("abc"),
-                            LoudsTrie::Callback::SEARCH_CULL);
-    callback.AddExpectation("abxy", 4, builder.GetId("abxy"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-    callback.AddExpectation("abxyz", 5, builder.GetId("abxyz"),
-                            LoudsTrie::Callback::SEARCH_CONTINUE);
-
-    trie.PredictiveSearch("a", &callback);
-    EXPECT_EQ(3, callback.num_invoked());
-  }
-
-  trie.Close();
-}
-
-TEST_F(LoudsTrieTest, RestoreKeyString) {
+TEST(LoudsTrieTest, RestoreKeyString) {
   LoudsTrieBuilder builder;
   builder.Add("aa");
   builder.Add("ab");

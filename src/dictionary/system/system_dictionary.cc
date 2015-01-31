@@ -50,6 +50,7 @@
 #include <cstring>
 #include <limits>
 #include <map>
+#include <queue>
 #include <string>
 #include <utility>
 #include <vector>
@@ -716,141 +717,73 @@ bool SystemDictionary::HasValue(StringPiece value) const {
   return false;
 }
 
-namespace {
+void SystemDictionary::CollectPredictiveNodesInBfsOrder(
+    StringPiece encoded_key,
+    const KeyExpansionTable &table,
+    size_t limit,
+    vector<PredictiveLookupSearchState> *result) const {
+  queue<PredictiveLookupSearchState> queue;
+  queue.push(PredictiveLookupSearchState(LoudsTrie::Node(), 0, false));
+  do {
+    PredictiveLookupSearchState state = queue.front();
+    queue.pop();
 
-// Collects short keys preferentially.
-class ShortKeyCollector : public LoudsTrie::Callback {
- public:
-  // Holds a lookup result from trie.
-  struct Entry {
-    string encoded_key;  // Encoded lookup key
-    string encoded_actual_key;  // Encoded actual key in trie (expanded key)
-    size_t actual_key_len;  // Decoded actual key length
-    int key_id;  // Key ID in trie
-  };
+    // Update traversal state for |encoded_key| and its expanded keys.
+    if (state.key_pos < encoded_key.size()) {
+      const char target_char = encoded_key[state.key_pos];
+      const ExpandedKey &chars = table.ExpandKey(target_char);
 
-  ShortKeyCollector(const SystemDictionaryCodecInterface *codec,
-                    StringPiece original_encoded_key,
-                    size_t min_key_len,
-                    size_t limit)
-      : codec_(codec),
-        original_encoded_key_(original_encoded_key),
-        min_key_len_(min_key_len),
-        limit_(limit),
-        current_max_key_len_(0),
-        num_max_key_length_entries_(0) {
-    entry_list_.reserve(limit);
-  }
-
-  virtual ResultType Run(const char *trie_key,
-                         size_t trie_key_len, int key_id) {
-    const StringPiece encoded_actual_key(trie_key, trie_key_len);
-
-    // First calculate the length of decoded key.
-    // Note: In the current kana modifier insensitive lookup mechanism, the
-    // lengths of the original lookup key and its expanded key are equal, so we
-    // can omit the construction of lookup key by calculating the length of
-    // decoded actual key. Just DCHECK here.
-    const size_t key_len = codec_->GetDecodedKeyLength(encoded_actual_key);
-    DCHECK_EQ(key_len, codec_->GetDecodedKeyLength(
-        original_encoded_key_.as_string() +
-        string(trie_key + original_encoded_key_.size(),
-               trie_key_len - original_encoded_key_.size())));
-    // Uninterested in too short key.
-    if (key_len < min_key_len_) {
-      return SEARCH_CONTINUE;
+      for (key_trie_->MoveToFirstChild(&state.node);
+           key_trie_->IsValidNode(state.node);
+           key_trie_->MoveToNextSibling(&state.node)) {
+        const char c = key_trie_->GetEdgeLabelToParentNode(state.node);
+        if (!chars.IsHit(c)) {
+          continue;
+        }
+        const bool is_expanded = state.is_expanded || c != target_char;
+        queue.push(PredictiveLookupSearchState(state.node,
+                                               state.key_pos + 1,
+                                               is_expanded));
+      }
+      continue;
     }
 
-    // Check the key length after decoding and update the internal state. As
-    // explained above, the length of actual key (expanded key) is equal to that
-    // of key.
-    const size_t actual_key_len = key_len;
-    if (actual_key_len > current_max_key_len_) {
-      if (entry_list_.size() > limit_) {
-        return SEARCH_CULL;
-      }
-      current_max_key_len_ = actual_key_len;
-      num_max_key_length_entries_ = 1;
-    } else if (actual_key_len == current_max_key_len_) {
-      ++num_max_key_length_entries_;
-    } else {
-      if (entry_list_.size() - num_max_key_length_entries_ + 1 >= limit_) {
-        RemoveAllMaxKeyLengthEntries();
-        UpdateMaxKeyLengthInternal();
-      }
+    // Collect prediction keys (state.key_pos >= encoded_key.size()).
+    if (key_trie_->IsTerminalNode(state.node)) {
+      result->push_back(state);
     }
 
-    // Keep this entry at the back.
-    entry_list_.push_back(Entry());
-    entry_list_.back().encoded_key.reserve(trie_key_len);
-    original_encoded_key_.CopyToString(&entry_list_.back().encoded_key);
-    entry_list_.back().encoded_key.append(
-        trie_key + original_encoded_key_.size(),
-        trie_key_len - original_encoded_key_.size());
-    entry_list_.back().encoded_actual_key.assign(trie_key, trie_key_len);
-    entry_list_.back().actual_key_len = actual_key_len;
-    entry_list_.back().key_id = key_id;
-
-    return SEARCH_CONTINUE;
-  }
-
-  const vector<Entry> &entry_list() const {
-    return entry_list_;
-  }
-
- private:
-  void RemoveAllMaxKeyLengthEntries() {
-    for (size_t i = 0; i < entry_list_.size(); ) {
-      Entry *result = &entry_list_[i];
-      if (result->actual_key_len < current_max_key_len_) {
-        // This result should still be kept.
-        ++i;
-        continue;
+    // Collected enough entries.  Collect all the remaining keys that have the
+    // same length as the longest key.
+    if (result->size() > limit) {
+      // The current key is the longest because of BFS property.
+      const size_t max_key_len = state.key_pos;
+      while (!queue.empty()) {
+        state = queue.front();
+        queue.pop();
+        if (state.key_pos > max_key_len) {
+          // Key length in the queue is monotonically increasing because of BFS
+          // property.  So we don't need to check all the elements in the queue.
+          break;
+        }
+        DCHECK_EQ(state.key_pos, max_key_len);
+        if (key_trie_->IsTerminalNode(state.node)) {
+          result->push_back(state);
+        }
       }
-
-      // Remove the i-th result by swapping it for the last one.
-      Entry *last_result = &entry_list_.back();
-      swap(result->encoded_key, last_result->encoded_key);
-      swap(result->encoded_actual_key, last_result->encoded_actual_key);
-      result->actual_key_len = last_result->actual_key_len;
-      result->key_id = last_result->key_id;
-      entry_list_.pop_back();
-
-      // Do not update the |i| here.
+      break;
     }
-  }
 
-  void UpdateMaxKeyLengthInternal() {
-    current_max_key_len_ = 0;
-    num_max_key_length_entries_ = 0;
-    for (size_t i = 0; i < entry_list_.size(); ++i) {
-      if (entry_list_[i].actual_key_len > current_max_key_len_) {
-        current_max_key_len_ = entry_list_[i].actual_key_len;
-        num_max_key_length_entries_ = 1;
-      } else if (entry_list_[i].actual_key_len == current_max_key_len_) {
-        ++num_max_key_length_entries_;
-      }
+    // Update traversal state for children.
+    for (key_trie_->MoveToFirstChild(&state.node);
+         key_trie_->IsValidNode(state.node);
+         key_trie_->MoveToNextSibling(&state.node)) {
+      queue.push(PredictiveLookupSearchState(state.node,
+                                             state.key_pos + 1,
+                                             state.is_expanded));
     }
-  }
-
-  const SystemDictionaryCodecInterface *codec_;
-  const StringPiece original_encoded_key_;
-
-  // Filter conditions.
-  const size_t min_key_len_;
-  const size_t limit_;
-
-  // Internal state for tracking current maximum key length.
-  size_t current_max_key_len_;
-  size_t num_max_key_length_entries_;
-
-  // Contains lookup results.
-  vector<Entry> entry_list_;
-
-  DISALLOW_COPY_AND_ASSIGN(ShortKeyCollector);
-};
-
-}  // namespace
+  } while (!queue.empty());
+}
 
 void SystemDictionary::LookupPredictive(
     StringPiece key, bool use_kana_modifier_insensitive_lookup,
@@ -861,31 +794,52 @@ void SystemDictionary::LookupPredictive(
     return;
   }
 
-  string lookup_key_str;
-  codec_->EncodeKey(key, &lookup_key_str);
-  if (lookup_key_str.size() > LoudsTrie::kMaxDepth) {
+  string encoded_key;
+  codec_->EncodeKey(key, &encoded_key);
+  if (encoded_key.size() > LoudsTrie::kMaxDepth) {
     return;
   }
 
-  // First, collect up to 64 keys so that results are as short as possible,
-  // which emulates BFS over trie.
-  ShortKeyCollector collector(codec_, lookup_key_str, 0, 64);
-  const KeyExpansionTable &table =
-      use_kana_modifier_insensitive_lookup ?
-      hiragana_expansion_table_ : KeyExpansionTable::GetDefaultInstance();
-  key_trie_->PredictiveSearchWithKeyExpansion(lookup_key_str, table,
-                                              &collector);
+  const KeyExpansionTable &table = use_kana_modifier_insensitive_lookup
+      ? hiragana_expansion_table_
+      : KeyExpansionTable::GetDefaultInstance();
 
-  string decoded_key, actual_key;
-  for (size_t i = 0; i < collector.entry_list().size(); ++i) {
-    const ShortKeyCollector::Entry &entry = collector.entry_list()[i];
+  // TODO(noriyukit): Lookup limit should be implemented at caller side by using
+  // callback mechanism.  This hard-coding limits the capability and generality
+  // of dictionary module.  CollectPredictiveNodesInBfsOrder() and the following
+  // loop for callback should be integrated for this purpose.
+  const size_t kLookupLimit = 64;
+  vector<PredictiveLookupSearchState> result;
+  result.reserve(kLookupLimit);
+  CollectPredictiveNodesInBfsOrder(encoded_key, table, kLookupLimit, &result);
 
+  // Reused buffer and instances inside the following loop.
+  char encoded_actual_key_buffer[LoudsTrie::kMaxDepth + 1];
+  string decoded_key, actual_key_str;
+  decoded_key.reserve(key.size() * 2);
+  actual_key_str.reserve(key.size() * 2);
+  for (size_t i = 0; i < result.size(); ++i) {
+    const PredictiveLookupSearchState &state = result[i];
+
+    // Computes the actual key.  For example:
+    // key = "くー"
+    // encoded_actual_key = encode("ぐーぐる")  [expanded]
+    // encoded_actual_key_prediction_suffix = encode("ぐる")
+    const StringPiece encoded_actual_key =
+        key_trie_->RestoreKeyString(state.node, encoded_actual_key_buffer);
+    const StringPiece encoded_actual_key_prediction_suffix(
+        encoded_actual_key,
+        encoded_key.size(),
+        encoded_actual_key.size() - encoded_key.size());
+
+    // decoded_key = "くーぐる" (= key + prediction suffix)
     decoded_key.clear();
-    codec_->DecodeKey(entry.encoded_key, &decoded_key);
+    key.CopyToString(&decoded_key);
+    codec_->DecodeKey(encoded_actual_key_prediction_suffix, &decoded_key);
     switch (callback->OnKey(decoded_key)) {
-      case DictionaryInterface::Callback::TRAVERSE_DONE:
+      case Callback::TRAVERSE_DONE:
         return;
-      case DictionaryInterface::Callback::TRAVERSE_NEXT_KEY:
+      case Callback::TRAVERSE_NEXT_KEY:
         continue;
       case DictionaryInterface::Callback::TRAVERSE_CULL:
         LOG(FATAL) << "Culling is not implemented.";
@@ -894,38 +848,41 @@ void SystemDictionary::LookupPredictive(
         break;
     }
 
-    actual_key.clear();
-    codec_->DecodeKey(entry.encoded_actual_key, &actual_key);
-    const bool is_expanded = entry.encoded_key != entry.encoded_actual_key;
-    switch (callback->OnActualKey(decoded_key, actual_key, is_expanded)) {
-      case DictionaryInterface::Callback::TRAVERSE_DONE:
+    StringPiece actual_key;
+    if (state.is_expanded) {
+      actual_key_str.clear();
+      codec_->DecodeKey(encoded_actual_key, &actual_key_str);
+      actual_key = actual_key_str;
+    } else {
+      actual_key = decoded_key;
+    }
+    switch (callback->OnActualKey(decoded_key, actual_key, state.is_expanded)) {
+      case Callback::TRAVERSE_DONE:
         return;
-      case DictionaryInterface::Callback::TRAVERSE_NEXT_KEY:
+      case Callback::TRAVERSE_NEXT_KEY:
         continue;
-      case DictionaryInterface::Callback::TRAVERSE_CULL:
+      case Callback::TRAVERSE_CULL:
         LOG(FATAL) << "Culling is not implemented.";
         continue;
       default:
         break;
     }
 
-    const uint8 *encoded_tokens_ptr =
-        GetTokenArrayPtr(*token_array_, entry.key_id);
+    const int key_id = key_trie_->GetKeyIdOfTerminalNode(state.node);
     for (TokenDecodeIterator iter(codec_, value_trie_.get(),
                                   frequent_pos_, actual_key,
-                                  encoded_tokens_ptr);
+                                  GetTokenArrayPtr(*token_array_, key_id));
          !iter.Done(); iter.Next()) {
       const TokenInfo &token_info = iter.Get();
-      const DictionaryInterface::Callback::ResultType result =
+      const Callback::ResultType result =
           callback->OnToken(decoded_key, actual_key, *token_info.token);
-      if (result == DictionaryInterface::Callback::TRAVERSE_DONE) {
+      if (result == Callback::TRAVERSE_DONE) {
         return;
       }
-      if (result == DictionaryInterface::Callback::TRAVERSE_NEXT_KEY) {
+      if (result == Callback::TRAVERSE_NEXT_KEY) {
         break;
       }
-      DCHECK_NE(DictionaryInterface::Callback::TRAVERSE_CULL, result)
-          << "Culling is not implemented.";
+      DCHECK_NE(Callback::TRAVERSE_CULL, result) << "Not implemented";
     }
   }
 }
