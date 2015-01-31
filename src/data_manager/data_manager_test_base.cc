@@ -31,11 +31,11 @@
 
 #include <cstring>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/hash_tables.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "converter/connector_base.h"
@@ -210,7 +210,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   }
 
   // Load the original suggestion filter from file.
-  hash_set<string> suggestion_filter_set;
+  std::unordered_set<string> suggestion_filter_set;
 
   vector<string> files;
   Util::SplitStringUsing(suggestion_filter_files_, ",", &files);

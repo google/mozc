@@ -38,9 +38,9 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "base/const.h"
-#include "base/hash_tables.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/process.h"
@@ -239,7 +239,7 @@ CComPtr<ITfCategoryMgr> GetCategoryMgr() {
 
 // Custom hash function for ATL::CComPtr.
 template <typename T>
-struct CComPtrHashCompare : public hash_compare<CComPtr<T>> {
+struct CComPtrHash {
   size_t operator()(const CComPtr<T> &value) const {
     // Caveats: On x86 environment, both _M_X64 and _M_IX86 are defined. So we
     //     need to check _M_X64 first.
@@ -253,19 +253,13 @@ struct CComPtrHashCompare : public hash_compare<CComPtr<T>> {
     // Compress the data by shifting unused bits.
     return reinterpret_cast<size_t>(value.p) >> kUnusedBits;
   }
-  bool operator()(const CComPtr<T> &value1, const CComPtr<T> &value2) const {
-      return value1 != value2;
-  }
 };
 
 // Custom hash function for GUID.
-struct GuidHashCompare : public hash_compare<GUID> {
+struct GuidHash {
   size_t operator()(const GUID &value) const {
     // Compress the data by shifting unused bits.
     return value.Data1;
-  }
-  bool operator()(const GUID &value1, const GUID &value2) const {
-    return !::IsEqualGUID(value1, value2);
   }
 };
 
@@ -1785,10 +1779,10 @@ class TipTextServiceImpl
   // Used for LangBar integration.
   TipLangBar langbar_;
 
-  typedef hash_map<GUID, UINT, GuidHashCompare> PreservedKeyMap;
-  typedef hash_map<CComPtr<ITfContext>,
-                   TipPrivateContext *,
-                   CComPtrHashCompare<ITfContext>> PrivateContextMap;
+  using PreservedKeyMap = std::unordered_map<GUID, UINT, GuidHash>;
+  using PrivateContextMap = std::unordered_map<CComPtr<ITfContext>,
+                                               TipPrivateContext *,
+                                               CComPtrHash<ITfContext>>;
   PrivateContextMap private_context_map_;
   PreservedKeyMap preserved_key_map_;
   unique_ptr<TipThreadContext> thread_context_;

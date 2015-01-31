@@ -36,7 +36,8 @@
 #include <atlstr.h>
 #include <msctf.h>
 
-#include "base/hash_tables.h"
+#include <unordered_map>
+
 #include "renderer/renderer_command.pb.h"
 #include "session/commands.pb.h"
 #include "win32/base/input_state.h"
@@ -93,7 +94,8 @@ HRESULT EndUI(ITfUIElementMgr *ui_element_manager, DWORD element_id) {
 }  // namespace
 
 class TipUiElementManager::UiElementMap
-    : public hash_map<TipUiElementManager::UIElementFlags, UIElementInfo> {
+    : public std::unordered_map<TipUiElementManager::UIElementFlags,
+                                UIElementInfo> {
 };
 
 TipUiElementManager::TipUiElementManager()

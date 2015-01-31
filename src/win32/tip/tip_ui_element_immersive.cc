@@ -40,8 +40,8 @@
 #include <msctf.h>
 
 #include <memory>
+#include <unordered_map>
 
-#include "base/hash_tables.h"
 #include "base/util.h"
 #include "renderer/table_layout.h"
 #include "renderer/win32/text_renderer.h"
@@ -607,9 +607,7 @@ HWND GetOwnerWindow(ITfContext *context) {
   return window_handle;
 }
 
-class WindowMap
-    : public hash_map<HWND, TipImmersiveUiElementImpl *> {
-};
+using WindowMap = std::unordered_map<HWND, TipImmersiveUiElementImpl *>;
 
 class ThreadLocalInfo {
  public:
