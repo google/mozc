@@ -96,6 +96,213 @@ class TestCallback : public LoudsTrie::Callback {
   DISALLOW_COPY_AND_ASSIGN(TestCallback);
 };
 
+TEST_F(LoudsTrieTest, NodeBasedApis) {
+  // Create the following trie (* stands for non-terminal nodes):
+  //
+  //        *          Key   ID
+  //     a/   \b       ---------
+  //    0      *       a     0
+  //  a/ \b     \d     aa    1
+  //  1   2      3     ab    2
+  //    c/ \d          bd    3
+  //    *   4          abd   4
+  //   d|              abcd  5
+  //    5
+  LoudsTrieBuilder builder;
+  builder.Add("a");
+  builder.Add("aa");
+  builder.Add("ab");
+  builder.Add("abcd");
+  builder.Add("abd");
+  builder.Add("bd");
+  builder.Build();
+
+  LoudsTrie trie;
+  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
+
+  char buf[LoudsTrie::kMaxDepth + 1];  // for RestoreKeyString().
+
+  // Walk the trie in BFS order and check properties at each node.
+
+  // Root node
+  const LoudsTrie::Node root;
+  ASSERT_TRUE(trie.IsValidNode(root));
+  EXPECT_FALSE(trie.IsTerminalNode(root));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("", &node));
+    EXPECT_EQ(root, node);
+  }
+
+  // There's no right sibling for root.
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToNextSibling(root)));
+
+  // Terminal node for "a".
+  const LoudsTrie::Node node_a = trie.MoveToFirstChild(root);
+  ASSERT_TRUE(trie.IsValidNode(node_a));
+  ASSERT_TRUE(trie.IsTerminalNode(node_a));
+  EXPECT_EQ('a', trie.GetEdgeLabelToParentNode(node_a));
+  EXPECT_EQ(0, trie.GetKeyIdOfTerminalNode(node_a));
+  EXPECT_EQ(node_a, trie.GetTerminalNodeFromKeyId(0));
+  EXPECT_EQ("a", trie.RestoreKeyString(0, buf));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("a", &node));
+    EXPECT_EQ(node_a, node);
+  }
+
+  // Non-terminal node for "b".
+  const LoudsTrie::Node node_b = trie.MoveToNextSibling(node_a);
+  ASSERT_TRUE(trie.IsValidNode(node_b));
+  EXPECT_FALSE(trie.IsTerminalNode(node_b));
+  EXPECT_EQ('b', trie.GetEdgeLabelToParentNode(node_b));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("b", &node));
+    EXPECT_EQ(node_b, node);
+  }
+
+  // There's no right sibling for "b".
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToNextSibling(node_b)));
+
+  // Terminal node (leaf) for "aa".
+  const LoudsTrie::Node node_aa = trie.MoveToFirstChild(node_a);
+  ASSERT_TRUE(trie.IsValidNode(node_aa));
+  ASSERT_TRUE(trie.IsTerminalNode(node_aa));
+  EXPECT_EQ('a', trie.GetEdgeLabelToParentNode(node_aa));
+  EXPECT_EQ(1, trie.GetKeyIdOfTerminalNode(node_aa));
+  EXPECT_EQ(node_aa, trie.GetTerminalNodeFromKeyId(1));
+  EXPECT_EQ("aa", trie.RestoreKeyString(1, buf));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("aa", &node));
+    EXPECT_EQ(node_aa, node);
+  }
+
+  // There's no child for "aa".
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToFirstChild(node_aa)));
+
+  // Terminal node for "ab".
+  const LoudsTrie::Node node_ab = trie.MoveToNextSibling(node_aa);
+  ASSERT_TRUE(trie.IsValidNode(node_ab));
+  ASSERT_TRUE(trie.IsTerminalNode(node_ab));
+  EXPECT_EQ('b', trie.GetEdgeLabelToParentNode(node_ab));
+  EXPECT_EQ(2, trie.GetKeyIdOfTerminalNode(node_ab));
+  EXPECT_EQ(node_ab, trie.GetTerminalNodeFromKeyId(2));
+  EXPECT_EQ("ab", trie.RestoreKeyString(2, buf));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("ab", &node));
+    EXPECT_EQ(node_ab, node);
+  }
+
+  // There's no right sibling for "ab".
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToNextSibling(node_ab)));
+
+  // Terminal node (leaf) for "bd".
+  const LoudsTrie::Node node_bd = trie.MoveToFirstChild(node_b);
+  ASSERT_TRUE(trie.IsValidNode(node_bd));
+  ASSERT_TRUE(trie.IsTerminalNode(node_bd));
+  EXPECT_EQ('d', trie.GetEdgeLabelToParentNode(node_bd));
+  EXPECT_EQ(3, trie.GetKeyIdOfTerminalNode(node_bd));
+  EXPECT_EQ(node_bd, trie.GetTerminalNodeFromKeyId(3));
+  EXPECT_EQ("bd", trie.RestoreKeyString(3, buf));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("bd", &node));
+    EXPECT_EQ(node_bd, node);
+  }
+
+  // There is no child nor right sibling for "bd".
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToFirstChild(node_bd)));
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToNextSibling(node_bd)));
+
+  // Non-terminal node for "abc".
+  const LoudsTrie::Node node_abc = trie.MoveToFirstChild(node_ab);
+  ASSERT_TRUE(trie.IsValidNode(node_abc));
+  EXPECT_FALSE(trie.IsTerminalNode(node_abc));
+  EXPECT_EQ('c', trie.GetEdgeLabelToParentNode(node_abc));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("abc", &node));
+    EXPECT_EQ(node_abc, node);
+  }
+
+  // Terminal node (leaf) for "abd".
+  const LoudsTrie::Node node_abd = trie.MoveToNextSibling(node_abc);
+  ASSERT_TRUE(trie.IsValidNode(node_abd));
+  ASSERT_TRUE(trie.IsTerminalNode(node_abd));
+  EXPECT_EQ('d', trie.GetEdgeLabelToParentNode(node_abd));
+  EXPECT_EQ(4, trie.GetKeyIdOfTerminalNode(node_abd));
+  EXPECT_EQ(node_abd, trie.GetTerminalNodeFromKeyId(4));
+  EXPECT_EQ("abd", trie.RestoreKeyString(4, buf));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("abd", &node));
+    EXPECT_EQ(node_abd, node);
+  }
+
+  // There is no child nor right sibling for "abd".
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToFirstChild(node_abd)));
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToNextSibling(node_abd)));
+
+  // Terminal node (leaf) for "abcd".
+  const LoudsTrie::Node node_abcd = trie.MoveToFirstChild(node_abc);
+  ASSERT_TRUE(trie.IsValidNode(node_abcd));
+  ASSERT_TRUE(trie.IsTerminalNode(node_abcd));
+  EXPECT_EQ('d', trie.GetEdgeLabelToParentNode(node_abcd));
+  EXPECT_EQ(5, trie.GetKeyIdOfTerminalNode(node_abcd));
+  EXPECT_EQ(node_abcd, trie.GetTerminalNodeFromKeyId(5));
+  EXPECT_EQ("abcd", trie.RestoreKeyString(5, buf));
+  {
+    LoudsTrie::Node node;
+    EXPECT_TRUE(trie.Traverse("abcd", &node));
+    EXPECT_EQ(node_abcd, node);
+  }
+
+  // There is no child nor right sibling for "abcd".
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToFirstChild(node_abcd)));
+  EXPECT_FALSE(trie.IsValidNode(trie.MoveToNextSibling(node_abcd)));
+
+  // Traverse for some non-existing keys.
+  LoudsTrie::Node node;
+  EXPECT_FALSE(trie.Traverse("x", &node));
+  EXPECT_FALSE(trie.Traverse("xyz", &node));
+}
+
+TEST_F(LoudsTrieTest, HasKey) {
+  LoudsTrieBuilder builder;
+  builder.Add("a");
+  builder.Add("abc");
+  builder.Add("abcd");
+  builder.Add("ae");
+  builder.Add("aecd");
+  builder.Add("b");
+  builder.Add("bcx");
+
+  builder.Build();
+  LoudsTrie trie;
+  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
+
+  EXPECT_TRUE(trie.HasKey("a"));
+  EXPECT_TRUE(trie.HasKey("abc"));
+  EXPECT_TRUE(trie.HasKey("abcd"));
+  EXPECT_TRUE(trie.HasKey("ae"));
+  EXPECT_TRUE(trie.HasKey("aecd"));
+  EXPECT_TRUE(trie.HasKey("b"));
+  EXPECT_TRUE(trie.HasKey("bcx"));
+  EXPECT_FALSE(trie.HasKey(""));
+  EXPECT_FALSE(trie.HasKey("ab"));
+  EXPECT_FALSE(trie.HasKey("aa"));
+  EXPECT_FALSE(trie.HasKey("aec"));
+  EXPECT_FALSE(trie.HasKey("aecx"));
+  EXPECT_FALSE(trie.HasKey("aecdf"));
+  EXPECT_FALSE(trie.HasKey("abcdefghi"));
+  EXPECT_FALSE(trie.HasKey("bc"));
+  EXPECT_FALSE(trie.HasKey("bca"));
+  EXPECT_FALSE(trie.HasKey("bcxyz"));
+}
+
 TEST_F(LoudsTrieTest, ExactSearch) {
   LoudsTrieBuilder builder;
   builder.Add("a");
@@ -518,7 +725,7 @@ TEST_F(LoudsTrieTest, PredictiveSearchCulling2) {
   trie.Close();
 }
 
-TEST_F(LoudsTrieTest, Reverse) {
+TEST_F(LoudsTrieTest, RestoreKeyString) {
   LoudsTrieBuilder builder;
   builder.Add("aa");
   builder.Add("ab");
@@ -536,17 +743,17 @@ TEST_F(LoudsTrieTest, Reverse) {
   trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
 
   char buffer[LoudsTrie::kMaxDepth + 1];
-  EXPECT_STREQ("aa", trie.Reverse(builder.GetId("aa"), buffer));
-  EXPECT_STREQ("ab", trie.Reverse(builder.GetId("ab"), buffer));
-  EXPECT_STREQ("abc", trie.Reverse(builder.GetId("abc"), buffer));
-  EXPECT_STREQ("abcd", trie.Reverse(builder.GetId("abcd"), buffer));
-  EXPECT_STREQ("abcde", trie.Reverse(builder.GetId("abcde"), buffer));
-  EXPECT_STREQ("abcdef", trie.Reverse(builder.GetId("abcdef"), buffer));
-  EXPECT_STREQ("abcea", trie.Reverse(builder.GetId("abcea"), buffer));
-  EXPECT_STREQ("abcef", trie.Reverse(builder.GetId("abcef"), buffer));
-  EXPECT_STREQ("abd", trie.Reverse(builder.GetId("abd"), buffer));
-  EXPECT_STREQ("ebd", trie.Reverse(builder.GetId("ebd"), buffer));
-  EXPECT_STREQ("", trie.Reverse(-1, buffer));
+  EXPECT_EQ("aa", trie.RestoreKeyString(builder.GetId("aa"), buffer));
+  EXPECT_EQ("ab", trie.RestoreKeyString(builder.GetId("ab"), buffer));
+  EXPECT_EQ("abc", trie.RestoreKeyString(builder.GetId("abc"), buffer));
+  EXPECT_EQ("abcd", trie.RestoreKeyString(builder.GetId("abcd"), buffer));
+  EXPECT_EQ("abcde", trie.RestoreKeyString(builder.GetId("abcde"), buffer));
+  EXPECT_EQ("abcdef", trie.RestoreKeyString(builder.GetId("abcdef"), buffer));
+  EXPECT_EQ("abcea", trie.RestoreKeyString(builder.GetId("abcea"), buffer));
+  EXPECT_EQ("abcef", trie.RestoreKeyString(builder.GetId("abcef"), buffer));
+  EXPECT_EQ("abd", trie.RestoreKeyString(builder.GetId("abd"), buffer));
+  EXPECT_EQ("ebd", trie.RestoreKeyString(builder.GetId("ebd"), buffer));
+  EXPECT_EQ("", trie.RestoreKeyString(-1, buffer));
   trie.Close();
 }
 

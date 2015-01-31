@@ -37,74 +37,115 @@ namespace mozc {
 namespace storage {
 namespace louds {
 
-// Implementation of the LOUDS (Level-Ordered Unary degree sequence).
-// LOUDS is a representation of tree by bit sequence, which supports "rank"
-// and "select" operations.
-// The representation of each node is "n 1-bits, followed by a 0-bit," where
-// n is the number of its children.
-// So, for example, if a node has two children, the erepresentation of
-// the node is "110". Another example is that a leaf is represented by "0".
-// The nodes are stored in breadth first order, and each node has its id
-// (0-origin, i.e. the root node is '0', the first child of the root is '1'
-// and so on).
-// This class provides some utilities between the "index of the bit array
-// representation" and "node id of the tree".
-// In this representation, we can think that each '1'-bit is corresponding
-// to an edge.
+// Implementation of the Level-Ordered Unary Degree Sequence (LOUDS).
+//
+// LOUDS represents a tree structure using a bit sequence.  A node having N
+// children is represented by N 1's and one trailing 0.  For example, "110"
+// represents a node with 2 children, while "0" represents a leaf.  The bit
+// sequence starts with the representation of super-root, "10", and is followed
+// by representations of nodes in order of breadth first manner; see the
+// following example:
+//
+//              0 (super root)
+//              |
+//              1 (root)
+//            /   \                                                           .
+//           2     3
+//                / \                                                         .
+//               4   5
+//
+//  Node:  0   1    2  3    4  5
+// LOUDS:  10  110  0  110  0  0
+//
+// This class provides basic APIs to traverse a tree structure.
 class Louds {
  public:
-  Louds() {
-  }
+  // Represents and stores location (tree node) for tree traversal.  By storing
+  // instances of this class, traversal state can be restored.  This class is
+  // copy-efficient.
+  class Node {
+   public:
+    // Default instance represents the root node (not the super-root).
+    Node() : edge_index_(0), node_id_(1) {}
+    Node(const Node &n) : edge_index_(n.edge_index_), node_id_(n.node_id_) {}
 
-  void Open(const uint8 *image, int length) {
+    int node_id() const { return node_id_; }
+
+    friend bool operator==(const Node &x, const Node &y) {
+      return x.edge_index_ == y.edge_index_ && x.node_id_ == y.node_id_;
+    }
+
+   private:
+    int edge_index_;
+    int node_id_;
+    friend class Louds;
+  };
+
+  Louds() {}
+  ~Louds() {}
+
+  // Initializes this LOUDS from bit array.
+  void Init(const uint8 *image, int length) {
     index_.Init(image, length);
   }
-  void Close() {
+
+  // Explicitly clears the internal bit array.
+  void Reset() {
     index_.Reset();
   }
 
-  // Returns true, if the corresponding bit represents an edge.
-  // TODO(hidehiko): Check the performance of the conversion between int and
-  // bool, because this method should be invoked so many times.
-  inline bool IsEdgeBit(int bit_index) const {
-    return (index_.Get(bit_index) != 0);
+  // APIs for traversal (all the methods are inline for performance).
+
+  // Initializes a Node instance from node ID.
+  // Note: to get the root node, just allocate a default Node instance.
+  void InitNodeFromNodeId(int node_id, Node *node) const {
+    node->node_id_ = node_id;
+    node->edge_index_ = index_.Select1(node->node_id_);
   }
 
-  // Returns the child node id of the edge corresponding to the given bit
-  // index.
-  // Note: the bit at the given index must be '1'.
-  inline int GetChildNodeId(int bit_index) const {
-    return index_.Rank1(bit_index) + 1;
+  // Returns true if the given node is the root.
+  static bool IsRoot(const Node &node) {
+    return node.node_id_ == 1;
   }
 
-  // Returns the parent node id of the edge corresponding to the given bit
-  // index.
-  // Note: this takes the bit index (as the argument variable name),
-  // so it is OK to pass the bit index even if the bit is '0'.
-  inline int GetParentNodeId(int bit_index) const {
-    return index_.Rank0(bit_index);
+  // Moves the given node to its first (most left) child.  If |node| is a leaf,
+  // the resulting node becomes invalid.  For example, in the above diagram of
+  // tree, moves are as follows:
+  //   * node 1 -> node 2
+  //   * node 3 -> node 4
+  //   * node 4 -> invalid node
+  // REQUIRES: |node| is valid.
+  void MoveToFirstChild(Node *node) const {
+    node->edge_index_ = index_.Select0(node->node_id_) + 1;
+    node->node_id_ = node->edge_index_ - node->node_id_ + 1;
   }
 
-  // Returns the bit index corresponding to the node's first edge.
-  inline int GetFirstEdgeBitIndex(int node_id) const {
-    return index_.Select0(node_id) + 1;
+  // Moves the given node to its next (right) sibling.  If there's no sibling
+  // for |node|, the resulting node becomes invalid. For example, in the above
+  // diagram of tree, moves are as follows:
+  //   * node 1 -> invalid node
+  //   * node 2 -> node 3
+  //   * node 5 -> invalid node
+  // REQUIRES: |node| is valid.
+  static void MoveToNextSibling(Node *node) {
+    ++node->edge_index_;
+    ++node->node_id_;
   }
 
-  // Returns the bit index corresponding to "the node to its parent" edge.
-  // Note: the root node has no parent, so node_id must > 0.
-  inline int GetParentEdgeBitIndex(int node_id) const {
-    return index_.Select1(node_id);
+  // Moves the given node to its unique parent.  For example, in the above
+  // diagram of tree, moves are as follows:
+  //   * node 2 -> node 1
+  //   * node 3 -> node 1
+  //   * node 5 -> node 3
+  // REQUIRES: |node| is valid and not root.
+  void MoveToParent(Node *node) const {
+    node->node_id_ = node->edge_index_ - node->node_id_ + 1;
+    node->edge_index_ = index_.Select1(node->node_id_);
   }
 
-  // Returns the node id for the first child node of the given node.
-  // The bit_index must be the bit index of the first edge bit index of the
-  // node. This method calculates the id effectively, at least more effective
-  // than calculating by Rank.
-  static inline int GetChildNodeId(int node_id, int bit_index) {
-    // Note: node_id == Rank0(bit_index),
-    // so "bit_index - node_id" == Rank1(bit_index).
-    // The first child_node_id is "Rank1(bit_index) + 1".
-    return bit_index - node_id + 1;
+  // Returns true if |node| is in a valid state.
+  bool IsValidNode(const Node &node) const {
+    return index_.Get(node.edge_index_) != 0;
   }
 
  private:

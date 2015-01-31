@@ -296,11 +296,8 @@ class TokenDecodeIterator {
 
   void LookupValue(int id, string *value) const {
     char buffer[LoudsTrie::kMaxDepth + 1];
-    const char *encoded_value = value_trie_->Reverse(id, buffer);
-    const size_t encoded_value_len =
-        LoudsTrie::kMaxDepth - (encoded_value - buffer);
-    DCHECK_EQ(encoded_value_len, strlen(encoded_value));
-    codec_->DecodeValue(StringPiece(encoded_value, encoded_value_len), value);
+    const StringPiece encoded_value = value_trie_->RestoreKeyString(id, buffer);
+    codec_->DecodeValue(encoded_value, value);
   }
 
   const SystemDictionaryCodecInterface *codec_;
@@ -660,13 +657,13 @@ void SystemDictionary::InitReverseLookupIndex() {
 bool SystemDictionary::HasKey(StringPiece key) const {
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
-  return (key_trie_->ExactSearch(encoded_key) != -1);
+  return key_trie_->HasKey(encoded_key);
 }
 
 bool SystemDictionary::HasValue(StringPiece value) const {
   string encoded_value;
   codec_->EncodeValue(value, &encoded_value);
-  if (value_trie_->ExactSearch(encoded_value) != -1) {
+  if (value_trie_->HasKey(encoded_value)) {
     return true;
   }
 
@@ -894,7 +891,7 @@ void SystemDictionary::LookupPredictive(
   const KeyExpansionTable &table =
       use_kana_modifier_insensitive_lookup ?
       hiragana_expansion_table_ : KeyExpansionTable::GetDefaultInstance();
-  key_trie_->PredictiveSearchWithKeyExpansion(lookup_key_str.c_str(), table,
+  key_trie_->PredictiveSearchWithKeyExpansion(lookup_key_str, table,
                                               &collector);
 
   string decoded_key, actual_key;
@@ -1060,7 +1057,7 @@ void SystemDictionary::LookupPrefix(
   const KeyExpansionTable &table = use_kana_modifier_insensitive_lookup ?
       hiragana_expansion_table_ : KeyExpansionTable::GetDefaultInstance();
   key_trie_->PrefixSearchWithKeyExpansion(
-      original_encoded_key.c_str(), table, &traverser);
+      original_encoded_key, table, &traverser);
 }
 
 void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
@@ -1158,7 +1155,7 @@ void SystemDictionary::PopulateReverseLookupCache(
     const StringPiece suffix(str, pos);
     string lookup_key;
     codec_->EncodeValue(suffix, &lookup_key);
-    value_trie_->PrefixSearch(lookup_key.c_str(), &id_collector);
+    value_trie_->PrefixSearch(lookup_key, &id_collector);
     pos += Util::OneCharLen(suffix.data());
   }
   // Collect tokens for all IDs.
@@ -1237,7 +1234,7 @@ void SystemDictionary::RegisterReverseLookupTokensForT13N(
   T13nPrefixTraverser traverser(token_array_.get(), value_trie_.get(), codec_,
                                 frequent_pos_, original_encoded_key, callback);
   key_trie_->PrefixSearchWithKeyExpansion(
-      original_encoded_key.c_str(), KeyExpansionTable::GetDefaultInstance(),
+      original_encoded_key, KeyExpansionTable::GetDefaultInstance(),
       &traverser);
 }
 
@@ -1248,7 +1245,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
   codec_->EncodeValue(value, &lookup_key);
 
   IdCollector id_collector;
-  value_trie_->PrefixSearch(lookup_key.c_str(), &id_collector);
+  value_trie_->PrefixSearch(lookup_key, &id_collector);
   const set<int> &id_set = id_collector.id_set();
 
   const bool has_cache = (allocator != NULL &&
@@ -1313,13 +1310,10 @@ void SystemDictionary::RegisterReverseLookupResults(
          ++result_itr) {
       const ReverseLookupResult &reverse_result = result_itr->second;
 
-      const char *encoded_key =
-          key_trie_->Reverse(reverse_result.id_in_key_trie, buffer);
-      const size_t encoded_key_len =
-          LoudsTrie::kMaxDepth - (encoded_key - buffer);
-      DCHECK_EQ(encoded_key_len, strlen(encoded_key));
+      const StringPiece encoded_key =
+          key_trie_->RestoreKeyString(reverse_result.id_in_key_trie, buffer);
       string tokens_key;
-      codec_->DecodeKey(StringPiece(encoded_key, encoded_key_len), &tokens_key);
+      codec_->DecodeKey(encoded_key, &tokens_key);
       if (callback->OnKey(tokens_key) !=
               SystemDictionary::Callback::TRAVERSE_CONTINUE) {
         continue;
