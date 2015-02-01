@@ -60,27 +60,6 @@ class CandidateViewManager implements MemoryManageable {
     public void onCollapse();
   }
 
-  private static class ClearCandidateAnimationListener implements Animation.AnimationListener {
-    private final CandidateView candidateView;
-
-    public ClearCandidateAnimationListener(CandidateView candidateView) {
-      this.candidateView = Preconditions.checkNotNull(candidateView);
-    }
-
-    @Override
-    public void onAnimationEnd(Animation animation) {
-      candidateView.update(EMPTY_COMMAND);
-    }
-
-    @Override
-    public void onAnimationRepeat(Animation animation) {
-    }
-
-    @Override
-    public void onAnimationStart(Animation animation) {
-    }
-  }
-
   /** {@link CandidateMode#FLOATING} is only available on Lollipop or later. */
   private enum CandidateMode {
     KEYBOARD, NUMBER, FLOATING,
@@ -138,9 +117,6 @@ class CandidateViewManager implements MemoryManageable {
       CandidateView keyboardCandidateView, FloatingCandidateView floatingCandidateView) {
     this.keyboardCandidateView = Preconditions.checkNotNull(keyboardCandidateView);
     this.floatingCandidateView = Preconditions.checkNotNull(floatingCandidateView);
-
-    keyboardCandidateView.setOutAnimationListener(
-        new ClearCandidateAnimationListener(keyboardCandidateView));
   }
 
   public void setNumberCandidateView(CandidateView numberCandidateView) {
@@ -149,8 +125,6 @@ class CandidateViewManager implements MemoryManageable {
     numberCandidateView.enableFoldButton(true);
     numberCandidateView.setInAnimation(numberCandidateViewInAnimation);
     numberCandidateView.setOutAnimation(numberCandidateViewOutAnimation);
-    numberCandidateView.setOutAnimationListener(
-        new ClearCandidateAnimationListener(numberCandidateView));
     if (candidateTextSize > 0 && descriptionTextSize > 0) {
       numberCandidateView.setCandidateTextDimension(candidateTextSize, descriptionTextSize);
     }
@@ -166,7 +140,9 @@ class CandidateViewManager implements MemoryManageable {
    * On-keyboard candidate view may animate and the animation listener may be invoked.
    */
   public void update(Command outCommand) {
-    updateInternal(Preconditions.checkNotNull(outCommand), true);
+    // Disable the animation in some situation to avoid ugly UI.
+    boolean withAnimation = !(isExtractedMode && candidateMode == CandidateMode.KEYBOARD);
+    updateInternal(Preconditions.checkNotNull(outCommand), withAnimation);
   }
 
   private void updateWithoutAnimation(Command outCommand) {

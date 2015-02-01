@@ -805,13 +805,23 @@ public class MozcView extends FrameLayout implements MemoryManageable {
 
   @VisibleForTesting
   void startSymbolInputViewInAnimation() {
-    getSymbolInputView().startInAnimation();
+    if (fullscreenMode) {
+      // Disable the animation during fullscreen mode to avoid ugly UI.
+      getSymbolInputView().setVisibility(VISIBLE);
+    } else {
+      getSymbolInputView().startInAnimation();
+    }
     changeBottomBackgroundHeight(symbolInputViewHeight);
   }
 
   @VisibleForTesting
   void startSymbolInputViewOutAnimation() {
-    getSymbolInputView().startOutAnimation();
+    if (fullscreenMode) {
+      // Disable the animation during fullscreen mode to avoid ugly UI.
+      getSymbolInputView().setVisibility(GONE);
+    } else {
+      getSymbolInputView().startOutAnimation();
+    }
     if (!candidateViewManager.isKeyboardCandidateViewVisible()) {
       resetBottomBackgroundHeight();
     }

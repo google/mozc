@@ -46,7 +46,6 @@ import android.annotation.TargetApi;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
 import android.view.inputmethod.EditorInfo;
 
 /**
@@ -279,7 +278,6 @@ public class CandidateViewManagerTest extends InstrumentationTestCaseWithMock {
       view.enableFoldButton(true);
       view.setInAnimation(isA(Animation.class));
       view.setOutAnimation(isA(Animation.class));
-      view.setOutAnimationListener(isA(AnimationListener.class));
       replayAll();
 
       candidateViewManager.setCandidateTextDimension(candidateTextSize, descriptionTextSize);
@@ -309,7 +307,6 @@ public class CandidateViewManagerTest extends InstrumentationTestCaseWithMock {
       view.setSkin(skin);
       view.setInAnimation(isA(Animation.class));
       view.setOutAnimation(isA(Animation.class));
-      view.setOutAnimationListener(isA(AnimationListener.class));
       replayAll();
 
       candidateViewManager.setNumberCandidateView(view);

@@ -54,7 +54,7 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.animation.Animation;
+import android.view.View;
 import android.widget.LinearLayout;
 
 /**
@@ -76,14 +76,6 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     public void onCandidateSelected(CandidateWord candidateWord, Optional<Integer> rowIndex) {
       viewEventListener.onConversionCandidateSelected(candidateWord.getId(),
                                                       Preconditions.checkNotNull(rowIndex));
-    }
-  }
-
-  private class OutAnimationAdapter extends AnimationAdapter {
-    @Override
-    public void onAnimationEnd(Animation animation) {
-      // Release candidate list when the out-animation is finished, as it won't be used any more.
-      update(null);
     }
   }
 
@@ -261,10 +253,6 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     super(context, attrs);
   }
 
-  {
-    setOutAnimationListener(new OutAnimationAdapter());
-  }
-
   @SuppressWarnings("deprecation")
   @Override
   public void onFinishInflate() {
@@ -276,6 +264,16 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     conversionCandidateWordView.inputFrameFoldButtonView = getInputFrameFoldButton();
 
     reset();
+  }
+
+  @Override
+  public void setVisibility(int visibility) {
+    boolean isHiding = (getVisibility() == View.VISIBLE) && (visibility != View.VISIBLE);
+    super.setVisibility(visibility);
+    if (isHiding) {
+      // Release candidate list when the out-animation is finished, as it won't be used any more.
+      update(null);
+    }
   }
 
   @VisibleForTesting InputFrameFoldButtonView getInputFrameFoldButton() {
