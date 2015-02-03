@@ -33,7 +33,6 @@ import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.resources.R;
 
-import android.annotation.TargetApi;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 
@@ -45,7 +44,6 @@ import java.util.List;
  * A referenceBaseFragment instance corresponds to a &lt;header&gt;(in prefernce header xml).
  *
  */
-@TargetApi(11)
 public class PreferenceBaseFragment extends PreferenceFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {

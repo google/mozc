@@ -35,7 +35,6 @@ import static org.easymock.EasyMock.expect;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.Annotation;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
@@ -142,7 +141,6 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
     };
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_AbsentLayout() {
     CandidateWindowAccessibilityNodeProvider provider =
@@ -162,7 +160,6 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
         CandidateWindowAccessibilityNodeProvider.UNDEFINED));
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_NoId() {
     CandidateWindowAccessibilityNodeProvider provider =
@@ -175,7 +172,6 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
     // Note: There is no way to get the id of children. Testing is omitted.
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_WithId() {
     View view = createMockView();
@@ -200,7 +196,6 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
     assertTrue((info.getActions() & AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS) != 0);
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testPerformAction() {
     CandidateWindowAccessibilityNodeProvider provider =
@@ -319,7 +314,6 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
   // Note AccessibilityEvent doesn't contain information enough to verify
   // the behavior of performActionForKey method (sourceId is required but not accessible).
   // Indirect verification instead.
-  @ApiLevel(14)
   @SmallTest
   public void testPerformActionForWord() {
     CandidateWindowAccessibilityNodeProvider provider =

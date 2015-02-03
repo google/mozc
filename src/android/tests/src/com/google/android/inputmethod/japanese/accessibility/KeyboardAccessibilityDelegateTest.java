@@ -44,7 +44,6 @@ import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.keyboard.PopUp;
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import com.google.common.base.Optional;
 
@@ -285,7 +284,6 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
     verifyAll();
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testSetPasswordField() {
     View view = createViewMock(View.class);

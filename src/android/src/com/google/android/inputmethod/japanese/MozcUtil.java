@@ -885,7 +885,6 @@ public final class MozcUtil {
    *
    * public accessibility for easier invocation via reflection.
    */
-  @TargetApi(9)
   public static class StrictModeRelaxer {
     private StrictModeRelaxer() {}
     public static void relaxStrictMode() {

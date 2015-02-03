@@ -29,7 +29,6 @@
 
 package org.mozc.android.inputmethod.japanese.preference;
 
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 
 import android.content.Intent;
@@ -41,7 +40,6 @@ import android.test.suitebuilder.annotation.SmallTest;
  */
 public class MozcFragmentBasePreferenceActivityTest extends InstrumentationTestCaseWithMock {
 
-  @ApiLevel(11)
   @SmallTest
   public void testMaybeCreateRedirectingIntent() {
     // Multi-pane && EXTRA_SHOW_FRAGMENT == null
