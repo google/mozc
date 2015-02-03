@@ -1139,7 +1139,11 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       public void onLayoutChange(
           View view, int left, int top, int right, int bottom,
           int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        if (right - left == 0 || bottom - top == 0) {
+        int width = right - left;
+        int height = bottom - top;
+        int oldWidth = oldRight - oldLeft;
+        int oldHeight = oldBottom - oldTop;
+        if (width == 0 || height == 0 || (width == oldWidth && height == oldHeight)) {
           return;
         }
         KeyboardView keyboardView = KeyboardView.class.cast(view);
