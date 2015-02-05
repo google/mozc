@@ -48,6 +48,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.view.ViewCompat;
 import android.text.InputType;
@@ -94,6 +95,9 @@ public class KeyboardView extends View implements MemoryManageable {
 
   private final KeyboardAccessibilityDelegate accessibilityDelegate;
 
+  /** Just for testing purpose. If true, HANDLING_TOUCH_EVENET metastate is removed directly. */
+  @VisibleForTesting boolean enableDelayForHandlingTouchEvent = true;
+
   /**
    * Decorator class for {@code Map} for {@code KeyEventContextMap}.
    * <p>
@@ -101,6 +105,23 @@ public class KeyboardView extends View implements MemoryManageable {
    * is updated.
    */
   private final class KeyEventContextMap extends ForwardingMap<Integer, KeyEventContext>{
+
+    // HANDLING_TOUCH_EVENT metastate must be kept turned on for DELAY millisecond
+    // after registered KeyEventContext becomes empty.
+    // Otherwise in the time between last TOUCH_UP event and the result from conversion engine
+    // (though it is typically very short time) Globe key is shown, which triggers unexpected
+    // IME switch.
+    private static final long DELAY = 100;  // in millisecond.
+    // Used for registering delayed update of HANDLING_TOUCH_EVENT.
+    private final Handler delayedHandlingTouchEventHandler = new Handler(Looper.getMainLooper());
+    // A Runnable to unset HANDLING_TOUCH_EVENT.
+    private final Runnable metastateUnsetter = new Runnable() {
+      @Override
+      public void run() {
+        updateMetaStates(Collections.<MetaState>emptySet(),
+                         Collections.singleton(MetaState.HANDLING_TOUCH_EVENT));
+      }
+    };
 
     private final Map<Integer, KeyEventContext> delegate;
 
@@ -116,34 +137,48 @@ public class KeyboardView extends View implements MemoryManageable {
     @Override
     public void clear() {
       super.clear();
-      updateHandlingTouchEventMetaState();
+      // Clearing the map corresponds to initialization so the metastate must be updated
+      // immediately.
+      updateHandlingTouchEventMetaState(false);
     }
 
     @Override
     public KeyEventContext put(Integer key, KeyEventContext value) {
       KeyEventContext result = super.put(key, value);
-      updateHandlingTouchEventMetaState();
+      updateHandlingTouchEventMetaState(true);
       return result;
     }
 
     @Override
     public void putAll(Map<? extends Integer, ? extends KeyEventContext> map) {
       super.putAll(map);
-      updateHandlingTouchEventMetaState();
+      updateHandlingTouchEventMetaState(true);
     }
 
     @Override
     public KeyEventContext remove(Object object) {
       KeyEventContext result = super.remove(object);
-      updateHandlingTouchEventMetaState();
+      updateHandlingTouchEventMetaState(true);
       return result;
     }
 
-    private void updateHandlingTouchEventMetaState() {
+    /**
+     * @param delayForUnset true if unsetting HANDLING_TOUCH_EVENT must be delayed.
+     */
+    private void updateHandlingTouchEventMetaState(boolean delayForUnset) {
+      // Clear the handler to guarantee that the handler has zero or one message.
+      delayedHandlingTouchEventHandler.removeCallbacks(metastateUnsetter);
       if (keyEventContextMap.isEmpty()) {
-        updateMetaStates(Collections.<MetaState>emptySet(),
-                         Collections.singleton(MetaState.HANDLING_TOUCH_EVENT));
+        if (delayForUnset && enableDelayForHandlingTouchEvent) {
+          // After DELAY milliseconds, HANDLING_TOUCH_EVENT will be unset.
+          delayedHandlingTouchEventHandler.postDelayed(metastateUnsetter, DELAY);
+        } else {
+          updateMetaStates(Collections.<MetaState>emptySet(),
+                           Collections.singleton(MetaState.HANDLING_TOUCH_EVENT));
+        }
       } else {
+        // Setting HANDLING_TOUCH_EVENT must be processed immediately in order to inactivate
+        // Globe key as soon as possible.
         updateMetaStates(Collections.singleton(MetaState.HANDLING_TOUCH_EVENT),
                          Collections.<MetaState>emptySet());
       }
