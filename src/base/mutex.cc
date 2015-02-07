@@ -43,12 +43,6 @@
 
 #if defined(OS_WIN)
 // We do not use pthread on Windows
-#elif defined(OS_ANDROID)
-// pthread rwlock is supported since API Level 9.
-// Currently minimum API Level is 7 so we cannot use it.
-// Note that we cannot use __ANDROID_API__ macro in above condition
-// because it is equal to target API Level, which is greater than
-// min sdk level. Causes runtime crash.
 #elif defined(__native_client__)
 // TODO(team): Consider to use glibc rwlock.
 #else
