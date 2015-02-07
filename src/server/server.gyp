@@ -217,10 +217,6 @@
             'VCLinkerTool': {
               'AdditionalDependencies': [
                 'crypt32.lib',  # used in 'mozc_cache_service.cc'
-                'shlwapi.lib',
-              ],
-              'DelayLoadDLLs': [
-                'shlwapi.dll',
               ],
             },
           },
