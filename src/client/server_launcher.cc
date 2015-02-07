@@ -54,6 +54,10 @@
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 
+#ifdef OS_WIN
+#include "base/win_sandbox.h"
+#endif  // OS_WIN
+
 namespace mozc {
 namespace client {
 namespace {

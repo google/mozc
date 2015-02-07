@@ -32,12 +32,6 @@
 
 #include <string>
 
-#ifdef OS_WIN
-#include "base/port.h"
-#include "base/scoped_handle.h"
-#include "base/win_sandbox.h"
-#endif  // OS_WIN
-
 namespace mozc {
 class Process {
  public:

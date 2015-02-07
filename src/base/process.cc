@@ -63,6 +63,10 @@
 #include "base/system_util.h"
 #include "base/util.h"
 
+#ifdef OS_WIN
+#include "base/scoped_handle.h"
+#endif  // OS_WIN
+
 #ifdef OS_MACOSX
 // We do not use the global environ variable because it is unavailable
 // in Mac Framework/dynamic libraries.  Instead call _NSGetEnviron().

@@ -49,6 +49,10 @@
 #include "base/mac_util.h"
 #endif
 
+#ifdef OS_WIN
+#include "base/win_sandbox.h"
+#endif  // OS_WIN
+
 namespace mozc {
 namespace renderer {
 namespace {
