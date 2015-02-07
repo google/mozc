@@ -40,8 +40,6 @@
 #endif  // OS_MACOSX
 
 #include "base/port.h"
-#include "base/util.h"
-#include "base/win_util.h"
 
 #if defined(OS_WIN)
 // We do not use pthread on Windows
@@ -116,96 +114,6 @@ SRWLOCK *AsSRWLock(T* opaque_buffer) {
   return reinterpret_cast<SRWLOCK *>(opaque_buffer);
 }
 
-// SlimReaderWriterLock is available on Windows Vista and later.
-class SlimReaderWriterLock {
- public:
-  static bool IsAvailable() {
-    CallOnce(&g_once_, InitializeInternal);
-    return g_is_available_;
-  }
-  static void InitializeSRWLock(__out SRWLOCK* lock) {
-    g_initialize_srw_lock_(lock);
-  }
-  static void AcquireSRWLockExclusive(__inout SRWLOCK* lock) {
-    g_acquire_srw_lock_exclusive_(lock);
-  }
-  static void AcquireSRWLockShared(__inout SRWLOCK* lock) {
-    g_acquire_srw_lock_shared_(lock);
-  }
-  static void ReleaseSRWLockExclusive(__inout SRWLOCK* lock) {
-    g_release_srw_lock_exclusive_(lock);
-  }
-  static void ReleaseSRWLockShared(__inout SRWLOCK* lock) {
-    g_release_srw_lock_shared_(lock);
-  }
-
- private:
-  typedef void (WINAPI *FPInitializeSRWLock)(__out SRWLOCK*);
-  typedef void (WINAPI *FPAcquireSRWLockExclusive)(__inout SRWLOCK*);
-  typedef void (WINAPI *FPAcquireSRWLockShared)(__inout SRWLOCK*);
-  typedef void (WINAPI *FPReleaseSRWLockExclusive)(__inout SRWLOCK*);
-  typedef void (WINAPI *FPReleaseSRWLockShared)(__inout SRWLOCK*);
-
-  static void InitializeInternal() {
-    g_is_available_ = false;
-    const HMODULE module = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
-    if (module == NULL) {
-      return;
-    }
-    g_initialize_srw_lock_ = reinterpret_cast<FPInitializeSRWLock>(
-        ::GetProcAddress(module, "InitializeSRWLock"));
-    if (g_initialize_srw_lock_ == NULL) {
-      return;
-    }
-    g_acquire_srw_lock_exclusive_ =
-        reinterpret_cast<FPAcquireSRWLockExclusive>(
-            ::GetProcAddress(module, "AcquireSRWLockExclusive"));
-    if (g_acquire_srw_lock_exclusive_ == NULL) {
-      return;
-    }
-    g_acquire_srw_lock_shared_ = reinterpret_cast<FPAcquireSRWLockShared>(
-        ::GetProcAddress(module, "AcquireSRWLockShared"));
-    if (g_acquire_srw_lock_shared_ == NULL) {
-      return;
-    }
-    g_release_srw_lock_exclusive_ =
-        reinterpret_cast<FPReleaseSRWLockExclusive>(
-            ::GetProcAddress(module, "ReleaseSRWLockExclusive"));
-    if (g_release_srw_lock_exclusive_ == NULL) {
-      return;
-    }
-    g_release_srw_lock_shared_ = reinterpret_cast<FPReleaseSRWLockShared>(
-        ::GetProcAddress(module, "ReleaseSRWLockShared"));
-    if (g_release_srw_lock_shared_ == NULL) {
-      return;
-    }
-    g_is_available_ = true;
-  }
-
-  static once_t g_once_;
-  static bool g_is_available_;
-  static FPInitializeSRWLock g_initialize_srw_lock_;
-  static FPAcquireSRWLockExclusive g_acquire_srw_lock_exclusive_;
-  static FPAcquireSRWLockShared g_acquire_srw_lock_shared_;
-  static FPReleaseSRWLockExclusive g_release_srw_lock_exclusive_;
-  static FPReleaseSRWLockShared g_release_srw_lock_shared_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SlimReaderWriterLock);
-};
-
-once_t SlimReaderWriterLock::g_once_ = MOZC_ONCE_INIT;
-bool SlimReaderWriterLock::g_is_available_ = false;
-SlimReaderWriterLock::FPInitializeSRWLock
-    SlimReaderWriterLock::g_initialize_srw_lock_ = NULL;
-SlimReaderWriterLock::FPAcquireSRWLockExclusive
-    SlimReaderWriterLock::g_acquire_srw_lock_exclusive_  = NULL;
-SlimReaderWriterLock::FPAcquireSRWLockShared
-    SlimReaderWriterLock::g_acquire_srw_lock_shared_  = NULL;
-SlimReaderWriterLock::FPReleaseSRWLockExclusive
-    SlimReaderWriterLock::g_release_srw_lock_exclusive_  = NULL;
-SlimReaderWriterLock::FPReleaseSRWLockShared
-    SlimReaderWriterLock::g_release_srw_lock_shared_  = NULL;
-
 }  // namespace
 
 Mutex::Mutex() {
@@ -229,53 +137,30 @@ void Mutex::Unlock() {
 }
 
 ReaderWriterMutex::ReaderWriterMutex() {
-  if (MultipleReadersThreadsSupported()) {
-    SlimReaderWriterLock::InitializeSRWLock(AsSRWLock(&opaque_buffer_));
-  } else {
-    ::InitializeCriticalSection(AsCriticalSection(&opaque_buffer_));
-  }
+  ::InitializeSRWLock(AsSRWLock(&opaque_buffer_));
 }
 
 ReaderWriterMutex::~ReaderWriterMutex() {
-  if (!MultipleReadersThreadsSupported()) {
-    ::DeleteCriticalSection(AsCriticalSection(&opaque_buffer_));
-  }
 }
 
 void ReaderWriterMutex::ReaderLock() {
-  if (MultipleReadersThreadsSupported()) {
-    SlimReaderWriterLock::AcquireSRWLockShared(AsSRWLock(&opaque_buffer_));
-  } else {
-    ::EnterCriticalSection(AsCriticalSection(&opaque_buffer_));
-  }
+  ::AcquireSRWLockShared(AsSRWLock(&opaque_buffer_));
 }
 
 void ReaderWriterMutex::WriterLock() {
-  if (MultipleReadersThreadsSupported()) {
-    SlimReaderWriterLock::AcquireSRWLockExclusive(AsSRWLock(&opaque_buffer_));
-  } else {
-    ::EnterCriticalSection(AsCriticalSection(&opaque_buffer_));
-  }
+  ::AcquireSRWLockExclusive(AsSRWLock(&opaque_buffer_));
 }
 
 void ReaderWriterMutex::ReaderUnlock() {
-  if (MultipleReadersThreadsSupported()) {
-    SlimReaderWriterLock::ReleaseSRWLockShared(AsSRWLock(&opaque_buffer_));
-  } else {
-    ::LeaveCriticalSection(AsCriticalSection(&opaque_buffer_));
-  }
+  ::ReleaseSRWLockShared(AsSRWLock(&opaque_buffer_));
 }
 
 void ReaderWriterMutex::WriterUnlock() {
-  if (MultipleReadersThreadsSupported()) {
-    SlimReaderWriterLock::ReleaseSRWLockExclusive(AsSRWLock(&opaque_buffer_));
-  } else {
-    ::LeaveCriticalSection(AsCriticalSection(&opaque_buffer_));
-  }
+  ::ReleaseSRWLockExclusive(AsSRWLock(&opaque_buffer_));
 }
 
 bool ReaderWriterMutex::MultipleReadersThreadsSupported() {
-  return SlimReaderWriterLock::IsAvailable();
+  return true;
 }
 
 #else  // Hereafter, we have pthread-based implementation
