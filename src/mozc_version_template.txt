@@ -1,6 +1,6 @@
 MAJOR=2
 MINOR=16
-BUILD=2049
+BUILD=2050
 REVISION=102
 # NACL_DICTIONARY_VERSION is the target version of the system dictionary to be
 # downloaded by NaCl Mozc.
