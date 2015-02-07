@@ -33,7 +33,6 @@
 
 #include "base/android_jni_proxy.h"
 #include "base/android_util.h"
-#include "base/mutex.h"
 #include "base/scheduler.h"
 #include "base/scoped_ptr.h"
 #include "base/singleton.h"
