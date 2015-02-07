@@ -3871,11 +3871,8 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
 
 // Check if LayoutManager can handle preedits which contains surrogate pair.
 // See b/4159275 for details.
-// Temporarily disabled to support Windows XP En, where surrogate pair is
-// disabled by default.
-// TODO(yukawa): Enable this test.
 TEST_F(Win32RendererUtilTest,
-       DISABLED_CheckSurrogatePairInHorizontalComposition_Issue4159275) {
+       CheckSurrogatePairInHorizontalComposition_Issue4159275) {
   const int kCursorOffsetX = 150;
 
   HWND hwnd = nullptr;
@@ -3934,11 +3931,8 @@ TEST_F(Win32RendererUtilTest,
 
 // Check if LayoutManager can handle preedits which contains surrogate pair.
 // See b/4159275 for details.
-// Temporarily disabled to support Windows XP En, where surrogate pair is
-// disabled by default.
-// TODO(yukawa): Enable this test.
 TEST_F(Win32RendererUtilTest,
-       DISABLED_CheckSurrogatePairInVerticalComposition_Issue4159275) {
+       CheckSurrogatePairInVerticalComposition_Issue4159275) {
   const int kCursorOffsetY = 175;
 
   HWND hwnd = nullptr;
