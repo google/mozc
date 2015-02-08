@@ -390,6 +390,7 @@ public class BufferedDrawable extends Drawable {
     // Scan each block (size: COMPOSITION_LENGTH x COMPOSITION_LENGTH).
     List<SparseIntArray> nonTransparentBlocksList =
         Lists.newArrayListWithCapacity((int) Math.ceil((double) height / COMPOSITION_LENGTH));
+    int roughBlockNum = 0;
     // Step 1 and 2. Divide original bitmap into blocks and concatenates it horizontally.
     for (int y = 0; y < height; y += COMPOSITION_LENGTH) {
       // Key: Start index of non-transparent block
@@ -422,6 +423,7 @@ public class BufferedDrawable extends Drawable {
         nonTransparentBlocks.put(nonTransparentStartLeftIndex, xIndex);
       }
       nonTransparentBlocksList.add(nonTransparentBlocks);
+      roughBlockNum += nonTransparentBlocks.size();
     }
 
     // Optimization: If entire bitmap needs to be drawn,
@@ -431,8 +433,7 @@ public class BufferedDrawable extends Drawable {
     }
 
     // The capacity will not be increased.
-    ArrayList<DecomposedBitmap> result = Lists.newArrayListWithCapacity(
-        (width / COMPOSITION_LENGTH + 1) * (height / COMPOSITION_LENGTH + 1));
+    ArrayList<DecomposedBitmap> result = Lists.newArrayListWithCapacity(roughBlockNum);
     // Step 3. Concatenate horizontally-merged blocks vertically.
     for (int topIndex = 0; topIndex < nonTransparentBlocksList.size(); ++topIndex) {
       SparseIntArray nonTarnsparentBlocks = nonTransparentBlocksList.get(topIndex);
