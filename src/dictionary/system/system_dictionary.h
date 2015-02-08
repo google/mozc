@@ -143,21 +143,13 @@ class SystemDictionary : public DictionaryInterface {
   // Implementation of DictionaryInterface.
   virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
-
-  // Predictive lookup
   virtual void LookupPredictive(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
-
-  // Prefix lookup
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
-
-  // Exact lookup
   virtual void LookupExact(StringPiece key, Callback *callback) const;
-
-  // Value to key prefix lookup
   virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
                              Callback *callback) const;
   virtual void PopulateReverseLookupCache(
@@ -245,16 +237,14 @@ class SystemDictionary : public DictionaryInterface {
       size_t limit,
       vector<PredictiveLookupSearchState> *result) const;
 
-  scoped_ptr<storage::louds::LoudsTrie> key_trie_;
-  scoped_ptr<storage::louds::LoudsTrie> value_trie_;
-  scoped_ptr<storage::louds::BitVectorBasedArray> token_array_;
-  scoped_ptr<DictionaryFile> dictionary_file_;
-
-  scoped_ptr<ReverseLookupIndex> reverse_lookup_index_;
-
+  storage::louds::LoudsTrie key_trie_;
+  storage::louds::LoudsTrie value_trie_;
+  storage::louds::BitVectorBasedArray token_array_;
   const uint32 *frequent_pos_;
   const SystemDictionaryCodecInterface *codec_;
   KeyExpansionTable hiragana_expansion_table_;
+  scoped_ptr<DictionaryFile> dictionary_file_;
+  scoped_ptr<ReverseLookupIndex> reverse_lookup_index_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);
 };
