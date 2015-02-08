@@ -49,6 +49,7 @@ import android.graphics.Rect;
 import android.graphics.Region;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.SparseIntArray;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -57,6 +58,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -364,61 +366,100 @@ public class BufferedDrawable extends Drawable {
    * Decomposes a {@code bitmap} into a {@code DecomposedBitmap} collection.
    * <p>
    * For rendering performance (reducing drawBitmap operation),
-   * horizontally connected {@code DecomposedBitmap} are merged internally.
+   * horizontally and vertically connected {@code DecomposedBitmap} are merged internally.
    * @param bitmap {@code Bitmap} to be decomposed. Note that this is recycled internally so
    *     the caller side cannot use this after the invocation.
    */
   private Collection<DecomposedBitmap> decomposeBitmap(Bitmap bitmap) {
     int width = bitmap.getWidth();
+    int height = bitmap.getHeight();
     Preconditions.checkArgument(width % COMPOSITION_LENGTH == 0);
-    Preconditions.checkArgument(bitmap.getHeight() % COMPOSITION_LENGTH == 0);
-    // The capacity will not be increased.
-    ArrayList<DecomposedBitmap> result = Lists.newArrayListWithCapacity(
-        (width / COMPOSITION_LENGTH + 1) * (bitmap.getHeight() / COMPOSITION_LENGTH + 1));
+    Preconditions.checkArgument(height % COMPOSITION_LENGTH == 0);
+
+    // Concatenate blocks to reduce the number of bitblt. Here we employed very simple algorithm to
+    // reduce the calculation cost.
+    // 1. Divide original bitmap into square blocks.
+    // 2. Concatenate non-transparent blocks horizontally.
+    // 3. Concatenate horizontally-merged blocks vertically if horizontal position / width of
+    //    adjacent blocks are completely same.
+
     // Fill the int array with the entire bitmap data.
-    int[] pixels = new int[width * bitmap.getHeight()];
-    bitmap.getPixels(pixels, 0, width, 0, 0, width, bitmap.getHeight());
+    int[] pixels = new int[width * height];
+    bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
     boolean noTransparent = true;  // Will be turned off if transparent block is found.
     // Scan each block (size: COMPOSITION_LENGTH x COMPOSITION_LENGTH).
-    for (int y = 0; y < bitmap.getHeight(); y += COMPOSITION_LENGTH) {
-      int nonTransparentStartLeft = Integer.MIN_VALUE;
-      for (int x = 0; x < width; x += COMPOSITION_LENGTH) {
+    List<SparseIntArray> nonTransparentBlocksList =
+        Lists.newArrayListWithCapacity((int) Math.ceil((double) height / COMPOSITION_LENGTH));
+    // Step 1 and 2. Divide original bitmap into blocks and concatenates it horizontally.
+    for (int y = 0; y < height; y += COMPOSITION_LENGTH) {
+      // Key: Start index of non-transparent block
+      // Value: End index of non-transparent block (Exclusive)
+      // Blocks in [Key, Value) is non-transparent.
+      SparseIntArray nonTransparentBlocks = new SparseIntArray();
+      int nonTransparentStartLeftIndex = Integer.MIN_VALUE;
+      int xIndex = 0;
+      for (int x = 0; x < width; x += COMPOSITION_LENGTH, ++xIndex) {
         // Check if all the pixels in [(x, y) - (x + COMPOSITION_LENGTH, y + COMPOSITION_LENGTH))
         // are transparent.
         if (isPixelsAllTransparent(pixels, x, y, width)) {
           // This block is Transparent so turn off noTransparent.
           noTransparent = false;
           // If nonTransparentStartLeft has already been set,
-          // create new DecomposedBitmap for the area
-          // [(nonTransparentStartLeft, y) - (x, y + COMPOSITION_LENGTH))
-          if (nonTransparentStartLeft != Integer.MIN_VALUE) {
-            result.add(new DecomposedBitmap(nonTransparentStartLeft, y,
-                MozcUtil.createBitmap(bitmap, nonTransparentStartLeft, y,
-                                      x - nonTransparentStartLeft, COMPOSITION_LENGTH)));
+          // register the following block for decomposing.
+          // [(nonTransparentStartLeftIndex * COMPOSITION_LENGTH, y) - (x, y + COMPOSITION_LENGTH)]
+          if (nonTransparentStartLeftIndex != Integer.MIN_VALUE) {
+            nonTransparentBlocks.append(nonTransparentStartLeftIndex, xIndex);
           }
-          nonTransparentStartLeft = Integer.MIN_VALUE;
-        } else if (nonTransparentStartLeft == Integer.MIN_VALUE) {
+          nonTransparentStartLeftIndex = Integer.MIN_VALUE;
+        } else if (nonTransparentStartLeftIndex == Integer.MIN_VALUE) {
           // Current block is non-transparent and nonTransparentStartLeft has not been set yet.
           // Next DecomposedBitmap starts from this block.
-          nonTransparentStartLeft = x;
+          nonTransparentStartLeftIndex = xIndex;
         }
       }
-      // Reached the end of the row.
-      // Flush DecomposedBitmap if there is pending block.
-      if (nonTransparentStartLeft != Integer.MIN_VALUE) {
-        result.add(new DecomposedBitmap(nonTransparentStartLeft, y,
-            MozcUtil.createBitmap(bitmap, nonTransparentStartLeft, y,
-                                  width - nonTransparentStartLeft, COMPOSITION_LENGTH)));
+      // Reached the end of the row. Register pending blocks if exists.
+      if (nonTransparentStartLeftIndex != Integer.MIN_VALUE) {
+        nonTransparentBlocks.put(nonTransparentStartLeftIndex, xIndex);
       }
+      nonTransparentBlocksList.add(nonTransparentBlocks);
     }
+
     // Optimization: If entire bitmap needs to be drawn,
     // return given bitmap instead of decomposed ones for rendering performance.
     if (noTransparent) {
-      // Decomposed bitmaps are not more required. Recycle them.
-      for (DecomposedBitmap decomposedBitmap : result) {
-        decomposedBitmap.bitmap.recycle();
-      }
       return Collections.singleton(new DecomposedBitmap(0, 0, bitmap));
+    }
+
+    // The capacity will not be increased.
+    ArrayList<DecomposedBitmap> result = Lists.newArrayListWithCapacity(
+        (width / COMPOSITION_LENGTH + 1) * (height / COMPOSITION_LENGTH + 1));
+    // Step 3. Concatenate horizontally-merged blocks vertically.
+    for (int topIndex = 0; topIndex < nonTransparentBlocksList.size(); ++topIndex) {
+      SparseIntArray nonTarnsparentBlocks = nonTransparentBlocksList.get(topIndex);
+      for (int i = 0; i < nonTarnsparentBlocks.size(); ++i) {
+        int leftIndex = nonTarnsparentBlocks.keyAt(i);
+        int rightIndex = nonTarnsparentBlocks.valueAt(i);
+        int bottomIndex = topIndex;
+        if (rightIndex == Integer.MIN_VALUE) {
+          // Skip a invalidated block, which was already handled.
+          continue;
+        }
+        while (++bottomIndex < nonTransparentBlocksList.size()) {
+          SparseIntArray blocks = nonTransparentBlocksList.get(bottomIndex);
+          if (blocks.get(leftIndex) == rightIndex) {
+            // Invalidate a merged block. Don't delete for performance.
+            blocks.put(leftIndex, Integer.MIN_VALUE);
+          } else {
+            break;
+          }
+        }
+        int left = leftIndex * COMPOSITION_LENGTH;
+        int right = Math.min(rightIndex * COMPOSITION_LENGTH, width);
+        int top = topIndex * COMPOSITION_LENGTH;
+        int bottom = Math.min(bottomIndex * COMPOSITION_LENGTH, height);
+        result.add(new DecomposedBitmap(left, top,
+            MozcUtil.createBitmap(bitmap, left, top, right - left, bottom - top)));
+      }
     }
     bitmap.recycle();
     result.trimToSize();
