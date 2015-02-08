@@ -276,9 +276,6 @@ class GdiTextRenderer : public TextRenderer {
   DISALLOW_COPY_AND_ASSIGN(GdiTextRenderer);
 };
 
-const D2D1_DRAW_TEXT_OPTIONS kD2D1DrawTextOptions =
-    static_cast<D2D1_DRAW_TEXT_OPTIONS>(4);
-
 class DirectWriteTextRenderer : public TextRenderer {
  public:
   static DirectWriteTextRenderer *Create() {
@@ -433,7 +430,7 @@ class DirectWriteTextRenderer : public TextRenderer {
     }
     D2D1_DRAW_TEXT_OPTIONS option = D2D1_DRAW_TEXT_OPTIONS_NONE;
     if (SystemUtil::IsWindows8_1OrLater()) {
-      option |= kD2D1DrawTextOptions;
+      option |= D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT;
     }
     dc_render_target_->BeginDraw();
     dc_render_target_->SetTransform(D2D1::Matrix3x2F::Identity());
