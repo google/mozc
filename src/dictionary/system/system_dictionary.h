@@ -46,13 +46,10 @@
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
-// for FRIEND_TEST
-#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 
 class DictionaryFile;
-struct Token;
 
 namespace dictionary {
 
@@ -115,16 +112,6 @@ class SystemDictionary : public DictionaryInterface {
     DISALLOW_COPY_AND_ASSIGN(Builder);
   };
 
-  struct ReverseLookupResult {
-    ReverseLookupResult() : tokens_offset(-1), id_in_key_trie(-1) {}
-    // Offset from the tokens section beginning.
-    // (token_array_->Get(id_in_key_trie) ==
-    //  token_array_->Get(0) + tokens_offset)
-    int tokens_offset;
-    // Id in key trie
-    int id_in_key_trie;
-  };
-
   virtual ~SystemDictionary();
 
   // TODO(team): Use builder instead of following static methods.
@@ -157,56 +144,32 @@ class SystemDictionary : public DictionaryInterface {
   virtual void ClearReverseLookupCache(
       NodeAllocatorInterface *allocator) const;
 
- private:
-  FRIEND_TEST(SystemDictionaryTest, TokenAfterSpellningToken);
-
-  struct FilterInfo {
-    enum Condition {
-      NONE = 0,
-      VALUE_ID = 1,
-      NO_SPELLING_CORRECTION = 2,
-      ONLY_T13N = 4,
-    };
-    int conditions;
-    // Return results only for tokens with given |value_id|.
-    // If VALUE_ID is specified
-    int value_id;
-    FilterInfo() : conditions(NONE), value_id(-1) {}
+  // TODO(noriyukit): This structure is implementation detail so should be
+  // hidden.
+  struct ReverseLookupResult {
+    ReverseLookupResult() : tokens_offset(-1), id_in_key_trie(-1) {}
+    // Offset from the tokens section beginning.
+    // (token_array_.Get(id_in_key_trie) == token_array_.Get(0) + tokens_offset)
+    int tokens_offset;
+    // Id in key trie
+    int id_in_key_trie;
   };
 
+ private:
   explicit SystemDictionary(const SystemDictionaryCodecInterface *codec);
-
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
-
-  // Calls |callback| with token info, which is filled using |tokens_key|,
-  // |actual_key| and |encoded_tokens_ptr|.
-  // |tokens_key| is a key used for look up.
-  // |actual_key| is a token's key.
-  // They may be different when we perform ambiguous search.
-  void RegisterTokens(
-      const FilterInfo &filter,
-      const string &tokens_key,
-      const string &actual_key,
-      const uint8 *encoded_tokens_ptr,
-      Callback *callback) const;
-
-  bool IsBadToken(const FilterInfo &filter, const TokenInfo &token_info) const;
 
   void RegisterReverseLookupTokensForT13N(StringPiece value,
                                           Callback *callback) const;
-
   void RegisterReverseLookupTokensForValue(StringPiece value,
                                            NodeAllocatorInterface *allocator,
                                            Callback *callback) const;
-
   void ScanTokens(const set<int> &id_set,
                   multimap<int, ReverseLookupResult> *reverse_results) const;
-
   void RegisterReverseLookupResults(
       const set<int> &id_set,
       const multimap<int, ReverseLookupResult> &reverse_results,
       Callback *callback) const;
-
   void InitReverseLookupIndex();
 
   Callback::ResultType LookupPrefixWithKeyExpansionImpl(

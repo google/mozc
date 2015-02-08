@@ -1300,11 +1300,7 @@ void SystemDictionary::RegisterReverseLookupResults(
   for (set<int>::const_iterator set_itr = id_set.begin();
        set_itr != id_set.end();
        ++set_itr) {
-    FilterInfo filter;
-    filter.conditions =
-        (FilterInfo::VALUE_ID | FilterInfo::NO_SPELLING_CORRECTION);
-    filter.value_id = *set_itr;
-
+    const int value_id = *set_itr;
     typedef multimap<int, ReverseLookupResult>::const_iterator ResultItr;
     pair<ResultItr, ResultItr> range = reverse_results.equal_range(*set_itr);
     for (ResultItr result_itr = range.first;
@@ -1316,63 +1312,22 @@ void SystemDictionary::RegisterReverseLookupResults(
           key_trie_.RestoreKeyString(reverse_result.id_in_key_trie, buffer);
       string tokens_key;
       codec_->DecodeKey(encoded_key, &tokens_key);
-      if (callback->OnKey(tokens_key) !=
-              SystemDictionary::Callback::TRAVERSE_CONTINUE) {
+      if (callback->OnKey(tokens_key) != Callback::TRAVERSE_CONTINUE) {
         continue;
       }
-
-      // actual_key is always the same as tokens_key for reverse conversions.
-      RegisterTokens(
-          filter,
-          tokens_key,
-          tokens_key,
-          encoded_tokens_ptr + reverse_result.tokens_offset,
-          callback);
+      for (TokenDecodeIterator iter(
+               codec_, value_trie_, frequent_pos_, tokens_key,
+               encoded_tokens_ptr  + reverse_result.tokens_offset);
+           !iter.Done(); iter.Next()) {
+        const TokenInfo &token_info = iter.Get();
+        if (token_info.token->attributes & Token::SPELLING_CORRECTION ||
+            token_info.id_in_value_trie != value_id) {
+          continue;
+        }
+        callback->OnToken(tokens_key, tokens_key, *token_info.token);
+      }
     }
   }
-}
-
-void SystemDictionary::RegisterTokens(
-    const FilterInfo &filter,
-    const string &tokens_key,
-    const string &actual_key,
-    const uint8 *encoded_tokens_ptr,
-    Callback *callback) const {
-  for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_,
-                                actual_key, encoded_tokens_ptr);
-       !iter.Done(); iter.Next()) {
-    const TokenInfo &token_info = iter.Get();
-    if (IsBadToken(filter, token_info)) {
-      continue;
-    }
-    callback->OnToken(tokens_key, actual_key, *token_info.token);
-  }
-}
-
-bool SystemDictionary::IsBadToken(
-    const FilterInfo &filter,
-    const TokenInfo &token_info) const {
-  if ((filter.conditions & FilterInfo::NO_SPELLING_CORRECTION) &&
-      (token_info.token->attributes & Token::SPELLING_CORRECTION)) {
-    return true;
-  }
-
-  if ((filter.conditions & FilterInfo::VALUE_ID) &&
-      token_info.id_in_value_trie != filter.value_id) {
-    return true;
-  }
-
-  if ((filter.conditions & FilterInfo::ONLY_T13N) &&
-      (token_info.value_type != TokenInfo::AS_IS_HIRAGANA &&
-       token_info.value_type != TokenInfo::AS_IS_KATAKANA)) {
-    // SAME_AS_PREV_VALUE may be t13n token.
-    string hiragana;
-    Util::KatakanaToHiragana(token_info.token->value, &hiragana);
-    if (token_info.token->key != hiragana) {
-      return true;
-    }
-  }
-  return false;
 }
 
 }  // namespace dictionary
