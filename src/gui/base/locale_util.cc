@@ -161,18 +161,12 @@ TranslationDataImpl::TranslationDataImpl()
   // Get the font from MessageFont
   NONCLIENTMETRICSW ncm = { 0 };
 
-  // Note that SystemParametersInfoW fails on Windows XP when |ncm.cbSize| is
-  // greater than 500 (bytes), which means that this function is no longer
-  // compatible with XP if WINVER >= 0x0600 because a new field named
-  // |iPaddedBorderWidth| was added at the last of NONCLIENTMETRICS structure
-  // in Windows Vista.  It would be better to initialize |ncm.cbSize| to be
-  // compatible with Windows XP unless you rely on |iPaddedBorderWidth|.
-  // For background information, you can read:
-  //   http://d.hatena.ne.jp/NyaRuRu/20080303/p1
-  //   http://blogs.msdn.com/b/oldnewthing/archive/2003/12/12/56061.aspx
-  const size_t kSizeOfNonClientMetricsWForXpOrPrior =
-      CCSIZEOF_STRUCT(NONCLIENTMETRICSW, lfMessageFont);
-  ncm.cbSize = kSizeOfNonClientMetricsWForXpOrPrior;
+  // We don't use |sizeof(NONCLIENTMETRICSW)| because it is fragile when the
+  // code is copied-and-pasted without caring about WINVER.
+  // http://blogs.msdn.com/b/oldnewthing/archive/2003/12/12/56061.aspx
+  const size_t kSizeOfNonClientMetricsWForVistaOrLater =
+      CCSIZEOF_STRUCT(NONCLIENTMETRICSW, iPaddedBorderWidth);
+  ncm.cbSize = kSizeOfNonClientMetricsWForVistaOrLater;
   if (::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &ncm, 0)) {
     // Windows font scale is 0..100 while Qt's scale is 0..99.
     // If lfWeight is 0 (default weight), we don't set the Qt's font weight.
