@@ -840,55 +840,6 @@
       ],
     },
     {
-      'target_name': 'gen_update_dialog_files',
-      'type': 'none',
-      'variables': {
-        'subdir': 'update_dialog',
-        'qrc_base_name': 'update_dialog',
-      },
-      'sources': [
-        '<(subdir)/update_dialog.ui',
-        '<(subdir)/update_dialog.h',
-        '<(subdir)/update_dialog.qrc',
-      ],
-      'includes': [
-        'qt_moc.gypi',
-        'qt_rcc.gypi',
-        'qt_uic.gypi',
-      ],
-    },
-    {
-      'target_name': 'update_dialog_lib',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/update_dialog/moc_update_dialog.cc',
-        '<(gen_out_dir)/update_dialog/qrc_update_dialog.cc',
-        'update_dialog/update_dialog.cc',
-        'update_dialog/update_dialog_libmain.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'gen_update_dialog_files',
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-    },
-    {
-      'target_name': 'update_dialog_main',
-      'type': 'executable',
-      'sources': [
-        'update_dialog/update_dialog_main.cc',
-      ],
-      'dependencies': [
-        'gui_base',
-        'update_dialog_lib',
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-    },
-    {
       'target_name': 'gen_mozc_tool_files',
       'type': 'none',
       'variables': {
@@ -934,7 +885,6 @@
         'gui_base',
         'post_install_dialog_lib',
         'set_default_dialog_lib',
-        'update_dialog_lib',
         'word_register_dialog_lib',
       ],
       'includes': [

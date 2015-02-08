@@ -33,14 +33,10 @@
 #define MOZC_GUI_ABOUT_DIALOG_ABOUT_DIALOG_H_
 
 #include <QtGui/QDialog>
+
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "gui/about_dialog/ui_about_dialog.h"
-
-#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD) \
-    && defined(DEBUG)
-#define USE_UPDATE_CHECKER
-#endif  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD && DEBUG
 
 class QImage;
 
@@ -64,17 +60,12 @@ class AboutDialog : public QDialog,
 
  public slots:
   void linkActivated(const QString &link);
-  void updateButtonPushed();
-
- protected:
-#ifdef USE_UPDATE_CHECKER
-  bool winEvent(MSG *message, long *result);
-#endif  // USE_UPDATE_CHECKER
 
  private:
   LinkCallbackInterface *callback_;
   scoped_ptr<QImage> product_image_;
 };
+
 }  // namespace mozc::gui
 }  // namespace mozc
 

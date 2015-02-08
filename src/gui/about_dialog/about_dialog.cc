@@ -38,17 +38,12 @@
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
-#include "base/update_checker.h"
 #include "base/util.h"
 #include "base/version.h"
 
 namespace mozc {
 namespace gui {
-
 namespace {
-#ifdef USE_UPDATE_CHECKER
-const UINT kUpdateCheckMessage = WM_USER;
-#endif  // USE_UPDATE_CHECKER
 
 void defaultLinkActivated(const QString &str) {
   QByteArray utf8 = str.toUtf8();
@@ -77,7 +72,8 @@ void SetLabelText(QLabel *label) {
     label->setText(QString::fromStdString(label_text));
   }
 }
-}  // anonymous namespace
+
+}  // namespace
 
 AboutDialog::AboutDialog(QWidget *parent)
     : QDialog(parent),
@@ -93,13 +89,6 @@ AboutDialog::AboutDialog(QWidget *parent)
   version_info += Version::GetMozcVersion().c_str();
   version_info += ")";
   version_label->setText(version_info);
-  updateButton->hide();
-#ifdef USE_UPDATE_CHECKER
-  UpdateChecker::CallbackInfo info;
-  info.mesage_receiver_window = winId();
-  info.mesage_id = kUpdateCheckMessage;
-  UpdateChecker::BeginCheck(info);
-#endif  // USE_UPDATE_CHECKER
 
   QPalette palette;
   palette.setColor(QPalette::Window, QColor(236, 233, 216));
@@ -151,45 +140,5 @@ void AboutDialog::linkActivated(const QString &link) {
   }
 }
 
-#ifdef USE_UPDATE_CHECKER
-bool AboutDialog::winEvent(MSG *message, long *result) {
-  if (message != NULL && message->message == kUpdateCheckMessage) {
-    QString version_info("(");
-    version_info += Version::GetMozcVersion().c_str();
-    version_info += ") - ";
-    // TODO(yukawa, team): Make better UI.
-    switch (message->wParam) {
-      case UpdateChecker::UPGRADE_IS_AVAILABLE:
-        version_info += tr("New version is available");
-        if (!RunLevel::IsElevatedByUAC()) {
-          QWindowsStyle style;
-          QIcon vista_icon(style.standardIcon(QStyle::SP_VistaShield));
-          updateButton->setIcon(vista_icon);
-        }
-        updateButton->show();
-        break;
-      case UpdateChecker::UPGRADE_ALREADY_UP_TO_DATE:
-        version_info += tr("You are using the latest version");
-        break;
-      case UpdateChecker::UPGRADE_ERROR:
-      default:
-        break;
-    }
-    version_label->setText(version_info);
-    *result = 0;
-    return true;
-  }
-
-  return QWidget::winEvent(message, result);
-}
-#endif  // USE_UPDATE_CHECKER
-
-void AboutDialog::updateButtonPushed() {
-  updateButton->setEnabled(false);
-  // Currently, update_dialog is available only on Windows.
-#if defined(OS_WIN)
-  Process::SpawnMozcProcess(mozc::kMozcTool, "--mode=update_dialog");
-#endif  // OS_WIN
-}
 }  // namespace gui
 }  // namespace mozc

@@ -49,7 +49,6 @@
         'stopwatch.cc',
         'timer.cc',
         'unnamed_event.cc',
-        'update_checker.cc',
         'update_util.cc',
         'url.cc',
       ],
