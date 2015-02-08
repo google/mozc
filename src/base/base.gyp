@@ -164,9 +164,6 @@
           'sources': [
             'android_util.cc',
           ],
-          'dependencies': [
-            '../android/android_base.gyp:android_sysconf',
-          ],
         }],
         ['target_platform=="NaCl" and _toolset=="target"', {
           'sources': [

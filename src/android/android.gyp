@@ -532,7 +532,6 @@
       'target_name': 'subset_font',
       'type': 'none',
       'dependencies': [
-        # TODO(komatsu): Is it better to move android_base.gyp?
         'resources/resources.gyp:copy_asis_svg',
         'resources/resources.gyp:transform_template_svg',
       ],
