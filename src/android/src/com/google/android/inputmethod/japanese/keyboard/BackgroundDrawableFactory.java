@@ -46,6 +46,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
@@ -449,6 +450,11 @@ public class BackgroundDrawableFactory {
       case CANDIDATE_BACKGROUND:
         // The size of candidate drawable varies so buffering will take much memory.
         // Don't use BufferedDrawable.
+        boolean isCandidateBackgroundDrawableTransparent =
+            (Color.alpha(skin.candidateBackgroundTopColor) == 0
+             && Color.alpha(skin.candidateBackgroundBottomColor) == 0
+             && Color.alpha(skin.candidateBackgroundHighlightColor) == 0
+             && Color.alpha(skin.candidateBackgroundBorderColor) == 0);
         return createFocusableDrawable(
             new CandidateBackgroundFocusedDrawable(
                 (int) (CANDIDATE_BACKGROUND_PADDING * density),
@@ -458,15 +464,17 @@ public class BackgroundDrawableFactory {
                 skin.candidateBackgroundFocusedTopColor,
                 skin.candidateBackgroundFocusedBottomColor,
                 skin.candidateBackgroundFocusedShadowColor),
-            Optional.<Drawable>of(new CandidateBackgroundDrawable(
-                (int) (CANDIDATE_BACKGROUND_PADDING * density),
-                (int) (CANDIDATE_BACKGROUND_PADDING * density),
-                (int) (CANDIDATE_BACKGROUND_PADDING * density),
-                (int) (CANDIDATE_BACKGROUND_PADDING * density),
-                skin.candidateBackgroundTopColor,
-                skin.candidateBackgroundBottomColor,
-                skin.candidateBackgroundHighlightColor,
-                skin.candidateBackgroundBorderColor)));
+            isCandidateBackgroundDrawableTransparent
+                ? Optional.<Drawable>absent()
+                : Optional.<Drawable>of(new CandidateBackgroundDrawable(
+                    (int) (CANDIDATE_BACKGROUND_PADDING * density),
+                    (int) (CANDIDATE_BACKGROUND_PADDING * density),
+                    (int) (CANDIDATE_BACKGROUND_PADDING * density),
+                    (int) (CANDIDATE_BACKGROUND_PADDING * density),
+                    skin.candidateBackgroundTopColor,
+                    skin.candidateBackgroundBottomColor,
+                    skin.candidateBackgroundHighlightColor,
+                    skin.candidateBackgroundBorderColor)));
 
       case SYMBOL_CANDIDATE_BACKGROUND:
         // The size of candidate drawable varies so buffering will take much memory.

@@ -202,16 +202,16 @@
         android:color="#FF80CBC4" />
     <Color
         android:name="candidateBackgroundTopColor"
-        android:color="#FF21272B" />
+        android:color="#00000000" />
     <Color
         android:name="candidateBackgroundBottomColor"
-        android:color="#FF21272B" />
+        android:color="#00000000" />
     <Color
         android:name="candidateBackgroundHighlightColor"
         android:color="#00000000" />
     <Color
         android:name="candidateBackgroundBorderColor"
-        android:color="#FF21272B" />
+        android:color="#00000000" />
     <Color
         android:name="candidateBackgroundSeparatorColor"
         android:color="#1AFFFFFF" />
