@@ -217,7 +217,8 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     // Make sure layout params.
     assertEquals(LayoutParams.MATCH_PARENT, keyboardView.getLayoutParams().width);
-    assertEquals(LayoutParams.MATCH_PARENT, keyboardView.getLayoutParams().height);
+    assertEquals(context.getResources().getDimensionPixelSize(R.dimen.input_frame_height),
+                 keyboardView.getLayoutParams().height);
 
     // Check visibility
     assertFalse(mozcView.candidateViewManager.isKeyboardCandidateViewVisible());
