@@ -238,7 +238,7 @@ public class CandidateLayoutRenderer {
     int focusedIndex = this.focusedIndex;
     for (Row row : candidateLayout.getRowList()) {
       float top = row.getTop();
-      if (top > clipBounds.bottom) {
+      if (top >= clipBounds.bottom) {
         break;
       }
       if (top + row.getHeight() < clipBounds.top) {
