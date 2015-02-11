@@ -423,11 +423,6 @@ void FcitxMozc::InitializeBar()
     FcitxUISetStatusVisable(instance, "mozc-composition-mode", false);
 }
 
-FcitxMozc::FcitxMozc(const mozc::fcitx::FcitxMozc& )
-{
-
-}
-
 boolean CompositionMenuAction(struct _FcitxUIMenu *menu, int index)
 {
     FcitxMozc* mozc = (FcitxMozc*) menu->priv;
