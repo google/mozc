@@ -55,12 +55,13 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
   private final int topColor;
   private final int bottomColor;
 
-  private final Paint basePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final Optional<Paint> shadowPaint;
   private final Optional<Paint> highlightPaint;
 
   private final RectF baseBound = new RectF();
   private final RectF shadowBound = new RectF();
+
+  private Optional<Paint> basePaint = Optional.absent();
 
   public RoundRectKeyDrawable(
       int leftPadding, int topPadding, int rightPadding, int bottomPadding,
@@ -79,7 +80,7 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
       shadowPaint = Optional.absent();
     }
     if (Color.alpha(highlightColor) != 0) {
-      highlightPaint = Optional.of(new Paint(Paint.ANTI_ALIAS_FLAG));
+      highlightPaint = Optional.of(new Paint());
       highlightPaint.get().setColor(highlightColor);
     } else {
       highlightPaint = Optional.absent();
@@ -96,7 +97,9 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
     if (shadowPaint.isPresent()) {
       canvas.drawRoundRect(shadowBound, roundSize, roundSize, shadowPaint.get());
     }
-    canvas.drawRoundRect(baseBound, roundSize, roundSize, basePaint);
+    if (basePaint.isPresent()) {
+      canvas.drawRoundRect(baseBound, roundSize, roundSize, basePaint.get());
+    }
 
     // Draw 1-px height highlight at the top of key if necessary.
     if (highlightPaint.isPresent()) {
@@ -116,7 +119,12 @@ public class RoundRectKeyDrawable extends BaseBackgroundDrawable {
                     Math.max(canvasRect.top + 1, rect.top + BLUR_SIZE),
                     Math.min(canvasRect.right + 1, rect.right - BLUR_SIZE),
                     Math.min(canvasRect.bottom + 2, rect.bottom - BLUR_SIZE));
-    basePaint.setShader(new LinearGradient(
-        0, canvasRect.top, 0, canvasRect.bottom, topColor, bottomColor, TileMode.CLAMP));
+    if (Color.alpha(topColor | bottomColor) != 0) {
+      basePaint = Optional.<Paint>of(new Paint(Paint.ANTI_ALIAS_FLAG));
+      basePaint.get().setShader(new LinearGradient(
+          0, canvasRect.top, 0, canvasRect.bottom, topColor, bottomColor, TileMode.CLAMP));
+    } else {
+      basePaint = Optional.<Paint>absent();
+    }
   }
 }
