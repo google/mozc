@@ -83,6 +83,7 @@ import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TabHost;
@@ -584,6 +585,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       setVerticalDimension(viewHeight.get(), keyboardHeightScale.get());
     }
 
+    initializeNumberKeyboard();
     initializeMinorCategoryTab();
     initializeCloseButton();
     initializeDeleteButton();
@@ -674,7 +676,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     setLayoutHeight(this, symbolInputViewHeight);
     setLayoutHeight(getMajorCategoryFrame(), majorCategoryHeight);
     setLayoutHeight(findViewById(R.id.number_keyboard), numberKeyboardHeight.get());
-    setLayoutHeight(findViewById(R.id.number_keyboard_frame), LayoutParams.WRAP_CONTENT);
+    setLayoutHeight(getNumberKeyboardFrame(), LayoutParams.WRAP_CONTENT);
   }
 
   public int getNumberKeyboardHeight() {
@@ -760,6 +762,30 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     }
   }
 
+  private void initializeNumberKeyboard() {
+    final KeyboardFactory factory = new KeyboardFactory();
+
+    getNumberKeyboardView().addOnLayoutChangeListener(new OnLayoutChangeListener() {
+      @Override
+      public void onLayoutChange(
+          View view, int left, int top, int right, int bottom,
+          int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        int width = right - left;
+        int height = bottom - top;
+        int oldWidth = oldRight - oldLeft;
+        int oldHeight = oldBottom - oldTop;
+        if (width == 0 || height == 0 || (width == oldWidth && height == oldHeight)) {
+          return;
+        }
+        KeyboardView keyboardView = KeyboardView.class.cast(view);
+        Keyboard keyboard =
+            factory.get(getResources(), KeyboardSpecification.SYMBOL_NUMBER, width, height);
+        keyboardView.setKeyboard(keyboard);
+        keyboardView.invalidate();
+      }
+    });
+  }
+
   private void initializeMinorCategoryTab() {
     TabHost tabhost = getTabHost();
     tabhost.setup();
@@ -807,6 +833,15 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
             Optional.<Drawable>absent()),
         createMinorButtonBackgroundDrawable(skin)
     });
+  }
+
+  private void resetNumberKeyboard() {
+    if (!isInflated()) {
+      return;
+    }
+    setLayoutHeight(
+        getNumberKeyboardFrame(),
+        getResources().getDimensionPixelSize(R.dimen.symbol_view_number_keyboard_height));
   }
 
   private void resetTabImageForMinorCategory() {
@@ -1091,7 +1126,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     if (currentMajorCategory == SymbolMajorCategory.NUMBER) {
       findViewById(android.R.id.tabhost).setVisibility(View.GONE);
       findViewById(R.id.number_frame).setVisibility(View.VISIBLE);
-      setNumberKeyboard();
+      resetNumberKeyboard();
     } else {
       findViewById(android.R.id.tabhost).setVisibility(View.VISIBLE);
       findViewById(R.id.number_frame).setVisibility(View.GONE);
@@ -1128,30 +1163,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
           currentMajorCategory == SymbolMajorCategory.EMOJI
           && !emojiEnabled ? View.VISIBLE : View.GONE);
     }
-  }
-
-  private void setNumberKeyboard() {
-    final KeyboardSpecification spec = KeyboardSpecification.SYMBOL_NUMBER;
-    final KeyboardFactory factory = new KeyboardFactory();
-
-    getNumberKeyboardView().addOnLayoutChangeListener(new OnLayoutChangeListener() {
-      @Override
-      public void onLayoutChange(
-          View view, int left, int top, int right, int bottom,
-          int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        int width = right - left;
-        int height = bottom - top;
-        int oldWidth = oldRight - oldLeft;
-        int oldHeight = oldBottom - oldTop;
-        if (width == 0 || height == 0 || (width == oldWidth && height == oldHeight)) {
-          return;
-        }
-        KeyboardView keyboardView = KeyboardView.class.cast(view);
-        Keyboard keyboard = factory.get(getResources(), spec, right - left, bottom - top);
-        keyboardView.setKeyboard(keyboard);
-        keyboardView.invalidate();
-      }
-    });
   }
 
   private void updateMinorCategory() {
@@ -1258,6 +1269,10 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   private KeyboardView getNumberKeyboardView() {
     return KeyboardView.class.cast(findViewById(R.id.number_keyboard));
+  }
+
+  private FrameLayout getNumberKeyboardFrame() {
+    return FrameLayout.class.cast(findViewById(R.id.number_keyboard_frame));
   }
 
   private LinearLayout getMajorCategoryFrame() {
