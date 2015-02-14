@@ -149,7 +149,7 @@ Lattice::Lattice() : history_end_pos_(0), node_allocator_(new NodeAllocator) {}
 
 Lattice::~Lattice() {}
 
-NodeAllocatorInterface *Lattice::node_allocator() const {
+NodeAllocator *Lattice::node_allocator() const {
   return node_allocator_.get();
 }
 

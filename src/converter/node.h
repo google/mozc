@@ -234,25 +234,6 @@ struct Node {
   }
 };
 
-class NodeAllocatorInterface {
- public:
-  NodeAllocatorInterface() : max_nodes_size_(8192) {}
-  virtual ~NodeAllocatorInterface() {}
-
-  virtual Node *NewNode() = 0;
-
-  virtual size_t max_nodes_size() const {
-    return max_nodes_size_;
-  }
-
-  virtual void set_max_nodes_size(size_t max_nodes_size) {
-    max_nodes_size_ = max_nodes_size;
-  }
-
- private:
-  size_t max_nodes_size_;
-};
-
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_NODE_H_

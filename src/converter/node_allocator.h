@@ -30,19 +30,20 @@
 #ifndef MOZC_CONVERTER_NODE_ALLOCATOR_H_
 #define MOZC_CONVERTER_NODE_ALLOCATOR_H_
 
-#include "base/port.h"
 #include "base/freelist.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "converter/node.h"
 
 namespace mozc {
 
-class NodeAllocator : public NodeAllocatorInterface {
+class NodeAllocator {
  public:
-  NodeAllocator() : node_freelist_(1024), node_count_(0) {}
-  virtual ~NodeAllocator() {}
+  NodeAllocator() : node_freelist_(1024), max_nodes_size_(8192),
+                    node_count_(0) {}
+  ~NodeAllocator() {}
 
-  virtual Node *NewNode() {
+  Node *NewNode() {
     Node *node = node_freelist_.Alloc();
     DCHECK(node);
     node->Init();
@@ -50,10 +51,18 @@ class NodeAllocator : public NodeAllocatorInterface {
     return node;
   }
 
-  // Free all nodes allocateed by NewNode()
+  // Frees all nodes allocateed by NewNode().
   void Free() {
     node_freelist_.Free();
     node_count_ = 0;
+  }
+
+  size_t max_nodes_size() const {
+    return max_nodes_size_;
+  }
+
+  void set_max_nodes_size(size_t max_nodes_size) {
+    max_nodes_size_ = max_nodes_size;
   }
 
   size_t node_count() const {
@@ -62,6 +71,7 @@ class NodeAllocator : public NodeAllocatorInterface {
 
  private:
   FreeList<Node> node_freelist_;
+  size_t max_nodes_size_;
   size_t node_count_;
 
   DISALLOW_COPY_AND_ASSIGN(NodeAllocator);

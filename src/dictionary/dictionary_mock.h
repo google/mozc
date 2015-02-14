@@ -63,9 +63,6 @@
 
 namespace mozc {
 
-// These structures are defined in converter
-class NodeAllocatorInterface;
-
 class DictionaryMock : public DictionaryInterface {
  public:
   DictionaryMock();

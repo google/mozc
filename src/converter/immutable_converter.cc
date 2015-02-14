@@ -50,6 +50,7 @@
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "converter/node_list_builder.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
@@ -80,7 +81,7 @@ class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
   KeyCorrectedNodeListBuilder(size_t pos,
                               StringPiece original_lookup_key,
                               const KeyCorrector *key_corrector,
-                              NodeAllocatorInterface *allocator)
+                              NodeAllocator *allocator)
       : BaseNodeListBuilder(allocator, allocator->max_nodes_size()),
         pos_(pos),
         original_lookup_key_(original_lookup_key),
@@ -739,7 +740,7 @@ namespace {
 
 class NodeListBuilderWithCacheEnabled : public NodeListBuilderForLookupPrefix {
  public:
-  NodeListBuilderWithCacheEnabled(NodeAllocatorInterface *allocator,
+  NodeListBuilderWithCacheEnabled(NodeAllocator *allocator,
                                   size_t min_key_length)
       : NodeListBuilderForLookupPrefix(allocator,
                                        allocator->max_nodes_size(),
@@ -1187,7 +1188,7 @@ namespace {
 // Adds penalty for predictive nodes when building a node list.
 class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
  public:
-  NodeListBuilderForPredictiveNodes(NodeAllocatorInterface *allocator,
+  NodeListBuilderForPredictiveNodes(NodeAllocator *allocator,
                                     int limit, const POSMatcher *pos_matcher)
       : BaseNodeListBuilder(allocator, limit), pos_matcher_(pos_matcher) {}
 
