@@ -268,8 +268,7 @@ class KeyCheckDictionary : public DictionaryInterface {
     // No check
   }
 
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const {
+  virtual void LookupReverse(StringPiece str, Callback *callback) const {
     // No check
   }
 

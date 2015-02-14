@@ -60,7 +60,6 @@
 #include "base/string_piece.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "converter/node_allocator.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/system/codec_interface.h"
@@ -77,7 +76,6 @@ using mozc::storage::louds::LoudsTrie;
 namespace {
 
 const int kMinTokenArrayBlobSize = 4;
-const char *kReverseLookupCache = "reverse_lookup_cache";
 
 // Expansion table format:
 // "<Character to expand>[<Expanded character 1><Expanded character 2>...]"
@@ -410,7 +408,7 @@ struct ReverseLookupResult {
 
 }  // namespace
 
-class SystemDictionary::ReverseLookupCache : public NodeAllocatorData::Data {
+class SystemDictionary::ReverseLookupCache {
  public:
   ReverseLookupCache() {}
 
@@ -1151,14 +1149,13 @@ void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
   }
 }
 
-void SystemDictionary::LookupReverse(
-    StringPiece str, NodeAllocatorInterface *allocator,
-    Callback *callback) const {
+void SystemDictionary::LookupReverse(StringPiece str,
+                                     Callback *callback) const {
   // 1st step: Hiragana/Katakana are not in the value trie
   // 2nd step: Reverse lookup in value trie
   ReverseLookupCallbackWrapper callback_wrapper(callback);
   RegisterReverseLookupTokensForT13N(str, &callback_wrapper);
-  RegisterReverseLookupTokensForValue(str, allocator, &callback_wrapper);
+  RegisterReverseLookupTokensForValue(str, &callback_wrapper);
 }
 
 namespace {
@@ -1183,19 +1180,14 @@ inline void AddKeyIdsOfAllPrefixes(const LoudsTrie &trie, StringPiece key,
 
 }  // namespace
 
-void SystemDictionary::PopulateReverseLookupCache(
-    StringPiece str, NodeAllocatorInterface *allocator) const {
-  if (allocator == NULL) {
-    return;
-  }
+void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
   if (reverse_lookup_index_ != NULL) {
     // We don't need to prepare cache for the current reverse conversion,
     // as we have already built the index for reverse lookup.
     return;
   }
-  ReverseLookupCache *cache =
-      allocator->mutable_data()->get<ReverseLookupCache>(kReverseLookupCache);
-  DCHECK(cache) << "can't get cache data.";
+  reverse_lookup_cache_.reset(new ReverseLookupCache);
+  DCHECK(reverse_lookup_cache_.get());
 
   // Iterate each suffix and collect IDs of all substrings.
   set<int> id_set;
@@ -1210,12 +1202,11 @@ void SystemDictionary::PopulateReverseLookupCache(
     pos += Util::OneCharLen(suffix.data());
   }
   // Collect tokens for all IDs.
-  ScanTokens(id_set, cache);
+  ScanTokens(id_set, reverse_lookup_cache_.get());
 }
 
-void SystemDictionary::ClearReverseLookupCache(
-    NodeAllocatorInterface *allocator) const {
-  allocator->mutable_data()->erase(kReverseLookupCache);
+void SystemDictionary::ClearReverseLookupCache() const {
+  reverse_lookup_cache_.reset(NULL);
 }
 
 namespace {
@@ -1261,28 +1252,21 @@ void SystemDictionary::RegisterReverseLookupTokensForT13N(
 }
 
 void SystemDictionary::RegisterReverseLookupTokensForValue(
-    StringPiece value, NodeAllocatorInterface *allocator,
-    Callback *callback) const {
+    StringPiece value, Callback *callback) const {
   string lookup_key;
   codec_->EncodeValue(value, &lookup_key);
 
   set<int> id_set;
   AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
 
-  const bool has_cache = (allocator != NULL &&
-                          allocator->data().has(kReverseLookupCache));
-  ReverseLookupCache *cache =
-      has_cache
-      ? allocator->mutable_data()->get<ReverseLookupCache>(kReverseLookupCache)
-      : NULL;
-
   ReverseLookupCache *results = NULL;
   ReverseLookupCache non_cached_results;
   if (reverse_lookup_index_ != NULL) {
     reverse_lookup_index_->FillResultMap(id_set, &non_cached_results.results);
     results = &non_cached_results;
-  } else if (cache != NULL && cache->IsAvailable(id_set)) {
-    results = cache;
+  } else if (reverse_lookup_cache_.get() != NULL &&
+             reverse_lookup_cache_->IsAvailable(id_set)) {
+    results = reverse_lookup_cache_.get();
   } else {
     // Cache is not available. Get token for each ID.
     ScanTokens(id_set, &non_cached_results);

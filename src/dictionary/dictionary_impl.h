@@ -63,30 +63,20 @@ class DictionaryImpl : public DictionaryInterface {
   virtual ~DictionaryImpl();
 
   virtual bool HasKey(StringPiece key) const;
-
   virtual bool HasValue(StringPiece value) const;
-
   virtual void LookupPredictive(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
-
   virtual void LookupExact(StringPiece key, Callback *callback) const;
-
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const;
-
+  virtual void LookupReverse(StringPiece str, Callback *callback) const;
   virtual bool LookupComment(StringPiece key, StringPiece value,
                              string *comment) const;
-
   virtual bool Reload();
-
-  virtual void PopulateReverseLookupCache(
-      StringPiece str, NodeAllocatorInterface *allocator) const;
-
-  virtual void ClearReverseLookupCache(NodeAllocatorInterface *allocator) const;
+  virtual void PopulateReverseLookupCache(StringPiece str) const;
+  virtual void ClearReverseLookupCache() const;
 
  private:
   enum LookupType {

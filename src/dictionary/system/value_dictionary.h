@@ -78,9 +78,7 @@ class ValueDictionary : public DictionaryInterface {
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
   virtual void LookupExact(StringPiece key, Callback *callback) const;
-  virtual void LookupReverse(
-      StringPiece str, NodeAllocatorInterface *allocator,
-      Callback *callback) const;
+  virtual void LookupReverse(StringPiece str, Callback *callback) const;
 
  private:
   explicit ValueDictionary(const POSMatcher& pos_matcher);

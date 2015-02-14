@@ -54,8 +54,7 @@ class UserDictionaryStub : public DictionaryInterface {
 
   virtual void LookupExact(StringPiece key, Callback *callback) const {}
 
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const {}
+  virtual void LookupReverse(StringPiece str, Callback *callback) const {}
 
   virtual bool LookupComment(StringPiece key, StringPiece value,
                              string *comment) const {

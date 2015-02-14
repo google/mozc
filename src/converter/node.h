@@ -30,15 +30,12 @@
 #ifndef MOZC_CONVERTER_NODE_H_
 #define MOZC_CONVERTER_NODE_H_
 
-#include <map>
 #include <string>
 
 #include "base/port.h"
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {
-
-class Segment;
 
 struct Node {
   enum NodeType {
@@ -237,49 +234,6 @@ struct Node {
   }
 };
 
-// this class keep multiple types of data.
-// each type should inherit NodeAllocatorData::Data
-class NodeAllocatorData {
- public:
-  ~NodeAllocatorData() {
-    clear();
-  }
-
-  bool has(const char *name) const {
-    return (data_.find(name) != data_.end());
-  }
-
-  void erase(const char *name) {
-    if (has(name)) {
-      delete data_[name];
-      data_.erase(name);
-    }
-  }
-
-  void clear() {
-    for (map<const char *, Data *>::iterator it = data_.begin();
-         it != data_.end(); ++it) {
-      delete it->second;
-    }
-    data_.clear();
-  }
-
-  template<typename Type> Type *get(const char *name) {
-    if (!has(name)) {
-      data_[name] = new Type;
-    }
-    return reinterpret_cast<Type *>(data_[name]);
-  }
-
-  class Data {
-   public:
-    virtual ~Data() {}
-  };
-
- private:
-  map<const char *, Data *> data_;
-};
-
 class NodeAllocatorInterface {
  public:
   NodeAllocatorInterface() : max_nodes_size_(8192) {}
@@ -295,17 +249,8 @@ class NodeAllocatorInterface {
     max_nodes_size_ = max_nodes_size;
   }
 
-  // Backend specific data, like cache for look up.
-  NodeAllocatorData *mutable_data() {
-    return &data_;
-  }
-  const NodeAllocatorData &data() {
-    return data_;
-  }
-
  private:
   size_t max_nodes_size_;
-  NodeAllocatorData data_;
 };
 
 }  // namespace mozc

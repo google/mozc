@@ -776,8 +776,7 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
     BaseNodeListBuilder builder(
         lattice->node_allocator(),
         lattice->node_allocator()->max_nodes_size());
-    dictionary_->LookupReverse(
-        StringPiece(begin, len), lattice->node_allocator(), &builder);
+    dictionary_->LookupReverse(StringPiece(begin, len), &builder);
     result_node = builder.result();
   } else {
     if (is_prediction && !FLAGS_disable_lattice_cache) {
@@ -1381,7 +1380,7 @@ bool ImmutableConverterImpl::MakeLattice(
   if (is_reverse) {
     // Reverse lookup for each prefix string in key is slow with current
     // implementation, so run it for them at once and cache the result.
-    dictionary_->PopulateReverseLookupCache(key, lattice->node_allocator());
+    dictionary_->PopulateReverseLookupCache(key);
   }
 
   bool is_valid_lattice = true;
@@ -1399,7 +1398,7 @@ bool ImmutableConverterImpl::MakeLattice(
 
   if (is_reverse) {
     // No reverse look up will happen afterwards.
-    dictionary_->ClearReverseLookupCache(lattice->node_allocator());
+    dictionary_->ClearReverseLookupCache();
   }
 
   // Predictive real time conversion

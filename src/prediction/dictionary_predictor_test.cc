@@ -297,9 +297,8 @@ class CallCheckDictionary : public DictionaryInterface {
                           Callback *callback));
   MOCK_CONST_METHOD2(LookupExact,
                      void(StringPiece key, Callback *callback));
-  MOCK_CONST_METHOD3(LookupReverse,
-                     void(StringPiece str, NodeAllocatorInterface *allocator,
-                          Callback *callback));
+  MOCK_CONST_METHOD2(LookupReverse,
+                     void(StringPiece str, Callback *callback));
 };
 
 // Action to call the third argument of LookupPrefix with the token
@@ -1738,8 +1737,7 @@ class TestSuffixDictionary : public DictionaryInterface {
 
   virtual void LookupExact(StringPiece key, Callback *callback) const {}
 
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const {}
+  virtual void LookupReverse(StringPiece str, Callback *callback) const {}
 };
 
 }  // namespace

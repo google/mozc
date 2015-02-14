@@ -194,7 +194,6 @@ void DictionaryImpl::LookupExact(StringPiece key, Callback *callback) const {
 }
 
 void DictionaryImpl::LookupReverse(StringPiece str,
-                                   NodeAllocatorInterface *allocator,
                                    Callback *callback) const {
   CallbackWithFilter callback_with_filter(
       GET_CONFIG(use_spelling_correction),
@@ -204,7 +203,7 @@ void DictionaryImpl::LookupReverse(StringPiece str,
       suppression_dictionary_,
       callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupReverse(str, allocator, &callback_with_filter);
+    dics_[i]->LookupReverse(str, &callback_with_filter);
   }
 }
 
@@ -225,17 +224,15 @@ bool DictionaryImpl::Reload() {
   return user_dictionary_->Reload();
 }
 
-void DictionaryImpl::PopulateReverseLookupCache(
-    StringPiece str, NodeAllocatorInterface *allocator) const {
+void DictionaryImpl::PopulateReverseLookupCache(StringPiece str) const {
   for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->PopulateReverseLookupCache(str, allocator);
+    dics_[i]->PopulateReverseLookupCache(str);
   }
 }
 
-void DictionaryImpl::ClearReverseLookupCache(
-    NodeAllocatorInterface *allocator) const {
+void DictionaryImpl::ClearReverseLookupCache() const {
   for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->ClearReverseLookupCache(allocator);
+    dics_[i]->ClearReverseLookupCache();
   }
 }
 

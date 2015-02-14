@@ -108,12 +108,9 @@ class SystemDictionary : public DictionaryInterface {
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
   virtual void LookupExact(StringPiece key, Callback *callback) const;
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const;
-  virtual void PopulateReverseLookupCache(
-      StringPiece str, NodeAllocatorInterface *allocator) const;
-  virtual void ClearReverseLookupCache(
-      NodeAllocatorInterface *allocator) const;
+  virtual void LookupReverse(StringPiece str, Callback *callback) const;
+  virtual void PopulateReverseLookupCache(StringPiece str) const;
+  virtual void ClearReverseLookupCache() const;
 
  private:
   class ReverseLookupCache;
@@ -126,7 +123,6 @@ class SystemDictionary : public DictionaryInterface {
   void RegisterReverseLookupTokensForT13N(StringPiece value,
                                           Callback *callback) const;
   void RegisterReverseLookupTokensForValue(StringPiece value,
-                                           NodeAllocatorInterface *allocator,
                                            Callback *callback) const;
   void ScanTokens(const set<int> &id_set, ReverseLookupCache *cache) const;
   void RegisterReverseLookupResults(const set<int> &id_set,
@@ -158,6 +154,7 @@ class SystemDictionary : public DictionaryInterface {
   const SystemDictionaryCodecInterface *codec_;
   KeyExpansionTable hiragana_expansion_table_;
   scoped_ptr<DictionaryFile> dictionary_file_;
+  mutable scoped_ptr<ReverseLookupCache> reverse_lookup_cache_;
   scoped_ptr<ReverseLookupIndex> reverse_lookup_index_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);

@@ -444,7 +444,6 @@ void UserDictionary::LookupExact(StringPiece key, Callback *callback) const {
 }
 
 void UserDictionary::LookupReverse(StringPiece str,
-                                   NodeAllocatorInterface *allocator,
                                    Callback *callback) const {
   if (GET_CONFIG(incognito_mode)) {
     return;

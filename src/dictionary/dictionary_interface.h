@@ -36,11 +36,9 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "base/trie.h"
+#include "dictionary/dictionary_token.h"
 
 namespace mozc {
-
-class NodeAllocatorInterface;  // converter/node.h
-struct Token;                  // dictionary/dictionary_token.h
 
 // TODO(noriyukit): Move this interface into dictionary namespace.
 class DictionaryInterface {
@@ -130,9 +128,7 @@ class DictionaryInterface {
 
   // For reverse lookup, the reading is stored in Token::value and the word
   // is stored in Token::key.
-  // TODO(hsumita): Remove a dependency on NodeAllocatorInterface.
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const = 0;
+  virtual void LookupReverse(StringPiece str, Callback *callback) const = 0;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
@@ -141,11 +137,10 @@ class DictionaryInterface {
                              string *comment) const { return false; }
 
   // Populates cache for LookupReverse().
-  // TODO(hsumita): Remove a dependency on NodeAllocatorInterface.
-  virtual void PopulateReverseLookupCache(
-      StringPiece str, NodeAllocatorInterface *allocator) const {}
-  virtual void ClearReverseLookupCache(
-      NodeAllocatorInterface *allocator) const {}
+  // TODO(noriyukit): These cache initialize/finalize mechanism shouldn't be a
+  // part of the interface.
+  virtual void PopulateReverseLookupCache(StringPiece str) const {}
+  virtual void ClearReverseLookupCache() const {}
 
   // Sync mutable dictionary data into local disk.
   virtual bool Sync() { return true; }
