@@ -524,14 +524,16 @@ SystemDictionary::Builder::Builder(const char *ptr, int len)
 
 SystemDictionary::Builder::~Builder() {}
 
-void SystemDictionary::Builder::SetOptions(Options options) {
+SystemDictionary::Builder & SystemDictionary::Builder::SetOptions(
+    Options options) {
   options_ = options;
+  return *this;
 }
 
-// This does not have the ownership of |codec|
-void SystemDictionary::Builder::SetCodec(
+SystemDictionary::Builder &SystemDictionary::Builder::SetCodec(
     const SystemDictionaryCodecInterface *codec) {
   codec_ = codec;
+  return *this;
 }
 
 SystemDictionary *SystemDictionary::Builder::Build() {
@@ -580,34 +582,6 @@ SystemDictionary::SystemDictionary(const SystemDictionaryCodecInterface *codec)
       dictionary_file_(new DictionaryFile) {}
 
 SystemDictionary::~SystemDictionary() {}
-
-// static
-SystemDictionary *SystemDictionary::CreateSystemDictionaryFromFileWithOptions(
-    const string &filename, Options options) {
-  Builder builder(filename);
-  builder.SetOptions(options);
-  return builder.Build();
-}
-
-// static
-SystemDictionary *SystemDictionary::CreateSystemDictionaryFromFile(
-    const string &filename) {
-  return CreateSystemDictionaryFromFileWithOptions(filename, NONE);
-}
-
-// static
-SystemDictionary *SystemDictionary::CreateSystemDictionaryFromImageWithOptions(
-    const char *ptr, int len, Options options) {
-  Builder builder(ptr, len);
-  builder.SetOptions(options);
-  return builder.Build();
-}
-
-// static
-SystemDictionary *SystemDictionary::CreateSystemDictionaryFromImage(
-    const char *ptr, int len) {
-  return CreateSystemDictionaryFromImageWithOptions(ptr, len, NONE);
-}
 
 bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
   int len;

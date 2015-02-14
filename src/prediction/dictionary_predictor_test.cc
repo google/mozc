@@ -90,7 +90,7 @@ DictionaryInterface *CreateSystemDictionaryFromDataManager(
   int size = 0;
   data_manager.GetSystemDictionaryData(&data, &size);
   using mozc::dictionary::SystemDictionary;
-  return SystemDictionary::CreateSystemDictionaryFromImage(data, size);
+  return SystemDictionary::Builder(data, size).Build();
 }
 
 DictionaryInterface *CreateSuffixDictionaryFromDataManager(

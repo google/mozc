@@ -86,8 +86,7 @@ class MockDataAndImmutableConverter {
     data_manager_->GetSystemDictionaryData(&dictionary_data,
                                            &dictionary_size);
     dictionary_.reset(new DictionaryImpl(
-        SystemDictionary::CreateSystemDictionaryFromImage(
-            dictionary_data, dictionary_size),
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
         ValueDictionary::CreateValueDictionaryFromImage(
             *pos_matcher, dictionary_data, dictionary_size),
         &user_dictionary_stub_,

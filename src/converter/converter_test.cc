@@ -196,8 +196,7 @@ class ConverterTest : public ::testing::Test {
     ret->user_dictionary.reset(new UserDictionaryStub);
     ret->suppression_dictionary.reset(new SuppressionDictionary);
     ret->dictionary.reset(new DictionaryImpl(
-        SystemDictionary::CreateSystemDictionaryFromImage(
-            dictionary_data, dictionary_size),
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
         ValueDictionary::CreateValueDictionaryFromImage(
             *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
         ret->user_dictionary.get(),
@@ -1232,8 +1231,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
   scoped_ptr<DictionaryInterface> dictionary(new DictionaryImpl(
-      SystemDictionary::CreateSystemDictionaryFromImage(
-          dictionary_data, dictionary_size),
+      SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
       ValueDictionary::CreateValueDictionaryFromImage(
           *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
       mock_user_dictionary.get(),

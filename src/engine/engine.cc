@@ -155,8 +155,7 @@ void Engine::Init(
   data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
   dictionary_.reset(new DictionaryImpl(
-      SystemDictionary::CreateSystemDictionaryFromImage(
-          dictionary_data, dictionary_size),
+      SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
       ValueDictionary::CreateValueDictionaryFromImage(
           *data_manager->GetPOSMatcher(), dictionary_data, dictionary_size),
       user_dictionary_.get(),

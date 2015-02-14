@@ -82,11 +82,12 @@ class SystemDictionary : public DictionaryInterface {
     ~Builder();
 
     // Sets options (default: NONE)
-    void SetOptions(Options options);
+    Builder &SetOptions(Options options);
 
     // Sets codec (default: NULL)
     // Uses default codec if this is NULL
-    void SetCodec(const SystemDictionaryCodecInterface *codec);
+    // Doesn't take the ownership of |codec|.
+    Builder &SetCodec(const SystemDictionaryCodecInterface *codec);
 
     // Builds and returns system dictionary.
     SystemDictionary *Build();
@@ -113,19 +114,6 @@ class SystemDictionary : public DictionaryInterface {
   };
 
   virtual ~SystemDictionary();
-
-  // TODO(team): Use builder instead of following static methods.
-  static SystemDictionary *CreateSystemDictionaryFromFile(
-      const string &filename);
-
-  static SystemDictionary *CreateSystemDictionaryFromFileWithOptions(
-      const string &filename, Options options);
-
-  static SystemDictionary *CreateSystemDictionaryFromImage(
-      const char *ptr, int len);
-
-  static SystemDictionary *CreateSystemDictionaryFromImageWithOptions(
-      const char *ptr, int len, Options options);
 
   // Implementation of DictionaryInterface.
   virtual bool HasKey(StringPiece key) const;
