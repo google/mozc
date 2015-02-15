@@ -27,12 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/sparse_connector.h"
+#include "converter/connector_base.h"
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/scoped_ptr.h"
 #include "data_manager/connection_file_reader.h"
@@ -41,32 +42,53 @@
 DECLARE_string(test_srcdir);
 
 namespace mozc {
-
 namespace {
+
 const char kTestConnectionDataImagePath[] =
     "data_manager/testing/connection_data.data";
 const char kTestConnectionFilePath[] =
     "data_manager/testing/connection_single_column.txt";
-}  // namespace
 
-TEST(SarseConnectorTest, SparseConnectorTest) {
+struct ConnectionDataEntry {
+  uint16 rid;
+  uint16 lid;
+  int cost;
+};
+
+TEST(ConnectorBaseTest, CompareWithRawData) {
   const string path = FileUtil::JoinPath(
       FLAGS_test_srcdir, kTestConnectionDataImagePath);
   Mmap cmmap;
   ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
-  scoped_ptr<SparseConnector> connector(
-      new SparseConnector(cmmap.begin(), cmmap.size()));
+  scoped_ptr<ConnectorBase> connector(
+      new ConnectorBase(cmmap.begin(), cmmap.size(), 256));
   ASSERT_EQ(1, connector->GetResolution());
 
   const string connection_text_path =
       FileUtil::JoinPath(FLAGS_test_srcdir, kTestConnectionFilePath);
+  vector<ConnectionDataEntry> data;
   for (ConnectionFileReader reader(connection_text_path);
        !reader.done(); reader.Next()) {
-    const uint16 rid = reader.rid_of_left_node();
-    const uint16 lid = reader.lid_of_right_node();
-    const int cost = reader.cost();
-    EXPECT_EQ(cost, connector->GetTransitionCost(rid, lid));
+    ConnectionDataEntry entry;
+    entry.rid = reader.rid_of_left_node();
+    entry.lid = reader.lid_of_right_node();
+    entry.cost = reader.cost();
+    data.push_back(entry);
+  }
+
+  for (int trial = 0; trial < 3; ++trial) {
+    // Lookup in random order for a few times.
+    random_shuffle(data.begin(), data.end());
+    for (size_t i = 0; i < data.size(); ++i) {
+      int actual = connector->GetTransitionCost(data[i].rid, data[i].lid);
+      EXPECT_EQ(data[i].cost, actual);
+
+      // Cache hit case.
+      actual = connector->GetTransitionCost(data[i].rid, data[i].lid);
+      EXPECT_EQ(data[i].cost, actual);
+    }
   }
 }
 
+}  // namespace
 }  // namespace mozc

@@ -30,7 +30,8 @@
 #ifndef MOZC_CONVERTER_CONNECTOR_BASE_H_
 #define MOZC_CONVERTER_CONNECTOR_BASE_H_
 
-#include <string>
+#include <vector>
+
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "converter/connector_interface.h"
@@ -38,12 +39,8 @@
 namespace mozc {
 
 class DataManagerInterface;
-class SparseConnector;
 
-namespace converter {
-class CachedConnector;
-}  // namespace converter
-
+// TODO(noriyukit): Rename this to Connector as no class inherits this class.
 class ConnectorBase : public ConnectorInterface {
  public:
   static ConnectorBase *CreateFromDataManager(
@@ -56,10 +53,23 @@ class ConnectorBase : public ConnectorInterface {
   virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
   virtual int GetResolution() const;
 
- private:
-  scoped_ptr<SparseConnector> sparse_connector_;
-  scoped_ptr<converter::CachedConnector> cached_connector_;
+  void ClearCache();
 
+ private:
+  class Row;
+
+  int LookupCost(uint16 rid, uint16 lid) const;
+
+  vector<Row *> rows_;
+  const uint16 *default_cost_;
+  int resolution_;
+
+  const int cache_size_;
+  const uint32 cache_hash_mask_;
+  mutable scoped_ptr<uint32[]> cache_key_;
+  mutable scoped_ptr<int[]> cache_value_;
+
+  DISALLOW_COPY_AND_ASSIGN(ConnectorBase);
 };
 
 }  // namespace mozc

@@ -49,28 +49,6 @@
       ],
     },
     {
-      'target_name': 'sparse_connector',
-      'type': 'static_library',
-      'sources': [
-        'sparse_connector.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../storage/louds/louds.gyp:simple_succinct_bit_vector_index',
-      ],
-    },
-    {
-      'target_name': 'cached_connector',
-      'type': 'static_library',
-      'sources': [
-        'cached_connector.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'sparse_connector',
-      ],
-    },
-    {
       'target_name': 'connector_base',
       'type': 'static_library',
       'sources': [
@@ -78,8 +56,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'cached_connector',
-        'sparse_connector',
+        '../storage/louds/louds.gyp:simple_succinct_bit_vector_index',
       ],
     },
     {
