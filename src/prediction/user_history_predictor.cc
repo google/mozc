@@ -57,6 +57,8 @@
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
 
+using mozc::commands::Request;
+using mozc::dictionary::SuppressionDictionary;
 
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.
@@ -65,9 +67,6 @@ DEFINE_bool(enable_expansion_for_user_history_predictor,
             "enable ambiguity expansion for user_history_predictor.");
 
 namespace mozc {
-
-using commands::Request;
-
 namespace {
 // find suggestion candidates from the most recent 3000 history in LRU.
 // We don't check all history, since suggestion is called every key event

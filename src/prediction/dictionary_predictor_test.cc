@@ -75,6 +75,7 @@
 #include "transliteration/transliteration.h"
 
 using ::testing::_;
+using mozc::dictionary::SuppressionDictionary;
 
 DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_dictionary_predictor);

@@ -46,6 +46,8 @@
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 
+using mozc::dictionary::SuppressionDictionary;
+
 namespace mozc {
 namespace converter {
 namespace {

@@ -56,10 +56,10 @@
 DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_user_history_predictor);
 
+using mozc::commands::Request;
+using mozc::dictionary::SuppressionDictionary;
+
 namespace mozc {
-
-using commands::Request;
-
 namespace {
 
 void MakeSegmentsForSuggestion(const string &key, Segments *segments) {

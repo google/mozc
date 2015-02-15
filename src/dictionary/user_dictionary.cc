@@ -52,7 +52,7 @@
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
-
+namespace dictionary {
 namespace {
 
 struct OrderByKey {
@@ -106,13 +106,13 @@ void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
 
 }  // namespace
 
-class TokensIndex : public vector<UserPOS::Token *> {
+class UserDictionary::TokensIndex : public vector<UserPOS::Token *> {
  public:
   explicit TokensIndex(const UserPOSInterface *user_pos,
                        SuppressionDictionary *suppression_dictionary)
       : user_pos_(user_pos),
         suppression_dictionary_(suppression_dictionary) {}
-  virtual ~TokensIndex() {
+  ~TokensIndex() {
     Clear();
   }
 
@@ -203,7 +203,7 @@ MOZC_CLANG_POP_WARNING();
   SuppressionDictionary *suppression_dictionary_;
 };
 
-class UserDictionaryReloader : public Thread {
+class UserDictionary::UserDictionaryReloader : public Thread {
  public:
   explicit UserDictionaryReloader(UserDictionary *dic)
       : auto_register_mode_(false), dic_(dic) {
@@ -584,4 +584,5 @@ void UserDictionary::SetUserDictionaryName(const string &filename) {
   Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
 }
 
+}  // namespace dictionary
 }  // namespace mozc

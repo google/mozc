@@ -31,16 +31,15 @@
 #define MOZC_DICTIONARY_DICTIONARY_IMPL_H_
 
 #include <vector>
+
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
-
-class POSMatcher;
-class SuppressionDictionary;
-
 namespace dictionary {
 
 class DictionaryImpl : public DictionaryInterface {

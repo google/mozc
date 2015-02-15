@@ -58,12 +58,13 @@
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 
-namespace mozc {
-
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
+using mozc::dictionary::UserDictionary;
 using mozc::dictionary::ValueDictionary;
 
+namespace mozc {
 namespace {
 
 class UserDataManagerImpl : public UserDataManagerInterface {

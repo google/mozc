@@ -39,7 +39,6 @@ namespace mozc {
 class ConverterInterface;
 class ConverterMock;
 class PredictorInterface;
-class SuppressionDictionary;
 class UserDataManagerInterface;
 class UserDataManagerMock;
 
@@ -51,7 +50,7 @@ class MockConverterEngine : public EngineInterface {
 
   virtual ConverterInterface *GetConverter() const;
   virtual PredictorInterface *GetPredictor() const;
-  virtual SuppressionDictionary *GetSuppressionDictionary();
+  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary();
   virtual bool Reload();
   virtual UserDataManagerInterface *GetUserDataManager();
 

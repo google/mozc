@@ -29,7 +29,6 @@
 
 #include "dictionary/dictionary_impl.h"
 
-#include <limits>
 #include <string>
 
 #include "base/logging.h"

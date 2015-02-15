@@ -38,6 +38,7 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "dictionary/suppression_dictionary.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
@@ -52,33 +53,33 @@ class POSMatcher;
 class PosGroup;
 class SegmenterInterface;
 class SuggestionFilter;
-class SuppressionDictionary;
 
 class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
-  ImmutableConverterImpl(const DictionaryInterface *dictionary,
-                         const DictionaryInterface *suffix_dictionary,
-                         const SuppressionDictionary *suppression_dictionary,
-                         const ConnectorInterface *connector,
-                         const SegmenterInterface *segmenter,
-                         const POSMatcher *pos_matcher,
-                         const PosGroup *pos_group,
-                         const SuggestionFilter *suggestion_filter);
+  ImmutableConverterImpl(
+      const DictionaryInterface *dictionary,
+      const DictionaryInterface *suffix_dictionary,
+      const dictionary::SuppressionDictionary *suppression_dictionary,
+      const ConnectorInterface *connector,
+      const SegmenterInterface *segmenter,
+      const POSMatcher *pos_matcher,
+      const PosGroup *pos_group,
+      const SuggestionFilter *suggestion_filter);
   virtual ~ImmutableConverterImpl() {}
 
   virtual bool ConvertForRequest(
       const ConversionRequest &request, Segments *segments) const;
 
  private:
+  FRIEND_TEST(ImmutableConverterTest, AddPredictiveNodes);
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesCost);
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary);
-  FRIEND_TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey);
-  FRIEND_TEST(ImmutableConverterTest, AddPredictiveNodes);
   FRIEND_TEST(ImmutableConverterTest, NotConnectedTest);
-  friend class NBestGeneratorTest;
+  FRIEND_TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey);
+  FRIEND_TEST(NBestGeneratorTest, InnerSegmentBoundary);
   FRIEND_TEST(NBestGeneratorTest, MultiSegmentConnectionTest);
   FRIEND_TEST(NBestGeneratorTest, SingleSegmentConnectionTest);
-  FRIEND_TEST(NBestGeneratorTest, InnerSegmentBoundary);
+  friend class NBestGeneratorTest;
 
   enum InsertCandidatesType {
     MULTI_SEGMENTS,  // Normal conversion ("私の|名前は|中野です")
@@ -181,7 +182,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
 
   const DictionaryInterface *dictionary_;
   const DictionaryInterface *suffix_dictionary_;
-  const SuppressionDictionary *suppression_dictionary_;
+  const dictionary::SuppressionDictionary *suppression_dictionary_;
   const ConnectorInterface *connector_;
   const SegmenterInterface *segmenter_;
   const POSMatcher *pos_matcher_;

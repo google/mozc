@@ -61,6 +61,8 @@
 #include "prediction/suggestion_filter.h"
 #include "session/commands.pb.h"
 
+using mozc::dictionary::SuppressionDictionary;
+
 namespace mozc {
 namespace {
 

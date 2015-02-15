@@ -81,13 +81,15 @@
 
 DECLARE_string(test_tmpdir);
 
-namespace mozc {
-
-struct SuffixToken;
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::ValueDictionary;
 using mozc::usage_stats::UsageStats;
+
+namespace mozc {
+
+struct SuffixToken;
 
 namespace {
 

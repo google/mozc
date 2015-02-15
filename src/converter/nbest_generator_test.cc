@@ -59,15 +59,16 @@
 
 DECLARE_string(test_tmpdir);
 
+using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::SuppressionDictionary;
+using mozc::dictionary::SystemDictionary;
+using mozc::dictionary::ValueDictionary;
+
 namespace mozc {
 
 struct SuffixToken;
 
 namespace {
-
-using mozc::dictionary::DictionaryImpl;
-using mozc::dictionary::SystemDictionary;
-using mozc::dictionary::ValueDictionary;
 
 class MockDataAndImmutableConverter {
  public:

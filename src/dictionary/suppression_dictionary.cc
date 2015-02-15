@@ -33,9 +33,15 @@
 #include "base/mutex.h"
 
 namespace mozc {
+namespace dictionary {
 namespace {
 const char kDelimiter = '\t';
 }  // namespace
+
+SuppressionDictionary::SuppressionDictionary()
+    : locked_(false), has_key_empty_(false), has_value_empty_(false) {}
+
+SuppressionDictionary::~SuppressionDictionary() {}
 
 bool SuppressionDictionary::AddEntry(
     const string &key, const string &value) {
@@ -102,25 +108,28 @@ bool SuppressionDictionary::SuppressEntry(
     return false;
   }
 
-  if (dic_.find(key + kDelimiter + value) != dic_.end()) {
+  string lookup_key = key;
+  lookup_key.append(1, kDelimiter).append(value);
+  if (dic_.find(lookup_key) != dic_.end()) {
     return true;
   }
 
-  if (has_key_empty_ &&
-      dic_.find(kDelimiter + value) != dic_.end()) {
-    return true;
+  if (has_key_empty_) {
+    lookup_key.assign(1, kDelimiter).append(value);
+    if (dic_.find(lookup_key) != dic_.end()) {
+      return true;
+    }
   }
 
-  if (has_value_empty_ &&
-      dic_.find(key + kDelimiter) != dic_.end()) {
-    return true;
+  if (has_value_empty_) {
+    lookup_key.assign(key).append(1, kDelimiter);
+    if (dic_.find(lookup_key) != dic_.end()) {
+      return true;
+    }
   }
 
   return false;
 }
 
-SuppressionDictionary::SuppressionDictionary()
-    : locked_(false), has_key_empty_(false), has_value_empty_(false) {}
-
-SuppressionDictionary::~SuppressionDictionary() {}
+}  // namespace dictionary
 }  // namespace mozc

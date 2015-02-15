@@ -38,6 +38,7 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace dictionary {
 namespace {
 
 TEST(SupressionDictionary, BasicTest) {
@@ -144,4 +145,5 @@ TEST(SupressionDictionary, ThreadTest) {
 }
 
 }  // namespace
+}  // namespace dictionary
 }  // namespace mozc

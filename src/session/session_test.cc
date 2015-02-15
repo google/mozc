@@ -68,11 +68,12 @@ namespace mozc {
 
 class ConverterInterface;
 class PredictorInterface;
-class SuppressionDictionary;
+
+namespace dictionary { class SuppressionDictionary; }
 
 namespace session {
-
 namespace {
+
 // "あいうえお"
 const char kAiueo[] =
     "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A";
@@ -443,7 +444,7 @@ class MockConverterEngineForReset : public EngineInterface {
     return NULL;
   }
 
-  virtual SuppressionDictionary *GetSuppressionDictionary() {
+  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
     return NULL;
   }
 
@@ -501,7 +502,7 @@ class MockConverterEngineForRevert : public EngineInterface {
     return NULL;
   }
 
-  virtual SuppressionDictionary *GetSuppressionDictionary() {
+  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
     return NULL;
   }
 

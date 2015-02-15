@@ -33,23 +33,25 @@
 #include <set>
 #include <string>
 #include <vector>
+
 #include "base/port.h"
 #include "converter/segments.h"
+#include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
 
 struct Node;
 class POSMatcher;
 class SuggestionFilter;
-class SuppressionDictionary;
 
 namespace converter {
 
 class CandidateFilter {
  public:
-  CandidateFilter(const SuppressionDictionary *suppression_dictionary,
-                  const POSMatcher *pos_matcher,
-                  const SuggestionFilter *suggestion_filter);
+  CandidateFilter(
+      const dictionary::SuppressionDictionary *suppression_dictionary,
+      const POSMatcher *pos_matcher,
+      const SuggestionFilter *suggestion_filter);
   ~CandidateFilter();
 
   enum ResultType {
@@ -73,7 +75,7 @@ class CandidateFilter {
                                      const vector<const Node *> &nodes,
                                      Segments::RequestType request_type);
 
-  const SuppressionDictionary *suppression_dictionary_;
+  const dictionary::SuppressionDictionary *suppression_dictionary_;
   const POSMatcher *pos_matcher_;
   const SuggestionFilter *suggestion_filter_;
 
