@@ -92,17 +92,17 @@ public class SelectionTrackerTest extends TestCase {
 
     // Type "あ": "[あ]|"
     tracker.onRender(null, null, createPreedit(1, createSegment("あ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 0, 1, 1, 0, 1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 0, 1, 1, 0, 1, false));
     assertTracker(0, 1, 1, tracker);
 
     // Type "い": "[あい]|"
     tracker.onRender(null, null, createPreedit(2, createSegment("あい")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(1, 1, 2, 2, 0, 2));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(1, 1, 2, 2, 0, 2, false));
     assertTracker(0, 2, 2, tracker);
 
     // Type "う": "[あいう]|"
     tracker.onRender(null, null, createPreedit(3, createSegment("あいう")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 0, 3));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 0, 3, false));
     assertTracker(0, 3, 3, tracker);
 
     // Hit space: "[あ]_いう_|"
@@ -113,72 +113,73 @@ public class SelectionTrackerTest extends TestCase {
     // Type Right: "[愛]_う_|"
     tracker.onRender(
         null, null, createPreedit(2, createHighlightSegment("愛"), createSegment("う")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 2, 2, 0, 2));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 2, 2, 0, 2, false));
     assertTracker(0, 2, 2, tracker);
 
     // Type Left: "[あ]_いう_|"
     tracker.onRender(
         null, null, createPreedit(3, createHighlightSegment("あ"), createSegment("いう")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 0, 3));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 0, 3, false));
     assertTracker(0, 3, 3, tracker);
 
     // Commit あ: "あ[いう]|"
     tracker.onRender(null, "あ", createPreedit(2, createSegment("いう")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 3, 3, 1, 3));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 3, 3, 1, 3, false));
     assertTracker(1, 3, 3, tracker);
 
     // Commit いう: "あいう|"
     tracker.onRender(null, "いう", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 3, 3, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 3, 3, -1, -1, false));
     assertTracker(3, 3, 3, tracker);
 
     // Tap between い and う: "あい|う"
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(3, 3, 2, 2, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(3, 3, 2, 2, -1, -1, false));
     assertTracker(2, 2, 2, tracker);
 
     // Type お: "あい[お]|う"
     tracker.onRender(null, null, createPreedit(1, createSegment("お")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 2, 3));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 2, 3, false));
     assertTracker(2, 3, 3, tracker);
 
     // Type か: "あい[おか]|う"
     tracker.onRender(null, null, createPreedit(2, createSegment("おか")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 2, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 2, 4, false));
     assertTracker(2, 4, 4, tracker);
 
     // Type Left: "あい[お]|_か_う"
     tracker.onRender(null, null, createPreedit(1, createSegment("おか")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 3, 3, 2, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 3, 3, 2, 4, false));
     assertTracker(2, 3, 3, tracker);
 
     // Type Right: "あい[おか]|う"
     tracker.onRender(null, null, createPreedit(2, createSegment("おか")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 2, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 2, 4, false));
     assertTracker(2, 4, 4, tracker);
 
     // Tap between お and か: "あい[お]|_か_う"
-    assertEquals(1, tracker.onUpdateSelection(4, 4, 3, 3, 2, 4));
+    assertEquals(1, tracker.onUpdateSelection(4, 4, 3, 3, 2, 4, false));
     tracker.onRender(null, null, createPreedit(1, createSegment("おか")));
     assertTracker(2, 3, 3, tracker);
 
     // Type き: "あい[おき]|_か_う"
     tracker.onRender(null, null, createPreedit(2, createSegment("おきか")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 2, 5));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 2, 5, false));
     assertTracker(2, 4, 4, tracker);
 
     // Type Enter.: "あいおきか|う"
     tracker.onRender(null, "おきか", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, -1, -1, false));
     assertTracker(5, 5, 5, tracker);
 
     // Type Undo.: "あい[おき]|_か_う"
     tracker.onRender(createDeletionRange(3), null, createPreedit(2, createSegment("おきか")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 4, 4, 2, 5));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 4, 4, 2, 5, false));
     assertTracker(2, 4, 4, tracker);
 
     // Commit again.: "あいおきか|う"
     tracker.onRender(null, "おきか", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, -1, -1, false));
     assertTracker(5, 5, 5, tracker);
 
     // Hide the keyboard.
@@ -186,7 +187,7 @@ public class SelectionTrackerTest extends TestCase {
 
     // Show again and type さ: "あいおきか[さ]|う"
     tracker.onRender(null, null, createPreedit(1, createSegment("さ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 6, 6, 5, 6));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 6, 6, 5, 6, false));
     assertTracker(5, 6, 6, tracker);
 
     // Close the activity by home button.
@@ -198,7 +199,7 @@ public class SelectionTrackerTest extends TestCase {
 
     // Type た: "あいおきかさ[た]|う"
     tracker.onRender(null, null, createPreedit(1, createSegment("た")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(6, 6, 7, 7, 6, 7));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(6, 6, 7, 7, 6, 7, false));
     assertTracker(6, 7, 7, tracker);
   }
 
@@ -254,7 +255,8 @@ public class SelectionTrackerTest extends TestCase {
     // Tap between い and う: "あい|う"
     // The message has _wrong_ oldSel{Start,End}...
     // Looks like the caret position in the browser is remained at the beginning of the field.
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(0, 0, 2, 2, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(0, 0, 2, 2, -1, -1, false));
     assertTracker(2, 2, 2, tracker);
 
     // Type お: "あい[お]|う"
@@ -267,39 +269,39 @@ public class SelectionTrackerTest extends TestCase {
 
     // Type Left: "あい[お]|_か_う"
     tracker.onRender(null, null, createPreedit(1, createSegment("おか")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 2, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 2, 4, false));
     assertTracker(2, 3, 3, tracker);
 
     // Type Right: "あい[おか]|う"
     // The candidates{Start,End} are wrongly set to (-1, -1).
     tracker.onRender(null, null, createPreedit(2, createSegment("おか")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, -1, -1, false));
     assertTracker(2, 4, 4, tracker);
 
     // Tap between お and か: "あい[お]|_か_う"
-    assertEquals(1, tracker.onUpdateSelection(4, 4, 3, 3, 2, 4));
+    assertEquals(1, tracker.onUpdateSelection(4, 4, 3, 3, 2, 4, false));
     tracker.onRender(null, null, createPreedit(1, createSegment("おか")));
     assertTracker(2, 3, 3, tracker);
 
     // Type き: "あい[おき]|_か_う"
     tracker.onRender(null, null, createPreedit(2, createSegment("おかき")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, -1, -1));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 4, 4, 2, 5));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, -1, -1, false));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 4, 4, 2, 5, false));
     assertTracker(2, 4, 4, tracker);
 
     // Type Enter.: "あいおきか|う"
     tracker.onRender(null, "おきか", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, -1, -1, false));
     assertTracker(5, 5, 5, tracker);
 
     // Type Undo.: "あい[おき]|_か_う"
     tracker.onRender(createDeletionRange(3), null, createPreedit(2, createSegment("おかき")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 4, 4, 2, 5));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 4, 4, 2, 5, false));
     assertTracker(2, 4, 4, tracker);
 
     // Commit again.: "あいおきか|う"
     tracker.onRender(null, "おきか", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, -1, -1, false));
     assertTracker(5, 5, 5, tracker);
 
     // Hide the keyboard.
@@ -330,7 +332,7 @@ public class SelectionTrackerTest extends TestCase {
     tracker.onStartInput(8, 8, true);
     tracker.onStartInput(8, 8, true);
     tracker.onStartInput(8, 8, true);
-    tracker.onUpdateSelection(8, 8, 0, 0, -1, -1);
+    tracker.onUpdateSelection(8, 8, 0, 0, -1, -1, false);
     assertTracker(0, 0, 0, tracker);
   }
 
@@ -363,13 +365,13 @@ public class SelectionTrackerTest extends TestCase {
 
     // Tap LEFT.
     tracker.onRender(null, null, createPreedit(3, createSegment("だいがく")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 0, 3, 3, 0, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 0, 3, 3, 0, 4, false));
     assertTracker(0, 3, 3, tracker);
 
     // Tap LEFT again.
     tracker.onRender(null, null, createPreedit(2, createSegment("だいがく")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, -1, -1));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 2, 2, 0, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, -1, -1, false));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 2, 2, 0, 4, false));
     assertTracker(0, 2, 2, tracker);
   }
 
@@ -418,7 +420,8 @@ public class SelectionTrackerTest extends TestCase {
     // Tap between い and う: "あい|う"
     // The message has _wrong_ oldSel{Start,End}...
     // Looks like the caret position in the browser is remained at the beginning of the field.
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(0, 0, 2, 2, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(0, 0, 2, 2, -1, -1, false));
     assertTracker(2, 2, 2, tracker);
 
     // Type お: "あい[お]|う"
@@ -431,7 +434,7 @@ public class SelectionTrackerTest extends TestCase {
 
     // Type Left: "あい[お]|_か_う"
     tracker.onRender(null, null, createPreedit(1, createSegment("おか")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 2, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 2, 4, false));
     assertTracker(2, 3, 3, tracker);
 
     // Type Right: "あい[おか]|う"
@@ -444,7 +447,8 @@ public class SelectionTrackerTest extends TestCase {
     // Reset. Set "あいうえお", and move the caret between え and お.
     tracker.onStartInput(0, 0, false);
     tracker.onRender(null, "あいうえお", null);
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(0, 0, 4, 4, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(0, 0, 4, 4, -1, -1, false));
     assertTracker(4, 4, 4, tracker);
 
     // Move to other page and back to the page to clear the field.
@@ -462,20 +466,22 @@ public class SelectionTrackerTest extends TestCase {
 
     // Type "ma"
     tracker.onRender(null, null, createPreedit(1, createSegment("m")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 0, 1, 1, 0, 1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 0, 1, 1, 0, 1, false));
     assertTracker(0, 1, 1, tracker);
 
     tracker.onRender(null, null, createPreedit(2, createSegment("ma")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(1, 1, 2, 2, 0, 2));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(1, 1, 2, 2, 0, 2, false));
     assertTracker(0, 2, 2, tracker);
 
     // Then select "Iam Example <example@exmaple.com>" from auto complete list.
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(2, 2, 44, 44, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(2, 2, 44, 44, -1, -1, false));
     assertTracker(44, 44, 44, tracker);
 
     // Type "z"
     tracker.onRender(null, null, createPreedit(1, createSegment("z")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(44, 44, 45, 45, 44, 45));
+    assertEquals(SelectionTracker.DO_NOTHING,
+                 tracker.onUpdateSelection(44, 44, 45, 45, 44, 45, false));
     assertTracker(44, 45, 45, tracker);
   }
 
@@ -484,9 +490,11 @@ public class SelectionTrackerTest extends TestCase {
 
     // Initialization.
     tracker.onStartInput(-1, -1, false);
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(-1, -1, 0, 0, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(-1, -1, 0, 0, -1, -1, false));
     tracker.onStartInput(-1, -1, false);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(-1, -1, 0, 0, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING,
+                 tracker.onUpdateSelection(-1, -1, 0, 0, -1, -1, false));
     tracker.onStartInput(-1, -1, false);
     tracker.onStartInput(-1, -1, false);
 
@@ -494,61 +502,65 @@ public class SelectionTrackerTest extends TestCase {
 
     // Type "あいうえお"
     tracker.onRender(null, null, createPreedit(1, createSegment("あ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(-1, -1, 1, 1, 0, 1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(-1, -1, 1, 1, 0, 1, false));
     assertTracker(0, 1, 1, tracker);
 
     tracker.onRender(null, null, createPreedit(2, createSegment("あい")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(1, 1, 2, 2, 0, 2));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(1, 1, 2, 2, 0, 2, false));
     assertTracker(0, 2, 2, tracker);
 
     tracker.onRender(null, null, createPreedit(3, createSegment("あいう")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 0, 3));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 0, 3, false));
     assertTracker(0, 3, 3, tracker);
 
     tracker.onRender(null, null, createPreedit(4, createSegment("あいうえ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 0, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 0, 4, false));
     assertTracker(0, 4, 4, tracker);
 
     tracker.onRender(null, null, createPreedit(5, createSegment("あいうえお")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, 0, 5));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, 0, 5, false));
     assertTracker(0, 5, 5, tracker);
 
     // Commit "あいうえお順"
     tracker.onRender(null, "あいうえお順", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 6, 6, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING,
+                 tracker.onUpdateSelection(5, 5, 6, 6, -1, -1, false));
     assertTracker(6, 6, 6, tracker);
 
     // Type "かきくけこ"
     tracker.onRender(null, null, createPreedit(1, createSegment("ｋ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(6, 6, 7, 7, 6, 7));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(6, 6, 7, 7, 6, 7, false));
     assertTracker(6, 7, 7, tracker);
 
     tracker.onRender(null, null, createPreedit(1, createSegment("か")));
     assertTracker(6, 7, 7, tracker);
 
     tracker.onRender(null, null, createPreedit(2, createSegment("かｋ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(7, 7, 8, 8, 6, 8));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(7, 7, 8, 8, 6, 8, false));
     assertTracker(6, 8, 8, tracker);
 
     tracker.onRender(null, null, createPreedit(2, createSegment("かき")));
     assertTracker(6, 8, 8, tracker);
 
     tracker.onRender(null, null, createPreedit(3, createSegment("かきｋ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(8, 8, 9, 9, 6, 9));
+    assertEquals(SelectionTracker.DO_NOTHING,
+                 tracker.onUpdateSelection(8, 8, 9, 9, 6, 9, false));
     assertTracker(6, 9, 9, tracker);
 
     tracker.onRender(null, null, createPreedit(3, createSegment("かきく")));
     assertTracker(6, 9, 9, tracker);
 
     tracker.onRender(null, null, createPreedit(4, createSegment("かきくｋ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(9, 9, 10, 10, 6, 10));
+    assertEquals(SelectionTracker.DO_NOTHING,
+                 tracker.onUpdateSelection(9, 9, 10, 10, 6, 10, false));
     assertTracker(6, 10, 10, tracker);
 
     tracker.onRender(null, null, createPreedit(4, createSegment("かきくけ")));
     assertTracker(6, 10, 10, tracker);
 
     tracker.onRender(null, null, createPreedit(5, createSegment("かきくけｋ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(10, 10, 11, 11, 6, 11));
+    assertEquals(SelectionTracker.DO_NOTHING,
+                 tracker.onUpdateSelection(10, 10, 11, 11, 6, 11, false));
     assertTracker(6, 11, 11, tracker);
 
     tracker.onRender(null, null, createPreedit(5, createSegment("かきくけこ")));
@@ -556,39 +568,41 @@ public class SelectionTrackerTest extends TestCase {
 
     // Commit "かきくけこ": "あいうえお順かきくけこ|"
     tracker.onRender(null, "かきくけこ", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(11, 11, 11, 11, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING,
+                 tracker.onUpdateSelection(11, 11, 11, 11, -1, -1, false));
     assertTracker(11, 11, 11, tracker);
 
     // Tap bitween え and お: "あいうえ|お順かきくけこ"
     tracker.onStartInput(-1, -1, false);
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(-1, -1, 4, 4, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(-1, -1, 4, 4, -1, -1, false));
     tracker.onStartInput(-1, -1, false);
     assertTracker(4, 4, 4, tracker);
 
     // Type "にほんご": "あいうえ[にほんご]|お順かきくけこ"
     tracker.onRender(null, null, createPreedit(1, createSegment("ｎ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(-1, -1, 5, 5, 4, 5));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(-1, -1, 5, 5, 4, 5, false));
     assertTracker(4, 5, 5, tracker);
 
     tracker.onRender(null, null, createPreedit(1, createSegment("に")));
     assertTracker(4, 5, 5, tracker);
 
     tracker.onRender(null, null, createPreedit(2, createSegment("にｈ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 6, 6, 4, 6));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 6, 6, 4, 6, false));
     assertTracker(4, 6, 6, tracker);
 
     tracker.onRender(null, null, createPreedit(2, createSegment("にほ")));
     assertTracker(4, 6, 6, tracker);
 
     tracker.onRender(null, null, createPreedit(3, createSegment("にほｎ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(6, 6, 7, 7, 4, 7));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(6, 6, 7, 7, 4, 7, false));
     assertTracker(4, 7, 7, tracker);
 
     tracker.onRender(null, null, createPreedit(3, createSegment("にほん")));
     assertTracker(4, 7, 7, tracker);
 
     tracker.onRender(null, null, createPreedit(4, createSegment("にほんｇ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(7, 7, 8, 8, 4, 8));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(7, 7, 8, 8, 4, 8, false));
     assertTracker(4, 8, 8, tracker);
 
     tracker.onRender(null, null, createPreedit(4, createSegment("にほんご")));
@@ -596,7 +610,7 @@ public class SelectionTrackerTest extends TestCase {
 
     // Commit "日本語": "あいうえ日本語お順かきくけこ"
     tracker.onRender(null, "日本語", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(8, 8, 7, 7, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(8, 8, 7, 7, -1, -1, false));
     assertTracker(7, 7, 7, tracker);
 
     // Unfocus from the field.
@@ -612,52 +626,56 @@ public class SelectionTrackerTest extends TestCase {
 
     // Initialization.
     tracker.onStartInput(-1, -1, false);
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(-1, -1, 0, 0, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(-1, -1, 0, 0, -1, -1, false));
 
     // Type "あいうaa"
     tracker.onRender(null, null, createPreedit(1, createSegment("あ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(-1, -1, 1, 1, 0, 1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(-1, -1, 1, 1, 0, 1, false));
     assertTracker(0, 1, 1, tracker);
 
     tracker.onRender(null, null, createPreedit(2, createSegment("あい")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(1, 1, 2, 2, 0, 2));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(1, 1, 2, 2, 0, 2, false));
     assertTracker(0, 2, 2, tracker);
 
     tracker.onRender(null, null, createPreedit(3, createSegment("あいう")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 0, 3));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(2, 2, 3, 3, 0, 3, false));
     assertTracker(0, 3, 3, tracker);
 
     tracker.onRender(null, null, createPreedit(4, createSegment("あいうa")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 0, 4));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(3, 3, 4, 4, 0, 4, false));
     assertTracker(0, 4, 4, tracker);
 
     tracker.onRender(null, null, createPreedit(5, createSegment("あいうaa")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, 0, 5));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, 0, 5, false));
     assertTracker(0, 5, 5, tracker);
 
     // Commit "あいうaa"
     tracker.onRender(null, "あいうaa", null);
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 5, 5, -1, -1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(5, 5, 5, 5, -1, -1, false));
     assertTracker(5, 5, 5, tracker);
 
     // Move the cursor to right "あいうa|a"
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(5, 5, 4, 4, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(5, 5, 4, 4, -1, -1, false));
     assertTracker(4, 4, 4, tracker);
 
     // Type "あ" so that we'll get "あいうa[あ]|a"
     tracker.onRender(null, null, createPreedit(1, createSegment("あ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, 4, 5));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(4, 4, 5, 5, 4, 5, false));
     assertTracker(4, 5, 5, tracker);
 
     // Then long tap around い, then first "あいう" should be selected.
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(5, 5, 0, 3, 4, 5));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(5, 5, 0, 3, 4, 5, false));
 
     // Finally the context reset causes canceling the composing text.
-    assertEquals(SelectionTracker.RESET_CONTEXT, tracker.onUpdateSelection(0, 3, 0, 3, -1, -1));
+    assertEquals(SelectionTracker.RESET_CONTEXT,
+                 tracker.onUpdateSelection(0, 3, 0, 3, -1, -1, false));
 
     // Then we can type as usual.
     tracker.onRender(null, null, createPreedit(1, createSegment("あ")));
-    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 3, 1, 1, 0, 1));
+    assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 3, 1, 1, 0, 1, false));
     assertTracker(0, 1, 1, tracker);
   }
 
@@ -667,7 +685,7 @@ public class SelectionTrackerTest extends TestCase {
 
   static class RenderCommit implements ScenarioPiece {
 
-    private int commitLength;
+    private final int commitLength;
 
     RenderCommit(int commitLength) {
       this.commitLength = commitLength;
@@ -681,37 +699,46 @@ public class SelectionTrackerTest extends TestCase {
 
   static class RenderPreedit implements ScenarioPiece {
 
-    private int preeditLength;
+    private final int preeditLength;
+    private final int cursorPosition;
 
     RenderPreedit(int preeditLength) {
       this.preeditLength = preeditLength;
+      this.cursorPosition = preeditLength;
+    }
+
+    RenderPreedit(int preeditLength, int cursorPosition) {
+      this.preeditLength = preeditLength;
+      this.cursorPosition = cursorPosition;
     }
 
     @Override
     public void execute(SelectionTracker tracker) {
-      tracker.onRender(null,  null,
+      tracker.onRender(null, null,
           Preedit.newBuilder()
               .addSegment(Segment.newBuilder()
                               .setValue(Strings.repeat("a", preeditLength))
                               .buildPartial())
-              .setCursor(preeditLength)
+              .setCursor(cursorPosition)
               .buildPartial());
     }
   }
 
   static class Selection implements ScenarioPiece {
 
-    private int oldSelStart;
-    private int oldSelEnd;
-    private int newSelStart;
-    private int newSelEnd;
-    private int candidatesStart;
-    private int candidatesEnd;
-    private int expectedResult;
+    private final int oldSelStart;
+    private final int oldSelEnd;
+    private final int newSelStart;
+    private final int newSelEnd;
+    private final int candidatesStart;
+    private final int candidatesEnd;
+    private final boolean isIgnoringMoveToTail;
+    private final int expectedResult;
 
     Selection(int oldSelStart, int oldSelEnd,
         int newSelStart, int newSelEnd,
         int candidatesStart, int candidatesEnd,
+        boolean isIgnoringMoveToTail,
         int expectedResult) {
       this.oldSelStart = oldSelStart;
       this.oldSelEnd = oldSelEnd;
@@ -719,6 +746,7 @@ public class SelectionTrackerTest extends TestCase {
       this.newSelEnd = newSelEnd;
       this.candidatesStart = candidatesStart;
       this.candidatesEnd = candidatesEnd;
+      this.isIgnoringMoveToTail = isIgnoringMoveToTail;
       this.expectedResult = expectedResult;
     }
 
@@ -727,7 +755,8 @@ public class SelectionTrackerTest extends TestCase {
       assertEquals(
           expectedResult,
           tracker.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart,
-                                    newSelEnd, candidatesStart, candidatesEnd));
+                                    newSelEnd, candidatesStart, candidatesEnd,
+                                    isIgnoringMoveToTail));
     }
   }
 
@@ -748,57 +777,57 @@ public class SelectionTrackerTest extends TestCase {
   public void testBackSpaceOnWebView() {
     runScenario(true,
         new RenderPreedit(1),
-        new Selection(0, 0, 1, 1, 0, 1, SelectionTracker.DO_NOTHING),
+        new Selection(0, 0, 1, 1, 0, 1, false, SelectionTracker.DO_NOTHING),
         new RenderCommit(1),
-        new Selection(1, 1, 1, 1, -1, -1, SelectionTracker.DO_NOTHING),
+        new Selection(1, 1, 1, 1, -1, -1, false, SelectionTracker.DO_NOTHING),
         // Here undetectable cursor move.
         new RenderPreedit(1),
-        new Selection(1, 1, 1, 1, 0, 1, SelectionTracker.DO_NOTHING));
+        new Selection(1, 1, 1, 1, 0, 1, false, SelectionTracker.DO_NOTHING));
   }
 
   public void testBackSpaceOnTextEdit() {
     runScenario(false,
         new RenderPreedit(1),
-        new Selection(0, 0, 1, 1, 0, 1, SelectionTracker.DO_NOTHING),
+        new Selection(0, 0, 1, 1, 0, 1, false, SelectionTracker.DO_NOTHING),
         new RenderCommit(1),
-        new Selection(1, 1, 1, 1, -1, -1, SelectionTracker.DO_NOTHING),
+        new Selection(1, 1, 1, 1, -1, -1, false, SelectionTracker.DO_NOTHING),
         // Here undetectable cursor move.
         new RenderPreedit(1),
-        new Selection(1, 1, 1, 1, 0, 1, SelectionTracker.RESET_CONTEXT));
+        new Selection(1, 1, 1, 1, 0, 1, false, SelectionTracker.RESET_CONTEXT));
   }
 
   public void testBackSpaceOnWebView2() {
     runScenario(true,
         new RenderPreedit(4),
-        new Selection(0, 0, 4, 4, 0, 4, SelectionTracker.DO_NOTHING),
+        new Selection(0, 0, 4, 4, 0, 4, false, SelectionTracker.DO_NOTHING),
         new RenderCommit(4),
-        new Selection(4, 4, 4, 4, -1, -1, SelectionTracker.DO_NOTHING),
+        new Selection(4, 4, 4, 4, -1, -1, false, SelectionTracker.DO_NOTHING),
         // Here undetectable cursor move to the beginning.
         new RenderPreedit(1),
-        new Selection(4, 4, 1, 1, 0, 1, SelectionTracker.DO_NOTHING));
+        new Selection(4, 4, 1, 1, 0, 1, false, SelectionTracker.DO_NOTHING));
   }
 
   public void testBackSpaceOnTextEdit2() {
     runScenario(false,
         new RenderPreedit(4),
-        new Selection(0, 0, 4, 4, 0, 4, SelectionTracker.DO_NOTHING),
+        new Selection(0, 0, 4, 4, 0, 4, false, SelectionTracker.DO_NOTHING),
         new RenderCommit(4),
-        new Selection(4, 4, 4, 4, -1, -1, SelectionTracker.DO_NOTHING),
+        new Selection(4, 4, 4, 4, -1, -1, false, SelectionTracker.DO_NOTHING),
         // Here undetectable cursor move to the beginning.
         new RenderPreedit(1),
-        new Selection(4, 4, 1, 1, 0, 1, SelectionTracker.RESET_CONTEXT));
+        new Selection(4, 4, 1, 1, 0, 1, false, SelectionTracker.RESET_CONTEXT));
   }
 
   public void testQuickTypeOnWebView() {
     runScenario(true,
         new RenderPreedit(10),  // If a user types very quickly, merged result will be arrive.
-        new Selection(0, 0, 10, 10, 0, 10, SelectionTracker.DO_NOTHING));
+        new Selection(0, 0, 10, 10, 0, 10, false, SelectionTracker.DO_NOTHING));
   }
 
   public void testQuickTypeOnTextEdit() {
     runScenario(false,
         new RenderPreedit(10),  // If a user types very quickly, merged result will be arrive.
-        new Selection(0, 0, 10, 10, 0, 10, SelectionTracker.DO_NOTHING));
+        new Selection(0, 0, 10, 10, 0, 10, false, SelectionTracker.DO_NOTHING));
   }
 
   public void testCompletionOnWebView() {
@@ -808,7 +837,7 @@ public class SelectionTrackerTest extends TestCase {
         new RenderPreedit(2),
 
         // 1st call-back correspoing to 1st character.
-        new Selection(0, 0, 1, 1, 0, 1, SelectionTracker.DO_NOTHING),
+        new Selection(0, 0, 1, 1, 0, 1, false, SelectionTracker.DO_NOTHING),
 
         // Here completion is applied without selection update call-back.
         // The cursor moves to position 10. No preedit is shown.
@@ -818,14 +847,28 @@ public class SelectionTrackerTest extends TestCase {
         // NOTE: What should expected here? Both resetting and keeping as-is are
         // uncomfortable for the users. Here DO_NOTHING is set as expectation but
         // RESET_CONTEXT is also acceptable here.
-        new Selection(10, 10, 12, 12, 10, 12, SelectionTracker.DO_NOTHING));
+        new Selection(10, 10, 12, 12, 10, 12, false, SelectionTracker.DO_NOTHING));
   }
 
   public void testCompletionOnTextEdit() {
     runScenario(false,
         new RenderPreedit(1),
         new RenderPreedit(2),
-        new Selection(0, 0, 1, 1, 0, 1, SelectionTracker.DO_NOTHING),
-        new Selection(10, 10, 12, 12, 10, 12, SelectionTracker.RESET_CONTEXT));
+        new Selection(0, 0, 1, 1, 0, 1, false, SelectionTracker.DO_NOTHING),
+        new Selection(10, 10, 12, 12, 10, 12, false, SelectionTracker.RESET_CONTEXT));
+  }
+
+  public void testIgnoringMoveToTail() {
+    runScenario(false,
+        new RenderPreedit(1),  // "か|"
+        new Selection(0, 0, 1, 1, 0, 1, true, SelectionTracker.DO_NOTHING),
+        new RenderPreedit(2),  // "かた|"
+        new Selection(1, 1, 2, 2, 0, 2, true, SelectionTracker.DO_NOTHING),
+        new RenderPreedit(2, 1),  // "か|た"
+        new Selection(2, 2, 1, 1, 0, 2, true, SelectionTracker.DO_NOTHING),
+        // After an edit of preedit, Searchbar app sends onUpdateSelection to
+        // set cursor position at the tail.
+        // Ignore the move request becuase of isIgnoringMoveToTail flag.
+        new Selection(1, 1, 2, 2, 0, 2, true, SelectionTracker.DO_NOTHING));
   }
 }

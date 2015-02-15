@@ -2066,7 +2066,7 @@ public class MozcBaseServiceTest extends InstrumentationTestCaseWithMock {
 
     resetAll();
     // No events for SessionExecutor are expected.
-    expect(selectionTracker.onUpdateSelection(0, 0, 1, 1, 0, 1))
+    expect(selectionTracker.onUpdateSelection(0, 0, 1, 1, 0, 1, false))
         .andReturn(SelectionTracker.DO_NOTHING);
     replayAll();
 
@@ -2092,7 +2092,7 @@ public class MozcBaseServiceTest extends InstrumentationTestCaseWithMock {
     service.selectionTracker = selectionTracker;
 
     resetAll();
-    expect(selectionTracker.onUpdateSelection(0, 0, 1, 1, 0, 1))
+    expect(selectionTracker.onUpdateSelection(0, 0, 1, 1, 0, 1, false))
         .andReturn(SelectionTracker.RESET_CONTEXT);
 
     // If the keyboard view is shown, reset the composing text here.
@@ -2124,7 +2124,7 @@ public class MozcBaseServiceTest extends InstrumentationTestCaseWithMock {
     service.selectionTracker = selectionTracker;
 
     resetAll();
-    expect(selectionTracker.onUpdateSelection(0, 0, 1, 1, 0, 1))
+    expect(selectionTracker.onUpdateSelection(0, 0, 1, 1, 0, 1, false))
         .andReturn(SelectionTracker.RESET_CONTEXT);
 
     // If the keyboard view isn't shown, do NOT reset the composing text.
@@ -2148,7 +2148,7 @@ public class MozcBaseServiceTest extends InstrumentationTestCaseWithMock {
     service.selectionTracker = selectionTracker;
 
     resetAll();
-    expect(selectionTracker.onUpdateSelection(0, 0, 1, 1, 0, 1))
+    expect(selectionTracker.onUpdateSelection(0, 0, 1, 1, 0, 1, false))
         .andReturn(5);
     // Send moveCursor event as selectionTracker says.
     sessionExecutor.moveCursor(eq(5), isA(EvaluationCallback.class));

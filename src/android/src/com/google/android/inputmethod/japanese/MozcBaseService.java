@@ -1708,7 +1708,8 @@ public class MozcBaseService extends InputMethodService {
     }
 
     int updateStatus = selectionTracker.onUpdateSelection(
-        oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd);
+        oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd,
+        applicationCompatibility.isIgnoringMoveToTail());
     if (isDebugBuild) {
       MozcLog.d(selectionTracker.toString());
     }
