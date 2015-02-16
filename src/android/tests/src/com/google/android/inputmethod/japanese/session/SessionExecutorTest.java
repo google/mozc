@@ -34,6 +34,7 @@ import static org.mozc.android.inputmethod.japanese.testing.MozcMatcher.sameOpti
 import static org.easymock.EasyMock.anyLong;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.getCurrentArguments;
 import static org.easymock.EasyMock.same;
 
@@ -90,6 +91,7 @@ import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
 
 import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 
 import java.util.Collections;
@@ -774,6 +776,8 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     assertNotNull(sharedPreferences);
 
+    int totalUsageStatsEventNum = 6;
+
     sharedPreferences.edit()
         .putString(PreferenceUtil.PREF_LANDSCAPE_KEYBOARD_LAYOUT_KEY, KeyboardLayout.GODAN.name())
         .putString(PreferenceUtil.PREF_PORTRAIT_KEYBOARD_LAYOUT_KEY, KeyboardLayout.QWERTY.name())
@@ -789,14 +793,11 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE)
                 .setUsageStatsEventIntValue(KeyboardLayout.GODAN.getId()))),
         same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
+    // Don't check other usage stats events to simplify tests.
     executor.evaluateAsynchronously(
-        matchesBuilder(Input.newBuilder()
-            .setType(CommandType.SEND_COMMAND)
-            .setCommand(SessionCommand.newBuilder()
-                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
-                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT)
-                .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
+        EasyMock.isA(Input.Builder.class),
         same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
+    expectLastCall().times(totalUsageStatsEventNum - 1);
     replayAll();
     executor.preferenceUsageStatsEvent(sharedPreferences, targetContext.getResources());
     verifyAll();
@@ -814,14 +815,11 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                 .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE)
                 .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
         same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
+    // Don't check other usage stats events to simplify tests.
     executor.evaluateAsynchronously(
-        matchesBuilder(Input.newBuilder()
-            .setType(CommandType.SEND_COMMAND)
-            .setCommand(SessionCommand.newBuilder()
-                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
-                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT)
-                .setUsageStatsEventIntValue(KeyboardLayout.QWERTY.getId()))),
+        EasyMock.isA(Input.Builder.class),
         same(Optional.<KeyEventInterface>absent()), same(Optional.<EvaluationCallback>absent()));
+    expectLastCall().times(totalUsageStatsEventNum - 1);
     replayAll();
     executor.preferenceUsageStatsEvent(sharedPreferences, targetContext.getResources());
     verifyAll();
