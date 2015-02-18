@@ -593,7 +593,7 @@ public class MozcBaseService extends InputMethodService {
 
   @VisibleForTesting boolean inputBound = false;
 
-  private int originalWindowAnimationResourceId = 0;
+  private Optional<Integer> originalWindowAnimationResourceId = Optional.absent();
 
   private ApplicationCompatibility applicationCompatibility =
       ApplicationCompatibility.getDefaultInstance();
@@ -802,15 +802,21 @@ public class MozcBaseService extends InputMethodService {
     }
   }
 
+  private void resetWindowAnimation() {
+    if (originalWindowAnimationResourceId.isPresent()) {
+      Window window = getWindow().getWindow();
+      window.setWindowAnimations(originalWindowAnimationResourceId.get());
+      originalWindowAnimationResourceId = Optional.absent();
+    }
+  }
+
   @Override
   public void onFinishInput() {
     // Omit rendering because the input view will soon disappear.
     resetContext();
     selectionTracker.onFinishInput();
     applicationCompatibility = ApplicationCompatibility.getDefaultInstance();
-
-    Window window = getWindow().getWindow();
-    window.setWindowAnimations(originalWindowAnimationResourceId);
+    resetWindowAnimation();
 
     super.onFinishInput();
   }
@@ -936,12 +942,18 @@ public class MozcBaseService extends InputMethodService {
     viewManager.updateGlobeButtonEnabled();
     viewManager.updateMicrophoneButtonEnabled();
 
-    Window window = getWindow().getWindow();
-    originalWindowAnimationResourceId = window.getAttributes().windowAnimations;
+    // Should reset the window animation since the order of onStartInputView() / onFinishInput() is
+    // not stable.
+    resetWindowAnimation();
     // Mode indicator is available and narrow frame is NOT available on Lollipop or later.
     // In this case, we temporary disable window animation to show the mode indicator correctly.
     if (Build.VERSION.SDK_INT >= 21 && viewManager.isNarrowMode()) {
-      window.setWindowAnimations(0);
+      Window window = getWindow().getWindow();
+      int animationId = window.getAttributes().windowAnimations;
+      if (animationId != 0) {
+        originalWindowAnimationResourceId = Optional.of(animationId);
+        window.setWindowAnimations(0);
+      }
     }
   }
 
