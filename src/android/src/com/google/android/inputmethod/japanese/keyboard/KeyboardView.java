@@ -326,12 +326,17 @@ public class KeyboardView extends View implements MemoryManageable {
 
   /** Set a given keyboard to this view, and send a request to update. */
   public void setKeyboard(Keyboard keyboard) {
+    Preconditions.checkNotNull(keyboard);
     flushPendingKeyEvent(Optional.<TouchEvent>absent());
-
+    Optional<Keyboard> oldKeyboard = this.keyboard;
     this.keyboard = Optional.of(keyboard);
+    if (!oldKeyboard.equals(this.keyboard)) {
+      // If this.keyboard equals to given keyboard, the content of current drawableCache
+      // is still valid so keep it.
+      this.drawableCache.clear();
+    }
     updateMetaStates(Collections.<MetaState>emptySet(), MetaState.CHAR_TYPE_EXCLUSIVE_GROUP);
     accessibilityDelegate.setKeyboard(this.keyboard);
-    this.drawableCache.clear();
     backgroundSurface.reset(this.keyboard, Collections.<MetaState>emptySet());
     invalidateIfRequired();
   }
