@@ -111,7 +111,7 @@ public class KeyboardView extends View implements MemoryManageable {
     // Otherwise in the time between last TOUCH_UP event and the result from conversion engine
     // (though it is typically very short time) Globe key is shown, which triggers unexpected
     // IME switch.
-    private static final long DELAY = 100;  // in millisecond.
+    private static final long DELAY = 300;  // in millisecond.
     // Used for registering delayed update of HANDLING_TOUCH_EVENT.
     private final Handler delayedHandlingTouchEventHandler = new Handler(Looper.getMainLooper());
     // A Runnable to unset HANDLING_TOUCH_EVENT.
@@ -326,17 +326,12 @@ public class KeyboardView extends View implements MemoryManageable {
 
   /** Set a given keyboard to this view, and send a request to update. */
   public void setKeyboard(Keyboard keyboard) {
-    Preconditions.checkNotNull(keyboard);
     flushPendingKeyEvent(Optional.<TouchEvent>absent());
-    Optional<Keyboard> oldKeyboard = this.keyboard;
+
     this.keyboard = Optional.of(keyboard);
-    if (!oldKeyboard.equals(this.keyboard)) {
-      // If this.keyboard equals to given keyboard, the content of current drawableCache
-      // is still valid so keep it.
-      this.drawableCache.clear();
-    }
     updateMetaStates(Collections.<MetaState>emptySet(), MetaState.CHAR_TYPE_EXCLUSIVE_GROUP);
     accessibilityDelegate.setKeyboard(this.keyboard);
+    this.drawableCache.clear();
     backgroundSurface.reset(this.keyboard, Collections.<MetaState>emptySet());
     invalidateIfRequired();
   }
