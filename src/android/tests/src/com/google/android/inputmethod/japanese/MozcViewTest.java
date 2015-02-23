@@ -465,7 +465,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     mozcView.reset();
 
     assertEquals(View.VISIBLE, mozcView.getKeyboardFrame().getVisibility());
-    assertTrue(mozcView.getKeyboardFrame().getLayoutParams().height > 0);
+    assertEquals(LayoutParams.WRAP_CONTENT, mozcView.getKeyboardFrame().getLayoutParams().height);
+    assertEquals(View.VISIBLE, mozcView.getKeyboardView().getVisibility());
+    assertTrue(mozcView.getKeyboardView().getLayoutParams().height > 0);
     assertFalse(mozcView.candidateViewManager.isKeyboardCandidateViewVisible());
     assertEquals(View.GONE, mozcView.getSymbolInputView().getVisibility());
     assertNull(mozcView.getSymbolInputView().getAnimation());

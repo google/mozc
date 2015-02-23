@@ -606,13 +606,15 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     // input_frame's height depends on fullscreen mode, narrow mode and Candidate/Symbol views.
     if (fullscreenMode) {
       setLayoutHeight(getBottomFrame(), getVisibleViewHeight());
-      setLayoutHeight(getKeyboardFrame(), getInputFrameHeight());
+      setLayoutHeight(getKeyboardView(), getInputFrameHeight());
+      setLayoutHeight(getKeyboardFrame(), LayoutParams.WRAP_CONTENT);
     } else {
       if (narrowMode) {
         setLayoutHeight(getBottomFrame(), dimensionPixelSize.narrowImeWindowHeight);
       } else {
         setLayoutHeight(getBottomFrame(), imeWindowHeight);
-        setLayoutHeight(getKeyboardFrame(), getInputFrameHeight());
+        setLayoutHeight(getKeyboardView(), getInputFrameHeight());
+        setLayoutHeight(getKeyboardFrame(), LayoutParams.WRAP_CONTENT);
       }
     }
   }

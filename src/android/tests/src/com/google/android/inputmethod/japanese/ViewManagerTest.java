@@ -997,8 +997,10 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     // Post-condition.
     verifyAll();
     assertEquals(View.VISIBLE, mozcView.getKeyboardFrame().getVisibility());
+    assertEquals(LayoutParams.WRAP_CONTENT, mozcView.getKeyboardFrame().getLayoutParams().height);
+    assertEquals(View.VISIBLE, mozcView.getKeyboardView().getVisibility());
     assertEquals(context.getResources().getDimensionPixelSize(R.dimen.input_frame_height),
-                 mozcView.getKeyboardFrame().getLayoutParams().height);
+                 mozcView.getKeyboardView().getLayoutParams().height);
     assertFalse(mozcView.candidateViewManager.isKeyboardCandidateViewVisible());
     assertEquals(View.GONE, mozcView.getSymbolInputView().getVisibility());
     assertNull(mozcView.candidateViewManager.keyboardCandidateView.getAnimation());

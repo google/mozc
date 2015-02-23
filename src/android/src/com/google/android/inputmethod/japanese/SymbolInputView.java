@@ -839,9 +839,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     if (!isInflated()) {
       return;
     }
-    setLayoutHeight(
-        getNumberKeyboardFrame(),
-        getResources().getDimensionPixelSize(R.dimen.symbol_view_number_keyboard_height));
+    // Resets candidate expansion.
+    setLayoutHeight(getNumberKeyboardFrame(), LayoutParams.WRAP_CONTENT);
   }
 
   private void resetTabImageForMinorCategory() {
