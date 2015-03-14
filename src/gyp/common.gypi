@@ -144,27 +144,27 @@
         'compiler_target': 'clang',
         'compiler_target_version_int': 305,  # Clang 3.5 or higher
         'compiler_host': 'clang',
-        'compiler_host_version_int': 305,  # Clang 3.5 or higher
+        'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],
       ['target_platform=="Android" and android_compiler=="gcc"', {
         'compiler_target': 'gcc',
         'compiler_target_version_int': 409,  # GCC 4.9 or higher
         'compiler_host': 'clang',
-        'compiler_host_version_int': 305,  # Clang 3.5 or higher
+        'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],
       ['target_platform=="NaCl"', {
         'compiler_target': 'clang',
         'compiler_target_version_int': 303,  # Clang 3.3 or higher
         'compiler_host': 'clang',
-        'compiler_host_version_int': 305,  # Clang 3.5 or higher
+        'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],
       ['target_platform=="Linux"', {
         # enable_gtk_renderer represents if mozc_renderer is supported on Linux
         # or not.
         'compiler_target': 'clang',
-        'compiler_target_version_int': 305,  # Clang 3.5 or higher
+        'compiler_target_version_int': 304,  # Clang 3.4 or higher
         'compiler_host': 'clang',
-        'compiler_host_version_int': 305,  # Clang 3.5 or higher
+        'compiler_host_version_int': 304,  # Clang 3.4 or higher
         'enable_gtk_renderer%': 1,
       }, {  # else
         'enable_gtk_renderer%': 0,
