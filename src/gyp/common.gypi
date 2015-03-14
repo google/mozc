@@ -154,7 +154,7 @@
       }],
       ['target_platform=="NaCl"', {
         'compiler_target': 'clang',
-        'compiler_target_version_int': 303,  # Clang 3.3 or higher
+        'compiler_target_version_int': 304,  # Clang 3.3 or higher
         'compiler_host': 'clang',
         'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],
@@ -381,6 +381,16 @@
               }],
             ],
           }],
+          ['target_platform=="NaCl"', {
+            'target_conditions' : [
+              ['_toolset=="target"', {
+                'defines': [
+                  # For the ambiguity of wcsstr.
+                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
+                ],
+              }],
+            ],
+          }],
           ['enable_mode_indicator==1', {
             'defines': ['MOZC_ENABLE_MODE_INDICATOR'],
           }],
@@ -527,6 +537,11 @@
               }],
             ],
           }],
+          ['target_platform=="NaCl"', {
+            'ldflags': [
+              '-L<(nacl_sdk_root)/lib/pnacl/Debug',
+            ],
+          }],
         ],
       },
       'Release_Base': {
@@ -577,6 +592,11 @@
           ['OS=="linux"', {
             'cflags': [
               '<@(release_extra_cflags)',
+            ],
+          }],
+          ['target_platform=="NaCl"', {
+            'ldflags': [
+              '-L<(nacl_sdk_root)/lib/pnacl/Release',
             ],
           }],
         ],
@@ -783,10 +803,11 @@
                 ],
               }],
               ['_toolset=="target" and _type=="static_library"', {
-                # PNaCl's artools.py doesn't support thin archive file.
-                # (crbug/165096)
+                # PNaCl's artools.py doesn't handle some thin archive files
+                # correctly. (crbug/463026)
                 # But GYP creates thin archive files for static_library.
                 # To avoid this issue we turn on this flag.
+                # TODO(hsumita): Remove this hack when the bug in SDK is fixed.
                 'standalone_static_library': 1,
               }],
             ]
@@ -844,8 +865,7 @@
   'conditions': [
     ['target_platform=="NaCl"', {
       'variables': {
-        'pnacl_bin_dir%':
-            '<(nacl_sdk_root)/toolchain/linux_x86_pnacl/newlib/bin',
+        'pnacl_bin_dir%': '<(nacl_sdk_root)/toolchain/linux_pnacl/bin',
       },
       'make_global_settings': [
         ['AR', '<(pnacl_bin_dir)/pnacl-ar'],

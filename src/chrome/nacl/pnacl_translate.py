@@ -34,7 +34,7 @@ Example usage:
   The following command generates stripped nexefile_arm.nexe and
   nexefile_x86_32.nexe and nexefile_x86_64.nexe.
 
-  python pnacl_translate.py --command=/path/to/toolchain/linux_x86_pnacl \
+  python pnacl_translate.py --command=/path/to/toolchain/linux_pnacl \
     --input=/path/to/pexefile --output_base=/path/to/nexefile \
     --configuration=Release
 """
@@ -50,11 +50,10 @@ import tempfile
 def Translate(toolchain_root, input_file, output_base):
   """Translates the input file for three architectures."""
   targets = (('arm', 'arm'), ('x86-32', 'x86_32'), ('x86-64', 'x86_64'))
-  translate_command = os.path.join(toolchain_root,
-                                   'newlib/bin64/pnacl-translate')
+  translate_command = os.path.join(toolchain_root, 'bin/pnacl-translate')
   for target in targets:
-    cmd = (translate_command, '-arch', target[0], input_file,
-           '-o', '%s_%s.nexe' % (output_base, target[1]))
+    cmd = (translate_command, '--allow-llvm-bitcode-input', '-arch', target[0],
+           input_file, '-o', '%s_%s.nexe' % (output_base, target[1]))
     print 'Running: ' + ' '.join(cmd)
     if subprocess.Popen(cmd).wait() != 0:
       print >> sys.stderr, 'ERROR: ' + ' '.join(cmd)
@@ -64,9 +63,7 @@ def Translate(toolchain_root, input_file, output_base):
 
 def StripAndTranslate(toolchain_root, input_file, output_base):
   """Strips and translates the input file for three architectures."""
-  strip_command = os.path.join(toolchain_root, 'newlib/bin64/pnacl-strip')
-  arm_strip_command = os.path.join(toolchain_root,
-                                   'host_x86_64/bin/arm-pc-nacl-strip')
+  strip_command = os.path.join(toolchain_root, 'bin/pnacl-strip')
   try:
     temp_dir = tempfile.mkdtemp()
     temp_file_base = os.path.join(temp_dir, 'stripped')
@@ -77,12 +74,10 @@ def StripAndTranslate(toolchain_root, input_file, output_base):
       raise RuntimeError('Strip Error')
     print 'Done: ' + ' '.join(cmd)
     Translate(toolchain_root, temp_file_base, temp_file_base)
-    targets = ((arm_strip_command, 'arm'),
-               (strip_command, 'x86_32'),
-               (strip_command, 'x86_64'))
+    targets = ('arm', 'x86_32', 'x86_64')
     for target in targets:
-      cmd = (target[0], '%s_%s.nexe' % (temp_file_base, target[1]),
-             '-o', '%s_%s.nexe' % (output_base, target[1]))
+      cmd = (strip_command, '%s_%s.nexe' % (temp_file_base, target),
+             '-o', '%s_%s.nexe' % (output_base, target))
       print 'Running: ' + ' '.join(cmd)
       if subprocess.Popen(cmd).wait() != 0:
         print >> sys.stderr, 'ERROR: ' + ' '.join(cmd)

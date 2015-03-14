@@ -41,9 +41,6 @@
           'sources': [
             'base/public/nacl_mock_module.cc',
           ],
-          'link_settings': {
-            'libraries': ['-lppapi', '-lppapi_cpp'],
-          },
           'dependencies': [
             '../base/base.gyp:base',
             '../net/net.gyp:http_client',

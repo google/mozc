@@ -27,40 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/flags.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#ifndef MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
+#define MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
 
-#ifdef __native_client__
-#include "base/pepper_file_system_mock.h"
-#include "base/pepper_file_util.h"
-#include "base/public/nacl_mock_module.h"
-#endif  // __native_client__
+namespace mozc {
+namespace testing {
 
-int main(int argc, char **argv) {
-  // TODO(yukawa, team): Implement b/2805528 so that you can specify any option
-  // given by gunit.
-  InitGoogle(argv[0], &argc, &argv, false);
-  mozc::InitTestFlags();
-  testing::InitGoogleTest(&argc, argv);
+// This method does nothing, and is just for avoiding link errors.
+//
+// This method should be called in somewhere. Otherwise, the object file
+// generated from this file will be avoided by clang++ since there is no code
+// which uses this module.
+// Actually, pp::CreateModule() in this module is called if NaCl module is
+// loaded on Chrome, so we need to link this module.
+// TODO(hsumita): Remove this workaround.
+void WorkAroundEmptyFunctionToAvoidLinkError();
 
-#ifdef OS_WINDOWS
-  _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
-  _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
-#endif  // OS_WINDOWS
+}  // namespace testing
+}  // namespace mozc
 
-  // Without this flag, ::RaiseException makes the job stuck.
-  // See b/2805521 for details.
-  testing::GTEST_FLAG(catch_exceptions) = true;
-
-#ifdef __native_client__
-  mozc::testing::WorkAroundEmptyFunctionToAvoidLinkError();
-
-  // Sets Pepper file system mock.
-  mozc::PepperFileSystemMock pepper_file_system_mock;
-  mozc::PepperFileUtil::SetPepperFileSystemInterfaceForTest(
-      &pepper_file_system_mock);
-#endif  // __native_client__
-
-  return RUN_ALL_TESTS();
-}
+#endif  // MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_

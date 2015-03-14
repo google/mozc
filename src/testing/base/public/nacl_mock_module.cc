@@ -47,6 +47,15 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+namespace mozc {
+namespace testing {
+
+void WorkAroundEmptyFunctionToAvoidLinkError() {
+}
+
+}  // namespace testing
+}  // namespace mozc
+
 namespace pp {
 namespace {
 
@@ -134,36 +143,3 @@ Module* CreateModule() {
 }
 
 }  // namespace pp
-
-extern "C" {
-// The following functions are not implemented in NaCl environment.
-// But the gtest library requires these functions in link phase.
-// So We implement these dummy functions.
-
-char *getcwd(char *buf, size_t size) {
-  LOG(WARNING) << "dummy getcwd called";
-  if (size < 5) {
-    errno = ENAMETOOLONG;
-    return NULL;
-  }
-  memcpy(buf, "/tmp", size);
-  return buf;
-}
-
-int access(const char *pathname, int mode) {
-  LOG(WARNING) << "dummy access called pathname: \"" << pathname
-               << "\" mode: " << mode;
-  return -1;
-}
-
-int unlink(const char *pathname) {
-  LOG(WARNING) << "dummy unlink called pathname: \"" << pathname << "\"";
-  return -1;
-}
-
-int mkdir(const char *pathname, mode_t mode) {
-  LOG(WARNING) << "dummy mkdir called pathname: \"" << pathname << "\""
-               << " mode: " << mode;
-  return -1;
-}
-}  // extern "C"
