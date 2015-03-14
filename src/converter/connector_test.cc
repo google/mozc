@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 
 #include <algorithm>
 #include <string>
@@ -55,13 +55,13 @@ struct ConnectionDataEntry {
   int cost;
 };
 
-TEST(ConnectorBaseTest, CompareWithRawData) {
+TEST(ConnectorTest, CompareWithRawData) {
   const string path = FileUtil::JoinPath(
       FLAGS_test_srcdir, kTestConnectionDataImagePath);
   Mmap cmmap;
   ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
-  scoped_ptr<ConnectorBase> connector(
-      new ConnectorBase(cmmap.begin(), cmmap.size(), 256));
+  scoped_ptr<Connector> connector(
+      new Connector(cmmap.begin(), cmmap.size(), 256));
   ASSERT_EQ(1, connector->GetResolution());
 
   const string connection_text_path =

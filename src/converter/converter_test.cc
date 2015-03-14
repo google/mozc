@@ -41,7 +41,7 @@
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
@@ -208,7 +208,7 @@ class ConverterTest : public ::testing::Test {
     ret->suggestion_filter.reset(CreateSuggestionFilter(data_manager));
     ret->suffix_dictionary.reset(
         CreateSuffixDictionaryFromDataManager(data_manager));
-    ret->connector.reset(ConnectorBase::CreateFromDataManager(data_manager));
+    ret->connector.reset(Connector::CreateFromDataManager(data_manager));
     ret->segmenter.reset(SegmenterBase::CreateFromDataManager(data_manager));
     ret->immutable_converter.reset(
         new ImmutableConverterImpl(ret->dictionary.get(),
@@ -1244,7 +1244,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const ConnectorInterface> connector(
-      ConnectorBase::CreateFromDataManager(data_manager));
+      Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(

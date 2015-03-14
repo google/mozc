@@ -65,7 +65,7 @@
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'converter.gyp:converter',
-        'converter_base.gyp:connector_base',
+        'converter_base.gyp:connector',
         'converter_base.gyp:converter_mock',
         'converter_base.gyp:segmenter_base',
         'converter_base.gyp:segments',
@@ -92,10 +92,10 @@
       ],
     },
     {
-      'target_name': 'connector_base_test',
+      'target_name': 'connector_test',
       'type': 'executable',
       'sources': [
-        'connector_base.cc',
+        'connector_test.cc',
       ],
       'dependencies': [
         '../data_manager/data_manager.gyp:connection_file_reader',
@@ -103,7 +103,7 @@
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../data_manager/testing/mock_data_manager_test.gyp:install_test_connection_txt',
         '../testing/testing.gyp:gtest_main',
-        'converter_base.gyp:connector_base',
+        'converter_base.gyp:connector',
       ],
       'variables': {
         'test_size': 'large',
@@ -128,7 +128,7 @@
       'target_name': 'converter_all_test',
       'type': 'none',
       'dependencies': [
-        'connector_base_test',
+        'connector_test',
         'converter_regression_test',
         'converter_test',
       ],

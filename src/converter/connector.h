@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_CONNECTOR_BASE_H_
-#define MOZC_CONVERTER_CONNECTOR_BASE_H_
+#ifndef MOZC_CONVERTER_CONNECTOR_H_
+#define MOZC_CONVERTER_CONNECTOR_H_
 
 #include <vector>
 
@@ -40,15 +40,14 @@ namespace mozc {
 
 class DataManagerInterface;
 
-// TODO(noriyukit): Rename this to Connector as no class inherits this class.
-class ConnectorBase : public ConnectorInterface {
+class Connector : public ConnectorInterface {
  public:
-  static ConnectorBase *CreateFromDataManager(
+  static Connector *CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
-  ConnectorBase(const char *connection_data, size_t connection_size,
-                int cache_size);
-  virtual ~ConnectorBase();
+  Connector(const char *connection_data, size_t connection_size,
+            int cache_size);
+  virtual ~Connector();
 
   virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
   virtual int GetResolution() const;
@@ -69,9 +68,9 @@ class ConnectorBase : public ConnectorInterface {
   mutable scoped_ptr<uint32[]> cache_key_;
   mutable scoped_ptr<int[]> cache_value_;
 
-  DISALLOW_COPY_AND_ASSIGN(ConnectorBase);
+  DISALLOW_COPY_AND_ASSIGN(Connector);
 };
 
 }  // namespace mozc
 
-#endif  // MOZC_CONVERTER_CONNECTOR_BASE_H_
+#endif  // MOZC_CONVERTER_CONNECTOR_H_

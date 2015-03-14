@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 
 #include <algorithm>
 
@@ -61,7 +61,7 @@ inline uint32 EncodeKey(uint16 rid, uint16 lid) {
 
 }  // namespace
 
-class ConnectorBase::Row {
+class Connector::Row {
  public:
   Row() : chunk_bits_index_(sizeof(uint32)),
           compact_bits_index_(sizeof(uint32)) {}
@@ -109,7 +109,7 @@ class ConnectorBase::Row {
   DISALLOW_COPY_AND_ASSIGN(Row);
 };
 
-ConnectorBase *ConnectorBase::CreateFromDataManager(
+Connector *Connector::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
 #ifdef OS_ANDROID
   const int kCacheSize = 256;
@@ -119,12 +119,12 @@ ConnectorBase *ConnectorBase::CreateFromDataManager(
   const char *connection_data = nullptr;
   size_t connection_data_size = 0;
   data_manager.GetConnectorData(&connection_data, &connection_data_size);
-  return new ConnectorBase(connection_data, connection_data_size, kCacheSize);
+  return new Connector(connection_data, connection_data_size, kCacheSize);
 }
 
-ConnectorBase::ConnectorBase(const char *connection_data,
-                             size_t connection_size,
-                             int cache_size)
+Connector::Connector(const char *connection_data,
+                     size_t connection_size,
+                     int cache_size)
     : default_cost_(nullptr),
       cache_size_(cache_size),
       cache_hash_mask_(cache_size - 1),
@@ -178,12 +178,12 @@ ConnectorBase::ConnectorBase(const char *connection_data,
   ClearCache();
 }
 
-ConnectorBase::~ConnectorBase() {
+Connector::~Connector() {
   STLDeleteElements(&rows_);
 }
 
 
-int ConnectorBase::GetTransitionCost(uint16 rid, uint16 lid) const {
+int Connector::GetTransitionCost(uint16 rid, uint16 lid) const {
   const uint32 index = EncodeKey(rid, lid);
   const uint32 bucket = GetHashValue(rid, lid, cache_hash_mask_);
   if (cache_key_[bucket] == index) {
@@ -195,15 +195,15 @@ int ConnectorBase::GetTransitionCost(uint16 rid, uint16 lid) const {
   return value;
 }
 
-int ConnectorBase::GetResolution() const {
+int Connector::GetResolution() const {
   return resolution_;
 }
 
-void ConnectorBase::ClearCache() {
+void Connector::ClearCache() {
   fill(cache_key_.get(), cache_key_.get() + cache_size_, kInvalidCacheKey);
 }
 
-int ConnectorBase::LookupCost(uint16 rid, uint16 lid) const {
+int Connector::LookupCost(uint16 rid, uint16 lid) const {
   uint16 value;
   if (!rows_[rid]->GetValue(lid, &value)) {
     return default_cost_[rid];

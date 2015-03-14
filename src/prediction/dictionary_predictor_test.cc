@@ -45,7 +45,7 @@
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
@@ -219,7 +219,7 @@ class MockDataAndPredictor {
     }
     CHECK(suffix_dictionary_.get());
 
-    connector_.reset(ConnectorBase::CreateFromDataManager(data_manager));
+    connector_.reset(Connector::CreateFromDataManager(data_manager));
     CHECK(connector_.get());
 
     segmenter_.reset(SegmenterBase::CreateFromDataManager(data_manager));
@@ -1559,7 +1559,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const ConnectorInterface> connector(
-      ConnectorBase::CreateFromDataManager(data_manager));
+      Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
@@ -3084,7 +3084,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const ConnectorInterface> connector(
-      ConnectorBase::CreateFromDataManager(data_manager));
+      Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(

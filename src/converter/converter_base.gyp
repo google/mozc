@@ -49,10 +49,10 @@
       ],
     },
     {
-      'target_name': 'connector_base',
+      'target_name': 'connector',
       'type': 'static_library',
       'sources': [
-        'connector_base.cc',
+        'connector.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',

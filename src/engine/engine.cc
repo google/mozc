@@ -31,7 +31,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
@@ -171,7 +171,7 @@ void Engine::Init(
                                                 suffix_tokens_size));
   CHECK(suffix_dictionary_.get());
 
-  connector_.reset(ConnectorBase::CreateFromDataManager(*data_manager));
+  connector_.reset(Connector::CreateFromDataManager(*data_manager));
   CHECK(connector_.get());
 
   segmenter_.reset(SegmenterBase::CreateFromDataManager(*data_manager));

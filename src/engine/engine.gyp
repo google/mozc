@@ -43,7 +43,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../converter/converter.gyp:converter',
-        '../converter/converter_base.gyp:connector_base',
+        '../converter/converter_base.gyp:connector',
         '../converter/converter_base.gyp:segmenter_base',
         '../dictionary/dictionary.gyp:dictionary_impl',
         '../dictionary/dictionary.gyp:suffix_dictionary',

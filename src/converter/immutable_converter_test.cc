@@ -41,7 +41,7 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/lattice.h"
@@ -128,7 +128,7 @@ class MockDataAndImmutableConverter {
     }
     CHECK(suffix_dictionary);
 
-    connector_.reset(ConnectorBase::CreateFromDataManager(*data_manager_));
+    connector_.reset(Connector::CreateFromDataManager(*data_manager_));
     CHECK(connector_.get());
 
     segmenter_.reset(SegmenterBase::CreateFromDataManager(*data_manager_));
