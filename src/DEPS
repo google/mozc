@@ -38,7 +38,7 @@ vars = {
   "wtl_revision": "587",
   "zinnia_revision": "16",
   "jsr305_version": "2.0.2",
-  "zlib_revision": "198222",
+  "zlib_revision": "50893291621658f355bc5b4d450a8d06a563053d",
   "japanese_usage_dictionary_revision": "10",
 }
 
@@ -87,7 +87,6 @@ deps_os = {
       "https://github.com/googlei18n/fonttools.git@" +
       Var("fonttools_revision"),
     "src/third_party/zlib/v1_2_8":
-      "https://src.chromium.org/chrome/trunk/src/third_party/zlib@" +
-      Var("zlib_revision"),
+      "https://github.com/madler/zlib.git@" + Var("zlib_revision"),
   },
 }

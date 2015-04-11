@@ -300,10 +300,8 @@
             ],
           },
           'cflags': [
-            '-Wno-error=uninitialized',
             '-Wno-implicit-function-declaration',
-            '-Wno-uninitialized',
-            '-Wno-unused-value',
+            '-Wno-incompatible-pointer-types-discards-qualifiers',
           ],
           'configurations': {
             'Debug_Base': {
