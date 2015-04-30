@@ -1322,7 +1322,13 @@ public class MozcBaseService extends InputMethodService {
     }
 
     // Otherwise, just delegates the key event to the connected application.
-    sendDownUpKeyEvents(keyCode);
+    // However space key needs special treatment because it is expected to produce space character
+    // instead of sending ACTION_DOWN/UP pair.
+    if (keyCode == KeyEvent.KEYCODE_SPACE) {
+      inputConnection.commitText(" ", 0);
+    } else {
+      sendDownUpKeyEvents(keyCode);
+    }
   }
 
   /**
