@@ -383,6 +383,11 @@ public class MozcService extends InputMethodService {
           .putString(key, layoutAdjustment.toString())
           .apply();
     }
+
+    @Override
+    public void onShowMushroomSelectionDialog() {
+      sessionExecutor.sendUsageStatsEvent(UsageStatsEvent.MUSHROOM_SELECTION_DIALOG_OPEN_EVENT);
+    }
   }
 
   /**
@@ -754,7 +759,7 @@ public class MozcService extends InputMethodService {
               eventListener,
               symbolHistoryStorage,
               imeSwitcher,
-              new MozcMenuDialogListenerImpl(this));
+              new MozcMenuDialogListenerImpl(this, eventListener));
     }
 
     // Setup FeedbackManager.

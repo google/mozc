@@ -367,8 +367,11 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
     case commands::SessionCommand::KEYBOARD_EXPAND_EVENT:
       UsageStats::IncrementCount("KeyboardExpandEvent");
       break;
+    case commands::SessionCommand::MUSHROOM_SELECTION_DIALOG_OPEN_EVENT:
+      UsageStats::IncrementCount("MushroomSelectionDialogOpen");
+      break;
     default:
-      LOG(WARNING) << "client side usage stats event has invalid category";
+      LOG(DFATAL) << "client side usage stats event has invalid category";
       break;
   }
 }

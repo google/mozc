@@ -147,4 +147,7 @@ public interface ViewEventListener {
    */
   public void onUpdateKeyboardLayoutAdjustment(
       ViewManagerInterface.LayoutAdjustment layoutAdjustment);
+
+  /** Called when the mushroom selection dialog is shown. */
+  public void onShowMushroomSelectionDialog();
 }

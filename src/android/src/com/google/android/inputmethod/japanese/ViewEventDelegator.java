@@ -154,4 +154,9 @@ public abstract class ViewEventDelegator implements ViewEventListener {
       ViewManagerInterface.LayoutAdjustment layoutAdjustment) {
     delegated.onUpdateKeyboardLayoutAdjustment(layoutAdjustment);
   }
+
+  @Override
+  public void onShowMushroomSelectionDialog() {
+    delegated.onShowMushroomSelectionDialog();
+  }
 }
