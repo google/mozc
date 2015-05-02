@@ -1951,6 +1951,9 @@ TEST(UtilTest, ScriptType) {
 
   // U+1F466, BOY/smile emoji
   EXPECT_EQ(Util::EMOJI, Util::GetScriptType("\xF0\x9F\x91\xA6"));
+  // U+FE003, Snow-man Android PUA emoji
+  EXPECT_TRUE(Util::IsAndroidPuaEmoji("\xf3\xbe\x80\x83"));
+  EXPECT_EQ(Util::EMOJI, Util::GetScriptType("\xf3\xbe\x80\x83"));
 }
 
 
