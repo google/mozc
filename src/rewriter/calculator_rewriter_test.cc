@@ -32,6 +32,7 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -43,6 +44,7 @@
 #include "engine/mock_data_engine_factory.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
+#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -68,13 +70,12 @@ void SetSegment(const string &key, const string &value, Segments *segments) {
   AddSegment(key, value, segments);
 }
 
-// "の計算結果"
-const char kPartOfCalculationDescription[] =
-    "\xE3\x81\xAE\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
+// "計算結果"
+const char kCalculationDescription[] =
+    "\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
 
 bool ContainsCalculatedResult(const Segment::Candidate &candidate) {
-  return candidate.description.find(kPartOfCalculationDescription) !=
-      string::npos;
+  return candidate.description.find(kCalculationDescription) != string::npos;
 }
 
 // If the segment has a candidate which was inserted by CalculatorRewriter,
@@ -83,14 +84,13 @@ int GetIndexOfCalculatedCandidate(const Segments &segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
-    // Description includes "の計算結果"
     if (ContainsCalculatedResult(candidate)) {
       return i;
     }
   }
   return -1;
 }
-}  // anonymous namespace
+}  // namespace
 
 class CalculatorRewriterTest : public testing::Test {
  protected:
@@ -157,9 +157,8 @@ TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
     EXPECT_EQ(candidate.content_value, "value");
     EXPECT_EQ(candidate.content_key, "key");
     EXPECT_NE(0, candidate.attributes & Segment::Candidate::NO_LEARNING);
-    // Description should be "key の計算結果"
-    EXPECT_EQ(candidate.description, "key " +
-              string(kPartOfCalculationDescription));
+    // Description should be "計算結果"
+    EXPECT_EQ(candidate.description, kCalculationDescription);
   }
 }
 
@@ -230,8 +229,7 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
       "\xEF\xBC\x93\xEF\xBC\x8B\xEF\xBC\x96\xEF\xBC\xBE\xE2\x88\x92"
       "\xEF\xBC\x91\xEF\xBC\x8A\xEF\xBC\x99\xEF\xBC\x9D";
   // Expected description
-  const string description =
-      "5/(8/4)-7%3+6^-1*9= " + string(kPartOfCalculationDescription);
+  const string description = kCalculationDescription;
 
   // Pretend kExpression is calculated to "3"
   calculator_mock().SetCalculatePair(kExpression, "3", true);
@@ -286,4 +284,41 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
     EXPECT_FALSE(calculator_rewriter->Rewrite(request, &segments));
   }
 }
+
+TEST_F(CalculatorRewriterTest, MobileEnvironmentTest) {
+  commands::Request input;
+  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  scoped_ptr<CalculatorRewriter> rewriter(
+      new CalculatorRewriter(engine_->GetConverter()));
+
+  {
+    input.set_mixed_conversion(true);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
+  }
+
+  {
+    input.set_mixed_conversion(false);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
+  }
+}
+
+TEST_F(CalculatorRewriterTest, EmptyKeyTest) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+
+  const ConversionRequest request;
+  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+      new CalculatorRewriter(engine_->GetConverter()));
+  {
+    Segments segments;
+    AddSegment("", "1", &segments);
+    config.set_use_calculator(true);
+    config::ConfigHandler::SetConfig(config);
+    EXPECT_FALSE(calculator_rewriter->Rewrite(request, &segments));
+  }
+}
+
 }  // namespace mozc
