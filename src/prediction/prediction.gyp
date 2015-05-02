@@ -58,6 +58,7 @@
         '../session/session_base.gyp:session_protocol',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
+        'gen_zero_query_data#host',
         'gen_zero_query_number_data#host',
         'prediction_base.gyp:suggestion_filter',
         'prediction_protocol',
@@ -76,19 +77,48 @@
             ],
           },
           'inputs': [
-            'gen_zero_query_number_data.py',
+            'gen_embedded_string_array_for_zero_query.py',
             '<@(input_files)',
           ],
           'outputs': [
             '<(gen_out_dir)/zero_query_number_data.h',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/zero_query_number_data.h',
-            'gen_zero_query_number_data.py',
-            '<@(input_files)',
+            'python', 'gen_embedded_string_array_for_zero_query.py',
+            '--input=<@(input_files)',
+            '--var_name=kZeroQueryNum',
+            '--output=<(gen_out_dir)/zero_query_number_data.h',
           ],
           'message': 'Generating <(gen_out_dir)/zero_query_number_data.h',
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_zero_query_data',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_zero_query_data',
+          'variables': {
+            'input_files': [
+              '../data/zero_query/zero_query.def',
+            ],
+          },
+          'inputs': [
+            'gen_embedded_string_array_for_zero_query.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/zero_query_data.h',
+          ],
+          'action': [
+            'python', 'gen_embedded_string_array_for_zero_query.py',
+            '--input=<@(input_files)',
+            '--var_name=kZeroQueryData',
+            '--output=<(gen_out_dir)/zero_query_data.h',
+          ],
+          'message': 'Generating <(gen_out_dir)/zero_query_data.h',
         },
       ],
     },

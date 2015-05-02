@@ -2097,7 +2097,54 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
         break;
       }
     }
-    EXPECT_EQ(test_case.expected_result, found);
+    EXPECT_EQ(test_case.expected_result, found) << test_case.history_value;
+  }
+}
+
+TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
+  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const DictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+  const ConversionRequest conversion_request;
+
+  const struct TestCase {
+    const char *history_key;
+    const char *history_value;
+    const char *find_value;
+    bool expected_result;
+  } kTestCases[] = {
+    { "@", "@",
+      "gmail.com", true },
+    { "!", "!",
+      "?", false },
+  };
+
+  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
+    Segments segments;
+    MakeSegmentsForSuggestion("", &segments);
+
+    const TestCase &test_case = kTestCases[i];
+    PrependHistorySegments(
+        test_case.history_key, test_case.history_value, &segments);
+    vector<DictionaryPredictor::Result> results;
+    predictor->AggregateSuffixPrediction(
+        DictionaryPredictor::SUFFIX,
+        conversion_request, segments, &results);
+    EXPECT_FALSE(results.empty());
+
+    bool found = false;
+    for (vector<DictionaryPredictor::Result>::const_iterator it =
+             results.begin();
+         it != results.end(); ++it) {
+      EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
+      if (it->value == test_case.find_value &&
+          it->lid == 0 /* EOS */) {
+        found = true;
+        break;
+      }
+    }
+    EXPECT_EQ(test_case.expected_result, found) << test_case.history_value;
   }
 }
 

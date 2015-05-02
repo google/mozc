@@ -58,6 +58,7 @@
 #include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
+#include "prediction/zero_query_data.h"
 #include "prediction/zero_query_number_data.h"
 #include "session/commands.pb.h"
 
@@ -98,22 +99,22 @@ void GetNumberSuffixArray(const string &history_input,
   int default_num = -1;
   int suffix_num = -1;
 
-  for (int i = 0; ZeroQueryNum[i]; ++i) {
-    if (default_str == ZeroQueryNum[i][0]) {
+  for (int i = 0; i < kZeroQueryNum_size; ++i) {
+    if (default_str == kZeroQueryNum_data[i][0]) {
       default_num = i;
-    } else if (history_input == ZeroQueryNum[i][0]) {
+    } else if (history_input == kZeroQueryNum_data[i][0]) {
       suffix_num = i;
     }
   }
   DCHECK_GE(default_num, 0);
 
   if (suffix_num != -1) {
-    for (int j = 1; ZeroQueryNum[suffix_num][j]; ++j) {
-      suffixes->push_back(ZeroQueryNum[suffix_num][j]);
+    for (int j = 1; kZeroQueryNum_data[suffix_num][j]; ++j) {
+      suffixes->push_back(kZeroQueryNum_data[suffix_num][j]);
     }
   }
-  for (int j = 1; ZeroQueryNum[default_num][j]; ++j) {
-    suffixes->push_back(ZeroQueryNum[default_num][j]);
+  for (int j = 1; kZeroQueryNum_data[default_num][j]; ++j) {
+    suffixes->push_back(kZeroQueryNum_data[default_num][j]);
   }
 }
 
@@ -163,6 +164,11 @@ bool IsTypingCorrectionEnabled() {
          FLAGS_enable_typing_correction;
 }
 
+struct ZeroQueryRuleCompare {
+  bool operator()(const char **lhs, const char **rhs) const {
+    return (strcmp(lhs[0], rhs[0]) < 0);
+  }
+};
 }  // namespace
 
 class DictionaryPredictor::PredictiveLookupCallback :
@@ -1617,6 +1623,88 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
   }
 }
 
+// Returns true if we add zero query result.
+bool DictionaryPredictor::AggregateNumberZeroQueryPrediction(
+    const Segments &segments, vector<Result> *results) const {
+  string number_key;
+  if (!GetNumberHistory(segments, &number_key)) {
+    return false;
+  }
+
+  // Use number suffixes and do not add normal zero query.
+  vector<string> suffixes;
+  GetNumberSuffixArray(number_key, &suffixes);
+  DCHECK_GT(suffixes.size(), 0);
+  int cost = 0;
+
+  for (size_t i = 0; i < suffixes.size(); ++i) {
+    const auto &suffix = suffixes[i];
+    // Increment cost to show the candidates in order.
+    const int kSuffixPenalty = 10;
+
+    results->push_back(Result());
+    Result *result = &results->back();
+    result->SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
+    result->key = suffix;
+    result->value = suffix;
+    result->wcost = cost;
+    result->lid = counter_suffix_word_id_;
+    result->rid = counter_suffix_word_id_;
+
+    cost += kSuffixPenalty;
+  }
+  return true;
+}
+
+// Returns true if we add zero query result.
+bool DictionaryPredictor::AggregateZeroQueryPrediction(
+    const Segments &segments, vector<Result> *results) const {
+  const size_t history_size = segments.history_segments_size();
+  if (history_size <= 0) {
+    return false;
+  }
+
+  const Segment &last_segment = segments.history_segment(history_size - 1);
+  DCHECK_GT(last_segment.candidates_size(), 0);
+  const string &history_value = last_segment.candidate(0).value;
+
+  const char *key_item[] = {history_value.c_str(), 0};
+  const char **key = key_item;
+  // kZeroQueryData_data is a 2-dimensional string array and
+  // sorted by the first string.
+  // For each string array, the first item is a key for zero query prediction,
+  // the rest items are candidates, and the last item is 0.
+  const char ***result_rule =
+      lower_bound(
+          kZeroQueryData_data, kZeroQueryData_data + kZeroQueryData_size,
+          key, ZeroQueryRuleCompare());
+  if (result_rule == (kZeroQueryData_data + kZeroQueryData_size) ||
+      history_value != (*result_rule)[0]) {
+    return false;
+  }
+
+  int cost = 0;
+  for (int i = 1; (*result_rule)[i]; ++i) {
+    string candidate = (*result_rule)[i];
+
+    // Increment cost to show the candidates in order.
+    const int kPenalty = 10;
+
+    results->push_back(Result());
+    Result *result = &results->back();
+
+    result->SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
+    result->key = candidate;
+    result->value = candidate;
+    result->wcost = cost;
+    result->lid = 0;  // EOS
+    result->rid = 0;  // EOS
+
+    cost += kPenalty;
+  }
+  return true;
+}
+
 void DictionaryPredictor::AggregateSuffixPrediction(
     PredictionTypes types,
     const ConversionRequest &request,
@@ -1630,30 +1718,10 @@ void DictionaryPredictor::AggregateSuffixPrediction(
 
   const bool is_zero_query = segments.conversion_segment(0).key().empty();
   if (is_zero_query) {
-    string number_key;
-    if (GetNumberHistory(segments, &number_key)) {
-      // Use number suffixes and do not add normal zero query.
-      vector<string> suffixes;
-      GetNumberSuffixArray(number_key, &suffixes);
-      DCHECK_GT(suffixes.size(), 0);
-      int cost = 0;
-
-      for (vector<string>::const_iterator it = suffixes.begin();
-           it != suffixes.end(); ++it) {
-        // Increment cost to show the candidates in order.
-        const int kSuffixPenalty = 10;
-
-        results->push_back(Result());
-        Result *result = &results->back();
-        result->SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
-        result->key = *it;
-        result->value = *it;
-        result->wcost = cost;
-        result->lid = counter_suffix_word_id_;
-        result->rid = counter_suffix_word_id_;
-
-        cost += kSuffixPenalty;
-      }
+    if (AggregateNumberZeroQueryPrediction(segments, results)) {
+      return;
+    }
+    if (AggregateZeroQueryPrediction(segments, results)) {
       return;
     }
     // Fall through

@@ -176,6 +176,12 @@ class DictionaryPredictor : public PredictorInterface {
                                          const Segments &segments,
                                          vector<Result> *results) const;
 
+  bool AggregateNumberZeroQueryPrediction(const Segments &segments,
+                                          vector<Result> *results) const;
+
+  bool AggregateZeroQueryPrediction(const Segments &segments,
+                                    vector<Result> *result) const;
+
   void ApplyPenaltyForKeyExpansion(const Segments &segments,
                                    vector<Result> *results) const;
 
@@ -200,6 +206,7 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
   FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
   FRIEND_TEST(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion);
+  FRIEND_TEST(DictionaryPredictorTest, TriggerZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, GetHistoryKeyAndValue);
   FRIEND_TEST(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets);
   FRIEND_TEST(DictionaryPredictorTest, IsAggressiveSuggestion);
