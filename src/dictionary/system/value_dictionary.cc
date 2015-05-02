@@ -43,14 +43,13 @@
 #include "dictionary/system/codec_interface.h"
 #include "storage/louds/louds_trie.h"
 
+using mozc::storage::louds::LoudsTrie;
+
 namespace mozc {
 namespace dictionary {
 
-using mozc::storage::louds::LoudsTrie;
-
 ValueDictionary::ValueDictionary(const POSMatcher& pos_matcher)
-    : value_trie_(new LoudsTrie),
-      dictionary_file_(new DictionaryFile),
+    : dictionary_file_(new DictionaryFile),
       codec_(SystemDictionaryCodecFactory::GetCodec()),
       suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {
 }
@@ -64,11 +63,11 @@ ValueDictionary *ValueDictionary::CreateValueDictionaryFromFile(
   DCHECK(instance.get());
   if (!instance->dictionary_file_->OpenFromFile(filename)) {
     LOG(ERROR) << "Failed to open system dictionary file";
-    return NULL;
+    return nullptr;
   }
   if (!instance->OpenDictionaryFile()) {
     LOG(ERROR) << "Failed to create value dictionary";
-    return NULL;
+    return nullptr;
   }
   return instance.release();
 }
@@ -86,11 +85,11 @@ ValueDictionary *ValueDictionary::CreateValueDictionaryFromImage(
   DCHECK(instance.get());
   if (!instance->dictionary_file_->OpenFromImage(ptr, len)) {
     LOG(ERROR) << "Failed to open system dictionary file";
-    return NULL;
+    return nullptr;
   }
   if (!instance->OpenDictionaryFile()) {
     LOG(ERROR) << "Failed to create value dictionary";
-    return NULL;
+    return nullptr;
   }
   return instance.release();
 }
@@ -101,7 +100,7 @@ bool ValueDictionary::OpenDictionaryFile() {
       reinterpret_cast<const uint8 *>(dictionary_file_->GetSection(
           codec_->GetSectionNameForValue(), &image_len));
   CHECK(value_image) << "can not find value section";
-  if (!(value_trie_->Open(value_image))) {
+  if (!(value_trie_.Open(value_image))) {
     DLOG(ERROR) << "Cannot open value trie";
     return false;
   }
@@ -175,7 +174,7 @@ void ValueDictionary::LookupPredictive(
   codec_->EncodeValue(key, &encoded_key);
 
   LoudsTrie::Node node;
-  if (!value_trie_->Traverse(encoded_key, &node)) {
+  if (!value_trie_.Traverse(encoded_key, &node)) {
     return;
   }
 
@@ -191,8 +190,8 @@ void ValueDictionary::LookupPredictive(
     node = queue.front();
     queue.pop();
 
-    if (value_trie_->IsTerminalNode(node)) {
-      switch (HandleTerminalNode(*value_trie_, *codec_,
+    if (value_trie_.IsTerminalNode(node)) {
+      switch (HandleTerminalNode(value_trie_, *codec_,
                                  suggestion_only_word_id_,
                                  node, callback, encoded_value_buffer,
                                  &value, &token)) {
@@ -205,9 +204,9 @@ void ValueDictionary::LookupPredictive(
       }
     }
 
-    for (value_trie_->MoveToFirstChild(&node);
-         value_trie_->IsValidNode(node);
-         value_trie_->MoveToNextSibling(&node)) {
+    for (value_trie_.MoveToFirstChild(&node);
+         value_trie_.IsValidNode(node);
+         value_trie_.MoveToNextSibling(&node)) {
       queue.push(node);
     }
   } while (!queue.empty());
@@ -219,15 +218,14 @@ void ValueDictionary::LookupPrefix(
 
 void ValueDictionary::LookupExact(StringPiece key, Callback *callback) const {
   if (key.empty()) {
-    // For empty string, return NULL for compatibility reason; see the comment
-    // above.
+    // For empty string, return nothing for compatibility reason; see the
+    // comment above.
     return;
   }
-  DCHECK(value_trie_.get() != NULL);
 
   string lookup_key_str;
   codec_->EncodeValue(key, &lookup_key_str);
-  if (value_trie_->ExactSearch(lookup_key_str) == -1) {
+  if (value_trie_.ExactSearch(lookup_key_str) == -1) {
     return;
   }
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
@@ -239,8 +237,7 @@ void ValueDictionary::LookupExact(StringPiece key, Callback *callback) const {
 }
 
 void ValueDictionary::LookupReverse(StringPiece str,
-                                    Callback *callback) const {
-}
+                                    Callback *callback) const {}
 
 }  // namespace dictionary
 }  // namespace mozc
