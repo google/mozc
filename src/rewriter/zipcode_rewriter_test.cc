@@ -47,8 +47,9 @@
 
 DECLARE_string(test_tmpdir);
 
-namespace mozc {
+using mozc::dictionary::POSMatcher;
 
+namespace mozc {
 namespace {
 
 enum SegmentType {

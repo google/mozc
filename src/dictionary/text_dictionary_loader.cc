@@ -54,6 +54,7 @@ DEFINE_int32(tokens_reserve_size, 1400000,
              "Reserve the specified size of token buffer in advance.");
 
 namespace mozc {
+namespace dictionary {
 namespace {
 
 // Functor to sort a sequence of Tokens first by value and then by key.
@@ -334,4 +335,5 @@ Token *TextDictionaryLoader::ParseTSV(
   return token.release();
 }
 
+}  // namespace dictionary
 }  // namespace mozc

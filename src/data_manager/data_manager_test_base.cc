@@ -50,6 +50,8 @@
 
 DECLARE_string(test_srcdir);
 
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
 namespace {
 

@@ -32,20 +32,17 @@
 
 #include <string>
 #include <vector>
+
 #include "base/port.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class POSMatcher;
-class Segments;
-class Segment;
-
 class TransliterationRewriter : public RewriterInterface  {
  public:
-  explicit TransliterationRewriter(const POSMatcher &pos_matcher);
+  explicit TransliterationRewriter(const dictionary::POSMatcher &pos_matcher);
   virtual ~TransliterationRewriter();
 
   virtual int capability(const ConversionRequest &request) const;
@@ -73,6 +70,8 @@ class TransliterationRewriter : public RewriterInterface  {
                                   Segments *segments) const;
 
   const uint16 unknown_id_;
+
+  DISALLOW_COPY_AND_ASSIGN(TransliterationRewriter);
 };
 
 }  // namespace mozc

@@ -55,13 +55,15 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 
+using mozc::config::CharacterFormManager;
+using mozc::config::Config;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosGroup;
+using mozc::storage::LRUStorage;
+
 namespace mozc {
-
-using config::CharacterFormManager;
-using config::Config;
-using storage::LRUStorage;
-
 namespace {
+
 const uint32 kValueSize = 4;
 const uint32 kLRUSize   = 20000;
 const uint32 kSeedValue = 0xf28defe3;

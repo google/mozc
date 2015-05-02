@@ -54,7 +54,10 @@ DEFINE_string(dataset,
               "The dataset tag of the POS data.");
 
 using std::unique_ptr;
+
+using mozc::dictionary::POSMatcher;
 using mozc::dictionary::SuffixToken;
+using mozc::dictionary::UserPOS;
 
 namespace mozc {
 namespace packed {

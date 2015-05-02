@@ -46,6 +46,8 @@
 
 DECLARE_string(test_tmpdir);
 
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
 
 class SingleKanjiRewriterTest : public ::testing::Test {

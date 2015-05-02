@@ -34,9 +34,6 @@
 #include "data_manager/data_manager_interface.h"
 
 namespace mozc {
-
-class POSMatcher;
-
 namespace oss {
 
 class OssUserPosManager : public DataManagerInterface {
@@ -49,8 +46,8 @@ class OssUserPosManager : public DataManagerInterface {
   // Partially implement the interface because some binary only reqiures the
   // folloiwng embedded data.
   // Returns the address to an array of UserPOS::POSToken.
-  virtual const UserPOS::POSToken *GetUserPOSData() const;
-  virtual const POSMatcher *GetPOSMatcher() const;
+  virtual const dictionary::UserPOS::POSToken *GetUserPOSData() const;
+  virtual const dictionary::POSMatcher *GetPOSMatcher() const;
 
   // The following are implemented in OssDataManager.
   virtual const uint8 *GetPosGroupData() const { return NULL; }

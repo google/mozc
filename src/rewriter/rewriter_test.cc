@@ -45,6 +45,9 @@
 
 DECLARE_string(test_tmpdir);
 
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::PosGroup;
+
 namespace mozc {
 namespace {
 

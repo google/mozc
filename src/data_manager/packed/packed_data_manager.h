@@ -49,8 +49,8 @@ class PackedDataManager : public DataManagerInterface {
 
   static PackedDataManager *GetUserPosManager();
 
-  virtual const UserPOS::POSToken *GetUserPOSData() const;
-  virtual const POSMatcher *GetPOSMatcher() const;
+  virtual const dictionary::UserPOS::POSToken *GetUserPOSData() const;
+  virtual const dictionary::POSMatcher *GetPOSMatcher() const;
   virtual const uint8 *GetPosGroupData() const;
   virtual void GetConnectorData(const char **data, size_t *size) const;
   virtual void GetSegmenterData(

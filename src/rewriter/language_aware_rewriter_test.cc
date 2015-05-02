@@ -56,6 +56,7 @@
 DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryMock;
+using mozc::dictionary::Token;
 
 namespace mozc {
 namespace {

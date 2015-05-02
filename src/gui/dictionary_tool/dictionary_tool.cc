@@ -312,7 +312,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
-      user_pos_(new UserPOS(
+      user_pos_(new dictionary::UserPOS(
           UserPosManager::GetUserPosManager()->GetUserPOSData())) {
   setupUi(this);
 

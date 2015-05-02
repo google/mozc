@@ -35,12 +35,10 @@
 
 #include "base/port.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-
-class ConversionRequest;
-class POSMatcher;
 
 class VariantsRewriter : public RewriterInterface {
  public:
@@ -56,7 +54,7 @@ class VariantsRewriter : public RewriterInterface {
   static const char *kDidYouMean;
   static const char *kYenKigou;
 
-  explicit VariantsRewriter(const POSMatcher *pos_matcher);
+  explicit VariantsRewriter(const dictionary::POSMatcher *pos_matcher);
   virtual ~VariantsRewriter();
   virtual int capability(const ConversionRequest &request) const;
   virtual bool Rewrite(const ConversionRequest &request,
@@ -66,12 +64,15 @@ class VariantsRewriter : public RewriterInterface {
 
   // Used by UserSegmentHistoryRewriter.
   // TODO(noriyukit): I'd be better to prepare some utility for rewriters.
-  static void SetDescriptionForCandidate(const POSMatcher &pos_matcher,
-                                         Segment::Candidate *candidate);
-  static void SetDescriptionForTransliteration(const POSMatcher &pos_matcher,
-                                               Segment::Candidate *candidate);
-  static void SetDescriptionForPrediction(const POSMatcher &pos_matcher,
-                                          Segment::Candidate *candidate);
+  static void SetDescriptionForCandidate(
+      const dictionary::POSMatcher &pos_matcher,
+      Segment::Candidate *candidate);
+  static void SetDescriptionForTransliteration(
+      const dictionary::POSMatcher &pos_matcher,
+      Segment::Candidate *candidate);
+  static void SetDescriptionForPrediction(
+      const dictionary::POSMatcher &pos_matcher,
+      Segment::Candidate *candidate);
 
  private:
   // 1) Full width / half width description
@@ -98,7 +99,7 @@ class VariantsRewriter : public RewriterInterface {
     SELECT_VARIANT = 1,  // Select preferred form
   };
 
-  static void SetDescription(const POSMatcher &pos_matcher,
+  static void SetDescription(const dictionary::POSMatcher &pos_matcher,
                              int description_type,
                              Segment::Candidate *candidate);
   bool RewriteSegment(RewriteType type, Segment *seg) const;
@@ -111,7 +112,7 @@ class VariantsRewriter : public RewriterInterface {
       vector<uint32> *default_inner_segment_boundary,
       vector<uint32> *alternative_inner_segment_boundary) const;
 
-  const POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher *pos_matcher_;
 };
 
 }  // namespace mozc

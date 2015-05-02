@@ -40,8 +40,8 @@
 
 namespace mozc {
 
-class POSMatcher;
 struct CounterSuffixEntry;
+namespace dictionary {class POSMatcher; }
 
 namespace number_compound_util {
 
@@ -71,7 +71,8 @@ bool SplitStringIntoNumberAndCounterSuffix(
 //   3) lid is general nound and content value consists of number and counter
 //      suffix, where counter suffix needs to be provided as a sorted array.
 bool IsNumber(const CounterSuffixEntry *suffix_array, size_t suffix_array_size,
-              const POSMatcher &pos_matcher, const Segment::Candidate &cand);
+              const dictionary::POSMatcher &pos_matcher,
+              const Segment::Candidate &cand);
 
 }  // namespace number_compound_util
 }  // namespace mozc

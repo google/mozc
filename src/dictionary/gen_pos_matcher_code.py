@@ -78,7 +78,8 @@ def OutputPosMatcherData(pos_matcher, output):
   for rule_name in pos_matcher.GetRuleNameList():
     output.write(
         '// %(rule_name)s "%(original_pattern)s"\n'
-        'const ::mozc::POSMatcher::Range kRangeTable_%(rule_name)s[] = {\n'
+        'const ::mozc::dictionary::POSMatcher::Range '
+        'kRangeTable_%(rule_name)s[] = {\n'
         % { 'rule_name': rule_name,
             'original_pattern': pos_matcher.GetOriginalPattern(rule_name) })
     for id_range in pos_matcher.GetRange(rule_name):
@@ -91,7 +92,8 @@ def OutputPosMatcherData(pos_matcher, output):
 
   # Generate kRangeTable[].
   output.write(
-      'const ::mozc::POSMatcher::Range *const kRangeTables[%d] = {\n'
+      'const ::mozc::dictionary::POSMatcher::Range *const '
+      'kRangeTables[%d] = {\n'
       % (len(pos_matcher.GetRuleNameList()) + 1))
   for rule_name in pos_matcher.GetRuleNameList():
     output.write('  kRangeTable_%s,\n' % rule_name)
@@ -112,6 +114,7 @@ def OutputPosMatcherHeader(pos_matcher, output):
       '#define MOZC_DICTIONARY_POS_MATCHER_H_\n'
       '#include "./base/port.h"\n'
       'namespace mozc {\n'
+      'namespace dictionary {\n'
       'class POSMatcher {\n'
       ' public:\n'
       '  struct Range {\n'
@@ -163,6 +166,7 @@ def OutputPosMatcherHeader(pos_matcher, output):
       '  const uint16 *const rule_id_table_;\n'
       '  const Range *const *const range_table_;\n'
       '};\n'
+      '}  // namespace dictionary\n'
       '}  // namespace mozc\n'
       '#endif  // MOZC_DICTIONARY_POS_MATCHER_H_\n')
 

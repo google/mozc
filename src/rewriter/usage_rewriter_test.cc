@@ -48,6 +48,7 @@ DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::UserDictionary;
+using mozc::dictionary::UserPOS;
 
 namespace mozc {
 namespace {

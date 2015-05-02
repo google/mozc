@@ -43,6 +43,9 @@
 #include "session/commands.pb.h"
 #include "usage_stats/usage_stats.h"
 
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
 
 LanguageAwareRewriter::LanguageAwareRewriter(

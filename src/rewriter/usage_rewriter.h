@@ -30,27 +30,25 @@
 #ifndef MOZC_REWRITER_USAGE_REWRITER_H_
 #define MOZC_REWRITER_USAGE_REWRITER_H_
 
-#include <list>
 #include <map>
 #include <string>
 #include <utility>
 
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/usage_rewriter_data_structs.h"
 #include "testing/base/public/gunit_prod.h"  // for FRIEND_TEST()
 
 namespace mozc {
 
-class ConversionRequest;
 class DataManagerInterface;
-class DictionaryInterface;
-class POSMatcher;
 
 class UsageRewriter : public RewriterInterface  {
  public:
   UsageRewriter(const DataManagerInterface *data_manager,
-                const DictionaryInterface *dictionary);
+                const dictionary::DictionaryInterface *dictionary);
   virtual ~UsageRewriter();
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
@@ -72,8 +70,8 @@ class UsageRewriter : public RewriterInterface  {
       const Segment::Candidate &candidate) const;
 
   map<StrPair, const UsageDictItem *> key_value_usageitem_map_;
-  const POSMatcher *pos_matcher_;
-  const DictionaryInterface *dictionary_;
+  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::DictionaryInterface *dictionary_;
   const ConjugationSuffix *base_conjugation_suffix_;
 };
 

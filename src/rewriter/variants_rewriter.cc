@@ -41,9 +41,10 @@
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 
-namespace mozc {
+using mozc::config::CharacterFormManager;
+using mozc::dictionary::POSMatcher;
 
-using config::CharacterFormManager;
+namespace mozc {
 
 #ifndef OS_ANDROID
 // "ひらがな"

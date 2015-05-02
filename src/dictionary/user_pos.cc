@@ -36,11 +36,12 @@
 #include "base/util.h"
 
 namespace mozc {
+namespace dictionary {
 
 UserPOS::UserPOS(const POSToken *pos_token_array)
     : pos_token_array_(pos_token_array) {
   DCHECK(pos_token_array_);
-  for (size_t i = 0; pos_token_array_[i].pos != NULL; ++i) {
+  for (size_t i = 0; pos_token_array_[i].pos != nullptr; ++i) {
     pos_map_.insert(make_pair(string(pos_token_array_[i].pos),
                               &pos_token_array_[i]));
   }
@@ -49,7 +50,7 @@ UserPOS::UserPOS(const POSToken *pos_token_array)
 
 void UserPOS::GetPOSList(vector<string> *pos_list) const {
   pos_list->clear();
-  for (size_t i = 0; pos_token_array_[i].pos != NULL; ++i) {
+  for (size_t i = 0; pos_token_array_[i].pos != nullptr; ++i) {
     pos_list->push_back(pos_token_array_[i].pos);
   }
 }
@@ -80,7 +81,7 @@ bool UserPOS::GetTokens(const string &key,
   if (key.empty() ||
       value.empty() ||
       pos.empty() ||
-      tokens == NULL) {
+      tokens == nullptr) {
     return false;
   }
 
@@ -140,4 +141,5 @@ bool UserPOS::GetTokens(const string &key,
   return true;
 }
 
+}  // namespace dictionary
 }  // namespace mozc

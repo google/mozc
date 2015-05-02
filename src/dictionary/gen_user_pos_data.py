@@ -45,8 +45,8 @@ def OutputUserPosDataHeader(user_pos_data, output):
   # Output kConjugation
   for index, (_, conjugation_list) in enumerate(user_pos_data):
     output.write(
-        'static const UserPOS::ConjugationType kConjugation%d[] = {\n' % (
-            index))
+        'static const ::mozc::dictionary::UserPOS::ConjugationType '
+        'kConjugation%d[] = {\n' % (index))
     for value_suffix, key_suffix, pos_id in conjugation_list:
       output.write('  { %s, %s, %d },\n' % (
           code_generator_util.ToCppStringLiteral(value_suffix),
@@ -55,7 +55,7 @@ def OutputUserPosDataHeader(user_pos_data, output):
     output.write('};\n')
 
   # Output PosToken
-  output.write('const UserPOS::POSToken kPOSToken[] = {\n')
+  output.write('const ::mozc::dictionary::UserPOS::POSToken kPOSToken[] = {\n')
   for index, (user_pos, conjunction_list) in enumerate(user_pos_data):
     output.write('  { %s, %d, kConjugation%d },\n' % (
         code_generator_util.ToCppStringLiteral(user_pos),

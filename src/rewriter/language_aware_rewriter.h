@@ -30,23 +30,18 @@
 #ifndef MOZC_REWRITER_LANGUAGE_AWARE_REWRITER_H_
 #define MOZC_REWRITER_LANGUAGE_AWARE_REWRITER_H_
 
-#include <string>
 #include "base/port.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class DictionaryInterface;
-class POSMatcher;
-class Segments;
-class Segment;
-
 class LanguageAwareRewriter : public RewriterInterface {
  public:
-  LanguageAwareRewriter(const POSMatcher &pos_matcher,
-                        const DictionaryInterface *dictionary);
+  LanguageAwareRewriter(const dictionary::POSMatcher &pos_matcher,
+                          const dictionary::DictionaryInterface *dictionary);
   virtual ~LanguageAwareRewriter();
 
   virtual int capability(const ConversionRequest &request) const;
@@ -62,7 +57,9 @@ class LanguageAwareRewriter : public RewriterInterface {
                    Segments *segments) const;
 
   const uint16 unknown_id_;
-  const DictionaryInterface *dictionary_;
+  const dictionary::DictionaryInterface *dictionary_;
+
+  DISALLOW_COPY_AND_ASSIGN(LanguageAwareRewriter);
 };
 
 }  // namespace mozc

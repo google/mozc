@@ -39,8 +39,8 @@
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {
+namespace dictionary {
 
-// TODO(noriyukit): Move this interface into dictionary namespace.
 class DictionaryInterface {
  public:
   // Callback interface for dictionary traversal (currently implemented only for
@@ -153,6 +153,7 @@ class DictionaryInterface {
   DictionaryInterface() {}
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_DICTIONARY_INTERFACE_H_

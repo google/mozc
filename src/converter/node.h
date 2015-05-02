@@ -86,7 +86,7 @@ struct Node {
   // begin_nodes: | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ... | N | (in lattice)
   //                |   |   :   :   :   :   :         :
   //                |   :
-  //                |   :          (NULL)
+  //                |   :          (nullptr)
   //                |   :           ^
   //                |   :           :
   //                v   :           |
@@ -96,14 +96,14 @@ struct Node {
   //           bnext|   :           ^
   //                v   :           |enext
   //               +-----------------+
-  //               | Node2(len4)     | (NULL)
+  //               | Node2(len4)     | (nullptr)
   //               +-----------------+  ^
   //           bnext|   :           ^   :
   //                |   :           |   :
   //                v   :           :   |enext
   //               +---------------------+
   //               | Node3(len5)         |
-  //               +---------------------+ (NULL)
+  //               +---------------------+ (nullptr)
   //           bnext|   :           :   ^   ^
   //                |   :           :   |   :
   //                v   :           :   :   |enext
@@ -113,7 +113,7 @@ struct Node {
   //           bnext|   :           :   :   ^
   //                :   :           :   :   |
   //                v   :           :   :   :
-  //             (NULL) |           :   :   :
+  //          (nullptr) |           :   :   :
   //                    v           :   |enext
   //                   +-----------------+  :
   //                   | Node5(len4)     |  :
@@ -137,7 +137,7 @@ struct Node {
   //               bnext|           :   :   ^
   //                    :           :   :   |
   //                    v           :   :   |
-  //                  (NULL)        :   :   |
+  //               (nullptr)        :   :   |
   //                                :   :   |
   //                :   :   :   :   :   |   |         :
   // end_nodes:   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ... | N |  (in lattice)
@@ -150,7 +150,7 @@ struct Node {
   Node *bnext;
   Node *enext;
 
-  // if it is not NULL, transition cost
+  // if it is not nullptr, transition cost
   // from constrained_prev to current node is defined,
   // other transition is set to be infinite
   Node *constrained_prev;
@@ -187,11 +187,11 @@ struct Node {
   }
 
   inline void Init() {
-    prev = NULL;
-    next = NULL;
-    bnext = NULL;
-    enext = NULL;
-    constrained_prev = NULL;
+    prev = nullptr;
+    next = nullptr;
+    bnext = nullptr;
+    enext = nullptr;
+    constrained_prev = nullptr;
     rid = 0;
     lid = 0;
     begin_pos = 0;
@@ -206,12 +206,12 @@ struct Node {
     value.clear();
   }
 
-  inline void InitFromToken(const Token &token) {
-    prev = NULL;
-    next = NULL;
-    bnext = NULL;
-    enext = NULL;
-    constrained_prev = NULL;
+  inline void InitFromToken(const dictionary::Token &token) {
+    prev = nullptr;
+    next = nullptr;
+    bnext = nullptr;
+    enext = nullptr;
+    constrained_prev = nullptr;
     rid = token.rid;
     lid = token.lid;
     begin_pos = 0;
@@ -221,10 +221,10 @@ struct Node {
     cost = 0;
     raw_wcost = 0;
     attributes = 0;
-    if (token.attributes & Token::SPELLING_CORRECTION) {
+    if (token.attributes & dictionary::Token::SPELLING_CORRECTION) {
       attributes |= SPELLING_CORRECTION;
     }
-    if (token.attributes & Token::USER_DICTIONARY) {
+    if (token.attributes & dictionary::Token::USER_DICTIONARY) {
       attributes |= USER_DICTIONARY;
       attributes |= NO_VARIANTS_EXPANSION;
     }

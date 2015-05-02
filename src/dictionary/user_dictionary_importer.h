@@ -206,4 +206,5 @@ class UserDictionaryImporter {
 };
 
 }  // namespace mozc
+
 #endif  // MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_

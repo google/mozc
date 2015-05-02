@@ -38,6 +38,9 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
@@ -45,25 +48,22 @@
 namespace mozc {
 
 struct Node;
-class DictionaryInterface;
 class ImmutableConverterInterface;
 class Lattice;
 class NBestGenerator;
-class POSMatcher;
-class PosGroup;
 class Segmenter;
 class SuggestionFilter;
 
 class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
   ImmutableConverterImpl(
-      const DictionaryInterface *dictionary,
-      const DictionaryInterface *suffix_dictionary,
+      const dictionary::DictionaryInterface *dictionary,
+      const dictionary::DictionaryInterface *suffix_dictionary,
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const Connector *connector,
       const Segmenter *segmenter,
-      const POSMatcher *pos_matcher,
-      const PosGroup *pos_group,
+      const dictionary::POSMatcher *pos_matcher,
+      const dictionary::PosGroup *pos_group,
       const SuggestionFilter *suggestion_filter);
   virtual ~ImmutableConverterImpl() {}
 
@@ -180,13 +180,13 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
     return connector_->GetTransitionCost(lnode->rid, rnode->lid) + rnode->wcost;
   }
 
-  const DictionaryInterface *dictionary_;
-  const DictionaryInterface *suffix_dictionary_;
+  const dictionary::DictionaryInterface *dictionary_;
+  const dictionary::DictionaryInterface *suffix_dictionary_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const Connector *connector_;
   const Segmenter *segmenter_;
-  const POSMatcher *pos_matcher_;
-  const PosGroup *pos_group_;
+  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::PosGroup *pos_group_;
   const SuggestionFilter *suggestion_filter_;
 
   // Cache for POS ids.

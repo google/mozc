@@ -36,9 +36,10 @@
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-class ConversionRequest;
+
 class DataManagerInterface;
-class POSMatcher;
+
+namespace dictionary { class POSMatcher; }
 
 class CollocationRewriter : public RewriterInterface {
  public:
@@ -58,7 +59,7 @@ class CollocationRewriter : public RewriterInterface {
                                Segment *seg) const;
   bool RewriteCollocation(Segments *segments) const;
 
-  const POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher *pos_matcher_;
   const uint16 first_name_id_;
   const uint16 last_name_id_;
 
@@ -73,6 +74,7 @@ class CollocationRewriter : public RewriterInterface {
   // very low (0.001% by default).
   scoped_ptr<SuppressionFilter> suppression_filter_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_COLLOCATION_REWRITER_H_

@@ -74,10 +74,15 @@
 #include "transliteration/transliteration.h"
 
 using ::testing::_;
+
+using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::DictionaryMock;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuffixDictionary;
 using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
+using mozc::dictionary::Token;
 
 DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_dictionary_predictor);

@@ -74,6 +74,10 @@ DEFINE_bool(enable_mixed_conversion,
 
 DECLARE_bool(enable_typing_correction);
 
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::Token;
+
 namespace mozc {
 namespace {
 
@@ -172,7 +176,7 @@ struct ZeroQueryRuleCompare {
 }  // namespace
 
 class DictionaryPredictor::PredictiveLookupCallback :
-      public mozc::DictionaryInterface::Callback {
+      public DictionaryInterface::Callback {
  public:
   PredictiveLookupCallback(DictionaryPredictor::PredictionTypes types,
                            size_t limit, size_t original_key_len,

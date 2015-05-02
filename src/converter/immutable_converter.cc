@@ -61,7 +61,11 @@
 #include "prediction/suggestion_filter.h"
 #include "session/commands.pb.h"
 
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuppressionDictionary;
+using mozc::dictionary::Token;
 
 namespace mozc {
 namespace {

@@ -35,6 +35,8 @@
 #include "dictionary/pos_matcher.h"
 #include "rewriter/counter_suffix.h"
 
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
 namespace number_compound_util {
 namespace {

@@ -32,6 +32,7 @@
 
 #include "base/port.h"
 #include "base/scoped_ptr.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
@@ -41,7 +42,6 @@ namespace mozc {
 class Connector;
 class ConverterInterface;
 class DataManagerInterface;
-class DictionaryInterface;
 class ImmutableConverterInterface;
 class PredictorInterface;
 class RewriterInterface;
@@ -80,9 +80,9 @@ class Engine : public EngineInterface {
   scoped_ptr<const Connector> connector_;
   scoped_ptr<const Segmenter> segmenter_;
   scoped_ptr<dictionary::UserDictionary> user_dictionary_;
-  scoped_ptr<DictionaryInterface> suffix_dictionary_;
-  scoped_ptr<DictionaryInterface> dictionary_;
-  scoped_ptr<const PosGroup> pos_group_;
+  scoped_ptr<dictionary::DictionaryInterface> suffix_dictionary_;
+  scoped_ptr<dictionary::DictionaryInterface> dictionary_;
+  scoped_ptr<const dictionary::PosGroup> pos_group_;
   scoped_ptr<ImmutableConverterInterface> immutable_converter_;
   scoped_ptr<const SuggestionFilter> suggestion_filter_;
 

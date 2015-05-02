@@ -43,11 +43,10 @@
 #include "storage/louds/louds_trie.h"
 
 namespace mozc {
-class POSMatcher;
-
 namespace dictionary {
 
 class DictionaryFile;
+class POSMatcher;
 class SystemDictionaryCodecInterface;
 
 class ValueDictionary : public DictionaryInterface {

@@ -50,7 +50,8 @@ namespace {
 
 }  // namespace
 
-const UserPOS::POSToken *ChromeOsUserPosManager::GetUserPOSData() const {
+const dictionary::UserPOS::POSToken *
+ChromeOsUserPosManager::GetUserPOSData() const {
   DCHECK(kPOSToken != NULL);
   return kPOSToken;
 }
@@ -60,13 +61,13 @@ namespace {
 // kRuleIdTable[] and kRangeTable[].
 #include "data_manager/chromeos/pos_matcher_data.h"
 
-class ChromeOsPOSMatcher : public POSMatcher {
+class ChromeOsPOSMatcher : public dictionary::POSMatcher {
  public:
   ChromeOsPOSMatcher() : POSMatcher(kRuleIdTable, kRangeTables) {}
 };
 }  // namespace
 
-const POSMatcher *ChromeOsUserPosManager::GetPOSMatcher() const {
+const dictionary::POSMatcher *ChromeOsUserPosManager::GetPOSMatcher() const {
   return Singleton<ChromeOsPOSMatcher>::get();
 }
 

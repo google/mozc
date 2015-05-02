@@ -33,14 +33,12 @@
 #include <string>
 #include <vector>
 
-#include "rewriter/rewriter_interface.h"
 #include "converter/segments.h"
+#include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-class ConversionRequest;
-class POSMatcher;
-class PosGroup;
-
 namespace storage {
 class LRUStorage;
 }  // namespace storage
@@ -53,8 +51,8 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
     const Segment::Candidate *candidate;
   };
 
-  UserSegmentHistoryRewriter(const POSMatcher *pos_matcher,
-                             const PosGroup *pos_group);
+  UserSegmentHistoryRewriter(const dictionary::POSMatcher *pos_matcher,
+                             const dictionary::PosGroup *pos_group);
   virtual ~UserSegmentHistoryRewriter();
 
   virtual bool Rewrite(const ConversionRequest &request,
@@ -98,9 +96,9 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                       Segment *segment) const;
 
 
-  scoped_ptr<mozc::storage::LRUStorage> storage_;
-  const POSMatcher *pos_matcher_;
-  const PosGroup *pos_group_;
+  scoped_ptr<storage::LRUStorage> storage_;
+  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::PosGroup *pos_group_;
 };
 
 }  // namespace mozc

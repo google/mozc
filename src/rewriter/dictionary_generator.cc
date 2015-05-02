@@ -82,8 +82,8 @@ static const size_t kTokenSize = 1000;
 DictionaryGenerator::DictionaryGenerator()
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
       token_map_(new map<uint64, Token *>),
-      user_pos_(
-          new UserPOS(UserPosManager::GetUserPosManager()->GetUserPOSData())),
+      user_pos_(new dictionary::UserPOS(
+          UserPosManager::GetUserPosManager()->GetUserPOSData())),
       open_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()
                        ->GetOpenBracketId()),
       close_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()

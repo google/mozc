@@ -81,11 +81,15 @@
 DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::DictionaryMock;
+using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuffixDictionary;
 using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
+using mozc::dictionary::Token;
+using mozc::dictionary::UserDictionaryStub;
 using mozc::dictionary::ValueDictionary;
 using mozc::usage_stats::UsageStats;
 

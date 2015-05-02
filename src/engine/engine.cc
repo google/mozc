@@ -59,11 +59,13 @@
 #include "rewriter/rewriter_interface.h"
 
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuffixDictionary;
 using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::UserDictionary;
+using mozc::dictionary::UserPOS;
 using mozc::dictionary::ValueDictionary;
 
 namespace mozc {

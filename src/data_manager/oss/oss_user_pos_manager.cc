@@ -50,7 +50,7 @@ namespace {
 
 }  // namespace
 
-const UserPOS::POSToken *OssUserPosManager::GetUserPOSData() const {
+const dictionary::UserPOS::POSToken *OssUserPosManager::GetUserPOSData() const {
   DCHECK(kPOSToken != NULL);
   return kPOSToken;
 }
@@ -60,13 +60,13 @@ namespace {
 // kRuleIdTable[] and kRangeTable[].
 #include "data_manager/oss/pos_matcher_data.h"
 
-class OssPOSMatcher : public POSMatcher {
+class OssPOSMatcher : public dictionary::POSMatcher {
  public:
   OssPOSMatcher() : POSMatcher(kRuleIdTable, kRangeTables) {}
 };
 }  // namespace
 
-const POSMatcher *OssUserPosManager::GetPOSMatcher() const {
+const dictionary::POSMatcher *OssUserPosManager::GetPOSMatcher() const {
   return Singleton<OssPOSMatcher>::get();
 }
 

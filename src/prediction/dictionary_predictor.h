@@ -35,7 +35,9 @@
 #include <vector>
 
 #include "base/util.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
@@ -45,9 +47,7 @@ namespace mozc {
 class Connector;
 class ConversionRequest;
 class ConverterInterface;
-class DictionaryInterface;
 class ImmutableConverterInterface;
-class POSMatcher;
 class Segmenter;
 class Segments;
 class SuggestionFilter;
@@ -59,11 +59,11 @@ class DictionaryPredictor : public PredictorInterface {
   // pointers are not owned by the class and to be deleted by the caller.
   DictionaryPredictor(const ConverterInterface *converter,
                       const ImmutableConverterInterface *immutable_converter,
-                      const DictionaryInterface *dictionary,
-                      const DictionaryInterface *suffix_dictionary,
+                      const dictionary::DictionaryInterface *dictionary,
+                      const dictionary::DictionaryInterface *suffix_dictionary,
                       const Connector *connector,
                       const Segmenter *segmenter,
-                      const POSMatcher *pos_matcher,
+                      const dictionary::POSMatcher *pos_matcher,
                       const SuggestionFilter *suggestion_filter);
   virtual ~DictionaryPredictor();
 
@@ -105,9 +105,11 @@ class DictionaryPredictor : public PredictorInterface {
     Result() : types(NO_PREDICTION), wcost(0), cost(0), lid(0), rid(0),
                candidate_attributes(0), consumed_key_size(0) {}
 
-    void InitializeByTokenAndTypes(const Token &token, PredictionTypes types);
-    void SetTypesAndTokenAttributes(PredictionTypes prediction_types,
-                                    Token::AttributesBitfield token_attr);
+    void InitializeByTokenAndTypes(const dictionary::Token &token,
+                                   PredictionTypes types);
+    void SetTypesAndTokenAttributes(
+        PredictionTypes prediction_types,
+        dictionary::Token::AttributesBitfield token_attr);
 
     string key;
     string value;
@@ -240,12 +242,12 @@ class DictionaryPredictor : public PredictorInterface {
                                    vector<Result> *results) const;
 
   // Changes the prediction type for irrelevant bigram candidate.
-  void CheckBigramResult(const Token &history_token,
+  void CheckBigramResult(const dictionary::Token &history_token,
                          const Util::ScriptType history_ctype,
                          const Util::ScriptType last_history_ctype,
                          Result *result) const;
 
-  void GetPredictiveResults(const DictionaryInterface &dictionary,
+  void GetPredictiveResults(const dictionary::DictionaryInterface &dictionary,
                             const string &history_key,
                             const ConversionRequest &request,
                             const Segments &segments,
@@ -253,29 +255,31 @@ class DictionaryPredictor : public PredictorInterface {
                             size_t lookup_limit,
                             vector<Result> *results) const;
 
-  void GetPredictiveResultsForBigram(const DictionaryInterface &dictionary,
-                                     const string &history_key,
-                                     const string &history_value,
-                                     const ConversionRequest &request,
-                                     const Segments &segments,
-                                     PredictionTypes types,
-                                     size_t lookup_limit,
-                                     vector<Result> *results) const;
+  void GetPredictiveResultsForBigram(
+      const dictionary::DictionaryInterface &dictionary,
+      const string &history_key,
+      const string &history_value,
+      const ConversionRequest &request,
+      const Segments &segments,
+      PredictionTypes types,
+      size_t lookup_limit,
+      vector<Result> *results) const;
 
   // Performs a custom look up for English words where case-conversion might be
   // applied to lookup key and/or output results.
-  void GetPredictiveResultsForEnglish(const DictionaryInterface &dictionary,
-                                      const string &history_key,
-                                      const ConversionRequest &request,
-                                      const Segments &segments,
-                                      PredictionTypes types,
-                                      size_t lookup_limit,
-                                      vector<Result> *results) const;
+  void GetPredictiveResultsForEnglish(
+      const dictionary::DictionaryInterface &dictionary,
+      const string &history_key,
+      const ConversionRequest &request,
+      const Segments &segments,
+      PredictionTypes types,
+      size_t lookup_limit,
+      vector<Result> *results) const;
 
   // Performs look-ups using type-corrected queries from composer. Usually
   // involves multiple look-ups from dictionary.
   void GetPredictiveResultsUsingTypingCorrection(
-      const DictionaryInterface &dictionary,
+      const dictionary::DictionaryInterface &dictionary,
       const string &history_key,
       const ConversionRequest &request,
       const Segments &segments,
@@ -421,8 +425,8 @@ class DictionaryPredictor : public PredictorInterface {
 
   const ConverterInterface *converter_;
   const ImmutableConverterInterface *immutable_converter_;
-  const DictionaryInterface *dictionary_;
-  const DictionaryInterface *suffix_dictionary_;
+  const dictionary::DictionaryInterface *dictionary_;
+  const dictionary::DictionaryInterface *suffix_dictionary_;
   const Connector *connector_;
   const Segmenter *segmenter_;
   const SuggestionFilter *suggestion_filter_;
@@ -431,6 +435,7 @@ class DictionaryPredictor : public PredictorInterface {
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryPredictor);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_PREDICTION_DICTIONARY_PREDICTOR_H_
