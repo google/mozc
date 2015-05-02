@@ -47,7 +47,7 @@
 #include "composer/composer.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_interface.h"
+#include "converter/connector.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -293,7 +293,7 @@ DictionaryPredictor::DictionaryPredictor(
     const ImmutableConverterInterface *immutable_converter,
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary,
-    const ConnectorInterface *connector,
+    const Connector *connector,
     const SegmenterInterface *segmenter,
     const POSMatcher *pos_matcher,
     const SuggestionFilter *suggestion_filter)

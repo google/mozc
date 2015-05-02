@@ -36,7 +36,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "converter/candidate_filter.h"
-#include "converter/connector_interface.h"
+#include "converter/connector.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
 #include "converter/segmenter_interface.h"
@@ -107,7 +107,7 @@ inline void NBestGenerator::Agenda::Pop() {
 
 NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const SegmenterInterface *segmenter,
-                               const ConnectorInterface *connector,
+                               const Connector *connector,
                                const POSMatcher *pos_matcher,
                                const Lattice *lattice,
                                const SuggestionFilter *suggestion_filter)

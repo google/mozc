@@ -44,7 +44,7 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_interface.h"
+#include "converter/connector.h"
 #include "converter/conversion_request.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
@@ -274,7 +274,7 @@ ImmutableConverterImpl::ImmutableConverterImpl(
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary,
     const SuppressionDictionary *suppression_dictionary,
-    const ConnectorInterface *connector,
+    const Connector *connector,
     const SegmenterInterface *segmenter,
     const POSMatcher *pos_matcher,
     const PosGroup *pos_group,
@@ -885,7 +885,7 @@ const int kVeryBigCost = (INT_MAX >> 2);
 // left_boundary should be the previous one, and right_boundary should be
 // the next).
 inline void ViterbiInternal(
-    const ConnectorInterface &connector, size_t pos, size_t right_boundary,
+    const Connector &connector, size_t pos, size_t right_boundary,
     Lattice *lattice) {
   for (Node *rnode = lattice->begin_nodes(pos);
        rnode != NULL; rnode = rnode->bnext) {

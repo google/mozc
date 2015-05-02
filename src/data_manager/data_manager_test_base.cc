@@ -39,7 +39,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "converter/connector.h"
-#include "converter/connector_interface.h"
 #include "converter/node.h"
 #include "converter/segmenter_base.h"
 #include "converter/segmenter_interface.h"
@@ -170,7 +169,7 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
 }
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
-  scoped_ptr<const ConnectorInterface> connector(
+  scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(*data_manager_));
   ASSERT_TRUE(connector.get() != NULL);
 
@@ -187,7 +186,7 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
     const int actual_cost =
         connector->GetTransitionCost(reader.rid_of_left_node(),
                                      reader.lid_of_right_node());
-    if (cost == ConnectorInterface::kInvalidCost) {
+    if (cost == Connector::kInvalidCost) {
       EXPECT_EQ(cost, actual_cost);
     } else {
       EXPECT_TRUE(cost == actual_cost ||

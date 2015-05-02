@@ -46,7 +46,6 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
@@ -155,7 +154,7 @@ class TestableDictionaryPredictor : public DictionaryPredictor {
       const ImmutableConverterInterface *immutable_converter,
       const DictionaryInterface *dictionary,
       const DictionaryInterface *suffix_dictionary,
-      const ConnectorInterface *connector,
+      const Connector *connector,
       const SegmenterInterface *segmenter,
       const POSMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter)
@@ -267,7 +266,7 @@ class MockDataAndPredictor {
  private:
   const POSMatcher *pos_matcher_;
   scoped_ptr<SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const ConnectorInterface> connector_;
+  scoped_ptr<const Connector> connector_;
   scoped_ptr<const SegmenterInterface> segmenter_;
   scoped_ptr<const DictionaryInterface> suffix_dictionary_;
   scoped_ptr<const DictionaryInterface> dictionary_;
@@ -1558,7 +1557,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
       new ImmutableConverterMock);
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const ConnectorInterface> connector(
+  scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));
@@ -3130,7 +3129,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
       new ImmutableConverterMock);
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const ConnectorInterface> connector(
+  scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));

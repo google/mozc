@@ -42,7 +42,7 @@
 
 namespace mozc {
 
-class ConnectorInterface;
+class Connector;
 class ConversionRequest;
 class ConverterInterface;
 class DictionaryInterface;
@@ -61,7 +61,7 @@ class DictionaryPredictor : public PredictorInterface {
                       const ImmutableConverterInterface *immutable_converter,
                       const DictionaryInterface *dictionary,
                       const DictionaryInterface *suffix_dictionary,
-                      const ConnectorInterface *connector,
+                      const Connector *connector,
                       const SegmenterInterface *segmenter,
                       const POSMatcher *pos_matcher,
                       const SuggestionFilter *suggestion_filter);
@@ -423,7 +423,7 @@ class DictionaryPredictor : public PredictorInterface {
   const ImmutableConverterInterface *immutable_converter_;
   const DictionaryInterface *dictionary_;
   const DictionaryInterface *suffix_dictionary_;
-  const ConnectorInterface *connector_;
+  const Connector *connector_;
   const SegmenterInterface *segmenter_;
   const SuggestionFilter *suggestion_filter_;
   const uint16 counter_suffix_word_id_;

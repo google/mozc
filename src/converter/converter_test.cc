@@ -42,7 +42,6 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
@@ -177,7 +176,7 @@ class ConverterTest : public ::testing::Test {
     scoped_ptr<DictionaryInterface> user_dictionary;
     scoped_ptr<SuppressionDictionary> suppression_dictionary;
     scoped_ptr<DictionaryInterface> suffix_dictionary;
-    scoped_ptr<const ConnectorInterface> connector;
+    scoped_ptr<const Connector> connector;
     scoped_ptr<const SegmenterInterface> segmenter;
     scoped_ptr<DictionaryInterface> dictionary;
     scoped_ptr<const PosGroup> pos_group;
@@ -1243,7 +1242,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       new PosGroup(data_manager.GetPosGroupData()));
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const ConnectorInterface> connector(
+  scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));

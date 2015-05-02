@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "converter/connector_interface.h"
+#include "converter/connector.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/segments.h"
@@ -60,7 +60,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
       const DictionaryInterface *dictionary,
       const DictionaryInterface *suffix_dictionary,
       const dictionary::SuppressionDictionary *suppression_dictionary,
-      const ConnectorInterface *connector,
+      const Connector *connector,
       const SegmenterInterface *segmenter,
       const POSMatcher *pos_matcher,
       const PosGroup *pos_group,
@@ -183,7 +183,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   const DictionaryInterface *dictionary_;
   const DictionaryInterface *suffix_dictionary_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  const ConnectorInterface *connector_;
+  const Connector *connector_;
   const SegmenterInterface *segmenter_;
   const POSMatcher *pos_matcher_;
   const PosGroup *pos_group_;

@@ -42,7 +42,6 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/lattice.h"
 #include "converter/segmenter_base.h"
@@ -163,7 +162,7 @@ class MockDataAndImmutableConverter {
  private:
   scoped_ptr<const DataManagerInterface> data_manager_;
   scoped_ptr<const SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const ConnectorInterface> connector_;
+  scoped_ptr<const Connector> connector_;
   scoped_ptr<const SegmenterInterface> segmenter_;
   scoped_ptr<const DictionaryInterface> suffix_dictionary_;
   scoped_ptr<const DictionaryInterface> dictionary_;

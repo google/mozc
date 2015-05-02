@@ -42,7 +42,7 @@
 
 namespace mozc {
 
-class ConnectorInterface;
+class Connector;
 class Lattice;
 class POSMatcher;
 class SegmenterInterface;
@@ -83,7 +83,7 @@ class NBestGenerator {
   NBestGenerator(
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const SegmenterInterface *segmenter,
-      const ConnectorInterface *connector,
+      const Connector *connector,
       const POSMatcher *pos_matcher,
       const Lattice *lattice,
       const SuggestionFilter *suggestion_filter);
@@ -172,7 +172,7 @@ class NBestGenerator {
   // References to relevant modules.
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const SegmenterInterface *segmenter_;
-  const ConnectorInterface *connector_;
+  const Connector *connector_;
   const POSMatcher *pos_matcher_;
   const Lattice *lattice_;
 

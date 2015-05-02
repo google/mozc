@@ -39,7 +39,6 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
