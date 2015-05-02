@@ -47,7 +47,7 @@
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
-#include "converter/segmenter_base.h"
+#include "converter/segmenter.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -208,7 +208,7 @@ class ConverterTest : public ::testing::Test {
     ret->suffix_dictionary.reset(
         CreateSuffixDictionaryFromDataManager(data_manager));
     ret->connector.reset(Connector::CreateFromDataManager(data_manager));
-    ret->segmenter.reset(SegmenterBase::CreateFromDataManager(data_manager));
+    ret->segmenter.reset(Segmenter::CreateFromDataManager(data_manager));
     ret->immutable_converter.reset(
         new ImmutableConverterImpl(ret->dictionary.get(),
                                    ret->suffix_dictionary.get(),
@@ -1245,7 +1245,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(data_manager));
+      Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   scoped_ptr<ImmutableConverterInterface> immutable_converter(

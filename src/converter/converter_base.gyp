@@ -39,10 +39,10 @@
   },
   'targets': [
     {
-      'target_name': 'segmenter_base',
+      'target_name': 'segmenter',
       'type': 'static_library',
       'sources': [
-        'segmenter_base.cc',
+        'segmenter.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',

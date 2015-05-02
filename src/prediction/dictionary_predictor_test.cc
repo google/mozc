@@ -53,8 +53,7 @@
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_allocator.h"
-#include "converter/segmenter_base.h"
-#include "converter/segmenter_interface.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -224,7 +223,7 @@ class MockDataAndPredictor {
     connector_.reset(Connector::CreateFromDataManager(data_manager));
     CHECK(connector_.get());
 
-    segmenter_.reset(SegmenterBase::CreateFromDataManager(data_manager));
+    segmenter_.reset(Segmenter::CreateFromDataManager(data_manager));
     CHECK(segmenter_.get());
 
     pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
@@ -1563,7 +1562,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(data_manager));
+      Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   scoped_ptr<TestableDictionaryPredictor> predictor(
@@ -3135,7 +3134,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
   scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(data_manager));
+      Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   scoped_ptr<TestableDictionaryPredictor> predictor(

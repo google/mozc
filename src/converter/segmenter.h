@@ -27,10 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Segmenter implementation base class
-
-#ifndef MOZC_CONVERTER_SEGMENTER_BASE_H_
-#define MOZC_CONVERTER_SEGMENTER_BASE_H_
+#ifndef MOZC_CONVERTER_SEGMENTER_H_
+#define MOZC_CONVERTER_SEGMENTER_H_
 
 #include "base/port.h"
 #include "converter/segmenter_interface.h"
@@ -41,17 +39,17 @@ class DataManagerInterface;
 struct Node;
 struct BoundaryData;
 
-class SegmenterBase : public SegmenterInterface {
+class Segmenter : public SegmenterInterface {
  public:
-  static SegmenterBase *CreateFromDataManager(
+  static Segmenter *CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
-  // This class does not have the ownership of pointer parameters.
-  SegmenterBase(size_t l_num_elements, size_t r_num_elements,
-                const uint16 *l_table, const uint16 *r_table,
-                size_t bitarray_num_bytes, const char *bitarray_data,
-                const BoundaryData *boundary_data);
-  virtual ~SegmenterBase();
+  // This class does not take the ownership of pointer parameters.
+  Segmenter(size_t l_num_elements, size_t r_num_elements,
+            const uint16 *l_table, const uint16 *r_table,
+            size_t bitarray_num_bytes, const char *bitarray_data,
+            const BoundaryData *boundary_data);
+  virtual ~Segmenter();
 
   virtual bool IsBoundary(const Node *lnode, const Node *rnode,
                           bool is_single_segment) const;
@@ -73,4 +71,5 @@ class SegmenterBase : public SegmenterInterface {
 };
 
 }  // namespace mozc
-#endif  // MOZC_CONVERTER_SEGMENTER_BASE_H_
+
+#endif  // MOZC_CONVERTER_SEGMENTER_H_

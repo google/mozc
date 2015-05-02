@@ -47,7 +47,7 @@
         '../converter/converter_base.gyp:connector',
         '../converter/converter_base.gyp:converter_mock',
         '../converter/converter_base.gyp:immutable_converter',
-        '../converter/converter_base.gyp:segmenter_base',
+        '../converter/converter_base.gyp:segmenter',
         '../converter/converter_base.gyp:segments',
         '../data_manager/data_manager.gyp:user_pos_manager',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',

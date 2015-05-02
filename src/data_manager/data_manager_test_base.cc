@@ -41,7 +41,6 @@
 #include "converter/connector.h"
 #include "converter/node.h"
 #include "converter/segmenter_base.h"
-#include "converter/segmenter_interface.h"
 #include "data_manager/connection_file_reader.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -84,8 +83,8 @@ DataManagerTestBase::~DataManagerTestBase() {}
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
   // the expected boundary rule.
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
   for (size_t rid = 0; rid < lsize_; ++rid) {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       EXPECT_EQ(is_boundary_(rid, lid),
@@ -95,8 +94,8 @@ void DataManagerTestBase::SegmenterTest_SameAsInternal() {
 }
 
 void DataManagerTestBase::SegmenterTest_LNodeTest() {
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
 
   // lnode is BOS
   Node lnode, rnode;
@@ -113,8 +112,8 @@ void DataManagerTestBase::SegmenterTest_LNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_RNodeTest() {
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
 
   // rnode is EOS
   Node lnode, rnode;
@@ -131,8 +130,8 @@ void DataManagerTestBase::SegmenterTest_RNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_NodeTest() {
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
 
   Node lnode, rnode;
   lnode.node_type = Node::NOR_NODE;
@@ -149,8 +148,8 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
   const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
 
   Node lnode, rnode;

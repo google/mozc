@@ -44,7 +44,7 @@
 #include "converter/connector.h"
 #include "converter/conversion_request.h"
 #include "converter/lattice.h"
-#include "converter/segmenter_base.h"
+#include "converter/segmenter.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -130,7 +130,7 @@ class MockDataAndImmutableConverter {
     connector_.reset(Connector::CreateFromDataManager(*data_manager_));
     CHECK(connector_.get());
 
-    segmenter_.reset(SegmenterBase::CreateFromDataManager(*data_manager_));
+    segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager_));
     CHECK(segmenter_.get());
 
     pos_group_.reset(new PosGroup(data_manager_->GetPosGroupData()));

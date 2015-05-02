@@ -44,7 +44,7 @@
         '../base/base.gyp:base',
         '../converter/converter.gyp:converter',
         '../converter/converter_base.gyp:connector',
-        '../converter/converter_base.gyp:segmenter_base',
+        '../converter/converter_base.gyp:segmenter',
         '../dictionary/dictionary.gyp:dictionary_impl',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:dictionary_protocol',
