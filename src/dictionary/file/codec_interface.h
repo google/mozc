@@ -37,18 +37,19 @@
 #include "dictionary/file/section.h"
 
 namespace mozc {
+namespace dictionary {
 
 class DictionaryFileCodecInterface {
  public:
-  // Write sections to output file stream
+  // Writes sections to an output file stream.
   virtual void WriteSections(const vector<DictionaryFileSection> &sections,
                              ostream *ofs) const = 0;
 
-  // Read sections from memory image
+  // Reads sections from memory image.
   virtual bool ReadSections(const char *image, int length,
                             vector<DictionaryFileSection> *sections) const = 0;
 
-  // Get section name
+  // Gets section name.
   virtual string GetSectionName(const string &name) const = 0;
 
  protected:
@@ -61,16 +62,17 @@ class DictionaryFileCodecInterface {
 
 class DictionaryFileCodecFactory {
  public:
-  // return singleton object
+  // Returns the singleton instance.
   static DictionaryFileCodecInterface *GetCodec();
 
-  // dependency injectin for unittesting
+  // For dependency injectin in unit tests.
   static void SetCodec(DictionaryFileCodecInterface *codec);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(DictionaryFileCodecFactory);
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_FILE_CODEC_INTERFACE_H_

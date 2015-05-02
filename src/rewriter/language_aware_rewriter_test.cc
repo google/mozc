@@ -55,9 +55,11 @@
 
 DECLARE_string(test_tmpdir);
 
-namespace mozc {
+using mozc::dictionary::DictionaryMock;
 
+namespace mozc {
 namespace {
+
 void InsertASCIISequence(const string &text, composer::Composer *composer) {
   for (size_t i = 0; i < text.size(); ++i) {
     commands::KeyEvent key;
@@ -65,6 +67,7 @@ void InsertASCIISequence(const string &text, composer::Composer *composer) {
     composer->InsertCharacterKeyEvent(key);
   }
 }
+
 }  // namespace
 
 class LanguageAwareRewriterTest : public testing::Test {

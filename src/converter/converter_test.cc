@@ -81,6 +81,7 @@
 DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::SuffixDictionary;
 using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;

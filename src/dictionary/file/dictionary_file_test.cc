@@ -30,6 +30,7 @@
 #include "dictionary/file/dictionary_file.h"
 
 #include <cstdio>
+#include <string>
 
 #include "base/file_util.h"
 #include "base/flags.h"
@@ -41,6 +42,7 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace dictionary {
 namespace {
 
 TEST(DictionaryFileTest, Basic) {
@@ -89,4 +91,5 @@ TEST(DictionaryFileTest, Basic) {
 }
 
 }  // namespace
+}  // namespace dictionary
 }  // namespace mozc

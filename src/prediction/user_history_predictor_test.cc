@@ -57,6 +57,7 @@ DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_user_history_predictor);
 
 using mozc::commands::Request;
+using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {

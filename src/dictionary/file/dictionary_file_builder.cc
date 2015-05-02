@@ -38,6 +38,7 @@
 #include "dictionary/file/section.h"
 
 namespace mozc {
+namespace dictionary {
 
 DictionaryFileBuilder::DictionaryFileBuilder() {}
 
@@ -62,16 +63,15 @@ bool DictionaryFileBuilder::AddSectionFromFile(
   ifs.seekg(0, ios::end);
   const int len = ifs.tellg();
 
-  // reads the file
+  // Reads the file
   ifs.seekg(0, ios::beg);
   char *ptr = new char[len];
   ifs.read(ptr, len);
 
   sections_.push_back(DictionaryFileSection(ptr, len, ""));
 
-  const string name =
+  sections_.back().name =
       DictionaryFileCodecFactory::GetCodec()->GetSectionName(section_name);
-  sections_.back().name = name;
 
   return true;
 }
@@ -82,4 +82,6 @@ void DictionaryFileBuilder::WriteImageToFile(const string &file_name) const {
   DictionaryFileCodecFactory::GetCodec()->WriteSections(sections_, &ofs);
   LOG(INFO) << "Generated";
 }
+
+}  // namespace dictionary
 }  // namespace mozc

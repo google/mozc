@@ -40,9 +40,9 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-using mozc::dictionary::CollectTokenCallback;
-
 namespace mozc {
+namespace dictionary {
+namespace {
 
 class DictionaryMockTest : public ::testing::Test {
  protected:
@@ -236,4 +236,6 @@ TEST_F(DictionaryMockTest, LookupExact) {
   EXPECT_TRUE(callback.tokens().empty());
 }
 
+}  // namespace
+}  // namespace dictionary
 }  // namespace mozc

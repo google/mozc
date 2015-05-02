@@ -45,11 +45,9 @@
 #include "storage/louds/louds_trie.h"
 
 namespace mozc {
-
-class DictionaryFile;
-
 namespace dictionary {
 
+class DictionaryFile;
 class SystemDictionaryCodecInterface;
 
 class SystemDictionary : public DictionaryInterface {

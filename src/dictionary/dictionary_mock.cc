@@ -41,6 +41,7 @@
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {
+namespace dictionary {
 namespace {
 
 const int kDummyPosId = 1;
@@ -258,4 +259,5 @@ void DictionaryMock::AddLookupExact(const string &str,
       CreateToken(str, key, value, attributes));
 }
 
+}  // namespace dictionary
 }  // namespace mozc

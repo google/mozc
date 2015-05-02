@@ -62,6 +62,7 @@
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {
+namespace dictionary {
 
 class DictionaryMock : public DictionaryInterface {
  public:
@@ -127,6 +128,8 @@ class DictionaryMock : public DictionaryInterface {
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryMock);
 };
+
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_DICTIONARY_MOCK_H_

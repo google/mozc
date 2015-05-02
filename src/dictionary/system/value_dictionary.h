@@ -42,21 +42,18 @@
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
-
-namespace dictionary {
-class SystemDictionaryCodecInterface;
-}  // namespace dictionary
-
 namespace storage {
 namespace louds {
 class LoudsTrie;
 }  // namespace louds
 }  // namespace storage
 
-class DictionaryFile;
 class POSMatcher;
 
 namespace dictionary {
+
+class DictionaryFile;
+class SystemDictionaryCodecInterface;
 
 class ValueDictionary : public DictionaryInterface {
  public:

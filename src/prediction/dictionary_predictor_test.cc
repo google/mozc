@@ -74,6 +74,7 @@
 #include "transliteration/transliteration.h"
 
 using ::testing::_;
+using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::SuffixDictionary;
 using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;

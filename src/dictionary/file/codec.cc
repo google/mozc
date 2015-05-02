@@ -42,6 +42,7 @@
 
 
 namespace mozc {
+namespace dictionary {
 namespace {
 
 void WriteInt(int value, ostream *ofs) {
@@ -142,13 +143,13 @@ void DictionaryFileCodec::Pad4(int length, ostream *ofs) {
 }
 
 namespace {
-DictionaryFileCodecInterface *g_dictionary_file_codec = NULL;
+DictionaryFileCodecInterface *g_dictionary_file_codec = nullptr;
 }  // namespace
 
 typedef DictionaryFileCodec DefaultCodec;
 
 DictionaryFileCodecInterface *DictionaryFileCodecFactory::GetCodec() {
-  if (g_dictionary_file_codec == NULL) {
+  if (g_dictionary_file_codec == nullptr) {
     return Singleton<DefaultCodec>::get();
   } else {
     return g_dictionary_file_codec;
@@ -159,4 +160,5 @@ void DictionaryFileCodecFactory::SetCodec(DictionaryFileCodecInterface *codec) {
   g_dictionary_file_codec = codec;
 }
 
+}  // namespace dictionary
 }  // namespace mozc

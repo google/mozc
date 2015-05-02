@@ -41,6 +41,7 @@
 #include "dictionary/file/section.h"
 
 namespace mozc {
+namespace dictionary {
 
 
 class DictionaryFileCodec : public DictionaryFileCodecInterface {
@@ -66,6 +67,7 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
   DISALLOW_COPY_AND_ASSIGN(DictionaryFileCodec);
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_FILE_CODEC_H_
