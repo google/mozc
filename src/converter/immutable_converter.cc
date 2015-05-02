@@ -52,7 +52,7 @@
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "converter/node_list_builder.h"
-#include "converter/segmenter_interface.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
@@ -275,7 +275,7 @@ ImmutableConverterImpl::ImmutableConverterImpl(
     const DictionaryInterface *suffix_dictionary,
     const SuppressionDictionary *suppression_dictionary,
     const Connector *connector,
-    const SegmenterInterface *segmenter,
+    const Segmenter *segmenter,
     const POSMatcher *pos_matcher,
     const PosGroup *pos_group,
     const SuggestionFilter *suggestion_filter)
@@ -650,7 +650,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
           if ((lnode->value.size() + rnode->value.size())
               == compound_node->value.size() &&
               (lnode->value + rnode->value) == compound_node->value &&
-              segmenter_->IsBoundary(lnode, rnode, false)) {   // Constraint 3.
+              segmenter_->IsBoundary(*lnode, *rnode, false)) {  // Constraint 3.
             const int32 cost = lnode->wcost + GetCost(lnode, rnode);
             if (cost < best_cost) {   // choose the smallest ones
               best_last_name_node = lnode;
@@ -1767,7 +1767,7 @@ bool ImmutableConverterImpl::IsSegmentEndNode(
   }
 
   // Grammatically segmented.
-  if (segmenter_->IsBoundary(node, node->next, is_single_segment)) {
+  if (segmenter_->IsBoundary(*node, *node->next, is_single_segment)) {
     return true;
   }
 

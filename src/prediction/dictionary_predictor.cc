@@ -52,7 +52,7 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
-#include "converter/segmenter_interface.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -294,7 +294,7 @@ DictionaryPredictor::DictionaryPredictor(
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary,
     const Connector *connector,
-    const SegmenterInterface *segmenter,
+    const Segmenter *segmenter,
     const POSMatcher *pos_matcher,
     const SuggestionFilter *suggestion_filter)
     : converter_(converter),

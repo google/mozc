@@ -42,11 +42,11 @@ Segmenter *Segmenter::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
   size_t l_num_elements = 0;
   size_t r_num_elements = 0;
-  const uint16 *l_table = NULL;
-  const uint16 *r_table = NULL;
+  const uint16 *l_table = nullptr;
+  const uint16 *r_table = nullptr;
   size_t bitarray_num_bytes = 0;
-  const char *bitarray_data = NULL;
-  const BoundaryData *boundary_data = NULL;
+  const char *bitarray_data = nullptr;
+  const BoundaryData *boundary_data = nullptr;
   data_manager.GetSegmenterData(&l_num_elements, &r_num_elements,
                                 &l_table, &r_table,
                                 &bitarray_num_bytes, &bitarray_data,
@@ -74,16 +74,14 @@ Segmenter::Segmenter(
 
 Segmenter::~Segmenter() {}
 
-bool Segmenter::IsBoundary(const Node *lnode, const Node *rnode,
+bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
                            bool is_single_segment) const {
-  DCHECK(lnode);
-  DCHECK(rnode);
-  if (lnode->node_type == Node::BOS_NODE ||
-      rnode->node_type == Node::EOS_NODE) {
+  if (lnode.node_type == Node::BOS_NODE ||
+      rnode.node_type == Node::EOS_NODE) {
     return true;
   }
 
-  // return always false in prediction mode.
+  // Always return false in prediction mode.
   // This implies that converter always returns single-segment-result
   // in prediction mode.
   if (is_single_segment) {
@@ -97,11 +95,11 @@ bool Segmenter::IsBoundary(const Node *lnode, const Node *rnode,
   // If we segment "に書く" into two segments, "二角" is never be shown.
   // There exits some implicit assumpution that user expects that his/her input
   // becomes one bunsetu. So, it would be better to keep "二角" even after "紙".
-  if (lnode->attributes & Node::STARTS_WITH_PARTICLE) {
+  if (lnode.attributes & Node::STARTS_WITH_PARTICLE) {
     return false;
   }
 
-  return IsBoundary(lnode->rid, rnode->lid);
+  return IsBoundary(lnode.rid, rnode.lid);
 }
 
 bool Segmenter::IsBoundary(uint16 rid, uint16 lid) const {

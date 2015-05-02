@@ -49,6 +49,7 @@
         '../composer/composer.gyp:composer',
         '../converter/converter_base.gyp:conversion_request',
         '../converter/converter_base.gyp:immutable_converter',
+        '../converter/converter_base.gyp:segmenter',
         '../converter/converter_base.gyp:segments',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary.gyp:suffix_dictionary',

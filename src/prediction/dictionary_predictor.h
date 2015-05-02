@@ -48,7 +48,7 @@ class ConverterInterface;
 class DictionaryInterface;
 class ImmutableConverterInterface;
 class POSMatcher;
-class SegmenterInterface;
+class Segmenter;
 class Segments;
 class SuggestionFilter;
 
@@ -62,7 +62,7 @@ class DictionaryPredictor : public PredictorInterface {
                       const DictionaryInterface *dictionary,
                       const DictionaryInterface *suffix_dictionary,
                       const Connector *connector,
-                      const SegmenterInterface *segmenter,
+                      const Segmenter *segmenter,
                       const POSMatcher *pos_matcher,
                       const SuggestionFilter *suggestion_filter);
   virtual ~DictionaryPredictor();
@@ -424,7 +424,7 @@ class DictionaryPredictor : public PredictorInterface {
   const DictionaryInterface *dictionary_;
   const DictionaryInterface *suffix_dictionary_;
   const Connector *connector_;
-  const SegmenterInterface *segmenter_;
+  const Segmenter *segmenter_;
   const SuggestionFilter *suggestion_filter_;
   const uint16 counter_suffix_word_id_;
   const string predictor_name_;

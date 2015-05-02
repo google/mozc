@@ -48,7 +48,6 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/segmenter.h"
-#include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -177,7 +176,7 @@ class ConverterTest : public ::testing::Test {
     scoped_ptr<SuppressionDictionary> suppression_dictionary;
     scoped_ptr<DictionaryInterface> suffix_dictionary;
     scoped_ptr<const Connector> connector;
-    scoped_ptr<const SegmenterInterface> segmenter;
+    scoped_ptr<const Segmenter> segmenter;
     scoped_ptr<DictionaryInterface> dictionary;
     scoped_ptr<const PosGroup> pos_group;
     scoped_ptr<const SuggestionFilter> suggestion_filter;
@@ -1244,7 +1243,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const SegmenterInterface> segmenter(
+  scoped_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));

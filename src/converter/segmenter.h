@@ -31,7 +31,6 @@
 #define MOZC_CONVERTER_SEGMENTER_H_
 
 #include "base/port.h"
-#include "converter/segmenter_interface.h"
 
 namespace mozc {
 
@@ -39,7 +38,7 @@ class DataManagerInterface;
 struct Node;
 struct BoundaryData;
 
-class Segmenter : public SegmenterInterface {
+class Segmenter {
  public:
   static Segmenter *CreateFromDataManager(
       const DataManagerInterface &data_manager);
@@ -49,16 +48,16 @@ class Segmenter : public SegmenterInterface {
             const uint16 *l_table, const uint16 *r_table,
             size_t bitarray_num_bytes, const char *bitarray_data,
             const BoundaryData *boundary_data);
-  virtual ~Segmenter();
+  ~Segmenter();
 
-  virtual bool IsBoundary(const Node *lnode, const Node *rnode,
-                          bool is_single_segment) const;
+  bool IsBoundary(const Node &lnode, const Node &rnode,
+                  bool is_single_segment) const;
 
-  virtual bool IsBoundary(uint16 rid, uint16 lid) const;
+  bool IsBoundary(uint16 rid, uint16 lid) const;
 
-  virtual int32 GetPrefixPenalty(uint16 lid) const;
+  int32 GetPrefixPenalty(uint16 lid) const;
 
-  virtual int32 GetSuffixPenalty(uint16 rid) const;
+  int32 GetSuffixPenalty(uint16 rid) const;
 
  private:
   const size_t l_num_elements_;
@@ -68,6 +67,8 @@ class Segmenter : public SegmenterInterface {
   const size_t bitarray_num_bytes_;
   const char *bitarray_data_;
   const BoundaryData *boundary_data_;
+
+  DISALLOW_COPY_AND_ASSIGN(Segmenter);
 };
 
 }  // namespace mozc

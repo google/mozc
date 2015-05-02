@@ -157,7 +157,7 @@ class TestableDictionaryPredictor : public DictionaryPredictor {
       const DictionaryInterface *dictionary,
       const DictionaryInterface *suffix_dictionary,
       const Connector *connector,
-      const SegmenterInterface *segmenter,
+      const Segmenter *segmenter,
       const POSMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter)
       : DictionaryPredictor(converter,
@@ -269,7 +269,7 @@ class MockDataAndPredictor {
   const POSMatcher *pos_matcher_;
   scoped_ptr<SuppressionDictionary> suppression_dictionary_;
   scoped_ptr<const Connector> connector_;
-  scoped_ptr<const SegmenterInterface> segmenter_;
+  scoped_ptr<const Segmenter> segmenter_;
   scoped_ptr<const DictionaryInterface> suffix_dictionary_;
   scoped_ptr<const DictionaryInterface> dictionary_;
   DictionaryMock *dictionary_mock_;
@@ -1561,7 +1561,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const SegmenterInterface> segmenter(
+  scoped_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
@@ -3133,7 +3133,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const SegmenterInterface> segmenter(
+  scoped_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));

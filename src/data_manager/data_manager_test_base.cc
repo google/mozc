@@ -40,7 +40,7 @@
 #include "base/util.h"
 #include "converter/connector.h"
 #include "converter/node.h"
-#include "converter/segmenter_base.h"
+#include "converter/segmenter.h"
 #include "data_manager/connection_file_reader.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -105,8 +105,8 @@ void DataManagerTestBase::SegmenterTest_LNodeTest() {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       lnode.rid = rid;
       lnode.lid = lid;
-      EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, false));
-      EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, true));
+      EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, false));
+      EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, true));
     }
   }
 }
@@ -123,8 +123,8 @@ void DataManagerTestBase::SegmenterTest_RNodeTest() {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       lnode.rid = rid;
       lnode.lid = lid;
-      EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, false));
-      EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, true));
+      EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, false));
+      EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, true));
     }
   }
 }
@@ -141,8 +141,8 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
       lnode.rid = rid;
       rnode.lid = lid;
       EXPECT_EQ(segmenter->IsBoundary(rid, lid),
-                segmenter->IsBoundary(&lnode, &rnode, false));
-      EXPECT_FALSE(segmenter->IsBoundary(&lnode, &rnode, true));
+                segmenter->IsBoundary(lnode, rnode, false));
+      EXPECT_FALSE(segmenter->IsBoundary(lnode, rnode, true));
     }
   }
 }
@@ -161,10 +161,10 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
   lnode.rid = pos_matcher->GetAcceptableParticleAtBeginOfSegmentId();
   // "名詞,サ変".
   rnode.lid = pos_matcher->GetUnknownId();
-  EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, false));
+  EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, false));
 
   lnode.attributes |= Node::STARTS_WITH_PARTICLE;
-  EXPECT_FALSE(segmenter->IsBoundary(&lnode, &rnode, false));
+  EXPECT_FALSE(segmenter->IsBoundary(lnode, rnode, false));
 }
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {

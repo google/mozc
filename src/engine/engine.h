@@ -45,7 +45,7 @@ class DictionaryInterface;
 class ImmutableConverterInterface;
 class PredictorInterface;
 class RewriterInterface;
-class SegmenterInterface;
+class Segmenter;
 class SuggestionFilter;
 class UserDataManagerInterface;
 
@@ -78,7 +78,7 @@ class Engine : public EngineInterface {
  private:
   scoped_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   scoped_ptr<const Connector> connector_;
-  scoped_ptr<const SegmenterInterface> segmenter_;
+  scoped_ptr<const Segmenter> segmenter_;
   scoped_ptr<dictionary::UserDictionary> user_dictionary_;
   scoped_ptr<DictionaryInterface> suffix_dictionary_;
   scoped_ptr<DictionaryInterface> dictionary_;

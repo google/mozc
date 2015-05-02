@@ -45,7 +45,7 @@ namespace mozc {
 class Connector;
 class Lattice;
 class POSMatcher;
-class SegmenterInterface;
+class Segmenter;
 class SuggestionFilter;
 struct Node;
 
@@ -82,7 +82,7 @@ class NBestGenerator {
   // Try to enumurate N-best results between begin_node and end_node.
   NBestGenerator(
       const dictionary::SuppressionDictionary *suppression_dictionary,
-      const SegmenterInterface *segmenter,
+      const Segmenter *segmenter,
       const Connector *connector,
       const POSMatcher *pos_matcher,
       const Lattice *lattice,
@@ -171,7 +171,7 @@ class NBestGenerator {
 
   // References to relevant modules.
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  const SegmenterInterface *segmenter_;
+  const Segmenter *segmenter_;
   const Connector *connector_;
   const POSMatcher *pos_matcher_;
   const Lattice *lattice_;

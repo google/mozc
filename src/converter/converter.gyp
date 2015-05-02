@@ -52,6 +52,7 @@
         'converter_base.gyp:conversion_request',
         'converter_base.gyp:immutable_converter',
         'converter_base.gyp:immutable_converter_interface',
+        'converter_base.gyp:segmenter',
         'converter_base.gyp:segments',
       ],
     },

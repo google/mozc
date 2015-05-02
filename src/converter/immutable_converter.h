@@ -51,7 +51,7 @@ class Lattice;
 class NBestGenerator;
 class POSMatcher;
 class PosGroup;
-class SegmenterInterface;
+class Segmenter;
 class SuggestionFilter;
 
 class ImmutableConverterImpl : public ImmutableConverterInterface {
@@ -61,7 +61,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
       const DictionaryInterface *suffix_dictionary,
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const Connector *connector,
-      const SegmenterInterface *segmenter,
+      const Segmenter *segmenter,
       const POSMatcher *pos_matcher,
       const PosGroup *pos_group,
       const SuggestionFilter *suggestion_filter);
@@ -184,7 +184,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   const DictionaryInterface *suffix_dictionary_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const Connector *connector_;
-  const SegmenterInterface *segmenter_;
+  const Segmenter *segmenter_;
   const POSMatcher *pos_matcher_;
   const PosGroup *pos_group_;
   const SuggestionFilter *suggestion_filter_;

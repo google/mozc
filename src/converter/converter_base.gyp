@@ -86,6 +86,7 @@
         '../transliteration/transliteration.gyp:transliteration',
         'connector',
         'lattice',
+        'segmenter',
       ],
     },
     {
@@ -127,6 +128,7 @@
         '../session/session_base.gyp:session_protocol',
         'connector',
         'immutable_converter_interface',
+        'segmenter',
         'segments',
       ],
     },

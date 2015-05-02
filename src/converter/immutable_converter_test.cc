@@ -45,7 +45,6 @@
 #include "converter/conversion_request.h"
 #include "converter/lattice.h"
 #include "converter/segmenter.h"
-#include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -163,7 +162,7 @@ class MockDataAndImmutableConverter {
   scoped_ptr<const DataManagerInterface> data_manager_;
   scoped_ptr<const SuppressionDictionary> suppression_dictionary_;
   scoped_ptr<const Connector> connector_;
-  scoped_ptr<const SegmenterInterface> segmenter_;
+  scoped_ptr<const Segmenter> segmenter_;
   scoped_ptr<const DictionaryInterface> suffix_dictionary_;
   scoped_ptr<const DictionaryInterface> dictionary_;
   scoped_ptr<const PosGroup> pos_group_;
