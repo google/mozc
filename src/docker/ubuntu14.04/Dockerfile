@@ -76,7 +76,7 @@ ENV PATH $PATH:/home/mozc_builder/work/depot_tools
 # check out Mozc source
 RUN mkdir -p /home/mozc_builder/work/mozc
 WORKDIR /home/mozc_builder/work/mozc
-RUN gclient config http://mozc.googlecode.com/svn/trunk/src
+RUN gclient config https://github.com/google/mozc.git --name=. --deps-file=src/DEPS
 RUN gclient sync
 
 WORKDIR /home/mozc_builder/work/mozc/src
