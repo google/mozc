@@ -58,6 +58,7 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
+#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
@@ -81,15 +82,14 @@
 DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::SuffixDictionary;
+using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::ValueDictionary;
 using mozc::usage_stats::UsageStats;
 
 namespace mozc {
-
-struct SuffixToken;
-
 namespace {
 
 class StubPredictor : public PredictorInterface {

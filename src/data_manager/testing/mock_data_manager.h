@@ -31,7 +31,6 @@
 #define MOZC_DATA_MANAGER_TESTING_MOCK_DATA_MANAGER_H_
 
 #include "base/port.h"
-#include "base/singleton.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
 
 namespace mozc {
@@ -50,7 +49,7 @@ class MockDataManager : public MockUserPosManager {
       size_t *bitarray_num_bytes, const char **bitarray_data,
       const BoundaryData **boundary_data) const;
   virtual void GetSystemDictionaryData(const char **data, int *size) const;
-  virtual void GetSuffixDictionaryData(const SuffixToken **data,
+  virtual void GetSuffixDictionaryData(const dictionary::SuffixToken **data,
                                        size_t *size) const;
   virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
                                         size_t *size) const;

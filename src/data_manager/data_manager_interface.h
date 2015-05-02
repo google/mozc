@@ -40,11 +40,12 @@ class POSMatcher;
 struct BoundaryData;
 struct CounterSuffixEntry;
 struct ReadingCorrectionItem;
-struct SuffixToken;
 #ifndef NO_USAGE_REWRITER
 struct ConjugationSuffix;
 struct UsageDictItem;
 #endif  // NO_USAGE_REWRITER
+
+namespace dictionary { struct SuffixToken; }
 
 // Builds those objects that depend on a set of embedded data generated from
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
@@ -76,7 +77,7 @@ class DataManagerInterface {
   virtual void GetSystemDictionaryData(const char **data, int *size) const = 0;
 
   // Returns the address of suffix dictionary and its size.
-  virtual void GetSuffixDictionaryData(const SuffixToken **tokens,
+  virtual void GetSuffixDictionaryData(const dictionary::SuffixToken **tokens,
                                        size_t *size) const = 0;
 
   // Gets a reference to reading correction data array and its size.

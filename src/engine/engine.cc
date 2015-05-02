@@ -59,6 +59,8 @@
 #include "rewriter/rewriter_interface.h"
 
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::SuffixDictionary;
+using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::UserDictionary;

@@ -38,6 +38,7 @@
 #include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -74,6 +75,8 @@
 #include "transliteration/transliteration.h"
 
 using ::testing::_;
+using mozc::dictionary::SuffixDictionary;
+using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 
 DECLARE_string(test_tmpdir);

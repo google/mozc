@@ -70,7 +70,7 @@ class SystemDictionaryDataPacker {
       const BoundaryData *boundary_data,
       size_t boundary_data_count);
   void SetSuffixTokens(
-      const SuffixToken *suffix_tokens,
+      const dictionary::SuffixToken *suffix_tokens,
       size_t suffix_tokens_count);
   void SetReadingCorretions(
       const ReadingCorrectionItem *reading_corrections,

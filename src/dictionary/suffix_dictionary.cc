@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <limits>
 #include <string>
 
 #include "base/iterator_adapter.h"
@@ -41,14 +40,7 @@
 #include "dictionary/suffix_dictionary_token.h"
 
 namespace mozc {
-
-SuffixDictionary::SuffixDictionary(const SuffixToken *suffix_tokens,
-                                   size_t suffix_tokens_size)
-    : suffix_tokens_(suffix_tokens),
-      suffix_tokens_size_(suffix_tokens_size) {}
-
-SuffixDictionary::~SuffixDictionary() {}
-
+namespace dictionary {
 namespace {
 
 struct SuffixTokenKeyAdapter : public AdapterBase<const char *> {
@@ -71,6 +63,13 @@ class ComparePrefix {
 };
 
 }  // namespace
+
+SuffixDictionary::SuffixDictionary(const SuffixToken *suffix_tokens,
+                                   size_t suffix_tokens_size)
+    : suffix_tokens_(suffix_tokens),
+      suffix_tokens_size_(suffix_tokens_size) {}
+
+SuffixDictionary::~SuffixDictionary() {}
 
 bool SuffixDictionary::HasKey(StringPiece key) const {
   // SuffixDictionary::HasKey() is never called and unnecessary to
@@ -140,4 +139,5 @@ void SuffixDictionary::LookupReverse(StringPiece str,
 void SuffixDictionary::LookupExact(StringPiece key, Callback *callback) const {
 }
 
+}  // namespace dictionary
 }  // namespace mozc

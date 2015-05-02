@@ -42,6 +42,8 @@
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
 
+using mozc::dictionary::SuffixToken;
+
 namespace mozc {
 namespace chromeos {
 

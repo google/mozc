@@ -35,6 +35,7 @@
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
+namespace dictionary {
 
 struct SuffixToken;
 
@@ -77,6 +78,7 @@ class SuffixDictionary : public DictionaryInterface {
   DISALLOW_COPY_AND_ASSIGN(SuffixDictionary);
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_SUFFIX_DICTIONARY_H_
