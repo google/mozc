@@ -8,6 +8,16 @@ Android OS, Apple OS X, Chromium OS, GNU/Linux and Microsoft Windows.  This
 open-source project originates from
 [Google Japanese Input](http://www.google.com/intl/ja/ime/).
 
+Build Status
+------------
+
+|         |Android |Windows |OS X |Linux |NaCl |
+|---------|:------:|:------:|:---:|:----:|:---:|
+|**Build**|N/A     | N/A    |[![Build Status](https://travis-ci.org/google/mozc.svg?branch=travis-initial-setup)](https://travis-ci.org/google/mozc) |N/A |N/A |
+
+
+What's Mozc?
+------------
 For historical reasons, the project name *Mozc* has two different meanings:
 
 1. Internal code name of Google Japanese Input that is still commonly used
@@ -17,7 +27,9 @@ For historical reasons, the project name *Mozc* has two different meanings:
 
 In this repository, *Mozc* means the second definition unless otherwise noted.
 
-#License
+License
+-------
+
 All Mozc code written by Google is released under
 [The BSD 3-Clause License](http://opensource.org/licenses/BSD-3-Clause).
 For thrid party code under [src/third_party](src/third_party) directory,
