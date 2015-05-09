@@ -13,7 +13,7 @@ Build Status
 
 |         |Android |Windows |OS X |Linux |NaCl |
 |---------|:------:|:------:|:---:|:----:|:---:|
-|**Build**|N/A     | N/A    |[![Build Status](https://travis-ci.org/google/mozc.svg?branch=master)](https://travis-ci.org/google/mozc) |N/A |N/A |
+|**Build**|N/A     |[![Build status](https://ci.appveyor.com/api/projects/status/qm7q355lenq5ogp6/branch/master?svg=true)](https://ci.appveyor.com/project/google/mozc/branch/master) |[![Build Status](https://travis-ci.org/google/mozc.svg?branch=master)](https://travis-ci.org/google/mozc) |N/A |N/A |
 
 
 What's Mozc?
