@@ -263,7 +263,8 @@ class TokenDecodeIterator {
     }
 
     if (token_info_.accent_encoding_type == TokenInfo::EMBEDDED_IN_TOKEN) {
-      token_.value += "_" + Util::StringPrintf("%d", token_info_.accent_type);
+      token_.value.append(1, '_')
+                  .append(Util::StringPrintf("%d", token_info_.accent_type));
     }
 
     if (token_info_.pos_type == TokenInfo::FREQUENT_POS) {

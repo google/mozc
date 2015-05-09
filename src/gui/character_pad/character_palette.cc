@@ -48,7 +48,6 @@
 
 namespace mozc {
 namespace gui {
-
 namespace {
 
 const char32 kHexBase = 16;
@@ -114,14 +113,15 @@ const CharacterPalette::CP932JumpTo kCP932JumpTo[] = {
   { NULL, 0 }
 };
 
-// add child QTreeWidgetItem with the text "name" to parent.
-// return child item.
+// Adds a child QTreeWidgetItem with the text "name" to parent.
+// Returns the added child item.
 QTreeWidgetItem *AddItem(QTreeWidgetItem *parent, const char *name) {
   QTreeWidgetItem *item = new QTreeWidgetItem(parent);
   item->setText(0, QString::fromUtf8(name));
   parent->addChild(item);
   return item;
 }
+
 }  // namespace
 
 CharacterPalette::CharacterPalette(QWidget *parent)
@@ -485,5 +485,6 @@ bool CharacterPalette::winEvent(MSG *message, long *result) {
   return QWidget::winEvent(message, result);
 }
 #endif  // OS_WIN
+
 }  // namespace gui
 }  // namespace mozc

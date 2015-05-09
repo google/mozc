@@ -33,11 +33,11 @@
 #include <vector>
 
 #include "base/util.h"
-#include "base/version.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace {
+
 const char kSurveyBaseURL[] =
     "http://www.google.com/support/ime/japanese/bin/request.py";
 
@@ -53,7 +53,6 @@ bool FindEncodedParam(const vector<string> &params,
   }
   return false;
 }
-}  // namespace
 
 TEST(URLTest, UninstallationSurveyURL) {
   string url;
@@ -85,4 +84,6 @@ TEST(URLTest, UninstallationSurveyURLWithNoVersion) {
   EXPECT_TRUE(FindEncodedParam(params, "hl", "jp"));
   EXPECT_TRUE(FindEncodedParam(params, "format", "inproduct"));
 }
+
+}  // namespace
 }  // namespace mozc

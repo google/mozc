@@ -28,13 +28,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef OS_WIN
+
 #include "gui/character_pad/windows_selection_handler.h"
 
 #include <windows.h>
 #include <QtCore/QString>
 #include <vector>
+
 #include "base/logging.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace gui {
@@ -74,6 +75,8 @@ void WindowsSelectionHandler::Select(const QString &str) {
     return;
   }
 }
+
 }  // namespace gui
 }  // namespace mozc
+
 #endif   // OS_WIN

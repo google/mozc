@@ -33,6 +33,7 @@
 #include "base/port.h"
 
 namespace mozc {
+
 class Stopwatch {
  public:
   enum StopwatchState {

@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "gui/config_dialog/combobox_delegate.h"
+
 #include <QtGui/QtGui>
 #include <QtGui/QComboBox>
 
@@ -60,8 +61,7 @@ void ComboBoxDelegate::setEditorData(
     QWidget *editor,
     const QModelIndex &index) const {
   QString str = index.model()->data(index, Qt::EditRole).toString();
-  QComboBox *comboBox =
-      static_cast<QComboBox*>(editor);
+  QComboBox *comboBox = static_cast<QComboBox*>(editor);
   if (comboBox == NULL) {
     return;
   }
@@ -71,8 +71,7 @@ void ComboBoxDelegate::setEditorData(
 void ComboBoxDelegate::setModelData(
     QWidget *editor, QAbstractItemModel *model,
     const QModelIndex &index) const {
-  QComboBox *comboBox =
-      static_cast<QComboBox*>(editor);
+  QComboBox *comboBox = static_cast<QComboBox*>(editor);
   if (comboBox == NULL || model == NULL) {
     return;
   }
@@ -94,5 +93,6 @@ void ComboBoxDelegate::CommitAndCloseEditor(const QString &) {
   emit commitData(editor);
   emit closeEditor(editor);
 }
-}  // gui
-}  // mozc
+
+}  // namespace gui
+}  // namespace mozc

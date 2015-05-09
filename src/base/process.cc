@@ -37,7 +37,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <cerrno>
-#endif  // WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
 #include <fcntl.h>
@@ -51,7 +51,7 @@
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
 #include <sys/types.h>
-#endif
+#endif  // OS_LINUX
 
 #include <cstdlib>
 #include <vector>

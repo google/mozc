@@ -29,8 +29,6 @@
 
 #include "base/init.h"
 
-#include <string.h>
-#include "base/util.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -56,7 +54,6 @@ TEST(InitTest, InitBasicTest) {
   RunFinalizers();
   EXPECT_EQ(4, g_counter);
 }
-
 
 }  // namespace
 }  // namespace mozc

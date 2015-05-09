@@ -47,6 +47,7 @@ DECLARE_bool(enable_expansion_for_user_history_predictor);
 
 namespace mozc {
 namespace {
+
 const int kPredictionSize = 100;
 // On Mobile mode PREDICTION (including PARTIAL_PREDICTION) behaves like as
 // conversion so very large limit is preferable.
@@ -263,4 +264,5 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
 
   return result;
 }
+
 }  // namespace mozc

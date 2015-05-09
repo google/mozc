@@ -69,10 +69,8 @@ bool DictionaryFileBuilder::AddSectionFromFile(
   ifs.read(ptr, len);
 
   sections_.push_back(DictionaryFileSection(ptr, len, ""));
-
   sections_.back().name =
       DictionaryFileCodecFactory::GetCodec()->GetSectionName(section_name);
-
   return true;
 }
 

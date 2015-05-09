@@ -35,31 +35,31 @@
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
+namespace mozc {
 namespace {
-class UnnamedEventNotifierThread: public mozc::Thread {
+
+class UnnamedEventNotifierThread : public Thread {
  public:
-  UnnamedEventNotifierThread(mozc::UnnamedEvent *event,
-                             int timeout)
+  UnnamedEventNotifierThread(UnnamedEvent *event, int timeout)
       : event_(event), timeout_(timeout) {}
 
  public:
-  void Run() {
-    mozc::Util::Sleep(timeout_);
+  virtual void Run() {
+    Util::Sleep(timeout_);
     LOG(INFO) << "Notify event";
     event_->Notify();
   }
 
  private:
-  mozc::UnnamedEvent *event_;
+  UnnamedEvent *event_;
   int timeout_;
 
   DISALLOW_COPY_AND_ASSIGN(UnnamedEventNotifierThread);
 };
-}  // namespace
 
 TEST(UnnamedEventTest, UnnamedEventTest) {
   {
-    mozc::UnnamedEvent event;
+    UnnamedEvent event;
     EXPECT_TRUE(event.IsAvailable());
     UnnamedEventNotifierThread t(&event, 400);
     t.Start();
@@ -70,7 +70,7 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
   }
 
   {
-    mozc::UnnamedEvent event;
+    UnnamedEvent event;
     EXPECT_TRUE(event.IsAvailable());
     UnnamedEventNotifierThread t(&event, 100);
     t.Start();
@@ -79,7 +79,7 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
   }
 
   {
-    mozc::UnnamedEvent event;
+    UnnamedEvent event;
     EXPECT_TRUE(event.IsAvailable());
     UnnamedEventNotifierThread t(&event, 3000);
     t.Start();
@@ -90,7 +90,7 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
   }
 
   {
-    mozc::UnnamedEvent event;
+    UnnamedEvent event;
     EXPECT_TRUE(event.IsAvailable());
     UnnamedEventNotifierThread t(&event, 2000);
     t.Start();
@@ -102,15 +102,18 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
 }
 
 TEST(UnnamedEventTest, NotifyBeforeWait) {
-  mozc::UnnamedEvent event;
+  UnnamedEvent event;
   ASSERT_TRUE(event.Notify());
   EXPECT_TRUE(event.Wait(100));
 }
 
 TEST(UnnamedEventTest, DoubleNotifyBeforeWait) {
-  mozc::UnnamedEvent event;
+  UnnamedEvent event;
   ASSERT_TRUE(event.Notify());
   ASSERT_TRUE(event.Notify());
   EXPECT_TRUE(event.Wait(100));
   EXPECT_FALSE(event.Wait(100));
 }
+
+}  // namespace
+}  // namespace mozc

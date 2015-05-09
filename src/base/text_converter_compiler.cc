@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/text_converter.h"
 #include "base/util.h"
