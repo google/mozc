@@ -5,16 +5,15 @@ Copyright 2010-2015, Google Inc.
 
 Mozc is a Japanese Input Method Editor (IME) designed for multi-platform such as
 Android OS, Apple OS X, Chromium OS, GNU/Linux and Microsoft Windows.  This
-open-source project originates from
+OpenSource project originates from
 [Google Japanese Input](http://www.google.com/intl/ja/ime/).
 
 Build Status
 ------------
 
-|         |Android |Windows |OS X |Linux |NaCl |
-|---------|:------:|:------:|:---:|:----:|:---:|
-|**Build**|N/A     |[![Build status](https://ci.appveyor.com/api/projects/status/qm7q355lenq5ogp6/branch/master?svg=true)](https://ci.appveyor.com/project/google/mozc/branch/master) |[![Build Status](https://travis-ci.org/google/mozc.svg?branch=master)](https://travis-ci.org/google/mozc) |N/A |N/A |
-
+|Android |Windows |OS X |Linux |NaCl |
+|:------:|:------:|:---:|:----:|:---:|
+|N/A     |[![Build status](https://ci.appveyor.com/api/projects/status/qm7q355lenq5ogp6/branch/master?svg=true)](https://ci.appveyor.com/project/google/mozc/branch/master) |[![Build Status](https://travis-ci.org/google/mozc.svg?branch=master)](https://travis-ci.org/google/mozc) |N/A |N/A |
 
 What's Mozc?
 ------------
@@ -26,6 +25,31 @@ For historical reasons, the project name *Mozc* has two different meanings:
    source code under OSS license without any warranty nor user support.
 
 In this repository, *Mozc* means the second definition unless otherwise noted.
+
+Detailed differences between Google Japanese Input and Mozc are described in [About Branding](doc/about_branding.md).
+
+Build Instructions
+------------------
+
+* [How to build Mozc in Docker](doc/build_mozc_in_docker.md): Android, NaCl, and Linux desktop builds.
+* [How to build Mozc in OS X](doc/build_mozc_in_osx.md): OS X build.
+* [How to build Mozc in Windows](doc/build_mozc_in_windows.md): Windows build.
+
+Release Plan
+------------
+
+tl;dr. **There is no stable version.**
+
+As described in [About Branding](doc/about_branding.md) page, Google does
+not promise any official QA for OSS Mozc project.  Because of this,
+Mozc does not have a concept of *Stable Release*.  Instead we change version
+number every time when we introduce non-trivial change.  If you are
+interested in packaging Mozc source code, or developing your own products
+based on Mozc, feel free to pick up any version.  They should be equally
+stable (or equally unstable) in terms of no official QA process.
+
+[Release History](doc/release_history.md) page may have additional
+information and useful links about recent changes.
 
 License
 -------
