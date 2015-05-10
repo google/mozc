@@ -177,6 +177,8 @@
         # We intentionally remove *.ime from system folders as a part
         # of uninstallation.
         '-sice:ICE09',
+        # Suppress the validation to address the LGHT0217 error.
+        '-sval',
         '-o', '<@(_outputs)',
         # We do not use '<@(_inputs)' here because it contains some
         # input files just for peoper rebiuld condition.
