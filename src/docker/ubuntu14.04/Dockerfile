@@ -54,9 +54,9 @@ RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 
 ## Android SDK/NDK
-RUN curl -L http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin -O && chmod u+x android-ndk-r10d-linux-x86_64.bin && ./android-ndk-r10d-linux-x86_64.bin && rm android-ndk-r10d-linux-x86_64.bin
+RUN curl -L http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin -O && chmod u+x android-ndk-r10e-linux-x86_64.bin && ./android-ndk-r10e-linux-x86_64.bin && rm android-ndk-r10e-linux-x86_64.bin
 RUN curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10d
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10e
 ENV ANDROID_HOME /home/mozc_builder/work/android-sdk-linux
 ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
 RUN echo y | android update sdk --all --force --no-ui --filter android-22
