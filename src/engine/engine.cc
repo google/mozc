@@ -31,7 +31,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
@@ -58,12 +58,13 @@
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 
-namespace mozc {
-
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
+using mozc::dictionary::UserDictionary;
 using mozc::dictionary::ValueDictionary;
 
+namespace mozc {
 namespace {
 
 class UserDataManagerImpl : public UserDataManagerInterface {
@@ -155,8 +156,7 @@ void Engine::Init(
   data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
   dictionary_.reset(new DictionaryImpl(
-      SystemDictionary::CreateSystemDictionaryFromImage(
-          dictionary_data, dictionary_size),
+      SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
       ValueDictionary::CreateValueDictionaryFromImage(
           *data_manager->GetPOSMatcher(), dictionary_data, dictionary_size),
       user_dictionary_.get(),
@@ -171,7 +171,7 @@ void Engine::Init(
                                                 suffix_tokens_size));
   CHECK(suffix_dictionary_.get());
 
-  connector_.reset(ConnectorBase::CreateFromDataManager(*data_manager));
+  connector_.reset(Connector::CreateFromDataManager(*data_manager));
   CHECK(connector_.get());
 
   segmenter_.reset(SegmenterBase::CreateFromDataManager(*data_manager));

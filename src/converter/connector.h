@@ -27,50 +27,50 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/node.h"
+#ifndef MOZC_CONVERTER_CONNECTOR_H_
+#define MOZC_CONVERTER_CONNECTOR_H_
 
-#include "testing/base/public/gunit.h"
+#include <vector>
+
+#include "base/port.h"
+#include "base/scoped_ptr.h"
+#include "converter/connector_interface.h"
 
 namespace mozc {
-namespace {
-const char *kTypeKey1 = "type1";
-const char *kTypeKey2 = "type2";
-class Type1 : public NodeAllocatorData::Data {
+
+class DataManagerInterface;
+
+class Connector : public ConnectorInterface {
  public:
-  virtual ~Type1() {}
-  int x;
+  static Connector *CreateFromDataManager(
+      const DataManagerInterface &data_manager);
+
+  Connector(const char *connection_data, size_t connection_size,
+            int cache_size);
+  virtual ~Connector();
+
+  virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
+  virtual int GetResolution() const;
+
+  void ClearCache();
+
+ private:
+  class Row;
+
+  int LookupCost(uint16 rid, uint16 lid) const;
+
+  vector<Row *> rows_;
+  const uint16 *default_cost_;
+  int resolution_;
+
+  const int cache_size_;
+  const uint32 cache_hash_mask_;
+  mutable scoped_ptr<uint32[]> cache_key_;
+  mutable scoped_ptr<int[]> cache_value_;
+
+  DISALLOW_COPY_AND_ASSIGN(Connector);
 };
-class Type2 : public NodeAllocatorData::Data {
- public:
-  virtual ~Type2() {}
-  int x;
-};
-}  // namespace
 
-TEST(NodeAllocatorDataTest, Basic) {
-  NodeAllocatorData data;
-  EXPECT_FALSE(data.has(kTypeKey1));
-  Type1 *t1;
-  Type2 *t2;
-  t2 = data.get<Type2>(kTypeKey2);
-  t2->x = 100;
-  EXPECT_FALSE(data.has(kTypeKey1));
-  EXPECT_TRUE(data.has(kTypeKey2));
+}  // namespace mozc
 
-  t1 = data.get<Type1>(kTypeKey1);
-  t1->x = 10;
-  EXPECT_TRUE(data.has(kTypeKey1));
-  EXPECT_TRUE(data.has(kTypeKey2));
-
-  t2 = data.get<Type2>(kTypeKey2);
-  EXPECT_EQ(100, t2->x);
-
-  data.erase(kTypeKey1);
-  EXPECT_FALSE(data.has(kTypeKey1));
-  EXPECT_TRUE(data.has(kTypeKey2));
-
-  data.clear();
-  EXPECT_FALSE(data.has(kTypeKey1));
-  EXPECT_FALSE(data.has(kTypeKey2));
-}
-}  // mozc
+#endif  // MOZC_CONVERTER_CONNECTOR_H_

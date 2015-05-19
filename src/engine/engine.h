@@ -33,6 +33,7 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "dictionary/pos_group.h"
+#include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
 
 namespace mozc {
@@ -46,9 +47,7 @@ class PredictorInterface;
 class RewriterInterface;
 class SegmenterInterface;
 class SuggestionFilter;
-class SuppressionDictionary;
 class UserDataManagerInterface;
-class UserDictionary;
 
 // Builds and manages a set of modules that are necessary for conversion engine.
 class Engine : public EngineInterface {
@@ -66,7 +65,7 @@ class Engine : public EngineInterface {
 
   virtual ConverterInterface *GetConverter() const { return converter_.get(); }
   virtual PredictorInterface *GetPredictor() const { return predictor_; }
-  virtual SuppressionDictionary *GetSuppressionDictionary() {
+  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
     return suppression_dictionary_.get();
   }
 
@@ -77,10 +76,10 @@ class Engine : public EngineInterface {
   }
 
  private:
-  scoped_ptr<SuppressionDictionary> suppression_dictionary_;
+  scoped_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   scoped_ptr<const ConnectorInterface> connector_;
   scoped_ptr<const SegmenterInterface> segmenter_;
-  scoped_ptr<UserDictionary> user_dictionary_;
+  scoped_ptr<dictionary::UserDictionary> user_dictionary_;
   scoped_ptr<DictionaryInterface> suffix_dictionary_;
   scoped_ptr<DictionaryInterface> dictionary_;
   scoped_ptr<const PosGroup> pos_group_;

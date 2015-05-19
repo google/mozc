@@ -40,10 +40,6 @@
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 
-DEFINE_bool(disable_lattice_cache,
-            false,
-            "do not use cache feature for lattice");
-
 namespace mozc {
 namespace {
 
@@ -149,7 +145,7 @@ Lattice::Lattice() : history_end_pos_(0), node_allocator_(new NodeAllocator) {}
 
 Lattice::~Lattice() {}
 
-NodeAllocatorInterface *Lattice::node_allocator() const {
+NodeAllocator *Lattice::node_allocator() const {
   return node_allocator_.get();
 }
 
@@ -257,11 +253,6 @@ size_t Lattice::history_end_pos() const {
 }
 
 void Lattice::UpdateKey(const string &new_key) {
-  if (FLAGS_disable_lattice_cache) {
-    SetKey(new_key);
-    return;
-  }
-
   const string old_key = key_;
   const string common_prefix = GetCommonPrefix(new_key, old_key);
 
@@ -285,7 +276,7 @@ void Lattice::UpdateKey(const string &new_key) {
 }
 
 void Lattice::AddSuffix(const string &suffix_key) {
-  if (suffix_key == "") {
+  if (suffix_key.empty()) {
     return;
   }
   const size_t old_size = key_.size();

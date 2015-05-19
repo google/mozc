@@ -36,19 +36,17 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/string_piece.h"
+#include "converter/node.h"
+#include "converter/node_allocator.h"
 
 namespace mozc {
-
-struct Node;
-class NodeAllocator;
-class NodeAllocatorInterface;
 
 class Lattice {
  public:
   Lattice();
   ~Lattice();
 
-  NodeAllocatorInterface *node_allocator() const;
+  NodeAllocator *node_allocator() const;
 
   // set key and initalizes lattice with key.
   void SetKey(StringPiece key);

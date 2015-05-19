@@ -205,9 +205,7 @@ void DictionaryMock::LookupExact(StringPiece key, Callback *callback) const {
   }
 }
 
-void DictionaryMock::LookupReverse(StringPiece str,
-                                   NodeAllocatorInterface *allocator,
-                                   Callback *callback) const {
+void DictionaryMock::LookupReverse(StringPiece str, Callback *callback) const {
   CHECK(!str.empty());
 
   for (int i = 1; i <= str.size(); ++i) {

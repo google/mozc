@@ -69,8 +69,7 @@ DictionaryData *CreateDictionaryData() {
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
   DictionaryInterface *sys_dict =
-      SystemDictionary::CreateSystemDictionaryFromImage(dictionary_data,
-                                                        dictionary_size);
+      SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
   DictionaryInterface *val_dict =
       ValueDictionary::CreateValueDictionaryFromImage(*ret->pos_matcher,
                                                       dictionary_data,

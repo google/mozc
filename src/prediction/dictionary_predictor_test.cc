@@ -45,7 +45,7 @@
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
@@ -75,6 +75,7 @@
 #include "transliteration/transliteration.h"
 
 using ::testing::_;
+using mozc::dictionary::SuppressionDictionary;
 
 DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_dictionary_predictor);
@@ -90,7 +91,7 @@ DictionaryInterface *CreateSystemDictionaryFromDataManager(
   int size = 0;
   data_manager.GetSystemDictionaryData(&data, &size);
   using mozc::dictionary::SystemDictionary;
-  return SystemDictionary::CreateSystemDictionaryFromImage(data, size);
+  return SystemDictionary::Builder(data, size).Build();
 }
 
 DictionaryInterface *CreateSuffixDictionaryFromDataManager(
@@ -218,7 +219,7 @@ class MockDataAndPredictor {
     }
     CHECK(suffix_dictionary_.get());
 
-    connector_.reset(ConnectorBase::CreateFromDataManager(data_manager));
+    connector_.reset(Connector::CreateFromDataManager(data_manager));
     CHECK(connector_.get());
 
     segmenter_.reset(SegmenterBase::CreateFromDataManager(data_manager));
@@ -297,9 +298,8 @@ class CallCheckDictionary : public DictionaryInterface {
                           Callback *callback));
   MOCK_CONST_METHOD2(LookupExact,
                      void(StringPiece key, Callback *callback));
-  MOCK_CONST_METHOD3(LookupReverse,
-                     void(StringPiece str, NodeAllocatorInterface *allocator,
-                          Callback *callback));
+  MOCK_CONST_METHOD2(LookupReverse,
+                     void(StringPiece str, Callback *callback));
 };
 
 // Action to call the third argument of LookupPrefix with the token
@@ -1559,7 +1559,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const ConnectorInterface> connector(
-      ConnectorBase::CreateFromDataManager(data_manager));
+      Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
@@ -1738,8 +1738,7 @@ class TestSuffixDictionary : public DictionaryInterface {
 
   virtual void LookupExact(StringPiece key, Callback *callback) const {}
 
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const {}
+  virtual void LookupReverse(StringPiece str, Callback *callback) const {}
 };
 
 }  // namespace
@@ -3085,7 +3084,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const ConnectorInterface> connector(
-      ConnectorBase::CreateFromDataManager(data_manager));
+      Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(

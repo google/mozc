@@ -41,7 +41,7 @@
 #include "converter/connector_base.h"
 #include "converter/connector_interface.h"
 #include "converter/node.h"
-#include "converter/segmenter_base.h"
+#include "converter/segmenter.h"
 #include "converter/segmenter_interface.h"
 #include "data_manager/connection_file_reader.h"
 #include "data_manager/data_manager_interface.h"
@@ -171,7 +171,7 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
   scoped_ptr<const ConnectorInterface> connector(
-      ConnectorBase::CreateFromDataManager(*data_manager_));
+      Connector::CreateFromDataManager(*data_manager_));
   ASSERT_TRUE(connector.get() != NULL);
 
   EXPECT_EQ(expected_resolution_, connector->GetResolution());

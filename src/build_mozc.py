@@ -927,7 +927,7 @@ def GypMain(options, unused_args, _):
       nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
     else:
       nacl_sdk_root = os.path.abspath(os.path.join(GetAdditionalThirdPartyDir(),
-                                                   'nacl_sdk', 'pepper_27'))
+                                                   'nacl_sdk', 'pepper_40'))
     if not os.path.isdir(nacl_sdk_root):
       PrintErrorAndExit('The nacl_sdk_root directory (%s) does not exist.'
                         % options.nacl_sdk_root)

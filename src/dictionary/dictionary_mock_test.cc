@@ -174,7 +174,7 @@ TEST_F(DictionaryMockTest, LookupReverse) {
   }
 
   CollectTokenCallback callback;
-  dic->LookupReverse(k1, NULL, &callback);
+  dic->LookupReverse(k1, &callback);
   const vector<Token> &result_tokens = callback.tokens();
   EXPECT_TRUE(SearchMatchingToken(t0->key, t0->value, 0, result_tokens))
       << "Failed to find: " << t0->key;

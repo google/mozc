@@ -43,6 +43,8 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 
+using mozc::dictionary::SuppressionDictionary;
+
 namespace mozc {
 namespace {
 

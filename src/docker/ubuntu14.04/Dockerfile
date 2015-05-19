@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM ubuntu:14.04.1
+FROM ubuntu:14.04.2
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -35,7 +35,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN dpkg --add-architecture i386
 RUN apt-get update
 ## Common packages for linux build environment
-RUN apt install -y clang-3.5 python pkg-config subversion git curl bzip2 unzip make
+RUN apt install -y clang python pkg-config subversion git curl bzip2 unzip make
 ## Packages for linux desktop version
 RUN apt install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
@@ -55,19 +55,19 @@ WORKDIR /home/mozc_builder/work
 
 ## Android SDK/NDK
 RUN curl -L http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin -O && chmod u+x android-ndk-r10d-linux-x86_64.bin && ./android-ndk-r10d-linux-x86_64.bin && rm android-ndk-r10d-linux-x86_64.bin
-RUN curl -L http://dl.google.com/android/android-sdk_r24.0.2-linux.tgz | tar -zx
+RUN curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx
 ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10d
 ENV ANDROID_HOME /home/mozc_builder/work/android-sdk-linux
 ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
-RUN echo y | android update sdk --all --force --no-ui --filter android-21
-RUN echo y | android update sdk --all --force --no-ui --filter build-tools-21.0.2
+RUN echo y | android update sdk --all --force --no-ui --filter android-22
+RUN echo y | android update sdk --all --force --no-ui --filter build-tools-22.0.0
 RUN echo y | android update sdk --all --force --no-ui --filter extra-android-support
 RUN echo y | android update sdk --all --force --no-ui --filter platform-tool
 
 ## NaCl SDK
 RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip
-RUN cd nacl_sdk && ./naclsdk install pepper_27
-ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_27
+RUN cd nacl_sdk && ./naclsdk install pepper_40
+ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_40
 
 ## depot_tools
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git

@@ -47,6 +47,8 @@
 #include "prediction/suggestion_filter.h"
 #include "testing/base/public/gunit.h"
 
+using mozc::dictionary::SuppressionDictionary;
+
 namespace mozc {
 namespace converter {
 namespace {

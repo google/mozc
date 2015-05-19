@@ -239,7 +239,6 @@ void ValueDictionary::LookupExact(StringPiece key, Callback *callback) const {
 }
 
 void ValueDictionary::LookupReverse(StringPiece str,
-                                    NodeAllocatorInterface *allocator,
                                     Callback *callback) const {
 }
 

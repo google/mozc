@@ -40,7 +40,6 @@
 #include "base/stl_util.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "converter/node_allocator.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
@@ -237,7 +236,7 @@ TEST_F(SystemDictionaryTest, HasValue) {
   BuildSystemDictionary(tokens, tokens.size());
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -296,7 +295,7 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -357,7 +356,7 @@ TEST_F(SystemDictionaryTest, SameWord) {
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -373,7 +372,7 @@ TEST_F(SystemDictionaryTest, LookupAllWords) {
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -402,7 +401,7 @@ TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
   BuildSystemDictionary(source_tokens, 100);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -510,7 +509,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, kKeyValuesSize);
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -632,7 +631,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
     BuildSystemDictionary(source_tokens, 10000);
   }
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
 
@@ -659,7 +658,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
 
   BuildSystemDictionary(tokens, 100);
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
 
@@ -694,7 +693,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
     BuildSystemDictionary(source_tokens, 10000);
   }
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
 
@@ -725,7 +724,7 @@ TEST_F(SystemDictionaryTest, LookupExact) {
   BuildSystemDictionary(source_tokens, 100);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -836,7 +835,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
   const size_t test_size = min(
@@ -845,7 +844,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   for (size_t source_index = 0; source_index < test_size; ++source_index) {
     const Token &source_token = *source_tokens[source_index];
     CollectTokenCallback callback;
-    system_dic->LookupReverse(source_token.value, NULL, &callback);
+    system_dic->LookupReverse(source_token.value, &callback);
     const vector<Token> &tokens = callback.tokens();
 
     bool found = false;
@@ -884,7 +883,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
     // append "が"
     const string key = t7->value + "\xe3\x81\x8c";
     CollectTokenCallback callback;
-    system_dic->LookupReverse(key, NULL, &callback);
+    system_dic->LookupReverse(key, &callback);
     const vector<Token> &tokens = callback.tokens();
     bool found = false;
     for (size_t i = 0; i < tokens.size(); ++i) {
@@ -902,13 +901,15 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
   scoped_ptr<SystemDictionary> system_dic_without_index(
-      SystemDictionary::CreateSystemDictionaryFromFileWithOptions(
-          dic_fn_, SystemDictionary::NONE));
+      SystemDictionary::Builder(dic_fn_)
+      .SetOptions(SystemDictionary::NONE)
+      .Build());
   ASSERT_TRUE(system_dic_without_index.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
   scoped_ptr<SystemDictionary> system_dic_with_index(
-      SystemDictionary::CreateSystemDictionaryFromFileWithOptions(
-          dic_fn_, SystemDictionary::ENABLE_REVERSE_LOOKUP_INDEX));
+      SystemDictionary::Builder(dic_fn_)
+      .SetOptions(SystemDictionary::ENABLE_REVERSE_LOOKUP_INDEX)
+      .Build());
   ASSERT_TRUE(system_dic_with_index.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -918,8 +919,8 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
        size > 0 && it != source_tokens.end(); ++it, --size) {
     const Token &t = **it;
     CollectTokenCallback callback1, callback2;
-    system_dic_without_index->LookupReverse(t.value, NULL, &callback1);
-    system_dic_with_index->LookupReverse(t.value, NULL, &callback2);
+    system_dic_without_index->LookupReverse(t.value, &callback1);
+    system_dic_with_index->LookupReverse(t.value, &callback2);
 
     const vector<Token> &tokens1 = callback1.tokens();
     const vector<Token> &tokens2 = callback2.tokens();
@@ -952,16 +953,15 @@ TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
   target_token.key.swap(target_token.value);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
-  NodeAllocator allocator;
-  system_dic->PopulateReverseLookupCache(kDoraemon, &allocator);
+  system_dic->PopulateReverseLookupCache(kDoraemon);
   CheckTokenExistenceCallback callback(&target_token);
-  system_dic->LookupReverse(kDoraemon, &allocator, &callback);
+  system_dic->LookupReverse(kDoraemon, &callback);
   EXPECT_TRUE(callback.found())
       << "Could not find " << PrintToken(source_token);
-  system_dic->ClearReverseLookupCache(&allocator);
+  system_dic->ClearReverseLookupCache();
 }
 
 TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
@@ -1005,7 +1005,7 @@ TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -1044,7 +1044,7 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   BuildSystemDictionary(source_tokens, 100);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -1103,7 +1103,7 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   BuildSystemDictionary(source_tokens, 100);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
@@ -1145,7 +1145,7 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
   BuildSystemDictionary(source_tokens, 100);
 
   scoped_ptr<SystemDictionary> system_dic(
-      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+      SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 

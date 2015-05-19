@@ -41,7 +41,7 @@
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
@@ -81,13 +81,15 @@
 
 DECLARE_string(test_tmpdir);
 
-namespace mozc {
-
-struct SuffixToken;
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::ValueDictionary;
 using mozc::usage_stats::UsageStats;
+
+namespace mozc {
+
+struct SuffixToken;
 
 namespace {
 
@@ -196,8 +198,7 @@ class ConverterTest : public ::testing::Test {
     ret->user_dictionary.reset(new UserDictionaryStub);
     ret->suppression_dictionary.reset(new SuppressionDictionary);
     ret->dictionary.reset(new DictionaryImpl(
-        SystemDictionary::CreateSystemDictionaryFromImage(
-            dictionary_data, dictionary_size),
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
         ValueDictionary::CreateValueDictionaryFromImage(
             *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
         ret->user_dictionary.get(),
@@ -207,7 +208,7 @@ class ConverterTest : public ::testing::Test {
     ret->suggestion_filter.reset(CreateSuggestionFilter(data_manager));
     ret->suffix_dictionary.reset(
         CreateSuffixDictionaryFromDataManager(data_manager));
-    ret->connector.reset(ConnectorBase::CreateFromDataManager(data_manager));
+    ret->connector.reset(Connector::CreateFromDataManager(data_manager));
     ret->segmenter.reset(SegmenterBase::CreateFromDataManager(data_manager));
     ret->immutable_converter.reset(
         new ImmutableConverterImpl(ret->dictionary.get(),
@@ -1232,8 +1233,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
   scoped_ptr<DictionaryInterface> dictionary(new DictionaryImpl(
-      SystemDictionary::CreateSystemDictionaryFromImage(
-          dictionary_data, dictionary_size),
+      SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
       ValueDictionary::CreateValueDictionaryFromImage(
           *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
       mock_user_dictionary.get(),
@@ -1244,7 +1244,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
   scoped_ptr<const ConnectorInterface> connector(
-      ConnectorBase::CreateFromDataManager(data_manager));
+      Connector::CreateFromDataManager(data_manager));
   scoped_ptr<const SegmenterInterface> segmenter(
       SegmenterBase::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(

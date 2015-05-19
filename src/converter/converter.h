@@ -34,6 +34,7 @@
 
 #include "base/scoped_ptr.h"
 #include "converter/converter_interface.h"
+#include "dictionary/suppression_dictionary.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
@@ -45,7 +46,6 @@ class POSMatcher;
 class PredictorInterface;
 class RewriterInterface;
 class Segments;
-class SuppressionDictionary;
 
 class ConverterImpl : public ConverterInterface {
  public:
@@ -54,7 +54,7 @@ class ConverterImpl : public ConverterInterface {
 
   // Lazily initializes the internal members. Must be called before the use.
   void Init(const POSMatcher *pos_matcher,
-            const SuppressionDictionary *suppression_dictionary,
+            const dictionary::SuppressionDictionary *suppression_dictionary,
             PredictorInterface *predictor,
             RewriterInterface *rewriter,
             ImmutableConverterInterface *immutable_converter);
@@ -169,7 +169,7 @@ class ConverterImpl : public ConverterInterface {
                              uint16 *id) const;
 
   const POSMatcher *pos_matcher_;
-  const SuppressionDictionary *suppression_dictionary_;
+  const dictionary::SuppressionDictionary *suppression_dictionary_;
   scoped_ptr<PredictorInterface> predictor_;
   scoped_ptr<RewriterInterface> rewriter_;
   const ImmutableConverterInterface *immutable_converter_;

@@ -34,6 +34,7 @@
 #ifdef __native_client__
 #include "base/pepper_file_system_mock.h"
 #include "base/pepper_file_util.h"
+#include "base/public/nacl_mock_module.h"
 #endif  // __native_client__
 
 int main(int argc, char **argv) {
@@ -53,6 +54,8 @@ int main(int argc, char **argv) {
   testing::GTEST_FLAG(catch_exceptions) = true;
 
 #ifdef __native_client__
+  mozc::testing::WorkAroundEmptyFunctionToAvoidLinkError();
+
   // Sets Pepper file system mock.
   mozc::PepperFileSystemMock pepper_file_system_mock;
   mozc::PepperFileUtil::SetPepperFileSystemInterfaceForTest(

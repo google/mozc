@@ -51,6 +51,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 
+using mozc::dictionary::SuppressionDictionary;
 using mozc::usage_stats::UsageStats;
 
 namespace mozc {

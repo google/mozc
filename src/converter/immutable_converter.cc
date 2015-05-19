@@ -50,6 +50,7 @@
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "converter/node_list_builder.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
@@ -60,10 +61,7 @@
 #include "prediction/suggestion_filter.h"
 #include "session/commands.pb.h"
 
-DECLARE_bool(disable_lattice_cache);
-DEFINE_bool(disable_predictive_realtime_conversion,
-            false,
-            "disable predictive realtime conversion");
+using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {
 namespace {
@@ -80,7 +78,7 @@ class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
   KeyCorrectedNodeListBuilder(size_t pos,
                               StringPiece original_lookup_key,
                               const KeyCorrector *key_corrector,
-                              NodeAllocatorInterface *allocator)
+                              NodeAllocator *allocator)
       : BaseNodeListBuilder(allocator, allocator->max_nodes_size()),
         pos_(pos),
         original_lookup_key_(original_lookup_key),
@@ -256,16 +254,14 @@ Lattice *GetLattice(Segments *segments, bool is_prediction) {
   const size_t lattice_history_end_pos = lattice->history_end_pos();
 
   if (!is_prediction ||
-      FLAGS_disable_lattice_cache ||
       Util::CharsLen(conversion_key) <= 1 ||
       lattice_history_end_pos != history_key.size()) {
-    // Do not cache if conversion is not prediction, or disable_lattice_cache
-    // flag is used.  In addition, if a user input the key right after the
-    // finish of conversion, reset the lattice to erase old nodes.
-    // Even if the lattice key is not changed, we should reset the lattice
-    // when the history size is changed.
-    // When we submit the candidate partially, the entire key will not changed,
-    // but the history position will be changed.
+    // Do not cache if conversion is not prediction.  In addition, if a user
+    // input the key right after the finish of conversion, reset the lattice to
+    // erase old nodes.  Even if the lattice key is not changed, we should reset
+    // the lattice when the history size is changed.  When we submit the
+    // candidate partially, the entire key will not changed, but the history
+    // position will be changed.
     lattice->Clear();
   }
 
@@ -739,7 +735,7 @@ namespace {
 
 class NodeListBuilderWithCacheEnabled : public NodeListBuilderForLookupPrefix {
  public:
-  NodeListBuilderWithCacheEnabled(NodeAllocatorInterface *allocator,
+  NodeListBuilderWithCacheEnabled(NodeAllocator *allocator,
                                   size_t min_key_length)
       : NodeListBuilderForLookupPrefix(allocator,
                                        allocator->max_nodes_size(),
@@ -776,11 +772,10 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
     BaseNodeListBuilder builder(
         lattice->node_allocator(),
         lattice->node_allocator()->max_nodes_size());
-    dictionary_->LookupReverse(
-        StringPiece(begin, len), lattice->node_allocator(), &builder);
+    dictionary_->LookupReverse(StringPiece(begin, len), &builder);
     result_node = builder.result();
   } else {
-    if (is_prediction && !FLAGS_disable_lattice_cache) {
+    if (is_prediction) {
       NodeListBuilderWithCacheEnabled builder(
           lattice->node_allocator(),
           lattice->cache_info(begin_pos) + 1);
@@ -1188,7 +1183,7 @@ namespace {
 // Adds penalty for predictive nodes when building a node list.
 class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
  public:
-  NodeListBuilderForPredictiveNodes(NodeAllocatorInterface *allocator,
+  NodeListBuilderForPredictiveNodes(NodeAllocator *allocator,
                                     int limit, const POSMatcher *pos_matcher)
       : BaseNodeListBuilder(allocator, limit), pos_matcher_(pos_matcher) {}
 
@@ -1381,7 +1376,7 @@ bool ImmutableConverterImpl::MakeLattice(
   if (is_reverse) {
     // Reverse lookup for each prefix string in key is slow with current
     // implementation, so run it for them at once and cache the result.
-    dictionary_->PopulateReverseLookupCache(key, lattice->node_allocator());
+    dictionary_->PopulateReverseLookupCache(key);
   }
 
   bool is_valid_lattice = true;
@@ -1399,11 +1394,11 @@ bool ImmutableConverterImpl::MakeLattice(
 
   if (is_reverse) {
     // No reverse look up will happen afterwards.
-    dictionary_->ClearReverseLookupCache(lattice->node_allocator());
+    dictionary_->ClearReverseLookupCache();
   }
 
   // Predictive real time conversion
-  if (is_prediction && !FLAGS_disable_predictive_realtime_conversion) {
+  if (is_prediction) {
     MakeLatticeNodesForPredictiveNodes(*segments, request, lattice);
   }
 
@@ -1420,9 +1415,7 @@ bool ImmutableConverterImpl::MakeLattice(
   ApplyPrefixSuffixPenalty(conversion_key, lattice);
 
   // Re-segment personal-names, numbers ...etc
-  const bool is_conversion =
-      (segments->request_type() == Segments::CONVERSION);
-  if (is_conversion) {
+  if (segments->request_type() == Segments::CONVERSION) {
     Resegment(*segments, history_key, conversion_key, lattice);
   }
 

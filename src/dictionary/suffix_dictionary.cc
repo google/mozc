@@ -134,7 +134,6 @@ void SuffixDictionary::LookupPrefix(StringPiece key,
 }
 
 void SuffixDictionary::LookupReverse(StringPiece str,
-                                     NodeAllocatorInterface *allocator,
                                      Callback *callback) const {
 }
 

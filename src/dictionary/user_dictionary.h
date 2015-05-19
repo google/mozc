@@ -32,21 +32,21 @@
 
 #include <string>
 #include <vector>
+
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.pb.h"
+#include "dictionary/user_pos_interface.h"
 
 namespace mozc {
 
-class POSMatcher;
 class ReaderWriterMutex;
-class SuppressionDictionary;
-class TokensIndex;   // defined in user_dictionary.cc
-class UserDictionaryReloader;
-class UserDictionaryStorage;
-class UserPOSInterface;
+
+namespace dictionary {
 
 class UserDictionary : public DictionaryInterface {
  public:
@@ -66,8 +66,7 @@ class UserDictionary : public DictionaryInterface {
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
   virtual void LookupExact(StringPiece key, Callback *callback) const;
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const;
+  virtual void LookupReverse(StringPiece str, Callback *callback) const;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
@@ -75,14 +74,14 @@ class UserDictionary : public DictionaryInterface {
   virtual bool LookupComment(StringPiece key, StringPiece value,
                              string *comment) const;
 
-  // Load dictionary from UserDictionaryStorage.
+  // Loads dictionary from UserDictionaryStorage.
   // mainly for unittesting
   bool Load(const user_dictionary::UserDictionaryStorage &storage);
 
-  // Reload dictionary asynchronously
+  // Reloads dictionary asynchronously
   bool Reload();
 
-  // Wait until reloader finishes
+  // Waits until reloader finishes
   void WaitForReloader();
 
   // Adds new word to auto registered dictionary and reload asynchronously.
@@ -95,14 +94,15 @@ class UserDictionary : public DictionaryInterface {
       const string &key, const string &value,
       user_dictionary::UserDictionary::PosType pos);
 
-  // Set user dicitonary filename for unittesting
+  // Sets user dicitonary filename for unittesting
   static void SetUserDictionaryName(const string &filename);
 
  private:
-  // Swap internal tokens index to |new_tokens|.
-  void Swap(TokensIndex *new_tokens);
+  class TokensIndex;
+  class UserDictionaryReloader;
 
-  friend class UserDictionaryTest;
+  // Swaps internal tokens index to |new_tokens|.
+  void Swap(TokensIndex *new_tokens);
 
   scoped_ptr<UserDictionaryReloader> reloader_;
   scoped_ptr<const UserPOSInterface> user_pos_;
@@ -111,9 +111,11 @@ class UserDictionary : public DictionaryInterface {
   TokensIndex *tokens_;
   mutable scoped_ptr<ReaderWriterMutex> mutex_;
 
+  friend class UserDictionaryTest;
   DISALLOW_COPY_AND_ASSIGN(UserDictionary);
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_USER_DICTIONARY_H_

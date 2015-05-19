@@ -46,8 +46,12 @@
 
 DECLARE_string(test_tmpdir);
 
+using mozc::dictionary::SuppressionDictionary;
+using mozc::dictionary::UserDictionary;
+
 namespace mozc {
 namespace {
+
 void AddCandidate(const string &key, const string &value,
                   const string &content_key, const string &content_value,
                   Segment *segment) {
@@ -58,6 +62,7 @@ void AddCandidate(const string &key, const string &value,
   candidate->content_key = content_key;
   candidate->content_value = content_value;
 }
+
 }  // namespace
 
 class UsageRewriterTest : public ::testing::Test {

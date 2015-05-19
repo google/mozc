@@ -27,47 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_CACHED_CONNECTOR_H_
-#define MOZC_CONVERTER_CACHED_CONNECTOR_H_
-
-#include "base/port.h"
-#include "base/scoped_ptr.h"
-#include "converter/connector_interface.h"
+#ifndef MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
+#define MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
 
 namespace mozc {
-namespace converter {
+namespace testing {
 
-// Provides cache mechanism for Connector.
-class CachedConnector : public ConnectorInterface {
- public:
-  // |cache_size| should be 2^k form of value.
-  CachedConnector(ConnectorInterface *connector, int cache_size);
-  virtual ~CachedConnector();
+// This method does nothing, and is just for avoiding link errors.
+//
+// This method should be called in somewhere. Otherwise, the object file
+// generated from this file will be avoided by clang++ since there is no code
+// which uses this module.
+// Actually, pp::CreateModule() in this module is called if NaCl module is
+// loaded on Chrome, so we need to link this module.
+// TODO(hsumita): Remove this workaround.
+void WorkAroundEmptyFunctionToAvoidLinkError();
 
-  virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
-  virtual int GetResolution() const;
-
-  // Clears cache explicitly.
-  void ClearCache();
-
- private:
-  void InitializeCache() const;
-
-  ConnectorInterface *connector_;
-
-  // Cache data need to be mutable as they are modified in const methods. For
-  // the performance, we are assuming the cache is an array, not vector.
-  mutable bool cache_initialized_;
-  mutable scoped_ptr<int[]> cache_key_;
-  mutable scoped_ptr<int[]> cache_value_;
-  const int cache_size_;
-  const int hash_mask_;
-
-
-  DISALLOW_COPY_AND_ASSIGN(CachedConnector);
-};
-
-}  // namespace converter
+}  // namespace testing
 }  // namespace mozc
 
-#endif  // MOZC_CONVERTER_CACHED_CONNECTOR_H_
+#endif  // MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_

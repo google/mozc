@@ -40,6 +40,7 @@
 #include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "base/trie.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "storage/lru_cache.h"
@@ -57,7 +58,6 @@ class DictionaryInterface;
 class POSMatcher;
 class Segment;
 class Segments;
-class SuppressionDictionary;
 class UserHistoryPredictorSyncer;
 
 // Added serialization method for UserHistory.
@@ -83,10 +83,11 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
 // called by multiple-threads at the same time
 class UserHistoryPredictor : public PredictorInterface {
  public:
-  UserHistoryPredictor(const DictionaryInterface *dictionary,
-                       const POSMatcher *pos_matcher,
-                       const SuppressionDictionary *suppression_dictionary,
-                       bool enable_content_word_learning);
+  UserHistoryPredictor(
+      const DictionaryInterface *dictionary,
+      const POSMatcher *pos_matcher,
+      const dictionary::SuppressionDictionary *suppression_dictionary,
+      bool enable_content_word_learning);
   virtual ~UserHistoryPredictor();
 
   void set_content_word_learning_enabled(bool value) {
@@ -494,7 +495,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   const DictionaryInterface *dictionary_;
   const POSMatcher *pos_matcher_;
-  const SuppressionDictionary *suppression_dictionary_;
+  const dictionary::SuppressionDictionary *suppression_dictionary_;
   const string predictor_name_;
 
   bool content_word_learning_enabled_;
@@ -502,6 +503,7 @@ class UserHistoryPredictor : public PredictorInterface {
   scoped_ptr<DicCache> dic_;
   mutable scoped_ptr<UserHistoryPredictorSyncer> syncer_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_

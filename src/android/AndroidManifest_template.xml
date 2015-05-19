@@ -33,7 +33,7 @@
           package="@ANDROID_APPLICATION_ID@"
           android:versionCode="@ANDROID_VERSION_CODE@"
           android:versionName="@MAJOR@.@MINOR@.@BUILD@.@REVISION@-@ANDROID_ARCH@">
-  <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="21" />
+  <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="22" />
 
   <!-- Google Japanese Input (the main code) requires the following permissions. -->
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

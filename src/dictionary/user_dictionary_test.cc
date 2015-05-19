@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Unit tests for UserDictionary.
-
 #include "dictionary/user_dictionary.h"
 
 #include <algorithm>
@@ -62,9 +60,8 @@
 
 DECLARE_string(test_tmpdir);
 
-using mozc::dictionary::CollectTokenCallback;
-
 namespace mozc {
+namespace dictionary {
 namespace {
 
 const char kUserDictionary0[] =
@@ -959,4 +956,5 @@ TEST_F(UserDictionaryTest, LookupComment) {
 }
 
 }  // namespace
+}  // namespace dictionary
 }  // namespace mozc

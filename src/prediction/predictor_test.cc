@@ -51,14 +51,16 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+DECLARE_string(test_tmpdir);
+
 using ::testing::AtMost;
 using ::testing::Return;
 using ::testing::_;
-
-DECLARE_string(test_tmpdir);
+using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {
 namespace {
+
 class CheckCandSizePredictor : public PredictorInterface {
  public:
   explicit CheckCandSizePredictor(int expected_cand_size) :
@@ -353,4 +355,5 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   EXPECT_TRUE(predictor1->predict_called());
   EXPECT_TRUE(predictor2->predict_called());
 }
+
 }  // namespace mozc

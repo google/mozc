@@ -63,9 +63,6 @@
 
 namespace mozc {
 
-// These structures are defined in converter
-class NodeAllocatorInterface;
-
 class DictionaryMock : public DictionaryInterface {
  public:
   DictionaryMock();
@@ -89,9 +86,8 @@ class DictionaryMock : public DictionaryInterface {
   virtual void LookupExact(StringPiece key, Callback *callback) const;
 
   // For reverse lookup, the reading is stored in Token::value and the word
-  // is stored in Token::key. This mock method doesn't use |*allocator|.
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const;
+  // is stored in Token::key.
+  virtual void LookupReverse(StringPiece str, Callback *callback) const;
 
   // Adds a string-result pair to the predictive search result.
   // LookupPrefix will return the result only when the search key exactly

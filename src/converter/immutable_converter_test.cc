@@ -41,7 +41,7 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_base.h"
+#include "converter/connector.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/lattice.h"
@@ -64,15 +64,16 @@
 
 DECLARE_string(test_tmpdir);
 
+using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::SuppressionDictionary;
+using mozc::dictionary::SystemDictionary;
+using mozc::dictionary::ValueDictionary;
+
 namespace mozc {
 
 struct SuffixToken;
 
 namespace {
-
-using mozc::dictionary::DictionaryImpl;
-using mozc::dictionary::SystemDictionary;
-using mozc::dictionary::ValueDictionary;
 
 void SetCandidate(const string &key, const string &value, Segment *segment) {
   segment->set_key(key);
@@ -109,8 +110,7 @@ class MockDataAndImmutableConverter {
       data_manager_->GetSystemDictionaryData(&dictionary_data,
                                              &dictionary_size);
       dictionary_.reset(new DictionaryImpl(
-          SystemDictionary::CreateSystemDictionaryFromImage(
-              dictionary_data, dictionary_size),
+          SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
           ValueDictionary::CreateValueDictionaryFromImage(
               *pos_matcher, dictionary_data, dictionary_size),
           &user_dictionary_stub_,
@@ -128,7 +128,7 @@ class MockDataAndImmutableConverter {
     }
     CHECK(suffix_dictionary);
 
-    connector_.reset(ConnectorBase::CreateFromDataManager(*data_manager_));
+    connector_.reset(Connector::CreateFromDataManager(*data_manager_));
     CHECK(connector_.get());
 
     segmenter_.reset(SegmenterBase::CreateFromDataManager(*data_manager_));
@@ -269,8 +269,7 @@ class KeyCheckDictionary : public DictionaryInterface {
     // No check
   }
 
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const {
+  virtual void LookupReverse(StringPiece str, Callback *callback) const {
     // No check
   }
 

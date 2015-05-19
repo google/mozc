@@ -31,12 +31,12 @@
 #define MOZC_ENGINE_ENGINE_INTERFACE_H_
 
 #include "base/port.h"
+#include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
 
 class ConverterInterface;
 class PredictorInterface;
-class SuppressionDictionary;
 class UserDataManagerInterface;
 
 // Builds and manages a set of modules that are necessary for conversion,
@@ -57,7 +57,7 @@ class EngineInterface {
 
   // Returns a reference to the suppression dictionary. The returned instance is
   // managed by the engine class and should not be deleted by callers.
-  virtual SuppressionDictionary *GetSuppressionDictionary() = 0;
+  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() = 0;
 
   // Reloads internal data, e.g., user dictionary, etc.
   virtual bool Reload() = 0;

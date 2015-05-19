@@ -30,8 +30,8 @@
 #ifndef MOZC_CONVERTER_NODE_LIST_BUILDER_H_
 #define MOZC_CONVERTER_NODE_LIST_BUILDER_H_
 
-#include "base/port.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/trie.h"
 #include "converter/node.h"
 #include "dictionary/dictionary_interface.h"
@@ -47,7 +47,7 @@ static const int32 kKanaModifierInsensitivePenalty = 1700;
 // dictionary lookup.
 class BaseNodeListBuilder : public DictionaryInterface::Callback {
  public:
-  BaseNodeListBuilder(NodeAllocatorInterface *allocator, int limit)
+  BaseNodeListBuilder(NodeAllocator *allocator, int limit)
       : allocator_(allocator), limit_(limit), penalty_(0), result_(NULL) {
     DCHECK(allocator_) << "Allocator must not be NULL";
   }
@@ -71,7 +71,7 @@ class BaseNodeListBuilder : public DictionaryInterface::Callback {
   int limit() const { return limit_; }
   int penalty() const { return penalty_; }
   Node *result() const { return result_; }
-  NodeAllocatorInterface *allocator() { return allocator_; }
+  NodeAllocator *allocator() { return allocator_; }
 
   Node *NewNodeFromToken(const Token &token) {
     Node *new_node = allocator_->NewNode();
@@ -87,7 +87,7 @@ class BaseNodeListBuilder : public DictionaryInterface::Callback {
   }
 
  protected:
-  NodeAllocatorInterface *allocator_;
+  NodeAllocator *allocator_;
   int limit_;
   int penalty_;
   Node *result_;
@@ -100,7 +100,7 @@ class BaseNodeListBuilder : public DictionaryInterface::Callback {
 // This class is also defined inline.
 class NodeListBuilderForLookupPrefix : public BaseNodeListBuilder {
  public:
-  NodeListBuilderForLookupPrefix(NodeAllocatorInterface *allocator,
+  NodeListBuilderForLookupPrefix(NodeAllocator *allocator,
                                  int limit, size_t min_key_length)
       : BaseNodeListBuilder(allocator, limit),
         min_key_length_(min_key_length) {}

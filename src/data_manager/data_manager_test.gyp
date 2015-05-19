@@ -41,7 +41,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../converter/converter_base.gyp:connector_base',
+        '../converter/converter_base.gyp:connector',
         '../converter/converter_base.gyp:segmenter_base',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction_base.gyp:suggestion_filter',

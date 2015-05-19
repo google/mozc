@@ -27,12 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Mozc system dictionary
-
 #ifndef MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_H_
 #define MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_H_
 
-#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -54,7 +51,6 @@ class DictionaryFile;
 namespace dictionary {
 
 class SystemDictionaryCodecInterface;
-class ReverseLookupIndex;
 
 class SystemDictionary : public DictionaryInterface {
  public:
@@ -72,7 +68,9 @@ class SystemDictionary : public DictionaryInterface {
   //   SystemDictionary::Builder builder(filename);
   //   builder.SetOptions(SystemDictionary::NONE);
   //   builder.SetCodec(NULL);
-  //   SystemDictionary *dictionry = builder.Build();
+  //   SystemDictionary *dictionary = builder.Build();
+  //   ...
+  //   delete dictionary;
   class Builder {
    public:
     // Creates Builder from filename
@@ -82,50 +80,23 @@ class SystemDictionary : public DictionaryInterface {
     ~Builder();
 
     // Sets options (default: NONE)
-    void SetOptions(Options options);
+    Builder &SetOptions(Options options);
 
     // Sets codec (default: NULL)
     // Uses default codec if this is NULL
-    void SetCodec(const SystemDictionaryCodecInterface *codec);
+    // Doesn't take the ownership of |codec|.
+    Builder &SetCodec(const SystemDictionaryCodecInterface *codec);
 
     // Builds and returns system dictionary.
     SystemDictionary *Build();
 
    private:
-    enum InputType {
-      FILENAME,
-      IMAGE,
-    };
-
-    InputType type_;
-
-    // For InputType::FILENAME
-    const string filename_;
-
-    // For InputTYpe::IMAGE
-    const char *ptr_;
-    const int len_;
-
-    Options options_;
-    const SystemDictionaryCodecInterface *codec_;
-
+    struct Specification;
+    scoped_ptr<Specification> spec_;
     DISALLOW_COPY_AND_ASSIGN(Builder);
   };
 
   virtual ~SystemDictionary();
-
-  // TODO(team): Use builder instead of following static methods.
-  static SystemDictionary *CreateSystemDictionaryFromFile(
-      const string &filename);
-
-  static SystemDictionary *CreateSystemDictionaryFromFileWithOptions(
-      const string &filename, Options options);
-
-  static SystemDictionary *CreateSystemDictionaryFromImage(
-      const char *ptr, int len);
-
-  static SystemDictionary *CreateSystemDictionaryFromImageWithOptions(
-      const char *ptr, int len, Options options);
 
   // Implementation of DictionaryInterface.
   virtual bool HasKey(StringPiece key) const;
@@ -137,39 +108,26 @@ class SystemDictionary : public DictionaryInterface {
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
   virtual void LookupExact(StringPiece key, Callback *callback) const;
-  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
-                             Callback *callback) const;
-  virtual void PopulateReverseLookupCache(
-      StringPiece str, NodeAllocatorInterface *allocator) const;
-  virtual void ClearReverseLookupCache(
-      NodeAllocatorInterface *allocator) const;
-
-  // TODO(noriyukit): This structure is implementation detail so should be
-  // hidden.
-  struct ReverseLookupResult {
-    ReverseLookupResult() : tokens_offset(-1), id_in_key_trie(-1) {}
-    // Offset from the tokens section beginning.
-    // (token_array_.Get(id_in_key_trie) == token_array_.Get(0) + tokens_offset)
-    int tokens_offset;
-    // Id in key trie
-    int id_in_key_trie;
-  };
+  virtual void LookupReverse(StringPiece str, Callback *callback) const;
+  virtual void PopulateReverseLookupCache(StringPiece str) const;
+  virtual void ClearReverseLookupCache() const;
 
  private:
+  class ReverseLookupCache;
+  class ReverseLookupIndex;
+  struct PredictiveLookupSearchState;
+
   explicit SystemDictionary(const SystemDictionaryCodecInterface *codec);
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 
   void RegisterReverseLookupTokensForT13N(StringPiece value,
                                           Callback *callback) const;
   void RegisterReverseLookupTokensForValue(StringPiece value,
-                                           NodeAllocatorInterface *allocator,
                                            Callback *callback) const;
-  void ScanTokens(const set<int> &id_set,
-                  multimap<int, ReverseLookupResult> *reverse_results) const;
-  void RegisterReverseLookupResults(
-      const set<int> &id_set,
-      const multimap<int, ReverseLookupResult> &reverse_results,
-      Callback *callback) const;
+  void ScanTokens(const set<int> &id_set, ReverseLookupCache *cache) const;
+  void RegisterReverseLookupResults(const set<int> &id_set,
+                                    const ReverseLookupCache &cache,
+                                    Callback *callback) const;
   void InitReverseLookupIndex();
 
   Callback::ResultType LookupPrefixWithKeyExpansionImpl(
@@ -182,17 +140,6 @@ class SystemDictionary : public DictionaryInterface {
       bool is_expanded,
       char *actual_key_buffer,
       string *actual_prefix) const;
-
-  struct PredictiveLookupSearchState {
-    PredictiveLookupSearchState() : key_pos(0), is_expanded(false) {}
-    PredictiveLookupSearchState(const storage::louds::LoudsTrie::Node &n,
-                                size_t pos, bool expanded)
-        : node(n), key_pos(pos), is_expanded(expanded) {}
-
-    storage::louds::LoudsTrie::Node node;
-    size_t key_pos;
-    bool is_expanded;
-  };
 
   void CollectPredictiveNodesInBfsOrder(
       StringPiece encoded_key,
@@ -207,6 +154,7 @@ class SystemDictionary : public DictionaryInterface {
   const SystemDictionaryCodecInterface *codec_;
   KeyExpansionTable hiragana_expansion_table_;
   scoped_ptr<DictionaryFile> dictionary_file_;
+  mutable scoped_ptr<ReverseLookupCache> reverse_lookup_cache_;
   scoped_ptr<ReverseLookupIndex> reverse_lookup_index_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);

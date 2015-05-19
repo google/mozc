@@ -38,6 +38,7 @@
 #include "base/scoped_ptr.h"
 #include "converter/candidate_filter.h"
 #include "converter/segments.h"
+#include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
 
@@ -46,10 +47,8 @@ class Lattice;
 class POSMatcher;
 class SegmenterInterface;
 class SuggestionFilter;
-class SuppressionDictionary;
 struct Node;
 
-// TODO(toshiyuki): write unittest for NBestGenerator.
 class NBestGenerator {
  public:
   enum BoundaryCheckMode {
@@ -81,12 +80,13 @@ class NBestGenerator {
   };
 
   // Try to enumurate N-best results between begin_node and end_node.
-  NBestGenerator(const SuppressionDictionary *suppression_dictionary,
-                 const SegmenterInterface *segmenter,
-                 const ConnectorInterface *connector,
-                 const POSMatcher *pos_matcher,
-                 const Lattice *lattice,
-                 const SuggestionFilter *suggestion_filter);
+  NBestGenerator(
+      const dictionary::SuppressionDictionary *suppression_dictionary,
+      const SegmenterInterface *segmenter,
+      const ConnectorInterface *connector,
+      const POSMatcher *pos_matcher,
+      const Lattice *lattice,
+      const SuggestionFilter *suggestion_filter);
   ~NBestGenerator();
 
   // Reset the iterator status.
@@ -170,7 +170,7 @@ class NBestGenerator {
                                        int32 w_gx);
 
   // References to relevant modules.
-  const SuppressionDictionary *suppression_dictionary_;
+  const dictionary::SuppressionDictionary *suppression_dictionary_;
   const SegmenterInterface *segmenter_;
   const ConnectorInterface *connector_;
   const POSMatcher *pos_matcher_;
