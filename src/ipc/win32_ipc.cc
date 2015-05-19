@@ -40,7 +40,6 @@
 #include "base/const.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/scoped_handle.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -57,44 +56,6 @@ const bool kReadTypeACK = true;
 const bool kReadTypeData = false;
 const bool kSendTypeData = false;
 const int kMaxSuccessiveConnectionFailureCount = 5;
-
-typedef BOOL (WINAPI *FPGetNamedPipeServerProcessId)(HANDLE, PULONG);
-FPGetNamedPipeServerProcessId g_get_named_pipe_server_process_id = nullptr;
-
-typedef BOOL (WINAPI *FPSetFileCompletionNotificationModes)(HANDLE, UCHAR);
-FPSetFileCompletionNotificationModes
-    g_set_file_completion_notification_modes = nullptr;
-
-// Defined when _WIN32_WINNT >= 0x600
-#ifndef FILE_SKIP_SET_EVENT_ON_HANDLE
-#define FILE_SKIP_SET_EVENT_ON_HANDLE 0x2
-#endif  // FILE_SKIP_SET_EVENT_ON_HANDLE
-
-once_t g_once = MOZC_ONCE_INIT;
-
-void InitAPIsForVistaAndLater() {
-  // We have to load the function pointer dynamically
-  // as GetNamedPipeServerProcessId() is only available on Windows Vista.
-  if (!SystemUtil::IsVistaOrLater()) {
-    return;
-  }
-
-  VLOG(1) << "Initializing GetNamedPipeServerProcessId";
-  // kernel32.dll must be loaded in client.
-  const HMODULE lib = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
-  if (lib == nullptr) {
-    LOG(ERROR) << "GetSystemModuleHandle for kernel32.dll failed.";
-    return;
-  }
-
-  g_get_named_pipe_server_process_id =
-      reinterpret_cast<FPGetNamedPipeServerProcessId>
-      (::GetProcAddress(lib, "GetNamedPipeServerProcessId"));
-
-  g_set_file_completion_notification_modes =
-      reinterpret_cast<FPSetFileCompletionNotificationModes>
-      (::GetProcAddress(lib, "SetFileCompletionNotificationModes"));
-}
 
 size_t GetNumberOfProcessors() {
   // thread-safety is not required.
@@ -256,14 +217,8 @@ class ScopedReleaseMutex {
 };
 
 uint32 GetServerProcessIdImpl(HANDLE handle) {
-  CallOnce(&g_once, &InitAPIsForVistaAndLater);
-
-  if (g_get_named_pipe_server_process_id == nullptr) {
-    return static_cast<uint32>(0);   // must be Windows XP
-  }
-
   ULONG pid = 0;
-  if ((*g_get_named_pipe_server_process_id)(handle, &pid) == 0) {
+  if (::GetNamedPipeServerProcessId(handle, &pid) == 0) {
     const DWORD get_named_pipe_server_process_id_error = ::GetLastError();
     LOG(ERROR) << "GetNamedPipeServerProcessId failed: "
                << get_named_pipe_server_process_id_error;
@@ -492,12 +447,9 @@ HANDLE CreateManualResetEvent() {
 // This slightly improves the performance.
 // See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365538.aspx
 void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
-  CallOnce(&g_once, &InitAPIsForVistaAndLater);
-  if (g_set_file_completion_notification_modes != nullptr) {
-    // This is not a mandatory task. Just ignore the actual error (if any).
-    g_set_file_completion_notification_modes(device_handle,
-                                             FILE_SKIP_SET_EVENT_ON_HANDLE);
-  }
+  // This is not a mandatory task. Just ignore the actual error (if any).
+  ::SetFileCompletionNotificationModes(device_handle,
+                                       FILE_SKIP_SET_EVENT_ON_HANDLE);
 }
 
 }  // namespace

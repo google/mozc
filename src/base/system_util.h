@@ -46,8 +46,6 @@ namespace mozc {
 class SystemUtil {
  public:
   // return "~/.mozc" for Unix/Mac
-  // return "%USERPROFILE%\\Local Settings\\Application\\"
-  //        "Google\\Google Japanese Input" for Windows XP.
   // return "%USERPROFILE%\\AppData\\LocalLow\\"
   //        "Google\\Google Japanese Input" for Windows Vista and later.
   static string GetUserProfileDirectory();
@@ -114,7 +112,6 @@ class SystemUtil {
   // EnsureVitalImmutableDataIsAvailable is a simple fail-fast mechanism to
   // this situation.  This function simply returns false instead of making
   // the process crash if any of following functions cannot work as expected.
-  // - IsVistaOrLaterCache
   // - SystemDirectoryCache
   // - ProgramFilesX86Cache
   // - LocalAppDataDirectoryCache
@@ -145,9 +142,6 @@ class SystemUtil {
   // [OS_LINUX] This function never returns false.
   // TODO(yukawa): support Mac and Linux.
   static bool IsPlatformSupported();
-
-  // returns true if the version of Windows is Vista or later.
-  static bool IsVistaOrLater();
 
   // returns true if the version of Windows is 6.1 or later.
   static bool IsWindows7OrLater();

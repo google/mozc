@@ -27,17 +27,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/hash_tables.h"
+#include "dictionary/system/key_expansion_table.h"
+
 #include "testing/base/public/gunit.h"
 
-TEST(HashTables, HashMap) {
-  hash_map<string, int> test_map;
-  test_map["test"] = 1;
-  EXPECT_EQ(1, test_map["test"]);
+namespace mozc {
+namespace dictionary {
+namespace {
+
+TEST(KeyExpansionTableTest, Test) {
+  KeyExpansionTable table;
+  table.Add('b', "d");
+
+  EXPECT_TRUE(table.ExpandKey('a').IsHit('a'));
+  EXPECT_FALSE(table.ExpandKey('a').IsHit('b'));
+  EXPECT_FALSE(table.ExpandKey('a').IsHit('c'));
+  EXPECT_FALSE(table.ExpandKey('a').IsHit('d'));
+
+  EXPECT_FALSE(table.ExpandKey('b').IsHit('a'));
+  EXPECT_TRUE(table.ExpandKey('b').IsHit('b'));
+  EXPECT_FALSE(table.ExpandKey('b').IsHit('c'));
+  EXPECT_TRUE(table.ExpandKey('b').IsHit('d'));
+
+  EXPECT_FALSE(table.ExpandKey('c').IsHit('a'));
+  EXPECT_FALSE(table.ExpandKey('c').IsHit('b'));
+  EXPECT_TRUE(table.ExpandKey('c').IsHit('c'));
+  EXPECT_FALSE(table.ExpandKey('c').IsHit('d'));
+
+  EXPECT_FALSE(table.ExpandKey('d').IsHit('a'));
+  EXPECT_FALSE(table.ExpandKey('d').IsHit('b'));
+  EXPECT_FALSE(table.ExpandKey('d').IsHit('c'));
+  EXPECT_TRUE(table.ExpandKey('d').IsHit('d'));
 }
 
-TEST(HashTables, HashSet) {
-  hash_set<string> test_set;
-  test_set.insert("test");
-  EXPECT_EQ(1, test_set.count("test"));
-}
+}  // namespace
+}  // namespace dictionary
+}  // namespace mozc

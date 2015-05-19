@@ -329,9 +329,6 @@ bool IPCPathManager::IsValidServer(uint32 pid,
 
 #ifdef OS_WIN
   {
-    DCHECK(SystemUtil::IsVistaOrLater())
-        << "This verification is functional on Vista and later.";
-
     wstring expected_server_ntpath;
     const map<string, wstring>::const_iterator it =
         expected_server_ntpath_cache_.find(server_path);

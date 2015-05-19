@@ -32,7 +32,6 @@
 
 #include "base/port.h"
 #include "base/string_piece.h"
-#include "storage/louds/key_expansion_table.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
@@ -40,46 +39,16 @@ namespace mozc {
 namespace storage {
 namespace louds {
 
-// Implementation of a trie, based on the LOUDS (Level-Ordered Unary Degree
-// Sequence) data structure.
-// The "string" this class can handle as a key is c-style string
-// (i.e. '\0'-terminated char array).
-// TODO(hidehiko): Parametrize succinct bit vector implementation.
 class LoudsTrie {
  public:
   // The max depth of the trie.
   static const size_t kMaxDepth = 256;
 
-  // Interface which is called back when the result is found.
-  class Callback {
-   public:
-    enum ResultType {
-      // Finishes the current (prefix or predictive) search.
-      SEARCH_DONE,
+  // This class stores a traversal state.
+  typedef Louds::Node Node;
 
-      // Continues the current (prefix or predictive) search.
-      SEARCH_CONTINUE,
-
-      // Finished the (prefix or predictive) search of the current edge,
-      // but still continues to search for other edges.
-      SEARCH_CULL,
-    };
-
-    virtual ~Callback() {
-    }
-
-    // The callback will be invoked when a target word is found.
-    // "s" may not be null-terminated.
-    virtual ResultType Run(const char *s, size_t len, int key_id) = 0;
-
-   protected:
-    Callback() {}
-  };
-
-  LoudsTrie() : edge_character_(NULL) {
-  }
-  ~LoudsTrie() {
-  }
+  LoudsTrie() : edge_character_(nullptr) {}
+  ~LoudsTrie() {}
 
   // Opens the binary image, and constructs the data structure.
   // This method doesn't own the "data", so it is caller's reponsibility
@@ -87,56 +56,144 @@ class LoudsTrie {
   // See .cc file for the detailed format of the binary image.
   bool Open(const uint8 *data);
 
-  // Destructs the internal data structure.
+  // Destructs the internal data structure explicitly (the destructor will do
+  // clean up too).
   void Close();
 
-  // Searches the trie for the key that exactly matches the given key. Returns
-  // -1 if the key doesn't exist.
-  // TODO(noriyukit): Implement a callback style method if necessary.
-  int ExactSearch(const StringPiece key) const;
+  // Generic APIs for tree traversal, some of which are delegated from Louds
+  // class; see louds.h.
 
-  // Searches the trie structure, and invokes callback->Run when for each word
-  // which is a prefix of the key is found.
-  void PrefixSearch(const char *key, Callback *callback) const {
-    PrefixSearchWithKeyExpansion(
-        key, KeyExpansionTable::GetDefaultInstance(), callback);
+  // Returns true if |node| is in a valid state (returns true both for terminal
+  // and non-terminal nodes).
+  bool IsValidNode(const Node &node) const { return louds_.IsValidNode(node); }
+
+  // Returns true if |node| is a terminal node.
+  bool IsTerminalNode(const Node &node) const {
+    return terminal_bit_vector_.Get(node.node_id() - 1) != 0;
   }
-  void PrefixSearchWithKeyExpansion(
-      const char *key, const KeyExpansionTable &key_expansion_table,
-      Callback *callback) const;
 
-
-  // Searches the trie structure, and invokes callback->Run when for each word
-  // which begins with key is found.
-  void PredictiveSearch(const char *key, Callback *callback) const {
-    PredictiveSearchWithKeyExpansion(
-        key, KeyExpansionTable::GetDefaultInstance(), callback);
+  // Returns the label of the edge from |node|'s parent (predecessor) to |node|.
+  char GetEdgeLabelToParentNode(const Node &node) const {
+    return edge_character_[node.node_id() - 1];
   }
-  void PredictiveSearchWithKeyExpansion(
-      const char *key, const KeyExpansionTable &key_expansion_table,
-      Callback *callback) const;
 
+  // Computes the ID of key that reaches to |node|.
+  // REQUIRES: |node| is a terminal node.
+  int GetKeyIdOfTerminalNode(const Node &node) const {
+    return terminal_bit_vector_.Rank1(node.node_id() - 1);
+  }
 
-  // Traverses the trie from leaf to root and store the characters annotated to
-  // the edges. The size of the buffer should be larger than kMaxDepth.  Returns
-  // the pointer to the first character.
-  const char *Reverse(int key_id, char *buf) const;
+  // Initializes a node corresponding to |key_id|.
+  // REQUIRES: |key_id| is a valid ID.
+  void GetTerminalNodeFromKeyId(int key_id, Node *node) const {
+    const int node_id = terminal_bit_vector_.Select1(key_id + 1) + 1;
+    louds_.InitNodeFromNodeId(node_id, node);
+  }
+  Node GetTerminalNodeFromKeyId(int key_id) const {
+    Node node;
+    GetTerminalNodeFromKeyId(key_id, &node);
+    return node;
+  }
+
+  // Restores the key string that reaches to |node|.  The caller is
+  // responsible for allocating a buffer for the result StringPiece, which needs
+  // to be passed in |buf|.  The returned StringPiece points to a piece of
+  // |buf|.
+  // REQUIRES: |buf| is longer than kMaxDepth + 1.
+  StringPiece RestoreKeyString(Node node, char *buf) const;
+
+  // Restores the key string corresponding to |key_id|.  The caller is
+  // responsible for allocating a buffer for the result StringPiece, which needs
+  // to be passed in |buf|.  The returned StringPiece points to a piece of
+  // |buf|.
+  // REQUIRES: |buf| is longer than kMaxDepth + 1.
+  StringPiece RestoreKeyString(int key_id, char *buf) const {
+    // TODO(noriyukit): Check if it's necessary to handle negative IDs.
+    return key_id < 0
+        ? StringPiece()
+        : RestoreKeyString(GetTerminalNodeFromKeyId(key_id), buf);
+  }
+
+  // Methods for moving node exported from Louds class; see louds.h.
+  void MoveToFirstChild(Node *node) const {
+    louds_.MoveToFirstChild(node);
+  }
+  Node MoveToFirstChild(Node node) const {
+    MoveToFirstChild(&node);
+    return node;
+  }
+  static void MoveToNextSibling(Node *node) {
+    Louds::MoveToNextSibling(node);
+  }
+  static Node MoveToNextSibling(Node node) {
+    MoveToNextSibling(&node);
+    return node;
+  }
+
+  // Moves |node| to its child connected by the edge with |label|.  If there's
+  // no edge having |label|, |node| becomes invalid and false is returned.
+  bool MoveToChildByLabel(char label, Node *node) const;
+
+  // Traverses a trie for |key|, starting from |node|, and modifies |node| to
+  // the destination terminal node.  Here, |node| is not necessarily the root.
+  // Returns false if there's no node reachable by |key|.
+  bool Traverse(StringPiece key, Node *node) const;
+
+  // Higher level APIs.
+
+  // Returns true if |key| is in this trie.
+  bool HasKey(StringPiece key) const {
+    Node node;  // Root
+    return Traverse(key, &node) && IsTerminalNode(node);
+  }
+
+  // Searches this trie for the key that exactly matches the given key. Returns
+  // -1 if such key doesn't exist.
+  // NOTE: When you only need to check if |key| is in this trie, use HasKey()
+  // method, which is more efficient.
+  int ExactSearch(StringPiece key) const;
+
+  // Runs a functor for the prefixes of |key| that exist in the trie.
+  // |callback| needs to have the following signature:
+  //
+  // void(StringPiece key, StringPiece::size_type prefix_len,
+  //      const LoudsTrie &trie, LoudsTrie::Node node)
+  //
+  // where
+  //   key: The original input key (i.e., the same as the input |key|).
+  //   prefix_len: The length of prefix, i.e., key.substr(0, prefix_len)
+  //               is the matched prefix.
+  //   trie: This trie.
+  //   node: The location information, from which key ID can be recovered by
+  //         LoudsTrie::GetKeyIdOfTerminalNode() method.
+  template <typename Func>
+  void PrefixSearch(StringPiece key, Func callback) const {
+    Node node;
+    for (StringPiece::size_type i = 0; i < key.size(); ) {
+      if (!MoveToChildByLabel(key[i], &node)) {
+        return;
+      }
+      ++i;  // Increment here for next loop and call |callback|.
+      if (IsTerminalNode(node)) {
+        callback(key, i, *this, node);
+      }
+    }
+  }
 
  private:
-  // Tree-structure represented in LOUDS.
-  Louds trie_;
+  Louds louds_;  // Tree structure representation by LOUDS.
 
   // Bit-vector to represent whether each node in LOUDS tree is terminal.
   // This bit vector doesn't include "super root" in the LOUDS.
-  // In other words, id=1 in trie_ corresponds to id=0 in terminal_bit_vector_,
-  // id=10 in trie_ corresponds to id=9 in terminal_bit_vector_, and so on.
-  // TODO(hidehiko): Simplify the id-mapping by introducing a bit for the
+  // In other words, id=1 in louds_ corresponds to id=0 in terminal_bit_vector_,
+  // id=10 in louds_ corresponds to id=9 in terminal_bit_vector_, and so on.
+  // TODO(noriyukit): Simplify the id-mapping by introducing a bit for the
   // super root in this bit vector.
   SimpleSuccinctBitVectorIndex terminal_bit_vector_;
 
   // A sequence of characters, annotated to each edge.
   // This array also doesn't have an entry for super root.
-  // In other words, id=2 in trie_ corresponds to edge_character_[1].
+  // In other words, id=2 in louds_ corresponds to edge_character_[1].
   const char *edge_character_;
 
   DISALLOW_COPY_AND_ASSIGN(LoudsTrie);

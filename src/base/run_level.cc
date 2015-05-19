@@ -85,12 +85,6 @@ bool IsDifferentUser(const HANDLE hToken) {
 
   // SourceName is not always null-terminated.
   //  We're looking for the cases marked '->'.
-  //  XP SP2 (Normal):                       "User32  "
-  //  XP SP2 (Scheduler while logon):        "User32  "
-  //  XP SP2 (Scheduler while logoff):       "advapi  "
-  //  ->  XP SP2 (RunAs):                    "seclogon"
-  //  Server 2003 SP2 (Normal):              "User32  "
-  //  ->  Server 2003 SP2 (RunAs):           "seclogon"
   //  Vista SP1 (Normal)                     "User32 \0"
   //  ->  Vista SP1 (RunAs):                 "seclogo\0"
   //  ->  Vista SP1 (Over-the-shoulder UAC): "CredPro\0"
@@ -109,11 +103,6 @@ bool IsDifferentUser(const HANDLE hToken) {
 // or if failed to determine.
 // This code is written by thatanaka
 bool IsElevatedByUAC(const HANDLE hToken) {
-  // UAC is supported only on Vista or later.
-  if (!SystemUtil::IsVistaOrLater()) {
-    return false;
-  }
-
   // Get TokenElevationType.
   DWORD dwSize;
   TOKEN_ELEVATION_TYPE ElevationType;
@@ -342,10 +331,6 @@ bool RunLevel::IsProcessInJob() {
 
 bool RunLevel::IsElevatedByUAC() {
 #ifdef OS_WIN
-  if (!SystemUtil::IsVistaOrLater()) {
-    return false;
-  }
-
   // Get process token
   HANDLE hProcessToken = NULL;
   if (!::OpenProcessToken(::GetCurrentProcess(),

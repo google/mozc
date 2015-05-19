@@ -294,21 +294,6 @@ bool ImeUtil::SetDefault() {
   return true;
 }
 
-bool ImeUtil::SetCuasEnabled(bool enable) {
-  if (SystemUtil::IsVistaOrLater()) {
-    // No need to enable CUAS since it is always enabled on Vista or later.
-    return true;
-  }
-
-  if (SystemUtil::IsWindowsX64()) {
-    // see both 64 bit and 32 bit registry keys
-    return SetCuasEnabledInternal(enable, KEY_WOW64_64KEY) &&
-           SetCuasEnabledInternal(enable, KEY_WOW64_32KEY);
-  } else {
-    return SetCuasEnabledInternal(enable, 0);
-  }
-}
-
 // TF_IsCtfmonRunning looks for ctfmon.exe's mutex.
 // Ctfmon.exe is running if TSF is enabled.
 // Most of the implementation and comments are based on a code by

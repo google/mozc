@@ -161,12 +161,10 @@ bool AboutDialog::winEvent(MSG *message, long *result) {
     switch (message->wParam) {
       case UpdateChecker::UPGRADE_IS_AVAILABLE:
         version_info += tr("New version is available");
-        if (SystemUtil::IsVistaOrLater()) {
-          if (!RunLevel::IsElevatedByUAC()) {
-            QWindowsStyle style;
-            QIcon vista_icon(style.standardIcon(QStyle::SP_VistaShield));
-            updateButton->setIcon(vista_icon);
-          }
+        if (!RunLevel::IsElevatedByUAC()) {
+          QWindowsStyle style;
+          QIcon vista_icon(style.standardIcon(QStyle::SP_VistaShield));
+          updateButton->setIcon(vista_icon);
         }
         updateButton->show();
         break;

@@ -42,6 +42,7 @@
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/system/codec_interface.h"
+#include "dictionary/system/key_expansion_table.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
@@ -216,6 +217,34 @@ class SystemDictionary : public DictionaryInterface {
 
   void InitReverseLookupIndex();
 
+  Callback::ResultType LookupPrefixWithKeyExpansionImpl(
+      const char *key,
+      StringPiece encoded_key,
+      const KeyExpansionTable &table,
+      Callback *callback,
+      storage::louds::LoudsTrie::Node node,
+      StringPiece::size_type key_pos,
+      bool is_expanded,
+      char *actual_key_buffer,
+      string *actual_prefix) const;
+
+  struct PredictiveLookupSearchState {
+    PredictiveLookupSearchState() : key_pos(0), is_expanded(false) {}
+    PredictiveLookupSearchState(const storage::louds::LoudsTrie::Node &n,
+                                size_t pos, bool expanded)
+        : node(n), key_pos(pos), is_expanded(expanded) {}
+
+    storage::louds::LoudsTrie::Node node;
+    size_t key_pos;
+    bool is_expanded;
+  };
+
+  void CollectPredictiveNodesInBfsOrder(
+      StringPiece encoded_key,
+      const KeyExpansionTable &table,
+      size_t limit,
+      vector<PredictiveLookupSearchState> *result) const;
+
   scoped_ptr<storage::louds::LoudsTrie> key_trie_;
   scoped_ptr<storage::louds::LoudsTrie> value_trie_;
   scoped_ptr<storage::louds::BitVectorBasedArray> token_array_;
@@ -225,7 +254,7 @@ class SystemDictionary : public DictionaryInterface {
 
   const uint32 *frequent_pos_;
   const SystemDictionaryCodecInterface *codec_;
-  storage::louds::KeyExpansionTable hiragana_expansion_table_;
+  KeyExpansionTable hiragana_expansion_table_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);
 };

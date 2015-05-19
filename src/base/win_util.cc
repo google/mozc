@@ -34,6 +34,7 @@
 
 #include <Aux_ulib.h>
 #include <Psapi.h>
+#include <Stringapiset.h>
 #include <Winternl.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
@@ -96,36 +97,6 @@ bool AdjustPrivilegesForShutdown() {
 
 bool EqualLuid(const LUID &L1, const LUID &L2) {
   return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
-}
-
-
-// The registry key for the CUAS setting.
-// Note: We have the same values in win32/base/imm_util.cc
-// TODO(yukawa): Define these constants at the same place.
-const wchar_t kCUASKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
-const wchar_t kCUASValueName[] = L"CUAS";
-
-// Reads CUAS value in the registry keys and returns true if the value is set
-// to 1.
-// The CUAS value is read from 64 bit registry keys if KEY_WOW64_64KEY is
-// specified as |additional_regsam| and read from 32 bit registry keys if
-// KEY_WOW64_32KEY is specified.
-bool IsCuasEnabledInternal(REGSAM additional_regsam) {
-  const REGSAM sam_desired = KEY_QUERY_VALUE | additional_regsam;
-  ATL::CRegKey key;
-  LONG result = key.Open(HKEY_LOCAL_MACHINE, kCUASKey, sam_desired);
-  if (ERROR_SUCCESS != result) {
-    LOG(ERROR) << "Cannot open HKEY_LOCAL_MACHINE\\Software\\Microsoft\\CTF\\"
-                  "SystemShared: "
-               << result;
-    return false;
-  }
-  DWORD cuas;
-  result = key.QueryDWORDValue(kCUASValueName, cuas);
-  if (ERROR_SUCCESS != result) {
-    LOG(ERROR) << "Failed to query CUAS value:" << result;
-  }
-  return (cuas == 1);
 }
 
 }  // namespace
@@ -226,27 +197,7 @@ bool WinUtil::Logoff() {
 
 bool WinUtil::Win32EqualString(const wstring &lhs, const wstring &rhs,
                                bool ignore_case, bool *are_equal) {
-  // http://msdn.microsoft.com/en-us/library/dd317762.aspx
-  typedef int (WINAPI *FPCompareStringOrdinal)(
-      __in LPCWSTR lpString1,
-      __in int     cchCount1,
-      __in LPCWSTR lpString2,
-      __in int     cchCount2,
-      __in BOOL    bIgnoreCase);
-
-  const HMODULE kernel = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
-  if (kernel == nullptr) {
-    LOG(ERROR) << "GetSystemModuleHandle failed";
-    return false;
-  }
-
-  const FPCompareStringOrdinal compare_string_ordinal =
-      reinterpret_cast<FPCompareStringOrdinal>(
-          ::GetProcAddress(kernel, "CompareStringOrdinal"));
-  if (compare_string_ordinal == nullptr) {
-    return false;
-  }
-  const int compare_result = compare_string_ordinal(
+  const int compare_result = ::CompareStringOrdinal(
       lhs.c_str(), lhs.size(), rhs.c_str(), rhs.size(),
       (ignore_case ? TRUE : FALSE));
 
@@ -384,14 +335,12 @@ bool WinUtil::IsServiceProcess(bool *is_service) {
     return false;
   }
 
-  if (SystemUtil::IsVistaOrLater()) {
-    // Session 0 is dedicated to services
-    DWORD dwSessionId = 0;
-    if (!::ProcessIdToSessionId(::GetCurrentProcessId(), &dwSessionId) ||
-        (dwSessionId == 0)) {
-      *is_service = true;
-      return true;
-    }
+  // Session 0 is dedicated to services
+  DWORD dwSessionId = 0;
+  if (!::ProcessIdToSessionId(::GetCurrentProcessId(), &dwSessionId) ||
+      (dwSessionId == 0)) {
+    *is_service = true;
+    return true;
   }
 
   // Get process token
@@ -566,18 +515,8 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
 }
 
 bool WinUtil::IsCuasEnabled() {
-  if (SystemUtil::IsVistaOrLater()) {
-    // CUAS is always enabled on Vista or later.
-    return true;
-  }
-
-  if (SystemUtil::IsWindowsX64()) {
-    // see both 64 bit and 32 bit registry keys
-    return IsCuasEnabledInternal(KEY_WOW64_64KEY) &&
-           IsCuasEnabledInternal(KEY_WOW64_32KEY);
-  } else {
-    return IsCuasEnabledInternal(0);
-  }
+  // CUAS is always enabled on Vista or later.
+  return true;
 }
 
 bool WinUtil::GetFileSystemInfoFromPath(
@@ -666,10 +605,8 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, wstring *nt_path) {
   }
   nt_path->clear();
 
-  const DWORD required_access =
-      SystemUtil::IsVistaOrLater() ? PROCESS_QUERY_LIMITED_INFORMATION
-                                   : PROCESS_QUERY_INFORMATION;
-  ScopedHandle process_handle(::OpenProcess(required_access, FALSE, pid));
+  ScopedHandle process_handle(::OpenProcess(
+      PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
 
   if (process_handle.get() == nullptr) {
     VLOG(1) << "OpenProcess() failed: " << ::GetLastError();

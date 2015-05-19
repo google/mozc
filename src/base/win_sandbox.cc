@@ -259,7 +259,6 @@ static_assert(PROCESS_QUERY_LIMITED_INFORMATION == 0x1000,
 wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
                             const wstring &token_user_sid,
                             const wstring &token_primary_group_sid,
-                            bool is_windows_vista_or_later,
                             bool is_windows_8_or_later) {
   // See http://social.msdn.microsoft.com/Forums/en-US/windowssecurity/thread/e92502b1-0b9f-4e02-9d72-e4e47e924a8f/
   // for how to acess named objects from an AppContainer.
@@ -270,9 +269,7 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
     case WinSandbox::kSharablePipe:
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
-      if (is_windows_vista_or_later) {
-        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      }
+      dacl += Allow(L"", SDDL_OWNER_RIGHTS);
       // Deny remote acccess
       dacl += Deny(SDDL_GENERIC_ALL, SDDL_NETWORK);
       // Allow general access to LocalSystem
@@ -285,17 +282,13 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       }
       // Allow general access to the current user
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
-      if (is_windows_vista_or_later) {
-        // Allow read/write access to low integrity
-        sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
-      }
+      // Allow read/write access to low integrity
+      sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
       break;
     case WinSandbox::kLooseSharablePipe:
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
-      if (is_windows_vista_or_later) {
-        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      }
+      dacl += Allow(L"", SDDL_OWNER_RIGHTS);
       // Deny remote acccess
       dacl += Deny(SDDL_GENERIC_ALL, SDDL_NETWORK);
       // Allow general access to LocalSystem
@@ -310,17 +303,13 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
       // Skip 2nd-phase ACL validation against restricted tokens.
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_RESTRICTED_CODE);
-      if (is_windows_vista_or_later) {
-        // Allow read/write access to low integrity
-        sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
-      }
+      // Allow read/write access to low integrity
+      sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
       break;
     case WinSandbox::kSharableEvent:
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
-      if (is_windows_vista_or_later) {
-        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      }
+      dacl += Allow(L"", SDDL_OWNER_RIGHTS);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -334,17 +323,13 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       // Skip 2nd-phase ACL validation against restricted tokens regarding
       // change/synchronize.
       dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_RESTRICTED_CODE);
-      if (is_windows_vista_or_later) {
-        // Allow read/write access to low integrity
-        sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
-      }
+      // Allow read/write access to low integrity
+      sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
       break;
     case WinSandbox::kSharableMutex:
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
-      if (is_windows_vista_or_later) {
-        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      }
+      dacl += Allow(L"", SDDL_OWNER_RIGHTS);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -358,17 +343,13 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       // Skip 2nd-phase ACL validation against restricted tokens regarding
       // change/synchronize.
       dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_RESTRICTED_CODE);
-      if (is_windows_vista_or_later) {
-        // Allow read/write access to low integrity
-        sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
-      }
+      // Allow read/write access to low integrity
+      sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
       break;
     case WinSandbox::kSharableFileForRead:
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
-      if (is_windows_vista_or_later) {
-        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      }
+      dacl += Allow(L"", SDDL_OWNER_RIGHTS);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -383,18 +364,14 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       // Skip 2nd-phase ACL validation against restricted tokens regarding
       // general read access.
       dacl += Allow(SDDL_GENERIC_READ, SDDL_RESTRICTED_CODE);
-      if (is_windows_vista_or_later) {
-        // Allow read access to low integrity
-        sacl += MandatoryLevel(
-            SDDL_NO_WRITE_UP SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
-      }
+      // Allow read access to low integrity
+      sacl += MandatoryLevel(
+          SDDL_NO_WRITE_UP SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
       break;
     case WinSandbox::kIPCServerProcess:
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
-      if (is_windows_vista_or_later) {
-        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      }
+      dacl += Allow(L"", SDDL_OWNER_RIGHTS);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -406,22 +383,15 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       }
       // Allow general access to the current user
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
-      if (is_windows_vista_or_later) {
-        // Allow PROCESS_QUERY_LIMITED_INFORMATION to restricted tokens
-        dacl += Allow(SDDL_PROCESS_QUERY_LIMITED_INFORMATION,
-                      SDDL_RESTRICTED_CODE);
-      } else {
-        // Allow PROCESS_QUERY_INFORMATION to restricted tokens
-        dacl += Allow(SDDL_PROCESS_QUERY_INFORMATION, SDDL_RESTRICTED_CODE);
-      }
+      // Allow PROCESS_QUERY_LIMITED_INFORMATION to restricted tokens
+      dacl += Allow(SDDL_PROCESS_QUERY_LIMITED_INFORMATION,
+                    SDDL_RESTRICTED_CODE);
       break;
     case WinSandbox::kPrivateObject:
     default:
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
-      if (is_windows_vista_or_later) {
-        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      }
+      dacl += Allow(L"", SDDL_OWNER_RIGHTS);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -513,7 +483,7 @@ bool WinSandbox::MakeSecurityAttributes(
 
   const wstring &sddl = GetSDDL(
       shareble_object_type, token_user_sid, token_primary_group_sid,
-      SystemUtil::IsVistaOrLater(), SystemUtil::IsWindows8OrLater());
+      SystemUtil::IsWindows8OrLater());
 
   // Create self-relative SD
   PSECURITY_DESCRIPTOR self_relative_desc = nullptr;
@@ -1209,10 +1179,6 @@ const wchar_t *GetPredefinedSidString(
 
 bool SetTokenIntegrityLevel(HANDLE token,
                             WinSandbox::IntegrityLevel integrity_level) {
-  if (!SystemUtil::IsVistaOrLater()) {
-    return true;
-  }
-
   const wchar_t* sid_string = GetPredefinedSidString(integrity_level);
   if (sid_string == nullptr) {
     // do not change the integrity level.
@@ -1368,10 +1334,8 @@ vector<Sid> WinSandbox::GetSidsToRestrict(HANDLE effective_token,
       // On Windows Vista, the following token (current logon sid) is required
       // to create objects in BNO.  Consider to use low integrity level
       // so that it cannot access object created by other processes.
-      if (SystemUtil::IsVistaOrLater()) {
-        for (size_t i = 0; i < token_logon_session.size(); ++i) {
-          sids_to_restrict.push_back(token_logon_session[i].sid());
-        }
+      for (size_t i = 0; i < token_logon_session.size(); ++i) {
+        sids_to_restrict.push_back(token_logon_session[i].sid());
       }
       break;
     case USER_RESTRICTED:

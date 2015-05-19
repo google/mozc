@@ -34,6 +34,7 @@
 #include <LMCons.h>
 #include <Sddl.h>
 #include <ShlObj.h>
+#include <VersionHelpers.h>
 #else  // OS_WIN
 #include <pwd.h>
 #include <sys/mman.h>
@@ -146,29 +147,7 @@ class LocalAppDataDirectoryCache {
     if (in_app_container) {
       return TryGetLocalAppDataForAppContainer(dir);
     }
-    if (SystemUtil::IsVistaOrLater()) {
-      return TryGetLocalAppDataLow(dir);
-    }
-
-    // Windows XP: use "%USERPROFILE%\Local Settings\Application Data"
-
-    // Retrieve the directory "%USERPROFILE%\Local Settings\Application Data",
-    // which is a user directory which serves a data repository for local
-    // applications, to avoid user profiles from being roamed by indexers.
-    wchar_t config[MAX_PATH] = {};
-    const HRESULT result = ::SHGetFolderPathW(
-        nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, &config[0]);
-    if (FAILED(result)) {
-      return result;
-    }
-
-    string buffer;
-    if (Util::WideToUTF8(&config[0], &buffer) == 0) {
-      return E_FAIL;
-    }
-
-    *dir = buffer;
-    return S_OK;
+    return TryGetLocalAppDataLow(dir);
   }
 
   static HRESULT TryGetLocalAppDataForAppContainer(string *dir) {
@@ -204,42 +183,17 @@ class LocalAppDataDirectoryCache {
     }
     dir->clear();
 
-    if (!SystemUtil::IsVistaOrLater()) {
-      return E_NOTIMPL;
-    }
-
-    // Windows Vista: use LocalLow
-    // Call SHGetKnownFolderPath dynamically.
-    // http://msdn.microsoft.com/en-us/library/bb762188(VS.85).aspx
-    // http://msdn.microsoft.com/en-us/library/bb762584(VS.85).aspx
-    // GUID: {A520A1A4-1780-4FF6-BD18-167343C5AF16}
-    const HMODULE hLib = WinUtil::LoadSystemLibrary(L"shell32.dll");
-    if (hLib == nullptr) {
-      return E_NOTIMPL;
-    }
-
-    typedef HRESULT (WINAPI *FPSHGetKnownFolderPath)(
-        const GUID &, DWORD, HANDLE, PWSTR *);
-    FPSHGetKnownFolderPath func = reinterpret_cast<FPSHGetKnownFolderPath>
-        (::GetProcAddress(hLib, "SHGetKnownFolderPath"));
-    if (func == nullptr) {
-      ::FreeLibrary(hLib);
-      return E_NOTIMPL;
-    }
-
     wchar_t *task_mem_buffer = nullptr;
-    const HRESULT result =
-        (*func)(FOLDERID_LocalAppDataLow, 0, nullptr, &task_mem_buffer);
+    const HRESULT result = ::SHGetKnownFolderPath(
+        FOLDERID_LocalAppDataLow, 0, nullptr, &task_mem_buffer);
     if (FAILED(result)) {
       if (task_mem_buffer != nullptr) {
         ::CoTaskMemFree(task_mem_buffer);
       }
-      ::FreeLibrary(hLib);
       return result;
     }
 
     if (task_mem_buffer == nullptr) {
-      ::FreeLibrary(hLib);
       return E_UNEXPECTED;
     }
 
@@ -248,13 +202,10 @@ class LocalAppDataDirectoryCache {
 
     string path;
     if (Util::WideToUTF8(wpath, &path) == 0) {
-      ::FreeLibrary(hLib);
       return E_UNEXPECTED;
     }
 
     *dir = path;
-
-    ::FreeLibrary(hLib);
     return S_OK;
   }
 
@@ -707,69 +658,6 @@ string SystemUtil::GetDesktopNameAsString() {
 
 #ifdef OS_WIN
 namespace {
-// TODO(yukawa): Use API wrapper so that unit test can emulate any case.
-template<DWORD MajorVersion, DWORD MinorVersion>
-class IsWindowsVerXOrLaterCache {
- public:
-  IsWindowsVerXOrLaterCache()
-    : succeeded_(false),
-      is_ver_x_or_later_(true) {
-    // Examine if this system is greater than or equal to WinNT ver. X
-    {
-      OSVERSIONINFOEX osvi = {};
-      osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-      osvi.dwMajorVersion = MajorVersion;
-      osvi.dwMinorVersion = MinorVersion;
-      DWORDLONG conditional = 0;
-      VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-      VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-      const BOOL result = ::VerifyVersionInfo(
-          &osvi, VER_MAJORVERSION | VER_MINORVERSION, conditional);
-      if (result != FALSE) {
-        succeeded_ = true;
-        is_ver_x_or_later_ = true;
-        return;
-      }
-    }
-
-    // Examine if this system is less than WinNT ver. X
-    {
-      OSVERSIONINFOEX osvi = {};
-      osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-      osvi.dwMajorVersion = MajorVersion;
-      osvi.dwMinorVersion = MinorVersion;
-      DWORDLONG conditional = 0;
-      VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_LESS);
-      VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_LESS);
-      const BOOL result = ::VerifyVersionInfo(
-          &osvi, VER_MAJORVERSION | VER_MINORVERSION, conditional);
-      if (result != FALSE) {
-        succeeded_ = true;
-        is_ver_x_or_later_ = false;
-        return;
-      }
-    }
-
-    // Unexpected situation.
-    succeeded_ = false;
-    is_ver_x_or_later_ = false;
-  }
-  const bool succeeded() const {
-    return succeeded_;
-  }
-  const bool is_ver_x_or_later() const {
-    return is_ver_x_or_later_;
-  }
-
- private:
-  bool succeeded_;
-  bool is_ver_x_or_later_;
-};
-
-typedef IsWindowsVerXOrLaterCache<6, 0> IsWindowsVistaOrLaterCache;
-typedef IsWindowsVerXOrLaterCache<6, 1> IsWindows7OrLaterCache;
-typedef IsWindowsVerXOrLaterCache<6, 2> IsWindows8OrLaterCache;
-typedef IsWindowsVerXOrLaterCache<6, 3> IsWindows8_1OrLaterCache;
 
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class SystemDirectoryCache {
@@ -794,22 +682,11 @@ class SystemDirectoryCache {
   wchar_t path_buffer_[MAX_PATH];
   wchar_t *system_dir_;
 };
+
 }  // namespace
 
 // TODO(team): Support other platforms.
 bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
-  if (!Singleton<IsWindowsVistaOrLaterCache>::get()->succeeded()) {
-    return false;
-  }
-  if (!Singleton<IsWindows7OrLaterCache>::get()->succeeded()) {
-    return false;
-  }
-  if (!Singleton<IsWindows8OrLaterCache>::get()->succeeded()) {
-    return false;
-  }
-  if (!Singleton<IsWindows8_1OrLaterCache>::get()->succeeded()) {
-    return false;
-  }
   if (!Singleton<SystemDirectoryCache>::get()->succeeded()) {
     return false;
   }
@@ -926,19 +803,10 @@ bool SystemUtil::IsPlatformSupported() {
 #endif  // OS_LINUX, OS_MACOSX, OS_WIN
 }
 
-bool SystemUtil::IsVistaOrLater() {
-#ifdef OS_WIN
-  DCHECK(Singleton<IsWindowsVistaOrLaterCache>::get()->succeeded());
-  return Singleton<IsWindowsVistaOrLaterCache>::get()->is_ver_x_or_later();
-#else
-  return false;
-#endif  // OS_WIN
-}
-
 bool SystemUtil::IsWindows7OrLater() {
 #ifdef OS_WIN
-  DCHECK(Singleton<IsWindows7OrLaterCache>::get()->succeeded());
-  return Singleton<IsWindows7OrLaterCache>::get()->is_ver_x_or_later();
+  static const bool result = ::IsWindows7OrGreater();
+  return result;
 #else
   return false;
 #endif  // OS_WIN
@@ -946,8 +814,8 @@ bool SystemUtil::IsWindows7OrLater() {
 
 bool SystemUtil::IsWindows8OrLater() {
 #ifdef OS_WIN
-  DCHECK(Singleton<IsWindows8OrLaterCache>::get()->succeeded());
-  return Singleton<IsWindows8OrLaterCache>::get()->is_ver_x_or_later();
+  static const bool result = ::IsWindows8OrGreater();
+  return result;
 #else
   return false;
 #endif  // OS_WIN
@@ -955,8 +823,8 @@ bool SystemUtil::IsWindows8OrLater() {
 
 bool SystemUtil::IsWindows8_1OrLater() {
 #ifdef OS_WIN
-  DCHECK(Singleton<IsWindows8_1OrLaterCache>::get()->succeeded());
-  return Singleton<IsWindows8_1OrLaterCache>::get()->is_ver_x_or_later();
+  static const bool result = ::IsWindows8Point1OrGreater();
+  return result;
 #else
   return false;
 #endif  // OS_WIN

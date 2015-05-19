@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_STORAGE_LOUDS_KEY_EXPANSION_TABLE_H_
-#define MOZC_STORAGE_LOUDS_KEY_EXPANSION_TABLE_H_
+#ifndef MOZC_DICTIONARY_SYSTEM_KEY_EXPANSION_TABLE_H_
+#define MOZC_DICTIONARY_SYSTEM_KEY_EXPANSION_TABLE_H_
 
 #include <cstring>
 #include <string>
@@ -36,8 +36,7 @@
 #include "base/port.h"
 
 namespace mozc {
-namespace storage {
-namespace louds {
+namespace dictionary {
 
 // Very thin wrapper class to check the edge annotated character is hit the
 // expanded key or not.
@@ -103,8 +102,7 @@ class KeyExpansionTable {
   DISALLOW_COPY_AND_ASSIGN(KeyExpansionTable);
 };
 
-}  // namespace louds
-}  // namespace storage
+}  // namespace dictionary
 }  // namespace mozc
 
-#endif  // MOZC_STORAGE_LOUDS_KEY_EXPANSION_TABLE_H_
+#endif  // MOZC_DICTIONARY_SYSTEM_KEY_EXPANSION_TABLE_H_

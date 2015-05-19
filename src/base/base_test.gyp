@@ -126,7 +126,6 @@
       'sources': [
         'bitarray_test.cc',
         'flags_test.cc',
-        'hash_tables_test.cc',
         'iterator_adapter_test.cc',
         'logging_test.cc',
         'mmap_test.cc',

@@ -90,8 +90,6 @@ const bool kDisableKanaModiferInsensitiveLookup = false;
 
 }  // namespace
 
-using mozc::storage::louds::KeyExpansionTable;
-
 class SystemDictionaryTest : public testing::Test {
  protected:
   SystemDictionaryTest()

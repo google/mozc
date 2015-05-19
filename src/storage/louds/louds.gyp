@@ -39,14 +39,6 @@
       ],
     },
     {
-      'target_name': 'key_expansion_table',
-      'type': 'none',
-      'toolsets': ['target', 'host'],
-      'sources': [
-        'key_expansion_table.h',
-      ],
-    },
-    {
       'target_name': 'louds_trie',
       'type': 'static_library',
       'toolsets': ['target', 'host'],
@@ -55,7 +47,6 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
-        'key_expansion_table',
         'louds',
         'simple_succinct_bit_vector_index',
       ],

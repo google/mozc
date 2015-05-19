@@ -98,17 +98,15 @@ int RunCharacterPad(int argc, char *argv[],
   ::SetWindowLong(window->winId(), GWL_EXSTYLE, style);
 
   // Aero
-  if (mozc::SystemUtil::IsVistaOrLater()) {
-    window->setContentsMargins(0, 0, 0, 0);
-    mozc::gui::WinUtil::InstallStyleSheetsFiles(
-        ":character_pad_win_aero_style.qss",
-        ":character_pad_win_style.qss");
-    if (mozc::gui::WinUtil::IsCompositionEnabled()) {
-      mozc::gui::WinUtil::ExtendFrameIntoClientArea(window.get());
-      InstallStyleSheet(":character_pad_win_aero_style.qss");
-    } else {
-      InstallStyleSheet(":character_pad_win_style.qss");
-    }
+  window->setContentsMargins(0, 0, 0, 0);
+  mozc::gui::WinUtil::InstallStyleSheetsFiles(
+      ":character_pad_win_aero_style.qss",
+      ":character_pad_win_style.qss");
+  if (mozc::gui::WinUtil::IsCompositionEnabled()) {
+    mozc::gui::WinUtil::ExtendFrameIntoClientArea(window.get());
+    InstallStyleSheet(":character_pad_win_aero_style.qss");
+  } else {
+    InstallStyleSheet(":character_pad_win_style.qss");
   }
 #endif
 

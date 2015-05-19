@@ -190,7 +190,6 @@ class WinSandbox {
   static wstring GetSDDL(ObjectSecurityType shareble_object_type,
                          const wstring &token_user_sid,
                          const wstring &token_primary_group_sid,
-                         bool is_windows_vista_or_later,
                          bool is_windows_8_or_later);
 
  private:

@@ -30,13 +30,13 @@
 #include "prediction/suggestion_filter.h"
 
 #include <set>
-#include <vector>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
-#include "base/hash_tables.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
@@ -69,7 +69,7 @@ const double kErrorRatio = 0.0001;
 
 TEST(SuggestionFilter, IsBadSuggestionTest) {
   // Load suggestion_filter
-  hash_set<string> suggestion_filter_set;
+  std::unordered_set<string> suggestion_filter_set;
 
   vector<string> files;
   Util::SplitStringUsing(FLAGS_suggestion_filter_files, ",", &files);

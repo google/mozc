@@ -29,7 +29,6 @@
 
 #include <string>
 
-#include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "win32/base/input_dll.h"
@@ -74,20 +73,12 @@ TEST_F(InputDllTest, EnsureInitializedTest) {
     // Actually input.dll exists on Windows XP.  However, it does not always
     // mean that input.dll exports the functions in which we are interested.
 
-    if (SystemUtil::IsVistaOrLater()) {
-      // Assume that the following funcsions are available on Vista and later.
-      EXPECT_NE(nullptr, InputDll::enum_enabled_layout_or_tip());
-      EXPECT_NE(nullptr, InputDll::enum_layout_or_tip_for_setup());
-      EXPECT_NE(nullptr, InputDll::install_layout_or_tip());
-      EXPECT_NE(nullptr, InputDll::install_layout_or_tip_user_reg());
-      EXPECT_NE(nullptr, InputDll::set_default_layout_or_tip());
-    } else {
-      // Assume that the following funcsions are not available on XP and prior.
-      EXPECT_EQ(nullptr, InputDll::enum_enabled_layout_or_tip());
-      EXPECT_EQ(nullptr, InputDll::enum_layout_or_tip_for_setup());
-      EXPECT_EQ(nullptr, InputDll::install_layout_or_tip_user_reg());
-      EXPECT_EQ(nullptr, InputDll::set_default_layout_or_tip());
-    }
+    // Assume that the following funcsions are available on Vista and later.
+    EXPECT_NE(nullptr, InputDll::enum_enabled_layout_or_tip());
+    EXPECT_NE(nullptr, InputDll::enum_layout_or_tip_for_setup());
+    EXPECT_NE(nullptr, InputDll::install_layout_or_tip());
+    EXPECT_NE(nullptr, InputDll::install_layout_or_tip_user_reg());
+    EXPECT_NE(nullptr, InputDll::set_default_layout_or_tip());
 
     // Check the consistency of the retuls of second call.
     EXPECT_TRUE(InputDll::EnsureInitialized());

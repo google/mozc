@@ -44,7 +44,6 @@
 #include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/run_level.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "config/config.pb.h"
@@ -297,16 +296,11 @@ ConfigDialog::ConfigDialog()
   launchAdministrationDialogButton->setEnabled(true);
   // if the current application is not elevated by UAC,
   // add a shield icon
-  if (mozc::SystemUtil::IsVistaOrLater()) {
-    if (!mozc::RunLevel::IsElevatedByUAC()) {
-      QWindowsStyle style;
-      QIcon vista_icon(style.standardIcon(QStyle::SP_VistaShield));
-      launchAdministrationDialogButton->setIcon(vista_icon);
-      launchAdministrationDialogButtonForUsageStats->setIcon(vista_icon);
-    }
-  } else {
-    dictionaryPreloadingAndUACLabel->setText(
-        tr("Dictionary preloading"));
+  if (!mozc::RunLevel::IsElevatedByUAC()) {
+    QWindowsStyle style;
+    QIcon vista_icon(style.standardIcon(QStyle::SP_VistaShield));
+    launchAdministrationDialogButton->setIcon(vista_icon);
+    launchAdministrationDialogButtonForUsageStats->setIcon(vista_icon);
   }
 
   usageStatsCheckBox->setDisabled(true);

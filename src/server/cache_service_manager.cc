@@ -79,11 +79,10 @@ class ScopedSCHandle {
   SC_HANDLE handle_;
 };
 
-// Returns a redirector for the specified string resource in Vista or later.
-// Returns a redirected string for the specified string resource in XP.
+// Returns a redirector for the specified string resource for Vista or later.
 // Returns an empty string if any error occurs.
 // See http://msdn.microsoft.com/en-us/library/dd374120.aspx for details.
-wstring GetRegistryStringRedirectorOrRedirectedString(int resource_id) {
+wstring GetRegistryStringRedirector(int resource_id) {
   const wchar_t kRegistryStringRedirectionPattern[] = L"@%s,-%d";
   const wstring &service_path = CacheServiceManager::GetUnquotedServicePath();
   wchar_t buffer[MAX_PATH] = { L'\0' };
@@ -95,30 +94,17 @@ wstring GetRegistryStringRedirectorOrRedirectedString(int resource_id) {
     return L"";
   }
   const wstring redirector(buffer);
-  if (SystemUtil::IsVistaOrLater()) {
-    // If this program is running on Windows Vista or later,
-    // just returns the redirector.
-    return redirector;
-  }
-
-  // If this program is running on Windows XP,
-  // explicitly calls SHLoadIndirectString and returns the retrieved string
-  // resource.
-  wchar_t redirected_string[4096] = { L'\0' };
-  hr = ::SHLoadIndirectString(redirector.c_str(), redirected_string,
-      sizeof(redirected_string), NULL);
-  if (hr != S_OK) {
-    return L"";
-  }
-  return redirected_string;
+  // If this program is running on Windows Vista or later,
+  // just returns the redirector.
+  return redirector;
 }
 
 wstring GetDisplayName() {
-  return GetRegistryStringRedirectorOrRedirectedString(IDS_DISPLAYNAME);
+  return GetRegistryStringRedirector(IDS_DISPLAYNAME);
 }
 
 wstring GetDescription() {
-  return GetRegistryStringRedirectorOrRedirectedString(IDS_DESCRIPTION);
+  return GetRegistryStringRedirector(IDS_DESCRIPTION);
 }
 
 // This function serializes a given message (any type of protobuf message)
@@ -298,11 +284,6 @@ bool SetServiceDescription(const ScopedSCHandle &service_handle,
 // We do not care about any failure because it is not critical for the
 // functionality of the cache service itself.
 void SetAdvancedConfig(const ScopedSCHandle &service_handle) {
-  // On Windows XP, we have nothing to do.
-  if (!SystemUtil::IsVistaOrLater()) {
-    return;
-  }
-
   // Windows Vista or later has some nice features as described in the
   // following documents.
   // http://msdn.microsoft.com/en-us/magazine/cc164252.aspx

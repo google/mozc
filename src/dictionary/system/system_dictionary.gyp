@@ -41,6 +41,14 @@
       ],
     },
     {
+      'target_name': 'key_expansion_table',
+      'type': 'none',
+      'toolsets': ['target', 'host'],
+      'sources': [
+        'key_expansion_table.h',
+      ],
+    },
+    {
       'target_name': 'system_dictionary',
       'type': 'static_library',
       'sources': [
@@ -52,6 +60,7 @@
         '../../storage/louds/louds.gyp:louds_trie',
         '../dictionary_base.gyp:text_dictionary_loader',
         '../file/dictionary_file.gyp:dictionary_file',
+        'key_expansion_table',
         'system_dictionary_codec',
       ],
     },

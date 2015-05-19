@@ -33,10 +33,10 @@
 #include <climits>
 #include <cstring>
 #include <sstream>
+#include <unordered_set>
 
 #include "base/file_stream.h"
 #include "base/flags.h"
-#include "base/hash_tables.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
@@ -202,7 +202,7 @@ bool HasHomonymsInSamePos(
     return false;
   }
 
-  hash_set<uint32> seen;
+  std::unordered_set<uint32> seen;
   for (size_t i = 0; i < key_info.tokens.size(); ++i) {
     const Token *token = key_info.tokens[i].token;
     const uint32 pos = GetCombinedPos(token->lid, token->rid);

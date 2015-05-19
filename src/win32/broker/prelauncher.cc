@@ -39,7 +39,6 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/run_level.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
 #include "client/client_interface.h"
@@ -78,11 +77,7 @@ void EnterBackgroundThreadMode() {
   const HANDLE thread_handle = ::GetCurrentThread();
 
   // Enter low priority mode.
-  if (SystemUtil::IsVistaOrLater()) {
-    ::SetThreadPriority(thread_handle, THREAD_MODE_BACKGROUND_BEGIN);
-  } else {
-    ::SetThreadPriority(thread_handle, THREAD_PRIORITY_IDLE);
-  }
+  ::SetThreadPriority(thread_handle, THREAD_MODE_BACKGROUND_BEGIN);
 }
 
 }  // namespace

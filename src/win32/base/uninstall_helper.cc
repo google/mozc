@@ -576,15 +576,6 @@ void UnloadActivatedKeyboardMain(const vector<wstring> &ime_filenames,
   }
 }
 
-void UnloadLayoutsForXP(
-    const vector<KeyboardLayoutInfo> &new_preload_layouts) {
-  vector <wstring> ime_filenames;
-  for (size_t i = 0; i < new_preload_layouts.size(); ++i) {
-    ime_filenames.push_back(new_preload_layouts[i].ime_filename);
-  }
-  UnloadActivatedKeyboardMain(ime_filenames, false);
-}
-
 void UnloadProfilesForVista(
     const vector<LayoutProfileInfo> &profiles_to_be_removed) {
   vector <wstring> ime_filenames;
@@ -692,25 +683,6 @@ bool RemoveHotKeyForIME(
 
 // Currently this function is Mozc-specific.
 // TODO(yukawa): Generalize this function for any IME.
-void RemoveHotKeyForXP(const vector<KeyboardLayoutInfo> &installed_layouts) {
-  vector<KeyboardLayoutInfo> hotkey_remove_targets;
-  for (size_t i = 0; i < installed_layouts.size(); ++i) {
-    const KeyboardLayoutInfo &layout = installed_layouts[i];
-    if (WinUtil::SystemEqualString(
-            layout.ime_filename, ImmRegistrar::GetFileNameForIME(), true)) {
-      // This is the full IMM32 version of Google Japanese Input.
-      hotkey_remove_targets.push_back(layout);
-      continue;
-    }
-  }
-
-  if (!RemoveHotKeyForIME(hotkey_remove_targets)) {
-    DLOG(ERROR) << "RemoveHotKeyForIME failed.";
-  }
-}
-
-// Currently this function is Mozc-specific.
-// TODO(yukawa): Generalize this function for any IME.
 void RemoveHotKeyForVista(const vector<LayoutProfileInfo> &installed_profiles) {
   vector<KeyboardLayoutInfo> hotkey_remove_targets;
   for (size_t i = 0; i < installed_profiles.size(); ++i) {
@@ -744,39 +716,6 @@ LayoutProfileInfo::LayoutProfileInfo()
       is_default(false),
       is_tip(false),
       is_enabled(false) {}
-
-// Currently this function is Mozc-specific.
-// TODO(yukawa): Generalize this function for any IME.
-bool UninstallHelper::GetNewPreloadLayoutsForXP(
-    const vector<KeyboardLayoutInfo> &preload_layouts,
-    const vector<KeyboardLayoutInfo> &installed_layouts,
-    vector<KeyboardLayoutInfo> *new_preloads) {
-  if (new_preloads == nullptr) {
-    return false;
-  }
-
-  new_preloads->clear();
-  for (size_t i = 0; i < preload_layouts.size(); ++i) {
-    const KeyboardLayoutInfo &layout = preload_layouts[i];
-    if (WinUtil::SystemEqualString(
-            layout.ime_filename, ImmRegistrar::GetFileNameForIME(), true)) {
-      // This is the full IMM32 version of Google Japanese Input.
-      continue;
-    }
-    new_preloads->push_back(layout);
-  }
-
-  if (new_preloads->size() == 0) {
-    // TODO(yukawa): Consider this case.
-    // Use MS-IME as a fallback.
-    KeyboardLayoutInfo msime_info;
-    msime_info.klid = kDefaultKLIDForMSIMEJa;
-    msime_info.ime_filename = kDefaultMSIMEJaFileName;
-    new_preloads->push_back(msime_info);
-  }
-
-  return true;
-}
 
 // Currently this function is Mozc-specific.
 // TODO(yukawa): Generalize this function for any IME and/or TIP.
@@ -874,45 +813,6 @@ bool UninstallHelper::GetInstalledProfilesByLanguage(
   return true;
 }
 
-bool UninstallHelper::GetKeyboardLayoutsForXP(
-    vector<KeyboardLayoutInfo> *preload_layouts,
-    vector<KeyboardLayoutInfo> *installed_layouts) {
-  if (preload_layouts == nullptr) {
-    return false;
-  }
-  preload_layouts->clear();
-  if (installed_layouts == nullptr) {
-    return false;
-  }
-  installed_layouts->clear();
-  if (!GenerateKeyboardLayoutList(installed_layouts)) {
-    return false;
-  }
-
-  map<DWORD, wstring> keyboard_layouts;
-  for (size_t i = 0; i < installed_layouts->size(); ++i) {
-    const KeyboardLayoutInfo &layout = (*installed_layouts)[i];
-    keyboard_layouts[layout.klid] = layout.ime_filename;
-  }
-
-  PreloadOrderToKLIDMap preload_map;
-  if (!GetPreloadLayoutsMain(&preload_map)) {
-    return false;
-  }
-
-  for (PreloadOrderToKLIDMap::const_iterator it = preload_map.begin();
-       it != preload_map.end(); ++it) {
-    KeyboardLayoutInfo info;
-    info.klid = it->second;
-    if (keyboard_layouts.find(info.klid) != keyboard_layouts.end()) {
-      info.ime_filename = keyboard_layouts[info.klid];
-    }
-    preload_layouts->push_back(info);
-  }
-
-  return true;
-}
-
 bool UninstallHelper::GetCurrentProfilesForVista(
     vector<LayoutProfileInfo> *current_profiles) {
   if (current_profiles == nullptr) {
@@ -989,65 +889,6 @@ bool UninstallHelper::GetCurrentProfilesForVista(
   return true;
 }
 
-bool UninstallHelper::UpdatePreloadLayoutsForXP(
-    const vector<KeyboardLayoutInfo> &new_preload_layouts) {
-  // First, retrieve existing preload entries.  |current_preload_map|
-  // represents the relationship between the value name and KLID as following
-  // example.
-  //   1: 0xE0200411
-  //   2: 0x00000411
-  //   3: 0xE0210411
-  //   4: 0xE0220411
-  PreloadOrderToKLIDMap current_preload_map;
-  if (!GetPreloadLayoutsMain(&current_preload_map)) {
-    return false;
-  }
-
-  if (IsEqualPreload(current_preload_map, new_preload_layouts)) {
-    // Already the same.
-    return true;
-  }
-
-  // Open the preload key for update.
-  CRegKey preload_key;
-  LONG result = preload_key.Open(
-      HKEY_CURRENT_USER, kPreloadKeyName, KEY_READ | KEY_WRITE);
-  if (ERROR_SUCCESS != result) {
-    return false;
-  }
-
-  // Second, delete unnecessary entries from bottom to top.  For example,
-  // if |new_preload_layouts| consists of [0xE0210411, 0xE0220411], the
-  // following code removes |current_preload_map[4]| and
-  // |current_preload_map[3]| in this order.
-  bool failed = false;
-  for (PreloadOrderToKLIDMap::const_reverse_iterator it =
-           current_preload_map.rbegin();
-       it != current_preload_map.rend(); ++it) {
-    if (it->first > new_preload_layouts.size()) {
-      result = preload_key.DeleteValue(utow(it->first).c_str());
-      if (result != ERROR_SUCCESS) {
-        failed = true;
-      }
-    }
-  }
-
-  // Third, (over)write the new entry from top to down.  Note that
-  // the preload value name, which seems to be a sort of index, is
-  // 1-origin.
-  for (size_t i = 0; i < new_preload_layouts.size(); ++i) {
-    const KeyboardLayoutID klid(new_preload_layouts[i].klid);
-    const int preload_index = i + 1;  // 1-origin.
-    result = preload_key.SetStringValue(
-        utow(preload_index).c_str(), klid.ToString().c_str());
-    if (result != ERROR_SUCCESS) {
-      failed = true;
-    }
-  }
-
-  return !failed;
-}
-
 bool UninstallHelper::RemoveProfilesForVista(
     const vector<LayoutProfileInfo> &profiles_to_be_removed) {
   if (profiles_to_be_removed.size() == 0) {
@@ -1100,20 +941,6 @@ wstring UninstallHelper::ComposeProfileStringForVista(
   return ss.str();
 }
 
-bool UninstallHelper::SetDefaultForXP(
-    const KeyboardLayoutInfo &layout, bool broadcast_change) {
-  EnableAndSetDefaultIfLayoutIsTIP(layout);
-
-  if (broadcast_change) {
-    if (!BroadcastNewIME(layout)) {
-      DLOG(ERROR) << "BroadcastNewIME failed";
-      return false;
-    }
-  }
-
-  return true;
-}
-
 bool UninstallHelper::SetDefaultForVista(
     const LayoutProfileInfo &current_default,
     const LayoutProfileInfo &new_default, bool broadcast_change) {
@@ -1160,42 +987,6 @@ bool UninstallHelper::SetDefaultForVista(
   return true;
 }
 
-bool UninstallHelper::RestoreUserIMEEnvironmentForXP(bool broadcast_change) {
-  vector<KeyboardLayoutInfo> preload_layouts;
-  vector<KeyboardLayoutInfo> installed_layouts;
-  if (!GetKeyboardLayoutsForXP(&preload_layouts, &installed_layouts)) {
-    return false;
-  }
-
-  RemoveHotKeyForXP(installed_layouts);
-
-  vector<KeyboardLayoutInfo> new_preloads;
-  if (!GetNewPreloadLayoutsForXP(
-           preload_layouts, installed_layouts, &new_preloads)) {
-    return false;
-  }
-  if (new_preloads.size() > 0) {
-    // The entry named '1' under the 'Preload' key corresponds to the user's
-    // default layout.  This was documented at least Windows 2000 Server and
-    // seems to be applicable on later version such as Windows XP.
-    //   http://technet.microsoft.com/en-us/library/cc978687.aspx
-    // Starting with Vista, there are some documented functions to tweak
-    // default keyboard layout or TIP.  See input_dll.h for details.
-    const KeyboardLayoutInfo &new_default = new_preloads[0];
-    if (!SetDefaultForXP(new_default, broadcast_change)) {
-      DLOG(ERROR) << "SetDefaultForXP failed.";
-    }
-    if (!UpdatePreloadLayoutsForXP(new_preloads)) {
-      DLOG(ERROR) << "UpdatePreloadLayoutsForXP failed.";
-    }
-    if (broadcast_change) {
-      // Finally unload unnecessary keyboard layouts.
-      UnloadLayoutsForXP(new_preloads);
-    }
-  }
-  return true;
-}
-
 bool UninstallHelper::RestoreUserIMEEnvironmentForVista(bool broadcast_change) {
   vector<LayoutProfileInfo> installed_profiles;
   if (!GetInstalledProfilesByLanguage(kLANGJaJP, &installed_profiles)) {
@@ -1237,11 +1028,7 @@ bool UninstallHelper::RestoreUserIMEEnvironmentMain() {
   // start to use the new default IME.
   const bool kBroadcastNewIME = true;
 
-  if (SystemUtil::IsVistaOrLater()) {
-    return RestoreUserIMEEnvironmentForVista(kBroadcastNewIME);
-  } else {
-    return RestoreUserIMEEnvironmentForXP(kBroadcastNewIME);
-  }
+  return RestoreUserIMEEnvironmentForVista(kBroadcastNewIME);
 }
 
 bool UninstallHelper::EnsureIMEIsRemovedForCurrentUser(
@@ -1264,11 +1051,8 @@ bool UninstallHelper::EnsureIMEIsRemovedForCurrentUser(
   // notification will not be sent in case it causes unwilling side-effects
   // against other important processes running in the service session.
   const bool kBroadcastNewIME = false;
-  if (SystemUtil::IsVistaOrLater()) {
-    return RestoreUserIMEEnvironmentForVista(kBroadcastNewIME);
-  } else {
-    return RestoreUserIMEEnvironmentForXP(kBroadcastNewIME);
-  }
+  return RestoreUserIMEEnvironmentForVista(kBroadcastNewIME);
 }
+
 }  // namespace win32
 }  // namespace mozc
