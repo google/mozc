@@ -61,7 +61,7 @@
         'mozc_broker64_path': '<(outdir64)/GoogleIMEJaBroker64.exe',
         'mozc_ca32_path': '<(outdir32)/GoogleIMEJaInstallerHelper32.dll',
         'mozc_ca64_path': '<(outdir64)/GoogleIMEJaInstallerHelper64.dll',
-        'mozc_data_dir': '<(DEPTH)/data',
+        'mozc_content_dir': '<(DEPTH)/data',
         'mozc_imm_32bit_wixobj': '<(outdir32)/installer_imm_32bit.wixobj',
         'mozc_imm_32bit_msi': '<(outdir32)/GoogleJapaneseInput32.msi',
         'mozc_imm_64bit_wixobj': '<(outdir32)/installer_imm_64bit.wixobj',

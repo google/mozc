@@ -211,7 +211,7 @@ class SessionConverterTest : public testing::Test {
     candidate->value = "\xE3\x81\x91";
 
     FillT13Ns(segments, composer_.get());
-    convertermock_->SetStartConversionWithComposer(segments, true);
+    convertermock_->SetStartConversionForRequest(segments, true);
   }
 
   void InsertASCIISequence(const string text, composer::Composer *composer) {
@@ -287,7 +287,7 @@ class SessionConverterTest : public testing::Test {
 
   static void SetCommandCandidate(
       Segments *segments, int segment_index, int canidate_index,
-      Segment::Candidate::COMMAND command) {
+      Segment::Candidate::Command command) {
     segments->mutable_conversion_segment(segment_index)
         ->mutable_candidate(canidate_index)->attributes
             |= Segment::Candidate::COMMAND_CANDIDATE;
@@ -308,7 +308,7 @@ TEST_F(SessionConverterTest, Convert) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
 
   composer_->InsertCharacterPreedit(aiueo_);
   EXPECT_TRUE(converter.Convert(*composer_));
@@ -355,7 +355,7 @@ TEST_F(SessionConverterTest, ConvertWithSpellingCorrection) {
   FillT13Ns(&segments, composer_.get());
   segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes |=
       Segment::Candidate::SPELLING_CORRECTION;
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
 
   composer_->InsertCharacterPreedit(aiueo_);
   EXPECT_TRUE(converter.Convert(*composer_));
@@ -370,7 +370,7 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
 
   composer_->InsertCharacterKeyAndPreedit("aiueo", aiueo_);
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
 
   EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::HALF_ASCII));
@@ -483,7 +483,7 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
   composer_->InsertCharacterKeyAndPreedit(
       "dvd", "\xEF\xBD\x84\xEF\xBD\x96\xEF\xBD\x84");
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::FULL_ASCII));
   {  // Check the conversion #1
@@ -548,7 +548,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   // "かまぼこのいんぼう"
   composer_->InsertCharacterPreedit(kKamabokono + kInbou);
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.Convert(*composer_));
 
   // Test for conversion
@@ -847,7 +847,7 @@ TEST_F(SessionConverterTest, Transliterations) {
     segment->add_candidate()->value = "\xE3\x82\xAF\xE3\x83\x9E\xE3\x83\xBC";
   }
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.Convert(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
@@ -909,7 +909,7 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
 
     InsertASCIISequence("kamabokonoinbou", composer_.get());
     FillT13Ns(&segments, composer_.get());
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
   }
   EXPECT_TRUE(converter.Convert(*composer_));
   // Test for segment motion. [SegmentFocusRight]
@@ -952,7 +952,7 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
     FillT13Ns(&segments, composer_.get());
     convertermock_->SetResizeSegment1(&segments, true);
   }
-  converter.SegmentWidthShrink();
+  converter.SegmentWidthShrink(*composer_);
 
   // Convert to half katakana
   converter.ConvertToTransliteration(*composer_,
@@ -989,7 +989,7 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
     segment->add_candidate()->value = "\xE3\x81\x82\xE3\x81\xB9\xE3\x81\x97";
   }
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
@@ -1060,7 +1060,7 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth_2) {
     segment->add_candidate()->value = "q\xef\xbd\xa4\xef\xbd\xa1";
   }
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
@@ -1097,7 +1097,7 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
       segment->add_candidate()->value = "\xE3\x81\x82\xE3\x81\xB9\xE3\x81\x97";
     }
     FillT13Ns(&segments, composer_.get());
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
     EXPECT_TRUE(converter.SwitchKanaType(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
 
@@ -1166,7 +1166,7 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
       segment->add_candidate()->value = "\xE6\xBC\xA2\xE5\xAD\x97";
     }
     FillT13Ns(&segments, composer_.get());
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
     EXPECT_TRUE(converter.Convert(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
 
@@ -1255,7 +1255,7 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
   Segments segments;
   SetKamaboko(&segments);
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
 
   const string kKamabokono =
     "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae";
@@ -1492,13 +1492,13 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
     EXPECT_TRUE(output.candidates().has_footer());
-#ifdef CHANNEL_DEV
+#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
     EXPECT_FALSE(output.candidates().footer().has_label());
     EXPECT_TRUE(output.candidates().footer().has_sub_label());
-#else  // CHANNEL_DEV
+#else  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
     EXPECT_TRUE(output.candidates().footer().has_label());
     EXPECT_FALSE(output.candidates().footer().has_sub_label());
-#endif  // CHANNEL_DEV
+#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
     EXPECT_FALSE(output.candidates().footer().index_visible());
     EXPECT_FALSE(output.candidates().footer().logo_visible());
 
@@ -1868,7 +1868,7 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
 
   composer_->InsertCharacterPreedit("aiueo");
   EXPECT_TRUE(converter.Convert(*composer_));
@@ -1926,7 +1926,7 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
   composer_->InsertCharacterPreedit(kKamabokono + kInbou);
 
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
 
   commands::Output output;
 
@@ -2086,7 +2086,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // CONVERSION
     SessionConverter converter(convertermock_.get());
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
     converter.Convert(*composer_);
     converter.CandidateNext(*composer_);
     string preedit;
@@ -2170,7 +2170,7 @@ TEST_F(SessionConverterTest, CopyFrom) {
     Segments segments;
     SetKamaboko(&segments);
 
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
 
     OperationPreferences operation_preferences;
     operation_preferences.use_cascading_window = false;
@@ -2306,7 +2306,7 @@ TEST_F(SessionConverterTest, Issue1960362) {
   }
 
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
   FillT13Ns(&resized_segments, composer_.get());
   convertermock_->SetResizeSegment1(&resized_segments, true);
   EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
@@ -2363,7 +2363,7 @@ TEST_F(SessionConverterTest, Issue1978201) {
   }
 
   // Meaningless segment manipulations.
-  converter.SegmentWidthShrink();
+  converter.SegmentWidthShrink(*composer_);
   converter.SegmentFocusLeft();
   converter.SegmentFocusLast();
 
@@ -2418,7 +2418,7 @@ TEST_F(SessionConverterTest, Issue2029557) {
   candidate->value = "a";
 
   FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::HIRAGANA));
   EXPECT_TRUE(converter.IsActive());
@@ -2561,7 +2561,7 @@ TEST_F(SessionConverterTest, GetReadingText) {
   candidate = segment->add_candidate();
   candidate->key = hiragana_aiueo;
   candidate->value = kanji_aiueo;
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
 
   string reading;
   EXPECT_TRUE(converter.GetReadingText(kanji_aiueo, &reading));
@@ -2709,7 +2709,7 @@ TEST_F(SessionConverterTest, CommandCandidate) {
   FillT13Ns(&segments, composer_.get());
   // set COMMAND_CANDIDATE.
   SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
-  convertermock_->SetStartConversionWithComposer(&segments, true);
+  convertermock_->SetStartConversionForRequest(&segments, true);
 
   composer_->InsertCharacterPreedit(aiueo_);
   EXPECT_TRUE(converter.Convert(*composer_));
@@ -2735,7 +2735,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     SetKamaboko(&segments);
     SetCommandCandidate(&segments, 0, 0,
                         Segment::Candidate::DEFAULT_COMMAND);
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
     converter.Convert(*composer_);
 
     size_t committed_size = 0;
@@ -2756,7 +2756,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     SetKamaboko(&segments);
     SetCommandCandidate(&segments, 1, 0,
                         Segment::Candidate::DEFAULT_COMMAND);
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
     converter.Convert(*composer_);
 
     size_t committed_size = 0;
@@ -2815,7 +2815,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
                         Segment::Candidate::ENABLE_INCOGNITO_MODE);
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
 
     composer_->InsertCharacterPreedit(aiueo_);
     EXPECT_TRUE(converter.Convert(*composer_));
@@ -2842,7 +2842,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
                         Segment::Candidate::DISABLE_INCOGNITO_MODE);
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
 
     composer_->InsertCharacterPreedit(aiueo_);
     EXPECT_TRUE(converter.Convert(*composer_));
@@ -2869,7 +2869,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
                         Segment::Candidate::ENABLE_PRESENTATION_MODE);
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
 
     composer_->InsertCharacterPreedit(aiueo_);
     EXPECT_TRUE(converter.Convert(*composer_));
@@ -2896,7 +2896,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
                         Segment::Candidate::DISABLE_PRESENTATION_MODE);
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
 
     composer_->InsertCharacterPreedit(aiueo_);
     EXPECT_TRUE(converter.Convert(*composer_));
@@ -2922,7 +2922,7 @@ TEST_F(SessionConverterTest, PropageteConfigToRenderer) {
     Segments segments;
     SetAiueo(&segments);
     FillT13Ns(&segments, composer_.get());
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
 
     commands::Output output;
     composer_->InsertCharacterPreedit(aiueo_);
@@ -2953,7 +2953,7 @@ TEST_F(SessionConverterTest, PropageteConfigToRenderer) {
     Segments segments;
     SetAiueo(&segments);
     FillT13Ns(&segments, composer_.get());
-    convertermock_->SetStartConversionWithComposer(&segments, true);
+    convertermock_->SetStartConversionForRequest(&segments, true);
 
     commands::Output output;
     composer_->InsertCharacterPreedit(aiueo_);

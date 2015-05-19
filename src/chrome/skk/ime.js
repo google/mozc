@@ -133,11 +133,11 @@ skk.IME.prototype.leaveCurrentMode = function() {
 skk.IME.prototype.registerEventHandlers = function() {
   var self = this;
 
-  chrome.experimental.input.onActivate.addListener(function(engineID) {
+  chrome.input.ime.onActivate.addListener(function(engineID) {
     console.log('ime.js: onActivate');
     self.isActive_ = true;
     self.engineID = engineID;
-    chrome.experimental.input.setCandidateWindowProperties(
+    chrome.input.ime.setCandidateWindowProperties(
         {
           engineID: self.engineID,
           properties: {
@@ -148,20 +148,20 @@ skk.IME.prototype.registerEventHandlers = function() {
         });
   });
 
-  chrome.experimental.input.onDeactivated.addListener(function() {
+  chrome.input.ime.onDeactivated.addListener(function() {
     console.log('ime.js: onDeactivated');
     self.isActive_ = false;
     self.context = null;
     self.getCurrentMode().reset();
   });
 
-  chrome.experimental.input.onFocus.addListener(function(context) {
+  chrome.input.ime.onFocus.addListener(function(context) {
     console.log('ime.js: onFocus');
     console.debug('context id: ', context.contextID);
     self.context = context;
   });
 
-  chrome.experimental.input.onBlur.addListener(function(contextID) {
+  chrome.input.ime.onBlur.addListener(function(contextID) {
     console.log('ime.js: onBlur');
     if (!self.context) { return; }
     if (self.context.contextID !== contextID) { return; }
@@ -169,7 +169,7 @@ skk.IME.prototype.registerEventHandlers = function() {
     self.context = null;
   });
 
-  chrome.experimental.input.onKeyEvent.addListener(function(engine, keyEvent) {
+  chrome.input.ime.onKeyEvent.addListener(function(engine, keyEvent) {
     console.log('ime.js: onKeyEvent: ', keyEvent);
     if (keyEvent.type == 'keyup') { return true; }
 
@@ -181,11 +181,11 @@ skk.IME.prototype.registerEventHandlers = function() {
     return handled;
   });
 
-  chrome.experimental.input.onInputContextUpdate.addListener(function() {
+  chrome.input.ime.onInputContextUpdate.addListener(function() {
     console.log('ime.js: onInputContextUpdate');
   });
 
-  chrome.experimental.input.onCandidateClicked.addListener(
+  chrome.input.ime.onCandidateClicked.addListener(
       function(engineID, candidateID, button) {
         console.log('ime.js: onCandidateClicked');
         if (self.engineID !== engineID) { return; }
@@ -196,7 +196,7 @@ skk.IME.prototype.registerEventHandlers = function() {
         self.getCurrentMode().commitCandidate(candidateID);
       });
 
-  chrome.experimental.input.onMenuItemActivated.addListener(function() {
+  chrome.input.ime.onMenuItemActivated.addListener(function() {
     console.log('ime.js: onMenuItemActivated');
   });
 };

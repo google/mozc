@@ -43,9 +43,9 @@
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "client/client.h"
+#include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "session/random_keyevents_generator.h"
-#include "session/commands.pb.h"
 
 DEFINE_int32(max_keyevents, 100000,
              "test at most |max_keyevents| key sequences");

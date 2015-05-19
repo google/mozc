@@ -29,8 +29,6 @@
 
 #import "mac/GoogleJapaneseInputServer.h"
 
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -38,7 +36,6 @@
 class GoogleJapaneseInputServerTest : public testing::Test {
  protected:
   void SetUp() {
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec_);
     pool_ = [[NSAutoreleasePool alloc] init];
     // Although GoogleJapaneseInputServer is a subclass of IMKServer,
     // it does not use initWithName:... method to instantiate the
@@ -50,15 +47,11 @@ class GoogleJapaneseInputServerTest : public testing::Test {
   void TearDown() {
     [pool_ drain];
     [server_ release];
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
 
  protected:
   NSAutoreleasePool *pool_;
   GoogleJapaneseInputServer *server_;
-  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
-  // testing, and the actual instance does not have to be LangDepSpecJapanese.
-  mozc::japanese::LangDepSpecJapanese spec_;
 };
 
 @interface MockController : NSObject<ControllerCallback> {

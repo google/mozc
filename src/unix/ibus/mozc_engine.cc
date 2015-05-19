@@ -32,6 +32,7 @@
 #include <ibus.h>
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <limits>
 #include <map>
 #include <sstream>
@@ -49,6 +50,7 @@
 #include "unix/ibus/config_util.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/key_translator.h"
+#include "unix/ibus/message_translator.h"
 #include "unix/ibus/mozc_engine_property.h"
 #include "unix/ibus/path_util.h"
 
@@ -59,6 +61,16 @@
 // use server/client session
 #include "client/client.h"
 #endif
+
+#ifdef ENABLE_GTK_RENDERER
+#include "renderer/renderer_client.h"
+#include "renderer/renderer_command.pb.h"
+#endif  // ENABLE_GTK_RENDERER
+
+#ifdef ENABLE_GTK_RENDERER
+DEFINE_bool(use_mozc_candidate_window, true,
+            "The engine uses GTK+ native candidate window service.");
+#endif  // ENABLE_GTK_RENDERER
 
 namespace {
 
@@ -71,6 +83,9 @@ const char kMozcSectionName[] = "engine/Mozc";
 
 // Icon path for MozcTool
 const char kMozcToolIconPath[] = "tool.png";
+
+// Default UI locale
+const char kMozcDefaultUILocale[] = "en_US.UTF-8";
 
 // for every 5 minutes, call SyncData
 const uint64 kSyncDataInterval = 5 * 60;
@@ -122,6 +137,25 @@ const gchar* ibus_property_get_key(IBusProperty* prop) {
 #if IBUS_CHECK_VERSION(1, 4, 0)
 #define USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
 #endif  // libibus (>= 1.4.0)
+
+#ifndef OS_CHROMEOS
+const char *kUILocaleEnvNames[] = {
+  "LC_ALL",
+  "LC_MESSAGES",
+  "LANG",
+};
+
+string GetMessageLocale() {
+  for (size_t i = 0; i < arraysize(kUILocaleEnvNames); ++i) {
+    const char *env_ptr = ::getenv(kUILocaleEnvNames[i]);
+    if (env_ptr == NULL || env_ptr[0] == '\0') {
+      continue;
+    }
+    return env_ptr;
+  }
+  return kMozcDefaultUILocale;
+}
+#endif  // !OS_CHROMEOS
 
 // Returns true if mozc_tool is installed.
 bool IsMozcToolAvailable() {
@@ -209,16 +243,6 @@ bool GetSafeDelta(guint from, guint to, int32 *delta) {
 
 #endif  // USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT ||
         // USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
-
-uint32 GetModifiers(commands::KeyEvent *key_event) {
-  DCHECK(key_event);
-
-  uint32 modifiers = 0;
-  for (size_t i = 0; i < key_event->modifier_keys_size(); ++i) {
-    modifiers |= key_event->modifier_keys(i);
-  }
-  return modifiers;
-}
 
 class AdditionalModifiersData {
  public:
@@ -393,6 +417,9 @@ MozcEngine::MozcEngine()
 #else
       client_(client::ClientFactory::NewClient()),
 #endif
+#ifdef ENABLE_GTK_RENDERER
+      renderer_(new renderer::RendererClient),
+#endif  // ENABLE_GTK_RENDERER
 #ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
       ignore_reset_for_deletion_range_workaround_(false),
 #endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
@@ -401,91 +428,15 @@ MozcEngine::MozcEngine()
       prop_mozc_tool_(NULL),
       original_composition_mode_(kMozcEngineInitialCompositionMode),
       is_activated_(true),
-      preedit_method_(config::Config::ROMAN) {
-  // |sub_prop_list| is a radio menu which is shown when a button in the
-  // language panel (i.e. |prop_composition_mode_| below) is clicked.
-  IBusPropList *sub_prop_list = ibus_prop_list_new();
-
-  // Create items for the radio menu.
-  string icon_path_for_panel;
-  for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
-    const MozcEngineProperty &entry = kMozcEngineProperties[i];
-    IBusText *label = ibus_text_new_from_static_string(entry.label);
-    IBusPropState state = PROP_STATE_UNCHECKED;
-    if (entry.composition_mode == kMozcEngineInitialCompositionMode) {
-      state = PROP_STATE_CHECKED;
-      icon_path_for_panel = GetIconPath(entry.icon);
-    }
-    IBusProperty *item = ibus_property_new(entry.key,
-                                           PROP_TYPE_RADIO,
-                                           label,
-                                           NULL /* icon */,
-                                           NULL /* tooltip */,
-                                           TRUE /* sensitive */,
-                                           TRUE /* visible */,
-                                           state,
-                                           NULL /* sub props */);
-    g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
-    ibus_prop_list_append(sub_prop_list, item);
-    // |sub_prop_list| owns |item| by calling g_object_ref_sink for the |item|.
-  }
-  DCHECK(!icon_path_for_panel.empty());
-
-  // The label of |prop_composition_mode_| is shown in the language panel.
-  prop_composition_mode_ = ibus_property_new("CompositionMode",
-                                             PROP_TYPE_MENU,
-                                             NULL /* label */,
-                                             icon_path_for_panel.c_str(),
-                                             NULL /* tooltip */,
-                                             TRUE /* sensitive */,
-                                             TRUE /* visible */,
-                                             PROP_STATE_UNCHECKED,
-                                             sub_prop_list);
-
-  // Likewise, |prop_composition_mode_| owns |sub_prop_list|. We have to sink
-  // |prop_composition_mode_| here so ibus_engine_update_property() call in
-  // PropertyActivate() does not destruct the object.
-  g_object_ref_sink(prop_composition_mode_);
-
-#ifndef OS_CHROMEOS
-  if (IsMozcToolAvailable()) {
-    // Create items for MozcTool
-    sub_prop_list = ibus_prop_list_new();
-
-    for (size_t i = 0; i < kMozcEngineToolPropertiesSize; ++i) {
-      const MozcEngineToolProperty &entry = kMozcEngineToolProperties[i];
-      IBusText *label = ibus_text_new_from_static_string(entry.label);
-      // TODO(yusukes): It would be better to use entry.icon here?
-      IBusProperty *item = ibus_property_new(entry.mode,
-                                             PROP_TYPE_NORMAL,
-                                             label,
-                                             NULL /* icon */,
-                                             NULL /* tooltip */,
-                                             TRUE,
-                                             TRUE,
-                                             PROP_STATE_UNCHECKED,
-                                             NULL);
-      g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
-      ibus_prop_list_append(sub_prop_list, item);
-    }
-
-    const string icon_path = GetIconPath(kMozcToolIconPath);
-    prop_mozc_tool_ = ibus_property_new("MozcTool",
-                                        PROP_TYPE_MENU,
-                                        NULL /* label */,
-                                        icon_path.c_str(),
-                                        NULL /* tooltip */,
-                                        TRUE /* sensitive */,
-                                        TRUE /* visible */,
-                                        PROP_STATE_UNCHECKED,
-                                        sub_prop_list);
-
-    // Likewise, |prop_mozc_tool_| owns |sub_prop_list|. We have to sink
-    // |prop_mozc_tool_| here so ibus_engine_update_property() call in
-    // PropertyActivate() does not destruct the object.
-    g_object_ref_sink(prop_mozc_tool_);
-  }
-#endif
+      preedit_method_(config::Config::ROMAN),
+      is_non_modifier_key_pressed_(false) {
+#ifdef OS_CHROMEOS
+  // It is OK not to translate messages in our side on ChromeOS,
+  // where built-in translation mechanism exists.
+  const NullMessageTranslator translator;
+#else
+  const LocaleBasedMessageTranslator translator(GetMessageLocale());
+#endif  // OS_CHROMEOS
 
   // |prop_root_| is used for registering properties in FocusIn().
   prop_root_ = ibus_prop_list_new();
@@ -493,11 +444,15 @@ MozcEngine::MozcEngine()
   // in FocusIn() does not destruct it.
   g_object_ref_sink(prop_root_);
 
-  ibus_prop_list_append(prop_root_, prop_composition_mode_);
+  if (kMozcEnginePropertiesSize != 0) {
+    AppendCompositionPropertyToPanel(translator);
+  }
+
+  AppendSwitchPropertyToPanel(translator);
 
 #ifndef OS_CHROMEOS
   if (IsMozcToolAvailable()) {
-    ibus_prop_list_append(prop_root_, prop_mozc_tool_);
+    AppendToolPropertyToPanel(translator);
   }
 #endif
 
@@ -516,11 +471,19 @@ MozcEngine::~MozcEngine() {
     g_object_unref(prop_composition_mode_);
     prop_composition_mode_ = NULL;
   }
+
   if (prop_mozc_tool_) {
     // The ref counter will drop to one.
     g_object_unref(prop_mozc_tool_);
     prop_mozc_tool_ = NULL;
   }
+
+  for (size_t i = 0; i < prop_switch_properties_.size(); ++i) {
+    // The ref counter will drop to one.
+    g_object_unref(prop_switch_properties_[i]);
+  }
+  prop_switch_properties_.clear();
+
   if (prop_root_) {
     // Destroy all objects under the root.
     g_object_unref(prop_root_);
@@ -563,6 +526,9 @@ void MozcEngine::Disable(IBusEngine *engine) {
 #endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
 
   RevertSession(engine);
+#ifdef ENABLE_GTK_RENDERER
+  HideNativeCandidateWindow();
+#endif  // ENABLE_GTK_RENDERER
 }
 
 void MozcEngine::Enable(IBusEngine *engine) {
@@ -593,11 +559,31 @@ void MozcEngine::FocusIn(IBusEngine *engine) {
   UpdatePreeditMethod();
 }
 
+#ifdef ENABLE_GTK_RENDERER
+void MozcEngine::HideNativeCandidateWindow() {
+  if (!FLAGS_use_mozc_candidate_window) {
+    return;
+  }
+  commands::RendererCommand command;
+  command.set_type(commands::RendererCommand::UPDATE);
+  command.set_visible(false);
+  commands::RendererCommand::ApplicationInfo *appinfo
+      = command.mutable_application_info();
+  appinfo->set_process_id(getpid());
+  appinfo->set_thread_id(pthread_self());
+  renderer_->ExecCommand(command);
+}
+#endif  // ENABLE_GTK_RENDERER
+
 void MozcEngine::FocusOut(IBusEngine *engine) {
 #ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   // Stop ignoring "reset" signal.  See ProcessKeyevent().
   ignore_reset_for_deletion_range_workaround_ = false;
 #endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+
+#ifdef ENABLE_GTK_RENDERER
+  HideNativeCandidateWindow();
+#endif  // ENABLE_GTK_RENDERER
 
   // Do not call SubmitSession or RevertSession. Preedit string will commit on
   // Focus Out event automatically by ibus_engine_update_preedit_text_with_mode
@@ -656,6 +642,7 @@ gboolean MozcEngine::ProcessKeyEvent(
   if (!ProcessModifiers((modifiers & IBUS_RELEASE_MASK) != 0,
                         keyval,
                         &key,
+                        &is_non_modifier_key_pressed_,
                         &currently_pressed_modifiers_,
                         &modifiers_to_be_sent_)) {
     return FALSE;
@@ -716,11 +703,11 @@ void MozcEngine::SetCompositionMode(
 void MozcEngine::PropertyActivate(IBusEngine *engine,
                                   const gchar *property_name,
                                   guint property_state) {
-  size_t i = 0;
   IBusProperty *prop = NULL;
 
 #ifndef OS_CHROMEOS
   if (prop_mozc_tool_) {
+    size_t i = 0;
     while ((prop = ibus_prop_list_get(
                // TODO(yusukes): libibus newer than Dec 22 2011 does not need
                // the const_cast<>. Remove the cast once we upgrade ibus ebuild.
@@ -740,23 +727,44 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
   }
 #endif
 
+  for (size_t i = 0; i < prop_switch_properties_.size(); ++i) {
+    prop = prop_switch_properties_[i];
+    if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
+      const MozcEngineSwitchProperty *entry =
+          reinterpret_cast<const MozcEngineSwitchProperty *>(
+              g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
+      DCHECK(entry->id);
+      commands::Output output;
+      commands::SessionCommand command;
+      command.set_language_bar_command_id(entry->id);
+      command.set_type(commands::SessionCommand::SEND_LANGUAGE_BAR_COMMAND);
+      if (!client_->SendCommand(command, &output)) {
+        LOG(ERROR) << "cannot send command to update session config: "
+                   << entry->id;
+      }
+      return;
+    }
+  }
+
   if (property_state != PROP_STATE_CHECKED) {
     return;
   }
 
-  i = 0;
-  while ((prop = ibus_prop_list_get(
-             // TODO(yusukes): Make the const_cast<> Linux-only. Chrome OS will
-             // not require the cast once we upgrade ibus ebuild.
-             const_cast<IBusPropList*>(
-                 ibus_property_get_sub_props(prop_composition_mode_)), i++))) {
-    if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
-      const MozcEngineProperty *entry =
-          reinterpret_cast<const MozcEngineProperty*>(
-              g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
-      SetCompositionMode(engine, entry->composition_mode);
-      UpdateCompositionModeIcon(engine, entry->composition_mode);
-      break;
+  if (prop_composition_mode_) {
+    size_t i = 0;
+    while ((prop = ibus_prop_list_get(
+               // TODO(yusukes): Make the const_cast<> Linux-only. Chrome OS
+               // will not require the cast once we upgrade ibus ebuild.
+               const_cast<IBusPropList*>(ibus_property_get_sub_props(
+                   prop_composition_mode_)), i++))) {
+      if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
+        const MozcEngineProperty *entry =
+            reinterpret_cast<const MozcEngineProperty*>(
+                g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
+        SetCompositionMode(engine, entry->composition_mode);
+        UpdateCompositionModeIcon(engine, entry->composition_mode);
+        break;
+      }
     }
   }
 }
@@ -885,6 +893,7 @@ bool MozcEngine::ProcessModifiers(
     bool is_key_up,
     gint keyval,
     commands::KeyEvent *key,
+    bool *is_non_modifier_key_pressed,
     set<gint> *currently_pressed_modifiers,
     set<commands::KeyEvent::ModifierKey> *modifiers_to_be_sent) {
   // Manage modifier key event.
@@ -893,13 +902,21 @@ bool MozcEngine::ProcessModifiers(
   // anymore.
   // Following examples are expected behaviors.
   //
+  // E.g.) Shift key is special. If Shift + printable key is pressed, key event
+  //       does NOT have shift modifiers. It is handled by KeyTranslator class.
+  //    <Event from ibus> <Event to server>
+  //     Shift down      | None
+  //     "a" down        | A
+  //     "a" up          | None
+  //     Shift up        | None
+  //
   // E.g.) Usual key is sent on key down.  Modifier keys are not sent if usual
   //       key is sent.
   //    <Event from ibus> <Event to server>
-  //     Shift down      | None
-  //     "a" down        | Shift+a
+  //     Ctrl down       | None
+  //     "a" down        | Ctrl+a
   //     "a" up          | None
-  //     Shift up        | None
+  //     Ctrl up         | None
   //
   // E.g.) Modifier key is sent on key up.
   //    <Event from ibus> <Event to server>
@@ -912,17 +929,58 @@ bool MozcEngine::ProcessModifiers(
   //     Control down    | None
   //     Shift up        | None
   //     Control up      | Control+Shift
+  //
+  // Essentialy we cannot handle modifier key evnet perfectly because
+  // - We cannot get current keyboard status with ibus. If some modifiers
+  //   are pressed or released without focusing the target window, we
+  //   cannot handle it.
+  // E.g.)
+  //    <Event from ibus> <Event to server>
+  //     Ctrl down       | None
+  //     (focuses out, Ctrl up, focuses in)
+  //     Shift down      | None
+  //     Shift up        | None (But we should send Shift key)
+  // To avoid a inconsistent state as much as possible, we clear states
+  // when key event without modifier keys is sent.
+
   const bool is_modifier_only =
       !(key->has_key_code() || key->has_special_key());
+
+  // We may get only up/down key event when a user moves a focus.
+  // This code handles such situation as much as possible.
+  // This code has a bug. If we send Shift + 'a', KeyTranslator removes a shift
+  // modifier and converts 'a' to 'A'. This codes does NOT consider these
+  // situation since we don't have enough data to handle it.
+  // TODO(hsumita): Moves the logic about a handling of Shift or Caps keys from
+  // KeyTranslator to MozcEngine.
+  if (key->modifier_keys_size() == 0) {
+    *is_non_modifier_key_pressed = false;
+    currently_pressed_modifiers->clear();
+    modifiers_to_be_sent->clear();
+  }
+
+  if (!currently_pressed_modifiers->empty() && !is_modifier_only) {
+    *is_non_modifier_key_pressed = true;
+  }
+  if (*is_non_modifier_key_pressed) {
+    modifiers_to_be_sent->clear();
+  }
+
   if (is_key_up) {
+    currently_pressed_modifiers->erase(keyval);
     if (!is_modifier_only) {
       return false;
     }
-    currently_pressed_modifiers->erase(keyval);
     if (!currently_pressed_modifiers->empty() ||
         modifiers_to_be_sent->empty()) {
+      *is_non_modifier_key_pressed = false;
       return false;
     }
+    if (*is_non_modifier_key_pressed) {
+      return false;
+    }
+    DCHECK(!*is_non_modifier_key_pressed);
+
     // Modifier key event fires
     key->mutable_modifier_keys()->Clear();
     for (set<commands::KeyEvent::ModifierKey>::const_iterator it =
@@ -933,6 +991,12 @@ bool MozcEngine::ProcessModifiers(
     }
     modifiers_to_be_sent->clear();
   } else if (is_modifier_only) {
+    // TODO(hsumita): Supports a key sequence below.
+    // - Ctrl down
+    // - a down
+    // - Alt down
+    // We should add Alt key to |currently_pressed_modifiers|, but current
+    // implementation does NOT do it.
     if (currently_pressed_modifiers->empty() ||
         !modifiers_to_be_sent->empty()) {
       for (size_t i = 0; i < key->modifier_keys_size(); ++i) {
@@ -943,12 +1007,145 @@ bool MozcEngine::ProcessModifiers(
     currently_pressed_modifiers->insert(keyval);
     return false;
   }
+
   // Clear modifier data just in case if |key| has no modifier keys.
   if (!IsModifierToBeSentOnKeyUp(*key)) {
+    *is_non_modifier_key_pressed = false;
     currently_pressed_modifiers->clear();
     modifiers_to_be_sent->clear();
   }
+
   return true;
+}
+
+void MozcEngine::AppendCompositionPropertyToPanel(
+    const MessageTranslatorInterface &translator) {
+  // |sub_prop_list| is a radio menu which is shown when a button in the
+  // language panel (i.e. |prop_composition_mode_| below) is clicked.
+  IBusPropList *sub_prop_list = ibus_prop_list_new();
+
+  // Create items for the radio menu.
+  string icon_path_for_panel;
+  for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
+    const MozcEngineProperty &entry = kMozcEngineProperties[i];
+    IBusText *label = ibus_text_new_from_string(
+        translator.MaybeTranslate(entry.label).c_str());
+    IBusPropState state = PROP_STATE_UNCHECKED;
+    if (entry.composition_mode == kMozcEngineInitialCompositionMode) {
+      state = PROP_STATE_CHECKED;
+      icon_path_for_panel = GetIconPath(entry.icon);
+    }
+    IBusProperty *item = ibus_property_new(entry.key,
+                                           PROP_TYPE_RADIO,
+                                           label,
+                                           NULL /* icon */,
+                                           NULL /* tooltip */,
+                                           TRUE /* sensitive */,
+                                           TRUE /* visible */,
+                                           state,
+                                           NULL /* sub props */);
+    g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
+    ibus_prop_list_append(sub_prop_list, item);
+    // |sub_prop_list| owns |item| by calling g_object_ref_sink for the |item|.
+    // Due to api behavior changes, the label object is leak on ibus-1.2.x
+    // environment, but we decide to give up.
+  }
+  DCHECK(!icon_path_for_panel.empty());
+
+  // The label of |prop_composition_mode_| is shown in the language panel.
+  prop_composition_mode_ = ibus_property_new("CompositionMode",
+                                             PROP_TYPE_MENU,
+                                             NULL /* label */,
+                                             icon_path_for_panel.c_str(),
+                                             NULL /* tooltip */,
+                                             TRUE /* sensitive */,
+                                             TRUE /* visible */,
+                                             PROP_STATE_UNCHECKED,
+                                             sub_prop_list);
+
+  // Likewise, |prop_composition_mode_| owns |sub_prop_list|. We have to sink
+  // |prop_composition_mode_| here so ibus_engine_update_property() call in
+  // PropertyActivate() does not destruct the object.
+  g_object_ref_sink(prop_composition_mode_);
+
+  ibus_prop_list_append(prop_root_, prop_composition_mode_);
+}
+
+void MozcEngine::AppendToolPropertyToPanel(
+    const MessageTranslatorInterface &translator) {
+  // |sub_prop_list| is a radio menu which is shown when a button in the
+  // language panel (i.e. |prop_composition_mode_| below) is clicked.
+  IBusPropList *sub_prop_list = ibus_prop_list_new();
+
+  for (size_t i = 0; i < kMozcEngineToolPropertiesSize; ++i) {
+    const MozcEngineToolProperty &entry = kMozcEngineToolProperties[i];
+    IBusText *label = ibus_text_new_from_string(
+        translator.MaybeTranslate(entry.label).c_str());
+    // TODO(yusukes): It would be better to use entry.icon here?
+    IBusProperty *item = ibus_property_new(entry.mode,
+                                             PROP_TYPE_NORMAL,
+                                           label,
+                                           NULL /* icon */,
+                                           NULL /* tooltip */,
+                                           TRUE,
+                                           TRUE,
+                                           PROP_STATE_UNCHECKED,
+                                           NULL);
+    g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
+    ibus_prop_list_append(sub_prop_list, item);
+    // Due to api behavior changes, the label object is leak on ibus-1.2.x
+    // environment, but we decide to give up.
+  }
+
+  const string icon_path = GetIconPath(kMozcToolIconPath);
+  prop_mozc_tool_ = ibus_property_new("MozcTool",
+                                      PROP_TYPE_MENU,
+                                      NULL /* label */,
+                                      icon_path.c_str(),
+                                      NULL /* tooltip */,
+                                      TRUE /* sensitive */,
+                                      TRUE /* visible */,
+                                      PROP_STATE_UNCHECKED,
+                                      sub_prop_list);
+
+  // Likewise, |prop_mozc_tool_| owns |sub_prop_list|. We have to sink
+  // |prop_mozc_tool_| here so ibus_engine_update_property() call in
+  // PropertyActivate() does not destruct the object.
+  g_object_ref_sink(prop_mozc_tool_);
+
+  ibus_prop_list_append(prop_root_, prop_mozc_tool_);
+}
+
+void MozcEngine::AppendSwitchPropertyToPanel(
+    const MessageTranslatorInterface &translator) {
+  for (size_t i = 0; i < kMozcEngineSwitchPropertiesSize; ++i) {
+    const MozcEngineSwitchProperty &entry = kMozcEngineSwitchProperties[i];
+    IBusText *label = ibus_text_new_from_string(
+        translator.MaybeTranslate(entry.label).c_str());
+    IBusText *tooltip = ibus_text_new_from_string(
+        translator.MaybeTranslate(entry.tooltip).c_str());
+    IBusProperty *item = ibus_property_new(entry.key,
+                                           PROP_TYPE_NORMAL,
+                                           label,
+                                           GetIconPath(entry.icon).c_str(),
+                                           tooltip,
+                                           TRUE,
+                                           TRUE,
+                                           PROP_STATE_UNCHECKED,
+                                           NULL);
+    g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
+    prop_switch_properties_.push_back(item);
+
+    // We have to sink |*item| here so ibus_engine_update_property() call in
+    // PropertyActivate() does not destruct the object.
+    g_object_ref_sink(item);
+    // Due to api behavior changes, the label object is leak on ibus-1.2.x
+    // environment, but we decide to give up.
+  }
+
+  for (size_t i = 0; i < prop_switch_properties_.size(); ++i) {
+    ibus_prop_list_append(prop_root_, prop_switch_properties_[i]);
+  }
 }
 
 bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
@@ -956,6 +1153,7 @@ bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
   UpdateResult(engine, output);
   UpdatePreedit(engine, output);
   UpdateCandidates(engine, output);
+  UpdateAuxiliaryText(engine, output);
 
   if (output.has_status() &&
       (output.status().activated() != is_activated_ ||
@@ -1063,11 +1261,29 @@ bool MozcEngine::UpdatePreedit(IBusEngine *engine,
   return true;
 }
 
+// TODO(hsumita): Writes test for this method.
 bool MozcEngine::UpdateCandidates(IBusEngine *engine,
                                   const commands::Output &output) {
+#ifdef ENABLE_GTK_RENDERER
+  if (FLAGS_use_mozc_candidate_window) {
+    commands::RendererCommand command;
+    command.mutable_output()->CopyFrom(output);
+    command.set_type(commands::RendererCommand::UPDATE);
+    command.set_visible(output.candidates().candidate_size() != 0);
+    commands::RendererCommand::ApplicationInfo *appinfo
+        = command.mutable_application_info();
+    appinfo->set_process_id(getpid());
+    appinfo->set_thread_id(pthread_self());
+
+    // TODO(nona): If renderer client fails to launch renderer use ibus_panel.
+    if (renderer_->ExecCommand(command)) {
+      return true;
+    }
+    return true;
+  }
+#endif  // ENABLE_GTK_RENDERER
   unique_candidate_ids_.clear();
-  if (!output.has_candidates()) {
-    ibus_engine_hide_auxiliary_text(engine);
+  if (!output.has_candidates() || output.candidates().candidate_size() == 0) {
     ibus_engine_hide_lookup_table(engine);
     return true;
   }
@@ -1154,14 +1370,6 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
   ibus_engine_update_lookup_table(engine, table, TRUE);
   // |table| is released by ibus_engine_update_lookup_table.
 
-  IBusText *auxiliary_text = ComposeAuxiliaryText(candidates);
-  if (auxiliary_text) {
-    ibus_engine_update_auxiliary_text(engine, auxiliary_text, TRUE);
-    // |auxiliary_text| is released by ibus_engine_update_auxiliary_text.
-  } else {
-    ibus_engine_hide_auxiliary_text(engine);
-  }
-
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     if (candidates.candidate(i).has_id()) {
       const int32 id = candidates.candidate(i).id();
@@ -1171,6 +1379,32 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
       // node does not contain a candidate word.
       unique_candidate_ids_.push_back(kBadCandidateId);
     }
+  }
+
+  return true;
+}
+
+// TODO(hsumita): Writes test for this method.
+bool MozcEngine::UpdateAuxiliaryText(IBusEngine *engine,
+                                     const commands::Output &output) const {
+#ifdef ENABLE_GTK_RENDERER
+  // Currently GTK Renderer does NOT support auxiliary text.
+  if (FLAGS_use_mozc_candidate_window) {
+    return true;
+  }
+#endif  // ENABLE_GTK_RENDERER
+
+  if (!output.has_candidates()) {
+    ibus_engine_hide_auxiliary_text(engine);
+    return true;
+  }
+
+  IBusText *auxiliary_text = ComposeAuxiliaryText(output.candidates());
+  if (auxiliary_text) {
+    ibus_engine_update_auxiliary_text(engine, auxiliary_text, TRUE);
+    // |auxiliary_text| is released by ibus_engine_update_auxiliary_text.
+  } else {
+    ibus_engine_hide_auxiliary_text(engine);
   }
 
   return true;
@@ -1205,10 +1439,14 @@ void MozcEngine::UpdateConfig(const gchar *section,
 
 void MozcEngine::UpdateCompositionModeIcon(
     IBusEngine *engine, const commands::CompositionMode new_composition_mode) {
+  if (prop_composition_mode_ == NULL) {
+    return;
+  }
 
   const MozcEngineProperty *entry = NULL;
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
-    if (kMozcEngineProperties[i].composition_mode == new_composition_mode) {
+    if (kMozcEngineProperties[i].composition_mode ==
+        new_composition_mode) {
       entry = &(kMozcEngineProperties[i]);
       break;
     }

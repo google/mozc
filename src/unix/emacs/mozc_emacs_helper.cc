@@ -38,8 +38,6 @@
 #include "base/version.h"
 #include "client/client.h"
 #include "config/config_handler.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "session/commands.pb.h"
 #include "unix/emacs/client_pool.h"
 
@@ -126,9 +124,6 @@ void ProcessLoop() {
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
-  mozc::japanese::LangDepSpecJapanese spec;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
-
   if (FLAGS_suppress_stderr) {
 #ifdef OS_WINDOWS
     const char path[] = "NUL";

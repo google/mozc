@@ -49,7 +49,7 @@ bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
   // Shortcut keys should be available as if CapsLock was not enabled like
   // other IMEs such as MS-IME or ATOK. b/5627459
   commands::KeyEvent normalized_key_event;
-  KeyEventUtil::NormalizeKeyEvent(key_event, &normalized_key_event);
+  KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
   KeyInformation key;
   if (!KeyEventUtil::GetKeyInformation(normalized_key_event, &key)) {
     return false;

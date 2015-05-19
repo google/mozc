@@ -608,7 +608,7 @@
         <x>30</x>
         <y>180</y>
         <width>441</width>
-        <height>27</height>
+        <height>32</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_12">
@@ -1432,208 +1432,480 @@
      <attribute name="title">
       <string>Misc</string>
      </attribute>
-     <widget class="QWidget" name="horizontalLayoutWidget_17">
+     <widget class="QWidget" name="widgetMisc" native="true">
       <property name="geometry">
        <rect>
         <x>20</x>
         <y>10</y>
-        <width>461</width>
-        <height>21</height>
+        <width>471</width>
+        <height>331</height>
        </rect>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_19">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="spacing">
+        <number>15</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>2</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
-        <widget class="QLabel" name="checkDefaultLabel">
-         <property name="text">
-          <string>Default IME</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="Line" name="checkDefaultLine">
+        <widget class="QWidget" name="miscDefaultIMEWidget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QWidget" name="widget_3" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <property name="spacing">
+              <number>-1</number>
+             </property>
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="checkDefaultLabel">
+               <property name="text">
+                <string>Default IME</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="Line" name="checkDefaultLine">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_4" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QCheckBox" name="checkDefaultCheckBox">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Check if Mozc is the default IME on startup</string>
+               </property>
+               <property name="tristate">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="IMEHotKeyDisabledCheckBox">
+               <property name="text">
+                <string>Disable Keyboard layout hotkey (Ctrl+Shift)</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="gridLayoutWidget_7">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>200</y>
-        <width>441</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_7">
-       <item row="0" column="0">
-        <widget class="QLabel" name="verboseLevelLabel">
-         <property name="text">
-          <string>Logging level (debug only)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QComboBox" name="verboseLevelComboBox">
-         <property name="minimumSize">
-          <size>
-           <width>100</width>
-           <height>0</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_10">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>180</y>
-        <width>461</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_13">
        <item>
-        <widget class="QLabel" name="loggingLabel">
-         <property name="text">
-          <string>Logging</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="Line" name="loggingLine">
+        <widget class="QWidget" name="miscAdministrationWidget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QWidget" name="widget_7" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <property name="spacing">
+              <number>-1</number>
+             </property>
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="administrationLabel">
+               <property name="text">
+                <string>Administration</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="Line" name="administrationLine">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_8" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_7">
+             <property name="leftMargin">
+              <number>12</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="dictionaryPreloadingAndUACLabel">
+               <property name="text">
+                <string>Dictionary preloading and UAC settings</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QPushButton" name="launchAdministrationDialogButton">
+               <property name="minimumSize">
+                <size>
+                 <width>120</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Settings...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <spacer name="horizontalSpacer_9">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_15">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>110</y>
-        <width>461</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_15">
        <item>
-        <widget class="QLabel" name="administrationLabel">
-         <property name="text">
-          <string>Administration</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="Line" name="administrationLine">
+        <widget class="QWidget" name="miscStartupWidget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QWidget" name="widget_11" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_19">
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="startupLabel">
+               <property name="text">
+                <string>Startup</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="Line" name="startupLine">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_12" native="true">
+            <layout class="QVBoxLayout" name="verticalLayout_6">
+             <property name="leftMargin">
+              <number>12</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QCheckBox" name="startupCheckBox">
+               <property name="text">
+                <string>Start conversion engine on login</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="gridLayoutWidget_11">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>130</y>
-        <width>441</width>
-        <height>32</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_10">
-       <item row="0" column="2">
-        <widget class="QPushButton" name="launchAdministrationDialogButton">
-         <property name="minimumSize">
-          <size>
-           <width>120</width>
-           <height>0</height>
-          </size>
+       <item>
+        <widget class="QWidget" name="miscLoggingWidget" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <property name="text">
-          <string>Settings...</string>
-         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QWidget" name="widget_9" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_13">
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="loggingLabel">
+               <property name="text">
+                <string>Logging</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="Line" name="loggingLine">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_10" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_15">
+             <property name="leftMargin">
+              <number>12</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="verboseLevelLabel">
+               <property name="text">
+                <string>Logging level (debug only)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_13">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QComboBox" name="verboseLevelComboBox">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
-       <item row="0" column="1">
-        <spacer name="horizontalSpacer_9">
+       <item>
+        <spacer name="verticalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>40</width>
-           <height>20</height>
+           <width>20</width>
+           <height>40</height>
           </size>
          </property>
         </spacer>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="dictionaryPreloadingAndUACLabel">
-         <property name="text">
-          <string>Dictionary preloading and UAC settings</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="layoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>40</y>
-        <width>441</width>
-        <height>51</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_8">
-       <item row="0" column="0">
-        <widget class="QCheckBox" name="checkDefaultCheckBox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Check if Mozc is the default IME on startup</string>
-         </property>
-         <property name="tristate">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QCheckBox" name="IMEHotKeyDisabledCheckBox">
-         <property name="text">
-          <string>Disable Keyboard layout hotkey (Ctrl+Shift)</string>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>
@@ -1723,10 +1995,12 @@
   <tabstop>keymapSettingComboBox</tabstop>
   <tabstop>editKeymapButton</tabstop>
   <tabstop>editRomanTableButton</tabstop>
-  <tabstop>resetToDefaultsButton</tabstop>
   <tabstop>historyLearningLevelComboBox</tabstop>
   <tabstop>clearUserHistoryButton</tabstop>
   <tabstop>editUserDictionaryButton</tabstop>
+  <tabstop>localUsageDictionaryCheckBox</tabstop>
+  <tabstop>webUsageDictionaryCheckBox</tabstop>
+  <tabstop>editWebServiceEntryButton</tabstop>
   <tabstop>singleKanjiDictionaryCheckBox</tabstop>
   <tabstop>symbolDictionaryCheckBox</tabstop>
   <tabstop>emoticonDictionaryCheckBox</tabstop>
@@ -1758,10 +2032,13 @@
   <tabstop>syncToggleButton</tabstop>
   <tabstop>syncCustomizationButton</tabstop>
   <tabstop>clearSyncButton</tabstop>
+  <tabstop>cloudHandwritingCheckBox</tabstop>
   <tabstop>checkDefaultCheckBox</tabstop>
   <tabstop>IMEHotKeyDisabledCheckBox</tabstop>
   <tabstop>launchAdministrationDialogButton</tabstop>
+  <tabstop>startupCheckBox</tabstop>
   <tabstop>verboseLevelComboBox</tabstop>
+  <tabstop>resetToDefaultsButton</tabstop>
   <tabstop>configDialogButtonBox</tabstop>
  </tabstops>
  <resources/>

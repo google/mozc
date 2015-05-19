@@ -102,7 +102,6 @@
             # private key to sign the extension.  Otherwise, a new packed
             # extension looks a different extension.
             # Of course, the private key must be placed in a secure manner.
-            '--enable-experimental-extension-apis',
             '--no-message-box',
           ],
         },
@@ -176,10 +175,10 @@
             '--nacl_sdk_root=<(nacl_sdk_root)',
             '--target_settings='
             '[{"configuration": "<(configuration_nacl_i686)",'
-            '  "toolchain_dir": "linux_x86",'
+            '  "toolchain_dir": "linux_x86_newlib",'
             '  "toolchain_prefix": "i686-nacl-"},'
             ' {"configuration": "<(configuration_nacl_x86_64)",'
-            '  "toolchain_dir": "linux_x86",'
+            '  "toolchain_dir": "linux_x86_newlib",'
             '  "toolchain_prefix": "x86_64-nacl-"}]',
             '--touch_when_done=<(gen_out_dir)/build_skk_dict_nexe_done',
             'chrome/skk/skk_dict.gyp:skk_dict.nexe',

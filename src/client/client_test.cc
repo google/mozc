@@ -34,8 +34,6 @@
 #include "base/version.h"
 #include "client/client.h"
 #include "ipc/ipc_mock.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -127,6 +125,8 @@ class TestServerLauncher : public ServerLauncherInterface {
 
   void set_restricted(bool restricted) {}
 
+  void set_suppress_error_dialog(bool suppress) {}
+
   void set_start_server_result(const bool result) {
     start_server_result_ = result;
   }
@@ -168,9 +168,6 @@ class ClientTest : public testing::Test {
   ClientTest() : version_diff_(0) {}
 
   virtual void SetUp() {
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
-        &language_dependent_spec_japanese_);
-
     client_factory_.reset(new IPCClientFactoryMock);
     client_.reset(new Client);
     client_->SetIPCClientFactory(client_factory_.get());
@@ -182,7 +179,6 @@ class ClientTest : public testing::Test {
   virtual void TearDown() {
     client_.reset();
     client_factory_.reset();
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
 
   void SetMockOutput(const commands::Output &mock_output) {
@@ -224,9 +220,6 @@ class ClientTest : public testing::Test {
   int version_diff_;
 
  private:
-  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
-  // testing, and the actual instance does not have to be LangDepSpecJapanese.
-  mozc::japanese::LangDepSpecJapanese language_dependent_spec_japanese_;
   DISALLOW_COPY_AND_ASSIGN(ClientTest);
 };
 
@@ -613,6 +606,8 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
 
   void set_restricted(bool restricted) {}
 
+  void set_suppress_error_dialog(bool suppress) {}
+
   void set_start_server_result(const bool result) {
     start_server_result_ = result;
   }
@@ -641,9 +636,6 @@ class SessionPlaybackTest : public testing::Test {
   virtual ~SessionPlaybackTest() {}
 
   virtual void SetUp() {
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
-        &language_dependent_spec_japanese_);
-
     ipc_client_factory_.reset(new IPCClientFactoryMock);
     ipc_client_.reset(reinterpret_cast<IPCClientMock *>(
         ipc_client_factory_->NewClient("")));
@@ -657,7 +649,6 @@ class SessionPlaybackTest : public testing::Test {
   virtual void TearDown() {
     client_.reset();
     ipc_client_factory_.reset();
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
 
   bool SetupConnection(const int id) {
@@ -691,9 +682,6 @@ class SessionPlaybackTest : public testing::Test {
   SessionPlaybackTestServerLauncher *server_launcher_;
 
  private:
-  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
-  // testing, and the actual instance does not have to be LangDepSpecJapanese.
-  mozc::japanese::LangDepSpecJapanese language_dependent_spec_japanese_;
   DISALLOW_COPY_AND_ASSIGN(SessionPlaybackTest);
 };
 

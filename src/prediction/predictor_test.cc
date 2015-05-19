@@ -30,10 +30,16 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "prediction/predictor_interface.h"
-#include "testing/base/public/gunit.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
+
+using ::testing::AtMost;
+using ::testing::Return;
+using ::testing::_;
 
 DECLARE_string(test_tmpdir);
 
@@ -69,6 +75,18 @@ class NullPredictor : public PredictorInterface {
   bool return_value_;
   mutable bool predict_called_;
 };
+
+class MockPredictor : public PredictorInterface {
+ public:
+  MockPredictor() {}
+  virtual ~MockPredictor() {}
+
+  MOCK_CONST_METHOD1(Predict, bool (Segments *segments));
+  MOCK_CONST_METHOD2(
+      PredictForRequest,
+      bool (const ConversionRequest &request, Segments *segments));
+};
+
 }  // namespace
 
 class PredictorTest : public testing::Test {
@@ -169,6 +187,27 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
   PredictorInterface *predictor = PredictorFactory::GetPredictor();
   EXPECT_TRUE(predictor->Predict(&segments));
 }
+
+TEST_F(PredictorTest, CallPredictForRequet) {
+  MockPredictor predictor1;
+  MockPredictor predictor2;
+  PredictorFactory::SetUserHistoryPredictor(&predictor1);
+  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  Segments segments;
+  {
+    segments.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments.add_segment();
+    CHECK(segment);
+  }
+  PredictorInterface *predictor = PredictorFactory::GetPredictor();
+  EXPECT_CALL(predictor1, PredictForRequest(_, _))
+      .Times(AtMost(1)).WillOnce(Return(true));
+  EXPECT_CALL(predictor2, PredictForRequest(_, _))
+      .Times(AtMost(1)).WillOnce(Return(true));
+  EXPECT_TRUE(predictor->Predict(&segments));
+}
+
 
 
 

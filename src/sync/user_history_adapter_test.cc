@@ -33,6 +33,7 @@
 #include <map>
 #include <string>
 #include "base/base.h"
+#include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/freelist.h"
 #include "base/util.h"
@@ -51,28 +52,14 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace sync {
 
-class TestClockTimer : public ClockTimerInterface {
- public:
-  uint64 GetCurrentTime() const {
-    return ++current_time_ + base_time_;
-  }
-
-  void SetBaseTime(uint64 base_time) {
-    base_time_ = base_time;
-  }
-
-  TestClockTimer()
-      : current_time_(0), base_time_(0) {}
-
- private:
-  mutable uint64 current_time_;
-  uint64 base_time_;
-};
-
 class UserHistoryAdapterTest : public testing::Test {
  public:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+    clock_mock_.reset(new ClockMock(0, 0));
+    clock_mock_->SetAutoPutClockForward(1, 0);
+    Util::SetClockHandler(clock_mock_.get());
 
     config::Config config = config::ConfigHandler::GetConfig();
     config::SyncConfig *sync_config = config.mutable_sync_config();
@@ -82,7 +69,10 @@ class UserHistoryAdapterTest : public testing::Test {
 
   virtual void TearDown() {
     storage::Registry::SetStorage(NULL);
+    Util::SetClockHandler(NULL);
   }
+
+  scoped_ptr<ClockMock> clock_mock_;
 };
 
 TEST_F(UserHistoryAdapterTest, BucketSize) {
@@ -126,12 +116,10 @@ TEST_F(UserHistoryAdapterTest, SetDownloadedItems) {
   adapter.SetLastDownloadTimestamp(0);
 
   UserHistorySyncUtil::UserHistory expected;
-  TestClockTimer clock_timer;
 
   {
     UserHistoryStorage local_history(filename);
-    UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                          &clock_timer);
+    UserHistorySyncUtil::AddRandomUpdates(&local_history);
     EXPECT_TRUE(local_history.Save());
     expected.CopyFrom(local_history);
   }
@@ -141,8 +129,7 @@ TEST_F(UserHistoryAdapterTest, SetDownloadedItems) {
   vector<const UserHistorySyncUtil::UserHistory *> updates;
   for (int i = 0; i < 10; ++i) {
     UserHistorySyncUtil::UserHistory *update = freelist.Alloc();
-    UserHistorySyncUtil::AddRandomUpdates(update,
-                                          &clock_timer);
+    UserHistorySyncUtil::AddRandomUpdates(update);
     updates.push_back(update);
   }
 
@@ -181,15 +168,11 @@ TEST_F(UserHistoryAdapterTest, GetItemsToUpload) {
 
   UserHistoryAdapter adapter;
   adapter.SetUserHistoryFileName(filename);
-  TestClockTimer clock_timer;
 
   UserHistoryStorage local_history(filename);
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
   EXPECT_GT(local_history.entries_size(), 0);
   EXPECT_TRUE(local_history.Save());
 
@@ -264,7 +247,7 @@ TEST_F(UserHistoryAdapterTest, MarkUploaded) {
   EXPECT_EQ(1234, adapter.GetLastDownloadTimestamp());
 
   // last_access_time is updated.
-  const uint64 synced_time = static_cast<uint64>(time(NULL));
+  const uint64 synced_time = Util::GetTime();
   ime_sync::SyncItems items;
   adapter.GetItemsToUpload(&items);
   adapter.MarkUploaded(item, true);
@@ -342,7 +325,6 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
   vector<Syncer *> syncers;
   vector<UserHistoryAdapter *> adapters;
   vector<storage::StorageInterface *> memory_storages;
-  TestClockTimer clock_timer;
 
   // create 10 clients
   for (int i = 0; i < kClientsSize; ++i) {
@@ -357,7 +339,6 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
         Util::JoinPath(FLAGS_test_tmpdir,
                        "client." + Util::SimpleItoa(i));
     adapter->SetUserHistoryFileName(filename);
-    adapter->SetClockTimerInterface(&clock_timer);
     syncer->RegisterAdapter(adapter);
     syncers.push_back(syncer);
     adapters.push_back(adapter);
@@ -376,9 +357,8 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
     CHECK(client_id >= 0 && client_id < kClientsSize);
     UserHistoryStorage history(filenames[client_id]);
     history.Load();
-    clock_timer.SetBaseTime(1000 * n + 100 * client_id);
-    UserHistorySyncUtil::AddRandomUpdates(&history,
-                                          &clock_timer);
+    clock_mock_->SetTime(1000 * n + 100 * client_id, 0);
+    UserHistorySyncUtil::AddRandomUpdates(&history);
     EXPECT_TRUE(history.Save());
 
     for (int i = 0; i < kClientsSize; ++i) {
@@ -394,23 +374,34 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
     syncers[i]->Sync(&reload_required);
   }
 
-  // Check all clients have the similear entries.
+  // Check all clients have the same entries.
   UserHistoryStorage target(filenames[0]);
   target.Load();
-  int same_history_num = 0;
   for (int i = 1; i < kClientsSize; ++i) {
     UserHistoryStorage storage(filenames[i]);
     storage.Load();
-    EXPECT_GT(storage.entries_size(), 0);
-    if (target.entries(0).DebugString() ==
-        storage.entries(0).DebugString()) {
-      ++same_history_num;
+    EXPECT_EQ(target.entries_size(), storage.entries_size());
+
+    if (target.entries_size() == storage.entries_size()) {
+      // Ensure all entries have all elements.
+      for (size_t i = 0; i < target.entries_size(); ++i) {
+        UserHistorySyncUtil::Entry *entry = target.mutable_entries(i);
+        entry->set_suggestion_freq(entry->suggestion_freq());
+        entry->set_conversion_freq(entry->conversion_freq());
+        entry->set_last_access_time(entry->last_access_time());
+        entry->set_removed(entry->removed());
+      }
+      for (size_t i = 0; i < storage.entries_size(); ++i) {
+        UserHistorySyncUtil::Entry *entry = storage.mutable_entries(i);
+        entry->set_suggestion_freq(entry->suggestion_freq());
+        entry->set_conversion_freq(entry->conversion_freq());
+        entry->set_last_access_time(entry->last_access_time());
+        entry->set_removed(entry->removed());
+      }
+
+      EXPECT_EQ(target.DebugString(), storage.DebugString());
     }
   }
-
-  // 7/9 entries should have the same top entries.
-  // TODO(taku): Compare all entities.
-  EXPECT_GE(same_history_num, 7);
 
   for (int i = 0; i < kClientsSize; ++i) {
     Util::Unlink(filenames[i]);

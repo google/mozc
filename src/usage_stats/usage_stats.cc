@@ -45,6 +45,10 @@
 #include "win32/base/imm_util.h"  // IsCuasEnabled
 #endif
 
+#ifdef OS_MACOSX
+#include "base/mac_util.h"
+#endif
+
 namespace mozc {
 namespace usage_stats {
 
@@ -287,6 +291,11 @@ bool UsageStats::Send(void *data) {
     }
   }
   UsageStats::SetBoolean("CuasEnabled", win32::ImeUtil::IsCuasEnabled());
+#endif
+
+#ifdef OS_MACOSX
+  UsageStats::SetBoolean("PrelauncherEnabled",
+                         MacUtil::CheckPrelauncherLoginItemStatus());
 #endif
 
   LoadStats(&uploader);

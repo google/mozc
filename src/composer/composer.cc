@@ -31,17 +31,18 @@
 
 #include "composer/composer.h"
 
-#include "base/util.h"
 #include "base/singleton.h"
+#include "base/util.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/mode_switching_handler.h"
 #include "composer/internal/transliterators_ja.h"
 #include "composer/table.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/character_form_manager.h"
 #include "session/commands.pb.h"
+#include "session/key_event_util.h"
 #include "session/request_handler.h"
 
 namespace mozc {
@@ -185,15 +186,6 @@ transliteration::TransliterationType GetTransliterationTypeFromCompositionMode(
       LOG(ERROR) << "Invalid CompositionMode: " << mode;
       return transliteration::HIRAGANA;
   }
-}
-
-bool IsCapsLocked(const commands::KeyEvent &key_event) {
-  for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
-    if (key_event.modifier_keys(i) == commands::KeyEvent::CAPS) {
-      return true;
-    }
-  }
-  return false;
 }
 
 }  // namespace
@@ -490,7 +482,8 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     // Romaji input usually does not has key_string.  Note that, the
     // existence of key_string never determines if the input mode is
     // Kana or Romaji.
-    ApplyTemporaryInputMode(input, IsCapsLocked(key));
+    const uint32 modifiers = KeyEventUtil::GetModifiers(key);
+    ApplyTemporaryInputMode(input, KeyEventUtil::HasCaps(modifiers));
     InsertCharacter(input);
   }
 

@@ -174,7 +174,7 @@ bool Table::Initialize() {
       return true;
     }
   }
-  switch(config.preedit_method()) {
+  switch (config.preedit_method()) {
     case config::Config::ROMAN:
       result = (config.has_custom_roman_table() &&
                 !config.custom_roman_table().empty()) ?
@@ -353,18 +353,12 @@ const Entry *Table::AddRuleWithAttributes(const string &escaped_input,
   // Invisible character is exception.
   if (!case_sensitive_) {
     const string trimed_input = DeleteSpecialKey(input);
-    const char *begin = trimed_input.data();
-    size_t pos = 0;
-    size_t mblen = 0;
-    while (pos < trimed_input.size()) {
-      const char32 ucs4 = Util::UTF8ToUCS4(begin + pos,
-                                           begin + trimed_input.size(),
-                                           &mblen);
+    for (ConstChar32Iterator iter(trimed_input); !iter.Done(); iter.Next()) {
+      const char32 ucs4 = iter.Get();
       if ('A' <= ucs4 && ucs4 <= 'Z') {
         case_sensitive_ = true;
         break;
       }
-      pos += mblen;
     }
   }
   return entry;

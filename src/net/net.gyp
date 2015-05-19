@@ -45,6 +45,44 @@
             'http_client_mac.mm',
           ],
         }],
+        ['OS=="win"', {
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'wininet.lib',
+                  # used in 'http_client.cc'
+                  # TODO(yukawa): Remove this dependency by replacing
+                  # ::timeGetTime() with Util::GetTick().
+                  'winmm.lib',
+                ],
+              },
+            },
+          },
+        }],
+        ['OS=="linux" and target_platform!="Android"', {
+          # Enable libcurl
+          'cflags': [
+            '<!@(<(pkg_config_command) --cflags-only-other libcurl)',
+          ],
+          'defines': [
+            'HAVE_CURL=1',
+          ],
+          'include_dirs': [
+            '<!@(<(pkg_config_command) --cflags-only-I libcurl)',
+          ],
+          # Following settings will be applied into all the executable targets
+          # and shared_library targets which directly or indirectly depend on
+          # this target.
+          'link_settings': {
+            'ldflags': [
+              '<!@(<(pkg_config_command) --libs-only-L libcurl)',
+            ],
+            'libraries': [
+              '<!@(<(pkg_config_command) --libs-only-l libcurl)',
+            ],
+          },
+        }],
       ],
     },
     {
@@ -114,7 +152,17 @@
       'type': 'none',
       'dependencies': [
         'http_client_mock_test',
-        'jsonpath_test',
+      ],
+      'conditions': [
+        ['enable_extra_unit_tests==1', {
+          'dependencies': [
+            # Temporarily disable following test because JsonCpp still
+            # cannot be built on OSS Mozc.
+            # TODO(nona): Support building JsonCpp on OSS Mozc and remove
+            #     the condtion above.
+            'jsonpath_test',
+          ],
+        }],
       ],
     },
   ],

@@ -57,7 +57,8 @@ enum RewriteType {
   KANJI_FIRST,  // kanji candidates first ordering
 };
 
-void PushBackCandidate(const string &value, const string &desc, uint16 style,
+void PushBackCandidate(const string &value, const string &desc,
+                       Util::NumberString::Style style,
                        vector<Segment::Candidate> *results) {
   bool found = false;
   for (vector<Segment::Candidate>::const_iterator it = results->begin();
@@ -211,9 +212,9 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
   cand->style = result_cand.style;
   cand->description = result_cand.description;
   // Don't want to have FULL_WIDTH form for Hex/Oct/BIN..etc.
-  if (cand->style == Segment::Candidate::NUMBER_HEX ||
-      cand->style == Segment::Candidate::NUMBER_OCT ||
-      cand->style == Segment::Candidate::NUMBER_BIN) {
+  if (cand->style == Util::NumberString::NUMBER_HEX ||
+      cand->style == Util::NumberString::NUMBER_OCT ||
+      cand->style == Util::NumberString::NUMBER_BIN) {
     cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   }
 }
@@ -269,8 +270,8 @@ void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
     vector<Segment::Candidate>::const_iterator itr =
         find_if(results.begin(), results.end(), CheckValueOperator(base_value));
     if (itr != results.end() &&
-        itr->style != Segment::Candidate::NUMBER_KANJI &&
-        itr->style != Segment::Candidate::NUMBER_KANJI_ARABIC) {
+        itr->style != Util::NumberString::NUMBER_KANJI &&
+        itr->style != Util::NumberString::NUMBER_KANJI_ARABIC) {
       // Update exsisting base candidate
       UpdateCandidate(seg, base_candidate_pos, base_cand, results[0]);
     } else {

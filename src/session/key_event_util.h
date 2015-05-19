@@ -57,12 +57,21 @@ class KeyEventUtil {
   static void NormalizeCaps(const commands::KeyEvent &key_event,
                             commands::KeyEvent *new_key_event);
 
-  // This function handles CapsLock as NormalizeCaps(), and
-  // removesLeft / Right specified modifiers.
-  static void NormalizeKeyEvent(const commands::KeyEvent &key_event,
-                                commands::KeyEvent *new_key_event);
+  // Handles CapsLock as NormalizeCaps(), and removes Left / Right specified
+  // modifiers.
+  static void NormalizeModifiers(const commands::KeyEvent &key_event,
+                                 commands::KeyEvent *new_key_event);
 
-  // Return a fallback keyevent generated from key_event. In the
+  // Normalizes a numpad key to a normal key (e.g. NUMPAD0 => '0')
+  static void NormalizeNumpadKey(const commands::KeyEvent &key_event,
+                                 commands::KeyEvent *new_key_event);
+
+  // Removes modifier keys which are specified by |remove_modifiers|.
+  static void RemoveModifiers(const commands::KeyEvent &key_event,
+                              uint32 remove_modifiers,
+                              commands::KeyEvent *new_key_event);
+
+  // Returns a fallback keyevent generated from key_event. In the
   // current implementation, if the input key_event does not contains
   // any special keys or modifier keys, that printable key will be replaced
   // with the ASCII special key.
@@ -85,11 +94,12 @@ class KeyEventUtil {
 
   static bool IsLowerAlphabet(const commands::KeyEvent &key_event);
   static bool IsUpperAlphabet(const commands::KeyEvent &key_event);
+  static bool IsNumpadKey(const commands::KeyEvent &key_event);
 
  private:
-  static void NormalizeKeyEventInternal(const commands::KeyEvent &key_event,
-                                        uint32 ignorable_modifier_mask,
-                                        commands::KeyEvent *new_key_event);
+  static void NormalizeModifiersInternal(const commands::KeyEvent &key_event,
+                                         uint32 ignorable_modifier_mask,
+                                         commands::KeyEvent *new_key_event);
 
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(KeyEventUtil);

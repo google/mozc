@@ -33,8 +33,6 @@
 #include "base/util.h"
 #include "base/thread.h"
 #include "ipc/ipc_path_manager.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -82,16 +80,7 @@ class IPCPathManagerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
-        &lang_dep_spec_);
   }
-
-  virtual void TearDown() {
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-  }
-
- private:
-  mozc::japanese::LangDepSpecJapanese lang_dep_spec_;
 };
 
 TEST_F(IPCPathManagerTest, IPCPathManagerTest) {

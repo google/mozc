@@ -54,6 +54,12 @@ from build_tools import mozc_version
 
 
 SRC_DIR = '.'
+# We need to obtain the absolute path of this script before we
+# call MoveToTopLevelSourceDirectory(), which may change the
+# current directory.
+# Note that if any import above has already changed the current
+# directory, this code cannot work anymore.
+ABS_SCRIPT_PATH = os.path.abspath(__file__)
 
 sys.path.append(SRC_DIR)
 
@@ -75,27 +81,30 @@ def IsLinux():
 
 # TODO(yukawa): Move this function to util.py (b/2715400)
 def GetNumberOfProcessors():
-  """Returns the number of processors available.
+  """Returns the number of CPU cores available.
 
   Returns:
-    An integer corresponding to the number of processors available in
-    Windows, Mac, and Linux.  In other platforms, returns 1.
+    An integer which represents the number of CPU cores available on
+    the host environment. Returns 1 if something fails.
   """
-  if IsWindows():
-    return int(os.environ['NUMBER_OF_PROCESSORS'])
-  elif IsMac():
-    commands = ['sysctl', '-n', 'hw.ncpu']
-    process = subprocess.Popen(commands, stdout=subprocess.PIPE)
-    return int(process.communicate()[0])
-  elif IsLinux():
-    # Count the number of 'vendor_id' in /proc/cpuinfo, assuming that
-    # each line corresponds to one logical CPU.
-    cpuinfo = open('/proc/cpuinfo', 'r')
-    count = len([line for line in cpuinfo if line.find('vendor_id') != -1])
-    cpuinfo.close()
-    return count
-  else:
-    return 1
+  count = 1
+  try:
+    if IsWindows():
+      count = int(os.environ.get('NUMBER_OF_PROCESSORS', '1'))
+    elif IsMac():
+      commands = ['sysctl', '-n', 'hw.ncpu']
+      process = subprocess.Popen(commands, stdout=subprocess.PIPE)
+      count = int(process.communicate()[0])
+    elif IsLinux():
+      # Count the number of 'vendor_id' in /proc/cpuinfo, assuming that
+      # each line corresponds to one logical CPU.
+      with open('/proc/cpuinfo', 'r') as cpuinfo:
+        count = len([line for line in cpuinfo if 'vendor_id' in line])
+    else:
+      logging.warning('failed to detect environment')
+  except BaseException as e:
+    logging.warning('GetNumberOfProcessors() failed: %s', e)
+  return max(1, count)
 
 
 def GetBuildBaseName(options):
@@ -157,6 +166,7 @@ def GenerateVersionFile(version_template_path, version_path):
       'MINOR=@MINOR@\n'
       'BUILD=@BUILD@\n'
       'REVISION=@REVISION@\n'
+      'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@\n'
       'FLAG=@FLAG@\n')
   old_content = ''
   if os.path.exists(version_path):
@@ -289,7 +299,7 @@ def GetTopLevelSourceDirectoryName():
   """Gets the top level source directory name."""
   if SRC_DIR == '.':
     return SRC_DIR
-  script_file_directory_name = os.path.dirname(sys.argv[0])
+  script_file_directory_name = os.path.dirname(ABS_SCRIPT_PATH)
   num_components = len(SRC_DIR.split('/'))
   return os.path.join(script_file_directory_name, *(['..'] * num_components))
 
@@ -297,20 +307,6 @@ def GetTopLevelSourceDirectoryName():
 def MoveToTopLevelSourceDirectory():
   """Moves to the build top level directory."""
   os.chdir(GetTopLevelSourceDirectoryName())
-
-
-def GetGypSvnUrl(deps_file_name):
-  """Get the GYP SVN URL from DEPS file."""
-  contents = file(deps_file_name).read()
-  match = re.search(r'"(http://gyp\.googlecode\.com.*?)@', contents)
-  if match:
-    base_url = match.group(1)
-    match = re.search(r'"gyp_revision":\s+"(\d+)"', contents)
-    if match:
-      revision = match.group(1)
-      return '%s@%s' % (base_url, revision)
-  else:
-    PrintErrorAndExit('GYP URL not found in %s:' % deps_file_name)
 
 
 class RunOrDieError(StandardError):
@@ -389,8 +385,8 @@ def ParseGypOptions(args=None, values=None):
   parser = optparse.OptionParser(usage='Usage: %prog gyp [options]')
   AddCommonOptions(parser)
   # DEPS file should exist in the same directory of the script.
-  default_deps_file = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]),
-                                                   'DEPS'))
+  default_deps_file = os.path.abspath(
+      os.path.join(os.path.dirname(ABS_SCRIPT_PATH), 'DEPS'))
   parser.add_option('--deps_file', dest='deps_file', default=default_deps_file,
                     help='Specifies the DEPS file.')
   parser.add_option('--gyp_generator', dest='gyp_generator',
@@ -401,9 +397,6 @@ def ParseGypOptions(args=None, values=None):
   parser.add_option('--qtdir', dest='qtdir',
                     default=os.getenv('QTDIR', None),
                     help='Qt base directory to be used.')
-  parser.add_option('--coverage', action='store_true', dest='coverage',
-                    help='use code coverage analysis build options',
-                    default=False)
   parser.add_option('--channel_dev', action='store', dest='channel_dev',
                     type='int',
                     help='Pass --channel_dev=1 if you need to build mozc with '
@@ -489,6 +482,9 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='webservice infolist',
                    macro_name='ENABLE_WEBSERVICE_INFOLIST',
                    option_name='webservice_infolist')
+  AddFeatureOption(parser, feature_name='gtk renderer',
+                   macro_name='ENABLE_GTK_RENDERER',
+                   option_name='gtk_renderer')
   AddFeatureOption(parser, feature_name='cloud sync',
                    macro_name='ENABLE_CLOUD_SYNC',
                    option_name='cloud_sync')
@@ -549,7 +545,7 @@ def ExpandMetaTarget(meta_target_name, target_platform):
     targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
                '%s/server/server.gyp:mozc_server',
                '%s/gui/gui.gyp:mozc_tool']
-  elif IsLinux():
+  elif target_platform == 'Linux':
     targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
                '%s/server/server.gyp:mozc_server',
                '%s/gui/gui.gyp:mozc_tool']
@@ -566,8 +562,11 @@ def ParseBuildOptions(args=None, values=None):
   """Parses command line options for the build command."""
   parser = optparse.OptionParser(usage='Usage: %prog build [options]')
   AddCommonOptions(parser)
-  parser.add_option('--jobs', '-j', dest='jobs', default='4', metavar='N',
-                    help='run jobs in parallel')
+  if IsLinux():
+    default_build_concurrency = GetNumberOfProcessors() * 2
+    parser.add_option('--jobs', '-j', dest='jobs',
+                      default=('%d' % default_build_concurrency),
+                      metavar='N', help='run build jobs in parallel')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
   parser.add_option('--version_file', dest='version_file',
@@ -586,10 +585,12 @@ def ParseRunTestsOptions(args=None, values=None):
   parser = optparse.OptionParser(
       usage='Usage: %prog runtests [options] [test_targets] [-- build options]')
   AddCommonOptions(parser)
+  if IsLinux():
+    default_build_concurrency = GetNumberOfProcessors() * 2
+    parser.add_option('--jobs', '-j', dest='jobs',
+                      default=('%d' % default_build_concurrency),
+                      metavar='N', help='run build jobs in parallel')
   parser.add_option('--test_size', dest='test_size', default='small')
-  parser.add_option('--calculate_coverage', dest='calculate_coverage',
-                    default=False, action='store_true',
-                    help='specify if you want to calculate test coverage.')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
 
@@ -629,11 +630,6 @@ def GypMain(options, unused_args):
     print '- %s' % file_name
   # We use the one in third_party/gyp
   gyp_script = os.path.join(options.gypdir, 'gyp')
-  # If we don't have a copy of gyp, download it.
-  if not os.path.isfile(gyp_script):
-    # SVN creates mozc_build_tools directory if it's not present.
-    gyp_svn_url = GetGypSvnUrl(options.deps_file)
-    RunOrDie(['svn', 'checkout', gyp_svn_url, options.gypdir])
   # Run GYP.
   print 'Running GYP...'
   command_line = [sys.executable, gyp_script,
@@ -653,8 +649,6 @@ def GypMain(options, unused_args):
     command_line.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
   else:
     command_line.extend(['-D', 'qt_dir='])
-  if options.coverage:
-    command_line.extend(['-D', 'coverage=1'])
 
   if IsWindows() and options.wix_dir:
     command_line.extend(['-D', 'use_wix=YES'])
@@ -663,6 +657,18 @@ def GypMain(options, unused_args):
     command_line.extend(['-D', 'use_wix=NO'])
 
   command_line.extend(['-D', 'build_base=%s' % GetBuildBaseName(options)])
+
+  disable_unittest_if_not_available = True
+  if disable_unittest_if_not_available:
+    required_modules = ['gmock', 'gtest']
+    for module in required_modules:
+      module_dir = os.path.abspath(
+          os.path.join(GetTopLevelSourceDirectoryName(), 'third_party', module))
+      if not os.path.exists(module_dir):
+        print '%s not found.' % module
+        print 'Disabling unittest.'
+        command_line.extend(['-D', 'enable_unittest=0'])
+        break
 
 
 
@@ -727,6 +733,9 @@ def GypMain(options, unused_args):
                      options.channel_dev)
 
   SetCommandLineForFeature(option_name='webservice_infolist')
+  enable_gtk_renderer_by_default = False
+  SetCommandLineForFeature(option_name='gtk_renderer',
+                           linux=enable_gtk_renderer_by_default)
   SetCommandLineForFeature(option_name='cloud_sync',
                            linux=is_official_dev,
                            windows=is_official_dev,
@@ -782,6 +791,7 @@ def GypMain(options, unused_args):
   else:
     command_line.extend(['-D', 'pkg_config_command='])
 
+
   if os.path.isdir(options.nacl_sdk_root):
     nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
   elif options.nacl_sdk_root:
@@ -792,8 +802,6 @@ def GypMain(options, unused_args):
   command_line.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
 
   command_line.extend(['-D', 'language=%s' % options.language])
-  command_line.extend([
-      '-D', 'language_define=LANGUAGE_%s' % options.language.upper()])
 
   command_line.extend([
       '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
@@ -996,10 +1004,8 @@ def BuildOnWindowsVS2010(abs_solution_path, platform, configuration):
   else:
     os.environ['PATH'] = abs_command_dir
 
-  build_concurrency = GetNumberOfProcessors()
-
   RunOrDie(['msbuild',
-            '/m:%d' % build_concurrency,  # Use concurrent build
+            '/m',  # enable concurrent build
             '/property:Platform=%s' % platform,
             '/property:Configuration=%s' % configuration,
             abs_solution_path])
@@ -1039,6 +1045,12 @@ def BuildMain(options, targets, original_directory_name):
   if not targets:
     PrintErrorAndExit('No build target is specified.')
 
+  # Add the mozc root directory to PYTHONPATH.
+  original_python_path = os.environ.get('PYTHONPATH', '')
+  mozc_root = os.path.abspath(GetTopLevelSourceDirectoryName())
+  python_path = os.pathsep.join([original_python_path, mozc_root])
+  os.environ['PYTHONPATH'] = python_path
+
   # Generate a version definition file.
   print 'Generating version definition file...'
   (template_path, version_path) = GetVersionFileNames(options)
@@ -1058,14 +1070,16 @@ def BuildMain(options, targets, original_directory_name):
   RunPackageVerifiers(
       os.path.join(GetBuildBaseName(options), options.configuration))
 
+  # Revert python path.
+  os.environ['PYTHONPATH'] = original_python_path
 
-def RunTests(build_base, configuration, unused_calculate_coverage):
+
+def RunTests(build_base, configuration):
   """Run built tests actually.
 
   Args:
     build_base: the base directory ('out_linux', 'out_mac', etc.)
     configuration: build configuration ('Release' or 'Debug')
-    unused_calculate_coverage: True if runtests calculates the test coverage.
 
   Raises:
     RunOrDieError: One or more tests have failed.
@@ -1132,6 +1146,8 @@ def RunTestsMain(options, args, original_directory_name):
 
   # configuration and build_base flags are shared among runtests options and
   # build options.
+  if 'jobs' in vars(options).keys():
+    build_options.extend(['-j', options.jobs])
   if options.configuration:
     build_options.extend(['-c', options.configuration])
   if options.build_base:
@@ -1148,8 +1164,7 @@ def RunTestsMain(options, args, original_directory_name):
   BuildMain(build_opts, build_args, original_directory_name)
 
   # Run tests actually
-  RunTests(GetBuildBaseName(options), options.configuration,
-           options.calculate_coverage)
+  RunTests(GetBuildBaseName(options), options.configuration)
 
 
 def CleanBuildFilesAndDirectories(options, unused_args):

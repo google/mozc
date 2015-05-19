@@ -50,5 +50,6 @@ TEST(CloudHandwritingTest, CreateRequest) {
 TEST(CloudHandwritingTest, CreateFeedback) {
   // We do test internal only.
 }
+
 }  // namespace handwriting
 }  // namespace mozc

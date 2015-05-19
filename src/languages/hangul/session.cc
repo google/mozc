@@ -102,13 +102,8 @@ bool SetPreeditToOutput(const string &text, commands::Output *output) {
 // Appends utf8 string into deque<char32>.
 void AppendUTF8ToUcscharDeque(const string &utf8str, deque<char32> *output) {
   DCHECK(output);
-  const char *begin = utf8str.data();
-  const char *end = begin + utf8str.size();
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
-    output->push_back(w);
-    begin += mblen;
+  for (ConstChar32Iterator iter(utf8str); !iter.Done(); iter.Next()) {
+    output->push_back(iter.Get());
   }
 }
 

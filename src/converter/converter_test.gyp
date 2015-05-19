@@ -38,7 +38,6 @@
       'type': 'executable',
       'sources': [
         'candidate_filter_test.cc',
-        'connector_test.cc',
         'converter_mock_test.cc',
         'converter_test.cc',
         'immutable_converter_test.cc',
@@ -65,63 +64,17 @@
       'variables': {
         'test_size': 'small',
       },
-    },
-    {
-      'target_name': 'quality_regression_test_data',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'quality_regression_test_data',
-          'variables': {
-            'input_files': [
-            ],
-          },
-          'inputs': [
-            'gen_quality_regression_test_data.py',
-            '<@(input_files)',
+      'conditions': [
+        ['use_separate_connection_data==1', {
+          'dependencies': [
+            'converter.gyp:connection_data_injected_environment',
           ],
-          'outputs': [
-            '<(gen_out_dir)/quality_regression_test_data.h',
+        }],
+        ['use_separate_dictionary==1', {
+          'dependencies': [
+            '../dictionary/dictionary.gyp:dictionary_data_injected_environment',
           ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/quality_regression_test_data.h',
-            'gen_quality_regression_test_data.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/quality_regression_test_data.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'quality_regression_test',
-      'type': 'executable',
-      'sources': [
-        '<(gen_out_dir)/quality_regression_test_data.h',
-        'quality_regression_test.cc',
-        'quality_regression_util.cc'
-      ],
-      'dependencies': [
-        '../config/config.gyp:config_handler',
-        '../testing/testing.gyp:gtest_main',
-        'converter.gyp:converter',
-        'converter_base.gyp:segments',
-        'quality_regression_test_data',
-      ],
-      'variables': {
-        'test_size': 'large',
-      },
-    },
-    {
-      'target_name': 'quality_regression_main',
-      'type': 'executable',
-      'sources': [
-        'quality_regression_main.cc',
-        'quality_regression_util.cc',
-       ],
-      'dependencies': [
-        'converter.gyp:converter',
-        'converter_base.gyp:segments',
+        }],
       ],
     },
     {
@@ -185,6 +138,13 @@
         'test_data_subdir': 'data/dictionary',
       },
       'includes': ['../gyp/install_testdata.gypi'],
+      'conditions': [
+        ['use_separate_connection_data==1', {
+          'dependencies': [
+            'converter.gyp:connection_data_injected_environment',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'test_connector_test',
@@ -223,7 +183,6 @@
         'character_form_manager_test',
         'connector_test',
         'converter_test',
-        'quality_regression_test',
         'sparse_connector_test',
       ],
     },

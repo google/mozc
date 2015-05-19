@@ -161,7 +161,7 @@ skk.mode.Kana.prototype.addKey = function(keyEvent) {
   var determAndUndeterm = this.composer_.addKey(keyEvent.key);
   var determined = determAndUndeterm[0];
   var undetermined = determAndUndeterm[1];
-  chrome.experimental.input.commitText(
+  chrome.input.ime.commitText(
       {
         contextID: this.ime_.context.contextID,
         text: determined

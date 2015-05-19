@@ -96,10 +96,9 @@
           ],
           'dependencies': [
             'ime_core',
-            '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
             '../../session/session.gyp:session',
           ],
-        },],
+        }],
       ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
@@ -153,6 +152,7 @@
             'ime_types.cc',
             'ime_ui_context.cc',
             'ime_ui_visibility_tracker.cc',
+            'ime_ui_window.cc',
           ],
           'dependencies': [
             '../../base/base.gyp:base',
@@ -160,6 +160,8 @@
             '../../config/config.gyp:config_handler',
             '../../config/config.gyp:config_protocol',
             '../../ipc/ipc.gyp:ipc',
+            '../../renderer/renderer.gyp:renderer_protocol',
+            '../../renderer/renderer.gyp:win32_font_util',
             '../../session/session_base.gyp:ime_switch_util',
             '../../session/session_base.gyp:session_protocol',
             '../base/win32_base.gyp:ime_base',
@@ -176,7 +178,6 @@
             'ime_language_bar.cc',
             'ime_language_bar_menu.cc',
             'ime_module.cc',
-            'ime_ui_window.cc',
             '<(gen_out_dir)/GoogleIMEJa_autogen.rc',
           ],
           'dependencies': [
@@ -184,7 +185,6 @@
             '../../client/client.gyp:client',
             '../../config/config.gyp:stats_config_util',
             '../../ipc/ipc.gyp:ipc',
-            '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
             '../../renderer/renderer.gyp:renderer',
             '../../session/session_base.gyp:ime_switch_util',
             '../../session/session_base.gyp:session_protocol',

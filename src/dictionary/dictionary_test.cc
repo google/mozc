@@ -38,6 +38,20 @@
 #include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
 
+#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
+#include "converter/connection_data_injected_environment.h"
+const ::testing::Environment *kConnectionDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::ConnectionDataInjectedEnvironment());
+#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
+
+#ifdef MOZC_USE_SEPARATE_DICTIONARY
+#include "dictionary/dictionary_data_injected_environment.h"
+const ::testing::Environment *kDictionaryDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::DictionaryDataInjectedEnvironment());
+#endif  // MOZC_USE_SEPARATE_DICTIONARY
+
 namespace mozc {
 
 TEST(Dictionary_test, basic) {

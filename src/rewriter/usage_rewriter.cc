@@ -69,19 +69,14 @@ UsageRewriter::~UsageRewriter() {
 // static
 // "合いました" => "合い"
 string UsageRewriter::GetKanjiPrefixAndOneHiragana(const string &word) {
-  const char *begin = word.data();
-  const char *end = word.data() + word.size();
-
+  // TODO(hidehiko): Refactor more based on ConstChar32Iterator.
   string result;
   int pos = 0;
   bool has_kanji = false;
   bool has_hiragana = false;
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
-    DCHECK_GT(mblen, 0);
+  for (ConstChar32Iterator iter(word); !iter.Done(); iter.Next()) {
+    const char32 w = iter.Get();
     const Util::ScriptType s = Util::GetScriptType(w);
-    begin += mblen;
     if (pos == 0 && s != Util::KANJI) {
       return "";
     } else if (pos >= 0 && pos <= 1 && s == Util::KANJI) {

@@ -40,6 +40,13 @@
 namespace mozc {
 namespace handwriting {
 
+enum HandwritingStatus {
+  HANDWRITING_NO_ERROR,
+  HANDWRITING_ERROR,
+  HANDWRITING_NETWORK_ERROR,
+  HANDWRITING_UNKNOWN_ERROR,
+};
+
 // A coordinate of a stroke.  If the canvas is a square, the point
 // range is supporsed from 0.0 to 1.0.
 typedef pair<float, float> Point;
@@ -51,10 +58,11 @@ class HandwritingInterface {
   HandwritingInterface() {}
   virtual ~HandwritingInterface() {}
 
-  virtual void Recognize(const Strokes &strokes,
-                         vector<string> *candidates) const ABSTRACT;
+  virtual HandwritingStatus Recognize(
+      const Strokes &strokes, vector<string> *candidates) const ABSTRACT;
 
-  virtual void Commit(const Strokes &strokes, const string &result) ABSTRACT;
+  virtual HandwritingStatus Commit(const Strokes &strokes,
+                                   const string &result) ABSTRACT;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(HandwritingInterface);
@@ -62,13 +70,13 @@ class HandwritingInterface {
 
 class HandwritingManager {
  public:
-  // Add a handwriting module inheriting HandwritingInterface.  The
+  // Set a handwriting module inheriting HandwritingInterface.  The
   // owner of the module should be the caller of this function.
-  static void AddHandwritingModule(HandwritingInterface *module);
-  static void ClearHandwritingModules();
+  static void SetHandwritingModule(HandwritingInterface *module);
 
-  static void Recognize(const Strokes &strokes, vector<string> *candidates);
-  static void Commit(const Strokes &strokes, const string &result);
+  static HandwritingStatus Recognize(const Strokes &strokes,
+                                     vector<string> *candidates);
+  static HandwritingStatus Commit(const Strokes &strokes, const string &result);
 
  private:
   HandwritingManager() {}

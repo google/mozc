@@ -51,6 +51,15 @@
             'src/common/windows/guid_string.cc',
             'src/common/windows/http_upload.cc'
           ],
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'dbghelp.lib',
+                ],
+              },
+            },
+          },
         }],
       ],
     },

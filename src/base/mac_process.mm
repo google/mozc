@@ -88,12 +88,16 @@ bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
   NSString *appName = nil;
   if (tool_name == "about_dialog") {
     appName = @"AboutDialog.app";
+  } else if (tool_name == "character_palette") {
+    appName = @"CharacterPalette.app";
   } else if (tool_name == "config_dialog") {
     appName = @"ConfigDialog.app";
   } else if (tool_name == "dictionary_tool") {
     appName = @"DictionaryTool.app";
   } else if (tool_name == "error_message_dialog") {
     appName = @"ErrorMessageDialog.app";
+  } else if (tool_name == "hand_writing") {
+    appName = @"HandWriting.app";
   } else if (tool_name == "word_register_dialog") {
     appName = @"WordRegisterDialog.app";
   }

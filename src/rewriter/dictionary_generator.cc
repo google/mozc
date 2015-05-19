@@ -36,6 +36,7 @@
 #include "base/file_stream.h"
 #include "base/freelist.h"
 #include "base/util.h"
+#include "data_manager/user_dictionary_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 
@@ -76,7 +77,9 @@ static const size_t kTokenSize = 1000;
 
 DictionaryGenerator::DictionaryGenerator()
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
-      token_map_(new map<uint64, Token *>) {}
+      token_map_(new map<uint64, Token *>),
+      user_pos_(
+          UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS()) {}
 
 DictionaryGenerator::~DictionaryGenerator() {}
 
@@ -151,7 +154,7 @@ bool DictionaryGenerator::Output(const string &filename) const {
     } else if (pos == "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x89") {  // "括弧閉"
       id = POSMatcher::GetCloseBracketId();
     } else {
-      CHECK(UserPOS::GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;
+      CHECK(user_pos_->GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;
     }
 
     // Output in mozc dictionary format

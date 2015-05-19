@@ -44,11 +44,6 @@
 #include "gui/character_pad/selection_handler.h"
 #include "gui/character_pad/windows_selection_handler.h"
 
-#ifdef ENABLE_CLOUD_HANDWRITING
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
-#endif  // ENABLE_CLOUD_HANDWRITING
-
 namespace {
 void InstallStyleSheet(const string &style_sheet) {
   QFile file(style_sheet.c_str());
@@ -124,24 +119,8 @@ int RunCharacterPalette(int argc, char *argv[]) {
 }
 
 int RunHandWriting(int argc, char *argv[]) {
-#ifdef ENABLE_CLOUD_HANDWRITING
-  // language spec is prepared here to use 'client' library in
-  // handwriting recognition.
-  // TODO(nona): remove these lines when link-time language dependency
-  //             injection is rolled out.
-  mozc::japanese::LangDepSpecJapanese spec;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
-#endif  // ENABLE_CLOUD_HANDWRITING
-
   mozc::handwriting::ZinniaHandwriting zinnia_handwriting;
-  mozc::handwriting::HandwritingManager::AddHandwritingModule(
+  mozc::handwriting::HandwritingManager::SetHandwritingModule(
       &zinnia_handwriting);
-  const int result = RunCharacterPad(argc, argv, HAND_WRITING);
-
-#ifdef ENABLE_CLOUD_HANDWRITING
-  // TODO(nona): remove this line when link-time language dependency
-  //             injection is rolled out.
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-#endif  // ENABLE_CLOUD_HANDWRITING
-  return result;
+  return RunCharacterPad(argc, argv, HAND_WRITING);
 }

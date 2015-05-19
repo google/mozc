@@ -85,13 +85,8 @@ bool GenerateKeySequenceFrom(const string& hiragana_sentence,
   Util::HiraganaToRomanji(hiragana_sentence, &tmp);
   Util::FullWidthToHalfWidth(tmp, &input);
 
-  const char* begin = input.c_str();
-  const char* end = begin + input.size();
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
-    CHECK_GT(mblen, 0);
-    begin += mblen;
+  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
+    const char32 ucs4 = iter.Get();
 
     // TODO(noriyukit) Improve key sequence generation; currently, a few ucs4
     // codes, like FF5E and 300E, cannot be handled.

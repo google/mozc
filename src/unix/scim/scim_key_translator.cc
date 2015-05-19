@@ -66,8 +66,11 @@ const struct SpecialKeyMap {
   {scim::SCIM_KEY_Insert, mozc::commands::KeyEvent::INSERT},
   {scim::SCIM_KEY_Henkan, mozc::commands::KeyEvent::HENKAN},
   {scim::SCIM_KEY_Muhenkan, mozc::commands::KeyEvent::MUHENKAN},
-  // NOTE(komatsu): There is scim::SCIM_KEY_Hiragana_Katakana too.
   {scim::SCIM_KEY_Hiragana, mozc::commands::KeyEvent::KANA},
+  // scim::SCIM_KEY_Hiragana_Katakana requires special treatment.
+  // See ScimKeyTranslator::NormalizeHiraganaKatakanaKeyWithShift.
+  {scim::SCIM_KEY_Hiragana_Katakana, mozc::commands::KeyEvent::KANA},
+  {scim::SCIM_KEY_Katakana, mozc::commands::KeyEvent::KATAKANA},
   {scim::SCIM_KEY_Eisu_toggle, mozc::commands::KeyEvent::EISU},
   {scim::SCIM_KEY_Home, mozc::commands::KeyEvent::HOME},
   {scim::SCIM_KEY_End, mozc::commands::KeyEvent::END},
@@ -356,17 +359,22 @@ ScimKeyTranslator::~ScimKeyTranslator() {
 }
 
 void ScimKeyTranslator::Translate(
-    const scim::KeyEvent &key, mozc::config::Config::PreeditMethod method,
+    const scim::KeyEvent &original_key,
+    mozc::config::Config::PreeditMethod method,
     mozc::commands::KeyEvent *out_event) const {
+  const scim::KeyEvent key(
+      NormalizeHiraganaKatakanaKeyWithShift(original_key));
   DCHECK(CanConvert(key));
   if (!CanConvert(key)) {
     LOG(ERROR) << "Can't handle the key: " << key.code;
     return;
   }
+
   DCHECK(out_event);
   if (!out_event) {
     return;
   }
+  out_event->Clear();
 
   if (key.is_control_down()) {
     out_event->add_modifier_keys(mozc::commands::KeyEvent::CTRL);
@@ -468,6 +476,16 @@ bool ScimKeyTranslator::IsSpecialKey(
   return true;
 }
 
+// static
+scim::KeyEvent ScimKeyTranslator::NormalizeHiraganaKatakanaKeyWithShift(
+    const scim::KeyEvent &key) {
+  if (key.is_shift_down() && (key.code == scim::SCIM_KEY_Hiragana_Katakana)) {
+    return scim::KeyEvent(scim::SCIM_KEY_Katakana,
+                          key.mask & ~scim::SCIM_KEY_ShiftMask, key.layout);
+  }
+  return key;
+}
+
 bool ScimKeyTranslator::IsSpecialAscii(
     const scim::KeyEvent &key, uint32 *out) const {
   map<uint32, uint32>::const_iterator iter = special_ascii_map_.find(key.code);
@@ -527,5 +545,4 @@ bool ScimKeyTranslator::IsJapaneseLayout(uint16 layout) {
   return layout == scim::SCIM_KEYBOARD_Unknown ||
       layout == scim::SCIM_KEYBOARD_Japanese;
 }
-
 }  // namespace mozc_unix_scim;

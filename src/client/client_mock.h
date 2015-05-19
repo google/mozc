@@ -68,6 +68,7 @@ class ClientMock : public client::ClientInterface {
   virtual void set_timeout(int timeout);
   virtual void set_restricted(bool restricted);
   virtual void set_server_program(const string &program_path);
+  virtual void set_suppress_error_dialog(bool suppress);
   virtual void set_client_capability(const commands::Capability &capability);
   bool LaunchTool(const string &mode, const string &extra_arg);
   bool LaunchToolWithProtoBuf(const commands::Output &output);

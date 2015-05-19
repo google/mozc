@@ -48,7 +48,6 @@
 #include "client/client.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
-#include "languages/global_language_spec.h"
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
 #endif  // OS_MACOSX
@@ -87,10 +86,9 @@ const string LoadServerFlags() {
 
 // initialize default path
 ServerLauncher::ServerLauncher()
-    : server_program_(
-          language::GlobalLanguageSpec::GetLanguageDependentSpec()
-              ->GetServerPath()),
-      restricted_(false) {}
+    : server_program_(Util::GetServerPath()),
+      restricted_(false),
+      suppress_error_dialog_(false) {}
 
 ServerLauncher::~ServerLauncher() {}
 
@@ -262,7 +260,9 @@ void ServerLauncher::OnFatal(
       return;
   }
 
-  Process::LaunchErrorMessageDialog(error_type);
+  if (!suppress_error_dialog_) {
+    Process::LaunchErrorMessageDialog(error_type);
+  }
 }
 }  // client
 }  // mozc

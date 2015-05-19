@@ -52,10 +52,9 @@
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
 #include "rewriter/zipcode_rewriter.h"
-#if defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
-// TODO(horo): Usage is available only in Mac and Windows and ChromeOS now.
+#ifdef USE_USAGE_REWRITER
 #include "rewriter/usage_rewriter.h"
-#endif
+#endif  // USE_USAGE_REWRITER
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
@@ -90,13 +89,9 @@ RewriterImpl::RewriterImpl() {
   AddRewriter(new FortuneRewriter);
   AddRewriter(new CommandRewriter);
   AddRewriter(new VersionRewriter);
-#if defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
-  // TODO(horo): Because infolist renderer window is implimented
-  //             only in Mac and Windows and ChromeOS,
-  //             usage is available only in these OS.
+#ifdef USE_USAGE_REWRITER
   AddRewriter(new UsageRewriter);
-#endif  // defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
-
+#endif  // USE_USAGE_REWRITER
   AddRewriter(new NormalizationRewriter);
   AddRewriter(new RemoveRedundantCandidateRewriter);
 }

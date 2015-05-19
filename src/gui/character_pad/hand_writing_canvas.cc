@@ -38,7 +38,8 @@ namespace gui {
 
 HandWritingCanvas::HandWritingCanvas(QWidget *parent)
     : QWidget(parent),
-      list_widget_(NULL), is_drawing_(false) {
+      list_widget_(NULL), is_drawing_(false),
+      handwriting_status_(handwriting::HANDWRITING_NO_ERROR) {
   setBackgroundRole(QPalette::Base);
   setAutoFillBackground(true);
   strokes_.reserve(128);
@@ -46,7 +47,13 @@ HandWritingCanvas::HandWritingCanvas(QWidget *parent)
                    &recognizer_thread_, SLOT(startRecognition()),
                    Qt::QueuedConnection);
   QObject::connect(&recognizer_thread_, SIGNAL(candidatesUpdated()),
-                   this, SLOT(listUpdated()),
+                   this, SLOT(listUpdated()), Qt::QueuedConnection);
+  qRegisterMetaType<mozc::handwriting::HandwritingStatus>(
+      "mozc::handwriting::HandwritingStatus");
+  QObject::connect(&recognizer_thread_,
+                   SIGNAL(statusUpdated(mozc::handwriting::HandwritingStatus)),
+                   this,
+                   SLOT(statusUpdated(mozc::handwriting::HandwritingStatus)),
                    Qt::QueuedConnection);
   recognizer_thread_.Start();
 }
@@ -65,12 +72,14 @@ void HandWritingCanvas::setListWidget(QListWidget *list_widget)  {
 }
 
 void HandWritingCanvas::clear() {
+  handwriting_status_ = handwriting::HANDWRITING_NO_ERROR;
   strokes_.clear();
   update();
   is_drawing_ = false;
 }
 
 void HandWritingCanvas::revert() {
+  handwriting_status_ = handwriting::HANDWRITING_NO_ERROR;
   if (!strokes_.empty()) {
     strokes_.resize(strokes_.size() - 1);
     update();
@@ -139,6 +148,26 @@ void HandWritingCanvas::paintEvent(QPaintEvent *) {
     }
   }
 
+  if (handwriting_status_ != handwriting::HANDWRITING_NO_ERROR) {
+    painter.setPen(QPen(Qt::red, 2));
+    QString warning_message;
+    switch (handwriting_status_) {
+      case handwriting::HANDWRITING_ERROR:
+        warning_message = QObject::tr("error");
+        break;
+      case handwriting::HANDWRITING_NETWORK_ERROR:
+        warning_message = QObject::tr("network error");
+        break;
+      case handwriting::HANDWRITING_UNKNOWN_ERROR:
+      default:
+        warning_message = QObject::tr("unknown error");
+        break;
+    }
+    painter.drawText(0, 0, width() - margin, height() - margin,
+                     Qt::AlignRight | Qt::AlignBottom | Qt::TextWordWrap,
+                     warning_message);
+  }
+
   emit canvasUpdated();
 }
 
@@ -159,6 +188,11 @@ void HandWritingCanvas::listUpdated() {
   for (size_t i = 0; i < candidates.size(); ++i) {
     list_widget_->addItem(QString::fromUtf8(candidates[i].c_str()));
   }
+}
+
+void HandWritingCanvas::statusUpdated(handwriting::HandwritingStatus status) {
+  handwriting_status_ = status;
+  update();
 }
 
 void HandWritingCanvas::mousePressEvent(QMouseEvent *event) {

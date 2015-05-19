@@ -40,13 +40,13 @@
 #include "base/coordinates.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/window_util.h"
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/composition_window.h"
 #include "renderer/win32/infolist_window.h"
 #include "renderer/win32/win32_renderer_util.h"
-#include "session/commands.pb.h"
 
 namespace mozc {
 namespace renderer {

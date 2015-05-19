@@ -37,12 +37,17 @@
 #include <IOKit/IOKitLib.h>
 
 #include "base/const.h"
+#include "base/scoped_cftyperef.h"
 #include "base/util.h"
 
 namespace mozc {
 namespace {
 const char kServerDirectory[] =
     "/Library/Input Methods/" kProductPrefix ".app/Contents/Resources";
+const unsigned char kPrelauncherPath[] =
+    "/Library/Input Methods/" kProductPrefix ".app/Contents/Resources/"
+    kProductPrefix "Prelauncher.app";
+
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kProjectPrefix[] =
     "com.google.inputmethod.Japanese.";
@@ -52,6 +57,64 @@ const char kProjectPrefix[] =
 #else
 #error Unknown branding
 #endif
+
+// Returns the reference of prelauncher login item.
+// If the prelauncher login item does not exist this function returns NULL.
+// Otherwise you must release the reference.
+LSSharedFileListItemRef GetPrelauncherLoginItem() {
+  LSSharedFileListItemRef prelauncher_item = NULL;
+  scoped_cftyperef<CFURLRef> url(
+    CFURLCreateFromFileSystemRepresentation(
+        kCFAllocatorDefault, kPrelauncherPath,
+        strlen((const char *)kPrelauncherPath), true));
+  if (!url.get()) {
+    LOG(ERROR) << "CFURLCreateFromFileSystemRepresentation error:"
+               << " Cannot create CFURL object.";
+    return NULL;
+  }
+
+  scoped_cftyperef<LSSharedFileListRef> login_items(
+      LSSharedFileListCreate(
+          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, NULL));
+  if (!login_items.get()) {
+    LOG(ERROR) << "LSSharedFileListCreate error: Cannot get the login items.";
+    return NULL;
+  }
+
+  scoped_cftyperef<CFArrayRef> login_items_array(
+      LSSharedFileListCopySnapshot(login_items.get(), NULL));
+  if (!login_items_array.get()) {
+    LOG(ERROR) << "LSSharedFileListCopySnapshot error:"
+               << " Cannot get the login items.";
+    return NULL;
+  }
+
+  for(CFIndex i = 0; i < CFArrayGetCount(login_items_array.get()); ++i) {
+    LSSharedFileListItemRef item =
+        reinterpret_cast<LSSharedFileListItemRef>(const_cast<void *>(
+            CFArrayGetValueAtIndex(login_items_array.get(), i)));
+    if (!item) {
+      LOG(ERROR) << "CFArrayGetValueAtIndex error:"
+                 << " Cannot get the login item.";
+      return NULL;
+    }
+
+    CFURLRef item_url_ref = NULL;
+    if (LSSharedFileListItemResolve(item, 0, &item_url_ref, NULL) == noErr) {
+      if (!item_url_ref) {
+        LOG(ERROR) << "LSSharedFileListItemResolve error:"
+                   << " Cannot get the login item url.";
+        return NULL;
+      }
+      if (CFEqual(item_url_ref, url.get())) {
+        prelauncher_item = item;
+        CFRetain(prelauncher_item);
+      }
+    }
+  }
+
+  return prelauncher_item;
+}
 }  // anonymous namespace
 
 string MacUtil::GetLabelForSuffix(const string &suffix) {
@@ -186,5 +249,61 @@ bool MacUtil::StartLaunchdService(const string &service_name,
   *pid = launch_data_get_integer(pid_data);
   launch_data_free(renderer_info);
   return true;
+}
+
+bool MacUtil::CheckPrelauncherLoginItemStatus() {
+  scoped_cftyperef<LSSharedFileListItemRef> prelauncher_item(
+      GetPrelauncherLoginItem());
+  return (prelauncher_item.get() != NULL);
+}
+
+void MacUtil::RemovePrelauncherLoginItem() {
+  scoped_cftyperef<LSSharedFileListItemRef> prelauncher_item(
+      GetPrelauncherLoginItem());
+
+  if (!prelauncher_item.get()) {
+    DLOG(INFO) << "prelauncher_item not found.  Probably not registered yet.";
+    return;
+  }
+  scoped_cftyperef<LSSharedFileListRef> login_items(
+      LSSharedFileListCreate(
+          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, NULL));
+  if (!login_items.get()) {
+    LOG(ERROR) << "LSSharedFileListCreate error: Cannot get the login items.";
+    return;
+  }
+  LSSharedFileListItemRemove(login_items.get(), prelauncher_item.get());
+}
+
+void MacUtil::AddPrelauncherLoginItem() {
+  if (CheckPrelauncherLoginItemStatus()) {
+    return;
+  }
+  scoped_cftyperef<LSSharedFileListRef> login_items(
+      LSSharedFileListCreate(
+          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, NULL));
+  if (!login_items.get()) {
+    LOG(ERROR) << "LSSharedFileListCreate error: Cannot get the login items.";
+    return;
+  }
+  scoped_cftyperef<CFURLRef> url(
+    CFURLCreateFromFileSystemRepresentation(
+        kCFAllocatorDefault, kPrelauncherPath,
+        strlen((const char *)kPrelauncherPath), true));
+
+  if (!url.get()) {
+    LOG(ERROR) << "CFURLCreateFromFileSystemRepresentation error:"
+               << " Cannot create CFURL object.";
+    return;
+  }
+  scoped_cftyperef<LSSharedFileListItemRef> new_item(
+      LSSharedFileListInsertItemURL(
+          login_items.get(), kLSSharedFileListItemLast, NULL, NULL, url.get(),
+          NULL, NULL));
+  if (!new_item.get()) {
+    LOG(ERROR) << "LSSharedFileListInsertItemURL error:"
+               << " Cannot insert the prelauncher to the login items.";
+    return;
+  }
 }
 }  // namespace mozc

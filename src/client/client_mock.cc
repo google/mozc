@@ -82,6 +82,7 @@ MockVoidImplementation(EnableCascadingWindow, bool enable);
 MockVoidImplementation(set_timeout, int timeout);
 MockVoidImplementation(set_restricted, bool restricted);
 MockVoidImplementation(set_server_program, const string &program_path);
+MockVoidImplementation(set_suppress_error_dialog, bool suppress_error_dialog);
 MockVoidImplementation(set_client_capability,
                        const commands::Capability &capability);
 MockBoolImplementation(LaunchToolWithProtoBuf, const commands::Output &output);

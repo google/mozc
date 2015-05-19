@@ -52,6 +52,8 @@ DECLARE_string(program_invocation_name);
 namespace mozc {
 namespace {
 
+#include "testing/mozc_data_dir.h"
+
 #ifdef OS_WINDOWS
 string GetProgramPath() {
   wchar_t w_path[MAX_PATH];
@@ -69,20 +71,7 @@ string GetProgramPath() {
 }
 
 string GetTestSrcdir() {
-  // Hack: Gyp does not support escaping strings (i.e. '\\' to '\\\\') while
-  // Gyp normalizes path separators from '/' to '\\' for Windows, so we have
-  // a trouble that, if MOZC_DATA_DIR is defined as "a:\r\n", backslashes are
-  // not treated as path separators and they are treated as escape sequences
-  // (carriage return and new line).
-  // Thus we need a little hack.  First, escape all characters in MOZC_DATA_DIR
-  // with AS_STRING ("a:\r\n" -> "\"a:\\r\\n\""), and then remove unwanted
-  // double-quotes at both ends.
-  string srcdir = AS_STRING(MOZC_DATA_DIR);
-  CHECK(srcdir.length() > 2 &&
-        srcdir[0] == '\"' &&
-        srcdir[srcdir.length() - 1] == '\"');
-  srcdir = srcdir.substr(1, srcdir.length() - 2);
-
+  const string srcdir(kMozcDataDir);
   CHECK(Util::DirectoryExists(srcdir)) << srcdir << " is not a directory.";
   return srcdir;
 }
@@ -114,7 +103,7 @@ string GetProgramPath() {
 }
 
 string GetTestSrcdir() {
-  const string srcdir = MOZC_DATA_DIR;
+  const string srcdir(kMozcDataDir);
 
   // FIXME(komatsu): We should implement "genrule" and "exports_files"
   // in build.py to install the data files into srcdir.

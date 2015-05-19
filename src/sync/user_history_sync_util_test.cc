@@ -31,6 +31,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/freelist.h"
 #include "base/util.h"
@@ -40,21 +41,23 @@
 
 namespace mozc {
 namespace sync {
-namespace {
 
-class TestClockTimer : public ClockTimerInterface {
+class UserHistorySyncUtilTest : public testing::Test {
  public:
-  uint64 GetCurrentTime() const {
-    return ++current_time_;
+  virtual void SetUp() {
+    clock_mock_.reset(new ClockMock(0, 0));
+    clock_mock_->SetAutoPutClockForward(1, 0);
+    Util::SetClockHandler(clock_mock_.get());
   }
-  TestClockTimer() : current_time_(0) {}
 
- private:
-  mutable uint64 current_time_;
+  virtual void TearDown() {
+    Util::SetClockHandler(NULL);
+  }
+
+  scoped_ptr<ClockMock> clock_mock_;
 };
-}  // namespace
 
-TEST(UserHistorySyncUtilTest, MergeEntry) {
+TEST_F(UserHistorySyncUtilTest, MergeEntry) {
   UserHistorySyncUtil::Entry entry;
   UserHistorySyncUtil::Entry new_entry;
 
@@ -146,7 +149,7 @@ TEST(UserHistorySyncUtilTest, MergeEntry) {
   EXPECT_EQ(10000, UserHistoryPredictor::cache_size());
 }
 
-TEST(UserHistorySyncUtilTest, CreateUpdate) {
+TEST_F(UserHistorySyncUtilTest, CreateUpdate) {
   UserHistorySyncUtil::UserHistory history;
 
   for (int i = 0; i < 1000; ++i) {
@@ -175,17 +178,15 @@ TEST(UserHistorySyncUtilTest, CreateUpdate) {
   }
 }
 
-TEST(UserHistorySyncUtilTest, MergeUpdates) {
+TEST_F(UserHistorySyncUtilTest, MergeUpdates) {
   FreeList<UserHistorySyncUtil::UserHistory> freelist(1024);
 
   vector<const UserHistorySyncUtil::UserHistory *> updates;
   UserHistorySyncUtil::UserHistory local_history;
-  TestClockTimer clock_timer;
 
   EXPECT_TRUE(UserHistorySyncUtil::MergeUpdates(updates,
                                                 &local_history));
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
 
   UserHistorySyncUtil::UserHistory prev;
 
@@ -198,8 +199,7 @@ TEST(UserHistorySyncUtilTest, MergeUpdates) {
 
   for (int i = 0; i < 10; ++i) {
     UserHistorySyncUtil::UserHistory *update = freelist.Alloc();
-    UserHistorySyncUtil::AddRandomUpdates(update,
-                                          &clock_timer);
+    UserHistorySyncUtil::AddRandomUpdates(update);
     updates.push_back(update);
   }
 
@@ -221,16 +221,12 @@ TEST(UserHistorySyncUtilTest, MergeUpdates) {
   }
 }
 
-TEST(UserHistorySyncUtilTest, MergeUpdatesClearAllEvent) {
+TEST_F(UserHistorySyncUtilTest, MergeUpdatesClearAllEvent) {
   UserHistorySyncUtil::UserHistory local_history;
-  TestClockTimer clock_timer;
 
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
   EXPECT_GT(local_history.entries_size(), 0);
 
   UserHistorySyncUtil::UserHistory update;
@@ -246,16 +242,12 @@ TEST(UserHistorySyncUtilTest, MergeUpdatesClearAllEvent) {
   EXPECT_EQ(1, local_history.entries_size());
 }
 
-TEST(UserHistorySyncUtilTest, MergeUpdatesClearUnusedEvent) {
+TEST_F(UserHistorySyncUtilTest, MergeUpdatesClearUnusedEvent) {
   UserHistorySyncUtil::UserHistory local_history;
-  TestClockTimer clock_timer;
 
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
-  UserHistorySyncUtil::AddRandomUpdates(&local_history,
-                                        &clock_timer);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
+  UserHistorySyncUtil::AddRandomUpdates(&local_history);
   EXPECT_GT(local_history.entries_size(), 0);
 
   size_t remain_size = 0;
@@ -279,5 +271,5 @@ TEST(UserHistorySyncUtilTest, MergeUpdatesClearUnusedEvent) {
   UserHistorySyncUtil::MergeUpdates(updates, &local_history);
   EXPECT_EQ(1 + remain_size, local_history.entries_size());
 }
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc

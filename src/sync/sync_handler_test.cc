@@ -29,14 +29,13 @@
 
 #include <string>
 #include "base/base.h"
-#include "base/util.h"
+#include "base/singleton.h"
 #include "base/thread.h"
+#include "base/util.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
 #include "ipc/named_event.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "net/http_client_mock.h"
 #include "sync/oauth2_client.h"
 #include "sync/oauth2_util.h"
@@ -135,7 +134,6 @@ class SyncHandlerTest : public testing::Test {
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     HTTPClient::SetHTTPClientHandler(&client_);
-    language::GlobalLanguageSpec::SetLanguageDependentSpec(&lang_dep_spec_);
     SyncerFactory::SetSyncer(&syncer_);
 
     ConfigHandler::SetConfigFileName("memory://config");
@@ -148,20 +146,26 @@ class SyncHandlerTest : public testing::Test {
     sync_config->set_use_contact_list_sync(true);
     sync_config->set_use_learning_preference_sync(true);
     ConfigHandler::SetConfig(config);
-  }
 
-  virtual void TearDown() {
-    language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+    status_manager_ = Singleton<SyncStatusManager>::get();
+    SyncStatusReset();
   }
 
   MockSyncer *GetSyncer() {
     return &syncer_;
   }
 
+  void SyncStatusReset() {
+    // Reset sync status assuming authorization succeeds.
+    status_manager_->SetSyncGlobalStatus(
+        commands::CloudSyncStatus::INSYNC);
+    status_manager_->NewSyncStatusSession();
+  }
+
  private:
+  SyncStatusManagerInterface *status_manager_;
   HTTPClientMock client_;
   MockSyncer syncer_;
-  japanese::LangDepSpecJapanese lang_dep_spec_;
 };
 
 namespace {
@@ -406,6 +410,15 @@ TEST_F(SyncHandlerTest, MinIntervalTest) {
   Util::Sleep(3000);
   {
     syncer->Reset();
+    EXPECT_TRUE(SyncHandler::Sync());
+    Util::Sleep(200);
+    // This must fail because SyncHandler::Clear() removes auth token.
+    EXPECT_FALSE(syncer->IsSyncCalled());
+
+    // Reset sync status for authorization.
+    syncer->Reset();
+    SyncStatusReset();
+
     EXPECT_TRUE(SyncHandler::Sync());
     Util::Sleep(200);
     EXPECT_TRUE(syncer->IsSyncCalled());

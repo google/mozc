@@ -142,7 +142,7 @@ bool UserHistorySyncUtil::MergeUpdates(
 
   VLOG(1) << all_entries.size() << " entries are found";
 
-  // sort by last_access_time
+  // sort by last_access_time again.
   sort(all_entries.begin(), all_entries.end(), EntryCompare());
 
   vector<Entry *> merged_entries;
@@ -177,7 +177,7 @@ bool UserHistorySyncUtil::MergeUpdates(
 
   VLOG(1) << merged_entries.size() << " sorted entries";
 
-  // sort by last_access_time again.
+  // sort by last_access_time
   sort(merged_entries.begin(), merged_entries.end(), EntryCompare());
 
   // find the latest CLEAN_ALL_EVENT and remove entries which
@@ -226,11 +226,15 @@ bool UserHistorySyncUtil::MergeUpdates(
   return true;
 }
 
-void UserHistorySyncUtil::AddRandomUpdates(UserHistory *history,
-                                           ClockTimerInterface *clock_timer) {
+void UserHistorySyncUtil::AddRandomUpdates(UserHistory *history) {
   CHECK(history);
   if (Util::Random(10) == 0) {
     history->Clear();
+
+    // insert ALL_CLEAR command for sync
+    Entry *entry = history->add_entries();
+    entry->set_entry_type(UserHistory::Entry::CLEAN_ALL_EVENT);
+    entry->set_last_access_time(static_cast<uint32>(Util::GetTime()));
   }
 
   set<uint32> seen;
@@ -240,18 +244,18 @@ void UserHistorySyncUtil::AddRandomUpdates(UserHistory *history,
     seen.insert(fp);
     if (Util::Random(10) == 0) {
       // update values
-      UserHistorySyncUtil::Entry *entry = history->mutable_entries(i);
+      Entry *entry = history->mutable_entries(i);
       entry->set_conversion_freq(
           entry->conversion_freq() + Util::Random(3));
       entry->set_suggestion_freq(
           entry->suggestion_freq() + Util::Random(3));
-      entry->set_last_access_time(clock_timer->GetCurrentTime());
+      entry->set_last_access_time(Util::GetTime());
     }
   }
 
   const int add_size = Util::Random(50) + 1;
   for (int i = 0; i < add_size; ++i) {
-    UserHistorySyncUtil::Entry *entry = history->add_entries();
+    Entry *entry = history->add_entries();
     const string key = SyncUtil::GenRandomString(3);
     const string &value = key;
     entry->set_key(key);
@@ -259,7 +263,7 @@ void UserHistorySyncUtil::AddRandomUpdates(UserHistory *history,
     entry->set_conversion_freq(Util::Random(3));
     entry->set_suggestion_freq(entry->conversion_freq() +
                                Util::Random(5));
-    entry->set_last_access_time(clock_timer->GetCurrentTime());
+    entry->set_last_access_time(Util::GetTime());
 
     const uint32 fp =
         UserHistoryPredictor::EntryFingerprint(*entry);

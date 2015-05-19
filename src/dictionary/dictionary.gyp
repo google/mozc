@@ -48,13 +48,13 @@
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../data_manager/data_manager.gyp:user_dictionary_manager',
         '../session/session_base.gyp:session_protocol',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'dictionary_base.gyp:gen_pos_matcher',
         'dictionary_protocol',
         'gen_pos_map',
         'suppression_dictionary',
-        'user_pos_data',
       ],
     },
     {
@@ -205,67 +205,6 @@
       ],
     },
     {
-      'target_name': 'gen_user_pos_data_main',
-      'type': 'executable',
-      'sources': [
-        'gen_user_pos_data_main.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'install_gen_user_pos_data_main',
-      'type': 'none',
-      'variables': {
-        'bin_name': 'gen_user_pos_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi'
-      ],
-    },
-    {
-      'target_name': 'user_pos_data',
-      'type': 'static_library',
-      'sources': [
-        'user_pos.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'gen_user_pos_data',
-      ],
-    },
-    {
-      'target_name': 'gen_user_pos_data',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'gen_user_pos_data',
-          'variables': {
-            'input_files': [
-               '../data/dictionary/id.def',
-               '../data/rules/special_pos.def',
-               '../data/rules/user_pos.def',
-               '../data/rules/cforms.def',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/user_pos_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/user_pos_data.h',
-            '<(mozc_build_tools_dir)/gen_user_pos_data_main',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/user_pos_data.h.',
-        },
-      ],
-    },
-    {
       'target_name': 'gen_pos_map',
       'type': 'none',
       'actions': [
@@ -376,6 +315,18 @@
       'dependencies': [
         '../base/base.gyp:base',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
+      ],
+    },
+    {
+      'target_name': 'dictionary_data_injected_environment',
+      'type': 'static_library',
+      'sources': [
+        'dictionary_data_injected_environment.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base_core',
+        '../testing/testing.gyp:testing',
+        'dictionary',
       ],
     },
   ],

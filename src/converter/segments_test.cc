@@ -28,12 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/util.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
-#include "converter/character_form_manager.h"
 #include "converter/segments.h"
 #include "testing/base/public/gunit.h"
 
@@ -286,7 +283,8 @@ TEST_F(CandidateTest, CopyFrom) {
   src.lid = 4;
   src.rid = 5;
   src.attributes = 6;
-  src.style = 7;
+  src.style = Util::NumberString::NUMBER_CIRCLED;
+  src.command = Segment::Candidate::DISABLE_PRESENTATION_MODE;
 
   dest.CopyFrom(src);
 
@@ -306,6 +304,7 @@ TEST_F(CandidateTest, CopyFrom) {
   EXPECT_EQ(src.rid, dest.rid);
   EXPECT_EQ(src.attributes, dest.attributes);
   EXPECT_EQ(src.style, dest.style);
+  EXPECT_EQ(src.command, dest.command);
 }
 
 TEST_F(SegmentsTest, RevertEntryTest) {
@@ -390,14 +389,6 @@ TEST_F(SegmentsTest, RemoveTailOfHistorySegments) {
   EXPECT_EQ("Moz", segments.history_segment(0).candidate(0).value);
 }
 
-TEST_F(SegmentsTest, ComposerAccessorTest) {
-  Segments segments;
-  EXPECT_TRUE(segments.composer() == NULL);
-  composer::Composer composer;
-  segments.set_composer(&composer);
-  EXPECT_EQ(&composer, segments.composer());
-}
-
 TEST_F(SegmentsTest, CopyFromTest) {
   Segments src;
 
@@ -443,9 +434,6 @@ TEST_F(SegmentsTest, CopyFromTest) {
                 dest.segment(i).candidate(j).key);
     }
   }
-
-  // TODO(hsumita) copy composer correctly
-  EXPECT_EQ(reinterpret_cast<composer::Composer *>(NULL), src.composer());
 }
 
 TEST_F(CandidateTest, functional_key) {

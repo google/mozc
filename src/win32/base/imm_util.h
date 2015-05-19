@@ -69,6 +69,7 @@ class ImeUtil {
   // Returns true if the operation completed successfully.
   static bool ActivateForCurrentProcess();
 
+
   // Activates the IMM32 version of Google Japanese Input for all existing
   // applications running in the current session.
   // Returns true if the operation completed successfully.

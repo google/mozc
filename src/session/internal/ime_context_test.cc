@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "base/scoped_ptr.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/converter_interface.h"
@@ -71,8 +72,8 @@ TEST(ImeContextTest, BasicTest) {
   EXPECT_EQ(composer, &context.composer());
   EXPECT_EQ(composer, context.mutable_composer());
 
-  ConverterMock converter_mock;
-  SessionConverter *converter = new SessionConverter(&converter_mock);
+  scoped_ptr<ConverterMock> converter_mock(new ConverterMock);
+  SessionConverter *converter = new SessionConverter(converter_mock.get());
   context.set_converter(converter);
   EXPECT_EQ(converter, &context.converter());
   EXPECT_EQ(converter, context.mutable_converter());
@@ -107,8 +108,8 @@ TEST(ImeContextTest, CopyContext) {
   // "な"
   table.AddRule("na", "\xE3\x81\xAA", "");
 
-  ConverterMock convertermock;
-  ConverterFactory::SetConverter(&convertermock);
+  scoped_ptr<ConverterMock> convertermock(new ConverterMock);
+  ConverterFactory::SetConverter(convertermock.get());
 
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -118,7 +119,7 @@ TEST(ImeContextTest, CopyContext) {
   // "庵"
   candidate->value = "\xE5\xBA\xB5";
 
-  convertermock.SetStartConversionWithComposer(&segments, true);
+  convertermock->SetStartConversionForRequest(&segments, true);
 
   {
     ImeContext source;
@@ -151,7 +152,11 @@ TEST(ImeContextTest, CopyContext) {
   }
 
   {
+    const uint64 kCreateTime = 100;
+    const uint64 kLastCommandTime = 200;
     ImeContext source;
+    source.set_create_time(kCreateTime);
+    source.set_last_command_time(kLastCommandTime);
     source.set_composer(new composer::Composer);
     source.mutable_composer()->SetTableForUnittest(&table);
     source.set_converter(
@@ -183,6 +188,8 @@ TEST(ImeContextTest, CopyContext) {
     EXPECT_EQ("\xE5\xBA\xB5", output.preedit().segment(0).value());
 
     ImeContext::CopyContext(source, &destination);
+    EXPECT_EQ(kCreateTime, destination.create_time());
+    EXPECT_EQ(kLastCommandTime, destination.last_command_time());
     EXPECT_EQ(ImeContext::CONVERSION, destination.state());
     composition.clear();
     destination.composer().GetQueryForConversion(&composition);

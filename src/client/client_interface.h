@@ -86,6 +86,9 @@ class ServerLauncherInterface {
   // launch with restricted mode
   virtual void set_restricted(bool restricted) = 0;
 
+  // Sets the flag of error dialog suppression.
+  virtual void set_suppress_error_dialog(bool suppress) = 0;
+
   ServerLauncherInterface() {}
   virtual ~ServerLauncherInterface() {}
 };
@@ -186,6 +189,9 @@ class ClientInterface {
   // Sets server program path.
   // mainly for unittesting.
   virtual void set_server_program(const string &program_path) = 0;
+
+  // Sets the flag of error dialog suppression.
+  virtual void set_suppress_error_dialog(bool suppress) = 0;
 
   // Sets client capability.
   virtual void set_client_capability(const commands::Capability &capability)

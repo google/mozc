@@ -58,7 +58,7 @@ class MozcDictionaryImpl : public DictionaryImpl {
 
 DictionaryInterface *DictionaryFactory::GetDictionary() {
   if (g_dictionary == NULL) {
-    if (!g_dictionary_address || !g_dictionary_size) {
+    if (!g_dictionary_address || g_dictionary_size == 0) {
       LOG(FATAL) << "Dictionary address/size is/are not set yet.";
       CHECK(false);
     }

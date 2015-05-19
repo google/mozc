@@ -27,8 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Protocol messages to be used for mozc client/server communication
-// and client/renderer communication.
+// Protocol messages to be used for mozc client/server communication.
 //
 // The Command message contains all the input/output values for
 // client/server commnication.  The messages structure of Command and
@@ -325,10 +324,14 @@ message SessionCommand {
     // suggest window on the correct position, this message can be ignored.
     SEND_CARET_LOCATION = 16;
 
+    // Send a command from language bar.
+    // Exact command is specified by language_bar_command_id.
+    SEND_LANGUAGE_BAR_COMMAND = 17;
+
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
-    NUM_OF_COMMANDS = 17;
+    NUM_OF_COMMANDS = 18;
   };
   required CommandType type = 1;
 
@@ -368,12 +371,25 @@ message SessionCommand {
   enum UsageStatsEvent {
     INFOLIST_WINDOW_SHOW = 1;
     INFOLIST_WINDOW_HIDE = 2;
+    HANDWRITING_OPEN_EVENT = 3;
+    HANDWRITING_COMMIT_EVENT = 4;
+    CHARACTER_PALETTE_OPEN_EVENT = 5;
+    CHARACTER_PALETTE_COMMIT_EVENT = 6;
   }
   optional UsageStatsEvent usage_stats_event = 7;
 
   // Specify the current caret location, this is used for suggest window
   // position calculation. Used with SEND_CARET_LOCATION.
   optional Rectangle caret_rectangle = 8;
+
+  // Specifies the command id which is sent from language bar.
+  enum LanguageBarCommandId {
+    TOGGLE_PINYIN_CHINESE_MODE = 1;
+    TOGGLE_PINYIN_FULL_WIDTH_WORD_MODE = 2;
+    TOGGLE_PINYIN_FULL_WIDTH_PUNCTUATION_MODE = 3;
+    TOGGLE_PINYIN_SIMPLIFIED_CHINESE_MODE = 4;
+  };
+  optional LanguageBarCommandId language_bar_command_id = 9;
 };
 
 message Context {
@@ -845,180 +861,4 @@ message Command {
 message CommandList {
   // This message is used for unittest.
   repeated Command commands = 1;
-};
-// TODO(team): Make a new proto file into which RendererCommand is moved.
-message RendererCommand {
-  message Rectangle {
-    optional int32 left   = 1;
-    optional int32 top    = 2;
-    optional int32 right  = 3;
-    optional int32 bottom = 4;
-  };
-  message Point {
-    optional int32 x = 1;
-    optional int32 y = 2;
-  };
-
-  enum CommandType {
-    NOOP = 0;      // No operation
-    UPDATE = 1;    // Update the current window
-    SHUTDOWN = 2;  // shutdown renderer
-  };
-
-  optional CommandType type = 1 [ default = NOOP ];
-
-  // set visibility
-  // if visible is false, the content of output
-  // is basically ignored.
-  optional bool visible = 2 [ default = false ];
-
-  optional Output output = 3;
-
-  // Preedit rectangle
-  optional Rectangle preedit_rectangle = 4;
-
-  // TODO(yukawa): make a common font format for all platforms.
-  message WinLogFont {
-    optional int32 height         = 1 [ default = 0 ];
-    optional int32 width          = 2 [ default = 0 ];
-    optional int32 escapement     = 3 [ default = 0 ];
-    optional int32 orientation    = 4 [ default = 0 ];
-    optional int32 weight         = 5 [ default = 0 ];   // FW_DONTCARE
-    optional bool  italic         = 6 [ default = false ];
-    optional bool  underline      = 7 [ default = false ];
-    optional bool  strike_out     = 8 [ default = false ];
-    optional int32 char_set       = 9 [ default = 1 ];   // DEFAULT_CHARSET
-    optional int32 out_precision  = 10 [ default = 0 ];  // OUT_DEFAULT_PRECIS
-    optional int32 clip_precision = 11 [ default = 0 ];  // CLIP_DEFAULT_PRECIS
-    optional int32 quality        = 12 [ default = 0 ];  // DEFAULT_QUALITY
-    optional int32 pitch_and_family = 13 [ default = 0 ];  // DEFAULT_PITCH
-    optional string face_name = 14;  // should be within 32 TCHARs (w/ '\0')
-  };
-
-  // An equivalent to COMPOSITIONFORM in IMM32. (For Windows only)
-  // TODO(yukawa): make a common composition form format for all platforms.
-  message CompositionForm {
-    // These constants correspond to CFS_* in Imm.h
-    enum Style {
-      DEFAULT = 0;          // CFS_DEFAULT
-      RECT = 1;             // CFS_RECT
-      POINT = 2;            // CFS_POINT
-      FORCE_POSITION = 32;  // CFS_FORCE_POSITION
-    };
-    // Use |style_bits| instead because there are some applications which
-    // specify a combination of style bits like CFS_RECT + CFS_POINT.
-    optional Style DEPRECATED_style = 1;
-    optional Point current_position = 2;
-    optional Rectangle area = 3;
-    optional uint32 style_bits = 4 [ default = 0 ];  // 0 means Style::DEFAULT
-  };
-
-  // This message is not ready to be externally released.
-  // An equivalent to CANDIDATEFORM in IMM32. (For Windows only)
-  // TODO(yukawa): make a common candidate form format for all platforms.
-  message CandidateForm {
-    // These constants correspond to CFS_* in Imm.h
-    enum Style {
-      DEFAULT = 0;        // CFS_DEFAULT
-      CANDIDATEPOS = 64;  // CFS_CANDIDATEPOS
-      EXCLUDE = 128;      // CFS_EXCLUDE
-    };
-    // Use |style_bits| instead in case there is an applications which
-    // specifies a combination of style bits.
-    optional Style DEPRECATED_style = 1;
-    optional Point current_position = 2;
-    optional Rectangle area = 3;
-    optional uint32 style_bits = 4 [ default = 0 ];  // 0 means Style::DEFAULT
-  };
-
-  // This message is not ready to be externally released.
-  // An equivalent to IMECHARPOSITION in IMM32. (For Windows only)
-  // TODO(yukawa): make a common candidate form format for all platforms.
-  message CharacterPosition {
-    optional uint32 position = 1;
-    optional Point top_left = 2;
-    optional uint32 line_height = 3;
-    optional Rectangle document_area = 4;
-  }
-
-  // This message is a subset of Win32 GUITHREADINFO. (For Windows only)
-  // TODO(yukawa): make a common candidate form format for all platforms.
-  message CaretInfo {
-    optional bool blinking = 1 [ default = false ];
-    optional Rectangle caret_rect = 2;
-    optional uint32 target_window_handle = 3;
-  }
-
-  // Application information Mozc UI is attaching
-  message ApplicationInfo {
-    optional uint32 process_id = 1;
-    optional uint32 thread_id = 2;
-    // used in Windows:
-    // WHND of the message-only window:
-    optional uint32 receiver_handle = 3;
-    // used in Windows:
-    // HWND of the window where composition is displayed.
-    optional uint32 target_window_handle = 4;
-    // used in Windows:
-    // Preffered font for composition string.
-    optional WinLogFont composition_font = 5;
-
-    // Represents IM Framework used in the client.
-    // Currently only Windows IM frameworks are supported.
-    // TODO(team): Add other IM frameworks.
-    enum InputFrameworkType {
-      UNKNOWN_FRAMEWORK = 0;   // Default. For backward compatibility.
-      TSF = 1;
-      IMM32 = 2;
-    };
-    // used in Windows:
-    // Specifies which IM Framework is used in the client.
-    // TODO(team): Support other IM frameworks.
-    optional InputFrameworkType input_framework = 6
-        [ default = UNKNOWN_FRAMEWORK ];
-
-    // used in Windows:
-    // Specifies where and how the renderer process shows the composition
-    // window (if necessary).
-    optional CompositionForm composition_form = 7;
-
-    // used in Windows:
-    // Specifies where and how the renderer process shows the candidate
-    // window (if necessary).
-    // Currently only one candidate window is supported.
-    // TODO(yukawa): support multiple candidate windows.
-    optional CandidateForm candidate_form = 8;
-
-    // used in Windows:
-    // Indicates if a UI element is expected to be displayed or not.  Note
-    // taht |RendererCommand::visible| should be prior to these flags, that is,
-    // you should hide all UI elements if |RendererCommand::visible| is false
-    // regardless of the visibility specified in this field.
-    enum UIVisibility {
-      ShowUIDefault = 0;
-      ShowCompositionWindow = 1;
-      ShowCandidateWindow = 2;
-      ShowSuggestWindow = 4;
-    };
-    // used in Windows:
-    optional int32 ui_visibilities = 9 [ default = 0 ];  // ShowUIDefault
-
-    // used in Windows:
-    // Specifies the target position in composition window.
-    optional CharacterPosition composition_target = 10;
-
-    // used in Windows:
-    // Represents caret information.
-    optional CaretInfo caret_info = 11;
-
-    // Renderer sends RendererCommand to renderer itself in order to
-    // extend InfoList.
-    enum MessageSenderType {
-      CLIENT = 0;
-      RENDERER = 1;
-    };
-    optional MessageSenderType message_sender_type = 12 [ default = CLIENT ];
-  };
-
-  optional ApplicationInfo application_info = 5;
 };

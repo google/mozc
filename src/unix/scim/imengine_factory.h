@@ -35,7 +35,6 @@
 #include <scim.h>
 
 #include "base/base.h"  // for DISALLOW_COPY_AND_ASSIGN.
-#include "languages/japanese/lang_dep_spec.h"
 
 namespace mozc_unix_scim {
 
@@ -58,7 +57,6 @@ class IMEngineFactory : public scim::IMEngineFactoryBase {
 
  private:
   const scim::ConfigPointer *config_;
-  mozc::japanese::LangDepSpecJapanese language_dependency_spec_japanese_;
 
   DISALLOW_COPY_AND_ASSIGN(IMEngineFactory);
 };

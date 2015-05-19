@@ -40,10 +40,12 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/node.h"
+#include "data_manager/user_dictionary_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
+#include "dictionary/user_pos.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
@@ -121,7 +123,20 @@ class UserDictionaryReloader : public Thread {
   UserDictionary *dic_;
 };
 
-UserDictionary::UserDictionary() : empty_limit_(Limit()) {
+// TODO(noriyukit): Deprecate this method; we should explicity pass
+// UserPOSInterface to user dictionary.
+UserDictionary::UserDictionary()
+    : user_pos_(
+        UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS()),
+      empty_limit_(Limit()) {
+  DCHECK(user_pos_);
+  AsyncReload();
+}
+
+UserDictionary::UserDictionary(const UserPOSInterface *user_pos)
+    : user_pos_(user_pos),
+      empty_limit_(Limit()) {
+  DCHECK(user_pos_);
   AsyncReload();
 }
 
@@ -378,7 +393,7 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
       const UserDictionaryStorage::UserDictionaryEntry &entry =
           dic.entries(j);
 
-      if (!UserDictionaryUtil::IsValidEntry(entry)) {
+      if (!UserDictionaryUtil::IsValidEntry(*user_pos_, entry)) {
         continue;
       }
 
@@ -405,8 +420,7 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
         suppression_dictionary->AddEntry(reading, entry.value());
       } else {
         tokens.clear();
-        UserPOS::GetTokens(reading, entry.value(), entry.pos(),
-                           &tokens);
+        user_pos_->GetTokens(reading, entry.value(), entry.pos(), &tokens);
         for (size_t k = 0; k < tokens.size(); ++k) {
           tokens_.push_back(new UserPOS::Token(tokens[k]));
         }
@@ -440,6 +454,8 @@ void UserDictionary::SetUserDictionaryName(const string &filename) {
   Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
 }
 
+// TODO(noriyukit): Remove this method after completing the implementation of
+// DataManager class.
 UserDictionary *UserDictionary::GetUserDictionary() {
   return Singleton<UserDictionary>::get();
 }

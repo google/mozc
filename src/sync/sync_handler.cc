@@ -173,14 +173,32 @@ class SyncerThread: public Thread {
     // existing token may be valid.
     oauth2_util_.RefreshAccessToken();
 
-    // Clear sync errors before stacking new errors in syncers' works.
-    sync_status_manager_->NewSyncStatusSession();
+    // Clear sync errors other than authorization error before stacking new
+    // errors in syncers' works.
+    {
+      commands::CloudSyncStatus sync_status;
+      sync_status_manager_->GetLastSyncStatus(&sync_status);
+      sync_status_manager_->NewSyncStatusSession();
+      for (size_t i = 0; i < sync_status.sync_errors_size(); ++i) {
+        const commands::CloudSyncStatus::SyncError &sync_error =
+            sync_status.sync_errors(i);
+        if (sync_error.error_code() ==
+            commands::CloudSyncStatus::AUTHORIZATION_FAIL) {
+          sync_status_manager_->AddSyncErrorWithTimestamp(
+              sync_error.error_code(), sync_error.timestamp());
+        }
+      }
+    }
 
     switch (command_type_) {
       case SYNC:
         {
-          sync_status_manager_->SetSyncGlobalStatus(
-              commands::CloudSyncStatus::INSYNC);
+          commands::CloudSyncStatus sync_status;
+          sync_status_manager_->GetLastSyncStatus(&sync_status);
+          if (sync_status.global_status() ==
+              commands::CloudSyncStatus::NOSYNC) {
+            break;
+          }
 
           bool reload_required = false;
           bool sync_succeed = true;
@@ -340,6 +358,7 @@ class SyncerThread: public Thread {
       SYNC_VLOG(1) << "setting authorization_info";
       LOG(INFO) << authorization_info.DebugString();
       if (oauth2_util_.RequestAccessToken(authorization_info.auth_code())) {
+        sync_status_manager_->NewSyncStatusSession();
         sync_status_manager_->SetSyncGlobalStatus(
             commands::CloudSyncStatus::INSYNC);
       } else {

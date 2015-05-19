@@ -89,12 +89,10 @@ bool HasCharacterFormDescription(const string &value) {
   if (value.empty()) {
     return false;
   }
-  const char *begin = value.data();
-  const char *end = value.data() + value.size();
   Util::FormType prev = Util::UNKNOWN_FORM;
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+
+  for (ConstChar32Iterator iter(value); !iter.Done(); iter.Next()) {
+    const char32 ucs4 = iter.Get();
     const Util::FormType type = Util::GetFormType(ucs4);
     if (prev != Util::UNKNOWN_FORM && prev != type) {
       return false;
@@ -103,7 +101,6 @@ bool HasCharacterFormDescription(const string &value) {
       return false;
     }
     prev = type;
-    begin += mblen;
   }
   return true;
 }
@@ -402,12 +399,12 @@ void VariantsRewriter::Finish(Segments *segments) {
     }
 
     switch (candidate.style) {
-      case Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
+      case Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
         // treat NUMBER_SEPARATED_ARABIC as half_width num
         CharacterFormManager::GetCharacterFormManager()->
             SetCharacterForm("0", config::Config::HALF_WIDTH);
         break;
-      case Segment::Candidate::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
+      case Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
         // treat NUMBER_SEPARATED_WIDE_ARABIC as full_width num
         CharacterFormManager::GetCharacterFormManager()->
             SetCharacterForm("0", config::Config::FULL_WIDTH);

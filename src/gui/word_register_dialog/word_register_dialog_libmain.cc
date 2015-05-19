@@ -35,8 +35,6 @@
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/word_register_dialog/word_register_dialog.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 
 int RunWordRegisterDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_word_register_dialog);
@@ -52,11 +50,6 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  // TODO(nona): remove these lines when link-time language dependency
-  //             injection is rolled out.
-  mozc::japanese::LangDepSpecJapanese spec;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
-
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
       "word_register_dialog");
 
@@ -68,11 +61,5 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
   word_register_dialog.show();
   word_register_dialog.raise();
 
-  const int result = app.exec();
-
-  // TODO(nona): remove this line when link-time language dependency
-  //             injection is rolled out.
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-
-  return result;
+  return app.exec();
 }

@@ -29,13 +29,13 @@
 
 {
   "name": "chrome-skk",
-  "version": "0.0.0.1",
-  "permissions": ["experimental", "ime"],
+  "version": "0.0.0.2",
+  "permissions": ["input"],
   "background_page": "skk.html",
   "input_components": [{
     "name": "skk",
     "type": "ime",
-    "description": "",
+    "description": "Chrome-SKK a is a Japanese input method editor in SKK style. The extension allows you to input Japanese in SKK style on any web pages. Have a happy SKK life.",
     "language": "ja",
     "layouts": ["us"],
     "shortcutKey": {

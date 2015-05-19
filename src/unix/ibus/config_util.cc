@@ -188,22 +188,31 @@ bool ConfigUtil::SetFieldForName(const gchar *name,
 void ConfigUtil::InitConfig(IBusConfig* config,
                             const char *section_name,
                             const map<string, const char*> &name_to_field) {
-#if IBUS_CHECK_VERSION(1, 3, 99)
-  // Following configuration codes are only for ChromeOS and IBus >= 1.3.99.
+#if IBUS_CHECK_VERSION(1, 4, 0)
+  // Following configuration codes are only for ChromeOS and IBus >= 1.4.
   // On Linux, we can use GUI configuration tools.
-  for (map<string, const char*>::const_iterator i = name_to_field.begin();
-       i != name_to_field.end(); ++i) {
-    const gchar *name = i->first.c_str();
-    GVariant *value = ibus_config_get_value(config, section_name, name);
-    if (!value) {
-      LOG(WARNING) << "ibus_config_get_value failed for " << name;
-      continue;
-    }
-    // Invoke the signal handler for the "value-changed" message.
-    g_signal_emit_by_name(config, "value-changed", section_name, name,
-                          value);
-    g_variant_unref(value);
+  GVariant *values = ibus_config_get_values(config, section_name);
+  if (!values) {
+    LOG(ERROR) << "Can not get config values in " << section_name
+               << " section.";
+    return;
   }
+
+  GVariantIter iter;
+  gchar *name;
+  GVariant *value;
+  g_variant_iter_init(&iter, values);
+
+  while (g_variant_iter_next(&iter, "{sv}", &name, &value)) {
+    if (name_to_field.find(name) != name_to_field.end()) {
+      g_signal_emit_by_name(config, "value-changed", section_name, name, value);
+    } else {
+      LOG(ERROR) << "Can not find " << name << " field in mozc";
+    }
+    g_variant_unref(value);
+    g_free(name);
+  }
+  g_variant_unref(values);
 #endif
 }
 

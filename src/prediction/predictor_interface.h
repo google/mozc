@@ -32,6 +32,7 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
 class PredictorInterface {
@@ -43,6 +44,11 @@ class PredictorInterface {
   // PREDICTION: invoked only when user pushes "tab" key.
   // less aggressive than SUGGESTION mode.
   virtual bool Predict(Segments *segments) const = 0;
+  virtual bool PredictForRequest(const ConversionRequest &request,
+                                 Segments *segments) const {
+    // Ignore the request (e.g., a composer in it) by default.
+    return Predict(segments);
+  }
 
   // Hook(s) for all mutable operations
   virtual void Finish(Segments *segments) {}

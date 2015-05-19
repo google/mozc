@@ -41,6 +41,7 @@
 #include "base/file_stream.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "data_manager/user_dictionary_manager.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/embedded_dictionary.h"
 
@@ -129,8 +130,15 @@ string NormalizeRendaku(const string &input) {
   return str;
 }
 
+// Wraps GetPOSIDs of UserPOS.
+bool GetPOSIDs(const string &pos, uint16 *id) {
+  const UserPOSInterface *user_pos =
+      UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS();
+  return user_pos->GetPOSIDs(pos, id);
+}
+
 // Read dic:
-void MakeDictioanry(const string &single_kanji_dictionary_file,
+void MakeDictionary(const string &single_kanji_dictionary_file,
                     const string &output_file) {
   mozc::InputFileStream ifs(single_kanji_dictionary_file.c_str());
   mozc::OutputFileStream ofs(output_file.c_str());
@@ -142,7 +150,7 @@ void MakeDictioanry(const string &single_kanji_dictionary_file,
   // assume POS of single-kanji is NOUN
   //  static const char kPOS[] = "名詞";
   static const char kPOS[] = "\345\220\215\350\251\236";
-  CHECK(UserPOS::GetPOSIDs(kPOS, &id));
+  CHECK(GetPOSIDs(kPOS, &id));
 
   map<string, map<string, pair<double, string> > > rdic;
   set<string> seen;
@@ -165,7 +173,8 @@ void MakeDictioanry(const string &single_kanji_dictionary_file,
   }
 
   // Rendaku Normalization
-  for (map<string, map<string, pair<double, string> > >::iterator it = rdic.begin();
+  for (map<string, map<string, pair<double, string> > >::iterator it =
+           rdic.begin();
        it != rdic.end(); ++it) {
     for (map<string, pair<double, string> >::iterator it2 = it->second.begin();
          it2 != it->second.end(); ++it2) {
@@ -182,9 +191,11 @@ void MakeDictioanry(const string &single_kanji_dictionary_file,
 
   map<string, vector<SingleKanjiEntry > > dic;
   double sum = 0.0;
-  for (map<string, map<string, pair<double, string> > >::const_iterator it = rdic.begin();
+  for (map<string, map<string, pair<double, string> > >::const_iterator it =
+           rdic.begin();
        it != rdic.end(); ++it) {
-    for (map<string, pair<double, string> >::const_iterator it2 = it->second.begin();
+    for (map<string, pair<double, string> >::const_iterator it2 =
+             it->second.begin();
          it2 != it->second.end(); ++it2) {
       const string &key = it2->first;
       const string &value = it->first;
@@ -223,7 +234,7 @@ int main(int argc, char **argv) {
   const string tmp_text_file = FLAGS_output + ".txt";
   static const char kHeaderName[] = "SingleKanjiData";
 
-  mozc::MakeDictioanry(FLAGS_input, tmp_text_file);
+  mozc::MakeDictionary(FLAGS_input, tmp_text_file);
   mozc::EmbeddedDictionary::Compile(kHeaderName,
                                     tmp_text_file,
                                     FLAGS_output);

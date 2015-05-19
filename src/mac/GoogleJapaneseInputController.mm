@@ -730,15 +730,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
       NSMakeRange(cursorPosition_, 0);
 }
 
-- (void)updateCandidates:(const Output *)output {
-  if (output == NULL) {
-    [self clearCandidates];
-    return;
-  }
-
-  rendererCommand_->set_type(RendererCommand::UPDATE);
-  rendererCommand_->mutable_output()->CopyFrom(*output);
-
+- (void)delayedUpdateCandidates {
   // The candidate window position is not recalculated if the
   // candidate already appears on the screen.  Therefore, if a user
   // moves client application window by mouse, candidate window won't
@@ -748,11 +740,13 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   //    frequently with those application, which irritates users.
   //  - Kotoeri does this too.
   if ((!rendererCommand_->visible()) &&
-      (output->candidates().candidate_size() > 0)) {
+      (rendererCommand_->output().candidates().candidate_size() > 0)) {
     NSRect preeditRect = NSZeroRect;
+    const int32 position = rendererCommand_->output().candidates().position();
     // Some applications throws error when we call attributesForCharacterIndex.
+    DLOG(INFO) << "attributesForCharacterIndex: " << position;
     @try {
-      [[self client] attributesForCharacterIndex:output->candidates().position()
+      [[self client] attributesForCharacterIndex:position
                              lineHeightRectangle:&preeditRect];
     }
     @catch (NSException *exception) {
@@ -760,6 +754,11 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
                  << [[exception name] UTF8String] << ","
                  << [[exception reason] UTF8String];
     }
+    DLOG(INFO) << "  preeditRect: (("
+               << preeditRect.origin.x << ", "
+               << preeditRect.origin.y << "), ("
+               << preeditRect.size.width << ", "
+               << preeditRect.size.height << "))";
     NSScreen *baseScreen = nil;
     NSRect baseFrame = NSZeroRect;
     for (baseScreen in [NSScreen screens]) {
@@ -779,10 +778,28 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
         baseHeight - preeditRect.origin.y);
   }
 
-  rendererCommand_->set_visible(output->candidates().candidate_size() > 0);
+  rendererCommand_->set_visible(
+    rendererCommand_->output().candidates().candidate_size() > 0);
   if (candidateController_) {
     candidateController_->ExecCommand(*rendererCommand_);
   }
+}
+
+- (void)updateCandidates:(const Output *)output {
+  if (output == NULL) {
+    [self clearCandidates];
+    return;
+  }
+
+  rendererCommand_->set_type(RendererCommand::UPDATE);
+  rendererCommand_->mutable_output()->CopyFrom(*output);
+
+  // Runs delayedUpdateCandidates in the next event loop.
+  // This is because some applications like Google Docs with Chrome returns
+  // incorrect cursor position if we call attributesForCharacterIndex here.
+  [self performSelector:@selector(delayedUpdateCandidates)
+             withObject:nil
+             afterDelay:0];
 }
 
 - (void)openLink:(NSURL *)url {
@@ -923,8 +940,12 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   [self launchWordRegisterTool:[self client]];
 }
 
-- (IBAction)characterPadClicked:(id)sender {
-  MacProcess::LaunchMozcTool("character_pad");
+- (IBAction)characterPaletteClicked:(id)sender {
+  MacProcess::LaunchMozcTool("character_palette");
+}
+
+- (IBAction)handWritingClicked:(id)sender {
+  MacProcess::LaunchMozcTool("hand_writing");
 }
 
 - (IBAction)aboutDialogClicked:(id)sender {

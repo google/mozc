@@ -36,15 +36,6 @@
 namespace mozc {
 namespace sync {
 
-// Abstract interface which represents time function.
-class ClockTimerInterface {
- public:
-  virtual uint64 GetCurrentTime() const = 0;
-
-  ClockTimerInterface() {}
-  virtual ~ClockTimerInterface() {}
-};
-
 // Common util for sync adapters.
 class SyncUtil {
  public:
@@ -58,8 +49,7 @@ class SyncUtil {
   static string GenRandomString(int size);
 
  private:
-  SyncUtil() {}
-  ~SyncUtil() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(SyncUtil);
 };
 }  // sync
 }  // mozc

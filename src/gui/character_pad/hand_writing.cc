@@ -41,13 +41,15 @@
 #endif
 
 #ifdef ENABLE_CLOUD_HANDWRITING
-#include "client/client.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
 #endif  // ENABLE_CLOUD_HANDWRITING
 
-#include "handwriting/handwriting_manager.h"
+#include "client/client.h"
+#include "config/stats_config_util.h"
 #include "gui/base/win_util.h"
+#include "handwriting/handwriting_manager.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 
@@ -106,11 +108,20 @@ bool IsCloudHandwritingAllowed(client::ClientInterface *client) {
 namespace gui {
 
 HandWriting::HandWriting(QWidget *parent)
-    : QMainWindow(parent) {
-#ifdef ENABLE_CLOUD_HANDWRITING
-    client_.reset(client::ClientFactory::NewClient());
-#endif  // ENABLE_CLOUD_HANDWRITING
+    : QMainWindow(parent),
+      usage_stats_enabled_(StatsConfigUtil::IsEnabled()) {
+  // To reduce the disk IO of reading the stats config, we load it only when the
+  // class is initialized. There is no problem because the config dialog (on
+  // Mac) and the administrator dialog (on Windows) say that the usage stats
+  // setting changes will take effect after the re-login.
 
+#ifdef ENABLE_CLOUD_HANDWRITING
+  client_.reset(client::ClientFactory::NewClient());
+#else
+  if (usage_stats_enabled_) {
+    client_.reset(client::ClientFactory::NewClient());
+  }
+#endif  // ENABLE_CLOUD_HANDWRITING
   setupUi(this);
 
   handWritingCanvas->setListWidget(resultListWidget);
@@ -120,6 +131,11 @@ HandWriting::HandWriting(QWidget *parent)
        (QFontDatabase::Any));
   fontComboBox->setEditable(false);
   fontComboBox->setCurrentFont(resultListWidget->font());
+
+  QObject::connect(resultListWidget,
+                   SIGNAL(itemSelected(const QListWidgetItem*)),
+                   this,
+                   SLOT(itemSelected(const QListWidgetItem*)));
 
   QObject::connect(fontComboBox,
                    SIGNAL(currentFontChanged(const QFont &)),
@@ -164,6 +180,17 @@ HandWriting::HandWriting(QWidget *parent)
 #endif  // ENABLE_CLOUD_HANDWRITING
   handwritingSourceComboBox->setCurrentIndex(default_handwriting_method);
 
+  if (usage_stats_enabled_) {
+    CHECK(client_.get());
+    // Sends the usage stats event (HANDWRITING_OPEN_EVENT) to mozc converter.
+    commands::SessionCommand command;
+    command.set_type(commands::SessionCommand::USAGE_STATS_EVENT);
+    command.set_usage_stats_event(
+        commands::SessionCommand::HANDWRITING_OPEN_EVENT);
+    commands::Output dummy_output;
+    client_->SendCommand(command, &dummy_output);
+  }
+
   updateUIStatus();
   repaint();
   update();
@@ -195,7 +222,7 @@ void HandWriting::tryToUpdateHandwritingSource(int index) {
         updateHandwritingSource(kZinniaHandwriting);
       }
       break;
-#endif
+#endif  // ENABLE_CLOUD_HANDWRITING
     default:
       DLOG(INFO) << "Unknown index = " << index;
       break;
@@ -203,15 +230,14 @@ void HandWriting::tryToUpdateHandwritingSource(int index) {
 }
 
 void HandWriting::updateHandwritingSource(int index) {
-  mozc::handwriting::HandwritingManager::ClearHandwritingModules();
   switch (index) {
     case kZinniaHandwriting:
-      mozc::handwriting::HandwritingManager::AddHandwritingModule(
+      mozc::handwriting::HandwritingManager::SetHandwritingModule(
           &zinnia_handwriting_);
       break;
 #ifdef ENABLE_CLOUD_HANDWRITING
     case kCloudHandwriting:
-      mozc::handwriting::HandwritingManager::AddHandwritingModule(
+      mozc::handwriting::HandwritingManager::SetHandwritingModule(
           &cloud_handwriting_);
       break;
 #endif  // ENABLE_CLOUD_HANDWRITING
@@ -251,6 +277,20 @@ void HandWriting::updateUIStatus() {
   clearButton->setEnabled(enabled);
   revertButton->setEnabled(enabled);
 #endif
+}
+
+void HandWriting::itemSelected(const QListWidgetItem *item) {
+  if (!usage_stats_enabled_) {
+    return;
+  }
+  CHECK(client_.get());
+  // Sends the usage stats event (HANDWRITING_COMMIT_EVENT) to mozc converter.
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::USAGE_STATS_EVENT);
+  command.set_usage_stats_event(
+      commands::SessionCommand::HANDWRITING_COMMIT_EVENT);
+  commands::Output dummy_output;
+  client_->SendCommand(command, &dummy_output);
 }
 
 #ifdef OS_WINDOWS

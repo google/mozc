@@ -36,7 +36,26 @@
 #include "config/config_handler.h"
 #include "config/config.pb.h"
 
+#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
+#include "converter/connection_data_injected_environment.h"
+namespace {
+const ::testing::Environment *kConnectionDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::ConnectionDataInjectedEnvironment());
+}  // namespace
+#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
+
+#ifdef MOZC_USE_SEPARATE_DICTIONARY
+#include "dictionary/dictionary_data_injected_environment.h"
+namespace {
+const ::testing::Environment *kDictionaryDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::DictionaryDataInjectedEnvironment());
+}  // namespace
+#endif  // MOZC_USE_SEPARATE_DICTIONARY
+
 DECLARE_string(test_tmpdir);
+
 
 namespace mozc {
 namespace {

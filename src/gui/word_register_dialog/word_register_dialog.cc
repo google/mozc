@@ -44,6 +44,7 @@
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "client/client.h"
+#include "data_manager/user_dictionary_manager.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
@@ -87,7 +88,9 @@ WordRegisterDialog::WordRegisterDialog()
           new UserDictionaryStorage(
               UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
-  window_title_(tr("Mozc")) {
+      window_title_(tr("Mozc")),
+      user_pos_(
+          UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
@@ -118,7 +121,7 @@ WordRegisterDialog::WordRegisterDialog()
 
   // Initialize ComboBox
   vector<string> pos_set;
-  UserPOS::GetPOSList(&pos_set);
+  user_pos_->GetPOSList(&pos_set);
   CHECK(!pos_set.empty());
 
   for (size_t i = 0; i < pos_set.size(); ++i) {

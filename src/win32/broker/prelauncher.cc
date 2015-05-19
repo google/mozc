@@ -67,12 +67,14 @@ int RunPrelaunchProcesses(int argc, char *argv[]) {
   {
     scoped_ptr<client::ClientInterface> converter_client(
         client::ClientFactory::NewClient());
+    converter_client->set_suppress_error_dialog(true);
     converter_client->EnsureConnection();
   }
 
   {
     scoped_ptr<renderer::RendererClient> renderer_client(
         new mozc::renderer::RendererClient);
+    renderer_client->set_suppress_error_dialog(true);
     renderer_client->Activate();
   }
 

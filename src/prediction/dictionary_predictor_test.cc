@@ -37,7 +37,6 @@
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/character_form_manager.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
@@ -51,6 +50,24 @@
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
+
+#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
+#include "converter/connection_data_injected_environment.h"
+namespace {
+const ::testing::Environment *kConnectionDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::ConnectionDataInjectedEnvironment());
+}  // namespace
+#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
+
+#ifdef MOZC_USE_SEPARATE_DICTIONARY
+#include "dictionary/dictionary_data_injected_environment.h"
+namespace {
+const ::testing::Environment *kDictionaryDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::DictionaryDataInjectedEnvironment());
+}  // namespace
+#endif  // MOZC_USE_SEPARATE_DICTIONARY
 
 using ::testing::Return;
 using ::testing::_;
@@ -216,6 +233,7 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
   DictionaryPredictor predictor;
 
   // turn off
+  ConversionRequest request;
   Segments segments;
   config::Config config;
   config.set_use_dictionary_suggest(false);
@@ -235,15 +253,16 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
   MakeSegmentsForSuggestion
       ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82",
        &segments);
-  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_TRUE(predictor.PredictForRequest(request, &segments));
 
   // empty query
   MakeSegmentsForSuggestion("", &segments);
-  EXPECT_FALSE(predictor.Predict(&segments));
+  EXPECT_FALSE(predictor.PredictForRequest(request, &segments));
 }
 
 
 TEST_F(DictionaryPredictorTest, BigramTest) {
+  ConversionRequest request;
   Segments segments;
   config::Config config;
   config.set_use_dictionary_suggest(true);
@@ -259,12 +278,13 @@ TEST_F(DictionaryPredictorTest, BigramTest) {
 
   DictionaryPredictor predictor;
   // "グーグルアドセンス" will be returned.
-  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_TRUE(predictor.PredictForRequest(request, &segments));
 }
 
 
 // Check that previous candidate never be shown at the current candidate.
 TEST_F(DictionaryPredictorTest, Regression3042706) {
+  ConversionRequest request;
   Segments segments;
   config::Config config;
   config.set_use_dictionary_suggest(true);
@@ -280,7 +300,7 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
                          &segments);
 
   DictionaryPredictor predictor;
-  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_TRUE(predictor.PredictForRequest(request, &segments));
   EXPECT_EQ(2, segments.segments_size());   // history + current
   for (int i = 0; i < segments.segment(1).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(1).candidate(i);
@@ -404,20 +424,21 @@ TEST_F(DictionaryPredictorTest,
 
   vector<DictionaryPredictor::Result> results;
   NodeAllocator allocator;
+  ConversionRequest dummy_request;
 
   predictor.AggregateUnigramPrediction(
       DictionaryPredictor::BIGRAM,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
   predictor.AggregateUnigramPrediction(
       DictionaryPredictor::REALTIME,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
   predictor.AggregateUnigramPrediction(
       DictionaryPredictor::UNIGRAM,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
   EXPECT_FALSE(results.empty());
 
   for (size_t i = 0; i < results.size(); ++i) {
@@ -434,6 +455,7 @@ TEST_F(DictionaryPredictorTest,
   NodeAllocator allocator;
 
   {
+    ConversionRequest dummy_request;
     Segments segments;
 
     // "あ"
@@ -452,17 +474,17 @@ TEST_F(DictionaryPredictorTest,
 
     predictor.AggregateBigramPrediction(
         DictionaryPredictor::UNIGRAM,
-        &segments, &allocator, &results);
+        dummy_request, &segments, &allocator, &results);
     EXPECT_TRUE(results.empty());
 
     predictor.AggregateBigramPrediction(
         DictionaryPredictor::REALTIME,
-        &segments, &allocator, &results);
+        dummy_request, &segments, &allocator, &results);
     EXPECT_TRUE(results.empty());
 
     predictor.AggregateBigramPrediction(
         DictionaryPredictor::BIGRAM,
-        &segments, &allocator, &results);
+        dummy_request, &segments, &allocator, &results);
     EXPECT_FALSE(results.empty());
 
     for (size_t i = 0; i < results.size(); ++i) {
@@ -482,6 +504,7 @@ TEST_F(DictionaryPredictorTest,
   }
 
   {
+    ConversionRequest dummy_request;
     Segments segments;
 
     // "と"
@@ -499,7 +522,7 @@ TEST_F(DictionaryPredictorTest,
 
     predictor.AggregateBigramPrediction(
         DictionaryPredictor::BIGRAM,
-        &segments, &allocator, &results);
+        dummy_request, &segments, &allocator, &results);
     EXPECT_TRUE(results.empty());
   }
 }
@@ -815,6 +838,7 @@ TEST_F(DictionaryPredictorTest,
   DictionaryPredictor predictor;
   NodeAllocator allocator;
 
+  ConversionRequest dummy_request;
   Segments segments;
 
   // "あ"
@@ -835,30 +859,30 @@ TEST_F(DictionaryPredictorTest,
   // result should be empty.
   predictor.AggregateSuffixPrediction(
       DictionaryPredictor::SUFFIX,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
   results.clear();
   segments.mutable_conversion_segment(0)->set_key("");
   predictor.AggregateSuffixPrediction(
       DictionaryPredictor::SUFFIX,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
   EXPECT_FALSE(results.empty());
 
   results.clear();
   predictor.AggregateSuffixPrediction(
       DictionaryPredictor::UNIGRAM,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
   predictor.AggregateSuffixPrediction(
       DictionaryPredictor::REALTIME,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
   predictor.AggregateSuffixPrediction(
       DictionaryPredictor::BIGRAM,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
   SuffixDictionaryFactory::SetSuffixDictionary(NULL);
@@ -991,6 +1015,7 @@ TEST_F(DictionaryPredictorTest,
 
 TEST_F(DictionaryPredictorTest,
        RealtimeConversionWithSpellingCorrection) {
+  ConversionRequest dummy_request;
   Segments segments;
   NodeAllocator allocator;
   // turn on real-time conversion
@@ -1010,7 +1035,7 @@ TEST_F(DictionaryPredictorTest,
 
   predictor.AggregateUnigramPrediction(
       DictionaryPredictor::UNIGRAM,
-      &segments, &allocator, &results);
+      dummy_request, &segments, &allocator, &results);
 
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(results[0].node->attributes & Node::SPELLING_CORRECTION);
@@ -1294,7 +1319,7 @@ void ExpansionForUnigramTestHelper(bool use_expansion) {
     composer::Composer composer;
     composer.SetTableForUnittest(&table);
     InsertInputSequence("gu-g", &composer);
-    segments.set_composer(&composer);
+    ConversionRequest request(&composer);
     Segment *segment = segments.add_segment();
     CHECK(segment);
     string query;
@@ -1310,8 +1335,9 @@ void ExpansionForUnigramTestHelper(bool use_expansion) {
     }
 
     vector<TestableDictionaryPredictor::Result> results;
-    predictor.AggregateUnigramPrediction(TestableDictionaryPredictor::UNIGRAM,
-                                         &segments, &allocator, &results);
+    predictor.AggregateUnigramPrediction(
+        TestableDictionaryPredictor::UNIGRAM,
+        request, &segments, &allocator, &results);
   }
 }
 
@@ -1353,7 +1379,7 @@ void ExpansionForBigramTestHelper(bool use_expansion) {
     composer::Composer composer;
     composer.SetTableForUnittest(&table);
     InsertInputSequence("m", &composer);
-    segments.set_composer(&composer);
+    ConversionRequest request(&composer);
     string query;
     composer.GetQueryForPrediction(&query);
     segment->set_key(query);
@@ -1380,8 +1406,9 @@ void ExpansionForBigramTestHelper(bool use_expansion) {
     }
 
     vector<TestableDictionaryPredictor::Result> results;
-    predictor.AggregateBigramPrediction(TestableDictionaryPredictor::BIGRAM,
-                                        &segments, &allocator, &results);
+    predictor.AggregateBigramPrediction(
+        TestableDictionaryPredictor::BIGRAM,
+        request, &segments, &allocator, &results);
   }
 }
 
@@ -1408,7 +1435,7 @@ void ExpansionForSuffixTestHelper(bool use_expansion) {
     composer::Composer composer;
     composer.SetTableForUnittest(&table);
     InsertInputSequence("des", &composer);
-    segments.set_composer(&composer);
+    ConversionRequest request(&composer);
     string query;
     composer.GetQueryForPrediction(&query);
     segment->set_key(query);
@@ -1422,8 +1449,9 @@ void ExpansionForSuffixTestHelper(bool use_expansion) {
     }
 
     vector<TestableDictionaryPredictor::Result> results;
-    predictor.AggregateSuffixPrediction(TestableDictionaryPredictor::SUFFIX,
-                                        &segments, &allocator, &results);
+    predictor.AggregateSuffixPrediction(
+        TestableDictionaryPredictor::SUFFIX,
+        request, &segments, &allocator, &results);
   }
 }
 }  // namespace
@@ -1476,7 +1504,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
   composer::Composer composer;
   composer.SetTableForUnittest(&table);
   InsertInputSequence("ak", &composer);
-  segments.set_composer(&composer);
+  ConversionRequest request(&composer);
   Segment *segment = segments.add_segment();
   CHECK(segment);
   {
@@ -1550,7 +1578,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
   composer.SetTableForUnittest(&table);
   // "あし"
   InsertInputSequence("\xe3\x81\x82\xe3\x81\x97", &composer);
-  segments.set_composer(&composer);
+  ConversionRequest request(&composer);
   Segment *segment = segments.add_segment();
   CHECK(segment);
   {

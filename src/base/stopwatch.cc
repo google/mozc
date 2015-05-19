@@ -28,20 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/stopwatch.h"
-
-#if defined(OS_WINDOWS)
-#include <windows.h>
-#endif  // OS_WINDOWS
-
-#if defined(OS_MACOSX)
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-#include <unistd.h>
-#endif  // OS_MACOSX
-
-#if defined(OS_LINUX)
-#include <sys/time.h>
-#endif  // OS_LINUX
+#include "base/util.h"
 
 namespace mozc {
 Stopwatch Stopwatch::StartNew() {
@@ -50,54 +37,12 @@ Stopwatch Stopwatch::StartNew() {
   return stopwatch;
 }
 
-int64 Stopwatch::GetFrequency() {
-#if defined(OS_WINDOWS)
-  LARGE_INTEGER timestamp;
-  // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
-  // available.
-  const BOOL result = ::QueryPerformanceFrequency(&timestamp);
-  return timestamp.QuadPart;
-#endif  // OS_WINDOWS
-
-#if defined(OS_MACOSX)
-  static mach_timebase_info_data_t timebase_info;
-  mach_timebase_info(&timebase_info);
-  return static_cast<int64>(1.0e9 * timebase_info.denom / timebase_info.numer);
-#endif  // OS_MACOSX
-
-#if defined(OS_LINUX)
-  return 1000000000LL;
-#endif  // OS_LINUX
-}
-
-int64 Stopwatch::GetTimestamp() {
-#if defined(OS_WINDOWS)
-  LARGE_INTEGER timestamp;
-  // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
-  // available.
-  const BOOL result = ::QueryPerformanceCounter(&timestamp);
-  return timestamp.QuadPart;
-#endif  // OS_WINDOWS
-
-#if defined(OS_MACOSX)
-  return static_cast<int64>(mach_absolute_time());
-#endif  // OS_MACOSX
-
-#if defined(OS_LINUX)
-  struct timespec timestamp;
-  if (-1 == clock_gettime(CLOCK_REALTIME, &timestamp)) {
-    return 0;
-  }
-  return timestamp.tv_sec * 1000000000LL + timestamp.tv_nsec;
-#endif  // OS_LINUX
-}
-
 Stopwatch::Stopwatch()
     : state_(STOPWATCH_STOPPED),
       frequency_(1000),
       start_timestamp_(0),
       elapsed_timestamp_(0) {
-  frequency_ = GetFrequency();
+  frequency_ = Util::GetFrequency();
 
   Reset();
 }
@@ -109,14 +54,14 @@ void Stopwatch::Reset() {
 
 void Stopwatch::Start() {
   if (state_ == STOPWATCH_STOPPED) {
-    start_timestamp_ = GetTimestamp();
+    start_timestamp_ = Util::GetTicks();
     state_ = STOPWATCH_RUNNING;
   }
 }
 
 void Stopwatch::Stop() {
   if (state_ == STOPWATCH_RUNNING) {
-    const int64 stop_timestamp = GetTimestamp();
+    const int64 stop_timestamp = Util::GetTicks();
     elapsed_timestamp_ += (stop_timestamp - start_timestamp_);
     start_timestamp_ = 0;
     state_ = STOPWATCH_STOPPED;
@@ -140,7 +85,7 @@ int64 Stopwatch::GetElapsedTicks() {
     return elapsed_timestamp_;
   }
 
-  const int64 current_timestamp = GetTimestamp();
+  const int64 current_timestamp = Util::GetTicks();
   elapsed_timestamp_ += (current_timestamp - start_timestamp_);
   start_timestamp_ = current_timestamp;
 

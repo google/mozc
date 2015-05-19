@@ -48,6 +48,7 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "dictionary/user_pos_interface.h"
 #include "storage/registry.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -97,7 +98,7 @@ void PushBackToken(const string &key,
 // depends on POS. It accepts only two values for part-of-speech:
 // "noun" as words without inflection and "verb" as words with
 // inflection.
-class UserPOSMock : public UserPOS::UserPOSInterface {
+class UserPOSMock : public UserPOSInterface {
  public:
   UserPOSMock() {}
   virtual ~UserPOSMock() {}
@@ -168,20 +169,25 @@ class UserDictionaryTest : public testing::Test {
  protected:
   virtual void SetUp() {
     pos_mock_.reset(new UserPOSMock);
+    CHECK(pos_mock_.get() != NULL);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    UserPOS::SetUserPOSInterface(pos_mock_.get());
-    EXPECT_TRUE(storage::Registry::Clear());
+    CHECK(storage::Registry::Clear());
   }
 
   virtual void TearDown() {
     pos_mock_.reset();
-    UserPOS::SetUserPOSInterface(NULL);
-    EXPECT_TRUE(storage::Registry::Clear());
+    CHECK(storage::Registry::Clear());
   }
 
   // Workaround for the constructor of UserDictionary being protected.
+  // Creates a user dictionary with mock pos data.
+  UserDictionary *CreateDictionaryWithMockPos() {
+    return new UserDictionary(pos_mock_.get());
+  }
+
+  // Creates a user dictionary with actual pos data.
   UserDictionary *CreateDictionary() {
-    return new UserDictionary;
+    return new UserDictionary();
   }
 
   struct Entry {
@@ -278,11 +284,11 @@ class UserDictionaryTest : public testing::Test {
     }
   }
 
-  scoped_ptr<UserPOSMock> pos_mock_;
+  scoped_ptr<const UserPOSMock> pos_mock_;
 };
 
 TEST_F(UserDictionaryTest, TestLookupPredictive) {
-  scoped_ptr<UserDictionary> dic(CreateDictionary());
+  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -345,7 +351,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
 }
 
 TEST_F(UserDictionaryTest, TestLookupPredictiveWithLimit) {
-  scoped_ptr<UserDictionary> dic(CreateDictionary());
+  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -391,7 +397,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictiveWithLimit) {
 }
 
 TEST_F(UserDictionaryTest, TestLookupPrefix) {
-  scoped_ptr<UserDictionary> dic(CreateDictionary());
+  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -451,7 +457,7 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
   config.set_incognito_mode(true);
   config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<UserDictionary> dic(CreateDictionary());
+  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -527,7 +533,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   SuppressionDictionary *suppression_dictionary =
       SuppressionDictionary::GetSuppressionDictionary();
 
-  scoped_ptr<UserDictionary> user_dic(CreateDictionary());
+  scoped_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();
 
   const string filename = Util::JoinPath(FLAGS_test_tmpdir,
@@ -602,7 +608,6 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   scoped_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
-  UserPOS::SetUserPOSInterface(NULL);
 
   const string filename = Util::JoinPath(FLAGS_test_tmpdir,
                                          "suggestion_only_test.db");
@@ -665,7 +670,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
 }
 
 TEST_F(UserDictionaryTest, TestUsageStats) {
-  scoped_ptr<UserDictionary> dic(CreateDictionary());
+  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
   UserDictionaryStorage storage("");

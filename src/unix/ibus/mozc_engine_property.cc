@@ -83,19 +83,23 @@ const MozcEngineProperty kMozcEngineProperties[] = {
   },
 };
 
-const MozcEngineProperty *kMozcEnginePropertyIMEOffState
-    = &kMozcEngineProperties[0];
+const MozcEngineProperty *kMozcEnginePropertyIMEOffState =
+    &kMozcEngineProperties[0];
 const size_t kMozcEnginePropertiesSize = arraysize(kMozcEngineProperties);
 COMPILE_ASSERT(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
                bad_number_of_props);
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
     commands::HIRAGANA;
 
+const MozcEngineSwitchProperty kMozcEngineSwitchProperties[] = {};
+const size_t kMozcEngineSwitchPropertiesSize =
+    ARRAYSIZE(kMozcEngineSwitchProperties);
+
 const MozcEngineToolProperty kMozcEngineToolProperties[] = {
   {
     "Tool.ConfigDialog",
     "config_dialog",
-    "Property",
+    "Properties",
     "properties.png",
   },
   {
@@ -107,13 +111,13 @@ const MozcEngineToolProperty kMozcEngineToolProperties[] = {
   {
     "Tool.WordRegisterDialog",
     "word_register_dialog",
-    "Word Register",
+    "Add Word",
     "word_register.png",
   },
   {
     "Tool.HandWriting",
     "hand_writing",
-    "Hand Writing",
+    "Handwriting",
     "hand_writing.png",
   },
   {

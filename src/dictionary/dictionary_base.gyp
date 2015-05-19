@@ -49,32 +49,45 @@
       ],
     },
     {
+      'target_name': 'pos_util',
+      'type': 'none',
+      'sources': [
+        '../build_tools/code_generator_util.py',
+        'pos_util.py',
+      ],
+    },
+    {
       'target_name': 'gen_pos_matcher',
       'type': 'none',
+      'dependencies': [
+        'pos_util',
+      ],
       'actions': [
         {
           'action_name': 'gen_pos_matcher',
           'variables': {
-            'input_files%': [
-              '../data/dictionary/id.def',
-              '../data/rules/special_pos.def',
-              '../data/rules/pos_matcher_rule.def',
-            ],
+            'id_def': '../data/dictionary/id.def',
+            'special_pos': '../data/rules/special_pos.def',
+            'pos_matcher_rule': '../data/rules/pos_matcher_rule.def',
+            'pos_matcher_header': '<(gen_out_dir)/pos_matcher.h',
           },
           'inputs': [
             'gen_pos_matcher_code.py',
-            '<@(input_files)',
+            '<(id_def)',
+            '<(special_pos)',
+            '<(pos_matcher_rule)'
           ],
           'outputs': [
-            '<(gen_out_dir)/pos_matcher.h',
+            '<(pos_matcher_header)',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/pos_matcher.h',
-            'gen_pos_matcher_code.py',
-            '<@(input_files)',
+            'python', 'gen_pos_matcher_code.py',
+            '--id_file=<(id_def)',
+            '--special_pos_file=<(special_pos)',
+            '--pos_matcher_rule_file=<(pos_matcher_rule)',
+            '--output=<(pos_matcher_header)',
           ],
-          'message': 'Generating <(gen_out_dir)/pos_matcher.h.',
+          'message': 'Generating <(pos_matcher_header)',
         },
       ],
     },
@@ -98,6 +111,66 @@
         ],
       },
       'includes': [ '../gyp/install_testdata.gypi' ],
+    },
+    {
+      'target_name': 'user_pos',
+      'type': 'static_library',
+      'sources' : [
+        'user_pos.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'gen_user_pos_data',
+      'type': 'none',
+      'dependencies': [
+        'pos_util',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_user_pos_data',
+          'variables': {
+            'id_def': '../data/dictionary/id.def',
+            'special_pos': '../data/rules/special_pos.def',
+            'user_pos': '../data/rules/user_pos.def',
+            'cforms': '../data/rules/cforms.def',
+            'user_pos_data': '<(gen_out_dir)/user_pos_data.h',
+          },
+          'inputs': [
+            'gen_user_pos_data.py',
+            '<(id_def)',
+            '<(special_pos)',
+            '<(user_pos)',
+            '<(cforms)',
+          ],
+          'outputs': [
+            '<(user_pos_data)',
+          ],
+          'action': [
+            'python', 'gen_user_pos_data.py',
+            '--id_file=<(id_def)',
+            '--special_pos_file=<(special_pos)',
+            '--user_pos_file=<(user_pos)',
+            '--cforms_file=<(cforms)',
+            '--output=<(user_pos_data)',
+          ],
+          'message': 'Generating <(user_pos_data).',
+        },
+      ],
+    },
+    {
+      'target_name': 'user_pos_data',
+      'type': 'none',
+      'hard_dependency': 1,
+      'dependencies': [
+        '../base/base.gyp:base',
+        'gen_user_pos_data',
+      ],
+      'export_dependent_settings': [
+        'gen_user_pos_data',
+      ],
     },
   ],
 }

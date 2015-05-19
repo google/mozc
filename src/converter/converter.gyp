@@ -63,5 +63,17 @@
         'converter_base.gyp:segments',
       ],
     },
+    {
+      'target_name': 'connection_data_injected_environment',
+      'type': 'static_library',
+      'sources': [
+        'connection_data_injected_environment.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base_core',
+        '../testing/testing.gyp:testing',
+        'converter_base.gyp:connector',
+      ],
+    },
   ],
 }

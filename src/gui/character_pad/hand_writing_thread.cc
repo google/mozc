@@ -34,6 +34,7 @@
 #include <QtGui/QtGui>
 
 #include "base/util.h"
+#include "config/stats_config_util.h"
 
 namespace {
 // Thread-safe copying of strokes.
@@ -76,6 +77,16 @@ void HandWritingThread::Start() {
   strokes_usec_ = 0;
   last_requested_sec_ = 0;
   last_requested_usec_ = 0;
+
+  // To reduce the disk IO of reading the stats config, we load it only when the
+  // thread is initialized. There is no problem because the config dialog (on
+  // Mac) and the administrator dialog (on Windows) say that the usage stats
+  // setting changes will take effect after the re-login.
+  // TODO(horo): There may be a possibility of read-write conflict in Mac,
+  // because the stats config is stored in a file.
+  // But this situation is very rare because the user have to change it in the
+  // config dialog UI.
+  usage_stats_enabled_ = StatsConfigUtil::IsEnabled();
   start();
   moveToThread(this);
 }
@@ -96,6 +107,8 @@ void HandWritingThread::startRecognition() {
     LOG(WARNING) << "Already sent that stroke";
     return;
   }
+  handwriting::HandwritingStatus status = handwriting::HANDWRITING_NO_ERROR;
+  emit statusUpdated(status);
 
   handwriting::Strokes strokes;
   CopyStrokes(strokes_, &strokes, &strokes_mutex_);
@@ -104,14 +117,20 @@ void HandWritingThread::startRecognition() {
   }
 
   vector<string> candidates;
-  handwriting::HandwritingManager::Recognize(strokes, &candidates);
+  status = handwriting::HandwritingManager::Recognize(strokes, &candidates);
   CopyCandidates(candidates, &candidates_, &candidates_mutex_);
   last_requested_sec_ = strokes_sec_;
   last_requested_usec_ = strokes_usec_;
   emit candidatesUpdated();
+  emit statusUpdated(status);
 }
 
 void HandWritingThread::itemSelected(const QListWidgetItem *item) {
+  // Do not send feedback it usage_stats is disabled.
+  if (!usage_stats_enabled_) {
+    return;
+  }
+
   handwriting::Strokes strokes;
   CopyStrokes(strokes_, &strokes, &strokes_mutex_);
   const QByteArray text = item->text().toUtf8();

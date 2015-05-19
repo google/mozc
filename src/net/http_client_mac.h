@@ -30,6 +30,7 @@
 #ifndef MOZC_NET_HTTP_CLIENT_MAC_H_
 #define MOZC_NET_HTTP_CLIENT_MAC_H_
 
+#ifdef OS_MACOSX
 #include <iostream>
 #include <string>
 #include "net/http_client.h"
@@ -50,4 +51,6 @@ class MacHTTPRequestHandler {
   virtual ~MacHTTPRequestHandler() {}
 };
 }  // namespace mozc
+
+#endif  // OS_MACOSX
 #endif  // MOZC_NET_HTTP_CLIENT_MAC_H_

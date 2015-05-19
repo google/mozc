@@ -41,8 +41,6 @@
 #include "base/process_mutex.h"
 #include "gui/base/locale_util.h"
 #include "gui/set_default_dialog/set_default_dialog.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 
 int RunSetDefaultDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_set_default_dialog);
@@ -65,20 +63,9 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
 
   QApplication app(argc, argv);
 
-  // TODO(nona): remove these lines when link-time language dependency
-  //             injection is rolled out.
-  mozc::japanese::LangDepSpecJapanese spec;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
-
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont
       ("set_default_dialog");
 
   mozc::gui::SetDefaultDialog dialog;
-  const int result = dialog.exec();
-
-  // TODO(nona): remove this line when link-time language dependency
-  //             injection is rolled out.
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-
-  return result;
+  return dialog.exec();
 }

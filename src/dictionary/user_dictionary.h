@@ -39,12 +39,14 @@
 
 namespace mozc {
 
-class UserDictionaryStorage;
 class UserDictionaryReloader;
+class UserDictionaryStorage;
+class UserPOSInterface;
 
 class UserDictionary : public DictionaryInterface {
  public:
   UserDictionary();
+  explicit UserDictionary(const UserPOSInterface *user_pos);
   virtual ~UserDictionary();
 
   virtual Node *LookupPredictiveWithLimit(
@@ -92,7 +94,7 @@ class UserDictionary : public DictionaryInterface {
 
   vector<UserPOS::Token *> tokens_;
   mutable scoped_ptr<UserDictionaryReloader> reloader_;
-
+  const UserPOSInterface *user_pos_;
   const Limit empty_limit_;
 
   DISALLOW_COPY_AND_ASSIGN(UserDictionary);

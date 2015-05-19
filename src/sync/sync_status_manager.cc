@@ -97,10 +97,16 @@ void SyncStatusManager::SetSyncGlobalStatus(
 
 void SyncStatusManager::AddSyncError(
     const commands::CloudSyncStatus::ErrorCode error_code) {
+  AddSyncErrorWithTimestamp(error_code, Util::GetTime());
+}
+
+void SyncStatusManager::AddSyncErrorWithTimestamp(
+    const commands::CloudSyncStatus::ErrorCode error_code,
+    const int64 timestamp) {
   scoped_lock lock(&mutex_);
   commands::CloudSyncStatus::SyncError *error = sync_status_.add_sync_errors();
   error->set_error_code(error_code);
-  error->set_timestamp(Util::GetTime());
+  error->set_timestamp(timestamp);
 }
 
 void SyncStatusManager::NewSyncStatusSession() {

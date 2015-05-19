@@ -44,21 +44,24 @@ namespace {
 class MockHandwriting : public HandwritingInterface {
  public:
   MockHandwriting()
-      : commit_counter_(0) {
+      : commit_counter_(0),
+        return_status_(HANDWRITING_NO_ERROR) {
   }
 
-  virtual void Recognize(const Strokes &unused_strokes,
-                         vector<string> *candidates) const {
+  virtual HandwritingStatus Recognize(const Strokes &unused_strokes,
+                                      vector<string> *candidates) const {
     CHECK(candidates);
     candidates->clear();
     for (size_t i = 0; i < candidates_.size(); ++i) {
       candidates->push_back(candidates_[i]);
     }
+    return return_status_;
   }
 
-  virtual void Commit(const Strokes &unused_strokes,
-                      const string &unused_result) {
+  virtual HandwritingStatus Commit(const Strokes &unused_strokes,
+                                   const string &unused_result) {
     ++commit_counter_;
+    return return_status_;
   }
 
   void SetCandidates(const vector<string> &candidates) {
@@ -75,20 +78,25 @@ class MockHandwriting : public HandwritingInterface {
   void ClearCommitCounter() {
     commit_counter_ = 0;
   }
+
+  void SetReturnStatus(HandwritingStatus status) {
+    return_status_ = status;
+  }
+
  private:
   vector<string> candidates_;
   int commit_counter_;
+  HandwritingStatus return_status_;
 };
 }  // anonymous namespace
 
 class HandwritingManagerTest : public testing::Test {
  public:
   virtual void SetUp() {
-    HandwritingManager::AddHandwritingModule(&mock_handwriting_);
+    HandwritingManager::SetHandwritingModule(&mock_handwriting_);
   }
 
   virtual void TearDown() {
-    HandwritingManager::ClearHandwritingModules();
   }
 
  protected:
@@ -104,7 +112,8 @@ TEST_F(HandwritingManagerTest, Recognize) {
 
   vector<string> result;
   Strokes dummy_strokes;
-  HandwritingManager::Recognize(dummy_strokes, &result);
+  EXPECT_EQ(HANDWRITING_NO_ERROR,
+            HandwritingManager::Recognize(dummy_strokes, &result));
   EXPECT_EQ(expected_candidates.size(), result.size());
   for (size_t i = 0; i < expected_candidates.size(); ++i) {
     EXPECT_EQ(expected_candidates[i], result[i])
@@ -118,8 +127,31 @@ TEST_F(HandwritingManagerTest, Commit) {
 
   Strokes dummy_strokes;
   string dummy_result;
-  HandwritingManager::Commit(dummy_strokes, dummy_result);
+  EXPECT_EQ(HANDWRITING_NO_ERROR,
+            HandwritingManager::Commit(dummy_strokes, dummy_result));
   EXPECT_EQ(1, mock_handwriting_.GetCommitCounter());
+}
+
+TEST_F(HandwritingManagerTest, RecognizeError) {
+  vector<string> result;
+  Strokes dummy_strokes;
+  mock_handwriting_.SetReturnStatus(HANDWRITING_ERROR);
+  EXPECT_EQ(HANDWRITING_ERROR,
+            HandwritingManager::Recognize(dummy_strokes, &result));
+  mock_handwriting_.SetReturnStatus(HANDWRITING_NETWORK_ERROR);
+  EXPECT_EQ(HANDWRITING_NETWORK_ERROR,
+            HandwritingManager::Recognize(dummy_strokes, &result));
+}
+
+TEST_F(HandwritingManagerTest, CommitError) {
+  Strokes dummy_strokes;
+  string dummy_result;
+  mock_handwriting_.SetReturnStatus(HANDWRITING_ERROR);
+  EXPECT_EQ(HANDWRITING_ERROR,
+            HandwritingManager::Commit(dummy_strokes, dummy_result));
+  mock_handwriting_.SetReturnStatus(HANDWRITING_NETWORK_ERROR);
+  EXPECT_EQ(HANDWRITING_NETWORK_ERROR,
+            HandwritingManager::Commit(dummy_strokes, dummy_result));
 }
 }  // namespace handwriting
 }  // namespace mozc

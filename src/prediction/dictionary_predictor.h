@@ -39,12 +39,13 @@
 
 namespace mozc {
 
-class Segments;
-class DictionaryInterface;
 class ConnectorInterface;
+class ConversionRequest;
+class DictionaryInterface;
 class ImmutableConverterInterface;
-class SegmenterInterface;
 class NodeAllocatorInterface;
+class Segments;
+class SegmenterInterface;
 struct Node;
 
 // Dictioanry-based predictor
@@ -55,6 +56,8 @@ class DictionaryPredictor: public PredictorInterface {
   virtual ~DictionaryPredictor();
 
   bool Predict(Segments *segments) const;
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const;
 
  protected:
   // Protected members for unittesting
@@ -94,16 +97,19 @@ class DictionaryPredictor: public PredictorInterface {
                                    vector<Result> *results) const;
 
   void AggregateUnigramPrediction(PredictionType type,
+                                  const ConversionRequest &request,
                                   Segments *segments,
                                   NodeAllocatorInterface *allocator,
                                   vector<Result> *results) const;
 
   void AggregateBigramPrediction(PredictionType type,
+                                 const ConversionRequest &request,
                                  Segments *segments,
                                  NodeAllocatorInterface *allocator,
                                  vector<Result> *results) const;
 
   void AggregateSuffixPrediction(PredictionType type,
+                                 const ConversionRequest &request,
                                  Segments *segments,
                                  NodeAllocatorInterface *allocator,
                                  vector<Result> *results) const;
@@ -142,8 +148,24 @@ class DictionaryPredictor: public PredictorInterface {
     }
   };
 
+  // Return false if no results were aggregated.
+  bool AggregatePrediction(const ConversionRequest &request,
+                           Segments *segments,
+                           NodeAllocatorInterface *allocator,
+                           vector<Result> *results) const;
+
+  void SetCost(const Segments &segments, vector<Result> *results) const;
+
+  // Remove prediciton by setting NO_PREDICTION to result type if necessary.
+  void RemovePrediction(const Segments &segments,
+                        vector<Result> *results) const;
+
+  bool AddPredictionToCandidates(Segments *segments,
+                                 vector<Result> *results) const;
+
   const Node *GetPredictiveNodes(const DictionaryInterface *dictionary,
                                  const string &history_key,
+                                 const ConversionRequest &request,
                                  const Segments &segments,
                                  NodeAllocatorInterface *allocator) const;
 

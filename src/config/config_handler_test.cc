@@ -116,8 +116,6 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   output.mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(input.DebugString(), output.DebugString());
 
-#ifdef CHANNEL_DEV
-#endif  // CHANNEL_DEV
 }
 
 TEST_F(ConfigHandlerTest, SetImposedConfig) {
@@ -312,7 +310,5 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   EXPECT_FALSE(output.use_auto_conversion());
 #endif
 
-#ifdef CHANNEL_DEV
-#endif  // CHANNEL_DEV
 }
 }

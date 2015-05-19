@@ -343,31 +343,30 @@ mozc::commands::Output."
                             key-and-modifiers))))
 
 (defun mozc-key-event-to-key-and-modifiers (event)
-  "Convert a keyboard event EVENT to a list of key and modifiers and return it.
+  "Convert a keyboard event EVENT to a list of key and modifiers.
 Key code and symbols are renamed so that the helper process understands them."
-  (let* ((basic-type (event-basic-type event))
-         (key (case basic-type
-                (?\b 'backspace)
-                (?\s 'space)
-                (?\d 'backspace)
-                ('eisu-toggle 'eisu)
-                (t basic-type))))
-    ;; `event-basic-type' always returns a lowercase character
-    ;; so reconstruct the original uppercase if any.
-    (mozc-reconstruct-uppercase-key-event key (event-modifiers event))))
-
-(defun mozc-reconstruct-uppercase-key-event (key modifiers)
-  "Reconstruct an uppercase character and return it with modifiers.
-If KEY is a key code and it has the corresponding uppercase and 'shift is
-included in MODIFIERS, this function reconstructs the uppercase character
-and returns a list of the uppercase character and modifiers excluding 'shift.
-Otherwise, return a list of the same key and modifiers."
-  (if (and (mozc-characterp key) (equal modifiers '(shift))
-           (/= key (upcase key)))
-      ;; Return the uppercase of the key and modifiers excluding shift.
-      (cons (upcase key) nil)
-    ;; Return the same key and modifiers.
-    (cons key modifiers)))
+  (let ((basic-type (event-basic-type event))
+        (modifiers (event-modifiers event)))
+    ;; Rename special keys to ones the helper process understands.
+    (let ((key (case basic-type
+                 (?\b 'backspace)
+                 (?\s 'space)
+                 (?\d 'backspace)
+                 ('eisu-toggle 'eisu)
+                 ('hiragana-katakana 'kana)
+                 ('next 'pagedown)
+                 ('prior 'pageup)
+                 (t basic-type))))
+      (cond
+       ;; kana + shift + rest => katakana + rest
+       ((and (eq key 'kana) (memq 'shift modifiers))
+        (cons 'katakana (remq 'shift modifiers)))
+       ;; lowercase + shift => uppercase
+       ((and (mozc-characterp key) (equal modifiers '(shift))
+             (/= key (upcase key)))
+        (cons (upcase key) nil))
+       (t
+        (cons key modifiers))))))
 
 (defun mozc-fall-back-on-default-binding (last-event)
   "Execute a command as if the command loop does.

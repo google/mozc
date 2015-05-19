@@ -31,6 +31,8 @@
 
 #ifdef OS_WINDOWS
 #include <windows.h>
+#else
+#include <unistd.h>  // for getpid()
 #endif
 
 #include "base/base.h"

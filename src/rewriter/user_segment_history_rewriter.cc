@@ -315,7 +315,7 @@ bool IsNumberSegment(const Segment &seg) {
 }
 
 void GetValueByType(const Segment *segment,
-                    Segment::Candidate::Style style,
+                    Util::NumberString::Style style,
                     string *output) {
   DCHECK(output);
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
@@ -340,12 +340,12 @@ void NormalizeCandidate(const Segment *segment, int n,
 
   string result = candidate.value;
   switch (candidate.style) {
-    case Segment::Candidate::DEFAULT_STYLE:
+    case Util::NumberString::DEFAULT_STYLE:
       CharacterFormManager::GetCharacterFormManager()->
           ConvertConversionString(candidate.value, &result);
       break;
-    case Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
-    case Segment::Candidate::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
+    case Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
+    case Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
       // Convert separated arabic here and don't use character form manager
       // so that suppressing mixed form of candidates
       // ("1，234" etc.)
@@ -357,11 +357,11 @@ void NormalizeCandidate(const Segment *segment, int n,
             GetConversionCharacterForm("0");
         if (form == config::Config::FULL_WIDTH) {
           GetValueByType(segment,
-                         Segment::Candidate::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
+                         Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
                          &result);
         } else if (form == config::Config::HALF_WIDTH) {
           GetValueByType(segment,
-                         Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
+                         Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
                          &result);
         }
       }
@@ -608,9 +608,9 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
   const Segment::Candidate &candidate = segment.candidate(0);
 
   if ((candidate.style ==
-       Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH) ||
+       Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH) ||
       (candidate.style ==
-       Segment::Candidate::NUMBER_SEPARATED_ARABIC_FULLWIDTH)) {
+       Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH)) {
     // in the case of:
     // 1. submit "123"
     // 2. submit "一二三"
@@ -622,7 +622,7 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
     // separated and default is learned at same time
     // This problem is solved by workaround on lookup.
     string default_feature_key;
-    GetFeatureN(Segment::Candidate::DEFAULT_STYLE, &default_feature_key);
+    GetFeatureN(Util::NumberString::DEFAULT_STYLE, &default_feature_key);
     FeatureValue v;
     DCHECK(v.IsValid());
     storage_->Insert(default_feature_key, reinterpret_cast<const char *>(&v));
@@ -875,9 +875,9 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
       // has higher rank by sorting of scores.
       if (last_access_time > 0 &&
           (segment->candidate(j).style
-           != Segment::Candidate::NUMBER_SEPARATED_ARABIC_FULLWIDTH) &&
+           != Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH) &&
           (segment->candidate(j).style
-           != Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH)) {
+           != Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH)) {
         last_access_time--;
       }
       scores.resize(scores.size() + 1);

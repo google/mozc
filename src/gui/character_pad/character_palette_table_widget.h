@@ -48,6 +48,9 @@ class CharacterPaletteTableWidget : public QTableWidget {
     lookup_result_item_ = item;
   }
 
+ signals:
+  void itemSelected(const QTableWidgetItem *item);
+
  protected:
   void mouseReleaseEvent(QMouseEvent *event);
   void mouseMoveEvent(QMouseEvent *event);

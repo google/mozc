@@ -37,7 +37,6 @@
 #include "base/freelist.h"
 #include "base/mutex.h"
 #include "base/util.h"
-#include "converter/character_form_manager.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "dictionary/pos_matcher.h"
@@ -342,7 +341,6 @@ Segments::Segments()
     user_history_enabled_(true),
     request_type_(Segments::CONVERSION),
     pool_(new ObjectPool<Segment>(32)),
-    composer_(NULL),
     cached_lattice_(new Lattice()) {}
 
 Segments::~Segments() {}
@@ -520,9 +518,6 @@ void Segments::CopyFrom(const Segments &src) {
     RevertEntry *revert_entry = push_back_revert_entry();
     revert_entry->CopyFrom(src.revert_entry(i));
   }
-
-  // TODO(hsumita): Copy composer_ correctly.
-  composer_ = NULL;
 }
 
 void Segments::clear_segments() {
@@ -610,14 +605,6 @@ const Segments::RevertEntry &Segments::revert_entry(size_t i) const {
 
 Segments::RevertEntry *Segments::mutable_revert_entry(size_t i) {
   return &revert_entries_[i];
-}
-
-const composer::Composer *Segments::composer() const {
-  return composer_;
-}
-
-void Segments::set_composer(const composer::Composer *composer) {
-  composer_ = composer;
 }
 
 Lattice *Segments::mutable_cached_lattice() {

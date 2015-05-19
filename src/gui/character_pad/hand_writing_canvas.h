@@ -61,6 +61,7 @@ class HandWritingCanvas : public QWidget {
   void revert();
   void listUpdated();
   void restartRecognition();
+  void statusUpdated(mozc::handwriting::HandwritingStatus status);
 
  protected:
   void paintEvent(QPaintEvent *event);
@@ -74,6 +75,7 @@ class HandWritingCanvas : public QWidget {
   QListWidget *list_widget_;
   bool is_drawing_;
   HandWritingThread recognizer_thread_;
+  handwriting::HandwritingStatus handwriting_status_;
 
  signals:
   void startRecognition();

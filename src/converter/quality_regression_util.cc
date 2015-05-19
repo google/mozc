@@ -48,8 +48,11 @@ const char kConversionExpect[]    = "Conversion Expected";
 const char kConversionNotExpect[] = "Conversion Not Expected";
 const char kReverseConversionExpect[]    = "ReverseConversion Expected";
 const char kReverseConversionNotExpect[] = "ReverseConversion Not Expected";
+// For now, suggestion and prediction are using same implementation
 const char kPredictionExpect[]    = "Prediction Expected";
 const char kPredictionNotExpect[] = "Prediction Not Expected";
+const char kSuggestionExpect[]    = "Suggestion Expected";
+const char kSuggestionNotExpect[] = "Suggestion Not Expected";
 
 // copied from evaluation/quality_regression/evaluator.cc
 int GetRank(const string &value, const Segments *segments,
@@ -194,14 +197,17 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
     command == kReverseConversionNotExpect) {
     converter_->StartReverseConversion(segments_.get(), key);
   } else if (command == kPredictionExpect ||
-             command == kPredictionNotExpect) {
+             command == kPredictionNotExpect||
+             command == kSuggestionExpect ||
+             command == kSuggestionNotExpect) {
     converter_->StartPrediction(segments_.get(), key);
   } else {
     LOG(FATAL) << "Unknown command: " << command;
   }
 
   // No results is OK if "prediction not expect" command
-  if (command == kPredictionNotExpect &&
+  if ((command == kPredictionNotExpect ||
+       command == kSuggestionNotExpect) &&
       (segments_->segments_size() == 0 ||
        (segments_->segments_size() >= 1 &&
         segments_->segment(0).candidates_size() == 0))) {
@@ -219,7 +225,8 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
 
   if (command == kConversionNotExpect ||
       command == kReverseConversionNotExpect ||
-      command == kPredictionNotExpect) {
+      command == kPredictionNotExpect ||
+      command == kSuggestionNotExpect) {
     result = !result;
   }
 

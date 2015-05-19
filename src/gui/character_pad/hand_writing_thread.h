@@ -67,6 +67,7 @@ class HandWritingThread : public QThread {
 
  signals:
   void candidatesUpdated();
+  void statusUpdated(mozc::handwriting::HandwritingStatus status);
 
  private:
   handwriting::Strokes strokes_;
@@ -79,6 +80,8 @@ class HandWritingThread : public QThread {
 
   QMutex strokes_mutex_;
   QMutex candidates_mutex_;
+
+  bool usage_stats_enabled_;
 };
 }  // namespace gui
 }  // namespace mozc

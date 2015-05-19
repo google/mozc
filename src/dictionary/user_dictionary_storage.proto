@@ -31,6 +31,7 @@ syntax = "proto2";
 
 package mozc.user_dictionary;
 
+
 message UserDictionaryStorage {
   message UserDictionary {
     // ID of this dictionary

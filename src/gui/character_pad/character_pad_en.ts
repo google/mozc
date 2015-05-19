@@ -90,8 +90,23 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="hand_writing_canvas.cc" line="100"/>
+        <location filename="hand_writing_canvas.cc" line="109"/>
         <source>Draw a character here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="hand_writing_canvas.cc" line="130"/>
+        <source>error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="hand_writing_canvas.cc" line="133"/>
+        <source>network error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="hand_writing_canvas.cc" line="137"/>
+        <source>unknown error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -105,22 +120,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="unicode_util.cc" line="187"/>
+        <location filename="unicode_util.cc" line="198"/>
         <source>Kun Reading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="unicode_util.cc" line="192"/>
+        <location filename="unicode_util.cc" line="203"/>
         <source>On Reading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="unicode_util.cc" line="211"/>
+        <location filename="unicode_util.cc" line="222"/>
         <source>Source</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="unicode_util.cc" line="217"/>
+        <location filename="unicode_util.cc" line="228"/>
         <source>Unicode</source>
         <translation type="unfinished"></translation>
     </message>
@@ -128,12 +143,12 @@
 <context>
     <name>mozc::gui::HandWriting</name>
     <message>
-        <location filename="hand_writing.cc" line="277"/>
+        <location filename="hand_writing.cc" line="317"/>
         <source>Cloud handwriting recognition</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="hand_writing.cc" line="280"/>
+        <location filename="hand_writing.cc" line="320"/>
         <source>This feature improve the accuracy of handwriting recognition by using a Google web service. To do so, your handwriting strokes will be securely sent to Google. Do you want to use Cloud handwriting?</source>
         <translation type="unfinished"></translation>
     </message>

@@ -32,6 +32,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/symbol_rewriter.h"
 #include "testing/base/public/gunit.h"
@@ -139,13 +140,14 @@ TEST_F(SymbolRewriterTest, TriggerRewriteTest) {
 
 TEST_F(SymbolRewriterTest, TriggerRewriteEntireTest) {
   SymbolRewriter symbol_rewriter;
+  ConversionRequest request;
   {
     Segments segments;
     // "ー"
     AddSegment("\xe3\x83\xbc", "test", &segments);
     // ">"
     AddSegment("\x3e", "test", &segments);
-    EXPECT_TRUE(symbol_rewriter.RewriteEntireCandidate(&segments));
+    EXPECT_TRUE(symbol_rewriter.RewriteEntireCandidate(request, &segments));
     // "→"
     EXPECT_TRUE(HasCandidate(segments, 0, "\xe2\x86\x92"));
   }
@@ -155,7 +157,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEntireTest) {
     AddSegment("\xe3\x83\xbc", "test", &segments);
     // "ー"
     AddSegment("\xe3\x83\xbc", "test", &segments);
-    EXPECT_FALSE(symbol_rewriter.RewriteEntireCandidate(&segments));
+    EXPECT_FALSE(symbol_rewriter.RewriteEntireCandidate(request, &segments));
   }
 }
 

@@ -108,21 +108,21 @@
         {
           'action_name': 'gen_emoticon_rewriter_data',
           'variables': {
-            'input_files': [
-              '../data/emoticon/emoticon.tsv',
-            ],
+            'input_file': '../data/emoticon/emoticon.tsv',
+            'output_file': '<(gen_out_dir)/emoticon_rewriter_data.h',
           },
           'inputs': [
-            '<@(input_files)',
+            'embedded_dictionary_compiler.py',
+            'gen_emoticon_rewriter_data.py',
+            '<(input_file)',
           ],
           'outputs': [
-            '<(gen_out_dir)/emoticon_rewriter_data.h',
+            '<(output_file)'
           ],
           'action': [
-            '<(mozc_build_tools_dir)/gen_emoticon_rewriter_dictionary_main',
-            '--input=<@(input_files)',
-            '--logtostderr',
-            '--output=<(gen_out_dir)/emoticon_rewriter_data.h',
+            'python', 'gen_emoticon_rewriter_data.py',
+            '--input=<(input_file)',
+            '--output=<(output_file)',
           ],
         },
         {
@@ -150,7 +150,7 @@
         },
       ],
       'conditions': [
-        ['OS=="mac" or OS=="win" or chromeos==1', {
+        ['target_platform!="Android"', {
           'actions': [
             {
               'action_name': 'gen_usage_rewriter_data',
@@ -210,7 +210,8 @@
       ],
        'dependencies': [
          '../base/base.gyp:base',
-         '../dictionary/dictionary.gyp:user_pos_data',
+         '../data_manager/data_manager.gyp:user_dictionary_manager',
+         '../dictionary/dictionary_base.gyp:user_pos_data',
        ],
     },
     {
@@ -233,18 +234,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../dictionary/dictionary.gyp:user_pos_data',
-      ],
-    },
-    {
-      'target_name': 'gen_emoticon_rewriter_dictionary_main',
-      'type': 'executable',
-      'sources': [
-        'embedded_dictionary.cc',
-        'gen_emoticon_rewriter_dictionary_main.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
+        '../data_manager/data_manager.gyp:user_dictionary_manager',
+        '../dictionary/dictionary_base.gyp:user_pos_data',
       ],
     },
     {
@@ -252,16 +243,6 @@
       'type': 'none',
       'variables': {
         'bin_name': 'gen_symbol_rewriter_dictionary_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ]
-    },
-    {
-      'target_name': 'install_gen_emoticon_rewriter_dictionary_main',
-      'type': 'none',
-      'variables': {
-        'bin_name': 'gen_emoticon_rewriter_dictionary_main'
       },
       'includes' : [
         '../gyp/install_build_tool.gypi',

@@ -175,28 +175,38 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1480"/>
+        <location filename="config_dialog.ui" line="1733"/>
+        <source>Startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="config_dialog.ui" line="1771"/>
+        <source>Start conversion engine on login</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="config_dialog.ui" line="1864"/>
         <source>Logging level (debug only)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1509"/>
+        <location filename="config_dialog.ui" line="1820"/>
         <source>Logging</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1541"/>
+        <location filename="config_dialog.ui" line="1617"/>
         <source>Administration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="config_dialog.ui" line="1191"/>
-        <location filename="config_dialog.ui" line="1579"/>
+        <location filename="config_dialog.ui" line="1674"/>
         <source>Settings...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1599"/>
+        <location filename="config_dialog.ui" line="1661"/>
         <source>Dictionary preloading and UAC settings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -411,22 +421,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1624"/>
+        <location filename="config_dialog.ui" line="1555"/>
         <source>Check if Mozc is the default IME on startup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1448"/>
+        <location filename="config_dialog.ui" line="1508"/>
         <source>Default IME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1634"/>
+        <location filename="config_dialog.ui" line="1565"/>
         <source>Disable Keyboard layout hotkey (Ctrl+Shift)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1673"/>
+        <location filename="config_dialog.ui" line="1945"/>
         <source>Reset to defaults</source>
         <translation type="unfinished"></translation>
     </message>
@@ -566,226 +576,226 @@
 <context>
     <name>mozc::gui::ConfigDialog</name>
     <message>
-        <location filename="config_dialog.cc" line="111"/>
+        <location filename="config_dialog.cc" line="126"/>
         <source>Custom keymap</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="112"/>
-        <location filename="config_dialog.cc" line="116"/>
+        <location filename="config_dialog.cc" line="127"/>
+        <location filename="config_dialog.cc" line="131"/>
         <source>ATOK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="113"/>
-        <location filename="config_dialog.cc" line="117"/>
+        <location filename="config_dialog.cc" line="128"/>
+        <location filename="config_dialog.cc" line="132"/>
         <source>MS-IME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="114"/>
-        <location filename="config_dialog.cc" line="118"/>
+        <location filename="config_dialog.cc" line="129"/>
+        <location filename="config_dialog.cc" line="133"/>
         <source>Kotoeri</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="120"/>
+        <location filename="config_dialog.cc" line="135"/>
         <source>Romaji</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="121"/>
+        <location filename="config_dialog.cc" line="136"/>
         <source>Kana</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="125"/>
+        <location filename="config_dialog.cc" line="140"/>
         <source>Romaji (switchable)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="126"/>
+        <location filename="config_dialog.cc" line="141"/>
         <source>Kana (switchable)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="129"/>
-        <location filename="config_dialog.cc" line="145"/>
+        <location filename="config_dialog.cc" line="144"/>
+        <location filename="config_dialog.cc" line="160"/>
         <source>Follow input mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="130"/>
-        <location filename="config_dialog.cc" line="146"/>
+        <location filename="config_dialog.cc" line="145"/>
+        <location filename="config_dialog.cc" line="161"/>
         <source>Fullwidth</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="131"/>
-        <location filename="config_dialog.cc" line="147"/>
+        <location filename="config_dialog.cc" line="146"/>
+        <location filename="config_dialog.cc" line="162"/>
         <source>Halfwidth</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="133"/>
+        <location filename="config_dialog.cc" line="148"/>
         <source>No shortcut</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="134"/>
+        <location filename="config_dialog.cc" line="149"/>
         <source>1 -- 9</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="135"/>
+        <location filename="config_dialog.cc" line="150"/>
         <source>A -- L</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="137"/>
+        <location filename="config_dialog.cc" line="152"/>
         <source>Yes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="138"/>
+        <location filename="config_dialog.cc" line="153"/>
         <source>Yes (don&apos;t record new data)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="139"/>
+        <location filename="config_dialog.cc" line="154"/>
         <source>No</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="141"/>
+        <location filename="config_dialog.cc" line="156"/>
         <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="142"/>
+        <location filename="config_dialog.cc" line="157"/>
         <source>Alphanumeric</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="143"/>
+        <location filename="config_dialog.cc" line="158"/>
         <source>Katakana</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="148"/>
+        <location filename="config_dialog.cc" line="163"/>
         <source>Direct input</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="150"/>
+        <location filename="config_dialog.cc" line="165"/>
         <source>0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="151"/>
+        <location filename="config_dialog.cc" line="166"/>
         <source>1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="152"/>
+        <location filename="config_dialog.cc" line="167"/>
         <source>2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="154"/>
+        <location filename="config_dialog.cc" line="169"/>
         <source>Yen Sign Â¥</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="155"/>
+        <location filename="config_dialog.cc" line="170"/>
         <source>Backslash \</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="278"/>
+        <location filename="config_dialog.cc" line="293"/>
         <source>Dictionary preloading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="385"/>
-        <location filename="config_dialog.cc" line="405"/>
-        <location filename="config_dialog.cc" line="419"/>
-        <location filename="config_dialog.cc" line="427"/>
-        <location filename="config_dialog.cc" line="734"/>
-        <location filename="config_dialog.cc" line="748"/>
-        <location filename="config_dialog.cc" line="758"/>
-        <location filename="config_dialog.cc" line="770"/>
-        <location filename="config_dialog.cc" line="780"/>
-        <location filename="config_dialog.cc" line="792"/>
-        <location filename="config_dialog.cc" line="872"/>
-        <location filename="config_dialog.cc" line="895"/>
+        <location filename="config_dialog.cc" line="400"/>
+        <location filename="config_dialog.cc" line="420"/>
+        <location filename="config_dialog.cc" line="434"/>
+        <location filename="config_dialog.cc" line="442"/>
+        <location filename="config_dialog.cc" line="767"/>
+        <location filename="config_dialog.cc" line="781"/>
+        <location filename="config_dialog.cc" line="791"/>
+        <location filename="config_dialog.cc" line="803"/>
+        <location filename="config_dialog.cc" line="813"/>
+        <location filename="config_dialog.cc" line="825"/>
+        <location filename="config_dialog.cc" line="905"/>
+        <location filename="config_dialog.cc" line="928"/>
         <source>Mozc settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="386"/>
+        <location filename="config_dialog.cc" line="401"/>
         <source>Failed to get current config values</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="406"/>
+        <location filename="config_dialog.cc" line="421"/>
         <source>The current custom keymap table is empty. When custom keymap is selected, you must customize it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="420"/>
+        <location filename="config_dialog.cc" line="435"/>
         <source>Romaji/Kana setting is enabled from new applications.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="428"/>
+        <location filename="config_dialog.cc" line="443"/>
         <source>Failed to update config</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="599"/>
+        <location filename="config_dialog.cc" line="626"/>
         <source>Checking sync status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="601"/>
-        <location filename="config_dialog.cc" line="1109"/>
+        <location filename="config_dialog.cc" line="628"/>
+        <location filename="config_dialog.cc" line="1152"/>
         <source>Sync is not enabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="735"/>
+        <location filename="config_dialog.cc" line="768"/>
         <source>Do you want to clear personalization data? Input history is not reset with this operation. Please open &quot;suggestion&quot; tab to remove input history data.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="749"/>
-        <location filename="config_dialog.cc" line="771"/>
+        <location filename="config_dialog.cc" line="782"/>
+        <location filename="config_dialog.cc" line="804"/>
         <source>Mozc Converter is not running. Settings were not saved.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="759"/>
+        <location filename="config_dialog.cc" line="792"/>
         <source>Do you want to clear all history data?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="781"/>
+        <location filename="config_dialog.cc" line="814"/>
         <source>Do you want to clear unused history data?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="793"/>
+        <location filename="config_dialog.cc" line="826"/>
         <source>Mozc Converter is not running. Operation was not executed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="873"/>
+        <location filename="config_dialog.cc" line="906"/>
         <source>Web Service extension enables Mozc to display third party usage dictionaries provided as an Web service API, e.g. REST (POX/JSON over HTTP). Note that candidate/preedit strings are sent to the Web service when this feature is enabled. Do you want to use Web Service extension?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="896"/>
+        <location filename="config_dialog.cc" line="929"/>
         <source>When you reset Mozc settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
  - Personalization data
  - Input history
@@ -795,93 +805,93 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="948"/>
+        <location filename="config_dialog.cc" line="986"/>
         <source>Stop Sync</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="950"/>
+        <location filename="config_dialog.cc" line="988"/>
         <source>Start Sync</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="966"/>
+        <location filename="config_dialog.cc" line="1004"/>
         <source>Stop sync and reset the auth token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="967"/>
+        <location filename="config_dialog.cc" line="1005"/>
         <source>You are trying to stop sync and reset the auth token. To restart sync, you will need to get a new auth token.
 Do you really want to continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1051"/>
+        <location filename="config_dialog.cc" line="1093"/>
         <source>Not synced yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1055"/>
+        <location filename="config_dialog.cc" line="1097"/>
         <source>Last synced time: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1097"/>
+        <location filename="config_dialog.cc" line="1140"/>
         <source>Waiting for server to be ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1103"/>
+        <location filename="config_dialog.cc" line="1146"/>
         <source>During synchronization</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1126"/>
+        <location filename="config_dialog.cc" line="1169"/>
         <source>Authorization failed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1129"/>
+        <location filename="config_dialog.cc" line="1172"/>
         <source>Cannot save dictionaries because Sync Dictionary exceeds its entry size limit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1133"/>
+        <location filename="config_dialog.cc" line="1176"/>
         <source>Cannot save dictionaries because Sync Dictionary exceeds its binary size limit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1137"/>
+        <location filename="config_dialog.cc" line="1180"/>
         <source>Cannot save dictionaries because the number of dictionaries for sync exceeds its limit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1141"/>
+        <location filename="config_dialog.cc" line="1184"/>
         <source>Unknown error was found.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1153"/>
+        <location filename="config_dialog.cc" line="1196"/>
         <source>Authorization error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1158"/>
+        <location filename="config_dialog.cc" line="1201"/>
         <source>Dictionary sync error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1161"/>
+        <location filename="config_dialog.cc" line="1204"/>
         <source>Unknown sync error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1175"/>
+        <location filename="config_dialog.cc" line="1218"/>
         <source>Clear all sync data in Google servers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1176"/>
+        <location filename="config_dialog.cc" line="1219"/>
         <source>You are trying to clear all the data in the sync server.
 Do you really want to continue?</source>
         <translation type="unfinished"></translation>
@@ -1128,62 +1138,57 @@ Do you really want to continue?</source>
 <context>
     <name>mozc::gui::WebServiceInfolistEditorDialog</name>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="99"/>
+        <location filename="webservice_infolist_editor.cc" line="64"/>
         <source>New entry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="101"/>
+        <location filename="webservice_infolist_editor.cc" line="66"/>
         <source>Remove selected entries</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="104"/>
+        <location filename="webservice_infolist_editor.cc" line="69"/>
         <source>Import from file...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="106"/>
+        <location filename="webservice_infolist_editor.cc" line="71"/>
         <source>Export to file...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="109"/>
+        <location filename="webservice_infolist_editor.cc" line="74"/>
         <source>Help...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="111"/>
+        <location filename="webservice_infolist_editor.cc" line="76"/>
         <source>Mozc Web Service Usage Dictionary table editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="123"/>
+        <location filename="webservice_infolist_editor.cc" line="82"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="123"/>
+        <location filename="webservice_infolist_editor.cc" line="82"/>
         <source>URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="124"/>
-        <source>Format type</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="124"/>
+        <location filename="webservice_infolist_editor.cc" line="82"/>
         <source>Xpath/Jsonpath</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="192"/>
+        <location filename="webservice_infolist_editor.cc" line="144"/>
         <source>Enter name of Web service</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="193"/>
+        <location filename="webservice_infolist_editor.cc" line="145"/>
         <source>Enter URL for of Web service.
 &quot;%s&quot; is expanded to the candidate string.
 &quot;%r&quot; is expanded to the all preedit string.
@@ -1192,12 +1197,7 @@ Example:   http://api.sample.com/keyword/%s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="197"/>
-        <source>Select format type</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="198"/>
+        <location filename="webservice_infolist_editor.cc" line="149"/>
         <source>Enter Xpath or Jsonpath.
 This query is used for extracting the content from URL.
 
@@ -1206,12 +1206,12 @@ Example of Jsonpath:   $.content.node</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="235"/>
+        <location filename="webservice_infolist_editor.cc" line="182"/>
         <source>Mozc settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="webservice_infolist_editor.cc" line="236"/>
+        <location filename="webservice_infolist_editor.cc" line="183"/>
         <source>You can&apos;t have more than %1 entries</source>
         <translation type="unfinished"></translation>
     </message>

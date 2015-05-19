@@ -47,6 +47,7 @@
 #include "base/util.h"
 #include "base/win_util.h"
 #include "win32/base/imm_registrar.h"
+#include "win32/base/imm_util.h"
 #include "win32/base/immdev.h"
 
 namespace mozc {
@@ -78,6 +79,7 @@ const wchar_t kPreloadKeyName[] = L"Keyboard Layout\\Preload";
 // Registry element size limits are described in the link below.
 // http://msdn.microsoft.com/en-us/library/ms724872(VS.85).aspx
 const DWORD kMaxValueNameLength = 16383;
+
 
 // Converts an unsigned integer to a wide string.
 wstring utow(unsigned int i) {
@@ -351,10 +353,12 @@ bool BroadcastNewIME(const KeyboardLayoutInfo &layout) {
     return false;
   }
 
-  // Broadcasting WM_INPUTLANGCHANGEREQUEST ensures that existing process in
-  // the this session will change their input method to |hkl| but his setting
-  // is volatile.  This works well for a HKL substituted by a TIP on Windows
-  // XP.
+
+  // Broadcasting WM_INPUTLANGCHANGEREQUEST so that existing process in the
+  // current session will change their input method to |hkl|. This mechanism
+  // also works against a HKL which is substituted by a TIP on Windows XP.
+  // Note: we have virtually the same code in imm_util.cc too.
+  // TODO(yukawa): Make a common function around WM_INPUTLANGCHANGEREQUEST.
   DWORD recipients = BSM_APPLICATIONS;
   const LONG result = ::BroadcastSystemMessage(
       BSF_POSTMESSAGE,

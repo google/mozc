@@ -800,6 +800,18 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
         state->clear_start_infolist_window_time();
       }
       break;
+    case commands::SessionCommand::HANDWRITING_OPEN_EVENT:
+      IncrementCount("HandwritingOpen");
+      break;
+    case commands::SessionCommand::HANDWRITING_COMMIT_EVENT:
+      IncrementCount("HandwritingCommit");
+      break;
+    case commands::SessionCommand::CHARACTER_PALETTE_OPEN_EVENT:
+      IncrementCount("CharacterPaletteOpen");
+      break;
+    case commands::SessionCommand::CHARACTER_PALETTE_COMMIT_EVENT:
+      IncrementCount("CharacterPaletteCommit");
+      break;
     default:
       LOG(WARNING) << "client side usage stats event has invalid category";
       break;

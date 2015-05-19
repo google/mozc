@@ -39,6 +39,8 @@
 
 namespace mozc {
 
+class UserPOSInterface;
+
 namespace client {
 class ClientInterface;
 }
@@ -108,6 +110,7 @@ class WordRegisterDialog : public QDialog,
   scoped_ptr<UserDictionaryStorage> storage_;
   scoped_ptr<client::ClientInterface> client_;
   QString window_title_;
+  const UserPOSInterface *user_pos_;
 };
 }  // namespace mozc::gui
 }  // namespace mozc

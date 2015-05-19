@@ -39,63 +39,46 @@ namespace handwriting {
 
 class HandwritingManagerImpl {
  public:
-  HandwritingManagerImpl() {}
+  HandwritingManagerImpl() : module_(NULL) {}
   virtual ~HandwritingManagerImpl() {}
 
-  void AddHandwritingModule(HandwritingInterface *module) {
-    modules_.push_back(module);
+  void SetHandwritingModule(HandwritingInterface *module) {
+    module_ = module;
   }
 
-  void ClearHandwritingModules() {
-    modules_.clear();
-  }
-
-  void Recognize(const Strokes &strokes, vector<string> *candidates) const {
+  HandwritingStatus Recognize(const Strokes &strokes,
+                              vector<string> *candidates) const {
+    DCHECK(module_);
+    DCHECK(candidates);
     candidates->clear();
-    set<string> contained;
-    for (size_t i = 0; i < modules_.size(); ++i) {
-      vector<string> module_candidates;
-      modules_[i]->Recognize(strokes, &module_candidates);
-      for (size_t j = 0; j < module_candidates.size(); ++j) {
-        const string &word = module_candidates[j];
-        if (contained.find(word) == contained.end()) {
-          contained.insert(word);
-          candidates->push_back(word);
-        }
-      }
-    }
+    return module_->Recognize(strokes, candidates);
   }
 
-  void Commit(const Strokes &strokes, const string &result) {
-    for (size_t i = 0; i < modules_.size(); ++i) {
-      modules_[i]->Commit(strokes, result);
-    }
+  HandwritingStatus Commit(const Strokes &strokes, const string &result) {
+    DCHECK(module_);
+    return module_->Commit(strokes, result);
   }
 
  private:
-  vector<HandwritingInterface *> modules_;
+  HandwritingInterface * module_;
 };
 
 // static
-void HandwritingManager::AddHandwritingModule(HandwritingInterface *module) {
-  Singleton<HandwritingManagerImpl>::get()->AddHandwritingModule(module);
+void HandwritingManager::SetHandwritingModule(HandwritingInterface *module) {
+  Singleton<HandwritingManagerImpl>::get()->SetHandwritingModule(module);
 }
 
 // static
-void HandwritingManager::ClearHandwritingModules() {
-  Singleton<HandwritingManagerImpl>::get()->ClearHandwritingModules();
+HandwritingStatus HandwritingManager::Recognize(const Strokes &strokes,
+                                                vector<string> *candidates) {
+  return Singleton<HandwritingManagerImpl>::get()->Recognize(strokes,
+                                                             candidates);
 }
 
 // static
-void HandwritingManager::Recognize(const Strokes &strokes,
-                                   vector<string> *candidates) {
-  Singleton<HandwritingManagerImpl>::get()->Recognize(strokes, candidates);
-}
-
-// static
-void HandwritingManager::Commit(const Strokes &strokes,
+HandwritingStatus HandwritingManager::Commit(const Strokes &strokes,
                                 const string &result) {
-  Singleton<HandwritingManagerImpl>::get()->Commit(strokes, result);
+  return Singleton<HandwritingManagerImpl>::get()->Commit(strokes, result);
 }
 
 }  // namespace handwriting

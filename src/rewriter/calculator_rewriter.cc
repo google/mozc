@@ -34,6 +34,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "rewriter/calculator/calculator_interface.h"
@@ -45,13 +46,18 @@ CalculatorRewriter::CalculatorRewriter() {
 
 CalculatorRewriter::~CalculatorRewriter() {}
 
+bool CalculatorRewriter::Rewrite(Segments *segments) const {
+  return RewriteForRequest(ConversionRequest(), segments);
+}
+
 // Rewrites candidates when conversion segments of |segments| represents an
 // expression that can be calculated. In such case, if |segments| consists
 // of multiple segments, it merges them by calling ConverterInterface::
 // ResizeSegment(), otherwise do calculation and insertion.
 // TODO(tok): It currently calculates same expression twice, if |segments| is
 //            a valid expression.
-bool CalculatorRewriter::Rewrite(Segments *segments) const {
+bool CalculatorRewriter::RewriteForRequest(const ConversionRequest &request,
+                                           Segments *segments) const {
   if (!GET_CONFIG(use_calculator)) {
     return false;
   }
@@ -97,7 +103,7 @@ bool CalculatorRewriter::Rewrite(Segments *segments) const {
   // ConverterInterface::ResizeSegment() calls Rewriter::Rewrite(), so
   // CalculatorRewriter::Rewrite() is recursively called with merged
   // conversion segment.
-  if (!converter->ResizeSegment(segments, 0, offset)) {
+  if (!converter->ResizeSegment(segments, request, 0, offset)) {
     LOG(ERROR) << "Failed to merge conversion segments";
     return false;
   }

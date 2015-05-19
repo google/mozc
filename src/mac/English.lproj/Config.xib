@@ -2,9 +2,9 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">10F569</string>
+		<string key="IBDocument.SystemVersion">10K549</string>
 		<string key="IBDocument.InterfaceBuilderVersion">823</string>
-		<string key="IBDocument.AppKitVersion">1038.29</string>
+		<string key="IBDocument.AppKitVersion">1038.36</string>
 		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="6"/>
+			<integer value="34"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -72,6 +72,24 @@
 					<object class="NSMenuItem" id="1073660182">
 						<reference key="NSMenu" ref="643703843"/>
 						<string key="NSTitle">Dictionary Tool...</string>
+						<string key="NSKeyEquiv"/>
+						<int key="NSKeyEquivModMask">1048576</int>
+						<int key="NSMnemonicLoc">2147483647</int>
+						<reference key="NSOnImage" ref="238454343"/>
+						<reference key="NSMixedImage" ref="787631504"/>
+					</object>
+					<object class="NSMenuItem" id="24336206">
+						<reference key="NSMenu" ref="643703843"/>
+						<string key="NSTitle">Hand Writing...</string>
+						<string key="NSKeyEquiv"/>
+						<int key="NSKeyEquivModMask">1048576</int>
+						<int key="NSMnemonicLoc">2147483647</int>
+						<reference key="NSOnImage" ref="238454343"/>
+						<reference key="NSMixedImage" ref="787631504"/>
+					</object>
+					<object class="NSMenuItem" id="307598403">
+						<reference key="NSMenu" ref="643703843"/>
+						<string key="NSTitle">Character Palette...</string>
 						<string key="NSKeyEquiv"/>
 						<int key="NSKeyEquivModMask">1048576</int>
 						<int key="NSMnemonicLoc">2147483647</int>
@@ -140,6 +158,22 @@
 					</object>
 					<int key="connectionID">33</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">characterPaletteClicked:</string>
+						<reference key="source" ref="86675633"/>
+						<reference key="destination" ref="307598403"/>
+					</object>
+					<int key="connectionID">38</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">handWritingClicked:</string>
+						<reference key="source" ref="86675633"/>
+						<reference key="destination" ref="24336206"/>
+					</object>
+					<int key="connectionID">39</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -180,6 +214,8 @@
 							<reference ref="285142239"/>
 							<reference ref="328924351"/>
 							<reference ref="249875073"/>
+							<reference ref="24336206"/>
+							<reference ref="307598403"/>
 						</object>
 						<reference key="parent" ref="0"/>
 						<string key="objectName">Menu (Google Japanese Input)</string>
@@ -209,6 +245,16 @@
 						<reference key="object" ref="249875073"/>
 						<reference key="parent" ref="643703843"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">34</int>
+						<reference key="object" ref="24336206"/>
+						<reference key="parent" ref="643703843"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">36</int>
+						<reference key="object" ref="307598403"/>
+						<reference key="parent" ref="643703843"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -224,6 +270,10 @@
 					<string>28.IBPluginDependency</string>
 					<string>30.IBPluginDependency</string>
 					<string>32.IBPluginDependency</string>
+					<string>34.IBPluginDependency</string>
+					<string>34.ImportedFromIB2</string>
+					<string>36.IBPluginDependency</string>
+					<string>36.ImportedFromIB2</string>
 					<string>6.IBEditorWindowLastContentRect</string>
 					<string>6.IBPluginDependency</string>
 					<string>6.ImportedFromIB2</string>
@@ -239,7 +289,11 @@
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{329, 887}, {286, 103}}</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<integer value="1"/>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<integer value="1"/>
+					<string>{{329, 942}, {286, 143}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<integer value="1"/>
 				</object>
@@ -260,7 +314,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">33</int>
+			<int key="maxID">39</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -276,30 +330,21 @@
 				<object class="IBPartialClassDescription">
 					<string key="className">GoogleJapaneseInputController</string>
 					<string key="superclassName">IMKInputController</string>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBUserSource</string>
-						<string key="minorKey"/>
-					</object>
-				</object>
-			</object>
-			<object class="NSMutableArray" key="referencedPartialClassDescriptionsV3.1+">
-				<bool key="EncodedWithXMLCoder">YES</bool>
-				<object class="IBPartialClassDescription">
-					<string key="className">GoogleJapaneseInputController</string>
-					<string key="superclassName">IMKInputController</string>
 					<object class="NSMutableDictionary" key="actions">
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>aboutDialogClicked:</string>
-							<string>characterPadClicked:</string>
+							<string>characterPaletteClicked:</string>
 							<string>configClicked:</string>
 							<string>dictionaryToolClicked:</string>
+							<string>handWritingClicked:</string>
 							<string>reconversionClicked:</string>
 							<string>registerWordClicked:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -313,9 +358,10 @@
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>aboutDialogClicked:</string>
-							<string>characterPadClicked:</string>
+							<string>characterPaletteClicked:</string>
 							<string>configClicked:</string>
 							<string>dictionaryToolClicked:</string>
+							<string>handWritingClicked:</string>
 							<string>reconversionClicked:</string>
 							<string>registerWordClicked:</string>
 						</object>
@@ -326,7 +372,7 @@
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">characterPadClicked:</string>
+								<string key="name">characterPaletteClicked:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -335,6 +381,10 @@
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">dictionaryToolClicked:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">handWritingClicked:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -351,38 +401,61 @@
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>imkServer_</string>
 							<string>menu_</string>
-							<string>server_</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>NSMenu</string>
 							<string>id</string>
+							<string>NSMenu</string>
 						</object>
 					</object>
 					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>imkServer_</string>
 							<string>menu_</string>
-							<string>server_</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<object class="IBToOneOutletInfo">
-								<string key="name">menu_</string>
-								<string key="candidateClassName">NSMenu</string>
+								<string key="name">imkServer_</string>
+								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBToOneOutletInfo">
-								<string key="name">server_</string>
-								<string key="candidateClassName">id</string>
+								<string key="name">menu_</string>
+								<string key="candidateClassName">NSMenu</string>
 							</object>
 						</object>
 					</object>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBDocumentRelativeSource</string>
-						<string key="minorKey">../GoogleJapaneseInputController.h</string>
+						<string key="majorKey">IBProjectSource</string>
+						<string key="minorKey">GoogleJapaneseInputController.h</string>
 					</object>
+				</object>
+				<object class="IBPartialClassDescription">
+					<string key="className">GoogleJapaneseInputController</string>
+					<string key="superclassName">IMKInputController</string>
+					<object class="IBClassDescriptionSource" key="sourceIdentifier">
+						<string key="majorKey">IBUserSource</string>
+						<string key="minorKey"/>
+					</object>
+				</object>
+			</object>
+			<object class="NSMutableArray" key="referencedPartialClassDescriptionsV3.2+">
+				<bool key="EncodedWithXMLCoder">YES</bool>
+				<object class="IBPartialClassDescription">
+					<string key="className">IMKInputController</string>
+					<string key="superclassName">NSObject</string>
+					<object class="IBClassDescriptionSource" key="sourceIdentifier" id="594481688">
+						<string key="majorKey">IBFrameworkSource</string>
+						<string key="minorKey">InputMethodKit.framework/Headers/IMKInputController.h</string>
+					</object>
+				</object>
+				<object class="IBPartialClassDescription">
+					<string key="className">NSObject</string>
+					<reference key="sourceIdentifier" ref="594481688"/>
 				</object>
 			</object>
 		</object>
@@ -392,12 +465,16 @@
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin.macosx</string>
 			<integer value="1050" key="NS.object.0"/>
 		</object>
+		<object class="NSMutableDictionary" key="IBDocument.PluginDeclaredDependencyDefaults">
+			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin.macosx</string>
+			<integer value="1050" key="NS.object.0"/>
+		</object>
 		<object class="NSMutableDictionary" key="IBDocument.PluginDeclaredDevelopmentDependencies">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin.InterfaceBuilder3</string>
 			<integer value="3000" key="NS.object.0"/>
 		</object>
 		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
-		<string key="IBDocument.LastKnownRelativeProjectPath">../GoogleJapaneseInput.xcodeproj</string>
+		<string key="IBDocument.LastKnownRelativeProjectPath">../mac.xcodeproj</string>
 		<int key="IBDocument.defaultPropertyAccessControl">3</int>
 		<object class="NSMutableDictionary" key="IBDocument.LastKnownImageSizes">
 			<bool key="EncodedWithXMLCoder">YES</bool>

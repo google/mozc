@@ -43,8 +43,6 @@
         '../../config/config.gyp:config_handler',
         '../../config/config.gyp:config_protocol',
         '../../ipc/ipc.gyp:ipc',
-        '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-        '../../languages/languages.gyp:global_language_spec',
         '../../session/session_base.gyp:session_protocol',
         'mozc_emacs_helper_lib',
       ],

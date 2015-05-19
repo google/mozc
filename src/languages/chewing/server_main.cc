@@ -27,17 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "languages/chewing/chewing_session_factory.h"
 #include "server/mozc_server.h"
 #include "session/session_factory_manager.h"
-#include "languages/chewing/chewing_session_factory.h"
-#include "languages/chewing/lang_dep_spec.h"
-#include "languages/global_language_spec.h"
 
 int main(int argc, char* argv[]) {
   mozc::server::InitGoogleAndMozcServer(argv[0], &argc, &argv, false);
 
-  mozc::chewing::LangDepSpecChewing manager;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&manager);
   mozc::chewing::ChewingSessionFactory session_factory;
   mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
 

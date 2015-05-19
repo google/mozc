@@ -118,6 +118,9 @@ commands::Output *ImeContext::mutable_output() {
 void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   DCHECK(dest);
 
+  dest->create_time_ = src.create_time_;
+  dest->last_command_time_ = src.last_command_time_;
+
   dest->mutable_composer()->CopyFrom(src.composer());
   dest->mutable_converter()->CopyFrom(src.converter());
 

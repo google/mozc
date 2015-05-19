@@ -34,6 +34,7 @@
 
 #include "base/base.h"
 #include "base/stl_util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -73,6 +74,18 @@ class MergerRewriter : public RewriterInterface {
   // This instance owns the rewriter.
   void AddRewriter(RewriterInterface *rewriter) {
     rewriters_.push_back(rewriter);
+  }
+
+  // Rewrites segments based on a request.
+  virtual bool RewriteForRequest(const ConversionRequest &request,
+                                 Segments *segments) const {
+    bool result = false;
+    for (size_t i = 0; i < rewriters_.size(); ++i) {
+      if (CheckCapablity(segments, rewriters_[i])) {
+        result |= rewriters_[i]->RewriteForRequest(request, segments);
+      }
+    }
+    return result;
   }
 
   // Rewrites request and/or result.

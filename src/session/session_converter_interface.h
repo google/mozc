@@ -193,8 +193,8 @@ class SessionConverterInterface {
   virtual void SegmentFocusLeftEdge() ABSTRACT;
 
   // Resize the focused segment.
-  virtual void SegmentWidthExpand() ABSTRACT;
-  virtual void SegmentWidthShrink() ABSTRACT;
+  virtual void SegmentWidthExpand(const composer::Composer &composer) ABSTRACT;
+  virtual void SegmentWidthShrink(const composer::Composer &composer) ABSTRACT;
 
   // Move the focus of candidates.
   virtual void CandidateNext(const composer::Composer &composer) ABSTRACT;

@@ -65,13 +65,17 @@ const size_t kMozcEnginePropertiesSize = arraysize(kMozcEngineProperties);
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
     commands::HIRAGANA;
 
+const MozcEngineSwitchProperty kMozcEngineSwitchProperties[] = {};
+const size_t kMozcEngineSwitchPropertiesSize =
+    ARRAYSIZE(kMozcEngineSwitchProperties);
+
 // TODO(nona) : Fixed for hangule input. This is copied from
 // chewing/unix/ibu/mozc_engine_property.cc.
 const MozcEngineToolProperty kMozcEngineToolProperties[] = {
   {
     "Tool.ConfigDialog",
     "config_dialog",
-    "Property",
+    "Properties",
     "properties.png",
   }, {
     "Tool.DictionaryTool",

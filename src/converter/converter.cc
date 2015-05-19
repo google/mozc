@@ -29,6 +29,7 @@
 
 #include "converter/converter.h"
 
+#include <algorithm>
 #include <climits>
 #include <string>
 #include <utility>
@@ -39,6 +40,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/connector_interface.h"
+#include "converter/conversion_request.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_allocator.h"
 #include "converter/segments.h"
@@ -53,8 +55,7 @@
 namespace mozc {
 namespace {
 
-size_t kErrorIndex = static_cast<size_t>(-1);
-
+const size_t kErrorIndex = static_cast<size_t>(-1);
 
 class UserDataManagerImpl : public UserDataManagerInterface {
  public:
@@ -162,18 +163,30 @@ bool ConverterImpl::SetupHistorySegmentsFromPrecedingText(
 
 bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
-  DCHECK(request.composer);
+  if (!request.has_composer()) {
+    LOG(ERROR) << "Request doesn't have composer";
+    return false;
+  }
+
   // Existing history segments are used prior to preceding text.
   if (segments->history_segments_size() == 0 &&
-      !request.preceding_text.empty()) {
-    if (!SetupHistorySegmentsFromPrecedingText(request.preceding_text,
+      !request.preceding_text().empty()) {
+    if (!SetupHistorySegmentsFromPrecedingText(request.preceding_text(),
                                                segments)) {
       LOG(WARNING) << "Failed to utilize preceding text: "
-                   << request.preceding_text;
+                   << request.preceding_text();
       segments->Clear();  // fall back to a normal conversion
     }
   }
-  return StartConversionWithComposer(segments, request.composer);
+  string conversion_key;
+  request.composer().GetQueryForConversion(&conversion_key);
+  SetKey(segments, conversion_key);
+  segments->set_request_type(Segments::CONVERSION);
+  if (!immutable_converter_->Convert(segments)) {
+    return false;
+  }
+  RewriterFactory::GetRewriter()->RewriteForRequest(request, segments);
+  return IsValidSegments(*segments);
 }
 
 bool ConverterImpl::StartConversion(Segments *segments,
@@ -185,15 +198,6 @@ bool ConverterImpl::StartConversion(Segments *segments,
   }
   RewriterFactory::GetRewriter()->Rewrite(segments);
   return IsValidSegments(*segments);
-}
-
-bool ConverterImpl::StartConversionWithComposer(
-    Segments *segments, const composer::Composer *composer) const {
-  DCHECK(composer);
-  string conversion_key;
-  composer->GetQueryForConversion(&conversion_key);
-  segments->set_composer(composer);
-  return StartConversion(segments, conversion_key);
 }
 
 bool ConverterImpl::StartReverseConversion(Segments *segments,
@@ -220,14 +224,14 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
   return true;
 }
 
-bool ConverterImpl::Predict(Segments *segments,
+// TODO(noriyukit): |key| can be a member of ConversionRequest.
+bool ConverterImpl::Predict(const ConversionRequest &request,
                             const string &key,
-                            const Segments::RequestType request_type) const {
+                            const Segments::RequestType request_type,
+                            Segments *segments) const {
   const Segments::RequestType original_request_type = segments->request_type();
   if ((original_request_type != Segments::PREDICTION &&
-       original_request_type != Segments::SUGGESTION &&
-       original_request_type != Segments::PARTIAL_PREDICTION &&
-       original_request_type != Segments::PARTIAL_SUGGESTION) ||
+       original_request_type != Segments::PARTIAL_PREDICTION) ||
       segments->conversion_segments_size() == 0 ||
       segments->conversion_segment(0).key() != key) {
     // - If the original request is not prediction relating one
@@ -238,101 +242,113 @@ bool ConverterImpl::Predict(Segments *segments,
     // - If the key of the segments differs from the input key,
     //   invoke SetKey because current segments should be completely reset.
     // - Otherwise keep current key and candidates.
+    //
+    // This SetKey omitting is for mobile predictor.
+    // On normal inputting, we are showing suggestion results. When users
+    // push expansion button, we will add prediction results just after the
+    // suggestion results. For this, we don't reset segments for prediction.
+    // However, we don't have to do so for suggestion. Here, we are deciding
+    // whether the input key is changed or not by using segment key. This is not
+    // perfect because for roman input, conversion key is not updated by
+    // imcomplete input, for example, conversion key is "あ" for the input "a",
+    // and will still be "あ" for the input "ak". For avoiding mis-reset of
+    // the results, we will reset always for suggestion request type.
     SetKey(segments, key);
   }
-  DCHECK(segments->conversion_segments_size() == 1);
-  DCHECK(segments->conversion_segment(0).key() == key);
+  DCHECK_EQ(1, segments->conversion_segments_size());
+  DCHECK_EQ(key, segments->conversion_segment(0).key());
 
   segments->set_request_type(request_type);
-  if (!PredictorFactory::GetPredictor()->Predict(segments)) {
+  if (!PredictorFactory::GetPredictor()->PredictForRequest(request, segments)) {
     return false;
   }
-  RewriterFactory::GetRewriter()->Rewrite(segments);
+  RewriterFactory::GetRewriter()->RewriteForRequest(request, segments);
   return IsValidSegments(*segments);
 }
 
 bool ConverterImpl::StartPredictionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
-  DCHECK(request.composer);
+  if (!request.has_composer()) {
+    LOG(ERROR) << "Composer is NULL";
+    return false;
+  }
+
   // Existing history segments are used prior to preceding text.
   if (segments->history_segments_size() == 0 &&
-      !request.preceding_text.empty()) {
-    if (!SetupHistorySegmentsFromPrecedingText(request.preceding_text,
+      !request.preceding_text().empty()) {
+    if (!SetupHistorySegmentsFromPrecedingText(request.preceding_text(),
                                                segments)) {
       LOG(WARNING) << "Failed to utilize preceding text: "
-                   << request.preceding_text;
+                   << request.preceding_text();
       segments->Clear();  // fall back to a normal prediction
     }
   }
-  return StartPredictionWithComposer(segments, request.composer);
+  string prediction_key;
+  request.composer().GetQueryForPrediction(&prediction_key);
+  return Predict(request, prediction_key, Segments::PREDICTION, segments);
 }
 
 bool ConverterImpl::StartPrediction(Segments *segments,
                                     const string &key) const {
-  return Predict(segments, key, Segments::PREDICTION);
-}
-
-bool ConverterImpl::StartPredictionWithComposer(
-    Segments *segments, const composer::Composer *composer) const {
-  DCHECK(composer);
-  string conversion_key;
-  composer->GetQueryForPrediction(&conversion_key);
-  segments->set_composer(composer);
-  return StartPrediction(segments, conversion_key);
+  ConversionRequest default_request;
+  return Predict(default_request, key, Segments::PREDICTION, segments);
 }
 
 bool ConverterImpl::StartSuggestion(Segments *segments,
                                     const string &key) const {
-  return Predict(segments, key, Segments::SUGGESTION);
+  ConversionRequest default_request;
+  return Predict(default_request, key, Segments::SUGGESTION, segments);
 }
 
-bool ConverterImpl::StartSuggestionWithComposer(
-    Segments *segments, const composer::Composer *composer) const {
-  DCHECK(composer);
-  string conversion_key;
-  composer->GetQueryForPrediction(&conversion_key);
-  segments->set_composer(composer);
-  return StartSuggestion(segments, conversion_key);
+bool ConverterImpl::StartSuggestionForRequest(const ConversionRequest &request,
+                                              Segments *segments) const {
+  DCHECK(request.has_composer());
+  string prediction_key;
+  request.composer().GetQueryForPrediction(&prediction_key);
+  return Predict(request, prediction_key, Segments::SUGGESTION, segments);
 }
 
 bool ConverterImpl::StartPartialSuggestion(Segments *segments,
                                            const string &key) const {
-  return Predict(segments, key, Segments::PARTIAL_SUGGESTION);
+  ConversionRequest default_request;
+  return Predict(default_request, key, Segments::PARTIAL_SUGGESTION, segments);
 }
 
-bool ConverterImpl::StartPartialSuggestionWithComposer(
-    Segments *segments, const composer::Composer *composer) const {
-  DCHECK(composer);
-  const size_t cursor = composer->GetCursor();
-  if (cursor == 0 || cursor == composer->GetLength()) {
-    return StartSuggestionWithComposer(segments, composer);
+bool ConverterImpl::StartPartialSuggestionForRequest(
+    const ConversionRequest &request, Segments *segments) const {
+  DCHECK(request.has_composer());
+  const size_t cursor = request.composer().GetCursor();
+  if (cursor == 0 || cursor == request.composer().GetLength()) {
+    return StartSuggestionForRequest(request, segments);
   }
 
   string conversion_key;
-  composer->GetQueryForConversion(&conversion_key);
+  request.composer().GetQueryForConversion(&conversion_key);
   conversion_key = Util::SubString(conversion_key, 0, cursor);
-  segments->set_composer(composer);
-  return StartPartialSuggestion(segments, conversion_key);
+  return Predict(request, conversion_key,
+                 Segments::PARTIAL_SUGGESTION, segments);
 }
 
 bool ConverterImpl::StartPartialPrediction(Segments *segments,
                                            const string &key) const {
-  return Predict(segments, key, Segments::PARTIAL_PREDICTION);
+  ConversionRequest default_request;
+  return Predict(default_request, key, Segments::PARTIAL_PREDICTION, segments);
 }
 
-bool ConverterImpl::StartPartialPredictionWithComposer(
-    Segments *segments, const composer::Composer *composer) const {
-  DCHECK(composer);
-  const size_t cursor = composer->GetCursor();
-  if (cursor == 0 || cursor == composer->GetLength()) {
-    return StartPredictionWithComposer(segments, composer);
+bool ConverterImpl::StartPartialPredictionForRequest(
+    const ConversionRequest &request, Segments *segments) const {
+  DCHECK(request.has_composer());
+  const size_t cursor = request.composer().GetCursor();
+  if (cursor == 0 || cursor == request.composer().GetLength()) {
+    return StartPredictionForRequest(request, segments);
   }
 
   string conversion_key;
-  composer->GetQueryForConversion(&conversion_key);
+  request.composer().GetQueryForConversion(&conversion_key);
   conversion_key = Util::SubString(conversion_key, 0, cursor);
-  segments->set_composer(composer);
-  return StartPartialPrediction(segments, conversion_key);
+
+  return Predict(request, conversion_key,
+                 Segments::PARTIAL_PREDICTION, segments);
 }
 
 bool ConverterImpl::FinishConversion(Segments *segments) const {
@@ -483,6 +499,7 @@ bool ConverterImpl::SubmitFirstSegment(Segments *segments,
 }
 
 bool ConverterImpl::ResizeSegment(Segments *segments,
+                                  const ConversionRequest &request,
                                   size_t segment_index,
                                   int offset_length) const {
   if (segments->request_type() != Segments::CONVERSION) {
@@ -590,12 +607,13 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     return false;
   }
 
-  RewriterFactory::GetRewriter()->Rewrite(segments);
+  RewriterFactory::GetRewriter()->RewriteForRequest(request, segments);
 
   return true;
 }
 
 bool ConverterImpl::ResizeSegment(Segments *segments,
+                                  const ConversionRequest &request,
                                   size_t start_segment_index,
                                   size_t segments_size,
                                   const uint8 *new_size_array,
@@ -652,83 +670,64 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     return false;
   }
 
-  RewriterFactory::GetRewriter()->Rewrite(segments);
+  RewriterFactory::GetRewriter()->RewriteForRequest(request, segments);
 
   return true;
 }
 
 void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
   DCHECK(candidate);
-  if (candidate->value.empty()) {
+  if (candidate->value.empty() || candidate->key.empty()) {
     return;
   }
 
-  if (candidate->lid == 0) {
-    candidate->lid = POSMatcher::GetUnknownId();
-    VLOG(1) << "Set LID: " << candidate->lid;
+  if (candidate->lid != 0 && candidate->rid != 0) {
+    return;
   }
 
-  if (candidate->rid == 0) {
-    const ConnectorInterface *connector =
-        ConnectorFactory::GetConnector();
-    const DictionaryInterface *dictionary =
-        SuffixDictionaryFactory::GetSuffixDictionary();
-
-    DCHECK(connector);
-    DCHECK(dictionary);
-
-    const string &value = candidate->value;
-
-    NodeAllocator allocator;
-    Node *node = dictionary->LookupPredictive("", 0, &allocator);
-    DCHECK(node);
-
-    const Node *best_node = NULL;
-    int best_cost = INT_MAX;
-
-    // Find a entry which is the suffix of |value|.
-    // Suffix dictionary supposes to have frequent suffix patterns,
-    // like particle, auxiliary verbs and functional verbs.
-    // Since hiragana-sequence which were not passed to the converter tend
-    // to be functional expressions, it is reasonable to use suffix
-    // dictionary to guess POS ids.
-    for (; node != NULL; node = node->bnext) {
-      if (!Util::EndsWith(value, node->value)) {
-        continue;
-      }
-
-      // Preserve the longest suffix match.
-      if (best_node == NULL ||
-          best_node->value.size() < node->value.size()) {
-        best_node = node;
-        best_cost = connector->GetTransitionCost(0, node->lid) +
-            node->wcost;
-        continue;
-      }
-
-      // If there are multiple nodes which have the
-      // same suffix length, select one who has the minimum
-      // language model cost.
-      if (best_node->value.size() == node->value.size()) {
-        const int cost = connector->GetTransitionCost(0, node->lid) +
-            node->wcost;
-        if (cost < best_cost) {
-          best_cost = cost;
-          best_node = node;
-        }
+  // Use general noun,  unknown word ("サ変") tend to produce
+  // "する" "して", which are not always acceptable for non-sahen words.
+  candidate->lid = POSMatcher::GetGeneralNounId();
+  candidate->rid = POSMatcher::GetGeneralNounId();
+  const size_t kExpandSizeStart = 5;
+  const size_t kExpandSizeDiff = 50;
+  const size_t kExpandSizeMax = 80;
+  // In almost all cases, user choses the top candidate.
+  // In order to reduce the latency, first, expand 5 candidates.
+  // If no valid candidates are found within 5 candidates, expand
+  // candidates step-by-step.
+  for (size_t size = kExpandSizeStart; size < kExpandSizeMax;
+       size += kExpandSizeDiff) {
+    Segments segments;
+    SetKey(&segments, candidate->key);
+    // use PREDICTION mode, as the size of segments after
+    // PREDICTION mode is always 1, thanks to real time conversion.
+    // However, PREDICTION mode produces "predictions", meaning
+    // that keys of result candidate are not always the same as
+    // query key. It would be nice to have PREDICTION_REALTIME_CONVERSION_ONLY.
+    segments.set_request_type(Segments::PREDICTION);
+    segments.set_max_prediction_candidates_size(size);
+    // In order to complete POSIds, call ImmutableConverter again.
+    if (!immutable_converter_->Convert(&segments)) {
+      LOG(ERROR) << "ImmutableConverter::Convert() failed";
+      return;
+    }
+    for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
+      const Segment::Candidate &ref_candidate =
+          segments.segment(0).candidate(i);
+      if (ref_candidate.value == candidate->value) {
+        candidate->lid = ref_candidate.lid;
+        candidate->rid = ref_candidate.rid;
+        candidate->cost = ref_candidate.cost;
+        candidate->wcost = ref_candidate.wcost;
+        candidate->structure_cost = ref_candidate.structure_cost;
+        VLOG(1) << "Set LID: " << candidate->lid;
+        VLOG(1) << "Set RID: " << candidate->rid;
+        return;
       }
     }
-
-    if (best_node != NULL) {
-      candidate->rid = best_node->rid;
-    } else {
-      // Cannot find suffix match. Use UnkownId just in case.
-      // TODO(team): we might want to call reverse conversion.
-      candidate->rid = POSMatcher::GetUnknownId();
-    }
-
-    VLOG(1) << "Set RID: " << candidate->rid << " " << value;
   }
+  LOG(WARNING) << "Cannot set lid/rid. use default value";
 }
 
 UserDataManagerInterface *ConverterImpl::GetUserDataManager() {

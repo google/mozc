@@ -48,6 +48,7 @@
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
         '../session/session_base.gyp:session_protocol',
         # storage.gyp:storage is depended by character_form_manager.
         # TODO(komatsu): delete this line.
@@ -168,7 +169,6 @@
         '../base/base.gyp:base',
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../transliteration/transliteration.gyp:transliteration',
-        'character_form_manager',
         'connector',
         'segmenter',
       ],

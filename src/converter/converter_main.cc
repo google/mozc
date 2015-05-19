@@ -27,13 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include <vector>
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <vector>
 #include "base/base.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "converter/conversion_request.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
@@ -125,8 +126,10 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     return converter.FreeSegmentValue(segments,
                                       atoi32(fields[1].c_str()));
   } else if (func == "resizesegment" || func == "resize") {
+    const mozc::ConversionRequest request;
     if (fields.size() == 3) {
       return converter.ResizeSegment(segments,
+                                     request,
                                      atoi32(fields[1].c_str()),
                                      atoi32(fields[2].c_str()));
     } else if (fields.size() > 3) {
@@ -135,6 +138,7 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
         new_arrays.push_back(static_cast<uint8>(atoi32(fields[i].c_str())));
       }
       return converter.ResizeSegment(segments,
+                                     request,
                                      atoi32(fields[1].c_str()),  // start
                                      atoi32(fields[2].c_str()),
                                      &new_arrays[0],
@@ -149,17 +153,15 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     mozc::composer::Composer composer;
     composer.InsertCharacter(fields[2]);
     mozc::ConversionRequest request(&composer);
-    request.preceding_text = fields[1];
+    request.set_preceding_text(fields[1]);
     converter.StartConversionForRequest(request, segments);
-    segments->set_composer(NULL);
   } else if (func == "predictwithprecedingtext" || func == "pwpt") {
     CHECK_FIELDS_LENGTH(3);
     mozc::composer::Composer composer;
     composer.InsertCharacter(fields[2]);
     mozc::ConversionRequest request(&composer);
-    request.preceding_text = fields[1];
+    request.set_preceding_text(fields[1]);
     converter.StartPredictionForRequest(request, segments);
-    segments->set_composer(NULL);
   } else {
     LOG(WARNING) << "Unknown command: " <<  func;
     return false;

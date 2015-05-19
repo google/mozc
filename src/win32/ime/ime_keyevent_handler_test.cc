@@ -39,8 +39,6 @@
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
 #include "testing/base/public/googletest.h"
@@ -121,6 +119,8 @@ class TestServerLauncher : public client::ServerLauncherInterface {
   }
 
   virtual void set_restricted(bool restricted) {}
+
+  virtual void set_suppress_error_dialog(bool suppress) {}
 
   virtual void set_server_program(const string &server_path) {}
 
@@ -242,8 +242,6 @@ class ImeKeyEventHandlerTest : public testing::Test {
   ImeKeyEventHandlerTest() {}
   virtual ~ImeKeyEventHandlerTest() {}
   virtual void SetUp() {
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
-        &language_dependency_spec_japanese_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);
     mozc::config::ConfigHandler::SetConfig(default_config_);
@@ -251,7 +249,6 @@ class ImeKeyEventHandlerTest : public testing::Test {
 
   virtual void TearDown() {
     mozc::config::ConfigHandler::SetConfig(default_config_);
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
 
   void UpdateConfigToUseKanaAsPreeditMethod() {
@@ -289,9 +286,6 @@ class ImeKeyEventHandlerTest : public testing::Test {
 
   mozc::config::Config default_config_;
  private:
-  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
-  // testing, and the actual instance does not have to be LangDepSpecJapanese.
-  mozc::japanese::LangDepSpecJapanese language_dependency_spec_japanese_;
   DISALLOW_COPY_AND_ASSIGN(ImeKeyEventHandlerTest);
 };
 

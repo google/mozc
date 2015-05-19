@@ -142,6 +142,9 @@ void Client::set_restricted(bool restricted) {
 void Client::set_server_program(const string &program_path) {
 }
 
+void Client::set_suppress_error_dialog(bool suppress) {
+}
+
 void Client::set_client_capability(const commands::Capability &capability) {
   client_capability_.CopyFrom(capability);
 }

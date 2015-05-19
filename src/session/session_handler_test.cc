@@ -45,10 +45,29 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
+#include "converter/connection_data_injected_environment.h"
+namespace {
+const ::testing::Environment *kConnectionDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::ConnectionDataInjectedEnvironment());
+}  // namespace
+#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
+
+#ifdef MOZC_USE_SEPARATE_DICTIONARY
+#include "dictionary/dictionary_data_injected_environment.h"
+namespace {
+const ::testing::Environment *kDictionaryDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::DictionaryDataInjectedEnvironment());
+}  // namespace
+#endif  // MOZC_USE_SEPARATE_DICTIONARY
+
 DECLARE_int32(max_session_size);
 DECLARE_int32(create_session_min_interval);
 DECLARE_int32(last_command_timeout);
 DECLARE_int32(last_create_session_timeout);
+
 
 namespace mozc {
 
@@ -57,6 +76,7 @@ using mozc::session::testing::CleanUp;
 using mozc::session::testing::IsGoodSession;
 
 using mozc::session::testing::JapaneseSessionHandlerTestBase;
+
 class SessionHandlerTest : public JapaneseSessionHandlerTestBase {
 };
 

@@ -29,7 +29,9 @@
 
 #ifdef OS_WINDOWS
 #include <windows.h>
-#endif  // OS_WINDOWS
+#elif defined(ENABLE_GTK_RENDERER)
+#include <gtk/gtk.h>
+#endif  // OS_WINDOWS, ENABLE_GTK_RENDERER
 
 #include "base/base.h"
 #include "base/run_level.h"
@@ -43,7 +45,19 @@
 #include "renderer/mac/mac_server.h"
 #include "renderer/mac/mac_server_send_command.h"
 #include "renderer/mac/CandidateController.h"
-#endif  // OS_WINDOWS, OS_MACOSX
+#elif defined(ENABLE_GTK_RENDERER)
+#include "renderer/renderer_client.h"
+#include "renderer/table_layout.h"
+#include "renderer/unix/cairo_factory.h"
+#include "renderer/unix/candidate_window.h"
+#include "renderer/unix/draw_tool.h"
+#include "renderer/unix/gtk_wrapper.h"
+#include "renderer/unix/infolist_window.h"
+#include "renderer/unix/text_renderer.h"
+#include "renderer/unix/unix_renderer.h"
+#include "renderer/unix/unix_server.h"
+#include "renderer/unix/window_manager.h"
+#endif  // OS_WINDOWS, OS_MACOSX, ENABLE_GTK_RENDERER
 
 DECLARE_bool(restricted);
 
@@ -57,7 +71,12 @@ int main(int argc, char *argv[]) {
 
 #ifdef OS_WINDOWS
   mozc::ScopedCOMInitializer com_initializer;
-#endif  // OS_WINDOWS
+#elif defined(ENABLE_GTK_RENDERER)
+  gtk_set_locale();
+  g_thread_init(NULL);
+  gdk_threads_init();
+  gtk_init(&argc, &argv);
+#endif  // OS_WINDOWS, ENABLE_GTK_RENDERER
 
   mozc::Util::DisableIME();
 
@@ -70,19 +89,42 @@ int main(int argc, char *argv[]) {
 
   int result_code = 0;
 
+  {
 #ifdef OS_WINDOWS
-  mozc::renderer::win32::Win32Server server;
-  server.SetRendererInterface(&server);
-  result_code = server.StartServer();
+    mozc::renderer::win32::Win32Server server;
+    server.SetRendererInterface(&server);
+    result_code = server.StartServer();
 #elif defined(OS_MACOSX)
-  mozc::renderer::mac::MacServer::Init();
-  mozc::renderer::mac::MacServer server;
-  mozc::renderer::mac::CandidateController renderer;
-  mozc::renderer::mac::MacServerSendCommand send_command;
-  server.SetRendererInterface(&renderer);
-  renderer.SetSendCommandInterface(&send_command);
-  result_code = server.StartServer();
-#endif  // OS_WINDOWS, OS_MACOSX
+    mozc::renderer::mac::MacServer::Init();
+    mozc::renderer::mac::MacServer server;
+    mozc::renderer::mac::CandidateController renderer;
+    mozc::renderer::mac::MacServerSendCommand send_command;
+    server.SetRendererInterface(&renderer);
+    renderer.SetSendCommandInterface(&send_command);
+    result_code = server.StartServer();
+#elif defined(ENABLE_GTK_RENDERER)
+    mozc::renderer::gtk::UnixRenderer renderer(
+        new mozc::renderer::gtk::WindowManager(
+            new mozc::renderer::gtk::CandidateWindow(
+                new mozc::renderer::TableLayout(),
+                new mozc::renderer::gtk::TextRenderer(),
+                new mozc::renderer::gtk::DrawTool(),
+                new mozc::renderer::gtk::GtkWrapper(),
+                new mozc::renderer::gtk::CairoFactory()),
+            new mozc::renderer::gtk::InfolistWindow(
+                new mozc::renderer::gtk::TextRenderer(),
+                new mozc::renderer::gtk::DrawTool(),
+                new mozc::renderer::gtk::GtkWrapper(),
+                new mozc::renderer::gtk::CairoFactory()),
+            new mozc::renderer::gtk::GtkWrapper()));
+    mozc::renderer::gtk::UnixServer server(
+        new mozc::renderer::gtk::GtkWrapper());
+    server.OpenPipe();
+    renderer.Initialize();
+    server.SetRendererInterface(&renderer);
+    result_code = server.StartServer();
+#endif  // OS_WINDOWS, OS_MACOSX, ENABLE_GTK_RENDERER
+  }
 
   return result_code;
 }

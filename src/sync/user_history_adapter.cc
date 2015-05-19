@@ -34,8 +34,6 @@
 #include <vector>
 
 #include "base/base.h"
-#include "base/singleton.h"
-#include "base/util.h"
 #include "storage/registry.h"
 #include "sync/user_history_sync_util.h"
 #include "sync/sync.pb.h"
@@ -47,17 +45,9 @@ namespace {
 const uint32 kBucketSize = 1024;
 const uint32 kMaxEntriesSize = 256;
 const char kLastDownloadTimestampKey[] = "sync.user_history_last_download_time";
-
-class RealClockTimer : public ClockTimerInterface {
- public:
-  uint64 GetCurrentTime() const {
-    return static_cast<uint64>(time(NULL));
-  }
-};
 }  // anonymous namespace
 
-UserHistoryAdapter::UserHistoryAdapter()
-    : clock_timer_(NULL), local_update_time_(0) {
+UserHistoryAdapter::UserHistoryAdapter() : local_update_time_(0) {
   // set default user dictionary
   SetUserHistoryFileName(UserHistoryPredictor::GetUserHistoryFileName());
 }
@@ -115,10 +105,7 @@ bool UserHistoryAdapter::SetDownloadedItems(
 bool UserHistoryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
   DCHECK(items);
 
-  local_update_time_ =
-      clock_timer_ != NULL ?
-      clock_timer_ ->GetCurrentTime() :
-      Singleton<RealClockTimer>::get()->GetCurrentTime();
+  local_update_time_ = Util::GetTime();
 
   if (!Util::FileExists(GetUserHistoryFileName())) {
     LOG(WARNING) << GetUserHistoryFileName() << " does not exist.";
@@ -244,12 +231,6 @@ uint64 UserHistoryAdapter::GetLastDownloadTimestamp() const {
     return static_cast<uint64>(0);
   }
   return last_download_time;
-}
-
-void UserHistoryAdapter::SetClockTimerInterface(
-    ClockTimerInterface *clock_timer) {
-  DCHECK(clock_timer);
-  clock_timer_ = clock_timer;
 }
 
 ime_sync::Component UserHistoryAdapter::component_id() const {

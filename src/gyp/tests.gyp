@@ -47,7 +47,7 @@
         # '../gui/gui.gyp:gui_all_test',
         '../ipc/ipc.gyp:ipc_all_test',
         '../net/net.gyp:net_all_test',
-        '../prediction/prediction.gyp:prediction_all_test',
+        '../prediction/prediction_test.gyp:prediction_all_test',
         '../renderer/renderer.gyp:renderer_all_test',
         '../rewriter/rewriter_test.gyp:rewriter_all_test',
         # Currently 'server_all_test' does not exist.
@@ -72,7 +72,7 @@
         }],
         ['OS=="linux"', {
           'dependencies': [
-            '../chrome/skk/skk_util_test.gyp:skk_util_test',
+            '../chrome/skk/skk_util_test.gyp:skk_util_all_test',
             '../unix/emacs/emacs.gyp:emacs_all_test',
           ],
         }],

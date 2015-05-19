@@ -37,12 +37,16 @@ namespace mozc {
 namespace handwriting {
 namespace {
 
-void MakeHandwritingRequest(const string &request, string *output) {
+bool MakeHandwritingRequest(const string &request, string *output) {
+  bool result = true;
   // The details of sending is internal only just in case.
+  return result;
 }
 
-void SendHandwritingFeedback(const string &request) {
+bool SendHandwritingFeedback(const string &request) {
+  bool result = true;
   // The details of sending is internal only just in case.
+  return result;
 }
 
 }  // namespace
@@ -74,25 +78,33 @@ string CloudHandwriting::CreateFeedback(
   return feedback_data;
 }
 
-void CloudHandwriting::Recognize(const Strokes &strokes,
-                                 vector<string> *candidates) const {
+HandwritingStatus CloudHandwriting::Recognize(
+    const Strokes &strokes, vector<string> *candidates) const {
   string output;
-  MakeHandwritingRequest(CreateRequest(strokes), &output);
-  ParseResponse(output, candidates);
+  if (!MakeHandwritingRequest(CreateRequest(strokes), &output)) {
+    return HANDWRITING_NETWORK_ERROR;
+  }
+  if (!ParseResponse(output, candidates)) {
+    return HANDWRITING_ERROR;
+  }
+  return HANDWRITING_NO_ERROR;
 }
 
-void CloudHandwriting::Commit(const Strokes &strokes, const string &result) {
+HandwritingStatus CloudHandwriting::Commit(const Strokes &strokes,
+                                           const string &result) {
   if (strokes.empty()) {
     DLOG(ERROR) << "Empty strokes: nothing should be committed";
-    return;
+    return HANDWRITING_ERROR;
   }
 
   if (result.empty()) {
     DLOG(ERROR) << "Result is empty";
-    return;
+    return HANDWRITING_ERROR;
   }
-
-  SendHandwritingFeedback(CreateFeedback(strokes, result));
+  if (!SendHandwritingFeedback(CreateFeedback(strokes, result))) {
+    return HANDWRITING_NETWORK_ERROR;
+  }
+  return HANDWRITING_NO_ERROR;
 }
 
 }  // namespace handwriting

@@ -31,7 +31,7 @@
 #define MOZC_RENDERER_MAC_INFOLIST_VIEW_H_
 
 #import <Cocoa/Cocoa.h>
-#include "session/commands.pb.h"
+#include "renderer/renderer_command.pb.h"
 
 namespace mozc {
 namespace renderer {

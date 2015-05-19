@@ -130,17 +130,20 @@ bool UserDictionaryStorage::LoadInternal() {
   return true;
 }
 
-bool UserDictionaryStorage::Load() {
+bool UserDictionaryStorage::LoadAndUpdateSyncDictionaries(
+    bool ensure_one_sync_dictionary_exists,
+    bool remove_empty_sync_dictionaries) {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   bool result = LoadInternal();
 
-  // Create sync dictionary when cloud sync feature is available.
-#ifdef ENABLE_CLOUD_SYNC
-  if (!EnsureSyncDictionaryExists()) {
+  if (ensure_one_sync_dictionary_exists && !EnsureSyncDictionaryExists()) {
     return false;
   }
-#endif  // ENABLE_CLOUD_SYNC
+
+  if (remove_empty_sync_dictionaries) {
+    RemoveUnusedSyncDictionariesIfExist();
+  }
 
   // Check dictionary id here. if id is 0, assign random ID.
   for (int i = 0; i < dictionaries_size(); ++i) {
@@ -151,6 +154,21 @@ bool UserDictionaryStorage::Load() {
   }
 
   return result;
+}
+
+bool UserDictionaryStorage::Load() {
+#ifdef ENABLE_CLOUD_SYNC
+  // Create sync dictionary when cloud sync feature is available.
+  return LoadAndUpdateSyncDictionaries(true, false);
+#else
+  // Do not automatically create sync dictionary.
+  // Remove empty sync dictionaries instead.
+  return LoadAndUpdateSyncDictionaries(false, true);
+#endif  // ENABLE_CLOUD_SYNC
+}
+
+bool UserDictionaryStorage::LoadWithoutChangingSyncDictionary() {
+  return LoadAndUpdateSyncDictionaries(false, false);
 }
 
 bool UserDictionaryStorage::Save() {
@@ -476,6 +494,28 @@ bool UserDictionaryStorage::EnsureSyncDictionaryExists() {
   dic->set_id(CreateID());
 
   return true;
+}
+
+void UserDictionaryStorage::RemoveUnusedSyncDictionariesIfExist() {
+  if (CountSyncableDictionaries(this) == 0) {
+    // Nothing to do.
+    return;
+  }
+
+  vector<UserDictionaryStorage::UserDictionary> copied_dictionaries;
+  for (size_t i = 0; i < dictionaries_size(); ++i) {
+    const UserDictionary &dict = dictionaries(i);
+    if (dict.syncable() && dict.entries_size() == 0) {
+      continue;
+    }
+    copied_dictionaries.push_back(dict);
+  }
+
+  clear_dictionaries();
+
+  for (size_t i = 0; i < copied_dictionaries.size(); ++i) {
+    add_dictionaries()->CopyFrom(copied_dictionaries[i]);
+  }
 }
 
 // static

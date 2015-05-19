@@ -79,9 +79,7 @@ ValueDictionary *ValueDictionary::CreateValueDictionaryFromImage(
   // has the priviledge to mlock.
   // Note that we don't munlock the space because it's always better to keep
   // the singleton system dictionary paged in as long as the process runs.
-#ifndef OS_WINDOWS
-  mlock(ptr, len);
-#endif  // OS_WINDOWS
+  Util::MaybeMLock(ptr, len);
   ValueDictionary *instance = new ValueDictionary();
   DCHECK(instance);
   if (!instance->dictionary_file_->OpenFromImage(ptr, len)) {

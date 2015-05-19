@@ -34,7 +34,7 @@
 #include "ipc/ipc.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_client.h"
-#include "session/commands.pb.h"
+#include "renderer/renderer_command.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -167,6 +167,9 @@ class TestRendererLauncher : public RendererLauncherInterface {
   virtual void SetPendingCommand(
       const commands::RendererCommand &command) {
     set_pending_command_called_ = true;
+  }
+
+  virtual void set_suppress_error_dialog(bool suppress) {
   }
 
   void Reset() {

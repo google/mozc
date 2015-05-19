@@ -132,6 +132,9 @@ const LinuxVirtualKeyEntry kLinuxVirtualKeyModifierNonRequiredTable[] = {
   { XK_Henkan, "Henkan" },
   { XK_Hiragana, "Hiragana" },
   { XK_Katakana, "Katakana" },
+  // We need special hack for Hiragana_Katakana key. For the detail, please see
+  // KeyBindingFilter::AddKey implementation.
+  { XK_Hiragana_Katakana, "Hiragana" },
   { XK_Eisu_toggle, "Eisu" },
   { XK_Zenkaku_Hankaku, "Hankaku/Zenkaku" },
 };
@@ -388,8 +391,33 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(
     }
   }
 #elif OS_LINUX
-  // Handle JP109's Muhenkan/Henkan/katakana-hiragana and Zenkaku/Hankaku
   const uint16 virtual_key = key_event.nativeVirtualKey();
+
+  // The XKB defines three types of logical key code: "xkb::Hiragana",
+  // "xkb::Katakana" and "xkb::Hiragana_Katakana".
+  // On most of Linux distributions, any key event against physical
+  // "ひらがな/カタカナ" key is likely to be mapped into
+  // "xkb::Hiragana_Katakana" regardless of the state of shift modifier. This
+  // means that you are likely to receive "Shift + xkb::Hiragana_Katakana"
+  // rather than "xkb::Katakana" when you physically press Shift +
+  // "ひらがな/カタカナ".
+  // On the other hand, Mozc protocol expects that Shift + "ひらがな/カタカナ"
+  // key event is always interpret as "{special_key: KeyEvent::KATAKANA}"
+  // without shift modifier. This is why we have the following special treatment
+  // against "shift + XK_Hiragana_Katakana". See b/6087341 for the background
+  // information.
+  // We use |key_event.modifiers()| instead of |shift_pressed_| because
+  // |shift_pressed_| is no longer valid in the following scenario.
+  //   1. Press "Shift"
+  //   2. Press "Hiragana/Katakana"  (shift_pressed_ == true)
+  //   3. Press "Hiragana/Katakana"  (shift_pressed_ == false)
+  const bool with_shift = (key_event.modifiers() & Qt::ShiftModifier) != 0;
+  if (with_shift && (virtual_key == XK_Hiragana_Katakana)) {
+    modifier_non_required_key_ = "Katakana";
+    return Encode(result);
+  }
+
+  // Handle JP109's Muhenkan/Henkan/katakana-hiragana and Zenkaku/Hankaku
   for (size_t i = 0; i < arraysize(kLinuxVirtualKeyModifierNonRequiredTable);
        ++i) {
     if (kLinuxVirtualKeyModifierNonRequiredTable[i].virtual_key ==

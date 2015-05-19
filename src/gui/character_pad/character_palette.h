@@ -38,6 +38,10 @@ class QTextCodec;
 class QClipboard;
 
 namespace mozc {
+namespace client {
+class ClientInterface;
+}
+
 namespace gui {
 
 class CharacterPalette :  public QMainWindow,
@@ -62,17 +66,22 @@ class CharacterPalette :  public QMainWindow,
   };
 
   CharacterPalette(QWidget *parent = NULL);
+  virtual ~CharacterPalette();
 
  public slots:
   void resizeEvent(QResizeEvent *event);
   void updateFontSize(int index);
   void updateFont(const QFont &font);
   void categorySelected(QTreeWidgetItem *item, int column);
+  void itemSelected(const QTableWidgetItem *item);
 
  protected:
 #ifdef OS_WINDOWS
   bool winEvent(MSG *message, long *result);
 #endif  // OS_WINDOWS
+
+  scoped_ptr<client::ClientInterface> client_;
+  bool usage_stats_enabled_;
 
  private:
   void updateTableSize();

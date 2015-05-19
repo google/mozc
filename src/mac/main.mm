@@ -38,8 +38,6 @@
 #include "base/const.h"
 #include "base/run_level.h"
 #include "client/client.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 
 int main(int argc, char *argv[]) {
   if (!mozc::RunLevel::IsValidClientRunLevel()) {
@@ -48,9 +46,6 @@ int main(int argc, char *argv[]) {
 
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   InitGoogleWithBreakPad(argv[0], &argc, &argv, false);
-
-  mozc::japanese::LangDepSpecJapanese spec;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 
   IMKServer *imkServer = [GoogleJapaneseInputServer getServer];
   if (!imkServer) {

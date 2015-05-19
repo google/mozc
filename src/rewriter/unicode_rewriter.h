@@ -34,6 +34,7 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
 class UnicodeRewriter: public RewriterInterface {
@@ -42,6 +43,8 @@ class UnicodeRewriter: public RewriterInterface {
   virtual ~UnicodeRewriter();
 
   virtual bool Rewrite(Segments *segments) const;
+  virtual bool RewriteForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
 };
 }  // mozc namespace
 

@@ -43,7 +43,7 @@
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "ipc/process_watch_dog.h"
-#include "session/commands.pb.h"
+#include "renderer/renderer_command.pb.h"
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.

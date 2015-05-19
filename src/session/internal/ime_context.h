@@ -93,6 +93,10 @@ class ImeContext {
   static void CopyContext(const ImeContext &src, ImeContext *dest);
 
  private:
+  // TODO(team): Actual use of |create_time_| is to keep the time when the
+  // session holding this instance is created and not the time when this
+  // instance is created. We may want to move out |create_time_| from ImeContext
+  // to Session, or somewhere more appropriate.
   uint64 create_time_;
   uint64 last_command_time_;
 
