@@ -32,24 +32,25 @@ package org.mozc.android.inputmethod.japanese.preference;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardParser;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardViewBackgroundSurface;
-import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.base.Optional;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
-import android.graphics.Bitmap.Config;
 import android.graphics.Shader.TileMode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -57,6 +58,7 @@ import android.graphics.drawable.Drawable;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -93,6 +95,7 @@ public class KeyboardPreviewDrawable extends Drawable {
    * cache will be released correctly.
    */
   static class CacheReferenceKey {
+
     @Override
     protected void finalize() throws Throwable {
       BitmapCache.getInstance().removeReference(this);
@@ -109,8 +112,9 @@ public class KeyboardPreviewDrawable extends Drawable {
    * for the details.
    */
   static class BitmapCache {
-    private static BitmapCache INSTANCE = new BitmapCache();
-    private static Object DUMMY_VALUE = new Object();
+
+    private static final BitmapCache INSTANCE = new BitmapCache();
+    private static final Object DUMMY_VALUE = new Object();
 
     private final Map<KeyboardLayout, Bitmap> map =
         new EnumMap<KeyboardLayout, Bitmap>(KeyboardLayout.class);
@@ -244,14 +248,15 @@ public class KeyboardPreviewDrawable extends Drawable {
 
     // Fill background.
     {
-      Drawable keyboardBackground =
+      Optional<Drawable> optionalKeyboardBackground =
           drawableCache.getDrawable(skinType.windowBackgroundResourceId);
-      if (keyboardBackground == null) {
+      if (!optionalKeyboardBackground.isPresent()) {
         // Default black drawing.
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setColor(0xFF000000);
         canvas.drawRect(0, 0, bitmap.getWidth(), bitmap.getHeight(), paint);
       } else {
+        Drawable keyboardBackground = optionalKeyboardBackground.get();
         if (keyboardBackground instanceof BitmapDrawable) {
           // If the background is bitmap resource, set repeat mode.
           BitmapDrawable.class.cast(keyboardBackground).setTileModeXY(
@@ -269,7 +274,7 @@ public class KeyboardPreviewDrawable extends Drawable {
       backgroundDrawableFactory.setSkinType(skinType);
       KeyboardViewBackgroundSurface backgroundSurface =
           new KeyboardViewBackgroundSurface(backgroundDrawableFactory, drawableCache);
-      backgroundSurface.requestUpdateKeyboard(keyboard, MetaState.UNMODIFIED);
+      backgroundSurface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
       backgroundSurface.requestUpdateSize(bitmap.getWidth(), bitmap.getHeight());
       backgroundSurface.update();
       backgroundSurface.draw(canvas);

@@ -29,6 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import org.mozc.android.inputmethod.japanese.accessibility.AccessibilityUtil;
+import org.mozc.android.inputmethod.japanese.accessibility.CandidateWindowAccessibilityDelegate;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
@@ -42,6 +44,7 @@ import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.SnapScroller;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.Context;
@@ -57,10 +60,13 @@ import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 
+import javax.annotation.Nullable;
+
 /**
  * A view for candidate words.
  *
  */
+// TODO(matsuzakit): Optional is introduced partially. Complete introduction.
 abstract class CandidateWordView extends View implements MemoryManageable {
 
   /**
@@ -119,6 +125,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
      * Points to an instance of currently pressed candidate word. Or {@code null} if any
      * candidates aren't pressed.
      */
+    @Nullable
     private CandidateWord pressedCandidate;
     private final RectF candidateRect = new RectF();
 
@@ -127,7 +134,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     }
 
     private void pressCandidate(Row row, Span span) {
-      pressedCandidate = span.getCandidateWord();
+      pressedCandidate = span.getCandidateWord().orNull();
       // TODO(yamaguchi):maybe better to make this rect larger by several pixels to avoid that
       // users fail to select a candidate by unconscious small movement of tap point.
       // (i.e. give hysterisis for noise reduction)
@@ -255,8 +262,8 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     /** @return the page size of the layout for the scroll orientation. */
     int getPageSize(CandidateLayouter layouter);
 
-    /** @return the content size for the scroll orientation of the layout. */
-    float getContentSize(CandidateLayout layout);
+    /** @return the content size for the scroll orientation of the layout. 0 for absent. */
+    float getContentSize(Optional<CandidateLayout> layout);
   }
 
   enum Orientation implements OrientationTrait {
@@ -287,11 +294,11 @@ abstract class CandidateWordView extends View implements MemoryManageable {
       }
       @Override
       public int getPageSize(CandidateLayouter layouter) {
-        return layouter.getPageWidth();
+        return Preconditions.checkNotNull(layouter).getPageWidth();
       }
       @Override
-      public float getContentSize(CandidateLayout layout) {
-        return layout.getContentWidth();
+      public float getContentSize(Optional<CandidateLayout> layout) {
+        return layout.isPresent() ? layout.get().getContentWidth() : 0;
       }
     },
     VERTICAL {
@@ -321,11 +328,11 @@ abstract class CandidateWordView extends View implements MemoryManageable {
       }
       @Override
       public int getPageSize(CandidateLayouter layouter) {
-        return layouter.getPageHeight();
+        return Preconditions.checkNotNull(layouter).getPageHeight();
       }
       @Override
-      public float getContentSize(CandidateLayout layout) {
-        return layout.getContentHeight();
+      public float getContentSize(Optional<CandidateLayout> layout) {
+        return layout.isPresent() ? layout.get().getContentHeight() : 0;
       }
     };
   }
@@ -368,6 +375,8 @@ abstract class CandidateWordView extends View implements MemoryManageable {
       new BackgroundDrawableFactory(getResources().getDisplayMetrics().density);
   private DrawableType backgroundDrawableType = null;
 
+  private final CandidateWindowAccessibilityDelegate accessibilityDelegate;
+
   CandidateWordView(Context context, OrientationTrait orientationFeature) {
     super(context);
     this.orientationTrait = orientationFeature;
@@ -383,6 +392,11 @@ abstract class CandidateWordView extends View implements MemoryManageable {
                     OrientationTrait orientationTrait) {
     super(context, attributeSet, defaultStyle);
     this.orientationTrait = orientationTrait;
+  }
+
+  {
+    accessibilityDelegate = new CandidateWindowAccessibilityDelegate(this);
+    ViewCompat.setAccessibilityDelegate(this, accessibilityDelegate);
   }
 
   void setCandidateSelectListener(CandidateSelectListener candidateSelectListener) {
@@ -497,9 +511,10 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   public final void computeScroll() {
     if (scroller.isScrolling()) {
       // If still scrolling, update the scroll position and invalidate the window.
-      Float velocity = scroller.computeScrollOffset();
+      Optional<Float> optionalVelocity = scroller.computeScrollOffset();
       orientationTrait.scrollTo(this, scroller.getScrollPosition());
-      if (velocity != null) {
+      if (optionalVelocity.isPresent()) {
+        Float velocity = optionalVelocity.get();
         // The end of scrolling. Check edge effect.
         if (velocity < 0) {
           topEdgeEffect.onAbsorb(velocity.intValue());
@@ -543,11 +558,10 @@ abstract class CandidateWordView extends View implements MemoryManageable {
       int focusedIndex = currentCandidateList.getFocusedIndex();
       row_loop: for (Row row : calculatedLayout.getRowList()) {
         for (Span span : row.getSpanList()) {
-          CandidateWord candidateWord = span.getCandidateWord();
-          if (candidateWord == null) {
+          if (!span.getCandidateWord().isPresent()) {
             continue;
           }
-          if (candidateWord.getIndex() == focusedIndex) {
+          if (span.getCandidateWord().get().getIndex() == focusedIndex) {
             scrollPosition = getUpdatedScrollPosition(row, span);
             break row_loop;
           }
@@ -567,7 +581,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   void update(CandidateList candidateList) {
     CandidateList previousCandidateList = currentCandidateList;
     currentCandidateList = candidateList;
-    candidateLayoutRenderer.setCandidateList(candidateList);
+    candidateLayoutRenderer.setCandidateList(Optional.fromNullable(candidateList));
     if (layouter != null && !equals(candidateList, previousCandidateList)) {
       updateCalculatedLayout();
     }
@@ -605,8 +619,13 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     if (currentCandidateList == null || layouter == null) {
       calculatedLayout = null;
     } else {
-      calculatedLayout = layouter.layout(currentCandidateList);
+      calculatedLayout = layouter.layout(currentCandidateList).orNull();
     }
+    Optional<CandidateLayout> candidateLayout = Optional.fromNullable(calculatedLayout);
+    accessibilityDelegate.setCandidateLayout(
+        candidateLayout,
+        (int) orientationTrait.getContentSize(candidateLayout),
+        orientationTrait.getViewLength(this));
   }
 
   private void updateScroller() {
@@ -616,7 +635,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     } else {
       int pageSize = orientationTrait.getPageSize(layouter);
       int contentSize =
-          (calculatedLayout == null) ? 0 : (int) orientationTrait.getContentSize(calculatedLayout);
+          (int) orientationTrait.getContentSize(Optional.fromNullable(calculatedLayout));
       if (pageSize != 0) {
         // Ceil to align pages.
         contentSize = (contentSize + pageSize - 1) / pageSize * pageSize;
@@ -651,7 +670,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
 
   private void resetBackground() {
     candidateLayoutRenderer.setSpanBackgroundDrawable(
-        backgroundDrawableFactory.getDrawable(backgroundDrawableType));
+        Optional.fromNullable(backgroundDrawableFactory.getDrawable(backgroundDrawableType)));
   }
 
   void setSkinType(SkinType skinType) {
@@ -662,7 +681,15 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   @Override
   public void trimMemory() {
     calculatedLayout = null;
+    accessibilityDelegate.setCandidateLayout(Optional.<CandidateLayout>absent(), 0, 0);
     currentCandidateList = null;
-    candidateLayoutRenderer.trimMemory();
+  }
+
+  @Override
+  protected boolean dispatchHoverEvent(MotionEvent event) {
+    if (AccessibilityUtil.isTouchExplorationEnabled(getContext())) {
+      return accessibilityDelegate.dispatchHoverEvent(event);
+    }
+    return false;
   }
 }

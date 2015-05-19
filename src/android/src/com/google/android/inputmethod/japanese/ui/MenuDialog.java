@@ -33,6 +33,10 @@ import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.mushroom.MushroomUtil;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -42,7 +46,9 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.IBinder;
-import android.widget.ArrayAdapter;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * UI component implementation for the Mozc's menu dialog.
@@ -67,6 +73,9 @@ public class MenuDialog {
     /** Invoked when "Launch Preference Activity" item is selected. */
     public void onLaunchPreferenceActivitySelected(Context context);
 
+    /** Invoked when "Voice input" item is selected. */
+    public void onLaunchVoiceInputActivitySelected(Context context);
+
     /** Invoked when "Launch Mushroom" item is selected. */
     public void onShowMushroomSelectionDialogSelected(Context context);
   }
@@ -74,46 +83,54 @@ public class MenuDialog {
   /**
    * Internal implementation of callback invocation dispatching.
    */
+  @VisibleForTesting
   static class MenuDialogListenerHandler implements OnClickListener, OnDismissListener {
     private final Context context;
-    private final MenuDialogListener listener;
+    /** Table to convert from a menu item index to a string resource id. */
+    private final int[] indexToIdTable;
+    private final Optional<MenuDialogListener> listener;
 
-    MenuDialogListenerHandler(Context context, MenuDialogListener listener) {
-      this.context = context;
-      this.listener = listener;
+    MenuDialogListenerHandler(
+        Context context, int[] indexToIdMap, Optional<MenuDialogListener> listener) {
+      this.context = Preconditions.checkNotNull(context);
+      this.indexToIdTable = Preconditions.checkNotNull(indexToIdMap);
+      this.listener = Preconditions.checkNotNull(listener);
     }
 
     // TODO(hidehiko): use DialogInterface.OnShowListener when we get rid of API level 7.
-    public void onShow(DialogInterface dialog) {
-      if (listener == null) {
+    public void onShow() {
+      if (!listener.isPresent()) {
         return;
       }
-      listener.onShow(context);
+      listener.get().onShow(context);
     }
 
     @Override
     public void onDismiss(DialogInterface dialog) {
-      if (listener == null) {
+      if (!listener.isPresent()) {
         return;
       }
-      listener.onDismiss(context);
+      listener.get().onDismiss(context);
     }
 
     @Override
     public void onClick(DialogInterface dialog, int which) {
-      if (listener == null) {
+      if (!listener.isPresent() || indexToIdTable.length <= which) {
         return;
       }
 
-      switch (which) {
-        case INPUT_METHOD_PICKER_INDEX:
-          listener.onShowInputMethodPickerSelected(context);
+      switch (indexToIdTable[which]) {
+        case R.string.menu_item_input_method:
+          listener.get().onShowInputMethodPickerSelected(context);
           break;
-        case PREFERENCE_INDEX:
-          listener.onLaunchPreferenceActivitySelected(context);
+        case R.string.menu_item_preferences:
+          listener.get().onLaunchPreferenceActivitySelected(context);
           break;
-        case MUSHROOM_INDEX:
-          listener.onShowMushroomSelectionDialogSelected(context);
+        case R.string.menu_item_voice_input:
+          listener.get().onLaunchVoiceInputActivitySelected(context);
+          break;
+        case R.string.menu_item_mushroom:
+          listener.get().onShowMushroomSelectionDialogSelected(context);
           break;
         default:
           MozcLog.e("Unknown menu index: " + which);
@@ -121,65 +138,41 @@ public class MenuDialog {
     }
   }
 
-  /**
-   * Adapter to handle enabling/disabling mushroom launching item.
-   */
-  static class MenuDialogAdapter extends ArrayAdapter<String> {
-    MenuDialogAdapter(Context context, String[] menuDialogItems) {
-      super(context, android.R.layout.select_dialog_item, android.R.id.text1, menuDialogItems);
-    }
-
-    @Override
-    public boolean areAllItemsEnabled() {
-      return false;
-    }
-
-    @Override
-    public boolean isEnabled(int position) {
-      if (position != MUSHROOM_INDEX) {
-        return true;
-      }
-
-      // "Mushroom" item is enabled only when Mushroom-aware applications are available.
-      PackageManager packageManager = getContext().getPackageManager();
-      return !MushroomUtil.getMushroomApplicationList(packageManager).isEmpty();
-    }
-  }
-
-  static final int INPUT_METHOD_PICKER_INDEX = 0;
-  static final int PREFERENCE_INDEX = 1;
-  static final int MUSHROOM_INDEX = 2;
-
-  private final MenuDialogListenerHandler listenerHandler;
   private final AlertDialog dialog;
+  private final MenuDialogListenerHandler listenerHandler;
 
-  public MenuDialog(Context context, MenuDialogListener listener) {
-    this.listenerHandler = new MenuDialogListenerHandler(context, listener);
-    this.dialog = createDialog(context, listenerHandler);
-  }
+  public MenuDialog(
+      Context context, Optional<MenuDialogListener> listener, boolean isVoiceInputEnabled) {
+    Preconditions.checkNotNull(context);
+    Preconditions.checkNotNull(listener);
 
-  private static AlertDialog createDialog(
-      Context context, MenuDialogListenerHandler listenerHandler) {
-    // R.array.menu_dialog_items's resources needs to be formatted.
     Resources resources = context.getResources();
-    String[] menuDialogItems = resources.getStringArray(R.array.menu_dialog_items);
     String appName = resources.getString(R.string.app_name);
-    for (int i = 0; i < menuDialogItems.length; ++i) {
-      menuDialogItems[i] = String.format(menuDialogItems[i], appName);
+
+    // R.string.menu_item_* resources needs to be formatted.
+    List<Integer> menuItemIds = getEnabledMenuIds(context, isVoiceInputEnabled);
+    int menuNum = menuItemIds.size();
+    String[] menuTextList = new String[menuNum];
+    int[] indexToIdTable = new int[menuNum];
+    for (int i = 0; i < menuNum; ++i) {
+      int id = menuItemIds.get(i);
+      menuTextList[i] = resources.getString(id, appName);
+      indexToIdTable[i] = id;
     }
 
-    AlertDialog dialog = new AlertDialog.Builder(context)
+    listenerHandler = new MenuDialogListenerHandler(
+        context, indexToIdTable, listener);
+    dialog = new AlertDialog.Builder(context)
         .setTitle(R.string.menu_dialog_title)
-        .setAdapter(new MenuDialogAdapter(context, menuDialogItems), listenerHandler)
+        .setItems(menuTextList, listenerHandler)
         .create();
     dialog.setOnDismissListener(listenerHandler);
-    return dialog;
   }
 
   public void show() {
     // Note that unfortunately, we don't have a callback which is invoked when the dialog is
     // shown on API level 7. So, instead, we manually invoke the method here.
-    listenerHandler.onShow(dialog);
+    listenerHandler.onShow();
     dialog.show();
   }
 
@@ -188,10 +181,24 @@ public class MenuDialog {
   }
 
   public void setWindowToken(IBinder windowToken) {
-    if (windowToken != null) {
-      MozcUtil.setWindowToken(windowToken, dialog);
-    } else {
-      MozcLog.w("Unknown window token.");
+    MozcUtil.setWindowToken(Preconditions.checkNotNull(windowToken), dialog);
+  }
+
+  @VisibleForTesting
+  static List<Integer> getEnabledMenuIds(Context context, boolean isVoiceInputEnabled) {
+    // "Mushroom" item is enabled only when Mushroom-aware applications are available.
+    PackageManager packageManager = Preconditions.checkNotNull(context).getPackageManager();
+    boolean isMushroomEnabled = !MushroomUtil.getMushroomApplicationList(packageManager).isEmpty();
+
+    List<Integer> menuItemIds = Lists.newArrayListWithCapacity(4);
+    menuItemIds.add(R.string.menu_item_input_method);
+    menuItemIds.add(R.string.menu_item_preferences);
+    if (isVoiceInputEnabled) {
+      menuItemIds.add(R.string.menu_item_voice_input);
     }
+    if (isMushroomEnabled) {
+      menuItemIds.add(R.string.menu_item_mushroom);
+    }
+    return Collections.unmodifiableList(menuItemIds);
   }
 }

@@ -88,6 +88,7 @@
         '../config/config.gyp:config_protocol',
         '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:user_dictionary',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:generic_storage_manager',
         'session_base.gyp:session_protocol',
       ],

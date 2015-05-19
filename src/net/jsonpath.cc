@@ -29,12 +29,13 @@
 
 #include "net/jsonpath.h"
 
+#include <cctype>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -48,12 +49,12 @@ struct JsonPathNode {
     ARRAY_INDEX,
     SLICE_INDEX
   };
-  Type   type;
+  Type type;
   string object_index;
-  int    array_index;
-  int    slice_start;
-  int    slice_end;
-  int    slice_step;
+  int array_index;
+  int slice_start;
+  int slice_end;
+  int slice_step;
 
   static const int kSliceUndef = kint32max;
 
@@ -403,5 +404,5 @@ bool JsonPath::Parse(const Json::Value &root,
   CollectNodesFromJson(root, jsonpathexp, 0, output);
   return true;
 }
-}   // net
-}   // mozc
+}   // namespace net
+}   // namespace mozc

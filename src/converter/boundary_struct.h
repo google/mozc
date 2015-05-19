@@ -33,7 +33,7 @@
 #ifndef MOZC_CONVERTER_BOUNDARY_STRUCT_H_
 #define MOZC_CONVERTER_BOUNDARY_STRUCT_H_
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 struct BoundaryData {

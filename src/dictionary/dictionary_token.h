@@ -37,6 +37,8 @@
 namespace mozc {
 
 struct Token {
+  typedef uint8 AttributesBitfield;
+
   enum Attribute {
     NONE = 0,
     SPELLING_CORRECTION = 1,
@@ -58,7 +60,7 @@ struct Token {
   int    cost;
   int    lid;
   int    rid;
-  uint8 attributes;  // Bit field of Attributes.
+  AttributesBitfield attributes;
 };
 
 }  // namespace mozc

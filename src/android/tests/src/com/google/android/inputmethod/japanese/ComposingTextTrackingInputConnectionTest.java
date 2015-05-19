@@ -30,7 +30,6 @@
 package org.mozc.android.inputmethod.japanese;
 
 import static android.test.MoreAsserts.assertAssignableFrom;
-
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.same;
@@ -268,7 +267,7 @@ public class ComposingTextTrackingInputConnectionTest extends InstrumentationTes
   }
 
   @ApiLevel(9)
-  public void testSetComposingRegion(int start, int end) {
+  public void testSetComposingRegion() {
     expect(inputConnectionMock.setComposingRegion(10, 20)).andReturn(true);
     replayAll();
 

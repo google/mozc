@@ -3301,7 +3301,7 @@ class MockTypingModel : public TypingModel {
  public:
   MockTypingModel() : TypingModel(NULL, 0, NULL, 0, NULL) {}
   virtual ~MockTypingModel() {}
-  virtual int GetCost(const StringPiece key) const {
+  virtual int GetCost(StringPiece key) const {
     return 10;
   }
 };

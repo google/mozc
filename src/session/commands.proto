@@ -139,7 +139,11 @@ message KeyEvent {
     UNDEFINED_KEY = 69;
     COMMA = 70;  // Numpad [,]
     CLEAR = 71;  // Numpad [5] without NUMLOCK
-    NUM_SPECIALKEYS = 72;
+    VIRTUAL_LEFT = 72;  // Left key on virtual (software) keyboard
+    VIRTUAL_RIGHT = 73;  // Right key on virtual (software) keyboard
+    VIRTUAL_ENTER = 74;  // Enter key on virtual (software) keyboard
+
+    NUM_SPECIALKEYS = 75;
   };
 
   // CTRL, ALT and SHIFT cover both LEFT and RIGHT keys.  If the
@@ -462,8 +466,11 @@ message SessionCommand {
     HANDWRITING_COMMIT_EVENT = 4;
     CHARACTER_PALETTE_OPEN_EVENT = 5;
     CHARACTER_PALETTE_COMMIT_EVENT = 6;
+    SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE = 7;
+    SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT = 8;
   }
   optional UsageStatsEvent usage_stats_event = 7;
+  optional int32 usage_stats_event_int_value = 9;
 
   // Specify the current caret location, this is used for suggest window
   // position calculation. Used with SEND_CARET_LOCATION.

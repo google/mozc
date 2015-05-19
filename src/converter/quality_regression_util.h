@@ -27,8 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
+#define MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
+
 #include <string>
-#include "base/base.h"
+#include <vector>
+
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 class Segments;
@@ -81,6 +87,11 @@ class QualityRegressionUtil {
   ConverterInterface *converter_;
   scoped_ptr<commands::Request> request_;
   scoped_ptr<Segments> segments_;
+
+  DISALLOW_COPY_AND_ASSIGN(QualityRegressionUtil);
 };
-}  // quality_regression
-}  // mozc
+
+}  // namespace quality_regression
+}  // namespace mozc
+
+#endif  // MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_

@@ -39,8 +39,8 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
 import org.mozc.android.inputmethod.japanese.testing.MemoryLogger;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.testing.mocking.MozcMockSupport;
+import com.google.common.base.Optional;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -55,7 +55,6 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -77,14 +76,7 @@ public class MozcStressTest extends InstrumentationTestCase {
         @Override
         public boolean isInputViewShown() { return true; }
       };
-      try {
-        VisibilityProxy.invokeByName(
-            service, "attachBaseContext", activity.getApplicationContext());
-      } catch (InvocationTargetException e) {
-        fail(e.getCause().toString());
-      } catch (Exception e) {
-        fail(e.toString());
-      }
+      service.attachBaseContext(activity.getApplicationContext());
       service.onCreate();
       inputView = service.onCreateInputView();
       activity.setContentView(inputView);
@@ -132,6 +124,7 @@ public class MozcStressTest extends InstrumentationTestCase {
     view.onTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, x, y, 0));
   }
 
+  @SuppressWarnings("deprecation")
   private Rect getViewRect() {
     Context context = activity.getApplicationContext();
     WindowManager windowmanager = WindowManager.class.cast(
@@ -191,10 +184,10 @@ public class MozcStressTest extends InstrumentationTestCase {
     KeyboardSpecification specification = viewManager.getJapaneseKeyboardSpecification();
     Request request = MozcUtil.getRequestForKeyboard(
         specification.getKeyboardSpecificationName(),
-        specification.getSpecialRomanjiTable(),
-        specification.getSpaceOnAlphanumeric(),
-        specification.isKanaModifierInsensitiveConversion(),
-        specification.getCrossingEdgeBehavior(),
+        Optional.of(specification.getSpecialRomanjiTable()),
+        Optional.of(specification.getSpaceOnAlphanumeric()),
+        Optional.of(specification.isKanaModifierInsensitiveConversion()),
+        Optional.of(specification.getCrossingEdgeBehavior()),
         getInstrumentation().getTargetContext().getResources().getConfiguration());
     List<TouchEvent> touchEventList = Collections.emptyList();
 

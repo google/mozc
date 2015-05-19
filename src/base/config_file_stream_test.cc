@@ -45,7 +45,7 @@ namespace {
 // Returns all data of the filename.
 string GetFileData(const string &filename) {
   InputFileStream ifs(filename.c_str(), ios::binary);
-  char c;
+  char c = '\0';
   string data;
   while (!ifs.get(c).fail()) {
     data.append(1, c);
@@ -92,7 +92,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
 
   {
     scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
-    ASSERT_TRUE(ifs.get());
+    ASSERT_NE(nullptr, ifs.get());
     scoped_ptr<char[]> buf(new char[kData.size() + 1]);
     ifs->read(buf.get(), kData.size());
     buf.get()[kData.size()] = '\0';
@@ -104,7 +104,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
 
   {
     scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
-    ASSERT_TRUE(ifs.get());
+    ASSERT_NE(nullptr, ifs.get());
     EXPECT_EOF(ifs.get());
   }
 }
@@ -155,7 +155,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   {
     scoped_ptr<istream> ifs(ConfigFileStream::OpenReadBinary(
         "user://" + string(kTestFileName)));
-    ASSERT_TRUE(ifs.get());
+    ASSERT_NE(nullptr, ifs.get());
     scoped_ptr<char[]> buf(new char[kBinaryDataSize]);
     ifs->read(buf.get(), kBinaryDataSize);
     // Check if all the data are loaded as binary mode.
@@ -201,7 +201,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   {
     scoped_ptr<istream> ifs(ConfigFileStream::OpenReadText(
         "user://" + string(kTestFileName)));
-    ASSERT_TRUE(ifs.get());
+    ASSERT_NE(nullptr, ifs.get());
     string line;
     int line_number = 0;  // note that this is 1-origin.
     while (!getline(*ifs.get(), line).fail()) {

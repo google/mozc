@@ -33,6 +33,13 @@ import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchPosition;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+
+import java.util.Set;
+
+import javax.annotation.Nullable;
 
 /**
  * This class represents user's one action, e.g., the sequence of:
@@ -42,6 +49,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchP
  * E.g. for user's two finger strokes, two instances will be instantiated.
  *
  */
+// TODO(matsuzakit): Get rid of @Nullable.
 public class KeyEventContext {
   final Key key;
   final int pointerId;
@@ -49,7 +57,7 @@ public class KeyEventContext {
   private final float pressedY;
   private final float flickThresholdSquared;
   private final boolean isFlickableKey;
-  private final MetaState metaState;
+  private final Optional<KeyState> keyState;
   Flick.Direction flickDirection = Flick.Direction.CENTER;
 
   // TODO(hidehiko): Move logging code to an upper layer, e.g., MozcService or ViewManager etc.
@@ -66,14 +74,17 @@ public class KeyEventContext {
 
   public KeyEventContext(Key key, int pointerId, float pressedX, float pressedY,
                          int keyboardWidth, int keyboardHeight,
-                         float flickThresholdSquared, MetaState metaState) {
+                         float flickThresholdSquared, Set<MetaState> metaState) {
+    Preconditions.checkNotNull(key);
+    Preconditions.checkNotNull(metaState);
+
     this.key = key;
     this.pressedX = pressedX;
     this.pressedY = pressedY;
     this.flickThresholdSquared = flickThresholdSquared;
     this.isFlickableKey = isFlickable(key, metaState);
+    this.keyState = key.getKeyState(metaState);
     this.pointerId = pointerId;
-    this.metaState = metaState;
     this.keyboardWidth = keyboardWidth;
     this.keyboardHeight = keyboardHeight;
   }
@@ -95,13 +106,17 @@ public class KeyEventContext {
 
   /**
    * Returns true iff the key is flickable. Otherwise returns false.
-   * This is package private for testing purpose.
    */
-  static boolean isFlickable(Key key, MetaState metaState) {
-    KeyState keyState = key.getKeyState(metaState);
-    if (keyState == null) {
+  @VisibleForTesting
+  static boolean isFlickable(Key key, Set<MetaState> metaState) {
+    Preconditions.checkNotNull(key);
+    Preconditions.checkNotNull(metaState);
+
+    Optional<KeyState> optionalKeyState = key.getKeyState(metaState);
+    if (!optionalKeyState.isPresent()) {
       return false;
     }
+    KeyState keyState = optionalKeyState.get();
     return keyState.getFlick(Flick.Direction.LEFT) != null ||
            keyState.getFlick(Flick.Direction.UP) != null ||
            keyState.getFlick(Flick.Direction.RIGHT) != null ||
@@ -111,29 +126,39 @@ public class KeyEventContext {
   /**
    * Returns the key entity corresponding to {@code metaState} and {@code direction}.
    */
-  public static KeyEntity getKeyEntity(Key key, MetaState metaState, Flick.Direction direction) {
-    if (key == null || metaState == null || direction == null) {
+  @Nullable
+  public static KeyEntity getKeyEntity(Key key, Set<MetaState> metaState,
+                                       @Nullable Flick.Direction direction) {
+    Preconditions.checkNotNull(key);
+    Preconditions.checkNotNull(metaState);
+
+    if (key.isSpacer()) {
       return null;
     }
-    KeyState keyState = key.getKeyState(metaState);
-    if (keyState == null && metaState != MetaState.UNMODIFIED) {
-      // Use default keyState as a fall back.
-      keyState = key.getKeyState(MetaState.UNMODIFIED);
-    }
-    if (keyState == null) {
-      return null;
+    // Key is not spacer for at least one KeyState is available.
+    return getKeyEntityInternal(key.getKeyState(metaState).get(), direction).orNull();
+  }
+
+  private Optional<KeyEntity> getKeyEntity(Flick.Direction direction) {
+    return keyState.isPresent()
+        ? getKeyEntityInternal(keyState.get(), direction)
+        : Optional.<KeyEntity>absent();
+  }
+
+  private static Optional<KeyEntity> getKeyEntityInternal(KeyState keyState,
+                                                          @Nullable Flick.Direction direction) {
+    Preconditions.checkNotNull(keyState);
+
+    if (direction == null) {
+      return Optional.absent();
     }
 
     Flick flick = keyState.getFlick(direction);
-    if (flick == null) {
-      return null;
-    }
-
-    return flick.getKeyEntity();
+    return flick == null ? Optional.<KeyEntity>absent() : Optional.of(flick.getKeyEntity());
   }
 
   /**
-   * Returns the key code to be sent via {@link KeyboardActionListener#onKey(int, List)}.
+   * Returns the key code to be sent via {@link KeyboardActionListener#onKey(int, java.util.List)}.
    */
   public int getKeyCode() {
     if (longPressSent) {
@@ -141,22 +166,19 @@ public class KeyEventContext {
       return KeyEntity.INVALID_KEY_CODE;
     }
 
-    KeyEntity keyEntity = getKeyEntity(key, metaState, flickDirection);
-    if (keyEntity == null) {
-      return KeyEntity.INVALID_KEY_CODE;
-    }
-    return keyEntity.getKeyCode();
+    Optional<KeyEntity> keyEntity = getKeyEntity(flickDirection);
+    return keyEntity.isPresent()
+        ? keyEntity.get().getKeyCode()
+        : KeyEntity.INVALID_KEY_CODE;
   }
 
-  MetaState getNextMetaState() {
-    if (!key.isModifier()) {
-      return null;
+  Set<MetaState> getNextMetaStates(Set<MetaState> originalMetaStates) {
+    if (!key.isModifier() || key.isSpacer()) {
+      // Non-modifier key shouldn't change meta state.
+      return originalMetaStates;
     }
-    KeyState keyState = key.getKeyState(metaState);
-    if (keyState == null) {
-      return null;
-    }
-    return keyState.getNextMetaState();
+    Set<MetaState> result = keyState.get().getNextMetaStates(originalMetaStates);
+    return result;
   }
 
   /**
@@ -169,11 +191,10 @@ public class KeyEventContext {
     }
 
     // Note that we always use CENTER flick direction for long press key events.
-    KeyEntity keyEntity = getKeyEntity(key, metaState, Flick.Direction.CENTER);
-    if (keyEntity == null) {
-      return KeyEntity.INVALID_KEY_CODE;
-    }
-    return keyEntity.getLongPressKeyCode();
+    Optional<KeyEntity> keyEntity = getKeyEntity(Flick.Direction.CENTER);
+    return keyEntity.isPresent()
+        ? keyEntity.get().getLongPressKeyCode()
+        : KeyEntity.INVALID_KEY_CODE;
   }
 
   /**
@@ -181,11 +202,10 @@ public class KeyEventContext {
    * {@link KeyboardActionListener#onRelease(int)}.
    */
   public int getPressedKeyCode() {
-    KeyEntity keyEntity = getKeyEntity(key, metaState, Flick.Direction.CENTER);
-    if (keyEntity == null) {
-      return KeyEntity.INVALID_KEY_CODE;
-    }
-    return keyEntity.getKeyCode();
+    Optional<KeyEntity> keyEntity = getKeyEntity(Flick.Direction.CENTER);
+    return keyEntity.isPresent()
+        ? keyEntity.get().getKeyCode()
+        : KeyEntity.INVALID_KEY_CODE;
   }
 
   /**
@@ -198,16 +218,14 @@ public class KeyEventContext {
   /**
    * Returns the pop up data for the current state.
    */
+  @Nullable
   PopUp getCurrentPopUp() {
     if (longPressSent) {
       return null;
     }
 
-    KeyEntity keyEntity = getKeyEntity(key, metaState, flickDirection);
-    if (keyEntity == null) {
-      return null;
-    }
-    return keyEntity.getPopUp();
+    Optional<KeyEntity> keyEntity = getKeyEntity(flickDirection);
+    return keyEntity.isPresent() ? keyEntity.get().getPopUp() : null;
   }
 
   /**
@@ -245,14 +263,15 @@ public class KeyEventContext {
   /**
    * @return {@code TouchEvent} instance which includes the stroke related to this context.
    */
+  @Nullable
   public TouchEvent getTouchEvent() {
-    KeyEntity keyEntity = getKeyEntity(key, metaState, flickDirection);
-    if (keyEntity == null) {
+    Optional<KeyEntity> keyEntity = getKeyEntity(flickDirection);
+    if (!keyEntity.isPresent()) {
       return null;
     }
 
     TouchEvent.Builder builder = TouchEvent.newBuilder()
-        .setSourceId(keyEntity.getSourceId());
+        .setSourceId(keyEntity.get().getSourceId());
     builder.addStroke(createTouchPosition(
         TouchAction.TOUCH_DOWN, pressedX, pressedY, keyboardWidth, keyboardHeight, 0));
     if (lastAction != null) {

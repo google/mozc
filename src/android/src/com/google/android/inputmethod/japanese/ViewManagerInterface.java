@@ -30,7 +30,9 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
+import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
 import org.mozc.android.inputmethod.japanese.model.JapaneseSoftwareKeyboardModel;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
@@ -157,6 +159,8 @@ public interface ViewManagerInterface extends MemoryManageable {
    */
   public void setNarrowMode(boolean isNarrowMode);
 
+  public void maybeTransitToNarrowMode(Command command, KeyEventInterface keyEvent);
+
   public boolean isNarrowMode();
 
   public void setPopupEnabled(boolean popupEnabled);
@@ -202,4 +206,10 @@ public interface ViewManagerInterface extends MemoryManageable {
 
   @VisibleForTesting
   public int getKeyboardHeightRatio();
+
+  /**
+   * Used for testing to inject key events.
+   */
+  @VisibleForTesting
+  public KeyboardActionListener getKeyboardActionListener();
 }

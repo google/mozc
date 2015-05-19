@@ -51,12 +51,10 @@
 
 namespace {
 
-const char kFileDelimiterForUnix = '/';
-const char kFileDelimiterForWindows = '\\';
 #ifdef OS_WIN
-const char kFileDelimiter = kFileDelimiterForWindows;
+const char kFileDelimiter = '\\';
 #else
-const char kFileDelimiter = kFileDelimiterForUnix;
+const char kFileDelimiter = '/';
 #endif  // OS_WIN
 
 }  // namespace
@@ -460,6 +458,8 @@ string FileUtil::Basename(const string &filename) {
 
 string FileUtil::NormalizeDirectorySeparator(const string &path) {
 #ifdef OS_WIN
+  const char kFileDelimiterForUnix = '/';
+  const char kFileDelimiterForWindows = '\\';
   string normalized;
   Util::StringReplace(path, string(1, kFileDelimiterForUnix),
                       string(1, kFileDelimiterForWindows), true, &normalized);

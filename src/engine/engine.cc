@@ -29,8 +29,8 @@
 
 #include "engine/engine.h"
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "converter/connector_base.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
@@ -84,6 +84,8 @@ class UserDataManagerImpl : public UserDataManagerInterface {
  private:
   PredictorInterface *predictor_;
   RewriterInterface *rewriter_;
+
+  DISALLOW_COPY_AND_ASSIGN(UserDataManagerImpl);
 };
 
 UserDataManagerImpl::~UserDataManagerImpl() {}

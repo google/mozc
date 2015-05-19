@@ -29,18 +29,21 @@
 
 #include "converter/nbest_generator.h"
 
+#include <string>
+
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector_base.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
+#include "converter/immutable_converter.h"
 #include "converter/segmenter_base.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
-#include "converter/immutable_converter.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_impl.h"
@@ -52,7 +55,6 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "prediction/suggestion_filter.h"
-
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

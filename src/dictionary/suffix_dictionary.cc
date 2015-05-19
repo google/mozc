@@ -31,46 +31,48 @@
 
 #include <algorithm>
 #include <cstring>
+#include <limits>
 #include <string>
 
+#include "base/iterator_adapter.h"
 #include "base/logging.h"
-#include "base/singleton.h"
-#include "base/trie.h"
 #include "base/util.h"
-#include "converter/node.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/suffix_dictionary_token.h"
 
 namespace mozc {
+
 SuffixDictionary::SuffixDictionary(const SuffixToken *suffix_tokens,
                                    size_t suffix_tokens_size)
     : suffix_tokens_(suffix_tokens),
-      suffix_tokens_size_(suffix_tokens_size),
-      empty_limit_(Limit()) {}
+      suffix_tokens_size_(suffix_tokens_size) {}
 
 SuffixDictionary::~SuffixDictionary() {}
 
-Node *SuffixDictionary::LookupPredictive(
-    const char *str, int size,
-    NodeAllocatorInterface *allocator) const {
-  return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
-}
-
 namespace {
-class SuffixTokenKeyPrefixComparator {
- public:
-  explicit SuffixTokenKeyPrefixComparator(size_t size) : size_(size) {
-  }
 
-  bool operator()(const SuffixToken &t1, const SuffixToken &t2) const {
-    return std::strncmp(t1.key, t2.key, size_) < 0;
+struct SuffixTokenKeyAdapter : public AdapterBase<const char *> {
+  value_type operator()(const SuffixToken *token) const {
+    return token->key;
+  }
+};
+
+class ComparePrefix {
+ public:
+  explicit ComparePrefix(size_t max_len) : max_len_(max_len) {}
+
+  // Note: the inputs don't need to be null-terminated.
+  bool operator()(const char *x, const char *y) const {
+    return std::strncmp(x, y, max_len_) < 0;
   }
 
  private:
-  size_t size_;
+  const size_t max_len_;
 };
+
 }  // namespace
 
-bool SuffixDictionary::HasValue(const StringPiece value) const {
+bool SuffixDictionary::HasValue(StringPiece value) const {
   // SuffixDictionary::HasValue() is never called and unnecessary to
   // implement. To avoid accidental calls of this method, the method simply dies
   // so that we can immediately notice this unimplemented method during
@@ -79,62 +81,55 @@ bool SuffixDictionary::HasValue(const StringPiece value) const {
   return false;
 }
 
-Node *SuffixDictionary::LookupPredictiveWithLimit(
-    const char *str, int size, const Limit &limit,
-    NodeAllocatorInterface *allocator) const {
-  size_t begin_index, end_index;
-  if (str == NULL) {
-    DCHECK(size == 0);
-    begin_index = 0;
-    end_index = suffix_tokens_size_;
-  } else {
-    SuffixToken key;
-    key.key = str;
-    pair<const SuffixToken *, const SuffixToken *> range = equal_range(
-        suffix_tokens_, suffix_tokens_ + suffix_tokens_size_,
-        key, SuffixTokenKeyPrefixComparator(size));
-    begin_index = range.first - suffix_tokens_;
-    end_index = range.second - suffix_tokens_;
-  }
+void SuffixDictionary::LookupPredictive(
+    StringPiece key,
+    bool,  // use_kana_modifier_insensitive_lookup
+    Callback *callback) const {
+  typedef IteratorAdapter<const SuffixToken *, SuffixTokenKeyAdapter> Iter;
+  pair<Iter, Iter> range = equal_range(
+      MakeIteratorAdapter(suffix_tokens_, SuffixTokenKeyAdapter()),
+      MakeIteratorAdapter(suffix_tokens_ + suffix_tokens_size_,
+                          SuffixTokenKeyAdapter()),
+      key.data(), ComparePrefix(key.size()));
 
-  DCHECK(allocator);
-
-  Node *result = NULL;
-  for (size_t i = begin_index; i < end_index; ++i) {
-    const SuffixToken &token = suffix_tokens_[i];
-    DCHECK(token.key);
-    // check begin with
-    if (limit.begin_with_trie != NULL) {
-      string value;
-      size_t key_length = 0;
-      bool has_subtrie = false;
-      if (!limit.begin_with_trie->LookUpPrefix(token.key + size, &value,
-                                               &key_length, &has_subtrie)) {
+  Token token;
+  token.attributes = Token::NONE;  // Common for all suffix tokens.
+  for (; range.first != range.second; ++range.first) {
+    const SuffixToken &suffix_token = *range.first.base();
+    token.key = suffix_token.key;
+    switch (callback->OnKey(token.key)) {
+      case Callback::TRAVERSE_DONE:
+        return;
+      case Callback::TRAVERSE_NEXT_KEY:
         continue;
-      }
+      case Callback::TRAVERSE_CULL:
+        LOG(FATAL) << "Culling is not supported.";
+        continue;
+      default:
+        break;
     }
-
-    Node *node = allocator->NewNode();
-    DCHECK(node);
-    node->Init();
-    node->wcost = token.wcost;
-    node->key = token.key;
-    // To save binary image, value is NULL if key == value.
-    node->value = (token.value == NULL) ? token.key : token.value;
-    node->lid = token.lid;
-    node->rid = token.rid;
-    node->bnext = result;
-    result = node;
+    token.value = (suffix_token.value == NULL) ? token.key : suffix_token.value;
+    token.lid = suffix_token.lid;
+    token.rid = suffix_token.rid;
+    token.cost = suffix_token.wcost;
+    if (callback->OnToken(token.key, token.key, token) !=
+        Callback::TRAVERSE_CONTINUE) {
+      break;
+    }
   }
-
-  return result;
 }
 
-// SuffixDictionary doesn't support Prefix/Revese Lookup.
-Node *SuffixDictionary::LookupReverse(
-    const char *str, int size,
-    NodeAllocatorInterface *allocator) const {
-  return NULL;
+void SuffixDictionary::LookupPrefix(StringPiece key,
+                                    bool use_kana_modifier_insensitive_lookup,
+                                    Callback *callback) const {
+}
+
+void SuffixDictionary::LookupReverse(StringPiece str,
+                                     NodeAllocatorInterface *allocator,
+                                     Callback *callback) const {
+}
+
+void SuffixDictionary::LookupExact(StringPiece key, Callback *callback) const {
 }
 
 }  // namespace mozc

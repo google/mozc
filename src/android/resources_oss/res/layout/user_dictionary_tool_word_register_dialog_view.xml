@@ -33,49 +33,56 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="9dip"
     android:paddingBottom="3dip"
     android:paddingLeft="3dip"
-    android:paddingRight="1dip">
-  <TextView
-      style="@style/MozcDialogTextView"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:paddingLeft="8dip"
-      android:text="@string/user_dictionary_tool_word_register_dialog_word_label" />
-  <EditText
-      android:id="@+id/user_dictionary_tool_word_register_dialog_word"
-      android:inputType="text"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:selectAllOnFocus="true">
-    <requestFocus />
-  </EditText>
+    android:paddingRight="1dip"
+    android:paddingTop="9dip" >
 
-  <TextView
-      style="@style/MozcDialogTextView"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:paddingLeft="8dip"
-      android:text="@string/user_dictionary_tool_word_register_dialog_reading_label" />
-  <EditText
-      android:id="@+id/user_dictionary_tool_word_register_dialog_reading"
-      android:inputType="text"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:selectAllOnFocus="true" />
+    <TextView
+        style="@style/MozcDialogTextView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="8dip"
+        android:text="@string/user_dictionary_tool_word_register_dialog_word_label" />
 
-  <TextView
-      style="@style/MozcDialogTextView"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:paddingLeft="8dip"
-      android:text="@string/user_dictionary_tool_word_register_dialog_pos_label" />
-  <view
-      class="org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryUtil$PosSpinner"
-      android:id="@+id/user_dictionary_tool_word_register_dialog_pos"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:spinnerMode="dropdown" />
+    <EditText
+        android:id="@+id/user_dictionary_tool_word_register_dialog_word"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/help_userdictionary_edit_word_value"
+        android:inputType="text"
+        android:selectAllOnFocus="true" >
+
+        <requestFocus />
+    </EditText>
+
+    <TextView
+        style="@style/MozcDialogTextView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="8dip"
+        android:text="@string/user_dictionary_tool_word_register_dialog_reading_label" />
+
+    <EditText
+        android:id="@+id/user_dictionary_tool_word_register_dialog_reading"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/help_userdictionary_edit_word_key"
+        android:inputType="text"
+        android:selectAllOnFocus="true" />
+
+    <TextView
+        style="@style/MozcDialogTextView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="8dip"
+        android:text="@string/user_dictionary_tool_word_register_dialog_pos_label" />
+
+    <view
+        android:id="@+id/user_dictionary_tool_word_register_dialog_pos"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        class="org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryUtil$PosSpinner"
+        android:spinnerMode="dropdown" />
 
 </LinearLayout>

@@ -77,7 +77,7 @@ public class HttpClientTest extends TestCase {
     {
       // Unsupported method
       try {
-        HttpUriRequest result = HttpClient.createRequest("PUT", url.toString(), null);
+        HttpClient.createRequest("PUT", url.toString(), null);
         fail("IllegalArgumentException is expected for PUT method.");
       } catch (IllegalArgumentException e) {
         // Expected.

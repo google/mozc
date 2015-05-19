@@ -41,6 +41,7 @@
 #include "base/cpu_stats.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/scoped_handle.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/thread.h"

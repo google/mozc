@@ -232,11 +232,20 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
   EXPECT_FALSE(storage.ExportDictionary(id + 1, export_file));
   EXPECT_TRUE(storage.ExportDictionary(id, export_file));
 
-  UserDictionaryStorage::UserDictionary dic2;
-  InputFileStream ifs(export_file.c_str());
-  CHECK(ifs);
-  UserDictionaryImporter::IStreamTextLineIterator iter(&ifs);
+  string file_string;
+  // Copy whole contents of the file into |file_string|.
+  {
+    InputFileStream ifs(export_file.c_str());
+    CHECK(ifs);
+    ifs.seekg(0, std::ios::end);
+    file_string.resize(ifs.tellg());
+    ifs.seekg(0, std::ios::beg);
+    ifs.read(&file_string[0], file_string.size());
+    ifs.close();
+  }
+  UserDictionaryImporter::StringTextLineIterator iter(file_string);
 
+  UserDictionaryStorage::UserDictionary dic2;
   EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
             UserDictionaryImporter::ImportFromTextLineIterator(
                 UserDictionaryImporter::MOZC,

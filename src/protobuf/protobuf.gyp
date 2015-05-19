@@ -39,6 +39,10 @@
       # 'this' : used in base member initializer list
       # http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
       '4355',
+      # 'type' : forcing value to bool 'true' or 'false'
+      # (performance warning)
+      # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
+      '4800',
     ],
     'protobuf_cpp_root' : '<(protobuf_root)/src/google/protobuf',
     'protobuf_sources': [
@@ -160,8 +164,8 @@
             '<@(msvc_disabled_warnings_for_protoc)',
           ],
           'conditions': [
-            # for gcc and clang
-            ['OS=="linux" or OS=="mac"', {
+            ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
+            '(_toolset=="host" and (compiler_host=="clang" or compiler_target=="gcc"))', {
               'cflags': [
                 '-Wno-conversion-null',  # coded_stream.cc uses NULL to bool.
                 '-Wno-unused-function',
@@ -170,6 +174,12 @@
             ['OS=="win"', {
               'defines!': [
                 'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
+              ],
+            }],
+            ['(_toolset=="target" and compiler_target=="clang" and compiler_target_version_int>=304) or '
+             '(_toolset=="host" and compiler_host=="clang" and compiler_host_version_int>=304)', {
+              'cflags_cc': [
+                '-Wno-unused-const-variable',
               ],
             }],
           ],
@@ -302,8 +312,22 @@
             '-Wno-uninitialized',
             '-Wno-unused-value',
           ],
+          'configurations': {
+            'Debug_Base': {
+              'cflags!': [
+                # zlib 1.2.8 with DEBUG isn't compatible with -Wwrite-strings
+                '-Wwrite-strings',
+              ],
+              'defines': [
+                # Teach zlib not to emit noisy logging message while running
+                'verbose=-1',
+              ],
+            },
+          },
           'conditions': [
-            ['clang==1', {
+            # TODO(yukawa): Do we still need this?
+            ['(_toolset=="target" and compiler_target=="clang") or '
+             '(_toolset=="host" and compiler_host=="clang")', {
               'defines!': [
                 'DEBUG',
               ],

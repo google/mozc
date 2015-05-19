@@ -41,13 +41,15 @@
     # Top directory of additional third party libraries.
     'additional_third_party_dir': '<(DEPTH)/third_party',
 
-    # Set this to true when building with Clang.
-    'clang%': 0,
-    # GYP has built-in assertion against 'make_global_settings' to enforce
-    # that all the 'make_global_settings' must be literally equivalent.
-    # In order to conform this assertion, we cannot use <(DEPTH) here because
-    # <(DEPTH) will be expanded to a relative path for each gyp file.
-    'clang_bin_dir%': '<(abs_depth)/third_party/llvm-build/Release+Asserts/bin',
+    # Compiler to build binaries that run in the target environment.
+    # e.g. "clang", "gcc", "msvs".
+    'compiler_target%': '',
+    'compiler_target_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
+
+    # Compiler to build binaries that run in the host environment.
+    # e.g. "clang", "gcc", "msvs".
+    'compiler_host%': '',
+    'compiler_host_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
 
     # Versioning stuff for Mac.
     'mac_sdk%': '10.8',
@@ -57,22 +59,13 @@
     # another 'conditions' in this gyp element level later. Note that
     # you can have only one 'conditions' in a gyp element.
     'variables': {
-      'target_compiler': '',
       'extra_warning_cflags': '',
       'conditions': [
         ['warn_as_error!=0', {
           'extra_warning_cflags': '-Werror',
         }],
-        ['OS=="win"', {
-          # Variable 'MSVS_VERSION' is available only on Windows.
-          'target_compiler': 'msvs<(MSVS_VERSION)',
-        }],
       ],
     },
-
-    # The target compiler such as 'msvs2010' or 'msvs2012'.
-    # This value is currently used only on Windows.
-    'target_compiler': '<(target_compiler)',
 
     # warning_cflags will be shared with Mac and Linux.
     'warning_cflags': [
@@ -132,14 +125,53 @@
     'enable_unittest%': '1',
 
     'conditions': [
+      ['OS=="win"', {
+        'conditions': [
+          ['MSVS_VERSION=="2010"', {
+            'compiler_target': 'msvs',
+            'compiler_target_version_int': 1600,  # Visual C++ 2010 or higher
+            'compiler_host': 'msvs',
+            'compiler_host_version_int': 1600,  # Visual C++ 2010 or higher
+          }],
+          ['MSVS_VERSION=="2012"', {
+            'compiler_target': 'msvs',
+            'compiler_target_version_int': 1700,  # Visual C++ 2012 or higher
+            'compiler_host': 'msvs',
+            'compiler_host_version_int': 1700,  # Visual C++ 2012 or higher
+          }],
+          ['MSVS_VERSION=="2013"', {
+            'compiler_target': 'msvs',
+            'compiler_target_version_int': 1800,  # Visual C++ 2013 or higher
+            'compiler_host': 'msvs',
+            'compiler_host_version_int': 1800,  # Visual C++ 2013 or higher
+          }],
+        ],
+      }],
       ['OS=="mac"', {
-        'clang': 1,
-        'clang_bin_dir': '/Applications/Xcode.app/Contents/Developer/Toolchains'
-                         '/XcodeDefault.xctoolchain/usr/bin/',
+        'compiler_target': 'clang',
+        'compiler_target_version_int': 303,  # Clang 3.3 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 303,  # Clang 3.3 or higher
+      }],
+      ['target_platform=="Android"', {
+        'compiler_target': 'gcc',
+        'compiler_target_version_int': 406,  # GCC 4.6 or higher
+        'compiler_host': 'gcc',
+        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+      }],
+      ['target_platform=="NaCl"', {
+        'compiler_target': 'clang',
+        'compiler_target_version_int': 303,  # Clang 3.3 or higher
+        'compiler_host': 'gcc',
+        'compiler_host_version_int': 406,  # GCC 4.6 or higher
       }],
       ['target_platform=="Linux"', {
         # enable_gtk_renderer represents if mozc_renderer is supported on Linux
         # or not.
+        'compiler_target': 'gcc',
+        'compiler_target_version_int': 406,  # GCC 4.6 or higher
+        'compiler_host': 'gcc',
+        'compiler_host_version_int': 406,  # GCC 4.6 or higher
         'enable_gtk_renderer%': 1,
       }, {  # else
         'enable_gtk_renderer%': 0,
@@ -160,16 +192,6 @@
       # 'identifier' : truncation from 'type1' to 'type2'
       # http://msdn.microsoft.com/en-us/library/0as1ke3f.aspx
       '4305',
-      # previous versions of the compiler did not override when
-      # parameters only differed by const/volatile qualifiers.
-      # http://msdn.microsoft.com/en-us/library/bb384874.aspx
-      # See also the following discussion.
-      # http://code.google.com/p/googlemock/issues/detail?id=141
-      '4373',
-      # 'type' : forcing value to bool 'true' or 'false'
-      # (performance warning)
-      # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
-      '4800',
       # The file contains a character that cannot be represented in the
       # current code page (number). Save the file in Unicode format to
       # prevent data loss.
@@ -222,6 +244,9 @@
     # use_libibus represents if ibus library is used or not.
     # This option is only for Linux.
     'use_libibus%': 0,
+
+    # use the previous implementation of encryptor.
+    'use_legacy_encryptor%': 0,
 
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
@@ -319,9 +344,38 @@
           }],
           ['target_platform=="Android"', {
             'defines': ['NO_USAGE_REWRITER'],
+            'target_conditions' : [
+              ['_toolset=="target"', {
+                'defines': [
+                  'OS_ANDROID',
+                  'MOZC_ANDROID_APPLICATION_ID="<(android_application_id)"',
+                ],
+                'ldflags!': [  # Remove all libraries for GNU/Linux.
+                  '<@(linux_ldflags)',
+                ],
+                'ldflags': [
+                  '-llog',
+                ],
+                'conditions': [
+                  ['android_arch=="arm"', {
+                    'cflags': [
+                      '-mthumb',  # Force thumb interaction set for smaller file size.
+                    ],
+                  }],
+                  ['android_stl=="stlport"', {
+                    'defines': [
+                      'MOZC_USE_STLPORT',
+                    ],
+                  }],
+                ],
+              }],
+            ],
           }],
           ['enable_mode_indicator==1', {
             'defines': ['MOZC_ENABLE_MODE_INDICATOR'],
+          }],
+          ['use_legacy_encryptor==1', {
+            'defines': ['MOZC_USE_LEGACY_ENCRYPTOR'],
           }],
         ],
       },
@@ -330,7 +384,7 @@
         'msvs_settings': {
           'VCCLCompilerTool': {
             'conditions': [
-              ['target_compiler!="msvs2010"', {
+              ['compiler_target=="msvs" and compiler_target_version_int>=1700', {
                 # Windows 7 and prior still support CPUs that lack of SSE/SSE2.
                 # So we explicitly disable them. We can change this setting to
                 # /arch:SSE2 once Windows 7 is unsupported in Mozc.
@@ -456,6 +510,15 @@
               '<@(debug_extra_cflags)',
             ],
           }],
+          ['target_platform=="Android"', {
+            'target_conditions' : [
+              ['_toolset=="target"', {
+                # We won't debug target's .so file so remove debug symbol.
+                # If the symbol is required, remove following line.
+                'cflags!': ['-g'],
+              }],
+            ],
+          }],
         ],
       },
       'Optimize_Base': {
@@ -519,26 +582,6 @@
           },
         },
       },
-      'Android_Base': {
-        'abstract': 1,
-        'defines': [
-          'OS_ANDROID',
-          'MOZC_ANDROID_APPLICATION_ID="<(android_application_id)"',
-        ],
-        'ldflags!': [  # Remove all libraries for GNU/Linux.
-          '<@(linux_ldflags)',
-        ],
-        'ldflags': [
-          '-llog',
-        ],
-        'conditions': [
-          ['android_arch=="arm"', {
-            'cflags': [
-              '-mthumb',  # Force thumb interaction set for smaller file size.
-            ],
-          }],
-        ],
-      },
       #
       # Concrete configurations
       #
@@ -572,17 +615,6 @@
             'inherit_from': ['Optimize_x64', 'Release_Base'],
           },
         }],
-        ['target_platform=="Android"', {
-          'Debug_Android': {
-            'inherit_from': ['Common_Base', 'Android_Base', 'Debug_Base'],
-            # We won't debug target's .so file so remove debug symbol.
-            # If the symbol is required, remove following line.
-            'cflags!': ['-g'],
-          },
-          'Release_Android': {
-            'inherit_from': ['Common_Base', 'Android_Base', 'Optimize_Base', 'Release_Base'],
-          },
-        }],
       ],
     },
     'default_configuration': 'Debug',
@@ -592,6 +624,48 @@
     'include_dirs': [
       '<(DEPTH)',
       '<(SHARED_INTERMEDIATE_DIR)',
+    ],
+    'target_conditions': [
+      ['_toolset=="target"', {
+        'conditions': [
+          ['compiler_target=="clang"', {
+            'cflags': [
+              '-Wtype-limits',
+            ],
+            'cflags_cc': [
+              '-Wno-covered-switch-default',
+              '-Wno-unnamed-type-template-args',
+              '-Wno-c++11-narrowing',
+              '-std=gnu++0x',
+            ],
+          }],
+          ['compiler_target=="clang" or compiler_target=="gcc"', {
+            'cflags_cc': [
+              '-std=gnu++0x',
+            ],
+          }],
+        ],
+      }],
+      ['_toolset=="host"', {
+        'conditions': [
+          ['compiler_host=="clang"', {
+            'cflags': [
+              '-Wtype-limits',
+            ],
+            'cflags_cc': [
+              '-Wno-covered-switch-default',
+              '-Wno-unnamed-type-template-args',
+              '-Wno-c++11-narrowing',
+              '-std=gnu++0x',
+            ],
+          }],
+          ['compiler_host=="clang" or compiler_host=="gcc"', {
+            'cflags_cc': [
+              '-std=gnu++0x',
+            ],
+          }],
+        ],
+      }],
     ],
     'conditions': [
       ['OS=="win"', {
@@ -697,22 +771,6 @@
           '-Wno-deprecated',
         ],
         'conditions': [
-          ['clang==1', {
-            'cflags': [
-              '-Wtype-limits',
-            ],
-            'cflags_cc': [
-              '-Wno-covered-switch-default',
-              '-Wno-unnamed-type-template-args',
-              '-Wno-c++11-narrowing',
-              '-std=gnu++0x',
-            ],
-          }],
-          ['clang==0 and target_platform!="Windows"', {
-            'cflags_cc': [
-              '-std=gnu++0x',
-            ],
-          }],
           ['target_platform!="NaCl"', {
             'cflags': [
               '<@(linux_cflags)',
@@ -728,9 +786,6 @@
               ['_toolset=="target"', {
                 'cflags': [
                   '<@(nacl_cflags)',
-                ],
-                'cflags_cc': [
-                  '-std=gnu++0x',
                 ],
                 'ldflags!': [  # Remove all libraries for GNU/Linux.
                   '<@(linux_ldflags)',
@@ -771,21 +826,17 @@
           'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
           'SDKROOT': 'macosx<(mac_sdk)',
           'PYTHONPATH': '<(abs_depth)/',
-          'conditions': [
-            ['clang==1', {
-              'CC': '<(clang_bin_dir)/clang',
-              'LDPLUSPLUS': '<(clang_bin_dir)/clang++',
-              'CLANG_WARN_CXX0X_EXTENSIONS': 'NO',
-              'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0',
-              'WARNING_CFLAGS': [
-                '-Wno-c++11-narrowing',
-                '-Wno-covered-switch-default',
-                '-Wno-unnamed-type-template-args',
-              ],
-              'OTHER_CPLUSPLUSFLAGS': [
-                '$(inherited)', '-std=gnu++11',
-              ],
-            }],
+          'CC': '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang',
+          'LDPLUSPLUS': '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++',
+          'CLANG_WARN_CXX0X_EXTENSIONS': 'NO',
+          'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0',
+          'WARNING_CFLAGS': [
+            '-Wno-c++11-narrowing',
+            '-Wno-covered-switch-default',
+            '-Wno-unnamed-type-template-args',
+          ],
+          'OTHER_CPLUSPLUSFLAGS': [
+            '$(inherited)', '-std=gnu++11',
           ],
         },
         'link_settings': {
@@ -801,16 +852,6 @@
     ],
   },
   'conditions': [
-    ['target_platform=="Linux" and clang==1', {
-      'make_global_settings': [
-        ['CC', '<(clang_bin_dir)/clang'],
-        ['CXX', '<(clang_bin_dir)/clang++'],
-        ['LINK', '$(CXX)'],
-        ['CC.host', '$(CC)'],
-        ['CXX.host', '$(CXX)'],
-        ['LINK.host', '$(LINK)'],
-      ],
-    }],
     ['target_platform=="NaCl"', {
       'variables': {
         'pnacl_bin_dir%':
@@ -850,6 +891,8 @@
           },
         }],
       ],
+      # To use clang only CC and CXX should point clang directly.
+      # c.f., https://android.googlesource.com/platform/ndk/+/tools_ndk_r9d/docs/text/STANDALONE-TOOLCHAIN.text
       'make_global_settings': [
         ['AR.target', '<(ndk_bin_dir)/<(toolchain_prefix)-ar'],
         ['AS.target', '<(ndk_bin_dir)/<(toolchain_prefix)-as'],

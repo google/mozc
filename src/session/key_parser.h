@@ -32,11 +32,10 @@
 #ifndef MOZC_SESSION_KEY_PARSER_H_
 #define MOZC_SESSION_KEY_PARSER_H_
 
-#include <map>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace commands {
@@ -51,9 +50,7 @@ class KeyParser {
                              commands::KeyEvent *key_event);
 
  private:
-  // Should never been allocated.
-  KeyParser();
-  virtual ~KeyParser();
+  DISALLOW_IMPLICIT_CONSTRUCTORS(KeyParser);
 };
 
 }  // namespace mozc

@@ -722,9 +722,12 @@ void PepperFileUtil::SetPepperFileSystemInterfaceForTest(
   g_pepper_file_system = mock_interface;
 }
 
-void PepperFileUtil::Initialize(pp::Instance *instance, int64 expected_size) {
+bool PepperFileUtil::Initialize(pp::Instance *instance, int64 expected_size) {
   const bool result = GetPepperFileSystem()->Open(instance, expected_size);
-  CHECK(result) << "PepperFileSystem::Open error";
+  if (!result) {
+    VLOG(2) << "PepperFileSystem::Open error";
+  }
+  return result;
 }
 
 bool PepperFileUtil::FileExists(const string &filename) {

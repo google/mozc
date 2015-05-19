@@ -30,6 +30,8 @@
 package org.mozc.android.inputmethod.japanese.ui;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.text.Layout;
 
@@ -45,7 +47,7 @@ public class CandidateLayout {
 
   /** Horizontal span which is occupied by a CandidateWord. */
   public static class Span {
-    private final CandidateWord candidateWord;
+    private final Optional<CandidateWord> candidateWord;
     private float left;
     private float right;
 
@@ -58,19 +60,20 @@ public class CandidateLayout {
      * In theory, it's better to have another structure to keep the cache,
      * but put this here for the simpler implementation.
      */
-    private Layout cachedLayout;
+    private Optional<Layout> cachedLayout = Optional.absent();
 
-    /** @param candidateWord the candidate word of this span. Must not be null. */
-    public Span(CandidateWord candidateWord,
+    /** @param candidateWord the candidate word of this span. Absent if the span is
+     * reserved empty one, which is for folding button. */
+    public Span(Optional<CandidateWord> candidateWord,
                 float valueWidth, float descriptionWidth,
                 List<String> splitDescriptionList) {
-      this.candidateWord = candidateWord;
+      this.candidateWord = Preconditions.checkNotNull(candidateWord);
       this.valueWidth = valueWidth;
       this.descriptionWidth = descriptionWidth;
-      this.splitDescriptionList = splitDescriptionList;
+      this.splitDescriptionList = Preconditions.checkNotNull(splitDescriptionList);
     }
 
-    public CandidateWord getCandidateWord() {
+    public Optional<CandidateWord> getCandidateWord() {
       return candidateWord;
     }
 
@@ -80,9 +83,7 @@ public class CandidateLayout {
 
     /** @param left the position of the left edge. Must be non negative value. */
     public void setLeft(float left) {
-      if (left < 0) {
-        throw new IllegalArgumentException();
-      }
+      Preconditions.checkArgument(left >= 0);
       this.left = left;
     }
 
@@ -92,9 +93,7 @@ public class CandidateLayout {
 
     /** @param right the position of the right edge. Must be equal or greater than left. */
     public void setRight(float right) {
-      if (left > right) {
-        throw new IllegalArgumentException();
-      }
+      Preconditions.checkArgument(left <= right);
       this.right = right;
     }
 
@@ -115,12 +114,12 @@ public class CandidateLayout {
       return splitDescriptionList;
     }
 
-    public Layout getCachedLayout() {
+    public Optional<Layout> getCachedLayout() {
       return cachedLayout;
     }
 
     public void setCachedLayout(Layout cachedLayout) {
-      this.cachedLayout = cachedLayout;
+      this.cachedLayout = Optional.of(Preconditions.checkNotNull(cachedLayout));
     }
   }
 
@@ -162,19 +161,16 @@ public class CandidateLayout {
     }
 
     public void addSpan(Span span) {
-      spans.add(span);
+      spans.add(Preconditions.checkNotNull(span));
     }
   }
 
   private final List<Row> rowList;
-
   private final float contentWidth;
-
   private final float contentHeight;
 
-  public CandidateLayout(
-      List<Row> rowList, float contentWidth, float contentHeight) {
-    this.rowList = rowList;
+  public CandidateLayout(List<Row> rowList, float contentWidth, float contentHeight) {
+    this.rowList = Preconditions.checkNotNull(rowList);
     this.contentWidth = contentWidth;
     this.contentHeight = contentHeight;
   }

@@ -36,14 +36,11 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "base/system_util.h"
-#include "base/trie.h"
-#include "converter/node.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
 #include "storage/louds/louds_trie.h"
-
 
 namespace mozc {
 namespace dictionary {
@@ -54,7 +51,6 @@ ValueDictionary::ValueDictionary(const POSMatcher& pos_matcher)
     : value_trie_(new LoudsTrie),
       dictionary_file_(new DictionaryFile),
       codec_(SystemDictionaryCodecFactory::GetCodec()),
-      empty_limit_(Limit()),
       suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {
 }
 
@@ -115,29 +111,11 @@ bool ValueDictionary::OpenDictionaryFile() {
 // and SystemDictionary::HasValue should return the same result with
 // ValueDictionary::HasValue.  So we can skip the actual logic of HasValue
 // and return just false.
-bool ValueDictionary::HasValue(const StringPiece value) const {
+bool ValueDictionary::HasValue(StringPiece value) const {
   return false;
 }
 
 namespace {
-
-inline void FillNode(const uint16 suggestion_only_word_id,
-                     const char *value, size_t value_size,
-                     Node *node) {
-  // Set fake token information.
-  // Since value dictionary is intended to use for suggestion,
-  // we use SuggestOnlyWordId here.
-  // Cost is also set without lookup.
-  // TODO(toshiyuki): If necessary, implement simple cost lookup.
-  // Bloom filter may be one option.
-  node->lid = suggestion_only_word_id;
-  node->rid = suggestion_only_word_id;
-  node->wcost = 10000;
-  node->key.assign(value, value_size);
-  node->value.assign(value, value_size);
-  node->node_type = Node::NOR_NODE;
-  node->bnext = NULL;
-}
 
 // A version of the above function for Token.
 inline void FillToken(const uint16 suggestion_only_word_id,
@@ -149,111 +127,72 @@ inline void FillToken(const uint16 suggestion_only_word_id,
   token->attributes = Token::NONE;
 }
 
-class NodeListBuilder : public LoudsTrie::Callback {
- public:
-  NodeListBuilder(const int original_key_len,
-                  const SystemDictionaryCodecInterface *codec,
-                  const uint16 suggestion_only_word_id,
-                  const Trie<string> *begin_with_trie,
-                  NodeAllocatorInterface *allocator)
-      : original_key_len_(original_key_len),
-        codec_(codec),
-        suggestion_only_word_id_(suggestion_only_word_id),
-        begin_with_trie_(begin_with_trie),
-        allocator_(allocator),
-        limit_(allocator == NULL ?
-            numeric_limits<int>::max() : allocator_->max_nodes_size()),
-        result_(NULL) {
+// Converts a value of SystemDictionary::Callback::ResultType to the
+// corresponding value of LoudsTrie::Callback::ResultType.
+inline LoudsTrie::Callback::ResultType ConvertResultType(
+    const DictionaryInterface::Callback::ResultType result) {
+  switch (result) {
+    case DictionaryInterface::Callback::TRAVERSE_DONE:
+      return LoudsTrie::Callback::SEARCH_DONE;
+    case DictionaryInterface::Callback::TRAVERSE_NEXT_KEY:
+    case DictionaryInterface::Callback::TRAVERSE_CONTINUE:
+      return LoudsTrie::Callback::SEARCH_CONTINUE;
+    case DictionaryInterface::Callback::TRAVERSE_CULL:
+      return LoudsTrie::Callback::SEARCH_CULL;
+    default:
+      LOG(DFATAL) << "Enum value " << result << " cannot be converted";
+      return LoudsTrie::Callback::SEARCH_DONE;  // dummy
   }
+}
+
+class PredictiveTraverser : public LoudsTrie::Callback {
+ public:
+  PredictiveTraverser(const SystemDictionaryCodecInterface *codec,
+                      const uint16 suggestion_only_word_id,
+                      DictionaryInterface::Callback *callback)
+      : codec_(codec),
+        suggestion_only_word_id_(suggestion_only_word_id),
+        callback_(callback) {}
+  virtual ~PredictiveTraverser() {}
 
   virtual ResultType Run(const char *key_begin, size_t len, int key_id) {
-    if (limit_ <= 0) {
-      return SEARCH_DONE;
-    }
-
     // The decoded key of value trie corresponds to value (surface form).
     string value;
     codec_->DecodeValue(StringPiece(key_begin, len), &value);
-
-    if (begin_with_trie_ != NULL) {
-      // If |begin_with_trie_| was provided, check if the value ends with some
-      // key in it. For example, if original key is "he" and "hello" was found,
-      // the node for "hello" is built only when "llo" is in |begin_with_trie_|.
-      string trie_value;
-      size_t key_length = 0;
-      bool has_subtrie = false;
-      if (!begin_with_trie_->LookUpPrefix(
-              StringPiece(value).substr(original_key_len_),
-              &trie_value, &key_length, &has_subtrie)) {
-        return SEARCH_CONTINUE;
-      }
+    DictionaryInterface::Callback::ResultType result = callback_->OnKey(value);
+    if (result != DictionaryInterface::Callback::TRAVERSE_CONTINUE) {
+      return ConvertResultType(result);
     }
-
-    // TODO(noriyukit): This is a very hacky way of injection for node
-    // allocation. We should implement an allocator that just creates new Node
-    // for unit tests.
-    Node *new_node = NULL;
-    if (allocator_ != NULL) {
-      new_node = allocator_->NewNode();
-    } else {
-      // for test
-      new_node = new Node();
-    }
-
-    FillNode(suggestion_only_word_id_, value.data(), value.size(), new_node);
-
-    // Update the list structure: insert |new_node| to the head.
-    new_node->bnext = result_;
-    result_ = new_node;
-
-    --limit_;
-    return SEARCH_CONTINUE;
-  }
-
-  Node *result() const {
-    return result_;
+    FillToken(suggestion_only_word_id_, value, &token_);
+    result = callback_->OnToken(value, value, token_);
+    return ConvertResultType(result);
   }
 
  private:
-  const int original_key_len_;
   const SystemDictionaryCodecInterface *codec_;
   const uint16 suggestion_only_word_id_;
-  const Trie<string> *begin_with_trie_;
-  NodeAllocatorInterface *allocator_;
-  int limit_;
-  Node *result_;
+  DictionaryInterface::Callback *callback_;
+  Token token_;
 
-  DISALLOW_COPY_AND_ASSIGN(NodeListBuilder);
+  DISALLOW_COPY_AND_ASSIGN(PredictiveTraverser);
 };
 
 }  // namespace
 
-Node *ValueDictionary::LookupPredictiveWithLimit(
-    const char *str, int size,
-    const Limit &limit,
-    NodeAllocatorInterface *allocator) const {
-  if (size == 0) {
-    // For empty key, return NULL (representing an empty result) immediately
-    // for backword compatibility.
-    // TODO(hidehiko): Returning all entries in dictionary for predictive
-    //   searching with an empty key may look natural as well. So we should
-    //   find an appropriate handling point.
-    return NULL;
+void ValueDictionary::LookupPredictive(
+    StringPiece key,
+    bool,  // use_kana_modifier_insensitive_lookup
+    Callback *callback) const {
+  // Do nothing for empty key, although looking up all the entries with empty
+  // string seems natural.
+  if (key.empty()) {
+    return;
   }
   string lookup_key_str;
-  codec_->EncodeValue(StringPiece(str, size), &lookup_key_str);
-
+  codec_->EncodeValue(key, &lookup_key_str);
   DCHECK(value_trie_.get() != NULL);
-  NodeListBuilder builder(size, codec_, suggestion_only_word_id_,
-                          limit.begin_with_trie, allocator);
-  value_trie_->PredictiveSearch(lookup_key_str.c_str(), &builder);
-  return builder.result();
-}
-
-Node *ValueDictionary::LookupPredictive(
-    const char *str, int size,
-    NodeAllocatorInterface *allocator) const {
-  return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
+  PredictiveTraverser traverser(codec_, suggestion_only_word_id_, callback);
+  value_trie_->PredictiveSearch(lookup_key_str.c_str(), &traverser);
 }
 
 void ValueDictionary::LookupPrefix(
@@ -281,9 +220,9 @@ void ValueDictionary::LookupExact(StringPiece key, Callback *callback) const {
   callback->OnToken(key, key, token);
 }
 
-Node *ValueDictionary::LookupReverse(const char *str, int size,
-                                     NodeAllocatorInterface *allocator) const {
-  return NULL;
+void ValueDictionary::LookupReverse(StringPiece str,
+                                    NodeAllocatorInterface *allocator,
+                                    Callback *callback) const {
 }
 
 }  // namespace dictionary

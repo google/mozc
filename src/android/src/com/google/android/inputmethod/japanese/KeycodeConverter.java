@@ -64,14 +64,15 @@ public class KeycodeConverter {
 
   public static final ProtoCommands.KeyEvent SPECIALKEY_SPACE =
       ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.SPACE).build();
-  public static final ProtoCommands.KeyEvent SPECIALKEY_ENTER =
-      ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.ENTER).build();
+  // TODO(matsuzakit): UP (and DOWN) is no more used. Remove.
   public static final ProtoCommands.KeyEvent SPECIALKEY_UP =
       ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.UP).build();
-  public static final ProtoCommands.KeyEvent SPECIALKEY_LEFT =
-      ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.LEFT).build();
-  public static final ProtoCommands.KeyEvent SPECIALKEY_RIGHT =
-      ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.RIGHT).build();
+  public static final ProtoCommands.KeyEvent SPECIALKEY_VIRTUAL_LEFT =
+      ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.VIRTUAL_LEFT).build();
+  public static final ProtoCommands.KeyEvent SPECIALKEY_VIRTUAL_RIGHT =
+      ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.VIRTUAL_RIGHT).build();
+  public static final ProtoCommands.KeyEvent SPECIALKEY_VIRTUAL_ENTER =
+      ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.VIRTUAL_ENTER).build();
   public static final ProtoCommands.KeyEvent SPECIALKEY_DOWN =
       ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.DOWN).build();
   public static final ProtoCommands.KeyEvent SPECIALKEY_BACKSPACE =
@@ -110,61 +111,6 @@ public class KeycodeConverter {
     return ProtoCommands.KeyEvent.newBuilder().setKeyCode(keyCode).build();
   }
 
-  /**
-   * Converts Android's KeyEvent to Mozc's KeyEvent which has only SpecialKey.
-   *
-   * @param androidKeyEvent
-   * @return Mozc's KeyEvent
-   */
-  public static ProtoCommands.KeyEvent getMozcSpecialKeyEvent(
-      android.view.KeyEvent androidKeyEvent) {
-    int metaState = androidKeyEvent.getMetaState();
-    int keyCode = androidKeyEvent.getKeyCode();
-    if (metaState == 0) {
-      switch(keyCode) {
-        // Space.
-        case android.view.KeyEvent.KEYCODE_SPACE:
-          return SPECIALKEY_SPACE;
-        // Enter.
-        case android.view.KeyEvent.KEYCODE_ENTER:
-          return SPECIALKEY_ENTER;
-        // Up.
-        case android.view.KeyEvent.KEYCODE_DPAD_UP:
-          return SPECIALKEY_UP;
-        // Left.
-        case android.view.KeyEvent.KEYCODE_DPAD_LEFT:
-          return SPECIALKEY_LEFT;
-        // Right.
-        case android.view.KeyEvent.KEYCODE_DPAD_RIGHT:
-          return SPECIALKEY_RIGHT;
-        // Down.
-        case android.view.KeyEvent.KEYCODE_DPAD_DOWN:
-          return SPECIALKEY_DOWN;
-        // Del -> Backspace.
-        case android.view.KeyEvent.KEYCODE_DEL:
-          return SPECIALKEY_BACKSPACE;
-        default:
-          return null;
-      }
-    } else if ((metaState & android.view.KeyEvent.META_SHIFT_ON) != 0) {
-      switch(keyCode) {
-        // Shift + Left.
-        case android.view.KeyEvent.KEYCODE_DPAD_LEFT:
-          return SPECIALKEY_SHIFT_LEFT;
-        // Shift + Right.
-        case android.view.KeyEvent.KEYCODE_DPAD_RIGHT:
-          return SPECIALKEY_SHIFT_RIGHT;
-        default:
-          return null;
-      }
-    } else if ((metaState & android.view.KeyEvent.META_CTRL_ON) != 0
-          && keyCode == android.view.KeyEvent.KEYCODE_DEL) {
-      // Ctrl + Del -> Ctrl + Backspace.
-      return SPECIALKEY_CTRL_BACKSPACE;
-    }
-    return null;
-  }
-
   public static KeyEventInterface getKeyEventInterface(final android.view.KeyEvent keyEvent) {
     return new KeyEventInterface() {
 
@@ -193,60 +139,6 @@ public class KeycodeConverter {
         return null;
       }
     };
-  }
-
-  public static boolean isSystemKey(android.view.KeyEvent keyEvent) {
-    switch(keyEvent.getKeyCode()) {
-      case android.view.KeyEvent.KEYCODE_3D_MODE:
-      case android.view.KeyEvent.KEYCODE_APP_SWITCH:
-      case android.view.KeyEvent.KEYCODE_ASSIST:
-      case android.view.KeyEvent.KEYCODE_AVR_INPUT:
-      case android.view.KeyEvent.KEYCODE_AVR_POWER:
-      case android.view.KeyEvent.KEYCODE_BOOKMARK:
-      case android.view.KeyEvent.KEYCODE_BACK:
-      case android.view.KeyEvent.KEYCODE_CALL:
-      case android.view.KeyEvent.KEYCODE_CAMERA:
-      case android.view.KeyEvent.KEYCODE_CHANNEL_DOWN:
-      case android.view.KeyEvent.KEYCODE_CHANNEL_UP:
-      case android.view.KeyEvent.KEYCODE_DVR:
-      case android.view.KeyEvent.KEYCODE_FOCUS:
-      case android.view.KeyEvent.KEYCODE_HEADSETHOOK:
-      case android.view.KeyEvent.KEYCODE_HOME:
-      case android.view.KeyEvent.KEYCODE_INFO:
-      case android.view.KeyEvent.KEYCODE_LANGUAGE_SWITCH:
-      case android.view.KeyEvent.KEYCODE_MANNER_MODE:
-      case android.view.KeyEvent.KEYCODE_MEDIA_CLOSE:
-      case android.view.KeyEvent.KEYCODE_MEDIA_EJECT:
-      case android.view.KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
-      case android.view.KeyEvent.KEYCODE_MEDIA_NEXT:
-      case android.view.KeyEvent.KEYCODE_MEDIA_PAUSE:
-      case android.view.KeyEvent.KEYCODE_MEDIA_PLAY:
-      case android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-      case android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-      case android.view.KeyEvent.KEYCODE_MEDIA_RECORD:
-      case android.view.KeyEvent.KEYCODE_MEDIA_REWIND:
-      case android.view.KeyEvent.KEYCODE_MEDIA_STOP:
-      case android.view.KeyEvent.KEYCODE_MENU:
-      case android.view.KeyEvent.KEYCODE_MUTE:
-      case android.view.KeyEvent.KEYCODE_NOTIFICATION:
-      case android.view.KeyEvent.KEYCODE_POWER:
-      case android.view.KeyEvent.KEYCODE_PROG_BLUE:
-      case android.view.KeyEvent.KEYCODE_PROG_GREEN:
-      case android.view.KeyEvent.KEYCODE_PROG_RED:
-      case android.view.KeyEvent.KEYCODE_PROG_YELLOW:
-      case android.view.KeyEvent.KEYCODE_SEARCH:
-      case android.view.KeyEvent.KEYCODE_SYSRQ:
-      case android.view.KeyEvent.KEYCODE_TV:
-      case android.view.KeyEvent.KEYCODE_TV_INPUT:
-      case android.view.KeyEvent.KEYCODE_TV_POWER:
-      case android.view.KeyEvent.KEYCODE_VOLUME_DOWN:
-      case android.view.KeyEvent.KEYCODE_VOLUME_MUTE:
-      case android.view.KeyEvent.KEYCODE_VOLUME_UP:
-      case android.view.KeyEvent.KEYCODE_ZOOM_IN:
-      case android.view.KeyEvent.KEYCODE_ZOOM_OUT:
-        return true;
-    }
-    return false;
   }
 
   public static boolean isMetaKey(android.view.KeyEvent keyEvent) {

@@ -52,7 +52,6 @@ DEFINE_string(suppression_data, "", "suppression data text");
 DEFINE_string(output, "", "output file name (default: stdout)");
 DEFINE_double(error_rate, 0.00001, "error rate");
 DEFINE_bool(binary_mode, false, "outputs binary file");
-DECLARE_bool(logtostderr);
 
 namespace mozc {
 namespace {
@@ -103,7 +102,6 @@ void Convert() {
 }  // namespace mozc
 
 int main(int argc, char *argv[]) {
-  FLAGS_logtostderr = true;
   InitGoogle(argv[0], &argc, &argv, true);
 
   LOG(INFO) << FLAGS_suppression_data;

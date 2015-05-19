@@ -47,22 +47,22 @@ class CandidateWindowHandlerInterface {
   // Updates candidate state. This function also shows or hides candidate window
   // based on output argument.
   virtual void Update(IBusEngine *engine,
-                      const commands::Output &output) ABSTRACT;
+                      const commands::Output &output) = 0;
 
   // Hides candidate window.
-  virtual void Hide(IBusEngine *engine) ABSTRACT;
+  virtual void Hide(IBusEngine *engine) = 0;
 
   // Shows candidate window.
-  virtual void Show(IBusEngine *engine) ABSTRACT;
+  virtual void Show(IBusEngine *engine) = 0;
 
   // Following methods handle property-changed events relevant to ibus-panel.
   // |custom_font_description| should be a string representation of
   // PangoFontDescription.
   // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
   virtual void OnIBusCustomFontDescriptionChanged(
-      const string &custom_font_description) ABSTRACT;
+      const string &custom_font_description) = 0;
   virtual void OnIBusUseCustomFontDescriptionChanged(
-      bool use_custom_font_description) ABSTRACT;
+      bool use_custom_font_description) = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(CandidateWindowHandlerInterface);

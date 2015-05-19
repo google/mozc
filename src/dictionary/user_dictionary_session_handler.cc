@@ -32,6 +32,8 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/protobuf/protobuf.h"
+#include "base/protobuf/repeated_field.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_session.h"
@@ -89,8 +91,8 @@ bool UserDictionarySessionHandler::Evaluate(
     case UserDictionaryCommand::GET_ENTRY_SIZE:
       GetEntrySize(command, status);
       break;
-    case UserDictionaryCommand::GET_ENTRY:
-      GetEntry(command, status);
+    case UserDictionaryCommand::GET_ENTRIES:
+      GetEntries(command, status);
       break;
     case UserDictionaryCommand::CHECK_NEW_DICTIONARY_AVAILABILITY:
       CheckNewDictionaryAvailability(command, status);
@@ -298,7 +300,7 @@ void UserDictionarySessionHandler::GetEntrySize(
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
 }
 
-void UserDictionarySessionHandler::GetEntry(
+void UserDictionarySessionHandler::GetEntries(
     const UserDictionaryCommand &command,
     UserDictionaryCommandStatus *status) {
   UserDictionarySession *session = GetSession(command, status);
@@ -306,7 +308,7 @@ void UserDictionarySessionHandler::GetEntry(
     return;
   }
 
-  if (!command.has_dictionary_id() || command.entry_index_size() != 1) {
+  if (!command.has_dictionary_id() || command.entry_index_size() <= 0) {
     status->set_status(UserDictionaryCommandStatus::INVALID_ARGUMENT);
     return;
   }
@@ -317,13 +319,24 @@ void UserDictionarySessionHandler::GetEntry(
     status->set_status(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID);
     return;
   }
-  int index = command.entry_index(0);
-  if (index < 0 || dictionary->entries_size() <= index) {
-    status->set_status(UserDictionaryCommandStatus::ENTRY_INDEX_OUT_OF_RANGE);
-    return;
+
+  const int entry_index_size = command.entry_index_size();
+  for (int i = 0; i < entry_index_size; ++i) {
+    const int entry_index = command.entry_index(i);
+    if (entry_index < 0 || dictionary->entries_size() <= entry_index) {
+      status->set_status(UserDictionaryCommandStatus::ENTRY_INDEX_OUT_OF_RANGE);
+      return;
+    }
   }
 
-  status->mutable_entry()->CopyFrom(dictionary->entries(index));
+  mozc::protobuf::RepeatedPtrField<UserDictionary::Entry> *mutable_entries =
+      status->mutable_entries();
+  mutable_entries->Clear();
+  mutable_entries->Reserve(entry_index_size);
+  for (int i = 0; i < entry_index_size; ++i) {
+    const int entry_index = command.entry_index(i);
+    mutable_entries->Add()->CopyFrom(dictionary->entries(entry_index));
+  }
   status->set_status(
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
 }

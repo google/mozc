@@ -45,14 +45,14 @@
   </string-array>
 
   <string-array name="pref_emoji_provider_type_entries">
-    <item>@string/pref_emoji_provider_type_none</item>
+    <item>@string/pref_emoji_provider_type_unicode</item>
     <item>@string/pref_emoji_provider_type_docomo</item>
     <item>@string/pref_emoji_provider_type_kddi</item>
     <item>@string/pref_emoji_provider_type_softbank</item>
   </string-array>
 
   <string-array name="pref_emoji_provider_type_values">
-    <item>NONE</item>
+    <item>UNICODE</item>
     <item>DOCOMO</item>
     <item>KDDI</item>
     <item>SOFTBANK</item>
@@ -107,12 +107,6 @@
     <item>DEFAULT_HISTORY</item>
     <item>READ_ONLY</item>
     <item>NO_HISTORY</item>
-  </string-array>
-
-  <string-array name="menu_dialog_items">
-    <item>@string/menu_item_input_method</item>
-    <item>@string/menu_item_preferences</item>
-    <item>@string/menu_item_mushroom</item>
   </string-array>
 
   <string-array name="layout_adjustment_entries">

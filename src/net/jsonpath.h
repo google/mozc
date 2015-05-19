@@ -31,7 +31,9 @@
 #define MOZC_NET_JSONPATH_H_
 
 #include <string>
-#include "base/base.h"
+#include <vector>
+
+#include "base/port.h"
 #include "net/jsoncpp.h"
 
 namespace mozc {
@@ -70,10 +72,10 @@ class JsonPath {
                     vector<const Json::Value *> *output);
 
  private:
-  JsonPath() {}
-  ~JsonPath() {}
-  DISALLOW_COPY_AND_ASSIGN(JsonPath);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(JsonPath);
 };
-}  // net
-}  // mozc
+
+}  // namespace net
+}  // namespace mozc
+
 #endif  // MOZC_NET_JSONPATH_H_

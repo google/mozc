@@ -34,15 +34,11 @@
 
 #include <algorithm>
 #include <climits>
-#include <map>
-#include <set>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
-#include "base/singleton.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"

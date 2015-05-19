@@ -29,9 +29,9 @@
 
 #include "converter/segmenter_base.h"
 
-#include "base/base.h"
 #include "base/bitarray.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "converter/boundary_struct.h"
 #include "converter/node.h"
 #include "data_manager/data_manager_interface.h"

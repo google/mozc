@@ -30,10 +30,10 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MajorCategory;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
+import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 
@@ -73,9 +73,9 @@ public interface ViewEventListener {
 
   /**
    * Called when a candidate on symbol input view is selected.
-   * TODO(hidehiko): MajorCategory is in SymbolInputView. It's a bit weird structure. Refactor it.
    */
-  public void onSymbolCandidateSelected(MajorCategory majorCategory, String candidate);
+  public void onSymbolCandidateSelected(SymbolMajorCategory majorCategory, String candidate,
+                                        boolean updateHistory);
 
   /**
    * Called when a feedback event happens.
@@ -99,6 +99,7 @@ public interface ViewEventListener {
    * @param touchEventList {@code TouchEvent} instances which is related to this event
    *        for logging usage stats.
    */
+  // TODO(matsuzakit): Rename. onFlushTouchEventStats ?
   public void onShowMenuDialog(List<? extends TouchEvent> touchEventList);
 
   /**
@@ -116,7 +117,7 @@ public interface ViewEventListener {
 
   /**
    * Called when the hardware_composition_button is clicked.
-   * @param newParam TODO(matsuzakit):
+   * @param mode new mode
    */
   public void onHardwareKeyboardCompositionModeChange(CompositionSwitchMode mode);
 

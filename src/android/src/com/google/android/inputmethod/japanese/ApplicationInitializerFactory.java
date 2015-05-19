@@ -49,6 +49,8 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 
+import java.io.File;
+
 /**
  * Factory class of application initializer.
  *
@@ -154,6 +156,11 @@ public class ApplicationInitializerFactory {
       SharedPreferences.Editor editor = sharedPreferences.edit();
       Resources resources = context.getResources();
       try {
+        File tempDirectory = MozcUtil.getUserDictionaryExportTempDirectory(context);
+        if (tempDirectory.isDirectory()) {
+          MozcUtil.deleteDirectoryContents(tempDirectory);
+        }
+
         Optional<Integer> lastVersionCode;
         boolean isActivityShown;
         if (initializationStatus.isLaunchedAtLeastOnce()) {

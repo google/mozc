@@ -30,9 +30,10 @@
 #ifndef MOZC_STORAGE_REGISTRY_H_
 #define MOZC_STORAGE_REGISTRY_H_
 
-#include <string.h>
+#include <cstring>
 #include <string>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "base/logging.h"
 
 namespace mozc {
@@ -80,7 +81,7 @@ class Registry {
   static bool Lookup(const string &key, bool *value) {
     uint8 v = 0;
     const bool result = Lookup<uint8>(key, &v);
-    *value = static_cast<bool>(v);
+    *value = (v != 0);
     return result;
   }
 
@@ -123,8 +124,7 @@ class Registry {
   static bool LookupInternal(const string &key, string *value);
   static bool InsertInternal(const string &key, const string &value);
 
-  Registry() {}
-  virtual ~Registry() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(Registry);
 };
 }  // namespace storage
 }  // namespace mozc

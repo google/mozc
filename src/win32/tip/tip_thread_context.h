@@ -38,6 +38,9 @@
 
 namespace mozc {
 namespace win32 {
+
+class FocusHierarchyObserver;
+
 namespace tsf {
 
 class TipInputModeManager;
@@ -48,6 +51,10 @@ class TipThreadContext {
   ~TipThreadContext();
 
   TipInputModeManager *GetInputModeManager();
+  const FocusHierarchyObserver *GetFocusHierarchyObserver() const;
+
+  void InitializeFocusHierarchyObserver();
+
   int32 GetFocusRevision() const;
   void IncrementFocusRevision();
 

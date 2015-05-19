@@ -55,6 +55,7 @@ import org.easymock.EasyMock;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  */
@@ -73,8 +74,8 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
         Collections.<KeyState>emptyList());
     return createMockBuilder(KeyEventContext.class)
         .withConstructor(Key.class, int.class, float.class, float.class,
-                         int.class, int.class, float.class, MetaState.class)
-        .withArgs(key, 0, 0f, 0f, 0, 0, 0f, MetaState.UNMODIFIED)
+                         int.class, int.class, float.class, Set.class)
+        .withArgs(key, 0, 0f, 0f, 0, 0, 0f, Collections.emptySet())
         .createMock();
   }
 
@@ -100,7 +101,7 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     view.layout(0, 0, 50, 50);
     Key key = KeyEventButtonTouchListener.createKey(view, 1, 10);
     KeyEventContext keyEventContext =
-        new KeyEventContext(key, 0, 0, 0, 0, 100, 100, MetaState.UNMODIFIED);
+        new KeyEventContext(key, 0, 0, 0, 0, 100, 100, Collections.<MetaState>emptySet());
 
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
     replayAll();
@@ -127,7 +128,7 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     view.layout(0, 0, 50, 50);
     Key key = KeyEventButtonTouchListener.createKey(view, 1, 10);
     KeyEventContext keyEventContext =
-        new KeyEventContext(key, 0, 0, 0, 0, 100, 100, MetaState.UNMODIFIED);
+        new KeyEventContext(key, 0, 0, 0, 0, 100, 100, Collections.<MetaState>emptySet());
     keyEventButtonTouchListener.keyEventContext = keyEventContext;
 
     // For onDown, first, cancelDelayedKeyEvent should be invoked to cancel old
@@ -155,7 +156,7 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     view.layout(0, 0, 50, 50);
     Key key = KeyEventButtonTouchListener.createKey(view, 1, 10);
     KeyEventContext keyEventContext =
-        new KeyEventContext(key, 0, 0, 0, 0, 100, 100, MetaState.UNMODIFIED);
+        new KeyEventContext(key, 0, 0, 0, 0, 100, 100, Collections.<MetaState>emptySet());
     keyEventButtonTouchListener.keyEventContext = keyEventContext;
 
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);

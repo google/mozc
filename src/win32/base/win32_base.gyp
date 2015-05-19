@@ -85,9 +85,13 @@
           'target_name': 'ime_impl_base',
           'type': 'static_library',
           'sources': [
+            'accessible_object.cc',
+            'accessible_object_info.cc',
+            'browser_info.cc',
             'config_snapshot.cc',
             'conversion_mode_util.cc',
             'deleter.cc',
+            'focus_hierarchy_observer.cc',
             'indicator_visibility_tracker.cc',
             'input_state.cc',
             'keyboard.cc',
@@ -104,6 +108,15 @@
             '../../session/session_base.gyp:session_protocol',
             '../../session/session_base.gyp:output_util',
           ],
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'oleacc.lib',
+                ],
+              },
+            },
+          },
         },
         {
           'target_name': 'ime_impl_base_test',

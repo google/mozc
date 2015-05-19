@@ -35,24 +35,15 @@
 
 namespace mozc {
 
-class NodeAllocatorInterface;
-
 class UserDictionaryStub : public DictionaryInterface {
  public:
-  virtual bool HasValue(const StringPiece value) const {
+  virtual bool HasValue(StringPiece value) const {
     return false;
   }
 
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size, const Limit &limit,
-      NodeAllocatorInterface *allocator) const {
-    return NULL;
-  }
-
-  virtual Node *LookupPredictive(const char *str, int size,
-                                 NodeAllocatorInterface *allocator) const {
-    return NULL;
-  }
+  virtual void LookupPredictive(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const {}
 
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
@@ -60,10 +51,8 @@ class UserDictionaryStub : public DictionaryInterface {
 
   virtual void LookupExact(StringPiece key, Callback *callback) const {}
 
-  virtual Node *LookupReverse(const char *str, int size,
-                              NodeAllocatorInterface *allocator) const {
-    return NULL;
-  }
+  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
+                             Callback *callback) const {}
 
   virtual bool LookupComment(StringPiece key, StringPiece value,
                              string *comment) const {

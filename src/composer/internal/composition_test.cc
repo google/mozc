@@ -2032,14 +2032,14 @@ TEST_F(CompositionTest, Clone) {
   // "く"
   AppendChunk("\xe3\x81\x8f", "", "c", &src);
 
-  EXPECT_TRUE(table_.get() == src.table());
-  EXPECT_TRUE(Transliterators::FULL_KATAKANA == src.input_t12r());
+  EXPECT_EQ(table_.get(), src.table());
+  EXPECT_EQ(Transliterators::FULL_KATAKANA, src.input_t12r());
   EXPECT_EQ(3, src.chunks().size());
 
   scoped_ptr<Composition> dest(src.CloneImpl());
-  ASSERT_TRUE(dest.get());
-  EXPECT_TRUE(src.table() == dest->table());
-  EXPECT_TRUE(src.input_t12r() == dest->input_t12r());
+  ASSERT_NE(nullptr, dest.get());
+  EXPECT_EQ(src.table(), dest->table());
+  EXPECT_EQ(src.input_t12r(), dest->input_t12r());
   ASSERT_EQ(src.chunks().size(), dest->chunks().size());
 
   CharChunkList::const_iterator src_it = src.chunks().begin();

@@ -202,7 +202,7 @@ void TableLayout::FreezeLayout() {
   layout_frozen_ = true;
 }
 
-int TableLayout::IsLayoutFrozen() const {
+bool TableLayout::IsLayoutFrozen() const {
   return layout_frozen_;
 }
 

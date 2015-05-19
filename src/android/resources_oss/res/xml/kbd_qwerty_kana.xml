@@ -31,6 +31,7 @@
 -->
 <Keyboard
     xmlns:mozc="http://schemas.android.com/apk/res-auto"
+    mozc:keyboardContentDescription="@string/cd_keyboard_kana"
     mozc:keyBackground="qwertyRegular"
     mozc:keyWidth="10%p" mozc:keyHeight="20.5%p"
     mozc:horizontalGap="0.3%p" mozc:verticalGap="4%p"
@@ -39,7 +40,7 @@
   <Row mozc:rowEdgeFlags="top" mozc:keyHeight="0dip" mozc:verticalGap="4%p" />
   <Row>
     <Key mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_q">
         <Flick>
           <KeyEntity mozc:sourceId="1"
                      mozc:keyCode="@integer/uchar_latin_small_letter_q"
@@ -57,7 +58,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_w">
         <Flick>
           <KeyEntity mozc:sourceId="2"
                      mozc:keyCode="@integer/uchar_latin_small_letter_w"
@@ -75,7 +76,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_e">
         <Flick>
           <KeyEntity mozc:sourceId="3"
                      mozc:keyCode="@integer/uchar_latin_small_letter_e"
@@ -93,7 +94,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_r">
         <Flick>
           <KeyEntity mozc:sourceId="4"
                      mozc:keyCode="@integer/uchar_latin_small_letter_r"
@@ -111,7 +112,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_t">
         <Flick>
           <KeyEntity mozc:sourceId="5"
                      mozc:keyCode="@integer/uchar_latin_small_letter_t"
@@ -129,7 +130,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_y">
         <Flick>
           <KeyEntity mozc:sourceId="6"
                      mozc:keyCode="@integer/uchar_latin_small_letter_y"
@@ -147,7 +148,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_u">
         <Flick>
           <KeyEntity mozc:sourceId="7"
                      mozc:keyCode="@integer/uchar_latin_small_letter_u"
@@ -165,7 +166,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_i">
         <Flick>
           <KeyEntity mozc:sourceId="8"
                      mozc:keyCode="@integer/uchar_latin_small_letter_i"
@@ -183,7 +184,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_o">
         <Flick>
           <KeyEntity mozc:sourceId="9"
                      mozc:keyCode="@integer/uchar_latin_small_letter_o"
@@ -201,7 +202,7 @@
       </KeyState>
     </Key>
     <Key mozc:keyEdgeFlags="right">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_p">
         <Flick>
           <KeyEntity mozc:sourceId="10"
                      mozc:keyCode="@integer/uchar_latin_small_letter_p"
@@ -221,7 +222,7 @@
   </Row>
   <Row>
     <Key mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_a">
         <Flick>
           <KeyEntity mozc:sourceId="11"
                      mozc:keyCode="@integer/uchar_latin_small_letter_a"
@@ -232,7 +233,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_s">
         <Flick>
           <KeyEntity mozc:sourceId="12"
                      mozc:keyCode="@integer/uchar_latin_small_letter_s"
@@ -243,7 +244,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_d">
         <Flick>
           <KeyEntity mozc:sourceId="13"
                      mozc:keyCode="@integer/uchar_latin_small_letter_d"
@@ -254,7 +255,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_f">
         <Flick>
           <KeyEntity mozc:sourceId="14"
                      mozc:keyCode="@integer/uchar_latin_small_letter_f"
@@ -265,7 +266,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_g">
         <Flick>
           <KeyEntity mozc:sourceId="15"
                      mozc:keyCode="@integer/uchar_latin_small_letter_g"
@@ -276,7 +277,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_h">
         <Flick>
           <KeyEntity mozc:sourceId="16"
                      mozc:keyCode="@integer/uchar_latin_small_letter_h"
@@ -287,7 +288,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_j">
         <Flick>
           <KeyEntity mozc:sourceId="17"
                      mozc:keyCode="@integer/uchar_latin_small_letter_j"
@@ -298,7 +299,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_k">
         <Flick>
           <KeyEntity mozc:sourceId="18"
                      mozc:keyCode="@integer/uchar_latin_small_letter_k"
@@ -309,7 +310,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_l">
         <Flick>
           <KeyEntity mozc:sourceId="19"
                      mozc:keyCode="@integer/uchar_latin_small_letter_l"
@@ -320,7 +321,7 @@
       </KeyState>
     </Key>
     <Key mozc:keyEdgeFlags="right">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_katakana_hiragana_prolonged_sound_mark">
         <Flick>
           <KeyEntity mozc:sourceId="20"
                      mozc:keyCode="@integer/uchar_hyphen_minus"
@@ -334,7 +335,7 @@
   <Row>
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="13%p" mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_symbol">
         <Flick>
           <KeyEntity mozc:sourceId="21"
                      mozc:keyCode="@integer/key_symbol"
@@ -346,7 +347,7 @@
     </Key>
     <Spacer mozc:horizontalGap="2%" mozc:stick="right" />
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_z">
         <Flick>
           <KeyEntity mozc:sourceId="22"
                      mozc:keyCode="@integer/uchar_latin_small_letter_z"
@@ -357,7 +358,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_x">
         <Flick>
           <KeyEntity mozc:sourceId="23"
                      mozc:keyCode="@integer/uchar_latin_small_letter_x" 
@@ -368,7 +369,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_c">
         <Flick>
           <KeyEntity mozc:sourceId="24"
                      mozc:keyCode="@integer/uchar_latin_small_letter_c"
@@ -379,7 +380,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_v">
         <Flick>
           <KeyEntity mozc:sourceId="25"
                      mozc:keyCode="@integer/uchar_latin_small_letter_v"
@@ -390,7 +391,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_b">
         <Flick>
           <KeyEntity mozc:sourceId="26"
                      mozc:keyCode="@integer/uchar_latin_small_letter_b"
@@ -401,7 +402,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_n">
         <Flick>
           <KeyEntity mozc:sourceId="27"
                      mozc:keyCode="@integer/uchar_latin_small_letter_n"
@@ -412,7 +413,7 @@
       </KeyState>
     </Key>
     <Key>
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_latin_small_letter_m">
         <Flick>
           <KeyEntity mozc:sourceId="28"
                      mozc:keyCode="@integer/uchar_latin_small_letter_m"
@@ -425,7 +426,7 @@
     <Spacer mozc:horizontalGap="2%" mozc:stick="left" />
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="13%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_backspace">
         <Flick>
           <KeyEntity mozc:sourceId="29"
                      mozc:keyCode="@integer/key_backspace"
@@ -437,9 +438,9 @@
     </Key>
   </Row>
   <Row>
-    <Key mozc:keyBackground="qwertyFunction"
+    <Key mozc:keyBackground="qwertyFunctionWithThreeDots"
          mozc:keyWidth="13%p" mozc:keyEdgeFlags="left">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_chartype_to_abc">
         <Flick>
           <KeyEntity mozc:sourceId="30"
                      mozc:keyCode="@integer/key_chartype_to_abc"
@@ -452,7 +453,7 @@
     </Key>
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="13%p">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_chartype_to_kana_123">
         <Flick>
           <KeyEntity mozc:sourceId="31"
                      mozc:keyCode="@integer/key_chartype_to_kana_123"
@@ -464,7 +465,7 @@
     </Key>
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="10%p">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_ideographic_comma">
         <Flick>
           <KeyEntity mozc:sourceId="32"
                      mozc:keyCode="@integer/uchar_comma"
@@ -474,12 +475,13 @@
         </Flick>
       </KeyState>
     </Key>
-    <Key mozc:keyBackground="qwertyFunction"
+    <Key mozc:keyBackground="qwertyFunctionWithThreeDots"
          mozc:keyWidth="21%p">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_space">
         <Flick>
           <KeyEntity mozc:sourceId="33"
                      mozc:keyCode="@integer/uchar_space"
+                     mozc:longPressKeyCode="@integer/key_ime_picker_dialog"
                      mozc:keyIcon="@raw/qwerty__function__space__icon">
             <PopUp mozc:popUpIcon="@raw/qwerty__function__space__popup" />
           </KeyEntity>
@@ -488,7 +490,7 @@
     </Key>
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="10%p">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_ideographic_full_stop">
         <Flick>
           <KeyEntity mozc:sourceId="34"
                      mozc:keyCode="@integer/uchar_full_stop"
@@ -501,7 +503,7 @@
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="10%p"
          mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_left">
         <Flick>
           <KeyEntity mozc:sourceId="39"
                      mozc:keyCode="@integer/key_left"
@@ -514,7 +516,7 @@
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="10%p"
          mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_right">
         <Flick>
           <KeyEntity mozc:sourceId="40"
                      mozc:keyCode="@integer/key_right"
@@ -526,7 +528,7 @@
     </Key>
     <Key mozc:keyBackground="qwertyFunction"
          mozc:keyWidth="13%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
-      <KeyState>
+      <KeyState mozc:contentDescription="@string/cd_key_uchar_linefeed">
         <Flick>
           <KeyEntity mozc:sourceId="36"
                      mozc:keyCode="@integer/uchar_linefeed"

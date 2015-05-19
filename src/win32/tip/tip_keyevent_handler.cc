@@ -43,8 +43,10 @@
 #include "base/util.h"
 #include "client/client_interface.h"
 #include "session/commands.pb.h"
+#include "win32/base/browser_info.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
+#include "win32/base/focus_hierarchy_observer.h"
 #include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
@@ -160,13 +162,13 @@ void FillMozcContextCommon(TipTextService *text_service,
   if (FAILED(context_view->GetWnd(&attached_window))) {
     return;
   }
-  if (WindowUtil::IsInChromeOmnibox(attached_window)) {
-    mozc_context->set_suppress_suggestion(true);
-    mozc_context->add_experimental_features("chrome_omnibox");
-  }
-  if (WindowUtil::IsInGoogleSearchBox(attached_window)) {
-    mozc_context->set_suppress_suggestion(true);
-    mozc_context->add_experimental_features("google_search_box");
+  const auto *focus_hierarchy_observer =
+      text_service->GetThreadContext()->GetFocusHierarchyObserver();
+  if (focus_hierarchy_observer->IsAbailable()) {
+    if (BrowserInfo::IsOnChromeOmnibox(*focus_hierarchy_observer)) {
+      mozc_context->set_suppress_suggestion(true);
+      mozc_context->add_experimental_features("chrome_omnibox");
+    }
   }
 }
 

@@ -33,7 +33,7 @@
 #include <map>
 #include <string>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {
@@ -75,8 +75,8 @@ struct Node {
   // prev and next are linking pointers to connect minimum cost path
   // in the lattice. In other words, we can think the doubly-linked list
   // with prev/next represents the minimum cost path.
-  Node     *prev;
-  Node     *next;
+  Node *prev;
+  Node *next;
 
   // bnext points to another Node instance which shares the same beginning
   // position of the key.
@@ -150,29 +150,29 @@ struct Node {
   //    bnext. Same for Nodes 5, 6, 7 and 8.
   // 2) Nodes 3, 5 and 6 end with pos "5", so they are connected by enext.
   //    Same for Nodes 4, 7 and 8.
-  Node     *bnext;
-  Node     *enext;
+  Node *bnext;
+  Node *enext;
 
   // if it is not NULL, transition cost
   // from constrained_prev to current node is defined,
   // other transition is set to be infinite
-  Node     *constrained_prev;
+  Node *constrained_prev;
 
-  uint16    rid;
-  uint16    lid;
-  uint16    begin_pos;
-  uint16    end_pos;
+  uint16 rid;
+  uint16 lid;
+  uint16 begin_pos;
+  uint16 end_pos;
 
   // wcost: word cost for the node; it may be changed after lookup
   // cost: the total cost between BOS and the node
   // raw_wcost: raw word cost for the node; it is not changed after lookup.
   //            It is used for the cache of lattice.
-  int32     wcost;
-  int32     cost;
-  int32     raw_wcost;
+  int32 wcost;
+  int32 cost;
+  int32 raw_wcost;
 
-  NodeType  node_type;
-  uint32    attributes;
+  NodeType node_type;
+  uint32 attributes;
 
   // Equal to that of Candidate.
   size_t consumed_key_size;
@@ -181,9 +181,9 @@ struct Node {
   // actual_key: The actual search key that corresponds to the value.
   //           Can differ from key when no modifier conversion is enabled.
   // value: The surface form of the word.
-  string    key;
-  string    actual_key;
-  string    value;
+  string key;
+  string actual_key;
+  string value;
 
   Node() {
     Init();

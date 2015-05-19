@@ -32,6 +32,8 @@
 
 #include <functional>
 
+#include "base/port.h"
+
 namespace mozc {
 
 template <class ForwardIterator>
@@ -52,6 +54,17 @@ void STLDeleteElements(T *container) {
   STLDeleteContainerPointers(container->begin(), container->end());
   container->clear();
 }
+
+template <typename C>
+class ScopedElementsDeleter {
+ public:
+  explicit ScopedElementsDeleter(C *container) : container_(container) {}
+  ~ScopedElementsDeleter() { STLDeleteElements(container_); }
+
+ private:
+  C *container_;
+  DISALLOW_COPY_AND_ASSIGN(ScopedElementsDeleter);
+};
 
 // Comparator functor based of a member.
 // Key: a function object to return key from the given value.

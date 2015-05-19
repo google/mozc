@@ -67,7 +67,7 @@ class Louds {
   // TODO(hidehiko): Check the performance of the conversion between int and
   // bool, because this method should be invoked so many times.
   inline bool IsEdgeBit(int bit_index) const {
-    return index_.Get(bit_index);
+    return (index_.Get(bit_index) != 0);
   }
 
   // Returns the child node id of the edge corresponding to the given bit

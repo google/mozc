@@ -30,105 +30,59 @@
 #include "dictionary/suffix_dictionary.h"
 
 #include "base/scoped_ptr.h"
-#include "base/trie.h"
 #include "base/util.h"
-#include "converter/node.h"
-#include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_test_util.h"
 #include "dictionary/suffix_dictionary_token.h"
 #include "testing/base/public/gunit.h"
 
+using ::mozc::dictionary::CollectTokenCallback;
+
 namespace mozc {
 
-TEST(SuffixDictionaryTest, BasicTest) {
-  // Test the SuffixDictionary with mock data.
-  testing::MockDataManager manager;
-
-  scoped_ptr<const DictionaryInterface> d;
+TEST(SuffixDictionaryTest, LookupPredictive) {
+  // Test SuffixDictionary with mock data.
+  scoped_ptr<const SuffixDictionary> dic;
   {
+    const testing::MockDataManager manager;
     const SuffixToken *tokens = NULL;
     size_t tokens_size = 0;
     manager.GetSuffixDictionaryData(&tokens, &tokens_size);
-    d.reset(new SuffixDictionary(tokens, tokens_size));
-    ASSERT_TRUE(d.get());
+    dic.reset(new SuffixDictionary(tokens, tokens_size));
+    ASSERT_NE(nullptr, dic.get());
   }
 
-  NodeAllocator allocator;
-
-  // only support predictive lookup.
-  // Also, SuffixDictionary returns non-NULL value even
-  // for empty request.
-  EXPECT_FALSE(NULL == d->LookupPredictive(NULL, 0, &allocator));
-  EXPECT_FALSE(NULL == d->LookupPredictive("", 0, &allocator));
-
   {
-    // empty request.
-    Node *node = d->LookupPredictive("", 0, &allocator);
-    for (; node != NULL; node = node->bnext) {
-      EXPECT_FALSE(node->key.empty());
-      EXPECT_FALSE(node->value.empty());
-      EXPECT_NE(node->lid, 0);
-      EXPECT_NE(node->rid, 0);
+    // Lookup with empty key.  All tokens are looked up.  Here, just verify the
+    // result is nonempty and each token has valid data.
+    CollectTokenCallback callback;
+    dic->LookupPredictive("", false, &callback);
+    EXPECT_FALSE(callback.tokens().empty());
+    for (size_t i = 0; i < callback.tokens().size(); ++i) {
+      const Token &token = callback.tokens()[i];
+      EXPECT_FALSE(token.key.empty());
+      EXPECT_FALSE(token.value.empty());
+      EXPECT_LT(0, token.lid);
+      EXPECT_LT(0, token.rid);
+      EXPECT_EQ(Token::NONE, token.attributes);
     }
   }
-
   {
-    // "た"
-    const char kQuery[] = "\xE3\x81\x9F";
-    Node *node = d->LookupPredictive(kQuery, strlen(kQuery), &allocator);
-    for (; node != NULL; node = node->bnext) {
-      EXPECT_FALSE(node->key.empty());
-      EXPECT_FALSE(node->value.empty());
-      EXPECT_NE(node->lid, 0);
-      EXPECT_NE(node->rid, 0);
-      EXPECT_TRUE(Util::StartsWith(node->key, kQuery));
-    }
-  }
-
-  {
-    // "だ"
-    const char kQuery[] = "\xe3\x81\xa0";
-    DictionaryInterface::Limit limit;
-    Trie<string> trie;
-    // "ね"
-    trie.AddEntry("\xe3\x81\xad", "");
-    // "よ"
-    trie.AddEntry("\xe3\x82\x88", "");
-    limit.begin_with_trie = &trie;
-
-    Node *node = d->LookupPredictiveWithLimit(kQuery, strlen(kQuery),
-                                              limit, &allocator);
-    for (; node != NULL; node = node->bnext) {
-      // "だね"
-      // "だよ"
-      EXPECT_TRUE(Util::StartsWith(node->key, "\xe3\x81\xa0\xe3\x81\xad") ||
-                  Util::StartsWith(node->key, "\xe3\x81\xa0\xe3\x82\x88"));
-      // "だな"
-      EXPECT_FALSE(Util::StartsWith(node->key, "\xe3\x81\xa0\xe3\x81\xaa"));
-      EXPECT_NE(node->lid, 0);
-      EXPECT_NE(node->rid, 0);
-    }
-  }
-
-  {
-    DictionaryInterface::Limit limit;
-    Trie<string> trie;
-    // "だ"
-    trie.AddEntry("\xe3\x81\xa0", "");
-    // "で"
-    trie.AddEntry("\xe3\x81\xa7", "");
-    limit.begin_with_trie = &trie;
-
-    Node *node = d->LookupPredictiveWithLimit("", 0, limit, &allocator);
-    for (; node != NULL; node = node->bnext) {
-      // "だ"
-      // "で"
-      EXPECT_TRUE(Util::StartsWith(node->key, "\xe3\x81\xa0") ||
-                  Util::StartsWith(node->key, "\xe3\x81\xa7"));
-      EXPECT_NE(node->lid, 0);
-      EXPECT_NE(node->rid, 0);
+    // Non-empty prefix.
+    const string kPrefix = "\xE3\x81\x9F";  // "た"
+    CollectTokenCallback callback;
+    dic->LookupPredictive(kPrefix, false, &callback);
+    EXPECT_FALSE(callback.tokens().empty());
+    for (size_t i = 0; i < callback.tokens().size(); ++i) {
+      const Token &token = callback.tokens()[i];
+      EXPECT_TRUE(Util::StartsWith(token.key, kPrefix));
+      EXPECT_FALSE(token.value.empty());
+      EXPECT_LT(0, token.lid);
+      EXPECT_LT(0, token.rid);
+      EXPECT_EQ(Token::NONE, token.attributes);
     }
   }
 }
+
 }  // namespace mozc

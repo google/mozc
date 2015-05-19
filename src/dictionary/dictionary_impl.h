@@ -62,22 +62,19 @@ class DictionaryImpl : public DictionaryInterface {
 
   virtual ~DictionaryImpl();
 
-  virtual bool HasValue(const StringPiece value) const;
+  virtual bool HasValue(StringPiece value) const;
 
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size, const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
-
-  virtual Node *LookupPredictive(const char *str, int size,
-                                 NodeAllocatorInterface *allocator) const;
+  virtual void LookupPredictive(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const;
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
 
   virtual void LookupExact(StringPiece key, Callback *callback) const;
 
-  virtual Node *LookupReverse(const char *str, int size,
-                              NodeAllocatorInterface *allocator) const;
+  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
+                             Callback *callback) const;
 
   virtual bool LookupComment(StringPiece key, StringPiece value,
                              string *comment) const;
@@ -85,7 +82,7 @@ class DictionaryImpl : public DictionaryInterface {
   virtual bool Reload();
 
   virtual void PopulateReverseLookupCache(
-      const char *str, int size, NodeAllocatorInterface *allocator) const;
+      StringPiece str, NodeAllocatorInterface *allocator) const;
 
   virtual void ClearReverseLookupCache(NodeAllocatorInterface *allocator) const;
 
@@ -96,13 +93,6 @@ class DictionaryImpl : public DictionaryInterface {
     REVERSE,
     EXACT,
   };
-
-  Node *LookupInternal(const char *str, int size,
-                       LookupType type,
-                       const Limit &limit,
-                       NodeAllocatorInterface *allocator) const;
-
-  Node *MaybeRemoveSpecialNodes(Node *node) const;
 
   // Used to check POS IDs.
   const POSMatcher *pos_matcher_;
@@ -116,7 +106,7 @@ class DictionaryImpl : public DictionaryInterface {
   // composite dictionary.
   vector<const DictionaryInterface *> dics_;
 
-  // Suppression dictionary is used to suppress nodes.
+  // Suppression dictionary is used to suppress entries.
   const SuppressionDictionary *suppression_dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryImpl);

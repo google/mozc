@@ -194,89 +194,110 @@ void TextDictionaryLoader::LoadWithLineLimit(
   //      tokens that have the same value.
   sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
 
+  vector<Token *> reading_correction_tokens;
+  LoadReadingCorrectionTokens(reading_correction_filename, tokens_,
+                              &limit, &reading_correction_tokens);
+  const size_t tokens_size = tokens_.size();
+  tokens_.resize(tokens_size + reading_correction_tokens.size());
+  for (size_t i = 0; i < reading_correction_tokens.size(); ++i) {
+    // |tokens_| takes the ownership of each allocated token.
+    tokens_[tokens_size + i] = reading_correction_tokens[i];
+  }
+}
+
+// Loads reading correction data into |tokens|.  The second argument is used to
+// determine costs of reading correction tokens and must be sorted by
+// OrderByValueThenByKey().  The output tokens are newly allocated and the
+// caller is responsible to delete them.
+void TextDictionaryLoader::LoadReadingCorrectionTokens(
+    const string &reading_correction_filename,
+    const vector<Token *> &ref_sorted_tokens,
+    int *limit,
+    vector<Token *> *tokens) {
   // Load reading correction entries.
   int reading_correction_size = 0;
-  {
-    InputMultiFile file(reading_correction_filename);
-    string line;
-    while (file.ReadLine(&line)) {
-      if (line.empty() || line[0] == '#') {
-        continue;
-      }
 
-      // Parse TSV line in a pair of value and key (Note: first element is value
-      // and the second key).
-      Util::ChopReturns(&line);
-      pair<StringPiece, StringPiece> value_key;
-      ParseReadingCorrectionTSV(line, &value_key);
+  InputMultiFile file(reading_correction_filename);
+  string line;
+  while (file.ReadLine(&line)) {
+    if (line.empty() || line[0] == '#') {
+      continue;
+    }
 
-      // Filter the entry if this key value pair already exists in the system
-      // dictionary.
-      if (binary_search(MakeIteratorAdapter(tokens_.begin(), AsValueAndKey()),
-                        MakeIteratorAdapter(tokens_.end(), AsValueAndKey()),
-                        value_key)) {
-        VLOG(1) << "System dictionary has the same key-value: " << line;
-        continue;
-      }
+    // Parse TSV line in a pair of value and key (Note: first element is value
+    // and the second key).
+    Util::ChopReturns(&line);
+    pair<StringPiece, StringPiece> value_key;
+    ParseReadingCorrectionTSV(line, &value_key);
 
-      // Since reading correction entries lack POS and cost, we recover those
-      // fields from a token in the system dictionary that has the same value.
-      // Since multple tokens may have the same value, from such tokens, we
-      // select the one that has the maximum cost.
-      typedef vector<Token *>::const_iterator TokenIterator;
-      typedef IteratorAdapter<TokenIterator, AsValue> AsValueIterator;
-      typedef pair<AsValueIterator, AsValueIterator> Range;
-      Range range = equal_range(MakeIteratorAdapter(CBegin(tokens_), AsValue()),
-                                MakeIteratorAdapter(CEnd(tokens_), AsValue()),
-                                value_key.first);
-      TokenIterator begin = range.first.base(), end = range.second.base();
-      if (begin == end) {
-        VLOG(1) << "Cannot find the value in system dicitonary - ignored:"
-                << line;
-        continue;
-      }
-      // Now [begin, end) contains all the tokens that have the same value as
-      // this reading correction entry.  Next, find the token that has the
-      // maximum cost in [begin, end).  Note that linear search is sufficiently
-      // fast here because the size of the range is small.
-      const Token *max_cost_token = *begin;
-      for (++begin; begin != end; ++begin) {
-        if ((*begin)->cost > max_cost_token->cost) {
-          max_cost_token = *begin;
-        }
-      }
+    // Filter the entry if this key value pair already exists in the system
+    // dictionary.
+    if (binary_search(
+            MakeIteratorAdapter(ref_sorted_tokens.begin(), AsValueAndKey()),
+            MakeIteratorAdapter(ref_sorted_tokens.end(), AsValueAndKey()),
+            value_key)) {
+      VLOG(1) << "System dictionary has the same key-value: " << line;
+      continue;
+    }
 
-      // The cost is calculated as -log(prob) * 500.
-      // We here assume that the wrong reading appear with 1/100 probability
-      // of the original (correct) reading.
-      const int kCostPenalty = 2302;      // -log(1/100) * 500;
-      scoped_ptr<Token> token(new Token);
-      value_key.second.CopyToString(&token->key);
-      token->value = max_cost_token->value;
-      token->lid = max_cost_token->lid;
-      token->rid = max_cost_token->rid;
-      token->cost = max_cost_token->cost + kCostPenalty;
-      // We don't set SPELLING_CORRECTION. The entries in reading_correction
-      // data are also stored in rewriter/correction_rewriter.cc.
-      // reading_correction_rewriter annotates the spelling correction
-      // notations.
-      token->attributes = Token::NONE;
-      tokens_.push_back(token.release());
-      ++reading_correction_size;
-      if (--limit <= 0) {
-        break;
+    // Since reading correction entries lack POS and cost, we recover those
+    // fields from a token in the system dictionary that has the same value.
+    // Since multple tokens may have the same value, from such tokens, we
+    // select the one that has the maximum cost.
+    typedef vector<Token *>::const_iterator TokenIterator;
+    typedef IteratorAdapter<TokenIterator, AsValue> AsValueIterator;
+    typedef pair<AsValueIterator, AsValueIterator> Range;
+    Range range = equal_range(
+        MakeIteratorAdapter(CBegin(ref_sorted_tokens), AsValue()),
+        MakeIteratorAdapter(CEnd(ref_sorted_tokens), AsValue()),
+        value_key.first);
+    TokenIterator begin = range.first.base(), end = range.second.base();
+    if (begin == end) {
+      VLOG(1) << "Cannot find the value in system dicitonary - ignored:"
+              << line;
+      continue;
+    }
+    // Now [begin, end) contains all the tokens that have the same value as
+    // this reading correction entry.  Next, find the token that has the
+    // maximum cost in [begin, end).  Note that linear search is sufficiently
+    // fast here because the size of the range is small.
+    const Token *max_cost_token = *begin;
+    for (++begin; begin != end; ++begin) {
+      if ((*begin)->cost > max_cost_token->cost) {
+        max_cost_token = *begin;
       }
     }
-    LOG(INFO) << reading_correction_size << " tokens from "
-              << reading_correction_filename;
+
+    // The cost is calculated as -log(prob) * 500.
+    // We here assume that the wrong reading appear with 1/100 probability
+    // of the original (correct) reading.
+    const int kCostPenalty = 2302;      // -log(1/100) * 500;
+    scoped_ptr<Token> token(new Token);
+    value_key.second.CopyToString(&token->key);
+    token->value = max_cost_token->value;
+    token->lid = max_cost_token->lid;
+    token->rid = max_cost_token->rid;
+    token->cost = max_cost_token->cost + kCostPenalty;
+    // We don't set SPELLING_CORRECTION. The entries in reading_correction
+    // data are also stored in rewriter/correction_rewriter.cc.
+    // reading_correction_rewriter annotates the spelling correction
+    // notations.
+    token->attributes = Token::NONE;
+    tokens->push_back(token.release());
+    ++reading_correction_size;
+    if (--*limit <= 0) {
+      break;
+    }
   }
+  LOG(INFO) << reading_correction_size << " tokens from "
+            << reading_correction_filename;
 }
 
 void TextDictionaryLoader::Clear() {
   STLDeleteElements(&tokens_);
 }
 
-void TextDictionaryLoader::CollectTokens(vector<Token *> *res) {
+void TextDictionaryLoader::CollectTokens(vector<Token *> *res) const {
   DCHECK(res);
   res->reserve(res->size() + tokens_.size());
   res->insert(res->end(), tokens_.begin(), tokens_.end());

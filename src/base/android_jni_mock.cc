@@ -81,11 +81,13 @@ void MockJNIEnv::ClearArrayMap() {
 }
 
 jclass MockJNIEnv::FindClass(const char *class_path) {
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
   static const char kEncryptorPath[] =
       "org/mozc/android/inputmethod/japanese/nativecallback/Encryptor";
   if (strcmp(class_path, kEncryptorPath) == 0) {
     return &mock_encryptor_class_;
   }
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
   static const char kHttpClientPath[] =
       "org/mozc/android/inputmethod/japanese/nativecallback/HttpClient";
   if (strcmp(class_path, kHttpClientPath) == 0) {
@@ -96,6 +98,7 @@ jclass MockJNIEnv::FindClass(const char *class_path) {
 
 jmethodID MockJNIEnv::GetStaticMethodID(
     jclass cls, const char *name, const char *signature) {
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
   if (cls == &mock_encryptor_class_) {
     if (strcmp(name, "deriveFromPassword") == 0 &&
         strcmp(signature, "([B[B)[B") == 0) {
@@ -111,6 +114,7 @@ jmethodID MockJNIEnv::GetStaticMethodID(
     }
     return NULL;
   }
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
   if (cls == &mock_http_client_class_) {
     if (strcmp(name, "request") == 0 &&
         strcmp(signature, "([B[B[B)[B") == 0) {
@@ -123,6 +127,7 @@ jmethodID MockJNIEnv::GetStaticMethodID(
 
 jobject MockJNIEnv::CallStaticObjectMethodV(
     jclass cls, jmethodID method, va_list args) {
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
   if (cls == &mock_encryptor_class_) {
     CHECK(mock_encryptor_.get() != NULL)
         << "mock_encryptor_ is not initialized.";
@@ -146,6 +151,7 @@ jobject MockJNIEnv::CallStaticObjectMethodV(
     LOG(FATAL) << "Unexpected call.";
     return NULL;
   }
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
   if (cls == &mock_http_client_class_) {
     CHECK(mock_http_client_.get() != NULL)
         << "mock_http_client_ is not initialized.";

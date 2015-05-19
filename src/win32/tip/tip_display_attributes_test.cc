@@ -104,7 +104,7 @@ TEST(TipDisplayAttributesTest, BasicTest) {
 
   GUID guid;
   EXPECT_EQ(S_OK, attribute.GetGUID(&guid));
-  EXPECT_TRUE(::IsEqualGUID(kTestGuid, guid));
+  EXPECT_NE(FALSE, ::IsEqualGUID(kTestGuid, guid));
 
   TF_DISPLAYATTRIBUTE info;
   EXPECT_EQ(S_OK, attribute.GetAttributeInfo(&info));

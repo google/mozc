@@ -32,8 +32,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="@ANDROID_APPLICATION_ID@"
           android:versionCode="@ANDROID_VERSION_CODE@"
-          android:versionName="@MAJOR@.@MINOR@.@BUILD@.@REVISION@">
-  <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="18" />
+          android:versionName="@MAJOR@.@MINOR@.@BUILD@.@REVISION@-@ANDROID_ARCH@">
+  <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="19" />
 
   <!-- Google Japanese Input (the main code) requires the following permissions. -->
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -42,7 +42,9 @@
 
 
   <application android:icon="@drawable/application_icon" android:label="@string/app_full_name" >
-    <service android:name="@ANDROID_SERVICE_NAME@" android:permission="android.permission.BIND_INPUT_METHOD">
+    <service android:name="@ANDROID_SERVICE_NAME@"
+             android:permission="android.permission.BIND_INPUT_METHOD"
+             android:label="@string/app_full_name">
       <intent-filter>
         <action android:name="android.view.InputMethod" />
       </intent-filter>
@@ -78,20 +80,25 @@
               android:theme="@style/MozcLightTheme"
               android:uiOptions="splitActionBarWhenNarrow"
               android:configChanges="orientation|screenSize">
-      <!-- Intent filters to receive a file-sending intent for user dictionary data importing. -->
+      <!-- Intent filters to receive a file-sending intent for importing user dictionary data.
+           UserDictionaryToolActivity accepts only file scheme.
+      -->
       <intent-filter>
         <action android:name="android.intent.action.SEND" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <data android:mimeType="text/plain" />
-        <data android:mimeType="application/zip" />
-      </intent-filter>
-      <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <data android:mimeType="text/plain" />
         <data android:mimeType="application/zip" />
+        <data android:scheme="file" />
       </intent-filter>
     </activity>
+
+    <!-- TODO(matsuzakit): Use @string/user_dictionary_tool_export_provider_name for name and authorities.
+         Currently resource reference is not used as it is not supported on API Level 7 (Eclair). -->
+    <provider android:name="org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryExportProvider"
+              android:authorities="org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryExportProvider"
+              android:exported="false"
+              android:grantUriPermissions="true"/>
 
     <!-- For mushroom.
          Note about the attributes:

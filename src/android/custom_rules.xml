@@ -33,7 +33,7 @@
   <target name="apk" description="Invokes 'release' or 'debug' target, based on gyp.build_type property.">
     <if>
       <condition>
-        <equals arg1="${gyp.build_type}" arg2="Release_Android"/>
+        <equals arg1="${gyp.build_type}" arg2="Release"/>
       </condition>
       <then>
         <antcall target="release"/>

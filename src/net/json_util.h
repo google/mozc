@@ -30,7 +30,7 @@
 #ifndef MOZC_NET_JSON_UTIL_H_
 #define MOZC_NET_JSON_UTIL_H_
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/protobuf/message.h"
 #include "net/jsoncpp.h"
 
@@ -49,10 +49,7 @@ class JsonUtil {
       const Json::Value &value, protobuf::Message *message);
 
  private:
-  JsonUtil() {}
-  ~JsonUtil() {}
-
-  DISALLOW_COPY_AND_ASSIGN(JsonUtil);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(JsonUtil);
 };
 
 }  // namespace net

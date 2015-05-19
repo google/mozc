@@ -240,6 +240,7 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     setOutAnimationListener(new OutAnimationAdapter());
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void onFinishInflate() {
     // Connect candidate word view and its scroll guide.
@@ -251,7 +252,7 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     // Initialize inputFrameFoldButton.
     CompoundButton inputFrameFoldButton = getInputFrameFoldButton();
     inputFrameFoldButton.setBackgroundDrawable(
-        new MozcDrawableFactory(getResources()).getDrawable(R.raw.keyboard__fold__tab));
+        new MozcDrawableFactory(getResources()).getDrawable(R.raw.keyboard__fold__tab).orNull());
 
     reset();
   }

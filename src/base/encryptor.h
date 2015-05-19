@@ -36,7 +36,9 @@
 
 namespace mozc {
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
 struct KeyData;
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
 class Encryptor {
  public:
@@ -78,20 +80,26 @@ class Encryptor {
     // return true if the key is ready
     bool IsAvailable() const;
 
-    // return the size required to encrypt
-    // the buffer of size |size|.
+    // return the size required to encrypt the buffer of size |size|.
     size_t GetEncryptedSize(size_t size) const;
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
     // Get Internal KeyData
     KeyData *GetKeyData() const;
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
     Key();
-    virtual ~Key();
+    ~Key();
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
    private:
     scoped_ptr<KeyData> data_;
     scoped_ptr<uint8[]> iv_;
     bool is_available_;
+#else
+    struct InternalData;
+    scoped_ptr<InternalData> data_;
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
   };
 
   // Encrypt character buffer. set the size of character buffer
@@ -124,8 +132,7 @@ class Encryptor {
   static bool UnprotectData(const string &cipher_text, string *plain_text);
 
  private:
-  Encryptor() {}
-  ~Encryptor() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(Encryptor);
 };
 }  // namespace mozc
 #endif  // MOZC_BASE_ENCRYPTOR_H_

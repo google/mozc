@@ -54,7 +54,6 @@ class LoudsTrie;
 }  // namespace storage
 
 class DictionaryFile;
-class NodeAllocatorInterface;
 class POSMatcher;
 
 namespace dictionary {
@@ -70,22 +69,17 @@ class ValueDictionary : public DictionaryInterface {
       const POSMatcher& pos_matcher, const char *ptr, int len);
 
   // Implementation of DictionaryInterface
-  virtual bool HasValue(const StringPiece value) const;
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size,
-      const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupPredictive(
-      const char *str, int size,
-      NodeAllocatorInterface *allocator) const;
+  virtual bool HasValue(StringPiece value) const;
+  virtual void LookupPredictive(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const;
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
-  virtual void LookupExact(
-      StringPiece key, Callback *callback) const;
-  virtual Node *LookupReverse(
-      const char *str, int size,
-      NodeAllocatorInterface *allocator) const;
+  virtual void LookupExact(StringPiece key, Callback *callback) const;
+  virtual void LookupReverse(
+      StringPiece str, NodeAllocatorInterface *allocator,
+      Callback *callback) const;
 
  private:
   explicit ValueDictionary(const POSMatcher& pos_matcher);
@@ -95,7 +89,6 @@ class ValueDictionary : public DictionaryInterface {
   scoped_ptr<mozc::storage::louds::LoudsTrie> value_trie_;
   scoped_ptr<DictionaryFile> dictionary_file_;
   const SystemDictionaryCodecInterface *codec_;
-  const Limit empty_limit_;
   const uint16 suggestion_only_word_id_;
 
   DISALLOW_COPY_AND_ASSIGN(ValueDictionary);

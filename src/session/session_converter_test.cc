@@ -1538,14 +1538,14 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
     EXPECT_EQ("\xe9\x99\xb0\xe8\xac\x80", conversion.segment(1).value());
   }
 
-  {  // Initialization of SetCommitFirstSegment.
+  {  // Initialization of SetCommitSegments.
     Segments segments_after_submit;
     Segment *segment = segments_after_submit.add_segment();
     // "いんぼう"
     segment->set_key("\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86");
     segment->add_candidate()->value = "\xe9\x99\xb0\xe8\xac\x80";  // "陰謀"
     segment->add_candidate()->value = "\xe5\x8d\xb0\xe6\x88\xbf";  // "印房"
-    convertermock_->SetCommitFirstSegment(&segments_after_submit, true);
+    convertermock_->SetCommitSegments(&segments_after_submit, true);
   }
   size_t size;
   converter.CommitFirstSegment(*composer_, Context::default_instance(), &size);
@@ -1561,6 +1561,104 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
   EXPECT_COUNT_STATS("CommitFromConversion", 1);
   EXPECT_STATS_NOT_EXIST("ConversionCandidates0");
   EXPECT_COUNT_STATS("ConversionCandidates1", 1);
+}
+
+TEST_F(SessionConverterTest, CommitHeadToFocusedSegments) {
+  SessionConverter converter(convertermock_.get(), &default_request_);
+  // "いべりこ"
+  const string kIberiko = "\xE3\x81\x84\xE3\x81\xB9\xE3\x82\x8A\xE3\x81\x93";
+  // "ねこを"
+  const string kNekowo = "\xE3\x81\xAD\xE3\x81\x93\xE3\x82\x92";
+  // "いただいた"
+  const string kItadaita = "\xE3\x81\x84\xE3\x81\x9F\xE3\x81"
+                           "\xA0\xE3\x81\x84\xE3\x81\x9F";
+  {  // Three segments as the result of conversion.
+    Segments segments;
+    Segment *segment;
+    Segment::Candidate *candidate;
+
+    segment = segments.add_segment();
+    segment->set_key(kIberiko);
+    candidate = segment->add_candidate();
+    // "イベリコ"
+    candidate->value = "\xE3\x82\xA4\xE3\x83\x99\xE3\x83\xAA\xE3\x82\xB3";
+
+    segment = segments.add_segment();
+    segment->set_key(kNekowo);
+    candidate = segment->add_candidate();
+    // "猫を"
+    candidate->value = "\xE7\x8C\xAB\xE3\x82\x92";
+
+    segment = segments.add_segment();
+    segment->set_key(kItadaita);
+    candidate = segment->add_candidate();
+    // "頂いた"
+    candidate->value = "\xE9\xA0\x82\xE3\x81\x84\xE3\x81\x9F";
+    convertermock_->SetStartConversionForRequest(&segments, true);
+  }
+
+  composer_->InsertCharacterPreedit(kIberiko + kNekowo + kItadaita);
+  EXPECT_TRUE(converter.Convert(*composer_));
+  // Here [イベリコ]|猫を|頂いた
+
+  converter.SegmentFocusRight();
+  // Here イベリコ|[猫を]|頂いた
+
+  {  // Initialization of SetCommitSegments.
+    Segments segments;
+    Segment *segment;
+    Segment::Candidate *candidate;
+
+    segment = segments.add_segment();
+    segment->set_key(kItadaita);
+    candidate = segment->add_candidate();
+    // "頂いた"
+    candidate->value = "\xE9\xA0\x82\xE3\x81\x84\xE3\x81\x9F";
+    convertermock_->SetStartConversionForRequest(&segments, true);
+
+    convertermock_->SetCommitSegments(&segments, true);
+  }
+  size_t size;
+  converter.CommitHeadToFocusedSegments(*composer_,
+                                        Context::default_instance(), &size);
+  // Here 頂いた
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_EQ(Util::CharsLen(kIberiko + kNekowo), size);
+  EXPECT_TRUE(converter.IsActive());
+}
+
+TEST_F(SessionConverterTest, CommitHeadToFocusedSegments_atLastSegment) {
+  SessionConverter converter(convertermock_.get(), &default_request_);
+  Segments segments;
+  SetKamaboko(&segments);
+  convertermock_->SetStartConversionForRequest(&segments, true);
+
+  // "かまぼこの"
+  const string kKamabokono =
+    "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae";
+  // "いんぼう"
+  const string kInbou =
+    "\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86";
+
+  // "かまぼこのいんぼう"
+  composer_->InsertCharacterPreedit(kKamabokono + kInbou);
+  EXPECT_TRUE(converter.Convert(*composer_));
+  // Here [かまぼこの]|陰謀
+
+  converter.SegmentFocusRight();
+  // Here かまぼこの|[陰謀]
+
+  {  // Initialization of SetCommitSegments.
+    Segments segments_after_submit;
+    convertermock_->SetCommitSegments(&segments_after_submit, true);
+  }
+  size_t size;
+  // All the segments should be committed.
+  converter.CommitHeadToFocusedSegments(*composer_,
+                                        Context::default_instance(), &size);
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_EQ(0, size);
+  EXPECT_FALSE(converter.IsActive());
 }
 
 TEST_F(SessionConverterTest, CommitPreedit) {

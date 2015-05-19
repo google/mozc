@@ -58,9 +58,7 @@ static const char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
 static const char kCustomKeyMapFile[] = "user://keymap.tsv";
 static const char kMobileKeyMapFile[] = "system://mobile.tsv";
 
-// TODO(team): Investigate if "InputModeX" commands should be
-//     functional on Android or not. Remove the condition if available.
-#if defined(OS_MACOSX) || defined(OS_ANDROID)
+#if defined(OS_MACOSX)
 const bool kInputModeXCommandSupported = false;
 #else
 const bool kInputModeXCommandSupported = true;
@@ -219,21 +217,13 @@ bool KeyMapManager::AddCommand(const string &state_name,
                                const string &key_event_name,
                                const string &command_name) {
 #ifdef NO_LOGGING  // means RELEASE BUILD
-  // On the release build, we do not support the Abort and ReportBug
+  // On the release build, we do not support the ReportBug
   // commands.  Note, true is returned as the arguments are
   // interpreted properly.
-  if (command_name == "Abort" || command_name == "ReportBug") {
+  if (command_name == "ReportBug") {
     return true;
   }
 #endif  // NO_LOGGING
-
-#ifndef DEBUG
-  // Only debug build supports the Abort command.  Note, true is
-  // returned as the arguments are interpreted properly.
-  if (command_name == "Abort") {
-    return true;
-  }
-#endif  // DEBUG
 
   commands::KeyEvent key_event;
   if (!KeyParser::ParseKey(key_event_name, &key_event)) {
@@ -475,10 +465,6 @@ void KeyMapManager::InitCommandData() {
   RegisterPrecompositionCommand("PredictAndConvert",
                                 PrecompositionState::PREDICT_AND_CONVERT);
 
-#ifdef DEBUG  // only for debugging
-  RegisterPrecompositionCommand("Abort", PrecompositionState::ABORT);
-#endif  // DEBUG
-
   // Composition
   RegisterCompositionCommand("IMEOff", CompositionState::IME_OFF);
   RegisterCompositionCommand("IMEOn", CompositionState::IME_ON);
@@ -565,9 +551,6 @@ void KeyMapManager::InitCommandData() {
     RegisterCompositionCommand("InputModeHalfAlphanumeric",
                                CompositionState::NONE);
   }
-#ifdef DEBUG  // only for debugging
-  RegisterCompositionCommand("Abort", CompositionState::ABORT);
-#endif  // DEBUG
 
   // Conversion
   RegisterConversionCommand("IMEOff", ConversionState::IME_OFF);
@@ -665,9 +648,6 @@ void KeyMapManager::InitCommandData() {
 #ifndef NO_LOGGING  // means NOT RELEASE build
   RegisterConversionCommand("ReportBug", ConversionState::REPORT_BUG);
 #endif  // NO_LOGGING
-#ifdef DEBUG  // only for dubugging
-  RegisterConversionCommand("Abort", ConversionState::ABORT);
-#endif  // DEBUG
 }
 
 bool KeyMapManager::GetCommandDirect(

@@ -37,7 +37,6 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segm
 import org.mozc.android.inputmethod.japanese.util.ArrayDeque;
 import com.google.common.base.Objects;
 
-import android.content.res.Configuration;
 import android.util.Log;
 
 /**
@@ -159,7 +158,7 @@ public class SelectionTracker {
     clear();
   }
 
-  public void onConfigurationChanged(Configuration newConfig) {
+  public void onConfigurationChanged() {
     // The Configuration such as orientation is changed, so we reset the context.
     clear();
   }

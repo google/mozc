@@ -40,7 +40,6 @@
 namespace mozc {
 
 class NodeAllocatorInterface;  // converter/node.h
-struct Node;                   // converter/node.h
 struct Token;                  // dictionary/dictionary_token.h
 
 // TODO(noriyukit): Move this interface into dictionary namespace.
@@ -111,52 +110,14 @@ class DictionaryInterface {
     Callback() {}
   };
 
-  // limitation for LookupPrefixWithLimit
-  struct Limit {
-    // For prefix lookup, to reduce redundant lookup for making lattice,
-    // returns only nodes which key length is >= this limit.
-    int key_len_lower_limit;
-    // For predictive lookup,
-    // returns only nodes which predicted key starts with the string in the trie
-    // Example:
-    //  predictive lookup key: 'conv'
-    //  begin with list: 'er', 'in'
-    //  In this case, we will get 'convert', converter', 'convince', etc.
-    //  We will not get 'convention', etc.
-    // This does not have the ownership
-    const Trie<string> *begin_with_trie;
-
-    // For predictive and prefix lookup, enables ambiguous search.
-    bool kana_modifier_insensitive_lookup_enabled;
-    Limit() :
-        key_len_lower_limit(0),
-        begin_with_trie(NULL),
-        kana_modifier_insensitive_lookup_enabled(false) {
-    }
-  };
-
   virtual ~DictionaryInterface() {}
 
   // Returns true if the dictionary has an entry for the given value.
-  virtual bool HasValue(const StringPiece value) const = 0;
+  virtual bool HasValue(StringPiece value) const = 0;
 
-  virtual void LookupPredictiveWithCallback(
+  virtual void LookupPredictive(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const {
-    // TODO(noriyukit): Remove the default implementation after removing
-    // LookupPredictiveWithLimit and LookupPredictive.
-  }
-
-  // For Lookup methods, dictionary does not manage the ownerships of the
-  // returned Node objects.
-  // If the |allocator| is specified, we will use it to make Node objects.
-
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size, const Limit &limit,
-      NodeAllocatorInterface *allocator) const = 0;
-
-  virtual Node *LookupPredictive(const char *str, int size,
-                                 NodeAllocatorInterface *allocator) const = 0;
+      Callback *callback) const = 0;
 
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
@@ -164,10 +125,11 @@ class DictionaryInterface {
 
   virtual void LookupExact(StringPiece key, Callback *callback) const = 0;
 
-  // For reverse lookup, the reading is stored in Node::value and the word
-  // is stored in Node::key.
-  virtual Node *LookupReverse(const char *str, int size,
-                              NodeAllocatorInterface *allocator) const = 0;
+  // For reverse lookup, the reading is stored in Token::value and the word
+  // is stored in Token::key.
+  // TODO(hsumita): Remove a dependency on NodeAllocatorInterface.
+  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
+                             Callback *callback) const = 0;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
@@ -175,8 +137,10 @@ class DictionaryInterface {
   virtual bool LookupComment(StringPiece key, StringPiece value,
                              string *comment) const { return false; }
 
+  // Populates cache for LookupReverse().
+  // TODO(hsumita): Remove a dependency on NodeAllocatorInterface.
   virtual void PopulateReverseLookupCache(
-      const char *str, int size, NodeAllocatorInterface *allocator) const {}
+      StringPiece str, NodeAllocatorInterface *allocator) const {}
   virtual void ClearReverseLookupCache(
       NodeAllocatorInterface *allocator) const {}
 

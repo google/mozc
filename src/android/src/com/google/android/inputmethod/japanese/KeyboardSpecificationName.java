@@ -29,6 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import com.google.common.base.Preconditions;
+
 import android.content.res.Configuration;
 
 /**
@@ -38,12 +40,13 @@ import android.content.res.Configuration;
  *
  */
 public class KeyboardSpecificationName {
+
   public final String baseName;
   public final int major;
   public final int minor;
   public final int revision;
   public KeyboardSpecificationName(String baseName, int major, int minor, int revision) {
-    this.baseName = baseName;
+    this.baseName = Preconditions.checkNotNull(baseName);
     this.major = major;
     this.minor = minor;
     this.revision = revision;
@@ -55,35 +58,35 @@ public class KeyboardSpecificationName {
    * The main purpose of the formatted name is collecting usage stats.
    */
   public String formattedKeyboardName(Configuration configuration) {
-      return new StringBuilder(baseName).append('-')
-                                        .append(major)
-                                        .append('.')
-                                        .append(minor)
-                                        .append('.')
-                                        .append(revision)
-                                        .append('-')
-                                        .append(getDeviceOrientationString(configuration))
-                                        .toString();
+    Preconditions.checkNotNull(configuration);
+    return new StringBuilder(baseName).append('-')
+                                      .append(major)
+                                      .append('.')
+                                      .append(minor)
+                                      .append('.')
+                                      .append(revision)
+                                      .append('-')
+                                      .append(getDeviceOrientationString(configuration))
+                                      .toString();
   }
 
   /**
    * Returns *Canonical* orientation string, which is used as a part of keyboard name.
    */
+  @SuppressWarnings("deprecation")
   public static String getDeviceOrientationString(Configuration configuration) {
-    if (configuration != null) {
-      switch (configuration.orientation) {
-        case Configuration.ORIENTATION_PORTRAIT:
-          return "PORTRAIT";
-        case Configuration.ORIENTATION_LANDSCAPE:
-          return "LANDSCAPE";
-        case Configuration.ORIENTATION_SQUARE:
-          return "SQUARE";
-        case Configuration.ORIENTATION_UNDEFINED:
-          return "UNDEFINED";
-      }
+    Preconditions.checkNotNull(configuration);
+    switch (configuration.orientation) {
+      case Configuration.ORIENTATION_PORTRAIT:
+        return "PORTRAIT";
+      case Configuration.ORIENTATION_LANDSCAPE:
+        return "LANDSCAPE";
+      case Configuration.ORIENTATION_SQUARE:
+        return "SQUARE";
+      case Configuration.ORIENTATION_UNDEFINED:
+        return "UNDEFINED";
     }
-    // If none of above is matched to the orientation or configuration is null,
-    // we return "UNKNOWN".
+    // If none of above is matched to the orientation, we return "UNKNOWN".
     return "UNKNOWN";
   }
 }

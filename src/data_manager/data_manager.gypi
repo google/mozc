@@ -233,7 +233,7 @@
             '--id_file=<(id_file)',
             '--special_pos_file=<(special_pos_file)',
             '--header_output_file=<(gen_out_dir)/embedded_connection_data.h',
-            '--target_compiler=<(target_compiler)',
+            '--target_compiler=<(compiler_target)',
             '--use_1byte_cost=<(use_1byte_cost_flag)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
@@ -261,7 +261,6 @@
           'action': [
             # Use the pre-built version. See comments in mozc.gyp for why.
             '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
-            '--logtostderr',
             '--input=<(input_files)',
             '--make_header',
             '--gen_test_dictionary=<(gen_test_dictionary_flag)',
@@ -321,7 +320,7 @@
             '--binary_output_file',
             '<@(_outputs)',
             '--target_compiler',
-            '<(target_compiler)',
+            '<(compiler_target)',
             '--use_1byte_cost',
             '<(use_1byte_cost_flag)',
           ],
@@ -348,7 +347,6 @@
           ],
           'action': [
             '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
-            '--logtostderr',
             '--input=<(input_files)',
             '--output=<(gen_out_dir)/system.dictionary',
           ],
@@ -402,34 +400,26 @@
       ],
     },
     {
-      'target_name': 'install_gen_<(dataset_tag)_segmenter_bitarray_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_<(dataset_tag)_segmenter_bitarray_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ],
-    },
-    {
       'target_name': 'gen_embedded_segmenter_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'dependencies': [
+        'gen_<(dataset_tag)_segmenter_bitarray_main#host',
+      ],
       'actions': [
         {
           'action_name': 'gen_embedded_segmenter_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(PRODUCT_DIR)/gen_<(dataset_tag)_segmenter_bitarray_main<(EXECUTABLE_SUFFIX)'
+          },
           'inputs': [
-            # HACK: Specifying this file is redundant but gyp requires actions
-            # to specify at least one file in inputs.
-            '<(current_dir)/gen_<(dataset_tag)_segmenter_bitarray_main.cc',
+            '<(generator)',
           ],
           'outputs': [
             '<(gen_out_dir)/segmenter_data.h',
           ],
           'action': [
-            '<(mozc_build_tools_dir)/gen_<(dataset_tag)_segmenter_bitarray_main',
-            '--logtostderr',
+            '<(generator)',
             '--output=<(gen_out_dir)/segmenter_data.h',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
@@ -531,22 +521,27 @@
       'target_name': 'gen_separate_collocation_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'dependencies': [
+        '../../rewriter/rewriter_base.gyp:gen_collocation_data_main#host',
+      ],
       'actions': [
         {
           'action_name': 'gen_separate_collocation_data',
           'variables': {
+            'generator' : '<(PRODUCT_DIR)/gen_collocation_data_main<(EXECUTABLE_SUFFIX)',
             'input_files%': [
               '<(platform_data_dir)/collocation.txt',
             ],
           },
           'inputs': [
+            '<(generator)',
             '<@(input_files)',
           ],
           'outputs': [
             '<(gen_out_dir)/collocation_data.data',
           ],
           'action': [
-            '<(mozc_build_tools_dir)/gen_collocation_data_main',
+            '<(generator)',
             '--collocation_data=<@(input_files)',
             '--output=<(gen_out_dir)/collocation_data.data',
             '--binary_mode',
@@ -560,15 +555,20 @@
       'target_name': 'gen_embedded_collocation_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'dependencies': [
+        '../../rewriter/rewriter_base.gyp:gen_collocation_data_main#host',
+      ],
       'actions': [
         {
           'action_name': 'gen_embedded_collocation_data',
           'variables': {
+            'generator' : '<(PRODUCT_DIR)/gen_collocation_data_main<(EXECUTABLE_SUFFIX)',
             'input_files%': [
               '<(platform_data_dir)/collocation.txt',
             ],
           },
           'inputs': [
+            '<(generator)',
             '<@(input_files)',
           ],
           'outputs': [
@@ -577,7 +577,7 @@
           'action': [
             'python', '<(mozc_dir)/build_tools/redirect.py',
             '<(gen_out_dir)/embedded_collocation_data.h',
-            '<(mozc_build_tools_dir)/gen_collocation_data_main',
+            '<(generator)',
             '--collocation_data=<@(input_files)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
@@ -589,15 +589,20 @@
       'target_name': 'gen_embedded_collocation_suppression_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'dependencies': [
+        '../../rewriter/rewriter_base.gyp:gen_collocation_suppression_data_main#host',
+      ],
       'actions': [
         {
           'action_name': 'gen_collocation_suppression_data',
           'variables': {
+            'generator' : '<(PRODUCT_DIR)/gen_collocation_suppression_data_main<(EXECUTABLE_SUFFIX)',
             'input_files%': [
               '<(platform_data_dir)/collocation_suppression.txt',
             ],
           },
           'inputs': [
+            '<(generator)',
             '<@(input_files)',
           ],
           'outputs': [
@@ -606,7 +611,7 @@
           'action': [
             'python', '<(mozc_dir)/build_tools/redirect.py',
             '<(gen_out_dir)/embedded_collocation_suppression_data.h',
-            '<(mozc_build_tools_dir)/gen_collocation_suppression_data_main',
+            '<(generator)',
             '--suppression_data=<@(input_files)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
@@ -618,26 +623,30 @@
       'target_name': 'gen_embedded_suggestion_filter_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'dependencies': [
+        '../../prediction/prediction_base.gyp:gen_suggestion_filter_main#host',
+      ],
       'actions': [
         {
           'action_name': 'gen_suggestion_filter_data',
           'variables': {
+            'generator' : '<(PRODUCT_DIR)/gen_suggestion_filter_main<(EXECUTABLE_SUFFIX)',
             'input_files%': [
               '<(platform_data_dir)/suggestion_filter.txt',
             ],
           },
           'inputs': [
+            '<(generator)',
             '<@(input_files)',
           ],
           'outputs': [
             '<(gen_out_dir)/suggestion_filter_data.h',
           ],
           'action': [
-            '<(mozc_build_tools_dir)/gen_suggestion_filter_main',
+            '<(generator)',
             '<@(input_files)',
             '<(gen_out_dir)/suggestion_filter_data.h',
             '--header',
-            '--logtostderr',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/suggestion_filter_data.h'),
@@ -648,10 +657,14 @@
       'target_name': 'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
+      'dependencies': [
+        '../../rewriter/rewriter_base.gyp:gen_symbol_rewriter_dictionary_main#host',
+      ],
       'actions': [
         {
           'action_name': 'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)',
           'variables': {
+            'generator' : '<(PRODUCT_DIR)/gen_symbol_rewriter_dictionary_main<(EXECUTABLE_SUFFIX)',
             'input_files': [
               '<(mozc_dir)/data/symbol/symbol.tsv',
               '<(mozc_dir)/data/rules/sorting_map.tsv',
@@ -659,15 +672,15 @@
             ],
           },
           'inputs': [
+            '<(generator)',
             '<@(input_files)',
           ],
           'outputs': [
             '<(gen_out_dir)/symbol_rewriter_data.h',
           ],
           'action': [
-            '<(mozc_build_tools_dir)/gen_symbol_rewriter_dictionary_main',
+            '<(generator)',
             '<@(input_files)',
-            '--logtostderr',
             '--output=<(gen_out_dir)/symbol_rewriter_data.h',
           ],
           'message': ('[<(dataset_tag)] Generating ' +

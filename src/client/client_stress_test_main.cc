@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "client/client.h"
+
 #ifdef OS_WIN
 #include <windows.h>
 #else
@@ -34,13 +36,14 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
-#include <iostream>
+#include <iostream>  // NOLINT
 
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
-#include "client/client.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_command.pb.h"
 #include "session/random_keyevents_generator.h"

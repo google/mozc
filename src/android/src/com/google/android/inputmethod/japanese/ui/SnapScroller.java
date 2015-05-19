@@ -31,6 +31,8 @@ package org.mozc.android.inputmethod.japanese.ui;
 
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
@@ -68,7 +70,7 @@ public class SnapScroller {
     }
   };
 
-  private static final Float ZERO = new Float(0);
+  private static final Optional<Float> OPTIONAL_ZERO = Optional.of(Float.valueOf(0));
 
   /** The time stamp calculator. */
   private final TimestampCalculator timestampCalculator;
@@ -121,19 +123,15 @@ public class SnapScroller {
   private long startScrollTime;
 
   public SnapScroller() {
-    this(null);
+    this(DEFAULT_TIMESTAMP_CALCULATOR);
   }
 
-  /** Injecting TimestampCalculator for testing */
-  SnapScroller(TimestampCalculator timestampCalculator) {
-    this.timestampCalculator =
-        (timestampCalculator == null) ? DEFAULT_TIMESTAMP_CALCULATOR : timestampCalculator;
+  @VisibleForTesting SnapScroller(TimestampCalculator timestampCalculator) {
+    this.timestampCalculator = Preconditions.checkNotNull(timestampCalculator);
   }
 
   public void setPageSize(int pageSize) {
-    if (pageSize < 0) {
-      throw new IllegalArgumentException("pageSize must be non-negative: " + pageSize);
-    }
+    Preconditions.checkArgument(pageSize >= 0, "pageSize must be non-negative: %d", pageSize);
     this.pageSize = pageSize;
   }
 
@@ -142,9 +140,8 @@ public class SnapScroller {
   }
 
   public void setContentSize(int contentSize) {
-    if (contentSize < 0) {
-      throw new IllegalArgumentException("contentSize must be non-negative: " + contentSize);
-    }
+    Preconditions.checkArgument(
+        contentSize >= 0, "contentSize must be non-negative: ", contentSize);
     this.contentSize = contentSize;
   }
 
@@ -277,9 +274,9 @@ public class SnapScroller {
     this.endScrollPosition = endScrollPosition;
   }
 
-  public Float computeScrollOffset() {
+  public Optional<Float> computeScrollOffset() {
     if (velocity == 0) {
-      return ZERO;
+      return OPTIONAL_ZERO;
     }
 
     // Scroll animation is on going so the caller needs to call getScrollPosition().
@@ -300,14 +297,14 @@ public class SnapScroller {
       fling((int) (velocity * decayRate));
       if (velocity == 0) {
         if (scrollPosition == 0 || scrollPosition == getMaxScrollPosition()) {
-          return Float.valueOf(oldVelocity);
+          return Optional.of(Float.valueOf(oldVelocity));
         } else {
-          return ZERO;
+          return OPTIONAL_ZERO;
         }
       }
     }
 
     // Continue to scroll.
-    return null;
+    return Optional.absent();
   }
 }

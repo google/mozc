@@ -43,18 +43,18 @@ class PropertyHandlerInterface {
   virtual ~PropertyHandlerInterface() {}
 
   // Registers current properties into engine.
-  virtual void Register(IBusEngine *engine) ABSTRACT;
+  virtual void Register(IBusEngine *engine) = 0;
 
-  virtual void ResetContentType(IBusEngine *engine) ABSTRACT;
-  virtual void UpdateContentType(IBusEngine *engine) ABSTRACT;
+  virtual void ResetContentType(IBusEngine *engine) = 0;
+  virtual void UpdateContentType(IBusEngine *engine) = 0;
 
   // Update properties.
   virtual void Update(IBusEngine *engine,
-                      const commands::Output &output) ABSTRACT;
+                      const commands::Output &output) = 0;
 
   virtual void ProcessPropertyActivate(IBusEngine *engine,
                                        const gchar *property_name,
-                                       guint property_state) ABSTRACT;
+                                       guint property_state) = 0;
 
   // Following two methods represent two aspects of an IME state.
   // * (activated, disabled) == (false, false)
@@ -74,11 +74,11 @@ class PropertyHandlerInterface {
   //     be unable to turn on the IME by using shortcut nor GUI menu. This state
   //     is used mainly on the password field. IME becomes to be "turned-on"
   //     once |disabled| state is flipped to false.
-  virtual bool IsActivated() const ABSTRACT;
-  virtual bool IsDisabled() const ABSTRACT;
+  virtual bool IsActivated() const = 0;
+  virtual bool IsDisabled() const = 0;
 
   // Returns original composition mode before.
-  virtual commands::CompositionMode GetOriginalCompositionMode() const ABSTRACT;
+  virtual commands::CompositionMode GetOriginalCompositionMode() const = 0;
 };
 
 }  // namespace ibus

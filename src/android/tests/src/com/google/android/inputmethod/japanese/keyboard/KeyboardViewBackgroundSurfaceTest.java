@@ -39,6 +39,7 @@ import org.mozc.android.inputmethod.japanese.keyboard.KeyboardViewBackgroundSurf
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
+import com.google.common.base.Optional;
 
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -71,7 +72,10 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     KeyEntity keyEntity = new KeyEntity(
         1, 'a', KeyEntity.INVALID_KEY_CODE, iconResourceId, drawableType, false, null);
     Flick centerFlick = new Flick(Direction.CENTER, keyEntity);
-    KeyState keyState = new KeyState(EnumSet.of(MetaState.UNMODIFIED), null,
+    KeyState keyState = new KeyState("",
+                                     Collections.<MetaState>emptySet(),
+                                     Collections.<MetaState>emptySet(),
+                                     Collections.<MetaState>emptySet(),
                                      Collections.singletonList(centerFlick));
     return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false,
                    Stick.EVEN, Collections.singletonList(keyState));
@@ -114,39 +118,44 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     Key key = new Key(
         0, 0, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
         Collections.singletonList(
-            new KeyState(EnumSet.of(MetaState.UNMODIFIED), null,
+            new KeyState("",
+                         Collections.<MetaState>emptySet(),
+                         Collections.<MetaState>emptySet(),
+                         Collections.<MetaState>emptySet(),
                          Arrays.asList(centerFlick, leftFlick))));
 
     // If this is the released key, the default key entity (center's one) should be returned.
     assertSame(
         centerEntity,
-        KeyboardViewBackgroundSurface.getKeyEntityForRendering(key, MetaState.UNMODIFIED, null));
+        KeyboardViewBackgroundSurface.getKeyEntityForRendering(
+            key, Collections.<MetaState>emptySet(), null));
 
     // If this is the pressed key without flick, the center key entity should be returned.
     assertSame(
         centerEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, MetaState.UNMODIFIED, Direction.CENTER));
+            key, Collections.<MetaState>emptySet(), Direction.CENTER));
 
     // If the flick state is set to the pressedKey, it should be returned.
     assertSame(
         leftEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, MetaState.UNMODIFIED, Direction.LEFT));
+            key, Collections.<MetaState>emptySet(), Direction.LEFT));
 
     // If the key doesn't have a KeyEntity for the current state, the default key entity
     // should be returned.
     assertSame(
         centerEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, MetaState.CAPS_LOCK, Direction.RIGHT));
-    assertSame(
-        centerEntity,
-        KeyboardViewBackgroundSurface.getKeyEntityForRendering(key, MetaState.CAPS_LOCK, null));
+            key, EnumSet.of(MetaState.CAPS_LOCK), Direction.RIGHT));
     assertSame(
         centerEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, MetaState.CAPS_LOCK, Direction.CENTER));
+            key, EnumSet.of(MetaState.CAPS_LOCK), null));
+    assertSame(
+        centerEntity,
+        KeyboardViewBackgroundSurface.getKeyEntityForRendering(
+            key, EnumSet.of(MetaState.CAPS_LOCK), Direction.CENTER));
   }
 
   @SmallTest
@@ -204,7 +213,7 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     Drawable icon = new ColorDrawable();
     int iconResourceId = 1;
     DrawableCache drawableCache = createDrawableCacheMock();
-    expect(drawableCache.getDrawable(iconResourceId)).andStubReturn(icon);
+    expect(drawableCache.getDrawable(iconResourceId)).andStubReturn(Optional.of(icon));
     replayAll();
     KeyEntity keyEntity =
         new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, iconResourceId, null, false, null);
@@ -229,37 +238,37 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     int icon1ResourceId = 1;
     Key key1 =
         createDummyKey(0, 0, icon1ResourceId, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
-    expect(drawableCache.getDrawable(icon1ResourceId)).andStubReturn(icon1);
+    expect(drawableCache.getDrawable(icon1ResourceId)).andStubReturn(Optional.of(icon1));
 
     Drawable icon2 = new ColorDrawable();
     int icon2ResourceId = 3;
     Key key2 =
         createDummyKey(WIDTH, 0, icon2ResourceId, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
-    expect(drawableCache.getDrawable(icon2ResourceId)).andStubReturn(icon2);
+    expect(drawableCache.getDrawable(icon2ResourceId)).andStubReturn(Optional.of(icon2));
 
     Drawable icon3 = new ColorDrawable();
     int icon3ResourceId = 5;
     Key key3 = createDummyKey(
         WIDTH * 2, 0, icon3ResourceId, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
-    expect(drawableCache.getDrawable(icon3ResourceId)).andStubReturn(icon3);
+    expect(drawableCache.getDrawable(icon3ResourceId)).andStubReturn(Optional.of(icon3));
 
     Drawable icon4 = new ColorDrawable();
     int icon4ResourceId = 7;
     Key key4 = createDummyKey(
         0, HEIGHT, icon4ResourceId, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
-    expect(drawableCache.getDrawable(icon4ResourceId)).andStubReturn(icon4);
+    expect(drawableCache.getDrawable(icon4ResourceId)).andStubReturn(Optional.of(icon4));
 
     Drawable icon5 = new ColorDrawable();
     int icon5ResourceId = 9;
     Key key5 = createDummyKey(
         WIDTH, HEIGHT, icon5ResourceId, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
-    expect(drawableCache.getDrawable(icon5ResourceId)).andStubReturn(icon5);
+    expect(drawableCache.getDrawable(icon5ResourceId)).andStubReturn(Optional.of(icon5));
 
     Drawable icon6 = new ColorDrawable();
     int icon6ResourceId = 11;
     Key key6 = createDummyKey(
         WIDTH * 2, HEIGHT, icon6ResourceId, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
-    expect(drawableCache.getDrawable(icon6ResourceId)).andStubReturn(icon6);
+    expect(drawableCache.getDrawable(icon6ResourceId)).andStubReturn(Optional.of(icon6));
 
     Drawable icon7 = new ColorDrawable();
     Drawable leftIcon7 = new ColorDrawable();
@@ -273,27 +282,31 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
         Direction.LEFT,
         new KeyEntity(2, 'a', KeyEntity.INVALID_KEY_CODE, leftIcon7ResourceId,
                       DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, false, null));
-    KeyState keyState = new KeyState(EnumSet.of(MetaState.UNMODIFIED), null,
+    KeyState keyState = new KeyState("",
+                                     Collections.<MetaState>emptySet(),
+                                     Collections.<MetaState>emptySet(),
+                                     Collections.<MetaState>emptySet(),
                                      Arrays.asList(centerFlick7, leftFlick7));
     Key key7 = new Key(0, HEIGHT * 2, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false,
                        Stick.EVEN, Collections.singletonList(keyState));
-    expect(drawableCache.getDrawable(icon7ResourceId)).andStubReturn(icon7);
-    expect(drawableCache.getDrawable(leftIcon7ResourceId)).andStubReturn(leftIcon7);
+    expect(drawableCache.getDrawable(icon7ResourceId)).andStubReturn(Optional.of(icon7));
+    expect(drawableCache.getDrawable(leftIcon7ResourceId)).andStubReturn(Optional.of(leftIcon7));
 
     Drawable icon8 = new ColorDrawable();
     int icon8ResourceId = 17;
     Key key8 = createDummyKey(
         WIDTH, HEIGHT * 2, icon8ResourceId, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
-    expect(drawableCache.getDrawable(icon8ResourceId)).andStubReturn(icon8);
+    expect(drawableCache.getDrawable(icon8ResourceId)).andStubReturn(Optional.of(icon8));
 
     Drawable icon9 = new ColorDrawable();
     int icon9ResourceId = 19;
     Key key9 = createDummyKey(
         WIDTH * 2, HEIGHT * 2, icon9ResourceId, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
-    expect(drawableCache.getDrawable(icon9ResourceId)).andStubReturn(icon9);
+    expect(drawableCache.getDrawable(icon9ResourceId)).andStubReturn(Optional.of(icon9));
     drawableCacheControl.replay();
 
     Keyboard keyboard = new Keyboard(
+        Optional.<String>absent(),
         Arrays.asList(
             new Row(Arrays.asList(key1, key2, key3), HEIGHT, 0),
             new Row(Arrays.asList(key4, key5, key6), HEIGHT, 0),
@@ -354,7 +367,7 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     };
 
     surface.requestUpdateSize(surfaceWidth, surfaceHeight);
-    surface.requestUpdateKeyboard(keyboard, MetaState.UNMODIFIED);
+    surface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
     surface.update();
 
     canvasControl.verify();
@@ -447,7 +460,7 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     surface.requestUpdateKey(key5, Direction.CENTER);
     surface.requestUpdateKey(key7, Direction.LEFT);
 
-    surface.requestUpdateKeyboard(keyboard, MetaState.UNMODIFIED);
+    surface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
     surface.update();
 
     canvasControl.verify();
@@ -490,7 +503,7 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     surface.requestUpdateKey(key5, Direction.CENTER);
     surface.requestUpdateKey(key2, Direction.LEFT);
 
-    surface.requestUpdateKeyboard(keyboard, MetaState.UNMODIFIED);
+    surface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
 
     surface.requestUpdateKey(key8, Direction.CENTER);
     surface.requestUpdateKey(key8, Direction.LEFT);

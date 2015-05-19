@@ -152,7 +152,8 @@ public class SymbolCandidateLayouterTest extends TestCase {
         int[] expectedIdRow = expectedIdTable[i];
         assertEquals(expectedIdRow.length, row.getSpanList().size());
         for (int j = 0; j < expectedIdRow.length; ++j) {
-          assertEquals(expectedIdRow[j], row.getSpanList().get(j).getCandidateWord().getId());
+          assertEquals(expectedIdRow[j],
+                       row.getSpanList().get(j).getCandidateWord().get().getId());
         }
       }
     }

@@ -34,6 +34,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary.PosType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus.Status;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.base.Preconditions;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -344,10 +345,10 @@ class UserDictionaryUtil {
     }
   }
 
-  private static int DIALOG_WIDTH_THRESHOLD = 480;  // in dip.
+  private static final int DIALOG_WIDTH_THRESHOLD = 480;  // in dip.
 
   /** A map from PosType to the string resource id for i18n. */
-  private static Map<PosType, Integer> POS_RESOURCE_MAP;
+  private static final Map<PosType, Integer> POS_RESOURCE_MAP;
   static {
     EnumMap<PosType, Integer> map = new EnumMap<PosType, Integer>(PosType.class);
     map.put(PosType.NOUN, R.string.japanese_pos_noun);
@@ -403,6 +404,71 @@ class UserDictionaryUtil {
     POS_RESOURCE_MAP = Collections.unmodifiableMap(map);
   }
 
+  /** A map from PosType to the string resource id dictionary export. */
+  private static final Map<PosType, Integer> POS_RESOURCE_MAP_FOR_DICTIONARY_EXPORT;
+  static {
+    EnumMap<PosType, Integer> map = new EnumMap<PosType, Integer>(PosType.class);
+    map.put(PosType.NOUN, R.string.japanese_pos_for_dictionary_export_noun);
+    map.put(PosType.ABBREVIATION, R.string.japanese_pos_for_dictionary_export_abbreviation);
+    map.put(PosType.SUGGESTION_ONLY, R.string.japanese_pos_for_dictionary_export_suggestion_only);
+    map.put(PosType.PROPER_NOUN, R.string.japanese_pos_for_dictionary_export_proper_noun);
+    map.put(PosType.PERSONAL_NAME, R.string.japanese_pos_for_dictionary_export_personal_name);
+    map.put(PosType.FAMILY_NAME, R.string.japanese_pos_for_dictionary_export_family_name);
+    map.put(PosType.FIRST_NAME, R.string.japanese_pos_for_dictionary_export_first_name);
+    map.put(PosType.ORGANIZATION_NAME,
+            R.string.japanese_pos_for_dictionary_export_organization_name);
+    map.put(PosType.PLACE_NAME, R.string.japanese_pos_for_dictionary_export_place_name);
+    map.put(PosType.SA_IRREGULAR_CONJUGATION_NOUN,
+            R.string.japanese_pos_for_dictionary_export_sa_irregular_conjugation_noun);
+    map.put(PosType.ADJECTIVE_VERBAL_NOUN,
+            R.string.japanese_pos_for_dictionary_export_adjective_verbal_noun);
+    map.put(PosType.NUMBER, R.string.japanese_pos_for_dictionary_export_number);
+    map.put(PosType.ALPHABET, R.string.japanese_pos_for_dictionary_export_alphabet);
+    map.put(PosType.SYMBOL, R.string.japanese_pos_for_dictionary_export_symbol);
+    map.put(PosType.EMOTICON, R.string.japanese_pos_for_dictionary_export_emoticon);
+    map.put(PosType.ADVERB, R.string.japanese_pos_for_dictionary_export_adverb);
+    map.put(PosType.PRENOUN_ADJECTIVAL,
+            R.string.japanese_pos_for_dictionary_export_prenoun_adjectival);
+    map.put(PosType.CONJUNCTION, R.string.japanese_pos_for_dictionary_export_conjunction);
+    map.put(PosType.INTERJECTION, R.string.japanese_pos_for_dictionary_export_interjection);
+    map.put(PosType.PREFIX, R.string.japanese_pos_for_dictionary_export_prefix);
+    map.put(PosType.COUNTER_SUFFIX, R.string.japanese_pos_for_dictionary_export_counter_suffix);
+    map.put(PosType.GENERIC_SUFFIX, R.string.japanese_pos_for_dictionary_export_generic_suffix);
+    map.put(PosType.PERSON_NAME_SUFFIX,
+            R.string.japanese_pos_for_dictionary_export_person_name_suffix);
+    map.put(PosType.PLACE_NAME_SUFFIX,
+            R.string.japanese_pos_for_dictionary_export_place_name_suffix);
+    map.put(PosType.WA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_wa_group1_verb);
+    map.put(PosType.KA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_ka_group1_verb);
+    map.put(PosType.SA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_sa_group1_verb);
+    map.put(PosType.TA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_ta_group1_verb);
+    map.put(PosType.NA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_na_group1_verb);
+    map.put(PosType.MA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_ma_group1_verb);
+    map.put(PosType.RA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_ra_group1_verb);
+    map.put(PosType.GA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_ga_group1_verb);
+    map.put(PosType.BA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_ba_group1_verb);
+    map.put(PosType.HA_GROUP1_VERB, R.string.japanese_pos_for_dictionary_export_ha_group1_verb);
+    map.put(PosType.GROUP2_VERB, R.string.japanese_pos_for_dictionary_export_group2_verb);
+    map.put(PosType.KURU_GROUP3_VERB, R.string.japanese_pos_for_dictionary_export_kuru_group3_verb);
+    map.put(PosType.SURU_GROUP3_VERB, R.string.japanese_pos_for_dictionary_export_suru_group3_verb);
+    map.put(PosType.ZURU_GROUP3_VERB, R.string.japanese_pos_for_dictionary_export_zuru_group3_verb);
+    map.put(PosType.RU_GROUP3_VERB, R.string.japanese_pos_for_dictionary_export_ru_group3_verb);
+    map.put(PosType.ADJECTIVE,
+            R.string.japanese_pos_for_dictionary_export_adjective);
+    map.put(PosType.SENTENCE_ENDING_PARTICLE,
+            R.string.japanese_pos_for_dictionary_export_sentence_ending_particle);
+    map.put(PosType.PUNCTUATION, R.string.japanese_pos_for_dictionary_export_punctuation);
+    map.put(PosType.FREE_STANDING_WORD,
+            R.string.japanese_pos_for_dictionary_export_free_standing_word);
+    map.put(PosType.SUPPRESSION_WORD, R.string.japanese_pos_for_dictionary_export_suppression_word);
+
+    if (map.size() != PosType.values().length) {
+      // There seems something unknown POS.
+      throw new AssertionError();
+    }
+    POS_RESOURCE_MAP_FOR_DICTIONARY_EXPORT = Collections.unmodifiableMap(map);
+  }
+
   /**
    * List of Japanese encodings to convert text for data importing.
    * These encodings are tries in the order, in other words, UTF-8 is the most high-prioritized
@@ -437,7 +503,14 @@ class UserDictionaryUtil {
    * Returns string resource id for the given {@code pos}.
    */
   static int getPosStringResourceId(PosType pos) {
-    return POS_RESOURCE_MAP.get(pos);
+    return POS_RESOURCE_MAP.get(Preconditions.checkNotNull(pos));
+  }
+
+  /**
+   * Returns string resource id for the given {@code pos} for dictionary export.
+   */
+  static int getPosStringResourceIdForDictionaryExport(PosType pos) {
+    return POS_RESOURCE_MAP_FOR_DICTIONARY_EXPORT.get(Preconditions.checkNotNull(pos));
   }
 
   /**
@@ -519,7 +592,7 @@ class UserDictionaryUtil {
    * The default size of dialog looks not good on some devices, such as tablets.
    * So, modify the dialog size to make the look better.
    *
-   * The current storategy is:
+   * The current strategy is:
    * - if the display is small, we tries to fill the display width by the dialog.
    * - otherwise, set w480dip to the window.
    */

@@ -48,7 +48,7 @@
         '../dictionary/dictionary.gyp:dictionary_impl',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:dictionary_protocol',
-        '../dictionary/dictionary_base.gyp:pos_matcher#host',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../dictionary/dictionary_base.gyp:user_pos',

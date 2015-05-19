@@ -34,8 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
-#include "base/crash_report_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/process.h"
@@ -47,8 +45,6 @@
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-// TODO(komatsu): Delete the next line by refactoring of the initializer.
-#include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "session/commands.pb.h"
@@ -100,8 +96,7 @@ void ApplyInputMode(const commands::CompositionMode mode,
       SwitchInputMode(transliteration::HALF_ASCII, composer);
       break;
     default:
-      LOG(ERROR) << "ime on with invalid mode";
-      DLOG(FATAL);
+      LOG(DFATAL) << "ime on with invalid mode";
   }
 }
 
@@ -638,8 +633,6 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
     case keymap::PrecompositionState::PREDICT_AND_CONVERT:
       return PredictAndConvert(command);
 
-    case keymap::PrecompositionState::ABORT:
-      return Abort(command);
     case keymap::PrecompositionState::NONE:
       return EchoBackAndClearUndoContext(command);
     case keymap::PrecompositionState::RECONVERT:
@@ -784,9 +777,6 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
 
     case keymap::CompositionState::INPUT_MODE_HALF_ALPHANUMERIC:
       return InputModeHalfASCII(command);
-
-    case keymap::CompositionState::ABORT:
-      return Abort(command);
 
     case keymap::CompositionState::NONE:
       return DoNothing(command);
@@ -941,9 +931,6 @@ bool Session::SendKeyConversionState(commands::Command *command) {
     case keymap::ConversionState::REPORT_BUG:
       return ReportBug(command);
 
-    case keymap::ConversionState::ABORT:
-      return Abort(command);
-
     case keymap::ConversionState::DELETE_SELECTED_CANDIDATE:
       return DeleteSelectedCandidateFromHistory(command);
 
@@ -1085,20 +1072,6 @@ bool Session::DoNothing(commands::Command *command) {
   return true;
 }
 
-bool Session::Abort(commands::Command *command) {
-#if defined(DEBUG) && !defined(__native_client__)
-  // Abort the server without any finalization.  This is only for
-  // debugging.
-  command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
-
-  CrashReportUtil::Abort();
-  return true;
-#else
-  return DoNothing(command);
-#endif  // defined(DEBUG) && !defined(__native_client__)
-}
-
 bool Session::Revert(commands::Command *command) {
   if (context_->state() == ImeContext::PRECOMPOSITION) {
     context_->mutable_converter()->Revert();
@@ -1234,16 +1207,7 @@ bool Session::ConvertReverse(commands::Command *command) {
   composer::Composer *composer = context_->mutable_composer();
   composer->Reset();
   vector<string> reading_characters;
-  // TODO(hsumita): Currently, InsertCharacterPreedit can't deal multiple
-  // characters at the same time.
-  // So we should split query to UTF-8 chars to avoid DCHECK failure.
-  // http://b/3437358
-  //
-  // See also http://b/5094684, http://b/5094642
-  Util::SplitStringToUtf8Chars(reading, &reading_characters);
-  for (size_t i = 0; i < reading_characters.size(); ++i) {
-    composer->InsertCharacterPreedit(reading_characters[i]);
-  }
+  composer->InsertCharacterPreedit(reading);
   composer->set_source_text(composition);
   // start conversion here.
   if (!context_->mutable_converter()->Convert(*composer)) {
@@ -1384,9 +1348,7 @@ bool Session::CommitCandidate(commands::Command *command) {
     // input message and commit first segment.
     context_->mutable_converter()->CandidateMoveToId(
         input.command().id(), context_->composer());
-    // TODO(yamaguchi): CommitFirstSegment might be inappropriate.
-    //     Fix spec and implementation.
-    CommitFirstSegmentInternal(command->input().context());
+    CommitHeadToFocusedSegmentsInternal(command->input().context());
   } else {
     // No candidate is focused.
     size_t consumed_key_size = 0;
@@ -1889,6 +1851,19 @@ bool Session::CommitSegment(commands::Command *command) {
 void Session::CommitFirstSegmentInternal(const commands::Context &context) {
   size_t size;
   context_->mutable_converter()->CommitFirstSegment(
+      context_->composer(), context, &size);
+  if (size > 0) {
+    // Delete the key characters of the first segment from the preedit.
+    context_->mutable_composer()->DeleteRange(0, size);
+    // The number of segments should be more than one.
+    DCHECK_GT(context_->composer().GetLength(), 0);
+  }
+}
+
+void Session::CommitHeadToFocusedSegmentsInternal(
+    const commands::Context &context) {
+  size_t size;
+  context_->mutable_converter()->CommitHeadToFocusedSegments(
       context_->composer(), context, &size);
   if (size > 0) {
     // Delete the key characters of the first segment from the preedit.

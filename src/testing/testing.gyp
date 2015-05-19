@@ -62,17 +62,19 @@
           'GTEST_HAS_TR1_TUPLE=1',
         ],
         'conditions': [
-          ['target_compiler=="msvs2012"', {
+          ['_toolset=="target" and compiler_target=="msvs" and compiler_target_version_int==1700', {
             'gtest_defines': [
               '_VARIADIC_MAX=10',  # for gtest/gmock on VC++ 2012
             ],
           }],
+          # TODO(yukawa): Get rid of the following workaround when C++11 is
+          # enabled on all the platforms.
           ['target_platform!="Windows"', {
             'gtest_defines': [
               'GTEST_LANG_CXX11=0',  # non-Windows build is not ready
             ],
           }],
-          ['target_platform=="Android"', {
+          ['_toolset=="target" and target_platform=="Android"', {
             'gtest_defines': [
               'GTEST_HAS_RTTI=0',  # Android NDKr7 requires this.
               'GTEST_HAS_CLONE=0',
@@ -118,7 +120,8 @@
         ],
       },
       'conditions': [
-        ['clang==1', {
+        ['(_toolset=="target" and compiler_target=="clang") or '
+         '(_toolset=="host" and compiler_host=="clang")', {
           'cflags': [
             '-Wno-missing-field-initializers',
             '-Wno-unused-private-field',

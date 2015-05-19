@@ -32,8 +32,8 @@ package org.mozc.android.inputmethod.japanese.preference;
 import org.mozc.android.inputmethod.japanese.ApplicationInitializerFactory;
 import org.mozc.android.inputmethod.japanese.ApplicationInitializerFactory.ApplicationInitializer;
 import org.mozc.android.inputmethod.japanese.DependencyFactory;
-import org.mozc.android.inputmethod.japanese.HardwareKeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.preference.KeyboardPreviewDrawable.BitmapCache;
 import org.mozc.android.inputmethod.japanese.preference.KeyboardPreviewDrawable.CacheReferenceKey;
 import org.mozc.android.inputmethod.japanese.resources.R;
@@ -243,5 +243,13 @@ public class MozcBasePreferenceActivity extends PreferenceActivity {
       imeSwitchDialog.show();
       return;
     }
+  }
+
+  /**
+   * For the time being, pretend default behavior of apps for the framework older than KITKAT.
+   */
+  @Override
+  protected boolean isValidFragment(@SuppressWarnings("unused") String fragmentName) {
+    return true;
   }
 }

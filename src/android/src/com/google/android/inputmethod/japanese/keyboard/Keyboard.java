@@ -29,6 +29,9 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -39,6 +42,7 @@ import java.util.List;
  */
 public class Keyboard {
 
+  private final Optional<String> contentDescription;
   private final float flickThreshold;
   private final List<Row> rowList;
 
@@ -47,7 +51,9 @@ public class Keyboard {
   public final int contentTop;
   public final int contentBottom;
 
-  public Keyboard(List<? extends Row> rowList, float flickThreshold) {
+  public Keyboard(Optional<String> contentDescription,
+                  List<? extends Row> rowList, float flickThreshold) {
+    this.contentDescription = Preconditions.checkNotNull(contentDescription);
     this.flickThreshold = flickThreshold;
     this.rowList = Collections.unmodifiableList(rowList);
 
@@ -65,6 +71,10 @@ public class Keyboard {
     this.contentRight = right;
     this.contentTop = top;
     this.contentBottom = bottom;
+  }
+
+  public Optional<String> getContentDescription() {
+    return contentDescription;
   }
 
   public float getFlickThreshold() {

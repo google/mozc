@@ -32,7 +32,8 @@
 
 #include <string>
 #include <vector>
-#include "base/base.h"
+
+#include "base/port.h"
 
 namespace mozc {
 
@@ -157,6 +158,10 @@ class KeyCorrector {
   string original_key_;
   vector<size_t> alignment_;
   vector<size_t> rev_alignment_;
+
+  DISALLOW_COPY_AND_ASSIGN(KeyCorrector);
 };
+
 }  // namespace mozc
-#endif  //  MOZC_CONVERTER_KEY_CORRECTOR_H_
+
+#endif  // MOZC_CONVERTER_KEY_CORRECTOR_H_

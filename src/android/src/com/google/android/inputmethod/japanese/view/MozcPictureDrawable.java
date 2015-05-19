@@ -29,6 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
+import com.google.common.base.Preconditions;
+
 import android.graphics.Canvas;
 import android.graphics.Picture;
 import android.graphics.Rect;
@@ -41,7 +43,7 @@ import android.graphics.drawable.PictureDrawable;
  */
 public class MozcPictureDrawable extends PictureDrawable {
   public MozcPictureDrawable(Picture picture) {
-    super(picture);
+    super(Preconditions.checkNotNull(picture));
   }
 
   @Override

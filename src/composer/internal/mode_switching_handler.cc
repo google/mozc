@@ -32,8 +32,11 @@
 
 #include "composer/internal/mode_switching_handler.h"
 
-#include "base/base.h"
+#include <string>
+
+#include "base/init.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 
 REGISTER_MODULE_RELOADER(mode_switching_handler, {

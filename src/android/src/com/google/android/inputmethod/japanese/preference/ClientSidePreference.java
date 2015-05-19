@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.preference;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import android.content.SharedPreferences;
@@ -54,9 +55,21 @@ public class ClientSidePreference {
    * belong to the selected layout.
    */
   public enum KeyboardLayout {
-    TWELVE_KEYS,
-    QWERTY,
-    GODAN,
+    TWELVE_KEYS(1),
+    QWERTY(2),
+    GODAN(3),
+    ;
+
+    // ID for usage stats.
+    private final int id;
+
+    private KeyboardLayout(int id) {
+      this.id = id;
+    }
+
+    public int getId() {
+      return id;
+    }
   }
 
   /**
@@ -96,43 +109,35 @@ public class ClientSidePreference {
   private final int keyboardHeightRatio;
 
   /**
-   * For testing purpose.
-   *
    * If you want to use this method,
-   * consider using {@link #ClientSidePreference(SharedPreferences, Configuration)} instead.
+   * consider using {@link #ClientSidePreference(SharedPreferences, int)} instead.
    */
-  public ClientSidePreference(boolean isHapticFeedbackEnabled,
-                              long hapticFeedbackDuration,
-                              boolean isSoundFeedbackEnabled,
-                              int soundFeedbackVolume,
-                              boolean isPopupFeedbackEnabled,
-                              KeyboardLayout keyboardLayout, InputStyle inputStyle,
-                              boolean qwertyLayoutForAlphabet, boolean fullscreenMode,
-                              int flickSensitivity,
-                              EmojiProviderType emojiProviderType, HardwareKeyMap hardwareKeyMap,
-                              SkinType skinType, LayoutAdjustment layoutAdjustment,
-                              int keyboardHeightRatio) {
-    Preconditions.checkNotNull(emojiProviderType);
-
+  @VisibleForTesting public ClientSidePreference(
+      boolean isHapticFeedbackEnabled, long hapticFeedbackDuration, boolean isSoundFeedbackEnabled,
+      int soundFeedbackVolume, boolean isPopupFeedbackEnabled, KeyboardLayout keyboardLayout,
+      InputStyle inputStyle, boolean qwertyLayoutForAlphabet, boolean fullscreenMode,
+      int flickSensitivity, EmojiProviderType emojiProviderType, HardwareKeyMap hardwareKeyMap,
+      SkinType skinType, LayoutAdjustment layoutAdjustment, int keyboardHeightRatio) {
     this.isHapticFeedbackEnabled = isHapticFeedbackEnabled;
     this.hapticFeedbackDuration = hapticFeedbackDuration;
     this.isSoundFeedbackEnabled = isSoundFeedbackEnabled;
     this.soundFeedbackVolume = soundFeedbackVolume;
     this.isPopupFeedbackEnabled = isPopupFeedbackEnabled;
-    this.keyboardLayout = keyboardLayout;
-    this.inputStyle = inputStyle;
+    this.keyboardLayout = Preconditions.checkNotNull(keyboardLayout);
+    this.inputStyle = Preconditions.checkNotNull(inputStyle);
     this.qwertyLayoutForAlphabet = qwertyLayoutForAlphabet;
     this.fullscreenMode = fullscreenMode;
     this.flickSensitivity = flickSensitivity;
-    this.emojiProviderType = emojiProviderType;
-    this.hardwareKeyMap = hardwareKeyMap;
-    this.skinType = skinType;
-    this.layoutAdjustment = layoutAdjustment;
+    this.emojiProviderType = Preconditions.checkNotNull(emojiProviderType);
+    this.hardwareKeyMap = Preconditions.checkNotNull(hardwareKeyMap);
+    this.skinType = Preconditions.checkNotNull(skinType);
+    this.layoutAdjustment = Preconditions.checkNotNull(layoutAdjustment);
     this.keyboardHeightRatio = keyboardHeightRatio;
   }
 
-  public ClientSidePreference(SharedPreferences sharedPreferences,
-                              Configuration deviceConfiguration) {
+  public ClientSidePreference(SharedPreferences sharedPreferences, int deviceOrientation) {
+    Preconditions.checkNotNull(sharedPreferences);
+
     isHapticFeedbackEnabled =
         sharedPreferences.getBoolean(PreferenceUtil.PREF_HAPTIC_FEEDBACK_KEY, false);
     hapticFeedbackDuration =
@@ -151,7 +156,7 @@ public class ClientSidePreference {
     String layoutAdjustmentKey;
     String keyboardHeightRatioKey;
 
-    if (PreferenceUtil.isLandscapeKeyboardSettingActive(sharedPreferences, deviceConfiguration)) {
+    if (PreferenceUtil.isLandscapeKeyboardSettingActive(sharedPreferences, deviceOrientation)) {
       keyboardLayoutKey = PreferenceUtil.PREF_LANDSCAPE_KEYBOARD_LAYOUT_KEY;
       inputStyleKey = PreferenceUtil.PREF_LANDSCAPE_INPUT_STYLE_KEY;
       qwertyLayoutForAlphabetKey = PreferenceUtil.PREF_LANDSCAPE_QWERTY_LAYOUT_FOR_ALPHABET_KEY;
@@ -168,7 +173,7 @@ public class ClientSidePreference {
     }
 
     // Don't apply pref_portrait_keyboard_settings_for_landscape for fullscreen mode.
-    String fullscreenKey = (deviceConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+    String fullscreenKey = (deviceOrientation == Configuration.ORIENTATION_LANDSCAPE)
         ? PreferenceUtil.PREF_LANDSCAPE_FULLSCREEN_KEY
         : PreferenceUtil.PREF_PORTRAIT_FULLSCREEN_KEY;
 

@@ -31,11 +31,11 @@
 
 #include <string>
 #include <vector>
-#include <sstream>
+#include <sstream>  // NOLINT
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/string_piece.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"

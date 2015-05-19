@@ -32,9 +32,10 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
-#include "base/base.h"
+
 #include "base/iterator_adapter.h"
 #include "base/logging.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace storage {

@@ -83,7 +83,7 @@ def ParseArgs():
                     action='store_true',
                     help='Runs native tests. [NATIVE] options are used.')
   parser.add_option('--configuration', dest='configuration',
-                    default='Debug_Android',
+                    default='Debug',
                     help='[JAVA] Build configuration. Used to build correct '
                     'testee binary.')
   parser.add_option('--app_package_name', dest='app_package_name',
@@ -167,7 +167,7 @@ class AndroidDevice(android_util.AndroidDevice):
 
   def WaitForMount(self):
     """Wait until SD card is mounted."""
-    retry = 5
+    retry = 10
     sleep = 30
     for _ in xrange(retry):
       if self._RunCommand('mount').find('/sdcard') != -1:

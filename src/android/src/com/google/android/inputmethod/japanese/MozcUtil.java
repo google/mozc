@@ -29,11 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese;
 
-import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.CrossingEdgeBehavior;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.EmojiCarrierType;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.RewriterCapability;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpaceOnAlphanumeric;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpecialRomanjiTable;
 import org.mozc.android.inputmethod.japanese.util.ResourcesWrapper;
@@ -43,6 +40,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Dialog;
 import android.content.Context;
@@ -57,7 +55,6 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -67,6 +64,7 @@ import android.os.StrictMode;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -77,28 +75,25 @@ import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.zip.ZipFile;
-
-import javax.annotation.Nullable;
 
 /**
  * Utility class
  *
  */
 public final class MozcUtil {
-  private static class OutOfMemoryRetryingResources extends ResourcesWrapper {
-    private final int retryCount;
 
+  private static class OutOfMemoryRetryingResources extends ResourcesWrapper {
+
+    private final int retryCount;
     public OutOfMemoryRetryingResources(Resources base, int retryCount) {
-      super(base);
+      super(Preconditions.checkNotNull(base));
       this.retryCount = retryCount;
     }
 
@@ -147,9 +142,10 @@ public final class MozcUtil {
    * Real implementation of TelephonyManagerInterface.
    */
   private static class TelephonyManagerImpl implements TelephonyManagerInterface {
+
     private final TelephonyManager telephonyManager;
     TelephonyManagerImpl(TelephonyManager telephonyManager) {
-      this.telephonyManager = telephonyManager;
+      this.telephonyManager = Preconditions.checkNotNull(telephonyManager);
     }
 
     @Override
@@ -159,9 +155,10 @@ public final class MozcUtil {
   }
 
   static class InputMethodPickerShowingCallback implements Handler.Callback {
+
     @Override
     public boolean handleMessage(Message msg) {
-      Context context = Context.class.cast(msg.obj);
+      Context context = Context.class.cast(Preconditions.checkNotNull(msg).obj);
       InputMethodManager.class.cast(
           context.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
       return false;
@@ -191,6 +188,12 @@ public final class MozcUtil {
   private static final int SHOW_INPUT_METHOD_PICKER_WHAT = 0;
   private static Optional<Handler> showInputMethodPickerHandler = Optional.absent();
 
+  public static final String IME_OPTION_NO_MICROPHONE_COMPAT = "nm";
+  public static final String IME_OPTION_NO_MICROPHONE =
+      "com.google.android.inputmethod.latin.noMicrophoneKey";
+
+  private static final String USER_DICTIONARY_EXPORT_DIR = "user_dictionary_export";
+
   /**
    * Lazy creation of a handler.
    *
@@ -203,19 +206,6 @@ public final class MozcUtil {
         Optional.of(new Handler(new InputMethodPickerShowingCallback()));
     }
     return showInputMethodPickerHandler.get();
-  }
-
-  /**
-   * Note that if the key is {@link EmojiProviderType#NONE}, {@code null} is returned.
-   */
-  private static final Map<EmojiProviderType, EmojiCarrierType> EMOJI_PROVIDER_TYPE_MAP;
-  static {
-    EnumMap<EmojiProviderType, EmojiCarrierType> map =
-        new EnumMap<EmojiProviderType, EmojiCarrierType>(EmojiProviderType.class);
-    map.put(EmojiProviderType.DOCOMO, EmojiCarrierType.DOCOMO_EMOJI);
-    map.put(EmojiProviderType.SOFTBANK, EmojiCarrierType.SOFTBANK_EMOJI);
-    map.put(EmojiProviderType.KDDI, EmojiCarrierType.KDDI_EMOJI);
-    EMOJI_PROVIDER_TYPE_MAP = Collections.unmodifiableMap(map);
   }
 
   // Disallow instantiation.
@@ -317,11 +307,17 @@ public final class MozcUtil {
    */
   public static int getAbiIndependentVersionCode(Context context) {
     // Version code format:
-    // 000ABBBBBB
+    // 00000BBBBB or
+    // 0005BBBBBA
     // A: ABI (0: Fat, 5: x86, 4: armeabi-v7a, 3: armeabi, 1:mips)
     // B: Build number
+    Preconditions.checkNotNull(context);
+    int rawVersionCode = getVersionCode(context);
     String versionCode = Integer.toString(getVersionCode(context));
-    return Integer.valueOf(versionCode.substring(Math.max(0, versionCode.length() - 6)));
+    if (versionCode.length() == 7 && versionCode.charAt(0) == '5') {
+      return Integer.valueOf(versionCode.substring(1, versionCode.length() - 1));
+    }
+    return rawVersionCode;
   }
 
   /**
@@ -336,18 +332,23 @@ public final class MozcUtil {
   /**
    * Returns true if {@code versionName} indicates dev channel.
    *
-   * This method sees only the characters after the last period.
+   * This method sees only the characters between the last period and hyphen.
    * If the characters is greater than or equal to (int)100,
    * this method returns true.
    */
   @VisibleForTesting static boolean isDevChannelVersionName(String versionName) {
     Preconditions.checkNotNull(versionName);
+
     int lastDot = versionName.lastIndexOf('.');
-    if (lastDot < 0 || versionName.length() == lastDot + 1) {
+    if (lastDot < 0) {
       return false;
     }
+    int lastHyphen = versionName.lastIndexOf('-');
+    if (lastHyphen < 0) {
+      lastHyphen = versionName.length();
+    }
     try {
-      return Integer.parseInt(versionName.substring(lastDot + 1)) >= 100;
+      return Integer.parseInt(versionName.substring(lastDot + 1, lastHyphen)) >= 100;
     } catch (NumberFormatException e) {
       return false;
     }
@@ -397,15 +398,15 @@ public final class MozcUtil {
       return isMozcDefaultIme.get();
     }
 
-    InputMethodInfo mozcInputMethodInfo = getMozcInputMethodInfo(context);
-    if (mozcInputMethodInfo == null) {
+    Optional<InputMethodInfo> mozcInputMethodInfo = getMozcInputMethodInfo(context);
+    if (!mozcInputMethodInfo.isPresent()) {
       MozcLog.w("Mozc's InputMethodInfo is not found.");
       return false;
     }
 
     String currentIme = Settings.Secure.getString(
         context.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
-    return mozcInputMethodInfo.getId().equals(currentIme);
+    return mozcInputMethodInfo.get().getId().equals(currentIme);
   }
 
   /**
@@ -418,22 +419,22 @@ public final class MozcUtil {
     MozcUtil.isMozcDefaultIme = Preconditions.checkNotNull(isMozcDefaultIme);
   }
 
-  private static InputMethodInfo getMozcInputMethodInfo(Context context) {
+  private static Optional<InputMethodInfo> getMozcInputMethodInfo(Context context) {
     Preconditions.checkNotNull(context);
     InputMethodManager inputMethodManager = getInputMethodManager(context);
     if (inputMethodManager == null) {
       MozcLog.w("InputMethodManager is not found.");
-      return null;
+      return Optional.absent();
     }
     String packageName = context.getPackageName();
     for (InputMethodInfo inputMethodInfo : inputMethodManager.getInputMethodList()) {
       if (inputMethodInfo.getPackageName().equals(packageName)) {
-        return inputMethodInfo;
+        return Optional.of(inputMethodInfo);
       }
     }
 
     // Not found.
-    return null;
+    return Optional.absent();
   }
 
 
@@ -496,19 +497,20 @@ public final class MozcUtil {
 
   public static <T extends View> T inflateWithOutOfMemoryRetrial(
       Class<T> clazz, LayoutInflater inflater,
-      int resourceId, @Nullable ViewGroup root, boolean attachToRoot) {
+      int resourceId, Optional<ViewGroup> root, boolean attachToRoot) {
     Preconditions.checkNotNull(clazz);
     Preconditions.checkNotNull(inflater);
+    Preconditions.checkNotNull(root);
     for (int i = 0; i < OUT_OF_MEMORY_RETRY_COUNT; ++i) {
       try {
-        return clazz.cast(inflater.inflate(resourceId, root, attachToRoot));
+        return clazz.cast(inflater.inflate(resourceId, root.orNull(), attachToRoot));
       } catch (OutOfMemoryError e) {
         // Retry with GC.
         System.gc();
       }
     }
 
-    return clazz.cast(inflater.inflate(resourceId, root, attachToRoot));
+    return clazz.cast(inflater.inflate(resourceId, root.orNull(), attachToRoot));
   }
 
   public static Bitmap createBitmap(int width, int height, Config config) {
@@ -557,59 +559,65 @@ public final class MozcUtil {
 
   public static Request getRequestForKeyboard(
       KeyboardSpecificationName specName,
-      @Nullable SpecialRomanjiTable romanjiTable,
-      @Nullable SpaceOnAlphanumeric spaceOnAlphanumeric,
-      @Nullable Boolean isKanaModifierInsensitiveConversion,
-      @Nullable CrossingEdgeBehavior crossingEdgeBehavior,
+      Optional<SpecialRomanjiTable> romanjiTable,
+      Optional<SpaceOnAlphanumeric> spaceOnAlphanumeric,
+      Optional<Boolean> isKanaModifierInsensitiveConversion,
+      Optional<CrossingEdgeBehavior> crossingEdgeBehavior,
       Configuration configuration) {
-    // TODO(matsuzakit): Migrate Nullables to Optional.
-    //                   Currently @Nullable is used to keep current interface.
     Preconditions.checkNotNull(specName);
+    Preconditions.checkNotNull(romanjiTable);
+    Preconditions.checkNotNull(spaceOnAlphanumeric);
+    Preconditions.checkNotNull(isKanaModifierInsensitiveConversion);
+    Preconditions.checkNotNull(crossingEdgeBehavior);
     Preconditions.checkNotNull(configuration);
     Request.Builder builder = Request.newBuilder();
     builder.setKeyboardName(specName.formattedKeyboardName(configuration));
-    if (romanjiTable != null) {
-      builder.setSpecialRomanjiTable(romanjiTable);
+    if (romanjiTable.isPresent()) {
+      builder.setSpecialRomanjiTable(romanjiTable.get());
     }
-    if (spaceOnAlphanumeric != null) {
-      builder.setSpaceOnAlphanumeric(spaceOnAlphanumeric);
+    if (spaceOnAlphanumeric.isPresent()) {
+      builder.setSpaceOnAlphanumeric(spaceOnAlphanumeric.get());
     }
-    if (isKanaModifierInsensitiveConversion != null) {
+    if (isKanaModifierInsensitiveConversion.isPresent()) {
       builder.setKanaModifierInsensitiveConversion(
-          isKanaModifierInsensitiveConversion.booleanValue());
+          isKanaModifierInsensitiveConversion.get().booleanValue());
     }
-    if (crossingEdgeBehavior != null) {
-      builder.setCrossingEdgeBehavior(crossingEdgeBehavior);
+    if (crossingEdgeBehavior.isPresent()) {
+      builder.setCrossingEdgeBehavior(crossingEdgeBehavior.get());
     }
     return builder.build();
   }
 
-  public static boolean isEmojiAllowed(EditorInfo editorInfo) {
+  @SuppressLint("InlinedApi")
+  public static boolean isPasswordField(EditorInfo editorInfo) {
     Preconditions.checkNotNull(editorInfo);
-    Bundle bundle = editorInfo.extras;
-    return (bundle != null) && bundle.getBoolean("allowEmoji");
+    int inputType = editorInfo.inputType;
+    int inputClass = inputType & InputType.TYPE_MASK_CLASS;
+    int inputVariation = inputType & InputType.TYPE_MASK_VARIATION;
+    return inputClass == InputType.TYPE_CLASS_TEXT &&
+        (inputVariation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+        inputVariation == InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+        inputVariation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD);
   }
 
-  public static Request createEmojiRequest(int sdkInt, EmojiProviderType emojiProviderType) {
-    Preconditions.checkNotNull(emojiProviderType);
-
-    int availableEmojiCarrier = 0;
-    if (sdkInt >= 16) {
-      // Unicode emoji is available when SDK version is equal to or higher than Jelly bean.
-      availableEmojiCarrier |= EmojiCarrierType.UNICODE_EMOJI.getNumber();
+  /**
+   * Returns true if the editor accepts microphone input.
+   *
+   * <p>Some editors sends a special record in privateImeOptions. In such situation transition to
+   * Voice IME should be disabled.
+   */
+  public static boolean isVoiceInputAllowed(EditorInfo editorInfo) {
+    Preconditions.checkNotNull(editorInfo);
+    if (editorInfo.privateImeOptions == null) {
+      return true;
     }
-
-    // NOTE: If emojiCarrierType is NONE, availableEmojiCarrier is not updated here.
-    EmojiCarrierType emojiCarrierType =
-        EMOJI_PROVIDER_TYPE_MAP.get(emojiProviderType);
-    if (emojiCarrierType != null) {
-      availableEmojiCarrier |= emojiCarrierType.getNumber();
+    for (String option : editorInfo.privateImeOptions.split(",")) {
+      if (option.equals(IME_OPTION_NO_MICROPHONE) ||
+          option.equals(IME_OPTION_NO_MICROPHONE_COMPAT)) {
+        return false;
+      }
     }
-
-    return Request.newBuilder()
-        .setAvailableEmojiCarrier(availableEmojiCarrier)
-        .setEmojiRewriterCapability(RewriterCapability.ALL.getNumber())
-        .build();
+    return true;
   }
 
   public static String utf8CStyleByteStringToString(ByteString value) {
@@ -627,10 +635,8 @@ public final class MozcUtil {
       return new String(bytes, "UTF-8");
     } catch (UnsupportedEncodingException e) {
       // Should never happen because of Java's spec.
-      MozcLog.w("UTF-8 charset is not available");
+      throw new IllegalStateException("UTF-8 charset is not available.");
     }
-
-    return null;
   }
 
   /**
@@ -718,9 +724,7 @@ public final class MozcUtil {
    */
   public static void closeIgnoringIOException(Closeable closeable) {
     try {
-      if (closeable != null) {
-        closeable.close();
-      }
+      Preconditions.checkNotNull(closeable).close();
     } catch (IOException e) {
       MozcLog.e("Failed to close.", e);
     }
@@ -731,9 +735,7 @@ public final class MozcUtil {
    */
   public static void closeIgnoringIOException(ZipFile zipFile) {
     try {
-      if (zipFile != null) {
-        zipFile.close();
-      }
+      Preconditions.checkNotNull(zipFile).close();
     } catch (IOException e) {
       MozcLog.e("Failed to close.", e);
     }
@@ -742,6 +744,40 @@ public final class MozcUtil {
   public static InputMethodManager getInputMethodManager(Context context) {
     Preconditions.checkNotNull(context);
     return InputMethodManager.class.cast(context.getSystemService(Context.INPUT_METHOD_SERVICE));
+  }
+
+  /**
+   * Get temporary directory for user dictionary export feature.
+   *
+   * This method creates a new directory if it doesn't exist.
+   */
+  public static File getUserDictionaryExportTempDirectory(Context context) {
+    File directory = new File(context.getCacheDir().getAbsolutePath(), USER_DICTIONARY_EXPORT_DIR);
+    if (directory.exists()) {
+      Preconditions.checkState(directory.isDirectory());
+    } else {
+      directory.mkdir();
+    }
+    return directory;
+  }
+
+  /**
+   * Delete contents of the directory.
+   *
+   * The root directory itself is NOT deleted.
+   *
+   * @return true if all entries are successfully deleted.
+   */
+  public static boolean deleteDirectoryContents(File directory) {
+    Preconditions.checkArgument(Preconditions.checkNotNull(directory).isDirectory());
+    boolean result = true;
+    for (File entry : directory.listFiles()) {
+      if (entry.isDirectory()) {
+        result &= deleteDirectoryContents(entry);
+      }
+      result &= entry.delete();
+    }
+    return result;
   }
 
   /**

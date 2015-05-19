@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "converter/lattice.h"
+
 #include <set>
 #include <string>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "converter/node.h"
-#include "converter/lattice.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -48,8 +50,8 @@ TEST(LatticeTest, LatticeTest) {
   lattice.set_history_end_pos(4);
   EXPECT_EQ(4, lattice.history_end_pos());
 
-  EXPECT_TRUE(lattice.bos_nodes());
-  EXPECT_TRUE(lattice.eos_nodes());
+  EXPECT_NE(nullptr, lattice.bos_nodes());
+  EXPECT_NE(nullptr, lattice.eos_nodes());
 
   lattice.Clear();
   EXPECT_EQ("", lattice.key());
@@ -135,10 +137,10 @@ TEST(LatticeTest, AddSuffixTest) {
 
     // check BOS & EOS
     EXPECT_TRUE(lattice.has_lattice());
-    EXPECT_TRUE(lattice.bos_nodes());
-    EXPECT_TRUE(lattice.bos_nodes()->node_type & Node::BOS_NODE);
-    EXPECT_TRUE(lattice.eos_nodes());
-    EXPECT_TRUE(lattice.eos_nodes()->node_type & Node::EOS_NODE);
+    EXPECT_NE(nullptr, lattice.bos_nodes());
+    EXPECT_NE(0, lattice.bos_nodes()->node_type & Node::BOS_NODE);
+    EXPECT_NE(nullptr, lattice.eos_nodes());
+    EXPECT_NE(0, lattice.eos_nodes()->node_type & Node::EOS_NODE);
 
     // check cache_info
     const size_t key_size = lattice.key().size();
@@ -187,10 +189,10 @@ TEST(LatticeTest, ShrinkKeyTest) {
 
     // check BOS & EOS
     EXPECT_TRUE(lattice.has_lattice());
-    EXPECT_TRUE(lattice.bos_nodes());
-    EXPECT_TRUE(lattice.bos_nodes()->node_type & Node::BOS_NODE);
-    EXPECT_TRUE(lattice.eos_nodes());
-    EXPECT_TRUE(lattice.eos_nodes()->node_type & Node::EOS_NODE);
+    EXPECT_NE(nullptr, lattice.bos_nodes());
+    EXPECT_NE(0, lattice.bos_nodes()->node_type & Node::BOS_NODE);
+    EXPECT_NE(nullptr, lattice.eos_nodes());
+    EXPECT_NE(0, lattice.eos_nodes()->node_type & Node::EOS_NODE);
 
     // check cache_info
     const size_t key_size = lattice.key().size();

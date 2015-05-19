@@ -41,16 +41,16 @@ public class WeakDrawableCacheTest extends TestCase {
     Drawable drawable = new ColorDrawable();
     int key = 10;
     WeakDrawableCache cacheMap = new WeakDrawableCache();
-    assertNull(cacheMap.get(key));
+    assertFalse(cacheMap.get(key).isPresent());
     cacheMap.put(key, drawable);
-    assertSame(drawable, cacheMap.get(key));
+    assertSame(drawable, cacheMap.get(key).get());
     System.gc();
-    assertSame(drawable, cacheMap.get(key));
+    assertSame(drawable, cacheMap.get(key).get());
 
     // Unfortunately, it is NOT ensured that the System.gc() runs GC actually.
     // So we cannot test if drawable is actually released.
 
     cacheMap.clear();
-    assertNull(cacheMap.get(key));
+    assertFalse(cacheMap.get(key).isPresent());
   }
 }

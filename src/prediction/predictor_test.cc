@@ -111,8 +111,6 @@ class MockPredictor : public PredictorInterface {
  public:
   MockPredictor() {}
   virtual ~MockPredictor() {}
-
-  MOCK_CONST_METHOD1(Predict, bool(Segments *segments));
   MOCK_CONST_METHOD2(
       PredictForRequest,
       bool(const ConversionRequest &request, Segments *segments));

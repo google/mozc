@@ -29,7 +29,9 @@
 
 #include "storage/louds/bit_vector_based_array.h"
 
-#include "base/base.h"
+#include <string>
+
+#include "base/port.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "testing/base/public/gunit.h"
 

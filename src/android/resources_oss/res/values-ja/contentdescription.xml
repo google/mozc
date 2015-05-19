@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2014, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+
+    <!-- Keyboard name -->
+    <string name="cd_keyboard_kana">かなキーボード</string>
+    <string name="cd_keyboard_alphabet">アルファベットキーボード</string>
+    <string name="cd_keyboard_number">数字キーボード</string>
+
+    <!-- Keys -->
+    <!--
+         Policy: Use Kanji as long as possible in order to improve the quality of TTS.
+         If written down in Hiragana, many information which is required for accent lacks.
+         But some entries are written down. For example, raw 'g' is spoken as "ぐらむ"
+         so explicitly "じー" is used instead.
+    -->
+
+    <string name="cd_key_shift">シフト</string>
+    <string name="cd_key_up">上</string>
+    <string name="cd_key_left">左</string>
+    <string name="cd_key_right">右</string>
+    <string name="cd_key_down">下</string>
+    <string name="cd_key_chartype_to_kana">かなへ切り替え</string>
+    <string name="cd_key_chartype_to_123">数字に切り替え</string>
+    <string name="cd_key_chartype_to_abc">アルファベットに切り替え</string>
+    <string name="cd_key_chartype_to_kana_123">記号に切り替え</string>
+    <string name="cd_key_chartype_to_abc_123">記号に切り替え</string>
+    <string name="cd_key_undo">アンドゥ</string>
+    <string name="cd_key_symbol">記号入力画面</string>
+    <string name="cd_key_alt">その他記号</string>
+    <string name="cd_key_alt_unmodified">その他記号を解除</string>
+    <string name="cd_key_capslock">キャプスロック</string>
+    <string name="cd_key_capsunlock">シフトを解除</string>
+    <string name="cd_key_menu_dialog">メニューを開く</string>
+    <string name="cd_key_ime_picker_dialog">入力方法切り替え</string>
+    <string name="cd_key_uchar_backspace">バックスペース</string>
+    <string name="cd_key_uchar_linefeed">改行</string>
+    <string name="cd_key_uchar_space">スペース</string>
+    <string name="cd_key_uchar_exclamation_mark">感嘆符</string>
+    <string name="cd_key_uchar_quotation_mark">ダブルクォート</string>
+    <string name="cd_key_uchar_number_sign">シャープ</string>
+    <string name="cd_key_uchar_dollar_sign">ドル記号</string>
+    <string name="cd_key_uchar_percent_sign">パーセント</string>
+    <string name="cd_key_uchar_ampersand">アンパサンド</string>
+    <string name="cd_key_uchar_apostrophe">アポストロフィ</string>
+    <string name="cd_key_uchar_left_parenthesis">始め丸括弧</string>
+    <string name="cd_key_uchar_right_parenthesis">終わり丸括弧</string>
+    <string name="cd_key_uchar_asterisk">アスタリスク</string>
+    <string name="cd_key_uchar_plus_sign">プラス</string>
+    <string name="cd_key_uchar_comma">カンマ</string>
+    <string name="cd_key_uchar_hyphen_minus">マイナス</string>
+    <string name="cd_key_uchar_full_stop">ピリオド</string>
+    <string name="cd_key_uchar_solidus">スラッシュ</string>
+    <string name="cd_key_uchar_digit_zero">0</string>
+    <string name="cd_key_uchar_digit_one">1</string>
+    <string name="cd_key_uchar_digit_two">2</string>
+    <string name="cd_key_uchar_digit_three">3</string>
+    <string name="cd_key_uchar_digit_four">4</string>
+    <string name="cd_key_uchar_digit_five">5</string>
+    <string name="cd_key_uchar_digit_six">6</string>
+    <string name="cd_key_uchar_digit_seven">7</string>
+    <string name="cd_key_uchar_digit_eight">8</string>
+    <string name="cd_key_uchar_digit_nine">9</string>
+    <string name="cd_key_uchar_colon">コロン</string>
+    <string name="cd_key_uchar_semicolon">セミコロン</string>
+    <string name="cd_key_uchar_less_than_sign">少なり</string>
+    <string name="cd_key_uchar_equals_sign">イコール</string>
+    <string name="cd_key_uchar_greater_than_sign">大なり</string>
+    <string name="cd_key_uchar_question_mark">疑問符</string>
+    <string name="cd_key_uchar_commercial_at">アットマーク</string>
+    <!--
+         'A' might be pronounciated 「おおもじえー」 or 「えー」, depending on TTS engine.
+         To avoid from ambiguation Hiragana description is employed here.
+    -->
+    <string name="cd_key_uchar_latin_capital_letter_a">えー</string>
+    <string name="cd_key_uchar_latin_capital_letter_b">びー</string>
+    <string name="cd_key_uchar_latin_capital_letter_c">しー</string>
+    <string name="cd_key_uchar_latin_capital_letter_d">でぃー</string>
+    <string name="cd_key_uchar_latin_capital_letter_e">いー</string>
+    <string name="cd_key_uchar_latin_capital_letter_f">えふ</string>
+    <string name="cd_key_uchar_latin_capital_letter_g">じー</string>
+    <string name="cd_key_uchar_latin_capital_letter_h">えいち</string>
+    <string name="cd_key_uchar_latin_capital_letter_i">あい</string>
+    <string name="cd_key_uchar_latin_capital_letter_j">じぇー</string>
+    <string name="cd_key_uchar_latin_capital_letter_k">けー</string>
+    <string name="cd_key_uchar_latin_capital_letter_l">える</string>
+    <string name="cd_key_uchar_latin_capital_letter_m">えむ</string>
+    <string name="cd_key_uchar_latin_capital_letter_n">えぬ</string>
+    <string name="cd_key_uchar_latin_capital_letter_o">おー</string>
+    <string name="cd_key_uchar_latin_capital_letter_p">ぴー</string>
+    <string name="cd_key_uchar_latin_capital_letter_q">きゅー</string>
+    <string name="cd_key_uchar_latin_capital_letter_r">あーる</string>
+    <string name="cd_key_uchar_latin_capital_letter_s">えす</string>
+    <string name="cd_key_uchar_latin_capital_letter_t">てぃー</string>
+    <string name="cd_key_uchar_latin_capital_letter_u">ゆー</string>
+    <string name="cd_key_uchar_latin_capital_letter_v">ヴぃ</string>
+    <string name="cd_key_uchar_latin_capital_letter_w">だぶりゅー</string>
+    <string name="cd_key_uchar_latin_capital_letter_x">えっくす</string>
+    <string name="cd_key_uchar_latin_capital_letter_y">わい</string>
+    <string name="cd_key_uchar_latin_capital_letter_z">ぜっと</string>
+    <string name="cd_key_uchar_left_square_bracket">始め角括弧</string>
+    <string name="cd_key_uchar_reverse_solidus">バックスラッシュ</string>
+    <string name="cd_key_uchar_right_square_bracket">終わり角括弧</string>
+    <string name="cd_key_uchar_circumflex_accent">ハット</string>
+    <string name="cd_key_uchar_low_line">アンダースコア</string>
+    <string name="cd_key_uchar_grave_accent">グレーブ</string>
+    <string name="cd_key_uchar_latin_small_letter_a">えー</string>
+    <string name="cd_key_uchar_latin_small_letter_b">びー</string>
+    <string name="cd_key_uchar_latin_small_letter_c">しー</string>
+    <string name="cd_key_uchar_latin_small_letter_d">でぃー</string>
+    <string name="cd_key_uchar_latin_small_letter_e">いー</string>
+    <string name="cd_key_uchar_latin_small_letter_f">えふ</string>
+    <string name="cd_key_uchar_latin_small_letter_g">じー</string>
+    <string name="cd_key_uchar_latin_small_letter_h">えいち</string>
+    <string name="cd_key_uchar_latin_small_letter_i">あい</string>
+    <string name="cd_key_uchar_latin_small_letter_j">じぇー</string>
+    <string name="cd_key_uchar_latin_small_letter_k">けー</string>
+    <string name="cd_key_uchar_latin_small_letter_l">える</string>
+    <string name="cd_key_uchar_latin_small_letter_m">えむ</string>
+    <string name="cd_key_uchar_latin_small_letter_n">えぬ</string>
+    <string name="cd_key_uchar_latin_small_letter_o">おー</string>
+    <string name="cd_key_uchar_latin_small_letter_p">ぴー</string>
+    <string name="cd_key_uchar_latin_small_letter_q">きゅー</string>
+    <string name="cd_key_uchar_latin_small_letter_r">あーる</string>
+    <string name="cd_key_uchar_latin_small_letter_s">えす</string>
+    <string name="cd_key_uchar_latin_small_letter_t">てぃー</string>
+    <string name="cd_key_uchar_latin_small_letter_u">ゆー</string>
+    <string name="cd_key_uchar_latin_small_letter_v">ヴぃ</string>
+    <string name="cd_key_uchar_latin_small_letter_w">だぶりゅー</string>
+    <string name="cd_key_uchar_latin_small_letter_x">えっくす</string>
+    <string name="cd_key_uchar_latin_small_letter_y">わい</string>
+    <string name="cd_key_uchar_latin_small_letter_z">ぜっと</string>
+    <string name="cd_key_uchar_left_curly_bracket">始め波括弧</string>
+    <string name="cd_key_uchar_vertical_line">縦線</string>
+    <string name="cd_key_uchar_right_curly_bracket">終わり波括弧</string>
+    <string name="cd_key_uchar_tilde">チルダ</string>
+
+    <!-- Keys in Kana keyboard -->
+    <string name="cd_key_kana_line_a">ア行</string>
+    <string name="cd_key_kana_line_ka">カ行</string>
+    <string name="cd_key_kana_line_sa">サ行</string>
+    <string name="cd_key_kana_line_ta">タ行</string>
+    <string name="cd_key_kana_line_na">ナ行</string>
+    <string name="cd_key_kana_line_ha">ハ行</string>
+    <string name="cd_key_kana_line_ma">マ行</string>
+    <string name="cd_key_kana_line_ya">ヤ行</string>
+    <string name="cd_key_kana_line_ra">ラ行</string>
+    <string name="cd_key_kana_modifier">濁点</string>
+    <string name="cd_key_kana_line_wa">ワ行</string>
+    <string name="cd_key_kana_punctuation">句読点</string>
+
+    <!-- Keys in Qwerty-Kana keyboard -->
+    <string name="cd_key_uchar_black_star">星</string>
+    <string name="cd_key_uchar_black_heart_suit">ハート</string>
+    <string name="cd_key_uchar_eighth_note">音符</string>
+    <string name="cd_key_uchar_reference_mark">米じるし</string>
+    <string name="cd_key_uchar_postal_mark">郵便記号</string>
+    <string name="cd_key_uchar_multiplication_sign">掛け算</string>
+    <string name="cd_key_uchar_division_sign">割り算</string>
+    <string name="cd_key_uchar_left_corner_bracket">始めかぎ括弧</string>
+    <string name="cd_key_uchar_right_corner_bracket">終わりかぎ括弧</string>
+    <string name="cd_key_uchar_katakana_middle_dot">中黒</string>
+    <string name="cd_key_uchar_two_dot_leader">二点リーダー</string>
+    <string name="cd_key_uchar_three_dot_leader">三点リーダー</string>
+    <string name="cd_key_uchar_left_black_lenticular_bracket">始めすみ付き括弧</string>
+    <string name="cd_key_uchar_right_black_lenticular_bracket">終わりすみ付き括弧</string>
+    <string name="cd_key_uchar_u6642">時</string>
+    <string name="cd_key_uchar_u5206">分</string>
+    <string name="cd_key_uchar_u6708">月</string>
+    <string name="cd_key_uchar_u65e5">日</string>
+    <string name="cd_key_uchar_wave_dash">波線</string>
+    <string name="cd_key_compound_monday">(月)</string>
+    <string name="cd_key_compound_tuesday">(火)</string>
+    <string name="cd_key_compound_wednesday">(水)</string>
+    <string name="cd_key_compound_thursday">(木)</string>
+    <string name="cd_key_compound_friday">(金)</string>
+    <string name="cd_key_compound_saturday">(土)</string>
+    <string name="cd_key_compound_sunday">(日)</string>
+    <string name="cd_key_uchar_ideographic_comma">読点</string>
+    <string name="cd_key_uchar_ideographic_full_stop">句点</string>
+    <string name="cd_key_uchar_katakana_hiragana_prolonged_sound_mark">長音</string>
+    <!-- Keys in Alphabet keyboard -->
+    <string name="cd_key_alphabet_abc">ABC</string>
+    <string name="cd_key_alphabet_def">DEF</string>
+    <string name="cd_key_alphabet_ghi">GHI</string>
+    <string name="cd_key_alphabet_jkl">JKL</string>
+    <string name="cd_key_alphabet_mno">MNO</string>
+    <string name="cd_key_alphabet_pqrs">PQRS</string>
+    <string name="cd_key_alphabet_tuv">TUV</string>
+    <string name="cd_key_alphabet_wxyz">WXYZ</string>
+    <string name="cd_key_alphabet_capitalize">大文字小文字</string>
+    <string name="spoken_use_headphone_for_password">パスワードのキーが音声出力されるのでヘッドセットを接続してください。</string>
+    <string name="cd_keyboard_fold_button">候補ウィンドウの大きさを変える</string>
+
+    <!-- Views -->
+    <string name="cd_close_symbol_window">キーボードに戻る</string>
+    <string name="cd_symbol_window_symbol">記号</string>
+    <string name="cd_symbol_window_emoticon">顔文字</string>
+    <string name="cd_symbol_window_emoji">絵文字</string>
+    <string name="cd_symbol_window_backspace">バックスペース</string>
+    <string name="help_userdictionary_dictionary_name">辞書の名前を入力してください</string>
+    <string name="help_userdictionary_edit_word_value">単語を入力してください</string>
+    <string name="help_userdictionary_edit_word_key">よみを入力してください</string>
+</resources>

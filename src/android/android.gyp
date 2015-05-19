@@ -37,7 +37,7 @@
 #
 # NOTES:
 # The apk package will be the release or debug version depending on -c option
-# of build_mozc.py (Release_Android or Debug_Android).
+# of build_mozc.py (Debug or Release).
 #
 # For signing, neither key.store nor key.alias in project.properties is set,
 # and the default debug key is used.  You need to set them in local.properties
@@ -61,10 +61,10 @@
     'sdk_gen_dir': 'gen',
     'sdk_test_gen_dir': 'tests/gen',
     'sdk_asset_dir': 'assets',
-    'support_v4_jar_paths': [
-      # Path of support-v4 has been changed for new SDK.
-      '<(android_home)/extras/android/compatibility/v4/android-support-v4.jar',
-      '<(android_home)/extras/android/support/v4/android-support-v4.jar',
+    'support_v13_jar_paths': [
+      # Path of support-v13 has been changed for new SDK. Try both.
+      '<(android_home)/extras/android/compatibility/v13/android-support-v13.jar',
+      '<(android_home)/extras/android/support/v13/android-support-v13.jar',
     ],
     'test_connection_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/testing/connection_data.data',
     'test_connection_text_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/testing/connection_single_column.txt',
@@ -369,6 +369,27 @@
       ],
     },
     {
+      # CAVEAT:
+      # This target is not actually used for build but placed here just to
+      # execute 'make-standalone-toolchain.sh' in GYP evaluation phase as a
+      # side-effect.
+      # Do not evaluate this target unless target_platform=="Android".
+      # Note that this .gyp file is evaluated only when
+      # target_platform=="Android". c.f., GetGypFileNames in build_mozc.py
+      'target_name': 'make_standalone_toolchain',
+      'toolsets': ['host'],
+      'type': 'none',
+      'variables': {
+        'make_standalone_toolchain_commands': [
+          '<(android_ndk_home)/build/tools/make-standalone-toolchain.sh',
+          '--arch=<(android_arch)',
+          '--stl=<(android_stl)',
+          '--install-dir=<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)',
+        ],
+        'make_standalone_toolchain_result': '<!(<(make_standalone_toolchain_commands))',
+      },
+    },
+    {
       'target_name': 'sdk_gen_emoji_data',
       'type': 'none',
       'copies': [{
@@ -532,17 +553,17 @@
       'type': 'none',
       'actions': [
         {
-          'action_name': 'copy_support_v4_library',
+          'action_name': 'copy_support_v13_library',
           'inputs': [
             '<(dummy_input_file)',
           ],
           'outputs': [
-            'libs/android-support-v4.jar',
+            'libs/android-support-v13.jar',
           ],
           'action': [
             '<@(copy_file)',
             '--ignore_existence_check',
-            '<@(support_v4_jar_paths)',
+            '<@(support_v13_jar_paths)',
             'libs',
           ]
         },
@@ -622,7 +643,7 @@
       # The final artifact of the native layer, libmozc.so.
       # Gyp generates executable artifact to <(PRODUCT_DIR),
       # but shared libraries are generated to local intermediate directory
-      # (e.g., out_andorid/Debug_Android/obj.target/....)
+      # (e.g., out_andorid/Debug/obj.target/....)
       # which cannot be accessed from other targets.
       # We use libmozc.so to build the .apk so explicitly set the destination
       # through 'product_dir' field.

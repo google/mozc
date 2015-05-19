@@ -190,7 +190,7 @@ public class ClientSidePreferenceTest extends InstrumentationTestCase {
       configuration.orientation = testData.orientation;
 
       ClientSidePreference preference =
-          new ClientSidePreference(sharedPreferences, configuration);
+          new ClientSidePreference(sharedPreferences, configuration.orientation);
       assertEquals(testData.toString(),
                    testData.expectedKeyboardLayout, preference.getKeyboardLayout());
       assertEquals(testData.toString(),

@@ -56,7 +56,7 @@ class TypingModel {
 
   // Gets cost value from key.
   // virtual for mocking.
-  virtual int GetCost(const StringPiece key) const;
+  virtual int GetCost(StringPiece key) const;
 
   // Gets a TypingModel based on SpecialRomanjiTable.
   // NULL if no corresponding model is available.
@@ -79,7 +79,7 @@ class TypingModel {
   // so when accessing to cost value, index should be
   // calculated by this method.
   // c.f. gen_typing_model.py's GetIndexFromKey.
-  size_t GetIndex(const StringPiece key) const;
+  size_t GetIndex(StringPiece key) const;
 
   // Radix table, needed by GetIndex.
   scoped_ptr<unsigned char[]> character_to_radix_table_;
@@ -93,4 +93,3 @@ class TypingModel {
 }  // namespace mozc
 
 #endif  // MOZC_COMPOSER_INTERNAL_TYPING_MODEL_H_
-

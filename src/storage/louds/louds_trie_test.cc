@@ -30,7 +30,9 @@
 #include "storage/louds/louds_trie.h"
 
 #include <limits>
-#include "base/base.h"
+#include <string>
+
+#include "base/port.h"
 #include "storage/louds/key_expansion_table.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "testing/base/public/gunit.h"

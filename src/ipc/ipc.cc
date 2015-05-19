@@ -37,9 +37,10 @@
 #include <errno.h>
 #endif
 
-#include <stdlib.h>
-#include "base/base.h"
+#include <cstdlib>
+
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/thread.h"
 #include "ipc/ipc_path_manager.h"
@@ -52,13 +53,17 @@ class IPCServerThread : public Thread {
  public:
   explicit IPCServerThread(IPCServer *server)
       : server_(server) {}
+  virtual ~IPCServerThread() {}
   virtual void Run() {
     if (server_ != NULL) {
       server_->Loop();
     }
   }
-  private:
+
+ private:
   IPCServer *server_;
+
+  DISALLOW_COPY_AND_ASSIGN(IPCServerThread);
 };
 
 }  // namespace

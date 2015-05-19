@@ -33,6 +33,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateW
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
+import com.google.common.base.Optional;
 
 import org.easymock.EasyMockSupport;
 import org.easymock.IMockBuilder;
@@ -62,7 +63,8 @@ public class MozcLayoutUtil {
 
   public static Span createSpan(int id, int left, int right) {
     Span span = new Span(
-        CandidateWord.newBuilder().setId(id).build(), 0, 0, Collections.<String>emptyList());
+        Optional.of(CandidateWord.newBuilder().setId(id).build()),
+        0, 0, Collections.<String>emptyList());
     span.setLeft(left);
     span.setRight(right);
     return span;
@@ -70,7 +72,7 @@ public class MozcLayoutUtil {
 
   public static Span createEmptySpan() {
     return new Span(
-        CandidateWord.getDefaultInstance(), 0, 0, Collections.<String>emptyList());
+        Optional.of(CandidateWord.getDefaultInstance()), 0, 0, Collections.<String>emptyList());
   }
 
   public static CandidateLayout createCandidateLayoutMock(EasyMockSupport easyMockSupport) {

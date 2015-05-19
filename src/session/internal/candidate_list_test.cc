@@ -27,9 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include "base/base.h"
 #include "session/internal/candidate_list.h"
+
+#include <string>
+
+#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

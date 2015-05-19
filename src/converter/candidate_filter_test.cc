@@ -33,9 +33,10 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/freelist.h"
 #include "base/number_util.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"

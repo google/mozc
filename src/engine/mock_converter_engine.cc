@@ -29,7 +29,6 @@
 
 #include "engine/mock_converter_engine.h"
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"

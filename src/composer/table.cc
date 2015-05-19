@@ -31,13 +31,16 @@
 
 #include "composer/table.h"
 
+#include <istream>  // NOLINT
+#include <map>
 #include <sstream>
 #include <string>
 
-#include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
@@ -83,7 +86,7 @@ const char kGodanHiraganaTableFile[] = "system://godan-hiragana.tsv";
 const char kNewChunkPrefix[] = "\t";
 const char kSpecialKeyOpen[] = "\x0F";  // Shift-In of ASCII
 const char kSpecialKeyClose[] = "\x0E";  // Shift-Out of ASCII
-}  // anonymous namespace
+}  // namespace
 
 // ========================================
 // Entry

@@ -39,21 +39,21 @@ import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.same;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.InOutAnimatedFrameLayout.VisibilityChangeListener;
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.LayoutParamsAnimator.InterpolationListener;
 import org.mozc.android.inputmethod.japanese.MozcView.DimensionPixelSize;
 import org.mozc.android.inputmethod.japanese.MozcView.HeightLinearInterpolationListener;
 import org.mozc.android.inputmethod.japanese.MozcView.InsetsCalculator;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MinorCategory;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
 import org.mozc.android.inputmethod.japanese.keyboard.Row;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
+import org.mozc.android.inputmethod.japanese.model.SymbolMinorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
@@ -65,6 +65,7 @@ import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.ui.SideFrameStubProxy;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.base.Optional;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -94,6 +95,7 @@ import java.util.Collections;
 /**
  */
 public class MozcViewTest extends InstrumentationTestCaseWithMock {
+
   @SmallTest
   public void testSetViewEventListener() {
     ViewEventListener viewEventListener = createMock(ViewEventListener.class);
@@ -105,6 +107,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
                                          isA(OnClickListener.class));
     ImageView hardwareCompositionButton = new ImageView(getInstrumentation().getContext());
     ImageView widenButton = new ImageView(getInstrumentation().getContext());
+
     OnClickListener leftAdjustButtonClickListener = createMock(OnClickListener.class);
     OnClickListener rightAdjustButtonClickListener = createMock(OnClickListener.class);
 
@@ -132,11 +135,13 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
 
     assertEquals(leftAdjustButtonClickListener,
-                 VisibilityProxy.getField(VisibilityProxy.getField(mozcView, "leftFrameStubProxy"),
-                     "buttonOnClickListener"));
+                 Optional.class.cast(VisibilityProxy.getField(
+                     VisibilityProxy.getField(mozcView, "leftFrameStubProxy"),
+                     "buttonOnClickListener")).get());
     assertEquals(rightAdjustButtonClickListener,
-                 VisibilityProxy.getField(VisibilityProxy.getField(mozcView, "rightFrameStubProxy"),
-                     "buttonOnClickListener"));
+                 Optional.class.cast(VisibilityProxy.getField(
+                     VisibilityProxy.getField(mozcView, "rightFrameStubProxy"),
+                     "buttonOnClickListener")).get());
   }
 
   @SmallTest
@@ -169,6 +174,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testGetJapaneseKeyboard() {
     JapaneseKeyboard keyboard = new JapaneseKeyboard(
+        Optional.<String>absent(),
         Collections.<Row>emptyList(), 1, KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA);
     JapaneseKeyboardView keyboardView = createViewMock(JapaneseKeyboardView.class);
     expect(keyboardView.getJapaneseKeyboard()).andStubReturn(keyboard);
@@ -189,6 +195,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetJapaneseKeyboard() {
     JapaneseKeyboard keyboard = new JapaneseKeyboard(
+        Optional.<String>absent(),
         Collections.<Row>emptyList(), 1, KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA);
     JapaneseKeyboardView keyboardView = createViewMock(JapaneseKeyboardView.class);
     keyboardView.setJapaneseKeyboard(keyboard);
@@ -213,18 +220,19 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
         .addMockedMethods("checkInflated", "getSymbolInputView")
         .createMock();
 
-    boolean parameters[] = { true, false };
-    for (boolean emojiEnabled : parameters) {
-      resetAll();
-      symbolInputView.setEmojiEnabled(emojiEnabled);
-      mozcView.checkInflated();
-      expectLastCall().asStub();
-      expect(mozcView.getSymbolInputView()).andStubReturn(symbolInputView);
-      replayAll();
+    for (boolean unicodeEmojiEnabled : new boolean[] {false, true}) {
+      for (boolean carrierEmojiEnabled : new boolean[] {false, true}) {
+        resetAll();
+        symbolInputView.setEmojiEnabled(unicodeEmojiEnabled, carrierEmojiEnabled);
+        mozcView.checkInflated();
+        expectLastCall().asStub();
+        expect(mozcView.getSymbolInputView()).andStubReturn(symbolInputView);
+        replayAll();
 
-      mozcView.setEmojiEnabled(emojiEnabled);
+        mozcView.setEmojiEnabled(unicodeEmojiEnabled, carrierEmojiEnabled);
 
-      verifyAll();
+        verifyAll();
+      }
     }
   }
 
@@ -435,9 +443,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     mozcView.isDropShadowExpanded = true;
     SymbolCandidateStorage candidateStorage = createMockBuilder(SymbolCandidateStorage.class)
         .withConstructor(SymbolHistoryStorage.class)
-        .withArgs(SymbolHistoryStorage.class.cast(null))
+        .withArgs(createMock(SymbolHistoryStorage.class))
         .createMock();
-    expect(candidateStorage.getCandidateList(isA(MinorCategory.class)))
+    expect(candidateStorage.getCandidateList(isA(SymbolMinorCategory.class)))
         .andStubReturn(CandidateList.getDefaultInstance());
     mozcView.setSymbolCandidateStorage(candidateStorage);
     replayAll();
@@ -1265,7 +1273,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
         mozcView.new InputFrameFoldButtonClickListener(
             eventListener, keyboardView,
             300, foldKeyboardViewInterpolator, 400, expandKeyboardViewInterpolator,
-            layoutParamsAnimator, 0.1f);
+            layoutParamsAnimator);
 
     {
       keyboardView.layout(0, 0, 250, 200);

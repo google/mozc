@@ -600,7 +600,7 @@ TEST_F(UsageStatsUploaderTest, UploadTouchEventStats) {
 }
 
 namespace {
-#ifdef OS_ANDROID
+#if defined(OS_ANDROID) && defined(MOZC_USE_LEGACY_ENCRYPTOR)
 class ClientIdTestMockJavaEncryptor : public ::mozc::jni::MockJavaEncryptor {
  public:
   explicit ClientIdTestMockJavaEncryptor(
@@ -679,31 +679,31 @@ class ClientIdTestMockJavaEncryptor : public ::mozc::jni::MockJavaEncryptor {
 
   DISALLOW_COPY_AND_ASSIGN(ClientIdTestMockJavaEncryptor);
 };
-#endif
+#endif  // OS_ANDROID && MOZC_USE_LEGACY_ENCRYPTOR
 
 class ClientIdTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-#ifdef OS_ANDROID
+#if defined(OS_ANDROID) && defined(MOZC_USE_LEGACY_ENCRYPTOR)
     jvm_.reset(new ::mozc::jni::MockJavaVM);
     ::mozc::jni::MockJNIEnv *env = jvm_->mutable_env();
     env->RegisterMockJavaEncryptor(
         new ClientIdTestMockJavaEncryptor(env));
     ::mozc::jni::JavaEncryptorProxy::SetJavaVM(jvm_->mutable_jvm());
-#endif
+#endif  // OS_ANDROID && MOZC_USE_LEGACY_ENCRYPTOR
   }
 
   virtual void TearDown() {
-#ifdef OS_ANDROID
+#if defined(OS_ANDROID) && defined(MOZC_USE_LEGACY_ENCRYPTOR)
     ::mozc::jni::JavaEncryptorProxy::SetJavaVM(NULL);
     jvm_.reset(NULL);
-#endif
+#endif  // OS_ANDROID && MOZC_USE_LEGACY_ENCRYPTOR
   }
 
  private:
-#ifdef OS_ANDROID
+#if defined(OS_ANDROID) && defined(MOZC_USE_LEGACY_ENCRYPTOR)
   scoped_ptr< ::mozc::jni::MockJavaVM> jvm_;
-#endif  // OS_ANDROID
+#endif  // OS_ANDROID && MOZC_USE_LEGACY_ENCRYPTOR
 };
 }  // namespace
 

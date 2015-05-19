@@ -33,6 +33,8 @@ import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.RectKeyDrawable;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -46,8 +48,9 @@ import android.view.View;
  *
  */
 public class ScrollGuideView extends View {
+
   private final int scrollBarMinimumHeight = getScrollBarMinimumHeight(getResources());
-  private SnapScroller scroller = null;
+  private Optional<SnapScroller> snapScroller = Optional.absent();
   private SkinType skinType = SkinType.BLUE_LIGHTGRAY;
   @VisibleForTesting Drawable scrollBarDrawable = createScrollBarDrawable(skinType);
 
@@ -66,6 +69,7 @@ public class ScrollGuideView extends View {
   private static Drawable createScrollBarDrawable(SkinType skinType) {
     // TODO(hidehiko): Probably we should rename the RectKeyDrawable,
     //   because this usage is not the key but actually we can reuse the code as is.
+    Preconditions.checkNotNull(skinType);
     return new RectKeyDrawable(1, 0, 1, 1,
                                skinType.candidateScrollBarTopColor,
                                skinType.candidateScrollBarBottomColor,
@@ -73,15 +77,13 @@ public class ScrollGuideView extends View {
   }
 
   private static int getScrollBarMinimumHeight(Resources resources) {
-    if (resources == null) {
-      return 0;
-    }
+    Preconditions.checkNotNull(resources);
     return resources.getDimensionPixelSize(R.dimen.candidate_scrollbar_minimum_height);
   }
 
   /** Sets the skin type, and regenerates an indicator drawable if necessary. */
   public void setSkinType(SkinType skinType) {
-    if (this.skinType == skinType) {
+    if (this.skinType == Preconditions.checkNotNull(skinType)) {
       return;
     }
     this.skinType = skinType;
@@ -91,7 +93,7 @@ public class ScrollGuideView extends View {
 
   /** Attaches a {@link SnapScroller} instance to this view. */
   public void setScroller(SnapScroller scroller) {
-    this.scroller = scroller;
+    this.snapScroller = Optional.of(Preconditions.checkNotNull(scroller));
     invalidate();
   }
 
@@ -100,9 +102,10 @@ public class ScrollGuideView extends View {
     super.onDraw(canvas);
 
     // Paint the scroll bar.
-    if (scroller == null || scrollBarDrawable == null) {
+    if (!snapScroller.isPresent()) {
       return;
     }
+    SnapScroller scroller = snapScroller.get();
 
     int contentSize = Math.max(
         scroller.getContentSize(), scroller.getMaxScrollPosition() + scroller.getViewSize());

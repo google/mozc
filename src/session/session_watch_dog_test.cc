@@ -27,15 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/session_watch_dog.h"
+
 #include <string>
 #include <vector>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "base/cpu_stats.h"
 #include "base/mutex.h"
 #include "base/util.h"
 #include "client/client_mock.h"
 #include "session/commands.pb.h"
-#include "session/session_watch_dog.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 

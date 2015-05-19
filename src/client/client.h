@@ -222,9 +222,6 @@ class Client : public ClientInterface {
   void PushHistory(const commands::Input &input,
                    const commands::Output &output);
   void ResetHistory();
-  // Returns true if the |key| corresponds to the key combination for aborting
-  // the application.
-  bool IsAbortKey(const commands::KeyEvent &key);
 
   // The alias of
   // DumpHistorySnapshot("query_of_death.log", "QUERY OF DEATH");

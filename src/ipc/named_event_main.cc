@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "ipc/named_event.h"
+
 #include <string>
 
-#include "base/base.h"
+#include "base/flags.h"
 #include "base/logging.h"
-#include "ipc/named_event.h"
+#include "base/port.h"
 
 DEFINE_bool(listener, true, "listener mode");
 DEFINE_bool(notifier, false, "notifier mode");

@@ -156,7 +156,7 @@ TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
     EXPECT_EQ(candidate.value, "value");
     EXPECT_EQ(candidate.content_value, "value");
     EXPECT_EQ(candidate.content_key, "key");
-    EXPECT_TRUE(candidate.attributes & Segment::Candidate::NO_LEARNING);
+    EXPECT_NE(0, candidate.attributes & Segment::Candidate::NO_LEARNING);
     // Description should be "key の計算結果"
     EXPECT_EQ(candidate.description, "key " +
               string(kPartOfCalculationDescription));

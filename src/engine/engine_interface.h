@@ -30,7 +30,7 @@
 #ifndef MOZC_ENGINE_ENGINE_INTERFACE_H_
 #define MOZC_ENGINE_ENGINE_INTERFACE_H_
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 

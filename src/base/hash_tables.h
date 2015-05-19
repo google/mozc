@@ -46,6 +46,12 @@ using stdext::hash_set;
 #endif
 #else  // not OS_WIN
 
+#ifdef OS_ANDROID
+// Use stlport hash_set/hash_map for android.
+#include <hash_map>
+#include <hash_set>
+#else  // not OS_ANDROID
+
 #include <ext/hash_map>
 #include <ext/hash_set>
 using __gnu_cxx::hash_map;
@@ -65,6 +71,7 @@ struct hash<std::string> {
   }
 };
 }
+#endif  // not OS_ANDROID
 #endif  // not OS_WIN
 
 #endif  // MOZC_BASE_HASH_TABLES_H_

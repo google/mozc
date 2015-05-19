@@ -30,7 +30,7 @@
 package org.mozc.android.inputmethod.japanese.preference;
 
 /**
- * Main Activity class for the fragment based preference UI on Android with API Level &lt; 11.
+ * Main Activity class for the fragment based preference UI on Android with API Level &gt;= 11.
  *
  */
 public class MozcFragmentPreferenceActivity extends MozcFragmentBasePreferenceActivity {

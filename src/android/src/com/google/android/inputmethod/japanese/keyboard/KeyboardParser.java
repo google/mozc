@@ -32,6 +32,9 @@ package org.mozc.android.inputmethod.japanese.keyboard;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -164,19 +167,25 @@ public class KeyboardParser {
 
   /** Attributes for a {@code <KeyState>} element. */
   private static final int[] KEY_STATE_ATTRIBUTES = {
+    R.attr.contentDescription,
     R.attr.keyBackground,
     R.attr.metaState,
     R.attr.nextMetaState,
+    R.attr.nextRemovedMetaStates,
   };
   static {
     Arrays.sort(KEY_STATE_ATTRIBUTES);
   }
+  private static final int KEY_STATE_CONTENT_DESCRIPTION_INDEX =
+      Arrays.binarySearch(KEY_STATE_ATTRIBUTES, R.attr.contentDescription);
   private static final int KEY_STATE_KEY_BACKGROUND_INDEX =
       Arrays.binarySearch(KEY_STATE_ATTRIBUTES, R.attr.keyBackground);
   private static final int KEY_STATE_META_STATE_INDEX =
       Arrays.binarySearch(KEY_STATE_ATTRIBUTES, R.attr.metaState);
   private static final int KEY_STATE_NEXT_META_STATE_INDEX =
       Arrays.binarySearch(KEY_STATE_ATTRIBUTES, R.attr.nextMetaState);
+  private static final int KEY_STATE_NEXT_REMOVED_META_STATES_INDEX =
+      Arrays.binarySearch(KEY_STATE_ATTRIBUTES, R.attr.nextRemovedMetaStates);
 
   /** Attributes for a {@code <KeyEntity>} element. */
   private static final int[] KEY_ENTITY_ATTRIBUTES = {
@@ -209,8 +218,10 @@ public class KeyboardParser {
   private static final DrawableType[] KEY_BACKGROUND_DRAWABLE_TYPE_MAP = {
     DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
     DrawableType.TWELVEKEYS_FUNCTION_KEY_BACKGROUND,
+    DrawableType.TWELVEKEYS_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS,
     DrawableType.QWERTY_REGULAR_KEY_BACKGROUND,
     DrawableType.QWERTY_FUNCTION_KEY_BACKGROUND,
+    DrawableType.QWERTY_FUNCTION_KEY_BACKGROUND_WITH_THREEDOTS,
     DrawableType.QWERTY_FUNCTION_KEY_LIGHT_ON_BACKGROUND,
     DrawableType.QWERTY_FUNCTION_KEY_LIGHT_OFF_BACKGROUND,
   };
@@ -218,7 +229,7 @@ public class KeyboardParser {
   /**
    * @return "sourceId" assigned to {@code value}.
    */
-  static int getSourceId(TypedValue value, int defaultValue) {
+  static int getSourceId(TypedValue value, @SuppressWarnings("unused") int defaultValue) {
     if (value == null ||
         (value.type != TypedValue.TYPE_INT_DEC &&
          value.type != TypedValue.TYPE_INT_HEX)) {
@@ -408,6 +419,7 @@ public class KeyboardParser {
     KeyAttributes keyAttributes;
     PopUpAttributes popUpAttributes;
     float flickThreshold;
+    Optional<String> contentDescription = Optional.absent();
     {
       TypedArray attributes = resources.obtainAttributes(parser, R.styleable.Keyboard);
       try {
@@ -434,6 +446,8 @@ public class KeyboardParser {
             R.styleable.Keyboard_popUpYOffset);
         flickThreshold = parseFlickThreshold(
             attributes, R.styleable.Keyboard_flickThreshold);
+        contentDescription = Optional.fromNullable(
+            attributes.getString(R.styleable.Keyboard_keyboardContentDescription));
       } finally {
         attributes.recycle();
       }
@@ -459,7 +473,7 @@ public class KeyboardParser {
     ignoreWhiteSpaceAndComment(parser);
     assertEndDocument(parser);
 
-    return buildKeyboard(rowList, flickThreshold);
+    return buildKeyboard(contentDescription, rowList, flickThreshold);
   }
 
   /**
@@ -558,12 +572,12 @@ public class KeyboardParser {
           parseKeyState(keyAttributes.keyBackgroundDrawableType, popUpAttributes));
     }
 
-    // At the moment, we just accept keys which has unmodified state.
-    boolean hasUnmodified = false;
+    // At the moment, we just accept keys which has default state.
+    boolean hasDefault = false;
     boolean hasLongPressKeyCode = false;
     for (KeyState keyState : keyStateList) {
-      if (keyState.getMetaStateSet().contains(KeyState.MetaState.UNMODIFIED)) {
-        hasUnmodified = true;
+      if (keyState.getMetaStateSet().isEmpty()) {
+        hasDefault = true;
         if (keyState.getFlick(Flick.Direction.CENTER).getKeyEntity().getLongPressKeyCode() !=
             KeyEntity.INVALID_KEY_CODE) {
           hasLongPressKeyCode = true;
@@ -571,9 +585,9 @@ public class KeyboardParser {
         break;
       }
     }
-    if (!hasUnmodified) {
+    if (!hasDefault) {
       throw new IllegalArgumentException(
-          "No unmodified KeyState element is found: " + parser.getPositionDescription());
+          "No default KeyState element is found: " + parser.getPositionDescription());
     }
 
     if (isRepeatable && hasLongPressKeyCode) {
@@ -627,19 +641,21 @@ public class KeyboardParser {
     XmlResourceParser parser = this.xmlResourceParser;
     assertStartTag(parser, "KeyState");
 
+    String contentDescription;
     DrawableType backgroundDrawableType;
     Set<KeyState.MetaState> metaStateSet;
-    KeyState.MetaState nextMetaState;
+    Set<KeyState.MetaState> nextAddMetaState;
+    Set<KeyState.MetaState> nextRemoveMetaState;
     {
       TypedArray attributes = resources.obtainAttributes(parser, KEY_STATE_ATTRIBUTES);
       try {
+        contentDescription = Objects.firstNonNull(
+            attributes.getText(KEY_STATE_CONTENT_DESCRIPTION_INDEX), "").toString();
         backgroundDrawableType = parseKeyBackgroundDrawableType(
             attributes, KEY_STATE_KEY_BACKGROUND_INDEX, defaultBackgroundDrawableType);
         metaStateSet = parseMetaState(attributes, KEY_STATE_META_STATE_INDEX);
-        if (metaStateSet.isEmpty()) {
-          throw new AssertionError("MetaState should be found.");
-        }
-        nextMetaState = parseNextMetaState(attributes, KEY_STATE_NEXT_META_STATE_INDEX);
+        nextAddMetaState = parseMetaState(attributes, KEY_STATE_NEXT_META_STATE_INDEX);
+        nextRemoveMetaState = parseMetaState(attributes, KEY_STATE_NEXT_REMOVED_META_STATES_INDEX);
       } finally {
         attributes.recycle();
       }
@@ -670,7 +686,8 @@ public class KeyboardParser {
     }
 
     assertEndTag(parser, "KeyState");
-    return new KeyState(metaStateSet, nextMetaState, flickList);
+    return new KeyState(contentDescription, metaStateSet, nextAddMetaState, nextRemoveMetaState,
+                        flickList);
   }
 
   private Flick parseFlick(DrawableType backgroundDrawableType,
@@ -716,6 +733,7 @@ public class KeyboardParser {
     int longPressKeyCode;
     int keyIconResourceId;
     String keyCharacter;
+    @SuppressWarnings("unused")
     DrawableType keyBackgroundDrawableType;
     boolean flickHighlight;
     {
@@ -845,11 +863,16 @@ public class KeyboardParser {
     return new PopUpAttributes(popUpWidth, popUpHeight, popUpXOffset, popUpYOffset);
   }
 
+  /**
+   * Returns set of MetaState.
+   *
+   * <p>Empty set is returned if corresponding attribute is not found.
+   * This is used for default KeyState.
+   */
   private Set<KeyState.MetaState> parseMetaState(TypedArray attributes, int index) {
     int metaStateFlags = attributes.getInt(index, 0);
     if (metaStateFlags == 0) {
-      // Specialize unmodified state.
-      return EnumSet.of(KeyState.MetaState.UNMODIFIED);
+      return Collections.emptySet();
     }
 
     Set<KeyState.MetaState> result = EnumSet.noneOf(KeyState.MetaState.class);
@@ -862,16 +885,14 @@ public class KeyboardParser {
     return result;
   }
 
-  private KeyState.MetaState parseNextMetaState(TypedArray attributes, int index) {
-    return KeyState.MetaState.valueOf(attributes.getInt(index, 0));
-  }
-
   private Flick.Direction parseFlickDirection(TypedArray attributes, int index) {
     return Flick.Direction.valueOf(attributes.getInt(index, Flick.Direction.CENTER.index));
   }
 
-  protected Keyboard buildKeyboard(List<Row> rowList, float flickThreshold) {
-    return new Keyboard(rowList, flickThreshold);
+  protected Keyboard buildKeyboard(
+      Optional<String> contentDescription, List<Row> rowList, float flickThreshold) {
+    return new Keyboard(Preconditions.checkNotNull(contentDescription),
+                        Preconditions.checkNotNull(rowList), flickThreshold);
   }
 
   protected Row buildRow(List<Key> keyList, int height, int verticalGap) {

@@ -98,11 +98,12 @@ public class DependencyFactory {
     public ViewManagerInterface createViewManager(Context context, ViewEventListener listener,
         SymbolHistoryStorage symbolHistoryStorage, ImeSwitcher imeSwitcher,
         MenuDialogListener menuDialogListener) {
-      Preconditions.checkNotNull(context);
-      Preconditions.checkNotNull(listener);
-      Preconditions.checkNotNull(symbolHistoryStorage);
-      Preconditions.checkNotNull(menuDialogListener);
-      return new ViewManager(context, listener, symbolHistoryStorage, menuDialogListener);
+      return new ViewManager(
+          Preconditions.checkNotNull(context),
+          Preconditions.checkNotNull(listener),
+          Preconditions.checkNotNull(symbolHistoryStorage),
+          Preconditions.checkNotNull(imeSwitcher),
+          Preconditions.checkNotNull(menuDialogListener));
     }
 
     @Override

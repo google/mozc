@@ -74,6 +74,7 @@ import java.io.File;
  *
  *
  */
+@SuppressWarnings("javadoc")
 public class MozcMockSupport extends EasyMockSupport {
   private final File dexCache;
 

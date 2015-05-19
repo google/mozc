@@ -144,7 +144,7 @@ class TableLayout : public TableLayoutInterface {
 
   // Fix the layout and calculate the total size.
   void FreezeLayout();
-  int IsLayoutFrozen() const;
+  bool IsLayoutFrozen() const;
 
   // Get the rect which is bounding the specified cell.
   // This rect does not include RowRectPadding.

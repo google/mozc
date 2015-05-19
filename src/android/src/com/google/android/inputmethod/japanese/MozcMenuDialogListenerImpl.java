@@ -31,6 +31,8 @@ package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.mushroom.MushroomUtil;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
+import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.content.Intent;
@@ -43,10 +45,12 @@ import android.view.inputmethod.InputConnection;
  */
 class MozcMenuDialogListenerImpl implements MenuDialogListener {
   private final InputMethodService inputMethodService;
+  private final ImeSwitcher imeSwitcher;
   private boolean showInputMethodPicker = false;
 
-  MozcMenuDialogListenerImpl(InputMethodService inputMethodService) {
-    this.inputMethodService = inputMethodService;
+  MozcMenuDialogListenerImpl(InputMethodService inputMethodService, ImeSwitcher imeSwitcher) {
+    this.inputMethodService = Preconditions.checkNotNull(inputMethodService);
+    this.imeSwitcher = Preconditions.checkNotNull(imeSwitcher);
   }
 
   @Override
@@ -79,6 +83,13 @@ class MozcMenuDialogListenerImpl implements MenuDialogListener {
                    DependencyFactory.getDependency(context).getPreferenceActivityClass());
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     context.startActivity(intent);
+  }
+
+  @Override
+  public void onLaunchVoiceInputActivitySelected(Context context) {
+    if (!imeSwitcher.switchToVoiceIme("ja")) {
+      MozcLog.e("Voice IME for ja locale is not found.");
+    }
   }
 
   @Override

@@ -35,8 +35,6 @@
 #include "base/logging.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
-#include "converter/node.h"
-#include "converter/node_allocator.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/googletest.h"
@@ -59,25 +57,24 @@ class DictionaryMockTest : public ::testing::Test {
   static Token *CreateToken(const string &key, const string &value);
   static Token *CreateToken(const string &key, const string &value,
                             Token::Attribute attr);
-  static bool SearchMatchingNode(const string &key,
-                                 const string &value,
-                                 uint32 attributes,
-                                 const Node *node);
+  static bool SearchMatchingToken(const string &key,
+                                  const string &value,
+                                  uint8 attributes,
+                                  const vector<Token> &tokens);
 
   scoped_ptr<DictionaryMock> mock_;
 };
 
-bool DictionaryMockTest::SearchMatchingNode(const string &key,
-                                            const string &value,
-                                            uint32 attributes,
-                                            const Node *node) {
-  CHECK(node);
-  while (node) {
-    if (node->key == key && node->value == value &&
-        node->attributes == attributes) {
+bool DictionaryMockTest::SearchMatchingToken(const string &key,
+                                             const string &value,
+                                             uint8 attributes,
+                                             const vector<Token> &tokens) {
+  for (size_t i = 0; i < tokens.size(); ++i) {
+    const Token &token = tokens[i];
+    if (token.key == key && token.value == value &&
+        token.attributes == attributes) {
       return true;
     }
-    node = node->bnext;
   }
   return false;
 }
@@ -102,7 +99,7 @@ Token *DictionaryMockTest::CreateToken(const string &key, const string &value,
   return token;
 }
 
-TEST_F(DictionaryMockTest, test_has_value) {
+TEST_F(DictionaryMockTest, HasValue) {
   DictionaryMock *dic = GetMock();
 
   scoped_ptr<Token> t0(CreateToken("k0", "v0"));
@@ -110,10 +107,10 @@ TEST_F(DictionaryMockTest, test_has_value) {
   scoped_ptr<Token> t2(CreateToken("k2", "v2"));
   scoped_ptr<Token> t3(CreateToken("k3", "v3"));
 
-  dic->AddLookupPrefix(t0->key, t0->key, t0->value, 0);
-  dic->AddLookupPredictive(t1->key, t1->key, t1->value, 0);
-  dic->AddLookupReverse(t2->key, t2->key, t2->value, 0);
-  dic->AddLookupExact(t3->key, t3->key, t3->value, 0);
+  dic->AddLookupPrefix(t0->key, t0->key, t0->value, Token::NONE);
+  dic->AddLookupPredictive(t1->key, t1->key, t1->value, Token::NONE);
+  dic->AddLookupReverse(t2->key, t2->key, t2->value, Token::NONE);
+  dic->AddLookupExact(t3->key, t3->key, t3->value, Token::NONE);
 
   EXPECT_TRUE(dic->HasValue("v0"));
   EXPECT_TRUE(dic->HasValue("v1"));
@@ -124,7 +121,7 @@ TEST_F(DictionaryMockTest, test_has_value) {
   EXPECT_FALSE(dic->HasValue("v6"));
 }
 
-TEST_F(DictionaryMockTest, test_prefix) {
+TEST_F(DictionaryMockTest, LookupPrefix) {
   DictionaryMock *dic = GetMock();
 
   scoped_ptr<Token> t0(CreateToken(
@@ -135,8 +132,8 @@ TEST_F(DictionaryMockTest, test_prefix) {
       "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81\xbb",
       "v1", Token::NONE));
 
-  dic->AddLookupPrefix(t0->key, t0->key, t0->value, 0);
-  dic->AddLookupPrefix(t1->key, t1->key, t1->value, 0);
+  dic->AddLookupPrefix(t0->key, t0->key, t0->value, Token::NONE);
+  dic->AddLookupPrefix(t1->key, t1->key, t1->value, Token::NONE);
 
   CollectTokenCallback callback;
   dic->LookupPrefix(t0->key, false, &callback);
@@ -154,7 +151,7 @@ TEST_F(DictionaryMockTest, test_prefix) {
   EXPECT_TRUE(callback.tokens().empty());
 }
 
-TEST_F(DictionaryMockTest, test_reverse) {
+TEST_F(DictionaryMockTest, LookupReverse) {
   DictionaryInterface *dic = GetMock();
 
   // "今"/"いま"
@@ -164,29 +161,28 @@ TEST_F(DictionaryMockTest, test_reverse) {
   const string k1 = "\xE4\xBB\x8A\xE6\x97\xA5";
   const string v1 = "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86";
 
-  vector<Token> tokens;
+  vector<Token> source_tokens;
   scoped_ptr<Token> t0(CreateToken(k0, v0));
   scoped_ptr<Token> t1(CreateToken(k1, v1));
 
-  tokens.push_back(*t0.get());
-  tokens.push_back(*t1.get());
+  source_tokens.push_back(*t0.get());
+  source_tokens.push_back(*t1.get());
 
-  NodeAllocator allocator;
-
-  vector<Token>::iterator it = tokens.begin();
-  for (; it != tokens.end(); ++it) {
-    GetMock()->AddLookupReverse(it->key, it->key, it->value, 0);
+  for (vector<Token>::iterator it = source_tokens.begin();
+       it != source_tokens.end(); ++it) {
+    GetMock()->AddLookupReverse(it->key, it->key, it->value, Token::NONE);
   }
 
-  Node *node = dic->LookupReverse(k1.c_str(), k1.size(), &allocator);
-  EXPECT_TRUE(node != NULL) << "No nodes found";
-  EXPECT_TRUE(SearchMatchingNode(t1->key, t1->value, 0, node))
-              << "Failed to find: " << t1->key;
-  EXPECT_TRUE(SearchMatchingNode(t0->key, t0->value, 0, node))
-              << "Failed to find: " << t0->key;
+  CollectTokenCallback callback;
+  dic->LookupReverse(k1, NULL, &callback);
+  const vector<Token> &result_tokens = callback.tokens();
+  EXPECT_TRUE(SearchMatchingToken(t0->key, t0->value, 0, result_tokens))
+      << "Failed to find: " << t0->key;
+  EXPECT_TRUE(SearchMatchingToken(t1->key, t1->value, 0, result_tokens))
+      << "Failed to find: " << t1->key;
 }
 
-TEST_F(DictionaryMockTest, test_predictive) {
+TEST_F(DictionaryMockTest, LookupPredictive) {
   DictionaryInterface *dic = GetMock();
   // "は"
   const string k0 = "\xe3\x81\xaf";
@@ -197,26 +193,23 @@ TEST_F(DictionaryMockTest, test_predictive) {
                     "\xbb";
 
   vector<Token> tokens;
-  scoped_ptr<Token> t1(CreateToken(k1, "v0"));
-  scoped_ptr<Token> t2(CreateToken(k2, "v1"));
+  scoped_ptr<Token> t1(CreateToken(k1, "v0", Token::NONE));
+  scoped_ptr<Token> t2(CreateToken(k2, "v1", Token::NONE));
   tokens.push_back(*t1.get());
   tokens.push_back(*t2.get());
 
-  vector<Token>::iterator it = tokens.begin();
-  for (; it != tokens.end(); ++it) {
-    GetMock()->AddLookupPredictive(k0, it->key, it->value, 0);
+  for (vector<Token>::iterator it = tokens.begin(); it != tokens.end(); ++it) {
+    GetMock()->AddLookupPredictive(k0, it->key, it->value, Token::NONE);
   }
 
-  NodeAllocator allocator;
-  Node *node = dic->LookupPredictive(k0.c_str(), k0.size(), &allocator);
-  EXPECT_TRUE(node != NULL) << "no nodes found";
-  EXPECT_TRUE(SearchMatchingNode(t1->key, t1->value, 0, node))
-              << "Failed to find " << t1->key;
-  EXPECT_TRUE(SearchMatchingNode(t2->key, t2->value, 0, node))
-              << "Failed to find " << t2->key;
+  CollectTokenCallback callback;
+  dic->LookupPredictive(k0, false, &callback);
+  ASSERT_EQ(2, callback.tokens().size());
+  EXPECT_TOKEN_EQ(*t1, callback.tokens()[0]);
+  EXPECT_TOKEN_EQ(*t2, callback.tokens()[1]);
 }
 
-TEST_F(DictionaryMockTest, test_exact) {
+TEST_F(DictionaryMockTest, LookupExact) {
   DictionaryInterface *dic = GetMock();
 
   const char *kKey = "\xE3\x81\xBB\xE3\x81\x92";  // "ほげ"
@@ -224,8 +217,8 @@ TEST_F(DictionaryMockTest, test_exact) {
   scoped_ptr<Token> t0(CreateToken(kKey, "value1", Token::NONE));
   scoped_ptr<Token> t1(CreateToken(kKey, "value2", Token::NONE));
 
-  GetMock()->AddLookupExact(t0->key, t0->key, t0->value, 0);
-  GetMock()->AddLookupExact(t1->key, t1->key, t1->value, 0);
+  GetMock()->AddLookupExact(t0->key, t0->key, t0->value, Token::NONE);
+  GetMock()->AddLookupExact(t1->key, t1->key, t1->value, Token::NONE);
 
   CollectTokenCallback callback;
   dic->LookupExact(kKey, &callback);

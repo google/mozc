@@ -57,15 +57,18 @@ class MergerRewriter : public RewriterInterface {
     }
     switch (segments->request_type()) {
       case Segments::CONVERSION:
-        return (rewriter->capability(request) & RewriterInterface::CONVERSION);
+        return ((rewriter->capability(request) & RewriterInterface::CONVERSION)
+                != 0);
 
       case Segments::PREDICTION:
       case Segments::PARTIAL_PREDICTION:
-        return (rewriter->capability(request) & RewriterInterface::PREDICTION);
+        return ((rewriter->capability(request) & RewriterInterface::PREDICTION)
+                != 0);
 
       case Segments::SUGGESTION:
       case Segments::PARTIAL_SUGGESTION:
-        return (rewriter->capability(request) & RewriterInterface::SUGGESTION);
+        return ((rewriter->capability(request) & RewriterInterface::SUGGESTION)
+                != 0);
 
       case Segments::REVERSE_CONVERSION:
       default:

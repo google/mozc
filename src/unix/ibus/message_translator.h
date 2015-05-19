@@ -47,7 +47,7 @@ class MessageTranslatorInterface {
 
   // Returns translated string if possible.
   // Returns |message| if fails to translate.
-  virtual string MaybeTranslate(const string &message) const ABSTRACT;
+  virtual string MaybeTranslate(const string &message) const = 0;
 };
 
 // This class never translates messages actually.

@@ -153,9 +153,9 @@ void PushFrontCandidate(const string &data, Segment *segment) {
 }  // namespace
 
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
-  dictionary_mock_->AddLookupExact("house", "house", "house", 0);
-  dictionary_mock_->AddLookupExact("query", "query", "query", 0);
-  dictionary_mock_->AddLookupExact("google", "google", "google", 0);
+  dictionary_mock_->AddLookupExact("house", "house", "house", Token::NONE);
+  dictionary_mock_->AddLookupExact("query", "query", "query", Token::NONE);
+  dictionary_mock_->AddLookupExact("google", "google", "google", Token::NONE);
 
   scoped_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
 

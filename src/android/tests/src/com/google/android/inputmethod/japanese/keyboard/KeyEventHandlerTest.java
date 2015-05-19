@@ -42,7 +42,6 @@ import android.os.Message;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import java.util.Collections;
-import java.util.EnumSet;
 
 /**
  */
@@ -51,13 +50,17 @@ public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
     KeyEntity keyEntity = new KeyEntity(1, keyCode, longPressKeyCode, 0, null, false, null);
     Flick flick = new Flick(Direction.CENTER, keyEntity);
     KeyState keyState =
-        new KeyState(EnumSet.of(MetaState.UNMODIFIED), null, Collections.singletonList(flick));
+        new KeyState("",
+                     Collections.<MetaState>emptySet(),
+                     Collections.<MetaState>emptySet(),
+                     Collections.<MetaState>emptySet(),
+                     Collections.singletonList(flick));
     return new Key(0, 0, 0, 0, 0, 0, isRepeatable, false, false, Stick.EVEN,
                    Collections.singletonList(keyState));
   }
 
   private static KeyEventContext createDummyKeyEventContext(Key key) {
-    return new KeyEventContext(key, 0, 0, 0, 100, 100, 0, MetaState.UNMODIFIED);
+    return new KeyEventContext(key, 0, 0, 0, 100, 100, 0, Collections.<MetaState>emptySet());
   }
 
   @SmallTest

@@ -136,17 +136,5 @@
         'jsoncpp.gyp:jsoncpp',
       ],
     },
-    {
-      'target_name': 'http_task_manager',
-      'type': 'static_library',
-      'sources': [
-        'http_task_manager.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:task',
-        'http_client',
-      ],
-    },
   ],
 }

@@ -36,8 +36,8 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "base/version.h"
@@ -336,17 +336,20 @@ bool SessionOutput::FillFooter(const commands::Category category,
         if (cand.has_annotation() && cand.annotation().deletable()) {
           // TODO(noriyukit): Change the message depending on user's keymap.
 #if defined(OS_MACOSX)
-          const char kDeleteInstruction[] =  // "control+fn+deleteで履歴から削除"
+          // "control+fn+deleteで履歴から削除"
+          const char kDeleteInstruction[] =
               "\x63\x6F\x6E\x74\x72\x6F\x6C\x2B\x66\x6E\x2B\x64\x65\x6C\x65"
               "\x74\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B\xE3"
               "\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
 #elif defined(__native_client__)
-          const char kDeleteInstruction[] =  // "ctrl+alt+backspaceで履歴から削除"
+          // "ctrl+alt+backspaceで履歴から削除"
+          const char kDeleteInstruction[] =
               "\x63\x74\x72\x6C\x2B\x61\x6C\x74\x2B\x62\x61\x63\x6B\x73\x70"
               "\x61\x63\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B"
               "\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
 #else  // !OS_MACOSX && !__native_client__
-          const char kDeleteInstruction[] =  // "Ctrl+Delで履歴から削除"
+          // "Ctrl+Delで履歴から削除"
+          const char kDeleteInstruction[] =
               "\x43\x74\x72\x6C\x2B\x44\x65\x6C\xE3\x81\xA7\xE5\xB1\xA5"
               "\xE6\xAD\xB4\xE3\x81\x8B\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
 #endif  // OS_MACOSX || __native_client__

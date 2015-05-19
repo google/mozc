@@ -72,7 +72,7 @@ public class LayoutParamsAnimatorTest extends InstrumentationTestCase {
         state = (interpolation == 1.0f ? FINISHED : INITIAL);
         ++cycles;
       }
-      void calculateAnimatedParams(float interpolation, LayoutParams currentLayoutParams) {
+      void calculateAnimatedParams(float interpolation) {
         if (state == PREPARING) {
           return;
         }
@@ -99,7 +99,7 @@ public class LayoutParamsAnimatorTest extends InstrumentationTestCase {
       @Override
       public LayoutParams calculateAnimatedParams(float interpolation,
           LayoutParams currentLayoutParams) {
-        stateMachine.calculateAnimatedParams(interpolation, currentLayoutParams);
+        stateMachine.calculateAnimatedParams(interpolation);
         currentLayoutParams.width = (int) (interpolation * 100);
         return currentLayoutParams;
       }

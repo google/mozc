@@ -35,6 +35,8 @@ import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
+import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
+import org.mozc.android.inputmethod.japanese.model.SymbolMinorCategory;
 import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
@@ -50,6 +52,7 @@ import org.mozc.android.inputmethod.japanese.view.SkinType;
 import org.mozc.android.inputmethod.japanese.view.SymbolMajorCategoryButtonDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.TabSelectedBackgroundDrawable;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.app.AlertDialog;
@@ -88,7 +91,6 @@ import android.widget.TabHost.TabSpec;
 import android.widget.TabWidget;
 import android.widget.TextView;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -100,144 +102,13 @@ import java.util.List;
  * "Symbol" means symbol character, like $ % ! €
  * "Emoji" means a more graphical character of face, building, food etc.
  *
- * This class treats all Emoticon, Symbol and Emoji category as "MajorCategory".
+ * This class treats all Emoticon, Symbol and Emoji category as "SymbolMajorCategory".
  * A major category has several minor categories.
  * Each minor category belongs to only one major category.
  * Major-Minor relation is defined by using R.layout.symbol_minor_category_*.
  *
  */
 public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryManageable {
-
-  /**
-   * The major category to which the minor categories belong.
-   */
-  public static enum MajorCategory {
-    SYMBOL(
-        R.id.category_selector_major_symbol,
-        R.raw.symbol__major__symbol,
-        Arrays.asList(
-            MinorCategory.SYMBOL_HISTORY,
-            MinorCategory.SYMBOL_GENERAL,
-            MinorCategory.SYMBOL_HALF,
-            MinorCategory.SYMBOL_PARENTHESIS,
-            MinorCategory.SYMBOL_ARROW,
-            MinorCategory.SYMBOL_MATH
-        ),
-        R.dimen.symbol_view_symbol_min_column_width),
-    EMOTICON(
-        R.id.category_selector_major_emoticon,
-        R.raw.symbol__major__emoticon,
-        Arrays.asList(
-            MinorCategory.EMOTICON_HISTORY,
-            MinorCategory.EMOTICON_SMILE,
-            MinorCategory.EMOTICON_SWEAT,
-            MinorCategory.EMOTICON_SURPRISE,
-            MinorCategory.EMOTICON_SADNESS,
-            MinorCategory.EMOTICON_DISPLEASURE
-        ),
-        R.dimen.symbol_view_emoticon_min_column_width),
-    EMOJI(
-        R.id.category_selector_major_emoji,
-        R.raw.symbol__major__emoji,
-        Arrays.asList(
-            MinorCategory.EMOJI_HISTORY,
-            MinorCategory.EMOJI_FACE,
-            MinorCategory.EMOJI_FOOD,
-            MinorCategory.EMOJI_ACTIVITY,
-            MinorCategory.EMOJI_CITY,
-            MinorCategory.EMOJI_NATURE
-        ),
-        R.dimen.symbol_view_emoji_min_column_width)
-    ;
-
-    // All fields are invariant so access directly.
-    final int buttonResourceId;
-    final int buttonImageResourceId;
-    final List<MinorCategory> minorCategories;
-    final int minColumnWidthResourceId;
-
-    /**
-     * @param buttonResourceId the resource id (R.id.xxxx) of corresponding selector button.
-     * @param buttonImageResourceId is the resource id (R.raw.xxx) of corresponding major
-     *        category button image.
-     * @param minorCategories the minor categories which belong to this MajorCategory.
-     *        {@code minorCategories.get(0)} is treated as default one.
-     * @param minColumnWidthResourceId the resource id (R.dimen.xxxx) which represents
-     *        the minimum width of each column.
-     */
-    MajorCategory(
-        int buttonResourceId,
-        int buttonImageResourceId,
-        List<MinorCategory> minorCategories,
-        int minColumnWidthResourceId) {
-      // We just store resource id instead of real bitmap/integer
-      // because we cannot obtain them here (Context instance is needed).
-      this.buttonResourceId = buttonResourceId;
-      this.buttonImageResourceId = buttonImageResourceId;
-      this.minorCategories = minorCategories;
-      this.minColumnWidthResourceId = minColumnWidthResourceId;
-    }
-
-    /**
-     * Returns default minor category.
-     *
-     * When this major category is selected,
-     * the default minor category returned by this method will be activated.
-     */
-    MinorCategory getDefaultMinorCategory() {
-      return minorCategories.get(0);
-    }
-
-    MinorCategory getMinorCategoryByRelativeIndex(MinorCategory minorCategory, int relativeIndex) {
-      int index = minorCategories.indexOf(minorCategory);
-      int newIndex = (index + relativeIndex + minorCategories.size())
-          % minorCategories.size();
-      return minorCategories.get(newIndex);
-    }
-
-    static MajorCategory findMajorCategory(MinorCategory minorCategory) {
-      for (MajorCategory majorCategory : MajorCategory.values()) {
-        if (majorCategory.minorCategories.contains(minorCategory)) {
-          return majorCategory;
-        }
-      }
-      throw new IllegalArgumentException("Invalid minor category.");
-    }
-  }
-
-  /**
-   * The minor category to which the candidates belong.
-   */
-  public static enum MinorCategory {
-    SYMBOL_HISTORY(R.string.symbol_minor_symbol_history_title),
-    SYMBOL_GENERAL(R.string.symbol_minor_symbol_general_title),
-    SYMBOL_HALF(R.string.symbol_minor_symbol_half_title),
-    SYMBOL_PARENTHESIS(R.string.symbol_minor_symbol_parenthesis_title),
-    SYMBOL_ARROW(R.string.symbol_minor_symbol_arrow_title),
-    SYMBOL_MATH(R.string.symbol_minor_symbol_math_title),
-    EMOTICON_HISTORY(R.string.symbol_minor_emoticon_history_title),
-    EMOTICON_SMILE(R.string.symbol_minor_emoticon_smile_title),
-    EMOTICON_SWEAT(R.string.symbol_minor_emoticon_sweat_title),
-    EMOTICON_SURPRISE(R.string.symbol_minor_emoticon_surprise_title),
-    EMOTICON_SADNESS(R.string.symbol_minor_emoticon_sadness_title),
-    EMOTICON_DISPLEASURE(R.string.symbol_minor_emoticon_displeasure_title),
-    EMOJI_HISTORY(R.string.symbol_minor_emoji_history_title),
-    EMOJI_FACE(R.string.symbol_minor_emoji_face_title),
-    EMOJI_FOOD(R.string.symbol_minor_emoji_food_title),
-    EMOJI_ACTIVITY(R.string.symbol_minor_emoji_activity_title),
-    EMOJI_CITY(R.string.symbol_minor_emoji_city_title),
-    EMOJI_NATURE(R.string.symbol_minor_emoji_nature_title)
-    ;
-
-    public final int textResourceId;
-
-    /**
-     * @param textResourceId the resource id of the corresponding text title.
-     */
-    MinorCategory(int textResourceId) {
-      this.textResourceId = textResourceId;
-    }
-  }
 
   /**
    * Adapter for symbol candidate selection.
@@ -248,8 +119,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     @Override
     public void onCandidateSelected(CandidateWord candidateWord) {
       if (viewEventListener != null) {
+        // If we are on password field, history shouldn't be updated to protect privacy.
         viewEventListener.onSymbolCandidateSelected(
-            currentMajorCategory, candidateWord.getValue());
+            currentMajorCategory, candidateWord.getValue(), !isPasswordField);
       }
     }
   }
@@ -258,9 +130,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    * Click handler of major category buttons.
    */
   class MajorCategoryButtonClickListener implements OnClickListener {
-    private final MajorCategory majorCategory;
+    private final SymbolMajorCategory majorCategory;
 
-    MajorCategoryButtonClickListener(MajorCategory majorCategory) {
+    MajorCategoryButtonClickListener(SymbolMajorCategory majorCategory) {
       if (majorCategory == null) {
         throw new NullPointerException("majorCategory should not be null.");
       }
@@ -274,7 +146,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       }
 
       if (emojiEnabled
-          && majorCategory == MajorCategory.EMOJI
+          && majorCategory == SymbolMajorCategory.EMOJI
           && emojiProviderType == EmojiProviderType.NONE) {
         // Ask the user which emoji provider s/he'd like to use.
         // If the user cancels the dialog, do nothing.
@@ -308,7 +180,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     private final SymbolCandidateStorage symbolCandidateStorage;
     private final ViewEventListener viewEventListener;
     private final CandidateSelectListener candidateSelectListener;
-    private final MajorCategory majorCategory;
+    private final SymbolMajorCategory majorCategory;
     private final SkinType skinType;
     private final EmojiProviderType emojiProviderType;
     private final TabHost tabHost;
@@ -322,7 +194,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     SymbolTabWidgetViewPagerAdapter(
         Context context, SymbolCandidateStorage symbolCandidateStorage,
         ViewEventListener viewEventListener, CandidateSelectListener candidateSelectListener,
-        MajorCategory majorCategory,
+        SymbolMajorCategory majorCategory,
         SkinType skinType, EmojiProviderType emojiProviderType,
         TabHost tabHost, ViewPager viewPager,
         float candidateTextSize, float descriptionTextSize) {
@@ -413,7 +285,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       inflater = inflater.cloneInContext(context);
 
       View view = MozcUtil.inflateWithOutOfMemoryRetrial(
-          View.class, inflater, R.layout.symbol_candidate_view, null, false);
+          View.class, inflater, R.layout.symbol_candidate_view, Optional.<ViewGroup>absent(),
+          false);
       SymbolCandidateView symbolCandidateView =
           SymbolCandidateView.class.cast(view.findViewById(R.id.symbol_input_candidate_view));
       symbolCandidateView.setCandidateSelectListener(candidateSelectListener);
@@ -527,13 +400,18 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     @Override
     public void onClick(DialogInterface dialog, int which) {
+      String value;
       TypedArray typedArray =
           context.getResources().obtainTypedArray(R.array.pref_emoji_provider_type_values);
-      String value = typedArray.getString(which);
+      try {
+        value = typedArray.getString(which);
+      } finally {
+        typedArray.recycle();
+      }
       sharedPreferences.edit()
           .putString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, value)
           .commit();
-      setMajorCategory(MajorCategory.EMOJI);
+      setMajorCategory(SymbolMajorCategory.EMOJI);
     }
   }
 
@@ -670,11 +548,11 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   private static final float BUTTON_RIGHT_OFFSET = 2.0f;
   private static final float BUTTON_BOTTOM_OFFSET = 2.0f;
 
-  private static int MAJOR_CATEGORY_TOP_COLOR = 0xFFF5F5F5;
-  private static int MAJOR_CATEGORY_BOTTOM_COLOR = 0xFFD2D2D2;
-  private static int MAJOR_CATEGORY_PRESSED_TOP_COLOR = 0xFFAAAAAA;
-  private static int MAJOR_CATEGORY_PRESSED_BOTTOM_COLOR = 0xFF828282;
-  private static int MAJOR_CATEGORY_SHADOW_COLOR = 0x57000000;
+  private static final int MAJOR_CATEGORY_TOP_COLOR = 0xFFF5F5F5;
+  private static final int MAJOR_CATEGORY_BOTTOM_COLOR = 0xFFD2D2D2;
+  private static final int MAJOR_CATEGORY_PRESSED_TOP_COLOR = 0xFFAAAAAA;
+  private static final int MAJOR_CATEGORY_PRESSED_BOTTOM_COLOR = 0xFF828282;
+  private static final int MAJOR_CATEGORY_SHADOW_COLOR = 0x57000000;
 
   // TODO(hidehiko): This parameter is not fixed yet. Needs to revisit again.
   private static final float SYMBOL_VIEW_MINOR_CATEGORY_TAB_SELECTED_HEIGHT = 6f;
@@ -683,8 +561,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   private SymbolCandidateStorage symbolCandidateStorage;
 
-  @VisibleForTesting MajorCategory currentMajorCategory;
+  @VisibleForTesting SymbolMajorCategory currentMajorCategory;
   @VisibleForTesting boolean emojiEnabled;
+  private boolean isPasswordField;
   @VisibleForTesting EmojiProviderType emojiProviderType = EmojiProviderType.NONE;
 
   @VisibleForTesting SharedPreferences sharedPreferences;
@@ -756,7 +635,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     LayoutInflater inflater = LayoutInflater.from(context);
     inflater = inflater.cloneInContext(context);
     MozcUtil.inflateWithOutOfMemoryRetrial(
-        SymbolInputView.class, inflater, R.layout.symbol_view, this, true);
+        SymbolInputView.class, inflater, R.layout.symbol_view, Optional.<ViewGroup>of(this), true);
     // Note: onFinishInflate won't be invoked on android ver 3.0 or later, while it is invoked
     // on android 2.3 or earlier. So, we define another (but similar) method and invoke it here
     // manually.
@@ -810,9 +689,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   }
 
   private void setMozcDrawable(ImageView imageView, int resourceId) {
-    Drawable drawable = mozcDrawableFactory.getDrawable(resourceId);
-    if (drawable != null) {
-      imageView.setImageDrawable(drawable);
+    Optional<Drawable> drawable = mozcDrawableFactory.getDrawable(resourceId);
+    if (drawable.isPresent()) {
+      imageView.setImageDrawable(drawable.get());
     }
   }
 
@@ -820,8 +699,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    * Sets click event handlers to each major category button.
    * It is necessary that the inflation has been done before this method invocation.
    */
+  @SuppressWarnings("deprecation")
   private void initializeMajorCategoryButtons() {
-    for (MajorCategory majorCategory : MajorCategory.values()) {
+    for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
       ImageView view = ImageView.class.cast(findViewById(majorCategory.buttonResourceId));
       if (view == null) {
         throw new IllegalStateException(
@@ -877,6 +757,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     tabhost.setCurrentTab(2);
   }
 
+  @SuppressWarnings("deprecation")
   private void resetTabBackground() {
     if (!isInflated()) {
       return;
@@ -909,7 +790,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     }
 
     TabWidget tabWidget = TabWidget.class.cast(findViewById(android.R.id.tabs));
-    List<MinorCategory> minorCategoryList = currentMajorCategory.minorCategories;
+    List<SymbolMinorCategory> minorCategoryList = currentMajorCategory.minorCategories;
     for (int i = 0; i < tabWidget.getChildCount(); ++i) {
       TextView textView = TextView.class.cast(tabWidget.getChildTabViewAt(i));
       textView.setText(minorCategoryList.get(i).textResourceId);
@@ -940,6 +821,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
             skinType.symbolReleasedFunctionKeyShadowColor));
   }
 
+  @SuppressWarnings("deprecation")
   private void initializeCloseButton() {
     ImageView closeButton = ImageView.class.cast(findViewById(R.id.symbol_view_close_button));
     if (closeButtonClickListener != null) {
@@ -955,6 +837,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    * Sets a click event handler to the delete button.
    * It is necessary that the inflation has been done before this method invocation.
    */
+  @SuppressWarnings("deprecation")
   private void initializeDeleteButton() {
     ImageView deleteButton = ImageView.class.cast(findViewById(R.id.symbol_view_delete_button));
     deleteButton.setOnTouchListener(deleteKeyEventButtonTouchListener);
@@ -972,7 +855,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     return ViewPager.class.cast(findViewById(R.id.symbol_input_candidate_view_pager));
   }
 
-  ImageButton getMajorCategoryButton(MajorCategory majorCategory) {
+  ImageButton getMajorCategoryButton(SymbolMajorCategory majorCategory) {
     if (majorCategory == null) {
       throw new NullPointerException("majorCategory shouldn't be null.");
     }
@@ -983,17 +866,23 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     return findViewById(R.id.symbol_emoji_disabled_message_view);
   }
 
-  public void setEmojiEnabled(boolean emojiEnabled) {
-    this.emojiEnabled = emojiEnabled;
-    enableEmoji(emojiEnabled);
+  public void setEmojiEnabled(boolean unicodeEmojiEnabled, boolean carrierEmojiEnabled) {
+    this.emojiEnabled = unicodeEmojiEnabled || carrierEmojiEnabled;
+    enableEmoji(this.emojiEnabled);
+    symbolCandidateStorage.setEmojiEnabled(unicodeEmojiEnabled, carrierEmojiEnabled);
   }
 
+  public void setPasswordField(boolean isPasswordField) {
+    this.isPasswordField = isPasswordField;
+  }
+
+  @SuppressWarnings("deprecation")
   private void enableEmoji(boolean enableEmoji) {
     if (!isInflated()) {
       return;
     }
 
-    ImageButton imageButton = getMajorCategoryButton(MajorCategory.EMOJI);
+    ImageButton imageButton = getMajorCategoryButton(SymbolMajorCategory.EMOJI);
     imageButton.setBackgroundDrawable(
         majorCategoryButtonDrawableFactory.createRightButtonDrawable(enableEmoji));
   }
@@ -1003,7 +892,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    */
   void reset() {
     // the current minor category is also updated in setMajorCategory.
-    setMajorCategory(MajorCategory.SYMBOL);
+    setMajorCategory(SymbolMajorCategory.SYMBOL);
     deleteKeyEventButtonTouchListener.reset();
   }
 
@@ -1058,7 +947,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
    *
    * @param newCategory the major category to show.
    */
-  protected void setMajorCategory(MajorCategory newCategory) {
+  protected void setMajorCategory(SymbolMajorCategory newCategory) {
     if (newCategory == null) {
       throw new NullPointerException("newCategory must be non-null.");
     }
@@ -1067,7 +956,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     // Reset the minor category to the default value.
     resetTabText();
     resetCandidateViewPager();
-    MinorCategory minorCategory = currentMajorCategory.getDefaultMinorCategory();
+    SymbolMinorCategory minorCategory = currentMajorCategory.getDefaultMinorCategory();
     if (symbolCandidateStorage.getCandidateList(minorCategory).getCandidatesCount() == 0) {
       minorCategory = currentMajorCategory.getMinorCategoryByRelativeIndex(minorCategory, 1);
     }
@@ -1076,7 +965,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     getTabHost().setCurrentTab(index);
 
     // Update visibility relating attributes.
-    for (MajorCategory majorCategory : MajorCategory.values()) {
+    for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
       // Update major category selector button's look and feel.
       ImageButton button = getMajorCategoryButton(majorCategory);
       if (button != null) {
@@ -1089,7 +978,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     if (emojiDisabledMessageView != null) {
       // Show messages about emoji-disabling, if necessary.
       emojiDisabledMessageView.setVisibility(
-          newCategory == MajorCategory.EMOJI && !emojiEnabled ? View.VISIBLE : View.GONE);
+          newCategory == SymbolMajorCategory.EMOJI && !emojiEnabled ? View.VISIBLE : View.GONE);
     }
   }
 

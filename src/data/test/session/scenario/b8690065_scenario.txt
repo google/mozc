@@ -1,0 +1,85 @@
+# This file contains a scenario for testing user history predictor.
+# See also http://b/issue?id=8690065.
+
+# Enable IME
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Set to Qwerty kana mode.
+SET_MOBILE_REQUEST
+UPDATE_MOBILE_KEYBOARD	QWERTY_MOBILE_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HIRAGANA
+
+# 1. Send key "aaaaa" and commit
+# 2. Send key "aaa" and "あああああ" is predicted.
+SEND_KEYS	aaa
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	あああああ
+SEND_KEYS	aa
+EXPECT_IN_ALL_CANDIDATE_WORDS	あああああ
+SEND_KEY	Enter
+SEND_KEYS	aaa
+EXPECT_IN_ALL_CANDIDATE_WORDS	あああああ
+
+RESET_CONTEXT
+
+# 1. Send key "iiiii" and commit
+# 2. Backspace and "いいいいい" is reverted from user history predictor.
+# 3. Send key "iii" and "いいいいい" is NOT predicted.
+SEND_KEYS	iii
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	いいいいい
+SEND_KEYS	ii
+EXPECT_IN_ALL_CANDIDATE_WORDS	いいいいい
+SEND_KEY	Enter
+SEND_KEY	Backspace
+SEND_KEYS	iii
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	いいいいい
+
+RESET_CONTEXT
+
+# 1. Send key "uuuuu" and commit
+# 2. Send key "u" and commit
+# 3. Backspace and "ううううう" is NOT reverted from user history predictor.
+# 4. Send key "uuu" and "ううううう" is predicted.
+SEND_KEYS	uuu
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	ううううう
+SEND_KEYS	uu
+EXPECT_IN_ALL_CANDIDATE_WORDS	ううううう
+SEND_KEY	Enter
+SEND_KEY	u
+SEND_KEY	Enter
+SEND_KEY	Backspace
+SEND_KEYS	uuu
+EXPECT_IN_ALL_CANDIDATE_WORDS	ううううう
+
+RESET_CONTEXT
+
+# 1. Send key "eeeee" and commit
+# 2. Send key "e" and revert it by backspace
+# 3. Backspace and "えええええ" is reverted from user history predictor.
+# 4. Send key "eee" and "えええええ" is NOT predicted.
+SEND_KEYS	eee
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	えええええ
+SEND_KEYS	ee
+EXPECT_IN_ALL_CANDIDATE_WORDS	えええええ
+SEND_KEY	Enter
+SEND_KEY	e
+SEND_KEY	Backspace
+SEND_KEY	Backspace
+SEND_KEYS	eee
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	えええええ
+
+RESET_CONTEXT
+
+# 1. Send key "ooooo" and commit
+# 2. Send left key
+# 3. Backspace and "おおおおお" is NOT reverted from user history predictor.
+# 4. Send key "ooo" and "おおおおお" is predicted.
+SEND_KEYS	ooo
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	おおおおお
+SEND_KEYS	oo
+EXPECT_IN_ALL_CANDIDATE_WORDS	おおおおお
+SEND_KEY	Enter
+SEND_KEY	Left
+SEND_KEY	Backspace
+SEND_KEYS	ooo
+EXPECT_IN_ALL_CANDIDATE_WORDS	おおおおお

@@ -59,7 +59,6 @@ STATE_CHECKED = 0x010100a0
 
 DRAWABLE_PICTURE = 1
 DRAWABLE_STATE_LIST = 2
-DRAWABLE_ANIMATION = 3
 
 CMD_PICTURE_EOP = 0
 CMD_PICTURE_DRAW_PATH = 1
@@ -69,6 +68,8 @@ CMD_PICTURE_DRAW_LINE = 4
 CMD_PICTURE_DRAW_RECT = 5
 CMD_PICTURE_DRAW_CIRCLE = 6
 CMD_PICTURE_DRAW_ELLIPSE = 7
+CMD_PICTURE_DRAW_GROUP_START = 8
+CMD_PICTURE_DRAW_GROUP_END = 9
 
 CMD_PICTURE_PATH_EOP = 0
 CMD_PICTURE_PATH_MOVE = 1
@@ -150,9 +151,10 @@ STYLE_CATEGORY_MAP = sorted(
 # Format of StateListDrawable:
 # 2, [[state_list], drawable]
 COLOR_PATTERN = re.compile(r'#([0-9A-Fa-f]{6})')
-PIXEL_PATTERN = re.compile(r'(\d+)px')
+PIXEL_PATTERN = re.compile(r'(\d+)(?:px)?')
 FLOAT_PATTERN = re.compile(r'^\s*,?\s*([+-]?\d+(?:\.\d*)?(:?e[+-]\d+)?)')
 SHADER_PATTERN = re.compile(r'url\(#(.*)\)')
+TRANSFORM_PATTERN = re.compile(r'(matrix|translate)\((.*)\)')
 MATRIX_PATTERN = re.compile(r'matrix\((.*)\)')
 STOP_COLOR_PATTERN = re.compile(r'stop-color:(.*)')
 
@@ -518,19 +520,28 @@ class MozcDrawableConverter(object):
       logging.critical('Unknown path')
       sys.exit(1)
 
-    # TODO support continuous commands.
     prev_control = None
     prev = None
     command_list = []
+    prev_command = None
     while True:
       path = path.strip()
       if not path:
         break
-      command = path[0]
+
+      if path[0] in 'mMcCsShHvVlLzZ':
+        # If the head character of path is one of the command prefix
+        # characters, use the character as the command and consume it.
+        command = path[0]
+        path = path[1:]
+      else:
+        # If not, use prev_command as command
+        # in order to support continuous commands.
+        command = prev_command
 
       if command == 'm' or command == 'M':
         # Move command.
-        (x, y), path = self._ConsumeFloatList(path[1:], 2)
+        (x, y), path = self._ConsumeFloatList(path, 2)
         if command == 'm' and prev is not None:
           x += prev[0]
           y += prev[1]
@@ -538,11 +549,14 @@ class MozcDrawableConverter(object):
         prev = (x, y)
         prev_control = None
         start = (x, y)
+        # Subsequent coordinates are treated as implicit
+        # lineto (l or L) commands.
+        prev_command = 'l' if command == 'm' else 'L'
         continue
 
       if command == 'c' or command == 'C':
         # Cubic curve.
-        (x1, y1, x2, y2, x, y), path = self._ConsumeFloatList(path[1:], 6)
+        (x1, y1, x2, y2, x, y), path = self._ConsumeFloatList(path, 6)
         if command == 'c':
           x1 += prev[0]
           y1 += prev[1]
@@ -553,11 +567,12 @@ class MozcDrawableConverter(object):
         command_list.append((CMD_PICTURE_PATH_CURVE, x1, y1, x2, y2, x, y))
         prev = (x, y)
         prev_control = (x2, y2)
+        prev_command = command
         continue
 
       if command == 's' or command == 'S':
         # Continued cubic curve.
-        (x2, y2, x, y), path = self._ConsumeFloatList(path[1:], 4)
+        (x2, y2, x, y), path = self._ConsumeFloatList(path, 4)
         if command == 's':
           x2 += prev[0]
           y2 += prev[1]
@@ -571,47 +586,52 @@ class MozcDrawableConverter(object):
         command_list.append((CMD_PICTURE_PATH_CONTINUED_CURVE, x2, y2, x, y))
         prev = (x, y)
         prev_control = (x2, y2)
+        prev_command = command
         continue
 
       if command == 'h' or command == 'H':
         # Horizontal line.
-        x, path = self._ConsumeFloat(path[1:])
+        x, path = self._ConsumeFloat(path)
         if command == 'h':
           x += prev[0]
         y = prev[1]
         command_list.append((CMD_PICTURE_PATH_HORIZONTAL_LINE, x))
         prev = (x, y)
         prev_control = None
+        prev_command = command
         continue
 
       if command == 'v' or command == 'V':
         # Vertical line.
-        y, path = self._ConsumeFloat(path[1:])
+        y, path = self._ConsumeFloat(path)
         if command == 'v':
           y += prev[1]
         x = prev[0]
         command_list.append((CMD_PICTURE_PATH_VERTICAL_LINE, y))
         prev = (x, y)
         prev_control = None
+        prev_command = command
         continue
 
       if command == 'l' or command == 'L':
         # Line.
-        (x, y), path = self._ConsumeFloatList(path[1:], 2)
+        (x, y), path = self._ConsumeFloatList(path, 2)
         if command == 'l':
           x += prev[0]
           y += prev[1]
         command_list.append((CMD_PICTURE_PATH_LINE, x, y))
         prev = (x, y)
         prev_control = None
+        prev_command = command
         continue
 
       if command == 'z' or command == 'Z':
         # Close the path.
         command_list.append((CMD_PICTURE_PATH_CLOSE,))
-        path = path[1:]
+        path = path
         prev = start
         prev_control = None
+        prev_command = command
         continue
 
       logging.critical('Unknown command: %s', path)
@@ -732,6 +752,60 @@ class MozcDrawableConverter(object):
     else:
       self._ConvertStyleList(style_list, output)
 
+  def _ConvertGroupElement(
+      self, node, style_category, has_shadow, shader_map, output):
+
+    transform = node.get('transform')
+    if transform:
+      # Output order of 3x3 matrix;
+      # [ 0 3 6
+      #   1 4 7
+      #   2 5 8 ]
+      # - Combined transformation is not supported yet.
+      # - Only 'matrix' and 'translate' transformation is supported.
+      transform_match = TRANSFORM_PATTERN.match(transform)
+      if transform_match is None:
+        logging.critical('Unsupported transform: %s', transform)
+        sys.exit(1)
+      transformation = transform_match.group(1)
+      coords = transform_match.group(2)
+
+      output.WriteByte(CMD_PICTURE_DRAW_GROUP_START)
+
+      if transformation == 'matrix':
+        (m11, m21, m12, m22, m13, m23) = tuple(self._ParseFloatList(coords))
+        output.WriteFloat(m11)
+        output.WriteFloat(m21)
+        output.WriteFloat(0)
+        output.WriteFloat(m12)
+        output.WriteFloat(m22)
+        output.WriteFloat(0)
+        output.WriteFloat(m13)
+        output.WriteFloat(m23)
+        output.WriteFloat(1)
+      elif transformation == 'translate':
+        (tx, ty) = tuple(self._ParseFloatList(coords))
+        output.WriteFloat(1)
+        output.WriteFloat(0)
+        output.WriteFloat(0)
+        output.WriteFloat(0)
+        output.WriteFloat(1)
+        output.WriteFloat(0)
+        output.WriteFloat(tx)
+        output.WriteFloat(ty)
+        output.WriteFloat(1)
+      else:
+        # Never reach here. Just in case.
+        logging.critical('Unsupported transform: %s', transform)
+        sys.exit(1)
+
+    for child in node:
+      self._ConvertPictureSequence(
+          child, style_category, has_shadow, shader_map, output)
+
+    if transform:
+      output.WriteByte(CMD_PICTURE_DRAW_GROUP_END)
+
   def _ConvertPictureSequence(
       self, node, style_category, has_shadow, shader_map, output):
     # Hack. To support shadow, we use 'id' attribute.
@@ -783,10 +857,8 @@ class MozcDrawableConverter(object):
 
     if node.tag in ['{http://www.w3.org/2000/svg}g',
                     '{http://www.w3.org/2000/svg}svg']:
-      # Flatten child nodes.
-      for child in node:
-        self._ConvertPictureSequence(
-            child, style_category, has_shadow, shader_map, output)
+      self._ConvertGroupElement(
+          node, style_category, has_shadow, shader_map, output)
       return
 
     if node.tag in ['{http://www.w3.org/2000/svg}linearGradient',
@@ -823,18 +895,6 @@ class MozcDrawableConverter(object):
         output.WriteInt32(state)
 
       # Output drawable.
-      self._ConvertPictureDrawableInternal(ElementTree.parse(path), output)
-    return output.output.getvalue()
-
-  # This method is actually not used, but we can use it to create animation
-  # drawables.
-  def ConvertAnimationDrawable(self, drawable_source_list):
-    output = _OutputStream(StringIO.StringIO())
-    output.WriteByte(DRAWABLE_ANIMATION)
-    output.WriteByte(len(drawable_source_list))
-    for (duration, path) in drawable_source_list:
-      # Output duration and corresponding picture drawable.
-      output.WriteInt16(duration)
       self._ConvertPictureDrawableInternal(ElementTree.parse(path), output)
     return output.output.getvalue()
 

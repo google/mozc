@@ -221,7 +221,7 @@ void Mutex::Lock() {
 }
 
 bool Mutex::TryLock() {
-  return ::TryEnterCriticalSection(AsCriticalSection(&opaque_buffer_));
+  return ::TryEnterCriticalSection(AsCriticalSection(&opaque_buffer_)) != FALSE;
 }
 
 void Mutex::Unlock() {

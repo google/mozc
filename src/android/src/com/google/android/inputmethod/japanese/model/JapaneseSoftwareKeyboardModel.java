@@ -33,7 +33,10 @@ import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecificat
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
+import android.inputmethodservice.InputMethodService;
 import android.text.InputType;
 
 /**
@@ -69,6 +72,7 @@ import android.text.InputType;
  * {@link InputMethodService#onStartInputView}.
  *
  */
+@SuppressWarnings("javadoc")
 public class JapaneseSoftwareKeyboardModel {
 
   /**
@@ -89,7 +93,7 @@ public class JapaneseSoftwareKeyboardModel {
   // (e.g., TWELVE_KEY_LAYOUT + (qwertyLayoutForAlphabet = false) + ALPHABET_NUMBER).
   // For now, getKeyboardLayout handles it, so it should fine. We may want to change the
   // strategy in future.
-  private KeyboardMode savedMode = null;
+  private Optional<KeyboardMode> savedMode = Optional.absent();
 
   public JapaneseSoftwareKeyboardModel() {
   }
@@ -99,18 +103,14 @@ public class JapaneseSoftwareKeyboardModel {
   }
 
   public void setKeyboardLayout(KeyboardLayout keyboardLayout) {
-    if (keyboardLayout == null) {
-      throw new NullPointerException();
-    }
-    KeyboardMode mode = getPreferredKeyboardMode(this.inputType, keyboardLayout);
-    if (mode == null) {
-      mode = KeyboardMode.KANA;
-    }
+    Preconditions.checkNotNull(keyboardLayout);
+    Optional<KeyboardMode> optionalMode = getPreferredKeyboardMode(this.inputType, keyboardLayout);
+    KeyboardMode mode = optionalMode.isPresent() ? optionalMode.get() : KeyboardMode.KANA;
 
     this.keyboardLayout = keyboardLayout;
     // Reset keyboard mode as well.
     this.keyboardMode = mode;
-    this.savedMode = null;
+    this.savedMode = Optional.absent();
   }
 
   public KeyboardMode getKeyboardMode() {
@@ -118,10 +118,7 @@ public class JapaneseSoftwareKeyboardModel {
   }
 
   public void setKeyboardMode(KeyboardMode keyboardMode) {
-    if (keyboardMode == null) {
-      throw new NullPointerException();
-    }
-    this.keyboardMode = keyboardMode;
+    this.keyboardMode = Preconditions.checkNotNull(keyboardMode);
   }
 
   public InputStyle getInputStyle() {
@@ -129,10 +126,7 @@ public class JapaneseSoftwareKeyboardModel {
   }
 
   public void setInputStyle(InputStyle inputStyle) {
-    if (inputStyle == null) {
-      throw new NullPointerException();
-    }
-    this.inputStyle = inputStyle;
+    this.inputStyle = Preconditions.checkNotNull(inputStyle);
   }
 
   public boolean isQwertyLayoutForAlphabet() {
@@ -148,43 +142,45 @@ public class JapaneseSoftwareKeyboardModel {
    * See the class comment for details.
    */
   public void setInputType(int inputType) {
-    KeyboardMode mode = getPreferredKeyboardMode(inputType, this.keyboardLayout);
-    if (mode != null) {
-      if (getPreferredKeyboardMode(this.inputType, this.keyboardLayout) == null) {
+    Optional<KeyboardMode> mode = getPreferredKeyboardMode(inputType, this.keyboardLayout);
+    if (mode.isPresent()) {
+      if (!getPreferredKeyboardMode(this.inputType, this.keyboardLayout).isPresent()) {
         // Remember the current keyboard mode.
-        savedMode = keyboardMode;
+        savedMode = Optional.of(keyboardMode);
       }
     } else {
       // Restore the saved mode.
       mode = savedMode;
-      savedMode = null;
+      savedMode = Optional.absent();
     }
 
     this.inputType = inputType;
-    if (mode != null) {
-      this.keyboardMode = mode;
+    if (mode.isPresent()) {
+      this.keyboardMode = mode.get();
     }
   }
 
-  private static KeyboardMode getPreferredKeyboardMode(int inputType, KeyboardLayout layout) {
+  private static Optional<KeyboardMode> getPreferredKeyboardMode(
+      int inputType, KeyboardLayout layout) {
+    Preconditions.checkNotNull(layout);
     switch (inputType & InputType.TYPE_MASK_CLASS) {
       case InputType.TYPE_CLASS_DATETIME:
       case InputType.TYPE_CLASS_PHONE:
       case InputType.TYPE_CLASS_NUMBER:
         return layout == KeyboardLayout.TWELVE_KEYS
-            ? KeyboardMode.KANA_NUMBER
-            : KeyboardMode.ALPHABET_NUMBER;
+            ? Optional.of(KeyboardMode.KANA_NUMBER)
+            : Optional.of(KeyboardMode.ALPHABET_NUMBER);
       case InputType.TYPE_CLASS_TEXT:
         switch (inputType & InputType.TYPE_MASK_VARIATION) {
           case InputType.TYPE_TEXT_VARIATION_PASSWORD:
           case InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD:
           case InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS:
           case InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD:
-            return KeyboardMode.ALPHABET;
+            return Optional.of(KeyboardMode.ALPHABET);
         }
     }
     // KeyboardMode recommended strongly is not found here, so just return null.
-    return null;
+    return Optional.<KeyboardMode>absent();
   }
 
   /**
@@ -285,9 +281,10 @@ public class JapaneseSoftwareKeyboardModel {
       case KANA: return KeyboardSpecification.GODAN_KANA;
       case ALPHABET: return KeyboardSpecification.QWERTY_ALPHABET;
       case ALPHABET_NUMBER: return KeyboardSpecification.QWERTY_ALPHABET_NUMBER;
+      default:
+        // KANA_NUMBER must be never used.
+        throw new IllegalArgumentException("Unknown keyboard mode: " + keyboardMode);
     }
-    // KANA_NUMBER must be never used.
-    throw new IllegalArgumentException("Unknown keyboard mode: " + keyboardMode);
   }
 
 }

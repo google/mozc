@@ -32,14 +32,17 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <memory>
+
 #include "base/logging.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/unix/window_manager.h"
 
+using std::unique_ptr;
+
 namespace mozc {
 namespace renderer {
 namespace gtk {
-
 namespace {
 
 gboolean mozc_prepare(GSource *source, int *timeout) {
@@ -98,10 +101,18 @@ bool UnixServer::Render() {
 
 bool UnixServer::AsyncExecCommand(string *proto_message) {
   {
+    // Take the ownership of |proto_message|.
+    unique_ptr<string> proto_message_owner(proto_message);
     scoped_lock l(&mutex_);
-    message_.assign(*proto_message);
+    if (message_ == *proto_message_owner.get()) {
+      // This is exactly the same to the previous message. Theoretically it is
+      // safe to do nothing here.
+      return true;
+    }
+    // Since mozc rendering protocol is state-less, we can always ignore the
+    // previous content of |message_|.
+    message_.swap(*proto_message_owner.get());
   }
-  delete proto_message;
 
   const char dummy_data = 0;
   if (write(pipefd_[1], &dummy_data, sizeof(dummy_data)) < 0) {

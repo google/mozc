@@ -82,7 +82,6 @@
         'clock_mock_test.cc',
         'codegen_bytearray_stream_test.cc',
         'cpu_stats_test.cc',
-        'crash_report_util_test.cc',
         'process_mutex_test.cc',
         'stopwatch_test.cc',
         'timer_test.cc',
@@ -110,7 +109,6 @@
         ['target_platform=="Android"', {
           'sources!': [
             'codegen_bytearray_stream_test.cc',
-            'encryptor_test.cc',
           ],
         }],
       ],
@@ -136,8 +134,8 @@
         'singleton_test.cc',
         'stl_util_test.cc',
         'string_piece_test.cc',
-        'thread_test.cc',
         'text_normalizer_test.cc',
+        'thread_test.cc',
         'version_test.cc',
       ],
       'conditions': [
@@ -244,6 +242,18 @@
       },
     },
     {
+      'target_name': 'obfuscator_support_test',
+      'type': 'executable',
+      'sources': [
+        'unverified_aes256_test.cc',
+        'unverified_sha1_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:obfuscator_support',
+      ],
+    },
+    {
       'target_name': 'encryptor_test',
       'type': 'executable',
       'sources': [
@@ -255,7 +265,7 @@
         'base.gyp:encryptor',
       ],
       'conditions': [
-        ['target_platform=="Android"', {
+        ['use_legacy_encryptor==1 and target_platform=="Android"', {
           'sources!': [
             # Testing of encryptor is ported to java test. See also
             # org.mozc.android.inputmethod.japanese.nativecallback.EncryptorTest
@@ -310,23 +320,6 @@
       },
     },
     {
-      'target_name': 'task_test',
-      'type': 'executable',
-      'sources': [
-        'task_manager_test.cc',
-        'task_runner_test.cc',
-        'task_token_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'base.gyp:base',
-        'base.gyp:task',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'scheduler_stub',
       'type': 'static_library',
       'sources': [
@@ -369,12 +362,12 @@
         'config_file_stream_test',
         'encryptor_test',
         'file_util_test',
-        'number_util_test',
         'multifile_test',
-        'scheduler_test',
+        'number_util_test',
+        'obfuscator_support_test',
         'scheduler_stub_test',
+        'scheduler_test',
         'system_util_test',
-        'task_test',
         'trie_test',
         'util_test',
       ],

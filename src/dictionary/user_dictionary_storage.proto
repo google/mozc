@@ -195,9 +195,8 @@ message UserDictionaryCommand {
     // given dictionary_id.
     GET_ENTRY_SIZE = 10;
 
-    // Returns an entry in the dictionary specified by dictionary_id.
-    // The position of the entry should be specified via entry_index(0).
-    GET_ENTRY = 11;
+    // Use GET_ENTRIES instead.
+    OBSOLETE_GET_ENTRY = 11;
 
     // Returns if it is possible to add new dictionary or not.
     // The result is returned by using status code.
@@ -240,6 +239,10 @@ message UserDictionaryCommand {
     // Note: The result of this command could be too large for IPC, which has a
     // size limitation of the response data.
     GET_STORAGE = 21;
+
+    // Returns entries in the dictionary specified by dictionary_id.
+    // The position of the entry should be specified via entry_index().
+    GET_ENTRIES = 22;
   };
 
   required CommandType type = 1;
@@ -307,7 +310,9 @@ message UserDictionaryCommandStatus {
   required Status status = 1;
   optional uint64 session_id = 2;
   optional UserDictionaryStorage storage = 3;
-  optional UserDictionary.Entry entry = 4;
+  // Use entries field instead.
+  optional UserDictionary.Entry OBSOLETE_entry = 4;
   optional uint64 dictionary_id = 5;
   optional uint32 entry_size = 6;
+  repeated UserDictionary.Entry entries = 7;
 };

@@ -60,12 +60,18 @@ public enum EmojiProviderType {
    * </ul>
    * If a user invokes Emoji screen on symbol input view, provider chooser dialog will be shown.
    * If Emoji is disabled by spec, Emoji screen itself should be suppressed.
+   *
+   * Note:
+   * <ul>
+   * <li>NONE is just a default value. User should update it to use Emoji.
+   * <li>Unicode 6.0 Emoji is available even if DOCOMO, KDDI and SOFTBANK.
+   * </ul>
    */
   NONE((byte) 0),
   DOCOMO((byte) 1),
   KDDI((byte) 2),
   SOFTBANK((byte) 4),
-  // TODO(hidehiko): add unicode 6.0, when supported.
+  UNICODE((byte) 8),
   ;
 
   private static final Map<String, EmojiProviderType> NETWORK_OPERATOR_MAP;
@@ -116,8 +122,9 @@ public enum EmojiProviderType {
     }
 
     // First, check if the emoji provider has already set to the preference.
-    if (NAME_SET.contains(
-        sharedPreferences.getString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, null))) {
+    String currentProviderTypeString =
+        sharedPreferences.getString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, null);
+    if (NAME_SET.contains(currentProviderTypeString) && !currentProviderTypeString.equals("NONE")) {
       // Found the valid value.
       return;
     }
@@ -138,6 +145,7 @@ public enum EmojiProviderType {
       TelephonyManagerInterface telephonyManager) {
     Preconditions.checkNotNull(telephonyManager);
 
+    // TODO(hsumita): Consider to make the default value UNICODE.
     return Objects.firstNonNull(NETWORK_OPERATOR_MAP.get(telephonyManager.getNetworkOperator()),
                                 NONE);
   }

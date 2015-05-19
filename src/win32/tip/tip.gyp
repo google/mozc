@@ -60,6 +60,7 @@
           'target_name': 'tip_core',
           'type': 'static_library',
           'sources': [
+            'tip_candidate_list.cc',
             'tip_class_factory.cc',
             'tip_compartment_util.cc',
             'tip_composition_util.cc',
@@ -72,7 +73,11 @@
             'tip_keyevent_handler.cc',
             'tip_lang_bar.cc',
             'tip_lang_bar_menu.cc',
+            'tip_linguistic_alternates.cc',
+            'tip_preferred_touch_keyboard.cc',
             'tip_private_context.cc',
+            'tip_query_provider.cc',
+            'tip_search_candidate_provider.cc',
             'tip_range_util.cc',
             'tip_reconvert_function.cc',
             'tip_ref_count.cc',
@@ -116,6 +121,7 @@
           'target_name': 'tip_core_test',
           'type': 'executable',
           'sources': [
+            'tip_candidate_list_test.cc',
             'tip_display_attributes_test.cc',
             'tip_enum_display_attributes_test.cc',
             'tip_input_mode_manager_test.cc',

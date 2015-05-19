@@ -74,6 +74,17 @@ class TipRangeUtil {
                              ITfRange *range_test,
                              ITfRange *range_cover);
 
+  // Returns the result of ITfContextView::GetTextExt with a workaround for a
+  // TSF bug which prevents an IME from receiving TF_E_NOLAYOUT error code
+  // correctly from ITfContextView::GetTextExt. The workaround may or may not
+  // work depending on the attached application implements
+  // ITextStoreACP::GetACPFromPoint.
+  static HRESULT GetTextExt(ITfContextView *context_view,
+                            TfEditCookie read_cookie,
+                            ITfRange *range,
+                            RECT *rect,
+                            bool *clipped);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipRangeUtil);
 };

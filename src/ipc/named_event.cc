@@ -41,12 +41,13 @@
 #include <sys/types.h>
 #endif
 
-#include <stdio.h>
 #include <algorithm>
+#include <cstdio>
 #include <string>
-#include "base/base.h"
+
 #include "base/const.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #ifdef OS_WIN
@@ -250,7 +251,7 @@ bool NamedEventNotifier::Notify() {
   }
 
   return true;
-};
+}
 
 #else   // OS_WIN
 
@@ -363,6 +364,6 @@ bool NamedEventNotifier::Notify() {
   }
 
   return true;
-};
+}
 #endif
 }  // namespace mozc

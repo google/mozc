@@ -41,6 +41,11 @@ class Candidates;
 
 namespace renderer {
 class TableLayout;
+
+namespace win32 {
+class TextRenderer;
+}  // namespace win32
+
 }  // namespace renderer
 
 namespace win32 {
@@ -55,6 +60,7 @@ class TipUiRendererImmersive {
   // offset length from the left edge with which the candidate UI should be
   // aligned.
   static HBITMAP Render(const commands::Candidates &candidates,
+                        const renderer::win32::TextRenderer *text_renderer,
                         renderer::TableLayout *table_layout,
                         SIZE *size,
                         int *left_align_offset);

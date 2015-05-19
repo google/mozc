@@ -300,7 +300,6 @@ bool EmojiRewriter::RewriteCandidates(
     Segment *segment = segments->mutable_conversion_segment(i);
     const string &reading = segment->key();
     if (reading.empty()) {
-      LOG(ERROR) << "reading is empty";
       continue;
     }
 

@@ -29,10 +29,12 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import com.google.common.base.Objects;
+
 /**
  * A class corresponding to {@code &lt;Flick&gt;} element in xml resource files.
  * This class represents what should be happened when user flicks at a key.
- * 
+ *
  */
 public class Flick {
   /**
@@ -76,5 +78,13 @@ public class Flick {
 
   public KeyEntity getKeyEntity() {
     return keyEntity;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+                  .add("direction", direction.toString())
+                  .add("keyEntity", keyEntity.toString())
+                  .toString();
   }
 }

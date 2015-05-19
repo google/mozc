@@ -34,6 +34,7 @@ import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
+import com.google.common.base.Preconditions;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -46,6 +47,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementation of the background surface for {@link KeyboardView}.
@@ -220,7 +222,7 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
 
   private boolean fullUpdateRequested;
   private Keyboard requestedKeyboard;
-  private MetaState requestedMetaState;
+  private Set<MetaState> requestedMetaState;
 
   /**
    * A set of pending keys to be updated.
@@ -270,9 +272,9 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
    * Resets the {@code keyboard} and {@code metaState} to be rendered on this surface.
    * This also cancels all key's direction for now.
    */
-  public void requestUpdateKeyboard(Keyboard keyboard, MetaState metaState) {
-    requestedKeyboard = keyboard;
-    requestedMetaState = metaState;
+  public void requestUpdateKeyboard(Keyboard keyboard, Set<MetaState> metaState) {
+    requestedKeyboard = Preconditions.checkNotNull(keyboard);
+    requestedMetaState = Preconditions.checkNotNull(metaState);
     fullUpdateRequested = true;
 
     // We set all keyboard update request here, and it overwrites the current pending key update
@@ -401,7 +403,7 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
    * This is package private for testing purpose.
    */
   static KeyEntity getKeyEntityForRendering(
-      Key key, MetaState metaState, Flick.Direction flickDirection) {
+      Key key, Set<MetaState> metaState, Flick.Direction flickDirection) {
     if (flickDirection != null) {
       // If the key is under flick state, check if there is corresponding key entity for the
       // direction first.
@@ -445,7 +447,7 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
       return null;
     }
     return setDrawableState(
-        drawableCache.getDrawable(keyEntity.getKeyIconResourceId()), isPressed);
+        drawableCache.getDrawable(keyEntity.getKeyIconResourceId()).orNull(), isPressed);
   }
 
   @Override

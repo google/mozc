@@ -34,6 +34,8 @@
 #import "DialogsController.h"
 
 #include <string>
+
+#include "base/init.h"
 #include "base/mac_util.h"
 #include "base/url.h"
 #include "base/version.h"

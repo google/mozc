@@ -34,6 +34,7 @@
 #include "session/commands.pb.h"
 #include "win32/base/config_snapshot.h"
 #include "win32/base/deleter.h"
+#include "win32/base/focus_hierarchy_observer.h"
 #include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/input_state.h"
 #include "win32/base/surrogate_pair_observer.h"
@@ -78,6 +79,7 @@ bool PrivateContext::Initialize() {
   last_output = new mozc::commands::Output();
   deleter = new VKBackBasedDeleter();
   surrogate_pair_observer = new SurrogatePairObserver();
+  focus_hierarchy_observer = FocusHierarchyObserver::Create();
   return true;
 }
 
@@ -93,6 +95,7 @@ bool PrivateContext::Uninitialize() {
   delete last_output;
   delete deleter;
   delete surrogate_pair_observer;
+  delete focus_hierarchy_observer;
   magic_number = 0;
   thread_id = 0;
   client = nullptr;
@@ -103,6 +106,7 @@ bool PrivateContext::Uninitialize() {
   last_output = nullptr;
   deleter = nullptr;
   surrogate_pair_observer = nullptr;
+  focus_hierarchy_observer = nullptr;
   return true;
 }
 

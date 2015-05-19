@@ -30,6 +30,8 @@
 package org.mozc.android.inputmethod.japanese.keyboard;
 
 import org.mozc.android.inputmethod.japanese.MemoryManageable;
+import org.mozc.android.inputmethod.japanese.accessibility.AccessibilityUtil;
+import org.mozc.android.inputmethod.japanese.accessibility.KeyboardAccessibilityDelegate;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
@@ -38,6 +40,9 @@ import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -47,15 +52,20 @@ import android.graphics.Shader.TileMode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Looper;
+import android.support.v4.view.ViewCompat;
+import android.text.InputType;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Basic implementation of a keyboard's view.
@@ -74,7 +84,8 @@ public class KeyboardView extends View implements MemoryManageable {
   private final long popupDismissDelay;
 
   private Keyboard keyboard;
-  @VisibleForTesting MetaState metaState = MetaState.UNMODIFIED;
+  // Do not update directly. Use setMetaState instead.
+  @VisibleForTesting Set<MetaState> metaState;
   @VisibleForTesting final KeyboardViewBackgroundSurface backgroundSurface =
       new KeyboardViewBackgroundSurface(backgroundDrawableFactory, drawableCache);
   @VisibleForTesting boolean isKeyPressed;
@@ -85,6 +96,8 @@ public class KeyboardView extends View implements MemoryManageable {
   private int flickSensitivity;
   private boolean popupEnabled = true;
   private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
+
+  private final KeyboardAccessibilityDelegate accessibilityDelegate;
 
   // A map from pointerId to KeyEventContext.
   // Note: the pointerId should be small integers, e.g. 0, 1, 2... So if it turned out
@@ -118,6 +131,9 @@ public class KeyboardView extends View implements MemoryManageable {
     popupDismissDelay = res.getInteger(R.integer.config_popup_dismiss_delay);
     keycodeSymbol = res.getInteger(R.integer.key_symbol);
     scaledDensity = res.getDisplayMetrics().scaledDensity;
+    accessibilityDelegate = new KeyboardAccessibilityDelegate(this);
+    ViewCompat.setAccessibilityDelegate(this, accessibilityDelegate);
+    setMetaStates(Collections.<MetaState>emptySet());
   }
 
   /**
@@ -134,7 +150,7 @@ public class KeyboardView extends View implements MemoryManageable {
 
   private float getFlickSensitivityInDip() {
     // To adapt the flickSensitiy Level to actual length, we scale 1.5f heuristically.
-    return - flickSensitivity * 1.5f * scaledDensity;
+    return -flickSensitivity * 1.5f * scaledDensity;
   }
 
   KeyEventContext getKeyEventContextByKey(Key key) {
@@ -200,7 +216,8 @@ public class KeyboardView extends View implements MemoryManageable {
     flushPendingKeyEvent(null);
 
     this.keyboard = keyboard;
-    this.metaState = MetaState.UNMODIFIED;
+    updateMetaStates(Collections.<MetaState>emptySet(), MetaState.CHAR_TYPE_EXCLUSIVE_GROUP);
+    accessibilityDelegate.setKeyboard(Optional.fromNullable(keyboard));
     this.drawableCache.clear();
     backgroundSurface.requestUpdateKeyboard(keyboard, metaState);
     backgroundSurface.requestUpdateSize(keyboard.contentRight - keyboard.contentLeft,
@@ -241,12 +258,14 @@ public class KeyboardView extends View implements MemoryManageable {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private void resetBackground() {
-    Drawable keyboardBackground =
+    Optional<Drawable> optionalKeyboardBackground =
         drawableCache.getDrawable(skinType.windowBackgroundResourceId);
-    if (keyboardBackground == null) {
+    if (!optionalKeyboardBackground.isPresent()) {
       setBackgroundColor(Color.BLACK);  // Set default background color.
     } else {
+      Drawable keyboardBackground = optionalKeyboardBackground.get();
       if (keyboardBackground instanceof BitmapDrawable) {
         // If the background is bitmap resource, set repeat mode.
         BitmapDrawable.class.cast(keyboardBackground).setTileModeXY(
@@ -268,6 +287,7 @@ public class KeyboardView extends View implements MemoryManageable {
     }
 
     this.keyEventHandler = keyEventHandler;
+    accessibilityDelegate.setKeyEventHandler(Optional.fromNullable(keyEventHandler));
   }
 
   @Override
@@ -311,8 +331,9 @@ public class KeyboardView extends View implements MemoryManageable {
         key, pointerId, x, y, getWidth(), getHeight(),
         flickThreshold * flickThreshold, metaState);
 
-    MetaState nextMetaState = keyEventContext.getNextMetaState();
-    if (nextMetaState != null) {
+    Set<MetaState> nextMetaStates = keyEventContext.getNextMetaStates(metaState);
+
+    if (!nextMetaStates.equals(metaState)) {
       // This is a modifier key, so we toggle the keyboard UI at the press timing instead of
       // releasing timing. It is in order to support multi-touch with the modifier key.
       // For example, "SHIFT + a" multi-touch will produce 'A' keycode, not 'a' keycode.
@@ -328,8 +349,8 @@ public class KeyboardView extends View implements MemoryManageable {
 
       // Update the metaState and request to update the full keyboard image
       // to update all key icons.
-      metaState = nextMetaState;
-      backgroundSurface.requestUpdateKeyboard(keyboard, nextMetaState);
+      setMetaStates(nextMetaStates);
+      backgroundSurface.requestUpdateKeyboard(keyboard, nextMetaStates);
     } else {
       // Remember if a non-modifier key is pressed.
       isKeyPressed = true;
@@ -392,21 +413,29 @@ public class KeyboardView extends View implements MemoryManageable {
       keyEventHandler.sendRelease(pressedKeyCode);
     }
 
-    if (keyEventContext.getNextMetaState() != null) {
+    if (keyEventContext.isMetaStateToggleEvent()) {
       if (isKeyPressed) {
         // A user pressed at least one key with pressing modifier key, and then the user
         // released this modifier key. So, we flush all pending events here, and
         // reset the keyboard's meta state to unmodified.
         flushPendingKeyEvent(keyEventContext.getTouchEvent());
-        metaState = MetaState.UNMODIFIED;
-        backgroundSurface.requestUpdateKeyboard(keyboard, MetaState.UNMODIFIED);
+        updateMetaStates(Collections.<MetaState>emptySet(), MetaState.CHAR_TYPE_EXCLUSIVE_GROUP);
+        backgroundSurface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
       }
     } else {
-      if (metaState.isOneTimeMetaState && keyEventContextMap.isEmpty()) {
-        // The current state is one time only, and we hit a release non-modifier key event here.
-        // So, we reset the meta state to unmodified.
-        metaState = MetaState.UNMODIFIED;
-        backgroundSurface.requestUpdateKeyboard(keyboard, MetaState.UNMODIFIED);
+      if (!metaState.isEmpty() && keyEventContextMap.isEmpty()) {
+        Set<MetaState> nextMetaState = Sets.newEnumSet(metaState, MetaState.class);
+        for (MetaState state : metaState) {
+          if (state.isOneTimeMetaState) {
+            // The current state is one time only, and we hit a release non-modifier key event here.
+            // So, we reset the meta state to unmodified.
+            nextMetaState.remove(state);
+          }
+        }
+        if (!nextMetaState.equals(metaState)) {
+          setMetaStates(nextMetaState);
+          backgroundSurface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
+        }
       }
     }
   }
@@ -438,7 +467,7 @@ public class KeyboardView extends View implements MemoryManageable {
 
   // Note that event is not used but this function takes it to standardize the signature to
   // other onXXX methods defined above.
-  private void onCancel(MotionEvent event) {
+  private void onCancel(@SuppressWarnings("unused") MotionEvent event) {
     resetState();
     if (keyEventHandler != null) {
       keyEventHandler.sendCancel();
@@ -552,5 +581,99 @@ public class KeyboardView extends View implements MemoryManageable {
     backgroundSurface.trimMemory();
     drawableCache.clear();
     popupPreviewPool.releaseAll();
+  }
+
+  @Override
+  public boolean dispatchTouchEvent(MotionEvent event) {
+    if (AccessibilityUtil.isTouchExplorationEnabled(getContext())) {
+      return accessibilityDelegate.dispatchTouchEvent(event);
+    }
+    return super.dispatchTouchEvent(event);
+  }
+
+  @Override
+  public boolean dispatchHoverEvent(MotionEvent event) {
+    if (AccessibilityUtil.isTouchExplorationEnabled(getContext())) {
+      return accessibilityDelegate.dispatchHoverEvent(event);
+    }
+    return false;
+  }
+
+  @VisibleForTesting
+  Set<MetaState> getMetaStates() {
+    return this.metaState;
+  }
+
+  private void setMetaStates(Set<MetaState> metaState) {
+    Preconditions.checkNotNull(metaState);
+    Preconditions.checkArgument(MetaState.isValidSet(metaState));
+    this.metaState = metaState;
+    accessibilityDelegate.setMetaState(metaState);
+  }
+
+  public void updateMetaStates(Set<MetaState> addedMetaStates, Set<MetaState> removedMetaStates) {
+    Preconditions.checkNotNull(addedMetaStates);
+    Preconditions.checkNotNull(removedMetaStates);
+
+    setMetaStates(Sets.union(Sets.difference(metaState, removedMetaStates),
+                             addedMetaStates).immutableCopy());
+  }
+
+  public void setPasswordField(boolean isPasswordField) {
+    accessibilityDelegate.setPasswordField(isPasswordField);
+  }
+
+  public void setEditorInfo(EditorInfo editorInfo) {
+    Preconditions.checkNotNull(editorInfo);
+
+    Set<MetaState> metaStates = EnumSet.noneOf(MetaState.class);
+    switch (editorInfo.imeOptions & EditorInfo.IME_MASK_ACTION) {
+      case EditorInfo.IME_ACTION_DONE:
+        metaStates.add(MetaState.ACTION_DONE);
+        break;
+      case EditorInfo.IME_ACTION_GO:
+        metaStates.add(MetaState.ACTION_GO);
+        break;
+      case EditorInfo.IME_ACTION_NEXT:
+        metaStates.add(MetaState.ACTION_NEXT);
+        break;
+      case EditorInfo.IME_ACTION_NONE:
+        metaStates.add(MetaState.ACTION_NONE);
+        break;
+      case EditorInfo.IME_ACTION_PREVIOUS:
+        metaStates.add(MetaState.ACTION_PREVIOUS);
+        break;
+      case EditorInfo.IME_ACTION_SEARCH:
+        metaStates.add(MetaState.ACTION_SEARCH);
+        break;
+      case EditorInfo.IME_ACTION_SEND:
+        metaStates.add(MetaState.ACTION_SEND);
+        break;
+      default:
+        // Do nothing
+    }
+    // InputType variation is *NOT* bit-fields in fact.
+    int clazz = editorInfo.inputType & InputType.TYPE_MASK_CLASS;
+    int variation = editorInfo.inputType & InputType.TYPE_MASK_VARIATION;
+    switch (clazz) {
+      case InputType.TYPE_CLASS_TEXT:
+        switch (variation) {
+          case InputType.TYPE_TEXT_VARIATION_URI:
+            metaStates.add(MetaState.VARIATION_URI);
+            break;
+          case InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS:
+          case InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS:
+            metaStates.add(MetaState.VARIATION_EMAIL_ADDRESS);
+            break;
+          default:
+            // Do nothing
+        }
+        break;
+      default:
+        // Do nothing
+    }
+
+    updateMetaStates(metaStates, Sets.union(MetaState.ACTION_EXCLUSIVE_GROUP,
+                                            MetaState.VARIATION_EXCLUSIVE_GROUP));
   }
 }

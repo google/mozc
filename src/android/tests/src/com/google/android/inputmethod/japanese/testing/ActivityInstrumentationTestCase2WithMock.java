@@ -117,7 +117,7 @@ public class ActivityInstrumentationTestCase2WithMock<T extends Activity>
     return mockSupport.createStrictMock(toMock);
   }
 
-  public <T> T createStrictMock(String name, Class<T> toMock) {
+  public <T> T createStrictMock(@SuppressWarnings("unused") String name, Class<T> toMock) {
     return mockSupport.createStrictMock(toMock);
   }
 

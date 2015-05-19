@@ -27,10 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include "base/base.h"
-#include "base/util.h"
 #include "converter/key_corrector.h"
+
+#include <string>
+
+#include "base/port.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -630,7 +631,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
     EXPECT_EQ(6, corrector.GetOriginalOffset(3, 6));
   }
 
-   {
+  {
     // "みんあ"
     const string input = "\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
@@ -698,7 +699,7 @@ TEST(KeyCorrectorTest, UCS4IsAvailable) {
 }
 
 TEST(KeyCorrectorTest, UCS4Test) {
-   {
+  {
     // "😁みんあ"
     const string input =
         "\xF0\x9F\x98\x81\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82";
@@ -712,7 +713,7 @@ TEST(KeyCorrectorTest, UCS4Test) {
 
 // Should not rewrite the character which is at the beginning of current input
 TEST(KeyCorrectorTest, Bug3046266Test) {
-   {
+  {
     // "かんあか"
     const string input = "\xE3\x81\x8B\xE3\x82\x93\xE3\x81\x82\xE3\x81\x8B";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 6);  // history_size = 6

@@ -1,0 +1,6 @@
+LIBRARY win_util_test_dll.dll
+
+EXPORTS
+        IsLockCheckSucceeded
+        IsLockHeld
+        ClearFlagsAndCheckAgain

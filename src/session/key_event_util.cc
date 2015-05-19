@@ -31,8 +31,8 @@
 
 #include <cctype>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
@@ -47,9 +47,18 @@ const uint32 kShiftMask =
     KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT | KeyEvent::RIGHT_SHIFT;
 const uint32 kCapsMask = KeyEvent::CAPS;
 
-uint32 DropCapsFromModifiers(uint32 modifiers) {
-  return modifiers & ~kCapsMask;
+uint32 Ignore(uint32 modifiers, uint32 modifiers_to_be_ignored) {
+  return modifiers & ~modifiers_to_be_ignored;
 }
+
+bool Any(uint32 modifiers_to_be_tested, uint32 modifiers_to_be_queried) {
+  return (modifiers_to_be_tested & modifiers_to_be_queried) != 0;
+}
+
+bool None(uint32 modifiers_to_be_tested, uint32 modifiers_to_be_queried) {
+  return !Any(modifiers_to_be_tested, modifiers_to_be_queried);
+}
+
 }  // namespace
 
 uint32 KeyEventUtil::GetModifiers(const KeyEvent &key_event) {
@@ -226,63 +235,69 @@ bool KeyEventUtil::MaybeGetKeyStub(const KeyEvent &key_event,
 }
 
 bool KeyEventUtil::HasAlt(uint32 modifiers) {
-  return modifiers & kAltMask;
+  return Any(modifiers, kAltMask);
 }
 
 bool KeyEventUtil::HasCtrl(uint32 modifiers) {
-  return modifiers & kCtrlMask;
+  return Any(modifiers, kCtrlMask);
 }
 
 bool KeyEventUtil::HasShift(uint32 modifiers) {
-  return modifiers & kShiftMask;
+  return Any(modifiers, kShiftMask);
 }
 
 bool KeyEventUtil::HasCaps(uint32 modifiers) {
-  return modifiers & kCapsMask;
+  return Any(modifiers, kCapsMask);
 }
 
 bool KeyEventUtil::IsAlt(uint32 modifiers) {
-  modifiers = DropCapsFromModifiers(modifiers);
-  return (modifiers & kAltMask) && ((modifiers & kAltMask) == modifiers);
+  if (!HasAlt(modifiers)) {
+    return false;
+  }
+  return None(Ignore(modifiers, kCapsMask), ~kAltMask);
 }
 
 bool KeyEventUtil::IsCtrl(uint32 modifiers) {
-  modifiers = DropCapsFromModifiers(modifiers);
-  return (modifiers & kCtrlMask) && ((modifiers & kCtrlMask) == modifiers);
+  if (!HasCtrl(modifiers)) {
+    return false;
+  }
+  return None(Ignore(modifiers, kCapsMask), ~kCtrlMask);
 }
 
 bool KeyEventUtil::IsShift(uint32 modifiers) {
-  modifiers = DropCapsFromModifiers(modifiers);
-  return (modifiers & kShiftMask) && ((modifiers & kShiftMask) == modifiers);
+  if (!HasShift(modifiers)) {
+    return false;
+  }
+  return None(Ignore(modifiers, kCapsMask), ~kShiftMask);
 }
 
 bool KeyEventUtil::IsAltCtrl(uint32 modifiers) {
-  modifiers = DropCapsFromModifiers(modifiers);
-  return (modifiers & kAltMask) &&
-      (modifiers & kCtrlMask) &&
-      ((modifiers & (kAltMask | kCtrlMask)) == modifiers);
+  if (!HasAlt(modifiers) || !HasCtrl(modifiers)) {
+    return false;
+  }
+  return None(Ignore(modifiers, kCapsMask), ~(kAltMask | kCtrlMask));
 }
 
 bool KeyEventUtil::IsAltShift(uint32 modifiers) {
-  modifiers = DropCapsFromModifiers(modifiers);
-  return (modifiers & kAltMask) &&
-      (modifiers & kShiftMask) &&
-      ((modifiers & (kAltMask | kShiftMask)) == modifiers);
+  if (!HasAlt(modifiers) || !HasShift(modifiers)) {
+    return false;
+  }
+  return None(Ignore(modifiers, kCapsMask), ~(kAltMask | kShiftMask));
 }
 
 bool KeyEventUtil::IsCtrlShift(uint32 modifiers) {
-  modifiers = DropCapsFromModifiers(modifiers);
-  return (modifiers & kCtrlMask) &&
-      (modifiers & kShiftMask) &&
-      ((modifiers & (kCtrlMask | kShiftMask)) == modifiers);
+  if (!HasCtrl(modifiers) || !HasShift(modifiers)) {
+    return false;
+  }
+  return None(Ignore(modifiers, kCapsMask), ~(kCtrlMask | kShiftMask));
 }
 
 bool KeyEventUtil::IsAltCtrlShift(uint32 modifiers) {
-  modifiers = DropCapsFromModifiers(modifiers);
-  return (modifiers & kAltMask) &&
-      (modifiers & kCtrlMask) &&
-      (modifiers & kShiftMask) &&
-      ((modifiers & (kAltMask | kCtrlMask | kShiftMask)) == modifiers);
+  if (!HasAlt(modifiers) || !HasCtrl(modifiers) || !HasShift(modifiers)) {
+    return false;
+  }
+  const auto kAltCtrlShiftMask = kAltMask | kCtrlMask | kShiftMask;
+  return None(Ignore(modifiers, kCapsMask), ~kAltCtrlShiftMask);
 }
 
 bool KeyEventUtil::IsLowerAlphabet(const KeyEvent &key_event) {
@@ -295,9 +310,9 @@ bool KeyEventUtil::IsLowerAlphabet(const KeyEvent &key_event) {
   const bool change_case = (HasShift(modifier_keys) != HasCaps(modifier_keys));
 
   if (change_case) {
-    return isupper(key_code);
+    return isupper(key_code) != 0;
   } else {
-    return islower(key_code);
+    return islower(key_code) != 0;
   }
 }
 
@@ -311,9 +326,9 @@ bool KeyEventUtil::IsUpperAlphabet(const KeyEvent &key_event) {
   const bool change_case = (HasShift(modifier_keys) != HasCaps(modifier_keys));
 
   if (change_case) {
-    return islower(key_code);
+    return islower(key_code) != 0;
   } else {
-    return isupper(key_code);
+    return isupper(key_code) != 0;
   }
 }
 

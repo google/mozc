@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace transliteration {
@@ -107,9 +107,7 @@ class T13n {
       TransliterationType current_type);
 
  private:
-  T13n();
-  virtual ~T13n();
-  DISALLOW_COPY_AND_ASSIGN(T13n);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(T13n);
 };
 
 }  // namespace transliteration

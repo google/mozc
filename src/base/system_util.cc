@@ -474,6 +474,12 @@ string SystemUtil::GetDocumentDirectory() {
 #endif  // OS_MACOSX
 }
 
+string SystemUtil::GetCrashReportDirectory() {
+  const char kCrashReportDirectory[] = "CrashReports";
+  return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
+                            kCrashReportDirectory);
+}
+
 string SystemUtil::GetUserNameAsString() {
 #ifdef MOZC_USE_PEPPER_FILE_IO
   LOG(ERROR) << "SystemUtil::GetUserNameAsString() is not implemented in NaCl.";

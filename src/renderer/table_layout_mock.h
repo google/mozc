@@ -48,7 +48,7 @@ class TableLayoutMock : public TableLayoutInterface {
   MOCK_METHOD1(EnsureFooterSize, void(const Size &size_in_pixels));
   MOCK_METHOD1(EnsureHeaderSize, void(const Size &size_in_pixels));
   MOCK_METHOD0(FreezeLayout, void());
-  MOCK_CONST_METHOD0(IsLayoutFrozen, int());
+  MOCK_CONST_METHOD0(IsLayoutFrozen, bool());
   MOCK_CONST_METHOD2(GetCellRect, Rect(int row, int column));
   MOCK_CONST_METHOD0(GetTotalSize, Size());
   MOCK_CONST_METHOD0(GetHeaderRect, Rect());

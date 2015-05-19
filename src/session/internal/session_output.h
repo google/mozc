@@ -33,7 +33,8 @@
 #define MOZC_SESSION_INTERNAL_SESSION_OUTPUT_H_
 
 #include <string>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "session/commands.pb.h"
 
 namespace mozc {

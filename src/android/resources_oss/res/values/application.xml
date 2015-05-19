@@ -43,6 +43,7 @@
     By default no restriction is applied in order to avoid from breaking existing implemntation.
     -->
     <string name="pref_url_restriction_regex">.*</string>
+    <string name="user_dictionary_tool_export_provider_name">org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryExportProvider</string>
 
     <!--
       If you developer want to activate usage stats collection feature, turn the property on

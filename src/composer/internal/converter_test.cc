@@ -29,7 +29,8 @@
 
 #include "composer/internal/converter.h"
 
-#include "base/base.h"
+#include <string>
+
 #include "composer/table.h"
 #include "testing/base/public/gunit.h"
 
@@ -62,8 +63,8 @@ static void InitTable(mozc::composer::Table* table) {
 
 TEST(ConverterTest, Converter) {
   static const struct TestCase {
-    const char* input;
-    const char* expected_output;
+    const char *input;
+    const char *expected_output;
   } test_cases[] = {
     // "あ"
     { "a", "\xE3\x81\x82" },
@@ -96,7 +97,7 @@ TEST(ConverterTest, Converter) {
   mozc::composer::Converter converter(table);
 
   for (int i = 0; i < size; ++i) {
-    const TestCase& test = test_cases[i];
+    const TestCase &test = test_cases[i];
     string output;
     converter.Convert(test.input, &output);
     EXPECT_EQ(test.expected_output, output);

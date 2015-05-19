@@ -58,6 +58,10 @@ CommitFromCompositionInGoogleSearchBox
 CommitPartialSuggestion
 CommitAutoPartialSuggestion
 
+# The number of the commited Unicode/carrier emoji.
+CommitUnicodeEmoji
+CommitCarrierEmoji
+
 # The count of all events
 SessionAllEvent
 
@@ -196,7 +200,6 @@ Performed_Precomposition_Cancel
 Performed_Precomposition_CancelAndIMEOff
 Performed_Precomposition_PredictAndConvert
 Performed_Precomposition_CommitFirstSuggestion
-Performed_Precomposition_Abort
 Performed_Precomposition_Reconvert
 
 Performed_Composition_IMEOff
@@ -239,7 +242,6 @@ Performed_Composition_InputModeFullKatakana
 Performed_Composition_InputModeHalfKatakana
 Performed_Composition_InputModeFullAlphanumeric
 Performed_Composition_InputModeHalfAlphanumeric
-Performed_Composition_Abort
 
 Performed_Conversion_IMEOff
 Performed_Conversion_IMEOn
@@ -284,7 +286,6 @@ Performed_Conversion_InputModeHalfKatakana
 Performed_Conversion_InputModeFullAlphanumeric
 Performed_Conversion_InputModeHalfAlphanumeric
 Performed_Conversion_ReportBug
-Performed_Conversion_Abort
 Performed_Conversion_DeleteSelectedCandidate
 
 # The count of some SessionCommands defined in session/commands.proto
@@ -401,6 +402,10 @@ UNDEFINED_KEY
 COMMA
 # Numpad [5]
 CLEAR
+# Left/Right/Enter keys of software keyboard
+VIRTUAL_LEFT
+VIRTUAL_RIGHT
+VIRTUAL_ENTER
 
 # Stats for config
 # Keymap style
@@ -469,8 +474,6 @@ ConfigSpaceCharacterForm
 ConfigAllowCloudHandwriting
 # Use local usage dictionary
 ConfigUseLocalUsageDictionary
-# Use web usage dictionary
-ConfigUseWebUsageDictionary
 # Prelauncher is enabled or not
 PrelauncherEnabled
 # Use Mode Indicator
@@ -519,6 +522,10 @@ HandwritingCommit
 CharacterPaletteOpen
 # The count of the commit from the character palette
 CharacterPaletteCommit
+# Selected software keyboard layout for landscape.
+SoftwareKeyboardLayoutLandscape
+# Selected software keyboard layout for portrait.
+SoftwareKeyboardLayoutPortrait
 
 # for windows
 

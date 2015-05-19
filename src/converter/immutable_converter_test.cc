@@ -29,7 +29,13 @@
 
 #include "converter/immutable_converter.h"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -241,21 +247,14 @@ class KeyCheckDictionary : public DictionaryInterface {
       : target_query_(query), received_target_query_(false) {}
   virtual ~KeyCheckDictionary() {}
 
-  virtual bool HasValue(const StringPiece value) const { return false; }
+  virtual bool HasValue(StringPiece value) const { return false; }
 
-  virtual Node *LookupPredictive(const char *str, int size,
-                                 NodeAllocatorInterface *allocator) const {
-    string key(str, size);
+  virtual void LookupPredictive(
+      StringPiece key, bool use_kana_modifier_insensitive_looukp,
+      Callback *callback) const {
     if (key == target_query_) {
       received_target_query_ = true;
     }
-    return NULL;
-  }
-
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size, const Limit &limit,
-      NodeAllocatorInterface *allocator) const {
-    return LookupPredictive(str, size, allocator);
   }
 
   virtual void LookupPrefix(
@@ -269,10 +268,9 @@ class KeyCheckDictionary : public DictionaryInterface {
     // No check
   }
 
-  virtual Node *LookupReverse(const char *str, int size,
-                              NodeAllocatorInterface *allocator) const {
+  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
+                             Callback *callback) const {
     // No check
-    return NULL;
   }
 
   bool received_target_query() const {

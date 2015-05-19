@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_TEST_UTIL_H_
 #define MOZC_DICTIONARY_DICTIONARY_TEST_UTIL_H_
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -67,6 +68,20 @@ class CheckTokenExistenceCallback : public DictionaryInterface::Callback {
   bool found_;
 };
 
+class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
+ public:
+  explicit CheckMultiTokensExistenceCallback(const vector<Token *> &tokens);
+  bool IsFound(const Token *token) const;
+  bool AreAllFound() const;
+
+  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                             const Token &token);
+
+ private:
+  size_t found_count_;
+  map<const Token *, bool> result_;
+};
+
 // Generates a human redable string of token(s).
 string PrintToken(const Token &token);
 string PrintTokens(const vector<Token> &tokens);
@@ -74,21 +89,21 @@ string PrintTokens(const vector<Token *> &token_ptrs);
 
 // Tests if two tokens are equal to each other.
 #define EXPECT_TOKEN_EQ(expected, actual)                         \
-  EXPECT_PRED_FORMAT2(::mozc::dictionary::internal::IsTokenEqaul, \
+  EXPECT_PRED_FORMAT2(::mozc::dictionary::internal::IsTokenEqual, \
                       expected, actual)
 
 // Tests if two token vectors are equal to each other as unordered set.
 #define EXPECT_TOKENS_EQ_UNORDERED(expected, actual)                         \
-  EXPECT_PRED_FORMAT2(::mozc::dictionary::internal::AreTokensEqaulUnordered, \
+  EXPECT_PRED_FORMAT2(::mozc::dictionary::internal::AreTokensEqualUnordered, \
                       expected, actual)
 
 namespace internal {
 
-::testing::AssertionResult IsTokenEqaul(
+::testing::AssertionResult IsTokenEqual(
      const char *expected_expr, const char *actual_expr,
      const Token &expected, const Token &actual);
 
-::testing::AssertionResult AreTokensEqaulUnordered(
+::testing::AssertionResult AreTokensEqualUnordered(
      const char *expected_expr, const char *actual_expr,
      const vector<Token *> &expected, const vector<Token> &actual);
 

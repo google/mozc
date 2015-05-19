@@ -48,6 +48,7 @@ import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.base.Optional;
 
 import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
@@ -56,8 +57,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.text.InputType;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -67,6 +70,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Unit tests for {@code org.mozc.android.inputmethod.japanese.keyboard.KeyboardView}.
@@ -120,16 +124,21 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     return result;
   }
 
-  static KeyState createKeyState(MetaState metaState, int keyCode) {
+  static KeyState createKeyState(Set<MetaState> metaState, int keyCode) {
     KeyEntity entity = new KeyEntity(1, keyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null);
     Flick flick = new Flick(Flick.Direction.CENTER, entity);
-    return new KeyState(EnumSet.of(metaState), null, Collections.singletonList(flick));
+    return new KeyState(
+        "",
+        metaState,
+        Collections.<MetaState>emptySet(),
+        Collections.<MetaState>emptySet(),
+        Collections.singletonList(flick));
   }
 
   static Key createKey(int x, int y, int keyCode) {
     return new Key(
         x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
-        Collections.singletonList(createKeyState(MetaState.UNMODIFIED, keyCode)));
+        Collections.singletonList(createKeyState(Collections.<MetaState>emptySet(), keyCode)));
   }
 
   private static Key createSpacer(int x, int y, Stick stick) {
@@ -141,8 +150,8 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   private static Key createKeyWithModifiedState(int x, int y, int keyCode, int modifiedKeyCode) {
     return new Key(
         x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
-        Arrays.asList(createKeyState(MetaState.UNMODIFIED, keyCode),
-                      createKeyState(MetaState.CAPS_LOCK, modifiedKeyCode)));
+        Arrays.asList(createKeyState(Collections.<MetaState>emptySet(), keyCode),
+                      createKeyState(EnumSet.of(MetaState.CAPS_LOCK), modifiedKeyCode)));
   }
 
   private static Key createFlickKey(
@@ -164,16 +173,25 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
         Flick.Direction.DOWN,
         new KeyEntity(1, downKeyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null));
     KeyState keyState = new KeyState(
-        EnumSet.of(MetaState.UNMODIFIED), null, Arrays.asList(center, left, right, up, down));
+        "",
+        Collections.<MetaState>emptySet(),
+        Collections.<MetaState>emptySet(),
+        Collections.<MetaState>emptySet(),
+        Arrays.asList(center, left, right, up, down));
     return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
                    Collections.singletonList(keyState));
   }
 
-  private static Key createModifierKey(int x, int y, int keyCode, MetaState nextMetaState) {
+  private static Key createModifierKey(int x, int y, int keyCode, Set<MetaState> nextAddMetaStates,
+                                       Set<MetaState> nextRemoveMetaStates) {
     KeyEntity entity = new KeyEntity(1, keyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null);
     Flick flick = new Flick(Flick.Direction.CENTER, entity);
     KeyState keyState = new KeyState(
-        EnumSet.of(MetaState.UNMODIFIED), nextMetaState, Collections.singletonList(flick));
+        "",
+        Collections.<MetaState>emptySet(),
+        nextAddMetaStates,
+        nextRemoveMetaStates,
+        Collections.singletonList(flick));
     return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, true, false, Stick.EVEN,
                    Collections.singletonList(keyState));
   }
@@ -184,7 +202,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
    */
   private static Keyboard createDummyKeyboard(Key key) {
     Row row = new Row(Collections.singletonList(key), HEIGHT, VERTICAL_GAP);
-    return new Keyboard(Collections.singletonList(row), 1);
+    return new Keyboard(Optional.<String>absent(), Collections.singletonList(row), 1);
   }
 
   private KeyEventHandler createKeyEventHandlerMock() {
@@ -199,7 +217,9 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   private KeyboardViewBackgroundSurface createKeyboardViewBackgroundSurfaceMock() {
     return createMockBuilder(KeyboardViewBackgroundSurface.class)
         .withConstructor(BackgroundDrawableFactory.class, DrawableCache.class)
-        .withArgs(new BackgroundDrawableFactory(1f), new DrawableCache(null))
+        .withArgs(new BackgroundDrawableFactory(1f),
+                  new DrawableCache(
+                      new MozcDrawableFactory(getInstrumentation().getContext().getResources())))
         .createMock();
   }
 
@@ -222,7 +242,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   public void testFlushPendingKeyEventRecursiveCall() {
     Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
-        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
     KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
@@ -244,7 +264,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    view.metaState = MetaState.CAPS_LOCK;
+    view.metaState = EnumSet.of(MetaState.CAPS_LOCK);
     Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
 
@@ -292,7 +312,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyboard(createDummyKeyboard(key));
 
     // Set modified state.
-    view.metaState = MetaState.CAPS_LOCK;
+    view.metaState = EnumSet.of(MetaState.CAPS_LOCK);
 
     // By pressing a key, internal pressedKey field should be filled.
     Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
@@ -331,13 +351,16 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     replayAll();
     view.setKeyEventHandler(keyEventHandler);
 
-    view.setKeyboard(createDummyKeyboard(createModifierKey(0, 0, -1, MetaState.CAPS_LOCK)));
+    view.setKeyboard(createDummyKeyboard(
+        createModifierKey(0, 0, -1, EnumSet.of(MetaState.CAPS_LOCK),
+                          EnumSet.of(MetaState.SHIFT))));
 
     // Set modified state.
-    view.metaState = MetaState.UNMODIFIED;
+    view.metaState = EnumSet.of(MetaState.SHIFT);
 
     KeyEventContext pendingKeyEventContext =
-        new KeyEventContext(createKey(0, 0, 'a'), 1, 100, 60, 100, 60, 0, MetaState.UNMODIFIED);
+        new KeyEventContext(createKey(0, 0, 'a'), 1, 100, 60, 100, 60, 0,
+                            Collections.<MetaState>emptySet());
     // By pressing a key, the pending events should be flushed and
     // the metaState should be updated.
     Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
@@ -346,7 +369,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     verifyAll();
     assertEquals(1, keyEventContextMap.size());
-    assertSame(MetaState.CAPS_LOCK, view.metaState);
+    assertEquals(EnumSet.of(MetaState.CAPS_LOCK), view.metaState);
   }
 
   @SmallTest
@@ -389,7 +412,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   public void testOnTouchEvent_release() {
     Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
-        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
     KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
     // The listener should receive two events.
@@ -462,7 +485,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
       Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
       KeyEventContext keyEventContext =
-          new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, MetaState.UNMODIFIED);
+          new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
       KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
       // cancelDelayedKeyEvent is called by each MOVE event.
@@ -495,7 +518,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyboard(createDummyKeyboard(key));
     Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
-        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, MetaState.CAPS_LOCK);
+        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, EnumSet.of(MetaState.CAPS_LOCK));
 
     KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
     // The listener should receive two events.
@@ -517,7 +540,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    view.metaState = MetaState.CAPS_LOCK;
+    view.metaState = EnumSet.of(MetaState.CAPS_LOCK);
     Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
 
@@ -525,16 +548,17 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     verifyAll();
     assertTrue(keyEventContextMap.isEmpty());
-    assertSame(MetaState.CAPS_LOCK, view.metaState);
+    assertEquals(EnumSet.of(MetaState.CAPS_LOCK), view.metaState);
   }
 
   @SmallTest
   public void testOnTouchEvent_releaseModifierSimple() {
-    Key key = createModifierKey(0, 0, -1, MetaState.SHIFT);
+    Key key = createModifierKey(0, 0, -1, EnumSet.of(MetaState.SHIFT),
+                                Collections.<MetaState>emptySet());
     view.setKeyboard(createDummyKeyboard(key));
 
     KeyEventContext keyEventContext =
-        new KeyEventContext(key, 0, 0, 0, 100, 60, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(key, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
     KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
@@ -552,7 +576,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    view.metaState = MetaState.SHIFT;
+    view.metaState = EnumSet.of(MetaState.SHIFT);
     Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     view.isKeyPressed = false;
     keyEventContextMap.put(0, keyEventContext);
@@ -562,20 +586,22 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     assertTrue(keyEventContextMap.isEmpty());
     // Simple releasing a modifier key shouldn't change the metaState.
-    assertSame(MetaState.SHIFT, view.metaState);
+    assertEquals(EnumSet.of(MetaState.SHIFT), view.metaState);
   }
 
   @SmallTest
   public void testOnTouchEvent_releaseModifierWithOtherKey() {
-    Key key = createModifierKey(0, 0, -1, MetaState.SHIFT);
+    Key key = createModifierKey(0, 0, -1, EnumSet.of(MetaState.SHIFT),
+                                Collections.<MetaState>emptySet());
     view.setKeyboard(createDummyKeyboard(key));
 
     KeyEventContext keyEventContext =
-        new KeyEventContext(key, 0, 0, 0, 100, 60, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(key, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
     // Another key event context for 'a' key.
     KeyEventContext keyEventContext2 =
-        new KeyEventContext(createKey(0, 0, 'a'), 0, 0, 0, 100, 60, 1, MetaState.SHIFT);
+        new KeyEventContext(createKey(0, 0, 'a'), 0, 0, 0, 100, 60, 1,
+                            EnumSet.of(MetaState.SHIFT));
 
     KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
     // The listener should receive two events.
@@ -616,7 +642,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    view.metaState = MetaState.SHIFT;
+    view.metaState = EnumSet.of(MetaState.SHIFT);
     Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
     keyEventContextMap.put(1, keyEventContext2);
@@ -627,14 +653,14 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     assertTrue(keyEventContextMap.isEmpty());
     // Simple releasing a modifier key shouldn't change the metaState.
-    assertSame(MetaState.UNMODIFIED, view.metaState);
+    assertTrue(view.metaState.isEmpty());
   }
 
   @SmallTest
   public void testOnTouchEvent_releaseModifierOneTime() {
     Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
-        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
     KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
@@ -652,7 +678,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    view.metaState = MetaState.SHIFT;
+    view.metaState = EnumSet.of(MetaState.SHIFT);
     Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
 
@@ -661,7 +687,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     assertTrue(keyEventContextMap.isEmpty());
     // Simple releasing a modifier key shouldn't change the metaState.
-    assertSame(MetaState.UNMODIFIED, view.metaState);
+    assertTrue(view.metaState.isEmpty());
   }
 
   @SmallTest
@@ -721,7 +747,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   public void testOnTouchEvent_cancel() {
     Key targetKey = view.getKeyboard().getRowList().get(0).getKeyList().get(0);
     KeyEventContext eventContext =
-        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
     KeyEventHandler keyEventHandler = createKeyEventHandlerMock();
     keyEventHandler.cancelDelayedKeyEvent(same(eventContext));
@@ -855,7 +881,10 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
         x2, y2,
         WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
         Collections.singletonList(new KeyState(
-            EnumSet.of(MetaState.UNMODIFIED), null,
+            "",
+            Collections.<MetaState>emptySet(),
+            Collections.<MetaState>emptySet(),
+            Collections.<MetaState>emptySet(),
             Arrays.asList(
                 new Flick(
                     Direction.CENTER,
@@ -874,7 +903,8 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     Row row3 = new Row(
         Arrays.asList(createKey(x1, y3, 'h'), createKey(x2, y3, 'i'), createKey(x3, y3, 'j')),
         HEIGHT, VERTICAL_GAP);
-    Keyboard keyboard = new Keyboard(Arrays.asList(row1, row2, row3), 1);
+    Keyboard keyboard = new Keyboard(Optional.<String>absent(),
+                                     Arrays.asList(row1, row2, row3), 1);
     view.setKeyboard(keyboard);
 
     // Set mock preview.
@@ -974,7 +1004,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
     for (TestCase testCase : testCases) {
       Row row = new Row(Arrays.asList(key1, testCase.spacer, key2), HEIGHT, VERTICAL_GAP);
-      view.setKeyboard(new Keyboard(Collections.singletonList(row), 1));
+      view.setKeyboard(new Keyboard(Optional.<String>absent(), Collections.singletonList(row), 1));
 
       // Center of key1.
       assertSame(key1, view.getKeyByCoord(WIDTH / 2, HEIGHT / 2));
@@ -1000,7 +1030,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     resetAll();
     Key targetKey = createKey(0, 0, keyCode);
     KeyEventContext keyEventContext =
-        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, MetaState.UNMODIFIED);
+        new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
 
     // The listener should receive only onRelease event.
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
@@ -1034,12 +1064,13 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
   }
 
+  @SuppressWarnings("unchecked")
   @SmallTest
   public void testSetSkinType() {
     KeyboardViewBackgroundSurface keyboardViewBackgroundSurface =
         createKeyboardViewBackgroundSurfaceMock();
     keyboardViewBackgroundSurface.requestUpdateKeyboard(
-        isA(Keyboard.class), isA(MetaState.class));
+        isA(Keyboard.class), isA(Set.class));
 
     DrawableCache drawableCache = createMockBuilder(DrawableCache.class)
         .withConstructor(MozcDrawableFactory.class)
@@ -1047,7 +1078,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
         .createMock();
     drawableCache.setSkinType(SkinType.ORANGE_LIGHTGRAY);
     expect(drawableCache.getDrawable(SkinType.ORANGE_LIGHTGRAY.windowBackgroundResourceId))
-        .andReturn(null);
+        .andReturn(Optional.<Drawable>absent());
 
     BackgroundDrawableFactory backgroundDrawableFactory =
         createMockBuilder(BackgroundDrawableFactory.class)
@@ -1064,5 +1095,74 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setSkinType(SkinType.ORANGE_LIGHTGRAY);
 
     verifyAll();
+  }
+
+  @SmallTest
+  public void testSetKeyboard() {
+    KeyboardView view = new KeyboardView(getInstrumentation().getTargetContext());
+    Set<MetaState> originalMetaStates = EnumSet.of(
+        MetaState.CAPS_LOCK,
+        MetaState.ACTION_GO,
+        MetaState.VARIATION_EMAIL_ADDRESS,
+        MetaState.COMPOSING,
+        MetaState.GLOBE);
+    view.updateMetaStates(originalMetaStates, EnumSet.noneOf(MetaState.class));
+    assertEquals(originalMetaStates, view.getMetaStates());
+    view.setKeyboard(new Keyboard(Optional.<String>absent(), Collections.<Row>emptyList(), 0f));
+    assertEquals(
+        EnumSet.of(
+            MetaState.ACTION_GO,
+            MetaState.VARIATION_EMAIL_ADDRESS,
+            MetaState.COMPOSING,
+            MetaState.GLOBE),
+        view.getMetaStates());
+  }
+
+  @SmallTest
+  public void testSetEditorInfo() {
+    KeyboardView view = new KeyboardView(getInstrumentation().getTargetContext());
+
+    class TestData extends Parameter {
+      final int imeOptions;
+      final int inputType;
+      final Set<MetaState> expectedMetaStates;
+      TestData(int imeOptions, int inputType, Set<MetaState> expectedMetaStates) {
+        this.imeOptions = imeOptions;
+        this.inputType = inputType;
+        this.expectedMetaStates = expectedMetaStates;
+      }
+    }
+
+    // Keep the order. KeyboardView's state is not reset in the iteration.
+    TestData[] testDataList = {
+        new TestData(0, 0, EnumSet.noneOf(MetaState.class)),
+        new TestData(EditorInfo.IME_ACTION_DONE, 0, EnumSet.of(MetaState.ACTION_DONE)),
+        new TestData(EditorInfo.IME_ACTION_GO, 0, EnumSet.of(MetaState.ACTION_GO)),
+        new TestData(EditorInfo.IME_ACTION_NEXT, 0, EnumSet.of(MetaState.ACTION_NEXT)),
+        new TestData(EditorInfo.IME_ACTION_NONE, 0, EnumSet.of(MetaState.ACTION_NONE)),
+        new TestData(EditorInfo.IME_ACTION_PREVIOUS, 0, EnumSet.of(MetaState.ACTION_PREVIOUS)),
+        new TestData(EditorInfo.IME_ACTION_SEARCH, 0, EnumSet.of(MetaState.ACTION_SEARCH)),
+        new TestData(EditorInfo.IME_ACTION_SEND, 0, EnumSet.of(MetaState.ACTION_SEND)),
+        new TestData(0, InputType.TYPE_TEXT_VARIATION_URI | InputType.TYPE_CLASS_TEXT,
+                     EnumSet.of(MetaState.VARIATION_URI)),
+        new TestData(0, InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS | InputType.TYPE_CLASS_TEXT,
+                     EnumSet.of(MetaState.VARIATION_EMAIL_ADDRESS)),
+        new TestData(0, InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS | InputType.TYPE_CLASS_TEXT,
+                     EnumSet.of(MetaState.VARIATION_EMAIL_ADDRESS)),
+        new TestData(0, InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE | InputType.TYPE_CLASS_TEXT,
+                     EnumSet.noneOf(MetaState.class)),
+        new TestData(0, InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS | InputType.TYPE_CLASS_TEXT,
+                     EnumSet.of(MetaState.VARIATION_EMAIL_ADDRESS)),
+        new TestData(0, InputType.TYPE_NUMBER_VARIATION_PASSWORD | InputType.TYPE_CLASS_NUMBER,
+                     EnumSet.noneOf(MetaState.class)),
+    };
+
+    for (TestData testData : testDataList) {
+      EditorInfo editorInfo = new EditorInfo();
+      editorInfo.imeOptions = testData.imeOptions;
+      editorInfo.inputType = testData.inputType;
+      view.setEditorInfo(editorInfo);
+      assertEquals(testData.toString(), testData.expectedMetaStates, view.getMetaStates());
+    }
   }
 }

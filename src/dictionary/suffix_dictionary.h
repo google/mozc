@@ -30,7 +30,6 @@
 #ifndef MOZC_DICTIONARY_SUFFIX_DICTIONARY_H_
 #define MOZC_DICTIONARY_SUFFIX_DICTIONARY_H_
 
-#include <string>
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
@@ -56,32 +55,24 @@ class SuffixDictionary : public DictionaryInterface {
                    size_t suffix_tokens_size);
   virtual ~SuffixDictionary();
 
-  virtual bool HasValue(const StringPiece value) const;
+  virtual bool HasValue(StringPiece value) const;
 
-  // Even if size == 0, suffix dictionary returns all the suffix
-  // in this dictionary.
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size,
-      const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
+  // Kana modifier insensitive lookup is not supported.
+  virtual void LookupPredictive(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const;
 
-  virtual Node *LookupPredictive(const char *str, int size,
-                                 NodeAllocatorInterface *allocator) const;
-
-  // SuffixDictionary doesn't support Prefix/Revese Lookup.
+  // SuffixDictionary doesn't support Prefix/Revese/Exact Lookup.
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const {}
-  virtual Node *LookupReverse(const char *str, int size,
-                              NodeAllocatorInterface *allocator) const;
-
-  // We may implement this if necessary.
-  virtual void LookupExact(StringPiece key, Callback *callback) const {}
+      Callback *callback) const;
+  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
+                             Callback *callback) const;
+  virtual void LookupExact(StringPiece key, Callback *callback) const;
 
  private:
   const SuffixToken *const suffix_tokens_;
   const size_t suffix_tokens_size_;
-  const Limit empty_limit_;
 
   DISALLOW_COPY_AND_ASSIGN(SuffixDictionary);
 };

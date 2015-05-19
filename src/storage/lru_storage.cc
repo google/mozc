@@ -38,11 +38,12 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 
 namespace mozc {

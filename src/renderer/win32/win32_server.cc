@@ -29,12 +29,16 @@
 
 #include "renderer/win32/win32_server.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/run_level.h"
 #include "base/util.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/win32/window_manager.h"
+
+using std::unique_ptr;
 
 namespace mozc {
 namespace renderer {
@@ -143,18 +147,19 @@ void Win32Server::SetSendCommandInterface(
 }
 
 bool Win32Server::AsyncExecCommand(string *proto_message) {
-  {
-    scoped_lock l(&mutex_);
-
-    // Since mozc rendering protocol is state-less,
-    // we can always discard the old message.
-    message_.assign(*proto_message);
-
-    // Set the event signaled to mark we have a message to render.
-    ::SetEvent(event_);
+  // Take the ownership of |proto_message|.
+  unique_ptr<string> proto_message_owner(proto_message);
+  scoped_lock l(&mutex_);
+  if (message_ == *proto_message_owner.get()) {
+    // This is exactly the same to the previous message. Theoretically it is
+    // safe to do nothing here.
+    return true;
   }
-  delete proto_message;
-
+  // Since mozc rendering protocol is state-less, we can always ignore the
+  // previous content of |message_|.
+  message_.swap(*proto_message_owner.get());
+  // Set the event signaled to mark we have a message to render.
+  ::SetEvent(event_);
   return true;
 }
 

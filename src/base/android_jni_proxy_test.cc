@@ -51,6 +51,7 @@ class MockJavaHttpClientImpl : public MockJavaHttpClient {
   MOCK_METHOD3(Request, jbyteArray(jbyteArray, jbyteArray, jbyteArray));
 };
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
 // We'd probably want to replace this class by gmock, but it has not been
 // well tested on android yet. To split the work to add jni's proxy from
 // introducing gmock, we manually mock JavaEncryptor temporarily.
@@ -193,6 +194,7 @@ class MockJavaEncryptorImpl : public MockJavaEncryptor {
 
   DISALLOW_COPY_AND_ASSIGN(MockJavaEncryptorImpl);
 };
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
 class AndroidJniProxyTest : public ::testing::Test {
  protected:
@@ -207,6 +209,7 @@ class AndroidJniProxyTest : public ::testing::Test {
   scoped_ptr<MockJavaVM> jvm_;
 };
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
 class AndroidJniProxyEncryptorTest : public AndroidJniProxyTest {
  protected:
   virtual void SetUp() {
@@ -227,6 +230,7 @@ class AndroidJniProxyEncryptorTest : public AndroidJniProxyTest {
 
   MockJavaEncryptorImpl *mock_encryptor_;
 };
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
 bool IsEqualByteArray(MockJNIEnv *env,
                       const jbyteArray& lhs, const jbyteArray& rhs) {
@@ -255,6 +259,7 @@ class ByteArrayMatcher {
 
 }  // namespace
 
+#ifdef MOZC_USE_LEGACY_ENCRYPTOR
 TEST_F(AndroidJniProxyEncryptorTest, DeriveFromPassword) {
   mock_encryptor_->ExpectDeriveFromPassword("password", "salt", "result");
 
@@ -301,6 +306,7 @@ TEST_F(AndroidJniProxyEncryptorTest, Decrypt) {
   EXPECT_EQ("result", string(buf, buf_size));
   EXPECT_FALSE(mock_encryptor_->has_expected_decrypt());
 }
+#endif  // MOZC_USE_LEGACY_ENCRYPTOR
 
 class HttpClientParams {
  public:

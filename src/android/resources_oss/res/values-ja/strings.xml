@@ -130,7 +130,7 @@
     <string name="pref_dictionary_personalization_entry_readonly">学習を利用するが更新しない</string>
     <string name="pref_dictionary_personalization_entry_disabled">学習を利用しない</string>
 
-    <string name="pref_emoji_provider_type_none">絵文字を利用しない</string>
+    <string name="pref_emoji_provider_type_unicode">キャリア絵文字を利用しない</string>
 
     <string name="pref_skin_type_orange_lightgray">オレンジ/ライトグレー</string>
     <string name="pref_skin_type_blue_lightgray">ブルー/ライトグレー</string>
@@ -202,6 +202,7 @@
     <string name="menu_dialog_title">入力オプション</string>
     <string name="menu_item_input_method">入力方法の選択</string>
     <string name="menu_item_preferences">%sの設定</string>
+    <string name="menu_item_voice_input">音声入力</string>
     <string name="menu_item_mushroom">マッシュルームの起動</string>
 
     <!-- User Dictionary Tool -->
@@ -213,6 +214,7 @@
       <string name="user_dictionary_tool_menu_create_dictionary_title">新規辞書作成</string>
       <string name="user_dictionary_tool_menu_rename_dictionary_title">現在の辞書名を編集</string>
       <string name="user_dictionary_tool_menu_delete_dictionary_title">現在の辞書を削除</string>
+      <string name="user_dictionary_tool_menu_export_dictionary_title">現在の辞書をエクスポート</string>
 
       <!-- Dictionary editing -->
       <string name="user_dictionary_tool_default_dictionary_name">ユーザ辞書 1</string>
@@ -241,6 +243,8 @@
       <string name="user_dictionary_tool_error_import_source_invalid_scheme">ファイル以外のデータをインポートすることはできません。</string>
       <string name="user_dictionary_tool_error_import_cannot_read_import_source">ファイルを読み込めません。</string>
       <string name="user_dictionary_tool_error_import_no_zip_entry">空のZIPファイルです。</string>
+      <string name="user_dictionary_tool_error_export_no_exportable_applications">ユーザ辞書をエクスポートするには、Google Docsなどの対応するアプリケーションが必要です。</string>
+      <string name="user_dictionary_tool_error_export_failed_to_export">ユーザ辞書のエクスポートに失敗しました。</string>
       <string name="user_dictionary_tool_status_error_general">操作を実行できません。</string>
       <string name="user_dictionary_tool_status_error_file_not_found">ファイルを開けません。</string>
       <string name="user_dictionary_tool_status_error_invalid_file_format">ファイルを読み込めません。</string>
@@ -262,6 +266,7 @@
       <string name="user_dictionary_tool_status_error_no_undo_history">これ以上操作を取り消せません。</string>
 
       <!-- List of Japanese POS -->
+      <!-- You should keep a consistency with japanese_pos_for_dictionary_export_*. -->
       <string name="japanese_pos_noun">名詞</string>
       <string name="japanese_pos_abbreviation">短縮よみ</string>
       <string name="japanese_pos_suggestion_only">サジェストのみ</string>

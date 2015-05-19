@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include "base/base.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "storage/lru_storage.h"
+
+#include <string>
+
+#include "base/logging.h"
+#include "base/port.h"
+#include "base/util.h"
 
 DEFINE_bool(create_db, false, "initialize database");
 DEFINE_string(file, "test.db", "");

@@ -36,7 +36,9 @@ Generated .java file is used by Android version.
 __author__ = "yoichio"
 
 from collections import defaultdict
+import logging
 import optparse
+import sys
 
 from build_tools import code_generator_util
 
@@ -47,13 +49,22 @@ def ReadData(stream):
   category_map = defaultdict(list)
   stream = code_generator_util.SkipLineComment(stream)
   stream = code_generator_util.ParseColumnStream(stream, delimiter='\t')
-  stream = code_generator_util.SelectColumn(stream, [2, 9, 10, 11, 12])
-  for (code, docomo_name, softbank_name, kddi_name, category_index) in stream:
-    if not code or code[0] == '>':
+  stream = code_generator_util.SelectColumn(stream, [0, 2, 8, 9, 10, 11, 12])
+  for (code, pua_code, japanese_name, docomo_name, softbank_name, kddi_name,
+       category_index) in stream:
+    if not pua_code or pua_code[0] == '>':
       continue
+    if not code:
+      if japanese_name:
+        logging.fatal('No Unicode emoji code point found.')
+        sys.exit(-1)
+      # Use dummy code point
+      code = '0'
+
     (category, index) = category_index.split('-')
     category_map[category].append(
-        (index, int(code, 16), docomo_name, softbank_name, kddi_name))
+        (index, int(code, 16), int(pua_code, 16),
+         japanese_name, docomo_name, softbank_name, kddi_name))
   return category_map
 
 
@@ -127,6 +138,7 @@ CHARA_NORMALIZE_MAP = {
     u'）': ')',
 }
 
+
 def PreprocessName(name):
   name = unicode(name, 'utf-8')
   name = u''.join(CHARA_NORMALIZE_MAP.get(c, c) for c in name)
@@ -143,23 +155,44 @@ def OutputData(category_map, stream):
                'public class EmojiData {\n')
 
   for category in CATEGORY_LIST:
-    data_list = category_map[category]
+    # The content of data list is
+    # 0: Index in the category
+    # 1: Code point of Unicode 6.0 emoji
+    # 2: Code point of carrier emoji.
+    # 3: Japanese Unicode 6.0 emoji name
+    # 4: DOCOMO carrier emoji name
+    # 5: Softbank carrier emoji name
+    # 6: KDDI carrier emoji name
+    data_list = [c for c in category_map[category]
+                 if c[3] or c[4] or c[5] or c[6]]
     stream.write(
         '  public static final String[] %s_VALUES = new String[]{\n' %
         category)
-    for _, code, docomo, softbank, kddi in data_list:
-      if not docomo and not softbank and not kddi:
-        continue
+    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
       stream.write(
-          '    %s,\n' % (
-              code_generator_util.ToJavaSurrogatePairStringLiteral(code)))
+          '    %s,\n' % (code_generator_util.ToJavaStringLiteral(code)))
+    stream.write('  };\n')
+
+    stream.write(
+        '  public static final String[] %s_PUA_VALUES = new String[]{\n' %
+        category)
+    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
+      stream.write(
+          '    %s,\n' % (code_generator_util.ToJavaStringLiteral(pua_code)))
+    stream.write('  };\n')
+
+    stream.write(
+        '  public static final String[] UNICODE_%s_NAME = {\n' % category)
+    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
+      if japanese:
+        stream.write('    "%s", \n' % PreprocessName(japanese))
+      else:
+        stream.write('    null, \n')
     stream.write('  };\n')
 
     stream.write(
         '  public static final String[] DOCOMO_%s_NAME = {\n' % category)
-    for _, code, docomo, softbank, kddi in data_list:
-      if not docomo and not softbank and not kddi:
-        continue
+    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
       if docomo:
         stream.write('    "%s", \n' % PreprocessName(docomo))
       else:
@@ -168,9 +201,7 @@ def OutputData(category_map, stream):
 
     stream.write(
         '  public static final String[] SOFTBANK_%s_NAME = {\n' % category)
-    for _, code, docomo, softbank, kddi in data_list:
-      if not docomo and not softbank and not kddi:
-        continue
+    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
       if softbank:
         stream.write('    "%s", \n' % PreprocessName(softbank))
       else:
@@ -179,9 +210,7 @@ def OutputData(category_map, stream):
 
     stream.write(
         '  public static final String[] KDDI_%s_NAME = {\n' % category)
-    for _, code, docomo, softbank, kddi in data_list:
-      if not docomo and not softbank and not kddi:
-        continue
+    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
       if kddi:
         stream.write('    "%s", \n' % PreprocessName(kddi))
       else:

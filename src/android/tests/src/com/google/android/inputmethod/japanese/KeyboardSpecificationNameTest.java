@@ -49,6 +49,7 @@ public class KeyboardSpecificationNameTest extends TestCase {
         this.expectation = expectation;
       }
     }
+    @SuppressWarnings("deprecation")
     TestData[] testDataList = {
         new TestData(Configuration.ORIENTATION_LANDSCAPE, "LANDSCAPE"),
         new TestData(Configuration.ORIENTATION_PORTRAIT, "PORTRAIT"),

@@ -36,6 +36,8 @@
 #include <atlapp.h>
 #include <atlmisc.h>
 
+#include <memory>
+
 #include "base/util.h"
 #include "session/commands.pb.h"
 #include "renderer/table_layout.h"
@@ -51,6 +53,7 @@ using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;
 using WTL::CRect;
+using std::unique_ptr;
 
 using ::mozc::commands::Candidates;
 using ::mozc::commands::Output;
@@ -180,7 +183,7 @@ void CalcLayout(const Candidates &candidates,
 CBitmapHandle RenderImpl(const Candidates &candidates,
                          const TableLayout &table_layout,
                          const TextRenderer &text_renderer,
-                         const vector<wstring> candidate_strings) {
+                         const vector<wstring> &candidate_strings) {
   const int width = table_layout.GetTotalSize().width;
   const int height = table_layout.GetTotalSize().height;
 
@@ -225,7 +228,7 @@ CBitmapHandle RenderImpl(const Candidates &candidates,
           table_layout.GetCellRect(i, column_type);
       display_list.push_back(TextRenderingInfo(candidate_string, text_rect));
     }
-    text_renderer.RenderText(dc.m_hDC, display_list, font_type);
+    text_renderer.RenderTextList(dc.m_hDC, display_list, font_type);
   }
 
   // Indicator
@@ -270,13 +273,12 @@ CBitmapHandle RenderImpl(const Candidates &candidates,
 }  // namespace
 
 HBITMAP TipUiRendererImmersive::Render(
-    const Candidates &candidates, renderer::TableLayout *table_layout,
+    const Candidates &candidates,
+    const renderer::win32::TextRenderer *text_renderer,
+    renderer::TableLayout *table_layout,
     SIZE *size, int *left_align_offset) {
-  TextRenderer text_renderer;
-  text_renderer.Init();
-
   vector<wstring> candidate_strings;
-  CalcLayout(candidates, text_renderer, table_layout, &candidate_strings);
+  CalcLayout(candidates, *text_renderer, table_layout, &candidate_strings);
 
   const Size &total_size = table_layout->GetTotalSize();
   if (size != nullptr) {
@@ -287,7 +289,7 @@ HBITMAP TipUiRendererImmersive::Render(
     *left_align_offset = table_layout->GetColumnRect(COLUMN_CANDIDATE).Left();
   }
   return RenderImpl(
-      candidates, *table_layout, text_renderer, candidate_strings);
+      candidates, *table_layout, *text_renderer, candidate_strings);
 }
 
 }  // namespace tsf

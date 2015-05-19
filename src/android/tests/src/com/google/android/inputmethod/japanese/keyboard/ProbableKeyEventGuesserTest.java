@@ -44,6 +44,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchP
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.ProbableKeyEvent;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -52,7 +53,6 @@ import android.content.res.Configuration;
 import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.SparseArray;
-import android.util.SparseIntArray;
 
 import org.easymock.Capture;
 
@@ -154,7 +154,6 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
           }},
           japaneseKeyboard,
         configuration,
-        Collections.<String, SparseArray<float[]>>emptyMap(),
         new UpdateStatsListener() {
           @Override
           public void updateStats(String formattedKeyboardName, SparseArray<float[]> stats) {
@@ -192,7 +191,6 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
         JapaneseKeyboardTest.createJapaneseKeyboard(KeyboardSpecification.GODAN_KANA,
                                                     getInstrumentation()),
         configuration,
-        Collections.<String, SparseArray<float[]>>emptyMap(),
         new UpdateStatsListener() {
           @Override
           public void updateStats(String formattedKeyboardName, SparseArray<float[]> stats) {
@@ -223,7 +221,6 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
         JapaneseKeyboardTest.createJapaneseKeyboard(
             KeyboardSpecification.GODAN_KANA, getInstrumentation()),
         configuration,
-        Collections.<String, SparseArray<float[]>>emptyMap(),
         new UpdateStatsListener() {
             @Override
             public void updateStats(String formattedKeyboardName, SparseArray<float[]> stats) {
@@ -266,7 +263,7 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
   public void testConstructor() {
     try {
       // TODO(matsuzakit): Introduce NullPointerTester. Unfortunately it's not runnable on Android.
-      ProbableKeyEventGuesser guesser = new ProbableKeyEventGuesser(null);
+      new ProbableKeyEventGuesser(null);
       fail("Non-null assetManager shouldn't be accepted.");
     } catch (NullPointerException e) {
       // Expected.
@@ -310,6 +307,7 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
     // typing correction stats.
     JapaneseKeyboard keyboard =
         new JapaneseKeyboard(
+            Optional.<String>absent(),
             Collections.<Row>emptyList(), 0f, KeyboardSpecification.HARDWARE_QWERTY_ALPHABET);
     Configuration configuration = new Configuration();
     configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
@@ -493,35 +491,5 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
           guesser.getProbableKeyEvents(touchEventList),
           testData.expectation.toArray());
     }
-  }
-
-  // TODO(matsuzakit): Move to JapaneseKeyboardTest.
-  @SmallTest
-  public void testGetKeycodeMapper() {
-    ProbableKeyEventGuesser guesser =
-        new ProbableKeyEventGuesser(getInstrumentation().getTargetContext().getAssets());
-    Configuration configuration = new Configuration();
-    configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
-    guesser.setConfiguration(configuration);
-
-    JapaneseKeyboard godanKana = JapaneseKeyboardTest.createJapaneseKeyboard(
-        KeyboardSpecification.GODAN_KANA, getInstrumentation());
-    JapaneseKeyboard qwertyAlphabet = JapaneseKeyboardTest.createJapaneseKeyboard(
-        KeyboardSpecification.QWERTY_ALPHABET, getInstrumentation());
-
-    // Register a mapper for GODAN_KANA.
-    guesser.formattedKeyboardNameToKeycodeMapper.put(
-        getFormattedKeyboardName(godanKana, configuration), new SparseIntArray());
-    assertEquals(1, guesser.formattedKeyboardNameToKeycodeMapper.size());
-
-    // Get a mapper for GODAN_KANA. No new mapper should be registered.
-    guesser.setJapaneseKeyboard(godanKana);
-    assertNotNull(guesser.getKeycodeMapper());
-    assertEquals(1, guesser.formattedKeyboardNameToKeycodeMapper.size());
-
-    // Get a mapper for QWERTY_ALPHABET. A new mapper should be registered.
-    guesser.setJapaneseKeyboard(qwertyAlphabet);
-    assertNotNull(guesser.getKeycodeMapper());
-    assertEquals(2, guesser.formattedKeyboardNameToKeycodeMapper.size());
   }
 }

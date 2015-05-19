@@ -102,29 +102,12 @@
         'genproto_json_util_test#host',
       ],
     },
-    {
-      'target_name': 'http_task_manager_test',
-      'type': 'executable',
-      'sources': [
-        'http_task_manager_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        '../testing/testing.gyp:testing_util',
-        'net.gyp:http_client_mock',
-        'net.gyp:http_task_manager',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'net_all_test',
       'type': 'none',
       'dependencies': [
         'http_client_mock_test',
-        'http_task_manager_test',
         'jsonpath_test',
         'json_util_test',
       ],

@@ -94,23 +94,23 @@ bool GetNextState(HIMC himc, const commands::Output &output,
   return true;
 }
 
-BOOL UpdateInputContext(
+bool UpdateInputContext(
     HIMC himc, const commands::Output &output, bool generate_message) {
   InputState next_state;
   if (!GetNextState(himc, output, &next_state)) {
-    return FALSE;
+    return false;
   }
   if (!generate_message) {
     if (!ImeCore::UpdateContext(himc, next_state, output, nullptr)) {
-      return FALSE;
+      return false;
     }
-    return TRUE;
+    return true;
   }
   MessageQueue message_queue(himc);
   if (!ImeCore::UpdateContext(himc, next_state, output, &message_queue)) {
     return FALSE;
   }
-  return (message_queue.Send() ? TRUE : FALSE);
+  return message_queue.Send();
 }
 
 HIMCC EnsureHIMCCSize(HIMCC himcc, DWORD size) {
@@ -892,7 +892,7 @@ bool ImeCore::TurnOnIMEAndTryToReconvertFromIME(HIMC himc) {
     }
   }
 
-  return (UpdateInputContext(himc, output, true) != FALSE);
+  return UpdateInputContext(himc, output, true);
 }
 
 string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
@@ -1020,7 +1020,7 @@ bool ImeCore::ReconversionFromApplication(
     return false;
   }
 
-  return (UpdateInputContext(himc, output, true) != FALSE);
+  return UpdateInputContext(himc, output, true);
 }
 
 }  // namespace win32

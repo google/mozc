@@ -35,16 +35,23 @@ But this means such APK is larger than "Thin" APK.
 This script creates Thin APKs from Fat APK.
 
 Version code format:
- 000ABBBBBB
+ 00000BBBBB:
+ B: Build number
+
+ or
+
+ 0005BBBBBA
  A: ABI (0: Fat, 5: x86, 4: armeabi-v7a, 3: armeabi, 1:mips)
  B: Build number
 
 Note:
 - This process must be done before signing.
-- ABI number 2 is unused because of historical reason.
-  It had been used for x86 but x86 was assigned 5 later.
-  If in the future new ABI will is introduced you can reuse 2 for it,
-  but *avoid reodering*, which must make wrong installation.
+- Prefix 5 is introduced because of historical reason.
+  Previously Build Number (B) is placed after ABI (A) but
+  it's found that swpping the order is reasonable.
+  Previously version code for x86 is always greater than that for armeabi.
+  Therefore version-check rule like "Version code of update must be greater
+  than that of previous" cannot be introduced.
 """
 
 
@@ -186,7 +193,10 @@ def GetVersionCode(base_version_code, abi):
     abi_code = 1
   else:
     raise IllegalArgumentError('Unexpected ABI; %s' % abi)
-  return int('%d%06d' % (abi_code, base_version_code))
+  if base_version_code >= 10000:
+    raise IllegalArgumentError('Version code is greater than 10000. '
+                               'It is time to revisit version code scheme.')
+  return int('5%05d%d' % (base_version_code, abi_code))
 
 
 def ModifyAndroidManifestFile(apk_path, abi):

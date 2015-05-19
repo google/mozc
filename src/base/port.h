@@ -110,7 +110,7 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 // TODO(team): Implement this.
 #define  FALLTHROUGH_INTENDED do { } while (0)
 
-#if (defined(__GNUC__) || defined(__clang__)) && !defined(SWIG)
+#if defined(__GNUC__) || defined(__clang__)
 // Tell the compiler to do printf format string checking if the
 // compiler supports it; see the 'format' attribute in
 // <http://gcc.gnu.org/onlinedocs/gcc-4.3.0/gcc/Function-Attributes.html>.
@@ -125,12 +125,7 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 #else
 #define PRINTF_ATTRIBUTE(string_index, first_to_check)
 #define SCANF_ATTRIBUTE(string_index, first_to_check)
-#endif  // (__GNUC__ || __clang__) && !SWIG
-
-// TODO(yukawa): Consider to unsupport SWIG.
-#ifndef SWIG
-#define ABSTRACT = 0
-#endif
+#endif  // __GNUC__ || __clang__
 
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)
 #define AS_STRING_INTERNAL(x)   #x
@@ -138,6 +133,5 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 
 // TODO(yukawa): Simplify following includes
 #include "base/flags.h"
-#include "base/init.h"
 
 #endif  // MOZC_BASE_PORT_H_

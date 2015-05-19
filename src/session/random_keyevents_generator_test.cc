@@ -27,11 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/random_keyevents_generator.h"
+
 #include <string>
 #include <vector>
-#include "base/base.h"
-#include "base/util.h"
-#include "session/random_keyevents_generator.h"
+
+#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

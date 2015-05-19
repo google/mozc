@@ -204,6 +204,7 @@ public class PreferenceUtilTest extends InstrumentationTestCaseWithMock {
         }
       }
 
+      @SuppressWarnings("deprecation")
       TestData[] testDataList = new TestData[] {
           new TestData(Configuration.ORIENTATION_PORTRAIT,
                        false,

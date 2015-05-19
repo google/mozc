@@ -84,7 +84,7 @@
         'test_size': 'small',
       },
       'conditions': [
-        ['target_platform=="Android"', {
+        ['use_legacy_encryptor==1 and target_platform=="Android"', {
           'dependencies': [
             '../base/base_test.gyp:android_jni_mock',
           ],

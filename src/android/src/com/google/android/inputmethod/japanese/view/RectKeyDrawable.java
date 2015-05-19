@@ -29,6 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
+import com.google.common.base.Optional;
+
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -41,6 +43,7 @@ import android.graphics.Shader.TileMode;
  *
  */
 public class RectKeyDrawable extends BaseBackgroundDrawable {
+
   private final int topColor;
   private final int bottomColor;
 
@@ -55,8 +58,8 @@ public class RectKeyDrawable extends BaseBackgroundDrawable {
   private int bottom;
 
   /** Cached Paint instance to reuse for performance reason. */
-  private Paint paint = new Paint();
-  private Shader shader = null;
+  private final Paint paint = new Paint();
+  private Optional<Shader> shader = Optional.absent();
 
   public RectKeyDrawable(
       int leftPadding, int topPadding, int rightPadding, int bottomPadding,
@@ -99,10 +102,10 @@ public class RectKeyDrawable extends BaseBackgroundDrawable {
     }
 
     // Render base region.
-    if (shader != null) {
+    if (shader.isPresent()) {
       paint.reset();
       paint.setAntiAlias(true);
-      paint.setShader(shader);
+      paint.setShader(shader.get());
       canvas.drawRect(left, top, right, bottom, paint);
     }
 
@@ -130,6 +133,7 @@ public class RectKeyDrawable extends BaseBackgroundDrawable {
     top = canvasRect.top;
     right = canvasRect.right;
     bottom = canvasRect.bottom;
-    shader = new LinearGradient(0, top, 0, bottom, topColor, bottomColor, TileMode.CLAMP);
+    shader = Optional.<Shader>of(
+        new LinearGradient(0, top, 0, bottom, topColor, bottomColor, TileMode.CLAMP));
   }
 }

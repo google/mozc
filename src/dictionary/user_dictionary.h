@@ -55,20 +55,18 @@ class UserDictionary : public DictionaryInterface {
                  SuppressionDictionary *suppression_dictionary);
   virtual ~UserDictionary();
 
-  virtual bool HasValue(const StringPiece value) const;
-  virtual Node *LookupPredictiveWithLimit(
-      const char *str, int size, const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupPredictive(const char *str, int size,
-                                 NodeAllocatorInterface *allocator) const;
-  // Kana modifier insensitive lookup is not supported, meaning that
+  virtual bool HasValue(StringPiece value) const;
+  // Lookup methods don't support kana modifier insensitive lookup, i.e.,
   // Callback::OnActualKey() is never called.
+  virtual void LookupPredictive(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const;
   virtual void LookupPrefix(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,
       Callback *callback) const;
   virtual void LookupExact(StringPiece key, Callback *callback) const;
-  virtual Node *LookupReverse(const char *str, int size,
-                              NodeAllocatorInterface *allocator) const;
+  virtual void LookupReverse(StringPiece str, NodeAllocatorInterface *allocator,
+                             Callback *callback) const;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
@@ -109,7 +107,6 @@ class UserDictionary : public DictionaryInterface {
   scoped_ptr<const UserPOSInterface> user_pos_;
   const POSMatcher *pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
-  const Limit empty_limit_;
   TokensIndex *tokens_;
   mutable scoped_ptr<ReaderWriterMutex> mutex_;
 

@@ -33,7 +33,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/port.h"
 
 namespace mozc {
@@ -88,8 +87,7 @@ class HTTPClient {
   static void SetHTTPClientHandler(const HTTPClientInterface *handler);
 
  private:
-  HTTPClient() {}
-  virtual ~HTTPClient() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(HTTPClient);
 };
 
 // Interface class for injecting an actual implementation

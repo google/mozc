@@ -36,6 +36,7 @@
 
     <subtype
         android:icon="@drawable/application_icon"
+        android:imeSubtypeExtraValue="EmojiCapable"
         android:imeSubtypeLocale="ja_JP"
         android:imeSubtypeMode="keyboard"
         android:label="@string/subtype_ja" />

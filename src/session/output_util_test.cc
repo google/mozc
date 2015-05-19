@@ -27,9 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
-#include "session/commands.pb.h"
 #include "session/output_util.h"
+
+#include "base/port.h"
+#include "session/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -385,7 +386,7 @@ void SetTestDataForConversion(commands::Output *output) {
     candidate_list->set_category(commands::CONVERSION);
   }
 }
-}  // anonymous namespace
+}  // namespace
 
 TEST(OutputUtilTest, GetCandidateIndexById) {
   commands::Output output;

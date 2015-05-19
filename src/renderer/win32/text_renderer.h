@@ -38,7 +38,6 @@
 #include <atlapp.h>
 #include <atlmisc.h>
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -58,7 +57,7 @@ struct TextRenderingInfo {
   }
 };
 
-// A class which manages text rendering for Windows. This class
+// An interface which manages text rendering for Windows. This class
 // is currently implemented with Win32 GDI functions.
 class TextRenderer {
  public:
@@ -76,30 +75,27 @@ class TextRenderer {
     SIZE_OF_FONT_TYPE,  // DO NOT DELETE THIS
   };
 
-  TextRenderer();
-  ~TextRenderer();
-  void Init();
-  // Retrieves the font handle
-  WTL::CFontHandle GetFont(FONT_TYPE font_type) const;
-  // Retrieves the font color
-  COLORREF GetFontColor(FONT_TYPE font_type) const;
-  // Retrieves the font style
-  DWORD GetFontStyle(FONT_TYPE font_type) const;
-  // Retrieves the bounding box for a given string.
-  Size MeasureString(FONT_TYPE font_type, const wstring &str) const;
-  Size MeasureStringMultiLine(FONT_TYPE font_type, const wstring &str,
-      const int width) const;
-  void RenderText(WTL::CDCHandle dc, const wstring &text, const Rect &rect,
-                  FONT_TYPE font_type) const;
-  void RenderText(WTL::CDCHandle dc,
-                  const vector<TextRenderingInfo> &display_list,
-                  FONT_TYPE font_type) const;
- private:
-  struct FontInfo;
-  std::unique_ptr<FontInfo[]> fonts_;
-  mutable WTL::CDC mem_dc_;
+  // Returns an instance of TextRenderer. Caller takes ownership.
+  static TextRenderer *Create();
 
-  DISALLOW_COPY_AND_ASSIGN(TextRenderer);
+  virtual ~TextRenderer();
+
+  // Updates font cache.
+  virtual void OnThemeChanged() = 0;
+
+  // Retrieves the bounding box for a given string.
+  virtual Size MeasureString(FONT_TYPE font_type, const wstring &str) const = 0;
+  virtual Size MeasureStringMultiLine(FONT_TYPE font_type,
+                                      const wstring &str,
+                                      const int width) const = 0;
+  // Renders the given |text|.
+  virtual void RenderText(WTL::CDCHandle dc,
+                          const wstring &text,
+                          const Rect &rect,
+                          FONT_TYPE font_type) const = 0;
+  virtual void RenderTextList(WTL::CDCHandle dc,
+                              const vector<TextRenderingInfo> &display_list,
+                              FONT_TYPE font_type) const = 0;
 };
 
 }  // namespace win32

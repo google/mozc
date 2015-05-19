@@ -32,8 +32,8 @@
 #include <cstring>
 #include <cmath>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace storage {

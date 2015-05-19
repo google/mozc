@@ -41,10 +41,11 @@
 #ifndef MOZC_USAGE_STATS_UPLOAD_UTIL_H_
 #define MOZC_USAGE_STATS_UPLOAD_UTIL_H_
 
-#include <vector>
 #include <string>
 #include <utility>
-#include "base/base.h"
+#include <vector>
+
+#include "base/port.h"
 
 namespace mozc {
 namespace usage_stats {
@@ -93,8 +94,11 @@ class UploadUtil {
   string stat_values_;
   vector<pair<string, string> > optional_url_params_;
   bool use_https_;
+
   DISALLOW_COPY_AND_ASSIGN(UploadUtil);
 };
-}  // namespace mozc::usage_stats
+
+}  // namespace usage_stats
 }  // namespace mozc
+
 #endif  // MOZC_USAGE_STATS_UPLOAD_UTIL_H_

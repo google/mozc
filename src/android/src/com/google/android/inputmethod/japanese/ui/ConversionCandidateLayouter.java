@@ -33,6 +33,8 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateL
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.util.FloatMath;
 
@@ -61,6 +63,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
    * heuristics for testing.
    */
   static class ChunkMetrics {
+
     private final float chunkWidth;
     private final float compressionRatio;
     private final float horizontalPadding;
@@ -78,6 +81,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
 
     /** Returns the number of chunks which the span would consume. */
     int getNumChunks(Span span) {
+      Preconditions.checkNotNull(span);
       float compressedValueWidth =
           compressValueWidth(span.getValueWidth(), compressionRatio, horizontalPadding, minWidth);
       return (int) FloatMath.ceil((compressedValueWidth + span.getDescriptionWidth()) / chunkWidth);
@@ -97,7 +101,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
     }
   }
 
-  private SpanFactory spanFactory;
+  private Optional<SpanFactory> spanFactory = Optional.absent();
 
   /** Horizontal common ratio of the value size. */
   private float valueWidthCompressionRate;
@@ -123,7 +127,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
    * @param spanFactory the spanFactory to set
    */
   public void setSpanFactory(SpanFactory spanFactory) {
-    this.spanFactory = spanFactory;
+    this.spanFactory = Optional.of(Preconditions.checkNotNull(spanFactory));
   }
 
   /**
@@ -201,18 +205,18 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
   }
 
   @Override
-  public CandidateLayout layout(CandidateList candidateList) {
-    if (minChunkWidth <= 0 || viewWidth <= 0 ||
-        candidateList == null || candidateList.getCandidatesCount() == 0 ||
-        spanFactory == null) {
-      return null;
+  public Optional<CandidateLayout> layout(CandidateList candidateList) {
+    Preconditions.checkNotNull(candidateList);
+    if (minChunkWidth <= 0 || viewWidth <= 0 || candidateList.getCandidatesCount() == 0 ||
+        !spanFactory.isPresent()) {
+      return Optional.<CandidateLayout>absent();
     }
 
     int numChunks = getNumChunks();
     float chunkWidth = getChunkWidth();
     ChunkMetrics chunkMetrics = new ChunkMetrics(
         chunkWidth, valueWidthCompressionRate, valueHorizontalPadding, minValueWidth);
-    List<Row> rowList = buildRowList(candidateList, spanFactory, numChunks, chunkMetrics,
+    List<Row> rowList = buildRowList(candidateList, spanFactory.get(), numChunks, chunkMetrics,
                                      reserveEmptySpan);
     int[] numAllocatedChunks = new int[numChunks];
     boolean isFirst = reserveEmptySpan;
@@ -227,7 +231,8 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
 
     // Push empty span at the end of the first row.
     if (reserveEmptySpan) {
-      Span emptySpan = new Span(null, 0, 0, Collections.<String>emptyList());
+      Span emptySpan = new Span(Optional.<CandidateWord>absent(), 0, 0,
+                                Collections.<String>emptyList());
       List<Span> spanList = rowList.get(0).getSpanList();
       emptySpan.setLeft(spanList.get(spanList.size() - 1).getRight());
       emptySpan.setRight(viewWidth);
@@ -239,7 +244,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
     int rowHeight = getRowHeight();
     layoutRowList(rowList, viewWidth, rowHeight);
 
-    return new CandidateLayout(rowList, viewWidth, rowHeight * rowList.size());
+    return Optional.of(new CandidateLayout(rowList, viewWidth, rowHeight * rowList.size()));
   }
 
   /**
@@ -250,6 +255,10 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
   static List<Row> buildRowList(
       CandidateList candidateList, SpanFactory spanFactory,
       int numChunks, ChunkMetrics chunkMetrics, boolean enableSpan) {
+    Preconditions.checkNotNull(candidateList);
+    Preconditions.checkNotNull(spanFactory);
+    Preconditions.checkNotNull(chunkMetrics);
+
     List<Row> rowList = new ArrayList<Row>();
 
     int numRemainingChunks = 0;
@@ -291,6 +300,11 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
   static void layoutSpanList(
       List<Span> spanList, int pageWidth,
       int numChunks, ChunkMetrics chunkMetrics, int[] numAllocatedChunks) {
+    Preconditions.checkNotNull(spanList);
+    Preconditions.checkNotNull(chunkMetrics);
+    Preconditions.checkNotNull(numAllocatedChunks);
+    Preconditions.checkArgument(spanList.size() <= numAllocatedChunks.length);
+
     int numRemainingChunks = numChunks;
     // First, allocate the chunks based on the metrics.
     {
@@ -332,7 +346,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
   /** Sets top, width and height to the each row. */
   static void layoutRowList(List<Row> rowList, int pageWidth, int rowHeight) {
     int top = 0;
-    for (Row row : rowList) {
+    for (Row row : Preconditions.checkNotNull(rowList)) {
       row.setTop(top);
       row.setWidth(pageWidth);
       row.setHeight(rowHeight);

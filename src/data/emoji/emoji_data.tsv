@@ -352,8 +352,8 @@
 1F46F	👯	FE1A2		E429	EADB	ばにー ばにーがーる かお	WOMAN WITH BUNNY EARS	バニー		ラインダンス	バニー	FACE-134
 1F470	👰	FE1A3			EAE9	はなよめ けっこん かお	BRIDE WITH VEIL	花嫁			花嫁	FACE-135
 1F471	👱	FE1A4		E515	EB13	かお がいこくじん	PERSON WITH BLOND HAIR	西洋人		西洋人	白人	FACE-136
-1F472	👲	FE1A5		E516	EB14	かお ちゅうごくじん おわんぼう	MAN WITH GUA PI MAO			中国人	中国人	FACE-137
-1F473	👳	FE1A6		E517	EB15	かお いんどじん たーばん	MAN WITH TURBAN			インド人	インド人	FACE-138
+1F472	👲	FE1A5		E516	EB14	かお ちゅうごくじん おわんぼう	MAN WITH GUA PI MAO	中国人		中国人	中国人	FACE-137
+1F473	👳	FE1A6		E517	EB15	かお いんどじん たーばん	MAN WITH TURBAN	インド人		インド人	インド人	FACE-138
 1F474	👴	FE1A7		E518	EB16	かお おじいさん	OLDER MAN	おじいさん		おじいさん	おじいさん	FACE-139
 1F475	👵	FE1A8		E519	EB17	かお おばあさん	OLDER WOMAN	おばあさん		おばあさん	おばあさん	FACE-140
 1F476	👶	FE1A9		E51A	EB18	かお あかちゃん あかんぼう	BABY	赤ちゃん		あかちゃん	赤ちゃん	FACE-141
@@ -398,7 +398,7 @@
 1F49D	💝	FEB17	>E6EC	E437	EB54	はーと ばれんたいん ばれんたいんでー	HEART WITH RIBBON	ハート		バレンタインデー	リボンがけのハート	FACE-098
 1F49E	💞	FEB18	>E6ED	>E327	E5AF	はーと かわいい	REVOLVING HEARTS	ハート			かわいい	FACE-099
 1F49F	💟	FEB19	>E6F8	E204	>E595	はーと	HEART DECORATION	ハート		飾り1		FACE-100
-1F4A0	💠	FEB55	E6F8			だいや だいあ かわいい	DIAMOND SHAPE WITH A DOT INSIDE	ダイヤモンド	かわいい			FACE-074
+1F4A0	💠	FEB55	E6F8			だいや だいあ かわいい	DIAMOND SHAPE WITH A DOT INSIDE	かわいい	かわいい			FACE-074
 1F4A1	💡	FEB56	E6FB	E10F	E476	でんきゅう ぴこーん ひらめき	ELECTRIC LIGHT BULB	電球	ひらめき	電球	電球	FACE-075
 1F4A2	💢	FEB57	E6FC	E334	E4E5	いかり ＃ むかっ	ANGER SYMBOL	怒り	むかっ（怒り）	怒り	怒り（ムカッ）	FACE-076
 1F4A3	💣	FEB58	E6FE	E311	E47A	ばくだん	BOMB	爆弾	爆弾	爆弾	爆弾	FACE-077

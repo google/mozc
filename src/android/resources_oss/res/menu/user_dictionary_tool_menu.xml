@@ -49,6 +49,9 @@
     <item android:id="@+id/user_dictionary_tool_menu_delete_dictionary"
           android:title="@string/user_dictionary_tool_menu_delete_dictionary_title"
           android:showAsAction="never" />
+    <item android:id="@+id/user_dictionary_tool_menu_export_dictionary"
+          android:title="@string/user_dictionary_tool_menu_export_dictionary_title"
+          android:showAsAction="never" />
 
     <item android:id="@+id/user_dictionary_tool_menu_undo"
           android:icon="@android:drawable/ic_menu_revert"

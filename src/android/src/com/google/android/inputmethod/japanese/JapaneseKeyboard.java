@@ -29,6 +29,11 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import org.mozc.android.inputmethod.japanese.keyboard.Flick;
+import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
+import org.mozc.android.inputmethod.japanese.keyboard.Key;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyState;
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
 import org.mozc.android.inputmethod.japanese.keyboard.Row;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
@@ -36,6 +41,10 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.Cros
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpaceOnAlphanumeric;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpecialRomanjiTable;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+
+import android.util.SparseIntArray;
 
 import java.util.List;
 
@@ -50,7 +59,7 @@ public class JapaneseKeyboard extends Keyboard {
   public static enum KeyboardSpecification {
     // 12 keys.
     TWELVE_KEY_TOGGLE_KANA(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_KANA", 0, 1, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_KANA", 0, 1, 1),
         R.xml.kbd_12keys_kana,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.TWELVE_KEYS_TO_HIRAGANA,
@@ -59,7 +68,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     TWELVE_KEY_TOGGLE_ALPHABET(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_ALPHABET", 0, 1, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_ALPHABET", 0, 1, 1),
         R.xml.kbd_12keys_abc,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.TWELVE_KEYS_TO_HALFWIDTHASCII,
@@ -68,7 +77,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     TWELVE_KEY_TOGGLE_NUMBER(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_NUMBER", 0, 1, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_NUMBER", 0, 1, 1),
         R.xml.kbd_12keys_123,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.TWELVE_KEYS_TO_NUMBER,
@@ -77,7 +86,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     TWELVE_KEY_TOGGLE_QWERTY_ALPHABET(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_QWERTY_ALPHABET", 0, 3, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_QWERTY_ALPHABET", 0, 4, 0),
         R.xml.kbd_12keys_qwerty_abc,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.QWERTY_MOBILE_TO_HALFWIDTHASCII,
@@ -87,7 +96,7 @@ public class JapaneseKeyboard extends Keyboard {
 
     // Flick mode.
     TWELVE_KEY_FLICK_KANA(
-        new KeyboardSpecificationName("TWELVE_KEY_FLICK_KANA", 0, 1, 2),
+        new KeyboardSpecificationName("TWELVE_KEY_FLICK_KANA", 0, 1, 3),
         R.xml.kbd_12keys_flick_kana,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.FLICK_TO_HIRAGANA,
@@ -96,7 +105,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     TWELVE_KEY_FLICK_ALPHABET(
-        new KeyboardSpecificationName("TWELVE_KEY_FLICK_ALPHABET", 0, 1, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_FLICK_ALPHABET", 0, 1, 1),
         R.xml.kbd_12keys_flick_abc,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.FLICK_TO_HALFWIDTHASCII,
@@ -105,7 +114,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.COMMIT_WITHOUT_CONSUMING),
 
     TWELVE_KEY_FLICK_NUMBER(
-        new KeyboardSpecificationName("TWELVE_KEY_FLICK_NUMBER", 0, 1, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_FLICK_NUMBER", 0, 1, 1),
         R.xml.kbd_12keys_flick_123,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.FLICK_TO_NUMBER,
@@ -114,7 +123,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.COMMIT_WITHOUT_CONSUMING),
 
     TWELVE_KEY_TOGGLE_FLICK_KANA(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_FLICK_KANA", 0, 1, 2),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_FLICK_KANA", 0, 1, 3),
         R.xml.kbd_12keys_flick_kana,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.TOGGLE_FLICK_TO_HIRAGANA,
@@ -123,7 +132,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     TWELVE_KEY_TOGGLE_FLICK_ALPHABET(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_FLICK_ALPHABET", 0, 1, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_FLICK_ALPHABET", 0, 1, 1),
         R.xml.kbd_12keys_flick_abc,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.TOGGLE_FLICK_TO_HALFWIDTHASCII,
@@ -132,7 +141,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     TWELVE_KEY_TOGGLE_FLICK_NUMBER(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_FLICK_ALPHABET", 0, 1, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_FLICK_ALPHABET", 0, 1, 1),
         R.xml.kbd_12keys_flick_123,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.TOGGLE_FLICK_TO_NUMBER,
@@ -142,7 +151,7 @@ public class JapaneseKeyboard extends Keyboard {
 
     // QWERTY keyboard.
     QWERTY_KANA(
-        new KeyboardSpecificationName("QWERTY_KANA", 0, 3, 0),
+        new KeyboardSpecificationName("QWERTY_KANA", 0, 3, 1),
         R.xml.kbd_qwerty_kana,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.QWERTY_MOBILE_TO_HIRAGANA,
@@ -151,7 +160,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     QWERTY_KANA_NUMBER(
-        new KeyboardSpecificationName("QWERTY_KANA_NUMBER", 0, 2, 0),
+        new KeyboardSpecificationName("QWERTY_KANA_NUMBER", 0, 2, 1),
         R.xml.kbd_qwerty_kana_123,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.QWERTY_MOBILE_TO_HIRAGANA_NUMBER,
@@ -160,7 +169,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     QWERTY_ALPHABET(
-        new KeyboardSpecificationName("QWERTY_ALPHABET", 0, 3, 0),
+        new KeyboardSpecificationName("QWERTY_ALPHABET", 0, 4, 0),
         R.xml.kbd_qwerty_abc,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.QWERTY_MOBILE_TO_HALFWIDTHASCII,
@@ -169,7 +178,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.COMMIT_WITHOUT_CONSUMING),
 
     QWERTY_ALPHABET_NUMBER(
-        new KeyboardSpecificationName("QWERTY_ALPHABET_NUMBER", 0, 2, 0),
+        new KeyboardSpecificationName("QWERTY_ALPHABET_NUMBER", 0, 2, 1),
         R.xml.kbd_qwerty_abc_123,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.QWERTY_MOBILE_TO_HALFWIDTHASCII,
@@ -179,7 +188,7 @@ public class JapaneseKeyboard extends Keyboard {
 
     // Godan keyboard.
     GODAN_KANA(
-        new KeyboardSpecificationName("GODAN_KANA", 0, 1, 0),
+        new KeyboardSpecificationName("GODAN_KANA", 0, 1, 1),
         R.xml.kbd_godan_kana,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.GODAN_TO_HIRAGANA,
@@ -224,13 +233,13 @@ public class JapaneseKeyboard extends Keyboard {
         SpaceOnAlphanumeric spaceOnAlphanumeric,
         boolean kanaModifierInsensitiveConversion,
         CrossingEdgeBehavior crossingEdgeBehavior) {
-      this.specName = specName;
+      this.specName = Preconditions.checkNotNull(specName);
       this.resourceId = resourceId;
-      this.compositionMode = compositionMode;
-      this.specialRomanjiTable = specialRomanjiTable;
-      this.spaceOnAlphanumeric = spaceOnAlphanumeric;
+      this.compositionMode = Preconditions.checkNotNull(compositionMode);
+      this.specialRomanjiTable = Preconditions.checkNotNull(specialRomanjiTable);
+      this.spaceOnAlphanumeric = Preconditions.checkNotNull(spaceOnAlphanumeric);
       this.kanaModifierInsensitiveConversion = kanaModifierInsensitiveConversion;
-      this.crossingEdgeBehavior = crossingEdgeBehavior;
+      this.crossingEdgeBehavior = Preconditions.checkNotNull(crossingEdgeBehavior);
     }
 
     public int getXmlLayoutResourceId() {
@@ -267,17 +276,48 @@ public class JapaneseKeyboard extends Keyboard {
   }
 
   private final KeyboardSpecification specification;
+  private Optional<SparseIntArray> sourceIdToKeyCode = Optional.absent();
 
   public JapaneseKeyboard(
+      Optional<String> contentDescription,
       List<Row> rowList, float flickThreshold, KeyboardSpecification specification) {
-    super(rowList, flickThreshold);
-    if (specification == null) {
-      throw new NullPointerException("specification is null.");
-    }
-    this.specification = specification;
+    super(Preconditions.checkNotNull(contentDescription),
+          Preconditions.checkNotNull(rowList), flickThreshold);
+    this.specification = Preconditions.checkNotNull(specification);
   }
 
   public KeyboardSpecification getSpecification() {
     return specification;
+  }
+
+  /**
+   * Returns keyCode from {@code souceId}.
+   *
+   * <p>If not found, {@code Integer.MIN_VALUE} is returned.
+   */
+  public int getKeyCode(int sourceId) {
+    ensureSourceIdToKeyCode();
+    return sourceIdToKeyCode.get().get(sourceId, Integer.MIN_VALUE);
+  }
+
+  private void ensureSourceIdToKeyCode() {
+    if (sourceIdToKeyCode.isPresent()) {
+      return;
+    }
+    SparseIntArray result = new SparseIntArray();
+    for (Row row : getRowList()) {
+      for (Key key : row.getKeyList()) {
+        for (KeyState keyState : key.getKeyStates()) {
+          for (Direction direction : Direction.values()) {
+            Flick flick = keyState.getFlick(direction);
+            if (flick != null) {
+              KeyEntity keyEntity = flick.getKeyEntity();
+              result.put(keyEntity.getSourceId(), keyEntity.getKeyCode());
+            }
+          }
+        }
+      }
+    }
+    sourceIdToKeyCode = Optional.of(result);
   }
 }

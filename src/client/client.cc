@@ -41,7 +41,6 @@
 #include <cstddef>
 
 #include "base/const.h"
-#include "base/crash_report_util.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -284,11 +283,6 @@ void Client::GetHistoryInputs(vector<commands::Input> *output) const {
 bool Client::SendKeyWithContext(const commands::KeyEvent &key,
                                 const commands::Context &context,
                                 commands::Output *output) {
-#ifdef DEBUG
-  if (IsAbortKey(key)) {
-    DCHECK(CrashReportUtil::Abort()) << "Not aborted by CrashReportUtil::Abort";
-  }
-#endif  // DEBUG
   commands::Input input;
   input.set_type(commands::Input::SEND_KEY);
   input.mutable_key()->CopyFrom(key);
@@ -302,11 +296,6 @@ bool Client::SendKeyWithContext(const commands::KeyEvent &key,
 bool Client::TestSendKeyWithContext(const commands::KeyEvent &key,
                                     const commands::Context &context,
                                     commands::Output *output) {
-#ifdef DEBUG
-  if (IsAbortKey(key)) {
-    DCHECK(CrashReportUtil::Abort()) << "Not aborted by CrashReportUtil::Abort";
-  }
-#endif  // DEBUG
   commands::Input input;
   input.set_type(commands::Input::TEST_SEND_KEY);
   // If the pointer of |context| is not the default_instance, update the data.
@@ -814,16 +803,6 @@ void Client::Reset() {
   server_status_ = SERVER_UNKNOWN;
   server_protocol_version_ = 0;
   server_process_id_ = 0;
-}
-
-bool Client::IsAbortKey(const commands::KeyEvent &key) {
-  return key.has_special_key() &&
-      key.special_key() == commands::KeyEvent::F12 &&
-      key.modifier_keys().size() == 2 &&
-      ((key.modifier_keys(0) == commands::KeyEvent::CTRL &&
-        key.modifier_keys(1) == commands::KeyEvent::ALT) ||
-       (key.modifier_keys(0) == commands::KeyEvent::ALT &&
-        key.modifier_keys(1) == commands::KeyEvent::CTRL));
 }
 
 bool Client::TranslateProtoBufToMozcToolArg(const commands::Output &output,

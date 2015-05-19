@@ -184,6 +184,12 @@ class SessionConverter : public SessionConverterInterface {
                                   const commands::Context &context,
                                   size_t *consumed_key_size);
 
+  // Does allmost the same thing as CommitFirstSegment.
+  // The only difference is to fix the segments from the head to the focused.
+  virtual void CommitHeadToFocusedSegments(const composer::Composer &composer,
+                                           const commands::Context &context,
+                                           size_t *consumed_key_size);
+
   // Commits the preedit string represented by Composer.
   virtual void CommitPreedit(const composer::Composer &composer,
                              const commands::Context &context);
@@ -272,6 +278,15 @@ class SessionConverter : public SessionConverterInterface {
 
   // Notifies the converter that the current segment is fixed.
   void SegmentFix();
+
+  // Fixes the conversion of the [0, segments_to_commit -1 ] segments,
+  // and keep the rest.
+  // Internal implementation for CommitFirstSegment and
+  // CommitHeadToFocusedSegment.
+  void CommitSegmentsInternal(const composer::Composer &composer,
+                              const commands::Context &context,
+                              size_t segments_to_commit,
+                              size_t *consumed_key_size);
 
   // Gets preedit from segment(index) to segment(index + size).
   void GetPreedit(size_t index, size_t size, string *preedit) const;

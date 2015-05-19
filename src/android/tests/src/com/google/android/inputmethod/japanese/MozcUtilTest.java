@@ -30,11 +30,8 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
-import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.CrossingEdgeBehavior;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.EmojiCarrierType;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.RewriterCapability;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpaceOnAlphanumeric;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpecialRomanjiTable;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
@@ -43,23 +40,18 @@ import com.google.protobuf.ByteString;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.os.Bundle;
 import android.test.InstrumentationTestCase;
 import android.test.mock.MockContext;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.text.InputType;
 import android.view.inputmethod.EditorInfo;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  */
 public class MozcUtilTest extends InstrumentationTestCase {
   @SmallTest
-  public void testIsDevChannel() throws InvocationTargetException {
-    class TestData {
+  public void testIsDevChannel() {
+    class TestData extends Parameter {
       final String versionName;
       final boolean isDevChannel;
       public TestData(String versionName, boolean isDevChanel) {
@@ -68,6 +60,16 @@ public class MozcUtilTest extends InstrumentationTestCase {
       }
     }
     TestData testDataList[] = {
+      new TestData("-neko", false),
+      new TestData("1-neko", false),
+      new TestData(".-neko", false),
+      new TestData("1.2.3.000-neko", false),
+      new TestData("111111-neko", false),
+      new TestData("1.1.1.1-neko", false),
+      new TestData("1.1.1.99-neko", false),
+      new TestData("1.1.1.100-neko", true),
+      new TestData(".1-neko", false),
+      new TestData(".a-neko", false),
       new TestData("", false),
       new TestData("1", false),
       new TestData(".", false),
@@ -80,7 +82,8 @@ public class MozcUtilTest extends InstrumentationTestCase {
       new TestData(".a", false),
     };
     for (TestData testData : testDataList) {
-      assertEquals(testData.isDevChannel, MozcUtil.isDevChannelVersionName(testData.versionName));
+      assertEquals(testData.toString(),
+                   testData.isDevChannel, MozcUtil.isDevChannelVersionName(testData.versionName));
     }
   }
 
@@ -90,13 +93,14 @@ public class MozcUtilTest extends InstrumentationTestCase {
     for (KeyboardSpecification specification : KeyboardSpecification.values()) {
       for (int orientation : new int[] {Configuration.ORIENTATION_PORTRAIT,
                                         Configuration.ORIENTATION_LANDSCAPE}) {
-        Request request =
-            MozcUtil.getRequestForKeyboard(specification.getKeyboardSpecificationName(),
-                                           specification.getSpecialRomanjiTable(),
-                                           specification.getSpaceOnAlphanumeric(),
-                                           specification.isKanaModifierInsensitiveConversion(),
-                                           specification.getCrossingEdgeBehavior(),
-                                           configuration);
+        configuration.orientation = orientation;
+        Request request = MozcUtil.getRequestForKeyboard(
+            specification.getKeyboardSpecificationName(),
+            Optional.of(specification.getSpecialRomanjiTable()),
+            Optional.of(specification.getSpaceOnAlphanumeric()),
+            Optional.of(specification.isKanaModifierInsensitiveConversion()),
+            Optional.of(specification.getCrossingEdgeBehavior()),
+            configuration);
         assertEquals(specification.getKeyboardSpecificationName()
                          .formattedKeyboardName(configuration),
                      request.getKeyboardName());
@@ -112,10 +116,10 @@ public class MozcUtilTest extends InstrumentationTestCase {
     {
       Request request =
           MozcUtil.getRequestForKeyboard(new KeyboardSpecificationName("baseName", 1, 2, 3),
-                                         SpecialRomanjiTable.DEFAULT_TABLE,
-                                         null,
-                                         null,
-                                         null,
+                                         Optional.of(SpecialRomanjiTable.DEFAULT_TABLE),
+                                         Optional.<SpaceOnAlphanumeric>absent(),
+                                         Optional.<Boolean>absent(),
+                                         Optional.<CrossingEdgeBehavior>absent(),
                                          configuration);
       assertEquals(SpecialRomanjiTable.DEFAULT_TABLE, request.getSpecialRomanjiTable());
       assertFalse(request.hasSpaceOnAlphanumeric());
@@ -125,10 +129,10 @@ public class MozcUtilTest extends InstrumentationTestCase {
     {
       Request request =
           MozcUtil.getRequestForKeyboard(new KeyboardSpecificationName("baseName", 1, 2, 3),
-                                         null,
-                                         SpaceOnAlphanumeric.COMMIT,
-                                         null,
-                                         null,
+                                         Optional.<SpecialRomanjiTable>absent(),
+                                         Optional.of(SpaceOnAlphanumeric.COMMIT),
+                                         Optional.<Boolean>absent(),
+                                         Optional.<CrossingEdgeBehavior>absent(),
                                          configuration);
       assertFalse(request.hasSpecialRomanjiTable());
       assertEquals(SpaceOnAlphanumeric.COMMIT, request.getSpaceOnAlphanumeric());
@@ -138,10 +142,10 @@ public class MozcUtilTest extends InstrumentationTestCase {
     {
       Request request =
           MozcUtil.getRequestForKeyboard(new KeyboardSpecificationName("baseName", 1, 2, 3),
-                                         null,
-                                         null,
-                                         Boolean.TRUE,
-                                         null,
+                                         Optional.<SpecialRomanjiTable>absent(),
+                                         Optional.<SpaceOnAlphanumeric>absent(),
+                                         Optional.of(Boolean.TRUE),
+                                         Optional.<CrossingEdgeBehavior>absent(),
                                          configuration);
       assertFalse(request.hasSpaceOnAlphanumeric());
       assertFalse(request.hasSpecialRomanjiTable());
@@ -151,10 +155,10 @@ public class MozcUtilTest extends InstrumentationTestCase {
     {
       Request request =
           MozcUtil.getRequestForKeyboard(new KeyboardSpecificationName("baseName", 1, 2, 3),
-                                         null,
-                                         null,
-                                         null,
-                                         CrossingEdgeBehavior.COMMIT_WITHOUT_CONSUMING,
+                                         Optional.<SpecialRomanjiTable>absent(),
+                                         Optional.<SpaceOnAlphanumeric>absent(),
+                                         Optional.<Boolean>absent(),
+                                         Optional.of(CrossingEdgeBehavior.COMMIT_WITHOUT_CONSUMING),
                                          configuration);
       assertFalse(request.hasSpaceOnAlphanumeric());
       assertFalse(request.hasSpecialRomanjiTable());
@@ -185,64 +189,61 @@ public class MozcUtilTest extends InstrumentationTestCase {
   }
 
   @SmallTest
-  public void testIsEmojiAllowed() {
-    EditorInfo editorInfo = new EditorInfo();
-    assertFalse(MozcUtil.isEmojiAllowed(editorInfo));
-    editorInfo.extras = new Bundle();
-    assertFalse(MozcUtil.isEmojiAllowed(editorInfo));
-    editorInfo.extras.putBoolean("allowEmoji", false);
-    assertFalse(MozcUtil.isEmojiAllowed(editorInfo));
-    editorInfo.extras.putBoolean("allowEmoji", true);
-    assertTrue(MozcUtil.isEmojiAllowed(editorInfo));
-  }
-
-  @SmallTest
-  public void testCreateEmojiRequest() {
+  public void testIsPasswordField() {
     class TestData extends Parameter {
-      final int sdkInt;
-      final EmojiProviderType emojiProviderType;
-      final Set<EmojiCarrierType> expectedEmojiCarrierTypeSet;
-
-      TestData(int sdkInt, EmojiProviderType emojiProviderType,
-               Set<EmojiCarrierType> expectedEmojiCarrierTypeSet) {
-        this.sdkInt = sdkInt;
-        this.emojiProviderType = emojiProviderType;
-        this.expectedEmojiCarrierTypeSet = expectedEmojiCarrierTypeSet;
+      final int inputType;
+      final boolean expectedPasswordField;
+      TestData(int inputType, boolean expectedPasswordField) {
+        this.inputType = inputType;
+        this.expectedPasswordField = expectedPasswordField;
       }
     }
 
     TestData[] testDataList = {
-        new TestData(7, EmojiProviderType.NONE, Collections.<EmojiCarrierType>emptySet()),
-        new TestData(7, EmojiProviderType.DOCOMO, EnumSet.of(EmojiCarrierType.DOCOMO_EMOJI)),
-        new TestData(7, EmojiProviderType.SOFTBANK, EnumSet.of(EmojiCarrierType.SOFTBANK_EMOJI)),
-        new TestData(7, EmojiProviderType.KDDI, EnumSet.of(EmojiCarrierType.KDDI_EMOJI)),
-
-        // Boundary check. Unicode 6.0 is not yet available on Api level 15.
-        new TestData(15, EmojiProviderType.NONE, Collections.<EmojiCarrierType>emptySet()),
-        new TestData(15, EmojiProviderType.DOCOMO, EnumSet.of(EmojiCarrierType.DOCOMO_EMOJI)),
-        new TestData(15, EmojiProviderType.SOFTBANK, EnumSet.of(EmojiCarrierType.SOFTBANK_EMOJI)),
-        new TestData(15, EmojiProviderType.KDDI, EnumSet.of(EmojiCarrierType.KDDI_EMOJI)),
-
-        // Unicode 6.0 is available on API level 16 or higher.
-        new TestData(16, EmojiProviderType.NONE, EnumSet.of(EmojiCarrierType.UNICODE_EMOJI)),
-        new TestData(16, EmojiProviderType.DOCOMO,
-                     EnumSet.of(EmojiCarrierType.UNICODE_EMOJI, EmojiCarrierType.DOCOMO_EMOJI)),
-        new TestData(16, EmojiProviderType.SOFTBANK,
-                     EnumSet.of(EmojiCarrierType.UNICODE_EMOJI, EmojiCarrierType.SOFTBANK_EMOJI)),
-        new TestData(16, EmojiProviderType.KDDI,
-                     EnumSet.of(EmojiCarrierType.UNICODE_EMOJI, EmojiCarrierType.KDDI_EMOJI)),
+        new TestData(0, false),
+        new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
+                     true),
+        new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD, true),
+        new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD, true),
+        new TestData(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD, false),
+        new TestData(InputType.TYPE_TEXT_VARIATION_PASSWORD, false),
+        new TestData(InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD, false),
     };
+
     for (TestData testData : testDataList) {
-      int carrier = 0;
-      for (EmojiCarrierType carrierType : testData.expectedEmojiCarrierTypeSet) {
-        carrier |= carrierType.getNumber();
+      EditorInfo editorInfo = new EditorInfo();
+      editorInfo.inputType = testData.inputType;
+      assertEquals(testData.expectedPasswordField, MozcUtil.isPasswordField(editorInfo));
+    }
+  }
+
+  @SmallTest
+  public void testIsVoiceInputAllowed() {
+    class TestData extends Parameter {
+      final String privateImeOptions;
+      final boolean expectedIsVoiceInputAllowed;
+      TestData(String privateImeOptions, boolean expectedIsVoiceInputAllowed) {
+        this.privateImeOptions = privateImeOptions;
+        this.expectedIsVoiceInputAllowed = expectedIsVoiceInputAllowed;
       }
-      assertEquals(
-          Request.newBuilder()
-              .setAvailableEmojiCarrier(carrier)
-              .setEmojiRewriterCapability(RewriterCapability.ALL.getNumber())
-              .build(),
-        MozcUtil.createEmojiRequest(testData.sdkInt, testData.emojiProviderType));
+    }
+
+    TestData[] testDataList = {
+        new TestData(null, true),
+        new TestData("", true),
+        new TestData("nnm", true),
+        new TestData("nnm,a", true),
+        new TestData("nm", false),
+        new TestData("a,nm", false),
+        new TestData("nm,b", false),
+        new TestData("a,nm,b", false),
+        new TestData("com.google.android.inputmethod.latin.noMicrophoneKey", false),
+    };
+
+    for (TestData testData : testDataList) {
+      EditorInfo editorInfo = new EditorInfo();
+      editorInfo.privateImeOptions = testData.privateImeOptions;
+      assertEquals(testData.expectedIsVoiceInputAllowed, MozcUtil.isVoiceInputAllowed(editorInfo));
     }
   }
 
@@ -301,8 +302,8 @@ public class MozcUtilTest extends InstrumentationTestCase {
         new TestData(1, 1),
         new TestData(0, 0),
         new TestData(123456, 123456),
-        new TestData(1000000, 0),
-        new TestData(7123456, 123456),
+        new TestData(5000001, 0),
+        new TestData(5123456, 12345),
     };
     for (TestData testData : testDataList) {
       try {

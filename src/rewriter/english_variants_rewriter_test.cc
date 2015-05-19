@@ -203,8 +203,8 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
     EXPECT_EQ(1, seg->candidates_size());
     EXPECT_EQ("Michael Jackson", seg->candidate(0).value);
     EXPECT_EQ("Michael Jackson", seg->candidate(0).content_value);
-    EXPECT_TRUE(seg->candidate(0).attributes &
-                Segment::Candidate::NO_VARIANTS_EXPANSION);
+    EXPECT_NE(0, (seg->candidate(0).attributes &
+                  Segment::Candidate::NO_VARIANTS_EXPANSION));
   }
 }
 
@@ -283,8 +283,8 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
     EXPECT_EQ(1, seg->candidates_size());
     EXPECT_EQ("Google", seg->candidate(0).value);
     EXPECT_EQ("Google", seg->candidate(0).content_value);
-    EXPECT_TRUE(seg->candidate(0).attributes &
-                Segment::Candidate::NO_VARIANTS_EXPANSION);
+    EXPECT_NE(0, (seg->candidate(0).attributes &
+                  Segment::Candidate::NO_VARIANTS_EXPANSION));
   }
 }
 

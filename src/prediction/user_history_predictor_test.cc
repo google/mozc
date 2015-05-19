@@ -44,7 +44,6 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
-#include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
@@ -2237,7 +2236,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
   {
     UserHistoryPredictor::EntryPriorityQueue queue;
     for (int i = 0; i < 10000; ++i) {
-      EXPECT_TRUE(queue.NewEntry());
+      EXPECT_NE(nullptr, queue.NewEntry());
     }
   }
 
@@ -2450,8 +2449,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
   for (size_t i = 0; i < arraysize(kEnglishWords); ++i) {
     // LookupPredictive is used in UserHistoryPredictor::IsPrivacySensitive().
     GetDictionaryMock()->AddLookupExact(
-        kEnglishWords[i], kEnglishWords[i], kEnglishWords[i],
-        Node::DEFAULT_ATTRIBUTE);
+        kEnglishWords[i], kEnglishWords[i], kEnglishWords[i], Token::NONE);
   }
 
   for (size_t i = 0; i < arraysize(kNonSensitiveCases); ++i) {

@@ -315,7 +315,7 @@ bool UIContext::GetOpenStatus() const {
   if (input_context_.get() == nullptr) {
     return false;
   }
-  return input_context_->fOpen;
+  return (input_context_->fOpen != FALSE);
 }
 
 bool UIContext::IsKanaInputPreferred() const {
