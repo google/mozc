@@ -33,6 +33,7 @@
 #include "converter/segmenter.h"
 #include "converter/segmenter_inl.h"
 #include "converter/node.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
 
@@ -42,10 +43,11 @@ class SegmenterTest : public testing::Test {
  protected:
   SegmenterTest() {
     segmenter_ = Singleton<Segmenter>::get();
+    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
   Segmenter *segmenter_;
-  const POSMatcher pos_matcher_;
+  const POSMatcher *pos_matcher_;
 };
 
 TEST_F(SegmenterTest, SegmenterTest) {
@@ -109,9 +111,9 @@ TEST_F(SegmenterTest, ParticleTest) {
   lnode.node_type = Node::NOR_NODE;
   rnode.node_type = Node::NOR_NODE;
   // "助詞"
-  lnode.rid = pos_matcher_.GetAcceptableParticleAtBeginOfSegmentId();
+  lnode.rid = pos_matcher_->GetAcceptableParticleAtBeginOfSegmentId();
   // "名詞,サ変".
-  rnode.lid = pos_matcher_.GetUnknownId();
+  rnode.lid = pos_matcher_->GetUnknownId();
   EXPECT_TRUE(segmenter_->IsBoundary(&lnode, &rnode, false));
 
   lnode.attributes |= Node::STARTS_WITH_PARTICLE;

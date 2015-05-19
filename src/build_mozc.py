@@ -49,11 +49,9 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
-import threading
 
 from build_tools import mozc_version
-from build_tools.test_tools import task_scheduler
+from build_tools.test_tools import test_launcher
 
 from build_tools.util import CheckFileOrDie
 from build_tools.util import CopyFile
@@ -283,10 +281,20 @@ def GetGypFileNames(options):
     if not os.path.exists(language_path):
       PrintErrorAndExit('Can not find language directory: %s ', language_path)
     mozc_top_level_names.append(language_path)
+
   # Exclude the gyp directory where we have special gyp files like
   # breakpad.gyp that we should exclude.
+  exclude_top_dirs = ['gyp']
+
+  # Exclude gyp files for Android unless the target platform is Android so as
+  # not to generate unnecessary files under android directory when you are
+  # building Mozc for other platforms.
+  if options.target_platform != 'Android':
+    exclude_top_dirs.append('android')
+
   mozc_top_level_names = [x for x in mozc_top_level_names if
-                          os.path.basename(x) != 'gyp']
+                          os.path.basename(x) not in exclude_top_dirs]
+
   for name in mozc_top_level_names:
     gyp_file_names.extend(glob.glob(name + '/*.gyp'))
   gyp_file_names.extend(glob.glob('%s/build_tools/*/*.gyp' % SRC_DIR))
@@ -327,6 +335,9 @@ def GetGypFileNames(options):
     gyp_file_names.append('%s/chrome/skk/skk.gyp' % SRC_DIR)
     gyp_file_names.append('%s/chrome/skk/skk_dict.gyp' % SRC_DIR)
     gyp_file_names.append('%s/chrome/skk/skk_util_test.gyp' % SRC_DIR)
+    # Add chrome NaCl Mozc gyp scripts.
+    gyp_file_names.append('%s/chrome/nacl/nacl_extension.gyp' % SRC_DIR)
+    gyp_file_names.append('%s/chrome/nacl/nacl_session.gyp' % SRC_DIR)
   gyp_file_names.extend(glob.glob('third_party/rx/*.gyp'))
   gyp_file_names.extend(glob.glob('third_party/jsoncpp/*.gyp'))
   gyp_file_names.sort()
@@ -347,13 +358,19 @@ def MoveToTopLevelSourceDirectory():
   os.chdir(GetTopLevelSourceDirectoryName())
 
 
+def GetBuildScriptDirectoryName():
+  """Gets the directory name of this script."""
+  return os.path.dirname(ABS_SCRIPT_PATH)
+
+
 def RunPackageVerifiers(build_dir):
   """Runs script to verify created packages/binaries.
 
   Args:
     build_dir: the directory where build results are.
   """
-  binary_size_checker = os.path.join('build_tools', 'binary_size_checker.py')
+  binary_size_checker = os.path.join(
+      GetBuildScriptDirectoryName(), 'build_tools', 'binary_size_checker.py')
   RunOrDie([binary_size_checker, '--target_directory', build_dir])
 
 
@@ -439,13 +456,6 @@ def ParseGypOptions(args=None, values=None):
                     'this flag will simply be ignored and Mozc always links '
                     'to protobuf statically.')
 
-  use_dynamically_linked_qt_default = True
-  parser.add_option('--use_dynamically_linked_qt',
-                    dest='use_dynamically_linked_qt',
-                    default=use_dynamically_linked_qt_default,
-                    help='Use dynamically linked version of Qt. '
-                    'Currently this flag is used only on Windows builds.')
-
   def AddFeatureOption(option_parser, feature_name, macro_name,
                        option_name):
     """Defines options like '--enable_foober' and '--disable_foober'.
@@ -458,6 +468,8 @@ def ParseGypOptions(args=None, values=None):
       feature_name: A name of the feature. Will be used for option's help.
       macro_name: A macro name which will be defined when this feature is
           enabled. Will be used for option's help.
+          Note that the macro is not automatically set.
+          Do this by yourself (typically on common.gypi).
       option_name: A base name of the option. If 'foobar' is specified,
           --enable_foobar and --disable_foobar will be defined.
 
@@ -491,9 +503,6 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='webservice infolist',
                    macro_name='ENABLE_WEBSERVICE_INFOLIST',
                    option_name='webservice_infolist')
-  AddFeatureOption(parser, feature_name='gtk renderer',
-                   macro_name='ENABLE_GTK_RENDERER',
-                   option_name='gtk_renderer')
   AddFeatureOption(parser, feature_name='cloud sync',
                    macro_name='ENABLE_CLOUD_SYNC',
                    option_name='cloud_sync')
@@ -560,13 +569,15 @@ def ExpandMetaTarget(meta_target_name):
   elif target_platform == 'Linux':
     targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
                '%s/server/server.gyp:mozc_server',
+               '%s/renderer/renderer.gyp:mozc_renderer',
                '%s/gui/gui.gyp:mozc_tool']
   elif target_platform == 'Mac':
     targets = ['%s/mac/mac.gyp:DiskImage']
   elif target_platform == 'Windows':
     targets = ['%s/win32/build32/build32.gyp:',
-               '%s/win32/build64/build64.gyp:']
-    targets += ['%s/win32/installer/installer.gyp:']
+               '%s/win32/build32/build32_dynamic.gyp:',
+               '%s/win32/build64/build64.gyp:',
+               '%s/win32/installer/installer.gyp:']
   return [(target % SRC_DIR) for target in targets]
 
 
@@ -599,9 +610,9 @@ def ParseRunTestsOptions(args=None, values=None):
     parser.add_option('--jobs', '-j', dest='jobs',
                       default=('%d' % default_build_concurrency),
                       metavar='N', help='run build jobs in parallel')
-  #TODO(nona): enable parallel testing on continuous build
+  default_test_jobs = GetNumberOfProcessors() * 2
   parser.add_option('--test_jobs', dest='test_jobs', type='int',
-                    default=1,
+                    default=default_test_jobs,
                     metavar='N', help='run test jobs in parallel')
   parser.add_option('--test_size', dest='test_size', default='small')
   parser.add_option('--configuration', '-c', dest='configuration',
@@ -631,6 +642,7 @@ def GypMain(options, unused_args):
                       options.channel_dev)
   version = GetMozcVersion()
   PrintInfo('Version string is %s' % version.GetVersionString())
+
 
   # Back up the original 'PYTHONPATH' environment variable in case we change
   # it in this function.
@@ -666,12 +678,12 @@ def GypMain(options, unused_args):
       PrintErrorAndExit(message)
     os.environ['PYTHONPATH'] = os.pathsep.join(
         [os.path.join(gyp_dir, 'pylib'), original_python_path])
-    mozc_dir = os.path.abspath(GetTopLevelSourceDirectoryName())
     # Following script tests if 'import gyp' is now available and its
     # location is expected one. By using this script, make sure
     # 'import gyp' actually loads 'third_party/gyp/pylib/gyp'.
     gyp_check_script = os.path.join(
-        mozc_dir, 'build_tools', 'ensure_gyp_module_path.py')
+        GetBuildScriptDirectoryName(), 'build_tools',
+        'ensure_gyp_module_path.py')
     expected_gyp_module_path = os.path.join(gyp_dir, 'pylib', 'gyp')
     RunOrDie([sys.executable, gyp_check_script,
               '--expected=%s' % expected_gyp_module_path])
@@ -801,9 +813,6 @@ def GypMain(options, unused_args):
                  (options.branding == 'GoogleJapaneseInput'))
   is_official_dev = (is_official and options.channel_dev)
 
-  enable_gtk_renderer_by_default = False
-  SetCommandLineForFeature(option_name='gtk_renderer',
-                           linux=enable_gtk_renderer_by_default)
   SetCommandLineForFeature(option_name='webservice_infolist')
   SetCommandLineForFeature(option_name='cloud_sync',
                            linux=is_official_dev,
@@ -820,16 +829,32 @@ def GypMain(options, unused_args):
                            mac=enable_http_client_by_default,
                            chromeos=False,  # not supported.
                            android=enable_http_client_by_default)
+  # Disable by default.
+  SetCommandLineForFeature(option_name='ambiguous_search')
 
   command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
 
   if IsWindows():
     command_line.extend(['-G', 'msvs_version=%s' % options.msvs_version])
 
-  if options.use_dynamically_linked_qt:
-    command_line.extend(['-D', 'use_dynamically_linked_qt=YES'])
+  # On Windows, we need to determine if <qtdir>/lib/Qt*.lib are import
+  # libraries for Qt DLLs or statically-linked libraries. Here we assume that
+  # Qt*.lib are import libraries when <qtdir>/lib/QtCore.prl contains
+  # 'QT_SHARED' in the definition of 'QMAKE_PRL_DEFINES'.
+  use_dynamically_linked_qt = False
+  if IsWindows() and not options.noqt and options.qtdir:
+    qtcore_prl_path = os.path.join(
+        os.path.abspath(options.qtdir), 'lib', 'QtCore.prl')
+    with open(qtcore_prl_path) as qtcore_prl_file:
+      for line in qtcore_prl_file:
+        if ('QMAKE_PRL_DEFINES' in line) and ('QT_SHARED' in line):
+          use_dynamically_linked_qt = True
+          break
+
+  if use_dynamically_linked_qt:
+    command_line.extend(['-D', 'use_dynamically_linked_qt=1'])
   else:
-    command_line.extend(['-D', 'use_dynamically_linked_qt=NO'])
+    command_line.extend(['-D', 'use_dynamically_linked_qt=0'])
 
   if options.use_zinnia:
     command_line.extend(['-D', 'use_zinnia=YES'])
@@ -888,9 +913,38 @@ def GypMain(options, unused_args):
   if not original_python_path:
     os.environ['PYTHONPATH'] = original_python_path
 
-
   # Done!
   PrintInfo('Done')
+
+  # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
+  # and debug symbols into Mozc's build directory. This is important because:
+  # - We can easily back up all the artifacts if relevant product binaries and
+  #   debug symbols are placed at the same place.
+  # - Some post-build tools such as bind.exe can easily look up the dependent
+  #   DLLs (QtCore4.dll and QtQui4.dll in this case).
+  # Perhaps the following code can also be implemented in gyp, but we atopt
+  # this ad hock workaround as a first step.
+  # TODO(yukawa): Implement the following logic in gyp, if magically possible.
+  if use_dynamically_linked_qt:
+    abs_qtdir = os.path.abspath(options.qtdir)
+    abs_qt_bin_dir = os.path.join(abs_qtdir, 'bin')
+    abs_qt_lib_dir = os.path.join(abs_qtdir, 'lib')
+    abs_out_win_dir = os.path.join(GetTopLevelSourceDirectoryName(), 'out_win')
+    copy_script = os.path.join(
+        GetBuildScriptDirectoryName(), 'build_tools', 'copy_dll_and_symbol.py')
+    copy_modes = [
+        { 'configuration': 'DebugDynamic', 'basenames': 'QtCored4;QtGuid4' },
+        { 'configuration': 'OptimizeDynamic', 'basenames': 'QtCore4;QtGui4' },
+        { 'configuration': 'ReleaseDynamic', 'basenames': 'QtCore4;QtGui4' }]
+    for mode in copy_modes:
+      copy_commands = [
+        copy_script,
+        '--basenames', mode['basenames'],
+        '--dll_paths', abs_qt_bin_dir,
+        '--pdb_paths', os.pathsep.join([abs_qt_bin_dir, abs_qt_lib_dir]),
+        '--target_dir', os.path.join(abs_out_win_dir, mode['configuration']),
+      ]
+      RunOrDie(copy_commands)
 
 
 def BuildToolsMain(options, unused_args, original_directory_name):
@@ -1078,17 +1132,26 @@ def BuildOnWindows(options, targets, original_directory_name):
 
     platform = 'Win32'
     # We are using very ad-hoc way to determine which target platform
-    # should be needed for the given target.  If and only if the target
+    # should be used for the given target.  If and only if the target
     # solution file name is 'build64.sln', invoke vcbuild to build x64
     # binaries.
     if base_sln_file_name.lower() == 'build64.sln':
       platform = 'x64'
 
+    # We are using very ad-hoc way to determine which build configuration
+    # should be used for the given target. If and only if the target
+    # solution file name is 'build32_dynamic.sln', invoke vcbuild to
+    # binaries which are dynamically linked to C++ runtime libraries.
+    configuration = options.configuration
+    if (base_sln_file_name.lower() == 'build32_dynamic.sln' and
+        not configuration.endswith('Dynamic')):
+      configuration += 'Dynamic'
+
     line = open(abs_sln_path).readline().rstrip('\n')
     if line.endswith('Format Version 11.00'):
-      BuildOnWindowsVS2010(abs_sln_path, platform, options.configuration)
+      BuildOnWindowsVS2010(abs_sln_path, platform, configuration)
     elif line.endswith('Format Version 10.00'):
-      BuildOnWindowsVS2008(abs_sln_path, platform, options.configuration)
+      BuildOnWindowsVS2008(abs_sln_path, platform, configuration)
 
 
 def BuildMain(options, targets, original_directory_name):
@@ -1153,56 +1216,31 @@ def RunTests(build_base, configuration, parallel_num):
   test_binaries = glob.glob(
       os.path.join(base_path, '*_test' + executable_suffix))
 
+  # Prepare gtest_report directory.
+  gtest_report_dir = os.path.abspath(os.path.join(base_path, 'gtest_report'))
+  if os.path.exists(gtest_report_dir):
+    # Clear existing gtest reports.
+    RemoveDirectoryRecursively(gtest_report_dir)
+  os.makedirs(gtest_report_dir)
+
   failed_tests = []
   if parallel_num == 1:
     for binary in test_binaries:
       PrintInfo('running %s...', binary)
       try:
+        binary_filename = os.path.basename(binary)
+        xml_path = os.path.join(gtest_report_dir, '%s.xml' % binary_filename)
+        options.extend(['--gunit_output=xml:%s' % xml_path,
+                        '--gtest_output=xml:%s' % xml_path])
         RunOrDie([binary] + options)
       except RunOrDieError, e:
         PrintError(e)
         failed_tests.append(binary)
   else:
-    scheduler = task_scheduler.TaskScheduler()
-    lock = threading.RLock()
-
-    def OnFail(cmd, msg, unused_return_code, unused_user_data):
-      # TODO(nona): using xml reports
-      with lock:
-        failed_tests.append(' '.join(cmd))
-        # Prints bare output of test.
-        print msg
-        PrintTestFailure(' '.join(cmd))
-
-    def OnSuccess(cmd, msg, user_data):
-      # Even return code represents suceess, if there is no xml output file, it
-      # suppose to exit unexpected way.
-      with lock:
-        if not os.path.isfile(user_data['xmlpath']):
-          failed_tests.append(' '.join(cmd))
-          # Prints bare output of test.
-          print msg
-          PrintError('XML file does not exists. test process might crash.')
-          PrintTestFailure(' '.join(cmd))
-          return
-        PrintTestSuccess(cmd[0])
-
-    def OnFinish(unused_cmd, unused_msg, user_data):
-      try:
-        shutil.rmtree(user_data['tmp_dir'])
-      except OSError:
-        PrintWarning('Failed to clean up temporary directory.')
-
+    launcher = test_launcher.TestLauncher(gtest_report_dir)
     for binary in test_binaries:
-      tmp_dir = tempfile.mkdtemp()
-      xml_path = os.path.join(tmp_dir, '%s.xml' % binary)
-      additional_options = ['--test_tmpdir=%s' % tmp_dir,
-                            '--gunit_output=xml:%s' % xml_path,
-                            '--gtest_output=xml:%s' % xml_path]
-      scheduler.AddTask([binary] + options + additional_options, OnSuccess,
-                        OnFail, OnFinish,
-                        {'xmlpath': xml_path, 'tmp_dir': tmp_dir})
-    scheduler.Execute(parallel_num)
+      launcher.AddTestCommand([binary] + options)
+    failed_tests = launcher.Execute(parallel_num)
   if failed_tests:
     raise RunOrDieError('\n'.join(['following tests failed'] + failed_tests))
 
@@ -1274,9 +1312,9 @@ def CleanBuildFilesAndDirectories(options, unused_args):
   gyp_directory_names = [os.path.dirname(f) for f in GetGypFileNames(options)]
   for gyp_directory_name in gyp_directory_names:
     if IsWindows():
-      for pattern in ['*.ncb', '*.rules', '*.sln', '*.suo', '*.vcproj',
-                      '*.vcproj.*.user', '*.vcxproj', '*.vcxproj.filters',
-                      '*.vcxproj.user']:
+      for pattern in ['*.ncb', '*.rules', '*.props', '*.sdf', '*.sln', '*.suo',
+                      '*.targets', '*.vcproj', '*.vcproj.*.user', '*.vcxproj',
+                      '*.vcxproj.filters', '*.vcxproj.user', 'gen_*_files.xml']:
         file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                  pattern)))
       for build_type in ['Debug', 'Optimize', 'Release']:

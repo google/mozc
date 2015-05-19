@@ -57,43 +57,53 @@ class PunctuationContext : public PinyinContextInterface {
   explicit PunctuationContext(const SessionConfig &session_config);
   virtual ~PunctuationContext();
 
-  bool Insert(char ch);
-  void Commit();
-  void CommitPreedit();
-  void Clear();
-  void ClearCommitText();
+  virtual bool Insert(char ch);
+  virtual void Commit();
+  virtual void CommitPreedit();
+  // Clear states except for direct commit mode related states.
+  // Please call ClearAll() if you want to all states.
+  virtual void Clear();
+  virtual void ClearCommitText();
 
-  bool MoveCursorRight();
-  bool MoveCursorLeft();
-  bool MoveCursorRightByWord();
-  bool MoveCursorLeftByWord();
-  bool MoveCursorToBeginning();
-  bool MoveCursorToEnd();
+  virtual bool MoveCursorRight();
+  virtual bool MoveCursorLeft();
+  virtual bool MoveCursorRightByWord();
+  virtual bool MoveCursorLeftByWord();
+  virtual bool MoveCursorToBeginning();
+  virtual bool MoveCursorToEnd();
 
-  bool SelectCandidate(size_t index);
-  bool FocusCandidate(size_t index);
-  bool FocusCandidatePrev();
-  bool FocusCandidateNext();
-  bool ClearCandidateFromHistory(size_t index);
+  virtual bool SelectCandidate(size_t index);
+  virtual bool FocusCandidate(size_t index);
+  virtual bool FocusCandidatePrev();
+  virtual bool FocusCandidateNext();
+  virtual bool ClearCandidateFromHistory(size_t index);
 
-  bool RemoveCharBefore();
-  bool RemoveCharAfter();
-  bool RemoveWordBefore();
-  bool RemoveWordAfter();
+  virtual bool RemoveCharBefore();
+  virtual bool RemoveCharAfter();
+  virtual bool RemoveWordBefore();
+  virtual bool RemoveWordAfter();
 
-  void ReloadConfig();
+  virtual void ReloadConfig();
 
-  const string &commit_text() const;
-  const string &input_text() const;
-  const string &selected_text() const;
-  const string &conversion_text() const;
-  const string &rest_text() const;
-  const string &auxiliary_text() const;
+  virtual const string &commit_text() const;
+  virtual const string &input_text() const;
+  virtual const string &selected_text() const;
+  virtual const string &conversion_text() const;
+  virtual const string &rest_text() const;
+  virtual const string &auxiliary_text() const;
 
-  size_t cursor() const;
-  size_t focused_candidate_index() const;
-  size_t candidates_size() const;
-  void GetCandidates(vector<string> *candidates) const;
+  virtual size_t cursor() const;
+  virtual size_t focused_candidate_index() const;
+  virtual bool GetCandidate(size_t index, Candidate *candidate);
+  virtual bool HasCandidate(size_t index);
+  virtual size_t PrepareCandidates(size_t required_size);
+
+  // In addition to Clear(), this method clears the data related to direct
+  // commit mode. This method is virtual for testing.
+  virtual void ClearAll();
+  // Updates the previous commit text to insert characters considering
+  // commited text on direct commit mode. This method is virtual for testing.
+  virtual void UpdatePreviousCommitText(const string &text);
 
  private:
   friend class PunctuationContextTest;
@@ -116,6 +126,11 @@ class PunctuationContext : public PinyinContextInterface {
   const string empty_text_;
   const PunctuationTableInterface *table_;
   const SessionConfig &session_config_;
+
+  // Direct mode related context.
+  bool is_next_single_quote_close_;
+  bool is_next_double_quote_close_;
+  bool is_next_dot_half_;
 
   DISALLOW_COPY_AND_ASSIGN(PunctuationContext);
 };

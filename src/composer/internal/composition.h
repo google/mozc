@@ -107,7 +107,7 @@ class Composition : public CompositionInterface {
   CompositionInterface *Clone() const;
   Composition *CloneImpl() const;
 
-  void SetTableForUnittest(const Table *table);
+  void SetTable(const Table *table);
 
   void GetChunkAt(size_t position,
                   const TransliteratorInterface *transliterator,

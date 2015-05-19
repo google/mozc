@@ -352,11 +352,10 @@ ConnectionTypeHandler::GetConnectionTypeForUnittest(
 ImmutableConverterImpl::ImmutableConverterImpl()
     : dictionary_(DictionaryFactory::GetDictionary()),
       suffix_dictionary_(SuffixDictionaryFactory::GetSuffixDictionary()),
-      suppression_dictionary_(
-          SuppressionDictionary::GetSuppressionDictionary()),
+      suppression_dictionary_(Singleton<SuppressionDictionary>::get()),
       connector_(ConnectorFactory::GetConnector()),
       segmenter_(Singleton<Segmenter>::get()),
-      pos_matcher_(Singleton<POSMatcher>::get()),
+      pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcher()),
       pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
       first_name_id_(pos_matcher_->GetFirstNameId()),
       last_name_id_(pos_matcher_->GetLastNameId()),

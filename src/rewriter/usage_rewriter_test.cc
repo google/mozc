@@ -37,6 +37,7 @@
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
 
@@ -73,7 +74,8 @@ class UsageRewriterTest : public testing::Test {
   }
 
   UsageRewriter *CreateUsageRewriter() const {
-    return new UsageRewriter(Singleton<POSMatcher>::get());
+    return new UsageRewriter(
+        UserPosManager::GetUserPosManager()->GetPOSMatcher());
   }
 };
 

@@ -40,9 +40,10 @@
       'sources': [
         'calculator_rewriter_test.cc',
         'collocation_util_test.cc',
+        'correction_rewriter_test.cc',
+        'command_rewriter_test.cc',
         'date_rewriter_test.cc',
         'dice_rewriter_test.cc',
-        'command_rewriter_test.cc',
         'dictionary_generator_test.cc',
         'emoticon_rewriter_test.cc',
         'english_variants_rewriter_test.cc',
@@ -66,6 +67,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../converter/converter.gyp:converter',
+        '../data_manager/data_manager.gyp:user_pos_manager',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
         'calculator/calculator.gyp:calculator_mock',

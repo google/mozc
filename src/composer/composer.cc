@@ -199,7 +199,7 @@ Composer::Composer()
       comeback_input_mode_(transliteration::HIRAGANA),
       input_field_type_(commands::SessionCommand::NORMAL),
       shifted_sequence_count_(0),
-      composition_(new Composition(Singleton<Table>::get())),
+      composition_(new Composition(NULL)),
       max_length_(kMaxPreeditLength) {
   SetInputMode(transliteration::HIRAGANA);
   Reset();
@@ -225,8 +225,8 @@ bool Composer::Empty() const {
   return (GetLength() == 0);
 }
 
-void Composer::SetTableForUnittest(const Table *table) {
-  composition_->SetTableForUnittest(table);
+void Composer::SetTable(const Table *table) {
+  composition_->SetTable(table);
 }
 
 void Composer::SetInputMode(transliteration::TransliterationType mode) {
@@ -602,6 +602,12 @@ void Composer::GetStringForPreedit(string *output) const {
   // input type as "half ascii".
   // But the architecture of Mozc expects the server to handle such character
   // width management.
+  // In addition, we also think about PASSWORD field type.
+  // we can prepare NUMBER and TEL keyboard layout, which has
+  // "half ascii" composition mode. This works.
+  // But we will not have PASSWORD only keyboard. We will share the basic
+  // keyboard on usual and password mode
+  // so such hacky code cannot be applicable.
   // TODO(matsuzakit): Move this logic to another appopriate location.
   // SetOutputMode() is not currently applicable but ideally it is
   // better location than here.

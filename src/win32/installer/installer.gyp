@@ -42,6 +42,7 @@
         'relative_dir': 'win32/installer',
         'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
         'outdir32': '<(build_base)/$(ConfigurationName)',
+        'outdir32_dynamic': '<(build_base)/$(ConfigurationName)Dynamic',
         'outdir64': '<(build_base)/$(ConfigurationName)64',
         'mozc_version_file': '<(gen_out_dir)/mozc_version.wxi',
         'mozc_ime32_path': '<(outdir32)/GIMEJa.ime',
@@ -49,14 +50,61 @@
         'mozc_server_path': '<(outdir32)/GoogleIMEJaConverter.exe',
         'mozc_cache_service_path': '<(outdir32)/GoogleIMEJaCacheService.exe',
         'mozc_renderer_path': '<(outdir32)/GoogleIMEJaRenderer.exe',
-        'mozc_tool_path': '<(outdir32)/GoogleIMEJaTool.exe',
-        'conditions': [
-          ['use_qt=="YES"', {
-            'mozc_zinnia_model_data_path%': '<(DEPTH)/third_party/zinnia/tomoe/handwriting-light-ja.model',
-          }, {  # else, that is 'use_qt!="YES"'
-            'mozc_zinnia_model_data_path': '',
-          }],
-        ],
+        'variables' : {
+          'variables' : {
+            # TODO(yukawa): Support 32-bit environment.
+            'merge_modules_dir': r'"C:\Program Files (x86)\Common Files\Merge Modules"',
+          },
+          'merge_modules_dir': '<(merge_modules_dir)',
+          'debug_crt_merge_module_id_prefix': '',
+          'release_crt_merge_module_id_prefix': '',
+          'debug_crt_merge_module_path': '',
+          'release_crt_merge_module_path': '',
+          'qtcore4_dll_path': '',
+          'qtcored4_dll_path': '',
+          'qtgui4_dll_path': '',
+          'qtguid4_dll_path': '',
+          'mozc_zinnia_model_data_path': '',
+          'mozc_tool_path': '',
+          'conditions': [
+            ['use_dynamically_linked_qt==1 and target_compiler=="msvs2008"', {
+              'debug_crt_merge_module_id_prefix': 'DebugCRT90',
+              'release_crt_merge_module_id_prefix': 'CRT90',
+              'debug_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC90_DebugCRT_x86.msm',
+              'release_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC90_CRT_x86.msm',
+            }],
+            ['use_dynamically_linked_qt==1 and target_compiler=="msvs2010"', {
+              'debug_crt_merge_module_id_prefix': 'DebugCRT100',
+              'release_crt_merge_module_id_prefix': 'CRT100',
+              'debug_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC100_DebugCRT_x86.msm',
+              'release_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC100_CRT_x86.msm',
+            }],
+            ['qt_dir and use_qt=="YES" and use_dynamically_linked_qt==1', {
+              'qtcore4_dll_path': '<(qt_dir)/bin/QtCore4.dll',
+              'qtcored4_dll_path': '<(qt_dir)/bin/QtCored4.dll',
+              'qtgui4_dll_path': '<(qt_dir)/bin/QtGui4.dll',
+              'qtguid4_dll_path': '<(qt_dir)/bin/QtGuid4.dll',
+            }],
+            ['use_qt=="YES" and use_zinnia=="YES"', {
+              'mozc_zinnia_model_data_path': '<(DEPTH)/third_party/zinnia/tomoe/handwriting-light-ja.model',
+            }],
+            ['use_dynamically_linked_qt==1', {
+              'mozc_tool_path': '<(outdir32_dynamic)/GoogleIMEJaTool.exe',
+            }, { # else
+              'mozc_tool_path': '<(outdir32)/GoogleIMEJaTool.exe',
+            }],
+          ],
+        },
+        'debug_crt_merge_module_id_prefix': '<(debug_crt_merge_module_id_prefix)',
+        'release_crt_merge_module_id_prefix': '<(release_crt_merge_module_id_prefix)',
+        'debug_crt_merge_module_path': '<(debug_crt_merge_module_path)',
+        'release_crt_merge_module_path': '<(release_crt_merge_module_path)',
+        'qtcore4_dll_path': '<(qtcore4_dll_path)',
+        'qtcored4_dll_path': '<(qtcored4_dll_path)',
+        'qtgui4_dll_path': '<(qtgui4_dll_path)',
+        'qtguid4_dll_path': '<(qtguid4_dll_path)',
+        'mozc_zinnia_model_data_path': '<(mozc_zinnia_model_data_path)',
+        'mozc_tool_path': '<(mozc_tool_path)',
         'mozc_broker32_path': '<(outdir32)/GoogleIMEJaBroker32.exe',
         'mozc_broker64_path': '<(outdir64)/GoogleIMEJaBroker64.exe',
         'mozc_ca32_path': '<(outdir32)/GoogleIMEJaInstallerHelper32.dll',

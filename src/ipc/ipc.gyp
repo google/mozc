@@ -36,6 +36,7 @@
       'target_name': 'ipc',
       'type': 'static_library',
       'sources': [
+        'android_ipc.cc',
         'ipc.cc',
         'ipc_mock.cc',
         'ipc_path_manager.cc',
@@ -48,6 +49,14 @@
       'dependencies': [
         '../base/base.gyp:base',
         'ipc_protocol',
+      ],
+      'conditions': [
+        ['target_platform=="Android"', {
+          'sources!': [
+            'ipc_path_manager.cc',
+            'process_watch_dog.cc',
+          ],
+        }],
       ],
     },
     {

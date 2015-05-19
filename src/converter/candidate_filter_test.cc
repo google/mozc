@@ -38,6 +38,7 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "testing/base/public/gunit.h"
@@ -53,6 +54,7 @@ class CandidateFilterTest : public testing::Test {
   virtual void SetUp() {
     candidate_freelist_.reset(new FreeList<Segment::Candidate>(1024));
     node_freelist_.reset(new FreeList<Node>(1024));
+    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
   virtual void TearDown() {
@@ -92,17 +94,17 @@ class CandidateFilterTest : public testing::Test {
   }
 
   const POSMatcher &pos_matcher() const {
-    return pos_matcher_;
+    return *pos_matcher_;
   }
 
   CandidateFilter *CreateCandidateFilter() const {
-    return new CandidateFilter(&suppression_dictionary_, &pos_matcher_);
+    return new CandidateFilter(&suppression_dictionary_, pos_matcher_);
   }
 
  private:
   scoped_ptr<FreeList<Segment::Candidate> > candidate_freelist_;
   scoped_ptr<FreeList<Node> > node_freelist_;
-  const POSMatcher pos_matcher_;
+  const POSMatcher *pos_matcher_;
   SuppressionDictionary suppression_dictionary_;
 };
 
@@ -303,9 +305,10 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
 
 TEST_F(CandidateFilterTest, Regression3437022) {
   scoped_ptr<SuppressionDictionary> dic(new SuppressionDictionary);
-  scoped_ptr<POSMatcher> pos_matcher(new POSMatcher);
+  const POSMatcher *pos_matcher =
+      UserPosManager::GetUserPosManager()->GetPOSMatcher();
   scoped_ptr<CandidateFilter> filter(
-      new CandidateFilter(dic.get(), pos_matcher.get()));
+      new CandidateFilter(dic.get(), pos_matcher));
 
   vector<const Node *> n;
   GetDefaultNodes(&n);

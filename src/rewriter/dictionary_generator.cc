@@ -79,8 +79,10 @@ DictionaryGenerator::DictionaryGenerator()
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
       token_map_(new map<uint64, Token *>),
       user_pos_(UserPosManager::GetUserPosManager()->GetUserPOS()),
-      open_bracket_id_(POSMatcher().GetOpenBracketId()),
-      close_bracket_id_(POSMatcher().GetCloseBracketId()) {}
+      open_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()
+                       ->GetOpenBracketId()),
+      close_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()
+                        ->GetCloseBracketId()) {}
 
 DictionaryGenerator::~DictionaryGenerator() {}
 

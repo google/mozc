@@ -143,13 +143,15 @@ TEST(MutexTest, ReaderWriterTest) {
     threads[i]->Start();
   }
 
-  for (int counter = 1; counter < 10; ++counter) {
-    // every reader thread can get g_counter variable at the same time.
-    Util::Sleep(10);
-    for (int i = 0; i < kThreadsSize; ++i) {
-      EXPECT_EQ(counter, threads[i]->counter());
-    }
+  const uint32 kSleepTime = 100;  // 100 msec
 
+  // every reader thread can get g_counter variable at the same time.
+  Util::Sleep(kSleepTime);
+  for (int i = 0; i < kThreadsSize; ++i) {
+    EXPECT_EQ(g_counter, threads[i]->counter());
+  }
+
+  for (int counter = 1; counter < 10; ++counter) {
     {
       // stops the reader thread.
       scoped_writer_lock l(&mutex);
@@ -163,7 +165,7 @@ TEST(MutexTest, ReaderWriterTest) {
       }
     }
 
-    Util::Sleep(10);
+    Util::Sleep(kSleepTime);
     // coutner value becomes the same as g_counter
     for (int i = 0; i < kThreadsSize; ++i) {
       EXPECT_EQ(g_counter, threads[i]->counter());

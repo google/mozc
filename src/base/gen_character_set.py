@@ -142,7 +142,7 @@ class CodePointCategorizer(object):
     # treat Unicode Japanese incompatible characters as JISX0208.
     return set([
         0x00A5,  # YEN SIGN
-        0x003E,  # OVERLINE
+        0x203E,  # OVERLINE
         0x301C,  # WAVE DASH
         0xFF5E,  # FULL WIDTH TILDE
         0x2016,  # DOUBLE VERTICAL LINE
@@ -357,9 +357,9 @@ def GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size):
   lines.append('Util::CharacterSet Util::GetCharacterSet(char32 ucs4) {\n')
 
   # First, check if the given code is valid or not. If not, returns
-  # UNICODE_ONLY as a fallback. Note that it is implementation dependent if
-  # char32 is signed or not.
-  lines.extend(['  if (ucs4 < 0) {\n',
+  # UNICODE_ONLY as a fallback.
+  # TODO(komatsu): add INVALID instead of UNICODE_ONLY.
+  lines.extend(['  if (ucs4 > 0x10FFFF) {\n',
                 '    return UNICODE_ONLY;\n',
                 '  }\n'])
   lines.append('\n')

@@ -38,6 +38,7 @@
 #include "rewriter/symbol_rewriter.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
+#include "session/request_handler.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -279,5 +280,17 @@ TEST_F(SymbolRewriterTest, SetKey) {
   }
 }
 
+TEST_F(SymbolRewriterTest, MobileEnvironmentTest) {
+  commands::Request input;
+  SymbolRewriter rewriter(converter_);
+
+  input.set_mixed_conversion(true);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+
+  input.set_mixed_conversion(false);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
 
 }  // namespace mozc

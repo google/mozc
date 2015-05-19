@@ -68,15 +68,6 @@ class SparseConnector : public ConnectorInterface {
 
   DISALLOW_COPY_AND_ASSIGN(SparseConnector);
 };
-
-class SparseConnectorBuilder {
- public:
-  static void Compile(const string &text_connection_file,
-                      const string &id_file,
-                      const string &special_pos_file,
-                      const string &output_file);
-};
-
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_SPARSE_CONNECTOR_H_

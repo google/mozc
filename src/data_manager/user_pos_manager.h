@@ -37,6 +37,8 @@
 
 namespace mozc {
 
+class POSMatcher;
+class PosGroup;
 class UserDictionary;
 class UserPOSInterface;
 
@@ -52,6 +54,10 @@ class UserPosManager : public DataManagerInterface {
 
   virtual const UserPOSInterface *GetUserPOS() const;
   virtual UserDictionary *GetUserDictionary() { return NULL; }
+
+  // TODO(noriyukit): Better to move GetPOSMatcher() to further derived class,
+  // as its use is restricted. Tentatively implemented in this class.
+  virtual const POSMatcher *GetPOSMatcher();
 
   // TODO(noriyukit): Better to move GetPosGroup() to further derived class, as
   // its use is restricted. Tentatively implemented in this class.

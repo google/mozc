@@ -37,6 +37,7 @@
 #include <utility>
 
 #include "base/base.h"
+#include "composer/table.h"
 #include "session/common.h"
 #include "session/session_handler_interface.h"
 #include "storage/lru_cache.h"
@@ -102,6 +103,7 @@ class SessionHandler : public SessionHandlerInterface {
   bool GetStoredConfig(commands::Command *command);
   bool SetStoredConfig(commands::Command *command);
   bool SetImposedConfig(commands::Command *command);
+  bool SetRequest(commands::Command *command);
   bool StartCloudSync(commands::Command *command);
   bool ClearCloudSync(commands::Command *command);
   bool GetCloudSyncStatus(commands::Command *command);
@@ -131,6 +133,8 @@ class SessionHandler : public SessionHandlerInterface {
   session::SessionFactoryInterface *session_factory_;
   scoped_ptr<session::SessionObserverHandler> observer_handler_;
   scoped_ptr<Stopwatch> stopwatch_;
+
+  scoped_ptr<composer::TableManager> table_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandler);
 };

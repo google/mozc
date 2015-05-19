@@ -78,12 +78,7 @@ class Composer {
   // Check the preedit string is empty or not.
   bool Empty() const;
 
-  void SetTableForUnittest(const Table *table);
-
-  // Add a conversion rule to the table.
-  void AddRule(const string &input,
-               const string &output,
-               const string &pending);
+  void SetTable(const Table *table);
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
@@ -182,6 +177,10 @@ class Composer {
 
   // Returns true if characters at the head of the preedit should be committed
   // immediately.
+  // This is used for implementing password input mode in Android.
+  // We cannot use direct input mode because it cannot deal with toggle input.
+  // In password mode, first character in composition should be committed
+  // when another letter is generated in composition.
   bool ShouldCommitHead(size_t *length_to_commit) const;
 
   // Transform characters for preferred number format.  If any

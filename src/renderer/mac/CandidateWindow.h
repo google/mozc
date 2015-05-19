@@ -50,8 +50,8 @@ namespace mac {
 // between a window and a CandidateView.
 class CandidateWindow : public RendererBaseWindow {
  public:
-  explicit CandidateWindow();
-  ~CandidateWindow();
+  CandidateWindow();
+  virtual ~CandidateWindow();
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
   void SetCandidates(const commands::Candidates &candidates);

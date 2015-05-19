@@ -99,7 +99,6 @@
               'DelayLoadDLLs': [
                 'version.dll',
                 'wininet.dll',
-                'winmm.dll',
               ],
             },
           }

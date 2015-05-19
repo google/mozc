@@ -2760,6 +2760,28 @@ TEST(UtilTest, FormType) {
   // "ー"
   EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xe3\x83\xbc"));
 
+  // "¢£¥¦¬¯"
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xc2\xa2\xc2\xa3\xc2\xa5"
+                                                "\xc2\xa6\xc2\xac\xc2\xaf"));
+
+  // "￨￩￪￫￬￭￮"
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType(
+      "\xef\xbf\xa8\xef\xbf\xa9\xef\xbf\xaa\xef\xbf\xab\xef\xbf\xac"
+      "\xef\xbf\xad\xef\xbf\xae"));
+
+  // Half-width mathematical symbols
+  // [U+27E6, U+27ED], U+2985, and U+2986
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType(
+      "\xe2\x9f\xa6\xe2\x9f\xa7\xe2\x9f\xa8\xe2\x9f\xa9\xe2\x9f\xaa\xe2"
+      "\x9f\xab\xe2\x9f\xac\xe2\x9f\xad\xe2\xa6\x85\xe2\xa6\x86"));
+
+  // Half-width hangul "ﾠﾡﾢ"
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xef\xbe\xa0\xef\xbe\xa1"
+                                                "\xef\xbe\xa2"));
+
+  // Half-width won "₩"
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xe2\x82\xa9"));
+
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("012"));
   // "０１２012"
   EXPECT_EQ(Util::UNKNOWN_FORM, Util::GetFormType("\xef\xbc\x90\xef\xbc\x91\xef"
@@ -3299,12 +3321,35 @@ TEST(UtilTest, ArabicToKanjiTest) {
     {"00000", 1, {"\xE9\x9B\xB6"}, {kOldKanji}},
     // "二", "弐"
     {"2", 2, {"\xE4\xBA\x8C", "\xE5\xBC\x90"}, {kKanji, kOldKanji}},
-    // "十", "拾"
-    {"10", 2, {"\xE5\x8D\x81", "\xE6\x8B\xBE"}, {kKanji, kOldKanji}},
+    // "壱拾" is needed to avoid mistakes. Please refer http://b/6422355
+    // for details.
+    // "十", "壱拾", "拾"
+    {"10", 3, {"\xE5\x8D\x81", "\xE5\xA3\xB1\xE6\x8B\xBE", "\xE6\x8B\xBE"},
+     {kKanji, kOldKanji, kOldKanji}},
+    // "百", "壱百"
+    {"100", 2, {"\xE7\x99\xBE", "\xE5\xA3\xB1\xE7\x99\xBE"},
+     {kKanji, kOldKanji}},
+    // "千", "壱阡", "阡"
+    {"1000", 3, {"\xE5\x8D\x83", "\xE5\xA3\xB1\xE9\x98\xA1",
+                 "\xE9\x98\xA1"},
+     {kKanji, kOldKanji, kOldKanji}},
     {"20", 3,
      // "二十", "弐拾", "廿"
      {"\xE4\xBA\x8C\xE5\x8D\x81", "\xE5\xBC\x90\xE6\x8B\xBE", "\xE5\xBB\xBF"},
      {kKanji, kOldKanji, kOldKanji}},
+    {"11111", 4,
+     // "1万1111"
+     {"1" "\xE4\xB8\x87" "1111",
+      // "１万１１１１"
+      "\xEF\xBC\x91\xE4\xB8\x87\xEF\xBC\x91\xEF\xBC\x91\xEF\xBC\x91"
+      "\xEF\xBC\x91",
+      // "一万千百十一"
+      "\xE4\xB8\x80\xE4\xB8\x87\xE5\x8D\x83\xE7\x99\xBE\xE5\x8D\x81"
+      "\xE4\xB8\x80",
+      // "壱萬壱阡壱百壱拾壱"
+      "\xE5\xA3\xB1\xE8\x90\xAC\xE5\xA3\xB1\xE9\x98\xA1\xE5\xA3\xB1"
+      "\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE5\xA3\xB1"},
+     {kHalfArabicKanji, kFullArabicKanji, kKanji, kOldKanji}},
     {"12345", 4,
      // "1万2345"
      {"1" "\xE4\xB8\x87" "2345",
@@ -3349,14 +3394,15 @@ TEST(UtilTest, ArabicToKanjiTest) {
       "\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81"
       "\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7\x99\xBE"
       "\xE5\x8D\x81\xE4\xBA\x94",
-      // "阡八百四拾四京六阡七百四拾四兆七百参拾七億九百五拾五萬阡六百拾五"
-      "\xE9\x98\xA1\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
-      "\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD\xE9\x98\xA1\xE4\xB8\x83"
-      "\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86"
-      "\xE4\xB8\x83\xE7\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83"
-      "\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
-      "\xE4\xBA\x94\xE8\x90\xAC\xE9\x98\xA1\xE5\x85\xAD\xE7\x99\xBE"
-      "\xE6\x8B\xBE\xE4\xBA\x94"},
+      // "壱阡八百四拾四京六阡七百四拾四兆七百参拾七億九百五拾五萬"
+      // "壱阡六百壱拾五"
+      "\xE5\xA3\xB1\xE9\x98\xA1\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B"
+      "\xE6\x8B\xBE\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD\xE9\x98\xA1"
+      "\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B"
+      "\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE"
+      "\xE4\xB8\x83\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94"
+      "\xE6\x8B\xBE\xE4\xBA\x94\xE8\x90\xAC\xE5\xA3\xB1\xE9\x98\xA1"
+      "\xE5\x85\xAD\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE4\xBA\x94"},
      {kHalfArabicKanji, kFullArabicKanji, kKanji, kOldKanji}},
   };
 
@@ -3364,7 +3410,8 @@ TEST(UtilTest, ArabicToKanjiTest) {
     vector<Util::NumberString> output;
     ASSERT_LE(kData[i].expect_num, kMaxCandsInArabicToKanjiTest);
     EXPECT_TRUE(Util::ArabicToKanji(kData[i].input, &output));
-    ASSERT_EQ(output.size(), kData[i].expect_num) << "i : " << i;
+    ASSERT_EQ(output.size(), kData[i].expect_num)
+        << "on conversion of '" << kData[i].input << "'";
     for (int j = 0; j < kData[i].expect_num; ++j) {
       EXPECT_EQ(kData[i].expect_value[j], output[j].value)
           << "input : " << kData[i].input << "\nj : " << j;

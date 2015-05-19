@@ -41,6 +41,7 @@
 
 #include "base/base.h"
 #include "base/singleton.h"
+#include "base/stopwatch.h"
 #include "base/util.h"
 #include "net/http_client_common.h"
 #ifdef MOZC_ENABLE_HTTP_CLIENT
@@ -136,22 +137,39 @@ void CALLBACK StatusCallback(HINTERNET internet,
   }
 }
 
-bool CheckTimeout(HANDLE event, DWORD target_time) {
+bool CheckTimeout(HANDLE event, int64 elapsed_msec, int32 timeout_msec) {
   const DWORD error = ::GetLastError();
-  if (error == ERROR_IO_PENDING) {
-    const DWORD time_left = target_time - ::timeGetTime();
-    if (time_left > 0 &&
-        WAIT_OBJECT_0 == ::WaitForSingleObject(event, time_left)) {
-      ::ResetEvent(event);
-      return true;
-    } else {
-      LOG(WARNING) << "Timeout: " << time_left;
-      return false;
-    }
+  if (error != ERROR_IO_PENDING) {
+    LOG(ERROR) << "Unexpected error state: " << error;
+    return false;
   }
-
-  LOG(ERROR) << error;
-  return false;
+  const int64 time_left = timeout_msec - elapsed_msec;
+  if (time_left < 0) {
+    LOG(WARNING) << "Already timed-out: " << time_left;
+    return false;
+  }
+  DCHECK_GE(elapsed_msec, 0);
+  DCHECK_LE(time_left, static_cast<int64>(MAXDWORD))
+      << "This should always be true because |timeout_msec| <= MAXDWORD";
+  const DWORD positive_time_left = static_cast<DWORD>(time_left);
+  const DWORD wait_result = ::WaitForSingleObject(event, positive_time_left);
+  if (wait_result == WAIT_FAILED) {
+    const DWORD wait_error = ::GetLastError();
+    LOG(ERROR) << "WaitForSingleObject failed. error: " << wait_error;
+    return false;
+  }
+  if (wait_result == WAIT_TIMEOUT) {
+    LOG(WARNING) << "WaitForSingleObject timed out after "
+                 << positive_time_left << " msec.";
+    return false;
+  }
+  if (wait_result != WAIT_OBJECT_0) {
+    LOG(ERROR) << "WaitForSingleObject returned unexpected result: "
+               << wait_result;
+    return false;
+  }
+  ::ResetEvent(event);
+  return true;
 }
 
 bool RequestInternal(HTTPMethodType type,
@@ -166,7 +184,7 @@ bool RequestInternal(HTTPMethodType type,
     return false;
   }
 
-  const DWORD target_time = ::timeGetTime() + option.timeout;
+  Stopwatch stopwatch = stopwatch.StartNew();
 
   HANDLE event = ::CreateEvent(NULL, FALSE, FALSE, NULL);
   if (NULL == event) {
@@ -289,7 +307,8 @@ bool RequestInternal(HTTPMethodType type,
                          NULL, 0,
                          (type == HTTP_POST) ? (LPVOID)post_data : NULL,
                          (type == HTTP_POST) ? post_size : 0)) {
-    if (!CheckTimeout(event, target_time)) {
+    if (!CheckTimeout(event, stopwatch.GetElapsedMilliseconds(),
+                      option.timeout)) {
       LOG(ERROR) << "HttpSendRequest() failed: "
                  << ::GetLastError() << " " << url;
       return false;
@@ -369,7 +388,8 @@ bool RequestInternal(HTTPMethodType type,
                                 &ibuf,
                                 WININET_API_FLAG_ASYNC,
                                 reinterpret_cast<DWORD_PTR>(event)) ||
-          CheckTimeout(event, target_time)) {
+          CheckTimeout(event, stopwatch.GetElapsedMilliseconds(),
+                       option.timeout)) {
         const DWORD size = ibuf.dwBufferLength;
         if (size == 0) {
           break;

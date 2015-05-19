@@ -32,6 +32,8 @@
 #include "converter/segments.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "testing/base/public/gunit.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {
@@ -65,5 +67,9 @@ TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
 TEST(RemoveRedundantCandidateRewriterTest, CapabilityTest) {
   RemoveRedundantCandidateRewriter rewriter;
   EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability());
+  commands::Request input;
+  input.set_mixed_conversion(true);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
 }
 }  // namespace mozc

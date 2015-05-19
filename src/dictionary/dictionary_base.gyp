@@ -69,43 +69,30 @@
         {
           'action_name': 'gen_pos_matcher',
           'variables': {
-            'id_def': '../data/dictionary/id.def',
-            'special_pos': '../data/rules/special_pos.def',
             'pos_matcher_rule': '../data/rules/pos_matcher_rule.def',
-            'base_pos_matcher_header': '<(gen_out_dir)/base_pos_matcher.h',
-            'pos_matcher_data': '<(gen_out_dir)/pos_matcher_data.h',
+            'pos_matcher_header': '<(gen_out_dir)/pos_matcher.h',
           },
           'inputs': [
             'gen_pos_matcher_code.py',
-            '<(id_def)',
-            '<(special_pos)',
             '<(pos_matcher_rule)'
           ],
           'outputs': [
-            '<(base_pos_matcher_header)',
-            '<(pos_matcher_data)',
+            '<(pos_matcher_header)',
           ],
           'action': [
             'python', 'gen_pos_matcher_code.py',
-            '--id_file=<(id_def)',
-            '--special_pos_file=<(special_pos)',
             '--pos_matcher_rule_file=<(pos_matcher_rule)',
-            '--output_pos_matcher_data=<(pos_matcher_data)',
-            '--output_base_pos_matcher_h=<(base_pos_matcher_header)',
+            '--output_pos_matcher_h=<(pos_matcher_header)',
           ],
-          'message': ('Generating <(pos_matcher_data) and ' +
-                      '<(base_pos_matcher_header)'),
+          'message': ('Generating <(pos_matcher_header)'),
         },
       ],
     },
     {
       'target_name': 'pos_matcher',
-      'type': 'static_library',
+      'type': 'none',
       'toolsets': ['target', 'host'],
       'hard_dependency': 1,
-      'sources': [
-        'pos_matcher.cc',
-      ],
       'dependencies': [
         'gen_pos_matcher#host',
       ],
@@ -282,6 +269,14 @@
         'gen_pos_map#host',
         'gen_pos_matcher#host',
         'suppression_dictionary',
+      ],
+      'conditions': [
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'sources!': [
+            'user_dictionary.cc',
+            'user_dictionary_storage.cc',
+          ],
+        }],
       ],
     },
   ],

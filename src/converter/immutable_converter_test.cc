@@ -203,7 +203,7 @@ TEST_F(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
           Singleton<SuppressionDictionary>::get(),
           ConnectorFactory::GetConnector(),
           Singleton<Segmenter>::get(),
-          Singleton<POSMatcher>::get(),
+          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
           UserPosManager::GetUserPosManager()->GetPosGroup()));
   converter->MakeLatticeNodesForPredictiveNodes(&lattice, &segments);
   EXPECT_FALSE(dictionary->received_target_query());
@@ -238,7 +238,7 @@ TEST_F(ImmutableConverterTest, AddPredictiveNodes) {
           Singleton<SuppressionDictionary>::get(),
           ConnectorFactory::GetConnector(),
           Singleton<Segmenter>::get(),
-          Singleton<POSMatcher>::get(),
+          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
           UserPosManager::GetUserPosManager()->GetPosGroup()));
   converter->MakeLatticeNodesForPredictiveNodes(&lattice, &segments);
   EXPECT_TRUE(dictionary->received_target_query());
@@ -265,7 +265,7 @@ TEST_F(ConnectionTypeHandlerTest, GetConnectionType) {
           Singleton<SuppressionDictionary>::get(),
           ConnectorFactory::GetConnector(),
           Singleton<Segmenter>::get(),
-          Singleton<POSMatcher>::get(),
+          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
           UserPosManager::GetUserPosManager()->GetPosGroup()));
 
   Segments segments;

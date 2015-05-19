@@ -163,56 +163,6 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
   EXPECT_FALSE(KeyEventUtil::GetKeyInformation(key_event, &output));
 }
 
-TEST(KeyEventUtilTest, NormalizeCaps) {
-  KeyEvent key_event;
-  KeyEvent normalized_key_event;
-
-  {  // Does nothing since key_event doesn't have CapsLock.
-    KeyParser::ParseKey("H", &key_event);
-    ASSERT_EQ(0, key_event.modifier_keys_size());
-    ASSERT_EQ('H', key_event.key_code());
-
-    KeyEventUtil::NormalizeCaps(key_event, &normalized_key_event);
-    EXPECT_EQ(0, normalized_key_event.modifier_keys_size());
-    EXPECT_EQ('H', normalized_key_event.key_code());
-  }
-
-  {  // Removes caps
-    KeyParser::ParseKey("CAPS H", &key_event);
-    ASSERT_EQ(1, key_event.modifier_keys_size());
-    ASSERT_EQ(KeyEvent::CAPS, KeyEventUtil::GetModifiers(key_event));
-    ASSERT_EQ('H', key_event.key_code());
-
-    KeyEventUtil::NormalizeCaps(key_event, &normalized_key_event);
-    EXPECT_EQ(0, normalized_key_event.modifier_keys_size());
-    EXPECT_EQ('h', normalized_key_event.key_code());
-  }
-
-  {  // Doesn't remove left or right shift.
-    KeyParser::ParseKey("LeftShift RightShift", &key_event);
-    ASSERT_EQ(3, key_event.modifier_keys_size());
-    ASSERT_EQ((KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT | KeyEvent::RIGHT_SHIFT),
-              KeyEventUtil::GetModifiers(key_event));
-
-    KeyEventUtil::NormalizeCaps(key_event, &normalized_key_event);
-    EXPECT_EQ(3, normalized_key_event.modifier_keys_size());
-    ASSERT_EQ((KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT | KeyEvent::RIGHT_SHIFT),
-              KeyEventUtil::GetModifiers(normalized_key_event));
-  }
-
-  {  // Removes caps and doesn't remove left shift.
-    KeyParser::ParseKey("LeftShift Caps", &key_event);
-    ASSERT_EQ(3, key_event.modifier_keys_size());
-    ASSERT_EQ((KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT | KeyEvent::CAPS),
-              KeyEventUtil::GetModifiers(key_event));
-
-    KeyEventUtil::NormalizeCaps(key_event, &normalized_key_event);
-    EXPECT_EQ(2, normalized_key_event.modifier_keys_size());
-    ASSERT_EQ((KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT),
-              KeyEventUtil::GetModifiers(normalized_key_event));
-  }
-}
-
 TEST(KeyEventUtilTest, NormalizeModifiers) {
   KeyEvent key_event;
   KeyEvent normalized_key_event;

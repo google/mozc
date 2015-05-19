@@ -47,6 +47,7 @@
 // for FRIEND_TEST
 #include "testing/base/public/gunit_prod.h"
 
+
 namespace mozc {
 
 namespace dictionary {
@@ -146,6 +147,7 @@ class SystemDictionary : public DictionaryInterface {
   Node *AppendNodesFromTokens(
       const FilterInfo &filter,
       const string &tokens_key,
+      const string &actual_key,
       vector<dictionary::TokenInfo> *tokens,
       Node *node,
       NodeAllocatorInterface *allocator,
@@ -185,6 +187,7 @@ class SystemDictionary : public DictionaryInterface {
 
   Node *CopyTokenToNode(NodeAllocatorInterface *allocator,
                         const Token &token) const;
+
 
   scoped_ptr<rx::RxTrie> key_trie_;
   scoped_ptr<rx::RxTrie> value_trie_;

@@ -31,6 +31,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/singleton.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "converter/node.h"
@@ -40,17 +41,8 @@
 namespace mozc {
 namespace {
 
-TEST(SupressionDictionary, SingletonTest) {
-  SuppressionDictionary *dic1 =
-      SuppressionDictionary::GetSuppressionDictionary();
-  SuppressionDictionary *dic2 =
-      SuppressionDictionary::GetSuppressionDictionary();
-  EXPECT_EQ(dic1, dic2);
-}
-
 TEST(SupressionDictionary, BasicTest) {
-  SuppressionDictionary *dic =
-      SuppressionDictionary::GetSuppressionDictionary();
+  SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
   CHECK(dic);
 
   // repeat 10 times
@@ -131,8 +123,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     nodes.push_back(new Node);
   }
 
-  SuppressionDictionary *dic =
-      SuppressionDictionary::GetSuppressionDictionary();
+  SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
   CHECK(dic);
 
   EXPECT_EQ(static_cast<Node*>(NULL), dic->SuppressNodes(NULL));
@@ -300,8 +291,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
 class DictionaryLoaderThread : public Thread {
  public:
   virtual void Run() {
-    SuppressionDictionary *dic =
-        SuppressionDictionary::GetSuppressionDictionary();
+    SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
     CHECK(dic);
     dic->Lock();
     dic->Clear();
@@ -316,8 +306,7 @@ class DictionaryLoaderThread : public Thread {
 };
 
 TEST(SupressionDictionary, ThreadTest) {
-  SuppressionDictionary *dic =
-      SuppressionDictionary::GetSuppressionDictionary();
+  SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
   CHECK(dic);
 
   dic->Lock();

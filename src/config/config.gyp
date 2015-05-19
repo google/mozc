@@ -79,6 +79,14 @@
       'dependencies': [
         'config_handler',
       ],
+      'conditions': [
+        ['target_platform=="Android"', {
+          'dependencies': [
+            'config_handler',
+            'config_protocol',
+          ],
+        }],
+      ],
     },
   ],
 }

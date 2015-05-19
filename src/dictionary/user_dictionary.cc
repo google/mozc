@@ -87,8 +87,10 @@ class UserDictionaryFileManager {
 
 class TokensIndex : public vector<UserPOS::Token *> {
  public:
-  explicit TokensIndex(const UserPOSInterface *user_pos)
-      : user_pos_(user_pos) {}
+  explicit TokensIndex(const UserPOSInterface *user_pos,
+                       SuppressionDictionary *suppression_dictionary)
+      : user_pos_(user_pos),
+        suppression_dictionary_(suppression_dictionary) {}
   virtual ~TokensIndex() {
     Clear();
   }
@@ -104,13 +106,10 @@ class TokensIndex : public vector<UserPOS::Token *> {
     vector<UserPOS::Token> tokens;
     int sync_words_count = 0;
 
-    SuppressionDictionary *suppression_dictionary =
-        SuppressionDictionary::GetSuppressionDictionary();
-    DCHECK(suppression_dictionary);
-    if (!suppression_dictionary->IsLocked()) {
+    if (!suppression_dictionary_->IsLocked()) {
       LOG(ERROR) << "SuppressionDictionary must be locked first";
     }
-    suppression_dictionary->Clear();
+    suppression_dictionary_->Clear();
 
     for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
       const UserDictionaryStorage::UserDictionary &dic =
@@ -151,7 +150,7 @@ class TokensIndex : public vector<UserPOS::Token *> {
 
         // "抑制単語"
         if (entry.pos() == "\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E") {
-          suppression_dictionary->AddEntry(reading, entry.value());
+          suppression_dictionary_->AddEntry(reading, entry.value());
         } else {
           tokens.clear();
           user_pos_->GetTokens(reading, entry.value(), entry.pos(), &tokens);
@@ -164,7 +163,7 @@ class TokensIndex : public vector<UserPOS::Token *> {
 
     sort(this->begin(), this->end(), POSTokenLess());
 
-    suppression_dictionary->UnLock();
+    suppression_dictionary_->UnLock();
 
     VLOG(1) << this->size() << " user dic entries loaded";
 
@@ -176,6 +175,7 @@ class TokensIndex : public vector<UserPOS::Token *> {
 
  private:
   const UserPOSInterface *user_pos_;
+  SuppressionDictionary *suppression_dictionary_;
 };
 
 class UserDictionaryReloader : public Thread {
@@ -237,14 +237,17 @@ class UserDictionaryReloader : public Thread {
 };
 
 UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
-                               const POSMatcher *pos_matcher)
+                               const POSMatcher *pos_matcher,
+                               SuppressionDictionary *suppression_dictionary)
     : reloader_(new UserDictionaryReloader(this)),
       user_pos_(user_pos),
       pos_matcher_(pos_matcher),
+      suppression_dictionary_(suppression_dictionary),
       empty_limit_(Limit()),
-      tokens_(new TokensIndex(user_pos_)) {
+      tokens_(new TokensIndex(user_pos_, suppression_dictionary)) {
   DCHECK(user_pos_);
   DCHECK(pos_matcher_);
+  DCHECK(suppression_dictionary_);
   Reload();
 }
 
@@ -408,8 +411,8 @@ bool UserDictionary::Reload() {
     return false;
   }
 
-  SuppressionDictionary::GetSuppressionDictionary()->Lock();
-  DCHECK(SuppressionDictionary::GetSuppressionDictionary()->IsLocked());
+  suppression_dictionary_->Lock();
+  DCHECK(suppression_dictionary_->IsLocked());
   reloader_->StartReload();
 
   return true;
@@ -430,8 +433,8 @@ bool UserDictionary::AddToAutoRegisteredDictionary(
     }
   }
 
-  SuppressionDictionary::GetSuppressionDictionary()->Lock();
-  DCHECK(SuppressionDictionary::GetSuppressionDictionary()->IsLocked());
+  suppression_dictionary_->Lock();
+  DCHECK(suppression_dictionary_->IsLocked());
   reloader_->StartAutoRegistration(key, value, pos);
 
   return true;
@@ -463,11 +466,12 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
   const size_t kVeryBigUserDictionarySize = 100000;
 
   if (size >= kVeryBigUserDictionarySize) {
-    TokensIndex *dummy_empty_tokens = new TokensIndex(user_pos_);
+    TokensIndex *dummy_empty_tokens = new TokensIndex(user_pos_,
+                                                      suppression_dictionary_);
     Swap(dummy_empty_tokens);
   }
 
-  TokensIndex *tokens = new TokensIndex(user_pos_);
+  TokensIndex *tokens = new TokensIndex(user_pos_, suppression_dictionary_);
   tokens->Load(storage);
   Swap(tokens);
   return true;

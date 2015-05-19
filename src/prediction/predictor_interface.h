@@ -30,6 +30,8 @@
 #ifndef MOZC_PREDICTION_PREDICTOR_INTERFACE_H_
 #define MOZC_PREDICTION_PREDICTOR_INTERFACE_H_
 
+#include <string>
+
 namespace mozc {
 
 class ConversionRequest;
@@ -69,6 +71,8 @@ class PredictorInterface {
 
   // Reload user history data from local disk.
   virtual bool Reload() { return true; }
+
+  virtual const string &GetPredictorName() const = 0;
 
  protected:
   // Disable the construction.

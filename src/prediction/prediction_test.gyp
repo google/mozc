@@ -54,6 +54,7 @@
         '../dictionary/dictionary_base.gyp:install_dictionary_test_data',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../config/config.gyp:config_handler',
+        '../session/session_base.gyp:request_handler',
         '../testing/testing.gyp:gtest_main',
         'prediction.gyp:prediction',
       ],
@@ -69,6 +70,14 @@
         ['use_separate_dictionary==1',{
           'dependencies': [
             '../dictionary/dictionary.gyp:dictionary_data_injected_environment',
+          ],
+        }],
+        ['target_platform=="Android"', {
+          'sources!': [
+            # This test depends on encryptor depending on Java libaray on
+            # Java, which is not available on native test.
+            # I.e., we cannot run this on Android.
+            'user_history_predictor_test.cc'
           ],
         }],
       ],

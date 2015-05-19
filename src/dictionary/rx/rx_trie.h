@@ -45,6 +45,7 @@ namespace rx {
 // Container for search result
 struct RxEntry {
   string key;
+  string actual_key;
   int id;
 };
 
@@ -55,6 +56,7 @@ class RxTrie {
 
   // Open from image.
   bool OpenImage(const unsigned char *image);
+
 
   void PredictiveSearch(const string &key, vector<RxEntry> *result) const;
 

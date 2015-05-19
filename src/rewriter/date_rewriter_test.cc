@@ -36,6 +36,7 @@
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -890,6 +891,18 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
   EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 }
 
+TEST_F(DateRewriterTest, MobileEnvironmentTest) {
+  commands::Request input;
+  DateRewriter rewriter;
+
+  input.set_mixed_conversion(true);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+
+  input.set_mixed_conversion(false);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
 
 TEST_F(DateRewriterTest, RewriteYearTest) {
   DateRewriter rewriter;

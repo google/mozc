@@ -86,6 +86,7 @@
       ],
       'dependencies': [
         '../client/client.gyp:client',
+        '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
         'session_base.gyp:generic_storage_manager',

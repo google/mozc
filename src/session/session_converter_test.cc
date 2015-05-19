@@ -78,7 +78,7 @@ class SessionConverterTest : public testing::Test {
     table_.reset(new composer::Table);
     table_->Initialize();
     composer_.reset(new composer::Composer);
-    composer_->SetTableForUnittest(table_.get());
+    composer_->SetTable(table_.get());
 
     // "あいうえお"
     aiueo_ = "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a";
@@ -1409,7 +1409,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  convertermock_->SetStartSuggestionForRequest(&segments, true);
   EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
@@ -1480,7 +1480,7 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  convertermock_->SetStartSuggestionForRequest(&segments, true);
   EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
@@ -1534,7 +1534,7 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 
   // Prediction
-  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  convertermock_->SetStartPredictionForRequest(&segments, true);
   EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
@@ -1640,7 +1640,7 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 
   // Prediction without suggestion.
-  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  convertermock_->SetStartPredictionForRequest(&segments, true);
   EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
@@ -1695,7 +1695,7 @@ TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  convertermock_->SetStartSuggestionForRequest(&segments, true);
   // No candidates should be visible because we are on password field.
   EXPECT_FALSE(converter.Suggest(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
@@ -1738,7 +1738,7 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
   composer_->InsertCharacterPreedit(kKey);
 
   // Suggestion
-  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  convertermock_->SetStartSuggestionForRequest(&segments, true);
   EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
@@ -1767,7 +1767,7 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
     }
   }
   // Expand suggestion candidate
-  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  convertermock_->SetStartPredictionForRequest(&segments, true);
   EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
@@ -2050,7 +2050,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // PREDICTION
     SessionConverter converter(convertermock_.get());
-    convertermock_->SetStartPredictionWithComposer(&segments, true);
+    convertermock_->SetStartPredictionForRequest(&segments, true);
     converter.Predict(*composer_);
     converter.CandidateNext(*composer_);
     string preedit;
@@ -2063,7 +2063,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // SUGGESTION
     SessionConverter converter(convertermock_.get());
-    convertermock_->SetStartSuggestionWithComposer(&segments, true);
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
     converter.Suggest(*composer_);
     string preedit;
     converter.GetPreedit(0, 1, &preedit);
@@ -2220,7 +2220,7 @@ TEST_F(SessionConverterTest, Issue1948334) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  convertermock_->SetStartSuggestionForRequest(&segments, true);
   EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
@@ -2239,7 +2239,7 @@ TEST_F(SessionConverterTest, Issue1948334) {
   composer_->InsertCharacterPreedit("\xE3\x82\x82\xE3\x81\x9A");
 
   // Suggestion
-  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  convertermock_->SetStartSuggestionForRequest(&segments, true);
   EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
@@ -2346,7 +2346,7 @@ TEST_F(SessionConverterTest, Issue1978201) {
   }
 
   // Prediction
-  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  convertermock_->SetStartPredictionForRequest(&segments, true);
   EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
@@ -2406,7 +2406,7 @@ TEST_F(SessionConverterTest, Issue2029557) {
   // Prediction (as <tab>)
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  convertermock_->SetStartPredictionForRequest(&segments, true);
   EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
@@ -2438,7 +2438,7 @@ TEST_F(SessionConverterTest, Issue2031986) {
     candidate->value = "AAAA";
     candidate = segment->add_candidate();
     candidate->value = "Aaaa";
-    convertermock_->SetStartSuggestionWithComposer(&segments, true);
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
   }
   // Get suggestion
   composer_->InsertCharacterPreedit("aaaa");
@@ -2449,7 +2449,7 @@ TEST_F(SessionConverterTest, Issue2031986) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("aaaaa");
-    convertermock_->SetStartSuggestionWithComposer(&segments, false);
+    convertermock_->SetStartSuggestionForRequest(&segments, false);
   }
   // Hide suggestion
   composer_->InsertCharacterPreedit("a");
@@ -2472,7 +2472,7 @@ TEST_F(SessionConverterTest, Issue2040116) {
     segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key("G");
-    convertermock_->SetStartPredictionWithComposer(&segments, false);
+    convertermock_->SetStartPredictionForRequest(&segments, false);
   }
   // Get prediction
   EXPECT_FALSE(converter.Predict(*composer_));
@@ -2487,7 +2487,7 @@ TEST_F(SessionConverterTest, Issue2040116) {
     Segment::Candidate *candidate;
     candidate = segment->add_candidate();
     candidate->value = "GoogleSuggest";
-    convertermock_->SetStartPredictionWithComposer(&segments, true);
+    convertermock_->SetStartPredictionForRequest(&segments, true);
   }
   // Get prediction again
   EXPECT_TRUE(converter.Predict(*composer_));
@@ -2512,7 +2512,7 @@ TEST_F(SessionConverterTest, Issue2040116) {
     segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key("G");
-    convertermock_->SetStartPredictionWithComposer(&segments, false);
+    convertermock_->SetStartPredictionForRequest(&segments, false);
   }
   // Hide prediction
   converter.CandidateNext(*composer_);
@@ -2579,7 +2579,7 @@ TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
   segment->set_key("");
   segment->add_candidate()->value = "search";
   segment->add_candidate()->value = "input";
-  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  convertermock_->SetStartSuggestionForRequest(&segments, true);
 
   EXPECT_TRUE(composer_->Empty());
   EXPECT_TRUE(converter.Suggest(*composer_));
@@ -2776,7 +2776,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
                         Segment::Candidate::DEFAULT_COMMAND);
-    convertermock_->SetStartSuggestionWithComposer(&segments, true);
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
     converter.Suggest(*composer_);
 
     size_t committed_size = 0;
@@ -2792,7 +2792,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 1,
                         Segment::Candidate::DEFAULT_COMMAND);
-    convertermock_->SetStartSuggestionWithComposer(&segments, true);
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
     converter.Suggest(*composer_);
 
     size_t committed_size = 0;

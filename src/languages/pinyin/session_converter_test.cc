@@ -31,12 +31,15 @@
 #include <vector>
 
 #include "base/util.h"
+#include "languages/pinyin/pinyin_constant.h"
+#include "languages/pinyin/pinyin_context_interface.h"
+#include "languages/pinyin/session_config.h"
+#include "languages/pinyin/session_converter.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
-#include "languages/pinyin/pinyin_context_interface.h"
-#include "languages/pinyin/session_converter.h"
 
+using ::testing::Invoke;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::SetArgPointee;
@@ -46,9 +49,20 @@ namespace mozc {
 namespace pinyin {
 
 namespace {
+const char *kCommitText = "\xE4\xBD\xA0\xE5\xA5\xBD";  // "你好"
+const char *kInputText = "input";
+const char *kSelectedText = "\xE9\x80\x89\xE5\x87\xBA";  // "选出"
+const char *kConversionText = "\xE5\x8F\x98\xE6\x8D\xA2";  // "变换"
+const char *kRestText = "\xE6\xAE\x8B\xE4\xBD\x99";  // "残余"
+const char *kAuxiliaryText = "auxiliary";
+const char *kCandidateText = "\xE5\x80\x99\xE9\x80\x89" "%d";  // "候选"
+const size_t kFocusedCandidateIndex = 6;
+const size_t kCandidatesSize = 7;
+const size_t kPageSize = 5;
+
 class MockContext : public PinyinContextInterface {
  public:
-  MockContext() {}
+  MockContext() : candidates_size_(0) {}
   virtual ~MockContext() {}
 
   MOCK_METHOD1(Insert, bool(char ch));
@@ -75,7 +89,8 @@ class MockContext : public PinyinContextInterface {
   MOCK_METHOD0(RemoveWordBefore, bool());
   MOCK_METHOD0(RemoveWordAfter, bool());
 
-  MOCK_METHOD0(ReloadConfig,  void());
+  MOCK_METHOD0(ReloadConfig, void());
+  MOCK_METHOD1(SwitchContext, void(int mode));
 
   MOCK_CONST_METHOD0(commit_text, const string &());
   MOCK_CONST_METHOD0(input_text, const string &());
@@ -86,28 +101,58 @@ class MockContext : public PinyinContextInterface {
 
   MOCK_CONST_METHOD0(cursor, size_t());
   MOCK_CONST_METHOD0(focused_candidate_index, size_t());
-  MOCK_CONST_METHOD0(candidates_size, size_t());
-  MOCK_CONST_METHOD1(GetCandidates, void(vector<string> *candidates));
+
+  virtual bool HasCandidate(size_t index) {
+    return index < candidates_size_;
+  }
+
+  virtual bool GetCandidate(size_t index, Candidate *candidate) {
+    if (!HasCandidate(index)) {
+      return false;
+    }
+    candidate->text = Util::StringPrintf(kCandidateText, index);
+    return true;
+  }
+
+  virtual size_t PrepareCandidates(size_t required_size) {
+    return min(candidates_size_, required_size);
+  }
+
+  void set_candidates_size(size_t size) {
+    candidates_size_ = size;
+  }
+
+ private:
+  size_t candidates_size_;
 };
 
-const char *kCommitText = "\xE4\xBD\xA0\xE5\xA5\xBD";  // "你好"
-const char *kInputText = "input";
-const char *kSelectedText = "\xE9\x80\x89\xE5\x87\xBA";  // "选出"
-const char *kConversionText = "\xE5\x8F\x98\xE6\x8D\xA2";  // "变换"
-const char *kRestText = "\xE6\xAE\x8B\xE4\xBD\x99";  // "残余"
-const char *kAuxiliaryText = "auxiliary";
-const char *kCandidateText = "\xE5\x80\x99\xE9\x80\x89" "%d";  // "候选"
-const size_t kFocusedCandidateIndex = 6;
-const size_t kCandidatesSize = 7;
-const size_t kPageSize = 5;
+class MockPunctuationContext : public punctuation::PunctuationContext {
+ public:
+  explicit MockPunctuationContext(const SessionConfig &session_config)
+      : punctuation::PunctuationContext(session_config) {}
+  virtual ~MockPunctuationContext() {}
+
+  MOCK_METHOD0(Clear, void());
+  MOCK_METHOD0(ClearAll, void());
+  MOCK_METHOD1(UpdatePreviousCommitText, void(const string &text));
+};
 }  // namespace
 
 class SessionConverterTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    // This mock converts a ASCII-sequence to full-width and upper case.
+    converter_.reset(new SessionConverter(session_config_));
+
+    // MockContext objects convert a ASCII-sequence to full-width and upper
+    // case.
     context_ = new MockContext;
-    converter_.reset(new SessionConverter(context_));
+    punctuation_context_ = new MockPunctuationContext(session_config_);
+
+    converter_->pinyin_context_.reset(context_);
+    converter_->direct_context_.reset(new MockContext);
+    converter_->english_context_.reset(new MockContext);
+    converter_->punctuation_context_.reset(punctuation_context_);
+    converter_->context_ = context_;
 
     ClearMockVariables();
   }
@@ -162,20 +207,11 @@ class SessionConverterTest : public testing::Test {
     EXPECT_CALL(*context_, rest_text()).WillRepeatedly(ReturnRef(rest_text_));
 
     if (has_candidates) {
-      for (int i = 0; i < kCandidatesSize; ++i) {
-        candidates_.push_back(Util::StringPrintf(kCandidateText, i));
-      }
-
-      EXPECT_CALL(*context_, GetCandidates(_))
-          .WillRepeatedly(SetArgPointee<0>(candidates_));
-      EXPECT_CALL(*context_, candidates_size())
-          .WillRepeatedly(Return(kCandidatesSize));
+      context_->set_candidates_size(kCandidatesSize);
       EXPECT_CALL(*context_, focused_candidate_index())
           .WillRepeatedly(Return(kFocusedCandidateIndex));
     } else {
-      EXPECT_CALL(*context_, GetCandidates(_))
-          .WillRepeatedly(SetArgPointee<0>(candidates_));
-      EXPECT_CALL(*context_, candidates_size()).WillRepeatedly(Return(0));
+      context_->set_candidates_size(0);
       EXPECT_CALL(*context_, focused_candidate_index())
           .WillRepeatedly(Return(0));
     }
@@ -234,10 +270,15 @@ class SessionConverterTest : public testing::Test {
       EXPECT_EQ(commands::MAIN, candidates.display_type());
       EXPECT_EQ(Util::CharsLen(selected_text_), candidates.position());
 
+      // It is very high cost to get a accurate candidates size, so we set
+      // a non-zero dummy value on SessionConverter.
+      const size_t kDummyCandidatesSize = 0xFFFFFFFF;
+      EXPECT_EQ(kDummyCandidatesSize, candidates.size());
+
       if (has_candidates) {
         EXPECT_EQ(kFocusedCandidateIndex, candidates.focused_index());
         EXPECT_EQ(kCandidatesSize - kPageSize, candidates.candidate_size());
-        EXPECT_EQ(kCandidatesSize, candidates.size());
+        EXPECT_EQ(kDummyCandidatesSize, candidates.size());
 
         for (size_t i = 0; i < kCandidatesSize - kPageSize; ++i) {
           const commands::Candidates::Candidate &c = candidates.candidate(i);
@@ -252,12 +293,14 @@ class SessionConverterTest : public testing::Test {
       } else {
         EXPECT_FALSE(candidates.has_focused_index());
         EXPECT_EQ(0, candidates.candidate_size());
-        EXPECT_EQ(0, candidates.size());
       }
 
       if (has_auxiliary_text) {
         ASSERT_TRUE(candidates.has_footer());
-        EXPECT_EQ(kAuxiliaryText, candidates.footer().label());
+        const commands::Footer &footer = candidates.footer();
+        EXPECT_EQ(kAuxiliaryText, footer.label());
+        ASSERT_TRUE(footer.has_index_visible());
+        EXPECT_FALSE(footer.index_visible());
       } else {
         EXPECT_FALSE(candidates.has_footer());
       }
@@ -266,11 +309,17 @@ class SessionConverterTest : public testing::Test {
     }
   }
 
+  PinyinContextInterface *GetCurrentContext() {
+    return converter_->context_;
+  }
+
   MockContext* context_;
-  scoped_ptr<SessionConverterInterface> converter_;
+  MockPunctuationContext *punctuation_context_;
+  scoped_ptr<SessionConverter> converter_;
 
   // variables for mock
-  vector<string> candidates_;
+  vector<Candidate> candidates_;
+  SessionConfig session_config_;
   string input_text_;
   string selected_text_;
   string conversion_text_;
@@ -289,8 +338,10 @@ TEST_F(SessionConverterTest, IsConverterActive) {
 }
 
 TEST_F(SessionConverterTest, Insert) {
-  commands::KeyEvent key_event;
+  const string commit_text;
+  EXPECT_CALL(*context_, commit_text()).WillRepeatedly(ReturnRef(commit_text));
 
+  commands::KeyEvent key_event;
   key_event.set_key_code('a');
   EXPECT_CALL(*context_, Insert('a')).WillOnce(Return(true));
   EXPECT_TRUE(converter_->Insert(key_event));
@@ -310,14 +361,23 @@ TEST_F(SessionConverterTest, Insert) {
 
 TEST_F(SessionConverterTest, Clear) {
   EXPECT_CALL(*context_, Clear()).Times(1);
+  EXPECT_CALL(*punctuation_context_, ClearAll()).Times(1);
   converter_->Clear();
 }
 
 TEST_F(SessionConverterTest, Commit) {
+  const string kText = kCommitText;
+
   EXPECT_CALL(*context_, Commit()).Times(1);
+  EXPECT_CALL(*context_, commit_text()).WillOnce(ReturnRef(kText));
+  EXPECT_CALL(*punctuation_context_,
+              UpdatePreviousCommitText(kText)).Times(1);
   converter_->Commit();
 
   EXPECT_CALL(*context_, CommitPreedit()).Times(1);
+  EXPECT_CALL(*context_, commit_text()).WillOnce(ReturnRef(kText));
+  EXPECT_CALL(*punctuation_context_,
+              UpdatePreviousCommitText(kText)).Times(1);
   converter_->CommitPreedit();
 }
 
@@ -376,8 +436,7 @@ TEST_F(SessionConverterTest, MoveCursor) {
 }
 
 TEST_F(SessionConverterTest, SelectCandidate) {
-  EXPECT_CALL(*context_, candidates_size())
-      .WillRepeatedly(Return(8));
+  context_->set_candidates_size(8);
   EXPECT_CALL(*context_, focused_candidate_index())
       .WillRepeatedly(Return(6));
 
@@ -391,7 +450,7 @@ TEST_F(SessionConverterTest, SelectCandidate) {
 }
 
 TEST_F(SessionConverterTest, FocusCandidate) {
-  EXPECT_CALL(*context_, candidates_size()).WillRepeatedly(Return(8));
+  context_->set_candidates_size(8);
   EXPECT_CALL(*context_, focused_candidate_index()).WillRepeatedly(Return(6));
 
   EXPECT_CALL(*context_, FocusCandidate(1)).WillOnce(Return(true));
@@ -416,19 +475,19 @@ TEST_F(SessionConverterTest, FocusCandidate) {
 
   // FocusCandidateNextPage
 
-  EXPECT_CALL(*context_, candidates_size()).WillRepeatedly(Return(10));
+  context_->set_candidates_size(10);
   EXPECT_CALL(*context_, focused_candidate_index()).WillRepeatedly(Return(6));
   EXPECT_CALL(*context_, FocusCandidate(_)).Times(0);
   EXPECT_FALSE(converter_->FocusCandidateNextPage());
 
-  EXPECT_CALL(*context_, candidates_size()).WillRepeatedly(Return(11));
+  context_->set_candidates_size(11);
   EXPECT_CALL(*context_, focused_candidate_index()).WillRepeatedly(Return(6));
   EXPECT_CALL(*context_, FocusCandidate(10)).WillOnce(Return(true));
   EXPECT_TRUE(converter_->FocusCandidateNextPage());
   EXPECT_CALL(*context_, FocusCandidate(10)).WillOnce(Return(false));
   EXPECT_FALSE(converter_->FocusCandidateNextPage());
 
-  EXPECT_CALL(*context_, candidates_size()).WillRepeatedly(Return(13));
+  context_->set_candidates_size(13);
   EXPECT_CALL(*context_, focused_candidate_index()).WillRepeatedly(Return(6));
   EXPECT_CALL(*context_, FocusCandidate(11)).WillOnce(Return(true));
   EXPECT_TRUE(converter_->FocusCandidateNextPage());
@@ -437,12 +496,12 @@ TEST_F(SessionConverterTest, FocusCandidate) {
 
   // FocusCandidatePrevPage
 
-  EXPECT_CALL(*context_, candidates_size()).WillRepeatedly(Return(4));
+  context_->set_candidates_size(4);
   EXPECT_CALL(*context_, focused_candidate_index()).WillRepeatedly(Return(3));
   EXPECT_CALL(*context_, FocusCandidate(_)).Times(0);
   EXPECT_FALSE(converter_->FocusCandidatePrevPage());
 
-  EXPECT_CALL(*context_, candidates_size()).WillRepeatedly(Return(8));
+  context_->set_candidates_size(8);
   EXPECT_CALL(*context_, focused_candidate_index()).WillRepeatedly(Return(6));
   EXPECT_CALL(*context_, FocusCandidate(1)).WillOnce(Return(true));
   EXPECT_TRUE(converter_->FocusCandidatePrevPage());
@@ -451,7 +510,7 @@ TEST_F(SessionConverterTest, FocusCandidate) {
 }
 
 TEST_F(SessionConverterTest, ClearCandidateFromHistory) {
-  EXPECT_CALL(*context_, candidates_size()).WillRepeatedly(Return(8));
+  context_->set_candidates_size(8);
   EXPECT_CALL(*context_, focused_candidate_index()).WillRepeatedly(Return(6));
 
   EXPECT_CALL(*context_, ClearCandidateFromHistory(7)).WillOnce(Return(true));
@@ -497,13 +556,24 @@ TEST_F(SessionConverterTest, ReloadConfig) {
 }
 
 TEST_F(SessionConverterTest, SelectWithNoCandidate_Issue6121366) {
-  EXPECT_CALL(*context_, candidates_size())
-      .WillRepeatedly(Return(0));
+  context_->set_candidates_size(0);
   EXPECT_CALL(*context_, focused_candidate_index())
       .WillRepeatedly(Return(0));
 
   EXPECT_CALL(*context_, Commit()).Times(1);
   EXPECT_TRUE(converter_->SelectFocusedCandidate());
+}
+
+TEST_F(SessionConverterTest, SwitchConversionMode) {
+  ASSERT_EQ(context_, GetCurrentContext());
+
+  EXPECT_CALL(*context_, Clear()).Times(1);
+  converter_->SwitchContext(PUNCTUATION);
+  EXPECT_EQ(punctuation_context_, GetCurrentContext());
+
+  EXPECT_CALL(*punctuation_context_, Clear()).Times(1);
+  converter_->SwitchContext(PINYIN);
+  EXPECT_EQ(context_, GetCurrentContext());
 }
 
 }  // namespace pinyin

@@ -46,6 +46,7 @@ class Config;
 
 namespace commands {
 class Capability;
+class CloudSyncStatus;
 class KeyEvent;
 class Output;
 class SessionCommand;
@@ -175,6 +176,15 @@ class ClientInterface {
   // call this method.
   virtual bool NoOperation() = 0;
 
+  // TODO(team): Add method descriptions.
+  virtual bool StartCloudSync() = 0;
+  virtual bool ClearCloudSync() = 0;
+  virtual bool GetCloudSyncStatus(
+      commands::CloudSyncStatus *cloud_sync_status) = 0;
+  virtual bool AddAuthCode(
+      const commands::Input::AuthorizationInfo &auth_info) {
+    return false;
+  }
 
   // Enables or disables using cascading window.
   virtual void EnableCascadingWindow(bool enable) = 0;

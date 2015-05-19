@@ -53,12 +53,21 @@
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../rewriter/rewriter.gyp:rewriter',
+        '../session/session_base.gyp:request_handler',
         '../session/session_base.gyp:session_protocol',
         '../storage/storage.gyp:encrypted_string_storage',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'gen_suggestion_filter_data#host',
+        'gen_zero_query_number_data#host',
         'prediction_protocol',
+      ],
+      'conditions': [
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'dependencies!': [
+            '../storage/storage.gyp:encrypted_string_storage',
+          ],
+        }],
       ],
     },
     {

@@ -48,9 +48,12 @@ template <class T> struct UnicodeDataCompare {
   }
 };
 
-bool IsOneUCS4Char(const QString &str, char32 *ucs4) {
+bool ExtractFirstUCS4Char(const QString &str, char32 *ucs4) {
   const QVector<uint> ucs4s = str.toUcs4();
-  if (ucs4s.size() != 1) {
+  // Due to QTBUG-25536, QString::toUcs4() is not reliable on Qt 4.8.0/4.8.1.
+  // https://bugreports.qt-project.org/browse/QTBUG-25536
+  // Nevertheless, we should be able to get the first character.
+  if (ucs4s.size() < 1) {
     return false;
   }
   DCHECK(ucs4);
@@ -80,7 +83,7 @@ uint16 SjisToEUC(uint16 code) {
 
 const uint16 LookupCP932Data(const QString &str) {
   char32 ucs4 = 0;
-  if (!IsOneUCS4Char(str, &ucs4)) {
+  if (!ExtractFirstUCS4Char(str, &ucs4)) {
     return 0;
   }
 
@@ -100,7 +103,7 @@ const uint16 LookupCP932Data(const QString &str) {
 
 const UnihanData *LookupUnihanData(const QString &str) {
   char32 ucs4 = 0;
-  if (!IsOneUCS4Char(str, &ucs4)) {
+  if (!ExtractFirstUCS4Char(str, &ucs4)) {
     return NULL;
   }
   UnihanData key;
@@ -120,7 +123,7 @@ const UnihanData *LookupUnihanData(const QString &str) {
 
 const QString LookupUnicodeData(const QString &str) {
   char32 ucs4 = 0;
-  if (!IsOneUCS4Char(str, &ucs4)) {
+  if (!ExtractFirstUCS4Char(str, &ucs4)) {
     return QString("");
   }
   UnicodeData key;
@@ -140,13 +143,12 @@ const QString LookupUnicodeData(const QString &str) {
 }
 
 QString toCodeInUcs4(const QString &str) {
-  QVector<uint> vec = str.toUcs4();
-  QString result = "U+";
-  for (int i = 0; i < vec.size(); ++i) {
-    QString tmp;
-    tmp.sprintf("%04X", vec[i]);
-    result += tmp;
+  char32 ucs4 = 0;
+  if (!ExtractFirstUCS4Char(str, &ucs4)) {
+    return "";
   }
+  QString result;
+  result.sprintf("U+%04X", ucs4);
   return result;
 }
 
@@ -158,7 +160,7 @@ QString toHexUTF8(const QString &str) {
   QString result;
   for (int i = 0; i < array.size(); ++i) {
     QString tmp;
-    tmp.sprintf("%02X ", static_cast<unsigned char>(array[i]));
+    tmp.sprintf("%02X ", static_cast<uint8>(array[i]));
     result += tmp;
   }
   return result;

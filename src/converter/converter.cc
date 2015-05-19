@@ -51,12 +51,14 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
+#include "session/request_handler.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -107,11 +109,22 @@ void SetKey(Segments *segments, const string &key) {
   VLOG(2) << segments->DebugString();
 }
 
+bool IsMobile() {
+  return GET_REQUEST(zero_query_suggestion) &&
+      GET_REQUEST(mixed_conversion);
+}
 
 bool IsValidSegments(const Segments &segments) {
   // All segments should have candidate
   for (size_t i = 0; i < segments.segments_size(); ++i) {
     if (segments.segment(i).candidates_size() != 0) {
+      continue;
+    }
+    // On mobile, we don't distinguish candidates and meta candidates
+    // So it's ok if we have meta candidates even if we don't have candidates
+    // TODO(team): we may remove mobile check if other platforms accept
+    // meta candidate only segemnt
+    if (IsMobile() && segments.segment(i).meta_candidates_size() != 0) {
       continue;
     }
     return false;
@@ -136,7 +149,7 @@ void ConverterFactory::SetConverter(ConverterInterface *converter) {
 
 ConverterImpl::ConverterImpl(PredictorInterface *predictor,
                              RewriterInterface *rewriter)
-    : pos_matcher_(Singleton<POSMatcher>::get()),
+    : pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcher()),
       pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
       predictor_(predictor),
       rewriter_(rewriter),
@@ -145,7 +158,7 @@ ConverterImpl::ConverterImpl(PredictorInterface *predictor,
       general_noun_id_(pos_matcher_->GetGeneralNounId()) {}
 
 ConverterImpl::ConverterImpl()
-    : pos_matcher_(Singleton<POSMatcher>::get()),
+    : pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcher()),
       pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
       rewriter_(new RewriterImpl(this, pos_matcher_, pos_group_)),
       immutable_converter_(ImmutableConverterFactory::GetImmutableConverter()),
@@ -154,24 +167,27 @@ ConverterImpl::ConverterImpl()
   // converter/predictor modules by appropriately setting parameters to the
   // constructors of those classes.
   PredictorInterface *dictionary_predictor =
-      new DictionaryPredictor(immutable_converter_,
-                              DictionaryFactory::GetDictionary(),
-                              SuffixDictionaryFactory::GetSuffixDictionary(),
-                              ConnectorFactory::GetConnector(),
-                              Singleton<Segmenter>::get(),
-                              *Singleton<POSMatcher>::get());
+      new DictionaryPredictor(
+          immutable_converter_,
+          DictionaryFactory::GetDictionary(),
+          SuffixDictionaryFactory::GetSuffixDictionary(),
+          ConnectorFactory::GetConnector(),
+          Singleton<Segmenter>::get(),
+          *UserPosManager::GetUserPosManager()->GetPOSMatcher());
   CHECK(dictionary_predictor);
 
   PredictorInterface *user_history_predictor =
-      new UserHistoryPredictor(DictionaryFactory::GetDictionary(),
-                               Singleton<POSMatcher>::get());
+      new UserHistoryPredictor(
+          DictionaryFactory::GetDictionary(),
+          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
+          Singleton<SuppressionDictionary>::get());
 
   PredictorInterface *extra_predictor = NULL;
 
-    predictor_.reset(
-        new DefaultPredictor(dictionary_predictor,
-                             user_history_predictor,
-                             extra_predictor));
+  predictor_.reset(new DefaultPredictor(dictionary_predictor,
+                                        user_history_predictor,
+                                        extra_predictor));
+
   user_data_manager_.reset(new UserDataManagerImpl(predictor_.get(),
                                                    rewriter_.get()));
 }

@@ -35,8 +35,10 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -54,6 +56,7 @@ class ValueDictionaryTest : public testing::Test {
     STLDeleteElements(&tokens_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     Util::Unlink(dict_name_);
+    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
   virtual void TearDown() {
@@ -78,6 +81,7 @@ class ValueDictionaryTest : public testing::Test {
   }
 
   const string dict_name_;
+  const POSMatcher *pos_matcher_;
 
  private:
   vector<Token *> tokens_;
@@ -86,17 +90,18 @@ class ValueDictionaryTest : public testing::Test {
 TEST_F(ValueDictionaryTest, LookupPredictive) {
   NodeAllocator allocator;
   // "うぃー"
-  AddToken("\xa4\xa6\xa4\xa3\xa1\xbc", "we");
+  AddToken("\xE3\x81\x86\xE3\x81\x83\xE3\x83\xBC", "we");
   // "うぉー"
-  AddToken("\xa4\xa6\xa4\xa9\xa1\xbc", "war");
+  AddToken("\xE3\x81\x86\xE3\x81\x89\xE3\x83\xBC", "war");
   // "わーど"
-  AddToken("\xa4\xef\xa1\xbc\xa4\xc9", "word");
+  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\xA9", "word");
   // "わーるど"
-  AddToken("\xa4\xef\xa1\xbc\xa4\xeb\xa4\xc9", "world");
+  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x82\x8B\xE3\x81\xA9", "world");
   BuildDictionary();
 
   scoped_ptr<ValueDictionary> dictionary(
-      ValueDictionary::CreateValueDictionaryFromFile(dict_name_));
+      ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
+                                                     dict_name_));
   const string lookup_key = "wo";
   Node *node = dictionary->LookupPredictive(lookup_key.c_str(),
                                             lookup_key.size(),
@@ -115,15 +120,16 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
 TEST_F(ValueDictionaryTest, LookupPredictiveWithLimit) {
   NodeAllocator allocator;
   // "うぃー"
-  AddToken("\xa4\xa6\xa4\xa3\xa1\xbc", "we");
+  AddToken("\xE3\x81\x86\xE3\x81\x83\xE3\x83\xBC", "we");
   // "うぉー"
-  AddToken("\xa4\xa6\xa4\xa9\xa1\xbc", "war");
+  AddToken("\xE3\x81\x86\xE3\x81\x89\xE3\x83\xBC", "war");
   // "わーど"
-  AddToken("\xa4\xef\xa1\xbc\xa4\xc9", "word");
+  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\xA9", "word");
   BuildDictionary();
 
   scoped_ptr<ValueDictionary> dictionary(
-      ValueDictionary::CreateValueDictionaryFromFile(dict_name_));
+      ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
+                                                     dict_name_));
   DictionaryInterface::Limit limit;
   Trie<string> trie;
   trie.AddEntry("e", "");

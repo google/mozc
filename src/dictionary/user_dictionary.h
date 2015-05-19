@@ -41,15 +41,17 @@
 namespace mozc {
 
 class POSMatcher;
+class SuppressionDictionary;
+class TokensIndex;   // defined in user_dictionary.cc
 class UserDictionaryReloader;
 class UserDictionaryStorage;
 class UserPOSInterface;
-class TokensIndex;   // defined in user_dictionary.cc
 
 class UserDictionary : public DictionaryInterface {
  public:
   UserDictionary(const UserPOSInterface *user_pos,
-                 const POSMatcher *pos_matcher);
+                 const POSMatcher *pos_matcher,
+                 SuppressionDictionary *suppression_dictionary);
   virtual ~UserDictionary();
 
   virtual Node *LookupPredictiveWithLimit(
@@ -99,6 +101,7 @@ class UserDictionary : public DictionaryInterface {
   scoped_ptr<UserDictionaryReloader> reloader_;
   const UserPOSInterface *user_pos_;
   const POSMatcher *pos_matcher_;
+  SuppressionDictionary *suppression_dictionary_;
   const Limit empty_limit_;
   TokensIndex *tokens_;
   mutable ReaderWriterMutex mutex_;

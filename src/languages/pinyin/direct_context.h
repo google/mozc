@@ -88,8 +88,9 @@ class DirectContext : public PinyinContextInterface {
 
   size_t cursor() const;
   size_t focused_candidate_index() const;
-  size_t candidates_size() const;
-  void GetCandidates(vector<string> *candidates) const;
+  bool GetCandidate(size_t index, Candidate *candidates);
+  bool HasCandidate(size_t index);
+  size_t PrepareCandidates(size_t required_size);
 
  private:
   const string empty_text_;

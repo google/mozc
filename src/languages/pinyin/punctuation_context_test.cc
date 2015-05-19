@@ -129,9 +129,13 @@ class PunctuationContextTest : public testing::Test {
                        size_t focused_candidate_index,
                        const string &auxiliary_text) {
     vector<string> actual_candidates;
-    context_->GetCandidates(&actual_candidates);
-    EXPECT_EQ(candidates, actual_candidates);
-    EXPECT_EQ(candidates.size(), context_->candidates_size());
+    const size_t candidates_size = GetCandidatesSize();
+    ASSERT_EQ(candidates.size(), candidates_size);
+    for (size_t i = 0; i < candidates_size; ++i) {
+      Candidate candidate;
+      ASSERT_TRUE(context_->GetCandidate(i, &candidate));
+      EXPECT_EQ(candidates[i], candidate.text);
+    }
 
     EXPECT_EQ(auxiliary_text, context_->auxiliary_text());
     EXPECT_EQ(focused_candidate_index, context_->focused_candidate_index());
@@ -139,6 +143,12 @@ class PunctuationContextTest : public testing::Test {
 
   void CheckResult(const string &commit_text) {
     EXPECT_EQ(commit_text, context_->commit_text());
+  }
+
+  size_t GetCandidatesSize() {
+    size_t size = 0;
+    for (; context_->HasCandidate(size); ++size) {}
+    return size;
   }
 
   scoped_ptr<MockTable> table_;
@@ -562,6 +572,63 @@ TEST_F(PunctuationContextTest, Config) {
     EXPECT_TRUE(context_->Insert('!'));
     CheckResult("\xEF\xBC\x81");  // "！"
   }
+}
+
+TEST_F(PunctuationContextTest, ToggleQuotes) {
+  const char *kOpenSingleQuote = "\xE2\x80\x98";  // "‘"
+  const char *kCloseSingleQuote = "\xE2\x80\x99";  // "’"
+  const char *kOpenDoubleQuote = "\xE2\x80\x9C";  // "“"
+  const char *kCloseDoubleQuote = "\xE2\x80\x9D";  // "”"
+
+  EXPECT_CALL(*table_, GetDirectCommitTextForSimplifiedChinese('\'', _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(kOpenSingleQuote), Return(true)));
+  EXPECT_CALL(*table_, GetDirectCommitTextForSimplifiedChinese('"', _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(kOpenDoubleQuote), Return(true)));
+  EXPECT_CALL(*table_, GetDirectCommitTextForSimplifiedChinese('a', _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>("a"), Return(true)));
+
+  context_->Insert('\'');
+  EXPECT_EQ(kOpenSingleQuote, context_->commit_text());
+  context_->Insert('\'');
+  EXPECT_EQ(kCloseSingleQuote, context_->commit_text());
+  context_->Insert('\'');
+  EXPECT_EQ(kOpenSingleQuote, context_->commit_text());
+
+  context_->Insert('"');
+  EXPECT_EQ(kOpenDoubleQuote, context_->commit_text());
+  context_->Insert('"');
+  EXPECT_EQ(kCloseDoubleQuote, context_->commit_text());
+  context_->Insert('"');
+  EXPECT_EQ(kOpenDoubleQuote, context_->commit_text());
+
+  context_->ClearAll();
+  // Opening quotes should be commited.
+  context_->Insert('\'');
+  EXPECT_EQ(kOpenSingleQuote, context_->commit_text());
+  context_->Insert('"');
+  EXPECT_EQ(kOpenDoubleQuote, context_->commit_text());
+
+  context_->Insert('a');
+  ASSERT_EQ("a", context_->commit_text());
+  // Closing quotes should be commited.
+  context_->Insert('\'');
+  EXPECT_EQ(kCloseSingleQuote, context_->commit_text());
+  context_->Insert('"');
+  EXPECT_EQ(kCloseDoubleQuote, context_->commit_text());
+}
+
+TEST_F(PunctuationContextTest, PeriodAfterDigit) {
+  const char *kDot = "\xE3\x80\x82";  // "。"
+
+  EXPECT_CALL(*table_, GetDirectCommitTextForSimplifiedChinese('.', _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(kDot), Return(true)));
+
+  context_->Insert('.');
+  EXPECT_EQ(kDot, context_->commit_text());
+
+  context_->UpdatePreviousCommitText("0");
+  context_->Insert('.');
+  EXPECT_EQ(".", context_->commit_text());
 }
 
 }  // namespace punctuation

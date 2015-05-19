@@ -26,7 +26,7 @@
     </message>
     <message>
         <location filename="about_dialog.ui" line="133"/>
-        <source>&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;http://code.google.com/p/mozc/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;http://code.google.com/p/mozc/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;http://code.google.com/p/mozc/issues/list&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

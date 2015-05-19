@@ -32,7 +32,7 @@
 
 #include <string>
 #include "base/base.h"
-#include "third_party/jsoncpp/json.h"
+#include "net/jsoncpp.h"
 
 namespace mozc {
 namespace net {

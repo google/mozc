@@ -31,8 +31,6 @@
 
 #include "session/japanese_session_factory.h"
 
-#include "base/singleton.h"
-#include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "session/internal/keymap.h"
 #include "session/session_interface.h"
@@ -41,20 +39,10 @@
 namespace mozc {
 namespace session {
 
-JapaneseSessionFactory::JapaneseSessionFactory()
-    : is_available_(false) {
-
-  if (!Singleton<composer::Table>::get()->Initialize()) {
-    return;
-  }
-  is_available_ = true;
+JapaneseSessionFactory::JapaneseSessionFactory() {
 }
 
 JapaneseSessionFactory::~JapaneseSessionFactory() {
-}
-
-void JapaneseSessionFactory::Reload() {
-  Singleton<composer::Table>::get()->Reload();
 }
 
 SessionInterface *JapaneseSessionFactory::NewSession() {
@@ -65,8 +53,10 @@ UserDataManagerInterface *JapaneseSessionFactory::GetUserDataManager() {
   return ConverterFactory::GetConverter()->GetUserDataManager();
 }
 
+// TODO(yoichio): This function is just same as extended one.
+// SessionFactoryInterface::IsAvailable() may be deprecated?
 bool JapaneseSessionFactory::IsAvailable() const {
-  return is_available_;
+  return true;
 }
 
 }  // namespace session

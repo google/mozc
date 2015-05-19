@@ -84,7 +84,6 @@ class DictionaryImpl : public DictionaryInterface {
 
   virtual void ClearReverseLookupCache(NodeAllocatorInterface *allocator) const;
 
-
  private:
   enum LookupType {
     PREDICTIVE,
@@ -99,6 +98,9 @@ class DictionaryImpl : public DictionaryInterface {
 
   Node *MaybeRemoveSpecialNodes(Node *node) const;
 
+  // Used to check POS IDs.
+  const POSMatcher *pos_matcher_;
+
   // Main three dictionaries.
   scoped_ptr<const DictionaryInterface> system_dictionary_;
   scoped_ptr<const DictionaryInterface> value_dictionary_;
@@ -110,9 +112,6 @@ class DictionaryImpl : public DictionaryInterface {
 
   // Suppression dictionary is used to suppress nodes.
   const SuppressionDictionary *suppression_dictionary_;
-
-  // Used to check POS IDs.
-  const POSMatcher *pos_matcher_;
 };
 
 }  // namespace mozc

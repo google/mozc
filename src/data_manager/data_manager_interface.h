@@ -36,6 +36,7 @@ namespace mozc {
 
 class ConnectorInterface;
 class DictionaryInterface;
+class POSMatcher;
 class PosGroup;
 class SegmenterInterface;
 class UserDictionary;
@@ -45,6 +46,8 @@ class UserPOSInterface;
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
 class DataManagerInterface {
  public:
+  virtual ~DataManagerInterface() {}
+
   // Returns a reference to the UserPOS class handling user pos data.  Don't
   // delete the returned pointer, which is owned by the manager.
   virtual const UserPOSInterface *GetUserPOS() const = 0;
@@ -52,6 +55,10 @@ class DataManagerInterface {
 
   // Since some modules don't require possibly huge dictionary data, we allow
   // derived classes not to implement the following methods.
+
+  // Returns a reference to POSMatcher class handling POS rules. Don't
+  // delete the returned pointer, which is owned by the manager.
+  virtual const POSMatcher *GetPOSMatcher() { return NULL; }
 
   // Returns a reference to PosGroup class handling POS grouping rule. Don't
   // delete the returned pointer, which is owned by the manager.
@@ -78,7 +85,6 @@ class DataManagerInterface {
 
  protected:
   DataManagerInterface() {}
-  virtual ~DataManagerInterface() {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DataManagerInterface);

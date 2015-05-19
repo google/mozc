@@ -284,6 +284,36 @@ message SessionCommand {
     // Return the current status such as composition mode, preedit method, etc.
     GET_STATUS = 6;
 
+    // This command is typically used for mobile IME's partial conversion,
+    // but currently it is on the way. This description is for current spec.
+    //
+    // This command requires that candidates exist.
+    //
+    // If there is a focused candidate (Conversion or Prediction state),
+    // the candidate matched with the given id in the first segment is
+    // submitted, even though the selected segment is not the first segment
+    // (Important thing is whether focused candidate exists
+    // or not. Focused index itself is ignored).
+    // This behavior should be updated because current cursor position and
+    // position of focused segment affects nothing.
+    // We should fix this non-intuitive behavior. Intuitive behavior might be
+    // submitting segments from first one to focused one (inclusive).
+    //
+    // If no focused candidate (Suggestion, including ZeroQuery suggestion),
+    // first (and only) segment's candiadte of which id is equal to id field of
+    // Input message is submitted.
+    // This behavior should be fixed because current cursor position affects
+    // nothing. In future, the characters after the cursor should be kept
+    // as preedit.
+    //
+    // This command's pre- and post- conditions are differenct from
+    // SUBMIT command's. Following conditions will be kept after updating
+    // the behavior.
+    // Pre-condition:
+    // - There should be candidate.
+    // Post-condition:
+    // - No guarantee on preedit text.
+    // TODO(yamaguchi): Update corresponding implementation please.
     SUBMIT_CANDIDATE = 7;
 
     // Perform reverse conversion.
@@ -356,6 +386,9 @@ message SessionCommand {
     NORMAL = 1;
 
     // Password field. Text is hidden after input.
+    // For Android,
+    // In order to make the last character visible to the user,
+    // the IME must not hold more than 2 characters in preedit.
     PASSWORD = 2;
 
     // Telephone number

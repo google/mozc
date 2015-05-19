@@ -34,6 +34,8 @@
 #include <string>
 #include <vector>
 
+#include "base/port.h"
+
 namespace mozc {
 
 // Simple synchronous HTTP client
@@ -65,7 +67,7 @@ class HTTPClient {
   struct Option {
     bool   include_header;       // include header in output
     size_t max_data_size;        // maximum data size client can retrieve
-    int    timeout;              // timeout
+    int32  timeout;              // timeout
     vector<string> headers;      // additional headers;
 
     // set default parameter

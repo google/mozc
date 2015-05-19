@@ -46,6 +46,10 @@
 #include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
+namespace composer {
+class Table;
+}  // namespace composer
+
 namespace session {
 class SessionCursorManageTest;
 class Session : public SessionInterface {
@@ -212,6 +216,8 @@ class Session : public SessionInterface {
   bool ReportBug(commands::Command *command);
 
   virtual void ReloadConfig();
+
+  virtual void SetTable(const composer::Table *table);
 
   // Set client capability for this session.  Used by unittest.
   virtual void set_client_capability(const commands::Capability &capability);

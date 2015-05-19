@@ -70,22 +70,14 @@
                 '<(qt_dir)/lib',
               ],
             },
+            'mac_framework_dirs': [
+              '<(qt_dir)/lib',
+            ],
             'libraries': [
-              '<(qt_dir)/lib/libQtCore.a',
-              '<(qt_dir)/lib/libQtGui.a',
-              '/usr/lib/libz.dylib',  # Qt on Mac always links to system zlib.
+              '<(qt_dir)/lib/QtCore.framework',
+              '<(qt_dir)/lib/QtGui.framework',
             ],
           },
-        }, {  # else
-          'xcode_settings': {
-            'LIBRARY_SEARCH_PATHS': [
-              '<(qt_dir_env)/lib',
-            ],
-          },
-          'libraries': [
-            '<(qt_dir_env)/lib/libQtCore.a',
-            '<(qt_dir_env)/lib/libQtGui.a',
-          ],
         }],
       ],
       'libraries': [

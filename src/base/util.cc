@@ -207,15 +207,6 @@ const char *const kNumGoogol =
 "100000000000000000000000000000000000000000000000000"
 "00000000000000000000000000000000000000000000000000";
 
-// Helper functions.
-void AppendToEachElement(
-    const string &s,
-    vector<pair<string, mozc::Util::NumberString::Style> > *out) {
-  for (int i = 0; i < out->size(); i++) {
-    (*out)[i].first.append(s);
-  }
-}
-
 // Judges given string is number or not.
 bool IsDecimalNumeric(const string &str) {
   for (int i = 0; i < str.size(); i++) {
@@ -949,18 +940,21 @@ bool Util::ArabicToKanji(const string &input_num,
           continue;
         }
 
-        if (style == NumberString::NUMBER_KANJI ||
-            style == NumberString::NUMBER_OLD_KANJI) {
+        if (style == NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH ||
+            style == NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH) {
+          segment_result += digits[segment[i] - '0'];
+        } else {
           if (segment[i] == '0') {
             continue;
           }
-          if (i == kDigitsInBigRank - 1 || segment[i] != '1') {
+          // In "大字" style, "壱" is also required on every rank.
+          if (style == NumberString::NUMBER_OLD_KANJI ||
+              i == kDigitsInBigRank - 1 || segment[i] != '1') {
             segment_result += digits[segment[i] - '0'];
           }
           segment_result += ranks[kDigitsInBigRank - i];
-        } else {
-          segment_result += digits[segment[i] - '0'];
         }
+
         leading = false;
       }
       if (!segment_result.empty()) {
@@ -978,15 +972,23 @@ bool Util::ArabicToKanji(const string &input_num,
       const char *kOldTwoTen = "\xE5\xBC\x90\xE6\x8B\xBE";
       // "廿"
       const char *kOldTwenty = "\xE5\xBB\xBF";
-
       size_t id;
       string result2(result);
       while ((id = result2.find(kOldTwoTen)) != string::npos) {
         result2.replace(id, strlen(kOldTwoTen), kOldTwenty);
       }
-
       if (result2 != result) {
         PushBackNumberString(result2, description, style, output);
+      }
+
+      // for single kanji
+      if (input == "0010") {
+        // "拾"
+        PushBackNumberString("\xE6\x8B\xBE", description, style, output);
+      }
+      if (input == "1000") {
+        // "阡"
+        PushBackNumberString("\xE9\x98\xA1", description, style, output);
       }
     }
   }
@@ -3196,10 +3198,43 @@ Util::ScriptType Util::GetScriptType(char32 w) {
 }
 
 Util::FormType Util::GetFormType(char32 w) {
+  // 'Unicode Standard Annex #11: EAST ASIAN WIDTH'
+  // http://www.unicode.org/reports/tr11/
+
+  // Characters marked as 'Na' in
+  // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
   if (INRANGE(w, 0x0020, 0x007F) ||  // ascii
-      INRANGE(w, 0xFF61, 0xFF9F)) {  // half-width katakana
+      INRANGE(w, 0x27E6, 0x27ED) ||  // narrow mathematical symbols
+      INRANGE(w, 0x2985, 0x2986)) {  // narrow white parentheses
     return HALF_WIDTH;
   }
+
+  // Other characters marked as 'Na' in
+  // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
+  if (INRANGE(w, 0x00A2, 0x00AF)) {
+    switch (w) {
+      case 0x00A2:  // CENT SIGN
+      case 0x00A3:  // POUND SIGN
+      case 0x00A5:  // YEN SIGN
+      case 0x00A6:  // BROKEN BAR
+      case 0x00AC:  // NOT SIGN
+      case 0x00AF:  // MACRON
+        return HALF_WIDTH;
+    }
+  }
+
+  // Characters marked as 'H' in
+  // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
+  if (w == 0x20A9 ||                 // WON SIGN
+      INRANGE(w, 0xFF61, 0xFF9F) ||  // half-width katakana
+      INRANGE(w, 0xFFA0, 0xFFBE) ||  // half-width hangul
+      INRANGE(w, 0xFFC2, 0xFFCF) ||  // half-width hangul
+      INRANGE(w, 0xFFD2, 0xFFD7) ||  // half-width hangul
+      INRANGE(w, 0xFFDA, 0xFFDC) ||  // half-width hangul
+      INRANGE(w, 0xFFE8, 0xFFEE)) {  // half-width symbols
+    return HALF_WIDTH;
+  }
+
   return FULL_WIDTH;
 }
 

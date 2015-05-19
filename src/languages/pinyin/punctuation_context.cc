@@ -53,7 +53,7 @@ const char kPunctuationSpecialKey = '`';
 PunctuationContext::PunctuationContext(const SessionConfig &session_config)
     : table_(Singleton<PunctuationTable>::get()),
       session_config_(session_config) {
-  Clear();
+  ClearAll();
 }
 
 PunctuationContext::~PunctuationContext() {}
@@ -295,13 +295,37 @@ size_t PunctuationContext::focused_candidate_index() const {
   return focused_candidate_index_;
 }
 
-size_t PunctuationContext::candidates_size() const {
-  return candidates_.size();
+bool PunctuationContext::GetCandidate(size_t index, Candidate *candidate) {
+  DCHECK(candidate);
+  if (!HasCandidate(index)) {
+    return false;
+  }
+
+  candidate->text.assign(candidates_[index]);
+  return true;
 }
 
-void PunctuationContext::GetCandidates(vector<string> *candidates) const {
-  DCHECK(candidates);
-  candidates->assign(candidates_.begin(), candidates_.end());
+bool PunctuationContext::HasCandidate(size_t index) {
+  return index < candidates_.size();
+}
+
+size_t PunctuationContext::PrepareCandidates(size_t required_size) {
+  return min(required_size, candidates_.size());
+}
+
+void PunctuationContext::UpdatePreviousCommitText(const string &text) {
+  if (!text.empty() && isdigit(text[text.size() - 1])) {
+    is_next_dot_half_ = true;
+  } else {
+    is_next_dot_half_ = false;
+  }
+}
+
+void PunctuationContext::ClearAll() {
+  Clear();
+  is_next_single_quote_close_ = false;
+  is_next_double_quote_close_ = false;
+  is_next_dot_half_ = false;
 }
 
 bool PunctuationContext::DirectCommit(char ch) {
@@ -313,6 +337,23 @@ bool PunctuationContext::DirectCommit(char ch) {
     } else {
       table_->GetDirectCommitTextForTraditionalChinese(ch, &text);
     }
+
+    // Converts some punctuation by the context.
+    if (text == "\xE2\x80\x98") {  // "‘"
+      if (is_next_single_quote_close_) {
+        text.assign("\xE2\x80\x99");  // "’"
+      }
+      is_next_single_quote_close_ = !is_next_single_quote_close_;
+    } else if (text == "\xE2\x80\x9C") {  // "“"
+      if (is_next_double_quote_close_) {
+        text.assign("\xE2\x80\x9D");  // "”"
+      }
+      is_next_double_quote_close_ = !is_next_double_quote_close_;
+    } else if (text == "\xE3\x80\x82" && is_next_dot_half_) {  // "。"
+      text.assign(".");
+      is_next_dot_half_ = false;
+    }
+
     // We use an original character as a commit text if
     // GetDirectCommitTextFor*() is failed.
   } else {

@@ -59,7 +59,6 @@
         '../dictionary/dictionary.gyp:install_gen_system_dictionary_data_main',
         '../rewriter/rewriter_base.gyp:install_gen_collocation_data_main',
         '../rewriter/rewriter_base.gyp:install_gen_collocation_suppression_data_main',
-        '../rewriter/rewriter_base.gyp:install_gen_single_kanji_rewriter_dictionary_main',
         '../rewriter/rewriter_base.gyp:install_gen_symbol_rewriter_dictionary_main',
         '../rewriter/rewriter_base.gyp:install_gen_usage_rewriter_dictionary_main',
       ],

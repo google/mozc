@@ -44,8 +44,8 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../net/net.gyp:http_client',
+        '../net/net.gyp:jsoncpp',
         '../storage/storage.gyp:storage',
-        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
         'gen_sync_data#host',
       ],
       'conditions': [
@@ -197,17 +197,9 @@
     {
       'target_name': 'sync_all_test',
       'type': 'none',
-      'conditions': [
-        ['enable_extra_unit_tests==1', {
-          'dependencies': [
-            # Temporarily disable following tests because JsonCpp still
-            # cannot be built on OSS Mozc.
-            # TODO(nona): Support building JsonCpp on OSS Mozc and remove the
-            #     condtion above.
-            'oauth2_token_util_test',
-            'sync_base_test',
-          ],
-        }],
+      'dependencies': [
+        'oauth2_token_util_test',
+        'sync_base_test',
       ],
     },
   ],

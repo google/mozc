@@ -33,6 +33,7 @@
 #include <map>
 
 #include "base/file_stream.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
@@ -58,8 +59,9 @@ class SystemDictionaryBuilderTest : public testing::Test {
 TEST_F(SystemDictionaryBuilderTest, test) {
   // This test is only testing that system dicionary does not make any errors.
   // Dictionary itself will be tested at sytem_dicitonary_test.
-  const POSMatcher pos_matcher;
-  TextDictionaryLoader loader(pos_matcher);
+  const POSMatcher *pos_matcher =
+      UserPosManager::GetUserPosManager()->GetPOSMatcher();
+  TextDictionaryLoader loader(*pos_matcher);
   const string dic_path = Util::JoinPath(FLAGS_test_srcdir, FLAGS_input);
   LOG(INFO) << "Reading " << dic_path;
   loader.OpenWithLineLimit(dic_path.c_str(), FLAGS_dictionary_test_size);

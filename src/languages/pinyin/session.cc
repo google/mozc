@@ -37,13 +37,9 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "languages/pinyin/direct_context.h"
-#include "languages/pinyin/english_context.h"
 #include "languages/pinyin/keymap.h"
-#include "languages/pinyin/keymap_constant.h"
 #include "languages/pinyin/pinyin_config_manager.h"
-#include "languages/pinyin/pinyin_context.h"
-#include "languages/pinyin/punctuation_context.h"
+#include "languages/pinyin/pinyin_constant.h"
 #include "languages/pinyin/session_config.h"
 #include "languages/pinyin/session_converter.h"
 #include "session/commands.pb.h"
@@ -90,9 +86,10 @@ size_t GetIndexFromKeyEvent(const commands::KeyEvent &key_event) {
 }  // namespace
 
 Session::Session()
-    : conversion_mode_(NONE),
+    : session_config_(new SessionConfig),
+      converter_(new SessionConverter(*session_config_)),
+      conversion_mode_(NONE),
       next_conversion_mode_(NONE),
-      session_config_(new SessionConfig),
       is_already_commited_(false),
       create_session_time_(Util::GetTime()),
       last_command_time_(0),
@@ -483,35 +480,27 @@ void Session::SwitchConversionMode(ConversionMode mode) {
   conversion_mode_ = mode;
   next_conversion_mode_ = mode;
 
-  // TODO(hsumita): Reuses context.
-  PinyinContextInterface *context = NULL;
   switch (conversion_mode_) {
     case PINYIN:
-      context = new PinyinContext(*session_config_);
       keymap_ = keymap::KeymapFactory::GetKeymap(keymap::PINYIN);
       break;
     case DIRECT:
-      context = new direct::DirectContext(*session_config_);
       keymap_ = keymap::KeymapFactory::GetKeymap(keymap::DIRECT);
       break;
     case ENGLISH:
-      context = new english::EnglishContext(*session_config_);
       keymap_ = keymap::KeymapFactory::GetKeymap(keymap::ENGLISH);
       break;
     case PUNCTUATION:
-      context = new punctuation::PunctuationContext(*session_config_);
       keymap_ = keymap::KeymapFactory::GetKeymap(keymap::PUNCTUATION);
       break;
     default:
       LOG(ERROR) << "Should NOT reach here. Set a fallback context";
       conversion_mode_ = PINYIN;
-      context = new PinyinContext(*session_config_);
       keymap_ = keymap::KeymapFactory::GetKeymap(keymap::PINYIN);
       break;
   }
 
-  DCHECK(context);
-  converter_.reset(new SessionConverter(context));
+  converter_->SwitchContext(conversion_mode_);
 }
 
 void Session::HandleLanguageBarCommand(

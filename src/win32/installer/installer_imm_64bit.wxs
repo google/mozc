@@ -5,6 +5,37 @@
   <?include $(var.MozcVersionFile) ?>
 <?endif?>
 
+<!-- Define variables with default values if not exist. WiX compiler does not
+     allow to use any undefined variable even when the variable is referenced
+     between ifdef conditional block. -->
+<?ifndef MozcZinniaModelDataPath ?>
+  <?define MozcZinniaModelDataPath="" ?>
+<?endif?>
+<?ifndef DebugCrtMergeModuleIdPrefix ?>
+  <?define DebugCrtMergeModuleIdPrefix="" ?>
+<?endif?>
+<?ifndef ReleaseCrtMergeModuleIdPrefix ?>
+  <?define ReleaseCrtMergeModuleIdPrefix="" ?>
+<?endif?>
+<?ifndef DebugCrtMergeModulePath ?>
+  <?define DebugCrtMergeModulePath="" ?>
+<?endif?>
+<?ifndef ReleaseCrtMergeModulePath ?>
+  <?define ReleaseCrtMergeModulePath="" ?>
+<?endif?>
+<?ifndef QtCore4DllPath ?>
+  <?define QtCore4DllPath="" ?>
+<?endif?>
+<?ifndef QtCored4DllPath ?>
+  <?define QtCored4DllPath="" ?>
+<?endif?>
+<?ifndef QtGui4DllPath ?>
+  <?define QtGui4DllPath="" ?>
+<?endif?>
+<?ifndef QtGuid4DllPath ?>
+  <?define QtGuid4DllPath="" ?>
+<?endif?>
+
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 
   <!--
@@ -71,6 +102,21 @@
     <?endif?>
 
     <Directory Id='TARGETDIR' Name='SourceDir'>
+      <!-- Install CRT DLLs.
+        Better not to in include policy MSMs.
+        http://blogs.msdn.com/b/astebner/archive/2007/02/13/building-an-msi-using-wix-v3-0-that-includes-the-vc-8-0-runtime-merge-modules.aspx
+       -->
+      <?if $(var.VSConfigurationName) = "Debug" ?>
+        <?if $(var.DebugCrtMergeModuleIdPrefix) != "" ?>
+          <Merge Id='$(var.DebugCrtMergeModuleIdPrefix)' Language='0'
+              DiskId='1' SourceFile='$(var.DebugCrtMergeModulePath)' />
+        <?endif?>
+      <?else?>
+        <?if $(var.ReleaseCrtMergeModuleIdPrefix) != "" ?>
+          <Merge Id='$(var.ReleaseCrtMergeModuleIdPrefix)' Language='0'
+              DiskId='1' SourceFile='$(var.ReleaseCrtMergeModulePath)' />
+        <?endif?>
+      <?endif?>
       <Directory Id='SystemFolder'>
         <Component Id='GIMEJaIME32' Guid='*' Permanent='no'>
           <File Id='GIMEJa32.ime' Name='GIMEJa.ime'
@@ -143,8 +189,8 @@
             </Component>
             <Component Id='GIMEJaRenderer' Guid='*'>
               <File Id='GoogleIMEJaRenderer.exe'
-                  Name='GoogleIMEJaRenderer.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcRendererPath)' Vital='yes' />
+                  Name='GoogleIMEJaRenderer.exe' DiskId='1' Vital='yes'
+                  Checksum='yes' Source='$(var.MozcRendererPath)' />
             </Component>
             <Component Id='GIMEJaTool' Guid='*'>
               <File Id='GoogleIMEJaTool.exe'
@@ -154,20 +200,51 @@
             <?if $(var.MozcZinniaModelDataPath) != "" ?>
               <Component Id='ZinniaModelData' Guid='*'>
                 <File Id='handwriting_ja.model'
-                    Name='handwriting-ja.model' DiskId='1'
-                    Checksum='yes' Source='$(var.MozcZinniaModelDataPath)' Vital='yes' />
+                    Name='handwriting-ja.model' DiskId='1' Vital='yes'
+                    Checksum='yes' Source='$(var.MozcZinniaModelDataPath)' />
               </Component>
+            <?endif?>
+            <?if $(var.VSConfigurationName) = "Debug" ?>
+              <?if $(var.QtCored4DllPath) != "" ?>
+                <Component Id='QtCored4Dll' Guid='*'>
+                  <File Id='QtCored4.dll'
+                      Name='QtCored4.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.QtCored4DllPath)' />
+                </Component>
+              <?endif?>
+              <?if $(var.QtGuid4DllPath) != "" ?>
+                <Component Id='QtGuid4Dll' Guid='*'>
+                  <File Id='QtGuid4.dll'
+                      Name='QtGuid4.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.QtGuid4DllPath)' />
+                </Component>
+              <?endif?>
+            <?else?>
+              <?if $(var.QtCore4DllPath) != "" ?>
+                <Component Id='QtCore4Dll' Guid='*'>
+                  <File Id='QtCore4.dll'
+                      Name='QtCore4.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.QtCore4DllPath)' />
+                </Component>
+              <?endif?>
+              <?if $(var.QtGui4DllPath) != "" ?>
+                <Component Id='QtGui4Dll' Guid='*'>
+                  <File Id='QtGui4.dll'
+                      Name='QtGui4.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.QtGui4DllPath)' />
+                </Component>
+              <?endif?>
             <?endif?>
             <Directory Id='DocumentsDir' Name='documents'>
               <Component Id='CreditsJa' Guid='*'>
                 <File Id='credits_ja.html' Name='credits_ja.html' DiskId='1'
-                      Checksum='yes' Source='$(var.DocumentsDir)/credits_ja.html'
-                      Vital='yes' />
+                      Checksum='yes' Vital='yes'
+                      Source='$(var.DocumentsDir)/credits_ja.html' />
               </Component>
               <Component Id='CreditsEn' Guid='*'>
                 <File Id='credits_en.html' Name='credits_en.html' DiskId='1'
-                      Checksum='yes' Source='$(var.DocumentsDir)/credits_en.html'
-                      Vital='yes' />
+                      Checksum='yes' Vital='yes'
+                      Source='$(var.DocumentsDir)/credits_en.html' />
               </Component>
             </Directory>
           </Directory>
@@ -218,8 +295,8 @@
       </Component>
 
       <!--
-        Write registry keys to set an elevation policy of Internet Explorer 7 so
-        that IE does not prompt the user when GoogleIMEJaTool.exe are
+        Write registry keys to set an elevation policy of Internet Explorer 7
+        so that IE does not prompt the user when GoogleIMEJaTool.exe are
         launched. See the following link for more information.
         http://msdn.microsoft.com/en-us/library/bb250462.aspx
       -->
@@ -306,7 +383,7 @@
         <RegistryValue Id='OmahaLaunchCmdLineValue' Root='HKLM'
             Key='$(var.OmahaClientStateKey)'
             Name='InstallerSuccessLaunchCmdLine' Action='write' Type='string'
-            Value='&quot;[#GoogleIMEJaTool.exe]&quot; --mode=post_install_dialog' />
+            Value='&quot;[GIMEJaDir]\GoogleIMEJaTool.exe&quot; --mode=post_install_dialog' />
       </Component>
 
       <!--
@@ -317,7 +394,7 @@
         <RegistryValue Id='RunBroker' Root='HKLM'
             Key='Software\Microsoft\Windows\CurrentVersion\Run'
             Name='Google Japanese Input Prelauncher' Action='write' Type='string'
-            Value='&quot;[#GoogleIMEJaBroker32.exe]&quot; --mode=prelaunch_processes' />
+            Value='&quot;[GIMEJaDir]\GoogleIMEJaBroker32.exe&quot; --mode=prelaunch_processes' />
       </Component>
     </Directory>
 
@@ -336,6 +413,24 @@
     </UI>
 
     <!-- List of actions to be performed. -->
+    <?if $(var.VSConfigurationName) = "Debug" ?>
+      <?if $(var.DebugCrtMergeModuleIdPrefix) != "" ?>
+        <Feature Id='$(var.DebugCrtMergeModuleIdPrefix)'
+            Title='Visual C++ Runtime Library' AllowAdvertise='no'
+            Display='hidden' Level='1'>
+          <MergeRef Id='$(var.DebugCrtMergeModuleIdPrefix)' />
+        </Feature>
+      <?endif?>
+    <?else?>
+      <?if $(var.ReleaseCrtMergeModuleIdPrefix) != "" ?>
+        <Feature Id='$(var.ReleaseCrtMergeModuleIdPrefix)'
+            Title='Visual C++ Runtime Library' AllowAdvertise='no'
+            Display='hidden' Level='1'>
+          <MergeRef Id='$(var.ReleaseCrtMergeModuleIdPrefix)' />
+        </Feature>
+      <?endif?>
+    <?endif?>
+
     <Feature Id='GIMEJaInstall' Title='Google 日本語入力' Level='1'>
       <ComponentRef Id='GIMEJaIME32' />
       <ComponentRef Id='GIMEJaIME64' />
@@ -347,6 +442,21 @@
       <ComponentRef Id='GIMEJaTool' />
       <?if $(var.MozcZinniaModelDataPath) != "" ?>
         <ComponentRef Id='ZinniaModelData' />
+      <?endif?>
+      <?if $(var.VSConfigurationName) = "Debug" ?>
+        <?if $(var.QtCored4DllPath) != "" ?>
+          <ComponentRef Id='QtCored4Dll' />
+        <?endif?>
+        <?if $(var.QtGuid4DllPath) != "" ?>
+          <ComponentRef Id='QtGuid4Dll' />
+        <?endif?>
+      <?else?>
+        <?if $(var.QtCore4DllPath) != "" ?>
+          <ComponentRef Id='QtCore4Dll' />
+        <?endif?>
+        <?if $(var.QtGui4DllPath) != "" ?>
+          <ComponentRef Id='QtGui4Dll' />
+        <?endif?>
       <?endif?>
       <ComponentRef Id='OmahaRegister' />
       <ComponentRef Id='OmahaRegLaunchCmdLine' />
@@ -403,9 +513,9 @@
         DllEntry='InitialInstallationCommit' Execute='commit'
         Impersonate='no' />
     <CustomAction Id='HideCancelButton' BinaryKey='CustomActions32'
-        DllEntry='HideCancelButton' Impersonate='no' Return='ignore' />
+        DllEntry='HideCancelButton' Return='ignore' />
     <CustomAction Id='SaveCustomActionData' BinaryKey='CustomActions32'
-        DllEntry='SaveCustomActionData' Impersonate='no' />
+        DllEntry='SaveCustomActionData' />
     <CustomAction Id='RestoreServiceState' BinaryKey='CustomActions32'
         DllEntry='RestoreServiceState' Impersonate='no' Execute='deferred'
         Return='ignore' />
@@ -432,9 +542,7 @@
       <Custom Action='WriteApValue' Before='SelfUnregModules' >
         (NOT (REMOVE="ALL"))
       </Custom>
-      <SelfUnregModules>
-        FALSE
-      </SelfUnregModules>
+      <SelfUnregModules />
       <Custom Action='RestoreUserIMEEnvironment' After='SelfUnregModules'>
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
       </Custom>
@@ -458,9 +566,7 @@
       <Custom Action='OpenUninstallSurveyPage' After='UninstallIME' >
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
       </Custom>
-      <SelfRegModules>
-        FALSE
-      </SelfRegModules>
+      <SelfRegModules />
       <Custom Action='RefreshPolicy' After='SelfRegModules'>
         (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 600)
       </Custom>

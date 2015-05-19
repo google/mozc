@@ -660,17 +660,22 @@ class Util {
   // return true if the string contains script_type char
   static bool ContainsScriptType(const string &str, ScriptType type);
 
+  // See 'Unicode Standard Annex #11: EAST ASIAN WIDTH'
+  // http://www.unicode.org/reports/tr11/
+  // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
   enum FormType {
     UNKNOWN_FORM,
-    HALF_WIDTH,
-    FULL_WIDTH,
+    HALF_WIDTH,  // [Na] and [H] in 'Unicode Standard Annex #11'
+    FULL_WIDTH,  // Any other characters
     FORM_TYPE_SIZE,
   };
 
-  // return Form type of single character
+  // return Form type of single character.
+  // This function never returns UNKNOWN_FORM.
   static FormType GetFormType(char32 w);
 
-  // return FormType of string
+  // return FormType of string.
+  // return UNKNOWN_FORM if |str| contains both HALF_WIDTH and FULL_WIDTH.
   static FormType GetFormType(const string &str);
 
   // Basically, if chraset >= JIX0212, the char is platform dependent char.

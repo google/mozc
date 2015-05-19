@@ -87,6 +87,15 @@ TEST_F(SessionHandlerStressTestMain, BasicStressTest) {
 
   EXPECT_TRUE(client.CleanUp());
 
+  keyevents_size = 0;
+  const size_t kRequestSize = 100000;
+  while (keyevents_size < kRequestSize) {
+    commands::Request request;
+    request.set_special_romanji_table(
+        commands::Request::FLICK_TO_HIRAGANA);
+    client.SetRequest(request, &output);
+    ++keyevents_size;
+  }
 
   EXPECT_TRUE(client.DeleteSession());
 }

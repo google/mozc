@@ -28,9 +28,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 vars = {
-  "breakpad_revision": "948",
+  "breakpad_revision": "960",
   "cygwin_in_chromium_revision": "66844",
-  "gtest_revision": "605",
+  "gtest_revision": "614",
   "gmock_revision": "403",
   "gyp_revision": "1251",
   "jsoncpp_revision": "249",

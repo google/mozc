@@ -99,6 +99,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	″	” びょう たんい きごう	秒		SYMBOL	DOUBLE PRIME
 記号	℃	ど たんい C	単位		OTHER
 記号	￥	えん つうか \ ¥ たんい	通貨記号	円	GENERAL OTHER
+記号	¥	えん つうか たんい	通貨記号	円	GENERAL OTHER	機種依存文字	U+00A5
 記号	＄	どる だらー だら つうか $ たんい	通貨記号	ドル	GENERAL OTHER
 記号	¢	せんと  つうか たんい	通貨記号	セント	OTHER
 記号	£	ぽんど  つうか たんい	通貨記号	ポンド	OTHER

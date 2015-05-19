@@ -44,51 +44,43 @@ namespace {
 testing::AssertionResult CheckContext(const char *expected_commit_text_expr,
                                       const char *actual_context_expr,
                                       const string &expected_commit_text,
-                                      const DirectContext &actual_context) {
+                                      DirectContext *actual_context) {
   vector<string> error_messages;
 
-  if (!actual_context.input_text().empty()) {
+  if (!actual_context->input_text().empty()) {
     error_messages.push_back("input_text is not empty.");
   }
-  if (!actual_context.selected_text().empty()) {
+  if (!actual_context->selected_text().empty()) {
     error_messages.push_back("selected_text is not empty.");
   }
-  if (!actual_context.conversion_text().empty()) {
+  if (!actual_context->conversion_text().empty()) {
     error_messages.push_back("conversion_text is not empty.");
   }
-  if (!actual_context.rest_text().empty()) {
+  if (!actual_context->rest_text().empty()) {
     error_messages.push_back("rest_text is not empty.");
   }
-  if (!actual_context.auxiliary_text().empty()) {
+  if (!actual_context->auxiliary_text().empty()) {
     error_messages.push_back("auxiliary_text is not empty.");
   }
-  if (actual_context.cursor() != 0) {
+  if (actual_context->cursor() != 0) {
     error_messages.push_back(Util::StringPrintf("invalid value. cursor: %d",
-                                                actual_context.cursor()));
+                                                actual_context->cursor()));
   }
-  if (actual_context.focused_candidate_index() != 0) {
+  if (actual_context->focused_candidate_index() != 0) {
     error_messages.push_back(Util::StringPrintf(
         "invalid value. focused_candidate_index: %d",
-        actual_context.focused_candidate_index()));
+        actual_context->focused_candidate_index()));
   }
-  if (actual_context.candidates_size() != 0) {
-    error_messages.push_back(Util::StringPrintf(
-        "invalid value. candidates_size: %d",
-        actual_context.candidates_size()));
-  }
-  vector<string> candidates;
-  candidates.push_back("dummy_candidates");
-  actual_context.GetCandidates(&candidates);
-  if (!candidates.empty()) {
+  if (actual_context->HasCandidate(0)) {
     error_messages.push_back("invalid value. there are some candidates.");
   }
 
-  if (expected_commit_text != actual_context.commit_text()) {
+  if (expected_commit_text != actual_context->commit_text()) {
     error_messages.push_back(Util::StringPrintf(
         "commit_text is not valid.\n"
         "Expected: %s\n"
         "Actual: %s",
-        expected_commit_text.c_str(), actual_context.commit_text().c_str()));
+        expected_commit_text.c_str(), actual_context->commit_text().c_str()));
   }
 
   if (!error_messages.empty()) {
@@ -101,7 +93,7 @@ testing::AssertionResult CheckContext(const char *expected_commit_text_expr,
 }
 
 #define EXPECT_VALID_CONTEXT(expected_commit_text) \
-  EXPECT_PRED_FORMAT2(CheckContext, expected_commit_text, *context_)
+  EXPECT_PRED_FORMAT2(CheckContext, expected_commit_text, context_.get())
 }  // namespace
 
 class DirectContextTest : public testing::Test {

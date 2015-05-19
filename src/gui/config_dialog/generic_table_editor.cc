@@ -104,7 +104,11 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
   editorTableWidget->horizontalHeader()->setStretchLastSection(true);
   editorTableWidget->horizontalHeader()->setSortIndicatorShown(true);
   editorTableWidget->horizontalHeader()->setHighlightSections(false);
-  editorTableWidget->setEditTriggers(QAbstractItemView::AllEditTriggers);
+  // Do not use QAbstractItemView::AllEditTriggers so that user can easily
+  // select multiple items. See b/6488800.
+  editorTableWidget->setEditTriggers(QAbstractItemView::AnyKeyPressed |
+                                     QAbstractItemView::DoubleClicked |
+                                     QAbstractItemView::SelectedClicked);
   editorTableWidget->setSortingEnabled(true);
 
   editorTableWidget->verticalHeader()->setResizeMode(QHeaderView::Fixed);
@@ -182,6 +186,17 @@ void GenericTableEditorDialog::DeleteSelectedItems() {
 
 void GenericTableEditorDialog::InsertEmptyItem(int row) {
   editorTableWidget->verticalHeader()->hide();
+
+  // It is important to disable auto-sorting before we programmatically edit
+  // multiple items. Otherwise, one single edit of cell such as
+  //   editorTableWidget->setItem(row, col, data);
+  // will cause auto-sorting and the target row will be moved to different
+  // place.
+  const bool sorting_enabled = editorTableWidget->isSortingEnabled();
+  if (sorting_enabled) {
+    editorTableWidget->setSortingEnabled(false);
+  }
+
   editorTableWidget->insertRow(row);
   for (size_t i = 0; i < column_size_; ++i) {
     editorTableWidget->setItem(row, i, new QTableWidgetItem(""));
@@ -192,6 +207,16 @@ void GenericTableEditorDialog::InsertEmptyItem(int row) {
     editorTableWidget->scrollToItem(item,
                                     QAbstractItemView::PositionAtCenter);
     editorTableWidget->editItem(item);
+  }
+
+  // Restore auto-sorting setting if necessary.
+  if (sorting_enabled) {
+    // From the usability perspective, auto-sorting should be disabled until
+    // a user explicitly enables it again by clicking the table header.
+    // To achieve it, set -1 to the |logicalIndex| in setSortIndicator.
+    editorTableWidget->horizontalHeader()->setSortIndicator(
+        -1, Qt::AscendingOrder);
+    editorTableWidget->setSortingEnabled(true);
   }
 
   UpdateMenuStatus();
@@ -217,10 +242,7 @@ void GenericTableEditorDialog::AddNewItem() {
     return;
   }
 
-  editorTableWidget->insertRow(editorTableWidget->rowCount());
-  InsertEmptyItem(editorTableWidget->rowCount() - 1);
-  editorTableWidget->setRowCount(editorTableWidget->rowCount() - 1);
-  UpdateMenuStatus();
+  InsertEmptyItem(editorTableWidget->rowCount());
 }
 
 void GenericTableEditorDialog::Import() {
@@ -306,11 +328,19 @@ void GenericTableEditorDialog::OnContextMenuRequested(const QPoint &pos) {
   }
 
   QMenu *menu = new QMenu(this);
+  QAction *edit_action = NULL;
+  const QList<QTableWidgetItem *> selected_items =
+      editorTableWidget->selectedItems();
+  if (selected_items.count() == 1) {
+    edit_action = menu->addAction(tr("Edit entry"));
+  }
   QAction *rename_action = menu->addAction(tr("New entry"));
   QAction *delete_action = menu->addAction(tr("Remove entry"));
   QAction *selected_action = menu->exec(QCursor::pos());
 
-  if (selected_action == rename_action) {
+  if (edit_action != NULL && selected_action == edit_action) {
+    editorTableWidget->editItem(selected_items[0]);
+  } else if (selected_action == rename_action) {
     AddNewItem();
   } else if (selected_action == delete_action) {
     DeleteSelectedItems();

@@ -45,6 +45,7 @@
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 // SymbolRewriter:
 // When updating the rule
@@ -361,6 +362,9 @@ SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter)
 SymbolRewriter::~SymbolRewriter() {}
 
 int SymbolRewriter::capability() const {
+  if (GET_REQUEST(mixed_conversion)) {
+    return RewriterInterface::ALL;
+  }
   return RewriterInterface::CONVERSION;
 }
 

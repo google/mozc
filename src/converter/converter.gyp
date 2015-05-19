@@ -48,6 +48,7 @@
         '../prediction/prediction.gyp:prediction',
         '../prediction/prediction.gyp:prediction_protocol',
         '../rewriter/rewriter.gyp:rewriter',
+        '../session/session_base.gyp:request_handler',
         '../session/session_base.gyp:session_protocol',
         'converter_base.gyp:immutable_converter',
         'converter_base.gyp:segments',

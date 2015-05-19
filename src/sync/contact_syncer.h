@@ -32,11 +32,11 @@
 
 #include "base/base.h"
 #include "dictionary/user_dictionary_storage.pb.h"
+#include "net/jsoncpp.h"
 #include "sync/oauth2_util.h"
 #include "sync/syncer_interface.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
-#include "third_party/jsoncpp/json.h"
 
 namespace mozc {
 namespace sync {

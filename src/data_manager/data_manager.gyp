@@ -34,6 +34,43 @@
   },
   'targets': [
     {
+      'target_name': 'gen_pos_matcher_data',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        '../dictionary/dictionary_base.gyp:pos_util',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_pos_matcher_data',
+          'variables': {
+            'id_def': '../data/dictionary/id.def',
+            'special_pos': '../data/rules/special_pos.def',
+            'pos_matcher_rule': '../data/rules/pos_matcher_rule.def',
+            'pos_matcher_data': '<(gen_out_dir)/pos_matcher_data.h',
+          },
+          'inputs': [
+            '../dictionary/gen_pos_matcher_code.py',
+            '<(id_def)',
+            '<(special_pos)',
+            '<(pos_matcher_rule)'
+          ],
+          'outputs': [
+            '<(pos_matcher_data)',
+          ],
+          'action': [
+            'python',
+            '../dictionary/gen_pos_matcher_code.py',
+            '--id_file=<(id_def)',
+            '--special_pos_file=<(special_pos)',
+            '--pos_matcher_rule_file=<(pos_matcher_rule)',
+            '--output_pos_matcher_data=<(pos_matcher_data)',
+          ],
+          'message': ('Generating <(pos_matcher_data)'),
+        },
+      ],
+    },
+    {
       'target_name': 'pos_group_data',
       'type': 'none',
       'toolsets': ['host'],
@@ -71,14 +108,18 @@
       'sources': [
         'user_pos_manager.cc',
         '../dictionary/pos_group.h',
+        '<(gen_out_dir)/dictionary/pos_matcher.h',
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:user_pos',
         '../dictionary/dictionary_base.gyp:user_pos_data',
+        'gen_pos_matcher_data#host',
         'pos_group_data#host',
       ],
       'export_dependent_settings': [
+        'gen_pos_matcher_data#host',
         'pos_group_data#host',
       ],
     },
@@ -91,6 +132,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../dictionary/dictionary_base.gyp:user_pos_data',
         'user_pos_manager',

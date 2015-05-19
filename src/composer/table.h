@@ -32,6 +32,7 @@
 #ifndef MOZC_COMPOSER_TABLE_H_
 #define MOZC_COMPOSER_TABLE_H_
 
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -39,6 +40,13 @@
 #include "base/trie.h"
 
 namespace mozc {
+namespace commands {
+class Request;
+}  // namespace commands
+
+namespace config {
+class Config;
+}  // namespace config
 namespace composer {
 
 // This is a bitmap representing Entry's additional attributes.
@@ -83,8 +91,15 @@ class Table {
   Table();
   virtual ~Table();
 
+  // TODO(yoichio): Initizalize and Reload methods use the system request
+  // and the config.
+  // These should be depericated.
   bool Initialize();
   bool Reload();
+
+  bool InitializeWithRequestAndConfig(const commands::Request &request,
+                                      const config::Config &config);
+
 
   // Return true if adding the input-pending pair makes a loop of
   // conversion rules.
@@ -138,6 +153,27 @@ class Table {
   // If false, input alphabet characters are normalized to lower
   // characters.  The default value is false.
   bool case_sensitive_;
+
+  DISALLOW_COPY_AND_ASSIGN(Table);
+};
+
+class TableManager {
+ public:
+  TableManager();
+  ~TableManager();
+  // Return Table for the request and the config
+  // TableManager has ownership of the return value;
+  const Table *GetTable(const commands::Request &request,
+                        const config::Config &config);
+
+ private:
+  // Table caches.
+  // Key uint32 is calculated hash and unique for
+  //  commands::Request::SpecialRomanjiTable
+  //  config::Config::PreeditMethod
+  //  config::Config::PunctuationMethod
+  //  config::Config::SymbolMethod
+  map<uint32, const Table*> table_map_;
 };
 
 }  // namespace composer

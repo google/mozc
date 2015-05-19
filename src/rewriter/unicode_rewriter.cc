@@ -34,6 +34,7 @@
 
 #include "base/util.h"
 #include "converter/conversion_request.h"
+#include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 
@@ -76,26 +77,89 @@ bool UCS4ExpressionToInteger(const string &input, uint32 *ucs4) {
 }
 
 // Checks if given ucs4 value is acceptable or not.
-bool IsAcceptableUnicode(uint32 ucs4) {
-  if (Util::GetScriptType(ucs4) != Util::UNKNOWN_SCRIPT) {
-    return true;
+bool IsAcceptableUnicode(const uint32 ucs4) {
+  // Unicode character should be less than 0x10FFFF.
+  if (ucs4 > 0x10FFFF) {
+    return false;
   }
 
-  // Expands acceptable characters.
-  // 0x20 to 0x7E is visible characters.
-  if (ucs4 >= 0x20 && ucs4 <= 0x7E) {
-    return true;
+  // Control characters are not acceptable.  0x7F is DEL.
+  if (ucs4 < 0x20 || (0x7F <= ucs4 && ucs4 <= 0x9F)) {
+    return false;
   }
 
-  return false;
+  // Bidirectional text control are not acceptable.
+  // See: http://en.wikipedia.org/wiki/Unicode_control_characters
+  if (ucs4 == 0x200E || ucs4 == 0x200F || (0x202A <= ucs4 && ucs4 <= 0x202E)) {
+    return false;
+  }
+
+  return true;
 }
 
+void AddCandidate(
+    const string &key, const string &value, int index, Segment *segment) {
+  DCHECK(segment);
+
+  if (index > segment->candidates_size()) {
+    index = segment->candidates_size();
+  }
+
+  Segment::Candidate *candidate = segment->insert_candidate(index);
+  DCHECK(candidate);
+
+  candidate->Init();
+  segment->set_key(key);
+  candidate->key = key;
+  candidate->value = value;
+  candidate->content_value = value;
+  // "Unicode 変換(" + key + ")"
+  candidate->description = "Unicode \xE5\xA4\x89\xE6\x8F\x9B (" + key + ")";
+  candidate->attributes |= (Segment::Candidate::NO_LEARNING |
+                            Segment::Candidate::NO_VARIANTS_EXPANSION);
+}
 }  // namespace
 
-bool UnicodeRewriter::Rewrite(const ConversionRequest &request,
-                              Segments *segments) const {
+// If the key is a single unicode character, the correspoinding
+// Unicode "U+xxxx" format is added. (ex. "A" -> "U+0041").  This is
+// triggered on reverse conversion only.
+bool UnicodeRewriter::RewriteToUnicodeCharFormat(
+    const ConversionRequest &request,
+    Segments *segments) const {
+  if (!request.has_composer()) {
+    return false;
+  }
+
+  if (request.composer().source_text().empty() ||
+      segments->conversion_segments_size() != 1) {
+    return false;
+  }
+
+  const string &source_text = request.composer().source_text();
+  const size_t source_text_size = Util::CharsLen(source_text);
+  if (source_text_size != 1) {
+    return false;
+  }
+
+  const string &source_char = request.composer().source_text();
+  size_t mblen = 0;
+  const char32 ucs4 = Util::UTF8ToUCS4(source_char.data(),
+                                       source_char.data() + source_char.size(),
+                                       &mblen);
+  const string value = Util::StringPrintf("U+%04X", ucs4);
+
+  const string &key = segments->conversion_segment(0).key();
+  Segment *segment = segments->mutable_conversion_segment(0);
+  AddCandidate(key, value, 5, segment);
+  return true;
+}
+
+// If the key is in the "U+xxxx" format, the corresponding Unicode
+// character is added. (ex. "U+0041" -> "A").
+bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
+    const ConversionRequest &request,
+    Segments *segments) const {
   string key;
-  DCHECK(segments);
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     key += segments->conversion_segment(i).key();
   }
@@ -113,10 +177,9 @@ bool UnicodeRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  string output;
-  Util::UCS4ToUTF8(ucs4, &output);
-
-  if (output.empty()) {
+  string value;
+  Util::UCS4ToUTF8(ucs4, &value);
+  if (value.empty()) {
     return false;
   }
 
@@ -125,27 +188,34 @@ bool UnicodeRewriter::Rewrite(const ConversionRequest &request,
       // The given segments are resized by user so don't modify anymore.
       return false;
     }
+
     const uint32 resize_len = Util::CharsLen(key) -
         Util::CharsLen(segments->conversion_segment(0).key());
     if (!parent_converter_->ResizeSegment(segments, request, 0, resize_len)) {
       return false;
     }
   }
+  DCHECK(segments->conversion_segments_size() == 1);
 
-  Segment* seg = segments->mutable_conversion_segment(0);
-  DCHECK(seg);
-  Segment::Candidate *candidate = seg->insert_candidate(0);
-  DCHECK(candidate);
-
-  candidate->Init();
-  seg->set_key(key);
-  candidate->key = key;
-  candidate->value = output;
-  candidate->content_value = output;
-  // "Unicode 変換(" + key + ")"
-  candidate->description = "Unicode \xE5\xA4\x89\xE6\x8F\x9B ("+key+")";
-  candidate->attributes |= Segment::Candidate::NO_LEARNING;
+  Segment *segment = segments->mutable_conversion_segment(0);
+  AddCandidate(key, value, 0, segment);
   return true;
+}
+
+bool UnicodeRewriter::Rewrite(const ConversionRequest &request,
+                              Segments *segments) const {
+  DCHECK(segments);
+  // "A" -> "U+0041" (Reverse conversion only).
+  if (RewriteToUnicodeCharFormat(request, segments)) {
+    return true;
+  }
+
+  // "U+0041" -> "A"
+  if (RewriteFromUnicodeCharFormat(request, segments)) {
+    return true;
+  }
+
+  return false;
 }
 
 }  // namespace mozc

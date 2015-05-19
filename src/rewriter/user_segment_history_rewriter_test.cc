@@ -154,6 +154,8 @@ class UserSegmentHistoryRewriterTest : public testing::Test {
     CharacterFormManager::GetCharacterFormManager()->Reload();
 
     Util::SetClockHandler(NULL);
+
+    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
   virtual void TearDown() {
@@ -176,22 +178,22 @@ class UserSegmentHistoryRewriterTest : public testing::Test {
   }
 
   const POSMatcher &pos_matcher() const {
-    return pos_matcher_;
+    return *pos_matcher_;
   }
 
   NumberRewriter *CreateNumberRewriter() const {
-    return new NumberRewriter(&pos_matcher_);
+    return new NumberRewriter(pos_matcher_);
   }
 
   UserSegmentHistoryRewriter *CreateUserSegmentHistoryRewriter() const {
     return new UserSegmentHistoryRewriter(
-        &pos_matcher_,
+        pos_matcher_,
         UserPosManager::GetUserPosManager()->GetPosGroup());
   }
 
  private:
   ConverterMock mock_;
-  const POSMatcher pos_matcher_;
+  const POSMatcher *pos_matcher_;
   DISALLOW_COPY_AND_ASSIGN(UserSegmentHistoryRewriterTest);
 };
 

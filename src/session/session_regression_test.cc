@@ -130,11 +130,15 @@ class SessionRegressionTest : public testing::Test {
 
   void ResetSession() {
     session_.reset(dynamic_cast<session::Session *>(handler_->NewSession()));
+    table_.reset(new composer::Table());
+    table_.get()->Initialize();
+    session_.get()->SetTable(table_.get());
   }
 
   bool orig_use_history_rewriter_;
   scoped_ptr<SessionHandler> handler_;
   scoped_ptr<session::Session> session_;
+  scoped_ptr<composer::Table> table_;
   session::JapaneseSessionFactory session_factory_;
 };
 
@@ -442,6 +446,44 @@ TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggesion) {
   EXPECT_EQ(suggestion_first_candidate, suggestion_commit_result);
   EXPECT_EQ(suggestion_first_candidate, prediction_first_candidate);
   EXPECT_EQ(suggestion_first_candidate, prediction_commit_result);
+}
+
+TEST_F(SessionRegressionTest, Transliteration_Issue2330463) {
+  {
+    ResetSession();
+    commands::Command command;
+
+    InsertCharacterChars("[],.", &command);
+    command.Clear();
+    SendKey("F8", &command);
+    // "｢｣､｡"
+    EXPECT_EQ("\357\275\242\357\275\243\357\275\244\357\275\241",
+              command.output().preedit().segment(0).value());
+  }
+
+  {
+    ResetSession();
+    commands::Command command;
+
+    InsertCharacterChars("[g],.", &command);
+    command.Clear();
+    SendKey("F8", &command);
+    // "｢g｣､｡"
+    EXPECT_EQ("\357\275\242\147\357\275\243\357\275\244\357\275\241",
+              command.output().preedit().segment(0).value());
+  }
+
+  {
+    ResetSession();
+    commands::Command command;
+
+    InsertCharacterChars("[a],.", &command);
+    command.Clear();
+    SendKey("F8", &command);
+    // "｢ｱ｣､｡"
+    EXPECT_EQ("\357\275\242\357\275\261\357\275\243\357\275\244\357\275\241",
+              command.output().preedit().segment(0).value());
+  }
 }
 
 TEST_F(SessionRegressionTest, Transliteration_Issue6209563) {

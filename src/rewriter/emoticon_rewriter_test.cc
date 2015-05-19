@@ -37,6 +37,7 @@
 #include "rewriter/emoticon_rewriter.h"
 #include "testing/base/public/gunit.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -156,5 +157,17 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
   }
 }
 
+TEST_F(EmoticonRewriterTest, MobileEnvironmentTest) {
+  commands::Request input;
+  EmoticonRewriter rewriter;
+
+  input.set_mixed_conversion(true);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+
+  input.set_mixed_conversion(false);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
 
 }  // namespace mozc

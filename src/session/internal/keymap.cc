@@ -53,6 +53,7 @@ static const char kMSIMEKeyMapFile[] = "system://ms-ime.tsv";
 static const char kATOKKeyMapFile[] = "system://atok.tsv";
 static const char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
 static const char kCustomKeyMapFile[] = "user://keymap.tsv";
+static const char kMobileKeyMapFile[] = "system://mobile.tsv";
 
 // TODO(team): Investigate if "InputModeX" commands should be
 //     functional on ChromeOS and/or Android or not. Remove the
@@ -128,6 +129,8 @@ const char *KeyMapManager::GetKeyMapFileName(
   switch (keymap) {
     case config::Config::ATOK:
       return kATOKKeyMapFile;
+    case config::Config::MOBILE:
+      return kMobileKeyMapFile;
     case config::Config::MSIME:
       return kMSIMEKeyMapFile;
     case config::Config::KOTOERI:
@@ -141,6 +144,7 @@ const char *KeyMapManager::GetKeyMapFileName(
                  << " appeared at key map initialization.";
       const config::Config::SessionKeymap default_keymap = GetDefaultKeyMap();
       DCHECK(default_keymap == config::Config::ATOK ||
+             default_keymap == config::Config::MOBILE ||
              default_keymap == config::Config::MSIME ||
              default_keymap == config::Config::KOTOERI ||
              default_keymap == config::Config::CUSTOM);

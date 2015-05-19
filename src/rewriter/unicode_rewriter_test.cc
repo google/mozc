@@ -31,6 +31,7 @@
 #include <string>
 #include "base/util.h"
 #include "config/config.pb.h"
+#include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/conversion_request.h"
@@ -117,14 +118,30 @@ TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
     // CJK
     { "U+611B", "\xE6\x84\x9B" },  // "愛"
     { "U+690D", "\xE6\xA4\x8D" },  // "植"
-    { "U+7537", "\xE7\x94\xB7" }   // "男"
+    { "U+7537", "\xE7\x94\xB7" },  // "男"
+
+    // Other types (Oriya script)
+    { "U+0B00", "\xE0\xAC\x80" },  // "଀"
+    { "U+0B01", "\xE0\xAC\x81" },  // "ଁ"
+    { "U+0B02", "\xE0\xAC\x82" },  // "ଂ"
+
+    // Other types (Arabic)
+    { "U+0600", "\xD8\x80" },  // "؀"
+    { "U+0601", "\xD8\x81" },  // "؁"
+    { "U+0602", "\xD8\x82" },  // "؂"
+
+    // Latin-1 support
+    { "U+00A0", "\xC2\xA0" },  // " " (nbsp)
+    { "U+00A1", "\xC2\xA1" },  // "¡"
   };
 
   const char* kMozcUnsupportedUtf8[] = {
-    // Oriya script
-    "U+0B00", "U+0B01", "U+0B02",
-    // Arabic
-    "U+0600", "U+0601", "U+0602"
+    // Control characters
+    "U+0000", "U+001F", "U+007F", "U+0080", "U+009F",
+    // Out of Unicode
+    "U+110000",
+    // Bidirectional text
+    "U+200E", "U+202D",
   };
 
   // All ascii code would be accepted.
@@ -192,4 +209,53 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
   EXPECT_EQ(' ', segments.conversion_segment(0).candidate(0).value.at(0));
 }
 
+TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
+  UnicodeRewriter rewriter(converter_);
+  {  // Typical case
+    composer::Composer composer;
+    composer.set_source_text("A");
+    ConversionRequest request(&composer);
+
+    Segments segments;
+    AddSegment("A", "A", &segments);
+
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(ContainCandidate(segments, "U+0041"));
+  }
+
+  {  // If source_text is not set, this rewrite is not triggered.
+    composer::Composer composer;
+    ConversionRequest request(&composer);
+
+    Segments segments;
+    AddSegment("A", "A", &segments);
+
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+    EXPECT_FALSE(ContainCandidate(segments, "U+0041"));
+  }
+
+  {  // If source_text is not a single character, this rewrite is not
+     // triggered.
+    composer::Composer composer;
+    composer.set_source_text("AB");
+    ConversionRequest request(&composer);
+
+    Segments segments;
+    AddSegment("AB", "AB", &segments);
+
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  }
+
+  {  // Multibyte character is also supported.
+    composer::Composer composer;
+    composer.set_source_text("\xE6\x84\x9B");  // "愛"
+    ConversionRequest request(&composer);
+
+    Segments segments;
+    AddSegment("\xE3\x81\x82\xE3\x81\x84", "\xE6\x84\x9B", &segments);
+
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(ContainCandidate(segments, "U+611B"));
+  }
+}
 }  // namespace mozc

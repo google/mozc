@@ -58,8 +58,22 @@ bool DeleteEnd(const string &end, string *target) {
 // Get from pending rules recursively
 // The recursion will be stopped if recursion_count is 0.
 // When returns false, the caller doesn't append result entries.
-bool GetFromPending(const Table &table, const string &key,
-                       int recursion_count, set<string> *result) {
+// If we have the rule,
+// '1' -> '', 'あ'
+// 'あ1' -> '', 'い'
+// 'い1' -> '', 'う'
+// 'う1' -> '', 'え'
+// 'え1' -> '', 'お'
+// 'お1' -> '', 'あ'
+// 'あ*' -> '', '{*}ぁ'
+// '{*}ぁ' -> '', '{*}あ'
+// '{*}あ' -> '', '{*}ぁ'
+// 'い*' -> '', '{*}ぃ'
+// '{*}ぃ' -> '', '{*}い'
+// '{*}い' -> '', '{*}ぃ'
+// Here, we want to get '{*}あ' <-> '{*}ぁ' loop from the input, 'あ'
+bool GetFromPending(const Table *table, const string &key,
+                    int recursion_count, set<string> *result) {
   DCHECK(result);
   if (recursion_count == 0) {
     // Don't find the loop within the |recursion_count|.
@@ -73,7 +87,7 @@ bool GetFromPending(const Table &table, const string &key,
   result->insert(key);
 
   vector<const Entry *> entries;
-  table.LookUpPredictiveAll(key, &entries);
+  table->LookUpPredictiveAll(key, &entries);
   for (size_t i = 0; i < entries.size(); ++i) {
     if (!entries[i]->result().empty()) {
       // skip rules with result, because this causes too many results.
@@ -93,8 +107,12 @@ bool GetFromPending(const Table &table, const string &key,
 }
 }  // anonymous namespace
 
-CharChunk::CharChunk()
-    : transliterator_(Transliterators::GetConversionStringSelector()),
+CharChunk::CharChunk(const TransliteratorInterface *transliterator,
+                     const Table *table)
+    : transliterator_((transliterator == NULL) ?
+                      Transliterators::GetConversionStringSelector() :
+                      transliterator),
+      table_(table),
       status_mask_(0),
       attributes_(NO_TABLE_ATTRIBUTE) {}
 
@@ -114,8 +132,7 @@ size_t CharChunk::GetLength(const TransliteratorInterface *t12r) const {
   return Util::CharsLen(t13n);
 }
 
-void CharChunk::AppendResult(const Table &table,
-                             const TransliteratorInterface *t12r,
+void CharChunk::AppendResult(const TransliteratorInterface *t12r,
                              string *result) const {
   if (has_status(NO_CONVERSION)) {
     result->append(Table::DeleteSpecialKey(raw_));
@@ -128,8 +145,7 @@ void CharChunk::AppendResult(const Table &table,
   }
 }
 
-void CharChunk::AppendTrimedResult(const Table &table,
-                                   const TransliteratorInterface *t12r,
+void CharChunk::AppendTrimedResult(const TransliteratorInterface *t12r,
                                    string *result) const {
   if (has_status(NO_CONVERSION)) {
     result->append(Table::DeleteSpecialKey(raw_));
@@ -139,7 +155,7 @@ void CharChunk::AppendTrimedResult(const Table &table,
     if (!pending_.empty()) {
       size_t key_length = 0;
       bool fixed = false;
-      const Entry *entry = table.LookUpPrefix(pending_, &key_length, &fixed);
+      const Entry *entry = table_->LookUpPrefix(pending_, &key_length, &fixed);
       if (entry != NULL && entry->input() == entry->result()) {
         converted.append(entry->result());
       }
@@ -150,8 +166,7 @@ void CharChunk::AppendTrimedResult(const Table &table,
   }
 }
 
-void CharChunk::AppendFixedResult(const Table &table,
-                                  const TransliteratorInterface *t12r,
+void CharChunk::AppendFixedResult(const TransliteratorInterface *t12r,
                                   string *result) const {
   if (has_status(NO_CONVERSION)) {
     result->append(Table::DeleteSpecialKey(raw_));
@@ -193,8 +208,28 @@ void CharChunk::AppendFixedResult(const Table &table,
 // 'は゜' -> 'ぱ', ''
 // 'は゛' -> 'ば', ''
 // From the input 'は', we want 'は', 'ば', 'ぱ'
-void CharChunk::GetExpandedResults(const Table &table,
-                                   const TransliteratorInterface *t12r,
+//
+// For mobile rules,
+// If we have the rule,
+// '1' -> '', 'あ'
+// 'あ1' -> '', 'い'
+// 'い1' -> '', 'う'
+// 'う1' -> '', 'え'
+// 'え1' -> '', 'お'
+// 'お1' -> '', 'あ'
+// 'あ*' -> '', '{*}ぁ'
+// '{*}ぁ' -> '', '{*}あ'
+// '{*}あ' -> '', '{*}ぁ'
+// 'い*' -> '', '{*}ぃ'
+// '{*}ぃ' -> '', '{*}い'
+// '{*}い' -> '', '{*}ぃ'
+// From the input '1', we want 'あ', 'ぁ', not including 'い', 'ぃ', 'う', etc
+//
+// Actually, we don't need to recursive lookup for above two patterns.
+//
+// What we want to append here is the 'looped rule' in |kMaxRecursion| lookup.
+// Here, '{*}ぁ' -> '{*}あ' -> '{*}ぁ' is the loop.
+void CharChunk::GetExpandedResults(const TransliteratorInterface *t12r,
                                    set<string> *results) const {
   DCHECK(results);
   if (has_status(NO_CONVERSION)) {
@@ -210,7 +245,7 @@ void CharChunk::GetExpandedResults(const Table &table,
     results->insert(Table::DeleteSpecialKey(pending_));
   }
   vector<const Entry *> entries;
-  table.LookUpPredictiveAll(pending_, &entries);
+  table_->LookUpPredictiveAll(pending_, &entries);
   for (size_t i = 0; i < entries.size(); ++i) {
     if (!entries[i]->result().empty()) {
       results->insert(Table::DeleteSpecialKey(entries[i]->result()));
@@ -219,7 +254,7 @@ void CharChunk::GetExpandedResults(const Table &table,
       continue;
     }
     set<string> loop_result;
-    if (!GetFromPending(table, entries[i]->pending(),
+    if (!GetFromPending(table_, entries[i]->pending(),
                         kMaxRecursion, &loop_result)) {
       continue;
     }
@@ -234,22 +269,25 @@ bool CharChunk::IsFixed() const {
   return pending_.empty();
 }
 
-bool CharChunk::IsAppendable(const TransliteratorInterface *t12r) const {
-  return !pending_.empty() && (t12r == NULL || t12r == transliterator_);
+bool CharChunk::IsAppendable(const TransliteratorInterface *t12r,
+                             const Table *table) const {
+  return !pending_.empty() &&
+      (t12r == NULL || t12r == transliterator_) &&
+      (table == table_);
 }
 
 bool CharChunk::IsConvertible(
     const TransliteratorInterface *t12r,
-    const Table &table,
+    const Table *table,
     const string &input) const {
-  if(!IsAppendable(t12r)) {
+  if (!IsAppendable(t12r, table)) {
     return false;
   }
 
   size_t key_length = 0;
   bool fixed = false;
   string key = pending_ + input;
-  const Entry *entry = table.LookUpPrefix(key, &key_length, &fixed);
+  const Entry *entry = table->LookUpPrefix(key, &key_length, &fixed);
 
   return entry && (key.size() == key_length) && fixed;
 }
@@ -271,13 +309,13 @@ void CharChunk::Combine(const CharChunk &left_chunk) {
   pending_ = left_chunk.pending_ + pending_;
 }
 
-bool CharChunk::AddInputInternal(const Table &table, string *input) {
+bool CharChunk::AddInputInternal(string *input) {
   const bool kNoLoop = false;
 
   size_t key_length = 0;
   bool fixed = false;
   string key = pending_ + *input;
-  const Entry *entry = table.LookUpPrefix(key, &key_length, &fixed);
+  const Entry *entry = table_->LookUpPrefix(key, &key_length, &fixed);
 
   if (entry == NULL) {
     if (key_length == 0) {
@@ -364,8 +402,8 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
   return kLoop;
 }
 
-void CharChunk::AddInput(const Table &table, string *input) {
-  while (AddInputInternal(table, input));
+void CharChunk::AddInput(string *input) {
+  while (AddInputInternal(input));
 }
 
 void CharChunk::AddConvertedChar(string *input) {
@@ -376,8 +414,7 @@ void CharChunk::AddConvertedChar(string *input) {
   *input = Util::SubString(*input, 1, string::npos);
 }
 
-void CharChunk::AddInputAndConvertedChar(const Table &table,
-                                         string *key,
+void CharChunk::AddInputAndConvertedChar(string *key,
                                          string *converted_char) {
   // If this chunk is empty, the key and converted_char are simply
   // copied.
@@ -393,7 +430,7 @@ void CharChunk::AddInputAndConvertedChar(const Table &table,
 
     // If this entry is the first entry, the table attributes are
     // applied to this chunk.
-    const Entry *entry = table.LookUp(pending_);
+    const Entry *entry = table_->LookUp(pending_);
     if (entry != NULL) {
       attributes_ = entry->attributes();
     }
@@ -403,7 +440,7 @@ void CharChunk::AddInputAndConvertedChar(const Table &table,
   const string input = pending_ + *converted_char;
   size_t key_length = 0;
   bool fixed = false;
-  const Entry *entry = table.LookUpPrefix(input, &key_length, &fixed);
+  const Entry *entry = table_->LookUpPrefix(input, &key_length, &fixed);
   if (entry == NULL) {
     // Do not modify this char_chunk, all key and converted_char
     // values will be used by the next char_chunk.
@@ -451,8 +488,7 @@ bool CharChunk::ShouldCommit() const {
   return (attributes_ & DIRECT_INPUT) && pending_.empty();
 }
 
-bool CharChunk::ShouldInsertNewChunk(const Table &table,
-                                     const CompositionInput &input) const {
+bool CharChunk::ShouldInsertNewChunk(const CompositionInput &input) const {
   if (raw_.empty() && conversion_.empty() && pending_.empty()) {
     return false;
   }
@@ -462,27 +498,26 @@ bool CharChunk::ShouldInsertNewChunk(const Table &table,
       ((attributes_ & END_CHUNK) && pending_.empty());
 
   if (is_new_input &&
-      (table.HasNewChunkEntry(input.raw()) ||
-          !table.HasSubRules(input.raw()))) {
+      (table_->HasNewChunkEntry(input.raw()) ||
+          !table_->HasSubRules(input.raw()))) {
     // Such input which is not on the table is treated as NewChunk entry.
     return true;
   }
   return false;
 }
 
-void CharChunk::AddCompositionInput(const Table &table,
-                                    CompositionInput *input) {
+void CharChunk::AddCompositionInput(CompositionInput *input) {
   if (input->has_conversion()) {
-    AddInputAndConvertedChar(table,
+    AddInputAndConvertedChar(
                              input->mutable_raw(),
                              input->mutable_conversion());
     return;
   }
 
-  if (ShouldInsertNewChunk(table, *input)) {
+  if (ShouldInsertNewChunk(*input)) {
     return;
   }
-  AddInput(table, input->mutable_raw());
+  AddInput(input->mutable_raw());
 }
 
 void CharChunk::SetTransliterator(
@@ -543,7 +578,7 @@ void CharChunk::clear_status() {
 
 bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
                            const size_t position,
-                           CharChunk *left_new_chunk) {
+                           CharChunk **left_new_chunk) {
   if (position <= 0 || position >= GetLength(t12r)) {
     LOG(WARNING) << "Invalid position: " << position;
     return false;
@@ -556,22 +591,22 @@ bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
       Table::DeleteSpecialKey(conversion_ + pending_),
       &raw_lhs, &raw_rhs, &converted_lhs, &converted_rhs);
 
-  left_new_chunk->SetTransliterator(transliterator_);
-  left_new_chunk->set_raw(raw_lhs);
+  *left_new_chunk = new CharChunk(transliterator_, table_);
+  (*left_new_chunk)->set_raw(raw_lhs);
   set_raw(raw_rhs);
 
   if (converted_lhs.size() > conversion_.size()) {
     // [ conversion | pending ] => [ conv | pend#1 ] [ pend#2 ]
     const string pending_lhs = converted_lhs.substr(conversion_.size());
-    left_new_chunk->set_conversion(conversion_);
-    left_new_chunk->set_pending(pending_lhs);
+    (*left_new_chunk)->set_conversion(conversion_);
+    (*left_new_chunk)->set_pending(pending_lhs);
 
     conversion_.clear();
     pending_ = converted_rhs;
     ambiguous_.clear();
   } else {
     // [ conversion | pending ] => [ conv#1 ] [ conv#2 | pending ]
-    left_new_chunk->set_conversion(converted_lhs);
+    (*left_new_chunk)->set_conversion(converted_lhs);
     // left_new_chunk->set_pending("");
     const size_t pending_pos = converted_rhs.size() - pending_.size();
     conversion_ = converted_rhs.substr(0, pending_pos);
@@ -594,16 +629,17 @@ const TransliteratorInterface *CharChunk::GetTransliterator(
   return transliterator_;
 }
 
-void CharChunk::CopyFrom(const CharChunk &src) {
+CharChunk *CharChunk::Clone() const {
   // TODO(hsumita): Implements TransliteratorFactory and uses it instead of
   // copying a pointer.
-  transliterator_ = src.transliterator_;
-  raw_.assign(src.raw_);
-  conversion_.assign(src.conversion_);
-  pending_.assign(src.pending_);
-  ambiguous_.assign(src.ambiguous_);
-  status_mask_ = src.status_mask_;
-  attributes_ = src.attributes_;
+  CharChunk *new_char_chunk = new CharChunk(transliterator_, table_);
+  new_char_chunk->raw_.assign(raw_);
+  new_char_chunk->conversion_.assign(conversion_);
+  new_char_chunk->pending_.assign(pending_);
+  new_char_chunk->ambiguous_.assign(ambiguous_);
+  new_char_chunk->status_mask_ = status_mask_;
+  new_char_chunk->attributes_ = attributes_;
+  return new_char_chunk;
 }
 
 }  // namespace composer

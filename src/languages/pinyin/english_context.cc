@@ -232,13 +232,22 @@ size_t EnglishContext::focused_candidate_index() const {
   return focused_candidate_index_;
 }
 
-size_t EnglishContext::candidates_size() const {
-  return candidates_.size();
+bool EnglishContext::GetCandidate(size_t index, Candidate *candidate) {
+  DCHECK(candidate);
+  if (!HasCandidate(index)) {
+    return false;
+  }
+
+  candidate->text.assign(candidates_[index]);
+  return true;
 }
 
-void EnglishContext::GetCandidates(vector<string> *candidates) const {
-  DCHECK(candidates);
-  candidates->assign(candidates_.begin(), candidates_.end());
+bool EnglishContext::HasCandidate(size_t index) {
+  return index < candidates_.size();
+}
+
+size_t EnglishContext::PrepareCandidates(size_t required_size) {
+  return min(required_size, candidates_.size());
 }
 
 void EnglishContext::Suggest() {

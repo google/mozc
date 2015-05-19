@@ -31,10 +31,10 @@
 #define MOZC_CHROME_SKK_SKK_DICT_H_
 
 #include "dictionary/system/system_dictionary.h"
+#include "net/jsoncpp.h"
 #include "ppapi/cpp/instance.h"
 #include "ppapi/cpp/module.h"
 #include "ppapi/cpp/var.h"
-#include "third_party/jsoncpp/json.h"
 
 namespace mozc {
 

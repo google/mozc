@@ -124,7 +124,9 @@ class CompositionInterface {
   // internal/composer_test.cc.
   virtual CompositionInterface *Clone() const = 0;
 
-  virtual void SetTableForUnittest(const Table *table) = 0;
+  // Set composition table.
+  // This class does NOT take the ownership of the table;
+  virtual void SetTable(const Table *table) = 0;
 };
 
 }  // namespace composer

@@ -393,16 +393,14 @@ const string &KeyCorrector::original_key() const {
 }
 
 size_t KeyCorrector::GetCorrectedPosition(const size_t original_key_pos) const {
-  if (original_key_pos >= 0 &&
-      original_key_pos < alignment_.size()) {
+  if (original_key_pos < alignment_.size()) {
     return alignment_[original_key_pos];
   }
   return kInvalidPos;
 }
 
 size_t KeyCorrector::GetOriginalPosition(const size_t corrected_key_pos) const {
-  if (corrected_key_pos >= 0 &&
-      corrected_key_pos < rev_alignment_.size()) {
+  if (corrected_key_pos < rev_alignment_.size()) {
     return rev_alignment_[corrected_key_pos];
   }
   return kInvalidPos;

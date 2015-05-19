@@ -273,9 +273,21 @@ size_t PinyinContextMock::candidates_size() const {
   return candidates_.size();
 }
 
-void PinyinContextMock::GetCandidates(vector<string> *candidates) const {
-  DCHECK(candidates);
-  candidates->assign(candidates_.begin(), candidates_.end());
+bool PinyinContextMock::HasCandidate(size_t index) {
+  return index < candidates_.size();
+}
+
+bool PinyinContextMock::GetCandidate(size_t index, Candidate *candidate) {
+  DCHECK(candidate);
+  if (!HasCandidate(index)) {
+    return false;
+  }
+  candidate->text.assign(candidates_[index]);
+  return true;
+}
+
+size_t PinyinContextMock::PrepareCandidates(size_t index) {
+  return min(index, candidates_.size());
 }
 
 size_t PinyinContextMock::BoundaryNext() const {

@@ -34,7 +34,7 @@
 #include "base/util.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_util.h"
-#include "third_party/jsoncpp/json.h"
+#include "net/jsoncpp.h"
 
 namespace mozc {
 namespace sync {

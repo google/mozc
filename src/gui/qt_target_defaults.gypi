@@ -34,7 +34,7 @@
   'variables': {
     'includes': ['qt_vars.gypi'],
     'conditions': [
-      ['use_dynamically_linked_qt=="YES"', {
+      ['use_dynamically_linked_qt==1', {
         'libfile_postfix_for_win': '4',
         'win32_dlls_for_qt': [],
       }, {  # else

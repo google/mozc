@@ -128,27 +128,26 @@ class EnglishContextTest : public testing::Test {
     EXPECT_EQ(focused_candidate_index, context_->focused_candidate_index());
 
     if (input_text.size() <= 1) {
-      vector<string> actual_candidates;
-      context_->GetCandidates(&actual_candidates);
-
-      EXPECT_EQ(0, context_->candidates_size());
-      EXPECT_EQ(0, actual_candidates.size());
+      EXPECT_EQ(0, GetCandidatesSize());
     } else {
       vector<string> expected_candidates;
       string query = input_text.substr(1);
       Util::LowerString(&query);
       dictionary_.GetSuggestions(query, &expected_candidates);
 
-      vector<string> actual_candidates;
-      context_->GetCandidates(&actual_candidates);
+      ASSERT_EQ(expected_candidates.size(), GetCandidatesSize());
 
-      ASSERT_EQ(expected_candidates.size(), context_->candidates_size());
-      ASSERT_EQ(expected_candidates.size(), actual_candidates.size());
-
-      for (size_t i = 0; i < actual_candidates.size(); ++i) {
-        EXPECT_EQ(expected_candidates[i], actual_candidates[i]);
+      Candidate candidate;
+      for (size_t i = 0; context_->GetCandidate(i, &candidate); ++i) {
+        EXPECT_EQ(expected_candidates[i], candidate.text);
       }
     }
+  }
+
+  size_t GetCandidatesSize() {
+    size_t size = 0;
+    for (; context_->HasCandidate(size); ++size) {}
+    return size;
   }
 
   EnglishMockDictionary dictionary_;
@@ -326,7 +325,7 @@ TEST_F(EnglishContextTest, FocusCandidateIndex) {
     CheckContext("vaa", "", 1);
   }
 
-  const size_t last_index = context_->candidates_size() - 1;
+  const size_t last_index = GetCandidatesSize() - 1;
 
   {
     SCOPED_TRACE("Focuses a last candidate");
@@ -378,7 +377,7 @@ TEST_F(EnglishContextTest, NoMatchingInput) {
     SCOPED_TRACE("Inserts. There are no matching words in the mock dictionary");
     InsertCharacterChars(kInputText);
     CheckContext(kInputText, "", 0);
-    EXPECT_EQ(0, context_->candidates_size());
+    EXPECT_EQ(0, GetCandidatesSize());
   }
 
   {

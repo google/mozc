@@ -154,6 +154,7 @@
       ],
       'dependencies': [
         '../config/config.gyp:genproto_config',
+        '../dictionary/dictionary_base.gyp:genproto_dictionary',
       ],
     },
     {
@@ -168,6 +169,7 @@
       'dependencies': [
         '../config/config.gyp:config_protocol',
         '../protobuf/protobuf.gyp:protobuf',
+        '../dictionary/dictionary_base.gyp:dictionary_protocol',
         'genproto_session#host',
       ],
       'export_dependent_settings': [

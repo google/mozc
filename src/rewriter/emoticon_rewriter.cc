@@ -43,6 +43,7 @@
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 namespace {
@@ -252,6 +253,9 @@ EmoticonRewriter::EmoticonRewriter() {}
 EmoticonRewriter::~EmoticonRewriter() {}
 
 int EmoticonRewriter::capability() const {
+  if (GET_REQUEST(mixed_conversion)) {
+    return RewriterInterface::ALL;
+  }
   return RewriterInterface::CONVERSION;
 }
 

@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "dictionary/system/system_dictionary.h"
-#include "third_party/jsoncpp/json.h"
+#include "net/jsoncpp.h"
 
 namespace mozc {
 

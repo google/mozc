@@ -57,11 +57,13 @@ class MozcDictionaryImpl : public DictionaryImpl {
   MozcDictionaryImpl() : DictionaryImpl(
       SystemDictionary::CreateSystemDictionaryFromImage(g_dictionary_address,
                                                         g_dictionary_size),
-      ValueDictionary::CreateValueDictionaryFromImage(g_dictionary_address,
-                                                      g_dictionary_size),
+      ValueDictionary::CreateValueDictionaryFromImage(
+          *UserDictionaryManager::GetUserDictionaryManager()->GetPOSMatcher(),
+          g_dictionary_address,
+          g_dictionary_size),
       UserDictionaryManager::GetUserDictionaryManager()->GetUserDictionary(),
-      SuppressionDictionary::GetSuppressionDictionary(),
-      Singleton<POSMatcher>::get()) {}
+      Singleton<SuppressionDictionary>::get(),
+      UserDictionaryManager::GetUserDictionaryManager()->GetPOSMatcher()) {}
   virtual ~MozcDictionaryImpl() {}
 
   friend class Singleton<MozcDictionaryImpl>;

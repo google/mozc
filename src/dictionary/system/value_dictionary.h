@@ -49,18 +49,19 @@ namespace rx {
 class RxTrie;
 }  // namespace rx
 
-class NodeAllocatorInterface;
 class DictionaryFile;
+class NodeAllocatorInterface;
+class POSMatcher;
 
 class ValueDictionary : public DictionaryInterface {
  public:
   virtual ~ValueDictionary();
 
   static ValueDictionary *CreateValueDictionaryFromFile(
-      const string &filename);
+      const POSMatcher& pos_matcher, const string &filename);
 
   static ValueDictionary *CreateValueDictionaryFromImage(
-      const char *ptr, int len);
+      const POSMatcher& pos_matcher, const char *ptr, int len);
 
   Node *LookupPredictiveWithLimit(const char *str, int size,
                                   const Limit &limit,
@@ -77,7 +78,7 @@ class ValueDictionary : public DictionaryInterface {
                       NodeAllocatorInterface *allocator) const;
 
  private:
-  ValueDictionary();
+  explicit ValueDictionary(const POSMatcher& pos_matcher);
 
   bool OpenDictionaryFile();
 

@@ -32,8 +32,15 @@
 
 namespace mozc {
 namespace pinyin {
-namespace keymap {
+enum ConversionMode {
+  NONE,         // Initial state.
+  PINYIN,       // Parses alphabet as pinyin, and converts it to phrase.
+  DIRECT,       // Inputs input characters.
+  ENGLISH,      // Suggests English words.
+  PUNCTUATION,  // Suggests punctuations.
+};
 
+namespace keymap {
 // TODO(hsumita): Merge this enum to ConversionMode enum.
 enum KeymapMode {
   PINYIN,
@@ -97,7 +104,6 @@ enum ConverterState {
   INACTIVE,
   ACTIVE,
 };
-
 }  // namespace keymap
 }  // namespace pinyin
 }  // namespace mozc

@@ -33,6 +33,7 @@
 #include "base/util.h"
 #include "converter/connector_interface.h"
 #include "converter/sparse_connector.h"
+#include "converter/sparse_connector_builder.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -82,10 +83,10 @@ TEST(SparseConnectorTest, SparseConnecterOpenTest) {
     ofs << "extra2" << endl;
   }
 
-  SparseConnectorBuilder::Compile(input_filename,
-                                  id_filename,
-                                  special_pos_filename,
-                                  output_filename);
+  converter::SparseConnectorBuilder::Compile(input_filename,
+                                             id_filename,
+                                             special_pos_filename,
+                                             output_filename);
 
   Mmap<char> cmmap;
   CHECK(cmmap.Open(output_filename.c_str()))

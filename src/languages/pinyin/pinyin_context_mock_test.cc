@@ -75,6 +75,12 @@ class PinyinContextMockTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
   }
+
+  size_t GetCandidatesSize(PinyinContextInterface *context) {
+    size_t size = 0;
+    for (; context->HasCandidate(size); ++size) {}
+    return size;
+  }
 };
 
 TEST_F(PinyinContextMockTest, InsertTest) {
@@ -96,14 +102,16 @@ TEST_F(PinyinContextMockTest, InsertTest) {
     EXPECT_EQ("", context.rest_text());
     EXPECT_EQ(5, context.cursor());
     EXPECT_EQ(0, context.focused_candidate_index());
-    ASSERT_EQ(5, context.candidates_size());
-    vector<string> candidates;
-    context.GetCandidates(&candidates);
-    EXPECT_EQ(ToFullWidthAscii("NIHAO"), candidates[0]);
-    EXPECT_EQ(ToFullWidthAscii("NIHA"), candidates[1]);
-    EXPECT_EQ(ToFullWidthAscii("NIH"), candidates[2]);
-    EXPECT_EQ(ToFullWidthAscii("NI"), candidates[3]);
-    EXPECT_EQ(ToFullWidthAscii("N"), candidates[4]);
+    ASSERT_EQ(5, GetCandidatesSize(&context));
+
+    const string kBaseCandidate = "NIHAO";
+    size_t size = kBaseCandidate.size();
+    for (size_t i = 0; i < size; ++i) {
+      Candidate candidate;
+      EXPECT_TRUE(context.GetCandidate(i, &candidate));
+      EXPECT_EQ(ToFullWidthAscii(kBaseCandidate.substr(0, size - i)),
+                candidate.text);
+    }
 
     // Does nothing.
     context.Insert('A');
@@ -651,16 +659,19 @@ TEST_F(PinyinContextMockTest, ClearCandidateFromHistory) {
   ASSERT_EQ(1, context.focused_candidate_index());
 
   context.ClearCandidateFromHistory(1);
-  EXPECT_EQ(2, context.candidates_size());
-  vector<string> candidates;
-  context.GetCandidates(&candidates);
+  EXPECT_EQ(2, GetCandidatesSize(&context));
+
+  Candidate candidate;
+  EXPECT_TRUE(context.GetCandidate(0, &candidate));
+  EXPECT_EQ(ToFullWidthAscii("ABC"), candidate.text);
+  EXPECT_TRUE(context.GetCandidate(1, &candidate));
+  EXPECT_EQ(ToFullWidthAscii("A"), candidate.text);
+
   EXPECT_EQ("abc", context.input_text());
   EXPECT_EQ("", context.selected_text());
   EXPECT_EQ(ToFullWidthAscii("ABC"), context.conversion_text());
   EXPECT_EQ("", context.rest_text());
   EXPECT_EQ(0, context.focused_candidate_index());
-  EXPECT_EQ(ToFullWidthAscii("ABC"), candidates[0]);
-  EXPECT_EQ(ToFullWidthAscii("A"), candidates[1]);
 }
 
 TEST_F(PinyinContextMockTest, ReloadConfig) {

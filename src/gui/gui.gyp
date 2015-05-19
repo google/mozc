@@ -52,6 +52,7 @@
         'base/locale_util.cc',
         'base/setup_util.cc',
         'base/singleton_window_helper.cc',
+        'base/table_util.cc',
         'base/win_util.cc',
         'base/window_title_modifier.cc',
       ],
@@ -520,9 +521,9 @@
             '../sync/sync.gyp:oauth2',
           ],
         }],
-        ['enable_cloud_handwriting==1 or enable_webservice_infolist==1', {
+        ['enable_webservice_infolist==1', {
           'dependencies': [
-            '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
+              '../net/net.gyp:jsoncpp',
           ],
         }],
       ],
@@ -636,6 +637,7 @@
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../data_manager/data_manager.gyp:user_dictionary_manager',
         '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:user_dictionary',
@@ -993,21 +995,15 @@
             'prelauncher_lib',
           ],
           'conditions': [
-            ['use_qt=="YES" and branding=="GoogleJapaneseInput"', {
+            ['use_qt=="YES"', {
               'postbuilds': [
                 {
-                  'postbuild_name': 'make Resources directory',
+                  'postbuild_name': 'Change the reference to Qt frameworks.',
                   'action': [
-                    'mkdir', '-p',
-                    '${BUILT_PRODUCTS_DIR}/<(branding)Tool_lib.framework/Contents/Resources',
-                  ],
-                },
-                {
-                  'postbuild_name': 'copy qt_menu.nib to Resources directory',
-                  'action': [
-                    'cp', '-rf',
-                     '<(qt_dir)/src/gui/mac/qt_menu.nib',
-                     '${BUILT_PRODUCTS_DIR}/<(branding)Tool_lib.framework/Contents/Resources/qt_menu.nib',
+                    'python', '../build_tools/change_qt_reference_mac.py',
+                    '--qtdir', '<(qt_dir)',
+                    '--target',
+                    '${BUILT_PRODUCTS_DIR}/<(branding)Tool_lib.framework/Versions/A/<(branding)Tool_lib',
                   ],
                 },
               ],
@@ -1067,6 +1063,25 @@
               # included outside from the condition.
               'includes': [
                 '../gyp/postbuilds_mac.gypi',
+              ],
+              'postbuilds': [
+                {
+                  'postbuild_name': 'Change the reference to Qt frameworks.',
+                  'action': [
+                    'python', '../build_tools/change_qt_reference_mac.py',
+                    '--qtdir', '<(qt_dir)',
+                    '--target',
+                    '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
+                  ],
+                },
+                {
+                  'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
+                  'action': [
+                    'python', '../build_tools/copy_qt_frameworks_mac.py',
+                    '--qtdir', '<(qt_dir)',
+                    '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
+                  ],
+                },
               ],
             }, {
               # So we include the same file explicitly here.

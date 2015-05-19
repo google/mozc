@@ -84,6 +84,7 @@
         'session_test.cc',
       ],
       'dependencies': [
+        '../data_manager/data_manager.gyp:user_pos_manager',
         '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',

@@ -59,9 +59,9 @@
 #define HAVE_TLS 1
 #endif // OS_WINDOWS && _MSC_VER
 
-// Andorid NDK doesn't support TLS.
+// Andorid NDK and NaCl don't support TLS.
 #if defined(OS_LINUX) && !defined(OS_ANDROID) && \
-    (defined(__GNUC__) || defined(__clang__))
+    !defined(__native_client__) && (defined(__GNUC__) || defined(__clang__))
 // GCC and Clang support TLS.
 #define TLS_KEYWORD __thread
 #define HAVE_TLS 1

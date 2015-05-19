@@ -32,8 +32,8 @@
 
 #include "base/base.h"
 #include "base/util.h"
+#include "net/jsoncpp.h"
 #include "sync/oauth2.h"
-#include "third_party/jsoncpp/json.h"
 
 // Program dependent constants
 // You have to get Client Credentials for Goole APIs and replace "client_id"

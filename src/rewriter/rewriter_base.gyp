@@ -39,6 +39,9 @@
     {
       'target_name': 'gen_rewriter_files',
       'type': 'none',
+      'dependencies': [
+        '../dictionary/dictionary_base.gyp:pos_util',
+      ],
       'toolsets': ['host'],
       'actions': [
         {
@@ -88,22 +91,34 @@
         {
           'action_name': 'gen_single_kanji_rewriter_data',
           'variables': {
-            'input_files': [
-              '../data/single_kanji/single_kanji.tsv',
-            ],
+            'input_file': '../data/single_kanji/single_kanji.tsv',
+            'id_def': '../data/dictionary/id.def',
+            'special_pos': '../data/rules/special_pos.def',
+            'user_pos': '../data/rules/user_pos.def',
+            'cforms': '../data/rules/cforms.def',
+            'output_file': '<(gen_out_dir)/single_kanji_rewriter_data.h',
           },
           'inputs': [
-            '<@(input_files)',
+            'embedded_dictionary_compiler.py',
+            'gen_single_kanji_rewriter_data.py',
+            '<(input_file)',
+            '<(id_def)',
+            '<(special_pos)',
+            '<(user_pos)',
+            '<(cforms)',
           ],
           'outputs': [
-            '<(gen_out_dir)/single_kanji_rewriter_data.h',
+            '<(output_file)'
           ],
           'action': [
-            '<(mozc_build_tools_dir)/gen_single_kanji_rewriter_dictionary_main',
-            '--logtostderr',
-            '--input=<(input_files)',
-            '--output=<(gen_out_dir)/single_kanji_rewriter_data.h',
+            'python', 'gen_single_kanji_rewriter_data.py',
+            '--input=<(input_file)',
             '--min_prob=0.0',
+            '--id_file=<(id_def)',
+            '--special_pos_file=<(special_pos)',
+            '--user_pos_file=<(user_pos)',
+            '--cforms_file=<(cforms)',
+            '--output=<(output_file)',
           ],
         },
         {
@@ -146,6 +161,27 @@
             'python', 'gen_emoticon_rewriter_data.py',
             '--input=<(input_file)',
             '--output=<(output_file)',
+          ],
+        },
+        {
+          'action_name': 'gen_reading_correction_data',
+          'variables': {
+            'input_files%': [
+              '../data/dictionary/reading_correction.tsv',
+            ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'conditions': [
+          ],
+          'outputs': [
+            '<(gen_out_dir)/reading_correction_data.h',
+          ],
+          'action': [
+            'python', './gen_reading_correction_data.py',
+            '--output=<(gen_out_dir)/reading_correction_data.h',
+            '--input=<@(input_files)',
           ],
         },
       ],
@@ -222,31 +258,6 @@
       'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_collocation_suppression_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ]
-    },
-    {
-      'target_name': 'gen_single_kanji_rewriter_dictionary_main',
-      'type': 'executable',
-      'toolsets': ['host'],
-      'sources': [
-        'embedded_dictionary.cc',
-        'gen_single_kanji_rewriter_dictionary_main.cc',
-      ],
-       'dependencies': [
-         '../base/base.gyp:base',
-         '../data_manager/data_manager.gyp:user_pos_manager',
-         '../dictionary/dictionary_base.gyp:user_pos_data',
-       ],
-    },
-    {
-      'target_name': 'install_gen_single_kanji_rewriter_dictionary_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_single_kanji_rewriter_dictionary_main'
       },
       'includes' : [
         '../gyp/install_build_tool.gypi',

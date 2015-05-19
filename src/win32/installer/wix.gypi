@@ -47,6 +47,54 @@
         }],
       ],
       'variables': {
+        'additional_args%': [],
+        'conditions': [
+          ['mozc_zinnia_model_data_path!=""', {
+            'additional_args+': [
+              '-dMozcZinniaModelDataPath=<(mozc_zinnia_model_data_path)',
+            ],
+          }],
+          ['debug_crt_merge_module_id_prefix!=""', {
+            'additional_args+': [
+              '-dDebugCrtMergeModuleIdPrefix=<(debug_crt_merge_module_id_prefix)',
+            ],
+          }],
+          ['release_crt_merge_module_id_prefix!=""', {
+            'additional_args+': [
+              '-dReleaseCrtMergeModuleIdPrefix=<(release_crt_merge_module_id_prefix)',
+            ],
+          }],
+          ['debug_crt_merge_module_path!=""', {
+            'additional_args+': [
+              '-dDebugCrtMergeModulePath="<(debug_crt_merge_module_path)"',
+            ],
+          }],
+          ['release_crt_merge_module_path!=""', {
+            'additional_args+': [
+              '-dReleaseCrtMergeModulePath="<(release_crt_merge_module_path)"',
+            ],
+          }],
+          ['qtcore4_dll_path!=""', {
+            'additional_args+': [
+              '-dQtCore4DllPath=<(qtcore4_dll_path)',
+            ],
+          }],
+          ['qtcored4_dll_path!=""', {
+            'additional_args+': [
+              '-dQtCored4DllPath=<(qtcored4_dll_path)',
+            ],
+          }],
+          ['qtgui4_dll_path!=""', {
+            'additional_args+': [
+              '-dQtGui4DllPath=<(qtgui4_dll_path)',
+            ],
+          }],
+          ['qtguid4_dll_path!=""', {
+            'additional_args+': [
+              '-dQtGuid4DllPath=<(qtguid4_dll_path)',
+            ],
+          }],
+        ],
         'omaha_guid': 'DDCCD2A9-025E-4142-BCEB-F467B88CF830',
         'omaha_client_key': r'Software\Google\Update\Clients\{<(omaha_guid)}',
         'omaha_clientstate_key': r'Software\Google\Update\ClientState\{<(omaha_guid)}',
@@ -69,11 +117,6 @@
       'action': [
         '<(wix_dir)/candle.exe',
         '-nologo',
-        # Suppress harmless warnings caused by including VC8.0 runtime
-        # merge modules.  See the following document for more details.
-        # http://blogs.msdn.com/astebner/archive/2007/02/13/building-an-msi-using-wix-v3-0-that-includes-the-vc-8-0-runtime-merge-modules.aspx
-        '-sw1055',
-        '-sw1076',
         '-dMozcVersionFile=<(mozc_version_file)',
         '-dUpgradeCode=<(upgrade_code)',
         '-dOmahaGuid=<(omaha_guid)',
@@ -93,10 +136,10 @@
         '-dMozcCacheServicePath=<(mozc_cache_service_path)',
         '-dMozcRendererPath=<(mozc_renderer_path)',
         '-dMozcToolPath=<(mozc_tool_path)',
-        '-dMozcZinniaModelDataPath=<(mozc_zinnia_model_data_path)',
         '-dCustomActions32Path=<(mozc_ca32_path)',
         '-dCustomActions64Path=<(mozc_ca64_path)',
         '-dDocumentsDir=<(document_dir)',
+        '<@(additional_args)',
         # we do not use '-o <@(_outputs)' because it causes an error.
         '"-o <@(_outputs)"',
         # We do not use '<@(_inputs)' here because it contains some
@@ -119,6 +162,17 @@
       'action': [
         '<(wix_dir)/light.exe',
         '-nologo',
+        # Suppress harmless warnings caused by including VC runtime
+        # merge modules.  See the following document for more details.
+        # http://blogs.msdn.com/astebner/archive/2007/02/13/building-an-msi-using-wix-v3-0-that-includes-the-vc-8-0-runtime-merge-modules.aspx
+        '-sw1055',
+        '-sice:ICE03',
+        '-sice:ICE30',
+        '-sice:ICE82',
+        '-sice:ICE83',
+        # We intentionally remove *.ime from system folders as a part
+        # of uninstallation.
+        '-sice:ICE09',
         # we do not use '-o <@(_outputs)' because it causes an error.
         '"-o <@(_outputs)"',
         # We do not use '<@(_inputs)' here because it contains some

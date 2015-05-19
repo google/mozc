@@ -39,6 +39,8 @@
 // Workaround against KB813540
 #include <atlbase_mozc.h>
 #include <atlcom.h>
+#include <atlstr.h>
+#include <atlwin.h>
 
 #include <objectarray.h>
 #include <shobjidl.h>
@@ -583,24 +585,70 @@ void WinUtil::DrawThemeText(const QString &text,
 }
 
 #ifdef OS_WINDOWS
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lp) {
+namespace {
+
+struct FindVisibleWindowInfo {
+  HWND found_window_handle;
+  DWORD target_thread_id;
+};
+
+BOOL CALLBACK FindVisibleWindowProc(HWND hwnd, LPARAM lp) {
   DWORD id = 0;
   ::GetWindowThreadProcessId(hwnd, &id);
-  if (static_cast<uint32>(id) != static_cast<uint32>(lp)) {
+  FindVisibleWindowInfo *info = reinterpret_cast<FindVisibleWindowInfo *>(lp);
+  if (id != info->target_thread_id) {
     // continue enum
     return TRUE;
   }
-  if (::SetForegroundWindow(hwnd) == 0) {
-    LOG(ERROR) << "::SetForegroundWindow() failed";
+  if (::IsWindowVisible(hwnd) == FALSE) {
+    // continue enum
+    return TRUE;
   }
+  info->found_window_handle = hwnd;
   return FALSE;
 }
+
+}  // namespace
 #endif  // OS_WINDOWS
 
 void WinUtil::ActivateWindow(uint32 process_id) {
 #ifdef OS_WINDOWS
-  if (::EnumWindows(EnumWindowsProc, static_cast<LPARAM>(process_id)) != 0) {
-    LOG(ERROR) << "could not find the exsisting window.";
+  FindVisibleWindowInfo info = {};
+  info.target_thread_id = process_id;
+
+  // The target process may contain several top-level windows.
+  // We do not care about the invisible windows.
+  if (::EnumWindows(FindVisibleWindowProc,
+                    reinterpret_cast<LPARAM>(&info)) != 0) {
+    LOG(ERROR) << "Could not find the exsisting window.";
+  }
+  const CWindow window(info.found_window_handle);
+  wstring window_title_wide;
+  {
+    CString buf;
+    window.GetWindowTextW(buf);
+    window_title_wide.assign(buf.GetString(), buf.GetLength());
+  }
+  string window_title_utf8;
+  Util::WideToUTF8(window_title_wide, &window_title_utf8);
+  LOG(INFO) << "A visible window found. hwnd: " << window.m_hWnd
+            << ", title: " << window_title_utf8;
+
+  // SetForegroundWindow API does not automatically restore the minimized
+  // window. Use explicitly OpenIcon API in this case.
+  if (window.IsIconic()) {
+    if (::OpenIcon(window.m_hWnd) == FALSE) {
+      LOG(ERROR) << "::OpenIcon() failed.";
+    }
+  }
+
+  // SetForegroundWindow API works wll iff the caller process satisfies the
+  // condition described in the following document.
+  // http://msdn.microsoft.com/en-us/library/windows/desktop/ms633539.aspx
+  // Never use AttachThreadInput API to work around this restriction.
+  // http://blogs.msdn.com/b/oldnewthing/archive/2008/08/01/8795860.aspx
+  if (::SetForegroundWindow(window.m_hWnd) == FALSE) {
+    LOG(ERROR) << "::SetForegroundWindow() failed.";
   }
 #endif  // OS_WINDOWS
 }

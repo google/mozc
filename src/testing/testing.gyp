@@ -105,21 +105,31 @@
         'googletest_lib',
         'testing',
       ],
-      'conditions': [
-        ['OS=="win"', {
-          'link_settings': {
-            'target_conditions': [
-              ['_type=="executable"', {
+      'link_settings': {
+        'target_conditions': [
+          ['_type=="executable"', {
+            'conditions': [
+              ['OS=="win"', {
                 'msvs_settings': {
                   'VCLinkerTool': {
                     'SubSystem': '1',  # 1 == subSystemConsole
                   },
                 },
+                'run_as': {
+                  'working_directory': '$(TargetDir)',
+                  'action': ['$(TargetPath)'],
+                },
+              }],
+              ['OS=="mac"', {
+                'run_as': {
+                  'working_directory': '${BUILT_PRODUCTS_DIR}',
+                  'action': ['${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}'],
+                },
               }],
             ],
-          },
-        }],
-      ],
+          }],
+        ],
+      },
     },
   ],
 }

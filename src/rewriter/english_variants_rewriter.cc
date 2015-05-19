@@ -36,6 +36,7 @@
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 
@@ -164,6 +165,9 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
 }
 
 int EnglishVariantsRewriter::capability() const {
+  if (GET_REQUEST(mixed_conversion)) {
+    return RewriterInterface::ALL;
+  }
   return RewriterInterface::CONVERSION;
 }
 

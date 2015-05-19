@@ -31,7 +31,7 @@
 #define MOZC_LANGUAGES_PINYIN_DEFAULT_KEYMAP_H_
 
 #include "base/port.h"
-#include "languages/pinyin/keymap_constant.h"
+#include "languages/pinyin/pinyin_constant.h"
 
 namespace mozc {
 namespace commands {

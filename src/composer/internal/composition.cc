@@ -86,7 +86,7 @@ size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
   CompositionInput mutable_input;
   mutable_input.CopyFrom(input);
   while (true) {
-    (*left_chunk)->AddCompositionInput(*table_, &mutable_input);
+    (*left_chunk)->AddCompositionInput(&mutable_input);
     if (mutable_input.Empty()) {
       break;
     }
@@ -124,8 +124,9 @@ size_t Composition::DeleteAt(const size_t position) {
       continue;
     }
 
-    CharChunk left_deleted_chunk;
-    (*chunk_it)->SplitChunk(kNullT12r, 1, &left_deleted_chunk);
+    CharChunk *left_deleted_chunk_ptr = NULL;
+    (*chunk_it)->SplitChunk(kNullT12r, 1, &left_deleted_chunk_ptr);
+    scoped_ptr<CharChunk> left_deleted_chunk(left_deleted_chunk_ptr);
   }
   return new_position;
 }
@@ -246,17 +247,17 @@ void Composition::GetStringWithModes(
 
   CharChunkList::const_iterator it;
   for (it = chunks_.begin(); *it != chunks_.back(); ++it) {
-    (*it)->AppendResult(*table_, transliterator, composition);
+    (*it)->AppendResult(transliterator, composition);
   }
   switch (trim_mode) {
     case TRIM:
-      (*it)->AppendTrimedResult(*table_, transliterator, composition);
+      (*it)->AppendTrimedResult(transliterator, composition);
       break;
     case ASIS:
-      (*it)->AppendResult(*table_, transliterator, composition);
+      (*it)->AppendResult(transliterator, composition);
       break;
     case FIX:
-      (*it)->AppendFixedResult(*table_, transliterator, composition);
+      (*it)->AppendFixedResult(transliterator, composition);
       break;
     default:
       LOG(WARNING) << "Unexpected trim mode: " << trim_mode;
@@ -284,12 +285,12 @@ void Composition::GetExpandedStringsWithTransliterator(
 
   CharChunkList::const_iterator it;
   for (it = chunks_.begin(); (*it) != chunks_.back(); ++it) {
-    (*it)->AppendFixedResult(*table_, transliterator, base);
+    (*it)->AppendFixedResult(transliterator, base);
   }
 
-  chunks_.back()->AppendTrimedResult(*table_, transliterator, base);
+  chunks_.back()->AppendTrimedResult(transliterator, base);
   // Get expanded from the last chunk
-  chunks_.back()->GetExpandedResults(*table_, transliterator, expanded);
+  chunks_.back()->GetExpandedResults(transliterator, expanded);
 }
 
 void Composition::GetString(string *composition) const {
@@ -302,7 +303,7 @@ void Composition::GetString(string *composition) const {
   for (CharChunkList::const_iterator it = chunks_.begin();
        it != chunks_.end();
        ++it) {
-    (*it)->AppendResult(*table_, kNullT12r, composition);
+    (*it)->AppendResult(kNullT12r, composition);
   }
 }
 
@@ -384,8 +385,8 @@ CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
     return chunk;
   }
 
-  CharChunk *left_chunk = new CharChunk();  // Left hand of new chunks
-  chunk->SplitChunk(kNullT12r, inner_position, left_chunk);
+  CharChunk *left_chunk = NULL;
+  chunk->SplitChunk(kNullT12r, inner_position, &left_chunk);
   chunks_.insert(*it, left_chunk);
   return left_chunk;
 }
@@ -400,7 +401,7 @@ void Composition::CombinePendingChunks(
     CharChunkList::iterator left_it = it;
     --left_it;
     if (!(*left_it)->IsConvertible(
-            input_t12r_, *table_, (*it)->pending() + next_input)) {
+            input_t12r_, table_, (*it)->pending() + next_input)) {
       return;
     }
 
@@ -412,8 +413,7 @@ void Composition::CombinePendingChunks(
 
 // Insert a chunk to the prev of it.
 CharChunkList::iterator Composition::InsertChunk(CharChunkList::iterator *it) {
-  CharChunk *new_chunk = new CharChunk();
-  new_chunk->SetTransliterator(input_t12r_);
+  CharChunk *new_chunk = new CharChunk(input_t12r_, table_);
   return chunks_.insert(*it, new_chunk);
 }
 
@@ -442,12 +442,11 @@ Composition *Composition::CloneImpl() const {
   // TODO(hsumita): Implements TableFactory and TransliteratorFactory and uses
   // it instead of copying pointers.
   object->input_t12r_ = input_t12r_;
+  object->table_ = table_;
 
   for (CharChunkList::const_iterator it = chunks_.begin();
        it != chunks_.end(); ++it) {
-    CharChunk *chunk = new CharChunk();
-    chunk->CopyFrom(**it);
-    object->chunks_.push_back(chunk);
+    object->chunks_.push_back((*it)->Clone());
   }
 
   return object;
@@ -462,7 +461,7 @@ CharChunkList::iterator Composition::GetInsertionChunk(
 
   CharChunkList::iterator left_it = *it;
   --left_it;
-  if ((*left_it)->IsAppendable(input_t12r_)) {
+  if ((*left_it)->IsAppendable(input_t12r_, table_)) {
     return left_it;
   }
   return InsertChunk(it);
@@ -472,7 +471,7 @@ void Composition::SetInputMode(const TransliteratorInterface *transliterator) {
   input_t12r_ = transliterator;
 }
 
-void Composition::SetTableForUnittest(const Table *table) {
+void Composition::SetTable(const Table *table) {
   table_ = table;
 }
 

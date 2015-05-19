@@ -35,6 +35,7 @@
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"
 #include "rewriter/command_rewriter.h"
+#include "rewriter/correction_rewriter.h"
 #include "rewriter/date_rewriter.h"
 #include "rewriter/dice_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
@@ -73,7 +74,9 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   DCHECK(parent_converter_);
   DCHECK(pos_matcher_);
   DCHECK(pos_group_);
+#ifndef __native_client__
   AddRewriter(new UserDictionaryRewriter);
+#endif  // __native_client__
   AddRewriter(new FocusCandidateRewriter);
   AddRewriter(new TransliterationRewriter(*pos_matcher_));
   AddRewriter(new EnglishVariantsRewriter);
@@ -88,17 +91,23 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(new ZipcodeRewriter(pos_matcher_));
   AddRewriter(new DiceRewriter);
 
+#ifndef __native_client__
   if (FLAGS_use_history_rewriter) {
     AddRewriter(new UserBoundaryHistoryRewriter(parent_converter_));
     AddRewriter(new UserSegmentHistoryRewriter(pos_matcher_, pos_group_));
   }
+#endif  // __native_client__
   AddRewriter(new DateRewriter);
   AddRewriter(new FortuneRewriter);
+  // CommandRewriter is not tested well on Android.
+  // So we temporarily disable it.
+  // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
   AddRewriter(new CommandRewriter);
   AddRewriter(new VersionRewriter);
 #ifdef USE_USAGE_REWRITER
   AddRewriter(new UsageRewriter(pos_matcher_));
 #endif  // USE_USAGE_REWRITER
+  AddRewriter(CorrectionRewriter::CreateCorrectionRewriter());
   AddRewriter(new NormalizationRewriter);
   AddRewriter(new RemoveRedundantCandidateRewriter);
 }

@@ -37,6 +37,7 @@
 #include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/util.h"
+#include "gui/base/table_util.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
@@ -181,12 +182,12 @@ bool RomanTableEditorDialog::Update() {
   string *table = mutable_table();
   table->clear();
   for (int i = 0; i < mutable_table_widget()->rowCount(); ++i) {
-    const string input =
-        mutable_table_widget()->item(i, 0)->text().toStdString();
-    const string output =
-        mutable_table_widget()->item(i, 1)->text().toStdString();
-    const string pending =
-        mutable_table_widget()->item(i, 2)->text().toStdString();
+    const string &input =
+        TableUtil::SafeGetItemText(mutable_table_widget(), i, 0).toStdString();
+    const string &output =
+        TableUtil::SafeGetItemText(mutable_table_widget(), i, 1).toStdString();
+    const string &pending =
+        TableUtil::SafeGetItemText(mutable_table_widget(), i, 2).toStdString();
     if (input.empty() || (output.empty() && pending.empty())) {
       continue;
     }
