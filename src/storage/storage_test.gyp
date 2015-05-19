@@ -33,6 +33,7 @@
       'target_name': 'storage_test',
       'type': 'executable',
       'sources': [
+        'encrypted_string_storage_test.cc',
         'existence_filter_test.cc',
         'lru_storage_test.cc',
         'memory_storage_test.cc',
@@ -47,26 +48,11 @@
         'test_size': 'small',
       },
     },
-    {
-      'target_name': 'encrypted_string_storage_test',
-      'type': 'executable',
-      'sources': [
-        'encrypted_string_storage_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'storage.gyp:encrypted_string_storage',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'storage_all_test',
       'type': 'none',
       'dependencies': [
-        'encrypted_string_storage_test',
         'storage_test',
       ],
     },

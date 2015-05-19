@@ -34,6 +34,9 @@
 # http://src.chromium.org/viewvc/chrome/trunk/src/build/common.gypi
 {
   'variables': {
+    # Set 1 when using two-pass build
+    'enable_two_pass_build%': 0,
+
 
     # Top directory of third party libraries.
     'third_party_dir': '<(DEPTH)/third_party',
@@ -221,7 +224,10 @@
 
     # Represents the directory where the source code of protobuf is
     # extracted. This value is ignored when 'use_libprotobuf' is 1.
-    'protobuf_root': '<(additional_third_party_dir)/protobuf',
+    'protobuf_root': '<(third_party_dir)/protobuf',
+
+    # For Android
+    'protobuf_java_root': '<(third_party_dir)/protobuf/java/src/main',
 
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
@@ -244,9 +250,6 @@
     # use_libibus represents if ibus library is used or not.
     # This option is only for Linux.
     'use_libibus%': 0,
-
-    # use the previous implementation of encryptor.
-    'use_legacy_encryptor%': 0,
 
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
@@ -373,9 +376,6 @@
           }],
           ['enable_mode_indicator==1', {
             'defines': ['MOZC_ENABLE_MODE_INDICATOR'],
-          }],
-          ['use_legacy_encryptor==1', {
-            'defines': ['MOZC_USE_LEGACY_ENCRYPTOR'],
           }],
         ],
       },

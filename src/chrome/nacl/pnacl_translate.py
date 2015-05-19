@@ -35,7 +35,8 @@ Example usage:
   nexefile_x86_32.nexe and nexefile_x86_64.nexe.
 
   python pnacl_translate.py --command=/path/to/toolchain/linux_x86_pnacl \
-    --input=/path/to/pexefile --output_base=/path/to/nexefile --strip
+    --input=/path/to/pexefile --output_base=/path/to/nexefile \
+    --configuration=Release
 """
 
 import optparse
@@ -100,8 +101,8 @@ def main():
                     help='input pexe file')
   parser.add_option('--output_base', dest='output_base',
                     help='output base path')
-  parser.add_option('--strip', action='store_true', dest='strip',
-                    default=False, help='strip the binary')
+  parser.add_option('--configuration', dest='configuration',
+                    help='build configuration')
   (options, _) = parser.parse_args()
 
   if not options.toolchain_root:
@@ -116,7 +117,7 @@ def main():
     print >> sys.stderr, 'Error: output_base is not set.'
     sys.exit(1)
 
-  if options.strip:
+  if options.configuration == 'Release':
     return StripAndTranslate(options.toolchain_root,
                              options.input,
                              options.output_base)

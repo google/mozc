@@ -36,7 +36,6 @@ vars = {
   "protobuf_revision": "462",
   "wtl_revision": "459",
   "zinnia_revision": "16",
-  "openssl_revision": "164645",
   "jsr305_version": "2.0.2",
   "zlib_revision": "198222",
   "japanese_usage_dictionary_revision": "10",
@@ -83,9 +82,6 @@ deps_os = {
       File("http://findbugs.googlecode.com/"
            + "svn/repos/release-repository/com/google/code/findbugs/jsr305/"
            + Var("jsr305_version") + "/jsr305-" + Var("jsr305_version") + ".jar"),
-    "src/third_party/openssl":
-      "http://src.chromium.org/svn/trunk/deps/third_party/openssl@" +
-      Var("openssl_revision"),
     "src/third_party/zlib/v1_2_8":
       "https://src.chromium.org/chrome/trunk/src/third_party/zlib@" +
       Var("zlib_revision"),

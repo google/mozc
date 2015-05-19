@@ -57,6 +57,7 @@
         '../prediction/prediction.gyp:prediction',
         '../prediction/prediction_base.gyp:suggestion_filter',
         '../rewriter/rewriter.gyp:rewriter',
+        '../session/session_base.gyp:session_protocol',
       ],
     },
     {

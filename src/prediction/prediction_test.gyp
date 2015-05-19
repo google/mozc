@@ -66,16 +66,6 @@
       'variables': {
         'test_size': 'small',
       },
-      'conditions': [
-        ['target_platform=="Android"', {
-          'sources!': [
-            # This test depends on encryptor depending on Java libaray on
-            # Java, which is not available on native test.
-            # I.e., we cannot run this on Android.
-            'user_history_predictor_test.cc'
-          ],
-        }],
-      ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {

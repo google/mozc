@@ -54,7 +54,6 @@ DEFINE_bool(make_header, false, "make header mode");
 DEFINE_bool(gen_test_dictionary, false,
             "generate test dictionary (use mock POSManager)");
 
-
 namespace mozc {
 namespace {
 

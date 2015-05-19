@@ -32,8 +32,7 @@
     # We accept following warnings come from protobuf.
     # This list should be revised when protobuf is updated.
     'msvc_disabled_warnings_for_protoc': [
-      # unary minus operator applied to unsigned type, result still
-      # unsigned.
+      # unary minus operator applied to unsigned type, result still unsigned.
       # http://msdn.microsoft.com/en-us/library/4kh09110.aspx
       '4146',
       # 'this' : used in base member initializer list

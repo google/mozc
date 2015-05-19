@@ -547,7 +547,7 @@ void Util::StripWhiteSpaces(const string &input, string *output) {
   for (; start < input.size() && isspace(input[start]); ++start) {}
   for (; end > start && isspace(input[end]); --end) {}
 
-  if (end > start) {
+  if (end >= start) {
     output->assign(input.data() + start, end - start + 1);
   }
 }
@@ -846,24 +846,27 @@ int Util::WideToUTF8(const wstring &input, string *output) {
 }
 #endif  // OS_WIN
 
+StringPiece Util::SubStringPiece(StringPiece src, size_t start) {
+  const char *begin = src.data();
+  const char *end = begin + src.size();
+  for (size_t i = 0; i < start && begin < end; ++i) {
+    begin += OneCharLen(begin);
+  }
+  const size_t prefix_len = begin - src.data();
+  return StringPiece(begin, src.size() - prefix_len);
+}
+
 StringPiece Util::SubStringPiece(
     StringPiece src, size_t start, size_t length) {
-  size_t l = start;
-  const char *substr_begin = src.data();
-  while (l > 0) {
-    substr_begin += OneCharLen(substr_begin);
-    --l;
-  }
-
-  l = length;
-  const char *substr_end = substr_begin;
+  src = SubStringPiece(src, start);
+  size_t l = length;
+  const char *substr_end = src.data();
   const char *const end = src.data() + src.size();
   while (l > 0 && substr_end < end) {
     substr_end += OneCharLen(substr_end);
     --l;
   }
-
-  return StringPiece(substr_begin, substr_end - substr_begin);
+  return StringPiece(src.data(), substr_end - src.data());
 }
 
 void Util::SubString(StringPiece src, size_t start, size_t length,

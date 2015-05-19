@@ -223,6 +223,7 @@
     {
       'target_name': 'obfuscator_support',
       'type': 'static_library',
+      'toolsets': ['host', 'target'],
       'sources': [
         'unverified_aes256.cc',
         'unverified_sha1.cc',
@@ -234,6 +235,7 @@
     {
       'target_name': 'encryptor',
       'type': 'static_library',
+      'toolsets': ['host', 'target'],
       'sources': [
         'encryptor.cc',
         'password_manager.cc',
@@ -243,15 +245,6 @@
         'obfuscator_support',
       ],
       'conditions': [
-        ['use_legacy_encryptor==1', {
-          # Use legacy implementation.
-          'sources!': [
-            'encryptor.cc',
-          ],
-          'sources': [
-            'encryptor_legacy.cc',
-          ],
-        }],
         ['OS=="win"', {
           'link_settings': {
             'msvs_settings': {
@@ -262,49 +255,6 @@
               },
             },
           },
-        }],
-        ['use_legacy_encryptor==1 and OS=="mac"', {
-          'defines': [
-            'HAVE_OPENSSL=1',
-          ],
-          'link_settings': {
-            'libraries': [
-              '/usr/lib/libcrypto.dylib',  # used in 'encryptor.cc'
-            ],
-          },
-        }],
-        ['use_legacy_encryptor==1 and '
-         'OS=="linux" and target_platform!="Android" and '
-         'not (target_platform=="NaCl" and _toolset=="target")', {
-          'cflags': [
-            '<!@(<(pkg_config_command) --cflags-only-other openssl)',
-          ],
-          'defines': [
-            'HAVE_OPENSSL=1',
-          ],
-          'include_dirs': [
-            '<!@(<(pkg_config_command) --cflags-only-I openssl)',
-          ],
-          'link_settings': {
-            'ldflags': [
-              '<!@(<(pkg_config_command) --libs-only-L openssl)',
-            ],
-            'libraries': [
-              '<!@(<(pkg_config_command) --libs-only-l openssl)',
-            ],
-          },
-        }],
-        ['use_legacy_encryptor==1 and target_platform=="Android"', {
-          'dependencies': [
-            'jni_proxy'
-          ],
-        }],
-        ['use_legacy_encryptor==1 and '
-         'target_platform=="NaCl" and _toolset=="target"', {
-          'dependencies': [
-            'openssl_crypto_aes',
-            'openssl_config',
-          ],
         }],
       ],
     },
@@ -524,71 +474,6 @@
           ],
           'dependencies': [
             'base.gyp:base',
-          ],
-        },
-        {
-          'target_name': 'openssl_crypto_aes',
-          'type': 'static_library',
-          'variables': {
-            'openssl_dir%': '<(DEPTH)/third_party/openssl/openssl',
-          },
-          'direct_dependent_settings': {
-            'defines': [
-              'HAVE_OPENSSL=1',
-            ],
-            'include_dirs': [
-              '<(gen_out_dir)/openssl/include',
-              '<(openssl_dir)/include',
-            ],
-          },
-          'cflags': [
-            # Suppresses warnings in third_party codes.
-            '-Wno-unused-value',
-          ],
-          'include_dirs': [
-            '<(gen_out_dir)/openssl/include',
-            '<(openssl_dir)',
-            '<(openssl_dir)/crypto',
-            '<(openssl_dir)/include',
-          ],
-          'hard_dependency': 1,
-          'sources': [
-            # The following files are the minumum set for 'encryptor.cc'
-            '<(openssl_dir)/crypto/aes/aes_cbc.c',
-            '<(openssl_dir)/crypto/aes/aes_core.c',
-            '<(openssl_dir)/crypto/aes/aes_misc.c',
-            '<(openssl_dir)/crypto/mem_clr.c',
-            '<(openssl_dir)/crypto/modes/cbc128.c',
-            '<(openssl_dir)/crypto/sha/sha1dgst.c',
-            '<(openssl_dir)/crypto/sha/sha1_one.c',
-            '<(openssl_dir)/crypto/sha/sha256.c',
-            '<(openssl_dir)/crypto/sha/sha512.c',
-            '<(openssl_dir)/crypto/sha/sha_dgst.c',
-            '<(openssl_dir)/crypto/sha/sha_one.c',
-          ],
-          'dependencies': [
-            'openssl_config',
-          ],
-          'export_dependent_settings': [
-            'openssl_config',
-          ],
-        },
-        {
-          'target_name': 'openssl_config',
-          'type': 'none',
-          'actions': [
-            {
-              'action_name': 'openssl_config',
-              'inputs': [
-                'openssl_config.sh',
-              ],
-              'outputs': [
-                '<(gen_out_dir)/openssl/include/openssl/opensslconf.h',
-              ],
-              'action': [
-                'bash', 'openssl_config.sh', '<(gen_out_dir)', '$(abspath ./)',
-              ],
-            },
           ],
         },
       ]},

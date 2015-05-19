@@ -32,23 +32,25 @@
   'variables': {
     'wrapper_path': '<(DEPTH)/build_tools/protoc_wrapper.py',
     'protoc_command': 'protoc<(EXECUTABLE_SUFFIX)',
+    'conditions': [
+      ['use_libprotobuf==1', {
+        'protoc_wrapper_additional_options': [],
+        'additional_inputs': [],
+      }],
+      ['use_libprotobuf==0 and enable_two_pass_build==0', {
+        'protoc_wrapper_additional_options': ['--protoc_dir=<(PRODUCT_DIR)'],
+        'additional_inputs': ['<(PRODUCT_DIR)/protoc<(EXECUTABLE_SUFFIX)'],
+      }],
+      ['use_libprotobuf==0 and enable_two_pass_build==1', {
+        'protoc_wrapper_additional_options': ['--protoc_dir=<(mozc_build_tools_dir)'],
+        'additional_inputs': [],
+      }],
+    ],
   },
   'conditions': [
-    ['target_platform!="Linux"', {
-      'variables': {
-        'protoc_wrapper_additional_options': ['--protoc_dir=<(mozc_build_tools_dir)'],
-      },
-    }, {  # else
-      'conditions': [
-        ['use_libprotobuf==0', {
-          'variables': {
-            'protoc_wrapper_additional_options': ['--protoc_dir=<(mozc_build_tools_dir)'],
-          },
-        }, {  # else
-          'variables': {
-            'protoc_wrapper_additional_options': [],
-          },
-        }],
+    ['use_libprotobuf==0 and enable_two_pass_build==0', {
+      'dependencies': [
+        '<(DEPTH)/protobuf/protobuf.gyp:protoc#host',
       ],
     }],
   ],
@@ -58,6 +60,7 @@
       'extension': 'proto',
       'inputs': [
         '<(wrapper_path)',
+        '<@(additional_inputs)',
       ],
       'outputs': [
         '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.h',

@@ -83,13 +83,6 @@
       'variables': {
         'test_size': 'small',
       },
-      'conditions': [
-        ['use_legacy_encryptor==1 and target_platform=="Android"', {
-          'dependencies': [
-            '../base/base_test.gyp:android_jni_mock',
-          ],
-        }],
-      ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {

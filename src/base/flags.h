@@ -63,7 +63,7 @@ void InitGoogle(const char *arg0,
                 bool remove_flags);
 
 #define DEFINE_VARIABLE(type, shorttype, name, value, help) \
-namespace fL##shorttype { \
+namespace mozc_flags_fL##shorttype { \
   using namespace mozc_flags; \
   type FLAGS_##name = value; \
   static const type FLAGS_DEFAULT_##name = value; \
@@ -73,13 +73,13 @@ namespace fL##shorttype { \
            reinterpret_cast<const void *>(&FLAGS_DEFAULT_##name),       \
            shorttype, help);                                            \
 } \
-using fL##shorttype::FLAGS_##name
+using mozc_flags_fL##shorttype::FLAGS_##name
 
 #define DECLARE_VARIABLE(type, shorttype, name)      \
-namespace fL##shorttype {                            \
+namespace mozc_flags_fL##shorttype {                 \
   extern type FLAGS_##name;                          \
 }                                                    \
-using fL##shorttype::FLAGS_##name
+using mozc_flags_fL##shorttype::FLAGS_##name
 
 #define DEFINE_int32(name, value, help) \
 DEFINE_VARIABLE(int32, I, name, value, help)

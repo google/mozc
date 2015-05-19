@@ -550,6 +550,14 @@ TEST(UtilTest, StripWhiteSpaces) {
     Util::StripWhiteSpaces(input, &output);
     EXPECT_TRUE(output.empty());
   }
+
+  // one character.
+  {
+    const string input = "a";
+    string output;
+    Util::StripWhiteSpaces(input, &output);
+    EXPECT_EQ("a", output);
+  }
 }
 
 TEST(UtilTest, SplitStringToUtf8Chars) {
@@ -855,6 +863,28 @@ TEST(UtilTest, SubStringPiece) {
   // "中野です"
   EXPECT_EQ("\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99", result);
   EXPECT_LE(src.data(), result.data());
+}
+
+TEST(UtilTest, SubStringPiece2) {
+  // "私はGoogleです"
+  const string src =
+      "\xE7\xA7\x81\xE3\x81\xAF\x47\x6F\x6F\x67\x6C\x65"
+      "\xE3\x81\xA7\xE3\x81\x99";
+
+  StringPiece result;
+
+  result = Util::SubStringPiece(src, 0);
+  EXPECT_EQ(src, result);
+
+  result = Util::SubStringPiece(src, 5);
+  // "gleです"
+  EXPECT_EQ("\x67\x6C\x65\xE3\x81\xA7\xE3\x81\x99", result);
+
+  result = Util::SubStringPiece(src, 10);
+  EXPECT_TRUE(result.empty());
+
+  result = Util::SubStringPiece(src, 13);
+  EXPECT_TRUE(result.empty());
 }
 
 TEST(UtilTest, SubString) {

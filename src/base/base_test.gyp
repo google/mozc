@@ -264,16 +264,6 @@
         '../testing/testing.gyp:gtest_main',
         'base.gyp:encryptor',
       ],
-      'conditions': [
-        ['use_legacy_encryptor==1 and target_platform=="Android"', {
-          'sources!': [
-            # Testing of encryptor is ported to java test. See also
-            # org.mozc.android.inputmethod.japanese.nativecallback.EncryptorTest
-            # and jni_proxy_test target.
-            'encryptor_test.cc',
-          ],
-        }],
-      ],
     },
     # init_test.cc is separated from all other base_core_test because it
     # calls finalizers.

@@ -40,9 +40,6 @@
 #include <vector>
 
 #include "base/port.h"
-#ifdef OS_ANDROID
-#include "base/scoped_ptr.h"
-#endif  // OS_ANDROID
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -161,7 +158,6 @@ class TestClientId : public ClientIdInterface {
     *output = kTestClientId;
   }
 };
-}  // namespace
 
 class UsageStatsUploaderTest : public ::testing::Test {
  protected:
@@ -321,7 +317,6 @@ TEST_F(UsageStatsUploaderTest, MozcVersionMismatchTest) {
   EXPECT_EQ(Version::GetMozcVersion(), recorded_version);
 }
 
-namespace {
 class TestStorage: public storage::StorageInterface {
  public:
   bool Open(const string &filename) { return true; }
@@ -335,7 +330,6 @@ class TestStorage: public storage::StorageInterface {
   TestStorage() {}
   virtual ~TestStorage() {}
 };
-}  // namespace
 
 TEST_F(UsageStatsUploaderTest, SaveMetadataFailTest) {
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
@@ -468,7 +462,6 @@ TEST_F(UsageStatsUploaderTest, UploadDataTest) {
   EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 }
 
-namespace {
 void SetDoubleValueStats(
     uint32 num, double total, double square_total,
     usage_stats::Stats::DoubleValueStats *double_stats) {
@@ -497,7 +490,6 @@ void SetEventStats(
   SetDoubleValueStats(tl_num, tl_total, tl_square_total,
                       event_stats->mutable_time_length_stats());
 }
-}  // namespace
 
 TEST_F(UsageStatsUploaderTest, UploadTouchEventStats) {
   // save last_upload
@@ -599,115 +591,7 @@ TEST_F(UsageStatsUploaderTest, UploadTouchEventStats) {
   EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 }
 
-namespace {
-#if defined(OS_ANDROID) && defined(MOZC_USE_LEGACY_ENCRYPTOR)
-class ClientIdTestMockJavaEncryptor : public ::mozc::jni::MockJavaEncryptor {
- public:
-  explicit ClientIdTestMockJavaEncryptor(
-      ::mozc::jni::MockJNIEnv *env) : env_(env) {
-  }
-
-  virtual jbyteArray DeriveFromPassword(jbyteArray password, jbyteArray salt) {
-    // Pseudo key generation.
-    string password_str = env_->JByteArrayToString(password);
-    string salt_str = env_->JByteArrayToString(salt);
-
-    KeyMap::iterator iter = key_map_.find(make_pair(password_str, salt_str));
-    if (iter == key_map_.end()) {
-      iter = key_map_.insert(make_pair(
-          make_pair(password_str, salt_str),
-          GetRandomAsciiSequence(
-              ::mozc::jni::JavaEncryptorProxy::kKeySizeInBits / 8))).first;
-    }
-
-    return env_->StringToJByteArray(iter->second);
-  }
-
-  virtual jbyteArray Encrypt(jbyteArray data, jbyteArray key, jbyteArray iv) {
-    // Pseudo encryption.
-    vector<pair<string, string> >& encrypt_pair_list =
-        GetEncryptPairList(key, iv);
-
-    string data_str = env_->JByteArrayToString(data);
-    for (size_t i = 0; i < encrypt_pair_list.size(); ++i) {
-      if (encrypt_pair_list[i].first == data_str) {
-        return env_->StringToJByteArray(encrypt_pair_list[i].second);
-      }
-    }
-
-    string encrypted = GetRandomAsciiSequence(data_str.size());
-    encrypt_pair_list.push_back(make_pair(data_str, encrypted));
-    return env_->StringToJByteArray(encrypted);
-  }
-
-  virtual jbyteArray Decrypt(jbyteArray data, jbyteArray key, jbyteArray iv) {
-    // Pseudo decryption.
-    vector<pair<string, string> >& encrypt_pair_list =
-        GetEncryptPairList(key, iv);
-
-    string data_str = env_->JByteArrayToString(data);
-    for (size_t i = 0; i < encrypt_pair_list.size(); ++i) {
-      if (encrypt_pair_list[i].second == data_str) {
-        return env_->StringToJByteArray(encrypt_pair_list[i].first);
-      }
-    }
-
-    return NULL;
-  }
-
- private:
-  ::mozc::jni::MockJNIEnv *env_;
-
-  typedef map<pair<string, string>, string> KeyMap;
-  KeyMap key_map_;
-  typedef map<pair<string, string>, vector<pair<string, string> > > EncryptMap;
-  EncryptMap encrypt_map_;
-
-  vector<pair<string, string> > &GetEncryptPairList(
-      jbyteArray key, jbyteArray iv) {
-    string key_str = env_->JByteArrayToString(key);
-    string iv_str = env_->JByteArrayToString(iv);
-
-    return encrypt_map_[make_pair(key_str, iv_str)];
-  }
-
-  static string GetRandomAsciiSequence(size_t size) {
-    scoped_ptr<char[]> buffer(new char[size]);
-    Util::GetRandomAsciiSequence(buffer.get(), size);
-    return string(buffer.get(), size);
-  }
-
-  DISALLOW_COPY_AND_ASSIGN(ClientIdTestMockJavaEncryptor);
-};
-#endif  // OS_ANDROID && MOZC_USE_LEGACY_ENCRYPTOR
-
-class ClientIdTest : public ::testing::Test {
- protected:
-  virtual void SetUp() {
-#if defined(OS_ANDROID) && defined(MOZC_USE_LEGACY_ENCRYPTOR)
-    jvm_.reset(new ::mozc::jni::MockJavaVM);
-    ::mozc::jni::MockJNIEnv *env = jvm_->mutable_env();
-    env->RegisterMockJavaEncryptor(
-        new ClientIdTestMockJavaEncryptor(env));
-    ::mozc::jni::JavaEncryptorProxy::SetJavaVM(jvm_->mutable_jvm());
-#endif  // OS_ANDROID && MOZC_USE_LEGACY_ENCRYPTOR
-  }
-
-  virtual void TearDown() {
-#if defined(OS_ANDROID) && defined(MOZC_USE_LEGACY_ENCRYPTOR)
-    ::mozc::jni::JavaEncryptorProxy::SetJavaVM(NULL);
-    jvm_.reset(NULL);
-#endif  // OS_ANDROID && MOZC_USE_LEGACY_ENCRYPTOR
-  }
-
- private:
-#if defined(OS_ANDROID) && defined(MOZC_USE_LEGACY_ENCRYPTOR)
-  scoped_ptr< ::mozc::jni::MockJavaVM> jvm_;
-#endif  // OS_ANDROID && MOZC_USE_LEGACY_ENCRYPTOR
-};
-}  // namespace
-
-TEST_F(ClientIdTest, CreateClientIdTest) {
+TEST(ClientIdTest, CreateClientIdTest) {
   // test default client id handler here
   TestableUsageStatsUploader::SetClientIdHandler(NULL);
   SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -728,7 +612,7 @@ TEST_F(ClientIdTest, CreateClientIdTest) {
   EXPECT_NE(client_id_in_storage1, client_id_in_storage2);
 }
 
-TEST_F(ClientIdTest, GetClientIdTest) {
+TEST(ClientIdTest, GetClientIdTest) {
   // test default client id handler here.
   TestableUsageStatsUploader::SetClientIdHandler(NULL);
   SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -747,7 +631,7 @@ TEST_F(ClientIdTest, GetClientIdTest) {
   EXPECT_NE(client_id1, client_id_in_storage);
 }
 
-TEST_F(ClientIdTest, GetClientIdFailTest) {
+TEST(ClientIdTest, GetClientIdFailTest) {
   // test default client id handler here.
   TestableUsageStatsUploader::SetClientIdHandler(NULL);
   SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -764,5 +648,7 @@ TEST_F(ClientIdTest, GetClientIdFailTest) {
   // new id should be generated
   EXPECT_NE(client_id1, client_id2);
 }
+
+}  // namespace
 }  // namespace usage_stats
 }  // namespace mozc

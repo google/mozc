@@ -132,7 +132,7 @@
             '../build_tools/run_after_chdir.py', 'tests',
             'ant',
             'debug',
-            '-Dgyp.protobuf_root=<(protobuf_root)',
+            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
             '-Dsdk.dir=<(android_home)',
           ],
         },
@@ -148,7 +148,6 @@
           'outputs': ['dummy_run_test'],
           'action': [
             'python', 'run_android_test.py',
-            '--android_devices=$(ANDROID_DEVICES)',
             '--android_home=<(android_home)',
             '--run_java_test',
             '--app_package_name=<(app_package_name)',
@@ -175,7 +174,7 @@
             'ant',
             'install',
             '-Dgyp.build_type=<(CONFIGURATION_NAME)',
-            '-Dgyp.protobuf_root=<(protobuf_root)',
+            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
           ],
         },
       ],
@@ -211,7 +210,7 @@
             'ant',
             'apk',
             '-Dgyp.build_type=<(CONFIGURATION_NAME)',
-            '-Dgyp.protobuf_root=<(protobuf_root)',
+            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
             '-Dsdk.dir=<(android_home)',
           ],
         },
@@ -665,7 +664,7 @@
       'ldflags': [
          # -s: Strip unused symbols
          # --version-script: Remove almost all exportable symbols
-         '-Wl,-s,--version-script,<(relative_dir)/libmozc.map',
+         '-Wl,-s,--version-script,<(abs_depth)/<(relative_dir)/libmozc.map',
       ],
       'conditions': [
         ['branding=="GoogleJapaneseInput"', {
@@ -725,7 +724,6 @@
           'outputs': ['dummy_run_native_small_test'],
           'action': [
             'python', 'run_android_test.py',
-            '--android_devices=$(ANDROID_DEVICES)',
             '--android_home=<(android_home)',
             '--mozc_connection_data_file=<(connection_data)',
             '--mozc_connection_text_data_file=<(connection_text_data)',

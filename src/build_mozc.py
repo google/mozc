@@ -980,12 +980,10 @@ def BuildToolsMain(options, unused_args, original_directory_name):
   # Build targets in this order.
   if IsWindows():
     build_tools_targets = [
-        'out_win/%s:primitive_tools' % options.configuration,
         'out_win/%s:build_tools' % options.configuration,
     ]
   else:
     gyp_files = [
-        os.path.join(build_tools_dir, 'primitive_tools', 'primitive_tools.gyp'),
         os.path.join(build_tools_dir, 'build_tools.gyp')
     ]
     build_tools_targets = []
@@ -1034,7 +1032,7 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
                 'BUILDTYPE=%s' % options.configuration]
   if hasattr(options, 'android_device'):
     # Only for android testing.
-    build_args.append('ANDROID_DEVICES=%s' % options.android_device)
+    os.environ['ANDROID_DEVICES'] = options.android_device
 
   build_args.append('builddir_name=%s' %
                     GetBuildBaseName(options,
