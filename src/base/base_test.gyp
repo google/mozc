@@ -80,6 +80,11 @@
             '../testing/sidestep/sidestep.gyp:sidestep',
           ],
         }],
+        ['target_platform=="NaCl"', {
+          'sources!': [
+            'process_mutex_test.cc',
+          ],
+        }],
       ],
       'dependencies': [
         'base.gyp:base',

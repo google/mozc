@@ -31,21 +31,22 @@
 {
   'variables': {
     'wrapper_path': '<(DEPTH)/build_tools/protoc_wrapper.py',
+    'protoc_command': 'protoc<(EXECUTABLE_SUFFIX)',
   },
   'conditions': [
-    ['target_platform!="linux"', {
+    ['target_platform!="Linux"', {
       'variables': {
-        'protoc_command%': '<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
+        'protoc_wrapper_additional_options': ['--protoc_dir=<(mozc_build_tools_dir)'],
       },
     }, {  # else
       'conditions': [
         ['use_libprotobuf==0', {
           'variables': {
-            'protoc_command%': '<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
+            'protoc_wrapper_additional_options': ['--protoc_dir=<(mozc_build_tools_dir)'],
           },
         }, {  # else
           'variables': {
-            'protoc_command%': 'protoc<(EXECUTABLE_SUFFIX)',
+            'protoc_wrapper_additional_options': [],
           },
         }],
       ],
@@ -65,9 +66,10 @@
       'action': [
         'python', '<(wrapper_path)',
         '--project_root=<(DEPTH)',
-        '--protoc_path=<(protoc_command)',
+        '--protoc_command=<(protoc_command)',
         '--proto=<(RULE_INPUT_PATH)',
         '--cpp_out=<(proto_out_dir)',
+        '<@(protoc_wrapper_additional_options)',
       ],
       'message': 'Generating C++ code from <(RULE_INPUT_PATH)',
     },

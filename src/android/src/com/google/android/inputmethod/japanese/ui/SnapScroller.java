@@ -29,7 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese.ui;
 
-import org.mozc.android.inputmethod.japanese.MozcLog;
+import org.mozc.android.inputmethod.japanese.MozcUtil;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
@@ -95,7 +96,7 @@ public class SnapScroller {
    *
    * Updated by {@link #computeScrollOffset()}, {@link #scrollTo(int)} and {@link #scrollBy(int)}.
    */
-  private int scrollPosition;
+  @VisibleForTesting int scrollPosition;
 
   /**
    * The scroll position at which scroll animation starts (in pixel).
@@ -127,10 +128,6 @@ public class SnapScroller {
   SnapScroller(TimestampCalculator timestampCalculator) {
     this.timestampCalculator =
         (timestampCalculator == null) ? DEFAULT_TIMESTAMP_CALCULATOR : timestampCalculator;
-  }
-
-  private static int clamp(int value, int min, int max) {
-    return Math.max(Math.min(value, max), min);
   }
 
   public void setPageSize(int pageSize) {
@@ -212,7 +209,7 @@ public class SnapScroller {
    * @param toPosition the position to be scrolled to.
    */
   public void scrollTo(int toPosition) {
-    scrollPosition = clamp(toPosition, 0, getMaxScrollPosition());
+    scrollPosition = MozcUtil.clamp(toPosition, 0, getMaxScrollPosition());
     velocity = 0;
   }
 
@@ -262,7 +259,7 @@ public class SnapScroller {
     //    scroll one more page.
     // The end scroll position should be clipped between 0 and (contentSize - pageSize) to avoid
     // exceeding the contents.
-    int endScrollPosition = clamp(
+    int endScrollPosition = MozcUtil.clamp(
         (velocity > 0)
             ? ((scrollPosition + pageSize) / pageSize * pageSize)
             : ((scrollPosition - 1) / pageSize * pageSize),

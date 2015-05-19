@@ -29,8 +29,8 @@
 
 #include "dictionary/dictionary_mock.h"
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"

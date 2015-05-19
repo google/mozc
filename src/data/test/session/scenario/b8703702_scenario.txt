@@ -1,0 +1,47 @@
+# This file contains a scenario for testing transliteration candidate.
+# See also http://b/issue?id=8703702
+
+# Enable IME
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Type "きき"
+SEND_KEYS	kiki
+
+# Enter to conversion mode. The 2nd candidate should be "危機" for now.
+SEND_KEY	SPACE
+SEND_KEY	SPACE
+EXPECT_PREEDIT	危機
+SEND_KEY	ENTER
+EXPECT_PREEDIT
+
+# Type "いっぱつ"
+SEND_KEYS	ippatsu
+SEND_KEY	SPACE
+EXPECT_PREEDIT	一髪
+
+# Clear "一髪" by hitting backspaces
+SEND_KEY	BACKSPACE
+SEND_KEY	BACKSPACE
+SEND_KEY	BACKSPACE
+SEND_KEY	BACKSPACE
+SEND_KEY	BACKSPACE
+EXPECT_PREEDIT
+
+# Type "いっぱつ" with test-send-key
+TEST_SEND_KEY	i
+SEND_KEY	i
+TEST_SEND_KEY	p
+SEND_KEY	p
+TEST_SEND_KEY	p
+SEND_KEY	p
+TEST_SEND_KEY	a
+SEND_KEY	a
+TEST_SEND_KEY	t
+SEND_KEY	t
+TEST_SEND_KEY	s
+SEND_KEY	s
+TEST_SEND_KEY	u
+SEND_KEY	u
+SEND_KEY	SPACE
+EXPECT_PREEDIT	一髪

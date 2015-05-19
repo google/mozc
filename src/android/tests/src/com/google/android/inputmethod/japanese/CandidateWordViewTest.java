@@ -35,7 +35,6 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.same;
 
-import org.mozc.android.inputmethod.japanese.CandidateWordView.CandidateSelectListener;
 import org.mozc.android.inputmethod.japanese.CandidateWordView.Orientation;
 import org.mozc.android.inputmethod.japanese.CandidateWordView.OrientationTrait;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
@@ -45,9 +44,9 @@ import org.mozc.android.inputmethod.japanese.testing.MozcLayoutUtil;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout;
-import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
+import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.SnapScroller;
 
 import android.content.Context;
@@ -178,7 +177,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     CandidateSelectListener candidateSelectListener = createMock(CandidateSelectListener.class);
     candidateWordView.setCandidateSelectListener(candidateSelectListener);
     CandidateLayout mockLayout = MozcLayoutUtil.createCandidateLayoutMock(getMockSupport());
-    VisibilityProxy.setField(candidateWordView, "calculatedLayout", mockLayout);
+    candidateWordView.calculatedLayout = mockLayout;
 
     // onCandidateSelected() is never be called back.
     expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
@@ -296,10 +295,8 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
         getInstrumentation().getTargetContext(), Orientation.VERTICAL);
     assertNull(candidateWordView.getCandidateLayouter());
     candidateWordView.update(CANDIDATE_LIST);
-    assertEquals(
-        CANDIDATE_LIST,
-        VisibilityProxy.getField(candidateWordView, "currentCandidateList"));
-    assertNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertEquals(CANDIDATE_LIST, candidateWordView.currentCandidateList);
+    assertNull(candidateWordView.calculatedLayout);
   }
 
   @SmallTest
@@ -314,14 +311,12 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     candidateWordView.updateLayouter();
-    assertNotNull(VisibilityProxy.getField(candidateWordView, "layouter"));  // Pre-condition
+    assertNotNull(candidateWordView.layouter);  // Pre-condition
     candidateWordView.update(CANDIDATE_LIST);
 
     verifyAll();
-    assertEquals(
-        CANDIDATE_LIST,
-        VisibilityProxy.getField(candidateWordView, "currentCandidateList"));
-    assertNotNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertEquals(CANDIDATE_LIST, candidateWordView.currentCandidateList);
+    assertNotNull(candidateWordView.calculatedLayout);
   }
 
   @SmallTest
@@ -336,16 +331,14 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     candidateWordView.updateLayouter();
-    assertNotNull(VisibilityProxy.getField(candidateWordView, "layouter"));  // Pre-condition
+    assertNotNull(candidateWordView.layouter);  // Pre-condition
     // If the same CandidateList is passed, post-condition should not be changed.
     candidateWordView.update(CANDIDATE_LIST);
     candidateWordView.update(CANDIDATE_LIST);
 
     verifyAll();
-    assertEquals(
-        CANDIDATE_LIST,
-        VisibilityProxy.getField(candidateWordView, "currentCandidateList"));
-    assertNotNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertEquals(CANDIDATE_LIST, candidateWordView.currentCandidateList);
+    assertNotNull(candidateWordView.calculatedLayout);
   }
 
   @SmallTest
@@ -361,13 +354,12 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     candidateWordView.updateLayouter();
-    assertNotNull(VisibilityProxy.getField(candidateWordView, "layouter"));
+    assertNotNull(candidateWordView.layouter);
     candidateWordView.update(CANDIDATE_LIST);
 
     // Pre-condition
     verifyAll();
-    assertNotNull(
-        VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertNotNull(candidateWordView.calculatedLayout);
 
     resetAll();
     replayAll();
@@ -376,7 +368,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     candidateWordView.update(null);
 
     verifyAll();
-    assertNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertNull(candidateWordView.calculatedLayout);
   }
 
   @SmallTest
@@ -424,7 +416,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       assertEquals(
           testData.toString(),
           testData.expected,
-          VisibilityProxy.invokeByName(candidateWordView, "getUpdatedScrollPosition", row, span));
+          candidateWordView.getUpdatedScrollPosition(row, span));
       verifyAll();
     }
   }
@@ -455,7 +447,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     expect(scroller.getScrollPosition()).andReturn(0);
     trait.scrollTo(same(candidateWordView), eq(0));
     replayAll();
-    VisibilityProxy.setField(candidateWordView, "calculatedLayout", mockLayout);
+    candidateWordView.calculatedLayout = mockLayout;
     candidateWordView.scrollTo(100, 100);
     candidateWordView.updateScrollPositionBasedOnFocusedIndex();
     verifyAll();
@@ -473,7 +465,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     expect(scroller.getScrollPosition()).andReturn(10);
     trait.scrollTo(same(candidateWordView), eq(10));
     replayAll();
-    VisibilityProxy.setField(candidateWordView, "calculatedLayout", mockLayout);
+    candidateWordView.calculatedLayout = mockLayout;
     candidateWordView.updateScrollPositionBasedOnFocusedIndex();
     verifyAll();
   }
@@ -487,8 +479,8 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     // Check pre-condition.
-    assertNull(VisibilityProxy.getField(candWordView, "calculatedLayout"));
-    assertNull(VisibilityProxy.getField(candWordView, "currentCandidateList"));
+    assertNull(candWordView.calculatedLayout);
+    assertNull(candWordView.currentCandidateList);
 
     verifyAll();
 
@@ -497,12 +489,12 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     expect(layouter.setViewSize(0, 0)).andReturn(false);
     replayAll();
 
-    VisibilityProxy.setField(candWordView, "currentCandidateList", CANDIDATE_LIST);
+    candWordView.currentCandidateList = CANDIDATE_LIST;
     candWordView.onLayout(true, 0, 0, 0, 0);
 
     verifyAll();
-    assertNull(VisibilityProxy.getField(candWordView, "calculatedLayout"));
-    assertNotNull(VisibilityProxy.getField(candWordView, "currentCandidateList"));
+    assertNull(candWordView.calculatedLayout);
+    assertNotNull(candWordView.currentCandidateList);
 
     // Call onLayout with non-empty view size.
     resetAll();
@@ -515,7 +507,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     candWordView.onLayout(true, 0, 0, 320, 240);
 
     verifyAll();
-    assertNotNull(VisibilityProxy.getField(candWordView, "calculatedLayout"));
-    assertNotNull(VisibilityProxy.getField(candWordView, "currentCandidateList"));
+    assertNotNull(candWordView.calculatedLayout);
+    assertNotNull(candWordView.currentCandidateList);
   }
 }

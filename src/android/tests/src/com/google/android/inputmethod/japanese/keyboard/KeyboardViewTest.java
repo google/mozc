@@ -35,6 +35,7 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.same;
 
+import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
@@ -53,7 +54,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.MotionEvent;
@@ -62,7 +62,6 @@ import android.view.View;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -103,7 +102,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   /** Emulates dragging from @{code (fromX, fromY)} to @{code (toX, toY)}. */
   private static boolean drag(KeyboardView view, int fromX, int toX, int fromY, int toY) {
-    long downTime = SystemClock.uptimeMillis();
+    long downTime = MozcUtil.getUptimeMillis();
 
     boolean result = true;
     result &= touchEvent(view, downTime, downTime, MotionEvent.ACTION_DOWN, fromX, fromY);
@@ -112,11 +111,11 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
       int x = fromX + (toX - fromX) * i / STEP_COUNT;
       int y = fromY + (toY - fromY) * i / STEP_COUNT;
 
-      long eventTime = SystemClock.uptimeMillis();
+      long eventTime = MozcUtil.getUptimeMillis();
       result &= touchEvent(view, downTime, eventTime, MotionEvent.ACTION_MOVE, x, y);
     }
 
-    long eventTime = SystemClock.uptimeMillis();
+    long eventTime = MozcUtil.getUptimeMillis();
     result &= touchEvent(view, downTime, eventTime, MotionEvent.ACTION_UP, toX, toY);
     return result;
   }
@@ -245,9 +244,8 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    VisibilityProxy.setField(view, "metaState", MetaState.CAPS_LOCK);
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    view.metaState = MetaState.CAPS_LOCK;
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
 
     Key key = createKeyWithModifiedState(0, 0, 'a', 'A');
@@ -268,8 +266,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // By pressing a key, internal pressedKey field should be filled.
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     assertTrue(keyEventContextMap.isEmpty());
     assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 25, 15));
 
@@ -277,7 +274,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     assertEquals(1, keyEventContextMap.size());
     assertEquals(Flick.Direction.CENTER,
                  keyEventContextMap.values().iterator().next().flickDirection);
-    assertTrue(VisibilityProxy.<Boolean>getField(view, "isKeyPressed"));
+    assertTrue(view.isKeyPressed);
   }
 
   @SmallTest
@@ -295,11 +292,10 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyboard(createDummyKeyboard(key));
 
     // Set modified state.
-    VisibilityProxy.setField(view, "metaState", MetaState.CAPS_LOCK);
+    view.metaState = MetaState.CAPS_LOCK;
 
     // By pressing a key, internal pressedKey field should be filled.
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     assertTrue(keyEventContextMap.isEmpty());
     assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 25, 15));
 
@@ -338,20 +334,19 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyboard(createDummyKeyboard(createModifierKey(0, 0, -1, MetaState.CAPS_LOCK)));
 
     // Set modified state.
-    VisibilityProxy.setField(view, "metaState", MetaState.UNMODIFIED);
+    view.metaState = MetaState.UNMODIFIED;
 
     KeyEventContext pendingKeyEventContext =
         new KeyEventContext(createKey(0, 0, 'a'), 1, 100, 60, 100, 60, 0, MetaState.UNMODIFIED);
     // By pressing a key, the pending events should be flushed and
     // the metaState should be updated.
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(1, pendingKeyEventContext);
     assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 25, 15));
 
     verifyAll();
     assertEquals(1, keyEventContextMap.size());
-    assertSame(MetaState.CAPS_LOCK, VisibilityProxy.getField(view, "metaState"));
+    assertSame(MetaState.CAPS_LOCK, view.metaState);
   }
 
   @SmallTest
@@ -361,8 +356,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Pressing non-key region shouldn't cause filling the pressedKey.
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     assertTrue(keyEventContextMap.isEmpty());
     assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 100, -100));
 
@@ -380,8 +374,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     replayAll();
     view.setKeyEventHandler(keyEventHandler);
 
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     assertTrue(keyEventContextMap.isEmpty());
     assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 100, 100));
 
@@ -389,7 +382,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     assertEquals(1, keyEventContextMap.size());
     assertEquals(Flick.Direction.CENTER,
                  keyEventContextMap.values().iterator().next().flickDirection);
-    assertTrue(VisibilityProxy.<Boolean>getField(view, "isKeyPressed"));
+    assertTrue(view.isKeyPressed);
   }
 
   @SmallTest
@@ -418,8 +411,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
 
     assertEquals(Flick.Direction.CENTER,
@@ -484,8 +476,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
       view.setKeyEventHandler(keyEventHandler);
 
       // Set pressed condition.
-      Map<Integer, KeyEventContext> keyEventContextMap =
-          VisibilityProxy.getField(view, "keyEventContextMap");
+      Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
       keyEventContextMap.put(0, keyEventContext);
 
       int startX = 25;
@@ -526,16 +517,15 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    VisibilityProxy.setField(view, "metaState", MetaState.CAPS_LOCK);
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    view.metaState = MetaState.CAPS_LOCK;
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_UP, 25, 15));
 
     verifyAll();
     assertTrue(keyEventContextMap.isEmpty());
-    assertSame(MetaState.CAPS_LOCK, VisibilityProxy.getField(view, "metaState"));
+    assertSame(MetaState.CAPS_LOCK, view.metaState);
   }
 
   @SmallTest
@@ -562,10 +552,9 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    VisibilityProxy.setField(view, "metaState", MetaState.SHIFT);
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
-    VisibilityProxy.setField(view, "isKeyPressed", false);
+    view.metaState = MetaState.SHIFT;
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
+    view.isKeyPressed = false;
     keyEventContextMap.put(0, keyEventContext);
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_UP, 25, 15));
@@ -573,7 +562,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     assertTrue(keyEventContextMap.isEmpty());
     // Simple releasing a modifier key shouldn't change the metaState.
-    assertSame(MetaState.SHIFT, VisibilityProxy.getField(view, "metaState"));
+    assertSame(MetaState.SHIFT, view.metaState);
   }
 
   @SmallTest
@@ -627,19 +616,18 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    VisibilityProxy.setField(view, "metaState", MetaState.SHIFT);
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    view.metaState = MetaState.SHIFT;
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
     keyEventContextMap.put(1, keyEventContext2);
-    VisibilityProxy.setField(view, "isKeyPressed", true);
+    view.isKeyPressed = true;
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_UP, 25, 15));
 
     verifyAll();
     assertTrue(keyEventContextMap.isEmpty());
     // Simple releasing a modifier key shouldn't change the metaState.
-    assertSame(MetaState.UNMODIFIED, VisibilityProxy.getField(view, "metaState"));
+    assertSame(MetaState.UNMODIFIED, view.metaState);
   }
 
   @SmallTest
@@ -664,9 +652,8 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    VisibilityProxy.setField(view, "metaState", MetaState.SHIFT);
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    view.metaState = MetaState.SHIFT;
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_UP, 25, 15));
@@ -674,7 +661,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     assertTrue(keyEventContextMap.isEmpty());
     // Simple releasing a modifier key shouldn't change the metaState.
-    assertSame(MetaState.UNMODIFIED, VisibilityProxy.getField(view, "metaState"));
+    assertSame(MetaState.UNMODIFIED, view.metaState);
   }
 
   @SmallTest
@@ -692,8 +679,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     // - move to down, which will make internal flickState to DOWN
     // - move to right, which will make internal flickState to RIGHT
     // - and, move back to the key, which will make internal flickState to CENTER.
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     assertTrue(keyEventContextMap.isEmpty());
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_DOWN, 25, 15));
@@ -745,8 +731,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, eventContext);
 
     assertTrue(touchEvent(view, MotionEvent.ACTION_CANCEL, 25, 15));
@@ -795,9 +780,9 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
       view.setKeyEventHandler(keyEventHandler);
 
-      assertTrue(VisibilityProxy.<Map<?, ?>>getField(view, "keyEventContextMap").isEmpty());
+      assertTrue(view.keyEventContextMap.isEmpty());
       assertTrue(drag(view, fromX, testCase.toX, fromY, testCase.toY));
-      assertTrue(VisibilityProxy.<Map<?, ?>>getField(view, "keyEventContextMap").isEmpty());
+      assertTrue(view.keyEventContextMap.isEmpty());
 
       view.setKeyEventHandler(null);
       verifyAll();
@@ -809,8 +794,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyboard(createDummyKeyboard(createFlickKey(0, 0, 'a', 'b', 'c', 'd', 'e')));
     view.layout(0, 0, 50, 30);
 
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
 
     int fromX = view.getWidth() / 2;
     int fromY = view.getHeight() / 2;
@@ -966,7 +950,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
   //   supporting devices with lower APIs for that purpose...
 
   @SmallTest
-  public void testGetKeyByCoord() throws InvocationTargetException {
+  public void testGetKeyByCoord() {
     Key key1 = createKey(0, 0, 'a');
     Key key2 = createKey(WIDTH * 2, 0, 'b');
 
@@ -993,24 +977,18 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
       view.setKeyboard(new Keyboard(Collections.singletonList(row), 1));
 
       // Center of key1.
-      assertSame(
-          key1, VisibilityProxy.invokeByName(view, "getKeyByCoord", WIDTH / 2, HEIGHT / 2));
+      assertSame(key1, view.getKeyByCoord(WIDTH / 2, HEIGHT / 2));
 
       // Center of key2.
-      assertSame(
-          key2, VisibilityProxy.invokeByName(view, "getKeyByCoord", WIDTH * 5 / 2, HEIGHT / 2));
+      assertSame(key2, view.getKeyByCoord(WIDTH * 5 / 2, HEIGHT / 2));
 
       // On a spacer.
-      assertSame(testCase.expectedLeftHalf,
-                 VisibilityProxy.invokeByName(view, "getKeyByCoord", WIDTH * 4 / 3, HEIGHT / 2));
-      assertSame(testCase.expectedRightHalf,
-                 VisibilityProxy.invokeByName(view, "getKeyByCoord", WIDTH * 5 / 3, HEIGHT / 2));
+      assertSame(testCase.expectedLeftHalf, view.getKeyByCoord(WIDTH * 4 / 3, HEIGHT / 2));
+      assertSame(testCase.expectedRightHalf, view.getKeyByCoord(WIDTH * 5 / 3, HEIGHT / 2));
 
       // Both outside of the keyboard.
-      assertSame(
-          key1, VisibilityProxy.invokeByName(view, "getKeyByCoord", - WIDTH / 2, HEIGHT / 2));
-      assertSame(
-          key2, VisibilityProxy.invokeByName(view, "getKeyByCoord", WIDTH * 7 / 2, HEIGHT / 2));
+      assertSame(key1, view.getKeyByCoord(-WIDTH / 2, HEIGHT / 2));
+      assertSame(key2, view.getKeyByCoord(WIDTH * 7 / 2, HEIGHT / 2));
     }
   }
 
@@ -1031,8 +1009,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     view.setKeyEventHandler(keyEventHandler);
 
     // Set pressed condition.
-    Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(view, "keyEventContextMap");
+    Map<Integer, KeyEventContext> keyEventContextMap = view.keyEventContextMap;
     keyEventContextMap.put(0, keyEventContext);
 
     assertEquals(Flick.Direction.CENTER,

@@ -1,0 +1,154 @@
+# This file tests PREDICT_AND_CONVERTE command.
+
+################################################################################
+# Test for MS-IME keymap
+SET_CONFIG	session_keymap	MSIME
+
+# Enable IME with Hiragana mode
+SEND_KEY	ON
+RESET_CONTEXT
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Test for TAB key (PredictAndConvert) in composition mode.
+# Check if prediction is performed after hitting TAB 4 times (Note: the number
+# of suggestion candidates is set to 3 by default and, hence, the fourth TAB
+# kicks prediction.)
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+RESET_CONTEXT
+
+# Test for TAB key (PredictAndConvert) in conversion mode.
+# Check if prediction is not performed after entering conversion mode.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	SPACE
+EXPECT_IN_ALL_CANDIDATE_WORDS	或る
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_IN_ALL_CANDIDATE_WORDS	或る
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+RESET_CONTEXT
+
+# Test for Down key (PredictAndConvert). The same test for TAB key.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+EXPECT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+
+################################################################################
+# Test for Kotoeri keymap
+RESET_CONTEXT
+SET_CONFIG	session_keymap	KOTOERI
+
+# Test for TAB key (PredictAndConvert) in composition mode.
+# Check if prediction is performed.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+RESET_CONTEXT
+
+# Test for TAB key (PredictAndConvert) in conversion mode.
+# Check if prediction is not performed after entering conversion mode.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	SPACE
+EXPECT_IN_ALL_CANDIDATE_WORDS	或る
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_IN_ALL_CANDIDATE_WORDS	或る
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+RESET_CONTEXT
+
+# Test for Down key (PredictAndConvert). The same test for TAB key.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+EXPECT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+RESET_CONTEXT
+
+# Test for Down key (PredictAndConvert). The same test for TAB key.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	CTRL n
+SEND_KEY	CTRL n
+SEND_KEY	CTRL n
+SEND_KEY	CTRL n
+EXPECT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+
+################################################################################
+# Test for ATOK keymap
+RESET_CONTEXT
+SET_CONFIG	session_keymap	ATOK
+
+# Test for TAB key (PredictAndConvert) in composition mode.
+# Check if prediction is performed.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+RESET_CONTEXT
+
+# Test for TAB key (PredictAndConvert) in conversion mode.
+# Check if prediction is not performed after entering conversion mode.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	SPACE
+EXPECT_IN_ALL_CANDIDATE_WORDS	或る
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_IN_ALL_CANDIDATE_WORDS	或る
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+RESET_CONTEXT
+
+# Test for Down key (PredictAndConvert). The same test for TAB key.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+SEND_KEY	DOWN
+EXPECT_IN_ALL_CANDIDATE_WORDS	アルカリ性
+
+RESET_CONTEXT
+
+# Test for Down key (PredictAndConvert). The same test for TAB key.
+SEND_KEYS	aru
+EXPECT_PREEDIT	ある
+SEND_KEY	CTRL DOWN
+SEND_KEY	CTRL DOWN
+SEND_KEY	CTRL DOWN
+SEND_KEY	CTRL DOWN
+EXPECT_IN_ALL_CANDIDATE_WORDS	アルカリ性

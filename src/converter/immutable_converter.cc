@@ -30,6 +30,7 @@
 #include "converter/immutable_converter.h"
 
 #include <algorithm>
+#include <cctype>
 #include <climits>
 #include <map>
 #include <string>
@@ -37,6 +38,7 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/util.h"
 #include "base/logging.h"
 #include "base/stl_util.h"
 #include "base/util.h"
@@ -120,6 +122,20 @@ void InsertCorrectedNodes(size_t pos, const string &key,
 
 bool IsNumber(const char c) {
   return c >= '0' && c <= '9';
+}
+
+bool ContainsWhiteSpacesOnly(const StringPiece s) {
+  for (ConstChar32Iterator iter(s); !iter.Done(); iter.Next()) {
+    switch (iter.Get()) {
+      case 0x09:    // TAB
+      case 0x20:    // Half-width space
+      case 0x3000:  // Full-width space
+        break;
+      default:
+        return false;
+    }
+  }
+  return true;
 }
 
 void DecomposeNumberAndSuffix(const string &input,
@@ -1643,8 +1659,24 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
 bool ImmutableConverterImpl::IsSegmentEndNode(
     const Segments &segments, const Node *node,
     const vector<uint16> &group, bool is_single_segment) const {
+  DCHECK(node->next);
   if (node->next->node_type == Node::EOS_NODE) {
     return true;
+  }
+
+  // In reverse conversion, group consecutive white spaces into one segment.
+  // For example, "ほん むりょう" -> "ほん", " ", "むりょう".
+  if (segments.request_type() == Segments::REVERSE_CONVERSION) {
+    const bool this_node_is_ws = ContainsWhiteSpacesOnly(node->key);
+    const bool next_node_is_ws = ContainsWhiteSpacesOnly(node->next->key);
+    if (this_node_is_ws) {
+      return !next_node_is_ws;
+    }
+    if (next_node_is_ws) {
+      return true;
+    }
+    // If this and next nodes are both non-white spaces, fall back to the
+    // subsequent logic.
   }
 
   const Segment &old_segment = segments.segment(group[node->begin_pos]);

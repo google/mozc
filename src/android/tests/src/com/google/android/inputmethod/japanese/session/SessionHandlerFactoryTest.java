@@ -29,8 +29,6 @@
 
 package org.mozc.android.inputmethod.japanese.session;
 
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
-
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.test.InstrumentationTestCase;
@@ -95,18 +93,11 @@ public class SessionHandlerFactoryTest extends InstrumentationTestCase {
   public void testCreateSessionHandler_appropriateParameter() {
       // SessionHandlerSocketClient for appropriate preference.
     SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putBoolean(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY"),
-        true);
-    editor.putString(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY"),
-        HOST_ADDRESS);
-    editor.putString(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY"),
-        Integer.toString(PORT));
+    editor.putBoolean(SessionHandlerFactory.PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY, true);
+    editor.putString(SessionHandlerFactory.PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY,
+                     HOST_ADDRESS);
+    editor.putString(SessionHandlerFactory.PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY,
+                     Integer.toString(PORT));
     editor.commit();
     assertEquals(SocketSessionHandler.class,
                  new SessionHandlerFactory(sharedPreferences).create().getClass());
@@ -116,18 +107,11 @@ public class SessionHandlerFactoryTest extends InstrumentationTestCase {
   public void testCreateSessionHandler_nonexistentServer() {
     // SessionHandler instance if the server does not exist.
     SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putBoolean(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY"),
-        true);
-    editor.putString(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY"),
-        "NEVER.EXIST");
-    editor.putString(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY"),
-        Integer.toString(PORT));
+    editor.putBoolean(SessionHandlerFactory.PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY, true);
+    editor.putString(SessionHandlerFactory.PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY,
+                     "NEVER.EXIST");
+    editor.putString(SessionHandlerFactory.PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY,
+                     Integer.toString(PORT));
     editor.commit();
     assertEquals(LocalSessionHandler.class,
                  new SessionHandlerFactory(sharedPreferences).create().getClass());
@@ -137,18 +121,11 @@ public class SessionHandlerFactoryTest extends InstrumentationTestCase {
   public void testCreateSessionHandler_malformedPort() {
     // SessionHandler instance for malformed port number.
     SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putBoolean(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY"),
-        true);
-    editor.putString(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY"),
-        HOST_ADDRESS);
-    editor.putString(
-        VisibilityProxy.<String>getStaticField(SessionHandlerFactory.class,
-            "PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY"),
-        "MALFORMED");
+    editor.putBoolean(SessionHandlerFactory.PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY, true);
+    editor.putString(SessionHandlerFactory.PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY,
+                     HOST_ADDRESS);
+    editor.putString(SessionHandlerFactory.PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY,
+                     "MALFORMED");
     editor.commit();
     assertEquals(LocalSessionHandler.class,
                  new SessionHandlerFactory(sharedPreferences).create().getClass());

@@ -114,16 +114,6 @@
       ],
     },
     {
-      'target_name': 'jsoncpp',
-      'type': 'none',
-      'sources': [
-        'jsoncpp.h',
-      ],
-      'dependencies': [
-        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp_do_not_directly_use',
-      ],
-    },
-    {
       'target_name': 'jsonpath',
       'type': 'static_library',
       'sources': [
@@ -131,7 +121,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'jsoncpp',
+        'jsoncpp.gyp:jsoncpp',
       ],
     },
     {
@@ -142,7 +132,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'jsoncpp',
+        'jsoncpp.gyp:jsoncpp',
       ],
     },
     {

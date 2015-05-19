@@ -83,9 +83,9 @@ namespace {
 // raw number to define the following constants. Check the equality here
 // just in case.
 #define COMPARE_LOG_LEVEL(mozc_log_level, android_log_level)  \
-    COMPILE_ASSERT(static_cast<int>(mozc_log_level) ==        \
-                   static_cast<int>(android_log_level),       \
-                   TEST_ ## android_log_level)
+    static_assert(static_cast<int>(mozc_log_level) ==         \
+                  static_cast<int>(android_log_level),        \
+                  "Checking Android log level constants.")
 COMPARE_LOG_LEVEL(LOG_UNKNOWN, ANDROID_LOG_UNKNOWN);
 COMPARE_LOG_LEVEL(LOG_DEFAULT, ANDROID_LOG_DEFAULT);
 COMPARE_LOG_LEVEL(LOG_VERBOSE, ANDROID_LOG_VERBOSE);
@@ -112,7 +112,9 @@ string Logging::GetLogMessageHeader() {
            "%p",
 #elif defined(OS_LINUX)
            "%lu",
-#else  // = OS_WIN or OS_MACOSX
+#elif defined(OS_MACOSX) && defined(__LP64__)
+           "%llu",
+#else  // OS_WIN or OS_MACOSX(32bit)
            "%u",
 #endif
            1900 + tm_time.tm_year,
@@ -126,7 +128,11 @@ string Logging::GetLogMessageHeader() {
            ::GetCurrentThreadId()
 #elif defined(OS_MACOSX)
            ::getpid(),
+#ifdef __LP64__
+           reinterpret_cast<uint64>(pthread_self())
+#else  // __LP64__
            reinterpret_cast<uint32>(pthread_self())
+#endif  // __LP64__
 #elif defined(__native_client__)
            ::getpid(),
            // pthread_self() returns __nc_basic_thread_data*.

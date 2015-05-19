@@ -34,8 +34,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "base/base.h"
 #include "base/number_util.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "converter/lattice.h"
 
 namespace mozc {
@@ -401,9 +402,6 @@ class Segments {
 
   bool resized() const;
   void set_resized(bool resized);
-
-  // Removes specified number of characters at the end of history segments.
-  void RemoveTailOfHistorySegments(size_t num_of_characters);
 
   // clear segments
   void Clear();

@@ -60,9 +60,9 @@
 #include <utility>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/string_piece.h"
 #include "base/text_converter.h"
@@ -120,6 +120,50 @@ void StringAppendV(string *dst, const char *format, va_list ap) {
 }   // namespace
 
 namespace mozc {
+
+ConstChar32Iterator::ConstChar32Iterator(StringPiece utf8_string)
+    : utf8_string_(utf8_string),
+      current_(0),
+      done_(false) {
+  Next();
+}
+
+char32 ConstChar32Iterator::Get() const {
+  DCHECK(!done_);
+  return current_;
+}
+
+void ConstChar32Iterator::Next() {
+  if (!done_) {
+    done_ = !Util::SplitFirstChar32(utf8_string_, &current_, &utf8_string_);
+  }
+}
+
+bool ConstChar32Iterator::Done() const {
+  return done_;
+}
+
+ConstChar32ReverseIterator::ConstChar32ReverseIterator(StringPiece utf8_string)
+    : utf8_string_(utf8_string),
+      current_(0),
+      done_(false) {
+  Next();
+}
+
+char32 ConstChar32ReverseIterator::Get() const {
+  DCHECK(!done_);
+  return current_;
+}
+
+void ConstChar32ReverseIterator::Next() {
+  if (!done_) {
+    done_ = !Util::SplitLastChar32(utf8_string_, &utf8_string_, &current_);
+  }
+}
+
+bool ConstChar32ReverseIterator::Done() const {
+  return done_;
+}
 
 MultiDelimiter::MultiDelimiter(const char* delim) {
   fill(lookup_table_, lookup_table_ + kTableSize, 0);
@@ -375,6 +419,9 @@ void Util::LowerString(string *str) {
   size_t pos = 0;
   while (pos < str->size()) {
     char32 ucs4 = UTF8ToUCS4(begin + pos, begin + str->size(), &mblen);
+    if (mblen == 0) {
+      break;
+    }
     // ('A' <= ucs4 && ucs4 <= 'Z') || ('Ａ' <= ucs4 && ucs4 <= 'Ｚ')
     if ((0x0041 <= ucs4 && ucs4 <= 0x005A) ||
         (0xFF21 <= ucs4 && ucs4 <= 0xFF3A)) {
@@ -499,6 +546,7 @@ void Util::StripWhiteSpaces(const string &input, string *output) {
 }
 
 namespace {
+
 // Table of UTF-8 character lengths, based on first byte
 const unsigned char kUTF8LenTbl[256] = {
   1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
@@ -510,6 +558,11 @@ const unsigned char kUTF8LenTbl[256] = {
   2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,
   3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 4,4,4,4,4,4,4,4
 };
+
+bool IsUTF8TrailingByte(uint8 c) {
+  return (c & 0xc0) == 0x80;
+}
+
 }  // namespace
 
 // Return length of a single UTF-8 source character
@@ -531,91 +584,146 @@ size_t Util::CharsLen(const char *src, size_t length) {
 char32 Util::UTF8ToUCS4(const char *begin,
                         const char *end,
                         size_t *mblen) {
-  DCHECK_LE(begin, end);
-  const size_t len = static_cast<size_t>(end - begin);
-  if (begin == end) {
+  StringPiece s(begin, end - begin);
+  StringPiece rest;
+  char32 c = 0;
+  if (!Util::SplitFirstChar32(s, &c, &rest)) {
     *mblen = 0;
     return 0;
   }
+  *mblen = rest.begin() - s.begin();
+  return c;
+}
 
-  if (static_cast<unsigned char>(begin[0]) < 0x80) {
-    *mblen = 1;
-    return static_cast<unsigned char>(begin[0]);
-  } else if (len >= 2 && (begin[0] & 0xe0) == 0xc0) {
-    *mblen = 2;
-    return ((begin[0] & 0x1f) << 6) | (begin[1] & 0x3f);
-  } else if (len >= 3 && (begin[0] & 0xf0) == 0xe0) {
-    *mblen = 3;
-    return ((begin[0] & 0x0f) << 12) |
-        ((begin[1] & 0x3f) << 6) | (begin[2] & 0x3f);
-  } else if (len >= 4 && (begin[0] & 0xf8) == 0xf0) {
-    *mblen = 4;
-    return ((begin[0] & 0x07) << 18) |
-        ((begin[1] & 0x3f) << 12) | ((begin[2] & 0x3f) << 6) |
-        (begin[3] & 0x3f);
-  // Below is out of UCS4 but acceptable in 32-bit.
-  } else if (len >= 5 && (begin[0] & 0xfc) == 0xf8) {
-    *mblen = 5;
-    return ((begin[0] & 0x03) << 24) |
-        ((begin[1] & 0x3f) << 18) | ((begin[2] & 0x3f) << 12) |
-        ((begin[3] & 0x3f) << 6) | (begin[4] & 0x3f);
-  } else if (len >= 6 && (begin[0] & 0xfe) == 0xfc) {
-    *mblen = 6;
-    return ((begin[0] & 0x01) << 30) |
-        ((begin[1] & 0x3f) << 24) | ((begin[2] & 0x3f) << 18) |
-        ((begin[3] & 0x3f) << 12) | ((begin[4] & 0x3f) << 6) |
-        (begin[5] & 0x3f);
-  } else {
-    *mblen = 1;
-    return 0;
+bool Util::SplitFirstChar32(StringPiece s,
+                            char32 *first_char32,
+                            StringPiece *rest) {
+  char32 dummy_char32 = 0;
+  if (first_char32 == NULL) {
+    first_char32 = &dummy_char32;
+  }
+  StringPiece dummy_rest;
+  if (rest == NULL) {
+    rest = &dummy_rest;
+  }
+
+  *first_char32 = 0;
+  rest->clear();
+
+  while (true) {
+    if (s.empty()) {
+      return false;
+    }
+
+    char32 result = 0;
+    size_t len = 0;
+    char32 min_value = 0;
+    char32 max_value = 0xffffffff;
+    {
+      const uint8 leading_byte = static_cast<uint8>(s[0]);
+      if (leading_byte < 0x80) {
+        *first_char32 = leading_byte;
+        *rest = s.substr(1);
+        return true;
+      }
+
+      if (IsUTF8TrailingByte(leading_byte)) {
+        // UTF-8 sequence should not start trailing bytes.
+        return false;
+      }
+
+      if ((leading_byte & 0xe0) == 0xc0) {
+        len = 2;
+        min_value = 0x0080;
+        max_value = 0x07ff;
+        result = (leading_byte & 0x1f);
+      } else if ((leading_byte & 0xf0) == 0xe0) {
+        len = 3;
+        min_value = 0x0800;
+        max_value = 0xffff;
+        result = (leading_byte & 0x0f);
+      } else if ((leading_byte & 0xf8) == 0xf0) {
+        len = 4;
+        min_value = 0x010000;
+        max_value = 0x1fffff;
+        result = (leading_byte & 0x07);
+        // Below is out of UCS4 but acceptable in 32-bit.
+      } else if ((leading_byte & 0xfc) == 0xf8) {
+        len = 5;
+        min_value = 0x0200000;
+        max_value = 0x3ffffff;
+        result = (leading_byte & 0x03);
+      } else if ((leading_byte & 0xfe) == 0xfc) {
+        len = 6;
+        min_value = 0x4000000;
+        max_value = 0x7fffffff;
+        result = (leading_byte & 0x01);
+      } else {
+        // Currently 0xFE and 0xFF are treated as invalid.
+        return false;
+      }
+    }
+
+    if (s.size() < len) {
+      // Data length is too short.
+      return false;
+    }
+
+    for (size_t i = 1; i < len; ++i) {
+      const uint8 c = static_cast<uint8>(s[i]);
+      if (!IsUTF8TrailingByte(c)) {
+        // Trailing bytes not found.
+        return false;
+      }
+      result <<= 6;
+      result += (c & 0x3f);
+    }
+    if ((result < min_value) || (max_value < result)) {
+      // redundant UTF-8 sequence found.
+      return false;
+    }
+    *first_char32 = result;
+    *rest = s.substr(len);
+    return true;
   }
 }
 
-uint16 Util::UTF8ToUCS2(const char *begin,
-                        const char *end,
-                        size_t *mblen) {
-  return static_cast<uint16>(UTF8ToUCS4(begin, end, mblen));
-}
-
-namespace {
-void UCS4ToUTF8Internal(char32 c, char *output) {
-  if (c < 0x00080) {
-    output[0] = static_cast<char>(c & 0xFF);
-    output[1] = '\0';
-  } else if (c < 0x00800) {
-    output[0] = static_cast<char>(0xC0 + ((c >> 6) & 0x1F));
-    output[1] = static_cast<char>(0x80 + (c & 0x3F));
-    output[2] = '\0';
-  } else if (c < 0x10000) {
-    output[0] = static_cast<char>(0xE0 + ((c >> 12) & 0x0F));
-    output[1] = static_cast<char>(0x80 + ((c >> 6) & 0x3F));
-    output[2] = static_cast<char>(0x80 + (c & 0x3F));
-    output[3] = '\0';
-  } else if (c < 0x200000) {
-    output[0] = static_cast<char>(0xF0 + ((c >> 18) & 0x07));
-    output[1] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
-    output[2] = static_cast<char>(0x80 + ((c >> 6)  & 0x3F));
-    output[3] = static_cast<char>(0x80 + (c & 0x3F));
-    output[4] = '\0';
-  // below is not in UCS4 but in 32bit int.
-  } else if (c < 0x8000000) {
-    output[0] = static_cast<char>(0xF8 + ((c >> 24) & 0x03));
-    output[1] = static_cast<char>(0x80 + ((c >> 18) & 0x3F));
-    output[2] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
-    output[3] = static_cast<char>(0x80 + ((c >> 6)  & 0x3F));
-    output[4] = static_cast<char>(0x80 + (c & 0x3F));
-    output[5] = '\0';
-  } else {
-    output[0] = static_cast<char>(0xFC + ((c >> 30) & 0x01));
-    output[1] = static_cast<char>(0x80 + ((c >> 24) & 0x3F));
-    output[2] = static_cast<char>(0x80 + ((c >> 18) & 0x3F));
-    output[3] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
-    output[4] = static_cast<char>(0x80 + ((c >> 6)  & 0x3F));
-    output[5] = static_cast<char>(0x80 + (c & 0x3F));
-    output[6] = '\0';
+bool Util::SplitLastChar32(StringPiece s,
+                           StringPiece *rest,
+                           char32 *last_char32) {
+  StringPiece dummy_rest;
+  if (rest == NULL) {
+    rest = &dummy_rest;
   }
+  char32 dummy_char32 = 0;
+  if (last_char32 == NULL) {
+    last_char32 = &dummy_char32;
+  }
+
+  *last_char32 = 0;
+  rest->clear();
+
+  if (s.empty()) {
+    return false;
+  }
+  StringPiece::const_reverse_iterator it = s.rbegin();
+  for (; (it != s.rend()) && IsUTF8TrailingByte(*it); ++it) {}
+  if (it == s.rend()) {
+    return false;
+  }
+  const StringPiece::difference_type len = distance(s.rbegin(), it) + 1;
+  StringPiece last_piece = s.substr(s.size() - len);
+  StringPiece result_piece;
+  if (!SplitFirstChar32(last_piece, last_char32, &result_piece)) {
+    return false;
+  }
+  if (!result_piece.empty()) {
+    return false;
+  }
+  *rest = s;
+  rest->remove_suffix(len);
+  return true;
 }
-}   // namespace
 
 void Util::UCS4ToUTF8(char32 c, string *output) {
   output->clear();
@@ -623,16 +731,63 @@ void Util::UCS4ToUTF8(char32 c, string *output) {
 }
 
 void Util::UCS4ToUTF8Append(char32 c, string *output) {
-  char buf[7];
-  UCS4ToUTF8Internal(c, buf);
-  *output += buf;
-}
-void Util::UCS2ToUTF8(uint16 c, string *output) {
-  UCS4ToUTF8(c, output);
-}
-
-void Util::UCS2ToUTF8Append(uint16 c, string *output) {
-  UCS4ToUTF8Append(c, output);
+  if (c == 0) {
+    // Do nothing if |c| is NUL. Previous implementation of UCS4ToUTF8Append
+    // worked like this.
+    return;
+  }
+  if (c < 0x00080) {
+    output->push_back(static_cast<char>(c & 0xFF));
+    return;
+  }
+  if (c < 0x00800) {
+    const char buf[] = {
+      static_cast<char>(0xC0 + ((c >> 6) & 0x1F)),
+      static_cast<char>(0x80 + (c & 0x3F)),
+    };
+    output->append(buf, arraysize(buf));
+    return;
+  }
+  if (c < 0x10000) {
+    const char buf[] = {
+      static_cast<char>(0xE0 + ((c >> 12) & 0x0F)),
+      static_cast<char>(0x80 + ((c >> 6) & 0x3F)),
+      static_cast<char>(0x80 + (c & 0x3F)),
+    };
+    output->append(buf, arraysize(buf));
+    return;
+  }
+  if (c < 0x200000) {
+    const char buf[] = {
+      static_cast<char>(0xF0 + ((c >> 18) & 0x07)),
+      static_cast<char>(0x80 + ((c >> 12) & 0x3F)),
+      static_cast<char>(0x80 + ((c >> 6)  & 0x3F)),
+      static_cast<char>(0x80 + (c & 0x3F)),
+    };
+    output->append(buf, arraysize(buf));
+    return;
+  }
+  // below is not in UCS4 but in 32bit int.
+  if (c < 0x8000000) {
+    const char buf[] = {
+      static_cast<char>(0xF8 + ((c >> 24) & 0x03)),
+      static_cast<char>(0x80 + ((c >> 18) & 0x3F)),
+      static_cast<char>(0x80 + ((c >> 12) & 0x3F)),
+      static_cast<char>(0x80 + ((c >> 6)  & 0x3F)),
+      static_cast<char>(0x80 + (c & 0x3F)),
+    };
+    output->append(buf, arraysize(buf));
+    return;
+  }
+  const char buf[] = {
+    static_cast<char>(0xFC + ((c >> 30) & 0x01)),
+    static_cast<char>(0x80 + ((c >> 24) & 0x3F)),
+    static_cast<char>(0x80 + ((c >> 18) & 0x3F)),
+    static_cast<char>(0x80 + ((c >> 12) & 0x3F)),
+    static_cast<char>(0x80 + ((c >> 6)  & 0x3F)),
+    static_cast<char>(0x80 + (c & 0x3F)),
+  };
+  output->append(buf, arraysize(buf));
 }
 
 #ifdef OS_WIN
@@ -843,7 +998,7 @@ void Util::GetRandomSequence(char *buf, size_t buf_size) {
 void Util::GetRandomAsciiSequence(char *buf, size_t buf_size) {
   // We use this map to convert a random byte value to an ascii character.
   // Its size happens to be 64, which is just one fourth of the number of
-  // values that can be represented by a sigle byte value. This accidental
+  // values that can be represented by a single byte value. This accidental
   // coincidence makes implementation of the method quite simple.
   const char kCharMap[] =
       "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
@@ -1439,20 +1594,20 @@ Util::ScriptType Util::GetScriptType(char32 w) {
     return ALPHABET;
   } else if (
       w == 0x3005 ||                   // IDEOGRAPHIC ITERATION MARK "々"
-      INRANGE(w, 0x3400, 0x4DBF) ||    // CJK Unified Ideographs Extention A
+      INRANGE(w, 0x3400, 0x4DBF) ||    // CJK Unified Ideographs Extension A
       INRANGE(w, 0x4E00, 0x9FFF) ||    // CJK Unified Ideographs
       INRANGE(w, 0xF900, 0xFAFF) ||    // CJK Compatibility Ideographs
-      INRANGE(w, 0x20000, 0x2A6DF) ||  // CJK Unified Ideographs Extention B
-      INRANGE(w, 0x2A700, 0x2B73F) ||  // CJK Unified Ideographs Extention C
-      INRANGE(w, 0x2B740, 0x2B81F) ||  // CJK Unified Ideographs Extention D
+      INRANGE(w, 0x20000, 0x2A6DF) ||  // CJK Unified Ideographs Extension B
+      INRANGE(w, 0x2A700, 0x2B73F) ||  // CJK Unified Ideographs Extension C
+      INRANGE(w, 0x2B740, 0x2B81F) ||  // CJK Unified Ideographs Extension D
       INRANGE(w, 0x2F800, 0x2FA1F)) {  // CJK Compatibility Ideographs
     // As of Unicode 6.0.2, each block has the following characters assigned.
-    // [U+3400, U+4DB5]:   CJK Unified Ideographs Extention A
+    // [U+3400, U+4DB5]:   CJK Unified Ideographs Extension A
     // [U+4E00, U+9FCB]:   CJK Unified Ideographs
     // [U+4E00, U+FAD9]:   CJK Compatibility Ideographs
-    // [U+20000, U+2A6D6]: CJK Unified Ideographs Extention B
-    // [U+2A700, U+2B734]: CJK Unified Ideographs Extention C
-    // [U+2B740, U+2B81D]: CJK Unified Ideographs Extention D
+    // [U+20000, U+2A6D6]: CJK Unified Ideographs Extension B
+    // [U+2A700, U+2B734]: CJK Unified Ideographs Extension C
+    // [U+2B740, U+2B81D]: CJK Unified Ideographs Extension D
     // [U+2F800, U+2FA1D]: CJK Compatibility Ideographs
     return KANJI;
   } else if (

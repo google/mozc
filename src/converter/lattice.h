@@ -33,8 +33,9 @@
 #include <sstream>  // For DebugString()
 #include <string>
 #include <vector>
-#include "base/base.h"
+#include "base/port.h"
 #include "base/freelist.h"
+#include "base/scoped_ptr.h"
 #include "converter/node.h"
 
 namespace mozc {

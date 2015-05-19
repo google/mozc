@@ -34,6 +34,7 @@ import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.HardwareKeyMap;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Converter from android key events to mozc key events.
@@ -63,7 +64,7 @@ public class HardwareKeyboard {
     KeyboardSpecification getAlphabetKeyboardSpecification();
   }
 
-  private HardwareKeyboadSpecificationInterface hardwareKeyboardSpecification =
+  @VisibleForTesting HardwareKeyboadSpecificationInterface hardwareKeyboardSpecification =
       HardwareKeyboardSpecification.JAPANESE109A;
 
   private CompositionMode compositionMode = CompositionMode.HIRAGANA;

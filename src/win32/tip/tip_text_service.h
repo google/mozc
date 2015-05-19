@@ -32,11 +32,14 @@
 
 #include <msctf.h>
 
+#include "base/port.h"
+
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
 class TipPrivateContext;
+class TipThreadContext;
 
 class TipTextService : public IUnknown {
  public:
@@ -46,21 +49,42 @@ class TipTextService : public IUnknown {
   // Retrieves the thread manager instance.
   virtual ITfThreadMgr *GetThreadManager() const = 0;
 
-  // Retrieves activate flags.
-  virtual DWORD activate_flags() const = 0;
+  // Returns true if the UI thread is in immersive mode.
+  virtual bool IsImmersiveUI() const = 0;
 
-  // Returns the associated private context. Returns NULL if not found.
+  // Returns the associated private context. Returns nullptr if not found.
   virtual TipPrivateContext *GetPrivateContext(ITfContext *context) = 0;
+
+  // Returns the associated thread context.
+  virtual TipThreadContext *GetThreadContext() = 0;
+
+  // Sends UI update message to the renderer.
+  virtual void PostUIUpdateMessage() = 0;
 
   // Returns the GUID atom for the display attributes.
   virtual TfGuidAtom input_attribute() const = 0;
   virtual TfGuidAtom converted_attribute() const = 0;
 
+  // Returns the window handle of render callback window.
+  // Returns nullptr if it is not available.
+  virtual HWND renderer_callback_window_handle() const = 0;
+
   // Returns an instance of ITfCompositionSink object. The caller must maintain
   // the reference count of the returned object.
   virtual ITfCompositionSink *CreateCompositionSink(ITfContext *context) = 0;
 
+  virtual void UpdateLangbar(bool enabled, uint32 mozc_mode) = 0;
+};
+
+class TipTextServiceFactory {
+ public:
   static TipTextService *Create();
+  static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
+  static void OnDllProcessDetach(HINSTANCE module_handle,
+                                 bool process_shutdown);
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(TipTextServiceFactory);
 };
 
 }  // namespace tsf

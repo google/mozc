@@ -33,7 +33,6 @@
 #include <windows.h>
 
 #include "base/base.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace client {
@@ -41,6 +40,7 @@ class ClientInterface;
 }  // namespace client
 
 namespace commands {
+class Context;
 class KeyEvent;
 class Output;
 }  // namespace commands
@@ -80,7 +80,8 @@ class KeyEventHandler {
       const KeyboardStatus &keyboard_status,
       const InputBehavior &behavior,
       const InputState &initial_state,
-      mozc::client::ClientInterface *client,
+      const commands::Context &context,
+      client::ClientInterface *client,
       Win32KeyboardInterface *keyboard,
       InputState *next_state,
       commands::Output *output);
@@ -92,7 +93,8 @@ class KeyEventHandler {
       const KeyboardStatus &keyboard_status,
       const InputBehavior &behavior,
       const InputState &initial_state,
-      mozc::client::ClientInterface *client,
+      const commands::Context &context,
+      client::ClientInterface *client,
       Win32KeyboardInterface *keyboard,
       InputState *next_state,
       commands::Output *output);
@@ -106,7 +108,7 @@ class KeyEventHandler {
       const InputBehavior &behavior,
       const InputState &initial_state,
       Win32KeyboardInterface *keyboard,
-      mozc::commands::KeyEvent *key);
+      commands::KeyEvent *key);
 
   static bool ConvertToKeyEvent(
       const VirtualKey &virtual_key,
@@ -136,7 +138,7 @@ class KeyEventHandler {
       KeyboardStatus *new_keyboard_status);
 
   // Span Tool if launch_tool_mode is set in |output|.
-  static void MaybeSpawnTool(mozc::client::ClientInterface *client,
+  static void MaybeSpawnTool(client::ClientInterface *client,
                              commands::Output *output);
 
  private:

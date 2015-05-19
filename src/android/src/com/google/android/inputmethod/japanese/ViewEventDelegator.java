@@ -59,7 +59,7 @@ import java.util.List;
 public abstract class ViewEventDelegator implements ViewEventListener {
   private final ViewEventListener delegated;
 
-  ViewEventDelegator(ViewEventListener delegated) {
+  public ViewEventDelegator(ViewEventListener delegated) {
     this.delegated = delegated;
   }
 
@@ -118,5 +118,10 @@ public abstract class ViewEventDelegator implements ViewEventListener {
   @Override
   public void onClickHardwareKeyboardCompositionModeButton() {
     delegated.onClickHardwareKeyboardCompositionModeButton();
+  }
+
+  @Override
+  public void onActionKey() {
+    delegated.onActionKey();
   }
 }

@@ -66,14 +66,6 @@ void ConversionRequest::set_composer(const composer::Composer *c) {
   composer_ = c;
 }
 
-const string &ConversionRequest::preceding_text() const {
-  return preceding_text_;
-}
-
-void ConversionRequest::set_preceding_text(const string &preceding_text) {
-  preceding_text_ = preceding_text;
-}
-
 const commands::Request &ConversionRequest::request() const {
   DCHECK(request_);
   return *request_;

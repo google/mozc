@@ -30,7 +30,6 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MinorCategory;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.CrossingEdgeBehavior;
@@ -39,17 +38,16 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.Rewr
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpaceOnAlphanumeric;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpecialRomanjiTable;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
+import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
 
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.test.InstrumentationTestCase;
 import android.test.mock.MockContext;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.inputmethod.EditorInfo;
-
-import junit.framework.TestCase;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
@@ -58,7 +56,7 @@ import java.util.Set;
 
 /**
  */
-public class MozcUtilTest extends TestCase {
+public class MozcUtilTest extends InstrumentationTestCase {
   @SmallTest
   public void testIsDevChannel() throws InvocationTargetException {
     class TestData {
@@ -70,7 +68,6 @@ public class MozcUtilTest extends TestCase {
       }
     }
     TestData testDataList[] = {
-      new TestData(null, false),
       new TestData("", false),
       new TestData("1", false),
       new TestData(".", false),
@@ -83,10 +80,7 @@ public class MozcUtilTest extends TestCase {
       new TestData(".a", false),
     };
     for (TestData testData : testDataList) {
-      assertEquals(
-          testData.isDevChannel,
-          VisibilityProxy.invokeStaticByName(
-              MozcUtil.class, "isDevChannelVersionName", testData.versionName));
+      assertEquals(testData.isDevChannel, MozcUtil.isDevChannelVersionName(testData.versionName));
     }
   }
 
@@ -218,19 +212,19 @@ public class MozcUtilTest extends TestCase {
     }
 
     TestData[] testDataList = {
-        new TestData(7, null, Collections.<EmojiCarrierType>emptySet()),
+        new TestData(7, EmojiProviderType.NONE, Collections.<EmojiCarrierType>emptySet()),
         new TestData(7, EmojiProviderType.DOCOMO, EnumSet.of(EmojiCarrierType.DOCOMO_EMOJI)),
         new TestData(7, EmojiProviderType.SOFTBANK, EnumSet.of(EmojiCarrierType.SOFTBANK_EMOJI)),
         new TestData(7, EmojiProviderType.KDDI, EnumSet.of(EmojiCarrierType.KDDI_EMOJI)),
 
         // Boundary check. Unicode 6.0 is not yet available on Api level 15.
-        new TestData(15, null, Collections.<EmojiCarrierType>emptySet()),
+        new TestData(15, EmojiProviderType.NONE, Collections.<EmojiCarrierType>emptySet()),
         new TestData(15, EmojiProviderType.DOCOMO, EnumSet.of(EmojiCarrierType.DOCOMO_EMOJI)),
         new TestData(15, EmojiProviderType.SOFTBANK, EnumSet.of(EmojiCarrierType.SOFTBANK_EMOJI)),
         new TestData(15, EmojiProviderType.KDDI, EnumSet.of(EmojiCarrierType.KDDI_EMOJI)),
 
         // Unicode 6.0 is available on API level 16 or higher.
-        new TestData(16, null, EnumSet.of(EmojiCarrierType.UNICODE_EMOJI)),
+        new TestData(16, EmojiProviderType.NONE, EnumSet.of(EmojiCarrierType.UNICODE_EMOJI)),
         new TestData(16, EmojiProviderType.DOCOMO,
                      EnumSet.of(EmojiCarrierType.UNICODE_EMOJI, EmojiCarrierType.DOCOMO_EMOJI)),
         new TestData(16, EmojiProviderType.SOFTBANK,
@@ -275,6 +269,51 @@ public class MozcUtilTest extends TestCase {
       assertEquals(testData.toString(),
                    testData.expected,
                    MozcUtil.utf8CStyleByteStringToString(testData.input));
+    }
+  }
+
+  @SmallTest
+  public void testClamp() {
+    assertEquals(0, MozcUtil.clamp(-1, 0, 2));
+    assertEquals(0, MozcUtil.clamp(0, 0, 2));
+    assertEquals(1, MozcUtil.clamp(1, 0, 2));
+    assertEquals(2, MozcUtil.clamp(2, 0, 2));
+    assertEquals(2, MozcUtil.clamp(3, 0, 2));
+
+    assertEquals(0.0f, MozcUtil.clamp(-1.0f, 0.0f, 2.0f));
+    assertEquals(0.0f, MozcUtil.clamp(0.0f, 0.0f, 2.0f));
+    assertEquals(1.0f, MozcUtil.clamp(1.0f, 0.0f, 2.0f));
+    assertEquals(2.0f, MozcUtil.clamp(2.0f, 0.0f, 2.0f));
+    assertEquals(2.0f, MozcUtil.clamp(3.0f, 0.0f, 2.0f));
+  }
+
+  @SmallTest
+  public void testGetAbiIndependentVersionCode() {
+    class TestData extends Parameter {
+      final int versionCode;
+      final int expectation;
+      TestData(int versionCode, int expectation) {
+        this.versionCode = versionCode;
+        this.expectation = expectation;
+      }
+    }
+    TestData[] testDataList = {
+        new TestData(1, 1),
+        new TestData(0, 0),
+        new TestData(123456, 123456),
+        new TestData(1000000, 0),
+        new TestData(7123456, 123456),
+    };
+    for (TestData testData : testDataList) {
+      try {
+        MozcUtil.setVersionCode(Optional.of(testData.versionCode));
+        assertEquals(
+            testData.toString(),
+            testData.expectation,
+            MozcUtil.getAbiIndependentVersionCode(getInstrumentation().getTargetContext()));
+      } finally {
+        MozcUtil.setVersionCode(Optional.<Integer>absent());
+      }
     }
   }
 }

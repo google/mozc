@@ -96,22 +96,17 @@ namespace {
 
 #define INRANGE(w, a, b) ((w) >= (a) && (w) <= (b))
 
-bool InternalValidateNormalizedReading(const string &normalized_reading) {
-  const char *begin = normalized_reading.c_str();
-  const char *end = begin + normalized_reading.size();
-  size_t mblen = 0;
-  while (begin < end) {
-    const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
-    if (INRANGE(w, 0x0021, 0x007E) ||  // Basic Latin (Ascii)
-        INRANGE(w, 0x3041, 0x3096) ||  // Hiragana
-        INRANGE(w, 0x309B, 0x309C) ||  // KATAKANA-HIRAGANA VOICED/SEMI-VOICED
-                                       // SOUND MARK
-        INRANGE(w, 0x30FB, 0x30FC) ||  // Nakaten, Prolonged sound mark
-        INRANGE(w, 0x3001, 0x3002) ||  // Japanese punctuation marks
-        INRANGE(w, 0x300C, 0x300F) ||  // Japanese brackets
-        INRANGE(w, 0x301C, 0x301C)) {  // Japanese Wavedash
-      begin += mblen;
-    } else {
+bool InternalValidateNormalizedReading(const string &reading) {
+  for (ConstChar32Iterator iter(reading); !iter.Done(); iter.Next()) {
+    const char32 c = iter.Get();
+    if (!INRANGE(c, 0x0021, 0x007E) &&  // Basic Latin (Ascii)
+        !INRANGE(c, 0x3041, 0x3096) &&  // Hiragana
+        !INRANGE(c, 0x309B, 0x309C) &&  // KATAKANA-HIRAGANA VOICED/SEMI-VOICED
+                                        // SOUND MARK
+        !INRANGE(c, 0x30FB, 0x30FC) &&  // Nakaten, Prolonged sound mark
+        !INRANGE(c, 0x3001, 0x3002) &&  // Japanese punctuation marks
+        !INRANGE(c, 0x300C, 0x300F) &&  // Japanese brackets
+        !INRANGE(c, 0x301C, 0x301C)) {  // Japanese Wavedash
       LOG(INFO) << "Invalid character in reading.";
       return false;
     }

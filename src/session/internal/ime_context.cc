@@ -44,8 +44,6 @@ using commands::Request;
 ImeContext::ImeContext()
     : create_time_(0),
       last_command_time_(0),
-      composer_(NULL),
-      converter_(NULL),
       state_(NONE),
       request_(&Request::default_instance()) {
 }

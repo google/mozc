@@ -325,7 +325,6 @@ bool SessionOutput::FillFooter(const commands::Category category,
     footer->set_index_visible(true);
     footer->set_logo_visible(true);
 
-#ifdef MOZC_ENABLE_HISTORY_DELETION
     // If the selected candidate is a user prediction history, tell the user
     // that it can be removed by Ctrl-Delete.
     if (candidates->has_focused_index()) {
@@ -336,16 +335,27 @@ bool SessionOutput::FillFooter(const commands::Category category,
         }
         if (cand.has_annotation() && cand.annotation().deletable()) {
           // TODO(noriyukit): Change the message depending on user's keymap.
+#if defined(OS_MACOSX)
+          const char kDeleteInstruction[] =  // "control+fn+deleteで履歴から削除"
+              "\x63\x6F\x6E\x74\x72\x6F\x6C\x2B\x66\x6E\x2B\x64\x65\x6C\x65"
+              "\x74\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B\xE3"
+              "\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+#elif defined(__native_client__)
+          const char kDeleteInstruction[] =  // "ctrl+alt+backspaceで履歴から削除"
+              "\x63\x74\x72\x6C\x2B\x61\x6C\x74\x2B\x62\x61\x63\x6B\x73\x70"
+              "\x61\x63\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B"
+              "\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+#else  // !OS_MACOSX && !__native_client__
           const char kDeleteInstruction[] =  // "Ctrl+Delで履歴から削除"
               "\x43\x74\x72\x6C\x2B\x44\x65\x6C\xE3\x81\xA7\xE5\xB1\xA5"
               "\xE6\xAD\xB4\xE3\x81\x8B\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+#endif  // OS_MACOSX || __native_client__
           footer->set_label(kDeleteInstruction);
           show_build_number = false;
         }
         break;
       }
     }
-#endif  // MOZC_ENABLE_HISTORY_DELETION
   }
 
   // Show the build number on the footer label for debugging when the build

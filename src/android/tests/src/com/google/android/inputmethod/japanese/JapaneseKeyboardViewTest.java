@@ -44,7 +44,6 @@ import android.app.Activity;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
@@ -75,8 +74,8 @@ public class JapaneseKeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   private static void drag(MainThreadRunner mainThreadRunner, JapaneseKeyboardView view,
                            int fromX, int toX, int fromY, int toY) {
-    long downTime = SystemClock.uptimeMillis();
-    long eventTime = SystemClock.uptimeMillis();
+    long downTime = MozcUtil.getUptimeMillis();
+    long eventTime = MozcUtil.getUptimeMillis();
 
     mainThreadRunner.onTouchEvent(
         view, MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_DOWN, fromX, fromY, 0));
@@ -85,12 +84,12 @@ public class JapaneseKeyboardViewTest extends InstrumentationTestCaseWithMock {
       int x = fromX + (toX - fromX) * i / STEP_COUNT;
       int y = fromY + (toY - fromY) * i / STEP_COUNT;
 
-      eventTime = SystemClock.uptimeMillis();
+      eventTime = MozcUtil.getUptimeMillis();
       mainThreadRunner.onTouchEvent(
           view, MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_MOVE, x, y, 0));
     }
 
-    eventTime = SystemClock.uptimeMillis();
+    eventTime = MozcUtil.getUptimeMillis();
     mainThreadRunner.onTouchEvent(
         view, MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_UP, toX, toY, 0));
   }

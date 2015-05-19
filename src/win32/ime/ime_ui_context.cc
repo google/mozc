@@ -277,6 +277,40 @@ bool UIContext::GetConversionMode(DWORD *conversion) const {
   return true;
 }
 
+bool UIContext::GetVisibleConversionMode(DWORD *conversion) const {
+  if (conversion == nullptr) {
+    return false;
+  }
+  if (input_context_.get() == nullptr) {
+    return false;
+  }
+  if (private_context_.get() == nullptr) {
+    return false;
+  }
+  if (!private_context_->Validate()) {
+    return false;
+  }
+  *conversion = private_context_->ime_state->visible_conversion_mode;
+  return true;
+}
+
+bool UIContext::GetLogicalConversionMode(DWORD *conversion) const {
+  if (conversion == nullptr) {
+    return false;
+  }
+  if (input_context_.get() == nullptr) {
+    return false;
+  }
+  if (private_context_.get() == nullptr) {
+    return false;
+  }
+  if (!private_context_->Validate()) {
+    return false;
+  }
+  *conversion = private_context_->ime_state->logical_conversion_mode;
+  return true;
+}
+
 bool UIContext::GetOpenStatus() const {
   if (input_context_.get() == nullptr) {
     return false;
@@ -298,6 +332,22 @@ bool UIContext::IsKanaInputPreferred() const {
     return false;
   }
   return private_context_->ime_behavior->prefer_kana_input;
+}
+
+bool UIContext::IsModeIndicatorEnabled() const {
+  if (input_context_.get() == nullptr) {
+    return false;
+  }
+  if (private_context_.get() == nullptr) {
+    return false;
+  }
+  if (!private_context_->Validate()) {
+    return false;
+  }
+  if (private_context_->ime_behavior == nullptr) {
+    return false;
+  }
+  return private_context_->ime_behavior->use_mode_indicator;
 }
 
 mozc::client::ClientInterface *UIContext::client() const {

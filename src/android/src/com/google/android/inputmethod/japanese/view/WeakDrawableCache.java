@@ -30,11 +30,10 @@
 package org.mozc.android.inputmethod.japanese.view;
 
 import android.graphics.drawable.Drawable;
+import android.util.SparseArray;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Simple cache implementation of {@code Drawable}.
@@ -52,7 +51,7 @@ public class WeakDrawableCache {
   }
 
   private final ReferenceQueue<Drawable> queue = new ReferenceQueue<Drawable>();
-  private final Map<Integer, WeakEntry> map = new HashMap<Integer, WeakEntry>();
+  private final SparseArray<WeakEntry> map = new SparseArray<WeakEntry>(128);
 
   private void cleanUp() {
     while (true) {
@@ -69,7 +68,7 @@ public class WeakDrawableCache {
    */
   public void put(Integer key, Drawable value) {
     cleanUp();
-    WeakEntry entry = map.put(key, new WeakEntry(key, value, queue));
+    map.put(key, new WeakEntry(key, value, queue));
   }
 
   /**

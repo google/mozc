@@ -113,6 +113,10 @@ class MockJNIEnv {
   jbyteArray NewByteArray(jsize size);
   jsize GetArrayLength(jarray array);
   jbyte *GetByteArrayElements(jbyteArray array, jboolean *is_copy);
+  void GetByteArrayRegion(
+      jbyteArray array, jsize start, jsize len, jbyte *buf);
+  void SetByteArrayRegion(
+      jbyteArray array, jsize start, jsize len, const jbyte *buf);
 
   // Register mocked encryptor. This method takes the ownership of
   // mock_encryptor instance.
@@ -162,8 +166,10 @@ class MockJNIEnv {
   static jthrowable ExceptionOccurredProxy(JNIEnv *);
   static jbyteArray NewByteArrayProxy(JNIEnv *env, jsize size);
   static jsize GetArrayLengthProxy(JNIEnv *env, jarray array);
-  static jbyte* GetByteArrayElementsProxy(
-      JNIEnv *env, jbyteArray array, jboolean *is_copy);
+  static void GetByteArrayRegionProxy(
+      JNIEnv *env, jbyteArray array, jsize start, jsize len, jbyte *buf);
+  static void SetByteArrayRegionProxy(
+      JNIEnv *env, jbyteArray array, jsize start, jsize len, const jbyte *buf);
 
   DISALLOW_COPY_AND_ASSIGN(MockJNIEnv);
 };

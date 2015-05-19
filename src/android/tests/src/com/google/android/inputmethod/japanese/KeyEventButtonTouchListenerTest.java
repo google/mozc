@@ -43,7 +43,6 @@ import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 
 import android.content.Context;
 import android.os.Looper;
@@ -106,11 +105,11 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
     replayAll();
 
-    VisibilityProxy.setField(keyEventButtonTouchListener, "keyEventContext", keyEventContext);
+    keyEventButtonTouchListener.keyEventContext = keyEventContext;
     keyEventButtonTouchListener.reset();
 
     verifyAll();
-    assertNull(VisibilityProxy.getField(keyEventButtonTouchListener, "keyEventContext"));
+    assertNull(keyEventButtonTouchListener.keyEventContext);
   }
 
   @SmallTest
@@ -129,7 +128,7 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     Key key = KeyEventButtonTouchListener.createKey(view, 1, 10);
     KeyEventContext keyEventContext =
         new KeyEventContext(key, 0, 0, 0, 0, 100, 100, MetaState.UNMODIFIED);
-    VisibilityProxy.setField(keyEventButtonTouchListener, "keyEventContext", keyEventContext);
+    keyEventButtonTouchListener.keyEventContext = keyEventContext;
 
     // For onDown, first, cancelDelayedKeyEvent should be invoked to cancel old
     // event, then maybeStartDelayedKeyEvent and sendPress should follow.
@@ -141,8 +140,7 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     keyEventButtonTouchListener.onDown(view, 0, 0);
 
     verifyAll();
-    assertNotSame(keyEventContext,
-                  VisibilityProxy.getField(keyEventButtonTouchListener, "keyEventContext"));
+    assertNotSame(keyEventContext, keyEventButtonTouchListener.keyEventContext);
     assertTrue(view.isPressed());
   }
 
@@ -158,7 +156,7 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     Key key = KeyEventButtonTouchListener.createKey(view, 1, 10);
     KeyEventContext keyEventContext =
         new KeyEventContext(key, 0, 0, 0, 0, 100, 100, MetaState.UNMODIFIED);
-    VisibilityProxy.setField(keyEventButtonTouchListener, "keyEventContext", keyEventContext);
+    keyEventButtonTouchListener.keyEventContext = keyEventContext;
 
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
     keyEventHandler.sendKey(eq(10), EasyMock.<List<TouchEvent>>notNull());
@@ -169,7 +167,7 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     keyEventButtonTouchListener.onUp(view, 25, 25, 100);
 
     verifyAll();
-    assertNull(VisibilityProxy.getField(keyEventButtonTouchListener, "keyEventContext"));
+    assertNull(keyEventButtonTouchListener.keyEventContext);
     assertFalse(view.isPressed());
   }
 
@@ -182,7 +180,7 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     keyEventButtonTouchListener.setKeyEventHandler(keyEventHandler);
 
     KeyEventContext keyEventContext = createKeyEventContextMock();
-    VisibilityProxy.setField(keyEventButtonTouchListener, "keyEventContext", keyEventContext);
+    keyEventButtonTouchListener.keyEventContext = keyEventContext;
 
     expect(keyEventContext.update(10, 20, TouchAction.TOUCH_MOVE, 100)).andReturn(true);
     keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
@@ -191,6 +189,6 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
     keyEventButtonTouchListener.onMove(10, 20, 100);
 
     verifyAll();
-    assertNull(VisibilityProxy.getField(keyEventButtonTouchListener, "keyEventContext"));
+    assertNull(keyEventButtonTouchListener.keyEventContext);
   }
 }

@@ -39,6 +39,12 @@
   "branding": {
     "message": "@BRANDING@"
   },
+  "appNameJPKeyboard": {
+    "message": "@APP_NAME_EN@ (for Japanese keyboard)"
+  },
+  "appNameUSKeyboard": {
+    "message": "@APP_NAME_EN@ (for US keyboard)"
+  },
   "compositionModeHiragana": {
     "message": "Hiragana"
   },
@@ -126,6 +132,9 @@
   "configSessionKeymapKotoeri": {
     "message": "Kotoeri"
   },
+  "configSessionKeymapCustom": {
+    "message": "Custom keymap"
+  },
   "configIncognitoMode": {
     "message": "Temporarily disable conversion personalization, history-based suggestions and user dictionary"
   },
@@ -141,11 +150,101 @@
   "configSuggestionsSize": {
     "message": "Maximum number of suggestions"
   },
+  "configSettingsTitle": {
+    "message": "Japanese input settings"
+  },
+  "configBasicsTitle": {
+    "message": "Basics"
+  },
+  "configInputAssistanceTitle": {
+    "message": "Input Assistance"
+  },
+  "configSuggestTitle": {
+    "message": "Suggest"
+  },
+  "configPrivacyTitle": {
+    "message": "Privacy"
+  },
+  "configClearUserHistory": {
+    "message": "Clear personalization data"
+  },
+  "configClearUserHistoryMessage": {
+    "message": "Do you want to clear all personalization data?"
+  },
   "configCreditsDescription": {
-    "message": "Copyright © 2012 Google Inc. All Rights Reserved."
+    "message": "Copyright © 2013 Google Inc. All Rights Reserved."
   },
   "configOssCreditsDescription": {
     "message": "This software is made possible by <a href=\"./credits_en.html\">open source software</a>."
+  },
+  "configSyncConfigCancel": {
+    "message": "Cancel"
+  },
+  "configSyncConfigOk": {
+    "message": "OK"
+  },
+  "configSyncStartSync": {
+    "message": "Start Sync"
+  },
+  "configSyncStopSync": {
+    "message": "Stop Sync"
+  },
+  "configSyncNotSyncedYet": {
+    "message": "Not synced yet"
+  },
+  "configSyncLastSyncedTime": {
+    "message": "Last synced time: "
+  },
+  "configSyncWaiting": {
+    "message": "Waiting for server to be ready"
+  },
+  "configSyncDuringSync": {
+    "message": "During synchronization"
+  },
+  "configSyncNoSync": {
+    "message": "Sync is not enabled"
+  },
+  "configSyncCustomization": {
+    "message": "Customize..."
+  },
+  "configSyncAdvancedSettings": {
+    "message": "Advanced sync settings"
+  },
+  "configSyncDescription": {
+    "message": "Mozc can securely syncs your settings and a user sync-dictionary among different machines. Synced data can be cleared by <a href=\"https://www.google.com/settings/dashboard\" target=\"_blank\">Google Dashboard</a>."
+  },
+  "configSyncTitle": {
+    "message": "Sync"
+  },
+  "configUseConfigSync": {
+    "message": "Sync settings"
+  },
+  "configUseUserDictionarySync": {
+    "message": "Sync user dictionary"
+  },
+  "configSyncAuthorizationFail": {
+    "message": "Authorization failed."
+  },
+  "configSyncUserDictionaryNumEntryExceeded": {
+    "message": "Cannot save dictionaries because Sync Dictionary exceeds its entry size limit."
+  },
+  "configSyncUserDictionaryByteSizeExceeded": {
+    "message": "Cannot save dictionaries because Sync Dictionary exceeds its binary size limit."
+  },
+  "configSyncUserDictionaryNumDicrionaryExceeded": {
+    "message": "Cannot save dictionaries because the number of dictionaries for sync exceeds its limit."
+  },
+  "configSyncUnknownErrorFound": {
+    "message": "Unknown error was found."
+  },
+  "configSyncAuthorizationError": {
+    "message": "Authorization error"
+  },
+  "configSyncDictionaryError": {
+    "message": "Dictionary sync error"
+  },
+  "configSyncUnknownError": {
+    "message": "Unknown sync error"
   },
   "configUploadUsageStats": {
     "message": "Help make Mozc better by automatically sending usage statistics and crash reports to Google."

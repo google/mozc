@@ -31,6 +31,8 @@
 
 #include <msctf.h>
 
+#include <memory>
+
 #include "base/win_util.h"
 #include "client/client_interface.h"
 #include "config/config.pb.h"
@@ -38,6 +40,7 @@
 #include "session/commands.pb.h"
 #include "win32/base/deleter.h"
 #include "win32/base/input_state.h"
+#include "win32/base/keyboard.h"
 #include "win32/base/surrogate_pair_observer.h"
 #include "win32/tip/tip_ui_element_manager.h"
 #include "win32/tip/tip_text_service.h"
@@ -53,18 +56,20 @@ using ::mozc::client::ClientInterface;
 using ::mozc::commands::Capability;
 using ::mozc::commands::Output;
 using ::mozc::config::Config;
+using ::std::unique_ptr;
 
-struct KanaInputStyle {
+struct ConfigSnapshot {
   bool use_kana_input;
   bool use_keyboard_to_change_preedit_method;
+  bool use_mode_indicator;
 };
 
-KanaInputStyle GetDefaultKanaInputStyleImpl(ClientInterface *client) {
-  KanaInputStyle style = {};
+ConfigSnapshot GetDefaultKanaInputStyleImpl(ClientInterface *client) {
+  ConfigSnapshot snapshot = {};
   bool in_appcontainer = false;
   if (!WinUtil::IsProcessInAppContainer(::GetCurrentProcess(),
                                         &in_appcontainer)) {
-    return style;
+    return snapshot;
   }
 
   Config config;
@@ -72,101 +77,114 @@ KanaInputStyle GetDefaultKanaInputStyleImpl(ClientInterface *client) {
     // config1.db is not readable from AppContainer. So retrieve the config
     // data from the server process.
     if (!client->CheckVersionOrRestartServer()) {
-      return style;
+      return snapshot;
     }
     if (!client->GetConfig(&config)) {
-      return style;
+      return snapshot;
     }
   } else {
     // config1.db should be readable in this case.
     config.CopyFrom(config::ConfigHandler::GetConfig());
   }
 
-  style.use_kana_input = (config.preedit_method() == Config::KANA);
-  style.use_keyboard_to_change_preedit_method =
+  snapshot.use_kana_input = (config.preedit_method() == Config::KANA);
+  snapshot.use_keyboard_to_change_preedit_method =
       config.use_keyboard_to_change_preedit_method();
-  return style;
+  snapshot.use_mode_indicator = config.use_mode_indicator();
+  return snapshot;
 }
 
-KanaInputStyle GetDefaultKanaInputStyle(ClientInterface *client) {
+ConfigSnapshot GetConfigSnapshot(ClientInterface *client) {
   // Note: Thread-safety is not required.
-  static KanaInputStyle default_style =
-      GetDefaultKanaInputStyleImpl(client);
+  static ConfigSnapshot default_style = GetDefaultKanaInputStyleImpl(client);
   return default_style;
 }
 
 }  // namespace
 
-TipPrivateContext::TipPrivateContext(DWORD text_edit_sink_cookie,
-                                     DWORD text_layout_sink_cookie)
+class TipPrivateContext::InternalState {
+ public:
+  InternalState(DWORD text_edit_sink_cookie,
+                DWORD text_layout_sink_cookie)
     : client_(ClientFactory::NewClient()),
-      surrogate_pair_observer_(new SurrogatePairObserver),
-      last_output_(new Output()),
-      input_state_(new InputState),
-      input_behavior_(new InputBehavior),
-      ui_element_manager_(new TipUiElementManager),
-      deleter_(new VKBackBasedDeleter),
       text_edit_sink_cookie_(text_edit_sink_cookie),
       text_layout_sink_cookie_(text_layout_sink_cookie) {
+  }
+  unique_ptr<client::ClientInterface> client_;
+  SurrogatePairObserver surrogate_pair_observer_;
+  commands::Output last_output_;
+  VirtualKey last_down_key_;
+  InputBehavior input_behavior_;
+  TipUiElementManager ui_element_manager_;
+  VKBackBasedDeleter deleter_;
+
+  const DWORD text_edit_sink_cookie_;
+  const DWORD text_layout_sink_cookie_;
+};
+
+TipPrivateContext::TipPrivateContext(DWORD text_edit_sink_cookie,
+                                     DWORD text_layout_sink_cookie)
+    : state_(new InternalState(text_edit_sink_cookie,
+                               text_layout_sink_cookie)) {
   Capability capability;
   capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
-  client_->set_client_capability(capability);
+  state_->client_->set_client_capability(capability);
 
-  const KanaInputStyle &kana_input_style =
-      GetDefaultKanaInputStyle(client_.get());
-  input_behavior_->prefer_kana_input = kana_input_style.use_kana_input;
-  input_behavior_->use_romaji_key_to_toggle_input_style =
-      kana_input_style.use_keyboard_to_change_preedit_method;
+  const ConfigSnapshot &snapshot = GetConfigSnapshot(state_->client_.get());
+  state_->input_behavior_.prefer_kana_input = snapshot.use_kana_input;
+  state_->input_behavior_.use_romaji_key_to_toggle_input_style =
+      snapshot.use_keyboard_to_change_preedit_method;
+  state_->input_behavior_.use_mode_indicator = snapshot.use_mode_indicator;
 }
 
 TipPrivateContext::~TipPrivateContext() {}
 
 ClientInterface *TipPrivateContext::GetClient() {
-  return client_.get();
+  return state_->client_.get();
 }
 
 SurrogatePairObserver *TipPrivateContext::GetSurrogatePairObserver() {
-  return surrogate_pair_observer_.get();
+  return &state_->surrogate_pair_observer_;
 }
 
 TipUiElementManager *TipPrivateContext::GetUiElementManager() {
-  return ui_element_manager_.get();
+  return &state_->ui_element_manager_;
 }
 
 VKBackBasedDeleter *TipPrivateContext::GetDeleter() {
-  return deleter_.get();
+  return &state_->deleter_;
 }
 
 const Output &TipPrivateContext::last_output() const {
-  return *last_output_;
+  return state_->last_output_;
 }
 
 Output *TipPrivateContext::mutable_last_output() {
-  return last_output_.get();
+  return &state_->last_output_;
 }
 
-const InputState &TipPrivateContext::input_state() const {
-  return *input_state_;
+const VirtualKey &TipPrivateContext::last_down_key() const {
+  return state_->last_down_key_;
 }
 
-InputState *TipPrivateContext::mutable_input_state() {
-  return input_state_.get();
+VirtualKey *TipPrivateContext::mutable_last_down_key() {
+  return &state_->last_down_key_;
 }
 
 const InputBehavior &TipPrivateContext::input_behavior() const {
-  return *input_behavior_;
+  return state_->input_behavior_;
 }
 
 InputBehavior *TipPrivateContext::mutable_input_behavior() {
-  return input_behavior_.get();
+  return &state_->input_behavior_;
 }
 
 DWORD TipPrivateContext::text_edit_sink_cookie() const {
-  return text_edit_sink_cookie_;
+  return state_->text_edit_sink_cookie_;
 }
 
 DWORD TipPrivateContext::text_layout_sink_cookie() const {
-  return text_layout_sink_cookie_;
+  return state_->text_layout_sink_cookie_;
 }
 
 }  // namespace tsf

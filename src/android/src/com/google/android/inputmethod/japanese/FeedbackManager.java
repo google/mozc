@@ -29,17 +29,19 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import android.media.AudioManager;
 
 /**
  * FeedbackManager manages feed back events, like haptic and sound.
  *
  */
-class FeedbackManager {
+public class FeedbackManager {
   /**
    * Evnet types.
    */
-  enum FeedbackEvent {
+  public enum FeedbackEvent {
     /**
      * Fired when a key is down.
      */
@@ -102,7 +104,7 @@ class FeedbackManager {
   private long hapticFeedbackDuration = 30;  // 30ms by default.
   private boolean isSoundFeedbackEnabled;
   private float soundFeedbackVolume = 0.1f;  // System default volume parameter.
-  private final FeedbackListener feedbackListener;
+  @VisibleForTesting final FeedbackListener feedbackListener;
 
   /**
    * @param listener the listener which is called when feedback event is fired.

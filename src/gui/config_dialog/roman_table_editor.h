@@ -32,7 +32,8 @@
 
 #include <QtGui/QWidget>
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "gui/config_dialog/generic_table_editor.h"
 
 class QAbstractButton;

@@ -54,7 +54,8 @@ struct TaskManager::TaskInfo {
   TaskInfo(const TaskRequestInterface *request_interface,
            TaskManagerCallbackFunc callback_func,
            void *callback_data)
-      : status(TASK_NOT_STARTED), request(request_interface), response(NULL),
+      : status(TASK_NOT_STARTED),
+        request(request_interface),
         callback_func_(callback_func), callback_data_(callback_data),
         task_runner(NULL) {
   }

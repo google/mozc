@@ -111,7 +111,7 @@ void InfolistWindow::SetCandidates(const Candidates &candidates) {
   [infolist_view setCandidates:&candidates];
   [infolist_view setNeedsDisplay:YES];
   NSSize size = [infolist_view updateLayout];
-  ::SizeWindow(window_, size.width, size.height, YES);
+  ResizeWindow(size.width, size.height);
 }
 
 void InfolistWindow::DelayHide(int delay) {
@@ -148,6 +148,7 @@ void InfolistWindow::Hide() {
   if (visible) {
     SendUsageStatsEvent(command_sender_, SessionCommand::INFOLIST_WINDOW_HIDE);
   }
+  visible_ = false;
 }
 
 void InfolistWindow::Show() {
@@ -156,6 +157,7 @@ void InfolistWindow::Show() {
   if (!visible) {
     SendUsageStatsEvent(command_sender_, SessionCommand::INFOLIST_WINDOW_SHOW);
   }
+  visible_ = true;
 }
 
 void InfolistWindow::onTimer(NSTimer* timer) {

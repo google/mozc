@@ -2,9 +2,188 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<script type="text/javascript" src="options.js"></script>
-<title>Chrome NaCl Mozc exntension Options</title>
+<script src="options.js"></script>
+<link rel="stylesheet" href="options.css">
+<title>Japanese input settings</title>
 </head>
 <body>
+
+<div id="sync_config_overlay" class="overlay">
+  <div id="sync_config_page">
+    <section>
+      <h1 id="sync_advanced_settings_title">Advanced sync settings</h1>
+      <span class="controlled-setting-with-label">
+        <input type="checkbox" id="sync_settings">
+        <span>
+          <label for="sync_settings" id="sync_settings_label">Sync settings</label>
+        </span>
+      </span>
+      <span class="controlled-setting-with-label">
+        <input type="checkbox" id="sync_user_dictionary">
+        <span>
+          <label for="sync_user_dictionary" id="sync_user_dictionary_label">Sync user dictionary</label>
+        </span>
+      </span>
+      <div id="sync_config_ok_cancel_div">
+        <input type="button" id="sync_config_cancel" value="Cancel">
+        <input type="button" id="sync_config_ok" value="OK">
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="settings_div">
+  <div id="settings_title_div">
+  <header>
+  <h1 id="settings_title">Japanese input settings</h1>
+  </header>
+  </div>
+
+  <div>
+    <section>
+      <h3 id="basics_title">Basics</h3>
+      <div id="preedit_method_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="preedit_method_label">Input mode:</span>
+          <select id="preedit_method"></select>
+        </span>
+      </div>
+      <div id="punctuation_method_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="punctuation_method_label">Punctuation style:</span>
+          <select id="punctuation_method"></select>
+        </span>
+      </div>
+      <div id="symbol_method_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="symbol_method_label">Symbol style:</span>
+          <select id="symbol_method"></select>
+        </span>
+      </div>
+      <div id="space_character_form_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="space_character_form_label">Space input style:</span>
+          <select id="space_character_form"></select>
+        </span>
+      </div>
+      <div id="selection_shortcut_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="selection_shortcut_label">Selection shortcut:</span>
+          <select id="selection_shortcut"></select>
+        </span>
+      </div>
+      <div id="session_keymap_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="session_keymap_label">Keymap style:</span>
+          <select id="session_keymap"></select>
+        </span>
+      </div>
+      <div id="history_learning_level_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="history_learning_level_label">Adjust conversion based on previous input:</span>
+          <select id="history_learning_level"></select>
+        </span>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h3 id="input_assistance_title">Input Assistance</h3>
+      <div id="use_auto_ime_turn_off_div">
+        <span class="controlled-setting-with-label">
+          <input type="checkbox" id="use_auto_ime_turn_off">
+          <span>
+            <label for="use_auto_ime_turn_off" id="use_auto_ime_turn_off_label">Automatically switch to halfwidth</label>
+          </span>
+        </span>
+      </div>
+      <div id="shift_key_mode_switch_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="shift_key_mode_switch_label">Shift key mode switch:</span>
+          <select id="shift_key_mode_switch"></select>
+        </span>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h3 id="suggest_title">Suggest</h3>
+      <div id="use_history_suggest_div">
+        <span class="controlled-setting-with-label">
+          <input type="checkbox" id="use_history_suggest">
+          <span>
+            <label for="use_history_suggest" id="use_history_suggest_label">Use input history</label>
+          </span>
+        </span>
+      </div>
+      <div id="use_dictionary_suggest_div">
+        <span class="controlled-setting-with-label">
+          <input type="checkbox" id="use_dictionary_suggest">
+          <span>
+            <label for="use_dictionary_suggest" id="use_dictionary_suggest_label">Use system dictionary</label>
+          </span>
+        </span>
+      </div>
+      <div id="suggestions_size_div">
+        <span class="controlled-setting-with-label">
+          <span class="selection-label" id="suggestions_size_label">Maximum number of suggestions:</span>
+          <select id="suggestions_size"></select>
+        </span>
+      </div>
+    </section>
+  </div>
+
+  <div id="cloud_sync_div">
+    <section>
+      <h3 id="sync_title">Sync</h3>
+      <div>
+        <span class="controlled-setting-with-label" id="sync_description">
+        Google Japanese Input can securely syncs your settings and a user sync-dictionary among different machines. Synced data can be cleared by <a href="https://www.google.com/settings/dashboard">Google Dashboard</a>.
+        </span>
+        <span class="controlled-setting-with-label"  id="sync_status"></span>
+      </div>
+      <div>
+        <span class="controlled-setting-with-label">
+          <input type="button" value="Start Sync" id="sync_toggle_button">
+          <input type="button" value="Customize..." id="sync_customization_button" disabled>
+        </span>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h3 id="privacy_title">Privacy</h3>
+      <div id="clear_user_history_div">
+        <span class="controlled-setting-with-label">
+          <input type="button" id="clear_user_history" value="Clear personalization data">
+        </span>
+      </div>
+      <div id="incognito_mode_div">
+        <span class="controlled-setting-with-label">
+          <input type="checkbox" id="incognito_mode">
+          <span>
+            <label for="incognito_mode" id="incognito_mode_label">Temporarily disable conversion personalization, history-based suggestions and user dictionary</label>
+          </span>
+        </span>
+      </div>
+      <div id="upload_usage_stats_div">
+        <span class="controlled-setting-with-label">
+          <input type="checkbox" id="upload_usage_stats">
+          <span>
+            <label for="upload_usage_stats" id="upload_usage_stats_label">Help make Google Japanese Input better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</label>
+          </span>
+        </span>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+  <div id="credits_title">Copyright © 2013 Google Inc. All Rights Reserved.</div>
+  <div id="oss_credits_title">This software is made possible by <a href="credits_en.html">open source software</a>.</div>
+  </footer>
+</div>
 </body>
 </html>

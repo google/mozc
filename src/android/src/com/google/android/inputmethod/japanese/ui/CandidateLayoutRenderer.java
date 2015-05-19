@@ -29,12 +29,15 @@
 
 package org.mozc.android.inputmethod.japanese.ui;
 
+import org.mozc.android.inputmethod.japanese.MemoryManageable;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
 import org.mozc.android.inputmethod.japanese.view.EmojiRenderHelper;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -42,9 +45,9 @@ import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.text.Layout;
+import android.text.Layout.Alignment;
 import android.text.StaticLayout;
 import android.text.TextPaint;
-import android.text.Layout.Alignment;
 import android.util.FloatMath;
 import android.view.View;
 
@@ -72,7 +75,7 @@ import java.util.List;
  * renderer.drawCandidateLayout(canvas, candidateLayout, pressedCandidateIndex);
  * }
  */
-public class CandidateLayoutRenderer {
+public class CandidateLayoutRenderer implements MemoryManageable {
 
   /**
    * The layout value width may be shorter than the rendered value without any settings.
@@ -127,7 +130,7 @@ public class CandidateLayoutRenderer {
   private DescriptionLayoutPolicy descriptionLayoutPolicy = DescriptionLayoutPolicy.OVERLAY;
 
   private Drawable spanBackgroundDrawable = null;
-  private int focusedIndex = -1;
+  @VisibleForTesting int focusedIndex = -1;
 
   public CandidateLayoutRenderer(View targetView) {
     emojiRenderHelper = new EmojiRenderHelper(targetView);
@@ -188,6 +191,8 @@ public class CandidateLayoutRenderer {
   }
 
   public void setEmojiProviderType(EmojiProviderType emojiProviderType) {
+    Preconditions.checkNotNull(emojiProviderType);
+
     this.emojiRenderHelper.setEmojiProviderType(emojiProviderType);
   }
 
@@ -341,12 +346,12 @@ public class CandidateLayoutRenderer {
     }
 
     // Actually render the image to the canvas.
-    canvas.save();
+    int saveCount = canvas.save();
     try {
       canvas.translate(span.getLeft(), row.getTop() + (row.getHeight() - layout.getHeight()) / 2);
       layout.draw(canvas);
     } finally {
-      canvas.restore();
+      canvas.restoreToCount(saveCount);
     }
   }
 
@@ -380,5 +385,10 @@ public class CandidateLayoutRenderer {
       canvas.drawText(description, right, top, descriptionPaint);
       top += descriptionTextSize;
     }
+  }
+
+  @Override
+  public void trimMemory() {
+    emojiRenderHelper.trimMemory();
   }
 }

@@ -116,7 +116,8 @@ HandWriting::HandWriting(QWidget *parent)
 #ifdef ENABLE_CLOUD_HANDWRITING
       cloud_handwriting_(new mozc::handwriting::CloudHandwriting),
 #endif  // ENABLE_CLOUD_HANDWRITING
-      zinnia_handwriting_(new mozc::handwriting::ZinniaHandwriting) {
+      zinnia_handwriting_(new mozc::handwriting::ZinniaHandwriting(
+          mozc::handwriting::ZinniaHandwriting::GetModelFileName())) {
   // To reduce the disk IO of reading the stats config, we load it only when the
   // class is initialized. There is no problem because the config dialog (on
   // Mac) and the administrator dialog (on Windows) say that the usage stats

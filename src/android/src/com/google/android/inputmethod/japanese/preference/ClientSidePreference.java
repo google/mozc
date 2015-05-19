@@ -29,9 +29,10 @@
 
 package org.mozc.android.inputmethod.japanese.preference;
 
-import org.mozc.android.inputmethod.japanese.ViewManager.LayoutAdjustment;
+import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.base.Preconditions;
 
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -111,6 +112,8 @@ public class ClientSidePreference {
                               EmojiProviderType emojiProviderType, HardwareKeyMap hardwareKeyMap,
                               SkinType skinType, LayoutAdjustment layoutAdjustment,
                               int keyboardHeightRatio) {
+    Preconditions.checkNotNull(emojiProviderType);
+
     this.isHapticFeedbackEnabled = isHapticFeedbackEnabled;
     this.hapticFeedbackDuration = hapticFeedbackDuration;
     this.isSoundFeedbackEnabled = isSoundFeedbackEnabled;
@@ -131,15 +134,15 @@ public class ClientSidePreference {
   public ClientSidePreference(SharedPreferences sharedPreferences,
                               Configuration deviceConfiguration) {
     isHapticFeedbackEnabled =
-        sharedPreferences.getBoolean("pref_haptic_feedback_key", false);
+        sharedPreferences.getBoolean(PreferenceUtil.PREF_HAPTIC_FEEDBACK_KEY, false);
     hapticFeedbackDuration =
-        sharedPreferences.getInt("pref_haptic_feedback_duration_key", 30);
+        sharedPreferences.getInt(PreferenceUtil.PREF_HAPTIC_FEEDBACK_DURATION_KEY, 30);
     isSoundFeedbackEnabled =
-        sharedPreferences.getBoolean("pref_sound_feedback_key", false);
+        sharedPreferences.getBoolean(PreferenceUtil.PREF_SOUND_FEEDBACK_KEY, false);
     soundFeedbackVolume =
-        sharedPreferences.getInt("pref_sound_feedback_volume_key", 50);
+        sharedPreferences.getInt(PreferenceUtil.PREF_SOUND_FEEDBACK_VOLUME_KEY, 50);
     isPopupFeedbackEnabled =
-        sharedPreferences.getBoolean("pref_popup_feedback_key", true);
+        sharedPreferences.getBoolean(PreferenceUtil.PREF_POPUP_FEEDBACK_KEY, true);
 
     String keyboardLayoutKey;
     String inputStyleKey;
@@ -169,10 +172,10 @@ public class ClientSidePreference {
         ? PreferenceUtil.PREF_LANDSCAPE_FULLSCREEN_KEY
         : PreferenceUtil.PREF_PORTRAIT_FULLSCREEN_KEY;
 
-    keyboardLayout = getEnum(
+    keyboardLayout = PreferenceUtil.getEnum(
         sharedPreferences, keyboardLayoutKey,
         KeyboardLayout.class, KeyboardLayout.TWELVE_KEYS, KeyboardLayout.GODAN);
-    inputStyle = getEnum(
+    inputStyle = PreferenceUtil.getEnum(
         sharedPreferences, inputStyleKey,
         InputStyle.class, InputStyle.TOGGLE_FLICK);
     qwertyLayoutForAlphabet =
@@ -184,55 +187,17 @@ public class ClientSidePreference {
         sharedPreferences.getBoolean(fullscreenKey, false);
     flickSensitivity = sharedPreferences.getInt(flickSensitivityKey, 0);
 
-    emojiProviderType = getEnum(
-        sharedPreferences, "pref_emoji_provider_type", EmojiProviderType.class, null);
+    emojiProviderType = PreferenceUtil.getEnum(
+        sharedPreferences, PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, EmojiProviderType.class,
+        EmojiProviderType.NONE);
 
-    hardwareKeyMap = getEnum(
-        sharedPreferences, "pref_hardware_keymap", HardwareKeyMap.class, null);
-    skinType = getEnum(
-        sharedPreferences, "pref_skin_type_key", SkinType.class, SkinType.BLUE_LIGHTGRAY);
-    layoutAdjustment = getEnum(
+    hardwareKeyMap = PreferenceUtil.getEnum(
+        sharedPreferences, PreferenceUtil.PREF_HARDWARE_KEYMAP, HardwareKeyMap.class, null);
+    skinType = PreferenceUtil.getEnum(
+        sharedPreferences, PreferenceUtil.PREF_SKIN_TYPE, SkinType.class, SkinType.BLUE_LIGHTGRAY);
+    layoutAdjustment = PreferenceUtil.getEnum(
         sharedPreferences, layoutAdjustmentKey, LayoutAdjustment.class, LayoutAdjustment.FILL);
     keyboardHeightRatio = sharedPreferences.getInt(keyboardHeightRatioKey, 100);
-  }
-
-  /**
-   * Gets an enum value in the SharedPreference.
-   *
-   * @param sharedPreference a {@link SharedPreferences} to be loaded.
-   * @param key a key name
-   * @param type a class of enum value
-   * @param defaultValue default value if the {@link SharedPreferences} doesn't have corresponding
-   *        entry.
-   * @param conversionRecoveryValue default value if unknown value is stored.
-   *        For example, if the value is "ALPHA" and {@code type} doesn't have "ALPHA" entry,
-   *        this argument is returned.
-   */
-  static <T extends Enum<T>> T getEnum(
-      SharedPreferences sharedPreference, String key, Class<T> type,
-      T defaultValue, T conversionRecoveryValue) {
-    if (sharedPreference == null) {
-      return defaultValue;
-    }
-    String name = sharedPreference.getString(key, null);
-    if (name != null) {
-      try {
-        return Enum.valueOf(type, name);
-      } catch (IllegalArgumentException e) {
-        return conversionRecoveryValue;
-      }
-    }
-    return defaultValue;
-  }
-
-  /**
-   * Same as {@link #getEnum(SharedPreferences, String, Class, Enum, Enum)}.
-   *
-   * {@code defaultValue} is used as {@code conversionRecoveryValue}
-   */
-  static <T extends Enum<T>> T getEnum(
-      SharedPreferences sharedPreference, String key, Class<T> type, T defaultValue) {
-    return getEnum(sharedPreference, key, type, defaultValue, defaultValue);
   }
 
   public boolean isHapticFeedbackEnabled() {

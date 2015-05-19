@@ -60,7 +60,6 @@
 #include <QtGui/QPaintEngine>
 #include <QtGui/QWidget>
 
-#include "base/base.h"
 #ifdef OS_WIN
 #include "base/const.h"
 #endif  // OS_WIN

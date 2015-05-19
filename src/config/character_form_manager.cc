@@ -189,10 +189,11 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
 // Returns canonical/normalized UCS2 character for given string.
 // Example:
 // "インターネット" -> "ア"  (All katakana becomes "ア")
-// "810124" -> "0"         (All numbers becomes "0")
-// "Google" -> "A"         (All numbers becomes "A")
-// "&" -> "&"              (Symbol is used as it is)
-// "ほげほげ" -> 0x0000     (Unknown)
+// "810124" -> "0"           (All numbers becomes "0")
+// "Google" -> "A"           (All numbers becomes "A")
+// "&" -> "&"                (Symbol is used as it is)
+// "ほげほげ" -> 0x0000      (Unknown)
+// "𠮟"       -> 0x0000      (Non BMP character is also Unknown)
 uint16 GetNormalizedCharacter(const string &str) {
   const Util::ScriptType type = Util::GetScriptType(str);
   uint16 ucs2 = 0x0000;
@@ -215,10 +216,12 @@ uint16 GetNormalizedCharacter(const string &str) {
         // normalize it to half width
         string tmp;
         Util::HalfWidthToFullWidth(str, &tmp);
-        size_t mblen = 0;
-        ucs2 = Util::UTF8ToUCS2(tmp.c_str(),
-                                tmp.c_str() + tmp.size(),
-                                &mblen);
+        char32 ucs4 = 0;
+        if (Util::SplitFirstChar32(tmp, &ucs4, NULL) && ucs4 <= 0xffff) {
+          ucs2 = static_cast<uint16>(ucs4);
+        } else {
+          ucs2 = 0x0000;   // no conversion as fall back
+        }
       }
       break;
   }
@@ -375,8 +378,8 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
   while (begin < end) {
     // TODO(team): Replace by iterator.
     size_t mblen = 0;
-    const uint16 ucs2 = Util::UTF8ToUCS2(begin, end,  &mblen);
-    const Util::ScriptType type = Util::GetScriptType(ucs2);
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end,  &mblen);
+    const Util::ScriptType type = Util::GetScriptType(ucs4);
     // Cache previous ScriptType to reduce to call GetCharacterForm()
     Config::CharacterForm form = prev_form;
     const string current(begin, mblen);
@@ -428,8 +431,8 @@ void CharacterFormManagerImpl::ConvertStringAlternative(
   string buf;
   while (begin < end) {
     size_t mblen = 0;
-    const uint16 ucs2 = Util::UTF8ToUCS2(begin, end,  &mblen);
-    const Util::ScriptType type = Util::GetScriptType(ucs2);
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end,  &mblen);
+    const Util::ScriptType type = Util::GetScriptType(ucs4);
     // Cache previous ScriptType to reduce to call GetFormType()
     Util::FormType form = prev_form;
     const string current(begin, mblen);
@@ -699,27 +702,27 @@ void CharacterFormManager::SetDefaultRule() {
 }
 
 namespace {
-// Almost the same as UTF8ToUCS2, but skip halfwidth
+// Almost the same as UTF8ToUCS4, but skip halfwidth
 // voice/semi-voice sound mark as they are treated as one character.
-uint16 SkipHalfWidthVoiceSoundMark(const char *begin,
+char32 SkipHalfWidthVoiceSoundMark(const char *begin,
                                    const char *end,
                                    size_t *mblen) {
-  uint16 w = 0;
+  char32 c = 0;
   *mblen = 0;
   while (begin < end) {
     size_t tmp_mblen = 0;
-    w = Util::UTF8ToUCS2(begin, end, &tmp_mblen);
+    c = Util::UTF8ToUCS4(begin, end, &tmp_mblen);
     CHECK_GT(tmp_mblen, 0);
     *mblen += tmp_mblen;
     begin += tmp_mblen;
     // 0xFF9E: Halfwidth voice sound mark
     // 0xFF9F: Halfwidth semi-voice sound mark
-    if (w != 0xFF9E && w != 0xFF9F) {
+    if (c != 0xFF9E && c != 0xFF9F) {
       break;
     }
   }
 
-  return w;
+  return c;
 }
 }   // namespace
 
@@ -744,17 +747,17 @@ bool CharacterFormManager::GetFormTypesFromStringPair(
   while (begin1 < end1 && begin2 < end2) {
     size_t mblen1 = 0;
     size_t mblen2 = 0;
-    const uint16 w1 = SkipHalfWidthVoiceSoundMark(begin1, end1, &mblen1);
-    const uint16 w2 = SkipHalfWidthVoiceSoundMark(begin2, end2, &mblen2);
+    const char32 c1 = SkipHalfWidthVoiceSoundMark(begin1, end1, &mblen1);
+    const char32 c2 = SkipHalfWidthVoiceSoundMark(begin2, end2, &mblen2);
     CHECK_GT(mblen1, 0);
     CHECK_GT(mblen2, 0);
     begin1 += mblen1;
     begin2 += mblen2;
 
-    const Util::ScriptType script1 = Util::GetScriptType(w1);
-    const Util::ScriptType script2 = Util::GetScriptType(w2);
-    const Util::FormType form1 = Util::GetFormType(w1);
-    const Util::FormType form2 = Util::GetFormType(w2);
+    const Util::ScriptType script1 = Util::GetScriptType(c1);
+    const Util::ScriptType script2 = Util::GetScriptType(c2);
+    const Util::FormType form1 = Util::GetFormType(c1);
+    const Util::FormType form2 = Util::GetFormType(c2);
 
     // TODO(taku): have to check that normalized w1 and w2 are identical
     if (script1 != script2) {
@@ -767,7 +770,7 @@ bool CharacterFormManager::GetFormTypesFromStringPair(
     if (form1 == Util::FULL_WIDTH && form2 == Util::HALF_WIDTH) {
       if (*output_form1 == CharacterFormManager::HALF_WIDTH ||
           *output_form2 == CharacterFormManager::FULL_WIDTH) {
-        // inconsitent with the previous forms.
+        // inconsistent with the previous forms.
         return false;
       }
       *output_form1 = CharacterFormManager::FULL_WIDTH;
@@ -775,7 +778,7 @@ bool CharacterFormManager::GetFormTypesFromStringPair(
     } else if (form1 == Util::HALF_WIDTH && form2 == Util::FULL_WIDTH) {
       if (*output_form1 == CharacterFormManager::FULL_WIDTH ||
           *output_form2 == CharacterFormManager::HALF_WIDTH) {
-        // inconsitent with the previous forms.
+        // inconsistent with the previous forms.
         return false;
       }
       *output_form1 = CharacterFormManager::HALF_WIDTH;

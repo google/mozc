@@ -30,8 +30,9 @@
 #ifndef MOZC_GUI_POST_INSTALL_DIALOG_H_
 #define MOZC_GUI_POST_INSTALL_DIALOG_H_
 
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "gui/post_install_dialog/ui_post_install_dialog.h"
-#include "base/base.h"
 
 namespace mozc {
 namespace gui {

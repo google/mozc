@@ -235,5 +235,20 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   }
 }
 
+TEST_F(DictionaryImplTest, LookupComment) {
+  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  DictionaryInterface *d = data->dictionary.get();
+  NodeAllocator allocator;
+
+  string comment;
+  EXPECT_FALSE(d->LookupComment("key", "value", &comment));
+  EXPECT_TRUE(comment.empty());
+
+  // If key or value is "comment", UserDictionaryStub returns
+  // "UserDictionaryStub" as comment.
+  EXPECT_TRUE(d->LookupComment("key", "comment", &comment));
+  EXPECT_EQ("UserDictionaryStub", comment);
+}
+
 }  // namespace dictionary
 }  // namespace mozc

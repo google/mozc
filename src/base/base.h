@@ -34,6 +34,5 @@
 
 #include "base/compiler_specific.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 #endif  // MOZC_BASE_BASE_H_

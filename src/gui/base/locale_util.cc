@@ -61,7 +61,6 @@
 #include <map>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/scoped_cftyperef.h"
 #include "base/singleton.h"

@@ -37,6 +37,10 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.Rewr
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpaceOnAlphanumeric;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpecialRomanjiTable;
 import org.mozc.android.inputmethod.japanese.util.ResourcesWrapper;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 
 import android.annotation.TargetApi;
@@ -58,7 +62,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.ParcelFileDescriptor;
 import android.os.StrictMode;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
@@ -80,6 +86,8 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.zip.ZipFile;
+
+import javax.annotation.Nullable;
 
 /**
  * Utility class
@@ -173,15 +181,33 @@ public final class MozcUtil {
 
   private static final int OUT_OF_MEMORY_RETRY_COUNT = 5;
 
-  private static Boolean isDebug = null;
-  private static Boolean isDevChannel = null;
-  private static Boolean isMozcEnabled = null;
-  private static Boolean isMozcDefaultIme = null;
+  private static Optional<Boolean> isDebug = Optional.<Boolean>absent();
+  private static Optional<Boolean> isDevChannel = Optional.<Boolean>absent();
+  private static Optional<Boolean> isMozcEnabled = Optional.<Boolean>absent();
+  private static Optional<Boolean> isMozcDefaultIme = Optional.<Boolean>absent();
+  private static Optional<Integer> versionCode = Optional.<Integer>absent();
+  private static Optional<Long> uptimeMillis = Optional.<Long>absent();
 
   private static final int SHOW_INPUT_METHOD_PICKER_WHAT = 0;
-  private static final Handler showInputMethodPickerHandler =
-      new Handler(new InputMethodPickerShowingCallback());
+  private static Optional<Handler> showInputMethodPickerHandler = Optional.absent();
 
+  /**
+   * Lazy creation of a handler.
+   *
+   * Creating a handler must be done in threads which has a Looper.
+   * This lazy creation enables worker threads (which don't have a Looper) to access this class.
+   */
+  private static Handler getShowInputMethodPickerHandler() {
+    if (!showInputMethodPickerHandler.isPresent()) {
+      showInputMethodPickerHandler =
+        Optional.of(new Handler(new InputMethodPickerShowingCallback()));
+    }
+    return showInputMethodPickerHandler.get();
+  }
+
+  /**
+   * Note that if the key is {@link EmojiProviderType#NONE}, {@code null} is returned.
+   */
   private static final Map<EmojiProviderType, EmojiCarrierType> EMOJI_PROVIDER_TYPE_MAP;
   static {
     EnumMap<EmojiProviderType, EmojiCarrierType> map =
@@ -196,55 +222,115 @@ public final class MozcUtil {
   private MozcUtil() {
   }
 
-  public static final boolean isDebug(Context context) {
-    if (isDebug != null) {
-      return isDebug;
-    }
-
+  private static final boolean checkApplicationFlag(Context context, int flag) {
+    Preconditions.checkNotNull(context);
     PackageManager manager = context.getPackageManager();
     try {
       ApplicationInfo appInfo =
           manager.getApplicationInfo(context.getPackageName(), 0);
-      return (appInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+      return (appInfo.flags & flag) != 0;
     } catch (NameNotFoundException e) {
       MozcLog.w("PackageManager#getApplicationInfo cannot find this application.");
       return false;
     }
   }
 
+  public static final boolean isDebug(Context context) {
+    Preconditions.checkNotNull(context);
+    if (isDebug.isPresent()) {
+      return isDebug.get();
+    }
+    return checkApplicationFlag(context, ApplicationInfo.FLAG_DEBUGGABLE);
+  }
+
   /**
    * For testing purpose.
-   * @param isDebug null if default behavior is preferable
+   *
+   * @param isDebug Optional.absent() if default behavior is preferable
    */
-  public static final void setDebug(Boolean isDebug) {
-    MozcUtil.isDebug = isDebug;
+  public static final void setDebug(Optional<Boolean> isDebug) {
+    MozcUtil.isDebug = Preconditions.checkNotNull(isDebug);
   }
 
   public static final boolean isDevChannel(Context context) {
-    if (isDevChannel != null) {
-      return isDevChannel;
+    Preconditions.checkNotNull(context);
+    if (isDevChannel.isPresent()) {
+      return isDevChannel.get();
     }
-
-    try {
-      return isDevChannelVersionName(getVersionName(context));
-    } catch (NameNotFoundException e) {
-      MozcLog.w("PackageManager#getApplicationInfo cannot find this application.");
-      return false;
-    }
+    return isDevChannelVersionName(getVersionName(context));
   }
 
-  public static String getVersionName(Context context) throws NameNotFoundException {
+
+  /**
+   * Gets version name.
+   *
+   * @return version name string or empty. Non-null is guaranteed.
+   */
+  public static String getVersionName(Context context) {
+    Preconditions.checkNotNull(context);
+
     PackageManager manager = context.getPackageManager();
-    PackageInfo packageInfo = manager.getPackageInfo(context.getPackageName(), 0);
-    return packageInfo.versionName;
+    try {
+      PackageInfo packageInfo = manager.getPackageInfo(context.getPackageName(), 0);
+      return Strings.nullToEmpty(packageInfo.versionName);
+    } catch (NameNotFoundException e) {
+      MozcLog.e("Package info error", e);
+    }
+    return "";
   }
 
   /**
    * For testing purpose.
-   * @param isDevChannel null if default behavior is preferable
    */
-  public static final void setDevChannel(Boolean isDevChannel) {
-    MozcUtil.isDevChannel = isDevChannel;
+  public static void setVersionCode(Optional<Integer> versionCode) {
+    MozcUtil.versionCode = Preconditions.checkNotNull(versionCode);
+  }
+
+  /**
+   * Gets raw (ABI dependent) version code.
+   *
+   * @return version code. Note that this version code contains ABI specific mask.
+   */
+  public static int getVersionCode(Context context) {
+    Preconditions.checkNotNull(context);
+
+    if (MozcUtil.versionCode.isPresent()) {
+      return MozcUtil.versionCode.get();
+    }
+
+    PackageManager manager = context.getPackageManager();
+    try {
+      PackageInfo packageInfo = manager.getPackageInfo(context.getPackageName(), 0);
+      return packageInfo.versionCode;
+    } catch (NameNotFoundException e) {
+      MozcLog.e("Package info error", e);
+    }
+    return 0;
+  }
+
+  /**
+   * Gets ABI independent version code.
+   *
+   * ABI independent version code is equivalent to "Build number" of Mozc project.
+   *
+   * <p>Must be consistent with split_abi.py
+   */
+  public static int getAbiIndependentVersionCode(Context context) {
+    // Version code format:
+    // 000ABBBBBB
+    // A: ABI (0: Fat, 5: x86, 4: armeabi-v7a, 3: armeabi, 1:mips)
+    // B: Build number
+    String versionCode = Integer.toString(getVersionCode(context));
+    return Integer.valueOf(versionCode.substring(Math.max(0, versionCode.length() - 6)));
+  }
+
+  /**
+   * For testing purpose.
+   *
+   * @param isDevChannel Optional.absent() if default behavior is preferable
+   */
+  public static final void setDevChannel(Optional<Boolean> isDevChannel) {
+    MozcUtil.isDevChannel = Preconditions.checkNotNull(isDevChannel);
   }
 
   /**
@@ -254,10 +340,8 @@ public final class MozcUtil {
    * If the characters is greater than or equal to (int)100,
    * this method returns true.
    */
-  private static boolean isDevChannelVersionName(String versionName) {
-    if (versionName == null) {
-      return false;
-    }
+  @VisibleForTesting static boolean isDevChannelVersionName(String versionName) {
+    Preconditions.checkNotNull(versionName);
     int lastDot = versionName.lastIndexOf('.');
     if (lastDot < 0 || versionName.length() == lastDot + 1) {
       return false;
@@ -274,12 +358,12 @@ public final class MozcUtil {
    * @return {@code true} if Mozc is enabled. Otherwise {@code false}.
    */
   public static boolean isMozcEnabled(Context context) {
-    if (isMozcEnabled != null) {
-      return isMozcEnabled;
+    Preconditions.checkNotNull(context);
+    if (isMozcEnabled.isPresent()) {
+      return isMozcEnabled.get();
     }
 
-    InputMethodManager inputMethodManager =
-        InputMethodManager.class.cast(context.getSystemService(Context.INPUT_METHOD_SERVICE));
+    InputMethodManager inputMethodManager = getInputMethodManager(context);
     if (inputMethodManager == null) {
       MozcLog.w("InputMethodManager is not found.");
       return false;
@@ -296,9 +380,11 @@ public final class MozcUtil {
   /**
    * Just injects the result of isMozcEnabled for testing purpose,
    * doesn't actually enable Mozc.
+   *
+   * @param isMozcEnabled Optional.absent() for default behavior
    */
-  public static void setMozcEnabled(Boolean isMozcEnabled) {
-    MozcUtil.isMozcEnabled = isMozcEnabled;
+  public static void setMozcEnabled(Optional<Boolean> isMozcEnabled) {
+    MozcUtil.isMozcEnabled = Preconditions.checkNotNull(isMozcEnabled);
   }
 
   /**
@@ -306,8 +392,9 @@ public final class MozcUtil {
    * @return {@code true} if the default IME is Mozc. Otherwise {@code false}.
    */
   public static boolean isMozcDefaultIme(Context context) {
-    if (isMozcDefaultIme != null) {
-      return isMozcDefaultIme;
+    Preconditions.checkNotNull(context);
+    if (isMozcDefaultIme.isPresent()) {
+      return isMozcDefaultIme.get();
     }
 
     InputMethodInfo mozcInputMethodInfo = getMozcInputMethodInfo(context);
@@ -324,14 +411,16 @@ public final class MozcUtil {
   /**
    * Just injects the result of isMozcDefaultIme for testing purpose,
    * doesn't actually set mozc as the default ime.
+   *
+   * @param isMozcDefaultIme Optional.absent() for default behavior
    */
-  public static void setMozcDefaultIme(Boolean isMozcDefaultIme) {
-    MozcUtil.isMozcDefaultIme = isMozcDefaultIme;
+  public static void setMozcDefaultIme(Optional<Boolean> isMozcDefaultIme) {
+    MozcUtil.isMozcDefaultIme = Preconditions.checkNotNull(isMozcDefaultIme);
   }
 
   private static InputMethodInfo getMozcInputMethodInfo(Context context) {
-    InputMethodManager inputMethodManager =
-        InputMethodManager.class.cast(context.getSystemService(Context.INPUT_METHOD_SERVICE));
+    Preconditions.checkNotNull(context);
+    InputMethodManager inputMethodManager = getInputMethodManager(context);
     if (inputMethodManager == null) {
       MozcLog.w("InputMethodManager is not found.");
       return null;
@@ -347,16 +436,39 @@ public final class MozcUtil {
     return null;
   }
 
+
+  public static long getUptimeMillis() {
+    if (uptimeMillis.isPresent()) {
+      return uptimeMillis.get();
+    }
+    return SystemClock.uptimeMillis();
+  }
+
+  /**
+   * For testing purpose.
+   *
+   * @param uptimeMillis Optional.absent() if default behavior is preferable
+   */
+  public static void setUptimeMillis(Optional<Long> uptimeMillis) {
+    MozcUtil.uptimeMillis = Preconditions.checkNotNull(uptimeMillis);
+  }
+
   public static boolean requestShowInputMethodPicker(Context context) {
+    Preconditions.checkNotNull(context);
+    Handler showInputMethodPickerHandler = getShowInputMethodPickerHandler();
     return showInputMethodPickerHandler.sendMessage(
         showInputMethodPickerHandler.obtainMessage(SHOW_INPUT_METHOD_PICKER_WHAT, context));
   }
 
   public static void cancelShowInputMethodPicker(Context context) {
+    Preconditions.checkNotNull(context);
+    Handler showInputMethodPickerHandler = getShowInputMethodPickerHandler();
     showInputMethodPickerHandler.removeMessages(SHOW_INPUT_METHOD_PICKER_WHAT, context);
   }
 
   public static boolean hasShowInputMethodPickerRequest(Context context) {
+    Preconditions.checkNotNull(context);
+    Handler showInputMethodPickerHandler = getShowInputMethodPickerHandler();
     return showInputMethodPickerHandler.hasMessages(SHOW_INPUT_METHOD_PICKER_WHAT, context);
   }
 
@@ -364,11 +476,13 @@ public final class MozcUtil {
    * Returns the {@code TelephonyManagerInterface} corresponding to the given {@code context}.
    */
   public static TelephonyManagerInterface getTelephonyManager(Context context) {
+    Preconditions.checkNotNull(context);
     return new TelephonyManagerImpl(
         TelephonyManager.class.cast(context.getSystemService(Context.TELEPHONY_SERVICE)));
   }
 
   public static Context getContextWithOutOfMemoryRetrial(Context context) {
+    Preconditions.checkNotNull(context);
     return new ContextWrapper(context) {
       final Resources resources =
           new OutOfMemoryRetryingResources(super.getResources(), OUT_OF_MEMORY_RETRY_COUNT);
@@ -382,7 +496,9 @@ public final class MozcUtil {
 
   public static <T extends View> T inflateWithOutOfMemoryRetrial(
       Class<T> clazz, LayoutInflater inflater,
-      int resourceId, ViewGroup root, boolean attachToRoot) {
+      int resourceId, @Nullable ViewGroup root, boolean attachToRoot) {
+    Preconditions.checkNotNull(clazz);
+    Preconditions.checkNotNull(inflater);
     for (int i = 0; i < OUT_OF_MEMORY_RETRY_COUNT; ++i) {
       try {
         return clazz.cast(inflater.inflate(resourceId, root, attachToRoot));
@@ -396,6 +512,7 @@ public final class MozcUtil {
   }
 
   public static Bitmap createBitmap(int width, int height, Config config) {
+    Preconditions.checkNotNull(config);
     for (int i = 0; i < OUT_OF_MEMORY_RETRY_COUNT; ++i) {
       try {
         return Bitmap.createBitmap(width, height, config);
@@ -409,6 +526,7 @@ public final class MozcUtil {
   }
 
   public static Bitmap createBitmap(Bitmap src) {
+    Preconditions.checkNotNull(src);
     for (int i = 0; i < OUT_OF_MEMORY_RETRY_COUNT; ++i) {
       try {
         return Bitmap.createBitmap(src);
@@ -426,10 +544,8 @@ public final class MozcUtil {
    * the IME service correctly to the {@code dialog}.
    */
   public static void setWindowToken(IBinder token, Dialog dialog) {
-    if (token == null) {
-      MozcLog.w("Unknown window token.");
-      return;
-    }
+    Preconditions.checkNotNull(token);
+    Preconditions.checkNotNull(dialog);
 
     Window window = dialog.getWindow();
     WindowManager.LayoutParams layoutParams = window.getAttributes();
@@ -441,11 +557,15 @@ public final class MozcUtil {
 
   public static Request getRequestForKeyboard(
       KeyboardSpecificationName specName,
-      SpecialRomanjiTable romanjiTable,
-      SpaceOnAlphanumeric spaceOnAlphanumeric,
-      Boolean isKanaModifierInsensitiveConversion,
-      CrossingEdgeBehavior crossingEdgeBehavior,
+      @Nullable SpecialRomanjiTable romanjiTable,
+      @Nullable SpaceOnAlphanumeric spaceOnAlphanumeric,
+      @Nullable Boolean isKanaModifierInsensitiveConversion,
+      @Nullable CrossingEdgeBehavior crossingEdgeBehavior,
       Configuration configuration) {
+    // TODO(matsuzakit): Migrate Nullables to Optional.
+    //                   Currently @Nullable is used to keep current interface.
+    Preconditions.checkNotNull(specName);
+    Preconditions.checkNotNull(configuration);
     Request.Builder builder = Request.newBuilder();
     builder.setKeyboardName(specName.formattedKeyboardName(configuration));
     if (romanjiTable != null) {
@@ -465,18 +585,21 @@ public final class MozcUtil {
   }
 
   public static boolean isEmojiAllowed(EditorInfo editorInfo) {
+    Preconditions.checkNotNull(editorInfo);
     Bundle bundle = editorInfo.extras;
     return (bundle != null) && bundle.getBoolean("allowEmoji");
   }
 
-  public static Request createEmojiRequest(
-      int sdkInt, EmojiProviderType emojiProviderType) {
+  public static Request createEmojiRequest(int sdkInt, EmojiProviderType emojiProviderType) {
+    Preconditions.checkNotNull(emojiProviderType);
+
     int availableEmojiCarrier = 0;
     if (sdkInt >= 16) {
       // Unicode emoji is available when SDK version is equal to or higher than Jelly bean.
       availableEmojiCarrier |= EmojiCarrierType.UNICODE_EMOJI.getNumber();
     }
 
+    // NOTE: If emojiCarrierType is NONE, availableEmojiCarrier is not updated here.
     EmojiCarrierType emojiCarrierType =
         EMOJI_PROVIDER_TYPE_MAP.get(emojiProviderType);
     if (emojiCarrierType != null) {
@@ -490,6 +613,7 @@ public final class MozcUtil {
   }
 
   public static String utf8CStyleByteStringToString(ByteString value) {
+    Preconditions.checkNotNull(value);
     // Find '\0' terminator. (if value doesn't contain '\0', the size should be as same as
     // value's.)
     int index = 0;
@@ -531,6 +655,7 @@ public final class MozcUtil {
    * @throws IOException
    */
   public static void close(Closeable closeable, boolean ignoreException) throws IOException {
+    Preconditions.checkNotNull(closeable);
     try {
       closeable.close();
     } catch (IOException e) {
@@ -545,6 +670,7 @@ public final class MozcUtil {
    * See {@link MozcUtil#close(Closeable,boolean)} for details.
    */
   public static void close(Socket socket, boolean ignoreIOException) throws IOException {
+    Preconditions.checkNotNull(socket);
     try {
       socket.close();
     } catch (IOException e) {
@@ -559,8 +685,27 @@ public final class MozcUtil {
    * See {@link MozcUtil#close(Closeable,boolean)} for details.
    */
   public static void close(ServerSocket socket, boolean ignoreIOException) throws IOException {
+    Preconditions.checkNotNull(socket);
     try {
       socket.close();
+    } catch (IOException e) {
+      if (!ignoreIOException) {
+        throw e;
+      }
+    }
+  }
+
+  /**
+   * Simple utility to close {@link ParcelFileDescriptor} instance.
+   * See {@link MozcUtil#close(Closeable,boolean)} for details.
+   *
+   * On later OS ParcelFileDescriptor implements {@link Closeable} but on earlier OS it doesn't.
+   */
+  public static void close(ParcelFileDescriptor descriptor, boolean ignoreIOException)
+      throws IOException {
+    Preconditions.checkNotNull(descriptor);
+    try {
+      descriptor.close();
     } catch (IOException e) {
       if (!ignoreIOException) {
         throw e;
@@ -592,6 +737,11 @@ public final class MozcUtil {
     } catch (IOException e) {
       MozcLog.e("Failed to close.", e);
     }
+  }
+
+  public static InputMethodManager getInputMethodManager(Context context) {
+    Preconditions.checkNotNull(context);
+    return InputMethodManager.class.cast(context.getSystemService(Context.INPUT_METHOD_SERVICE));
   }
 
   /**
@@ -648,5 +798,19 @@ public final class MozcUtil {
     } catch (InvocationTargetException e) {
       MozcLog.e(e.getMessage(), e);
     }
+  }
+
+  /**
+   * If value &gt;= max returns max. If value &lt;= min returns min. Otherwise returns value.
+   */
+  public static int clamp(int value, int min, int max) {
+    return Math.max(Math.min(value, max), min);
+  }
+
+  /**
+   * If value &gt;= max returns max. If value &lt;= min returns min. Otherwise returns value.
+   */
+  public static float clamp(float value, float min, float max) {
+    return Math.max(Math.min(value, max), min);
   }
 }

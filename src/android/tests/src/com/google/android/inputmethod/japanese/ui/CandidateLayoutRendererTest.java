@@ -120,7 +120,7 @@ public class CandidateLayoutRendererTest extends InstrumentationTestCaseWithMock
 
     verifyAll();
     // The focused index should also be updated.
-    assertEquals(6, VisibilityProxy.getField(renderer, "focusedIndex"));
+    assertEquals(6, renderer.focusedIndex);
 
     resetAll();
     emojiRenderHelper.setCandidateList(isNull(CandidateList.class));
@@ -129,7 +129,7 @@ public class CandidateLayoutRendererTest extends InstrumentationTestCaseWithMock
     renderer.setCandidateList(null);
 
     verifyAll();
-    assertEquals(-1, VisibilityProxy.getField(renderer, "focusedIndex"));
+    assertEquals(-1, renderer.focusedIndex);
 
     resetAll();
     // Set the candidateList again.
@@ -139,7 +139,7 @@ public class CandidateLayoutRendererTest extends InstrumentationTestCaseWithMock
     renderer.setCandidateList(candidateList);
 
     verifyAll();
-    assertEquals(6, VisibilityProxy.getField(renderer, "focusedIndex"));
+    assertEquals(6, renderer.focusedIndex);
 
     // Then render the layout to the canvas.
     resetAll();

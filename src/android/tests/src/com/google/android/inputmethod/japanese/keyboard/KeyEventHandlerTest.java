@@ -35,7 +35,6 @@ import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -78,7 +77,7 @@ public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
 
     KeyEventHandler keyEventHandler =
         new KeyEventHandler(Looper.myLooper(), keyboardActionListener, 0, 0, 0);
-    Handler handler = VisibilityProxy.getField(keyEventHandler, "handler");
+    Handler handler = keyEventHandler.handler;
     Message message =
         handler.obtainMessage(KeyEventHandler.REPEAT_KEY, 'a', 0, keyEventContext);
     try {
@@ -108,7 +107,7 @@ public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
 
     KeyEventHandler keyEventHandler =
         new KeyEventHandler(Looper.myLooper(), keyboardActionListener, 0, 0, 0);
-    Handler handler = VisibilityProxy.getField(keyEventHandler, "handler");
+    Handler handler = keyEventHandler.handler;
     Message message = handler.obtainMessage(
         KeyEventHandler.LONG_PRESS_KEY, 'A', 0, keyEventContext);
     keyEventHandler.handleMessage(message);
@@ -129,7 +128,7 @@ public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
         new KeyEventHandler(Looper.myLooper(), keyboardActionListener, 0, 0, 0);
     keyEventHandler.maybeStartDelayedKeyEvent(keyEventContext);
 
-    Handler handler = VisibilityProxy.getField(keyEventHandler, "handler");
+    Handler handler = keyEventHandler.handler;
     assertTrue(handler.hasMessages(KeyEventHandler.REPEAT_KEY, keyEventContext));
     handler.removeMessages(KeyEventHandler.REPEAT_KEY);
   }
@@ -145,7 +144,7 @@ public class KeyEventHandlerTest extends InstrumentationTestCaseWithMock {
         new KeyEventHandler(Looper.myLooper(), keyboardActionListener, 0, 0, 0);
     keyEventHandler.maybeStartDelayedKeyEvent(keyEventContext);
 
-    Handler handler = VisibilityProxy.getField(keyEventHandler, "handler");
+    Handler handler = keyEventHandler.handler;
     assertTrue(handler.hasMessages(KeyEventHandler.LONG_PRESS_KEY, keyEventContext));
     handler.removeMessages(KeyEventHandler.LONG_PRESS_KEY);
   }

@@ -28,10 +28,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 vars = {
-  "breakpad_revision": "1126",
+  "breakpad_revision": "1191",
   "clang_helper_in_chromium_revision": "171017",
   "cygwin_in_chromium_revision": "66844",
-  "gtest_revision": "644",
+  "gtest_revision": "645",
   "gmock_revision": "425",
   "gyp_revision": "1589",
   "jsoncpp_revision": "249",
@@ -41,6 +41,7 @@ vars = {
   "wtl_revision": "459",
   "zinnia_revision": "16",
   "openssl_revision": "164645",
+  "jsr305_version": "2.0.2",
   "zlib_revision": "173801",
 }
 
@@ -56,6 +57,12 @@ deps = {
     "http://gyp.googlecode.com/svn/trunk@" + Var("gyp_revision"),
   "src/protobuf/files":
     "http://protobuf.googlecode.com/svn/trunk@" + Var("protobuf_revision"),
+  "src/third_party/findbug":
+    # We need only a jar file so avoiding to sync entire tree.
+    # Findbug project keeps release-jar files in their repository.
+    File("http://findbugs.googlecode.com/"
+         + "svn/repos/release-repository/com/google/code/findbugs/jsr305/"
+         + Var("jsr305_version") + "/jsr305-" + Var("jsr305_version") + ".jar"),
 }
 
 deps_os = {

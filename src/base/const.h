@@ -153,11 +153,6 @@ const char kMozcServerName[] = "mozc_server";  // Japanese
 const char kMozcRenderer[] = "mozc_renderer";
 const char kEventPathPrefix[] = "mozc.event.";
 const char kMozcTool[] = "mozc_tool";
-#ifdef MOZC_SERVER_DIRECTORY
-const char kMozcServerDirectory[] = MOZC_SERVER_DIRECTORY;
-#else
-const char kMozcServerDirectory[] = "/usr/lib/mozc";
-#endif  // MOZC_SERVER_DIRECTORY
 #ifdef OS_ANDROID
 #ifndef MOZC_ANDROID_APPLICATION_ID
 #error "MOZC_ANDROID_APPLICATION_ID must be set (e.g. \"org.mozc.android\""

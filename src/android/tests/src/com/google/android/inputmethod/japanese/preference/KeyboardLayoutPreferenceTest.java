@@ -108,7 +108,9 @@ public class KeyboardLayoutPreferenceTest extends InstrumentationTestCase {
         android.widget.Gallery.class.cast(widgetView.findViewById(R.id.pref_inputstyle_gallery));
     for (int i = 0; i < KeyboardLayoutPreference.itemList.size(); ++i) {
       KeyboardLayoutPreference.Item item = KeyboardLayoutPreference.itemList.get(i);
-      gallery.setSelection(i, false);
+      // Don't use Gallery#setSelection, which calls back onItemSelected asynchronously using
+      // ViewRoot local queue since Android 4.1.1.
+      gallery.getOnItemSelectedListener().onItemSelected(gallery, null, i, 0);
       TextView descriptionView =
           (TextView) widgetView.findViewById(R.id.pref_inputstyle_description);
       String expectedDescription =

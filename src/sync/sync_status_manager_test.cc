@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "storage/registry.h"

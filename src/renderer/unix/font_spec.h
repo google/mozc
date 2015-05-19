@@ -32,7 +32,8 @@
 
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "renderer/unix/font_spec_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 

@@ -52,11 +52,11 @@ namespace {
 
 const Segments::RequestType kRequestTypes[] = {
   Segments::CONVERSION,
-  Segments::REVERSE_CONVERSION,
   Segments::PREDICTION,
   Segments::SUGGESTION,
   Segments::PARTIAL_PREDICTION,
   Segments::PARTIAL_SUGGESTION,
+  // Type Segments::REVERSE_CONVERSION is tested separately.
 };
 
 }  // namespace
@@ -844,6 +844,55 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     // Test case where "これはフィルター" is predicted from the same key.
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate(c->key, c, nodes, Segments::PREDICTION));
+  }
+}
+
+TEST_F(CandidateFilterTest, ReverseConversion) {
+  scoped_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  vector<const Node *> nodes;
+  GetDefaultNodes(&nodes);
+
+  const char kHonKanji[] = "\xE6\x9C\xAC";  // "本"
+  const char kHonHiragana[] = "\xE3\x81\xBB\xE3\x82\x93";  // "ほん"
+
+  Node *n1 = NewNode();
+  n1->key = kHonKanji;
+  n1->value = kHonHiragana;
+  nodes.push_back(n1);
+
+  Node *n2 = NewNode();
+  n2->key = " ";
+  n2->value = " ";
+  nodes.push_back(n2);
+
+  {
+    Segment::Candidate *c = NewCandidate();
+    c->key.assign(n1->key);
+    c->value.assign(n1->value);
+    c->content_key = c->key;
+    c->content_value = c->value;
+    c->cost = 1000;
+    c->structure_cost = 2000;
+    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+              filter->FilterCandidate(kHonHiragana, c, nodes,
+                                      Segments::REVERSE_CONVERSION));
+    // Duplicates should be removed.
+    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+              filter->FilterCandidate(kHonHiragana, c, nodes,
+                                      Segments::REVERSE_CONVERSION));
+  }
+  {
+    // White space should be valid candidate.
+    Segment::Candidate *c = NewCandidate();
+    c->key.assign(n2->key);
+    c->value.assign(n2->value);
+    c->content_key = c->key;
+    c->content_value = c->value;
+    c->cost = 1000;
+    c->structure_cost = 2000;
+    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+              filter->FilterCandidate(" ", c, nodes,
+                                      Segments::REVERSE_CONVERSION));
   }
 }
 

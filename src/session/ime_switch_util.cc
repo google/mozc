@@ -34,9 +34,10 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config.pb.h"

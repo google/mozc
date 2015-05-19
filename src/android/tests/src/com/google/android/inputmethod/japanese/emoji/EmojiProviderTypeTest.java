@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.emoji;
 import static org.easymock.EasyMock.expect;
 
 import org.mozc.android.inputmethod.japanese.MozcUtil.TelephonyManagerInterface;
+import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.MozcPreferenceUtil;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
@@ -44,10 +45,22 @@ import android.test.suitebuilder.annotation.SmallTest;
  */
 public class EmojiProviderTypeTest extends InstrumentationTestCaseWithMock {
 
+  /**
+   * @return mock manager
+   */
+  private TelephonyManagerInterface getTelephonyManagerInterface() {
+    return new TelephonyManagerInterface() {
+      @Override
+      public String getNetworkOperator() {
+        return "INVALID NETWORK OPERATOR";
+      }
+    };
+  }
+
   @SmallTest
   public void testMaybeDetectEmojiProviderType_null() {
     // Just make sure that passing null-SharedPreferences does nothing.
-    EmojiProviderType.maybeSetDetectedEmojiProviderType(null, null);
+    EmojiProviderType.maybeSetDetectedEmojiProviderType(null, getTelephonyManagerInterface());
   }
 
   @SmallTest
@@ -58,15 +71,16 @@ public class EmojiProviderTypeTest extends InstrumentationTestCaseWithMock {
 
     for (EmojiProviderType providerType : EmojiProviderType.values()) {
       MozcPreferenceUtil.updateSharedPreference(
-          sharedPreferences, EmojiProviderType.EMOJI_PROVIDER_TYPE_PREFERENCE_KEY,
+          sharedPreferences, PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE,
           providerType.name());
 
-      EmojiProviderType.maybeSetDetectedEmojiProviderType(sharedPreferences, null);
+      EmojiProviderType.maybeSetDetectedEmojiProviderType(sharedPreferences,
+                                                          getTelephonyManagerInterface());
 
       // Make sure nothing has been changed.
       assertEquals(
           providerType.name(),
-          sharedPreferences.getString(EmojiProviderType.EMOJI_PROVIDER_TYPE_PREFERENCE_KEY, null));
+          sharedPreferences.getString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, null));
     }
   }
 
@@ -76,7 +90,7 @@ public class EmojiProviderTypeTest extends InstrumentationTestCaseWithMock {
     SharedPreferences sharedPreferences = MozcPreferenceUtil.getSharedPreferences(
         context, "DETECT_EMOJI_PROVIDER");
     MozcPreferenceUtil.updateSharedPreference(
-        sharedPreferences, EmojiProviderType.EMOJI_PROVIDER_TYPE_PREFERENCE_KEY,
+        sharedPreferences, PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE,
         "INVALID PROVIDER NAME");
     TelephonyManagerInterface telephonyManager = createNiceMock(TelephonyManagerInterface.class);
     // DOCOMO NMP
@@ -88,7 +102,7 @@ public class EmojiProviderTypeTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     assertEquals(
         "DOCOMO",
-        sharedPreferences.getString(EmojiProviderType.EMOJI_PROVIDER_TYPE_PREFERENCE_KEY, null));
+        sharedPreferences.getString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, null));
   }
 
   @SmallTest
@@ -112,6 +126,7 @@ public class EmojiProviderTypeTest extends InstrumentationTestCaseWithMock {
         new TestData("44010", "DOCOMO"),
         new TestData("44020", "SOFTBANK"),
         new TestData("44070", "KDDI"),
+        new TestData("INVALID NETWORK OPERATOR", "NONE"),
     };
     for (TestData testData : testDataList) {
       sharedPreferences.edit().clear().commit();
@@ -125,24 +140,7 @@ public class EmojiProviderTypeTest extends InstrumentationTestCaseWithMock {
       assertEquals(
           testData.toString(),
           testData.expectedEmojiProvider,
-          sharedPreferences.getString(EmojiProviderType.EMOJI_PROVIDER_TYPE_PREFERENCE_KEY, null));
+          sharedPreferences.getString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, null));
     }
-  }
-
-  @SmallTest
-  public void testMaybeDetectEmojiProviderType_unexpectedMobileNetworkCode() {
-    Context context = getInstrumentation().getContext();
-    SharedPreferences sharedPreferences = MozcPreferenceUtil.getSharedPreferences(
-        context, "DETECT_EMOJI_PROVIDER");
-    sharedPreferences.edit().clear().commit();
-    TelephonyManagerInterface telephonyManager = createNiceMock(TelephonyManagerInterface.class);
-    expect(telephonyManager.getNetworkOperator()).andStubReturn("INVALID NETWORK OPERATOR");
-    replayAll();
-
-    EmojiProviderType.maybeSetDetectedEmojiProviderType(sharedPreferences, telephonyManager);
-
-    verifyAll();
-    assertNull(
-        sharedPreferences.getString(EmojiProviderType.EMOJI_PROVIDER_TYPE_PREFERENCE_KEY, null));
   }
 }

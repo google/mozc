@@ -30,7 +30,6 @@
 #include "gui/config_dialog/auth_dialog.h"
 
 #include <string>
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/util.h"

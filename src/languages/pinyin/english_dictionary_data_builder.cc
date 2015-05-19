@@ -52,8 +52,7 @@ const float kIndexOffset = 10.0;
 const float kLearningMultiplier = 0.02;
 }  // namespace
 
-EnglishDictionaryDataBuilder::EnglishDictionaryDataBuilder()
-    : builder_(NULL), louds_id_to_priority_(NULL), words_num_(0) {
+EnglishDictionaryDataBuilder::EnglishDictionaryDataBuilder() : words_num_(0) {
 }
 
 EnglishDictionaryDataBuilder::~EnglishDictionaryDataBuilder() {

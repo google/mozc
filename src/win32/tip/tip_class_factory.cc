@@ -88,7 +88,7 @@ HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(
   }
 
   // Create an TipTextService object and initialize it.
-  CComPtr<TipTextService> text_service(TipTextService::Create());
+  CComPtr<TipTextService> text_service(TipTextServiceFactory::Create());
 
   // Retrieve the requested interface from the TipTextService object.
   // If this TipTextService object implements the given interface, the

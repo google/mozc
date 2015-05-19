@@ -36,6 +36,8 @@
 
 document.addEventListener('readystatechange', function() {
   if (document.readyState == 'complete') {
-    chrome.extension.getBackgroundPage()['newOptionPage'](this);
+    var optionPage = /** @type {!mozc.OptionPage} */
+        chrome.extension.getBackgroundPage()['newOptionPage'](this, console);
+    window.addEventListener('beforeunload', optionPage.unload.bind(optionPage));
   }
 }, true);

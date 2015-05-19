@@ -29,13 +29,13 @@
 
 package org.mozc.android.inputmethod.japanese;
 
-import org.mozc.android.inputmethod.japanese.CandidateWordView.CandidateSelectListener;
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
+import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.resources.R;
@@ -49,6 +49,8 @@ import org.mozc.android.inputmethod.japanese.view.RoundRectKeyDrawable;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import org.mozc.android.inputmethod.japanese.view.SymbolMajorCategoryButtonDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.TabSelectedBackgroundDrawable;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -63,6 +65,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -103,7 +106,7 @@ import java.util.List;
  * Major-Minor relation is defined by using R.layout.symbol_minor_category_*.
  *
  */
-public class SymbolInputView extends InOutAnimatedFrameLayout {
+public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryManageable {
 
   /**
    * The major category to which the minor categories belong.
@@ -270,34 +273,28 @@ public class SymbolInputView extends InOutAnimatedFrameLayout {
         viewEventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
       }
 
-      if (emojiEnabled && emojiProviderType == null) {
-        // Detect the emoji provider. This invocation (indirectly) updates emojiProviderType,
-        // if succeeds. We'll use the detected emoji provider.
-        maybeDetectEmojiProviderType();
-        if (majorCategory == MajorCategory.EMOJI && emojiProviderType == null) {
-          // Here, the detection is failed unfortunately, so ask the user which emoji provider
-          // s/he'd like to use. If the user cancels the dialog, do nothing.
-          maybeInitializeEmojiProviderDialog(getContext());
-          if (emojiProviderDialog != null) {
-            MozcUtil.setWindowToken(getWindowToken(), emojiProviderDialog);
-
-            // If a user selects a provider, the dialog handler will set major category
-            // to EMOJI automatically. If s/he cancels, nothing will be happened.
-            emojiProviderDialog.show();
+      if (emojiEnabled
+          && majorCategory == MajorCategory.EMOJI
+          && emojiProviderType == EmojiProviderType.NONE) {
+        // Ask the user which emoji provider s/he'd like to use.
+        // If the user cancels the dialog, do nothing.
+        maybeInitializeEmojiProviderDialog(getContext());
+        if (emojiProviderDialog != null) {
+          IBinder token = getWindowToken();
+          if (token != null) {
+            MozcUtil.setWindowToken(token, emojiProviderDialog);
+          } else {
+            MozcLog.w("Unknown window token.");
           }
-          return;
+
+          // If a user selects a provider, the dialog handler will set major category
+          // to EMOJI automatically. If s/he cancels, nothing will be happened.
+          emojiProviderDialog.show();
         }
+        return;
       }
 
       setMajorCategory(majorCategory);
-    }
-
-    /**
-     * Simple wrapper of maybeDetectEmojiProviderType to inject some behavior for testing purpose.
-     */
-    void maybeDetectEmojiProviderType() {
-      EmojiProviderType.maybeSetDetectedEmojiProviderType(
-          sharedPreferences, MozcUtil.getTelephonyManager(getContext()));
     }
   }
 
@@ -326,6 +323,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout {
         MajorCategory majorCategory,
         SkinType skinType, EmojiProviderType emojiProviderType,
         TabHost tabHost, ViewPager viewPager) {
+      Preconditions.checkNotNull(emojiProviderType);
+
       this.context = context;
       this.symbolCandidateStorage = symbolCandidateStorage;
       this.viewEventListener = viewEventListener;
@@ -526,7 +525,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout {
           context.getResources().obtainTypedArray(R.array.pref_emoji_provider_type_values);
       String value = typedArray.getString(which);
       sharedPreferences.edit()
-          .putString(EmojiProviderType.EMOJI_PROVIDER_TYPE_PREFERENCE_KEY, value)
+          .putString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, value)
           .commit();
       setMajorCategory(MajorCategory.EMOJI);
     }
@@ -675,12 +674,12 @@ public class SymbolInputView extends InOutAnimatedFrameLayout {
 
   private SymbolCandidateStorage symbolCandidateStorage;
 
-  private MajorCategory currentMajorCategory;
-  private boolean emojiEnabled;
-  private EmojiProviderType emojiProviderType;
+  @VisibleForTesting MajorCategory currentMajorCategory;
+  @VisibleForTesting boolean emojiEnabled;
+  @VisibleForTesting EmojiProviderType emojiProviderType = EmojiProviderType.NONE;
 
-  private SharedPreferences sharedPreferences;
-  private AlertDialog emojiProviderDialog;
+  @VisibleForTesting SharedPreferences sharedPreferences;
+  @VisibleForTesting AlertDialog emojiProviderDialog;
 
   private ViewEventListener viewEventListener;
   private final KeyEventButtonTouchListener deleteKeyEventButtonTouchListener =
@@ -1071,6 +1070,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout {
   }
 
   void setEmojiProviderType(EmojiProviderType emojiProviderType) {
+    Preconditions.checkNotNull(emojiProviderType);
+
     this.emojiProviderType = emojiProviderType;
     this.symbolCandidateStorage.setEmojiProviderType(emojiProviderType);
     if (!isInflated()) {
@@ -1103,5 +1104,19 @@ public class SymbolInputView extends InOutAnimatedFrameLayout {
     resetTabBackground();
     resetCandidateViewPager();
     resetMajorCategoryBackground();
+  }
+
+  @Override
+  public void trimMemory() {
+    ViewGroup viewGroup = getCandidateViewPager();
+    if (viewGroup == null) {
+      return;
+    }
+    for (int i = 0; i < viewGroup.getChildCount(); ++i) {
+      View view = viewGroup.getChildAt(i);
+      if (view instanceof MemoryManageable) {
+        MemoryManageable.class.cast(view).trimMemory();
+      }
+    }
   }
 }

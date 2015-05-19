@@ -50,6 +50,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionComma
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 
 import android.content.Context;
@@ -81,7 +82,7 @@ public class SessionExecutor {
   // In order to keep the call order correctly, we call it from the single worker thread.
   // Note that we use well-known double check lazy initialization,
   // so that we can inject instances via reflections for testing purposes.
-  private static volatile SessionExecutor instance;
+  @VisibleForTesting static volatile SessionExecutor instance;
   private static SessionExecutor getInstanceInternal(
       SessionHandlerFactory factory, Context applicationContext) {
     SessionExecutor result = instance;
@@ -227,9 +228,9 @@ public class SessionExecutor {
     static final int INITIALIZE_SESSION_HANDLER = 0;
 
     /**
-     * Creates a new session.
+     * Deletes the session.
      */
-    static final int CREATE_SESSION = 1;
+    static final int DELETE_SESSION = 1;
 
     /**
      * Evaluates the command asynchronously.
@@ -261,7 +262,7 @@ public class SessionExecutor {
      */
     static final int PASS_TO_CALLBACK = 6;
 
-    private static final long INVALID_SESSION_ID = 0;
+    @VisibleForTesting static final long INVALID_SESSION_ID = 0;
 
     /**
      * A set of CommandType which don't need session id.
@@ -283,8 +284,8 @@ public class SessionExecutor {
 
     // Mozc session's ID.
     // Set on CREATE_SESSION and will not be updated.
-    private long sessionId = INVALID_SESSION_ID;
-    private Request.Builder request;
+    @VisibleForTesting long sessionId = INVALID_SESSION_ID;
+    @VisibleForTesting Request.Builder request;
 
     // The logging for debugging is disabled by default.
     boolean isLogging = false;
@@ -303,10 +304,8 @@ public class SessionExecutor {
         case INITIALIZE_SESSION_HANDLER:
           sessionHandler.initialize(Context.class.cast(message.obj));
           break;
-        case CREATE_SESSION:
-          MozcLog.d("start SessionExecutor#handleMessage CREATE_SESSION " + System.nanoTime());
-          createSession();
-          MozcLog.d("end SessionExecutor#handleMessage CREATE_SESSION " + System.nanoTime());
+        case DELETE_SESSION:
+          deleteSession();
           break;
         case EVALUATE_ASYNCHRONOUSLY:
         case EVALUATE_KEYEVENT_ASYNCHRONOUSLY:
@@ -347,7 +346,11 @@ public class SessionExecutor {
       return outCommand;
     }
 
-    void createSession() {
+    void ensureSession() {
+      if (sessionId != INVALID_SESSION_ID) {
+        return;
+      }
+
       // Send CREATE_SESSION command and keep the returned sessionId.
       Input input = Input.newBuilder()
           .setType(CommandType.CREATE_SESSION)
@@ -370,6 +373,20 @@ public class SessionExecutor {
           .setType(CommandType.SET_REQUEST)
           .setRequest(request)
           .build());
+    }
+
+    void deleteSession() {
+      if (sessionId == INVALID_SESSION_ID) {
+        return;
+      }
+
+      Input input = Input.newBuilder()
+          .setType(CommandType.DELETE_SESSION)
+          .setId(sessionId)
+          .build();
+      evaluate(input);
+      sessionId = INVALID_SESSION_ID;
+      request = null;
     }
 
     /**
@@ -436,23 +453,7 @@ public class SessionExecutor {
       // We set the session id to the input in asynchronous evaluation before the evaluation,
       // if necessary.
       if (isSessionIdRequired(inputBuilder)) {
-        // Assume this evaluation is called after CREATE_SESSION defined above.
-        // So, set sessionId to the input, and then evaluate it.
-        if (sessionId == INVALID_SESSION_ID) {
-          StringBuilder message =
-              new StringBuilder("Session should be created before asynchronous evaluation.");
-          // Don't include inputBuilder.toString()
-          // because inputBuilder might contain key event, which might cause privacy issue.
-          if (inputBuilder.getType() != null) {
-            message.append(" Input.CommandType=")
-                   .append(inputBuilder.getType().toString());
-          }
-          if (inputBuilder.getCommand() != null && inputBuilder.getCommand().getType() != null) {
-            message.append(" SessionCommand.CommandType=")
-                   .append(inputBuilder.getCommand().getType().toString());
-          }
-          throw new IllegalStateException(message.toString());
-        }
+        ensureSession();
         inputBuilder.setId(sessionId);
       }
       context.outCommand = evaluate(inputBuilder.build());
@@ -488,6 +489,7 @@ public class SessionExecutor {
     }
 
     void updateRequest(Input.Builder inputBuilder) {
+      ensureSession();
       request.mergeFrom(inputBuilder.getRequest());
       Input input = inputBuilder
           .setId(sessionId)
@@ -542,7 +544,7 @@ public class SessionExecutor {
     }
   }
 
-  private Handler handler;
+  @VisibleForTesting Handler handler;
   private ExecutorMainCallback mainCallback;
   private final CallbackHandler callbackHandler;
 
@@ -589,13 +591,8 @@ public class SessionExecutor {
     callbackHandler.removeMessages(CallbackHandler.SQUASHABLE_OUTPUT);
   }
 
-  /**
-   * Sends a create session message to the JNI working handler, and returns immediately.
-   * The actual evaluation (session creation) will be done eventually, before the next
-   * evaluation request is handled.
-   */
-  public void createSession() {
-    handler.sendMessage(handler.obtainMessage(ExecutorMainCallback.CREATE_SESSION));
+  public void deleteSession() {
+    handler.sendMessage(handler.obtainMessage(ExecutorMainCallback.DELETE_SESSION));
   }
 
   /**

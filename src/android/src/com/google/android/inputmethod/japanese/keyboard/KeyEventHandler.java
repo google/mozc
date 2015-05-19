@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese.keyboard;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -51,7 +52,7 @@ public class KeyEventHandler implements Handler.Callback {
   static final int REPEAT_KEY = 1;
   static final int LONG_PRESS_KEY = 2;
 
-  private final Handler handler;
+  @VisibleForTesting final Handler handler;
   private final KeyboardActionListener keyboardActionListener;
 
   // Following three variables representing delay time are in milliseconds.

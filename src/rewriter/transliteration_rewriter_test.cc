@@ -122,7 +122,7 @@ class TransliterationRewriterTest : public testing::Test {
   config::Config default_config_;
 };
 
-TEST_F(TransliterationRewriterTest, T13NFromKeyTest) {
+TEST_F(TransliterationRewriterTest, T13nFromKeyTest) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
   Segments segments;
@@ -173,7 +173,7 @@ TEST_F(TransliterationRewriterTest, T13NFromKeyTest) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, T13NFromComposerTest) {
+TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -234,7 +234,7 @@ TEST_F(TransliterationRewriterTest, T13NFromComposerTest) {
 }
 
 
-TEST_F(TransliterationRewriterTest, KeyOfT13NFromComposerTest) {
+TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -275,7 +275,7 @@ TEST_F(TransliterationRewriterTest, KeyOfT13NFromComposerTest) {
 }
 
 
-TEST_F(TransliterationRewriterTest, T13NWithMultiSegmentsTest) {
+TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -640,7 +640,7 @@ TEST_F(TransliterationRewriterTest, MobileEnvironmentTest) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysHiragana) {
+TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -711,7 +711,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysHiragana) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysToNumber) {
+TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -783,7 +783,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysToNumber) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysFlick) {
+TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -854,7 +854,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysFlick) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, MobileT13NTestWithQwertyHiragana) {
+TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -907,7 +907,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWithQwertyHiragana) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, MobileT13NTestWithGodan) {
+TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -976,7 +976,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWithGodan) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, MobileT13NTest_ValidateGodanT13nTable) {
+TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 

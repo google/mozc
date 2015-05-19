@@ -81,7 +81,8 @@ using mozc::config::StatsConfigUtil;
 ConfigDialog::ConfigDialog()
     : client_(client::ClientFactory::NewClient()),
       initial_preedit_method_(0),
-      initial_use_keyboard_to_change_preedit_method_(false) {
+      initial_use_keyboard_to_change_preedit_method_(false),
+      initial_use_mode_indicator_(true) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint);
   setWindowModality(Qt::NonModal);
@@ -115,8 +116,6 @@ ConfigDialog::ConfigDialog()
 
 #ifndef ENABLE_CLOUD_SYNC
   syncDescriptionLabel->setVisible(false);
-  clearSyncButton->setVisible(false);
-  removeAllDescriptionLabel->setVisible(false);
   syncStatusLabel->setVisible(false);
   syncButtonsLayoutWidget->setVisible(false);
   syncHeaderLayoutWidget->setVisible(false);
@@ -215,6 +214,11 @@ ConfigDialog::ConfigDialog()
   useJapaneseLayout->hide();
 #endif  // !OS_MACOSX
 
+#ifndef MOZC_ENABLE_MODE_INDICATOR
+  // If not enabled, useModeIndicator checkbox should be invisible.
+  useModeIndicator->hide();
+#endif  // !MOZC_ENABLE_MODE_INDICATOR
+
   // signal/slot
   QObject::connect(configDialogButtonBox,
                    SIGNAL(clicked(QAbstractButton *)),
@@ -286,10 +290,6 @@ ConfigDialog::ConfigDialog()
                    SIGNAL(clicked()),
                    this,
                    SLOT(LaunchSyncCustomizationDialog()));
-  QObject::connect(clearSyncButton,
-                   SIGNAL(clicked()),
-                   this,
-                   SLOT(ClearSyncClicked()));
 #endif  // ENABLE_CLOUD_SYNC
 
   // Event handlers to enable 'Apply' button.
@@ -376,7 +376,6 @@ ConfigDialog::ConfigDialog()
   timer_->start(1000);
   last_synced_timestamp_ = 0;
   // all sync buttons are not enabled for the first time.
-  clearSyncButton->setEnabled(false);
   syncCustomizationButton->setEnabled(false);
   syncToggleButton->setEnabled(false);
 #endif  // ENABLE_CLOUD_SYNC
@@ -444,6 +443,7 @@ void ConfigDialog::Reload() {
   initial_preedit_method_ = static_cast<int>(config.preedit_method());
   initial_use_keyboard_to_change_preedit_method_ =
       config.use_keyboard_to_change_preedit_method();
+  initial_use_mode_indicator_ = config.use_mode_indicator();
 }
 
 bool ConfigDialog::Update() {
@@ -461,15 +461,27 @@ bool ConfigDialog::Update() {
 
 
 #if defined(OS_WIN) || defined(OS_LINUX)
-  if (initial_preedit_method_ !=
-      static_cast<int>(config.preedit_method()) ||
-      initial_use_keyboard_to_change_preedit_method_ !=
-      static_cast<int>(config.use_keyboard_to_change_preedit_method())) {
+  if ((initial_preedit_method_ !=
+       static_cast<int>(config.preedit_method())) ||
+      (initial_use_keyboard_to_change_preedit_method_ !=
+       config.use_keyboard_to_change_preedit_method())) {
     QMessageBox::information(this, windowTitle(),
                              tr("Romaji/Kana setting is enabled from"
                                 " new applications."));
+    initial_preedit_method_ = static_cast<int>(config.preedit_method());
+    initial_use_keyboard_to_change_preedit_method_ =
+        config.use_keyboard_to_change_preedit_method();
   }
-#endif
+#endif  // OS_WIN or OS_LINUX
+
+#ifdef OS_WIN
+  if (initial_use_mode_indicator_ != config.use_mode_indicator()) {
+    QMessageBox::information(this, windowTitle(),
+                             tr("Input mode indicator setting is enabled from"
+                                " new applications."));
+    initial_use_mode_indicator_ = config.use_mode_indicator();
+  }
+#endif  // OS_WIN
 
   if (!SetConfig(config)) {
     QMessageBox::critical(this, windowTitle(),
@@ -483,7 +495,7 @@ bool ConfigDialog::Update() {
     // TODO(taku): better to show dialog?
     LOG(ERROR) << "Failed to update IME HotKey status";
   }
-#endif
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
   if (startupCheckBox->isChecked()) {
@@ -630,6 +642,8 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
 
   SET_CHECKBOX(useJapaneseLayout, use_japanese_layout);
 
+  SET_CHECKBOX(useModeIndicator, use_mode_indicator);
+
   // tab4
   SET_CHECKBOX(historySuggestCheckBox, use_history_suggest);
   SET_CHECKBOX(dictionarySuggestCheckBox, use_dictionary_suggest);
@@ -714,6 +728,8 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_CHECKBOX(useAutoConversion, use_auto_conversion);
 
   GET_CHECKBOX(useJapaneseLayout, use_japanese_layout);
+
+  GET_CHECKBOX(useModeIndicator, use_mode_indicator);
 
   uint32 auto_conversion_key = 0;
   if (kutenCheckBox->isChecked()) {
@@ -998,12 +1014,6 @@ void ConfigDialog::UpdateSyncStatus() {
 #endif  // ENABLE_CLOUD_SYNC
 }
 
-void ConfigDialog::ClearSyncClicked() {
-#ifdef ENABLE_CLOUD_SYNC
-  ClearSyncClickedImpl();
-#endif  // ENABLE_CLOUD_SYNC
-}
-
 void ConfigDialog::EnableApplyButton() {
   configDialogButtonBox->button(QDialogButtonBox::Apply)->setEnabled(true);
 }
@@ -1103,6 +1113,9 @@ void ConfigDialog::LaunchAuthDialog() {
 }
 
 void ConfigDialog::LaunchSyncCustomizationDialogImpl() {
+  // Store the current config for the rollback when failed.
+  config::Config current_config;
+  sync_customize_dialog_->Save(true, &current_config);
   if (QDialog::Accepted == sync_customize_dialog_->exec()) {
     // Before starting sync, the sync customization should be applied.
     // WARNING: the whole configuration (items other than sync) should
@@ -1111,6 +1124,8 @@ void ConfigDialog::LaunchSyncCustomizationDialogImpl() {
     if (!client_->StartCloudSync()) {
       LOG(WARNING) << "Cloud sync is failed to start";
     }
+  } else {
+    sync_customize_dialog_->Load(current_config);
   }
 }
 
@@ -1146,10 +1161,6 @@ void ConfigDialog::UpdateSyncStatusImpl() {
   commands::CloudSyncStatus::SyncGlobalStatus sync_global_status =
       cloud_sync_status.global_status();
 
-  // clearing sync is only available when sync is succeeding ==
-  // the current authorization is valid.
-  clearSyncButton->setEnabled(
-      sync_global_status == commands::CloudSyncStatus::SYNC_SUCCESS);
   syncCustomizationButton->setEnabled(true);
   syncToggleButton->setEnabled(true);
 
@@ -1168,19 +1179,16 @@ void ConfigDialog::UpdateSyncStatusImpl() {
       sync_message = tr("Waiting for server to be ready");
       syncCustomizationButton->setEnabled(false);
       syncToggleButton->setEnabled(false);
-      clearSyncButton->setEnabled(false);
       break;
     case commands::CloudSyncStatus::INSYNC:
       sync_message = tr("During synchronization");
       syncCustomizationButton->setEnabled(false);
       syncToggleButton->setEnabled(false);
-      clearSyncButton->setEnabled(false);
       break;
     case commands::CloudSyncStatus::NOSYNC:
       sync_message = tr("Sync is not enabled");
       sync_running_ = false;
       syncCustomizationButton->setEnabled(false);
-      clearSyncButton->setEnabled(false);
       break;
   }
 
@@ -1239,29 +1247,6 @@ void ConfigDialog::UpdateSyncStatusImpl() {
   syncStatusLabel->setToolTip(tooltip);
 }
 
-void ConfigDialog::ClearSyncClickedImpl() {
-  if (QMessageBox::Cancel ==
-      QMessageBox::question(
-          this,
-          tr("Clear all sync data in Google servers"),
-          tr("You are trying to clear all the data in the sync server.\n"
-             "Do you really want to continue?"),
-          QMessageBox::Ok | QMessageBox::Cancel,
-          QMessageBox::Cancel)) {
-    return;
-  }
-
-  // Stop doing sync configurations.
-  config::Config config;
-  GetConfig(&config);
-  config.clear_sync_config();
-  sync_running_ = false;
-  ConvertFromProto(config);
-  Update();
-
-  // Do the actual clear.
-  client_->ClearCloudSync();
-}
 #endif  // ENABLE_CLOUD_SYNC
 
 // Catch MouseButtonRelease event to toggle the CheckBoxes

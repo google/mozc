@@ -93,6 +93,7 @@ class PepperFileUtil {
   static bool DeleteFile(const string &filename);
 
   // Renames a file.
+  // This method first deletes the "to" file if it exists, and tries to rename.
   static bool RenameFile(const string &from, const string &to);
 
   // Registers Mmap object.

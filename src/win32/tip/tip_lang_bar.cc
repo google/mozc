@@ -160,7 +160,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
 
   // A workaround to satisfy both b/6106437 and b/6641460.
   // On Windows 8, keep the instance into |lang_bar_item_mgr_for_win8_|.
-  // On prior OSes, always instanciate new LangBarItemMgr object.
+  // On prior OSes, always instantiate new LangBarItemMgr object.
   CComPtr<ITfLangBarItemMgr> item;
   if (SystemUtil::IsWindows8OrLater()) {
     if (!lang_bar_item_mgr_for_win8_) {
@@ -382,7 +382,7 @@ HRESULT TipLangBar::UninitLangBar() {
 
   // A workaround to satisfy both b/6106437 and b/6641460.
   // On Windows 8, retrieves the instance from |lang_bar_item_mgr_for_win8_|.
-  // On prior OSes, always instanciates new LangBarItemMgr object.
+  // On prior OSes, always instantiates new LangBarItemMgr object.
   CComPtr<ITfLangBarItemMgr> item;
   if (SystemUtil::IsWindows8OrLater()) {
     // Move the ownership.

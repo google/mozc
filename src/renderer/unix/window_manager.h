@@ -32,8 +32,9 @@
 #include <gtk/gtk.h>
 #include <string>
 
-#include "base/base.h"
 #include "base/mutex.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/unix/gtk_window_interface.h"

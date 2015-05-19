@@ -65,6 +65,8 @@ def GetBrandingName(version):
       'APP_NAME_JA': 'Mozc',
       'APP_NAME_EN': 'Mozc',
       'BRANDING': 'Mozc',
+      'DEV_CHANNEL': 'false',
+      'OFFICIAL_BUILD': 'false',
   }
   return branding_name
 

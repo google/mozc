@@ -31,7 +31,8 @@
 #define MOZC_RENDERER_RENDERER_CLIENT_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "renderer/renderer_interface.h"
 
 namespace mozc {

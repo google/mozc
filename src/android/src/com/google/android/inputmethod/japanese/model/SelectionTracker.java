@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese.model;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
+import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.DeletionRange;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
@@ -325,7 +326,7 @@ public class SelectionTracker {
       if (newSelStart == newSelEnd) {
         // This is case 2-1)
         // In composition with tapping somewhere.
-        return clamp(newSelStart - candidatesStart, candidatesEnd - candidatesStart, 0);
+        return MozcUtil.clamp(newSelStart - candidatesStart, 0, candidatesEnd - candidatesStart);
       }
 
       // This is case 2-2).
@@ -359,12 +360,5 @@ public class SelectionTracker {
 
     // Tell the caller to reset the context.
     return RESET_CONTEXT;
-  }
-
-  /**
-   * If value >= max returns max. If value <= min returns min. Otherwise returns value.
-   */
-  private static int clamp(int value, int max, int min) {
-    return Math.max(Math.min(value, max), min);
   }
 }

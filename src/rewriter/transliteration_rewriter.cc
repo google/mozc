@@ -42,7 +42,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
-// For T13N normalize
+// For T13n normalize
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -80,7 +80,7 @@ bool IsComposerApplicable(const ConversionRequest &request,
   return true;
 }
 
-void NormalizeT13Ns(vector<string> *t13ns) {
+void NormalizeT13ns(vector<string> *t13ns) {
   DCHECK(t13ns);
   string normalized;
   for (size_t i = 0; i < t13ns->size(); ++i) {
@@ -91,7 +91,7 @@ void NormalizeT13Ns(vector<string> *t13ns) {
   }
 }
 
-void ModifyT13NsForGodan(const string &key, vector<string> *t13ns) {
+void ModifyT13nsForGodan(const string &key, vector<string> *t13ns) {
   static const char * const kKeycodeToT13nMap[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -110,8 +110,8 @@ void ModifyT13NsForGodan(const string &key, vector<string> *t13ns) {
     // to be unsigned in Mozc.
     // TODO(yukawa): use std::is_unsigned in <type_traits> instead
     //     when C++11 becomes available.
-    COMPILE_ASSERT(string::value_type(-1) > 0,
-                   string_value_type_should_be_unsigned);
+    static_assert(string::value_type(-1) > 0,
+                  "string::value must be unsigned.");
     if (*c < arraysize(kKeycodeToT13nMap) && kKeycodeToT13nMap[*c] != NULL) {
       dst.append(kKeycodeToT13nMap[*c]);
     } else {
@@ -164,20 +164,20 @@ bool IsTransliterated(const vector<string> &t13ns) {
   return false;
 }
 
-struct T13NIds {
+struct T13nIds {
   uint16 hiragana_lid;
   uint16 hiragana_rid;
   uint16 katakana_lid;
   uint16 katakana_rid;
   uint16 ascii_lid;
   uint16 ascii_rid;
-  T13NIds() : hiragana_lid(0), hiragana_rid(0),
+  T13nIds() : hiragana_lid(0), hiragana_rid(0),
               katakana_lid(0), katakana_rid(0),
               ascii_lid(0), ascii_rid(0) {}
 };
 
-// Get T13N candidate ids from existing candidates.
-void GetIds(const Segment &segment, T13NIds *ids) {
+// Get T13n candidate ids from existing candidates.
+void GetIds(const Segment &segment, T13nIds *ids) {
   DCHECK(ids);
   // reverse loop to use the highest rank results for each type
   for (int i = segment.candidates_size() - 1; i >= 0; --i) {
@@ -196,20 +196,20 @@ void GetIds(const Segment &segment, T13NIds *ids) {
   }
 }
 
-void ModifyT13Ns(const ConversionRequest &request,
+void ModifyT13ns(const ConversionRequest &request,
                  const Segment &segment, vector<string> *t13ns) {
   commands::Request::SpecialRomanjiTable special_romanji_table =
       request.request().special_romanji_table();
   if (special_romanji_table == commands::Request::GODAN_TO_HIRAGANA) {
-    ModifyT13NsForGodan(segment.key(), t13ns);
+    ModifyT13nsForGodan(segment.key(), t13ns);
   }
 
-  NormalizeT13Ns(t13ns);
+  NormalizeT13ns(t13ns);
 }
 }  // namespace
 
 
-bool TransliterationRewriter::FillT13NsFromComposer(
+bool TransliterationRewriter::FillT13nsFromComposer(
     const ConversionRequest &request,
     Segments *segments) const {
 
@@ -222,7 +222,7 @@ bool TransliterationRewriter::FillT13NsFromComposer(
     request.composer().GetTransliterations(&t13ns);
     Segment *segment = segments->mutable_conversion_segment(0);
     CHECK(segment);
-    ModifyT13Ns(request, *segment, &t13ns);
+    ModifyT13ns(request, *segment, &t13ns);
     string key;
     request.composer().GetQueryForConversion(&key);
     return SetTransliterations(t13ns, key, segment);
@@ -244,7 +244,7 @@ bool TransliterationRewriter::FillT13NsFromComposer(
                                               &t13ns);
     composition_pos += composition_len;
 
-    ModifyT13Ns(request, *segment, &t13ns);
+    ModifyT13ns(request, *segment, &t13ns);
     modified |= SetTransliterations(t13ns, key, segment);
   }
   return modified;
@@ -253,7 +253,7 @@ bool TransliterationRewriter::FillT13NsFromComposer(
 // This function is used for a fail-safe.
 // Ambiguities of roman rule are ignored here.
 // ('n' or 'nn' for "ん", etc)
-bool TransliterationRewriter::FillT13NsFromKey(Segments *segments) const {
+bool TransliterationRewriter::FillT13nsFromKey(Segments *segments) const {
   bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
@@ -296,7 +296,7 @@ bool TransliterationRewriter::FillT13NsFromKey(Segments *segments) const {
     t13ns[transliteration::FULL_ASCII_LOWER] = full_ascii_lower;
     t13ns[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
 
-    NormalizeT13Ns(&t13ns);
+    NormalizeT13ns(&t13ns);
     modified |= SetTransliterations(t13ns, segment->key(), segment);
   }
   return modified;
@@ -315,7 +315,7 @@ int TransliterationRewriter::capability(
   return RewriterInterface::CONVERSION;
 }
 
-bool TransliterationRewriter::AddRawNumberT13NCandidates(
+bool TransliterationRewriter::AddRawNumberT13nCandidates(
     const ConversionRequest &request,
     Segments *segments) const {
   if (segments->conversion_segments_size() != 1) {
@@ -332,9 +332,12 @@ bool TransliterationRewriter::AddRawNumberT13NCandidates(
   }
   const composer::Composer &composer = request.composer();
   Segment *segment = segments->mutable_conversion_segment(0);
-  // Get the half_ascii T13N text (nearly equal Raw input).
+  // Get the half_ascii T13n text (nearly equal Raw input).
+  // Note that only one segment is in the Segments, but sometimes like
+  // on partial conversion, segment.key() is different from the size of
+  // the whole composition.
   string raw;
-  composer.GetRawText(0, Util::CharsLen(segment->key()), &raw);
+  composer.GetRawSubString(0, Util::CharsLen(segment->key()), &raw);
   if (raw.empty()) {
     return false;
   }
@@ -342,7 +345,7 @@ bool TransliterationRewriter::AddRawNumberT13NCandidates(
     return false;
   }
   // half_ascii is arabic number. So let's append additional candidates.
-  T13NIds ids;
+  T13nIds ids;
   GetIds(*segment, &ids);
 
   // Append half_ascii as normal candidate.
@@ -350,7 +353,7 @@ bool TransliterationRewriter::AddRawNumberT13NCandidates(
   if (segment->meta_candidates_size() < transliteration::HALF_ASCII ||
       segment->meta_candidate(transliteration::HALF_ASCII).value != raw) {
     Segment::Candidate *half_candidate = segment->add_candidate();
-    InitT13NCandidate(raw, raw,
+    InitT13nCandidate(raw, raw,
                       ids.ascii_lid, ids.ascii_rid,
                       half_candidate);
     // Keep the character form.
@@ -365,7 +368,7 @@ bool TransliterationRewriter::AddRawNumberT13NCandidates(
   if (segment->meta_candidates_size() < transliteration::FULL_ASCII ||
       segment->meta_candidate(transliteration::FULL_ASCII).value != full_raw) {
     Segment::Candidate *full_candidate = segment->add_candidate();
-    InitT13NCandidate(raw, full_raw,
+    InitT13nCandidate(raw, full_raw,
                       ids.ascii_lid, ids.ascii_rid,
                       full_candidate);
     full_candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -379,13 +382,13 @@ bool TransliterationRewriter::Rewrite(
     return false;
   }
   bool modified = IsComposerApplicable(request, segments)
-                  ? FillT13NsFromComposer(request, segments)
-                  : FillT13NsFromKey(segments);
-  modified |= AddRawNumberT13NCandidates(request, segments);
+                  ? FillT13nsFromComposer(request, segments)
+                  : FillT13nsFromKey(segments);
+  modified |= AddRawNumberT13nCandidates(request, segments);
   return modified;
 }
 
-void TransliterationRewriter::InitT13NCandidate(
+void TransliterationRewriter::InitT13nCandidate(
     const string &key,
     const string &value,
     uint16 lid,
@@ -410,56 +413,56 @@ bool TransliterationRewriter::SetTransliterations(
 
   segment->clear_meta_candidates();
 
-  T13NIds ids;
+  T13nIds ids;
   GetIds(*segment, &ids);
 
   vector<Segment::Candidate> *meta_candidates =
       segment->mutable_meta_candidates();
   meta_candidates->resize(transliteration::NUM_T13N_TYPES);
 
-  InitT13NCandidate(key, t13ns[transliteration::HIRAGANA],
+  InitT13nCandidate(key, t13ns[transliteration::HIRAGANA],
                     ids.hiragana_lid, ids.hiragana_rid,
                     &meta_candidates->at(transliteration::HIRAGANA));
 
-  InitT13NCandidate(key, t13ns[transliteration::FULL_KATAKANA],
+  InitT13nCandidate(key, t13ns[transliteration::FULL_KATAKANA],
                     ids.katakana_lid, ids.katakana_rid,
                     &meta_candidates->at(transliteration::FULL_KATAKANA));
 
-  InitT13NCandidate(key, t13ns[transliteration::HALF_ASCII],
+  InitT13nCandidate(key, t13ns[transliteration::HALF_ASCII],
                     ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::HALF_ASCII));
 
-  InitT13NCandidate(key, t13ns[transliteration::HALF_ASCII_UPPER],
+  InitT13nCandidate(key, t13ns[transliteration::HALF_ASCII_UPPER],
                     ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::HALF_ASCII_UPPER));
 
-  InitT13NCandidate(key, t13ns[transliteration::HALF_ASCII_LOWER],
+  InitT13nCandidate(key, t13ns[transliteration::HALF_ASCII_LOWER],
                     ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::HALF_ASCII_LOWER));
 
-  InitT13NCandidate(
+  InitT13nCandidate(
       key, t13ns[transliteration::HALF_ASCII_CAPITALIZED],
       ids.ascii_lid, ids.ascii_rid,
       &meta_candidates->at(transliteration::HALF_ASCII_CAPITALIZED));
 
-  InitT13NCandidate(key, t13ns[transliteration::FULL_ASCII],
+  InitT13nCandidate(key, t13ns[transliteration::FULL_ASCII],
                     ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::FULL_ASCII));
 
-  InitT13NCandidate(key, t13ns[transliteration::FULL_ASCII_UPPER],
+  InitT13nCandidate(key, t13ns[transliteration::FULL_ASCII_UPPER],
                     ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::FULL_ASCII_UPPER));
 
-  InitT13NCandidate(key, t13ns[transliteration::FULL_ASCII_LOWER],
+  InitT13nCandidate(key, t13ns[transliteration::FULL_ASCII_LOWER],
                     ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::FULL_ASCII_LOWER));
 
-  InitT13NCandidate(
+  InitT13nCandidate(
       key, t13ns[transliteration::FULL_ASCII_CAPITALIZED],
       ids.ascii_lid, ids.ascii_rid,
       &meta_candidates->at(transliteration::FULL_ASCII_CAPITALIZED));
 
-  InitT13NCandidate(key, t13ns[transliteration::HALF_KATAKANA],
+  InitT13nCandidate(key, t13ns[transliteration::HALF_KATAKANA],
                     ids.katakana_lid, ids.katakana_rid,
                     &meta_candidates->at(transliteration::HALF_KATAKANA));
   return true;

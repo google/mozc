@@ -31,6 +31,8 @@
 #define MOZC_GUI_CHARACTER_PAD_HAND_WRITING_H_
 
 #include <QtGui/QMainWindow>
+
+#include "base/scoped_ptr.h"
 #include "gui/character_pad/ui_hand_writing.h"
 
 namespace mozc {

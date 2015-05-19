@@ -85,8 +85,8 @@ void Loop(istream *input, ostream *output) {
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
-  scoped_ptr<mozc::InputFileStream> input_file(NULL);
-  scoped_ptr<mozc::OutputFileStream> output_file(NULL);
+  scoped_ptr<mozc::InputFileStream> input_file;
+  scoped_ptr<mozc::OutputFileStream> output_file;
   istream *input = NULL;
   ostream *output = NULL;
 

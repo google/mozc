@@ -30,7 +30,6 @@
 package org.mozc.android.inputmethod.japanese.stresstest;
 
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
-import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcService;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.ViewManager;
@@ -39,6 +38,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchE
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
+import org.mozc.android.inputmethod.japanese.testing.MemoryLogger;
 import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.testing.mocking.MozcMockSupport;
 
@@ -46,8 +46,6 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Rect;
-import android.os.Debug;
-import android.os.Debug.MemoryInfo;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
 import android.view.Display;
@@ -93,7 +91,7 @@ public class MozcStressTest extends InstrumentationTestCase {
       InputConnection inputConnection = mockSupport.createNiceMock(InputConnection.class);
       mockSupport.replayAll();
       service.onCreateInputMethodInterface().restartInput(inputConnection, new EditorInfo());
-      viewManager = VisibilityProxy.getField(service, "viewManager");
+      viewManager = ViewManager.class.cast(service.viewManager);
     }
   }
 
@@ -104,7 +102,6 @@ public class MozcStressTest extends InstrumentationTestCase {
   private volatile View inputView;
   private volatile ViewManager viewManager;
   private Context context;
-  private int reportCount;
 
   @Override
   protected void setUp() throws Exception {
@@ -115,7 +112,6 @@ public class MozcStressTest extends InstrumentationTestCase {
         "org.mozc.android.inputmethod.japanese", Activity.class, null);
     instrumentation.runOnMainSync(new OnCreateRunner());
     context = instrumentation.getTargetContext();
-    reportCount = 0;
   }
 
   @Override
@@ -134,24 +130,6 @@ public class MozcStressTest extends InstrumentationTestCase {
   static void tap(View view, float x, float y) {
     view.onTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, x, y, 0));
     view.onTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, x, y, 0));
-  }
-
-  private static void log(String s) {
-    MozcLog.d("MozcStressTest." + s);
-  }
-
-  private void logMemory() {
-    System.gc();
-    Thread.yield();
-    MemoryInfo memoryInfo = new MemoryInfo();
-    Debug.getMemoryInfo(memoryInfo);
-    log("meminfo @" + reportCount
-        + " global:" + Debug.getGlobalAllocSize()
-        + " gcount:" + Debug.getGlobalAllocCount()
-        + " private:" + memoryInfo.getTotalPrivateDirty()
-        + " pss:" + memoryInfo.getTotalPss()
-        + " shared:" + memoryInfo.getTotalSharedDirty());
-    reportCount++;
   }
 
   private Rect getViewRect() {
@@ -174,16 +152,16 @@ public class MozcStressTest extends InstrumentationTestCase {
   @StressTest
   @UiThreadTest
   public void testRandomTouch() {
+    MemoryLogger memoryLogger = new MemoryLogger("testRandomTouch", 100);
+
     viewManager.setKeyboardLayout(KeyboardLayout.TWELVE_KEYS);
 
     final int actions = 500;
-    final int reportperaction = 100;
 
     final Random random = new Random();
     Rect rect = getViewRect();
 
-    logMemory();
-    int count = 0;
+    memoryLogger.logMemory("start");
     for (int i = 0; i < actions; i++) {
       final int x = rect.left + random.nextInt(rect.width());
       final int y = rect.top + random.nextInt(rect.height());
@@ -195,24 +173,19 @@ public class MozcStressTest extends InstrumentationTestCase {
       // for server processing.
       sleep(200);
 
-      count++;
-      if (count >= reportperaction) {
-        logMemory();
-        count = 0;
-      }
+      memoryLogger.logMemoryInterval();
     }
+    memoryLogger.logMemory("start");
   }
 
   @StressTest
   @UiThreadTest
   public void testUpdateRequest() {
+    MemoryLogger memoryLogger = new MemoryLogger("testUpdateRequest", 100);
+
     viewManager.setKeyboardLayout(KeyboardLayout.TWELVE_KEYS);
 
     final int actions = 500;
-    final int reportperaction = 100;
-
-    logMemory();
-    int count = 0;
 
     SessionExecutor session = SessionExecutor.getInstance(null);
     KeyboardSpecification specification = viewManager.getJapaneseKeyboardSpecification();
@@ -225,38 +198,32 @@ public class MozcStressTest extends InstrumentationTestCase {
         getInstrumentation().getTargetContext().getResources().getConfiguration());
     List<TouchEvent> touchEventList = Collections.emptyList();
 
+    memoryLogger.logMemory("start");
     for (int i = 0; i < actions; i++) {
       session.updateRequest(request, touchEventList);
       // updateRequest sends asynchronous message to server. So we need to wait a moment
       // for server processing.
       sleep(100);
 
-      count++;
-      if (count >= reportperaction) {
-        logMemory();
-        count = 0;
-      }
+      memoryLogger.logMemoryInterval();
     }
+    memoryLogger.logMemory("end");
   }
 
   @StressTest
   @UiThreadTest
   public void testOnCreateInputView() {
+    MemoryLogger memoryLogger = new MemoryLogger("testOnCreateInputView", 100);
+
     viewManager.setKeyboardLayout(KeyboardLayout.TWELVE_KEYS);
 
     final int actions = 500;
-    final int reportperaction = 100;
 
-    logMemory();
-    int count = 0;
-
+    memoryLogger.logMemory("start");
     for (int i = 0; i < actions; i++) {
       viewManager.createMozcView(context);
-      count++;
-      if (count >= reportperaction) {
-        logMemory();
-        count = 0;
-      }
+      memoryLogger.logMemoryInterval();
     }
+    memoryLogger.logMemory("end");
   }
 }

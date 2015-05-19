@@ -29,8 +29,6 @@
 
 #include <errno.h>
 #include <pthread.h>
-#include <stdio.h>
-#include <string.h>
 #include <sys/types.h>
 
 #include <ppapi/cpp/instance.h>
@@ -39,7 +37,10 @@
 #include <ppapi/cpp/url_request_info.h>
 #include <ppapi/utility/completion_callback_factory.h>
 
-#include "base/base.h"
+#include <cstring>
+#include <memory>
+
+#include "base/port.h"
 #include "base/logging.h"
 #include "base/pepper_file_util.h"
 #include "net/http_client_pepper.h"
@@ -68,13 +69,14 @@ class NaclTestInstance : public pp::Instance {
   void OnUrlLoaderOpen(int32_t result);
   pthread_t thread_handle_;
   pp::CompletionCallbackFactory<NaclTestInstance> cc_factory_;
-  scoped_ptr<pp::URLRequestInfo> url_request_;
-  scoped_ptr<pp::URLLoader> url_loader_;
+  std::unique_ptr<pp::URLRequestInfo> url_request_;
+  std::unique_ptr<pp::URLLoader> url_loader_;
 
   DISALLOW_COPY_AND_ASSIGN(NaclTestInstance);
 };
 
 void *NaclTestInstance::ThreadFunc(void *ptr) {
+  mozc::InitTestFlags();
   NaclTestInstance *self = static_cast<NaclTestInstance *>(ptr);
   mozc::RegisterPepperInstanceForHTTPClient(self);
   mozc::PepperFileUtil::Initialize(self, 1024);

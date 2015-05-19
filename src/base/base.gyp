@@ -31,6 +31,7 @@
   'variables': {
     'relative_dir': 'base',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+    'document_dir%': '/usr/lib/mozc/documents',
   },
   'targets': [
     {
@@ -157,6 +158,16 @@
             },
           },
         }],
+        ['target_platform=="Linux" and server_dir!=""', {
+          'defines': [
+            'MOZC_SERVER_DIRECTORY="<(server_dir)"',
+          ],
+        }],
+        ['target_platform=="Linux" and document_dir!=""', {
+          'defines': [
+            'MOZC_DOCUMENT_DIRECTORY="<(document_dir)"',
+          ],
+        }],
         ['target_platform=="Android" and _toolset=="target"', {
           'sources': [
             'android_util.cc',
@@ -230,6 +241,21 @@
       ],
     },
     {
+      'target_name': 'nacl_js_proxy',
+      'type': 'static_library',
+      'conditions': [
+        ['target_platform=="NaCl"', {
+          'sources': [
+            'nacl_js_proxy.cc'
+          ],
+        }],
+      ],
+      'dependencies': [
+        'base',
+        '../net/jsoncpp.gyp:jsoncpp',
+      ],
+    },
+    {
       'target_name': 'encryptor',
       'type': 'static_library',
       'sources': [
@@ -258,9 +284,8 @@
           'link_settings': {
             'libraries': [
               '/usr/lib/libcrypto.dylib',  # used in 'encryptor.cc'
-              '/usr/lib/libssl.dylib',     # used in 'encryptor.cc'
             ],
-          }
+          },
         }],
         ['OS=="linux" and target_platform!="Android" and '
          'not (target_platform=="NaCl" and _toolset=="target")', {
@@ -428,15 +453,24 @@
         'base',
       ],
       'conditions': [
+        ['OS=="win"', {
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'DbgHelp.lib',  # used in 'crash_report_handler.cc'
+                ],
+              },
+            },
+          },
+        }],
         ['OS=="mac"', {
-          'dependencies': [
-            # We cannot add 'crash_report_handler.mm' to 'sources' here
-            # because we already have 'crash_report_handler.cc' in this
-            # target. When a static library target has multiple files
-            # with the same basenames in its 'sources' list,
-            # gyp (r1354+) treats it as an error.
-            'crash_report_handler_mac',
+          'sources': [
+            'crash_report_handler_mac.mm',
           ],
+          'sources!': [
+            'crash_report_handler.cc',
+          ]
         }],
       ],
     },
@@ -444,13 +478,6 @@
   'conditions': [
     ['OS=="mac"', {
       'targets': [
-        {
-          'target_name': 'crash_report_handler_mac',
-          'type': 'static_library',
-          'sources': [
-            'crash_report_handler.mm',
-          ],
-        },
         {
           'target_name': 'mac_util_main',
           'type': 'executable',

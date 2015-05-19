@@ -41,7 +41,6 @@
 #include <QtCore/QString>
 #include <QtGui/QMessageBox>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/util.h"
 

@@ -50,3 +50,15 @@
 -keepclasseswithmembers class org.mozc.android.inputmethod.japanese.nativecallback.* {
     public static <methods>;
 }
+
+# Needed for Guava library.
+-libraryjars libs/jsr305.jar
+-dontwarn sun.misc.Unsafe
+-dontwarn com.google.common.collect.MinMaxPriorityQueue
+# Following suppression items are introduced for guava14.
+# To resolve these references Guice (or its compatible) library is needed
+# but we don't want to include it into our build dependency.
+# Instead just ignore the warnings.
+# Note: "Warning" in Proguard is like an error because it stops the build process.
+-dontwarn javax.inject.Inject
+-dontwarn javax.inject.Singleton

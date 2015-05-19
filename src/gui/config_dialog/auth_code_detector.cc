@@ -37,9 +37,12 @@
 #include <Carbon/Carbon.h>
 #endif  // OS_MACOSX
 
-#if defined(OS_WIN)
+#if defined(OS_MACOSX)
+#include "base/scoped_ptr.h"
+#elif defined(OS_WIN)
 #include "base/util.h"
-#endif  // OS_WIN
+#endif
+
 #include "sync/oauth2_token_util.h"
 
 namespace mozc {

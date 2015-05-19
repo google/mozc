@@ -37,7 +37,8 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "base/trie.h"
 #include "dictionary/dictionary_interface.h"

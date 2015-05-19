@@ -43,7 +43,9 @@
         android:summary="@string/pref_about_terms_of_service_description"
         android:title="@string/pref_about_terms_of_service_title">
       <intent
-          android:action="android.intent.action.VIEW"
+          android:action="android.intent.action.MAIN"
+          android:targetPackage="org.mozc.android.inputmethod.japanese"
+          android:targetClass="org.mozc.android.inputmethod.japanese.preference.MiniBrowserActivity"
           android:data="@string/pref_about_terms_of_service_url" />
     </Preference>
 
@@ -53,7 +55,9 @@
         android:summary="@string/pref_about_privacy_policy_description"
         android:title="@string/pref_about_privacy_policy_title">
       <intent
-          android:action="android.intent.action.VIEW"
+          android:action="android.intent.action.MAIN"
+          android:targetPackage="org.mozc.android.inputmethod.japanese"
+          android:targetClass="org.mozc.android.inputmethod.japanese.preference.MiniBrowserActivity"
           android:data="@string/pref_about_privacy_policy_url" />
     </Preference>
 
@@ -65,7 +69,8 @@
       <intent
           android:action="android.intent.action.MAIN"
           android:targetPackage="org.mozc.android.inputmethod.japanese"
-          android:targetClass="org.mozc.android.inputmethod.japanese.preference.CreditsActivity" />
+          android:targetClass="org.mozc.android.inputmethod.japanese.preference.MiniBrowserActivity"
+          android:data="@string/pref_oss_credits_url" />
     </Preference>
   </PreferenceCategory>
 </PreferenceScreen>

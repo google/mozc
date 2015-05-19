@@ -61,9 +61,5 @@
         android:key="pref_emoji_provider_type"
         android:summary="@string/pref_emoji_provider_type_description"
         android:title="@string/pref_emoji_provider_type_title" />
-
-    <!-- TODO(hidehiko): Add preferences for enabling/disabling kana_modifier_insensitive_conversion
-        and typing correction.
-    -->
   </PreferenceCategory>
 </PreferenceScreen>

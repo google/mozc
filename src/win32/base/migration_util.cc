@@ -39,11 +39,12 @@
 
 #include <strsafe.h>
 
+#include <memory>
+
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/scoped_handle.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
@@ -58,6 +59,7 @@ namespace win32 {
 namespace {
 
 using ATL::CStringA;
+using std::unique_ptr;
 
 bool SpawnBroker(const string &arg) {
   // To workaround a bug around WoW version of LoadKeyboardLayout, 64-bit
@@ -142,7 +144,7 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
   const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
       nullptr, nullptr, nullptr, nullptr, 0);
 
-  scoped_array<LAYOUTORTIPPROFILE> buffer(new LAYOUTORTIPPROFILE[num_element]);
+  unique_ptr<LAYOUTORTIPPROFILE[]> buffer(new LAYOUTORTIPPROFILE[num_element]);
 
   const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
       nullptr, nullptr, nullptr, buffer.get(), num_element);

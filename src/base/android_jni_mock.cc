@@ -60,7 +60,8 @@ void MockJNIEnv::SetUpJNIEnv() {
 
   functions->NewByteArray = MockJNIEnv::NewByteArrayProxy;
   functions->GetArrayLength = MockJNIEnv::GetArrayLengthProxy;
-  functions->GetByteArrayElements = MockJNIEnv::GetByteArrayElementsProxy;
+  functions->GetByteArrayRegion = MockJNIEnv::GetByteArrayRegionProxy;
+  functions->SetByteArrayRegion = MockJNIEnv::SetByteArrayRegionProxy;
 
   env_.functions = functions;
 }
@@ -185,10 +186,27 @@ jbyte *MockJNIEnv::GetByteArrayElements(jbyteArray array, jboolean *is_copy) {
   map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
       byte_array_map_.find(array);
   if (iter != byte_array_map_.end()) {
-    *is_copy = JNI_FALSE;
+    if (is_copy) {
+      *is_copy = JNI_FALSE;
+    }
     return iter->second.second;
   }
   return NULL;
+}
+void MockJNIEnv::GetByteArrayRegion(
+      jbyteArray array, jsize start, jsize len, jbyte *buf) {
+  const jsize size = GetArrayLength(array);
+  CHECK(start <= size);
+  CHECK(start + len <= size);
+  memcpy(buf, GetByteArrayElements(array, NULL) + start, len);
+}
+
+void MockJNIEnv::SetByteArrayRegion(
+      jbyteArray array, jsize start, jsize len, const jbyte *buf) {
+  const jsize size = GetArrayLength(array);
+  CHECK(start <= size);
+  CHECK(start + len <= size);
+  memcpy(GetByteArrayElements(array, NULL) + start, buf, len);
 }
 
 string MockJNIEnv::JByteArrayToString(jbyteArray array) {
@@ -254,12 +272,17 @@ jsize MockJNIEnv::GetArrayLengthProxy(JNIEnv *env, jarray array) {
       ->GetArrayLength(array);
 }
 
-jbyte *MockJNIEnv::GetByteArrayElementsProxy(
-    JNIEnv *env, jbyteArray array, jboolean *is_copy) {
-  return static_cast<MockJNIEnv*>(env->functions->reserved0)
-      ->GetByteArrayElements(array, is_copy);
+void MockJNIEnv::GetByteArrayRegionProxy(
+      JNIEnv *env, jbyteArray array, jsize start, jsize len, jbyte *buf) {
+  static_cast<MockJNIEnv*>(env->functions->reserved0)
+      ->GetByteArrayRegion(array, start, len, buf);
 }
 
+void MockJNIEnv::SetByteArrayRegionProxy(
+      JNIEnv *env, jbyteArray array, jsize start, jsize len, const jbyte *buf) {
+  static_cast<MockJNIEnv*>(env->functions->reserved0)
+      ->SetByteArrayRegion(array, start, len, buf);
+}
 
 MockJavaVM::MockJavaVM() {
   SetUpJavaVM();

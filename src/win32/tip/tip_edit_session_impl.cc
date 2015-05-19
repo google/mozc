@@ -1,0 +1,638 @@
+// Copyright 2010-2013, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#include "win32/tip/tip_edit_session_impl.h"
+
+#include <Windows.h>
+#define _ATL_NO_AUTOMATIC_NAMESPACE
+#define _WTL_NO_AUTOMATIC_NAMESPACE
+// Workaround against KB813540
+#include <atlbase_mozc.h>
+#include <atlcom.h>
+#include <msctf.h>
+
+#include <string>
+
+#include "base/util.h"
+#include "client/client_interface.h"
+#include "session/commands.pb.h"
+#include "win32/base/conversion_mode_util.h"
+#include "win32/base/input_state.h"
+#include "win32/base/string_util.h"
+#include "win32/tip/tip_composition_util.h"
+#include "win32/tip/tip_input_mode_manager.h"
+#include "win32/tip/tip_private_context.h"
+#include "win32/tip/tip_range_util.h"
+#include "win32/tip/tip_status.h"
+#include "win32/tip/tip_text_service.h"
+#include "win32/tip/tip_thread_context.h"
+#include "win32/tip/tip_ui_handler.h"
+
+namespace mozc {
+namespace win32 {
+namespace tsf {
+
+using ATL::CComBSTR;
+using ATL::CComPtr;
+using ATL::CComQIPtr;
+using ATL::CComVariant;
+using ::mozc::commands::Output;
+using ::mozc::commands::Preedit;
+using ::mozc::commands::Result;
+using ::mozc::commands::SessionCommand;
+using ::mozc::commands::Status;
+typedef ::mozc::commands::CompositionMode CompositionMode;
+typedef ::mozc::commands::Preedit::Segment Segment;
+typedef ::mozc::commands::Preedit::Segment::Annotation Annotation;
+
+namespace {
+
+HRESULT SetReadingProperties(ITfContext *context,
+                             ITfRange *range,
+                             const string &reading_string_utf8,
+                             TfEditCookie write_cookie) {
+  HRESULT result = S_OK;
+
+  // Get out the reading property
+  CComPtr<ITfProperty> reading_property;
+  result = context->GetProperty(GUID_PROP_READING, &reading_property);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  const wstring &canonical_reading_string =
+      StringUtil::KeyToReading(reading_string_utf8);
+  CComVariant reading(CComBSTR(canonical_reading_string.c_str()));
+  result = reading_property->SetValue(write_cookie, range, &reading);
+  if (FAILED(result)) {
+    return result;
+  }
+  return result;
+}
+
+HRESULT ClearReadingProperties(ITfContext *context,
+                               ITfRange *range,
+                               TfEditCookie write_cookie) {
+  HRESULT result = S_OK;
+
+  // Get out the reading property
+  CComPtr<ITfProperty> reading_property;
+  result = context->GetProperty(GUID_PROP_READING, &reading_property);
+  if (FAILED(result)) {
+    return result;
+  }
+  // Clear existing attributes.
+  result = reading_property->Clear(write_cookie, range);
+  if (FAILED(result)) {
+    return result;
+  }
+  return result;
+}
+
+CComPtr<ITfComposition> CreateCompositioin(TipTextService *text_service,
+                                           ITfContext *context,
+                                           TfEditCookie write_cookie) {
+  CComQIPtr<ITfContextComposition> composition_context = context;
+  if (!composition_context) {
+    return nullptr;
+  }
+  TfActiveSelEnd sel_end = TF_AE_NONE;
+  CComQIPtr<ITfInsertAtSelection> insert_selection = context;
+  if (!insert_selection) {
+    return nullptr;
+  }
+  CComPtr<ITfRange> insertion_pos;
+  if (FAILED(insert_selection->InsertTextAtSelection(
+          write_cookie, TF_IAS_QUERYONLY, nullptr, 0, &insertion_pos))) {
+    return nullptr;
+  }
+  CComPtr<ITfComposition> composition;
+  if (FAILED(composition_context->StartComposition(
+          write_cookie, insertion_pos,
+          text_service->CreateCompositionSink(context), &composition))) {
+    return nullptr;
+  }
+  return composition;
+}
+
+// Note: Committing a text is a tricky part in TSF/CUAS. Basically it should be
+// done as following steps.
+//   1. Create a composition (if not exists).
+//   2. Replace the text stored in the composition range with the text to be
+//      committed. Note that CUAS updates GCS_RESULTCLAUSE and
+//      GCS_RESULTREADCLAUSE by using the segment structure of GUID_PROP_READING
+//      property. For example, CUAS generates two segments for the following
+//      reading text structure.
+//        "今日は(きょうは)/晴天(せいてん)"
+//   3. Call ITfComposition::ShiftStart to shrink the composition range. Note
+//      that the text that is pushed out from the composition range is
+//      interpreted as the "committed text".
+// See also b/8406545.
+CComPtr<ITfComposition> CommitText(TipTextService *text_service,
+                                   ITfContext *context,
+                                   TfEditCookie write_cookie,
+                                   CComPtr<ITfComposition> composition,
+                                   const Output &output) {
+  if (!composition) {
+    composition = CreateCompositioin(text_service, context, write_cookie);
+  }
+  if (!composition) {
+    return nullptr;
+  }
+
+  HRESULT result = S_OK;
+
+  CComPtr<ITfRange> composition_range;
+  result = composition->GetRange(&composition_range);
+  if (FAILED(result)) {
+    return nullptr;
+  }
+
+  wstring result_text;
+  Util::UTF8ToWide(output.result().value(), &result_text);
+
+  wstring composition_text;
+  TipRangeUtil::GetText(composition_range, write_cookie, &composition_text);
+
+  // Make sure that |composition_text| begins with |result_text| so that
+  // CUAS can generate an appropriate GCS_RESULTREADCLAUSE information.
+  // See b/8406545
+  if (composition_text.find(result_text) != 0) {
+    result = composition_range->SetText(
+        write_cookie, 0, result_text.c_str(), result_text.size());
+    if (FAILED(result)) {
+      return nullptr;
+    }
+    result = SetReadingProperties(context, composition_range,
+                                  output.result().key(), write_cookie);
+    if (FAILED(result)) {
+      return nullptr;
+    }
+  }
+
+  CComPtr<ITfRange> new_composition_start;
+  result = composition_range->Clone(&new_composition_start);
+  if (FAILED(result)) {
+    return nullptr;
+  }
+  LONG moved = 0;
+  result = new_composition_start->ShiftStart(
+      write_cookie, result_text.size(), &moved, nullptr);
+  if (FAILED(result)) {
+    return nullptr;
+  }
+  result = new_composition_start->Collapse(write_cookie, TF_ANCHOR_START);
+  if (FAILED(result)) {
+    return nullptr;
+  }
+  result = composition->ShiftStart(write_cookie, new_composition_start);
+  if (FAILED(result)) {
+    return nullptr;
+  }
+  return composition;
+}
+
+HRESULT UpdateComposition(TipTextService *text_service,
+                          ITfContext *context,
+                          CComPtr<ITfComposition> composition,
+                          TfEditCookie write_cookie,
+                          const Output &output) {
+  HRESULT result = S_OK;
+
+  // Clear composition
+  if (composition) {
+    CComPtr<ITfRange> composition_range;
+    result = composition->GetRange(&composition_range);
+    if (FAILED(result)) {
+      return result;
+    }
+    result = composition_range->SetText(write_cookie, 0, L"", 0);
+    if (FAILED(result)) {
+      return result;
+    }
+    result = ClearReadingProperties(context, composition_range, write_cookie);
+    if (FAILED(result)) {
+      return result;
+    }
+  }
+
+  if (!output.has_preedit()) {
+    if (composition) {
+      result = composition->EndComposition(write_cookie);
+      if (FAILED(result)) {
+        return result;
+      }
+    }
+    return S_OK;
+  }
+
+  DCHECK(output.has_preedit());
+
+  if (!composition) {
+    CComQIPtr<ITfInsertAtSelection> insert_selection = context;
+    if (!insert_selection) {
+      return E_FAIL;
+    }
+    CComPtr<ITfRange> insertion_pos;
+    result = insert_selection->InsertTextAtSelection(
+        write_cookie, TF_IAS_QUERYONLY, nullptr, 0, &insertion_pos);
+    if (FAILED(result)) {
+      return result;
+    }
+    composition = CreateCompositioin(text_service, context, write_cookie);
+  }
+  if (!composition) {
+    return E_FAIL;
+  }
+  CComPtr<ITfRange> composition_range;
+  result = composition->GetRange(&composition_range);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  const Preedit &preedit = output.preedit();
+  const wstring &preedit_text = StringUtil::ComposePreeditText(preedit);
+  result = composition_range->SetText(
+      write_cookie, 0, preedit_text.c_str(), preedit_text.size());
+  if (FAILED(result)) {
+    return result;
+  }
+
+  // Get out the display attribute property
+  CComPtr<ITfProperty> display_attribute;
+  result = context->GetProperty(GUID_PROP_ATTRIBUTE, &display_attribute);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  // Get out the reading property
+  CComPtr<ITfProperty> reading_property;
+  result = context->GetProperty(GUID_PROP_READING, &reading_property);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  // Set each segment's display attribute
+  int start = 0;
+  int end = 0;
+  for (int i = 0; i < preedit.segment_size(); ++i) {
+    const Preedit::Segment &segment = preedit.segment(i);
+    end = start + Util::WideCharsLen(segment.value());
+    const Preedit::Segment::Annotation &annotation =
+      segment.annotation();
+    TfGuidAtom attribute = TF_INVALID_GUIDATOM;
+    if (annotation == Preedit::Segment::UNDERLINE) {
+      attribute = text_service->input_attribute();
+    } else if (annotation == Preedit::Segment::HIGHLIGHT) {
+      attribute = text_service->converted_attribute();
+    } else {  // mozc::commands::Preedit::Segment::NONE or unknown value
+      continue;
+    }
+
+    CComPtr<ITfRange> segment_range;
+    result = composition_range->Clone(&segment_range);
+    if (FAILED(result)) {
+      return result;
+    }
+    result = segment_range->Collapse(write_cookie, TF_ANCHOR_START);
+    if (FAILED(result)) {
+      return result;
+    }
+    LONG shift = 0;
+    result = segment_range->ShiftEnd(write_cookie, end, &shift, nullptr);
+    if (FAILED(result)) {
+      return result;
+    }
+    result = segment_range->ShiftStart(write_cookie, start, &shift, nullptr);
+    if (FAILED(result)) {
+      return result;
+    }
+    CComVariant var;
+    // set the value over the range
+    var.vt = VT_I4;
+    var.lVal = attribute;
+    result = display_attribute->SetValue(write_cookie, segment_range, &var);
+    if (segment.has_key()) {
+      const wstring &reading_string = StringUtil::KeyToReading(segment.key());
+      CComVariant reading(CComBSTR(reading_string.c_str()));
+      result = reading_property->SetValue(
+          write_cookie, segment_range, &reading);
+    }
+    start = end;
+  }
+
+  // Update cursor.
+  {
+    string preedit_text;
+    for (int i = 0; i < preedit.segment_size(); ++i) {
+      preedit_text += preedit.segment(i).value();
+    }
+
+    CComPtr<ITfRange> cursor_range;
+    result = composition_range->Clone(&cursor_range);
+    if (FAILED(result)) {
+      return result;
+    }
+    // |output.preedit().cursor()| is in the unit of UTF-32. We need to convert
+    // it to UTF-16 for TSF.
+    const uint32 cursor_pos_utf16 = Util::WideCharsLen(Util::SubString(
+        preedit_text, 0, preedit.cursor()));
+
+    result = cursor_range->Collapse(write_cookie, TF_ANCHOR_START);
+    if (FAILED(result)) {
+      return result;
+    }
+    LONG shift = 0;
+    result = cursor_range->ShiftEnd(
+        write_cookie, cursor_pos_utf16, &shift, nullptr);
+    if (FAILED(result)) {
+      return result;
+    }
+    result = cursor_range->ShiftStart(
+        write_cookie, cursor_pos_utf16, &shift, nullptr);
+    if (FAILED(result)) {
+      return result;
+    }
+    result = TipRangeUtil::SetSelection(
+        context, write_cookie, cursor_range, TF_AE_END);
+  }
+  return result;
+}
+
+HRESULT DoEditSessionImpl(TipTextService *text_service,
+                          ITfContext *context,
+                          TfEditCookie write_cookie,
+                          const Output &output) {
+  HRESULT result = S_OK;
+
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  if (private_context != nullptr) {
+    private_context->mutable_last_output()->CopyFrom(output);
+    if (output.has_status()) {
+      const Status &status = output.status();
+      TipInputModeManager *input_mode_manager =
+          text_service->GetThreadContext()->GetInputModeManager();
+      const TipInputModeManager::NotifyActionSet action_set =
+          input_mode_manager->OnReceiveCommand(status.activated(),
+                                               status.comeback_mode(),
+                                               status.mode());
+      if ((action_set & TipInputModeManager::kNotifySystemOpenClose) ==
+          TipInputModeManager::kNotifySystemOpenClose) {
+        TipStatus::SetIMEOpen(text_service->GetThreadManager(),
+                              text_service->GetClientID(),
+                              input_mode_manager->GetEffectiveOpenClose());
+      }
+      if ((action_set & TipInputModeManager::kNotifySystemConversionMode) ==
+          TipInputModeManager::kNotifySystemConversionMode) {
+        const CompositionMode mozc_mode = static_cast<CompositionMode>(
+            input_mode_manager->GetEffectiveConversionMode());
+        uint32 native_mode = 0;
+        if (ConversionModeUtil::ToNativeMode(
+                mozc_mode,
+                private_context->input_behavior().prefer_kana_input,
+                &native_mode)) {
+          TipStatus::SetInputModeConversion(text_service->GetThreadManager(),
+                                            text_service->GetClientID(),
+                                            native_mode);
+        }
+      }
+    }
+  }
+
+  CComPtr<ITfComposition> composition = CComQIPtr<ITfComposition>(
+      TipCompositionUtil::GetComposition(context, write_cookie));
+
+  // Clear the display attributes first.
+  if (composition) {
+    result = TipCompositionUtil::ClearDisplayAttributes(
+        context, composition, write_cookie);
+    if (FAILED(result)) {
+      return result;
+    }
+  }
+
+  if (output.has_result()) {
+    CComPtr<ITfComposition> new_composition = CommitText(
+        text_service, context, write_cookie, composition, output);
+    composition = new_composition;
+    if (!new_composition) {
+      return E_FAIL;
+    }
+  }
+
+  return UpdateComposition(
+      text_service, context, composition, write_cookie, output);
+}
+
+HRESULT OnEndEditImpl(TipTextService *text_service,
+                      ITfContext *context,
+                      TfEditCookie write_cookie,
+                      ITfEditRecord *edit_record,
+                      bool *update_ui) {
+  bool dummy_bool = false;
+  if (update_ui == nullptr) {
+    update_ui = &dummy_bool;
+  }
+  *update_ui = false;
+
+  HRESULT result = S_OK;
+
+  {
+    CComPtr<ITfRange> selection_range;
+    TfActiveSelEnd active_sel_end = TF_AE_NONE;
+    result = TipRangeUtil::GetDefaultSelection(
+        context, write_cookie, &selection_range, &active_sel_end);
+    if (FAILED(result)) {
+        return result;
+    }
+    vector<InputScope> input_scopes;
+    result = TipRangeUtil::GetInputScopes(
+        selection_range, write_cookie, &input_scopes);
+    TipInputModeManager *input_mode_manager =
+        text_service->GetThreadContext()->GetInputModeManager();
+    const auto actions = input_mode_manager->OnChangeInputScope(input_scopes);
+    if (actions == TipInputModeManager::kUpdateUI) {
+      *update_ui = true;
+    }
+    // If the indicator is visible, update UI just in case.
+    if (input_mode_manager->IsIndicatorVisible()) {
+      *update_ui = true;
+    }
+  }
+
+  CComPtr<ITfCompositionView> composition_view =
+    TipCompositionUtil::GetComposition(context, write_cookie);
+  if (!composition_view) {
+    // If there is no composition, nothing to check.
+    return S_OK;
+  }
+  CComPtr<ITfComposition> composition;
+  result = composition_view.QueryInterface(&composition);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  if (!composition) {
+    // Nothing to do.
+    return S_OK;
+  }
+
+  CComPtr<ITfRange> composition_range;
+  result = composition->GetRange(&composition_range);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  BOOL selection_changed = FALSE;
+  result = edit_record->GetSelectionStatus(&selection_changed);
+  if (FAILED(result)) {
+    return result;
+  }
+  if (selection_changed) {
+    // When the selection is changed, make sure the new selection range is
+    // covered by the composition range. Otherwise, terminate the composition.
+    CComPtr<ITfRange> selected_range;
+    TfActiveSelEnd active_sel_end = TF_AE_NONE;
+    result = TipRangeUtil::GetDefaultSelection(
+        context, write_cookie, &selected_range, &active_sel_end);
+    if (FAILED(result)) {
+      return result;
+    }
+    if (!TipRangeUtil::IsRangeCovered(
+            write_cookie, selected_range, composition_range)) {
+      if (!TipEditSessionImpl::OnCompositionTerminated(
+              text_service, context, composition, write_cookie)) {
+        return E_FAIL;
+      }
+      // Cancels further operations.
+      return S_OK;
+    }
+  }
+
+  BOOL is_empty = FALSE;
+  result = composition_range->IsEmpty(write_cookie, &is_empty);
+  if (FAILED(result)) {
+    return result;
+  }
+  if (is_empty) {
+    // When the composition range is empty, we assume the composition is
+    // canceled by the application or something. Actually CUAS does this
+    // when it receives NI_COMPOSITIONSTR/CPS_CANCEL. You can see this as
+    // Excel's auto-completion. If this happens, send REVERT command to
+    // the server to keep the state consistent. See b/1793331 for details.
+    if (!TipEditSessionImpl::OnCompositionReverted(
+            text_service, context, composition, write_cookie)) {
+      return E_FAIL;
+    }
+  }
+  return S_OK;
+}
+
+}  // namespace
+
+HRESULT TipEditSessionImpl::UpdateContext(
+    TipTextService *text_service,
+    ITfContext *context,
+    TfEditCookie write_cookie,
+    const commands::Output &output) {
+  const HRESULT result = DoEditSessionImpl(
+      text_service, context, write_cookie, output);
+  UpdateUI(text_service, context, write_cookie);
+  return result;
+}
+
+bool TipEditSessionImpl::OnCompositionReverted(TipTextService *text_service,
+                                               ITfContext *context,
+                                               ITfComposition *composition,
+                                               TfEditCookie write_cookie) {
+  // Ignore any error.
+  TipCompositionUtil::ClearDisplayAttributes(
+      context, composition, write_cookie);
+
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  if (!private_context) {
+    return false;
+  }
+
+  Output output;
+  SessionCommand command;
+  command.set_type(SessionCommand::REVERT);
+  if (!private_context->GetClient()->SendCommand(command, &output)) {
+    return false;
+  }
+
+  return SUCCEEDED(UpdateContext(text_service, context, write_cookie, output));
+}
+
+bool TipEditSessionImpl::OnCompositionTerminated(TipTextService *text_service,
+                                                 ITfContext *context,
+                                                 ITfComposition *composition,
+                                                 TfEditCookie write_cookie) {
+  if (!composition) {
+    return false;
+  }
+  // Ignore any error.
+  TipCompositionUtil::ClearDisplayAttributes(
+      context, composition, write_cookie);
+
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  if (!private_context) {
+    return false;
+  }
+  Output output;
+  SessionCommand command;
+  command.set_type(SessionCommand::SUBMIT);
+  if (!private_context->GetClient()->SendCommand(command, &output)) {
+    return false;
+  }
+  return SUCCEEDED(UpdateContext(text_service, context, write_cookie, output));
+}
+
+HRESULT TipEditSessionImpl::OnEndEdit(TipTextService *text_service,
+                                      ITfContext *context,
+                                      TfEditCookie write_cookie,
+                                      ITfEditRecord *edit_record) {
+  bool update_ui = false;
+  const HRESULT result = OnEndEditImpl(
+      text_service, context, write_cookie, edit_record, &update_ui);
+  if (update_ui) {
+    TipEditSessionImpl::UpdateUI(text_service, context, write_cookie);
+  }
+  return result;
+}
+
+void TipEditSessionImpl::UpdateUI(TipTextService *text_service,
+                                  ITfContext *context,
+                                  TfEditCookie read_cookie) {
+  TipUiHandler::Update(text_service, context, read_cookie);
+}
+
+}  // namespace tsf
+}  // namespace win32
+}  // namespace mozc

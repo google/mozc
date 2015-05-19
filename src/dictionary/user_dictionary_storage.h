@@ -62,7 +62,8 @@
 #define MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 
 namespace mozc {

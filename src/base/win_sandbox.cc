@@ -36,14 +36,16 @@
 #include <sddl.h>
 #include <strsafe.h>
 
+#include <memory>
 #include <string>
 
 #include "base/base.h"
 #include "base/logging.h"
 #include "base/scoped_handle.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
+
+using std::unique_ptr;
 
 namespace mozc {
 namespace {
@@ -353,13 +355,13 @@ wstring Sid::GetAccountName() const {
       // Use string SID instead.
       return GetName();
     }
-    scoped_array<wchar_t> name_buffer(new wchar_t[name_size]);
+    unique_ptr<wchar_t[]> name_buffer(new wchar_t[name_size]);
     ::LookupAccountSid(nullptr, temp_sid.GetPSID(), name_buffer.get(),
                        &name_size, nullptr, &domain_name_size, &name_use);
     return wstring(L"/") + name_buffer.get();
   }
-  scoped_array<wchar_t> name_buffer(new wchar_t[name_size]);
-  scoped_array<wchar_t> domain_name_buffer(new wchar_t[domain_name_size]);
+  unique_ptr<wchar_t[]> name_buffer(new wchar_t[name_size]);
+  unique_ptr<wchar_t[]> domain_name_buffer(new wchar_t[domain_name_size]);
   ::LookupAccountSid(nullptr, temp_sid.GetPSID(), name_buffer.get(), &name_size,
                      domain_name_buffer.get(), &domain_name_size, &name_use);
   const wstring domain_name = wstring(domain_name_buffer.get());
@@ -541,7 +543,7 @@ class LockedDownJob {
   DISALLOW_COPY_AND_ASSIGN(LockedDownJob);
 };
 
-bool CreateSuspendedRestrictedProcess(scoped_array<wchar_t> *command_line,
+bool CreateSuspendedRestrictedProcess(unique_ptr<wchar_t[]> *command_line,
                                       const WinSandbox::SecurityInfo &info,
                                       ScopedHandle *process_handle,
                                       ScopedHandle *thread_handle,
@@ -657,7 +659,7 @@ bool CreateSuspendedRestrictedProcess(scoped_array<wchar_t> *command_line,
   return true;
 }
 
-bool SpawnSandboxedProcessImpl(scoped_array<wchar_t> *command_line,
+bool SpawnSandboxedProcessImpl(unique_ptr<wchar_t[]> *command_line,
                                 const WinSandbox::SecurityInfo &info,
                                 DWORD *pid) {
   LockedDownJob job;
@@ -713,7 +715,7 @@ bool WinSandbox::SpawnSandboxedProcess(const string &path,
     wpath += warg;
   }
 
-  scoped_array<wchar_t> wpath2(new wchar_t[wpath.size() + 1]);
+  unique_ptr<wchar_t[]> wpath2(new wchar_t[wpath.size() + 1]);
   if (0 != wcscpy_s(wpath2.get(), wpath.size() + 1, wpath.c_str())) {
     return false;
   }
@@ -788,7 +790,7 @@ class ScopedTokenInfo {
     return get();
   }
  private:
-  scoped_array<BYTE> buffer_;
+  unique_ptr<BYTE[]> buffer_;
   bool initialized_;
 };
 
@@ -953,7 +955,7 @@ bool CreateRestrictedTokenImpl(HANDLE effective_token,
     return true;
   }
 
-  scoped_array<SID_AND_ATTRIBUTES> sids_to_disable_array;
+  unique_ptr<SID_AND_ATTRIBUTES[]> sids_to_disable_array;
   vector<Sid> sids_to_disable_array_buffer = sids_to_disable;
   {
     const size_t size = sids_to_disable.size();
@@ -967,7 +969,7 @@ bool CreateRestrictedTokenImpl(HANDLE effective_token,
     }
   }
 
-  scoped_array<LUID_AND_ATTRIBUTES> privileges_to_disable_array;
+  unique_ptr<LUID_AND_ATTRIBUTES[]> privileges_to_disable_array;
   {
     const size_t size = privileges_to_disable.size();
     if (size > 0) {
@@ -979,7 +981,7 @@ bool CreateRestrictedTokenImpl(HANDLE effective_token,
     }
   }
 
-  scoped_array<SID_AND_ATTRIBUTES> sids_to_restrict_array;
+  unique_ptr<SID_AND_ATTRIBUTES[]> sids_to_restrict_array;
   vector<Sid> sids_to_restrict_array_buffer = sids_to_restrict;
   {
     const size_t size = sids_to_restrict.size();

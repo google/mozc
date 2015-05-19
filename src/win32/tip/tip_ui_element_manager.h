@@ -33,8 +33,9 @@
 #include <Windows.h>
 #include <msctf.h>
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace win32 {
@@ -48,6 +49,7 @@ class TipUiElementManager {
     kNoneWindow = 0,
     kSuggestWindow = 1 << 0,
     kCandidateWindow = 1 << 1,
+    kIndicatorWindow = 1 << 2,
   };
   TipUiElementManager();
   ~TipUiElementManager();
@@ -60,7 +62,7 @@ class TipUiElementManager {
 
  private:
   class UiElementMap;
-  scoped_ptr<UiElementMap> ui_element_map_;
+  std::unique_ptr<UiElementMap> ui_element_map_;
 
   DISALLOW_COPY_AND_ASSIGN(TipUiElementManager);
 };

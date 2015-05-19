@@ -31,8 +31,8 @@
 
 #include <map>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 
 namespace mozc {

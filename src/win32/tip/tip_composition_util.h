@@ -53,20 +53,10 @@ class TipCompositionUtil {
   static ATL::CComPtr<ITfCompositionView> GetComposition(
       ATL::CComPtr<ITfContext> context, TfEditCookie edit_cookie);
 
-  // Removes display attributes and reading properties from |composition|.
-  // Returns the result.
-  static HRESULT ClearProperties(ITfContext *context,
-                                 ITfComposition *composition,
-                                 TfEditCookie write_cookie);
-
-  // Does post-edit status checking for composition (if exists). For example,
-  // when the composition is cancelled by the application, this method sends
-  // REVERT message to the server so that the status is kept to be consistent.
-  static HRESULT OnEndEdit(TipTextService *text_service,
-                           ITfContext *context,
-                           ITfComposition *composition,
-                           TfEditCookie edit_cookie,
-                           ITfEditRecord *edit_record);
+  // Removes display attributes from |composition|. Returns the result.
+  static HRESULT ClearDisplayAttributes(ITfContext *context,
+                                        ITfComposition *composition,
+                                        TfEditCookie write_cookie);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipCompositionUtil);

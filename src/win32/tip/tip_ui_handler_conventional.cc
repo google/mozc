@@ -41,11 +41,18 @@
 #include "base/util.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/win32/win32_renderer_client.h"
+#include "win32/base/conversion_mode_util.h"
+#include "win32/base/indicator_visibility_tracker.h"
+#include "win32/base/input_state.h"
 #include "win32/base/migration_util.h"
 #include "win32/tip/tip_composition_util.h"
+#include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
+#include "win32/tip/tip_range_util.h"
 #include "win32/tip/tip_ref_count.h"
+#include "win32/tip/tip_status.h"
 #include "win32/tip/tip_text_service.h"
+#include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_element_conventional.h"
 #include "win32/tip/tip_ui_element_manager.h"
 
@@ -57,10 +64,12 @@ namespace {
 
 using ATL::CComPtr;
 using ATL::CComQIPtr;
+using ::mozc::commands::CompositionMode;
 using ::mozc::commands::Preedit;
 using ::mozc::renderer::win32::Win32RendererClient;
 typedef ::mozc::commands::Preedit_Segment Segment;
 typedef ::mozc::commands::Preedit_Segment::Annotation Annotation;
+typedef ::mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
 typedef ::mozc::commands::RendererCommand RendererCommand;
 typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 
@@ -280,6 +289,86 @@ bool FillCharPosition(TipPrivateContext *private_context,
   return true;
 }
 
+bool FillCharPositionFromCaret(TipPrivateContext *private_context,
+                               ITfContext *context,
+                               TfEditCookie read_cookie,
+                               ApplicationInfo *app_info) {
+  if (private_context == nullptr) {
+    return false;
+  }
+
+  if (!app_info->has_target_window_handle()) {
+    return false;
+  }
+
+  const HWND window_handle =
+      reinterpret_cast<HWND>(app_info->target_window_handle());
+
+  CComPtr<ITfRange> selection_range;
+  TfActiveSelEnd sel_end = TF_AE_NONE;
+  if (FAILED(TipRangeUtil::GetDefaultSelection(
+          context, read_cookie, &selection_range, &sel_end))) {
+    return false;
+  }
+
+  CComPtr<ITfRange> target_range;
+  if (FAILED(selection_range->Clone(&target_range))) {
+    return false;
+  }
+  if (!target_range) {
+    return false;
+  }
+
+  const commands::Output &output = private_context->last_output();
+  LONG shifted = 0;
+  if (FAILED(target_range->Collapse(read_cookie, TF_ANCHOR_START))) {
+    return false;
+  }
+  const size_t target_pos = GetTargetPos(output);
+  if (FAILED(target_range->ShiftStart(
+          read_cookie, target_pos, &shifted, nullptr))) {
+    return false;
+  }
+  if (FAILED(target_range->ShiftEnd(
+          read_cookie, target_pos + 1, &shifted, nullptr))) {
+    return false;
+  }
+
+  CComPtr<ITfContextView> context_view;
+  if (FAILED(context->GetActiveView(&context_view)) || !context_view) {
+    return false;
+  }
+
+  RECT document_rect = {};
+  if (FAILED(context_view->GetScreenExt(&document_rect))) {
+    return false;
+  }
+
+  RECT text_rect = {};
+  BOOL clipped = FALSE;
+  if (FAILED(context_view->GetTextExt(read_cookie, target_range,
+                                      &text_rect, &clipped))) {
+    return false;
+  }
+
+  RendererCommand::Point *top_left=
+      app_info->mutable_composition_target()->mutable_top_left();
+  top_left->set_x(text_rect.left);
+  top_left->set_y(text_rect.top);
+  app_info->mutable_composition_target()->set_position(0);
+  app_info->mutable_composition_target()->set_line_height(
+      text_rect.bottom - text_rect.top);
+
+  RendererCommand::Rectangle *area=
+      app_info->mutable_composition_target()->mutable_document_area();
+  area->set_left(document_rect.left);
+  area->set_top(document_rect.top);
+  area->set_right(document_rect.right);
+  area->set_bottom(document_rect.bottom);
+
+  return true;
+}
+
 void UpdateCommand(TipTextService *text_service,
                    ITfContext *context,
                    TfEditCookie read_cookie,
@@ -291,28 +380,47 @@ void UpdateCommand(TipTextService *text_service,
       text_service->GetPrivateContext(context);
   if (private_context != nullptr) {
     command->mutable_output()->CopyFrom(private_context->last_output());
+    private_context->GetUiElementManager()->OnUpdate(text_service, context);
   }
-  private_context->GetUiElementManager()->OnUpdate(text_service, context);
 
   ApplicationInfo *app_info = command->mutable_application_info();
   app_info->set_input_framework(ApplicationInfo::TSF);
   app_info->set_process_id(::GetCurrentProcessId());
   app_info->set_thread_id(::GetCurrentThreadId());
+  app_info->set_receiver_handle(
+      reinterpret_cast<int32>(text_service->renderer_callback_window_handle()));
 
-  // TODO(yukawa): Set app_info.receiver_handle to support mouse event.
   CComQIPtr<ITfUIElementMgr> ui_element_manager(
       text_service->GetThreadManager());
   FillVisibility(ui_element_manager, private_context, command);
   FillWindowHandle(context, app_info);
   FillCaretInfo(app_info);
-  FillCharPosition(private_context, context, read_cookie, app_info);
+  if (command->output().has_preedit()) {
+    FillCharPosition(private_context, context, read_cookie, app_info);
+  } else {
+    FillCharPositionFromCaret(private_context, context, read_cookie, app_info);
+  }
+
+  if (private_context != nullptr) {
+    const TipInputModeManager *input_mode_manager =
+        text_service->GetThreadContext()->GetInputModeManager();
+    if (private_context->input_behavior().use_mode_indicator &&
+        input_mode_manager->IsIndicatorVisible()) {
+      command->set_visible(true);
+      IndicatorInfo *info = app_info->mutable_indicator_info();
+      info->mutable_status()->set_activated(
+          input_mode_manager->GetEffectiveOpenClose());
+      info->mutable_status()->set_mode(static_cast<CompositionMode>(
+          input_mode_manager->GetEffectiveConversionMode()));
+    }
+  }
 }
 
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively read the date from the text store.
-class UpdateUiEditSession : public ITfEditSession {
+class UpdateUiEditSessionImpl : public ITfEditSession {
  public:
-  ~UpdateUiEditSession() {}
+  ~UpdateUiEditSessionImpl() {}
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -360,8 +468,8 @@ class UpdateUiEditSession : public ITfEditSession {
   static bool BeginRequest(TipTextService *text_service, ITfContext *context) {
     // When RequestEditSession fails, it does not maintain the reference count.
     // So we need to ensure that AddRef/Release should be called at least once
-    // per oject.
-    CComPtr<ITfEditSession> edit_session(new UpdateUiEditSession(
+    // per object.
+    CComPtr<ITfEditSession> edit_session(new UpdateUiEditSessionImpl(
         text_service, context));
 
     HRESULT edit_session_result = S_OK;
@@ -373,7 +481,8 @@ class UpdateUiEditSession : public ITfEditSession {
   }
 
  private:
-  UpdateUiEditSession(TipTextService *text_service, ITfContext *context)
+  UpdateUiEditSessionImpl(TipTextService *text_service,
+                          ITfContext *context)
       : text_service_(text_service),
         context_(context) {
   }
@@ -382,8 +491,44 @@ class UpdateUiEditSession : public ITfEditSession {
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
 
-  DISALLOW_COPY_AND_ASSIGN(UpdateUiEditSession);
+  DISALLOW_COPY_AND_ASSIGN(UpdateUiEditSessionImpl);
 };
+
+HRESULT OnUpdateLanguageBar(TipTextService *text_service,
+                            ITfDocumentMgr *document_manager) {
+  HRESULT result = S_OK;
+  ITfThreadMgr *thread_manager = text_service->GetThreadManager();
+
+  if (thread_manager == nullptr) {
+    return E_FAIL;
+  }
+
+  bool disabled = false;
+  {
+    if (document_manager == nullptr) {
+      // When |document_manager| is null, we should disable an IME like we
+      // disable it when ImmAssociateContext(window_handle, nullptr) is
+      // called.
+      disabled = true;
+    } else {
+      CComPtr<ITfContext> context;
+      result = document_manager->GetTop(&context);
+      if (SUCCEEDED(result)) {
+        disabled = TipStatus::IsDisabledContext(context);
+      }
+    }
+  }
+
+  const TipInputModeManager *input_mode_manager =
+      text_service->GetThreadContext()->GetInputModeManager();
+  const bool open = input_mode_manager->GetEffectiveOpenClose();
+  const CompositionMode mozc_mode =
+      open ? static_cast<CompositionMode>(
+                input_mode_manager->GetEffectiveConversionMode())
+           : commands::DIRECT;
+  text_service->UpdateLangbar(!disabled, static_cast<uint32>(mozc_mode));
+  return S_OK;
+}
 
 }  // namespace
 
@@ -398,6 +543,9 @@ ITfUIElement *TipUiHandlerConventional::CreateUI(TipUiHandler::UiType type,
     case TipUiHandler::kCandidateWindow:
       return TipUiElementConventional::New(
           TipUiElementConventional::kCandidateWindow, text_service, context);
+    case TipUiHandler::kIndicatorWindow:
+      return TipUiElementConventional::New(
+          TipUiElementConventional::KIndicatorWindow, text_service, context);
     default:
       return nullptr;
   }
@@ -409,7 +557,7 @@ void TipUiHandlerConventional::OnDestroyElement(ITfUIElement *element) {
   // Note that |element| will be destroyed by using ref count.
 }
 
-void TipUiHandlerConventional::OnActivate() {
+void TipUiHandlerConventional::OnActivate(TipTextService *text_service) {
   Win32RendererClient::EnsureUIThreadInitialized();
 
   static bool migrate_checked = false;
@@ -417,6 +565,12 @@ void TipUiHandlerConventional::OnActivate() {
     migrate_checked = true;
     MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8();
   }
+  ITfThreadMgr *thread_mgr = text_service->GetThreadManager();
+  CComPtr<ITfDocumentMgr> document;
+  if (FAILED(thread_mgr->GetFocus(&document))) {
+    return;
+  }
+  OnFocusChange(text_service, document);
 }
 
 void TipUiHandlerConventional::OnDeactivate() {
@@ -431,6 +585,8 @@ void TipUiHandlerConventional::OnFocusChange(
     command.set_type(RendererCommand::UPDATE);
     command.set_visible(false);
     Win32RendererClient::OnUpdated(command);
+    // Update the langbar.
+    OnUpdateLanguageBar(text_service, focused_document_manager);
     return;
   }
 
@@ -441,23 +597,26 @@ void TipUiHandlerConventional::OnFocusChange(
   if (!context) {
     return;
   }
-
-  UpdateUiEditSession::BeginRequest(text_service, context);
-}
-
-bool TipUiHandlerConventional::OnLayoutChange(TipTextService *text_service,
-                                              ITfContext *context,
-                                              TfLayoutCode layout_code,
-                                              ITfContextView *context_view) {
-  return UpdateUiEditSession::BeginRequest(text_service, context);
+  OnUpdateLanguageBar(text_service, focused_document_manager);
+  UpdateUiEditSessionImpl::BeginRequest(text_service, context);
 }
 
 bool TipUiHandlerConventional::Update(TipTextService *text_service,
                                       ITfContext *context,
                                       TfEditCookie read_cookie) {
   RendererCommand command;
+  const TipInputModeManager *input_mode_manager =
+      text_service->GetThreadContext()->GetInputModeManager();
+  const bool open = input_mode_manager->GetEffectiveOpenClose();
+  const CompositionMode mozc_mode = static_cast<CompositionMode>(
+      input_mode_manager->GetEffectiveConversionMode());
   UpdateCommand(text_service, context, read_cookie, &command);
   Win32RendererClient::OnUpdated(command);
+  if (open) {
+    text_service->UpdateLangbar(true, mozc_mode);
+  } else {
+    text_service->UpdateLangbar(true, commands::DIRECT);
+  }
   return true;
 }
 

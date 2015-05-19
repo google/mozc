@@ -34,7 +34,6 @@
 #include <QtCore/QObject>
 #include <QtGui/QItemDelegate>
 
-#include "base/base.h"
 
 namespace mozc {
 namespace gui {

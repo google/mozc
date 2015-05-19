@@ -31,7 +31,8 @@
 #define MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 
 #include <QtGui/QTableWidget>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "config/config.pb.h"
 
 namespace mozc {

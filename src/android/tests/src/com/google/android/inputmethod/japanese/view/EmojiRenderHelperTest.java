@@ -173,6 +173,8 @@ public class EmojiRenderHelperTest extends InstrumentationTestCaseWithMock {
   public void testSetEmojiProviderType() {
     View view = createViewMock(View.class);
     EmojiRenderHelper helper = new EmojiRenderHelper(view);
+    // Set provider to enforce internal update later.
+    helper.setEmojiProviderType(EmojiProviderType.values()[EmojiProviderType.values().length - 1]);
     EmojiDrawableFactory factory = createMockBuilder(EmojiDrawableFactory.class)
         .withConstructor(Resources.class)
         .withArgs(new MockResources())
@@ -190,10 +192,10 @@ public class EmojiRenderHelperTest extends InstrumentationTestCaseWithMock {
     }
 
     resetAll();
-    factory.setProviderType(null);
+    factory.setProviderType(EmojiProviderType.NONE);
     replayAll();
 
-    helper.setEmojiProviderType(null);
+    helper.setEmojiProviderType(EmojiProviderType.NONE);
 
     verifyAll();
 
@@ -201,7 +203,7 @@ public class EmojiRenderHelperTest extends InstrumentationTestCaseWithMock {
     resetAll();
     replayAll();
 
-    helper.setEmojiProviderType(null);
+    helper.setEmojiProviderType(EmojiProviderType.NONE);
 
     verifyAll();
   }
@@ -209,7 +211,7 @@ public class EmojiRenderHelperTest extends InstrumentationTestCaseWithMock {
   public void testIsSystemSupportedEmoji() {
     View view = createViewMock(View.class);
     EmojiRenderHelper helper = new EmojiRenderHelper(view);
-    helper.setEmojiProviderType(null);
+    helper.setEmojiProviderType(EmojiProviderType.NONE);
     assertFalse(helper.isSystemSupportedEmoji());
 
     // Docomo is system supported (see setUp and tearDown).
@@ -238,8 +240,8 @@ public class EmojiRenderHelperTest extends InstrumentationTestCaseWithMock {
     expectLastCall().anyTimes();
     replayAll();
 
-    // For null provider type, any value won't be rendered.
-    helper.setEmojiProviderType(null);
+    // For NONE provider type, any value won't be rendered.
+    helper.setEmojiProviderType(EmojiProviderType.NONE);
     assertFalse(
         helper.isRenderableEmoji(toString(EmojiDrawableFactory.MIN_EMOJI_PUA_CODE_POINT)));
 

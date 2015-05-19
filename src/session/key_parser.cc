@@ -170,6 +170,7 @@ class KeyParserData {
     keycode_map_["divide"] = KeyEvent::DIVIDE;
     keycode_map_["equals"] = KeyEvent::EQUALS;
     keycode_map_["comma"] = KeyEvent::COMMA;
+    keycode_map_["clear"] = KeyEvent::CLEAR;
   }
 
   SpecialKeysMap keycode_map_;
@@ -206,10 +207,10 @@ bool KeyParser::ParseKeyVector(const vector<string> &keys,
 
   for (size_t i = 0; i < keys.size(); ++i) {
     if (Util::CharsLen(keys[i]) == 1) {
-      const char *begin = keys[i].c_str();
-      size_t mblen = 0;
-      uint16 key_code = Util::UTF8ToUCS2(begin, begin + keys[i].size(), &mblen);
-      key_event->set_key_code(key_code);
+      char32 key_code = 0;
+      if (Util::SplitFirstChar32(keys[i], &key_code, NULL)) {
+        key_event->set_key_code(key_code);
+      }
     } else {
       string key = keys[i];
       Util::LowerString(&key);

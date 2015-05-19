@@ -34,8 +34,9 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/coordinates.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "composer/composer.h"
 #include "session/session_interface.h"
 #include "transliteration/transliteration.h"
@@ -139,7 +140,7 @@ class Session : public SessionInterface {
   bool MoveCursorToBeginning(mozc::commands::Command *command);
   bool MoveCursorTo(mozc::commands::Command *command);
   bool Convert(mozc::commands::Command *command);
-  // Start converion not using user history.  This is used for debugging.
+  // Start conversion not using user history.  This is used for debugging.
   bool ConvertWithoutHistory(mozc::commands::Command *command);
   bool ConvertNext(mozc::commands::Command *command);
   bool ConvertPrev(mozc::commands::Command *command);
@@ -305,6 +306,7 @@ class Session : public SessionInterface {
   // Commits without SessionConverter.
   void CommitCompositionDirectly(commands::Command *command);
   void CommitSourceTextDirectly(commands::Command *command);
+  void CommitRawTextDirectly(commands::Command *command);
   void CommitStringDirectly(const string &key, const string &preedit,
                             commands::Command *command);
 
@@ -316,7 +318,7 @@ class Session : public SessionInterface {
 
   // Commands like EditCancel should restore the original string used for
   // the reverse conversion without any modification.
-  // Returns true if the |source_text| is committed to calcel reconversion.
+  // Returns true if the |source_text| is committed to cancel reconversion.
   // Returns false if this function has nothing to do.
   bool TryCancelConvertReverse(mozc::commands::Command *command);
 
@@ -365,11 +367,14 @@ class Session : public SessionInterface {
   // AutoIMEConversion.
   bool CanStartAutoConversion(const mozc::commands::KeyEvent &key_event) const;
 
-  // Expand composition if required for nested calculation.
-  void ExpandCompositionForCalculator(mozc::commands::Command *command);
-
   // Stores received caret location into caret_rectangle_.
   bool SetCaretLocation(mozc::commands::Command *command);
+
+  // Handles KeyEvent::activated to support indirect IME on/off.
+  bool HandleIndirectImeOnOff(mozc::commands::Command *command);
+
+  // Commits the raw text of the composition.
+  bool CommitRawText(commands::Command *command);
 
   DISALLOW_COPY_AND_ASSIGN(Session);
 };

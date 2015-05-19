@@ -57,33 +57,20 @@ class TipStatus {
   // Returns true if the context state specified by |context| is empty.
   static bool IsEmptyContext(ITfContext *context);
 
-  // Returns true if TSF conversion mode is successfuly retrieved into |mode|.
+  // Returns true if TSF conversion mode is successfully retrieved into |mode|.
   static bool GetInputModeConversion(ITfThreadMgr *thread_mgr,
-                                     TfClientId client_id, DWORD *mode);
+                                     TfClientId client_id,
+                                     DWORD *mode);
 
   // Returns true if TSF keyboard open/closed mode is updated.
-  static bool SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
+  static bool SetIMEOpen(ITfThreadMgr *thread_mgr,
+                         TfClientId client_id,
                          bool open);
 
-  // Returns true if TSF keyboard open/close mode and conversion mode are
-  // updated. |is_kana_input_preferred| should be true if Kana input style is
-  // preferred in Hiragana/Katakana mode.
-  // |mozc_composition_mode| is a conversion mode defined as
-  // commands::CompositionMode but declared as DWORD to avoid dependency on
-  // auto generated header files.
-  static bool UpdateFromMozcMode(ITfThreadMgr *thread_mgr,
-                                 DWORD client_id,
-                                 bool is_kana_input_preferred,
-                                 DWORD mozc_composition_mode);
-
-  // Returns true if TSF keyboard open/close mode and conversion mode are
-  // updated. |is_kana_input_preferred| should be true if Kana input style is
-  // preferred in Hiragana/Katakana mode. |status| is the next status
-  // returned from the server.
-  static bool UpdateFromMozcStatus(ITfThreadMgr *thread_mgr,
-                                   DWORD client_id,
-                                   bool is_kana_input_preferred,
-                                   const commands::Status &status);
+  // Returns true if TSF conversion mode is updated.
+  static bool SetInputModeConversion(ITfThreadMgr *thread_mgr,
+                                     DWORD client_id,
+                                     DWORD native_mode);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipStatus);

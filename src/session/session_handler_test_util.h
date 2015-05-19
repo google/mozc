@@ -137,13 +137,17 @@ class TestSessionClient {
   bool UndoOrRewind(commands::Output *output);
   bool SwitchInputMode(commands::CompositionMode composition_mode);
   bool SetRequest(const commands::Request &request, commands::Output *output);
+  void SetCallbackText(const string &text);
 
  private:
   bool EvalCommand(commands::Input *input, commands::Output *output);
+  bool EvalCommandInternal(commands::Input *input, commands::Output *output,
+                           bool allow_callback);
 
   uint64 id_;
   scoped_ptr<SessionObserverInterface> usage_observer_;
   scoped_ptr<SessionHandlerInterface> handler_;
+  string callback_text_;
 };
 
 }  // namespace testing

@@ -31,6 +31,8 @@
 #define MOZC_REWRITER_SYMBOL_REWRITER_H_
 
 #include <string>
+
+#include "base/scoped_ptr.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 // for FRIEND_TEST()

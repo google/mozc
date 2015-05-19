@@ -32,13 +32,13 @@
 #include <SoftPub.h>
 #include <Wintrust.h>
 
+#include <memory>
 #include <sstream>
 #include <string>
 
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/run_level.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -51,6 +51,8 @@
 namespace mozc {
 namespace win32 {
 namespace {
+
+using std::unique_ptr;
 
 const int kErrorLevelSuccess = 0;
 const int kErrorLevelGeneralError = 1;
@@ -157,14 +159,14 @@ int RunPrelaunchProcesses(int argc, char *argv[]) {
   }
 
   {
-    scoped_ptr<client::ClientInterface> converter_client(
+    unique_ptr<client::ClientInterface> converter_client(
         client::ClientFactory::NewClient());
     converter_client->set_suppress_error_dialog(true);
     converter_client->EnsureConnection();
   }
 
   {
-    scoped_ptr<renderer::RendererClient> renderer_client(
+    unique_ptr<renderer::RendererClient> renderer_client(
         new mozc::renderer::RendererClient);
     renderer_client->set_suppress_error_dialog(true);
     renderer_client->Activate();

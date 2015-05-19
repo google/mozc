@@ -39,6 +39,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus.Status;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryStorage;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.net.Uri;
 
@@ -50,13 +51,13 @@ import java.util.zip.ZipFile;
  */
 public class UserDictionaryToolModel {
   private final SessionExecutor sessionExecutor;
-  private long sessionId;
+  @VisibleForTesting long sessionId;
 
-  private UserDictionaryStorage storage = null;
-  private long selectedDictionaryId = 0;
+  @VisibleForTesting UserDictionaryStorage storage = null;
+  @VisibleForTesting long selectedDictionaryId = 0;
 
   // TODO(hidehiko): Move this bit into the server side.
-  private boolean dirty = false;
+  @VisibleForTesting boolean dirty = false;
 
   // Unfortunately our target API level 7 doesn't support to passing any arguments to the dialog.
   // Thus, as a workaround, we relay the edit target entry's index by this model.

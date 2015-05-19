@@ -55,10 +55,38 @@ import java.util.Set;
  *
  */
 public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
+
+  @SmallTest
+  public void testIsPrintable() {
+    int[] printables = {'a', ' ', '猫', '☀'};
+    int[] nonPrintables = {'\t', '\n', '\0', '\uFFFF'};
+
+    for (int codepoint : printables) {
+      assertTrue(String.format("%d is printable.", codepoint),
+                 HardwareKeyboardSpecification.isPrintable(codepoint));
+    }
+    for (int codepoint : nonPrintables) {
+      assertFalse(String.format("%d is not printable.", codepoint),
+                 HardwareKeyboardSpecification.isPrintable(codepoint));
+    }
+  }
+
   @SmallTest
   public void testDefaultConverter() {
     HardwareKeyboadSpecificationInterface keyboardSpecification =
         HardwareKeyboardSpecification.DEFAULT;
+
+    class KeyEventMock extends KeyEvent {
+      private int unicode;
+      KeyEventMock(int action, int keycode, int meta, int unicode) {
+        super(0, 0, action, keycode, 0, meta);
+        this.unicode = unicode;
+      }
+      @Override
+      public int getUnicodeChar() {
+        return unicode;
+      }
+    }
 
     assertTrue(keyboardSpecification.isKeyToConsume(new KeyEvent(0, 0)));
 
@@ -95,24 +123,25 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
     }
 
     {
-      KeyEvent keyEvent = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A, 0,
-                                       KeyEvent.META_SHIFT_ON);
+      KeyEvent keyEvent = new KeyEventMock(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A,
+                                           KeyEvent.META_SHIFT_ON, 'A');
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertEquals(keyEvent.getUnicodeChar(), mozcKeyEvent.getKeyCode());
-      assertEquals(1, mozcKeyEvent.getModifierKeysCount());
-      assertEquals(ModifierKey.SHIFT, mozcKeyEvent.getModifierKeys(0));
+      // shift+a is printable ('A') so no modifier shouldn't be sent.
+      assertEquals(0, mozcKeyEvent.getModifierKeysCount());
 
       KeyEventInterface keyEventInterface = keyboardSpecification.getKeyEventInterface(keyEvent);
       assertEquals(keyEvent, keyEventInterface.getNativeEvent());
     }
 
     {
-      KeyEvent keyEvent = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A, 0,
-                                       KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON);
+      KeyEvent keyEvent = new KeyEventMock(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A,
+                                           KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON, 0);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertEquals(keyEvent.getUnicodeChar(), mozcKeyEvent.getKeyCode());
+      // shift+alt+a is not printable so modifier should be sent.
       HashSet<ModifierKey> expected = new HashSet<ProtoCommands.KeyEvent.ModifierKey>();
       expected.add(ModifierKey.SHIFT);
       expected.add(ModifierKey.ALT);
@@ -124,12 +153,13 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
     }
 
     {
-      KeyEvent keyEvent = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A, 0,
-                                       KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON |
-                                           KeyEvent.META_CTRL_ON);
+      KeyEvent keyEvent = new KeyEventMock(
+          KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A,
+          KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON | KeyEvent.META_CTRL_ON, 0);
 
       ProtoCommands.KeyEvent mozcKeyEvent = keyboardSpecification.getMozcKeyEvent(keyEvent);
       assertEquals(keyEvent.getUnicodeChar(), mozcKeyEvent.getKeyCode());
+      // shift+ctrl+alt+a is not printable so modifier should be sent.
       HashSet<ModifierKey> expected = new HashSet<ProtoCommands.KeyEvent.ModifierKey>();
       expected.add(ModifierKey.SHIFT);
       expected.add(ModifierKey.ALT);
@@ -289,7 +319,7 @@ public class HardwareKeyboardSpecificationTest extends InstrumentationTestCase {
 
         new TestData(0x01, 0, 0, SpecialKey.ESCAPE, noModifierKeys, null),
         new TestData(0x01, KeyEvent.META_SHIFT_ON, 0, SpecialKey.ESCAPE, shiftModified, null),
-        new TestData(0x01, KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON, 0, 
+        new TestData(0x01, KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON, 0,
                      SpecialKey.ESCAPE, shiftAltModified, null),
         new TestData(0x01, KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON | KeyEvent.META_CTRL_ON, 0,
                      SpecialKey.ESCAPE, shiftAltCtrlModified, null),

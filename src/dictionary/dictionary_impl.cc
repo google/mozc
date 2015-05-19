@@ -114,6 +114,19 @@ Node *DictionaryImpl::LookupReverse(const char *str, int size,
   return LookupInternal(str, size, REVERSE, Limit(), allocator);
 }
 
+bool DictionaryImpl::LookupComment(StringPiece key, StringPiece value,
+                                   string *comment) const {
+  // TODO(komatsu): UserDictionary should be treated as the highest priority.
+  // In the current implementation, UserDictionary is the last node of dics_,
+  // but the only dictionary which may return true.
+  for (size_t i = 0; i < dics_.size(); ++i) {
+    if (dics_[i]->LookupComment(key, value, comment)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool DictionaryImpl::Reload() {
   return user_dictionary_->Reload();
 }

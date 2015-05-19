@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "base/logging.h"
 #include "data_manager/testing/mock_user_pos_manager.h"

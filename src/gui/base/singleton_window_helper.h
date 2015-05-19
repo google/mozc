@@ -46,8 +46,8 @@
 
 #include <string>
 
-#include "base/base.h"
-#include "base/scoped_handle.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 class ProcessMutex;

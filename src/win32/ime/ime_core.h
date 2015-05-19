@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/base.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 #include "win32/base/immdev.h"
@@ -51,6 +50,7 @@ class ClientInterface;
 }  // namespace client
 
 namespace commands {
+class Context;
 class Output;
 }  // namespace commands
 
@@ -75,6 +75,7 @@ class ImeCore {
       const KeyboardStatus &keyboard_status,
       const InputBehavior &behavior,
       const InputState &initial_state,
+      const commands::Context &context,
       InputState *next_state,
       commands::Output *output);
 
@@ -87,8 +88,13 @@ class ImeCore {
       const KeyboardStatus &keyboard_status,
       const InputBehavior &behavior,
       const InputState &initial_state,
+      const commands::Context &context,
       InputState *next_state,
       commands::Output *output);
+
+  // Update |context| if surrounding text is available.
+  static void UpdateContextWithSurroundingText(HIMC himc,
+                                               commands::Context *context);
 
   // This function sends IME open message to the server w/o generating any UI
   // messages.
@@ -117,6 +123,19 @@ class ImeCore {
   // any UI message.
   // Returns true if the operation completed successfully.
   static bool CancelComposition(HIMC himc, bool generate_message);
+
+  // This function sends SWITCH_INPUT_MODE command to the server and updates the
+  // input context.  If |generate_message| is false, this function will not
+  // generate any UI message.
+  // Returns true if the operation completed successfully.
+  static bool SwitchInputMode(
+      HIMC himc, DWORD native_mode, bool generate_message);
+
+  // This function sends callback command to the server which is set in the
+  // response from the server, and updates the input context. If
+  // |generate_message| is false, this function will not generate any UI
+  // message. Returns true if the operation completed successfully.
+  static bool SendCallbackCommand(HIMC himc, bool generate_message);
 
   // Removes and modifies unsupported bits from |raw_conversion_mode|.
   // Returns normalized conversion mode.
@@ -185,11 +204,6 @@ class ImeCore {
   static bool ReconversionFromApplication(
       HIMC himc, const RECONVERTSTRING *composition_info,
       const RECONVERTSTRING *reading_info);
-
-  // Reset internal context if the composition status is 'precomposition' and
-  // left click event is recorded after the last call of this method.
-  // See b/3282221 for details.
-  static bool ResetServerContextIfNeccesary(HIMC himc);
 
  private:
   // Sort UI messages to be the same order to that of Office IME 2010

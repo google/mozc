@@ -38,14 +38,46 @@
 #include <atlwin.h>
 #include <atlstr.h>
 
+#include <memory>
+
+#include "base/logging.h"
 #include "base/port.h"
+#include "base/system_util.h"
 #include "base/util.h"
+#include "base/win_util.h"
 
 namespace mozc {
 namespace win32 {
+namespace {
 
 using ATL::CWindow;
 using ATL::CStringW;
+using std::unique_ptr;
+
+wstring SafeGetWindowText(HWND window_handle) {
+  if (!::IsWindow(window_handle)) {
+    return wstring();
+  }
+
+  const int text_len_without_null = GetWindowTextLength(window_handle);
+  if (text_len_without_null <= 0) {
+    return wstring();
+  }
+
+  const size_t buffer_len = text_len_without_null + 1;
+  unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_len]);
+
+  const int copied_len_without_null = GetWindowText(
+      window_handle, buffer.get(), buffer_len);
+
+  if (copied_len_without_null <= 0) {
+    return wstring();
+  }
+
+  return wstring(buffer.get(), copied_len_without_null);
+}
+
+}  // namespace
 
 wstring WindowUtil::GetWindowClassName(HWND window_handle) {
   // Maximum length of WindowClass is assumed to be 256.
@@ -67,10 +99,10 @@ bool WindowUtil::IsSuppressSuggestionWindow(HWND window_handle) {
 
 // static
 bool WindowUtil::IsInChromeOmnibox(HWND window_handle) {
-  const CWindow root_window(::GetAncestor(window_handle, GA_ROOT));
-  if (!root_window.IsWindow()) {
+  if (!::IsWindow(window_handle)) {
     return false;
   }
+
   const wstring &class_name = GetWindowClassName(window_handle);
   if (class_name.empty()) {
     return false;
@@ -86,8 +118,11 @@ bool WindowUtil::IsInChromeOmnibox(HWND window_handle) {
 
 // static
 bool WindowUtil::IsInGoogleSearchBox(HWND window_handle) {
-  const CWindow root_window(::GetAncestor(window_handle, GA_ROOT));
-  if (!root_window.IsWindow()) {
+  if (!::IsWindow(window_handle)) {
+    return false;
+  }
+  const HWND root_window_handle = ::GetAncestor(window_handle, GA_ROOT);
+  if (!::IsWindow(root_window_handle)) {
     return false;
   }
   const wstring &class_name = GetWindowClassName(window_handle);
@@ -114,13 +149,8 @@ bool WindowUtil::IsInGoogleSearchBox(HWND window_handle) {
     return false;
   }
   string root_title;
-  {
-    CStringW wide_str;
-    if (!root_window.GetWindowTextW(wide_str)) {
-      return false;
-    }
-    mozc::Util::WideToUTF8(wide_str.GetBuffer(), &root_title);
-  }
+  mozc::Util::WideToUTF8(SafeGetWindowText(root_window_handle),
+                         &root_title);
 
   const char kGoogleSearchJa[] = "- Google \xE6\xA4\x9C\xE7\xB4\xA2 -";
   const char kGoogleSearchEn[] = "- Google Search -";
@@ -135,6 +165,68 @@ bool WindowUtil::IsInGoogleSearchBox(HWND window_handle) {
     return true;
   }
   return false;
+}
+
+// static
+bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
+  typedef BOOL (WINAPI *FPChangeWindowMessageFilter)(UINT, DWORD);
+  typedef BOOL (WINAPI *FPChangeWindowMessageFilterEx)(
+      HWND, UINT, DWORD, LPVOID);
+
+  // Following constants are not available unless we change the WINVER
+  // higher enough.
+  const int kMessageFilterAdd = 1;    // MSGFLT_ADD    (WINVER >=0x0600)
+  const int kMessageFilterAllow = 1;  // MSGFLT_ALLOW  (WINVER >=0x0601)
+
+  // Skip windows XP.
+  // ChangeWindowMessageFilter is only available on Windows Vista or Later
+  if (!SystemUtil::IsVistaOrLater()) {
+    LOG(ERROR) << "Skip ChangeWindowMessageFilter on Windows XP";
+    return true;
+  }
+
+  const HMODULE lib = WinUtil::GetSystemModuleHandle(L"user32.dll");
+  if (lib == nullptr) {
+    LOG(ERROR) << L"GetModuleHandle for user32.dll failed.";
+    return false;
+  }
+
+  // Windows 7+
+  // http://msdn.microsoft.com/en-us/library/dd388202.aspx
+  FPChangeWindowMessageFilterEx change_window_message_filter_ex
+      = reinterpret_cast<FPChangeWindowMessageFilterEx>(
+          ::GetProcAddress(lib, "ChangeWindowMessageFilterEx"));
+  if (change_window_message_filter_ex != nullptr) {
+    // Windows 7+ only
+    if (!(*change_window_message_filter_ex)(
+            window_handle, message, kMessageFilterAllow, nullptr)) {
+      // Note: this actually fails in Internet Explorer 10 on Windows 8
+      // with ERROR_ACCESS_DENIED (0x5).
+      const int error = ::GetLastError();
+      VLOG(1) << L"ChangeWindowMessageFilterEx failed. error = " << error;
+      return false;
+    }
+    return true;
+  }
+
+  // Windows Vista
+  FPChangeWindowMessageFilter change_window_message_filter
+      = reinterpret_cast<FPChangeWindowMessageFilter>(
+          ::GetProcAddress(lib, "ChangeWindowMessageFilter"));
+  if (change_window_message_filter == nullptr) {
+    const int error = ::GetLastError();
+    LOG(ERROR) << L"GetProcAddress failed. error = " << error;
+    return false;
+  }
+
+  DCHECK(change_window_message_filter != nullptr);
+  if (!(*change_window_message_filter)(message, kMessageFilterAdd)) {
+    const int error = ::GetLastError();
+    LOG(ERROR) << L"ChangeWindowMessageFilter failed. error = " << error;
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace win32

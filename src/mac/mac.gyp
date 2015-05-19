@@ -177,50 +177,6 @@
       ],
       'targets': [
         {
-          'target_name': 'UserHistoryTransition',
-          'type': 'executable',
-          'mac_bundle': 1,
-          'sources': [
-            'UserHistoryTransition/DialogsController.mm',
-            'UserHistoryTransition/deprecated_user_storage.cc',
-            'UserHistoryTransition/user_history_transition.cc',
-            'UserHistoryTransition/user_history_transition_gui_main.mm',
-            '../sync/sync_util.cc',  # for GenRandomString
-            '../sync/user_history_sync_util.cc',
-          ],
-          'dependencies': [
-            '../base/base.gyp:base',
-            '../prediction/prediction.gyp:prediction',
-            '../prediction/prediction.gyp:prediction_protocol',
-          ],
-          'mac_bundle_resources': [
-            '../data/images/mac/product_icon.icns',
-            'UserHistoryTransition/English.lproj/Dialogs.xib',
-            'UserHistoryTransition/English.lproj/InfoPlist.strings',
-            'UserHistoryTransition/Japanese.lproj/Dialogs.xib',
-            'UserHistoryTransition/Japanese.lproj/InfoPlist.strings',
-          ],
-          'xcode_settings': {
-            'INFOPLIST_FILE': 'UserHistoryTransition/Info.plist',
-          },
-        },
-        {
-          'target_name': 'UserHistoryTransitionCUI',
-          'type': 'executable',
-          'sources': [
-            'UserHistoryTransition/deprecated_user_storage.cc',
-            'UserHistoryTransition/user_history_transition.cc',
-            'UserHistoryTransition/user_history_transition_main.cc',
-            '../sync/sync_util.cc',  # for GenRandomString
-            '../sync/user_history_sync_util.cc',
-          ],
-          'dependencies': [
-            '../base/base.gyp:base',
-            '../prediction/prediction.gyp:prediction',
-            '../prediction/prediction.gyp:prediction_protocol',
-          ],
-        },
-        {
           'target_name': 'ActivatePane',
           'type': 'loadable_module',
           'mac_bundle': 1,
@@ -327,12 +283,6 @@
             'gen_key_mappings',
           ],
           'mac_bundle_resources': [
-            '../data/images/mac/direct.png',
-            '../data/images/mac/full_ascii.png',
-            '../data/images/mac/full_katakana.png',
-            '../data/images/mac/half_ascii.png',
-            '../data/images/mac/half_katakana.png',
-            '../data/images/mac/hiragana.png',
             '../data/images/mac/direct.tiff',
             '../data/images/mac/full_ascii.tiff',
             '../data/images/mac/full_katakana.tiff',

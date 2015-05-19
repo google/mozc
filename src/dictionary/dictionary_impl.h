@@ -85,6 +85,9 @@ class DictionaryImpl : public DictionaryInterface {
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
 
+  virtual bool LookupComment(StringPiece key, StringPiece value,
+                             string *comment) const;
+
   virtual bool Reload();
 
   virtual void PopulateReverseLookupCache(

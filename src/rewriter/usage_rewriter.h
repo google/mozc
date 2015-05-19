@@ -45,13 +45,13 @@ namespace mozc {
 
 class ConversionRequest;
 class DataManagerInterface;
+class DictionaryInterface;
 class POSMatcher;
-class UserDictionary;
 
 class UsageRewriter : public RewriterInterface  {
  public:
   UsageRewriter(const DataManagerInterface *data_manager,
-                const UserDictionary *user_dictionary);
+                const DictionaryInterface *dictionary);
   virtual ~UsageRewriter();
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
@@ -74,7 +74,7 @@ class UsageRewriter : public RewriterInterface  {
 
   map<StrPair, const UsageDictItem *> key_value_usageitem_map_;
   const POSMatcher *pos_matcher_;
-  const UserDictionary *user_dictionary_;
+  const DictionaryInterface *dictionary_;
   const ConjugationSuffix *base_conjugation_suffix_;
 };
 

@@ -38,8 +38,9 @@ import java.util.List;
  *
  */
 public class Keyboard {
+
   private final float flickThreshold;
-  private final List<? extends Row> rowList;
+  private final List<Row> rowList;
 
   public final int contentLeft;
   public final int contentRight;
@@ -70,7 +71,7 @@ public class Keyboard {
     return flickThreshold;
   }
 
-  public List<? extends Row> getRowList() {
+  public List<Row> getRowList() {
     return rowList;
   }
 }

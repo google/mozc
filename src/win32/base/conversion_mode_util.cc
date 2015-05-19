@@ -57,71 +57,53 @@ const uint32 kFixed = 0x800;
 // Check the equality of constans if header files are available.
 
 // kAlphaNumeric
-COMPILE_ASSERT(
-    kAlphaNumeric == IME_CMODE_ALPHANUMERIC, check_kAlphaNumeric);
-COMPILE_ASSERT(
-    kAlphaNumeric == TF_CONVERSIONMODE_ALPHANUMERIC, check_kAlphaNumeric);
+static_assert(kAlphaNumeric == IME_CMODE_ALPHANUMERIC, "Renaming Check");
+static_assert(kAlphaNumeric == TF_CONVERSIONMODE_ALPHANUMERIC,
+              "Renaming Check");
 
 // kNative
-COMPILE_ASSERT(
-    kNative == IME_CMODE_NATIVE, check_kNative);
-COMPILE_ASSERT(
-    kNative == TF_CONVERSIONMODE_NATIVE, check_kNative);
+static_assert(kNative == IME_CMODE_NATIVE, "Renaming Check");
+static_assert(kNative == TF_CONVERSIONMODE_NATIVE,  "Renaming Check");
 
 // kKatakana
-COMPILE_ASSERT(
-    kKatakana == IME_CMODE_KATAKANA, check_kKatakana);
-COMPILE_ASSERT(
-    kKatakana == TF_CONVERSIONMODE_KATAKANA, check_kKatakana);
+static_assert(kKatakana == IME_CMODE_KATAKANA, "Renaming Check");
+static_assert(kKatakana == TF_CONVERSIONMODE_KATAKANA, "Renaming Check");
 
 // kLanguage
-COMPILE_ASSERT(
-    kLanguage == IME_CMODE_LANGUAGE, check_kLanguage);
+static_assert(kLanguage == IME_CMODE_LANGUAGE, "Renaming Check");
 
 // kFullShape
-COMPILE_ASSERT(
-    kFullShape == IME_CMODE_FULLSHAPE, check_kFullShape);
-COMPILE_ASSERT(
-    kFullShape == TF_CONVERSIONMODE_FULLSHAPE, check_kFullShape);
+static_assert(kFullShape == IME_CMODE_FULLSHAPE, "Renaming Check");
+static_assert(kFullShape == TF_CONVERSIONMODE_FULLSHAPE, "Renaming Check");
 
 // kRoman
-COMPILE_ASSERT(
-    kRoman == IME_CMODE_ROMAN, check_kRoman);
-COMPILE_ASSERT(
-    kRoman == TF_CONVERSIONMODE_ROMAN, check_kRoman);
+static_assert(kRoman == IME_CMODE_ROMAN, "Renaming Check");
+static_assert(kRoman == TF_CONVERSIONMODE_ROMAN, "Renaming Check");
 
 // kCharCode
-COMPILE_ASSERT(
-    kCharCode == IME_CMODE_CHARCODE, check_kCharCode);
-COMPILE_ASSERT(
-    kCharCode == TF_CONVERSIONMODE_CHARCODE, check_kCharCode);
-
+static_assert(kCharCode == IME_CMODE_CHARCODE, "Renaming Check");
+static_assert(kCharCode == TF_CONVERSIONMODE_CHARCODE, "Renaming Check");
 // kHanjiConvert
-COMPILE_ASSERT(
-    kHanjiConvert == IME_CMODE_HANJACONVERT, check_kHanjiConvert);
+static_assert(kHanjiConvert == IME_CMODE_HANJACONVERT, "Renaming Check");
 
 // kSoftKeyboard
-COMPILE_ASSERT(
-    kSoftKeyboard == IME_CMODE_SOFTKBD, check_kSoftKeyboard);
+static_assert(kSoftKeyboard == IME_CMODE_SOFTKBD, "Renaming Check");
 
 // kNoConversion
-COMPILE_ASSERT(
-    kNoConversion == IME_CMODE_NOCONVERSION, check_kNoConversion);
-COMPILE_ASSERT(kNoConversion == TF_CONVERSIONMODE_NOCONVERSION,
-               check_kNoConversion);
+static_assert(kNoConversion == IME_CMODE_NOCONVERSION, "Renaming Check");
+static_assert(kNoConversion == TF_CONVERSIONMODE_NOCONVERSION,
+              "Renaming Check");
 
 // kEUDC
-COMPILE_ASSERT(kEUDC == IME_CMODE_EUDC, check_kEUDC);
+static_assert(kEUDC == IME_CMODE_EUDC, "Renaming Check");
 
 // kSymbol
-COMPILE_ASSERT(
-    kSymbol == IME_CMODE_SYMBOL, check_kSymbol);
-COMPILE_ASSERT(
-    kSymbol == TF_CONVERSIONMODE_SYMBOL, check_kSymbol);
+static_assert(kSymbol == IME_CMODE_SYMBOL, "Renaming Check");
+static_assert(kSymbol == TF_CONVERSIONMODE_SYMBOL, "Renaming Check");
 
 // kFixed
-COMPILE_ASSERT(kFixed == IME_CMODE_FIXED, check_kFixed);
-COMPILE_ASSERT(kFixed == TF_CONVERSIONMODE_FIXED, check_kFixed);
+static_assert(kFixed == IME_CMODE_FIXED, "Renaming Check");
+static_assert(kFixed == TF_CONVERSIONMODE_FIXED, "Renaming Check");
 #endif  // OS_WIN
 
 // Returns true if the specified bits are set in the |flag| with
@@ -131,7 +113,7 @@ bool TestAndClearBits(uint32 *flag, uint32 bits) {
   *flag &= ~bits;
   return result;
 }
-}  // anonymous namespace
+}  // namespace
 
 namespace mozc {
 namespace win32 {
@@ -315,8 +297,10 @@ bool ConversionModeUtil::ConvertStatusFromMozcToNative(
     const mozc::commands::Status &status,
     bool kana_lock_enabled_in_hiragana_mode,
     bool *is_open,
-    DWORD *imm32_mode) {
-  if (!status.has_activated() || !status.has_mode()) {
+    DWORD *logical_imm32_mode,
+    DWORD *visible_imm32_mode) {
+  if (!status.has_activated() || !status.has_mode() ||
+      !status.has_comeback_mode()) {
     return false;
   }
 
@@ -325,41 +309,44 @@ bool ConversionModeUtil::ConvertStatusFromMozcToNative(
     return false;
   }
 
-  uint32 native_mode = 0;
-  if (!ConversionModeUtil::ToNativeMode(
-          status.mode(), kana_lock_enabled_in_hiragana_mode, &native_mode)) {
+  uint32 logical_native_mode = 0;
+  if (!ConversionModeUtil::ToNativeMode(status.comeback_mode(),
+                                        kana_lock_enabled_in_hiragana_mode,
+                                        &logical_native_mode)) {
     return false;
+  }
+
+  uint32 visible_native_mode = 0;
+  if (!ConversionModeUtil::ToNativeMode(status.mode(),
+                                        kana_lock_enabled_in_hiragana_mode,
+                                        &visible_native_mode)) {
+      return false;
   }
 
   if (is_open != nullptr) {
     *is_open = status.activated();
   }
-  if (imm32_mode != nullptr) {
-    *imm32_mode = static_cast<DWORD>(native_mode);
+  if (logical_imm32_mode != nullptr) {
+    *logical_imm32_mode = static_cast<DWORD>(logical_native_mode);
+  }
+  if (visible_imm32_mode != nullptr) {
+    *visible_imm32_mode = static_cast<DWORD>(visible_native_mode);
   }
   return true;
 }
 
-bool ConversionModeUtil::ConvertStatusFromNativeToMozc(
-    bool is_open,
+bool ConversionModeUtil::GetMozcModeFromNativeMode(
     DWORD imm32_mode,
-    mozc::commands::Status *status) {
+    mozc::commands::CompositionMode *mozc_mode) {
   const uint32 native_mode = static_cast<uint32>(imm32_mode);
-  mozc::commands::CompositionMode mozc_mode = mozc::commands::HIRAGANA;
-  if (!ConversionModeUtil::ToMozcMode(native_mode, &mozc_mode)) {
+  *mozc_mode = mozc::commands::HIRAGANA;
+  if (!ConversionModeUtil::ToMozcMode(native_mode, mozc_mode)) {
     return false;
   }
 
   // We never returns DIRECT from ConversionModeUtil::ToMozcMode.
-  DCHECK_NE(mozc::commands::DIRECT, mozc_mode);
+  DCHECK_NE(mozc::commands::DIRECT, *mozc_mode);
 
-  if (status == nullptr) {
-    // Nothing to do.
-    return true;
-  }
-
-  status->set_activated(is_open);
-  status->set_mode(mozc_mode);
   return true;
 }
 }  // namespace win32

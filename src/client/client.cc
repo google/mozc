@@ -86,7 +86,6 @@ Client::Client()
     : id_(0),
       server_launcher_(new ServerLauncher),
       result_(new char[kResultBufferSize]),
-      preferences_(NULL),
       timeout_(kDefaultTimeout),
       server_status_(SERVER_UNKNOWN),
       server_protocol_version_(0),

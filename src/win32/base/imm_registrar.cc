@@ -38,13 +38,13 @@
 
 #include <iomanip>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <string>
 
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -57,6 +57,9 @@ namespace mozc {
 namespace win32 {
 
 namespace {
+
+using std::unique_ptr;
+
 const wchar_t kRegKeyboardLayouts[] =
     L"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts";
 const wchar_t kLayoutDisplayNameKey[] = L"Layout Display Name";
@@ -325,7 +328,7 @@ HRESULT ImmRegistrar::Unregister(const wstring &ime_filename) {
   // Ensure the target IME is unloaded.
   {
     const int num_keyboard_layout = ::GetKeyboardLayoutList(0, nullptr);
-    scoped_array<HKL> keyboard_layouts(new HKL[num_keyboard_layout]);
+    unique_ptr<HKL[]> keyboard_layouts(new HKL[num_keyboard_layout]);
     const size_t num_copied = ::GetKeyboardLayoutList(num_keyboard_layout,
                                                       keyboard_layouts.get());
     for (size_t i = 0; i < num_copied; ++i) {

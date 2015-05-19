@@ -33,7 +33,6 @@
 #include <windows.h>
 #include <QtCore/QString>
 #include <vector>
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/util.h"
 

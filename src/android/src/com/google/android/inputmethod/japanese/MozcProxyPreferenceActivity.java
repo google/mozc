@@ -29,38 +29,20 @@
 
 package org.mozc.android.inputmethod.japanese;
 
-import org.mozc.android.inputmethod.japanese.resources.R;
-
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.Resources.NotFoundException;
-import android.os.Bundle;
 
 /**
- * A proxy activity invoked from launcher.
- *
- * Preference activity (MozcClassicPreferenceActivity and MozcFragmentPrefernceActivity)
- * is invoked from 1. Launcher, 2. Language preference, 3. Keyboard long tap.
- * On 2 and 3 we specify which activity to launch by string resource.
- * But launcher sees AndroidManfest.xml to find the activity to launch,
- * but &lt;activity&gt; tag does not accept string resource (accepts only fixed string).
- * Thus we use this activity in manifest file as a launch activity and
- * this activity redirects incoming access to real activity.
- *
+ * Proxy activity forwarding to preference screen based on
+ * {@link org.mozc.android.inputmethod.japanese.DependencyFactory.Dependency}.
  */
-public class MozcProxyPreferenceActivity extends Activity {
+public class MozcProxyPreferenceActivity extends MozcProxyActivity {
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    try {
-      Class<?> activityClass = Class.forName(getResources().getString(R.string.settings_activity));
-      startActivity(new Intent(this, activityClass));
-    } catch (NotFoundException e) {
-      MozcLog.e(e.getMessage(), e);
-    } catch (ClassNotFoundException e) {
-      MozcLog.e(e.getMessage(), e);
-    }
-    finish();
+  protected Intent getForwardIntent() {
+    Class<? extends Activity> destinationActivity =
+        DependencyFactory.getDependency(getApplicationContext()).getPreferenceActivityClass();
+    return new Intent(this, destinationActivity);
   }
+
 }

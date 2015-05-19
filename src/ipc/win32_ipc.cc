@@ -759,25 +759,27 @@ void IPCClient::Init(const string &name, const string &server_path) {
     wstring wserver_address;
     Util::UTF8ToWide(server_address.c_str(), &wserver_address);
 
-    const HANDLE handle = ::CreateFile(wserver_address.c_str(),
-                                       GENERIC_READ | GENERIC_WRITE,
-                                       0, nullptr, OPEN_EXISTING,
-                                       FILE_FLAG_OVERLAPPED |
-                                       SECURITY_SQOS_PRESENT |
-                                       SECURITY_IDENTIFICATION |
-                                       SECURITY_EFFECTIVE_ONLY,
-                                       nullptr);
+    ScopedHandle new_handle(::CreateFile(wserver_address.c_str(),
+                                         GENERIC_READ | GENERIC_WRITE,
+                                         0, nullptr, OPEN_EXISTING,
+                                         FILE_FLAG_OVERLAPPED |
+                                         SECURITY_SQOS_PRESENT |
+                                         SECURITY_IDENTIFICATION |
+                                         SECURITY_EFFECTIVE_ONLY,
+                                         nullptr));
     const DWORD create_file_error = ::GetLastError();
-    if (INVALID_HANDLE_VALUE != handle) {
+    // ScopedHandle returns nullptr even when it received INVALID_HANDLE_VALUE.
+    if (new_handle.get() != nullptr) {
       DWORD mode = PIPE_READMODE_MESSAGE;
-      if (::SetNamedPipeHandleState(handle, &mode, nullptr, nullptr) == FALSE) {
+      if (::SetNamedPipeHandleState(new_handle.get(), &mode, nullptr, nullptr)
+          == FALSE) {
         const DWORD set_namedpipe_handle_state_error = ::GetLastError();
         LOG(ERROR) << "SetNamedPipeHandleState failed. error: "
                    << set_namedpipe_handle_state_error;
         last_ipc_error_ = IPC_UNKNOWN_ERROR;
         return;
       }
-      pipe_handle_.reset(handle);
+      pipe_handle_.reset(new_handle.take());
       MaybeDisableFileCompletionNotification(pipe_handle_.get());
       if (!manager->IsValidServer(GetServerProcessIdImpl(pipe_handle_.get()),
                                   server_path)) {

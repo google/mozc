@@ -29,7 +29,7 @@
 
 #include <cstdio>
 
-#include "base/base.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/version.h"
 #include "config/config_handler.h"

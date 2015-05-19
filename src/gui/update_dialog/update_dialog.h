@@ -33,7 +33,6 @@
 #include <QtCore/QString>
 #include <QtGui/QtGui>
 #include <QtGui/QDialog>
-#include "base/base.h"
 #include "gui/update_dialog/ui_update_dialog.h"
 
 #if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)

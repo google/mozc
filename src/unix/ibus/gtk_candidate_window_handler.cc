@@ -65,8 +65,8 @@ bool GtkCandidateWindowHandler::SendUpdateCommand(
       = command.mutable_application_info();
 
   // Set pid
-  COMPILE_ASSERT(sizeof(::getpid()) <= sizeof(appinfo->process_id()),
-                 pid_t_value_size_check);
+  static_assert(sizeof(::getpid()) <= sizeof(appinfo->process_id()),
+                "|appinfo->process_id()| must have sufficient room.");
   appinfo->set_process_id(::getpid());
 
   // Do not set thread_id returned from ::pthread_self() because:

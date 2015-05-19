@@ -36,7 +36,6 @@ import org.mozc.android.inputmethod.japanese.resources.R;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.preference.Preference;
@@ -133,14 +132,25 @@ public class PreferenceUtil {
       "pref_portrait_fullscreen_key";
   public static final String PREF_LANDSCAPE_FULLSCREEN_KEY =
       "pref_landscape_fullscreen_key";
+  public static final String PREF_SKIN_TYPE = "pref_skin_type_key";
+  public static final String PREF_HARDWARE_KEYMAP = "pref_hardware_keymap";
 
   // Keys for generic preferences.
+  public static final String PREF_HAPTIC_FEEDBACK_KEY = "pref_haptic_feedback_key";
+  public static final String PREF_HAPTIC_FEEDBACK_DURATION_KEY =
+      "pref_haptic_feedback_duration_key";
+  public static final String PREF_SOUND_FEEDBACK_KEY = "pref_sound_feedback_key";
+  public static final String PREF_SOUND_FEEDBACK_VOLUME_KEY =
+      "pref_sound_feedback_volume_key";
+  public static final String PREF_POPUP_FEEDBACK_KEY = "pref_popup_feedback_key";
   public static final String PREF_SPACE_CHARACTER_FORM_KEY =
       "pref_space_character_form_key";
   public static final String PREF_KANA_MODIFIER_INSENSITIVE_CONVERSION_KEY =
       "pref_kana_modifier_insensitive_conversion";
   public static final String PREF_TYPING_CORRECTION_KEY =
       "pref_typing_correction";
+  public static final String PREF_EMOJI_PROVIDER_TYPE =
+      "pref_emoji_provider_type";
   public static final String PREF_DICTIONARY_PERSONALIZATION_KEY =
       "pref_dictionary_personalization_key";
   public static final String PREF_DICTIONARY_USER_DICTIONARY_TOOL_KEY =
@@ -244,12 +254,7 @@ public class PreferenceUtil {
     if (preference == null) {
       return;
     }
-
-    try {
-      preference.setSummary(MozcUtil.getVersionName(preference.getContext()));
-    } catch (NameNotFoundException e) {
-      MozcLog.w("PackageManager#getApplicationInfo cannot find this application.");
-    }
+    preference.setSummary(MozcUtil.getVersionName(preference.getContext()));
   }
 
   static boolean shouldRemoveLayoutAdjustmentPreferences(
@@ -292,5 +297,44 @@ public class PreferenceUtil {
       removePreference(preferenceManager, PREF_PORTRAIT_LAYOUT_ADJUSTMENT_KEY);
       removePreference(preferenceManager, PREF_LANDSCAPE_LAYOUT_ADJUSTMENT_KEY);
     }
+  }
+
+  /**
+   * Gets an enum value in the SharedPreference.
+   *
+   * @param sharedPreference a {@link SharedPreferences} to be loaded.
+   * @param key a key name
+   * @param type a class of enum value
+   * @param defaultValue default value if the {@link SharedPreferences} doesn't have corresponding
+   *        entry.
+   * @param conversionRecoveryValue default value if unknown value is stored.
+   *        For example, if the value is "ALPHA" and {@code type} doesn't have "ALPHA" entry,
+   *        this argument is returned.
+   */
+  public static <T extends Enum<T>> T getEnum(
+      SharedPreferences sharedPreference, String key, Class<T> type,
+      T defaultValue, T conversionRecoveryValue) {
+    if (sharedPreference == null) {
+      return defaultValue;
+    }
+    String name = sharedPreference.getString(key, null);
+    if (name != null) {
+      try {
+        return Enum.valueOf(type, name);
+      } catch (IllegalArgumentException e) {
+        return conversionRecoveryValue;
+      }
+    }
+    return defaultValue;
+  }
+
+  /**
+   * Same as {@link getEnum}.
+   *
+   * {@code defaultValue} is used as {@code conversionRecoveryValue}
+   */
+  public static <T extends Enum<T>> T getEnum(
+      SharedPreferences sharedPreference, String key, Class<T> type, T defaultValue) {
+    return getEnum(sharedPreference, key, type, defaultValue, defaultValue);
   }
 }

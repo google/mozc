@@ -36,11 +36,11 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/protobuf/coded_stream.h"
 #include "base/protobuf/descriptor.h"
@@ -48,6 +48,7 @@
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_util.h"
 

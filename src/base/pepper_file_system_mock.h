@@ -30,8 +30,11 @@
 #ifndef MOZC_BASE_PEPPER_FILE_SYSTEM_MOCK_H_
 #define MOZC_BASE_PEPPER_FILE_SYSTEM_MOCK_H_
 
+#include <map>
+#include <set>
 #include <string>
 
+#include "base/mutex.h"
 #include "base/pepper_file_util.h"
 #include "base/port.h"
 
@@ -43,7 +46,6 @@ namespace mozc {
 
 // Mock implementation of Papper file system.
 // Currently all method just return false.
-// TODO(horo) Implement these methods correctly.
 class PepperFileSystemMock : public PepperFileSystemInterface {
  public:
   PepperFileSystemMock();
@@ -61,6 +63,10 @@ class PepperFileSystemMock : public PepperFileSystemInterface {
   virtual bool SyncMmapToFile();
 
  private:
+  map<string, string> file_storage_;
+  set<Mmap*> mmap_set_;
+  Mutex mutex_;
+
   DISALLOW_COPY_AND_ASSIGN(PepperFileSystemMock);
 };
 

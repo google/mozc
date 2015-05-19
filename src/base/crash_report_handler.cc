@@ -44,10 +44,10 @@
 #include "base/process.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "base/win_util.h"
 #include "third_party/breakpad/src/client/windows/handler/exception_handler.h"
 
 namespace {
+
 // The prefix of the pipe name which GoogleCrashHandler.exe opens for clients
 // to register them.
 const wchar_t kGoogleCrashHandlerPipePrefix[] =
@@ -144,9 +144,10 @@ google_breakpad::CustomClientInfo* GetCustomInfo() {
 // Returns the pipe name of the GoogleCrashHandler.exe or
 // GoogleCrashHandler64.exe running as a system user.
 wstring GetCrashHandlerPipeName() {
-  return wstring(kGoogleCrashHandlerPipePrefix) +
-         wstring(kSystemPrincipalSid) +
-         wstring(kGoogleCrashHandlerPipePostfix);
+  wstring pipe_name = kGoogleCrashHandlerPipePrefix;
+  pipe_name.append(kSystemPrincipalSid);
+  pipe_name.append(kGoogleCrashHandlerPipePostfix);
+  return pipe_name;
 }
 
 class ScopedCriticalSection {
@@ -162,12 +163,13 @@ class ScopedCriticalSection {
       LeaveCriticalSection(critical_section_);
     }
   }
+
  private:
   CRITICAL_SECTION *critical_section_;
 };
 
 // get the handle to the module containing the given executing address
-static HMODULE GetModuleHandleFromAddress(void *address) {
+HMODULE GetModuleHandleFromAddress(void *address) {
   // address may be NULL
   MEMORY_BASIC_INFORMATION mbi;
   SIZE_T result = VirtualQuery(address, &mbi, sizeof(mbi));
@@ -178,12 +180,12 @@ static HMODULE GetModuleHandleFromAddress(void *address) {
 }
 
 // get the handle to the currently executing module
-static HMODULE GetCurrentModuleHandle() {
+HMODULE GetCurrentModuleHandle() {
   return GetModuleHandleFromAddress(GetCurrentModuleHandle);
 }
 
 // Check to see if an address is in the current module.
-inline bool IsAddressInCurrentModule(void *address) {
+bool IsAddressInCurrentModule(void *address) {
   // address may be NULL
   return GetCurrentModuleHandle() == GetModuleHandleFromAddress(address);
 }
@@ -229,8 +231,8 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
   return false;
 }
 
-static bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
-                          MDRawAssertionInfo *assertion) {
+bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
+                   MDRawAssertionInfo *assertion) {
   if (exinfo == NULL) {
     // We do not catch CRT error in release build.
 #ifdef NO_LOGGING
@@ -252,25 +254,6 @@ static bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
   return false;
 }
 
-// Returns false if the specified named pipe does not exists.
-// This function can not ensure that you can connect the pipe
-// when it returns false because of a race condition.
-bool NamedPipeExist(const wchar_t *pipe_name) {
-  const int kPipeBusyWaitTimeoutMs = 0;
-  if (::WaitNamedPipe(pipe_name, kPipeBusyWaitTimeoutMs)) {
-    // The specified pipe exists.
-    return true;
-  }
-  const int last_error = ::GetLastError();
-  switch (last_error) {
-    case NO_ERROR:
-    case ERROR_FILE_NOT_FOUND:
-      return false;
-    default:
-      // We had an error but the specified pipe probably exists.
-      return true;
-  }
-}
 }  // namespace
 
 
@@ -282,25 +265,8 @@ bool CrashReportHandler::Initialize(bool check_address) {
   DCHECK_GE(g_reference_count, 0);
   ++g_reference_count;
   if (g_reference_count == 1 && g_handler == NULL) {
-    bool lock_held = false;
-    // Give up to use the crash handler if the caller has a loader lock because
-    // we cannot destroy the handler here if it is initialized for in-proc dump
-    // generation.  http://b/1903139
-    if (!WinUtil::IsDLLSynchronizationHeld(&lock_held) || lock_held) {
-      Uninitialize();
-      return false;
-    }
-
-    // Give up to use the crash handler if the named pipe is apparently
-    // unavailable. This is because the crash handler may use in-proc dump
-    // generation if it fails to connect the specified named pipe.
-    if (!NamedPipeExist(GetCrashHandlerPipeName().c_str())) {
-      Uninitialize();
-      return false;
-    }
-
     const string acrashdump_directory =
-      CrashReportUtil::GetCrashReportDirectory();
+        CrashReportUtil::GetCrashReportDirectory();
     // create a crash dump directory if not exist.
     if (!FileUtil::FileExists(acrashdump_directory)) {
       FileUtil::CreateDirectory(acrashdump_directory);
@@ -320,15 +286,6 @@ bool CrashReportHandler::Initialize(bool check_address) {
         MiniDumpNormal,
         GetCrashHandlerPipeName().c_str(),
         GetCustomInfo());
-
-    // Give up to use the crash handler if the crash handler uses in-proc
-    // dump generation.  We must not destroy the crash handler if it uses
-    // in-proc dump generatio and the caller has a loader lock.
-    // http://b/1903139
-    if (!g_handler->IsOutOfProcess()) {
-      Uninitialize();
-      return false;
-    }
 
 #ifdef DEBUG
     g_handler->set_handle_debug_exceptions(true);

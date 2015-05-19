@@ -202,7 +202,7 @@ int main(int argc, char **argv) {
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
   }
 
-  scoped_ptr<mozc::InputFileStream> input_file(NULL);
+  scoped_ptr<mozc::InputFileStream> input_file;
   istream *input = NULL;
 
   if (!FLAGS_input.empty()) {

@@ -207,17 +207,64 @@ bool SystemDictionaryTest::CompareForLookup(const Node *node,
 }
 
 TEST_F(SystemDictionaryTest, HasValue) {
-  vector<Token *> tokens(4);
-  for (size_t i = 0; i < 4; ++i) {
-    tokens[i] = new Token;
-    tokens[i]->key = Util::StringPrintf(
-        "\xE3\x81\x8D\xE3\x83\xBC%d",  // "きー%d"
-        static_cast<int>(i));
-    tokens[i]->value = Util::StringPrintf(
-        "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC%d",  // "バリュー%d"
-        static_cast<int>(i));
+  vector<Token *> tokens;
+  for (int i = 0; i < 4; ++i) {
+    Token *token = new Token;
+    // "きー%d"
+    token->key = Util::StringPrintf("\xE3\x81\x8D\xE3\x83\xBC%d", i);
+    // "バリュー%d"
+    token->value = Util::StringPrintf(
+        "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC%d", i);
+    tokens.push_back(token);
   }
-  BuildSystemDictionary(tokens, 4);
+
+  {  // Alphabet
+    Token *token = new Token;
+    token->key = "Mozc";
+    token->value = "Mozc";
+    tokens.push_back(token);
+  }
+
+  {  // Alphabet upper case
+    Token *token = new Token;
+    token->key = "upper";
+    token->value = "UPPER";
+    tokens.push_back(token);
+  }
+
+  // "ｆｕｌｌ"
+  const string kFull = "\xEF\xBD\x86\xEF\xBD\x95\xEF\xBD\x8C\xEF\xBD\x8C";
+  // "ひらがな"
+  const string kHiragana = "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA";
+  // "かたかな"
+  const string kKatakanaKey =
+      "\xE3\x81\x8B\xE3\x81\x9F\xE3\x81\x8B\xE3\x81\xAA";
+  // "カタカナ"
+  const string kKatakanaValue =
+      "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A";
+
+  {  // Alphabet full width
+    Token *token = new Token;
+    token->key = "full";
+    token->value = kFull;  // "ｆｕｌｌ"
+    tokens.push_back(token);
+  }
+
+  {  // Hiragana
+    Token *token = new Token;
+    token->key = kHiragana;  // "ひらがな"
+    token->value = kHiragana;  // "ひらがな"
+    tokens.push_back(token);
+  }
+
+  {  // Katakana
+    Token *token = new Token;
+    token->key = kKatakanaKey;  // "かたかな"
+    token->value = kKatakanaValue;  // "カタカナ"
+    tokens.push_back(token);
+  }
+
+  BuildSystemDictionary(tokens, tokens.size());
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
@@ -245,6 +292,22 @@ TEST_F(SystemDictionaryTest, HasValue) {
   EXPECT_FALSE(system_dic->HasValue(
       // "バリュー6"
       "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x36"));
+
+  EXPECT_TRUE(system_dic->HasValue("Mozc"));
+  EXPECT_FALSE(system_dic->HasValue("mozc"));
+
+  EXPECT_TRUE(system_dic->HasValue("UPPER"));
+  EXPECT_FALSE(system_dic->HasValue("upper"));
+
+  EXPECT_TRUE(system_dic->HasValue(kFull));  // "ｆｕｌｌ"
+  EXPECT_FALSE(system_dic->HasValue("full"));
+
+  EXPECT_TRUE(system_dic->HasValue(kHiragana));  //"ひらがな"
+  EXPECT_FALSE(system_dic->HasValue(
+      "\xE3\x83\x92\xE3\x83\xA9\xE3\x82\xAC\xE3\x83\x8A\x0A"));  // "ヒラガナ"
+
+  EXPECT_TRUE(system_dic->HasValue(kKatakanaValue));  // "カタカナ"
+  EXPECT_FALSE(system_dic->HasValue(kKatakanaKey));  // "かたかな"
 
   STLDeleteElements(&tokens);
 }

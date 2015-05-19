@@ -39,8 +39,9 @@
 #include <map>
 #endif  // OS_WIN
 #include <string>
-#include "base/base.h"
 #include "base/mutex.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 // For FRIEND_TEST
 #include "testing/base/public/gunit_prod.h"
 

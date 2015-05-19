@@ -782,8 +782,12 @@ TEST(UtilTest, UTF8ToUCS4) {
 
 TEST(UtilTest, UCS4ToUTF8) {
   string output;
+
+  // Do nothing if |c| is NUL. Previous implementation of UCS4ToUTF8 worked like
+  // this even though the reason is unclear.
   Util::UCS4ToUTF8(0, &output);
-  EXPECT_EQ("\0", output);
+  EXPECT_TRUE(output.empty());
+
   Util::UCS4ToUTF8(0x7F, &output);
   EXPECT_EQ("\x7F", output);
   Util::UCS4ToUTF8(0x80, &output);
@@ -990,11 +994,11 @@ TEST(UtilTest, IsAndroidPuaEmoji) {
   EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
 }
 
-MOZC_GCC_PUSH_WARNING();
-// On GCC, |EXPECT_EQ("", Util::StringPrintf(""))| may cause
-// "warning: zero-length printf format string" so we disable this check.
-MOZC_GCC_DISABLE_WARNING_FILELEVEL(format-zero-length);
 TEST(UtilTest, StringPrintf) {
+  // On GCC, |EXPECT_EQ("", Util::StringPrintf(""))| may cause
+  // "warning: zero-length printf format string" so we disable this check.
+  MOZC_GCC_DISABLE_WARNING_INLINE(format-zero-length);
+
   // strings
   EXPECT_EQ("", Util::StringPrintf(""));
   EXPECT_EQ("", Util::StringPrintf("%s", ""));
@@ -1039,7 +1043,6 @@ TEST(UtilTest, StringPrintf) {
                                             kLongStrB.c_str());
   EXPECT_EQ(kLongStrA + "\t" + kLongStrB + "\n", result);
 }
-MOZC_GCC_POP_WARNING();
 
 TEST(UtilTest, HiraganaToKatakana) {
   {
@@ -1737,7 +1740,7 @@ TEST(UtilTest, ScriptType) {
   // "龻" U+9FBB
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xBB"));
   // U+9FFF is not assigned yet but reserved for CJK Unified Ideographs.
-  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xFF"));
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBF\xBF"));
   // "𠮟咤" U+20B9F U+54A4
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xA0\xAE\x9F\xE5\x92\xA4"));
   // "𠮷野" U+20BB7 U+91CE
@@ -1927,9 +1930,9 @@ TEST(UtilTest, CharacterSet_gen_character_set) {
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2460));
   // "㊤"
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x32A4));
-  // "ð ®" from UCS4 ragne (b/4176888)
+  // "ð ®" from UCS4 range (b/4176888)
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x20B9F));
-  // "ðª²" from UCS4 ragne (b/4176888)
+  // "ðª²" from UCS4 range (b/4176888)
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2A6B2));
 
   // only in CP932
@@ -1939,7 +1942,7 @@ TEST(UtilTest, CharacterSet_gen_character_set) {
   // only in Unicode
   // "￦"
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet(0xFFE6));
-  // "ð ®·" from UCS4 ragne (b/4176888)
+  // "ð ®·" from UCS4 range (b/4176888)
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet(0x20BB7));
 }
 
@@ -1970,9 +1973,9 @@ TEST(UtilTest, CharacterSet) {
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe2\x91\xa0"));
   // "㊤"
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe3\x8a\xa4"));
-  // "ð ®" from UCS4 ragne (b/4176888)
+  // "ð ®" from UCS4 range (b/4176888)
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xF0\xA0\xAE\x9F"));
-  // "ðª²" from UCS4 ragne (b/4176888)
+  // "ðª²" from UCS4 range (b/4176888)
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xF0\xAA\x9A\xB2"));
 
   // only in CP932
@@ -1982,7 +1985,7 @@ TEST(UtilTest, CharacterSet) {
   // only in Unicode
   // "￦"
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xef\xbf\xa6"));
-  // "ð ®·" from UCS4 ragne (b/4176888)
+  // "ð ®·" from UCS4 range (b/4176888)
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xF0\xA0\xAE\xB7"));
 }
 
@@ -2131,6 +2134,300 @@ TEST(UtilTest, RandomSeedTest) {
   // Reset the seed.
   Util::SetRandomSeed(0);
   EXPECT_EQ(first_try, Util::Random(INT_MAX));
+}
+
+TEST(UtilTest, SplitFirstChar32) {
+  StringPiece rest;
+  char32 c = 0;
+
+  rest.clear();
+  c = 0;
+  EXPECT_FALSE(Util::SplitFirstChar32("", &c, &rest));
+  EXPECT_EQ(0, c);
+  EXPECT_TRUE(rest.empty());
+
+  // Allow NULL to ignore the matched value.
+  rest.clear();
+  EXPECT_TRUE(Util::SplitFirstChar32("01", NULL, &rest));
+  EXPECT_EQ("1", rest);
+
+  // Allow NULL to ignore the matched value.
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("01", &c, NULL));
+  EXPECT_EQ('0', c);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\x01 ", &c, &rest));
+  EXPECT_EQ(1, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\x7F ", &c, &rest));
+  EXPECT_EQ(0x7F, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xC2\x80 ", &c, &rest));
+  EXPECT_EQ(0x80, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xDF\xBF ", &c, &rest));
+  EXPECT_EQ(0x7FF, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xE0\xA0\x80 ", &c, &rest));
+  EXPECT_EQ(0x800, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xEF\xBF\xBF ", &c, &rest));
+  EXPECT_EQ(0xFFFF, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xF0\x90\x80\x80 ", &c, &rest));
+  EXPECT_EQ(0x10000, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xF7\xBF\xBF\xBF ", &c, &rest));
+  EXPECT_EQ(0x1FFFFF, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xF8\x88\x80\x80\x80 ", &c, &rest));
+  EXPECT_EQ(0x200000, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xFB\xBF\xBF\xBF\xBF ", &c, &rest));
+  EXPECT_EQ(0x3FFFFFF, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xFC\x84\x80\x80\x80\x80 ", &c, &rest));
+  EXPECT_EQ(0x4000000, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitFirstChar32("\xFD\xBF\xBF\xBF\xBF\xBF ", &c, &rest));
+  EXPECT_EQ(0x7FFFFFFF, c);
+  EXPECT_EQ(" ", rest);
+
+  // If there is any invalid sequence, the entire text should be treated as
+  // am empty string.
+  {
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xC2 ", &c, &rest));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xC2\xC2 ", &c, &rest));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xE0 ", &c, &rest));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xE0\xE0\xE0 ", &c, &rest));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xF0 ", &c, &rest));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xF0\xF0\xF0\xF0 ", &c, &rest));
+    EXPECT_EQ(0, c);
+  }
+
+  // BOM should be treated as invalid byte.
+  {
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xFF ", &c, &rest));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xFE ", &c, &rest));
+    EXPECT_EQ(0, c);
+  }
+
+  // Invalid sequence for U+002F (redundant encoding)
+  {
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xC0\xAF", &c, &rest));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xE0\x80\xAF", &c, &rest));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitFirstChar32("\xF0\x80\x80\xAF", &c, &rest));
+    EXPECT_EQ(0, c);
+  }
+}
+
+TEST(UtilTest, SplitLastChar32) {
+  StringPiece rest;
+  char32 c = 0;
+
+  rest.clear();
+  c = 0;
+  EXPECT_FALSE(Util::SplitLastChar32("", &rest, &c));
+  EXPECT_EQ(0, c);
+  EXPECT_TRUE(rest.empty());
+
+  // Allow NULL to ignore the matched value.
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32("01", NULL, &c));
+  EXPECT_EQ('1', c);
+
+  // Allow NULL to ignore the matched value.
+  rest.clear();
+  EXPECT_TRUE(Util::SplitLastChar32("01", &rest, NULL));
+  EXPECT_EQ("0", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \x01", &rest, &c));
+  EXPECT_EQ(1, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \x7F", &rest, &c));
+  EXPECT_EQ(0x7F, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xC2\x80", &rest, &c));
+  EXPECT_EQ(0x80, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xDF\xBF", &rest, &c));
+  EXPECT_EQ(0x7FF, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xE0\xA0\x80", &rest, &c));
+  EXPECT_EQ(0x800, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xEF\xBF\xBF", &rest, &c));
+  EXPECT_EQ(0xFFFF, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xF0\x90\x80\x80", &rest, &c));
+  EXPECT_EQ(0x10000, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xF7\xBF\xBF\xBF", &rest, &c));
+  EXPECT_EQ(0x1FFFFF, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xF8\x88\x80\x80\x80", &rest, &c));
+  EXPECT_EQ(0x200000, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xFB\xBF\xBF\xBF\xBF", &rest, &c));
+  EXPECT_EQ(0x3FFFFFF, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xFC\x84\x80\x80\x80\x80", &rest, &c));
+  EXPECT_EQ(0x4000000, c);
+  EXPECT_EQ(" ", rest);
+
+  rest.clear();
+  c = 0;
+  EXPECT_TRUE(Util::SplitLastChar32(" \xFD\xBF\xBF\xBF\xBF\xBF", &rest, &c));
+  EXPECT_EQ(0x7FFFFFFF, c);
+  EXPECT_EQ(" ", rest);
+
+  // If there is any invalid sequence, the entire text should be treated as
+  // am empty string.
+  {
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32(" \xC2", &rest, &c));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32(" \xC2\xC2", &rest, &c));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32(" \xE0", &rest, &c));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32(" \xE0\xE0\xE0", &rest, &c));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32(" \xF0", &rest, &c));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32(" \xF0\xF0\xF0\xF0", &rest, &c));
+    EXPECT_EQ(0, c);
+  }
+
+  // BOM should be treated as invalid byte.
+  {
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32(" \xFF", &rest, &c));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32(" \xFE", &rest, &c));
+    EXPECT_EQ(0, c);
+  }
+
+  // Invalid sequence for U+002F (redundant encoding)
+  {
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32("\xC0\xAF", &rest, &c));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32("\xE0\x80\xAF", &rest, &c));
+    EXPECT_EQ(0, c);
+
+    c = 0;
+    EXPECT_FALSE(Util::SplitLastChar32("\xF0\x80\x80\xAF", &rest, &c));
+    EXPECT_EQ(0, c);
+  }
 }
 
 }  // namespace mozc

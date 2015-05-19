@@ -110,10 +110,12 @@ bool ValueDictionary::OpenDictionaryFile() {
   return true;
 }
 
+// ValueDictionary is supposed to use the same data with SystemDictionary
+// and SystemDictionary::HasValue should return the same result with
+// ValueDictionary::HasValue.  So we can skip the actual logic of HasValue
+// and return just false.
 bool ValueDictionary::HasValue(const StringPiece value) const {
-  string encoded;
-  codec_->EncodeValue(value, &encoded);
-  return value_trie_->ExactSearch(encoded) != -1;
+  return false;
 }
 
 namespace {

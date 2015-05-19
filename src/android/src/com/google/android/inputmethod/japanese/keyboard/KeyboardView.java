@@ -29,6 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import org.mozc.android.inputmethod.japanese.MemoryManageable;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
@@ -36,6 +37,7 @@ import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -61,7 +63,7 @@ import java.util.Map;
  * {@code KeyboardActionListener}.
  *
  */
-public class KeyboardView extends View {
+public class KeyboardView extends View implements MemoryManageable {
   private final BackgroundDrawableFactory backgroundDrawableFactory =
       new BackgroundDrawableFactory(getResources().getDisplayMetrics().density);
   private final DrawableCache drawableCache =
@@ -72,10 +74,10 @@ public class KeyboardView extends View {
   private final long popupDismissDelay;
 
   private Keyboard keyboard;
-  private MetaState metaState = MetaState.UNMODIFIED;
-  private final KeyboardViewBackgroundSurface backgroundSurface =
+  @VisibleForTesting MetaState metaState = MetaState.UNMODIFIED;
+  @VisibleForTesting final KeyboardViewBackgroundSurface backgroundSurface =
       new KeyboardViewBackgroundSurface(backgroundDrawableFactory, drawableCache);
-  private boolean isKeyPressed;
+  @VisibleForTesting boolean isKeyPressed;
 
   private final int keycodeSymbol;
   private final float scaledDensity;
@@ -91,7 +93,7 @@ public class KeyboardView extends View {
   // We use LinkedHashMap with accessOrder=false here, in order to ensure sending key events
   // in the pressing order in flushPendingKeyEvent.
   // Its initial capacity (16) and load factor (0.75) are just heuristics.
-  private final Map<Integer, KeyEventContext> keyEventContextMap =
+  @VisibleForTesting public final Map<Integer, KeyEventContext> keyEventContextMap =
       new LinkedHashMap<Integer, KeyEventContext>(16, 0.75f, false);
 
   private KeyEventHandler keyEventHandler = null;
@@ -478,7 +480,7 @@ public class KeyboardView extends View {
    * @param y {@code y}-coordinate.
    * @return A corresponding {@code Key} instance, or {@code null} if not found.
    */
-  private Key getKeyByCoord(float x, float y) {
+  @VisibleForTesting Key getKeyByCoord(float x, float y) {
     if (y < 0 || keyboard == null || keyboard.getRowList().isEmpty()) {
       return null;
     }
@@ -543,5 +545,12 @@ public class KeyboardView extends View {
     }
 
     return null;  // Not found.
+  }
+
+  @Override
+  public void trimMemory() {
+    backgroundSurface.trimMemory();
+    drawableCache.clear();
+    popupPreviewPool.releaseAll();
   }
 }

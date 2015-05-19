@@ -29,7 +29,6 @@
 
 #include "gui/base/setup_util.h"
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"

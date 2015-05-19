@@ -29,12 +29,26 @@
 
 #include "win32/base/indicator_visibility_tracker.h"
 
+#include "base/stopwatch.h"
+
 namespace mozc {
 namespace win32 {
 namespace {
 
+#ifdef MOZC_ENABLE_MODE_INDICATOR
+const bool kIndicatorSupported = true;
+#else
+const bool kIndicatorSupported = false;
+#endif  // MOZC_ENABLE_MODE_INDICATOR
+
+const double kIgnoreMoveWindowDuration = 500.0;  // msec
+
 IndicatorVisibilityTracker::Action GetDefaultAction(
     bool previously_visible, bool now_visible) {
+  if (!kIndicatorSupported) {
+    return IndicatorVisibilityTracker::kNothing;
+  }
+
   if (previously_visible == now_visible) {
     return IndicatorVisibilityTracker::kNothing;
   }
@@ -49,6 +63,7 @@ struct IndicatorVisibilityTracker::InternalState {
       : visible(false) {}
 
   bool visible;
+  Stopwatch mode_changed_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(InternalState);
@@ -63,6 +78,7 @@ IndicatorVisibilityTracker::Action
 IndicatorVisibilityTracker::OnDissociateContext() {
   const bool original = state_->visible;
   state_->visible = false;
+  state_->mode_changed_.Reset();
   return GetDefaultAction(original, state_->visible);
 }
 
@@ -73,6 +89,7 @@ IndicatorVisibilityTracker::Action IndicatorVisibilityTracker::OnTestKey(
   }
   const bool original = state_->visible;
   state_->visible = false;
+  state_->mode_changed_.Reset();
   return GetDefaultAction(original, state_->visible);
 }
 
@@ -83,13 +100,22 @@ IndicatorVisibilityTracker::Action IndicatorVisibilityTracker::OnKey(
   }
   const bool original = state_->visible;
   state_->visible = false;
+  state_->mode_changed_.Reset();
   return GetDefaultAction(original, state_->visible);
 }
 
 IndicatorVisibilityTracker::Action
 IndicatorVisibilityTracker::OnMoveFocusedWindow() {
   const bool original = state_->visible;
-  state_->visible = false;
+  if (state_->mode_changed_.IsRunning()) {
+    if (state_->mode_changed_.GetElapsedMilliseconds() >=
+        kIgnoreMoveWindowDuration) {
+      state_->mode_changed_.Reset();
+      state_->visible = false;
+    }
+  } else {
+    state_->visible = false;
+  }
   return GetDefaultAction(original, state_->visible);
 }
 
@@ -97,10 +123,17 @@ IndicatorVisibilityTracker::Action
 IndicatorVisibilityTracker::OnChangeInputMode() {
   const bool original = state_->visible;
   state_->visible = true;
+  state_->mode_changed_.Stop();
+  state_->mode_changed_.Reset();
+  state_->mode_changed_.Start();
   return GetDefaultAction(original, state_->visible);
 }
 
 bool IndicatorVisibilityTracker::IsVisible() const {
+  if (!kIndicatorSupported) {
+    return false;
+  }
+
   return state_->visible;
 }
 

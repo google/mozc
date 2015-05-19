@@ -123,7 +123,8 @@ void PepperFileReader::ReadImpl(int32_t result) {
       cc_factory_.NewCallback(&PepperFileReader::OnFileOpen));
   VLOG(2) << "file_io_->Open ret: " << ret;
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
-    LOG(ERROR) << "file_io_->Open error. ret: " << ret;
+    LOG(ERROR) << "file_io_->Open error. ret: " << ret
+               << " [" << filename_ << "]";
     result_ = ret;
     event_.Notify();
     return;
@@ -133,7 +134,8 @@ void PepperFileReader::ReadImpl(int32_t result) {
 void PepperFileReader::OnFileOpen(int32_t result) {
   VLOG(2) << "PepperFileReader::OnFileOpen: " << result;
   if (result != PP_OK) {
-    LOG(ERROR) << "PepperFileReader::OnFileOpen error. ret: " << result;
+    LOG(ERROR) << "PepperFileReader::OnFileOpen error. ret: " << result
+               << " [" << filename_ << "]";
     result_ = result;
     event_.Notify();
     return;
@@ -143,7 +145,8 @@ void PepperFileReader::OnFileOpen(int32_t result) {
       cc_factory_.NewCallback(&PepperFileReader::OnQuery));
   VLOG(2) << "file_io_->Query ret: " << ret;
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
-    LOG(ERROR) << "file_io_->Query error. ret: " << ret;
+    LOG(ERROR) << "file_io_->Query error. ret: " << ret
+               << " [" << filename_ << "]";
     result_ = ret;
     event_.Notify();
     return;
@@ -153,7 +156,8 @@ void PepperFileReader::OnFileOpen(int32_t result) {
 void PepperFileReader::OnQuery(int32_t result) {
   VLOG(2) << "PepperFileReader::OnQuery: " << result;
   if (result != PP_OK) {
-    LOG(ERROR) << "PepperFileReader::OnQuery error. ret: " << result;
+    LOG(ERROR) << "PepperFileReader::OnQuery error. ret: " << result
+               << " [" << filename_ << "]";
     result_ = result;
     event_.Notify();
     return;
@@ -168,7 +172,7 @@ void PepperFileReader::OnQuery(int32_t result) {
 void PepperFileReader::OnRead(int32_t bytes_read) {
   VLOG(2) << "PepperFileReader::OnRead: " << bytes_read;
   if (bytes_read < 0) {
-    LOG(ERROR) << "OnRead error.";
+    LOG(ERROR) << "OnRead error. [" << filename_ << "]";
     result_ = bytes_read;
     event_.Notify();
     return;
@@ -187,7 +191,8 @@ void PepperFileReader::OnRead(int32_t bytes_read) {
         cc_factory_.NewCallback(&PepperFileReader::OnRead));
     VLOG(2) << "file_io_->Read ret: " << ret;
     if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
-      LOG(ERROR) << "file_io_->Read error. ret: " << ret;
+      LOG(ERROR) << "file_io_->Read error. ret: " << ret
+                 << " [" << filename_ << "]";
       result_ = ret;
       event_.Notify();
       return;
@@ -208,6 +213,7 @@ class PepperFileWriter : public PepperFileOperator {
   void OnFileOpen(int32_t result);
   void OnWrite(int32_t result);
   void OnFlush(int32_t result);
+  void OnReset(int32_t result);
 
   string filename_;
   const string *buffer_;
@@ -248,7 +254,8 @@ void PepperFileWriter::WriteImpl(int32_t result) {
       cc_factory_.NewCallback(&PepperFileWriter::OnFileOpen));
   VLOG(2) << "file_io_->Open ret: " << ret;
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
-    LOG(ERROR) << "file_io_->Open error. ret: " << ret;
+    LOG(ERROR) << "file_io_->Open error. ret: " << ret
+               << " [" << filename_ << "]";
     result_ = ret;
     event_.Notify();
     return;
@@ -258,7 +265,30 @@ void PepperFileWriter::WriteImpl(int32_t result) {
 void PepperFileWriter::OnFileOpen(int32_t result) {
   VLOG(2) << "PepperFileWriter::OnFileOpen: " << result;
   if (result != PP_OK) {
-    LOG(ERROR) << "PepperFileWriter::OnFileOpen error. ret: " << result;
+    LOG(ERROR) << "PepperFileWriter::OnFileOpen error. ret: " << result
+               << " [" << filename_ << "]";
+    result_ = result;
+    event_.Notify();
+    return;
+  }
+  CHECK(file_io_.get());
+  const int32_t ret = file_io_->SetLength(
+      0, cc_factory_.NewCallback(&PepperFileWriter::OnReset));
+  VLOG(2) << "file_io_->SetLength ret: " << ret;
+  if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
+    LOG(ERROR) << "file_io_->SetLength error. ret: " << ret
+               << " [" << filename_ << "]";
+    result_ = ret;
+    event_.Notify();
+    return;
+  }
+}
+
+void PepperFileWriter::OnReset(int32_t result) {
+  VLOG(2) << "PepperFileWriter::OnReset: " << result;
+  if (result != PP_OK) {
+    LOG(ERROR) << "PepperFileWriter::OnReset error. ret: " << result
+               << " [" << filename_ << "]";
     result_ = result;
     event_.Notify();
     return;
@@ -271,7 +301,7 @@ void PepperFileWriter::OnFileOpen(int32_t result) {
 void PepperFileWriter::OnWrite(int32_t bytes_written) {
   VLOG(2) << "PepperFileWriter::OnWrite: " << bytes_written;
   if (bytes_written < 0) {
-    LOG(ERROR) << "WriteCallback error.";
+    LOG(ERROR) << "WriteCallback error. [" << filename_ << "]";
     result_ = bytes_written;
     event_.Notify();
     return;
@@ -283,7 +313,8 @@ void PepperFileWriter::OnWrite(int32_t bytes_written) {
         cc_factory_.NewCallback(&PepperFileWriter::OnFlush));
     VLOG(2) << "file_io_->Flush ret: " << ret;
     if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
-      LOG(ERROR) << "file_io_->Flush error. ret: " << ret;
+      LOG(ERROR) << "file_io_->Flush error. ret: " << ret
+                 << " [" << filename_ << "]";
       result_ = ret;
       event_.Notify();
       return;
@@ -295,7 +326,8 @@ void PepperFileWriter::OnWrite(int32_t bytes_written) {
         cc_factory_.NewCallback(&PepperFileWriter::OnWrite));
     VLOG(2) << "file_io_->Write ret: " << ret;
     if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
-      LOG(ERROR) << "file_io_->Write error. ret: " << ret;
+      LOG(ERROR) << "file_io_->Write error. ret: " << ret
+                 << " [" << filename_ << "]";
       result_ = ret;
       event_.Notify();
       return;
@@ -306,7 +338,8 @@ void PepperFileWriter::OnWrite(int32_t bytes_written) {
 void PepperFileWriter::OnFlush(int32_t result) {
   VLOG(2) << "PepperFileWriter::OnFlush: " << result;
   if (result < 0) {
-    LOG(ERROR) << "FlushCallback error. ret: " << result;
+    LOG(ERROR) << "FlushCallback error. ret: " << result
+               << " [" << filename_ << "]";
     result_ = result;
     event_.Notify();
     return;
@@ -366,7 +399,8 @@ void PepperFileQuerer::QueryImpl(int32_t result) {
       cc_factory_.NewCallback(&PepperFileQuerer::OnFileOpen));
   VLOG(2) << "file_io_->Open ret: " << ret;
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
-    LOG(ERROR) << "file_io_->Open error. ret: " << ret;
+    LOG(ERROR) << "file_io_->Open error. ret: " << ret
+               << " [" << filename_ << "]";
     result_ = ret;
     event_.Notify();
     return;
@@ -376,7 +410,8 @@ void PepperFileQuerer::QueryImpl(int32_t result) {
 void PepperFileQuerer::OnFileOpen(int32_t result) {
   VLOG(2) << "PepperFileQuerer::OnFileOpen: " << result;
   if (result != PP_OK) {
-    LOG(ERROR) << "PepperFileQuerer::OnFileOpen error. ret: " << result;
+    LOG(ERROR) << "PepperFileQuerer::OnFileOpen error. ret: " << result
+               << " [" << filename_ << "]";
     result_ = result;
     event_.Notify();
     return;
@@ -386,7 +421,8 @@ void PepperFileQuerer::OnFileOpen(int32_t result) {
       cc_factory_.NewCallback(&PepperFileQuerer::OnQuery));
   VLOG(2) << "file_io_->Query: " << ret;
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
-    LOG(ERROR) << "file_io_->Query error. ret: " << ret;
+    LOG(ERROR) << "file_io_->Query error. ret: " << ret
+               << " [" << filename_ << "]";
     result_ = ret;
     event_.Notify();
     return;

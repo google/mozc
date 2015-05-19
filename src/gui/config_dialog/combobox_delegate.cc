@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "gui/config_dialog/combobox_delegate.h"
-#include "base/base.h"
 #include <QtGui/QtGui>
 #include <QtGui/QComboBox>
 

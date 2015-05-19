@@ -35,7 +35,7 @@ import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.
  * A class corresponding to a {@code &lt;KeyEntity&gt;} element in xml resource files.
  * This class has basic attributes for a key, which can have various values based on conditions,
  * e.g. meta keys' state or flick directions.
- * 
+ *
  */
 public class KeyEntity {
   /** INVALID_KEY_CODE represents the key has no key code to call the Mozc server back. */
@@ -45,18 +45,35 @@ public class KeyEntity {
   private final int keyCode;
   private final int longPressKeyCode;
   private final int keyIconResourceId;
+  // If |keyIconResourceId| is empty and |keyCharacter| is set,
+  // use this character for rendering key top.
+  // TODO(team): Implement rendering method.
+  private final String keyCharacter;
   // TODO(hidehiko): Move this field to Key.
   private final DrawableType keyBackgroundDrawableType;
   private final boolean flickHighlightEnabled;
   private final PopUp popUp;
 
+  // Constructor for compatibility.
+  // TODO(team): Remove this constructor after changing all callers including tests.
   public KeyEntity(int sourceId, int keyCode, int longPressKeyCode,
-                   int keyIconResourceId, DrawableType keyBackgroundDrawableType,
+                   int keyIconResourceId,
+                   DrawableType keyBackgroundDrawableType,
+                   boolean flickHighlightEnabled, PopUp popUp) {
+    this(
+        sourceId, keyCode, longPressKeyCode, keyIconResourceId, null, keyBackgroundDrawableType,
+        flickHighlightEnabled, popUp);
+  }
+
+  public KeyEntity(int sourceId, int keyCode, int longPressKeyCode,
+                   int keyIconResourceId, String keyCharacter,
+                   DrawableType keyBackgroundDrawableType,
                    boolean flickHighlightEnabled, PopUp popUp) {
     this.sourceId = sourceId;
     this.keyCode = keyCode;
     this.longPressKeyCode = longPressKeyCode;
     this.keyIconResourceId = keyIconResourceId;
+    this.keyCharacter = keyCharacter;
     this.keyBackgroundDrawableType = keyBackgroundDrawableType;
     this.flickHighlightEnabled = flickHighlightEnabled;
     this.popUp = popUp;
@@ -76,6 +93,10 @@ public class KeyEntity {
 
   public int getKeyIconResourceId() {
     return keyIconResourceId;
+  }
+
+  public String getKeyCharacter() {
+    return keyCharacter;
   }
 
   public DrawableType getKeyBackgroundDrawableType() {

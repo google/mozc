@@ -260,8 +260,13 @@ bool TestSessionClient::SetRequest(const commands::Request &request,
   return EvalCommand(&input, output);
 }
 
-bool TestSessionClient::EvalCommand(commands::Input *input,
-                                    commands::Output *output) {
+void TestSessionClient::SetCallbackText(const string &text) {
+  callback_text_ = text;
+}
+
+bool TestSessionClient::EvalCommandInternal(commands::Input *input,
+                                            commands::Output *output,
+                                            bool allow_callback) {
   input->set_id(id_);
   commands::Command command;
   command.mutable_input()->CopyFrom(*input);
@@ -269,7 +274,28 @@ bool TestSessionClient::EvalCommand(commands::Input *input,
   if (result && output != NULL) {
     output->CopyFrom(command.output());
   }
+
+  // If callback is allowed and the callback field exists, evaluate the callback
+  // command.
+  if (result &&
+      allow_callback &&
+      command.output().has_callback() &&
+      command.output().callback().has_session_command()) {
+    commands::Input input2;
+    input2.set_type(commands::Input::SEND_COMMAND);
+    input2.mutable_command()->CopyFrom(
+        command.output().callback().session_command());
+    input2.mutable_command()->set_text(callback_text_);
+    // Disallow further recursion.
+    result = EvalCommandInternal(&input2, output, false);
+  }
+  callback_text_.clear();
   return result;
+}
+
+bool TestSessionClient::EvalCommand(commands::Input *input,
+                                    commands::Output *output) {
+  return EvalCommandInternal(input, output, true);
 }
 
 }  // namespace testing

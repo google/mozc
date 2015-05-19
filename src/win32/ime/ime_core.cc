@@ -32,6 +32,8 @@
 #include <ime.h>
 #include <windows.h>
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
@@ -45,7 +47,6 @@
 #include "win32/base/imm_reconvert_string.h"
 #include "win32/ime/ime_candidate_info.h"
 #include "win32/ime/ime_composition_string.h"
-#include "win32/ime/ime_mouse_tracker.h"
 #include "win32/ime/ime_private_context.h"
 #include "win32/ime/ime_scoped_context.h"
 #include "win32/ime/ime_ui_context.h"
@@ -57,8 +58,10 @@ namespace win32 {
 using commands::KeyEvent;
 using commands::Output;
 using commands::SessionCommand;
+using std::unique_ptr;
 
 namespace {
+
 const size_t kReconvertStringSizeLimit = 1024*64;
 // An embedded object in the RichEdit will be replaced with this character.
 // See b/3406434 for details.
@@ -70,21 +73,24 @@ bool GetNextState(HIMC himc, const commands::Output &output,
 
   UIContext context(himc);
   bool next_open_status = false;
-  DWORD next_mode = 0;
+  DWORD next_logical_mode = 0;
+  DWORD next_visible_mode = 0;
   if (!output.has_status()) {
     // |output| does not have |status|.  Preserve the current status.
     next_open_status = context.GetOpenStatus();
-    if (!context.GetConversionMode(&next_mode)) {
+    if (!context.GetConversionMode(&next_logical_mode)) {
       return false;
     }
+    next_visible_mode = next_logical_mode;
   } else if (!mozc::win32::ConversionModeUtil::ConvertStatusFromMozcToNative(
       output.status(), context.IsKanaInputPreferred(),
-      &next_open_status, &next_mode)) {
+      &next_open_status, &next_logical_mode, &next_visible_mode)) {
     return false;
   }
 
   next_state->open = next_open_status;
-  next_state->conversion_status = next_mode;
+  next_state->logical_conversion_mode = next_logical_mode;
+  next_state->visible_conversion_mode = next_visible_mode;
   return true;
 }
 
@@ -207,7 +213,57 @@ bool GetReconvertString(const RECONVERTSTRING *reconvert_string,
 
   return true;
 }
-}  // anonymous namespace
+
+bool QueryDocumentFeed(HIMC himc,
+                       wstring *preceding_text,
+                       wstring *following_text) {
+  LRESULT result = ::ImmRequestMessageW(himc, IMR_DOCUMENTFEED, 0);
+  if (result == 0) {
+    // IMR_DOCUMENTFEED is not supported.
+    return false;
+  }
+  const size_t buffer_size = static_cast<size_t>(result);
+  if (buffer_size > kReconvertStringSizeLimit) {
+    LOG(ERROR) << "Too large RECONVERTSTRING.";
+    return false;
+  }
+
+  unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
+
+  RECONVERTSTRING *reconvert_string =
+      reinterpret_cast<RECONVERTSTRING *>(buffer.get());
+  reconvert_string->dwSize = buffer_size;
+  reconvert_string->dwVersion = 0;
+
+  result = ::ImmRequestMessageW(himc, IMR_DOCUMENTFEED,
+                                reinterpret_cast<LPARAM>(reconvert_string));
+  if (result == 0) {
+    DLOG(ERROR) << "RECONVERTSTRING is nullptr.";
+    return false;
+  }
+
+  return ReconvertString::Decompose(
+      reconvert_string, preceding_text, nullptr, nullptr, nullptr,
+      following_text);
+}
+
+}  // namespace
+
+void ImeCore::UpdateContextWithSurroundingText(HIMC himc,
+                                               commands::Context *context) {
+  if (context == nullptr) {
+    return;
+  }
+  context->clear_preceding_text();
+  context->clear_following_text();
+  wstring preceding_text;
+  wstring following_text;
+  if (!QueryDocumentFeed(himc, &preceding_text, &following_text)) {
+    return;
+  }
+  Util::WideToUTF8(preceding_text, context->mutable_preceding_text());
+  Util::WideToUTF8(following_text, context->mutable_following_text());
+}
 
 KeyEventHandlerResult ImeCore::ImeProcessKey(
     mozc::client::ClientInterface *client,
@@ -216,13 +272,14 @@ KeyEventHandlerResult ImeCore::ImeProcessKey(
     const KeyboardStatus &keyboard_status,
     const InputBehavior &behavior,
     const InputState &initial_state,
+    const mozc::commands::Context &context,
     InputState *next_state,
     commands::Output *output) {
-  scoped_ptr<Win32KeyboardInterface>
+  unique_ptr<Win32KeyboardInterface>
       keyboard(Win32KeyboardInterface::CreateDefault());
   return KeyEventHandler::ImeProcessKey(
       virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
-      keyboard_status, behavior, initial_state, client, keyboard.get(),
+      keyboard_status, behavior, initial_state, context, client, keyboard.get(),
       next_state, output);
 }
 
@@ -234,27 +291,25 @@ KeyEventHandlerResult ImeCore::ImeToAsciiEx(
     const KeyboardStatus &keyboard_status,
     const InputBehavior &behavior,
     const InputState &initial_state,
+    const commands::Context &context,
     InputState *next_state,
     commands::Output *output) {
-  scoped_ptr<Win32KeyboardInterface>
+  unique_ptr<Win32KeyboardInterface>
       keyboard(Win32KeyboardInterface::CreateDefault());
   return KeyEventHandler::ImeToAsciiEx(
       virtual_key, scan_code, is_key_down, keyboard_status, behavior,
-      initial_state, client, keyboard.get(), next_state, output);
+      initial_state, context, client, keyboard.get(), next_state, output);
 }
 
-bool ImeCore::OpenIME(
-    mozc::client::ClientInterface *client,
-    DWORD next_mode) {
-  commands::Status status;
-  if (!ConversionModeUtil::ConvertStatusFromNativeToMozc(
-          true, next_mode, &status)) {
+bool ImeCore::OpenIME(mozc::client::ClientInterface *client, DWORD next_mode) {
+  commands::CompositionMode mode = commands::DIRECT;
+  if (!ConversionModeUtil::GetMozcModeFromNativeMode(next_mode, &mode)) {
     return false;
   }
 
   mozc::commands::KeyEvent key;
   key.set_special_key(mozc::commands::KeyEvent::ON);
-  key.set_mode(status.mode());
+  key.set_mode(mode);
   commands::Output output;
   if (!client->SendKey(key, &output)) {
     return false;
@@ -293,6 +348,47 @@ bool ImeCore::CancelComposition(HIMC himc, bool generate_message) {
   mozc::commands::SessionCommand command;
   command.set_type(mozc::commands::SessionCommand::REVERT);
   if (!context.client()->SendCommand(command, &output)) {
+    return false;
+  }
+  return UpdateInputContext(himc, output, generate_message);
+}
+
+bool ImeCore::SwitchInputMode(
+    HIMC himc, DWORD native_mode, bool generate_message) {
+  UIContext context(himc);
+
+  const bool open = context.GetOpenStatus();
+  if (!open) {
+    return true;
+  }
+  mozc::commands::Output output;
+  mozc::commands::SessionCommand command;
+  command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
+
+  commands::CompositionMode mozc_mode = commands::HIRAGANA;
+  if (!ConversionModeUtil::ToMozcMode(native_mode, &mozc_mode)) {
+    return false;
+  }
+
+  command.set_composition_mode(mozc_mode);
+  if (!context.client()->SendCommand(command, &output)) {
+    return false;
+  }
+  return UpdateInputContext(himc, output, generate_message);
+}
+
+bool ImeCore::SendCallbackCommand(HIMC himc, bool generate_message) {
+  UIContext context(himc);
+  commands::Output last_output;
+  context.GetLastOutput(&last_output);
+
+  if (!last_output.has_callback()) {
+    return false;
+  }
+
+  mozc::commands::Output output;
+  if (!context.client()->SendCommand(last_output.callback().session_command(),
+                                     &output)) {
     return false;
   }
   return UpdateInputContext(himc, output, generate_message);
@@ -459,7 +555,15 @@ bool ImeCore::UpdateContext(HIMC himc,
     return UpdateContextMain(himc, next_state, new_output, message_queue);
   }
 
-  // Callback exists.
+  // Delayed callback exists.
+  if (new_output.callback().has_delay_millisec()) {
+    message_queue->AddMessage(WM_IME_NOTIFY,
+                              IMN_PRIVATE,
+                              kNotifyDelayedCallback);
+    return UpdateContextMain(himc, next_state, new_output, message_queue);
+  }
+
+  // Immediate callback exists.
   const SessionCommand &callback_command =
       new_output.callback().session_command();
 
@@ -540,7 +644,7 @@ bool ImeCore::UpdateContextMain(HIMC himc,
 
   // Update context.
   context->fOpen = next_state.open ? TRUE : FALSE;
-  context->fdwConversion = next_state.conversion_status;
+  context->fdwConversion = next_state.logical_conversion_mode;
 
   vector<UIMessage> composition_messages;
   if (!UpdateCompositionString(himc, output, &composition_messages)) {
@@ -565,7 +669,7 @@ bool ImeCore::UpdateContextMain(HIMC himc,
                     previous_open,
                     previous_conversion,
                     next_state.open,
-                    next_state.conversion_status,
+                    next_state.logical_conversion_mode,
                     &sorted_messages);
 
     // Allow visibility trackers to track if each UI message will be
@@ -599,21 +703,24 @@ BOOL ImeCore::IMEOff(HIMC himc, bool generate_message) {
     return FALSE;
   }
   bool next_open_status = false;
-  DWORD next_mode = 0;
+  DWORD next_logical_mode = 0;
+  DWORD next_visible_mode = 0;
   if (!output.has_status()) {
     mozc::win32::UIContext uicontext(himc);
-    if (!uicontext.GetConversionMode(&next_mode)) {
+    if (!uicontext.GetConversionMode(&next_logical_mode)) {
       return FALSE;
     }
+    next_visible_mode = next_logical_mode;
   } else if (!mozc::win32::ConversionModeUtil::
                   ConvertStatusFromMozcToNative(
       output.status(), context.IsKanaInputPreferred(),
-      &next_open_status, &next_mode)) {
+      &next_open_status, &next_logical_mode, &next_visible_mode)) {
     return FALSE;
   }
   InputState next_state;
   next_state.open = false;  // We ignore the returned status.
-  next_state.conversion_status = next_mode;
+  next_state.logical_conversion_mode = next_logical_mode;
+  next_state.visible_conversion_mode = next_visible_mode;
   if (!generate_message) {
     if (!UpdateContext(himc, next_state, output, nullptr)) {
       return FALSE;
@@ -746,7 +853,7 @@ bool ImeCore::TurnOnIMEAndTryToReconvertFromIME(HIMC himc) {
   if (!context.IsCompositionStringEmpty()) {
     // TODO(yukawa): Use Mozc server to determine the behavior when any
     //   appropriate protocol becomes available.
-    DLOG(INFO) << "Ongoing comosition exists.";
+    DLOG(INFO) << "Ongoing composition exists.";
     return false;
   }
 
@@ -788,8 +895,7 @@ string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
   // |RECONVERTSTRING::dwTargetStrOffset| and |RECONVERTSTRING::dwTargetStrLen|
   // is to be reconverted.  Technically most of the following processes should
   // be done at the server-side.
-  LRESULT result =
-      ::ImmRequestMessageW(himc, IMR_RECONVERTSTRING, 0);
+  LRESULT result = ::ImmRequestMessageW(himc, IMR_RECONVERTSTRING, 0);
   if (result == 0) {
     DLOG(INFO) << "IMR_RECONVERTSTRING is not supported.";
     return "";
@@ -801,10 +907,10 @@ string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
     return "";
   }
 
-  scoped_array<BYTE> buffer(new BYTE[buffer_size]);
+  unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
 
   RECONVERTSTRING *reconvert_string =
-      reinterpret_cast<RECONVERTSTRING*>(buffer.get());
+      reinterpret_cast<RECONVERTSTRING *>(buffer.get());
   reconvert_string->dwSize = buffer_size;
   reconvert_string->dwVersion = 0;
 
@@ -815,12 +921,12 @@ string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
     return "";
   }
 
-  scoped_array<BYTE> copied_buffer(new BYTE[buffer_size]);
+  unique_ptr<BYTE[]> copied_buffer(new BYTE[buffer_size]);
   for (size_t i = 0; i < buffer_size; ++i) {
     copied_buffer[i] = buffer[i];
   }
   RECONVERTSTRING *expanded_reconvert_string =
-      reinterpret_cast<RECONVERTSTRING*>(copied_buffer.get());
+      reinterpret_cast<RECONVERTSTRING *>(copied_buffer.get());
 
   // Expand the composition range if necessary.
   if (!ReconvertString::EnsureCompositionIsNotEmpty(
@@ -878,7 +984,7 @@ bool ImeCore::ReconversionFromApplication(
   if (!context.IsCompositionStringEmpty()) {
     // TODO(yukawa): Use Mozc server to determine the behavior when any
     //   appropriate protocol becomes available.
-    DLOG(INFO) << "Ongoing comosition exists.";
+    DLOG(INFO) << "Ongoing composition exists.";
     return false;
   }
 
@@ -904,34 +1010,5 @@ bool ImeCore::ReconversionFromApplication(
   return (UpdateInputContext(himc, output, true) != FALSE);
 }
 
-bool ImeCore::ResetServerContextIfNeccesary(HIMC himc) {
-  UIContext context(himc);
-  if (context.IsEmpty()) {
-    return false;
-  }
-  if (context.input_context() == nullptr) {
-    return false;
-  }
-  if (context.client() == nullptr) {
-    return false;
-  }
-
-  // TODO(yukawa): Use IMR_DOCUMENTFEED in addition to mouse event.
-  const bool was_left_pressed = ThreadLocalMouseTracker::WasLeftButtonPressed();
-  ThreadLocalMouseTracker::ResetWasLeftButtonPressed();
-  if (!context.GetOpenStatus() || !context.IsCompositionStringEmpty()) {
-    return true;
-  }
-  if (was_left_pressed) {
-    SessionCommand command;
-    command.set_type(commands::SessionCommand::RESET_CONTEXT);
-    Output output;
-    if (!context.client()->SendCommand(command, &output)) {
-      LOG(ERROR) << "TestSendKey failed.";
-      return false;
-    }
-  }
-  return true;
-}
 }  // namespace win32
 }  // namespace mozc

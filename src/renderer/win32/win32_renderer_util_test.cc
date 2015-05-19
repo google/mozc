@@ -3583,10 +3583,10 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
   const UINT kClassStyle = CS_DBLCLKS;
   const DWORD kWindowStyle =
       WS_CHILDWINDOW | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-  COMPILE_ASSERT(kWindowStyle == 0x56000000, EVERNOTE_EDITOR_WINDOW_STYLE);
+  static_assert(kWindowStyle == 0x56000000, "Check actual value");
   const DWORD kWindowExStyle =
       WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
-  COMPILE_ASSERT(kWindowExStyle == 0, EVERNOTE_EDITOR_WINDOW_EX_STYLE);
+  static_assert(kWindowExStyle == 0, "Check actual value");
 
   const CRect kWindowRect(1548, 879, 1786, 1416);
   const CPoint kClientOffset(0, 0);
@@ -3693,13 +3693,13 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
 TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
   const wchar_t kClassName[] = L"CrescentEditer";
   const UINT kClassStyle = CS_DBLCLKS | CS_BYTEALIGNCLIENT;
-  COMPILE_ASSERT(kClassStyle == 0x00001008, CRESCENTEVE_CLASS_STYLE);
+  static_assert(kClassStyle == 0x00001008, "Check actual value");
   const DWORD kWindowStyle = WS_CHILDWINDOW | WS_VISIBLE | WS_VSCROLL;
-  COMPILE_ASSERT(kWindowStyle == 0x50200000, CRESCENTEVE_WINDOW_STYLE);
+  static_assert(kWindowStyle == 0x50200000, "Check actual value");
   const DWORD kWindowExStyle =
       WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
       WS_EX_ACCEPTFILES | WS_EX_CLIENTEDGE;
-  COMPILE_ASSERT(kWindowExStyle == 0x00000210, CRESCENTEVE_WINDOW_EX_STYLE);
+  static_assert(kWindowExStyle == 0x00000210, "Check actual value");
 
   const CRect kWindowRect(184, 192, 1312, 1426);
   const CPoint kClientOffset(2, 2);
@@ -5246,11 +5246,11 @@ TEST_F(Win32RendererUtilTest, Opera10_Suggest) {
       WS_CAPTION | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
       WS_SYSMENU | WS_THICKFRAME | WS_OVERLAPPED | WS_MINIMIZEBOX |
       WS_MAXIMIZEBOX;
-  COMPILE_ASSERT(kWindowStyle == 0x16cf0000, OPERA10_WINDOW_STYLE);
+  static_assert(kWindowStyle == 0x16cf0000, "Check actual value");
   const DWORD kWindowExStyle =
       WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
       WS_EX_ACCEPTFILES | WS_EX_WINDOWEDGE;
-  COMPILE_ASSERT(kWindowExStyle == 0x00000110, OPERA10_WINDOW_EX_STYLE);
+  static_assert(kWindowExStyle == 0x00000110, "Check actual value");
 
   const CRect kWindowRect(538, 229, 2114, 1271);
   const CPoint kClientOffset(8, 0);
@@ -5288,11 +5288,11 @@ TEST_F(Win32RendererUtilTest, Opera10_Convert) {
       WS_CAPTION | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
       WS_SYSMENU | WS_THICKFRAME | WS_OVERLAPPED | WS_MINIMIZEBOX |
       WS_MAXIMIZEBOX;
-  COMPILE_ASSERT(kWindowStyle == 0x16cf0000, OPERA10_WINDOW_STYLE);
+  static_assert(kWindowStyle == 0x16cf0000, "Check actual value");
   const DWORD kWindowExStyle =
       WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
       WS_EX_ACCEPTFILES | WS_EX_WINDOWEDGE;
-  COMPILE_ASSERT(kWindowExStyle == 0x00000110, OPERA10_WINDOW_EX_STYLE);
+  static_assert(kWindowExStyle == 0x00000110, "Check actual value");
 
   const CRect kWindowRect(538, 229, 2114, 1271);
   const CPoint kClientOffset(8, 0);
@@ -5333,11 +5333,11 @@ TEST_F(Win32RendererUtilTest, Emacs22) {
       WS_CAPTION | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
       WS_SYSMENU | WS_THICKFRAME | WS_OVERLAPPED | WS_MINIMIZEBOX |
       WS_MAXIMIZEBOX;
-  COMPILE_ASSERT(kWindowStyle == 0x16cf0000, EMACS22_WINDOW_STYLE);
+  static_assert(kWindowStyle == 0x16cf0000, "Check actual value");
   const DWORD kWindowExStyle =
       WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
       WS_EX_ACCEPTFILES | WS_EX_OVERLAPPEDWINDOW;
-  COMPILE_ASSERT(kWindowExStyle == 0x00000310, EMACS22_WINDOW_EX_STYLE);
+  static_assert(kWindowExStyle == 0x00000310, "Check actual value");
 
   const CRect kWindowRect(175, 175, 797, 924);
   const CPoint kClientOffset(10, 53);
@@ -5392,11 +5392,11 @@ TEST_F(Win32RendererUtilTest, Meadow3) {
       WS_CAPTION | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
       WS_SYSMENU | WS_THICKFRAME | WS_OVERLAPPED | WS_MINIMIZEBOX |
       WS_MAXIMIZEBOX;
-  COMPILE_ASSERT(kWindowStyle == 0x16cf0000, MEADOW_WINDOW_STYLE);
+  static_assert(kWindowStyle == 0x16cf0000, "Check actual value");
   const DWORD kWindowExStyle =
       WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
       WS_EX_ACCEPTFILES | WS_EX_OVERLAPPEDWINDOW;
-  COMPILE_ASSERT(kWindowExStyle == 0x00000310, MEADOW_WINDOW_EX_STYLE);
+  static_assert(kWindowExStyle == 0x00000310, "Check actual value");
 
   const CRect kWindowRect(175, 175, 797, 928);
   const CPoint kClientOffset(10, 53);

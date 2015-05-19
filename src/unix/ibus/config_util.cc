@@ -31,7 +31,6 @@
 
 #include <map>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/singleton.h"

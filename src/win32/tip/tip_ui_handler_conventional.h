@@ -49,14 +49,10 @@ class TipUiHandlerConventional {
                                 ITfContext *context);
   static void OnDestroyElement(ITfUIElement *element);
 
-  static void OnActivate();
+  static void OnActivate(TipTextService *text_service);
   static void OnDeactivate();
   static void OnFocusChange(TipTextService *text_service,
                             ITfDocumentMgr *focused_document_manager);
-  static bool OnLayoutChange(TipTextService *text_service,
-                             ITfContext *context,
-                             TfLayoutCode layout_code,
-                             ITfContextView *context_view);
   static bool Update(TipTextService *text_service,
                      ITfContext *context,
                      TfEditCookie read_cookie);

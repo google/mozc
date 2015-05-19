@@ -35,8 +35,7 @@
 
 namespace mozc {
 
-SuggestionFilter::SuggestionFilter(const char *data, size_t size)
-    : filter_(NULL) {
+SuggestionFilter::SuggestionFilter(const char *data, size_t size) {
   filter_.reset(mozc::storage::ExistenceFilter::Read(data, size));
   LOG_IF(ERROR, filter_.get() == NULL)
       << "SuggestionFilterData is broken";

@@ -35,7 +35,7 @@
 namespace mozc {
 
 InputMultiFile::InputMultiFile(const string &filenames, ios_base::openmode mode)
-    : mode_(mode), ifs_(NULL) {
+    : mode_(mode) {
   Util::SplitStringUsing(filenames, ",", &filenames_);
   next_iter_ = filenames_.begin();
   if (next_iter_ != filenames_.end()) {

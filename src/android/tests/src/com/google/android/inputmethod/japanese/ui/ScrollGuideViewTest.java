@@ -29,7 +29,6 @@
 
 package org.mozc.android.inputmethod.japanese.ui;
 
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 
 import android.graphics.drawable.Drawable;
@@ -42,8 +41,8 @@ public class ScrollGuideViewTest extends InstrumentationTestCase {
   @SmallTest
   public void testScrollGuideViewSkin() {
     ScrollGuideView view = new ScrollGuideView(getInstrumentation().getTargetContext());
-    Drawable drawable = VisibilityProxy.getField(view, "scrollBarDrawable");
+    Drawable drawable = view.scrollBarDrawable;
     view.setSkinType(SkinType.TEST);
-    assertNotSame(drawable, VisibilityProxy.getField(view, "scrollBarDrawable"));
+    assertNotSame(drawable, view.scrollBarDrawable);
   }
 }

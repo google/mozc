@@ -75,6 +75,7 @@ class QualityRegressionUtil {
                       string *actual_value);
 
   void SetRequest(const commands::Request &request);
+  static string GetPlatformString(uint32 platform_bitfiled);
 
  private:
   ConverterInterface *converter_;

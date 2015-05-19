@@ -52,8 +52,8 @@ string GenRandomString(int size) {
   string result;
   const size_t len = Util::Random(size) + 1;
   for (int i = 0; i < len; ++i) {
-    const uint16 l = Util::Random(0xFFFF) + 1;
-    Util::UCS2ToUTF8Append(l, &result);
+    const char32 l = Util::Random(0x1FFFF) + 1;
+    Util::UCS4ToUTF8Append(l, &result);
   }
   return result;
 }

@@ -31,13 +31,17 @@ package org.mozc.android.inputmethod.japanese.preference;
 
 import static org.easymock.EasyMock.expect;
 
-import org.mozc.android.inputmethod.japanese.HardwareKeyboardSpecification;
+import org.mozc.android.inputmethod.japanese.ApplicationInitializerFactory;
+import org.mozc.android.inputmethod.japanese.ApplicationInitializerFactory.ApplicationInitializationStatus;
+import org.mozc.android.inputmethod.japanese.ApplicationInitializerFactory.ApplicationInitializer;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import org.mozc.android.inputmethod.japanese.MozcUtil.TelephonyManagerInterface;
 import org.mozc.android.inputmethod.japanese.testing.ActivityInstrumentationTestCase2WithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
+import com.google.common.base.Optional;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.preference.PreferenceManager;
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -51,10 +55,10 @@ public class MozcBasePreferenceActivityTest
 
   @Override
   protected void tearDown() throws Exception {
-    MozcUtil.setDebug(null);
-    MozcUtil.setDevChannel(null);
-    MozcUtil.setMozcEnabled(null);
-    MozcUtil.setMozcDefaultIme(null);
+    MozcUtil.setDebug(Optional.<Boolean>absent());
+    MozcUtil.setDevChannel(Optional.<Boolean>absent());
+    MozcUtil.setMozcEnabled(Optional.<Boolean>absent());
+    MozcUtil.setMozcDefaultIme(Optional.<Boolean>absent());
     super.tearDown();
   }
 
@@ -64,8 +68,8 @@ public class MozcBasePreferenceActivityTest
     AlertDialog imeEnableDialog = createDialogMock(AlertDialog.class);
     AlertDialog imeSwitchDialog = createDialogMock(AlertDialog.class);
 
-    VisibilityProxy.setField(activity, "imeEnableDialog", imeEnableDialog);
-    VisibilityProxy.setField(activity, "imeSwitchDialog", imeSwitchDialog);
+    activity.imeEnableDialog = imeEnableDialog;
+    activity.imeSwitchDialog = imeSwitchDialog;
 
     class TestData extends Parameter {
       final boolean isMozcEnabled;
@@ -88,6 +92,22 @@ public class MozcBasePreferenceActivityTest
         new TestData(true, true, false, false),
     };
 
+    ApplicationInitializationStatus initializationStatus = new ApplicationInitializationStatus() {
+      @Deprecated
+      @Override
+      public boolean isLaunchedAtLeastOnce() {
+        return false;
+      }
+      @Override
+      public Optional<Integer> getLastLaunchAbiIndependentVersionCode() {
+        return Optional.of(Integer.MAX_VALUE);
+      }
+      @Override
+      public boolean isWelcomeActivityShownAtLeastOnce() {
+        return true;
+      }
+    };
+
     for (TestData test : testData) {
       resetAll();
       expect(imeEnableDialog.isShowing()).andStubReturn(false);
@@ -100,9 +120,23 @@ public class MozcBasePreferenceActivityTest
       }
       replayAll();
 
-      MozcUtil.setMozcEnabled(test.isMozcEnabled);
-      MozcUtil.setMozcDefaultIme(test.isMozcDefaultIme);
-      activity.onPostResume();
+      MozcUtil.setMozcEnabled(Optional.of(test.isMozcEnabled));
+      MozcUtil.setMozcDefaultIme(Optional.of(test.isMozcDefaultIme));
+
+      Context context = getInstrumentation().getTargetContext();
+      ApplicationInitializer initializer =
+          ApplicationInitializerFactory.createInstance(
+              initializationStatus,
+              context,
+              PreferenceManager.getDefaultSharedPreferences(context),
+              new TelephonyManagerInterface() {
+                @Override
+                public String getNetworkOperator() {
+                  return "INVALID NETWORK OPERATOR";
+                }
+              });
+
+      activity.onPostResumeInternal(initializer);
 
       verifyAll();
     }

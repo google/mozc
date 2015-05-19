@@ -86,4 +86,5 @@
 
   <!-- Duration for fading in/out of candidate frame (in pixels/sec). -->
   <integer name="layout_adjustment_transition_duration">200</integer>
+
 </resources>

@@ -60,7 +60,6 @@
             'ime_composition_string_test.cc',
             'ime_core_test.cc',
             'ime_input_context_test.cc',
-            'ime_mouse_tracker_test.cc',
             'ime_ui_visibility_tracker_test.cc',
           ],
           'dependencies': [
@@ -108,9 +107,7 @@
             'ime_core.cc',
             'ime_input_context.cc',
             'ime_message_queue.cc',
-            'ime_mouse_tracker.cc',
             'ime_private_context.cc',
-            'ime_trace.cc',
             'ime_types.cc',
             'ime_ui_context.cc',
             'ime_ui_visibility_tracker.cc',

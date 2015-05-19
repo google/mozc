@@ -82,51 +82,37 @@ namespace mozc {
 
 RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
                            const DataManagerInterface *data_manager,
-                           const PosGroup *pos_group) {
-  Init(parent_converter, data_manager, pos_group, NULL);
-}
-
-RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
-                           const DataManagerInterface *data_manager,
                            const PosGroup *pos_group,
-                           const UserDictionary *user_dictionary) {
-  Init(parent_converter, data_manager, pos_group, user_dictionary);
-}
-
-void RewriterImpl::Init(const ConverterInterface *parent_converter,
-                        const DataManagerInterface *data_manager,
-                        const PosGroup *pos_group,
-                        const UserDictionary *user_dictionary) {
+                           const DictionaryInterface *dictionary) {
   DCHECK(parent_converter);
   DCHECK(data_manager);
   DCHECK(pos_group);
-  parent_converter_ = parent_converter;
-  pos_matcher_ = data_manager->GetPOSMatcher();
-  DCHECK(pos_matcher_);
-  // |user_dictionary| can be NULL
+  const POSMatcher *pos_matcher = data_manager->GetPOSMatcher();
+  DCHECK(pos_matcher);
+  // |dictionary| can be NULL
 
   AddRewriter(new UserDictionaryRewriter);
   AddRewriter(new FocusCandidateRewriter);
-  AddRewriter(new TransliterationRewriter(*pos_matcher_));
+  AddRewriter(new TransliterationRewriter(*pos_matcher));
   AddRewriter(new EnglishVariantsRewriter);
-  AddRewriter(new NumberRewriter(pos_matcher_));
+  AddRewriter(new NumberRewriter(pos_matcher));
   AddRewriter(new CollocationRewriter(data_manager));
-  AddRewriter(new SingleKanjiRewriter(*pos_matcher_));
+  AddRewriter(new SingleKanjiRewriter(*pos_matcher));
   AddRewriter(new EmojiRewriter(
       kEmojiDataList, arraysize(kEmojiDataList),
       kEmojiTokenList, arraysize(kEmojiTokenList),
       kEmojiValueList));
   AddRewriter(new EmoticonRewriter);
-  AddRewriter(new CalculatorRewriter(parent_converter_));
-  AddRewriter(new SymbolRewriter(parent_converter_, data_manager));
-  AddRewriter(new UnicodeRewriter(parent_converter_));
-  AddRewriter(new VariantsRewriter(pos_matcher_));
-  AddRewriter(new ZipcodeRewriter(pos_matcher_));
+  AddRewriter(new CalculatorRewriter(parent_converter));
+  AddRewriter(new SymbolRewriter(parent_converter, data_manager));
+  AddRewriter(new UnicodeRewriter(parent_converter));
+  AddRewriter(new VariantsRewriter(pos_matcher));
+  AddRewriter(new ZipcodeRewriter(pos_matcher));
   AddRewriter(new DiceRewriter);
 
   if (FLAGS_use_history_rewriter) {
-    AddRewriter(new UserBoundaryHistoryRewriter(parent_converter_));
-    AddRewriter(new UserSegmentHistoryRewriter(pos_matcher_, pos_group));
+    AddRewriter(new UserBoundaryHistoryRewriter(parent_converter));
+    AddRewriter(new UserSegmentHistoryRewriter(pos_matcher, pos_group));
   }
 
   AddRewriter(new DateRewriter);
@@ -138,7 +124,7 @@ void RewriterImpl::Init(const ConverterInterface *parent_converter,
   AddRewriter(new CommandRewriter);
 #endif  // OS_ANDROID
 #ifndef NO_USAGE_REWRITER
-  AddRewriter(new UsageRewriter(data_manager, user_dictionary));
+  AddRewriter(new UsageRewriter(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER
 
   AddRewriter(new VersionRewriter);

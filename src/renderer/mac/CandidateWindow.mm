@@ -83,7 +83,7 @@ void CandidateWindow::SetCandidates(const Candidates &candidates) {
   [candidate_view setCandidates:&candidates];
   [candidate_view setNeedsDisplay:YES];
   NSSize size = [candidate_view updateLayout];
-  ::SizeWindow(window_, size.width, size.height, YES);
+  ResizeWindow(size.width, size.height);
 }
 
 void CandidateWindow::ResetView(){

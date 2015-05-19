@@ -39,29 +39,39 @@
         android:layout_height="fill_parent"
         android:orientation="horizontal" >
 
-        <!-- By the layout_weight parameter, ConversionCandidateWordView will fill
-             the parent view except ScrollGuideView declared below. -->
-        <FrameLayout
+        <!--
+             By the layout_weight parameter, ConversionCandidateWordView will fill
+             the parent view except ScrollGuideView declared below.
+        -->
+
+        <view
             android:layout_width="0dip"
             android:layout_height="fill_parent"
-            android:layout_weight="1">
-          <view
-              android:id="@+id/candidate_word_view"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              class="org.mozc.android.inputmethod.japanese.CandidateView$ConversionCandidateWordView" />
+            android:layout_weight="1"
+            class="org.mozc.android.inputmethod.japanese.ConversionCandidateWordContainerView" >
 
-          <ToggleButton
-              android:id="@+id/input_frame_fold_button"
-              android:layout_width="@dimen/keyboard_folding_icon_size"
-              android:layout_height="@dimen/keyboard_folding_icon_size"
-              android:layout_gravity="top|right"
-              android:minWidth="0dip"
-              android:minHeight="0dip"
-              android:disabledAlpha="0"
-              android:textOff=""
-              android:textOn="" />
-        </FrameLayout>
+            <!--
+                layout_width/height attributes, which are mandatory, of the children are ignored.
+                Layout process is done by ConversionCandidateWordViewContainerView without
+                layout parameters.
+            -->
+
+            <view
+                android:id="@+id/candidate_word_view"
+                android:layout_width="0dip"
+                android:layout_height="0dip"
+                class="org.mozc.android.inputmethod.japanese.CandidateView$ConversionCandidateWordView" />
+
+            <ToggleButton
+                android:id="@+id/input_frame_fold_button"
+                android:layout_width="0dip"
+                android:layout_height="0dip"
+                android:disabledAlpha="0"
+                android:minHeight="0dip"
+                android:minWidth="0dip"
+                android:textOff=""
+                android:textOn="" />
+        </view>
 
         <org.mozc.android.inputmethod.japanese.ui.ScrollGuideView
             android:id="@+id/candidate_scroll_guide_view"

@@ -44,15 +44,20 @@ class WindowUtil {
   // Returns an empty string when fails to retrieve the class name.
   static wstring GetWindowClassName(HWND window_handle);
 
-  // Returns true when Mozc's suggestion UI is expected to be surpressed on
-  // the window specified by |window_handle|.
+  // Returns true if Mozc's suggestion UI is expected to be suppressed on the
+  // window specified by |window_handle|.
   static bool IsSuppressSuggestionWindow(HWND window_handle);
 
-  // Returns true when the target text input field is in Chrome's Omnibox.
+  // Returns true if the target text input field is in Chrome's Omnibox.
   static bool IsInChromeOmnibox(HWND window_handle);
 
-  // Returns true when the target text input field is in Google search box.
+  // Returns true if the target text input field is in Google search box.
   static bool IsInGoogleSearchBox(HWND window_handle);
+
+  // Returns true if the target window specified by |window_handle| can be
+  // successfully configured to receive an incoming message from lower
+  // integrity processes.
+  static bool ChangeMessageFilter(HWND window_handle, UINT message);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(WindowUtil);

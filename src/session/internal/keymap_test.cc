@@ -67,7 +67,7 @@ class KeyMapTest : public testing::Test {
 };
 
 TEST_F(KeyMapTest, AddRule) {
-  KeyMap<PrecompositionState::Commands> keymap;
+  KeyMap<PrecompositionState> keymap;
   commands::KeyEvent key_event;
   // 'a'
   key_event.set_key_code(97);
@@ -103,7 +103,7 @@ TEST_F(KeyMapTest, AddRule) {
 
 TEST_F(KeyMapTest, GetCommand) {
   {
-    KeyMap<PrecompositionState::Commands> keymap;
+    KeyMap<PrecompositionState> keymap;
     commands::KeyEvent init_key_event;
     init_key_event.set_key_code(97);
     EXPECT_TRUE(keymap.AddRule(init_key_event,
@@ -120,7 +120,20 @@ TEST_F(KeyMapTest, GetCommand) {
     EXPECT_FALSE(keymap.GetCommand(key_event, &command));
   }
   {
-    KeyMap<CompositionState::Commands> keymap;
+    KeyMap<PrecompositionState> keymap;
+    commands::KeyEvent init_key_event;
+    init_key_event.set_key_code(97);
+    EXPECT_TRUE(keymap.AddRule(init_key_event,
+                               PrecompositionState::INSERT_CHARACTER));
+
+    commands::KeyEvent key_event;
+    PrecompositionState::Commands command;
+    key_event.set_key_string("hoge");
+    EXPECT_TRUE(keymap.GetCommand(key_event, &command));
+    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+  }
+  {
+    KeyMap<CompositionState> keymap;
     commands::KeyEvent init_key_event;
     init_key_event.set_key_code(97);
     EXPECT_TRUE(keymap.AddRule(init_key_event,
@@ -137,7 +150,7 @@ TEST_F(KeyMapTest, GetCommand) {
     EXPECT_FALSE(keymap.GetCommand(key_event, &command));
   }
   {
-    KeyMap<CompositionState::Commands> keymap;
+    KeyMap<CompositionState> keymap;
     commands::KeyEvent init_key_event;
     init_key_event.set_special_key(commands::KeyEvent::ENTER);
     EXPECT_TRUE(keymap.AddRule(init_key_event, CompositionState::COMMIT));
@@ -167,8 +180,44 @@ TEST_F(KeyMapTest, GetCommand) {
   }
 }
 
+TEST_F(KeyMapTest, GetCommandForKeyString) {
+  KeyMap<PrecompositionState> keymap;
+
+  // When a key event is not registered, GetCommand should return false.
+  {
+    commands::KeyEvent key_event;
+    PrecompositionState::Commands command;
+    key_event.set_key_code(97);
+    EXPECT_FALSE(keymap.GetCommand(key_event, &command));
+  }
+
+  // When a key event is not registered, GetCommand should return false even if
+  // the key event has |key_string|. See also b/9684668
+  {
+    commands::KeyEvent key_event;
+    PrecompositionState::Commands command;
+    key_event.set_key_code(97);
+    key_event.set_key_string("a");
+    EXPECT_FALSE(keymap.GetCommand(key_event, &command));
+  }
+
+  // Special case for b/4170089. VK_PACKET on Windows will be encoded as
+  // {
+  //   key_code: (empty)
+  //   key_string: (the Unicode string to be input)
+  // }
+  // We always treat such key events as INSERT_CHARACTER command.
+  {
+    commands::KeyEvent key_event;
+    PrecompositionState::Commands command;
+    key_event.set_key_string("a");
+    EXPECT_TRUE(keymap.GetCommand(key_event, &command));
+    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+  }
+}
+
 TEST_F(KeyMapTest, GetCommandKeyStub) {
-  KeyMap<PrecompositionState::Commands> keymap;
+  KeyMap<PrecompositionState> keymap;
   commands::KeyEvent init_key_event;
   init_key_event.set_special_key(commands::KeyEvent::ASCII);
   EXPECT_TRUE(keymap.AddRule(init_key_event,

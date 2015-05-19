@@ -44,8 +44,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../net/jsoncpp.gyp:jsoncpp',
         '../net/net.gyp:http_client',
-        '../net/net.gyp:jsoncpp',
         '../storage/storage.gyp:storage',
         'gen_sync_data#host',
       ],
@@ -53,6 +53,11 @@
         ['target_platform!="Android"', {
           'dependencies': [
             '../base/base.gyp:encryptor',  # 'oauth2_util.cc' depends on Encryptor except for Android.
+          ],
+        }],
+        ['target_platform=="NaCl"', {
+          'dependencies': [
+            '../base/base.gyp:nacl_js_proxy',
           ],
         }],
       ],

@@ -31,7 +31,8 @@
 #define MOZC_BASE_ENCRYPTOR_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 

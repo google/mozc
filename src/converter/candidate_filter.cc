@@ -345,13 +345,21 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     const Segment::Candidate *candidate,
     const vector<const Node *> &nodes,
     Segments::RequestType request_type) {
-  const ResultType result =
-      FilterCandidateInternal(original_key, candidate, nodes, request_type);
-  if (result != GOOD_CANDIDATE) {
+  if (request_type == Segments::REVERSE_CONVERSION) {
+    // In reverse conversion, only remove duplicates because the filtering
+    // criteria of FilterCandidateInternal() are completely designed for
+    // (forward) conversion.
+    const bool inserted = seen_.insert(candidate->value).second;
+    return inserted ? GOOD_CANDIDATE : BAD_CANDIDATE;
+  } else {
+    const ResultType result = FilterCandidateInternal(original_key, candidate,
+                                                      nodes, request_type);
+    if (result != GOOD_CANDIDATE) {
+      return result;
+    }
+    seen_.insert(candidate->value);
     return result;
   }
-  seen_.insert(candidate->value);
-  return result;
 }
 
 }  // namespace converter

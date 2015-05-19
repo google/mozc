@@ -79,7 +79,12 @@ const size_t kMaxSuggestionTrial = 3000;
 const size_t kMaxPrevValueTrial = 500;
 
 // cache size
+// Typically memory/storage footprint becomes kLRUCacheSize * 70 bytes.
+#ifdef OS_ANDROID
+const size_t kLRUCacheSize = 2000;
+#else  // OS_ANDROID
 const size_t kLRUCacheSize = 10000;
+#endif  // OS_ANDROID
 
 // don't save key/value that are
 // longer than kMaxCandidateSize to avoid memory explosion
@@ -1271,7 +1276,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   // |input_key| is "あｋ" and |base_key| is "あ"
   string input_key;
   string base_key;
-  scoped_ptr<Trie<string> > expanded(NULL);
+  scoped_ptr<Trie<string> > expanded;
   GetInputKeyFromSegments(request, segments, &input_key, &base_key, &expanded);
 
   int trial = 0;

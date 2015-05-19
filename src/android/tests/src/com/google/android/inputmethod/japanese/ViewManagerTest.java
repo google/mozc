@@ -34,6 +34,7 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
+
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.MozcView.HeightLinearInterpolationListener;
@@ -65,7 +66,6 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
@@ -86,6 +86,7 @@ import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -101,7 +102,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     Context context = getInstrumentation().getTargetContext();
     ViewManager viewManager = new ViewManager(context, viewEventListener, null, null);
     ViewManagerEventListener viewManagerEventListener =
-        VisibilityProxy.getField(viewManager, "eventListener");
+        ViewManagerEventListener.class.cast(viewManager.eventListener);
 
     MozcView mozcView = viewManager.createMozcView(context);
 
@@ -230,7 +231,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     ViewManager viewManager =
         new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
     MozcView mozcView = createViewMock(MozcView.class);
-    VisibilityProxy.setField(viewManager, "mozcView", mozcView);
+    viewManager.mozcView = mozcView;
 
     replayAll();
 
@@ -261,7 +262,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     CandidateView.ConversionCandidateWordView candidateWordView =
         candidateView.getConversionCandidateWordView();
     candidateWordView.onLayout(false, 0, 0, 320, 240);
-    assertNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertNull(candidateWordView.calculatedLayout);
 
     viewManager.render(Command.newBuilder()
         .setOutput(Output.newBuilder()
@@ -272,7 +273,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     // CandidateView's bodyView has children now as a result of
     // calling CandidateView#update() from ViewManager#render().
-    assertNotNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertNotNull(candidateWordView.calculatedLayout);
   }
 
   @SmallTest
@@ -281,7 +282,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     MozcView mozcView = createViewMock(MozcView.class);
     ViewManager viewManager =
         new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
-    VisibilityProxy.setField(viewManager, "mozcView", mozcView);
+    viewManager.mozcView = mozcView;
 
     class TestData extends Parameter {
       final boolean allowEmoji;
@@ -608,7 +609,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     viewManager.createMozcView(context);
     KeyboardSpecification keyboardSpecification =
         JapaneseSoftwareKeyboardModel.class.cast(
-            VisibilityProxy.getField(viewManager, "japaneseSoftwareKeyboardModel"))
+            viewManager.japaneseSoftwareKeyboardModel)
                 .getKeyboardSpecification();
 
     Resources resources = context.getResources();
@@ -791,8 +792,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     ViewManager viewManager = new ViewManager(context, listener, null, null);
     viewManager.createMozcView(context);
     KeyboardSpecification keyboardSpecification =
-        JapaneseSoftwareKeyboardModel.class.cast(
-            VisibilityProxy.getField(viewManager, "japaneseSoftwareKeyboardModel"))
+        JapaneseSoftwareKeyboardModel.class.cast(viewManager.japaneseSoftwareKeyboardModel)
             .getKeyboardSpecification();
 
     // Emulate toggling a key.
@@ -821,7 +821,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     // Set mozcView mock.
     MozcView mozcView = createViewMock(MozcView.class);
-    VisibilityProxy.setField(viewManager, "mozcView", mozcView);
+    viewManager.mozcView = mozcView;
 
     // Render with empty output.
     {
@@ -867,7 +867,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     LayoutParams layoutParams = mozcView.getKeyboardFrame().getLayoutParams();
     layoutParams.height = 0;
     Map<Integer, KeyEventContext> keyEventContextMap =
-        VisibilityProxy.getField(mozcView.getKeyboardView(), "keyEventContextMap");
+        mozcView.getKeyboardView().keyEventContextMap;
     {
       // Add dummy KeyEventContext.
       KeyEventContext keyEventContext =
@@ -886,7 +886,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
         .withArgs(context, null)
         .createMock();
     resetAll();
-    VisibilityProxy.setField(viewManager, "menuDialog", menuDialog);
+    viewManager.menuDialog = menuDialog;
     menuDialog.dismiss();
     replayAll();
 
@@ -937,7 +937,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
 
     for (TestData testData : testDataList) {
       resetAll();
-      VisibilityProxy.setField(viewManager, "mozcView", null);
+      viewManager.mozcView = null;
 
       View mockContentView = new View(context);
       mockContentView.layout(0, 0, 0, testData.contentViewHeight);
@@ -963,7 +963,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     {
       MozcView mozcView = createViewMock(MozcView.class);
       resetAll();
-      VisibilityProxy.setField(viewManager, "mozcView", mozcView);
+      viewManager.mozcView = mozcView;
 
       int contentViewWidth = 200;
       int contentViewHeight = 400;
@@ -1001,7 +1001,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
     ViewManager viewManager =
         new ViewManager(context, createNiceMock(ViewEventListener.class), null, null);
     MozcView mozcView = createViewMock(MozcView.class);
-    VisibilityProxy.setField(viewManager, "mozcView", mozcView);
+    viewManager.mozcView = mozcView;
 
     for (EmojiProviderType emojiProviderType : EmojiProviderType.values()) {
       resetAll();
@@ -1011,8 +1011,7 @@ public class ViewManagerTest extends InstrumentationTestCaseWithMock {
       viewManager.setEmojiProviderType(emojiProviderType);
 
       verifyAll();
-      assertEquals(emojiProviderType,
-                   VisibilityProxy.getField(viewManager, "emojiProviderType"));
+      assertEquals(emojiProviderType, viewManager.emojiProviderType);
     }
   }
 

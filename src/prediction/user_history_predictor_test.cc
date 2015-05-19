@@ -3257,7 +3257,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   table->LoadFromFile("system://romanji-hiragana.tsv");
   scoped_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
-  scoped_ptr<ConversionRequest> conversion_request(NULL);
+  scoped_ptr<ConversionRequest> conversion_request;
   Segments segments;
 
   {

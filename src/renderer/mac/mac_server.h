@@ -48,7 +48,7 @@ class CandidateController;
 // Actual window management is delegated to CandidateController class.
 class MacServer : public RendererServer {
  public:
-  MacServer();
+  MacServer(int argc, const char **argv);
   virtual bool AsyncExecCommand(string *proto_message);
   virtual int StartMessageLoop();
 
@@ -64,6 +64,8 @@ class MacServer : public RendererServer {
   pthread_cond_t event_;
   string message_;
   scoped_ptr<CandidateController> controller_;
+  int argc_;
+  const char **argv_;
 
   DISALLOW_COPY_AND_ASSIGN(MacServer);
 };

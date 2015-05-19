@@ -29,7 +29,7 @@
 
 // The main function of configure dialog for Mozc.
 
-#include "base/base.h"
+#include "base/flags.h"
 #include "base/winmain.h"
 
 int RunConfigDialog(int argc, char *argv[]);

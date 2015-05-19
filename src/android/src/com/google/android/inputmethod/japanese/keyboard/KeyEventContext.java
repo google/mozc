@@ -34,8 +34,6 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchA
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchPosition;
 
-import java.util.List;
-
 /**
  * This class represents user's one action, e.g., the sequence of:
  * press -> move -> move -> ... -> move -> release.
@@ -113,7 +111,7 @@ public class KeyEventContext {
   /**
    * Returns the key entity corresponding to {@code metaState} and {@code direction}.
    */
-  static KeyEntity getKeyEntity(Key key, MetaState metaState, Flick.Direction direction) {
+  public static KeyEntity getKeyEntity(Key key, MetaState metaState, Flick.Direction direction) {
     if (key == null || metaState == null || direction == null) {
       return null;
     }

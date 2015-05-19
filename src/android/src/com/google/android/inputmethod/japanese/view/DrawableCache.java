@@ -30,19 +30,16 @@
 package org.mozc.android.inputmethod.japanese.view;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 
 import android.graphics.drawable.Drawable;
-
-import java.util.HashMap;
-import java.util.Map;
+import android.util.SparseArray;
 
 /**
  * Cache of android's Drawable instances.
  *
  */
 public class DrawableCache {
-  private final Map<Integer, Drawable> cacheMap = new HashMap<Integer, Drawable>(256);
+  private final SparseArray<Drawable> cacheMap = new SparseArray<Drawable>(128);
   private final MozcDrawableFactory mozcDrawableFactory;
   private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
 

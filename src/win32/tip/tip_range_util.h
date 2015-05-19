@@ -31,9 +31,11 @@
 #define MOZC_WIN32_TIP_TIP_RANGE_UTIL_H_
 
 #include <Windows.h>
+#include <InputScope.h>
 #include <msctf.h>
 
 #include <string>
+#include <vector>
 
 #include "base/port.h"
 
@@ -61,9 +63,17 @@ class TipRangeUtil {
   static HRESULT GetText(
       ITfRange *range, TfEditCookie edit_cookie, wstring *text);
 
+  // Retrieves the input scopes from |range| into |input_scopes|.
+  // Returns the general result code.
+  static HRESULT GetInputScopes(ITfRange *range,
+                                TfEditCookie read_cookie,
+                                vector<InputScope> *input_scopes);
+
+  // Checks whether or not |range_test| becomes a subset of |range_cover|.
   static bool IsRangeCovered(TfEditCookie edit_cookie,
                              ITfRange *range_test,
                              ITfRange *range_cover);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipRangeUtil);
 };

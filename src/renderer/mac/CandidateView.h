@@ -28,14 +28,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #import <Cocoa/Cocoa.h>
+#include "renderer/renderer_command.pb.h"
 
 namespace mozc {
 namespace client {
 class SendCommandInterface;
 }  // namespace mozc::client
-namespace commands {
-class Candidates;
-}  // namespace mozc::commands
 
 namespace renderer {
 class TableLayout;
@@ -56,7 +54,7 @@ enum COLUMN_TYPE {
 // according to the current candidates.
 @interface CandidateView : NSView {
  @private
-  const mozc::commands::Candidates *candidates_;
+  mozc::commands::Candidates candidates_;
   mozc::renderer::TableLayout *tableLayout_;
   const mozc::renderer::RendererStyle *style_;
 
@@ -70,8 +68,7 @@ enum COLUMN_TYPE {
   mozc::client::SendCommandInterface *command_sender_;
 }
 
-// setCandidates: sets the reference of candidates to be rendered.  It
-// doesn't take ownership of the specified |candidates|.
+// setCandidates: sets the candidates to be rendered.
 - (void)setCandidates:(const mozc::commands::Candidates *)candidates;
 
 // setController: sets the reference of GoogleJapaneseInputController.

@@ -43,7 +43,6 @@
 #include "client/client_interface.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "ipc/named_event.h"
 #include "net/http_client.h"
 #include "net/http_client_mock.h"
 #include "session/commands.pb.h"
@@ -202,35 +201,6 @@ class ScopedClockMock {
 };
 
 namespace {
-class NamedEventListenerThread : public Thread {
- public:
-  explicit NamedEventListenerThread(int timeout)
-      : listener_("sync"), timeout_(timeout), result_(false) {
-    LOG_IF(FATAL, !listener_.IsAvailable())
-        << "Failed to intialize named event listener.";
-  }
-
-  ~NamedEventListenerThread() {
-    Join();
-  }
-
-  void Run() {
-    result_ = listener_.Wait(timeout_);
-  }
-
-  bool GetResult() {
-    Join();
-    return result_;
-  }
-
- private:
-  NamedEventListener listener_;
-  int32 timeout_;
-  bool result_;
-};
-}  // namespace
-
-namespace {
 
 void SetUpHttpClientMockForAuth(const string &auth_token,
                                 HTTPClientMock *client_mock) {
@@ -258,85 +228,6 @@ void SetUpHttpClientMockForAuth(const string &auth_token,
 }
 
 }  // namespace
-
-TEST_F(SyncHandlerTest, NotificationTest) {
-  FLAGS_min_sync_interval = 0;
-
-  // Implementation note:
-  //    We intentionally do not assert any timing condition like
-  //      "this operation should be finished within X seconds",
-  //    as it is not naturally guaranteed on preemptive multitasking operation
-  //    system, especially on highly virtualized test environment. Here we have
-  //    a long enough timeout just to prevent this test from getting stuck.
-  //    See b/6407046 for the background of the flakiness of this test.
-  const int kTimeout = 30 * 1000;  // 30 sec.
-  const int kSyncDuation = 1000;  // 1 sec.
-
-  {
-    syncer_->Reset();
-    syncer_->SetOperationDuration(kSyncDuation);
-
-    EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(1).WillOnce(Return(true));
-
-    // Call three times to test IsRunning state.
-    EXPECT_TRUE(sync_handler_->Sync());
-    EXPECT_TRUE(sync_handler_->Sync());
-    EXPECT_TRUE(sync_handler_->Sync());
-
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
-    // should be signaled eventually.
-    EXPECT_TRUE(listener.Wait(kTimeout));
-
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-
-  {
-    syncer_->Reset();
-    syncer_->SetOperationDuration(kSyncDuation);
-
-    EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(false));
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(0);
-
-    NamedEventListenerThread listener(kTimeout);
-    listener.Start();
-    Util::Sleep(200);
-
-    EXPECT_FALSE(sync_handler_->Sync());
-    // should be signaled eventually.
-    EXPECT_TRUE(listener.GetResult());
-
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-
-  {
-    syncer_->Reset();
-    syncer_->SetOperationDuration(kSyncDuation);
-
-    EXPECT_CALL(*syncer_, Start()).Times(0);
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(0);
-    EXPECT_CALL(*syncer_, ClearInternal()).Times(1).WillOnce(Return(true));
-
-    // Call three times to test IsRunning state.
-    EXPECT_TRUE(sync_handler_->Clear());
-    EXPECT_TRUE(sync_handler_->Clear());
-    EXPECT_TRUE(sync_handler_->Clear());
-
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
-    // should be signaled eventually.
-    EXPECT_TRUE(listener.Wait(kTimeout));
-
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-}
 
 namespace {
 bool g_is_reload_called = false;
@@ -372,10 +263,15 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
     EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
 
     g_is_reload_called = false;
+    const uint64 reload_required_timestamp =
+      sync_handler_->GetReloadRequiredTimestamp();
+    Util::Sleep(100);
     syncer_->SetReloadRequired(true);
     sync_handler_->Sync();
     sync_handler_->Wait();
     EXPECT_TRUE(g_is_reload_called);
+    EXPECT_LE(reload_required_timestamp + 100,
+              sync_handler_->GetReloadRequiredTimestamp());
 
     Mock::VerifyAndClearExpectations(syncer_);
   }
@@ -388,10 +284,14 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
     EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
 
     g_is_reload_called = false;
+    const uint64 reload_required_timestamp =
+      sync_handler_->GetReloadRequiredTimestamp();
     syncer_->SetReloadRequired(true);
     sync_handler_->Sync();
     sync_handler_->Wait();
     EXPECT_FALSE(g_is_reload_called);
+    EXPECT_EQ(reload_required_timestamp,
+              sync_handler_->GetReloadRequiredTimestamp());
 
     Mock::VerifyAndClearExpectations(syncer_);
   }
@@ -404,10 +304,14 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
     EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
 
     g_is_reload_called = false;
+    const uint64 reload_required_timestamp =
+      sync_handler_->GetReloadRequiredTimestamp();
     syncer_->SetReloadRequired(false);
     sync_handler_->Sync();
     sync_handler_->Wait();
     EXPECT_FALSE(g_is_reload_called);
+    EXPECT_EQ(reload_required_timestamp,
+              sync_handler_->GetReloadRequiredTimestamp());
 
     Mock::VerifyAndClearExpectations(syncer_);
   }
@@ -418,10 +322,14 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
     EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(false));
 
     g_is_reload_called = false;
+    const uint64 reload_required_timestamp =
+      sync_handler_->GetReloadRequiredTimestamp();
     syncer_->SetReloadRequired(true);
     sync_handler_->Sync();
     sync_handler_->Wait();
     EXPECT_FALSE(g_is_reload_called);
+    EXPECT_EQ(reload_required_timestamp,
+              sync_handler_->GetReloadRequiredTimestamp());
 
     Mock::VerifyAndClearExpectations(syncer_);
   }
@@ -433,10 +341,14 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
     ON_CALL(*syncer_, SyncInternal()).WillByDefault(Return(true));
 
     g_is_reload_called = false;
+    const uint64 reload_required_timestamp =
+      sync_handler_->GetReloadRequiredTimestamp();
     syncer_->SetReloadRequired(true);
     sync_handler_->Clear();
     sync_handler_->Wait();
     EXPECT_FALSE(g_is_reload_called);
+    EXPECT_EQ(reload_required_timestamp,
+              sync_handler_->GetReloadRequiredTimestamp());
 
     Mock::VerifyAndClearExpectations(syncer_);
   }
@@ -457,11 +369,7 @@ TEST_F(SyncHandlerTest, MinIntervalTest) {
 
     syncer_->Reset();
 
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
     EXPECT_TRUE(sync_handler_->Sync());
-    ASSERT_TRUE(listener.Wait(1000))
-        << "Initial Sync should be invoked immediately";
     sync_handler_->Wait();
 
     Mock::VerifyAndClearExpectations(syncer_);
@@ -474,17 +382,10 @@ TEST_F(SyncHandlerTest, MinIntervalTest) {
 
     syncer_->Reset();
 
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
     EXPECT_TRUE(sync_handler_->Sync());
-    ASSERT_FALSE(listener.Wait(500))
-        << "Subsequent Sync call should wait for the next sync time "
-        "window with minimum sync interval.";
 
     Mock::VerifyAndClearExpectations(syncer_);
 
-    ASSERT_TRUE(listener.Wait(FLAGS_min_sync_interval * 1000))
-        << "The second Sync call should be finished.";
     sync_handler_->Wait();
   }
 
@@ -495,11 +396,7 @@ TEST_F(SyncHandlerTest, MinIntervalTest) {
 
     syncer_->Reset();
 
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
     EXPECT_TRUE(sync_handler_->Sync());
-    ASSERT_TRUE(listener.Wait(1000))
-        << "With sufficient wait time, Sync should be invoked immediately.";
     sync_handler_->Wait();
 
     Mock::VerifyAndClearExpectations(syncer_);
@@ -512,12 +409,7 @@ TEST_F(SyncHandlerTest, MinIntervalTest) {
 
     syncer_->Reset();
 
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
     EXPECT_TRUE(sync_handler_->Clear());
-    ASSERT_TRUE(listener.Wait(1000))
-        << "Even within the minimum interval, Clear should be invoked "
-        "immediately.";
     sync_handler_->Wait();
 
     Mock::VerifyAndClearExpectations(syncer_);
@@ -534,11 +426,7 @@ TEST_F(SyncHandlerTest, ClearTest) {
 
     EXPECT_CALL(*syncer_, ClearInternal()).Times(1).WillOnce(Return(true));
 
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
     EXPECT_TRUE(sync_handler_->Clear());
-    ASSERT_TRUE(listener.Wait(1000))
-        << "Initial Clear should be invoked immediately.";
     sync_handler_->Wait();
 
     Mock::VerifyAndClearExpectations(syncer_);
@@ -549,11 +437,7 @@ TEST_F(SyncHandlerTest, ClearTest) {
 
     EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
 
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
     EXPECT_TRUE(sync_handler_->Clear());
-    ASSERT_FALSE(listener.Wait(250))
-        << "Subsequent Clear should not be simply ignored.";
     sync_handler_->Wait();
 
     Mock::VerifyAndClearExpectations(syncer_);
@@ -564,12 +448,7 @@ TEST_F(SyncHandlerTest, ClearTest) {
 
     EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
 
-    NamedEventListener listener("sync");
-    ASSERT_TRUE(listener.IsAvailable());
     EXPECT_TRUE(sync_handler_->Sync());
-    ASSERT_TRUE(listener.Wait(1000))
-        << "Sync after Clear should be invoked immediately because "
-        "sync_handler_->Clear() removes auth token.";
     sync_handler_->Wait();
 
     Mock::VerifyAndClearExpectations(syncer_);

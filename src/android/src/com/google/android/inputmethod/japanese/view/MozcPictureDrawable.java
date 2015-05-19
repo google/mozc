@@ -51,7 +51,7 @@ public class MozcPictureDrawable extends PictureDrawable {
       return;
     }
     Rect bounds = getBounds();
-    canvas.save();
+    int saveCount = canvas.save();
     try {
       canvas.clipRect(bounds);
       canvas.translate(bounds.left, bounds.top);
@@ -60,7 +60,7 @@ public class MozcPictureDrawable extends PictureDrawable {
       canvas.scale(scaleX, scaleY);
       canvas.drawPicture(picture);
     } finally {
-      canvas.restore();
+      canvas.restoreToCount(saveCount);
     }
   }
 }

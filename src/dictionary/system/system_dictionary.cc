@@ -438,9 +438,56 @@ const KeyExpansionTable &SystemDictionary::GetExpansionTableBySetting(
 }
 
 bool SystemDictionary::HasValue(const StringPiece value) const {
-  string encoded;
-  codec_->EncodeValue(value, &encoded);
-  return value_trie_->ExactSearch(encoded) != -1;
+  string encoded_value;
+  codec_->EncodeValue(value, &encoded_value);
+  if (value_trie_->ExactSearch(encoded_value) != -1) {
+    return true;
+  }
+
+  // Because Hiragana, Katakana and Alphabet words are not stored in the
+  // value_trie for the data compression.  They are only stored in the
+  // key_trie with flags.  So we also need to check the existence in
+  // the key_trie.
+
+  // Normalize the value as the key.  This process depends on the
+  // implementation of SystemDictionaryBuilder::BuildValueTrie.
+  string key;
+  Util::KatakanaToHiragana(value, &key);
+
+  string encoded_key;
+  codec_->EncodeKey(key, &encoded_key);
+  const int key_id = key_trie_->ExactSearch(encoded_key);
+  if (key_id == -1) {
+    return false;
+  }
+
+  // We need to check the contents of value_trie for Katakana values.
+  // If (key, value) = (かな, カナ) is in the dictionary, "カナ" is
+  // not used as a key for value_trie or key_trie.  Only "かな" is
+  // used as a key for key_trie.  If we accept this limitation, we can
+  // skip the following code.
+  //
+  // If we add "if (key == value) return true;" here, we can check
+  // almost all cases of Hiragana and Alphabet words without the
+  // following iteration.  However, when (mozc, MOZC) is stored but
+  // (mozc, mozc) is NOT stored, HasValue("mozc") wrongly returns
+  // true.
+
+  // Get the block of tokens for this key.
+  size_t length = 0;  // unused
+  const uint8 *encoded_tokens_ptr = reinterpret_cast<const uint8*>(
+      token_array_->Get(key_id, &length));
+
+  // Check tokens.
+  for (TokenDecodeIterator iter(
+           codec_, value_trie_.get(), frequent_pos_, key, encoded_tokens_ptr);
+       !iter.Done(); iter.Next()) {
+    const Token *token = iter.Get().token;
+    if (value == token->value) {
+      return true;
+    }
+  }
+  return false;
 }
 
 namespace {
@@ -662,7 +709,7 @@ Node *SystemDictionary::LookupPredictiveWithLimit(
         0 : kKanaModifierInsensitivePenalty;
 
     // Decode tokens for this key and update the list of nodes.
-    size_t dummy_length;
+    size_t dummy_length = 0;
     const uint8 *encoded_tokens_ptr = reinterpret_cast<const uint8*>(
         token_array_->Get(entry.key_id, &dummy_length));
     for (TokenDecodeIterator iter(
@@ -735,7 +782,7 @@ class PrefixTraverser : public LoudsTrie::Callback {
     }
 
     // Decode tokens and call back OnToken() for each token.
-    size_t dummy_length;
+    size_t dummy_length = 0;
     const uint8 *encoded_tokens_ptr = reinterpret_cast<const uint8*>(
         token_array_->Get(key_id, &dummy_length));
     for (TokenDecodeIterator iter(
@@ -876,7 +923,7 @@ Node *SystemDictionary::LookupExact(
   }
 
   // Get the block of tokens for this key.
-  size_t dummy_length;
+  size_t dummy_length = 0;
   const uint8 *encoded_tokens_ptr = reinterpret_cast<const uint8*>(
       token_array_->Get(key_id, &dummy_length));
 
@@ -1131,7 +1178,7 @@ void SystemDictionary::ScanTokens(
   int offset = 0;
   int tokens_offset = 0;
   int index = 0;
-  size_t dummy_length;
+  size_t dummy_length = 0;
   const uint8 *encoded_tokens_ptr =
       reinterpret_cast<const uint8*>(token_array_->Get(0, &dummy_length));
   const uint8 termination_flag = codec_->GetTokensTerminationFlag();
@@ -1168,7 +1215,7 @@ Node *SystemDictionary::GetNodesFromReverseLookupResults(
     NodeAllocatorInterface *allocator,
     int *limit) const {
   Node *res = NULL;
-  size_t dummy_length;
+  size_t dummy_length = 0;
   const uint8 *encoded_tokens_ptr =
       reinterpret_cast<const uint8*>(token_array_->Get(0, &dummy_length));
   char buffer[LoudsTrie::kMaxDepth + 1];

@@ -29,7 +29,6 @@
 
 #include "win32/base/imm_reconvert_string.h"
 
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"

@@ -119,11 +119,13 @@ TEST_F(UsageStatsUpdaterTest, UpdaterTest) {
     "ConfigUseLocalUsageDictionary",
     "ConfigUseWebUsageDictionary",
     "WebServiceEntrySize",
+    "ConfigUseModeIndicator",
 
     // Other stats
     "TotalPhysicalMemory",
 #ifdef OS_WIN
     "WindowsX64",
+    "PerUserInputSettingsEnabled",
     "CuasEnabled",
     "MsctfVerMajor",
     "MsctfVerMinor",

@@ -31,8 +31,6 @@
 -->
 <resources>
     <string name="subtype_ja">Japanese</string>
-    <string name="settings_activity">org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity</string>
-    <string name="mozc_software_keyboard_advanced_settings_preference_activity">org.mozc.android.inputmethod.japanese.preference.MozcClassicSoftwareKeyboardAdvancedSettingsPreferenceActivity</string>
 
     <!-- Preference titles -->
     <string name="pref_software_keyboard_category_title">Software keyboard</string>
@@ -129,6 +127,7 @@
     <string name="pref_fullscreen_portrait">Enable on portrait</string>
     <string name="pref_fullscreen_landscape">Enable on landscape</string>
 
+    <string name="pref_emoji_provider_type_none">Disable Emoji</string>
     <string name="pref_emoji_provider_type_docomo">NTT docomo</string>
     <string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
     <string name="pref_emoji_provider_type_softbank">SoftBank</string>
@@ -315,4 +314,9 @@
       <string name="japanese_pos_free_standing_word">Free standing word</string>
       <string name="japanese_pos_suppression_word">Suppression word</string>
 
+
+      <!-- Yes/No -->
+      <!-- Unfortunately android.R.string.yes/no correspond to OK/Cancel. -->
+      <string name="yes">Yes</string>
+      <string name="no">No</string>
 </resources>

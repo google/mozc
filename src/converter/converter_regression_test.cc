@@ -175,40 +175,4 @@ TEST_F(ConverterRegressionTest, Regression3323108) {
             segments.conversion_segment(1).key());
 }
 
-TEST_F(ConverterRegressionTest, ConvertUsingPrecedingText_Jyosushi) {
-  // TODO(noriyukit): This test requires the actual dictionary data. Rewrite the
-  // test with mock data.
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
-  ConverterInterface *converter = engine->GetConverter();
-  Table table;
-  // To see preceding text helps conversion after number characters, consider
-  // the case where user converts "ひき".
-  {
-    // Without preceding text, test dictionary converts "ひき" to "引き".
-    Segments segments;
-    Composer composer(&table, &default_request());
-    composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
-    ConversionRequest request(&composer, &default_request());
-    converter->StartConversionForRequest(request, &segments);
-
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ("\xE5\xBC\x95\xE3\x81\x8D",  // "引き"
-              segments.conversion_segment(0).candidate(0).value);
-  }
-  {
-    // However, if providing "猫が5" as preceding text, "ひき" is converted to
-    // "匹" with test dictionary.
-    Segments segments;
-    Composer composer(&table, &default_request());
-    composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
-    ConversionRequest request(&composer, &default_request());
-    request.set_preceding_text("\xE7\x8C\xAB\xE3\x81\x8C\x35");  // "猫が5"
-    converter->StartConversionForRequest(request, &segments);
-
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ("\xE5\x8C\xB9",  // "匹"
-              segments.conversion_segment(0).candidate(0).value);
-  }
-}
-
 }  // namespace mozc

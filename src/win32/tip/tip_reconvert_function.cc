@@ -37,7 +37,7 @@
 #include <atlcom.h>
 #include <Ctffunc.h>
 
-#include "win32/tip/tip_command_handler.h"
+#include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
@@ -175,7 +175,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
       return E_INVALIDARG;
     }
 
-    if (!TipCommandHandler::ReconvertFromApplication(text_service_, range)) {
+    if (!TipEditSession::ReconvertFromApplicationSync(text_service_, range)) {
       return E_FAIL;
     }
     return S_OK;

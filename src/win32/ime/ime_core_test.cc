@@ -311,17 +311,16 @@ const wchar_t kLastUpdatedCharacter = L'\0';
 const DWORD kCompositionUpdateFlag =
     GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
     GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART;
-COMPILE_ASSERT(0x1bf == kCompositionUpdateFlag, kCompositionUpdateFlagValue);
+static_assert(kCompositionUpdateFlag == 0x1bf, "Must be 0x1bf");
 
 const DWORD kCompositionResultFlag =
     GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE |
     GCS_RESULTSTR | GCS_RESULTCLAUSE;
-COMPILE_ASSERT(0x1e00 == kCompositionResultFlag, kCompositionResultFlagValue);
+static_assert(kCompositionResultFlag == 0x1e00, "Must be 0x1e00");
 
 const DWORD kCompositionResultAndUpdateFlag =
     kCompositionResultFlag | kCompositionUpdateFlag;
-COMPILE_ASSERT(0x1FBF == kCompositionResultAndUpdateFlag,
-               kkCompositionResultAndUpdateFlagValue);
+static_assert(kCompositionResultAndUpdateFlag == 0x1fbf, "Must be 0x1fbf");
 
 const UIMessage kMsgMozcUIUpdate(WM_IME_NOTIFY, IMN_PRIVATE, kNotifyUpdateUI);
 const UIMessage kMsgSetConversionMode(WM_IME_NOTIFY, IMN_SETCONVERSIONMODE, 0);

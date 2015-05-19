@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     scoped_ptr<mozc::client::Client> client(new mozc::client::Client);
     client->PingServer();
   }
-  RunApplicationEventLoop();
+  NSApplicationMain(argc, (const char **)argv);
   [pool drain];
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   mozc::CrashReportHandler::Uninitialize();

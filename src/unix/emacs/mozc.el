@@ -167,7 +167,7 @@ Return value of last one."
   "Return non-nil if OBJECT is a character.
 
 This macro is equivalent to `characterp' or `char-valid-p' depending on
-the Emacs version.  `char-valid-p' is obsolete since Emacs 23."
+the Emacs version.  `char-valid-p' is deprecated since Emacs 23."
   (if (fboundp #'characterp)
       `(characterp ,object)
     `(char-valid-p ,object)))
@@ -356,6 +356,33 @@ Key code and symbols are renamed so that the helper process understands them."
                  ('hiragana-katakana 'kana)
                  ('next 'pagedown)
                  ('prior 'pageup)
+                 ('kp-decimal 'decimal)
+                 ('kp-0 'numpad0)
+                 ('kp-1 'numpad1)
+                 ('kp-2 'numpad2)
+                 ('kp-3 'numpad3)
+                 ('kp-4 'numpad4)
+                 ('kp-5 'numpad5)
+                 ('kp-6 'numpad6)
+                 ('kp-7 'numpad7)
+                 ('kp-8 'numpad8)
+                 ('kp-9 'numpad9)
+                 ('kp-delete 'delete)  ; .
+                 ('kp-insert 'insert)  ; 0
+                 ('kp-end 'right)      ; 1
+                 ('kp-down 'down)      ; 2
+                 ('kp-next 'pagedown)  ; 3
+                 ('kp-left 'left)      ; 4
+                 ('kp-begin 'clear)    ; 5
+                 ('kp-right 'right)    ; 6
+                 ('kp-home 'home)      ; 7
+                 ('kp-up 'up)          ; 8
+                 ('kp-prior 'pageup)   ; 9
+                 ('kp-add 'add)
+                 ('kp-subtract 'subtract)
+                 ('kp-multiply 'multiply)
+                 ('kp-divide 'divide)
+                 ('kp-enter 'enter)
                  (t basic-type))))
       (cond
        ;; kana + shift + rest => katakana + rest
@@ -427,10 +454,6 @@ Clean up the preedit and candidate window."
   "Position information at the insertion point in the current buffer.")
 (make-variable-buffer-local 'mozc-preedit-posn-origin)
 
-(defvar mozc-preedit-overlay nil
-  "An overlay which shows preedit.")
-(make-variable-buffer-local 'mozc-preedit-overlay)
-
 (defun mozc-preedit-init ()
   "Initialize a new preedit session.
 The preedit shows up at the current point."
@@ -438,15 +461,13 @@ The preedit shows up at the current point."
   ;; Set the origin point.
   (setq mozc-preedit-point-origin (copy-marker (point)))
   ;; Set up an overlay for preedit.
-  (let ((origin mozc-preedit-point-origin))
-    (setq mozc-preedit-overlay
-          (make-overlay origin origin (marker-buffer origin))))
+  (mozc-preedit-overlay-make-overlay mozc-preedit-point-origin)
   (setq mozc-preedit-in-session-flag t))
 
 (defun mozc-preedit-clean-up ()
   "Clean up the current preedit session."
+  (mozc-preedit-overlay-delete-overlay)
   (when mozc-preedit-in-session-flag
-    (delete-overlay mozc-preedit-overlay)
     (goto-char mozc-preedit-point-origin))
   (setq mozc-preedit-point-origin nil
         mozc-preedit-in-session-flag nil))
@@ -456,7 +477,7 @@ The preedit shows up at the current point."
 This function expects an update just after this call.
 If you want to finish a preedit session, call `mozc-preedit-clean-up'."
   (when mozc-preedit-in-session-flag
-    (overlay-put mozc-preedit-overlay 'before-string nil)))
+    (mozc-preedit-overlay-put-text nil)))
 
 (defun mozc-preedit-update (preedit &optional candidates)
   "Update the current preedit.
@@ -484,11 +505,54 @@ CANDIDATES must be the candidates field in a response protobuf if any."
           (mozc-clean-up-session)
           (barf-if-buffer-read-only))
       ;; Update the position information at the beginning of the preedit.
-      (overlay-put mozc-preedit-overlay 'before-string nil)
+      (mozc-preedit-overlay-put-text nil)
       (setq mozc-preedit-posn-origin
             (mozc-posn-at-point mozc-preedit-point-origin))
       ;; Show the preedit.
-      (overlay-put mozc-preedit-overlay 'before-string text))))
+      (mozc-preedit-overlay-put-text text)
+      ;; Move the cursor onto the preedit overlay or to the following position.
+      (goto-char (if (text-property-not-all 0 (length text) 'cursor nil text)
+                     mozc-preedit-point-origin
+                   (1+ mozc-preedit-point-origin))))))
+
+(defvar mozc-preedit-overlay nil
+  "An overlay which shows the preedit.")
+(make-variable-buffer-local 'mozc-preedit-overlay)
+
+(defvar mozc-preedit-overlay-temporary-region nil
+  "A region which is temporarily added for showing the preedit.
+This is a cons which holds two markers which point to the region of
+a temporarily added character.")
+(make-variable-buffer-local 'mozc-preedit-overlay-temporary-region)
+
+(defun mozc-preedit-overlay-make-overlay (origin)
+  "Create a new overlay at ORIGIN to show the preedit.
+The preedit is stored in `mozc-preedit-overlay' and removed by
+`mozc-preedit-overlay-delete-overlay'."
+  (mozc-preedit-overlay-delete-overlay)
+  (save-excursion
+    (goto-char origin)
+    (mozc-with-undo-list-unchanged
+     (insert-char ?\s 1))
+    (setq mozc-preedit-overlay-temporary-region
+          (cons origin (1+ origin))))
+  (setq mozc-preedit-overlay
+        (make-overlay origin (1+ origin) (marker-buffer origin))))
+
+(defun mozc-preedit-overlay-put-text (text)
+  "Change the display property of the preedit overlay to TEXT."
+  (overlay-put mozc-preedit-overlay 'display text))
+
+(defun mozc-preedit-overlay-delete-overlay ()
+  "Remove the preedit overlay and the temporary region."
+  (when mozc-preedit-overlay
+    (delete-overlay mozc-preedit-overlay)
+    (setq mozc-preedit-overlay nil))
+  (when mozc-preedit-overlay-temporary-region
+    (let ((region-to-be-removed mozc-preedit-overlay-temporary-region))
+      (setq mozc-preedit-overlay-temporary-region nil)
+      (mozc-with-undo-list-unchanged
+       (delete-region (car region-to-be-removed) (cdr region-to-be-removed))))))
 
 (defun mozc-preedit-make-text (preedit &optional decor-left decor-right
                                        separator)
@@ -538,7 +602,8 @@ Return the modified text.  If CURSOR-POS is over the TEXT length, do nothing
 and return the same text as is."
   (if (and (<= 0 cursor-pos) (< cursor-pos (length text)))
       (let ((text (copy-sequence text)))  ; Do not modify the original string.
-        (put-text-property cursor-pos (1+ cursor-pos) 'cursor t text)
+        (put-text-property cursor-pos (1+ cursor-pos)
+                           'cursor (length text) text)
         text)
     text))
 
@@ -1758,11 +1823,15 @@ KEYCODE must be an integer representing a key code to remove."
 (defun mozc-leim-activate (input-method)
   "Activate mozc-mode via LEIM.
 INPUT-METHOD is not used."
-  (setq inactivate-current-input-method-function 'mozc-leim-inactivate)
+  (let ((new 'deactivate-current-input-method-function)
+        (old 'inactivate-current-input-method-function))
+    ;; `inactivate-current-input-method-function' is deprecated
+    ;; since Emacs 24.3.
+    (set (if (boundp new) new old) #'mozc-leim-deactivate))
   (mozc-mode t))
 
-(defun mozc-leim-inactivate ()
-  "Inactivate mozc-mode via LEIM."
+(defun mozc-leim-deactivate ()
+  "Deactivate mozc-mode via LEIM."
   (mozc-mode nil))
 
 (defcustom mozc-leim-title "[Mozc]"
@@ -1775,7 +1844,7 @@ This indicator is not shown when you don't use LEIM."
 (register-input-method
  "japanese-mozc"
  "Japanese"
- 'mozc-leim-activate
+ #'mozc-leim-activate
  mozc-leim-title
  "Japanese input method with Mozc/Google Japanese Input.")
 

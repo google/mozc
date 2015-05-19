@@ -1,0 +1,75 @@
+# This file tests RECONVERT command.
+
+################################################################################
+# Test for MS-IME keymap
+SET_CONFIG	session_keymap	MSIME
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Test Henkan key (Reconvert) in Direct input mode.
+SWITCH_INPUT_MODE	DIRECT
+SET_SELECTION_TEXT	集合
+SEND_KEY	HENKAN
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+
+RESET_CONTEXT
+
+# Test Henkan key (Reconvert) in Precomposition mode.
+SWITCH_INPUT_MODE	HIRAGANA
+SET_SELECTION_TEXT	集合
+SEND_KEY	HENKAN
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+
+
+################################################################################
+# Test for Kotoeri keymap
+SET_CONFIG	session_keymap	KOTOERI
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Test Ctrl-Shift-r (Reconvert) in Direct input mode.
+SWITCH_INPUT_MODE	DIRECT
+SET_SELECTION_TEXT	集合
+SEND_KEY	CTRL SHIFT r
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+
+RESET_CONTEXT
+
+# Test Ctrl-Shift-r (Reconvert) in Precomposition mode.
+SWITCH_INPUT_MODE	HIRAGANA
+SET_SELECTION_TEXT	集合
+SEND_KEY	CTRL SHIFT r
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+
+
+################################################################################
+# Test for ATOK keymap
+SET_CONFIG	session_keymap	ATOK
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Test Shift-Henkan (Reconvert) in Direct input mode.
+SWITCH_INPUT_MODE	DIRECT
+SET_SELECTION_TEXT	集合
+SEND_KEY	SHIFT HENKAN
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+
+RESET_CONTEXT
+
+# Test Shift-Henkan (Reconvert) in Precomposition mode.
+SWITCH_INPUT_MODE	HIRAGANA
+SET_SELECTION_TEXT	集合
+SEND_KEY	SHIFT HENKAN
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号

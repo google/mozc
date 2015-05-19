@@ -29,13 +29,16 @@
 
 package org.mozc.android.inputmethod.japanese.preference;
 
-import org.mozc.android.inputmethod.japanese.FirstTimeLaunchActivity;
+import org.mozc.android.inputmethod.japanese.ApplicationInitializerFactory;
+import org.mozc.android.inputmethod.japanese.ApplicationInitializerFactory.ApplicationInitializer;
+import org.mozc.android.inputmethod.japanese.DependencyFactory;
 import org.mozc.android.inputmethod.japanese.HardwareKeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
-import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.preference.KeyboardPreviewDrawable.BitmapCache;
 import org.mozc.android.inputmethod.japanese.preference.KeyboardPreviewDrawable.CacheReferenceKey;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -121,8 +124,8 @@ public class MozcBasePreferenceActivity extends PreferenceActivity {
     }
   }
 
-  private AlertDialog imeEnableDialog;
-  private AlertDialog imeSwitchDialog;
+  @VisibleForTesting AlertDialog imeEnableDialog;
+  @VisibleForTesting AlertDialog imeSwitchDialog;
 
   // Cache the SharedPreferences instance, otherwise PreferenceManager.getDefaultSharedPreferences
   // would try to read it from the storage every time.
@@ -141,10 +144,6 @@ public class MozcBasePreferenceActivity extends PreferenceActivity {
   protected void onResume() {
     super.onResume();
 
-    // First of all, run emoji provider type detection, so that the detected provider will be
-    // used as the default values of the preference activity.
-    EmojiProviderType.maybeSetDetectedEmojiProviderType(
-        sharedPreferences, MozcUtil.getTelephonyManager(getApplicationContext()));
     HardwareKeyboardSpecification.maybeSetDetectedHardwareKeyMap(
         sharedPreferences, getResources().getConfiguration(), false);
   }
@@ -152,7 +151,21 @@ public class MozcBasePreferenceActivity extends PreferenceActivity {
   @Override
   protected void onPostResume() {
     super.onPostResume();
-    if (!FirstTimeLaunchActivity.maybeProcessFirstTimeLaunchAction(sharedPreferences, this)) {
+    onPostResumeInternal(ApplicationInitializerFactory.createInstance(this));
+  }
+
+  @VisibleForTesting
+  void onPostResumeInternal(ApplicationInitializer initializer) {
+    Context context = getApplicationContext();
+    boolean omitWelcomeActivity = false;
+    Optional<Intent> forwardIntent = initializer.initialize(
+        omitWelcomeActivity,
+        MozcUtil.isDevChannel(context),
+        DependencyFactory.getDependency(getApplicationContext()).isWelcomeActivityPreferrable(),
+        MozcUtil.getAbiIndependentVersionCode(context));
+    if (forwardIntent.isPresent()) {
+      startActivity(forwardIntent.get());
+    } else {
       // After all resuming processes, we check the default IME status.
       // Note that we need to do this only when first launch activity is *not* launched.
       maybeShowAlertDialogIme();

@@ -105,12 +105,9 @@ class ScopedJavaThreadAttacher {
 jbyteArray BufferToJByteArray(
     JNIEnv *env, const void *data, const size_t size) {
   jbyteArray result = env->NewByteArray(size);
-  jboolean is_copy;
-  jbyte *bytes = env->GetByteArrayElements(result, &is_copy);
-  memcpy(bytes, data, size);
-  if (is_copy) {
-    env->ReleaseByteArrayElements(result, bytes, 0);
-  }
+  CHECK(result);
+  env->SetByteArrayRegion(
+      result, 0, size, reinterpret_cast<const jbyte*>(data));
   return result;
 }
 
@@ -124,30 +121,21 @@ jbyteArray StringToJByteArray(JNIEnv *env, const string &data) {
 // Retruns true, if finished successfully. Otherwise, false.
 bool CopyJByteArrayToBuf(JNIEnv *env, const jbyteArray &source,
                          void *buf, size_t *buf_size) {
-  jsize size = env->GetArrayLength(source);
+  const jsize size = env->GetArrayLength(source);
   if (size > *buf_size) {
     return false;
   }
-
-  jboolean is_copy;
-  jbyte *bytes = env->GetByteArrayElements(source, &is_copy);
-  memcpy(buf, bytes, size);
-  if (is_copy) {
-    env->ReleaseByteArrayElements(source, bytes, JNI_ABORT);
-  }
+  env->GetByteArrayRegion(source, 0, size, reinterpret_cast<jbyte*>(buf));
   *buf_size = size;
   return true;
 }
 
 void AssignJByteArrayToString(JNIEnv *env, const jbyteArray &source,
                               string *dest) {
-  jboolean is_copy;
-  jbyte *bytes = env->GetByteArrayElements(source, &is_copy);
-  dest->assign(reinterpret_cast<const char*>(bytes),
-               env->GetArrayLength(source));
-  if (is_copy) {
-    env->ReleaseByteArrayElements(source, bytes, JNI_ABORT);
-  }
+  size_t size = env->GetArrayLength(source);
+  scoped_array<char> buf(new char[size]);
+  CHECK(CopyJByteArrayToBuf(env, source, buf.get(), &size));
+  dest->assign(buf.get(), size);
 }
 
 const char *HTTPMethodTypeToChars(mozc::HTTPMethodType type) {

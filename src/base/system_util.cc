@@ -422,8 +422,12 @@ string SystemUtil::GetServerDirectory() {
   return MacUtil::GetServerDirectory();
 
 #elif defined(OS_LINUX)
-  // TODO(mazda): Not to use hardcoded path.
-  return kMozcServerDirectory;
+#if defined(MOZC_SERVER_DIRECTORY)
+  return MOZC_SERVER_DIRECTORY;
+#else
+  return "/usr/lib/mozc";
+#endif  // MOZC_SERVER_DIRECTORY
+
 #endif  // OS_WIN, OS_MACOSX, OS_LINUX
 }
 
@@ -455,9 +459,11 @@ string SystemUtil::GetToolPath() {
 }
 
 string SystemUtil::GetDocumentDirectory() {
-#ifdef OS_MACOSX
+#if defined(OS_MACOSX)
   return GetServerDirectory();
-#else  // OS_MACOSX
+#elif defined(MOZC_DOCUMENT_DIRECTORY)
+  return MOZC_DOCUMENT_DIRECTORY;
+#else
   return FileUtil::JoinPath(GetServerDirectory(), "documents");
 #endif  // OS_MACOSX
 }
@@ -905,7 +911,7 @@ bool SystemUtil::IsPlatformSupported() {
   // |OSVERSION| < Windows XP SP2: not supported
   return false;  // not support
 #else  // !OS_LINUX && !OS_MACOSX && !OS_WIN
-  COMPILE_ASSERT(false, unsupported_platform);
+#error "Unsupported platform".
 #endif  // OS_LINUX, OS_MACOSX, OS_WIN
 }
 
@@ -1169,8 +1175,10 @@ bool SystemUtil::IsLittleEndian() {
     unsigned char c[4];
     unsigned int i;
   } u;
-  COMPILE_ASSERT(sizeof(u.c) == sizeof(u.i), bad_sizeof_int);
-  COMPILE_ASSERT(sizeof(u) == sizeof(u.i), misaligned_union);
+  static_assert(sizeof(u.c) == sizeof(u.i),
+                "Expecting (unsigned) int is 32-bit integer.");
+  static_assert(sizeof(u) == sizeof(u.i),
+                "Checking alignment.");
   u.i = 0x12345678U;
   return u.c[0] == 0x78U;
 #else  // OS_WIN

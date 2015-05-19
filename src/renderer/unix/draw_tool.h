@@ -31,8 +31,8 @@
 #define MOZC_RENDERER_UNIX_DRAW_TOOL_H_
 #include <gtk/gtk.h>
 
-#include "base/base.h"
 #include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "renderer/unix/cairo_wrapper_interface.h"
 #include "renderer/unix/draw_tool_interface.h"
 

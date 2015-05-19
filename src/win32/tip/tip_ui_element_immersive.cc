@@ -40,12 +40,17 @@
 #include <atlwin.h>
 #include <msctf.h>
 
+#include <memory>
+
 #include "base/hash_tables.h"
 #include "base/util.h"
+#include "renderer/table_layout.h"
+#include "renderer/win32/win32_renderer_util.h"
+#include "renderer/window_util.h"
 #include "session/commands.pb.h"
-#include "win32/tip/tip_command_handler.h"
 #include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_dll_module.h"
+#include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
@@ -69,8 +74,14 @@ using WTL::CPoint;
 using WTL::CRect;
 using WTL::CSize;
 
+using ::mozc::commands::Candidates;
 using ::mozc::commands::Output;
 using ::mozc::commands::Preedit;
+using ::mozc::renderer::TableLayout;
+using ::mozc::renderer::WindowUtil;
+using ::std::unique_ptr;
+
+typedef ::mozc::commands::Candidates::Candidate Candidate;
 typedef ::mozc::commands::Preedit_Segment Segment;
 typedef ::mozc::commands::Preedit_Segment::Annotation Annotation;
 
@@ -202,6 +213,41 @@ bool FillRenderInfo(TipTextService *text_service,
   return true;
 }
 
+CRect ToCRect(const Rect &rect) {
+  return WTL::CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
+}
+
+// Returns the smallest index of the given candidate list which satisfies
+// candidates.candidate(i) == |candidate_index|.
+// This function returns the size of the given candidate list when there
+// aren't any candidates satisfying the above condition.
+int GetCandidateArrayIndexByCandidateIndex(const Candidates &candidates,
+                                           int candidate_index) {
+  for (size_t i = 0; i < candidates.candidate_size(); ++i) {
+    const Candidate &candidate = candidates.candidate(i);
+    if (candidate.index() == candidate_index) {
+      return i;
+    }
+  }
+  return candidates.candidate_size();
+}
+
+// Returns the smallest index of the given candidate list which satisfies
+// |candidates.focused_index| == |candidates.candidate(i).index()|.
+// This function returns the size of the given candidate list when there
+// aren't any candidates satisfying the above condition.
+int GetFocusedArrayIndex(const Candidates &candidates) {
+  const int kInvalidIndex = candidates.candidate_size();
+
+  if (!candidates.has_focused_index()) {
+    return kInvalidIndex;
+  }
+
+  const int focused_index = candidates.focused_index();
+
+  return GetCandidateArrayIndexByCandidateIndex(candidates, focused_index);
+}
+
 class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
  public:
   TipImmersiveUiElementImpl(TipTextService *text_service,
@@ -212,6 +258,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
         delegate_(TipUiElementDelegateFactory::Create(
             text_service, context,
             TipUiElementDelegateFactory::kImmersiveCandidateWindow)),
+        working_area_(renderer::win32::WorkingAreaFactory::Create()),
         window_(window_handle) {
   }
 
@@ -232,9 +279,11 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
     // Find a matching interface from the ones implemented by this object.
     // This object implements IUnknown and ITfEditSession.
     if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
+      *object = static_cast<IUnknown *>(
+          static_cast<ITfCandidateListUIElement *>(this));
     } else if (IsEqualIID(interface_id, IID_ITfUIElement)) {
-      *object = static_cast<ITfUIElement *>(this);
+      *object = static_cast<ITfUIElement *>(
+          static_cast<ITfCandidateListUIElement *>(this));
     } else if (IsEqualIID(interface_id, IID_ITfCandidateListUIElement)) {
       *object = static_cast<ITfCandidateListUIElement *>(this);
     } else if (IsEqualIID(interface_id,
@@ -265,7 +314,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   void OnUpdate() {
     // When RequestEditSession fails, it does not maintain the reference count.
     // So we need to ensure that AddRef/Release should be called at least once
-    // per oject.
+    // per object.
     CComPtr<ITfEditSession> edit_session(new UpdateUiEditSession(
         text_service_, context_, this));
 
@@ -276,12 +325,41 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
         TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
   }
 
+  // Returns true when handled.
+  bool HandleMouseEvent(
+      UINT nFlags, const CPoint &point, bool select_candidate) {
+    const Candidates candidates = rendering_info_.output.candidates();
+    for (size_t i = 0; i < candidates.candidate_size(); ++i) {
+      const Candidate &candidate = candidates.candidate(i);
+
+      const CRect rect = ToCRect(table_layout_.GetRowRect(i));
+      if (rect.PtInRect(point)) {
+        if (select_candidate) {
+          TipEditSession::SelectCandidateAsync(
+              text_service_, context_, candidate.id());
+          return true;
+        } else {
+          const int focused_array_index = GetFocusedArrayIndex(candidates);
+          if (i != focused_array_index) {
+            TipEditSession::HilightCandidateAsync(
+                text_service_, context_, candidate.id());
+            return true;
+          }
+          return false;
+        }
+      }
+    }
+    return false;
+  }
+
   void Render(const RenderingInfo &info) {
     if (!info.output.has_candidates()) {
       window_.ShowWindow(SW_HIDE);
       return;
     }
 
+    rendering_info_.target_rect = info.target_rect;
+    rendering_info_.output.CopyFrom(info.output);
     RenderImpl(info);
 
     BOOL shown = FALSE;
@@ -289,8 +367,40 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
     if (!shown) {
       window_.ShowWindow(SW_HIDE);
     } else {
-      window_.Invalidate();
       window_.ShowWindow(SW_SHOWNA);
+    }
+  }
+
+  LRESULT WindowProc(
+      HWND window_handle, UINT message, WPARAM wparam, LPARAM lparam) {
+    switch (message) {
+      case WM_MOZC_IMMERSIVE_WINDOW_UPDATE:
+        OnUpdate();
+        return 0;
+      case WM_MOUSEACTIVATE:
+        return MA_NOACTIVATE;
+      case WM_LBUTTONDOWN:
+        HandleMouseEvent(static_cast<UINT>(wparam),
+                         CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)),
+                         false);
+        return ::DefWindowProcW(window_handle, message, wparam, lparam);
+      case WM_LBUTTONUP:
+        HandleMouseEvent(static_cast<UINT>(wparam),
+                         CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)),
+                         true);
+        return ::DefWindowProcW(window_handle, message, wparam, lparam);
+      case WM_MOUSEMOVE:
+        if ((static_cast<UINT>(wparam) & MK_LBUTTON) == MK_LBUTTON) {
+          HandleMouseEvent(static_cast<UINT>(wparam),
+                           CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)),
+                           false);
+        }
+        return ::DefWindowProcW(window_handle, message, wparam, lparam);
+      case WM_SETCURSOR:
+        ::SetCursor(::LoadCursor(NULL, IDC_ARROW));
+        return 0;
+      default:
+        return ::DefWindowProcW(window_handle, message, wparam, lparam);
     }
   }
 
@@ -299,16 +409,42 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
     CSize size;
     int left_offset = 0;
     CBitmap bitmap(TipUiRendererImmersive::Render(
-        info.output.candidates(), &size, &left_offset));
-    CPoint left_top(info.target_rect.left - left_offset,
-                    info.target_rect.bottom);
-    CPoint src_left_top(0, 0);
-    BLENDFUNCTION func = {AC_SRC_OVER, 0, 255, 0};
+        info.output.candidates(), &table_layout_, &size, &left_offset));
+    const CPoint target_point(info.target_rect.left, info.target_rect.bottom);
+    Rect new_position(target_point.x - left_offset,
+                      target_point.y,
+                      size.cx,
+                      size.cy);
+    {
+      const Rect preedit_rect(info.target_rect.left,
+                              info.target_rect.top,
+                              info.target_rect.Width(),
+                              info.target_rect.Height());
+      const Size window_size(size.cx, size.cy);
+      const Point zero_point_offset(left_offset, 0);
+      Rect working_area;
+      CRect area;
+      if (working_area_->GetWorkingAreaFromPoint(target_point, &area)) {
+        working_area = Rect(area.left, area.top, area.Width(), area.Height());
+      }
+      new_position =
+          WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
+              Point(target_point.x, target_point.y),
+              preedit_rect,
+              window_size,
+              zero_point_offset,
+              working_area,
+              false);
+    }
     CDC memdc;
     memdc.CreateCompatibleDC();
     const CBitmapHandle old_bitmap = memdc.SelectBitmap(bitmap);
-    ::UpdateLayeredWindow(window_.m_hWnd, nullptr, &left_top, &size, memdc,
-                          &src_left_top, 0, &func, ULW_OPAQUE);
+    CPoint src_left_top(0, 0);
+    CPoint new_top_left(new_position.Left(), new_position.Top());
+    CSize new_size(new_position.Width(), new_position.Height());
+    BLENDFUNCTION func = {AC_SRC_OVER, 0, 255, 0};
+    ::UpdateLayeredWindow(window_.m_hWnd, nullptr, &new_top_left, &new_size,
+                          memdc, &src_left_top, 0, &func, ULW_ALPHA);
     memdc.SelectBitmap(old_bitmap);
   }
 
@@ -401,8 +537,11 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-  scoped_ptr<TipUiElementDelegate> delegate_;
+  unique_ptr<TipUiElementDelegate> delegate_;
+  unique_ptr<renderer::win32::WorkingAreaInterface> working_area_;
   CWindow window_;
+  TableLayout table_layout_;
+  RenderingInfo rendering_info_;
   DISALLOW_COPY_AND_ASSIGN(TipImmersiveUiElementImpl);
 };
 
@@ -465,7 +604,7 @@ void EnsureThreadLocalInfoDestroyed() {
   ThreadLocalInfo *info = static_cast<ThreadLocalInfo *>(
       ::TlsGetValue(g_tls_index));
   if (info == nullptr) {
-    // already destroyes.
+    // already destroyed.
     return;
   }
   delete info;
@@ -487,16 +626,14 @@ LRESULT WINAPI WindowProc(HWND window_handle,
   }
 
   switch (message) {
-    case WM_MOZC_IMMERSIVE_WINDOW_UPDATE:
-      it->second->OnUpdate();
-      return 0;
-    case WM_ERASEBKGND:
-      return 1;
-    case WM_NCDESTROY:
+    case WM_NCDESTROY: {
+      const LRESULT result =
+          it->second->WindowProc(window_handle, message, wparam, lparam);
       info->window_map()->erase(it);
-      return ::DefWindowProcW(window_handle, message, wparam, lparam);
+      return result;
+    }
     default:
-      return ::DefWindowProcW(window_handle, message, wparam, lparam);
+      return it->second->WindowProc(window_handle, message, wparam, lparam);
   }
 }
 
@@ -582,7 +719,7 @@ ITfUIElement *TipUiElementImmersive::New(
       WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
       kImmersiveUIWindowClassName,
       L"",
-      WS_POPUP | WS_DISABLED,
+      WS_POPUP,
       0, 0, 0, 0,
       owner_window,
       nullptr,
@@ -595,7 +732,7 @@ ITfUIElement *TipUiElementImmersive::New(
       new TipImmersiveUiElementImpl(text_service, context, window);
   (*info->window_map())[window] = impl;
   *window_handle = window;
-  return impl;
+  return static_cast<ITfCandidateListUIElement *>(impl);
 }
 
 void TipUiElementImmersive::OnActivate() {

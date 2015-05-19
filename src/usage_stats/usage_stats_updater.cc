@@ -208,6 +208,8 @@ void UpdateConfigStats() {
   UsageStats::SetBoolean("ConfigAllowCloudHandwriting",
                          config.allow_cloud_handwriting());
 
+  UsageStats::SetBoolean("ConfigUseModeIndicator", config.use_mode_indicator());
+
   const bool has_information_list_config =
       config.has_information_list_config();
   const bool use_local_usage_dictionary =
@@ -237,6 +239,8 @@ void UsageStatsUpdater::UpdateStats() {
 
 #ifdef OS_WIN
   UsageStats::SetBoolean("WindowsX64", SystemUtil::IsWindowsX64());
+  UsageStats::SetBoolean("PerUserInputSettingsEnabled",
+                         WinUtil::IsPerUserInputSettingsEnabled());
   UsageStats::SetBoolean("CuasEnabled", WinUtil::IsCuasEnabled());
   {
     // get msctf version

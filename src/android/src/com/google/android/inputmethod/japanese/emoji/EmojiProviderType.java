@@ -31,6 +31,9 @@ package org.mozc.android.inputmethod.japanese.emoji;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil.TelephonyManagerInterface;
+import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 
 import android.content.SharedPreferences;
 
@@ -40,16 +43,31 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 /**
  * Providers whose emoji set MechaMozc supports.
  *
  */
 public enum EmojiProviderType {
-  DOCOMO((byte) 1), KDDI((byte) 2), SOFTBANK((byte) 4),
+
+  /**
+   * Place holder for following situations.
+   * <ul>
+   * <li>Provider detection is failed.
+   * <li>A user select this item explicitly on the preference screen.
+   * <li>Emoji is disabled by spec.
+   * </ul>
+   * If a user invokes Emoji screen on symbol input view, provider chooser dialog will be shown.
+   * If Emoji is disabled by spec, Emoji screen itself should be suppressed.
+   */
+  NONE((byte) 0),
+  DOCOMO((byte) 1),
+  KDDI((byte) 2),
+  SOFTBANK((byte) 4),
   // TODO(hidehiko): add unicode 6.0, when supported.
   ;
 
-  public static String EMOJI_PROVIDER_TYPE_PREFERENCE_KEY = "pref_emoji_provider_type";
   private static final Map<String, EmojiProviderType> NETWORK_OPERATOR_MAP;
   private static final Set<String> NAME_SET;
 
@@ -90,13 +108,16 @@ public enum EmojiProviderType {
    * and if it has registered callbacks, of course, they will be invoked as usual.
    */
   public static void maybeSetDetectedEmojiProviderType(
-      SharedPreferences sharedPreferences, TelephonyManagerInterface telephonyManager) {
+      @Nullable SharedPreferences sharedPreferences, TelephonyManagerInterface telephonyManager) {
+    Preconditions.checkNotNull(telephonyManager);
+
     if (sharedPreferences == null) {
       return;
     }
 
     // First, check if the emoji provider has already set to the preference.
-    if (NAME_SET.contains(sharedPreferences.getString(EMOJI_PROVIDER_TYPE_PREFERENCE_KEY, null))) {
+    if (NAME_SET.contains(
+        sharedPreferences.getString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, null))) {
       // Found the valid value.
       return;
     }
@@ -104,16 +125,20 @@ public enum EmojiProviderType {
     // Here, the EmojiProviderType hasn't set yet, so detect emoji provider.
     EmojiProviderType detectedType =
         detectEmojiProviderTypeByMobileNetworkOperator(telephonyManager);
-    if (detectedType != null) {
-      sharedPreferences.edit()
-          .putString(EMOJI_PROVIDER_TYPE_PREFERENCE_KEY, detectedType.name())
-          .commit();
-    }
+    sharedPreferences.edit()
+        .putString(PreferenceUtil.PREF_EMOJI_PROVIDER_TYPE, detectedType.name())
+        .commit();
     MozcLog.i("RUN EMOJI PROVIDER DETECTION: " + detectedType);
   }
 
+  /**
+   * @return EmojiProviderType, including NONE. NONE if the detection fails.
+   */
   private static EmojiProviderType detectEmojiProviderTypeByMobileNetworkOperator(
       TelephonyManagerInterface telephonyManager) {
-    return NETWORK_OPERATOR_MAP.get(telephonyManager.getNetworkOperator());
+    Preconditions.checkNotNull(telephonyManager);
+
+    return Objects.firstNonNull(NETWORK_OPERATOR_MAP.get(telephonyManager.getNetworkOperator()),
+                                NONE);
   }
 }

@@ -35,20 +35,16 @@ import static org.easymock.EasyMock.isA;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.SymbolInputView.MajorCategory;
-import org.mozc.android.inputmethod.japanese.SymbolInputView.MajorCategoryButtonClickListener;
 import org.mozc.android.inputmethod.japanese.SymbolInputView.MinorCategory;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
-import org.mozc.android.inputmethod.japanese.testing.MozcPreferenceUtil;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 
@@ -79,45 +75,17 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testMajorCategoryButtonClickListenerEmojiDetectionSucceeded() {
-    Context context = getInstrumentation().getTargetContext();
-    final SymbolInputView symbolInputView = createViewMock(SymbolInputView.class);
-
-    VisibilityProxy.setField(symbolInputView, "emojiEnabled", true);
-    VisibilityProxy.setField(symbolInputView, "emojiProviderType", null);
-    SharedPreferences sharedPreferences = MozcPreferenceUtil.getSharedPreferences(
-        getInstrumentation().getContext(), "EMOJI_PREF");
-    VisibilityProxy.setField(symbolInputView, "sharedPreferences", sharedPreferences);
-    symbolInputView.setMajorCategory(MajorCategory.EMOJI);
-    replayAll();
-
-    MajorCategoryButtonClickListener listener =
-        symbolInputView.new MajorCategoryButtonClickListener(MajorCategory.EMOJI) {
-      @Override
-      void maybeDetectEmojiProviderType() {
-        // Emulate the emoji detection is done.
-        VisibilityProxy.setField(symbolInputView, "emojiProviderType", EmojiProviderType.DOCOMO);
-      }
-    };
-    listener.onClick(null);
-
-    verifyAll();
-    assertEquals(EmojiProviderType.DOCOMO,
-                 VisibilityProxy.getField(symbolInputView, "emojiProviderType"));
-  }
-
-  @SmallTest
-  public void testMajorCategoryButtonClickListenerEmojiDetectionFailed() {
+  public void testMajorCategoryButtonClickListenerForNoneProvider() {
     Context context = getInstrumentation().getTargetContext();
     SymbolInputView symbolInputView = createViewMock(SymbolInputView.class);
 
-    VisibilityProxy.setField(symbolInputView, "emojiEnabled", true);
-    VisibilityProxy.setField(symbolInputView, "emojiProviderType", null);
+    symbolInputView.emojiEnabled = true;
+    symbolInputView.emojiProviderType = EmojiProviderType.NONE;
     // Set sharedPreferences null to emulate detection failure.
-    VisibilityProxy.setField(symbolInputView, "sharedPreferences", null);
+    symbolInputView.sharedPreferences = null;
 
     AlertDialog dialog = createDialogMock(AlertDialog.class);
-    VisibilityProxy.setField(symbolInputView, "emojiProviderDialog", dialog);
+    symbolInputView.emojiProviderDialog = dialog;
 
     symbolInputView.maybeInitializeEmojiProviderDialog(context);
     expect(symbolInputView.getWindowToken()).andReturn(null);
@@ -128,7 +96,7 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     symbolInputView.new MajorCategoryButtonClickListener(MajorCategory.EMOJI).onClick(null);
 
     verifyAll();
-    assertNull(VisibilityProxy.getField(symbolInputView, "emojiProviderType"));
+    assertSame(EmojiProviderType.NONE, symbolInputView.emojiProviderType);
   }
 
   @SmallTest
@@ -160,7 +128,7 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
   }
 
   private void checkConsistency(SymbolInputView view) {
-    MajorCategory major = VisibilityProxy.getField(view, "currentMajorCategory");
+    MajorCategory major = view.currentMajorCategory;
     for (MajorCategory category : MajorCategory.values()) {
       // Check if only the selected major category's button is "selected" and "enabled".
       View majorCategoryButton = view.getMajorCategoryButton(category);

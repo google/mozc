@@ -29,7 +29,6 @@
 
 #include <QtGui/QApplication>
 #include <QtGui/QtGui>
-#include "base/base.h"
 #include "base/system_util.h"
 #include "gui/administration_dialog/administration_dialog.h"
 #include "gui/base/locale_util.h"

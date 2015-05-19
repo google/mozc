@@ -36,7 +36,6 @@ import static org.easymock.EasyMock.isA;
 
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 
@@ -44,7 +43,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -68,16 +66,21 @@ public class PopUpPreviewTest extends InstrumentationTestCaseWithMock {
         .createMock();
     expect(cache.getDrawable(iconResourceId)).andStubReturn(icon);
 
-    PopUp popup = new PopUp(iconResourceId, 40, 80, 0, -30);
+    int popupWidth = 40;
+    int popupHeight = 80;
+    PopUp popup = new PopUp(iconResourceId, popupWidth, popupHeight, 0, -30);
     Key key = new Key(5, 10, 30, 20, 0, 0, false, false, false, Stick.EVEN,
                       Collections.<KeyState>emptyList());
+
+    final int parentLocationX = 100;
+    final int parentLocationY = 200;
 
     IAnswer<Void> getLocationInWindowAnswer = new IAnswer<Void>() {
       @Override
       public Void answer() {
         int[] location = int[].class.cast(getCurrentArguments()[0]);
-        location[0] = 100;
-        location[1] = 200;
+        location[0] = parentLocationX;
+        location[1] = parentLocationY;
         return null;
       }
     };
@@ -87,15 +90,10 @@ public class PopUpPreviewTest extends InstrumentationTestCaseWithMock {
     expectLastCall().andAnswer(getLocationInWindowAnswer);
     expect(mockView.getRootView()).andStubReturn(null);
 
-    FrameLayout.LayoutParams layoutParams = createMockBuilder(FrameLayout.LayoutParams.class)
-        .withConstructor(int.class, int.class, int.class)
-        .withArgs(0, 0, Gravity.LEFT | Gravity.TOP)
-        .createMock();
-    layoutParams.setMargins(100, 150, 0, 0);
     replayAll();
 
     PopUpPreview preview = new PopUpPreview(mockView, new BackgroundDrawableFactory(1f), cache);
-    ImageView popupView = VisibilityProxy.getField(preview, "popupView");
+    ImageView popupView = preview.popupView;
 
     preview.showIfNecessary(null, popup);
     assertEquals(View.GONE, popupView.getVisibility());
@@ -107,16 +105,23 @@ public class PopUpPreviewTest extends InstrumentationTestCaseWithMock {
     assertNull(popupView.getDrawable());
     assertNull(popupView.getBackground());
 
+    FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(0, 0);
     popupView.setLayoutParams(layoutParams);
-
     preview.showIfNecessary(key, popup);
-
     verifyAll();
     assertEquals(View.VISIBLE, popupView.getVisibility());
     assertSame(icon, popupView.getDrawable());
     assertNotNull(popupView.getBackground());
-    assertEquals(40, layoutParams.width);
-    assertEquals(80, layoutParams.height);
+    assertEquals(popupWidth, layoutParams.width);
+    assertEquals(popupHeight, layoutParams.height);
+    assertEquals(key.getX() + key.getWidth() / 2 + popup.getXOffset() - popup.getWidth() / 2
+                     + parentLocationX,
+                 layoutParams.leftMargin);
+    assertEquals(key.getY() + key.getHeight() / 2 + popup.getYOffset() - popup.getHeight() / 2
+                     + parentLocationY,
+                 layoutParams.topMargin);
+    assertEquals(0, layoutParams.rightMargin);
+    assertEquals(0, layoutParams.bottomMargin);
   }
 
   @SmallTest
@@ -124,7 +129,7 @@ public class PopUpPreviewTest extends InstrumentationTestCaseWithMock {
     PopUpPreview preview =
         new PopUpPreview(new View(getInstrumentation().getTargetContext()), null, null);
     preview.dismiss();
-    ImageView popupView = VisibilityProxy.getField(preview, "popupView");
+    ImageView popupView = preview.popupView;
     assertEquals(View.GONE, popupView.getVisibility());
     assertNull(popupView.getDrawable());
     assertNull(popupView.getBackground());

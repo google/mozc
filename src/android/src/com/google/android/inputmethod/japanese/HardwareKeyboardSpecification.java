@@ -34,6 +34,7 @@ import org.mozc.android.inputmethod.japanese.HardwareKeyboard.HardwareKeyboadSpe
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.HardwareKeyMap;
+import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.ModifierKey;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.SpecialKey;
@@ -83,6 +84,16 @@ public enum HardwareKeyboardSpecification implements HardwareKeyboadSpecificatio
     CompositionSwitchMode getCompositionSwitchMode(android.view.KeyEvent keyEvent);
 
     boolean isKeyToConsume(android.view.KeyEvent keyEvent);
+  }
+
+  // Visible for testing
+  static boolean isPrintable(int codepoint) {
+    if (Character.isISOControl(codepoint)) {
+      return false;
+    }
+    Character.UnicodeBlock block = Character.UnicodeBlock.of(codepoint);
+    return block != null &&
+           block != Character.UnicodeBlock.SPECIALS;
   }
 
   private static class DefaultConverter implements HardwareKeyCodeConverter {
@@ -174,14 +185,17 @@ public enum HardwareKeyboardSpecification implements HardwareKeyboadSpecificatio
           break;
       }
 
-      if ((metaState & android.view.KeyEvent.META_SHIFT_MASK) != 0) {
-          builder.addModifierKeys(ModifierKey.SHIFT);
-      }
-      if ((metaState & android.view.KeyEvent.META_ALT_MASK) != 0) {
-        builder.addModifierKeys(ModifierKey.ALT);
-      }
-      if ((metaState & android.view.KeyEvent.META_CTRL_MASK) != 0) {
-        builder.addModifierKeys(ModifierKey.CTRL);
+      if (!isPrintable(unicodeChar)) {
+        // Mozc server accepts modifiers only if non-printable key event is sent.
+        if ((metaState & android.view.KeyEvent.META_SHIFT_MASK) != 0) {
+            builder.addModifierKeys(ModifierKey.SHIFT);
+        }
+        if ((metaState & android.view.KeyEvent.META_ALT_MASK) != 0) {
+          builder.addModifierKeys(ModifierKey.ALT);
+        }
+        if ((metaState & android.view.KeyEvent.META_CTRL_MASK) != 0) {
+          builder.addModifierKeys(ModifierKey.CTRL);
+        }
       }
       return builder.build();
     }
@@ -524,8 +538,6 @@ public enum HardwareKeyboardSpecification implements HardwareKeyboadSpecificatio
   private static final Map<HardwareKeyMap, HardwareKeyboadSpecificationInterface>
       hardwareKeyMapToSpecificationMap;
 
-  public static final String PREF_HARDWARE_KEYMAP_KEY = "pref_hardware_keymap";
-
   static {
     HashMap<HardwareKeyMap, HardwareKeyboadSpecificationInterface> tmpMap =
         new HashMap<HardwareKeyMap, HardwareKeyboadSpecificationInterface>();
@@ -596,12 +608,20 @@ public enum HardwareKeyboardSpecification implements HardwareKeyboadSpecificatio
     MozcLog.i("RUN HARDWARE KEYBOARD DETECTION: " + detectedKeyMap);
   }
 
+  /**
+   * Returns currently set key map based on the default SharedPreferences.
+   *
+   * @param sharedPreferences a SharedPreference to be retrieved
+   * @return null if no preference has not been set
+   */
   public static HardwareKeyMap getHardwareKeyMap(SharedPreferences sharedPreferences) {
-    String prefHardwareKeyMap = sharedPreferences.getString(PREF_HARDWARE_KEYMAP_KEY, null);
+    String prefHardwareKeyMap =
+        sharedPreferences.getString(PreferenceUtil.PREF_HARDWARE_KEYMAP, null);
     if (prefHardwareKeyMap != null) {
       try {
         return HardwareKeyMap.valueOf(prefHardwareKeyMap);
       } catch (IllegalArgumentException e) {
+        return null;
       }
     }
     return null;
@@ -609,7 +629,8 @@ public enum HardwareKeyboardSpecification implements HardwareKeyboadSpecificatio
 
   static void setHardwareKeyMap(
       SharedPreferences sharedPreference, HardwareKeyMap hardwareKeyMap) {
-    sharedPreference.edit().putString(PREF_HARDWARE_KEYMAP_KEY, hardwareKeyMap.name()).commit();
+    sharedPreference.edit()
+         .putString(PreferenceUtil.PREF_HARDWARE_KEYMAP, hardwareKeyMap.name()).commit();
   }
 
   @Override

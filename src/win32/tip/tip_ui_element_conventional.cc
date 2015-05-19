@@ -37,12 +37,11 @@
 #include <atlstr.h>
 #include <msctf.h>
 
+#include <memory>
 #include <string>
 
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
-#include "win32/tip/tip_command_handler.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_ref_count.h"
@@ -60,34 +59,19 @@ using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ATL::CComVariant;
 using ATL::CStringW;
+using std::unique_ptr;
 
-TipUiElementDelegateFactory::ElementType ToDelegateType(
-    TipUiElementConventional::UIType type) {
-  switch (type) {
-    case TipUiElementConventional::kUnobservableSuggestWindow:
-      return TipUiElementDelegateFactory::
-          kConventionalUnobservableSuggestWindow;
-    case TipUiElementConventional::kObservableSuggestWindow:
-      return TipUiElementDelegateFactory::kConventionalObservableSuggestWindow;
-    case TipUiElementConventional::kCandidateWindow:
-      return TipUiElementDelegateFactory::kConventionalCandidateWindow;
-    default:
-      LOG(FATAL) << "must not reach here.";
-      return TipUiElementDelegateFactory::kConventionalCandidateWindow;
-  }
-}
-
-class TipUiElementImpl : public ITfCandidateListUIElementBehavior {
+class TipCandidateListImpl : public ITfCandidateListUIElementBehavior {
  public:
-  TipUiElementImpl(TipUiElementConventional::UIType type,
-                   TipTextService *text_service,
-                   ITfContext *context)
+  TipCandidateListImpl(TipUiElementConventional::UIType type,
+                       TipTextService *text_service,
+                       ITfContext *context)
       : delegate_(TipUiElementDelegateFactory::Create(
             text_service, context, ToDelegateType(type))) {
   }
 
  private:
-  virtual ~TipUiElementImpl() {}
+  ~TipCandidateListImpl() {}
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -97,7 +81,7 @@ class TipUiElementImpl : public ITfCandidateListUIElementBehavior {
     *object = nullptr;
 
     // Finds a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
+    // This object implements IUnknown.
     if (::IsEqualIID(interface_id, IID_IUnknown)) {
       *object = static_cast<IUnknown *>(this);
     } else if (IsEqualIID(interface_id, IID_ITfUIElement)) {
@@ -186,9 +170,97 @@ class TipUiElementImpl : public ITfCandidateListUIElementBehavior {
     return delegate_->Abort();
   }
 
+  static TipUiElementDelegateFactory::ElementType ToDelegateType(
+      TipUiElementConventional::UIType type) {
+    switch (type) {
+      case TipUiElementConventional::kUnobservableSuggestWindow:
+        return TipUiElementDelegateFactory::
+            kConventionalUnobservableSuggestWindow;
+      case TipUiElementConventional::kObservableSuggestWindow:
+        return
+            TipUiElementDelegateFactory::kConventionalObservableSuggestWindow;
+      case TipUiElementConventional::kCandidateWindow:
+        return TipUiElementDelegateFactory::kConventionalCandidateWindow;
+      default:
+        LOG(FATAL) << "must not reach here.";
+        return TipUiElementDelegateFactory::kConventionalCandidateWindow;
+    }
+  }
+
   TipRefCount ref_count_;
-  scoped_ptr<TipUiElementDelegate> delegate_;
-  DISALLOW_COPY_AND_ASSIGN(TipUiElementImpl);
+  unique_ptr<TipUiElementDelegate> delegate_;
+  DISALLOW_COPY_AND_ASSIGN(TipCandidateListImpl);
+};
+
+class TipIndicatorImpl : public ITfToolTipUIElement {
+ public:
+  TipIndicatorImpl(TipTextService *text_service, ITfContext *context)
+      : delegate_(TipUiElementDelegateFactory::Create(
+            text_service, context,
+            TipUiElementDelegateFactory::kConventionalIndicatorWindow)) {}
+
+ private:
+  ~TipIndicatorImpl() {}
+
+  // The IUnknown interface methods.
+  virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
+    if (!object) {
+      return E_INVALIDARG;
+    }
+    *object = nullptr;
+
+    // Finds a matching interface from the ones implemented by this object.
+    // This object implements IUnknown.
+    if (::IsEqualIID(interface_id, IID_IUnknown)) {
+      *object = static_cast<IUnknown *>(this);
+    } else if (::IsEqualIID(interface_id, IID_ITfUIElement)) {
+      *object = static_cast<ITfUIElement *>(this);
+    } else if (::IsEqualIID(interface_id, IID_ITfToolTipUIElement)) {
+      *object = static_cast<ITfToolTipUIElement *>(this);
+    }
+
+    if (*object == nullptr) {
+      return E_NOINTERFACE;
+    }
+
+    AddRef();
+    return S_OK;
+  }
+
+  virtual ULONG STDMETHODCALLTYPE AddRef() {
+    return ref_count_.AddRefImpl();
+  }
+
+  virtual ULONG STDMETHODCALLTYPE Release() {
+    const ULONG count = ref_count_.ReleaseImpl();
+    if (count == 0) {
+      delete this;
+    }
+    return count;
+  }
+
+  // The ITfUIElement interface methods
+  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *description) {
+    return delegate_->GetDescription(description);
+  }
+  virtual HRESULT STDMETHODCALLTYPE GetGUID(GUID *guid) {
+    return delegate_->GetGUID(guid);
+  }
+  virtual HRESULT STDMETHODCALLTYPE Show(BOOL show) {
+    return delegate_->Show(show);
+  }
+  virtual HRESULT STDMETHODCALLTYPE IsShown(BOOL *show) {
+    return delegate_->IsShown(show);
+  }
+
+  // The ITfToolTipUIElement interface methods
+  virtual HRESULT STDMETHODCALLTYPE GetString(BSTR *str) {
+    return delegate_->GetString(str);
+  }
+
+  TipRefCount ref_count_;
+  unique_ptr<TipUiElementDelegate> delegate_;
+  DISALLOW_COPY_AND_ASSIGN(TipIndicatorImpl);
 };
 
 }  // namespace
@@ -203,7 +275,18 @@ ITfUIElement *TipUiElementConventional::New(
   if (context == nullptr) {
     return nullptr;
   }
-  return new TipUiElementImpl(type, text_service, context);
+  switch (type) {
+    case TipUiElementConventional::kUnobservableSuggestWindow:
+      return new TipCandidateListImpl(type, text_service, context);
+    case TipUiElementConventional::kObservableSuggestWindow:
+      return new TipCandidateListImpl(type, text_service, context);
+    case TipUiElementConventional::kCandidateWindow:
+      return new TipCandidateListImpl(type, text_service, context);
+    case TipUiElementConventional::KIndicatorWindow:
+      return new TipIndicatorImpl(text_service, context);
+    default:
+      return nullptr;
+  }
 }
 
 }  // namespace tsf

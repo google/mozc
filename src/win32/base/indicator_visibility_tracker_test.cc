@@ -29,16 +29,47 @@
 
 #include "win32/base/indicator_visibility_tracker.h"
 
+#include <memory>
+
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+
+#include "base/clock_mock.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
 
+using std::unique_ptr;
+
+#ifdef MOZC_ENABLE_MODE_INDICATOR
+
+const uint64 kWaitDuration = 500;  // msec
 const VirtualKey AKey = VirtualKey::FromVirtualKey('A');
 
-TEST(IndicatorVisibilityTrackerTest, BasicTest) {
+class IndicatorVisibilityTrackerTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    clock_mock_.reset(new ClockMock(0, 0));
+    // 1 kHz (Accuracy = 1msec)
+    clock_mock_->SetFrequency(1000uLL);
+    Util::SetClockHandler(clock_mock_.get());
+  }
+
+  virtual void TearDown() {
+    Util::SetClockHandler(NULL);
+  }
+
+  void PutForwardMilliseconds(uint64 milli_sec) {
+    clock_mock_->PutClockForwardByTicks(milli_sec);
+  }
+
+ private:
+  unique_ptr<ClockMock> clock_mock_;
+};
+
+TEST_F(IndicatorVisibilityTrackerTest, BasicTest) {
   IndicatorVisibilityTracker tracker;
 
   EXPECT_FALSE(tracker.IsVisible()) << "Should be hidden by default.";
@@ -55,9 +86,24 @@ TEST(IndicatorVisibilityTrackerTest, BasicTest) {
   EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI,
             tracker.OnChangeInputMode());
   EXPECT_TRUE(tracker.IsVisible());    // ChangeInputMode -> Visible
+
+  // 0 msec later -> WindowMove -> Visible
+  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
+            tracker.OnMoveFocusedWindow());
+  EXPECT_TRUE(tracker.IsVisible());
+
+  // |kWaitDuration/2| msec later -> WindowMove -> Visible
+  PutForwardMilliseconds(kWaitDuration / 2);
+  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
+            tracker.OnMoveFocusedWindow());
+  EXPECT_TRUE(tracker.IsVisible());
+
+  // |kWaitDuration*2| msec later -> WindowMove -> Invisible
+  PutForwardMilliseconds(kWaitDuration * 2);
   EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI,
             tracker.OnMoveFocusedWindow());
-  EXPECT_FALSE(tracker.IsVisible());    // WindowMove -> Invisible
+  EXPECT_FALSE(tracker.IsVisible());
+
   EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI,
             tracker.OnChangeInputMode());
   EXPECT_TRUE(tracker.IsVisible());    // ChangeInputMode -> Visible
@@ -80,6 +126,21 @@ TEST(IndicatorVisibilityTrackerTest, BasicTest) {
             tracker.OnKey(AKey, false, false));
   EXPECT_TRUE(tracker.IsVisible());    // KeyUp -> Visible
 }
+
+#else
+
+// Mode Indicator is not supported yet.
+TEST(IndicatorVisibilityTrackerTest, BasicTest) {
+  IndicatorVisibilityTracker tracker;
+
+  EXPECT_FALSE(tracker.IsVisible()) << "Should be hidden by default.";
+
+  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
+            tracker.OnChangeInputMode());
+  EXPECT_FALSE(tracker.IsVisible());    // ChangeInputMode -> Invisible
+}
+
+#endif  // MOZC_ENABLE_MODE_INDICATOR or not
 
 }  // namespace
 

@@ -216,6 +216,66 @@ MessageTranslatorInterface *CreateTranslator() {
 #endif
 }
 
+
+struct SurroundingTextInfo {
+  SurroundingTextInfo()
+      : relative_selected_length(0) {}
+  int32 relative_selected_length;
+  string preceding_text;
+  string selection_text;
+  string following_text;
+};
+
+bool GetSurroundingText(IBusEngine *engine,
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+                        SelectionMonitorInterface *selection_monitor,
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
+                        SurroundingTextInfo *info) {
+  if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
+    VLOG(1) << "Give up CONVERT_REVERSE due to client_capabilities: "
+            << engine->client_capabilities;
+    return false;
+  }
+  guint cursor_pos = 0;
+  guint anchor_pos = 0;
+  // DO NOT call g_object_unref against this.
+  // http://ibus.googlecode.com/svn/docs/ibus-1.4/IBusText.html
+  // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
+  IBusText *text = NULL;
+  ibus_engine_get_surrounding_text(engine, &text, &cursor_pos,
+                                   &anchor_pos);
+  const string surrounding_text(ibus_text_get_text(text));
+
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+  if (cursor_pos == anchor_pos && selection_monitor != NULL) {
+    const SelectionInfo &info = selection_monitor->GetSelectionInfo();
+    guint new_anchor_pos = 0;
+    if (SurroundingTextUtil::GetAnchorPosFromSelection(
+            surrounding_text, info.selected_text,
+            cursor_pos, &new_anchor_pos)) {
+      anchor_pos = new_anchor_pos;
+    }
+  }
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
+
+  if (!SurroundingTextUtil::GetSafeDelta(cursor_pos, anchor_pos,
+                                         &info->relative_selected_length)) {
+    LOG(ERROR) << "Too long text selection.";
+    return false;
+  }
+
+  const uint32 selection_start = min(cursor_pos, anchor_pos);
+  const uint32 selection_length = abs(info->relative_selected_length);
+  info->preceding_text = surrounding_text.substr(0, selection_start);
+  Util::SubString(surrounding_text,
+                  selection_start,
+                  selection_length,
+                  &info->selection_text);
+  info->following_text = surrounding_text.substr(
+      selection_start + selection_length);
+  return true;
+}
+
 }  // namespace
 
 MozcEngine::MozcEngine()
@@ -381,8 +441,20 @@ gboolean MozcEngine::ProcessKeyEvent(
 
   key.set_mode(property_handler_->GetOriginalCompositionMode());
 
+  commands::Context context;
+#ifndef OS_CHROMEOS
+  SurroundingTextInfo surrounding_text_info;
+  if (GetSurroundingText(engine,
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+                         selection_monitor_.get(),
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
+                         &surrounding_text_info)) {
+    context.set_preceding_text(surrounding_text_info.preceding_text);
+    context.set_following_text(surrounding_text_info.following_text);
+  }
+#endif  // !OS_CHROMEOS
   commands::Output output;
-  if (!client_->SendKey(key, &output)) {
+  if (!client_->SendKeyWithContext(key, context, &output)) {
     LOG(ERROR) << "SendKey failed";
     return FALSE;
   }
@@ -700,7 +772,7 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
   // Note that you should not allow 0x80000000 for |relative_selected_length|
   // because you cannot safely use |-relative_selected_length| nor
   // |abs(relative_selected_length)| in this case due to integer overflow.
-  int32 relative_selected_length = 0;
+  SurroundingTextInfo surrounding_text_info;
 
   switch (callback_command.type()) {
     case commands::SessionCommand::UNDO:
@@ -714,57 +786,14 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
       // }
       break;
     case commands::SessionCommand::CONVERT_REVERSE: {
-      if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
-        VLOG(1) << "Give up CONVERT_REVERSE due to client_capabilities: "
-                << engine->client_capabilities;
-        return false;
-      }
-      guint cursor_pos = 0;
-      guint anchor_pos = 0;
-      // DO NOT call g_object_unref against this.
-      // http://ibus.googlecode.com/svn/docs/ibus-1.4/IBusText.html
-      // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
-      IBusText *text = NULL;
-      ibus_engine_get_surrounding_text(engine, &text, &cursor_pos,
-                                       &anchor_pos);
-      const string surrounding_text(ibus_text_get_text(text));
-
+      if (!GetSurroundingText(engine,
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
-      if (cursor_pos == anchor_pos && selection_monitor_.get() != NULL) {
-        const SelectionInfo &info = selection_monitor_->GetSelectionInfo();
-        guint new_anchor_pos = 0;
-        if (SurroundingTextUtil::GetAnchorPosFromSelection(
-                surrounding_text, info.selected_text,
-                cursor_pos, &new_anchor_pos)) {
-          anchor_pos = new_anchor_pos;
-        }
-      }
+                              selection_monitor_.get(),
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
-
-      if (cursor_pos == anchor_pos) {
-        // There is no selection text.
-        VLOG(1) << "Failed to retrieve non-empty text selection.";
+                              &surrounding_text_info)) {
         return false;
       }
-
-      if (!SurroundingTextUtil::GetSafeDelta(cursor_pos, anchor_pos,
-                                             &relative_selected_length)) {
-        LOG(ERROR) << "Too long text selection.";
-        return false;
-      }
-
-      // TODO(nona): Write a test for this logic (especially selection_length).
-      // TODO(nona): Check integer range because Util::SubString works
-      //     on size_t, not uint32.
-      string selection_text;
-      const uint32 selection_start = min(cursor_pos, anchor_pos);
-      const uint32 selection_length = abs(relative_selected_length);
-      Util::SubString(surrounding_text,
-                      selection_start,
-                      selection_length,
-                      &selection_text);
-
-      session_command.set_text(selection_text);
+      session_command.set_text(surrounding_text_info.selection_text);
       break;
     }
     default:
@@ -785,11 +814,11 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
     // offset should be a negative value to delete preceding text.
     // For backward selection (that is, |relative_selected_length < 0|),
     // IBus and/or some applications seem to expect |offset == 0| somehow.
-    const int32 offset = relative_selected_length > 0
-        ? -relative_selected_length  // forward selection
-        : 0;                         // backward selection
+    const int32 offset = surrounding_text_info.relative_selected_length > 0
+        ? -surrounding_text_info.relative_selected_length  // forward selection
+        : 0;                                               // backward selection
     range->set_offset(offset);
-    range->set_length(abs(relative_selected_length));
+    range->set_length(abs(surrounding_text_info.relative_selected_length));
   }
 
   // Here uses recursion of UpdateAll but it's okay because the converter

@@ -49,14 +49,18 @@ class KeyEvent;
 namespace keymap {
 
 template<typename T>
-class KeyMap : public KeyMapInterface<T> {
+class KeyMap : public KeyMapInterface<typename T::Commands> {
  public:
-  bool GetCommand(const commands::KeyEvent &key_event, T *command) const;
-  bool AddRule(const commands::KeyEvent &key_event, T command);
+  typedef typename T::Commands CommandsType;
+
+  bool GetCommand(const commands::KeyEvent &key_event,
+                  CommandsType *command) const;
+  bool AddRule(const commands::KeyEvent &key_event, CommandsType command);
   void Clear();
 
  private:
-  map<KeyInformation, T> keymap_;
+  typedef map<KeyInformation, CommandsType> KeyToCommandMap;
+  KeyToCommandMap keymap_;
 };
 
 class KeyMapManager {
@@ -155,23 +159,23 @@ class KeyMapManager {
   map<ConversionState::Commands, string> reverse_command_conversion_map_;
 
   // Status should be out of keymap.
-  keymap::KeyMap<keymap::DirectInputState::Commands> keymap_direct_;
-  keymap::KeyMap<keymap::PrecompositionState::Commands> keymap_precomposition_;
-  keymap::KeyMap<keymap::CompositionState::Commands> keymap_composition_;
-  keymap::KeyMap<keymap::ConversionState::Commands> keymap_conversion_;
+  keymap::KeyMap<keymap::DirectInputState> keymap_direct_;
+  keymap::KeyMap<keymap::PrecompositionState> keymap_precomposition_;
+  keymap::KeyMap<keymap::CompositionState> keymap_composition_;
+  keymap::KeyMap<keymap::ConversionState> keymap_conversion_;
 
   // enabled only if zero query suggestion is shown. Otherwise, inherit from
   // keymap_precomposition
-  keymap::KeyMap<keymap::PrecompositionState::Commands>
+  keymap::KeyMap<keymap::PrecompositionState>
       keymap_zero_query_suggestion_;
 
   // enabled only if suggestion is shown. Otherwise, inherit from
   // keymap_composition
-  keymap::KeyMap<keymap::CompositionState::Commands> keymap_suggestion_;
+  keymap::KeyMap<keymap::CompositionState> keymap_suggestion_;
 
   // enabled only if prediction is shown. Otherwise, inherit from
   // keymap_conversion
-  keymap::KeyMap<keymap::ConversionState::Commands> keymap_prediction_;
+  keymap::KeyMap<keymap::ConversionState> keymap_prediction_;
 
   DISALLOW_COPY_AND_ASSIGN(KeyMapManager);
 };

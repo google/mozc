@@ -523,7 +523,7 @@
         }],
         ['enable_webservice_infolist==1', {
           'dependencies': [
-              '../net/net.gyp:jsoncpp',
+              '../net/jsoncpp.gyp:jsoncpp',
           ],
         }],
       ],

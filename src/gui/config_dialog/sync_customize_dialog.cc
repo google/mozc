@@ -30,7 +30,6 @@
 #include "gui/config_dialog/sync_customize_dialog.h"
 
 #include <string>
-#include "base/base.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "sync/oauth2_client.h"

@@ -75,9 +75,17 @@ class UserDictionaryStub : public DictionaryInterface {
                               NodeAllocatorInterface *allocator) const {
     return NULL;
   }
+
+  virtual bool LookupComment(StringPiece key, StringPiece value,
+                             string *comment) const {
+    if (key == "comment" || value == "comment") {
+      comment->assign("UserDictionaryStub");
+      return true;
+    }
+    return false;
+  }
 };
 
 }  // namespace mozc
-
 
 #endif  // MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_

@@ -33,7 +33,8 @@
 #include <QtCore/QString>
 #include <QtGui/QtGui>
 #include <QtGui/QDialog>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "gui/word_register_dialog/ui_word_register_dialog.h"
 
 namespace mozc {

@@ -33,7 +33,6 @@
 #include <windows.h>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "win32/base/immdev.h"
 
 namespace mozc {

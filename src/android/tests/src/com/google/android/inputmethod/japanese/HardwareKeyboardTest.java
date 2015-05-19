@@ -39,7 +39,6 @@ import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.Har
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
@@ -52,8 +51,7 @@ public class HardwareKeyboardTest extends InstrumentationTestCaseWithMock {
     HardwareKeyboard hardwareKeyboard = new HardwareKeyboard();
     HardwareKeyboadSpecificationInterface hardwareKeyboardSpecification =
         createMock(HardwareKeyboadSpecificationInterface.class);
-    VisibilityProxy.setField(hardwareKeyboard, "hardwareKeyboardSpecification",
-                             hardwareKeyboardSpecification);
+    hardwareKeyboard.hardwareKeyboardSpecification = hardwareKeyboardSpecification;
 
     android.view.KeyEvent keyEvent = new KeyEvent(1, 1);
     ProtoCommands.KeyEvent returnKey = ProtoCommands.KeyEvent.newBuilder().setKeyCode(1).build();
@@ -71,8 +69,7 @@ public class HardwareKeyboardTest extends InstrumentationTestCaseWithMock {
     HardwareKeyboard hardwareKeyboard = new HardwareKeyboard();
     HardwareKeyboadSpecificationInterface hardwareKeyboardSpecification =
         createMock(HardwareKeyboadSpecificationInterface.class);
-    VisibilityProxy.setField(hardwareKeyboard, "hardwareKeyboardSpecification",
-                             hardwareKeyboardSpecification);
+    hardwareKeyboard.hardwareKeyboardSpecification = hardwareKeyboardSpecification;
 
     android.view.KeyEvent keyEvent = new KeyEvent(1, 1);
     KeyEventInterface keyEventInterface = createMock(KeyEventInterface.class);
@@ -91,8 +88,7 @@ public class HardwareKeyboardTest extends InstrumentationTestCaseWithMock {
     HardwareKeyboard hardwareKeyboard = new HardwareKeyboard();
     HardwareKeyboadSpecificationInterface hardwareKeyboardSpecification =
         createMock(HardwareKeyboadSpecificationInterface.class);
-    VisibilityProxy.setField(hardwareKeyboard, "hardwareKeyboardSpecification",
-                             hardwareKeyboardSpecification);
+    hardwareKeyboard.hardwareKeyboardSpecification = hardwareKeyboardSpecification;
 
     expect(hardwareKeyboardSpecification.getKanaKeyboardSpecification())
         .andStubReturn(KeyboardSpecification.HARDWARE_QWERTY_KANA);
@@ -142,8 +138,7 @@ public class HardwareKeyboardTest extends InstrumentationTestCaseWithMock {
     HardwareKeyboard hardwareKeyboard = new HardwareKeyboard();
     HardwareKeyboadSpecificationInterface hardwareKeyboardSpecification =
         createMock(HardwareKeyboadSpecificationInterface.class);
-    VisibilityProxy.setField(hardwareKeyboard, "hardwareKeyboardSpecification",
-                             hardwareKeyboardSpecification);
+    hardwareKeyboard.hardwareKeyboardSpecification = hardwareKeyboardSpecification;
 
     android.view.KeyEvent keyEvent1 = new KeyEvent(1, 1);
     expect(hardwareKeyboardSpecification.isKeyToConsume(keyEvent1)).andReturn(true);
@@ -163,15 +158,15 @@ public class HardwareKeyboardTest extends InstrumentationTestCaseWithMock {
     HardwareKeyboard hardwareKeyboard = new HardwareKeyboard();
     hardwareKeyboard.setHardwareKeyMap(HardwareKeyMap.DEFAULT);
     assertEquals(HardwareKeyboardSpecification.DEFAULT,
-                 VisibilityProxy.getField(hardwareKeyboard, "hardwareKeyboardSpecification"));
+                 hardwareKeyboard.hardwareKeyboardSpecification);
     assertEquals(HardwareKeyMap.DEFAULT, hardwareKeyboard.getHardwareKeyMap());
     hardwareKeyboard.setHardwareKeyMap(HardwareKeyMap.JAPANESE109A);
     assertEquals(HardwareKeyboardSpecification.JAPANESE109A,
-                 VisibilityProxy.getField(hardwareKeyboard, "hardwareKeyboardSpecification"));
+                 hardwareKeyboard.hardwareKeyboardSpecification);
     assertEquals(HardwareKeyMap.JAPANESE109A, hardwareKeyboard.getHardwareKeyMap());
     hardwareKeyboard.setHardwareKeyMap(HardwareKeyMap.TWELVEKEY);
     assertEquals(HardwareKeyboardSpecification.TWELVEKEY,
-                 VisibilityProxy.getField(hardwareKeyboard, "hardwareKeyboardSpecification"));
+                 hardwareKeyboard.hardwareKeyboardSpecification);
     assertEquals(HardwareKeyMap.TWELVEKEY, hardwareKeyboard.getHardwareKeyMap());
   }
 }

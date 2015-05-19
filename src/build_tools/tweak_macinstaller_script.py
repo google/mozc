@@ -65,10 +65,10 @@ def ParseOptions():
     An options data.
   """
   parser = optparse.OptionParser()
-  parser.add_option("--version_file", dest="version_file")
-  parser.add_option("--output", dest="output")
-  parser.add_option("--input", dest="input")
-  parser.add_option("--build_type", dest="build_type")
+  parser.add_option('--version_file', dest='version_file')
+  parser.add_option('--output', dest='output')
+  parser.add_option('--input', dest='input')
+  parser.add_option('--build_type', dest='build_type')
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -77,28 +77,28 @@ def ParseOptions():
 def main():
   """The main function."""
   options = ParseOptions()
-  required_flags = ["version_file", "output", "input"]
+  required_flags = ['version_file', 'output', 'input']
   for flag in required_flags:
     if getattr(options, flag) is None:
-      logging.error("--%s is not specified." % flag)
+      logging.error('--%s is not specified.', flag)
       exit(-1)
 
   version = mozc_version.MozcVersion(options.version_file)
 
-  if options.build_type == "dev":
-    omaha_tag = "external-dev"
+  if options.build_type == 'dev':
+    omaha_tag = 'external-dev'
   else:
-    omaha_tag = "external-stable"
+    omaha_tag = 'external-stable'
 
   # This definition is copied from tools/scons/script.py
   variables = [
-      ("@@@MOZC_VERSION@@@", version.GetVersionString()),
-      ("@@@MOZC_PRODUCT_ID@@@", "com.google.JapaneseIME"),
-      ("@@@MOZC_APP_PATH@@@", "/Library/Input Methods/GoogleJapaneseInput.app"),
-      ("@@@MOZC_APPLICATIONS_DIR@@@",
-       "/Application/GoogleJapaneseInput.localized"),
-      ("@@@MOZC_OMAHA_TAG@@@", omaha_tag),
-      ("@@@MOZC_PACKAGE_NAME@@@", "GoogleJapaneseInput.pkg"),
+      ('@@@MOZC_VERSION@@@', version.GetVersionString()),
+      ('@@@MOZC_PRODUCT_ID@@@', 'com.google.JapaneseIME'),
+      ('@@@MOZC_APP_PATH@@@', '/Library/Input Methods/GoogleJapaneseInput.app'),
+      ('@@@MOZC_APPLICATIONS_DIR@@@',
+       '/Applications/GoogleJapaneseInput.localized'),
+      ('@@@MOZC_OMAHA_TAG@@@', omaha_tag),
+      ('@@@MOZC_PACKAGE_NAME@@@', 'GoogleJapaneseInput.pkg'),
       ]
 
   open(options.output, 'w').write(

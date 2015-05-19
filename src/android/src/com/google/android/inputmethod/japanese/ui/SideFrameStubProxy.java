@@ -31,14 +31,15 @@ package org.mozc.android.inputmethod.japanese.ui;
 
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.ViewStub.OnInflateListener;
 import android.view.animation.Animation;
@@ -53,7 +54,7 @@ import android.widget.ImageView;
  */
 public class SideFrameStubProxy {
 
-  private boolean inflated = false;
+  @VisibleForTesting public boolean inflated = false;
 
   private View currentView = null;
 

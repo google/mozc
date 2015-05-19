@@ -31,6 +31,7 @@
 #define MOZC_SYNC_OAUTH2_UTIL_H_
 
 #include "sync/oauth2.h"
+#include "sync/oauth2_client.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
@@ -49,14 +50,17 @@ class OAuth2Util {
   ~OAuth2Util();
 
   // Return a URI to authorize mozc via web browser.
+  // Chrome App client doesn't support this method.
   string GetAuthenticateUri();
 
   // Requests an access_token with the authorization_token and stores the access
   // token into the mozc registry.
+  // Chrome App client doesn't support this method.
   OAuth2::Error RequestAccessToken(const string &auth_token);
 
   // Refreshes an access token in the local storage, and stores the new token.
   // Return true only if refresh succeeds.
+  // Chrome App client doesn't support this method.
   OAuth2::Error RefreshAccessToken();
 
   // Accesses 'resource_uri' and puts returned string in 'resource'. This
@@ -65,12 +69,17 @@ class OAuth2Util {
   // TODO(peria): enable to use POST method
   bool RequestResource(const string &resource_uri, string *resource);
 
-  // Clear all registed tokens.
+  // Clear all registered tokens.
+  // Chrome App client doesn't support this method.
   void Clear();
 
-  // Get the access token from the local storage and stores it to
-  // "access_token".  Returns true if it successfully obtain the
-  // access token.
+  // Installed App:
+  //   Get the access token from the local storage and stores it to
+  //   "access_token".  Returns true if it successfully obtain the
+  //   access token.
+  // Chrome App:
+  //   Gets the access token with chrome.identity.getAuthToken JavaScript API.
+  //   This JavaScript API is called via NaclJsProxy.
   bool GetAccessToken(string *access_token);
 
   // Get the machine ID and stores it to "mid".  If the underlaying
@@ -79,21 +88,24 @@ class OAuth2Util {
   // new machine id generation fails.
   bool GetMID(string *mid);
 
+  // Returns the type of OAuth2Client.
+  OAuth2ClientType GetClientType() const;
+
   // Change the scope of authentification.
   // This method is used only in tests.
   void set_scope(const string &scope);
 
   // Following getter functions are used in only unit tests.
-  string authenticate_uri_for_unittest() {
+  const string &authenticate_uri_for_unittest() const {
     return authenticate_uri_;
   }
-  string redirect_uri_for_unittest() {
+  const string &redirect_uri_for_unittest() const {
     return redirect_uri_;
   }
-  string request_token_uri_for_unittest() {
+  const string &request_token_uri_for_unittest() const {
     return request_token_uri_;
   }
-  string scope_for_unittest() {
+  const string &scope_for_unittest() const {
     return scope_;
   }
 
@@ -126,6 +138,7 @@ class OAuth2Util {
   const string client_name_;
   const string client_id_;
   const string client_secret_;
+  const OAuth2ClientType client_type_;
   const string authenticate_uri_;
   const string redirect_uri_;
   const string request_token_uri_;

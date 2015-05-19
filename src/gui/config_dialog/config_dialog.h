@@ -36,7 +36,8 @@
 #include <QtCore/QTimer>
 #include <map>
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "config/config.pb.h"
 #include "gui/config_dialog/ui_config_dialog.h"
 #ifdef ENABLE_CLOUD_SYNC
@@ -90,7 +91,6 @@ class ConfigDialog : public QDialog,
   virtual void SyncToggleButtonClicked();
   virtual void LaunchSyncCustomizationDialog();
   virtual void UpdateSyncStatus();
-  virtual void ClearSyncClicked();
   virtual void EnableApplyButton();
 
  protected:
@@ -116,7 +116,6 @@ class ConfigDialog : public QDialog,
   void SyncToggleButtonClickedImpl();
   void LaunchSyncCustomizationDialogImpl();
   void UpdateSyncStatusImpl();
-  void ClearSyncClickedImpl();
 #endif  // ENABLE_CLOUD_SYNC
 
   scoped_ptr<client::ClientInterface> client_;
@@ -125,6 +124,7 @@ class ConfigDialog : public QDialog,
   config::Config::InformationListConfig information_list_config_;
   int initial_preedit_method_;
   bool initial_use_keyboard_to_change_preedit_method_;
+  bool initial_use_mode_indicator_;
   map<QString, config::Config::SessionKeymap> keymapname_sessionkeymap_map_;
 #ifdef ENABLE_CLOUD_SYNC
   scoped_ptr<SyncCustomizeDialog> sync_customize_dialog_;

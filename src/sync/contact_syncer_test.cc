@@ -80,7 +80,10 @@ const char kResourceUri[] =
 class ContactSyncerTest : public testing::Test {
  protected:
   ContactSyncerTest()
-      : oauth2_client_("google", "dummyclientid", "dummyclientsecret"),
+      : oauth2_client_("google",
+                       "dummyclientid",
+                       "dummyclientsecret",
+                       INSTALLED_APP),
         oauth2_server_(
             kAuthorizeClientUrl, kRedirectUri, kAuthorizeTokenUri, kScope) {}
 

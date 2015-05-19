@@ -31,12 +31,12 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "converter/connector_interface.h"
 #include "testing/base/public/gunit.h"

@@ -32,8 +32,8 @@
 #include <limits>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -42,8 +42,10 @@ namespace ibus {
 bool SurroundingTextUtil::GetSafeDelta(guint from, guint to, int32 *delta) {
   DCHECK(delta);
 
-  COMPILE_ASSERT(sizeof(int64) > sizeof(guint), int64_guint_check);
-  COMPILE_ASSERT(sizeof(int64) == sizeof(llabs(0)), int64_llabs_check);
+  static_assert(sizeof(int64) >= sizeof(guint),
+                "int64 must be sufficient to store a guint value.");
+  static_assert(sizeof(int64) == sizeof(llabs(0)),
+                "|llabs(0)| must returns a 64-bit integer.");
   const int64 kInt32AbsMax =
       llabs(static_cast<int64>(numeric_limits<int32>::max()));
   const int64 kInt32AbsMin =

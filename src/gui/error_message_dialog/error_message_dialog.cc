@@ -32,7 +32,8 @@
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>
 #include <QtGui/QMessageBox>
-#include "base/base.h"
+
+#include "base/flags.h"
 
 DEFINE_string(error_type, "", "type of error");
 

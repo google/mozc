@@ -29,19 +29,21 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
+import org.mozc.android.inputmethod.japanese.MemoryManageable;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiData;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
+import com.google.common.base.Preconditions;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.Paint.Align;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.text.Layout;
@@ -63,7 +65,7 @@ import java.util.Set;
  * Helper to render Japanese Emoji.
  *
  */
-public class EmojiRenderHelper {
+public class EmojiRenderHelper implements MemoryManageable {
 
   /**
    * Background view to support rendering emoji (including animated emoji
@@ -281,7 +283,7 @@ public class EmojiRenderHelper {
   private final TextPaint candidateTextPaint;
   private float candidateTextSize;
 
-  private EmojiProviderType emojiProviderType = null;
+  private EmojiProviderType emojiProviderType = EmojiProviderType.NONE;
   private boolean systemSupportedEmoji = false;
   private BitSet emojiBitSet = null;
   private int[] emojiLineIndex = null;
@@ -312,9 +314,11 @@ public class EmojiRenderHelper {
    * Sets the provider type to this instance.
    * Note that this method may cancel the current animation state.
    * @param providerType the type of emoji provider.
-   *     {@code null} if the runtime environment doesn't support emoji.
+   *     {@link EmojiProviderType#NONE} if the runtime environment doesn't support emoji.
    */
   public void setEmojiProviderType(EmojiProviderType providerType) {
+    Preconditions.checkNotNull(providerType);
+
     if (emojiProviderType == providerType) {
       return;
     }
@@ -327,7 +331,7 @@ public class EmojiRenderHelper {
     backgroundTextView.setText("");
     emojiBitSet = null;
 
-    if (providerType == null) {
+    if (providerType == EmojiProviderType.NONE) {
       systemSupportedEmoji = false;
       return;
     }
@@ -362,6 +366,8 @@ public class EmojiRenderHelper {
               EmojiData.KDDI_NATURE_NAME,
           });
           break;
+        default:
+          MozcLog.e("Unexpected Emoji provider type is given: " + providerType.name());
       }
     }
   }
@@ -423,7 +429,7 @@ public class EmojiRenderHelper {
    *   by this class.
    */
   public boolean isRenderableEmoji(String value) {
-    if (value == null || value.length() == 0 || emojiProviderType == null) {
+    if (value == null || value.length() == 0 || emojiProviderType == EmojiProviderType.NONE) {
       // The value is empty, or no provider is set.
       return false;
     }
@@ -571,7 +577,7 @@ public class EmojiRenderHelper {
     }
 
     Layout layout = backgroundTextView.getLayout();
-    canvas.save();
+    int saveCount = canvas.save();
     backgroundTextView.lockInvalidate();
     try {
       // The text content of backgroundTextView has a candidate word per line,
@@ -583,7 +589,7 @@ public class EmojiRenderHelper {
       layout.draw(canvas);
     } finally {
       backgroundTextView.unlockInvalidate();
-      canvas.restore();
+      canvas.restoreToCount(saveCount);
     }
   }
 
@@ -602,7 +608,7 @@ public class EmojiRenderHelper {
           Math.min(nextInvalidateTime, animationDrawable.getNextFrameTiming(drawTime));
     }
 
-    canvas.save();
+    int saveCount = canvas.save();
     try {
       float size = this.candidateTextSize;
       float scale = size / drawable.getIntrinsicHeight();
@@ -611,7 +617,7 @@ public class EmojiRenderHelper {
       drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
       drawable.draw(canvas);
     } finally {
-      canvas.restore();
+      canvas.restoreToCount(saveCount);
     }
   }
 
@@ -625,5 +631,10 @@ public class EmojiRenderHelper {
       backgroundTextView.postInvalidateDelayed(
           baseTime + nextInvalidateTime - System.currentTimeMillis());
     }
+  }
+
+  @Override
+  public void trimMemory() {
+    emojiDrawableFactory.trimMemory();
   }
 }

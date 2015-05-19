@@ -66,6 +66,7 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace session {
 
+using mozc::commands::Context;
 using mozc::commands::Request;
 using mozc::commands::RequestForUnitTest;
 
@@ -451,7 +452,7 @@ TEST_F(SessionConverterTest, Convert) {
   EXPECT_TRUE(converter.IsActive());
   EXPECT_FALSE(IsCandidateListVisible(converter));
 
-  converter.Commit(commands::Context::default_instance());
+  converter.Commit(Context::default_instance());
   composer_->Reset();
   output.Clear();
   converter.FillOutput(*composer_, &output);
@@ -549,7 +550,7 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
 
-  converter.Commit(commands::Context::default_instance());
+  converter.Commit(Context::default_instance());
 
   EXPECT_COUNT_STATS("Commit", 1);
   EXPECT_COUNT_STATS("CommitFromConversion", 1);
@@ -984,7 +985,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_EQ("\xe5\x8d\xb0\xe6\x88\xbf", conversion.segment(1).value());
   }
 
-  converter.Commit(commands::Context::default_instance());
+  converter.Commit(Context::default_instance());
   expected_indices.clear();
   {
     composer_->Reset();
@@ -1531,7 +1532,7 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
     convertermock_->SetCommitFirstSegment(&segments_after_submit, true);
   }
   size_t size;
-  converter.CommitFirstSegment(commands::Context::default_instance(), &size);
+  converter.CommitFirstSegment(Context::default_instance(), &size);
   expected_indices.erase(expected_indices.begin(),
                          expected_indices.begin() + 1);
   EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -1552,7 +1553,7 @@ TEST_F(SessionConverterTest, CommitPreedit) {
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   composer_->InsertCharacterPreedit(kChars_Aiueo);
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-  converter.CommitPreedit(*composer_, commands::Context::default_instance());
+  converter.CommitPreedit(*composer_, Context::default_instance());
   composer_->Reset();
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1628,7 +1629,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
 
   size_t committed_key_size = 0;
   converter.CommitSuggestionByIndex(1, *composer_.get(),
-                                    commands::Context::default_instance(),
+                                    Context::default_instance(),
                                     &committed_key_size);
   expected_indices.clear();
   composer_->Reset();
@@ -1695,7 +1696,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   size_t committed_key_size = 0;
   convertermock_->SetCommitSegmentValue(&segments, true);
   converter.CommitSuggestionById(kCandidateIndex, *composer_.get(),
-                                 commands::Context::default_instance(),
+                                 Context::default_instance(),
                                  &committed_key_size);
   expected_indices.clear();
   composer_->Reset();
@@ -1827,7 +1828,7 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   convertermock_->SetStartSuggestionForRequest(&segments2, true);
   convertermock_->SetStartPartialSuggestion(&segments2, false);
   converter.CommitSuggestionById(0, *composer_.get(),
-                                 commands::Context::default_instance(),
+                                 Context::default_instance(),
                                  &committed_key_size);
   EXPECT_EQ(Util::CharsLen(kChars_Kokode), committed_key_size);
   // Indices should be {0} since there is another segment.
@@ -2010,7 +2011,7 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   converter.CandidateNext(*composer_);
   expected_indices[0] += 1;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-  converter.Commit(commands::Context::default_instance());
+  converter.Commit(Context::default_instance());
   composer_->Reset();
   expected_indices.clear();
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -2144,7 +2145,7 @@ TEST_F(SessionConverterTest, SuppressSuggestion) {
     candidate->value = kChars_Momonga;
     candidate->content_key = kChars_Momonga;
   }
-  composer_->SetInputFieldType(commands::Context::PASSWORD);
+  composer_->SetInputFieldType(Context::PASSWORD);
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
@@ -2580,41 +2581,6 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
   }
 }
 
-TEST_F(SessionConverterTest, FillContext) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
-  Segments segments;
-
-  // Set history segments.
-  // "車で", "行く"
-  const string kHistoryInput[] = {
-      "\xE8\xBB\x8A\xE3\x81\xA7",
-      "\xE8\xA1\x8C\xE3\x81\x8F"
-  };
-  for (size_t i = 0; i < arraysize(kHistoryInput); ++i) {
-    Segment *segment = segments.add_segment();
-    segment->set_segment_type(Segment::HISTORY);
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = kHistoryInput[i];
-  }
-  convertermock_->SetFinishConversion(&segments, true);
-  converter.CommitPreedit(*composer_, commands::Context::default_instance());
-
-  // FillContext must fill concatenation of values of history segments into
-  // preceding_text.
-  commands::Context context;
-  converter.FillContext(&context);
-  EXPECT_TRUE(context.has_preceding_text());
-  EXPECT_EQ(kHistoryInput[0] + kHistoryInput[1], context.preceding_text());
-
-  // If preceding text has been set already, do not overwrite it.
-  // "自動車で行く"
-  const char kPrecedingText[] = "\xE8\x87\xAA\xE5\x8B\x95\xE8\xBB\x8A"
-                                "\xE3\x81\xA7\xE8\xA1\x8C\xE3\x81\x8F";
-  context.set_preceding_text(kPrecedingText);
-  converter.FillContext(&context);
-  EXPECT_EQ(kPrecedingText, context.preceding_text());
-}
-
 TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   Segments segments;
 
@@ -2711,7 +2677,7 @@ TEST_F(SessionConverterTest, GetAndSetSegments) {
     candidate->value = kHistoryInput[i];
   }
   convertermock_->SetFinishConversion(&segments, true);
-  converter.CommitPreedit(*composer_, commands::Context::default_instance());
+  converter.CommitPreedit(*composer_, Context::default_instance());
 
   Segments src;
   GetSegments(converter, &src);
@@ -2984,7 +2950,7 @@ TEST_F(SessionConverterTest, Issue1981020) {
       "\xE3\x82\x94\xE3\x82\x94\xE3\x82\x94\xE3\x82\x94");
   Segments segments;
   convertermock_->SetFinishConversion(&segments, true);
-  converter.CommitPreedit(*composer_, commands::Context::default_instance());
+  converter.CommitPreedit(*composer_, Context::default_instance());
   convertermock_->GetFinishConversion(&segments);
   // katakana "ヴヴヴヴ"
   EXPECT_EQ("\xE3\x83\xB4\xE3\x83\xB4\xE3\x83\xB4\xE3\x83\xB4",
@@ -3196,9 +3162,12 @@ TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
 
 // since History segments are almost hidden from
 namespace {
+
 class ConverterMockForReset : public ConverterMock {
  public:
-  bool ResetConversion(Segments *segments) const {
+  ConverterMockForReset() : reset_conversion_called_(false) {}
+
+  virtual bool ResetConversion(Segments *segments) const {
     reset_conversion_called_ = true;
     return true;
   }
@@ -3211,14 +3180,15 @@ class ConverterMockForReset : public ConverterMock {
     reset_conversion_called_ = false;
   }
 
-  ConverterMockForReset() : reset_conversion_called_(false) {}
  private:
   mutable bool reset_conversion_called_;
 };
 
 class ConverterMockForRevert : public ConverterMock {
  public:
-  bool RevertConversion(Segments *segments) const {
+  ConverterMockForRevert() : revert_conversion_called_(false) {}
+
+  virtual bool RevertConversion(Segments *segments) const {
     revert_conversion_called_ = true;
     return true;
   }
@@ -3231,10 +3201,40 @@ class ConverterMockForRevert : public ConverterMock {
     revert_conversion_called_ = false;
   }
 
-  ConverterMockForRevert() : revert_conversion_called_(false) {}
  private:
   mutable bool revert_conversion_called_;
 };
+
+class ConverterMockForReconstructHistory : public ConverterMock {
+ public:
+  ConverterMockForReconstructHistory() : reconstruct_history_called_(false) {}
+
+  virtual bool ReconstructHistory(Segments *segments,
+                                  const string &preceding_text) const {
+    reconstruct_history_called_ = true;
+    preceding_text_ = preceding_text;
+    ConverterMock::ReconstructHistory(segments, preceding_text);
+    return true;
+  }
+
+  bool reconstruct_history_called() const {
+    return reconstruct_history_called_;
+  }
+
+  const string preceding_text() const {
+    return preceding_text_;
+  }
+
+  void Reset() {
+    reconstruct_history_called_ = false;
+    preceding_text_.clear();
+  }
+
+ private:
+  mutable bool reconstruct_history_called_;
+  mutable string preceding_text_;
+};
+
 }  // namespace
 
 TEST(SessionConverterResetTest, Reset) {
@@ -3311,7 +3311,7 @@ TEST_F(SessionConverterTest, CommandCandidate) {
   composer_->InsertCharacterPreedit(kChars_Aiueo);
   EXPECT_TRUE(converter.Convert(*composer_));
 
-  converter.Commit(commands::Context::default_instance());
+  converter.Commit(Context::default_instance());
   commands::Output output;
   converter.FillOutput(*composer_, &output);
   EXPECT_FALSE(output.has_result());
@@ -3337,7 +3337,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     converter.Convert(*composer_);
 
     size_t committed_size = 0;
-    converter.CommitFirstSegment(commands::Context::default_instance(),
+    converter.CommitFirstSegment(Context::default_instance(),
                                  &committed_size);
     EXPECT_EQ(0, committed_size);
 
@@ -3360,7 +3360,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     converter.Convert(*composer_);
 
     size_t committed_size = 0;
-    converter.CommitFirstSegment(commands::Context::default_instance(),
+    converter.CommitFirstSegment(Context::default_instance(),
                                  &committed_size);
     EXPECT_EQ(Util::CharsLen(kKamabokono), committed_size);
 
@@ -3383,7 +3383,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
 
     size_t committed_size = 0;
     EXPECT_FALSE(converter.CommitSuggestionById(
-        0, *composer_, commands::Context::default_instance(), &committed_size));
+        0, *composer_, Context::default_instance(), &committed_size));
     EXPECT_EQ(0, committed_size);
   }
 
@@ -3400,7 +3400,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
 
     size_t committed_size = 0;
     EXPECT_FALSE(converter.CommitSuggestionByIndex(
-        1, *composer_, commands::Context::default_instance(), &committed_size));
+        1, *composer_, Context::default_instance(), &committed_size));
     EXPECT_EQ(0, committed_size);
   }
 }
@@ -3424,7 +3424,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     composer_->InsertCharacterPreedit(kChars_Aiueo);
     EXPECT_TRUE(converter.Convert(*composer_));
 
-    converter.Commit(commands::Context::default_instance());
+    converter.Commit(Context::default_instance());
     commands::Output output;
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
@@ -3452,7 +3452,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     composer_->InsertCharacterPreedit(kChars_Aiueo);
     EXPECT_TRUE(converter.Convert(*composer_));
 
-    converter.Commit(commands::Context::default_instance());
+    converter.Commit(Context::default_instance());
     commands::Output output;
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
@@ -3480,7 +3480,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     composer_->InsertCharacterPreedit(kChars_Aiueo);
     EXPECT_TRUE(converter.Convert(*composer_));
 
-    converter.Commit(commands::Context::default_instance());
+    converter.Commit(Context::default_instance());
     commands::Output output;
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
@@ -3508,7 +3508,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     composer_->InsertCharacterPreedit(kChars_Aiueo);
     EXPECT_TRUE(converter.Convert(*composer_));
 
-    converter.Commit(commands::Context::default_instance());
+    converter.Commit(Context::default_instance());
     commands::Output output;
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
@@ -3640,6 +3640,233 @@ TEST_F(SessionConverterTest, ConversionFail) {
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
+  }
+}
+
+TEST_F(SessionConverterTest, ResetByClientRevision) {
+  const int32 kRevision = 0x1234;
+
+  ConverterMockForReset convertermock;
+  SessionConverter converter(&convertermock, &default_request_);
+  Context context;
+
+  // Initialize the session converter with given context age.
+  context.set_revision(kRevision);
+  converter.OnStartComposition(context);
+  converter.Revert();
+
+  convertermock.Reset();
+  EXPECT_FALSE(convertermock.reset_conversion_called());
+
+  // OnStartComposition with different context age causes Reset()
+  context.set_revision(kRevision + 1);
+  converter.OnStartComposition(context);
+  EXPECT_TRUE(convertermock.reset_conversion_called());
+}
+
+TEST_F(SessionConverterTest, ResetByPrecedingText) {
+  ConverterMockForReset convertermock;
+  SessionConverter converter(&convertermock, &default_request_);
+
+  // no preceding_text -> Reset should not be called.
+  {
+    convertermock.Reset();
+    Segments segments;
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+    for (size_t i = 0; i < segments.segments_size(); ++i) {
+      Segment *segment = segments.mutable_segment(i);
+      segment->set_segment_type(Segment::HISTORY);
+    }
+    SetSegments(segments, &converter);
+    converter.OnStartComposition(Context::default_instance());
+    EXPECT_FALSE(convertermock.reset_conversion_called());
+    converter.Revert();
+  }
+
+  // preceding_text == history_segments -> Reset should not be called.
+  {
+    convertermock.Reset();
+    Segments segments;
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+    for (size_t i = 0; i < segments.segments_size(); ++i) {
+      Segment *segment = segments.mutable_segment(i);
+      segment->set_segment_type(Segment::HISTORY);
+    }
+    SetSegments(segments, &converter);
+    Context context;
+    context.set_preceding_text(kChars_Aiueo);
+    converter.OnStartComposition(context);
+    EXPECT_FALSE(convertermock.reset_conversion_called());
+    converter.Revert();
+  }
+
+  // preceding_text == "" && history_segments != "" -> Reset should be called.
+  {
+    convertermock.Reset();
+    Segments segments;
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+    for (size_t i = 0; i < segments.segments_size(); ++i) {
+      Segment *segment = segments.mutable_segment(i);
+      segment->set_segment_type(Segment::HISTORY);
+    }
+    SetSegments(segments, &converter);
+    Context context;
+    context.set_preceding_text("");
+    converter.OnStartComposition(context);
+    EXPECT_TRUE(convertermock.reset_conversion_called());
+    converter.Revert();
+  }
+
+  // preceding_text != "" && preceding_text.EndsWith(history_segments).
+  //    -> Reset should not be called.
+  {
+    convertermock.Reset();
+    Segments segments;
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+    for (size_t i = 0; i < segments.segments_size(); ++i) {
+      Segment *segment = segments.mutable_segment(i);
+      segment->set_segment_type(Segment::HISTORY);
+    }
+    SetSegments(segments, &converter);
+    Context context;
+    context.set_preceding_text(kChars_Aiueo);
+    converter.OnStartComposition(context);
+    EXPECT_FALSE(convertermock.reset_conversion_called());
+    converter.Revert();
+  }
+
+  // preceding_text != "" && history_segments.EndsWith(preceding_text).
+  //    -> Reset should not be called.
+  {
+    convertermock.Reset();
+    Segments segments;
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+    for (size_t i = 0; i < segments.segments_size(); ++i) {
+      Segment *segment = segments.mutable_segment(i);
+      segment->set_segment_type(Segment::HISTORY);
+    }
+    SetSegments(segments, &converter);
+    Context context;
+    context.set_preceding_text(kChars_Aiueo);
+    converter.OnStartComposition(context);
+    EXPECT_FALSE(convertermock.reset_conversion_called());
+    converter.Revert();
+  }
+}
+
+TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
+  ConverterMockForReconstructHistory convertermock;
+
+  const uint16 kId = 1234;
+  const char kKey[] = "1";
+  const char kValue[] = "1";
+
+  // Set up mock
+  Segments mock_result;
+  {
+    Segment *segment = mock_result.add_segment();
+    segment->set_key(kKey);
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->push_back_candidate();
+    candidate->rid = kId;
+    candidate->lid = kId;
+    candidate->content_key = kKey;
+    candidate->key = kKey;
+    candidate->content_value = kValue;
+    candidate->value = kValue;
+    candidate->attributes = Segment::Candidate::NO_LEARNING;
+  }
+  convertermock.SetReconstructHistory(&mock_result, true);
+
+  // With revision
+  {
+    SessionConverter converter(&convertermock, &default_request_);
+
+    Context context;
+    context.set_revision(0);
+    context.set_preceding_text(kKey);
+    EXPECT_FALSE(convertermock.reconstruct_history_called());
+    converter.OnStartComposition(context);
+    EXPECT_TRUE(convertermock.reconstruct_history_called());
+    EXPECT_EQ(kKey, convertermock.preceding_text());
+
+    // History segments should be reconstructed.
+    Segments segments;
+    GetSegments(converter, &segments);
+    EXPECT_EQ(1, segments.segments_size());
+    const Segment &segment = segments.segment(0);
+    EXPECT_EQ(Segment::HISTORY, segment.segment_type());
+    EXPECT_EQ(kKey, segment.key());
+    EXPECT_EQ(1, segment.candidates_size());
+    const Segment::Candidate &candidate = segment.candidate(0);
+    EXPECT_EQ(Segment::Candidate::NO_LEARNING, candidate.attributes);
+    EXPECT_EQ(kKey, candidate.content_key);
+    EXPECT_EQ(kKey, candidate.key);
+    EXPECT_EQ(kValue, candidate.content_value);
+    EXPECT_EQ(kValue, candidate.value);
+    EXPECT_EQ(kId, candidate.lid);
+    EXPECT_EQ(kId, candidate.rid);
+
+    convertermock.Reset();
+    convertermock.SetReconstructHistory(&mock_result, true);
+
+    // Increment revesion
+    context.set_revision(1);
+    context.set_preceding_text(kKey);
+    EXPECT_FALSE(convertermock.reconstruct_history_called());
+    converter.OnStartComposition(context);
+    EXPECT_FALSE(convertermock.reconstruct_history_called())
+        << "ReconstructHistory should not be called as long as the "
+        << "history segments are consistent with the preceding text "
+        << "even when the revision number is changed.";
+  }
+
+  convertermock.Reset();
+  convertermock.SetReconstructHistory(&mock_result, true);
+
+  // Without revision
+  {
+    SessionConverter converter(&convertermock, &default_request_);
+
+    Context context;
+    context.set_preceding_text(kKey);
+    EXPECT_FALSE(convertermock.reconstruct_history_called());
+    converter.OnStartComposition(context);
+    EXPECT_TRUE(convertermock.reconstruct_history_called());
+    EXPECT_EQ(kKey, convertermock.preceding_text());
+
+    // History segments should be reconstructed.
+    Segments segments;
+    GetSegments(converter, &segments);
+    EXPECT_EQ(1, segments.segments_size());
+    const Segment &segment = segments.segment(0);
+    EXPECT_EQ(Segment::HISTORY, segment.segment_type());
+    EXPECT_EQ(kKey, segment.key());
+    EXPECT_EQ(1, segment.candidates_size());
+    const Segment::Candidate &candidate = segment.candidate(0);
+    EXPECT_EQ(Segment::Candidate::NO_LEARNING, candidate.attributes);
+    EXPECT_EQ(kKey, candidate.content_key);
+    EXPECT_EQ(kKey, candidate.key);
+    EXPECT_EQ(kValue, candidate.content_value);
+    EXPECT_EQ(kValue, candidate.value);
+    EXPECT_EQ(kId, candidate.lid);
+    EXPECT_EQ(kId, candidate.rid);
+
+    convertermock.Reset();
+    convertermock.SetReconstructHistory(&mock_result, true);
+
+    context.set_preceding_text(kKey);
+    EXPECT_FALSE(convertermock.reconstruct_history_called());
+    converter.OnStartComposition(context);
+    EXPECT_FALSE(convertermock.reconstruct_history_called())
+        << "ReconstructHistory should not be called as long as the "
+        << "history segments are consistent with the preceding text "
+        << "even when the revision number is changed.";
   }
 }
 

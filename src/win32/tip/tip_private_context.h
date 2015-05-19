@@ -32,8 +32,9 @@
 
 #include <Windows.h>
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -47,10 +48,10 @@ class Output;
 
 namespace win32 {
 
-struct InputState;
 struct InputBehavior;
 class SurrogatePairObserver;
 class VKBackBasedDeleter;
+class VirtualKey;
 
 namespace tsf {
 
@@ -69,24 +70,16 @@ class TipPrivateContext {
 
   const commands::Output &last_output() const;
   commands::Output *mutable_last_output();
-  const InputState &input_state() const;
-  InputState *mutable_input_state();
+  const VirtualKey &last_down_key() const;
+  VirtualKey *mutable_last_down_key();
   const InputBehavior &input_behavior() const;
   InputBehavior *mutable_input_behavior();
   DWORD text_edit_sink_cookie() const;
   DWORD text_layout_sink_cookie() const;
 
  private:
-  scoped_ptr<client::ClientInterface> client_;
-  scoped_ptr<SurrogatePairObserver> surrogate_pair_observer_;
-  scoped_ptr<commands::Output> last_output_;
-  scoped_ptr<InputState> input_state_;
-  scoped_ptr<InputBehavior> input_behavior_;
-  scoped_ptr<TipUiElementManager> ui_element_manager_;
-  scoped_ptr<VKBackBasedDeleter> deleter_;
-
-  const DWORD text_edit_sink_cookie_;
-  const DWORD text_layout_sink_cookie_;
+  class InternalState;
+  std::unique_ptr<InternalState> state_;
 
   DISALLOW_COPY_AND_ASSIGN(TipPrivateContext);
 };
