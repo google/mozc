@@ -36,7 +36,9 @@
 #include <cctype>
 #include <string>
 
+#include "base/crash_report_handler.h"
 #include "base/file_stream.h"
+#include "base/number_util.h"
 #include "base/util.h"
 
 namespace {
@@ -46,6 +48,13 @@ const int kDateSize = 8;
 }  // namespace
 
 namespace mozc {
+
+void CrashReportUtil::InstallBreakpad() {
+  // TODO(nona): Support breakpad for official branding build on Linux.
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD) && !defined(OS_LINUX)
+  CrashReportHandler::Initialize(false);
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD && !OS_LINUX
+}
 
 string CrashReportUtil::GetCrashReportDirectory() {
   const char kCrashReportDirectory[] = "CrashReports";
@@ -88,7 +97,7 @@ string CrashReportUtil::GetLatestReportPath() {
 }
 
 bool CrashReportUtil::WriteLatestReport(int date) {
-  const string current_date_str = Util::SimpleItoa(date);
+  const string current_date_str = NumberUtil::SimpleItoa(date);
   if (kDateSize != current_date_str.size()) {
     return false;
   }
@@ -113,7 +122,7 @@ bool CrashReportUtil::ReadLatestReport(int *date) {
   if (kDateSize!= current_date.size()) {
     return false;
   }
-  *date = Util::SimpleAtoi(current_date);
+  *date = NumberUtil::SimpleAtoi(current_date);
   return true;
 }
 
@@ -202,7 +211,7 @@ bool CrashReportUtil::ValidateVersion(const string &version) {
 }
 
 bool CrashReportUtil::Abort() {
-#ifdef _DEBUG
+#ifdef DEBUG
 #ifdef OS_WINDOWS
   ::RaiseException(EXCEPTION_BREAKPOINT, EXCEPTION_NONCONTINUABLE, 0, NULL);
 #else
@@ -216,6 +225,6 @@ bool CrashReportUtil::Abort() {
   return true;
 #else
   return false;
-#endif  // _DEBUG
+#endif  // DEBUG
 }
 }  // namespace mozc

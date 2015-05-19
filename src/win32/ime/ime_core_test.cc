@@ -44,6 +44,7 @@
 #include "testing/base/public/gunit.h"
 #include "win32/ime/ime_core.h"
 #include "win32/ime/ime_keyboard.h"
+#include "win32/ime/ime_state.h"
 
 namespace mozc {
 namespace win32 {

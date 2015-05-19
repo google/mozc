@@ -34,10 +34,11 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "rewriter/user_segment_history_rewriter.h"
 #include "rewriter/user_boundary_history_rewriter.h"
+#include "rewriter/user_segment_history_rewriter.h"
 #include "storage/registry.h"
 #include "sync/learning_preference_sync_util.h"
 #include "sync/sync.pb.h"
@@ -223,8 +224,9 @@ bool LearningPreferenceAdapter::Clear() {
   return true;
 }
 
-void LearningPreferenceAdapter::AddStorage(LearningPreference::Entry::Type type,
-                                           const LRUStorage *lru_storage) {
+void LearningPreferenceAdapter::AddStorage(
+    LearningPreference::Entry::Type type,
+    const mozc::storage::LRUStorage *lru_storage) {
   if (lru_storage == NULL) {
     LOG(ERROR) << "LRUStorage is NULL";
     return;

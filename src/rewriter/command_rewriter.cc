@@ -32,11 +32,13 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/logging.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "config/config_handler.h"
-#include "config/config.pb.h"
 
 namespace mozc {
 namespace {

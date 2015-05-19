@@ -39,9 +39,10 @@
 #include <string>
 
 #include "base/base.h"
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/scoped_handle.h"
 #include "base/scoped_ptr.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace {

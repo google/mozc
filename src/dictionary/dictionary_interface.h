@@ -82,6 +82,9 @@ class DictionaryInterface {
   virtual Node *LookupPrefix(const char *str, int size,
                              NodeAllocatorInterface *allocator) const = 0;
 
+  virtual Node *LookupExact(const char *str, int size,
+                            NodeAllocatorInterface *allocator) const = 0;
+
   // For reverse lookup, the reading is stored in Node::value and the word
   // is stored in Node::key.
   virtual Node *LookupReverse(const char *str, int size,
@@ -103,22 +106,6 @@ class DictionaryInterface {
   DictionaryInterface() {}
 };
 
-class DictionaryFactory {
- public:
-  // return singleton object
-  static DictionaryInterface *GetDictionary();
-
-  // dependency injection for unittesting
-  static void SetDictionary(DictionaryInterface *dictionary);
-
-  // set the dictionary's address and size.
-  // if not set, default value (typically embedded dictionary) is used.
-  static void SetDictionaryData(void *address, size_t size);
-
- private:
-  DictionaryFactory() {}
-  ~DictionaryFactory() {}
-};
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_INTERFACE_H_

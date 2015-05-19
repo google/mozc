@@ -27,19 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dictionary/suffix_dictionary.h"
+
 #include "base/base.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/suffix_dictionary.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 
 TEST(SuffixDictionaryTest, BasicTest) {
-  DictionaryInterface *d = SuffixDictionaryFactory::GetSuffixDictionary();
+  // Test the SuffixDictionary with mock data.
+  testing::MockDataManager manager;
+  const DictionaryInterface *d = manager.GetSuffixDictionary();
   NodeAllocator allocator;
 
   // doesn't support prefix/reverse lookup.

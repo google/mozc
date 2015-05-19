@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
@@ -113,7 +114,6 @@ CharChunk::CharChunk(const TransliteratorInterface *transliterator,
                       Transliterators::GetConversionStringSelector() :
                       transliterator),
       table_(table),
-      status_mask_(0),
       attributes_(NO_TABLE_ATTRIBUTE) {}
 
 void CharChunk::Clear() {
@@ -121,7 +121,6 @@ void CharChunk::Clear() {
   conversion_.clear();
   pending_.clear();
   ambiguous_.clear();
-  clear_status();
 }
 
 size_t CharChunk::GetLength(const TransliteratorInterface *t12r) const {
@@ -134,60 +133,48 @@ size_t CharChunk::GetLength(const TransliteratorInterface *t12r) const {
 
 void CharChunk::AppendResult(const TransliteratorInterface *t12r,
                              string *result) const {
-  if (has_status(NO_CONVERSION)) {
-    result->append(Table::DeleteSpecialKey(raw_));
-  } else {
-    const string t13n =
-      GetTransliterator(t12r)->Transliterate(
-          Table::DeleteSpecialKey(raw_),
-          Table::DeleteSpecialKey(conversion_ + pending_));
-    result->append(t13n);
-  }
+  const string t13n =
+    GetTransliterator(t12r)->Transliterate(
+        Table::DeleteSpecialKey(raw_),
+        Table::DeleteSpecialKey(conversion_ + pending_));
+  result->append(t13n);
 }
 
 void CharChunk::AppendTrimedResult(const TransliteratorInterface *t12r,
                                    string *result) const {
-  if (has_status(NO_CONVERSION)) {
-    result->append(Table::DeleteSpecialKey(raw_));
-  } else {
-    // Only determined value (e.g. |conversion_| only) is added.
-    string converted = conversion_;
-    if (!pending_.empty()) {
-      size_t key_length = 0;
-      bool fixed = false;
-      const Entry *entry = table_->LookUpPrefix(pending_, &key_length, &fixed);
-      if (entry != NULL && entry->input() == entry->result()) {
-        converted.append(entry->result());
-      }
+  // Only determined value (e.g. |conversion_| only) is added.
+  string converted = conversion_;
+  if (!pending_.empty()) {
+    size_t key_length = 0;
+    bool fixed = false;
+    const Entry *entry = table_->LookUpPrefix(pending_, &key_length, &fixed);
+    if (entry != NULL && entry->input() == entry->result()) {
+      converted.append(entry->result());
     }
-    result->append(GetTransliterator(t12r)->Transliterate(
-                       Table::DeleteSpecialKey(raw_),
-                       Table::DeleteSpecialKey(converted)));
   }
+  result->append(GetTransliterator(t12r)->Transliterate(
+                     Table::DeleteSpecialKey(raw_),
+                     Table::DeleteSpecialKey(converted)));
 }
 
 void CharChunk::AppendFixedResult(const TransliteratorInterface *t12r,
                                   string *result) const {
-  if (has_status(NO_CONVERSION)) {
-    result->append(Table::DeleteSpecialKey(raw_));
+  string converted = conversion_;
+  if (!ambiguous_.empty()) {
+    // Add the |ambiguous_| value as a fixed value.  |ambiguous_|
+    // contains an undetermined result string like "ん" converted
+    // from a single 'n'.
+    converted.append(ambiguous_);
   } else {
-    string converted = conversion_;
-    if (!ambiguous_.empty()) {
-      // Add the |ambiguous_| value as a fixed value.  |ambiguous_|
-      // contains an undetermined result string like "ん" converted
-      // from a single 'n'.
-      converted.append(ambiguous_);
-    } else {
-      // If |pending_| exists but |ambiguous_| does not exist,
-      // |pending_| is appended.  If |ambiguous_| exists, the value of
-      // |pending_| is usually equal to |ambiguous_| so it is not
-      // appended.
-      converted.append(pending_);
-    }
-    result->append(GetTransliterator(t12r)->Transliterate(
-                       Table::DeleteSpecialKey(raw_),
-                       Table::DeleteSpecialKey(converted)));
+    // If |pending_| exists but |ambiguous_| does not exist,
+    // |pending_| is appended.  If |ambiguous_| exists, the value of
+    // |pending_| is usually equal to |ambiguous_| so it is not
+    // appended.
+    converted.append(pending_);
   }
+  result->append(GetTransliterator(t12r)->Transliterate(
+                     Table::DeleteSpecialKey(raw_),
+                     Table::DeleteSpecialKey(converted)));
 }
 
 // If we have the rule (roman),
@@ -232,16 +219,12 @@ void CharChunk::AppendFixedResult(const TransliteratorInterface *t12r,
 void CharChunk::GetExpandedResults(const TransliteratorInterface *t12r,
                                    set<string> *results) const {
   DCHECK(results);
-  if (has_status(NO_CONVERSION)) {
-    results->insert(Table::DeleteSpecialKey(raw_));
-    return;
-  }
 
   if (pending_.empty()) {
     return;
   }
   // Append current pending string
-  if (conversion_.empty()){
+  if (conversion_.empty()) {
     results->insert(Table::DeleteSpecialKey(pending_));
   }
   vector<const Entry *> entries;
@@ -403,7 +386,7 @@ bool CharChunk::AddInputInternal(string *input) {
 }
 
 void CharChunk::AddInput(string *input) {
-  while (AddInputInternal(input));
+  while (AddInputInternal(input)) {}
 }
 
 void CharChunk::AddConvertedChar(string *input) {
@@ -560,22 +543,6 @@ void CharChunk::set_ambiguous(const string &ambiguous) {
   ambiguous_ = ambiguous;
 }
 
-void CharChunk::set_status(const uint32 status_mask) {
-  status_mask_ = status_mask;
-}
-
-void CharChunk::add_status(const uint32 status_mask) {
-  status_mask_ |= status_mask;
-}
-
-bool CharChunk::has_status(const uint32 status_mask) const {
-  return (status_mask == (status_mask_ & status_mask));
-}
-
-void CharChunk::clear_status() {
-  status_mask_ = 0;
-}
-
 bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
                            const size_t position,
                            CharChunk **left_new_chunk) {
@@ -637,7 +604,6 @@ CharChunk *CharChunk::Clone() const {
   new_char_chunk->conversion_.assign(conversion_);
   new_char_chunk->pending_.assign(pending_);
   new_char_chunk->ambiguous_.assign(ambiguous_);
-  new_char_chunk->status_mask_ = status_mask_;
   new_char_chunk->attributes_ = attributes_;
   return new_char_chunk;
 }

@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_util.h"
@@ -40,6 +41,7 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+
 namespace {
 
 class TestInputIterator
@@ -52,20 +54,23 @@ class TestInputIterator
     return is_available_;
   }
 
-  bool Next(UserDictionaryStorage::UserDictionaryEntry *entry) {
+  bool Next(UserDictionaryImporter::RawEntry *entry) {
     if (!is_available_) {
       return false;
     }
     if (index_ >= entries_->size()) {
       return false;
     }
-    entry->CopyFrom((*entries_)[index_]);
+    entry->key = (*entries_)[index_].key;
+    entry->value = (*entries_)[index_].value;
+    entry->pos = (*entries_)[index_].pos;
+    entry->comment = (*entries_)[index_].comment;
     ++index_;
     return true;
   }
 
   void set_entries(
-      const vector<UserDictionaryStorage::UserDictionaryEntry> *entries) {
+      const vector<UserDictionaryImporter::RawEntry> *entries) {
     entries_ = entries;
   }
 
@@ -76,9 +81,10 @@ class TestInputIterator
  public:
   int index_;
   bool is_available_;
-  const vector<UserDictionaryStorage::UserDictionaryEntry> *entries_;
+  const vector<UserDictionaryImporter::RawEntry> *entries_;
 };
-}
+
+}  // namespace
 
 TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
   // const char kInput[] =
@@ -133,25 +139,28 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
   EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
             user_dic.entries(0).key());
   EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
-  EXPECT_EQ("\xE5\x90\x8D\xE8\xA9\x9E", user_dic.entries(0).pos());
+  EXPECT_EQ(user_dictionary::UserDictionary::NOUN, user_dic.entries(0).pos());
   EXPECT_EQ("", user_dic.entries(0).comment());
 
   EXPECT_EQ("\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
             user_dic.entries(1).key());
   EXPECT_EQ("\xE5\xA4\xA7\xE9\x98\xAA", user_dic.entries(1).value());
-  EXPECT_EQ("\xE5\x9C\xB0\xE5\x90\x8D", user_dic.entries(1).pos());
+  EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
+            user_dic.entries(1).pos());
   EXPECT_EQ("", user_dic.entries(1).comment());
 
   EXPECT_EQ("\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
             user_dic.entries(2).key());
   EXPECT_EQ("\xE6\x9D\xB1\xE4\xBA\xAC", user_dic.entries(2).value());
-  EXPECT_EQ("\xE5\x9C\xB0\xE5\x90\x8D", user_dic.entries(2).pos());
+  EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
+            user_dic.entries(2).pos());
   EXPECT_EQ("\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88",
             user_dic.entries(2).comment());
 
   EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D", user_dic.entries(3).key());
   EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(3).value());
-  EXPECT_EQ("\xE4\xBA\xBA\xE5\x90\x8D", user_dic.entries(3).pos());
+  EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
+            user_dic.entries(3).pos());
   EXPECT_EQ("", user_dic.entries(3).comment());
 }
 
@@ -201,13 +210,14 @@ TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
     EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
               user_dic.entries(0).key());
     EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
-    EXPECT_EQ("\xE5\x90\x8D\xE8\xA9\x9E", user_dic.entries(0).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
+              user_dic.entries(0).pos());
 
     EXPECT_EQ("\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
               user_dic.entries(1).key());
     EXPECT_EQ("\xE5\xA4\xA7\xE9\x98\xAA", user_dic.entries(1).value());
-    EXPECT_EQ("\xE5\x9C\xB0\xE5\x90\x8D", user_dic.entries(1).pos());
-
+    EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
+              user_dic.entries(1).pos());
   }
 }
 
@@ -232,7 +242,6 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
       "\xE9\x88\xB4\xE6\x9C\xA8\t\xE4\xBA\xBA\xE5\x90\x8D\n";
 
   {
-
     istringstream is(string("!Microsoft IME\n") + kInput);
     UserDictionaryImporter::IStreamTextLineIterator iter(&is);
     UserDictionaryStorage::UserDictionary user_dic;
@@ -260,17 +269,20 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
     EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
               user_dic.entries(0).key());
     EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
-    EXPECT_EQ("\xE5\x90\x8D\xE8\xA9\x9E", user_dic.entries(0).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
+              user_dic.entries(0).pos());
 
     EXPECT_EQ("#\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
               user_dic.entries(1).key());
     EXPECT_EQ("\xE6\x9D\xB1\xE4\xBA\xAC", user_dic.entries(1).value());
-    EXPECT_EQ("\xE5\x9C\xB0\xE5\x90\x8D", user_dic.entries(1).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
+              user_dic.entries(1).pos());
 
     EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D",
               user_dic.entries(2).key());
     EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(2).value());
-    EXPECT_EQ("\xE4\xBA\xBA\xE5\x90\x8D", user_dic.entries(2).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
+              user_dic.entries(2).pos());
   }
 
   {
@@ -301,16 +313,20 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
     EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
               user_dic.entries(0).key());
     EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
-    EXPECT_EQ("\xE5\x90\x8D\xE8\xA9\x9E", user_dic.entries(0).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
+              user_dic.entries(0).pos());
 
     EXPECT_EQ("!\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
               user_dic.entries(1).key());
     EXPECT_EQ("\xE5\xA4\xA7\xE9\x98\xAA", user_dic.entries(1).value());
-    EXPECT_EQ("\xE5\x9C\xB0\xE5\x90\x8D", user_dic.entries(1).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
+              user_dic.entries(1).pos());
 
-    EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D", user_dic.entries(2).key());
+    EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D",
+              user_dic.entries(2).key());
     EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(2).value());
-    EXPECT_EQ("\xE4\xBA\xBA\xE5\x90\x8D", user_dic.entries(2).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
+              user_dic.entries(2).pos());
   }
 }
 
@@ -347,8 +363,8 @@ TEST(UserDictionaryImporter, ImportFromInvalidTextTest) {
 
   EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D", user_dic.entries(0).key());
   EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(0).value());
-  EXPECT_EQ("\xE4\xBA\xBA\xE5\x90\x8D", user_dic.entries(0).pos());
-
+  EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
+            user_dic.entries(0).pos());
 }
 
 TEST(UserDictionaryImporter, ImportFromIteratorInvalidTest) {
@@ -356,8 +372,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidTest) {
   UserDictionaryStorage::UserDictionary user_dic;
   EXPECT_FALSE(iter.IsAvailable());
   EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
-            UserDictionaryImporter::ImportFromIterator(
-                &iter, &user_dic));
+            UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
 }
 
 TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
@@ -365,13 +380,13 @@ TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
   iter.set_available(true);
   UserDictionaryStorage::UserDictionary user_dic;
 
-  vector<UserDictionaryStorage::UserDictionaryEntry> entries;
+  vector<UserDictionaryImporter::RawEntry> entries;
   {
-    UserDictionaryStorage::UserDictionaryEntry entry;
-    entry.set_key("aa");
-    entry.set_value("aa");
-    // entry.set_pos("名詞");
-    entry.set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+    UserDictionaryImporter::RawEntry entry;
+    entry.key = "aa";
+    entry.value = "aa";
+    // entry.pos = "名詞";
+    entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
     entries.push_back(entry);
   }
 
@@ -387,8 +402,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
 
   EXPECT_TRUE(iter.IsAvailable());
   EXPECT_EQ(UserDictionaryImporter::IMPORT_TOO_MANY_WORDS,
-            UserDictionaryImporter::ImportFromIterator(
-                &iter, &user_dic));
+            UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
 
   EXPECT_EQ(UserDictionaryStorage::max_entry_size(),
             user_dic.entries_size());
@@ -400,15 +414,15 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
 
   static const size_t kSize[] = { 10, 100, 1000, 5000, 12000 };
   for (size_t i = 0; i < arraysize(kSize); ++i) {
-    vector<UserDictionaryStorage::UserDictionaryEntry> entries;
+    vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry entry;
-      const string key = "key" + Util::SimpleItoa(j);
-      const string value = "value" + Util::SimpleItoa(j);
-      entry.set_key(key);
-      entry.set_value(value);
+      UserDictionaryImporter::RawEntry entry;
+      const string key = "key" + NumberUtil::SimpleItoa(j);
+      const string value = "value" + NumberUtil::SimpleItoa(j);
+      entry.key = key;
+      entry.value = value;
       // entry.set_pos("名詞");
-      entry.set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+      entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
       entries.push_back(entry);
     }
 
@@ -417,20 +431,20 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
 
     if (kSize[i] <= UserDictionaryStorage::max_entry_size()) {
       EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
-                UserDictionaryImporter::ImportFromIterator(
-                    &iter, &user_dic));
+                UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
     } else {
       EXPECT_EQ(UserDictionaryImporter::IMPORT_TOO_MANY_WORDS,
-                UserDictionaryImporter::ImportFromIterator(
-                    &iter, &user_dic));
+                UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
     }
 
     const size_t size = min(UserDictionaryStorage::max_entry_size(),
                             kSize[i]);
     EXPECT_EQ(size, user_dic.entries_size());
     for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ(entries[j].DebugString(),
-                user_dic.entries(j).DebugString());
+      EXPECT_EQ(entries[j].key, user_dic.entries(j).key());
+      EXPECT_EQ(entries[j].value, user_dic.entries(j).value());
+      EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
+                user_dic.entries(j).pos());
     }
   }
 }
@@ -443,15 +457,15 @@ TEST(UserDictionaryImporter, ImportFromIteratorSyncableTest) {
   user_dic.set_syncable(true);
   static const size_t kSize[] = { 10, 100, 1000, 5000, 12000 };
   for (size_t i = 0; i < arraysize(kSize); ++i) {
-    vector<UserDictionaryStorage::UserDictionaryEntry> entries;
+    vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry entry;
-      const string key = "key" + Util::SimpleItoa(j);
-      const string value = "value" + Util::SimpleItoa(j);
-      entry.set_key(key);
-      entry.set_value(value);
+      UserDictionaryImporter::RawEntry entry;
+      const string key = "key" + NumberUtil::SimpleItoa(j);
+      const string value = "value" + NumberUtil::SimpleItoa(j);
+      entry.key = key;
+      entry.value = value;
       // entry.set_pos("名詞");
-      entry.set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+      entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
       entries.push_back(entry);
     }
 
@@ -462,20 +476,20 @@ TEST(UserDictionaryImporter, ImportFromIteratorSyncableTest) {
     // max_sync_entry_size instead of max_entry_size.
     if (kSize[i] <= UserDictionaryStorage::max_sync_entry_size()) {
       EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
-                UserDictionaryImporter::ImportFromIterator(
-                    &iter, &user_dic));
+                UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
     } else {
       EXPECT_EQ(UserDictionaryImporter::IMPORT_TOO_MANY_WORDS,
-                UserDictionaryImporter::ImportFromIterator(
-                    &iter, &user_dic));
+                UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
     }
 
     const size_t size = min(UserDictionaryStorage::max_sync_entry_size(),
                             kSize[i]);
     EXPECT_EQ(size, user_dic.entries_size());
     for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ(entries[j].DebugString(),
-                user_dic.entries(j).DebugString());
+      EXPECT_EQ(entries[j].key, user_dic.entries(j).key());
+      EXPECT_EQ(entries[j].value, user_dic.entries(j).value());
+      EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
+                user_dic.entries(j).pos());
     }
   }
 }
@@ -486,16 +500,16 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
 
   static const size_t kSize[] = { 10, 100, 1000 };
   for (size_t i = 0; i < arraysize(kSize); ++i) {
-    vector<UserDictionaryStorage::UserDictionaryEntry> entries;
+    vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry entry;
-      const string key = "key" + Util::SimpleItoa(j);
-      const string value = "value" + Util::SimpleItoa(j);
-      entry.set_key(key);
-      entry.set_value(value);
+      UserDictionaryImporter::RawEntry entry;
+      const string key = "key" + NumberUtil::SimpleItoa(j);
+      const string value = "value" + NumberUtil::SimpleItoa(j);
+      entry.key = key;
+      entry.value = value;
       if (j % 2 == 0) {
         // entry.set_pos("名詞");
-        entry.set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+        entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
       }
       entries.push_back(entry);
     }
@@ -504,8 +518,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
     iter.set_entries(&entries);
 
     EXPECT_EQ(UserDictionaryImporter::IMPORT_INVALID_ENTRIES,
-              UserDictionaryImporter::ImportFromIterator(
-                  &iter, &user_dic));
+              UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
     EXPECT_EQ(kSize[i] / 2, user_dic.entries_size());
   }
 }
@@ -521,48 +534,45 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
     entry->set_key("aa");
     entry->set_value("aa");
     // entry->set_pos("名詞");
-    entry->set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
   }
 
-  vector<UserDictionaryStorage::UserDictionaryEntry> entries;
+  vector<UserDictionaryImporter::RawEntry> entries;
 
   {
-    UserDictionaryStorage::UserDictionaryEntry entry;
-    entry.set_key("aa");
-    entry.set_value("aa");
+    UserDictionaryImporter::RawEntry entry;
+    entry.key = "aa";
+    entry.value = "aa";
     // entry.set_pos("名詞");
-    entry.set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+    entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
     entries.push_back(entry);
   }
 
   iter.set_entries(&entries);
 
   EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
-            UserDictionaryImporter::ImportFromIterator(
-                &iter, &user_dic));
+            UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
 
   EXPECT_EQ(1, user_dic.entries_size());
 
   {
-    UserDictionaryStorage::UserDictionaryEntry entry;
-    entry.set_key("bb");
-    entry.set_value("bb");
+    UserDictionaryImporter::RawEntry entry;
+    entry.key = "bb";
+    entry.value = "bb";
     // entry.set_pos("名詞");
-    entry.set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+    entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
     entries.push_back(entry);
   }
 
   iter.set_entries(&entries);
 
   EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
-            UserDictionaryImporter::ImportFromIterator(
-                &iter, &user_dic));
+            UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
 
   EXPECT_EQ(2, user_dic.entries_size());
 
   EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
-            UserDictionaryImporter::ImportFromIterator(
-                &iter, &user_dic));
+            UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
 
   EXPECT_EQ(2, user_dic.entries_size());
 }
@@ -763,4 +773,106 @@ TEST(UserDictionaryImporter, ImportFromMSIMETest) {
   EXPECT_EQ(UserDictionaryImporter::IMPORT_NOT_SUPPORTED, result);
 #endif
 }
-}  // mozc
+
+TEST(UserDictionaryImporter, StringTextLineIterator) {
+  string line;
+  const char *kTestData[] = {
+    // Test for LF.
+    "abcde\n"
+    "fghij\n"
+    "klmno",
+
+    // Test for CR.
+    "abcde\r"
+    "fghij\r"
+    "klmno",
+
+    // Test for CRLF.
+    "abcde\r\n"
+    "fghij\r\n"
+    "klmno",
+  };
+
+  for (int i = 0; i < 3; ++i) {
+    const string data = kTestData[i];
+    UserDictionaryImporter::StringTextLineIterator iter(data);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("abcde", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("fghij", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("klmno", line);
+    EXPECT_FALSE(iter.IsAvailable());
+  }
+
+  // Test empty line with CR.
+  {
+    const string data = "\r\rabcde";
+    UserDictionaryImporter::StringTextLineIterator iter(data);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("abcde", line);
+    EXPECT_FALSE(iter.IsAvailable());
+  }
+
+  // Test empty line with LF.
+  {
+    const string data = "\n\nabcde";
+    UserDictionaryImporter::StringTextLineIterator iter(data);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("abcde", line);
+    EXPECT_FALSE(iter.IsAvailable());
+  }
+
+
+  // Test empty line with CRLF.
+  {
+    const string data = "\r\n\r\nabcde";
+    UserDictionaryImporter::StringTextLineIterator iter(data);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("abcde", line);
+    EXPECT_FALSE(iter.IsAvailable());
+  }
+
+  // Invalid empty line.
+  // At the moment, \n\r is processed as two empty lines.
+  {
+    const string data = "\n\rabcde";
+    UserDictionaryImporter::StringTextLineIterator iter(data);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("", line);
+    ASSERT_TRUE(iter.IsAvailable());
+    ASSERT_TRUE(iter.Next(&line));
+    EXPECT_EQ("abcde", line);
+    EXPECT_FALSE(iter.IsAvailable());
+  }
+}
+
+}  // namespace mozc

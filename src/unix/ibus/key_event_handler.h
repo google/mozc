@@ -30,7 +30,6 @@
 #ifndef MOZC_UNIX_IBUS_KEY_EVENT_HANDLER_H_
 #define MOZC_UNIX_IBUS_KEY_EVENT_HANDLER_H_
 
-#include <ibus.h>
 #include <set>
 
 #include "base/port.h"

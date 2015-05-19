@@ -29,8 +29,7 @@
 
 #include "net/proxy_manager.h"
 
-#include "base/base.h"
-#include "base/singleton.h"
+#include <string>
 
 #ifdef OS_MACOSX
 #include <CoreServices/CoreServices.h>
@@ -38,6 +37,10 @@
 #include "base/scoped_cftyperef.h"
 #include "base/mac_util.h"
 #endif
+
+#include "base/base.h"
+#include "base/logging.h"
+#include "base/singleton.h"
 
 namespace mozc {
 

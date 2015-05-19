@@ -38,9 +38,11 @@
       'type': 'executable',
       'sources': [
         'dictionary_mock_test.cc',
-        'dictionary_test.cc',
+        'dictionary_impl_test.cc',
         'suppression_dictionary_test.cc',
         'user_dictionary_importer_test.cc',
+        'user_dictionary_session_handler_test.cc',
+        'user_dictionary_session_test.cc',
         'user_dictionary_storage_test.cc',
         'user_dictionary_test.cc',
         'user_dictionary_util_test.cc',
@@ -48,8 +50,10 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:testing_util',
         '../config/config.gyp:config_handler',
-        '../data_manager/data_manager.gyp:user_dictionary_manager',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../data_manager/testing/mock_data_manager_base.gyp:mock_user_pos_manager',
         '../testing/testing.gyp:gtest_main',
         '../usage_stats/usage_stats.gyp:usage_stats',
         '../usage_stats/usage_stats.gyp:usage_stats_protocol',
@@ -62,18 +66,6 @@
       'variables': {
         'test_size': 'small',
       },
-      'conditions': [
-        ['use_separate_connection_data==1', {
-          'dependencies': [
-            '../converter/converter.gyp:connection_data_injected_environment',
-          ],
-        }],
-        ['use_separate_dictionary==1', {
-          'dependencies': [
-            'dictionary.gyp:dictionary_data_injected_environment',
-          ],
-        }],
-      ],
     },
     {
       'target_name': 'text_dictionary_loader_test',

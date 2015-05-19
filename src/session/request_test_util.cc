@@ -34,6 +34,7 @@
 
 namespace mozc {
 namespace commands {
+
 ScopedRequestForUnittest::ScopedRequestForUnittest(const Request &request)
     : prev_request_(RequestHandler::GetRequest()) {
   RequestHandler::SetRequest(request);
@@ -45,14 +46,17 @@ ScopedRequestForUnittest::~ScopedRequestForUnittest() {
 
 ScopedMobileRequestForUnittest::ScopedMobileRequestForUnittest() {
   Request request;
-  request.set_zero_query_suggestion(true);
-  request.set_mixed_conversion(true);
-  request.set_update_input_mode_from_surrounding_text(false);
-  request.set_special_romanji_table(Request::TWELVE_KEYS_TO_HIRAGANA);
-
+  RequestForUnitTest::FillMobileRequest(&request);
   scoped_request_.reset(new ScopedRequestForUnittest(request));
 }
 
 ScopedMobileRequestForUnittest::~ScopedMobileRequestForUnittest() {}
+
+void RequestForUnitTest::FillMobileRequest(Request *request) {
+  request->set_zero_query_suggestion(true);
+  request->set_mixed_conversion(true);
+  request->set_update_input_mode_from_surrounding_text(false);
+  request->set_special_romanji_table(Request::TWELVE_KEYS_TO_HIRAGANA);
+}
 }  // namespace commands
 }  // namespace mozc

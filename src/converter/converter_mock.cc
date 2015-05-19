@@ -30,6 +30,9 @@
 #include "converter/converter_mock.h"
 
 #include <string>
+
+#include "base/base.h"
+#include "base/logging.h"
 #include "converter/segments.h"
 #include "converter/user_data_manager_mock.h"
 

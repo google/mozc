@@ -50,7 +50,7 @@
       'target_name': 'hangul_all_test',
       'type': 'none',
       'conditions': [
-        ['OS == "linux" and chromeos==1', {
+        ['OS=="linux" and target_platform=="ChromeOS"', {
           'dependencies': [
             'hangul_session_test',
           ],
@@ -72,7 +72,7 @@
             '../../unix/ibus/ibus.gyp:ibus_mozc_lib',
           ],
           'conditions': [
-            ['chromeos==1', {
+            ['target_platform=="ChromeOS"', {
              'dependencies': [
                '../../config/config.gyp:config_handler',
                '../../config/config.gyp:config_protocol',

@@ -30,14 +30,14 @@
 #include "dictionary/suppression_dictionary.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
-#include "base/singleton.h"
 #include "converter/node.h"
 
 namespace mozc {
 namespace {
 const char kDelimiter = '\t';
-}
+}  // namespace
 
 bool SuppressionDictionary::AddEntry(
     const string &key, const string &value) {
@@ -154,4 +154,4 @@ SuppressionDictionary::SuppressionDictionary()
     : locked_(false), has_key_empty_(false), has_value_empty_(false) {}
 
 SuppressionDictionary::~SuppressionDictionary() {}
-}  // mozc
+}  // namespace mozc

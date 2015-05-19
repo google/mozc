@@ -49,6 +49,11 @@
 
 #include "base/base.h"
 
+#ifdef OS_ANDROID
+// This is used only for code generation, so shouldn't be used from android
+// platform.
+#error "base/codegen_bytearray_stream.h shouldn't be used from android platform."
+#endif
 
 #ifdef OS_WINDOWS
 // Visual C++ does not support string literals longer than 65535 characters

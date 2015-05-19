@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/password_manager.h"
 #include "base/util.h"
 

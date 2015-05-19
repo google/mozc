@@ -27,15 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 #include "base/base.h"
+#include "base/thread.h"
 #include "base/util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "base/thread.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -131,16 +131,21 @@ TEST(IPCTest, IPCTest) {
 #endif
   con.LoopAndReturn();
 
-  vector<MultiConnections> cons(kNumThreads);
+  // mozc::Thread is not designed as value-semantics.
+  // So here we use pointers to maintain these instances.
+  vector<MultiConnections *> cons(kNumThreads);
   for (size_t i = 0; i < cons.size(); ++i) {
+    cons[i] = new MultiConnections;
 #ifdef OS_MACOSX
-    cons[i].SetMachPortManager(&manager);
+    cons[i]->SetMachPortManager(&manager);
 #endif
-    cons[i].SetJoinable(true);
-    cons[i].Start();
+    cons[i]->SetJoinable(true);
+    cons[i]->Start();
   }
   for (size_t i = 0; i < cons.size(); ++i) {
-    cons[i].Join();
+    cons[i]->Join();
+    delete cons[i];
+    cons[i] = NULL;
   }
 
   mozc::IPCClient kill(kServerAddress, "");

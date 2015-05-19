@@ -75,6 +75,9 @@ class SyncHandler {
 
   static void SetSchedulerJobSetting(const Scheduler::JobSetting *setting);
 
+  // Clear the last command and sync time. Used by unit test.
+  static void ClearLastCommandAndSyncTime();
+
  private:
   SyncHandler() {}
   ~SyncHandler() {}

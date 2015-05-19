@@ -30,9 +30,8 @@
 #ifndef MOZC_UNIX_IBUS_PREEDIT_HANDLER_INTERFACE_H_
 #define MOZC_UNIX_IBUS_PREEDIT_HANDLER_INTERFACE_H_
 
-#include <ibus.h>
-
 #include "base/port.h"
+#include "unix/ibus/ibus_header.h"
 
 namespace mozc {
 namespace commands {

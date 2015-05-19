@@ -30,11 +30,13 @@
 #include "converter/cached_connector.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/thread.h"
 #include "converter/connector_interface.h"
 #include "converter/sparse_connector.h"
 
 namespace mozc {
+namespace converter {
 namespace {
 const int kInvalidCacheKey = -1;
 
@@ -47,6 +49,11 @@ inline int GetHashValue(uint16 rid, uint16 lid, int hash_mask) {
   // Multiplying '3' makes the conversion speed faster.
   // The result hash value becomes reasonalbly random.
 }
+
+inline uint32 EncodeKey(uint16 rid, uint16 lid) {
+  return (static_cast<uint32>(rid) << 16) | lid;
+}
+
 }  // namespace
 
 CachedConnector::CachedConnector(ConnectorInterface *connector,
@@ -75,7 +82,7 @@ int CachedConnector::GetTransitionCost(uint16 rid, uint16 lid) const {
   // single thread environment
   // 2) Can see about 20% performance drop with Mutex lock.
 
-  const uint32 index = SparseConnector::EncodeKey(rid, lid);
+  const uint32 index = EncodeKey(rid, lid);
   const int bucket = GetHashValue(rid, lid, hash_mask_);
   if (cache_key_[bucket] != index) {
     // Simply overwrite previous key/value.
@@ -105,4 +112,5 @@ int CachedConnector::GetResolution() const {
 void CachedConnector::ClearCache() {
   *cache_initialized_ = false;
 }
+}  // namespace converter
 }  // namespace mozc

@@ -44,6 +44,19 @@
       },
     },
     {
+      'target_name': 'install_stats_config_util_test_data',
+      'type': 'none',
+      'variables': {
+        'test_data_subdir': 'data/test/config',
+        'test_data': [
+          '../<(test_data_subdir)/mac_config1.db',
+          '../<(test_data_subdir)/linux_config1.db',
+          '../<(test_data_subdir)/win_config1.db',
+        ],
+      },
+      'includes': [ '../gyp/install_testdata.gypi' ],
+    },
+    {
       'target_name': 'stats_config_util_test',
       'type': 'executable',
       'sources': [
@@ -52,6 +65,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'config.gyp:stats_config_util',
+        'install_stats_config_util_test_data',
       ],
       'conditions': [
         ['OS=="win" and branding=="GoogleJapaneseInput"', {
@@ -62,20 +76,28 @@
       ],
       'variables': {
         'test_size': 'small',
-        'test_data_subdir': 'data/test/config',
-        'test_data': [
-          '../<(test_data_subdir)/mac_config1.db',
-          '../<(test_data_subdir)/linux_config1.db',
-          '../<(test_data_subdir)/win_config1.db',
-        ],
       },
-      'includes': [ '../gyp/install_testdata.gypi' ],
+    },
+    {
+      'target_name': 'character_form_manager_test',
+      'type': 'executable',
+      'sources': [
+        'character_form_manager_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'config.gyp:character_form_manager',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'config_all_test',
       'type': 'none',
       'dependencies': [
+        'character_form_manager_test',
         'config_handler_test',
         'stats_config_util_test',
       ],

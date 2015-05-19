@@ -63,7 +63,6 @@ def GetNumberOfProcessors():
   Returns:
     An integer which represents the number of CPU cores available on
     the host environment. Returns 1 if something fails.
-  TODO(nona): Support colorized error message
   """
   try:
     return multiprocessing.cpu_count()
@@ -87,14 +86,14 @@ def RunOrDie(argv):
     argv.insert(0, sys.executable)  # Inject the python interpreter path.
   # We don't capture stdout and stderr from Popen. The output will just
   # be emitted to a terminal or console.
-  # TODO(nona): Support colorized error message
-  print 'Running: ' + ' '.join(argv)
+  logging.info('Running: %s', ' '.join(argv))
   process = subprocess.Popen(argv)
 
   if process.wait() != 0:
+    error_label = ColoredText('ERROR', logging.ERROR)
     raise RunOrDieError('\n'.join(['',
                                    '==========',
-                                   ' ERROR: %s' % ' '.join(argv),
+                                   ' %s: %s' % (error_label, ' '.join(argv)),
                                    '==========']))
 
 
@@ -105,7 +104,7 @@ def RemoveFile(file_name):
   if IsWindows():
     # Read-only files cannot be deleted on Windows.
     os.chmod(file_name, 0700)
-  print 'Removing file: %s' % file_name
+  logging.info('Removing file: %s', file_name)
   os.unlink(file_name)
 
 
@@ -116,16 +115,14 @@ def CopyFile(source, destination):
   dest_dirname = os.path.dirname(destination)
   if not os.path.isdir(dest_dirname):
     os.makedirs(dest_dirname)
-  # TODO(nona): Support colorized error message
-  print 'Copying file to: %s' % destination
+  logging.info('Copying file to: %s', destination)
   shutil.copy(source, destination)
 
 
 def RemoveDirectoryRecursively(directory):
   """Removes the specified directory recursively."""
   if os.path.isdir(directory):
-    # TODO(nona): Support colorized error message
-    print 'Removing directory: %s' % directory
+    logging.info('Removing directory: %s', directory)
     if IsWindows():
       # Use RD because shutil.rmtree fails when the directory is readonly.
       RunOrDie(['CMD.exe', '/C', 'RD', '/S', '/Q',
@@ -144,8 +141,9 @@ def MakeFileWritableRecursively(path):
 
 def PrintErrorAndExit(error_message):
   """Prints the error message and exists."""
-  # TODO(nona): Support colorized error message
-  print '\n==========\n ERROR: %s\n==========\n' % error_message
+  logging.critical('\n==========\n')
+  logging.critical(error_message)
+  logging.critical('\n==========\n')
   sys.exit(1)
 
 
@@ -171,3 +169,56 @@ def CheckFileOrDie(file_name):
   """Check the file exists or dies if not."""
   if not os.path.isfile(file_name):
     PrintErrorAndExit('No such file: ' + file_name)
+
+
+# ANSI Color sequences
+_TERMINAL_COLORS = {
+    'CLEAR': '\x1b[0m',
+    'BLACK': '\x1b[30m',
+    'RED': '\x1b[31m',
+    'GREEN': '\x1b[32m',
+    'YELLOW': '\x1b[33m',
+    'BLUE': '\x1b[34m',
+    'MAGENTA': '\x1b[35m',
+    'CYAN': '\x1b[36m',
+    'WHITE': '\x1b[37m',
+}
+
+# Indicates the output stream supports colored text or not.
+# It is disabled on windows because cmd.exe doesn't support ANSI color escape
+# sequences.
+# TODO(team): Considers to use ctypes.windll.kernel32.SetConsoleTextAttribute
+#             on Windows. b/6260694
+_COLORED_TEXT_SUPPORT = (
+    not IsWindows() and sys.stdout.isatty() and sys.stderr.isatty())
+
+
+def ColoredText(text, level):
+  """Generates a colored text according to log level."""
+  if not _COLORED_TEXT_SUPPORT:
+    return text
+
+  if level <= logging.INFO:
+    color = 'GREEN'
+  elif level <= logging.WARNING:
+    color = 'YELLOW'
+  else:
+    color = 'RED'
+
+  return _TERMINAL_COLORS[color] + text + _TERMINAL_COLORS['CLEAR']
+
+
+class ColoredLoggingFilter(logging.Filter):
+  """Supports colored text on logging library.
+
+  Sample code.
+  logging.getLogger().addFilter(util.ColoredLoggingFilter())
+  """
+
+  def filter(self, record):
+    level_name = record.levelname
+    level_no = record.levelno
+    if level_name and level_no:
+      record.levelname = ColoredText(level_name, level_no)
+
+    return True

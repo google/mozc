@@ -43,8 +43,9 @@
 #include <iostream>
 #include <vector>
 
-#include "base/util.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "rewriter/gen_existence_header.h"
 
 DEFINE_string(suppression_data, "", "suppression data text");
@@ -71,7 +72,7 @@ void Convert() {
         continue;
       }
       vector<string> fields;
-      mozc::Util::SplitStringUsing(line, kSeparator, &fields);
+      Util::SplitStringUsing(line, kSeparator, &fields);
       CHECK_GE(fields.size(), 2);
       entries.push_back(fields[0] + kSeparator + fields[1]);
     }
@@ -84,7 +85,7 @@ void Convert() {
 
   const string kNameSpace = "CollocationSuppressionData";
 
-  mozc::GenExistenceHeader::GenExistenceHeader(entries, kNameSpace, ofs,
+  GenExistenceHeader::GenExistenceHeader(entries, kNameSpace, ofs,
                                                FLAGS_error_rate);
 
   if (ofs != &cout) {

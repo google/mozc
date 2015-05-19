@@ -31,13 +31,16 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
-#include "config/config.pb.h"
-#include "converter/converter_interface.h"
-#include "session/session_converter.h"
 #include "composer/table.h"
-#include "testing/base/public/gunit.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/converter_interface.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
+#include "session/commands.pb.h"
+#include "session/session_converter.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -68,6 +71,13 @@ class SessionConverterStressTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
   }
+
+  const commands::Request &default_request() const {
+    return default_request_;
+  }
+
+ private:
+  const commands::Request default_request_;
 };
 
 namespace {
@@ -97,12 +107,12 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
 
   const string kRomajiHiraganaTable = "system://romanji-hiragana.tsv";
 
-  ConverterInterface* converter = ConverterFactory::GetConverter();
-  SessionConverter sconverter(converter);
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface* converter = engine->GetConverter();
+  SessionConverter sconverter(converter, commands::Request::default_instance());
   composer::Table table;
   table.LoadFromFile(kRomajiHiraganaTable.c_str());
-  composer::Composer composer;
-  composer.SetTable(&table);
+  composer::Composer composer(&table, default_request());
   commands::Output output;
   string input;
 

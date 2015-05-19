@@ -33,15 +33,8 @@
 #define MOZC_BASE_FLAGS_H_
 
 
-#ifdef OS_WINDOWS
-#include <windows.h>
-#endif
-
-#include "base/crash_report_handler.h"
-
 #include <string>
 #include "base/port.h"
-#include "config/stats_config_util.h"
 
 namespace mozc_flags {
 
@@ -65,71 +58,9 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
                              bool remove_flags);
 }  // mozc_flags
 
-namespace mozc {
-
-extern void InitGoogleInternal(const char *arg0,
-                               int *argc, char ***argv,
-                               bool remove_flags);
-
-// We define InstallBreakpad() here,
-// so that CrashReportHandler() is resovled in link time
-inline void InstallBreakpad() {
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-#ifndef OS_LINUX
-  if (StatsConfigUtil::IsEnabled()) {
-    CrashReportHandler::Initialize(false);
-  }
-#else  // OS_LINUX
-  // TODO(taku): install breakpad
-#endif  // OS_LINUX
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
-}
-}  // mozc
-
-#ifdef OS_WINDOWS
-inline LONG CALLBACK ExitProcessExceptionFilter(
-    EXCEPTION_POINTERS *ExceptionInfo) {
-  // Currently, we haven't found good way to perform both
-  // "send mininump" and "exit the process gracefully".
-  ::ExitProcess(static_cast<UINT>(-1));
-  return EXCEPTION_EXECUTE_HANDLER;
-}
-#endif  // OS_WINDOWS
-
-// class for holding argc, and argv
-// This class just copies the pointer of argv given at
-// the entory point
-namespace mozc {
-class Flags {
- public:
-  static int argc;
-  static char **argv;
-};
-}
-
-// not install breakpad
-inline void InitGoogle(const char *arg0,
-                       int *argc, char ***argv,
-                       bool remove_flags) {
-#ifdef OS_WINDOWS
-  // InitGoogle() is supposed to be used for code generator or
-  // other programs which are not included in the production code.
-  // In these code, we don't want to show any error messages when
-  // exceptions are raised. This is important to keep
-  // our continuous build stable.
-  ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
-#endif  // OS_WINDOWS
-
-  mozc::InitGoogleInternal(arg0, argc, argv, remove_flags);
-}
-
-// install breakpad
-inline void InitGoogleWithBreakPad(const char *arg0,
-                                   int *argc, char ***argv,
-                                   bool remove_flags) {
-  mozc::InstallBreakpad();
-  mozc::InitGoogleInternal(arg0, argc, argv, remove_flags);
-}
+void InitGoogle(const char *arg0,
+                int *argc, char ***argv,
+                bool remove_flags);
 
 #define DEFINE_VARIABLE(type, shorttype, name, value, help) \
 namespace fL##shorttype { \

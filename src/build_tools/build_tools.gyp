@@ -53,10 +53,10 @@
       'toolsets': ['host'],
       'dependencies': [
         'primitive_tools/primitive_tools.gyp:primitive_tools',
-        '../converter/converter_base.gyp:install_gen_connection_data_main',
-        '../converter/converter_base.gyp:install_gen_segmenter_bitarray_main',
-        '../converter/converter_base.gyp:install_gen_test_segmenter_bitarray_main',
+        '../data_manager/oss/oss_data_manager.gyp:install_gen_oss_segmenter_bitarray_main',
+        '../data_manager/testing/mock_data_manager.gyp:install_gen_mock_segmenter_bitarray_main',
         '../dictionary/dictionary.gyp:install_gen_system_dictionary_data_main',
+        '../prediction/prediction_base.gyp:install_gen_suggestion_filter_main',
         '../rewriter/rewriter_base.gyp:install_gen_collocation_data_main',
         '../rewriter/rewriter_base.gyp:install_gen_collocation_suppression_data_main',
         '../rewriter/rewriter_base.gyp:install_gen_symbol_rewriter_dictionary_main',
@@ -65,7 +65,7 @@
       'conditions': [
         ['target_platform=="Android"', {
           'dependencies': [
-            '../android/android_base.gyp:copy_curl_config_headers',
+            '../data_manager/android/android_data_manager.gyp:install_gen_android_segmenter_bitarray_main',
           ],
         }],
         ['language=="pinyin"', {

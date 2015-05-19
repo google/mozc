@@ -34,8 +34,6 @@
 
 #include "handwriting/handwriting_manager.h"
 
-#include "base/mmap.h"
-
 #ifdef USE_LIBZINNIA
 // Use default zinnia installed in /usr/include
 #include <zinnia.h>
@@ -44,6 +42,8 @@
 #endif
 
 namespace mozc {
+class Mmap;
+
 namespace handwriting {
 
 class ZinniaHandwriting : public HandwritingInterface {
@@ -59,7 +59,7 @@ class ZinniaHandwriting : public HandwritingInterface {
  private:
   scoped_ptr<zinnia::Recognizer> recognizer_;
   scoped_ptr<zinnia::Character> character_;
-  scoped_ptr<Mmap<char> > mmap_;
+  scoped_ptr<Mmap> mmap_;
   size_t width_;
   size_t height_;
   bool zinnia_model_error_;

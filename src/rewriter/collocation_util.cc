@@ -32,27 +32,11 @@
 #include "base/util.h"
 
 namespace mozc {
-void CollocationUtil::GetNormalizedScript(const string &str, string *output) {
+void CollocationUtil::GetNormalizedScript(
+    const string &str, bool remove_number, string *output) {
   output->clear();
   string temp;
-  size_t pos = 0;
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  size_t mblen = 0;
-  while (begin < end) {
-    const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
-    if (((Util::GetScriptType(w) != Util::UNKNOWN_SCRIPT) && !IsNumber(w)) ||
-        w == 0x3005 ||  // "々"
-        w == 0x0025 || w == 0xFF05 ||  // "%", "％"
-        w == 0x3006 ||  // "〆"
-        w == 0x301C || w == 0xFF5E) {  // "〜", "～"
-      temp += str.substr(pos, mblen);
-    }
-
-    begin += mblen;
-    pos += mblen;
-  }
-
+  RemoveExtraCharacters(str, remove_number, &temp);
   string temp2;
   // "％" -> "%"
   Util::StringReplace(temp, "\xef\xbc\x85", "%", true, &temp2);
@@ -60,12 +44,12 @@ void CollocationUtil::GetNormalizedScript(const string &str, string *output) {
   Util::StringReplace(temp2, "\xef\xbd\x9e", "\xe3\x80\x9c", true, output);
 }
 
-bool CollocationUtil::IsNumber(uint16 wchar) {
-  if (Util::GetScriptType(wchar) == Util::NUMBER) {
+bool CollocationUtil::IsNumber(char32 c) {
+  if (Util::GetScriptType(c) == Util::NUMBER) {
     return true;
   }
 
-  switch (wchar) {
+  switch (c) {
     case 0x3007:  // "〇"
     case 0x4e00:  // "一"
     case 0x4e8c:  // "二"
@@ -87,5 +71,20 @@ bool CollocationUtil::IsNumber(uint16 wchar) {
       break;
   }
   return false;
+}
+
+void CollocationUtil::RemoveExtraCharacters(
+    const string &input, bool remove_number, string *output) {
+  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
+    const char32 w = iter.Get();
+    if (((Util::GetScriptType(w) != Util::UNKNOWN_SCRIPT) &&
+         (!remove_number || !IsNumber(w))) ||
+        w == 0x3005 ||  // "々"
+        w == 0x0025 || w == 0xFF05 ||  // "%", "％"
+        w == 0x3006 ||  // "〆"
+        w == 0x301C || w == 0xFF5E) {  // "〜", "～"
+      Util::UCS4ToUTF8Append(w, output);
+    }
+  }
 }
 }  // namespace mozc

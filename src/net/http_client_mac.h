@@ -44,8 +44,7 @@ class MacHTTPRequestHandler {
                       const char *post_data,
                       size_t post_size,
                       const HTTPClient::Option &option,
-                      string *output_string,
-                      ostream *output_stream);
+                      string *output_string);
  private:
   MacHTTPRequestHandler() {}
   virtual ~MacHTTPRequestHandler() {}

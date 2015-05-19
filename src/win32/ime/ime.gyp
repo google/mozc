@@ -41,32 +41,6 @@
   },
   'targets': [
     {
-      'target_name': 'commands_util',
-      'type': 'static_library',
-      'sources': [
-        'output_util.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base',
-        '../../config/config.gyp:config_protocol',
-        '../../session/session_base.gyp:session_protocol',
-      ],
-    },
-    {
-      'target_name': 'commands_util_test',
-      'type': 'executable',
-      'sources': [
-        'output_util_test.cc',
-      ],
-      'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        'commands_util',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'ime_core_test',
       'type': 'executable',
       'sources': [
@@ -106,14 +80,13 @@
       'target_name': 'ime_all_test',
       'type': 'none',
       'dependencies': [
-        'commands_util_test',
       ],
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
             'ime_core_test',
           ],
-        },],
+        }],
       ],
     },
   ],
@@ -147,6 +120,7 @@
             'ime_mouse_tracker.cc',
             'ime_private_context.cc',
             'ime_reconvert_string.cc',
+            'ime_state.cc',
             'ime_surrogate_pair_observer.cc',
             'ime_trace.cc',
             'ime_types.cc',
@@ -164,9 +138,9 @@
             '../../renderer/renderer.gyp:renderer_protocol',
             '../../renderer/renderer.gyp:win32_font_util',
             '../../session/session_base.gyp:ime_switch_util',
+            '../../session/session_base.gyp:output_util',
             '../../session/session_base.gyp:session_protocol',
             '../base/win32_base.gyp:ime_base',
-            'commands_util',
           ],
         },
         {

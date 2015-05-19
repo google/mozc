@@ -37,32 +37,13 @@
 #include "converter/conversion_request.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/base/public/gunit.h"
 
-#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
-#include "converter/connection_data_injected_environment.h"
-namespace {
-const ::testing::Environment *kConnectionDataInjectedEnvironment =
-    ::testing::AddGlobalTestEnvironment(
-        new ::mozc::ConnectionDataInjectedEnvironment());
-}  // namespace
-#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
-
-#ifdef MOZC_USE_SEPARATE_DICTIONARY
-#include "dictionary/dictionary_data_injected_environment.h"
-namespace {
-const ::testing::Environment *kDictionaryDataInjectedEnvironment =
-    ::testing::AddGlobalTestEnvironment(
-        new ::mozc::DictionaryDataInjectedEnvironment());
-}  // namespace
-#endif  // MOZC_USE_SEPARATE_DICTIONARY
-
 DECLARE_string(test_tmpdir);
-
 
 namespace mozc {
 namespace {
@@ -80,7 +61,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
 
 }  // namespace
 
-class RewriterTest : public testing::Test {
+class RewriterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -88,10 +69,8 @@ class RewriterTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
     converter_mock_.reset(new ConverterMock);
-    rewriter_.reset(
-        new RewriterImpl(converter_mock_.get(),
-                         UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-                         UserPosManager::GetUserPosManager()->GetPosGroup()));
+    const testing::MockDataManager data_manager;
+    rewriter_.reset(new RewriterImpl(converter_mock_.get(), &data_manager));
   }
 
   virtual void TearDown() {
@@ -122,7 +101,11 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     candidate->value = "\xE3\x82\xB3\xE3\x83\x9E"
                        "\xE3\x83\xB3\xE3\x83\x89";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
+#ifdef OS_ANDROID
+    EXPECT_EQ(0, CommandCandidatesSize(*seg));
+#else
     EXPECT_EQ(2, CommandCandidatesSize(*seg));
+#endif
     seg->clear_candidates();
   }
 
@@ -135,7 +118,11 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     candidate->value = "\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
                        "\xE3\x82\xB9\xE3\x83\x88";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
+#ifdef OS_ANDROID
+    EXPECT_EQ(0, CommandCandidatesSize(*seg));
+#else
     EXPECT_EQ(1, CommandCandidatesSize(*seg));
+#endif
     seg->clear_candidates();
   }
 }

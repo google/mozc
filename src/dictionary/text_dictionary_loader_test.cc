@@ -47,6 +47,10 @@ const char kTextLines[] =
 "key_test1\t0\t0\t1\tvalue_test1\n"
 "foo\t1\t2\t3\tbar\n"
 "buz\t10\t20\t30\tfoobar\n";
+
+const char kReadingCorrectionLines[] =
+    "bar\tfoo\tfoo_correct\n"
+    "foobar\tfoobar_error\tfoobar_correct\n";
 }  // namespace
 
 class TextDictionaryLoaderTest : public ::testing::Test {
@@ -83,7 +87,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   {
     scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
-    EXPECT_TRUE(loader->Open(filename.c_str()));
+    EXPECT_TRUE(loader->Open(filename));
     loader->CollectTokens(&tokens);
 
     EXPECT_EQ(3, tokens.size());
@@ -142,8 +146,8 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
     // open twice -- tokens are cleared everytime
-    EXPECT_TRUE(loader->Open(filename.c_str()));
-    EXPECT_TRUE(loader->Open(filename.c_str()));
+    EXPECT_TRUE(loader->Open(filename));
+    EXPECT_TRUE(loader->Open(filename));
     loader->CollectTokens(&tokens);
     EXPECT_EQ(3, tokens.size());
   }
@@ -187,6 +191,16 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     Token token;
     token.lid = 100;
     token.rid = 200;
+    EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ENGLISH:RATED"));
+    EXPECT_EQ(pos_matcher_->GetIsolatedWordId(), token.lid);
+    EXPECT_EQ(pos_matcher_->GetIsolatedWordId(), token.rid);
+    EXPECT_EQ(Token::NONE, token.attributes);
+  }
+
+  {
+    Token token;
+    token.lid = 100;
+    token.rid = 200;
     EXPECT_FALSE(loader->RewriteSpecialToken(&token, "foo"));
     EXPECT_EQ(100, token.lid);
     EXPECT_EQ(200, token.rid);
@@ -212,12 +226,47 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   {
     scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
-    EXPECT_TRUE(loader->Open(filename.c_str()));
+    EXPECT_TRUE(loader->Open(filename));
     loader->CollectTokens(&tokens);
     EXPECT_EQ(6, tokens.size());
   }
 
   Util::Unlink(filename1);
   Util::Unlink(filename2);
+}
+
+TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
+  scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+
+  const string dic_filename =
+      Util::JoinPath(FLAGS_test_tmpdir, "test.tsv");
+  const string reading_correction_filename =
+      Util::JoinPath(FLAGS_test_tmpdir, "reading_correction.tsv");
+
+  {
+    OutputFileStream ofs(dic_filename.c_str());
+    ofs << kTextLines;
+  }
+
+  {
+    OutputFileStream ofs(reading_correction_filename.c_str());
+    ofs << kReadingCorrectionLines;
+  }
+
+  vector<Token *> tokens;
+  EXPECT_TRUE(loader->Open(dic_filename));
+  loader->CollectTokens(&tokens);
+  CHECK_EQ(tokens.size(), 3);
+
+  EXPECT_TRUE(loader->OpenReadingCorrection(reading_correction_filename));
+  tokens.clear();
+  loader->CollectTokens(&tokens);
+  CHECK_EQ(tokens.size(), 4);
+
+  EXPECT_EQ("foobar_error", tokens[3]->key);
+  EXPECT_EQ("foobar", tokens[3]->value);
+  EXPECT_EQ(10, tokens[3]->lid);
+  EXPECT_EQ(20, tokens[3]->rid);
+  EXPECT_EQ(30 + 2302, tokens[3]->cost);
 }
 }  // namespace mozc

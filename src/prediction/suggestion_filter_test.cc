@@ -27,31 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "prediction/suggestion_filter.h"
+
 #include <set>
 #include <vector>
 #include <string>
+
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/hash_tables.h"
+#include "base/logging.h"
 #include "base/util.h"
-#include "prediction/suggestion_filter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+// TODO(noriyukit): Write test using tiner data set.
 DEFINE_string(dictionary_file,
-              "data/dictionary/dictionary00.txt,"
-              "data/dictionary/dictionary01.txt,"
-              "data/dictionary/dictionary02.txt,"
-              "data/dictionary/dictionary03.txt,"
-              "data/dictionary/dictionary04.txt,"
-              "data/dictionary/dictionary05.txt,"
-              "data/dictionary/dictionary06.txt,"
-              "data/dictionary/dictionary07.txt,"
-              "data/dictionary/dictionary08.txt,"
-              "data/dictionary/dictionary09.txt",
+              "data/dictionary_oss/dictionary00.txt,"
+              "data/dictionary_oss/dictionary01.txt,"
+              "data/dictionary_oss/dictionary02.txt,"
+              "data/dictionary_oss/dictionary03.txt,"
+              "data/dictionary_oss/dictionary04.txt,"
+              "data/dictionary_oss/dictionary05.txt,"
+              "data/dictionary_oss/dictionary06.txt,"
+              "data/dictionary_oss/dictionary07.txt,"
+              "data/dictionary_oss/dictionary08.txt,"
+              "data/dictionary_oss/dictionary09.txt",
               "default mozc dictionary");
 DEFINE_string(suggestion_filter_files,
-              "data/dictionary/suggestion_filter.txt",
+              "data/dictionary_oss/suggestion_filter.txt",
               "comma separated mozc suggestion_filter filter files");
 DECLARE_string(test_srcdir);
 

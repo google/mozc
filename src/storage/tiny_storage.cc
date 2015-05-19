@@ -29,18 +29,25 @@
 
 #include "storage/tiny_storage.h"
 
+#ifdef OS_WINDOWS
+#include <Windows.h>
+#endif  // OS_WINDOWS
+
 #include <algorithm>
+#include <cstring>
 #include <map>
 #include <string>
 #include <vector>
 #include "base/base.h"
 #include "base/file_stream.h"
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/mmap.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace storage {
 namespace {
+
 const uint32 kStorageVersion = 0;
 const uint32 kStorageMagicId = 0x431fe241;  // random seed
 const size_t kMaxElementSize = 1024;        // max map size
@@ -48,7 +55,7 @@ const size_t kMaxKeySize     = 4096;        // 4k for key/value
 const size_t kMaxValueSize   = 4096;        // 4k for key/value
 // 1024 * (4096 + 4096) =~ 8MByte
 // so 10Mbyte data is reasonable upper bound for file size
-const size_t kMaxFileSize     = 1024 * 1024 * 10; // 10Mbyte
+const size_t kMaxFileSize     = 1024 * 1024 * 10;  // 10Mbyte
 
 template<typename T>
 bool ReadData(char **begin, const char *end, T *value) {
@@ -77,24 +84,45 @@ bool IsInvalid(const string &key, const string &value,
   }
   return false;
 }
-}  // namespace
 
-TinyStorage::TinyStorage() : should_sync_(true) {
+class TinyStorageImpl : public StorageInterface {
+ public:
+  TinyStorageImpl();
+  virtual ~TinyStorageImpl();
+
+  virtual bool Open(const string &filename);
+  virtual bool Sync();
+  virtual bool Lookup(const string &key, string *value) const;
+  virtual bool Insert(const string &key, const string &value);
+  virtual bool Erase(const string &key);
+  virtual bool Clear();
+  virtual size_t Size() const {
+    return dic_.size();
+  }
+
+ private:
+  string filename_;
+  bool should_sync_;
+  map<string, string> dic_;
+};
+
+TinyStorageImpl::TinyStorageImpl() : should_sync_(true) {
   // the each entry consumes at most
   // sizeof(uint32) * 2 (key/value length) +
   // kMaxKeySize + kMaxValueSize
-  DCHECK(kMaxFileSize >
-         kMaxElementSize * (kMaxKeySize + kMaxValueSize + sizeof(uint32) * 2));
+  DCHECK_GT(
+      kMaxFileSize,
+      kMaxElementSize * (kMaxKeySize + kMaxValueSize + sizeof(uint32) * 2));
 }
 
-TinyStorage::~TinyStorage() {
+TinyStorageImpl::~TinyStorageImpl() {
   if (should_sync_) {
     Sync();
   }
 }
 
-bool TinyStorage::Open(const string &filename) {
-  Mmap<char> mmap;
+bool TinyStorageImpl::Open(const string &filename) {
+  Mmap mmap;
   dic_.clear();
   filename_ = filename;
   if (!mmap.Open(filename.c_str(), "r")) {
@@ -105,12 +133,12 @@ bool TinyStorage::Open(const string &filename) {
     return true;
   }
 
-  if (mmap.GetFileSize() > kMaxFileSize) {
+  if (mmap.size() > kMaxFileSize) {
     LOG(ERROR) << "tring to open too big file";
     return false;
   }
 
-  char *begin = const_cast<char *>(mmap.begin());
+  char *begin = mmap.begin();
   const char *end = mmap.end();
 
   uint32 version = 0;
@@ -123,7 +151,7 @@ bool TinyStorage::Open(const string &filename) {
     return false;
   }
 
-  if ((magic ^ kStorageMagicId) != mmap.GetFileSize()) {
+  if ((magic ^ kStorageMagicId) != mmap.size()) {
     LOG(ERROR) << "file magic is broken";
     return false;
   }
@@ -179,7 +207,7 @@ bool TinyStorage::Open(const string &filename) {
     dic_.insert(make_pair(key, value));
   }
 
-  if (static_cast<size_t>(begin - mmap.begin()) != mmap.GetFileSize()) {
+  if (static_cast<size_t>(begin - mmap.begin()) != mmap.size()) {
     LOG(ERROR) << "file is broken: " << filename_;
     dic_.clear();
     return false;
@@ -192,7 +220,7 @@ bool TinyStorage::Open(const string &filename) {
 // |magic(uint32 file_size ^ kStorageVersion)|version(uint32)|size(uint32)|
 // |key_size(uint32)|key(variable length)|
 // |value_size(uint32)|value(variable length)| ...
-bool TinyStorage::Sync() {
+bool TinyStorageImpl::Sync() {
   if (!should_sync_) {
     VLOG(2) << "Already synced";
     return true;
@@ -268,7 +296,7 @@ bool TinyStorage::Sync() {
   return true;
 }
 
-bool TinyStorage::Insert(const string &key, const string &value) {
+bool TinyStorageImpl::Insert(const string &key, const string &value) {
   if (IsInvalid(key, value, dic_.size())) {
     LOG(WARNING) << "invalid key/value is passed";
     return false;
@@ -278,7 +306,7 @@ bool TinyStorage::Insert(const string &key, const string &value) {
   return true;
 }
 
-bool TinyStorage::Erase(const string &key) {
+bool TinyStorageImpl::Erase(const string &key) {
   map<string, string>::iterator it = dic_.find(key);
   if (it == dic_.end()) {
     LOG(WARNING) << "cannot erase key: " << key;
@@ -289,7 +317,7 @@ bool TinyStorage::Erase(const string &key) {
   return true;
 }
 
-bool TinyStorage::Lookup(const string &key,
+bool TinyStorageImpl::Lookup(const string &key,
                          string *value) const {
   map<string, string>::const_iterator it = dic_.find(key);
   if (it == dic_.end()) {
@@ -300,24 +328,27 @@ bool TinyStorage::Lookup(const string &key,
   return true;
 }
 
-bool TinyStorage::Clear() {
+bool TinyStorageImpl::Clear() {
   dic_.clear();
   should_sync_ = true;
   return Sync();
 }
 
-TinyStorage *Create(const char *filename) {
-  TinyStorage *storage = new TinyStorage;
-  if (storage == NULL) {
-    LOG(ERROR) << "cannot make TinyStorage";
-    return NULL;
-  }
+}  // namespace
+
+StorageInterface *TinyStorage::Create(const char *filename) {
+  TinyStorageImpl *storage = new TinyStorageImpl;
   if (!storage->Open(filename)) {
-    LOG(ERROR) << "cannot open TinyStorage";
+    LOG(ERROR) << "cannot open " << storage;
     delete storage;
     return NULL;
   }
   return storage;
 }
-}  // storage
-}  // mozc
+
+StorageInterface *TinyStorage::New() {
+  return new TinyStorageImpl;
+}
+
+}  // namespace storage
+}  // namespace mozc

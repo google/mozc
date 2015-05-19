@@ -109,6 +109,13 @@
         }],
       ],
     }],
+    ['clang==1', {
+      'cflags': [
+        # Temporal workaround against following false warning in Clang.
+        # http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-June/022477.html
+        '-Wno-uninitialized',
+      ],
+    }],
   ],
 
   }]],  # End of use_qt=="YES"

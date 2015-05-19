@@ -56,6 +56,7 @@ class DateRewriter : public RewriterInterface  {
 
  private:
   FRIEND_TEST(DateRewriterTest, ADToERA);
+  FRIEND_TEST(DateRewriterTest, ERAToAD);
   FRIEND_TEST(DateRewriterTest, ConvertTime);
   FRIEND_TEST(DateRewriterTest, ConvertDateTest);
 
@@ -71,6 +72,7 @@ class DateRewriter : public RewriterInterface  {
   bool RewriteDateAndCurrentTime(Segment *segment) const;
   bool RewriteEra(Segment *current_segment,
                   const Segment &next_segment) const;
+  bool RewriteAd(Segment *segment) const;
   bool RewriteWeekday(Segment *segment) const;
 
   // When segment has four number characters,this function adds date and time
@@ -83,7 +85,23 @@ class DateRewriter : public RewriterInterface  {
   //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
   bool RewriteFourDigits(Segment *segment) const;
 
-  bool ADtoERA(int year, vector<string> *results) const;
+  bool AdToEra(int year, vector<string> *results) const;
+
+  // Converts AD to Japanese ERA.
+  // If given string is invalid, this function does not nothing and
+  // returns false
+  // The results will have multiple variants.
+  // e.g.)
+  //   key              -> results, descriptions
+  //   -----------------------------------------------
+  //   "へいせい20ねん" -> {"2008年", "２００８年", "二〇〇八年"},
+  //                       {"平成20年", "平成20年", "平成20年"}
+  //   "しょうわ2ねん"  -> {"1927年", "１９２７年", "一九二七年",
+  //                        "1313年", "１３１３年", "一三一三年" },
+  //                       {"昭和2年", "昭和2年", "昭和2年",
+  //                        "正和2年", "正和2年", "正和2年"}
+  bool EraToAd(const string &key,
+               vector<string> *results, vector<string> *descriptions) const;
 
   // Converts given time to string expression.
   // If given time information is invalid, this function does nothing and

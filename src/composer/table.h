@@ -174,6 +174,8 @@ class TableManager {
   //  config::Config::PunctuationMethod
   //  config::Config::SymbolMethod
   map<uint32, const Table*> table_map_;
+  // Fingerprint for Config::custom_roman_table;
+  uint32 custom_roman_table_fingerprint_;
 };
 
 }  // namespace composer

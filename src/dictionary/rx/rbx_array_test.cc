@@ -27,15 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dictionary/rx/rbx_array.h"
+
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/hash_tables.h"
+#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
-#include "dictionary/rx/rbx_array.h"
 #include "dictionary/rx/rbx_array_builder.h"
 #include "testing/base/public/gunit.h"
 
@@ -85,13 +88,13 @@ class RbxArrayTest : public testing::Test {
   void ReadFromFile(RbxArray *array) {
     DCHECK(array);
     EXPECT_TRUE(Util::FileExists(test_rbx_));
-    mapping_.reset(new Mmap<char>());
+    mapping_.reset(new Mmap);
     mapping_->Open(test_rbx_.c_str());
     const char *ptr = mapping_->begin();
-    EXPECT_TRUE(array->OpenImage(
-        reinterpret_cast<const unsigned char *>(ptr)));
+    EXPECT_TRUE(
+        array->OpenImage(reinterpret_cast<const unsigned char *>(ptr)));
   }
-  scoped_ptr<Mmap<char> > mapping_;
+  scoped_ptr<Mmap> mapping_;
 
   const string test_rbx_;
 };

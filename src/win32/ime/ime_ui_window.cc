@@ -41,41 +41,44 @@
 #include <strsafe.h>
 
 #include "base/const.h"
+#include "base/mutex.h"
 #include "base/process.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
+#include "base/scoped_handle.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "base/win_util.h"
+#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_command.pb.h"
+#include "session/output_util.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/string_util.h"
 #include "win32/ime/ime_core.h"
 #include "win32/ime/ime_impl_imm.h"
-#include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_language_bar.h"
 #include "win32/ime/ime_mouse_tracker.h"
 #include "win32/ime/ime_scoped_context.h"
+#include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_types.h"
 #include "win32/ime/ime_ui_context.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
-#include "win32/ime/output_util.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
+
 using ATL::CRegKey;
 using ATL::CStringA;
 using ATL::CWindow;
 using WTL::CPoint;
 using WTL::CRect;
 
-const int kRendereCommandMaxRetry = 2;
-
 // True if the the DLL received DLL_PROCESS_DETACH notification.
-bool g_module_unloaded = false;
+volatile bool g_module_unloaded = false;
 
 // As filed in b/3088049 or b/4271156, the IME module (e.g. GIMEJa.ime) is
 // sometimes unloaded too early. You can use this macro to guard callback
@@ -90,14 +93,184 @@ bool g_module_unloaded = false;
 // A global variable of mozc::once_t, which is POD, has no bad side effect.
 static once_t g_launch_set_default_dialog = MOZC_ONCE_INIT;
 
+// A pointer to the renderer command to be sent to the renderer process.
+// The reader and writer must grant lock via |g_mutex| when accessing this
+// object.
+commands::RendererCommand *g_renderer_command = NULL;
+
+// A reference count which indicates the number of users who are using the
+// the global shared resources.
+volatile LONG g_shared_resource_refcount = 0;
+
+// A pointer to the Mutex object with which the |g_renderer_command| is to be
+// guarded. The command sender thread needs to delete this object when
+// |g_renderer_quit_event| is signaled.
+Mutex *g_mutex = NULL;
+
+// An event object which should be signaled while |g_renderer_command| is
+// pointing a valid renderer command which is to be sent to the renderer.
+// The command sender thread needs to call CloseHandle API against this object
+// when |g_renderer_quit_event| is signaled.
+HANDLE g_renderer_thread_event = NULL;
+
+// An event object which should be signaled when the command sender thread
+// needs to be terminated.
+// The command sender thread needs to call CloseHandle API against this object
+// when |g_renderer_quit_event| is signaled.
+HANDLE g_renderer_quit_event = NULL;
+
+// A global variable of mozc::once_t, which is POD, has no bad side effect.
+once_t g_renderer_thread_launch_once = MOZC_ONCE_INIT;
+
+bool IsSharedResourceAvailable() {
+  return g_shared_resource_refcount > 0;
+}
+
+void AddRefSharedResource() {
+  ::InterlockedIncrement(&g_shared_resource_refcount);
+}
+
+void TryReleaseSharedResource() {
+  if (::InterlockedDecrement(&g_shared_resource_refcount) == 0) {
+    if (g_mutex != NULL) {
+      scoped_lock lock(g_mutex);
+      delete g_renderer_command;
+      g_renderer_command = NULL;
+    }
+    if (g_renderer_quit_event != NULL) {
+      ::CloseHandle(g_renderer_quit_event);
+      g_renderer_quit_event = NULL;
+    }
+    if (g_renderer_thread_event != NULL) {
+      ::CloseHandle(g_renderer_thread_event);
+      g_renderer_thread_event = NULL;
+    }
+    delete g_mutex;
+    g_mutex = NULL;
+  }
+}
+
+DWORD WINAPI RendererClientThread(void * /*unused*/) {
+  {
+    mozc::renderer::RendererClient renderer_client;
+    while (true) {
+      const HANDLE handles[] = {g_renderer_quit_event, g_renderer_thread_event};
+      const DWORD wait_result = ::WaitForMultipleObjects(
+          arraysize(handles), handles, FALSE, INFINITE);
+      const DWORD wait_error = ::GetLastError();
+      if (g_module_unloaded) {
+        break;
+      }
+      const DWORD kQuitEventSignaled = WAIT_OBJECT_0;
+      const DWORD kRendererEventSignaled = WAIT_OBJECT_0 + 1;
+      if (wait_result == kQuitEventSignaled) {
+        // handles[0], that is, quit event is signaled.
+        break;
+      }
+      if (wait_result != kRendererEventSignaled) {
+        LOG(ERROR) << "WaitForMultipleObjects failed. error: " << wait_error;
+        break;
+      }
+      // handles[1], that is, renderer event is signaled.
+      scoped_ptr<commands::RendererCommand> command;
+      {
+        scoped_lock lock(g_mutex);
+        command.reset(g_renderer_command);
+        g_renderer_command = NULL;
+        ::ResetEvent(g_renderer_thread_event);
+      }
+      if (command.get() == NULL) {
+        DCHECK(command.get()) << "This should not be NULL.";
+        continue;
+      }
+      if (!renderer_client.ExecCommand(*command)) {
+        DLOG(ERROR) << "RendererClient::ExecCommand failed.";
+      }
+    }
+  }
+  TryReleaseSharedResource();
+  // Here we need to
+  //   1) decrement the reference count of this DLL and
+  //   2) exit the current thread
+  // The following API does both 1) and 2) as one action.
+  ::FreeLibraryAndExitThread(ImeGetResource(), 0);
+}
+
+void CreateRendererThread() {
+  // Here we directly use CreateThread API rather than _beginthreadex because
+  // the command sender thread will be eventually terminated via
+  // FreeLibraryAndExitThread API. Regarding CRT memory resources, this will
+  // be OK because this code will be running as DLL and the CRT can manage
+  // thread specific resources through attach/detach notification in DllMain.
+  DWORD thread_id = 0;
+  ScopedHandle thread_handle(::CreateThread(
+    NULL, 0, RendererClientThread, NULL, CREATE_SUSPENDED, &thread_id));
+  if (thread_handle.get() == NULL) {
+    // Failed to create the thread. Restore the reference count of the DLL.
+    return;
+  }
+
+  // Increment the reference count of the IME DLL so that the DLL will not
+  // be unloaded while the sender thread is running. The reference count
+  // will be decremented by FreeLibraryAndExitThread API in the thread routine.
+  HMODULE loaded_module = NULL;
+  if (::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                           reinterpret_cast<const wchar_t *>(::ImeGetResource()),
+                           &loaded_module) == FALSE) {
+    ::TerminateThread(thread_handle.get(), 0);
+    return;
+  }
+  if (loaded_module != ::ImeGetResource()) {
+    ::TerminateThread(thread_handle.get(), 0);
+    return;
+  }
+
+  // Crete shared objects. We use manual reset events for simplicity.
+  ScopedHandle renderer_event(::CreateEventW(NULL, TRUE, FALSE, NULL));
+  ScopedHandle quit_event(::CreateEventW(NULL, TRUE, FALSE, NULL));
+  if ((renderer_event.get() == NULL) || (quit_event.get() == NULL)) {
+    ::TerminateThread(thread_handle.get(), 0);
+    return;
+  }
+  g_renderer_thread_event = renderer_event.take();
+  g_renderer_quit_event = quit_event.take();
+  g_mutex = new Mutex();
+  AddRefSharedResource();  // for the current thread.
+  AddRefSharedResource();  // for the renderer thread.
+
+  // Resume the thread.
+  ::ResumeThread(thread_handle.get());
+}
+
+// This function is not thread safe.
+void EnsureRendererThreadLaunched() {
+  if (IsSharedResourceAvailable()) {
+    return;
+  }
+
+  // Callback functions in an IME is likely called even when the thread has
+  // loader lock. In such cases, we must not create any thread because it
+  // causes dead lock.
+  bool loader_locked = false;
+  if (!WinUtil::IsDLLSynchronizationHeld(&loader_locked)) {
+    return;
+  }
+  if (loader_locked) {
+    return;
+  }
+
+  CallOnce(&g_renderer_thread_launch_once, CreateRendererThread);
+}
+
 void LaunchSetDefaultDialog() {
-  const config::Config &config =
-      config::ConfigHandler::GetConfig();
-  // Note that we need not to launch SetDefaultDialog here if the old IME is
-  // default.  See b/2935950 for details.
-  if ((config.has_check_default() && !config.check_default()) ||
-       ImeUtil::IsDefault()) {
-    VLOG(1) << "Do not launch SetDefaultDialog.";
+  const config::Config &config = config::ConfigHandler::GetConfig();
+  if (config.has_check_default() && !config.check_default()) {
+    // User opted out the default IME checking. Do nothing.
+    return;
+  }
+
+  if (ImeUtil::IsDefault()) {
+    // Mozc has already been the default IME. Do nothing.
     return;
   }
 
@@ -170,7 +343,7 @@ class PrivateRendererMessageInitializer {
       return true;
     }
 
-    const HMODULE lib = mozc::Util::GetSystemModuleHandle(L"user32.dll");
+    const HMODULE lib = mozc::WinUtil::GetSystemModuleHandle(L"user32.dll");
     if (lib == NULL) {
       FUNCTION_TRACE(L"GetModuleHandle for user32.dll failed.");
       return false;
@@ -543,10 +716,9 @@ class DefaultUIWindow {
  public:
   explicit DefaultUIWindow(HWND hwnd)
       : hwnd_(hwnd),
-        renderer_command_num_retry_(kRendereCommandMaxRetry),
         langbar_callback_(new LangBarCallbackImpl(hwnd)),
-        renderer_client_(new mozc::renderer::RendererClient),
         language_bar_(new LanguageBar) {
+    EnsureRendererThreadLaunched();
   }
 
   ~DefaultUIWindow() {
@@ -802,25 +974,30 @@ class DefaultUIWindow {
   // Constructs RendererCommand based on various parameters in the input
   // context.  This implementation is very experimental, should be revised.
   void UpdateCandidate(const UIContext &context) {
-    if (renderer_command_num_retry_ <= 0) {
-      DLOG(INFO) << "RendererClient::ExecCommand failed "
-                 << kRendereCommandMaxRetry
-                 << " times. Gave up to call RendererClient::ExecCommand.";
+    // In case the we could not launch the command sender thread due to loader
+    // lock in the previous chances, here we ensure that the command sender
+    // thread is launched.
+    CallOnce(&g_renderer_thread_launch_once, EnsureRendererThreadLaunched);
+    if (!IsSharedResourceAvailable()) {
+        // Do nothing if the command sender thread is not available.
       return;
     }
 
-    mozc::commands::RendererCommand command;
-    if (!command.IsInitialized()) {
-      return;
-    }
-    command.set_type(mozc::commands::RendererCommand::UPDATE);
-    command.set_visible(false);
-    UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(), &command);
-    if (renderer_client_->ExecCommand(command)) {
-      renderer_command_num_retry_ = kRendereCommandMaxRetry;
-    } else {
-      DLOG(ERROR) << "RendererClient::ExecCommand failed.";
-      --renderer_command_num_retry_;
+    scoped_ptr<commands::RendererCommand> command(
+        new commands::RendererCommand);
+    command->set_type(commands::RendererCommand::UPDATE);
+    command->set_visible(false);
+    UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(),
+                  command.get());
+
+    // Transfer the ownership of |command| to the command sender thread via
+    // |g_renderer_command|.
+    {
+      scoped_lock lock(g_mutex);
+      // Delete the previous message if exists.
+      delete g_renderer_command;
+      g_renderer_command = command.release();
+      ::SetEvent(g_renderer_thread_event);
     }
   }
 
@@ -854,8 +1031,6 @@ class DefaultUIWindow {
   }
 
   HWND hwnd_;
-  int renderer_command_num_retry_;
-  scoped_ptr<mozc::renderer::RendererClient> renderer_client_;
   scoped_ptr<LanguageBar> language_bar_;
   LangBarCallbackImpl *langbar_callback_;
 
@@ -1044,6 +1219,12 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
 }
 }  // anonymous namespace
 
+void UIWindowManager::OnImeDestroy() {
+  if (IsSharedResourceAvailable()) {
+    ::SetEvent(g_renderer_quit_event);
+  }
+}
+
 bool UIWindowManager::OnDllProcessAttach(HINSTANCE module_handle,
                                          bool static_loading) {
   WNDCLASSEXW wc = {};
@@ -1072,9 +1253,11 @@ void UIWindowManager::OnDllProcessDetach(HINSTANCE module_handle,
     // unregister window class. See b/4271156.
     FUNCTION_TRACE(L"UnregisterClass failed");
   }
+  TryReleaseSharedResource();
   // This flag is used to inactivate out DefWindowProc and any other callbacks
   // to avoid further problems.
   g_module_unloaded = true;
 }
+
 }  // namespace win32
 }  // namespace mozc

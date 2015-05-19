@@ -68,7 +68,7 @@ class SkkUtil {
   static void RemoveDuplicateEntry(vector<string> *candidates);
   static bool ValidateMessage(const Json::Value &json_message,
                               string *error_message);
-  static void LookupEntry(mozc::SystemDictionary *dictionary,
+  static void LookupEntry(mozc::dictionary::SystemDictionary *dictionary,
                           const string &reading,
                           vector<string> *candidates,
                           vector<string> *predictions);

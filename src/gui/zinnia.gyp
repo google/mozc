@@ -44,6 +44,9 @@
     {
       'target_name': 'zinnia',
       'type': 'static_library',
+      'cflags': [
+        '-Wno-type-limits',
+      ],
       'conditions': [
         ['OS=="linux"', {
           'conditions': [
@@ -62,6 +65,12 @@
         ['OS=="mac"', {
           'sources': ['<@(zinnia_sources)'],
           'defines': ['HAVE_CONFIG_H'],
+        }],
+        ['clang==1', {
+          'cflags+': [
+            '-Wno-missing-field-initializers',
+            '-Wno-tautological-compare',
+          ],
         }],
         ['OS=="win"', {
           'sources': ['<@(zinnia_sources)'],

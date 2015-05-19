@@ -30,23 +30,20 @@
 #include "dictionary/dictionary_mock.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+
 namespace mozc {
 
 class DictionaryMockTest : public testing::Test {
  protected:
-  void SetUp() {
+  virtual void SetUp() {
     mock_.reset(new DictionaryMock);
-    DictionaryFactory::SetDictionary(mock_.get());
-  }
-
-  void TearDown() {
-    DictionaryFactory::SetDictionary(NULL);
   }
 
   DictionaryMock *GetMock() {
@@ -84,7 +81,7 @@ Token *DictionaryMockTest::CreateToken(const string &key, const string &value) {
 }
 
 TEST_F(DictionaryMockTest, test_prefix) {
-  DictionaryInterface *dic = DictionaryFactory::GetDictionary();
+  DictionaryInterface *dic = GetMock();
 
   // "は"
   const string k0 = "\xe3\x81\xaf";
@@ -114,7 +111,7 @@ TEST_F(DictionaryMockTest, test_prefix) {
 }
 
 TEST_F(DictionaryMockTest, test_reverse) {
-  DictionaryInterface *dic = DictionaryFactory::GetDictionary();
+  DictionaryInterface *dic = GetMock();
 
   // "今"/"いま"
   const string k0 = "\xE4\xBB\x8A";
@@ -138,7 +135,7 @@ TEST_F(DictionaryMockTest, test_reverse) {
   }
 
   Node *node = dic->LookupReverse(k1.c_str(), k1.size(), &allocator);
-  CHECK(node) << "No nodes found";
+  EXPECT_TRUE(node != NULL) << "No nodes found";
   EXPECT_TRUE(SearchMatchingNode(t1->key, t1->value, 0, node))
               << "Failed to find: " << t1->key;
   EXPECT_TRUE(SearchMatchingNode(t0->key, t0->value, 0, node))
@@ -146,7 +143,7 @@ TEST_F(DictionaryMockTest, test_reverse) {
 }
 
 TEST_F(DictionaryMockTest, test_predictive) {
-  DictionaryInterface *dic = DictionaryFactory::GetDictionary();
+  DictionaryInterface *dic = GetMock();
   // "は"
   const string k0 = "\xe3\x81\xaf";
   // "はひふ"
@@ -168,10 +165,36 @@ TEST_F(DictionaryMockTest, test_predictive) {
 
   NodeAllocator allocator;
   Node *node = dic->LookupPredictive(k0.c_str(), k0.size(), &allocator);
-  CHECK(node) << "no nodes found";
+  EXPECT_TRUE(node != NULL) << "no nodes found";
   EXPECT_TRUE(SearchMatchingNode(t1->key, t1->value, 0, node))
               << "Failed to find " << t1->key;
   EXPECT_TRUE(SearchMatchingNode(t2->key, t2->value, 0, node))
               << "Failed to find " << t2->key;
+}
+
+TEST_F(DictionaryMockTest, test_exact) {
+  DictionaryInterface *dic = GetMock();
+  const string key = "\xE3\x81\xBB\xE3\x81\x92";  // "ほげ"
+  GetMock()->AddLookupExact(key, key, "value1", 0);
+  GetMock()->AddLookupExact(key, key, "value2", 0);
+
+  {
+    NodeAllocator allocator;
+    Node *node = dic->LookupExact(key.c_str(), key.size(), &allocator);
+    EXPECT_TRUE(node != NULL) << "no nodes found";
+    EXPECT_TRUE(SearchMatchingNode(key, "value1", 0, node));
+    EXPECT_TRUE(SearchMatchingNode(key, "value2", 0, node));
+  }
+  {
+    NodeAllocator allocator;
+    Node *node = dic->LookupExact("hoge", key.size(), &allocator);
+    EXPECT_TRUE(node == NULL);
+  }
+  {
+    NodeAllocator allocator;
+    // "ほ"
+    Node *node = dic->LookupExact("\xE3\x81\xBB", key.size(), &allocator);
+    EXPECT_TRUE(node == NULL);
+  }
 }
 }  // namespace mozc

@@ -39,6 +39,8 @@
 namespace mozc {
 namespace gui {
 
+using mozc::config::StatsConfigUtil;
+
 AdministrationDialog::AdministrationDialog() {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint |

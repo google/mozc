@@ -109,7 +109,7 @@ namespace gui {
 
 HandWriting::HandWriting(QWidget *parent)
     : QMainWindow(parent),
-      usage_stats_enabled_(StatsConfigUtil::IsEnabled()) {
+      usage_stats_enabled_(mozc::config::StatsConfigUtil::IsEnabled()) {
   // To reduce the disk IO of reading the stats config, we load it only when the
   // class is initialized. There is no problem because the config dialog (on
   // Mac) and the administrator dialog (on Windows) say that the usage stats

@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <pyzy-1.0/PyZyInputContext.h>
+#include <PyZy/InputContext.h>
 
 #include "languages/pinyin/pinyin_session_factory.h"
 #include "server/mozc_server.h"

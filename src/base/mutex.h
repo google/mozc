@@ -30,14 +30,8 @@
 #ifndef MOZC_BASE_MUTEX_H_
 #define MOZC_BASE_MUTEX_H_
 
-#ifdef OS_WINDOWS
-#include <windows.h>
-#else
-#include <pthread.h>
-#endif
-
-
-#include "base/base.h"
+#include "base/port.h"
+#include "base/thread_annotations.h"
 
 namespace mozc {
 
@@ -49,167 +43,115 @@ namespace mozc {
 //   ..
 // };
 
-#ifdef OS_WINDOWS
-class Mutex : CRITICAL_SECTION {
- public:
-  Mutex() {
-    ::InitializeCriticalSection(this);
-  }
-
-  virtual ~Mutex() {
-    ::DeleteCriticalSection(this);
-  }
-
-  void Lock() {
-    ::EnterCriticalSection(this);
-  }
-
-  void Unlock() {
-    ::LeaveCriticalSection(this);
-  }
-
-  // Fallback implementations in case that ReaderWriterLock is not available.
-  void ReaderLock() { Lock(); }
-  void WriterLock() { Lock(); }
-  void ReaderUnlock() { Unlock(); }
-  void WriterUnlock() { Unlock(); }
-};
-
-// TODO(taku): implement ReaderWriterMutex for Windows.
-// e.g., http://msdn.microsoft.com/en-us/library/windows/desktop/ms683483.aspx
-typedef Mutex ReaderWriterMutex;
-
-#else   // OS_WINDOWS
-
-class Mutex {
- public:
-  Mutex() {
-    // make RECURSIVE lock:
-    // default setting is no-recursive lock.
-    // when mutex.Lock() is called while the mutex is already locked,
-    // mutex will be blocked. This behavior is not compatible with windows.
-    // We set PTHREAD_MUTEX_RECURSIVE_NP to make the mutex recursive-lock
-
-    // PTHREAD_MUTEX_RECURSIVE_NP and PTHREAD_MUTEX_RECURSIVE seem to be
-    // variants.  For example, Mac OS X 10.4 had
-    // PTHREAD_MUTEX_RECURSIVE_NP but Mac OS X 10.5 does not
-#ifdef OS_MACOSX
-#define PTHREAD_MUTEX_RECURSIVE_VALUE PTHREAD_MUTEX_RECURSIVE
+// To remove dependencies against plafrom specific headers such as
+// <Windows.h> or <pthread.h>, we use an array of pointers as an opaque buffer
+// where platform specific mutex structure will be placed.
+#if defined(OS_MACOSX)
+// Mac requires relatively large buffer for pthread mutex object.
+#define MOZC_MUTEX_PTR_ARRAYSIZE 11
+#define MOZC_RW_MUTEX_PTR_ARRAYSIZE 32
+#else
+// Currently following sizes seem to be enough to support all other platforms.
+#define MOZC_MUTEX_PTR_ARRAYSIZE 6
+#define MOZC_RW_MUTEX_PTR_ARRAYSIZE 10
 #endif
 
-#ifdef OS_LINUX
-#define PTHREAD_MUTEX_RECURSIVE_VALUE PTHREAD_MUTEX_RECURSIVE_NP
-#endif
-
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_VALUE);
-    pthread_mutex_init(&mutex_, &attr);
-  }
-
-  virtual ~Mutex() {
-    pthread_mutex_destroy(&mutex_);
-  }
-
-  void Lock() {
-    pthread_mutex_lock(&mutex_);
-  }
-
-  void Unlock() {
-    pthread_mutex_unlock(&mutex_);
-  }
-
-  // Fallback implementations in case that ReaderWriterLock is not available.
-  void ReaderLock() { Lock(); }
-  void WriterLock() { Lock(); }
-  void ReaderUnlock() { Unlock(); }
-  void WriterUnlock() { Unlock(); }
+class LOCKABLE Mutex {
+ public:
+  Mutex();
+  ~Mutex();
+  void Lock() EXCLUSIVE_LOCK_FUNCTION();
+  void Unlock() UNLOCK_FUNCTION();
 
  private:
-  pthread_mutex_t mutex_;
+  void *opaque_buffer_[MOZC_MUTEX_PTR_ARRAYSIZE];
+
+  DISALLOW_COPY_AND_ASSIGN(Mutex);
 };
 
-#if defined(OS_ANDROID) && defined(__ANDROID_API__) && (__ANDROID_API__ < 9) || \
-    defined(__native_client__)
-// pthread_rwlock_init is not available < Android ver. 2.3 and NaCl.
-// TODO(all): Enables ReaderWriterMutex on Android when API Level >= 9.
-typedef Mutex ReaderWriterMutex;
-#else  // (!OS_ANDROID || __ANDROID_API__ >= 9) && !__native_client__
+#undef MOZC_MUTEX_PTR_ARRAYSIZE
 
-#define HAVE_READER_WRITER_MUTEX
-
-class ReaderWriterMutex {
+// IMPORTANT NOTE: Unlike mozc::Mutex, this class does not always support
+//     recursive lock.
+// TODO(yukawa): Rename this as ReaderWriterNonRecursiveMutex.
+class LOCKABLE ReaderWriterMutex {
  public:
-  ReaderWriterMutex() {
-    pthread_rwlock_init(&mutex_, NULL);
-  }
+  ReaderWriterMutex();
+  ~ReaderWriterMutex();
 
-  virtual ~ReaderWriterMutex() {
-    pthread_rwlock_destroy(&mutex_);
-  }
+  void ReaderLock() SHARED_LOCK_FUNCTION();
+  void WriterLock() EXCLUSIVE_LOCK_FUNCTION();
+  void ReaderUnlock() UNLOCK_FUNCTION();
+  void WriterUnlock() UNLOCK_FUNCTION();
 
-  void ReaderLock() {
-    pthread_rwlock_rdlock(&mutex_);
-  }
-
-  void ReaderUnlock() {
-    pthread_rwlock_unlock(&mutex_);
-  }
-
-  void WriterLock() {
-    pthread_rwlock_wrlock(&mutex_);
-  }
-
-  void WriterUnlock() {
-    pthread_rwlock_unlock(&mutex_);
-  }
+  // Returns true if multiple reader thread can grant the lock at the same time
+  // on the current platform.
+  static bool MultipleReadersThreadsSupported();
 
  private:
-  pthread_rwlock_t mutex_;
+  void *opaque_buffer_[MOZC_RW_MUTEX_PTR_ARRAYSIZE];
+
+  DISALLOW_COPY_AND_ASSIGN(ReaderWriterMutex);
 };
-#endif  // (!OS_ANDROID || __ANDROID_API__ >= 9) && !__native_client__
-#endif  // OS_WINDOWS
 
-class scoped_lock {
+#undef MOZC_RW_MUTEX_PTR_ARRAYSIZE
+
+// Implementation of this class is left in header for poor compilers where link
+// time code generation has not been proven well.
+class SCOPED_LOCKABLE scoped_lock {
  public:
-  void Lock() { mutex_->Lock(); }
-  void Unlock() { mutex_->Unlock(); }
-
-  explicit scoped_lock(Mutex *mutex): mutex_(mutex) {
-    Lock();
+  explicit scoped_lock(Mutex *mutex) EXCLUSIVE_LOCK_FUNCTION(mutex)
+      : mutex_(mutex) {
+    mutex_->Lock();
   }
-
-  virtual ~scoped_lock() {
-    Unlock();
+  ~scoped_lock() UNLOCK_FUNCTION() {
+    mutex_->Unlock();
   }
 
  private:
   Mutex *mutex_;
-  scoped_lock() {}
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_lock);
 };
 
-class scoped_writer_lock {
+// Implementation of this class is left in header for poor compilers where link
+// time code generation has not been proven well.
+// TODO(yukawa): Rename this as scoped_nonrecursive_writer_lock.
+class SCOPED_LOCKABLE scoped_writer_lock {
  public:
-  explicit scoped_writer_lock(ReaderWriterMutex *mutex) : mutex_(mutex) {
+  explicit scoped_writer_lock(ReaderWriterMutex *mutex)
+      SHARED_LOCK_FUNCTION(mutex)
+      : mutex_(mutex) {
     mutex_->WriterLock();
   }
-  ~scoped_writer_lock() {
+  ~scoped_writer_lock() UNLOCK_FUNCTION() {
     mutex_->WriterUnlock();
   }
+
  private:
   ReaderWriterMutex *mutex_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_writer_lock);
 };
 
-class scoped_reader_lock {
+// Implementation of this class is left in header for poor compilers where link
+// time code generation has not been proven well.
+// TODO(yukawa): Rename this as scoped_nonrecursive_reader_lock.
+class SCOPED_LOCKABLE scoped_reader_lock {
  public:
-  explicit scoped_reader_lock(ReaderWriterMutex *mutex) : mutex_(mutex) {
+  explicit scoped_reader_lock(ReaderWriterMutex *mutex)
+      EXCLUSIVE_LOCK_FUNCTION(mutex)
+      : mutex_(mutex) {
     mutex_->ReaderLock();
   }
-  ~scoped_reader_lock() {
+  ~scoped_reader_lock() UNLOCK_FUNCTION() {
     mutex_->ReaderUnlock();
   }
+
  private:
   ReaderWriterMutex *mutex_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_reader_lock);
 };
 
 typedef scoped_lock MutexLock;
@@ -224,8 +166,8 @@ enum CallOnceState {
 
 struct once_t {
 #ifdef OS_WINDOWS
-  volatile LONG state;
-  volatile LONG counter;
+  volatile long state;    // NOLINT
+  volatile long counter;  // NOLINT
 #else
   volatile int state;
   volatile int counter;
@@ -237,5 +179,7 @@ void CallOnce(once_t *once, void (*func)());
 
 // reset once_t
 void ResetOnce(once_t *once);
+
 }  // mozc
+
 #endif  // MOZC_BASE_MUTEX_H_

@@ -46,6 +46,7 @@ namespace mozc {
 namespace commands {
 class Context;
 class KeyEvent;
+class Request;
 }  // namespace commands
 
 namespace composer {
@@ -60,7 +61,7 @@ class Composer {
     REWIND,
   };
 
-  Composer();
+  Composer(const Table *table, const commands::Request &request);
   virtual ~Composer();
 
   // Reset all composing data except table.
@@ -79,6 +80,8 @@ class Composer {
   bool Empty() const;
 
   void SetTable(const Table *table);
+
+  void SetRequest(const commands::Request &request);
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
@@ -236,6 +239,8 @@ class Composer {
   string source_text_;
 
   size_t max_length_;
+
+  commands::Request request_;
 
   DISALLOW_COPY_AND_ASSIGN(Composer);
 };

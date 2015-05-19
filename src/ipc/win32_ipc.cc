@@ -36,23 +36,40 @@
 #include <Sddl.h>
 
 #include <string>
+
 #include "base/base.h"
 #include "base/const.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "base/thread.h"
 #include "base/util.h"
 #include "base/win_sandbox.h"
+#include "base/win_util.h"
 #include "ipc/ipc_path_manager.h"
 
 namespace mozc {
 namespace {
 
+const bool kReadTypeACK = true;
+const bool kReadTypeData = false;
+const bool kSendTypeData = false;
+const int kMaxSuccessiveConnectionFailureCount = 5;
+
 typedef BOOL (WINAPI *FPGetNamedPipeServerProcessId)(HANDLE, PULONG);
 FPGetNamedPipeServerProcessId g_get_named_pipe_server_process_id = NULL;
 
+typedef BOOL (WINAPI *FPSetFileCompletionNotificationModes)(HANDLE, UCHAR);
+FPSetFileCompletionNotificationModes
+    g_set_file_completion_notification_modes = NULL;
+
+// Defined when _WIN32_WINNT >= 0x600
+#ifndef FILE_SKIP_SET_EVENT_ON_HANDLE
+#define FILE_SKIP_SET_EVENT_ON_HANDLE 0x2
+#endif  // FILE_SKIP_SET_EVENT_ON_HANDLE
+
 static once_t g_once = MOZC_ONCE_INIT;
 
-void InitFPGetNamedPipeServerProcessId() {
+void InitAPIsForVistaAndLater() {
   // We have to load the function pointer dynamically
   // as GetNamedPipeServerProcessId() is only available on Windows Vista.
   if (!Util::IsVistaOrLater()) {
@@ -61,7 +78,7 @@ void InitFPGetNamedPipeServerProcessId() {
 
   VLOG(1) << "Initializing GetNamedPipeServerProcessId";
   // kernel32.dll must be loaded in client.
-  const HMODULE lib = Util::GetSystemModuleHandle(L"kernel32.dll");
+  const HMODULE lib = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
   if (lib == NULL) {
     LOG(ERROR) << "GetSystemModuleHandle for kernel32.dll failed.";
     return;
@@ -70,22 +87,54 @@ void InitFPGetNamedPipeServerProcessId() {
   g_get_named_pipe_server_process_id =
       reinterpret_cast<FPGetNamedPipeServerProcessId>
       (::GetProcAddress(lib, "GetNamedPipeServerProcessId"));
+
+  g_set_file_completion_notification_modes =
+      reinterpret_cast<FPSetFileCompletionNotificationModes>
+      (::GetProcAddress(lib, "SetFileCompletionNotificationModes"));
 }
 
-class IPCClientMutex {
+// Least significant bit of OVERLAPPED::hEvent can be used for special
+// purpose against GetQueuedCompletionStatus API.
+// http://msdn.microsoft.com/en-us/library/windows/desktop/aa364986.aspx
+// This function provides a safe way to retrieve the actual event handle
+// even in this situation.
+HANDLE GetEventHandleFromOverlapped(const OVERLAPPED *overlapped) {
+  return reinterpret_cast<HANDLE>(
+      reinterpret_cast<DWORD_PTR>(overlapped->hEvent) & ~1);
+}
+
+// Returns true if the given |overlapped| is initialized in successful.
+bool InitOverlapped(OVERLAPPED *overlapped, HANDLE wait_handle) {
+  if (wait_handle == 0 || wait_handle == INVALID_HANDLE_VALUE) {
+    LOG(ERROR) << "wait_handle is invalid.";
+    return false;
+  }
+  ::ZeroMemory(overlapped, sizeof(OVERLAPPED));
+  if (::ResetEvent(wait_handle) == FALSE) {
+    const DWORD last_error = ::GetLastError();
+    LOG(ERROR) << "::ResetEvent failed. error: " << last_error;
+    return false;
+  }
+  overlapped->hEvent = wait_handle;
+  return true;
+}
+
+class IPCClientMutexBase {
  public:
-  IPCClientMutex() {
+  explicit IPCClientMutexBase(const string &ipc_channel_name) {
     // Make a kernel mutex object so that multiple ipc connections are
     // serialized here. In Windows, there is no useful way to serialize
     // the multiple connections to the single-thread named pipe server.
     // WaitForNamedPipe doesn't work for this propose as it just lets
     // clients know that the connection becomes "available" right now.
     // It doesn't mean that connection is available for the current
-    /// thread. The "available" notification is sent to all waiting ipc
+    // thread. The "available" notification is sent to all waiting ipc
     // clients at the same time and only one client gets the connection.
     // This causes redundant and wasteful CreateFile calles.
     string mutex_name = kMutexPathPrefix;
     mutex_name += Util::GetUserSidAsString();
+    mutex_name += ".";
+    mutex_name += ipc_channel_name;
     mutex_name += ".ipc";
     wstring wmutex_name;
     Util::UTF8ToWide(mutex_name.c_str(), &wmutex_name);
@@ -110,9 +159,9 @@ class IPCClientMutex {
     // certain which process has initial ownership.
     ipc_mutex_.reset(::CreateMutex(security_attributes_ptr,
                                    FALSE, wmutex_name.c_str()));
-
+    const DWORD create_mutex_error = ::GetLastError();
     if (ipc_mutex_.get() == NULL) {
-      LOG(ERROR) << "CreateMutex failed: " << ::GetLastError();
+      LOG(ERROR) << "CreateMutex failed: " << create_mutex_error;
       return;
     }
 
@@ -123,7 +172,7 @@ class IPCClientMutex {
     }
   }
 
-  virtual ~IPCClientMutex() {}
+  virtual ~IPCClientMutexBase() {}
 
   HANDLE get() const {
     return ipc_mutex_.get();
@@ -133,25 +182,73 @@ class IPCClientMutex {
   ScopedHandle ipc_mutex_;
 };
 
+class ConverterClientMutex : public IPCClientMutexBase {
+ public:
+  ConverterClientMutex()
+      : IPCClientMutexBase("converter") {}
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(ConverterClientMutex);
+};
+
+class RendererClientMutex : public IPCClientMutexBase {
+ public:
+  RendererClientMutex()
+      : IPCClientMutexBase("renderer") {}
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(RendererClientMutex);
+};
+
+class FallbackClientMutex : public IPCClientMutexBase {
+ public:
+  FallbackClientMutex()
+      : IPCClientMutexBase("fallback") {}
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(FallbackClientMutex);
+};
+
+// In Mozc client, we should support different IPC channels (client-converter
+// and client-renderer) so we need to have different global mutexes to
+// serialize each client. Currently |ipc_name| starts with "session" and
+// "renderer" are expected.
+HANDLE GetClientMutex(const string &ipc_name) {
+  if (Util::StartsWith(ipc_name, "session")) {
+    return Singleton<ConverterClientMutex>::get()->get();
+  }
+  if (Util::StartsWith(ipc_name, "renderer")) {
+    return Singleton<RendererClientMutex>::get()->get();
+  }
+  LOG(WARNING) << "unexpected IPC name: " << ipc_name;
+  return Singleton<FallbackClientMutex>::get()->get();
+}
+
 // RAII class for calling ReleaseMutex in destructor.
 class ScopedReleaseMutex {
  public:
   explicit ScopedReleaseMutex(HANDLE handle)
-      : handle_(handle) {}
+      : pipe_handle_(handle) {}
 
   virtual ~ScopedReleaseMutex() {
-    if (NULL != handle_) {
-      ::ReleaseMutex(handle_);
+    if (NULL != pipe_handle_) {
+      ::ReleaseMutex(pipe_handle_);
     }
+    pipe_handle_ = NULL;
   }
 
-  HANDLE get() const { return handle_; }
+  HANDLE get() const {
+    return pipe_handle_;
+  }
+
  private:
-  HANDLE handle_;
+  HANDLE pipe_handle_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ScopedReleaseMutex);
 };
 
-uint32 GetServerProcessId(HANDLE handle) {
-  CallOnce(&g_once, &InitFPGetNamedPipeServerProcessId);
+uint32 GetServerProcessIdImpl(HANDLE handle) {
+  CallOnce(&g_once, &InitAPIsForVistaAndLater);
 
   if (g_get_named_pipe_server_process_id == NULL) {
     return static_cast<uint32>(0);   // must be Windows XP
@@ -159,7 +256,9 @@ uint32 GetServerProcessId(HANDLE handle) {
 
   ULONG pid = 0;
   if ((*g_get_named_pipe_server_process_id)(handle, &pid) == 0) {
-    LOG(ERROR) << "GetNamedPipeServerProcessId failed: " << ::GetLastError();
+    const DWORD get_named_pipe_server_process_id_error = ::GetLastError();
+    LOG(ERROR) << "GetNamedPipeServerProcessId failed: "
+               << get_named_pipe_server_process_id_error;
     return static_cast<uint32>(-1);   // always deny the connection
   }
 
@@ -168,18 +267,124 @@ uint32 GetServerProcessId(HANDLE handle) {
   return static_cast<uint32>(pid);
 }
 
-void SafeCancelIO(HANDLE handle, OVERLAPPED *overlapped) {
-  if (::CancelIo(handle)) {
-    // wait for the cancel to complete
-    // ignore the result, as we're exiting anyway
-    DWORD size = 0;
-    ::GetOverlappedResult(handle, overlapped, &size, TRUE);
-  } else {
-    LOG(WARNING) << "Failed to CancelIo: " << ::GetLastError();
+void SafeCancelIO(HANDLE device_handle, OVERLAPPED *overlapped) {
+  if (::CancelIo(device_handle) == FALSE) {
+    const DWORD cancel_error = ::GetLastError();
+    // In this case, the issued I/O is still on-going. We must keep
+    // |overlapped| and the memory block used for this I/O accessible from the
+    // I/O module. Otherwise, unexpected memory corruption may happen.
+    LOG(ERROR) << "Failed to CancelIo: " << cancel_error;
+    return;
   }
+
+  // Wait for the completion of the cancel request forever. This is not _safe_
+  // and should be fixed anyway.
+  // TODO(yukawa): Do not use INFINITE here.
+  ::WaitForSingleObject(GetEventHandleFromOverlapped(overlapped), INFINITE);
 }
 
-bool SendIPCMessage(HANDLE handle,
+bool WaitForQuitOrIOImpl(
+    HANDLE device_handle, HANDLE quit_event, DWORD timeout,
+    OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
+  const HANDLE events[] = {
+    quit_event, GetEventHandleFromOverlapped(overlapped)
+  };
+  const DWORD wait_result = ::WaitForMultipleObjects(
+      ARRAYSIZE(events), events, FALSE, timeout);
+  const DWORD wait_error = ::GetLastError();
+  // Clear the I/O operation if still exists.
+  if (!HasOverlappedIoCompleted(overlapped)) {
+    // This is not safe because this operation may be blocked forever.
+    // TODO(yukawa): Implement safer cancelation mechanism.
+    SafeCancelIO(device_handle, overlapped);
+  }
+  if (wait_result == WAIT_TIMEOUT) {
+    LOG(WARNING) << "Timeout: " << timeout;
+    *last_ipc_error = IPC_TIMEOUT_ERROR;
+    return false;
+  }
+  if (wait_result == WAIT_OBJECT_0) {
+    // Should be quit immediately
+    *last_ipc_error = IPC_QUIT_EVENT_SIGNALED;
+    return false;
+  }
+  if (wait_result != (WAIT_OBJECT_0 + 1)) {
+    LOG(WARNING) << "Unknown result: " << wait_result
+                 << ", Error: " << wait_error;
+    *last_ipc_error = IPC_UNKNOWN_ERROR;
+    return false;
+  }
+  return true;
+}
+
+bool WaitForIOImpl(HANDLE device_handle, DWORD timeout,
+                   OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
+  const DWORD wait_result = ::WaitForSingleObject(
+      GetEventHandleFromOverlapped(overlapped), timeout);
+  // Clear the I/O operation if still exists.
+  if (!HasOverlappedIoCompleted(overlapped)) {
+    // This is not safe because this operation may be blocked forever.
+    // TODO(yukawa): Implement safer cancelation mechanism.
+    SafeCancelIO(device_handle, overlapped);
+  }
+  if (wait_result == WAIT_TIMEOUT) {
+    LOG(WARNING) << "Timeout: " << timeout;
+    *last_ipc_error = IPC_TIMEOUT_ERROR;
+    return false;
+  }
+  if (wait_result != WAIT_OBJECT_0) {
+    LOG(WARNING) << "Unknown result: " << wait_result;
+    *last_ipc_error = IPC_UNKNOWN_ERROR;
+    return false;
+  }
+  return true;
+}
+
+bool WaitForQuitOrIO(
+    HANDLE device_handle, HANDLE quit_event, DWORD timeout,
+    OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
+  if (quit_event != NULL) {
+    return WaitForQuitOrIOImpl(device_handle, quit_event, timeout,
+                               overlapped, last_ipc_error);
+  }
+  return WaitForIOImpl(device_handle, timeout, overlapped, last_ipc_error);
+}
+
+// To work around a bug of GetOverlappedResult in Vista
+// http://msdn.microsoft.com/en-us/library/dd371711.aspx
+bool SafeWaitOverlappedResult(
+    HANDLE device_handle, HANDLE quit_event, DWORD timeout,
+    OVERLAPPED *overlapped, DWORD *num_bytes_updated,
+    IPCErrorType *last_ipc_error, bool wait_ack) {
+  DCHECK(overlapped);
+  DCHECK(num_bytes_updated);
+  DCHECK(last_ipc_error);
+  if (!WaitForQuitOrIO(device_handle, quit_event, timeout,
+                       overlapped, last_ipc_error)) {
+    return false;
+  }
+
+  *num_bytes_updated = 0;
+  const BOOL get_overlapped_result = ::GetOverlappedResult(
+      device_handle, overlapped, num_bytes_updated, FALSE);
+  if (get_overlapped_result == FALSE) {
+    const DWORD get_overlapped_error = ::GetLastError();
+    if (get_overlapped_error == ERROR_BROKEN_PIPE) {
+      if (wait_ack) {
+        // This is an expected behavior.
+        return true;
+      }
+      LOG(ERROR) << "GetOverlappedResult() failed: ERROR_BROKEN_PIPE";
+    } else {
+      LOG(ERROR) << "GetOverlappedResult() failed: " << get_overlapped_error;
+    }
+    *last_ipc_error = IPC_UNKNOWN_ERROR;
+    return false;
+  }
+  return true;
+}
+
+bool SendIPCMessage(HANDLE device_handle, HANDLE write_wait_handle,
                     const char *buf, size_t buf_length, int timeout,
                     IPCErrorType *last_ipc_error) {
   if (buf_length == 0) {
@@ -188,43 +393,45 @@ bool SendIPCMessage(HANDLE handle,
     return false;
   }
 
-  OVERLAPPED Overlapped;
-
-  bool error = false;
-  while (buf_length > 0) {
-    ::ZeroMemory(&Overlapped, sizeof(Overlapped));
-    if (!::WriteFile(handle, buf,
-                     static_cast<DWORD>(buf_length), NULL, &Overlapped) &&
-        ERROR_IO_PENDING != ::GetLastError()) {
-      LOG(ERROR) << "WriteFile failed: " << ::GetLastError();
-      *last_ipc_error = IPC_WRITE_ERROR;
-      error = true;
-      break;
-    }
-
-    if (WAIT_OBJECT_0 != ::WaitForSingleObject(handle, timeout)) {
-      SafeCancelIO(handle, &Overlapped);
-      LOG(WARNING) << "Write timeout: " << timeout;
-      *last_ipc_error = IPC_TIMEOUT_ERROR;
-      error = true;
-      break;
-    }
-
-    DWORD size = 0;
-    if (!::GetOverlappedResult(handle, &Overlapped, &size, FALSE)) {
-      LOG(ERROR) << "GetOverlappedResult() failed: " << ::GetLastError();
-      *last_ipc_error = IPC_UNKNOWN_ERROR;
-      error = true;
-      break;
-    }
-    buf_length -= size;
-    buf += size;
+  DWORD num_bytes_written = 0;
+  OVERLAPPED overlapped;
+  if (!InitOverlapped(&overlapped, write_wait_handle)) {
+    *last_ipc_error = IPC_WRITE_ERROR;
+    return false;
   }
 
-  return !error;
+  const bool write_file_result = (::WriteFile(
+      device_handle, buf, static_cast<DWORD>(buf_length),
+      &num_bytes_written, &overlapped) != FALSE);
+  const DWORD write_file_error = ::GetLastError();
+  if (write_file_result) {
+    // ::WriteFile is done as sync operation.
+  } else {
+    if (write_file_error != ERROR_IO_PENDING) {
+      LOG(ERROR) << "WriteFile() failed: " << write_file_error;
+      *last_ipc_error = IPC_WRITE_ERROR;
+      return false;
+    }
+    if (!SafeWaitOverlappedResult(
+            write_wait_handle, NULL, timeout, &overlapped,
+            &num_bytes_written, last_ipc_error, kSendTypeData)) {
+      return false;
+    }
+  }
+
+  // As we use message-type namedpipe, all the data should be written in one
+  // shot. Otherwise, single message will be split into multiple packets.
+  if (num_bytes_written != buf_length) {
+    LOG(ERROR) << "Data truncated. buf_length: " << buf_length
+               << ", num_bytes_written: " << num_bytes_written;
+    *last_ipc_error = IPC_UNKNOWN_ERROR;
+    return false;
+  }
+  return true;
 }
 
-bool RecvIPCMessage(HANDLE handle, char *buf, size_t *buf_length, int timeout,
+bool RecvIPCMessage(HANDLE device_handle, HANDLE read_wait_handle, char *buf,
+                    size_t *buf_length, int timeout, bool read_type_ack,
                     IPCErrorType *last_ipc_error) {
   if (*buf_length == 0) {
     LOG(WARNING) << "buf length is 0";
@@ -232,46 +439,71 @@ bool RecvIPCMessage(HANDLE handle, char *buf, size_t *buf_length, int timeout,
     return false;
   }
 
-  OVERLAPPED Overlapped;
-  ::ZeroMemory(&Overlapped, sizeof(Overlapped));
-
-  if (!::ReadFile(handle, buf,
-                  static_cast<DWORD>(*buf_length), NULL, &Overlapped) &&
-      ERROR_IO_PENDING != ::GetLastError()) {
-    LOG(ERROR) << "ReadFile() failed: " << ::GetLastError();
+  OVERLAPPED overlapped;
+  if (!InitOverlapped(&overlapped, read_wait_handle)) {
     *last_ipc_error = IPC_READ_ERROR;
     return false;
   }
 
-  if (WAIT_OBJECT_0 != ::WaitForSingleObject(handle, timeout)) {
-    SafeCancelIO(handle, &Overlapped);
-    LOG(WARNING) << "Read timeout: " << timeout;
-    *last_ipc_error = IPC_TIMEOUT_ERROR;
-    return false;
+  DWORD num_bytes_read = 0;
+  const bool read_file_result = (::ReadFile(
+      device_handle, buf, static_cast<DWORD>(*buf_length), &num_bytes_read,
+      &overlapped) != FALSE);
+  const DWORD read_file_error = ::GetLastError();
+  if (read_file_result) {
+    // ::ReadFile is done as sync operation.
+  } else {
+    if (read_type_ack && (read_file_error == ERROR_BROKEN_PIPE)) {
+      // The client has already disconnected this pipe. This is an expected
+      // behavior and do not treat as an error.
+      return true;
+    }
+    if (read_file_error != ERROR_IO_PENDING) {
+      LOG(ERROR) << "ReadFile() failed: " << read_file_error;
+      *last_ipc_error = IPC_READ_ERROR;
+      return false;
+    }
+    // Actually this is an async operation. Let's wait for its completion.
+    if (!SafeWaitOverlappedResult(
+            read_wait_handle, NULL, timeout, &overlapped,
+            &num_bytes_read, last_ipc_error, read_type_ack)) {
+      return false;
+    }
   }
 
-  DWORD size = 0;
-  if (!::GetOverlappedResult(handle, &Overlapped, &size, FALSE)) {
-    LOG(ERROR) << "GetOverlappedResult() failed: " << ::GetLastError();
-    *last_ipc_error = IPC_UNKNOWN_ERROR;
-    return false;
+  if (!read_type_ack && (num_bytes_read == 0)) {
+    LOG(WARNING) << "Received 0 result.";
   }
 
-  if (size <= 0) {
-    LOG(WARNING) << "Received 0 result. ignored";
-  }
-
-  *buf_length = size;
+  *buf_length = num_bytes_read;
 
   return true;
 }
+
+HANDLE CreateManualResetEvent() {
+  return ::CreateEvent(NULL, TRUE, FALSE, NULL);
+}
+
+// We do not care about the signaled state of the device handle itself.
+// This slightly improves the performance.
+// See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365538.aspx
+void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
+  CallOnce(&g_once, &InitAPIsForVistaAndLater);
+  if (g_set_file_completion_notification_modes != NULL) {
+    // This is not a mandatory task. Just ignore the actual error (if any).
+    g_set_file_completion_notification_modes(device_handle,
+                                             FILE_SKIP_SET_EVENT_ON_HANDLE);
+  }
+}
+
 }  // namespace
 
 IPCServer::IPCServer(const string &name,
                      int32 num_connections,
                      int32 timeout)
     : connected_(false),
-      event_(::CreateEvent(NULL, TRUE, FALSE, NULL)),
+      pipe_event_(CreateManualResetEvent()),
+      quit_event_(CreateManualResetEvent()),
       timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
   string server_address;
@@ -309,15 +541,17 @@ IPCServer::IPCServer(const string &name,
                                     sizeof(response_),
                                     0,
                                     &security_attributes);
+  const DWORD create_named_pipe_error = ::GetLastError();
+  ::LocalFree(security_attributes.lpSecurityDescriptor);
 
   if (INVALID_HANDLE_VALUE == handle) {
-    LOG(FATAL) << "CreateNamedPipe failed" << ::GetLastError();
+    LOG(FATAL) << "CreateNamedPipe failed" << create_named_pipe_error;
     return;
   }
 
-  handle_.reset(handle);
+  pipe_handle_.reset(handle);
 
-  ::LocalFree(security_attributes.lpSecurityDescriptor);
+  MaybeDisableFileCompletionNotification(pipe_handle_.get());
 
   if (!manager->SavePathName()) {
     LOG(ERROR) << "Cannot save IPC path name";
@@ -344,7 +578,7 @@ void IPCServer::Terminate() {
     return;
   }
 
-  if (!::SetEvent(event_.get())) {
+  if (!::SetEvent(quit_event_.get())) {
     LOG(ERROR) << "SetEvent failed";
   }
 
@@ -361,56 +595,56 @@ void IPCServer::Terminate() {
 void IPCServer::Loop() {
   IPCErrorType last_ipc_error = IPC_NO_ERROR;
 
+  int successive_connection_failure_count = 0;
   while (connected_) {
-    OVERLAPPED Overlapped;
-    ::ZeroMemory(&Overlapped, sizeof(Overlapped));
-    const HRESULT result = ::ConnectNamedPipe(handle_.get(), &Overlapped);
-    // ConnectNamedPipe always return 0 with Overlapped IO
-    CHECK_EQ(0, result);
-
-    DWORD size = 0;
-    const DWORD last_error = ::GetLastError();
-    // WaitForMultipleObjects returns the smallest index value of all the
-    // signaled objects if bWaitAll parameter is FALSE.  Thus we should sort
-    // the handle array by their priorities.
-    HANDLE handles[2] = { event_.get(), handle_.get() };
-
-    switch (last_error) {
-      case ERROR_IO_PENDING:  // wait for incoming message
-        switch (::WaitForMultipleObjects(2, handles, FALSE, INFINITE)) {
-          case WAIT_OBJECT_0:
-            LOG(WARNING) << "Recived Conrol event from other thread";
-            SafeCancelIO(handle_.get(), &Overlapped);
-            connected_ = false;
-            return;
-          case WAIT_OBJECT_0 + 1:
-            break;
-          default:
-            LOG(FATAL) << "::WaitForMultipleObjects() failed: "
-                       << GetLastError();
-            SafeCancelIO(handle_.get(), &Overlapped);
-            return;
-        }
-        if (!::GetOverlappedResult(handle_.get(), &Overlapped, &size, FALSE)) {
-          LOG(FATAL) << "::GetOverlappedResult() failed: " << GetLastError();
-          return;
-        }
-        break;
-      case ERROR_NO_DATA:  // client already closes the connection
-        ::DisconnectNamedPipe(handle_.get());
-        continue;
-        break;
-      case ERROR_PIPE_CONNECTED:  // client is sending requests
-        break;
-      default:
-        LOG(FATAL) << "::ConnectNamedPipe() failed: " << GetLastError();
-        break;
+    OVERLAPPED overlapped;
+    if (!InitOverlapped(&overlapped, pipe_event_.get())) {
+      connected_ = false;
+      return;
     }
 
+    const HRESULT result = ::ConnectNamedPipe(pipe_handle_.get(), &overlapped);
+    const DWORD connect_named_pipe_error = ::GetLastError();
+    if (result == FALSE) {
+      if (connect_named_pipe_error == ERROR_PIPE_CONNECTED) {
+        // Already connected. Nothing to do.
+      } else if (connect_named_pipe_error == ERROR_NO_DATA) {
+        // client already closes the connection
+        ::DisconnectNamedPipe(pipe_handle_.get());
+        continue;
+      } else if (connect_named_pipe_error == ERROR_IO_PENDING) {
+        // Actually this is async operation.
+        DWORD ignored = 0;
+        IPCErrorType ipc_error = IPC_NO_ERROR;
+        if (!SafeWaitOverlappedResult(pipe_handle_.get(), quit_event_.get(),
+                                      INFINITE, &overlapped, &ignored,
+                                      &ipc_error, kReadTypeData)) {
+          if (ipc_error == IPC_QUIT_EVENT_SIGNALED) {
+            VLOG(1) << "Recived Conrol event from other thread";
+            connected_ = false;
+            return;
+          }
+          ++successive_connection_failure_count;
+          if (successive_connection_failure_count >=
+              kMaxSuccessiveConnectionFailureCount) {
+            LOG(ERROR) << "Give up to connect named pipe.";
+            connected_ = false;
+            return;
+          }
+          ::DisconnectNamedPipe(pipe_handle_.get());
+          continue;
+        }
+      } else {
+        LOG(FATAL) << "Unexpected error: " << connect_named_pipe_error;
+      }
+    }
+
+    successive_connection_failure_count = 0;
     // Retrieve an incoming message.
     size_t request_size = sizeof(request_);
-    if (RecvIPCMessage(handle_.get(), &request_[0], &request_size, timeout_,
-                       &last_ipc_error)) {
+    if (RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(),
+                       &request_[0], &request_size, timeout_,
+                       kReadTypeData, &last_ipc_error)) {
       size_t response_size = sizeof(response_);
       if (!Process(&request_[0], request_size,
                    &response_[0], &response_size)) {
@@ -421,38 +655,39 @@ void IPCServer::Loop() {
       // instead of checking ACK message
       if (response_size == 0) {
         LOG(WARNING) << "Process() return 0 result";
-        ::DisconnectNamedPipe(handle_.get());
+        ::DisconnectNamedPipe(pipe_handle_.get());
         continue;
       }
 
       // Send a response
-      SendIPCMessage(handle_.get(), &response_[0], response_size,
-                     timeout_, &last_ipc_error);
+      SendIPCMessage(pipe_handle_.get(), pipe_event_.get(),
+                     &response_[0], response_size, timeout_, &last_ipc_error);
     }
 
     // Special treatment for Windows per discussion with thatanaka:
     // It's hard to know that client has processed the server's response.
-    // We will be able to call ::FlushFileHandles() here, but FlushFileHandles()
-    // is blocked if client doesn't call ReadFile(). That means that
-    // a malicious user can easily block the server not by calling ReadFile.
-    // In order to know the transaction completes successfully, client needs to
-    // send an ACK message to the server.
+    // We will be able to call ::FlushFileHandles() here, but
+    // FlushFileHandles() is blocked if client doesn't call ReadFile(). That
+    // means that a malicious user can easily block the server not by calling
+    // ReadFile. In order to know the transaction completes successfully,
+    // client needs to send an ACK message to the server.
 
-    // Wait ACK message from client for 0.1 second
+    // Wait ACK-like signal from client for 0.1 second. If we detect the pipe
+    // disconnect event, so far so good. If we receive more data, we assume it
+    // is an ACK signal (the IPC client of Mozc 1.5.x or earlier does this).
     char ack_request[1] = {0};
     size_t ack_request_size = 1;
     static const int kAckTimeout = 100;
-    if (!RecvIPCMessage(handle_.get(), ack_request,
-                        &ack_request_size, kAckTimeout, &last_ipc_error)) {
-      // This case happens
-      // 1) Client did not send an ACK but close the handle.
-      // 2) Client did not recive the server's response within timeout
-      // In ether case, we can safly close the connection.
-      LOG(WARNING) << "Client doesn't send ACK message";
+    if (!RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(),
+                        ack_request, &ack_request_size, kAckTimeout,
+                        kReadTypeACK, &last_ipc_error)) {
+      // This case happens when the client did not recive the server's response
+      // within timeout. Anyway we will close the connection so that the server
+      // will not be blocked.
+      LOG(WARNING) << "Client didn't respond within "
+                   << kAckTimeout << " msec.";
     }
-
-    // Can safely close the handle as server can recive an ACK message.
-    ::DisconnectNamedPipe(handle_.get());
+    ::DisconnectNamedPipe(pipe_handle_.get());
   }
 
   connected_ = false;
@@ -460,14 +695,16 @@ void IPCServer::Loop() {
 
 // old interface
 IPCClient::IPCClient(const string &name)
-    : connected_(false),
+    : pipe_event_(CreateManualResetEvent()),
+      connected_(false),
       ipc_path_manager_(NULL),
       last_ipc_error_(IPC_NO_ERROR) {
   Init(name, "");
 }
 
 IPCClient::IPCClient(const string &name, const string &server_path)
-    : connected_(false),
+    : pipe_event_(CreateManualResetEvent()),
+      connected_(false),
       ipc_path_manager_(NULL),
       last_ipc_error_(IPC_NO_ERROR) {
   Init(name, server_path);
@@ -476,10 +713,8 @@ IPCClient::IPCClient(const string &name, const string &server_path)
 void IPCClient::Init(const string &name, const string &server_path) {
   last_ipc_error_ = IPC_NO_CONNECTION;
 
-  // TODO(taku): ICPClientMutex doesn't take IPC path name into consideration.
-  // Currently, it is not a critical problem, as we only have single
-  // channel (session).
-  ScopedReleaseMutex ipc_mutex(Singleton<IPCClientMutex>::get()->get());
+  // We should change the mutex based on which IPC server we will talk with.
+  ScopedReleaseMutex ipc_mutex(GetClientMutex(name));
 
   if (ipc_mutex.get() == NULL) {
     LOG(ERROR) << "IPC mutex is not available";
@@ -512,7 +747,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
   ipc_path_manager_ = manager;
 
   // TODO(taku): enable them on Mac/Linux
-#ifdef _DEBUG
+#ifdef DEBUG
   const size_t kMaxTrial = 256;
 #else
   const size_t kMaxTrial = 2;
@@ -526,18 +761,27 @@ void IPCClient::Init(const string &name, const string &server_path) {
     wstring wserver_address;
     Util::UTF8ToWide(server_address.c_str(), &wserver_address);
 
-    HANDLE handle = ::CreateFile(wserver_address.c_str(),
-                                 GENERIC_READ | GENERIC_WRITE,
-                                 0, NULL, OPEN_EXISTING,
-                                 FILE_FLAG_OVERLAPPED |
-                                 SECURITY_SQOS_PRESENT |
-                                 SECURITY_IDENTIFICATION |
-                                 SECURITY_EFFECTIVE_ONLY,
-                                 NULL);
-
+    const HANDLE handle = ::CreateFile(wserver_address.c_str(),
+                                       GENERIC_READ | GENERIC_WRITE,
+                                       0, NULL, OPEN_EXISTING,
+                                       FILE_FLAG_OVERLAPPED |
+                                       SECURITY_SQOS_PRESENT |
+                                       SECURITY_IDENTIFICATION |
+                                       SECURITY_EFFECTIVE_ONLY,
+                                       NULL);
+    const DWORD create_file_error = ::GetLastError();
     if (INVALID_HANDLE_VALUE != handle) {
-      handle_.reset(handle);
-      if (!manager->IsValidServer(mozc::GetServerProcessId(handle_.get()),
+      DWORD mode = PIPE_READMODE_MESSAGE;
+      if (::SetNamedPipeHandleState(handle, &mode, NULL, NULL) == FALSE) {
+        const DWORD set_namedpipe_handle_state_error = ::GetLastError();
+        LOG(ERROR) << "SetNamedPipeHandleState failed. error: "
+                   << set_namedpipe_handle_state_error;
+        last_ipc_error_ = IPC_UNKNOWN_ERROR;
+        return;
+      }
+      pipe_handle_.reset(handle);
+      MaybeDisableFileCompletionNotification(pipe_handle_.get());
+      if (!manager->IsValidServer(GetServerProcessIdImpl(pipe_handle_.get()),
                                   server_path)) {
         LOG(ERROR) << "Connecting to invalid server";
         last_ipc_error_ = IPC_INVALID_SERVER;
@@ -547,19 +791,17 @@ void IPCClient::Init(const string &name, const string &server_path) {
       last_ipc_error_ = IPC_NO_ERROR;
       connected_ = true;
       return;
-    } else {
-      DLOG(ERROR) << "CreateFile failed: " << ::GetLastError();
     }
 
-    if (ERROR_PIPE_BUSY != ::GetLastError()) {
-      LOG(ERROR) << "Server is not running: " << ::GetLastError();
+    if (ERROR_PIPE_BUSY != create_file_error) {
+      LOG(ERROR) << "Server is not running: " << create_file_error;
       manager->Clear();
       continue;
     }
 
     // wait for 10 second until server is ready
     // TODO(taku): control the timeout via flag.
-#ifdef _DEBUG
+#ifdef DEBUG
     const int kNamedPipeTimeout = 100000;   // 100 sec
 #else
     const int kNamedPipeTimeout = 10000;    // 10 sec
@@ -568,7 +810,8 @@ void IPCClient::Init(const string &name, const string &server_path) {
                 << kNamedPipeTimeout << " msec";
     if (!::WaitNamedPipe(wserver_address.c_str(),
                          kNamedPipeTimeout)) {
-      LOG(ERROR) << "WaitNamedPipe failed: " << ::GetLastError();
+      const DWORD wait_named_pipe_error = ::GetLastError();
+      LOG(ERROR) << "WaitNamedPipe failed: " << wait_named_pipe_error;
       if ((trial + 1) == kMaxTrial) {
         last_ipc_error_ = IPC_TIMEOUT_ERROR;
         return;
@@ -594,26 +837,27 @@ bool IPCClient::Call(const char *request, size_t request_size,
     return false;
   }
 
-  if (!SendIPCMessage(handle_.get(), request, request_size, timeout,
-                      &last_ipc_error_)) {
+  if (!SendIPCMessage(pipe_handle_.get(), pipe_event_.get(), request,
+                      request_size, timeout, &last_ipc_error_)) {
     LOG(ERROR) << "SendIPCMessage() failed";
     return false;
   }
 
-  if (!RecvIPCMessage(handle_.get(), response, response_size, timeout,
+  if (!RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), response,
+                      response_size, timeout, kReadTypeData,
                       &last_ipc_error_)) {
     LOG(ERROR) << "RecvIPCMessage() failed";
     return false;
   }
 
-  // Client sends an ACK message to Server to notify that
-  // client can read the message successfully.
-  const char kAckMessage[1] = { 0 };
-  IPCErrorType unused_error_type;
-  SendIPCMessage(handle_.get(), kAckMessage, 1, timeout, &unused_error_type);
+  // Instead of sending ACK message to Server, we simply disconnect the named
+  // pile to notify that client can read the message successfully.
+  connected_ = false;
+  pipe_handle_.reset(INVALID_HANDLE_VALUE);
 
   return true;
 }
+
 }  // namespace mozc
 
 #endif  // OS_WINDOWS

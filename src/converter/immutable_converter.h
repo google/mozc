@@ -100,7 +100,6 @@ class ConnectionTypeHandler {
 
 class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
-  ImmutableConverterImpl();
   ImmutableConverterImpl(const DictionaryInterface *dictionary,
                          const DictionaryInterface *suffix_dictionary,
                          const SuppressionDictionary *suppression_dictionary,

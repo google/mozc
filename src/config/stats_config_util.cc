@@ -53,11 +53,16 @@
 #include "base/mutex.h"
 #endif
 
+#ifdef OS_ANDROID
+#include "config/config_handler.h"
+#include "config/config.pb.h"
+#endif  // OS_ANDROID
 
 #include "base/singleton.h"
 #include "base/util.h"
 
 namespace mozc {
+namespace config {
 namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
@@ -75,17 +80,17 @@ const wchar_t kSendStatsName[] = L"usagestats";
 
 class WinStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  WinStatsConfigUtilImpl();
-  virtual ~WinStatsConfigUtilImpl();
-  bool IsEnabled();
-  bool SetEnabled(bool val);
+  WinStatsConfigUtilImpl() {
+  }
+  virtual ~WinStatsConfigUtilImpl() {
+  }
+  virtual bool IsEnabled() const;
+  virtual bool SetEnabled(bool val);
+ private:
+  DISALLOW_COPY_AND_ASSIGN(WinStatsConfigUtilImpl);
 };
 
-WinStatsConfigUtilImpl::WinStatsConfigUtilImpl() {}
-
-WinStatsConfigUtilImpl::~WinStatsConfigUtilImpl() {}
-
-bool WinStatsConfigUtilImpl::IsEnabled() {
+bool WinStatsConfigUtilImpl::IsEnabled() const {
 #ifdef CHANNEL_DEV
   return true;
 #else
@@ -154,13 +159,16 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
 class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   MacStatsConfigUtilImpl();
-  virtual ~MacStatsConfigUtilImpl();
-  bool IsEnabled();
-  bool SetEnabled(bool val);
+  virtual ~MacStatsConfigUtilImpl() {
+  }
+  virtual bool IsEnabled() const;
+  virtual bool SetEnabled(bool val);
 
  private:
   string config_file_;
   Mutex mutex_;
+
+  DISALLOW_COPY_AND_ASSIGN(MacStatsConfigUtilImpl);
 };
 
 MacStatsConfigUtilImpl::MacStatsConfigUtilImpl() {
@@ -168,9 +176,7 @@ MacStatsConfigUtilImpl::MacStatsConfigUtilImpl() {
       Util::GetUserProfileDirectory() + "/.usagestats.db";  // hidden file
 }
 
-MacStatsConfigUtilImpl::~MacStatsConfigUtilImpl() {}
-
-bool MacStatsConfigUtilImpl::IsEnabled() {
+bool MacStatsConfigUtilImpl::IsEnabled() const {
 #ifdef CHANNEL_DEV
   return true;
 #else
@@ -220,6 +226,25 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 }
 #endif  // MACOSX
 
+#ifdef OS_ANDROID
+class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
+ public:
+  AndroidStatsConfigUtilImpl() {
+  }
+  virtual ~AndroidStatsConfigUtilImpl() {
+  }
+  virtual bool IsEnabled() const {
+    return ConfigHandler::GetConfig().general_config().upload_usage_stats();
+  }
+  virtual bool SetEnabled(bool val) {
+    // TODO(horo): Implement this.
+    return false;
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(AndroidStatsConfigUtilImpl);
+};
+#endif  // OS_ANDROID
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -227,12 +252,14 @@ class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   NullStatsConfigUtilImpl() {}
   virtual ~NullStatsConfigUtilImpl() {}
-  bool IsEnabled() {
+  virtual bool IsEnabled() const {
     return false;
   }
-  bool SetEnabled(bool val) {
+  virtual bool SetEnabled(bool val) {
     return true;
   }
+ private:
+  DISALLOW_COPY_AND_ASSIGN(NullStatsConfigUtilImpl);
 };
 
 StatsConfigUtilInterface *g_stats_config_util_handler = NULL;
@@ -273,4 +300,6 @@ bool StatsConfigUtil::IsEnabled() {
 bool StatsConfigUtil::SetEnabled(bool val) {
   return GetStatsConfigUtil().SetEnabled(val);
 }
+
+}  // namespace config
 }  // namespace mozc

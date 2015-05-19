@@ -36,6 +36,8 @@
 #include "base/base.h"
 #include "base/run_level.h"
 #include "base/util.h"
+#include "base/crash_report_util.h"
+#include "config/stats_config_util.h"
 
 #ifdef OS_WINDOWS
 #include "base/winmain.h"
@@ -90,7 +92,10 @@ int main(int argc, char *argv[]) {
     FLAGS_restricted = true;
   }
 
-  InitGoogleWithBreakPad(argv[0], &argc, &argv, false);
+  if (mozc::config::StatsConfigUtil::IsEnabled()) {
+    mozc::CrashReportUtil::InstallBreakpad();
+  }
+  InitGoogle(argv[0], &argc, &argv, false);
 
   int result_code = 0;
 

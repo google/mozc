@@ -37,14 +37,28 @@
 
 // MIDL_INTERFACE expects a string literal rather than a constant array of
 // characters.
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #define IIDSTR_IMozcLangBarMenu "85B8A2CD-88A0-469f-BC39-8333620AE1F5"
 #define IIDSTR_IMozcToggleButtonMenu "E625A19B-C56D-4511-8B48-5A7C2AA10DF5"
+#else
+#define IIDSTR_IMozcLangBarItem "6419BEBA-28B7-458D-B7C7-46657FE468D9"
+#define IIDSTR_IMozcLangBarToggleItem "14CAC0FE-90C3-4DFC-97FA-B7113F93BD74"
+#endif
 
 class LangBarCallback;
 
+enum ImeLangBarItemFlags {
+  kImeLangBarItemTypeDefault = 0,
+  kImeLangBarItemTypeChecked = TF_LBMENUF_CHECKED,            // 0x1
+  // ImeLangBarItemTypeSubMenu = TF_LBMENUF_SUBMENU  // 0x2 (not supported)
+  kImeLangBarItemTypeSeparator = TF_LBMENUF_SEPARATOR,        // 0x4
+  kImeLangBarItemTypeRadioChecked = TF_LBMENUF_RADIOCHECKED,  // 0x8
+  kImeLangBarItemTypeGrayed = TF_LBMENUF_GRAYED,              // 0x10
+};
+
 // Represents a tuple to specify the content of a language bar menu item.
 struct ImeLangBarMenuItem {
-  int flags_;
+  ImeLangBarItemFlags flags_;
   UINT menu_id_;
   UINT text_id_;
   UINT icon_id_for_non_theme_;

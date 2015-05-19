@@ -94,8 +94,5 @@ UserDataManagerInterface *ChewingSessionFactory::GetUserDataManager() {
   return Singleton<EmptyUserDataManager>::get();
 }
 
-bool ChewingSessionFactory::IsAvailable() const {
-  return true;
-}
 }  // namespace session
 }  // namespace mozc

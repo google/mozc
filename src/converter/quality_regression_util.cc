@@ -27,18 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "converter/quality_regression_util.h"
+
 #include <string>
 #include <vector>
 #include <sstream>
+
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
-#include "converter/segments.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
-#include "converter/quality_regression_util.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace quality_regression {
@@ -97,7 +100,7 @@ uint32 GetPlatfromFromString(const string &str) {
   if (str == "mobile") {
     return QualityRegressionUtil::MOBILE;
   }
-  LOG(ERROR) << "Unknown platform name: " << str;
+  LOG(FATAL) << "Unknown platform name: " << str;
   return QualityRegressionUtil::DESKTOP;
 }
 }   // namespace
@@ -121,8 +124,8 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
   key            = tokens[1];
   TextNormalizer::NormalizeCandidateText(tokens[2], &expected_value);
   command        = tokens[3];
-  expected_rank  = atoi(tokens[4].c_str());
-  accuracy       = atof(tokens[5].c_str());
+  expected_rank  = NumberUtil::SimpleAtoi(tokens[4].c_str());
+  NumberUtil::SafeStrToDouble(tokens[5].c_str(), &accuracy);
   platform       = 0;
   if (tokens.size() >= 7) {
     vector<string> platforms;
@@ -135,14 +138,6 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
     platform = QualityRegressionUtil::DESKTOP;
   }
   return true;
-}
-
-QualityRegressionUtil::QualityRegressionUtil()
-    : converter_(ConverterFactory::GetConverter()),
-      segments_(new Segments) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  config::ConfigHandler::SetConfig(config);
 }
 
 QualityRegressionUtil::QualityRegressionUtil(ConverterInterface *converter)
@@ -235,5 +230,5 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
 
   return result;
 }
-}   // quality_regression
-}   // mozc
+}   // namespace quality_regression
+}   // namespace mozc

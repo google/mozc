@@ -27,25 +27,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/util.h"
 #include "dictionary/user_pos.h"
 
-#include "data_manager/user_dictionary_manager.h"
-#include "dictionary/user_pos.h"
+#include <string>
+#include <vector>
+
+#include "base/base.h"
+#include "base/util.h"
+#include "base/logging.h"
+#include "data_manager/testing/mock_user_pos_manager.h"
 #include "dictionary/user_pos_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-namespace {
 
 class UserPOSTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    // TODO(noriyukit): This test uses the actual user pos data, i.e., currently
-    // testing the actual pos data. We need to split the test into two, one for
-    // logic of the class and the other for data quality.
-    user_pos_ = UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS();
+    const testing::MockUserPosManager user_pos_manager;
+    user_pos_ = user_pos_manager.GetUserPOS();
     CHECK(user_pos_ != NULL);
   }
 
@@ -141,5 +142,5 @@ TEST_F(UserPOSTest, ConjugationTest) {
     EXPECT_EQ(tokens1[i].cost, tokens2[i].cost);
   }
 }
-}  // namespace
+
 }  // namespace mozc

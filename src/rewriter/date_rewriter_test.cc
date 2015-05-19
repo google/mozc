@@ -169,6 +169,15 @@ bool IsStringContained(const string &key, const vector<string> &container) {
   return false;
 }
 
+bool AllElementsAreSame(const string &key, const vector<string> &container) {
+  for (size_t i = 0; i < container.size(); ++i) {
+    if (key != container[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // "2011-04-18 15:06:31 (Mon)" UTC
 const uint64 kTestSeconds =  1303139191uLL;
 // micro seconds. it is random value.
@@ -385,7 +394,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
         "\xE4\xBB\x8A\xE6\x97\xA5"
         "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
     size_t offset = 1;
-    for (int rel_cand_idx = 0; rel_cand_idx < ARRAYSIZE(kTodayCandidate);
+    for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
          ++rel_cand_idx) {
       EXPECT_EQ(kTodayCandidate[rel_cand_idx],
                 GetNthCandidateValue(segments, rel_cand_idx + offset));
@@ -411,7 +420,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
         "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
 
     offset = 5;
-    for (int rel_cand_idx = 0; rel_cand_idx < ARRAYSIZE(kTodayCandidate);
+    for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
          ++rel_cand_idx) {
       EXPECT_EQ(kTodayCandidate[rel_cand_idx],
                 GetNthCandidateValue(segments, rel_cand_idx + offset));
@@ -436,7 +445,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
         "\xE4\xBB\x8A\xE6\x97\xA5"
         "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
 
-    for (int rel_cand_idx = 0; rel_cand_idx < ARRAYSIZE(kTodayCandidate);
+    for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
          ++rel_cand_idx) {
       EXPECT_EQ(kTodayCandidate[rel_cand_idx],
                 GetNthCandidateValue(segments,
@@ -453,19 +462,19 @@ TEST_F(DateRewriterTest, ADToERA) {
   const ConversionRequest request;
 
   results.clear();
-  rewriter.ADtoERA(0, &results);
+  rewriter.AdToEra(0, &results);
   EXPECT_EQ(results.size(), 0);
 
   // AD.645 is "大化元(年)"
   results.clear();
-  rewriter.ADtoERA(645, &results);
+  rewriter.AdToEra(645, &results);
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0],
             "\xE5\xA4\xA7\xE5\x8C\x96\xE5\x85\x83");
 
   // AD.646 is "大化2(年)" or "大化二(年)"
   results.clear();
-  rewriter.ADtoERA(646, &results);
+  rewriter.AdToEra(646, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
             "\xE5\xA4\xA7\xE5\x8C\x96" "2",
@@ -474,7 +483,7 @@ TEST_F(DateRewriterTest, ADToERA) {
 
   // AD.1976 is "昭和51(年)" or "昭和五十一(年)"
   results.clear();
-  rewriter.ADtoERA(1976, &results);
+  rewriter.AdToEra(1976, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
             "\xE6\x98\xAD\xE5\x92\x8C" "51",
@@ -482,7 +491,7 @@ TEST_F(DateRewriterTest, ADToERA) {
 
   // AD.1989 is "昭和64(年)" or "昭和六四(年)" or "平成元(年)"
   results.clear();
-  rewriter.ADtoERA(1989, &results);
+  rewriter.AdToEra(1989, &results);
   Expect3Results(results,
                  "\xE6\x98\xAD\xE5\x92\x8C" "64",
                  "\xE6\x98\xAD\xE5\x92\x8C\xE5\x85\xAD\xE5\x8D\x81\xE5\x9B\x9B",
@@ -490,7 +499,7 @@ TEST_F(DateRewriterTest, ADToERA) {
 
   // AD.1990 is "平成2(年)" or "平成(二)年"
   results.clear();
-  rewriter.ADtoERA(1990, &results);
+  rewriter.AdToEra(1990, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
             "\xE5\xB9\xB3\xE6\x88\x90" "2",
@@ -499,7 +508,7 @@ TEST_F(DateRewriterTest, ADToERA) {
   // 2 courts era.
   // AD.1331 "元徳3(年)" or "元弘元(年)"
   results.clear();
-  rewriter.ADtoERA(1331, &results);
+  rewriter.AdToEra(1331, &results);
   Expect3Results(results,
                  "\xE5\x85\x83\xE5\xBE\xB3" "3",
                  "\xE5\x85\x83\xE5\xBE\xB3\xE4\xB8\x89",
@@ -507,7 +516,7 @@ TEST_F(DateRewriterTest, ADToERA) {
 
   // AD.1393 "明徳4(年)" or "明徳四(年)"
   results.clear();
-  rewriter.ADtoERA(1393, &results);
+  rewriter.AdToEra(1393, &results);
   Expect2Results(results,
             "\xE6\x98\x8E\xE5\xBE\xB3" "4",
             "\xE6\x98\x8E\xE5\xBE\xB3\xE5\x9B\x9B");
@@ -516,7 +525,7 @@ TEST_F(DateRewriterTest, ADToERA) {
   // South: "文中4(年)" or "文中四(年)", "天授元(年)"
   // North: "応安8(年)" or "応安八(年)", "永和元(年)"
   results.clear();
-  rewriter.ADtoERA(1375, &results);
+  rewriter.AdToEra(1375, &results);
   // just checks number.
   EXPECT_EQ(results.size(), 6);
 
@@ -524,7 +533,7 @@ TEST_F(DateRewriterTest, ADToERA) {
   // South: "元弘2(年)" or "元弘二(年)"
   // North: "正慶元(年)", "元徳4(年)" or "元徳四(年)"
   results.clear();
-  rewriter.ADtoERA(1332, &results);
+  rewriter.AdToEra(1332, &results);
   EXPECT_EQ(results.size(), 5);
   Expect5Results(results,
                  "\xE5\x85\x83\xE5\xBC\x98" "2",
@@ -536,7 +545,7 @@ TEST_F(DateRewriterTest, ADToERA) {
   // South: "元弘3" or "元弘三(年)"
   // North: "正慶2" or "正慶二(年)"
   results.clear();
-  rewriter.ADtoERA(1333, &results);
+  rewriter.AdToEra(1333, &results);
   Expect4Results(results,
                  "\xE5\x85\x83\xE5\xBC\x98" "3",
                  "\xE5\x85\x83\xE5\xBC\x98\xE4\xB8\x89",
@@ -547,7 +556,7 @@ TEST_F(DateRewriterTest, ADToERA) {
   // South: "元弘4" or "元弘四(年)", "建武元"
   // North: "正慶3" or "正慶三(年)", "建武元(deduped)"
   results.clear();
-  rewriter.ADtoERA(1334, &results);
+  rewriter.AdToEra(1334, &results);
   EXPECT_EQ(results.size(), 5);
   Expect5Results(results,
                  "\xE5\x85\x83\xE5\xBC\x98" "4",
@@ -559,7 +568,7 @@ TEST_F(DateRewriterTest, ADToERA) {
   // AD.1997
   // "平成九年"
   results.clear();
-  rewriter.ADtoERA(1997, &results);
+  rewriter.AdToEra(1997, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
                  "\xE5\xB9\xB3\xE6\x88\x90" "9",
@@ -568,7 +577,7 @@ TEST_F(DateRewriterTest, ADToERA) {
   // AD.2011
   // "平成二十三年"
   results.clear();
-  rewriter.ADtoERA(2011, &results);
+  rewriter.AdToEra(2011, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(
       results,
@@ -578,7 +587,7 @@ TEST_F(DateRewriterTest, ADToERA) {
   // AD.1998
   // "平成十年" or "平成10年"
   results.clear();
-  rewriter.ADtoERA(1998, &results);
+  rewriter.AdToEra(1998, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
                  "\xE5\xB9\xB3\xE6\x88\x90" "10",
@@ -587,8 +596,166 @@ TEST_F(DateRewriterTest, ADToERA) {
   // Negative Test
   // Too big number or negative number input are expected false return
   results.clear();
-  EXPECT_FALSE(rewriter.ADtoERA(2100, &results));
-  EXPECT_FALSE(rewriter.ADtoERA(-100, &results));
+  EXPECT_FALSE(rewriter.AdToEra(2100, &results));
+  EXPECT_FALSE(rewriter.AdToEra(-100, &results));
+}
+
+TEST_F(DateRewriterTest, ERAToAD) {
+  DateRewriter rewriter;
+  vector<string> results, descriptions;
+  const ConversionRequest request;
+  // "1234", "１２３４", "一二三四"
+  const int kNumYearRepresentation = 3;
+
+  results.clear();
+  descriptions.clear();
+  rewriter.EraToAd("", &results, &descriptions);
+  EXPECT_EQ(0, results.size());
+  EXPECT_EQ(0, descriptions.size());
+
+  // "たいか1ねん" is "645年" or "６４５年" or "六四五年"
+  // "大化1年"
+  results.clear();
+  descriptions.clear();
+  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x9F\xE3\x81\x84\xE3\x81\x8B"
+                               "1" "\xE3\x81\xAD\xE3\x82\x93",
+                               &results, &descriptions));
+  EXPECT_EQ(kNumYearRepresentation, results.size());
+  EXPECT_EQ(kNumYearRepresentation, descriptions.size());
+  Expect3Results(results,
+                 "645\xE5\xB9\xB4",
+                 "\xE5\x85\xAD\xE5\x9B\x9B\xE4\xBA\x94\xE5\xB9\xB4",
+                 "\xEF\xBC\x96\xEF\xBC\x94\xEF\xBC\x95\xE5\xB9\xB4");
+  AllElementsAreSame("\xE5\xA4\xA7\xE5\x8C\x96" "1" "\xE5\xB9\xB4",
+                     descriptions);
+
+  // "たいか2ねん" is "646年" or "６４６年" or "六四六年"
+  // "大化2年"
+  results.clear();
+  descriptions.clear();
+  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x9F\xE3\x81\x84\xE3\x81\x8B"
+                               "2" "\xE3\x81\xAD\xE3\x82\x93",
+                               &results, &descriptions));
+  EXPECT_EQ(kNumYearRepresentation, results.size());
+  EXPECT_EQ(kNumYearRepresentation, descriptions.size());
+  Expect3Results(results,
+                 "646\xE5\xB9\xB4",
+                 "\xEF\xBC\x96\xEF\xBC\x94\xEF\xBC\x96\xE5\xB9\xB4",
+                 "\xE5\x85\xAD\xE5\x9B\x9B\xE5\x85\xAD\xE5\xB9\xB4");
+  AllElementsAreSame("\xE5\xA4\xA7\xE5\x8C\x96" "2" "\xE5\xB9\xB4",
+                     descriptions);
+
+  // "しょうわ2ねん" is AD.1313 or AD.1927
+  // "1313年", "１３１３年", "一三一三年"
+  // "1927年", "１９２７年", "一九二七年"
+  results.clear();
+  descriptions.clear();
+  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
+                               "\xE3\x81\x86\xE3\x82\x8F"
+                               "2"
+                               "\xE3\x81\xAD\xE3\x82\x93",
+                               &results, &descriptions));
+  EXPECT_EQ(kNumYearRepresentation * 2, results.size());
+  EXPECT_EQ(kNumYearRepresentation * 2, descriptions.size());
+
+  for (int i = 0; i < kNumYearRepresentation; ++i) {
+    // "正和2年"
+    EXPECT_EQ("\xE6\xAD\xA3\xE5\x92\x8C" "2" "\xE5\xB9\xB4", descriptions[i]);
+    // "昭和2年"
+    EXPECT_EQ("\xE6\x98\xAD\xE5\x92\x8C" "2" "\xE5\xB9\xB4",
+              descriptions[i + kNumYearRepresentation]);
+  }
+  vector<string> first(results.begin(),
+                       results.begin() + kNumYearRepresentation);
+  vector<string> second(results.begin() + kNumYearRepresentation,
+                        results.end());
+  EXPECT_TRUE(IsStringContained("1313" "\xE5\xB9\xB4", first));
+  EXPECT_TRUE(IsStringContained("\xEF\xBC\x91\xEF\xBC\x93\xEF\xBC\x91"
+                                "\xEF\xBC\x93\xE5\xB9\xB4", first));
+  EXPECT_TRUE(IsStringContained("\xE4\xB8\x80\xE4\xB8\x89\xE4\xB8\x80"
+                                "\xE4\xB8\x89\xE5\xB9\xB4", first));
+  EXPECT_TRUE(IsStringContained("1927" "\xE5\xB9\xB4", second));
+  EXPECT_TRUE(IsStringContained("\xEF\xBC\x91\xEF\xBC\x99\xEF\xBC\x92"
+                                "\xEF\xBC\x97\xE5\xB9\xB4", second));
+  EXPECT_TRUE(IsStringContained("\xE4\xB8\x80\xE4\xB9\x9D\xE4\xBA\x8C"
+                                "\xE4\xB8\x83\xE5\xB9\xB4", second));
+
+  // North court test
+  // "げんとく1ねん" is AD.1329
+  results.clear();
+  descriptions.clear();
+  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x92\xE3\x82\x93"
+                               "\xE3\x81\xA8\xE3\x81\x8F"
+                               "1"
+                               "\xE3\x81\xAD\xE3\x82\x93",
+                               &results, &descriptions));
+  EXPECT_EQ(kNumYearRepresentation, results.size());
+  EXPECT_EQ(kNumYearRepresentation, descriptions.size());
+  EXPECT_TRUE(IsStringContained("1329" "\xE5\xB9\xB4", results));
+  // "めいとく3ねん" is AD.1392
+  results.clear();
+  descriptions.clear();
+  EXPECT_TRUE(rewriter.EraToAd("\xE3\x82\x81\xE3\x81\x84"
+                               "\xE3\x81\xA8\xE3\x81\x8F"
+                               "3"
+                               "\xE3\x81\xAD\xE3\x82\x93",
+                               &results, &descriptions));
+  EXPECT_EQ(kNumYearRepresentation, results.size());
+  EXPECT_EQ(kNumYearRepresentation, descriptions.size());
+  EXPECT_TRUE(IsStringContained("1392" "\xE5\xB9\xB4", results));
+  // "けんむ1ねん" is AD.1334 (requires dedupe)
+  results.clear();
+  descriptions.clear();
+  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x91\xE3\x82\x93\xE3\x82\x80"
+                               "1"
+                               "\xE3\x81\xAD\xE3\x82\x93",
+                               &results, &descriptions));
+  EXPECT_EQ(kNumYearRepresentation, results.size());
+  EXPECT_EQ(kNumYearRepresentation, descriptions.size());
+  EXPECT_TRUE(IsStringContained("1334" "\xE5\xB9\xB4", results));
+
+  // Big number test
+  // "昭和80年" is AD.2005
+  // "しょうわ80ねん"
+  results.clear();
+  descriptions.clear();
+  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
+                               "\xE3\x81\x86\xE3\x82\x8F"
+                               "80"
+                               "\xE3\x81\xAD\xE3\x82\x93",
+                               &results, &descriptions));
+  EXPECT_TRUE(IsStringContained("2005" "\xE5\xB9\xB4", results));
+  // "大正101年" is AD.2012
+  // "たいしょう101ねん"
+  results.clear();
+  descriptions.clear();
+  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x9F\xE3\x81\x84"
+                               "\xE3\x81\x97\xE3\x82\x87\xE3\x81\x86"
+                               "101" "\xE3\x81\xAD\xE3\x82\x93",
+                               &results, &descriptions));
+  EXPECT_TRUE(IsStringContained("2012" "\xE5\xB9\xB4", results));
+
+
+  // Negative Test
+  // 0 or negative number input are expected false return
+  results.clear();
+  descriptions.clear();
+  EXPECT_FALSE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
+                                "\xE3\x81\x86\xE3\x82\x8F"
+                                "-1"
+                                "\xE3\x81\xAD\xE3\x82\x93",
+                                &results, &descriptions));
+  EXPECT_FALSE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
+                                "\xE3\x81\x86\xE3\x82\x8F"
+                                "0"
+                                "\xE3\x81\xAD\xE3\x82\x93",
+                                &results, &descriptions));
+  EXPECT_FALSE(rewriter.EraToAd(""
+                                "0"
+                                "\xE3\x81\xAD\xE3\x82\x93",
+                                &results, &descriptions));
+  EXPECT_EQ(0, results.size());
+  EXPECT_EQ(0, descriptions.size());
 }
 
 TEST_F(DateRewriterTest, ConvertTime) {
@@ -764,7 +931,7 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
     { 12, 31 }
   };
 
-  for (size_t i = 0; i < ARRAYSIZE(month_days_test_data); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(month_days_test_data); ++i) {
     EXPECT_TRUE(rewriter.ConvertDateWithYear(
         2001,
         month_days_test_data[i].month,

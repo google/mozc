@@ -34,14 +34,10 @@
 
 #include "base/base.h"
 #include "languages/pinyin/pinyin_constant.h"
+#include "session/commands.pb.h"
 #include "session/session_interface.h"
 
 namespace mozc {
-namespace commands {
-class ApplicationInfo;
-class Command;
-class SessionCommand;
-}  // namespace commands
 
 #ifdef OS_CHROMEOS
 namespace config {

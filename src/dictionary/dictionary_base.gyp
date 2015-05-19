@@ -101,27 +101,6 @@
       ]
     },
     {
-      'target_name': 'install_dictionary_test_data',
-      'type': 'none',
-      'variables': {
-        'test_data_subdir': 'data/dictionary',
-        'test_data': [
-          '../<(test_data_subdir)/suggestion_filter.txt',
-          '../<(test_data_subdir)/dictionary00.txt',
-          '../<(test_data_subdir)/dictionary01.txt',
-          '../<(test_data_subdir)/dictionary02.txt',
-          '../<(test_data_subdir)/dictionary03.txt',
-          '../<(test_data_subdir)/dictionary04.txt',
-          '../<(test_data_subdir)/dictionary05.txt',
-          '../<(test_data_subdir)/dictionary06.txt',
-          '../<(test_data_subdir)/dictionary07.txt',
-          '../<(test_data_subdir)/dictionary08.txt',
-          '../<(test_data_subdir)/dictionary09.txt',
-        ],
-      },
-      'includes': [ '../gyp/install_testdata.gypi' ],
-    },
-    {
       'target_name': 'user_pos',
       'type': 'static_library',
       'toolsets': ['target', 'host'],
@@ -130,58 +109,6 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'gen_user_pos_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        'pos_util',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_user_pos_data',
-          'variables': {
-            'id_def': '../data/dictionary/id.def',
-            'special_pos': '../data/rules/special_pos.def',
-            'user_pos': '../data/rules/user_pos.def',
-            'cforms': '../data/rules/cforms.def',
-            'user_pos_data': '<(gen_out_dir)/user_pos_data.h',
-          },
-          'inputs': [
-            'gen_user_pos_data.py',
-            '<(id_def)',
-            '<(special_pos)',
-            '<(user_pos)',
-            '<(cforms)',
-          ],
-          'outputs': [
-            '<(user_pos_data)',
-          ],
-          'action': [
-            'python', 'gen_user_pos_data.py',
-            '--id_file=<(id_def)',
-            '--special_pos_file=<(special_pos)',
-            '--user_pos_file=<(user_pos)',
-            '--cforms_file=<(cforms)',
-            '--output=<(user_pos_data)',
-          ],
-          'message': 'Generating <(user_pos_data).',
-        },
-      ],
-    },
-    {
-      'target_name': 'user_pos_data',
-      'type': 'none',
-      'toolsets': ['target', 'host'],
-      'hard_dependency': 1,
-      'dependencies': [
-        '../base/base.gyp:base',
-        'gen_user_pos_data#host',
-      ],
-      'export_dependent_settings': [
-        'gen_user_pos_data#host',
       ],
     },
     {
@@ -214,28 +141,34 @@
       'target_name': 'gen_pos_map',
       'type': 'none',
       'toolsets': ['host'],
+      'sources': [
+        '../build_tools/code_generator_util.py',
+        'gen_pos_map.py',
+      ],
+
       'actions': [
         {
           'action_name': 'gen_pos_map',
           'variables': {
-            'input_files': [
-              '../data/rules/user_pos.def',
-              '../data/rules/third_party_pos_map.def',
-            ],
+            'user_pos': '../data/rules/user_pos.def',
+            'third_party_pos_map': '../data/rules/third_party_pos_map.def',
+            'pos_map_header': '<(gen_out_dir)/pos_map.h',
           },
           'inputs': [
             'gen_pos_map.py',
-            '<@(input_files)',
+            '<(user_pos)',
+            '<(third_party_pos_map)',
           ],
           'outputs': [
-            '<(gen_out_dir)/pos_map.h',
+            '<(pos_map_header)',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/pos_map.h',
-            'gen_pos_map.py',
-            '<@(input_files)',
+            'python', 'gen_pos_map.py',
+            '--user_pos_file=<(user_pos)',
+            '--third_party_pos_map_file=<(third_party_pos_map)',
+            '--output=<(pos_map_header)',
           ],
+          'message': ('Generating <(pos_map_header)'),
         },
       ],
     },
@@ -256,6 +189,8 @@
         '<(gen_out_dir)/pos_map.h',
         'user_dictionary.cc',
         'user_dictionary_importer.cc',
+        'user_dictionary_session.cc',
+        'user_dictionary_session_handler.cc',
         'user_dictionary_storage.cc',
         'user_dictionary_util.cc',
       ],

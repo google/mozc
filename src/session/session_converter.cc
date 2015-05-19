@@ -31,24 +31,27 @@
 
 #include "session/session_converter.h"
 
-#include <vector>
+#include <string>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "config/config_handler.h"
+#include "composer/composer.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "composer/composer.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
-#include "session/request_handler.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace session {
 
 namespace {
+
+using ::mozc::commands::Request;
 
 const size_t kDefaultMaxHistorySize = 3;
 
@@ -68,7 +71,8 @@ void SetIncognitoMode(bool enabled) {
 
 }  // namespace
 
-SessionConverter::SessionConverter(const ConverterInterface *converter)
+SessionConverter::SessionConverter(const ConverterInterface *converter,
+                                   const Request &request)
     : SessionConverterInterface(),
       state_(COMPOSITION),
       converter_(converter),
@@ -78,8 +82,10 @@ SessionConverter::SessionConverter(const ConverterInterface *converter)
       candidate_list_visible_(false) {
   conversion_preferences_.use_history = true;
   conversion_preferences_.max_history_size = kDefaultMaxHistorySize;
+  conversion_preferences_.request_suggestion = true;
   operation_preferences_.use_cascading_window = true;
   operation_preferences_.candidate_shortcuts.clear();
+  request_.CopyFrom(request);
 }
 
 SessionConverter::~SessionConverter() {}
@@ -395,17 +401,17 @@ bool SessionConverter::SuggestWithPreferences(
   ResetState();
 
   // If we are on a password field, suppress suggestion.
-  if (composer.GetInputFieldType() == commands::SessionCommand::PASSWORD) {
+  if (!preferences.request_suggestion ||
+      composer.GetInputFieldType() == commands::SessionCommand::PASSWORD) {
     return false;
   }
 
   // Initialize the segments for suggestion.
   SetConversionPreferences(preferences, segments_.get());
 
-  const bool use_partial_suggestion = GET_REQUEST(mixed_conversion);
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
-      !use_partial_suggestion) {
+      !request_.mixed_conversion()) {
     if (!converter_->StartSuggestionForRequest(
             ConversionRequest(&composer), segments_.get())) {
       // TODO(komatsu): Because suggestion is a prefix search, once
@@ -540,10 +546,9 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
   // Without this statement we can add additional candidates into
   // existing segments.
 
-  const bool use_partial_suggestion = GET_REQUEST(mixed_conversion);
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
-      !use_partial_suggestion) {
+      !request_.mixed_conversion()) {
     // This is abuse of StartPrediction().
     // TODO(matsuzakit or yamaguchi): Add ExpandSuggestion method
     //    to Converter class.
@@ -663,11 +668,10 @@ bool SessionConverter::CommitSuggestionInternal(
 
   const size_t result_length = Util::CharsLen(result_.key());
   const size_t preedit_length = Util::CharsLen(preedit);
-  const bool use_partial_suggestion = GET_REQUEST(zero_query_suggestion);
 
   // TODO(horo): When we will support hardware keyboard and introduce
   // shift+enter keymap in Android, this if condition may be insufficient.
-  if (use_partial_suggestion && (result_length < preedit_length)) {
+  if (request_.zero_query_suggestion() && (result_length < preedit_length)) {
     // A candidate was chosen from partial suggestion.
     converter_->CommitPartialSuggestionSegmentValue(
         segments_.get(),
@@ -1132,33 +1136,33 @@ void SessionConverter::SetConversionPreferences(
   segments->set_max_history_segments_size(preferences.max_history_size);
 }
 
-// TODO(team): Strictly speaking, copy source must be of type SessionConverter
-// because we cannot create an exact copy from another implementation of
-// SessionConverterInterface other than SessionConverter. The design should be
-// reconsidered.
-void SessionConverter::CopyFrom(const SessionConverterInterface &src) {
-  Reset();
+SessionConverterInterface* SessionConverter::Clone() const {
+  SessionConverter *session_converter =
+      new SessionConverter(converter_, request_);
 
   // Copy the members in order of their declarations.
-  state_ = src.GetState();
+  session_converter->state_ = GetState();
   // TODO(team): copy of |converter_| member.
   // We cannot copy the member converter_ from SessionConverterInterface becase
   // it doesn't (and shouldn't) define a method like GetConverter(). At the
   // moment it's ok because the current design guarantees that the converter is
   // singleton. However, we should refactor such bad design; see also the
   // comment right above.
-  src.GetSegments(segments_.get());
-  segment_index_ = src.GetSegmentIndex();
-  previous_suggestions_.CopyFrom(src.GetPreviousSuggestions());
-  conversion_preferences_ = src.conversion_preferences();
-  operation_preferences_ = src.GetOperationPreferences();
-  result_.CopyFrom(src.GetResult());
+  GetSegments(session_converter->segments_.get());
+  session_converter->segment_index_ = GetSegmentIndex();
+  session_converter->previous_suggestions_.CopyFrom(GetPreviousSuggestions());
+  session_converter->conversion_preferences_ = conversion_preferences();
+  session_converter->operation_preferences_ = GetOperationPreferences();
+  session_converter->result_.CopyFrom(GetResult());
 
-  if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
-    UpdateCandidateList();
-    candidate_list_->MoveToId(src.GetCandidateList().focused_id());
-    SetCandidateListVisible(src.IsCandidateListVisible());
+  if (session_converter->CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
+    session_converter->UpdateCandidateList();
+    session_converter->candidate_list_->MoveToId(
+        GetCandidateList().focused_id());
+    session_converter->SetCandidateListVisible(IsCandidateListVisible());
   }
+
+  return session_converter;
 }
 
 void SessionConverter::ResetResult() {
@@ -1315,7 +1319,12 @@ void SessionConverter::AppendCandidateList() {
   candidate_list_->set_focused(focused);
 
   if (segment.meta_candidates_size() == 0) {
-    LOG(WARNING) << "T13N is not initialized: " << segment.key();
+    // For suggestion mode, it is natural that T13N is not initialized.
+    if (CheckState(SUGGESTION)) {
+      return;
+    }
+    // For other modes, records |segment| just in case.
+    VLOG(1) << "T13N is not initialized: " << segment.key();
     return;
   }
 
@@ -1517,6 +1526,10 @@ void SessionConverter::PropagateConfigToRenderer(
     output->mutable_config()->mutable_information_list_config()->CopyFrom(
         config.information_list_config());
   }
+}
+
+void SessionConverter::SetRequest(const commands::Request &request) {
+  request_.CopyFrom(request);
 }
 }  // namespace session
 }  // namespace mozc

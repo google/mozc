@@ -30,8 +30,9 @@
 #ifndef MOZC_STORAGE_GENERIC_STORAGE_MANAGER_H_
 #define MOZC_STORAGE_GENERIC_STORAGE_MANAGER_H_
 
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "session/commands.pb.h"
-#include "storage/lru_storage.h"
 
 namespace mozc {
 
@@ -39,6 +40,10 @@ class GenericStorageInterface;
 
 // For unit test.
 class GenericLruStorageProxy;
+
+namespace storage {
+class LRUStorage;
+}  // namespace storage
 
 // Override and set the subclass's instance to
 // GenericStorageManager for unit test.
@@ -61,8 +66,7 @@ class GenericStorageManagerFactory {
   static void SetGenericStorageManager(GenericStorageManagerInterface *manager);
 
  private:
-  GenericStorageManagerFactory() {}
-  ~GenericStorageManagerFactory() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(GenericStorageManagerFactory);
 };
 
 // Generic interface for storages.
@@ -90,15 +94,9 @@ class GenericStorageInterface {
 // Storage class of which backend is LRUStorage.
 class GenericLruStorage : public GenericStorageInterface {
  public:
-  GenericLruStorage(const char *file_name,
-                    size_t value_size,
-                    size_t size,
-                    uint32 seed) :
-      file_name_(file_name),
-      value_size_(value_size),
-      size_(size),
-      seed_(seed) {}
-  virtual ~GenericLruStorage() {}
+  GenericLruStorage(
+      const char *file_name, size_t value_size, size_t size, uint32 seed);
+  virtual ~GenericLruStorage();
 
   // If the storage has |key|, this method overwrites
   // the old value.
@@ -120,11 +118,13 @@ class GenericLruStorage : public GenericStorageInterface {
 
  private:
   friend class GenericLruStorageProxy;
-  scoped_ptr<LRUStorage> lru_storage_;
+  scoped_ptr<mozc::storage::LRUStorage> lru_storage_;
   const string file_name_;
   const size_t value_size_;
   const size_t size_;
   const uint32 seed_;
+
+  DISALLOW_COPY_AND_ASSIGN(GenericLruStorage);
 };
 
 }  // namespace mozc

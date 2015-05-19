@@ -34,7 +34,6 @@
 #include <QtGui/QtGui>
 #include <QtGui/QDialog>
 #include "base/base.h"
-#include "dictionary/user_dictionary_storage.h"
 #include "gui/word_register_dialog/ui_word_register_dialog.h"
 
 namespace mozc {
@@ -43,7 +42,11 @@ class UserPOSInterface;
 
 namespace client {
 class ClientInterface;
-}
+}  // namespace client
+
+namespace user_dictionary {
+class UserDictionarySession;
+}  // namespace user_dictionary
 
 namespace gui {
 class WordRegisterDialog : public QDialog,
@@ -107,7 +110,7 @@ class WordRegisterDialog : public QDialog,
   void EnableIME();
 
   bool is_available_;
-  scoped_ptr<UserDictionaryStorage> storage_;
+  scoped_ptr<mozc::user_dictionary::UserDictionarySession> session_;
   scoped_ptr<client::ClientInterface> client_;
   QString window_title_;
   const UserPOSInterface *user_pos_;

@@ -43,15 +43,9 @@ namespace sync {
 
 class UserDictionarySyncUtil {
  public:
-  typedef
-  user_dictionary::UserDictionaryStorage UserDictionaryStorageBase;
-
-  typedef
-  user_dictionary::UserDictionaryStorage::UserDictionary UserDictionary;
-
-  typedef
-  user_dictionary::UserDictionaryStorage::UserDictionary::Entry
-  UserDictionaryEntry;
+  typedef user_dictionary::UserDictionaryStorage UserDictionaryStorageBase;
+  typedef user_dictionary::UserDictionary UserDictionary;
+  typedef user_dictionary::UserDictionary::Entry UserDictionaryEntry;
 
   // Return true if |storage1| and |storage2| contain the same entries.
   // Even if the orders of entries are different, this function returns
@@ -98,7 +92,7 @@ class UserDictionarySyncUtil {
   // 2) merge the rest of updates which are newer than snapshot to |storage|.
   // return true if storage is synced to the local disk successfully.
   static bool MergeUpdates(
-      const vector<const UserDictionaryStorageBase *> &updates,
+      const vector<UserDictionaryStorageBase *> &updates,
       UserDictionaryStorageBase *storage);
 
   // Get lock and save storage, after verifying the numbers of entries in its
@@ -109,10 +103,10 @@ class UserDictionarySyncUtil {
   static bool LockAndSaveStorage(UserDictionaryStorage *storage);
 
  private:
-  UserDictionarySyncUtil() {}
-  ~UserDictionarySyncUtil() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(UserDictionarySyncUtil);
 };
-}  // sync
-}  // mozc
+
+}  // namespace sync
+}  // namespace mozc
 
 #endif  // MOZC_SYNC_USER_DICTIONARY_SYNC_UTIL_H_

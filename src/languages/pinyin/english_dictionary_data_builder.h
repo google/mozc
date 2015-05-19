@@ -35,9 +35,17 @@
 #include "base/base.h"
 
 namespace mozc {
+#ifdef MOZC_USE_MOZC_LOUDS
+namespace storage {
+namespace louds {
+class LoudsTrieBuilder;
+}
+}
+#else
 namespace rx {
 class RxTrieBuilder;
-};
+}
+#endif  // MOZC_USE_MOZC_LOUDS
 
 namespace pinyin {
 namespace english {
@@ -53,8 +61,14 @@ class EnglishDictionaryDataBuilder {
   void WriteToStream(ostream *output_stream) const;
 
  private:
-  scoped_ptr<rx::RxTrieBuilder> builder_;
-  scoped_array<float> rx_id_to_priority_;
+#ifdef MOZC_USE_MOZC_LOUDS
+  typedef storage::louds::LoudsTrieBuilder TrieBuilderType;
+#else
+  typedef rx::RxTrieBuilder TrieBuilderType;
+#endif  // MOZC_USE_MOZC_LOUDS
+
+  scoped_ptr<TrieBuilderType> builder_;
+  scoped_array<float> louds_id_to_priority_;
   int words_num_;
 
   DISALLOW_COPY_AND_ASSIGN(EnglishDictionaryDataBuilder);

@@ -38,7 +38,6 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "languages/pinyin/keymap.h"
-#include "languages/pinyin/pinyin_config_manager.h"
 #include "languages/pinyin/pinyin_constant.h"
 #include "languages/pinyin/session_config.h"
 #include "languages/pinyin/session_converter.h"
@@ -101,7 +100,6 @@ Session::Session()
       config.initial_mode_full_width_punctuation();
   session_config_->simplified_chinese_mode =
       config.initial_mode_simplified_chinese();
-  PinyinConfigManager::UpdateWithSessionConfig(*session_config_);
 
   const ConversionMode conversion_mode =
       GET_CONFIG(pinyin_config).initial_mode_chinese() ? PINYIN : DIRECT;
@@ -177,7 +175,6 @@ void Session::UpdateConfig(const config::PinyinConfig &config) {
   config::Config mozc_config;
   mozc_config.mutable_pinyin_config()->MergeFrom(config);
   config::ConfigHandler::SetConfig(mozc_config);
-  PinyinConfigManager::UpdateWithGlobalConfig(config);
   g_last_config_updated = Util::GetTime();
 }
 #endif  // OS_CHROMEOS
@@ -397,7 +394,7 @@ bool Session::ProcessKeyEvent(commands::Command *command) {
     case keymap::TOGGLE_SIMPLIFIED_CHINESE_MODE:
       session_config_->simplified_chinese_mode =
           !session_config_->simplified_chinese_mode;
-      PinyinConfigManager::UpdateWithSessionConfig(*session_config_);
+      ResetConfig();
       break;
     case keymap::DO_NOTHING_WITH_CONSUME:
       break;
@@ -532,7 +529,7 @@ void Session::HandleLanguageBarCommand(
       break;
   }
 
-  PinyinConfigManager::UpdateWithSessionConfig(*session_config_);
+  ResetConfig();
 }
 
 }  // namespace pinyin

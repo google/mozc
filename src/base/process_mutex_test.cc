@@ -27,7 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#if !defined(OS_WINDOWS)
+#include <unistd.h>
+#include <cstdlib>
+#endif  // !OS_WINDOWS
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/thread.h"
 #include "base/util.h"
@@ -35,27 +41,47 @@
 
 DECLARE_string(test_tmpdir);
 
+namespace mozc {
 namespace {
 static const char kName[] = "process_mutex_test";
 
+class ProcessMutexTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    original_user_profile_dir_ = Util::GetUserProfileDirectory();
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  }
+
+  virtual void TearDown() {
+    ProcessMutex mutex(kName);
+    if (Util::FileExists(mutex.lock_filename())) {
+      LOG(FATAL) << "Lock file unexpectedly remains: " << mutex.lock_filename();
+    }
+
+    Util::SetUserProfileDirectory(original_user_profile_dir_);
+  }
+
+ private:
+  string original_user_profile_dir_;
+};
+
 #ifndef OS_WINDOWS
-TEST(ProcessMutexTest, ForkProcessMutexTest) {
-  mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  const pid_t pid = fork();
+TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
+  const pid_t pid = ::fork();
   if (pid == 0) {  // child process
-    mozc::ProcessMutex m(kName);
+    ProcessMutex m(kName);
     EXPECT_TRUE(m.Lock());
-    mozc::Util::Sleep(3000);
+    Util::Sleep(3000);
     EXPECT_TRUE(m.UnLock());
     ::exit(0);
   } else if (pid > 0) {  // parent process
-    mozc::ProcessMutex m(kName);
-    mozc::Util::Sleep(1000);
+    ProcessMutex m(kName);
+    Util::Sleep(1000);
 
     // kName should be locked by child
     EXPECT_FALSE(m.Lock());
 
-    mozc::Util::Sleep(5000);
+    Util::Sleep(5000);
 
     // child process already finished, so now we can lock
     EXPECT_TRUE(m.Lock());
@@ -66,21 +92,38 @@ TEST(ProcessMutexTest, ForkProcessMutexTest) {
 }
 #endif
 
-TEST(ProcessMutexTest, ProcessMutexTest) {
-  mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
-  mozc::ProcessMutex m1(kName);
+TEST_F(ProcessMutexTest, BasicTest) {
+  ProcessMutex m1(kName);
   EXPECT_TRUE(m1.Lock());
+  EXPECT_TRUE(m1.locked());
 
-  mozc::ProcessMutex m2(kName);
+  ProcessMutex m2(kName);
   EXPECT_FALSE(m2.Lock());
+  EXPECT_FALSE(m2.locked());
 
-  mozc::ProcessMutex m3(kName);
+  ProcessMutex m3(kName);
   EXPECT_FALSE(m3.Lock());
+  EXPECT_FALSE(m3.locked());
 
   EXPECT_TRUE(m1.UnLock());
+  EXPECT_FALSE(m1.locked());
 
   EXPECT_TRUE(m2.Lock());
+  EXPECT_TRUE(m2.locked());
+
   EXPECT_FALSE(m3.Lock());
+  EXPECT_FALSE(m3.locked());
 }
+
+TEST_F(ProcessMutexTest, RecursiveLockTest) {
+  ProcessMutex mutex(kName);
+  EXPECT_TRUE(mutex.Lock());
+  EXPECT_TRUE(mutex.locked());
+  EXPECT_FALSE(mutex.Lock()) << "Recursive lock should fail.";
+  EXPECT_TRUE(mutex.locked());
+  EXPECT_TRUE(mutex.UnLock());
+  EXPECT_FALSE(mutex.locked());
+}
+
 }  // namespace
+}  // namespace mozc

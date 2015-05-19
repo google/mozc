@@ -392,16 +392,18 @@ const struct PunctuationDirectCommitTable {
 
 PunctuationTable::PunctuationTable() {
   const size_t default_candidates_table_size =
-      ARRAYSIZE(kPunctuationDefaultCandidatesTable);
+      ARRAYSIZE_UNSAFE(kPunctuationDefaultCandidatesTable);
   const char **table = kPunctuationDefaultCandidatesTable;
   default_candidates_.assign(table, table + default_candidates_table_size);
 
-  const size_t candidates_table_size = ARRAYSIZE(kPunctuationCandidatesTable);
+  const size_t candidates_table_size =
+      ARRAYSIZE_UNSAFE(kPunctuationCandidatesTable);
+
   for (size_t i = 0; i < candidates_table_size; ++i) {
     const PunctuationCandidatesTable &data = kPunctuationCandidatesTable[i];
 
     size_t candidates_num = 0;
-    for (size_t j = 0; j < ARRAYSIZE(data.candidates); ++j) {
+    for (size_t j = 0; j < ARRAYSIZE_UNSAFE(data.candidates); ++j) {
       if (data.candidates[j] == NULL) {
         candidates_num = j;
         break;
@@ -415,7 +417,7 @@ PunctuationTable::PunctuationTable() {
   }
 
   const size_t commit_table_size =
-      ARRAYSIZE(kPunctuationDirectCommitTable);
+      ARRAYSIZE_UNSAFE(kPunctuationDirectCommitTable);
   for (size_t i = 0; i < commit_table_size; ++i) {
     const PunctuationDirectCommitTable &item =
         kPunctuationDirectCommitTable[i];

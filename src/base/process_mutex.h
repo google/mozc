@@ -30,11 +30,13 @@
 #ifndef MOZC_IPC_PROCESS_MUTEX_H_
 #define MOZC_IPC_PROCESS_MUTEX_H_
 
-#ifdef OS_WINDOWS
-#include <windows.h>
-#endif
-
 #include <string>
+
+#ifdef OS_WINDOWS
+#include "base/scoped_handle.h"
+#endif  // OS_WINDOWS
+
+#include "base/port.h"
 
 // Process-wide named mutex class:
 // Make a simple process-wide named mutex using file locking.
@@ -56,7 +58,7 @@ namespace mozc {
 class ProcessMutex {
  public:
   explicit ProcessMutex(const char *name);
-  virtual ~ProcessMutex();
+  ~ProcessMutex();
 
   // return false if the process is already locked
   bool Lock();
@@ -77,12 +79,23 @@ class ProcessMutex {
     filename_ = filename;
   }
 
+  bool locked() const {
+    return locked_;
+  }
+
+ private:
 #ifdef OS_WINDOWS
-  HANDLE handle_;
+  ScopedHandle handle_;
 #endif
 
+  // TODO(yukawa): Remove this flag as it can always be determined by other
+  //     internal state.
   bool locked_;
   string filename_;
+
+  DISALLOW_COPY_AND_ASSIGN(ProcessMutex);
 };
+
 }  // namespace mozc
+
 #endif  // MOZC_IPC_PROCESS_MUTEX_H_

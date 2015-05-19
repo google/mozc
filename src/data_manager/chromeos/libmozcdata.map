@@ -1,0 +1,10 @@
+{
+  global:
+    /* Hide all the other symbols to reduce .so size */
+    extern "C++" {
+      mozc::chromeos::CreateDataManager*;
+      mozc::chromeos::DeleteDataManager*;
+    };
+  local:
+    *;
+};

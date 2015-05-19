@@ -31,6 +31,11 @@
 
 #include <QtGui/QtGui>
 #include <QtGui/QMessageBox>
+
+#ifdef OS_WINDOWS
+#include <Windows.h>
+#endif  // OS_WINDOWS
+
 #include "base/util.h"
 #include "client/client.h"
 #include "config/stats_config_util.h"
@@ -121,7 +126,7 @@ QTreeWidgetItem *AddItem(QTreeWidgetItem *parent, const char *name) {
 
 CharacterPalette::CharacterPalette(QWidget *parent)
     : QMainWindow(parent),
-      usage_stats_enabled_(StatsConfigUtil::IsEnabled()) {
+      usage_stats_enabled_(mozc::config::StatsConfigUtil::IsEnabled()) {
   // To reduce the disk IO of reading the stats config, we load it only when the
   // class is initialized. There is no problem because the config dialog (on
   // Mac) and the administrator dialog (on Windows) say that the usage stats
@@ -132,9 +137,8 @@ CharacterPalette::CharacterPalette(QWidget *parent)
   }
   setupUi(this);
 
-  fontComboBox->setWritingSystem
-      (static_cast<QFontDatabase::WritingSystem>
-       (QFontDatabase::Any));
+  fontComboBox->setWritingSystem(
+      static_cast<QFontDatabase::WritingSystem>(QFontDatabase::Any));
   fontComboBox->setEditable(false);
   fontComboBox->setCurrentFont(tableWidget->font());
 
@@ -364,7 +368,7 @@ void CharacterPalette::showUnicodeTableByRange(const UnicodeRange &range) {
   for (char32 ucs4 = range.first; ucs4 <= range.last; ++ucs4) {
     const char32 ucs4s[] = { ucs4 };
     QTableWidgetItem *item =
-        new QTableWidgetItem(QString::fromUcs4(ucs4s, ARRAYSIZE(ucs4s)));
+        new QTableWidgetItem(QString::fromUcs4(ucs4s, arraysize(ucs4s)));
     item->setTextAlignment(Qt::AlignCenter);
     tableWidget->setItem(ucs4 / kHexBase - offset, ucs4 % kHexBase, item);
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);

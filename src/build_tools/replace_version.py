@@ -41,7 +41,7 @@ __author__ = "mukai"
 import logging
 import optparse
 
-import mozc_version
+from build_tools import mozc_version
 
 
 def ParseOptions():

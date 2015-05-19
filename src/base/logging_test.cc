@@ -39,6 +39,7 @@ TEST(LoggingTest, CompileTest) {
     LOG(INFO) << "";
     LOG(WARNING) << "";
     LOG(ERROR) << "";
+    LOG(DFATAL) << "";
     LOG(FATAL) << "";
     VLOG(0) << "";
     VLOG(1) << "";
@@ -59,6 +60,7 @@ TEST(LoggingTest, CompileTest) {
   LOG_IF(INFO, false) << "";
   LOG_IF(WARNING, false) << "";
   LOG_IF(ERROR, false) << "";
+  LOG_IF(DFATAL, false) << "";
   LOG_IF(FATAL, false) << "";
 
   DLOG_IF(INFO, false) << "";
@@ -101,7 +103,7 @@ TEST(LoggingTest, SideEffectTest) {
   bool flag = false;
 
 #ifdef NO_LOGGING
-  // LOG_(INFO|WARNING|ERROR) are not executed on release mode
+  // LOG_(INFO|WARNING|ERROR|DFATAL) are not executed on release mode
   flag = true;
   LOG_IF(INFO, flag = false) << "";
   EXPECT_TRUE(flag);
@@ -112,6 +114,10 @@ TEST(LoggingTest, SideEffectTest) {
 
   flag = true;
   LOG_IF(ERROR, flag = false) << "";
+  EXPECT_TRUE(flag);
+
+  flag = true;
+  LOG_IF(DFATAL, flag = false) << "";
   EXPECT_TRUE(flag);
 #else
   flag = true;
@@ -124,6 +130,10 @@ TEST(LoggingTest, SideEffectTest) {
 
   flag = true;
   LOG_IF(ERROR, flag = false) << "";
+  EXPECT_FALSE(flag);
+
+  flag = true;
+  LOG_IF(DFATAL, flag = false) << "";
   EXPECT_FALSE(flag);
 #endif
 

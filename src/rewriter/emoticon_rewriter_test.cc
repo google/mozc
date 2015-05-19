@@ -27,17 +27,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/emoticon_rewriter.h"
+
 #include <string>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "rewriter/emoticon_rewriter.h"
-#include "testing/base/public/gunit.h"
 #include "session/commands.pb.h"
 #include "session/request_handler.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 

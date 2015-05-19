@@ -81,7 +81,7 @@ uint16 SjisToEUC(uint16 code) {
       (lo + (lo >= 0x7f ? 0x60 : 0x61));
 }
 
-const uint16 LookupCP932Data(const QString &str) {
+uint16 LookupCP932Data(const QString &str) {
   char32 ucs4 = 0;
   if (!ExtractFirstUCS4Char(str, &ucs4)) {
     return 0;

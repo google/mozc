@@ -36,7 +36,7 @@
 #include <atlcom.h>
 
 #include "base/util.h"
-
+#include "base/win_util.h"
 #include "win32/ime/ime_impl_imm.h"
 #include "win32/ime/ime_language_bar_menu.h"
 #include "win32/ime/ime_resource.h"
@@ -54,6 +54,8 @@ const GUID kSystemLangBarHelpMenu = {
   0xED9D5450, 0xEBE6, 0x4255, {0x82, 0x89, 0xF8, 0xA3, 0x1E, 0x68, 0x72, 0x28}
 };
 
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+
 // {C4A8F44E-8100-44fe-BA5D-F226AA4B65CA}
 const GUID kImeLangBarItem_Button = {
   0xc4a8f44e, 0x8100, 0x44fe, {0xba, 0x5d, 0xf2, 0x26, 0xaa, 0x4b, 0x65, 0xca}
@@ -69,24 +71,33 @@ const GUID kImeLangBarItem_HelpMenu = {
   0xbbca8c7b, 0xc1e5, 0x473d, {0x83, 0x45, 0xc6, 0x5b, 0x2c, 0x02, 0xcd, 0xc8}
 };
 
-CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
-  // To work around weird crash on Windows8 CP, instanciate the LangBarItemMrg
-  // via ::CoCreateInstance. b/6106437.
-  // TODO(yukawa): Revisit here and make sure if we should extend the condition
-  //     to Vista (or 7) or not.
-  if (mozc::Util::IsWindows8OrLater()) {
-    CComPtr<ITfLangBarItemMgr> ptr;
-    ptr.CoCreateInstance(CLSID_TF_LangBarItemMgr);
-    return ptr;
-  }
+#else
 
+// {E44F4C58-12E2-43FC-A7A3-367BE56BFB65}
+const GUID kImeLangBarItem_Button = {
+  0xe44f4c58, 0x12e2, 0x43fc, {0xa7, 0xa3, 0x36, 0x7b, 0xe5, 0x6b, 0xfb, 0x65}
+};
+
+// {1D8481D3-0D37-4271-8B54-EB0E768AE258}
+const GUID kImeLangBarItem_ToolButton = {
+  0x1d8481d3, 0xd37, 0x4271, {0x8b, 0x54, 0xeb, 0xe, 0x76, 0x8a, 0xe2, 0x58}
+};
+
+// {8963BF4D-04CC-4B17-A6FD-C24E060CAD98}
+const GUID kImeLangBarItem_HelpMenu = {
+  0x8963bf4d, 0x4cc, 0x4b17, {0xa6, 0xfd, 0xc2, 0x4e, 0x6, 0xc, 0xad, 0x98}
+};
+
+#endif
+
+CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   // "msctf.dll" is not always available.  For example, Windows XP can disable
   // TSF completely.  In this case, the "msctf.dll" is not loaded.
   // Note that "msctf.dll" never be unloaded when it exists because we
   // increments its reference count here. This prevents weired crashes such as
   // b/4322508.
   const HMODULE module =
-      mozc::Util::GetSystemModuleHandleAndIncrementRefCount(L"msctf.dll");
+      mozc::WinUtil::GetSystemModuleHandleAndIncrementRefCount(L"msctf.dll");
   if (module == NULL) {
     return NULL;
   }
@@ -119,7 +130,19 @@ LanguageBar::~LanguageBar() {}
 HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
   HRESULT result = S_OK;
 
-  CComPtr<ITfLangBarItemMgr> item = GetLangBarItemMgr();
+  // A workaround to satisfy both b/6106437 and b/6641460.
+  // On Windows 8, keep the instance into |lang_bar_item_mgr_for_win8_|.
+  // On prior OSes, always instanciate new LangBarItemMgr object.
+  CComPtr<ITfLangBarItemMgr> item;
+  if (mozc::Util::IsWindows8OrLater()) {
+    if (!lang_bar_item_mgr_for_win8_) {
+      lang_bar_item_mgr_for_win8_ = GetLangBarItemMgr();
+    }
+    item = lang_bar_item_mgr_for_win8_;
+  } else {
+    item = GetLangBarItemMgr();
+  }
+
   if (!item) {
     return E_FAIL;
   }
@@ -127,22 +150,26 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
   if (input_button_menu_ == NULL) {
     // Add the "Input Mode" button.
     const ImeLangBarMenuItem kInputMenu[] = {
-      {NULL, LangBarCallback::kHiragana, IDS_HIRAGANA,
-       IDI_HIRAGANA_NT, IDI_HIRAGANA},
-      {NULL, LangBarCallback::kFullKatakana, IDS_FULL_KATAKANA,
-       IDI_FULL_KATAKANA_NT, IDI_FULL_KATAKANA},
-      {NULL, LangBarCallback::kFullAlphanumeric, IDS_FULL_ALPHANUMERIC,
-       IDI_FULL_ALPHANUMERIC_NT, IDI_FULL_ALPHANUMERIC},
-      {NULL, LangBarCallback::kHalfKatakana, IDS_HALF_KATAKANA,
-       IDI_HALF_KATAKANA_NT, IDI_HALF_KATAKANA},
-      {NULL, LangBarCallback::kHalfAlphanumeric, IDS_HALF_ALPHANUMERIC,
-       IDI_HALF_ALPHANUMERIC_NT, IDI_HALF_ALPHANUMERIC},
-      {TF_LBMENUF_RADIOCHECKED, LangBarCallback::kDirect, IDS_DIRECT,
-       IDI_DIRECT_NT, IDI_DIRECT},
-      // TODO(yukawa): investigate the http://b/2104435 and
-      // un-comment this line.
-      // {TF_LBMENUF_SEPARATOR, 0, 0, 0, 0},
-      {NULL, LangBarCallback::kCancel, IDS_CANCEL, 0, 0},
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kHiragana,
+       IDS_HIRAGANA, IDI_HIRAGANA_NT, IDI_HIRAGANA},
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kFullKatakana,
+       IDS_FULL_KATAKANA, IDI_FULL_KATAKANA_NT, IDI_FULL_KATAKANA},
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kFullAlphanumeric,
+       IDS_FULL_ALPHANUMERIC, IDI_FULL_ALPHANUMERIC_NT, IDI_FULL_ALPHANUMERIC},
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kHalfKatakana,
+       IDS_HALF_KATAKANA, IDI_HALF_KATAKANA_NT, IDI_HALF_KATAKANA},
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kHalfAlphanumeric,
+       IDS_HALF_ALPHANUMERIC, IDI_HALF_ALPHANUMERIC_NT, IDI_HALF_ALPHANUMERIC},
+      {kImeLangBarItemTypeRadioChecked,
+       LangBarCallback::kDirect,
+       IDS_DIRECT, IDI_DIRECT_NT, IDI_DIRECT},
+      {kImeLangBarItemTypeSeparator, 0, 0, 0, 0},
+      {kImeLangBarItemTypeDefault, LangBarCallback::kCancel, IDS_CANCEL, 0, 0},
     };
 
     CComPtr<ImeToggleButtonMenu> input_button_menu(
@@ -152,7 +179,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
     }
 
     result = input_button_menu->Init(ImeGetResource(), IDS_INPUTMODE,
-                                      &kInputMenu[0], ARRAYSIZE(kInputMenu));
+                                     &kInputMenu[0], arraysize(kInputMenu));
     if (result != S_OK) {
       return result;
     }
@@ -166,16 +193,20 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
     // TODO(yukawa): Make an Icon for kWordRegister kReconversion.
     // TODO(yukawa): Move kReconversion into other appropriate pull-down menu.
     const ImeLangBarMenuItem kToolMenu[] = {
-      {NULL, LangBarCallback::kHandWriting, IDS_HAND_WRITING, 0, 0},
-      {NULL, LangBarCallback::kCharacterPalette, IDS_CHARACTER_PALETTE, 0, 0},
-      {NULL, LangBarCallback::kDictionary, IDS_DICTIONARY,
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kHandWriting, IDS_HAND_WRITING, 0, 0},
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kCharacterPalette, IDS_CHARACTER_PALETTE, 0, 0},
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kDictionary, IDS_DICTIONARY,
        IDI_DICTIONARY_NT, IDI_DICTIONARY},
-      {NULL, LangBarCallback::kWordRegister, IDS_WORD_REGISTER,
+      {kImeLangBarItemTypeDefault,
+       LangBarCallback::kWordRegister, IDS_WORD_REGISTER,
        IDI_DICTIONARY_NT, IDI_DICTIONARY},  // Use Dictionary icon temporarily
-      {NULL, LangBarCallback::kProperty, IDS_PROPERTY,
+      {kImeLangBarItemTypeDefault, LangBarCallback::kProperty, IDS_PROPERTY,
        IDI_PROPERTY_NT, IDI_PROPERTY},
-      {TF_LBMENUF_SEPARATOR, 0, 0, 0, 0},
-      {NULL, LangBarCallback::kCancel, IDS_CANCEL, 0, 0},
+      {kImeLangBarItemTypeSeparator, 0, 0, 0, 0},
+      {kImeLangBarItemTypeDefault, LangBarCallback::kCancel, IDS_CANCEL, 0, 0},
     };
 
     CComPtr<ImeIconButtonMenu> tool_button_menu(
@@ -185,7 +216,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
     }
 
     result = tool_button_menu->Init(ImeGetResource(), IDS_TOOL,
-                                    &kToolMenu[0], ARRAYSIZE(kToolMenu),
+                                    &kToolMenu[0], arraysize(kToolMenu),
                                     IDI_TOOL_NT, IDI_TOOL);
     if (result != S_OK) {
       return result;
@@ -197,8 +228,8 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
   if (help_menu_ == NULL) {
     // Add the "Help" items to the system language bar help menu.
     const ImeLangBarMenuItem kHelpMenu[] = {
-      {NULL, LangBarCallback::kAbout, IDS_ABOUT, 0, 0},
-      {NULL, LangBarCallback::kHelp, IDS_HELP, 0, 0},
+      {kImeLangBarItemTypeDefault, LangBarCallback::kAbout, IDS_ABOUT, 0, 0},
+      {kImeLangBarItemTypeDefault, LangBarCallback::kHelp, IDS_HELP, 0, 0},
     };
 
     CComPtr<ImeSystemLangBarMenu> help_menu(
@@ -209,13 +240,14 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
 
     result = help_menu->Init(ImeGetResource(),
                              &kHelpMenu[0],
-                             ARRAYSIZE(kHelpMenu));
+                             arraysize(kHelpMenu));
     if (result != S_OK) {
       return result;
     }
 
     CComPtr<ITfLangBarItem> help_menu_item;
-    result = item->GetItem(kSystemLangBarHelpMenu, &help_menu_item);
+    result = item->GetItem(
+        kSystemLangBarHelpMenu, &help_menu_item);
     if (result != S_OK) {
       return result;
     }
@@ -239,10 +271,21 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
   return result;
 }
 
+// IMPORTANT: See b/6106437 and b/6641460 before you change this method.
 HRESULT LanguageBar::UninitLanguageBar() {
   HRESULT result = S_OK;
 
-  CComPtr<ITfLangBarItemMgr> item = GetLangBarItemMgr();
+  // A workaround to satisfy both b/6106437 and b/6641460.
+  // On Windows 8, retrieve the instance from |lang_bar_item_mgr_for_win8_|.
+  // On prior OSes, always instanciate new LangBarItemMgr object.
+  CComPtr<ITfLangBarItemMgr> item;
+  if (mozc::Util::IsWindows8OrLater()) {
+    // Move the ownership.
+    item = lang_bar_item_mgr_for_win8_;
+    lang_bar_item_mgr_for_win8_.Release();
+  } else {
+    item = GetLangBarItemMgr();
+  }
   if (!item) {
     return E_FAIL;
   }
@@ -258,7 +301,8 @@ HRESULT LanguageBar::UninitLanguageBar() {
 
   if ((help_menu_ != NULL) && (help_menu_cookie_ != TF_INVALID_COOKIE)) {
     CComPtr<ITfLangBarItem> help_menu_item;
-    result = item->GetItem(kSystemLangBarHelpMenu, &help_menu_item);
+    result = item->GetItem(
+        kSystemLangBarHelpMenu, &help_menu_item);
     if (result == S_OK) {
       CComPtr<ITfSource> source;
       result = help_menu_item->QueryInterface(

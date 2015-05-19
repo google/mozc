@@ -30,10 +30,14 @@
 #ifndef MOZC_SYNC_CONTACT_LIST_UTIL_H_
 #define MOZC_SYNC_CONTACT_LIST_UTIL_H_
 
-#include "base/base.h"
-#include "dictionary/user_dictionary_storage.pb.h"
+#include "base/port.h"
 
 namespace mozc {
+
+namespace user_dictionary {
+class UserDictionary;
+}  // namespace user_dictionary
+
 namespace sync {
 
 class ContactListUtil {
@@ -42,13 +46,13 @@ class ContactListUtil {
   // a dictionary and stores a time stamp into |last_timestamp|.
   // |contact_update| script figures the differentials in the contact list
   // and the time stamp
-  static bool ParseContacts(const string &contact_update,
-      user_dictionary::UserDictionaryStorage::UserDictionary *user_dictionary,
+  static bool ParseContacts(
+      const string &contact_update,
+      user_dictionary::UserDictionary *user_dictionary,
       string *last_timestamp);
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(ContactListUtil);
-
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ContactListUtil);
 };
 
 }  //namespace sync

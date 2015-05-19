@@ -150,7 +150,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
   style->mutable_footer_bottom_color()->set_g(0xee);
   style->mutable_footer_bottom_color()->set_b(0xee);
 
-  style->set_logo_file_name("candidate_window_logo.png");
+  style->set_logo_file_name("candidate_window_logo.tiff");
 
   style->mutable_focused_background_color()->set_r(0xd1);
   style->mutable_focused_background_color()->set_g(0xea);
@@ -215,10 +215,10 @@ void RendererStyleHandler::GetDPIScalingFactor(double *x, double *y) {
   const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
   const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);
   if (x != NULL) {
-    *x = dpi_x / kDefaultDPI;
+    *x = static_cast<double>(dpi_x) / kDefaultDPI;
   }
   if (y != NULL) {
-    *y = dpi_x / kDefaultDPI;
+    *y = static_cast<double>(dpi_y) / kDefaultDPI;
   }
 #else
   if (x != NULL) {

@@ -29,6 +29,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/process.h"
 
 DEFINE_string(open_browser, "", "URL");

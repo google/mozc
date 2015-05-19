@@ -37,7 +37,6 @@ namespace pinyin {
 
 TEST(PinyinSessionFactoryTest, BasicTest) {
   PinyinSessionFactory session_factory;
-  EXPECT_TRUE(session_factory.IsAvailable());
 
   scoped_ptr<session::SessionInterface> session(session_factory.NewSession());
   EXPECT_TRUE(session.get());

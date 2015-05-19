@@ -61,6 +61,7 @@ class UserHistoryAdapter : public AdapterInterface {
   FRIEND_TEST(UserHistoryAdapterTest, GetItemsToUpload);
   FRIEND_TEST(UserHistoryAdapterTest, MarkUploaded);
   FRIEND_TEST(UserHistoryAdapterTest, RealScenarioTest);
+  FRIEND_TEST(UserHistoryAdapterTest, DISABLED_EditAndDeleteAtTheSameTime);
 
   // Return the size of buckets.
   uint32 bucket_size() const;

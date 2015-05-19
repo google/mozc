@@ -48,5 +48,7 @@
         <string>YES</string>
         <key>GoogleBreakpadSendAndExit</key>
         <string>YES</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 </dict>
 </plist>

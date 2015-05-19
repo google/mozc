@@ -80,7 +80,7 @@ TEST(KeyParserTest, ModifierKeys) {
     make_pair("SHIFT", commands::KeyEvent::SHIFT),
   };
 
-  for (size_t i = 0; i < ARRAYSIZE(kTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kTestData); ++i) {
     SCOPED_TRACE(kTestData[i].first);
     commands::KeyEvent key_event;
     EXPECT_TRUE(KeyParser::ParseKey(kTestData[i].first, &key_event));
@@ -175,11 +175,12 @@ TEST(KeyParserTest, SpecialKeys) {
     make_pair("decimal", commands::KeyEvent::DECIMAL),
     make_pair("divide", commands::KeyEvent::DIVIDE),
     make_pair("equals", commands::KeyEvent::EQUALS),
+    make_pair("comma", commands::KeyEvent::COMMA),
 
     make_pair("on", commands::KeyEvent::ON),
   };
 
-  for (size_t i = 0; i < ARRAYSIZE(kTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kTestData); ++i) {
     SCOPED_TRACE(kTestData[i].first);
     commands::KeyEvent key_event;
     EXPECT_TRUE(KeyParser::ParseKey(kTestData[i].first, &key_event));

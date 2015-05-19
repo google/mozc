@@ -31,13 +31,16 @@
 #define MOZC_DICTIONARY_DICTIONARY_IMPL_H_
 
 #include <vector>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
 
 class POSMatcher;
 class SuppressionDictionary;
+
+namespace dictionary {
 
 class DictionaryImpl : public DictionaryInterface {
  public:
@@ -70,9 +73,11 @@ class DictionaryImpl : public DictionaryInterface {
       const Limit &limit,
       NodeAllocatorInterface *allocator) const;
 
-  virtual Node *LookupPrefix(
-      const char *str, int size,
-      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const;
+
+  virtual Node *LookupExact(const char *str, int size,
+                            NodeAllocatorInterface *allocator) const;
 
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
@@ -89,6 +94,7 @@ class DictionaryImpl : public DictionaryInterface {
     PREDICTIVE,
     PREFIX,
     REVERSE,
+    EXACT,
   };
 
   Node *LookupInternal(const char *str, int size,
@@ -112,8 +118,11 @@ class DictionaryImpl : public DictionaryInterface {
 
   // Suppression dictionary is used to suppress nodes.
   const SuppressionDictionary *suppression_dictionary_;
+
+  DISALLOW_COPY_AND_ASSIGN(DictionaryImpl);
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_DICTIONARY_IMPL_H_

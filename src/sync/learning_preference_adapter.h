@@ -40,7 +40,9 @@
 
 namespace mozc {
 
+namespace storage {
 class LRUStorage;
+}  // namespace storage
 
 namespace sync {
 
@@ -67,7 +69,7 @@ class LearningPreferenceAdapter : public AdapterInterface {
 
   struct Storage {
     LearningPreference::Entry::Type type;
-    const LRUStorage *lru_storage;
+    const mozc::storage::LRUStorage *lru_storage;
   };
 
   // Inject sync-target LRUStorages into the adapter.
@@ -78,7 +80,7 @@ class LearningPreferenceAdapter : public AdapterInterface {
   // is used for getting meta data, like filename, seed,
   // value size, of the |storage|.
   void AddStorage(LearningPreference::Entry::Type type,
-                  const LRUStorage *storage);
+                  const mozc::storage::LRUStorage *storage);
   void ClearStorage();
   size_t GetStorageSize() const;
   const Storage &GetStorage(size_t i) const;

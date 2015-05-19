@@ -45,7 +45,6 @@ class HangulSessionFactory : public session::SessionFactoryInterface {
   virtual ~HangulSessionFactory();
   virtual session::SessionInterface *NewSession();
   virtual UserDataManagerInterface *GetUserDataManager();
-  virtual bool IsAvailable() const;
  private:
   bool is_available_;
 };

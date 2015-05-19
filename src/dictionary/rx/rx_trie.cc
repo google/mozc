@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "third_party/rx/v1_1_2/rx.h"
 
 namespace mozc {
@@ -63,14 +64,15 @@ static int RxCallback(void *cookie, const char *s, int len, int id) {
   // truncates to len byte.
   RxEntry entry;
   if (res->is_predictive) {
-    size_t search_key_len = res->search_key.size();
+    const size_t search_key_len = res->search_key.size();
     DCHECK(len >= search_key_len);
-    entry.actual_key = string(s, len);
-    entry.key = res->search_key + string(s + search_key_len,
-                                         len - search_key_len);
+    entry.actual_key.assign(s, len);
+    entry.key.reserve(len);
+    entry.key.assign(res->search_key);
+    entry.key.append(s + search_key_len, len - search_key_len);
   } else {  // prefix search
-    entry.actual_key = string(s, len);
-    entry.key = string(res->search_key, 0, len);
+    entry.actual_key.assign(s, len);
+    entry.key.assign(res->search_key, 0, len);
   }
   entry.id = id;
   res->result->push_back(entry);

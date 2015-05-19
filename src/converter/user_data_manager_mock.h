@@ -43,33 +43,16 @@ namespace mozc {
 
 class UserDataManagerMock : public UserDataManagerInterface {
  public:
-  UserDataManagerMock() {}
-  ~UserDataManagerMock() {}
+  UserDataManagerMock();
+  virtual ~UserDataManagerMock();
 
-  virtual bool Sync() {
-    function_counters_["Sync"]++;
-    return true;
-  }
-  virtual bool Reload() {
-    function_counters_["Reload"]++;
-    return true;
-  }
-  virtual bool ClearUserHistory() {
-    function_counters_["ClearUserHistory"]++;
-    return true;
-  }
-  virtual bool ClearUserPrediction() {
-    function_counters_["ClearUserPrediction"]++;
-    return true;
-  }
-  virtual bool ClearUnusedUserPrediction() {
-    function_counters_["ClearUnusedUserPrediction"]++;
-    return true;
-  }
+  virtual bool Sync();
+  virtual bool Reload();
+  virtual bool ClearUserHistory();
+  virtual bool ClearUserPrediction();
+  virtual bool ClearUnusedUserPrediction();
 
-  int GetFunctionCallCount(const string &name) {
-    return function_counters_[name];
-  }
+  int GetFunctionCallCount(const string &name);
 
  private:
   map<string, int> function_counters_;

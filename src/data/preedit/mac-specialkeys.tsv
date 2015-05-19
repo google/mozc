@@ -50,3 +50,4 @@ Keypad8	NUMPAD8
 Keypad9	NUMPAD9
 kVK_JIS_Eisu	OFF
 kVK_JIS_Kana	ON
+kVK_JIS_KeypadComma	COMMA

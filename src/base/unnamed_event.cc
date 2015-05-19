@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/unnamed_event.h"
-#include "base/base.h"
 
 #ifdef OS_WINDOWS
 #include <windows.h>
@@ -37,6 +36,9 @@
 #include <pthread.h>
 #include <sys/time.h>
 #endif  // OS_WINDOWS
+
+#include "base/base.h"
+#include "base/logging.h"
 
 namespace mozc {
 

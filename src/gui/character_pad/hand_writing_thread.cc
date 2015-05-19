@@ -86,7 +86,7 @@ void HandWritingThread::Start() {
   // because the stats config is stored in a file.
   // But this situation is very rare because the user have to change it in the
   // config dialog UI.
-  usage_stats_enabled_ = StatsConfigUtil::IsEnabled();
+  usage_stats_enabled_ = mozc::config::StatsConfigUtil::IsEnabled();
   start();
   moveToThread(this);
 }

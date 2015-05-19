@@ -32,11 +32,17 @@
 
 #include <string>
 #include "base/port.h"
-#include "converter/cached_connector.h"
+#include "base/scoped_ptr.h"
 #include "converter/connector_interface.h"
-#include "converter/sparse_connector.h"
 
 namespace mozc {
+
+class SparseConnector;
+
+namespace converter {
+class CachedConnector;
+}  // namespace converter
+
 class ConnectorBase : public ConnectorInterface {
  public:
   virtual ~ConnectorBase();
@@ -51,9 +57,10 @@ class ConnectorBase : public ConnectorInterface {
 
  private:
   scoped_ptr<SparseConnector> sparse_connector_;
-  scoped_ptr<CachedConnector> cached_connector_;
+  scoped_ptr<converter::CachedConnector> cached_connector_;
 
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_CONNECTOR_BASE_H_

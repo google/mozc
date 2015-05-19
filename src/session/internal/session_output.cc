@@ -31,11 +31,18 @@
 
 #include "session/internal/session_output.h"
 
+#include <algorithm>
+#include <map>
+#include <string>
+#include <vector>
+
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "converter/segments.h"
 #include "composer/composer.h"
+#include "converter/segments.h"
 #include "session/internal/candidate_list.h"
 
 namespace mozc {

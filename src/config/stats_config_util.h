@@ -30,9 +30,22 @@
 #ifndef MOZC_CONFIG_STATS_CONFIG_UTIL_H_
 #define MOZC_CONFIG_STATS_CONFIG_UTIL_H_
 
-namespace mozc {
+#include "base/port.h"
 
-class StatsConfigUtilInterface;
+namespace mozc {
+namespace config {
+
+// Interface class
+class StatsConfigUtilInterface {
+ public:
+  virtual bool IsEnabled() const = 0;
+  virtual bool SetEnabled(bool val) = 0;
+ protected:
+  StatsConfigUtilInterface() {
+  }
+  virtual ~StatsConfigUtilInterface() {
+  }
+};
 
 class StatsConfigUtil {
  public:
@@ -53,19 +66,11 @@ class StatsConfigUtil {
 
   // Should never be allocated.
  private:
-  StatsConfigUtil() {}
-  virtual ~StatsConfigUtil() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(StatsConfigUtil);
 };
 
-// Interface class
-class StatsConfigUtilInterface {
- public:
-  StatsConfigUtilInterface() {}
-  virtual ~StatsConfigUtilInterface() {}
-  virtual bool IsEnabled() = 0;
-  virtual bool SetEnabled(bool val) = 0;
-};
-}
+}  // namespace config
+}  // namespace mozc
 
 
 #endif  // MOZC_CONFIG_STATS_CONFIG_UTIL_H_

@@ -34,8 +34,6 @@
 #include <string>
 #include <vector>
 #include "base/port.h"
-// FRIEND_TEST
-#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace usage_stats {
@@ -43,8 +41,8 @@ class UploadUtil;
 
 class ClientIdInterface {
  public:
-  ClientIdInterface() {}
-  virtual ~ClientIdInterface() {}
+  ClientIdInterface();
+  virtual ~ClientIdInterface();
 
   // gets client id
   virtual void GetClientId(string *output) = 0;
@@ -72,11 +70,7 @@ class UsageStatsUploader {
   // Sets client id handler
   static void SetClientIdHandler(ClientIdInterface *client_id_handler);
 
- private:
-  FRIEND_TEST(ClientIdTest, CreateClientIdTest);
-  FRIEND_TEST(ClientIdTest, GetClientIdTest);
-  FRIEND_TEST(ClientIdTest, GetClientIdFailTest);
-
+ protected:
   static void LoadStats(UploadUtil *uploader);
 
   // Gets client id

@@ -31,9 +31,12 @@
 
 #include <algorithm>
 #include <string>
+
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"

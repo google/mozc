@@ -1,0 +1,500 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2012, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+"""Utility for Android.
+
+Internally this depends on 'aapt' and 'jarsigner' commands so if they are not
+on the path an exception will raise.
+"""
+
+__author__ = "matsuzakit"
+
+import glob
+import logging
+import os.path
+import re
+import shutil
+import stat
+import subprocess
+import sys
+import zipfile
+
+
+
+class Apk(object):
+  """Represents an apk file."""
+
+  def __init__(self, apk_path):
+    """Inits the instance.
+
+    Args:
+      apk_path: A String of apk's path.
+
+    Raises:
+      IOError: If apk_file is not a file, an IOError raises.
+    """
+    if not os.path.isfile(apk_path):
+      raise IOError('%s is not found' % apk_path)
+    self._apk_path = os.path.abspath(apk_path)
+
+  def GetProperties(self):
+    """Gets the apk's properties.
+
+    Returns:
+      Following properties will be returned.
+      apk_file_name (string): Full path of the apk file.
+      apk_size (int): File size of the apk file.
+      classdex_{raw,compressed}_size (int):
+          {Raw,Compressed} file size of classes.dex.
+      has_release_key (boolean): True if the apk is signed with release key.
+      libmozc_{raw,compressed}_size: {Raw,Compressed} file size of libmozc.so.
+      res__file_count (int): Count of res/**/* files
+      res_image_file__count (int): Count of res/**/*.{png,jpg,gif} files.
+      res_image_{raw,compressed}_size_total (int):
+          Total {raw,compressed} file size of res/**/*.{png,jpg,gif} files.
+      res_{raw,compressed}_size_total (int):
+          Total {raw,compressed} file size of res/**/* files.
+      res_xml_file__count (int): Count of res/**/*.xml files.
+      res_xml_{raw,compressed}_size_total (int):
+          Total {raw,compressed} file size of res/**/*.xml files.
+      uses_permissions (array of string): List of uses_permission.
+      version_name (string): Version name.
+    """
+
+    props = {}
+    props['apk_file_name'] = self._apk_path
+    props['apk_size'] = os.path.getsize(self._apk_path)
+
+    zip_file = zipfile.ZipFile(self._apk_path)
+    try:
+      self._CollectSingleFileMetrics(
+          zip_file, r'lib/[^/]+/libmozc.so', 'libmozc', props)
+      self._CollectSingleFileMetrics(
+          zip_file, r'classes.dex', 'classdex', props)
+      self._CollectMultipleFileMetrics(
+          zip_file, r'res/.*', 'res', props)
+      self._CollectMultipleFileMetrics(
+          zip_file, r'res/.*\.(png|jpg|gif)', 'res_image', props)
+      self._CollectMultipleFileMetrics(
+          zip_file, r'res/.*\.xml', 'res_xml', props)
+    finally:
+      zip_file.close()
+
+    self._CollectBadgingProperties(props)
+    self._CollectSignatureProperties(props)
+
+    return props
+
+  def _CollectBadgingProperties(self, props):
+    args = ['aapt', 'dump', 'badging', self._apk_path]
+    logging.info('Collecting badging props; %s', args)
+    (output, _) = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
+    logging.debug(output)
+    props['version_name'] = re.search(r'versionName=\'(\d+\.\d+\.\d+\.\d+)\'',
+                                      output).group(1)
+    props['uses_permissions'] = re.findall(r'^uses-permission:\'(.*)\'$',
+                                           output, re.MULTILINE)
+
+  def _CollectSignatureProperties(self, props):
+    certificate = (r'X.509, CN=Unknown, OU="Google, Inc", O="Google, Inc", '
+                   r'L=Mountain View, ST=CA, C=US')
+    args = ['jarsigner', '-verify', '-verbose', '-certs', self._apk_path]
+    logging.info('Collecting signature; %s', args)
+    (output, _) = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
+    logging.debug(output)
+    props['has_release_key'] = output.find(certificate) != -1
+
+  def _CollectSingleFileMetrics(self, zip_file, name_pattern, key, props):
+    info_list = self._GetZipInfoList(zip_file, name_pattern)
+    if len(info_list) != 1:
+      raise LookupError('Exactly one %s is required' % name_pattern)
+    info = info_list[0]
+    props['%s_raw_size' % key] = info.file_size
+    props['%s_compressed_size' % key] = info.compress_size
+
+  def _CollectMultipleFileMetrics(self, zip_file, name_pattern, key, props):
+    info_list = self._GetZipInfoList(zip_file, name_pattern)
+    count = 0
+    raw_size = 0
+    compressed_size = 0
+    for info in info_list:
+      count += 1
+      raw_size += info.file_size
+      compressed_size += info.compress_size
+    props['%s_file_count' % key] = count
+    props['%s_raw_size_total' % key] = raw_size
+    props['%s_compressed_size_total' % key] = compressed_size
+
+  def _GetZipInfoList(self, zip_file, name_pattern):
+    result = []
+    for zip_info in zip_file.infolist():
+      if re.match(name_pattern, zip_info.filename):
+        result.append(zip_info)
+    return result
+
+
+class AndroidDevice(object):
+  """Represents an Android device (an emulator or a real device)."""
+
+  def __init__(self, serial):
+    self.serial = serial
+    # Don't access this property dicretly.
+    # Use self._GetAvdName() instead.
+    self._avd_name = None
+
+  def WaitForDevice(self):
+    """Equivalent to `adb wait-for-device`."""
+    args = [os.path.join(ANDROID_SDK_ROOT, 'platform-tools', 'adb'), '-s',
+            self.serial, 'wait-for-device']
+    if subprocess.call(args):
+      raise StandardError('wait-for-device failed for %s' % self.serial)
+
+  def IsAcceptableAbi(self, abi):
+    """Returns if given abi is executable on this device.
+
+    Args:
+      abi: ABI name. e.g. armeabi, armeabi-v7a, x86, mips
+    Returns:
+      True if given abi is executable on this device.
+    """
+    keys = ['ro.product.cpu.abi', 'ro.product.cpu.abi2']
+    for key in keys:
+      value = self._GetProperty(key)
+      if value == abi:
+        return True
+    return False
+
+  def _RunCommand(self, *command):
+    """Run a command on android via adb."""
+    args = ['adb', '-s', self.serial, 'shell']
+    args.extend(command)
+    logging.info('Running at %s: %s', self.serial, args)
+    process = subprocess.Popen(args, stdout=subprocess.PIPE)
+    output, _ = process.communicate()
+    if process.returncode != 0:
+      raise StandardError('Failed to run the command: ' + ' '.join(command))
+    logging.info(output)
+    return output
+
+  def _GetAvdName(self):
+    if not self._avd_name:
+      # [mozc.avd_name] property is set by build_mozc.py
+      self._avd_name = self._GetProperty('mozc.avd_name')
+      # If the property is not available (e.g. on real device or an emulator
+      # instance launched not from build_mozc.py),
+      # use [ro.build.display.id].
+      if not self._avd_name:
+        self._avd_name = self._GetProperty('ro.build.display.id')
+    return self._avd_name
+
+  def _GetProperty(self, key):
+    return self._RunCommand('getprop', key).rstrip()
+
+  @staticmethod
+  def GetDevices():
+    """Gets all the available devices via adb.
+
+    The devices which are accessible from adb and of which status is
+    'device' or 'offline' are returned.
+    'unknown' devices are not included becuase it will never be accessible.
+
+    Raises:
+      StandardError: when `adb` commands fails.
+    Returns:
+      A list of AndroidDevice.
+    """
+    args = ['adb', 'devices']
+    logging.info('Running: %s', args)
+    process = subprocess.Popen(args, stdout=subprocess.PIPE)
+    output, _ = process.communicate()
+    if process.returncode != 0:
+      raise StandardError('Failed to run the command: ' + ' '.join(args))
+    logging.info(output)
+    result = []
+    # offline is used for such emulator processes which have just been launched.
+    regex = re.compile(r'(.*?)\s+(?:device|offline)$')
+    for line in output.splitlines():
+      m = regex.match(line)
+      if m:
+        result.append(AndroidDevice(m.group(1)))
+    return result
+
+
+class Emulator(object):
+  """An emulator and emulator related stuff."""
+
+  @staticmethod
+  def GetAvailableEmulatorPorts():
+    """Returns a list of ports which are available for an emulator.
+
+    Returned port can be passed to Launch method as port parameter.
+    Returns:
+      List of available ports.
+    """
+    args = [os.path.join(ANDROID_SDK_ROOT, 'platform-tools', 'adb'), 'devices']
+    process = subprocess.Popen(args, stdout=subprocess.PIPE)
+    (devices_result, _) = process.communicate()
+    used_ports = set(int(port) for port
+                     in re.findall(r'emulator-(\d+)', devices_result))
+    return [port for port in xrange(5554, 5586, 2) if port not in used_ports]
+
+  @staticmethod
+  def _GetFixedAvdIni(f, ini_file_path):
+    """Fixes corrupt .ini file.
+
+    Typically .ini files in template sdk home directory have corrupt or no path=
+    entry. This method fixes it.
+    Args:
+      f: File object which represents original ini file content.
+      ini_file_path: Path to ini file to be fixed.
+    Returns:
+      Fixed content.
+    """
+    result = [line for line in f if not line.startswith('path=')]
+    avd_name = os.path.splitext(ini_file_path)[0]
+    avd_relative_path = os.path.join(os.path.basename(ini_file_path),
+                                     '%s.avd' % avd_name)
+    # path entry needs absolute path.
+    result.append('path=%s\n' % os.path.abspath(avd_relative_path))
+    return ''.join(result)
+
+  @staticmethod
+  def _CopyPregeneratedFileToSdkHome(dest_android_sdk_home, avd_name):
+    """Copy pregenerated files if possible.
+
+    Currently only userdata-qemu.img is copied.
+    The file is mandatory for successfull launch of an emulator.
+    If the file doesn't exist, the emulator stucks.
+    sdcard.img is not copied because pregenerated one is smaller than
+    our expectation and can be created by CreateBlankSdCard method.
+
+    Args:
+      dest_android_sdk_home: Path to Android SDK home
+      avd_name: Name of AVD.
+    Returns:
+      True if pregenerated file(s) is/are successfully copied.
+    """
+    avd_dir = os.path.join(dest_android_sdk_home,
+                           '.android', 'avd', '%s.avd' % avd_name)
+    # Expecting image.sysdir.1 points system image.
+    system_image_relative = Emulator.GetAvdProperties(
+        dest_android_sdk_home, avd_name)['image.sysdir.1']
+    system_image_dir = os.path.join(ANDROID_SDK_ROOT, system_image_relative)
+    userdata_qemu_path = os.path.join(system_image_dir, 'pregenerated',
+                                      'userdata-qemu.img')
+    if os.path.exists(userdata_qemu_path):
+      shutil.copy(userdata_qemu_path, avd_dir)
+      Emulator._MakeFileWritableRecursively(avd_dir)
+      logging.info('%s is copied to %s.', userdata_qemu_path, avd_dir)
+      return True
+    else:
+      logging.warning('%s is not found.', userdata_qemu_path)
+      return False
+
+  @staticmethod
+  def SetUpTestingSdkHomeDirectory(template_android_sdk_home,
+                                   dest_android_sdk_home):
+    """Sets up sdk home directory to minimum required level.
+
+    This method copies files from template directory to target.
+    And fixes (intentionally) corrupt config.ini file and
+    copies pregenerated files from sdk root.
+    This method doesn't set up SD card, which is not mandatory to launch an
+    emulator.
+    If using normal sdk home, this method should not be used.
+    If using template sd home, invoke this before creating an Emulator.
+    Args:
+      template_android_sdk_home: path to template android sdk home directory.
+      dest_android_sdk_home: path to newly created sdk home directory basing on
+          template_android_sdk_home
+    """
+    # Copy entire tree.
+    if os.path.exists(dest_android_sdk_home):
+      shutil.rmtree(dest_android_sdk_home)
+    shutil.copytree(template_android_sdk_home, dest_android_sdk_home)
+    # Fix ${avd_name}.ini files' "path" property.
+    target_avd_dir = os.path.abspath(os.path.join(dest_android_sdk_home,
+                                                  '.android', 'avd'))
+    Emulator._MakeFileWritableRecursively(dest_android_sdk_home)
+    for ini_file_path in glob.glob(os.path.join(target_avd_dir, '*.ini')):
+      # Overwrite .ini file by fixed content.
+      with open(ini_file_path, 'r') as f:
+        content = Emulator._GetFixedAvdIni(f, ini_file_path)
+      with open(ini_file_path, 'w') as f:
+        f.write(content)
+      avd_name = os.path.splitext(os.path.basename(ini_file_path))[0]
+      Emulator._CopyPregeneratedFileToSdkHome(dest_android_sdk_home, avd_name)
+
+  @staticmethod
+  def GetAvdNames(android_sdk_home):
+    """Returns avd names which are available in android_sdk_home."""
+    result = []
+    ini_file_glob = os.path.join(android_sdk_home, '.android', 'avd', '*.ini')
+    for ini_file_path in glob.glob(ini_file_glob):
+      result.append(os.path.splitext(os.path.basename(ini_file_path))[0])
+    return result
+
+  @staticmethod
+  def GetAvdProperties(android_sdk_home, avd_name):
+    """Returns a property, which is based on ${avd_name}/config.ini file."""
+    config_path = os.path.join(android_sdk_home, '.android', 'avd',
+                               '%s.avd' % avd_name, 'config.ini')
+    result = {}
+    with open(config_path, 'r') as f:
+      for line in f:
+        m = re.match(r'^(.*?)=(.*)$', line)
+        if m:
+          result[m.group(1)] = m.group(2)
+    return result
+
+  @staticmethod
+  def _MakeFileWritableRecursively(path):
+    for dir_path, _, filelist in os.walk(path):
+      for filename in filelist:
+        path = os.path.join(dir_path, filename)
+        os.chmod(path, os.lstat(path).st_mode | stat.S_IWRITE)
+
+  def __init__(self, android_sdk_home, avd_name):
+    """Create an Emulator instance.
+
+    After instantiation, an emulator process is not lauched.
+    To launch the process, call Launch method.
+    If you are using template SDK home directory, set up temporary
+    SDK home by SetUpTestingSdkHomeDirectory before creating an Emulator
+    instance.
+    Args:
+      android_sdk_home: Path to android sdk home.
+      avd_name: Name of an avd to use.
+    """
+    self._android_sdk_home = android_sdk_home
+    self._avd_name = avd_name
+    self._avd_dir = os.path.join(android_sdk_home, '.android',
+                                 'avd', '%s.avd' % avd_name)
+    self._avd_properties = Emulator.GetAvdProperties(android_sdk_home, avd_name)
+    # _process can be used for checking whether emulator process has been
+    # launched or not.
+    self._process = None
+
+  def Launch(self, port_number):
+    """Launhes an emulator process.
+
+    Args:
+      port_number: Port number to be used by newly launched emulator.
+          c.f.  GetAvailableEmulatorPorts().
+    Raises:
+      StandardError: If fails on launching a process.
+    """
+    if self._process:
+      raise StandardError('Emulator process has been launched already.')
+    self._port_number = port_number
+    self.serial = 'emulator-%s' % port_number
+
+    # Old Android OS emulator lacks hw.cpu.arch property.
+    # Use armeabi as default.
+    hw_cpu_arch = self._avd_properties.get('hw.cpu.arch', 'armeabi')
+    if hw_cpu_arch == 'x86':
+      emulator = 'emulator-x86'
+    else:
+      emulator = 'emulator-arm'
+    logging.info('hw.cpu.arch is %s so using %s', hw_cpu_arch, emulator)
+
+    args = [
+        os.path.join(ANDROID_SDK_ROOT, 'tools', emulator),
+        '-avd', self._avd_name,
+        '-port', str(self._port_number),
+        '-no-window',  # For headless environment.
+        '-prop', 'mozc.avd_name=%s' % self._avd_name,
+        '-verbose',
+    ]
+    logging.info('Launching an emulator; %s', args)
+    env = {'ANDROID_SDK_HOME': self._android_sdk_home,
+           'ANDROID_SDK_ROOT': ANDROID_SDK_ROOT}
+    self._process = subprocess.Popen(args, env=env)
+    if self._process.poll() is not None:
+      raise StandardError('Emulator launch fails.')
+
+  def CreateBlankSdCard(self, size_bytes):
+    """Creates blank SD card.
+
+    Args:
+      size_bytes: The size of the SD card (bytes).
+    Raises:
+      StandardError: if fails on mksdcard command.
+    """
+    if self._process:
+      raise StandardError('Emulator process for %s has been launched already '
+                          'so SD card creation fails.' % self.serial)
+    sdcard_path = os.path.join(self._avd_dir, 'sdcard.img')
+    args = [os.path.join(ANDROID_SDK_ROOT, 'tools', 'mksdcard'),
+            str(size_bytes), sdcard_path]
+    logging.info('Creating SD card: %s', args)
+    if subprocess.call(args):
+      raise StandardError('SD card creation fails.')
+
+  def CopyTreeToSdCard(self, host_src_dir, sd_dest_dir):
+    """Copies tree from host to SD card.
+
+    Args:
+      host_src_dir: Source path (host).
+      sd_dest_dir: Destination path (SD card).
+    Raises:
+      StandardError: If fails on mtools command.
+    """
+    if self._process:
+      raise StandardError('Emulator process for %s has been launched already '
+                          'so SD card modifaction fails.' % self.serial)
+    sdcard_path = os.path.join(self._avd_dir, 'sdcard.img')
+    args = ['mtools', '-c', 'mcopy', '-i', sdcard_path, '-s', host_src_dir,
+            '::%s' % sd_dest_dir]
+    logging.info('Copying into SD card: %s', args)
+    # The size of an SD card which mksdcard creates is invalid for mtools.
+    # Skip format check by MTOOLS_SKIP_CHECK variable.
+    if subprocess.call(args, env={'MTOOLS_SKIP_CHECK': '1'}):
+      raise StandardError('Copying %s into SD card fails' % host_src_dir)
+
+  def GetAndroidDevice(self):
+    return AndroidDevice(self.serial)
+
+  def Terminate(self):
+    """Terminate the process."""
+    if not self._process:
+      raise StandardError('Emulator process has not been launched.')
+    self._process.terminate()
+    self._process = None
+
+
+def main():
+  for arg in sys.argv[1:]:
+    for item in sorted(Apk(arg).GetProperties().items()):
+      print '%s: %s' % item
+
+
+if __name__ == '__main__':
+  main()

@@ -27,20 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "storage/lru_storage.h"
+
 #include <algorithm>
-#include <string>
-#include <vector>
 #include <set>
+#include <string>
 #include <utility>
+#include <vector>
+
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "storage/lru_cache.h"
-#include "storage/lru_storage.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace storage {
 namespace {
 
 string GenRandomString(int size) {
@@ -54,7 +58,7 @@ string GenRandomString(int size) {
 }
 
 void RunTest(LRUStorage *storage, uint32 size) {
-  LRUCache<string, uint32> cache(size);
+  mozc::storage::LRUCache<string, uint32> cache(size);
   set<string> used;
   vector<pair<string, uint32> > values;
   for (int i = 0; i < size * 2; ++i) {
@@ -96,7 +100,7 @@ void RunTest(LRUStorage *storage, uint32 size) {
     EXPECT_TRUE(v2 == NULL);
   }
 }
-}  // anonymous namespace
+}  // namespace
 
 class LRUStorageTest : public testing::Test {
  protected:
@@ -319,9 +323,9 @@ TEST_F(LRUStorageTest, InvalidFileOpenTest) {
   EXPECT_FALSE(storage.Insert("test", NULL));
 }
 
-class LRUStoragOpenOrCreateTest : public testing::Test {
+class LRUStorageOpenOrCreateTest : public testing::Test {
  protected:
-  LRUStoragOpenOrCreateTest() {}
+  LRUStorageOpenOrCreateTest() {}
 
   virtual void SetUp() {
     UnlinkDBFileIfExists();
@@ -341,13 +345,14 @@ class LRUStoragOpenOrCreateTest : public testing::Test {
   static string GetTemporaryFilePath() {
     // This name should be unique to each test.
     return Util::JoinPath(FLAGS_test_tmpdir,
-                          "LRUStoragOpenOrCreateTest_test.db");
+                          "LRUStorageOpenOrCreateTest_test.db");
   }
+
  private:
-  DISALLOW_COPY_AND_ASSIGN(LRUStoragOpenOrCreateTest);
+  DISALLOW_COPY_AND_ASSIGN(LRUStorageOpenOrCreateTest);
 };
 
-TEST_F(LRUStoragOpenOrCreateTest, LRUStoragOpenOrCreateTest) {
+TEST_F(LRUStorageOpenOrCreateTest, OpenOrCreateTest) {
   const string file = GetTemporaryFilePath();
   {
     OutputFileStream ofs(file.c_str());
@@ -356,12 +361,14 @@ TEST_F(LRUStoragOpenOrCreateTest, LRUStoragOpenOrCreateTest) {
 
   {
     LRUStorage storage;
-    EXPECT_FALSE(storage.Open(file.c_str()));
+    EXPECT_FALSE(storage.Open(file.c_str()))
+        << "Corrupted file should be detected as an error.";
   }
 
   {
     LRUStorage storage;
-    EXPECT_TRUE(storage.OpenOrCreate(file.c_str(), 4, 10, 0x76fef));
+    EXPECT_TRUE(storage.OpenOrCreate(file.c_str(), 4, 10, 0x76fef))
+        << "Corrupted file should be replaced with new one.";
     uint32 v = 823;
     storage.Insert("test", reinterpret_cast<const char *>(&v));
     const uint32 *result =
@@ -369,4 +376,6 @@ TEST_F(LRUStoragOpenOrCreateTest, LRUStoragOpenOrCreateTest) {
     CHECK_EQ(v, *result);
   }
 }
+
+}  // namespace storage
 }  // namespace mozc

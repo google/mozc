@@ -50,20 +50,28 @@ def ParseOptions():
 
 
 def WriteData(input_path, output_path):
+  outputs = []
+  with open(input_path) as input_stream:
+    input_stream = code_generator_util.SkipLineComment(input_stream)
+    input_stream = code_generator_util.ParseColumnStream(input_stream,
+                                                         num_column=3)
+    # ex. (value, error, correction) = ("雰囲気", "ふいんき", "ふんいき")
+    for value, error, correction in input_stream:
+      outputs.append([value, error, correction])
+
+  # In order to lookup the entries via |error| with binary search,
+  # sort outputs  here.
+  outputs.sort(lambda x, y: cmp(x[1], y[1]) or cmp(x[0], y[0]))
+
   with open(output_path, 'w') as output_stream:
     output_stream.write('static const ReadingCorrectionItem '
                         'kReadingCorrections[] = {\n')
-
-    with open(input_path) as input_stream:
-      input_stream = code_generator_util.SkipLineComment(input_stream)
-      input_stream = code_generator_util.ParseColumnStream(input_stream,
-                                                           num_column=3)
-      # ex. (value, error, correction) = ("雰囲気", "ふいんき", "ふんいき")
-      for value, error, correction in input_stream:
-        output_stream.write('  // %s, %s, %s\n' % (value, error, correction))
-        output_stream.write(
-          code_generator_util.FormatWithCppEscape(
-            '  { %s, %s, %s },\n', value, error, correction))
+    for output in outputs:
+      (value, error, correction) = output
+      output_stream.write('  // %s, %s, %s\n' % (value, error, correction))
+      output_stream.write(
+        code_generator_util.FormatWithCppEscape(
+        '  { %s, %s, %s },\n', value, error, correction))
 
     output_stream.write('};\n')
 

@@ -31,6 +31,8 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/thread.h"
 #include "base/util.h"
@@ -106,8 +108,8 @@ Node *MakeNodes(const vector<Node *>& nodes) {
   Node *prev = NULL;
   for (int i = 0; i < nodes.size(); ++i) {
     Node *node = nodes[i];
-    node->key = "key" + Util::SimpleItoa(i);
-    node->value = "value" + Util::SimpleItoa(i);
+    node->key = "key" + NumberUtil::SimpleItoa(i);
+    node->value = "value" + NumberUtil::SimpleItoa(i);
     if (prev != NULL) {
       prev->bnext = node;
     }
@@ -274,8 +276,8 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->Lock();
     dic->Clear();
     for (int i = 0; i < 10; ++i) {
-      dic->AddEntry("key" + Util::SimpleItoa(i),
-                    "value" + Util::SimpleItoa(i));
+      dic->AddEntry("key" + NumberUtil::SimpleItoa(i),
+                    "value" + NumberUtil::SimpleItoa(i));
     }
     dic->UnLock();
     Node *head = MakeNodes(nodes);
@@ -296,8 +298,8 @@ class DictionaryLoaderThread : public Thread {
     dic->Lock();
     dic->Clear();
     for (int i = 0; i < 100; ++i) {
-      const string key = "key" + Util::SimpleItoa(i);
-      const string value = "value" + Util::SimpleItoa(i);
+      const string key = "key" + NumberUtil::SimpleItoa(i);
+      const string value = "value" + NumberUtil::SimpleItoa(i);
       EXPECT_TRUE(dic->AddEntry(key, value));
       Util::Sleep(5);
     }
@@ -318,8 +320,8 @@ TEST(SupressionDictionary, ThreadTest) {
     thread.Start();
 
     for (int i = 0; i < 100; ++i) {
-      const string key = "key" + Util::SimpleItoa(i);
-      const string value = "value" + Util::SimpleItoa(i);
+      const string key = "key" + NumberUtil::SimpleItoa(i);
+      const string value = "value" + NumberUtil::SimpleItoa(i);
       if (!thread.IsRunning()) {
         EXPECT_TRUE(dic->SuppressEntry(key, value));
       }

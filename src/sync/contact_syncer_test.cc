@@ -174,8 +174,9 @@ TEST_F(ContactSyncerTest, Download) {
   OAuth2Util oauth2_util(oauth2_client_.get());
   oauth2_util.set_scope(kScope);
   ContactSyncer syncer(&oauth2_util);
+  OAuth2::Error error;
 
-  EXPECT_TRUE(oauth2_util.RequestAccessToken(kAuthToken));
+  EXPECT_TRUE(oauth2_util.RequestAccessToken(kAuthToken, &error));
 
   SetResourceServer();
   syncer.SetLastDownloadTimestamp("2011-05-22T04:00:00.000Z");
@@ -184,10 +185,9 @@ TEST_F(ContactSyncerTest, Download) {
   user_dictionary::UserDictionaryStorage storage;
   EXPECT_TRUE(syncer.Download(&storage, &reload_required));
   EXPECT_EQ(1, storage.dictionaries_size());
-  user_dictionary::UserDictionaryStorage::UserDictionary *user_dict =
-      storage.mutable_dictionaries(0);
+  user_dictionary::UserDictionary *user_dict = storage.mutable_dictionaries(0);
   EXPECT_EQ(1, user_dict->entries_size());
-  user_dictionary::UserDictionaryStorage::UserDictionary::Entry *entry =
+  user_dictionary::UserDictionary::Entry *entry =
       user_dict->mutable_entries(0);
   // "みょうじ""なまえ"
   EXPECT_EQ("\xE3\x81\xBF\xE3\x82\x87\xE3\x81\x86\xE3\x81\x98"

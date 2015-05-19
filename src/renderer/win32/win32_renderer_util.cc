@@ -54,6 +54,7 @@
 #include "base/base.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
+#include "base/win_util.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 
@@ -707,7 +708,7 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
                                                   POINT *point);
   static FPLogicalToPhysicalPoint GetLogicalToPhysicalPoint() {
     // LogicalToPhysicalPoint API is available in Vista or later.
-    const HMODULE module = Util::GetSystemModuleHandle(L"user32.dll");
+    const HMODULE module = WinUtil::GetSystemModuleHandle(L"user32.dll");
     if (module == NULL) {
       return NULL;
     }

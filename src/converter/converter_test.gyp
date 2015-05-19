@@ -43,50 +43,22 @@
         'immutable_converter_test.cc',
         'key_corrector_test.cc',
         'lattice_test.cc',
-        'segmenter_test.cc',
         'segments_test.cc',
-        'sparse_connector_builder.cc',
-        'test_segmenter_test.cc',
       ],
       'dependencies': [
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../dictionary/dictionary.gyp:dictionary_mock',
+        '../engine/engine.gyp:engine_factory',
+        '../engine/engine.gyp:mock_data_engine_factory',
         '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
         '../transliteration/transliteration.gyp:transliteration',
         'converter.gyp:converter',
+        'converter_base.gyp:converter_mock',
         'converter_base.gyp:segments',
-        'converter_base.gyp:segmenter',
-        'converter_base.gyp:test_segmenter',
-        'converter_base.gyp:gen_segmenter_inl#host',
-        'converter_base.gyp:gen_test_segmenter_inl#host',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-      'conditions': [
-        ['use_separate_connection_data==1', {
-          'dependencies': [
-            'converter.gyp:connection_data_injected_environment',
-          ],
-        }],
-        ['use_separate_dictionary==1', {
-          'dependencies': [
-            '../dictionary/dictionary.gyp:dictionary_data_injected_environment',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'character_form_manager_test',
-      'type': 'executable',
-      'sources': [
-        'character_form_manager_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'converter_base.gyp:character_form_manager',
       ],
       'variables': {
         'test_size': 'small',
@@ -101,11 +73,61 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'converter_base.gyp:sparse_connector',
-        'converter_base.gyp:sparse_connector_builder',
+        'install_test_connection_data',
+        'generate_test_connection_data_image',
       ],
       'variables': {
-        'test_size': 'small',
+        'test_size': 'large',
       },
+    },
+    {
+      'target_name': 'generate_test_connection_data_image',
+      'type': 'none',
+      'sources': [
+        '../build_tools/code_generator_util.py',
+        '../data_manager/gen_connection_data.py',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_test_connection_data',
+          'variables': {
+            'text_connection_file': '../data/test/dictionary/connection.txt',
+            'id_file': '../data/test/dictionary/id.def',
+            'special_pos_file': '../data/rules/special_pos.def',
+            'use_1byte_cost_flag': 'false',
+          },
+          'inputs': [
+            '<(text_connection_file)',
+            '<(id_file)',
+            '<(special_pos_file)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/test_connection_data.data',
+          ],
+          'action': [
+            'python', '../data_manager/gen_connection_data.py',
+            '--text_connection_file=<(text_connection_file)',
+            '--id_file=<(id_file)',
+            '--special_pos_file=<(special_pos_file)',
+            '--binary_output_file=<(gen_out_dir)/test_connection_data.data',
+            '--target_compiler=<(target_compiler)',
+            '--use_1byte_cost=<(use_1byte_cost_flag)',
+          ],
+          'message': ('Generating ' +
+                      '<(gen_out_dir)/test_connection_data.data'),
+        },
+      ],
+    },
+    {
+      'target_name': 'install_test_connection_data',
+      'type': 'none',
+      'variables': {
+        'test_data': [
+          '../<(test_data_subdir)/connection.txt',
+        ],
+        'test_data_subdir': 'data/test/dictionary',
+      },
+      'includes': ['../gyp/install_testdata.gypi'],
     },
     {
       'target_name': 'cached_connector_test',
@@ -121,75 +143,12 @@
         'test_size': 'small',
       },
     },
-    {
-      'target_name': 'install_connection_txt',
-      'type': 'none',
-      'variables': {
-        'test_data': [
-          '../<(test_data_subdir)/connection.txt',
-        ],
-        'test_data_subdir': 'data/dictionary',
-      },
-      'includes': ['../gyp/install_testdata.gypi'],
-    },
-    {
-      'target_name': 'connector_test',
-      'type': 'executable',
-      'sources': [
-        'connector_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'converter_base.gyp:connector',
-        'install_connection_txt',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-      'conditions': [
-        ['use_separate_connection_data==1', {
-          'dependencies': [
-            'converter.gyp:connection_data_injected_environment',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'test_connector_test',
-      'type': 'executable',
-      'sources': [
-        'test_connector_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'converter_base.gyp:connector',
-        'converter_base.gyp:test_connector',
-        'install_connection_txt',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-      # Copy explicitly.
-      # install_testdata.gypi does not support multiple directories of data
-      'copies': [
-        # The file ../data/dictionary/connection.txt' is copied by the target
-        # install_connection_txt. So here we need to copy
-        # ../data/test/dictionary/connection.txt only.
-        {
-          'destination': '<(mozc_data_dir)/data/test/dictionary/',
-          'files': [ '../data/test/dictionary/connection.txt', ],
-        },
-      ],
-    },
-
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'converter_all_test',
       'type': 'none',
       'dependencies': [
         'cached_connector_test',
-        'character_form_manager_test',
-        'connector_test',
         'converter_test',
         'sparse_connector_test',
       ],

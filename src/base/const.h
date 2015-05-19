@@ -43,6 +43,8 @@ const char kProductNameLocalized[] = "Mozc";
 #define kProductPrefix "Mozc"
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
+const char kVersionRewriterVersionPrefix[] = kProductPrefix "-";
+
 #if defined(OS_WINDOWS)
 // Safe length of IME name in terms of IME_ESC_IME_NAME request.
 // See http://msdn.microsoft.com/en-us/library/dd318166.aspx for details.
@@ -124,6 +126,8 @@ const wchar_t kElevatedProcessDisabledKey[]
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 #elif defined(OS_MACOSX)
 const char kMozcServerName[] = kProductPrefix "Converter.app";
+const char kMozcRenderer[] = kProductPrefix "Renderer.app";
+const char kMozcTool[] = kProductPrefix "Tool.app";
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kEventPathPrefix[] = "GoogleJapaneseInput.event.";
 #else
@@ -136,6 +140,7 @@ const char kMozcServerName[] =
 #else
 const char kMozcServerName[] = "mozc_server";  // Japanese
 #endif
+const char kMozcRenderer[] = "mozc_renderer";
 const char kEventPathPrefix[] = "mozc.event.";
 const char kMozcTool[] = "mozc_tool";
 #ifdef MOZC_SERVER_DIRECTORY
@@ -143,6 +148,12 @@ const char kMozcServerDirectory[] = MOZC_SERVER_DIRECTORY;
 #else
 const char kMozcServerDirectory[] = "/usr/lib/mozc";
 #endif  // MOZC_SERVER_DIRECTORY
+#ifdef OS_ANDROID
+#ifndef MOZC_ANDROID_APPLICATION_ID
+#error "MOZC_ANDROID_APPLICATION_ID must be set (e.g. \"org.mozc.android\""
+#endif  // !MOZC_ANDROID_APPLICATION_ID
+const char kMozcAndroidPackage[] = MOZC_ANDROID_APPLICATION_ID;
+#endif  // OS_ANDROID
 #endif
 
 const char kWordRegisterEnvironmentName[] = "default_entry_of_word_register";

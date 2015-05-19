@@ -30,6 +30,9 @@
 #include "rewriter/number_rewriter.h"
 
 #include <string>
+
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -75,8 +78,8 @@ bool FindValue(const Segment &segment, const string &value) {
 
 Segment *SetupSegments(const string &candidate_value, Segments *segments) {
   segments->Clear();
-  Segment *seg = segments->push_back_segment();
-  Segment::Candidate *candidate = seg->add_candidate();
+  Segment *segment = segments->push_back_segment();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
   const POSMatcher *pos_matcher =
       UserPosManager::GetUserPosManager()->GetPOSMatcher();
@@ -84,8 +87,7 @@ Segment *SetupSegments(const string &candidate_value, Segments *segments) {
   candidate->rid = pos_matcher->GetNumberId();
   candidate->value = candidate_value;
   candidate->content_value = candidate_value;
-
-  return seg;
+  return segment;
 }
 
 bool HasDescription(const Segment &segment, const string &description) {
@@ -180,7 +182,7 @@ TEST_F(NumberRewriterTest, BasicTest) {
     {"0b1100", "0b1100", "2""\xE9\x80\xB2\xE6\x95\xB0"},
   };
 
-  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  const size_t kExpectResultSize = arraysize(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -213,7 +215,7 @@ TEST_F(NumberRewriterTest, RequestType) {
 
   scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
-  for (size_t i = 0; i < ARRAYSIZE(test_data_list); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(test_data_list); ++i) {
     TestData& test_data = test_data_list[i];
     Segments segments;
     segments.set_request_type(test_data.request_type_);
@@ -245,7 +247,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
 
   const ExpectResult kExpectResults[] = {
     // "012"
-    {"012\xE3\x81\x8C", "012",""},
+    {"012\xE3\x81\x8C", "012", ""},
     // "〇一二"
     {"\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C\xE3\x81\x8C",
      "\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", kKanjiDescription},
@@ -272,7 +274,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
     {"0b1100""\xE3\x81\x8C", "0b1100", "2""\xE9\x80\xB2\xE6\x95\xB0"},
   };
 
-  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  const size_t kExpectResultSize = arraysize(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -548,14 +550,12 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
   EXPECT_EQ("", seg->candidate(0).description);
 
   // "〇〇"
-  EXPECT_EQ("\xE3\x80\x87\xE3\x80\x87",
-            seg->candidate(1).value);
+  EXPECT_EQ("\xE3\x80\x87\xE3\x80\x87", seg->candidate(1).value);
   EXPECT_EQ("\xE3\x80\x87\xE3\x80\x87", seg->candidate(1).content_value);
   EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // "００"
-  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x90",
-            seg->candidate(2).value);
+  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x90", seg->candidate(2).value);
   EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x90", seg->candidate(2).content_value);
   EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
@@ -637,83 +637,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
      "2""\xE9\x80\xB2\xE6\x95\xB0"},
   };
 
-  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
-  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
-
-  for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
-    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value,
-              seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description,
-              seg->candidate(i).description);
-  }
-
-  seg->clear_candidates();
-}
-
-TEST_F(NumberRewriterTest, NumberIs20Digit) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
-
-  Segments segments;
-  Segment *seg = segments.push_back_segment();
-  Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetNumberId();
-  candidate->value = "10000000000000000000";
-  candidate->content_value = "10000000000000000000";
-
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
-
-  const ExpectResult kExpectResults[] = {
-    {"10000000000000000000", "10000000000000000000", ""},
-    // "一〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇"
-    {"\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-     "\xE3\x80\x87\xE3\x80\x87",
-     "\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-     "\xE3\x80\x87\xE3\x80\x87", kKanjiDescription},
-    // "１０００００００００００００００００００"
-    {"\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90",
-     "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90", kArabicDescription},
-    {"10,000,000,000,000,000,000", "10,000,000,000,000,000,000",
-     kArabicDescription},
-    // "１０，０００，０００，０００，０００，０００，０００"
-    {"\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90",
-     "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-     "\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-     "\xEF\xBC\x90\xEF\xBC\x90", kArabicDescription},
-    // "1000京"
-    {"1000""\xE4\xBA\xAC", "1000""\xE4\xBA\xAC", kArabicDescription},
-    // "１０００京"
-    {"\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xE4\xBA\xAC",
-     "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xE4\xBA\xAC",
-     kArabicDescription},
-    // "千京"
-    {"\xE5\x8D\x83\xE4\xBA\xAC", "\xE5\x8D\x83\xE4\xBA\xAC",
-     kKanjiDescription},
-    // "壱阡京"
-    {"\xE5\xA3\xB1\xE9\x98\xA1\xE4\xBA\xAC",
-     "\xE5\xA3\xB1\xE9\x98\xA1\xE4\xBA\xAC", kOldKanjiDescription},
-  };
-
-  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  const size_t kExpectResultSize = arraysize(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -818,7 +742,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
      kOldKanjiDescription},
   };
 
-  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  const size_t kExpectResultSize = arraysize(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -1049,89 +973,61 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
   scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   const ConversionRequest request;
 
-  {
-    Segments segments;
-    Segment *seg = segments.push_back_segment();
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
-    candidate->value = "123";
-    candidate->content_value = "123";
-    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
-    EXPECT_FALSE(FindValue(segments.segment(0), ",123"));
-    // "，１２３"
-    EXPECT_FALSE(FindValue(segments.segment(0),
-                           "\xef\xbc\x8c\xef\xbc\x91\xef\xbc\x92\xef\xbc\x93"));
-  }
-
-  {
-    Segments segments;
-    Segment *seg = segments.push_back_segment();
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
-    candidate->value = "999";
-    candidate->content_value = "999";
-    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
-    EXPECT_FALSE(FindValue(segments.segment(0), ",999"));
-    // "，９９９"
-    EXPECT_FALSE(FindValue(segments.segment(0),
-                           "\xef\xbc\x8c\xef\xbc\x99\xef\xbc\x99\xef\xbc\x99"));
-  }
-
-  {
-    Segments segments;
-    Segment *seg = segments.push_back_segment();
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
-    candidate->value = "1000";
-    candidate->content_value = "1000";
-    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
-    EXPECT_TRUE(FindValue(segments.segment(0), "1,000"));
+  // Expected data to succeed tests.
+  const char* kSuccess[][3] = {
     // "１，０００"
-    EXPECT_TRUE(FindValue(segments.segment(0),
-                          "\xef\xbc\x91\xef\xbc\x8c\xef\xbc"
-                          "\x90\xef\xbc\x90\xef\xbc\x90"));
-  }
-
-  {
-    Segments segments;
-    Segment *seg = segments.push_back_segment();
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
-    candidate->value = "0000";
-    candidate->content_value = "0000";
-    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
-    EXPECT_FALSE(FindValue(segments.segment(0), "0,000"));
-    // "０，０００"
-    EXPECT_FALSE(FindValue(segments.segment(0),
-                           "\xef\xbc\x90\xef\xbc\x8c\xef\xbc"
-                           "\x90\xef\xbc\x90\xef\xbc\x90"));
-  }
-
-  {
-    Segments segments;
-    Segment *seg = segments.push_back_segment();
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
-    candidate->value = "12345678";
-    candidate->content_value = "12345678";
-    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
-    EXPECT_TRUE(FindValue(segments.segment(0), "12,345,678"));
+    {"1000", "1,000",
+     "\xef\xbc\x91\xef\xbc\x8c\xef\xbc\x90\xef\xbc\x90\xef\xbc\x90"},
     // "１２，３４５，６７８"
-    EXPECT_TRUE(FindValue(segments.segment(0),
-                          "\xef\xbc\x91\xef\xbc\x92\xef\xbc"
-                          "\x8c\xef\xbc\x93\xef\xbc\x94\xef"
-                          "\xbc\x95\xef\xbc\x8c\xef\xbc\x96"
-                          "\xef\xbc\x97\xef\xbc\x98"));
+    {"12345678", "12,345,678",
+     "\xef\xbc\x91\xef\xbc\x92\xef\xbc\x8c\xef\xbc\x93\xef\xbc\x94"
+     "\xef\xbc\x95\xef\xbc\x8c\xef\xbc\x96\xef\xbc\x97\xef\xbc\x98"},
+    // "１，２３４．５"
+    {"1234.5", "1,234.5", "\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x92\xEF\xBC\x93"
+     "\xEF\xBC\x94\xEF\xBC\x8E\xEF\xBC\x95"},
+  };
+
+  for (size_t i = 0; i < arraysize(kSuccess); ++i) {
+    Segments segments;
+    Segment *seg = segments.push_back_segment();
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->lid = pos_matcher_->GetNumberId();
+    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->value = kSuccess[i][0];
+    candidate->content_value = kSuccess[i][0];
+    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+    EXPECT_TRUE(FindValue(segments.segment(0), kSuccess[i][1]))
+        << "Input : " << kSuccess[i][0];
+    EXPECT_TRUE(FindValue(segments.segment(0), kSuccess[i][2]))
+        << "Input : " << kSuccess[i][0];
+  }
+
+  // Expected data to fail tests.
+  const char* kFail[][3] = {
+    // "，１２３"
+    {"123", ",123", "\xef\xbc\x8c\xef\xbc\x91\xef\xbc\x92\xef\xbc\x93"},
+    // "，９９９"
+    {"999", ",999", "\xef\xbc\x8c\xef\xbc\x99\xef\xbc\x99\xef\xbc\x99"},
+    {"0000", "0,000",
+    // "０，０００"
+     "\xef\xbc\x90\xef\xbc\x8c\xef\xbc\x90\xef\xbc\x90\xef\xbc\x90"},
+  };
+
+  for (size_t i = 0; i < arraysize(kFail); ++i) {
+    Segments segments;
+    Segment *seg = segments.push_back_segment();
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->lid = pos_matcher_->GetNumberId();
+    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->value = kFail[i][0];
+    candidate->content_value = kFail[i][0];
+    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+    EXPECT_FALSE(FindValue(segments.segment(0), kFail[i][1]))
+        << "Input : " << kFail[i][0];
+    EXPECT_FALSE(FindValue(segments.segment(0), kFail[i][2]))
+        << "Input : " << kFail[i][0];
   }
 }
 
@@ -1178,6 +1074,45 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
     }
     EXPECT_TRUE(base_candidate_found);
   }
+}
+
+TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
+  // To reproduce issue b/6714268.
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  Segments segments;
+  Segment *segment = segments.push_back_segment();
+  for (int i = 0; i < 20; ++i) {
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->Init();
+    candidate->lid = pos_matcher_->GetUnknownId();  // Not number POS
+    candidate->rid = pos_matcher_->GetUnknownId();
+    // "いち"
+    candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
+    // "いち"
+    candidate->content_key = "\xe3\x81\x84\xe3\x81\xa1";
+    // "壱"
+    candidate->value = "\xe5\xa3\xb1";
+    // "壱"
+    candidate->content_value = "\xe5\xa3\xb1";
+  }
+  for (int i = 0; i < 20; ++i) {
+    Segment::Candidate *candidate = segment->add_candidate();
+
+    candidate->Init();
+    candidate->lid = pos_matcher_->GetNumberId();  // Number POS
+    candidate->rid = pos_matcher_->GetNumberId();
+    // "いち"
+    candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
+    // "いち"
+    candidate->content_key = "\xe3\x81\x84\xe3\x81\xa1";
+    // "一"
+    candidate->value = "\xe4\xb8\x80";
+    // "一"
+    candidate->content_value = "\xe4\xb8\x80";
+  }
+
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 }
 
 TEST_F(NumberRewriterTest, MobileEnvironmentTest) {

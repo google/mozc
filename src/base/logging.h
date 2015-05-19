@@ -30,17 +30,6 @@
 #ifndef MOZC_BASE_LOGGING_H_
 #define MOZC_BASE_LOGGING_H_
 
-#ifdef OS_WINDOWS
-#include <windows.h>
-// windows.h defines ERROR as 0 somewhere!
-#endif
-
-#undef INFO
-#undef WARNING
-#undef ERROR
-#undef FATAL
-
-#include <stdlib.h>
 
 #include <iostream>
 #include <string>
@@ -48,16 +37,40 @@
 #include "base/namespace.h"
 #include "base/port.h"
 
-
 namespace mozc {
 
 enum LogSeverity {
-  LOG_INFO = 0,
+#ifdef OS_ANDROID
+  // Defined in <android/log.h>
+  LOG_UNKNOWN = 0,  // ANDROID_LOG_UNKNOWN
+  LOG_DEFAULT = 1,  // ANDROID_LOG_DEFAULT
+  LOG_VERBOSE = 2,  // ANDROID_LOG_VERBOSE
+  LOG_DEBUG   = 3,  // ANDROID_LOG_DEBUG
+  LOG_INFO    = 4,  // ANDROID_LOG_INFO
+  LOG_WARNING = 5,  // ANDROID_LOG_WARN
+  LOG_ERROR   = 6,  // ANDROID_LOG_ERROR
+  LOG_FATAL   = 7,  // ANDROID_LOG_FATAL
+  LOG_SILENT  = 8,  // ANDROID_LOG_SILENT
+  LOG_SEVERITY_SIZE = 9,
+#else
+  LOG_INFO    = 0,
   LOG_WARNING = 1,
-  LOG_ERROR = 2,
-  LOG_FATAL = 3,
+  LOG_ERROR   = 2,
+  // Special hack for Windows build, where ERROR is defined as 0 in wingdi.h.
+#ifdef OS_WINDOWS
+  LOG_0       = LOG_ERROR,
+#endif  // OS_WINDOWS
+  LOG_FATAL   = 3,
   LOG_SEVERITY_SIZE = 4,
+#endif
 };
+
+// DFATAL is FATAL in debug mode, ERROR in normal mode
+#ifdef DEBUG
+#define LOG_DFATAL LOG_FATAL
+#else
+#define LOG_DFATAL LOG_ERROR
+#endif  // DEBUG
 
 class NullLogStream;
 
@@ -105,29 +118,13 @@ class Logging {
 
 class LogFinalizer {
  public:
-  explicit LogFinalizer(LogSeverity severity)
-      : severity_(severity) {}
+  explicit LogFinalizer(LogSeverity severity);
+  ~LogFinalizer();
 
-  ~LogFinalizer() {
-    mozc::Logging::GetLogStream() << endl;
-    if (severity_ >= LOG_FATAL) {
-      // On windows, call exception handler to
-      // make stack trace and minidump
-#ifdef OS_WINDOWS
-      ::RaiseException(::GetLastError(),
-                       EXCEPTION_NONCONTINUABLE,
-                       NULL, NULL);
-#else
-      mozc::Logging::CloseLogStream();
-      exit(-1);
-#endif
-    }
-  }
-
-  void operator&(ostream&) {}
+  void operator&(ostream&);
 
  private:
-  LogSeverity  severity_;
+  const LogSeverity  severity_;
 };
 
 // When using NullLogStream, all debug message will be stripped
@@ -146,23 +143,21 @@ class NullLogFinalizer {
  public:
   explicit NullLogFinalizer(LogSeverity severity)
       : severity_(severity) {}
+
   ~NullLogFinalizer() {
     if (severity_ >= LOG_FATAL) {
-#ifdef OS_WINDOWS
-      ::RaiseException(::GetLastError(),
-                       EXCEPTION_NONCONTINUABLE,
-                       NULL, NULL);
-#else
-      exit(-1);
-#endif
+      OnFatal();
     }
   }
 
   void operator&(NullLogStream&) {}
 
  private:
-  LogSeverity severity_;
+  static void OnFatal();
+
+  const LogSeverity severity_;
 };
+
 }  // namespace mozc
 
 // ad-hoc porting of google-glog
@@ -270,5 +265,6 @@ class NullLogFinalizer {
 #define DVLOG(verboselevel) DLOG_IF(INFO, VLOG_IS_ON(verboselevel))
 #define DVLOG_IF(verboselevel, condition) \
   DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
+
 
 #endif  // MOZC_BASE_LOGGING_H_

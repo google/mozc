@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "converter/node.h"
@@ -41,9 +42,9 @@
 namespace mozc {
 namespace {
 static Node *LookupInternal(map<string, list<DictionaryMock::NodeData> > dic,
-                     const char *str,
-                     size_t size, NodeAllocatorInterface *allocator,
-                     bool is_prefix_search) {
+                            const char *str,
+                            size_t size, NodeAllocatorInterface *allocator,
+                            bool is_prefix_search) {
   CHECK(str);
 
   const string lookup_str(str, size);
@@ -63,7 +64,7 @@ static Node *LookupInternal(map<string, list<DictionaryMock::NodeData> > dic,
       list<DictionaryMock::NodeData> &node_list = dic[prefix];
       list<DictionaryMock::NodeData>::iterator it_list = node_list.begin();
       for (; it_list != node_list.end(); ++it_list) {
-        DictionaryMock::NodeData& node_data = *it_list;
+        const DictionaryMock::NodeData &node_data = *it_list;
         if (node_data.lookup_str == prefix) {
           Node *new_node = NULL;
           if (allocator != NULL) {
@@ -120,12 +121,37 @@ Node *DictionaryMock::LookupPrefixWithLimit(
   return LookupPrefix(str, size, allocator);
 }
 
-Node *DictionaryMock::LookupPrefix(
-    const char *str, int size,
-    NodeAllocatorInterface *allocator) const {
+Node *DictionaryMock::LookupPrefix(const char *str, int size,
+                                   NodeAllocatorInterface *allocator) const {
   CHECK_GT(size, 0);
   return LookupInternal(prefix_dictionary_, str,
                         static_cast<size_t>(size), allocator, true);
+}
+
+Node *DictionaryMock::LookupExact(const char *str, int size,
+                                  NodeAllocatorInterface *allocator) const {
+  const string key(str, size);
+  map<string, list<NodeData> >::const_iterator itr =
+      exact_dictionary_.find(key);
+  if (itr == exact_dictionary_.end()) {
+    return NULL;
+  }
+
+  const list<NodeData> &data = itr->second;
+  Node *head = NULL;
+  for (list<NodeData>::const_iterator jtr = data.begin();
+       jtr != data.end(); ++jtr) {
+    const NodeData &node_data = *jtr;
+    Node *node = allocator->NewNode();
+    node->key = node_data.key;
+    node->value = node_data.value;
+    node->attributes = node_data.attributes;
+    node->rid = 1;
+    node->lid = 1;
+    node->bnext = head;
+    head = node;
+  }
+  return head;
 }
 
 Node *DictionaryMock::LookupReverse(const char *str, int size,
@@ -163,6 +189,13 @@ void DictionaryMock::AddLookupReverse(const string &str,
                                       uint32 attributes) {
   NodeData node_data(str, key, value, attributes);
   reverse_dictionary_[str].push_back(node_data);
+}
+
+void DictionaryMock::AddLookupExact(const string &str,
+                                    const string &key, const string &value,
+                                    uint32 attributes) {
+  NodeData node_data(str, key, value, attributes);
+  exact_dictionary_[str].push_back(node_data);
 }
 
 DictionaryMock *DictionaryMock::GetDictionaryMock() {

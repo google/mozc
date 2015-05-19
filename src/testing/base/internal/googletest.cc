@@ -105,19 +105,27 @@ string GetProgramPath() {
 string GetTestSrcdir() {
   const string srcdir(kMozcDataDir);
 
+#ifndef MOZC_USE_PEPPER_FILE_IO
+  // TestSrcdir is not supported in NaCl.
+  // TODO(horo): Consider how to implement TestSrcdir in NaCl.
   // FIXME(komatsu): We should implement "genrule" and "exports_files"
   // in build.py to install the data files into srcdir.
   CHECK_EQ(access(srcdir.c_str(), R_OK|X_OK), 0)
       << "Access failure: " << srcdir;
+#endif  // MOZC_USE_PEPPER_FILE_IO
   return srcdir;
 }
 
 string GetTestTmpdir() {
   const string tmpdir = GetProgramPath() + ".tmp";
 
+#ifndef MOZC_USE_PEPPER_FILE_IO
+  // GetTestTmpdir is not supported in NaCl.
+  // TODO(horo): Consider how to implement TestTmpdir in NaCl.
   if (access(tmpdir.c_str(), R_OK|X_OK) != 0) {
     CHECK(Util::CreateDirectory(tmpdir));
   }
+#endif  // MOZC_USE_PEPPER_FILE_IO
   return tmpdir;
 }
 #endif  // OS_WINDOWS

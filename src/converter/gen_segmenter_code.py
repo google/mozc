@@ -122,17 +122,10 @@ def main():
       continue
     (l, r, result) = line.split()
     result = result.lower()
-    lcond = GetRange(pos, l, "rid");
-    rcond = GetRange(pos, r, "lid");
+    lcond = GetRange(pos, l, "rid") or "true";
+    rcond = GetRange(pos, r, "lid") or "true";
     print "  // %s %s %s" % (l, r, result)
-    if lcond == "" and rcond != "":
-      print "  if (%s) { return %s; }" % (rcond, result)
-    elif lcond != "" and rcond == "":
-      print "  if (%s) { return %s; }" % (lcond, result)
-    elif lcond != "" and rcond != "":
-      print "  if ((%s) && (%s)) { return %s; }" % (lcond, rcond, result)
-    else:
-      print "  return %s;" % (result)
+    print "  if ((%s) && (%s)) { return %s; }" % (lcond, rcond, result)
 
   print FOOTER
 

@@ -36,6 +36,7 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/logging.h"
 #include "base/multifile.h"
 #include "base/util.h"
 #include "client/client.h"
@@ -195,7 +196,7 @@ double CalculateMean(const vector<double>& scores) {
   const double sum = accumulate(scores.begin(), scores.end(), 0.0);
   return sum / static_cast<double>(scores.size());
 }
-}  // anonymous namespace
+}  // namespace mozc
 
 
 int main(int argc, char* argv[]) {

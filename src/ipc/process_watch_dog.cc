@@ -38,21 +38,21 @@
 
 #include "base/base.h"
 #include "base/mutex.h"
+#include "base/scoped_handle.h"
 #include "base/util.h"
 
 namespace mozc {
 
 #ifdef OS_WINDOWS
 ProcessWatchDog::ProcessWatchDog()
-    : event_(NULL),
+    : event_(::CreateEventW(NULL, TRUE, FALSE, NULL)),
       process_id_(UnknownProcessID),
       thread_id_(UnknownThreadID),
       timeout_(-1),
-      is_finished_(false) {
-  event_ = ::CreateEventW(NULL, TRUE, FALSE, NULL);
-  if (event_ == NULL) {
-    LOG(ERROR) << "::CreateEvent() failed: "
-               << ::GetLastError();
+      is_finished_(false),
+      mutex_(new Mutex) {
+  if (event_.get() == NULL) {
+    LOG(ERROR) << "::CreateEvent() failed.";
     return;
   }
   Thread::Start();  // start
@@ -61,21 +61,16 @@ ProcessWatchDog::ProcessWatchDog()
 ProcessWatchDog::~ProcessWatchDog() {
   is_finished_ = true;  // set the flag to terminate the thread
 
-  if (event_ != NULL) {
-    ::SetEvent(event_);  // wake up WaitForMultipleObjects
+  if (event_.get() != NULL) {
+    ::SetEvent(event_.get());  // wake up WaitForMultipleObjects
   }
 
   Join();  // wait for the thread
-
-  if (event_ != NULL) {
-    ::CloseHandle(event_);   // close the handle
-    event_ = NULL;
-  }
 }
 
 bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
                             int timeout) {
-  if (event_ == NULL) {
+  if (event_.get() == NULL) {
     LOG(ERROR) << "event is NULL";
     return false;
   }
@@ -88,32 +83,33 @@ bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
 
   // rewrite the valeus
   {
-    scoped_lock l(&mutex_);
+    scoped_lock l(mutex_.get());
     process_id_ = process_id;
     thread_id_ = thread_id;
     timeout_ = timeout;
   }
 
   // wake up WaitForMultipleObjects
-  ::SetEvent(event_);
+  ::SetEvent(event_.get());
 
   return true;
 }
 
 void ProcessWatchDog::Run() {
   while (!is_finished_) {
-    HANDLE process_handle = NULL;
-    HANDLE thread_handle = NULL;
+    ScopedHandle process_handle;
+    ScopedHandle thread_handle;
     int timeout = -1;
 
     // read the current ids/timeout
     {
-      scoped_lock l(&mutex_);
+      scoped_lock l(mutex_.get());
 
       if (process_id_ != UnknownProcessID) {
-        process_handle = ::OpenProcess(SYNCHRONIZE, FALSE, process_id_);
-        if (process_handle == NULL) {
-          const DWORD error = ::GetLastError();
+        const HANDLE handle = ::OpenProcess(SYNCHRONIZE, FALSE, process_id_);
+        const DWORD error = ::GetLastError();
+        process_handle.reset(handle);
+        if (process_handle.get() == NULL) {
           LOG(ERROR) << "OpenProcess failed: " << process_id_ << " " << error;
           switch (error) {
             case ERROR_ACCESS_DENIED:
@@ -130,9 +126,10 @@ void ProcessWatchDog::Run() {
       }
 
       if (thread_id_ != UnknownThreadID) {
-        thread_handle = ::OpenThread(SYNCHRONIZE, FALSE, thread_id_);
-        if (thread_handle == NULL) {
-          const DWORD error = ::GetLastError();
+        const HANDLE handle = ::OpenThread(SYNCHRONIZE, FALSE, thread_id_);
+        const DWORD error = ::GetLastError();
+        thread_handle.reset(handle);
+        if (thread_handle.get() == NULL) {
           LOG(ERROR) << "OpenThread failed: " << thread_id_ << " " << error;
           switch (error) {
             case ERROR_ACCESS_DENIED:
@@ -159,35 +156,35 @@ void ProcessWatchDog::Run() {
     }
 
     SignalType types[3];
-    HANDLE handles[3];
+    HANDLE handles[3] = {};
 
     // set event
-    handles[0] = event_;
+    handles[0] = event_.get();
 
     // set handles
     DWORD size = 1;
-    if (process_handle != NULL) {
+    if (process_handle.get() != NULL) {
       VLOG(2) << "Inserting process handle";
-      handles[size] = process_handle;
+      handles[size] = process_handle.get();
       types[size] = ProcessWatchDog::PROCESS_SIGNALED;
       ++size;
     }
 
-    if (thread_handle != NULL) {
+    if (thread_handle.get() != NULL) {
       VLOG(2) << "Inserting thread handle";
-      handles[size] = thread_handle;
+      handles[size] = thread_handle.get();
       types[size] = ProcessWatchDog::THREAD_SIGNALED;
       ++size;
     }
 
-    const DWORD result = ::WaitForMultipleObjects(size, handles,
-                                                  FALSE, timeout);
+    const DWORD result = ::WaitForMultipleObjects(
+        size, handles, FALSE, timeout);
     SignalType result_type = ProcessWatchDog::UNKNOWN_SIGNALED;
     switch (result) {
       case WAIT_OBJECT_0:
       case WAIT_ABANDONED_0:
         VLOG(2) << "event is signaled";
-        ::ResetEvent(event_);  // reset event to wait for the new request
+        ::ResetEvent(event_.get());  // reset event to wait for the new request
         break;
       case WAIT_OBJECT_0 + 1:
       case WAIT_ABANDONED_0 + 1:
@@ -208,14 +205,6 @@ void ProcessWatchDog::Run() {
         break;
     }
 
-    if (process_handle != NULL) {
-      ::CloseHandle(process_handle);
-    }
-
-    if (thread_handle != NULL) {
-      ::CloseHandle(thread_handle);
-    }
-
     if (result_type != ProcessWatchDog::UNKNOWN_SIGNALED) {
       VLOG(1) << "Sending signal: " << static_cast<int>(result_type);
       Signaled(result_type);   // call signal handler
@@ -228,7 +217,8 @@ void ProcessWatchDog::Run() {
 ProcessWatchDog::ProcessWatchDog()
     : process_id_(UnknownProcessID),
       thread_id_(UnknownProcessID),
-      is_finished_(false) {
+      is_finished_(false),
+      mutex_(new Mutex) {
   Thread::Start();
 }
 
@@ -260,7 +250,7 @@ bool ProcessWatchDog::SetID(ProcessWatchDog::ProcessID process_id,
   }
 
   {
-    scoped_lock l(&mutex_);
+    scoped_lock l(mutex_.get());
     process_id_ = process_id;
     thread_id_ = thread_id;
     timeout_ = -1;
@@ -271,11 +261,12 @@ bool ProcessWatchDog::SetID(ProcessWatchDog::ProcessID process_id,
 
 void ProcessWatchDog::Run() {
   // Polling-based watch-dog.
-  // Seems Linux/Mac have no event-driven API
-  // like WaitForMultipleObjects on Windows.
+  // Unlike WaitForMultipleObjects on Windows, no event-driven API seems to be
+  // available on Linux.
   // NOTE In theory, there may possibility that some other process
   // reuse same process id in 250ms or write to is_finished_ stays
   // forever in another CPU's local cache.
+  // TODO(team): use kqueue with EVFILT_PROC/NOTE_EXIT for Mac.
   while (!is_finished_) {
     Util::Sleep(250);
     if (process_id_ == UnknownProcessID) {
@@ -292,10 +283,11 @@ void ProcessWatchDog::Run() {
       } else {
         Signaled(ProcessWatchDog::PROCESS_ERROR_SIGNALED);
       }
-      scoped_lock l(&mutex_);
+      scoped_lock l(mutex_.get());
       process_id_ = UnknownProcessID;
     }
   }
 }
 #endif  // OS_WINDOWS
-}  // mozc
+
+}  // namespace mozc

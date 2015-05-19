@@ -27,6 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// English dictionary class to suggest english words by prefix match. This class
+// supports user dictionary to learn new words or reorder suggested words.
+// This class is NOT thread-safe or process-safe.
+
 #ifndef MOZC_LANGUAGES_PINYIN_ENGLISH_DICTIONARY_H_
 #define MOZC_LANGUAGES_PINYIN_ENGLISH_DICTIONARY_H_
 
@@ -39,46 +43,77 @@
 #include "languages/pinyin/english_dictionary_interface.h"
 
 namespace mozc {
-
-namespace storage {
-class EncryptedStringStorage;
-}  // namespace storage
-
+// Following ifdef block is just a migration code.
+// TODO(hsumita): Remove code related to rx::RxTrie.
+#ifdef MOZC_USE_MOZC_LOUDS
+namespace dictionary {
+namespace louds {
+class LoudsTrieAdapter;
+}
+}
+#else
 namespace rx {
 class RxTrie;
-}  // namespace rx
+}
+#endif  // MOZC_USE_MOZC_LOUDS
+
+namespace storage {
+class StringStorageInterface;
+}  // namespace storage
 
 namespace pinyin {
 namespace english {
 
-typedef map<string, float> UserDictionary;
+typedef map<string, uint32> UserDictionary;
 
 class EnglishDictionary : public EnglishDictionaryInterface {
  public:
   EnglishDictionary();
   virtual ~EnglishDictionary();
 
-  bool GetSuggestions(const string &prefix, vector<string> *output) const;
-  void LearnWord(const string &word);
+  // Gets english words starting with |prefix| from system / user dictionary,
+  // and sets it into |output|. Entries of |output| are ordered by priority
+  // based on appearance frequency, and consist of lower-case characters.
+  virtual void GetSuggestions(const string &prefix,
+                              vector<string> *output) const;
+
+  // Boosts the priority of a word. if it is a unknown word, It will be added on
+  // user dictionary. Return false if failed.
+  virtual bool LearnWord(const string &word);
 
  private:
   friend class EnglishDictionaryTest;
 
+  // Loads system / user dictionary data. Don't call this method twice.
   void Init();
-  // Discards user dictionary data and reload it from a storage.
+
+  // Discards user dictionary data and reloads it from storage.
   bool ReloadUserDictionary();
-  // Read user dicitonary data from a storage, merges it, and writes it to a
-  // storage. Currently some data are not merged correctly.
+
+  // Reads user dictionary data from storage, merges it, and writes it to a
+  // storage.
   bool Sync();
 
-  // For Initialization or unittest use only.
-  static string file_name();
+  // Returns the path to the user dictionary file.
+  // For initialization or unittest use only.
+  static string user_dictionary_file_path();
 
-  scoped_ptr<rx::RxTrie> word_trie_;
+#ifdef MOZC_USE_MOZC_LOUDS
+  typedef dictionary::louds::LoudsTrieAdapter TrieType;
+#else
+  typedef rx::RxTrie TrieType;
+#endif  // MOZC_USE_MOZC_LOUDS
+
+  // System dictionary trie data.
+  scoped_ptr<TrieType> word_trie_;
+  // Maps an ID of trie entries to their priority.
   vector<float> priority_table_;
+  // It maps words to their frequency.
   UserDictionary user_dictionary_;
+  // Multiplier to convert from frequency to priority.
   float learning_multiplier_;
-  scoped_ptr<storage::EncryptedStringStorage> storage_;
+  // Storage instance to manage user dictionary.
+  scoped_ptr<storage::StringStorageInterface> storage_;
 
   DISALLOW_COPY_AND_ASSIGN(EnglishDictionary);
 };

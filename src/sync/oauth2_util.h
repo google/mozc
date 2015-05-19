@@ -53,11 +53,11 @@ class OAuth2Util {
   // Requests an access_token with the authorization_token and stores the access
   // token into the mozc registry.  Returns true if it successfully obtains the
   // access token.  Returns false otherwise.
-  bool RequestAccessToken(const string &auth_token);
+  bool RequestAccessToken(const string &auth_token, OAuth2::Error *error);
 
   // Refreshes an access token in the local storage, and stores the new token.
   // Return true only if refresh succeeds.
-  bool RefreshAccessToken();
+  bool RefreshAccessToken(OAuth2::Error *error);
 
   // Accesses 'resource_uri' and puts returned string in 'resource'. This
   // method does not refresh tokens even if it fails, so you need to refresh it

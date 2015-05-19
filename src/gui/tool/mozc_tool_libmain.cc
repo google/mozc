@@ -36,9 +36,11 @@
 #include <QtGui/QtGui>
 #include "base/base.h"
 #include "base/const.h"
+#include "base/crash_report_util.h"
 #include "base/password_manager.h"
 #include "base/run_level.h"
 #include "base/util.h"
+#include "config/stats_config_util.h"
 #include "gui/base/debug_util.h"
 #include "gui/base/win_util.h"
 
@@ -89,6 +91,9 @@ char *strdup_with_new(const char *str) {
 #endif  // OS_MACOSX
 
 int RunMozcTool(int argc, char *argv[]) {
+  if (mozc::config::StatsConfigUtil::IsEnabled()) {
+    mozc::CrashReportUtil::InstallBreakpad();
+  }
 #ifdef OS_MACOSX
   // OSX's app won't accept command line flags.
   // Here we read the flags by using --fromenv option
@@ -98,11 +103,11 @@ int RunMozcTool(int argc, char *argv[]) {
        "--fromenv=mode,error_type,confirmation_type,register_prelauncher");
   int new_argc = 2;
   char **new_argv = tmp.get();
-  InitGoogleWithBreakPad(new_argv[0], &new_argc, &new_argv, false);
+  InitGoogle(new_argv[0], &new_argc, &new_argv, false);
   delete [] tmp[0];
   delete [] tmp[1];
 #else  // OS_MACOSX
-  InitGoogleWithBreakPad(argv[0], &argc, &argv, false);
+  InitGoogle(argv[0], &argc, &argv, false);
 #endif  // OS_MACOSX
 
 #ifdef OS_MACOSX

@@ -31,7 +31,6 @@
 #define MOZC_BASE_FILE_STREAM_H_
 
 #include <fstream>
-#include "base/util.h"
 
 namespace mozc {
 
@@ -46,59 +45,30 @@ namespace mozc {
 // encodings except UTF-8 for internationalized file names.
 class InputFileStream : public ifstream {
  public:
-  InputFileStream() {
-  }
-
+  InputFileStream();
   explicit InputFileStream(const char* filename,
-                           ios_base::openmode mode = ios_base::in) {
-    InputFileStream::open(filename, mode);
-  }
+                           ios_base::openmode mode = ios_base::in);
 
   // Opens the specified file.
   // This function is a wrapper function for the ifstream::open() function
   // to change the encoding of the specified file name from UTF-8 to its native
   // one before calling the ifstream::open() function.
-  void open(const char* filename, ios_base::openmode mode = ios_base::in) {
-#if defined(OS_WINDOWS)
-    // Since Windows uses UTF-16 for internationalized file names, we should
-    // convert the encoding of the given |filename| from UTF-8 to UTF-16.
-    wstring filename_wide;
-    if (Util::UTF8ToWide(filename, &filename_wide) > 0) {
-      ifstream::open(filename_wide.c_str(), mode);
-    }
-#else
-    ifstream::open(filename, mode);
-#endif
-  }
+  void open(const char* filename, ios_base::openmode mode = ios_base::in);
 };
 
 class OutputFileStream : public ofstream {
  public:
-  OutputFileStream() {
-  }
-
+  OutputFileStream();
   explicit OutputFileStream(const char* filename,
-                            ios_base::openmode mode = ios_base::out) {
-    OutputFileStream::open(filename, mode);
-  }
+                            ios_base::openmode mode = ios_base::out);
 
   // Opens the specified file.
   // This function is a wrapper function for the ofstream::open() function
   // to change the encoding of the specified file name from UTF-8 to its native
   // one before calling the ofstream::open() function.
-  void open(const char* filename, ios_base::openmode mode = ios_base::out) {
-#if defined(OS_WINDOWS)
-    // Since Windows uses UTF-16 for internationalized file names, we should
-    // convert the encoding of the given |filename| from UTF-8 to UTF-16.
-    wstring filename_wide;
-    if (Util::UTF8ToWide(filename, &filename_wide) > 0) {
-      ofstream::open(filename_wide.c_str(), mode);
-    }
-#else
-    ofstream::open(filename, mode);
-#endif
-  }
+  void open(const char* filename, ios_base::openmode mode = ios_base::out);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_FILE_STREAM_H_

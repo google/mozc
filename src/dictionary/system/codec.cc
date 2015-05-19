@@ -31,6 +31,8 @@
 
 #include <sstream>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
@@ -46,8 +48,6 @@ uint8 GetFlagsForToken(const vector<TokenInfo> &tokens, int index);
 uint8 GetFlagForPos(const TokenInfo &token_info, const Token *token);
 
 uint8 GetFlagForValue(const TokenInfo &token_info, const Token *token);
-
-uint8 GetKeyCharCode(const char *str);
 
 void EncodeCost(const TokenInfo &token_info, uint8 *dst, int *offset);
 
@@ -353,12 +353,11 @@ uint8 SystemDictionaryCodec::GetTokensTerminationFlag() const {
 void SystemDictionaryCodec::EncodeTokens(
     const vector<TokenInfo> &tokens, string *output) const {
   DCHECK(output);
-  ostringstream oss;
+  output->clear();
 
   for (size_t i = 0; i < tokens.size(); ++i) {
-    EncodeToken(tokens, i, &oss);
+    EncodeToken(tokens, i, output);
   }
-  *output = oss.str();
   CHECK((*output)[0] != GetTokensTerminationFlag());
 }
 
@@ -377,7 +376,7 @@ void SystemDictionaryCodec::EncodeTokens(
 //  When kCrammedIDFlag is set, 2 bytes
 //  Othewise, 3 bytes
 void SystemDictionaryCodec::EncodeToken(
-    const vector<TokenInfo> &tokens, int index, ostringstream *oss) const {
+    const vector<TokenInfo> &tokens, int index, string *output) const {
   CHECK_LT(index, tokens.size());
 
   // Determines the flags for this token.
@@ -394,7 +393,7 @@ void SystemDictionaryCodec::EncodeToken(
   EncodeValueInfo(token_info, flags, buff, &offset);  // <= 3 bytes
 
   CHECK_LE(offset, 9);
-  oss->write(reinterpret_cast<char *>(buff), offset);
+  output->append(reinterpret_cast<char *>(buff), offset);
 }
 
 void SystemDictionaryCodec::DecodeTokens(

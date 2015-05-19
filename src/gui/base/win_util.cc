@@ -69,9 +69,7 @@
 #endif  // OS_WINDOWS
 #include "base/util.h"
 #include "base/singleton.h"
-#ifdef OS_WINDOWS
 #include "base/win_util.h"
-#endif  // OS_WINDOWS
 
 #ifdef OS_WINDOWS
 #ifndef WM_DWMCOMPOSITIONCHANGED
@@ -153,8 +151,8 @@ class WindowNotifier : public QWidget {
 class DwmResolver {
  public:
   DwmResolver() : dwmlib_(NULL), themelib_(NULL) {
-    dwmlib_ = Util::LoadSystemLibrary(L"dwmapi.dll");
-    themelib_ = Util::LoadSystemLibrary(L"uxtheme.dll");
+    dwmlib_ = mozc::WinUtil::LoadSystemLibrary(L"dwmapi.dll");
+    themelib_ = mozc::WinUtil::LoadSystemLibrary(L"uxtheme.dll");
 
     if (NULL != dwmlib_) {
       gDwmIsCompositionEnabled =
@@ -218,8 +216,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
 
   {
     wstring mozc_tool_path_wide;
-    Util::UTF8ToWide(Util::JoinPath(Util::GetServerDirectory(), kMozcTool),
-                     &mozc_tool_path_wide);
+    Util::UTF8ToWide(Util::GetToolPath(), &mozc_tool_path_wide);
     hr = link->SetPath(mozc_tool_path_wide.c_str());
     if (FAILED(hr)) {
       DLOG(ERROR) << "SetPath failed. hr = " << hr;
@@ -270,6 +267,12 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
   return link;
 }
 
+struct LinkInfo {
+  const char *argument;
+  const char *title_english;
+  const char *title_japanese;
+};
+
 bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
   HRESULT hr = S_OK;
   CComPtr<IObjectCollection> object_collection;
@@ -280,12 +283,6 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
                   " hr = " << hr;
     return false;
   }
-
-  struct LinkInfo {
-    const char *argument;
-    const char *title_english;
-    const char *title_japanese;
-  };
 
   // TODO(yukawa): Investigate better way to localize strings.
   const LinkInfo kLinks[] = {
@@ -318,7 +315,7 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
   const bool use_japanese_ui =
       (kJapaneseLangId == ::GetUserDefaultUILanguage());
 
-  for (size_t i = 0; i < ARRAYSIZE(kLinks); ++i) {
+  for (size_t i = 0; i < arraysize(kLinks); ++i) {
     CComPtr<IShellLink> link;
     if (use_japanese_ui) {
       link = InitializeShellLinkItem(kLinks[i].argument,
@@ -589,14 +586,14 @@ namespace {
 
 struct FindVisibleWindowInfo {
   HWND found_window_handle;
-  DWORD target_thread_id;
+  DWORD target_process_id;
 };
 
 BOOL CALLBACK FindVisibleWindowProc(HWND hwnd, LPARAM lp) {
-  DWORD id = 0;
-  ::GetWindowThreadProcessId(hwnd, &id);
+  DWORD process_id = 0;
+  ::GetWindowThreadProcessId(hwnd, &process_id);
   FindVisibleWindowInfo *info = reinterpret_cast<FindVisibleWindowInfo *>(lp);
-  if (id != info->target_thread_id) {
+  if (process_id != info->target_process_id) {
     // continue enum
     return TRUE;
   }
@@ -614,7 +611,7 @@ BOOL CALLBACK FindVisibleWindowProc(HWND hwnd, LPARAM lp) {
 void WinUtil::ActivateWindow(uint32 process_id) {
 #ifdef OS_WINDOWS
   FindVisibleWindowInfo info = {};
-  info.target_thread_id = process_id;
+  info.target_process_id = process_id;
 
   // The target process may contain several top-level windows.
   // We do not care about the invisible windows.
@@ -673,14 +670,14 @@ bool WinUtil::GetIMEHotKeyDisabled() {
   }
 
   wchar_t data[4] = {};
-  ULONG num_chars = ARRAYSIZE(data);
+  ULONG num_chars = arraysize(data);
   result = key.QueryStringValue(kIMEHotKeyEntryValue, data, &num_chars);
   // Returned |num_char| includes NULL character.
 
   // This is only the condition when this function
   // can return |true|
   if (ERROR_SUCCESS == result &&
-      num_chars < ARRAYSIZE(data) &&
+      num_chars < arraysize(data) &&
       wstring(data) == kIMEHotKeyEntryData) {
     return true;
   }

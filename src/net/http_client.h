@@ -30,10 +30,10 @@
 #ifndef MOZC_NET_HTTP_CLIENT_H_
 #define MOZC_NET_HTTP_CLIENT_H_
 
-#include <ostream>
 #include <string>
 #include <vector>
 
+#include "base/base.h"
 #include "base/port.h"
 
 namespace mozc {
@@ -51,12 +51,7 @@ namespace mozc {
 // option.headers.push_back("Host: foo.bar.com"); // replace/add header
 // CHECK(mozc::HTTPClient::Get("http://www.google.com/", option, &output));
 //
-// 3) output to ofstream
-// ostrem ofs("foo.txt")
-// mozc::HTTPClient::Get("http://www.google.com/", &ofs);
-// mozc::HTTPClient::Get("http://www.google.com/", option, &ofs);
-//
-// 4) Rewrite an actual implementation (for unittesting)
+// 3) Rewrite an actual implementation (for unittesting)
 // class MyHandler: public HTTPClientInterface { .. };
 // MyHandler handler;
 // mozc::HTTPClient::SetHTTPClientInterface(handler);
@@ -82,36 +77,12 @@ class HTTPClient {
   // string interface
   static bool Get(const string &url, string *output);
   static bool Head(const string &url, string *output);
-  static bool Post(const string &url, const string &data,
-                   string *output);
+  static bool Post(const string &url, const string &data, string *output);
 
-  static bool Get(const string &url, const Option &option,
-                  string *output);
-  static bool Head(const string &url, const Option &option,
-                   string *output);
+  static bool Get(const string &url, const Option &option, string *output);
+  static bool Head(const string &url, const Option &option, string *output);
   static bool Post(const string &url, const string &data,
-                   const Option &option,
-                   string *output);
-  static bool Post(const string &url, const char *data,
-                   size_t data_size,
                    const Option &option, string *output);
-
-  // std::ostream interface
-  static bool Get(const string &url, ostream *output);
-  static bool Head(const string &url, ostream *output);
-  static bool Post(const string &url, const string &data,
-                   ostream *output);
-
-  static bool Get(const string &url, const Option &option,
-                  ostream *output);
-  static bool Head(const string &url, const Option &option,
-                   ostream *output);
-  static bool Post(const string &url, const string &data,
-                   const Option &option,
-                   ostream *output);
-  static bool Post(const string &url, const char *data,
-                   size_t data_size,
-                   const Option &option, ostream *output);
 
   // Inject a dependency for unittesting
   static void SetHTTPClientHandler(const HTTPClientInterface *handler);
@@ -126,10 +97,6 @@ class HTTPClientInterface {
  public:
   HTTPClientInterface() {}
   virtual ~HTTPClientInterface() {}
-  virtual bool Get(const string &url, string *output) const = 0;
-  virtual bool Head(const string &url, string *output) const = 0;
-  virtual bool Post(const string &url, const string &data,
-                    string *output) const = 0;
 
   virtual bool Get(const string &url, const HTTPClient::Option &option,
                    string *output) const = 0;
@@ -138,27 +105,6 @@ class HTTPClientInterface {
   virtual bool Post(const string &url, const string &data,
                     const HTTPClient::Option &option,
                     string *output) const = 0;
-  virtual bool Post(const string &url, const char *data,
-                    size_t data_size,
-                    const HTTPClient::Option &option,
-                    string *output) const = 0;
-
-  virtual bool Get(const string &url, ostream *output)  const = 0;
-  virtual bool Head(const string &url, ostream *output)  const = 0;
-  virtual bool Post(const string &url, const string &data,
-                    ostream *output)  const = 0;
-
-  virtual bool Get(const string &url, const HTTPClient::Option &option,
-                   ostream *output)  const = 0;
-  virtual bool Head(const string &url, const HTTPClient::Option &option,
-                    ostream *output)  const = 0;
-  virtual bool Post(const string &url, const string &data,
-                    const HTTPClient::Option &option,
-                    ostream *output)  const = 0;
-  virtual bool Post(const string &url, const char *data,
-                    size_t data_size,
-                    const HTTPClient::Option &option,
-                    ostream *output) const = 0;
 };
-}
+}  // namespace mozc
 #endif  // MOZC_NET_HTTP_CLIENT_H_

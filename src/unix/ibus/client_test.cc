@@ -32,6 +32,7 @@
 #include "base/base.h"
 #include "base/scoped_ptr.h"
 #include "client/client.h"
+#include "engine/mock_converter_engine.h"
 #ifdef OS_CHROMEOS
 #include "session/japanese_session_factory.h"
 #include "session/session_factory_manager.h"
@@ -45,12 +46,15 @@ namespace ibus {
 class ClientEnvironment : public testing::Environment {
  public:
   virtual void SetUp() {
-    session_factory_.reset(new mozc::session::JapaneseSessionFactory);
+    engine_.reset(new mozc::MockConverterEngine);
+    session_factory_.reset(
+        new mozc::session::JapaneseSessionFactory(engine_.get()));
     mozc::session::SessionFactoryManager::SetSessionFactory(
         session_factory_.get());
   }
 
  private:
+  scoped_ptr<mozc::MockConverterEngine> engine_;
   scoped_ptr<mozc::session::JapaneseSessionFactory> session_factory_;
 };
 

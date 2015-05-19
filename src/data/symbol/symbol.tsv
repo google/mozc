@@ -116,6 +116,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	○	まる しろまる ずけい	丸		SYMBOL
 記号	●	まる くろまる ずけい	黒丸		SYMBOL
 記号	◎	にじゅうまる まる ずけい	二重丸		SYMBOL
+記号	◉	じゃのめ まる ずけい	蛇の目		SYMBOL		U+25C9
+記号	⦿	まるなかぐろ まる ずけい	丸中黒		SYMBOL		U+29BF
 記号	◇	しかく だいや ひしがた ひし ずけい	ひしがた		SYMBOL
 記号	◆	しかく だいや ひしがた ひし ずけい	黒ひしがた		SYMBOL
 記号	□	しかく ずけい	四角		SYMBOL
@@ -128,6 +130,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	▶	さんかく ずけい みぎ みぎさんかく >	右向黒三角		SYMBOL
 記号	◁	さんかく ずけい ひだり ひだりさんかく <	左向三角		SYMBOL
 記号	◀	さんかく ずけい ひだり ひだりさんかく <	左向黒三角		SYMBOL
+記号	﹅	ごま けんてん ぼうてん わきてん	圏点	ゴマ	SYMBOL		U+FE45
+記号	﹆	しろごま けんてん ぼうてん わきてん	圏点	白ゴマ	SYMBOL		U+FE46
 記号	※	こめ * こめじるし きごう ほし	米印		SYMBOL
 記号	〒	ゆうびん ゆうびんばんごう きごう	郵便番号		SYMBOL
 記号	→	やじるし  みぎや -> ー> みぎ	矢印	右	SYMBOL

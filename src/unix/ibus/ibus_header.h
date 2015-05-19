@@ -32,4 +32,9 @@
 
 #include <ibus.h>
 
+#if !IBUS_CHECK_VERSION(1, 4, 1)
+#error "ibus-mozc now requires IBus>=1.4.1"
+#endif  // libibus (<1.4.1)
+
+
 #endif  // MOZC_UNIX_IBUS_IBUS_HEADER_H_

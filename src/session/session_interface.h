@@ -33,11 +33,13 @@
 #define MOZC_SESSION_SESSION_INTERFACE_H_
 
 #include "base/base.h"
-#include "session/commands.pb.h"
 
 namespace mozc {
 namespace commands {
+class ApplicationInfo;
+class Capability;
 class Command;
+class Request;
 }  // namespace commands
 namespace composer {
 class Table;
@@ -56,6 +58,9 @@ class SessionInterface {
   virtual bool SendCommand(commands::Command *command) ABSTRACT;
 
   virtual void ReloadConfig() ABSTRACT;
+
+  // Set Request. Currently, this is especial for session::Session.
+  virtual void SetRequest(const commands::Request &request) {}
 
   // Set composition Table. Currently, this is especial for session::Session.
   virtual void SetTable(const composer::Table *table) {}
@@ -76,7 +81,6 @@ class SessionInterface {
 
   // return 0 (default value) if no command is executed in this session.
   virtual uint64 last_command_time() const ABSTRACT;
-
 };
 
 }  // namespace session

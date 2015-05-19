@@ -29,9 +29,10 @@
 
 #ifdef OS_WINDOWS
 #include <windows.h>
-#endif
+#endif  // OS_WINDOWS
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/process_mutex.h"
 
 DEFINE_int32(sleep_time, 30, "sleep 30 sec");

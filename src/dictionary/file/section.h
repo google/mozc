@@ -37,8 +37,12 @@
 namespace mozc {
 struct DictionaryFileSection {
   const char *ptr;
-  int len;
+  size_t len;
   string name;
+
+  DictionaryFileSection(const char *ptr, size_t len, const string &name)
+      : ptr(ptr), len(len), name(name) {
+  }
 };
 }  // namespace mozc
 

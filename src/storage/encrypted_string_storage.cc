@@ -29,12 +29,19 @@
 
 #include "storage/encrypted_string_storage.h"
 
+#ifdef OS_WINDOWS
+#include <Windows.h>
+#endif
+
+#include <cstring>
 #include <string>
 
-#include "base/mmap.h"
-#include "base/file_stream.h"
-#include "base/password_manager.h"
 #include "base/encryptor.h"
+#include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/mmap.h"
+#include "base/password_manager.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace storage {
@@ -52,37 +59,34 @@ EncryptedStringStorage::EncryptedStringStorage(const string &filename)
 
 EncryptedStringStorage::~EncryptedStringStorage() {}
 
-bool EncryptedStringStorage::Load(string *output) {
+bool EncryptedStringStorage::Load(string *output) const {
   DCHECK(output);
 
   string salt;
 
   // Reads encrypted message and salt from local file
   {
-    Mmap<char> mmap;
+    Mmap mmap;
     if (!mmap.Open(filename_.c_str(), "r")) {
       LOG(ERROR) << "cannot open user history file";
       return false;
     }
 
-    if (mmap.GetFileSize() < kSaltSize) {
+    if (mmap.size() < kSaltSize) {
       LOG(ERROR) << "file size is too small";
       return false;
     }
 
-    if (mmap.GetFileSize() > kMaxFileSize) {
+    if (mmap.size() > kMaxFileSize) {
       LOG(ERROR) << "file size is too big.";
       return false;
     }
 
     // copy salt
-    char tmp[kSaltSize];
-    memcpy(tmp, mmap.begin(), kSaltSize);
-    salt.assign(tmp, kSaltSize);
+    salt.assign(mmap.begin(), kSaltSize);
 
     // copy body
-    output->assign(mmap.begin() + kSaltSize,
-                   mmap.GetFileSize() - kSaltSize);
+    output->assign(mmap.begin() + kSaltSize, mmap.size() - kSaltSize);
   }
 
   string password;

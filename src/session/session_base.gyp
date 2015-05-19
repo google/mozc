@@ -128,6 +128,17 @@
       ],
     },
     {
+      'target_name': 'output_util',
+      'type': 'static_library',
+      'sources': [
+        'output_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'session_protocol',
+      ],
+    },
+    {
       'target_name': 'generic_storage_manager',
       'type': 'static_library',
       'sources': [

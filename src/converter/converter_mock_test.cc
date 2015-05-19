@@ -29,12 +29,9 @@
 
 #include <string>
 
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
-#include "dictionary/dictionary_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -55,14 +52,9 @@ void SetSegments(Segments *segments, const string &cand_value) {
 }
 
 class ConverterMockTest : public testing::Test {
- public:
-  void SetUp() {
+ protected:
+  virtual void SetUp() {
     mock_.reset(new ConverterMock);
-    ConverterFactory::SetConverter(mock_.get());
-  }
-
-  void TearDown() {
-    ConverterFactory::SetConverter(NULL);
   }
 
   ConverterMock *GetMock() {
@@ -73,20 +65,8 @@ class ConverterMockTest : public testing::Test {
   scoped_ptr<ConverterMock> mock_;
 };
 
-// This is not a test of ConverterMock but a test of ConverterFactory.
-// TODO(toshiyuki): move this test case to converter_test.cc
-TEST_F(ConverterMockTest, SetConverter) {
-  ConverterMock mock;
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-  EXPECT_NE(&mock, converter);
-
-  ConverterFactory::SetConverter(&mock);
-  ConverterInterface *converter_mock = ConverterFactory::GetConverter();
-  EXPECT_EQ(&mock, converter_mock);
-}
-
 TEST_F(ConverterMockTest, CopySegment) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "StartConvert");
@@ -104,7 +84,7 @@ TEST_F(ConverterMockTest, CopySegment) {
 }
 
 TEST_F(ConverterMockTest, SetStartConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "StartConversion");
@@ -114,7 +94,7 @@ TEST_F(ConverterMockTest, SetStartConversion) {
 }
 
 TEST_F(ConverterMockTest, SetStartReverseConvert) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "StartReverseConvert");
@@ -124,7 +104,7 @@ TEST_F(ConverterMockTest, SetStartReverseConvert) {
 }
 
 TEST_F(ConverterMockTest, SetStartPrediction) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "StartPrediction");
@@ -134,7 +114,7 @@ TEST_F(ConverterMockTest, SetStartPrediction) {
 }
 
 TEST_F(ConverterMockTest, SetStartSuggestion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "StartSuggestion");
@@ -144,7 +124,7 @@ TEST_F(ConverterMockTest, SetStartSuggestion) {
 }
 
 TEST_F(ConverterMockTest, SetStartPartialPrediction) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "StartPartialPrediction");
@@ -154,7 +134,7 @@ TEST_F(ConverterMockTest, SetStartPartialPrediction) {
 }
 
 TEST_F(ConverterMockTest, SetStartPartialSuggestion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "StartPartialSuggestion");
@@ -164,7 +144,7 @@ TEST_F(ConverterMockTest, SetStartPartialSuggestion) {
 }
 
 TEST_F(ConverterMockTest, SetFinishConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "FinishConversion");
@@ -174,7 +154,7 @@ TEST_F(ConverterMockTest, SetFinishConversion) {
 }
 
 TEST_F(ConverterMockTest, SetCancelConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "CancelConversion");
@@ -184,7 +164,7 @@ TEST_F(ConverterMockTest, SetCancelConversion) {
 }
 
 TEST_F(ConverterMockTest, SetResetConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "ResetConversion");
@@ -194,7 +174,7 @@ TEST_F(ConverterMockTest, SetResetConversion) {
 }
 
 TEST_F(ConverterMockTest, SetCommitSegmentValue) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "CommitSegmentValue");
@@ -204,7 +184,7 @@ TEST_F(ConverterMockTest, SetCommitSegmentValue) {
 }
 
 TEST_F(ConverterMockTest, SetFocusSegmentValue) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "FocusSegmentValue");
@@ -214,7 +194,7 @@ TEST_F(ConverterMockTest, SetFocusSegmentValue) {
 }
 
 TEST_F(ConverterMockTest, SetFreeSegmentValue) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "FreeSegmentValue");
@@ -224,7 +204,7 @@ TEST_F(ConverterMockTest, SetFreeSegmentValue) {
 }
 
 TEST_F(ConverterMockTest, SetSubmitFirstSegment) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "SubmitFirstSegment");
@@ -234,7 +214,7 @@ TEST_F(ConverterMockTest, SetSubmitFirstSegment) {
 }
 
 TEST_F(ConverterMockTest, SetResizeSegment1) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "ResizeSegment1");
@@ -244,7 +224,7 @@ TEST_F(ConverterMockTest, SetResizeSegment1) {
 }
 
 TEST_F(ConverterMockTest, SetResizeSegment2) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments output, expect;
   SetSegments(&expect, "ResizeSegment2");
@@ -255,7 +235,7 @@ TEST_F(ConverterMockTest, SetResizeSegment2) {
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 TEST_F(ConverterMockTest, GetStartConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   const string input_key = "Key";
@@ -273,7 +253,7 @@ TEST_F(ConverterMockTest, GetStartConversion) {
 }
 
 TEST_F(ConverterMockTest, GetStartReverseConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   const string input_key = "Key";
@@ -291,7 +271,7 @@ TEST_F(ConverterMockTest, GetStartReverseConversion) {
 }
 
 TEST_F(ConverterMockTest, GetStartPrediction) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   const string input_key = "Key";
@@ -309,7 +289,7 @@ TEST_F(ConverterMockTest, GetStartPrediction) {
 }
 
 TEST_F(ConverterMockTest, GetStartSuggestion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   const string input_key = "Key";
@@ -327,7 +307,7 @@ TEST_F(ConverterMockTest, GetStartSuggestion) {
 }
 
 TEST_F(ConverterMockTest, GetStartPartialPrediction) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   const string input_key = "Key";
@@ -345,7 +325,7 @@ TEST_F(ConverterMockTest, GetStartPartialPrediction) {
 }
 
 TEST_F(ConverterMockTest, GetStartPartialSuggestion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   const string input_key = "Key";
@@ -363,7 +343,7 @@ TEST_F(ConverterMockTest, GetStartPartialSuggestion) {
 }
 
 TEST_F(ConverterMockTest, GetFinishConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   SetSegments(&input, "FinishConversion");
@@ -378,7 +358,7 @@ TEST_F(ConverterMockTest, GetFinishConversion) {
 }
 
 TEST_F(ConverterMockTest, GetCancelConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   SetSegments(&input, "CancelConversion");
@@ -393,7 +373,7 @@ TEST_F(ConverterMockTest, GetCancelConversion) {
 }
 
 TEST_F(ConverterMockTest, GetResetConversion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   SetSegments(&input, "ResetConversion");
@@ -408,7 +388,7 @@ TEST_F(ConverterMockTest, GetResetConversion) {
 }
 
 TEST_F(ConverterMockTest, GetCommitSegmentValue) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   size_t input_idx = 1;
@@ -429,7 +409,7 @@ TEST_F(ConverterMockTest, GetCommitSegmentValue) {
 }
 
 TEST_F(ConverterMockTest, GetFocusSegmentValue) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   size_t input_idx = 1;
@@ -450,7 +430,7 @@ TEST_F(ConverterMockTest, GetFocusSegmentValue) {
 }
 
 TEST_F(ConverterMockTest, GetFreeSegmentValue) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   size_t input_idx = 1;
@@ -468,7 +448,7 @@ TEST_F(ConverterMockTest, GetFreeSegmentValue) {
 }
 
 TEST_F(ConverterMockTest, GetSubmitFirstSegment) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   size_t input_idx = 1;
@@ -486,7 +466,7 @@ TEST_F(ConverterMockTest, GetSubmitFirstSegment) {
 }
 
 TEST_F(ConverterMockTest, GetResizeSegment1) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   size_t input_idx = 1;
@@ -508,7 +488,7 @@ TEST_F(ConverterMockTest, GetResizeSegment1) {
 }
 
 TEST_F(ConverterMockTest, GetResizeSegment2) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   size_t input_idx = 1, input_size = 3;
@@ -537,7 +517,7 @@ TEST_F(ConverterMockTest, GetResizeSegment2) {
 }
 
 TEST_F(ConverterMockTest, DefaultBehavior) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  ConverterInterface *converter = GetMock();
 
   Segments input;
   const string input_key = "Key";

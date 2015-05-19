@@ -218,19 +218,19 @@ Win32KeyboardInterface *Win32KeyboardInterface::CreateDefault() {
 }
 
 KeyboardStatus::KeyboardStatus() {
-  memset(&status_[0], 0, ARRAYSIZE(status_));
+  memset(&status_[0], 0, arraysize(status_));
 }
 
 KeyboardStatus::KeyboardStatus(const BYTE key_status[256]) {
   const errno_t error = memcpy_s(
-      &status_[0], ARRAYSIZE(status_), key_status, ARRAYSIZE(status_));
+      &status_[0], arraysize(status_), key_status, arraysize(status_));
   if (error != NO_ERROR) {
-    memset(&status_[0], 0, ARRAYSIZE(status_));
+    memset(&status_[0], 0, arraysize(status_));
   }
 }
 
 BYTE KeyboardStatus::GetState(int virtual_key) const {
-  if (virtual_key < 0 || ARRAYSIZE(status_) <= virtual_key) {
+  if (virtual_key < 0 || arraysize(status_) <= virtual_key) {
     DLOG(ERROR) << "index out of range. index = " << virtual_key;
     return 0;
   }
@@ -238,7 +238,7 @@ BYTE KeyboardStatus::GetState(int virtual_key) const {
 }
 
 void KeyboardStatus::SetState(int virtual_key, BYTE value) {
-  if (virtual_key < 0 || ARRAYSIZE(status_) <= virtual_key) {
+  if (virtual_key < 0 || arraysize(status_) <= virtual_key) {
     DLOG(ERROR) << "index out of range. index = " << virtual_key;
     return;
   }
@@ -262,7 +262,7 @@ BYTE * KeyboardStatus::mutable_status() {
 }
 
 size_t KeyboardStatus::status_size() const {
-  return ARRAYSIZE(status_);
+  return arraysize(status_);
 }
 
 namespace {
@@ -1471,14 +1471,14 @@ wchar_t JapaneseKeyboardLayoutEmulator::GetCharacterForKeyDown(
   // - VK_LCONTROL/VK_RCONTROL
   // - VK_LMENU/VK_RMENU
 
-  DCHECK(virtual_key < ARRAYSIZE(kCharTable));
+  DCHECK(virtual_key < arraysize(kCharTable));
   if (is_menu_active) {
     DCHECK_LE(0, index);
-    DCHECK(index < ARRAYSIZE(kNoCharGenKey));
+    DCHECK(index < arraysize(kNoCharGenKey));
     return kCharTableMenuActive[virtual_key][index];
   } else {
     DCHECK_LE(0, index);
-    DCHECK(index < ARRAYSIZE(kNoCharGenKey));
+    DCHECK(index < arraysize(kNoCharGenKey));
     return kCharTable[virtual_key][index];
   }
 }

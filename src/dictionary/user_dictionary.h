@@ -33,14 +33,14 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
-#include "base/mutex.h"
-#include "base/thread.h"
+#include "base/scoped_ptr.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/user_pos.h"
+#include "dictionary/user_dictionary_storage.pb.h"
 
 namespace mozc {
 
 class POSMatcher;
+class ReaderWriterMutex;
 class SuppressionDictionary;
 class TokensIndex;   // defined in user_dictionary.cc
 class UserDictionaryReloader;
@@ -57,16 +57,15 @@ class UserDictionary : public DictionaryInterface {
   virtual Node *LookupPredictiveWithLimit(
       const char *str, int size, const Limit &limit,
       NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupPredictive(
-      const char *str, int size,
-      NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupPrefixWithLimit(
-      const char *str, int size,
-      const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupPrefix(
-      const char *str, int size,
-      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPredictive(const char *str, int size,
+                                 NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefixWithLimit(const char *str, int size,
+                                      const Limit &limit,
+                                      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupExact(const char *str, int size,
+                            NodeAllocatorInterface *allocator) const;
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
 
@@ -87,7 +86,8 @@ class UserDictionary : public DictionaryInterface {
   // Also, this method should be called by the main converter thread which
   // is executed synchronously with user input.
   bool AddToAutoRegisteredDictionary(
-      const string &key, const string &value, const string &pos);
+      const string &key, const string &value,
+      user_dictionary::UserDictionary::PosType pos);
 
   // Set user dicitonary filename for unittesting
   static void SetUserDictionaryName(const string &filename);
@@ -104,7 +104,7 @@ class UserDictionary : public DictionaryInterface {
   SuppressionDictionary *suppression_dictionary_;
   const Limit empty_limit_;
   TokensIndex *tokens_;
-  mutable ReaderWriterMutex mutex_;
+  mutable scoped_ptr<ReaderWriterMutex> mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(UserDictionary);
 };

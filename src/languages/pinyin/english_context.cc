@@ -156,20 +156,6 @@ bool EnglishContext::FocusCandidate(size_t index) {
   return true;
 }
 
-bool EnglishContext::FocusCandidatePrev() {
-  if (focused_candidate_index_ == 0) {
-    return true;
-  }
-  return FocusCandidate(focused_candidate_index_ - 1);
-}
-
-bool EnglishContext::FocusCandidateNext() {
-  if (focused_candidate_index_ + 1 >= candidates_.size()) {
-    return false;
-  }
-  return FocusCandidate(focused_candidate_index_ + 1);
-}
-
 bool EnglishContext::ClearCandidateFromHistory(size_t index) {
   if (index >= candidates_.size()) {
     return false;

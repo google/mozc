@@ -40,7 +40,9 @@
 #include <iostream>
 #include <vector>
 
+#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "rewriter/gen_existence_header.h"
 
 DEFINE_string(collocation_data, "", "collocation data text");

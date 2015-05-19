@@ -33,6 +33,10 @@
 #include <QtGui/QtGui>
 #include <QtGui/QProgressDialog>
 
+#ifdef OS_WINDOWS
+#include <Windows.h>
+#endif  // OS_WINDOWS
+
 #include <algorithm>
 #include <functional>
 #include <string>
@@ -46,7 +50,9 @@
 #include "client/client.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/user_dictionary_importer.h"
+#include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "gui/config_dialog/combobox_delegate.h"
@@ -55,6 +61,12 @@
 
 namespace mozc {
 namespace gui {
+
+using mozc::user_dictionary::UserDictionary;
+using mozc::user_dictionary::UserDictionaryCommandStatus;
+using mozc::user_dictionary::UserDictionarySession;
+using mozc::user_dictionary::UserDictionaryStorage;
+
 namespace {
 
 // set longer timeout because it takes longer time
@@ -93,9 +105,9 @@ QProgressDialog *CreateProgressDialog(
 
 size_t GetMaxDictionaryEntrySize(bool is_syncable) {
   if (is_syncable) {
-    return UserDictionaryStorage::max_sync_entry_size();
+    return mozc::UserDictionaryStorage::max_sync_entry_size();
   } else {
-    return UserDictionaryStorage::max_entry_size();
+    return mozc::UserDictionaryStorage::max_entry_size();
   }
 }
 
@@ -290,9 +302,8 @@ UserDictionaryImporter::TextLineIteratorInterface *CreateTextLineIterator(
 DictionaryTool::DictionaryTool(QWidget *parent)
     : QMainWindow(parent),
       import_dialog_(NULL), find_dialog_(NULL),
-      storage_(
-          new UserDictionaryStorage(
-              UserDictionaryUtil::GetUserDictionaryFileName())),
+      session_(new UserDictionarySession(
+          UserDictionaryUtil::GetUserDictionaryFileName())),
       current_dic_id_(0), modified_(false), monitoring_user_edit_(false),
       window_title_(tr("Mozc")),
       dic_menu_(new QMenu),
@@ -302,7 +313,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       export_action_(NULL), import_default_ime_action_(NULL),
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
-      max_entry_size_(UserDictionaryStorage::max_entry_size()),
+      max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
       user_pos_(UserPosManager::GetUserPosManager()->GetUserPOS()) {
   setupUi(this);
 
@@ -314,11 +325,12 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   client_->set_timeout(kSessionTimeout);
 
-  if (!storage_->Load()) {
-    LOG(WARNING) << "UserDictionaryStorage::Load() failed";
+  if (session_->Load() !=
+      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
+    LOG(WARNING) << "UserDictionarySession::Load() failed";
   }
 
-  if (!storage_->Lock()) {
+  if (!session_->mutable_storage()->Lock()) {
     QMessageBox::information(
         this, window_title_,
         tr("Another process is accessing the user dictionary file."));
@@ -499,7 +511,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // If this is the first time for the user dictionary is used, create
   // a defautl dictionary.
-  if (!storage_->Exists()) {
+  if (!session_->mutable_storage()->Exists()) {
     CreateDictionaryHelper(tr("User Dictionary 1"));
   }
 
@@ -542,8 +554,8 @@ void DictionaryTool::closeEvent(QCloseEvent *event) {
   SyncToStorage();
   SaveAndReloadServer();
 
-  if (storage_->GetLastError()
-      == UserDictionaryStorage::TOO_BIG_FILE_BYTES) {
+  if (session_->mutable_storage()->GetLastError()
+      == mozc::UserDictionaryStorage::TOO_BIG_FILE_BYTES) {
     QMessageBox::warning(
         this, window_title_,
         tr("Making dangerously large user dictionary file. "
@@ -597,16 +609,16 @@ void DictionaryTool::OnDictionarySelectionChanged() {
   } else {
     current_dic_id_ = dic_info.id;
     SetupDicContentEditor(dic_info);
-    const UserDictionaryStorage::UserDictionary *dic =
-        storage_->GetUserDictionary(current_dic_id_);
+    const UserDictionary *dic =
+        session_->mutable_storage()->GetUserDictionary(current_dic_id_);
     max_entry_size_ = GetMaxDictionaryEntrySize(dic->syncable());
   }
 }
 
 void DictionaryTool::SetupDicContentEditor(
     const DictionaryInfo &dic_info) {
-  UserDictionaryStorage::UserDictionary *dic =
-      storage_->GetUserDictionary(dic_info.id);
+  UserDictionary *dic =
+      session_->mutable_storage()->GetUserDictionary(dic_info.id);
 
   if (dic == NULL) {
     LOG(ERROR) << "Failed to load the dictionary: " << dic_info.id;
@@ -640,7 +652,8 @@ void DictionaryTool::SetupDicContentEditor(
       dic_content_->setItem(
           i, 1, new QTableWidgetItem(dic->entries(i).value().c_str()));
       dic_content_->setItem(
-          i, 2, new QTableWidgetItem(dic->entries(i).pos().c_str()));
+          i, 2, new QTableWidgetItem(
+              UserDictionaryUtil::GetStringPosType(dic->entries(i).pos())));
       dic_content_->setItem(
           i, 3, new QTableWidgetItem(dic->entries(i).comment().c_str()));
       progress->setValue(i);
@@ -664,7 +677,7 @@ void DictionaryTool::SetupDicContentEditor(
 
 void DictionaryTool::CreateDictionary() {
   const int max_size =
-      static_cast<int>(UserDictionaryStorage::max_dictionary_size());
+      static_cast<int>(mozc::UserDictionaryStorage::max_dictionary_size());
   if (dic_list_->count() >= max_size) {
     QMessageBox::critical(
         this, window_title_,
@@ -699,7 +712,7 @@ void DictionaryTool::DeleteDictionary() {
     return;
   }
 
-  if (!storage_->DeleteDictionary(dic_info.id)) {
+  if (!session_->mutable_storage()->DeleteDictionary(dic_info.id)) {
     LOG(ERROR) << "Failed to delete the dictionary.";
     ReportError();
     return;
@@ -727,7 +740,8 @@ void DictionaryTool::RenameDictionary() {
     return;
   }
 
-  if (!storage_->RenameDictionary(dic_info.id, dic_name.toStdString())) {
+  if (!session_->mutable_storage()->RenameDictionary(
+          dic_info.id, dic_name.toStdString())) {
     LOG(ERROR) << "Failed to rename the dictionary.";
     ReportError();
     return;
@@ -740,7 +754,7 @@ void DictionaryTool::RenameDictionary() {
 
 void DictionaryTool::ImportAndCreateDictionary() {
   const int max_size = static_cast<int>(
-      UserDictionaryStorage::max_dictionary_size());
+      mozc::UserDictionaryStorage::max_dictionary_size());
   if (dic_list_->count() >= max_size) {
     QMessageBox::critical(
         this, window_title_,
@@ -845,14 +859,14 @@ void DictionaryTool::ImportHelper(
     return;
   }
 
-  if (dic_id == 0 && !storage_->CreateDictionary(dic_name, &dic_id)) {
+  if (dic_id == 0 &&
+      !session_->mutable_storage()->CreateDictionary(dic_name, &dic_id)) {
     LOG(ERROR) << "Failed to create the dictionary.";
     ReportError();
     return;
   }
 
-  UserDictionaryStorage::UserDictionary *dic =
-      storage_->GetUserDictionary(dic_id);
+  UserDictionary *dic = session_->mutable_storage()->GetUserDictionary(dic_id);
 
   if (dic == NULL) {
     LOG(ERROR) << "Cannot find dictionary id: " << dic_id;
@@ -933,8 +947,8 @@ void DictionaryTool::ImportFromDefaultIME() {
 
   SyncToStorage();
 
-  UserDictionaryStorage::UserDictionary *dic =
-      storage_->GetUserDictionary(dic_info.id);
+  UserDictionary *dic =
+      session_->mutable_storage()->GetUserDictionary(dic_info.id);
   DCHECK(dic);
 
   const int old_size = dic->entries_size();
@@ -977,7 +991,7 @@ void DictionaryTool::ExportDictionary() {
 
   SyncToStorage();
 
-  if (!storage_->ExportDictionary(dic_info.id, file_name)) {
+  if (!session_->mutable_storage()->ExportDictionary(dic_info.id, file_name)) {
     LOG(ERROR) << "Failed to export the dictionary.";
     ReportError();
     return;
@@ -1113,7 +1127,7 @@ void DictionaryTool::EditPOS(const string &pos) {
 }
 
 void DictionaryTool::MoveTo(int dictionary_row) {
-  UserDictionaryStorage::UserDictionary *target_dict = NULL;
+  UserDictionary *target_dict = NULL;
   {
     const QListWidgetItem * selected_dict = GetFirstSelectedDictionary();
     if (selected_dict == NULL) {
@@ -1126,7 +1140,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
       return;
     }
 
-    target_dict = storage_->GetUserDictionary(
+    target_dict = session_->mutable_storage()->GetUserDictionary(
         target_dict_item->data(Qt::UserRole).toULongLong());
   }
 
@@ -1161,12 +1175,12 @@ void DictionaryTool::MoveTo(int dictionary_row) {
     int progress_index = 0;
     if (target_dict) {
       for (size_t i = 0; i < rows.size(); ++i) {
-        UserDictionaryStorage::UserDictionaryEntry *entry =
-            target_dict->add_entries();
+        UserDictionary::Entry *entry = target_dict->add_entries();
         const int row = rows[i];
         entry->set_key(dic_content_->item(row, 0)->text().toStdString());
         entry->set_value(dic_content_->item(row, 1)->text().toStdString());
-        entry->set_pos(dic_content_->item(row, 2)->text().toStdString());
+        entry->set_pos(UserDictionaryUtil::ToPosType(
+            dic_content_->item(row, 2)->text().toStdString().c_str()));
         entry->set_comment(dic_content_->item(row, 3)->text().toStdString());
         UserDictionaryUtil::SanitizeEntry(entry);
         progress->setValue(progress_index);
@@ -1395,8 +1409,8 @@ bool DictionaryTool::IsCurrentDictionaryForSync() const {
     return false;
   }
 
-  UserDictionaryStorage::UserDictionary *dic =
-      storage_->GetUserDictionary(dic_info.id);
+  UserDictionary *dic =
+      session_->mutable_storage()->GetUserDictionary(dic_info.id);
   return dic->syncable();
 }
 
@@ -1405,8 +1419,8 @@ void DictionaryTool::SyncToStorage() {
     return;
   }
 
-  UserDictionaryStorage::UserDictionary *dic =
-      storage_->GetUserDictionary(current_dic_id_);
+  UserDictionary *dic =
+      session_->mutable_storage()->GetUserDictionary(current_dic_id_);
 
   if (dic == NULL) {
     LOG(ERROR) << "No save dictionary: " << current_dic_id_;
@@ -1416,11 +1430,12 @@ void DictionaryTool::SyncToStorage() {
   dic->clear_entries();
 
   for (int i = 0; i < dic_content_->rowCount(); ++i) {
-    UserDictionaryStorage::UserDictionaryEntry *entry =
+    UserDictionary::Entry *entry =
         dic->add_entries();
     entry->set_key(dic_content_->item(i, 0)->text().toStdString());
     entry->set_value(dic_content_->item(i, 1)->text().toStdString());
-    entry->set_pos(dic_content_->item(i, 2)->text().toStdString());
+    entry->set_pos(UserDictionaryUtil::ToPosType(
+        dic_content_->item(i, 2)->text().toStdString().c_str()));
     entry->set_comment(dic_content_->item(i, 3)->text().toStdString());
     UserDictionaryUtil::SanitizeEntry(entry);
   }
@@ -1430,7 +1445,8 @@ void DictionaryTool::SyncToStorage() {
 
 void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
   uint64 new_dic_id = 0;
-  if (!storage_->CreateDictionary(dic_name.toStdString(), &new_dic_id)) {
+  if (!session_->mutable_storage()->CreateDictionary(
+          dic_name.toStdString(), &new_dic_id)) {
     LOG(ERROR) << "Failed to create a new dictionary.";
     ReportError();
     return;
@@ -1449,13 +1465,14 @@ void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
 
 bool DictionaryTool::InitDictionaryList() {
   dic_list_->clear();
-  for (size_t i = 0; i < storage_->dictionaries_size(); ++i) {
+  const UserDictionaryStorage &storage = session_->storage();
+  for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
     QListWidgetItem *item = new QListWidgetItem(dic_list_);
     DCHECK(item);
-    item->setText(storage_->dictionaries(i).name().c_str());
+    item->setText(storage.dictionaries(i).name().c_str());
     item->setData(Qt::UserRole,
                   QVariant(
-                      static_cast<qulonglong>(storage_->dictionaries(i).id())));
+                      static_cast<qulonglong>(storage.dictionaries(i).id())));
   }
 
   UpdateUIStatus();
@@ -1483,24 +1500,24 @@ QString DictionaryTool::PromptForDictionaryName(const QString &text,
 }
 
 void DictionaryTool::ReportError() {
-  switch (storage_->GetLastError()) {
-    case UserDictionaryStorage::INVALID_CHARACTERS_IN_DICTIONARY_NAME:
+  switch (session_->mutable_storage()->GetLastError()) {
+    case mozc::UserDictionaryStorage::INVALID_CHARACTERS_IN_DICTIONARY_NAME:
       LOG(ERROR) << "Dictionary name contains an invalid character.";
       QMessageBox::critical(
           this, window_title_,
           tr("An invalid character is included in the dictionary name."));
       break;
-    case UserDictionaryStorage::EMPTY_DICTIONARY_NAME:
+    case mozc::UserDictionaryStorage::EMPTY_DICTIONARY_NAME:
       LOG(ERROR) << "Dictionary name is empty.";
       QMessageBox::critical(this, window_title_,
                             tr("Dictionary name is empty."));
       break;
-    case UserDictionaryStorage::TOO_LONG_DICTIONARY_NAME:
+    case mozc::UserDictionaryStorage::TOO_LONG_DICTIONARY_NAME:
       LOG(ERROR) << "Dictionary name is too long.";
       QMessageBox::critical(this, window_title_,
                             tr("Dictionary name is too long."));
       break;
-    case UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME:
+    case mozc::UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME:
       LOG(ERROR) << "duplicated dictionary name";
       QMessageBox::critical(this, window_title_,
                             tr("Dictionary already exists."));
@@ -1532,8 +1549,9 @@ void DictionaryTool::StopMonitoringUserEdit() {
 }
 
 void DictionaryTool::SaveAndReloadServer() {
-  if (!storage_->Save() &&
-      storage_->GetLastError() == UserDictionaryStorage::SYNC_FAILURE) {
+  if (!session_->mutable_storage()->Save() &&
+      session_->mutable_storage()->GetLastError() ==
+      mozc::UserDictionaryStorage::SYNC_FAILURE) {
     LOG(ERROR) << "Cannot save dictionary";
     return;
   }
@@ -1601,7 +1619,7 @@ void DictionaryTool::paintEvent(QPaintEvent *event) {
 
 void DictionaryTool::UpdateUIStatus() {
   const bool is_enable_new_dic =
-      dic_list_->count() < storage_->max_dictionary_size();
+      dic_list_->count() < session_->mutable_storage()->max_dictionary_size();
   new_action_->setEnabled(is_enable_new_dic);
   import_create_action_->setEnabled(is_enable_new_dic);
 

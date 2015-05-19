@@ -37,17 +37,19 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#endif
+#endif  // OS_WINDOWS
 
 #include <map>
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 
 namespace mozc {
 
 namespace {
+
 string CreateProcessMutexFile(const char *name) {
   name = (name == NULL) ? "NULL" : name;
 
@@ -71,7 +73,7 @@ bool ProcessMutex::Lock() {
 #ifdef OS_WINDOWS
 
 ProcessMutex::ProcessMutex(const char *name)
-    : handle_(NULL), locked_(false) {
+    : handle_(INVALID_HANDLE_VALUE), locked_(false) {
   filename_ = CreateProcessMutexFile(name);
 }
 
@@ -80,21 +82,21 @@ ProcessMutex::~ProcessMutex() {
 }
 
 bool ProcessMutex::LockAndWrite(const string &message) {
+  if (locked_) {
+    VLOG(1) << filename_ << " is already locked";
+    return false;
+  }
+
   wstring wfilename;
   Util::UTF8ToWide(filename_.c_str(), &wfilename);
-  handle_ = ::CreateFileW
-      (wfilename.c_str(),
-       GENERIC_WRITE,
-       FILE_SHARE_READ,  // allow read
-       NULL,
-       CREATE_ALWAYS,
-       FILE_ATTRIBUTE_HIDDEN |
-       FILE_ATTRIBUTE_SYSTEM |
-       FILE_ATTRIBUTE_TEMPORARY |
-       FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
-       FILE_FLAG_DELETE_ON_CLOSE,
-       NULL);
-  locked_ = (INVALID_HANDLE_VALUE != handle_);
+  const DWORD kAttribute =
+      FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
+      FILE_ATTRIBUTE_TEMPORARY | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
+      FILE_FLAG_DELETE_ON_CLOSE;
+  handle_.reset(::CreateFileW(
+      wfilename.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL,
+      CREATE_ALWAYS, kAttribute, NULL));
+  locked_ = (handle_.get() != NULL);
 
   if (!locked_) {
     VLOG(1) << "already locked";
@@ -103,8 +105,13 @@ bool ProcessMutex::LockAndWrite(const string &message) {
 
   if (!message.empty()) {
     DWORD size = 0;
-    if (!::WriteFile(handle_, message.data(), message.size(), &size, NULL)) {
-      LOG(ERROR) << "Cannot write message: " << ::GetLastError();
+    if (!::WriteFile(handle_.get(), message.data(), message.size(),
+                     &size, NULL)) {
+      const int last_error = ::GetLastError();
+      LOG(ERROR) << "Cannot write message: " << message
+                 << ", last_error:" << last_error;
+      UnLock();
+      return false;
     }
   }
 
@@ -112,11 +119,9 @@ bool ProcessMutex::LockAndWrite(const string &message) {
 }
 
 bool ProcessMutex::UnLock() {
-  if (NULL != handle_) {
-    ::CloseHandle(handle_);
-    handle_ = NULL;
-  }
+  handle_.reset(NULL);
   Util::Unlink(filename_);
+  locked_ = false;
   return true;
 }
 
@@ -216,6 +221,7 @@ class FileLockManager {
   Mutex mutex_;
   map<string, int> fdmap_;
 };
+
 }  // namespace
 
 ProcessMutex::ProcessMutex(const char *name) : locked_(false) {
@@ -231,7 +237,7 @@ ProcessMutex::~ProcessMutex() {
 bool ProcessMutex::LockAndWrite(const string &message) {
   int fd = -1;
   if (!Singleton<FileLockManager>::get()->Lock(filename_, &fd)) {
-    VLOG(1) << "already locked";
+    VLOG(1) << filename_ << " is already locked";
     return false;
   }
 
@@ -243,7 +249,7 @@ bool ProcessMutex::LockAndWrite(const string &message) {
   if (!message.empty()) {
     if (write(fd, message.data(), message.size()) !=
         message.size()) {
-      LOG(ERROR) << "Cannot write message";
+      LOG(ERROR) << "Cannot write message: " << message;
       UnLock();
       return false;
     }

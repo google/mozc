@@ -33,17 +33,20 @@
 #include "composer/composition_interface.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "session/commands.pb.h"
 
 DEFINE_string(table, "system://romanji-hiragana.tsv",
               "preedit conversion table file.");
 
+using ::mozc::commands::Request;
+
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
-  scoped_ptr<mozc::composer::Composer> composer(new mozc::composer::Composer);
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
-  composer->SetTable(&table);
+  scoped_ptr<mozc::composer::Composer> composer(
+      new mozc::composer::Composer(&table, Request::default_instance()));
 
   string command;
   string left, focused, right;

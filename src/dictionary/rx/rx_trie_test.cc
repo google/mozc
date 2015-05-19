@@ -27,13 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dictionary/rx/rx_trie.h"
+
 #include <algorithm>
 
+#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/hash_tables.h"
+#include "base/logging.h"
 #include "base/mmap.h"
+#include "base/number_util.h"
 #include "base/util.h"
-#include "dictionary/rx/rx_trie.h"
 #include "dictionary/rx/rx_trie_builder.h"
 #include "testing/base/public/gunit.h"
 
@@ -65,13 +69,12 @@ class RxTrieTest : public testing::Test {
   void ReadFromFile(RxTrie *trie) {
     DCHECK(trie);
     EXPECT_TRUE(Util::FileExists(test_rx_));
-    mapping_.reset(new Mmap<char>());
+    mapping_.reset(new Mmap);
     mapping_->Open(test_rx_.c_str());
     const char *ptr = mapping_->begin();
-    EXPECT_TRUE(trie->OpenImage(
-        reinterpret_cast<const unsigned char *>(ptr)));
+    EXPECT_TRUE(trie->OpenImage(reinterpret_cast<const unsigned char *>(ptr)));
   }
-  scoped_ptr<Mmap<char> > mapping_;
+  scoped_ptr<Mmap> mapping_;
 
   const string test_rx_;
 };
@@ -140,7 +143,7 @@ TEST_F(RxTrieTest, RandomTest) {
     Util::SetRandomSeed(0);
     RxTrieBuilder builder;
     for (size_t i = 0; i < kTestSize; ++i) {
-      const string key = Util::SimpleItoa(Util::Random(kTestSize));
+      const string key = NumberUtil::SimpleItoa(Util::Random(kTestSize));
       builder.AddKey(key);
       inserted.insert(make_pair(key, -1));
     }
@@ -213,7 +216,7 @@ TEST_F(RxTrieTest, RandomTest) {
   }
   {
     for (size_t i = 0; i < (kTestSize / 1000); ++i) {
-      const string test_key = Util::SimpleItoa(Util::Random(kTestSize));
+      const string test_key = NumberUtil::SimpleItoa(Util::Random(kTestSize));
       const hash_map<string, int>::const_iterator itr = inserted.find(test_key);
       string key;
       if (itr != inserted.end()) {

@@ -34,13 +34,7 @@
 #include "win32/base/immdev.h"
 
 namespace mozc {
-
-namespace commands {
-class RendererCommand;
-}  // namespace commands
-
 namespace win32 {
-class UIContext;
 
 extern const LPARAM kNotifyUpdateUI;
 extern const LPARAM kNotifyReconvertFromIME;

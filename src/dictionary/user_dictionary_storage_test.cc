@@ -34,9 +34,16 @@
 #endif
 
 #include <algorithm>
+#include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/mmap.h"
+#include "base/number_util.h"
+#include "base/protobuf/unknown_field_set.h"
+#include "base/testing_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_util.h"
@@ -46,6 +53,12 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+
+using mozc::protobuf::UnknownField;
+using mozc::protobuf::UnknownFieldSet;
+using mozc::testing::SerializeUnknownFieldSetAsString;
+using user_dictionary::UserDictionary;
+
 namespace {
 
 string GenRandomString(int size) {
@@ -59,26 +72,40 @@ string GenRandomString(int size) {
   return result;
 }
 
-string GetUserDictionaryFile() {
-#ifndef OS_WINDOWS
-  chmod(FLAGS_test_tmpdir.c_str(), 0777);
-#endif
-  return Util::JoinPath(FLAGS_test_tmpdir, "test.db");
-}
-
 }   // namespace
 
-TEST(UserDictionaryStorage, FileTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
+class UserDictionaryStorageTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+    backup_user_profile_directory_ = Util::GetUserProfileDirectory();
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+#ifndef OS_WINDOWS
+    // TODO(hidehiko): Do we really need this?
+    chmod(FLAGS_test_tmpdir.c_str(), 0777);
+#endif
+    Util::Unlink(GetUserDictionaryFile());
+  }
+
+  virtual void TearDown() {
+    Util::Unlink(GetUserDictionaryFile());
+    Util::SetUserProfileDirectory(backup_user_profile_directory_);
+  }
+
+  static string GetUserDictionaryFile() {
+    return Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+  }
+
+ private:
+  string backup_user_profile_directory_;
+};
+
+TEST_F(UserDictionaryStorageTest, FileTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_EQ(storage.filename(), GetUserDictionaryFile());
   EXPECT_FALSE(storage.Exists());
 }
 
-TEST(UserDictionaryStorage, LockTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
+TEST_F(UserDictionaryStorageTest, LockTest) {
   UserDictionaryStorage storage1(GetUserDictionaryFile());
   UserDictionaryStorage storage2(GetUserDictionaryFile());
   EXPECT_TRUE(storage1.Lock());
@@ -89,9 +116,7 @@ TEST(UserDictionaryStorage, LockTest) {
   EXPECT_TRUE(storage2.Save());
 }
 
-TEST(UserDictionaryStorage, SyncDictionaryBinarySizeTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
+TEST_F(UserDictionaryStorageTest, SyncDictionaryBinarySizeTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 #ifndef ENABLE_CLOUD_SYNC
@@ -113,7 +138,7 @@ TEST(UserDictionaryStorage, SyncDictionaryBinarySizeTest) {
         dic->add_entries();
     entry->set_key(string(UserDictionaryStorage::max_sync_binary_size(), 'a'));
     entry->set_value("value");
-    entry->set_pos("pos");
+    entry->set_pos(UserDictionary::NOUN);
   }
   // Okay to store such entry in the normal dictionary.
   EXPECT_TRUE(storage.Save());
@@ -127,7 +152,7 @@ TEST(UserDictionaryStorage, SyncDictionaryBinarySizeTest) {
         dic->add_entries();
     entry->set_key(string(UserDictionaryStorage::max_sync_binary_size(), 'a'));
     entry->set_value("value");
-    entry->set_pos("pos");
+    entry->set_pos(UserDictionary::NOUN);
   }
   // Such size is unacceptable for sync.
   EXPECT_FALSE(storage.Save());
@@ -135,9 +160,7 @@ TEST(UserDictionaryStorage, SyncDictionaryBinarySizeTest) {
   EXPECT_TRUE(storage.UnLock());
 }
 
-TEST(UserDictionaryStorage, SyncDictionaryEntrySizeTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
+TEST_F(UserDictionaryStorageTest, SyncDictionaryEntrySizeTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 #ifndef ENABLE_CLOUD_SYNC
@@ -181,10 +204,7 @@ TEST(UserDictionaryStorage, SyncDictionaryEntrySizeTest) {
   EXPECT_TRUE(storage.UnLock());
 }
 
-TEST(UserDictionaryStorage, BasicOperationsTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
-
+TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 
@@ -194,7 +214,8 @@ TEST(UserDictionaryStorage, BasicOperationsTest) {
   const size_t dict_size = storage.dictionaries_size();
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
-    EXPECT_TRUE(storage.CreateDictionary("test" + Util::SimpleItoa(i), &id[i]));
+    EXPECT_TRUE(storage.CreateDictionary("test" + NumberUtil::SimpleItoa(i),
+                                         &id[i]));
     EXPECT_EQ(i + 1 + dict_size, storage.dictionaries_size());
   }
 
@@ -239,10 +260,7 @@ TEST(UserDictionaryStorage, BasicOperationsTest) {
   EXPECT_EQ(kDictionariesSize + dict_size - 1, storage.dictionaries_size());
 }
 
-TEST(UserDictionaryStorage, DeleteTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
-
+TEST_F(UserDictionaryStorageTest, DeleteTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 
@@ -251,7 +269,7 @@ TEST(UserDictionaryStorage, DeleteTest) {
     storage.Clear();
     vector<uint64> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
-      EXPECT_TRUE(storage.CreateDictionary("test" + Util::SimpleItoa(i),
+      EXPECT_TRUE(storage.CreateDictionary("test" + NumberUtil::SimpleItoa(i),
                                            &ids[i]));
     }
 
@@ -272,8 +290,7 @@ TEST(UserDictionaryStorage, DeleteTest) {
   }
 }
 
-TEST(UserDictionaryStorage, ExportTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserDictionaryStorageTest, ExportTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   uint64 id = 0;
 
@@ -284,12 +301,12 @@ TEST(UserDictionaryStorage, ExportTest) {
 
   for (size_t i = 0; i < 1000; ++i) {
     UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-    const string prefix = Util::SimpleItoa(i);
+    const string prefix = NumberUtil::SimpleItoa(i);
     // set empty fields randomly
     entry->set_key(prefix + "key");
     entry->set_value(prefix + "value");
     // "名詞"
-    entry->set_pos("\xe5\x90\x8d\xe8\xa9\x9e");
+    entry->set_pos(UserDictionary::NOUN);
     entry->set_comment(prefix + "comment");
   }
 
@@ -315,9 +332,7 @@ TEST(UserDictionaryStorage, ExportTest) {
   EXPECT_EQ(dic2.DebugString(), dic->DebugString());
 }
 
-TEST(UserDictionaryStorage, SerializeTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+TEST_F(UserDictionaryStorageTest, SerializeTest) {
   // repeat 20 times
   for (int i = 0; i < 20; ++i) {
     Util::Unlink(GetUserDictionaryFile());
@@ -329,8 +344,9 @@ TEST(UserDictionaryStorage, SerializeTest) {
 
       for (size_t i = 0; i < dic_size; ++i) {
         uint64 id = 0;
-        EXPECT_TRUE(storage1.CreateDictionary("test" + Util::SimpleItoa(i),
-                                             &id));
+        EXPECT_TRUE(
+            storage1.CreateDictionary("test" + NumberUtil::SimpleItoa(i),
+                                      &id));
         const size_t entry_size = Util::Random(100) + 1;
         for (size_t j = 0; j < entry_size; ++j) {
           UserDictionaryStorage::UserDictionary *dic =
@@ -339,7 +355,7 @@ TEST(UserDictionaryStorage, SerializeTest) {
               dic->add_entries();
           entry->set_key(GenRandomString(10));
           entry->set_value(GenRandomString(10));
-          entry->set_pos(GenRandomString(10));
+          entry->set_pos(UserDictionary::NOUN);
           entry->set_comment(GenRandomString(10));
         }
       }
@@ -358,10 +374,7 @@ TEST(UserDictionaryStorage, SerializeTest) {
   }
 }
 
-TEST(UserDictionaryStorage, GetUserDictionaryIdTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
-
+TEST_F(UserDictionaryStorageTest, GetUserDictionaryIdTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 
@@ -381,16 +394,13 @@ TEST(UserDictionaryStorage, GetUserDictionaryIdTest) {
 
 // Following test is valid only when sync feature is enabled.
 #ifdef ENABLE_CLOUD_SYNC
-TEST(UserDictionaryStorage, SyncDictionaryTests) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
-
+TEST_F(UserDictionaryStorageTest, SyncDictionaryTests) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 
   // Always the storage has the sync dictionary.
   EXPECT_EQ(1, storage.dictionaries_size());
-  const user_dictionary::UserDictionaryStorage::UserDictionary &sync_dict =
+  const UserDictionaryStorage::UserDictionary &sync_dict =
       storage.dictionaries(0);
   uint64 sync_dict_id = sync_dict.id();
   EXPECT_NE(0, sync_dict_id);
@@ -415,7 +425,7 @@ TEST(UserDictionaryStorage, SyncDictionaryTests) {
   bool has_sync_dict = false;
   bool has_normal_dict = false;
   for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
-    const user_dictionary::UserDictionaryStorage::UserDictionary &dict =
+    const UserDictionaryStorage::UserDictionary &dict =
         storage.dictionaries(i);
     if (dict.syncable()) {
       // sync dictionary
@@ -431,10 +441,7 @@ TEST(UserDictionaryStorage, SyncDictionaryTests) {
 }
 #endif  // ENABLE_CLOUD_SYNC
 
-TEST(UserDictionaryStorage, SyncDictionaryOperations) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
-
+TEST_F(UserDictionaryStorageTest, SyncDictionaryOperations) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 #ifndef ENABLE_CLOUD_SYNC
@@ -457,10 +464,7 @@ TEST(UserDictionaryStorage, SyncDictionaryOperations) {
   EXPECT_EQ(0, dummy_id);
 }
 
-TEST(UserDictionaryStorage, CreateDefaultSyncDictionaryIfNeccesary) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
-
+TEST_F(UserDictionaryStorageTest, CreateDefaultSyncDictionaryIfNeccesary) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 #ifdef ENABLE_CLOUD_SYNC
@@ -475,10 +479,7 @@ TEST(UserDictionaryStorage, CreateDefaultSyncDictionaryIfNeccesary) {
 }
 
 #ifndef ENABLE_CLOUD_SYNC
-TEST(UserDictionaryStorage, Issue6004671) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
-
+TEST_F(UserDictionaryStorageTest, Issue6004671) {
   { // Emulate the situation in b/6004671.
     UserDictionaryStorage storage(GetUserDictionaryFile());
     EXPECT_FALSE(storage.Load());
@@ -497,17 +498,12 @@ TEST(UserDictionaryStorage, Issue6004671) {
            "dictionary in UserDictionaryStorage::Load() when "
            "ENABLE_CLOUD_SYNC is not defined.";
   }
-
-  Util::Unlink(GetUserDictionaryFile());
 }
 #endif  // ENABLE_CLOUD_SYNC
 
-TEST(UserDictionaryStorage, RemoveUnusedSyncDictionariesIfExist) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  Util::Unlink(GetUserDictionaryFile());
-
+TEST_F(UserDictionaryStorageTest, RemoveUnusedSyncDictionariesIfExist) {
   // "名詞"
-  static const char kPos[] = "\xE5\x90\x8D\xE8\xA9\x9E";
+  static const UserDictionary::PosType kPos = UserDictionary::NOUN;
 
   {
     UserDictionaryStorage storage(GetUserDictionaryFile());
@@ -593,35 +589,32 @@ TEST(UserDictionaryStorage, RemoveUnusedSyncDictionariesIfExist) {
     storage.RemoveUnusedSyncDictionariesIfExist();
     EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(&storage));
   }
-
-  Util::Unlink(GetUserDictionaryFile());
 }
 
-TEST(UserDictionaryStorage, AddToAutoRegisteredDictionary) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+TEST_F(UserDictionaryStorageTest, AddToAutoRegisteredDictionary) {
   {
-    Util::Unlink(GetUserDictionaryFile());
     UserDictionaryStorage storage(GetUserDictionaryFile());
     EXPECT_EQ(0, storage.dictionaries_size());
-    EXPECT_TRUE(storage.AddToAutoRegisteredDictionary("key1", "value1", "pos"));
+    EXPECT_TRUE(storage.AddToAutoRegisteredDictionary(
+        "key1", "value1", UserDictionary::NOUN));
     EXPECT_EQ(1, storage.dictionaries_size());
     EXPECT_EQ(1, storage.dictionaries(0).entries_size());
     const UserDictionaryStorage::UserDictionaryEntry &entry1 =
         storage.dictionaries(0).entries(0);
     EXPECT_EQ("key1", entry1.key());
     EXPECT_EQ("value1", entry1.value());
-    EXPECT_EQ("pos", entry1.pos());
+    EXPECT_EQ(UserDictionary::NOUN, entry1.pos());
     EXPECT_TRUE(entry1.auto_registered());
 
-    EXPECT_TRUE(storage.AddToAutoRegisteredDictionary("key2", "value2", "pos"));
+    EXPECT_TRUE(storage.AddToAutoRegisteredDictionary(
+        "key2", "value2", UserDictionary::NOUN));
     EXPECT_EQ(1, storage.dictionaries_size());
     EXPECT_EQ(2, storage.dictionaries(0).entries_size());
     const UserDictionaryStorage::UserDictionaryEntry &entry2 =
         storage.dictionaries(0).entries(1);
     EXPECT_EQ("key2", entry2.key());
     EXPECT_EQ("value2", entry2.value());
-    EXPECT_EQ("pos", entry2.pos());
+    EXPECT_EQ(UserDictionary::NOUN, entry2.pos());
     EXPECT_TRUE(entry1.auto_registered());
   }
 
@@ -630,7 +623,245 @@ TEST(UserDictionaryStorage, AddToAutoRegisteredDictionary) {
     UserDictionaryStorage storage(GetUserDictionaryFile());
     storage.Lock();
     // Already locked.
-    EXPECT_FALSE(storage.AddToAutoRegisteredDictionary("key", "value", "pos"));
+    EXPECT_FALSE(storage.AddToAutoRegisteredDictionary(
+        "key", "value", UserDictionary::NOUN));
   }
 }
+
+#ifndef OS_ANDROID
+// This is a test to check if the data stored by the new binary can be read
+// by an older binary, considering the Dev -> Stable converting users.
+// We can remove when the new Stable binary which supports reading new format
+// is spread enough.
+TEST_F(UserDictionaryStorageTest, BackwardCompatibilityTest) {
+  {
+    UserDictionaryStorage storage(GetUserDictionaryFile());
+    // Add dummy entry.
+    {
+      UserDictionary *dictionary = storage.add_dictionaries();
+      UserDictionary::Entry *entry = dictionary->add_entries();
+      entry->set_key("key");
+      entry->set_value("value");
+      entry->set_comment("comment");
+      entry->set_pos(UserDictionary::NOUN);
+    }
+
+    ASSERT_TRUE(storage.Lock());
+    ASSERT_TRUE(storage.Save());
+    ASSERT_TRUE(storage.UnLock());
+  }
+
+  // Make sure that the deprecated field is filled (in string).
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  ASSERT_TRUE(storage.LoadWithoutMigration());
+
+#ifndef ENABLE_CLOUD_SYNC
+  // In binaries built without sync feature, we should make sync dictionary
+  // intentionally.
+  storage.EnsureSyncDictionaryExists();
+#endif  // ENABLE_CLOUD_SYNC
+
+  ASSERT_EQ(2, storage.dictionaries_size());
+  const UserDictionary &dictionary = storage.dictionaries(0);
+  ASSERT_EQ(1, dictionary.entries_size());
+  const UserDictionary::Entry &entry = dictionary.entries(0);
+  const UnknownFieldSet &unknown_field_set = entry.unknown_fields();
+  ASSERT_EQ(1, unknown_field_set.field_count());
+  const UnknownField &unknown_field = unknown_field_set.field(0);
+  EXPECT_EQ(3, unknown_field.number());
+  EXPECT_EQ(UnknownField::TYPE_LENGTH_DELIMITED, unknown_field.type());
+  EXPECT_EQ("\xE5\x90\x8D\xE8\xA9\x9E", unknown_field.length_delimited());
+}
+#endif
+
+TEST_F(UserDictionaryStorageTest, Export) {
+  const int kDummyDictionaryId = 10;
+  const string kPath = Util::JoinPath(FLAGS_test_tmpdir, "exported_file");
+
+  {
+    UserDictionaryStorage storage(GetUserDictionaryFile());
+    {
+      UserDictionary *dictionary = storage.add_dictionaries();
+      dictionary->set_id(kDummyDictionaryId);
+      UserDictionary::Entry *entry = dictionary->add_entries();
+      entry->set_key("key");
+      entry->set_value("value");
+      entry->set_pos(UserDictionary::NOUN);
+      entry->set_comment("comment");
+    }
+    storage.ExportDictionary(kDummyDictionaryId, kPath);
+  }
+
+  Mmap mapped_data;
+  ASSERT_TRUE(mapped_data.Open(kPath.c_str()));
+
+  // Make sure the exported format, especially that the pos is exported in
+  // Japanese.
+  // "key value 名詞 comment" separted by a tab character.
+#ifdef OS_WINDOWS
+  EXPECT_EQ("key\tvalue\t\xE5\x90\x8D\xE8\xA9\x9E\tcomment\r\n",
+            string(mapped_data.begin(), mapped_data.size()));
+#else
+  EXPECT_EQ("key\tvalue\t\xE5\x90\x8D\xE8\xA9\x9E\tcomment\n",
+            string(mapped_data.begin(), mapped_data.size()));
+#endif  // OS_WINDOWS
+}
+
+namespace {
+
+enum SerializedPosType {
+  NEW_ENUM_POS,
+  LEGACY_STRING_POS,
+  LEGACY_ENUM_POS,
+};
+
+void AddTestDummyUserDictionary(
+    SerializedPosType serialized_pos_type, UnknownFieldSet *storage) {
+  UnknownFieldSet dictionary;
+  for (int i = UserDictionary::PosType_MIN;
+       i <= UserDictionary::PosType_MAX; ++i) {
+    UnknownFieldSet entry;
+    entry.AddLengthDelimited(1, Util::StringPrintf("key%d", i));
+    entry.AddLengthDelimited(2, Util::StringPrintf("value%d", i));
+    switch (serialized_pos_type) {
+      case NEW_ENUM_POS:
+        entry.AddVarint(5, i);
+        break;
+      case LEGACY_STRING_POS:
+        entry.AddLengthDelimited(
+            3,
+            UserDictionaryUtil::GetStringPosType(
+                static_cast<UserDictionary::PosType>(i)));
+        break;
+      case LEGACY_ENUM_POS:
+        entry.AddVarint(3, i);
+        break;
+      default:
+        LOG(FATAL) << "Unknown serialized pos type: " << serialized_pos_type;
+    }
+    entry.AddLengthDelimited(4, Util::StringPrintf("comment%d", i));
+    dictionary.AddLengthDelimited(
+        4, SerializeUnknownFieldSetAsString(entry));
+  }
+  storage->AddLengthDelimited(
+      2, SerializeUnknownFieldSetAsString(dictionary));
+}
+
+void WriteToFile(const string &value, const string &filepath) {
+  OutputFileStream stream(filepath.c_str(), ios::out|ios::binary|ios::trunc);
+  stream.write(value.data(), value.size());
+}
+
+}  // namespace
+
+class UserDictionaryStorageMigrationTest
+    : public UserDictionaryStorageTest,
+      public ::testing::WithParamInterface<SerializedPosType> {
+};
+
+TEST_P(UserDictionaryStorageMigrationTest, Load) {
+  {
+    // Create serialized user dictionary data directly.
+    UnknownFieldSet storage;
+    AddTestDummyUserDictionary(GetParam(), &storage);
+    WriteToFile(SerializeUnknownFieldSetAsString(storage),
+                GetUserDictionaryFile());
+  }
+
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  ASSERT_TRUE(storage.Load());
+
+#ifndef ENABLE_CLOUD_SYNC
+  // In binaries built without sync feature, we should make sync dictionary
+  // intentionally.
+  storage.EnsureSyncDictionaryExists();
+#endif  // ENABLE_CLOUD_SYNC
+
+  ASSERT_EQ(2, storage.dictionaries_size()) << storage.Utf8DebugString();
+  const UserDictionary &dictionary = storage.dictionaries(0);
+  ASSERT_EQ(UserDictionary::PosType_MAX - UserDictionary::PosType_MIN + 1,
+            dictionary.entries_size())
+      << dictionary.Utf8DebugString();
+  for (int i = 0; i < dictionary.entries_size(); ++i) {
+    const int id = UserDictionary::PosType_MIN + i;
+    const UserDictionary::Entry &entry = dictionary.entries(i);
+    EXPECT_EQ(Util::StringPrintf("key%d", id), entry.key())
+        << entry.Utf8DebugString();
+    EXPECT_EQ(Util::StringPrintf("value%d", id), entry.value())
+        << entry.Utf8DebugString();
+    EXPECT_EQ(id, entry.pos()) << entry.Utf8DebugString();
+    EXPECT_EQ(Util::StringPrintf("comment%d", id), entry.comment())
+        << entry.Utf8DebugString();
+  }
+}
+
+TEST_P(UserDictionaryStorageMigrationTest, LoadWithoutMigration) {
+  {
+    // Create serialized user dictionary data directly.
+    UnknownFieldSet storage;
+    AddTestDummyUserDictionary(GetParam(), &storage);
+    WriteToFile(SerializeUnknownFieldSetAsString(storage),
+                GetUserDictionaryFile());
+  }
+
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  ASSERT_TRUE(storage.LoadWithoutMigration());
+
+#ifndef ENABLE_CLOUD_SYNC
+  // In binaries built without sync feature, we should make sync dictionary
+  // intentionally.
+  storage.EnsureSyncDictionaryExists();
+#endif  // ENABLE_CLOUD_SYNC
+
+  ASSERT_EQ(2, storage.dictionaries_size()) << storage.Utf8DebugString();
+  const UserDictionary &dictionary = storage.dictionaries(0);
+  ASSERT_EQ(UserDictionary::PosType_MAX - UserDictionary::PosType_MIN + 1,
+            dictionary.entries_size())
+      << dictionary.Utf8DebugString();
+  for (int i = 0; i < dictionary.entries_size(); ++i) {
+    const int id = UserDictionary::PosType_MIN + i;
+    const UserDictionary::Entry &entry = dictionary.entries(i);
+    EXPECT_EQ(Util::StringPrintf("key%d", id), entry.key())
+        << entry.Utf8DebugString();
+    EXPECT_EQ(Util::StringPrintf("value%d", id), entry.value())
+        << entry.Utf8DebugString();
+    switch (GetParam()) {
+      case NEW_ENUM_POS:
+        ASSERT_TRUE(entry.has_pos());
+        EXPECT_EQ(id, entry.pos());
+        break;
+      case LEGACY_STRING_POS: {
+        const UnknownFieldSet &unknown_field_set = entry.unknown_fields();
+        ASSERT_EQ(1, unknown_field_set.field_count());
+        const UnknownField &unknown_field = unknown_field_set.field(0);
+        EXPECT_EQ(UnknownField::TYPE_LENGTH_DELIMITED, unknown_field.type());
+        EXPECT_EQ(3, unknown_field.number());
+        EXPECT_EQ(
+            UserDictionaryUtil::GetStringPosType(
+                static_cast<UserDictionary::PosType>(id)),
+            unknown_field.length_delimited());
+        break;
+      }
+      case LEGACY_ENUM_POS: {
+        const UnknownFieldSet &unknown_field_set = entry.unknown_fields();
+        ASSERT_EQ(1, unknown_field_set.field_count());
+        const UnknownField &unknown_field = unknown_field_set.field(0);
+        EXPECT_EQ(UnknownField::TYPE_VARINT, unknown_field.type());
+        EXPECT_EQ(3, unknown_field.number());
+        EXPECT_EQ(id, unknown_field.varint());
+        break;
+      }
+      default:
+        LOG(FATAL) << "Unknown serialized pos type: " << GetParam();
+    }
+    EXPECT_EQ(Util::StringPrintf("comment%d", id), entry.comment())
+        << entry.Utf8DebugString();
+  }
+}
+
+INSTANTIATE_TEST_CASE_P(
+    UserDictionaryStorageProtoMigration,
+    UserDictionaryStorageMigrationTest,
+    ::testing::Values(NEW_ENUM_POS, LEGACY_STRING_POS, LEGACY_ENUM_POS));
+
 }  // namespace mozc

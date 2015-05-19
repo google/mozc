@@ -31,7 +31,8 @@
 
 #include <string>
 
-#include "base/util.h"
+#include "base/base.h"
+#include "base/logging.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_util.h"
 #include "net/jsoncpp.h"
@@ -53,8 +54,9 @@ namespace sync {
 // Please refer [1] and [2] for its details.
 // [1] http://code.google.com/intl/ja/apis/gdata/docs/2.0/elements.html
 // [2] http://code.google.com/intl/ja/apis/gdata/docs/json.html
-bool ContactListUtil::ParseContacts(const string &contact_update,
-    user_dictionary::UserDictionaryStorage::UserDictionary *user_dictionary,
+bool ContactListUtil::ParseContacts(
+    const string &contact_update,
+    user_dictionary::UserDictionary *user_dictionary,
     string *last_timestamp) {
   DCHECK(user_dictionary);
   DCHECK(last_timestamp);
@@ -113,13 +115,13 @@ bool ContactListUtil::ParseContacts(const string &contact_update,
     // push <normalize(yomi), kanji> into dictionary;
     string normal_yomi;
     UserDictionaryUtil::NormalizeReading(yomi, &normal_yomi);
-    user_dictionary::UserDictionaryStorage::UserDictionary::Entry *entry =
+    user_dictionary::UserDictionary::Entry *entry =
         user_dictionary->add_entries();
     DCHECK(entry);
     entry->set_key(normal_yomi);
     entry->set_value(kanji);
     // "人名"
-    entry->set_pos("\xE4\xBA\xBA\xE5\x90\x8D");
+    entry->set_pos(user_dictionary::UserDictionary::PERSONAL_NAME);
   }
 
   *last_timestamp = root["feed"]["updated"]["$t"].asString();

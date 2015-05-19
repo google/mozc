@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "net/http_client.h"
 #include "net/jsoncpp.h"
@@ -73,8 +74,11 @@ bool OAuth2::AuthorizeToken(const string &authorize_token_uri,
                             const string &client_id,
                             const string &client_secret,
                             const string &redirect_uri,
-                            const string &auth_token, const string &scope,
-                            const string &state, string *access_token,
+                            const string &auth_token,
+                            const string &scope,
+                            const string &state,
+                            Error *error,
+                            string *access_token,
                             string *refresh_token) {
   DCHECK(access_token);
 
@@ -96,15 +100,10 @@ bool OAuth2::AuthorizeToken(const string &authorize_token_uri,
   string request;
   Util::AppendCGIParams(params, &request);
   VLOG(2) << "Request to server:" << request;
-  mozc::HTTPClient::Option option;
+  HTTPClient::Option option;
   option.headers.push_back(string("Content-Type: ") + kOAuth2ContentType);
   string response;
-  if (!mozc::HTTPClient::Post(authorize_token_uri,
-                              request, option, &response)) {
-    LOG(ERROR) << "Cannot connect to " << authorize_token_uri
-               << " or bad request.";
-    return false;
-  }
+  HTTPClient::Post(authorize_token_uri, request, option, &response);
 
   // Parse JSON and save access_token and refresh_token
   Json::Value root;
@@ -113,6 +112,14 @@ bool OAuth2::AuthorizeToken(const string &authorize_token_uri,
     LOG(INFO) << "Parsing JSON error.";
     return false;
   }
+
+  // Check errors in response
+  *error = GetError(root);
+  if (*error != kNone) {
+    LOG(INFO) << "OAuth error (code : " << error << ") in AuthorizeToken()";
+    return false;
+  }
+
   if (!root.isMember(kOAuth2AccessTokenKey)) {
     LOG(ERROR) << "Cannot find access_token "
                << "in response from authorized server.";
@@ -135,15 +142,16 @@ bool OAuth2::GetProtectedResource(const string &resource_uri,
                                   string *output) {
   DCHECK(output);
 
-  mozc::HTTPClient::Option option;
+  HTTPClient::Option option;
   option.headers.push_back("Authorization: OAuth " + access_token);
-  return mozc::HTTPClient::Get(resource_uri, option, output);
+  return HTTPClient::Get(resource_uri, option, output);
 }
 
 bool OAuth2::RefreshTokens(const string &refresh_uri,
                            const string &client_id,
                            const string &client_secret,
                            const string &scope,
+                           OAuth2::Error *error,
                            string *refresh_token,
                            string *access_token) {
   DCHECK(refresh_token);
@@ -162,22 +170,27 @@ bool OAuth2::RefreshTokens(const string &refresh_uri,
   string request;
   Util::AppendCGIParams(params, &request);
   VLOG(2) << "Request to server:" << request;
-  mozc::HTTPClient::Option option;
+  HTTPClient::Option option;
   option.headers.push_back(string("Content-Type: ") + kOAuth2ContentType);
   string response;
-  if (!mozc::HTTPClient::Post(refresh_uri, request, option, &response)) {
-    LOG(ERROR) << "Cannot connect to " << refresh_uri << " or bad request.";
-    return false;
-  }
+  HTTPClient::Post(refresh_uri, request, option, &response);
 
   LOG(INFO) << response;
   // Parse JSON and save access_token and refresh_token
   Json::Value root;
   Json::Reader reader;
   if (!reader.parse(response, root)) {
-    LOG(INFO) << "Parsing JSON error.";
+    LOG(INFO) << "Erorr in parsing JSON.";
     return false;
   }
+
+  // Check errors in response
+  *error = GetError(root);
+  if (*error != kNone) {
+    LOG(INFO) << "OAuth error (code : " << error << ") in RefreshToken()";
+    return false;
+  }
+
   if (!root.isMember(kOAuth2AccessTokenKey)) {
     LOG(ERROR) << "cannot find " << kOAuth2AccessTokenKey
                << " in response from authorized server.";
@@ -194,6 +207,45 @@ bool OAuth2::RefreshTokens(const string &refresh_uri,
   }
 
   return true;
+}
+
+OAuth2::Error OAuth2::GetError(Json::Value &root) {
+  if (!root.isMember("error")) {
+    return kNone;
+  }
+
+  const string error_code = root["error"].asString();
+  if (error_code == "invalid_request") {
+    return kInvalidRequest;
+  }
+  if (error_code == "invalid_client") {
+    return kInvalidClient;
+  }
+  if (error_code == "invalid_grant") {
+    return kInvalidGrant;
+  }
+  if (error_code == "unauthorized_client") {
+    return kUnauthorizedClient;
+  }
+  if (error_code == "unsupported_grant_type") {
+    return kUnsupportedGrantType;
+  }
+  if (error_code == "unsupported_response_type") {
+    return kUnsupportedResponseType;
+  }
+  if (error_code == "access_denied") {
+    return kAccessDenied;
+  }
+  if (error_code == "server_error") {
+    return kServerError;
+  }
+  if (error_code == "temporarily_unavailable") {
+    return kTemporarilyUnavailable;
+  }
+  if (error_code == "invalid_scope") {
+    return kInvalidScope;
+  }
+  return kUnknownError;
 }
 
 };  // namespace sync

@@ -31,129 +31,141 @@
 """Single kanji dictionary generator.
 
 How to run this script:
-gen_single_kanji_rewriter_data.py \
-  --input=input.tsv \
-  --min_prob=0.0 \
-  --output=single_kanji_data.h \
-  --id_file=id.def \
-  --special_pos_file=special_pos.def \
-  --cforms_file=cforms.def \
-  --user_pos_file=user_pos.def
+gen_single_kanji_rewriter_data.py
+  --single_kanji_file=single_kanji.tsv
+  --variant_file=variant_rule.txt
+  --output=single_kanji_data.h
 """
 
 __author__ = "hidehiko"
 
-from collections import defaultdict
-import math
 import optparse
 from build_tools import code_generator_util
-from dictionary import pos_util
 from rewriter import embedded_dictionary_compiler
 
-RENDAKU_DEMOTION_FACTOR = 0.01
-RENDAKU_MAP = {
-    'が': 'か',
-    'ぎ': 'き',
-    'ぐ': 'く',
-    'げ': 'け',
-    'ご': 'こ',
-    'ざ': 'さ',
-    'じ': 'し',
-    'ず': 'す',
-    'ぜ': 'せ',
-    'ぞ': 'そ',
-    'だ': 'た',
-    'ぢ': 'ち',
-    'づ': 'つ',
-    'で': 'て',
-    'ど': 'と',
-    'ば': 'は',
-    'び': 'ひ',
-    'ぶ': 'ふ',
-    'べ': 'へ',
-    'ぼ': 'ほ',
-}
+# key, value, rank
+NOUN_PREFIX = [
+    ['お', 'お', 1],
+    ['ご', 'ご', 1],
+    # ['ご', '誤'],    # don't register it as 誤 isn't in the ipadic.
+    # ['み', 'み'],    # seems to be rare.
+    ['もと', 'もと', 1],
+    ['だい', '代', 1],
+    ['てい', '低', 0],
+    ['もと', '元', 1],
+    ['ぜん', '全', 0],
+    ['さい', '再', 0],
+    ['しょ', '初', 1],
+    ['はつ', '初', 0],
+    ['ぜん', '前', 1],
+    ['かく', '各', 1],
+    ['どう', '同', 1],
+    ['だい', '大', 1],
+    ['おお', '大', 1],
+    ['とう', '当', 1],
+    ['ご', '御', 1],
+    ['お', '御', 1],
+    ['しん', '新', 1],
+    ['さい', '最', 1],
+    ['み', '未', 0],
+    ['ほん', '本', 1],
+    ['む', '無', 0],
+    ['だい', '第', 1],
+    ['とう', '等', 1],
+    ['やく', '約', 1],
+    ['ひ', '被', 1],
+    ['ちょう', '超', 1],
+    ['ちょう', '長', 1],
+    ['なが', '長', 1],
+    ['ひ', '非', 1],
+    ['こう', '高', 1]
+]
 
 
-def _NormalizeRendaku(s):
-  # We do not normalize one-kana character string.
-  if len(s) > 3:
-    replace = RENDAKU_MAP.get(s[:3])
-    if replace:
-      return replace + s[3:]
-  return s
-
-
-def ReadSingleKanji(user_pos, min_probability, stream):
+def ReadSingleKanji(stream):
   """Parses single kanji dictionary data from stream."""
+  stream = code_generator_util.SkipLineComment(stream)
+  stream = code_generator_util.ParseColumnStream(stream, num_column=2)
+  outputs = list(stream)
+  # For binary search by |key|, sort outputs here.
+  outputs.sort(lambda x, y: cmp(x[0], y[0]))
+
+  return outputs
+
+
+def ReadVariant(stream):
+  """Parses variant data from stream."""
+  variant_types = []
+  variant_items = []
+
+  stream = code_generator_util.SkipLineComment(stream)
   stream = code_generator_util.ParseColumnStream(stream)
-  dictionary = {}
-  for columns in stream:
-    value, key, probability, frequency = columns[:4]
-    probability = float(probability)
-    frequency = float(frequency)
-    # Filter kanji with minor reading.
-    if probability > min_probability and frequency > 0:
-      description = columns[6] if len(columns) >= 7 else ''
-      dictionary[(key, value)] = (frequency, description)
+  for tokens in stream:
+    if len(tokens) == 1:
+      variant_types.append(tokens[0])
+    elif len(tokens) == 2 and variant_types:
+      (target, original) = tokens
+      variant_items.append([target, original, len(variant_types) - 1])
 
-  # Rendaku (sequential voicing) Normalization.
-  update = []
-  for (key, value), (frequency, description) in dictionary.iteritems():
-    normalized_key = _NormalizeRendaku(key)
-    if normalized_key != key and (normalized_key, value) in dictionary:
-      update.append((key, value))
-  for key, value in update:
-    frequency, description = dictionary[(key, value)]
-    frequency *= RENDAKU_DEMOTION_FACTOR
-    if frequency <= 0:
-      raise RuntimeError('frequency must be positive: %s, %s' % (key, value))
-    dictionary[(key, value)] = (frequency, description)
+  # For binary search by |target|, sort variant items here.
+  variant_items.sort(lambda x, y: cmp(x[0], y[0]))
 
-  # Format to the map of token list for embedded_dictionary_compiler.
-  entry_map = defaultdict(list)
-  total_frequency = 0
-  for (key, value), (frequency, description) in dictionary.iteritems():
-    entry_map[key].append((frequency, value, description))
-    total_frequency += frequency
+  return (variant_types, variant_items)
 
-  if total_frequency <= 0:
-    raise RuntimeError('Total frequency must be positive')
 
-  noun_id = user_pos.GetPosId('名詞')
+def GenNounPrefix():
+  """Generates noun prefix embedded dictioanry entries."""
   token_map = {}
-  for key, entry_list in sorted(entry_map.items()):
-    entry_list.sort(reverse=True)
-    token_list = []
-    for frequency, value, description in entry_list:
-      # The max cost of single kanji data is 32765, in case something
-      # bad behavior happens.
-      cost = min(int(-500 * math.log(frequency / total_frequency)), 32765)
-      if cost <= 0:
-        raise RuntimeError('Cost must be positive: %s, %s' % (key, value))
-      token_list.append(embedded_dictionary_compiler.Token(
-          key, value, description, '', noun_id, noun_id, cost))
-    token_map[key] = token_list
+  for entry in NOUN_PREFIX:
+    key = entry[0]
+    value = entry[1]
+    rank = entry[2]
+    token_map.setdefault(key, []).append(
+        embedded_dictionary_compiler.Token(
+            key, value, '', '', 0, 0, rank))
 
   return token_map
+
+
+def WriteSingleKanji(outputs, stream):
+  """Writes single kanji list for readings."""
+  stream.write('static const SingleKanjiList kSingleKanjis[] = {\n')
+  for output in outputs:
+    (key, values) = output
+    stream.write('  // %s, %s\n' % (key, values))
+    stream.write(code_generator_util.FormatWithCppEscape(
+        '  { %s, %s },\n', key, values))
+  stream.write('};\n')
+
+
+def WriteVariantInfo(variant_info, stream):
+  """Writes single kanji variants info."""
+  (variant_types, variant_items) = variant_info
+
+  stream.write('static const char *kKanjiVariantTypes[] = {\n')
+  for variant_type in variant_types:
+    stream.write(code_generator_util.FormatWithCppEscape(
+        '  %s,', variant_type))
+    stream.write('  // %s\n' % variant_type)
+  stream.write('};\n')
+
+  stream.write('static const KanjiVariantItem kKanjiVariants[] = {\n')
+  for item in variant_items:
+    (target, original, variant_type) = item
+    stream.write(code_generator_util.FormatWithCppEscape(
+        '  { %s, %s, %d },', target, original, variant_type))
+    stream.write('  // %s, %s, %d\n' % (target, original, variant_type))
+  stream.write('};\n')
 
 
 def _ParseOptions():
   parser = optparse.OptionParser()
 
-  parser.add_option('--input', dest='input',
-                    help='Single kanji dictionary file')
-  parser.add_option('--min_prob', dest='min_prob', type='float',
-                    default=0.1, help='Minimum prob threshold.')
+  parser.add_option('--single_kanji_file', dest='single_kanji_file',
+                    help='Single kanji file')
+  parser.add_option('--variant_file', dest='variant_file',
+                    help='Variant rule file')
   parser.add_option('--output', dest='output', help='Output header file.')
-
-  parser.add_option('--id_file', dest='id_file', help='Path to id.def.')
-  parser.add_option('--special_pos_file', dest='special_pos_file',
-                    help='Path to special_pos.def')
-  parser.add_option('--cforms_file', dest='cforms_file',
-                    help='Path to cforms.def')
-  parser.add_option('--user_pos_file', dest='user_pos_file',
-                    help='Path to user_pos,def')
 
   return parser.parse_args()[0]
 
@@ -161,20 +173,19 @@ def _ParseOptions():
 def main():
   options = _ParseOptions()
 
-  # Construct user pos data.
-  pos_database = pos_util.PosDataBase()
-  pos_database.Parse(options.id_file, options.special_pos_file)
-  inflection_map = pos_util.InflectionMap()
-  inflection_map.Parse(options.cforms_file)
-  user_pos = pos_util.UserPos(pos_database, inflection_map)
-  user_pos.Parse(options.user_pos_file)
+  with open(options.single_kanji_file, 'r') as single_kanji_stream:
+    single_kanji = ReadSingleKanji(single_kanji_stream)
 
-  with open(options.input, 'r') as input_stream:
-    input_data = ReadSingleKanji(user_pos, options.min_prob, input_stream)
+  with open(options.variant_file, 'r') as variant_stream:
+    variant_info = ReadVariant(variant_stream)
+
+  noun_prefix = GenNounPrefix()
 
   with open(options.output, 'w') as output_stream:
+    WriteSingleKanji(single_kanji, output_stream)
+    WriteVariantInfo(variant_info, output_stream)
     embedded_dictionary_compiler.Compile(
-        'SingleKanjiData', input_data, output_stream)
+        'NounPrefixData', noun_prefix, output_stream)
 
 
 if __name__ == '__main__':

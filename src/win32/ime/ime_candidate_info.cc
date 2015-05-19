@@ -311,7 +311,7 @@ void CandidateInfoUtil::Write(const CandidateInfo &info,
     target->dwCount = 0;
     target->dwPrivateOffset = 0;
     target->dwPrivateSize = 0;
-    for (size_t i = 0; i < ARRAYSIZE(target->dwOffset); ++i) {
+    for (size_t i = 0; i < arraysize(target->dwOffset); ++i) {
       target->dwOffset[i] = 0;
     }
     return;
@@ -322,7 +322,7 @@ void CandidateInfoUtil::Write(const CandidateInfo &info,
   target->dwPrivateSize = 0;
   target->dwOffset[0] = kSizeOfCANDIDATEINFO;
 
-  for (size_t i = 1; i < ARRAYSIZE(target->dwOffset); ++i) {
+  for (size_t i = 1; i < arraysize(target->dwOffset); ++i) {
     // CANDIDATELIST is to be placed just after CANDIDATEINFO.
     target->dwOffset[i] = 0;
   }

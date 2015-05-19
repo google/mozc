@@ -91,13 +91,6 @@ struct TokenInfo {
   CostType cost_type;
 };
 
-// Represents words info for a certain key(=reading).
-struct KeyInfo {
-  KeyInfo() : id_in_key_trie(-1) {}
-  // id of the key(=reading) string in key trie
-  int id_in_key_trie;
-  vector<TokenInfo> tokens;
-};
 }  // namespace dictionary
 }  // namespace mozc
 

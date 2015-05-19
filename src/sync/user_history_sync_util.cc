@@ -34,9 +34,11 @@
 #include <set>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
-#include "base/util.h"
 #include "base/freelist.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "prediction/user_history_predictor.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "sync/sync_util.h"

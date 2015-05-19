@@ -53,9 +53,6 @@ class SessionFactoryInterface {
   // Reload the configuration if it has.
   virtual void Reload() {}
 
-  // Returns true if the session factory is available.
-  virtual bool IsAvailable() const { return true; }
-
 };
 
 // SessionFactoryManager manages the session factory which creates the session

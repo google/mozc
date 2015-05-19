@@ -30,7 +30,7 @@
 #ifndef MOZC_UNIX_IBUS_SRC_ENGINE_REGISTRAR_H_
 #define MOZC_UNIX_IBUS_SRC_ENGINE_REGISTRAR_H_
 
-#include <ibus.h>
+#include "unix/ibus/ibus_header.h"
 
 namespace mozc {
 namespace ibus {

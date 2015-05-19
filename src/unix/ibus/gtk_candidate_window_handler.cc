@@ -45,7 +45,8 @@ const char kDefaultFont[] = "SansSerif 11";
 GtkCandidateWindowHandler::GtkCandidateWindowHandler(
     renderer::RendererInterface *renderer)
     : renderer_(renderer),
-      last_update_output_(new commands::Output()) {
+      last_update_output_(new commands::Output()),
+      use_custom_font_description_(false) {
 }
 
 GtkCandidateWindowHandler::~GtkCandidateWindowHandler() {

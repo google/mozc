@@ -27,11 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "sync/inprocess_service.h"
+
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "sync/sync.pb.h"
-#include "sync/inprocess_service.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -107,11 +111,11 @@ TEST(InprocessServiceTest, DownloadUploadTest) {
       sync::TestKey *key =
           item->mutable_key()->MutableExtension(
               sync::TestKey::ext);
-      key->set_key("test_key" + Util::SimpleItoa(i));
+      key->set_key("test_key" + NumberUtil::SimpleItoa(i));
       sync::TestValue *value =
           item->mutable_value()->MutableExtension(
               sync::TestValue::ext);
-      value->set_value("test_value" + Util::SimpleItoa(i));
+      value->set_value("test_value" + NumberUtil::SimpleItoa(i));
     }
 
     EXPECT_TRUE(service.Upload(&request, &response));
@@ -153,11 +157,11 @@ TEST(InprocessServiceTest, DownloadUploadTest) {
       sync::TestKey *key =
           item->mutable_key()->MutableExtension(
               sync::TestKey::ext);
-      key->set_key("test_key" + Util::SimpleItoa(i));
+      key->set_key("test_key" + NumberUtil::SimpleItoa(i));
       sync::TestValue *value =
           item->mutable_value()->MutableExtension(
               sync::TestValue::ext);
-      value->set_value("test_value" + Util::SimpleItoa(i));
+      value->set_value("test_value" + NumberUtil::SimpleItoa(i));
     }
 
     // add more 100 items
@@ -168,11 +172,11 @@ TEST(InprocessServiceTest, DownloadUploadTest) {
       sync::TestKey *key =
           item->mutable_key()->MutableExtension(
               sync::TestKey::ext);
-      key->set_key("test_key" + Util::SimpleItoa(i));
+      key->set_key("test_key" + NumberUtil::SimpleItoa(i));
       sync::TestValue *value =
           item->mutable_value()->MutableExtension(
               sync::TestValue::ext);
-      value->set_value("test_value" + Util::SimpleItoa(i));
+      value->set_value("test_value" + NumberUtil::SimpleItoa(i));
     }
 
     EXPECT_TRUE(service.Upload(&request, &response));
@@ -193,8 +197,8 @@ TEST(InprocessServiceTest, DownloadUploadTest) {
           item.key().GetExtension(sync::TestKey::ext);
       const sync::TestValue &value =
           item.value().GetExtension(sync::TestValue::ext);
-      EXPECT_EQ(key.key(), "test_key" + Util::SimpleItoa(i));
-      EXPECT_EQ(value.value(), "test_value" + Util::SimpleItoa(i));
+      EXPECT_EQ(key.key(), "test_key" + NumberUtil::SimpleItoa(i));
+      EXPECT_EQ(value.value(), "test_value" + NumberUtil::SimpleItoa(i));
     }
 
     for (int i = 50; i < 150; ++i) {
@@ -203,10 +207,10 @@ TEST(InprocessServiceTest, DownloadUploadTest) {
           item.key().GetExtension(sync::TestKey::ext);
       const sync::TestValue &value =
           item.value().GetExtension(sync::TestValue::ext);
-      EXPECT_EQ(key.key(), "test_key" + Util::SimpleItoa(i + 50));
-      EXPECT_EQ(value.value(), "test_value" + Util::SimpleItoa(i + 50));
+      EXPECT_EQ(key.key(), "test_key" + NumberUtil::SimpleItoa(i + 50));
+      EXPECT_EQ(value.value(), "test_value" + NumberUtil::SimpleItoa(i + 50));
     }
   }
 }
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc

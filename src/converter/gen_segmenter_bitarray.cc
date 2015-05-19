@@ -42,6 +42,7 @@
 #include "base/bitarray.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 
 namespace mozc {
 

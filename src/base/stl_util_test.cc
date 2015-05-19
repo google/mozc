@@ -31,10 +31,12 @@
 
 #include "testing/base/public/gunit.h"
 
+namespace mozc {
+namespace {
+
 // This templatized helper can subclass any class and count how many times
 // instances have been constructed or destructed.  It is used to make sure
 // that deletes are actually occuring.
-
 template <class T>
 class InstanceCounter: public T {
  public:
@@ -49,6 +51,8 @@ class InstanceCounter: public T {
 template <class T>
 int InstanceCounter<T>::instance_count = 0;
 
+}  // namespace
+
 TEST(STLDeleteElementsTest, STLDeleteElements) {
   vector<InstanceCounter<string> *> v;
   v.push_back(new InstanceCounter<string>());
@@ -57,11 +61,61 @@ TEST(STLDeleteElementsTest, STLDeleteElements) {
   EXPECT_EQ(3, InstanceCounter<string>::instance_count);
   v.push_back(NULL);
   EXPECT_EQ(3, InstanceCounter<string>::instance_count);
-  mozc::STLDeleteElements(&v);
+  STLDeleteElements(&v);
   EXPECT_EQ(0, InstanceCounter<string>::instance_count);
   EXPECT_EQ(0, v.size());
 
   // Deleting NULL pointers to containers is ok.
   vector<InstanceCounter<string> *> *p = NULL;
-  mozc::STLDeleteElements(p);
+  STLDeleteElements(p);
 }
+
+TEST(StlUtilTest, OrderBy) {
+  typedef OrderBy<FirstKey, Less> OrderByFirst;
+  typedef OrderBy<SecondKey, Less> OrderBySecond;
+
+  EXPECT_TRUE(OrderByFirst()(make_pair(0, 1), make_pair(1, 0)));
+  EXPECT_FALSE(OrderBySecond()(make_pair(0, 1), make_pair(1, 0)));
+}
+
+TEST(StlUtilTest, Key) {
+  EXPECT_EQ(1, FirstKey()(make_pair(1, "abc")));
+  EXPECT_EQ(2, FirstKey()(make_pair(2, "abc")));
+
+  EXPECT_STREQ("abc", SecondKey()(make_pair(1, "abc")));
+  EXPECT_STREQ("def", SecondKey()(make_pair(1, "def")));
+}
+
+TEST(StlUtilTest, FunctionalComparator) {
+  EXPECT_TRUE(EqualTo()(1, 1));
+  EXPECT_FALSE(EqualTo()(1, 2));
+  EXPECT_FALSE(EqualTo()(2, 1));
+  EXPECT_TRUE(EqualTo()(2, 2));
+
+  EXPECT_FALSE(NotEqualTo()(1, 1));
+  EXPECT_TRUE(NotEqualTo()(1, 2));
+  EXPECT_TRUE(NotEqualTo()(2, 1));
+  EXPECT_FALSE(NotEqualTo()(2, 2));
+
+  EXPECT_FALSE(Less()(1, 1));
+  EXPECT_TRUE(Less()(1, 2));
+  EXPECT_FALSE(Less()(2, 1));
+  EXPECT_FALSE(Less()(2, 2));
+
+  EXPECT_FALSE(Greater()(1, 1));
+  EXPECT_FALSE(Greater()(1, 2));
+  EXPECT_TRUE(Greater()(2, 1));
+  EXPECT_FALSE(Greater()(2, 2));
+
+  EXPECT_TRUE(LessEqual()(1, 1));
+  EXPECT_TRUE(Less()(1, 2));
+  EXPECT_FALSE(Less()(2, 1));
+  EXPECT_TRUE(LessEqual()(2, 2));
+
+  EXPECT_TRUE(GreaterEqual()(1, 1));
+  EXPECT_FALSE(Greater()(1, 2));
+  EXPECT_TRUE(Greater()(2, 1));
+  EXPECT_TRUE(GreaterEqual()(2, 2));
+}
+
+}  // namespace mozc

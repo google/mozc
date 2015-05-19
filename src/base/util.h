@@ -35,8 +35,25 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/string_piece.h"
 
 struct tm;
+
+// Ad-hoc workadound against macro problem on Windows.
+// On Windows, following macros, defined when you include <Windows.h>,
+// should be removed here because they affects the method name definition of
+// Util class.
+// TODO(yukawa): Use different method name if applicable.
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif  // CreateDirectory
+#ifdef RemoveDirectory
+#undef RemoveDirectory
+#endif  // RemoveDirectory
+#ifdef CopyFile
+#undef CopyFile
+#endif  // CopyFile
 
 namespace mozc {
 
@@ -71,14 +88,33 @@ class Util {
   static void LowerString(string *output);
   static void UpperString(string *output);
 
-  // Transform the first character to the upper case and tailing
-  // characters to the lower cases.  ex. "abCd" => "Abcd".
+  // Transforms the first character to the upper case and tailing characters to
+  // the lower cases.  ex. "abCd" => "Abcd".
   static void CapitalizeString(string *output);
 
-  // Strip the leading/trailing white spaces from the input and stores
-  // it to the output.  If the input does not have such white spaces,
-  // this method just copies the input into the output.  It clears
-  // the output always.
+  // Returns true if the characters in [first, last) are all in lower case
+  // ASCII.
+  static bool IsLowerAscii(StringPiece s);
+
+  // Returns true if the characters in [first, last) are all in upper case
+  // ASCII.
+  static bool IsUpperAscii(StringPiece s);
+
+  // Returns true if the text in the rage [first, last) is capitalized ASCII.
+  static bool IsCapitalizedAscii(StringPiece s);
+
+  // Returns true if the characters in [first, last) are all in lower case ASCII
+  // or all in upper case ASCII. Namely, equivalent to
+  //     IsLowerAscii(first, last) || IsUpperAscii(first last)
+  static bool IsLowerOrUpperAscii(StringPiece s);
+
+  // Returns true if the text in the range [first, last) is 1) all in upper case
+  // ASCII, or 2) capitalized.
+  static bool IsUpperOrCapitalizedAscii(StringPiece s);
+
+  // Strips the leading/trailing white spaces from the input and stores it to
+  // the output.  If the input does not have such white spaces, this method just
+  // copies the input into the output.  It clears the output always.
   static void StripWhiteSpaces(const string &str, string *output);
 
   static size_t OneCharLen(const char *src);
@@ -102,7 +138,7 @@ class Util {
                            const char *end,
                            size_t *mblen);
 
-  // Convert UCS2 code point to UTF8 string
+  // Converts UCS2 code point to UTF8 string.
   static void UCS2ToUTF8(uint16 c, string *output);
   static void UCS2ToUTF8Append(uint16 c, string *output);
 
@@ -143,118 +179,6 @@ class Util {
 
   // return true the line starts with UTF16-LE/UTF16-BE BOM.
   static bool IsUTF16BOM(const string &line);
-
-  // Convert the number to a string and append it to output.
-  static string SimpleItoa(int32 number);
-
-  // Convert the string to a number and return it.
-  static int SimpleAtoi(const string &str);
-
-  // Returns true if the given input_string contains only number characters
-  // (regardless of halfwidth or fullwidth).
-  static bool IsArabicNumber(const string &input_string);
-
-  struct NumberString {
-   public:
-    enum Style {
-        DEFAULT_STYLE = 0,
-        // 123,456,789
-        NUMBER_SEPARATED_ARABIC_HALFWIDTH,
-        // "１２３，４５６，７８９"
-        NUMBER_SEPARATED_ARABIC_FULLWIDTH,
-        // "123億456万7890"
-        NUMBER_ARABIC_AND_KANJI_HALFWIDTH,
-        // "１２３億４５６万７８９０"
-        NUMBER_ARABIC_AND_KANJI_FULLWIDTH,
-        // "一億二千三百四十五万六千七百八十九"
-        NUMBER_KANJI,
-        // "壱億弐千参百四拾五万六千七百八拾九"
-        NUMBER_OLD_KANJI,
-        // "ⅠⅡⅢ"
-        NUMBER_ROMAN_CAPITAL,
-        // "ⅰⅱⅲ"
-        NUMBER_ROMAN_SMALL,
-        // "①②③"
-        NUMBER_CIRCLED,
-        // "ニ〇〇"
-        NUMBER_KANJI_ARABIC,
-        // "0x4d2" (1234 in decimal)
-        NUMBER_HEX,
-        // "02322" (1234 in decimal)
-        NUMBER_OCT,
-        // "0b10011010010" (1234 in decimal)
-        NUMBER_BIN,
-    };
-
-    NumberString(const string &value, const string &description, Style style)
-        : value(value),
-          description(description),
-          style(style) {}
-
-    // Converted string
-    string value;
-
-    // Description of Converted String
-    string description;
-
-    // Converted Number Style
-    Style style;
-  };
-
-  // Converts half-width Arabic number string to Kan-su-ji string
-  //    - input_num: a string which *must* be half-width number string
-  //    - output: function appends new representation into output vector.
-  // value, desc and style are stored same size and same order.
-  // if invalid string is set, this function do nothing.
-  static bool ArabicToKanji(const string &input_num,
-                            vector<Util::NumberString> *output);
-
-  // Converts half-width Arabic number string to Separated Arabic string
-  //  (e.g. 1234567890 are converted to 1,234,567,890)
-  // Arguments are same as ArabicToKanji (above)
-  static bool ArabicToSeparatedArabic(const string &input_num,
-                                      vector<Util::NumberString> *output);
-
-  // Converts half-width Arabic number string to full-width Arabic number string
-  // Arguments are same as ArabicToKanji (above)
-  static bool ArabicToWideArabic(const string &input_num,
-                                 vector<Util::NumberString> *output);
-
-  // Converts half-width Arabic number to various styles
-  // Arguments are same as ArabicToKanji (above)
-  //    - Roman style (i) (ii) ...
-  static bool ArabicToOtherForms(const string &input_num,
-                                 vector<Util::NumberString> *output);
-
-  // Converts half-width Arabic number to various radices (2,8,16)
-  // Arguments are same as ArabicToKanji (above)
-  //   except input digits is smaller than 20
-  static bool ArabicToOtherRadixes(const string &input_num,
-                                   vector<Util::NumberString> *output);
-
-  // Converts the string to a 32-/64-bit unsigned int.  Returns true if success
-  // or false if the string is in the wrong format.
-  static bool SafeStrToUInt32(const string &str, uint32 *value);
-  static bool SafeStrToUInt64(const string &str, uint64 *value);
-  static bool SafeHexStrToUInt32(const string &str, uint32 *value);
-  static bool SafeOctStrToUInt32(const string &str, uint32 *value);
-
-  // Converts the string to a double.  Returns true if success or false if the
-  // string is in the wrong format.
-  // If |str| is a hexadecimal number like "0x1234", the result depends on
-  // compiler.  It returns false when compiled by VisualC++.  On the other hand
-  // it returns true and sets correct value when compiled by gcc.
-  static bool SafeStrToDouble(const string &str, double *value);
-
-  // Converts the string to a float. Returns true if success or false if the
-  // string is in the wrong format.
-  static bool SafeStrToFloat(const string &str, float *value);
-  // Converts the string to a float.
-  static float StrToFloat(const string &str) {
-    float value;
-    Util::SafeStrToFloat(str, &value);
-    return value;
-  }
 
 #ifndef SWIG
   // C++ string version of sprintf.
@@ -351,29 +275,6 @@ class Util {
   // the time-out interval elapses.
   static void Sleep(uint32 msec);
 
-  // Convert Kanji numeric into Arabic numeric.
-  // When the trim_leading_zeros is true, leading zeros for arabic_output
-  // are trimmed off.
-  // TODO(toshiyuki): This parameter is only applied for arabic_output now.
-  //
-  // Input: "2千五百"
-  // kanji_output: "二千五百"
-  // arabic output: 2500
-  //
-  // NormalizeNumbers() returns false if it finds non-number characters.
-  // NormalizeNumbersWithSuffix() skips trailing non-number characters and
-  // return them in "suffix".
-  static bool NormalizeNumbers(const string &input,
-                               bool trim_leading_zeros,
-                               string *kanji_output,
-                               string *arabic_output);
-
-  static bool NormalizeNumbersWithSuffix(const string &input,
-                                         bool trim_leading_zeros,
-                                         string *kanji_output,
-                                         string *arabic_output,
-                                         string *suffix);
-
   // Japanese utils
   static void HiraganaToKatakana(const string &input,
                                  string *output);
@@ -429,11 +330,6 @@ class Util {
   static void NormalizeVoicedSoundMark(const string &input,
                                        string *output);
 
-  // Note: this function just does charcter-by-character conversion
-  // "百二十" -> 10020
-  static void KanjiNumberToArabicNumber(const string &input,
-                                        string *output);
-
   // return true if key is an open bracket.
   // if key is an open bracket, corresponding close bracket is
   // assigned
@@ -456,7 +352,7 @@ class Util {
 
   // Filesystem or user related methods are disabled on Native Client
   // environment.
-#ifndef __native_client__
+#ifndef MOZC_USE_PEPPER_FILE_IO
   // File and directory operations
   static bool CreateDirectory(const string &path);
   static bool RemoveDirectory(const string &dirname);
@@ -494,6 +390,8 @@ class Util {
   // is not properly implemented, atomic rename is POSIX spec though.
   // http://www.weirdnet.nl/apple/rename.html
   static bool AtomicRename(const string &from, const string &to);
+
+#endif  // !MOZC_USE_PEPPER_FILE_IO
 
   static string JoinPath(const string &path1, const string &path2);
 
@@ -534,6 +432,12 @@ class Util {
   // return the path of the mozc server.
   static string GetServerPath();
 
+  // return the path of the mozc renderer.
+  static string GetRendererPath();
+
+  // return the path of the mozc tool.
+  static string GetToolPath();
+
   // Returns the directory name which holds some documents bundled to
   // the installed application package.  Typically it's
   // <server directory>/documents but it can change among platforms.
@@ -555,8 +459,6 @@ class Util {
   // On Linux, return getenv("DISPLAY")
   // Mac has no DesktopName() so, just return empty string
   static string GetDesktopNameAsString();
-
-#endif  // __native_client__
 
 #ifdef OS_WINDOWS
   // From an early stage of the development of Mozc, we have somehow abused
@@ -731,33 +633,6 @@ class Util {
   // This function is thread safe.
   static const wchar_t *GetSystemDir();
 
-  // Load a DLL which has the specified base-name and is located in the
-  // system directory.
-  // If the function succeeds, the return value is a handle to the module.
-  // You should call FreeLibrary with the handle.
-  // If the function fails, the return value is NULL.
-  static HMODULE LoadSystemLibrary(const wstring &base_filename);
-
-  // Load a DLL which has the specified base-name and is located in the
-  // Mozc server directory.
-  // If the function succeeds, the return value is a handle to the module.
-  // You should call FreeLibrary with the handle.
-  // If the function fails, the return value is NULL.
-  static HMODULE LoadMozcLibrary(const wstring &base_filename);
-
-  // If a DLL which has the specified base-name and located in the system
-  // directory is loaded in the caller process, retrieve its module handle.
-  // If the function succeeds, the return value is a handle to the module
-  // without incrementing its reference count so that you should not call
-  // FreeLibrary with the handle.
-  // If the function fails, the return value is NULL.
-  static HMODULE GetSystemModuleHandle(const wstring &base_filename);
-
-  // A variant ot GetSystemModuleHandle except that this method increments
-  // reference count of the target DLL.
-  static HMODULE GetSystemModuleHandleAndIncrementRefCount(
-      const wstring &base_filename);
-
   // Retrieves version of the specified file.
   // If the function fails, returns false.
   static bool GetFileVersion(const wstring &file_fullpath,
@@ -769,6 +644,13 @@ class Util {
   // If the function fails, the return value is an empty string.
   static string GetFileVersionString(const wstring &file_fullpath);
 
+  // Returns "MSCTF.AsmCacheReady.<desktop name><session #>" to work around
+  // b/5765783.
+  // Returns an empty string if fails.
+  // Currently this method is defined in util.h because it depends on some
+  // utility functions defined in util.cc.
+  // TODO(yukawa): Move this method to win32/base/*
+  static string GetMSCTFAsmCacheReadyEventName();
 #endif
 
   // return string representing os version
@@ -780,13 +662,6 @@ class Util {
 
   // retrieve total physical memory. returns 0 if any error occurs.
   static uint64 GetTotalPhysicalMemory();
-
-  // read specified memory-mapped region to cause page fault.
-  // this function does not consider memory alignment.
-  // if |*query_quit| is or becomes true, it returns immediately.
-  static void PreloadMappedRegion(const void *begin,
-                                  size_t region_size_in_byte,
-                                  volatile bool *query_quit);
 
   // check endian-ness at runtime.
   static bool IsLittleEndian();

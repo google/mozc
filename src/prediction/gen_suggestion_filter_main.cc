@@ -33,6 +33,7 @@
 #include "base/base.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
 
@@ -60,6 +61,8 @@ void ReadWords(const string &name, vector<uint64> *words) {
 const size_t kMinimumFilterBytes = 100 * 1000;
 }  // namespace
 
+using mozc::storage::ExistenceFilter;
+
 // read per-line word list and generate
 // bloom filter in raw byte array or header file format
 int main(int argc, char **argv) {
@@ -79,14 +82,14 @@ int main(int argc, char **argv) {
 
   static const float kErrorRate = 0.00001;
   const size_t num_bytes = max(
-      mozc::ExistenceFilter::MinFilterSizeInBytesForErrorRate(
+      ExistenceFilter::MinFilterSizeInBytesForErrorRate(
           kErrorRate, words.size()),
       kMinimumFilterBytes);
 
   LOG(INFO) << "num_bytes: " << num_bytes;
 
-  scoped_ptr<mozc::ExistenceFilter> filter(
-      mozc::ExistenceFilter::CreateOptimal(num_bytes, words.size()));
+  scoped_ptr<ExistenceFilter> filter(
+      ExistenceFilter::CreateOptimal(num_bytes, words.size()));
   for (size_t i = 0; i < words.size(); ++i) {
     filter->Insert(words[i]);
   }

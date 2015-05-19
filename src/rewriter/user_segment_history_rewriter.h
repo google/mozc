@@ -40,9 +40,12 @@
 
 namespace mozc {
 class ConversionRequest;
-class LRUStorage;
 class POSMatcher;
 class PosGroup;
+
+namespace storage {
+class LRUStorage;
+}  // namespace storage
 
 class UserSegmentHistoryRewriter : public RewriterInterface {
  public:
@@ -69,7 +72,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   // UserSegmentHistoryRewriter is basically singleton in converter thread.
   // GetStorage() returns the current active storage managed by converter.
   // TODO(taku): This design is ad-hoc. Needs refactoring.
-  static LRUStorage *GetStorage();
+  static mozc::storage::LRUStorage *GetStorage();
 
  private:
   bool IsAvailable(const Segments &segments) const;
@@ -103,7 +106,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                       Segment *segment) const;
 
 
-  scoped_ptr<LRUStorage> storage_;
+  scoped_ptr<mozc::storage::LRUStorage> storage_;
   const POSMatcher *pos_matcher_;
   const PosGroup *pos_group_;
 };

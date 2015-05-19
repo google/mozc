@@ -52,6 +52,7 @@
         '../../renderer/renderer.gyp:renderer_client',
         '../../session/session_base.gyp:genproto_session',
         '../base/win32_base.gyp:ime_base',
+        '../base/win32_base.gyp:win32_file_verifier',
         'gen_mozc_broker_resource_header',
       ],
     }],

@@ -30,13 +30,17 @@
 #include <string>
 #include <vector>
 #include <utility>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace storage {
+namespace {
 
 void CheckValues(ExistenceFilter* filter, int m, int n) {
   int false_positives = 0;
@@ -81,6 +85,8 @@ void RunTest(int m, int n) {
 
   delete filter;
 }
+
+}  // namespace
 
 TEST(ExistenceFilterTest, RunTest) {
   int n = 50000;
@@ -158,4 +164,6 @@ TEST(ExistenceFilterTest, InsertAndExistsTest) {
     EXPECT_TRUE(filter->Exists(Util::Fingerprint(words[i])));
   }
 };
+
+}  // namespace storage
 }  // namespace mozc

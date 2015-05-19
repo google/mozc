@@ -31,6 +31,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/util.h"
@@ -50,7 +51,7 @@ const char kRegistryFileName[] = ".registry.db";   // hidden file
 class StorageInitializer {
  public:
   StorageInitializer() :
-      default_storage_(new TinyStorage), current_storage_(NULL) {
+      default_storage_(TinyStorage::New()), current_storage_(NULL) {
     if (!default_storage_->Open(Util::JoinPath(Util::GetUserProfileDirectory(),
                                        kRegistryFileName))) {
       LOG(ERROR) << "cannot open registry";
@@ -106,5 +107,5 @@ bool Registry::InsertInternal(const string &key, const string &value) {
   scoped_lock l(&g_mutex);
   return Singleton<StorageInitializer>::get()->GetStorage()->Insert(key, value);
 }
-}  // storage
-}  // mozc
+}  // namespace storage
+}  // namespace mozc

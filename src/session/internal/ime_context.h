@@ -50,10 +50,19 @@ class ImeContext {
   ImeContext();
   virtual ~ImeContext();
 
-  uint64 create_time() const;
-  void set_create_time(uint64 create_time);
-  uint64 last_command_time() const;
-  void set_last_command_time(uint64 last_time);
+  uint64 create_time() const {
+    return create_time_;
+  }
+  void set_create_time(uint64 create_time) {
+    create_time_ = create_time;
+  }
+
+  uint64 last_command_time() const {
+    return last_command_time_;
+  }
+  void set_last_command_time(uint64 last_command_time) {
+    last_command_time_ = last_command_time;
+  }
 
   // Note that before using getter methods,
   // |composer_| must be set non-null value.
@@ -72,20 +81,57 @@ class ImeContext {
     COMPOSITION = 4,
     CONVERSION = 8,
   };
-  State state() const;
-  void set_state(State state);
+  State state() const {
+    return state_;
+  }
+  void set_state(State state) {
+    state_ = state;
+  }
 
-  config::Config::SessionKeymap keymap() const;
-  void set_keymap(config::Config::SessionKeymap keymap);
+  config::Config::SessionKeymap keymap() const {
+    return keymap_;
+  }
+  void set_keymap(config::Config::SessionKeymap keymap) {
+    keymap_ = keymap;
+  }
 
-  const commands::Capability &client_capability() const;
-  commands::Capability *mutable_client_capability();
+  void SetRequest(const commands::Request &request);
+  const commands::Request &GetRequest() const;
 
-  const commands::ApplicationInfo &application_info() const;
-  commands::ApplicationInfo *mutable_application_info();
+  const commands::Capability &client_capability() const {
+    return client_capability_;
+  }
+  commands::Capability *mutable_client_capability() {
+    return &client_capability_;
+  }
 
-  const commands::Output &output() const;
-  commands::Output *mutable_output();
+  const commands::ApplicationInfo &application_info() const {
+    return application_info_;
+  }
+  commands::ApplicationInfo *mutable_application_info() {
+    return &application_info_;
+  }
+
+  const commands::Rectangle &composition_rectangle() const {
+    return composition_rectangle_;
+  }
+  commands::Rectangle *mutable_composition_rectangle() {
+    return &composition_rectangle_;
+  }
+
+  const commands::Rectangle &caret_rectangle() const {
+    return caret_rectangle_;
+  }
+  commands::Rectangle *mutable_caret_rectangle() {
+    return &caret_rectangle_;
+  }
+
+  const commands::Output &output() const {
+    return output_;
+  }
+  commands::Output *mutable_output() {
+    return &output_;
+  }
 
   // Copy |source| context to |destination| context.
   // TODO(hsumita): Renames it as CopyFrom and make it non-static to keep
@@ -105,15 +151,25 @@ class ImeContext {
   scoped_ptr<SessionConverterInterface> converter_;
 
   State state_;
+
+  commands::Request request_;
+
   config::Config::SessionKeymap keymap_;
 
   commands::Capability client_capability_;
 
   commands::ApplicationInfo application_info_;
 
+  // TODO(nona): remove these fields by moving the rectangle calculation logic
+  //   to the linux client.
+  commands::Rectangle composition_rectangle_;
+  commands::Rectangle caret_rectangle_;
+
   // Storing the last output consisting of the last result and the
   // last performed command.
   commands::Output output_;
+
+  DISALLOW_COPY_AND_ASSIGN(ImeContext);
 };
 
 }  // namespace session

@@ -29,8 +29,7 @@
 
 #include "languages/pinyin/session.h"
 
-#include <pyzy-1.0/PyZyConfig.h>
-#include <pyzy-1.0/PyZyInputContext.h>
+#include <PyZy/InputContext.h>
 #include <string>
 
 #include "base/scoped_ptr.h"
@@ -174,7 +173,7 @@ class PinyinSessionTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
 
-    PyZy::InputContext::init(FLAGS_test_tmpdir);
+    PyZy::InputContext::init(FLAGS_test_tmpdir, FLAGS_test_tmpdir);
 
     ResetSession();
   }
@@ -946,16 +945,17 @@ TEST_F(PinyinSessionTest, HandleNumpadOnPunctuationMode_Issue6055961) {
 }
 
 TEST_F(PinyinSessionTest, ToggleSimplifiedChineseMode) {
-  PyZy::PinyinConfig &pyzy_config = PyZy::PinyinConfig::instance();
-  const bool original_simplified_chinese_mode = pyzy_config.modeSimp();
+  const SessionConfig *session_config =
+      GetSessionConfigWithSessionInstance(*session_);
+  ASSERT_TRUE(session_config->simplified_chinese_mode);
 
   commands::Command command;
   SendKey("Ctrl Shift f", &command);
-  EXPECT_NE(original_simplified_chinese_mode, pyzy_config.modeSimp());
+  EXPECT_FALSE(session_config->simplified_chinese_mode);
 
   command.Clear();
   SendKey("Ctrl Shift F", &command);
-  EXPECT_EQ(original_simplified_chinese_mode, pyzy_config.modeSimp());
+  EXPECT_TRUE(session_config->simplified_chinese_mode);
 }
 
 TEST_F(PinyinSessionTest, SetSessionRequest) {

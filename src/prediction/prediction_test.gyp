@@ -38,23 +38,23 @@
       'type': 'executable',
       'sources': [
         'dictionary_predictor_test.cc',
-        'suggestion_filter_test.cc',
         'user_history_predictor_test.cc',
         'predictor_test.cc',
       ],
       'dependencies': [
-        '../converter/converter_base.gyp:connector',
+        '../config/config.gyp:config_protocol',
         '../converter/converter_base.gyp:immutable_converter',
-        '../converter/converter_base.gyp:segmenter',
         '../converter/converter_base.gyp:segments',
         '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary.gyp:dictionary_mock',
         '../dictionary/dictionary.gyp:suffix_dictionary',
-        '../dictionary/dictionary_base.gyp:install_dictionary_test_data',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../config/config.gyp:config_handler',
         '../session/session_base.gyp:request_handler',
+        '../session/session_base.gyp:request_test_util',
+        '../session/session_base.gyp:session_protocol',
         '../testing/testing.gyp:gtest_main',
         'prediction.gyp:prediction',
       ],
@@ -62,16 +62,6 @@
         'test_size': 'small',
       },
       'conditions': [
-        ['use_separate_connection_data==1',{
-          'dependencies': [
-            '../converter/converter.gyp:connection_data_injected_environment',
-          ],
-        }],
-        ['use_separate_dictionary==1',{
-          'dependencies': [
-            '../dictionary/dictionary.gyp:dictionary_data_injected_environment',
-          ],
-        }],
         ['target_platform=="Android"', {
           'sources!': [
             # This test depends on encryptor depending on Java libaray on

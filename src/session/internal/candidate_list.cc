@@ -29,9 +29,16 @@
 
 // CandidateList and Candidate classes to be used with Session class.
 
-#include "session/internal/candidate_list.h"
+#include <algorithm>
+#include <map>
+#include <string>
+#include <vector>
+
+#include "base/base.h"
 #include "base/freelist.h"
+#include "base/logging.h"
 #include "base/util.h"
+#include "session/internal/candidate_list.h"
 
 namespace mozc {
 namespace session {

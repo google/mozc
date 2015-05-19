@@ -30,11 +30,14 @@
 #include "rewriter/variants_rewriter.h"
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
+#include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/character_form_manager.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
@@ -44,6 +47,19 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+
+using config::CharacterFormManager;
+using config::Config;
+using config::ConfigHandler;
+
+namespace {
+string AppendString(const string &lhs, const string &rhs) {
+  if (!rhs.empty()) {
+    return lhs + ' ' + rhs;
+  }
+  return lhs;
+}
+}  // namespace
 
 class VariantsRewriterTest : public testing::Test {
  protected:
@@ -62,9 +78,9 @@ class VariantsRewriterTest : public testing::Test {
 
   void Reset() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     CharacterFormManager::GetCharacterFormManager()->ClearHistory();
   }
@@ -114,7 +130,7 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
     candidate->value = "012";
     candidate->content_value = "012";
     CharacterFormManager::GetCharacterFormManager()->
-      SetCharacterForm("012", config::Config::FULL_WIDTH);
+      SetCharacterForm("012", Config::FULL_WIDTH);
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(2, seg->candidates_size());
@@ -135,7 +151,7 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
     candidate->content_value = "012";
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     CharacterFormManager::GetCharacterFormManager()->
-      SetCharacterForm("012", config::Config::FULL_WIDTH);
+      SetCharacterForm("012", Config::FULL_WIDTH);
 
     EXPECT_FALSE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(1, seg->candidates_size());
@@ -148,7 +164,7 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
     candidate->value = "Google";
     candidate->content_value = "Google";
     CharacterFormManager::GetCharacterFormManager()->
-      SetCharacterForm("abc", config::Config::FULL_WIDTH);
+      SetCharacterForm("abc", Config::FULL_WIDTH);
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(2, seg->candidates_size());
@@ -169,7 +185,7 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
     candidate->value = "@";
     candidate->content_value = "@";
     CharacterFormManager::GetCharacterFormManager()->
-      SetCharacterForm("@", config::Config::FULL_WIDTH);
+      SetCharacterForm("@", Config::FULL_WIDTH);
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(2, seg->candidates_size());
@@ -193,7 +209,7 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
     CharacterFormManager::GetCharacterFormManager()->
       // "アイウ"
       SetCharacterForm("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6",
-                       config::Config::FULL_WIDTH);
+                       Config::FULL_WIDTH);
 
     EXPECT_FALSE(rewriter->Rewrite(request, &segments));
     seg->clear_candidates();
@@ -210,7 +226,7 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
      CharacterFormManager::GetCharacterFormManager()->
          // "アイウ"
          AddConversionRule("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6",
-                           config::Config::HALF_WIDTH);
+                           Config::HALF_WIDTH);
 
      EXPECT_TRUE(rewriter->Rewrite(request, &segments));
      EXPECT_EQ(2, seg->candidates_size());
@@ -236,16 +252,16 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
 
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  config::ConfigHandler::SetConfig(config);
+  Config config;
+  ConfigHandler::GetDefaultConfig(&config);
+  ConfigHandler::SetConfig(config);
 
   {
     for (int i = 0; i < 10; ++i) {
       Segment::Candidate *candidate1 = seg->add_candidate();
       candidate1->Init();
-      candidate1->value = Util::SimpleItoa(i);
-      candidate1->content_value = Util::SimpleItoa(i);
+      candidate1->value = NumberUtil::SimpleItoa(i);
+      candidate1->content_value = NumberUtil::SimpleItoa(i);
       Segment::Candidate *candidate2 = seg->add_candidate();
       candidate2->Init();
       // "ぐーぐる"
@@ -263,8 +279,9 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
     EXPECT_EQ(30, seg->candidates_size());
 
     for (int i = 0; i < 10; ++i) {
-      EXPECT_EQ(Util::SimpleItoa(i), seg->candidate(3 * i + 1).value);
-      EXPECT_EQ(Util::SimpleItoa(i), seg->candidate(3 * i + 1).content_value);
+      EXPECT_EQ(NumberUtil::SimpleItoa(i), seg->candidate(3 * i + 1).value);
+      EXPECT_EQ(NumberUtil::SimpleItoa(i),
+                seg->candidate(3 * i + 1).content_value);
       string full_width;
       Util::HalfWidthToFullWidth(seg->candidate(3 * i + 1).value, &full_width);
       EXPECT_EQ(full_width, seg->candidate(3 * i).value);
@@ -294,16 +311,17 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
           "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
       Segment::Candidate *candidate2 = seg->add_candidate();
       candidate2->Init();
-      candidate2->value = Util::SimpleItoa(i);
-      candidate2->content_value = Util::SimpleItoa(i);
+      candidate2->value = NumberUtil::SimpleItoa(i);
+      candidate2->content_value = NumberUtil::SimpleItoa(i);
     }
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(30, seg->candidates_size());
 
     for (int i = 0; i < 10; ++i) {
-      EXPECT_EQ(Util::SimpleItoa(i), seg->candidate(3 * i + 2).value);
-      EXPECT_EQ(Util::SimpleItoa(i), seg->candidate(3 * i + 2).content_value);
+      EXPECT_EQ(NumberUtil::SimpleItoa(i), seg->candidate(3 * i + 2).value);
+      EXPECT_EQ(NumberUtil::SimpleItoa(i),
+                seg->candidate(3 * i + 2).content_value);
       string full_width;
       Util::HalfWidthToFullWidth(seg->candidate(3 * i + 2).value, &full_width);
       EXPECT_EQ(full_width, seg->candidate(3 * i + 1).value);
@@ -326,8 +344,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "halfascii";
     VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
     // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+    EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
+                           VariantsRewriter::kAlphabet),
               candidate.description);
   }
   // containing symbols
@@ -339,8 +357,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "half ascii";
     VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
     // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+    EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
+                           VariantsRewriter::kAlphabet),
               candidate.description);
   }
   {
@@ -351,8 +369,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "half!ascii!";
     VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
     // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+    EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
+                           VariantsRewriter::kAlphabet),
               candidate.description);
   }
   {
@@ -366,8 +384,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
         "\x83\xbc\xe3\x82\x8d\xe3\x82\x80";
     VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
     // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+    EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
+                           VariantsRewriter::kAlphabet),
               candidate.description);
   }
   {
@@ -383,9 +401,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
         "\x94\xe3\x81\x99\xe3\x82\x80";
     VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
     // "[全] カタカナ"
-    EXPECT_EQ(
-        "\x5b\xe5\x85\xa8\x5d\x20\xe3\x82\xab\xe3\x82\xbf\xe3\x82\xab"
-        "\xe3\x83\x8a",
+    EXPECT_EQ(AppendString(VariantsRewriter::kFullWidth,
+                           VariantsRewriter::kKatakana),
         candidate.description);
   }
   {
@@ -396,7 +413,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "!@#";
     VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
     // "[半]"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d", candidate.description);
+    EXPECT_EQ(VariantsRewriter::kHalfWidth, candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -408,8 +425,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "[ABC]";
     VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
     // "[全] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x85\xa8\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95"
-              "\xe3\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+    EXPECT_EQ(AppendString(VariantsRewriter::kFullWidth,
+                           VariantsRewriter::kAlphabet),
               candidate.description);
   }
   {
@@ -423,8 +440,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
         "\xE3\x81\x8E\xE3\x81\xA4\xE3\x82\x88\xE3\x81\x97";
     VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
     // "<機種依存文字>"
-    EXPECT_EQ("<\xE6\xA9\x9F\xE7\xA8\xAE\xE4\xBE\x9D"
-              "\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>", candidate.description);
+    EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
   }
 }
 
@@ -438,8 +454,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     VariantsRewriter::SetDescriptionForTransliteration(*pos_matcher_,
                                                        &candidate);
     // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+    EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
+                           VariantsRewriter::kAlphabet),
               candidate.description);
   }
   {
@@ -451,7 +467,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     VariantsRewriter::SetDescriptionForTransliteration(*pos_matcher_,
                                                        &candidate);
     // "[半]"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d", candidate.description);
+    EXPECT_EQ(VariantsRewriter::kHalfWidth, candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -464,8 +480,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     VariantsRewriter::SetDescriptionForTransliteration(*pos_matcher_,
                                                        &candidate);
     // "[全] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x85\xa8\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95"
-              "\xe3\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+    EXPECT_EQ(AppendString(VariantsRewriter::kFullWidth,
+                           VariantsRewriter::kAlphabet),
               candidate.description);
   }
   {
@@ -480,8 +496,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     VariantsRewriter::SetDescriptionForTransliteration(*pos_matcher_,
                                                        &candidate);
     // "<機種依存文字>"
-    EXPECT_EQ("<\xE6\xA9\x9F\xE7\xA8\xAE\xE4\xBE\x9D"
-              "\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>", candidate.description);
+    EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
   }
 }
 
@@ -544,7 +559,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     candidate.content_value = candidate.value;
     candidate.content_key = "[ABC]";
     VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
-    // "[全] アルファベット"
     EXPECT_EQ("", candidate.description);
   }
   {
@@ -558,8 +572,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
         "\xE3\x81\x8E\xE3\x81\xA4\xE3\x82\x88\xE3\x81\x97";
     VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
     // "<機種依存文字>"
-    EXPECT_EQ("<\xE6\xA9\x9F\xE7\xA8\xAE\xE4\xBE\x9D"
-              "\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>", candidate.description);
+    EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
   }
 }
 
@@ -585,7 +598,7 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
     EXPECT_EQ(1, segments.segments_size());
     EXPECT_EQ(2, segments.segment(0).candidates_size());
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
+    EXPECT_EQ(Config::FULL_WIDTH,
               character_form_manager->GetConversionCharacterForm("abc"));
 
     // "ａｂｃ"
@@ -594,7 +607,7 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
     EXPECT_EQ("abc", segments.segment(0).candidate(1).value);
   }
   {
-    character_form_manager->SetCharacterForm("abc", config::Config::HALF_WIDTH);
+    character_form_manager->SetCharacterForm("abc", Config::HALF_WIDTH);
     Segments segments;
     segments.set_request_type(Segments::CONVERSION);
     {
@@ -611,7 +624,7 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
     EXPECT_EQ(1, segments.segments_size());
     EXPECT_EQ(2, segments.segment(0).candidates_size());
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
+    EXPECT_EQ(Config::HALF_WIDTH,
               character_form_manager->GetConversionCharacterForm("abc"));
 
     EXPECT_EQ("abc", segments.segment(0).candidate(0).value);
@@ -634,7 +647,7 @@ TEST_F(VariantsRewriterTest, RewriteForPrediction) {
     EXPECT_EQ(1, segments.segments_size());
     EXPECT_EQ(2, segments.segment(0).candidates_size());
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
+    EXPECT_EQ(Config::FULL_WIDTH,
               character_form_manager->GetConversionCharacterForm("abc"));
 
     // "ａｂｃ"
@@ -643,7 +656,7 @@ TEST_F(VariantsRewriterTest, RewriteForPrediction) {
     EXPECT_EQ("abc", segments.segment(0).candidate(1).value);
   }
   {
-    character_form_manager->SetCharacterForm("abc", config::Config::HALF_WIDTH);
+    character_form_manager->SetCharacterForm("abc", Config::HALF_WIDTH);
     Segments segments;
     segments.set_request_type(Segments::PREDICTION);
     InitSegmentsForAlphabetRewrite("abc", &segments);
@@ -651,7 +664,7 @@ TEST_F(VariantsRewriterTest, RewriteForPrediction) {
     EXPECT_EQ(1, segments.segments_size());
     EXPECT_EQ(2, segments.segment(0).candidates_size());
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
+    EXPECT_EQ(Config::HALF_WIDTH,
               character_form_manager->GetConversionCharacterForm("abc"));
 
     EXPECT_EQ("abc", segments.segment(0).candidate(0).value);
@@ -674,7 +687,7 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
     EXPECT_EQ(1, segments.segments_size());
     EXPECT_EQ(1, segments.segment(0).candidates_size());
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
+    EXPECT_EQ(Config::FULL_WIDTH,
               character_form_manager->GetConversionCharacterForm("abc"));
 
     // "ａｂｃ"
@@ -682,7 +695,7 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
               segments.segment(0).candidate(0).value);
   }
   {
-    character_form_manager->SetCharacterForm("abc", config::Config::HALF_WIDTH);
+    character_form_manager->SetCharacterForm("abc", Config::HALF_WIDTH);
     Segments segments;
     segments.set_request_type(Segments::SUGGESTION);
     InitSegmentsForAlphabetRewrite("abc", &segments);
@@ -690,7 +703,7 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
     EXPECT_EQ(1, segments.segments_size());
     EXPECT_EQ(1, segments.segment(0).candidates_size());
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
+    EXPECT_EQ(Config::HALF_WIDTH,
               character_form_manager->GetConversionCharacterForm("abc"));
 
     EXPECT_EQ("abc", segments.segment(0).candidate(0).value);

@@ -50,6 +50,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../engine/engine.gyp:engine_factory',
         '../session/session.gyp:session',
         'mozc_server_lib',
       ],
@@ -124,6 +125,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../engine/engine.gyp:engine_factory',
         '../session/session.gyp:session',
         '../session/session.gyp:session_server',
         '../session/session.gyp:random_keyevents_generator',

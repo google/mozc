@@ -49,8 +49,5 @@ UserDataManagerInterface *HangulSessionFactory::GetUserDataManager() {
   return Singleton<EmptyUserDataManager>::get();
 }
 
-bool HangulSessionFactory::IsAvailable() const {
-  return true;
-}
-}  // namesapce hangul
+}  // namespace hangul
 }  // namespace mozc

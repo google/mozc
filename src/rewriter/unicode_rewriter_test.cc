@@ -30,13 +30,16 @@
 #include <cstdlib>
 #include <string>
 #include "base/util.h"
-#include "config/config.pb.h"
 #include "composer/composer.h"
+#include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
 #include "converter/conversion_request.h"
+#include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
 #include "rewriter/unicode_rewriter.h"
+#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -72,20 +75,29 @@ bool ContainCandidate(const Segments &segments, const string &candidate) {
 
 class UnicodeRewriterTest : public testing::Test {
  protected:
+  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
+  UnicodeRewriterTest() {}
+  virtual ~UnicodeRewriterTest() {}
+
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-    converter_ = ConverterFactory::GetConverter();
+    engine_.reset(MockDataEngineFactory::Create());
   }
 
-  const ConverterInterface *converter_;
+  scoped_ptr<EngineInterface> engine_;
+  const commands::Request &default_request() const {
+    return default_request_;
+  }
+ private:
+  const commands::Request default_request_;
 };
 
 TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
   Segments segments;
-  UnicodeRewriter rewriter(converter_);
+  UnicodeRewriter rewriter(engine_->GetConverter());
   const ConversionRequest request;
 
   struct UCS4UTF8Data {
@@ -153,14 +165,14 @@ TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
   }
 
   // Mozc accepts Japanese characters
-  for (size_t i = 0; i < ARRAYSIZE(kUcs4Utf8Data); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kUcs4Utf8Data); ++i) {
     InitSegments(kUcs4Utf8Data[i].ucs4, kUcs4Utf8Data[i].ucs4, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, kUcs4Utf8Data[i].utf8));
   }
 
   // Mozc does not accept other characters
-  for (size_t i = 0; i < ARRAYSIZE(kMozcUnsupportedUtf8); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kMozcUnsupportedUtf8); ++i) {
     InitSegments(kMozcUnsupportedUtf8[i], kMozcUnsupportedUtf8[i], &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }
@@ -181,7 +193,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
 
 TEST_F(UnicodeRewriterTest, MultipleSegment) {
   Segments segments;
-  UnicodeRewriter rewriter(converter_);
+  UnicodeRewriter rewriter(engine_->GetConverter());
   const ConversionRequest request;
 
   // Multiple segments are combined.
@@ -210,9 +222,9 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
 }
 
 TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
-  UnicodeRewriter rewriter(converter_);
+  UnicodeRewriter rewriter(engine_->GetConverter());
   {  // Typical case
-    composer::Composer composer;
+    composer::Composer composer(NULL, default_request());
     composer.set_source_text("A");
     ConversionRequest request(&composer);
 
@@ -224,7 +236,7 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   }
 
   {  // If source_text is not set, this rewrite is not triggered.
-    composer::Composer composer;
+    composer::Composer composer(NULL, default_request());
     ConversionRequest request(&composer);
 
     Segments segments;
@@ -236,7 +248,7 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
 
   {  // If source_text is not a single character, this rewrite is not
      // triggered.
-    composer::Composer composer;
+    composer::Composer composer(NULL, default_request());
     composer.set_source_text("AB");
     ConversionRequest request(&composer);
 
@@ -247,7 +259,7 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   }
 
   {  // Multibyte character is also supported.
-    composer::Composer composer;
+    composer::Composer composer(NULL, default_request());
     composer.set_source_text("\xE6\x84\x9B");  // "愛"
     ConversionRequest request(&composer);
 

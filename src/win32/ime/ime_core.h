@@ -37,22 +37,28 @@
 
 #include "base/base.h"
 #include "base/scoped_ptr.h"
-#include "client/client_interface.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 #include "win32/base/immdev.h"
 #include "win32/ime/ime_input_context.h"
-#include "win32/ime/ime_keyboard.h"
 #include "win32/ime/ime_keyevent_handler.h"
-#include "win32/ime/ime_types.h"
 #include "win32/ime/ime_message_queue.h"
+#include "win32/ime/ime_types.h"
 
 namespace mozc {
 namespace client {
 class ClientInterface;
 }  // namespace client
 
+namespace commands {
+class Output;
+}  // namespace commands
+
 namespace win32 {
+
+struct ImeBehavior;
+struct ImeState;
+
 // Currently this class is a Kitchen-sink class and can be merged with
 // UIContext class.
 // Note that some static methods receive raw HIMC, which makes it difficult
@@ -135,7 +141,7 @@ class ImeCore {
   // function will not generate any UI message.
   // Returns true if the operation completed successfully.
   static bool UpdateContext(HIMC himc,
-                            const ImeState next_state,
+                            const ImeState &next_state,
                             const commands::Output &new_output,
                             MessageQueue *message_queue);
 
@@ -210,7 +216,7 @@ class ImeCore {
   // ignores callback field, which is supposed to be handled in the
   // UpdateContext before this method is called.
   static bool UpdateContextMain(HIMC himc,
-                                const ImeState next_state,
+                                const ImeState &next_state,
                                 const commands::Output &new_output,
                                 MessageQueue *message_queue);
 
@@ -224,6 +230,7 @@ class ImeCore {
 
   DISALLOW_COPY_AND_ASSIGN(ImeCore);
 };
+
 }  // namespace win32
 }  // namespace mozc
 #endif  // MOZC_WIN32_IME_IME_CORE_

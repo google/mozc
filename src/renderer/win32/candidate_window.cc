@@ -226,7 +226,8 @@ HBITMAP LoadBitmapFromResource(HMODULE module, int resource_id) {
       ::LoadImage(module, MAKEINTRESOURCE(resource_id), IMAGE_BITMAP,
                   0, 0, LR_CREATEDIBSECTION));
 }
-}  // anonymous namespace
+
+}  // namespace
 
 // ------------------------------------------------------------------------
 // CandidateWindow
@@ -235,8 +236,6 @@ HBITMAP LoadBitmapFromResource(HMODULE module, int resource_id) {
 CandidateWindow::CandidateWindow()
     : candidates_(new commands::Candidates),
       indicator_width_(0),
-      footer_logo_(LoadBitmapFromResource(::GetModuleHandle(NULL),
-                                          IDB_FOOTER_LOGO_COLOR)),
       footer_logo_display_size_(0, 0),
       metrics_changed_(false),
       mouse_moving_(true),
@@ -247,13 +246,31 @@ CandidateWindow::CandidateWindow()
   double scale_factor_y = 1.0;
   RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x,
                                             &scale_factor_y);
+  double image_scale_factor = 1.0;
+  if (scale_factor_x < 1.125 || scale_factor_y < 1.125) {
+    footer_logo_.Attach(LoadBitmapFromResource(
+      ::GetModuleHandle(NULL), IDB_FOOTER_LOGO_COLOR_100));
+    image_scale_factor = 1.0;
+  } else if (scale_factor_x < 1.375 || scale_factor_y < 1.375) {
+    footer_logo_.Attach(LoadBitmapFromResource(
+      ::GetModuleHandle(NULL), IDB_FOOTER_LOGO_COLOR_125));
+    image_scale_factor = 1.25;
+  } else if (scale_factor_x < 1.75 || scale_factor_y < 1.75) {
+    footer_logo_.Attach(LoadBitmapFromResource(
+      ::GetModuleHandle(NULL), IDB_FOOTER_LOGO_COLOR_150));
+    image_scale_factor = 1.5;
+  } else {
+    footer_logo_.Attach(LoadBitmapFromResource(
+      ::GetModuleHandle(NULL), IDB_FOOTER_LOGO_COLOR_200));
+    image_scale_factor = 2.0;
+  }
 
   // If DPI is not default value, re-calculate the size based on the DPI.
   if (!footer_logo_.IsNull()) {
     CSize size;
     footer_logo_.GetSize(size);
-    size.cx *= scale_factor_x;
-    size.cy *= scale_factor_y;
+    size.cx *= (scale_factor_x / image_scale_factor);
+    size.cy *= (scale_factor_y / image_scale_factor);
     footer_logo_display_size_ = Size(size.cx, size.cy);
   }
 

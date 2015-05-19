@@ -29,6 +29,11 @@
 
 #include "unix/ibus/message_translator.h"
 
+#include <string>
+#include <vector>
+
+#include "base/util.h"
+
 namespace {
 
 struct TranslationMap {
@@ -55,7 +60,7 @@ const TranslationMap kUTF8JapaneseMap[] = {
   { "Properties",
     "\xE3\x83\x97\xE3\x83\xAD\xE3\x83\x91\xE3\x83\x86\xE3\x82\xA3" },
   // "辞書ツール"
-  { "Dictionary tool",
+  { "Dictionary Tool",
     "\xE8\xBE\x9E\xE6\x9B\xB8\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB" },
   // "単語登録"
   { "Add Word",
@@ -90,8 +95,20 @@ string NullMessageTranslator::MaybeTranslate(const string &message) const {
 
 LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
     const string &locale_name) {
-  // Currently we support ja_JP.UTF-8 only.
-  if (locale_name != "ja_JP.UTF-8") {
+  // Currently we support ja_JP.UTF-8 and ja_JP.utf8 only.
+  vector<string> tokens;
+  Util::SplitStringUsing(locale_name, ".", &tokens);
+  if (tokens.size() != 2) {
+    return;
+  }
+  const string &language_code = tokens[0];
+  if (language_code != "ja_JP") {
+    return;
+  }
+
+  Util::LowerString(&tokens[1]);
+  const string &lowser_char_set_name = tokens[1];
+  if (lowser_char_set_name != "utf-8" && lowser_char_set_name != "utf8") {
     return;
   }
 

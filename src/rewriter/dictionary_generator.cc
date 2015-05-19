@@ -32,9 +32,14 @@
 #include "rewriter/dictionary_generator.h"
 
 #include <algorithm>
+#include <map>
+#include <string>
+#include <vector>
 
+#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/freelist.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"

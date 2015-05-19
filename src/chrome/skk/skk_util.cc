@@ -138,7 +138,7 @@ bool SkkUtil::ValidateMessage(const Json::Value &json_message,
 // This method keeps existing elements in |candidates| and |predictions|.
 // Because when the word looking up for can be conjugated, this method will be
 // called multiple times.
-void SkkUtil::LookupEntry(mozc::SystemDictionary *dictionary,
+void SkkUtil::LookupEntry(mozc::dictionary::SystemDictionary *dictionary,
                           const string &reading,
                           vector<string> *candidates,
                           vector<string> *predictions) {

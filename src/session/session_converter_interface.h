@@ -48,6 +48,18 @@ class CandidateList;
 struct ConversionPreferences {
   bool use_history;
   int max_history_size;
+
+  // This is a flag to check if the converter should return the suggestion
+  // or not. Indeed, the design is actually twisted, because clients should
+  // be able to avoid the invocation of SessionConverter::Suggest, if they'd
+  // like. However, The current SessionConverter's architecture is too
+  // complicated and has too many limitations to ensure the full state
+  // transition. In order to support "skipping suggestion" for the performance
+  // without current client's breakage in short period, this flag is
+  // introduced.
+  // TODO(hidehiko,komatsu): Remove this flag, when the full SessionConverter
+  //   refactoring is done and gets safer for future development/extensions.
+  bool request_suggestion;
 };
 
 // Do not forget to update SessionConverter::SetOperationPreferences()
@@ -233,6 +245,10 @@ class SessionConverterInterface {
   // Remove tail part of history segments
   virtual void RemoveTailOfHistorySegments(size_t num_of_characters) ABSTRACT;
 
+  // Set setting by the request.
+  // Currently this is especially for SessionConverter.
+  virtual void SetRequest(const commands::Request &request) ABSTRACT;
+
   // Accessor
   virtual const commands::Result &GetResult() const ABSTRACT;
   virtual const CandidateList &GetCandidateList() const ABSTRACT;
@@ -242,7 +258,9 @@ class SessionConverterInterface {
   virtual const Segment &GetPreviousSuggestions()
       const ABSTRACT;
 
-  virtual void CopyFrom(const SessionConverterInterface &src) ABSTRACT;
+  // Clone instance.
+  // Callee object doesn't have the ownership of the cloned instance.
+  virtual SessionConverterInterface *Clone() const ABSTRACT;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionConverterInterface);

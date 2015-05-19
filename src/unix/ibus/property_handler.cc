@@ -29,8 +29,6 @@
 
 #include "unix/ibus/property_handler.h"
 
-#include <ibus.h>
-
 #include "base/const.h"
 #include "base/util.h"
 #include "client/client.h"  // For client interface
@@ -48,20 +46,9 @@ const char kGObjectDataKey[] = "ibus-mozc-aux-data";
 // Icon path for MozcTool
 const char kMozcToolIconPath[] = "tool.png";
 
-#if !IBUS_CHECK_VERSION(1, 3, 99)
-// Older libibus (<= 1.3) does not have the accessor methods.
-IBusPropList* ibus_property_get_sub_props(IBusProperty* prop) {
-  return prop->sub_props;
-}
-const gchar* ibus_property_get_key(IBusProperty* prop) {
-  return prop->key;
-}
-#endif
-
 // Returns true if mozc_tool is installed.
 bool IsMozcToolAvailable() {
-  return mozc::Util::FileExists(
-      mozc::Util::JoinPath(mozc::Util::GetServerDirectory(), mozc::kMozcTool));
+  return mozc::Util::FileExists(mozc::Util::GetToolPath());
 }
 }  // namespace
 
@@ -75,17 +62,12 @@ PropertyHandler::PropertyHandler(MessageTranslatorInterface *translator,
       original_composition_mode_(kMozcEngineInitialCompositionMode),
       is_activated_(true) {
 
-  if (kMozcEnginePropertiesSize != 0) {
-    AppendCompositionPropertyToPanel();
-  }
-
+  AppendCompositionPropertyToPanel();
   AppendSwitchPropertyToPanel();
-
 #ifndef OS_CHROMEOS
-  if (IsMozcToolAvailable()) {
-    AppendToolPropertyToPanel();
-  }
+  AppendToolPropertyToPanel();
 #endif
+
   // We have to sink |prop_root_| as well so ibus_engine_register_properties()
   // in FocusIn() does not destruct it.
   g_object_ref_sink(prop_root_);
@@ -123,6 +105,10 @@ void PropertyHandler::Register(IBusEngine *engine) {
 
 // TODO(nona): do not use kMozcEngine*** directory.
 void PropertyHandler::AppendCompositionPropertyToPanel() {
+  if (kMozcEngineProperties == NULL || kMozcEnginePropertiesSize == 0) {
+    return;
+  }
+
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
   IBusPropList *sub_prop_list = ibus_prop_list_new();
@@ -176,6 +162,11 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
 
 // TODO(nona): do not use kMozcEngine*** directory.
 void PropertyHandler::AppendToolPropertyToPanel() {
+  if (kMozcEngineToolProperties == NULL || kMozcEngineToolPropertiesSize == 0 ||
+      !IsMozcToolAvailable()) {
+    return;
+  }
+
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
   IBusPropList *sub_prop_list = ibus_prop_list_new();
@@ -221,6 +212,11 @@ void PropertyHandler::AppendToolPropertyToPanel() {
 
 // TODO(nona): do not use kMozcEngine*** directory.
 void PropertyHandler::AppendSwitchPropertyToPanel() {
+  if (kMozcEngineSwitchProperties == NULL ||
+      kMozcEngineSwitchPropertiesSize == 0) {
+    return;
+  }
+
   for (size_t i = 0; i < kMozcEngineSwitchPropertiesSize; ++i) {
     const MozcEngineSwitchProperty &entry = kMozcEngineSwitchProperties[i];
     IBusText *label = ibus_text_new_from_string(
@@ -284,13 +280,12 @@ void PropertyHandler::UpdateCompositionModeIcon(
   }
   DCHECK(entry);
 
-  size_t i = 0;
-  IBusProperty *prop = NULL;
-  while ((prop = ibus_prop_list_get(
-             // TODO(yusukes): Make the const_cast<> Linux-only. Chrome OS will
-             // not require the cast once we upgrade ibus ebuild.
-             const_cast<IBusPropList*>(
-                 ibus_property_get_sub_props(prop_composition_mode_)), i++))) {
+  for (guint prop_index = 0; ; ++prop_index) {
+    IBusProperty *prop = ibus_prop_list_get(
+        ibus_property_get_sub_props(prop_composition_mode_), prop_index);
+    if (prop == NULL) {
+      break;
+    }
     if (!g_strcmp0(entry->key, ibus_property_get_key(prop))) {
       // Update the language panel.
       ibus_property_set_icon(prop_composition_mode_,
@@ -335,16 +330,14 @@ void PropertyHandler::SetCompositionMode(
 void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
                                               const gchar *property_name,
                                               guint property_state) {
-  IBusProperty *prop = NULL;
-
 #ifndef OS_CHROMEOS
   if (prop_mozc_tool_) {
-    size_t i = 0;
-    while ((prop = ibus_prop_list_get(
-               // TODO(yusukes): libibus newer than Dec 22 2011 does not need
-               // the const_cast<>. Remove the cast once we upgrade ibus ebuild.
-               const_cast<IBusPropList*>(
-                   ibus_property_get_sub_props(prop_mozc_tool_)), i++))) {
+    for (guint prop_index = 0; ; ++prop_index) {
+      IBusProperty *prop = ibus_prop_list_get(
+          ibus_property_get_sub_props(prop_mozc_tool_), prop_index);
+      if (prop == NULL) {
+        break;
+      }
       if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
         const MozcEngineToolProperty *entry =
             reinterpret_cast<const MozcEngineToolProperty*>(
@@ -360,7 +353,7 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
 #endif
 
   for (size_t i = 0; i < prop_switch_properties_.size(); ++i) {
-    prop = prop_switch_properties_[i];
+    IBusProperty *prop = prop_switch_properties_[i];
     if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
       const MozcEngineSwitchProperty *entry =
           reinterpret_cast<const MozcEngineSwitchProperty *>(
@@ -383,12 +376,12 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
   }
 
   if (prop_composition_mode_) {
-    size_t i = 0;
-    while ((prop = ibus_prop_list_get(
-               // TODO(yusukes): Make the const_cast<> Linux-only. Chrome OS
-               // will not require the cast once we upgrade ibus ebuild.
-               const_cast<IBusPropList*>(ibus_property_get_sub_props(
-                   prop_composition_mode_)), i++))) {
+    for (guint prop_index = 0; ; ++prop_index) {
+      IBusProperty *prop = ibus_prop_list_get(
+          ibus_property_get_sub_props(prop_composition_mode_), prop_index);
+      if (prop == NULL) {
+        break;
+      }
       if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
         const MozcEngineProperty *entry =
             reinterpret_cast<const MozcEngineProperty*>(

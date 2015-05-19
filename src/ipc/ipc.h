@@ -30,20 +30,20 @@
 #ifndef MOZC_IPC_IPC_H_
 #define MOZC_IPC_IPC_H_
 
-#ifdef OS_WINDOWS
-#include "windows.h"
-#endif
-
 #ifdef OS_MACOSX
-#include <mach/mach.h>
+#include <mach/mach.h>  // for mach_port_t
 #endif  // OS_OS_MACOSX
 
 #include <string>
+
 #include "base/scoped_handle.h"
-#include "base/thread.h"
-#include "base/base.h"
+#include "base/scoped_ptr.h"
+#include "base/port.h"
 
 namespace mozc {
+
+class IPCPathManager;
+class Thread;
 
 enum {
   IPC_REQUESTSIZE = 16 * 8192,
@@ -63,10 +63,9 @@ enum IPCErrorType {
   IPC_WRITE_ERROR,
   IPC_INVALID_SERVER,
   IPC_UNKNOWN_ERROR,
+  IPC_QUIT_EVENT_SIGNALED,
   IPC_ERROR_TYPE_SIZE
 };
-
-class IPCServerThread;
 
 class IPCClientInterface {
  public:
@@ -103,8 +102,6 @@ class MachPortManagerInterface {
 };
 #endif  // OS_MACOSX
 
-class IPCPathManager;
-
 // Synchronous, Single-thread IPC Client
 // Usage:
 //  IPCClient con("name", "/foo/bar/server");
@@ -122,6 +119,7 @@ class IPCClient : public IPCClientInterface {
   // You can pass an absolute server_path to make sure
   // the client is connecting a valid server.
   // If server_path is empty, no validation is executed.
+  // Note: "server_path" will be ignored on Mac (MachIPC).
   IPCClient(const string &name, const string &server_path);
 
   // old interface
@@ -148,8 +146,8 @@ class IPCClient : public IPCClientInterface {
   // Return true when IPC finishes successfully.
   // When Server doesn't send response within timeout, 'Call' returns false.
   // When timeout (in msec) is set -1, 'Call' waits forever.
-  // Note that on Linux, Call() closes the socket_. This means you cannot call
-  // the Call() function more than once.
+  // Note that on Linux and Windows, Call() closes the socket_. This means you
+  // cannot call the Call() function more than once.
   bool Call(const char *request,
             size_t request_size,
             char *response,
@@ -175,7 +173,8 @@ class IPCClient : public IPCClientInterface {
 
 #ifdef OS_WINDOWS
   // Windows
-  ScopedHandle handle_;
+  ScopedHandle pipe_handle_;
+  ScopedHandle pipe_event_;
 #elif defined(OS_MACOSX)
   string name_;
   MachPortManagerInterface *mach_port_manager_;
@@ -269,13 +268,7 @@ class IPCServer {
   // On Win32, we make a control event to terminate
   // main loop gracefully. On Mac/Linux, we simply
   // call TerminateThread()
-#ifdef OS_WINDOWS
   void Terminate();
-#else
-  void Terminate() {
-    server_thread_->Terminate();
-  }
-#endif
 
 #ifdef OS_MACOSX
   void SetMachPortManager(MachPortManagerInterface *manager) {
@@ -284,27 +277,15 @@ class IPCServer {
 #endif
 
  private:
-  class IPCServerThread: public Thread {
-   public:
-    explicit IPCServerThread(IPCServer *server)
-        : server_(server) {}
-    virtual void Run() {
-      if (server_ != NULL) {
-        server_->Loop();
-      }
-    }
-   private:
-    IPCServer *server_;
-  };
-
   char request_[IPC_REQUESTSIZE];
   char response_[IPC_RESPONSESIZE];
   bool connected_;
-  scoped_ptr<IPCServerThread> server_thread_;
+  scoped_ptr<Thread> server_thread_;
 
 #ifdef OS_WINDOWS
-  ScopedHandle handle_;  // Windows
-  ScopedHandle event_;   // ctrl event
+  ScopedHandle pipe_handle_;
+  ScopedHandle pipe_event_;
+  ScopedHandle quit_event_;
 #elif defined(OS_MACOSX)
   string name_;
   MachPortManagerInterface *mach_port_manager_;

@@ -30,13 +30,16 @@
 #include "gui/config_dialog/auth_code_detector.h"
 
 #if defined(OS_WINDOWS)
-#include "base/util.h"
-#endif
+#include <Windows.h>
+#endif  // OS_WINDOWS
 
 #if defined(OS_MACOSX)
 #include <Carbon/Carbon.h>
-#endif
+#endif  // OS_MACOSX
 
+#if defined(OS_WINDOWS)
+#include "base/util.h"
+#endif  // OS_WINDOWS
 #include "sync/oauth2_token_util.h"
 
 namespace mozc {
@@ -47,13 +50,13 @@ namespace {
 BOOL CALLBACK EnumWindowsProc(HWND window_handle, LPARAM lparam) {
   wchar_t buffer[512] = {};
   const int copied_len_without_null =
-      ::GetWindowText(window_handle, buffer, ARRAYSIZE(buffer));
+      ::GetWindowText(window_handle, buffer, arraysize(buffer));
   if (copied_len_without_null == 0) {
     // Failed. Go to next window.
     return TRUE;
   }
 
-  if (copied_len_without_null > ARRAYSIZE(buffer)) {
+  if (copied_len_without_null > arraysize(buffer)) {
     // Result is too big. Go to next window.
     return TRUE;
   }

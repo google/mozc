@@ -45,7 +45,6 @@ class PinyinSessionFactory : public session::SessionFactoryInterface {
   virtual ~PinyinSessionFactory();
   virtual session::SessionInterface *NewSession();
   virtual UserDataManagerInterface *GetUserDataManager();
-  virtual bool IsAvailable() const;
  private:
 };
 }  // namespace pinyin

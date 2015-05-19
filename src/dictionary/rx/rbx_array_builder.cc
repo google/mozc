@@ -31,6 +31,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "third_party/rx/v1_1_2/rx.h"
 
 namespace mozc {

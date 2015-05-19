@@ -34,6 +34,7 @@
 
 #include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"

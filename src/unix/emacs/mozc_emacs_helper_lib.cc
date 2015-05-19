@@ -35,6 +35,7 @@
 #include <cstdlib>
 
 #include "base/base.h"
+#include "base/number_util.h"
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
@@ -83,7 +84,7 @@ void ParseInputLine(
   }
 
   // Read an event ID (a sequence number).
-  if (!mozc::Util::SafeStrToUInt32(tokens[1], event_id)) {
+  if (!NumberUtil::SafeStrToUInt32(tokens[1], event_id)) {
     ErrorExit(kErrWrongTypeArgument, "Event ID is not an integer");
   }
 
@@ -115,7 +116,7 @@ void ParseInputLine(
         ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
       }
       // Parse session ID.
-      if (!mozc::Util::SafeStrToUInt32(tokens[3], session_id)) {
+      if (!NumberUtil::SafeStrToUInt32(tokens[3], session_id)) {
         ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
       }
       break;
@@ -126,7 +127,7 @@ void ParseInputLine(
         ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
       }
       // Parse session ID.
-      if (!mozc::Util::SafeStrToUInt32(tokens[3], session_id)) {
+      if (!NumberUtil::SafeStrToUInt32(tokens[3], session_id)) {
         ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
       }
       // Parse keys.
@@ -135,7 +136,7 @@ void ParseInputLine(
       for (int i = 4; i < tokens.size() - 1; ++i) {
         if (isdigit(tokens[i][0])) {  // Numeric key code
           uint32 key_code;
-          if (!mozc::Util::SafeStrToUInt32(tokens[i], &key_code) ||
+          if (!NumberUtil::SafeStrToUInt32(tokens[i], &key_code) ||
               key_code > 255) {
             ErrorExit(kErrWrongTypeArgument, "Wrong character code");
           }

@@ -31,6 +31,7 @@
 
 #include "handwriting/zinnia_handwriting.h"
 
+#include "base/mmap.h"
 #include "base/util.h"
 
 #ifdef OS_MACOSX
@@ -65,7 +66,7 @@ const uint32 kBoxSize = 200;
 ZinniaHandwriting::ZinniaHandwriting()
     : recognizer_(zinnia::Recognizer::create()),
       character_(zinnia::Character::create()),
-      mmap_(new Mmap<char>()),
+      mmap_(new Mmap),
       zinnia_model_error_(false) {
   const string model_file = GetModelFileName();
   DCHECK(recognizer_.get());
@@ -75,7 +76,7 @@ ZinniaHandwriting::ZinniaHandwriting()
     zinnia_model_error_ = true;
     return;
   }
-  if (!recognizer_->open(mmap_->begin(), mmap_->GetFileSize())) {
+  if (!recognizer_->open(mmap_->begin(), mmap_->size())) {
     LOG(ERROR) << "Model file is broken:" << model_file;
     zinnia_model_error_ = true;
     return;

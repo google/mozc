@@ -30,12 +30,13 @@
 #include "win32/ime/ime_private_context.h"
 
 #include "base/run_level.h"
-#include "client/client.h"
+#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
 #include "win32/ime/ime_core.h"
 #include "win32/ime/ime_deleter.h"
 #include "win32/ime/ime_scoped_context.h"
+#include "win32/ime/ime_state.h"
 #include "win32/ime/ime_surrogate_pair_observer.h"
 #include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
@@ -162,16 +163,11 @@ bool PrivateContextUtil::EnsurePrivateContextIsInitialized(
   // current kana lock state.
   const mozc::config::Config &config =
       mozc::config::ConfigHandler::GetConfig();
-  if (config.has_preedit_method()) {
-    if (config.preedit_method() == mozc::config::Config::KANA) {
-      private_context_allocator->ime_behavior->prefer_kana_input = true;
-    }
-  } else {
-    LOG(WARNING) << "Failed to retrieve config's kana input mode";
+  if (config.preedit_method() == mozc::config::Config::KANA) {
+    private_context_allocator->ime_behavior->prefer_kana_input = true;
   }
 
-  if (config.has_use_keyboard_to_change_preedit_method() &&
-      config.use_keyboard_to_change_preedit_method()) {
+  if (config.use_keyboard_to_change_preedit_method()) {
     private_context_allocator->ime_behavior->
         use_kanji_key_to_toggle_input_style = true;
   }

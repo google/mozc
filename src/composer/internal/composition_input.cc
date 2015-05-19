@@ -29,6 +29,8 @@
 
 #include "composer/internal/composition_input.h"
 
+#include "base/logging.h"
+
 namespace mozc {
 namespace composer {
 

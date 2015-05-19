@@ -41,6 +41,7 @@ namespace win32 {
 
 class UIWindowManager {
  public:
+  static void OnImeDestroy();
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);

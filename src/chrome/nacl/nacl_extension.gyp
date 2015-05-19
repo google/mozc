@@ -39,62 +39,106 @@
     'copy_file': ['python', '../../build_tools/copy_file.py'],
     'product_nacl_i686_dir': '<(DEPTH)/$(builddir_name)/<(configuration_nacl_i686)',
     'product_nacl_x86_64_dir': '<(DEPTH)/$(builddir_name)/<(configuration_nacl_x86_64)',
+    'build_for_nacl_with_args': [
+      'python', '../build_for_nacl.py',
+      '--build_base=<(build_base)',
+      '--depth=<(DEPTH)',
+      '--nacl_sdk_root=<(nacl_sdk_root)',
+      '--target_settings='
+      '[{"configuration": "<(configuration_nacl_i686)",'
+      '  "toolchain_dir": "linux_x86_newlib",'
+      '  "toolchain_prefix": "i686-nacl-"},'
+      ' {"configuration": "<(configuration_nacl_x86_64)",'
+      '  "toolchain_dir": "linux_x86_newlib",'
+      '  "toolchain_prefix": "x86_64-nacl-"}]',
+    ],
+    'nacl_test_targets': [
+      'rewriter/rewriter_test.gyp:rewriter_test',
+      'session/session_test.gyp:session_handler_test',
+    ],
   },
   'targets': [
     {
-      'target_name': 'copy_nacl_session_nexe',
+      'target_name': 'copy_nacl_session_handler_nexe',
       'type': 'none',
       'actions': [
         {
-          'action_name': 'copy_nacl_session_x86_32',
-          'inputs': ['<(gen_out_dir)/build_nacl_session_nexe_done'],
-          'outputs': ['<(gen_out_dir)/nacl/nacl_session_x86_32.nexe'],
+          'action_name': 'copy_nacl_session_handler_x86_32',
+          'inputs': ['<(gen_out_dir)/build_nacl_session_handler_nexe_done'],
+          'outputs': ['<(gen_out_dir)/nacl/nacl_session_handler_x86_32.nexe'],
           'action': [
             '<@(copy_file)',
-            '--reference=<(gen_out_dir)/build_nacl_session_nexe_done',
-            '<(product_nacl_i686_dir)/nacl_session.nexe',
-            '<(gen_out_dir)/nacl/nacl_session_x86_32.nexe',
+            '--reference=<(gen_out_dir)/build_nacl_session_handler_nexe_done',
+            '<(product_nacl_i686_dir)/nacl_session_handler.nexe',
+            '<(gen_out_dir)/nacl/nacl_session_handler_x86_32.nexe',
           ],
         },
         {
-          'action_name': 'copy_nacl_session_x86_64',
-          'inputs': ['<(gen_out_dir)/build_nacl_session_nexe_done'],
-          'outputs': ['<(gen_out_dir)/nacl/nacl_session_x86_64.nexe'],
+          'action_name': 'copy_nacl_session_handler_x86_64',
+          'inputs': ['<(gen_out_dir)/build_nacl_session_handler_nexe_done'],
+          'outputs': ['<(gen_out_dir)/nacl/nacl_session_handler_x86_64.nexe'],
           'action': [
             '<@(copy_file)',
-            '--reference=<(gen_out_dir)/build_nacl_session_nexe_done',
-            '<(product_nacl_x86_64_dir)/nacl_session.nexe',
-            '<(gen_out_dir)/nacl/nacl_session_x86_64.nexe',
+            '--reference=<(gen_out_dir)/build_nacl_session_handler_nexe_done',
+            '<(product_nacl_x86_64_dir)/nacl_session_handler.nexe',
+            '<(gen_out_dir)/nacl/nacl_session_handler_x86_64.nexe',
           ],
         },
       ],
       'dependencies': [
-        'build_nacl_session_nexe',
+        'build_nacl_session_handler_nexe',
       ],
     },
     {
-      'target_name': 'build_nacl_session_nexe',
+      'target_name': 'build_nacl_session_handler_nexe',
       'type': 'none',
       'actions': [
         {
-          'action_name': 'build_nacl_session_nexe',
+          'action_name': 'build_nacl_session_handler_nexe',
           'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_build_nacl_session_nexe',
-                      '<(gen_out_dir)/build_nacl_session_nexe_done'],
+          'outputs': ['dummy_build_nacl_session_handler_nexe',
+                      '<(gen_out_dir)/build_nacl_session_handler_nexe_done'],
           'action': [
-            'python', '../build_for_nacl.py',
-            '--build_base=<(build_base)',
-            '--depth=<(DEPTH)',
+            '<@(build_for_nacl_with_args)',
+            '--touch_when_done=<(gen_out_dir)/build_nacl_session_handler_nexe_done',
+            'chrome/nacl/nacl_executables.gyp:nacl_session_handler.nexe',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'run_nacl_test',
+      'type': 'none',
+      'dependencies': [
+        'build_nacl_test',
+      ],
+      'actions': [
+        {
+          'action_name': 'ran_nacl_test',
+          'inputs': ['<(dummy_input_file)',
+                     '<(gen_out_dir)/build_nacl_test_done'],
+          'outputs': ['dummy_run_nacl_test'],
+          'action': [
+            'python', 'run_nacl_test.py',
             '--nacl_sdk_root=<(nacl_sdk_root)',
-            '--target_settings='
-            '[{"configuration": "<(configuration_nacl_i686)",'
-            '  "toolchain_dir": "linux_x86_newlib",'
-            '  "toolchain_prefix": "i686-nacl-"},'
-            ' {"configuration": "<(configuration_nacl_x86_64)",'
-            '  "toolchain_dir": "linux_x86_newlib",'
-            '  "toolchain_prefix": "x86_64-nacl-"}]',
-            '--touch_when_done=<(gen_out_dir)/build_nacl_session_nexe_done',
-            'chrome/nacl/nacl_session.gyp:nacl_session.nexe',
+            '--test_bin_dir=<(product_nacl_x86_64_dir)',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'build_nacl_test',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'build_nacl_test',
+          'inputs': ['<(dummy_input_file)'],
+          'outputs': ['dummy_build_nacl_test',
+                      '<(gen_out_dir)/build_nacl_test_done'],
+          'action': [
+            '<@(build_for_nacl_with_args)',
+            '--touch_when_done=<(gen_out_dir)/build_nacl_test_nexe_done',
+            '<@(nacl_test_targets)',
           ],
         },
       ],

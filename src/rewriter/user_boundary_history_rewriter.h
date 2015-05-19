@@ -39,9 +39,12 @@ namespace mozc {
 
 class ConversionRequest;
 class ConverterInterface;
-class LRUStorage;
 class Segment;
 class Segments;
+
+namespace storage {
+class LRUStorage;
+}  // namespace storage
 
 class UserBoundaryHistoryRewriter : public RewriterInterface {
  public:
@@ -62,7 +65,7 @@ class UserBoundaryHistoryRewriter : public RewriterInterface {
   // UserBoundaryHistoryRewriter is basically singleton in converter thread.
   // GetStorage() returns the current active storage managed by converter.
   // TODO(taku): This design is ad-hoc. Needs refactoring.
-  static LRUStorage *GetStorage();
+  static mozc::storage::LRUStorage *GetStorage();
 
  private:
   bool ResizeOrInsert(Segments *segments, const ConversionRequest &request,
@@ -72,7 +75,7 @@ class UserBoundaryHistoryRewriter : public RewriterInterface {
               const vector<const Segment *> &segs2);
 
   const ConverterInterface *parent_converter_;
-  scoped_ptr<LRUStorage> storage_;
+  scoped_ptr<mozc::storage::LRUStorage> storage_;
 };
 
 }  // namespace mozc

@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dictionary/file/dictionary_file.h"
+
 #include <cstdio>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
-#include "dictionary/file/dictionary_file.h"
 #include "dictionary/file/dictionary_file_builder.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"

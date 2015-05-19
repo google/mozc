@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <ibus.h>
-
 #include "unix/ibus/mozc_engine_property.h"
 
 #include "base/base.h"
@@ -37,8 +35,9 @@
 namespace mozc {
 namespace ibus {
 
+namespace {
 // The list of properties used in ibus-mozc.
-const MozcEngineProperty kMozcEngineProperties[] = {
+const MozcEngineProperty kMozcEnginePropertiesArray[] = {
   {
     commands::DIRECT,
     "CompositionMode.Direct",
@@ -83,19 +82,7 @@ const MozcEngineProperty kMozcEngineProperties[] = {
   },
 };
 
-const MozcEngineProperty *kMozcEnginePropertyIMEOffState =
-    &kMozcEngineProperties[0];
-const size_t kMozcEnginePropertiesSize = arraysize(kMozcEngineProperties);
-COMPILE_ASSERT(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
-               bad_number_of_props);
-const commands::CompositionMode kMozcEngineInitialCompositionMode =
-    commands::HIRAGANA;
-
-const MozcEngineSwitchProperty kMozcEngineSwitchProperties[] = {};
-const size_t kMozcEngineSwitchPropertiesSize =
-    ARRAYSIZE(kMozcEngineSwitchProperties);
-
-const MozcEngineToolProperty kMozcEngineToolProperties[] = {
+const MozcEngineToolProperty kMozcEngineToolPropertiesArray[] = {
   {
     "Tool.ConfigDialog",
     "config_dialog",
@@ -105,7 +92,7 @@ const MozcEngineToolProperty kMozcEngineToolProperties[] = {
   {
     "Tool.DictionaryTool",
     "dictionary_tool",
-    "Dictionary tool",
+    "Dictionary Tool",
     "dictionary.png",
   },
   {
@@ -133,9 +120,27 @@ const MozcEngineToolProperty kMozcEngineToolProperties[] = {
     NULL,
   },
 };
+}  // namespace
 
+// The list of properties used in ibus-mozc.
+const MozcEngineProperty *kMozcEngineProperties =
+    &kMozcEnginePropertiesArray[0];
+
+const MozcEngineProperty *kMozcEnginePropertyIMEOffState =
+    &kMozcEngineProperties[0];
+const size_t kMozcEnginePropertiesSize = arraysize(kMozcEnginePropertiesArray);
+COMPILE_ASSERT(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
+               bad_number_of_props);
+const commands::CompositionMode kMozcEngineInitialCompositionMode =
+    commands::HIRAGANA;
+
+const MozcEngineSwitchProperty *kMozcEngineSwitchProperties = NULL;
+const size_t kMozcEngineSwitchPropertiesSize = 0;
+
+const MozcEngineToolProperty *kMozcEngineToolProperties =
+    &kMozcEngineToolPropertiesArray[0];
 const size_t kMozcEngineToolPropertiesSize =
-    arraysize(kMozcEngineToolProperties);
+    arraysize(kMozcEngineToolPropertiesArray);
 
 const unsigned int kPageSize = 9;
 }  // namespace ibus

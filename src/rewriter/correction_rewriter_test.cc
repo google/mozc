@@ -31,6 +31,8 @@
 
 #include <string>
 #include "base/base.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "testing/base/public/gunit.h"
@@ -65,11 +67,22 @@ class CorrectionRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
     rewriter_.reset(new CorrectionRewriter(
-        kReadingCorrectionTestItems,
-        arraysize(kReadingCorrectionTestItems)));
+                        kReadingCorrectionTestItems,
+                        arraysize(kReadingCorrectionTestItems)));
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::Config config(default_config_);
+    config.set_use_spelling_correction(true);
+    config::ConfigHandler::SetConfig(config);
+  }
+
+  virtual void TearDown() {
+    config::ConfigHandler::SetConfig(default_config_);
   }
 
   scoped_ptr<CorrectionRewriter> rewriter_;
+
+ private:
+  config::Config default_config_;
 };
 
 TEST_F(CorrectionRewriterTest, CapabilityTest) {
@@ -88,7 +101,15 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
 
   AddCandidate("gekkyokuwo", "GEKKYOKUwo", "gekkyoku", "GEKKYOKU", segment);
 
-  rewriter_->Rewrite(request, &segments);
+  config::Config config;
+  config.set_use_spelling_correction(false);
+  config::ConfigHandler::SetConfig(config);
+
+  EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
+
+  config.set_use_spelling_correction(true);
+  config::ConfigHandler::SetConfig(config);
+  EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
 
   // candidate 0
   EXPECT_EQ(

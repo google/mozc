@@ -138,30 +138,27 @@ bool DeprecatedUserHistoryStorage::Load() {
 
   // read encrypted message and salt from local file
   {
-    Mmap<char> mmap;
+    Mmap mmap;
     if (!mmap.Open(filename_.c_str(), "r")) {
       LOG(ERROR) << "cannot open user history file";
       return false;
     }
 
-    if (mmap.GetFileSize() < kSaltSize) {
+    if (mmap.size() < kSaltSize) {
       LOG(ERROR) << "file size is too small";
       return false;
     }
 
-    if (mmap.GetFileSize() > kMaxFileSize) {
+    if (mmap.size() > kMaxFileSize) {
       LOG(ERROR) << "file size is too big.";
       return false;
     }
 
     // copy salt
-    char tmp[kSaltSize];
-    memcpy(tmp, mmap.begin(), kSaltSize);
-    salt.assign(tmp, kSaltSize);
+    salt.assign(mmap.begin(), kSaltSize);
 
     // copy body
-    input.assign(mmap.begin() + kSaltSize,
-                 mmap.GetFileSize() - kSaltSize);
+    input.assign(mmap.begin() + kSaltSize, mmap.size() - kSaltSize);
   }
 
   string password;

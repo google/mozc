@@ -70,8 +70,6 @@ class PinyinContextInterface {
 
   virtual bool SelectCandidate(size_t index) = 0;
   virtual bool FocusCandidate(size_t index) = 0;
-  virtual bool FocusCandidatePrev() = 0;
-  virtual bool FocusCandidateNext() = 0;
   // Clears specified conversion history.
   // Candidate which is introduced by conversion history is also cleared.
   virtual bool ClearCandidateFromHistory(size_t index) = 0;

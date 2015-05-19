@@ -183,20 +183,6 @@ bool PunctuationContext::FocusCandidate(size_t index) {
   return true;
 }
 
-bool PunctuationContext::FocusCandidatePrev() {
-  if (focused_candidate_index_ == 0) {
-    return true;
-  }
-  return FocusCandidate(focused_candidate_index_ - 1);
-}
-
-bool PunctuationContext::FocusCandidateNext() {
-  if (focused_candidate_index_ + 1 >= candidates_.size()) {
-    return false;
-  }
-  return FocusCandidate(focused_candidate_index_ + 1);
-}
-
 bool PunctuationContext::ClearCandidateFromHistory(size_t index) {
   // This context doesn't use history.
   return true;

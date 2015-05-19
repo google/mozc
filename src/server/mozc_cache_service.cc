@@ -66,8 +66,8 @@ void LogMessageImpl(
 wstring GetMappedFileNameByAddress(LPVOID address) {
   wchar_t path[MAX_PATH];
   const int length = ::GetMappedFileName(::GetCurrentProcess(), address,
-                                         path, ARRAYSIZE(path));
-  if (length == 0 || ARRAYSIZE(path) <= length) {
+                                         path, arraysize(path));
+  if (length == 0 || arraysize(path) <= length) {
     LOG_WIN32_ERROR(L"GetMappedFileName failed.");
     return L"";
   }
@@ -171,7 +171,7 @@ void WINAPI ServiceHandlerProc(DWORD control_code) {
   return; \
 } while (false)
 
-#if defined(_DEBUG)
+#if defined(DEBUG)
 // This function try to make a temporary file in the same directory of the
 // service if the arguments contains "--verify_privilege_restriction".
 // This attempt should fail by ERROR_ACCESS_DENIED since the cache service
@@ -219,7 +219,7 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
 
   return true;
 }
-#endif  // _DEBUG
+#endif  // DEBUG
 
 VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   SERVICE_STATUS_HANDLE service_status_handle = ::RegisterServiceCtrlHandler(

@@ -30,7 +30,6 @@
 #ifndef MOZC_UNIX_IBUS_MOZC_ENGINE_H_
 #define MOZC_UNIX_IBUS_MOZC_ENGINE_H_
 
-#include <ibus.h>
 #include <set>
 #include <vector>
 #include "base/port.h"
@@ -38,10 +37,6 @@
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit_prod.h"
 #include "unix/ibus/engine_interface.h"
-
-#if !defined(OS_CHROMEOS) && IBUS_CHECK_VERSION(1, 2, 1)
-#define USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-#endif  // !OS_CHROMEOS && libibus (>=1.2.1)
 
 namespace mozc {
 
@@ -57,6 +52,9 @@ class LaunchToolTest;
 class MessageTranslatorInterface;
 class PreeditHandlerInterface;
 class PropertyHandlerInterface;
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+class SelectionMonitorInterface;
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
 // Implements EngineInterface and handles signals from IBus daemon.
 // This class mainly does the two things:
@@ -107,19 +105,11 @@ class MozcEngine : public EngineInterface {
   // The callback function to the "disconnected" signal to the bus object.
   static void Disconnected(IBusBus *bus, gpointer user_data);
   // The callback function to the "value-changed" signal to the config object.
-#if IBUS_CHECK_VERSION(1, 3, 99)
   static void ConfigValueChanged(IBusConfig *config,
                                  const gchar *section,
                                  const gchar *name,
                                  GVariant *value,
                                  gpointer user_data);
-#else
-  static void ConfigValueChanged(IBusConfig *config,
-                                 const gchar *section,
-                                 const gchar *name,
-                                 GValue *value,
-                                 gpointer user_data);
-#endif
 
   // Initializes mozc config.
   static void InitConfig(IBusConfig *config);
@@ -144,13 +134,8 @@ class MozcEngine : public EngineInterface {
   // Updates the callback message based on the content of |output|.
   bool ExecuteCallback(IBusEngine *engine, const commands::Output &output);
   // Updates the configuration.
-#if IBUS_CHECK_VERSION(1, 3, 99)
   void UpdateConfig(
       const gchar *section, const gchar *name, GVariant *gvalue);
-#else
-  void UpdateConfig(
-      const gchar *section, const gchar *name, GValue *gvalue);
-#endif
 
   // Launches Mozc tool with appropriate arguments.
   bool LaunchTool(const commands::Output &output) const;
@@ -176,12 +161,9 @@ class MozcEngine : public EngineInterface {
   uint64 last_sync_time_;
   scoped_ptr<KeyEventHandler> key_event_handler_;
   scoped_ptr<client::ClientInterface> client_;
-
-#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-  // A flag to avoid reverting session after deleting surrounding text.
-  // This is a workaround.  See the implementation of ProcessKeyEvent().
-  bool ignore_reset_for_deletion_range_workaround_;
-#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+  scoped_ptr<SelectionMonitorInterface> selection_monitor_;
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
   scoped_ptr<PropertyHandlerInterface> property_handler_;
   scoped_ptr<PreeditHandlerInterface> preedit_handler_;

@@ -32,11 +32,8 @@
 
 #include <windows.h>
 
-#include <deque>
-
 #include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "win32/base/immdev.h"
 
 namespace mozc {
 namespace commands {
@@ -46,6 +43,7 @@ class Output;
 namespace win32 {
 
 struct ImeState;
+class VKBackBasedDeleterQueue;
 class Win32KeyboardInterface;
 
 // This class implements the *deletion_range* mechanism of the Mozc protocol.
@@ -57,13 +55,13 @@ class Win32KeyboardInterface;
 //  1. IME DLL receives an output which contains *deletion_range*.
 //  2. IME DLL enqueues the output so that it will be applied after the
 //     application deletes the characters to be deleted.
-//  3. IME DLL generates ([requied deletion count] + 1) keydown/up pairs
+//  3. IME DLL generates ([required deletion count] + 1) keydown/up pairs
 //     of VK_BACK.
-//  4. As for ([requied deletion count]) keydown/up pairs of VK_BACK will be
-//     handled by the application to delete [requied deletion count] of
+//  4. As for ([required deletion count]) keydown/up pairs of VK_BACK will be
+//     handled by the application to delete [required deletion count] of
 //     characters.
 //  5. The last keydown/up pair of VK_BACK will be consumed by the IME module
-//     and never be sent to the application.  With these keyevents, the IME
+//     and never be sent to the application.  With these key events, the IME
 //     module can interrupt just after character delete events.
 // - VK_BACK down  | Delivered to the application to delete a character.
 // - VK_BACK up    | Delivered to the application to do nothing.
@@ -118,7 +116,7 @@ class VKBackBasedDeleter {
   };
 
   VKBackBasedDeleter();
-  virtual ~VKBackBasedDeleter() {}
+  ~VKBackBasedDeleter();
 
   // For unit test only.
   // You can hook relevant Win32 API calls in this class for unit tests.
@@ -148,11 +146,10 @@ class VKBackBasedDeleter {
  private:
   void UnsetModifiers();
 
-  deque<pair<DeletionWaitState, ClientAction> > wait_queue_;
-
+  scoped_ptr<VKBackBasedDeleterQueue> wait_queue_;
+  scoped_ptr<Win32KeyboardInterface> keyboard_;
   scoped_ptr<ImeState> pending_ime_state_;
   scoped_ptr<mozc::commands::Output> pending_output_;
-  scoped_ptr<Win32KeyboardInterface> keyboard_;
 
   DISALLOW_COPY_AND_ASSIGN(VKBackBasedDeleter);
 };

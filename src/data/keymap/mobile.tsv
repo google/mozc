@@ -4,14 +4,22 @@ Precomposition	Backspace	Revert
 Precomposition	Ctrl Backspace	Undo
 Composition	Backspace	Backspace
 Composition	Delete	Delete
+Composition	Down	MoveCursorToEnd
 Composition	Enter	Commit
 Composition	ESC	Cancel
 Composition	Left	MoveCursorLeft
 Composition	Right	MoveCursorRight
 Composition	Space	Convert
+Composition	Tab	PredictAndConvert
 Conversion	Backspace	Cancel
+Conversion	Down	ConvertNext
 Conversion	Enter	CommitOnlyFirstSegment
 Conversion	ESC	Cancel
 Conversion	Left	SegmentWidthShrink
 Conversion	Right	SegmentWidthExpand
 Conversion	Space	ConvertNext
+Conversion	Shift Tab	ConvertPrev
+Conversion	Tab	PredictAndConvert
+Conversion	Up	ConvertPrev
+Suggestion	Down	PredictAndConvert
+Suggestion	Shift Enter	CommitFirstSuggestion

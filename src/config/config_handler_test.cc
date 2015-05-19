@@ -28,12 +28,15 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
@@ -116,6 +119,27 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   output.mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(input.DebugString(), output.DebugString());
 
+#ifdef OS_ANDROID
+#ifdef CHANNEL_DEV
+  input.Clear();
+  EXPECT_FALSE(input.general_config().has_upload_usage_stats());
+  EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
+  output.Clear();
+  EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+  EXPECT_TRUE(output.general_config().has_upload_usage_stats());
+  EXPECT_TRUE(output.general_config().upload_usage_stats());
+
+  input.Clear();
+  input.mutable_general_config()->set_upload_usage_stats(false);
+  EXPECT_TRUE(input.general_config().has_upload_usage_stats());
+  EXPECT_FALSE(input.general_config().upload_usage_stats());
+  EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
+  output.Clear();
+  EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+  EXPECT_TRUE(output.general_config().has_upload_usage_stats());
+  EXPECT_TRUE(output.general_config().upload_usage_stats());
+#endif  // CHANNEL_DEV
+#endif  // OS_ANDROID
 }
 
 TEST_F(ConfigHandlerTest, SetImposedConfig) {
@@ -143,7 +167,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     {false, Testcase::DO_NOT_IMPOSE, false},
   };
 
-  for (size_t i = 0; i < ARRAYSIZE(kTestcases); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTestcases); ++i) {
     const bool stored_config_value = kTestcases[i].stored_config_value;
     const bool expected = kTestcases[i].expected_value;
 
@@ -197,7 +221,7 @@ TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
   const string config_file = string("config")
-      + Util::SimpleItoa(config::CONFIG_VERSION);
+      + NumberUtil::SimpleItoa(config::CONFIG_VERSION);
 
   const string filename = Util::JoinPath(FLAGS_test_tmpdir,
                                          config_file);
@@ -220,6 +244,7 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
             GET_CONFIG(hangul_config).keyboard_type());
 }
 
+#ifndef OS_ANDROID
 // Temporarily disable this test because Util::CopyFile fails on
 // Android for some reason.
 // TODO(yukawa): Enable this test on Android.
@@ -258,6 +283,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     EXPECT_FALSE(Util::FileExists(dest_path));
   }
 }
+#endif  // !OS_ANDROID
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   config::Config output;
@@ -296,8 +322,8 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
     {"<>=+-/*", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
     {"?!", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
   };
-  EXPECT_EQ(output.character_form_rules_size(), ARRAYSIZE(testcases));
-  for (size_t i = 0; i < ARRAYSIZE(testcases); ++i) {
+  EXPECT_EQ(output.character_form_rules_size(), ARRAYSIZE_UNSAFE(testcases));
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(testcases); ++i) {
     EXPECT_EQ(output.character_form_rules(i).group(),
               testcases[i].group);
     EXPECT_EQ(output.character_form_rules(i).preedit_character_form(),
@@ -310,5 +336,11 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   EXPECT_FALSE(output.use_auto_conversion());
 #endif
 
+#ifdef OS_ANDROID
+#ifdef CHANNEL_DEV
+  EXPECT_TRUE(output.general_config().has_upload_usage_stats());
+  EXPECT_TRUE(output.general_config().upload_usage_stats());
+#endif  // CHANNEL_DEV
+#endif  // OS_ANDROID
 }
-}
+}  // namespace mozc

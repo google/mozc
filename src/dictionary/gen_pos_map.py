@@ -33,9 +33,13 @@
 
 __author__ = "keni"
 
+import optparse
 import sys
 
-BODY = """// Copyright 2009 Google Inc. All Rights Reserved.
+from build_tools import code_generator_util
+
+
+HEADER = """// Copyright 2009 Google Inc. All Rights Reserved.
 // Author: keni
 
 #ifndef MOZC_DICTIONARY_POS_MAP_H_
@@ -43,78 +47,83 @@ BODY = """// Copyright 2009 Google Inc. All Rights Reserved.
 
 // POS conversion rules
 const POSMap kPOSMap[] = {
-%s};
+"""
+FOOTER = """};
 
 #endif  // MOZC_DICTIONARY_POS_MAP_H_
 """
 
-def Escape(str):
-  result = []
-  length = len(str)
-  x = 0
-  for c in str:
-    result.append("\\x%2X" % ord(c))
-  return "".join(result)
+def ParseUserPos(user_pos_file):
+  with open(user_pos_file, 'r') as stream:
+    stream = code_generator_util.SkipLineComment(stream)
+    stream = code_generator_util.ParseColumnStream(stream, num_column=2)
+    return dict((key, enum_value) for key, enum_value in stream)
 
-def GenPOSMap(pos_map_file, user_pos_file):
-  user_pos = {}
-  outputs = []
-  dup = {}
 
-  # target POS must be found in user_pos map
-  for line in open(user_pos_file, "r"):
-    fields = line.split()
-    user_pos[fields[0]] = True
+def GeneratePosMap(third_party_pos_map_file, user_pos_file):
+  user_pos_map = ParseUserPos(user_pos_file)
 
-  # read all POS mapping
-  for line in open(pos_map_file, "r"):
-    line = line.lstrip("\n");
-    if line == '' or line[0] == '#':
+  result = {}
+  with open(third_party_pos_map_file, 'r') as stream:
+    stream = code_generator_util.SkipLineComment(stream)
+    for columns in code_generator_util.ParseColumnStream(stream, num_column=2):
+      third_party_pos_name, mozc_pos = (columns + [None])[:2]
+      if mozc_pos is not None:
+        mozc_pos = user_pos_map[mozc_pos]
+
+      if third_party_pos_name in result:
+        assert (result[third_party_pos_name] == mozc_pos)
+        continue
+
+      result[third_party_pos_name] = mozc_pos
+
+  # Create mozc_pos to mozc_pos map.
+  for key, value in user_pos_map.iteritems():
+    if key in result:
+      assert (result[key] == value)
       continue
+    result[key] = value
 
-    fields = line.split()
-    num_fields = len(fields)
+  return result
 
-    assert(num_fields >= 1 and num_fields <= 3)
 
-    if (num_fields >= 2):
-      assert(user_pos.has_key(fields[1]))
+def OutputPosMap(pos_map, output):
+  output.write(HEADER)
+  for key, value in sorted(pos_map.items()):
+    key = code_generator_util.ToCppStringLiteral(key)
+    if value is None:
+      # Invalid PosType.
+      value = (
+          'static_cast< ::mozc::user_dictionary::UserDictionary::PosType>(-1)')
+    else:
+      value = '::mozc::user_dictionary::UserDictionary::' + value
+    output.write('  { %s, %s },\n' % (key, value))
+  output.write(FOOTER)
 
-    output = ''
-    if len(fields) == 1:
-      output = '  { "%s", NULL }, ' % Escape(fields[0])
-    elif len(fields) >= 2:
-      output = '  { "%s", "%s" }, ' % (Escape(fields[0]),
-                                       Escape(fields[1]))
 
-    # For example, when ATOK has POS "FOO", and MS-IME has the
-    # same POS "FOO", we assume that these two POSes can be
-    # translated into the same Mozc POS.
-    # We allow duplicate source POSes in the pos_map, but target pos
-    # for these POSes must be the same.
-    if dup.has_key(fields[0]):
-      assert(dup[fields[0]] == output)
-      continue
+def ParseOptions():
+  parser = optparse.OptionParser()
+  # Input: user_pos.def, third_party_pos_map.def
+  # Output: pos_map.h
+  parser.add_option('--user_pos_file', dest='user_pos_file',
+                    help='Path to user_pos.def')
+  parser.add_option('--third_party_pos_map_file',
+                    dest='third_party_pos_map_file',
+                    help='Path to third_party_pos_map.def')
+  parser.add_option('--output', dest='output',
+                    help='Path to output pos_map.h')
+  return parser.parse_args()[0]
 
-    outputs.append(output)
-    dup[fields[0]] = output
-
-  # Make a Mozc to Mozc mapping rule.
-  for line in open(user_pos_file, "r"):
-    fields = line.split()
-    output = ''
-    if not dup.has_key(fields[0]):
-      outputs.append('  { "%s", "%s" }, ' % (Escape(fields[0]),
-                                             Escape(fields[0])))
-
-  outputs.sort()
-  return "\n".join(outputs) + "\n"
 
 def main():
-  user_pos_file = sys.argv[1]
-  pos_map_file = sys.argv[2]
-  pos_map = GenPOSMap(pos_map_file, user_pos_file)
-  print BODY % pos_map
+  options = ParseOptions()
+
+  pos_map = GeneratePosMap(options.third_party_pos_map_file,
+                           options.user_pos_file)
+
+  with open(options.output, 'w') as stream:
+    OutputPosMap(pos_map, stream)
+
 
 if __name__ == '__main__':
   main()

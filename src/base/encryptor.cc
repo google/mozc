@@ -45,7 +45,11 @@
 #include <openssl/aes.h>
 #endif  // HAVE_OPENSSL
 
+#ifdef OS_ANDROID
+#include "base/android_jni_proxy.h"
+#endif  // OS_ANDROID
 
+#include "base/logging.h"
 #include "base/password_manager.h"
 #include "base/util.h"
 
@@ -58,7 +62,11 @@
 namespace mozc {
 namespace {
 
-#if defined(OS_WINDOWS)
+#if defined(OS_ANDROID)
+using jni::JavaEncryptorProxy;
+const size_t kBlockSize = JavaEncryptorProxy::kBlockSizeInBytes;
+const size_t kKeySize = JavaEncryptorProxy::kKeySizeInBits;
+#elif defined(OS_WINDOWS)
 const size_t kBlockSize = 16;  // 128bit
 const size_t kKeySize = 256;   // key length in bit
 // Use CBC mode:
@@ -139,7 +147,9 @@ string GetMSCryptDeriveKeyWithSHA1(const string &password,
 }  // namespace
 
 struct KeyData {
-#if defined(OS_WINDOWS)
+#if defined(OS_ANDROID)
+  uint8 key[kKeySize / 8];
+#elif defined(OS_WINDOWS)
   HCRYPTPROV prov;
   HCRYPTHASH hash;
   HCRYPTKEY  key;
@@ -156,7 +166,7 @@ size_t Encryptor::Key::block_size() const {
   return kBlockSize;
 }
 
-const uint8* Encryptor::Key::iv() const {
+const uint8 *Encryptor::Key::iv() const {
   return iv_.get();
 }
 
@@ -306,6 +316,18 @@ bool Encryptor::Key::DeriveFromPassword(const string &password,
     memset(iv_.get(), '\0', iv_size());
   }
 
+#ifdef OS_ANDROID
+  size_t size = sizeof(GetKeyData()->key);
+  if (!JavaEncryptorProxy::DeriveFromPassword(
+          password, salt, GetKeyData()->key, &size)) {
+    LOG(WARNING) << "Failed to generate key.";
+    return false;
+  }
+  if (size != sizeof(GetKeyData()->key)) {
+    LOG(WARNING) << "Key size is changed: " << size;
+    return false;
+  }
+#else
   const string key = GetMSCryptDeriveKeyWithSHA1(password, salt);
   DCHECK_EQ(40, key.size());   // SHA1 is 160bit hash, so 160*2/8 = 40byte
 
@@ -315,6 +337,7 @@ bool Encryptor::Key::DeriveFromPassword(const string &password,
   AES_set_decrypt_key(reinterpret_cast<const uint8 *>(key.data()),
                       key_size(),
                       &(GetKeyData()->decrypt_key));
+#endif  // OS_ANDROID
 
   is_available_ = true;
 
@@ -385,16 +408,14 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
 
   const size_t enc_size = key.GetEncryptedSize(*buf_size);
 
-#ifndef OS_WINDOWS
-  // perform PKCS#5 padding
-  const size_t padding_size = enc_size - *buf_size;
-  const uint8 padding_value = static_cast<uint8>(padding_size);
-  for (size_t i = *buf_size; i < enc_size; ++i) {
-    buf[i] = static_cast<char>(padding_value);
+#if defined(OS_ANDROID)
+  if (!JavaEncryptorProxy::Encrypt(
+          key.GetKeyData()->key, key.iv(), enc_size, buf, buf_size)) {
+    LOG(ERROR) << "CryptEncrypt failed";
+    return false;
   }
-#endif  // OS_WINDOWS
-
-#ifdef OS_WINDOWS
+  return true;
+#elif defined(OS_WINDOWS)
   uint32 size = *buf_size;
   if (!::CryptEncrypt(key.GetKeyData()->key,
                       0, TRUE, 0,
@@ -405,8 +426,15 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
     return false;
   }
   *buf_size = enc_size;
+  return true;
+#elif defined(HAVE_OPENSSL)
+  // perform PKCS#5 padding
+  const size_t padding_size = enc_size - *buf_size;
+  const uint8 padding_value = static_cast<uint8>(padding_size);
+  for (size_t i = *buf_size; i < enc_size; ++i) {
+    buf[i] = static_cast<char>(padding_value);
+  }
 
-#else  // OS_WINDOWS
   // iv is used inside AES_cbc_encrypt, so must copy it.
   scoped_array<uint8> iv(new uint8[key.iv_size()]);
   memcpy(iv.get(), key.iv(), key.iv_size());  // copy iv
@@ -416,9 +444,12 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
                   enc_size, &(key.GetKeyData()->encrypt_key),
                   iv.get(), AES_ENCRYPT);
   *buf_size = enc_size;
-
-#endif  // OS_WINDOWS
   return true;
+#else
+// None of OS_ANDROID/OS_WINDOWS/HAVE_OPENSSL is defined.
+#error "Encryptor does not support your platform."
+  return false;
+#endif
 }
 
 bool Encryptor::DecryptArray(const Encryptor::Key &key,
@@ -438,21 +469,27 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
     return false;
   }
 
-
-  size_t size = *buf_size;
-
-#ifdef OS_WINDOWS
+#if defined(OS_ANDROID)
+  if (!JavaEncryptorProxy::Decrypt(
+          key.GetKeyData()->key, key.iv(), *buf_size, buf, buf_size)) {
+    LOG(ERROR) << "CryptDecrypt failed";
+    return false;
+  }
+  return true;
+#elif defined(OS_WINDOWS)
+  DWORD size = static_cast<DWORD>(*buf_size);
   if (!::CryptDecrypt(key.GetKeyData()->key,
                       0, TRUE, 0,
                       reinterpret_cast<uint8 *>(buf),
-                      reinterpret_cast<DWORD *>(&size))) {
+                      &size)) {
     LOG(ERROR) << "CryptDecrypt failed: " << ::GetLastError();
     return false;
   }
 
   *buf_size = size;
-
-#else  // OS_WINDOWS
+  return true;
+#elif defined(HAVE_OPENSSL)
+  size_t size = *buf_size;
   // iv is used inside AES_cbc_encrypt, so must copy it.
   scoped_array<uint8> iv(new uint8[key.iv_size()]);
   memcpy(iv.get(), key.iv(), key.iv_size());  // copy iv
@@ -482,9 +519,12 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
     }
   }
   *buf_size -= padding_size;   // remove padding part
-
-#endif  // OS_WINDOWS
   return true;
+#else
+// None of OS_ANDROID/OS_WINDOWS/HAVE_OPENSSL is defined.
+#error "Encryptor does not support your platform."
+  return false;
+#endif
 }
 
 // Protect|Unprotect Data
@@ -597,8 +637,10 @@ bool Encryptor::UnprotectData(const string &cipher_text,
 #else  // OS_WINDOWS | OS_MACOSX
 
 namespace {
+
 const size_t kSaltSize = 32;
-}
+
+}  // namespace
 
 // Use AES to emulate ProtectData
 bool Encryptor::ProtectData(const string &plain_text, string *cipher_text) {
@@ -673,4 +715,5 @@ bool Encryptor::UnprotectData(const string &cipher_text, string *plain_text) {
   return true;
 }
 #endif  // OS_WINDOWS
-}  // mozc
+
+}  // namespace mozc

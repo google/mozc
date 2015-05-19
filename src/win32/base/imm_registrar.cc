@@ -99,7 +99,7 @@ HRESULT SetLayoutDisplayName(const KeyboardLayoutID &klid,
   }
 
   wchar_t layout_name[MAX_PATH];
-  HRESULT hr = StringCchPrintf(layout_name, ARRAYSIZE(layout_name),
+  HRESULT hr = StringCchPrintf(layout_name, arraysize(layout_name),
                                kLayoutDisplayNamePattern,
                                layout_display_name_resource_path.c_str(),
                                layout_display_name_resource_id);

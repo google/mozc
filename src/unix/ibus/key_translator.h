@@ -30,12 +30,11 @@
 #ifndef MOZC_UNIX_IBUS_KEY_TRANSLATOR_H_
 #define MOZC_UNIX_IBUS_KEY_TRANSLATOR_H_
 
-#include <ibus.h>
-
 #include <map>
 
 #include "base/base.h"
 #include "session/commands.pb.h"
+#include "unix/ibus/ibus_header.h"
 
 namespace mozc {
 namespace ibus {

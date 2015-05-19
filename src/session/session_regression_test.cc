@@ -31,26 +31,34 @@
 // conversion may differ from previous versions.
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
 #include "rewriter/rewriter_interface.h"
+#include "session/commands.pb.h"
+#include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/japanese_session_factory.h"
 #include "session/key_parser.h"
+#include "session/request_test_util.h"
 #include "session/session.h"
 #include "session/session_converter_interface.h"
 #include "session/session_handler.h"
 #include "session/session_test_util.h"
-#include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 DECLARE_bool(use_history_rewriter);
+
 
 namespace mozc {
 
@@ -81,10 +89,16 @@ class SessionRegressionTest : public testing::Test {
  protected:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    session::SessionFactoryManager::SetSessionFactory(&session_factory_);
 
     orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
     FLAGS_use_history_rewriter = true;
+
+    // Note: engine must be created after setting all the flags, as it
+    // internally depends on global flags, e.g., for creation of rewriters.
+    engine_.reset(EngineFactory::Create());
+
+    session_factory_.reset(new session::JapaneseSessionFactory(engine_.get()));
+    session::SessionFactoryManager::SetSessionFactory(session_factory_.get());
 
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -129,17 +143,18 @@ class SessionRegressionTest : public testing::Test {
   }
 
   void ResetSession() {
-    session_.reset(dynamic_cast<session::Session *>(handler_->NewSession()));
+    session_.reset(static_cast<session::Session *>(handler_->NewSession()));
     table_.reset(new composer::Table());
-    table_.get()->Initialize();
-    session_.get()->SetTable(table_.get());
+    table_->Initialize();
+    session_->SetTable(table_.get());
   }
 
   bool orig_use_history_rewriter_;
+  scoped_ptr<EngineInterface> engine_;
   scoped_ptr<SessionHandler> handler_;
   scoped_ptr<session::Session> session_;
   scoped_ptr<composer::Table> table_;
-  session::JapaneseSessionFactory session_factory_;
+  scoped_ptr<session::JapaneseSessionFactory> session_factory_;
 };
 
 
@@ -448,6 +463,75 @@ TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggesion) {
   EXPECT_EQ(suggestion_first_candidate, prediction_commit_result);
 }
 
+TEST_F(SessionRegressionTest, AutoConversionTest) {
+  // Default mode
+  {
+    ResetSession();
+    commands::Command command;
+
+    InitSessionToPrecomposition(session_.get());
+
+    const char kInputKeys[] = "123456.7";
+    for (size_t i = 0; kInputKeys[i]; ++i) {
+      command.Clear();
+      commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
+      key_event->set_key_code(kInputKeys[i]);
+      key_event->set_key_string(string(1, kInputKeys[i]));
+      session_->InsertCharacter(&command);
+    }
+
+    EXPECT_EQ(session::ImeContext::COMPOSITION, session_->context().state());
+  }
+
+  // Auto conversion with KUTEN
+  {
+    ResetSession();
+    commands::Command command;
+
+    InitSessionToPrecomposition(session_.get());
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_use_auto_conversion(true);
+    config::ConfigHandler::SetConfig(config);
+    session_->ReloadConfig();
+
+    const char kInputKeys[] = "aiueo.";
+    for (size_t i = 0; i < kInputKeys[i]; ++i) {
+      command.Clear();
+      commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
+      key_event->set_key_code(kInputKeys[i]);
+      key_event->set_key_string(string(1, kInputKeys[i]));
+      session_->InsertCharacter(&command);
+    }
+
+    EXPECT_EQ(session::ImeContext::CONVERSION, session_->context().state());
+  }
+
+  // Auto conversion with KUTEN, but do not convert in numerical input
+  {
+    ResetSession();
+    commands::Command command;
+
+    InitSessionToPrecomposition(session_.get());
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_use_auto_conversion(true);
+    config::ConfigHandler::SetConfig(config);
+    session_->ReloadConfig();
+
+    const char kInputKeys[] = "1234.";
+    for (size_t i = 0; i < kInputKeys[i]; ++i) {
+      command.Clear();
+      commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
+      key_event->set_key_code(kInputKeys[i]);
+      key_event->set_key_string(string(1, kInputKeys[i]));
+      session_->InsertCharacter(&command);
+    }
+
+    EXPECT_EQ(session::ImeContext::COMPOSITION, session_->context().state());
+  }
+}
+
 TEST_F(SessionRegressionTest, Transliteration_Issue2330463) {
   {
     ResetSession();
@@ -521,4 +605,30 @@ TEST_F(SessionRegressionTest, Transliteration_Issue6209563) {
   }
 }
 
+TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
+  // This is the test for http://b/6934881.
+  // Pending char chunk remains after committing transliteration.
+  session::ScopedMobilePreference mobile_preference;
+
+  InitSessionToPrecomposition(session_.get());
+
+  commands::Command command;
+  InsertCharacterChars("ssh", &command);
+  // "っｓｈ"
+  EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88", GetComposition(command));
+
+  command.Clear();
+  command.mutable_input()->mutable_command()->set_type(
+      commands::SessionCommand::SUBMIT_CANDIDATE);
+  const int kHiraganaId = -1;
+  command.mutable_input()->mutable_command()->set_id(kHiraganaId);
+  session_->SendCommand(&command);
+
+  EXPECT_TRUE(command.output().has_result());
+  EXPECT_FALSE(command.output().has_preedit());
+
+  // "っｓｈ"
+  EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88",
+            command.output().result().value());
+}
 }  // namespace mozc

@@ -36,8 +36,13 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/logging.h"
 
 namespace mozc {
+namespace storage {
+
+// Note: this class keeps some resources inside of the Key/Value, even if
+// such a entry is erased. Be careful to use for such classes.
 template<typename Key, typename Value>
 class LRUCache {
  public:
@@ -100,7 +105,6 @@ class LRUCache {
   const Element *Tail() const { return lru_tail_; }
 
  private:
-
   // Allocates a new block containing next_block_size_ elements, updates
   // next_block_size_ appropriately, and pushes the elements in the new block
   // onto the free list.
@@ -401,5 +405,7 @@ template<typename Key, typename Value>
 size_t LRUCache<Key, Value>::Size() const {
   return table_->size();
 }
-}   // mozc
+
+}  // namespace storage
+}  // namespace mozc
 #endif  // MOZC_STORAGE_LRU_CACHE_H_

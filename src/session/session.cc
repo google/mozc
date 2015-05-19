@@ -31,7 +31,12 @@
 
 #include "session/session.h"
 
+#include <string>
+#include <vector>
+
+#include "base/base.h"
 #include "base/crash_report_util.h"
+#include "base/logging.h"
 #include "base/port.h"
 #include "base/process.h"
 #include "base/singleton.h"
@@ -40,18 +45,20 @@
 #include "base/version.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 // TODO(komatsu): Delete the next line by refactoring of the initializer.
 #include "converter/converter_interface.h"
+#include "engine/engine_interface.h"
 #include "rewriter/calculator/calculator_interface.h"
-#include "session/internal/keymap.h"
+#include "session/commands.pb.h"
+#include "session/internal/ime_context.h"
+#include "session/internal/key_event_transformer.h"
 #include "session/internal/keymap-inl.h"
+#include "session/internal/keymap.h"
 #include "session/internal/keymap_factory.h"
 #include "session/internal/session_output.h"
-#include "session/internal/key_event_transformer.h"
 #include "session/key_event_util.h"
-#include "session/request_handler.h"
 #include "session/session_converter.h"
 
 namespace mozc {
@@ -158,11 +165,43 @@ bool IsPureSpaceKey(const commands::KeyEvent &key) {
   }
   return true;
 }
+
+// Set session state to the given state and also update related status.
+void SetSessionState(const ImeContext::State state, ImeContext *context) {
+  const ImeContext::State prev_state = context->state();
+  context->set_state(state);
+  switch (state) {
+    case ImeContext::DIRECT:
+    case ImeContext::PRECOMPOSITION:
+      context->mutable_composer()->Reset();
+      break;
+    case ImeContext::CONVERSION:
+      context->mutable_composer()->ResetInputMode();
+      break;
+    case ImeContext::COMPOSITION:
+      if (prev_state == ImeContext::PRECOMPOSITION) {
+        // NOTE: In case of state change including commitment, state change
+        // doesn't happen directly at once from CONVERSION to COMPOSITION.
+        // Actual state change is CONVERSION to PRECOMPOSITION at first,
+        // followed by PRECOMPOSITION to COMPOSITION.
+        // However in this case we can only get one SendCaretRectangle
+        // because the state change is executed atomically.
+        context->mutable_composition_rectangle()->CopyFrom(
+            context->caret_rectangle());
+      }
+      break;
+    default:
+      // Do nothing.
+      break;
+  }
+}
+
 }  // namespace
 
 // TODO(komatsu): Remove these argument by using/making singletons.
-Session::Session()
-    : context_(new ImeContext),
+Session::Session(EngineInterface *engine)
+    : engine_(engine),
+      context_(new ImeContext),
       prev_context_(NULL) {
   InitContext(context_.get());
 }
@@ -172,9 +211,9 @@ Session::~Session() {}
 void Session::InitContext(ImeContext *context) const {
   context->set_create_time(Util::GetTime());
   context->set_last_command_time(0);
-  context->set_composer(new composer::Composer);
+  context->set_composer(new composer::Composer(NULL, context->GetRequest()));
   context->set_converter(
-      new SessionConverter(ConverterFactory::GetConverter()));
+      new SessionConverter(engine_->GetConverter(), context->GetRequest()));
 #ifdef OS_WINDOWS
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
@@ -186,25 +225,6 @@ void Session::InitContext(ImeContext *context) const {
   UpdateConfig(config::ConfigHandler::GetConfig(), context);
 }
 
-void Session::SetSessionState(const ImeContext::State state) {
-  const ImeContext::State prev_state = context_->state();
-  context_->set_state(state);
-  if (state == ImeContext::DIRECT ||
-      state == ImeContext::PRECOMPOSITION) {
-    context_->mutable_composer()->Reset();
-  } else if (state == ImeContext::CONVERSION) {
-    context_->mutable_composer()->ResetInputMode();
-  } else if (state == ImeContext::COMPOSITION) {
-    if (prev_state == ImeContext::PRECOMPOSITION) {
-      // NOTE: In case of state change including commitment, state change does
-      // not happen directly at once from CONVERSION to COMPOSITION. Actual path
-      // is CONVERSION to PRECOMPOSITION at first, then PRECOMPOSITION to
-      // COMPOSITION. However in this case we can only get one
-      // SendCaretRectangle because above state change is executed atomically.
-      composition_rectangle_.CopyFrom(caret_rectangle_);
-    }
-  }
-}
 
 void Session::PushUndoContext() {
   // TODO(komatsu): Support multiple undo.
@@ -228,7 +248,7 @@ void Session::ClearUndoContext() {
 
 void Session::EnsureIMEIsOn() {
   if (context_->state() == ImeContext::DIRECT) {
-    SetSessionState(ImeContext::PRECOMPOSITION);
+    SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
   }
 }
 
@@ -905,7 +925,7 @@ bool Session::IMEOn(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   ClearUndoContext();
 
-  SetSessionState(ImeContext::PRECOMPOSITION);
+  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
   if (command->input().has_key() && command->input().key().has_mode()) {
     ApplyInputMode(
         command->input().key().mode(), context_->mutable_composer());
@@ -923,7 +943,7 @@ bool Session::IMEOff(commands::Command *command) {
   // Reset the context.
   context_->mutable_converter()->Reset();
 
-  SetSessionState(ImeContext::DIRECT);
+  SetSessionState(ImeContext::DIRECT, context_.get());
   OutputMode(command);
   return true;
 }
@@ -957,16 +977,16 @@ bool Session::DoNothing(commands::Command *command) {
       context_->mutable_converter()->Reset();
       Output(command);
     }
-  } else if (context_->state() == ImeContext::COMPOSITION) {
-    OutputComposition(command);
-  } else if (context_->state() == ImeContext::CONVERSION) {
+  }
+
+  if (context_->state() & (ImeContext::COMPOSITION | ImeContext::CONVERSION)) {
     Output(command);
   }
   return true;
 }
 
 bool Session::Abort(commands::Command *command) {
-#ifdef _DEBUG
+#if defined(DEBUG) && !defined(__native_client__)
   // Abort the server without any finalization.  This is only for
   // debugging.
   command->mutable_output()->set_consumed(true);
@@ -976,7 +996,7 @@ bool Session::Abort(commands::Command *command) {
   return true;
 #else
   return DoNothing(command);
-#endif
+#endif  // defined(DEBUG) && !defined(__native_client__)
 }
 
 bool Session::Revert(commands::Command *command) {
@@ -997,7 +1017,7 @@ bool Session::Revert(commands::Command *command) {
     context_->mutable_converter()->Cancel();
   }
 
-  SetSessionState(ImeContext::PRECOMPOSITION);
+  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
   OutputMode(command);
   return true;
 }
@@ -1013,7 +1033,7 @@ bool Session::ResetContext(commands::Command *command) {
 
   context_->mutable_converter()->Reset();
 
-  SetSessionState(ImeContext::PRECOMPOSITION);
+  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
   OutputMode(command);
   return true;
 }
@@ -1025,6 +1045,11 @@ void Session::SetTable(const composer::Table *table) {
 
 void Session::ReloadConfig() {
   UpdateConfig(config::ConfigHandler::GetConfig(), context_.get());
+}
+
+void Session::SetRequest(const commands::Request &request) {
+  ClearUndoContext();
+  context_->SetRequest(request);
 }
 
 // static
@@ -1128,7 +1153,7 @@ bool Session::ConvertReverse(commands::Command *command) {
 
   command->mutable_output()->set_consumed(true);
 
-  SetSessionState(ImeContext::CONVERSION);
+  SetSessionState(ImeContext::CONVERSION, context_.get());
   context_->mutable_converter()->SetCandidateListVisible(true);
   Output(command);
   return true;
@@ -1221,7 +1246,7 @@ bool Session::SelectCandidateInternal(commands::Command *command) {
 
   context_->mutable_converter()->CandidateMoveToId(
       command->input().command().id(), context_->composer());
-  SetSessionState(ImeContext::CONVERSION);
+  SetSessionState(ImeContext::CONVERSION, context_.get());
 
   return true;
 }
@@ -1284,13 +1309,12 @@ bool Session::CommitCandidate(commands::Command *command) {
   if (!context_->converter().IsActive()) {
     // If the converter is not active (ie. the segment size was one.),
     // the state should be switched to precomposition.
-    SetSessionState(ImeContext::PRECOMPOSITION);
+    SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
 
     // Get suggestion if zero_query_suggestion is set.
     // zero_query_suggestion is usually set where the client is a
     // mobile.
-    // TODO(komatsu): Perform the refactoring when the internal tag is removed.
-    if (GET_REQUEST(zero_query_suggestion)) {
+    if (context_->GetRequest().zero_query_suggestion()) {
       context_->mutable_converter()->Suggest(context_->composer());
     }
   }
@@ -1382,7 +1406,7 @@ bool Session::InsertCharacter(commands::Command *command) {
     }
 
     context_->mutable_composer()->InsertCharacterKeyEvent(key);
-    SetSessionState(ImeContext::COMPOSITION);
+    SetSessionState(ImeContext::COMPOSITION, context_.get());
     const bool result = Commit(command);
     ClearUndoContext();  // UndoContext must be invalidated.
     return result;
@@ -1400,7 +1424,7 @@ bool Session::InsertCharacter(commands::Command *command) {
   context_->composer().GetQueryForConversion(&composition);
   bool should_commit = (context_->state() == ImeContext::CONVERSION);
 
-  if (GET_REQUEST(space_on_alphanumeric) ==
+  if (context_->GetRequest().space_on_alphanumeric() ==
       commands::Request::SPACE_OR_CONVERT_COMMITING_COMPOSITION &&
       context_->state() == ImeContext::COMPOSITION &&
       // TODO(komatsu): Support FullWidthSpace
@@ -1424,7 +1448,7 @@ bool Session::InsertCharacter(commands::Command *command) {
       result->mutable_key()->append(composition);
       result->mutable_value()->append(conversion);
 
-      SetSessionState(ImeContext::PRECOMPOSITION);
+      SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
       Output(command);
       return true;
     }
@@ -1441,12 +1465,17 @@ bool Session::InsertCharacter(commands::Command *command) {
 
   ExpandCompositionForCalculator(command);
 
-  SetSessionState(ImeContext::COMPOSITION);
+  SetSessionState(ImeContext::COMPOSITION, context_.get());
   if (CanStartAutoConversion(key)) {
     return Convert(command);
   }
 
-  if (context_->mutable_converter()->Suggest(context_->composer())) {
+  ConversionPreferences conversion_preferences =
+      context_->converter().conversion_preferences();
+  conversion_preferences.request_suggestion =
+      command->input().request_suggestion();
+  if (context_->mutable_converter()->SuggestWithPreferences(
+          context_->composer(), conversion_preferences)) {
     DCHECK(context_->converter().IsActive());
     Output(command);
     return true;
@@ -1477,7 +1506,8 @@ bool Session::IsFullWidthInsertSpace(const commands::Input &input) const {
   scoped_ptr<composer::Composer> temporary_composer;
   if (input.has_key() && input.key().has_mode()) {
     // Allocate an object only when it is necessary.
-    temporary_composer.reset(new composer::Composer);
+    temporary_composer.reset(new composer::Composer(
+        NULL, commands::Request::default_instance()));
     // Copy the current composer state just in case.
     temporary_composer->CopyFrom(context_->composer());
     ApplyInputMode(input.key().mode(), temporary_composer.get());
@@ -1640,7 +1670,7 @@ bool Session::EditCancel(commands::Command *command) {
   // To work around b/5034698, we need to use OutputMode() unless the
   // original text is restored to cancel reconversion.
   const bool text_restored = TryCancelConvertReverse(command);
-  SetSessionState(ImeContext::PRECOMPOSITION);
+  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
   if (text_restored) {
     Output(command);
   } else {
@@ -1679,7 +1709,7 @@ bool Session::EditCancelAndIMEOff(commands::Command *command) {
   // Reset the context.
   context_->mutable_converter()->Reset();
 
-  SetSessionState(ImeContext::DIRECT);
+  SetSessionState(ImeContext::DIRECT, context_.get());
   Output(command);
   return true;
 }
@@ -1699,12 +1729,11 @@ bool Session::Commit(commands::Command *command) {
     context_->mutable_converter()->Commit();
   }
 
-  SetSessionState(ImeContext::PRECOMPOSITION);
+  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
 
   // Get suggestion if zero_query_suggestion is set.
   // zero_query_suggestion is usually set where the client is a mobile.
-  // TODO(komatsu): Perform the refactoring.
-  if (GET_REQUEST(zero_query_suggestion)) {
+  if (context_->GetRequest().zero_query_suggestion()) {
     context_->mutable_converter()->Suggest(context_->composer());
   }
 
@@ -1749,12 +1778,11 @@ bool Session::CommitFirstSuggestion(commands::Command *command) {
   context_->mutable_converter()->CommitSuggestionByIndex(
       kFirstIndex, context_->composer(), &committed_key_size);
 
-  SetSessionState(ImeContext::PRECOMPOSITION);
+  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
 
   // Get suggestion if zero_query_suggestion is set.
   // zero_query_suggestion is usually set where the client is a mobile.
-  // TODO(komatsu): Perform the refactoring.
-  if (GET_REQUEST(zero_query_suggestion)) {
+  if (context_->GetRequest().zero_query_suggestion()) {
     context_->mutable_converter()->Suggest(context_->composer());
   }
 
@@ -1777,12 +1805,11 @@ bool Session::CommitSegment(commands::Command *command) {
   if (!context_->converter().IsActive()) {
     // If the converter is not active (ie. the segment size was one.),
     // the state should be switched to precomposition.
-    SetSessionState(ImeContext::PRECOMPOSITION);
+    SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
 
     // Get suggestion if zero_query_suggestion is set.
     // zero_query_suggestion is usually set where the client is a mobile.
-    // TODO(komatsu): Perform the refactoring.
-    if (GET_REQUEST(zero_query_suggestion)) {
+    if (context_->GetRequest().zero_query_suggestion()) {
       context_->mutable_converter()->Suggest(context_->composer());
     }
   }
@@ -1816,7 +1843,7 @@ bool Session::ConvertToTransliteration(
           context_->composer(), type)) {
     return false;
   }
-  SetSessionState(ImeContext::CONVERSION);
+  SetSessionState(ImeContext::CONVERSION, context_.get());
   Output(command);
   return true;
 }
@@ -1851,7 +1878,7 @@ bool Session::SwitchKanaType(commands::Command *command) {
   if (!context_->mutable_converter()->SwitchKanaType(context_->composer())) {
     return false;
   }
-  SetSessionState(ImeContext::CONVERSION);
+  SetSessionState(ImeContext::CONVERSION, context_.get());
   Output(command);
   return true;
 }
@@ -2013,7 +2040,7 @@ bool Session::ConvertToHalfWidth(commands::Command *command) {
           context_->composer())) {
     return false;
   }
-  SetSessionState(ImeContext::CONVERSION);
+  SetSessionState(ImeContext::CONVERSION, context_.get());
   Output(command);
   return true;
 }
@@ -2125,7 +2152,8 @@ bool Session::Convert(commands::Command *command) {
       command->input().key().special_key() == commands::KeyEvent::SPACE) {
     // TODO(komatsu): Consider FullWidth Space too.
     if (!Util::EndsWith(composition, " ")) {
-      if (GET_REQUEST(space_on_alphanumeric) == commands::Request::COMMIT) {
+      if (context_->GetRequest().space_on_alphanumeric() ==
+          commands::Request::COMMIT) {
         // Space is committed with the composition
         context_->mutable_composer()->InsertCharacterPreedit(" ");
         return Commit(command);
@@ -2153,7 +2181,7 @@ bool Session::Convert(commands::Command *command) {
     return true;
   }
 
-  SetSessionState(ImeContext::CONVERSION);
+  SetSessionState(ImeContext::CONVERSION, context_.get());
   Output(command);
   return true;
 }
@@ -2171,7 +2199,7 @@ bool Session::ConvertWithoutHistory(commands::Command *command) {
     return true;
   }
 
-  SetSessionState(ImeContext::CONVERSION);
+  SetSessionState(ImeContext::CONVERSION, context_.get());
   Output(command);
   return true;
 }
@@ -2268,7 +2296,7 @@ bool Session::Delete(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   context_->mutable_composer()->Delete();
   if (context_->mutable_composer()->Empty()) {
-    SetSessionState(ImeContext::PRECOMPOSITION);
+    SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
     OutputMode(command);
   } else if (context_->mutable_converter()->Suggest(context_->composer())) {
     DCHECK(context_->converter().IsActive());
@@ -2284,7 +2312,7 @@ bool Session::Backspace(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   context_->mutable_composer()->Backspace();
   if (context_->mutable_composer()->Empty()) {
-    SetSessionState(ImeContext::PRECOMPOSITION);
+    SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
     OutputMode(command);
   } else if (context_->mutable_converter()->Suggest(context_->composer())) {
     DCHECK(context_->converter().IsActive());
@@ -2391,7 +2419,7 @@ bool Session::ConvertPrevPage(commands::Command *command) {
 bool Session::ConvertCancel(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
 
-  SetSessionState(ImeContext::COMPOSITION);
+  SetSessionState(ImeContext::COMPOSITION, context_.get());
   context_->mutable_converter()->Cancel();
   if (context_->mutable_converter()->Suggest(context_->composer())) {
     DCHECK(context_->converter().IsActive());
@@ -2409,7 +2437,7 @@ bool Session::PredictAndConvert(commands::Command *command) {
 
   command->mutable_output()->set_consumed(true);
   if (context_->mutable_converter()->Predict(context_->composer())) {
-    SetSessionState(ImeContext::CONVERSION);
+    SetSessionState(ImeContext::CONVERSION, context_.get());
     Output(command);
   } else {
     OutputComposition(command);
@@ -2454,8 +2482,8 @@ void Session::Output(commands::Command *command) {
 
 void Session::OutputWindowLocation(commands::Command *command) const {
   if (!(command->output().has_candidates() &&
-        caret_rectangle_.IsInitialized() &&
-        composition_rectangle_.IsInitialized())) {
+        context_->caret_rectangle().IsInitialized() &&
+        context_->composition_rectangle().IsInitialized())) {
     return;
   }
 
@@ -2464,10 +2492,11 @@ void Session::OutputWindowLocation(commands::Command *command) const {
   commands::Candidates *candidates =
       command->mutable_output()->mutable_candidates();
 
-  candidates->mutable_caret_rectangle()->CopyFrom(caret_rectangle_);
+  candidates->mutable_caret_rectangle()->CopyFrom(
+      context_->caret_rectangle());
 
   candidates->mutable_composition_rectangle()->CopyFrom(
-      composition_rectangle_);
+      context_->composition_rectangle());
 
   if (command->output().candidates().category() == commands::SUGGESTION ||
       command->output().candidates().category() == commands::PREDICTION) {
@@ -2594,9 +2623,11 @@ bool Session::CanStartAutoConversion(
 
   // We should NOT check key_string. http://b/issue?id=3217992
 
-  // now evaluate preedit string and preedit length.
+  // Auto conversion is not triggered if the composition is empty or
+  // only one character, or the cursor is not in the end of the
+  // composition.
   const size_t length = context_->composer().GetLength();
-  if (length <= 1) {
+  if (length <= 1 || length != context_->composer().GetCursor()) {
     return false;
   }
 
@@ -2695,26 +2726,29 @@ bool Session::SetCaretLocation(commands::Command *command) {
 
   const commands::SessionCommand &session_command = command->input().command();
   if (!session_command.has_caret_rectangle()) {
-    caret_rectangle_.Clear();
+    context_->mutable_caret_rectangle()->Clear();
     return false;
   }
 
-  if (!caret_rectangle_.IsInitialized()) {
-    caret_rectangle_.CopyFrom(session_command.caret_rectangle());
+  if (!context_->caret_rectangle().IsInitialized()) {
+    context_->mutable_caret_rectangle()->CopyFrom(
+        session_command.caret_rectangle());
     return true;
   }
 
-  const int caret_delta_y =
-      abs(caret_rectangle_.y() - session_command.caret_rectangle().y());
+  const int caret_delta_y = abs(
+      context_->caret_rectangle().y() - session_command.caret_rectangle().y());
 
-  caret_rectangle_.CopyFrom(session_command.caret_rectangle());
+  context_->mutable_caret_rectangle()->CopyFrom(
+      session_command.caret_rectangle());
 
   const int kJumpThreshold = 30;
 
   // If caret is jumped, assume the text field is also jumped and reset the
   // rectangle of composition text.
   if (caret_delta_y > kJumpThreshold) {
-    composition_rectangle_.CopyFrom(caret_rectangle_);
+    context_->mutable_composition_rectangle()->CopyFrom(
+        context_->caret_rectangle());
   }
 
   return true;

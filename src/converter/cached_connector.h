@@ -34,6 +34,7 @@
 #include "converter/connector_interface.h"
 
 namespace mozc {
+namespace converter {
 // The result of GetTransitionCost() is cached with TLS.
 // Note that the cache is created as a global variable. If you
 // pass two different connectors, the cache variable will be shared.
@@ -69,7 +70,10 @@ class CachedConnector : public ConnectorInterface {
   const int cache_size_;
   const int hash_mask_;
 
+
+  DISALLOW_COPY_AND_ASSIGN(CachedConnector);
 };
+}  // namespace converter
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_CACHED_CONNECTOR_H_

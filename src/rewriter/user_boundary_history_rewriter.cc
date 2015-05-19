@@ -32,7 +32,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -45,6 +48,9 @@
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
+
+using mozc::storage::LRUStorage;
+
 namespace {
 const int kValueSize  = 4;
 const uint32 kLRUSize = 5000;
@@ -139,10 +145,19 @@ void UserBoundaryHistoryRewriter::Finish(Segments *segments) {
     // |ResizeOrInsert| does NOT call Converter::ResizeSegment since we pass
     // INSERT as an argument, so we can use dummy ConversionRequest.
     ResizeOrInsert(segments, ConversionRequest(), INSERT);
+#ifdef OS_ANDROID
+    // TODO(hidehiko): UsageStats requires some functionalities, e.g. network,
+    // which are not needed for mozc's main features.
+    // So, to focus on the main features' developping, we just skip it for now.
+    // Note: we can #ifdef inside SetInteger, but to build it we need to build
+    // other methods in usage_stats as well. So we'll exclude the method here
+    // for now.
+#else
     // update usage stats here
     usage_stats::UsageStats::SetInteger(
         "UserBoundaryHistoryEntrySize",
         static_cast<int>(storage_->used_size()));
+#endif
   }
 }
 
@@ -187,8 +202,12 @@ bool UserBoundaryHistoryRewriter::Reload() {
 
   const char kFileSuffix[] = ".merge_pending";
   const string merge_pending_file = filename + kFileSuffix;
-  storage_->Merge(merge_pending_file.c_str());
-  Util::Unlink(merge_pending_file);
+
+  // merge pending file does not always exist.
+  if (Util::FileExists(merge_pending_file)) {
+    storage_->Merge(merge_pending_file.c_str());
+    Util::Unlink(merge_pending_file);
+  }
 
   return true;
 }
@@ -252,13 +271,18 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
           orig_value.CopyFromUCharArray(length_array);
           if (!value->Equal(orig_value)) {
             value->ToUCharArray(length_array);
-            const int old_segments_size = static_cast<int>(target_segments_size);
+            const int old_segments_size =
+                static_cast<int>(target_segments_size);
             VLOG(2) << "ResizeSegment key: " << key << " "
                     << i - history_segments_size << " " << j + 1
-                    << " " << (int)length_array[0] << " " << (int)length_array[1]
-                    << " " << (int)length_array[2] << " " << (int)length_array[3]
-                    << " " << (int)length_array[4] << " " << (int)length_array[5]
-                    << " " << (int)length_array[6] << " " << (int)length_array[7];
+                    << " " << static_cast<int>(length_array[0])
+                    << " " << static_cast<int>(length_array[1])
+                    << " " << static_cast<int>(length_array[2])
+                    << " " << static_cast<int>(length_array[3])
+                    << " " << static_cast<int>(length_array[4])
+                    << " " << static_cast<int>(length_array[5])
+                    << " " << static_cast<int>(length_array[6])
+                    << " " << static_cast<int>(length_array[7]);
             parent_converter_->ResizeSegment(segments,
                                              request,
                                              i - history_segments_size,
@@ -272,10 +296,14 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
       } else if (type == INSERT) {
         VLOG(2) << "InserteSegment key: " << key << " "
                 << i - history_segments_size << " " << j + 1
-                << " " << (int)length_array[0] << " " << (int)length_array[1]
-                << " " << (int)length_array[2] << " " << (int)length_array[3]
-                << " " << (int)length_array[4] << " " << (int)length_array[5]
-                << " " << (int)length_array[6] << " " << (int)length_array[7];
+                << " " << static_cast<int>(length_array[0])
+                << " " << static_cast<int>(length_array[1])
+                << " " << static_cast<int>(length_array[2])
+                << " " << static_cast<int>(length_array[3])
+                << " " << static_cast<int>(length_array[4])
+                << " " << static_cast<int>(length_array[5])
+                << " " << static_cast<int>(length_array[6])
+                << " " << static_cast<int>(length_array[7]);
         LengthArray inserted_value;
         inserted_value.CopyFromUCharArray(length_array);
         storage_->Insert(key, reinterpret_cast<const char *>(&inserted_value));

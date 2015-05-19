@@ -35,6 +35,7 @@
 #include <string>
 #include "base/scoped_ptr.h"
 #include "config/config.pb.h"
+#include "engine/engine_interface.h"
 #include "session/commands.pb.h"
 #include "session/japanese_session_factory.h"
 #include "testing/base/public/gunit.h"
@@ -73,13 +74,16 @@ class JapaneseSessionHandlerTestBase : public ::testing::Test {
   JapaneseSessionHandlerTestBase();
   ~JapaneseSessionHandlerTestBase();
 
+  void ResetEngine(EngineInterface *engine);
+
  private:
   // Keep the global configurations here, and restore them in tear down phase.
   string user_profile_directory_backup_;
   config::Config config_backup_;
   SessionFactoryInterface *session_factory_backup_;
 
-  JapaneseSessionFactory session_factory_;
+  scoped_ptr<EngineInterface> engine_;
+  scoped_ptr<JapaneseSessionFactory> session_factory_;
 };
 
 // Session utility for stress tests.

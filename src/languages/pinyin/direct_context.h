@@ -68,8 +68,6 @@ class DirectContext : public PinyinContextInterface {
 
   bool SelectCandidate(size_t index);
   bool FocusCandidate(size_t index);
-  bool FocusCandidatePrev();
-  bool FocusCandidateNext();
   bool ClearCandidateFromHistory(size_t index);
 
   bool RemoveCharBefore();

@@ -30,10 +30,12 @@
 #include "dictionary/file/dictionary_file_builder.h"
 
 #include <string>
+
 #include "base/base.h"
 #include "base/file_stream.h"
-#include "dictionary/file/codec_interface.h"
+#include "base/logging.h"
 #include "dictionary/file/codec.h"
+#include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
@@ -66,9 +68,7 @@ bool DictionaryFileBuilder::AddSectionFromFile(
   char *ptr = new char[len];
   ifs.read(ptr, len);
 
-  sections_.resize(sections_.size() + 1);
-  sections_.back().ptr = ptr;
-  sections_.back().len = len;
+  sections_.push_back(DictionaryFileSection(ptr, len, ""));
 
   const string name =
       DictionaryFileCodecFactory::GetCodec()->GetSectionName(section_name);
@@ -83,4 +83,4 @@ void DictionaryFileBuilder::WriteImageToFile(const string &file_name) const {
   DictionaryFileCodecFactory::GetCodec()->WriteSections(sections_, &ofs);
   LOG(INFO) << "Generated";
 }
-}  // namespace
+}  // namespace mozc

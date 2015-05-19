@@ -29,9 +29,6 @@
 
 #include "base/logging.h"
 
-#include <stdio.h>
-#include <string.h>
-
 #ifdef OS_WINDOWS
 #define NO_MINMAX
 #include <windows.h>
@@ -40,12 +37,23 @@
 #include <unistd.h>
 #endif
 
+#ifdef OS_ANDROID
+#include <android/log.h>
+#endif  // OS_ANDROID
 
 #include <algorithm>
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
+#ifdef OS_ANDROID
+#include <sstream>
+#endif  // OS_ANDROID
 #include <string>
 
 #include "base/base.h"
+#ifdef OS_ANDROID
+#include "base/const.h"
+#endif  // OS_ANDROID
 #include "base/file_stream.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
@@ -67,8 +75,31 @@ DEFINE_int32(v, 0, "verbose level");
 
 namespace mozc {
 
+#ifdef OS_ANDROID
+namespace {
+// In order to make logging.h independent from <android/log.h>, we use the
+// raw number to define the following constants. Check the equality here
+// just in case.
+#define COMPARE_LOG_LEVEL(mozc_log_level, android_log_level)  \
+    COMPILE_ASSERT(static_cast<int>(mozc_log_level) ==        \
+                   static_cast<int>(android_log_level),       \
+                   TEST_ ## android_log_level)
+COMPARE_LOG_LEVEL(LOG_UNKNOWN, ANDROID_LOG_UNKNOWN);
+COMPARE_LOG_LEVEL(LOG_DEFAULT, ANDROID_LOG_DEFAULT);
+COMPARE_LOG_LEVEL(LOG_VERBOSE, ANDROID_LOG_VERBOSE);
+COMPARE_LOG_LEVEL(LOG_DEBUG, ANDROID_LOG_DEBUG);
+COMPARE_LOG_LEVEL(LOG_INFO, ANDROID_LOG_INFO);
+COMPARE_LOG_LEVEL(LOG_WARNING, ANDROID_LOG_WARN);
+COMPARE_LOG_LEVEL(LOG_ERROR, ANDROID_LOG_ERROR);
+COMPARE_LOG_LEVEL(LOG_FATAL, ANDROID_LOG_FATAL);
+COMPARE_LOG_LEVEL(LOG_SILENT, ANDROID_LOG_SILENT);
+#undef COMPARE_LOG_LEVEL
+}  // namespace
+#endif  // OS_ANDROID
+
 // Use the same implementation both for Opt and Debug.
 string Logging::GetLogMessageHeader() {
+#ifndef OS_ANDROID
   tm tm_time;
   Util::GetCurrentTm(&tm_time);
 
@@ -100,6 +131,15 @@ string Logging::GetLogMessageHeader() {
 #endif
            );
   return buf;
+#else  // OS_ANDROID
+  // On Android, other records are not needed because they are added by
+  // Android's logging framework.
+  char buf[32];
+  snprintf(buf, sizeof(buf),
+           "%lu ",
+           pthread_self());  // returns unsigned long.
+  return buf;
+#endif  // OS_ANDROID
 }
 
 #ifdef NO_LOGGING
@@ -203,6 +243,11 @@ void LogStreamImpl::Init(const char *argv0) {
     support_color_ = FLAGS_colored_log && isatty(fileno(stderr));
 #endif  // OS_WINDOWS
   } else {
+#ifdef OS_ANDROID
+    // Use ostringstream to output logging messages by android's logging
+    // framework.
+    stream_ = new ostringstream();
+#else
 #ifdef OS_WINDOWS
     const char *slash = ::strrchr(argv0, '\\');
 #else
@@ -217,6 +262,7 @@ void LogStreamImpl::Init(const char *argv0) {
 #ifndef OS_WINDOWS
     ::chmod(filename.c_str(), 0600);
 #endif
+#endif  // OS_ANDROID
   }
 #endif  // __native_client__
 
@@ -273,10 +319,22 @@ const struct SeverityProperty {
   const char *label;
   const char *color_escape_sequence;
 } kSeverityProperties[] = {
+#ifdef OS_ANDROID
+  { "UNKNOWN", kCyanEscapeSequence },
+  { "DEFAULT", kCyanEscapeSequence },
+  { "VERBOSE", kCyanEscapeSequence },
+  { "DEBUG",   kCyanEscapeSequence },
   { "INFO",    kCyanEscapeSequence },
   { "WARNING", kYellowEscapeSequence },
   { "ERROR",   kRedEscapeSequence },
   { "FATAL",   kRedEscapeSequence },
+  { "SILENT",  kCyanEscapeSequence },
+#else
+  { "INFO",    kCyanEscapeSequence },
+  { "WARNING", kYellowEscapeSequence },
+  { "ERROR",   kRedEscapeSequence },
+  { "FATAL",   kRedEscapeSequence },
+#endif  // OS_ANDROID
 };
 }  // namespace
 
@@ -310,4 +368,44 @@ void Logging::SetConfigVerboseLevel(int verboselevel) {
   Singleton<LogStreamImpl>::get()->set_config_verbose_level(verboselevel);
 }
 #endif  // NO_LOGGING
+
+LogFinalizer::LogFinalizer(LogSeverity severity)
+    : severity_(severity) {}
+
+LogFinalizer::~LogFinalizer() {
+  mozc::Logging::GetLogStream() << endl;
+#ifdef OS_ANDROID
+  ostringstream *log_stream =
+      static_cast<ostringstream*>(&mozc::Logging::GetLogStream());
+  if (log_stream != &cerr) {
+    __android_log_write(severity_, kProductPrefix, log_stream->str().c_str());
+  }
+  log_stream->str("");
+#endif  // OS_ANDROID
+  if (severity_ >= LOG_FATAL) {
+    // On windows, call exception handler to
+    // make stack trace and minidump
+#ifdef OS_WINDOWS
+    ::RaiseException(::GetLastError(),
+                     EXCEPTION_NONCONTINUABLE,
+                     NULL, NULL);
+#else
+    mozc::Logging::CloseLogStream();
+    exit(-1);
+#endif
+  }
+}
+
+void LogFinalizer::operator&(ostream&) {}
+
+void NullLogFinalizer::OnFatal() {
+#ifdef OS_WINDOWS
+  ::RaiseException(::GetLastError(),
+                   EXCEPTION_NONCONTINUABLE,
+                   NULL, NULL);
+#else
+  exit(-1);
+#endif
+}
+
 }       // namespace mozc

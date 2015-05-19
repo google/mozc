@@ -45,6 +45,8 @@ namespace mozc {
 namespace sync {
 namespace {
 
+using mozc::storage::LRUStorage;
+
 TEST(LearningPreferenceSyncUtilTest, CreateUpdate) {
   const string filename1 = Util::JoinPath(FLAGS_test_tmpdir,
                                           "file1");

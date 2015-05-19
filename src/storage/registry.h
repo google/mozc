@@ -33,6 +33,7 @@
 #include <string.h>
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace storage {
@@ -125,6 +126,6 @@ class Registry {
   Registry() {}
   virtual ~Registry() {}
 };
-}  // storage
-}  // mozc
+}  // namespace storage
+}  // namespace mozc
 #endif  // MOZC_STORAGE_REGISTRY_H_

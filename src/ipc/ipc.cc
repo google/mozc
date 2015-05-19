@@ -39,15 +39,28 @@
 
 #include <stdlib.h>
 #include "base/base.h"
-#include "base/file_stream.h"
-#include "base/mmap.h"
-#include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/thread.h"
-#include "base/util.h"
 #include "ipc/ipc_path_manager.h"
 
 namespace mozc {
+
+namespace {
+
+class IPCServerThread : public Thread {
+ public:
+  explicit IPCServerThread(IPCServer *server)
+      : server_(server) {}
+  virtual void Run() {
+    if (server_ != NULL) {
+      server_->Loop();
+    }
+  }
+  private:
+  IPCServer *server_;
+};
+
+}  // namespace
 
 void IPCServer::LoopAndReturn() {
   if (server_thread_.get() == NULL) {

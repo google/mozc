@@ -39,6 +39,15 @@
 #include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
 #endif
 
+#ifdef OS_ANDROID
+#include "config/config_handler.h"
+#include "config/config.pb.h"
+
+DECLARE_string(test_tmpdir);
+#endif  // OS_ANDROID
+
+namespace mozc {
+namespace config {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #ifdef OS_WINDOWS
@@ -279,7 +288,6 @@ class StatsConfigUtilTestWin : public testing::Test {
 };
 }  // namespace
 
-namespace mozc {
 #if defined(CHANNEL_DEV)
 TEST_F(StatsConfigUtilTestWin, IsEnabledIgnoresRegistrySettings) {
   // In dev channel, settings in the registry are simply ignored and
@@ -682,19 +690,37 @@ TEST_F(StatsConfigUtilTestWin, IsEnabled) {
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
 #endif  // !CHANNEL_DEV
-
-}  // namespace mozc
 #endif  // OS_WINDOWS
 
+#ifdef OS_ANDROID
+TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
+  const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
+      "mozc_stats_config_util_test_tmp");
+  Util::Unlink(config_file);
+  ConfigHandler::SetConfigFileName(config_file);
+  EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
+  ConfigHandler::Reload();
+#ifdef CHANNEL_DEV
+  EXPECT_TRUE(StatsConfigUtil::IsEnabled());
+#else  // CHANNEL_DEV
+  EXPECT_FALSE(StatsConfigUtil::IsEnabled());
+#endif  // CHANNEL_DEV
+}
+#endif  // OS_ANDROID
 
 #ifdef OS_LINUX
+#ifndef OS_ANDROID
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
-  EXPECT_FALSE(mozc::StatsConfigUtil::IsEnabled());
+  EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
+#endif  // OS_ANDROID
 #endif  // OS_LINUX
 
 #else  // !GOOGLE_JAPANESE_INPUT_BUILD
 TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {
-  EXPECT_FALSE(mozc::StatsConfigUtil::IsEnabled());
+  EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
 #endif
+
+}  // namespace config
+}  // namespace mozc

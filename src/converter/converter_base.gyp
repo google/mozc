@@ -39,23 +39,6 @@
   },
   'targets': [
     {
-      'target_name': 'character_form_manager',
-      'type': 'static_library',
-      'sources': [
-        'character_form_manager.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:config_file_stream',
-        '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        '../session/session_base.gyp:session_protocol',
-        # storage.gyp:storage is depended by character_form_manager.
-        # TODO(komatsu): delete this line.
-        '../storage/storage.gyp:storage',
-      ]
-    },
-    {
       'target_name': 'segmenter_base',
       'type': 'static_library',
       'sources': [
@@ -66,36 +49,6 @@
       ],
     },
     {
-      'target_name': 'segmenter',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/boundary_data.h',
-        '<(gen_out_dir)/segmenter_data.h',
-        'segmenter.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'gen_boundary_data#host',
-        'gen_segmenter_data#host',
-        'segmenter_base',
-      ],
-    },
-    {
-      'target_name': 'test_segmenter',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/test_boundary_data.h',
-        '<(gen_out_dir)/test_segmenter_data.h',
-        'test_segmenter.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'gen_test_boundary_data#host',
-        'gen_test_segmenter_data#host',
-        'segmenter_base',
-      ],
-    },
-    {
       'target_name': 'sparse_connector',
       'type': 'static_library',
       'sources': [
@@ -103,7 +56,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../storage/storage.gyp:storage',
+        '../storage/louds/louds.gyp:simple_succinct_bit_vector_index',
       ],
     },
     {
@@ -130,31 +83,6 @@
       ],
     },
     {
-      'target_name': 'connector',
-      'type': 'static_library',
-      'sources': [
-        'connector.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'connector_base',
-        'gen_connection_data#host',
-      ],
-    },
-    {
-      'target_name': 'test_connector',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/embedded_test_connection_data.h',
-        'test_connector.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'connector_base',
-        'gen_embedded_test_connection_data#host',
-      ],
-    },
-    {
       'target_name': 'segments',
       'type': 'static_library',
       'sources': [
@@ -169,15 +97,12 @@
         '../base/base.gyp:base',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../transliteration/transliteration.gyp:transliteration',
-        'connector',
-        'segmenter',
       ],
     },
     {
       'target_name': 'immutable_converter',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/user_segment_history_rewriter_rule.h',
         'immutable_converter.cc',
         'key_corrector.cc',
       ],
@@ -195,218 +120,16 @@
       ],
     },
     {
-      'target_name': 'gen_connection_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'conditions': [
-        ['use_separate_connection_data==1',{
-            'dependencies': [
-              'gen_separate_connection_data',
-            ],
-          },
-          {
-            'dependencies': [
-              'gen_embedded_connection_data',
-            ],
-          },
-        ]
-      ],
-    },
-    {
-      'target_name': 'gen_embedded_connection_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_embedded_connection_data',
-          'variables': {
-            'input_files%': [
-              '../data/dictionary/connection.txt',
-              '../data/dictionary/id.def',
-              '../data/rules/special_pos.def',
-            ],
-            'use_1byte_cost_flag': 'false',
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          # HACK: If gen_converter_data_main is added to inputs, build with
-          # vcbuild fails because gyp on Windows generates a project file which
-          # excludes this action from executed actions for some reasons. Build
-          # with vcbuild succeeds without specifying this input so we omit the
-          # input on Windows.
-          'outputs': [
-            '<(gen_out_dir)/embedded_connection_data.h',
-          ],
-          'action': [
-            # Use the pre-built version. See comments in mozc.gyp for why.
-            '<(mozc_build_tools_dir)/gen_connection_data_main',
-            '--logtostderr',
-            '--input=<(input_files)',
-            '--make_header',
-            '--output=<(gen_out_dir)/embedded_connection_data.h',
-            '--use_1byte_cost=<(use_1byte_cost_flag)',
-          ],
-          'message': 'Generating <(gen_out_dir)/embedded_connection_data.h.',
-        },
-      ],
-    },
-    {
-      # This target is copied from 'gen_embedded_connection_data'.
-      # We need both targets because some targets depend on
-      # gen_embedded_test_connection_data directly.
-      'target_name': 'gen_separate_connection_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_separate_connection_data',
-          'variables': {
-            'input_files%': [
-              '../data/dictionary/connection.txt',
-              '../data/dictionary/id.def',
-              '../data/rules/special_pos.def',
-            ],
-            'use_1byte_cost_flag': 'false',
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          # HACK: If gen_converter_data_main is added to inputs, build with
-          # vcbuild fails because gyp on Windows generates a project file which
-          # excludes this action from executed actions for some reasons. Build
-          # with vcbuild succeeds without specifying this input so we omit the
-          # input on Windows.
-          'outputs': [
-            '<(gen_out_dir)/connection.data',
-          ],
-          'action': [
-            # Use the pre-built version. See comments in mozc.gyp for why.
-            '<(mozc_build_tools_dir)/gen_connection_data_main',
-            '--logtostderr',
-            '--input=<(input_files)',
-            '--output=<(gen_out_dir)/connection.data',
-            '--use_1byte_cost=<(use_1byte_cost_flag)',
-          ],
-          'message': 'Generating <(gen_out_dir)/connection.data.',
-        },
-      ],
-    },
-    # TODO(toshiyuki): make .gypi file.
-    {
-      'target_name': 'gen_embedded_test_connection_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_embedded_test_connection_data',
-          'variables': {
-            'input_files%': [
-              '../data/test/dictionary/connection.txt',
-              '../data/test/dictionary/id.def',
-              '../data/rules/special_pos.def',
-            ],
-            'use_1byte_cost_flag': 'false',
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/embedded_test_connection_data.h',
-          ],
-          'action': [
-            '<(mozc_build_tools_dir)/gen_connection_data_main',
-            '--logtostderr',
-            '--input=<(input_files)',
-            '--make_header',
-            '--output=<(gen_out_dir)/embedded_test_connection_data.h',
-            '--use_1byte_cost=<(use_1byte_cost_flag)',
-          ],
-          'message': 'Generating <(gen_out_dir)/embedded_test_connection_data.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_segmenter_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_segmenter_data',
-          'inputs': [
-            # HACK: Specifying this file is redundant but gyp requires actions
-            # to specify at least one file in inputs.
-            'gen_segmenter_bitarray_main.cc',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/segmenter_data.h',
-          ],
-          'action': [
-            '<(mozc_build_tools_dir)/gen_segmenter_bitarray_main',
-            '--logtostderr',
-            '--output=<(gen_out_dir)/segmenter_data.h',
-          ],
-          'message': 'Generating <(gen_out_dir)/segmenter_data.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_test_segmenter_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_test_segmenter_data',
-          'inputs': [
-            # HACK: Specifying this file is redundant but gyp requires actions
-            # to specify at least one file in inputs.
-            'gen_test_segmenter_bitarray_main.cc',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/test_segmenter_data.h',
-          ],
-          'action': [
-            '<(mozc_build_tools_dir)/gen_test_segmenter_bitarray_main',
-            '--logtostderr',
-            '--test_output=<(gen_out_dir)/test_segmenter_data.h',
-          ],
-          'message': 'Generating <(gen_out_dir)/test_segmenter_data.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'sparse_connector_builder',
+      'target_name': 'converter_mock',
       'type': 'static_library',
-      'toolsets': ['target', 'host'],   # "target" is needed for test.
       'sources': [
-        'sparse_connector.cc',
-        'sparse_connector_builder.cc',
+        'converter_mock.cc',
+        'user_data_manager_mock.cc',
       ],
       'dependencies': [
-        '../storage/storage.gyp:storage',
+        '../base/base.gyp:base',
+        'segments',
       ],
-    },
-    {
-      'target_name': 'gen_connection_data_main',
-      'type': 'executable',
-      'toolsets': ['host'],
-      'sources': [
-        'gen_connection_data_main.cc',
-      ],
-      'dependencies': [
-        'sparse_connector_builder',
-      ],
-    },
-    {
-      'target_name': 'install_gen_connection_data_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_connection_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi'
-      ]
     },
     {
       'target_name': 'gen_segmenter_bitarray',
@@ -418,176 +141,6 @@
       'dependencies' : [
         '../base/base.gyp:base',
       ]
-    },
-    {
-      'target_name': 'gen_segmenter_bitarray_main',
-      'type': 'executable',
-      'toolsets': ['host'],
-      'sources': [
-        'gen_segmenter_bitarray_main.cc',
-      ],
-      'dependencies': [
-        'gen_segmenter_bitarray',
-        'gen_segmenter_inl',
-      ],
-    },
-    {
-      'target_name': 'gen_test_segmenter_bitarray_main',
-      'type': 'executable',
-      'toolsets': ['host'],
-      'sources': [
-        'gen_test_segmenter_bitarray_main.cc',
-      ],
-      'dependencies': [
-        'gen_segmenter_bitarray',
-        'gen_test_segmenter_inl',
-      ],
-    },
-    {
-      'target_name': 'gen_segmenter_inl',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_segmenter_inl',
-          'variables': {
-            'input_files%': [
-              '../data/dictionary/id.def',
-              '../data/rules/special_pos.def',
-              '../data/rules/segmenter.def',
-            ],
-          },
-          'inputs': [
-            'gen_segmenter_code.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/segmenter_inl.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/segmenter_inl.h',
-            'gen_segmenter_code.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/segmenter_inl.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_test_segmenter_inl',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_test_segmenter_inl',
-          'variables': {
-            'input_files%': [
-              '../data/test/dictionary/id.def',
-              '../data/rules/special_pos.def',
-              '../data/rules/segmenter.def',
-            ],
-          },
-          'inputs': [
-            'gen_segmenter_code.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/test_segmenter_inl.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/test_segmenter_inl.h',
-            'gen_segmenter_code.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/test_segmenter_inl.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_boundary_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_boundary_data',
-          'variables': {
-            # ordering-sensitive
-            'input_files%': [
-              '../data/rules/boundary.def',
-              '../data/dictionary/id.def',
-            ],
-          },
-          'inputs': [
-            'gen_boundary_data.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/boundary_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/boundary_data.h',
-            'gen_boundary_data.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/boundary_data.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_test_boundary_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_test_boundary_data',
-          'variables': {
-            # ordering-sensitive
-            'input_files': [
-              '../data/rules/boundary.def',
-              '../data/test/dictionary/id.def',
-            ],
-          },
-          'inputs': [
-            'gen_boundary_data.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/test_boundary_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/test_boundary_data.h',
-            'gen_boundary_data.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/test_boundary_data.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'install_gen_segmenter_bitarray_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_segmenter_bitarray_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ],
-    },
-    {
-      'target_name': 'install_gen_test_segmenter_bitarray_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_test_segmenter_bitarray_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ],
     },
   ],
 }

@@ -32,6 +32,9 @@
 #include <string>
 #include <vector>
 
+#include "base/base.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -53,11 +56,16 @@ bool IsValidRequest(const ConversionRequest &request,
   }
 
   string conversion_query;
-  request.composer().GetQueryForConversion(&conversion_query);
-  if (segments->request_type() == Segments::PARTIAL_PREDICTION ||
-      segments->request_type() == Segments::PARTIAL_SUGGESTION) {
-    conversion_query =
-        Util::SubString(conversion_query, 0, request.composer().GetCursor());
+  if (segments->request_type() == Segments::PREDICTION ||
+      segments->request_type() == Segments::SUGGESTION) {
+    request.composer().GetQueryForPrediction(&conversion_query);
+  } else {
+    request.composer().GetQueryForConversion(&conversion_query);
+    if (segments->request_type() == Segments::PARTIAL_PREDICTION ||
+        segments->request_type() == Segments::PARTIAL_SUGGESTION) {
+      conversion_query =
+          Util::SubString(conversion_query, 0, request.composer().GetCursor());
+    }
   }
 
   string segments_key;
@@ -99,7 +107,7 @@ void EraseNon12KeyT13Ns(const string &key, vector<string> *t13ns) {
 
   for (size_t i = 0; i < arraysize(kAsciiTransliterationTypeList); ++i) {
     TransliterationType type = kAsciiTransliterationTypeList[i];
-    if (!Util::IsArabicNumber((*t13ns)[type])) {
+    if (!NumberUtil::IsArabicNumber((*t13ns)[type])) {
       // The translitarated string contains a non-number character.
       // So erase it.
       // Hack: because of the t13n implementation on upper layer, we cannot
@@ -111,6 +119,7 @@ void EraseNon12KeyT13Ns(const string &key, vector<string> *t13ns) {
     }
   }
 }
+
 
 bool IsTransliterated(const vector<string> &t13ns) {
   if (t13ns.empty() || t13ns[0].empty()) {
@@ -126,8 +135,20 @@ bool IsTransliterated(const vector<string> &t13ns) {
   return false;
 }
 
+struct T13NIds {
+  uint16 hiragana_lid;
+  uint16 hiragana_rid;
+  uint16 katakana_lid;
+  uint16 katakana_rid;
+  uint16 ascii_lid;
+  uint16 ascii_rid;
+  T13NIds() : hiragana_lid(0), hiragana_rid(0),
+              katakana_lid(0), katakana_rid(0),
+              ascii_lid(0), ascii_rid(0) {}
+};
+
 // Get T13N candidate ids from existing candidates.
-void GetIds(const Segment &segment, TransliterationRewriter::T13NIds *ids) {
+void GetIds(const Segment &segment, T13NIds *ids) {
   DCHECK(ids);
   // reverse loop to use the highest rank results for each type
   for (int i = segment.candidates_size() - 1; i >= 0; --i) {
@@ -145,46 +166,62 @@ void GetIds(const Segment &segment, TransliterationRewriter::T13NIds *ids) {
     }
   }
 }
+
+void ModifyT13Ns(const Segment &segment, vector<string> *t13ns) {
+  // Especially for mobile-flick input, the input key is sometimes
+  // non-transliteration. For example, the i-flick is '_', which is not
+  // the transliteration at all. So, for those input mode, we just accept
+  // only 12-keys number layouts.
+  commands::Request::SpecialRomanjiTable special_romanji_table =
+      GET_REQUEST(special_romanji_table);
+  if (special_romanji_table == commands::Request::TWELVE_KEYS_TO_HIRAGANA ||
+      special_romanji_table == commands::Request::FLICK_TO_HIRAGANA ||
+      special_romanji_table == commands::Request::TOGGLE_FLICK_TO_HIRAGANA) {
+    EraseNon12KeyT13Ns(segment.key(), t13ns);
+  }
+
+  NormalizeT13Ns(t13ns);
+}
 }  // namespace
+
 
 bool TransliterationRewriter::FillT13NsFromComposer(
     const ConversionRequest &request,
     Segments *segments) const {
+
+  // If the size of conversion_segments is one, and the cursor is at
+  // the end of the composition, the key for t13n should be equal to
+  // the composition string.
+  if (segments->conversion_segments_size() == 1 &&
+      request.composer().GetLength() == request.composer().GetCursor()) {
+    vector<string> t13ns;
+    request.composer().GetTransliterations(&t13ns);
+    Segment *segment = segments->mutable_conversion_segment(0);
+    CHECK(segment);
+    ModifyT13Ns(*segment, &t13ns);
+    string key;
+    request.composer().GetQueryForConversion(&key);
+    return SetTransliterations(t13ns, key, segment);
+  }
+
   bool modified = false;
   size_t composition_pos = 0;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
     CHECK(segment);
-    if (segment->key().empty()) {
+    const string &key = segment->key();
+    if (key.empty()) {
       continue;
     }
-    const size_t composition_len = Util::CharsLen(segment->key());
+    const size_t composition_len = Util::CharsLen(key);
     vector<string> t13ns;
     request.composer().GetSubTransliterations(composition_pos,
                                               composition_len,
                                               &t13ns);
     composition_pos += composition_len;
-    TransliterationRewriter::T13NIds ids;
-    GetIds(*segment, &ids);
 
-    // Especially for mobile-flick input, the input key is sometimes
-    // non-transliteration. For example, the i-flick is '_', which is not
-    // the transliteration at all. So, for those input mode, we just accept
-    // only 12-keys number layouts.
-    commands::Request::SpecialRomanjiTable special_romanji_table =
-        GET_REQUEST(special_romanji_table);
-    if (special_romanji_table == commands::Request::TWELVE_KEYS_TO_HIRAGANA ||
-        special_romanji_table == commands::Request::FLICK_TO_HIRAGANA ||
-        special_romanji_table == commands::Request::TOGGLE_FLICK_TO_HIRAGANA) {
-      EraseNon12KeyT13Ns(segment->key(), &t13ns);
-    }
-
-    NormalizeT13Ns(&t13ns);
-    if (!IsTransliterated(t13ns)) {
-      continue;
-    }
-    SetTransliterations(t13ns, ids, segment);
-    modified = true;
+    ModifyT13Ns(*segment, &t13ns);
+    modified |= SetTransliterations(t13ns, key, segment);
   }
   return modified;
 }
@@ -221,9 +258,6 @@ bool TransliterationRewriter::FillT13NsFromKey(Segments *segments) const {
     Util::LowerString(&full_ascii_lower);
     Util::CapitalizeString(&full_ascii_capitalized);
 
-    TransliterationRewriter::T13NIds ids;
-    GetIds(*segment, &ids);
-
     vector<string> t13ns;
     t13ns.resize(transliteration::NUM_T13N_TYPES);
     t13ns[transliteration::HIRAGANA] = hiragana;
@@ -239,11 +273,7 @@ bool TransliterationRewriter::FillT13NsFromKey(Segments *segments) const {
     t13ns[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
 
     NormalizeT13Ns(&t13ns);
-    if (!IsTransliterated(t13ns)) {
-      continue;
-    }
-    SetTransliterations(t13ns, ids, segment);
-    modified = true;
+    modified |= SetTransliterations(t13ns, segment->key(), segment);
   }
   return modified;
 }
@@ -285,14 +315,17 @@ void TransliterationRewriter::InitT13NCandidate(
   cand->rid = (rid != 0) ? rid : unknown_id_;
 }
 
-void TransliterationRewriter::SetTransliterations(
-    const vector<string> &t13ns, const T13NIds &ids, Segment *segment) const {
-  if (t13ns.size() != transliteration::NUM_T13N_TYPES) {
-    LOG(WARNING) << "t13ns size is invalid";
-    return;
+bool TransliterationRewriter::SetTransliterations(
+    const vector<string> &t13ns, const string &key, Segment *segment) const {
+  if (t13ns.size() != transliteration::NUM_T13N_TYPES ||
+      !IsTransliterated(t13ns)) {
+    return false;
   }
+
   segment->clear_meta_candidates();
-  const string &key = segment->key();
+
+  T13NIds ids;
+  GetIds(*segment, &ids);
 
   vector<Segment::Candidate> *meta_candidates =
       segment->mutable_meta_candidates();
@@ -343,6 +376,7 @@ void TransliterationRewriter::SetTransliterations(
   InitT13NCandidate(key, t13ns[transliteration::HALF_KATAKANA],
                     ids.katakana_lid, ids.katakana_rid,
                     &meta_candidates->at(transliteration::HALF_KATAKANA));
+  return true;
 }
 
 }  // namespace mozc

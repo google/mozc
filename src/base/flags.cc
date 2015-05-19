@@ -28,24 +28,27 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-
 #include "base/flags.h"
 
 #include <stdlib.h>  // for atexit, getenv
+#ifdef OS_WINDOWS
+#include <windows.h>
+#endif  // OS_WINDOWS
 #include <cstring>
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/crash_report_handler.h"
 #include "base/init.h"
 #include "base/singleton.h"
 #include "base/util.h"
 
 DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
 
-int mozc::Flags::argc = 0;
-char **mozc::Flags::argv = NULL;
+namespace mozc_flags {
 
 namespace {
 
@@ -67,9 +70,8 @@ bool IsTrue(const char *value) {
   }
   return false;
 }
-}  // namespace
 
-namespace mozc_flags {
+}  // namespace
 
 class FlagUtil {
  public:
@@ -158,28 +160,28 @@ void FlagUtil::PrintFlags(string *output) {
       case I:
         os << "  type: int32  default: " <<
             *(reinterpret_cast<const int *>(flag->default_storage)) << endl;
-                                break;
+        break;
       case B:
         os << "  type: bool  default: " <<
             (*(reinterpret_cast<const bool *>(flag->default_storage))
              ? "true" : "false") << endl;
-                               break;
+        break;
       case I64:
         os << "  type: int64 default: " <<
             *(reinterpret_cast<const int64 *>(flag->default_storage)) << endl;
-                               break;
+        break;
       case U64:
         os << "  type: uint64  default: " <<
             *(reinterpret_cast<const uint64 *>(flag->default_storage)) << endl;
-                                 break;
+        break;
       case D:
         os << "  type: double  default: " <<
             *(reinterpret_cast<const double *>(flag->default_storage)) << endl;
-                                 break;
+        break;
       case S:
         os << "  type: string  default: " <<
             *(reinterpret_cast<const string *>(flag->default_storage)) << endl;
-                                 break;
+        break;
       default:
         break;
     }
@@ -253,9 +255,21 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
   }
   return *argc;
 }
-}  // mozc_flags
 
-namespace mozc {
+}  // namespace mozc_flags
+
+namespace {
+
+#ifdef OS_WINDOWS
+LONG CALLBACK ExitProcessExceptionFilter(
+    EXCEPTION_POINTERS *ExceptionInfo) {
+  // Currently, we haven't found good way to perform both
+  // "send mininump" and "exit the process gracefully".
+  ::ExitProcess(static_cast<UINT>(-1));
+  return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif  // OS_WINDOWS
+
 void InitGoogleInternal(const char *argv0,
                         int *argc, char ***argv,
                         bool remove_flags) {
@@ -268,9 +282,24 @@ void InitGoogleInternal(const char *argv0,
   }
 
   mozc::RunInitializers();  // do all static initialization
-
-  // copy argc/argv
-  mozc::Flags::argc = *argc;
-  mozc::Flags::argv = *argv;
 }
-}  // namespace mozc
+
+}  // namespace
+
+// not install breakpad
+// This function is defined in global namespace.
+void InitGoogle(const char *arg0,
+                int *argc, char ***argv,
+                bool remove_flags) {
+#ifdef OS_WINDOWS
+  // InitGoogle() is supposed to be used for code generator or
+  // other programs which are not included in the production code.
+  // In these code, we don't want to show any error messages when
+  // exceptions are raised. This is important to keep
+  // our continuous build stable.
+  ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
+#endif  // OS_WINDOWS
+
+  InitGoogleInternal(arg0, argc, argv, remove_flags);
+}
+

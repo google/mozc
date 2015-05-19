@@ -55,6 +55,11 @@ const char kRefreshToken[] = "1/first_correct_refresh_token_ccccccccccccccc";
 const char kAccessToken2[] = "1/second_correct_access_token_bbbbbbbbbbbbbbb";
 const char kRefreshToken2[] = "1/second_correct_refresh_token_cccccccccccccc";
 
+class TestableOAuth2 : public OAuth2 {
+ public:
+  using OAuth2::GetError;
+};
+
 class OAuth2Test : public testing::Test {
  protected:
   virtual void SetUp() {
@@ -152,11 +157,13 @@ TEST_F(OAuth2Test, GetAuthorizeUri) {
 TEST_F(OAuth2Test, OAuth2Test) {
   SetAuthorizationServer();
 
+  OAuth2::Error error;
   string access_token;
   string refresh_token;
   EXPECT_TRUE(OAuth2::AuthorizeToken(kAuthorizeUri, kClientId, kClientSecret,
                                      kRedirectUri, kAuthToken, kScope, "",
-                                     &access_token, &refresh_token));
+                                     &error, &access_token, &refresh_token));
+  EXPECT_EQ(OAuth2::kNone, error);
   EXPECT_EQ(kAccessToken, access_token);
   EXPECT_EQ(kRefreshToken, refresh_token);
 }
@@ -164,11 +171,12 @@ TEST_F(OAuth2Test, OAuth2Test) {
 TEST_F(OAuth2Test, InvalidAuthorizationToken) {
   SetAuthorizationServer();
 
+  OAuth2::Error error;
   string access_token;
   string refresh_token;
   EXPECT_FALSE(OAuth2::AuthorizeToken(kAuthorizeUri, kClientId, kClientSecret,
                                       kRedirectUri, kWrongAuthToken, kScope, "",
-                                      &access_token, &refresh_token));
+                                      &error, &access_token, &refresh_token));
 }
 
 TEST_F(OAuth2Test, RequestProtectedResource) {
@@ -185,10 +193,13 @@ TEST_F(OAuth2Test, RequestProtectedResource) {
 TEST_F(OAuth2Test, RefreshToken) {
   SetRefreshServer(true);
 
+  OAuth2::Error error;
   string access_token(kAccessToken);
   string refresh_token(kRefreshToken);
   EXPECT_TRUE(OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
-                                    kScope, &refresh_token, &access_token));
+      kScope, &error, &refresh_token, &access_token));
+
+  EXPECT_EQ(OAuth2::kNone, error);
   EXPECT_EQ(kAccessToken2, access_token);
   EXPECT_EQ(kRefreshToken2, refresh_token);
 }
@@ -196,10 +207,13 @@ TEST_F(OAuth2Test, RefreshToken) {
 TEST_F(OAuth2Test, RefreshTokenWithoutNewRefreshToken) {
   SetRefreshServer(false);
 
+  OAuth2::Error error;
   string access_token(kAccessToken);
   string refresh_token(kRefreshToken);
   EXPECT_TRUE(OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
-                                    kScope, &refresh_token, &access_token));
+      kScope, &error, &refresh_token, &access_token));
+
+  EXPECT_EQ(OAuth2::kNone, error);
   EXPECT_EQ(kAccessToken2, access_token);
   // Refresh token is not updated.
   EXPECT_EQ(kRefreshToken, refresh_token);
@@ -208,13 +222,48 @@ TEST_F(OAuth2Test, RefreshTokenWithoutNewRefreshToken) {
 TEST_F(OAuth2Test, RefreshTokenError) {
   SetRefreshServerError();
 
+  OAuth2::Error error;
   string access_token(kAccessToken);
   string refresh_token(kRefreshToken);
   EXPECT_FALSE(OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
-                                     kScope, &refresh_token, &access_token));
+      kScope, &error, &refresh_token, &access_token));
+
   // Tokens unchanged.
   EXPECT_EQ(kAccessToken, access_token);
   EXPECT_EQ(kRefreshToken, refresh_token);
+}
+
+namespace {
+  struct ErrorTest {
+    const char *input;
+    const OAuth2::Error expect_error;
+  } kErrorTestData[] = {
+    {"{\"error\":\"invalid_request\"}", OAuth2::kInvalidRequest},
+    {"{\"error\":\"unauthorized_client\"}", OAuth2::kUnauthorizedClient},
+    {"{\"error\":\"access_denied\"}", OAuth2::kAccessDenied},
+    {"{\"error\":\"unsupported_response_type\"}",
+     OAuth2::kUnsupportedResponseType},
+    {"{\"error\":\"invalid_scope\"}", OAuth2::kInvalidScope},
+    {"{\"error\":\"server_error\"}", OAuth2::kServerError},
+    {"{\"error\":\"temporarily_unavailable\"}",
+     OAuth2::kTemporarilyUnavailable},
+    {"{\"error\":\"invalid_client\"}", OAuth2::kInvalidClient},
+    {"{\"error\":\"invalid_grant\"}", OAuth2::kInvalidGrant},
+    {"{\"error\":\"unsupported_grant_type\"}", OAuth2::kUnsupportedGrantType},
+    {"{\"error\":\"foo_bar\"}", OAuth2::kUnknownError},
+    {"{\"access_token\":\"succeeded\"}", OAuth2::kNone},
+  };
+}  // namespace
+
+TEST_F(OAuth2Test, GetErrorTest) {
+  for (size_t i = 0; i < arraysize(kErrorTestData); ++i) {
+    const ErrorTest &data = kErrorTestData[i];
+    Json::Value root;
+    Json::Reader reader;
+    ASSERT_TRUE(reader.parse(data.input, root));
+    EXPECT_EQ(data.expect_error, TestableOAuth2::GetError(root))
+        << "Input : " << data.input;
+  }
 }
 
 }  // namespace sync

@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Windows.h>
+#include <CGuid.h>
 
 #include "base/const.h"
 #include "base/util.h"

@@ -36,8 +36,10 @@
 #include <string>
 #include <vector>
 
-#include "base/file_stream.h"
+#include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -225,13 +227,13 @@ bool KeyMapManager::AddCommand(const string &state_name,
   }
 #endif  // NO_LOGGING
 
-#ifndef _DEBUG
+#ifndef DEBUG
   // Only debug build supports the Abort command.  Note, true is
   // returned as the arguments are interpreted properly.
   if (command_name == "Abort") {
     return true;
   }
-#endif  // NO_LOGGING
+#endif  // DEBUG
 
   commands::KeyEvent key_event;
   if (!KeyParser::ParseKey(key_event_name, &key_event)) {
@@ -473,9 +475,9 @@ void KeyMapManager::InitCommandData() {
   RegisterPrecompositionCommand("PredictAndConvert",
                                 PrecompositionState::PREDICT_AND_CONVERT);
 
-#ifdef _DEBUG  // only for debugging
+#ifdef DEBUG  // only for debugging
   RegisterPrecompositionCommand("Abort", PrecompositionState::ABORT);
-#endif  // _DEBUG
+#endif  // DEBUG
 
   // Composition
   RegisterCompositionCommand("IMEOff", CompositionState::IME_OFF);
@@ -563,9 +565,9 @@ void KeyMapManager::InitCommandData() {
     RegisterCompositionCommand("InputModeHalfAlphanumeric",
                                CompositionState::NONE);
   }
-#ifdef _DEBUG  // only for debugging
+#ifdef DEBUG  // only for debugging
   RegisterCompositionCommand("Abort", CompositionState::ABORT);
-#endif  // _DEBUG
+#endif  // DEBUG
 
   // Conversion
   RegisterConversionCommand("IMEOff", ConversionState::IME_OFF);
@@ -661,9 +663,9 @@ void KeyMapManager::InitCommandData() {
 #ifndef NO_LOGGING  // means NOT RELEASE build
   RegisterConversionCommand("ReportBug", ConversionState::REPORT_BUG);
 #endif  // NO_LOGGING
-#ifdef _DEBUG  // only for dubugging
+#ifdef DEBUG  // only for dubugging
   RegisterConversionCommand("Abort", ConversionState::ABORT);
-#endif  // _DEBUG
+#endif  // DEBUG
 }
 
 #undef ADD_TO_COMMAND_MAP

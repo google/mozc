@@ -28,16 +28,20 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Handler of mozc configuration.
+
 #include "config/config_handler.h"
 
+#include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
+#include "base/util.h"
 #include "base/version.h"
 #include "config/config.pb.h"
 
-#include "base/logging.h"
-
 namespace mozc {
+
 namespace config {
 
 namespace {
@@ -60,7 +64,7 @@ class ConfigHandlerImpl {
   ConfigHandlerImpl() {
     // <user_profile>/config1.db
     filename_ = kFileNamePrefix;
-    filename_ += Util::SimpleItoa(CONFIG_VERSION);
+    filename_ += NumberUtil::SimpleItoa(CONFIG_VERSION);
     filename_ += ".db";
     Reload();
   }
@@ -136,6 +140,12 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 #endif  // OS_MACOSX
   }
 
+#ifdef OS_ANDROID
+#ifdef CHANNEL_DEV
+  stored_config_.mutable_general_config()
+      ->set_upload_usage_stats(true);
+#endif  // CHANNEL_DEV
+#endif  // OS_ANDROID
 
   UpdateMergedConfig();
 
@@ -183,6 +193,12 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 
 // Reload from file
 bool ConfigHandlerImpl::Reload() {
+#ifdef MOZC_USE_PEPPER_FILE_IO
+  // TODO(horo): We have to implement the user config file loader for NaCl.
+  LOG(ERROR) << "ConfigHandlerImpl::Reload is not implemented for NaCl now.";
+  Config input_proto;
+  return SetConfigInternal(input_proto);
+#else  // MOZC_USE_PEPPER_FILE_IO
   VLOG(1) << "Reloading config file: " << filename_;
   scoped_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
@@ -201,6 +217,7 @@ bool ConfigHandlerImpl::Reload() {
   ret_code |= SetConfigInternal(input_proto);
 
   return ret_code;
+#endif  // MOZC_USE_PEPPER_FILE_IO
 }
 
 void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
@@ -280,6 +297,12 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   AddCharacterFormRule(config, "?!",
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
 
+#ifdef OS_ANDROID
+#ifdef CHANNEL_DEV
+  config->mutable_general_config()
+      ->set_upload_usage_stats(true);
+#endif  // CHANNEL_DEV
+#endif  // OS_ANDROID
 }
 
 // Reload from file
@@ -304,5 +327,6 @@ void ConfigHandler::SetMetaData(Config *config) {
   general_config->set_platform(Util::GetOSVersionString());
 }
 
-}  // config
-}  // mozc
+}  // namespace config
+
+}  // namespace mozc

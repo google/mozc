@@ -27,21 +27,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <fstream>
+#include "session/session_usage_observer.h"
 
+#include <fstream>
+#include <set>
+#include <string>
+
+#include "base/base.h"
 #include "base/clock_mock.h"
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/text_format.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
+#include "base/scheduler_stub.h"
+#include "base/util.h"
 #include "config/config_handler.h"
+#include "config/stats_config_util.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/internal/keymap_factory.h"
-#include "session/session_usage_observer.h"
 #include "storage/registry.h"
-#include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.pb.h"
 
 DECLARE_string(test_tmpdir);
@@ -56,7 +63,6 @@ void ConfigSyncTest(const string &stats_key, const string &config_key) {
   config::ConfigHandler::GetDefaultConfig(&config);
   config::ConfigHandler::SetConfig(config);
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   EXPECT_TRUE(storage::Registry::Lookup(
@@ -119,6 +125,27 @@ void ConfigSyncTest(const string &stats_key, const string &config_key) {
 }
 }  // namespace
 
+class StatsConfigStub : public config::StatsConfigUtilInterface {
+ public:
+  StatsConfigStub() {
+    val_ = true;
+  }
+
+  virtual ~StatsConfigStub() {}
+
+  virtual bool IsEnabled() const {
+    return val_;
+  }
+
+  virtual bool SetEnabled(bool val) {
+    val_ = val;
+    return true;
+  }
+
+ private:
+  bool val_;
+};
+
 class SessionUsageObserverTest : public testing::Test {
  protected:
   virtual void SetUp() {
@@ -129,10 +156,18 @@ class SessionUsageObserverTest : public testing::Test {
     EXPECT_TRUE(storage::Registry::Clear());
 
     Util::SetClockHandler(NULL);
+
+    scheduler_stub_.reset(new SchedulerStub);
+    Scheduler::SetSchedulerHandler(scheduler_stub_.get());
+
+    stats_config_stub_.reset(new StatsConfigStub);
+    config::StatsConfigUtil::SetHandler(stats_config_stub_.get());
   }
 
   virtual void TearDown() {
     Util::SetClockHandler(NULL);
+    Scheduler::SetSchedulerHandler(NULL);
+    config::StatsConfigUtil::SetHandler(NULL);
 
     // just in case, reset the config in test_tmpdir
     config::Config config;
@@ -153,6 +188,12 @@ class SessionUsageObserverTest : public testing::Test {
     EXPECT_TRUE(protobuf::TextFormat::Parse(input.get(), command_list));
   }
 
+  void EnsureSave() const {
+    // Make sure to save stats.
+    const uint32 kWaitngUsecForEnsureSave = 10 * 60 * 1000;
+    scheduler_stub_->PutClockForward(kWaitngUsecForEnsureSave);
+  }
+
   void ExpectStatsCount(const string &name, uint64 val) const {
     string reg_str;
     if (val == 0) {
@@ -171,6 +212,11 @@ class SessionUsageObserverTest : public testing::Test {
     EXPECT_EQ(usage_stats::Stats::COUNT, stats.type()) << name;
     EXPECT_EQ(name, stats.name()) << name;
     EXPECT_EQ(val, stats.count()) << name;
+  }
+
+  void EnsureSaveAndExpectStatsCount(const string &name, uint64 val) const {
+    EnsureSave();
+    ExpectStatsCount(name, val);
   }
 
   void ExpectStatsTiming(const string &name, uint64 num_val, uint64 avg_val,
@@ -197,6 +243,13 @@ class SessionUsageObserverTest : public testing::Test {
     EXPECT_EQ(max_val, stats.max_time()) << name;
   }
 
+  void EnsureSaveAndExpectStatsTiming(
+      const string &name, uint64 num_val, uint64 avg_val,
+      uint64 min_val, uint64 max_val) const {
+    EnsureSave();
+    ExpectStatsTiming(name, num_val, avg_val, min_val, max_val);
+  }
+
   void CountSendKeyStats(const commands::CommandList &command_list,
                          int *consumed_sendkey, int *unconsumed_sendkey) const {
     DCHECK(consumed_sendkey);
@@ -220,6 +273,9 @@ class SessionUsageObserverTest : public testing::Test {
       }
     }
   }
+
+  scoped_ptr<SchedulerStub> scheduler_stub_;
+  scoped_ptr<StatsConfigStub> stats_config_stub_;
 };
 
 TEST_F(SessionUsageObserverTest, SaveWhenDeleted) {
@@ -247,6 +303,28 @@ TEST_F(SessionUsageObserverTest, SaveWhenDeleted) {
   EXPECT_EQ(5, stats.count());
 }
 
+TEST_F(SessionUsageObserverTest, DoNotSaveWhenDeleted) {
+  stats_config_stub_->SetEnabled(false);
+
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  string reg_str;
+
+  // Add command
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::NONE);
+  command.mutable_input()->set_id(0);
+  command.mutable_output()->set_consumed(true);
+  for (int i = 0; i < 5; ++i) {
+    observer->EvalCommandHandler(command);
+    EXPECT_FALSE(storage::Registry::Lookup("usage_stats.SessionAllEvent",
+                                           &reg_str));
+  }
+
+  observer.reset();
+  EXPECT_FALSE(storage::Registry::Lookup("usage_stats.SessionAllEvent",
+                                        &reg_str));
+}
+
 TEST_F(SessionUsageObserverTest, SavePeriodically) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   string reg_str;
@@ -264,6 +342,9 @@ TEST_F(SessionUsageObserverTest, SavePeriodically) {
   }
 
   observer->EvalCommandHandler(command);
+
+  EnsureSave();
+
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.SessionAllEvent",
                                         &reg_str));
   usage_stats::Stats stats;
@@ -273,23 +354,34 @@ TEST_F(SessionUsageObserverTest, SavePeriodically) {
   EXPECT_EQ(250, stats.count());
 }
 
-TEST_F(SessionUsageObserverTest, SetInterval) {
+TEST_F(SessionUsageObserverTest, DoNotSavePeriodically) {
+  stats_config_stub_->SetEnabled(false);
+
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   // Add command
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::NONE);
+  command.mutable_input()->set_id(0);
   command.mutable_output()->set_consumed(true);
+  for (int i = 0; i < (500 / 2) - 1; ++i) {
+    // 2 stats are saved for every command (AllEvent, ElapsedTime)
+    observer->EvalCommandHandler(command);
+    EXPECT_FALSE(storage::Registry::Lookup("usage_stats.SessionAllEvent",
+                                           &reg_str));
+  }
+
   observer->EvalCommandHandler(command);
-  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.SessionAllEvent",
-                                        &reg_str));
+
+  EnsureSave();
+
+  EXPECT_FALSE(storage::Registry::Lookup("usage_stats.SessionAllEvent",
+                                         &reg_str));
 }
 
 TEST_F(SessionUsageObserverTest, SaveSpecialKeys) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   // create session
@@ -321,6 +413,7 @@ TEST_F(SessionUsageObserverTest, SaveSpecialKeys) {
   key->set_special_key(commands::KeyEvent::F1);
   observer->EvalCommandHandler(command);
 
+  EnsureSave();
   {
     EXPECT_TRUE(storage::Registry::Lookup("usage_stats.NonASCIITyping",
                                           &reg_str));
@@ -359,7 +452,6 @@ TEST_F(SessionUsageObserverTest, SaveSpecialKeys) {
 
 TEST_F(SessionUsageObserverTest, AllSpecialKeysTest) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   // create session
@@ -389,7 +481,6 @@ TEST_F(SessionUsageObserverTest, AllSpecialKeysTest) {
 
 TEST_F(SessionUsageObserverTest, PerformedCommandTest) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
   config::Config::SessionKeymap keymap = config::Config::MSIME;
   keymap::KeyMapManager *keymap_manager =
@@ -405,7 +496,7 @@ TEST_F(SessionUsageObserverTest, PerformedCommandTest) {
       command.mutable_output()->set_id(1);
       command.mutable_output()->set_performed_command("Direct_" + *iter);
       observer->EvalCommandHandler(command);
-      ExpectStatsCount("Performed_Direct_" + *iter, 1);
+      EnsureSaveAndExpectStatsCount("Performed_Direct_" + *iter, 1);
     }
   }
   {
@@ -419,7 +510,7 @@ TEST_F(SessionUsageObserverTest, PerformedCommandTest) {
       command.mutable_output()->
           set_performed_command("Precomposition_" + *iter);
       observer->EvalCommandHandler(command);
-      ExpectStatsCount("Performed_Precomposition_" + *iter, 1);
+      EnsureSaveAndExpectStatsCount("Performed_Precomposition_" + *iter, 1);
     }
   }
   {
@@ -432,7 +523,7 @@ TEST_F(SessionUsageObserverTest, PerformedCommandTest) {
       command.mutable_output()->set_id(1);
       command.mutable_output()->set_performed_command("Composition_" + *iter);
       observer->EvalCommandHandler(command);
-      ExpectStatsCount("Performed_Composition_" + *iter, 1);
+      EnsureSaveAndExpectStatsCount("Performed_Composition_" + *iter, 1);
     }
   }
   {
@@ -445,14 +536,13 @@ TEST_F(SessionUsageObserverTest, PerformedCommandTest) {
       command.mutable_output()->set_id(1);
       command.mutable_output()->set_performed_command("Conversion_" + *iter);
       observer->EvalCommandHandler(command);
-      ExpectStatsCount("Performed_Conversion_" + *iter, 1);
+      EnsureSaveAndExpectStatsCount("Performed_Conversion_" + *iter, 1);
     }
   }
 }
 
 TEST_F(SessionUsageObserverTest, ConfigTest) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   // config stats are set when the observer instance is created.
@@ -723,7 +813,6 @@ TEST_F(SessionUsageObserverTest, IMEActivationKeyCustomizedTest) {
   config::ConfigHandler::SetConfig(config);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   // config stats are set when the observer instance is created.
@@ -742,7 +831,6 @@ TEST_F(SessionUsageObserverTest, IMEActivationKeyDefaultTest) {
   config::ConfigHandler::GetDefaultConfig(&config);
   config::ConfigHandler::SetConfig(config);
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   // config stats are set when the observer instance is created.
@@ -769,7 +857,6 @@ TEST_F(SessionUsageObserverTest, IMEActivationKeyNoCustomTest) {
 
   config::ConfigHandler::SetConfig(config);
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   // config stats are set when the observer instance is created.
@@ -799,7 +886,6 @@ TEST_F(SessionUsageObserverTest, ConfigSyncTests) {
 
 TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
 
   // create session
@@ -839,7 +925,7 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
       commands::SessionCommand::INFOLIST_WINDOW_HIDE);
   observer->EvalCommandHandler(command);
 
-  ExpectStatsTiming("InfolistWindowDuration", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("InfolistWindowDuration", 1, 1, 1, 1);
 }
 
 TEST_F(SessionUsageObserverTest, ConvertOneSegment) {
@@ -855,7 +941,6 @@ TEST_F(SessionUsageObserverTest, ConvertOneSegment) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -865,54 +950,54 @@ TEST_F(SessionUsageObserverTest, ConvertOneSegment) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 1);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 1);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
-  ExpectStatsCount("SubmittedTotalLength", 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 1);
 }
 
 TEST_F(SessionUsageObserverTest, Prediction) {
@@ -927,7 +1012,6 @@ TEST_F(SessionUsageObserverTest, Prediction) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -937,57 +1021,57 @@ TEST_F(SessionUsageObserverTest, Prediction) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("SubmittedTotalLength", 6);
-  ExpectStatsCount("ConsumedSendKey", 5);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 6);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", 5);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 0);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 1);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 1);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 1);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 6, 6, 6);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 6, 6, 6);
-  ExpectStatsCount("SubmittedTotalLength", 6);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 6, 6, 6);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 6, 6, 6);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 6);
 }
 
 TEST_F(SessionUsageObserverTest, Suggestion) {
@@ -1001,7 +1085,6 @@ TEST_F(SessionUsageObserverTest, Suggestion) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1010,55 +1093,55 @@ TEST_F(SessionUsageObserverTest, Suggestion) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 0);
-  ExpectStatsCount("CommitFromSuggestion", 1);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 1);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 1);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 3, 3, 3);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 3, 3, 3);
-  ExpectStatsCount("SubmittedTotalLength", 3);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 3, 3, 3);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 3, 3, 3);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 3);
 }
 
 TEST_F(SessionUsageObserverTest, SelectPrediction) {
@@ -1074,7 +1157,6 @@ TEST_F(SessionUsageObserverTest, SelectPrediction) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1083,55 +1165,55 @@ TEST_F(SessionUsageObserverTest, SelectPrediction) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 0);
-  ExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
   // It is prediction because user types 'tab' and expand them.
-  ExpectStatsCount("CommitFromPrediction", 1);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 1);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 1);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 4, 4, 4);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 4, 4, 4);
-  ExpectStatsCount("SubmittedTotalLength", 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 4, 4, 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 4, 4, 4);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 4);
 }
 
 TEST_F(SessionUsageObserverTest, MouseSelectFromSuggestion) {
@@ -1146,7 +1228,6 @@ TEST_F(SessionUsageObserverTest, MouseSelectFromSuggestion) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1155,54 +1236,54 @@ TEST_F(SessionUsageObserverTest, MouseSelectFromSuggestion) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 0);
-  ExpectStatsCount("CommitFromSuggestion", 1);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 1);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 1);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 1);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 1);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 4, 4, 4);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 4, 4, 4);
-  ExpectStatsCount("SubmittedTotalLength", 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 4, 4, 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 4, 4, 4);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 4);
 }
 
 TEST_F(SessionUsageObserverTest, Composition) {
@@ -1216,7 +1297,6 @@ TEST_F(SessionUsageObserverTest, Composition) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1225,54 +1305,54 @@ TEST_F(SessionUsageObserverTest, Composition) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 0);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 1);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 1);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 3, 3, 3);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 3, 3, 3);
-  ExpectStatsCount("SubmittedTotalLength", 3);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 3, 3, 3);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 3, 3, 3);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 3);
 }
 
 TEST_F(SessionUsageObserverTest, SelectConversion) {
@@ -1287,7 +1367,6 @@ TEST_F(SessionUsageObserverTest, SelectConversion) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1296,54 +1375,54 @@ TEST_F(SessionUsageObserverTest, SelectConversion) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 1);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 1);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
-  ExpectStatsCount("SubmittedTotalLength", 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 1);
 }
 
 TEST_F(SessionUsageObserverTest, SelectMinorPrediction) {
@@ -1359,7 +1438,6 @@ TEST_F(SessionUsageObserverTest, SelectMinorPrediction) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1368,54 +1446,54 @@ TEST_F(SessionUsageObserverTest, SelectMinorPrediction) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 0);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 1);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 1);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 1);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 4, 4, 4);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 4, 4, 4);
-  ExpectStatsCount("SubmittedTotalLength", 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 4, 4, 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 4, 4, 4);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 4);
 }
 
 TEST_F(SessionUsageObserverTest, SelectT13N) {
@@ -1431,7 +1509,6 @@ TEST_F(SessionUsageObserverTest, SelectT13N) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1440,54 +1517,54 @@ TEST_F(SessionUsageObserverTest, SelectT13N) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 1);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 1);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 1);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
-  ExpectStatsCount("SubmittedTotalLength", 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 1);
 }
 
 TEST_F(SessionUsageObserverTest, T13NbyKey) {
@@ -1502,7 +1579,6 @@ TEST_F(SessionUsageObserverTest, T13NbyKey) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1511,54 +1587,54 @@ TEST_F(SessionUsageObserverTest, T13NbyKey) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 1);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 1);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
-  ExpectStatsCount("SubmittedTotalLength", 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 1);
 }
 
 TEST_F(SessionUsageObserverTest, MultiSegments) {
@@ -1572,7 +1648,6 @@ TEST_F(SessionUsageObserverTest, MultiSegments) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1581,54 +1656,54 @@ TEST_F(SessionUsageObserverTest, MultiSegments) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 1);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 2);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 2);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 2, 5, 2, 8);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 2, 2, 2);
-  ExpectStatsTiming("SubmittedLength", 1, 10, 10, 10);
-  ExpectStatsCount("SubmittedTotalLength", 10);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 2, 5, 2, 8);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 2, 2, 2);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 10, 10, 10);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 10);
 }
 
 TEST_F(SessionUsageObserverTest, SelectCandidatesInMultiSegments) {
@@ -1643,7 +1718,6 @@ TEST_F(SessionUsageObserverTest, SelectCandidatesInMultiSegments) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1652,54 +1726,54 @@ TEST_F(SessionUsageObserverTest, SelectCandidatesInMultiSegments) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 1);
-  ExpectStatsCount("CommitFromConversion", 1);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 1);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 1);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 2, 3, 2, 4);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 2, 2, 2);
-  ExpectStatsTiming("SubmittedLength", 1, 6, 6, 6);
-  ExpectStatsCount("SubmittedTotalLength", 6);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 2, 3, 2, 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 1, 2, 2, 2);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 1, 6, 6, 6);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 6);
 }
 
 TEST_F(SessionUsageObserverTest, ContinueInput) {
@@ -1715,7 +1789,6 @@ TEST_F(SessionUsageObserverTest, ContinueInput) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1724,54 +1797,54 @@ TEST_F(SessionUsageObserverTest, ContinueInput) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 2);
-  ExpectStatsCount("CommitFromConversion", 1);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 1);
+  EnsureSaveAndExpectStatsCount("Commit", 2);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 1);
 
-  ExpectStatsCount("ConversionCandidates0", 1);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 1);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 3, 2, 2, 4);
-  ExpectStatsTiming("SubmittedSegmentNumber", 2, 1, 1, 2);
-  ExpectStatsTiming("SubmittedLength", 2, 4, 2, 6);
-  ExpectStatsCount("SubmittedTotalLength", 8);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 3, 2, 2, 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 2, 1, 1, 2);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 2, 4, 2, 6);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 8);
 }
 
 TEST_F(SessionUsageObserverTest, MultiInputSession) {
@@ -1787,7 +1860,6 @@ TEST_F(SessionUsageObserverTest, MultiInputSession) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1802,54 +1874,54 @@ TEST_F(SessionUsageObserverTest, MultiInputSession) {
   consumed_sendkey *= 2;
   unconsumed_sendkey *= 2;
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 2);
-  ExpectStatsCount("CommitFromConversion", 2);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 2);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 2);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 2);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 2);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 2);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 2);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 4, 3, 2, 4);
-  ExpectStatsTiming("SubmittedSegmentNumber", 2, 2, 2, 2);
-  ExpectStatsTiming("SubmittedLength", 2, 6, 6, 6);
-  ExpectStatsCount("SubmittedTotalLength", 12);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 4, 3, 2, 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 2, 2, 2, 2);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 2, 6, 6, 6);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 12);
 }
 
 TEST_F(SessionUsageObserverTest, ContinuousInput) {
@@ -1869,7 +1941,6 @@ TEST_F(SessionUsageObserverTest, ContinuousInput) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1878,54 +1949,54 @@ TEST_F(SessionUsageObserverTest, ContinuousInput) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 9);
-  ExpectStatsCount("CommitFromConversion", 3);
-  ExpectStatsCount("CommitFromSuggestion", 1);
-  ExpectStatsCount("CommitFromPrediction", 3);
-  ExpectStatsCount("CommitFromComposition", 2);
+  EnsureSaveAndExpectStatsCount("Commit", 9);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 3);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 3);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 2);
 
-  ExpectStatsCount("ConversionCandidates0", 2);
-  ExpectStatsCount("ConversionCandidates1", 1);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 2);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 3);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 3);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 1);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 1);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 0);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 9, 3, 3, 3);
-  ExpectStatsTiming("SubmittedSegmentNumber", 9, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 9, 3, 3, 3);
-  ExpectStatsCount("SubmittedTotalLength", 27);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 9, 3, 3, 3);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 9, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 9, 3, 3, 3);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 27);
 }
 
 TEST_F(SessionUsageObserverTest, BackSpaceAfterCommit) {
@@ -1939,7 +2010,6 @@ TEST_F(SessionUsageObserverTest, BackSpaceAfterCommit) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -1948,54 +2018,54 @@ TEST_F(SessionUsageObserverTest, BackSpaceAfterCommit) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 2);
-  ExpectStatsCount("CommitFromConversion", 1);
-  ExpectStatsCount("CommitFromSuggestion", 0);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 1);
+  EnsureSaveAndExpectStatsCount("Commit", 2);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 1);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 1);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 1);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 0);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 1);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 2, 2, 1, 3);
-  ExpectStatsTiming("SubmittedSegmentNumber", 2, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 2, 2, 1, 3);
-  ExpectStatsCount("SubmittedTotalLength", 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 2, 2, 1, 3);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 2, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 2, 2, 1, 3);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 4);
 }
 
 TEST_F(SessionUsageObserverTest, MultipleBackSpaceAfterCommit) {
@@ -2011,7 +2081,6 @@ TEST_F(SessionUsageObserverTest, MultipleBackSpaceAfterCommit) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -2020,54 +2089,54 @@ TEST_F(SessionUsageObserverTest, MultipleBackSpaceAfterCommit) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 2);
-  ExpectStatsCount("CommitFromConversion", 0);
-  ExpectStatsCount("CommitFromSuggestion", 1);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 1);
+  EnsureSaveAndExpectStatsCount("Commit", 2);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 1);
 
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 1);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 1);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 1);
-  ExpectStatsCount("BackSpaceAfterCommit", 2);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 1);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 2);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 2, 3, 3, 4);
-  ExpectStatsTiming("SubmittedSegmentNumber", 2, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 2, 3, 3, 4);
-  ExpectStatsCount("SubmittedTotalLength", 7);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 2, 3, 3, 4);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 2, 1, 1, 1);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 2, 3, 3, 4);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 7);
 }
 
 TEST_F(SessionUsageObserverTest, MultipleSessions) {
@@ -2090,7 +2159,6 @@ TEST_F(SessionUsageObserverTest, MultipleSessions) {
                           &command_list);
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
     observer->EvalCommandHandler(command_list.commands(i));
@@ -2099,54 +2167,54 @@ TEST_F(SessionUsageObserverTest, MultipleSessions) {
   int unconsumed_sendkey = 0;
   CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
 
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+  EnsureSaveAndExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  EnsureSaveAndExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
 
-  ExpectStatsCount("Commit", 3);
-  ExpectStatsCount("CommitFromConversion", 2);
-  ExpectStatsCount("CommitFromSuggestion", 1);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
+  EnsureSaveAndExpectStatsCount("Commit", 3);
+  EnsureSaveAndExpectStatsCount("CommitFromConversion", 2);
+  EnsureSaveAndExpectStatsCount("CommitFromSuggestion", 1);
+  EnsureSaveAndExpectStatsCount("CommitFromPrediction", 0);
+  EnsureSaveAndExpectStatsCount("CommitFromComposition", 0);
 
-  ExpectStatsCount("ConversionCandidates0", 3);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 1);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates0", 3);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates2", 1);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("ConversionCandidatesGE10", 0);
 
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("TransliterationCandidatesGE10", 0);
 
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates1", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("PredictionCandidatesGE10", 0);
 
-  ExpectStatsCount("SuggestionCandidates0", 0);
-  ExpectStatsCount("SuggestionCandidates1", 1);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates0", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates1", 1);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates2", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates3", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates4", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidates5", 0);
+  EnsureSaveAndExpectStatsCount("SuggestionCandidatesGE10", 0);
 
-  ExpectStatsCount("MouseSelect", 1);
-  ExpectStatsCount("BackSpaceAfterCommit", 2);
+  EnsureSaveAndExpectStatsCount("MouseSelect", 1);
+  EnsureSaveAndExpectStatsCount("BackSpaceAfterCommit", 2);
 
-  ExpectStatsTiming("SubmittedSegmentLength", 5, 4, 2, 8);
-  ExpectStatsTiming("SubmittedSegmentNumber", 3, 1, 1, 2);
-  ExpectStatsTiming("SubmittedLength", 3, 6, 4, 10);
-  ExpectStatsCount("SubmittedTotalLength", 20);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentLength", 5, 4, 2, 8);
+  EnsureSaveAndExpectStatsTiming("SubmittedSegmentNumber", 3, 1, 1, 2);
+  EnsureSaveAndExpectStatsTiming("SubmittedLength", 3, 6, 4, 10);
+  EnsureSaveAndExpectStatsCount("SubmittedTotalLength", 20);
 }
 
 
@@ -2155,7 +2223,6 @@ TEST_F(SessionUsageObserverTest, ConfigInformationList) {
   config::ConfigHandler::GetDefaultConfig(&config);
   config::ConfigHandler::SetConfig(config);
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
   usage_stats::Stats stats;
 
@@ -2213,7 +2280,6 @@ TEST_F(SessionUsageObserverTest, ConfigWebServiceEntrySize) {
   config::ConfigHandler::GetDefaultConfig(&config);
   config::ConfigHandler::SetConfig(config);
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
   string reg_str;
   usage_stats::Stats stats;
 

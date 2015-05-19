@@ -29,22 +29,30 @@
 
 #include "sync/user_history_adapter.h"
 
+#include <algorithm>
 #include <cmath>
 #include <map>
+#include <set>
 #include <string>
+
 #include "base/base.h"
 #include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/freelist.h"
+#include "base/logging.h"
+#include "base/number_util.h"
+#include "base/stl_util.h"
+#include "base/testing_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "sync/inprocess_service.h"
-#include "sync/sync.pb.h"
-#include "sync/syncer.h"
-#include "sync/sync_util.h"
-#include "sync/user_history_sync_util.h"
+#include "storage/memory_storage.h"
 #include "storage/registry.h"
 #include "storage/tiny_storage.h"
+#include "sync/inprocess_service.h"
+#include "sync/sync.pb.h"
+#include "sync/sync_util.h"
+#include "sync/syncer.h"
+#include "sync/user_history_sync_util.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -52,7 +60,7 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace sync {
 
-class UserHistoryAdapterTest : public testing::Test {
+class UserHistoryAdapterTest : public ::testing::Test {
  public:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -257,62 +265,36 @@ TEST_F(UserHistoryAdapterTest, MarkUploaded) {
 }
 
 namespace {
-// On memory storage for dependency injection.
-// This class might be useful for other test cases.
-// TODO(taku): Move this class in storage/ directory.
-class MemoryStorage : public storage::StorageInterface {
- public:
-  bool Open(const string &filename) {
-    return true;
+
+string DumpUserHistoryStorage(const string &fname) {
+  UserHistoryStorage storage(fname);
+  storage.Load();
+  return storage.Utf8DebugString();
+}
+
+void FillEntryWithDefaultValueIfNotExist(UserHistorySyncUtil::Entry *entry) {
+  const UserHistorySyncUtil::Entry &default_entry =
+      UserHistorySyncUtil::Entry::default_instance();
+  if (!entry->has_suggestion_freq()) {
+    entry->set_suggestion_freq(default_entry.suggestion_freq());
   }
-
-  bool OpenOrCreate(const string &filename) {
-    return true;
+  if (!entry->has_conversion_freq()) {
+    entry->set_conversion_freq(default_entry.conversion_freq());
   }
-
-  bool Sync() {
-    return true;
+  if (!entry->has_last_access_time()) {
+    entry->set_last_access_time(default_entry.last_access_time());
   }
-
-  bool Lookup(const string &key, string *value) const {
-    CHECK(value);
-    map<string, string>::const_iterator it = data_.find(key);
-    if (it == data_.end()) {
-      return false;
-    }
-    *value = it->second;
-    return true;
+  if (!entry->has_removed()) {
+    entry->set_removed(default_entry.removed());
   }
+}
 
-  bool Insert(const string &key, const string &value) {
-    data_[key] = value;
-    return true;
+void FillEachEntryWithDefaultValueIfNotExist(UserHistoryStorage *storage) {
+  for (int i = 0; i < storage->entries_size(); ++i) {
+    FillEntryWithDefaultValueIfNotExist(storage->mutable_entries(i));
   }
+}
 
-  bool Erase(const string &key) {
-    map<string, string>::iterator it = data_.find(key);
-    if (it != data_.end()) {
-      data_.erase(it);
-      return true;
-    }
-    return false;
-  }
-
-  bool Clear() {
-    data_.clear();
-    return true;
-  }
-
-  size_t Size() const {
-    return data_.size();
-  }
-
-  MemoryStorage() {}
-  virtual ~MemoryStorage() {}
-
- private:
-  map<string, string> data_;
-};
 }  // namespace
 
 TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
@@ -330,14 +312,14 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
   for (int i = 0; i < kClientsSize; ++i) {
     Syncer *syncer = new Syncer(&service);
     CHECK(syncer);
-    storage::StorageInterface *memory_storage = new MemoryStorage;
+    storage::StorageInterface *memory_storage = storage::MemoryStorage::New();
     CHECK(memory_storage);
 
     UserHistoryAdapter *adapter = new UserHistoryAdapter;
     CHECK(adapter);
     const string filename =
         Util::JoinPath(FLAGS_test_tmpdir,
-                       "client." + Util::SimpleItoa(i));
+                       "client." + NumberUtil::SimpleItoa(i));
     adapter->SetUserHistoryFileName(filename);
     syncer->RegisterAdapter(adapter);
     syncers.push_back(syncer);
@@ -357,7 +339,6 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
     CHECK(client_id >= 0 && client_id < kClientsSize);
     UserHistoryStorage history(filenames[client_id]);
     history.Load();
-    clock_mock_->SetTime(1000 * n + 100 * client_id, 0);
     UserHistorySyncUtil::AddRandomUpdates(&history);
     EXPECT_TRUE(history.Save());
 
@@ -377,6 +358,7 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
   // Check all clients have the same entries.
   UserHistoryStorage target(filenames[0]);
   target.Load();
+  FillEachEntryWithDefaultValueIfNotExist(&target);
   for (int i = 1; i < kClientsSize; ++i) {
     UserHistoryStorage storage(filenames[i]);
     storage.Load();
@@ -384,31 +366,196 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
 
     if (target.entries_size() == storage.entries_size()) {
       // Ensure all entries have all elements.
-      for (size_t i = 0; i < target.entries_size(); ++i) {
-        UserHistorySyncUtil::Entry *entry = target.mutable_entries(i);
-        entry->set_suggestion_freq(entry->suggestion_freq());
-        entry->set_conversion_freq(entry->conversion_freq());
-        entry->set_last_access_time(entry->last_access_time());
-        entry->set_removed(entry->removed());
-      }
-      for (size_t i = 0; i < storage.entries_size(); ++i) {
-        UserHistorySyncUtil::Entry *entry = storage.mutable_entries(i);
-        entry->set_suggestion_freq(entry->suggestion_freq());
-        entry->set_conversion_freq(entry->conversion_freq());
-        entry->set_last_access_time(entry->last_access_time());
-        entry->set_removed(entry->removed());
-      }
-
+      FillEachEntryWithDefaultValueIfNotExist(&storage);
       EXPECT_EQ(target.DebugString(), storage.DebugString());
     }
   }
 
   for (int i = 0; i < kClientsSize; ++i) {
     Util::Unlink(filenames[i]);
-    delete syncers[i];
-    delete adapters[i];
-    delete memory_storages[i];
   }
+  STLDeleteElements(&syncers);
+  STLDeleteElements(&adapters);
+  STLDeleteElements(&memory_storages);
 }
-}  // sync
-}  // mozc
+
+// TODO(team): In case where add/edit and clean occur at the same time on
+// different clients, sync behavior is undefined because entry is sorted only in
+// order of timestamp, i.e., the order of key-value and CLEAN_ALL_EVENT depends
+// on sorting algorithm and initial order. Although such situation would be
+// rare, we should fix the behavior of sync. Currently test is added as DISABLED
+// and to be fixed.
+TEST_F(UserHistoryAdapterTest, DISABLED_EditAndDeleteAtTheSameTime) {
+  const int kClientsSize = 2;
+
+  // Emulates sync server.
+  InprocessService service;
+
+  vector<string> filenames;
+  vector<Syncer *> syncers;
+  vector<UserHistoryAdapter *> adapters;
+  vector<storage::StorageInterface *> memory_storages;
+
+  // Create sync clients.
+  for (int i = 0; i < kClientsSize; ++i) {
+    Syncer *syncer = new Syncer(&service);
+    CHECK(syncer);
+    storage::StorageInterface *memory_storage = storage::MemoryStorage::New();
+    CHECK(memory_storage);
+
+    UserHistoryAdapter *adapter = new UserHistoryAdapter;
+    CHECK(adapter);
+    const string filename =
+        Util::JoinPath(FLAGS_test_tmpdir,
+                       "client." + NumberUtil::SimpleItoa(i));
+    adapter->SetUserHistoryFileName(filename);
+    syncer->RegisterAdapter(adapter);
+    syncers.push_back(syncer);
+    adapters.push_back(adapter);
+    memory_storages.push_back(memory_storage);
+    filenames.push_back(filename);
+  }
+  ASSERT_EQ(filenames.size(), adapters.size());
+  ASSERT_EQ(syncers.size(), adapters.size());
+
+  // Add a history entry as initial state.
+  {
+    const uint64 kTime0 = 0;
+    UserHistoryStorage history(filenames[0]);
+    history.Load();
+    UserHistorySyncUtil::Entry *entry = history.add_entries();
+    entry->set_key("start");
+    entry->set_value("start");
+    entry->set_conversion_freq(10);
+    entry->set_suggestion_freq(20);
+    entry->set_last_access_time(kTime0);
+    EXPECT_TRUE(history.Save());
+
+    // Do sync on every client to share the initial state.
+    clock_mock_->SetTime(kTime0, 0);
+    for (int i = 0; i < kClientsSize; ++i) {
+      storage::Registry::SetStorage(memory_storages[i]);
+      bool reload_required = false;
+      syncers[i]->Sync(&reload_required);
+      VLOG(1) << "UserHistoryStorage of " << i << ": "
+              << DumpUserHistoryStorage(filenames[i]);
+    }
+  }
+
+  const int kNumEntriesToAdd = 10;
+  {
+    // Set the clock forward 1000 time units to make it easy to understand sync
+    // behavior by VLOG dump.
+    const uint64 kTime1 = Util::GetTime() + 1000;
+    // Change on client 0
+    {
+      // Adds new entries at time 1
+      UserHistoryStorage history(filenames[0]);
+      history.Load();
+      for (int i = 0; i < kNumEntriesToAdd; ++i) {
+        UserHistorySyncUtil::Entry *entry = history.add_entries();
+        entry->set_key(Util::StringPrintf("newentry%d", i));
+        entry->set_value(Util::StringPrintf("newentry%d", i));
+        entry->set_conversion_freq(30);
+        entry->set_suggestion_freq(40);
+        entry->set_last_access_time(kTime1);
+      }
+
+      // Modifies entry "start" at time 1.
+      for (int i = 0; i < history.entries_size(); ++i) {
+        if (history.entries(i).key() != "start") {
+          continue;
+        }
+        UserHistorySyncUtil::Entry *entry = history.mutable_entries(i);
+        entry->set_conversion_freq(1000);
+        entry->set_last_access_time(kTime1);
+        break;
+      }
+      EXPECT_TRUE(history.Save());
+    }
+
+    // Client 1 clears history.
+    {
+      UserHistoryStorage history(filenames[1]);
+      history.Load();
+      UserHistorySyncUtil::Entry *entry = history.add_entries();
+      entry->set_entry_type(UserHistorySyncUtil::Entry::CLEAN_ALL_EVENT);
+      entry->set_last_access_time(kTime1);
+      EXPECT_TRUE(history.Save());
+    }
+  }
+
+  {
+    const uint64 kTime2 = Util::GetTime() + 1000;
+    clock_mock_->SetTime(kTime2, 0);
+
+    // Do sync on every client in random order.
+    vector<int> order(kClientsSize);
+    for (int i = 0; i < kClientsSize; ++i) {
+      order[i] = i;
+    }
+    random_shuffle(order.begin(), order.end(), Util::Random);
+
+    for (int i = 0; i < kClientsSize; ++i) {
+      const int client_id = order[i];
+      storage::Registry::SetStorage(memory_storages[client_id]);
+      bool reload_required = false;
+      syncers[client_id]->Sync(&reload_required);
+    }
+  }
+
+  {
+    const uint64 kTime3 = Util::GetTime() + 1000;
+    clock_mock_->SetTime(kTime3, 0);
+
+    // Do sync on every client to share the final server state.
+    for (int i = 0; i < kClientsSize; ++i) {
+      storage::Registry::SetStorage(memory_storages[i]);
+      bool reload_required = false;
+      syncers[i]->Sync(&reload_required);
+      VLOG(1) << "Final state of client " << i << ": "
+              << DumpUserHistoryStorage(filenames[i]);
+    }
+  }
+
+  // Check if every client shares the same state.
+  UserHistoryStorage storage_0(filenames[0]);
+  storage_0.Load();
+  FillEachEntryWithDefaultValueIfNotExist(&storage_0);
+  for (int i = 1; i < kClientsSize; ++i) {
+    UserHistoryStorage storage_i(filenames[i]);
+    storage_i.Load();
+    FillEachEntryWithDefaultValueIfNotExist(&storage_i);
+    EXPECT_PROTO_EQ(storage_0, storage_i);
+  }
+
+  // Check if the initial entry "start" modified at time kTime1 and entries
+  // added at time kTime1 exist (i.e., if entries are added/modified locally on
+  // a client and local entries on another client are cleared at exactly the
+  // same time, we may want to keep those entries.
+  for (int i = 0; i < kClientsSize; ++i) {
+    UserHistoryStorage storage(filenames[i]);
+    storage.Load();
+    set<string> keys;
+    for (int j = 0; j < storage.entries_size(); ++j) {
+      keys.insert(storage.entries(i).key());
+    }
+    EXPECT_TRUE(keys.find("start") != keys.end())
+        << "start is not in the storage of client " << i;
+    for (int j = 0; j < kNumEntriesToAdd; ++j) {
+      const string key = Util::StringPrintf("newentry%d", j);
+      EXPECT_TRUE(keys.find(key) != keys.end())
+          << key << " is not in the storage of client " << i;
+    }
+  }
+
+  for (int i = 0; i < kClientsSize; ++i) {
+    Util::Unlink(filenames[i]);
+  }
+  STLDeleteElements(&syncers);
+  STLDeleteElements(&adapters);
+  STLDeleteElements(&memory_storages);
+}
+
+}  // namespace sync
+}  // namespace mozc

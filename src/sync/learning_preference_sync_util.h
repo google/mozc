@@ -31,12 +31,14 @@
 #define MOZC_SYNC_LEARNING_PREFERENCE_SYNC_UTIL_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
 #include "sync/sync.pb.h"
 
 namespace mozc {
 
+namespace storage {
 class LRUStorage;
+}  // namepace storage
 
 namespace sync {
 
@@ -46,7 +48,7 @@ class LearningPreferenceSyncUtil {
   // All items, which should be synced to the cloud, must be newer than
   // |last_access_time|. The storage data is handled as an independent
   // entry whose type is |type|.
-  static bool CreateUpdate(const LRUStorage &storage,
+  static bool CreateUpdate(const mozc::storage::LRUStorage &storage,
                            LearningPreference::Entry::Type type,
                            uint64 last_access_time,
                            LearningPreference *local_update);
@@ -58,15 +60,15 @@ class LearningPreferenceSyncUtil {
   // Since |remote_update| contains different types of entries, you can
   // filter them by |type|.
   static bool CreateMergePendingFile(
-      const LRUStorage &storage,
+      const mozc::storage::LRUStorage &storage,
       LearningPreference::Entry::Type type,
       const LearningPreference &remote_update);
 
  private:
-  LearningPreferenceSyncUtil() {}
-  ~LearningPreferenceSyncUtil() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(LearningPreferenceSyncUtil);
 };
-}  // sync
-}  // mozc
+
+}  // namespace sync
+}  // namespace mozc
 
 #endif  // MOZC_SYNC_LEARNING_PREFERENCE_SYNC_UTIL_H_

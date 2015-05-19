@@ -31,9 +31,10 @@
 #define MOZC_BASE_BASE_H_
 
 #include "base/namespace.h"
-#include "base/port.h"
-#include "base/logging.h"
+
 #include "base/compiler_specific.h"
+#include "base/logging.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 
 #endif  // MOZC_BASE_BASE_H_

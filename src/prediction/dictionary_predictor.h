@@ -32,7 +32,8 @@
 
 #include <string>
 #include <vector>
-#include "base/base.h"
+#include "base/util.h"
+#include "data_manager/data_manager_interface.h"
 #include "prediction/predictor_interface.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
@@ -47,6 +48,7 @@ class NodeAllocatorInterface;
 class POSMatcher;
 class SegmenterInterface;
 class Segments;
+class SuggestionFilter;
 struct Node;
 
 // Dictioanry-based predictor
@@ -57,9 +59,7 @@ class DictionaryPredictor : public PredictorInterface {
   DictionaryPredictor(const ImmutableConverterInterface *immutable_converter,
                       const DictionaryInterface *dictionary,
                       const DictionaryInterface *suffix_dictionary,
-                      const ConnectorInterface *connector,
-                      const SegmenterInterface *segmenter,
-                      const POSMatcher &pos_matcher);
+                      const DataManagerInterface *data_manager);
   virtual ~DictionaryPredictor();
 
   virtual bool Predict(Segments *segments) const;
@@ -82,54 +82,64 @@ class DictionaryPredictor : public PredictorInterface {
     REALTIME = 4,
     // add suffixes like "さん", "が" which matches to the pevious context.
     SUFFIX =  8,
+    // add English words.
+    ENGLISH = 16,
   };
+  // Bitfield to store a set of PredictionType.
+  typedef int32 PredictionTypes;
 
   struct Result {
-    Result() : node(NULL), type(NO_PREDICTION), cost(0) {}
-    Result(const Node *node_, PredictionType type_)
-        : node(node_), type(type_), cost(0) {}
+    Result() : node(NULL), types(NO_PREDICTION), cost(0) {}
+    Result(const Node *node_, PredictionTypes types_)
+        : node(node_), types(types_), cost(0) {}
     const Node *node;
-    PredictionType type;
+    PredictionTypes types;
     int cost;
   };
 
-  // On MSVS2008/2010, TestableDictionaryPredictor::Result(node, type) causes
-  // a compile error even if you change the access right of it to public.
-  // You can use TestableDictionaryPredictor::MakeResult(node, type) instead.
-  static Result MakeResult(const Node *node, PredictionType type) {
-    return Result(node, type);
+  // On MSVS2008/2010, TestableDictionaryPredictor::Result(node, types) causes a
+  // compile error even if you change the access right of it to public.  You can
+  // use TestableDictionaryPredictor::MakeResult(node, types) instead.
+  static Result MakeResult(const Node *node, PredictionTypes types) {
+    return Result(node, types);
   }
 
-  void AggregateRealtimeConversion(PredictionType type,
+  void AggregateRealtimeConversion(PredictionTypes types,
                                    Segments *segments,
                                    NodeAllocatorInterface *allocator,
                                    vector<Result> *results) const;
 
-  void AggregateUnigramPrediction(PredictionType type,
+  void AggregateUnigramPrediction(PredictionTypes types,
                                   const ConversionRequest &request,
                                   Segments *segments,
                                   NodeAllocatorInterface *allocator,
                                   vector<Result> *results) const;
 
-  void AggregateBigramPrediction(PredictionType type,
+  void AggregateBigramPrediction(PredictionTypes types,
                                  const ConversionRequest &request,
                                  Segments *segments,
                                  NodeAllocatorInterface *allocator,
                                  vector<Result> *results) const;
 
-  void AggregateSuffixPrediction(PredictionType type,
+  void AggregateSuffixPrediction(PredictionTypes types,
                                  const ConversionRequest &request,
                                  Segments *segments,
                                  NodeAllocatorInterface *allocator,
                                  vector<Result> *results) const;
+
+  void AggregateEnglishPrediction(PredictionTypes types,
+                                  const ConversionRequest &request,
+                                  Segments *segments,
+                                  NodeAllocatorInterface *allocator,
+                                  vector<Result> *results) const;
 
   void ApplyPenaltyForKeyExpansion(const Segments &segments,
                                    vector<Result> *results) const;
 
  private:
-  FRIEND_TEST(DictionaryPredictorTest, GetPredictionType);
+  FRIEND_TEST(DictionaryPredictorTest, GetPredictionTypes);
   FRIEND_TEST(DictionaryPredictorTest,
-              GetPredictionTypeTestWithZeroQuerySuggestion);
+              GetPredictionTypesTestWithZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, IsZipCodeRequest);
   FRIEND_TEST(DictionaryPredictorTest, GetRealtimeCandidateMaxSize);
   FRIEND_TEST(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed);
@@ -149,6 +159,9 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, RemoveMissSpelledCandidates);
   FRIEND_TEST(DictionaryPredictorTest, ConformCharacterWidthToPreference);
   FRIEND_TEST(DictionaryPredictorTest, SetLMCost);
+#ifdef DEBUG
+  FRIEND_TEST(DictionaryPredictorTest, SetDebugDescription);
+#endif  // DEBUG
 
   class ResultCompare {
    public:
@@ -157,7 +170,7 @@ class DictionaryPredictor : public PredictorInterface {
     }
   };
 
-  // Return false if no results were aggregated.
+  // Returns false if no results were aggregated.
   bool AggregatePrediction(const ConversionRequest &request,
                            Segments *segments,
                            NodeAllocatorInterface *allocator,
@@ -165,12 +178,28 @@ class DictionaryPredictor : public PredictorInterface {
 
   void SetCost(const Segments &segments, vector<Result> *results) const;
 
-  // Remove prediciton by setting NO_PREDICTION to result type if necessary.
+  // Removes prediciton by setting NO_PREDICTION to result type if necessary.
   void RemovePrediction(const Segments &segments,
                         vector<Result> *results) const;
 
-  bool AddPredictionToCandidates(Segments *segments,
+  bool AddPredictionToCandidates(const ConversionRequest &request,
+                                 Segments *segments,
                                  vector<Result> *results) const;
+
+  // Adds prediction results from history key and value.
+  void AddBigramResultsFromHistory(const string &history_key,
+                                   const string &history_value,
+                                   const ConversionRequest &request,
+                                   Segments *segments,
+                                   NodeAllocatorInterface *allocator,
+                                   vector<Result> *results) const;
+
+  // Changes the prediction type for irrelevant bigram candidate.
+  void CheckBigramResult(const Node *history_node,
+                         const Util::ScriptType history_ctype,
+                         const Util::ScriptType last_history_ctype,
+                         NodeAllocatorInterface *allocator,
+                         Result *result) const;
 
   const Node *GetPredictiveNodes(const DictionaryInterface *dictionary,
                                  const string &history_key,
@@ -178,7 +207,16 @@ class DictionaryPredictor : public PredictorInterface {
                                  const Segments &segments,
                                  NodeAllocatorInterface *allocator) const;
 
-  // return the position of mis-spelled character position
+  // Performs a custom look up for English words where case-conversion might be
+  // applied to lookup key and/or output results.
+  const Node *GetPredictiveNodesForEnglish(
+      const DictionaryInterface *dictionary,
+      const string &history_key,
+      const ConversionRequest &request,
+      const Segments &segments,
+      NodeAllocatorInterface *allocator) const;
+
+  // Returns the position of misspelled character position.
   //
   // Example1:
   // key: "れみおめろん"
@@ -192,16 +230,16 @@ class DictionaryPredictor : public PredictorInterface {
   size_t GetMissSpelledPosition(const string &key,
                                 const string &value) const;
 
-  // return true if key/value is in dictionary.
+  // Returns true if key/value is in dictionary.
   const Node *LookupKeyValueFromDictionary(
       const string &key,
       const string &value,
       NodeAllocatorInterface *allocator) const;
 
-  // return language model cost of |node|
+  // Returns language model cost of |node| given prediciton type |type|.
   // |rid| is the right id of previous word (node).
-  // if |rid| is uknown, set 0 as a default value.
-  int GetLMCost(PredictionType type, const Node &node, int rid) const;
+  // If |rid| is uknown, set 0 as a default value.
+  int GetLMCost(PredictionTypes type, const Node &node, int rid) const;
 
   // Given the results aggregated by aggregates, remove
   // miss-spelled results from the |results|.
@@ -257,41 +295,69 @@ class DictionaryPredictor : public PredictorInterface {
   void SetLMCost(const Segments &segments,
                  vector<Result> *results) const;
 
-  // return true if key consistes of '0'-'9' or '-'
+  // Returns true if key consistes of '0'-'9' or '-'
   bool IsZipCodeRequest(const string &key) const;
 
-  // return true if the suggestion is classified
+  // Returns true if the suggestion is classified
   // as "aggressive".
   bool IsAggressiveSuggestion(
-      size_t query_len, size_t key_len, int32 cost,
+      size_t query_len, size_t key_len, int cost,
       bool is_suggestion, size_t total_candidates_size) const;
 
-  // return history key/value.
+  // Gets history key/value.
+  // Returns false if history segments are
+  // not found.
   bool GetHistoryKeyAndValue(const Segments &segments,
                              string *key, string *value) const;
 
-  // return PredictionType.
-  // return value may be UNIGRAM | BIGRAM | REALTIME | SUFFIX.
-  PredictionType GetPredictionType(const Segments &segments) const;
+  // Returns a bitfield of PredictionType.
+  PredictionTypes GetPredictionTypes(const ConversionRequest &request,
+                                     const Segments &segments) const;
 
-  // return max size of realtime candidates.
+  // Returns max size of realtime candidates.
   size_t GetRealtimeCandidateMaxSize(const Segments &segments,
                                      bool mixed_conversion,
                                      size_t max_size) const;
 
-  // return cutoff threshold of unigram candidates.
+  // Aggregates unigram candidate for mixed conversion.
+  // This reduces redundant candidates.
+  void AggregateUnigramCandidateForMixedConversion(
+      const ConversionRequest &request,
+      Segments *segments,
+      NodeAllocatorInterface *allocator,
+      vector<Result> *results) const;
+
+  // Aggregates unigram candidate for non mixed conversion.
+  void AggregateUnigramCandidate(const ConversionRequest &request,
+                                 Segments *segments,
+                                 NodeAllocatorInterface *allocator,
+                                 vector<Result> *results) const;
+
+  // Aggregates English candidates, basically for Latin input modes.
+  void AggregateEnglishCandidate(const ConversionRequest &request,
+                                 Segments *segments,
+                                 NodeAllocatorInterface *allocator,
+                                 vector<Result> *results) const;
+
+  // Returns cutoff threshold of unigram candidates.
   // AggregateUnigramPrediction method does not return any candidates
   // if there are too many (>= cutoff threshold) eligible candidates.
   // This behavior prevents a user from seeing too many prefix-match
   // candidates.
-  size_t GetUnigramCandidateCutoffThreshold(const Segments &segments,
-                                            bool mixed_conversion) const;
+  size_t GetUnigramCandidateCutoffThreshold(const Segments &segments) const;
+
+#ifdef DEBUG
+  // Provides useful information of suggestion source in debug build.
+  static void SetDebugDescription(PredictionTypes types,
+                                  string *description);
+#endif  // DEBUG
 
   const ImmutableConverterInterface *immutable_converter_;
   const DictionaryInterface *dictionary_;
   const DictionaryInterface *suffix_dictionary_;
   const ConnectorInterface *connector_;
   const SegmenterInterface *segmenter_;
+  scoped_ptr<SuggestionFilter> suggestion_filter_;
   const uint16 counter_suffix_word_id_;
   const string predictor_name_;
 };

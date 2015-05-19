@@ -88,5 +88,21 @@
         }],
       ],
     },
+    {
+      'target_name': 'character_form_manager',
+      'type': 'static_library',
+      'sources': [
+        'character_form_manager.cc',
+      ],
+      'dependencies': [
+        'config_handler',
+        'config_protocol',
+        '../base/base.gyp:base',
+        '../base/base.gyp:config_file_stream',
+        # storage.gyp:storage is depended by character_form_manager.
+        # TODO(komatsu): delete this line.
+        '../storage/storage.gyp:storage',
+      ]
+    },
   ],
 }

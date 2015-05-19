@@ -31,6 +31,7 @@
 #include <string>
 
 #include "base/hash_tables.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "dictionary/rx/rx_trie_builder.h"
 #include "testing/base/public/gunit.h"
@@ -70,13 +71,13 @@ TEST(RxTrieBuilderTest, RandomTest) {
   hash_set<string> inserted;
   RxTrieBuilder builder;
   for (size_t i = 0; i < kTestSize; ++i) {
-    const string key = Util::SimpleItoa(Util::Random(kTestSize));
+    const string key = NumberUtil::SimpleItoa(Util::Random(kTestSize));
     builder.AddKey(key);
     inserted.insert(key);
   }
   builder.Build();
   for (size_t i = 0; i < kTestSize; ++i) {
-    const string key = Util::SimpleItoa(Util::Random(kTestSize));
+    const string key = NumberUtil::SimpleItoa(Util::Random(kTestSize));
     if (inserted.find(key) != inserted.end()) {
       EXPECT_GE(builder.GetIdFromKey(key), 0);
     } else {
@@ -85,7 +86,7 @@ TEST(RxTrieBuilderTest, RandomTest) {
   }
   hash_set<int> ids;
   for (size_t i = 0; i < kTestSize; ++i) {
-    const string key = Util::SimpleItoa(i);
+    const string key = NumberUtil::SimpleItoa(i);
     const int id = builder.GetIdFromKey(key);
     if (id != -1) {
       ids.insert(id);

@@ -64,6 +64,8 @@ namespace mozc {
 
 namespace gui {
 
+using mozc::config::StatsConfigUtil;
+
 ConfigDialog::ConfigDialog()
     : client_(client::ClientFactory::NewClient()),
       initial_preedit_method_(0),

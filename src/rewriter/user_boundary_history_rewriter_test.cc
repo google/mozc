@@ -106,7 +106,6 @@ class UserBoundaryHistoryRewriterTest : public testing::Test {
   UserBoundaryHistoryRewriterTest() {}
 
   virtual void SetUp() {
-    ConverterFactory::SetConverter(&mock_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -121,9 +120,6 @@ class UserBoundaryHistoryRewriterTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-
-    // Clear converter mock.  Otherwise, subsequent tests receive garbage.
-    ConverterFactory::SetConverter(NULL);
   }
 
   ConverterMock &mock() {

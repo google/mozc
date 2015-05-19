@@ -29,6 +29,8 @@
 
 #include "client/client_mock.h"
 
+#include "base/logging.h"
+
 namespace mozc {
 namespace client {
 
@@ -182,5 +184,5 @@ void ClientMock::set_output_GetCloudSyncStatus(
     const commands::CloudSyncStatus &cloud_sync_status) {
   cloud_sync_status_.CopyFrom(cloud_sync_status);
 }
+}  // namespace client
 }  // namespace mozc
-}  // namespace ibus

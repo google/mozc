@@ -49,8 +49,5 @@ UserDataManagerInterface *PinyinSessionFactory::GetUserDataManager() {
   return Singleton<EmptyUserDataManager>::get();
 }
 
-bool PinyinSessionFactory::IsAvailable() const {
-  return true;
-}
 }  // namesapce pinyin
 }  // namespace mozc

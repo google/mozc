@@ -55,18 +55,18 @@ class EnglishMockDictionary : public EnglishDictionaryInterface {
       "aa", "ab", "ac",
       "a", "b", "c",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kWordList); ++i) {
+    for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kWordList); ++i) {
       word_list_.push_back(kWordList[i]);
     }
   }
   virtual ~EnglishMockDictionary() {}
 
-  bool GetSuggestions(const string &prefix, vector<string> *output) const {
+  void GetSuggestions(const string &prefix, vector<string> *output) const {
     DCHECK(output);
     output->clear();
 
     if (prefix.empty()) {
-      return false;
+      return;
     }
 
     string normalized_prefix = prefix;
@@ -77,11 +77,9 @@ class EnglishMockDictionary : public EnglishDictionaryInterface {
         output->push_back(word_list_[i]);
       }
     }
-
-    return !output->empty();
   }
 
-  MOCK_METHOD1(LearnWord, void(const string &word));
+  MOCK_METHOD1(LearnWord, bool(const string &word));
 
  private:
   vector<string> word_list_;
@@ -91,7 +89,9 @@ class EnglishMockDictionary : public EnglishDictionaryInterface {
 class EnglishContextTest : public testing::Test {
  protected:
   virtual void SetUp() {
+    EXPECT_CALL(dictionary_, LearnWord(_)).WillRepeatedly(Return(true));
     EnglishDictionaryFactory::SetDictionary(&dictionary_);
+
     session_config_.reset(new SessionConfig);
     session_config_->full_width_word_mode = false;
     session_config_->full_width_punctuation_mode = true;
@@ -212,9 +212,9 @@ TEST_F(EnglishContextTest, CommitTest) {
 
   {  // Selects second candidate and commits.
     {
-      SCOPED_TRACE("Focuses a next candidate");
+      SCOPED_TRACE("Focuses a 2nd candidate");
       InsertCharacterChars("va");
-      context_->FocusCandidateNext();
+      context_->FocusCandidate(1);
       CheckContext("va", "", 1);
     }
     {
@@ -313,18 +313,6 @@ TEST_F(EnglishContextTest, RemoveTest) {
 TEST_F(EnglishContextTest, FocusCandidateIndex) {
   InsertCharacterChars("vaa");
 
-  {
-    SCOPED_TRACE("Focuses a previous candidate and make no sense");
-    EXPECT_TRUE(context_->FocusCandidatePrev());
-    CheckContext("vaa", "", 0);
-  }
-
-  {
-    SCOPED_TRACE("Focuses a next candidate");
-    EXPECT_TRUE(context_->FocusCandidateNext());
-    CheckContext("vaa", "", 1);
-  }
-
   const size_t last_index = GetCandidatesSize() - 1;
 
   {
@@ -334,21 +322,15 @@ TEST_F(EnglishContextTest, FocusCandidateIndex) {
   }
 
   {
-    SCOPED_TRACE("Focuses a next candidate and make no sense");
-    EXPECT_FALSE(context_->FocusCandidateNext());
+    SCOPED_TRACE("Focuses a invalid candidate and make no sense");
+    EXPECT_FALSE(context_->FocusCandidate(last_index + 1));
     CheckContext("vaa", "", last_index);
   }
 
   {
-    SCOPED_TRACE("Focuses a previous candidate");
-    EXPECT_TRUE(context_->FocusCandidatePrev());
-    CheckContext("vaa", "", last_index - 1);
-  }
-
-  {
-    SCOPED_TRACE("Focuses a non-exist candidate");
-    EXPECT_FALSE(context_->FocusCandidate(100));
-    CheckContext("vaa", "", last_index - 1);
+    SCOPED_TRACE("Focuses a 1st candidate");
+    EXPECT_TRUE(context_->FocusCandidate(0));
+    CheckContext("vaa", "", 0);
   }
 }
 

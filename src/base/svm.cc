@@ -28,17 +28,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/svm.h"
-#include "base/base.h"
 
 #ifdef OS_WINDOWS
 #define NO_MINMAX
-#endif
+#endif  // OS_WINDOWS
 
 #include <cstring>
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <algorithm>
+
+#include "base/base.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace {

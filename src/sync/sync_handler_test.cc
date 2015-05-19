@@ -29,6 +29,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/clock_mock.h"
 #include "base/singleton.h"
 #include "base/thread.h"
 #include "base/util.h"
@@ -132,10 +133,13 @@ class MockSyncer : public SyncerInterface {
 class SyncHandlerTest : public testing::Test {
  public:
   virtual void SetUp() {
+    original_min_sync_interval_ = FLAGS_min_sync_interval;
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     HTTPClient::SetHTTPClientHandler(&client_);
+    syncer_.Reset();
     SyncerFactory::SetSyncer(&syncer_);
 
+    original_config_filename_ = ConfigHandler::GetConfigFileName();
     ConfigHandler::SetConfigFileName("memory://config");
 
     Config config = ConfigHandler::GetConfig();
@@ -147,8 +151,23 @@ class SyncHandlerTest : public testing::Test {
     sync_config->set_use_learning_preference_sync(true);
     ConfigHandler::SetConfig(config);
 
-    status_manager_ = Singleton<SyncStatusManager>::get();
     SyncStatusReset();
+  }
+
+  virtual void TearDown() {
+    // Since SyncHandler internally uses Singleton<SyncerThread> which is
+    // stateful, it is important to initialize its internal state here.
+    // Otherwise, any subsequent test which will be invoked in this process may
+    // run under unusual global settings.
+    SyncHandler::Wait();
+    SyncHandler::ClearLastCommandAndSyncTime();
+
+    // Also restores following global state for the subsequent test.
+    ConfigHandler::SetConfigFileName(original_config_filename_);
+    HTTPClient::SetHTTPClientHandler(NULL);
+    SyncerFactory::SetSyncer(NULL);
+    Util::SetClockHandler(NULL);
+    FLAGS_min_sync_interval = original_min_sync_interval_;
   }
 
   MockSyncer *GetSyncer() {
@@ -157,15 +176,35 @@ class SyncHandlerTest : public testing::Test {
 
   void SyncStatusReset() {
     // Reset sync status assuming authorization succeeds.
-    status_manager_->SetSyncGlobalStatus(
+    Singleton<SyncStatusManager>::get()->SetSyncGlobalStatus(
         commands::CloudSyncStatus::INSYNC);
-    status_manager_->NewSyncStatusSession();
+    Singleton<SyncStatusManager>::get()->NewSyncStatusSession();
   }
 
  private:
-  SyncStatusManagerInterface *status_manager_;
+  string original_config_filename_;
+  string config_filename_;
   HTTPClientMock client_;
   MockSyncer syncer_;
+  int32 original_min_sync_interval_;
+};
+
+class ScopedClockMock {
+ public:
+  ScopedClockMock()
+      : clock_mock_(Util::GetTime(), 0) {
+    Util::SetClockHandler(&clock_mock_);
+  }
+  ~ScopedClockMock() {
+    Util::SetClockHandler(NULL);
+  }
+  ClockMock *get() {
+    return &clock_mock_;
+  }
+
+ private:
+  ClockMock clock_mock_;
+  DISALLOW_COPY_AND_ASSIGN(ScopedClockMock);
 };
 
 namespace {
@@ -173,7 +212,8 @@ class NamedEventListenerThread : public Thread {
  public:
   explicit NamedEventListenerThread(int timeout)
       : listener_("sync"), timeout_(timeout), result_(false) {
-    EXPECT_TRUE(listener_.IsAvailable());
+    LOG_IF(FATAL, !listener_.IsAvailable())
+        << "Failed to intialize named event listener.";
   }
 
   ~NamedEventListenerThread() {
@@ -194,15 +234,25 @@ class NamedEventListenerThread : public Thread {
   int32 timeout_;
   bool result_;
 };
-}
+}  // namespace
 
 TEST_F(SyncHandlerTest, NotificationTest) {
   FLAGS_min_sync_interval = 0;
   MockSyncer *syncer = GetSyncer();
 
+  // Implementation note:
+  //    We intentionally do not assert any timing condition like
+  //      "this operation should be finished within X seconds",
+  //    as it is not naturally guaranteed on preemptive multitasking operation
+  //    system, especially on highly virtualized test environment. Here we have
+  //    a long enough timeout just to prevent this test from getting stuck.
+  //    See b/6407046 for the background of the flakiness of this test.
+  const int kTimeout = 30 * 1000;  // 60 sec.
+  const int kSyncDuation = 1000;  // 1 sec.
+
   {
     syncer->Reset();
-    syncer->SetOperationDuration(2000);  // sync takes 2000 msec
+    syncer->SetOperationDuration(kSyncDuation);
 
     // Call three times to test IsRunning state.
     EXPECT_TRUE(SyncHandler::Sync());
@@ -211,16 +261,9 @@ TEST_F(SyncHandlerTest, NotificationTest) {
 
     {
       NamedEventListener listener("sync");
-      EXPECT_TRUE(listener.IsAvailable());
-      // Not signaled within 500msec
-      EXPECT_FALSE(listener.Wait(500));
-    }
-
-    {
-      NamedEventListener listener("sync");
-      EXPECT_TRUE(listener.IsAvailable());
-      // signaled within 5000msec
-      EXPECT_TRUE(listener.Wait(5000));
+      ASSERT_TRUE(listener.IsAvailable());
+      // should be signaled eventually.
+      EXPECT_TRUE(listener.Wait(kTimeout));
     }
 
     EXPECT_TRUE(syncer->IsStartCalled());
@@ -230,15 +273,15 @@ TEST_F(SyncHandlerTest, NotificationTest) {
   }
 
   {
-    NamedEventListenerThread listener(500);
+    NamedEventListenerThread listener(kTimeout);
     listener.Start();
     Util::Sleep(200);
     syncer->Reset();
-    syncer->SetOperationDuration(2000);  // sync takes 2000 msec
+    syncer->SetOperationDuration(kSyncDuation);
     syncer->SetStartResult(false);
     EXPECT_FALSE(SyncHandler::Sync());
 
-    // event is singled immediately (500msec).
+    // should be signaled eventually.
     EXPECT_TRUE(listener.GetResult());
 
     EXPECT_TRUE(syncer->IsStartCalled());
@@ -249,7 +292,7 @@ TEST_F(SyncHandlerTest, NotificationTest) {
 
   {
     syncer->Reset();
-    syncer->SetOperationDuration(2000); // clear takes 2000 msec
+    syncer->SetOperationDuration(kSyncDuation);
 
     // Call three times to test IsRunning state.
     EXPECT_TRUE(SyncHandler::Clear());
@@ -258,16 +301,9 @@ TEST_F(SyncHandlerTest, NotificationTest) {
 
     {
       NamedEventListener listener("sync");
-      EXPECT_TRUE(listener.IsAvailable());
-      // Not signaled within 500msec
-      EXPECT_FALSE(listener.Wait(500));
-    }
-
-    {
-      NamedEventListener listener("sync");
-      EXPECT_TRUE(listener.IsAvailable());
-      // signaled within 5000msec
-      EXPECT_TRUE(listener.Wait(5000));
+      ASSERT_TRUE(listener.IsAvailable());
+      // should be signaled eventually.
+      EXPECT_TRUE(listener.Wait(kTimeout));
     }
 
     EXPECT_FALSE(syncer->IsStartCalled());
@@ -357,93 +393,119 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
 }
 
 TEST_F(SyncHandlerTest, MinIntervalTest) {
+  ScopedClockMock clock_mock;
   MockSyncer *syncer = GetSyncer();
-  FLAGS_min_sync_interval = 2;
-
-  Util::Sleep(3000);
+  // The resolution of timing calculation in SyncHandler is 1 second.
+  // So |FLAGS_min_sync_interval| must be relatively larger than the
+  // resolution to stabilize this test.
+  FLAGS_min_sync_interval = 5;  // seconds
 
   {
     syncer->Reset();
-    EXPECT_TRUE(SyncHandler::Sync());
-    Util::Sleep(200);
-    EXPECT_TRUE(syncer->IsSyncCalled());
-    syncer->Reset();
-    EXPECT_TRUE(SyncHandler::Sync());
-    Util::Sleep(200);
-    // Sync is not called because two Sync calls are very close.
-    EXPECT_FALSE(syncer->IsSyncCalled());
+    {
+      NamedEventListener listener("sync");
+      ASSERT_TRUE(listener.IsAvailable());
+      EXPECT_TRUE(SyncHandler::Sync());
+      ASSERT_TRUE(listener.Wait(1000))
+          << "Initial Sync should be invoked immediately";
+      EXPECT_TRUE(syncer->IsSyncCalled())
+          << "Initial Sync should be invoked immediately";
+      SyncHandler::Wait();
+    }
 
-    // Wait for 2 sec and call Sync again.
+    // Advance the clock 2 seconds.
+    clock_mock.get()->PutClockForward(2, 0);
     syncer->Reset();
-    Util::Sleep(2000);
-    EXPECT_TRUE(SyncHandler::Sync());
-    Util::Sleep(200);
-    // Then it succeeds.
-    EXPECT_TRUE(syncer->IsSyncCalled());
-    SyncHandler::Wait();
+    {
+      NamedEventListener listener("sync");
+      ASSERT_TRUE(listener.IsAvailable());
+      EXPECT_TRUE(SyncHandler::Sync());
+      ASSERT_FALSE(listener.Wait(500))
+          << "Subsequent Sync call should wait for the next sync time "
+             "window with minimum sync interval.";
+      EXPECT_FALSE(syncer->IsSyncCalled())
+          << "Subsequent Sync call should wait for the next sync time "
+             "window with minimum sync interval.";
+
+      ASSERT_TRUE(listener.Wait(FLAGS_min_sync_interval * 1000))
+          << "The second Sync call should be finished.";
+      SyncHandler::Wait();
+    }
+
+    // Advance the clock 2 wait intervals.
+    clock_mock.get()->PutClockForward(FLAGS_min_sync_interval * 2, 0);
+    syncer->Reset();
+    {
+      NamedEventListener listener("sync");
+      ASSERT_TRUE(listener.IsAvailable());
+      EXPECT_TRUE(SyncHandler::Sync());
+      ASSERT_TRUE(listener.Wait(1000))
+          << "With sufficient wait time, Sync should be invoked immediately.";
+      EXPECT_TRUE(syncer->IsSyncCalled())
+          << "With sufficient wait time, Sync should be invoked immediately.";
+      SyncHandler::Wait();
+    }
+
+    // Advance the clock 1 second.
+    clock_mock.get()->PutClockForward(1, 0);
+    syncer->Reset();
+    {
+      NamedEventListener listener("sync");
+      ASSERT_TRUE(listener.IsAvailable());
+      EXPECT_TRUE(SyncHandler::Clear());
+      ASSERT_TRUE(listener.Wait(1000))
+          << "Even within the minimum interval, Clear should be invoked "
+             "immediately.";
+      EXPECT_TRUE(syncer->IsClearCalled())
+          << "Even within the minimum interval, Clear should be invoked "
+             "immediately.";
+      SyncHandler::Wait();
+    }
   }
+}
 
-  Util::Sleep(3000);
+TEST_F(SyncHandlerTest, ClearTest) {
+  MockSyncer *syncer = GetSyncer();
+  FLAGS_min_sync_interval = 0;
+
   {
     syncer->Reset();
-    EXPECT_TRUE(SyncHandler::Sync());
-    Util::Sleep(200);
-    EXPECT_TRUE(syncer->IsSyncCalled());
-    syncer->Reset();
-    EXPECT_FALSE(syncer->IsClearCalled());
-    EXPECT_TRUE(SyncHandler::Clear());
-    Util::Sleep(200);
-    // Clear is still called after the sync command even within the
-    // minimum interval.
-    EXPECT_TRUE(syncer->IsClearCalled());
+    {
+      NamedEventListener listener("sync");
+      ASSERT_TRUE(listener.IsAvailable());
+      EXPECT_TRUE(SyncHandler::Clear());
+      ASSERT_TRUE(listener.Wait(1000))
+          << "Initial Clear should be invoked immediately.";
+      EXPECT_TRUE(syncer->IsClearCalled())
+          << "Initial Clear should be invoked immediately.";
+      SyncHandler::Wait();
+    }
 
-    // Wait for 2 sec and call Clear again.
     syncer->Reset();
-    Util::Sleep(2000);
-    EXPECT_TRUE(SyncHandler::Clear());
-    Util::Sleep(200);
-    // Clear is never called after Clear call.
-    EXPECT_FALSE(syncer->IsClearCalled());
-    SyncHandler::Wait();
-  }
+    {
+      NamedEventListener listener("sync");
+      ASSERT_TRUE(listener.IsAvailable());
+      EXPECT_TRUE(SyncHandler::Clear());
+      ASSERT_FALSE(listener.Wait(250))
+          << "Subsequent Clear should not be simply ignored.";
+      EXPECT_FALSE(syncer->IsClearCalled())
+          << "Subsequent Clear should not be simply ignored.";
+      SyncHandler::Wait();
+    }
 
-  Util::Sleep(3000);
-  {
     syncer->Reset();
-    EXPECT_TRUE(SyncHandler::Sync());
-    Util::Sleep(200);
-    // This must fail because SyncHandler::Clear() removes auth token.
-    EXPECT_FALSE(syncer->IsSyncCalled());
-
-    // Reset sync status for authorization.
-    syncer->Reset();
-    SyncStatusReset();
-
-    EXPECT_TRUE(SyncHandler::Sync());
-    Util::Sleep(200);
-    EXPECT_TRUE(syncer->IsSyncCalled());
-    syncer->Reset();
-    EXPECT_FALSE(syncer->IsClearCalled());
-    EXPECT_TRUE(SyncHandler::Clear());
-    Util::Sleep(200);
-    // Clear is still called after the sync command even within the
-    // minimum interval.
-    EXPECT_TRUE(syncer->IsClearCalled());
-
-    // Sync is not called because it's within the minimum interval.
-    syncer->Reset();
-    EXPECT_TRUE(SyncHandler::Sync());
-    Util::Sleep(200);
-    EXPECT_FALSE(syncer->IsSyncCalled());
-    SyncHandler::Wait();
-
-    // Wait for 2 sec and sync will succeed.
-    syncer->Reset();
-    Util::Sleep(2000);
-    EXPECT_TRUE(SyncHandler::Sync());
-    Util::Sleep(200);
-    EXPECT_TRUE(syncer->IsSyncCalled());
-    SyncHandler::Wait();
+    {
+      NamedEventListener listener("sync");
+      ASSERT_TRUE(listener.IsAvailable());
+      EXPECT_TRUE(SyncHandler::Sync());
+      ASSERT_TRUE(listener.Wait(1000))
+          << "Sync after Clear should be invoked immediately because "
+             "SyncHandler::Clear() removes auth token.";
+      EXPECT_FALSE(syncer->IsSyncCalled())
+          << "Sync after Clear should fail immediately because "
+             "SyncHandler::Clear() removes auth token.";
+      SyncHandler::Wait();
+    }
   }
 }
 
@@ -499,5 +561,5 @@ TEST_F(SyncHandlerTest, AuthorizationFailedTest) {
   }
 }
 
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc

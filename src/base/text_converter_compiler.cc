@@ -29,9 +29,12 @@
 
 #include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/text_converter.h"
+#include "base/util.h"
 #include "third_party/darts/v0_32/darts.h"
 
 DEFINE_string(input, "", "input");

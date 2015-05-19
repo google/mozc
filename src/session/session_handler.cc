@@ -32,24 +32,33 @@
 #include "session/session_handler.h"
 
 #include <algorithm>
+#include <string>
 #include <vector>
 
 #include "base/base.h"
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/process.h"
 #include "base/singleton.h"
 #include "base/stopwatch.h"
-#include "config/config_handler.h"
-#include "config/config.pb.h"
-#include "converter/user_data_manager_interface.h"
+#include "base/util.h"
 #include "composer/table.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/user_data_manager_interface.h"
+#include "dictionary/user_dictionary_session_handler.h"
 #include "session/commands.pb.h"
 #include "session/generic_storage_manager.h"
 #include "session/request_handler.h"
 #include "session/session_factory_manager.h"
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
+#else  // MOZC_DISABLE_SESSION_WATCHDOG
+// Session watch dog is not aviable from android mozc and nacl mozc for now.
+// TODO(kkojima): Remove this guard after
+// enabling session watch dog for android.
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 #ifdef ENABLE_CLOUD_SYNC
 #include "sync/sync_handler.h"
 #include "sync/syncer_interface.h"
@@ -87,6 +96,7 @@ namespace mozc {
 
 namespace {
 bool IsApplicationAlive(const session::SessionInterface *session) {
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
   const commands::ApplicationInfo &info = session->application_info();
   // When the thread/process's current status is unknown, i.e.,
   // if IsThreadAlive/IsProcessAlive functions failed to know the
@@ -105,6 +115,11 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
         static_cast<size_t>(info.process_id()), true);
   }
 #endif  // OS_WINDOWS
+#else  // MOZC_DISABLE_SESSION_WATCHDOG
+  // Currently the process is not available through android mozc and nacl mozc.
+  // TODO(kkojima): remove this guard after
+  // android version supports base/process.cc
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
   return true;
 }
 }  // namespace
@@ -120,7 +135,12 @@ SessionHandler::SessionHandler()
           session::SessionFactoryManager::GetSessionFactory()),
       observer_handler_(new session::SessionObserverHandler()),
       stopwatch_(new Stopwatch),
-      table_manager_(new composer::TableManager) {
+#ifndef __native_client__
+      user_dictionary_session_handler_(
+          new user_dictionary::UserDictionarySessionHandler),
+#endif  // __native_client__
+      table_manager_(new composer::TableManager),
+      request_(new commands::Request) {
   if (FLAGS_restricted) {
     VLOG(1) << "Server starts with restricted mode";
     // --restricted is almost always specified when mozc_client is inside Job.
@@ -135,13 +155,19 @@ SessionHandler::SessionHandler()
     FLAGS_last_command_timeout = 60;
   }
 
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
   session_watch_dog_.reset(new SessionWatchDog(FLAGS_watch_dog_interval));
+#else  // MOZC_DISABLE_SESSION_WATCHDOG
+  // Session watch dog is not aviable from android mozc and nacl mozc for now.
+  // TODO(kkojima): Remove this guard after
+  // enabling session watch dog for android.
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   // allow [2..128] sessions
   max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
   session_map_.reset(new SessionMap(max_session_size_));
 
-  if (session_factory_ == NULL || !session_factory_->IsAvailable()) {
+  if (session_factory_ == NULL) {
     return;
   }
 
@@ -157,9 +183,15 @@ SessionHandler::~SessionHandler() {
     element->value = NULL;
   }
   session_map_->Clear();
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
   if (session_watch_dog_->IsRunning()) {
     session_watch_dog_->Terminate();
   }
+#else  // MOZC_DISABLE_SESSION_WATCHDOG
+  // Session watch dog is not aviable from android mozc and nacl mozc for now.
+  // TODO(kkojima): Remove this guard after
+  // enabling session watch dog for android.
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
 bool SessionHandler::IsAvailable() const {
@@ -167,10 +199,17 @@ bool SessionHandler::IsAvailable() const {
 }
 
 bool SessionHandler::StartWatchDog() {
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
   if (!session_watch_dog_->IsRunning()) {
     session_watch_dog_->Start();
   }
   return session_watch_dog_->IsRunning();
+#else  // MOZC_DISABLE_SESSION_WATCHDOG
+  // Session watch dog is not aviable from android mozc and nacl mozc for now.
+  // TODO(kkojima): Remove this guard after
+  // enabling session watch dog for android.
+  return false;
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
 void SessionHandler::ReloadSession() {
@@ -180,13 +219,13 @@ void SessionHandler::ReloadSession() {
 
 void SessionHandler::ReloadConfig() {
   const composer::Table *table = table_manager_->GetTable(
-      commands::RequestHandler::GetRequest(),
-      config::ConfigHandler::GetConfig());
+      *request_, config::ConfigHandler::GetConfig());
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {
     if (element->value != NULL) {
       element->value->ReloadConfig();
+      element->value->SetRequest(*request_);
       element->value->SetTable(table);
     }
   }
@@ -296,8 +335,9 @@ bool SessionHandler::SetRequest(commands::Command *command) {
     return false;
   }
 
-  const mozc::commands::Request &reqeust = command->input().request();
-  commands::RequestHandler::SetRequest(reqeust);
+  request_->CopyFrom(command->input().request());
+  // TODO(yoichio): After refactoring  to remove all GET_REQUEST, delete this.
+  commands::RequestHandler::SetRequest(*request_);
 
   Reload(command);
 
@@ -509,6 +549,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     case commands::Input::CLEAR_STORAGE:
       eval_succeeded = ClearStorage(command);
       break;
+    case commands::Input::SEND_USER_DICTIONARY_COMMAND:
+      eval_succeeded = SendUserDictionaryCommand(command);
+      break;
     case commands::Input::NO_OPERATION:
       eval_succeeded = NoOperation(command);
       break;
@@ -676,6 +719,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
 
   // suspend/hibernation may happen
   uint64 suspend_time = 0;
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
   if (last_cleanup_time_ != 0 &&
       session_watch_dog_->IsRunning() &&
       (current_time - last_cleanup_time_) >
@@ -685,6 +729,11 @@ bool SessionHandler::Cleanup(commands::Command *command) {
     LOG(WARNING) << "server went to suspend mode for "
                  << suspend_time << " sec";
   }
+#else  // MOZC_DISABLE_SESSION_WATCHDOG
+  // Session watch dog is not aviable from android mozc and nacl mozc for now.
+  // TODO(kkojima): Remove this guard after
+  // enabling session watch dog for android.
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   // allow [1..600] sec. default: 300
   const uint64 kCreateSessionTimeout =
@@ -740,6 +789,25 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   return true;
 }
 
+bool SessionHandler::SendUserDictionaryCommand(commands::Command *command) {
+  if (!command->input().has_user_dictionary_command()) {
+    return false;
+  }
+#ifndef __native_client__
+  user_dictionary::UserDictionaryCommandStatus status;
+  const bool result = user_dictionary_session_handler_->Evaluate(
+      command->input().user_dictionary_command(), &status);
+  if (result) {
+    status.Swap(
+        command->mutable_output()->mutable_user_dictionary_command_status());
+  }
+  return result;
+#else  // __native_client__
+  // TODO(horo): UserDictionaryCommand is not aviable from nacl mozc now.
+  return false;
+#endif  // __native_client__
+}
+
 bool SessionHandler::NoOperation(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
@@ -755,7 +823,11 @@ SessionID SessionHandler::CreateNewSessionID() {
       LOG(ERROR) << "GetSecureRandomSequence() failed. use random value";
       id = static_cast<uint64>(Util::Random(RAND_MAX));
     }
-
+#ifdef  __native_client__
+    // Because JavaScript does not support uint64.
+    // So we downsize the session id range from uint64 to uint32 in NaCl.
+    id = static_cast<uint32>(id);
+#endif  // __native_client__
     // don't allow id == 0, as it is reserved for
     // "invalid id"
     if (id != 0 && !session_map_->HasKey(id)) {

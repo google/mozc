@@ -46,7 +46,7 @@
 namespace mozc {
 
 namespace storage {
-class EncryptedStringStorage;
+class StringStorageInterface;
 }  // namespace storage
 
 class ConversionRequest;
@@ -72,7 +72,7 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
   bool Save() const;
 
  private:
-  scoped_ptr<storage::EncryptedStringStorage> storage_;
+  scoped_ptr<storage::StringStorageInterface> storage_;
 };
 #endif  // __native_client__
 
@@ -150,6 +150,7 @@ class UserHistoryPredictor : public PredictorInterface {
               UserHistoryPredictorTailingPunctuation);
   FRIEND_TEST(UserHistoryPredictorTest,
               UserHistoryPredictorPreceedingPunctuation);
+  FRIEND_TEST(UserHistoryPredictorTest, StartsWithPunctuations);
   FRIEND_TEST(UserHistoryPredictorTest, ZeroQuerySuggestionTest);
   FRIEND_TEST(UserHistoryPredictorTest, MultiSegmentsMultiInput);
   FRIEND_TEST(UserHistoryPredictorTest, MultiSegmentsSingleInput);
@@ -185,6 +186,19 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN);
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana);
 
+  enum MatchType {
+    NO_MATCH,            // no match
+    LEFT_PREFIX_MATCH,   // left string is a prefix of right string
+    RIGHT_PREFIX_MATCH,  // right string is a prefix of left string
+    LEFT_EMPTY_MATCH,    // left string is empty (for zero_query_suggestion)
+    EXACT_MATCH,         // right string == left string
+  };
+
+  enum RequestType {
+    DEFAULT,
+    ZERO_QUERY_SUGGESTION,
+  };
+
   // Load user history data to LRU from local file
   bool Load();
 
@@ -205,14 +219,6 @@ class UserHistoryPredictor : public PredictorInterface {
   // return id for RevertEntry
   static uint16 revert_id();
 
-  enum MatchType {
-    NO_MATCH,            // no match
-    LEFT_PREFIX_MATCH,   // left string is a prefix of right string
-    RIGHT_PREFIX_MATCH,  // right string is a prefix of left string
-    LEFT_EMPTY_MATCH,    // left string is empty (for zero_query_suggestion)
-    EXACT_MATCH,         // right string == left string
-  };
-
   // Get match type from two strings
   static MatchType GetMatchType(const string &lstr, const string &rstr);
 
@@ -232,7 +238,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // return true |result_entry| can be handled as
   // a valid result if the length of user input is |prefix_len|.
-  static bool IsValidSuggestion(bool zero_query_suggestion,
+  static bool IsValidSuggestion(RequestType request_type,
                                 uint32 prefix_len,
                                 const Entry &result_entry);
 
@@ -268,8 +274,8 @@ class UserHistoryPredictor : public PredictorInterface {
     set<uint32> seen_;
   };
 
-  typedef LRUCache<uint32, Entry>  DicCache;
-  typedef LRUCache<uint32, Entry>::Element DicElement;
+  typedef mozc::storage::LRUCache<uint32, Entry> DicCache;
+  typedef DicCache::Element DicElement;
 
   bool CheckSyncerAndDelete() const;
 
@@ -303,7 +309,7 @@ class UserHistoryPredictor : public PredictorInterface {
       string *input_key, string *base,
       scoped_ptr<Trie<string> >*expanded);
 
-  bool InsertCandidates(bool zero_query_suggestion, Segments *segments,
+  bool InsertCandidates(RequestType request_type, Segments *segments,
                         EntryPriorityQueue *results) const;
 
   // return true if |prefix| is a fuzzy-prefix of |str|.

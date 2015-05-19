@@ -380,7 +380,7 @@ TEST_F(HangulSessionTest, CandidateTest) {
 
   const int kCandidatesPerPage = 10;  // TODO(nona): load from ibus
 
-  for (size_t i = 0; i < ARRAYSIZE(kCandidates); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kCandidates); ++i) {
     EXPECT_EQ(kCandidates[i], GetNthCandidate(command, i % kCandidatesPerPage));
     EXPECT_TRUE(SendSpecialKey(commands::KeyEvent::RIGHT, session_, &command));
   }
@@ -452,24 +452,24 @@ TEST_F(HangulSessionTest, IgnoreCapsLockState) {
   SetUpKeyboard(config::HangulConfig::KEYBOARD_Sebeolsik390);
 
   // Input with Caps lock being off.
-  EXPECT_TRUE(SendKey("q", session_, &command));  // key of "ᆺ"
-  ExpectPreedit("\xE1\x86\xBA", 1, command);  // "ᆺ"
-  EXPECT_TRUE(SendKey("Q", session_, &command));  // key of "ᇁ"
-  ExpectPreedit("\xE1\x87\x81", 1, command);  // "ᇁ"
-  EXPECT_TRUE(SendKey("1", session_, &command));  // key of "ᇂ"
-  ExpectPreedit("\xE1\x87\x82", 1, command);  // "ᇂ"
-  EXPECT_TRUE(SendKey("!", session_, &command));  // key of "ᆽ"
-  ExpectPreedit("\xE1\x86\xBD", 1, command);  // "ᆽ"
+  EXPECT_TRUE(SendKey("q", session_, &command));  // key of "ㅅ"
+  ExpectPreedit("\xE3\x85\x85", 1, command);  // "ㅅ"
+  EXPECT_TRUE(SendKey("Q", session_, &command));  // key of "ㅍ"
+  ExpectPreedit("\xE3\x85\x8D", 1, command);  // "ㅍ"
+  EXPECT_TRUE(SendKey("1", session_, &command));  // key of "ㅎ"
+  ExpectPreedit("\xE3\x85\x8E", 1, command);  // "ㅎ"
+  EXPECT_TRUE(SendKey("!", session_, &command));  // key of "ㅈ"
+  ExpectPreedit("\xE3\x85\x88", 1, command);  // "ㅈ"
 
   // Input with Caps lock being on.
   EXPECT_TRUE(SendKey("caps Q", session_, &command));
-  ExpectPreedit("\xE1\x86\xBA", 1, command);  // "ᆺ"
+  ExpectPreedit("\xE3\x85\x85", 1, command);  // "ㅅ"
   EXPECT_TRUE(SendKey("caps q", session_, &command));
-  ExpectPreedit("\xE1\x87\x81", 1, command);  // "ᇁ"
+  ExpectPreedit("\xE3\x85\x8D", 1, command);  // "ㅍ"
   EXPECT_TRUE(SendKey("caps 1", session_, &command));
-  ExpectPreedit("\xE1\x87\x82", 1, command);  // "ᇂ"
+  ExpectPreedit("\xE3\x85\x8E", 1, command);  // "ㅎ"
   EXPECT_TRUE(SendKey("caps !", session_, &command));
-  ExpectPreedit("\xE1\x86\xBD", 1, command);  // "ᆽ"
+  ExpectPreedit("\xE3\x85\x88", 1, command);  // "ㅈ"
 }
 
 TEST_F(HangulSessionTest, RenewContext) {
@@ -822,7 +822,7 @@ TEST_F(HangulSessionTest, HanjaLockNumberSelectionTest) {
     "\xE7\x96\x8F\xE8\xA8\xBB"   // "疏註"
   };
 
-  for (size_t i = 0; i < ARRAYSIZE(kCandidates); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kCandidates); ++i) {
     EXPECT_TRUE(SendKey("t", session_, &command));
     EXPECT_TRUE(SendKey("h", session_, &command));
     EXPECT_TRUE(SendKey("w", session_, &command));
@@ -1038,7 +1038,7 @@ TEST_F(HangulSessionTest, NumpadSelectionTest) {
     commands::KeyEvent::NUMPAD9,
   };
 
-  for (size_t i = 0; i < ARRAYSIZE(kNumPadKeys); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kNumPadKeys); ++i) {
     EXPECT_TRUE(SendKey("e", session_, &command));
     EXPECT_TRUE(SendKey("k", session_, &command));
     EXPECT_TRUE(SendSpecialKey(commands::KeyEvent::HANJA, session_, &command));

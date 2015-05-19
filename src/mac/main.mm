@@ -36,8 +36,11 @@
 
 #include "base/base.h"
 #include "base/const.h"
+#include "base/crash_report_handler.h"
+#include "base/crash_report_util.h"
 #include "base/run_level.h"
 #include "client/client.h"
+#include "config/stats_config_util.h"
 
 int main(int argc, char *argv[]) {
   if (!mozc::RunLevel::IsValidClientRunLevel()) {
@@ -45,7 +48,10 @@ int main(int argc, char *argv[]) {
   }
 
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  InitGoogleWithBreakPad(argv[0], &argc, &argv, false);
+  if (mozc::config::StatsConfigUtil::IsEnabled()) {
+    mozc::CrashReportUtil::InstallBreakpad();
+  }
+  InitGoogle(argv[0], &argc, &argv, false);
 
   IMKServer *imkServer = [GoogleJapaneseInputServer getServer];
   if (!imkServer) {

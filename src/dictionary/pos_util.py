@@ -156,8 +156,8 @@ class UserPos(object):
     result = []
     with open(filepath, 'r') as stream:
       stream = code_generator_util.SkipLineComment(stream)
-      stream = code_generator_util.ParseColumnStream(stream, num_column=3)
-      for user_pos, ctype, feature in stream:
+      stream = code_generator_util.ParseColumnStream(stream, num_column=4)
+      for user_pos, _, ctype, feature in stream:
         conjugation_list = []
         if ctype == '*':
           conjugation_list.append(

@@ -31,12 +31,12 @@
 #include <iostream>
 #include "base/base.h"
 #include "dictionary/user_dictionary_importer.h"
-#include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_storage.pb.h"
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
-  mozc::UserDictionaryStorage::UserDictionary user_dic;
+  mozc::user_dictionary::UserDictionary user_dic;
   mozc::UserDictionaryImporter::ImportFromMSIME(&user_dic);
 
   for (size_t i = 0; i < user_dic.entries_size(); ++i) {

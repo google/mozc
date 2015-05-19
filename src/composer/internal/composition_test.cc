@@ -124,7 +124,7 @@ static int InitComposition(Composition* comp) {
     // "っ"
     { "\xe3\x81\xa3", "ty", "tty" },
   };
-  static const int test_chunks_size = ARRAYSIZE(test_chunks);
+  static const int test_chunks_size = ARRAYSIZE_UNSAFE(test_chunks);
   CharChunkList::iterator it;
   comp->MaybeSplitChunkAt(0, &it);
   for (int i = 0; i < test_chunks_size; ++i) {
@@ -171,7 +171,7 @@ TEST_F(CompositionTest, GetChunkLength) {
   };
   CharChunk *chunk = AppendChunk("", "", "", composition_.get());
 
-  for (int i = 0; i < ARRAYSIZE(test_cases); ++i) {
+  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     chunk->set_conversion(test.conversion);
     chunk->set_pending(test.pending);
@@ -317,7 +317,7 @@ TEST_F(CompositionTest, SplitRawChunk) {
     // "っ", "っ"
     { "\xe3\x81\xa3", "ty", "tty", 3, "", "", "", "\xe3\x81\xa3", "ty", "tty" },
   };
-  for (int i = 0; i < ARRAYSIZE(test_cases); ++i) {
+  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     CharChunk right_orig_chunk(NULL, NULL);
     right_orig_chunk.set_conversion(test.conversion);
@@ -370,7 +370,7 @@ TEST_F(CompositionTest, SplitConversionChunk) {
     // "っ", "っ"
     { "\xe3\x81\xa3", "ty", "tty", 3, "", "", "", "\xe3\x81\xa3", "ty", "tty" },
   };
-  for (int i = 0; i < ARRAYSIZE(test_cases); ++i) {
+  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     CharChunk right_orig_chunk(NULL, NULL);
     right_orig_chunk.set_conversion(test.conversion);
@@ -427,7 +427,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
     { 12, false, false, 5, 5 },
   };
   const size_t dummy_position = 0;
-  for (int i = 0; i < ARRAYSIZE(test_cases); ++i) {
+  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
     const TestCase& test = test_cases[i];
 
     {  // Test RAW mode
@@ -1921,19 +1921,19 @@ TEST_F(CompositionTest, Clone) {
   // "く"
   AppendChunk("\xe3\x81\x8f", "", "c", &src);
 
-  EXPECT_TRUE(table_.get() == src.table_);
-  EXPECT_TRUE(kFullKatakanaT12r == src.input_t12r_);
-  EXPECT_EQ(3, src.chunks_.size());
+  EXPECT_TRUE(table_.get() == src.table());
+  EXPECT_TRUE(kFullKatakanaT12r == src.input_t12r());
+  EXPECT_EQ(3, src.chunks().size());
 
   scoped_ptr<Composition> dest(src.CloneImpl());
   ASSERT_TRUE(dest.get());
-  EXPECT_TRUE(src.table_ == dest->table_);
-  EXPECT_TRUE(src.input_t12r_ == dest->input_t12r_);
-  ASSERT_EQ(src.chunks_.size(), dest->chunks_.size());
+  EXPECT_TRUE(src.table() == dest->table());
+  EXPECT_TRUE(src.input_t12r() == dest->input_t12r());
+  ASSERT_EQ(src.chunks().size(), dest->chunks().size());
 
-  CharChunkList::iterator src_it = src.chunks_.begin();
-  CharChunkList::iterator dest_it = dest->chunks_.begin();
-  for (; src_it != src.chunks_.end(); ++src_it, ++dest_it) {
+  CharChunkList::const_iterator src_it = src.chunks().begin();
+  CharChunkList::const_iterator dest_it = dest->chunks().begin();
+  for (; src_it != src.chunks().end(); ++src_it, ++dest_it) {
     EXPECT_EQ((*src_it)->raw(), (*dest_it)->raw());
   }
 }

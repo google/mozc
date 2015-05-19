@@ -29,11 +29,12 @@
 
 #include "base/timer.h"
 
-#ifdef OS_WINDOWS
-#include <windows.h>
-#endif
-
+#ifndef OS_WINDWOS
+#include "base/mutex.h"
+#include "base/thread.h"
 #include "base/unnamed_event.h"
+#endif  // !OS_WINDOWS
+#include "base/logging.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -124,7 +125,15 @@ Timer::~Timer() {
   Stop();
 }
 
+void CALLBACK Timer::TimerCallback(void *ptr, BOOLEAN timer_or_wait) {
+  Timer *p = static_cast<Timer *>(ptr);
+  p->num_signaled_++;
+  p->Signaled();
+}
+
 #else   // OS_WINDOWS
+
+namespace {
 
 class TimerThread: public Thread {
  public:
@@ -172,6 +181,14 @@ class TimerThread: public Thread {
   UnnamedEvent *event_;
 };
 
+}  // namespace
+
+void Timer::TimerCallback() {
+  scoped_lock l(mutex_.get());
+  num_signaled_++;
+  Signaled();
+}
+
 bool Timer::Start(uint32 due_time, uint32 interval) {
   if (timer_thread_.get() != NULL) {
     Stop();
@@ -187,17 +204,20 @@ void Timer::Stop() {
   if (timer_thread_.get() == NULL) {
     return;
   }
-  scoped_lock l(&mutex_);
+  scoped_lock l(mutex_.get());
   event_->Notify();
   timer_thread_->Join();
   timer_thread_.reset(NULL);
   event_.reset(NULL);
 }
 
-Timer::Timer() : num_signaled_(0) {}
+Timer::Timer()
+    : mutex_(new Mutex),
+      num_signaled_(0) {}
 
 Timer::~Timer() {
   Stop();
 }
 #endif  // OS_WINDOWS
+
 }  // namespace mozc

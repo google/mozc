@@ -35,7 +35,6 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
-#include "base/util.h"
 #else
 #include <string.h>
 #include <sys/stat.h>
@@ -60,6 +59,7 @@
 #endif
 
 #include <vector>
+#include "base/logging.h"
 #include "base/util.h"
 
 #ifdef OS_MACOSX
@@ -76,8 +76,10 @@ static char **environ = *_NSGetEnviron();
 extern char **environ;
 #endif
 
-#ifdef OS_WINDOWS
+namespace mozc {
+
 namespace {
+#ifdef OS_WINDOWS
 // ShellExecute to execute file in system dir.
 // Since Windows does not allow rename or delete a directory which
 // is set to the working directory by existing processes, we should
@@ -91,7 +93,7 @@ bool ShellExecuteInSystemDir(const wchar_t *verb,
                              INT show_command) {
   const int result =
       reinterpret_cast<int>(::ShellExecuteW(0, verb, file, parameters,
-                                            mozc::Util::GetSystemDir(),
+                                            Util::GetSystemDir(),
                                             show_command));
   LOG_IF(ERROR, result <= 32)
       << "ShellExecute failed."
@@ -101,10 +103,8 @@ bool ShellExecuteInSystemDir(const wchar_t *verb,
       << ", parameters: " << parameters;
   return result > 32;
 }
-}  // anonymous namespace
 #endif  // OS_WINDOWS
-
-namespace mozc {
+}  // namespace
 
 bool Process::OpenBrowser(const string &url) {
   // url must start with http:// or https:// or file://
@@ -253,8 +253,8 @@ bool Process::SpawnProcess(const string &path,
 
 bool Process::SpawnMozcProcess(
     const string &filename, const string &arg, size_t *pid) {
-  return mozc::Process::SpawnProcess(
-      mozc::Util::JoinPath(mozc::Util::GetServerDirectory(), filename),
+  return Process::SpawnProcess(
+      Util::JoinPath(Util::GetServerDirectory(), filename),
       arg, pid);
 }
 
@@ -392,8 +392,7 @@ bool Process::LaunchErrorMessageDialog(const string &error_type) {
 #ifdef OS_WINDOWS
   const string arg = "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
-  if (!Process::SpawnProcess(
-          Util::JoinPath(Util::GetServerDirectory(), kMozcTool), arg, &pid)) {
+  if (!Process::SpawnProcess(Util::GetToolPath(), arg, &pid)) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }
@@ -403,8 +402,7 @@ bool Process::LaunchErrorMessageDialog(const string &error_type) {
   const char kMozcTool[] = "mozc_tool";
   const string arg = "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
-  if (!Process::SpawnProcess(
-          Util::JoinPath(Util::GetServerDirectory(), kMozcTool), arg, &pid)) {
+  if (!Process::SpawnProcess(Util::GetToolPath(), arg, &pid)) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }

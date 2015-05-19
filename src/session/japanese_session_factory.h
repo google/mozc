@@ -36,18 +36,22 @@
 #include "session/session_factory_manager.h"
 
 namespace mozc {
+class EngineInterface;
+
 namespace session {
 class SessionInterface;
 
 class JapaneseSessionFactory : public SessionFactoryInterface {
  public:
-  JapaneseSessionFactory();
+  // The pointer engine should be owned by the caller. In current mozc, it is
+  // managed in the main function of server/server_main.cc.
+  explicit JapaneseSessionFactory(EngineInterface *engine);
   virtual ~JapaneseSessionFactory();
   virtual SessionInterface *NewSession();
   virtual UserDataManagerInterface *GetUserDataManager();
-  virtual bool IsAvailable() const;
+  virtual void Reload();
  private:
-  static scoped_ptr<SessionFactoryInterface> factory_;
+  EngineInterface *engine_;
 };
 
 }  // namespace session

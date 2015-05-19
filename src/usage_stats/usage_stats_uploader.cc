@@ -31,9 +31,13 @@
 
 #include <algorithm>
 
+#ifdef OS_ANDROID
+#include "base/android_util.h"
+#endif  // OS_ANDROID
 #include "base/encryptor.h"
 #include "base/mac_util.h"
 #include "base/mutex.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "base/version.h"
@@ -124,6 +128,10 @@ ClientIdInterface &GetClientIdHandler() {
 
 }  // namespace
 
+ClientIdInterface::ClientIdInterface() {}
+
+ClientIdInterface::~ClientIdInterface() {}
+
 // 1 min
 const uint32 UsageStatsUploader::kDefaultSchedulerDelay = 60*1000;
 // 5 min
@@ -206,18 +214,28 @@ bool UsageStatsUploader::Send(void *data) {
     }
   }
 
-  // if no upload_usage_stats, we simply clear stats here.
-  if (!StatsConfigUtil::IsEnabled()) {
+  // if usage stats is disabled, we simply clear stats here.
+  if (!mozc::config::StatsConfigUtil::IsEnabled()) {
     UsageStats::ClearStats();
-    LOG(WARNING) << "no send_stats";
+    VLOG(1) << "UsageStats is disabled.";
     return false;
   }
 
-  const uint32 elapsed_sec = current_sec - last_upload_sec;
-  DCHECK_GE(elapsed_sec, 0);
+  uint32 elapsed_sec = 0;
+  if (current_sec >= last_upload_sec) {
+    elapsed_sec = current_sec - last_upload_sec;
+  } else {
+    LOG(WARNING) << "Timing counter seems to be reversed."
+                 << " current_sec: " << current_sec
+                 << " last_upload_sec: " << last_upload_sec;
+  }
 
   if (elapsed_sec < kSendInterval) {
-    LOG(WARNING) << "not enough time has passed yet";
+    VLOG(1) << "Skip uploading the data as not enough time has passed yet."
+            << " current_sec: " << current_sec
+            << " last_upload_sec: " << last_upload_sec
+            << " elapsed_sec: " << elapsed_sec
+            << " kSendInterval: " << kSendInterval;
     return false;
   }
 
@@ -229,6 +247,15 @@ bool UsageStatsUploader::Send(void *data) {
   DCHECK(!client_id.empty());
   params.push_back(make_pair("client_id", client_id));
   params.push_back(make_pair("os_ver", Util::GetOSVersionString()));
+#ifdef OS_ANDROID
+  params.push_back(
+      make_pair("model",
+                AndroidUtil::GetSystemProperty(
+                    AndroidUtil::kSystemPropertyModel, "Unknown")));
+  const int sdk_level = NumberUtil::SimpleAtoi(AndroidUtil::GetSystemProperty(
+                            AndroidUtil::kSystemPropertySdkVersion, "0"));
+  UsageStats::SetInteger("AndroidApiLevel", sdk_level);
+#endif  // OS_ANDROID
   // Get total memory in MB.
   const uint32 memory_in_mb = Util::GetTotalPhysicalMemory() / (1024 * 1024);
   UsageStats::SetInteger("TotalPhysicalMemory", memory_in_mb);

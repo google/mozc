@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include "base/base.h"
+#include "base/logging.h"
 #include "client/client.h"
 
 // Simple command line tool to ping mozc server

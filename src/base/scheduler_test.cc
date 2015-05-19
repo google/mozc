@@ -31,8 +31,9 @@
 
 #include <algorithm>
 
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/mutex.h"
+#include "base/util.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

@@ -45,18 +45,6 @@ class Segment;
 
 class TransliterationRewriter : public RewriterInterface  {
  public:
-  struct T13NIds {
-    uint16 hiragana_lid;
-    uint16 hiragana_rid;
-    uint16 katakana_lid;
-    uint16 katakana_rid;
-    uint16 ascii_lid;
-    uint16 ascii_rid;
-    T13NIds() : hiragana_lid(0), hiragana_rid(0),
-                katakana_lid(0), katakana_rid(0),
-                ascii_lid(0), ascii_rid(0) {}
-  };
-
   explicit TransliterationRewriter(const POSMatcher &pos_matcher);
   virtual ~TransliterationRewriter();
 
@@ -71,8 +59,10 @@ class TransliterationRewriter : public RewriterInterface  {
                          uint16 lid,
                          uint16 rid,
                          Segment::Candidate *cand) const;
-  void SetTransliterations(const vector<string> &t13ns,
-                           const T13NIds &ids,
+  // Set transliteration values into segment.  If t13ns is invalid,
+  // false is returned.
+  bool SetTransliterations(const vector<string> &t13ns,
+                           const string &key,
                            Segment *segment) const;
   bool FillT13NsFromComposer(const ConversionRequest &request,
                              Segments *segments) const;

@@ -33,7 +33,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <utility>
+#include "base/port.h"
 #include "converter/segments.h"
 
 namespace mozc {
@@ -42,11 +42,13 @@ struct Node;
 class POSMatcher;
 class SuppressionDictionary;
 
+namespace converter {
+
 class CandidateFilter {
  public:
   CandidateFilter(const SuppressionDictionary *suppression_dictionary,
                   const POSMatcher *pos_matcher);
-  virtual ~CandidateFilter();
+  ~CandidateFilter();
 
   enum ResultType {
     GOOD_CANDIDATE,    // Can insert the candidate into the list
@@ -56,7 +58,7 @@ class CandidateFilter {
 
   // return ResultType
   ResultType FilterCandidate(const Segment::Candidate *candidate,
-                             const vector<const Node *> nodes);
+                             const vector<const Node *> &nodes);
 
   // reset internal state
   void Reset();
@@ -64,7 +66,7 @@ class CandidateFilter {
  private:
   ResultType FilterCandidateInternal(
       const Segment::Candidate *candidate,
-      const vector<const Node *> nodes);
+      const vector<const Node *> &nodes);
 
   const SuppressionDictionary *suppression_dictionary_;
   const POSMatcher *pos_matcher_;
@@ -74,6 +76,8 @@ class CandidateFilter {
 
   DISALLOW_COPY_AND_ASSIGN(CandidateFilter);
 };
+
+}  // namespace converter
 }  // namespace mozc
 
 #endif  // IME_MOZC_CONVERTER_CANDIDATE_FILTER_H_

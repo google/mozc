@@ -37,13 +37,21 @@
 namespace mozc {
 namespace storage {
 
-class EncryptedStringStorage {
+class StringStorageInterface {
+ public:
+  virtual ~StringStorageInterface() {}
+
+  virtual bool Load(string *output) const = 0;
+  virtual bool Save(const string &input) const = 0;
+};
+
+class EncryptedStringStorage : public StringStorageInterface {
  public:
   explicit EncryptedStringStorage(const string &filename);
-  ~EncryptedStringStorage();
+  virtual ~EncryptedStringStorage();
 
-  bool Load(string *output);
-  bool Save(const string &input) const;
+  virtual bool Load(string *output) const;
+  virtual bool Save(const string &input) const;
 
  private:
   string filename_;

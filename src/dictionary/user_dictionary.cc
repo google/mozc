@@ -32,7 +32,9 @@
 #include <algorithm>
 #include <set>
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/stl_util.h"
@@ -46,10 +48,11 @@
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
-#include "dictionary/user_pos_interface.h"
+#include "dictionary/user_pos.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
+
 namespace {
 
 class POSTokenLess {
@@ -138,22 +141,26 @@ class TokensIndex : public vector<UserPOS::Token *> {
         // http://b/2480844
         Util::NormalizeVoicedSoundMark(tmp, &reading);
 
+        DCHECK_LE(0, entry.pos());
+        DCHECK_LE(entry.pos(), 255);
         const uint64 fp = Util::Fingerprint(reading +
                                             "\t" +
                                             entry.value() +
                                             "\t" +
-                                            entry.pos());
+                                            static_cast<char>(entry.pos()));
         if (!seen.insert(fp).second) {
           VLOG(1) << "Found dup item";
           continue;
         }
 
         // "抑制単語"
-        if (entry.pos() == "\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E") {
+        if (entry.pos() == user_dictionary::UserDictionary::SUPPRESSION_WORD) {
           suppression_dictionary_->AddEntry(reading, entry.value());
         } else {
           tokens.clear();
-          user_pos_->GetTokens(reading, entry.value(), entry.pos(), &tokens);
+          user_pos_->GetTokens(
+              reading, entry.value(),
+              UserDictionaryUtil::GetStringPosType(entry.pos()), &tokens);
           for (size_t k = 0; k < tokens.size(); ++k) {
             this->push_back(new UserPOS::Token(tokens[k]));
           }
@@ -191,7 +198,7 @@ class UserDictionaryReloader : public Thread {
 
   void StartAutoRegistration(const string &key,
                              const string &value,
-                             const string &pos) {
+                             user_dictionary::UserDictionary::PosType pos) {
     {
       scoped_lock l(&mutex_);
       auto_register_mode_ = true;
@@ -233,7 +240,7 @@ class UserDictionaryReloader : public Thread {
   UserDictionary *dic_;
   string key_;
   string value_;
-  string pos_;
+  user_dictionary::UserDictionary::PosType pos_;
 };
 
 UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
@@ -244,7 +251,8 @@ UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
       empty_limit_(Limit()),
-      tokens_(new TokensIndex(user_pos_, suppression_dictionary)) {
+      tokens_(new TokensIndex(user_pos_, suppression_dictionary)),
+      mutex_(new ReaderWriterMutex) {
   DCHECK(user_pos_);
   DCHECK(pos_matcher_);
   DCHECK(suppression_dictionary_);
@@ -259,7 +267,7 @@ UserDictionary::~UserDictionary() {
 Node *UserDictionary::LookupPredictiveWithLimit(
     const char *str, int size, const Limit &limit,
     NodeAllocatorInterface *allocator) const {
-  scoped_reader_lock l(&mutex_);
+  scoped_reader_lock l(mutex_.get());
 
   if (size == 0) {
     LOG(WARNING) << "string of length zero is passed.";
@@ -330,7 +338,7 @@ Node *UserDictionary::LookupPrefixWithLimit(
     int size,
     const Limit &limit,
     NodeAllocatorInterface *allocator) const {
-  scoped_reader_lock l(&mutex_);
+  scoped_reader_lock l(mutex_.get());
 
   if (size == 0) {
     LOG(WARNING) << "string of length zero is passed.";
@@ -391,10 +399,44 @@ Node *UserDictionary::LookupPrefixWithLimit(
   return result_node;
 }
 
-Node *UserDictionary::LookupPrefix(const char *str,
-                                   int size,
+Node *UserDictionary::LookupPrefix(const char *str, int size,
                                    NodeAllocatorInterface *allocator) const {
   return LookupPrefixWithLimit(str, size, empty_limit_, allocator);
+}
+
+Node *UserDictionary::LookupExact(const char *str, int size,
+                                  NodeAllocatorInterface *allocator) const {
+  scoped_reader_lock l(mutex_.get());
+  if (size == 0 || tokens_->empty() || GET_CONFIG(incognito_mode)) {
+    return NULL;
+  }
+  DCHECK(allocator);
+  UserPOS::Token key_token;
+  key_token.key.assign(str, size);
+  typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
+  pair<TokenIterator, TokenIterator> range =
+      equal_range(tokens_->begin(), tokens_->end(), &key_token, POSTokenLess());
+
+  Node *head = NULL;
+  for (; range.first != range.second; ++range.first) {
+    const UserPOS::Token *token = *range.first;
+    if (pos_matcher_->IsSuggestOnlyWord(token->id)) {
+      continue;
+    }
+    Node *node = allocator->NewNode();
+    DCHECK(node);
+    node->lid = token->id;
+    node->rid = token->id;
+    node->wcost = token->cost;
+    node->key = token->key;
+    node->value = token->value;
+    node->node_type = Node::NOR_NODE;
+    node->attributes |= Node::NO_VARIANTS_EXPANSION;
+    node->attributes |= Node::USER_DICTIONARY;
+    node->bnext = head;
+    head = node;
+  }
+  return head;
 }
 
 Node *UserDictionary::LookupReverse(const char *str, int size,
@@ -419,7 +461,8 @@ bool UserDictionary::Reload() {
 }
 
 bool UserDictionary::AddToAutoRegisteredDictionary(
-    const string &key, const string &value, const string &pos) {
+    const string &key, const string &value,
+    user_dictionary::UserDictionary::PosType pos) {
   if (reloader_->IsRunning()) {
     return false;
   }
@@ -448,7 +491,7 @@ void UserDictionary::Swap(TokensIndex *new_tokens) {
   DCHECK(new_tokens);
   TokensIndex *old_tokens = tokens_;
   {
-    scoped_writer_lock l(&mutex_);
+    scoped_writer_lock l(mutex_.get());
     tokens_ = new_tokens;
   }
   delete old_tokens;
@@ -457,13 +500,17 @@ void UserDictionary::Swap(TokensIndex *new_tokens) {
 bool UserDictionary::Load(const UserDictionaryStorage &storage) {
   size_t size = 0;
   {
-    scoped_reader_lock l(&mutex_);
+    scoped_reader_lock l(mutex_.get());
     size = tokens_->size();
   }
 
   // If UserDictionary is pretty big, we first remove the
   // current dictionary to save memory usage.
+#ifdef OS_ANDROID
+  const size_t kVeryBigUserDictionarySize = 5000;
+#else
   const size_t kVeryBigUserDictionarySize = 100000;
+#endif
 
   if (size >= kVeryBigUserDictionarySize) {
     TokensIndex *dummy_empty_tokens = new TokensIndex(user_pos_,

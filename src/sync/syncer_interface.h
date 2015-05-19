@@ -30,9 +30,7 @@
 #ifndef MOZC_SYNC_SYNCER_INTERFACE_H_
 #define MOZC_SYNC_SYNCER_INTERFACE_H_
 
-#include <map>
 #include "base/base.h"
-#include "base/thread.h"
 
 namespace mozc {
 namespace sync {

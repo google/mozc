@@ -56,6 +56,7 @@
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:testing',
         'session.gyp:session',
         'session.gyp:session_handler',
@@ -84,7 +85,9 @@
         'session_test.cc',
       ],
       'dependencies': [
+        '../converter/converter_base.gyp:converter_mock',
         '../data_manager/data_manager.gyp:user_pos_manager',
+        '../engine/engine.gyp:mock_converter_engine',
         '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
@@ -103,6 +106,7 @@
       ],
       'dependencies': [
         ':session_test_util',
+        '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
         'session.gyp:session_server',
@@ -118,6 +122,7 @@
         'session_handler_test.cc',
       ],
       'dependencies': [
+        '../converter/converter_base.gyp:converter_mock',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
         'session.gyp:session_server',
@@ -127,14 +132,9 @@
         'test_size': 'small',
       },
       'conditions': [
-        ['use_separate_connection_data==1', {
-          'dependencies': [
-            '../converter/converter.gyp:connection_data_injected_environment',
-          ],
-        }],
-        ['use_separate_dictionary==1', {
-          'dependencies': [
-            '../dictionary/dictionary.gyp:dictionary_data_injected_environment',
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'dependencies!': [
+            'session.gyp:session_server',
           ],
         }],
       ],
@@ -146,44 +146,16 @@
         'session_converter_test.cc',
       ],
       'dependencies': [
+        '../converter/converter_base.gyp:converter_mock',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
         'session_test_util',
       ],
     },
     {
-      'target_name': 'session_module_test',
-      'type': 'executable',
-      'sources': [
-        'ime_switch_util_test.cc',
-        'key_event_util_test.cc',
-        'key_parser_test.cc',
-        'request_handler_test.cc',
-        'session_observer_handler_test.cc',
-        'session_usage_observer_test.cc',
-        'session_watch_dog_test.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../client/client.gyp:client_mock',
-        '../testing/testing.gyp:gtest_main',
-        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
-        'session.gyp:session',
-        'session.gyp:session_server',
-        'session_base.gyp:ime_switch_util',
-        'session_base.gyp:key_event_util',
-        'session_base.gyp:key_parser',
-        'session_base.gyp:session_protocol',
-      ],
-      'conditions': [
-        ['target_platform=="Android"', {
-          'sources!': [
-            'session_watch_dog_test.cc',
-          ],
-        }],
-      ],
+      'target_name': 'install_session_module_test_data',
+      'type': 'none',
       'variables': {
-        'test_size': 'small',
         'test_data': [
           '../<(test_data_subdir)/session_usage_observer_testcase1.txt',
           '../<(test_data_subdir)/session_usage_observer_testcase2.txt',
@@ -208,6 +180,47 @@
       'includes': ['../gyp/install_testdata.gypi'],
     },
     {
+      'target_name': 'session_module_test',
+      'type': 'executable',
+      'sources': [
+        'ime_switch_util_test.cc',
+        'key_event_util_test.cc',
+        'key_parser_test.cc',
+        'output_util_test.cc',
+        'request_handler_test.cc',
+        'session_observer_handler_test.cc',
+        'session_usage_observer_test.cc',
+        'session_watch_dog_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../base/base_test.gyp:scheduler_stub',
+        '../client/client.gyp:client_mock',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:stats_config_util',
+        '../testing/testing.gyp:gtest_main',
+        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
+        'install_session_module_test_data',
+        'session.gyp:session',
+        'session.gyp:session_server',
+        'session_base.gyp:ime_switch_util',
+        'session_base.gyp:key_event_util',
+        'session_base.gyp:key_parser',
+        'session_base.gyp:output_util',
+        'session_base.gyp:session_protocol',
+      ],
+      'conditions': [
+        ['target_platform=="Android"', {
+          'sources!': [
+            'session_watch_dog_test.cc',
+          ],
+        }],
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'session_internal_test',
       'type': 'executable',
       'sources': [
@@ -220,7 +233,10 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:testing_util',
         '../config/config.gyp:config_protocol',
+        '../converter/converter_base.gyp:converter_mock',
+        '../engine/engine.gyp:mock_converter_engine',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
         'session_base.gyp:session_protocol',
@@ -245,18 +261,6 @@
       'variables': {
         'test_size': 'small',
       },
-      'conditions': [
-        ['use_separate_connection_data==1', {
-          'dependencies': [
-            '../converter/converter.gyp:connection_data_injected_environment',
-          ],
-        }],
-        ['use_separate_dictionary==1', {
-          'dependencies': [
-            '../dictionary/dictionary.gyp:dictionary_data_injected_environment',
-          ],
-        }],
-      ],
     },
     {
       'target_name': 'random_keyevents_generator_test',
@@ -279,6 +283,7 @@
         'session_converter_stress_test.cc'
       ],
       'dependencies': [
+        '../engine/engine.gyp:mock_data_engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
       ],

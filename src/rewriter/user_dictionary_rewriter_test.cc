@@ -27,13 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/user_dictionary_rewriter.h"
+
 #include <string>
 #include <vector>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "rewriter/user_dictionary_rewriter.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

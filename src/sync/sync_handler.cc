@@ -30,7 +30,9 @@
 #include "sync/sync_handler.h"
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/scheduler.h"
 #include "base/singleton.h"
@@ -43,7 +45,9 @@
 #include "sync/oauth2_util.h"
 #include "sync/sync_status_manager.h"
 #include "sync/syncer_interface.h"
+#ifndef OS_ANDROID
 #include "client/client_interface.h"
+#endif  // OS_ANDROID
 
 DEFINE_int32(min_sync_interval, 120, "min sync interval");
 
@@ -118,18 +122,21 @@ void NotifyEvent() {
 }
 
 void SendReloadCommand() {
+#ifndef OS_ANDROID
   scoped_ptr<client::ClientInterface> client(
       client::ClientFactory::NewClient());
   DCHECK(client.get());
   SYNC_VLOG(1) << "realoading server...";
   client->Reload();
   SYNC_VLOG(1) << "done. reloaded";
+#endif  // OS_ANDROID
 }
 
 class SyncerThread: public Thread {
  public:
   SyncerThread()
-      : oauth2_util_(OAuth2Client::GetDefaultClient()),
+      : command_type_(COMMAND_NONE),
+        oauth2_util_(OAuth2Client::GetDefaultClient()),
         last_sync_timestamp_(0) {
     SyncerFactory::SetOAuth2(&oauth2_util_);
 
@@ -169,9 +176,8 @@ class SyncerThread: public Thread {
       // coding this part with leaving some comments.
     }
 
-    // We don't care the failure of refreshing token because the
-    // existing token may be valid.
-    oauth2_util_.RefreshAccessToken();
+    OAuth2::Error error;
+    oauth2_util_.RefreshAccessToken(&error);
 
     // Clear sync errors other than authorization error before stacking new
     // errors in syncers' works.
@@ -188,6 +194,24 @@ class SyncerThread: public Thread {
               sync_error.error_code(), sync_error.timestamp());
         }
       }
+    }
+
+    // Stop Sync if authorization fails.
+    if (error == OAuth2::kInvalidGrant) {
+      SYNC_VLOG(1) << "Refreshing tokens fails with invalid grant.";
+
+      // Dummy auth does not have any specific authorization data,
+      // so it clears the auth info compeletely and sets the sync
+      // status to NOSYNC.
+      SYNC_VLOG(1) << "clearing auth token, it is no more in use.";
+      commands::Input::AuthorizationInfo dummy_auth;
+      SetAuthorization(dummy_auth);
+
+      sync_status_manager_->SetSyncGlobalStatus(
+          commands::CloudSyncStatus::NOSYNC);
+      // Stop sync thread running.
+      Scheduler::RemoveJob(kClearSyncName);
+      return;
     }
 
     switch (command_type_) {
@@ -275,6 +299,7 @@ class SyncerThread: public Thread {
   }
 
   enum CommandType {
+    COMMAND_NONE,
     SYNC,
     CLEAR,
   };
@@ -352,12 +377,14 @@ class SyncerThread: public Thread {
 
   void SetAuthorization(
       const commands::Input::AuthorizationInfo &authorization_info) {
+    OAuth2::Error error;
     SYNC_VLOG(1) << "SetAuthorization is called";
     if (authorization_info.has_auth_code() &&
         !authorization_info.auth_code().empty()) {
       SYNC_VLOG(1) << "setting authorization_info";
       LOG(INFO) << authorization_info.DebugString();
-      if (oauth2_util_.RequestAccessToken(authorization_info.auth_code())) {
+      if (oauth2_util_.RequestAccessToken(authorization_info.auth_code(),
+                                          &error)) {
         sync_status_manager_->NewSyncStatusSession();
         sync_status_manager_->SetSyncGlobalStatus(
             commands::CloudSyncStatus::INSYNC);
@@ -374,6 +401,12 @@ class SyncerThread: public Thread {
       sync_status_manager_->SetSyncGlobalStatus(
           commands::CloudSyncStatus::NOSYNC);
     }
+  }
+
+  // For unittest
+  void ClearLastCommandAndSyncTime() {
+    command_type_ = COMMAND_NONE;
+    last_sync_timestamp_ = 0;
   }
 
  private:
@@ -420,5 +453,10 @@ bool SyncHandler::SetAuthorization(
   Singleton<SyncerThread>::get()->SetAuthorization(authorization_info);
   return true;
 }
+
+void SyncHandler::ClearLastCommandAndSyncTime() {
+  return Singleton<SyncerThread>::get()->ClearLastCommandAndSyncTime();
+}
+
 }  // namespace sync
 }  // namespace mozc

@@ -98,7 +98,7 @@ def main():
       ("@@@MOZC_APPLICATIONS_DIR@@@",
        "/Application/GoogleJapaneseInput.localized"),
       ("@@@MOZC_OMAHA_TAG@@@", omaha_tag),
-      ("@@@MOZC_PACKAGE_NAME@@@", "GoogleJapaneseInput.mpkg"),
+      ("@@@MOZC_PACKAGE_NAME@@@", "GoogleJapaneseInput.pkg"),
       ]
 
   open(options.output, 'w').write(

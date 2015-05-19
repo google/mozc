@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include "base/base.h"
+#include "base/logging.h"
 #include "client/client.h"
 
 DEFINE_bool(shutdown, false,

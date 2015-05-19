@@ -40,8 +40,20 @@
     # Top directory of third party libraries for Windows.
     'third_party_dir_win%': '<(DEPTH)/third_party',
 
+    # Set this to true when building with Clang.
+    'clang%': 0,
+    # GYP has built-in assertion against 'make_global_settings' to enforce
+    # that all the 'make_global_settings' must be literally equivalent.
+    # In order to conform this assertion, we cannot use <(DEPTH) here because
+    # <(DEPTH) will be expanded to a relative path for each gyp file.
+    'clang_bin_dir%': '<(abs_depth)/third_party/llvm-build/Release+Asserts/bin',
+
     # This variable need to be set to 1 when you build Mozc for Chromium OS.
     'chromeos%': 0,
+
+    # Versioning stuff for Mac.
+    'mac_sdk%': '10.5',
+    'mac_deployment_target%': '10.5',
 
     # warning_cflags will be shared with Mac and Linux.
     'warning_cflags': [
@@ -58,7 +70,7 @@
       '-fno-omit-frame-pointer',
       '-fno-strict-aliasing',
       '-funsigned-char',
-      '-include', 'base/namespace.h',
+      '-include base/namespace.h',
       '-pipe',
       '-pthread',
     ],
@@ -69,7 +81,7 @@
       '-fmessage-length=0',
       '-fno-strict-aliasing',
       '-funsigned-char',
-      '-include', 'base/namespace.h',
+      '-include base/namespace.h',
       '-pipe',
       '-pthread',
     ],
@@ -93,13 +105,16 @@
             ['MSVS_VERSION=="2010"', {
               'target_compiler': 'msvs2010',
             }],
+            ['MSVS_VERSION=="2012"', {
+              'target_compiler': 'msvs2012',
+            }],
           ],
         }],
       ],
     },
 
-    # The target compiler such as 'msvs2008' or 'msvs2010'. This value is
-    # currently used only on Windows.
+    # The target compiler such as 'msvs2008', 'msvs2010' or, 'msvs2012'.
+    # This value is currently used only on Windows.
     'target_compiler': '<(target_compiler)',
 
     # Extra defines
@@ -122,11 +137,6 @@
         'enable_gtk_renderer%': 1,
       }, { # else
         'enable_gtk_renderer%': 0,
-      }],
-      ['target_platform=="ChromeOS"', {
-        # Unittest is not integrated to the automated test framework yet.
-        # TODO(nona): Enable unittest on Chromium OS. crosbug.com/19325
-        'enable_unittest': '0',
       }],
       ['target_compiler=="msvs2008"', {
         'additional_defines+': [
@@ -175,6 +185,12 @@
 
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
+    # You should not set this flag if you want to use "dlopen" to
+    # load Mozc's modules. See
+    # - http://code.google.com/p/mozc/issues/detail?id=14
+    # - http://code.google.com/p/protobuf/issues/detail?id=128
+    # - http://code.google.com/p/protobuf/issues/detail?id=370
+    # for the background information.
     'use_libprotobuf%': 0,
 
     # use_libzinnia represents if zinnia library is used or not.
@@ -188,10 +204,6 @@
     # use_libibus represents if ibus library is used or not.
     # This option is only for Linux.
     'use_libibus%': 0,
-
-    # use_libscim represents if scim library is used or not.
-    # This option is only for Linux.
-    'use_libscim%': 0,
 
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
@@ -207,15 +219,17 @@
     # enabled or not.
     'enable_webservice_infolist%': 0,
 
+    # enable_http_client represents if http client feature is enabled or not.
+    'enable_http_client%': 0,
+
+    # use self-implemented louds code, instead of using the rx library.
+    'enable_mozc_louds%': 1,
+
 
     # The pkg-config command to get the cflags/ldflags for Linux
     # builds.  We make it customizable to allow building in a special
     # environment such like cross-platform build.
     'pkg_config_command%': 'pkg-config',
-
-    # Android SDK home.
-    # Used only on Android build.
-    'android_home_dir%': '',
 
     'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
   },
@@ -294,11 +308,19 @@
           ['enable_webservice_infolist==1', {
             'defines': ['ENABLE_WEBSERVICE_INFOLIST'],
           }],
+          ['enable_http_client==1', {
+            # TODO(peria): Considers of moving the definition and control of
+            # enable_http_client and MOZC_ENABLE_HTTP_CLIENT to net/net.gyp.
+            'defines': ['MOZC_ENABLE_HTTP_CLIENT'],
+          }],
           ['enable_gtk_renderer==1', {
             'defines': ['ENABLE_GTK_RENDERER'],
           }],
           ['enable_unittest==1', {
             'defines': ['MOZC_ENABLE_UNITTEST'],
+          }],
+          ['enable_mozc_louds==1', {
+            'defines': ['MOZC_USE_MOZC_LOUDS'],
           }],
         ],
       },
@@ -474,7 +496,7 @@
               'WholeProgramOptimization': '1',
             },
           }],
-          ['target_compiler=="msvs2010"', {
+          ['target_compiler=="msvs2010" or target_compiler=="msvs2012"', {
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'WholeProgramOptimization': 'true',
@@ -498,6 +520,7 @@
         'abstract': 1,
         'defines': [
           'OS_ANDROID',
+          'MOZC_ANDROID_APPLICATION_ID="<(android_application_id)"',
           # For Protobuf
           'GOOGLE_PROTOBUF_NO_RTTI',
         ],
@@ -619,24 +642,23 @@
           'WIN32',
           'WIN32_IE=0x0600',
           'WINVER=0x0501',
+          'WIN32_LEAN_AND_MEAN',
           '_ATL_ALL_WARNINGS',
-          '_ATL_APARTMENT_THREADED',
+          '_ATL_ALLOW_CHAR_UNSIGNED',
           '_ATL_CSTRING_EXPLICIT_CONSTRUCTORS',
-          '_CONSOLE',
           '_CRT_SECURE_NO_DEPRECATE',
           '_MIDL_USE_GUIDDEF_',
           '_STL_MSVC',
           '_UNICODE',
-          '_USRDLL',
+          '_VARIADIC_MAX=10',  # for gtest/gmock on VC++ 2012
           '_WIN32',
-          '_WIN32_WINDOWS=0x0410',
+          '_WIN32_WINDOWS=0x0501',
           '_WIN32_WINNT=0x0501',
-          '_WINDLL',
           '_WINDOWS',
         ],
         'include_dirs': [
           '<@(msvs_includes)',
-          '<(third_party_dir_win)/wtl_80/files/include',
+          '<(third_party_dir_win)/wtl/files/include',
           # Add atl_wrapper dir into the 'include_dirs' so that we can
           # include the header file as <atlbase_mozc.h>, which
           # is more lintian-friendly than "atlbase_mozc.h".
@@ -671,7 +693,7 @@
               ['target_compiler=="msvs2008"', {
                 'AdditionalOptions': ['/Oy-'],  # /Oy-
               }],
-              ['target_compiler=="msvs2010"', {
+              ['target_compiler=="msvs2010" or target_compiler=="msvs2012"', {
                 'OmitFramePointers': 'false',  # /Oy- (for Visual C++ 2010)
               }],
             ],
@@ -731,9 +753,16 @@
           '-Wno-deprecated',
         ],
         'conditions': [
-          ['chromeos==1', {
+          ['target_platform=="ChromeOS"', {
             'defines': [
               'OS_CHROMEOS',
+            ],
+          }],
+          ['clang==1', {
+            'cflags+': [
+              '-Wno-unnamed-type-template-args',
+              '-Wno-covered-switch-default',
+              '-Wtype-limits',
             ],
           }],
           ['target_platform!="NaCl"', {
@@ -774,7 +803,21 @@
             '<@(gcc_cflags)',
           ],
           'WARNING_CFLAGS': ['<@(warning_cflags)'],
-          'SDKROOT': 'macosx10.5',
+
+          'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
+          'SDKROOT': 'macosx<(mac_sdk)',
+          'conditions': [
+            ['clang==1', {
+              'CC': '<(clang_bin_dir)/clang',
+              'LDPLUSPLUS': '<(clang_bin_dir)/clang++',
+              'CLANG_WARN_CXX0X_EXTENSIONS': 'NO',
+              'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0',
+              'WARNING_CFLAGS+': [
+                '-Wno-unnamed-type-template-args',
+                '-Wno-covered-switch-default',
+              ],
+            }],
+          ],
         },
         'link_settings': {
           'libraries': [
@@ -788,6 +831,18 @@
       }],
     ],
   },
+  'conditions': [
+    ['target_platform=="Linux" and clang==1', {
+      'make_global_settings': [
+        ['CC', '<(clang_bin_dir)/clang'],
+        ['CXX', '<(clang_bin_dir)/clang++'],
+        ['LINK', '$(CXX)'],
+        ['CC.host', '$(CC)'],
+        ['CXX.host', '$(CXX)'],
+        ['LINK.host', '$(LINK)'],
+      ],
+    }],
+  ],
   'xcode_settings': {
     'SYMROOT': '<(build_base)',
     'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',

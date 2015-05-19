@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/number_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -283,7 +284,7 @@ TEST_F(CandidateTest, CopyFrom) {
   src.lid = 4;
   src.rid = 5;
   src.attributes = 6;
-  src.style = Util::NumberString::NUMBER_CIRCLED;
+  src.style = NumberUtil::NumberString::NUMBER_CIRCLED;
   src.command = Segment::Candidate::DISABLE_PRESENTATION_MODE;
 
   dest.CopyFrom(src);
@@ -314,7 +315,7 @@ TEST_F(SegmentsTest, RevertEntryTest) {
   const int kSize = 10;
   for (int i = 0; i < kSize; ++i) {
     Segments::RevertEntry *e = segments.push_back_revert_entry();
-    e->key = "test" + Util::SimpleItoa(i);
+    e->key = "test" + NumberUtil::SimpleItoa(i);
     e->id = i;
   }
 
@@ -323,12 +324,12 @@ TEST_F(SegmentsTest, RevertEntryTest) {
   for (int i = 0; i < kSize; ++i) {
     {
       const Segments::RevertEntry &e = segments.revert_entry(i);
-      EXPECT_EQ(string("test") + Util::SimpleItoa(i), e.key);
+      EXPECT_EQ(string("test") + NumberUtil::SimpleItoa(i), e.key);
       EXPECT_EQ(i, e.id);
     }
     {
       Segments::RevertEntry *e = segments.mutable_revert_entry(i);
-      EXPECT_EQ(string("test") + Util::SimpleItoa(i), e->key);
+      EXPECT_EQ(string("test") + NumberUtil::SimpleItoa(i), e->key);
       EXPECT_EQ(i, e->id);
     }
   }
@@ -336,12 +337,12 @@ TEST_F(SegmentsTest, RevertEntryTest) {
   for (int i = 0; i < kSize; ++i) {
     Segments::RevertEntry *e = segments.mutable_revert_entry(i);
     e->id = kSize - i;
-    e->key = "test2" + Util::SimpleItoa(i);
+    e->key = "test2" + NumberUtil::SimpleItoa(i);
   }
 
   for (int i = 0; i < kSize; ++i) {
     const Segments::RevertEntry &e = segments.revert_entry(i);
-    EXPECT_EQ(string("test2") + Util::SimpleItoa(i), e.key);
+    EXPECT_EQ(string("test2") + NumberUtil::SimpleItoa(i), e.key);
     EXPECT_EQ(kSize - i, e.id);
   }
 
@@ -598,4 +599,4 @@ TEST_F(SegmentTest, MetaCandidateTest) {
   segment.clear_meta_candidates();
   EXPECT_EQ(0, segment.meta_candidates_size());
 }
-}  // namespace
+}  // namespace mozc

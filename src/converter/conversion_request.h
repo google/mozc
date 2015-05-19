@@ -31,7 +31,9 @@
 #define MOZC_CONVERTER_CONVERSION_REQUEST_H_
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace composer {

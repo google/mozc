@@ -89,7 +89,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
 
   {
     scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
-    CHECK(ifs.get());
+    ASSERT_TRUE(ifs.get());
     scoped_array<char> buf(new char[kData.size() + 1]);
     ifs->read(buf.get(), kData.size());
     buf.get()[kData.size()] = '\0';
@@ -101,7 +101,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
 
   {
     scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
-    CHECK(ifs.get());
+    ASSERT_TRUE(ifs.get());
     EXPECT_EOF(ifs.get());
   }
 }
@@ -152,7 +152,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   {
     scoped_ptr<istream> ifs(ConfigFileStream::OpenReadBinary(
         "user://" + string(kTestFileName)));
-    CHECK(ifs.get());
+    ASSERT_TRUE(ifs.get());
     scoped_array<char> buf(new char[kBinaryDataSize]);
     ifs->read(buf.get(), kBinaryDataSize);
     // Check if all the data are loaded as binary mode.
@@ -198,7 +198,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   {
     scoped_ptr<istream> ifs(ConfigFileStream::OpenReadText(
         "user://" + string(kTestFileName)));
-    CHECK(ifs.get());
+    ASSERT_TRUE(ifs.get());
     string line;
     int line_number = 0;  // note that this is 1-origin.
     while(getline(*ifs.get(), line)) {

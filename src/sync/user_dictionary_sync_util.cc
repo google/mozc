@@ -33,16 +33,27 @@
 #include <map>
 #include <set>
 #include <string>
+
 #include "base/base.h"
-#include "base/mmap.h"
+#include "base/logging.h"
 #include "base/mutex.h"
+#include "base/protobuf/protobuf.h"
+#include "base/protobuf/repeated_field.h"
+#include "base/protobuf/unknown_field_set.h"
 #include "base/singleton.h"
+#include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_util.h"
 #include "sync/sync_status_manager.h"
 #include "sync/sync_util.h"
 
 namespace mozc {
 namespace sync {
+
+using mozc::protobuf::Reflection;
+using mozc::protobuf::RepeatedPtrField;
+using mozc::protobuf::UnknownFieldSet;
+
 namespace {
 
 void CreateStorageSet(
@@ -63,11 +74,12 @@ void CreateStorageSet(
       if (entry.removed()) {
         continue;
       }
-      const uint64 fp = Util::Fingerprint(name + '\t' +
-                                          entry.key() + '\t' +
-                                          entry.value() + '\t' +
-                                          entry.pos() + '\t' +
-                                          entry.comment());
+      const uint64 fp = Util::Fingerprint(
+          name + '\t' +
+          entry.key() + '\t' +
+          entry.value() + '\t' +
+          static_cast<char>(entry.pos()) + '\t' +
+          entry.comment());
       contains->insert(fp);
     }
   }
@@ -91,7 +103,7 @@ uint64 UserDictionarySyncUtil::EntryFingerprint(
     const UserDictionarySyncUtil::UserDictionaryEntry &entry) {
   return Util::Fingerprint(entry.key() + '\t' +
                            entry.value() + '\t' +
-                           entry.pos() + '\t' +
+                           static_cast<char>(entry.pos()) + '\t' +
                            entry.comment());
 }
 
@@ -110,8 +122,7 @@ int FindDictionary(
     const UserDictionarySyncUtil::UserDictionaryStorageBase &storage,
     const string &name) {
   for (int i = 0; i < storage.dictionaries_size(); ++i) {
-    const user_dictionary::UserDictionaryStorage::UserDictionary &dict =
-        storage.dictionaries(i);
+    const user_dictionary::UserDictionary &dict = storage.dictionaries(i);
     if (dict.syncable() && name == dict.name()) {
       return i;
     }
@@ -297,8 +308,8 @@ void DeleteDictionary(
     int delete_index,
     UserDictionarySyncUtil::UserDictionaryStorageBase *storage) {
   DCHECK(storage);
-  google::protobuf::RepeatedPtrField<UserDictionarySyncUtil::UserDictionary>
-      *dics = storage->mutable_dictionaries();
+  RepeatedPtrField<UserDictionarySyncUtil::UserDictionary> *dics =
+      storage->mutable_dictionaries();
   DCHECK(dics);
 
   UserDictionarySyncUtil::UserDictionary **data = dics->mutable_data();
@@ -359,7 +370,7 @@ bool UserDictionarySyncUtil::MergeUpdate(
 }
 
 bool UserDictionarySyncUtil::MergeUpdates(
-    const vector<const UserDictionaryStorageBase *> &updates,
+    const vector<UserDictionaryStorageBase *> &updates,
     UserDictionaryStorageBase *storage) {
   DCHECK(storage);
 

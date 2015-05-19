@@ -31,68 +31,47 @@
 #define MOZC_BASE_SCOPED_HANDLE_H_
 
 #ifdef OS_WINDOWS
-#include <windows.h>
 // Example:
 //   ScopedHandle hfile(CreateFile(...));
 //   if (!hfile.get())
 //     ...process error
 //   ReadFile(hfile.get(), ...);
 namespace mozc {
+
 class ScopedHandle {
  public:
-  ScopedHandle() : handle_(NULL) {}
+  // In order not to depend on <Windows.h> from this header, here we
+  // assume HANDLE type is a synonym of void *.
+  typedef void *Win32Handle;
 
-  explicit ScopedHandle(HANDLE handle) : handle_(NULL) {
-    reset(handle);
-  }
+  // Initializes with NULL.
+  ScopedHandle();
 
-  ~ScopedHandle() {
-    Close();
-  }
+  // Initializes with taking ownership of |handle|.
+  // Covert: If |handle| is INVALID_HANDLE_VALUE, this wrapper treat
+  //     it as NULL.
+  explicit ScopedHandle(Win32Handle handle);
 
-  void reset(HANDLE handle) {
-    Close();
-    // Comment by yukawa:
-    // FYI, ATL has similar class called CHandle and its document
-    // says that we cannot
-    // assume INVALID_HANDLE_VALUE is the only invalid handle.
-    // See the note section of this document.
-    // http://msdn.microsoft.com/en-us/library/5fc6ft2t.aspx
-    // .NET approach is also informative.
-    // .NET has similar handle wrapper called SafeHandle,
-    // which allows us to override
-    // the condition of invalid handle.
-    // http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle.isinvalid.aspx
-    // They has pre-defined special classes SafeHandleMinusOneIsInvalid and
-    // SafeHandleZeroOrMinusOneIsInvalid.
-    // http://msdn.microsoft.com/en-us/library/microsoft.win32.safehandles.safehandleminusoneisinvalid.aspx
-    // http://msdn.microsoft.com/en-us/library/microsoft.win32.safehandles.safehandlezeroorminusoneisinvalid.aspx
-    if (handle != INVALID_HANDLE_VALUE) {
-      handle_ = handle;
-    }
-  }
+  // Call ::CloseHandle API against the current object (if any).
+  ~ScopedHandle();
 
-  HANDLE get() const {
-    return handle_;
-  }
+  // Call ::CloseHandle API against the current object (if any), then
+  // takes ownership of |handle|
+  void reset(Win32Handle handle);
 
-  // transfers ownership away from this object
-  HANDLE take() {
-    HANDLE handle = handle_;
-    handle_ = NULL;
-    return handle;
-  }
+  // Returns the object pointer without transferring the ownership.
+  Win32Handle get() const;
+
+  // Transfers ownership away from this object.
+  Win32Handle take();
 
  private:
-  void Close() {
-    if (handle_ != NULL) {
-      ::CloseHandle(handle_);
-      handle_ = NULL;
-    }
-  }
+  void Close();
 
-  HANDLE handle_;
+  Win32Handle handle_;
 };
-}  //  mozc
+
+}  // namespace mozc
+
 #endif  // OS_WINDOWS
 #endif  // MOZC_BASE_SCOPED_HANDLE_H_

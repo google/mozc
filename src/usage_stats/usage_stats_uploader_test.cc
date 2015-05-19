@@ -33,7 +33,11 @@
 #include <string>
 #include <vector>
 
+#ifdef OS_ANDROID
+#include <jni.h>
+#endif  // OS_ANDROID
 
+#include "base/number_util.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "base/scoped_ptr.h"
@@ -47,43 +51,34 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
 
+#ifdef OS_ANDROID
+#include "base/android_util.h"
+#include "base/android_jni_mock.h"
+#include "base/android_jni_proxy.h"
+#endif  // OS_ANDROID
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace usage_stats {
 namespace {
+
+using mozc::config::StatsConfigUtil;
+using mozc::config::StatsConfigUtilInterface;
+
+class TestableUsageStatsUploader : public UsageStatsUploader {
+ public:
+  // Change access rights.
+  using UsageStatsUploader::LoadStats;
+  using UsageStatsUploader::GetClientId;
+};
+
 class TestHTTPClient : public HTTPClientInterface {
  public:
-  bool Get(const string &url, string *output) const { return true; }
-  bool Head(const string &url, string *output) const { return true; }
-  bool Post(const string &url, const string &data,
-            string *output) const { return true; }
-
   bool Get(const string &url, const HTTPClient::Option &option,
            string *output) const { return true; }
   bool Head(const string &url, const HTTPClient::Option &option,
             string *output) const { return true; }
-  bool Post(const string &url, const char *data,
-            size_t data_size, const HTTPClient::Option &option,
-            string *output) const { return true; }
-
-  bool Get(const string &url, ostream *output)  const { return true; }
-  bool Head(const string &url, ostream *output)  const { return true; }
-  bool Post(const string &url, const string &data,
-            ostream *output) const { return true; }
-
-  bool Get(const string &url, const HTTPClient::Option &option,
-           ostream *output)  const { return true; }
-  bool Head(const string &url, const HTTPClient::Option &option,
-            ostream *output)  const { return true; }
-  bool Post(const string &url, const string &data,
-            const HTTPClient::Option & option,
-            std::ostream *outptu) const { return true; }
-  bool Post(const string &url, const char *data,
-            size_t data_size, const HTTPClient::Option &option,
-            std::ostream *output) const { return true; }
-
   bool Post(const string &url, const string &data,
             const HTTPClient::Option &option, string *output) const {
     LOG(INFO) << "url: " << url;
@@ -136,7 +131,7 @@ class TestStatsConfigUtil : public StatsConfigUtilInterface {
 
   virtual ~TestStatsConfigUtil() {}
 
-  virtual bool IsEnabled() {
+  virtual bool IsEnabled() const {
     return val_;
   }
 
@@ -166,7 +161,7 @@ class TestClientId : public ClientIdInterface {
 class UsageStatsUploaderTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    UsageStatsUploader::SetClientIdHandler(&client_id_);
+    TestableUsageStatsUploader::SetClientIdHandler(&client_id_);
     stats_config_util_.SetEnabled(true);
     StatsConfigUtil::SetHandler(&stats_config_util_);
     EXPECT_TRUE(StatsConfigUtil::IsEnabled());
@@ -206,6 +201,12 @@ class UsageStatsUploaderTest : public ::testing::Test {
     params.push_back(make_pair("v", Version::GetMozcVersion()));
     params.push_back(make_pair("client_id", kTestClientId));
     params.push_back(make_pair("os_ver", Util::GetOSVersionString()));
+#ifdef OS_ANDROID
+    params.push_back(
+        make_pair("model",
+                  AndroidUtil::GetSystemProperty(
+                      AndroidUtil::kSystemPropertyModel, "Unknown")));
+#endif  // OS_ANDROID
 
     string url = string(kBaseUrl) + "?";
     Util::AppendCGIParams(params, &url);
@@ -228,7 +229,7 @@ TEST_F(UsageStatsUploaderTest, SendTest) {
                                         yesterday_sec));
   SetValidResult();
   const uint32 send_sec = static_cast<uint32>(Util::GetTime());
-  EXPECT_TRUE(UsageStatsUploader::Send(NULL));
+  EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 
   string stats_str;
   // COUNT stats are cleared
@@ -250,7 +251,7 @@ TEST_F(UsageStatsUploaderTest, SendFailTest) {
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
                                         yesterday_sec));
   SetValidResult();
-  EXPECT_FALSE(UsageStatsUploader::Send(NULL));
+  EXPECT_FALSE(TestableUsageStatsUploader::Send(NULL));
 
   string stats_str;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
@@ -272,7 +273,7 @@ TEST_F(UsageStatsUploaderTest, InvalidLastUploadTest) {
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
                                         invalid_sec));
   SetValidResult();
-  EXPECT_TRUE(UsageStatsUploader::Send(NULL));
+  EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 
   string stats_str;
   EXPECT_FALSE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
@@ -317,7 +318,7 @@ TEST_F(UsageStatsUploaderTest, SaveCurrentTimeFailTest) {
   EXPECT_FALSE(storage::Registry::Insert("usage_stats.last_upload",
                                         yesterday_sec));
 
-  EXPECT_FALSE(UsageStatsUploader::Send(NULL));
+  EXPECT_FALSE(TestableUsageStatsUploader::Send(NULL));
   // restore
   storage::Registry::SetStorage(NULL);
 
@@ -346,7 +347,7 @@ TEST_F(UsageStatsUploaderTest, UploadFailTest) {
   result.expected_url = "fail_url";
   client_.set_result(result);
 
-  EXPECT_FALSE(UsageStatsUploader::Send(NULL));
+  EXPECT_FALSE(TestableUsageStatsUploader::Send(NULL));
 
   // stats data are not cleared
   string stats_str;
@@ -381,7 +382,7 @@ TEST_F(UsageStatsUploaderTest, UploadRetryTest) {
   result.expected_url = "fail_url";
   client_.set_result(result);
 
-  EXPECT_FALSE(UsageStatsUploader::Send(NULL));
+  EXPECT_FALSE(TestableUsageStatsUploader::Send(NULL));
 
   // stats data are not cleared
   string stats_str;
@@ -397,7 +398,7 @@ TEST_F(UsageStatsUploaderTest, UploadRetryTest) {
   // retry
   SetValidResult();
   // We can send stats if network is available.
-  EXPECT_TRUE(UsageStatsUploader::Send(NULL));
+  EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 
   // Stats are cleared
   EXPECT_FALSE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
@@ -430,13 +431,13 @@ TEST_F(UsageStatsUploaderTest, UploadDataTest) {
   path += kDllName;
   if (Util::GetFileVersion(path, &major, &minor, &build, &revision)) {
     client_.AddExpectedData(
-        string("MsctfVerMajor:i=") + Util::SimpleItoa(major));
+        string("MsctfVerMajor:i=") + NumberUtil::SimpleItoa(major));
     client_.AddExpectedData(
-        string("MsctfVerMinor:i=") + Util::SimpleItoa(minor));
+        string("MsctfVerMinor:i=") + NumberUtil::SimpleItoa(minor));
     client_.AddExpectedData(
-        string("MsctfVerBuild:i=") + Util::SimpleItoa(build));
+        string("MsctfVerBuild:i=") + NumberUtil::SimpleItoa(build));
     client_.AddExpectedData(
-        string("MsctfVerRevision:i=") + Util::SimpleItoa(revision));
+        string("MsctfVerRevision:i=") + NumberUtil::SimpleItoa(revision));
   } else {
     LOG(ERROR) << "get file version for msctf.dll failed";
   }
@@ -448,37 +449,131 @@ TEST_F(UsageStatsUploaderTest, UploadDataTest) {
   client_.AddExpectedData(string("ConfigHistoryLearningLevel:i=0"));
   client_.AddExpectedData(string("Daily"));
 
-  EXPECT_TRUE(UsageStatsUploader::Send(NULL));
+  EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 }
 
 
 namespace {
+#ifdef OS_ANDROID
+class ClientIdTestMockJavaEncryptor : public ::mozc::jni::MockJavaEncryptor {
+ public:
+  explicit ClientIdTestMockJavaEncryptor(
+      ::mozc::jni::MockJNIEnv *env) : env_(env) {
+  }
+
+  virtual jbyteArray DeriveFromPassword(jbyteArray password, jbyteArray salt) {
+    // Pseudo key generation.
+    string password_str = env_->JByteArrayToString(password);
+    string salt_str = env_->JByteArrayToString(salt);
+
+    KeyMap::iterator iter = key_map_.find(make_pair(password_str, salt_str));
+    if (iter == key_map_.end()) {
+      iter = key_map_.insert(make_pair(
+          make_pair(password_str, salt_str),
+          GetRandomAsciiSequence(
+              ::mozc::jni::JavaEncryptorProxy::kKeySizeInBits / 8))).first;
+    }
+
+    return env_->StringToJByteArray(iter->second);
+  }
+
+  virtual jbyteArray Encrypt(jbyteArray data, jbyteArray key, jbyteArray iv) {
+    // Pseudo encryption.
+    vector<pair<string, string> >& encrypt_pair_list =
+        GetEncryptPairList(key, iv);
+
+    string data_str = env_->JByteArrayToString(data);
+    for (size_t i = 0; i < encrypt_pair_list.size(); ++i) {
+      if (encrypt_pair_list[i].first == data_str) {
+        return env_->StringToJByteArray(encrypt_pair_list[i].second);
+      }
+    }
+
+    string encrypted = GetRandomAsciiSequence(data_str.size());
+    encrypt_pair_list.push_back(make_pair(data_str, encrypted));
+    return env_->StringToJByteArray(encrypted);
+  }
+
+  virtual jbyteArray Decrypt(jbyteArray data, jbyteArray key, jbyteArray iv) {
+    // Pseudo decryption.
+    vector<pair<string, string> >& encrypt_pair_list =
+        GetEncryptPairList(key, iv);
+
+    string data_str = env_->JByteArrayToString(data);
+    for (size_t i = 0; i < encrypt_pair_list.size(); ++i) {
+      if (encrypt_pair_list[i].second == data_str) {
+        return env_->StringToJByteArray(encrypt_pair_list[i].first);
+      }
+    }
+
+    return NULL;
+  }
+
+ private:
+  ::mozc::jni::MockJNIEnv *env_;
+
+  typedef map<pair<string, string>, string> KeyMap;
+  KeyMap key_map_;
+  typedef map<pair<string, string>, vector<pair<string, string> > > EncryptMap;
+  EncryptMap encrypt_map_;
+
+  vector<pair<string, string> > &GetEncryptPairList(
+      jbyteArray key, jbyteArray iv) {
+    string key_str = env_->JByteArrayToString(key);
+    string iv_str = env_->JByteArrayToString(iv);
+
+    return encrypt_map_[make_pair(key_str, iv_str)];
+  }
+
+  static string GetRandomAsciiSequence(size_t size) {
+    scoped_array<char> buffer(new char[size]);
+    Util::GetSecureRandomAsciiSequence(buffer.get(), size);
+    return string(buffer.get(), size);
+  }
+
+  DISALLOW_COPY_AND_ASSIGN(ClientIdTestMockJavaEncryptor);
+};
+#endif
 
 class ClientIdTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
+#ifdef OS_ANDROID
+    jvm_.reset(new ::mozc::jni::MockJavaVM);
+    ::mozc::jni::MockJNIEnv *env = jvm_->mutable_env();
+    env->RegisterMockJavaEncryptor(
+        new ClientIdTestMockJavaEncryptor(env));
+    ::mozc::jni::JavaEncryptorProxy::SetJavaVM(jvm_->mutable_jvm());
+#endif
   }
 
   virtual void TearDown() {
+#ifdef OS_ANDROID
+    ::mozc::jni::JavaEncryptorProxy::SetJavaVM(NULL);
+    jvm_.reset(NULL);
+#endif
   }
 
  private:
+#ifdef OS_ANDROID
+  scoped_ptr< ::mozc::jni::MockJavaVM> jvm_;
+#endif
 };
 }  // namespace
 
 TEST_F(ClientIdTest, CreateClientIdTest) {
   // test default client id handler here
-  UsageStatsUploader::SetClientIdHandler(NULL);
+  TestableUsageStatsUploader::SetClientIdHandler(NULL);
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   EXPECT_TRUE(storage::Registry::Clear());
   string client_id1;
-  UsageStatsUploader::GetClientId(&client_id1);
+  TestableUsageStatsUploader::GetClientId(&client_id1);
   string client_id_in_storage1;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.client_id",
                                         &client_id_in_storage1));
   EXPECT_TRUE(storage::Registry::Clear());
   string client_id2;
-  UsageStatsUploader::GetClientId(&client_id2);
+  TestableUsageStatsUploader::GetClientId(&client_id2);
   string client_id_in_storage2;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.client_id",
                                         &client_id_in_storage2));
@@ -489,13 +584,13 @@ TEST_F(ClientIdTest, CreateClientIdTest) {
 
 TEST_F(ClientIdTest, GetClientIdTest) {
   // test default client id handler here.
-  UsageStatsUploader::SetClientIdHandler(NULL);
+  TestableUsageStatsUploader::SetClientIdHandler(NULL);
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   EXPECT_TRUE(storage::Registry::Clear());
   string client_id1;
-  UsageStatsUploader::GetClientId(&client_id1);
+  TestableUsageStatsUploader::GetClientId(&client_id1);
   string client_id2;
-  UsageStatsUploader::GetClientId(&client_id2);
+  TestableUsageStatsUploader::GetClientId(&client_id2);
   // we can get same client id.
   EXPECT_EQ(client_id1, client_id2);
 
@@ -508,18 +603,18 @@ TEST_F(ClientIdTest, GetClientIdTest) {
 
 TEST_F(ClientIdTest, GetClientIdFailTest) {
   // test default client id handler here.
-  UsageStatsUploader::SetClientIdHandler(NULL);
+  TestableUsageStatsUploader::SetClientIdHandler(NULL);
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   EXPECT_TRUE(storage::Registry::Clear());
   string client_id1;
-  UsageStatsUploader::GetClientId(&client_id1);
+  TestableUsageStatsUploader::GetClientId(&client_id1);
   // insert invalid data
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.client_id",
                                         "invalid_data"));
 
   string client_id2;
   // decript should be failed
-  UsageStatsUploader::GetClientId(&client_id2);
+  TestableUsageStatsUploader::GetClientId(&client_id2);
   // new id should be generated
   EXPECT_NE(client_id1, client_id2);
 }

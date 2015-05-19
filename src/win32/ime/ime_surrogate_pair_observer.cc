@@ -29,7 +29,7 @@
 
 #include "win32/ime/ime_surrogate_pair_observer.h"
 
-#include "session/commands.pb.h"
+#include "win32/ime/ime_keyboard.h"
 
 namespace mozc {
 namespace win32 {

@@ -151,12 +151,12 @@ class SemicolonEater {};
 #endif  // _MSC_VER
 
 // Utility macros
-#define MOZC_CLANG_GCC_DISABLE_WARING_IMPL(compiler, s)  \
+#define MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(compiler, s)  \
     MOZC_DO_PRAGMA_IMPL(compiler diagnostic ignored #s)
 
 #if MOZC_GCC_VERSION_GE(4, 2)
 #define MOZC_GCC_DISABLE_WARNING_FILELEVEL(type)         \
-    MOZC_CLANG_GCC_DISABLE_WARING_IMPL(GCC, -W ## type)
+    MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(GCC, -W ## type)
 #else  // GCC<4.2
 #define MOZC_GCC_DISABLE_WARNING_FILELEVEL(type)         \
     MOZC_SWALLOWING_SEMICOLON_HACK
@@ -164,9 +164,9 @@ class SemicolonEater {};
 
 #if MOZC_GCC_VERSION_GE(4, 6)
 #define MOZC_GCC_DISABLE_WARNING_INLINE(type)            \
-    MOZC_CLANG_GCC_DISABLE_WARING_IMPL(GCC, -W ## type)
+    MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(GCC, -W ## type)
 #define MOZC_GCC_POP_WARNING() MOZC_DO_PRAGMA_IMPL(GCC diagnostic pop)
-#define MOZC_GCC_PUSH_WARNING() MOZC_DO_PRAGMA_IMPL(GCC diagnostic pop)
+#define MOZC_GCC_PUSH_WARNING() MOZC_DO_PRAGMA_IMPL(GCC diagnostic push)
 #else  // GCC<4.6
 #define MOZC_GCC_DISABLE_WARNING_INLINE(type) MOZC_SWALLOWING_SEMICOLON_HACK
 #define MOZC_GCC_POP_WARNING() MOZC_SWALLOWING_SEMICOLON_HACK
@@ -175,7 +175,7 @@ class SemicolonEater {};
 
 #if defined(__clang__)
 #define MOZC_CLANG_DISABLE_WARNING(type)                 \
-    MOZC_CLANG_GCC_DISABLE_WARING_IMPL(clang, -W ## type)
+    MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(clang, -W ## type)
 #define MOZC_CLANG_POP_WARNING() MOZC_DO_PRAGMA_IMPL(clang diagnostic pop)
 #define MOZC_CLANG_PUSH_WARNING() MOZC_DO_PRAGMA_IMPL(clang diagnostic push)
 #else  // !__clang__

@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "base/port.h"
+#include "base/protobuf/message.h"
 #include "base/protobuf/protobuf.h"
 
 namespace mozc {

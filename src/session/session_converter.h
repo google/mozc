@@ -52,7 +52,8 @@ class CandidateList;
 // support stateful operations related with the converter.
 class SessionConverter : public SessionConverterInterface {
  public:
-  explicit SessionConverter(const ConverterInterface *converter);
+  explicit SessionConverter(const ConverterInterface *converter,
+                            const commands::Request &request);
   virtual ~SessionConverter();
 
   // Update OperationPreferences.
@@ -208,6 +209,9 @@ class SessionConverter : public SessionConverterInterface {
   // Fill protocol buffers with all flatten candidate words.
   void FillAllCandidateWords(commands::CandidateList *candidates) const;
 
+  // Set setting by the request;
+  void SetRequest(const commands::Request &request);
+
   // Accessor
   const commands::Result &GetResult() const;
   const CandidateList &GetCandidateList() const;
@@ -224,7 +228,7 @@ class SessionConverter : public SessionConverterInterface {
   // Copy SessionConverter
   // TODO(hsumita): Copy all member variables.
   // Currently, converter_ is not copied.
-  void CopyFrom(const SessionConverterInterface &src);
+  SessionConverterInterface *Clone() const;
 
  private:
   FRIEND_TEST(SessionConverterTest, AppendCandidateList);
@@ -312,6 +316,8 @@ class SessionConverter : public SessionConverterInterface {
 
   scoped_ptr<CandidateList> candidate_list_;
   bool candidate_list_visible_;
+
+  commands::Request request_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionConverter);
 };

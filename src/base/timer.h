@@ -30,14 +30,18 @@
 #ifndef MOZC_BASE_TIMER_H_
 #define MOZC_BASE_TIMER_H_
 
-#include "base/base.h"
-#include "base/mutex.h"
-#include "base/thread.h"
+#ifdef OS_WINDOWS
+#include <windows.h>  // for HANDLE
+#endif  // OS_WINDOWS
+
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 
 #ifndef OS_WINDOWS
-class TimerThread;
+class Mutex;
+class Thread;
 class UnnamedEvent;
 #endif  // !OS_WINDOWS
 
@@ -66,38 +70,33 @@ class Timer {
   virtual ~Timer();
 
 #ifndef OS_WINDOWS
-  void TimerCallback() {
-    scoped_lock l(&mutex_);
-    num_signaled_++;
-    Signaled();
-  }
-#endif
+  void TimerCallback();
+#endif  // !OS_WINDOWS
 
  protected:
   // overwrite this function to implement
   // signal handler.
-  virtual void Signaled() {}
+  virtual void Signaled() = 0;
 
  private:
 #ifdef OS_WINDOWS
+  // Covert: ScopedHandle cannot be used for them as they cannot be closed by
+  //     ::CloseHandle API.
   HANDLE timer_queue_;
   HANDLE timer_handle_;
   bool one_shot_;
 #else
-  Mutex mutex_;
+  scoped_ptr<Mutex> mutex_;
   scoped_ptr<UnnamedEvent> event_;
-  scoped_ptr<TimerThread> timer_thread_;
+  scoped_ptr<Thread> timer_thread_;
 #endif
 
   uint32 num_signaled_;
 
 #ifdef OS_WINDOWS
-  static void CALLBACK TimerCallback(void *ptr, BOOLEAN timer_or_wait) {
-    Timer *p = static_cast<Timer *>(ptr);
-    p->num_signaled_++;
-    p->Signaled();
-  }
-#endif
+  static void CALLBACK TimerCallback(void *ptr, BOOLEAN timer_or_wait);
+#endif  // OS_WINDOWS
 };
+
 }  // namespace mozc
 #endif  // MOZC_BASE_TIMER_H_

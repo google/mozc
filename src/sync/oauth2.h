@@ -38,7 +38,7 @@
 // Currently, this library supports only 1. style.
 //
 //
-// [1] http://tools.ietf.org/html/draft-ietf-oauth-v2-15.
+// [1] http://tools.ietf.org/html/draft-ietf-oauth-v2-26.
 
 #ifndef MOZC_SYNC_OAUTH2_H_
 #define MOZC_SYNC_OAUTH2_H_
@@ -46,19 +46,38 @@
 #include <string>
 
 #include "base/util.h"
+#include "net/jsoncpp.h"
 
 namespace mozc {
 namespace sync {
 
 class OAuth2 {
  public:
+  // Enumerated error responses defined in 4.1.2.1, 4.2.2.1 or 5.2 in [1]
+  enum Error {
+    kNone = 0,
+    kInvalidRequest,
+    kInvalidClient,
+    kInvalidGrant,
+    kUnauthorizedClient,
+    kUnsupportedGrantType,
+    kUnsupportedResponseType,
+    kAccessDenied,
+    kInvalidScope,
+    kServerError,
+    kTemporarilyUnavailable,
+
+    kUnknownError,
+  };
+
   // Make URI to get authorize token. 'scope' and 'state' are optional in
   // protocol, but we require scope field to correspond Google API.
   // Thus, only status can be empty string.
   static void GetAuthorizeUri(const string &authorize_client_uri,
                               const string &client_id,
                               const string &redirect_uri,
-                              const string &scope, const string &state,
+                              const string &scope,
+                              const string &state,
                               string *auth_uri);
 
   // Get access_token and refresh_token from authorization server for OAuth2.
@@ -71,8 +90,11 @@ class OAuth2 {
                              const string &client_id,
                              const string &client_secret,
                              const string &redirect_uri,
-                             const string &auth_token, const string &scope,
-                             const string &state, string *access_token,
+                             const string &auth_token,
+                             const string &scope,
+                             const string &state,
+                             Error *error,
+                             string *access_token,
                              string *refresh_token);
 
   // Get protected resource as a string from resource server.
@@ -89,9 +111,13 @@ class OAuth2 {
   static bool RefreshTokens(const string &refresh_uri,
                             const string &client_id,
                             const string &client_secret,
-                            const string &scope, string* refresh_token,
+                            const string &scope,
+                            Error *error,
+                            string *refresh_token,
                             string *access_token);
 
+ protected:
+  static Error GetError(Json::Value &root);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OAuth2);

@@ -39,6 +39,11 @@
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.pb.h"
 
+#ifdef OS_ANDROID
+#include "base/android_util.h"
+#include "base/android_jni_mock.h"
+#include "base/android_jni_proxy.h"
+#endif  // OS_ANDROID
 
 DECLARE_string(test_tmpdir);
 

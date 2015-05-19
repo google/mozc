@@ -37,8 +37,6 @@
 #include <string>
 
 #include "base/port.h"
-// for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace composer {
@@ -55,60 +53,64 @@ class Composition : public CompositionInterface {
   explicit Composition(const Table *table);
   virtual ~Composition();
 
-  size_t DeleteAt(size_t position);
-  size_t InsertAt(size_t position, const string &input);
-  size_t InsertKeyAndPreeditAt(size_t position,
-                               const string &key,
-                               const string &preedit);
+  virtual size_t DeleteAt(size_t position);
+  virtual size_t InsertAt(size_t position, const string &input);
+  virtual size_t InsertKeyAndPreeditAt(size_t position,
+                                       const string &key,
+                                       const string &preedit);
   // Insert the given |input| to the composition at the given |position|
   // and return the new position.
-  size_t InsertInput(size_t position, const CompositionInput &input);
+  virtual size_t InsertInput(size_t position, const CompositionInput &input);
 
-  void Erase();
+  virtual void Erase();
 
   // Get the position on mode_to from position_from on mode_from.
-  size_t ConvertPosition(size_t position_from,
-                         const TransliteratorInterface *transliterator_from,
-                         const TransliteratorInterface *transliterator_to);
+  virtual size_t ConvertPosition(
+      size_t position_from,
+      const TransliteratorInterface *transliterator_from,
+      const TransliteratorInterface *transliterator_to);
+
   // TODO(komatsu): To be deleted.
-  size_t SetDisplayMode(size_t position,
-                        const TransliteratorInterface *transliterator);
+  virtual size_t SetDisplayMode(size_t position,
+                                const TransliteratorInterface *transliterator);
 
   // NOTE(komatsu) Kind of SetDisplayMode.
-  void SetTransliterator(size_t position_from,
-                         size_t position_to,
-                         const TransliteratorInterface *transliterator);
-  const TransliteratorInterface *GetTransliterator(size_t position);
+  virtual void SetTransliterator(
+      size_t position_from,
+      size_t position_to,
+      const TransliteratorInterface *transliterator);
+  virtual const TransliteratorInterface *GetTransliterator(size_t position);
 
-  size_t GetLength() const;
-  void GetString(string *composition) const;
-  void GetStringWithTransliterator(
+  virtual size_t GetLength() const;
+  virtual void GetString(string *composition) const;
+  virtual void GetStringWithTransliterator(
       const TransliteratorInterface *transliterator,
       string *output) const;
-  void GetStringWithTrimMode(TrimMode trim_mode, string* output) const;
+  virtual void GetStringWithTrimMode(TrimMode trim_mode, string* output) const;
   // Get string with consideration for ambiguity from pending input
-  void GetExpandedStrings(string *base,
-                          set<string> *expanded) const;
-  void GetExpandedStringsWithTransliterator(
+  virtual void GetExpandedStrings(string *base,
+                                  set<string> *expanded) const;
+  virtual void GetExpandedStringsWithTransliterator(
       const TransliteratorInterface *transliterator,
       string *base,
       set<string> *expanded) const;
-  void GetPreedit(
+  virtual void GetPreedit(
       size_t position, string *left, string *focused, string *right) const;
 
-  void SetInputMode(const TransliteratorInterface *transliterator);
+  virtual void SetInputMode(const TransliteratorInterface *transliterator);
 
   // Return true if the composition is adviced to be committed immediately.
-  bool ShouldCommit() const;
+  virtual bool ShouldCommit() const;
 
   // Get a clone.
   // Clone is a thin wrapper of CloneImpl.
   // CloneImpl is created to write test codes without dynamic_cast.
-  CompositionInterface *Clone() const;
+  virtual CompositionInterface *Clone() const;
   Composition *CloneImpl() const;
 
-  void SetTable(const Table *table);
+  virtual void SetTable(const Table *table);
 
+  // Following methods are declared as public for unit test.
   void GetChunkAt(size_t position,
                   const TransliteratorInterface *transliterator,
                   CharChunkList::iterator *chunk_it,
@@ -120,9 +122,6 @@ class Composition : public CompositionInterface {
   CharChunkList::iterator InsertChunk(CharChunkList::iterator *left_it);
 
   CharChunk *MaybeSplitChunkAt(size_t position, CharChunkList::iterator *it);
-  void SplitChunk(const size_t position,
-                  CharChunk *left_new_chunk,
-                  CharChunk *right_orig_chunk) const;
 
   // Combine |input| and chunks from |it| to left direction,
   // which have pending data and can be combined.
@@ -132,6 +131,21 @@ class Composition : public CompositionInterface {
   // e.g. [pending='k']+[pending='y']+[input='q'] are not combined.
   void CombinePendingChunks(CharChunkList::iterator it,
                             const CompositionInput &input);
+  const CharChunkList &GetCharChunkList() const;
+  const Table *table() const {
+    return table_;
+  }
+  const CharChunkList &chunks() const {
+    return chunks_;
+  }
+  const TransliteratorInterface *input_t12r() const {
+    return input_t12r_;
+  }
+
+ private:
+  void SplitChunk(const size_t position,
+                  CharChunk *left_new_chunk,
+                  CharChunk *right_orig_chunk) const;
 
   void GetStringWithModes(const TransliteratorInterface *transliterator,
                           TrimMode trim_mode,
@@ -143,11 +157,6 @@ class Composition : public CompositionInterface {
   static void SplitRawChunk(const size_t position,
                             CharChunk *left_new_chunk,
                             CharChunk *right_orig_chunk);
-
-  const CharChunkList &GetCharChunkList() const;
-
- private:
-  FRIEND_TEST(CompositionTest, Clone);
 
   const Table *table_;
   CharChunkList chunks_;

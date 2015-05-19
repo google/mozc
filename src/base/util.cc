@@ -30,11 +30,12 @@
 #include "base/util.h"
 
 #ifdef OS_WINDOWS
-#include <windows.h>
-#include <Lmcons.h>
-#include <shlobj.h>
+#include <Windows.h>
+#include <LMCons.h>
+#include <Sddl.h>
+#include <ShlObj.h>
+#include <WinCrypt.h>
 #include <time.h>
-#include <sddl.h>
 #include <stdio.h>  // MSVC requires this for _vsnprintf
 // #include <KnownFolders.h>
 #else  // OS_WINDOWS
@@ -42,9 +43,11 @@
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 #include <sys/sysctl.h>
-#endif  // OS_MACOSX
+#elif defined(__native_client__)  // OS_MACOSX
+#include <irt.h>
+#endif  // OS_MACOSX or __native_client__
 #include <pwd.h>
-#include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -52,11 +55,13 @@
 #endif  // OS_WINDOWS
 #include <algorithm>
 #include <cctype>
+#ifdef OS_MACOSX
 #include <cerrno>
+#endif  // OS_MACOSX
 #include <cstdarg>
+#include <cstring>
 #include <fstream>
 #include <iterator>
-#include <limits>
 #include <map>
 #include <sstream>
 #include <string>
@@ -66,16 +71,43 @@
 #include "base/base.h"
 #include "base/const.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/mutex.h"
+#include "base/number_util.h"
 #include "base/port.h"
+#include "base/scoped_handle.h"
 #include "base/singleton.h"
+#include "base/string_piece.h"
 #include "base/text_converter.h"
+
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
 #endif
+#include "base/win_util.h"
+
+#ifdef OS_ANDROID
+// HACK to avoid a bug in sysconf in android.
+#include "android/sysconf.h"
+#define sysconf mysysconf
+#include "base/android_util.h"
+#endif
 
 
+// Ad-hoc workadound against macro problem on Windows.
+// On Windows, following macros, defined when you include <Windows.h>,
+// should be removed here because they affects the method name definition of
+// Util class.
+// TODO(yukawa): Use different method name if applicable.
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif  // CreateDirectory
+#ifdef RemoveDirectory
+#undef RemoveDirectory
+#endif  // RemoveDirectory
+#ifdef CopyFile
+#undef CopyFile
+#endif  // CopyFile
 
 namespace {
 
@@ -102,121 +134,6 @@ const unsigned char kUTF8LenTbl[256] = {
   3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 4,4,4,4,4,4,4,4
 };
 
-// Table of number character of Kansuji
-const char *const kNumKanjiDigits[] = {
-  "\xe3\x80\x87", "\xe4\xb8\x80", "\xe4\xba\x8c", "\xe4\xb8\x89",
-  "\xe5\x9b\x9b", "\xe4\xba\x94", "\xe5\x85\xad", "\xe4\xb8\x83",
-  "\xe5\x85\xab", "\xe4\xb9\x9d", NULL
-  //   "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", NULL
-};
-const char *const kNumWideDigits[] = {
-  "\xef\xbc\x90", "\xef\xbc\x91", "\xef\xbc\x92", "\xef\xbc\x93",
-  "\xef\xbc\x94", "\xef\xbc\x95", "\xef\xbc\x96", "\xef\xbc\x97",
-  "\xef\xbc\x98", "\xef\xbc\x99", NULL
-  //   "０", "１", "２", "３", "４", "５", "６", "７", "８", "９", NULL
-};
-const char *const kNumHalfDigits[] = {
-  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL
-};
-
-const char *const kNumKanjiOldDigits[] = {
-  NULL, "\xe5\xa3\xb1", "\xe5\xbc\x90", "\xe5\x8f\x82", "\xe5\x9b\x9b",
-  "\xe4\xba\x94", "\xe5\x85\xad", "\xe4\xb8\x83", "\xe5\x85\xab",
-  "\xe4\xb9\x9d"
-  //   NULL, "壱", "弐", "参", "四", "五", "六", "七", "八", "九"
-};
-
-const char *const kNumKanjiRanks[] = {
-  NULL, "", "\xe5\x8d\x81", "\xe7\x99\xbe", "\xe5\x8d\x83"
-  //   NULL, "", "十", "百", "千"
-};
-const char *const kNumKanjiBiggerRanks[] = {
-  "", "\xe4\xb8\x87", "\xe5\x84\x84", "\xe5\x85\x86", "\xe4\xba\xac"
-  //   "", "万", "億", "兆", "京"
-};
-const char *const kNumKanjiOldRanks[] = {
-  NULL, "", "\xe6\x8b\xbe", "\xe7\x99\xbe", "\xe9\x98\xa1"
-  //   NULL, "", "拾", "百", "阡"
-};
-const char *const kNumKanjiBiggerOldRanks[] = {
-  "", "\xe8\x90\xac", "\xe5\x84\x84", "\xe5\x85\x86", "\xe4\xba\xac"
-  //   "", "萬", "億", "兆", "京"
-};
-
-const char *const *const kKanjiDigitsVariations[] = {
-  kNumHalfDigits, kNumWideDigits, kNumKanjiDigits, kNumKanjiOldDigits, NULL
-};
-const char *const *const kSingleDigitsVariations[] = {
-  kNumKanjiDigits, kNumWideDigits, NULL
-};
-const char *const *const kNumDigitsVariations[] = {
-  kNumHalfDigits, kNumWideDigits, NULL
-};
-
-const char *kRomanNumbersCapital[] = {
-  NULL, "\xe2\x85\xa0", "\xe2\x85\xa1", "\xe2\x85\xa2", "\xe2\x85\xa3",
-  "\xe2\x85\xa4", "\xe2\x85\xa5", "\xe2\x85\xa6", "\xe2\x85\xa7",
-  "\xe2\x85\xa8", "\xe2\x85\xa9", "\xe2\x85\xaa", "\xe2\x85\xab", NULL
-  //   NULL, "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ", NULL
-};
-
-const char *kRomanNumbersSmall[] = {
-  NULL, "\xe2\x85\xb0", "\xe2\x85\xb1", "\xe2\x85\xb2", "\xe2\x85\xb3",
-  "\xe2\x85\xb4", "\xe2\x85\xb5", "\xe2\x85\xb6", "\xe2\x85\xb7",
-  "\xe2\x85\xb8", "\xe2\x85\xb9", "\xe2\x85\xba", "\xe2\x85\xbb", NULL
-  //   NULL, "ⅰ", "ⅱ", "ⅲ", "ⅳ", "ⅴ", "ⅵ", "ⅶ", "ⅷ", "ⅸ", "ⅹ", "ⅺ", "ⅻ", NULL
-};
-
-const char *kCircledNumbers[] = {
-  NULL, "\xe2\x91\xa0", "\xe2\x91\xa1", "\xe2\x91\xa2", "\xe2\x91\xa3",
-  "\xe2\x91\xa4", "\xe2\x91\xa5", "\xe2\x91\xa6", "\xe2\x91\xa7",
-  "\xe2\x91\xa8", "\xe2\x91\xa9",
-  //   NULL, "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
-  "\xe2\x91\xaa", "\xe2\x91\xab", "\xe2\x91\xac", "\xe2\x91\xad",
-  "\xe2\x91\xae", "\xe2\x91\xaf", "\xe2\x91\xb0", "\xe2\x91\xb1",
-  "\xe2\x91\xb2", "\xe2\x91\xb3",
-  //   "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳",
-  "\xE3\x89\x91", "\xE3\x89\x92", "\xE3\x89\x93", "\xE3\x89\x94",
-  "\xE3\x89\x95", "\xE3\x89\x96", "\xE3\x89\x97", "\xE3\x89\x98",
-  "\xE3\x89\x99", "\xE3\x89\x9A", "\xE3\x89\x9B", "\xE3\x89\x9C",
-  "\xE3\x89\x9D", "\xE3\x89\x9E", "\xE3\x89\x9F",
-  // 21-35
-  "\xE3\x8A\xB1", "\xE3\x8A\xB2", "\xE3\x8A\xB3", "\xE3\x8A\xB4",
-  "\xE3\x8A\xB5", "\xE3\x8A\xB6", "\xE3\x8A\xB7", "\xE3\x8A\xB8",
-  "\xE3\x8A\xB9", "\xE3\x8A\xBA", "\xE3\x8A\xBB", "\xE3\x8A\xBC",
-  "\xE3\x8A\xBD", "\xE3\x8A\xBE", "\xE3\x8A\xBF",
-  // 36-50
-  NULL
-};
-
-const char *const *const kSpecialNumericVariations[] = {
-  kRomanNumbersCapital, kRomanNumbersSmall, kCircledNumbers,
-  NULL
-};
-const int kSpecialNumericSizes[] = {
-  arraysize(kRomanNumbersCapital),
-  arraysize(kRomanNumbersSmall),
-  arraysize(kCircledNumbers),
-  -1
-};
-
-const char *const kNumZero = "\xe9\x9b\xb6";
-// const char* const kNumZero = "零";
-
-const char *const kNumGoogol =
-"100000000000000000000000000000000000000000000000000"
-"00000000000000000000000000000000000000000000000000";
-
-// Judges given string is number or not.
-bool IsDecimalNumeric(const string &str) {
-  for (int i = 0; i < str.size(); i++) {
-    if (!isdigit(str[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
 template <class ITR>
 void SplitStringToIteratorUsing(const string &full,
                                 const char *delim,
@@ -231,7 +148,7 @@ void SplitStringToIteratorUsing(const string &full,
         ++p;
       } else {
         const char *start = p;
-        while (++p != end && *p != c);
+        while (++p != end && *p != c) {}
         *result++ = string(start, p - start);
       }
     }
@@ -316,35 +233,6 @@ void StringAppendV(string *dst, const char *format, va_list ap) {
     delete[] buf;
   }
 }
-
-bool SafeStrToUInt32WithBase(const string &str, int base, uint32 *value) {
-  DCHECK(value);
-
-  const char *s = str.c_str();
-
-  // strtoul does not give any errors on negative numbers, so we have to
-  // search the string for '-' manually.
-  while (isspace(*s)) {
-    ++s;
-  }
-  if (*s == '-') {
-    return false;
-  }
-
-  char *endptr;
-  errno = 0;  // errno only gets set on errors
-  const unsigned long ul = strtoul(s, &endptr, base);
-  if (endptr != s) {
-    while (isspace(*endptr)) {
-      ++endptr;
-    }
-  }
-
-  *value = static_cast<uint32>(ul);
-  return *s != 0 && *endptr == 0 && errno == 0 &&
-      static_cast<unsigned long>(*value) == ul;  // no overflow
-}
-
 }   // namespace
 
 namespace mozc {
@@ -534,6 +422,57 @@ void Util::CapitalizeString(string *str) {
   str->assign(first_str + tailing_str);
 }
 
+bool Util::IsLowerAscii(StringPiece s) {
+  for (StringPiece::const_iterator iter = s.begin(); iter != s.end(); ++iter) {
+    if (!islower(*iter)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Util::IsUpperAscii(StringPiece s) {
+  for (StringPiece::const_iterator iter = s.begin(); iter != s.end(); ++iter) {
+    if (!isupper(*iter)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Util::IsCapitalizedAscii(StringPiece s) {
+  if (s.empty()) {
+    return true;
+  }
+  if (isupper(*s.begin())) {
+    return IsLowerAscii(s.substr(1));
+  }
+  return false;
+}
+
+bool Util::IsLowerOrUpperAscii(StringPiece s) {
+  if (s.empty()) {
+    return true;
+  }
+  if (islower(*s.begin())) {
+    return IsLowerAscii(s.substr(1));
+  }
+  if (isupper(*s.begin())) {
+    return IsUpperAscii(s.substr(1));
+  }
+  return false;
+}
+
+bool Util::IsUpperOrCapitalizedAscii(StringPiece s) {
+  if (s.empty()) {
+    return true;
+  }
+  if (isupper(*s.begin())) {
+    return IsLowerOrUpperAscii(s.substr(1));
+  }
+  return false;
+}
+
 void Util::StripWhiteSpaces(const string &input, string *output) {
   DCHECK(output);
   output->clear();
@@ -544,8 +483,8 @@ void Util::StripWhiteSpaces(const string &input, string *output) {
 
   size_t start = 0;
   size_t end = input.size() - 1;
-  for (; start < input.size() && isspace(input[start]); ++start);
-  for (; end > start && isspace(input[end]); --end);
+  for (; start < input.size() && isspace(input[start]); ++start) {}
+  for (; end > start && isspace(input[end]); --end) {}
 
   if (end > start) {
     output->assign(input.data() + start, end - start + 1);
@@ -788,488 +727,6 @@ bool Util::IsUTF16BOM(const string &line) {
   return false;
 }
 
-namespace {
-const int kInt32BufferSize = 12;  // -2147483648\0
-}
-string Util::SimpleItoa(int32 number) {
-  char buffer[kInt32BufferSize];
-  int length = snprintf(buffer, kInt32BufferSize, "%d", number);
-  return string(buffer, length);
-}
-
-int Util::SimpleAtoi(const string &str) {
-  stringstream ss;
-  ss << str;
-  int i = 0;
-  ss >> i;
-  return i;
-}
-
-namespace {
-// TODO(hidehiko): Refactoring with GetScriptType.
-inline bool IsArabicDecimalChar32(char32 ucs4) {
-  // Halfwidth digit.
-  if ('0' <= ucs4 && ucs4 <= '9') {
-    return true;
-  }
-
-  // Fullwidth digit.
-  if (0xFF10 <= ucs4 && ucs4 <= 0xFF19) {
-    return true;
-  }
-
-  return false;
-}
-}  // namespace
-
-bool Util::IsArabicNumber(const string &input_string) {
-  for (ConstChar32Iterator iter(input_string); !iter.Done(); iter.Next()) {
-    if (!IsArabicDecimalChar32(iter.Get())) {
-      // Found non-arabic decimal character.
-      return false;
-    }
-  }
-
-  // All characters are numbers.
-  return true;
-}
-
-namespace {
-void PushBackNumberString(const string &value, const string &description,
-                          Util::NumberString::Style style,
-                          vector<Util::NumberString> *output) {
-  output->push_back(Util::NumberString(value, description, style));
-}
-}  // namespace
-
-// Number Converters main functions.
-// They receives two arguments:
-//  - input_num: a string consisting of arabic numeric characters
-// If the input_num is invalid or cannot represent as the form, this
-// function does nothing.  If finds more than one representations,
-// pushes all candidates into the output.
-bool Util::ArabicToKanji(const string &input_num,
-                         vector<NumberString> *output) {
-  DCHECK(output);
-  const int kDigitsInBigRank = 4;
-
-  if (!IsDecimalNumeric(input_num)) {
-    return false;
-  }
-
-  // We don't convert a number starting with '0', other than 0 itself.
-  if (input_num[0] == '0') {
-    const char *p = input_num.c_str();
-    while (*p == '0') {
-      ++p;
-    }
-    if (*p == '\0') {
-      // "大字"
-      PushBackNumberString(kNumZero, "\xE5\xA4\xA7\xE5\xAD\x97",
-                           NumberString::NUMBER_OLD_KANJI, output);
-      return true;
-    }
-  }
-
-  // If given number needs higher ranks than our expectations,
-  // we don't convert it.
-  if (arraysize(kNumKanjiBiggerRanks) * kDigitsInBigRank < input_num.size()) {
-    return false;
-  }
-
-  // The order in this array must be same with kKanjiDigitsVariations[].
-  const NumberString::Style kStyles[] = {
-    NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH,
-    NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH,
-    NumberString::NUMBER_KANJI,
-    NumberString::NUMBER_OLD_KANJI,
-  };
-  // To know what "大字" means, please refer
-  // http://ja.wikipedia.org/wiki/%E5%A4%A7%E5%AD%97_(%E6%95%B0%E5%AD%97)
-  const char *kDescriptions[] = {
-    // "数字"
-    "\xE6\x95\xB0\xE5\xAD\x97",
-    // "数字"
-    "\xE6\x95\xB0\xE5\xAD\x97",
-    // "漢数字"
-    "\xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97",
-    // "大字"
-    "\xE5\xA4\xA7\xE5\xAD\x97",
-  };
-
-  // Fill '0' in the beginning of input_num to make its length
-  // (N * kDigitsInBigRank).
-  const int filled_zero_num = (kDigitsInBigRank -
-      (input_num.size() % kDigitsInBigRank)) % kDigitsInBigRank;
-  string input(filled_zero_num, '0');
-  input.append(input_num);
-
-  // Segment into kDigitsInBigRank-digits pieces
-  vector<string> ranked_numbers;
-  for (int i = static_cast<int>(input.size()) - kDigitsInBigRank; i >= 0;
-       i -= kDigitsInBigRank) {
-    ranked_numbers.push_back(input.substr(i, kDigitsInBigRank));
-  }
-  const size_t rank_size = ranked_numbers.size();
-
-  for (size_t variation_index = 0;
-       kKanjiDigitsVariations[variation_index] != NULL; ++variation_index) {
-    const char *const *const digits = kKanjiDigitsVariations[variation_index];
-    const NumberString::Style style = kStyles[variation_index];
-
-    if (rank_size == 1 &&
-        (style == NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH ||
-         style == NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH)) {
-      continue;
-    }
-
-    const char *const *ranks = (style == NumberString::NUMBER_OLD_KANJI) ?
-        kNumKanjiOldRanks : kNumKanjiRanks;
-    const char *const *bigger_ranks =
-        (style == NumberString::NUMBER_OLD_KANJI) ?
-        kNumKanjiBiggerOldRanks : kNumKanjiBiggerRanks;
-
-    // Converts each segment, and merges them with rank Kanjis.
-    string result;
-    for (int rank = rank_size - 1; rank >= 0; --rank) {
-      const string &segment = ranked_numbers[rank];
-      string segment_result;
-      bool leading = true;
-      for (size_t i = 0; i < segment.size(); ++i) {
-        if (leading && segment[i] == '0') {
-          continue;
-        }
-
-        if (style == NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH ||
-            style == NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH) {
-          segment_result += digits[segment[i] - '0'];
-        } else {
-          if (segment[i] == '0') {
-            continue;
-          }
-          // In "大字" style, "壱" is also required on every rank.
-          if (style == NumberString::NUMBER_OLD_KANJI ||
-              i == kDigitsInBigRank - 1 || segment[i] != '1') {
-            segment_result += digits[segment[i] - '0'];
-          }
-          segment_result += ranks[kDigitsInBigRank - i];
-        }
-
-        leading = false;
-      }
-      if (!segment_result.empty()) {
-        result += segment_result + bigger_ranks[rank];
-      }
-    }
-
-    const char *description = kDescriptions[variation_index];
-    // Add simply converted numbers.
-    PushBackNumberString(result, description, style, output);
-
-    // Add specialized style numbers.
-    if (style == NumberString::NUMBER_OLD_KANJI) {
-      // "弐拾"
-      const char *kOldTwoTen = "\xE5\xBC\x90\xE6\x8B\xBE";
-      // "廿"
-      const char *kOldTwenty = "\xE5\xBB\xBF";
-      size_t id;
-      string result2(result);
-      while ((id = result2.find(kOldTwoTen)) != string::npos) {
-        result2.replace(id, strlen(kOldTwoTen), kOldTwenty);
-      }
-      if (result2 != result) {
-        PushBackNumberString(result2, description, style, output);
-      }
-
-      // for single kanji
-      if (input == "0010") {
-        // "拾"
-        PushBackNumberString("\xE6\x8B\xBE", description, style, output);
-      }
-      if (input == "1000") {
-        // "阡"
-        PushBackNumberString("\xE9\x98\xA1", description, style, output);
-      }
-    }
-  }
-
-  return true;
-}
-
-bool Util::ArabicToSeparatedArabic(const string &input_num,
-                                   vector<NumberString> *output) {
-  DCHECK(output);
-
-  if (!IsDecimalNumeric(input_num)) {
-    return false;
-  }
-
-  if (input_num[0] == '0') {
-    // We don't add separator to number starting with '0'
-    return false;
-  }
-
-  const char *kSeparaters[] = {",", "\xef\xbc\x8c", NULL};
-  const Util::NumberString::Style kStyles[] = {
-    Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
-    Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
-  };
-
-  for (size_t i = 0; kNumDigitsVariations[i] != NULL; ++i) {
-    int counter = 2 - ((input_num.size() - 1) % 3);
-    string result;
-    for (size_t j = 0; j < input_num.size(); ++j) {
-      // We don't add separater first
-      if (j != 0 && counter % 3 == 0 && kSeparaters[i]) {
-        result.append(kSeparaters[i]);
-      }
-      const uint32 d = input_num[j] - '0';
-      if (d <= 9 && kNumDigitsVariations[i][d]) {
-        result.append(kNumDigitsVariations[i][d]);
-      }
-      ++counter;
-    }
-    // "数字"
-    PushBackNumberString(result,
-                         "\xE6\x95\xB0\xE5\xAD\x97",
-                         kStyles[i], output);
-  }
-  return true;
-}
-
-bool Util::ArabicToWideArabic(const string &input_num,
-                              vector<NumberString> *output) {
-  DCHECK(output);
-
-  if (!IsDecimalNumeric(input_num)) {
-    return false;
-  }
-
-  const Util::NumberString::Style kStyles[] = {
-    Util::NumberString::NUMBER_KANJI_ARABIC,
-    Util::NumberString::DEFAULT_STYLE,
-    // use default for wide arabic, because half/full width for
-    // normal number is learned by charactor form manager.
-  };
-
-  const char *kStylesName[] = {
-    "\xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97",  // "漢数字"
-    "\xE6\x95\xB0\xE5\xAD\x97",              // "数字"
-    NULL
-  };
-
-  for (size_t i = 0; kSingleDigitsVariations[i] != NULL; ++i) {
-    string result;
-    for (size_t j = 0; j < input_num.size(); ++j) {
-      uint32 n = input_num[j] - '0';
-      if (n <= 9 && kSingleDigitsVariations[i][n]) {
-        result.append(kSingleDigitsVariations[i][n]);
-      } else {
-        break;
-      }
-    }
-    if (!result.empty()) {
-      PushBackNumberString(result, kStylesName[i], kStyles[i], output);
-    }
-  }
-  return true;
-}
-
-bool Util::ArabicToOtherForms(const string &input_num,
-                              vector<NumberString> *output) {
-  DCHECK(output);
-
-  if (!IsDecimalNumeric(input_num)) {
-    return false;
-  }
-
-  if (input_num == kNumGoogol) {
-    PushBackNumberString("Googol", "",
-                         Util::NumberString::DEFAULT_STYLE, output);
-  }
-  int32 n = 0;
-  for (size_t i = 0; i < input_num.size(); ++i) {
-    uint32 d = input_num[i] - '0';
-    if (d <= 9) {
-      n = n * 10 + input_num[i] - '0';
-      if (n > 99) {
-        return false;
-      }
-    } else {
-      break;
-    }
-  }
-
-  const Util::NumberString::Style kStyles[] = {
-    Util::NumberString::NUMBER_ROMAN_CAPITAL,
-    Util::NumberString::NUMBER_ROMAN_SMALL,
-    Util::NumberString::NUMBER_CIRCLED,
-  };
-
-  // "ローマ数字(大文字)",
-  // "ローマ数字(小文字)",
-  // "丸数字"
-  const char *kStylesName[] = {
-    "\xE3\x83\xAD\xE3\x83\xBC\xE3\x83\x9E\xE6\x95\xB0"
-    "\xE5\xAD\x97(\xE5\xA4\xA7\xE6\x96\x87\xE5\xAD\x97)",
-    "\xE3\x83\xAD\xE3\x83\xBC\xE3\x83\x9E\xE6\x95\xB0"
-    "\xE5\xAD\x97(\xE5\xB0\x8F\xE6\x96\x87\xE5\xAD\x97)",
-    "\xE4\xB8\xB8\xE6\x95\xB0\xE5\xAD\x97"
-  };
-
-  for (int i = 0; kSpecialNumericVariations[i]; ++i) {
-    if (n < kSpecialNumericSizes[i] && kSpecialNumericVariations[i][n]) {
-      PushBackNumberString(kSpecialNumericVariations[i][n],
-                           kStylesName[i], kStyles[i], output);
-    }
-  }
-  return true;
-}
-
-bool Util::ArabicToOtherRadixes(const string &input_num,
-                                vector<NumberString> *output) {
-  DCHECK(output);
-
-  if (!IsDecimalNumeric(input_num)) {
-    return false;
-  }
-
-  // uint64 size of digits is smaller than 20.
-#define MAX_INT64_SIZE 20
-  if (input_num.size() >= MAX_INT64_SIZE) {
-    return false;
-  }
-  uint64 n = 0;
-  for (string::const_iterator i = input_num.begin();
-       i != input_num.end(); ++i) {
-    n = 10 * n + (*i) - '0';
-  }
-  if (n > 9) {
-    // Hexadecimal
-    string hexadecimal("0x");
-    char buf[MAX_INT64_SIZE];
-    int len = snprintf(buf, MAX_INT64_SIZE, "%llx", n);
-    hexadecimal.append(buf, len);
-    // 16\xE9\x80\xB2\xE6\x95\xB0 is "16進数"
-    PushBackNumberString(hexadecimal,
-                         "16\xE9\x80\xB2\xE6\x95\xB0",
-                         Util::NumberString::NUMBER_HEX, output);
-  }
-  if (n > 1) {
-    // octal and binary
-    string octal;
-    string binary;
-    bool put_octal = (n > 7);
-    while (n > 0) {
-      octal.push_back('0' + static_cast<char>(n & 0x7));
-      for (int i = 0; i < 3 && n > 0; ++i) {
-        binary.push_back('0' + static_cast<char>(n & 0x1));
-        n >>= 1;
-      }
-    }
-    if (put_octal) {
-      reverse(octal.begin(), octal.end());
-      // 8\xE9\x80\xB2\xE6\x95\xB0 is "8進数"
-      PushBackNumberString(string("0") + octal,
-                           "8\xE9\x80\xB2\xE6\x95\xB0",
-                           Util::NumberString::NUMBER_OCT, output);
-    }
-    reverse(binary.begin(), binary.end());
-    // 2\xE9\x80\xB2\xE6\x95\xB0 is "2進数"
-    PushBackNumberString(string("0b") + binary,
-                         "2\xE9\x80\xB2\xE6\x95\xB0",
-                         Util::NumberString::NUMBER_BIN, output);
-  }
-  return true;
-}
-
-bool Util::SafeStrToUInt32(const string &str, uint32 *value) {
-  return SafeStrToUInt32WithBase(str, 10, value);
-}
-
-bool Util::SafeHexStrToUInt32(const string &str, uint32 *value) {
-  return SafeStrToUInt32WithBase(str, 16, value);
-}
-
-bool Util::SafeOctStrToUInt32(const string &str, uint32 *value) {
-  return SafeStrToUInt32WithBase(str, 8, value);
-}
-
-bool Util::SafeStrToUInt64(const string &str, uint64 *value) {
-  DCHECK(value);
-
-  const char *s = str.c_str();
-
-  // strtoull does not give any errors on negative numbers, so we have to
-  // search the string for '-' manually.
-  while (isspace(*s)) {
-    ++s;
-  }
-  if (*s == '-') {
-    return false;
-  }
-
-  char *endptr;
-  errno = 0;  // errno only gets set on errors
-#ifdef OS_WINDOWS
-  *value = _strtoui64(s, &endptr, 10);
-#else
-  unsigned long long ull = strtoull(s, &endptr, 10);
-#endif
-  if (endptr != s) {
-    while (isspace(*endptr)) {
-      ++endptr;
-    }
-  }
-
-#ifdef OS_WINDOWS
-  return *s != 0 && *endptr == 0 && errno == 0;
-#else
-  *value = static_cast<uint64>(ull);
-  return *s != 0 && *endptr == 0 && errno == 0 &&
-      static_cast<unsigned long long>(*value) == ull;  // no overflow
-#endif
-}
-
-bool Util::SafeStrToDouble(const string &str, double *value) {
-  DCHECK(value);
-
-  const char *s = str.c_str();
-
-  char *endptr;
-  errno = 0;  // errno only gets set on errors
-  // strtod of GCC accepts hexadecimal number like "0x1234", but that of
-  // VisualC++ does not.
-  *value = strtod(s, &endptr);
-  if ((*value ==  numeric_limits<double>::infinity()) ||
-      (*value == -numeric_limits<double>::infinity())) {
-    return false;
-  }
-
-  if (endptr == s) {
-    return false;
-  }
-  while (isspace(*endptr)) {
-    ++endptr;
-  }
-
-  return (*endptr == '\0') && (errno == 0);
-}
-
-bool Util::SafeStrToFloat(const string &str, float *value) {
-  double double_value;
-  if (!SafeStrToDouble(str, &double_value)) {
-    return false;
-  }
-  *value = static_cast<float>(double_value);
-
-  if ((*value ==  numeric_limits<float>::infinity()) ||
-      (*value == -numeric_limits<float>::infinity())) {
-    return false;
-  }
-  return true;
-}
-
 string Util::StringPrintf(const char *format, ...) {
   va_list ap;
   va_start(ap, format);
@@ -1306,7 +763,28 @@ bool Util::GetSecureRandomSequence(char *buf, size_t buf_size) {
     return false;
   }
   ::CryptReleaseContext(hprov, 0);
-#else
+  return true;
+#elif defined(__native_client__)
+  struct nacl_irt_random interface;
+
+  if (nacl_interface_query(NACL_IRT_RANDOM_v0_1, &interface,
+                           sizeof(interface)) != sizeof(interface)) {
+    DLOG(ERROR) << "Cannot get NACL_IRT_RANDOM_v0_1 interface";
+    return false;
+  }
+
+  size_t nread;
+  const int error = interface.get_random_bytes(buf, buf_size, &nread);
+  if (error != 0) {
+    LOG(ERROR) << "interface.get_random_bytes error: " << error;
+    return false;
+  } else if (nread != buf_size) {
+    LOG(ERROR) << "interface.get_random_bytes error. nread: " << nread
+               << " buf_size: " << buf_size;
+    return false;
+  }
+  return true;
+#else  // !OS_WINDOWS && !__native_client__
   // Use non blocking interface on Linux.
   // Mac also have /dev/urandom (although it's identical with /dev/random)
   ifstream ifs("/dev/urandom", ios::binary);
@@ -1314,9 +792,8 @@ bool Util::GetSecureRandomSequence(char *buf, size_t buf_size) {
     return false;
   }
   ifs.read(buf, buf_size);
-#endif
-
   return true;
+#endif
 }
 
 bool Util::GetSecureRandomAsciiSequence(char *buf, size_t buf_size) {
@@ -1504,272 +981,6 @@ void Util::Sleep(uint32 msec) {
 }
 
 namespace {
-// TODO(yukawa): this should be moved into ports.h
-const uint64 kUInt64Max = 0xFFFFFFFFFFFFFFFFull;
-
-// There is an informative discussion about the overflow detection in
-// "Hacker's Delight" (http://www.hackersdelight.org/basics.pdf)
-//   2-12 'Overflow Detection'
-
-// *output = arg1 + arg2
-// return false when an integer overflow happens.
-bool AddAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
-  *output = arg1 + arg2;
-  if (arg2 > (kUInt64Max - arg1)) {
-    // overflow happens
-    return false;
-  }
-  return true;
-}
-
-// *output = arg1 * arg2
-// return false when an integer overflow happens.
-bool MultiplyAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
-  *output = arg1 * arg2;
-  if (arg1 != 0 && arg2 > (kUInt64Max / arg1)) {
-    // overflow happens
-    return false;
-  }
-  return true;
-}
-
-// Reduces leading digits less than 10 as their base10 interpretation, e.g.,
-//   [1, 2, 3, 10, 100] => begin points to [10, 100], output = 123
-// Returns false when overflow happened.
-bool ReduceLeadingNumbersAsBase10System(
-    vector<uint64>::const_iterator *begin,
-    const vector<uint64>::const_iterator &end,
-    uint64 *output) {
-  *output = 0;
-  for (; *begin < end; ++*begin) {
-    if (**begin >= 10) {
-      return true;
-    }
-    // *output = *output * 10 + *it
-    if (!MultiplyAndCheckOverflow(*output, 10, output) ||
-        !AddAndCheckOverflow(*output, **begin, output)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// Interprets digits as base10 system, e.g.,
-//   [1, 2, 3] => 123
-//   [1, 2, 3, 10] => false
-// Returns false if a number greater than 10 was found or overflow happened.
-bool InterpretNumbersAsBase10System(const vector<uint64> &numbers,
-                                    uint64 *output) {
-  vector<uint64>::const_iterator begin = numbers.begin();
-  const bool success =
-      ReduceLeadingNumbersAsBase10System(&begin, numbers.end(), output);
-  // Check if the whole numbers were reduced.
-  return (success && begin == numbers.end());
-}
-
-// Reads a leading number in a sequence and advances the iterator. Returns false
-// if the range is empty or the leading number is not less than 10.
-bool ReduceOnesDigit(vector<uint64>::const_iterator *begin,
-                     const vector<uint64>::const_iterator &end,
-                     uint64 *num) {
-  if (*begin == end || **begin >= 10) {
-    return false;
-  }
-  *num = **begin;
-  ++*begin;
-  return true;
-}
-
-// Given expected_base, 10, 100, or 1000, reads leading one or two numbers and
-// calculates the number in the follwoing way:
-//   Case: expected_base == 10
-//     [10, ...] => 10
-//     [2, 10, ...] => 20
-//     [1, 10, ...] => error because we don't write "一十" in Japanese.
-//     [20, ...] => 20 because "廿" is interpreted as 20.
-//     [2, 0, ...] => 20
-//   Case: expected_base == 100
-//     [100, ...] => 100
-//     [2, 100, ...] => 200
-//     [1, 100, ...] => error because we don't write "一百" in Japanese.
-//     [1, 2, 3, ...] => 123
-//   Case: expected_base == 1000
-//     [1000, ...] => 1000
-//     [2, 1000, ...] => 2000
-//     [1, 1000, ...] => 1000
-//     [1, 2, 3, 4, ...] => 1234
-bool ReduceDigitsHelper(vector<uint64>::const_iterator *begin,
-                        const vector<uint64>::const_iterator &end,
-                        uint64 *num,
-                        const uint64 expected_base) {
-  // Skip leading zero(s).
-  while (*begin != end && **begin == 0) {
-    ++*begin;
-  }
-  if (*begin == end) {
-    return false;
-  }
-  const uint64 leading_number = **begin;
-
-  // If the leading number is less than 10, e.g., patterns like [2, 10], we need
-  // to check the next number.
-  if (leading_number < 10) {
-    if (end - *begin < 2) {
-      return false;
-    }
-    const uint64 next_number = *(*begin + 1);
-
-    // If the next number is also less than 10, this pattern is like
-    // [1, 2, ...] => 12. In this case, the result must be less than
-    // 10 * expected_base.
-    if (next_number < 10) {
-      if (!ReduceLeadingNumbersAsBase10System(begin, end, num) ||
-          *num >= expected_base * 10 ||
-          (*begin != end && **begin < 10000)) {
-        *begin = end;  // Force to ignore the rest of the sequence.
-        return false;
-      }
-      return true;
-    }
-
-    // Patterns like [2, 10, ...] and [1, 1000, ...].
-    if (next_number != expected_base ||
-        (leading_number == 1 && expected_base != 1000)) {
-      return false;
-    }
-    *num = leading_number * expected_base;
-    *begin += 2;
-    return true;
-  }
-
-  // Patterns like [10, ...], [100, ...], [1000, ...], [20, ...]. The leading 20
-  // is a special case for Kanji "廿".
-  if (leading_number == expected_base ||
-      (expected_base == 10 && leading_number == 20)) {
-    *num = leading_number;
-    ++*begin;
-    return true;
-  }
-  return false;
-}
-
-inline bool ReduceTensDigit(vector<uint64>::const_iterator *begin,
-                            const vector<uint64>::const_iterator &end,
-                            uint64 *num) {
-  return ReduceDigitsHelper(begin, end, num, 10);
-}
-
-inline bool ReduceHundredsDigit(vector<uint64>::const_iterator *begin,
-                                const vector<uint64>::const_iterator &end,
-                                uint64 *num) {
-  return ReduceDigitsHelper(begin, end, num, 100);
-}
-
-inline bool ReduceThousandsDigit(vector<uint64>::const_iterator *begin,
-                                 const vector<uint64>::const_iterator &end,
-                                 uint64 *num) {
-  return ReduceDigitsHelper(begin, end, num, 1000);
-}
-
-// Reduces leading digits as a number less than 10000 and advances the
-// iterator. For example:
-//   [1, 1000, 2, 100, 3, 10, 4, 10000, ...]
-//        => begin points to [10000, ...], num = 1234
-//   [3, 100, 4, 100]
-//        => error because same base number appears twice
-bool ReduceNumberLessThan10000(vector<uint64>::const_iterator *begin,
-                               const vector<uint64>::const_iterator &end,
-                               uint64 *num) {
-  *num = 0;
-  bool success = false;
-  uint64 n = 0;
-  // Note: the following additions never overflow.
-  if (ReduceThousandsDigit(begin, end, &n)) {
-    *num += n;
-    success = true;
-  }
-  if (ReduceHundredsDigit(begin, end, &n)) {
-    *num += n;
-    success = true;
-  }
-  if (ReduceTensDigit(begin, end, &n)) {
-    *num += n;
-    success = true;
-  }
-  if (ReduceOnesDigit(begin, end, &n)) {
-    *num += n;
-    success = true;
-  }
-  // If at least one reduce was successful, no number remains in the sequence or
-  // the next number should be a base number greater than 1000 (e.g., 10000,
-  // 100000, etc.). Strictly speaking, better to check **begin % 10 == 0.
-  return success && (*begin == end || **begin >= 10000);
-}
-
-// Interprets a sequence of numbers in a Japanese reading way. For example:
-//   "一万二千三百四十五" = [1, 10000, 2, 1000, 3, 100, 4, 10, 5] => 12345
-// Base-10 numbers must be decreasing, i.e.,
-//   "一十二百" = [1, 10, 2, 100] => error
-bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
-                                   uint64 *output) {
-  uint64 last_base = kUInt64Max;
-  vector<uint64>::const_iterator begin = numbers.begin();
-  *output = 0;
-  do {
-    uint64 coef = 0;
-    if (!ReduceNumberLessThan10000(&begin, numbers.end(), &coef)) {
-      return false;
-    }
-    if (begin == numbers.end()) {
-      return AddAndCheckOverflow(*output, coef, output);
-    }
-    if (*begin >= last_base) {
-      return false;  // Increasing order of base-10 numbers.
-    }
-    // Safely performs *output += coef * *begin.
-    uint64 delta = 0;
-    if (!MultiplyAndCheckOverflow(coef, *begin, &delta) ||
-        !AddAndCheckOverflow(*output, delta, output)) {
-      return false;
-    }
-    last_base = *begin++;
-  } while (begin != numbers.end());
-
-  return true;
-}
-
-// Interprets a sequence of numbers directly or in a Japanese reading way
-// depending on the maximum number in the sequence.
-bool NormalizeNumbersHelper(const vector<uint64> &numbers,
-                            uint64 *number_output) {
-  const vector<uint64>::const_iterator itr_max = max_element(numbers.begin(),
-                                                             numbers.end());
-  if (itr_max == numbers.end()) {
-    return false;  // numbers is empty
-  }
-
-  // When no scaling number is found, convert number directly.
-  // For example, [5,4,3] => 543
-  if (*itr_max < 10) {
-    return InterpretNumbersAsBase10System(numbers, number_output);
-  }
-  return InterpretNumbersInJapaneseWay(numbers, number_output);
-}
-
-bool SafeStringToUInt64(const string &number_string, uint64 *val) {
-  for (size_t i = 0; i < number_string.size(); ++i) {
-    if (!isdigit(number_string[i])) {   // non-number is included
-      return false;
-    }
-    const uint64 val_of_char = static_cast<uint64>(number_string[i] - '0');
-    if (!MultiplyAndCheckOverflow(*val, 10, val) ||
-        !AddAndCheckOverflow(*val, val_of_char, val)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 void EscapeInternal(char input, const string &prefix, string *output) {
   const int hi = ((static_cast<int>(input) & 0xF0) >> 4);
   const int lo = (static_cast<int>(input) & 0x0F);
@@ -1777,109 +988,7 @@ void EscapeInternal(char input, const string &prefix, string *output) {
   *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
-
-bool NormalizeNumbersInternal(const string &input,
-                              bool trim_leading_zeros,
-                              bool allow_suffix,
-                              string *kanji_output,
-                              string *arabic_output,
-                              string *suffix) {
-  DCHECK(kanji_output);
-  DCHECK(arabic_output);
-  const char *begin = input.data();
-  const char *end = input.data() + input.size();
-  vector<uint64> numbers;
-  numbers.reserve(input.size());
-
-  // Maps Kanji number string to digits, e.g., "二百十一" -> [2, 100, 10, 1].
-  // Simultaneously, constructs a Kanji number string.
-  kanji_output->clear();
-  arabic_output->clear();
-  string kanji_char;
-  string kanji_char_normalized;
-
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32 wchar = Util::UTF8ToUCS4(begin, end, &mblen);
-    kanji_char.assign(begin, mblen);
-    if (wchar >= 0x0030 && wchar <= 0x0039) {  // '0' <= wchar <= '9'
-      kanji_char_normalized = kNumKanjiDigits[wchar - 0x0030];
-    } else if (wchar >= 0xFF10 && wchar <= 0xFF19) {  // '０' <= wchar <= '９'
-      kanji_char_normalized = kNumKanjiDigits[wchar - 0xFF10];
-    } else {
-      kanji_char_normalized = kanji_char;
-    }
-
-    string tmp;
-    Util::KanjiNumberToArabicNumber(kanji_char, &tmp);
-
-    uint64 n = 0;
-    if (!SafeStringToUInt64(tmp, &n)) {
-      if (!allow_suffix) {
-        return false;
-      }
-      DCHECK(suffix);
-      suffix->assign(begin, end);
-      break;
-    }
-    *kanji_output += kanji_char_normalized;
-    numbers.push_back(n);
-    begin += mblen;
-  }
-  if (numbers.empty()) {
-    return false;
-  }
-
-  // Tries interpreting the sequence of digits.
-  uint64 n = 0;
-  if (!NormalizeNumbersHelper(numbers, &n)) {
-    return false;
-  }
-
-  if (!trim_leading_zeros) {
-    // if numbers is [0, 0, 0], we add output "00".
-    for (size_t i = 0; i < numbers.size() - 1; ++i) {
-      if (numbers[i] == 0) {
-        *arabic_output += "0";
-      } else {
-        break;
-      }
-    }
-  }
-
-  char buf[1024];
-  snprintf(buf, sizeof(buf), "%llu", n);
-  *arabic_output += buf;
-  return true;
-}
 }  // end of anonymous namespace
-
-// Convert Kanji numbers into Arabic numbers:
-// e.g. "百二十万" -> 1200000
-bool Util::NormalizeNumbers(const string &input,
-                            bool trim_leading_zeros,
-                            string *kanji_output,
-                            string *arabic_output) {
-  return NormalizeNumbersInternal(input,
-                                  trim_leading_zeros,
-                                  false,  // allow_suffix
-                                  kanji_output,
-                                  arabic_output,
-                                  NULL);
-}
-
-bool Util::NormalizeNumbersWithSuffix(const string &input,
-                                      bool trim_leading_zeros,
-                                      string *kanji_output,
-                                      string *arabic_output,
-                                      string *suffix) {
-  return NormalizeNumbersInternal(input,
-                                  trim_leading_zeros,
-                                  true,  // allow_suffix
-                                  kanji_output,
-                                  arabic_output,
-                                  suffix);
-}
 
 // Load  Rules
 #include "base/japanese_util_rule.h"
@@ -1994,14 +1103,6 @@ void Util::NormalizeVoicedSoundMark(const string &input,
                                     string *output) {
   TextConverter::Convert(normalize_voiced_sound_da,
                          normalize_voiced_sound_table,
-                         input,
-                         output);
-}
-
-void Util::KanjiNumberToArabicNumber(const string &input,
-                                     string *output) {
-  TextConverter::Convert(kanjinumber_to_arabicnumber_da,
-                         kanjinumber_to_arabicnumber_table,
                          input,
                          output);
 }
@@ -2175,7 +1276,7 @@ bool Util::IsEnglishTransliteration(const string &value) {
   return true;
 }
 
-#ifndef __native_client__
+#ifndef MOZC_USE_PEPPER_FILE_IO
 
 bool Util::Unlink(const string &filename) {
 #ifdef OS_WINDOWS
@@ -2281,13 +1382,13 @@ void InitTxMoveFile() {
     return;
   }
 
-  const HMODULE lib_ktmw = mozc::Util::LoadSystemLibrary(L"ktmw32.dll");
+  const HMODULE lib_ktmw = WinUtil::LoadSystemLibrary(L"ktmw32.dll");
   if (lib_ktmw == NULL) {
     LOG(ERROR) << "LoadSystemLibrary for ktmw32.dll failed.";
     return;
   }
 
-  const HMODULE lib_kernel = Util::GetSystemModuleHandle(L"kernel32.dll");
+  const HMODULE lib_kernel = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
   if (lib_kernel == NULL) {
     LOG(ERROR) << "LoadSystemLibrary for kernel32.dll failed.";
     return;
@@ -2312,56 +1413,63 @@ void InitTxMoveFile() {
   LOG_IF(ERROR, g_commit_transaction == NULL)
       << "CommitTransaction init failed";
 }
+
+bool TransactionalMoveFile(const wstring &from, const wstring &to) {
+  CallOnce(&g_init_tx_move_file_once, &InitTxMoveFile);
+
+  if (g_commit_transaction == NULL || g_move_file_transactedw == NULL ||
+      g_create_transaction == NULL) {
+    // Transactional NTFS is not available.
+    return false;
+  }
+
+  const DWORD kTimeout = 5000;  // 5 sec.
+  ScopedHandle handle((*g_create_transaction)(
+      NULL, 0, 0, 0, 0, kTimeout, NULL));
+  const DWORD create_transaction_error = ::GetLastError();
+  if (handle.get() == 0) {
+    LOG(ERROR) << "CreateTransaction failed: " << create_transaction_error;
+    return false;
+  }
+
+  if (!(*g_move_file_transactedw)(from.c_str(), to.c_str(),
+                                  NULL, NULL,
+                                  MOVEFILE_COPY_ALLOWED |
+                                  MOVEFILE_REPLACE_EXISTING,
+                                  handle.get())) {
+    const DWORD move_file_transacted_error = ::GetLastError();
+    LOG(ERROR) << "MoveFileTransactedW failed: "
+               << move_file_transacted_error;
+    return false;
+  }
+
+  if (!(*g_commit_transaction)(handle.get())) {
+    const DWORD commit_transaction_error = ::GetLastError();
+    LOG(ERROR) << "CommitTransaction failed: " << commit_transaction_error;
+    return false;
+  }
+
+  return true;
+}
+
 }  // namespace
 #endif  // OS_WINDOWS
 
+
 bool Util::AtomicRename(const string &from, const string &to) {
 #ifdef OS_WINDOWS
-  CallOnce(&g_init_tx_move_file_once, &InitTxMoveFile);
-
   wstring fromw, tow;
   Util::UTF8ToWide(from.c_str(), &fromw);
   Util::UTF8ToWide(to.c_str(), &tow);
 
-  bool transaction_failed = false;
-
-  if (g_commit_transaction != NULL &&
-      g_move_file_transactedw != NULL &&
-      g_create_transaction != NULL) {
-    HANDLE handle = (*g_create_transaction)(NULL, 0, 0, 0, 0, 0, NULL);
-    if (INVALID_HANDLE_VALUE == handle) {
-      LOG(ERROR) << "CreateTransaction failed: " << ::GetLastError();
-      transaction_failed = true;
-    }
-
-    if (!transaction_failed &&
-        !(*g_move_file_transactedw)(fromw.c_str(), tow.c_str(),
-                                    NULL, NULL,
-                                    MOVEFILE_WRITE_THROUGH |
-                                    MOVEFILE_REPLACE_EXISTING,
-                                    handle)) {
-      LOG(ERROR) << "MoveFileTransactedW failed: " << ::GetLastError();
-      transaction_failed = true;
-    }
-
-    if (!transaction_failed &&
-        !(*g_commit_transaction)(handle)) {
-      LOG(ERROR) << "CommitTransaction failed: " << ::GetLastError();
-      transaction_failed = true;
-    }
-
-    LOG_IF(ERROR, transaction_failed)
-        << "Transactional MoveFile failed. Execute fallback plan";
-
-    ::CloseHandle(handle);
-  } else {
-    transaction_failed = true;
+  if (TransactionalMoveFile(fromw, tow)) {
+    return true;
   }
 
-  if (transaction_failed &&
-      !::MoveFileEx(fromw.c_str(), tow.c_str(),
-                    MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
-    LOG(ERROR) << "MoveFileEx failed: " << ::GetLastError();
+  if (!::MoveFileExW(fromw.c_str(), tow.c_str(),
+                     MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
+    const DWORD move_file_ex_error = ::GetLastError();
+    LOG(ERROR) << "MoveFileEx failed: " << move_file_ex_error;
     return false;
   }
 
@@ -2395,7 +1503,7 @@ bool Util::CopyTextFile(const string &from, const string &to) {
 }
 
 bool Util::CopyFile(const string &from, const string &to) {
-  Mmap<char> input;
+  Mmap input;
   if (!input.Open(from.c_str(), "r")) {
     LOG(ERROR) << "Can't open input file. " << from;
     return false;
@@ -2410,7 +1518,7 @@ bool Util::CopyFile(const string &from, const string &to) {
   // TOOD(taku): opening file with mmap could not be
   // a best solution. Also, we have to check disk quota
   // in advance.
-  ofs.write(input.begin(), input.GetFileSize());
+  ofs.write(input.begin(), input.size());
 
   return true;
 }
@@ -2418,7 +1526,7 @@ bool Util::CopyFile(const string &from, const string &to) {
 // Return true if |filename1| and |filename2| are identical.
 bool Util::IsEqualFile(const string &filename1,
                        const string &filename2) {
-  Mmap<char> mmap1, mmap2;
+  Mmap mmap1, mmap2;
 
   if (!mmap1.Open(filename1.c_str(), "r")) {
     LOG(ERROR) << "Cannot open: " << filename1;
@@ -2430,13 +1538,14 @@ bool Util::IsEqualFile(const string &filename1,
     return false;
   }
 
-  if (mmap1.GetFileSize() != mmap2.GetFileSize()) {
+  if (mmap1.size() != mmap2.size()) {
     return false;
   }
 
-  return 0 == memcmp(mmap1.begin(), mmap2.begin(),
-                     mmap1.GetFileSize());
+  return 0 == memcmp(mmap1.begin(), mmap2.begin(), mmap1.size());
 }
+
+#endif  // !MOZC_USE_PEPPER_FILE_IO
 
 // TODO(taku):  This value is defined in KnownFolders.h
 // If Win SDK for Vista is installed. Check the availability of SDK later.
@@ -2444,8 +1553,7 @@ bool Util::IsEqualFile(const string &filename1,
 EXTERN_C const GUID DECLSPEC_SELECTANY FOLDERID_LocalAppDataLow = {
   0xA520A1A4, 0x1780, 0x4FF6, { 0xBD, 0x18, 0x16, 0x73, 0x43, 0xC5, 0xAF, 0x16 }
 };
-
-#endif
+#endif  // OS_WINDOWS
 
 namespace {
 
@@ -2540,7 +1648,7 @@ class LocalAppDataDirectoryCache {
     // http://msdn.microsoft.com/en-us/library/bb762188(VS.85).aspx
     // http://msdn.microsoft.com/en-us/library/bb762584(VS.85).aspx
     // GUID: {A520A1A4-1780-4FF6-BD18-167343C5AF16}
-    const HMODULE hLib = mozc::Util::LoadSystemLibrary(L"shell32.dll");
+    const HMODULE hLib = WinUtil::LoadSystemLibrary(L"shell32.dll");
     if (hLib == NULL) {
       return E_NOTIMPL;
     }
@@ -2591,7 +1699,14 @@ class LocalAppDataDirectoryCache {
 #endif
 
 UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
+#ifdef MOZC_USE_PEPPER_FILE_IO
+  // In NaCl, we can't call Util::CreateDirectory() nor Util::DirectoryExists().
+  // So we just set dir_ here.
+  dir_ = "/";
+  return;
+#else  // MOZC_USE_PEPPER_FILE_IO
   string dir;
+
 #ifdef OS_WINDOWS
   DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
   dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
@@ -2609,10 +1724,17 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
   // TODO(komatsu): nice to make a wrapper function.
   ::mkdir(dir.c_str(), 0755);
   dir = Util::JoinPath(dir, "JapaneseInput");
-#else
+#else  //  GOOGLE_JAPANESE_INPUT_BUILD
   dir = Util::JoinPath(dir, "Mozc");
-#endif
-#else  // OS_LINUX or OS_CHROMEOS
+#endif  //  GOOGLE_JAPANESE_INPUT_BUILD
+
+#elif defined(OS_ANDROID)
+  // For android, we just use pre-defined directory, which is under the package
+  // directory, asssuming each device has single user.
+  dir = Util::JoinPath("/data/data", kMozcAndroidPackage);
+  dir = Util::JoinPath(dir, ".mozc");
+
+#else  // !OS_WINDOWS && !OS_MACOSX && !OS_ANDROID
   char buf[1024];
   struct passwd pw, *ppw;
   const uid_t uid = geteuid();
@@ -2621,7 +1743,7 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
   CHECK_LT(0, strlen(pw.pw_dir))
       << "Home directory for uid " << uid << " is not set.";
   dir = Util::JoinPath(pw.pw_dir, ".mozc");
-#endif
+#endif  // !OS_WINDOWS && !OS_MACOSX && !OS_ANDROID
 
   Util::CreateDirectory(dir);
   if (!Util::DirectoryExists(dir)) {
@@ -2630,6 +1752,7 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 
   // set User profile directory
   dir_ = dir;
+#endif  // MOZC_USE_PEPPER_FILE_IO
 }
 
 #ifdef OS_WINDOWS
@@ -2760,6 +1883,24 @@ string Util::GetServerPath() {
   return mozc::Util::JoinPath(server_path, kMozcServerName);
 }
 
+string Util::GetRendererPath() {
+  const string server_path = mozc::Util::GetServerDirectory();
+  // if server path is empty, return empty path
+  if (server_path.empty()) {
+    return "";
+  }
+  return mozc::Util::JoinPath(server_path, kMozcRenderer);
+}
+
+string Util::GetToolPath() {
+  const string server_path = mozc::Util::GetServerDirectory();
+  // if server path is empty, return empty path
+  if (server_path.empty()) {
+    return "";
+  }
+  return mozc::Util::JoinPath(server_path, kMozcTool);
+}
+
 string Util::GetDocumentDirectory() {
 #ifdef OS_MACOSX
   return Util::GetServerDirectory();
@@ -2769,8 +1910,11 @@ string Util::GetDocumentDirectory() {
 }
 
 string Util::GetUserNameAsString() {
-  string username;
-#ifdef OS_WINDOWS
+#ifdef MOZC_USE_PEPPER_FILE_IO
+  LOG(ERROR) << "Util::GetUserNameAsString() is not implemented in NaCl.";
+  return "username";
+
+#elif defined(OS_WINDOWS)  // MOZC_USE_PEPPER_FILE_IO
   wchar_t wusername[UNLEN + 1];
   DWORD name_size = UNLEN + 1;
   // Call the same name Windows API.  (include Advapi32.lib).
@@ -2779,14 +1923,23 @@ string Util::GetUserNameAsString() {
   //   or will be impersonated.
   const BOOL result = ::GetUserName(wusername, &name_size);
   DCHECK_NE(FALSE, result);
+  string username;
   Util::WideToUTF8(&wusername[0], &username);
-#else  // OS_WINDOWS
+  return username;
+
+#elif defined(OS_ANDROID)  // OS_WINDOWS
+  // Android doesn't seem to support getpwuid_r.
+  struct passwd *ppw = getpwuid(geteuid());
+  CHECK(ppw != NULL);
+  return ppw->pw_name;
+
+#else  // OS_ANDROID
+  // OS_MACOSX or OS_LINUX
   struct passwd pw, *ppw;
   char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
-  username.append(pw.pw_name);
-#endif  // OS_WINDOWS
-  return username;
+  return pw.pw_name;
+#endif  // !MOZC_USE_PEPPER_FILE_IO && !OS_WINDOWS && !OS_ANDROID
 }
 
 #ifdef OS_WINDOWS
@@ -2843,7 +1996,7 @@ bool GetCurrentSessionId(DWORD *session_id) {
   return true;
 }
 
-}
+}  // namespace
 #endif  // OS_WINDOWS
 
 string Util::GetDesktopNameAsString() {
@@ -2977,8 +2130,6 @@ string Util::NormalizeDirectorySeparator(const string &path) {
   return path;
 #endif
 }
-
-#endif  // __native_client__
 
 // Command line flags
 bool Util::CommandLineGetFlag(int argc,
@@ -3271,6 +2422,12 @@ Util::ScriptType GetScriptTypeInternal(const string &str,
       continue;
     }
 
+    // Periods are NUMBER as well, if it is not the first character.
+    // 0xFF0E == '．', 0x002E == '.' in UCS4 encoding.
+    if (result == Util::NUMBER && (w == 0xFF0E || w == 0x002E)) {
+      continue;
+    }
+
     // Not first character.
     // Note: GetScriptType doesn't return SCRIPT_TYPE_SIZE, thus if result
     // is not SCRIPT_TYPE_SIZE, it is not the first character.
@@ -3524,49 +2681,12 @@ typedef IsWindowsVerXOrLaterCache<6, 1> IsWindows7OrLaterCache;
 typedef IsWindowsVerXOrLaterCache<6, 2> IsWindows8OrLaterCache;
 
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
-class IsWindowsX64Cache {
- public:
-  IsWindowsX64Cache() : is_x64_(IsX64()) {}
-  bool is_x64() const {
-    return is_x64_;
-  }
-
- private:
-  static bool IsX64() {
-    typedef void (WINAPI *GetNativeSystemInfoProc)(
-        __out  LPSYSTEM_INFO lpSystemInfo);
-
-    const HMODULE kernel32 = Util::GetSystemModuleHandle(L"kernel32.dll");
-    DCHECK_NE(kernel32, NULL);
-
-    GetNativeSystemInfoProc proc = reinterpret_cast<GetNativeSystemInfoProc>(
-        ::GetProcAddress(kernel32, "GetNativeSystemInfo"));
-
-    if (proc == NULL) {
-      DLOG(INFO) << "GetNativeSystemInfo not found";
-      // If GetNativeSystemInfo API is not exported,
-      // the system is never X64 edition.
-      return false;
-    }
-
-    SYSTEM_INFO system_info;
-    ::ZeroMemory(&system_info, sizeof(system_info));
-    proc(&system_info);
-
-    return (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-  }
-
-  bool is_x64_;
-  DISALLOW_COPY_AND_ASSIGN(IsWindowsX64Cache);
-};
-
-// TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class SystemDirectoryCache {
  public:
   SystemDirectoryCache() : system_dir_(NULL) {
     const UINT copied_len_wo_null_if_success =
-        ::GetSystemDirectory(path_buffer_, ARRAYSIZE(path_buffer_));
-    if (copied_len_wo_null_if_success >= ARRAYSIZE(path_buffer_)) {
+        ::GetSystemDirectory(path_buffer_, arraysize(path_buffer_));
+    if (copied_len_wo_null_if_success >= arraysize(path_buffer_)) {
       // Function failed.
       return;
     }
@@ -3583,7 +2703,8 @@ class SystemDirectoryCache {
   wchar_t path_buffer_[MAX_PATH];
   wchar_t *system_dir_;
 };
-}  // anonymous namespace
+
+}  // namespace
 
 bool Util::IsVistaOrLater() {
   DCHECK(Singleton<IsWindowsVistaOrLaterCache>::get()->succeeded());
@@ -3607,12 +2728,20 @@ bool Util::IsWindowsX64() {
     case IS_WINDOWS_X64_EMULATE_64BIT_MACHINE:
       return true;
     case IS_WINDOWS_X64_DEFAULT_MODE:
-      return Singleton<IsWindowsX64Cache>::get()->is_x64();
+      // handled below.
+      break;
     default:
+      // Should never reach here.
       DLOG(FATAL) << "Unexpected mode specified.  mode = "
                   << g_is_windows_x64_mode;
-      return Singleton<IsWindowsX64Cache>::get()->is_x64();
+      // handled below.
+      break;
   }
+  SYSTEM_INFO system_info = {};
+  // This function never fails.
+  ::GetNativeSystemInfo(&system_info);
+  return (system_info.wProcessorArchitecture ==
+          PROCESSOR_ARCHITECTURE_AMD64);
 }
 
 void Util::SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode) {
@@ -3633,73 +2762,6 @@ void Util::SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode) {
 const wchar_t *Util::GetSystemDir() {
   DCHECK(Singleton<SystemDirectoryCache>::get()->succeeded());
   return Singleton<SystemDirectoryCache>::get()->system_dir();
-}
-
-HMODULE Util::LoadSystemLibrary(const wstring &base_filename) {
-  wstring fullpath = Util::GetSystemDir();
-  fullpath += L"\\";
-  fullpath += base_filename;
-
-  const HMODULE module = ::LoadLibraryExW(fullpath.c_str(),
-                                          NULL,
-                                          LOAD_WITH_ALTERED_SEARCH_PATH);
-  if (NULL == module) {
-    const int last_error = ::GetLastError();
-    DLOG(WARNING) << "LoadLibraryEx failed."
-                  << " fullpath = " << fullpath.c_str()
-                  << " error = " << last_error;
-  }
-  return module;
-}
-
-HMODULE Util::LoadMozcLibrary(const wstring &base_filename) {
-  wstring fullpath;
-  Util::UTF8ToWide(Util::GetServerDirectory().c_str(), &fullpath);
-  fullpath += L"\\";
-  fullpath += base_filename;
-
-  const HMODULE module = ::LoadLibraryExW(fullpath.c_str(),
-                                          NULL,
-                                          LOAD_WITH_ALTERED_SEARCH_PATH);
-  if (NULL == module) {
-    const int last_error = ::GetLastError();
-    DLOG(WARNING) << "LoadLibraryEx failed."
-                  << " fullpath = " << fullpath.c_str()
-                  << " error = " << last_error;
-  }
-  return module;
-}
-
-HMODULE Util::GetSystemModuleHandle(const wstring &base_filename) {
-  wstring fullpath = Util::GetSystemDir();
-  fullpath += L"\\";
-  fullpath += base_filename;
-
-  HMODULE module = NULL;
-  if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                         fullpath.c_str(), &module) == FALSE) {
-    const int last_error = ::GetLastError();
-    DLOG(WARNING) << "GetModuleHandleExW failed."
-                  << " fullpath = " << fullpath.c_str()
-                  << " error = " << last_error;
-  }
-  return module;
-}
-
-HMODULE Util::GetSystemModuleHandleAndIncrementRefCount(
-    const wstring &base_filename) {
-  wstring fullpath = Util::GetSystemDir();
-  fullpath += L"\\";
-  fullpath += base_filename;
-
-  HMODULE module = NULL;
-  if (GetModuleHandleExW(0, fullpath.c_str(), &module) == FALSE) {
-    const int last_error = ::GetLastError();
-    DLOG(WARNING) << "GetModuleHandleExW failed."
-                  << " fullpath = " << fullpath.c_str()
-                  << " error = " << last_error;
-  }
-  return module;
 }
 
 bool Util::GetFileVersion(const wstring &file_fullpath,
@@ -3767,6 +2829,24 @@ string Util::GetFileVersionString(const wstring &file_fullpath) {
   return buf.str();
 }
 
+string Util::GetMSCTFAsmCacheReadyEventName() {
+  DWORD session_id = 0;
+  if (!GetCurrentSessionId(&session_id)) {
+    return "";
+  }
+
+  const string &desktop_name =
+      GetObjectNameAsString(::GetThreadDesktop(::GetCurrentThreadId()));
+
+  if (desktop_name.empty()) {
+    DLOG(ERROR) << "Failed to retrieve desktop name";
+    return "";
+  }
+
+  // Compose "Local\MSCTF.AsmCacheReady.<desktop name><session #>".
+  return ("Local\\MSCTF.AsmCacheReady." + desktop_name +
+          StringPrintf("%u", session_id));
+}
 
 #endif  // OS_WINDOWS
 
@@ -3778,10 +2858,10 @@ string Util::GetOSVersionString() {
   OSVERSIONINFOEX osvi = { 0 };
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
   if (GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&osvi))) {
-    ret += "." + SimpleItoa(osvi.dwMajorVersion);
-    ret += "." + SimpleItoa(osvi.dwMinorVersion);
-    ret += "." + SimpleItoa(osvi.wServicePackMajor);
-    ret += "." + SimpleItoa(osvi.wServicePackMinor);
+    ret += "." + NumberUtil::SimpleItoa(osvi.dwMajorVersion);
+    ret += "." + NumberUtil::SimpleItoa(osvi.dwMinorVersion);
+    ret += "." + NumberUtil::SimpleItoa(osvi.wServicePackMajor);
+    ret += "." + NumberUtil::SimpleItoa(osvi.wServicePackMinor);
   } else {
     LOG(WARNING) << "GetVersionEx failed";
   }
@@ -3848,35 +2928,6 @@ uint64 Util::GetTotalPhysicalMemory() {
 #endif
 }
 
-void Util::PreloadMappedRegion(const void *begin,
-                               size_t region_size_in_byte,
-                               volatile bool *query_quit) {
-#if defined(OS_WINDOWS)
-  SYSTEM_INFO system_info;
-  ::ZeroMemory(&system_info, sizeof(system_info));
-  ::GetSystemInfo(&system_info);
-  const size_t page_size = system_info.dwPageSize;
-#elif defined(OS_MACOSX) || defined(OS_LINUX)
-#if defined(_SC_PAGESIZE)
-  const size_t page_size = sysconf(_SC_PAGESIZE);
-#else
-  const size_t page_size = 4096;
-#endif
-#else  // !(defined(OS_WINDOWS) || defined(OS_MACOSX) || defined(OS_LINUX))
-#error "unknown platform"
-#endif
-  const char *begin_ptr = reinterpret_cast<const char *>(begin);
-  const char *end_ptr = begin_ptr + region_size_in_byte;
-  // make sure the read operation will not be removed by the optimization
-  static volatile char dummy = 0;
-  for (const char *p = begin_ptr; p < end_ptr; p += page_size) {
-    if (query_quit != NULL && (*query_quit)) {
-      break;
-    }
-    dummy += *p;
-  }
-}
-
 bool Util::IsLittleEndian() {
 #ifndef OS_WINDOWS
   union {
@@ -3937,4 +2988,5 @@ bool Util::EnsureVitalImmutableDataIsAvailable() {
   return true;
 }
 #endif  // OS_WINDOWS
+
 }  // namespace mozc

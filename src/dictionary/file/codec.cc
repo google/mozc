@@ -34,6 +34,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"
@@ -127,10 +128,7 @@ bool DictionaryFileCodec::ReadSections(
     ptr += name_len;
     ptr += Rup4(name_len);
 
-    sections->resize(sections->size() + 1);
-    sections->back().len = size;
-    sections->back().ptr = ptr;
-    sections->back().name = name;
+    sections->push_back(DictionaryFileSection(ptr, size, name));
 
     ptr += size;
     ptr += Rup4(size);

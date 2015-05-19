@@ -35,15 +35,16 @@
 #include <set>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
+#include "rewriter/rewriter_interface.h"
 #include "session/commands.pb.h"
 #include "session/request_handler.h"
 
@@ -95,12 +96,6 @@ const string SymbolRewriter::GetDescription(
     const char *additional_description) {
   if (description == NULL) {
     return "";
-  }
-  if (value == "\x5C") {   // 0x5c
-    // return "円記号,バックスラッシュ";
-    return "\xE5\x86\x86\xE8\xA8\x98\xE5\x8F\xB7 "
-        "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF"
-        "\xE3\x82\xB9\xE3\x83\xA9\xE3\x83\x83\xE3\x82\xB7\xE3\x83\xA5";
   }
   string result = description;
   // Merge description

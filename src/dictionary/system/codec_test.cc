@@ -27,9 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dictionary/system/codec.h"
+
+#include <string>
+#include <vector>
+
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/system/codec.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "testing/base/public/googletest.h"
@@ -319,6 +325,11 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
       const vector<TokenInfo> &tokens, string *output) const {}
   void DecodeTokens(
       const uint8 *ptr, vector<TokenInfo> *tokens) const {}
+  bool DecodeToken(
+      const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const {
+    *read_bytes = 0;
+    return false;
+  }
   bool ReadTokenForReverseLookup(
       const uint8 *ptr, int *value_id, int *read_bytes) const { return false; }
   uint8 GetTokensTerminationFlag() const { return 0xff; }

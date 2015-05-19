@@ -45,79 +45,25 @@
       'toolsets': ['host'],
       'actions': [
         {
-          'action_name': 'gen_collocation_data',
-          'variables': {
-            'input_files%': [
-              '../data/dictionary/collocation.txt',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'conditions': [
-          ],
-          'outputs': [
-            '<(gen_out_dir)/embedded_collocation_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/embedded_collocation_data.h',
-            '<(mozc_build_tools_dir)/gen_collocation_data_main',
-            '--collocation_data=<@(input_files)',
-          ],
-        },
-        {
-          'action_name': 'gen_collocation_suppression_data',
-          'variables': {
-            'input_files%': [
-              '../data/dictionary/collocation_suppression.txt',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'conditions': [
-          ],
-          'outputs': [
-            '<(gen_out_dir)/embedded_collocation_suppression_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/embedded_collocation_suppression_data.h',
-            '<(mozc_build_tools_dir)/gen_collocation_suppression_data_main',
-            '--suppression_data=<@(input_files)',
-          ],
-        },
-        {
           'action_name': 'gen_single_kanji_rewriter_data',
           'variables': {
-            'input_file': '../data/single_kanji/single_kanji.tsv',
-            'id_def': '../data/dictionary/id.def',
-            'special_pos': '../data/rules/special_pos.def',
-            'user_pos': '../data/rules/user_pos.def',
-            'cforms': '../data/rules/cforms.def',
+            'single_kanji_file': '../data/single_kanji/single_kanji.tsv',
+            'variant_file': '../data/single_kanji/variant_rule.txt',
             'output_file': '<(gen_out_dir)/single_kanji_rewriter_data.h',
           },
           'inputs': [
             'embedded_dictionary_compiler.py',
             'gen_single_kanji_rewriter_data.py',
-            '<(input_file)',
-            '<(id_def)',
-            '<(special_pos)',
-            '<(user_pos)',
-            '<(cforms)',
+            '<(single_kanji_file)',
+            '<(variant_file)',
           ],
           'outputs': [
             '<(output_file)'
           ],
           'action': [
             'python', 'gen_single_kanji_rewriter_data.py',
-            '--input=<(input_file)',
-            '--min_prob=0.0',
-            '--id_file=<(id_def)',
-            '--special_pos_file=<(special_pos)',
-            '--user_pos_file=<(user_pos)',
-            '--cforms_file=<(cforms)',
+            '--single_kanji_file=<(single_kanji_file)',
+            '--variant_file=<(variant_file)',
             '--output=<(output_file)',
           ],
         },
@@ -163,27 +109,6 @@
             '--output=<(output_file)',
           ],
         },
-        {
-          'action_name': 'gen_reading_correction_data',
-          'variables': {
-            'input_files%': [
-              '../data/dictionary/reading_correction.tsv',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'conditions': [
-          ],
-          'outputs': [
-            '<(gen_out_dir)/reading_correction_data.h',
-          ],
-          'action': [
-            'python', './gen_reading_correction_data.py',
-            '--output=<(gen_out_dir)/reading_correction_data.h',
-            '--input=<@(input_files)',
-          ],
-        },
       ],
       'conditions': [
         ['target_platform!="Android"', {
@@ -218,15 +143,26 @@
       ],
     },
     {
+      'target_name': 'gen_existence_header',
+      'type': 'static_library',
+      'toolsets': ['host'],
+      'sources': [
+        'gen_existence_header.cc'
+      ],
+      'dependencies': [
+        '../storage/storage.gyp:storage#host',
+        '../base/base.gyp:codegen_bytearray_stream#host',
+      ],
+    },
+    {
       'target_name': 'gen_collocation_data_main',
       'type': 'executable',
       'toolsets': ['host'],
       'sources': [
         'gen_collocation_data_main.cc',
-        'gen_existence_header.cc'
       ],
       'dependencies': [
-        '../storage/storage.gyp:storage',
+        'gen_existence_header',
       ],
     },
     {
@@ -246,10 +182,9 @@
       'toolsets': ['host'],
       'sources': [
         'gen_collocation_suppression_data_main.cc',
-        'gen_existence_header.cc'
       ],
       'dependencies': [
-        '../storage/storage.gyp:storage',
+        'gen_existence_header',
       ],
     },
     {
@@ -276,7 +211,6 @@
         '../base/base.gyp:base',
         '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../dictionary/dictionary_base.gyp:user_pos_data',
       ],
     },
     {
@@ -310,7 +244,7 @@
       },
       'includes' : [
         '../gyp/install_build_tool.gypi',
-      ]
+      ],
     },
   ],
 }

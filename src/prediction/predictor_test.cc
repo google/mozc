@@ -29,7 +29,10 @@
 
 #include "prediction/predictor.h"
 
+#include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config.pb.h"
@@ -107,10 +110,10 @@ class MockPredictor : public PredictorInterface {
   MockPredictor() {}
   virtual ~MockPredictor() {}
 
-  MOCK_CONST_METHOD1(Predict, bool (Segments *segments));
+  MOCK_CONST_METHOD1(Predict, bool(Segments *segments));
   MOCK_CONST_METHOD2(
       PredictForRequest,
-      bool (const ConversionRequest &request, Segments *segments));
+      bool(const ConversionRequest &request, Segments *segments));
   MOCK_CONST_METHOD0(GetPredictorName, const string &());
 };
 
@@ -190,7 +193,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
       new DefaultPredictor(
           new CheckCandSizePredictor(GET_CONFIG(suggestions_size)),
           new CheckCandSizePredictor(GET_CONFIG(suggestions_size)),
-          new CheckCandSizePredictor(-1)));
+          new CheckCandSizePredictor(GET_CONFIG(suggestions_size))));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);

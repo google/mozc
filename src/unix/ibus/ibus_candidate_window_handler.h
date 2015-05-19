@@ -30,8 +30,6 @@
 #ifndef MOZC_UNIX_IBUS_IBUS_CANDIDATE_WINDOW_HANDLER_H_
 #define MOZC_UNIX_IBUS_IBUS_CANDIDATE_WINDOW_HANDLER_H_
 
-#include <ibus.h>
-
 #include "unix/ibus/candidate_window_handler_interface.h"
 
 namespace mozc {

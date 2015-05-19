@@ -27,16 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/base.h"
 #include "base/util.h"
 #include "base/winmain.h"
+#include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
 #include "server/mozc_server.h"
-#include "session/session_factory_manager.h"
 #include "session/japanese_session_factory.h"
+#include "session/session_factory_manager.h"
 
 int main(int argc, char* argv[]) {
   mozc::server::InitGoogleAndMozcServer(argv[0], &argc, &argv, false);
 
-  mozc::session::JapaneseSessionFactory session_factory;
+  scoped_ptr<mozc::EngineInterface> engine(mozc::EngineFactory::Create());
+
+  mozc::session::JapaneseSessionFactory session_factory(engine.get());
   mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
 
   const int return_value = mozc::server::MozcServer::Run();

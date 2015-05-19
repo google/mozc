@@ -31,12 +31,31 @@
 #define MOZC_BASE_FREELIST_H_
 
 #include <vector>
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 
+// Note: The program will be crashed in the following code;
+//   FreeList<int> freelist(10);
+//   freelist.Alloc(5);
+//   freelist.set_size(100);
+//   int* array = freelist.Alloc(10);
+//   array[8] = 0;  // crashed.
+// Also this class runs unneeded T's constructor along with the memory chunk
+// allocation.
+// Please do take care to use this class.
 template <class T> class FreeList {
  public:
+  explicit FreeList(size_t size)
+      : current_index_(0), chunk_index_(0), size_(size) {
+  }
+
+  ~FreeList() {
+    for (size_t i = 0; i < pool_.size(); ++i) {
+      delete [] pool_[i];
+    }
+  }
+
   void Reset() {
     chunk_index_ = current_index_ = 0;
   }
@@ -75,25 +94,23 @@ template <class T> class FreeList {
     size_ = size;
   }
 
-  explicit FreeList(size_t size):
-      current_index_(0), chunk_index_(0), size_(size) {}
-
-  virtual ~FreeList() {
-    for (size_t i = 0; i < pool_.size(); ++i) {
-      delete [] pool_[i];
-    }
-  }
-
  private:
-  FreeList() {}
   vector<T *> pool_;
   size_t current_index_;
   size_t chunk_index_;
   size_t size_;
+
+  DISALLOW_COPY_AND_ASSIGN(FreeList);
 };
 
 template <class T> class ObjectPool {
  public:
+  explicit ObjectPool(int size): freelist_(size) {
+  }
+
+  ~ObjectPool() {
+  }
+
   void Free() {
     released_.clear();
     freelist_.Free();
@@ -116,12 +133,13 @@ template <class T> class ObjectPool {
     freelist_.set_size(size);
   }
 
-  explicit ObjectPool(int size): freelist_(size) {}
-  virtual ~ObjectPool() {}
-
  private:
   vector<T *> released_;
   FreeList<T> freelist_;
+
+  DISALLOW_COPY_AND_ASSIGN(ObjectPool);
 };
-}
+
+}  // namespace mozc
+
 #endif  // MOZC_BASE_FREELIST_H_

@@ -72,17 +72,19 @@ class SuffixDictionary : public DictionaryInterface {
                                  NodeAllocatorInterface *allocator) const;
 
   // SuffixDictionary doesn't support Prefix/Revese Lookup.
-  virtual Node *LookupPrefixWithLimit(
-      const char *str, int size,
-      const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
-
-  virtual Node *LookupPrefix(
-      const char *str, int size,
-      NodeAllocatorInterface *allocator) const;
-
+  virtual Node *LookupPrefixWithLimit(const char *str, int size,
+                                      const Limit &limit,
+                                      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const;
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
+
+  // We may implement this if necessary.
+  virtual Node *LookupExact(const char *str, int size,
+                            NodeAllocatorInterface *allocator) const {
+    return NULL;
+  }
 
  private:
   const SuffixToken *const suffix_tokens_;
@@ -92,16 +94,6 @@ class SuffixDictionary : public DictionaryInterface {
   DISALLOW_COPY_AND_ASSIGN(SuffixDictionary);
 };
 
-class SuffixDictionaryFactory {
- public:
-  // return singleton object
-  static DictionaryInterface *GetSuffixDictionary();
-  static void SetSuffixDictionary(DictionaryInterface *suffix_dictionary);
-
- private:
-  SuffixDictionaryFactory() {}
-  ~SuffixDictionaryFactory() {}
-};
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_SUFFIX_DICTIONARY_H_

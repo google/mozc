@@ -30,10 +30,13 @@
 #include "sync/user_dictionary_sync_util.h"
 
 #include <string>
+
 #include "base/base.h"
 #include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/freelist.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
@@ -46,6 +49,8 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace sync {
 
+using mozc::user_dictionary::UserDictionary;
+
 TEST(UserDictionarySyncUtilTest, IsEqualStorage) {
   UserDictionarySyncUtil::UserDictionaryStorageBase storage1, storage2;
 
@@ -57,10 +62,10 @@ TEST(UserDictionarySyncUtilTest, IsEqualStorage) {
     dic->set_syncable(true);
     for (int i = 0; i < 10; ++i) {
       UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
-      const string suffix = Util::SimpleItoa(i);
+      const string suffix = NumberUtil::SimpleItoa(i);
       entry->set_key("key" + suffix);
       entry->set_value("value" + suffix);
-      entry->set_pos("pos" + suffix);
+      entry->set_pos(UserDictionary::NOUN);
     }
   }
   EXPECT_FALSE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
@@ -72,10 +77,10 @@ TEST(UserDictionarySyncUtilTest, IsEqualStorage) {
     // Order is different.
     for (int i = 9; i >= 0; --i) {
       UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
-      const string suffix = Util::SimpleItoa(i);
+      const string suffix = NumberUtil::SimpleItoa(i);
       entry->set_key("key" + suffix);
       entry->set_value("value" + suffix);
-      entry->set_pos("pos" + suffix);
+      entry->set_pos(UserDictionary::NOUN);
     }
   }
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
@@ -86,10 +91,10 @@ TEST(UserDictionarySyncUtilTest, IsEqualStorage) {
         storage1.mutable_dictionaries(0);
     for (int i = 0; i < 4; ++i) {
       UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
-      const string suffix = Util::SimpleItoa(i);
+      const string suffix = NumberUtil::SimpleItoa(i);
       entry->set_key("key" + suffix);
       entry->set_value("value" + suffix);
-      entry->set_pos("pos" + suffix);
+      entry->set_pos(UserDictionary::NOUN);
     }
   }
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
@@ -102,10 +107,10 @@ TEST(UserDictionarySyncUtilTest, IsEqualStorage) {
     dic->set_syncable(false);
     for (int i = 0; i < 10; ++i) {
       UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
-      const string suffix = Util::SimpleItoa(i);
+      const string suffix = NumberUtil::SimpleItoa(i);
       entry->set_key("key2" + suffix);
       entry->set_value("value2" + suffix);
-      entry->set_pos("pos2" + suffix);
+      entry->set_pos(UserDictionary::NOUN);
     }
   }
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
@@ -119,28 +124,29 @@ TEST(UserDictionarySyncUtilTest, EntryFingerprint) {
 
   entry1.set_key("key");
   entry1.set_value("value");
-  entry1.set_pos("pos");
-  entry1.set_pos("comment");
-  entry2.CopyFrom(entry1);
+  entry1.set_pos(UserDictionary::NOUN);
+  entry1.set_comment("comment");
 
+  entry2.CopyFrom(entry1);
   EXPECT_EQ(UserDictionarySyncUtil::EntryFingerprint(entry1),
             UserDictionarySyncUtil::EntryFingerprint(entry2));
 
+  entry2.CopyFrom(entry1);
   entry2.set_key("key2");
   EXPECT_NE(UserDictionarySyncUtil::EntryFingerprint(entry1),
             UserDictionarySyncUtil::EntryFingerprint(entry2));
 
-  entry2.set_key("key");
+  entry2.CopyFrom(entry1);
   entry2.set_value("value2");
   EXPECT_NE(UserDictionarySyncUtil::EntryFingerprint(entry1),
             UserDictionarySyncUtil::EntryFingerprint(entry2));
 
-  entry2.set_value("value");
-  entry2.set_pos("pos2");
+  entry2.CopyFrom(entry1);
+  entry2.set_pos(UserDictionary::ADVERB);
   EXPECT_NE(UserDictionarySyncUtil::EntryFingerprint(entry1),
             UserDictionarySyncUtil::EntryFingerprint(entry2));
 
-  entry2.set_pos("pos");
+  entry2.CopyFrom(entry1);
   entry2.set_comment("comment2");
   EXPECT_NE(UserDictionarySyncUtil::EntryFingerprint(entry1),
             UserDictionarySyncUtil::EntryFingerprint(entry2));
@@ -186,7 +192,7 @@ void AddRandomUpdates(UserDictionaryStorage *storage) {
       DCHECK(entry);
       entry->set_key(SyncUtil::GenRandomString(5));
       entry->set_value(SyncUtil::GenRandomString(5));
-      entry->set_pos(SyncUtil::GenRandomString(5));
+      entry->set_pos(UserDictionary::NOUN);
     }
   }
 
@@ -214,8 +220,8 @@ TEST(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
   EXPECT_EQ(0, dic->entries_size());
   for (int i = 0; i < kMaxNumEntry; ++i) {
     UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
-    entry->set_key("key" + Util::SimpleItoa(i));
-    entry->set_value("value" + Util::SimpleItoa(i));
+    entry->set_key("key" + NumberUtil::SimpleItoa(i));
+    entry->set_value("value" + NumberUtil::SimpleItoa(i));
   }
 
   commands::CloudSyncStatus status;
@@ -230,8 +236,8 @@ TEST(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
   // Newly add a few etnries, to exceed maximum number of entry.
   for (int i = 0; i < 10; ++i) {
     UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
-    entry->set_key("key" + Util::SimpleItoa(i + kMaxNumEntry));
-    entry->set_value("value" + Util::SimpleItoa(i + kMaxNumEntry));
+    entry->set_key("key" + NumberUtil::SimpleItoa(i + kMaxNumEntry));
+    entry->set_value("value" + NumberUtil::SimpleItoa(i + kMaxNumEntry));
   }
   EXPECT_FALSE(UserDictionarySyncUtil::VerifyLockAndSaveStorage(&storage));
   // Save without validation intentionally.
@@ -261,7 +267,7 @@ TEST(UserDictionarySyncUtilTest, CreateAndMergeTest) {
     const int num_updates = Util::Random(100) + 1;
     storage_cur.CopyFrom(storage_orig);
     UserDictionaryStorageAllocator allocator(100);
-    vector<const UserDictionarySyncUtil::UserDictionaryStorageBase *> updates;
+    vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> updates;
     // Emulate the scenario that client sends |num_updaes| updates to the
     // cloud.
     for (int n = 0; n < num_updates; ++n) {
@@ -302,10 +308,10 @@ TEST(UserDictionarySyncUtilTest, DuplicatedSyncDictionaryNameTest) {
     dic->set_syncable(false);
     for (int i = 0; i < 10; ++i) {
       UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
-      const string suffix = Util::SimpleItoa(i);
+      const string suffix = NumberUtil::SimpleItoa(i);
       entry->set_key("key" + suffix);
       entry->set_value("value" + suffix);
-      entry->set_pos("pos" + suffix);
+      entry->set_pos(UserDictionary::NOUN);
     }
   }
   {
@@ -316,10 +322,10 @@ TEST(UserDictionarySyncUtilTest, DuplicatedSyncDictionaryNameTest) {
     dic->set_syncable(true);
     for (int i = 0; i < 10; ++i) {
       UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
-      const string suffix = Util::SimpleItoa(i);
+      const string suffix = NumberUtil::SimpleItoa(i);
       entry->set_key("key_sync" + suffix);
       entry->set_value("value_sync" + suffix);
-      entry->set_pos("pos_sync" + suffix);
+      entry->set_pos(UserDictionary::NOUN);
     }
   }
 
@@ -334,7 +340,7 @@ TEST(UserDictionarySyncUtilTest, DuplicatedSyncDictionaryNameTest) {
     UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
     entry->set_key("new_key");
     entry->set_value("new_value");
-    entry->set_pos("new_pos");
+    entry->set_pos(UserDictionary::NOUN);
   }
 
   {
@@ -345,11 +351,11 @@ TEST(UserDictionarySyncUtilTest, DuplicatedSyncDictionaryNameTest) {
     UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
     entry->set_key("new_synced_key");
     entry->set_value("new_synced_value");
-    entry->set_pos("new_synced_pos");
+    entry->set_pos(UserDictionary::NOUN);
   }
 
   UserDictionarySyncUtil::UserDictionaryStorageBase update;
-  vector<const UserDictionarySyncUtil::UserDictionaryStorageBase *> updates;
+  vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> updates;
   UserDictionarySyncUtil::CreateUpdate(storage_orig, storage_cur, &update);
   updates.push_back(&update);
   UserDictionarySyncUtil::MergeUpdates(updates, &storage_new);
@@ -399,10 +405,8 @@ namespace {
 // Emulate cloud download.
 void DownloadUpdates(
     int timestamp,
-    const vector<const UserDictionarySyncUtil::UserDictionaryStorageBase *>
-    &updates,
-    vector<const UserDictionarySyncUtil::UserDictionaryStorageBase *>
-    *new_updates) {
+    const vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> &updates,
+    vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> *new_updates) {
   for (size_t i = 0; i < updates.size(); ++i) {
     if (timestamp <= i) {   // newer than timestamp.
       new_updates->push_back(updates[i]);
@@ -424,7 +428,7 @@ TEST(UserDictionarySyncUtilTest, RealScenarioTest) {
 
   vector<int> timestamps(kClientsSize);
   fill(timestamps.begin(), timestamps.end(), 0);
-  vector<const UserDictionarySyncUtil::UserDictionaryStorageBase *> updates;
+  vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> updates;
 
   UserDictionaryStorageAllocator allocator(100);
 
@@ -447,8 +451,7 @@ TEST(UserDictionarySyncUtilTest, RealScenarioTest) {
     // Here we assume that no conflicts occur.
     for (int i = 0; i < kClientsSize; ++i) {
       // Download updates from the cloud
-      vector<const UserDictionarySyncUtil::UserDictionaryStorageBase *>
-          new_updates;
+      vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> new_updates;
       DownloadUpdates(timestamps[i], updates, &new_updates);
       timestamps[i] = updates.size();   // update timestamp.
       UserDictionarySyncUtil::MergeUpdates(new_updates, storages[i]);
@@ -466,5 +469,5 @@ TEST(UserDictionarySyncUtilTest, RealScenarioTest) {
   }
 }
 
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc

@@ -35,14 +35,14 @@
 
 #include <set>
 
-#include "base/singleton.h"
 #include "base/util.h"
-#include "client/client.h"
+#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/ime/ime_keyboard.h"
+#include "win32/ime/ime_state.h"
 
 namespace mozc {
 namespace win32 {
@@ -50,6 +50,7 @@ using commands::KeyEvent;
 using commands::Output;
 
 namespace {
+
 // The Mozc protocol has expected the client to send a key event with
 // |KeyEvent::HANKAKU| special key as if there was single Hankaku/Zenkaku
 // key.  This is why we map both VK_DBE_SBCSCHAR and VK_DBE_DBCSCHAR into
@@ -248,8 +249,12 @@ const KeyEvent::SpecialKey kSpecialKeyMap[] = {
   KeyEvent::NO_SPECIALKEY,        // 0xBE: VK_OEM_PERIOD
   KeyEvent::NO_SPECIALKEY,        // 0xBF: VK_OEM_2
   KeyEvent::NO_SPECIALKEY,        // 0xC0: VK_OEM_3
-  KeyEvent::NO_SPECIALKEY,        // 0xC1:
-  KeyEvent::NO_SPECIALKEY,        // 0xC2:
+  KeyEvent::NO_SPECIALKEY,        // 0xC1: VK_ABNT_C1
+  // The numpad comma on the Apple Japanese 109 keyboard is somehow mapped into
+  // VK_ABNT_C2, which is only defined in kbd.h.
+  // See also http://blogs.msdn.com/b/michkap/archive/2006/10/07/799605.aspx
+  // See also b/6639635.
+  KeyEvent::COMMA,                // 0xC2: VK_ABNT_C2
   KeyEvent::NO_SPECIALKEY,        // 0xC3:
   KeyEvent::NO_SPECIALKEY,        // 0xC4:
   KeyEvent::NO_SPECIALKEY,        // 0xC5:
@@ -312,7 +317,6 @@ const KeyEvent::SpecialKey kSpecialKeyMap[] = {
   KeyEvent::NO_SPECIALKEY,        // 0xFE:
   KeyEvent::NO_SPECIALKEY,        // 0xFF:
 };
-
 
 void ClearModifyerKeyIfNeeded(
     const KeyEvent *key, set<KeyEvent::ModifierKey> *modifiers) {
@@ -496,7 +500,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
     const int kana_locked_length = keyboard->ToUnicode(
         virtual_key.virtual_key(), to_unicode_scancode,
         keyboard_status_w_kana_lock.status(), &kana_codes[0],
-        ARRAYSIZE(kana_codes),
+        arraysize(kana_codes),
         to_unicode_flag);
     if (kana_locked_length != 1) {
       return false;
@@ -594,7 +598,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
   int kana_unlocked_length = keyboard->ToUnicode(
       virtual_key.virtual_key(), to_unicode_scancode,
       keyboard_status_wo_kana_lock.status(), &codes[0],
-      ARRAYSIZE(codes), to_unicode_flag);
+      arraysize(codes), to_unicode_flag);
 
   // A workaround for b/3029665.
   // Keyboard drivers of the JIS keyboard do not produce a key code for
@@ -613,7 +617,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
     kana_unlocked_length = keyboard->ToUnicode(
         virtual_key.virtual_key(), to_unicode_scancode,
         keyboard_status_wo_kana_lock.status(), &codes[0],
-        ARRAYSIZE(codes), to_unicode_flag);
+        arraysize(codes), to_unicode_flag);
   }
 
   if (kana_unlocked_length != 1) {
@@ -629,17 +633,8 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
 
   return true;
 }
-}  // anonymous namespace
 
-ImeBehavior::ImeBehavior()
-    : disabled(false),
-      prefer_kana_input(false),
-      use_kanji_key_to_toggle_input_style(false) {}
-
-ImeState::ImeState()
-    : open(false),
-      conversion_status(0) {
-}
+}  // namespace
 
 KeyEventHandlerResult::KeyEventHandlerResult()
     : should_be_eaten(false),
