@@ -204,7 +204,8 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   // Check whether the server/renderer is running inside sandbox.
   if (type == SERVER || type == RENDERER) {
     // Restricted token must be created by sandbox.
-    // Server is launched with NON_ADMIN so that it can use SSL access.
+    // Server/Renderer are launched with NON_ADMIN so that they
+    // can use SSL access.
     // This is why it doesn't have restricted token. b/5502343
     if (type != SERVER && !::IsTokenRestricted(process_token.get())) {
       return RunLevel::DENY;

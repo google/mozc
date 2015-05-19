@@ -96,3 +96,17 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
     t.Join();
   }
 }
+
+TEST(UnnamedEventTest, NotifyBeforeWait) {
+  mozc::UnnamedEvent event;
+  ASSERT_TRUE(event.Notify());
+  EXPECT_TRUE(event.Wait(100));
+}
+
+TEST(UnnamedEventTest, DoubleNotifyBeforeWait) {
+  mozc::UnnamedEvent event;
+  ASSERT_TRUE(event.Notify());
+  ASSERT_TRUE(event.Notify());
+  EXPECT_TRUE(event.Wait(100));
+  EXPECT_FALSE(event.Wait(100));
+}

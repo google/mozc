@@ -32,15 +32,15 @@
 
 #include <map>
 #include <string>
-#include <utility>
 #include <vector>
-#include "base/util.h"
-#include "testing/base/public/gunit_prod.h"  // FRIEND_TEST
-#include "usage_stats/usage_stats.pb.h"
+#include "base/port.h"
+// FRIEND_TEST
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace usage_stats {
 class UploadUtil;
+
 
 class ClientIdInterface {
  public:

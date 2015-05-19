@@ -52,6 +52,8 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
     return -1;
   }
 
+  // TODO(nona): remove these lines when link-time language dependency
+  //             injection is rolled out.
   mozc::japanese::LangDepSpecJapanese spec;
   mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 
@@ -66,5 +68,11 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
   word_register_dialog.show();
   word_register_dialog.raise();
 
-  return app.exec();
+  const int result = app.exec();
+
+  // TODO(nona): remove this line when link-time language dependency
+  //             injection is rolled out.
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+
+  return result;
 }

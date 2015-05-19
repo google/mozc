@@ -1210,6 +1210,61 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
   EXPECT_LT(kanji_pos, old_kanji_pos);
 }
 
+TEST_F(NumberRewriterTest, EraseExistingCandidates) {
+  NumberRewriter number_rewriter;
+
+  Segments segments;
+  {
+    Segment *segment = segments.add_segment();
+    DCHECK(segment);
+    // "いち"
+    segment->set_key("\xe3\x81\x84\xe3\x81\xa1");
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->Init();
+    candidate->lid = POSMatcher::GetUnknownId();  // Not number POS
+    candidate->rid = POSMatcher::GetUnknownId();
+    // "いち"
+    candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
+    // "いち"
+    candidate->content_key = "\xe3\x81\x84\xe3\x81\xa1";
+    // "壱"
+    candidate->value = "\xe5\xa3\xb1";
+    // "壱"
+    candidate->content_value = "\xe5\xa3\xb1";
+
+    candidate = segment->add_candidate();
+    candidate->Init();
+    candidate->lid = POSMatcher::GetNumberId();  // Number POS
+    candidate->rid = POSMatcher::GetNumberId();
+    // "いち"
+    candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
+    // "いち"
+    candidate->content_key = "\xe3\x81\x84\xe3\x81\xa1";
+    // "一"
+    candidate->value = "\xe4\xb8\x80";
+    // "一"
+    candidate->content_value = "\xe4\xb8\x80";
+  }
+
+  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+
+  // "一" become the base candidate, instead of "壱"
+  int base_pos = 0;
+  // "一"
+  EXPECT_TRUE(FindCandidateId(segments.segment(0), "\xe4\xb8\x80", &base_pos));
+  EXPECT_EQ(0, base_pos);
+
+  // Daiji will be inserted with new correct POS ids.
+  int daiji_pos = 0;
+  // "壱"
+  EXPECT_TRUE(FindCandidateId(segments.segment(0), "\xe5\xa3\xb1", &daiji_pos));
+  EXPECT_GT(daiji_pos, 0);
+  EXPECT_EQ(POSMatcher::GetNumberId(),
+            segments.segment(0).candidate(daiji_pos).lid);
+  EXPECT_EQ(POSMatcher::GetNumberId(),
+            segments.segment(0).candidate(daiji_pos).rid);
+}
+
 TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
   NumberRewriter number_rewriter;
 
@@ -1296,6 +1351,51 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
                           "\x8c\xef\xbc\x93\xef\xbc\x94\xef"
                           "\xbc\x95\xef\xbc\x8c\xef\xbc\x96"
                           "\xef\xbc\x97\xef\xbc\x98"));
+  }
+}
+
+// Consider the case where user dictionaries contain following entry.
+// - Reading: "はやぶさ"
+// - Value: "8823"
+// - POS: GeneralNoun (not *Number*)
+// In this case, NumberRewriter should not clear
+// Segment::Candidate::USER_DICTIONARY bit in the base candidate.
+TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
+  NumberRewriter number_rewriter;
+  {
+    Segments segments;
+    {
+      Segment *seg = segments.push_back_segment();
+      Segment::Candidate *candidate = seg->add_candidate();
+      candidate->Init();
+      candidate->lid = POSMatcher::GetGeneralNounId();
+      candidate->rid = POSMatcher::GetGeneralNounId();
+      // "はやぶさ"
+      candidate->key = "\xE3\x81\xAF\xE3\x82\x84\xE3\x81\xB6\xE3\x81\x95";
+      candidate->content_key = candidate->key;
+      candidate->value = "8823";
+      candidate->content_value = candidate->value;
+      candidate->cost = 5925;
+      candidate->wcost = 5000;
+      candidate->attributes =
+          Segment::Candidate::USER_DICTIONARY |
+          Segment::Candidate::NO_VARIANTS_EXPANSION;
+    }
+
+    EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+    bool base_candidate_found = false;
+    {
+      const Segment &segment = segments.segment(0);
+      for (size_t i = 0; i < segment.candidates_size(); ++i) {
+        const Segment::Candidate &candidate = segment.candidate(i);
+        if (candidate.value == "8823" &&
+            (candidate.attributes & Segment::Candidate::USER_DICTIONARY)) {
+          base_candidate_found = true;
+          break;
+        }
+      }
+    }
+    EXPECT_TRUE(base_candidate_found);
   }
 }
 

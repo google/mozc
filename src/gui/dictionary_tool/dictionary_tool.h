@@ -169,10 +169,21 @@ class DictionaryTool : public QMainWindow,
   // Changes the POS of all selected items to |pos|.
   void EditPOS(const string &pos);
 
+  // Moves selected items to the dictionary whose row is |dictionary_row|.
+  void MoveTo(int dictionary_row);
+
   // Helper functions to check if a file with given name is readable
   // to import or writable to export without trying to open it.
   static bool IsWritableToExport(const string &file_name);
   static bool IsReadableToImport(const string &file_name);
+
+  // Helper function for DeleteWord and MoveTo.
+  // Fills selected word entry rows as a unique sorted sequence.
+  void GetSortedSelectedRows(vector<int> *rows) const;
+
+  // Returns a pointer to the first selected dictionary.
+  // Returns NULL if no dictionary is selected.
+  QListWidgetItem *GetFirstSelectedDictionary() const;
 
   ImportDialog *import_dialog_;
   FindDialog   *find_dialog_;

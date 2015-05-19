@@ -38,6 +38,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 // For T13N normalize
 #include "transliteration/transliteration.h"
 
@@ -92,10 +93,39 @@ void NormalizeT13Ns(vector<string> *t13ns) {
   }
 }
 
+void EraseNon12KeyT13Ns(const string &key, vector<string> *t13ns) {
+  using transliteration::TransliterationType;
+  static const TransliterationType kAsciiTransliterationTypeList[] = {
+    transliteration::HALF_ASCII,
+    transliteration::HALF_ASCII_UPPER,
+    transliteration::HALF_ASCII_LOWER,
+    transliteration::HALF_ASCII_CAPITALIZED,
+    transliteration::FULL_ASCII,
+    transliteration::FULL_ASCII_UPPER,
+    transliteration::FULL_ASCII_LOWER,
+    transliteration::FULL_ASCII_CAPITALIZED,
+  };
+
+  for (size_t i = 0; i < arraysize(kAsciiTransliterationTypeList); ++i) {
+    TransliterationType type = kAsciiTransliterationTypeList[i];
+    if (!Util::IsArabicNumber((*t13ns)[type])) {
+      // The translitarated string contains a non-number character.
+      // So erase it.
+      // Hack: because of the t13n implementation on upper layer, we cannot
+      //   "erase" the element because the number of t13n entries is fixed.
+      //   Also, just clearing it (i.e. make it an empty string) cannot work.
+      //   Thus, as a work around, we set original key, so that it'll be
+      //   reduced in the later phase by de-dupping.
+      (*t13ns)[type] = key;
+    }
+  }
+}
+
 bool IsTransliterated(const vector<string> &t13ns) {
   if (t13ns.empty() || t13ns[0].empty()) {
     return false;
   }
+
   const string &base_candidate = t13ns[0];
   for (size_t i = 1; i < t13ns.size(); ++i) {
     if (t13ns[i] != base_candidate) {
@@ -218,6 +248,18 @@ bool FillT13NsFromComposer(Segments *segments) {
     T13NIds ids;
     GetIds(*segment, &ids);
 
+    // Especially for mobile-flick input, the input key is sometimes
+    // non-transliteration. For example, the i-flick is '_', which is not
+    // the transliteration at all. So, for those input mode, we just accept
+    // only 12-keys number layouts.
+    commands::Request::SpecialRomanjiTable special_romanji_table =
+        GET_REQUEST(special_romanji_table);
+    if (special_romanji_table == commands::Request::TWELVE_KEYS_TO_HIRAGANA ||
+        special_romanji_table == commands::Request::FLICK_TO_HIRAGANA ||
+        special_romanji_table == commands::Request::TOGGLE_FLICK_TO_HIRAGANA) {
+      EraseNon12KeyT13Ns(segment->key(), &t13ns);
+    }
+
     NormalizeT13Ns(&t13ns);
     if (!IsTransliterated(t13ns)) {
       continue;
@@ -292,6 +334,9 @@ TransliterationRewriter::TransliterationRewriter() {}
 TransliterationRewriter::~TransliterationRewriter() {}
 
 int TransliterationRewriter::capability() const {
+  if (GET_REQUEST(mixed_conversion)) {
+    return RewriterInterface::ALL;
+  }
   return RewriterInterface::CONVERSION;
 }
 

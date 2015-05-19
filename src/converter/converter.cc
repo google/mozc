@@ -127,6 +127,55 @@ ConverterImpl::ConverterImpl()
 
 ConverterImpl::~ConverterImpl() {}
 
+bool ConverterImpl::SetupHistorySegmentsFromPrecedingText(
+    const string &preceding_text, Segments *segments) const {
+  if (!StartReverseConversion(segments, preceding_text)) {
+    LOG(WARNING) << "Reverse conversion failed for " << preceding_text;
+    return false;
+  }
+  // Below we change the resulting segments to history segments. We should
+  // guarantee that the total segments size doesn't exceed the maximum size of
+  // history segments, by erasing leading segments as necessary.
+  if (segments->segments_size() > segments->max_history_segments_size()) {
+    segments->erase_segments(
+        0, segments->segments_size() - segments->max_history_segments_size());
+  }
+  for (int i = 0; i < segments->segments_size(); ++i) {
+    Segment *segment = segments->mutable_segment(i);
+    DCHECK(segment);
+    if (segment->candidates_size() == 0) {
+      LOG(WARNING) << "Empty segment was returned by reverse conversion";
+      return false;
+    }
+    // Need to swap key and value as the reverse conversion stores reading
+    // (usual key for conversion) to value.
+    for (int j = 0; j < segment->candidates_size(); ++j) {
+      Segment::Candidate *candidate = segment->mutable_candidate(j);
+      swap(candidate->key, candidate->value);
+      swap(candidate->content_key, candidate->content_value);
+    }
+    segment->set_segment_type(Segment::HISTORY);
+    segment->set_key(segment->candidate(0).key);
+  }
+  return true;
+}
+
+bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
+                                              Segments *segments) const {
+  DCHECK(request.composer);
+  // Existing history segments are used prior to preceding text.
+  if (segments->history_segments_size() == 0 &&
+      !request.preceding_text.empty()) {
+    if (!SetupHistorySegmentsFromPrecedingText(request.preceding_text,
+                                               segments)) {
+      LOG(WARNING) << "Failed to utilize preceding text: "
+                   << request.preceding_text;
+      segments->Clear();  // fall back to a normal conversion
+    }
+  }
+  return StartConversionWithComposer(segments, request.composer);
+}
+
 bool ConverterImpl::StartConversion(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
@@ -174,13 +223,48 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
 bool ConverterImpl::Predict(Segments *segments,
                             const string &key,
                             const Segments::RequestType request_type) const {
-  SetKey(segments, key);
+  const Segments::RequestType original_request_type = segments->request_type();
+  if ((original_request_type != Segments::PREDICTION &&
+       original_request_type != Segments::SUGGESTION &&
+       original_request_type != Segments::PARTIAL_PREDICTION &&
+       original_request_type != Segments::PARTIAL_SUGGESTION) ||
+      segments->conversion_segments_size() == 0 ||
+      segments->conversion_segment(0).key() != key) {
+    // - If the original request is not prediction relating one
+    //   (e.g. conversion), invoke SetKey because current segments has
+    //   data for conversion, not prediction.
+    // - If the segment size is 0, invoke SetKey because the segments is not
+    //   correctly prepared.
+    // - If the key of the segments differs from the input key,
+    //   invoke SetKey because current segments should be completely reset.
+    // - Otherwise keep current key and candidates.
+    SetKey(segments, key);
+  }
+  DCHECK(segments->conversion_segments_size() == 1);
+  DCHECK(segments->conversion_segment(0).key() == key);
+
   segments->set_request_type(request_type);
   if (!PredictorFactory::GetPredictor()->Predict(segments)) {
     return false;
   }
   RewriterFactory::GetRewriter()->Rewrite(segments);
   return IsValidSegments(*segments);
+}
+
+bool ConverterImpl::StartPredictionForRequest(const ConversionRequest &request,
+                                              Segments *segments) const {
+  DCHECK(request.composer);
+  // Existing history segments are used prior to preceding text.
+  if (segments->history_segments_size() == 0 &&
+      !request.preceding_text.empty()) {
+    if (!SetupHistorySegmentsFromPrecedingText(request.preceding_text,
+                                               segments)) {
+      LOG(WARNING) << "Failed to utilize preceding text: "
+                   << request.preceding_text;
+      segments->Clear();  // fall back to a normal prediction
+    }
+  }
+  return StartPredictionWithComposer(segments, request.composer);
 }
 
 bool ConverterImpl::StartPrediction(Segments *segments,
@@ -264,7 +348,7 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
       seg->set_segment_type(Segment::FIXED_VALUE);
     }
     if (seg->candidates_size() > 0) {
-      ConverterUtil::CompletePOSIds(seg->mutable_candidate(0));
+      CompletePOSIds(seg->mutable_candidate(0));
     }
   }
 
@@ -573,62 +657,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   return true;
 }
 
-UserDataManagerInterface *ConverterImpl::GetUserDataManager() {
-  return user_data_manager_.get();
-}
-
-UserDataManagerImpl::UserDataManagerImpl() {}
-UserDataManagerImpl::~UserDataManagerImpl() {}
-
-bool UserDataManagerImpl::Sync() {
-  return (RewriterFactory::GetRewriter()->Sync() &&
-          PredictorFactory::GetPredictor()->Sync() &&
-          DictionaryFactory::GetDictionary()->Sync());
-}
-
-bool UserDataManagerImpl::Reload() {
-  return (RewriterFactory::GetRewriter()->Reload() &&
-          PredictorFactory::GetPredictor()->Reload() &&
-          DictionaryFactory::GetDictionary()->Reload());
-}
-
-bool UserDataManagerImpl::ClearUserHistory() {
-  RewriterFactory::GetRewriter()->Clear();
-  return true;
-}
-
-bool UserDataManagerImpl::ClearUserPrediction() {
-  PredictorFactory::GetPredictor()->ClearAllHistory();
-  return true;
-}
-
-bool UserDataManagerImpl::ClearUnusedUserPrediction() {
-  PredictorFactory::GetPredictor()->ClearUnusedHistory();
-  return true;
-}
-
-void ConverterUtil::InitSegmentsFromString(const string &key,
-                                           const string &preedit,
-                                           Segments *segments) {
-  segments->clear_conversion_segments();
-  // the request mode is CONVERSION, as the user experience
-  // is similar to conversion. UserHistryPredictor distinguishes
-  // CONVERSION from SUGGESTION now.
-  segments->set_request_type(Segments::CONVERSION);
-  Segment *segment = segments->add_segment();
-  segment->Clear();
-  segment->set_key(key);
-  segment->set_segment_type(Segment::FIXED_VALUE);
-  Segment::Candidate *c = segment->add_candidate();
-  c->Init();
-  c->value = preedit;
-  c->content_value = preedit;
-  c->key = key;
-  c->content_key = key;
-}
-
-// static
-void ConverterUtil::CompletePOSIds(Segment::Candidate *candidate) {
+void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
   DCHECK(candidate);
   if (candidate->value.empty()) {
     return;
@@ -701,4 +730,59 @@ void ConverterUtil::CompletePOSIds(Segment::Candidate *candidate) {
     VLOG(1) << "Set RID: " << candidate->rid << " " << value;
   }
 }
+
+UserDataManagerInterface *ConverterImpl::GetUserDataManager() {
+  return user_data_manager_.get();
+}
+
+UserDataManagerImpl::UserDataManagerImpl() {}
+UserDataManagerImpl::~UserDataManagerImpl() {}
+
+bool UserDataManagerImpl::Sync() {
+  return (RewriterFactory::GetRewriter()->Sync() &&
+          PredictorFactory::GetPredictor()->Sync() &&
+          DictionaryFactory::GetDictionary()->Sync());
+}
+
+bool UserDataManagerImpl::Reload() {
+  return (RewriterFactory::GetRewriter()->Reload() &&
+          PredictorFactory::GetPredictor()->Reload() &&
+          DictionaryFactory::GetDictionary()->Reload());
+}
+
+bool UserDataManagerImpl::ClearUserHistory() {
+  RewriterFactory::GetRewriter()->Clear();
+  return true;
+}
+
+bool UserDataManagerImpl::ClearUserPrediction() {
+  PredictorFactory::GetPredictor()->ClearAllHistory();
+  return true;
+}
+
+bool UserDataManagerImpl::ClearUnusedUserPrediction() {
+  PredictorFactory::GetPredictor()->ClearUnusedHistory();
+  return true;
+}
+
+void ConverterUtil::InitSegmentsFromString(const string &key,
+                                           const string &preedit,
+                                           Segments *segments) {
+  segments->clear_conversion_segments();
+  // the request mode is CONVERSION, as the user experience
+  // is similar to conversion. UserHistryPredictor distinguishes
+  // CONVERSION from SUGGESTION now.
+  segments->set_request_type(Segments::CONVERSION);
+  Segment *segment = segments->add_segment();
+  segment->Clear();
+  segment->set_key(key);
+  segment->set_segment_type(Segment::FIXED_VALUE);
+  Segment::Candidate *c = segment->add_candidate();
+  c->Init();
+  c->value = preedit;
+  c->content_value = preedit;
+  c->key = key;
+  c->content_key = key;
+}
+
 }  // namespace mozc

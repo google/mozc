@@ -39,6 +39,12 @@
 #include "prediction/predictor.h"
 #include "prediction/user_history_predictor.h"
 
+// TODO(team): Implement ambiguity expansion for rewriters.
+DEFINE_bool(enable_ambiguity_expansion, true,
+            "Enable ambiguity trigger expansion for predictions");
+DECLARE_bool(enable_expansion_for_dictionary_predictor);
+DECLARE_bool(enable_expansion_for_user_history_predictor);
+
 namespace mozc {
 namespace {
 const int kPredictionSize = 100;
@@ -59,7 +65,12 @@ PredictorInterface *g_dictionary_predictor = NULL;
 
 }  // namespace
 
-BasePredictor::BasePredictor() {}
+BasePredictor::BasePredictor() {
+  FLAGS_enable_expansion_for_dictionary_predictor =
+      FLAGS_enable_ambiguity_expansion;
+  FLAGS_enable_expansion_for_user_history_predictor =
+      FLAGS_enable_ambiguity_expansion;
+}
 
 BasePredictor::~BasePredictor() {}
 

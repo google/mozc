@@ -37,7 +37,7 @@
 
 #include "base/base.h"
 #include "session/commands.pb.h"
-#include "session/internal/keymap.h"
+#include "session/key_event_util.h"
 #include "session/session_interface.h"
 #include "testing/base/public/gunit_prod.h"
 
@@ -229,9 +229,9 @@ class Session: public mozc::session::SessionInterface {
   uint64 create_session_time_;
   uint64 last_command_time_;
   uint64 last_config_updated_;
-  set<keymap::Key> hanja_key_set_;
+  set<KeyInformation> hanja_key_set_;
 };
 
-}  // namespace session
+}  // namespace hangul
 }  // namespace mozc
 #endif  // MOZC_LANGUAGES_HANGUL_SESSION_H_

@@ -82,5 +82,9 @@ TEST_F(SessionServerTest, SetSchedulerJobTest) {
       job_recorder->job_settings();
   EXPECT_GE(job_settings.size(), 1);
   EXPECT_EQ("UsageStatsTimer", job_settings[0].name());
+#ifdef ENABLE_CLOUD_SYNC
+  EXPECT_GE(job_settings.size(), 2);
+  EXPECT_EQ("CloudSync", job_settings[1].name());
+#endif  // ENABLE_CLOUD_SYNC
   mozc::Scheduler::SetSchedulerHandler(NULL);
 }

@@ -395,30 +395,36 @@ void SessionOutput::FillConversion(const Segments &segments,
 }
 
 // static
+void SessionOutput::FillConversionResultWithoutNormalization(
+    const string &key,
+    const string &result,
+    commands::Result *result_proto) {
+  result_proto->set_type(commands::Result::STRING);
+  result_proto->set_key(key);
+  result_proto->set_value(result);
+}
+
+// static
 void SessionOutput::FillConversionResult(const string &key,
                                          const string &result,
                                          commands::Result *result_proto) {
-  result_proto->set_type(commands::Result::STRING);
-
   // Key should be normalized as a preedit text.
   string normalized_key;
   TextNormalizer::NormalizePreeditText(key, &normalized_key);
-  result_proto->set_key(normalized_key);
 
   // value is already normalized by converter.
-  result_proto->set_value(result);
+  FillConversionResultWithoutNormalization(
+      normalized_key, result, result_proto);
 }
 
 // static
 void SessionOutput::FillPreeditResult(const string &preedit,
                                       commands::Result *result_proto) {
-  result_proto->set_type(commands::Result::STRING);
-
-
   string normalized_preedit;
   TextNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
-  result_proto->set_key(normalized_preedit);
-  result_proto->set_value(normalized_preedit);
+
+  FillConversionResultWithoutNormalization(
+      normalized_preedit, normalized_preedit, result_proto);
 }
 
 }  // namespace session

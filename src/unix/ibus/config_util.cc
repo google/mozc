@@ -89,7 +89,7 @@ bool ConfigUtil::GetBoolean(GValue *value, gboolean *out_boolean) {
 }
 #endif
 
-void ConfigUtil::SetFieldForName(const gchar *name,
+bool ConfigUtil::SetFieldForName(const gchar *name,
 #if IBUS_CHECK_VERSION(1, 3, 99)
                                  GVariant *value,
 #else
@@ -98,7 +98,7 @@ void ConfigUtil::SetFieldForName(const gchar *name,
                                  protobuf::Message *result) {
   if (!name || !value) {
     LOG(ERROR) << "name or value is not specified";
-    return;
+    return false;
   }
   DCHECK(result);
 
@@ -109,60 +109,78 @@ void ConfigUtil::SetFieldForName(const gchar *name,
 
   if (!field_to_update) {
     LOG(ERROR) << "Unknown field name: " << name;
-    return;
+    return false;
   }
 
   // Set |value| to |result|.
   switch (field_to_update->cpp_type()) {
-    case google::protobuf::FieldDescriptor::CPPTYPE_ENUM: {
-      // |value| should be STRING.
-      const gchar *string_value = NULL;
-      if (!GetString(value, &string_value)) {
-        LOG(ERROR) << "Bad value type for " << name;
-        return;
+    case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
+      {
+        // |value| should be STRING.
+        const gchar *string_value = NULL;
+        if (!GetString(value, &string_value)) {
+          LOG(ERROR) << "Bad value type for " << name;
+          return false;
+        }
+        DCHECK(string_value);
+        const google::protobuf::EnumValueDescriptor *enum_value =
+            descriptor->FindEnumValueByName(string_value);
+        if (!enum_value) {
+          LOG(ERROR) << "Bad value for " << name << ": " << string_value;
+          return false;
+        }
+        reflection->SetEnum(result, field_to_update, enum_value);
+        VLOG(2) << "setting field: " << name << " = " << string_value;
+        break;
       }
-      DCHECK(string_value);
-      const google::protobuf::EnumValueDescriptor *enum_value =
-          descriptor->FindEnumValueByName(string_value);
-      if (!enum_value) {
-        LOG(ERROR) << "Bad value for " << name << ": " << string_value;
-        return;
+    case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+      {
+        // |value| should be INT.
+        gint int_value = -1;
+        if (!GetInteger(value, &int_value)) {
+          LOG(ERROR) << "Bad value type for " << name;
+          return false;
+        }
+        reflection->SetInt32(result, field_to_update, int_value);
+        VLOG(2) << "setting field: " << name << " = " << int_value;
+        break;
       }
-      reflection->SetEnum(result, field_to_update, enum_value);
-      VLOG(2) << "setting field: " << name << " = " << string_value;
-      break;
-    }
-    case google::protobuf::FieldDescriptor::CPPTYPE_UINT32: {
-      // unsigned int is not supported as chrome's preference type and int is
-      // used as an alternative type, so |value| should be INT.
-      gint int_value = -1;
-      if (!GetInteger(value, &int_value)) {
-        LOG(ERROR) << "Bad value type for " << name;
-        return;
+    case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+      {
+        // unsigned int is not supported as chrome's preference type and int is
+        // used as an alternative type, so |value| should be INT.
+        gint int_value = -1;
+        if (!GetInteger(value, &int_value)) {
+          LOG(ERROR) << "Bad value type for " << name;
+          return false;
+        }
+        reflection->SetUInt32(result, field_to_update, int_value);
+        VLOG(2) << "setting field: " << name << " = " << int_value;
+        break;
       }
-      reflection->SetUInt32(result, field_to_update, int_value);
-      VLOG(2) << "setting field: " << name << " = " << int_value;
-      break;
-    }
-    case google::protobuf::FieldDescriptor::CPPTYPE_BOOL: {
-      // |value| should be BOOLEAN.
-      gboolean boolean_value = FALSE;
-      if (!GetBoolean(value, &boolean_value)) {
-        LOG(ERROR) << "Bad value type for " << name;
-        return;
+    case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
+      {
+        // |value| should be BOOLEAN.
+        gboolean boolean_value = FALSE;
+        if (!GetBoolean(value, &boolean_value)) {
+          LOG(ERROR) << "Bad value type for " << name;
+          return false;
+        }
+        reflection->SetBool(result, field_to_update, boolean_value);
+        VLOG(2) << "setting field: " << name << " = "
+                << (boolean_value ? "true" : "false");
+        break;
       }
-      reflection->SetBool(result, field_to_update, boolean_value);
-      VLOG(2) << "setting field: " << name << " = "
-              << (boolean_value ? "true" : "false");
-      break;
-    }
-    default: {
-      // TODO(yusukes): Support other types.
-      LOG(ERROR) << "Unknown or unsupported type: " << name << ": "
-                 << field_to_update->cpp_type();
-      return;
-    }
+    default:
+      {
+        // TODO(yusukes): Support other types.
+        LOG(ERROR) << "Unknown or unsupported type: " << name << ": "
+                   << field_to_update->cpp_type();
+        return false;
+      }
   }
+
+  return true;
 }
 
 #ifdef OS_CHROMEOS

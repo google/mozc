@@ -45,6 +45,7 @@ DEFINE_string(mode, "", "mozc_broker mode");
 #ifdef OS_WINDOWS
 namespace mozc {
 namespace win32 {
+int RunPrelaunchProcesses(int argc, char *argv[]);
 int RunRegisterIME(int argc, char *argv[]);
 int RunUnregisterIME(int argc, char *argv[]);
 int RunSetDefault(int argc, char *argv[]);
@@ -70,6 +71,8 @@ int main(int argc, char *argv[]) {
     result = mozc::win32::RunSetDefault(argc, argv);
   } else if (FLAGS_mode == "unregister_ime") {
     result = mozc::win32::RunUnregisterIME(argc, argv);
+  } else if (FLAGS_mode == "prelaunch_processes") {
+    result = mozc::win32::RunPrelaunchProcesses(argc, argv);
   }
 #endif  // OS_WINDOWS
 

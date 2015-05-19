@@ -215,12 +215,24 @@ enum CompatibilityMode {
   // they are the offset from the upper-left corner of the window.  GTK-based
   // applications and Java AWT-based applications match this category.
   USE_LOCAL_COORD_FOR_CANDIDATE_FORM = 2,
-  // Some applications like V2C occasionally create zero-initialized
+  // Some applications such as V2C occasionally create zero-initialized
   // CANDIDATEFORM and maintain it regardless of the actual position of the
   // composition. This compatibility flag represents that it is better to
   // ignore this phantom CANDIDATEFORM.  Currently all the Java AWT-based
   // applications match this category.
   IGNORE_DEFAULT_COMPOSITION_FORM = 4,
+  // Some applications such as NTEmacs22 or Meadow3.0 automatically and
+  // frequently generates WM_IME_CONTROL/IMC_SETCOMPOSITIONWINDOW messages.
+  // In this case, the renderer might not be able to show the InfoList
+  // because new rendering messages will come before the InfoList is
+  // displayed with the default delay (~500 msec). This compatibility flag
+  // represents that we should show the InfoList immediately on such
+  // applications. See b/5824433 for details.
+  // TODO(horo, yukawa): Perhapes we can improve the rendering algorithm
+  //     when the renderer is receiving the same messages successively.
+  //     If we can safely ignore such successive messages, this flag
+  //     can be removed.
+  SHOW_INFOLIST_IMMEDIATELY = 8,
 };
 
 class LayoutManager {
@@ -375,6 +387,7 @@ class LayoutManager {
 
   DISALLOW_COPY_AND_ASSIGN(LayoutManager);
 };
+
 }  // namespace win32
 }  // namespace renderer
 }  // namespace mozc

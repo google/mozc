@@ -41,7 +41,6 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
-        'genproto_config',
         'config_protocol',
       ],
     },
@@ -58,12 +57,16 @@
     {
       'target_name': 'config_protocol',
       'type': 'static_library',
+      'hard_dependency': 1,
       'sources': [
         '<(proto_out_dir)/<(relative_dir)/config.pb.cc',
       ],
       'dependencies': [
         '../protobuf/protobuf.gyp:protobuf',
-        'genproto_config'
+        'genproto_config',
+      ],
+      'export_dependent_settings': [
+        'genproto_config',
       ],
     },
     {
@@ -74,7 +77,6 @@
       ],
       'dependencies': [
         'config_handler',
-        'genproto_config'
       ],
     },
   ],

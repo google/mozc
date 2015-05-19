@@ -30,10 +30,12 @@
 #include "dictionary/system/system_dictionary.h"
 
 #include "base/base.h"
+#include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/system/codec.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
 #include "testing/base/public/googletest.h"
@@ -61,9 +63,10 @@ DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
-namespace dictionary {
-namespace {
 
+
+using dictionary::SystemDictionaryBuilder;
+using dictionary::TokenInfo;
 
 class SystemDictionaryTest : public testing::Test {
  protected:
@@ -379,6 +382,67 @@ TEST_F(SystemDictionaryTest, test_predictive) {
   }
   EXPECT_TRUE(found_k1) << "Failed to find " << k1;
   EXPECT_TRUE(found_k2) << "Failed to find " << k2;
+}
+
+TEST_F(SystemDictionaryTest, test_predictive_with_limit) {
+  vector<Token *> source_tokens;
+
+  // "まみむめも"
+  // There are not be so many entries which start with "まみむめも".
+  const string k0 = "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
+      "\xe3\x82\x81\xe3\x82\x82";
+  // "まみむめもや"
+  const string k1 = "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
+      "\xe3\x82\x81\xe3\x82\x82\xe3\x82\x84";
+  // "まみむめもやゆよ"
+  const string k2 = "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
+      "\xe3\x82\x81\xe3\x82\x82\xe3\x82\x84\xe3\x82\x86\xe3\x82\x88";
+  // "まみむめもままま"
+  const string k3 = "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80\xe3\x82\x81"
+      "\xe3\x82\x82\xe3\x81\xbe\xe3\x81\xbe\xe3\x81\xbe";
+
+  scoped_ptr<Token> t1(CreateToken(k1, "aa"));
+  scoped_ptr<Token> t2(CreateToken(k2, "bb"));
+  scoped_ptr<Token> t3(CreateToken(k3, "cc"));
+  source_tokens.push_back(t1.get());
+  source_tokens.push_back(t2.get());
+  source_tokens.push_back(t3.get());
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, 10000);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  DictionaryInterface::Limit limit;
+  Trie<string> trie;
+  // "や"
+  trie.AddEntry("\xe3\x82\x84", "");
+  limit.begin_with_trie = &trie;
+  Node *node = system_dic->LookupPredictiveWithLimit(k0.c_str(), k0.size(),
+                                                     limit, NULL);
+  EXPECT_TRUE(node != NULL) << "no nodes found";
+  bool found_k1 = false;
+  bool found_k2 = false;
+  bool found_k3 = false;
+  while (node) {
+    if (CompareForLookup(node, t1.get(), false)) {
+      found_k1 = true;
+    }
+    if (CompareForLookup(node, t2.get(), false)) {
+      found_k2 = true;
+    }
+    if (CompareForLookup(node, t3.get(), false)) {
+      found_k3 = true;
+    }
+    Node *tmp_node = node;
+    node = node->bnext;
+    delete tmp_node;
+  }
+  EXPECT_TRUE(found_k1) << "Failed to find " << k1;
+  EXPECT_TRUE(found_k2) << "Failed to find " << k2;
+  EXPECT_FALSE(found_k3) << "Failed to filter " << k3;
 }
 
 TEST_F(SystemDictionaryTest, test_predictive_cutoff) {
@@ -729,6 +793,71 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
                        << ":" << (*it)->value;
   }
 }
-}  // namespace
-}  // namespace dictionary
+
+// Minimal modification of the codec for the TokenAfterSpellningToken.
+class CodecForTest : public dictionary::SystemDictionaryCodec {
+ public:
+  CodecForTest() {
+  }
+
+  virtual ~CodecForTest() {
+  }
+
+  static const char *kDummyValue;
+
+  void DecodeValue(const string &src, string *dst) const {
+    *dst = kDummyValue;
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(CodecForTest);
+};
+
+const char *CodecForTest::kDummyValue = "DummyValue";
+
+TEST_F(SystemDictionaryTest, TokenAfterSpellningToken) {
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  // Filter for reverse look up.
+  SystemDictionary::FilterInfo filter;
+  filter.conditions = SystemDictionary::FilterInfo::NO_SPELLING_CORRECTION;
+
+  // The 2nd token refers previous token by SAME_AS_PREV_VALUE,
+  // but the 1st token is spelling correction which will be ignored for
+  // reverse conversion.
+  vector<TokenInfo> tokens;
+  scoped_ptr<Token> t0(new Token);
+  t0->attributes = Token::SPELLING_CORRECTION;
+  t0->cost = 1;
+  tokens.push_back(dictionary::TokenInfo(t0.get()));
+  scoped_ptr<Token> t1(new Token);
+  t1->cost = 111;
+  tokens.push_back(dictionary::TokenInfo(t1.get()));
+  tokens[1].value_type = TokenInfo::SAME_AS_PREV_VALUE;
+
+  // Inject a minimal codec.
+  scoped_ptr<CodecForTest>
+      codec(new CodecForTest());
+  system_dic->codec_ = codec.get();
+
+  const string tokens_key;
+  Node *head = NULL;
+  int limit = 10000;
+  Node *res = system_dic->AppendNodesFromTokens(filter, tokens_key, &tokens,
+                                                head, NULL, &limit);
+
+  vector<Node *> nodes;
+  while (res) {
+    nodes.push_back(res);
+    res = res->bnext;
+  }
+  // The 2nd token should survive with the same value of 1st token.
+  EXPECT_EQ(1, nodes.size());
+  EXPECT_EQ(111, nodes[0]->wcost);
+  EXPECT_EQ(CodecForTest::kDummyValue, nodes[0]->value);
+
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    delete nodes[i];
+  }
+}
 }  // namespace mozc

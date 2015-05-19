@@ -49,6 +49,7 @@ class ConverterMock : public ConverterInterface {
 
   // TODO(toshiyuki): define more appropriate struct.
   struct ConverterInput {
+    ConversionRequest request;
     Segments segments;
     string key;
     const composer::Composer *composer;
@@ -61,15 +62,18 @@ class ConverterMock : public ConverterInterface {
     vector<uint8> new_size_array;
     string current_segment_key;
     string new_segment_key;
+    ConverterInput() : request(NULL) {}
   };
 
   ConverterMock();
   virtual ~ConverterMock();
 
   // set next output of respective functions
+  void SetStartConversionForRequest(Segments *segments, bool result);
   void SetStartConversion(Segments *segments, bool result);
   void SetStartConversionWithComposer(Segments *segments, bool result);
   void SetStartReverseConversion(Segments *segments, bool result);
+  void SetStartPredictionForRequest(Segments *segments, bool result);
   void SetStartPrediction(Segments *segments, bool result);
   void SetStartPredictionWithComposer(Segments *segments, bool result);
   void SetStartSuggestion(Segments *segments, bool result);
@@ -91,10 +95,14 @@ class ConverterMock : public ConverterInterface {
   void SetResizeSegment2(Segments *segments, bool result);
 
   // get last input of respective functions
+  void GetStartConversionForRequest(Segments *segments,
+                                    ConversionRequest *request);
   void GetStartConversion(Segments *segments, string *key);
   void GetStartConversionWithComposer(Segments *segments,
                                       const composer::Composer **composer);
   void GetStartReverseConversion(Segments *segments, string *key);
+  void GetStartPredictionForRequest(Segments *segments,
+                                    ConversionRequest *request);
   void GetStartPrediction(Segments *segments, string *key);
   void GetStartPredictionWithComposer(Segments *segments,
                                       const composer::Composer **composer);
@@ -131,12 +139,16 @@ class ConverterMock : public ConverterInterface {
                         size_t *array_size);
 
   // ConverterInterface
+  bool StartConversionForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
   bool StartConversion(Segments *segments,
                        const string &key) const;
   bool StartConversionWithComposer(
       Segments *segments, const composer::Composer *composer) const;
   bool StartReverseConversion(Segments *segments,
                               const string &key) const;
+  bool StartPredictionForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
   bool StartPrediction(Segments *segments,
                        const string &key) const;
   bool StartPredictionWithComposer(
@@ -186,9 +198,11 @@ class ConverterMock : public ConverterInterface {
 
  private:
   // mutable for recode input in const functions
+  mutable ConverterInput startconversionwithrequest_input_;
   mutable ConverterInput startconversion_input_;
   mutable ConverterInput startconversionwithcomposer_input_;
   mutable ConverterInput startreverseconversion_input_;
+  mutable ConverterInput startpredictionwithrequest_input_;
   mutable ConverterInput startprediction_input_;
   mutable ConverterInput startpredictionwithcomposer_input_;
   mutable ConverterInput startsuggestion_input_;
@@ -209,9 +223,11 @@ class ConverterMock : public ConverterInterface {
   mutable ConverterInput resizesegment1_input_;
   mutable ConverterInput resizesegment2_input_;
 
+  ConverterOutput startconversionwithrequest_output_;
   ConverterOutput startconversion_output_;
   ConverterOutput startconversionwithcomposer_output_;
   ConverterOutput startreverseconversion_output_;
+  ConverterOutput startpredictionwithrequest_output_;
   ConverterOutput startprediction_output_;
   ConverterOutput startpredictionwithcomposer_output_;
   ConverterOutput startsuggestion_output_;

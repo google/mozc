@@ -85,13 +85,6 @@ void ImeContext::set_state(ImeContext::State state) {
   state_ = state;
 }
 
-const TransformTable &ImeContext::transform_table() const {
-  return transform_table_;
-}
-TransformTable *ImeContext::mutable_transform_table() {
-  return &transform_table_;
-}
-
 config::Config::SessionKeymap ImeContext::keymap() const {
   return keymap_;
 }
@@ -125,27 +118,15 @@ commands::Output *ImeContext::mutable_output() {
 void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   DCHECK(dest);
 
-  dest->mutable_output()->CopyFrom(src.output());
+  dest->mutable_composer()->CopyFrom(src.composer());
   dest->mutable_converter()->CopyFrom(src.converter());
+
   dest->set_state(src.state());
+  dest->set_keymap(src.keymap());
 
-  switch (dest->state()) {
-    case DIRECT:
-    case PRECOMPOSITION:
-      // Do nothing more.
-      return;
-
-    case COMPOSITION:
-      dest->mutable_composer()->CopyFromForSubmission(src.composer());
-      return;
-
-    case CONVERSION:
-      dest->mutable_composer()->CopyFromForConversion(src.composer());
-      return;
-
-    default:
-      LOG(ERROR) << "Unknown state: " << dest->state();
-  }
+  dest->mutable_client_capability()->CopyFrom(src.client_capability());
+  dest->mutable_application_info()->CopyFrom(src.application_info());
+  dest->mutable_output()->CopyFrom(src.output());
 }
 
 }  // namespace session

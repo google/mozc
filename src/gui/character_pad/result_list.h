@@ -48,6 +48,9 @@ class ResultList: public QListWidget {
   void updateFontSize(int index);
   void updateFont(const QFont &font);
 
+ signals:
+  void itemSelected(const QListWidgetItem *item);
+
  protected:
   void mouseReleaseEvent(QMouseEvent *event);
   void mouseMoveEvent(QMouseEvent *event);

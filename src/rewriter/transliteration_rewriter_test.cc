@@ -37,12 +37,16 @@
 #include "converter/segments.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+
+using mozc::commands::ScopedRequestForUnittest;
 
 namespace {
 void InsertASCIISequence(const string &text, composer::Composer *composer) {
@@ -75,11 +79,17 @@ void SetKamaboko(composer::Composer *composer) {
 class TransliterationRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
+    prev_preference_.CopyFrom(commands::RequestHandler::GetRequest());
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
   }
+  virtual void TearDown() {
+    commands::RequestHandler::SetRequest(prev_preference_);
+  }
+ private:
+  commands::Request prev_preference_;
 };
 
 TEST_F(TransliterationRewriterTest, T13NFromKeyTest) {
@@ -137,7 +147,7 @@ TEST_F(TransliterationRewriterTest, T13NFromComposerTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTable(&table);
+  composer.SetTableForUnittest(&table);
   SetAkann(&composer);
 
   Segments segments;
@@ -196,7 +206,7 @@ TEST_F(TransliterationRewriterTest, T13NWithMultiSegmentsTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTable(&table);
+  composer.SetTableForUnittest(&table);
   SetAkann(&composer);
 
   Segments segments;
@@ -239,7 +249,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTable(&table);
+  composer.SetTableForUnittest(&table);
   SetAkann(&composer);
 
   Segments segments;
@@ -293,7 +303,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTable(&table);
+  composer.SetTableForUnittest(&table);
   SetAkann(&composer);
 
   Segments segments;
@@ -450,7 +460,7 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTable(&table);
+  composer.SetTableForUnittest(&table);
   InsertASCIISequence("a", &composer);
 
   Segments segments;
@@ -484,4 +494,317 @@ TEST_F(TransliterationRewriterTest, NoRewriteTest) {
   EXPECT_EQ(0, segments.conversion_segment(0).meta_candidates_size());
 }
 
+TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
+  TransliterationRewriter t13n_rewriter;
+
+  composer::Table table;
+  table.Initialize();
+  composer::Composer composer;
+  composer.SetTableForUnittest(&table);
+
+  // "らゔ"
+  composer.InsertCharacterPreedit("\xE3\x82\x89\xE3\x82\x94");
+
+  Segments segments;
+  {  // Initialize segments.
+    Segment *segment = segments.add_segment();
+    CHECK(segment);
+    // "らゔ"
+    segment->set_key("\xE3\x82\x89\xE3\x82\x94");
+    segment->add_candidate()->value = "LOVE";
+  }
+
+  segments.set_composer(&composer);
+  EXPECT_TRUE(t13n_rewriter.Rewrite(&segments));
+  EXPECT_EQ(1, segments.segments_size());
+  const Segment &seg = segments.segment(0);
+  // "らヴ"
+  EXPECT_EQ("\xE3\x82\x89\xE3\x83\xB4",
+            seg.meta_candidate(transliteration::HIRAGANA).value);
+}
+
+TEST_F(TransliterationRewriterTest, MobileEnvironmentTest) {
+  commands::Request input;
+  TransliterationRewriter rewriter;
+
+  input.set_mixed_conversion(true);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+
+  input.set_mixed_conversion(false);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
+
+TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysHiragana) {
+  TransliterationRewriter t13n_rewriter;
+
+  commands::Request request;
+  request.set_zero_query_suggestion(true);
+  request.set_mixed_conversion(true);
+  request.set_combine_all_segments(true);
+  request.set_special_romanji_table(
+      commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+
+  ScopedRequestForUnittest scoped_request(request);
+
+  composer::Table table;
+  table.Initialize();
+  composer::Composer composer;
+  composer.SetTableForUnittest(&table);
+  {
+    InsertASCIISequence("11#", &composer);
+    string query;
+    composer.GetQueryForConversion(&query);
+    // "い、"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x80\x81", query);
+  }
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  // "い、"
+  segment->set_key("\xe3\x81\x84\xe3\x80\x81");
+  segments.set_composer(&composer);
+  EXPECT_TRUE(t13n_rewriter.Rewrite(&segments));
+
+  // Do not want to show raw keys for implementation
+  {
+    const Segment &seg = segments.conversion_segment(0);
+
+    // "い、"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x80\x81",
+              seg.meta_candidate(transliteration::HIRAGANA).value);
+    // "イ、"
+    EXPECT_EQ("\xe3\x82\xa4\xe3\x80\x81",
+              seg.meta_candidate(transliteration::FULL_KATAKANA).value);
+    // "い、"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x80\x81",
+              seg.meta_candidate(transliteration::HALF_ASCII).value);
+    // "い、"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x80\x81",
+              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
+    // "い、"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x80\x81",
+              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
+    EXPECT_EQ(
+        // "い、"
+        "\xe3\x81\x84\xe3\x80\x81",
+        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
+    // "い、"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x80\x81",
+              seg.meta_candidate(transliteration::FULL_ASCII).value);
+    // "い、"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x80\x81",
+              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
+    // "い、"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x80\x81",
+              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
+    EXPECT_EQ(
+        // "い、"
+        "\xe3\x81\x84\xe3\x80\x81",
+        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
+    // "ｲ､"
+    EXPECT_EQ("\xef\xbd\xb2\xef\xbd\xa4",
+              seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+  }
+}
+
+TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysToNumber) {
+  TransliterationRewriter t13n_rewriter;
+
+  commands::Request request;
+  request.set_zero_query_suggestion(true);
+  request.set_mixed_conversion(true);
+  request.set_combine_all_segments(true);
+  request.set_special_romanji_table(
+      commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+
+  ScopedRequestForUnittest scoped_request(request);
+
+  composer::Table table;
+  table.Initialize();
+  composer::Composer composer;
+  composer.SetTableForUnittest(&table);
+  {
+    InsertASCIISequence("1212", &composer);
+    string query;
+    composer.GetQueryForConversion(&query);
+    // "あかあか"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8b\xe3\x81\x82\xe3\x81\x8b", query);
+  }
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  // "あかあか"
+  segment->set_key("\xe3\x81\x82\xe3\x81\x8b\xe3\x81\x82\xe3\x81\x8b");
+  segments.set_composer(&composer);
+  EXPECT_TRUE(t13n_rewriter.Rewrite(&segments));
+
+  // Do not want to show raw keys for implementation
+  {
+    const Segment &seg = segments.conversion_segment(0);
+
+    // "あかあか"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8b\xe3\x81\x82\xe3\x81\x8b",
+              seg.meta_candidate(transliteration::HIRAGANA).value);
+    // "アカアカ"
+    EXPECT_EQ("\xe3\x82\xa2\xe3\x82\xab\xe3\x82\xa2\xe3\x82\xab",
+              seg.meta_candidate(transliteration::FULL_KATAKANA).value);
+    // "1212"
+    EXPECT_EQ("1212",
+              seg.meta_candidate(transliteration::HALF_ASCII).value);
+    // "1212"
+    EXPECT_EQ("1212",
+              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
+    // "1212"
+    EXPECT_EQ("1212",
+              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
+    // "1212"
+    EXPECT_EQ(
+        "1212",
+        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
+    // "１２１２"
+    EXPECT_EQ("\xef\xbc\x91\xef\xbc\x92\xef\xbc\x91\xef\xbc\x92",
+              seg.meta_candidate(transliteration::FULL_ASCII).value);
+    // "１２１２"
+    EXPECT_EQ("\xef\xbc\x91\xef\xbc\x92\xef\xbc\x91\xef\xbc\x92",
+              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
+    // "１２１２"
+    EXPECT_EQ("\xef\xbc\x91\xef\xbc\x92\xef\xbc\x91\xef\xbc\x92",
+              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
+    // "１２１２"
+    EXPECT_EQ(
+        "\xef\xbc\x91\xef\xbc\x92\xef\xbc\x91\xef\xbc\x92",
+        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
+    // "ｱｶｱｶ"
+    EXPECT_EQ("\xef\xbd\xb1\xef\xbd\xb6\xef\xbd\xb1\xef\xbd\xb6",
+              seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+  }
+}
+
+TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysFlick) {
+  TransliterationRewriter t13n_rewriter;
+
+  commands::Request request;
+  request.set_zero_query_suggestion(true);
+  request.set_mixed_conversion(true);
+  request.set_combine_all_segments(true);
+  request.set_special_romanji_table(
+      commands::Request::TOGGLE_FLICK_TO_HIRAGANA);
+
+  ScopedRequestForUnittest scoped_request(request);
+
+  composer::Table table;
+  table.Initialize();
+  composer::Composer composer;
+  composer.SetTableForUnittest(&table);
+  {
+    InsertASCIISequence("1a", &composer);
+    string query;
+    composer.GetQueryForConversion(&query);
+    // "あき"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8d", query);
+  }
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  // "あき"
+  segment->set_key("\xe3\x81\x82\xe3\x81\x8d");
+  segments.set_composer(&composer);
+  EXPECT_TRUE(t13n_rewriter.Rewrite(&segments));
+
+  // Do not want to show raw keys for implementation
+  {
+    const Segment &seg = segments.conversion_segment(0);
+
+    // "あき"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8d",
+              seg.meta_candidate(transliteration::HIRAGANA).value);
+    // "アキ"
+    EXPECT_EQ("\xe3\x82\xa2\xe3\x82\xad",
+              seg.meta_candidate(transliteration::FULL_KATAKANA).value);
+    // "あき"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8d",
+              seg.meta_candidate(transliteration::HALF_ASCII).value);
+    // "あき"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8d",
+              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
+    // "あき"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8d",
+              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
+    // "あき"
+    EXPECT_EQ(
+        "\xe3\x81\x82\xe3\x81\x8d",
+        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
+    // "あき"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8d",
+              seg.meta_candidate(transliteration::FULL_ASCII).value);
+    // "あき"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8d",
+              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
+    // "あき"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8d",
+              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
+    // "あき"
+    EXPECT_EQ(
+        "\xe3\x81\x82\xe3\x81\x8d",
+        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
+    // "ｱｷ"
+    EXPECT_EQ("\xef\xbd\xb1\xef\xbd\xb7",
+              seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+  }
+}
+
+TEST_F(TransliterationRewriterTest, MobileT13NTestWithQwertyHiragana) {
+  TransliterationRewriter t13n_rewriter;
+
+  commands::Request request;
+  request.set_zero_query_suggestion(true);
+  request.set_mixed_conversion(true);
+  request.set_combine_all_segments(true);
+  request.set_special_romanji_table(
+      commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
+
+  ScopedRequestForUnittest scoped_request(request);
+
+  // "し";
+  const string kShi = "\xE3\x81\x97";
+  composer::Table table;
+  table.Initialize();
+
+  {
+    composer::Composer composer;
+    composer.SetTableForUnittest(&table);
+
+    InsertASCIISequence("shi", &composer);
+    string query;
+    composer.GetQueryForConversion(&query);
+    EXPECT_EQ(kShi, query);
+
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key(kShi);
+    segments.set_composer(&composer);
+    EXPECT_TRUE(t13n_rewriter.Rewrite(&segments));
+
+    const Segment &seg = segments.conversion_segment(0);
+    EXPECT_EQ("shi", seg.meta_candidate(transliteration::HALF_ASCII).value);
+  }
+
+  {
+    composer::Composer composer;
+    composer.SetTableForUnittest(&table);
+
+    InsertASCIISequence("si", &composer);
+    string query;
+    composer.GetQueryForConversion(&query);
+    EXPECT_EQ(kShi, query);
+
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key(kShi);
+    segments.set_composer(&composer);
+    EXPECT_TRUE(t13n_rewriter.Rewrite(&segments));
+
+    const Segment &seg = segments.conversion_segment(0);
+    EXPECT_EQ("si", seg.meta_candidate(transliteration::HALF_ASCII).value);
+  }
+}
 }  // namespace mozc

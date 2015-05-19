@@ -37,9 +37,12 @@
 #include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
+#include "base/trie.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 namespace composer {
@@ -48,6 +51,32 @@ const char kDefaultPreeditTableFile[] = "system://romanji-hiragana.tsv";
 const char kRomajiPreeditTableFile[] = "system://romanji-hiragana.tsv";
 // Table for Kana combinations like "か゛" → "が".
 const char kKanaCombinationTableFile[] = "system://kana.tsv";
+
+// Special tables for 12keys
+const char k12keysHiraganaTableFile[] = "system://12keys-hiragana.tsv";
+const char k12keysHalfwidthasciiTableFile[]
+    = "system://12keys-halfwidthascii.tsv";
+const char k12keysNumberTableFile[]
+    = "system://12keys-number.tsv";
+const char kFlickHiraganaTableFile[] = "system://flick-hiragana.tsv";
+const char kFlickHalfwidthasciiTableFile[]
+    = "system://flick-halfwidthascii.tsv";
+const char kFlickNumberTableFile[]
+    = "system://flick-number.tsv";
+const char kToggleFlickHiraganaTableFile[]
+    = "system://toggle_flick-hiragana.tsv";
+const char kToggleFlickHalfwidthasciiTableFile[]
+    = "system://toggle_flick-halfwidthascii.tsv";
+const char kToggleFlickNumberTableFile[]
+    = "system://toggle_flick-number.tsv";
+// Special tables for QWERTY mobile
+const char kQwertyMobileHiraganaTableFile[]
+    = "system://qwerty_mobile-hiragana.tsv";
+const char kQwertyMobileHiraganaNumberTableFile[]
+    = "system://qwerty_mobile-hiragana-number.tsv";
+const char kQwertyMobileHalfwidthasciiTableFile[]
+    = "system://qwerty_mobile-halfwidthascii.tsv";
+
 
 const char kNewChunkPrefix[] = "\t";
 const char kSpecialKeyOpen[] = "\x0F";  // Shift-In of ASCII
@@ -90,8 +119,61 @@ static const char kSquareClose[] = "]";
 static const char kMiddleDot[]   = "\xE3\x83\xBB";  // "・"
 
 bool Table::Initialize() {
+  case_sensitive_ = false;
   bool result = false;
   const config::Config &config = config::ConfigHandler::GetConfig();
+  if (GET_REQUEST(special_romanji_table)
+      != mozc::commands::Request::DEFAULT_TABLE) {
+    const char *table_file_name;
+    switch (GET_REQUEST(special_romanji_table)) {
+      case mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA:
+        table_file_name = k12keysHiraganaTableFile;
+        break;
+      case mozc::commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII:
+        table_file_name = k12keysHalfwidthasciiTableFile;
+        break;
+      case mozc::commands::Request::TWELVE_KEYS_TO_NUMBER:
+        table_file_name = k12keysNumberTableFile;
+        break;
+      case mozc::commands::Request::FLICK_TO_HIRAGANA:
+        table_file_name = kFlickHiraganaTableFile;
+        break;
+      case mozc::commands::Request::FLICK_TO_HALFWIDTHASCII:
+        table_file_name = kFlickHalfwidthasciiTableFile;
+        break;
+      case mozc::commands::Request::FLICK_TO_NUMBER:
+        table_file_name = kFlickNumberTableFile;
+        break;
+      case mozc::commands::Request::TOGGLE_FLICK_TO_HIRAGANA:
+        table_file_name = kToggleFlickHiraganaTableFile;
+        break;
+      case mozc::commands::Request::TOGGLE_FLICK_TO_HALFWIDTHASCII:
+        table_file_name = kToggleFlickHalfwidthasciiTableFile;
+        break;
+      case mozc::commands::Request::TOGGLE_FLICK_TO_NUMBER:
+        table_file_name = kToggleFlickNumberTableFile;
+        break;
+      case mozc::commands::Request::QWERTY_MOBILE_TO_HIRAGANA:
+        // This table is almost as same as "romaji-hiragana.tsv",
+        // and the diff should be only the behavior of ','.
+        // So probably we'd like to share the table, but we keep this way
+        // for now, as this is still internal code.
+        // TODO(hidehiko): refactor this code to clean up.
+        table_file_name = kQwertyMobileHiraganaTableFile;
+        break;
+      case mozc::commands::Request::QWERTY_MOBILE_TO_HIRAGANA_NUMBER:
+        table_file_name = kQwertyMobileHiraganaNumberTableFile;
+        break;
+      case mozc::commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII:
+        table_file_name = kQwertyMobileHalfwidthasciiTableFile;
+        break;
+      default:
+        table_file_name = NULL;
+    }
+    if (table_file_name && LoadFromFile(table_file_name)) {
+      return true;
+    }
+  }
   switch(config.preedit_method()) {
     case config::Config::ROMAN:
       result = (config.has_custom_roman_table() &&
@@ -310,7 +392,7 @@ bool Table::LoadFromString(const string &str) {
 }
 
 bool Table::LoadFromFile(const char *filepath) {
-  scoped_ptr<istream> ifs(ConfigFileStream::Open(filepath));
+  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filepath));
   if (ifs.get() == NULL) {
     return false;
   }

@@ -28,6 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/hash_tables.h"
@@ -120,11 +122,10 @@ TEST_F(RbxArrayTest, RandomTest) {
   const int kTestSize = 1000;
   vector<string> inserted;
   {
-    srand(0);
+    Util::SetRandomSeed(0);
     RbxArrayBuilder builder;
     for (size_t i = 0; i < kTestSize; ++i) {
-      const int len = static_cast<int>(
-          1.0 * 10000 * rand() / (RAND_MAX + 1.0));
+      const int len = Util::Random(10000);
       const string key = string(len, 'a');
       PushTestStr(key, &builder);
       inserted.push_back(key);

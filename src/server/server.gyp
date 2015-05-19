@@ -158,6 +158,21 @@
           ],
         },
         {
+          'target_name': 'server_protocol',
+          'type': 'static_library',
+          'hard_dependency': 1,
+          'sources': [
+            '<(proto_out_dir)/<(relative_dir)/win32_service_state.pb.cc',
+          ],
+          'dependencies': [
+            '../protobuf/protobuf.gyp:protobuf',
+            'genproto_server',
+          ],
+          'export_dependent_settings': [
+            'genproto_server',
+          ],
+        },
+        {
           'target_name': 'gen_mozc_server_resource_header',
           'variables': {
             'gen_resource_proj_name': 'mozc_server',
@@ -185,13 +200,11 @@
           'target_name': 'cache_service_manager',
           'type': 'static_library',
           'sources': [
-            '<(proto_out_dir)/<(relative_dir)/win32_service_state.pb.cc',
             'cache_service_manager.cc',
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            '../protobuf/protobuf.gyp:protobuf',
-            'genproto_server',
+            'server_protocol',
           ],
         },
         {

@@ -55,7 +55,6 @@
 
 #ifndef MOZC_BASE_SCOPED_PTR_H_
 #define MOZC_BASE_SCOPED_PTR_H_
-
 #include <assert.h>
 #include <stdlib.h>
 #include <cstddef>

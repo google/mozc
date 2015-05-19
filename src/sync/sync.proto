@@ -36,61 +36,34 @@ import "config/config.proto";
 import "dictionary/user_dictionary_storage.proto";
 import "prediction/user_history_predictor.proto";
 
-// sync_service.proto
-// MOZC_SETTING         = 100;
-// MOZC_USER_DICTIONARY = 101;
-// MOZC_USER_HISTORY_PREDICTION = 102;
-// MOZC_LEARNING_PREFERENCE = 103;
-
 message UserDictionaryKey {
   optional uint32 bucket_id = 1 [ default = 0 ];
-  extend ime_sync.SyncKey {
-    optional UserDictionaryKey ext = 101;
-  }
 }
 
 message UserDictionaryValue {
   // user_dictionary_storage contains UPDATE or SNAPSHOT.
   // See UserDictionaryStorage::storage_type field.
   optional mozc.user_dictionary.UserDictionaryStorage user_dictionary_storage = 1;
-  extend ime_sync.SyncValue {
-    optional UserDictionaryValue ext = 101;
-  }
 }
 
 message ConfigKey {
   // ConfigKey is a single value, so no fields are here.
-  extend ime_sync.SyncKey {
-    optional ConfigKey ext = 100;
-  }
 }
 
 message ConfigValue {
   optional mozc.config.Config config = 1;
-  extend ime_sync.SyncValue {
-    optional ConfigValue ext = 100;
-  }
 }
 
 message UserHistoryKey {
   optional uint32 bucket_id = 1 [ default = 0 ];
-  extend ime_sync.SyncKey {
-    optional UserHistoryKey ext = 102;
-  }
 }
 
 message UserHistoryValue {
   optional mozc.user_history_predictor.UserHistory user_history = 1;
-  extend ime_sync.SyncValue {
-    optional UserHistoryValue ext = 102;
-  }
 }
 
 message LearningPreferenceKey {
   optional uint32 bucket_id = 1 [ default = 0 ];
-  extend ime_sync.SyncKey {
-    optional LearningPreferenceKey ext = 103;
-  }
 }
 
 message LearningPreference {
@@ -111,22 +84,13 @@ message LearningPreference {
 
 message LearningPreferenceValue {
   optional LearningPreference learning_preference = 1;
-  extend ime_sync.SyncValue {
-    optional LearningPreferenceValue ext = 103;
-  }
 }
 
 // Used only for unittesting
 message TestKey {
   optional string key = 1;
-  extend ime_sync.SyncKey {
-    optional TestKey ext = 199;
-  }
 }
 
 message TestValue {
   optional string value = 1;
-  extend ime_sync.SyncValue {
-    optional TestValue ext = 199;
-  }
 }

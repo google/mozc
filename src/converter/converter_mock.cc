@@ -42,6 +42,13 @@ ConverterMock::ConverterMock()
 
 ConverterMock::~ConverterMock() {}
 
+void ConverterMock::SetStartConversionForRequest(Segments *segments,
+                                                 bool result) {
+  startconversionwithrequest_output_.initialized = true;
+  startconversionwithrequest_output_.segments.CopyFrom(*segments);
+  startconversionwithrequest_output_.return_value = result;
+}
+
 void ConverterMock::SetStartConversion(Segments *segments, bool result) {
   startconversion_output_.initialized = true;
   startconversion_output_.segments.CopyFrom(*segments);
@@ -59,6 +66,13 @@ void ConverterMock::SetStartReverseConversion(Segments *segments, bool result) {
   startreverseconversion_output_.initialized = true;
   startreverseconversion_output_.segments.CopyFrom(*segments);
   startreverseconversion_output_.return_value = result;
+}
+
+void ConverterMock::SetStartPredictionForRequest(Segments *segments,
+                                                 bool result) {
+  startpredictionwithrequest_output_.initialized = true;
+  startpredictionwithrequest_output_.segments.CopyFrom(*segments);
+  startpredictionwithrequest_output_.return_value = result;
 }
 
 void ConverterMock::SetStartPrediction(Segments *segments, bool result) {
@@ -180,6 +194,12 @@ void ConverterMock::SetResizeSegment2(Segments *segments, bool result) {
   resizesegment2_output_.return_value = result;
 }
 
+void ConverterMock::GetStartConversionForRequest(
+    Segments *segments, ConversionRequest *request) {
+  segments->CopyFrom(startconversionwithrequest_input_.segments);
+  *request = startconversionwithrequest_input_.request;
+}
+
 void ConverterMock::GetStartConversion(Segments *segments, string *key) {
   segments->CopyFrom(startconversion_input_.segments);
   *key = startconversion_input_.key;
@@ -195,6 +215,12 @@ void ConverterMock::GetStartReverseConversion(Segments *segments,
                                               string *key) {
   segments->CopyFrom(startreverseconversion_input_.segments);
   *key = startreverseconversion_input_.key;
+}
+
+void ConverterMock::GetStartPredictionForRequest(
+    Segments *segments, ConversionRequest *request) {
+  segments->CopyFrom(startpredictionwithrequest_input_.segments);
+  *request = startpredictionwithrequest_input_.request;
 }
 
 void ConverterMock::GetStartPrediction(Segments *segments, string *key) {
@@ -315,6 +341,20 @@ void ConverterMock::GetResizeSegment2(Segments *segments,
   *array_size = resizesegment2_input_.new_size_array.size();
 }
 
+bool ConverterMock::StartConversionForRequest(const ConversionRequest &request,
+                                              Segments *segments) const {
+  VLOG(2) << "mock function: StartConversion with ConversionRequest";
+  startconversionwithrequest_input_.segments.CopyFrom(*segments);
+  startconversionwithrequest_input_.request = request;
+
+  if (!startconversionwithrequest_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(startconversionwithrequest_output_.segments);
+    return startconversionwithrequest_output_.return_value;
+  }
+}
+
 bool ConverterMock::StartConversion(Segments *segments,
                                     const string &key) const {
   VLOG(2) << "mock function: StartConversion";
@@ -356,6 +396,20 @@ bool ConverterMock::StartReverseConversion(Segments *segments,
     return startreverseconversion_output_.return_value;
   }
   return false;
+}
+
+bool ConverterMock::StartPredictionForRequest(const ConversionRequest &request,
+                                              Segments *segments) const {
+  VLOG(2) << "mock function: StartPredictionForRequest";
+  startpredictionwithrequest_input_.segments.CopyFrom(*segments);
+  startpredictionwithrequest_input_.request = request;
+
+  if (!startpredictionwithrequest_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(startpredictionwithrequest_output_.segments);
+    return startpredictionwithrequest_output_.return_value;
+  }
 }
 
 bool ConverterMock::StartPrediction(Segments *segments,

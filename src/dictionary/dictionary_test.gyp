@@ -37,6 +37,7 @@
       'target_name': 'dictionary_test',
       'type': 'executable',
       'sources': [
+        'dictionary_mock_test.cc',
         'dictionary_test.cc',
         'suppression_dictionary_test.cc',
         'user_dictionary_importer_test.cc',
@@ -47,9 +48,12 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../protobuf/protobuf.gyp:protobuf',
+        '../config/config.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',
+        '../usage_stats/usage_stats.gyp:usage_stats',
+        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
         'dictionary.gyp:dictionary',
+        'dictionary.gyp:dictionary_mock',
         'dictionary.gyp:suppression_dictionary',
         'dictionary.gyp:user_dictionary',
       ],

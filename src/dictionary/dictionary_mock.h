@@ -46,10 +46,10 @@
 //       calling LookupPrefix("きょうとだいがく", ...).
 //       Nodes returned by these methods all have the "lid" and "rid" with the
 //       value 1.
-//       TODO(manabe): An interface to change "lid"/"rid".
+// TODO(manabe): An interface to change "lid"/"rid".
 
-#ifndef IME_MOZC_DICTIONARY_DICTIONARY_MOCK_H_
-#define IME_MOZC_DICTIONARY_DICTIONARY_MOCK_H_
+#ifndef MOZC_DICTIONARY_DICTIONARY_MOCK_H_
+#define MOZC_DICTIONARY_DICTIONARY_MOCK_H_
 
 #include <list>
 #include <map>
@@ -78,12 +78,21 @@ class DictionaryMock : public DictionaryInterface {
   DictionaryMock();
   virtual ~DictionaryMock();
 
-  virtual Node *LookupPredictive(const char *str, int size,
-                                 NodeAllocatorInterface *allocator) const;
+  // DictionaryMock doesn't support a limitation
+  virtual Node *LookupPredictiveWithLimit(
+      const char *str, int size, const Limit &limit,
+      NodeAllocatorInterface *allocator) const;
 
+  virtual Node *LookupPredictive(
+      const char *str, int size, NodeAllocatorInterface *allocator) const;
+
+  // DictionaryMock doesn't support a limitation
   virtual Node *LookupPrefixWithLimit(const char *str, int size,
                                       const Limit &limit,
                                       NodeAllocatorInterface *allocator) const;
+
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const;
 
   // For reverse lookup, the reading is stored in Node::value and the word
   // is stored in Node::key.
@@ -126,4 +135,4 @@ class DictionaryMock : public DictionaryInterface {
 };
 }  // namespace mozc
 
-#endif  // IME_MOZC_DICTIONARY_DICTIONARY_MOCK_H_
+#endif  // MOZC_DICTIONARY_DICTIONARY_MOCK_H_

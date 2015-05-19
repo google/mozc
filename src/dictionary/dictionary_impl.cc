@@ -63,8 +63,16 @@ DictionaryImpl::~DictionaryImpl() {
   dics_.clear();
 }
 
+Node *DictionaryImpl::LookupPredictiveWithLimit(
+    const char *str, int size,
+    const Limit &limit,
+    NodeAllocatorInterface *allocator) const {
+  return LookupInternal(str, size, PREDICTIVE, limit, allocator);
+}
+
 Node *DictionaryImpl::LookupPredictive(
-    const char *str, int size, NodeAllocatorInterface *allocator) const {
+    const char *str, int size,
+    NodeAllocatorInterface *allocator) const {
   return LookupInternal(str, size, PREDICTIVE, Limit(), allocator);
 }
 
@@ -73,6 +81,12 @@ Node *DictionaryImpl::LookupPrefixWithLimit(
     const Limit &limit,
     NodeAllocatorInterface *allocator) const {
   return LookupInternal(str, size, PREFIX, limit, allocator);
+}
+
+Node *DictionaryImpl::LookupPrefix(
+    const char *str, int size,
+    NodeAllocatorInterface *allocator) const {
+  return LookupInternal(str, size, PREFIX, Limit(), allocator);
 }
 
 Node *DictionaryImpl::LookupReverse(const char *str, int size,
@@ -98,7 +112,7 @@ void DictionaryImpl::ClearReverseLookupCache(
   }
 }
 
-Node *DictionaryImpl::MaybeRemvoeSpecialNodes(Node *node) const {
+Node *DictionaryImpl::MaybeRemoveSpecialNodes(Node *node) const {
   const bool use_spelling_correction = GET_CONFIG(use_spelling_correction);
   const bool use_zip_code_conversion = GET_CONFIG(use_zip_code_conversion);
   const bool use_t13n_conversion = GET_CONFIG(use_t13n_conversion);
@@ -153,11 +167,11 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
     Node *nodes = NULL;
     switch (type) {
       case PREDICTIVE:
-        nodes = dics_[i]->LookupPredictive(str, size, allocator);
+        nodes = dics_[i]->LookupPredictiveWithLimit(
+            str, size, limit, allocator);
         break;
       case PREFIX:
-        nodes = dics_[i]->LookupPrefixWithLimit(
-            str, size, limit, allocator);
+        nodes = dics_[i]->LookupPrefixWithLimit(str, size, limit, allocator);
         break;
       case REVERSE:
         nodes = dics_[i]->LookupReverse(str, size, allocator);
@@ -174,7 +188,7 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
     }
   }
 
-  head = MaybeRemvoeSpecialNodes(head);
+  head = MaybeRemoveSpecialNodes(head);
   head = suppression_dictionary_->SuppressNodes(head);
 
   return head;

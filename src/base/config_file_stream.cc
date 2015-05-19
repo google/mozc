@@ -148,9 +148,9 @@ istream *ConfigFileStream::Open(const string &filename,
 }
 
 bool ConfigFileStream::AtomicUpdate(const string &filename,
-                                    const string &new_contents) {
+                                    const string &new_binary_contens) {
   if (Util::StartsWith(filename, kMemoryPrefix)) {
-    Singleton<OnMemoryFileMap>::get()->set(filename, new_contents);
+    Singleton<OnMemoryFileMap>::get()->set(filename, new_binary_contens);
     return true;
   } else if (Util::StartsWith(filename, kSystemPrefix)) {
     LOG(ERROR) << "Cannot update system:// files.";
@@ -172,7 +172,7 @@ bool ConfigFileStream::AtomicUpdate(const string &filename,
       LOG(ERROR) << "cannot open " << tmp_filename;
       return false;
     }
-    ofs << new_contents;
+    ofs << new_binary_contens;
   }
 
   if (!Util::AtomicRename(tmp_filename, real_filename)) {

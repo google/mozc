@@ -38,10 +38,9 @@
       'type': 'executable',
       'sources': [
         'clock_mock_test.cc',
+        'codegen_bytearray_stream_test.cc',
         'cpu_stats_test.cc',
         'crash_report_util_test.cc',
-        'encryptor_test.cc',
-        'password_manager_test.cc',
         'process_mutex_test.cc',
         'scheduler_test.cc',
         'stopwatch_test.cc',
@@ -73,7 +72,6 @@
         'stl_util_test.cc',
         'thread_test.cc',
         'text_normalizer_test.cc',
-        'util_test.cc',
         'version_test.cc',
       ],
       'dependencies': [
@@ -83,6 +81,38 @@
       'variables': {
         'test_size': 'small',
       },
+    },
+    {
+      'target_name': 'util_test',
+      'type': 'executable',
+      'sources': [
+        'util_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base_core',
+      ],
+      'variables': {
+        'test_size': 'small',
+        # Copy the test data for character set test.
+        'test_data_subdir': 'data/test/character_set',
+        'test_data': [
+          '../<(test_data_subdir)/character_set.tsv',
+        ],
+      },
+      'includes': [ '../gyp/install_testdata.gypi' ],
+    },
+    {
+      'target_name': 'encryptor_test',
+      'type': 'executable',
+      'sources': [
+        'encryptor_test.cc',
+        'password_manager_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:encryptor',
+      ],
     },
     # init_test.cc is separated from all other base_core_test because it
     # calls finalizers.
@@ -114,6 +144,20 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'trie_test',
+      'type': 'executable',
+      'sources': [
+        'trie_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'base_all_test',
@@ -123,6 +167,9 @@
         'base_init_test',
         'base_test',
         'config_file_stream_test',
+        'encryptor_test',
+        'trie_test',
+        'util_test',
       ],
     },
   ],

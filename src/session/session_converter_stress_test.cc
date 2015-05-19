@@ -27,7 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <ctime>
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
@@ -58,9 +57,9 @@ class SessionConverterStressTest : public testing::Test {
  public:
   SessionConverterStressTest() {
     if (!FLAGS_test_deterministic) {
-      FLAGS_test_srand_seed = static_cast<int32>(::time(NULL));
+      FLAGS_test_srand_seed = static_cast<int32>(Util::GetTime());
     }
-    ::srand(static_cast<uint32>(FLAGS_test_srand_seed));
+    Util::SetRandomSeed(static_cast<uint32>(FLAGS_test_srand_seed));
   }
 
   virtual void SetUp() {
@@ -72,11 +71,6 @@ class SessionConverterStressTest : public testing::Test {
 };
 
 namespace {
-
-int GetRandom(int size) {
-  return static_cast<int> (1.0 * size * ::rand() / (RAND_MAX + 1.0));
-}
-
 void GenerateRandomInput(
     size_t length, char min_code, char max_code, string* output) {
   output->reserve(length);
@@ -84,11 +78,10 @@ void GenerateRandomInput(
   tmp[1] = '\0';
   for (int i = 0; i < length; ++i) {
     tmp[0] = static_cast<unsigned char>(
-        min_code + GetRandom(max_code - min_code + 1));
+        min_code + Util::Random(max_code - min_code + 1));
     output->append(tmp);
   }
 }
-
 }  // namespace
 
 TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
@@ -109,7 +102,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   composer::Table table;
   table.LoadFromFile(kRomajiHiraganaTable.c_str());
   composer::Composer composer;
-  composer.SetTable(&table);
+  composer.SetTableForUnittest(&table);
   commands::Output output;
   string input;
 

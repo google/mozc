@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "base/clock_mock.h"
 #include "base/init.h"
 #include "base/util.h"
 #include "config/config.pb.h"
@@ -51,23 +52,17 @@ namespace {
 
 const size_t kCandidatesSize = 20;
 
-string Itoa(size_t n) {
-  char tmp[128];
-  snprintf(tmp, sizeof(tmp), "%d", static_cast<int>(n));
-  return tmp;
-}
-
 void InitSegments(Segments *segments, size_t size,
                   size_t candidate_size) {
   segments->Clear();
   for (size_t i = 0; i < size; ++i) {
     Segment *segment = segments->add_segment();
     CHECK(segment);
-    segment->set_key(string("segment") + Itoa(i));
+    segment->set_key(string("segment") + Util::SimpleItoa(i));
     for (size_t j = 0; j < candidate_size; ++j) {
       Segment::Candidate *c = segment->add_candidate();
       c->content_key = segment->key();
-      c->content_value = string("candidate") + Itoa(j);
+      c->content_value = string("candidate") + Util::SimpleItoa(j);
       c->value = c->content_value;
       if (j == 0) {
         c->attributes |= Segment::Candidate::BEST_CANDIDATE;
@@ -154,9 +149,13 @@ class UserSegmentHistoryRewriterTest : public testing::Test {
     }
     config::ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->Reload();
+
+    Util::SetClockHandler(NULL);
   }
 
   virtual void TearDown() {
+    Util::SetClockHandler(NULL);
+
     UserSegmentHistoryRewriter rewriter;
     rewriter.Clear();
     // reset config of test_tmpdir.
@@ -431,6 +430,11 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
 
   rewriter.Clear();
 
+  const uint64 kSeconds = 0;
+  const uint32 kMicroSeconds = 0;
+  ClockMock clock(kSeconds, kMicroSeconds);
+  Util::SetClockHandler(&clock);
+
   {
     InitSegments(&segments, 1);
 
@@ -442,9 +446,9 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
               segments.segment(0).candidate(0).value);
     rewriter.Finish(&segments);  // learn "candidate2"
 
-    // This sleep is needed for assuming that next timestamp of learning should
-    // be newer than previous learning.
-    Util::Sleep(1000);
+    // Next timestamp of learning should be newer than previous learning.
+    clock.PutClockForward(1, 0);
+
     InitSegments(&segments, 2);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
@@ -466,7 +470,8 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
               segments.segment(1).candidate(0).value);
     rewriter.Finish(&segments);  // learn "candidate3"
 
-    Util::Sleep(1000);
+    clock.PutClockForward(1, 0);
+
     InitSegments(&segments, 3);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
@@ -493,7 +498,8 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
               segments.segment(2).candidate(0).value);
     rewriter.Finish(&segments);  // learn "candidate2"
 
-    Util::Sleep(1000);
+    clock.PutClockForward(1, 0);
+
     InitSegments(&segments, 4);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
@@ -526,6 +532,11 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
 
   rewriter.Clear();
 
+  const uint64 kSeconds = 0;
+  const uint32 kMicroSeconds = 0;
+  ClockMock clock(kSeconds, kMicroSeconds);
+  Util::SetClockHandler(&clock);
+
   {
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(4, 0);
@@ -544,7 +555,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    Util::Sleep(2000);
+    clock.PutClockForward(1, 0);
     rewriter.Finish(&segments);
     InitSegments(&segments, 1);
     rewriter.Rewrite(&segments);
@@ -558,7 +569,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    Util::Sleep(2000);
+    clock.PutClockForward(1, 0);
     rewriter.Finish(&segments);
     InitSegments(&segments, 1);
     rewriter.Rewrite(&segments);
@@ -1385,6 +1396,11 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
 
   rewriter.Clear();
 
+  const uint64 kSeconds = 0;
+  const uint32 kMicroSeconds = 0;
+  ClockMock clock(kSeconds, kMicroSeconds);
+  Util::SetClockHandler(&clock);
+
   InitSegments(&segments, 1);
   segments.mutable_segment(0)->move_candidate(2, 0);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes
@@ -1403,7 +1419,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   segments.mutable_segment(0)->mutable_candidate(0)->attributes
       |= Segment::Candidate::RERANKED;
   segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-  Util::Sleep(2000);
+  clock.PutClockForward(1, 0);
   rewriter.Finish(&segments);
 
   InitSegments(&segments, 1);
@@ -1417,7 +1433,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   segments.mutable_segment(0)->mutable_candidate(0)->attributes
       |= Segment::Candidate::RERANKED;
   segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-  Util::Sleep(2000);
+  clock.PutClockForward(1, 0);
   rewriter.Finish(&segments);
 
   InitSegments(&segments, 1);
@@ -1511,21 +1527,20 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression3264619) {
             segments.segment(1).candidate(0).value);
 }
 
-namespace {
-int GetRandom(int size) {
-  return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
-}
-}
-
 TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
   Segments segments;
   UserSegmentHistoryRewriter rewriter;
 
+  const uint64 kSeconds = 0;
+  const uint32 kMicroSeconds = 0;
+  ClockMock clock(kSeconds, kMicroSeconds);
+  Util::SetClockHandler(&clock);
+
   rewriter.Clear();
   for (int i = 0; i < 5; ++i) {
     InitSegments(&segments, 1);
-    const int n = GetRandom(10);
+    const int n = Util::Random(10);
     const string expected = segments.segment(0).candidate(n).value;
     segments.mutable_segment(0)->move_candidate(n, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
@@ -1538,7 +1553,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
     rewriter.Rewrite(&segments);
     EXPECT_EQ(expected,
               segments.segment(0).candidate(0).value);
-    Util::Sleep(2000);   // update LRU timer
+    clock.PutClockForward(1, 0);  // update LRU timer
   }
 }
 

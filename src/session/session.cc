@@ -47,199 +47,16 @@
 #include "session/internal/keymap.h"
 #include "session/internal/keymap-inl.h"
 #include "session/internal/keymap_factory.h"
-
 #include "session/internal/session_output.h"
+#include "session/internal/key_event_transformer.h"
+#include "session/key_event_util.h"
+#include "session/request_handler.h"
 #include "session/session_converter.h"
 
 namespace mozc {
 namespace session {
 
 namespace {
-// Numpad keys are transformed to normal characters.
-static const struct NumpadTransformTable {
-  const commands::KeyEvent::SpecialKey key;
-  const char code;
-  const char *halfwidth_key_string;
-  const char *fullwidth_key_string;
-} kTransformTable[] = {
-  // "０"
-  { commands::KeyEvent::NUMPAD0,  '0', "0", "\xef\xbc\x90"},
-  // "１"
-  { commands::KeyEvent::NUMPAD1,  '1', "1", "\xef\xbc\x91"},
-  // "２"
-  { commands::KeyEvent::NUMPAD2,  '2', "2", "\xef\xbc\x92"},
-  // "３"
-  { commands::KeyEvent::NUMPAD3,  '3', "3", "\xef\xbc\x93"},
-  // "４"
-  { commands::KeyEvent::NUMPAD4,  '4', "4", "\xef\xbc\x94"},
-  // "５"
-  { commands::KeyEvent::NUMPAD5,  '5', "5", "\xef\xbc\x95"},
-  // "６"
-  { commands::KeyEvent::NUMPAD6,  '6', "6", "\xef\xbc\x96"},
-  // "７"
-  { commands::KeyEvent::NUMPAD7,  '7', "7", "\xef\xbc\x97"},
-  // "８"
-  { commands::KeyEvent::NUMPAD8,  '8', "8", "\xef\xbc\x98"},
-  // "９"
-  { commands::KeyEvent::NUMPAD9,  '9', "9", "\xef\xbc\x99"},
-  // "＊"
-  { commands::KeyEvent::MULTIPLY, '*', "*", "\xef\xbc\x8a"},
-  // "＋"
-  { commands::KeyEvent::ADD,      '+', "+", "\xef\xbc\x8b"},
-  // "−"
-  { commands::KeyEvent::SUBTRACT, '-', "-", "\xe2\x88\x92"},
-  // "．"
-  { commands::KeyEvent::DECIMAL,  '.', ".", "\xef\xbc\x8e"},
-  // "／"
-  { commands::KeyEvent::DIVIDE,   '/', "/", "\xef\xbc\x8f"},
-  // "＝"
-  { commands::KeyEvent::EQUALS,   '=', "=", "\xef\xbc\x9d"},
-};
-
-// Transform the key event base on the rule.  This function is used
-// for special treatment with numpad keys.
-bool TransformKeyEventForNumpad(commands::KeyEvent *key_event) {
-  if (!key_event->has_special_key()) {
-    return false;
-  }
-  const commands::KeyEvent::SpecialKey special_key = key_event->special_key();
-
-  // commands::KeyEvent::SEPARATOR is transformed to Enter.
-  if (special_key == commands::KeyEvent::SEPARATOR) {
-    key_event->set_special_key(commands::KeyEvent::ENTER);
-    return true;
-  }
-
-  for (size_t i = 0; i < arraysize(kTransformTable); ++i) {
-    if (special_key == kTransformTable[i].key) {
-      key_event->clear_special_key();
-      key_event->set_key_code(static_cast<uint32>(kTransformTable[i].code));
-      switch (GET_CONFIG(numpad_character_form)) {
-        case config::Config::NUMPAD_INPUT_MODE:
-          key_event->set_key_string(kTransformTable[i].fullwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::FOLLOW_MODE);
-          break;
-        case config::Config::NUMPAD_FULL_WIDTH:
-          key_event->set_key_string(kTransformTable[i].fullwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::AS_IS);
-          break;
-        case config::Config::NUMPAD_HALF_WIDTH:
-          key_event->set_key_string(kTransformTable[i].halfwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::AS_IS);
-          break;
-        case config::Config::NUMPAD_DIRECT_INPUT:
-          key_event->set_key_string(kTransformTable[i].halfwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::DIRECT_INPUT);
-          break;
-        default:
-          LOG(ERROR) << "Unknown numpad character form value.";
-          // Use the same behavior with NUMPAD_HALF_WIDTH as a fallback.
-          key_event->set_key_string(kTransformTable[i].halfwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::AS_IS);
-          break;
-      }
-      return true;
-    }
-  }
-  return false;
-}
-
-// Transform symbols for Kana input.  Character transformation for
-// Romanji input is performed in preedit/table.cc
-bool TransformKeyEventForKana(const TransformTable &table,
-                              commands::KeyEvent *key_event) {
-  if (!key_event->has_key_string()) {
-    return false;
-  }
-  if (key_event->modifier_keys_size() > 0) {
-    return false;
-  }
-  if (key_event->has_modifiers() && key_event->modifiers() != 0) {
-    return false;
-  }
-
-  const TransformTable::const_iterator it = table.find(key_event->key_string());
-  if (it == table.end()) {
-    return false;
-  }
-
-  key_event->CopyFrom(it->second);
-  return true;
-}
-
-bool TransformKeyEvent(const TransformTable &table,
-                       commands::KeyEvent *key_event) {
-  if (key_event == NULL) {
-    LOG(ERROR) << "key_event is NULL";
-    return false;
-  }
-  if (TransformKeyEventForNumpad(key_event)) {
-    return true;
-  }
-  if (TransformKeyEventForKana(table, key_event)) {
-    return true;
-  }
-  return false;
-}
-
-void InitTransformTable(const config::Config &config, TransformTable *table) {
-  if (table == NULL) {
-    LOG(ERROR) << "table is NULL";
-    return;
-  }
-  table->clear();
-  const config::Config::PunctuationMethod punctuation =
-      config.punctuation_method();
-  if (punctuation == config::Config::COMMA_PERIOD ||
-      punctuation == config::Config::COMMA_TOUTEN) {
-    commands::KeyEvent key_event;
-    key_event.set_key_code(static_cast<uint32>(','));
-    // "，"
-    key_event.set_key_string("\xef\xbc\x8c");
-    // "、"
-    table->insert(make_pair("\xe3\x80\x81", key_event));
-  }
-  if (punctuation == config::Config::COMMA_PERIOD ||
-      punctuation == config::Config::KUTEN_PERIOD) {
-    commands::KeyEvent key_event;
-    key_event.set_key_code(static_cast<uint32>('.'));
-    // "．"
-    key_event.set_key_string("\xef\xbc\x8e");
-    // "。"
-    table->insert(make_pair("\xe3\x80\x82", key_event));
-  }
-
-  const config::Config::SymbolMethod symbol = config.symbol_method();
-  if (symbol == config::Config::SQUARE_BRACKET_SLASH ||
-      symbol == config::Config::SQUARE_BRACKET_MIDDLE_DOT) {
-    {
-      commands::KeyEvent key_event;
-      key_event.set_key_code(static_cast<uint32>('['));
-      // "［"
-      key_event.set_key_string("\xef\xbc\xbb");
-      // "「"
-      table->insert(make_pair("\xe3\x80\x8c", key_event));
-    }
-    {
-      commands::KeyEvent key_event;
-      key_event.set_key_code(static_cast<uint32>(']'));
-      // "］"
-      key_event.set_key_string("\xef\xbc\xbd");
-      // "」"
-      table->insert(make_pair("\xe3\x80\x8d", key_event));
-    }
-  }
-  if (symbol == config::Config::SQUARE_BRACKET_SLASH ||
-      symbol == config::Config::CORNER_BRACKET_SLASH) {
-    commands::KeyEvent key_event;
-    key_event.set_key_code(static_cast<uint32>('/'));
-    // "／"
-    key_event.set_key_string("\xef\xbc\x8f");
-    // "・"
-    table->insert(make_pair("\xE3\x83\xBB", key_event));
-  }
-}
-
 // Logic of nested calculation
 // Returns the number of characters to expand preedit to left.
 size_t GetCompositionExpansionForCalculator(const string &preceding_text,
@@ -285,6 +102,32 @@ void SwitchInputMode(const transliteration::TransliterationType mode,
   composer->SetNewInput();
 }
 
+// Set input mode to the |composer| if the the input mode of |composer| is not
+// the given |mode|.
+void ApplyInputMode(const commands::CompositionMode mode,
+                    composer::Composer *composer) {
+  switch (mode) {
+    case commands::HIRAGANA:
+      SwitchInputMode(transliteration::HIRAGANA, composer);
+      break;
+    case commands::FULL_KATAKANA:
+      SwitchInputMode(transliteration::FULL_KATAKANA, composer);
+      break;
+    case commands::HALF_KATAKANA:
+      SwitchInputMode(transliteration::HALF_KATAKANA, composer);
+      break;
+    case commands::FULL_ASCII:
+      SwitchInputMode(transliteration::FULL_ASCII, composer);
+      break;
+    case commands::HALF_ASCII:
+      SwitchInputMode(transliteration::HALF_ASCII, composer);
+      break;
+    default:
+      LOG(ERROR) << "ime on with invalid mode";
+      DLOG(FATAL);
+  }
+}
+
 // Return true if the specified key event consists of any modifier key only.
 bool IsPureModifierKeyEvent(const commands::KeyEvent &key) {
   if (key.has_key_code()) {
@@ -294,6 +137,22 @@ bool IsPureModifierKeyEvent(const commands::KeyEvent &key) {
     return false;
   }
   if (key.modifier_keys_size() == 0) {
+    return false;
+  }
+  return true;
+}
+
+bool IsPureSpaceKey(const commands::KeyEvent &key) {
+  if (key.has_key_code()) {
+    return false;
+  }
+  if (key.modifier_keys_size() > 0) {
+    return false;
+  }
+  if (!key.has_special_key()) {
+    return false;
+  }
+  if (key.special_key() != commands::KeyEvent::SPACE) {
     return false;
   }
   return true;
@@ -425,6 +284,9 @@ bool Session::SendCommand(commands::Command *command) {
     case commands::SessionCommand::SELECT_CANDIDATE:
       result = SelectCandidate(command);
       break;
+    case commands::SessionCommand::SUBMIT_CANDIDATE:
+      result = CommitCandidate(command);
+      break;
     case commands::SessionCommand::HIGHLIGHT_CANDIDATE:
       result = HighlightCandidate(command);
       break;
@@ -454,6 +316,9 @@ bool Session::SendCommand(commands::Command *command) {
       // when it receive the output from the server.
       command->mutable_output()->set_consumed(false);
       result = true;
+      break;
+    case commands::SessionCommand::UNDO_OR_REWIND:
+      result = UndoOrRewind(command);
       break;
     case commands::SessionCommand::SEND_CARET_LOCATION:
       result = SetCaretLocation(command);
@@ -488,12 +353,6 @@ bool Session::TestSendKey(commands::Command *command) {
         key_command == keymap::DirectInputState::NONE) {
       return EchoBack(command);
     }
-
-    if ((key_command == keymap::DirectInputState::INSERT_SPACE ||
-         key_command == keymap::DirectInputState::INSERT_ALTERNATE_SPACE) &&
-        !IsFullWidthInsertSpace()) {
-      return EchoBack(command);
-    }
     return DoNothing(command);
   }
 
@@ -509,7 +368,7 @@ bool Session::TestSendKey(commands::Command *command) {
             command->input().key(), &key_command);
     if (!result || key_command == keymap::PrecompositionState::NONE) {
       // Clear undo context just in case. b/5529702.
-      // Note that the undo context will not be cleard in
+      // Note that the undo context will not be cleared in
       // EchoBackAndClearUndoContext if the key event consists of modifier keys
       // only.
       return EchoBackAndClearUndoContext(command);
@@ -526,13 +385,34 @@ bool Session::TestSendKey(commands::Command *command) {
 
     // TODO(komatsu): This is a hack to work around the problem with
     // the inconsistency between TestSendKey and SendKey.
-    if (key_command == keymap::PrecompositionState::INSERT_SPACE &&
-        !IsFullWidthInsertSpace()) {
-      return EchoBack(command);
-    }
-    if (key_command == keymap::PrecompositionState::INSERT_ALTERNATE_SPACE &&
-        IsFullWidthInsertSpace()) {
-      return EchoBack(command);
+    switch (key_command) {
+      case keymap::PrecompositionState::INSERT_SPACE:
+        ClearUndoContext();
+        if (!IsFullWidthInsertSpace(command->input()) &&
+            IsPureSpaceKey(command->input().key())) {
+          return EchoBack(command);
+        }
+        return DoNothing(command);
+      case keymap::PrecompositionState::INSERT_ALTERNATE_SPACE:
+        ClearUndoContext();
+        if (IsFullWidthInsertSpace(command->input()) &&
+            IsPureSpaceKey(command->input().key())) {
+          return EchoBack(command);
+        }
+        return DoNothing(command);
+      case keymap::PrecompositionState::INSERT_HALF_SPACE:
+        ClearUndoContext();
+        if (IsPureSpaceKey(command->input().key())) {
+          return EchoBack(command);
+        }
+        return DoNothing(command);
+      case keymap::PrecompositionState::INSERT_FULL_SPACE:
+        ClearUndoContext();
+        return DoNothing(command);
+        break;
+      default:
+        // Do nothing.
+        break;
     }
 
     if (key_command == keymap::PrecompositionState::REVERT) {
@@ -599,10 +479,6 @@ bool Session::SendKeyDirectInputState(commands::Command *command) {
   switch (key_command) {
     case keymap::DirectInputState::IME_ON:
       return IMEOn(command);
-    case keymap::DirectInputState::INSERT_SPACE:
-      return InsertSpace(command);
-    case keymap::DirectInputState::INSERT_ALTERNATE_SPACE:
-      return InsertSpaceToggled(command);
     case keymap::DirectInputState::INPUT_MODE_HIRAGANA:
       return InputModeHiragana(command);
     case keymap::DirectInputState::INPUT_MODE_FULL_KATAKANA:
@@ -687,6 +563,9 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
       // would be nice to make a new command when EditCancel is
       // extended or the requirement of this command is added.
       return EditCancel(command);
+    case keymap::PrecompositionState::CANCEL_AND_IME_OFF:
+      // The same to keymap::PrecompositionState::CANCEL.
+      return EditCancelAndIMEOff(command);
     // For zero query suggestion
     case keymap::PrecompositionState::COMMIT_FIRST_SUGGESTION:
       return CommitFirstSuggestion(command);
@@ -746,6 +625,12 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
     case keymap::CompositionState::BACKSPACE:
       return Backspace(command);
 
+    case keymap::CompositionState::INSERT_SPACE:
+      return InsertSpace(command);
+
+    case keymap::CompositionState::INSERT_ALTERNATE_SPACE:
+      return InsertSpaceToggled(command);
+
     case keymap::CompositionState::INSERT_HALF_SPACE:
       return InsertSpaceHalfWidth(command);
 
@@ -766,6 +651,9 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
 
     case keymap::CompositionState::CANCEL:
       return EditCancel(command);
+
+    case keymap::CompositionState::CANCEL_AND_IME_OFF:
+      return EditCancelAndIMEOff(command);
 
     case keymap::CompositionState::UNDO:
       return RequestUndo(command);
@@ -864,6 +752,12 @@ bool Session::SendKeyConversionState(commands::Command *command) {
     case keymap::ConversionState::INSERT_CHARACTER:
       return InsertCharacter(command);
 
+    case keymap::ConversionState::INSERT_SPACE:
+      return InsertSpace(command);
+
+    case keymap::ConversionState::INSERT_ALTERNATE_SPACE:
+      return InsertSpaceToggled(command);
+
     case keymap::ConversionState::INSERT_HALF_SPACE:
       return InsertSpaceHalfWidth(command);
 
@@ -911,6 +805,9 @@ bool Session::SendKeyConversionState(commands::Command *command) {
 
     case keymap::ConversionState::CANCEL:
       return ConvertCancel(command);
+
+    case keymap::ConversionState::CANCEL_AND_IME_OFF:
+      return EditCancelAndIMEOff(command);
 
     case keymap::ConversionState::UNDO:
       return RequestUndo(command);
@@ -1013,34 +910,9 @@ bool Session::IMEOn(commands::Command *command) {
   ClearUndoContext();
 
   SetSessionState(ImeContext::PRECOMPOSITION);
-  const commands::KeyEvent &key = command->input().key();
-  if (key.has_mode()) {
-    // Ime on with specified mode.
-    switch (key.mode()) {
-      case commands::HIRAGANA:
-        SwitchInputMode(transliteration::HIRAGANA,
-                        context_->mutable_composer());
-        break;
-      case commands::FULL_KATAKANA:
-        SwitchInputMode(transliteration::FULL_KATAKANA,
-                        context_->mutable_composer());
-        break;
-      case commands::HALF_KATAKANA:
-        SwitchInputMode(transliteration::HALF_KATAKANA,
-                        context_->mutable_composer());
-        break;
-      case commands::FULL_ASCII:
-        SwitchInputMode(transliteration::FULL_ASCII,
-                        context_->mutable_composer());
-        break;
-      case commands::HALF_ASCII:
-        SwitchInputMode(transliteration::HALF_ASCII,
-                        context_->mutable_composer());
-        break;
-      default:
-        LOG(ERROR) << "ime on with invalid mode";
-        DLOG(FATAL);
-    }
+  if (command->input().has_key() && command->input().key().has_mode()) {
+    ApplyInputMode(
+        command->input().key().mode(), context_->mutable_composer());
   }
   OutputMode(command);
   return true;
@@ -1050,10 +922,6 @@ bool Session::IMEOff(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   ClearUndoContext();
 
-  // If you want to cancel composition on IMEOff,
-  // call EditCancel() instead of Commit() here.
-  // TODO(toshiyuki): Modify here if we have the config.
-  //  EditCancel(command);
   Commit(command);
 
   // Reset the context.
@@ -1162,7 +1030,7 @@ void Session::ReloadConfig() {
 void Session::UpdateConfig(const config::Config &config, ImeContext *context) {
   context->set_keymap(config.session_keymap());
 
-  InitTransformTable(config, context->mutable_transform_table());
+  Singleton<KeyEventTransformer>::get()->ReloadConfig(config);
   context->mutable_composer()->ReloadConfig();
   UpdateOperationPreferences(config, context);
 }
@@ -1365,6 +1233,71 @@ bool Session::SelectCandidate(commands::Command *command) {
   return true;
 }
 
+bool Session::CommitCandidate(commands::Command *command) {
+  if (!(context_->state() & (ImeContext::COMPOSITION |
+                             ImeContext::CONVERSION |
+                             ImeContext::PRECOMPOSITION))) {
+    return false;
+  }
+  const commands::Input &input = command->input();
+  if (!input.has_command() ||
+      !input.command().has_id()) {
+    LOG(WARNING) << "input.command or input.command.id did not exist.";
+    return false;
+  }
+  if (!context_->converter().IsActive()) {
+    LOG(WARNING) << "converter is not active. (no candidates)";
+    return false;
+  }
+  command->mutable_output()->set_consumed(true);
+
+  PushUndoContext();
+
+  if (context_->state() & ImeContext::CONVERSION) {
+    // There is a focused candidate so just select a candidate based on
+    // input message and commit first segment.
+    context_->mutable_converter()->CandidateMoveToId(
+        input.command().id(), context_->composer());
+    // TODO(yamaguchi): CommitFirstSegment might be inappropriate.
+    //     Fix spec and implementation.
+    CommitFirstSegmentInternal();
+  } else {
+    // No candidate is focused.
+    size_t committed_key_size = 0;
+    if (context_->mutable_converter()->CommitSuggestionById(
+            input.command().id(), context_->composer(), &committed_key_size)) {
+      string preedit;
+      context_->composer().GetStringForPreedit(&preedit);
+      size_t preedit_size = Util::CharsLen(preedit);
+      if (committed_key_size < preedit_size) {
+        // partial suggestion was committed.
+        context_->mutable_composer()->DeleteRange(0, committed_key_size);
+        MoveCursorToEnd(command);
+        // Copy the previous output for Undo.
+        context_->mutable_output()->CopyFrom(command->output());
+        return true;
+      }
+    }
+  }
+
+  if (!context_->converter().IsActive()) {
+    // If the converter is not active (ie. the segment size was one.),
+    // the state should be switched to precomposition.
+    SetSessionState(ImeContext::PRECOMPOSITION);
+
+    // Get suggestion if zero_query_suggestion is set.
+    // zero_query_suggestion is usually set where the client is a
+    // mobile.
+    // TODO(komatsu): Perform the refactoring when the internal tag is removed.
+    if (GET_REQUEST(zero_query_suggestion)) {
+      context_->mutable_converter()->Suggest(context_->composer());
+    }
+  }
+  Output(command);
+  // Copy the previous output for Undo.
+  context_->mutable_output()->CopyFrom(command->output());
+  return true;
+}
 
 bool Session::HighlightCandidate(commands::Command *command) {
   if (!SelectCandidateInternal(command)) {
@@ -1384,7 +1317,8 @@ bool Session::MaybeSelectCandidate(commands::Command *command) {
   // enabled. This is why we need to normalize the key event here.
   // See b/5655743.
   commands::KeyEvent normalized_keyevent;
-  keymap::NormalizeKeyEvent(command->input().key(), &normalized_keyevent);
+  KeyEventUtil::NormalizeKeyEvent(command->input().key(),
+                                  &normalized_keyevent);
 
   // Check if the input character is in the shortcut.
   // TODO(komatsu): Support non ASCII characters such as Unicode and
@@ -1426,14 +1360,31 @@ bool Session::InsertCharacter(commands::Command *command) {
     // If the key event represents a half width ascii character (ie.
     // key_code is equal to key_string), that key event is not
     // consumed and done echo back.
+    // We must not call |EchoBackAndClearUndoContext| for a half-width space
+    // here because it should be done in Session::TestSendKey or
+    // Session::InsertSpaceHalfWidth. Note that the |key| comes from
+    // Session::InsertSpaceHalfWidth and Session::InsertSpaceFullWidth is
+    // different from the original key event.
+    // For example, when the client sends a key command like
+    //   {key.special_key(): HENKAN, key.modifier_keys(): [SHIFT]},
+    // Session::InsertSpaceHalfWidth replaces it with
+    //   {key.key_string(): " ", key.key_code(): ' '}
+    // when you assign [Shift+HENKAN] to [InsertSpaceHalfWidth].
+    // So |key.key_code() == ' '| does not always mean that the original key is
+    // a space key w/o any modifier.
+    // This is why we cannot call |EchoBackAndClearUndoContext| when
+    // |key.key_code() == ' '|. This issue was found in b/5872031.
     if (key.key_string().size() == 1 &&
-        key.key_code() == key.key_string()[0]) {
+        key.key_code() == key.key_string()[0] &&
+        key.key_code() != ' ') {
       return EchoBackAndClearUndoContext(command);
     }
 
     context_->mutable_composer()->InsertCharacterKeyEvent(key);
     SetSessionState(ImeContext::COMPOSITION);
-    return Commit(command);
+    const bool result = Commit(command);
+    ClearUndoContext();  // UndoContext must be invalidated.
+    return result;
   }
 
   command->mutable_output()->set_consumed(true);
@@ -1443,7 +1394,6 @@ bool Session::InsertCharacter(commands::Command *command) {
     Output(command);
     return true;
   }
-
 
   string composition;
   context_->composer().GetQueryForConversion(&composition);
@@ -1497,17 +1447,41 @@ bool Session::InsertCharacter(commands::Command *command) {
   return true;
 }
 
-bool Session::IsFullWidthInsertSpace() const {
+bool Session::IsFullWidthInsertSpace(const commands::Input &input) const {
   // If IME is off, any space has to be half-width.
   if (context_->state() == ImeContext::DIRECT) {
     return false;
+  }
+
+  // In this method, we should not update the actual input mode stored in
+  // the composer even when |input| has a new input mode. Note that this
+  // method can be called from TestSendKey, where internal input mode is
+  // is not expected to be changed. This is one of the reasons why this
+  // method is a const method.
+  // On the other hand, this method should behave as if the new input mode
+  // in |input| was applied. For example, this method should behave as if
+  // the current input mode was HALF_KATAKANA in the following situation.
+  //   composer's input mode: HIRAGANA
+  //   input.key().mode()   : HALF_KATAKANA
+  // To achieve this, we create a temporary composer object to which the
+  // new input mode will be stored when |input| has a new input mode.
+  const composer::Composer* target_composer = &context_->composer();
+  scoped_ptr<composer::Composer> temporary_composer;
+  if (input.has_key() && input.key().has_mode()) {
+    // Allocate an object only when it is necessary.
+    temporary_composer.reset(new composer::Composer);
+    // Copy the current composer state just in case.
+    temporary_composer->CopyFrom(context_->composer());
+    ApplyInputMode(input.key().mode(), temporary_composer.get());
+    // Refer to this temporary composer in this method.
+    target_composer = temporary_composer.get();
   }
 
   // PRECOMPOSITION and current mode is HALF_ASCII: situation is same
   // as DIRECT.
   if (context_->state() == ImeContext::PRECOMPOSITION &&
       transliteration::T13n::IsInHalfAsciiTypes(
-          context_->composer().GetInputMode())) {
+          target_composer->GetInputMode())) {
     return false;
   }
 
@@ -1516,7 +1490,7 @@ bool Session::IsFullWidthInsertSpace() const {
   switch (GET_CONFIG(space_character_form)) {
     case config::Config::FUNDAMENTAL_INPUT_MODE: {
       const transliteration::TransliterationType input_mode =
-          context_->composer().GetInputMode();
+          target_composer->GetInputMode();
       if (transliteration::T13n::IsInHalfAsciiTypes(input_mode) ||
           transliteration::T13n::IsInHalfKatakanaTypes(input_mode)) {
         is_full_width = false;
@@ -1541,7 +1515,7 @@ bool Session::IsFullWidthInsertSpace() const {
 }
 
 bool Session::InsertSpace(commands::Command *command) {
-  if (IsFullWidthInsertSpace()) {
+  if (IsFullWidthInsertSpace(command->input())) {
     return InsertSpaceFullWidth(command);
   } else {
     return InsertSpaceHalfWidth(command);
@@ -1549,7 +1523,7 @@ bool Session::InsertSpace(commands::Command *command) {
 }
 
 bool Session::InsertSpaceToggled(commands::Command *command) {
-  if (IsFullWidthInsertSpace()) {
+  if (IsFullWidthInsertSpace(command->input())) {
     return InsertSpaceHalfWidth(command);
   } else {
     return InsertSpaceFullWidth(command);
@@ -1564,7 +1538,12 @@ bool Session::InsertSpaceHalfWidth(commands::Command *command) {
   }
 
   if (context_->state() == ImeContext::PRECOMPOSITION) {
-    return EchoBackAndClearUndoContext(command);
+    // TODO(komatsu): This is a hack to work around the problem with
+    // the inconsistency between TestSendKey and SendKey.
+    if (IsPureSpaceKey(command->input().key())) {
+      return EchoBackAndClearUndoContext(command);
+    }
+    // UndoContext will be cleared in |InsertCharacter| in this case.
   }
 
   const commands::CompositionMode mode = command->input().key().mode();
@@ -1585,6 +1564,8 @@ bool Session::InsertSpaceFullWidth(commands::Command *command) {
   }
 
   if (context_->state() == ImeContext::PRECOMPOSITION) {
+    // UndoContext will be cleared in |InsertCharacter| in this case.
+
     // TODO(komatsu): make sure if
     // |context_->mutable_converter()->Reset()| is necessary here.
     context_->mutable_converter()->Reset();
@@ -1601,7 +1582,54 @@ bool Session::InsertSpaceFullWidth(commands::Command *command) {
   return InsertCharacter(command);
 }
 
+bool Session::TryCancelConvertReverse(commands::Command *command) {
+  // If source_text is set, it usually means this session started by a
+  // reverse conversion.
+  if (context_->composer().source_text().empty()) {
+    return false;
+  }
+
+  // The value of source_text is reset at the below Reset
+  // command, so we need to make a copy of the string.
+  const string source_text = context_->composer().source_text();
+  context_->mutable_composer()->Reset();
+  // You cannot use |context_->mutable_converter()->CommitPreedit| here
+  // because it invokes unexpected text normalization and transliterations.
+  // See b/5094642, b/5094684, b/5687022, and b/5566728 for details.
+  // SessionConverter::CommitPreeditString never does such unwilling
+  // operations.
+  //
+  // One interesting problem is what |key| is expected when a given
+  // reconversion is canceled. For example, when a user tries to reconvert
+  // "今日" then cancels the reconversion, what |key| should be returned?
+  // Currently we are using |source_text| as |key|, which is the same
+  // approach of MS-IME 2010. So you will see the following output in this
+  // case.
+  //   output {
+  //     mode: HIRAGANA
+  //     consumed: true
+  //     result {
+  //       type: STRING
+  //       value: "今日"
+  //       key: "今日"
+  //     }
+  //     status {
+  //       activated: true
+  //       mode: HIRAGANA
+  //     }
+  //     performed_command: "Composition_Cancel"
+  //   }
+  // We need to revisit here when any problem occurs.
+  context_->mutable_converter()->CommitPreeditString(source_text,
+                                                     source_text);
+
+  return true;
+}
+
 bool Session::EditCancel(commands::Command *command) {
+  // In password mode, we should commit preedit and close keyboard
+  // on Android.
+  // TODO(matsuzakit): Remove this trick. b/5955618
   if (CommitIfPassword(command)) {
     command->mutable_output()->set_consumed(false);
     return true;
@@ -1609,30 +1637,50 @@ bool Session::EditCancel(commands::Command *command) {
 
   command->mutable_output()->set_consumed(true);
 
-  // If source_text is set, it usually means this session started by a
-  // reverse conversion.  In this case EditCancel should restore the
-  // string used for the reverse conversion.
-  if (!context_->composer().source_text().empty()) {
-    // The value of source_text is reset at the below Reset
-    // command, so this variable cannot be a reference.
-    const string source_text = context_->composer().source_text();
-    context_->mutable_composer()->Reset();
-    context_->mutable_composer()->InsertCharacterPreedit(source_text);
-    context_->mutable_converter()->CommitPreedit(context_->composer());
-
-    SetSessionState(ImeContext::PRECOMPOSITION);
+  // To work around b/5034698, we need to use OutputMode() unless the
+  // original text is restored to cancel reconversion.
+  const bool text_restored = TryCancelConvertReverse(command);
+  SetSessionState(ImeContext::PRECOMPOSITION);
+  if (text_restored) {
     Output(command);
+  } else {
+    // It is nice to use Output() instead of OutputMode().  However, if
+    // Output() is used, unnecessary candidate words are shown because
+    // the previous candidate state is not cleared here.  To fix it, we
+    // should carefully modify SessionConverter. See b/5034698.
+    //
+    // TODO(komatsu): Use Output() instead of OutputMode.
+    OutputMode(command);
+  }
+  return true;
+}
+
+bool Session::EditCancelAndIMEOff(commands::Command *command) {
+  // In password mode, we should commit preedit and close keyboard
+  // on Android.
+  // TODO(matsuzakit): Remove this trick. b/5955618.
+  if (CommitIfPassword(command)) {
+    command->mutable_output()->set_consumed(false);
     return true;
   }
 
-  SetSessionState(ImeContext::PRECOMPOSITION);
-  // It is nice to use Output() instead of OutputMode().  However, if
-  // Output() is used, unnecessary candidate words are shown because
-  // the previous candidate state is not cleared here.  To fix it, we
-  // should carefully modify SessionConverter.
-  //
-  // TODO(komatsu): Use Output() instead of OutputMode.
-  OutputMode(command);
+  if (!(context_->state() & (ImeContext::PRECOMPOSITION |
+                             ImeContext::COMPOSITION |
+                             ImeContext::CONVERSION))) {
+    return DoNothing(command);
+  }
+
+  command->mutable_output()->set_consumed(true);
+
+  TryCancelConvertReverse(command);
+
+  ClearUndoContext();
+
+  // Reset the context.
+  context_->mutable_converter()->Reset();
+
+  SetSessionState(ImeContext::DIRECT);
+  Output(command);
   return true;
 }
 
@@ -2002,6 +2050,21 @@ bool Session::LaunchWordRegisterDialog(commands::Command *command) {
   return DoNothing(command);
 }
 
+bool Session::UndoOrRewind(commands::Command *command) {
+  // Rewind if the state is in composition.
+  if (context_->state() & ImeContext::COMPOSITION) {
+    command->mutable_output()->set_consumed(true);
+    return SendComposerCommand(composer::Composer::REWIND, command);
+  }
+
+  // Undo if we can order UNDO command.
+  if (prev_context_.get()) {
+    return Undo(command);
+  }
+
+  return DoNothing(command);
+}
+
 bool Session::SendComposerCommand(
     const composer::Composer::InternalCommand composer_command,
     commands::Command *command) {
@@ -2042,7 +2105,6 @@ bool Session::Convert(commands::Command *command) {
        context_->composer().GetInputMode() == transliteration::FULL_ASCII) &&
       command->input().key().has_special_key() &&
       command->input().key().special_key() == commands::KeyEvent::SPACE) {
-
     // TODO(komatsu): Consider FullWidth Space too.
     if (!Util::EndsWith(composition, " ")) {
       bool should_commit = false;
@@ -2556,7 +2618,8 @@ void Session::UpdateTime() {
 
 void Session::TransformInput(commands::Input *input) {
   if (input->has_key()) {
-    TransformKeyEvent(context_->transform_table(), input->mutable_key());
+    Singleton<KeyEventTransformer>::get()->TransformKeyEvent(
+        input->mutable_key());
   }
   context_->converter().FillContext(input->mutable_context());
 }

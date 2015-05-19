@@ -56,34 +56,9 @@ class DictionaryPredictor: public PredictorInterface {
 
   bool Predict(Segments *segments) const;
 
- private:
-  FRIEND_TEST(DictionaryPredictorTest, GetPredictionType);
-  FRIEND_TEST(DictionaryPredictorTest,
-              GetPredictionTypeTestWithZeroQuerySuggestion);
-  FRIEND_TEST(DictionaryPredictorTest, IsZipCodeRequest);
-  FRIEND_TEST(DictionaryPredictorTest, GetRealtimeCandidateMaxSize);
-  FRIEND_TEST(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed);
-  FRIEND_TEST(DictionaryPredictorTest, AggregateRealtimeConversion);
-  FRIEND_TEST(DictionaryPredictorTest, GetUnigramCandidateCutoffThreshold);
-  FRIEND_TEST(DictionaryPredictorTest, AggregateUnigramPrediction);
-  FRIEND_TEST(DictionaryPredictorTest, AggregateBigramPrediction);
-  FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
-  FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
-  FRIEND_TEST(DictionaryPredictorTest, GetHistoryKeyAndValue);
-  FRIEND_TEST(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets);
-  FRIEND_TEST(DictionaryPredictorTest,
-              IsAggressiveSuggestion);
-  FRIEND_TEST(DictionaryPredictorTest,
-              LookupKeyValueFromDictionary);
-  FRIEND_TEST(DictionaryPredictorTest,
-              RealtimeConversionWithSpellingCorrection);
-  FRIEND_TEST(DictionaryPredictorTest,
-              GetMissSpelledPosition);
-  FRIEND_TEST(DictionaryPredictorTest,
-              RemoveMissSpelledCandidates);
-  FRIEND_TEST(DictionaryPredictorTest,
-              ConformCharacterWidthToPreference);
-
+ protected:
+  // Protected members for unittesting
+  // For use util method accessing private members, made them protected.
   enum PredictionType {
     // don't need to show any suggestions.
     NO_PREDICTION = 0,
@@ -106,6 +81,60 @@ class DictionaryPredictor: public PredictorInterface {
     int cost;
   };
 
+  // On MSVS2008/2010, TestableDictionaryPredictor::Result(node, type) causes
+  // a compile error even if you change the access right of it to public.
+  // You can use TestableDictionaryPredictor::MakeResult(node, type) instead.
+  static Result MakeResult(const Node *node, PredictionType type) {
+    return Result(node, type);
+  }
+
+  void AggregateRealtimeConversion(PredictionType type,
+                                   Segments *segments,
+                                   NodeAllocatorInterface *allocator,
+                                   vector<Result> *results) const;
+
+  void AggregateUnigramPrediction(PredictionType type,
+                                  Segments *segments,
+                                  NodeAllocatorInterface *allocator,
+                                  vector<Result> *results) const;
+
+  void AggregateBigramPrediction(PredictionType type,
+                                 Segments *segments,
+                                 NodeAllocatorInterface *allocator,
+                                 vector<Result> *results) const;
+
+  void AggregateSuffixPrediction(PredictionType type,
+                                 Segments *segments,
+                                 NodeAllocatorInterface *allocator,
+                                 vector<Result> *results) const;
+
+  void ApplyPenaltyForKeyExpansion(const Segments &segments,
+                                   vector<Result> *results) const;
+
+ private:
+  FRIEND_TEST(DictionaryPredictorTest, GetPredictionType);
+  FRIEND_TEST(DictionaryPredictorTest,
+              GetPredictionTypeTestWithZeroQuerySuggestion);
+  FRIEND_TEST(DictionaryPredictorTest, IsZipCodeRequest);
+  FRIEND_TEST(DictionaryPredictorTest, GetRealtimeCandidateMaxSize);
+  FRIEND_TEST(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateRealtimeConversion);
+  FRIEND_TEST(DictionaryPredictorTest, GetUnigramCandidateCutoffThreshold);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateUnigramPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateBigramPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
+  FRIEND_TEST(DictionaryPredictorTest, GetHistoryKeyAndValue);
+  FRIEND_TEST(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets);
+  FRIEND_TEST(DictionaryPredictorTest, IsAggressiveSuggestion);
+  FRIEND_TEST(DictionaryPredictorTest, LookupKeyValueFromDictionary);
+  FRIEND_TEST(DictionaryPredictorTest,
+              RealtimeConversionWithSpellingCorrection);
+  FRIEND_TEST(DictionaryPredictorTest, GetMissSpelledPosition);
+  FRIEND_TEST(DictionaryPredictorTest, RemoveMissSpelledCandidates);
+  FRIEND_TEST(DictionaryPredictorTest, ConformCharacterWidthToPreference);
+  FRIEND_TEST(DictionaryPredictorTest, SetLMCost);
+
   class ResultCompare {
    public:
     bool operator() (const Result &a, const Result &b) const {
@@ -113,22 +142,10 @@ class DictionaryPredictor: public PredictorInterface {
     }
   };
 
-  void AggregateRealtimeConversion(PredictionType type,
-                                   Segments *segments,
-                                   NodeAllocatorInterface *allocator,
-                                   vector<Result> *results) const;
-  void AggregateUnigramPrediction(PredictionType type,
-                                  Segments *segments,
-                                  NodeAllocatorInterface *allocator,
-                                  vector<Result> *results) const;
-  void AggregateBigramPrediction(PredictionType type,
-                                 Segments *segments,
-                                 NodeAllocatorInterface *allocator,
-                                 vector<Result> *results) const;
-  void AggregateSuffixPrediction(PredictionType type,
-                                 Segments *segments,
-                                 NodeAllocatorInterface *allocator,
-                                 vector<Result> *results) const;
+  const Node *GetPredictiveNodes(const DictionaryInterface *dictionary,
+                                 const string &history_key,
+                                 const Segments &segments,
+                                 NodeAllocatorInterface *allocator) const;
 
   // return the position of mis-spelled character position
   //

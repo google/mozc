@@ -36,6 +36,10 @@
         <translation>Cancel</translation>
     </message>
     <message>
+        <source>CancelAndIMEOff</source>
+        <translation>Cancel and deactivate IME</translation>
+    </message>
+    <message>
         <source>Revert</source>
         <translation>Cancel the last preference learning</translation>
     </message>

@@ -38,6 +38,7 @@
 #include "base/protobuf/descriptor.h"
 #include "base/singleton.h"
 #include "config/config_handler.h"
+#include "sync/logging.h"
 #include "sync/sync.pb.h"
 #include "sync/sync_util.h"
 
@@ -52,11 +53,13 @@ namespace {
 const size_t kConfigFileSizeLimit = 128 * 1024;  // 128KiB
 
 void StripUnnecessaryConfigFields(Config *config) {
+  CHECK(config);
   config->mutable_general_config()->Clear();
   config->mutable_sync_config()->Clear();
 }
 
 void MergeConfig(const Config &source, Config *target) {
+  CHECK(target);
   mozc::config::GeneralConfig target_general;
   target_general.CopyFrom(target->general_config());
   mozc::config::SyncConfig target_sync;
@@ -75,8 +78,13 @@ ConfigAdapter::~ConfigAdapter() {
 }
 
 bool ConfigAdapter::SetDownloadedItems(const ime_sync::SyncItems &items) {
-  VLOG(1) << "Start SetDownloadedItems: "
-          << items.size() << " items for Config";
+  SYNC_VLOG(1) << "start SetDownloadedItems(): "
+               << items.size() << " items for Config";
+
+  if (items.size() == 0) {
+    SYNC_VLOG(1) << "no items found";
+    return true;
+  }
 
   const Config *remote_config = NULL;
   for (size_t i = 0; i < items.size(); ++i) {
@@ -90,13 +98,13 @@ bool ConfigAdapter::SetDownloadedItems(const ime_sync::SyncItems &items) {
   }
 
   if (remote_config == NULL) {
-    VLOG(1) << "No new remote items downloaded";
+    SYNC_VLOG(1) << "no new remote items are found";
     return true;
   }
 
   Config current_config;
   if (!ConfigHandler::GetConfig(&current_config)) {
-    LOG(ERROR) << "Cannot obtain configs";
+    SYNC_VLOG(1) << "cannot obtain local config";
     return false;
   }
 
@@ -109,35 +117,52 @@ bool ConfigAdapter::SetDownloadedItems(const ime_sync::SyncItems &items) {
   // here rule is very simple: override the config by the new one.
   if (has_last_downloaded &&
       IsSameConfig(last_downloaded_config, *remote_config)) {
+    SYNC_VLOG(1) << "remote_config and last_downloaded_config are the same. "
+                 << "no need to update local config";
     // No same config comes.
     return true;
   }
 
   // Anyway it stores the last downloaded file.
-  ConfigFileStream::AtomicUpdate(
-      GetLastDownloadedConfigFileName(), remote_config->SerializeAsString());
+  SYNC_VLOG(1) << "saving remote_config to "
+               << GetLastDownloadedConfigFileName();
+  if (!ConfigFileStream::AtomicUpdate(
+          GetLastDownloadedConfigFileName(),
+          remote_config->SerializeAsString())) {
+    SYNC_VLOG(1) << "AtomicUpdate failed";
+    return false;
+  }
 
-  MergeConfig(*remote_config, &current_config);
+  SYNC_VLOG(1) << "merging remote_config into current_config";
+   MergeConfig(*remote_config, &current_config);
+
+  SYNC_VLOG(1) << "updating current config. merged config is used now.";
   ConfigHandler::SetConfig(current_config);
+
   // Also modify the last uploaded file to prevent unnecessary upload.
-  ConfigFileStream::AtomicUpdate(
-      GetLastUploadedConfigFileName(), remote_config->SerializeAsString());
+  SYNC_VLOG(1) << "saving remote_config to " << GetLastUploadedConfigFileName();
+  if (!ConfigFileStream::AtomicUpdate(
+          GetLastUploadedConfigFileName(), remote_config->SerializeAsString())) {
+    SYNC_VLOG(1) << "AtomicUpdate failed";
+    return false;
+  }
+
   return true;
 }
 
 bool ConfigAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
   DCHECK(items);
-  VLOG(1) << "Start GetItemsToUpload() for Config";
+  SYNC_VLOG(1) << "start GetItemsToUpload()";
 
   Config current_config;
   if (!ConfigHandler::GetConfig(&current_config)) {
-    LOG(ERROR) << "Cannot obtain configs";
+    SYNC_VLOG(1) << "cannot obtain local config";
     return false;
   }
   StripUnnecessaryConfigFields(&current_config);
-  string serialized_data = current_config.SerializeAsString();
+  const string serialized_data = current_config.SerializeAsString();
   if (serialized_data.size() > kConfigFileSizeLimit) {
-    LOG(ERROR) << "Cannot upload such huge data";
+    SYNC_VLOG(1) << "cannot upload such huge data";
     return false;
   }
 
@@ -146,10 +171,12 @@ bool ConfigAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
       GetLastUploadedConfigFileName(), &last_uploaded_config);
 
   if (has_last_uploaded && IsSameConfig(last_uploaded_config, current_config)) {
-    VLOG(1) << "No need to upload config";
+    SYNC_VLOG(1) << "last_uploaded_config and current_config are the same. "
+                 << "no need to upload config";
     return true;
   }
 
+  SYNC_VLOG(1) << "setting local config to remote config";
   ime_sync::SyncItem *item = items->Add();
   CHECK(item);
 
@@ -167,40 +194,50 @@ bool ConfigAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
 
 bool ConfigAdapter::MarkUploaded(
     const ime_sync::SyncItem& item, bool uploaded) {
-  VLOG(1) << "Start MarkUploaded() uploaded=" << uploaded;
+  SYNC_VLOG(1) << "start MarkUploaded() uploaded=" << uploaded;
 
   if (!item.key().HasExtension(sync::ConfigKey::ext) ||
       !item.value().HasExtension(sync::ConfigValue::ext)) {
-    // This item is not for config
+    SYNC_VLOG(1) << "this item is not for config";
     return false;
   }
 
   const sync::ConfigValue &value =
       item.value().GetExtension(sync::ConfigValue::ext);
   if (!value.has_config()) {
-    LOG(ERROR) << "invalid config item: " << value.DebugString();
+    SYNC_VLOG(1) << "invalid config item: " << value.DebugString();
     return false;
   }
 
   if (!uploaded) {
-    VLOG(1) << "Upload failed during sync of Config";
+    SYNC_VLOG(1) << "upload failed during sync of Config";
     return true;
   }
 
-  ConfigFileStream::AtomicUpdate(
-      GetLastUploadedConfigFileName(), value.config().SerializeAsString());
+  SYNC_VLOG(1) << "upload finished successfully";
+
+  SYNC_VLOG(1) << "saving the current config to "
+               << GetLastUploadedConfigFileName();
+  if (!ConfigFileStream::AtomicUpdate(
+          GetLastUploadedConfigFileName(),
+          value.config().SerializeAsString())) {
+    SYNC_VLOG(1) << "AtomicUpdate failed";
+  }
   return true;
 }
 
 bool ConfigAdapter::Clear() {
-  string last_downloaded_filename = ConfigFileStream::GetFileName(
+  SYNC_VLOG(1) << "start Clear()";
+  const string last_downloaded_filename = ConfigFileStream::GetFileName(
       GetLastDownloadedConfigFileName());
   if (!last_downloaded_filename.empty()) {
+    SYNC_VLOG(1) << "deleteing " << last_downloaded_filename;
     Util::Unlink(last_downloaded_filename);
   }
-  string last_uploaded_filename = ConfigFileStream::GetFileName(
+  const string last_uploaded_filename = ConfigFileStream::GetFileName(
       GetLastUploadedConfigFileName());
   if (!last_uploaded_filename.empty()) {
+    SYNC_VLOG(1) << "deleteing " << last_uploaded_filename;
     Util::Unlink(last_uploaded_filename);
   }
   return true;
@@ -211,23 +248,23 @@ ime_sync::Component ConfigAdapter::component_id() const {
 }
 
 bool ConfigAdapter::LoadConfigFromFile(const string &filename, Config *config) {
-  VLOG(1) << "Load config from file: " << filename;
+  SYNC_VLOG(1) << "loading config from file: " << filename;
   DCHECK(config);
-  scoped_ptr<istream> ifs(ConfigFileStream::Open(filename));
+  scoped_ptr<istream> ifs(ConfigFileStream::OpenReadBinary(filename));
   if (ifs.get() == NULL || ifs->fail()) {
-    LOG(ERROR) << filename << " is not found";
+    SYNC_VLOG(1) << filename << " is not found";
     return false;
   }
 
   if (ifs->eof()) {
-    LOG(ERROR) << filename << " is empty";
+    SYNC_VLOG(1) << filename << " is empty";
     return false;
   }
 
   config->Clear();
   bool success = true;
   if (!config->ParseFromIstream(ifs.get())) {
-    LOG(ERROR) << filename << " is broken";
+    SYNC_VLOG(1) << filename << " is broken";
     config->Clear();
     success = false;
   }

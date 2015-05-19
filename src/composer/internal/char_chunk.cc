@@ -594,6 +594,17 @@ const TransliteratorInterface *CharChunk::GetTransliterator(
   return transliterator_;
 }
 
+void CharChunk::CopyFrom(const CharChunk &src) {
+  // TODO(hsumita): Implements TransliteratorFactory and uses it instead of
+  // copying a pointer.
+  transliterator_ = src.transliterator_;
+  raw_.assign(src.raw_);
+  conversion_.assign(src.conversion_);
+  pending_.assign(src.pending_);
+  ambiguous_.assign(src.ambiguous_);
+  status_mask_ = src.status_mask_;
+  attributes_ = src.attributes_;
+}
 
 }  // namespace composer
 }  // namespace mozc

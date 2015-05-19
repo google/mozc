@@ -36,7 +36,6 @@
       'target_name': 'ipc',
       'type': 'static_library',
       'sources': [
-        '<(proto_out_dir)/<(relative_dir)/ipc.pb.cc',
         'ipc.cc',
         'ipc_mock.cc',
         'ipc_path_manager.cc',
@@ -49,7 +48,21 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../languages/languages.gyp:global_language_spec',
+        'ipc_protocol',
+      ],
+    },
+    {
+      'target_name': 'ipc_protocol',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/ipc.pb.cc',
+      ],
+      'dependencies': [
         '../protobuf/protobuf.gyp:protobuf',
+        'genproto_ipc',
+      ],
+      'export_dependent_settings': [
         'genproto_ipc',
       ],
     },
@@ -58,6 +71,30 @@
       'type': 'none',
       'sources': [
         'ipc.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'window_info_protocol',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/window_info.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_window_info',
+      ],
+      'export_dependent_settings': [
+        'genproto_window_info',
+      ],
+    },
+    {
+      'target_name': 'genproto_window_info',
+      'type': 'none',
+      'sources': [
         'window_info.proto',
       ],
       'includes': [

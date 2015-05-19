@@ -19,6 +19,10 @@
 # Manual rules:
 # When you find misconversions which are caused by this rule,
 # edit the following section.
+
+# Users tend to input verb 基本形 in one segment
+SUFFIX 動詞,自立,*,*,*,基本形        0
+
 PREFIX 名詞,非自立,副詞可能,*,*,*,際 1000
 # want to premote "件"
 PREFIX 名詞,接尾,地域,*,*,*,県       1500
@@ -29,6 +33,8 @@ PREFIX 名詞,接尾,                    1000
 PREFIX 助詞,格助詞,引用,*,*,*,と     2000
 PREFIX 助詞,(格助詞|連体化)          3000
 PREFIX 動詞,自立,*,*,サ変・スル,*    1000
+# general noun might be buried in personal names
+PREFIX 名詞,固有名詞,人名            1000
 PREFIX 名詞,(数|固有名詞|副詞可能|代名詞|一般|サ変接続), 0
 # さかれていた => さ|枯れていた
 PREFIX 副詞,助詞類接続,*,*,*,*,さ    2000

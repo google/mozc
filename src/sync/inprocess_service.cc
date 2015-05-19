@@ -30,8 +30,6 @@
 #include "sync/inprocess_service.h"
 
 #include <algorithm>
-#include <time.h>
-#include <stdlib.h>
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
@@ -52,7 +50,7 @@ bool IsValidRequest(Request *request, Response *response) {
 }
 }  // anonymous namespace
 
-InprocessService::InprocessService() : timestamp_(time(NULL)) {}
+InprocessService::InprocessService() : timestamp_(Util::GetTime()) {}
 
 InprocessService::~InprocessService() {}
 

@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_CONNECTOR_H_
-#define MOZC_CONVERTER_CONNECTOR_H_
+#ifndef MOZC_CONVERTER_CONNECTOR_INTERFACE_H_
+#define MOZC_CONVERTER_CONNECTOR_INTERFACE_H_
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 
@@ -50,27 +50,6 @@ class ConnectorInterface {
   DISALLOW_COPY_AND_ASSIGN(ConnectorInterface);
 };
 
-// The result of GetTransitionCost() is cached with TLS.
-// Note that the cache is created as a global variable. If you
-// pass two different connectors, the cache variable will be shared.
-// Since we can assume that real Connector is a singleton object,
-// this restriction will not be a big issue.
-class CachedConnector : public ConnectorInterface {
- public:
-  CachedConnector(ConnectorInterface *connector);
-  ~CachedConnector();
-
-  virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
-  virtual int GetResolution() const;
-
-  // Clear cache explicitly.
-  static void ClearCache();
-
- private:
-  void InitializeCache() const;
-  ConnectorInterface *connector_;
-};
-
 class ConnectorFactory {
  public:
   // return singleton object
@@ -78,7 +57,11 @@ class ConnectorFactory {
 
   // dependency injection for unittesting
   static void SetConnector(ConnectorInterface *connector);
+
+  // set the connector data's address and size.
+  // if not set, default value (typically embedded data) is used.
+  static void SetConnectionData(void *address, size_t size);
 };
 }  // namespace mozc
 
-#endif  // MOZC_CONVERTER_CONNECTOR_H_
+#endif  // MOZC_CONVERTER_CONNECTOR_INTERFACE_H_

@@ -31,16 +31,33 @@
 #define MOZC_GUI_CHARACTER_PAD_HAND_WRITING_H_
 
 #include <QtGui/QMainWindow>
+// Do not depend on CloudHandwriting class to keep dependencies
+// minimum.
+// TODO(yukawa): Remove this #ifdef when CloudHandwriting class
+//     never depends on unnecessary libraries when
+//     ENABLE_CLOUD_HANDWRITING macro is not defined.
+#ifdef ENABLE_CLOUD_HANDWRITING
+#include "handwriting/cloud_handwriting.h"
+#endif  // ENABLE_CLOUD_HANDWRITING
+#include "handwriting/zinnia_handwriting.h"
 #include "gui/character_pad/ui_hand_writing.h"
 
 namespace mozc {
+
+#ifdef ENABLE_CLOUD_HANDWRITING
+namespace client {
+class ClientInterface;
+}
+#endif  // ENABLE_CLOUD_HANDWRITING
+
 namespace gui {
 class HandWriting : public QMainWindow,
                     private Ui::HandWriting {
   Q_OBJECT;
 
  public:
-  HandWriting(QWidget *parent = NULL);
+  explicit HandWriting(QWidget *parent = NULL);
+  virtual ~HandWriting();
 
  public slots:
   void updateFontSize(int index);
@@ -48,13 +65,32 @@ class HandWriting : public QMainWindow,
   void clear();
   void revert();
   void updateUIStatus();
+  void tryToUpdateHandwritingSource(int index);
 
  protected:
   void resizeEvent(QResizeEvent *event);
 
 #ifdef OS_WINDOWS
   bool winEvent(MSG *message, long *result);
-#endif
+#endif  // OS_WINDOWS
+
+  void updateHandwritingSource(int index);
+
+// Do not depend on CloudHandwriting class to keep dependencies
+// minimum.
+// TODO(yukawa): Remove this #ifdef when CloudHandwriting class
+//     never depends on unnecessary libraries when
+//     ENABLE_CLOUD_HANDWRITING macro is not defined.
+#ifdef ENABLE_CLOUD_HANDWRITING
+  // Returns true if the user allowed to enable cloud handwriting feature.
+  // This function asks to the user to enable cloud handwriting if
+  // necessary and updates the current config as
+  // |config.set_allow_cloud_handwriting(true)| when it is allowed.
+  bool TryToEnableCloudHandwriting();
+  scoped_ptr<client::ClientInterface> client_;
+  mozc::handwriting::CloudHandwriting cloud_handwriting_;
+#endif  // ENABLE_CLOUD_HANDWRITING
+  mozc::handwriting::ZinniaHandwriting zinnia_handwriting_;
 };
 }  // namespace gui
 }  // namespace mozc

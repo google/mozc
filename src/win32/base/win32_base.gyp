@@ -94,8 +94,8 @@
           ],
           'dependencies': [
             '../../base/base.gyp:base',
-            '../../config/config.gyp:genproto_config',
-            '../../session/session_base.gyp:genproto_session',
+            '../../config/config.gyp:config_protocol',
+            '../../session/session_base.gyp:session_protocol',
             'imm_util',
           ],
         },

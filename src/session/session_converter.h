@@ -41,6 +41,10 @@
 #include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
+namespace config {
+class Config;
+}
+
 namespace session {
 class CandidateList;
 
@@ -136,6 +140,11 @@ class SessionConverter : public SessionConverterInterface {
   // so Commit() method is called instead. In this case, the caller
   // should not delete any characters.
   void CommitFirstSegment(size_t *committed_key_size);
+
+  // Commit the preedit string as is form.
+  // Any transliteration or text normalization ("ゔ" -> "ヴ", or vender
+  // specific code replacement) will not be performed.
+  void CommitPreeditString(const string &key, const string &preedit);
 
   // Commit the preedit string represented by Composer.
   void CommitPreedit(const composer::Composer &composer);
@@ -277,6 +286,12 @@ class SessionConverter : public SessionConverterInterface {
   void FillCandidates(commands::Candidates *candidates) const;
 
   bool IsEmptySegment(const Segment &segment) const;
+
+  // Propagete config proto to |output|.
+  // Renderer might need to refer mozc config saved in |output|.
+  // In order to reduce IPC latency, we only propagete config only
+  // when it is really required.
+  void PropagateConfigToRenderer(commands::Output *output) const;
 
   SessionConverterInterface::State state_;
 

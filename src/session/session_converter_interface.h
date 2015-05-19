@@ -167,6 +167,12 @@ class SessionConverterInterface {
   // |committed_key_size|.
   virtual void CommitFirstSegment(size_t *committed_key_size) ABSTRACT;
 
+  // Commit the preedit string without any modification with given |key|.
+  // Any transliteration or text normalization ("ゔ" -> "ヴ", or vender
+  // specific code replacement) will not be performed.
+  virtual void CommitPreeditString(const string &key,
+                                   const string &preedit) ABSTRACT;
+
   // Commit the preedit string represented by Composer.
   virtual void CommitPreedit(const composer::Composer &composer) ABSTRACT;
 

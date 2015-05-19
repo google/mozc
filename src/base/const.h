@@ -63,6 +63,8 @@ const char kMozcBroker32[] = "GoogleIMEJaBroker32.exe";
 const char kMozcBroker64[] = "GoogleIMEJaBroker64.exe";
 const char kMozcTool[] = "GoogleIMEJaTool.exe";
 const char kMozcRenderer[] = "GoogleIMEJaRenderer.exe";
+const char kMozcCacheServiceExeName[] = "GoogleIMEJaCacheService.exe";
+const wchar_t kMozcCacheServiceName[] = L"GoogleIMEJaCacheService";
 const wchar_t kMessageReceiverMessageName[]
     = L"googlejapaneseinput.renderer.message";
 const wchar_t kMessageReceiverClassName[]
@@ -97,6 +99,8 @@ const char kMozcBroker32[] = "mozc_broker32.exe";
 const char kMozcBroker64[] = "mozc_broker64.exe";
 const char kMozcTool[] = "mozc_tool.exe";
 const char kMozcRenderer[] = "mozc_renderer.exe";
+const char kMozcCacheServiceExeName[] = "mozc_cache_service.exe";
+const wchar_t kMozcCacheServiceName[] = L"MozcCacheService";
 const wchar_t kMessageReceiverMessageName[]
     = L"mozc.renderer.message";
 const wchar_t kMessageReceiverClassName[]
@@ -125,6 +129,11 @@ const char kEventPathPrefix[] = "Mozc.event.";
 #else  // OS_LINUX
 const char kEventPathPrefix[] = "mozc.event.";
 const char kMozcTool[] = "mozc_tool";
+#ifdef MOZC_SERVER_DIRECTORY
+const char kMozcServerDirectory[] = MOZC_SERVER_DIRECTORY;
+#else
+const char kMozcServerDirectory[] = "/usr/lib/mozc";
+#endif  // MOZC_SERVER_DIRECTORY
 #endif
 
 const char kWordRegisterEnvironmentName[] = "default_entry_of_word_register";

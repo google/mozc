@@ -1,3 +1,16 @@
+mozc (1.4.1003.102) lucid; urgency=low
+
+  * Ver. 1.4.1003.102 on 2012-02-22
+  * Link statically with the protocol buffer lib. (Issue 14)
+  * Fixed bugs:
+    - "build_mozc.py clean" doesn't remove some generated files. (Issue 54)
+    - Cannot be built with IBus 1.4.1. (Issue 117)
+  * Use ibus_engine_delete_surrounding_text instead of backspace forwarding
+    for IBus 1.2.1 or later. (Issue 126)
+  * Enable "Set input mode to X" commands on Linux.
+
+ -- Hidehiko Abe <hidehiko>  Wed, 22 Feb 2012 14:16:29 +0900
+
 mozc (1.3.975.102) lucid; urgency=low
 
   * Ver. 1.3.975.102 on 2012-01-24

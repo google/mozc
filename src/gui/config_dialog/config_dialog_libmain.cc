@@ -55,6 +55,8 @@ int RunConfigDialog(int argc, char *argv[]) {
     return -1;
   }
 
+  // TODO(nona): remove these lines when link-time language dependency
+  //             injection is rolled out.
   mozc::japanese::LangDepSpecJapanese spec;
   mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 
@@ -65,5 +67,11 @@ int RunConfigDialog(int argc, char *argv[]) {
 
   mozc_config.show();
   mozc_config.raise();
-  return app.exec();
+  const int result = app.exec();
+
+  // TODO(nona): remove this line when link-time language dependency
+  //             injection is rolled out.
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+
+  return result;
 }

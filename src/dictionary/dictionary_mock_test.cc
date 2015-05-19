@@ -78,7 +78,6 @@ bool DictionaryMockTest::SearchMatchingNode(const string &key,
 
 Token *DictionaryMockTest::CreateToken(const string &key, const string &value) {
   Token *token = new Token;
-  memset(token, 0, sizeof(*token));
   token->key = key;
   token->value = value;
   return token;

@@ -38,6 +38,7 @@
 #include <vector>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/trie.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
@@ -47,8 +48,10 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "storage/registry.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "usage_stats/usage_stats.pb.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -151,15 +154,11 @@ class UserPOSMock : public UserPOS::UserPOSInterface {
   DISALLOW_COPY_AND_ASSIGN(UserPOSMock);
 };
 
-int Random(int size) {
-  return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
-}
-
 string GenRandomAlphabet(int size) {
   string result;
-  const size_t len = Random(size) + 1;
+  const size_t len = Util::Random(size) + 1;
   for (int i = 0; i < len; ++i) {
-    const uint16 l = Random(static_cast<int>('z' - 'a')) + 'a';
+    const uint16 l = Util::Random(static_cast<int>('z' - 'a')) + 'a';
     Util::UCS2ToUTF8Append(l, &result);
   }
   return result;
@@ -171,11 +170,13 @@ class UserDictionaryTest : public testing::Test {
     pos_mock_.reset(new UserPOSMock);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     UserPOS::SetUserPOSInterface(pos_mock_.get());
+    EXPECT_TRUE(storage::Registry::Clear());
   }
 
   virtual void TearDown() {
     pos_mock_.reset();
     UserPOS::SetUserPOSInterface(NULL);
+    EXPECT_TRUE(storage::Registry::Clear());
   }
 
   // Workaround for the constructor of UserDictionary being protected.
@@ -341,6 +342,52 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
   // Lookup for entries which are gone should returns empty result.
   TestLookupPredictiveHelper(NULL, 0, "start", 5, *dic.get());
   TestLookupPredictiveHelper(NULL, 0, "st", 2, *dic.get());
+}
+
+TEST_F(UserDictionaryTest, TestLookupPredictiveWithLimit) {
+  scoped_ptr<UserDictionary> dic(CreateDictionary());
+  // Wait for async reload called from the constructor.
+  dic->WaitForReloader();
+
+  {
+    UserDictionaryStorage storage("");
+    UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
+    dic->Load(storage);
+  }
+
+  {
+    NodeAllocator allocator;
+    DictionaryInterface::Limit limit;
+    Trie<string> trie;
+    trie.AddEntry("m", "");
+    trie.AddEntry("n", "");
+    limit.begin_with_trie = &trie;
+
+    const string key = "sta";
+    Node *node = dic->LookupPredictiveWithLimit(
+        key.data(), key.size(), limit, &allocator);
+    const Entry kExpected[] = {
+      { "stamp", "stamp", 100, 100 },
+      { "stand", "stand", 200, 200 },
+      { "standed", "standed", 210, 210 },
+      { "standing", "standing", 220, 220 },
+    };
+    CompareEntries(kExpected, arraysize(kExpected), node);
+  }
+
+  {
+    NodeAllocator allocator;
+    DictionaryInterface::Limit limit;
+    const string key = "stan";
+    Node *node = dic->LookupPredictiveWithLimit(
+        key.data(), key.size(), limit, &allocator);
+    const Entry kExpected[] = {
+      { "stand", "stand", 200, 200 },
+      { "standed", "standed", 210, 210 },
+      { "standing", "standing", 220, 220 },
+    };
+    CompareEntries(kExpected, arraysize(kExpected), node);
+  }
 }
 
 TEST_F(UserDictionaryTest, TestLookupPrefix) {
@@ -615,6 +662,68 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   }
 
   Util::Unlink(filename);
+}
+
+TEST_F(UserDictionaryTest, TestUsageStats) {
+  scoped_ptr<UserDictionary> dic(CreateDictionary());
+  // Wait for async reload called from the constructor.
+  dic->WaitForReloader();
+  UserDictionaryStorage storage("");
+
+  {
+    UserDictionaryStorage::UserDictionary *dic1 = storage.add_dictionaries();
+    CHECK(dic1);
+    UserDictionaryStorage::UserDictionaryEntry *entry;
+    entry = dic1->add_entries();
+    CHECK(entry);
+    entry->set_key("key1");
+    entry->set_value("value1");
+    entry->set_pos("noun");
+    entry = dic1->add_entries();
+    CHECK(entry);
+    entry->set_key("key2");
+    entry->set_value("value2");
+    entry->set_pos("noun");
+  }
+  {
+    UserDictionaryStorage::UserDictionary *dic2 = storage.add_dictionaries();
+    dic2->set_syncable(true);
+    CHECK(dic2);
+    UserDictionaryStorage::UserDictionaryEntry *entry;
+    entry = dic2->add_entries();
+    CHECK(entry);
+    entry->set_key("key3");
+    entry->set_value("value3");
+    entry->set_pos("noun");
+    entry = dic2->add_entries();
+    CHECK(entry);
+    entry->set_key("key4");
+    entry->set_value("value4");
+    entry->set_pos("noun");
+    entry = dic2->add_entries();
+    CHECK(entry);
+    entry->set_key("key5");
+    entry->set_value("value5");
+    entry->set_pos("noun");
+  }
+  dic->Load(storage);
+
+  string reg_str;
+  usage_stats::Stats stats;
+
+  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.UserRegisteredWord",
+                                         &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("UserRegisteredWord", stats.name());
+  EXPECT_EQ(usage_stats::Stats::INTEGER, stats.type());
+  EXPECT_EQ(5, stats.int_value());
+
+  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.UserRegisteredSyncWord",
+                                         &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("UserRegisteredSyncWord", stats.name());
+  EXPECT_EQ(usage_stats::Stats::INTEGER, stats.type());
+  EXPECT_EQ(3, stats.int_value());
 }
 }  // namespace
 }  // namespace mozc

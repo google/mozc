@@ -74,6 +74,10 @@ class RxTrie {
   // It will cause infinite loop.
   void ReverseLookup(int id, string *key) const;
 
+  // Searches the key string and returns the id of it.
+  // Returns -1 if key is not found.
+  int GetIdFromKey(const string &key) const;
+
  private:
   enum SearchType {
     PREDICTIVE = 0,

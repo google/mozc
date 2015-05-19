@@ -36,7 +36,9 @@
 #include <set>
 #include <string>
 
-#include "base/base.h"
+#include "base/port.h"
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace composer {
@@ -44,13 +46,13 @@ namespace composer {
 class CharChunk;
 typedef list<CharChunk*> CharChunkList;
 
-class TransliteratorInterface;
-
 class CompositionInput;
+class Table;
+class TransliteratorInterface;
 
 class Composition : public CompositionInterface {
  public:
-  Composition();
+  explicit Composition(const Table *table);
   virtual ~Composition();
 
   size_t DeleteAt(size_t position);
@@ -94,8 +96,18 @@ class Composition : public CompositionInterface {
   void GetPreedit(
       size_t position, string *left, string *focused, string *right) const;
 
-  void SetTable(const Table *table);
   void SetInputMode(const TransliteratorInterface *transliterator);
+
+  // Return true if the composition is adviced to be committed immediately.
+  bool ShouldCommit() const;
+
+  // Get a clone.
+  // Clone is a thin wrapper of CloneImpl.
+  // CloneImpl is created to write test codes without dynamic_cast.
+  CompositionInterface *Clone() const;
+  Composition *CloneImpl() const;
+
+  void SetTableForUnittest(const Table *table);
 
   void GetChunkAt(size_t position,
                   const TransliteratorInterface *transliterator,
@@ -134,10 +146,9 @@ class Composition : public CompositionInterface {
 
   const CharChunkList &GetCharChunkList() const;
 
-  // Return true if the composition is adviced to be committed immediately.
-  bool ShouldCommit() const;
-
  private:
+  FRIEND_TEST(CompositionTest, Clone);
+
   const Table *table_;
   CharChunkList chunks_;
   const TransliteratorInterface *input_t12r_;

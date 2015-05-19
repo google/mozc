@@ -72,4 +72,10 @@ message UserDictionaryStorage {
   // dictionary body
   repeated UserDictionary dictionaries = 2;
 
+  enum StorageType {
+    SNAPSHOT = 1;   // This storage is a snapshot.
+    UPDATE = 2;     // This storage is a diff of some snapshots.
+  };
+
+  optional StorageType storage_type = 10 [ default = SNAPSHOT ];
 };

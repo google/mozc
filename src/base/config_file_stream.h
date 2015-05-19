@@ -58,24 +58,53 @@ namespace mozc {
 //
 class ConfigFileStream {
  public:
-  static istream *Open(const string &filename) {
+  // Open |filename| as a text file with read permission.
+  static istream *OpenReadText(const string &filename) {
     return Open(filename, ios_base::in);
   }
 
-  static istream *Open(const string &filename,
-                       ios_base::openmode mode);
+  // Open |filename| as a binary file with read permission.
+  static istream *OpenReadBinary(const string &filename) {
+    return Open(filename, ios_base::in | ios_base::binary);
+  }
+
+  // Mozc 1.3 and prior had had a following method, which opens |filename|
+  // as a text file with read permission.
+  //   static istream *Open(const string &filename) {
+  //     return Open(filename, ios_base::in);
+  //   }
+  // As of Mozc 1.3, a number of files had had depended on this method.
+  // However, we did not programatically replaced all of them with
+  // |OpenReadText| because these existing code do not have enough unit
+  // tests to check the treatment of line-end character, especially on Windows.
+  // Perhaps |OpenReadBinary| might be more appropriate in some cases.
+  // So we left |LegacyOpen| as an alias of the old version.
+  // You should not use this method in new code.
+  // TODO(yukawa): Add unit tests and replace |LegacyOpen| with |OpenReadText|
+  //     or |OpenReadBinary| where this method is used.
+  static istream *LegacyOpen(const string &filename) {
+    return Open(filename, ios_base::in);
+  }
 
   // Update the specified config filename (formatted as above) with
   // the |new_contents| atomically.  Returns true if the update
   // succeeds.
+  // Note that this method uses binary mode to update |filename|.
+  // TODO(yukawa): Consider to rename to |AtomicUpdateBinary|.
   static bool AtomicUpdate(const string &filename,
-                           const string &new_contents);
+                           const string &new_binary_contens);
 
   // if prefix is system:// or memory:// return "";
   static string GetFileName(const string &filename);
 
   // Clear all memory:// files.  This is a utility method for testing.
   static void ClearOnMemoryFiles();
+
+ private:
+  // This function was deplicated. Use OpenReadText or OpenReadBinary instead.
+  // TODO(yukawa): Move this function to anonymous namespace in
+  //     config_file_stream.cc.
+  static istream *Open(const string &filename, ios_base::openmode mode);
 };
 }  // namespace mozc
 

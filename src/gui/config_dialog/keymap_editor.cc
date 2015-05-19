@@ -502,7 +502,7 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
       const char *keymap_file =
           keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[import_index]);
       scoped_ptr<istream> ifs(
-          ConfigFileStream::Open(keymap_file));
+          ConfigFileStream::LegacyOpen(keymap_file));
       CHECK(ifs.get() != NULL);  // should never happen
       CHECK(LoadFromStream(ifs.get()));
     }

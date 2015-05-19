@@ -27,29 +27,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Handler of mozc clients' request.
+
+#include "session/request_handler.h"
+
 #include "session/commands.pb.h"
-#include "session/mock_session_handler.h"
-#include "session/session_handler_interface.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/googletest.h"
 
 namespace mozc {
-bool IsGoodSession(SessionHandlerInterface *handler, uint64 id) {
-  commands::Command command;
-  command.mutable_input()->set_id(id);
-  command.mutable_input()->set_type(commands::Input::SEND_KEY);
-  command.mutable_input()->mutable_key()->set_special_key(
-      commands::KeyEvent::SPACE);
-  handler->EvalCommand(&command);
-  return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
+namespace commands {
+
+Request RequestHandler::request_;
+
+// return current Request
+const Request &RequestHandler::GetRequest() {
+  return request_;
 }
 
-TEST(MockSessionHandlerTest, BaseTest) {
-  {
-    MockSessionHandler handler;
-    // Mock session handler returns successful responses
-    // for SEND_KEY requests with any session id.
-    EXPECT_TRUE(IsGoodSession(&handler, 1));
-  }
+// set request
+void RequestHandler::SetRequest(const Request &request) {
+  request_.CopyFrom(request);
 }
+}  // namespace commands
 }  // namespace mozc

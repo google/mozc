@@ -30,104 +30,64 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
+#include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
+#include "session/japanese_session_factory.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"
+#include "session/session_handler_test_util.h"
+#include "testing/base/public/gunit.h"
 
-DECLARE_string(FLAGS_test_tmpdir);
+DECLARE_int32(last_command_timeout);
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
-namespace {
 
-class TestSessionClient {
- public:
-  TestSessionClient()
-      : id_(0), handler_(new SessionHandler) {}
-  virtual ~TestSessionClient() {}
+using mozc::session::testing::TestSessionClient;
 
-  bool CreateSession() {
-    commands::Command command;
-    command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
-    if (!handler_->EvalCommand(&command)) {
-      return false;
-    }
-    id_ = command.output().id();
-    return true;
+using mozc::session::testing::JapaneseSessionHandlerTestBase;
+class SessionHandlerStressTestMain : public JapaneseSessionHandlerTestBase {
+ protected:
+  virtual void SetUp() {
+    JapaneseSessionHandlerTestBase::SetUp();
+    FLAGS_last_command_timeout = 10;  // 10 sec
   }
-
-  bool DeleteSession() {
-    commands::Command command;
-    command.mutable_input()->set_id(id_);
-    command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
-    return handler_->EvalCommand(&command);
-  }
-  bool SendKey(const commands::KeyEvent &key,
-               commands::Output *output) {
-    commands::Input input;
-    input.set_type(commands::Input::SEND_KEY);
-    input.mutable_key()->CopyFrom(key);
-    return Call(&input, output);
-  }
-
-  bool TestSendKey(const commands::KeyEvent &key,
-                   commands::Output *output) {
-    commands::Input input;
-    input.set_type(commands::Input::TEST_SEND_KEY);
-    input.mutable_key()->CopyFrom(key);
-    return Call(&input, output);
-  }
-
- private:
-  bool Call(commands::Input *input,
-            commands::Output *output) {
-    input->set_id(id_);
-    output->set_id(0);
-    commands::Command command;
-    command.mutable_input()->CopyFrom(*input);
-    if (!handler_->EvalCommand(&command)) {
-      return false;
-    }
-    output->CopyFrom(command.output());
-    return true;
-  }
-
-  uint64 id_;
-  scoped_ptr<SessionHandler> handler_;
 };
 
-}   // namespace
-}  // namespae mozc
-
-int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
-
-  mozc::config::Config config;
-  mozc::config::ConfigHandler::GetDefaultConfig(&config);
+// Don't add another TEST_F or TEST statement.
+// We check the maximum memory usage of this binary to find memory leaks.
+// If we add another test case, we can't find memory leak correctly.
+TEST_F(SessionHandlerStressTestMain, BasicStressTest) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
   // TOOD(all): Add a test for the case where
   // use_realtime_conversion is true.
   config.set_use_realtime_conversion(false);
-  mozc::config::ConfigHandler::SetConfig(config);
+  config::ConfigHandler::SetConfig(config);
 
-  mozc::session::RandomKeyEventsGenerator::PrepareForMemoryLeakTest();
+  session::RandomKeyEventsGenerator::PrepareForMemoryLeakTest();
 
-  vector<mozc::commands::KeyEvent> keys;
-  mozc::commands::Output output;
-  mozc::TestSessionClient client;
+  vector<commands::KeyEvent> keys;
+  commands::Output output;
+  TestSessionClient client;
   size_t keyevents_size = 0;
-  const size_t kMaxEventSize = 10000000;
-  client.CreateSession();
+  const size_t kMaxEventSize = 100000;
+  ASSERT_TRUE(client.CreateSession());
   while (keyevents_size < kMaxEventSize) {
     keys.clear();
-    mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
+    session::RandomKeyEventsGenerator::GenerateSequence(&keys);
     for (size_t i = 0; i < keys.size(); ++i) {
       ++keyevents_size;
       client.TestSendKey(keys[i], &output);
       client.SendKey(keys[i], &output);
     }
   }
-  client.DeleteSession();
 
-  return 0;
+  EXPECT_TRUE(client.CleanUp());
+
+
+  EXPECT_TRUE(client.DeleteSession());
 }
+}  // namespae mozc

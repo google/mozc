@@ -31,15 +31,17 @@
 #define MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
 
 #include <map>
+#include <ostream>
 #include <string>
 #include <vector>
 
 #include "base/base.h"
-#include "dictionary/rx/rx_trie_builder.h"
 #include "dictionary/rx/rbx_array_builder.h"
+#include "dictionary/rx/rx_trie_builder.h"
 #include "dictionary/system/words_info.h"
 
 namespace mozc {
+struct DictionaryFileSection;
 struct Token;
 namespace dictionary {
 class SystemDictionaryCodecInterface;
@@ -53,6 +55,8 @@ class SystemDictionaryBuilder {
   void BuildFromTokens(const vector<Token *> &tokens);
 
   void WriteToFile(const string &output_file) const;
+  void WriteToStream(const string &intermediate_output_file_base_path,
+                     ostream *output_stream) const;
 
  private:
   typedef map<string, KeyInfo> KeyInfoMap;
@@ -61,16 +65,12 @@ class SystemDictionaryBuilder {
                   KeyInfoMap *key_info_map) const;
 
   void BuildFrequentPos(const KeyInfoMap &key_info_map);
-  void WriteFrequentPos(const string &file) const;
 
   void BuildValueTrie(const KeyInfoMap &key_info_map);
-  void WriteValueTrie(const string &file) const;
 
   void BuildKeyTrie(const KeyInfoMap &key_info_map);
-  void WriteKeyTrie(const string &file) const;
 
   void BuildTokenArray(const KeyInfoMap &key_info_map);
-  void WriteTokenArray(const string &file) const;
 
   void SetIdForValue(KeyInfoMap *key_info_map) const;
   void SetIdForKey(KeyInfoMap *key_info_map) const;

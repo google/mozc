@@ -38,6 +38,10 @@
 #include "testing/base/public/gunit_prod.h"
 #include "unix/ibus/engine_interface.h"
 
+#if !defined(OS_CHROMEOS) && IBUS_CHECK_VERSION(1, 2, 1)
+#define USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+#endif  // !OS_CHROMEOS && libibus (>=1.2.1)
+
 namespace mozc {
 
 namespace client {
@@ -181,6 +185,12 @@ class MozcEngine : public EngineInterface {
   scoped_ptr<KeyTranslator> key_translator_;
   scoped_ptr<client::ClientInterface> client_;
 
+#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+  // A flag to avoid reverting session after deleting surrounding text.
+  // This is a workaround.  See the implementation of ProcessKeyEvent().
+  bool ignore_reset_for_deletion_range_workaround_;
+#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+
   IBusPropList *prop_root_;
   IBusProperty *prop_composition_mode_;
   IBusProperty *prop_mozc_tool_;
@@ -195,10 +205,6 @@ class MozcEngine : public EngineInterface {
   set<gint> currently_pressed_modifiers_;
   // Pending modifier keys.
   set<commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
-
-  // A flag to avoid reverting session after deleting surrounding text.
-  // This is a workaround.  See the implementation of ProcessKeyEvent().
-  bool ignore_reset_for_deletion_range_workaround_;
 
   friend class LaunchToolTest;
   FRIEND_TEST(LaunchToolTest, LaunchToolTest);

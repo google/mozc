@@ -41,10 +41,11 @@
 #include <string>
 
 #include "base/base.h"
-#include "base/singleton.h"
-#include "base/util.h"
 #include "base/flags.h"
 #include "base/mmap.h"
+#include "base/singleton.h"
+#include "base/trie.h"
+#include "base/util.h"
 #include "converter/node.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/dictionary_file.h"
@@ -102,7 +103,8 @@ SystemDictionary::SystemDictionary()
       token_array_(new rx::RbxArray),
       dictionary_file_(new DictionaryFile),
       frequent_pos_(NULL),
-      codec_(dictionary::SystemDictionaryCodecFactory::GetCodec()) {}
+      codec_(dictionary::SystemDictionaryCodecFactory::GetCodec()),
+      empty_limit_(Limit()) {}
 
 SystemDictionary::~SystemDictionary() {}
 
@@ -194,8 +196,9 @@ bool SystemDictionary::OpenDictionaryFile() {
   return true;
 }
 
-Node *SystemDictionary::LookupPredictive(
+Node *SystemDictionary::LookupPredictiveWithLimit(
     const char *str, int size,
+    const Limit &lookup_limit,
     NodeAllocatorInterface *allocator) const {
   string lookup_key_str;
   codec_->EncodeKey(string(str, size), &lookup_key_str);
@@ -234,8 +237,18 @@ Node *SystemDictionary::LookupPredictive(
     }
   }
 
+  filter.key_len_lower_limit = lookup_limit.key_len_lower_limit;
+  if (lookup_limit.begin_with_trie != NULL) {
+    filter.key_begin_with_pos = size;
+    filter.key_begin_with_trie = lookup_limit.begin_with_trie;
+  }
   return GetNodesFromLookupResults(
       filter, results, allocator, &limit);
+}
+
+Node *SystemDictionary::LookupPredictive(
+    const char *str, int size, NodeAllocatorInterface *allocator) const {
+  return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
 }
 
 Node *SystemDictionary::LookupPrefixWithLimit(
@@ -261,6 +274,13 @@ Node *SystemDictionary::LookupPrefixWithLimit(
       filter, results, allocator, &limit);
 }
 
+Node *SystemDictionary::LookupPrefix(
+    const char *str, int size,
+    NodeAllocatorInterface *allocator) const {
+  // default limit
+  return LookupPrefixWithLimit(str, size, empty_limit_, allocator);
+}
+
 Node *SystemDictionary::GetNodesFromLookupResults(
     const FilterInfo &filter,
     const vector<rx::RxEntry> &results,
@@ -283,6 +303,19 @@ Node *SystemDictionary::GetNodesFromLookupResults(
     }
     if (tokens_key.size() > filter.key_len_upper_limit) {
       continue;
+    }
+
+    // filter by begin with list
+    if (filter.key_begin_with_pos >= 0 &&
+        filter.key_begin_with_trie != NULL) {
+      string value;
+      size_t key_length = 0;
+      bool has_subtrie = false;
+      if (!filter.key_begin_with_trie->LookUpPrefix(
+              tokens_key.data() + filter.key_begin_with_pos,
+              &value, &key_length, &has_subtrie)) {
+        continue;
+      }
     }
 
     // gets tokens block of this key.
@@ -329,13 +362,13 @@ Node *SystemDictionary::AppendNodesFromTokens(
 
     FillTokenInfo(tokens_key, key_katakana, prev_token_info, token_info);
 
-    if (IsBadToken(filter, *token_info)) {
-      continue;
-    }
-
     if (token_info->value_type == dictionary::TokenInfo::DEFAULT_VALUE) {
       // Actual lookup here
       LookupValue(token_info);
+    }
+
+    if (IsBadToken(filter, *token_info)) {
+      continue;
     }
 
     if (*limit == -1 || *limit > 0) {
@@ -607,7 +640,7 @@ Node *SystemDictionary::GetNodesFromReverseLookupResults(
         break;
       }
 
-      const ReverseLookupResult reverse_result = result_itr->second;
+      const ReverseLookupResult &reverse_result = result_itr->second;
 
       tokens.clear();
       codec_->DecodeTokens(

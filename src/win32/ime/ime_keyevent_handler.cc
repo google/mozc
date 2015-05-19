@@ -693,10 +693,10 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
   // We do not handle key message unless the key is one of force activation
   // keys.
   if (!ime_state.open) {
-    // TODO(yukawa): Treat VK_PACKET as a force actiovation key.
-    const bool is_force_activation_key =
-        is_key_down && config::ImeSwitchUtil::IsTurnOnInDirectMode(*key);
-    if (!is_force_activation_key) {
+    // TODO(yukawa): Treat VK_PACKET as a direct mode key.
+    const bool is_direct_mode_command =
+        is_key_down && config::ImeSwitchUtil::IsDirectModeCommand(*key);
+    if (!is_direct_mode_command) {
       result.succeeded = true;
       result.should_be_eaten = false;
       result.should_be_sent_to_server = false;

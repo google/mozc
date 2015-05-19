@@ -31,6 +31,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "languages/hangul/session.h"
+#include "session/key_event_util.h"
 #include "session/key_parser.h"
 #include "testing/base/public/gunit.h"
 
@@ -179,7 +180,7 @@ class HangulSessionTest : public ::testing::Test {
     return session_->hanja_lock_preedit_;
   }
 
-  const set<keymap::Key> &SessionGetHanjaKeySet() {
+  const set<KeyInformation> &SessionGetHanjaKeySet() {
     return session_->hanja_key_set_;
   }
 
@@ -773,23 +774,23 @@ TEST_F(HangulSessionTest, HanjaKeyMapTest) {
   SessionUpdateConfig(hangul_config);
   SessionResetConfig();
 
-  keymap::Key key;
+  KeyInformation key;
   commands::KeyEvent key_event;
 
   KeyParser::ParseKey("Ctrl 9", &key_event);
-  keymap::GetKey(key_event, &key);
+  KeyEventUtil::GetKeyInformation(key_event, &key);
   EXPECT_NE(SessionGetHanjaKeySet().end(), SessionGetHanjaKeySet().find(key));
 
   KeyParser::ParseKey("F9", &key_event);
-  keymap::GetKey(key_event, &key);
+  KeyEventUtil::GetKeyInformation(key_event, &key);
   EXPECT_NE(SessionGetHanjaKeySet().end(), SessionGetHanjaKeySet().find(key));
 
   KeyParser::ParseKey("F10", &key_event);
-  keymap::GetKey(key_event, &key);
+  KeyEventUtil::GetKeyInformation(key_event, &key);
   EXPECT_NE(SessionGetHanjaKeySet().end(), SessionGetHanjaKeySet().find(key));
 
   KeyParser::ParseKey("F7", &key_event);
-  keymap::GetKey(key_event, &key);
+  KeyEventUtil::GetKeyInformation(key_event, &key);
   EXPECT_EQ(SessionGetHanjaKeySet().end(), SessionGetHanjaKeySet().find(key));
 
   EXPECT_TRUE(SendKey("e", session_, &command));

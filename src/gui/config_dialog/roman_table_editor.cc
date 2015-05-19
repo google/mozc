@@ -83,7 +83,7 @@ RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)
 RomanTableEditorDialog::~RomanTableEditorDialog() {}
 
 string RomanTableEditorDialog::GetDefaultRomanTable() {
-  scoped_ptr<istream> ifs(ConfigFileStream::Open(kRomanTableFile));
+  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != NULL);  // should never happen
   string line, result;
   vector<string> fields;
@@ -148,12 +148,11 @@ bool RomanTableEditorDialog::LoadFromStream(istream *is) {
     mutable_table_widget()->setItem(row, 2, pending);
     ++row;
 
-    if (row >= GenericTableEditorDialog::max_entry_size()) {
+    if (row >= max_entry_size()) {
       QMessageBox::warning(
           this,
           tr("Mozc settings"),
-          tr("You can't have more than %1 entries").arg(
-              GenericTableEditorDialog::max_entry_size()));
+          tr("You can't have more than %1 entries").arg(max_entry_size()));
       break;
     }
   }
@@ -164,7 +163,7 @@ bool RomanTableEditorDialog::LoadFromStream(istream *is) {
 }
 
 bool RomanTableEditorDialog::LoadDefaultRomanTable() {
-  scoped_ptr<istream> ifs(ConfigFileStream::Open(kRomanTableFile));
+  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != NULL);  // should never happen
   CHECK(LoadFromStream(ifs.get()));
   return true;

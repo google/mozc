@@ -402,7 +402,7 @@ bool UserDictionarySyncUtil::MergeUpdates(
   return true;
 }
 
-bool UserDictionarySyncUtil::LockAndSaveStorage(
+bool UserDictionarySyncUtil::VerifyLockAndSaveStorage(
     UserDictionaryStorage *storage) {
   DCHECK(storage);
 
@@ -420,11 +420,18 @@ bool UserDictionarySyncUtil::LockAndSaveStorage(
     }
   }
 
+  return LockAndSaveStorage(storage);
+}
+
+bool UserDictionarySyncUtil::LockAndSaveStorage(
+    UserDictionaryStorage *storage) {
+  DCHECK(storage);
+
   if (!storage->Lock()) {
     LOG(ERROR) << "cannot lock the storage: " << storage->filename();
     return false;
   }
-  if (!storage->Save()) {
+  if (!storage->SaveCore()) {
     LOG(ERROR) << "cannot save the storage: " << storage->filename();
     storage->UnLock();
     return false;

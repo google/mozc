@@ -1,0 +1,17 @@
+status	key	command
+Precomposition	Space	InsertSpace
+Precomposition	Backspace	Revert
+Precomposition	Ctrl Backspace	Undo
+Composition	Backspace	Backspace
+Composition	Delete	Delete
+Composition	Enter	Commit
+Composition	ESC	Cancel
+Composition	Left	MoveCursorLeft
+Composition	Right	MoveCursorRight
+Composition	Space	Convert
+Conversion	Backspace	Cancel
+Conversion	Enter	CommitOnlyFirstSegment
+Conversion	ESC	Cancel
+Conversion	Left	SegmentWidthShrink
+Conversion	Right	SegmentWidthExpand
+Conversion	Space	ConvertNext

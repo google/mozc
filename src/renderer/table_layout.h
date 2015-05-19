@@ -35,6 +35,7 @@
 
 #include "base/base.h"
 #include "base/coordinates.h"
+#include "renderer/table_layout_interface.h"
 
 namespace mozc {
 namespace renderer {
@@ -108,7 +109,7 @@ namespace renderer {
 //     11111
 //     .....
 
-class TableLayout {
+class TableLayout : public TableLayoutInterface {
  public:
   TableLayout();
 

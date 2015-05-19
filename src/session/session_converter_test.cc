@@ -78,7 +78,7 @@ class SessionConverterTest : public testing::Test {
     table_.reset(new composer::Table);
     table_->Initialize();
     composer_.reset(new composer::Composer);
-    composer_->SetTable(table_.get());
+    composer_->SetTableForUnittest(table_.get());
 
     // "あいうえお"
     aiueo_ = "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a";
@@ -283,6 +283,16 @@ class SessionConverterTest : public testing::Test {
     EXPECT_EQ(result_lhs.type(), result_rhs.type());
     EXPECT_EQ(result_lhs.value(), result_rhs.value());
     EXPECT_EQ(result_lhs.key(), result_rhs.key());
+  }
+
+  static void SetCommandCandidate(
+      Segments *segments, int segment_index, int canidate_index,
+      Segment::Candidate::COMMAND command) {
+    segments->mutable_conversion_segment(segment_index)
+        ->mutable_candidate(canidate_index)->attributes
+            |= Segment::Candidate::COMMAND_CANDIDATE;
+    segments->mutable_conversion_segment(segment_index)
+        ->mutable_candidate(canidate_index)->command = command;
   }
 
   scoped_ptr<ConverterMock> convertermock_;
@@ -1286,6 +1296,75 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
   // "かまぼこの"
   EXPECT_EQ(Util::CharsLen(kKamabokono), size);
   EXPECT_TRUE(converter.IsActive());
+}
+
+TEST_F(SessionConverterTest, CommitPreeditString) {
+  {
+    SessionConverter converter(convertermock_.get());
+    composer_->Reset();
+    converter.CommitPreeditString(kChars_Mozuku, "Mozc");
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+
+    {  // Check the result
+      commands::Output output;
+      converter.FillOutput(*composer_, &output);
+      EXPECT_TRUE(output.has_result());
+      EXPECT_FALSE(output.has_preedit());
+      EXPECT_FALSE(output.has_candidates());
+
+      const commands::Result &result = output.result();
+      EXPECT_EQ("Mozc", result.value());
+      EXPECT_EQ(kChars_Mozuku, result.key());
+    }
+    EXPECT_FALSE(converter.IsActive());
+  }
+
+  // CommitPreeditString never normalizes text.
+  {
+    SessionConverter converter(convertermock_.get());
+    composer_->Reset();
+    // "ゔ"
+    const char kInput[] = "\xE3\x82\x94";
+    converter.CommitPreeditString(kInput, kInput);
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+
+    {  // Check the result
+      commands::Output output;
+      converter.FillOutput(*composer_, &output);
+      EXPECT_TRUE(output.has_result());
+      EXPECT_FALSE(output.has_preedit());
+      EXPECT_FALSE(output.has_candidates());
+
+      const commands::Result &result = output.result();
+      EXPECT_EQ(kInput, result.value());
+      EXPECT_EQ(kInput, result.key());
+    }
+    EXPECT_FALSE(converter.IsActive());
+  }
+
+  // CommitPreeditString does not normalize vender specific character.
+  // Check "CENT SIGN (U+00A2)" for Windows.
+  {
+    SessionConverter converter(convertermock_.get());
+    composer_->Reset();
+    // CENT SIGN (U+00A2)
+    const char kCentSign[] = "\xC2\xA2";
+    converter.CommitPreeditString(kCentSign, kCentSign);
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+
+    {  // Check the result
+      commands::Output output;
+      converter.FillOutput(*composer_, &output);
+      EXPECT_TRUE(output.has_result());
+      EXPECT_FALSE(output.has_preedit());
+      EXPECT_FALSE(output.has_candidates());
+
+      const commands::Result &result = output.result();
+      EXPECT_EQ(kCentSign, result.value());
+      EXPECT_EQ(kCentSign, result.key());
+    }
+    EXPECT_FALSE(converter.IsActive());
+  }
 }
 
 TEST_F(SessionConverterTest, CommitPreedit) {
@@ -2629,8 +2708,7 @@ TEST_F(SessionConverterTest, CommandCandidate) {
   SetAiueo(&segments);
   FillT13Ns(&segments, composer_.get());
   // set COMMAND_CANDIDATE.
-  segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes |=
-      Segment::Candidate::COMMAND_CANDIDATE;
+  SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
   convertermock_->SetStartConversionWithComposer(&segments, true);
 
   composer_->InsertCharacterPreedit(aiueo_);
@@ -2655,8 +2733,8 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     SessionConverter converter(convertermock_.get());
     Segments segments;
     SetKamaboko(&segments);
-    segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes =
-        Segment::Candidate::COMMAND_CANDIDATE;
+    SetCommandCandidate(&segments, 0, 0,
+                        Segment::Candidate::DEFAULT_COMMAND);
     convertermock_->SetStartConversionWithComposer(&segments, true);
     converter.Convert(*composer_);
 
@@ -2676,9 +2754,8 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     SessionConverter converter(convertermock_.get());
     Segments segments;
     SetKamaboko(&segments);
-
-    segments.mutable_conversion_segment(1)->mutable_candidate(0)->attributes =
-        Segment::Candidate::COMMAND_CANDIDATE;
+    SetCommandCandidate(&segments, 1, 0,
+                        Segment::Candidate::DEFAULT_COMMAND);
     convertermock_->SetStartConversionWithComposer(&segments, true);
     converter.Convert(*composer_);
 
@@ -2697,9 +2774,8 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     SessionConverter converter(convertermock_.get());
     Segments segments;
     SetAiueo(&segments);
-
-    segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes =
-        Segment::Candidate::COMMAND_CANDIDATE;
+    SetCommandCandidate(&segments, 0, 0,
+                        Segment::Candidate::DEFAULT_COMMAND);
     convertermock_->SetStartSuggestionWithComposer(&segments, true);
     converter.Suggest(*composer_);
 
@@ -2714,9 +2790,8 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     SessionConverter converter(convertermock_.get());
     Segments segments;
     SetAiueo(&segments);
-
-    segments.mutable_conversion_segment(0)->mutable_candidate(1)->attributes =
-        Segment::Candidate::COMMAND_CANDIDATE;
+    SetCommandCandidate(&segments, 0, 1,
+                        Segment::Candidate::DEFAULT_COMMAND);
     convertermock_->SetStartSuggestionWithComposer(&segments, true);
     converter.Suggest(*composer_);
 
@@ -2727,5 +2802,174 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
   }
 }
 
+TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
+  // Enable Incognito mode
+  {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_incognito_mode(false);
+    config::ConfigHandler::SetConfig(config);
+
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetAiueo(&segments);
+    SetCommandCandidate(&segments, 0, 0,
+                        Segment::Candidate::ENABLE_INCOGNITO_MODE);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+
+    composer_->InsertCharacterPreedit(aiueo_);
+    EXPECT_TRUE(converter.Convert(*composer_));
+
+    converter.Commit();
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+
+    config::ConfigHandler::GetConfig(&config);
+    EXPECT_TRUE(config.incognito_mode())
+        << "Incognito mode should be enabled.";
+  }
+
+  // Disable Incognito mode
+  {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_incognito_mode(true);
+    config::ConfigHandler::SetConfig(config);
+
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetAiueo(&segments);
+    SetCommandCandidate(&segments, 0, 0,
+                        Segment::Candidate::DISABLE_INCOGNITO_MODE);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+
+    composer_->InsertCharacterPreedit(aiueo_);
+    EXPECT_TRUE(converter.Convert(*composer_));
+
+    converter.Commit();
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+
+    config::ConfigHandler::GetConfig(&config);
+    EXPECT_FALSE(config.incognito_mode())
+        << "Incognito mode should be disabled.";
+  }
+
+  // Enable Presentation mode
+  {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_presentation_mode(false);
+    config::ConfigHandler::SetConfig(config);
+
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetAiueo(&segments);
+    SetCommandCandidate(&segments, 0, 0,
+                        Segment::Candidate::ENABLE_PRESENTATION_MODE);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+
+    composer_->InsertCharacterPreedit(aiueo_);
+    EXPECT_TRUE(converter.Convert(*composer_));
+
+    converter.Commit();
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+
+    config::ConfigHandler::GetConfig(&config);
+    EXPECT_TRUE(config.presentation_mode())
+        << "Presentation mode should be enabled.";
+  }
+
+  // Disable Presentation mode
+  {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_incognito_mode(true);
+    config::ConfigHandler::SetConfig(config);
+
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetAiueo(&segments);
+    SetCommandCandidate(&segments, 0, 0,
+                        Segment::Candidate::DISABLE_PRESENTATION_MODE);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+
+    composer_->InsertCharacterPreedit(aiueo_);
+    EXPECT_TRUE(converter.Convert(*composer_));
+
+    converter.Commit();
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+
+    config::ConfigHandler::GetConfig(&config);
+    EXPECT_FALSE(config.presentation_mode())
+        << "Presentation mode should be disabled.";
+  }
+}
+
+TEST_F(SessionConverterTest, PropageteConfigToRenderer) {
+  // Disable information_list_config()
+  {
+    config::Config config;
+    config::ConfigHandler::SetConfig(config);
+
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+
+    commands::Output output;
+    composer_->InsertCharacterPreedit(aiueo_);
+    converter.Convert(*composer_);
+
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+    output.Clear();
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_config());
+
+    converter.CandidateNext(*composer_);
+    EXPECT_TRUE(converter.IsCandidateListVisible());
+    output.Clear();
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_config());
+  }
+
+  // Enable information_list_config()
+  {
+    config::Config config;
+    config.mutable_information_list_config()
+        ->set_use_web_usage_dictionary(true);
+    config.mutable_information_list_config()
+        ->add_web_service_entries();
+    config::ConfigHandler::SetConfig(config);
+
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+
+    commands::Output output;
+    composer_->InsertCharacterPreedit(aiueo_);
+    converter.Convert(*composer_);
+
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+    output.Clear();
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_config());
+
+    converter.CandidateNext(*composer_);
+    EXPECT_TRUE(converter.IsCandidateListVisible());
+    output.Clear();
+    converter.FillOutput(*composer_, &output);
+    EXPECT_TRUE(output.has_config());
+  }
+}
 }  // namespace session
 }  // namespace mozc

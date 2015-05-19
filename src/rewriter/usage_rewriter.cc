@@ -28,6 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/usage_rewriter.h"
@@ -147,6 +149,16 @@ const UsageDictItem* UsageRewriter::LookupUsage(
 
 bool UsageRewriter::Rewrite(Segments *segments) const {
   DLOG(INFO) << segments->DebugString();
+
+  const config::Config &config = config::ConfigHandler::GetConfig();
+  // Default value of use_local_usage_dictionary() is true.
+  // So if information_list_config() is not available in the config,
+  // we don't need to return false here.
+  if (config.has_information_list_config() &&
+      !config.information_list_config().use_local_usage_dictionary()) {
+    return false;
+  }
+
   bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);

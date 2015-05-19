@@ -324,7 +324,7 @@ void GenericTableEditorDialog::UpdateOKButton(bool status) {
   }
 }
 
-size_t GenericTableEditorDialog::max_entry_size() {
+size_t GenericTableEditorDialog::max_entry_size() const {
   return kMaxEntrySize;
 }
 

@@ -113,6 +113,14 @@ TEST_F(RxTrieTest, BasicTest) {
     trie.ReverseLookup(a_id, &key);
     EXPECT_EQ("a", key);
   }
+  {
+    const int id = trie.GetIdFromKey("a");
+    EXPECT_EQ(a_id, id);
+  }
+  {
+    const int id = trie.GetIdFromKey("x");
+    EXPECT_EQ(-1, id);
+  }
 }
 
 struct CmpRxEntry {
@@ -129,11 +137,10 @@ TEST_F(RxTrieTest, RandomTest) {
   const int kTestSize = 1000000;
   hash_map<string, int> inserted;
   {
-    srand(0);
+    Util::SetRandomSeed(0);
     RxTrieBuilder builder;
     for (size_t i = 0; i < kTestSize; ++i) {
-      const string key = Util::SimpleItoa(
-          static_cast<int>(kTestSize * (1.0 * rand() / RAND_MAX)));
+      const string key = Util::SimpleItoa(Util::Random(kTestSize));
       builder.AddKey(key);
       inserted.insert(make_pair(key, -1));
     }
@@ -173,6 +180,8 @@ TEST_F(RxTrieTest, RandomTest) {
       string key;
       trie.ReverseLookup(results[i].id, &key);
       EXPECT_EQ(results[i].key, key);
+      const int id = trie.GetIdFromKey(results[i].key);
+      EXPECT_EQ(results[i].id, id);
     }
   }
   {
@@ -198,17 +207,20 @@ TEST_F(RxTrieTest, RandomTest) {
       string key;
       trie.ReverseLookup(results[i].id, &key);
       EXPECT_EQ(results[i].key, key);
+      const int id = trie.GetIdFromKey(results[i].key);
+      EXPECT_EQ(results[i].id, id);
     }
   }
   {
     for (size_t i = 0; i < (kTestSize / 1000); ++i) {
-      const string test_key = Util::SimpleItoa(
-          static_cast<int>(kTestSize * (1.0 * rand() / RAND_MAX)));
+      const string test_key = Util::SimpleItoa(Util::Random(kTestSize));
       const hash_map<string, int>::const_iterator itr = inserted.find(test_key);
       string key;
       if (itr != inserted.end()) {
         trie.ReverseLookup(itr->second, &key);
         EXPECT_EQ(itr->first, key);
+        const int id = trie.GetIdFromKey(itr->first);
+        EXPECT_EQ(itr->second, id);
       }
     }
   }
@@ -219,7 +231,7 @@ TEST_F(RxTrieTest, LimitTest) {
   const int kLimit = 3;
   hash_map<string, int> inserted;
   {
-    srand(0);
+    Util::SetRandomSeed(0);
     RxTrieBuilder builder;
     for (size_t i = 0; i < kTestSize; ++i) {
       const string key = string(i + 1, '1');
@@ -263,6 +275,8 @@ TEST_F(RxTrieTest, LimitTest) {
       string key;
       trie.ReverseLookup(results[i].id, &key);
       EXPECT_EQ(results[i].key, key);
+      const int id = trie.GetIdFromKey(results[i].key);
+      EXPECT_EQ(results[i].id, id);
     }
   }
   {
@@ -289,6 +303,8 @@ TEST_F(RxTrieTest, LimitTest) {
       string key;
       trie.ReverseLookup(results[i].id, &key);
       EXPECT_EQ(results[i].key, key);
+      const int id = trie.GetIdFromKey(results[i].key);
+      EXPECT_EQ(results[i].id, id);
     }
   }
 }

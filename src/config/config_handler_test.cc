@@ -35,6 +35,7 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
+DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
@@ -59,6 +60,23 @@ class ConfigHandlerTest : public testing::Test {
   string default_config_filename_;
 };
 
+class ScopedSetConfigFileName {
+ public:
+  explicit ScopedSetConfigFileName(const string &new_name)
+      : default_config_filename_(config::ConfigHandler::GetConfigFileName()) {
+    config::ConfigHandler::SetConfigFileName(new_name);
+  }
+
+  ~ScopedSetConfigFileName() {
+    config::ConfigHandler::SetConfigFileName(default_config_filename_);
+  }
+
+ private:
+  string default_config_filename_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ScopedSetConfigFileName);
+};
+
 TEST_F(ConfigHandlerTest, SetConfig) {
   config::Config input;
   config::Config output;
@@ -66,9 +84,10 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
                                             "mozc_config_test_tmp");
   Util::Unlink(config_file);
-  config::ConfigHandler::SetConfigFileName(config_file);
+  ScopedSetConfigFileName scoped_config_file_name(config_file);
   EXPECT_EQ(config_file, config::ConfigHandler::GetConfigFileName());
-  config::ConfigHandler::Reload();
+  ASSERT_TRUE(config::ConfigHandler::Reload())
+      << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
 
   config::ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(true);
@@ -108,8 +127,9 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
   const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
                                             "mozc_config_test_tmp");
   Util::Unlink(config_file);
-  config::ConfigHandler::SetConfigFileName(config_file);
-  config::ConfigHandler::Reload();
+  ScopedSetConfigFileName scoped_config_file_name(config_file);
+  ASSERT_TRUE(config::ConfigHandler::Reload())
+      << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
 
   struct Testcase {
     bool stored_config_value;
@@ -151,7 +171,8 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     EXPECT_EQ(stored_config_value, output.incognito_mode());
 
     // Reload and check.
-    config::ConfigHandler::Reload();
+    ASSERT_TRUE(config::ConfigHandler::Reload())
+        << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
     output.Clear();
     EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
     EXPECT_EQ(expected, output.incognito_mode());
@@ -193,10 +214,51 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   mozc_config.mutable_hangul_config()->set_keyboard_type(
       config::HangulConfig::KEYBOARD_SebeolsikFinal);
   config::ConfigHandler::SetConfig(mozc_config);
-  config::ConfigHandler::SetConfigFileName("memory://hangul_config.test.db");
+  // ScopedSetConfigFileName internally calls SetConfigFileName.
+  ScopedSetConfigFileName scoped_config_file_name(
+      "memory://hangul_config.test.db");
   // After SetConfigFileName called, settings are set as default.
   EXPECT_EQ(config::HangulConfig::KEYBOARD_Dubeolsik,
             GET_CONFIG(hangul_config).keyboard_type());
+}
+
+// Temporarily disable this test because Util::CopyFile fails on
+// Android for some reason.
+// TODO(yukawa): Enable this test on Android.
+TEST_F(ConfigHandlerTest, LoadTestConfig) {
+  const char kPathPrefix[] = "";
+  const char KDataDir[] = "data/test/config";
+  // TODO(yukawa): Generate test data automatically so that we can keep
+  //     the compatibility among variety of config files.
+  // TODO(yukawa): Enumerate test data in the directory automatically.
+  const char *kDataFiles[] = {
+    "linux_config1.db",
+    "mac_config1.db",
+    "win_config1.db",
+  };
+
+  for (size_t i = 0; i < arraysize(kDataFiles); ++i) {
+    const char *file_name = kDataFiles[i];
+    const string &src_path = Util::JoinPath(
+        Util::JoinPath(FLAGS_test_srcdir, kPathPrefix),
+        Util::JoinPath(KDataDir, file_name));
+    const string &dest_path = Util::JoinPath(
+        Util::GetUserProfileDirectory(), file_name);
+    ASSERT_TRUE(Util::CopyFile(src_path, dest_path));
+
+    ScopedSetConfigFileName scoped_config_file_name(
+        "user://" + string(file_name));
+    ASSERT_TRUE(config::ConfigHandler::Reload())
+        << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
+
+    config::Config default_config;
+    EXPECT_TRUE(config::ConfigHandler::GetConfig(&default_config))
+        << "failed to GetConfig from: " << file_name;
+
+    // Remove test file just in case.
+    ASSERT_TRUE(Util::Unlink(dest_path));
+    EXPECT_FALSE(Util::FileExists(dest_path));
+  }
 }
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {

@@ -418,12 +418,48 @@ TEST_F(KeyTranslatorTest, TranslateUnknow) {
 }
 
 TEST_F(KeyTranslatorTest, TranslateModiferOnly) {
-  // Just tap shift key
   commands::KeyEvent out;
+
+  // Just tap left_shift key
   EXPECT_TRUE(translator_->Translate(
       IBUS_Shift_L, 0, 0, config::Config::ROMAN, true, &out));
   EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+  EXPECT_EQ(commands::KeyEvent::LEFT_SHIFT, out.modifier_keys(0));
+
+  // Just tap right_shift key
+  out.Clear();
+  EXPECT_TRUE(translator_->Translate(
+      IBUS_Shift_R, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::RIGHT_SHIFT, out.modifier_keys(0));
+
+  // Just tap left_ctrl key
+  out.Clear();
+  EXPECT_TRUE(translator_->Translate(
+      IBUS_Control_L, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::LEFT_CTRL, out.modifier_keys(0));
+
+  // Just tap right_ctrl key
+  out.Clear();
+  EXPECT_TRUE(translator_->Translate(
+      IBUS_Control_R, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::RIGHT_CTRL, out.modifier_keys(0));
+
+  // Just tap left_alt key
+  out.Clear();
+  EXPECT_TRUE(translator_->Translate(
+      IBUS_Alt_L, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::LEFT_ALT, out.modifier_keys(0));
+
+  // Just tap right_alt key
+  out.Clear();
+  EXPECT_TRUE(translator_->Translate(
+      IBUS_Alt_R, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::RIGHT_ALT, out.modifier_keys(0));
 }
 
 }  // namespace ibus

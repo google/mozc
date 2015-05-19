@@ -33,14 +33,25 @@
       'target_name': 'testing',
       'type': 'static_library',
       'sources': [
-        '<(DEPTH)/third_party/gtest/src/gtest.cc',
+        '<(DEPTH)/third_party/gmock/src/gmock-cardinalities.cc',
+        '<(DEPTH)/third_party/gmock/src/gmock-internal-utils.cc',
+        '<(DEPTH)/third_party/gmock/src/gmock-matchers.cc',
+        '<(DEPTH)/third_party/gmock/src/gmock-spec-builders.cc',
+        '<(DEPTH)/third_party/gmock/src/gmock.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-death-test.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-filepath.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-port.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-printers.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-test-part.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-typed-test.cc',
+        '<(DEPTH)/third_party/gtest/src/gtest.cc',
       ],
+      'include_dirs': [
+        '<(DEPTH)/third_party/gmock',
+        '<(DEPTH)/third_party/gmock/include',
+        '<(DEPTH)/third_party/gtest',
+        '<(DEPTH)/third_party/gtest/include',
+      ]
     },
     {
       'target_name': 'gtest_main',
@@ -51,27 +62,17 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        'testing',
       ],
       'conditions': [
-        ['OS!="linux"', {
-          'dependencies': [
-            'testing',
-          ],
-        }, {  # OS=="linux"
-          'conditions': [
-            ['use_libgtest==1', {
-              'link_settings': {
-                'libraries': [
-                  # NOTE(komatsu): Nice to use pkg-config when it is available.
-                  '-lgtest',
-                ],
+        ['OS=="win"', {
+          'direct_dependent_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'SubSystem': '1',  # 1 == subSystemConsole
               },
-            }, {  # OS=="linux" and use_libgtest!="YES"
-              'dependencies': [
-                'testing',
-              ],
-            }],
-          ],
+            },
+          },
         }],
       ],
     },

@@ -38,7 +38,10 @@
 #include "languages/global_language_spec.h"
 #include "languages/japanese/lang_dep_spec.h"
 #include "net/http_client_mock.h"
+#include "sync/oauth2_client.h"
+#include "sync/oauth2_util.h"
 #include "sync/sync_handler.h"
+#include "sync/sync_status_manager.h"
 #include "sync/syncer_interface.h"
 #include "testing/base/public/gunit.h"
 
@@ -430,5 +433,58 @@ TEST_F(SyncHandlerTest, MinIntervalTest) {
     SyncHandler::Wait();
   }
 }
+
+TEST_F(SyncHandlerTest, AuthorizationFailedTest) {
+  const char kCorrectAuthToken[] = "a_correct_token";
+  const char kWrongAuthToken[] = "a_wrong_token";
+
+  // Set up environment
+  const OAuth2Client *oauth2_client = OAuth2Client::GetDefaultClient();
+  OAuth2Util oauth2_util(oauth2_client);
+  vector<pair<string, string> > params;
+  params.push_back(make_pair("grant_type", "authorization_code"));
+  params.push_back(make_pair("client_id", oauth2_client->client_id_));
+  params.push_back(make_pair("client_secret", oauth2_client->client_secret_));
+  params.push_back(make_pair("redirect_uri",
+                             oauth2_util.redirect_uri_for_unittest()));
+  params.push_back(make_pair("code", kCorrectAuthToken));
+  params.push_back(make_pair("scope", oauth2_util.scope_for_unittest()));
+
+  HTTPClientMock::Result expect_result;
+  expect_result.expected_url = oauth2_util.request_token_uri_for_unittest();
+  Util::AppendCGIParams(params, &expect_result.expected_request);
+  expect_result.expected_result = "{\"access_token\":\"1/correct_token\","
+      "\"token_type\":\"Bearer\"}";
+
+  HTTPClientMock client_mock;
+  client_mock.set_result(expect_result);
+  HTTPClient::SetHTTPClientHandler(&client_mock);
+
+  // Authorization is expected to succeed.
+  {
+    commands::Input::AuthorizationInfo auth_info;
+    auth_info.set_auth_code(kCorrectAuthToken);
+    SyncHandler::SetAuthorization(auth_info);
+    commands::CloudSyncStatus sync_status;
+    SyncHandler::GetCloudSyncStatus(&sync_status);
+    EXPECT_EQ(commands::CloudSyncStatus::INSYNC,
+              sync_status.global_status());
+  }
+
+  // Authorization is expected to fail.
+  {
+    commands::Input::AuthorizationInfo auth_info;
+    auth_info.set_auth_code(kWrongAuthToken);
+    SyncHandler::SetAuthorization(auth_info);
+    commands::CloudSyncStatus sync_status;
+    SyncHandler::GetCloudSyncStatus(&sync_status);
+    EXPECT_EQ(commands::CloudSyncStatus::NOSYNC,
+              sync_status.global_status());
+    EXPECT_EQ(1, sync_status.sync_errors_size());
+    EXPECT_EQ(commands::CloudSyncStatus::AUTHORIZATION_FAIL,
+              sync_status.sync_errors(0).error_code());
+  }
+}
+
 }  // sync
 }  // mozc

@@ -36,6 +36,7 @@
 #include "storage/registry.h"
 #include "sync/adapter_interface.h"
 #include "sync/config_adapter.h"
+#include "sync/logging.h"
 #include "sync/mock_syncer.h"
 #include "sync/oauth2_client.h"
 #include "sync/oauth2_util.h"
@@ -98,13 +99,14 @@ bool Syncer::RegisterAdapter(AdapterInterface *adapter) {
 }
 
 bool Syncer::Sync(bool *reload_required) {
+  SYNC_VLOG(1) << "start Syncer::Sync";
   if (!Download(reload_required)) {
-    LOG(ERROR) << "Download failed";
+    SYNC_VLOG(1) << "Download failed";
     return false;
   }
 
   if (!Upload()) {
-    LOG(ERROR) << "Upload failed";
+    SYNC_VLOG(1)  << "Upload failed";
     return false;
   }
 
@@ -112,9 +114,9 @@ bool Syncer::Sync(bool *reload_required) {
 }
 
 bool Syncer::Clear() {
-  VLOG(1) << "Start Syncer::Clear";
+  SYNC_VLOG(1) << "start Syncer::Clear";
   if (service_ == NULL) {
-    LOG(ERROR) << "Service is NULL";
+    SYNC_VLOG(1) << "service is NULL";
     return false;
   }
 
@@ -130,8 +132,9 @@ bool Syncer::Clear() {
     request.add_components(iter->first);
   }
 
+  SYNC_VLOG(1) << "sending clear RPC call";
   if (!service_->Clear(&request, &response)) {
-    LOG(ERROR) << "RPC error";
+    SYNC_VLOG(1) << "RPC error";
     return false;
   }
 
@@ -139,27 +142,30 @@ bool Syncer::Clear() {
   VLOG(2) << "Response: " << response.DebugString();
 
   if (!response.IsInitialized()) {
-    LOG(ERROR) << "response is not initialized";
+    SYNC_VLOG(1) << "response is not initialized";
     return false;
   }
 
   if (response.error() != ime_sync::SYNC_OK) {
-    LOG(ERROR) << "response header is not SYNC_OK";
+    SYNC_VLOG(1) << "response header is not SYNC_OK";
     return false;
   }
+
+  SYNC_VLOG(1) << "clear is called successfully";
 
   for (AdapterMap::const_iterator iter = adapters_.begin();
        iter != adapters_.end(); ++iter) {
     iter->second->Clear();
   }
 
+  SYNC_VLOG(1) << "initializing LastDownloadTimestamp";
   SetLastDownloadTimestamp(0);
 
   return true;
 }
 
 bool Syncer::Download(bool *reload_required) {
-  VLOG(1) << "Start Syncer::Download()";
+  SYNC_VLOG(1) << "start Syncer::Download";
   DCHECK(reload_required);
 
   *reload_required = false;
@@ -176,7 +182,10 @@ bool Syncer::Download(bool *reload_required) {
   request.set_client(ime_sync::MOZC);
 
   // if last_download_timestamp is void, use 0 as an initial value
-  request.set_last_download_timestamp(GetLastDownloadTimestamp());
+  const uint64 last_download_timestamp = GetLastDownloadTimestamp();
+  request.set_last_download_timestamp(last_download_timestamp);
+
+  SYNC_VLOG(1) << "setting last_download_timestamp=" << last_download_timestamp;
 
   Config config = ConfigHandler::GetConfig();
 
@@ -188,8 +197,9 @@ bool Syncer::Download(bool *reload_required) {
     }
   }
 
+  SYNC_VLOG(1) << "downloading remote items...";
   if (!service_->Download(&request, &response)) {
-    LOG(ERROR) << "RPC error";
+    SYNC_VLOG(1) << "RPC error";
     return false;
   }
 
@@ -197,31 +207,43 @@ bool Syncer::Download(bool *reload_required) {
   VLOG(2) << "Response: " << response.DebugString();
 
   if (!response.IsInitialized()) {
-    LOG(ERROR) << "response is not initialized";
+    SYNC_VLOG(1) << "response is not initialized";
     return false;
   }
 
   if (response.error() != ime_sync::SYNC_OK) {
-    LOG(ERROR) << "response header is not SYNC_OK";
+    SYNC_VLOG(1) << "response header is not SYNC_OK";
     return false;
   }
 
+  SYNC_VLOG(1) << "done. remote items are downloaded";
+
+  SYNC_VLOG(1) << "updating local components...";
   for (AdapterMap::const_iterator iter = adapters_.begin();
        iter != adapters_.end(); ++iter) {
     if (!CheckConfigToSync(config, iter->first)) {
       continue;
     }
+    SYNC_VLOG(1) << "calling SetDownloadedItems: "
+                 << iter->second->component_id();
     if (!iter->second->SetDownloadedItems(response.items())) {
-      LOG(ERROR) << "Adapter component_id=" << iter->second->component_id()
-                 << " failed in SetDownloadedItems()";
+      SYNC_VLOG(1) << "SetDownloadedItems failed: "
+                   << iter->second->component_id();
       return false;
     }
   }
+
+  SYNC_VLOG(1) << "done. local components are updated";
 
   // when the size of donloaded items > 0, set *reload_required to be true.
   // TODO(taku): this might not be optimal, as items may contain
   // invalid data.
   *reload_required = response.items().size() > 0;
+
+  SYNC_VLOG(1) << "reload_required=" << *reload_required;
+  SYNC_VLOG(1) << "LastDownloadTimestamp is updated from "
+               << last_download_timestamp << " to "
+               << response.download_timestamp();
 
   SetLastDownloadTimestamp(response.download_timestamp());
 
@@ -229,7 +251,7 @@ bool Syncer::Download(bool *reload_required) {
 }
 
 bool Syncer::Upload() {
-  VLOG(1) << "Start Syncer::Upload()";
+  SYNC_VLOG(1) << "start Syncer::Upload";
 
   if (service_ == NULL) {
     LOG(ERROR) << "Service is NULL";
@@ -244,27 +266,31 @@ bool Syncer::Upload() {
 
   Config config = ConfigHandler::GetConfig();
 
+  SYNC_VLOG(1) << "collecting local updates...";
   bool result = true;
   for (AdapterMap::const_iterator iter = adapters_.begin();
        iter != adapters_.end(); ++iter) {
     if (!CheckConfigToSync(config, iter->first)) {
       continue;
     }
+    SYNC_VLOG(1) << "calling GetItemsToUpload: "
+                 << iter->second->component_id();
     if (!iter->second->GetItemsToUpload(request.mutable_items())) {
-      LOG(ERROR) << "Adapter component_id=" << iter->second->component_id()
-                 << " failed in GetItemsToUpload()";
+      SYNC_VLOG(1) << "GetItemsToUpload failed: "
+                   << iter->second->component_id();
       result = false;
     }
   }
 
   if (request.items_size() == 0) {
-    LOG(WARNING) << "No items should be synced";
+    SYNC_VLOG(1) << "no items should be uploaded";
     return true;
   }
 
   if (result) {
+    SYNC_VLOG(1) << "uploading local items to the server...";
     if (!service_->Upload(&request, &response)) {
-      LOG(ERROR) << "RPC error";
+      SYNC_VLOG(1) << "RPC error";
       result = false;
     }
 
@@ -272,11 +298,14 @@ bool Syncer::Upload() {
     VLOG(2) << "Response: " << response.DebugString();
 
     if (response.error() != ime_sync::SYNC_OK) {
-      LOG(ERROR) << "response header is not SYNC_OK";
+      SYNC_VLOG(1) << "response header is not SYNC_OK";
       result = false;
     }
+
+    SYNC_VLOG(1) << "done. local items are uploaded";
   }
 
+  SYNC_VLOG(1) << "marking uploaded flags...";
   for (size_t i = 0; i < request.items_size(); ++i) {
     const ime_sync::SyncItem& item = request.items(i);
     AdapterMap::const_iterator iter = adapters_.find(item.component());
@@ -285,14 +314,18 @@ bool Syncer::Upload() {
       continue;
     }
     // set result code.
+    SYNC_VLOG(1) << "calling MarkUploaded: " << iter->second->component_id()
+                 << " result=" << result;
     iter->second->MarkUploaded(item, result);
   }
+
+  SYNC_VLOG(1) << "done. uploaded flags";
 
   return result;
 }
 
 bool Syncer::Start() {
-  VLOG(1) << "Start Syncer::Start()";
+  VLOG(1) << "start Syncer::Start()";
 
   for (AdapterMap::const_iterator iter = adapters_.begin();
        iter != adapters_.end();  ++iter) {
@@ -307,7 +340,7 @@ bool Syncer::Start() {
 uint64 Syncer::GetLastDownloadTimestamp() const {
   uint64 value = 0;
   if (!mozc::storage::Registry::Lookup(kLastDownloadTimeStampKey, &value)) {
-    LOG(ERROR) << "cannot read: " << kLastDownloadTimeStampKey;
+    SYNC_VLOG(1) << "cannot read: " << kLastDownloadTimeStampKey;
   }
   VLOG(1) << "GetLastDownloadTimestamp: " << value;
   return value;
@@ -316,7 +349,7 @@ uint64 Syncer::GetLastDownloadTimestamp() const {
 void Syncer::SetLastDownloadTimestamp(uint64 value) {
   VLOG(1) << "SetLastDownloadTimestamp: " << value;
   if (!mozc::storage::Registry::Insert(kLastDownloadTimeStampKey, value)) {
-    LOG(ERROR) << "cannot save: "<< kLastDownloadTimeStampKey;
+    SYNC_VLOG(1) << "cannot save: "<< kLastDownloadTimeStampKey;
   }
   mozc::storage::Registry::Sync();
 }
@@ -331,18 +364,18 @@ class DefaultSyncerCreator {
       : config_adapter_(new ConfigAdapter),
         user_dictionary_adapter_(new UserDictionaryAdapter) {
     if (g_oauth2 == NULL) {
-      LOG(INFO) << "set oauth2 service";
+      SYNC_VLOG(1) << "set oauth2 service";
       SyncerFactory::SetOAuth2(
           new OAuth2Util(OAuth2Client::GetDefaultClient()));
     }
 
     syncer_.reset(new Syncer(service_.get()));
     if (!syncer_->RegisterAdapter(config_adapter_.get())) {
-      LOG(ERROR) << "cannot register ConfigAdapter";
+      SYNC_VLOG(1) << "cannot register ConfigAdapter";
     }
 
     if (!syncer_->RegisterAdapter(user_dictionary_adapter_.get())) {
-      LOG(ERROR) << "cannot register UserDictionaryAdapter";
+      SYNC_VLOG(1) << "cannot register UserDictionaryAdapter";
     }
   }
 

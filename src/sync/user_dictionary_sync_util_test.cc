@@ -221,7 +221,7 @@ TEST(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
   commands::CloudSyncStatus status;
   manager->GetLastSyncStatus(&status);
   EXPECT_EQ(0, status.sync_errors_size());
-  EXPECT_TRUE(UserDictionarySyncUtil::LockAndSaveStorage(&storage));
+  EXPECT_TRUE(UserDictionarySyncUtil::VerifyLockAndSaveStorage(&storage));
 
   // Check error log
   manager->GetLastSyncStatus(&status);
@@ -233,7 +233,9 @@ TEST(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
     entry->set_key("key" + Util::SimpleItoa(i + kMaxNumEntry));
     entry->set_value("value" + Util::SimpleItoa(i + kMaxNumEntry));
   }
-  EXPECT_FALSE(UserDictionarySyncUtil::LockAndSaveStorage(&storage));
+  EXPECT_FALSE(UserDictionarySyncUtil::VerifyLockAndSaveStorage(&storage));
+  // Save without validation intentionally.
+  EXPECT_TRUE(UserDictionarySyncUtil::LockAndSaveStorage(&storage));
 
   // Check error log
   manager->GetLastSyncStatus(&status);

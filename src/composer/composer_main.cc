@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
   scoped_ptr<mozc::composer::Composer> composer(new mozc::composer::Composer);
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
-  composer->SetTable(&table);
+  composer->SetTableForUnittest(&table);
 
   string command;
   string left, focused, right;

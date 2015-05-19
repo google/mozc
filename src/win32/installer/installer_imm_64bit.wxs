@@ -308,6 +308,7 @@
             Name='InstallerSuccessLaunchCmdLine' Action='write' Type='string'
             Value='&quot;[#GoogleIMEJaTool.exe]&quot; --mode=post_install_dialog' />
       </Component>
+
     </Directory>
 
     <Upgrade Id='$(var.UpgradeCode)'>

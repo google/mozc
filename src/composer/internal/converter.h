@@ -36,7 +36,6 @@
 #include <set>
 #include <string>
 #include "base/base.h"
-#include "composer/internal/trie.h"
 
 namespace mozc {
 namespace composer {

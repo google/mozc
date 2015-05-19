@@ -59,6 +59,13 @@ message GeneralConfig {
   optional bool upload_usage_stats = 6 [default = false];
 };
 
+message SyncConfig {
+  optional bool use_config_sync = 1 [ default = false ];
+  optional bool use_user_dictionary_sync = 2 [ default = false ];
+  optional bool use_user_history_sync = 3 [ default = false ];
+  optional bool use_learning_preference_sync = 4 [ default = false ];
+  optional bool use_contact_list_sync = 5 [ default = false ];
+};
 
 message Config {
   // General config and logging/debugging:
@@ -296,15 +303,48 @@ message Config {
   // use realtime conversion feature (experimental)
   optional bool use_realtime_conversion = 102 [ default = true ];
 
-
   // size of suggestions
   optional uint32 suggestions_size = 110 [ default = 3 ];
 
+  //////////////////////////////////////////////////////////////
+  //
+  // Cloud (300-319)
+  //
+  // Configuration for cloud sync feature.
+  optional SyncConfig sync_config = 300;
 
-  // Config for chewing.  It resides here for historical reason.
+  // Allow the cloud handwriting.  The handwriting UI has to notice
+  // user before activating the feature, and set this field to true
+  // when the user permit.
+  // NOTE: OSS version does not handle this field.
+  optional bool allow_cloud_handwriting = 301 [ default = false ];
+
+
+  // Multilingual config.  It resides here for historical reason.
   // TODO(mukai): apply extension for multilingual config.
   optional HangulConfig hangul_config = 998;
   optional ChewingConfig chewing_config = 999;
+};
+
+
+
+// Config for Korean hangul input.
+message HangulConfig {
+  enum KeyboardTypes {
+    KEYBOARD_Dubeolsik = 0;
+    KEYBOARD_DubeolsikYetgeul = 1;
+    KEYBOARD_SebeolsikDubeol = 2;
+    KEYBOARD_Sebeolsik390 = 3;
+    KEYBOARD_SebeolsikFinal = 4;
+    KEYBOARD_SebeolsikNoshift = 5;
+    KEYBOARD_SebeolsikYetgeul = 6;
+    KEYBOARD_Romaja = 7;
+    KEYBOARD_Ahnmatae = 8;
+  };
+  optional KeyboardTypes  keyboard_type = 1 [ default = KEYBOARD_Dubeolsik ];
+
+  // custom hanja keymap
+  repeated bytes hanja_keys = 2;
 };
 
 // Config for Taiwanese chewing input.  Those items are based on the
@@ -354,23 +394,4 @@ message ChewingConfig {
   };
   optional HsuSelectionKeys hsu_selection_keys = 13
       [ default = HSU_asdfjkl789 ];
-};
-
-// Config for Korean hangul input.
-message HangulConfig {
-  enum KeyboardTypes {
-    KEYBOARD_Dubeolsik = 0;
-    KEYBOARD_DubeolsikYetgeul = 1;
-    KEYBOARD_SebeolsikDubeol = 2;
-    KEYBOARD_Sebeolsik390 = 3;
-    KEYBOARD_SebeolsikFinal = 4;
-    KEYBOARD_SebeolsikNoshift = 5;
-    KEYBOARD_SebeolsikYetgeul = 6;
-    KEYBOARD_Romaja = 7;
-    KEYBOARD_Ahnmatae = 8;
-  };
-  optional KeyboardTypes  keyboard_type = 1 [ default = KEYBOARD_Dubeolsik ];
-
-  // custom hanja keymap
-  repeated bytes hanja_keys = 2;
 };

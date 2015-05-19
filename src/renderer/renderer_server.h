@@ -42,6 +42,7 @@ class RendererInterface;
 class RendererServerSendCommand;
 class ParentApplicationWatchDog;
 
+
 // RendererServer base class. Implement Async* method.
 class RendererServer : public IPCServer {
  public:
@@ -93,6 +94,7 @@ class RendererServer : public IPCServer {
   RendererInterface *renderer_interface_;
   scoped_ptr<ParentApplicationWatchDog> watch_dog_;
   scoped_ptr<RendererServerSendCommand> send_command_;
+
 };
 }  // renderer
 }  // mozc

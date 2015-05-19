@@ -36,6 +36,10 @@
         <translation>キャンセル</translation>
     </message>
     <message>
+        <source>CancelAndIMEOff</source>
+        <translation>キャンセル後 IME を無効化</translation>
+    </message>
+    <message>
         <source>Revert</source>
         <translation>最後の学習をキャンセル</translation>
     </message>

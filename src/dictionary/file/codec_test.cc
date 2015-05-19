@@ -27,9 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/util.h"
-#include "base/file_stream.h"
 #include "dictionary/file/codec.h"
+
+#include "base/file_stream.h"
+#include "base/util.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "testing/base/public/googletest.h"
@@ -97,7 +98,7 @@ class CodecTest : public ::testing::Test {
 class CodecMock : public DictionaryFileCodecInterface {
  public:
   virtual void WriteSections(const vector<DictionaryFileSection> &sections,
-                             OutputFileStream *ofs) const {
+                             ostream *ofs) const {
     const string value = "dummy value";
     ofs->write(value.data(), value.size());
   }
@@ -219,6 +220,7 @@ TEST_F(CodecTest, CodecTest) {
   EXPECT_TRUE(FindSection(codec, sections, "Section 1", &index));
   EXPECT_TRUE(CheckValue(sections[index], "Value 1 test test"));
 }
+
 
 }  // namespace
 }  // namespace mozc

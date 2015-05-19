@@ -30,6 +30,12 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_INTERFACE_H_
 #define MOZC_DICTIONARY_DICTIONARY_INTERFACE_H_
 
+#include <string>
+#include <vector>
+
+#include "base/trie.h"
+#include "base/port.h"
+
 namespace mozc {
 
 // These structures are defined in converter
@@ -40,9 +46,28 @@ class DictionaryInterface {
  public:
   // limitation for LookupPrefixWithLimit
   struct Limit {
+    // For prefix lookup, to reduce redundant lookup for making lattice,
+    // returns only nodes which key length is >= this limit.
     int key_len_lower_limit;
-    Limit() : key_len_lower_limit(0) {}
+    // For predictive lookup,
+    // returns only nodes which predicted key starts with the string in the trie
+    // Example:
+    //  predictive lookup key: 'conv'
+    //  begin with list: 'er', 'in'
+    //  In this case, we will get 'convert', converter', 'convince', etc.
+    //  We will not get 'convention', etc.
+    // This does not have the ownership
+    const Trie<string> *begin_with_trie;
+    Limit() : key_len_lower_limit(0), begin_with_trie(NULL)  {}
   };
+
+  // For Lookup methods, dictionary does not manage the ownerships of the
+  // returned Node objects.
+  // If the |allocator| is specified, we will use it to make Node objects.
+
+  virtual Node *LookupPredictiveWithLimit(
+      const char *str, int size, const Limit &limit,
+      NodeAllocatorInterface *allocator) const = 0;
 
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const = 0;
@@ -52,12 +77,8 @@ class DictionaryInterface {
       const Limit &limit,
       NodeAllocatorInterface *allocator) const = 0;
 
-  Node *LookupPrefix(const char *str, int size,
-                     NodeAllocatorInterface *allocator) const {
-    Limit limit;
-    limit.key_len_lower_limit = 0;  // no limit
-    return LookupPrefixWithLimit(str, size, limit, allocator);
-  }
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const = 0;
 
   // For reverse lookup, the reading is stored in Node::value and the word
   // is stored in Node::key.
@@ -89,10 +110,14 @@ class DictionaryFactory {
   // dependency injection for unittesting
   static void SetDictionary(DictionaryInterface *dictionary);
 
+  // set the dictionary's address and size.
+  // if not set, default value (typically embedded dictionary) is used.
+  static void SetDictionaryData(void *address, size_t size);
+
  private:
   DictionaryFactory() {}
   ~DictionaryFactory() {}
 };
-} // namespace mozc
+}  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_INTERFACE_H_

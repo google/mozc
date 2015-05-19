@@ -34,7 +34,6 @@
 #include "base/base.h"
 #include "base/freelist.h"
 #include "config/config.pb.h"
-#include "config/config_handler.h"
 #include "session/internal/keymap.h"
 
 namespace mozc {

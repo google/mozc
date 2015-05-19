@@ -214,66 +214,20 @@ TEST(KeyMap, DefaultKeyBindings) {
 TEST(KeyMap, LoadStreamWithErrors) {
   KeyMapManager manager;
   vector<string> errors;
-  scoped_ptr<istream> is(ConfigFileStream::Open("system://atok.tsv"));
+  scoped_ptr<istream> is(ConfigFileStream::LegacyOpen("system://atok.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
   errors.clear();
-  is.reset(ConfigFileStream::Open("system://ms-ime.tsv"));
+  is.reset(ConfigFileStream::LegacyOpen("system://ms-ime.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
   errors.clear();
-  is.reset(ConfigFileStream::Open("system://kotoeri.tsv"));
+  is.reset(ConfigFileStream::LegacyOpen("system://kotoeri.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
-}
-
-TEST(KeyMap, MigrationTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  config::Config config;
-  config.CopyFrom(config::ConfigHandler::GetConfig());
-
-  string test_keymap;
-  ostringstream oss(test_keymap);
-  oss << endl;  // first line is reverved for comment and will be skipped
-  oss << "DirectInput\tON\tIMEOn" << endl;
-  oss << "Conversion\tOFF\tIMEOff" << endl;
-  oss << "Precomposition\tOFF\tIMEOff" << endl;
-  oss << "Composition\tOFF\tIMEOff" << endl;
-  config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(oss.str());
-
-  config::ConfigHandler::SetConfig(config);
-  KeyMapManager manager;
-
-  {  // Check key bindings of Hankaku
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("Hankaku/Zenkaku", &key_event);
-
-    DirectInputState::Commands direct_command;
-    EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
-    EXPECT_EQ(DirectInputState::IME_ON, direct_command);
-
-    PrecompositionState::Commands fund_command;
-    EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &fund_command));
-    EXPECT_EQ(PrecompositionState::IME_OFF, fund_command);
-
-    CompositionState::Commands composition_command;
-    EXPECT_TRUE(manager.GetCommandComposition(key_event, &composition_command));
-    EXPECT_EQ(CompositionState::IME_OFF, composition_command);
-
-    ConversionState::Commands conv_command;
-    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(ConversionState::IME_OFF, conv_command);
-  }
-
-  const string &keymap_table = GET_CONFIG(custom_keymap_table);
-
-  // Nothing happen
-  const string &keymap_table_new = GET_CONFIG(custom_keymap_table);
-  EXPECT_EQ(keymap_table, keymap_table_new);
 }
 
 TEST(KeyMap, GetName) {
@@ -330,6 +284,20 @@ TEST(KeyMap, GetName) {
         ConversionState::INSERT_CHARACTER, &name));
     EXPECT_EQ("InsertCharacter", name);
   }
+}
+
+TEST(KeyMap, DirectModeDoesNotSupportInsertSpace) {
+  // InsertSpace, InsertAlternateSpace, InsertHalfSpace, and InsertFullSpace
+  // are not supported in direct mode.
+  KeyMapManager manager;
+  set<string> names;
+  manager.GetAvailableCommandNameDirect(&names);
+
+  // We cannot use EXPECT_EQ because of overload resolution here.
+  EXPECT_TRUE(names.end() == names.find("InsertSpace"));
+  EXPECT_TRUE(names.end() == names.find("InsertAlternateSpace"));
+  EXPECT_TRUE(names.end() == names.find("InsertHalfSpace"));
+  EXPECT_TRUE(names.end() == names.find("InsertFullSpace"));
 }
 
 TEST(KeyMap, AdditionalKeymapsForChromeOS) {

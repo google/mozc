@@ -31,9 +31,10 @@
 
 #include "session/internal/keymap.h"
 
+#include <set>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 #include "base/file_stream.h"
 #include "base/config_file_stream.h"
@@ -42,7 +43,7 @@
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap-inl.h"
-#include "session/key_event_normalizer.h"
+#include "session/key_event_util.h"
 #include "session/key_parser.h"
 
 namespace mozc {
@@ -53,95 +54,16 @@ static const char kATOKKeyMapFile[] = "system://atok.tsv";
 static const char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
 static const char kCustomKeyMapFile[] = "user://keymap.tsv";
 
-uint32 GetModifiers(const commands::KeyEvent &key_event) {
-  uint32 modifiers = 0;
-  if (key_event.has_modifiers()) {
-    modifiers = key_event.modifiers();
-  } else {
-    for (int i = 0; i < key_event.modifier_keys_size(); ++i) {
-      modifiers |= key_event.modifier_keys(i);
-    }
-  }
-  return modifiers;
-}
+// TODO(team): Investigate if "InputModeX" commands should be
+//     functional on ChromeOS and/or Android or not. Remove the
+//     condition if available.
+#if defined(OS_MACOSX) || defined(OS_CHROMEOS) || defined(OS_ANDROID)
+const bool kInputModeXCommandSupported = false;
+#else
+const bool kInputModeXCommandSupported = true;
+#endif
+
 }  // anonymous namespace
-
-void NormalizeKeyEvent(const commands::KeyEvent &key_event,
-                       commands::KeyEvent *new_key_event) {
-  DCHECK(new_key_event);
-  new_key_event->CopyFrom(key_event);
-
-  if ((GetModifiers(key_event) & (commands::KeyEvent::CAPS)) == 0) {
-    // No caps lock. Nothing to do.
-    return;
-  }
-
-  // Remove caps lock from |new_key_event->modifier_keys()|.
-  new_key_event->clear_modifier_keys();
-  for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
-    if (key_event.modifier_keys(i) != commands::KeyEvent::CAPS) {
-      new_key_event->add_modifier_keys(key_event.modifier_keys(i));
-    }
-  }
-
-  if (!key_event.has_key_code()) {
-    return;
-  }
-
-  // Revert the flip of alphabetical key events caused by CapsLock.
-  const int key_code = key_event.key_code();
-  if ('A' <= key_code && key_code <= 'Z') {
-    new_key_event->set_key_code(key_code - 'A' + 'a');
-  } else if ('a' <= key_code && key_code <= 'z') {
-    new_key_event->set_key_code(key_code - 'a' + 'A');
-  }
-}
-
-bool GetKey(const commands::KeyEvent &key_event, Key *key) {
-  // Key is an alias of uint64.
-  Key modifier_keys = GetModifiers(key_event);
-  Key special_key = key_event.has_special_key() ?
-      key_event.special_key() : commands::KeyEvent::NO_SPECIALKEY;
-  Key key_code = key_event.has_key_code() ? key_event.key_code() : 0;
-
-  // Make sure the translation from the obsolete spesification.
-  // key_code should no longer contain control characters.
-  if (0 < key_code && key_code <= 32) {
-    return false;
-  }
-
-  // Key = |Modifiers(16bit)|SpecialKey(16bit)|Unicode(32bit)|.
-  *key = (modifier_keys << 48) + (special_key << 32) + key_code;
-  return true;
-}
-
-// Return a fallback keyevent generated from key_event.  In the
-// current implementation, if the input key_event does not contains
-// any special keys or modifier keys, that printable key will be replaced
-// with the ASCII special key.
-bool MaybeGetKeyStub(const commands::KeyEvent &key_event, Key *key) {
-  // If any modifier keys were pressed, this function does nothing.
-  if (GetModifiers(key_event) != 0) {
-    return false;
-  }
-
-  // No stub rule is supported for special keys yet.
-  if (key_event.has_special_key()) {
-    return false;
-  }
-
-  if (!key_event.has_key_code() || key_event.key_code() <= 32) {
-    return false;
-  }
-
-  commands::KeyEvent stub_key_event;
-  stub_key_event.set_special_key(commands::KeyEvent::ASCII);
-  if (!GetKey(stub_key_event, key)) {
-    return false;
-  }
-
-  return true;
-}
 
 KeyMapManager::KeyMapManager()
     : keymap_(config::Config::NONE) {
@@ -150,74 +72,6 @@ KeyMapManager::KeyMapManager()
 }
 
 KeyMapManager::~KeyMapManager() {}
-
-void KeyMapManager::CheckIMEOnOffKeymap() {
-  uint64 key_on = 0, key_off = 0, key_eisu = 0;
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("ON", &key_event);
-    KeyEventNormalizer::ToUint64(key_event, &key_on);
-  }
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("OFF", &key_event);
-    KeyEventNormalizer::ToUint64(key_event, &key_off);
-  }
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("EISU", &key_event);
-    KeyEventNormalizer::ToUint64(key_event, &key_eisu);
-  }
-
-  if (key_on == 0 || key_off == 0 || key_eisu == 0) {
-    // One of KeyEventNormalizer fails: do nothing to avoid unexpected errors.
-    return;
-  }
-
-  bool need_to_be_migrated = true;
-  for (set<uint64>::const_iterator iter = ime_on_off_keys_.begin();
-       iter != ime_on_off_keys_.end(); ++iter) {
-    if (*iter != key_on && *iter != key_off && *iter != key_eisu) {
-      // This seems to have own settings.
-      need_to_be_migrated = false;
-      break;
-    }
-  }
-
-  if (need_to_be_migrated) {
-    // Add rules
-    commands::KeyEvent key_event_hankaku;
-    commands::KeyEvent key_event_kanji;
-    KeyParser::ParseKey("Hankaku/Zenkaku", &key_event_hankaku);
-    KeyParser::ParseKey("Kanji", &key_event_kanji);
-    keymap_direct_.AddRule(key_event_hankaku, DirectInputState::IME_ON);
-    keymap_precomposition_.AddRule(key_event_hankaku,
-                                   PrecompositionState::IME_OFF);
-    keymap_composition_.AddRule(key_event_hankaku, CompositionState::IME_OFF);
-    keymap_conversion_.AddRule(key_event_hankaku, ConversionState::IME_OFF);
-    keymap_direct_.AddRule(key_event_kanji, DirectInputState::IME_ON);
-    keymap_precomposition_.AddRule(key_event_kanji,
-                                   PrecompositionState::IME_OFF);
-    keymap_composition_.AddRule(key_event_kanji, CompositionState::IME_OFF);
-    keymap_conversion_.AddRule(key_event_kanji, ConversionState::IME_OFF);
-
-    // Write settings
-    config::Config config;
-    config.CopyFrom(config::ConfigHandler::GetConfig());
-    ostringstream oss(config.custom_keymap_table());
-    oss << endl;
-    oss << "DirectInput\tHankaku/Zenkaku\tIMEOn" << endl;
-    oss << "DirectInput\tKanji\tIMEOn" << endl;
-    oss << "Conversion\tHankaku/Zenkaku\tIMEOff" << endl;
-    oss << "Conversion\tKanji\tIMEOff" << endl;
-    oss << "Precomposition\tHankaku/Zenkaku\tIMEOff" << endl;
-    oss << "Precomposition\tKanji\tIMEOff" << endl;
-    oss << "Composition\tHankaku/Zenkaku\tIMEOff" << endl;
-    oss << "Composition\tKanji\tIMEOff" << endl;
-    config.set_custom_keymap_table(oss.str());
-    config::ConfigHandler::SetConfig(config);
-  }
-}
 
 bool KeyMapManager::ReloadWithKeymap(
     const config::Config::SessionKeymap new_keymap) {
@@ -239,8 +93,6 @@ bool KeyMapManager::ReloadWithKeymap(
   keymap_suggestion_.Clear();
   keymap_prediction_.Clear();
 
-  ime_on_off_keys_.clear();
-
   if (new_keymap == config::Config::CUSTOM) {
     const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
     if (custom_keymap_table.empty()) {
@@ -259,9 +111,7 @@ bool KeyMapManager::ReloadWithKeymap(
     }
 #endif
     istringstream ifs(custom_keymap_table);
-    const bool result = LoadStream(&ifs);
-    CheckIMEOnOffKeymap();
-    return result;
+    return LoadStream(&ifs);
   }
 
   if (keymap_file != NULL && LoadFile(keymap_file)) {
@@ -275,7 +125,7 @@ bool KeyMapManager::ReloadWithKeymap(
 // static
 const char *KeyMapManager::GetKeyMapFileName(
     const config::Config::SessionKeymap keymap) {
-  switch(keymap) {
+  switch (keymap) {
     case config::Config::ATOK:
       return kATOKKeyMapFile;
     case config::Config::MSIME:
@@ -309,7 +159,7 @@ config::Config::SessionKeymap KeyMapManager::GetDefaultKeyMap() {
 }
 
 bool KeyMapManager::LoadFile(const char *filename) {
-  scoped_ptr<istream> ifs(ConfigFileStream::Open(filename));
+  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs.get() == NULL) {
     LOG(WARNING) << "cannot load keymap table: " << filename;
     return false;
@@ -382,18 +232,6 @@ bool KeyMapManager::AddCommand(const string &state_name,
   commands::KeyEvent key_event;
   if (!KeyParser::ParseKey(key_event_name, &key_event)) {
     return false;
-  }
-
-  // Migration code:
-  // check key events for IME ON/OFF
-  {
-    if (command_name == "IMEOn" ||
-        command_name == "IMEOff") {
-      uint64 key;
-      if (KeyEventNormalizer::ToUint64(key_event, &key)) {
-        ime_on_off_keys_.insert(key);
-      }
-    }
   }
 
   if (state_name == "DirectInput" || state_name == "Direct") {
@@ -578,36 +416,38 @@ void KeyMapManager::InitCommandData() {
                                 PrecompositionState::INSERT_FULL_SPACE);
   RegisterPrecompositionCommand("ToggleAlphanumericMode",
                                 PrecompositionState::TOGGLE_ALPHANUMERIC_MODE);
-#ifdef OS_WINDOWS
-  RegisterPrecompositionCommand("InputModeHiragana",
-                                PrecompositionState::INPUT_MODE_HIRAGANA);
-  RegisterPrecompositionCommand("InputModeFullKatakana",
-                                PrecompositionState::INPUT_MODE_FULL_KATAKANA);
-  RegisterPrecompositionCommand("InputModeHalfKatakana",
-                                PrecompositionState::INPUT_MODE_HALF_KATAKANA);
-  RegisterPrecompositionCommand(
-      "InputModeFullAlphanumeric",
-      PrecompositionState::INPUT_MODE_FULL_ALPHANUMERIC);
-  RegisterPrecompositionCommand(
-      "InputModeHalfAlphanumeric",
-      PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
-  RegisterPrecompositionCommand(
-      "InputModeSwitchKanaType",
-      PrecompositionState::INPUT_MODE_SWITCH_KANA_TYPE);
-#else
-  RegisterPrecompositionCommand("InputModeHiragana",
-                                PrecompositionState::NONE);
-  RegisterPrecompositionCommand("InputModeFullKatakana",
-                                PrecompositionState::NONE);
-  RegisterPrecompositionCommand("InputModeHalfKatakana",
-                                PrecompositionState::NONE);
-  RegisterPrecompositionCommand("InputModeFullAlphanumeric",
-                                PrecompositionState::NONE);
-  RegisterPrecompositionCommand("InputModeHalfAlphanumeric",
-                                PrecompositionState::NONE);
-  RegisterPrecompositionCommand("InputModeSwitchKanaType",
-                                PrecompositionState::NONE);
-#endif  // OS_WINDOWS
+  if (kInputModeXCommandSupported) {
+    RegisterPrecompositionCommand("InputModeHiragana",
+                                  PrecompositionState::INPUT_MODE_HIRAGANA);
+    RegisterPrecompositionCommand(
+        "InputModeFullKatakana",
+        PrecompositionState::INPUT_MODE_FULL_KATAKANA);
+    RegisterPrecompositionCommand(
+        "InputModeHalfKatakana",
+        PrecompositionState::INPUT_MODE_HALF_KATAKANA);
+    RegisterPrecompositionCommand(
+        "InputModeFullAlphanumeric",
+        PrecompositionState::INPUT_MODE_FULL_ALPHANUMERIC);
+    RegisterPrecompositionCommand(
+        "InputModeHalfAlphanumeric",
+        PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
+    RegisterPrecompositionCommand(
+        "InputModeSwitchKanaType",
+        PrecompositionState::INPUT_MODE_SWITCH_KANA_TYPE);
+  } else {
+    RegisterPrecompositionCommand("InputModeHiragana",
+                                  PrecompositionState::NONE);
+    RegisterPrecompositionCommand("InputModeFullKatakana",
+                                  PrecompositionState::NONE);
+    RegisterPrecompositionCommand("InputModeHalfKatakana",
+                                  PrecompositionState::NONE);
+    RegisterPrecompositionCommand("InputModeFullAlphanumeric",
+                                  PrecompositionState::NONE);
+    RegisterPrecompositionCommand("InputModeHalfAlphanumeric",
+                                  PrecompositionState::NONE);
+    RegisterPrecompositionCommand("InputModeSwitchKanaType",
+                                  PrecompositionState::NONE);
+  }
 
   RegisterPrecompositionCommand("LaunchConfigDialog",
                                 PrecompositionState::LAUNCH_CONFIG_DIALOG);
@@ -622,6 +462,8 @@ void KeyMapManager::InitCommandData() {
   RegisterPrecompositionCommand("Reconvert", PrecompositionState::RECONVERT);
 
   RegisterPrecompositionCommand("Cancel", PrecompositionState::CANCEL);
+  RegisterPrecompositionCommand("CancelAndIMEOff",
+                                PrecompositionState::CANCEL_AND_IME_OFF);
   RegisterPrecompositionCommand("CommitFirstSuggestion",
                                 PrecompositionState::COMMIT_FIRST_SUGGESTION);
   RegisterPrecompositionCommand("PredictAndConvert",
@@ -638,11 +480,17 @@ void KeyMapManager::InitCommandData() {
                              CompositionState::INSERT_CHARACTER);
   RegisterCompositionCommand("Delete", CompositionState::DEL);
   RegisterCompositionCommand("Backspace", CompositionState::BACKSPACE);
+  RegisterCompositionCommand("InsertSpace",
+                             CompositionState::INSERT_SPACE);
+  RegisterCompositionCommand("InsertAlternateSpace",
+                             CompositionState::INSERT_ALTERNATE_SPACE);
   RegisterCompositionCommand("InsertHalfSpace",
                              CompositionState::INSERT_HALF_SPACE);
   RegisterCompositionCommand("InsertFullSpace",
                              CompositionState::INSERT_FULL_SPACE);
   RegisterCompositionCommand("Cancel", CompositionState::CANCEL);
+  RegisterCompositionCommand("CancelAndIMEOff",
+                             CompositionState::CANCEL_AND_IME_OFF);
   RegisterCompositionCommand("Undo", CompositionState::UNDO);
   RegisterCompositionCommand("MoveCursorLeft",
                              CompositionState::MOVE_CURSOR_LEFT);
@@ -688,29 +536,29 @@ void KeyMapManager::InitCommandData() {
                              CompositionState::TRANSLATE_HALF_ASCII);
   RegisterCompositionCommand("ToggleAlphanumericMode",
                              CompositionState::TOGGLE_ALPHANUMERIC_MODE);
-#ifdef OS_WINDOWS
-  RegisterCompositionCommand("InputModeHiragana",
-                             CompositionState::INPUT_MODE_HIRAGANA);
-  RegisterCompositionCommand("InputModeFullKatakana",
-                             CompositionState::INPUT_MODE_FULL_KATAKANA);
-  RegisterCompositionCommand("InputModeHalfKatakana",
-                             CompositionState::INPUT_MODE_HALF_KATAKANA);
-  RegisterCompositionCommand("InputModeFullAlphanumeric",
-                             CompositionState::INPUT_MODE_FULL_ALPHANUMERIC);
-  RegisterCompositionCommand("InputModeHalfAlphanumeric",
-                             CompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
-#else
-  RegisterCompositionCommand("InputModeHiragana",
+  if (kInputModeXCommandSupported) {
+    RegisterCompositionCommand("InputModeHiragana",
+                               CompositionState::INPUT_MODE_HIRAGANA);
+    RegisterCompositionCommand("InputModeFullKatakana",
+                               CompositionState::INPUT_MODE_FULL_KATAKANA);
+    RegisterCompositionCommand("InputModeHalfKatakana",
+                               CompositionState::INPUT_MODE_HALF_KATAKANA);
+    RegisterCompositionCommand("InputModeFullAlphanumeric",
+                               CompositionState::INPUT_MODE_FULL_ALPHANUMERIC);
+    RegisterCompositionCommand("InputModeHalfAlphanumeric",
+                               CompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
+  } else {
+    RegisterCompositionCommand("InputModeHiragana",
                              CompositionState::NONE);
-  RegisterCompositionCommand("InputModeFullKatakana",
-                             CompositionState::NONE);
-  RegisterCompositionCommand("InputModeHalfKatakana",
-                             CompositionState::NONE);
-  RegisterCompositionCommand("InputModeFullAlphanumeric",
-                             CompositionState::NONE);
-  RegisterCompositionCommand("InputModeHalfAlphanumeric",
-                             CompositionState::NONE);
-#endif  // OS_WINDOWS
+    RegisterCompositionCommand("InputModeFullKatakana",
+                               CompositionState::NONE);
+    RegisterCompositionCommand("InputModeHalfKatakana",
+                               CompositionState::NONE);
+    RegisterCompositionCommand("InputModeFullAlphanumeric",
+                               CompositionState::NONE);
+    RegisterCompositionCommand("InputModeHalfAlphanumeric",
+                               CompositionState::NONE);
+  }
 #ifdef _DEBUG  // only for debugging
   RegisterCompositionCommand("Abort", CompositionState::ABORT);
 #endif  // _DEBUG
@@ -720,11 +568,17 @@ void KeyMapManager::InitCommandData() {
   RegisterConversionCommand("IMEOn", ConversionState::IME_ON);
   RegisterConversionCommand("InsertCharacter",
                             ConversionState::INSERT_CHARACTER);
+  RegisterConversionCommand("InsertSpace",
+                            ConversionState::INSERT_SPACE);
+  RegisterConversionCommand("InsertAlternateSpace",
+                            ConversionState::INSERT_ALTERNATE_SPACE);
   RegisterConversionCommand("InsertHalfSpace",
                             ConversionState::INSERT_HALF_SPACE);
   RegisterConversionCommand("InsertFullSpace",
                             ConversionState::INSERT_FULL_SPACE);
   RegisterConversionCommand("Cancel", ConversionState::CANCEL);
+  RegisterConversionCommand("CancelAndIMEOff",
+                            ConversionState::CANCEL_AND_IME_OFF);
   RegisterConversionCommand("Undo", ConversionState::UNDO);
   RegisterConversionCommand("SegmentFocusLeft",
                             ConversionState::SEGMENT_FOCUS_LEFT);
@@ -777,29 +631,29 @@ void KeyMapManager::InitCommandData() {
                             ConversionState::TRANSLATE_FULL_ASCII);
   RegisterConversionCommand("DisplayAsHalfAlphanumeric",
                             ConversionState::TRANSLATE_HALF_ASCII);
-#ifdef OS_WINDOWS
-  RegisterConversionCommand("InputModeHiragana",
-                            ConversionState::INPUT_MODE_HIRAGANA);
-  RegisterConversionCommand("InputModeFullKatakana",
-                            ConversionState::INPUT_MODE_FULL_KATAKANA);
-  RegisterConversionCommand("InputModeHalfKatakana",
-                            ConversionState::INPUT_MODE_HALF_KATAKANA);
-  RegisterConversionCommand("InputModeFullAlphanumeric",
-                            ConversionState::INPUT_MODE_FULL_ALPHANUMERIC);
-  RegisterConversionCommand("InputModeHalfAlphanumeric",
-                            ConversionState::INPUT_MODE_HALF_ALPHANUMERIC);
-#else
-  RegisterConversionCommand("InputModeHiragana",
-                            ConversionState::NONE);
-  RegisterConversionCommand("InputModeFullKatakana",
-                            ConversionState::NONE);
-  RegisterConversionCommand("InputModeHalfKatakana",
-                            ConversionState::NONE);
-  RegisterConversionCommand("InputModeFullAlphanumeric",
-                            ConversionState::NONE);
-  RegisterConversionCommand("InputModeHalfAlphanumeric",
-                            ConversionState::NONE);
-#endif  // OS_WINDOWS
+  if (kInputModeXCommandSupported) {
+    RegisterConversionCommand("InputModeHiragana",
+                              ConversionState::INPUT_MODE_HIRAGANA);
+    RegisterConversionCommand("InputModeFullKatakana",
+                              ConversionState::INPUT_MODE_FULL_KATAKANA);
+    RegisterConversionCommand("InputModeHalfKatakana",
+                              ConversionState::INPUT_MODE_HALF_KATAKANA);
+    RegisterConversionCommand("InputModeFullAlphanumeric",
+                              ConversionState::INPUT_MODE_FULL_ALPHANUMERIC);
+    RegisterConversionCommand("InputModeHalfAlphanumeric",
+                              ConversionState::INPUT_MODE_HALF_ALPHANUMERIC);
+  } else {
+    RegisterConversionCommand("InputModeHiragana",
+                              ConversionState::NONE);
+    RegisterConversionCommand("InputModeFullKatakana",
+                              ConversionState::NONE);
+    RegisterConversionCommand("InputModeHalfKatakana",
+                              ConversionState::NONE);
+    RegisterConversionCommand("InputModeFullAlphanumeric",
+                              ConversionState::NONE);
+    RegisterConversionCommand("InputModeHalfAlphanumeric",
+                              ConversionState::NONE);
+  }
 #ifndef NO_LOGGING  // means NOT RELEASE build
   RegisterConversionCommand("ReportBug", ConversionState::REPORT_BUG);
 #endif  // NO_LOGGING

@@ -96,12 +96,26 @@ const uint8 kKeyCharMiddleDot = 0xfd;
 const uint8 kKeyCharProlongedSound = 0xfe;
 
 //// Constants for value ////
+// Unused for now.
+// We are using from 0x00~0xfa for the Kanji, Hiragana and Katakana.
+// Please see the comments for EncodeValue for details.
+// const uint8 kValueCharMarkReserved = 0xfb;
 // ASCII character.
-const uint8 kValueCharMarkAscii = 0xfd;
-// UCS2 character 0x??00.
-const uint8 kValueCharMarkXX00 = 0xfe;
-// This UCS2 character is neither Hiragana nor above 2 patterns.
-const uint8 kValueCharMarkOther = 0xff;
+const uint8 kValueCharMarkAscii = 0xfc;
+// UCS4 character 0x??00.
+const uint8 kValueCharMarkXX00 = 0xfd;
+// This UCS4 character is neither Hiragana nor above 2 patterns 0x????
+const uint8 kValueCharMarkOtherUCS2 = 0xfe;
+
+// UCS4 character 0x00?????? (beyond UCS2 range)
+// UCS4 characters never exceed 10FFFF. (three 8bits, A-B-C).
+// For left most 8bits A, we will use upper 2bits for the flag
+// that indicating whether B and C is 0 or not.
+const uint8 kValueCharMarkUCS4 = 0xff;
+const uint8 kValueCharMarkUCS4Middle0 = 0x80;
+const uint8 kValueCharMarkUCS4Right0 = 0x40;
+const uint8 kValueCharMarkUCS4LeftMask = 0x1f;
+
 // character code related constants
 const int kValueKanjiOffset = 0x01;
 const int kValueHiraganaOffset = 0x4b;
@@ -217,16 +231,17 @@ void SystemDictionaryCodec::DecodeKey(const string &src, string *dst) const {
   DecodeKeyImpl(src, dst);
 }
 
-// This encodes each UCS2 character into following areas
-// The trickier part in this encoding is handling of \0 byte in UCS2
+// This encodes each UCS4 character into following areas
+// The trickier part in this encoding is handling of \0 byte in UCS4
 // character. To avoid \0 in converted string, this function uses
 // VALUE_CHAR_MARK_* markers.
-//  Kanji in 0x4eXX~0x97XX -> 0x01 0xXX ~ 0x4a 0xXX (74*256 characters)
+//  Kanji in 0x4e00~0x97ff -> 0x01 0x00 ~ 0x4a 0xff (74*256 characters)
 //  Hiragana 0x3041~0x3095 -> 0x4b~0x9f (84 characters)
 //  Katakana 0x30a1~0x30fc -> 0x9f~0xfa (91 characters)
 //  0x?? (ASCII) -> VALUE_CHAR_MARK_ASCII ??
 //  0x??00 -> VALUE_CHAR_MARK_XX00 ??
 //  Other 0x?? ?? -> VALUE_CHAR_MARK_OTHER ?? ??
+//  0x?????? -> VALUE_CHAR_MARK_BIG ?? ?? ??
 
 void SystemDictionaryCodec::EncodeValue(
     const string &src, string *dst) const {
@@ -236,7 +251,8 @@ void SystemDictionaryCodec::EncodeValue(
   int pos = 0;
   while (pos < src.length()) {
     size_t mblen;
-    const uint16 c = Util::UTF8ToUCS2(&cstr[pos], end, &mblen);
+    COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
+    const uint32 c = Util::UTF8ToUCS4(&cstr[pos], end, &mblen);
     pos += mblen;
     if (c >= 0x3041 && c < 0x3095) {
       // Hiragana(85 characters) are encoded into 1 byte.
@@ -244,11 +260,11 @@ void SystemDictionaryCodec::EncodeValue(
     } else if (c >= 0x30a1 && c < 0x30fd) {
       // Katakana (92 characters) are encoded into 1 byte.
       dst->push_back(c - 0x30a1 + kValueKatakanaOffset);
-    } else if (((c >> 8) & 255) == 0) {
+    } else if (c < 0x10000 && ((c >> 8) & 255) == 0) {
       // 0x00?? (ASCII) are encoded into 2 bytes.
       dst->push_back(kValueCharMarkAscii);
       dst->push_back(c & 255);
-    } else if ((c & 255) == 0) {
+    } else if (c < 0x10000 && (c & 255) == 0) {
       // 0x??00 are encoded into 2 bytes.
       dst->push_back(kValueCharMarkXX00);
       dst->push_back((c >> 8) & 255);
@@ -259,9 +275,29 @@ void SystemDictionaryCodec::EncodeValue(
       const int h = ((c - 0x4e00) >> 8) + kValueKanjiOffset;
       dst->push_back(h);
       dst->push_back(c & 255);
+    } else if (0x10000 <= c && c <= 0x10ffff) {
+      // charaters encoded into 2-4bytes.
+      int left = ((c >> 16) & 255);
+      const int middle = ((c >> 8) & 255);
+      const int right = (c & 255);
+      if (middle == 0) {
+        left |= kValueCharMarkUCS4Middle0;
+      }
+      if (right == 0) {
+        left |= kValueCharMarkUCS4Right0;
+      }
+      dst->push_back(kValueCharMarkUCS4);
+      dst->push_back(left);
+      if (middle != 0) {
+        dst->push_back(middle);
+      }
+      if (right != 0) {
+        dst->push_back(right);
+      }
     } else {
-      // Other charaters are encoded into 3bytes.
-      dst->push_back(kValueCharMarkOther);
+      DCHECK_LE(c, 0x10ffff);
+      // Other charaters encoded into 3bytes.
+      dst->push_back(kValueCharMarkOtherUCS2);
       dst->push_back((c >> 8) & 255);
       dst->push_back(c & 255);
     }
@@ -291,7 +327,18 @@ void SystemDictionaryCodec::DecodeValue(
       // xx00
       c = (p[1] << 8);
       p += 2;
-    } else if (cc == kValueCharMarkOther) {
+    } else if (cc == kValueCharMarkUCS4) {
+      // UCS4
+      c = ((p[1] & kValueCharMarkUCS4LeftMask) << 16);
+      int pos = 2;
+      if (!(p[1] & kValueCharMarkUCS4Middle0)) {
+        c += (p[pos++] << 8);
+      }
+      if (!(p[1] & kValueCharMarkUCS4Right0)) {
+        c += p[pos++];
+      }
+      p += pos;
+    } else if (cc == kValueCharMarkOtherUCS2) {
       // other
       c = (p[1] << 8);
       c += p[2];
@@ -304,7 +351,7 @@ void SystemDictionaryCodec::DecodeValue(
     } else {
       VLOG(1) << "should never come here";
     }
-    Util::UCS2ToUTF8Append(c, dst);
+    Util::UCS4ToUTF8Append(c, dst);
   }
 }
 

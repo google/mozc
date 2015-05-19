@@ -218,17 +218,26 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
       exit(0);
 #endif
     }
+#ifdef DEBUG
+    // Ignores unittest specific commandline flags.
+    // In the case of Release build, IGNORE_INVALID_FLAG macro is set, so that
+    // following condition makes no sense.
+    if (mozc::Util::StartsWith(key, "gtest_") ||
+        mozc::Util::StartsWith(key, "gunit_")) {
+      continue;
+    }
+#endif  // DEBUG
 #ifdef OS_MACOSX
     // Mac OSX specifies process serial number like -psn_0_217141.
     // Let's ignore it.
-    if (key.find("psn_") == 0) {
+    if (mozc::Util::StartsWith(key, "psn_")) {
       continue;
     }
 #endif
     if (!FlagUtil::SetFlag(key, value)) {
 #ifndef IGNORE_INVALID_FLAG
       cerr << "Unknown/Invalid flag " << key << endl;
-      exit(0);
+      exit(1);
 #endif
     }
   }

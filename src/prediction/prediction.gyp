@@ -37,7 +37,6 @@
       'target_name': 'prediction',
       'type': 'static_library',
       'sources': [
-        '<(proto_out_dir)/<(relative_dir)/user_history_predictor.pb.cc',
         'suggestion_filter.cc',
         'dictionary_predictor.cc',
         'predictor.cc',
@@ -47,23 +46,20 @@
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
+        '../composer/composer.gyp:composer',
         '../converter/converter_base.gyp:immutable_converter',
         '../converter/converter_base.gyp:segments',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary.gyp:suppression_dictionary',
         '../rewriter/rewriter.gyp:rewriter',
-        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:session_protocol',
+        '../storage/storage.gyp:encrypted_string_storage',
+        '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats.gyp:usage_stats',
-        '../usage_stats/usage_stats.gyp:genproto_usage_stats',
         'gen_suggestion_filter_data',
-        'genproto_prediction',
+        'prediction_protocol',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_suggestion_filter_main',
-        ],
-      }]],
     },
     {
       'target_name': 'gen_suggestion_filter_data',
@@ -79,11 +75,6 @@
           'inputs': [
             '<@(input_files)',
           ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_suggestion_filter_main',
-            ],
-          }]],
           'outputs': [
             '<(gen_out_dir)/suggestion_filter_data.h',
           ],
@@ -125,6 +116,21 @@
       ],
       'includes': [
         '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'prediction_protocol',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/user_history_predictor.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_prediction',
+      ],
+      'export_dependent_settings': [
+        'genproto_prediction',
       ],
     },
     {

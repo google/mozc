@@ -33,22 +33,35 @@
 
 namespace mozc {
 namespace {
+
+#ifdef MOZC_USE_SEPARATE_DICTIONARY
+const char *kDictionaryData_data = NULL;
+const size_t kDictionaryData_size = 0;
+#else
 #include "dictionary/embedded_dictionary_data.h"
+#endif  // MOZC_USE_SEPARATE_DICTIONARY
+
+DictionaryInterface *g_dictionary = NULL;
+
+char* g_dictionary_address = const_cast<char*>(kDictionaryData_data);
+int g_dictionary_size = kDictionaryData_size;
 
 class MozcDictionaryImpl : public DictionaryImpl {
  private:
-  MozcDictionaryImpl() : DictionaryImpl(kDictionaryData_data,
-                                        kDictionaryData_size) {}
+  MozcDictionaryImpl() : DictionaryImpl(g_dictionary_address,
+                                        g_dictionary_size) {}
   virtual ~MozcDictionaryImpl() {}
 
   friend class Singleton<MozcDictionaryImpl>;
 };
-
-DictionaryInterface *g_dictionary = NULL;
 }  // namespace
 
 DictionaryInterface *DictionaryFactory::GetDictionary() {
   if (g_dictionary == NULL) {
+    if (!g_dictionary_address || !g_dictionary_size) {
+      LOG(FATAL) << "Dictionary address/size is/are not set yet.";
+      CHECK(false);
+    }
     return Singleton<MozcDictionaryImpl>::get();
   } else {
     return g_dictionary;
@@ -58,4 +71,10 @@ DictionaryInterface *DictionaryFactory::GetDictionary() {
 void DictionaryFactory::SetDictionary(DictionaryInterface *dictionary) {
   g_dictionary = dictionary;
 }
+
+void DictionaryFactory::SetDictionaryData(void *address, size_t size) {
+  g_dictionary_address = reinterpret_cast<char*>(address);
+  g_dictionary_size = size;
+}
+
 }  // namespace mozc

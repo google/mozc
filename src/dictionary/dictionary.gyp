@@ -38,7 +38,6 @@
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/pos_map.h',
-        '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
         'user_dictionary.cc',
         'user_dictionary_importer.cc',
         'user_dictionary_storage.cc',
@@ -48,21 +47,15 @@
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:genproto_config',
-        '../session/session_base.gyp:genproto_session',
+        '../config/config.gyp:config_protocol',
+        '../session/session_base.gyp:session_protocol',
         '../usage_stats/usage_stats.gyp:usage_stats',
-        '../usage_stats/usage_stats.gyp:genproto_usage_stats',
         'dictionary_base.gyp:gen_pos_matcher',
+        'dictionary_protocol',
         'gen_pos_map',
-        'genproto_dictionary',
         'suppression_dictionary',
         'user_pos_data',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_user_pos_data_main',
-        ],
-      }]],
     },
     {
       'target_name': 'suppression_dictionary',
@@ -94,18 +87,13 @@
       'dependencies': [
         '../base/base.gyp:base',
         'dictionary_impl',
-        'gen_embedded_dictionary_data',
-        'genproto_dictionary',
+        'dictionary_protocol',
+        'gen_dictionary_data',
         'suffix_dictionary',
         'suppression_dictionary',
         'system/system_dictionary.gyp:system_dictionary',
         'user_dictionary',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_system_dictionary_data_main',
-        ],
-      }]],
     },
     {
       'target_name': 'dictionary_impl',
@@ -115,23 +103,32 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_handler',
-        '../config/config.gyp:genproto_config',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
         'dictionary_base.gyp:gen_pos_matcher',
-        'gen_embedded_dictionary_data',
-        'genproto_dictionary',
+        'dictionary_protocol',
+        'gen_dictionary_data',
         'suffix_dictionary',
         'suppression_dictionary',
         'system/system_dictionary.gyp:system_dictionary',
         'system/system_dictionary.gyp:value_dictionary',
         'user_dictionary',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_system_dictionary_data_main',
-        ],
-      }]],
+    },
+    {
+      'target_name': 'gen_dictionary_data',
+      'type': 'none',
+      'conditions': [
+        ['use_separate_dictionary==1',{
+            'dependencies': [
+              'gen_separate_dictionary_data',
+            ],
+          }, {
+            'dependencies': [
+              'gen_embedded_dictionary_data',
+            ],
+          },
+        ]
+      ],
     },
     {
       'target_name': 'gen_embedded_dictionary_data',
@@ -156,13 +153,6 @@
           'inputs': [
             '<@(input_files)',
           ],
-          'conditions': [
-            ['two_pass_build==0',
-              { 'inputs':
-                [ '<(mozc_build_tools_dir)/gen_system_dictionary_data_main', ],
-              },
-            ],
-          ],
           'outputs': [
             '<(gen_out_dir)/embedded_dictionary_data.h',
           ],
@@ -175,6 +165,42 @@
             '--output=<(gen_out_dir)/embedded_dictionary_data.h',
           ],
           'message': 'Generating <(gen_out_dir)/embedded_dictionary_data.h.',
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_dictionary_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_separate_dictionary_data',
+          'variables': {
+             'input_files%': [
+               '../data/dictionary/dictionary00.txt',
+               '../data/dictionary/dictionary01.txt',
+               '../data/dictionary/dictionary02.txt',
+               '../data/dictionary/dictionary03.txt',
+               '../data/dictionary/dictionary04.txt',
+               '../data/dictionary/dictionary05.txt',
+               '../data/dictionary/dictionary06.txt',
+               '../data/dictionary/dictionary07.txt',
+               '../data/dictionary/dictionary08.txt',
+               '../data/dictionary/dictionary09.txt',
+             ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/system.dictionary',
+          ],
+          'action': [
+            '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
+            '--logtostderr',
+            '--input=<(input_files)',
+            '--output=<(gen_out_dir)/system.dictionary',
+          ],
+          'message': 'Generating <(gen_out_dir)/system.dictionary.',
         },
       ],
     },
@@ -208,11 +234,6 @@
         '../base/base.gyp:base',
         'gen_user_pos_data',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_user_pos_data_main',
-        ],
-      }]],
     },
     {
       'target_name': 'gen_user_pos_data',
@@ -231,11 +252,6 @@
           'inputs': [
             '<@(input_files)',
           ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_user_pos_data_main',
-            ],
-          }]],
           'outputs': [
             '<(gen_out_dir)/user_pos_data.h',
           ],
@@ -305,6 +321,21 @@
       ],
     },
     {
+      'target_name': 'dictionary_protocol',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_dictionary',
+      ],
+      'export_dependent_settings': [
+        'genproto_dictionary',
+      ],
+    },
+    {
       'target_name': 'genproto_dictionary',
       'type': 'none',
       'sources': [
@@ -346,22 +377,6 @@
         '../base/base.gyp:base',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
       ],
-    },
-    {
-      'target_name': 'dictionary_mock_test',
-      'type': 'executable',
-      'sources': [
-        'dictionary_mock_test.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../testing/testing.gyp:gtest_main',
-        'dictionary',
-        'dictionary_mock',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
     },
   ],
 }

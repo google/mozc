@@ -34,7 +34,10 @@
 #include <string>
 
 #include "base/base.h"
-#include "composer/table.h"  // For TableAttributes
+// For TableAttributes
+#include "composer/table.h"
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace composer {
@@ -142,10 +145,14 @@ class CharChunk {
   bool has_status(uint32 status_mask) const;
   void clear_status();
 
+  void CopyFrom(const CharChunk &src);
+
   // Test only
   bool AddInputInternal(const Table &table, string *input);
 
  private:
+  FRIEND_TEST(CharChunkTest, CopyFrom);
+
   const TransliteratorInterface *transliterator_;
 
   string raw_;

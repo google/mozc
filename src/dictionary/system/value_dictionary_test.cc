@@ -31,9 +31,11 @@
 
 #include "base/base.h"
 #include "base/stl_util.h"
+#include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "testing/base/public/googletest.h"
@@ -108,6 +110,45 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
     node = node->bnext;
   }
   EXPECT_TRUE(found);
+}
+
+TEST_F(ValueDictionaryTest, LookupPredictiveWithLimit) {
+  NodeAllocator allocator;
+  // "うぃー"
+  AddToken("\xa4\xa6\xa4\xa3\xa1\xbc", "we");
+  // "うぉー"
+  AddToken("\xa4\xa6\xa4\xa9\xa1\xbc", "war");
+  // "わーど"
+  AddToken("\xa4\xef\xa1\xbc\xa4\xc9", "word");
+  BuildDictionary();
+
+  scoped_ptr<ValueDictionary> dictionary(
+      ValueDictionary::CreateValueDictionaryFromFile(dict_name_));
+  DictionaryInterface::Limit limit;
+  Trie<string> trie;
+  trie.AddEntry("e", "");
+  trie.AddEntry("a", "");
+  limit.begin_with_trie = &trie;
+
+  const string lookup_key = "w";
+  Node *node = dictionary->LookupPredictiveWithLimit(
+      lookup_key.c_str(), lookup_key.size(), limit, &allocator);
+  bool we_found = false;
+  bool war_found = false;
+  bool word_found = false;
+  while (node) {
+    if (node->value == "we") {
+      we_found = true;
+    } else if (node->value == "war") {
+      war_found = true;
+    } else if (node->value == "word") {
+      word_found = true;
+    }
+    node = node->bnext;
+  }
+  EXPECT_TRUE(we_found);
+  EXPECT_TRUE(war_found);
+  EXPECT_FALSE(word_found);
 }
 
 }  // namespace mozc

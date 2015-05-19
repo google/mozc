@@ -63,8 +63,9 @@ class InputFileStream : public ifstream {
     // Since Windows uses UTF-16 for internationalized file names, we should
     // convert the encoding of the given |filename| from UTF-8 to UTF-16.
     wstring filename_wide;
-    if (Util::UTF8ToWide(filename, &filename_wide) > 0)
+    if (Util::UTF8ToWide(filename, &filename_wide) > 0) {
       ifstream::open(filename_wide.c_str(), mode);
+    }
 #else
     ifstream::open(filename, mode);
 #endif
@@ -90,8 +91,9 @@ class OutputFileStream : public ofstream {
     // Since Windows uses UTF-16 for internationalized file names, we should
     // convert the encoding of the given |filename| from UTF-8 to UTF-16.
     wstring filename_wide;
-    if (Util::UTF8ToWide(filename, &filename_wide) > 0)
+    if (Util::UTF8ToWide(filename, &filename_wide) > 0) {
       ofstream::open(filename_wide.c_str(), mode);
+    }
 #else
     ofstream::open(filename, mode);
 #endif

@@ -42,13 +42,13 @@
 
 namespace mozc {
 namespace {
-void WriteInt(int value, OutputFileStream *ofs) {
+void WriteInt(int value, ostream *ofs) {
   DCHECK(ofs);
   ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
 }
 
 // Write padding
-void Pad4(int length, OutputFileStream *ofs) {
+void Pad4(int length, ostream *ofs) {
   DCHECK(ofs);
   for (int i = length; (i % 4) != 0; ++i) {
     (*ofs) << static_cast<char>(Util::Random(CHAR_MAX));
@@ -74,7 +74,7 @@ DictionaryFileCodec::~DictionaryFileCodec() {}
 
 void DictionaryFileCodec::WriteSections(
     const vector<DictionaryFileSection> &sections,
-    OutputFileStream *ofs) const {
+    ostream *ofs) const {
   DCHECK(ofs);
   WriteHeader(ofs);
   for (size_t i = 0; i < sections.size(); ++i) {
@@ -83,13 +83,13 @@ void DictionaryFileCodec::WriteSections(
   WriteInt(0, ofs);
 }
 
-void DictionaryFileCodec::WriteHeader(OutputFileStream *ofs) const {
+void DictionaryFileCodec::WriteHeader(ostream *ofs) const {
   DCHECK(ofs);
   WriteInt(filemagic_, ofs);
 }
 
 void DictionaryFileCodec::WriteSection(
-    const DictionaryFileSection &section, OutputFileStream *ofs) const {
+    const DictionaryFileSection &section, ostream *ofs) const {
   DCHECK(ofs);
   const string &name = GetSectionName(section.name);
   VLOG(1) << "section=" << name << " length=" << section.len;

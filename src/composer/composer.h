@@ -38,7 +38,6 @@
 
 #include "base/base.h"
 #include "transliteration/transliteration.h"
-#include "composer/composition_interface.h"
 #include "session/commands.pb.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
@@ -51,6 +50,7 @@ class KeyEvent;
 
 namespace composer {
 
+class CompositionInterface;
 class Table;
 
 class Composer {
@@ -78,7 +78,7 @@ class Composer {
   // Check the preedit string is empty or not.
   bool Empty() const;
 
-  void SetTable(const Table *table);
+  void SetTableForUnittest(const Table *table);
 
   // Add a conversion rule to the table.
   void AddRule(const string &input,
@@ -118,6 +118,9 @@ class Composer {
 
   // Return a prediction query trimmed the tail alphabet characters.
   void GetQueryForPrediction(string *output) const;
+
+  // Return a expanded prediction query.
+  void GetQueriesForPrediction(string *base, set<string> *expanded) const;
 
   size_t GetLength() const;
   size_t GetCursor() const;
@@ -192,10 +195,7 @@ class Composer {
   // new chunk if the character has NewChunk attribute.
   void SetNewInput();
 
-  // These methods cannot copy composition_ correctly.
-  // TODO(hsumita): Do deep copy composition_ and add CopyFrom() method.
-  void CopyFromForSubmission(const Composer &src);
-  void CopyFromForConversion(const Composer &src);
+  void CopyFrom(const Composer &src);
 
   bool is_new_input() const;
   size_t shifted_sequence_count() const;
@@ -207,10 +207,6 @@ class Composer {
 
  private:
   FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
-
-  // Copy composer except for composition_.
-  // Arguments are Source composer and query string for composition.
-  void CopyFromInternal(const Composer &src, const string &query);
 
   // Change input mode temporarily accoding to the current context and
   // the given input character.

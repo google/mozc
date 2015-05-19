@@ -42,8 +42,8 @@ namespace {
 const TransliteratorInterface *kNullT12r = NULL;
 }  // namespace
 
-Composition::Composition()
-    : input_t12r_(NULL) {}
+Composition::Composition(const Table *table)
+    : table_(table), input_t12r_(NULL) {}
 
 Composition::~Composition() {
   Erase();
@@ -432,6 +432,27 @@ bool Composition::ShouldCommit() const {
   return true;
 }
 
+CompositionInterface *Composition::Clone() const {
+  return CloneImpl();
+}
+
+Composition *Composition::CloneImpl() const {
+  Composition *object = new Composition(table_);
+
+  // TODO(hsumita): Implements TableFactory and TransliteratorFactory and uses
+  // it instead of copying pointers.
+  object->input_t12r_ = input_t12r_;
+
+  for (CharChunkList::const_iterator it = chunks_.begin();
+       it != chunks_.end(); ++it) {
+    CharChunk *chunk = new CharChunk();
+    chunk->CopyFrom(**it);
+    object->chunks_.push_back(chunk);
+  }
+
+  return object;
+}
+
 // Return charchunk to be inserted and iterator of the *next* char chunk.
 CharChunkList::iterator Composition::GetInsertionChunk(
     CharChunkList::iterator *it) {
@@ -447,12 +468,12 @@ CharChunkList::iterator Composition::GetInsertionChunk(
   return InsertChunk(it);
 }
 
-void Composition::SetTable(const Table *table) {
-  table_ = table;
-}
-
 void Composition::SetInputMode(const TransliteratorInterface *transliterator) {
   input_t12r_ = transliterator;
+}
+
+void Composition::SetTableForUnittest(const Table *table) {
+  table_ = table;
 }
 
 }  // namespace composer

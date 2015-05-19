@@ -42,15 +42,12 @@
 
 namespace mozc {
 namespace {
-int Random(int size) {
-  return 1 + static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
-}
 
 string GenRandomString(int size) {
   string result;
-  const size_t len = Random(size);
+  const size_t len = Util::Random(size) + 1;
   for (int i = 0; i < len; ++i) {
-    const uint16 l = Random(0xFFFF);
+    const uint16 l = Util::Random(0xFFFF) + 1;
     Util::UCS2ToUTF8Append(l, &result);
   }
   return result;
@@ -62,7 +59,7 @@ void RunTest(LRUStorage *storage, uint32 size) {
   vector<pair<string, uint32> > values;
   for (int i = 0; i < size * 2; ++i) {
     const string key = GenRandomString(20);
-    const uint32 value = static_cast<uint32>(Random(10000000));
+    const uint32 value = static_cast<uint32>(Util::Random(10000000));
     if (used.find(key) != used.end()) {
       continue;
     }
@@ -167,10 +164,10 @@ TEST_F(LRUStorageTest, ReadWriteTest) {
     const size_t size = kSize[i];
     for (int j = 0; j < size; ++j) {
       Entry entry;
-      entry.key = rand();
-      const int n = rand();
+      entry.key = Util::Random(RAND_MAX);
+      const int n = Util::Random(RAND_MAX);
       entry.value.assign(reinterpret_cast<const char *>(&n), 4);
-      entry.last_access_time = Random(100000);
+      entry.last_access_time = Util::Random(100000);
       entries.push_back(entry);
       storage.Write(j, entry.key, entry.value, entry.last_access_time);
     }

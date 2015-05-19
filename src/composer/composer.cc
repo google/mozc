@@ -42,6 +42,7 @@
 #include "config/config.pb.h"
 #include "converter/character_form_manager.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 namespace composer {
@@ -206,9 +207,8 @@ Composer::Composer()
       comeback_input_mode_(transliteration::HIRAGANA),
       input_field_type_(commands::SessionCommand::NORMAL),
       shifted_sequence_count_(0),
-      composition_(new Composition),
+      composition_(new Composition(Singleton<Table>::get())),
       max_length_(kMaxPreeditLength) {
-  composition_->SetTable(Singleton<Table>::get());
   SetInputMode(transliteration::HIRAGANA);
   Reset();
 }
@@ -233,8 +233,8 @@ bool Composer::Empty() const {
   return (GetLength() == 0);
 }
 
-void Composer::SetTable(const Table *table) {
-  composition_->SetTable(table);
+void Composer::SetTableForUnittest(const Table *table) {
+  composition_->SetTableForUnittest(table);
 }
 
 void Composer::SetInputMode(transliteration::TransliterationType mode) {
@@ -256,25 +256,22 @@ void Composer::SetTemporaryInputMode(
 }
 
 void Composer::UpdateInputMode() {
-  if (position_ == 0) {
-    // Set the default input mode.
-    SetInputMode(comeback_input_mode_);
-    return;
-  }
-
-  const TransliteratorInterface *current_t12r =
-      composition_->GetTransliterator(position_);
-  if (position_ == composition_->GetLength() ||
-      current_t12r == composition_->GetTransliterator(position_ + 1)) {
-    // - The cursor is at the tail of composition.
-    //   Use last character's transliterator as the input mode.
-    // - If the current cursor is between the same character type like
-    //   "A|B" and "あ|い", the input mode follows the character type.
-    input_mode_ = GetTransliterationType(current_t12r, comeback_input_mode_);
-    shifted_sequence_count_ = 0;
-    is_new_input_ = true;
-    composition_->SetInputMode(GetTransliterator(input_mode_));
-    return;
+  if (position_ != 0 &&
+      GET_REQUEST(update_input_mode_from_surrounding_text)) {
+    const TransliteratorInterface *current_t12r =
+        composition_->GetTransliterator(position_);
+    if (position_ == composition_->GetLength() ||
+        current_t12r == composition_->GetTransliterator(position_ + 1)) {
+      // - The cursor is at the tail of composition.
+      //   Use last character's transliterator as the input mode.
+      // - If the current cursor is between the same character type like
+      //   "A|B" and "あ|い", the input mode follows the character type.
+      input_mode_ = GetTransliterationType(current_t12r, comeback_input_mode_);
+      shifted_sequence_count_ = 0;
+      is_new_input_ = true;
+      composition_->SetInputMode(GetTransliterator(input_mode_));
+      return;
+    }
   }
 
   // Set the default input mode.
@@ -378,8 +375,6 @@ void Composer::InsertCharacter(const string &key) {
 }
 
 void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
-  const bool sensitive = Singleton<Table>::get()->case_sensitive();
-  Singleton<Table>::get()->set_case_sensitive(true);
   switch (internal_command) {
     case REWIND:
       InsertCharacter(Table::ParseSpecialKey("{<}"));
@@ -387,7 +382,6 @@ void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
     default:
       LOG(ERROR) << "Unkown command : " << internal_command;
   }
-  Singleton<Table>::get()->set_case_sensitive(sensitive);
 }
 
 void Composer::InsertCharacterPreedit(const string &input) {
@@ -719,6 +713,14 @@ void Composer::GetQueryForPrediction(string *output) const {
   Util::FullWidthAsciiToHalfWidthAscii(*base_query, output);
 }
 
+void Composer::GetQueriesForPrediction(
+    string *base, set<string> *expanded) const {
+  DCHECK(base);
+  DCHECK(expanded);
+  DCHECK(composition_.get());
+  composition_->GetExpandedStrings(base, expanded);
+}
+
 size_t Composer::GetLength() const {
   return composition_->GetLength();
 }
@@ -963,7 +965,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
     const Script script = char_scripts[i];
     if (script == OTHERS || IsAlphabetOrNumber(script)) {
       // Append one character.
-      Util::SubString(*query, i, 1, &transformed_query);
+      transformed_query.append(Util::SubString(*query, i, 1));
       continue;
     }
 
@@ -995,7 +997,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
         transformed = true;
       } else {
         // Append one character.
-        Util::SubString(*query, i, 1, &transformed_query);
+        transformed_query.append(Util::SubString(*query, i, 1));
       }
       continue;
     }
@@ -1014,7 +1016,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
         transformed = true;
       } else {
         // Append one character.
-        Util::SubString(*query, i, 1, &transformed_query);
+        transformed_query.append(Util::SubString(*query, i, 1));
       }
       continue;
     }
@@ -1033,7 +1035,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
         transformed = true;
       } else {
         // Append one character.
-        Util::SubString(*query, i, 1, &transformed_query);
+        transformed_query.append(Util::SubString(*query, i, 1));
       }
       continue;
     }
@@ -1054,50 +1056,21 @@ void Composer::SetNewInput() {
   is_new_input_ = true;
 }
 
-void Composer::CopyFromInternal(const Composer &src, const string &query) {
+void Composer::CopyFrom(const Composer &src) {
   Reset();
 
-  SetInputMode(src.GetComebackInputMode());
-  SetOutputMode(src.GetOutputMode());
-  SetInputFieldType(src.GetInputFieldType());
+  input_mode_ = src.input_mode_;
+  comeback_input_mode_ = src.comeback_input_mode_;
+  output_mode_ = src.output_mode_;
+  input_field_type_ = src.input_field_type_;
 
-  // Currently, InsertCharacterPreedit can't deal multiple characters
-  // at the same time.
-  // So we should split query to UTF-8 chars to avoid DCHECK failure.
-  // http://b/3437358
-  //
-  // See also http://b/5094684, http://b/5094642
-  vector<string> chars;
-  Util::SplitStringToUtf8Chars(query, &chars);
-  for (size_t i = 0; i < chars.size(); ++i) {
-    // This function does not work correctly with characters
-    // input with InsertCharacterPreedit() or InsertCharacterPreeditAt().
-    // TODO(hsumita): Add flags to determine how characters are input.
-    // We can appropriately copy a composition when this TODO is fixed.
-    // TODO(yukawa): Consider CapsLock.
-    ApplyTemporaryInputMode(chars[i], false);
-    InsertCharacterPreedit(chars[i]);
-  }
+  position_ = src.position_;
+  is_new_input_ = src.is_new_input_;
+  shifted_sequence_count_ = src.shifted_sequence_count_;
+  source_text_.assign(src.source_text_);
+  max_length_ = src.max_length_;
 
-  position_ = src.GetCursor();
-  is_new_input_ = src.is_new_input();
-  shifted_sequence_count_ = src.shifted_sequence_count();
-  source_text_.assign(src.source_text());
-  max_length_ = src.max_length();
-}
-
-void Composer::CopyFromForSubmission(const Composer &src) {
-  // TODO(hsumita): Copy composition correctly.
-  string composition;
-  src.GetStringForSubmission(&composition);
-  CopyFromInternal(src, composition);
-}
-
-void Composer::CopyFromForConversion(const Composer &src) {
-  // TODO(hsumita): Copy composition correctly.
-  string composition;
-  src.GetQueryForConversion(&composition);
-  CopyFromInternal(src, composition);
+  composition_.reset(src.composition_->Clone());
 }
 
 bool Composer::is_new_input() const {

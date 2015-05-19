@@ -49,39 +49,64 @@ string GetFileData(const string &filename) {
   }
   return data;
 }
-}  // anonymous namespace
 
-TEST(ConfigFileStreamTest, OnMemoryFiles) {
+// Returns true if |input_stream| is at the end of stream. This function
+// peeks one more character in case the current position is actually at
+// the end of the stream but |input_stream| instance has not observed it
+// yet. In other words, this method may change the internal state of
+// |input_stream| as a side effect.
+bool IsEof(istream *input_stream) {
+  return input_stream->peek() == istream::traits_type::eof() &&
+         input_stream->eof();
+}
+
+// Note that this macro may change the internal state of |input_stream|.
+// See the comment of IsEof.
+#define EXPECT_EOF(input_stream) EXPECT_PRED1(IsEof, input_stream)
+
+}  // namespace
+
+class ConfigFileStreamTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    default_profile_directory_ = Util::GetUserProfileDirectory();
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  }
+
+  virtual void TearDown() {
+    Util::SetUserProfileDirectory(default_profile_directory_);
+  }
+
+ private:
+  string default_profile_directory_;
+};
+
+TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
   const string kData = "data";
   const string kPath = "memory://test";
   EXPECT_TRUE(ConfigFileStream::GetFileName(kPath).empty());
   ConfigFileStream::AtomicUpdate(kPath, kData);
 
   {
-    scoped_ptr<istream> ifs(ConfigFileStream::Open(kPath));
+    scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
     CHECK(ifs.get());
     scoped_array<char> buf(new char[kData.size() + 1]);
     ifs->read(buf.get(), kData.size());
     buf.get()[kData.size()] = '\0';
     EXPECT_EQ(kData, buf.get());
-    // eof() does not work well for istringstream for some reasons, so
-    // here just uses peek() instead.
-    EXPECT_EQ(-1, ifs->peek());
+    EXPECT_EOF(ifs.get());
   }
 
   ConfigFileStream::ClearOnMemoryFiles();
 
   {
-    scoped_ptr<istream> ifs(ConfigFileStream::Open(kPath));
+    scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
     CHECK(ifs.get());
-    // eof() does not work well for istringstream for some reasons, so
-    // here just uses peek() instead.
-    EXPECT_EQ(-1, ifs->peek());
+    EXPECT_EOF(ifs.get());
   }
 }
 
-TEST(ConfigFileStreamTest, AtomicUpdate) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(ConfigFileStreamTest, AtomicUpdate) {
   const string prefixed_filename = "user://atomic_update_test";
   const string filename = ConfigFileStream::GetFileName(prefixed_filename);
   const string tmp_filename = filename + ".tmp";
@@ -104,6 +129,89 @@ TEST(ConfigFileStreamTest, AtomicUpdate) {
   if (Util::FileExists(filename)) {
     Util::Unlink(filename);
   }
+}
+
+TEST_F(ConfigFileStreamTest, OpenReadBinary) {
+  // At first, generate a binary data file in (temporary) user directory
+  // so that we can load it as "user://my_binary_file.dat"
+  const char kTestFileName[] = "my_binary_file.dat";
+  const string &test_file_path = Util::JoinPath(
+      Util::GetUserProfileDirectory(), kTestFileName);
+
+  const char kBinaryData[] = {
+    ' ', ' ', '\r', ' ', '\n', ' ', '\r', '\n', ' ', '\0', ' ',
+  };
+  const size_t kBinaryDataSize = sizeof(kBinaryData);
+  {
+    OutputFileStream ofs(test_file_path.c_str(), ios::out | ios::binary);
+    ofs.write(kBinaryData, kBinaryDataSize);
+  }
+
+  ASSERT_TRUE(Util::FileExists(test_file_path));
+
+  {
+    scoped_ptr<istream> ifs(ConfigFileStream::OpenReadBinary(
+        "user://" + string(kTestFileName)));
+    CHECK(ifs.get());
+    scoped_array<char> buf(new char[kBinaryDataSize]);
+    ifs->read(buf.get(), kBinaryDataSize);
+    // Check if all the data are loaded as binary mode.
+    for (size_t i = 0; i < kBinaryDataSize; ++i) {
+      EXPECT_EQ(static_cast<int>(kBinaryData[i]), static_cast<int>(buf[i]));
+    }
+    EXPECT_EOF(ifs.get());
+  }
+
+  // Remove test file just in case.
+  EXPECT_TRUE(Util::Unlink(test_file_path));
+  EXPECT_FALSE(Util::FileExists(test_file_path));
+}
+
+TEST_F(ConfigFileStreamTest, OpenReadText) {
+  // At first, generate a binary data file in (temporary) user directory
+  // so that we can load it as "user://my_binary_file.dat"
+  const char kTestFileName[] = "my_text_file.dat";
+  const string &test_file_path = Util::JoinPath(
+      Util::GetUserProfileDirectory(), kTestFileName);
+
+  const char kSourceTextData[] = {
+      'a', 'b', '\r', 'c', '\n', 'd', '\r', '\n', 'e',
+  };
+  {
+    // Use |ios::binary| to preserve the line-end character.
+    OutputFileStream ofs(test_file_path.c_str(), ios::out | ios::binary);
+    ofs.write(kSourceTextData, sizeof(kSourceTextData));
+  }
+
+  ASSERT_TRUE(Util::FileExists(test_file_path));
+
+#ifdef OS_WINDOWS
+#define TRAILING_CARRIAGE_RETURN ""
+#else
+#define TRAILING_CARRIAGE_RETURN "\r"
+#endif
+  const char *kExpectedLines[] = {
+    "ab\rc", "d" TRAILING_CARRIAGE_RETURN, "e",
+  };
+#undef TRAILING_CARRIAGE_RETURN
+
+  {
+    scoped_ptr<istream> ifs(ConfigFileStream::OpenReadText(
+        "user://" + string(kTestFileName)));
+    CHECK(ifs.get());
+    string line;
+    int line_number = 0;  // note that this is 1-origin.
+    while(getline(*ifs.get(), line)) {
+      ++line_number;
+      ASSERT_LE(line_number, arraysize(kExpectedLines));
+      EXPECT_EQ(line, kExpectedLines[line_number - 1])
+          << "failed at line: " << line_number;
+    }
+  }
+
+  // Remove test file just in case.
+  EXPECT_TRUE(Util::Unlink(test_file_path));
+  EXPECT_FALSE(Util::FileExists(test_file_path));
 }
 
 }  // namespace mozc

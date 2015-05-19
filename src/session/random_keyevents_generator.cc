@@ -29,6 +29,8 @@
 
 #include "session/random_keyevents_generator.h"
 
+#include <string>
+
 #include "base/base.h"
 #include "base/mutex.h"
 #include "base/util.h"
@@ -89,19 +91,16 @@ const commands::KeyEvent::SpecialKey kSpecialKeys[] = {
   commands::KeyEvent::EQUALS
 };
 
-int GetRandom(int size) {
-  return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
-}
-
 uint32 GetRandomAsciiKey() {
-  return static_cast<uint32>(' ') + GetRandom(static_cast<uint32>('~' - ' '));
+  return static_cast<uint32>(' ') +
+      Util::Random(static_cast<uint32>('~' - ' '));
 }
 
 void InitSeed() {
   uint32 seed = 0;
   mozc::Util::GetSecureRandomSequence(reinterpret_cast<char *>(&seed),
                                       sizeof(seed));
-  srand(seed);
+  Util::SetRandomSeed(seed);
 }
 
 once_t seed_init_once = MOZC_ONCE_INIT;
@@ -123,7 +122,8 @@ void RandomKeyEventsGenerator::GenerateSequence(
 
   CallOnce(&seed_init_once, &InitSeed);
 
-  const string sentence = kTestSentences[GetRandom(arraysize(kTestSentences))];
+  const string sentence =
+      kTestSentences[Util::Random(arraysize(kTestSentences))];
   CHECK(!sentence.empty());
 
   string tmp, input;
@@ -166,11 +166,11 @@ void RandomKeyEventsGenerator::GenerateSequence(
     }
 
     for (int i = 0; i < 5; ++i) {
-      const size_t num = GetRandom(30) + 8;
+      const size_t num = Util::Random(30) + 8;
       for (size_t j = 0; j < num; ++j) {
         commands::KeyEvent key;
         key.set_special_key(commands::KeyEvent::SPACE);
-        if (GetRandom(4) == 0) {
+        if (Util::Random(4) == 0) {
           key.add_modifier_keys(commands::KeyEvent::SHIFT);
           keys->push_back(key);
         }
@@ -191,25 +191,25 @@ void RandomKeyEventsGenerator::GenerateSequence(
       keys->push_back(basic_keys[i]);
     }
 
-    const size_t num = GetRandom(30) + 10;
+    const size_t num = Util::Random(30) + 10;
     for (size_t i = 0; i < num; ++i) {
       commands::KeyEvent key;
-      switch (GetRandom(4)) {
+      switch (Util::Random(4)) {
         case 0:
           key.set_special_key(commands::KeyEvent::LEFT);
-          if (GetRandom(2) == 0) {
+          if (Util::Random(2) == 0) {
             key.add_modifier_keys(commands::KeyEvent::SHIFT);
           }
           break;
         case 1:
           key.set_special_key(commands::KeyEvent::RIGHT);
-          if (GetRandom(2) == 0) {
+          if (Util::Random(2) == 0) {
             key.add_modifier_keys(commands::KeyEvent::SHIFT);
           }
           break;
         default:
           {
-            const size_t space_num = GetRandom(20) + 3;
+            const size_t space_num = Util::Random(20) + 3;
             for (size_t i = 0; i < space_num; ++i) {
               key.set_special_key(commands::KeyEvent::SPACE);
               keys->push_back(key);
@@ -218,11 +218,11 @@ void RandomKeyEventsGenerator::GenerateSequence(
           break;
       }
 
-      if (GetRandom(4) == 0) {
+      if (Util::Random(4) == 0) {
         key.add_modifier_keys(commands::KeyEvent::CTRL);
       }
 
-      if (GetRandom(10) == 0) {
+      if (Util::Random(10) == 0) {
         key.add_modifier_keys(commands::KeyEvent::ALT);
       }
 
@@ -240,10 +240,10 @@ void RandomKeyEventsGenerator::GenerateSequence(
       keys->push_back(basic_keys[i]);
     }
 
-    const size_t num = GetRandom(20) + 10;
+    const size_t num = Util::Random(20) + 10;
     for (size_t i = 0; i < num; ++i) {
       commands::KeyEvent key;
-      switch (GetRandom(5)) {
+      switch (Util::Random(5)) {
         case 0:
           key.set_special_key(commands::KeyEvent::LEFT);
           break;
@@ -259,7 +259,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
         default:
           {
             // add any ascii
-            const size_t insert_num = GetRandom(5) + 1;
+            const size_t insert_num = Util::Random(5) + 1;
             for (size_t i = 0; i < insert_num; ++i) {
               key.set_key_code(GetRandomAsciiKey());
             }
@@ -277,9 +277,9 @@ void RandomKeyEventsGenerator::GenerateSequence(
   {
     for (size_t i = 0; i < basic_keys.size(); ++i) {
       commands::KeyEvent key;
-      switch (GetRandom(8)) {
+      switch (Util::Random(8)) {
         case 0:
-          key.set_key_code(kSpecialKeys[GetRandom(arraysize(kSpecialKeys))]);
+          key.set_key_code(kSpecialKeys[Util::Random(arraysize(kSpecialKeys))]);
           break;
         case 1:
           key.set_key_code(GetRandomAsciiKey());
@@ -289,19 +289,19 @@ void RandomKeyEventsGenerator::GenerateSequence(
           break;
       }
 
-      if (GetRandom(10) == 0) {  // 10%
+      if (Util::Random(10) == 0) {  // 10%
         key.add_modifier_keys(commands::KeyEvent::CTRL);
       }
 
-      if (GetRandom(10) == 0) {  // 10%
+      if (Util::Random(10) == 0) {  // 10%
         key.add_modifier_keys(commands::KeyEvent::SHIFT);
       }
 
-      if (GetRandom(50) == 0) {  // 2%
+      if (Util::Random(50) == 0) {  // 2%
         key.add_modifier_keys(commands::KeyEvent::KEY_DOWN);
       }
 
-      if (GetRandom(50) == 0) {  // 2%
+      if (Util::Random(50) == 0) {  // 2%
         key.add_modifier_keys(commands::KeyEvent::KEY_UP);
       }
 

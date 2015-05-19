@@ -33,9 +33,6 @@
 #ifndef MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 #define MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 
-#include <map>
-#include <string>
-
 #include "base/base.h"
 #include "session/commands.pb.h"
 
@@ -47,8 +44,6 @@ class Composer;
 
 namespace session {
 class SessionConverterInterface;
-
-typedef map<string, commands::KeyEvent> TransformTable;
 
 class ImeContext {
  public:
@@ -80,9 +75,6 @@ class ImeContext {
   State state() const;
   void set_state(State state);
 
-  const TransformTable &transform_table() const;
-  TransformTable *mutable_transform_table();
-
   config::Config::SessionKeymap keymap() const;
   void set_keymap(config::Config::SessionKeymap keymap);
 
@@ -95,8 +87,9 @@ class ImeContext {
   const commands::Output &output() const;
   commands::Output *mutable_output();
 
-  // Copy |source| context to |destination| context.  This function
-  // does not perform compele copying at this moment.
+  // Copy |source| context to |destination| context.
+  // TODO(hsumita): Renames it as CopyFrom and make it non-static to keep
+  // consistency with other classes.
   static void CopyContext(const ImeContext &src, ImeContext *dest);
 
  private:
@@ -108,7 +101,6 @@ class ImeContext {
   scoped_ptr<SessionConverterInterface> converter_;
 
   State state_;
-  TransformTable transform_table_;
   config::Config::SessionKeymap keymap_;
 
   commands::Capability client_capability_;

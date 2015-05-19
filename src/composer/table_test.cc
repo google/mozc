@@ -35,6 +35,8 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "testing/base/public/gunit.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -89,6 +91,9 @@ class TableTest : public testing::Test {
   TableTest() {}
 
   virtual void SetUp() {
+    saved_request_.CopyFrom(commands::RequestHandler::GetRequest());
+    commands::Request default_request;
+    commands::RequestHandler::SetRequest(default_request);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
@@ -96,8 +101,17 @@ class TableTest : public testing::Test {
 
   virtual void TearDown() {
     config::ConfigHandler::SetConfig(default_config_);
+    commands::RequestHandler::SetRequest(saved_request_);
   }
 
+  void SetCustomRomanTable(const string &roman_table) {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_custom_roman_table(roman_table);
+    config::ConfigHandler::SetConfig(config);
+  }
+
+  commands::Request saved_request_;
   config::Config default_config_;
 
  private:
@@ -407,9 +421,7 @@ TEST_F(TableTest, CustomPunctuationsAndSymbols) {
   custom_roman_table.append("[\tOPEN\n");
   custom_roman_table.append("]\tCLOSE\n");
 
-  config::Config config;
-  config.set_custom_roman_table(custom_roman_table);
-  EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
+  SetCustomRomanTable(custom_roman_table);
 
   Table table;
   table.Initialize();
@@ -678,6 +690,77 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
       EXPECT_EQ(1, key_length);
       EXPECT_TRUE(fixed);
     }
+  }
+}
+
+// Table class automatically enables case-sensitive mode when the given roman
+// table has any input rule which contains one or more upper case characters.
+//   e.g. "V" -> "5" or "YT" -> "You there"
+// This feature was implemented as b/2910223 as per following request.
+// http://www.google.com/support/forum/p/ime/thread?tid=4ea9aed4ac8a2ba6&hl=ja
+//
+// The following test checks if a case-sensitive and a case-inensitive roman
+// table enables and disables this "case-sensitive mode", respectively.
+TEST_F(TableTest, AutomaticCaseSensitiveDetection) {
+  static const char kCaseInsensitiveRomanTable[] = {
+    "m\tmozc\n"     // m -> mozc
+    "n\tnamazu\n"   // n -> namazu
+  };
+  static const char kCaseSensitiveRomanTable[] = {
+    "m\tmozc\n"     // m -> mozc
+    "M\tMozc\n"     // M -> Mozc
+  };
+
+  {
+    Table table;
+    SetCustomRomanTable(kCaseSensitiveRomanTable);
+    EXPECT_FALSE(table.case_sensitive())
+        << "case-sensitive mode should be desabled by default.";
+    // Load a custom config with case-sensitive custom roman table.
+    ASSERT_TRUE(table.Initialize());
+    EXPECT_TRUE(table.case_sensitive())
+        << "Case sensitive roman table should enable case-sensitive mode.";
+  }
+
+  {
+    Table table;
+    // Load a custom config with case-insensitive custom roman table.
+    SetCustomRomanTable(kCaseInsensitiveRomanTable);
+    ASSERT_TRUE(table.Initialize());
+    EXPECT_FALSE(table.case_sensitive())
+        << "Case insensitive roman table should disable case-sensitive mode.";
+  }
+
+  {
+    // Hereafter, we make sure if Table::Reload() updates
+    // |table.case_sensitive()| as expected just in case.
+    Table table;
+
+    // Load a custom config with case-sensitive roman table again.
+    SetCustomRomanTable(kCaseSensitiveRomanTable);
+    ASSERT_TRUE(table.Initialize());
+    EXPECT_TRUE(table.case_sensitive())
+        << "Case sensitive roman table should enable case-sensitive mode.";
+    // Explicitly disable case-sensitive mode.
+    table.set_case_sensitive(false);
+    ASSERT_FALSE(table.case_sensitive());
+
+    // Reload a case-sensitive custom roman table.
+    ASSERT_TRUE(table.Reload());
+    EXPECT_TRUE(table.case_sensitive())
+        << "Case sensitive roman table should enable case-sensitive mode.";
+
+    // Load a custom config with case-insensitive roman table again
+    SetCustomRomanTable(kCaseInsensitiveRomanTable);
+
+    // Explicitly enable case-sensitive mode.
+    table.set_case_sensitive(true);
+    ASSERT_TRUE(table.case_sensitive());
+
+    // Reload a case-insensitive custom roman table.
+    ASSERT_TRUE(table.Reload());
+    EXPECT_FALSE(table.case_sensitive())
+        << "Case insensitive roman table should disable case-sensitive mode.";
   }
 }
 

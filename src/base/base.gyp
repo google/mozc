@@ -41,9 +41,7 @@
         'cpu_stats.cc',
         'crash_report_handler.cc',
         'crash_report_util.cc',
-        'encryptor.cc',
         'iconv.cc',
-        'password_manager.cc',
         'process.cc',
         'process_mutex.cc',
         'run_level.cc',
@@ -133,11 +131,26 @@
             '<(gen_out_dir)/character_set.h',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/character_set.h',
-            'gen_character_set.py', '<@(input_files)',
+            'python', 'gen_character_set.py',
+            '--cp932file=../data/unicode/CP932.TXT',
+            '--jisx0201file=../data/unicode/JIS0201.TXT',
+            '--jisx0208file=../data/unicode/JIS0208.TXT',
+            '--jisx0212file=../data/unicode/JIS0212.TXT',
+            '--jisx0213file=../data/unicode/jisx0213-2004-std.txt',
+            '--output=<(gen_out_dir)/character_set.h'
           ],
         },
+      ],
+    },
+    {
+      'target_name': 'encryptor',
+      'type': 'static_library',
+      'sources': [
+        'encryptor.cc',
+        'password_manager.cc',
+      ],
+      'dependencies': [
+        'base',
       ],
     },
     {
@@ -174,11 +187,6 @@
       'dependencies': [
         'gen_config_file_stream_data',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_config_file_stream_data_main',
-        ],
-      }]],
     },
     {
       'target_name': 'gen_config_file_stream_data',
@@ -190,10 +198,23 @@
             'input_files': [
               '../data/keymap/atok.tsv',
               '../data/keymap/kotoeri.tsv',
+              '../data/keymap/mobile.tsv',
               '../data/keymap/ms-ime.tsv',
               '../data/preedit/kana.tsv',
               '../data/preedit/hiragana-romanji.tsv',
               '../data/preedit/romanji-hiragana.tsv',
+              '../data/preedit/12keys-hiragana.tsv',
+              '../data/preedit/12keys-halfwidthascii.tsv',
+              '../data/preedit/12keys-number.tsv',
+              '../data/preedit/flick-halfwidthascii.tsv',
+              '../data/preedit/flick-hiragana.tsv',
+              '../data/preedit/flick-number.tsv',
+              '../data/preedit/toggle_flick-hiragana.tsv',
+              '../data/preedit/toggle_flick-halfwidthascii.tsv',
+              '../data/preedit/toggle_flick-number.tsv',
+              '../data/preedit/qwerty_mobile-hiragana.tsv',
+              '../data/preedit/qwerty_mobile-hiragana-number.tsv',
+              '../data/preedit/qwerty_mobile-halfwidthascii.tsv',
             ],
           },
           'inputs': [

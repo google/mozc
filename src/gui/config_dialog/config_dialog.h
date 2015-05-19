@@ -37,7 +37,11 @@
 #include <map>
 #include <string>
 #include "base/base.h"
+#include "config/config.pb.h"
 #include "gui/config_dialog/ui_config_dialog.h"
+#ifdef ENABLE_CLOUD_SYNC
+#include "gui/config_dialog/sync_customize_dialog.h"
+#endif  // ENABLE_CLOUD_SYNC
 
 namespace mozc {
 
@@ -58,6 +62,16 @@ class ConfigDialog : public QDialog,
   ConfigDialog();
   virtual ~ConfigDialog();
 
+ // Methods defined in the 'slots' section (Qt's extention) will be processed
+ // by Qt's moc tool (moc.exe on Windows). Unfortunately, preprocessor macros
+ // defined for C/C++ are not automatically passed into the moc tool.
+ // For example, you need to call the moc tool with '-D' option as
+ // 'moc -DENABLE_FOOBER ...' to make the moc tool aware of the ENABLE_FOOBER
+ // macro. http://developer.qt.nokia.com/doc/qt-4.8/moc.html
+ // So basically we must not use any #ifdef macro in slot declarations.
+ // Otherwise, methods enclosed by "ifdef ENABLE_FOOBER" will be simply ignored
+ // by the moc tool and |QObject::connect| against these methods results in
+ // failure. See b/5935351 about how we found this issue.
  protected slots:
   virtual void clicked(QAbstractButton *button);
   virtual void ClearUserHistory();
@@ -66,11 +80,17 @@ class ConfigDialog : public QDialog,
   virtual void EditUserDictionary();
   virtual void EditKeymap();
   virtual void EditRomanTable();
+  virtual void EditInforlistConfig();
   virtual void ResetToDefaults();
   virtual void SelectInputModeSetting(int index);
   virtual void SelectAutoConversionSetting(int state);
   virtual void SelectSuggestionSetting(int state);
+  virtual void SelectWebUsageDictionarySetting(bool checked);
   virtual void LaunchAdministrationDialog();
+  virtual void SyncToggleButtonClicked();
+  virtual void LaunchSyncCustomizationDialog();
+  virtual void UpdateSyncStatus();
+  virtual void ClearSyncClicked();
 
  protected:
   bool eventFilter(QObject *obj, QEvent *event);
@@ -86,12 +106,30 @@ class ConfigDialog : public QDialog,
   void ConvertFromProto(const config::Config &config);
   bool Update();
   void Reload();
+#ifdef ENABLE_CLOUD_SYNC
+  void UpdateSyncToggleButtonText();
+  void StopSync();
+  void LaunchAuthDialog();
+  void AddLastSyncedDateTime(uint64 timestamp, QString *output) const;
+  void SyncToggleButtonClickedImpl();
+  void LaunchSyncCustomizationDialogImpl();
+  void UpdateSyncStatusImpl();
+  void ClearSyncClickedImpl();
+#endif  // ENABLE_CLOUD_SYNC
+
   scoped_ptr<client::ClientInterface> client_;
   string custom_keymap_table_;
   string custom_roman_table_;
+  config::Config::InformationListConfig information_list_config_;
   int initial_preedit_method_;
   bool initial_use_keyboard_to_change_preedit_method_;
   map<QString, config::Config::SessionKeymap> keymapname_sessionkeymap_map_;
+#ifdef ENABLE_CLOUD_SYNC
+  scoped_ptr<SyncCustomizeDialog> sync_customize_dialog_;
+  bool sync_running_;
+  scoped_ptr<QTimer> timer_;
+  uint64 last_synced_timestamp_;
+#endif  // ENABLE_CLOUD_SYNC
 };
 }  // namespace gui
 }  // namespace mozc

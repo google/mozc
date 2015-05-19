@@ -53,7 +53,7 @@ bool VerifyCalculation(const CalculatorInterface *calculator,
       << expression << "  expected = " << expected;
   const double result_val = atof(result.c_str());
   const double expected_val = atof(expected.c_str());
-  const double err = abs(result_val - expected_val);
+  const double err = fabs(result_val - expected_val);
 
   EXPECT_DOUBLE_EQ(expected_val, result_val)
       << "comparison: " << result_val << " vs " << expected_val << endl

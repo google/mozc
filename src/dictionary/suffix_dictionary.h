@@ -54,6 +54,11 @@ class SuffixDictionary : public DictionaryInterface {
 
   // Even if size == 0, suffix dictionary returns all the suffix
   // in this dictionary.
+  virtual Node *LookupPredictiveWithLimit(
+      const char *str, int size,
+      const Limit &limit,
+      NodeAllocatorInterface *allocator) const;
+
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const;
 
@@ -63,10 +68,16 @@ class SuffixDictionary : public DictionaryInterface {
       const Limit &limit,
       NodeAllocatorInterface *allocator) const;
 
+  virtual Node *LookupPrefix(
+      const char *str, int size,
+      NodeAllocatorInterface *allocator) const;
+
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
 
  private:
+  const Limit empty_limit_;
+
   DISALLOW_COPY_AND_ASSIGN(SuffixDictionary);
 };
 

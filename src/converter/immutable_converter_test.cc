@@ -119,6 +119,12 @@ class KeyCheckDictionary : public DictionaryInterface {
     return NULL;
   }
 
+  virtual Node *LookupPredictiveWithLimit(
+      const char *str, int size, const Limit &limit,
+      NodeAllocatorInterface *allocator) const {
+    return LookupPredictive(str, size, allocator);
+  }
+
   virtual Node *LookupPrefix(const char *str, int size,
                              NodeAllocatorInterface *allocator) const {
     // No check
@@ -227,62 +233,4 @@ TEST_F(ImmutableConverterTest, AddPredictiveNodes) {
   DictionaryFactory::SetDictionary(NULL);
   SuffixDictionaryFactory::SetSuffixDictionary(NULL);
 }
-
-TEST_F(ImmutableConverterTest, PromoteUserDictionaryCandidate) {
-  {
-    Segment segment;
-    EXPECT_EQ(0, segment.candidates_size());
-    GetConverter()->PromoteUserDictionaryCandidate(&segment);
-    EXPECT_EQ(0, segment.candidates_size());
-  }
-
-  {
-    Segment segment;
-    // "てすと"
-    SetCandidate("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8", "test", &segment);
-    EXPECT_EQ(1, segment.candidates_size());
-    EXPECT_EQ("test", segment.candidate(0).value);
-    GetConverter()->PromoteUserDictionaryCandidate(&segment);
-    EXPECT_EQ(1, segment.candidates_size());
-    EXPECT_EQ("test", segment.candidate(0).value);
-  }
-  {
-    // "てすと"
-    const string kWord0 = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8";
-    // "テスト"
-    const string kWord1 = "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88";
-    // "user dictionary テスト"
-    const string kWord2 = "user dictionary "
-        "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88";
-    Segment segment;
-    // "てすと"
-    segment.set_key("\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8");
-    Segment::Candidate *candidate = segment.add_candidate();
-    candidate->Init();
-    candidate->key = kWord0;
-    candidate->value = kWord0;
-    candidate = segment.add_candidate();
-    candidate->Init();
-    candidate->key = kWord0;
-    candidate->value = kWord1;
-    candidate = segment.add_candidate();
-    candidate->Init();
-    candidate->key = kWord0;
-    candidate->value = kWord2;
-    candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
-
-    EXPECT_EQ(3, segment.candidates_size());
-    EXPECT_EQ(kWord0, segment.candidate(0).value);
-    EXPECT_EQ(kWord1, segment.candidate(1).value);
-    EXPECT_EQ(kWord2, segment.candidate(2).value);
-
-    GetConverter()->PromoteUserDictionaryCandidate(&segment);
-
-    EXPECT_EQ(3, segment.candidates_size());
-    EXPECT_EQ(kWord0, segment.candidate(0).value);
-    EXPECT_EQ(kWord2, segment.candidate(1).value);
-    EXPECT_EQ(kWord1, segment.candidate(2).value);
-  }
-}
-
 }  // namespace mozc

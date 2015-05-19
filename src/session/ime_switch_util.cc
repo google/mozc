@@ -41,7 +41,7 @@
 #include "config/config.pb.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap.h"
-#include "session/key_event_normalizer.h"
+#include "session/key_event_util.h"
 #include "session/key_parser.h"
 
 namespace mozc {
@@ -49,13 +49,6 @@ namespace config {
 namespace {
 const char kModeDirect[] = "Direct";
 const char kModeDirectInput[] = "DirectInput";
-const char kCommandIMEOn[] = "IMEOn";
-const char kCommandHiragana[] = "InputModeHiragana";
-const char kCommandFullKatakana[] = "InputModeFullKatakana";
-const char kCommandHalfKatakana[] = "InputModeHalfKatakana";
-const char kCommandFullAlphanumeric[] = "InputModeFullAlphanumeric";
-const char kCommandHalfAlphanumeric[] = "InputModeHalfAlphanumeric";
-const char kCommandReconvert[] = "Reconvert";
 
 class ImeSwitchUtilImpl {
  public:
@@ -65,14 +58,14 @@ class ImeSwitchUtilImpl {
 
   virtual ~ImeSwitchUtilImpl() {}
 
-  bool IsTurnOnInDirectMode(const commands::KeyEvent &key_event) const {
-    uint64 key;
-    if (!KeyEventNormalizer::ToUint64(key_event, &key)) {
+  bool IsDirectModeCommand(const commands::KeyEvent &key_event) const {
+    KeyInformation key;
+    if (!KeyEventUtil::GetKeyInformation(key_event, &key)) {
       return false;
     }
-    for (size_t i = 0; i < ime_on_keyevents_.size(); ++i) {
-      uint64 ime_on_key;
-      if (!KeyEventNormalizer::ToUint64(ime_on_keyevents_[i], &ime_on_key)) {
+    for (size_t i = 0; i < keyevents_.size(); ++i) {
+      KeyInformation ime_on_key;
+      if (!KeyEventUtil::GetKeyInformation(keyevents_[i], &ime_on_key)) {
         continue;
       }
       if (key == ime_on_key) {
@@ -83,7 +76,7 @@ class ImeSwitchUtilImpl {
   }
 
   void Reload() {
-    ime_on_keyevents_.clear();
+    keyevents_.clear();
     const config::Config::SessionKeymap keymap = GET_CONFIG(session_keymap);
     if (keymap == Config::CUSTOM) {
       const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
@@ -97,7 +90,6 @@ class ImeSwitchUtilImpl {
       }
       istringstream ifs(custom_keymap_table);
       ReloadFromStream(&ifs);
-      CheckMigration();
       return;
     }
     const char *keymap_file = keymap::KeyMapManager::GetKeyMapFileName(keymap);
@@ -106,52 +98,10 @@ class ImeSwitchUtilImpl {
 
   void GetTurnOnInDirectModeKeyEventList(
       vector<commands::KeyEvent> *key_events) const {
-    *key_events = ime_on_keyevents_;
+    *key_events = keyevents_;
   }
 
  private:
-  void CheckMigration() {
-    // migration code
-    // Add hankaku to ime_on_keyevents_ if the settings seem to
-    // be from previous version.
-    // This code can deleted after IME ON/OFF feature migration.
-    // TODO(toshiyuki): remove this after 0.11 Beta.
-    const char kKeyOn[] = "On";
-    const char kKeyEisu[] = "Eisu";
-    const char kKeyHankaku[] = "Hankaku/Zenkaku";
-    const char kKeyKanji[] = "Kanji";
-
-    uint64 key_on = 0;
-    uint64 key_eisu = 0;
-    {
-      commands::KeyEvent key_event;
-      KeyParser::ParseKey(kKeyOn, &key_event);
-      KeyEventNormalizer::ToUint64(key_event, &key_on);
-    }
-    {
-      commands::KeyEvent key_event;
-      KeyParser::ParseKey(kKeyEisu, &key_event);
-      KeyEventNormalizer::ToUint64(key_event, &key_eisu);
-    }
-    bool should_be_migrated = true;
-    for (size_t i = 0; i < ime_on_keyevents_.size(); ++i) {
-      uint64 key = 0;
-      KeyEventNormalizer::ToUint64(ime_on_keyevents_[i], &key);
-      if (key != key_on && key != key_eisu) {
-        should_be_migrated = false;
-        break;
-      }
-    }
-    if (should_be_migrated) {
-      commands::KeyEvent key_hankaku;
-      commands::KeyEvent key_kanji;
-      KeyParser::ParseKey(kKeyHankaku, &key_hankaku);
-      KeyParser::ParseKey(kKeyKanji, &key_kanji);
-      ime_on_keyevents_.push_back(key_hankaku);
-      ime_on_keyevents_.push_back(key_kanji);;
-    }
-  }
-
   void ReloadFromStream(istream *ifs) {
     string line;
     getline(*ifs, line);  // Skip the first line.
@@ -168,24 +118,17 @@ class ImeSwitchUtilImpl {
         LOG(ERROR) << "Invalid format: " << line;
         continue;
       }
-      if (!((rules[0] == kModeDirect || rules[0] == kModeDirectInput) &&
-            (rules[2] == kCommandIMEOn ||
-             rules[2] == kCommandHiragana ||
-             rules[2] == kCommandFullKatakana ||
-             rules[2] == kCommandHalfKatakana ||
-             rules[2] == kCommandFullAlphanumeric ||
-             rules[2] == kCommandHalfAlphanumeric ||
-             rules[2] == kCommandReconvert))) {
+      if (!(rules[0] == kModeDirect || rules[0] == kModeDirectInput)) {
         continue;
       }
       commands::KeyEvent key_event;
       KeyParser::ParseKey(rules[1], &key_event);
-      ime_on_keyevents_.push_back(key_event);
+      keyevents_.push_back(key_event);
     }
   }
 
   void ReloadFromFile(const string &filename) {
-    scoped_ptr<istream> ifs(ConfigFileStream::Open(filename));
+    scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
     if (ifs.get() == NULL) {
       DLOG(FATAL) << "could not open file: " << filename;
       return;
@@ -194,19 +137,13 @@ class ImeSwitchUtilImpl {
   }
 
   // original forms
-  vector<commands::KeyEvent> ime_on_keyevents_;
+  vector<commands::KeyEvent> keyevents_;
 };
 
 }  // namespace
 
-bool ImeSwitchUtil::IsTurnOnInDirectMode(const commands::KeyEvent &key) {
-  return Singleton<ImeSwitchUtilImpl>::get()->IsTurnOnInDirectMode(key);
-}
-
-void ImeSwitchUtil::GetTurnOnInDirectModeKeyEventList(
-    vector<commands::KeyEvent> *key_events) {
-  Singleton<ImeSwitchUtilImpl>::get()->
-      GetTurnOnInDirectModeKeyEventList(key_events);
+bool ImeSwitchUtil::IsDirectModeCommand(const commands::KeyEvent &key) {
+  return Singleton<ImeSwitchUtilImpl>::get()->IsDirectModeCommand(key);
 }
 
 void ImeSwitchUtil::Reload() {

@@ -30,19 +30,19 @@
 #ifndef MOZC_DICTIONARY_FILE_CODEC_INTERFACE_H_
 #define MOZC_DICTIONARY_FILE_CODEC_INTERFACE_H_
 
+#include <ostream>
 #include <vector>
 
 #include "base/base.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
-class OutputFileStream;
 
 class DictionaryFileCodecInterface {
  public:
   // Write sections to output file stream
   virtual void WriteSections(const vector<DictionaryFileSection> &sections,
-                             OutputFileStream *ofs) const = 0;
+                             ostream *ofs) const = 0;
 
   // Read sections from memory image
   virtual bool ReadSections(const char *image, int length,
@@ -71,6 +71,7 @@ class DictionaryFileCodecFactory {
   DictionaryFileCodecFactory() {}
   ~DictionaryFileCodecFactory() {}
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_FILE_CODEC_INTERFACE_H_

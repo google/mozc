@@ -202,21 +202,12 @@
           ],
         }, {  # OS=="linux"
           'conditions': [
-            ['use_libgtest==0', {
+            ['use_libprotobuf==0', {
               'includes' : [
                 '../gyp/install_build_tool.gypi',
               ],
             }],
           ],
-        }],
-        ['OS=="win"', {
-          'msvs_settings': {
-            'VCCLCompilerTool': {
-              'DisableSpecificWarnings': [
-                '<@(msvc_disabled_warnings_for_protoc)'
-              ],
-            },
-          },
         }],
       ],
     },

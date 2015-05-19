@@ -101,7 +101,11 @@ class UserDictionarySyncUtil {
       const vector<const UserDictionaryStorageBase *> &updates,
       UserDictionaryStorageBase *storage);
 
-  // Get lock and save storage
+  // Get lock and save storage, after verifying the numbers of entries in its
+  // sync dictionaries do not exceed the limit.
+  static bool VerifyLockAndSaveStorage(UserDictionaryStorage *storage);
+
+  // Get lock and save storage.
   static bool LockAndSaveStorage(UserDictionaryStorage *storage);
 
  private:

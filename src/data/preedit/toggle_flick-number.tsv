@@ -1,0 +1,25 @@
+/		{?}/	NewChunk NoTransliteration
+~		{*}~	NoTransliteration
+.		{*}.	NoTransliteration
+*		{*}*	NoTransliteration
+{?}//		{?}~
+{?}~/		{?}.
+{?}./		{?}*
+{?}*/		{?}/
+{?}/{<}		{?}*
+{?}~{<}		{?}/
+{?}.{<}		{?}~
+{?}*{<}		{?}.
++		{?}+	NewChunk NoTransliteration
+-		{*}-	NoTransliteration
+=		{*}=	NoTransliteration
+#		{*}#	NoTransliteration
+{?}++		{?}-
+{?}-+		{?}=
+{?}=+		{?}#
+{?}#+		{?}+
+{?}+{<}		{?}#
+{?}-{<}		{?}+
+{?}={<}		{?}-
+{?}#{<}		{?}=
+{<}		

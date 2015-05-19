@@ -74,4 +74,8 @@ message SessionState {
   // last candidates result
   optional mozc.commands.Result result = 23;
 
+  // last request
+  optional mozc.commands.Request request = 24;
+
+  optional mozc.commands.SessionCommand.InputFieldType input_field_type = 25;
 };

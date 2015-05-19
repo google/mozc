@@ -61,7 +61,6 @@
         '../../ipc/ipc.gyp:ipc',
         '../../languages/languages.gyp:global_language_spec',
         '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-        '../../session/session_base.gyp:genproto_session',
         '../../session/session_base.gyp:ime_switch_util',
         '../../session/session_base.gyp:session_protocol',
       ],
@@ -89,7 +88,7 @@
       ],
     },
     {
-      'target_name': 'scim_mozc_tests',
+      'target_name': 'scim_mozc_test',
       'type': 'executable',
       'sources': [
         'mozc_response_parser_test.cc',
@@ -98,7 +97,6 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
-        '../../session/session_base.gyp:genproto_session',
         '../../session/session_base.gyp:session_protocol',
         '../../testing/testing.gyp:gtest_main',
         'scim_mozc',
@@ -117,6 +115,14 @@
       'variables': {
         'test_size': 'small',
       },
+    },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'scim_all_test',
+      'type': 'none',
+      'dependencies': [
+        'scim_mozc_test',
+      ],
     },
   ],
 }

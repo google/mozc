@@ -47,7 +47,6 @@
       'target_name': 'gui_base',
       'type': 'static_library',
       'sources': [
-        '<(proto_out_dir)/ipc/window_info.pb.cc',
         '<(gen_out_dir)/base/moc_window_title_modifier.cc',
         'base/debug_util.cc',
         'base/locale_util.cc',
@@ -57,11 +56,10 @@
         'base/window_title_modifier.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:genproto_config',
         '../dictionary/dictionary.gyp:user_dictionary',
-        '../ipc/ipc.gyp:genproto_ipc',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:genproto_session',
+        '../ipc/ipc.gyp:window_info_protocol',
+        '../session/session_base.gyp:session_protocol',
         'gen_base_files',
       ],
       'includes': [
@@ -378,11 +376,20 @@
       'includes': [
         'qt_libraries.gypi',
       ],
-      'conditions': [['use_libzinnia==1 and OS=="linux"', {
-        'defines': [
-          'USE_LIBZINNIA',
-        ],
-      }]],
+      'conditions': [
+        ['enable_cloud_handwriting==1', {
+          'dependencies': [
+            '../client/client.gyp:client',
+            '../handwriting/handwriting.gyp:cloud_handwriting',
+            '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
+          ],
+        }],
+        ['use_libzinnia==1 and OS=="linux"', {
+          'defines': [
+            'USE_LIBZINNIA',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'character_palette_main',
@@ -433,6 +440,22 @@
         '<(subdir)/keymap_editor.h',
         '<(subdir)/roman_table_editor.h',
       ],
+      'conditions': [
+        ['enable_webservice_infolist==1', {
+          'sources': [
+            '<(subdir)/webservice_infolist_editor.h',
+          ],
+        }],
+        ['enable_cloud_sync==1', {
+          'sources': [
+            '<(subdir)/auth_code_detector.h',
+            '<(subdir)/auth_dialog.h',
+            '<(subdir)/auth_dialog.ui',
+            '<(subdir)/sync_customize_dialog.h',
+            '<(subdir)/sync_customize_dialog.ui',
+          ],
+        }],
+      ],
       'includes': [
         'qt_moc.gypi',
         'qt_rcc.gypi',
@@ -467,14 +490,40 @@
         '../base/base.gyp:config_file_stream',
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:genproto_config',
+        '../config/config.gyp:config_protocol',
         '../config/config.gyp:stats_config_util',
         '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-        '../session/session_base.gyp:genproto_session',
         '../session/session_base.gyp:key_parser',
         '../session/session_base.gyp:keymap',
+        '../session/session_base.gyp:session_protocol',
         '../sync/sync.gyp:oauth2_token_util',
         'gen_config_dialog_files',
+      ],
+      'conditions': [
+        ['enable_webservice_infolist==1', {
+          'sources': [
+            '<(gen_out_dir)/config_dialog/moc_webservice_infolist_editor.cc',
+            'config_dialog/webservice_infolist_editor.cc',
+          ],
+        }],
+        ['enable_cloud_sync==1', {
+          'sources': [
+            '<(gen_out_dir)/config_dialog/moc_auth_code_detector.cc',
+            '<(gen_out_dir)/config_dialog/moc_auth_dialog.cc',
+            '<(gen_out_dir)/config_dialog/moc_sync_customize_dialog.cc',
+            'config_dialog/auth_code_detector.cc',
+            'config_dialog/auth_dialog.cc',
+            'config_dialog/sync_customize_dialog.cc',
+          ],
+          'dependencies': [
+            '../sync/sync.gyp:oauth2',
+          ],
+        }],
+        ['enable_cloud_handwriting==1 or enable_webservice_infolist==1', {
+          'dependencies': [
+            '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
+          ],
+        }],
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -584,11 +633,12 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client',
-        '../config/config.gyp:genproto_config',
-        '../dictionary/dictionary.gyp:genproto_dictionary',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        '../dictionary/dictionary.gyp:dictionary_protocol',
         '../dictionary/dictionary.gyp:user_dictionary',
         '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:session_protocol',
         'gen_config_dialog_files',
         'gen_dictionary_tool_files',
       ],
@@ -640,9 +690,10 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client',
-        '../dictionary/dictionary.gyp:genproto_dictionary',
+        '../dictionary/dictionary.gyp:dictionary_protocol',
         '../dictionary/dictionary.gyp:user_dictionary',
         '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
+        '../session/session_base.gyp:session_protocol',
         'gen_word_register_dialog_files',
       ],
       'includes': [
@@ -739,10 +790,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:genproto_config',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:genproto_session',
-        '../usage_stats/usage_stats.gyp:genproto_usage_stats',
+        '../session/session_base.gyp:session_protocol',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'gen_post_install_dialog_files',
       ],
@@ -800,10 +849,10 @@
       ],
       'dependencies': [
         '../client/client.gyp:client',
-        '../config/config.gyp:genproto_config',
+        '../config/config.gyp:config_protocol',
         '../ipc/ipc.gyp:ipc',
         '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:session_protocol',
         'gen_set_default_dialog_files',
       ],
       'conditions': [

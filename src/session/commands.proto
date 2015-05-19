@@ -134,6 +134,8 @@ message KeyEvent {
   // CTRL, ALT and SHIFT cover both LEFT and RIGHT keys.  If the
   // difference between LEFT and RIGHT is no matter, using CTRL (or ALT, SHIFT)
   // is preferred.
+  // If LEFT (or RIGHT) CTRL(or ALT, SHIFT) is pressed, LEFT_CTRL is set on 
+  // Windows or Mac client, or LEFT_CTRL and CTRL are set on Unix client.
   // Mozc key translation logic is as follows
   //
   //             ---- Modifier Keys -----
@@ -237,6 +239,23 @@ message KeyEvent {
   optional CompositionMode mode = 7;
 };
 
+message GenericStorageEntry {
+  enum StorageType {
+    SYMBOL_HISTORY = 0;
+    EMOTICON_HISTORY = 1;
+    EMOJI_HISTORY=2;
+  }
+  optional StorageType type = 1;
+  optional string key = 2;
+  // The type must be bytes instead of string
+  // because value might have U+0000 character as a terminator.
+  // In this case, characters after the terminator are undefined.
+  // Such byte stream cannot be treaed by Java's String class, which
+  // is used for PB's string type.
+  // Instead, PB's bytes type is converted into ByteString in Java,
+  // which can treat C laguage style string described above.
+  repeated bytes value = 3;
+}
 
 message SessionCommand {
   enum CommandType {
@@ -287,6 +306,9 @@ message SessionCommand {
     // Client side event information for collecting usage statistics
     USAGE_STATS_EVENT = 13;
 
+    // This command is used in only Android.
+    // Works UNDO or rewind HIRAGANA characters based on the state.
+    UNDO_OR_REWIND = 14;
 
     // Expand suggestion candidates.
     // Usual suggestion algorithm is not "rich" but "fast" because suggestion
@@ -377,6 +399,105 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 };
 
+// Clients' request to the server.
+// Users cannot modify this.
+// In the future each request may be able to be overwirtten by Config.
+// The server does not have to obey this request.
+message Request {
+  // Enable zero query suggestion.
+  optional bool zero_query_suggestion = 1
+      [default = false] ;  // true for android
+
+  // Conversion's candidate includes suggestion, prediction and conversion.
+  optional bool mixed_conversion = 2
+      [default = false] ;  // true for android
+
+  // Combine all segments like mobile IME.
+  optional bool combine_all_segments = 3
+      [default = false] ;  // true for android
+
+  enum SpecialRomanjiTable {
+    // Do not use special table.
+    // Romanji table is selected based on Config.
+    DEFAULT_TABLE = 0;
+
+    // Use special table for 12keys (to hiragana).
+    TWELVE_KEYS_TO_HIRAGANA = 10;
+
+    // Use special table for 12keys (to half-width ascii).
+    TWELVE_KEYS_TO_HALFWIDTHASCII = 11;
+
+    // Use special table for 12keys (to number).
+    TWELVE_KEYS_TO_NUMBER = 12;
+
+    // Use special table for flick (to hiragana).
+    FLICK_TO_HIRAGANA = 13;
+
+    // Use special table for flick (to half-width ascii).
+    FLICK_TO_HALFWIDTHASCII = 14;
+
+    // Use special table for flick (to number).
+    FLICK_TO_NUMBER = 15;
+
+    // Use special table for both toggle and flick (to hiragana).
+    TOGGLE_FLICK_TO_HIRAGANA = 16;
+
+    // Use special table for both toggle and flick (to half-width ascii).
+    TOGGLE_FLICK_TO_HALFWIDTHASCII = 17;
+
+    // Use special table for both toggle and flick (to number).
+    TOGGLE_FLICK_TO_NUMBER = 18;
+
+    // Use special table for Qwerty (for Mobile) (to hiragana).
+    QWERTY_MOBILE_TO_HIRAGANA = 20;
+
+    // Use special table for Qwerty (for Mobile) (to hiragana's number).
+    QWERTY_MOBILE_TO_HIRAGANA_NUMBER = 21;
+
+    // Use special table for Qwerty (for Mobile) (to half-width ascii).
+    QWERTY_MOBILE_TO_HALFWIDTHASCII = 22;
+
+  };
+
+  // Use special Romanji table.
+  optional SpecialRomanjiTable special_romanji_table = 4
+    [default = DEFAULT_TABLE] ; //  TWELVE_KEYS_TO_HIRAGANA for android.
+
+
+  enum SpaceOnAlphanumeric {
+    // The first input is treated as a space, double input is treated
+    // as a conversion.  If a character is input after the first
+    // input, the composition will remain.  For example, "ab<space>dc"
+    // becomes "ab dc" as a single composition.
+    SPACE_OR_CONVERT_KEEPING_COMPOSITION = 0;
+
+    // The first input is treated as a space, double input is treated
+    // as a conversion.  If a character is input after the first
+    // input, the previous composition will be committed.  For
+    // example, "ab<space>dc" results "ab " as a committed string and
+    // "dc" as a composition.
+    SPACE_OR_CONVERT_COMMITING_COMPOSITION = 1;
+
+    // Commit the composition and a space.
+    COMMIT = 2;
+  };
+
+  optional SpaceOnAlphanumeric space_on_alphanumeric = 6
+      [default = SPACE_OR_CONVERT_KEEPING_COMPOSITION];
+
+  // Keyboard name for touch devices.
+  // For example, "TWELVE_KEY_TOGGLE_KANA", "QWERTY_KANA_NUMBER".
+  // It is used to analyze touch event usage stats.
+  optional string keyboard_name = 7;
+
+  // Enables Composer's input mode auto updating by using surrounding text.
+  // For example, when a composition string is "ad", a carret is at the end,
+  // and a user selects HIRAGANA mode, if the user moves the carret to between
+  // "a" and "d" the mode will be automatically switch to ASCII (temporarily).
+  // See details in the Composer::UpdateInputMode.
+  optional bool update_input_mode_from_surrounding_text = 8
+      [default = true];
+}
 
 // Note there is another ApplicationInfo inside RendererCommand.
 // Since Input is not using nested message, define ApplicationInfo here.
@@ -424,6 +545,8 @@ message Input {
     SET_CONFIG = 7;
     SET_IMPOSED_CONFIG = 22;
 
+    // Set client's request
+    SET_REQUEST = 17;
 
     // sync dictionary/history data to local file
     SYNC_DATA = 8;
@@ -452,7 +575,22 @@ message Input {
     // can be used for pinging the server
     NO_OPERATION = 14;
 
+    START_CLOUD_SYNC = 18;
+    CLEAR_CLOUD_SYNC = 19;
+    // Obtains the current cloud sync status.  The converter will fill the
+    // 'cloud_sync_status' field in the output.
+    GET_CLOUD_SYNC_STATUS = 23;
+    // You need to specify "auth_code" field when this command is
+    // used.  This command adds the specified "auth_code" to the
+    // converter.  Currently the converter has only one slot for the
+    // "auth_code" so this command means just replacing authorization.
+    // TODO(mukai): prepare a command to invalidate an existing
+    // "auth_code".
+    ADD_AUTH_CODE = 24;
 
+    INSERT_TO_STORAGE = 20;
+    READ_ALL_FROM_STORAGE = 21;
+    CLEAR_STORAGE = 25;
 
     // Number of commands.
     // When new command is added, the command should use below number
@@ -484,8 +622,27 @@ message Input {
   // the program name.
   optional ApplicationInfo application_info = 8;
 
+  // Client request
+  optional Request request = 9;
 
+  // If the command is INSERT_TO_STORAGE, all the fields must be filled.
+  // If READ_ALL_FROM_STORAGE, key and value fields are ignored.
+  optional GenericStorageEntry storage_entry = 10;
 
+  // Authorization information for cloud sync.  You need to specify
+  // this message for SET_AUTH_CODE command.
+  message AuthorizationInfo {
+    // The auth_code.
+    optional string auth_code = 1;
+    // The name to distinguish an authorization from others.  This is
+    // prepared in case that the configuration allows multiple tokens
+    // of OAuth2, but currently it does nothing.
+    optional string name = 2;
+    // The scope of the authorization.  Ditto.
+    optional string scope = 3;
+  };
+  // Specify the authorization info if the command is SET_AUTH_CODE.
+  optional AuthorizationInfo auth_code = 11;
 
 };
 
@@ -573,6 +730,7 @@ message CloudSyncStatus {
     SYNC_FAILURE = 1;
     INSYNC = 2;
     NOSYNC = 3;  // no synchronisation is working.
+    WAITSYNC = 4;  // waiting for minimum sync RPC duration.
   };
   required SyncGlobalStatus global_status = 1;
 
@@ -673,6 +831,10 @@ message Output {
   };
   optional Callback callback = 18;
 
+  // Used when the command is READ_ALL_FROM_STORAGE.
+  optional GenericStorageEntry storage_entry = 19;
+
+  optional CloudSyncStatus cloud_sync_status = 20;
 };
 
 message Command {

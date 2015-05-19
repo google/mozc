@@ -45,7 +45,7 @@
     ],
     'ibus_client_dependencies' : [
       '../../client/client.gyp:client',
-      '../../session/session_base.gyp:genproto_session',
+      '../../session/session_base.gyp:session_protocol',
     ],
     'ibus_standalone_dependencies' : [
       '../../base/base.gyp:config_file_stream',
@@ -108,7 +108,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
-        '../../session/session_base.gyp:genproto_session',
+        '../../session/session_base.gyp:session_protocol',
       ],
       'includes': [
         'ibus_libraries.gypi',
@@ -127,8 +127,8 @@
         'ibus_libraries.gypi',
       ],
       'dependencies': [
-        '../../session/session_base.gyp:genproto_session',
         '../../session/session_base.gyp:ime_switch_util',
+        '../../session/session_base.gyp:session_protocol',
       ],
       'conditions': [
         ['chromeos==1', {
@@ -255,6 +255,21 @@
       'variables': {
         'test_size': 'small',
       },
+    },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'ibus_all_test',
+      'type': 'none',
+      'dependencies': [
+        'ibus_mozc_test',
+      ],
+      'conditions': [
+        ['chromeos==1', {
+          'dependencies': [
+            'chromeos_client_test',
+          ],
+        }],
+      ],
     },
   ],
   'conditions': [

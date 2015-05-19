@@ -34,8 +34,9 @@
 #include <string>
 
 #include "base/base.h"
-#include "base/util.h"
 #include "base/flags.h"
+#include "base/trie.h"
+#include "base/util.h"
 #include "converter/node.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
@@ -47,7 +48,8 @@ namespace mozc {
 ValueDictionary::ValueDictionary()
     : value_trie_(new rx::RxTrie),
       dictionary_file_(new DictionaryFile),
-      codec_(dictionary::SystemDictionaryCodecFactory::GetCodec()) {
+      codec_(dictionary::SystemDictionaryCodecFactory::GetCodec()),
+      empty_limit_(Limit()) {
 }
 
 ValueDictionary::~ValueDictionary() {}
@@ -107,8 +109,9 @@ bool ValueDictionary::OpenDictionaryFile() {
   return true;
 }
 
-Node *ValueDictionary::LookupPredictive(
+Node *ValueDictionary::LookupPredictiveWithLimit(
     const char *str, int size,
+    const Limit &limit,
     NodeAllocatorInterface *allocator) const {
   string lookup_key_str;
   codec_->EncodeValue(string(str, size), &lookup_key_str);
@@ -116,19 +119,37 @@ Node *ValueDictionary::LookupPredictive(
   DCHECK(value_trie_.get() != NULL);
 
   vector<rx::RxEntry> results;
-  int limit = -1;  // no limit
+  // TODO(toshiyuki): node_size_limit can be defined in the Limit
+  int node_size_limit = -1;  // no limit
   if (allocator != NULL) {
-    limit = allocator->max_nodes_size();
-    value_trie_->PredictiveSearchWithLimit(lookup_key_str, limit, &results);
+    node_size_limit = allocator->max_nodes_size();
+    value_trie_->PredictiveSearchWithLimit(
+        lookup_key_str, node_size_limit, &results);
   } else {
     value_trie_->PredictiveSearch(lookup_key_str, &results);
   }
 
   Node *res = NULL;
   for (size_t i = 0; i < results.size(); ++i) {
-    if (limit == 0) {
+    if (node_size_limit == 0) {
       break;
     }
+    if (!Util::StartsWith(results[i].key, lookup_key_str)) {
+      break;
+    }
+    string value;
+    codec_->DecodeValue(results[i].key, &value);
+    // filter by begin with list
+    if (limit.begin_with_trie != NULL) {
+      string trie_value;
+      size_t key_length = 0;
+      bool has_subtrie = false;
+      if (!limit.begin_with_trie->LookUpPrefix(value.data() + size, &trie_value,
+                                               &key_length, &has_subtrie)) {
+        continue;
+      }
+    }
+
     Node *new_node = NULL;
     if (allocator != NULL) {
       new_node = allocator->NewNode();
@@ -145,19 +166,23 @@ Node *ValueDictionary::LookupPredictive(
     new_node->lid = POSMatcher::GetSuggestOnlyWordId();
     new_node->rid = POSMatcher::GetSuggestOnlyWordId();
     new_node->wcost = 10000;
-    string value;
-    codec_->DecodeValue(results[i].key, &value);
     new_node->key = value;
     new_node->value = value;
     new_node->node_type = Node::NOR_NODE;
 
     new_node->bnext = res;
     res = new_node;
-    if (limit > 0) {
-      --limit;
+    if (node_size_limit > 0) {
+      --node_size_limit;
     }
   }
   return res;
+}
+
+Node *ValueDictionary::LookupPredictive(
+    const char *str, int size,
+    NodeAllocatorInterface *allocator) const {
+  return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
 }
 
 // Value dictioanry is intended to use for prediction,
