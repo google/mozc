@@ -1,0 +1,162 @@
+# This file tests SEGMENT_FOCUS_{FIRST,LAST,LEFT,RIGHT} commands.
+
+################################################################################
+# Test for MS-IME keymap
+SET_CONFIG	session_keymap	MSIME
+
+# Enable IME with Hiragana mode
+SEND_KEY	ON
+RESET_CONTEXT
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Make Segments of size 3: わたしの|なまえは|なかのです
+SEND_KEYS	watashinonamaehanakanodesu
+EXPECT_PREEDIT	わたしのなまえはなかのです
+SEND_KEY	SPACE
+EXPECT_SEGMENTS_SIZE	3
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test RIGHT (SegmentFocusRight)
+SEND_KEY	RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	1
+
+# Test Ctrl-d (SegmentFocusRight)
+SEND_KEY	CTRL d
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test LEFT (SegmentFocusLeft)
+SEND_KEY	LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	1
+
+# Test Ctrl-s (SegmentFocusLeft)
+SEND_KEY	Ctrl s
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test Ctrl-f (SegmentFocusLast)
+SEND_KEY	CTRL f
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test Ctrl-a (SegmentFocusFirst)
+SEND_KEY	CTRL a
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test Ctrl-Right (SegmentFocusLast)
+SEND_KEY	CTRL RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test Ctrl-Left (SegmentFocusFirst)
+SEND_KEY	CTRL LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test End (SegmentFocusLast)
+SEND_KEY	END
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test Home (SegmentFocusFirst)
+SEND_KEY	HOME
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test corner case: SegmentFocusLeft on the first segment
+SEND_KEY	LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test corner case: SegmentFocusRight on the last segment
+SEND_KEY	RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+################################################################################
+# Test for Kotoeri keymap
+RESET_CONTEXT
+SET_CONFIG	session_keymap	KOTOERI
+
+# Make Segments of size 3: わたしの|なまえは|なかのです
+SEND_KEYS	watashinonamaehanakanodesu
+EXPECT_PREEDIT	わたしのなまえはなかのです
+SEND_KEY	SPACE
+EXPECT_SEGMENTS_SIZE	3
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test RIGHT (SegmentFocusRight)
+SEND_KEY	RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	1
+
+# Test Ctrl-d (SegmentFocusRight)
+SEND_KEY	CTRL d
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test LEFT (SegmentFocusLeft)
+SEND_KEY	LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	1
+
+# Test Ctrl-b (SegmentFocusLeft)
+SEND_KEY	Ctrl b
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test Ctrl-Right (SegmentFocusLast)
+SEND_KEY	CTRL RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test Ctrl-Left (SegmentFocusFirst)
+SEND_KEY	CTRL LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test End (SegmentFocusLast)
+SEND_KEY	END
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test Home (SegmentFocusFirst)
+SEND_KEY	HOME
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Move the focus to the last (third) segment
+SEND_KEY	END
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test Ctrl-a (SegmentFocusFirst)
+SEND_KEY	CTRL a
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test corner case: SegmentFocusLeft on the first segment
+SEND_KEY	LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test corner case: SegmentFocusRight on the last segment
+SEND_KEY	RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+
+################################################################################
+# Test for ATOK keymap
+RESET_CONTEXT
+SET_CONFIG	session_keymap	ATOK
+
+# Make Segments of size 3: わたしの|なまえは|なかのです
+SEND_KEYS	watashinonamaehanakanodesu
+EXPECT_PREEDIT	わたしのなまえはなかのです
+SEND_KEY	SPACE
+EXPECT_SEGMENTS_SIZE	3
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test Shift-Right (SegmentFocusRight)
+SEND_KEY	SHIFT RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	1
+
+# Test Shift-Left (SegmentFocusLeft)
+SEND_KEY	SHIFT LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test Ctrl-Right (SegmentFocusLast)
+SEND_KEY	CTRL RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test Ctrl-Left (SegmentFocusFirst)
+SEND_KEY	CTRL LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0
+
+# Test corner case: SegmentFocusLeft on the first segment
+SEND_KEY	SHIFT LEFT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	2
+
+# Test corner case: SegmentFocusRight on the last segment
+SEND_KEY	SHIFT RIGHT
+EXPECT_HIGHLIGHTED_SEGMENT_INDEX	0

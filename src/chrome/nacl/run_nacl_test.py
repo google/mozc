@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@ def FindTestBinaries(test_bin_dir):
     test_bin_path = os.path.join(test_bin_dir, f)
     if (os.access(test_bin_path, os.R_OK | os.X_OK) and
         os.path.isfile(test_bin_path) and
-        f.endswith('_test')):
+        f.endswith('_test_x86_64.nexe')):
       result.append(test_bin_path)
   return result
 
@@ -66,7 +66,8 @@ def FindTestBinaries(test_bin_dir):
 def RunCommand(options, command):
   """Run a command on android via sel_ldr."""
   args = [os.path.join(options.nacl_sdk_root, 'tools', 'sel_ldr_x86_64'),
-          '-B', os.path.join(options.nacl_sdk_root, 'tools', 'irt_x86_64.nexe')]
+          '-B',
+          os.path.join(options.nacl_sdk_root, 'tools', 'irt_core_x86_64.nexe')]
   args.extend(command)
   process = subprocess.Popen(args, stdout=subprocess.PIPE)
   output, _ = process.communicate()

@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,32 +43,6 @@
       'dependencies': [
         '../base/base.gyp:base',
       ],
-      'conditions': [
-        ['target_platform=="NaCl" and _toolset=="target"', {
-          'sources!': [
-            'registry.cc',
-            'tiny_storage.cc',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'storage_test',
-      'type': 'executable',
-      'sources': [
-        'existence_filter_test.cc',
-        'lru_storage_test.cc',
-        'memory_storage_test.cc',
-        'registry_test.cc',
-        'tiny_storage_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'storage',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
     },
     # For Android build, base.gyp:encryptor cannot be compiled for the host,
     # while storage is depended from some build tools. So it is necessary
@@ -82,29 +56,6 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:encryptor',
-      ],
-    },
-    {
-      'target_name': 'encrypted_string_storage_test',
-      'type': 'executable',
-      'sources': [
-        'encrypted_string_storage_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'encrypted_string_storage',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'storage_all_test',
-      'type': 'none',
-      'dependencies': [
-        'encrypted_string_storage_test',
-        'storage_test',
       ],
     },
   ],

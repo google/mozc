@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <header
+        android:fragment="org.mozc.android.inputmethod.japanese.preference.PreferenceBaseFragment"
+        android:title="@string/pref_fragment_software_keyboard_title" >
+
+        <!--
+         "PREFERENCE_PAGE" attribute corresponds to MozcBasePreferenceActivity.PreferencePage
+         enumlator.
+        -->
+        <extra
+            android:name="PREFERENCE_PAGE"
+            android:value="SOFTWARE_KEYBOARD" />
+    </header>
+    <header
+        android:fragment="org.mozc.android.inputmethod.japanese.preference.PreferenceBaseFragment"
+        android:title="@string/pref_fragment_input_support_title" >
+        <extra
+            android:name="PREFERENCE_PAGE"
+            android:value="INPUT_SUPPORT" />
+    </header>
+    <header
+        android:fragment="org.mozc.android.inputmethod.japanese.preference.PreferenceBaseFragment"
+        android:title="@string/pref_fragment_conversion_title" >
+        <extra
+            android:name="PREFERENCE_PAGE"
+            android:value="CONVERSION" />
+    </header>
+    <header
+        android:fragment="org.mozc.android.inputmethod.japanese.preference.PreferenceBaseFragment"
+        android:title="@string/pref_fragment_dictionary_title" >
+        <extra
+            android:name="PREFERENCE_PAGE"
+            android:value="DICTIONARY" />
+    </header>
+    <header
+        android:fragment="org.mozc.android.inputmethod.japanese.preference.PreferenceBaseFragment"
+        android:title="@string/pref_fragment_user_feedback_title" >
+        <extra
+            android:name="PREFERENCE_PAGE"
+            android:value="USER_FEEDBACK" />
+    </header>
+    <header
+        android:fragment="org.mozc.android.inputmethod.japanese.preference.PreferenceBaseFragment"
+        android:title="@string/pref_fragment_about_title" >
+        <extra
+            android:name="PREFERENCE_PAGE"
+            android:value="ABOUT" />
+    </header>
+
+</preference-headers>

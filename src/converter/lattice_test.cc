@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,16 @@ TEST(LatticeTest, LatticeTest) {
   lattice.SetKey("this is a test");
   EXPECT_TRUE(lattice.has_lattice());
 
+  lattice.set_history_end_pos(4);
+  EXPECT_EQ(4, lattice.history_end_pos());
+
   EXPECT_TRUE(lattice.bos_nodes());
   EXPECT_TRUE(lattice.eos_nodes());
 
   lattice.Clear();
   EXPECT_EQ("", lattice.key());
   EXPECT_FALSE(lattice.has_lattice());
+  EXPECT_EQ(0, lattice.history_end_pos());
 }
 
 TEST(LatticeTest, NewNodeTest) {
@@ -112,7 +116,7 @@ void InsertNodes(Lattice *lattice) {
   const size_t key_size = lattice->key().size();
   for (size_t i = 0; i < key_size; ++i) {
     Node *node = lattice->NewNode();
-    node->key = lattice->key().substr(i, key_size - i);
+    node->key.assign(lattice->key(), i, key_size - i);
     lattice->Insert(i, node);
   }
 }

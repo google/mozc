@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,6 @@
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 namespace mozc {
 
@@ -241,8 +240,8 @@ SingleKanjiRewriter::SingleKanjiRewriter(const POSMatcher &pos_matcher)
 
 SingleKanjiRewriter::~SingleKanjiRewriter() {}
 
-int SingleKanjiRewriter::capability() const {
-  if (GET_REQUEST(mixed_conversion)) {
+int SingleKanjiRewriter::capability(const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;

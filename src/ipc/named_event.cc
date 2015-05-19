@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "ipc/named_event.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
 #include <Sddl.h>
 #else
@@ -46,15 +46,17 @@
 #include <string>
 #include "base/base.h"
 #include "base/const.h"
+#include "base/logging.h"
+#include "base/system_util.h"
 #include "base/util.h"
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include "base/win_sandbox.h"
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 namespace mozc {
 namespace {
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
 const pid_t kInvalidPid = 1;  // We can safely use 1 as 1 is reserved for init.
 
 // Returns true if the process is alive.
@@ -67,16 +69,16 @@ bool IsProcessAlive(pid_t pid) {
   // still performed.
   return ::kill(pid, kSig) == 0;
 }
-#endif  // !OS_WINDOWS
+#endif  // !OS_WIN
 }  // namespace
 
 const string NamedEventUtil::GetEventPath(const char *name) {
   name = (name == NULL) ? "NULL" : name;
   string event_name = kEventPathPrefix;
-  event_name += Util::GetUserSidAsString();
+  event_name += SystemUtil::GetUserSidAsString();
   event_name += ".";
   event_name += name;
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   return event_name;
 #else
   // To maximze mozc portability, (especailly on BSD including OSX),
@@ -94,7 +96,7 @@ const string NamedEventUtil::GetEventPath(const char *name) {
 #endif
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), handle_(NULL) {
   wstring event_path;
@@ -104,25 +106,20 @@ NamedEventListener::NamedEventListener(const char *name)
                          event_path.c_str());
 
   if (handle_ == NULL) {
-    SECURITY_ATTRIBUTES SecurityAttributes;
-    if (!WinSandbox::MakeSecurityAttributes(&SecurityAttributes)) {
+    SECURITY_ATTRIBUTES security_attributes;
+    if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharableEvent,
+                                            &security_attributes)) {
       LOG(ERROR) << "Cannot make SecurityAttributes";
       return;
     }
 
-    handle_ = ::CreateEventW(&SecurityAttributes,
+    handle_ = ::CreateEventW(&security_attributes,
                              true, false,
                              event_path.c_str());
+    ::LocalFree(security_attributes.lpSecurityDescriptor);
     if (handle_ == NULL) {
-      LOG(ERROR) << "CreateEvent() failed: "
-                 << ::GetLastError();
+      LOG(ERROR) << "CreateEvent() failed: " << ::GetLastError();
       return;
-    }
-
-    // permit the access from a process runinning with low integrity level
-    if (Util::IsVistaOrLater()) {
-      WinSandbox::SetMandatoryLabelW(handle_, SE_KERNEL_OBJECT,
-                                     SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
     }
 
     is_owner_ = true;
@@ -255,7 +252,7 @@ bool NamedEventNotifier::Notify() {
   return true;
 };
 
-#else   // OS_WINDOWS
+#else   // OS_WIN
 
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), sem_(SEM_FAILED) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,19 +29,19 @@
 
 #include "base/thread.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #include <process.h>  // for _beginthreadex
 #else
 #include <pthread.h>
-#endif  // OS_WINDOWS or not
+#endif  // OS_WIN
 
 #include "base/base.h"
 #include "base/logging.h"
 
 namespace mozc {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // Win32-based Thread implementation.
 
 namespace {
@@ -246,7 +246,7 @@ void *Thread::WrapperForPOSIX(void *ptr) {
     p->Run();
     pthread_cleanup_pop(1);
   }
-#endif  // __native_client__ or not
+#endif  // __native_client__
   return NULL;
 }
 
@@ -260,7 +260,7 @@ void Thread::Terminate() {
   }
 }
 
-#endif  // OS_WINDOWS or not
+#endif  // OS_WIN
 
 Thread::Thread()
     : state_(new ThreadInternalState) {}
@@ -271,6 +271,51 @@ Thread::~Thread() {
 
 void Thread::SetJoinable(bool joinable) {
   state_->joinable_ = joinable;
+}
+
+namespace {
+
+#ifdef OS_WIN
+unsigned __stdcall DetachedThreadFuncWin(void *ptr) {
+  scoped_ptr<DetachedThread> p(static_cast<DetachedThread *>(ptr));
+  p->Run();
+  return 0;
+}
+#else
+void *DetachedThreadFuncPosix(void *ptr) {
+  scoped_ptr<DetachedThread> p(static_cast<DetachedThread *>(ptr));
+  p->Run();
+  return 0;
+}
+#endif  // OS_WIN
+
+}  // namespace
+
+DetachedThread::DetachedThread() {}
+
+DetachedThread::~DetachedThread() {}
+
+bool DetachedThread::Start() {
+#ifdef OS_WIN
+  HANDLE handle = reinterpret_cast<HANDLE>(_beginthreadex(
+      NULL, 0, DetachedThreadFuncWin, this, 0, NULL));
+  if (0 == handle) {
+    delete this;
+    return false;
+  }
+  ::CloseHandle(handle);
+  return true;
+#else
+  pthread_attr_t tattr;
+  pthread_attr_init(&tattr);
+  pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);
+  pthread_t thread_id;
+  if (0 != pthread_create(&thread_id, &tattr, DetachedThreadFuncPosix, this)) {
+    delete this;
+    return false;
+  }
+  return true;
+#endif  // OS_WIN
 }
 
 }  // namespace mozc

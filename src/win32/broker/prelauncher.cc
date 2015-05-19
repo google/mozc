@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,15 +36,16 @@
 #include <string>
 
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/run_level.h"
-#include "base/mmap.h"
 #include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
-#include "win32/base/imm_util.h"
 #include "win32/base/file_verifier.h"
+#include "win32/base/imm_util.h"
 #include "win32/broker/mozc_broker_resource.h"
 
 namespace mozc {
@@ -58,7 +59,7 @@ const int kErrorLevelCorruptedFileDetected = 2;
 wstring LoadStringResource(int resource_id) {
   wchar_t buffer[4096] = {};
   const int copied_chars_without_null =
-      ::LoadString(::GetModuleHandleW(NULL), resource_id,
+      ::LoadString(::GetModuleHandleW(nullptr), resource_id,
       buffer, arraysize(buffer));
 
   if (copied_chars_without_null == arraysize(buffer)) {
@@ -75,7 +76,7 @@ void EnterBackgroundThreadMode() {
   const HANDLE thread_handle = ::GetCurrentThread();
 
   // Enter low priority mode.
-  if (mozc::Util::IsVistaOrLater()) {
+  if (SystemUtil::IsVistaOrLater()) {
     ::SetThreadPriority(thread_handle, THREAD_MODE_BACKGROUND_BEGIN);
   } else {
     ::SetThreadPriority(thread_handle, THREAD_PRIORITY_IDLE);
@@ -149,7 +150,7 @@ int RunPrelaunchProcesses(int argc, char *argv[]) {
       message << L"\r\n" << LoadStringResource(IDS_DIALOG_FILE_NOT_FOUND)
               << L":" << missing_files_str;
     }
-    ::MessageBoxW(NULL, message.str().c_str(),
+    ::MessageBoxW(nullptr, message.str().c_str(),
                   LoadStringResource(IDS_DIALOG_TITLE).c_str(),
                   MB_OK | MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY);
     return kErrorLevelCorruptedFileDetected;

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "ipc/ipc.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <sys/types.h>
@@ -39,6 +39,7 @@
 
 #include <stdlib.h>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/thread.h"
 #include "ipc/ipc_path_manager.h"
@@ -132,7 +133,7 @@ bool IPCClient::TerminateServer(const string &name) {
     return false;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   HANDLE handle = ::OpenProcess(PROCESS_TERMINATE,
                                 false, static_cast<DWORD>(pid));
   if (NULL == handle) {

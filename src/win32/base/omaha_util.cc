@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@
 
 #include <string>
 
-#include "base/util.h"
+#include "base/system_util.h"
 
 namespace mozc {
 namespace win32 {
@@ -58,7 +58,7 @@ const wchar_t kChannelKeyName[] = L"ap";
 
 LONG OpenClientStateKey(CRegKey *key, REGSAM base_sam) {
   const REGSAM sam_desired = base_sam |
-      (Util::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+      (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
   return key->Create(HKEY_LOCAL_MACHINE, kClientStateKey,
                      REG_NONE, REG_OPTION_NON_VOLATILE,
                      sam_desired);

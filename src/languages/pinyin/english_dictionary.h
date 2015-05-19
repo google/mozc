@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,22 +43,14 @@
 #include "languages/pinyin/english_dictionary_interface.h"
 
 namespace mozc {
-// Following ifdef block is just a migration code.
-// TODO(hsumita): Remove code related to rx::RxTrie.
-#ifdef MOZC_USE_MOZC_LOUDS
-namespace dictionary {
-namespace louds {
-class LoudsTrieAdapter;
-}
-}
-#else
-namespace rx {
-class RxTrie;
-}
-#endif  // MOZC_USE_MOZC_LOUDS
-
 namespace storage {
+
 class StringStorageInterface;
+
+namespace louds {
+class LoudsTrie;
+}  // namespace louds
+
 }  // namespace storage
 
 namespace pinyin {
@@ -98,14 +90,8 @@ class EnglishDictionary : public EnglishDictionaryInterface {
   // For initialization or unittest use only.
   static string user_dictionary_file_path();
 
-#ifdef MOZC_USE_MOZC_LOUDS
-  typedef dictionary::louds::LoudsTrieAdapter TrieType;
-#else
-  typedef rx::RxTrie TrieType;
-#endif  // MOZC_USE_MOZC_LOUDS
-
   // System dictionary trie data.
-  scoped_ptr<TrieType> word_trie_;
+  scoped_ptr<mozc::storage::louds::LoudsTrie> word_trie_;
   // Maps an ID of trie entries to their priority.
   vector<float> priority_table_;
   // It maps words to their frequency.
@@ -113,7 +99,7 @@ class EnglishDictionary : public EnglishDictionaryInterface {
   // Multiplier to convert from frequency to priority.
   float learning_multiplier_;
   // Storage instance to manage user dictionary.
-  scoped_ptr<storage::StringStorageInterface> storage_;
+  scoped_ptr<mozc::storage::StringStorageInterface> storage_;
 
   DISALLOW_COPY_AND_ASSIGN(EnglishDictionary);
 };
@@ -122,5 +108,4 @@ class EnglishDictionary : public EnglishDictionaryInterface {
 }  // namespace pinyin
 }  // namespace mozc
 
-// MOZC_LANGUAGES_PINYIN_ENGLISH_DICTIONARY_H_
-#endif
+#endif  // MOZC_LANGUAGES_PINYIN_ENGLISH_DICTIONARY_H_

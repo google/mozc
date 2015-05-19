@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if !defined(OS_WINDOWS)
+#ifndef OS_WIN
 #include <unistd.h>
 #include <cstdlib>
-#endif  // !OS_WINDOWS
+#endif  // OS_WIN
 
-#include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
-#include "base/thread.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -48,24 +48,24 @@ static const char kName[] = "process_mutex_test";
 class ProcessMutexTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    original_user_profile_dir_ = Util::GetUserProfileDirectory();
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    original_user_profile_dir_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
   virtual void TearDown() {
     ProcessMutex mutex(kName);
-    if (Util::FileExists(mutex.lock_filename())) {
+    if (FileUtil::FileExists(mutex.lock_filename())) {
       LOG(FATAL) << "Lock file unexpectedly remains: " << mutex.lock_filename();
     }
 
-    Util::SetUserProfileDirectory(original_user_profile_dir_);
+    SystemUtil::SetUserProfileDirectory(original_user_profile_dir_);
   }
 
  private:
   string original_user_profile_dir_;
 };
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
 TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
   const pid_t pid = ::fork();
   if (pid == 0) {  // child process

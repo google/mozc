@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "base/mmap.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
 #include <string>
 #else
@@ -38,21 +38,31 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <cstring>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/logging.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include "base/scoped_handle.h"
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
+
+#ifdef MOZC_USE_PEPPER_FILE_IO
+#include "base/pepper_file_util.h"
+#endif  // MOZC_USE_PEPPER_FILE_IO
 
 namespace mozc {
 
-#ifdef OS_WINDOWS
+#ifndef MOZC_USE_PEPPER_FILE_IO
+
+Mmap::Mmap() : text_(NULL), size_(0) {
+}
+
+#ifdef OS_WIN
 
 bool Mmap::Open(const char *filename, const char *mode) {
   Close();
@@ -113,7 +123,7 @@ void Mmap::Close() {
   size_ = 0;
 }
 
-#else
+#else  // OS_WIN
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -171,7 +181,7 @@ bool Mmap::Open(const char *filename, const char *mode) {
     return false;
   }
 
-  Util::MaybeMLock(ptr, size_);
+  SystemUtil::MaybeMLock(ptr, size_);
   text_ = reinterpret_cast<char *>(ptr);
   size_ = st.st_size;
   return true;
@@ -179,13 +189,71 @@ bool Mmap::Open(const char *filename, const char *mode) {
 
 void Mmap::Close() {
   if (text_ != NULL) {
-    Util::MaybeMUnlock(text_, size_);
+    SystemUtil::MaybeMUnlock(text_, size_);
     munmap(reinterpret_cast<char *>(text_), size_);
   }
 
   text_ = NULL;
   size_ = 0;
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
+
+#else  // MOZC_USE_PEPPER_FILE_IO
+
+Mmap::Mmap() : write_mode_(false), size_(0) {
+}
+
+bool Mmap::Open(const char *filename, const char *mode) {
+  Close();
+
+  if (strcmp(mode, "r") == 0) {
+    write_mode_ = false;
+  } else if (strcmp(mode, "r+") == 0) {
+    write_mode_ = true;
+  } else {
+    LOG(WARNING) << "unknown open mode: " << filename;
+    return false;
+  }
+  string buffer;
+  if (!PepperFileUtil::ReadBinaryFile(filename, &buffer)) {
+    LOG(WARNING) << "read failed: " << filename;
+    return false;
+  }
+  if (buffer.empty()) {
+    LOG(WARNING) << "file size = 0: " << filename;
+    return false;
+  }
+  size_ = buffer.size();
+  text_.reset(new char[size_]);
+  buffer.copy(text_.get(), size_);
+  filename_ = filename;
+  if (write_mode_) {
+    PepperFileUtil::RegisterMmap(this);
+  }
+  return true;
+}
+
+void Mmap::Close() {
+  if (write_mode_) {
+    PepperFileUtil::UnRegisterMmap(this);
+    if (!PepperFileUtil::WriteBinaryFile(filename_,
+                                         string(text_.get(), size_))) {
+      LOG(WARNING) << "write failed: " << filename_;
+    }
+  }
+  text_.reset();
+  size_ = 0;
+}
+
+bool Mmap::SyncToFile() {
+  if (!write_mode_) {
+    LOG(ERROR) << "Mmap::SyncToFile error. This file is opened in read mode: "
+               << filename_;
+    return false;
+  }
+  return PepperFileUtil::WriteBinaryFile(filename_,
+                                         string(text_.get(), size_));
+}
+#endif  // MOZC_USE_PEPPER_FILE_IO
 
 }  // namespace mozc

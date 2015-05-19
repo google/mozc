@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,19 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/logging.h"
+#include "base/singleton.h"
+#include "base/system_util.h"
+#include "base/util.h"
+#include "composer/internal/typing_model.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
 #include "session/key_parser.h"
-#include "session/request_test_util.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -122,19 +126,22 @@ class ComposerTest : public testing::Test {
   ComposerTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     Config config;
     ConfigHandler::GetDefaultConfig(&config);
     ConfigHandler::SetConfig(config);
     table_.reset(new Table);
-    default_request_.CopyFrom(Request::default_instance());
-    composer_.reset(new Composer(table_.get(), default_request_));
+    default_request_.reset(new Request);
+    composer_.reset(new Composer(table_.get(), default_request_.get()));
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
   virtual void TearDown() {
-    table_.reset();
+    CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     composer_.reset();
+    default_request_.reset();
+    table_.reset();
+
     // just in case, reset config in test_tmpdir
     Config config;
     ConfigHandler::GetDefaultConfig(&config);
@@ -143,7 +150,7 @@ class ComposerTest : public testing::Test {
 
   scoped_ptr<Composer> composer_;
   scoped_ptr<Table> table_;
-  Request default_request_;
+  scoped_ptr<Request> default_request_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ComposerTest);
@@ -154,13 +161,13 @@ TEST_F(ComposerTest, Reset) {
   composer_->InsertCharacter("mozuku");
 
   composer_->SetInputMode(transliteration::HALF_ASCII);
-  composer_->SetInputFieldType(commands::SessionCommand::PASSWORD);
+  composer_->SetInputFieldType(commands::Context::PASSWORD);
   composer_->Reset();
 
   EXPECT_TRUE(composer_->Empty());
-  // The input mode ramains the previous mode.
+  // The input mode ramains as the previous mode.
   EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
-  EXPECT_EQ(commands::SessionCommand::PASSWORD,
+  EXPECT_EQ(commands::Context::PASSWORD,
             composer_->GetInputFieldType());
 }
 
@@ -746,10 +753,6 @@ TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
     composer_->GetStringForPreedit(&preedit);
     // "う"
     EXPECT_EQ("\xe3\x81\x86", base);
-    for (set<string>::const_iterator itr = expanded.begin();
-         itr != expanded.end(); ++itr) {
-      LOG(INFO) << *itr;
-    }
     EXPECT_EQ(7, expanded.size());
     // We can't use EXPECT_NE for iterator
     EXPECT_TRUE(expanded.end() != expanded.find("s"));
@@ -841,13 +844,13 @@ TEST_F(ComposerTest, GetStringFunctions_ForN) {
 
 TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
   const struct TestData {
-    const commands::SessionCommand::InputFieldType field_type_;
+    const commands::Context::InputFieldType field_type_;
     const bool ascii_expected_;
   } test_data_list[] = {
-      {commands::SessionCommand::NORMAL, false},
-      {commands::SessionCommand::NUMBER, true},
-      {commands::SessionCommand::PASSWORD, true},
-      {commands::SessionCommand::TEL, true},
+      {commands::Context::NORMAL, false},
+      {commands::Context::NUMBER, true},
+      {commands::Context::PASSWORD, true},
+      {commands::Context::TEL, true},
   };
 
   composer_->SetInputMode(transliteration::HIRAGANA);
@@ -1110,7 +1113,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(new Composer(table_.get(), default_request_));
+  composer_.reset(new Composer(table_.get(), default_request_.get()));
 
   {
     // "a" → "あ" (Hiragana)
@@ -1364,7 +1367,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("", src_composition);
 
-    Composer dest(NULL, default_request_);
+    Composer dest(NULL, default_request_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1380,7 +1383,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "あｎ"
     EXPECT_EQ("\xE3\x81\x82\xEF\xBD\x8E", src_composition);
 
-    Composer dest(NULL, default_request_);
+    Composer dest(NULL, default_request_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1394,7 +1397,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "あん"
     EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", src_composition);
 
-    Composer dest(NULL, default_request_);
+    Composer dest(NULL, default_request_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1414,7 +1417,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "AaAAあ"
     EXPECT_EQ("AaAA\xE3\x81\x82", src_composition);
 
-    Composer dest(NULL, default_request_);
+    Composer dest(NULL, default_request_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1424,7 +1427,7 @@ TEST_F(ComposerTest, CopyFrom) {
     SCOPED_TRACE("Composition with password mode");
 
     composer_->Reset();
-    composer_->SetInputFieldType(commands::SessionCommand::PASSWORD);
+    composer_->SetInputFieldType(commands::Context::PASSWORD);
     composer_->SetInputMode(transliteration::HALF_ASCII);
     composer_->SetOutputMode(transliteration::HALF_ASCII);
     composer_->InsertCharacter("M");
@@ -1432,7 +1435,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("M", src_composition);
 
-    Composer dest(NULL, default_request_);
+    Composer dest(NULL, default_request_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1544,7 +1547,7 @@ TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
   ConfigHandler::GetConfig(&config);
   config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
   ConfigHandler::SetConfig(config);
-  table_->Initialize();
+  table_->InitializeWithRequestAndConfig(*default_request_, config);
   composer_->Reset();
   composer_->SetInputMode(transliteration::HIRAGANA);
   InsertKey("K", composer_.get());
@@ -1592,7 +1595,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   config.set_use_auto_ime_turn_off(true);
   ConfigHandler::SetConfig(config);
 
-  table_->Initialize();
+  table_->InitializeWithRequestAndConfig(*default_request_, config);
 
   commands::KeyEvent key;
 
@@ -1612,7 +1615,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(new Composer(table_.get(), default_request_));
+  composer_.reset(new Composer(table_.get(), default_request_.get()));
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1685,7 +1688,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
 
   config.set_shift_key_mode_switch(Config::OFF);
   ConfigHandler::SetConfig(config);
-  composer_.reset(new Composer(table_.get(), default_request_));
+  composer_.reset(new Composer(table_.get(), default_request_.get()));
 
   {  // Google
     InsertKey("G", composer_.get());
@@ -1716,7 +1719,7 @@ TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
   config.set_use_auto_ime_turn_off(false);
   ConfigHandler::SetConfig(config);
 
-  table_->Initialize();
+  table_->InitializeWithRequestAndConfig(*default_request_, config);
 
   commands::KeyEvent key;
 
@@ -1757,7 +1760,7 @@ TEST_F(ComposerTest, AutoIMETurnOffKana) {
   config.set_use_auto_ime_turn_off(true);
   ConfigHandler::SetConfig(config);
 
-  table_->Initialize();
+  table_->InitializeWithRequestAndConfig(*default_request_, config);
 
   commands::KeyEvent key;
 
@@ -1907,7 +1910,8 @@ TEST_F(ComposerTest, UpdateInputMode) {
   string output;
   composer_->GetStringForPreedit(&output);
   // "AIあいａｉ"
-  EXPECT_EQ("\x41\x49\xE3\x81\x82\xE3\x81\x84\xEF\xBD\x81\xEF\xBD\x89", output);
+  EXPECT_EQ("\x41\x49\xE3\x81\x82\xE3\x81\x84\xEF\xBD\x81\xEF\xBD\x89",
+            output);
 
   composer_->SetInputMode(transliteration::FULL_KATAKANA);
 
@@ -1981,7 +1985,7 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
   // Set the flag disable.
   commands::Request request;
   request.set_update_input_mode_from_surrounding_text(false);
-  composer_->SetRequest(request);
+  composer_->SetRequest(&request);
 
   // "あ"
   table_->AddRule("a", "\xE3\x81\x82", "");
@@ -2010,7 +2014,8 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
   string output;
   composer_->GetStringForPreedit(&output);
   // "AIあいａｉ"
-  EXPECT_EQ("\x41\x49\xE3\x81\x82\xE3\x81\x84\xEF\xBD\x81\xEF\xBD\x89", output);
+  EXPECT_EQ("\x41\x49\xE3\x81\x82\xE3\x81\x84\xEF\xBD\x81\xEF\xBD\x89",
+            output);
 
   composer_->SetInputMode(transliteration::FULL_KATAKANA);
 
@@ -2735,7 +2740,7 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     config.set_shift_key_mode_switch(Config::OFF);
     ConfigHandler::SetConfig(config);
     EXPECT_TRUE(ConfigHandler::SetConfig(config));
-    table_->Initialize();
+    table_->InitializeWithRequestAndConfig(*default_request_, config);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2758,7 +2763,7 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
     ConfigHandler::SetConfig(config);
     EXPECT_TRUE(ConfigHandler::SetConfig(config));
-    table_->Initialize();
+    table_->InitializeWithRequestAndConfig(*default_request_, config);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2784,7 +2789,7 @@ TEST_F(ComposerTest,
     config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
     ConfigHandler::SetConfig(config);
     EXPECT_TRUE(ConfigHandler::SetConfig(config));
-    table_->Initialize();
+    table_->InitializeWithRequestAndConfig(*default_request_, config);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2849,7 +2854,8 @@ TEST_F(ComposerTest,
   // 2. Type Back-space 6 times ("い")
   // 3. Type "i" (should be "いい")
 
-  table_->Initialize();
+  config::Config config;
+  table_->InitializeWithRequestAndConfig(*default_request_, config);
 
   // i -> "い"
   table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2896,7 +2902,8 @@ TEST_F(ComposerTest,
 TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   // The expectation of this test is the same as MS-IME's
 
-  table_->Initialize();
+  config::Config config;
+  table_->InitializeWithRequestAndConfig(*default_request_, config);
 
   // i -> "い"
   table_->AddRule("i", "\xe3\x81\x84", "");
@@ -3057,11 +3064,11 @@ TEST_F(ComposerTest, ShuoldCommit) {
 TEST_F(ComposerTest, ShouldCommitHead) {
   struct TestData {
     const string input_text;
-    const commands::SessionCommand::InputFieldType field_type;
+    const commands::Context::InputFieldType field_type;
     const bool expected_return;
     const size_t expected_commit_length;
     TestData(const string &input_text,
-             commands::SessionCommand::InputFieldType field_type,
+             commands::Context::InputFieldType field_type,
              bool expected_return,
              size_t expected_commit_length)
         : input_text(input_text),
@@ -3072,23 +3079,23 @@ TEST_F(ComposerTest, ShouldCommitHead) {
   };
   const TestData test_data_list[] = {
       // On NORMAL, never commit the head.
-      TestData("", commands::SessionCommand::NORMAL, false, 0),
-      TestData("A", commands::SessionCommand::NORMAL, false, 0),
-      TestData("AB", commands::SessionCommand::NORMAL, false, 0),
-      TestData("", commands::SessionCommand::PASSWORD, false, 0),
+      TestData("", commands::Context::NORMAL, false, 0),
+      TestData("A", commands::Context::NORMAL, false, 0),
+      TestData("AB", commands::Context::NORMAL, false, 0),
+      TestData("", commands::Context::PASSWORD, false, 0),
       // On PASSWORD, commit (length - 1) characters.
-      TestData("A", commands::SessionCommand::PASSWORD, false, 0),
-      TestData("AB", commands::SessionCommand::PASSWORD, true, 1),
-      TestData("ABCDEFGHI", commands::SessionCommand::PASSWORD, true, 8),
+      TestData("A", commands::Context::PASSWORD, false, 0),
+      TestData("AB", commands::Context::PASSWORD, true, 1),
+      TestData("ABCDEFGHI", commands::Context::PASSWORD, true, 8),
       // On NUMBER and TEL, commit (length) characters.
-      TestData("", commands::SessionCommand::NUMBER, false, 0),
-      TestData("A", commands::SessionCommand::NUMBER, true, 1),
-      TestData("AB", commands::SessionCommand::NUMBER, true, 2),
-      TestData("ABCDEFGHI", commands::SessionCommand::NUMBER, true, 9),
-      TestData("", commands::SessionCommand::TEL, false, 0),
-      TestData("A", commands::SessionCommand::TEL, true, 1),
-      TestData("AB", commands::SessionCommand::TEL, true, 2),
-      TestData("ABCDEFGHI", commands::SessionCommand::TEL, true, 9),
+      TestData("", commands::Context::NUMBER, false, 0),
+      TestData("A", commands::Context::NUMBER, true, 1),
+      TestData("AB", commands::Context::NUMBER, true, 2),
+      TestData("ABCDEFGHI", commands::Context::NUMBER, true, 9),
+      TestData("", commands::Context::TEL, false, 0),
+      TestData("A", commands::Context::TEL, true, 1),
+      TestData("AB", commands::Context::TEL, true, 2),
+      TestData("ABCDEFGHI", commands::Context::TEL, true, 9),
   };
 
   for (size_t i = 0; i < ARRAYSIZE_UNSAFE(test_data_list); ++i) {
@@ -3253,6 +3260,12 @@ TEST_F(ComposerTest, DeleteRange) {
   EXPECT_EQ("\xe3\x82\x82\xe3\x82\x82\xef\xbd\x99\xef\xbd\x9a",
             GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
+
+  composer_->DeleteRange(2, 1000);
+  // "もも|"
+  EXPECT_EQ("\xe3\x82\x82\xe3\x82\x82",
+            GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
 }
 
 TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
@@ -3263,7 +3276,7 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
   request.set_combine_all_segments(true);
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-  composer_->SetRequest(request);
+  composer_->SetRequest(&request);
   table_->InitializeWithRequestAndConfig(request,
                                          config::ConfigHandler::GetConfig());
   composer_->InsertCharacter("2");
@@ -3274,6 +3287,243 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
   result.clear();
   composer_->GetQueryForPrediction(&result);
   EXPECT_EQ("a", result);
+}
+
+TEST_F(ComposerTest, InsertCharacterPreedit) {
+  // "ああaｋka。"
+  const char kTestStr[] =
+      "\xe3\x81\x82\xe3\x81\x82\x61\xef\xbd\x8b\x6b\x61\xe3\x80\x82";
+
+  {
+    string preedit;
+    string conversion_query;
+    string prediction_query;
+    string base;
+    set<string> expanded;
+    composer_->InsertCharacterPreedit(kTestStr);
+    composer_->GetStringForPreedit(&preedit);
+    composer_->GetQueryForConversion(&conversion_query);
+    composer_->GetQueryForPrediction(&prediction_query);
+    composer_->GetQueriesForPrediction(&base, &expanded);
+    EXPECT_FALSE(preedit.empty());
+    EXPECT_FALSE(conversion_query.empty());
+    EXPECT_FALSE(prediction_query.empty());
+    EXPECT_FALSE(base.empty());
+  }
+  composer_->Reset();
+  {
+    string preedit;
+    string conversion_query;
+    string prediction_query;
+    string base;
+    set<string> expanded;
+    vector<string> chars;
+    Util::SplitStringToUtf8Chars(kTestStr, &chars);
+    for (size_t i = 0; i < chars.size(); ++i) {
+      composer_->InsertCharacterPreedit(chars[i]);
+    }
+    composer_->GetStringForPreedit(&preedit);
+    composer_->GetQueryForConversion(&conversion_query);
+    composer_->GetQueryForPrediction(&prediction_query);
+    composer_->GetQueriesForPrediction(&base, &expanded);
+    EXPECT_FALSE(preedit.empty());
+    EXPECT_FALSE(conversion_query.empty());
+    EXPECT_FALSE(prediction_query.empty());
+    EXPECT_FALSE(base.empty());
+  }
+}
+
+namespace {
+ProbableKeyEvents GetStubProbableKeyEvent(int key_code, double probability) {
+  ProbableKeyEvents result;
+  ProbableKeyEvent *event;
+  event = result.Add();
+  event->set_key_code(key_code);
+  event->set_probability(probability);
+  event = result.Add();
+  event->set_key_code('z');
+  event->set_probability(1.0f - probability);
+  return result;
+}
+}  // namespace
+
+class MockTypingModel : public TypingModel {
+ public:
+  MockTypingModel() : TypingModel(NULL, 0, NULL, 0, NULL) {}
+  virtual ~MockTypingModel() {}
+  virtual int GetCost(const StringPiece key) const {
+    return 10;
+  }
+};
+
+// Test fixture for setting up mobile qwerty romaji table to test typing
+// corrector inside composer.
+class TypingCorrectionTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+    ConfigHandler::GetConfig(&config_backup_);
+
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    config.set_use_typing_correction(true);
+    ConfigHandler::SetConfig(config);
+
+    table_.reset(new Table);
+    table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
+
+    request_.reset(new Request);
+    request_->set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
+
+    composer_.reset(new Composer(table_.get(), request_.get()));
+
+    table_->typing_model_ = Singleton<MockTypingModel>::get();
+  }
+
+  virtual void TearDown() {
+    ConfigHandler::SetConfig(config_backup_);
+  }
+
+  static bool IsTypingCorrectorClearedOrInvalidated(const Composer &composer) {
+    vector<TypeCorrectedQuery> queries;
+    composer.GetTypeCorrectedQueriesForPrediction(&queries);
+    return queries.empty();
+  }
+
+  scoped_ptr<Request> request_;
+  scoped_ptr<Composer> composer_;
+  scoped_ptr<Table> table_;
+  Config config_backup_;
+};
+
+TEST_F(TypingCorrectionTest, ResetAfterComposerReset) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->Reset();
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterDeleteAt) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->DeleteAt(0);
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterDelete) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->Delete();
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterDeleteRange) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->DeleteRange(0, 1);
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, ResetAfterEditErase) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->EditErase();
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterBackspace) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->Backspace();
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorLeft) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->MoveCursorLeft();
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorRight) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->MoveCursorRight();
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorToBeginning) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->MoveCursorToBeginning();
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorToEnd) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->MoveCursorToEnd();
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorTo) {
+  composer_->InsertCharacterForProbableKeyEvents(
+      "a",
+      GetStubProbableKeyEvent('a', 0.9f));
+  composer_->InsertCharacterForProbableKeyEvents(
+      "b",
+      GetStubProbableKeyEvent('a', 0.9f));
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  composer_->MoveCursorTo(0);
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
+TEST_F(TypingCorrectionTest, GetTypeCorrectedQueriesForPrediction) {
+  // This test only checks if typing correction candidates are nonempty after
+  // each key insertion. The quality of typing correction depends on data model
+  // and is tested in composer/internal/typing_corrector_test.cc.
+  const char *kKeys[] = { "m", "o", "z", "u", "k", "u" };
+  for (size_t i = 0; i < arraysize(kKeys); ++i) {
+    composer_->InsertCharacterForProbableKeyEvents(
+        kKeys[i],
+        GetStubProbableKeyEvent(kKeys[i][0], 0.9f));
+    EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  }
+  composer_->Backspace();
+  for (size_t i = 0; i < arraysize(kKeys); ++i) {
+    composer_->InsertCharacterForProbableKeyEvents(kKeys[i],
+                                                   ProbableKeyEvents());
+    EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+  }
 }
 
 }  // namespace composer

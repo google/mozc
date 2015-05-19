@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "converter/segments.h"
+
+#include <string>
+#include <vector>
+
 #include "base/number_util.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -42,7 +46,7 @@ namespace mozc {
 class SegmentsTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
   }
@@ -57,7 +61,7 @@ class SegmentsTest : public testing::Test {
 class CandidateTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
   }
@@ -69,7 +73,7 @@ class CandidateTest : public testing::Test {
 class SegmentTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
   }
@@ -286,6 +290,7 @@ TEST_F(CandidateTest, CopyFrom) {
   src.attributes = 6;
   src.style = NumberUtil::NumberString::NUMBER_CIRCLED;
   src.command = Segment::Candidate::DISABLE_PRESENTATION_MODE;
+  src.inner_segment_boundary.push_back(pair<int, int>(1, 3));
 
   dest.CopyFrom(src);
 
@@ -306,6 +311,44 @@ TEST_F(CandidateTest, CopyFrom) {
   EXPECT_EQ(src.attributes, dest.attributes);
   EXPECT_EQ(src.style, dest.style);
   EXPECT_EQ(src.command, dest.command);
+  EXPECT_EQ(src.inner_segment_boundary, dest.inner_segment_boundary);
+}
+
+TEST_F(CandidateTest, IsValid) {
+  Segment::Candidate c;
+  c.Init();
+  EXPECT_TRUE(c.IsValid());
+
+  c.key = "key";
+  c.value = "value";
+  c.content_key = "content_key";
+  c.content_value = "content_value";
+  c.prefix = "prefix";
+  c.suffix = "suffix";
+  c.description = "description";
+  c.usage_title = "usage_title";
+  c.usage_description = "usage_description";
+  c.cost = 1;
+  c.wcost = 2;
+  c.structure_cost = 3;
+  c.lid = 4;
+  c.rid = 5;
+  c.attributes = 6;
+  c.style = NumberUtil::NumberString::NUMBER_CIRCLED;
+  c.command = Segment::Candidate::DISABLE_PRESENTATION_MODE;
+  EXPECT_TRUE(c.IsValid());  // Empty inner_segment_boundary
+
+  // Valid inner_segment_boundary.
+  c.inner_segment_boundary.push_back(pair<int, int>(1, 3));
+  c.inner_segment_boundary.push_back(pair<int, int>(2, 2));
+  EXPECT_TRUE(c.IsValid());
+
+  // Invalid inner_segment_boundary.
+  c.inner_segment_boundary.clear();
+  c.inner_segment_boundary.push_back(pair<int, int>(1, 1));
+  c.inner_segment_boundary.push_back(pair<int, int>(2, 2));
+  c.inner_segment_boundary.push_back(pair<int, int>(3, 3));
+  EXPECT_FALSE(c.IsValid());
 }
 
 TEST_F(SegmentsTest, RevertEntryTest) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,22 +32,22 @@
 #include <ime.h>
 #include <windows.h>
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
-#include "session/ime_switch_util.h"
 #include "session/output_util.h"
 #include "win32/base/conversion_mode_util.h"
+#include "win32/base/deleter.h"
+#include "win32/base/input_state.h"
+#include "win32/base/keyboard.h"
+#include "win32/base/imm_reconvert_string.h"
 #include "win32/ime/ime_candidate_info.h"
 #include "win32/ime/ime_composition_string.h"
-#include "win32/ime/ime_deleter.h"
-#include "win32/ime/ime_keyboard.h"
 #include "win32/ime/ime_mouse_tracker.h"
 #include "win32/ime/ime_private_context.h"
-#include "win32/ime/ime_reconvert_string.h"
 #include "win32/ime/ime_scoped_context.h"
-#include "win32/ime/ime_state.h"
 #include "win32/ime/ime_ui_context.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
 
@@ -65,7 +65,7 @@ const size_t kReconvertStringSizeLimit = 1024*64;
 const wchar_t kObjectReplacementCharacter = L'\uFFFC';
 
 bool GetNextState(HIMC himc, const commands::Output &output,
-                  mozc::win32::ImeState *next_state) {
+                  mozc::win32::InputState *next_state) {
   DCHECK(next_state);
 
   UIContext context(himc);
@@ -90,12 +90,12 @@ bool GetNextState(HIMC himc, const commands::Output &output,
 
 BOOL UpdateInputContext(
     HIMC himc, const commands::Output &output, bool generate_message) {
-  ImeState next_state;
+  InputState next_state;
   if (!GetNextState(himc, output, &next_state)) {
     return FALSE;
   }
   if (!generate_message) {
-    if (!ImeCore::UpdateContext(himc, next_state, output, NULL)) {
+    if (!ImeCore::UpdateContext(himc, next_state, output, nullptr)) {
       return FALSE;
     }
     return TRUE;
@@ -108,7 +108,7 @@ BOOL UpdateInputContext(
 }
 
 HIMCC EnsureHIMCCSize(HIMCC himcc, DWORD size) {
-  if (himcc == NULL) {
+  if (himcc == nullptr) {
     return ::ImmCreateIMCC(size);
   }
   const DWORD current_size = ::ImmGetIMCCSize(himcc);
@@ -129,7 +129,7 @@ bool UpdateCompositionString(HIMC himc,
   // TODO(yukawa): Move this logic into more appropriate place.
   const HIMCC composition_string_handle = EnsureHIMCCSize(
       context->hCompStr, sizeof(CompositionString));
-  if (composition_string_handle == NULL) {
+  if (composition_string_handle == nullptr) {
     return false;
   }
   ScopedHIMCC<CompositionString> compstr(composition_string_handle);
@@ -151,7 +151,7 @@ bool UpdateCompositionStringAndPushMessages(
     return false;
   }
 
-  const bool generate_message = (message_queue != NULL);
+  const bool generate_message = (message_queue != nullptr);
   if (!generate_message) {
     return true;
   }
@@ -182,8 +182,8 @@ bool GetReconvertString(const RECONVERTSTRING *reconvert_string,
   wstring target_text;
   wstring following_composition;
   if (!ReconvertString::Decompose(
-          reconvert_string, NULL, &preceding_composition,
-          &target_text, &following_composition, NULL)) {
+          reconvert_string, nullptr, &preceding_composition,
+          &target_text, &following_composition, nullptr)) {
     DLOG(INFO) << "ReconvertString::Decompose failed.";
     return false;
   }
@@ -214,15 +214,16 @@ KeyEventHandlerResult ImeCore::ImeProcessKey(
     const VirtualKey &virtual_key,
     const LParamKeyInfo &lparam,
     const KeyboardStatus &keyboard_status,
-    const ImeBehavior &behavior,
-    const ImeState &initial_state,
-    ImeState *next_state,
+    const InputBehavior &behavior,
+    const InputState &initial_state,
+    InputState *next_state,
     commands::Output *output) {
   scoped_ptr<Win32KeyboardInterface>
       keyboard(Win32KeyboardInterface::CreateDefault());
   return KeyEventHandler::ImeProcessKey(
-      virtual_key, lparam, keyboard_status, behavior, initial_state,
-      client, keyboard.get(), next_state, output);
+      virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+      keyboard_status, behavior, initial_state, client, keyboard.get(),
+      next_state, output);
 }
 
 KeyEventHandlerResult ImeCore::ImeToAsciiEx(
@@ -231,9 +232,9 @@ KeyEventHandlerResult ImeCore::ImeToAsciiEx(
     BYTE scan_code,
     bool is_key_down,
     const KeyboardStatus &keyboard_status,
-    const ImeBehavior &behavior,
-    const ImeState &initial_state,
-    ImeState *next_state,
+    const InputBehavior &behavior,
+    const InputState &initial_state,
+    InputState *next_state,
     commands::Output *output) {
   scoped_ptr<Win32KeyboardInterface>
       keyboard(Win32KeyboardInterface::CreateDefault());
@@ -348,13 +349,13 @@ DWORD ImeCore::GetSupportableSentenceMode(DWORD raw_sentence_mode) {
 }
 
 bool ImeCore::IsInputContextInitialized(HIMC himc) {
-  if (himc == NULL) {
+  if (himc == nullptr) {
     return false;
   }
   ScopedHIMC<InputContext> context(himc);
   // For some reason, we fail to lock input context.  See b/3088049 for
   // details.
-  if (context.get() == NULL) {
+  if (context.get() == nullptr) {
     return false;
   }
   if (!PrivateContextUtil::IsValidPrivateContext(context->hPrivate)) {
@@ -445,7 +446,7 @@ void ImeCore::SortIMEMessages(
 }
 
 bool ImeCore::UpdateContext(HIMC himc,
-                            const ImeState &next_state,
+                            const InputState &next_state,
                             const commands::Output &new_output,
                             MessageQueue *message_queue) {
   if (!IsInputContextInitialized(himc)) {
@@ -467,7 +468,7 @@ bool ImeCore::UpdateContext(HIMC himc,
   // The UI handler will invoke reconversion later as other Japanese IMEs do.
   if (callback_command.has_type() &&
       callback_command.type() == SessionCommand::CONVERT_REVERSE) {
-    if (message_queue != NULL) {
+    if (message_queue != nullptr) {
       message_queue->AddMessage(WM_IME_NOTIFY, IMN_PRIVATE,
                                 kNotifyReconvertFromIME);
     }
@@ -481,7 +482,7 @@ bool ImeCore::UpdateContext(HIMC himc,
   if (!context.client()->SendCommand(callback_command, &callback_output)) {
     return false;
   }
-  ImeState callback_state;
+  InputState callback_state;
   if (!GetNextState(himc, callback_output, &callback_state)) {
     return false;
   }
@@ -490,11 +491,11 @@ bool ImeCore::UpdateContext(HIMC himc,
 }
 
 bool ImeCore::UpdateContextMain(HIMC himc,
-                                const ImeState &next_state,
+                                const InputState &next_state,
                                 const commands::Output &new_output,
                                 MessageQueue *message_queue) {
   DCHECK(IsInputContextInitialized(himc));
-  const bool generate_message = (message_queue != NULL);
+  const bool generate_message = (message_queue != nullptr);
   ScopedHIMC<InputContext> context(himc);
   ScopedHIMCC<PrivateContext> private_context(context->hPrivate);
 
@@ -550,7 +551,7 @@ bool ImeCore::UpdateContextMain(HIMC himc,
   context->hCandInfo =
       mozc::win32::CandidateInfoUtil::Update(context->hCandInfo,
                                              output, &candidate_messages);
-  if (context->hCandInfo == NULL) {
+  if (context->hCandInfo == nullptr) {
     return false;
   }
 
@@ -610,11 +611,11 @@ BOOL ImeCore::IMEOff(HIMC himc, bool generate_message) {
       &next_open_status, &next_mode)) {
     return FALSE;
   }
-  ImeState next_state;
+  InputState next_state;
   next_state.open = false;  // We ignore the returned status.
   next_state.conversion_status = next_mode;
   if (!generate_message) {
-    if (!UpdateContext(himc, next_state, output, NULL)) {
+    if (!UpdateContext(himc, next_state, output, nullptr)) {
       return FALSE;
     }
     return TRUE;
@@ -725,7 +726,7 @@ BOOL ImeCore::CloseCandidate(HIMC himc, bool generate_message) {
 bool ImeCore::IsActiveContext(HIMC himc) {
   bool is_active = false;
   const HWND focus_window = ::GetFocus();
-  if (focus_window != NULL &&
+  if (focus_window != nullptr &&
       ::IsWindow(focus_window) != FALSE) {
     const HIMC active_himc = ::ImmGetContext(focus_window);
     is_active = (himc == active_himc);
@@ -739,7 +740,7 @@ bool ImeCore::TurnOnIMEAndTryToReconvertFromIME(HIMC himc) {
   if (context.IsEmpty()) {
     return false;
   }
-  if (context.input_context() == NULL) {
+  if (context.input_context() == nullptr) {
     return false;
   }
   if (!context.IsCompositionStringEmpty()) {
@@ -788,7 +789,7 @@ string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
   // is to be reconverted.  Technically most of the following processes should
   // be done at the server-side.
   LRESULT result =
-      ::ImmRequestMessageW(himc, IMR_RECONVERTSTRING, NULL);
+      ::ImmRequestMessageW(himc, IMR_RECONVERTSTRING, 0);
   if (result == 0) {
     DLOG(INFO) << "IMR_RECONVERTSTRING is not supported.";
     return "";
@@ -810,7 +811,7 @@ string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
   result = ::ImmRequestMessageW(himc, IMR_RECONVERTSTRING,
                                 reinterpret_cast<LPARAM>(reconvert_string));
   if (result == 0) {
-    DLOG(ERROR) << "RECONVERTSTRING is NULL.";
+    DLOG(ERROR) << "RECONVERTSTRING is nullptr.";
     return "";
   }
 
@@ -870,7 +871,7 @@ bool ImeCore::ReconversionFromApplication(
   if (context.IsEmpty()) {
     return false;
   }
-  if (context.input_context() == NULL) {
+  if (context.input_context() == nullptr) {
     return false;
   }
 
@@ -908,10 +909,10 @@ bool ImeCore::ResetServerContextIfNeccesary(HIMC himc) {
   if (context.IsEmpty()) {
     return false;
   }
-  if (context.input_context() == NULL) {
+  if (context.input_context() == nullptr) {
     return false;
   }
-  if (context.client() == NULL) {
+  if (context.client() == nullptr) {
     return false;
   }
 

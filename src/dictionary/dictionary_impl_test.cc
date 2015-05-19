@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
+#include "dictionary/dictionary_impl.h"
+
+#include <cstring>
+#include <string>
+
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "dictionary/system/system_dictionary.h"
+#include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "testing/base/public/gunit.h"
 
@@ -57,11 +63,19 @@ struct DictionaryData {
 DictionaryData *CreateDictionaryData() {
   DictionaryData *ret = new DictionaryData;
   testing::MockDataManager data_manager;
-  DictionaryInterface *sys_dict = data_manager.CreateSystemDictionary();
-  DictionaryInterface *val_dict = data_manager.CreateValueDictionary();
+  ret->pos_matcher = data_manager.GetPOSMatcher();
+  const char *dictionary_data = NULL;
+  int dictionary_size = 0;
+  data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
+  DictionaryInterface *sys_dict =
+      SystemDictionary::CreateSystemDictionaryFromImage(dictionary_data,
+                                                        dictionary_size);
+  DictionaryInterface *val_dict =
+      ValueDictionary::CreateValueDictionaryFromImage(*ret->pos_matcher,
+                                                      dictionary_data,
+                                                      dictionary_size);
   ret->user_dictionary.reset(new UserDictionaryStub);
   ret->suppression_dictionary.reset(new SuppressionDictionary);
-  ret->pos_matcher = data_manager.GetPOSMatcher();
   ret->dictionary.reset(new DictionaryImpl(sys_dict,
                                            val_dict,
                                            ret->user_dictionary.get(),
@@ -75,7 +89,7 @@ DictionaryData *CreateDictionaryData() {
 class DictionaryImplTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@
 
 #include <string>
 #include <iostream>
+
 #include "base/base.h"
 #include "base/file_stream.h"
-#include "base/mmap.h"
 #include "net/http_client.h"
 #include "net/proxy_manager.h"
 

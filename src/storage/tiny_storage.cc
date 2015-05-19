@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,19 +29,19 @@
 
 #include "storage/tiny_storage.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
-#include <algorithm>
 #include <cstring>
 #include <map>
 #include <string>
-#include <vector>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -68,8 +68,7 @@ bool ReadData(char **begin, const char *end, T *value) {
   return true;
 }
 
-bool IsInvalid(const string &key, const string &value,
-               size_t size) {
+bool IsInvalid(const string &key, const string &value, size_t size) {
   if (size >= kMaxElementSize) {
     LOG(ERROR) << "too many elements";
     return true;
@@ -276,11 +275,12 @@ bool TinyStorageImpl::Sync() {
   // should call close(). Othrwise AtomicRename will be failed.
   ofs.close();
 
-  if (!Util::AtomicRename(output_filename, filename_)) {
+  if (!FileUtil::AtomicRename(output_filename, filename_)) {
     LOG(ERROR) << "AtomicRename failed";
+    return false;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   wstring wfilename;
   Util::UTF8ToWide(filename_.c_str(), &wfilename);
   if (!::SetFileAttributes(wfilename.c_str(),
@@ -309,7 +309,7 @@ bool TinyStorageImpl::Insert(const string &key, const string &value) {
 bool TinyStorageImpl::Erase(const string &key) {
   map<string, string>::iterator it = dic_.find(key);
   if (it == dic_.end()) {
-    LOG(WARNING) << "cannot erase key: " << key;
+    VLOG(2) << "cannot erase key: " << key;
     return false;
   }
   dic_.erase(it);
@@ -317,8 +317,7 @@ bool TinyStorageImpl::Erase(const string &key) {
   return true;
 }
 
-bool TinyStorageImpl::Lookup(const string &key,
-                         string *value) const {
+bool TinyStorageImpl::Lookup(const string &key, string *value) const {
   map<string, string>::const_iterator it = dic_.find(key);
   if (it == dic_.end()) {
     VLOG(3) << "cannot find key: " << key;
@@ -337,13 +336,12 @@ bool TinyStorageImpl::Clear() {
 }  // namespace
 
 StorageInterface *TinyStorage::Create(const char *filename) {
-  TinyStorageImpl *storage = new TinyStorageImpl;
+  scoped_ptr<TinyStorageImpl> storage(new TinyStorageImpl);
   if (!storage->Open(filename)) {
-    LOG(ERROR) << "cannot open " << storage;
-    delete storage;
+    LOG(ERROR) << "cannot open " << filename;
     return NULL;
   }
-  return storage;
+  return storage.release();
 }
 
 StorageInterface *TinyStorage::New() {

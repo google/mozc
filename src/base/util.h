@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,41 +30,96 @@
 #ifndef MOZC_BASE_UTIL_H_
 #define MOZC_BASE_UTIL_H_
 
+#include <climits>
+#include <ctime>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/string_piece.h"
 
 struct tm;
 
-// Ad-hoc workadound against macro problem on Windows.
-// On Windows, following macros, defined when you include <Windows.h>,
-// should be removed here because they affects the method name definition of
-// Util class.
-// TODO(yukawa): Use different method name if applicable.
-#ifdef CreateDirectory
-#undef CreateDirectory
-#endif  // CreateDirectory
-#ifdef RemoveDirectory
-#undef RemoveDirectory
-#endif  // RemoveDirectory
-#ifdef CopyFile
-#undef CopyFile
-#endif  // CopyFile
-
 namespace mozc {
+
+// SplitIterator - Iteratively splits a StringPiece to sub-StringPieces.
+//
+// This template class takes two template parameters, Delimiter and Option.
+//
+// Delimiter:
+//   - SingleDelimiter: Input is splitted by only one character.  If your
+//         delimiter is a single character, use this parameter because algorithm
+//         is optimized for this common case.
+//   - MultiDelimiter: Input is splitted by any of the specified characters.
+//
+// Option:
+//   - SkipEmpty (default): empty pieces are ignored:
+//         ",a,b,,c," -> {"a", "b", "c"}  (delimiter = ',')
+//   - AllowEmpty: empty pieces are not ignored:
+//         ",a,b,,c," -> {"", "a", "b", "", "c", ""}  (delimiter = ',')
+//
+// Usage Example:
+//
+// // 1. SingleDelimiter and SkipEmpty
+// for (SplitIterator<SingleDelimiter> iter("this,is,,mozc", ",");
+//      !iter.Done(); iter.Next()) {
+//   StringPiece sp = iter.Get();  // "this", "is", and finally "mozc"
+//   ...
+// }
+//
+// // 2. SingleDelimiter and AllowEmpty
+// for (SplitIterator<SingleDelimiter, AllowEmpty> iter("this,is,,mozc", ",");
+//      !iter.Done(); iter.Next()) {
+//   StringPiece sp = iter.Get();  // "this", "is", "", and finally "mozc"
+//   ...
+// }
+//
+// // 3. MultiDelimiter and SkipEmpty
+// for (SplitIterator<MultiDelimiter> iter("this,is:\tmozc", ",:\t");
+//      !iter.Done(); iter.Next()) {
+//   StringPiece sp = iter.Get();  // "this", "is", and finally "mozc"
+//   ...
+// }
+//
+// // 4. MultiDelimiter and AllowEmpty
+// for (SplitIterator<MultiDelimiter, AllowEmpty>
+//          iter("this,is::\tmozc", ",:\t"); !iter.Done(); iter.Next()) {
+//   StringPiece sp = iter.Get();  // "this", "is", "", "", and finally "mozc"
+//   ...
+// }
+class SingleDelimiter;
+class MultiDelimiter;
+struct SkipEmpty {};
+struct AllowEmpty {};
+
+template <typename Delimiter, typename Option = SkipEmpty>
+class SplitIterator {
+ public:
+  SplitIterator(StringPiece s, const char *delim);
+  StringPiece Get() const;
+  void Next();
+  bool Done() const;
+};
 
 class Util {
  public:
   // String utils
-  static void SplitStringUsing(const string &str,
+  template <typename StringContainer>
+  static void PushBackStringPiece(StringPiece s, StringContainer *container) {
+    container->push_back(string());
+    s.CopyToString(&container->back());
+  }
+
+  static void SplitStringUsing(StringPiece str,
                                const char *delm,
                                vector<string> *output);
+  static void SplitStringUsing(StringPiece str,
+                               const char *delm,
+                               vector<StringPiece> *output);
 
-  static void SplitStringAllowEmpty(const string &str,
+  static void SplitStringAllowEmpty(StringPiece str,
                                     const char *delm,
                                     vector<string> *output);
 
@@ -76,13 +131,16 @@ class Util {
   static void JoinStrings(const vector<string> &str,
                           const char *delm,
                           string *output);
+  static void JoinStringPieces(const vector<StringPiece> &str,
+                               const char *delm,
+                               string *output);
 
-  static void AppendStringWithDelimiter(const string &delimiter,
-                                        const string &append_string,
+  static void AppendStringWithDelimiter(StringPiece delimiter,
+                                        StringPiece append_string,
                                         string *output);
 
-  static void StringReplace(const string &s, const string &oldsub,
-                            const string &newsub, bool replace_all,
+  static void StringReplace(StringPiece s, StringPiece oldsub,
+                            StringPiece newsub, bool replace_all,
                             string *res);
 
   static void LowerString(string *output);
@@ -121,8 +179,8 @@ class Util {
 
   static size_t CharsLen(const char *src, size_t size);
 
-  static size_t CharsLen(const string &str) {
-    return CharsLen(str.c_str(), str.size());
+  static size_t CharsLen(const StringPiece str) {
+    return CharsLen(str.data(), str.size());
   }
 
   static char32 UTF8ToUCS4(const char *begin,
@@ -142,7 +200,7 @@ class Util {
   static void UCS2ToUTF8(uint16 c, string *output);
   static void UCS2ToUTF8Append(uint16 c, string *output);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Returns how many wide characters are necessary in UTF-16 to represent
   // given UTF-8 string. Note that the result of this method becomes greater
   // than that of Util::CharsLen if |src| contains any character which is
@@ -155,13 +213,19 @@ class Util {
   static int UTF8ToWide(const string &input, wstring *output);
   static int WideToUTF8(const wchar_t *input, string *output);
   static int WideToUTF8(const wstring &input, string *output);
-#endif
+#endif  // OS_WIN
 
-  static void SubString(const string &src,
+  // Extracts a substring range, where both start and length are in terms of
+  // UTF8 size. Note that the returned string piece refers to the same memory
+  // block as the input.
+  static StringPiece SubStringPiece(const StringPiece src,
+                                    const size_t start, const size_t length);
+
+  static void SubString(const StringPiece src,
                         const size_t start, const size_t length,
                         string *result);
 
-  static string SubString(const string &src,
+  static string SubString(const StringPiece src,
                           const size_t start, const size_t length) {
     string result;
     SubString(src, start, length, &result);
@@ -169,10 +233,10 @@ class Util {
   }
 
   // Determines whether the beginning of |str| matches |prefix|.
-  static bool StartsWith(const string &str, const string &prefix);
+  static bool StartsWith(const StringPiece str, const StringPiece prefix);
 
   // Determines whether the end of |str| matches |suffix|.
-  static bool EndsWith(const string &str, const string &suffix);
+  static bool EndsWith(const StringPiece str, const StringPiece suffix);
 
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static void StripUTF8BOM(string *line);
@@ -180,12 +244,16 @@ class Util {
   // return true the line starts with UTF16-LE/UTF16-BE BOM.
   static bool IsUTF16BOM(const string &line);
 
+  // Returns true if the given |s| has only one ucs4 character, and it is
+  // in the range of Android Emoji PUA.
+  static bool IsAndroidPuaEmoji(const StringPiece s);
+
 #ifndef SWIG
   // C++ string version of sprintf.
   static string StringPrintf(const char *format, ...)
       // Tell the compiler to do printf format string checking.
       PRINTF_ATTRIBUTE(1, 2);
-#endif
+#endif  // SWIG
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
@@ -196,7 +264,7 @@ class Util {
 #ifndef SWIG
   static uint32 Fingerprint32(const char *str, size_t length);
   static uint32 Fingerprint32(const char *str);
-#endif
+#endif  // SWIG
 
   static uint32 Fingerprint32WithSeed(const string &key,
                                       uint32 seed);
@@ -205,7 +273,7 @@ class Util {
                                       size_t length, uint32 seed);
   static uint32 Fingerprint32WithSeed(const char *str,
                                       uint32 seed);
-#endif
+#endif  // SWIG
   static uint32 Fingerprint32WithSeed(uint32 num, uint32 seed);
 
   // 64bit Fingerprint
@@ -217,9 +285,10 @@ class Util {
   static uint64 FingerprintWithSeed(const char *str,
                                     size_t length, uint32 seed);
 
-  // Fill a given buffer with random characters
-  static bool GetSecureRandomSequence(char *buf, size_t buf_size);
-  static bool GetSecureRandomAsciiSequence(char *buf, size_t buf_size);
+  // Generate a random sequence. It uses secure method if possible, or Random()
+  // as a fallback method.
+  static void GetRandomSequence(char *buf, size_t buf_size);
+  static void GetRandomAsciiSequence(char *buf, size_t buf_size);
 
   // Return random variable whose range is [0..size-1].
   // This function uses rand() internally, so don't use it for
@@ -275,42 +344,39 @@ class Util {
   // the time-out interval elapses.
   static void Sleep(uint32 msec);
 
-  // Japanese utils
-  static void HiraganaToKatakana(const string &input,
-                                 string *output);
-
-  static void HiraganaToHalfwidthKatakana(const string &input,
+  // Japanese utilities for character form transliteration.
+  static void HiraganaToKatakana(const StringPiece input, string *output);
+  static void HiraganaToHalfwidthKatakana(const StringPiece input,
                                           string *output);
-
-  static void HiraganaToRomanji(const string &input,
-                                string *output);
-
-  static void HalfWidthAsciiToFullWidthAscii(const string &input,
+  static void HiraganaToRomanji(const StringPiece input, string *output);
+  static void HalfWidthAsciiToFullWidthAscii(const StringPiece input,
                                              string *output);
-
-  static void FullWidthAsciiToHalfWidthAscii(const string &input,
+  static void FullWidthAsciiToHalfWidthAscii(const StringPiece input,
                                              string *output);
-
-  static void HiraganaToFullwidthRomanji(const string &input,
+  static void HiraganaToFullwidthRomanji(const StringPiece input,
                                          string *output);
-
-  static void RomanjiToHiragana(const string &input,
-                                string *output);
-
-  static void KatakanaToHiragana(const string &input,
-                                 string *output);
-
-  static void HalfWidthKatakanaToFullWidthKatakana(const string &input,
+  static void RomanjiToHiragana(const StringPiece input, string *output);
+  static void KatakanaToHiragana(const StringPiece input, string *output);
+  static void HalfWidthKatakanaToFullWidthKatakana(const StringPiece input,
                                                    string *output);
-
-  static void FullWidthKatakanaToHalfWidthKatakana(const string &input,
+  static void FullWidthKatakanaToHalfWidthKatakana(const StringPiece input,
                                                    string *output);
+  static void FullWidthToHalfWidth(const StringPiece input, string *output);
+  static void HalfWidthToFullWidth(const StringPiece input, string *output);
 
-  static void FullWidthToHalfWidth(const string &input,
-                                   string *output);
-
-  static void HalfWidthToFullWidth(const string &input,
-                                   string *output);
+#ifdef SWIG
+  // Since StringPiece is not supported by SWIG, provide overloads for string
+  // versions.
+  static void HiraganaToKatakana(const string &input, string *output) {
+    HiraganaToKatakana(StringPiece(input), output);
+  }
+  static void RomanjiToHiragana(const string &input, string *output) {
+    RomanjiToHiragana(StringPiece(input), output);
+  }
+  static void KatakanaToHiragana(const string &input, string *output) {
+    KatakanaToHiragana(StringPiece(input), output);
+  }
+#endif  // SWIG
 
   // return true if all chars in input are both defined
   // in full width and half-width-katakana area
@@ -327,8 +393,7 @@ class Util {
   // return true if |input| looks like a pure English word.
   static bool IsEnglishTransliteration(const string &input);
 
-  static void NormalizeVoicedSoundMark(const string &input,
-                                       string *output);
+  static void NormalizeVoicedSoundMark(StringPiece input, string *output);
 
   // return true if key is an open bracket.
   // if key is an open bracket, corresponding close bracket is
@@ -341,160 +406,14 @@ class Util {
   static bool IsCloseBracket(const string &key, string *open_bracket);
 
   // Code converter
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
   static void UTF8ToEUC(const string &input, string *output);
   static void EUCToUTF8(const string &input, string *output);
-#endif
+#endif  // OS_WIDNWOS
 
   static void UTF8ToSJIS(const string &input, string *output);
   static void SJISToUTF8(const string &input, string *output);
   static bool ToUTF8(const char *from, const string &input, string *output);
-
-  // Filesystem or user related methods are disabled on Native Client
-  // environment.
-#ifndef MOZC_USE_PEPPER_FILE_IO
-  // File and directory operations
-  static bool CreateDirectory(const string &path);
-  static bool RemoveDirectory(const string &dirname);
-  static bool Unlink(const string &filename);
-  static bool FileExists(const string &filename);
-  static bool DirectoryExists(const string &filename);
-  static bool Rename(const string &from, const string &to);
-
-  // This function has a limitation. See comment in the .cc file.
-  // This function opens a file with text mode. The return code
-  // may be different between |from| and |to|.
-  static bool CopyTextFile(const string &from, const string &to);
-
-  // CopyFile uses mmap internally. |from| and |to| should
-  // be identical.
-  static bool CopyFile(const string &from, const string &to);
-
-  // Return true if |filename1| and |filename2|
-  // are identical.
-  static bool IsEqualFile(const string &filename1,
-                          const string &filename2);
-
-  // Move/Rename file atomically.
-  // Vista or Later: use Transactional NTFS API, which guarantees atomic
-  // file move operation.
-  // When anything wrong happen during the transactional NTFS api, execute
-  // the fallback plan, which is the same as the treatment for Windows XP.
-  //
-  // XP: use MoveFileWx with MOVEFILE_WRITE_THROUGH, which isn't atomic but
-  // almost always works as intended.
-  //
-  // Linux: use rename(2), which is atomic.
-  //
-  // Mac OSX: use rename(2), but rename(2) on Mac OSX
-  // is not properly implemented, atomic rename is POSIX spec though.
-  // http://www.weirdnet.nl/apple/rename.html
-  static bool AtomicRename(const string &from, const string &to);
-
-#endif  // !MOZC_USE_PEPPER_FILE_IO
-
-  static string JoinPath(const string &path1, const string &path2);
-
-#ifndef SWIG
-  static void JoinPath(const string &path1, const string &path2,
-                       string *output);
-#endif
-
-  static string Basename(const string &filename);
-  static string Dirname(const string &filename);
-
-  // return normalized path by replacing '/' with '\\' in Windows.
-  // does nothing in other platforms.
-  static string NormalizeDirectorySeparator(const string &path);
-
-  // return "~/.mozc" for Unix/Mac
-  // return "%USERPROFILE%\\Local Settings\\Application\\"
-  //        "Google\\Google Japanese Input" for Windows XP.
-  // return "%USERPROFILE%\\AppData\\LocalLow\\"
-  //        "Google\\Google Japanese Input" for Windows Vista and later.
-  static string GetUserProfileDirectory();
-
-  // return ~/Library/Logs/Mozc for Mac
-  // Otherwise same as GetUserProfileDirectory().
-  static string GetLoggingDirectory();
-
-  // set user dir
-
-  // Currently we enabled this method to release-build too because
-  // some tests use this.
-  // TODO(mukai,taku): find better way to hide this method in the release
-  // build but available from those tests.
-  static void SetUserProfileDirectory(const string &path);
-
-  // return the directory name where the mozc server exist.
-  static string GetServerDirectory();
-
-  // return the path of the mozc server.
-  static string GetServerPath();
-
-  // return the path of the mozc renderer.
-  static string GetRendererPath();
-
-  // return the path of the mozc tool.
-  static string GetToolPath();
-
-  // Returns the directory name which holds some documents bundled to
-  // the installed application package.  Typically it's
-  // <server directory>/documents but it can change among platforms.
-  static string GetDocumentDirectory();
-
-  // return the username.  This function's name was GetUserName.
-  // Since Windows reserves GetUserName as a macro, we have changed
-  // the name to GetUserNameAsString.
-  static string GetUserNameAsString();
-
-  // return Windows SID as string.
-  // On Linux and Mac, GetUserSidAsString() is equivalent to
-  // GetUserNameAsString()
-  static string GetUserSidAsString();
-
-
-  // return DesktopName as string.
-  // On Windows. return <session_id>.<DesktopStationName>.<ThreadDesktopName>
-  // On Linux, return getenv("DISPLAY")
-  // Mac has no DesktopName() so, just return empty string
-  static string GetDesktopNameAsString();
-
-#ifdef OS_WINDOWS
-  // From an early stage of the development of Mozc, we have somehow abused
-  // CHECK macro assuming that any failure of fundamental APIs like
-  // ::SHGetFolderPathW or ::SHGetKnownFolderPathis is worth being notified
-  // as a crash.  But the circumstances have been changed.  As filed as
-  // b/3216603, increasing number of instances of various applications begin
-  // to use their own sandbox technology, where these kind of fundamental APIs
-  // are far more likely to fail with an unexpected error code.
-  // EnsureVitalImmutableDataIsAvailable is a simple fail-fast mechanism to
-  // this situation.  This function simply returns false instead of making
-  // the process crash if any of following functions cannot work as expected.
-  // - IsVistaOrLaterCache
-  // - SystemDirectoryCache
-  // - ProgramFilesX86Cache
-  // - LocalAppDataDirectoryCache
-  // TODO(taku,yukawa): Implement more robust and reliable mechanism against
-  //   sandboxed environment, where such kind of fundamental APIs are far more
-  //   likely to fail.  See b/3216603.
-  static bool EnsureVitalImmutableDataIsAvailable();
-#endif  // OS_WINDOWS
-
-  // Command line arguments
-
-  // Rotate the first argv value to the end of argv.
-  static void CommandLineRotateArguments(int argc, char ***argv);
-
-  // Get a pair of key and value from argv, and returns the number of
-  // arguments used for the pair of key and value.  If the argv
-  // contains invalid format, this function returns false and the
-  // number of checked arguments.  Otherwise returns true.
-  static bool CommandLineGetFlag(int argc,
-                                 char **argv,
-                                 string *key,
-                                 string *value,
-                                 int *used_args);
 
   static void EncodeURI(const string &input, string *output);
   static void DecodeURI(const string &input, string *output);
@@ -557,10 +476,10 @@ class Util {
   static ScriptType GetScriptTypeWithoutSymbols(const string &str);
 
   // return true if all script_type in str is "type"
-  static bool IsScriptType(const string &str, ScriptType type);
+  static bool IsScriptType(const StringPiece str, ScriptType type);
 
   // return true if the string contains script_type char
-  static bool ContainsScriptType(const string &str, ScriptType type);
+  static bool ContainsScriptType(const StringPiece str, ScriptType type);
 
   // See 'Unicode Standard Annex #11: EAST ASIAN WIDTH'
   // http://www.unicode.org/reports/tr11/
@@ -600,92 +519,8 @@ class Util {
   // the maximum character set.
   static CharacterSet GetCharacterSet(const string &str);
 
-  // Return true if the OS is supported.
-  // [OS_MACOSX] This function never returns false.
-  // [OS_LINUX] This function never returns false.
-  // TODO(yukawa): support Mac and Linux.
-  static bool IsPlatformSupported();
-
-#ifdef OS_WINDOWS
-  // return true if the version of Windows is Vista or later.
-  static bool IsVistaOrLater();
-
-  // return true if the version of Windows is 6.1 or later.
-  static bool IsWindows7OrLater();
-
-  // return true if the version of Windows is 6.2 or later.
-  static bool IsWindows8OrLater();
-
-  // return true if the version of Windows is x64 Edition.
-  static bool IsWindowsX64();
-
-  enum IsWindowsX64Mode {
-    IS_WINDOWS_X64_DEFAULT_MODE,
-    IS_WINDOWS_X64_EMULATE_32BIT_MACHINE,
-    IS_WINDOWS_X64_EMULATE_64BIT_MACHINE,
-  };
-
-  // For unit tests, this function overrides the behavior of |IsWindowsX64|.
-  static void SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode);
-
-  // return system directory. If failed, return NULL.
-  // You need not to delete the returned pointer.
-  // This function is thread safe.
-  static const wchar_t *GetSystemDir();
-
-  // Retrieves version of the specified file.
-  // If the function fails, returns false.
-  static bool GetFileVersion(const wstring &file_fullpath,
-                             int *major, int *minor, int *build, int *revision);
-
-  // Retrieves version string of the specified file.
-  // The version string consists of 4 digits separated by comma
-  // like "X.YY.ZZZ.WWWW".
-  // If the function fails, the return value is an empty string.
-  static string GetFileVersionString(const wstring &file_fullpath);
-
-  // Returns "MSCTF.AsmCacheReady.<desktop name><session #>" to work around
-  // b/5765783.
-  // Returns an empty string if fails.
-  // Currently this method is defined in util.h because it depends on some
-  // utility functions defined in util.cc.
-  // TODO(yukawa): Move this method to win32/base/*
-  static string GetMSCTFAsmCacheReadyEventName();
-#endif
-
-  // return string representing os version
-  // TODO(toshiyuki): Add unittests.
-  static string GetOSVersionString();
-
-  // disable IME in the current process/thread
-  static void DisableIME();
-
-  // retrieve total physical memory. returns 0 if any error occurs.
-  static uint64 GetTotalPhysicalMemory();
-
-  // check endian-ness at runtime.
-  static bool IsLittleEndian();
-
-  // Following mlock/munlock related functions work based on target environment.
-  // In the case of Android, Native Client, Windows, we don't want to call
-  // actual functions, so these functions do nothing and return -1. In other
-  // cases, these functions call actual mlock/munlock functions and return it's
-  // result.
-  // On Android, page-out is probably acceptable because
-  // - Smaller RAM on the device.
-  // - The storage is (usually) solid state thus page-in/out is expected to
-  //   be faster.
-  // On Linux, in the kernel version >= 2.6.9, user process can mlock. In older
-  // kernel, it fails if the process is running in user priviledge.
-  // TODO(horo): Check in mac that mlock is really necessary.
-  static int MaybeMLock(const void *addr, size_t len);
-
-  static int MaybeMUnlock(const void *addr, size_t len);
-
-  // should never be allocated.
  private:
-  Util() {}
-  virtual ~Util() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(Util);
 };
 
 // Const iterator implementation to traverse on a (utf8) string as a char32
@@ -699,7 +534,7 @@ class Util {
 //   }
 class ConstChar32Iterator {
  public:
-  explicit ConstChar32Iterator(const string &utf8_string) {
+  explicit ConstChar32Iterator(const StringPiece utf8_string) {
     ptr_ = utf8_string.data();
     end_ = utf8_string.data() + utf8_string.size();
     current_ = Util::UTF8ToUCS4(ptr_, end_, &current_char_size_);
@@ -714,6 +549,11 @@ class ConstChar32Iterator {
   char32 Get() const {
     DCHECK(ptr_ < end_);
     return current_;
+  }
+
+  StringPiece GetUtf8() const {
+    DCHECK(ptr_ < end_);
+    return StringPiece(ptr_, current_char_size_);
   }
 
   void Next() {
@@ -733,6 +573,73 @@ class ConstChar32Iterator {
   size_t current_char_size_;
 
   DISALLOW_COPY_AND_ASSIGN(ConstChar32Iterator);
+};
+
+// Actual definitions of delimiter classes.
+class SingleDelimiter {
+ public:
+  explicit SingleDelimiter(const char *delim) : delim_(*delim) {}
+  bool Contains(char c) const { return c == delim_; }
+
+ private:
+  const char delim_;
+  DISALLOW_COPY_AND_ASSIGN(SingleDelimiter);
+};
+
+class MultiDelimiter {
+ public:
+  static const size_t kTableSize = UCHAR_MAX / 8;
+
+  explicit MultiDelimiter(const char* delim);
+
+  bool Contains(char c) const {
+    const unsigned char uc = static_cast<unsigned char>(c);
+    return lookup_table_[uc >> 3] & (1 << (uc & 0x07));
+  }
+
+ private:
+  // Bit field for looking up delimiters. Think of this as a 256-bit array where
+  // n-th bit is set to 1 if the delimiters contain a character whose unsigned
+  // char code is n.
+  unsigned char lookup_table_[kTableSize];
+  DISALLOW_COPY_AND_ASSIGN(MultiDelimiter);
+};
+
+// Declarations of the partial specializations of SplitIterator for two options.
+// Implementations are explicitly instantiated in util.cc.
+template <typename Delimiter>
+class SplitIterator<Delimiter, SkipEmpty> {
+ public:
+  SplitIterator(StringPiece s, const char *delim);
+  StringPiece Get() const { return StringPiece(sp_begin_, sp_len_); }
+  bool Done() const { return sp_begin_ == end_; }
+  void Next();
+
+ private:
+  const char *const end_;
+  const Delimiter delim_;
+  const char *sp_begin_;
+  StringPiece::size_type sp_len_;
+
+  DISALLOW_COPY_AND_ASSIGN(SplitIterator);
+};
+
+template <typename Delimiter>
+class SplitIterator<Delimiter, AllowEmpty> {
+ public:
+  SplitIterator(StringPiece s, const char *delim);
+  StringPiece Get() const { return StringPiece(sp_begin_, sp_len_); }
+  bool Done() const { return done_; }
+  void Next();
+
+ private:
+  const char *const end_;
+  const Delimiter delim_;
+  const char *sp_begin_;
+  StringPiece::size_type sp_len_;
+  bool done_;
+
+  DISALLOW_COPY_AND_ASSIGN(SplitIterator);
 };
 
 }  // namespace mozc

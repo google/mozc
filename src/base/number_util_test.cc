@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "base/number_util.h"
 
+#include "base/port.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -45,11 +46,11 @@ TEST_F(NumberUtilTest, SimpleItoa) {
   EXPECT_EQ("-1", NumberUtil::SimpleItoa(-1));
 
   char buf[100];
-  snprintf(buf, arraysize(buf), "%d", INT_MAX);
-  EXPECT_EQ(buf, NumberUtil::SimpleItoa(INT_MAX));
+  snprintf(buf, arraysize(buf), "%d", kint32max);
+  EXPECT_EQ(buf, NumberUtil::SimpleItoa(kint32max));
 
-  snprintf(buf, arraysize(buf), "%d", INT_MIN);
-  EXPECT_EQ(buf, NumberUtil::SimpleItoa(INT_MIN));
+  snprintf(buf, arraysize(buf), "%d", kint32min);
+  EXPECT_EQ(buf, NumberUtil::SimpleItoa(kint32min));
 }
 
 TEST_F(NumberUtilTest, SimpleAtoi) {
@@ -76,6 +77,14 @@ TEST_F(NumberUtilTest, SafeStrToUInt32) {
   EXPECT_TRUE(NumberUtil::SafeStrToUInt32("4294967295", &value));
   EXPECT_EQ(4294967295u, value);  // max of 32-bit unsigned integer
 
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt32(" 1", &value));
+  EXPECT_EQ(1, value);
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt32("2 ", &value));
+  EXPECT_EQ(2, value);
+
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32("-0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32("0x1234", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32("4294967296", &value));
@@ -84,6 +93,20 @@ TEST_F(NumberUtilTest, SafeStrToUInt32) {
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32("0.", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32("", &value));
+
+  // Test for StringPiece input.
+  const char *kString = "123 abc 789";
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt32(StringPiece(kString, 3),
+                                          &value));
+  EXPECT_EQ(123, value);
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt32(StringPiece(kString + 4, 3),
+                                           &value));
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt32(StringPiece(kString + 8, 3),
+                                          &value));
+  EXPECT_EQ(789, value);
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt32(StringPiece(kString + 7, 4),
+                                          &value));
+  EXPECT_EQ(789, value);
 }
 
 TEST_F(NumberUtilTest, SafeHexStrToUInt32) {
@@ -120,6 +143,17 @@ TEST_F(NumberUtilTest, SafeHexStrToUInt32) {
   EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32("0.", &value));
   EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32("", &value));
+
+  // Test for StringPiece input.
+  const char *kString = "123 abc 5x";
+  EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32(StringPiece(kString, 3),
+                                             &value));
+  EXPECT_EQ(291, value);
+  EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32(StringPiece(kString + 4, 3),
+                                             &value));
+  EXPECT_EQ(2748, value);
+  EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32(StringPiece(kString + 8, 2),
+                                              &value));
 }
 
 TEST_F(NumberUtilTest, SafeOctStrToUInt32) {
@@ -148,6 +182,17 @@ TEST_F(NumberUtilTest, SafeOctStrToUInt32) {
   EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32("0.", &value));
   EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32("", &value));
+
+  // Test for StringPiece input.
+  const char *kString = "123 456 789";
+  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32(StringPiece(kString, 3),
+                                             &value));
+  EXPECT_EQ(83, value);
+  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32(StringPiece(kString + 4, 3),
+                                             &value));
+  EXPECT_EQ(302, value);
+  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32(StringPiece(kString + 8, 3),
+                                              &value));
 }
 
 TEST_F(NumberUtilTest, SafeStrToUInt64) {
@@ -170,6 +215,17 @@ TEST_F(NumberUtilTest, SafeStrToUInt64) {
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("0.", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("", &value));
+
+  // Test for StringPiece input.
+  const char *kString = "123 abc 789";
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt64(StringPiece(kString, 3),
+                                          &value));
+  EXPECT_EQ(123, value);
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt64(StringPiece(kString + 4, 3),
+                                           &value));
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt64(StringPiece(kString + 8, 3),
+                                          &value));
+  EXPECT_EQ(789, value);
 }
 
 TEST_F(NumberUtilTest, SafeStrToDouble) {
@@ -222,6 +278,17 @@ TEST_F(NumberUtilTest, SafeStrToDouble) {
   // 2) it's better to keep the test for _MSC_VER in open source code.
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("0x1234", &value));
 #endif
+
+  // Test for StringPiece input.
+  const char *kString = "0.01 3.1415 double";
+  EXPECT_TRUE(NumberUtil::SafeStrToDouble(StringPiece(kString, 4),
+                                          &value));
+  EXPECT_EQ(0.01, value);
+  EXPECT_TRUE(NumberUtil::SafeStrToDouble(StringPiece(kString + 5, 6),
+                                          &value));
+  EXPECT_EQ(3.1415, value);
+  EXPECT_FALSE(NumberUtil::SafeStrToDouble(StringPiece(kString + 12, 6),
+                                           &value));
 }
 
 TEST_F(NumberUtilTest, SafeStrToFloat) {
@@ -268,6 +335,17 @@ TEST_F(NumberUtilTest, SafeStrToFloat) {
   // 2) it's better to keep the test for _MSC_VER in open source code.
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("0x1234", &value));
 #endif
+
+  // Test for StringPiece input.
+  const char *kString = "0.01 3.14 float";
+  EXPECT_TRUE(NumberUtil::SafeStrToFloat(StringPiece(kString, 4),
+                                         &value));
+  EXPECT_EQ(0.01f, value);
+  EXPECT_TRUE(NumberUtil::SafeStrToFloat(StringPiece(kString + 5, 4),
+                                         &value));
+  EXPECT_EQ(3.14f, value);
+  EXPECT_FALSE(NumberUtil::SafeStrToFloat(StringPiece(kString + 10, 5),
+                                          &value));
 }
 
 TEST_F(NumberUtilTest, StrToFloat) {
@@ -279,9 +357,16 @@ TEST_F(NumberUtilTest, StrToFloat) {
   EXPECT_EQ(0.0, NumberUtil::StrToFloat(".0"));
   EXPECT_EQ(0.0, NumberUtil::StrToFloat("0."));
   EXPECT_EQ(0.0, NumberUtil::StrToFloat("0.0"));
+
+  // Test for StringPiece input.
+  const char *kString = "0.01 3.14";
+  EXPECT_EQ(0.01f, NumberUtil::StrToFloat(StringPiece(kString, 4)));
+  EXPECT_EQ(3.14f, NumberUtil::StrToFloat(StringPiece(kString + 5, 4)));
 }
 
 TEST_F(NumberUtilTest, IsArabicNumber) {
+  EXPECT_FALSE(NumberUtil::IsArabicNumber(""));
+
   EXPECT_TRUE(NumberUtil::IsArabicNumber("0"));
   EXPECT_TRUE(NumberUtil::IsArabicNumber("1"));
   EXPECT_TRUE(NumberUtil::IsArabicNumber("2"));
@@ -318,6 +403,8 @@ TEST_F(NumberUtilTest, IsArabicNumber) {
 }
 
 TEST_F(NumberUtilTest, IsDecimalInteger) {
+  EXPECT_FALSE(NumberUtil::IsDecimalInteger(""));
+
   EXPECT_TRUE(NumberUtil::IsDecimalInteger("0"));
   EXPECT_TRUE(NumberUtil::IsDecimalInteger("1"));
   EXPECT_TRUE(NumberUtil::IsDecimalInteger("2"));

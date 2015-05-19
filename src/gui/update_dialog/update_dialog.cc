@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@
 
 #include "gui/update_dialog/update_dialog.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 # include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>

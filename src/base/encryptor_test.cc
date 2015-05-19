@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
 #include "base/encryptor.h"
 #include "base/password_manager.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -90,7 +90,6 @@ const TestData kTestData[] = {
 }
 
 TEST(EncryptorTest, VerificationTest) {
-  kUseMockPasswordManager = true;
   {
     const string password(kTestData[0].password, kTestData[0].password_size);
     const string salt(kTestData[0].salt, kTestData[0].salt_size);
@@ -178,7 +177,6 @@ TEST(EncryptorTest, VerificationTest) {
 }
 
 TEST(EncryptorTest, BasicTest) {
-  kUseMockPasswordManager = true;
   Encryptor::Key key;
   EXPECT_FALSE(key.DeriveFromPassword(""));
   EXPECT_FALSE(key.IsAvailable());
@@ -190,13 +188,12 @@ TEST(EncryptorTest, BasicTest) {
 }
 
 TEST(EncryptorTest, EncryptBatch) {
-  kUseMockPasswordManager = true;
   const size_t kSizeTable[] = { 1, 10, 16, 32, 100, 1000, 1600,
                                 10000, 16000, 100000 };
 
   for (size_t i = 0; i < arraysize(kSizeTable); ++i) {
     scoped_array<char> buf(new char[kSizeTable[i]]);
-    Util::GetSecureRandomSequence(buf.get(), kSizeTable[i]);
+    Util::GetRandomSequence(buf.get(), kSizeTable[i]);
 
     Encryptor::Key key1, key2, key3, key4;
 
@@ -245,13 +242,12 @@ TEST(EncryptorTest, EncryptBatch) {
 }
 
 TEST(EncryptorTest, ProtectData) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   const size_t kSizeTable[] = { 1, 10, 100, 1000, 10000, 100000 };
 
   for (size_t i = 0; i < arraysize(kSizeTable); ++i) {
     scoped_array<char> buf(new char[kSizeTable[i]]);
-    Util::GetSecureRandomSequence(buf.get(), kSizeTable[i]);
+    Util::GetRandomSequence(buf.get(), kSizeTable[i]);
     string input(buf.get(), kSizeTable[i]);
     string output;
     EXPECT_TRUE(Encryptor::ProtectData(input, &output));

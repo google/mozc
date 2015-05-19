@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,24 +28,41 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # The duration of showing each window in sec
-ConversionWindowDuration
-PredictionWindowDuration
-SuggestionWindowDuration
-InfolistWindowDuration
+ConversionWindowDurationMSec
+PredictionWindowDurationMSec
+SuggestionWindowDurationMSec
+InfolistWindowDurationMSec
 
 # The count of commit
 Commit
 # The count of commit from each state
-CommitFromSuggestion
 CommitFromPrediction
 CommitFromConversion
 CommitFromComposition
+CommitFromUnknown
+# The count of commit special characters
+CommitEmoji
+
+# The count of commit from each state in Chrome Omnibox
+CommitFromConversionInChromeOmnibox
+CommitFromPredictionInChromeOmnibox
+CommitFromCompositionInChromeOmnibox
+
+# The count of commit from each state in Google search box
+CommitFromConversionInGoogleSearchBox
+CommitFromPredictionInGoogleSearchBox
+CommitFromCompositionInGoogleSearchBox
+
+# The number of the candidates committed from partial suggestion
+# CommitPartialSuggestion and CommitAutoPartialSuggestion are exclusive.
+CommitPartialSuggestion
+CommitAutoPartialSuggestion
 
 # The count of all events
 SessionAllEvent
 
 # The elapsed time for processing the request
-ElapsedTime
+ElapsedTimeUSec
 
 # The count of session creation
 SessionCreated
@@ -56,15 +73,17 @@ SetConfig
 # The total submitted length count
 SubmittedTotalLength
 
+# Following 3 stats are scaled by 1,000 to improve the accuracy of average
+# values.
+# The length of submitted segment.
+# 猫を|飼う -> [2000, 2000]
+SubmittedSegmentLengthx1000
+# The count of submitted segment.
+# 猫を|飼う -> 2000
+SubmittedSegmentNumberx1000
 # The length of submitted segment
-# 猫を|飼う -> [2, 2]
-SubmittedSegmentLength
-# The count of submitted segment
-# 猫を|飼う -> 2
-SubmittedSegmentNumber
-# The length of submitted segment
-# 猫を|飼う -> 4
-SubmittedLength
+# 猫を|飼う -> 4000
+SubmittedLengthx1000
 
 # The count of ascii/non-ascii typing input
 ASCIITyping
@@ -82,19 +101,6 @@ PredictionCandidates7
 PredictionCandidates8
 PredictionCandidates9
 PredictionCandidatesGE10
-
-# The count that each candidate is selected from suggestion
-SuggestionCandidates0
-SuggestionCandidates1
-SuggestionCandidates2
-SuggestionCandidates3
-SuggestionCandidates4
-SuggestionCandidates5
-SuggestionCandidates6
-SuggestionCandidates7
-SuggestionCandidates8
-SuggestionCandidates9
-SuggestionCandidatesGE10
 
 # The count that each candidate is selected from conversion
 ConversionCandidates0
@@ -126,11 +132,11 @@ TransliterationCandidatesGE10
 # The count of mouse selection command call
 MouseSelect
 
-# The time in sec of each session
-SessionDuration
+# The time in msec of each session
+SessionDurationMSec
 
-# The time in sec of each preedit
-PreeditDuration
+# The time in msec of each preedit
+PreeditDurationMSec
 
 # The count of showing cascading window
 ShowCascadingWindow
@@ -275,6 +281,30 @@ Performed_Conversion_InputModeFullAlphanumeric
 Performed_Conversion_InputModeHalfAlphanumeric
 Performed_Conversion_ReportBug
 Performed_Conversion_Abort
+Performed_Conversion_DeleteSelectedCandidate
+
+# The count of some SessionCommands defined in session/commands.proto
+SendCommand_Revert
+SendCommand_Submit
+SendCommand_SelectCandidate
+SendCommand_HighlightCandidate
+SendCommand_SwitchInputMode
+SendCommand_GetStatus
+SendCommand_SubmitCandidate
+SendCommand_ConvertReverse
+SendCommand_Undo
+SendCommand_ResetContext
+SendCommand_MoveCursor
+SendCommand_SwitchInputFieldType
+SendCommand_UsageStatsEvent
+SendCommand_UndoOrRewind
+SendCommand_ExpandSuggestion
+SendCommand_SendCaretLocation
+SendCommand_SendLanguageBarCommand
+
+# The count of revert in Chrome Omnibox or Google search box
+SendCommand_RevertInChromeOmnibox
+SendCommand_RevertInGoogleSearchBox
 
 # The count of special keys input
 NO_SPECIALKEY
@@ -354,6 +384,8 @@ ASCII
 HANKAKU
 KANJI
 KATAKANA
+CAPS_LOCK
+HANJA
 # Numpad [,]
 COMMA
 
@@ -388,6 +420,8 @@ ConfigUseT13nConversion
 ConfigUseZipCodeConversion
 # Spelling correction
 ConfigUseSpellingCorrection
+# Emoji conversion
+ConfigUseEmojiConversion
 # Secret mode
 ConfigIncognito
 # Selection shortcut
@@ -499,6 +533,12 @@ MsctfVerRevision
 # CUAS status
 CuasEnabled
 
+# Virtual keyboard touch event stats
+VirtualKeyboardStats
+VirtualKeyboardMissStats
+
+# Big dictionary stats
+BigDictionaryState
 
 # usage stats
 UsageStatsUploadFailed

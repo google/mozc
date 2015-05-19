@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/base.h"
+#include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "ipc/named_event.h"
@@ -63,7 +64,7 @@ class NamedEventListenerThread: public Thread {
 };
 
 TEST(NamedEventTest, NamedEventBasicTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
   for (int i = 0; i < kNumRequests; ++i) {
     NamedEventNotifierThread t;
@@ -104,7 +105,7 @@ TEST(NamedEventTest, IsOwnerTest) {
 }
 
 TEST(NamedEventTest, NamedEventMultipleListenerTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
   // mozc::Thread is not designed as value-semantics.
   // So here we use pointers to maintain these instances.
@@ -128,11 +129,11 @@ TEST(NamedEventTest, NamedEventMultipleListenerTest) {
 }
 
 TEST(NamedEventTest, NamedEventPathLengthTest) {
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
   const string name_path = NamedEventUtil::GetEventPath(kName);
   // length should be less than 14 not includeing terminating null.
   EXPECT_EQ(13, strlen(name_path.c_str()));
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 }  // namespace
 }  // mozc

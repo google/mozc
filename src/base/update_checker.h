@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 #ifndef MOZC_BASE_UPDATE_CHECKER_H_
 #define MOZC_BASE_UPDATE_CHECKER_H_
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <Windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include "base/port.h"
 
@@ -40,7 +40,7 @@ namespace mozc {
 
 class UpdateChecker {
  public:
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
   struct CallbackInfo {
     // Window handle to which the callback message is sent.
     HWND mesage_receiver_window;
@@ -65,7 +65,7 @@ class UpdateChecker {
       : dummy(NULL)
     {}
   };
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   // On Windows, this method immediately returns true when background update
   // check begins.  The actual result will be delivered as Win32 message as
@@ -79,7 +79,7 @@ class UpdateChecker {
 
 class UpdateInvoker {
  public:
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
   struct CallbackInfo {
     // Window handle to which the callback message is sent.
     HWND mesage_receiver_window;
@@ -137,7 +137,7 @@ class UpdateInvoker {
       : dummy(NULL)
     {}
   };
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   // On Windows, this method immediately returns true when background update
   // begins.  The actual result will be delivered as Win32 message as

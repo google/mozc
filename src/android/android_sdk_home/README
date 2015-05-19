@@ -1,0 +1,3 @@
+This directory is designed to be pointed to by ANDROID_SDK_HOME, especially to
+place the AVD images.  Some of files in this directory are compressed and to be
+extracted before use.

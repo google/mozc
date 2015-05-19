@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,20 +29,16 @@
 
 #include "dictionary/user_dictionary_storage.h"
 
-#ifndef OS_WINDOWS
-#include <sys/stat.h>
-#endif
-
-#include <algorithm>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/protobuf/unknown_field_set.h"
+#include "base/system_util.h"
 #include "base/testing_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
@@ -77,22 +73,18 @@ string GenRandomString(int size) {
 class UserDictionaryStorageTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    backup_user_profile_directory_ = Util::GetUserProfileDirectory();
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-#ifndef OS_WINDOWS
-    // TODO(hidehiko): Do we really need this?
-    chmod(FLAGS_test_tmpdir.c_str(), 0777);
-#endif
-    Util::Unlink(GetUserDictionaryFile());
+    backup_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    FileUtil::Unlink(GetUserDictionaryFile());
   }
 
   virtual void TearDown() {
-    Util::Unlink(GetUserDictionaryFile());
-    Util::SetUserProfileDirectory(backup_user_profile_directory_);
+    FileUtil::Unlink(GetUserDictionaryFile());
+    SystemUtil::SetUserProfileDirectory(backup_user_profile_directory_);
   }
 
   static string GetUserDictionaryFile() {
-    return Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+    return FileUtil::JoinPath(FLAGS_test_tmpdir, "test.db");
   }
 
  private:
@@ -310,8 +302,8 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
     entry->set_comment(prefix + "comment");
   }
 
-  const string export_file = Util::JoinPath(FLAGS_test_tmpdir,
-                                            "export.txt");
+  const string export_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                                "export.txt");
 
   EXPECT_FALSE(storage.ExportDictionary(id + 1, export_file));
   EXPECT_TRUE(storage.ExportDictionary(id, export_file));
@@ -335,7 +327,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
 TEST_F(UserDictionaryStorageTest, SerializeTest) {
   // repeat 20 times
   for (int i = 0; i < 20; ++i) {
-    Util::Unlink(GetUserDictionaryFile());
+    FileUtil::Unlink(GetUserDictionaryFile());
     UserDictionaryStorage storage1(GetUserDictionaryFile());
 
     {
@@ -563,7 +555,7 @@ TEST_F(UserDictionaryStorageTest, RemoveUnusedSyncDictionariesIfExist) {
     EXPECT_TRUE(storage.UnLock());
   }
 
-  ASSERT_TRUE(Util::FileExists(GetUserDictionaryFile()))
+  ASSERT_TRUE(FileUtil::FileExists(GetUserDictionaryFile()))
       << "A temporary user dictionary file shoudl exist.";
 
   // Remove unused sync dictionaries.
@@ -619,7 +611,7 @@ TEST_F(UserDictionaryStorageTest, AddToAutoRegisteredDictionary) {
   }
 
   {
-    Util::Unlink(GetUserDictionaryFile());
+    FileUtil::Unlink(GetUserDictionaryFile());
     UserDictionaryStorage storage(GetUserDictionaryFile());
     storage.Lock();
     // Already locked.
@@ -676,7 +668,7 @@ TEST_F(UserDictionaryStorageTest, BackwardCompatibilityTest) {
 
 TEST_F(UserDictionaryStorageTest, Export) {
   const int kDummyDictionaryId = 10;
-  const string kPath = Util::JoinPath(FLAGS_test_tmpdir, "exported_file");
+  const string kPath = FileUtil::JoinPath(FLAGS_test_tmpdir, "exported_file");
 
   {
     UserDictionaryStorage storage(GetUserDictionaryFile());
@@ -698,13 +690,13 @@ TEST_F(UserDictionaryStorageTest, Export) {
   // Make sure the exported format, especially that the pos is exported in
   // Japanese.
   // "key value 名詞 comment" separted by a tab character.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   EXPECT_EQ("key\tvalue\t\xE5\x90\x8D\xE8\xA9\x9E\tcomment\r\n",
             string(mapped_data.begin(), mapped_data.size()));
 #else
   EXPECT_EQ("key\tvalue\t\xE5\x90\x8D\xE8\xA9\x9E\tcomment\n",
             string(mapped_data.begin(), mapped_data.size()));
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 namespace {

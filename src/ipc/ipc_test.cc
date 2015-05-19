@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <vector>
 #include "base/base.h"
+#include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "ipc/ipc.h"
@@ -45,7 +46,7 @@ namespace {
 // testing tool rut.py misunderstood that the file named
 // kServerAddress is a binary to be tested.
 static const char kServerAddress[] = "test_echo_server";
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // On windows, multiple-connections failed.
 static const int kNumThreads = 1;
 #else
@@ -120,7 +121,7 @@ class EchoServer: public mozc::IPCServer {
 }
 
 TEST(IPCTest, IPCTest) {
-  mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  mozc::SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 #ifdef OS_MACOSX
   mozc::TestMachPortManager manager;
 #endif

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
 #include "server/cache_service_manager.h"
 
@@ -39,13 +39,16 @@
 
 #include "base/base.h"
 #include "base/const.h"
+#include "base/file_util.h"
 #include "base/scoped_handle.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "server/mozc_cache_service_resource.h"
 #include "server/win32_service_state.pb.h"
 
 namespace mozc {
 namespace {
+
 const uint64 kMinimumRequiredMemorySizeForInstall = 384 * 1024 * 1024;
 
 class ScopedSCHandle {
@@ -89,7 +92,7 @@ wstring GetRegistryStringRedirectorOrRedirectedString(int resource_id) {
     return L"";
   }
   const wstring redirector(buffer);
-  if (Util::IsVistaOrLater()) {
+  if (SystemUtil::IsVistaOrLater()) {
     // If this program is running on Windows Vista or later,
     // just returns the redirector.
     return redirector;
@@ -293,7 +296,7 @@ bool SetServiceDescription(const ScopedSCHandle &service_handle,
 // functionality of the cache service itself.
 void SetAdvancedConfig(const ScopedSCHandle &service_handle) {
   // On Windows XP, we have nothing to do.
-  if (!Util::IsVistaOrLater()) {
+  if (!SystemUtil::IsVistaOrLater()) {
     return;
   }
 
@@ -493,7 +496,8 @@ const wchar_t *CacheServiceManager::GetServiceName() {
 
 wstring CacheServiceManager::GetUnquotedServicePath() {
   const string lock_service_path =
-      Util::JoinPath(Util::GetServerDirectory(), kMozcCacheServiceExeName);
+      FileUtil::JoinPath(SystemUtil::GetServerDirectory(),
+                         kMozcCacheServiceExeName);
   wstring wlock_service_path;
   if (Util::UTF8ToWide(lock_service_path.c_str(), &wlock_service_path) <= 0) {
     return L"";
@@ -574,8 +578,8 @@ bool CacheServiceManager::RestartService() {
 }
 
 bool CacheServiceManager::HasEnoughMemory() {
-  return Util::GetTotalPhysicalMemory()
-      >= kMinimumRequiredMemorySizeForInstall;
+  return SystemUtil::GetTotalPhysicalMemory() >=
+      kMinimumRequiredMemorySizeForInstall;
 }
 
 bool CacheServiceManager::BackupStateAsString(wstring *result) {
@@ -662,5 +666,6 @@ bool CacheServiceManager::EnsureServiceStopped() {
 
   return IsServiceRunning(service_handle);
 }
-}  // mozc
-#endif  // OS_WINDOWS
+
+}  // namespace mozc
+#endif  // OS_WIN

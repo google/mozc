@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,19 +44,6 @@ message SessionState {
   // whether session is just after commitment
   optional bool committed = 3 [default = false];
 
-  // selected indices from the candidates
-  repeated int32 selected_indices = 4;
-
-  // conversion mode
-  // indicates where the selected candidates came from
-  enum Mode {
-    COMPOSITION = 0;
-    CONVERSION = 1;
-    PREDICTION = 2;
-    SUGGESTION = 3;
-  };
-  optional Mode mode = 5 [default = COMPOSITION];
-
   optional uint64 start_preedit_time = 10;
   optional uint64 start_conversion_window_time = 11;
   optional uint64 start_prediction_window_time = 12;
@@ -68,7 +55,6 @@ message SessionState {
 
   // last candidates state
   optional mozc.commands.Candidates candidates = 21;
-  optional mozc.commands.CandidateList all_candidate_words = 22;
 
   // last candidates result
   optional mozc.commands.Result result = 23;
@@ -76,5 +62,5 @@ message SessionState {
   // last request
   optional mozc.commands.Request request = 24;
 
-  optional mozc.commands.SessionCommand.InputFieldType input_field_type = 25;
+  optional mozc.commands.Context.InputFieldType input_field_type = 25;
 };

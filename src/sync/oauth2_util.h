@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 namespace mozc {
 namespace sync {
 struct OAuth2Client;
+struct OAuth2Server;
 
 // OAuth2Util class is a wrapper class of OAuth2. It simplifies authorization
 // interface to use specific servers with an OAuth2 authorization.
@@ -44,20 +45,19 @@ struct OAuth2Client;
 // TODO(peria): generalize for other than Google servers.
 class OAuth2Util {
  public:
-  OAuth2Util(const OAuth2Client *client);
+  OAuth2Util(const OAuth2Client &client, const OAuth2Server &server);
   ~OAuth2Util();
 
   // Return a URI to authorize mozc via web browser.
   string GetAuthenticateUri();
 
   // Requests an access_token with the authorization_token and stores the access
-  // token into the mozc registry.  Returns true if it successfully obtains the
-  // access token.  Returns false otherwise.
-  bool RequestAccessToken(const string &auth_token, OAuth2::Error *error);
+  // token into the mozc registry.
+  OAuth2::Error RequestAccessToken(const string &auth_token);
 
   // Refreshes an access token in the local storage, and stores the new token.
   // Return true only if refresh succeeds.
-  bool RefreshAccessToken(OAuth2::Error *error);
+  OAuth2::Error RefreshAccessToken();
 
   // Accesses 'resource_uri' and puts returned string in 'resource'. This
   // method does not refresh tokens even if it fails, so you need to refresh it
@@ -98,17 +98,9 @@ class OAuth2Util {
   }
 
  private:
-  const OAuth2Client *client_;
-  const string authenticate_uri_;
-  const string redirect_uri_;
-  const string request_token_uri_;
-  string scope_;
-
   FRIEND_TEST(OAuth2UtilTest, CheckLogin);
   FRIEND_TEST(OAuth2UtilTest, GetResource);
   FRIEND_TEST(OAuth2UtilTest, RefeshToken);
-
-  DISALLOW_COPY_AND_ASSIGN(OAuth2Util);
 
   // Gets the access token and the refresh token from the local storage.
   // Returns true if both tokens are found, or false otherwise.
@@ -130,6 +122,16 @@ class OAuth2Util {
   // Initializes a new mahcine id and stores it to the underlaying
   // storage.  Returns true if it successfully generated the id.
   bool InitMID();
+
+  const string client_name_;
+  const string client_id_;
+  const string client_secret_;
+  const string authenticate_uri_;
+  const string redirect_uri_;
+  const string request_token_uri_;
+  string scope_;
+
+  DISALLOW_COPY_AND_ASSIGN(OAuth2Util);
 };
 }  // namespace sync
 }  // namespace mozc

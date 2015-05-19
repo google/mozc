@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,9 @@ namespace win32 {
 namespace {
 const MOUSEHOOKSTRUCT kMouseHookInfo = {
   {100, 200},  // pt
-  NULL,        // hwnd
+  nullptr,     // hwnd
   HTNOWHERE,   // wHitTestCode
-  NULL         // dwExtraInfo
+  0            // dwExtraInfo
 };
 
 class AlwaysOnTestThread : public Thread {
@@ -111,10 +111,10 @@ class MouseTrackerTest : public testing::Test {
     // without setting up test windows including message pump.
     ThreadLocalMouseTracker::set_do_not_call_call_next_hook_ex(true);
 
-    ThreadLocalMouseTracker::OnDllProcessAttach(NULL, true);
+    ThreadLocalMouseTracker::OnDllProcessAttach(nullptr, true);
   }
   static void TearDownTestCase() {
-    ThreadLocalMouseTracker::OnDllProcessDetach(NULL, true);
+    ThreadLocalMouseTracker::OnDllProcessDetach(nullptr, true);
   }
 };
 

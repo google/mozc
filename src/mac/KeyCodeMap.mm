@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #import <Carbon/Carbon.h>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "session/commands.pb.h"
 
@@ -42,8 +43,8 @@ using mozc::once_t;
 using mozc::CallOnce;
 
 #include "mac/init_kanamap.h"
-#include "mac/init_specialkeymap.h"
 #include "mac/init_specialcharmap.h"
+#include "mac/init_specialkeymap.h"
 
 static const unichar kYenMark = 0xA5;
 

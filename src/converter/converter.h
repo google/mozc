@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,19 +30,22 @@
 #ifndef MOZC_CONVERTER_CONVERTER_H_
 #define MOZC_CONVERTER_CONVERTER_H_
 
+#include <string>
+
+#include "base/scoped_ptr.h"
 #include "converter/converter_interface.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
+
 class ConversionRequest;
 class ImmutableConverterInterface;
-class PredictorInterface;
 class POSMatcher;
-class PosGroup;
+class PredictorInterface;
 class RewriterInterface;
 class Segments;
-class UserDatamanagerInterface;
+class SuppressionDictionary;
 
 class ConverterImpl : public ConverterInterface {
  public:
@@ -51,7 +54,7 @@ class ConverterImpl : public ConverterInterface {
 
   // Lazily initializes the internal members. Must be called before the use.
   void Init(const POSMatcher *pos_matcher,
-            const PosGroup *pos_group,
+            const SuppressionDictionary *suppression_dictionary,
             PredictorInterface *predictor,
             RewriterInterface *rewriter,
             ImmutableConverterInterface *immutable_converter);
@@ -61,64 +64,65 @@ class ConverterImpl : public ConverterInterface {
                const Segments::RequestType request_type,
                Segments *segments) const;
 
-  bool StartConversionForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
-  bool StartConversion(Segments *segments,
-                       const string &key) const;
-  bool StartReverseConversion(Segments *segments,
-                              const string &key) const;
-  bool StartPredictionForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
-  bool StartPrediction(Segments *segments,
-                       const string &key) const;
-  bool StartSuggestionForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
-  bool StartSuggestion(Segments *segments,
-                       const string &key) const;
-  bool StartPartialPredictionForRequest(const ConversionRequest &request,
-                                        Segments *segments) const;
-  bool StartPartialPrediction(Segments *segments,
-                              const string &key) const;
-  bool StartPartialSuggestionForRequest(const ConversionRequest &request,
-                                        Segments *segments) const;
-  bool StartPartialSuggestion(Segments *segments,
-                              const string &key) const;
+  virtual bool StartConversionForRequest(const ConversionRequest &request,
+                                         Segments *segments) const;
+  virtual bool StartConversion(Segments *segments,
+                               const string &key) const;
+  virtual bool StartReverseConversion(Segments *segments,
+                                      const string &key) const;
+  virtual bool StartPredictionForRequest(const ConversionRequest &request,
+                                         Segments *segments) const;
+  virtual bool StartPrediction(Segments *segments,
+                               const string &key) const;
+  virtual bool StartSuggestionForRequest(const ConversionRequest &request,
+                                         Segments *segments) const;
+  virtual bool StartSuggestion(Segments *segments,
+                               const string &key) const;
+  virtual bool StartPartialPredictionForRequest(
+      const ConversionRequest &request, Segments *segments) const;
+  virtual bool StartPartialPrediction(Segments *segments,
+                                      const string &key) const;
+  virtual bool StartPartialSuggestionForRequest(
+      const ConversionRequest &request, Segments *segments) const;
+  virtual bool StartPartialSuggestion(Segments *segments,
+                                      const string &key) const;
 
-  bool FinishConversion(Segments *segments) const;
-  bool CancelConversion(Segments *segments) const;
-  bool ResetConversion(Segments *segments) const;
-  bool RevertConversion(Segments *segments) const;
-  bool CommitSegmentValue(Segments *segments,
-                          size_t segment_index,
-                          int candidate_index) const;
-  bool CommitPartialSuggestionSegmentValue(Segments *segments,
-                                         size_t segment_index,
-                                         int candidate_index,
-                                         const string &current_segment_key,
-                                         const string &new_segment_key) const;
-  bool FocusSegmentValue(Segments *segments,
-                         size_t segment_index,
-                         int candidate_index) const;
-  bool FreeSegmentValue(Segments *segments,
-                        size_t segment_index) const;
-  bool SubmitFirstSegment(Segments *segments,
-                          size_t candidate_index) const;
-  bool ResizeSegment(Segments *segments,
-                     const ConversionRequest &requset,
-                     size_t segment_index,
-                     int offset_length) const;
-  bool ResizeSegment(Segments *segments,
-                     const ConversionRequest &requset,
-                     size_t start_segment_index,
-                     size_t segments_size,
-                     const uint8 *new_size_array,
-                     size_t array_size) const;
-  UserDataManagerInterface *GetUserDataManager();
+  virtual bool FinishConversion(Segments *segments) const;
+  virtual bool CancelConversion(Segments *segments) const;
+  virtual bool ResetConversion(Segments *segments) const;
+  virtual bool RevertConversion(Segments *segments) const;
+  virtual bool CommitSegmentValue(Segments *segments,
+                                  size_t segment_index,
+                                  int candidate_index) const;
+  virtual bool CommitPartialSuggestionSegmentValue(
+      Segments *segments,
+      size_t segment_index,
+      int candidate_index,
+      const string &current_segment_key,
+      const string &new_segment_key) const;
+  virtual bool FocusSegmentValue(Segments *segments,
+                                 size_t segment_index,
+                                 int candidate_index) const;
+  virtual bool FreeSegmentValue(Segments *segments,
+                                size_t segment_index) const;
+  virtual bool CommitFirstSegment(Segments *segments,
+                                  size_t candidate_index) const;
+  virtual bool ResizeSegment(Segments *segments,
+                             const ConversionRequest &requset,
+                             size_t segment_index,
+                             int offset_length) const;
+  virtual bool ResizeSegment(Segments *segments,
+                             const ConversionRequest &requset,
+                             size_t start_segment_index,
+                             size_t segments_size,
+                             const uint8 *new_size_array,
+                             size_t array_size) const;
 
  private:
   FRIEND_TEST(ConverterTest, CompletePOSIds);
   FRIEND_TEST(ConverterTest, SetupHistorySegmentsFromPrecedingText);
   FRIEND_TEST(ConverterTest, DefaultPredictor);
+  FRIEND_TEST(ConverterTest, MaybeSetConsumedKeySizeToSegment);
 
   // Complete Left id/Right id if they are not defined.
   // Some users don't push conversion button but directly
@@ -132,19 +136,40 @@ class ConverterImpl : public ConverterInterface {
                                   int candidate_index,
                                   Segment::SegmentType segment_type) const;
 
+  // Sets all the candidates' attribute PARTIALLY_KEY_CONSUMED
+  // and consumed_key_size if the attribute is not set.
+  static void MaybeSetConsumedKeySizeToCandidate(size_t consumed_key_size,
+                                                 Segment::Candidate* candidate);
+
+  // Sets all the candidates' attribute PARTIALLY_KEY_CONSUMED
+  // and consumed_key_size if the attribute is not set.
+  static void MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
+                                               Segment* segment);
+
   // Reconstructs history segments from preceding text to emulate user input
   // from preceding (surrounding) text.
   bool SetupHistorySegmentsFromPrecedingText(const string &preceding_text,
                                              Segments *segments) const;
 
+  // Rewrites and applies the suppression dictionary.
+  void RewriteAndSuppressCandidates(const ConversionRequest &request,
+                                    Segments *segments) const;
+
+  // Commits usage stats for commited text.
+  // |begin_segment_index| is a index of whole segments. (history and conversion
+  // segments)
+  void CommitUsageStats(const Segments *segments,
+                        size_t begin_segment_index,
+                        size_t segment_length) const;
+
   const POSMatcher *pos_matcher_;
-  const PosGroup *pos_group_;
+  const SuppressionDictionary *suppression_dictionary_;
   scoped_ptr<PredictorInterface> predictor_;
   scoped_ptr<RewriterInterface> rewriter_;
-  scoped_ptr<UserDataManagerInterface> user_data_manager_;
   const ImmutableConverterInterface *immutable_converter_;
   uint16 general_noun_id_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_CONVERTER_H_

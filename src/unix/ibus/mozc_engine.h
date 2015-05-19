@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -134,8 +134,7 @@ class MozcEngine : public EngineInterface {
   // Updates the callback message based on the content of |output|.
   bool ExecuteCallback(IBusEngine *engine, const commands::Output &output);
   // Updates the configuration.
-  void UpdateConfig(
-      const gchar *section, const gchar *name, GVariant *gvalue);
+  void UpdateConfig(const gchar *section, const gchar *name, GVariant *value);
 
   // Launches Mozc tool with appropriate arguments.
   bool LaunchTool(const commands::Output &output) const;

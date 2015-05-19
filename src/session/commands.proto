@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@ import "dictionary/user_dictionary_storage.proto";
 
 package mozc.commands;
 
+option java_outer_classname = "ProtoCommands";
+option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
 // This enum is used by SessionCommand::input_mode with
 // CHANGE_INPUT_MODE and Output::mode.
@@ -214,6 +216,18 @@ message KeyEvent {
     CAPS = 2048;
   };
 
+  // Probable key event, mainly for touch screen.
+  // User's input has ambiguity (e.g. the touch position is merginal)
+  // so this message expresses the probable event.
+  message ProbableKeyEvent {
+    // message ID is the same as Input message.
+    optional uint32 key_code = 1;
+    optional SpecialKey special_key = 3;  // Unprintable key listed above.
+    repeated ModifierKey modifier_keys = 4;  // ModifierKeys
+    // Sum of probabilities must be lesser or equal than 1.
+    // 0<= probability <= 1
+    optional double probability = 10;
+  };
 
   // Printable key in UCS4.  If key_code is empty, key_string is used
   // as a raw input.
@@ -242,6 +256,11 @@ message KeyEvent {
   // Input mode
   optional CompositionMode mode = 7;
 
+  // Probable key events
+  // Even if you can fill this field,
+  // don't omit Input.key_code and so on
+  // because preedit string is composed based on them.
+  repeated ProbableKeyEvent probable_key_event = 8;
 };
 
 message GenericStorageEntry {
@@ -383,29 +402,6 @@ message SessionCommand {
   // New cursor position in preedit. Used with MOVE_CURSOR.
   optional uint32 cursor_position = 5;
 
-  // Input field type.
-  // The types are based on the input types defined in HTML5.
-  // http://dev.w3.org/html5/spec/Overview.html#attr-input-type
-  // Other types are to be added later.
-  enum InputFieldType {
-    // No restrictions nor special functions. The IME operates as usual.
-    NORMAL = 1;
-
-    // Password field. Text is hidden after input.
-    // For Android,
-    // In order to make the last character visible to the user,
-    // the IME must not hold more than 2 characters in preedit.
-    PASSWORD = 2;
-
-    // Telephone number
-    TEL = 3;
-
-    // Number
-    NUMBER = 4;
-  };
-  // Type of the input field being focused.
-  optional InputFieldType input_field_type = 6;
-
   // Client side event for collecting usage statistics
   enum UsageStatsEvent {
     INFOLIST_WINDOW_SHOW = 1;
@@ -437,6 +433,40 @@ message Context {
 
   // Latter part of surrounding text.
   optional string following_text = 2;
+
+  // If this is true, suggestion feature is disabled regardless the
+  // congiguration.  If this is false, suggestion feature is followed
+  // by the user's configuration.  If you want to omit interim
+  // suggestions during the key typing, you might want to use
+  // request_suggestion.
+  // TODO(komatsu): Delete this field and use experimental_features.
+  optional bool suppress_suggestion = 3 [default = false];
+
+  // Input field type.
+  // The types are based on the input types defined in HTML5.
+  // http://dev.w3.org/html5/spec/Overview.html#attr-input-type
+  // Other types are to be added later.
+  enum InputFieldType {
+    // No restrictions nor special functions. The IME operates as usual.
+    NORMAL = 1;
+
+    // Password field. Text is hidden after input.
+    // For Android,
+    // In order to make the last character visible to the user,
+    // the IME must not hold more than 2 characters in preedit.
+    PASSWORD = 2;
+
+    // Telephone number
+    TEL = 3;
+
+    // Number
+    NUMBER = 4;
+  };
+  // Type of the input field being focused.
+  optional InputFieldType input_field_type = 4;
+
+  // Repeated fields to be used for experimental features.
+  repeated string experimental_features = 100;
 };
 
 // Clients' capability.
@@ -512,6 +542,14 @@ message Request {
     // Use special table for Qwerty (for Mobile) (to half-width ascii).
     QWERTY_MOBILE_TO_HALFWIDTHASCII = 22;
 
+    // Use special table for Godan (to hiragana).
+    GODAN_TO_HIRAGANA = 30;
+
+    // Use special table for Godan (to half-width ascii).
+    GODAN_TO_HALFWIDTHASCII = 31;
+
+    // Use special table for Godan (to number).
+    GODAN_TO_NUMBER = 32;
   };
 
   // Use special Romanji table.
@@ -552,6 +590,90 @@ message Request {
   // See details in the Composer::UpdateInputMode.
   optional bool update_input_mode_from_surrounding_text = 8
       [default = true];
+
+  // Enables Kana-modifier-insensitive conversion as follows:
+  // 1) Voiced/Semi-voiced kana will be hit by non-modified kana.
+  //    e.g.) "ば" and "ぱ" will be hit by key "は".
+  // 2) Geminate consonant "っ" will be hit by non-modified kana "つ".
+  // 3) Palatalized kana will be hit by non-modified kana.
+  //    e.g.) "ゃ" will be hit by key "や".
+  // Here is an example of the search: "学校" ("がっこう") will be hit
+  // by "かつこう".
+  optional bool kana_modifier_insensitive_conversion = 9 [default = false];
+
+  // Enables Auto partial suggestion.
+  // For Auto partial suggestion, we can see first segment only candidates
+  // adding to normal realtime conversion suggestion results.
+  // If we commit that candidate, we will show suggestions for remaining part
+  // of key.
+  //
+  // Note: This feature can be enabled only for mobile due to UX design.
+  optional bool auto_partial_suggestion = 10 [default = false];
+
+  // Nowadays, four kinds of emoji characters are used in Japan.
+  // - Unicode: Unicode based emoji (since Unicode 6.0).
+  // - Docomo: Docomo's carrier emoji.
+  // - Softbank: Softbank's carrier emoji.
+  // - Kddi: Kddi's carrier emoji.
+  // Note that especially latter three kinds are used on Mobile phones.
+  // So, it is necessary to control what kinds of emoji can be used or not
+  // based on client's (or connected application's) information.
+  // For example, on Android;
+  // - Unicode emoji characters are available only on Android 4.1 or later
+  //   only.
+  // - JP mobile carriers' emoji characters depend on the devices. Also,
+  //   we need to check the text field's attribute for them.
+  // The following bit set tells the emoji availability to EmojiRewriter.
+  enum EmojiCarrierType {
+    UNICODE_EMOJI = 1;
+    DOCOMO_EMOJI = 2;
+    SOFTBANK_EMOJI = 4;
+    KDDI_EMOJI = 8;
+  }
+
+  // By default, UNICODE emoji is available.
+  optional int32 available_emoji_carrier = 11 [default = 1];
+
+  // For emoji rewriter, it is necessary to control when the rewriter runs
+  // based on the clients. The following bit set is sync'ed to
+  // RewriterInterface::CapabilityType (see rewriter_interface.h, too),
+  // so that clients can fill the value.
+  enum RewriterCapability {
+    NOT_AVAILABLE = 0;
+    CONVERSION = 1;
+    PREDICTION = 2;
+    SUGGESTION = 4;
+    ALL = 7;  // CONVERSION | PREDICTION | SUGGESTION.
+  }
+
+  // By default, Emoji rewriter works on conversion mode only.
+  optional int32 emoji_rewriter_capability = 12 [default = 1];
+
+  // Controls the behavior when a user types the left/right key at the edge
+  // of the preedit string (in more precise, the left key at the beginning
+  // of the preedit string, or the right key at the end).
+  enum CrossingEdgeBehavior {
+    // This is the default behavior. The cursor movement at the edge
+    // will make nothing, i.e., keeping the current cursor position (at the
+    // edge), consume the key event.
+    DO_NOTHING = 0;
+
+    // This is the behavior, especially designed for alphabet keyboards on
+    // mobile devices. Assuming the following text:
+    //   XXXXabcde|YYYYY
+    // where XXXX is preceding text, abcde is composing text, YYYYY is
+    // following text and '|' is the caret, when a user sends "RIGHT"
+    // cursor key, we'd like to commit the abcde and move the caret to right.
+    // So the user will get:
+    //   XXXXabcdeY|YYYY
+    // Here, what we need is commiting the "abcde" with the appropriate
+    // caret position. (Note that we need to handle the left cursor key, too).
+    // Also, we should *NOT* consume the key, so that the key event will be
+    // handled appropriately by the target application.
+    COMMIT_WITHOUT_CONSUMING = 1;
+  }
+  optional CrossingEdgeBehavior crossing_edge_behavior = 13
+      [default = DO_NOTHING];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
@@ -702,6 +824,31 @@ message Input {
   // Specify the authorization info if the command is SET_AUTH_CODE.
   optional AuthorizationInfo auth_code = 11;
 
+  enum TouchAction {
+    TOUCH_DOWN = 1;
+    TOUCH_MOVE = 2;
+    TOUCH_UP = 3;
+  };
+  message TouchPosition {
+    optional TouchAction action = 1;
+    // x, y potision: keyboad left-top is (0, 0), right-bottom is (1, 1).
+    optional float x = 2;
+    optional float y = 3;
+    // timestamp (in ms) is set to zero when the touch event starts.
+    optional int64 timestamp = 4;
+  }
+  // TouchEvent contains source_id and stroke.
+  // Touch_events contain all key touch event.
+  // Statistical information are collected for each source_id
+  // by SessionUsageObserver.
+  message TouchEvent {
+    // source_id specifies the user action such as "X button pressed".
+    // It must be unique within the same keyboard_name,
+    // which is set in Request message.
+    optional uint32 source_id = 1;
+    repeated TouchPosition stroke = 2;
+  }
+  repeated TouchEvent touch_events = 12;
 
   optional mozc.user_dictionary.UserDictionaryCommand user_dictionary_command
       = 13;
@@ -714,6 +861,9 @@ message Input {
   // in the previous phase, it is possible from the client to submit it.
   // This works only for suggestions for the key insersion, but not for
   // others commands, such as predictions or conversions.
+  // This flag is used for the performance improvement in terms of the
+  // latency.  If you want to suppress the suggestions for the UX improment,
+  // you may want to use suppress_suggestion in the Context message.
   optional bool request_suggestion = 14 [default = true];
 };
 
@@ -731,6 +881,13 @@ message Result {
 
   // Source of the value.  It is almost always the reading of the value.
   optional string key = 3;
+
+  // The caret position after the result submission.
+  // "0" means the end of the result, and a positive value means moving forward
+  // and a negative value backward.
+  // e.g.) "-s", where s is the length of value, means the caret position
+  // after the committing should be the beginning of the committed value.
+  optional int32 cursor_offset = 4 [default = 0];
 };
 
 
@@ -867,18 +1024,12 @@ message Output {
   };
   optional ErrorCode error_code = 11 [ default = SESSION_SUCCESS ];
 
-  // number of microseconds that have elapsed for processing the request.
-  optional uint32 elapsed_time = 12 [ default = 0 ];
-
   // The current IME status.
   optional Status status = 13;
 
   // All flatten candidate words stored in 1D array.  This value is
   // filled only when the content is changed.
   optional CandidateList all_candidate_words = 14;
-
-  // Performed command name in the server
-  optional string performed_command = 15;
 
   // Range of characters to be deleted by client.
   optional DeletionRange deletion_range = 16;

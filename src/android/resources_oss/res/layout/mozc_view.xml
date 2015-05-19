@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<!-- This file is a part of ViewManager so please maintain in parallel. -->
+<!-- MozcView hierarchy
+
+Syntax:
+"Type parent-id
+     Type child-id0
+     Type child-id1
+     ..."
+
+Type:
+  Frame: FrameLayout
+  Linear-V: LinearLayout orientation=vertical
+  Linear-H: LinearLayout orientation=horizontal
+  Image: ImageView
+
+MozcView(Linear-V)
+    View overlay_view
+
+    Frame bottom_frame
+        View bottom_background
+
+        Linear-H foreground_frame
+            Frame left_frame
+                Frame left_dropshadow
+                    Linear left_dropshadow_short
+                        Image dropshadow_left_short_top
+                        Image dropshadow_left_short_bottom
+                    Linear left_dropshadow_long
+                        Image dropshadow_left_long_top
+                        Image dropshadow_left_long_bottom
+                Image left_adjust_botton
+
+            Linear-V center_frame
+                Image dropshadow_top
+                Frame input_frame
+                    Linear-V textinput_frame
+                        Frame
+                            CandidateView candidate_view
+                            Image dropshadow
+
+                        Frame narrow_frame
+                            Image hardware_composition_button
+                            Image widen_button
+
+                        Frame keyboard_frame
+                            JapaneseKeyboardView keyboard_view
+
+                    SymbolInputView symbol_input_view
+
+            Frame right_frame
+                Linear right_dropshadow
+                    Linear right_dropshadow_short
+                        Image dropshadow_right_short_top
+                        Image dropshadow_right_short_bottom
+                    Linear right_dropshadow_long
+                        Image dropshadow_right_long_top
+                        Image dropshadow_right_long_bottom
+                Image right_adjust_botton
+    -->
+
+<org.mozc.android.inputmethod.japanese.MozcView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_gravity="bottom"
+    android:gravity="bottom"
+    android:orientation="vertical" >
+
+    <!--
+         This invisible view overlays on target activity
+         and makes a touchable region during candidate dragging.
+    -->
+
+    <View
+        android:id="@+id/overlay_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="invisible" />
+
+    <FrameLayout
+        android:id="@+id/bottom_frame"
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/ime_window_height"
+        android:gravity="bottom" >
+
+        <View
+            android:id="@+id/bottom_background"
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/input_frame_height"
+            android:layout_gravity="bottom" />
+
+        <LinearLayout
+            android:id="@+id/foreground_frame"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_gravity="bottom"
+            android:gravity="bottom"
+            android:orientation="horizontal" >
+
+            <ViewStub
+                android:id="@+id/stub_left_frame"
+                android:inflatedId="@+id/left_frame"
+                android:layout="@layout/left_frame"
+                android:layout_width="@dimen/side_frame_width"
+                android:layout_height="fill_parent"
+                android:layout_gravity="right"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/center_frame"
+                android:layout_width="0dip"
+                android:layout_weight="1"
+                android:layout_height="fill_parent"
+                android:gravity="bottom"
+                android:orientation="vertical" >
+
+                <ImageView
+                    android:id="@+id/dropshadow_top"
+                    android:layout_width="fill_parent"
+                    android:layout_height="@dimen/translucent_border_height"
+                    android:background="@drawable/dropshadow_top"
+                    android:visibility="invisible" />
+
+                <FrameLayout
+                    android:id="@+id/input_frame"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:gravity="bottom" >
+
+                    <LinearLayout
+                        android:id="@+id/textinput_frame"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:layout_gravity="bottom"
+                        android:baselineAligned="false"
+                        android:gravity="bottom"
+                        android:orientation="vertical" >
+
+                        <!--
+                         An include tag must have the attributes which the
+                         included tag has, otherwise LayoutInflator.inflate
+                         causes memory leak.
+                        -->
+
+                        <FrameLayout
+                            android:layout_width="fill_parent"
+                            android:layout_height="0dip"
+                            android:layout_weight="1" >
+
+                            <include
+                                android:id="@+id/candidate_view"
+                                android:layout_width="fill_parent"
+                                android:layout_height="fill_parent"
+                                layout="@layout/candidate_view" />
+
+                            <ImageView
+                                android:layout_width="fill_parent"
+                                android:layout_height="@dimen/translucent_border_height"
+                                android:layout_gravity="fill_horizontal|bottom"
+                                android:background="@drawable/dropshadow_top" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:id="@+id/narrow_frame"
+                            android:layout_width="fill_parent"
+                            android:layout_height="@dimen/narrow_frame_height"
+                            android:layout_gravity="bottom"
+                            android:background="@color/keyboard_background"
+                            android:visibility="gone" >
+
+                            <ImageView
+                                android:id="@+id/hardware_composition_button"
+                                android:layout_width="64dip"
+                                android:layout_height="fill_parent"
+                                android:layout_gravity="left|bottom" />
+
+                            <ImageView
+                                android:id="@+id/widen_button"
+                                android:layout_width="64dip"
+                                android:layout_height="fill_parent"
+                                android:layout_gravity="right|bottom" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:id="@+id/keyboard_frame"
+                            android:layout_width="fill_parent"
+                            android:layout_height="@dimen/input_frame_height" >
+
+                            <org.mozc.android.inputmethod.japanese.JapaneseKeyboardView
+                                android:id="@+id/keyboard_view"
+                                android:layout_width="fill_parent"
+                                android:layout_height="fill_parent" />
+                        </FrameLayout>
+                    </LinearLayout>
+
+                    <!--
+                         In order not to send tapping events of "unclickable region" on
+                         SymbolInputView to behind views (usually keyboard view), we set
+                         "clickable=true" to this view, so that this view consumes click
+                         events. Otherwise, for example, assuming a user uses
+                         qwerty-layout and opens symbol input view connecting to a text
+                         field which doesn't support emoji, user can open CursorView
+                         by tapping (a part of) emoji-major-category-button (because
+                         the cursor view open button is very "close" to the major category
+                         button, regardless of the keyboard view's visibility).
+                    -->
+
+                    <org.mozc.android.inputmethod.japanese.SymbolInputView
+                        android:id="@+id/symbol_input_view"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:clickable="true"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </LinearLayout>
+
+            <ViewStub
+                android:id="@+id/stub_right_frame"
+                android:inflatedId="@+id/right_frame"
+                android:layout="@layout/right_frame"
+                android:layout_width="@dimen/side_frame_width"
+                android:layout_height="fill_parent"
+                android:layout_gravity="right"
+                android:visibility="gone" />
+        </LinearLayout>
+    </FrameLayout>
+</org.mozc.android.inputmethod.japanese.MozcView>

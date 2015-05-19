@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,28 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../prediction/prediction_base.gyp:suggestion_filter',
         '../transliteration/transliteration.gyp:transliteration',
+      ],
+    },
+    {
+      'target_name': 'converter_util',
+      'type': 'static_library',
+      'sources': [
+        'converter_util.cc',
+      ],
+      'dependencies': [
+        'segments',
+      ],
+    },
+    {
+      'target_name': 'immutable_converter_interface',
+      'type': 'static_library',
+      'sources': [
+        'immutable_converter_interface.cc',
+      ],
+      'dependencies': [
+        'conversion_request',
       ],
     },
     {
@@ -116,6 +137,7 @@
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
         '../session/session_base.gyp:session_protocol',
+        'immutable_converter_interface',
         'segments',
       ],
     },
@@ -124,11 +146,12 @@
       'type': 'static_library',
       'sources': [
         'converter_mock.cc',
-        'user_data_manager_mock.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../session/session_base.gyp:session_protocol',
         'segments',
+        'conversion_request',
       ],
     },
     {
@@ -141,6 +164,17 @@
       'dependencies' : [
         '../base/base.gyp:base',
       ]
+    },
+    {
+      'target_name': 'conversion_request',
+      'type': 'static_library',
+      'sources': [
+        'conversion_request.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../session/session_base.gyp:session_protocol',
+      ],
     },
   ],
 }

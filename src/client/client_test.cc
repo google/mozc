@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,10 @@ namespace mozc {
 namespace client {
 
 namespace {
+const char kPrecedingText[] = "preceding_text";
+const char kFollowingText[] = "following_text";
+const bool kSuppressSuggestion = true;
+
 const string UpdateVersion(int diff) {
   vector<string> tokens;
   Util::SplitStringUsing(Version::GetMozcVersion(), ".", &tokens);
@@ -139,10 +143,6 @@ class TestServerLauncher : public ServerLauncherInterface {
 
   void set_server_protocol_version(uint32 server_protocol_version) {
     server_protocol_version_ = server_protocol_version;
-  }
-
-  uint32 set_server_protocol_version() const {
-    return server_protocol_version_;
   }
 
   void set_mock_after_start_server(const commands::Output &mock_output) {
@@ -265,6 +265,36 @@ TEST_F(ClientTest, SendKey) {
   EXPECT_EQ(commands::Input::SEND_KEY, input.type());
 }
 
+TEST_F(ClientTest, SendKeyWithContext) {
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::KeyEvent key_event;
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+
+  commands::Context context;
+  context.set_preceding_text(kPrecedingText);
+  context.set_following_text(kFollowingText);
+  context.set_suppress_suggestion(kSuppressSuggestion);
+
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  EXPECT_TRUE(client_->SendKeyWithContext(key_event, context, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  commands::Input input;
+  GetGeneratedInput(&input);
+  EXPECT_EQ(mock_id, input.id());
+  EXPECT_EQ(commands::Input::SEND_KEY, input.type());
+  EXPECT_EQ(kPrecedingText, input.context().preceding_text());
+  EXPECT_EQ(kFollowingText, input.context().following_text());
+  EXPECT_EQ(kSuppressSuggestion, input.context().suppress_suggestion());
+}
+
 TEST_F(ClientTest, TestSendKey) {
   const int mock_id = 512;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -288,6 +318,38 @@ TEST_F(ClientTest, TestSendKey) {
   EXPECT_EQ(commands::Input::TEST_SEND_KEY, input.type());
 }
 
+
+TEST_F(ClientTest, TestSendKeyWithContext) {
+  const int mock_id = 512;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::KeyEvent key_event;
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+
+  commands::Context context;
+  context.set_preceding_text(kPrecedingText);
+  context.set_following_text(kFollowingText);
+  context.set_suppress_suggestion(kSuppressSuggestion);
+
+  commands::Output mock_output;
+  mock_output.Clear();
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  EXPECT_TRUE(client_->TestSendKeyWithContext(key_event, context, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  commands::Input input;
+  GetGeneratedInput(&input);
+  EXPECT_EQ(mock_id, input.id());
+  EXPECT_EQ(commands::Input::TEST_SEND_KEY, input.type());
+  EXPECT_EQ(kPrecedingText, input.context().preceding_text());
+  EXPECT_EQ(kFollowingText, input.context().following_text());
+  EXPECT_EQ(kSuppressSuggestion, input.context().suppress_suggestion());
+}
+
 TEST_F(ClientTest, SendCommand) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -307,6 +369,37 @@ TEST_F(ClientTest, SendCommand) {
   GetGeneratedInput(&input);
   EXPECT_EQ(mock_id, input.id());
   EXPECT_EQ(commands::Input::SEND_COMMAND, input.type());
+}
+
+TEST_F(ClientTest, SendCommandWithContext) {
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::SessionCommand session_command;
+  session_command.set_type(commands::SessionCommand::SUBMIT);
+
+  commands::Context context;
+  context.set_preceding_text(kPrecedingText);
+  context.set_following_text(kFollowingText);
+  context.set_suppress_suggestion(kSuppressSuggestion);
+
+  commands::Output mock_output;
+  mock_output.Clear();
+  mock_output.set_id(mock_id);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  EXPECT_TRUE(client_->SendCommandWithContext(session_command,
+                                              context,
+                                              &output));
+
+  commands::Input input;
+  GetGeneratedInput(&input);
+  EXPECT_EQ(mock_id, input.id());
+  EXPECT_EQ(commands::Input::SEND_COMMAND, input.type());
+  EXPECT_EQ(kPrecedingText, input.context().preceding_text());
+  EXPECT_EQ(kFollowingText, input.context().following_text());
+  EXPECT_EQ(kSuppressSuggestion, input.context().suppress_suggestion());
 }
 
 TEST_F(ClientTest, SetConfig) {
@@ -674,10 +767,6 @@ class SessionPlaybackTest : public testing::Test {
     ipc_client_factory_->SetMockResponse(response);
   }
 
-  void GetGeneratedInput(commands::Input *input) {
-    input->ParseFromString(ipc_client_factory_->GetGeneratedRequest());
-  }
-
   scoped_ptr<IPCClientFactoryMock> ipc_client_factory_;
   scoped_ptr<IPCClientMock> ipc_client_;
   scoped_ptr<Client> client_;
@@ -725,7 +814,7 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest) {
 }
 
 TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -769,7 +858,7 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
 }
 
 TEST_F(SessionPlaybackTest, PushAndResetHistoryWithDirectTest) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -855,7 +944,7 @@ TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
 }
 
 TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 

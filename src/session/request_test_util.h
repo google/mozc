@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,27 +37,6 @@
 
 namespace mozc {
 namespace commands {
-class ScopedRequestForUnittest {
- public:
-  explicit ScopedRequestForUnittest(const Request &request);
-  virtual ~ScopedRequestForUnittest();
-
- private:
-  const Request prev_request_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedRequestForUnittest);
-};
-
-class ScopedMobileRequestForUnittest {
- public:
-  ScopedMobileRequestForUnittest();
-  virtual ~ScopedMobileRequestForUnittest();
-
- private:
-  scoped_ptr<ScopedRequestForUnittest> scoped_request_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedMobileRequestForUnittest);
-};
 
 class RequestForUnitTest {
  public:

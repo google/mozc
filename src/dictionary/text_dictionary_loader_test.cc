@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
@@ -43,6 +44,7 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
+
 const char kTextLines[] =
 "key_test1\t0\t0\t1\tvalue_test1\n"
 "foo\t1\t2\t3\tbar\n"
@@ -78,7 +80,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     EXPECT_TRUE(tokens.empty());
   }
 
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir, "test.tsv");
+  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir, "test.tsv");
   {
     OutputFileStream ofs(filename.c_str());
     ofs << kTextLines;
@@ -86,9 +88,8 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
 
   {
     scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
-    vector<Token *> tokens;
-    EXPECT_TRUE(loader->Open(filename));
-    loader->CollectTokens(&tokens);
+    loader->Load(filename, "");
+    const vector<Token *> &tokens = loader->tokens();
 
     EXPECT_EQ(3, tokens.size());
 
@@ -110,17 +111,14 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     EXPECT_EQ(20, tokens[2]->rid);
     EXPECT_EQ(30, tokens[2]->cost);
 
-    loader->Close();
-    tokens.clear();
-    loader->CollectTokens(&tokens);
-    EXPECT_TRUE(tokens.empty());
+    loader->Clear();
+    EXPECT_TRUE(loader->tokens().empty());
   }
 
   {
     scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
-    vector<Token *> tokens;
-    EXPECT_TRUE(loader->OpenWithLineLimit(filename.c_str(), 2));
-    loader->CollectTokens(&tokens);
+    loader->LoadWithLineLimit(filename, "", 2);
+    const vector<Token *> &tokens = loader->tokens();
 
     EXPECT_EQ(2, tokens.size());
 
@@ -136,23 +134,20 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     EXPECT_EQ(2, tokens[1]->rid);
     EXPECT_EQ(3, tokens[1]->cost);
 
-    loader->Close();
-    tokens.clear();
-    loader->CollectTokens(&tokens);
-    EXPECT_TRUE(tokens.empty());
+    loader->Clear();
+    EXPECT_TRUE(loader->tokens().empty());
   }
 
   {
     scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
-    vector<Token *> tokens;
     // open twice -- tokens are cleared everytime
-    EXPECT_TRUE(loader->Open(filename));
-    EXPECT_TRUE(loader->Open(filename));
-    loader->CollectTokens(&tokens);
+    loader->Load(filename, "");
+    loader->Load(filename, "");
+    const vector<Token *> &tokens = loader->tokens();
     EXPECT_EQ(3, tokens.size());
   }
 
-  Util::Unlink(filename);
+  FileUtil::Unlink(filename);
 }
 
 TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
@@ -209,15 +204,14 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
 }
 
 TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
-  const string filename1 = Util::JoinPath(FLAGS_test_tmpdir, "test1.tsv");
-  const string filename2 = Util::JoinPath(FLAGS_test_tmpdir, "test2.tsv");
+  const string filename1 = FileUtil::JoinPath(FLAGS_test_tmpdir, "test1.tsv");
+  const string filename2 = FileUtil::JoinPath(FLAGS_test_tmpdir, "test2.tsv");
   const string filename = filename1 + "," + filename2;
 
   {
     OutputFileStream ofs(filename1.c_str());
     ofs << kTextLines;
   }
-
   {
     OutputFileStream ofs(filename2.c_str());
     ofs << kTextLines;
@@ -225,48 +219,39 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
 
   {
     scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
-    vector<Token *> tokens;
-    EXPECT_TRUE(loader->Open(filename));
-    loader->CollectTokens(&tokens);
-    EXPECT_EQ(6, tokens.size());
+    loader->Load(filename, "");
+    EXPECT_EQ(6, loader->tokens().size());
   }
 
-  Util::Unlink(filename1);
-  Util::Unlink(filename2);
+  FileUtil::Unlink(filename1);
+  FileUtil::Unlink(filename2);
 }
 
 TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
   scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
 
   const string dic_filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test.tsv");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test.tsv");
   const string reading_correction_filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "reading_correction.tsv");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "reading_correction.tsv");
 
   {
     OutputFileStream ofs(dic_filename.c_str());
     ofs << kTextLines;
   }
-
   {
     OutputFileStream ofs(reading_correction_filename.c_str());
     ofs << kReadingCorrectionLines;
   }
 
-  vector<Token *> tokens;
-  EXPECT_TRUE(loader->Open(dic_filename));
-  loader->CollectTokens(&tokens);
-  CHECK_EQ(tokens.size(), 3);
-
-  EXPECT_TRUE(loader->OpenReadingCorrection(reading_correction_filename));
-  tokens.clear();
-  loader->CollectTokens(&tokens);
-  CHECK_EQ(tokens.size(), 4);
-
+  loader->Load(dic_filename, reading_correction_filename);
+  const vector<Token *> &tokens = loader->tokens();
+  ASSERT_EQ(tokens.size(), 4);
   EXPECT_EQ("foobar_error", tokens[3]->key);
   EXPECT_EQ("foobar", tokens[3]->value);
   EXPECT_EQ(10, tokens[3]->lid);
   EXPECT_EQ(20, tokens[3]->rid);
   EXPECT_EQ(30 + 2302, tokens[3]->cost);
 }
+
 }  // namespace mozc

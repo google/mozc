@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -100,6 +100,7 @@ class LRUCache {
 
   // Returns the head of LRU list
   const Element *Head() const { return lru_head_; }
+  Element *MutableHead() const { return lru_head_; }
 
   // Returns the tail of LRU list
   const Element *Tail() const { return lru_tail_; }

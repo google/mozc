@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,55 +38,41 @@
 
 #include "base/base.h"
 #include "base/coordinates.h"
-#include "base/singleton.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
-#include "renderer/window_util.h"
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/composition_window.h"
 #include "renderer/win32/infolist_window.h"
 #include "renderer/win32/win32_renderer_util.h"
+#include "renderer/window_util.h"
 
 namespace mozc {
 namespace renderer {
 namespace win32 {
+
 using WTL::CPoint;
 using WTL::CRect;
+
 namespace {
+
 const uint32 kHideWindowDelay = 500;  // msec
 const POINT kInvalidMousePosition = {-65535, -65535};
 
-CRect GetPreeditRect(const commands::RendererCommand &command) {
-  const CRect preedit_rectangle(command.preedit_rectangle().left(),
-                                command.preedit_rectangle().top(),
-                                command.preedit_rectangle().right(),
-                                command.preedit_rectangle().bottom());
-
-  if (!command.has_application_info() ||
-      !command.application_info().has_target_window_handle()) {
-    return preedit_rectangle;
-  }
-
-  const HWND target_window_handle = reinterpret_cast<HWND>(
-        command.application_info().target_window_handle());
-  CRect result;
-  Singleton<LayoutManager>().get()->GetRectInPhysicalCoords(
-      target_window_handle, preedit_rectangle, &result);
-  return result;
-}
-}  // anonymous namespace
+}  // namespace
 
 WindowManager::WindowManager()
-    : candidates_finger_print_(0),
-      thread_id_(0),
-      send_command_interface_(NULL),
-      last_position_(kInvalidMousePosition),
-      main_window_(new CandidateWindow),
+    : main_window_(new CandidateWindow),
       cascading_window_(new CandidateWindow),
+      composition_window_list_(CompositionWindowList::CreateInstance()),
       infolist_window_(new InfolistWindow),
-      composition_window_list_(CompositionWindowList::CreateInstance()) {
-}
+      layout_manager_(new LayoutManager),
+      working_area_(WorkingAreaFactory::Create()),
+      send_command_interface_(nullptr),
+      last_position_(kInvalidMousePosition),
+      candidates_finger_print_(0),
+      thread_id_(0) {}
 
 WindowManager::~WindowManager() {}
 
@@ -95,11 +81,11 @@ void WindowManager::Initialize() {
   DCHECK(!cascading_window_->IsWindow());
   DCHECK(!infolist_window_->IsWindow());
 
-  main_window_->Create(NULL);
+  main_window_->Create(nullptr);
   main_window_->ShowWindow(SW_HIDE);
-  cascading_window_->Create(NULL);
+  cascading_window_->Create(nullptr);
   cascading_window_->ShowWindow(SW_HIDE);
-  infolist_window_->Create(NULL);
+  infolist_window_->Create(nullptr);
   infolist_window_->ShowWindow(SW_HIDE);
   composition_window_list_->Initialize();
 }
@@ -141,7 +127,7 @@ void WindowManager::HideAllWindows() {
 // TODO(yukawa): Refactor this method by making a new method in LayoutManager
 //   with unit tests so that LayoutManager can handle both composition windows
 //   and candidate windows.
-void WindowManager::UpdateLayout(
+void WindowManager::UpdateLayoutIMM32(
     const commands::RendererCommand &command) {
   typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
   typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
@@ -182,7 +168,7 @@ void WindowManager::UpdateLayout(
   CandidateWindowLayout candidate_layout;
   vector<CompositionWindowLayout> layouts;
   if (show_composition) {
-    if (!Singleton<LayoutManager>().get()->LayoutCompositionWindow(
+    if (!layout_manager_->LayoutCompositionWindow(
              command, &layouts, &candidate_layout)) {
       candidate_layout.Clear();
       layouts.clear();
@@ -248,13 +234,11 @@ void WindowManager::UpdateLayout(
   if (!candidate_layout.initialized()) {
     candidate_layout.Clear();
     if (is_suggest) {
-        Singleton<LayoutManager>().get()->
-            LayoutCandidateWindowForSuggestion(
-                app_info, &candidate_layout);
+      layout_manager_->LayoutCandidateWindowForSuggestion(
+          app_info, &candidate_layout);
     } else if (is_convert_or_predict) {
-        Singleton<LayoutManager>().get()->
-            LayoutCandidateWindowForConversion(
-                app_info, &candidate_layout);
+      layout_manager_->LayoutCandidateWindowForConversion(
+          app_info, &candidate_layout);
     }
   }
 
@@ -277,19 +261,13 @@ void WindowManager::UpdateLayout(
                            candidate_layout.position().y);
 
   // Obtain the monitor's working area
-  const HMONITOR monitor = ::MonitorFromPoint(
-      CPoint(target_point.x, target_point.y), MONITOR_DEFAULTTONEAREST);
-
   Rect working_area;
-  MONITORINFO monitor_info = {0};
-  monitor_info.cbSize = CCSIZEOF_STRUCT(MONITORINFO, dwFlags);
-  if (::GetMonitorInfo(monitor, &monitor_info) == 0) {
-    LOG(ERROR) << "GetMonitorInfo failed. last error = " << GetLastError();
-    working_area.size.height = 0;
-    working_area.size.width = 0;
-  } else {
-    const CRect area(monitor_info.rcWork);
-    working_area = Rect(area.left, area.top, area.Width(), area.Height());
+  {
+    CRect area;
+    if (working_area_->GetWorkingAreaFromPoint(
+            CPoint(target_point.x, target_point.y), &area)) {
+      working_area = Rect(area.left, area.top, area.Width(), area.Height());
+    }
   }
 
   // We prefer the left position of candidate strings is aligned to
@@ -371,8 +349,7 @@ void WindowManager::UpdateLayout(
     infolist_window_->SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0,
         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-    const int mode =
-        Singleton<LayoutManager>().get()->GetCompatibilityMode(app_info);
+    const int mode = layout_manager_->GetCompatibilityMode(app_info);
 
     // If SHOW_INFOLIST_IMMEDIATELY flag is set, we should show the InfoList
     // without delay. See the comment of SHOW_INFOLIST_IMMEDIATELY in
@@ -454,6 +431,12 @@ void WindowManager::UpdateLayout(
   }
 }
 
+void WindowManager::UpdateLayoutTSF(const commands::RendererCommand &command) {
+  // Currently implemented by IMM32 implementation.
+  // TODO(yukawa): Implement TSF version.
+  UpdateLayoutIMM32(command);
+}
+
 bool WindowManager::IsAvailable() const {
   return main_window_->IsWindow() &&
          cascading_window_->IsWindow() &&
@@ -485,7 +468,7 @@ void WindowManager::PreTranslateMessage(const MSG &message) {
   const CPoint cursor_pos_in_client_coords(GET_X_LPARAM(message.lParam),
                                            GET_Y_LPARAM(message.lParam));
   CPoint cursor_pos_in_logical_coords;
-  if (Singleton<LayoutManager>().get()->ClientPointToScreen(
+  if (layout_manager_->ClientPointToScreen(
           message.hwnd, cursor_pos_in_client_coords,
           &cursor_pos_in_logical_coords)) {
     // Since the renderer process is DPI-aware, we can safely use this
@@ -501,6 +484,7 @@ void WindowManager::PreTranslateMessage(const MSG &message) {
   main_window_->set_mouse_moving(is_moving);
   cascading_window_->set_mouse_moving(is_moving);
 }
+
 }  // namespace win32
 }  // namespace renderer
 }  // namespace mozc

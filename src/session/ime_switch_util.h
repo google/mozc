@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,14 @@
 #include <vector>
 
 #include "base/port.h"
-#include "session/commands.pb.h"
 
 namespace mozc {
+namespace commands {
+class KeyEvent;
+}  // namespace commands
+
 namespace config {
+
 class ImeSwitchUtil {
  public:
   // Returns true if 'key' is assigned for any command in direct mode.
@@ -49,8 +53,9 @@ class ImeSwitchUtil {
 
  private:
   // Should never be allocated.
-  DISALLOW_COPY_AND_ASSIGN(ImeSwitchUtil);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ImeSwitchUtil);
 };
+
 }  // namespace config
 }  // namespace mozc
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,18 +33,18 @@
 
 #include <string>
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
 #include "session/commands.pb.h"
-#include "session/ime_switch_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "win32/base/input_state.h"
+#include "win32/base/keyboard.h"
 #include "win32/ime/ime_core.h"
-#include "win32/ime/ime_keyboard.h"
-#include "win32/ime/ime_state.h"
 
 namespace mozc {
 namespace win32 {
@@ -134,9 +134,9 @@ class TestServerLauncher : public client::ServerLauncherInterface {
 class MockClient : public client::Client {
  public:
   MockClient()
-      : launcher_(NULL) {}
+      : launcher_(nullptr) {}
   explicit MockClient(const commands::Output &mock_response)
-      : launcher_(NULL) {
+      : launcher_(nullptr) {
     client_factory_.SetConnection(true);
     client_factory_.SetResult(true);
     client_factory_.SetServerProductVersion(Version::GetMozcVersion());
@@ -168,7 +168,6 @@ class MockClient : public client::Client {
 TEST(ImeCoreTest, OpenIME) {
   commands::Output mock_output;
   mock_output.set_consumed(true);
-  mock_output.set_elapsed_time(10);
   mock_output.set_mode(commands::FULL_KATAKANA);
   mock_output.mutable_status()->set_activated(true);
   mock_output.mutable_status()->set_mode(commands::FULL_KATAKANA);
@@ -196,7 +195,6 @@ TEST(ImeCoreTest, OpenIME) {
 TEST(ImeCoreTest, CloseIME) {
   commands::Output mock_output;
   mock_output.set_consumed(true);
-  mock_output.set_elapsed_time(10);
   mock_output.set_mode(commands::DIRECT);
   mock_output.mutable_status()->set_activated(false);
   mock_output.mutable_status()->set_mode(commands::HIRAGANA);

@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -795,7 +795,7 @@
         '../base/base.gyp:base',
         '../ipc/ipc.gyp:ipc',
         '../session/session_base.gyp:session_protocol',
-        '../usage_stats/usage_stats.gyp:usage_stats',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
         'gen_post_install_dialog_files',
       ],
       'conditions': [
@@ -965,6 +965,8 @@
         'tool/mozc_tool_libmain.cc',
       ],
       'dependencies': [
+        '../base/base.gyp:crash_report_handler',
+        '../config/config.gyp:stats_config_util',
         'about_dialog_lib',
         'administration_dialog_lib',
         'config_dialog_lib',
@@ -977,7 +979,6 @@
         'set_default_dialog_lib',
         'update_dialog_lib',
         'word_register_dialog_lib',
-        '../config/config.gyp:stats_config_util',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -1097,7 +1098,6 @@
         ['OS=="win"', {
           'product_name': '<(tool_product_name_win)',
           'sources': [
-            'tool/mozc_tool.exe.manifest',
             '<(gen_out_dir)/tool/mozc_tool_autogen.rc',
           ],
           'dependencies': [
@@ -1105,9 +1105,12 @@
             '../win32/base/win32_base.gyp:ime_base',
             'gen_mozc_tool_header',
           ],
-          'includes': [
-            '../gyp/postbuilds_win.gypi',
-          ],
+          'msvs_settings': {
+            'VCManifestTool': {
+              'AdditionalManifestFiles': 'tool/mozc_tool.exe.manifest',
+              'EmbedManifest': 'false',
+            },
+          },
         }],
       ],
     },

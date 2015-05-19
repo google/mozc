@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,21 +38,15 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/string_piece.h"
 #include "base/trie.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
+#include "storage/louds/bit_vector_based_array.h"
+#include "storage/louds/louds_trie.h"
 // for FRIEND_TEST
 #include "testing/base/public/gunit_prod.h"
-
-#ifdef MOZC_USE_MOZC_LOUDS
-#include "storage/louds/bit_vector_based_array.h"
-#include "dictionary/louds/louds_trie_adapter.h"
-#else
-#include "dictionary/rx/rx_trie.h"
-#include "dictionary/rx/rbx_array.h"
-#endif  // MOZC_USE_MOZC_LOUDS
-
 
 namespace mozc {
 
@@ -66,18 +60,71 @@ class SystemDictionaryCodecInterface;
 
 class SystemDictionary : public DictionaryInterface {
  public:
+  // Callback interface for dictionary traversal (currently implemented only for
+  // prefix search). Each method is called in the following manner:
+  //
+  // for (each key found) {
+  //   OnKey(key);
+  //   OnActualKey(key, actual_key, key != actual_key);
+  //   for (each token in the token array for the key) {
+  //     OnToken(key, actual_key, token);
+  //   }
+  // }
+  //
+  // Using the return value of each call of the three methods, you can tell the
+  // traverser how to proceed. The meanings of the four values are as follows:
+  //   1) TRAVERSE_DONE
+  //       Quit the traversal, i.e., no more callbacks for keys and/or tokens.
+  //   2) TRAVERSE_NEXT_KEY
+  //       Finish the traversal for the current key and search for the next key.
+  //       If returned from OnToken(), the remaining tokens are discarded.
+  //   3) TRAVERSE_CULL
+  //       Similar to TRAVERSE_NEXT_KEY, finish the traversal for the current
+  //       key but search for the next key by using search culling. Namely,
+  //       traversal of the subtree starting with the current key is skipped,
+  //       which is the difference from TRAVERSE_NEXT_KEY.
+  //   4) TRAVERSE_CONTINUE
+  //       Continue the traversal for the current key or tokens, namely:
+  //         - If returned from OnKey(), OnActualKey() will be called back.
+  //         - If returned from OnActualKey(), a series of OnToken()'s will be
+  //           called back.
+  //         - If returned from OnToken(), OnToken() will be called back again
+  //           with the next token, provided that it exists. Proceed to the next
+  //           key if there's no more token.
+  class Callback {
+   public:
+    enum ResultType {
+      TRAVERSE_DONE,
+      TRAVERSE_NEXT_KEY,
+      TRAVERSE_CULL,
+      TRAVERSE_CONTINUE,
+    };
 
-#ifdef MOZC_USE_MOZC_LOUDS
-  typedef dictionary::louds::LoudsTrieAdapter TrieType;
-  typedef dictionary::louds::Entry EntryType;
-  typedef storage::louds::BitVectorBasedArray ArrayType;
-  typedef storage::louds::KeyExpansionTable KeyExpansionTable;
-#else
-  typedef rx::RxTrie TrieType;
-  typedef rx::RxEntry EntryType;
-  typedef rx::RbxArray ArrayType;
-  typedef scoped_array<string> KeyExpansionTable;
-#endif  // MOZC_USE_MOZC_LOUDS
+    virtual ~Callback() {
+    }
+
+    // Called back when key is found.
+    virtual ResultType OnKey(const string &key) {
+      return TRAVERSE_CONTINUE;
+    }
+
+    // Called back when actual key is decoded. The third argument is guaranteed
+    // to be (key != actual_key) but computed in an efficient way.
+    virtual ResultType OnActualKey(
+        const string &key, const string &actual_key, bool is_expanded) {
+      return TRAVERSE_CONTINUE;
+    }
+
+    // Called back when a token is decoded.
+    virtual ResultType OnToken(const string &key,
+                               const string &expanded_key,
+                               const TokenInfo &token_info) {
+      return TRAVERSE_CONTINUE;
+    }
+
+   protected:
+    Callback() {}
+  };
 
   struct ReverseLookupResult {
     // Offset from the tokens section beginning.
@@ -96,19 +143,28 @@ class SystemDictionary : public DictionaryInterface {
   static SystemDictionary *CreateSystemDictionaryFromImage(
       const char *ptr, int len);
 
+  // Implementation of DictionaryInterface.
+  virtual bool HasValue(const StringPiece value) const;
+
   // Predictive lookup
   virtual Node *LookupPredictiveWithLimit(
       const char *str, int size, const Limit &limit,
       NodeAllocatorInterface *allocator) const;
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const;
+
   // Prefix lookup
   virtual Node *LookupPrefixWithLimit(const char *str, int size,
                                       const Limit &limit,
                                       NodeAllocatorInterface *allocator) const;
-  // Prefix lookup
   virtual Node *LookupPrefix(const char *str, int size,
                              NodeAllocatorInterface *allocator) const;
+  // TODO(noriyukit): We may want to define this method as a part of
+  // DictionaryInterface for general purpose prefix search.
+  void LookupPrefixWithCallback(const StringPiece key,
+                                bool use_kana_modifier_insensitive_lookup,
+                                Callback *callback) const;
+
   // Exact lookup
   virtual Node *LookupExact(const char *str, int size,
                             NodeAllocatorInterface *allocator) const;
@@ -133,31 +189,7 @@ class SystemDictionary : public DictionaryInterface {
     // Return results only for tokens with given |value_id|.
     // If VALUE_ID is specified
     int value_id;
-    int key_len_lower_limit;
-    int key_len_upper_limit;
-    // Starting position for begin with filter.
-    // Assume that the target key length >= pos.
-    // Do not filter if -1.
-    // We will check the key is beginning with the string in the list.
-    //
-    // Example:
-    //  key_begin_with_pos: 3
-    //  key_begin_with_list: a, b, cd,
-    //
-    //  input:
-    //   abcd -> NG (input + 3 is 'd')
-    //   abca -> OK
-    //   abcc -> NG (input + 3 does not start with any of 'a', 'b', and 'cd')
-    //   abccd -> OK
-    //   abcaaaa -> OK
-    int key_begin_with_pos;
-    // This does not have the ownership
-    const Trie<string> *key_begin_with_trie;
-    FilterInfo() : conditions(NONE), value_id(-1),
-                   key_len_lower_limit(0),
-                   key_len_upper_limit(kint32max),
-                   key_begin_with_pos(-1),
-                   key_begin_with_trie(NULL) {}
+    FilterInfo() : conditions(NONE), value_id(-1) {}
   };
 
   SystemDictionary();
@@ -178,19 +210,13 @@ class SystemDictionary : public DictionaryInterface {
       NodeAllocatorInterface *allocator,
       int *limit) const;
 
-  bool IsBadToken(const FilterInfo &filter,
-                  const dictionary::TokenInfo &token_info) const;
+  bool IsBadToken(const FilterInfo &filter, const TokenInfo &token_info) const;
 
-  Node *GetNodesFromLookupResults(const FilterInfo &filter,
-                                  const vector<EntryType> &results,
-                                  NodeAllocatorInterface *allocator,
-                                  int *limit) const;
-
-  Node *GetReverseLookupNodesForT13N(const string &value,
+  Node *GetReverseLookupNodesForT13N(const StringPiece value,
                                      NodeAllocatorInterface *allocator,
                                      int *limit) const;
 
-  Node *GetReverseLookupNodesForValue(const string &value,
+  Node *GetReverseLookupNodesForValue(const StringPiece value,
                                       NodeAllocatorInterface *allocator,
                                       int *limit) const;
 
@@ -203,14 +229,17 @@ class SystemDictionary : public DictionaryInterface {
       NodeAllocatorInterface *allocator,
       int *limit) const;
 
+  const storage::louds::KeyExpansionTable &GetExpansionTableBySetting(
+      const Limit &limit) const;
 
-  scoped_ptr<TrieType> key_trie_;
-  scoped_ptr<TrieType> value_trie_;
-  scoped_ptr<ArrayType> token_array_;
+  scoped_ptr<storage::louds::LoudsTrie> key_trie_;
+  scoped_ptr<storage::louds::LoudsTrie> value_trie_;
+  scoped_ptr<storage::louds::BitVectorBasedArray> token_array_;
   scoped_ptr<DictionaryFile> dictionary_file_;
   const uint32 *frequent_pos_;
   const SystemDictionaryCodecInterface *codec_;
   const Limit empty_limit_;
+  storage::louds::KeyExpansionTable hiragana_expansion_table_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);
 };

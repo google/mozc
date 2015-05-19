@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,15 @@
 
 #include "prediction/user_history_predictor.h"
 
-#include <map>
 #include <set>
 #include <string>
 
-#include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/password_manager.h"
+#include "base/port.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -46,12 +47,10 @@
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
-#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -59,10 +58,12 @@ DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_user_history_predictor);
 
 namespace mozc {
+
+using commands::Request;
+
 namespace {
 
-void MakeSegmentsForSuggestion(const string key,
-                               Segments *segments) {
+void MakeSegmentsForSuggestion(const string &key, Segments *segments) {
   segments->set_max_prediction_candidates_size(10);
   segments->set_request_type(Segments::SUGGESTION);
   Segment *seg = segments->add_segment();
@@ -70,8 +71,7 @@ void MakeSegmentsForSuggestion(const string key,
   seg->set_segment_type(Segment::FIXED_VALUE);
 }
 
-void MakeSegmentsForPrediction(const string key,
-                               Segments *segments) {
+void MakeSegmentsForPrediction(const string &key, Segments *segments) {
   segments->set_max_prediction_candidates_size(10);
   segments->set_request_type(Segments::PREDICTION);
   Segment *seg = segments->add_segment();
@@ -79,8 +79,7 @@ void MakeSegmentsForPrediction(const string key,
   seg->set_segment_type(Segment::FIXED_VALUE);
 }
 
-void MakeSegmentsForConversion(const string key,
-                               Segments *segments) {
+void MakeSegmentsForConversion(const string &key, Segments *segments) {
   segments->set_request_type(Segments::CONVERSION);
   Segment *seg = segments->add_segment();
   seg->set_key(key);
@@ -122,6 +121,16 @@ void AddCandidateWithDescription(const string &value,
                                  Segments *segments) {
   AddCandidateWithDescription(0, value, desc, segments);
 }
+
+bool FindCandidateByValue(const string &value, const Segments &segments) {
+  for (size_t i = 0;
+       i < segments.conversion_segment(0).candidates_size(); ++i) {
+    if (segments.conversion_segment(0).candidate(i).value == value) {
+      return true;
+    }
+  }
+  return false;
+}
 }   // anonymous namespace
 
 class UserHistoryPredictorTest : public ::testing::Test {
@@ -135,34 +144,27 @@ class UserHistoryPredictorTest : public ::testing::Test {
 
  protected:
   virtual void SetUp() {
-    kUseMockPasswordManager = true;
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
-    commands::RequestHandler::SetRequest(default_request_);
     data_and_predictor_.reset(CreateDataAndPredictor());
   }
 
   virtual void TearDown() {
     config::ConfigHandler::SetConfig(default_config_);
-    commands::RequestHandler::SetRequest(default_request_);
     FLAGS_enable_expansion_for_user_history_predictor = default_expansion_;
-  }
-
-  virtual void EnableZeroQuerySuggestion() {
-    commands::Request request;
-    request.set_zero_query_suggestion(true);
-    commands::RequestHandler::SetRequest(request);
-  }
-
-  virtual void DisableZeroQuerySuggestion() {
-    commands::Request request;
-    request.set_zero_query_suggestion(false);
-    commands::RequestHandler::SetRequest(request);
   }
 
   UserHistoryPredictor *GetUserHistoryPredictor() {
     return data_and_predictor_->predictor.get();
+  }
+
+  UserHistoryPredictor *GetUserHistoryPredictorWithClearedHistory() {
+    UserHistoryPredictor *predictor = data_and_predictor_->predictor.get();
+    predictor->WaitForSyncer();
+    predictor->ClearAllHistory();
+    predictor->WaitForSyncer();
+    return predictor;
   }
 
   DictionaryMock *GetDictionaryMock() {
@@ -175,6 +177,112 @@ class UserHistoryPredictorTest : public ::testing::Test {
 
   const commands::Request &default_request() const {
     return default_request_;
+  }
+
+  static bool IsSuggested(UserHistoryPredictor *predictor,
+                          const string &key, const string &value) {
+    const ConversionRequest conversion_request;
+    Segments segments;
+    MakeSegmentsForSuggestion(key, &segments);
+    return predictor->PredictForRequest(conversion_request, &segments) &&
+           FindCandidateByValue(value, segments);
+  }
+
+  static bool IsPredicted(UserHistoryPredictor *predictor,
+                          const string &key, const string &value) {
+    const ConversionRequest conversion_request;
+    Segments segments;
+    MakeSegmentsForPrediction(key, &segments);
+    return predictor->PredictForRequest(conversion_request, &segments) &&
+           FindCandidateByValue(value, segments);
+  }
+
+  static bool IsSuggestedAndPredicted(UserHistoryPredictor *predictor,
+                                      const string &key, const string &value) {
+    return IsSuggested(predictor, key, value) &&
+           IsPredicted(predictor, key, value);
+  }
+
+  static UserHistoryPredictor::Entry *InsertEntry(
+      UserHistoryPredictor *predictor,
+      const string &key, const string &value) {
+    UserHistoryPredictor::Entry *e =
+        &predictor->dic_->Insert(predictor->Fingerprint(key, value))->value;
+    e->set_key(key);
+    e->set_value(value);
+    e->set_removed(false);
+    return e;
+  }
+
+  static UserHistoryPredictor::Entry *AppendEntry(
+      UserHistoryPredictor *predictor,
+      const string &key, const string &value,
+      UserHistoryPredictor::Entry *prev) {
+    prev->add_next_entries()->set_entry_fp(
+        predictor->Fingerprint(key, value));
+    UserHistoryPredictor::Entry *e = InsertEntry(predictor, key, value);
+    return e;
+  }
+
+  static bool IsConnected(const UserHistoryPredictor::Entry &prev,
+                          const UserHistoryPredictor::Entry &next) {
+    const uint32 fp =
+        UserHistoryPredictor::Fingerprint(next.key(), next.value());
+    for (size_t i = 0; i < prev.next_entries_size(); ++i) {
+      if (prev.next_entries(i).entry_fp() == fp) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Helper function to create a test case for bigram history deletion.
+  static void InitHistory_JapaneseInput(
+      UserHistoryPredictor *predictor,
+      UserHistoryPredictor::Entry **japaneseinput,
+      UserHistoryPredictor::Entry **japanese,
+      UserHistoryPredictor::Entry **input) {
+    // Make the history for ("japaneseinput", "JapaneseInput"). It's assumed
+    // that this sentence consists of two segments, "japanese" and "input". So,
+    // the following history entries are constructed:
+    //   ("japaneseinput", "JapaneseInput")  // Unigram
+    //   ("japanese", "Japanese") --- ("input", "Input")  // Bigram chain
+    *japaneseinput = InsertEntry(predictor, "japaneseinput", "JapaneseInput");
+    *japanese = InsertEntry(predictor, "japanese", "Japanese");
+    *input = AppendEntry(predictor, "input", "Input", *japanese);
+
+    // Check the predictor functionality for the above history structure.
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "input", "Input"));
+  }
+
+  // Helper function to create a test case for trigram history deletion.
+  static void InitHistory_JapaneseInputMethod(
+      UserHistoryPredictor *predictor,
+      UserHistoryPredictor::Entry **japaneseinputmethod,
+      UserHistoryPredictor::Entry **japanese,
+      UserHistoryPredictor::Entry **input,
+      UserHistoryPredictor::Entry **method) {
+    // Make the history for ("japaneseinputmethod", "JapaneseInputMethod"). It's
+    // assumed that this sentence consists of three segments, "japanese",
+    // "input" and "method". So, the following history entries are constructed:
+    //   ("japaneseinputmethod", "JapaneseInputMethod")  // Unigram
+    //   ("japanese", "Japanese") -- ("input", "Input") -- ("method", "Method")
+    *japaneseinputmethod =
+        InsertEntry(predictor, "japaneseinputmethod", "JapaneseInputMethod");
+    *japanese = InsertEntry(predictor, "japanese", "Japanese");
+    *input = AppendEntry(predictor, "input", "Input", *japanese);
+    *method = AppendEntry(predictor, "method", "Method", *input);
+
+    // Check the predictor functionality for the above history structure.
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                        "japan", "JapaneseInputMethod"));
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
   }
 
  private:
@@ -203,35 +311,34 @@ class UserHistoryPredictorTest : public ::testing::Test {
 };
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
+  const ConversionRequest conversion_request;
+
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->WaitForSyncer();
 
     // Nothing happen
     {
-      ConversionRequest request;
       Segments segments;
       // "てすと"
       MakeSegmentsForSuggestion(
           "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8", &segments);
-      EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+      EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
       EXPECT_EQ(0, segments.segment(0).candidates_size());
     }
 
     // Nothing happen
     {
-      ConversionRequest request;
       Segments segments;
       // "てすと"
       MakeSegmentsForPrediction(
           "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8", &segments);
-      EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+      EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
       EXPECT_EQ(0, segments.segment(0).candidates_size());
     }
 
     // Insert two items
     {
-      ConversionRequest request;
       Segments segments;
       // "わたしのなまえはなかのです"
       MakeSegmentsForConversion
@@ -249,7 +356,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+      EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
       // "私の名前は中野です"
       EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
                 "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
@@ -260,7 +367,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       // "わたしの"
       MakeSegmentsForPrediction(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+      EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
       // "私の名前は中野です"
       EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
                 "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
@@ -277,7 +384,6 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->WaitForSyncer();
-    ConversionRequest request;
     Segments segments;
 
     // turn off
@@ -290,7 +396,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+      EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
 
       config.set_use_history_suggest(true);
       config.set_incognito_mode(true);
@@ -299,7 +405,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+      EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
     }
 
     // turn on
@@ -312,7 +418,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // "私の名前は中野です"
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
@@ -322,7 +428,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     // "わたしの"
     MakeSegmentsForPrediction(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // "私の名前は中野です"
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
@@ -336,7 +442,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
         "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
         "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99",
         &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // "私の名前は中野です"
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
@@ -348,7 +454,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
         "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF\xE3\x81\xAA"
         "\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99", &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // "私の名前は中野です"
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
@@ -363,38 +469,36 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->WaitForSyncer();
-    ConversionRequest request;
     Segments segments;
 
     // reproducesd
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+    EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
 
     // "わたしの"
     MakeSegmentsForPrediction(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+    EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
   }
 
   // nothing happen
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->WaitForSyncer();
-    ConversionRequest request;
     Segments segments;
 
     // reproducesd
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+    EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
 
     // "わたしの"
     MakeSegmentsForPrediction(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+    EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
   }
 }
 
@@ -434,11 +538,11 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion) {
 
   // Obtain input histories via Predict method.
   {
-    ConversionRequest request;
+    const ConversionRequest conversion_request;
     Segments segments;
     // "かま"
     MakeSegmentsForSuggestion("\xE3\x81\x8B\xE3\x81\xBE", &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     set<string> expected_candidates;
     // "火魔汰"
     expected_candidates.insert("\xE7\x81\xAB\xE9\xAD\x94\xE6\xB1\xB0");
@@ -463,13 +567,15 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   // "テスト"
   const char kDescription[] = "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88";
 #endif  // DEBUG
+
+  const ConversionRequest conversion_request;
+
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->WaitForSyncer();
 
     // Insert two items
     {
-      ConversionRequest request;
       Segments segments;
       // "わたしのなまえはなかのです"
       MakeSegmentsForConversion
@@ -489,7 +595,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+      EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
       // "私の名前は中野です"
       EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
                 "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
@@ -501,7 +607,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
       // "わたしの"
       MakeSegmentsForPrediction(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+      EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
       // "私の名前は中野です"
       EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
                 "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
@@ -518,7 +624,6 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->WaitForSyncer();
-    ConversionRequest request;
     Segments segments;
 
     // turn off
@@ -532,7 +637,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+      EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
 
       config.set_use_history_suggest(true);
       config.set_incognito_mode(true);
@@ -541,7 +646,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+      EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
     }
 
     // turn on
@@ -555,7 +660,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // "私の名前は中野です"
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
@@ -566,7 +671,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
     // "わたしの"
     MakeSegmentsForPrediction(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // "私の名前は中野です"
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
@@ -581,7 +686,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
         "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
         "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99",
         &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // "私の名前は中野です"
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
@@ -594,7 +699,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
         "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF\xE3\x81\xAA"
         "\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99", &segments);
-    EXPECT_TRUE(predictor->PredictForRequest(request, &segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // "私の名前は中野です"
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
@@ -610,38 +715,36 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->WaitForSyncer();
-    ConversionRequest request;
     Segments segments;
 
     // reproducesd
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+    EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
 
     // "わたしの"
     MakeSegmentsForPrediction(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+    EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
   }
 
   // nothing happen
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->WaitForSyncer();
-    ConversionRequest request;
     Segments segments;
 
     // reproducesd
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+    EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
 
     // "わたしの"
     MakeSegmentsForPrediction(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor->PredictForRequest(request, &segments));
+    EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
   }
 }
 
@@ -1033,14 +1136,21 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
   predictor->WaitForSyncer();
   predictor->ClearAllHistory();
   predictor->WaitForSyncer();
-  EnableZeroQuerySuggestion();
+
+  commands::Request request;
+  request.set_zero_query_suggestion(true);
+  const ConversionRequest conversion_request(NULL, &request);
+  commands::Request non_zero_query_request;
+  non_zero_query_request.set_zero_query_suggestion(false);
+  const ConversionRequest non_zero_query_conversion_request(
+      NULL, &non_zero_query_request);
 
   Segments segments;
 
   // No history segments
   segments.Clear();
   MakeSegmentsForSuggestion("", &segments);
-  EXPECT_FALSE(predictor->Predict(&segments));
+  EXPECT_FALSE(predictor->PredictForRequest(conversion_request, &segments));
 
   {
     segments.Clear();
@@ -1081,17 +1191,15 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     predictor->Finish(&segments);
     segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
-    DisableZeroQuerySuggestion();
+    // Zero query suggestion is disabled.
     segments.pop_back_segment();
     MakeSegmentsForSuggestion("", &segments);  // empty request
-    EXPECT_FALSE(predictor->Predict(&segments));
-
-    // Enable zero query suggestions
-    EnableZeroQuerySuggestion();
+    EXPECT_FALSE(predictor->PredictForRequest(
+        non_zero_query_conversion_request, &segments));
 
     segments.pop_back_segment();
     MakeSegmentsForSuggestion("", &segments);   // empty request
-    EXPECT_TRUE(predictor->Predict(&segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // last-pushed segment is "大阪"
     // "大阪"
     EXPECT_EQ("\xE5\xA4\xA7\xE9\x98\xAA",
@@ -1103,22 +1211,22 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     segments.pop_back_segment();
     // "は"
     MakeSegmentsForSuggestion("\xE3\x81\xAF", &segments);
-    EXPECT_TRUE(predictor->Predict(&segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "た"
     MakeSegmentsForSuggestion("\xE3\x81\x9F", &segments);
-    EXPECT_TRUE(predictor->Predict(&segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "き"
     MakeSegmentsForSuggestion("\xE3\x81\x8D", &segments);
-    EXPECT_TRUE(predictor->Predict(&segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "お"
     MakeSegmentsForSuggestion("\xE3\x81\x8A", &segments);
-    EXPECT_TRUE(predictor->Predict(&segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
   }
 
   predictor->ClearAllHistory();
@@ -1144,27 +1252,24 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
-    DisableZeroQuerySuggestion();
-
+    // Zero query suggestion is disabled.
     MakeSegmentsForSuggestion("", &segments);  // empty request
-    EXPECT_FALSE(predictor->Predict(&segments));
-
-    // Enable zero query suggestions
-    EnableZeroQuerySuggestion();
+    EXPECT_FALSE(predictor->PredictForRequest(
+        non_zero_query_conversion_request, &segments));
 
     segments.pop_back_segment();
     MakeSegmentsForSuggestion("", &segments);   // empty request
-    EXPECT_TRUE(predictor->Predict(&segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "は"
     MakeSegmentsForSuggestion("\xE3\x81\xAF", &segments);
-    EXPECT_TRUE(predictor->Predict(&segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "た"
     MakeSegmentsForSuggestion("\xE3\x81\x9F", &segments);
-    EXPECT_TRUE(predictor->Predict(&segments));
+    EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
   }
 }
 
@@ -1829,6 +1934,7 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
         segments.Clear();
         MakeSegmentsForSuggestion(commands[i].key, &segments);
         predictor->Predict(&segments);
+        break;
       default:
         break;
     }
@@ -2013,30 +2119,73 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
 
   UserHistoryPredictor::Entry entry;
 
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
 
   entry.set_key("key");
   entry.set_value("value");
 
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
 
   entry.set_removed(true);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
 
   entry.set_removed(false);
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
 
   entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_ALL_EVENT);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
 
   entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_UNUSED_EVENT);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
 
   entry.set_removed(true);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
 
   entry.Clear();
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
+
+  entry.Clear();
+  entry.set_key("key");
+  entry.set_value("value");
+  // "絵文字"
+  entry.set_description("\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97");
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntry(entry, 0));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry, 0));
+
+  // An android pua emoji example. (Note: 0xFE000 is in the region).
+  Util::UCS4ToUTF8(0xFE000, entry.mutable_value());
+  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntry(entry, 0));
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::DOCOMO_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::SOFTBANK_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::KDDI_EMOJI));
+
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry, 0));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::DOCOMO_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::SOFTBANK_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::KDDI_EMOJI));
 
   SuppressionDictionary *d = GetSuppressionDictionary();
   DCHECK(d);
@@ -2046,11 +2195,15 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
 
   entry.set_key("key");
   entry.set_value("value");
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
 
   entry.set_key("foo");
   entry.set_value("bar");
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
+      entry, Request::UNICODE_EMOJI));
 
   d->Lock();
   d->Clear();
@@ -2167,7 +2320,7 @@ const PrivacySensitiveTestData kNonSensitiveCases[] = {
     "by mistake.",
     "0007",
     // "０００７"
-    "\xEF\xBC\x90\\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x97",
+    "\xef\xbc\x90\xef\xbc\x90\xef\xbc\x90\xef\xbc\x97"
   }, {
     kNonSensitive,
     "Type a ZIP number.",
@@ -2405,7 +2558,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveMultiSegmentsTest) {
 
 TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
   const string filename =
-      Util::JoinPath(Util::GetUserProfileDirectory(), "test");
+      FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), "test");
 
   UserHistoryStorage storage1(filename);
 
@@ -2418,7 +2571,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
   storage2.Load();
 
   EXPECT_EQ(storage1.DebugString(), storage2.DebugString());
-  Util::Unlink(filename);
+  FileUtil::Unlink(filename);
 }
 
 TEST_F(UserHistoryPredictorTest, RomanFuzzyPrefixMatch) {
@@ -2978,18 +3131,21 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
   scoped_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
   scoped_ptr<composer::Composer> composer(
-      new composer::Composer(table.get(), default_request()));
-  ConversionRequest request;
+      new composer::Composer(table.get(), &default_request()));
+  ConversionRequest conversion_request;
   Segments segments;
 
-  InitSegmentsFromInputSequence("gu-g", composer.get(), &request, &segments);
+  InitSegmentsFromInputSequence("gu-g",
+                                composer.get(),
+                                &conversion_request,
+                                &segments);
 
   {
     FLAGS_enable_expansion_for_user_history_predictor = true;
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(request,
+    UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3015,7 +3171,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(request,
+    UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3040,12 +3196,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
   scoped_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
   scoped_ptr<composer::Composer> composer(
-      new composer::Composer(table.get(), default_request()));
-  ConversionRequest request;
+      new composer::Composer(table.get(), &default_request()));
+  ConversionRequest conversion_request;
   Segments segments;
 
   for (size_t i = 0; i < 1000; ++i) {
-    composer.reset(new composer::Composer(table.get(), default_request()));
+    composer.reset(new composer::Composer(table.get(), &default_request()));
     const int len = 1 + Util::Random(4);
     DCHECK_GE(len, 1);
     DCHECK_LE(len, 5);
@@ -3053,11 +3209,14 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
     for (size_t j = 0; j < len; ++j) {
       input += GetRandomAscii();
     }
-    InitSegmentsFromInputSequence(input, composer.get(), &request, &segments);
+    InitSegmentsFromInputSequence(input,
+                                  composer.get(),
+                                  &conversion_request,
+                                  &segments);
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(request,
+    UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3072,16 +3231,19 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   scoped_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
   scoped_ptr<composer::Composer> composer(
-      new composer::Composer(table.get(), default_request()));
-  ConversionRequest request;
+      new composer::Composer(table.get(), &default_request()));
+  ConversionRequest conversion_request;
   Segments segments;
 
   {
-    InitSegmentsFromInputSequence("8,+", composer.get(), &request, &segments);
+    InitSegmentsFromInputSequence("8,+",
+                                  composer.get(),
+                                  &conversion_request,
+                                  &segments);
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(request,
+    UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3094,18 +3256,18 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   scoped_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
   scoped_ptr<composer::Composer> composer(
-      new composer::Composer(table.get(), default_request()));
-  scoped_ptr<ConversionRequest> request(NULL);
+      new composer::Composer(table.get(), &default_request()));
+  scoped_ptr<ConversionRequest> conversion_request(NULL);
   Segments segments;
 
   {
-    request.reset(new ConversionRequest);
+    conversion_request.reset(new ConversionRequest);
     InitSegmentsFromInputSequence("n", composer.get(),
-                                  request.get(), &segments);
+                                  conversion_request.get(), &segments);
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(*request,
+    UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3125,16 +3287,16 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     EXPECT_EQ("\xe3\x81\xaa", value);
   }
 
-  composer.reset(new composer::Composer(table.get(), default_request()));
+  composer.reset(new composer::Composer(table.get(), &default_request()));
   segments.Clear();
   {
-    request.reset(new ConversionRequest);
+    conversion_request.reset(new ConversionRequest);
     InitSegmentsFromInputSequence("nn", composer.get(),
-                                  request.get(), &segments);
+                                  conversion_request.get(), &segments);
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(*request,
+    UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3146,16 +3308,16 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     EXPECT_TRUE(expanded.get() == NULL);
   }
 
-  composer.reset(new composer::Composer(table.get(), default_request()));
+  composer.reset(new composer::Composer(table.get(), &default_request()));
   segments.Clear();
   {
-    request.reset(new ConversionRequest);
+    conversion_request.reset(new ConversionRequest);
     InitSegmentsFromInputSequence("n'", composer.get(),
-                                  request.get(), &segments);
+                                  conversion_request.get(), &segments);
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(*request,
+    UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3167,16 +3329,16 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     EXPECT_TRUE(expanded.get() == NULL);
   }
 
-  composer.reset(new composer::Composer(table.get(), default_request()));
+  composer.reset(new composer::Composer(table.get(), &default_request()));
   segments.Clear();
   {
-    request.reset(new ConversionRequest);
+    conversion_request.reset(new ConversionRequest);
     InitSegmentsFromInputSequence("n'n", composer.get(),
-                                  request.get(), &segments);
+                                  conversion_request.get(), &segments);
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(*request,
+    UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3203,16 +3365,17 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
   scoped_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://flick-hiragana.tsv");
   scoped_ptr<composer::Composer> composer(
-      new composer::Composer(table.get(), default_request()));
-  ConversionRequest request;
+      new composer::Composer(table.get(), &default_request()));
+  ConversionRequest conversion_request;
   Segments segments;
 
   {
-    InitSegmentsFromInputSequence("/", composer.get(), &request, &segments);
+    InitSegmentsFromInputSequence("/", composer.get(), &conversion_request,
+                                  &segments);
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(request,
+    UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3238,18 +3401,20 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
   scoped_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://12keys-hiragana.tsv");
   scoped_ptr<composer::Composer> composer(
-      new composer::Composer(table.get(), default_request()));
-  ConversionRequest request;
+      new composer::Composer(table.get(), &default_request()));
+  ConversionRequest conversion_request;
   Segments segments;
 
   {
     // "わ00"
     InitSegmentsFromInputSequence("\xe3\x82\x8f\x30\x30",
-                                  composer.get(), &request, &segments);
+                                  composer.get(),
+                                  &conversion_request,
+                                  &segments);
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(request,
+    UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3274,20 +3439,20 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
   scoped_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://kana.tsv");
   scoped_ptr<composer::Composer> composer(
-      new composer::Composer(table.get(), default_request()));
-  ConversionRequest request;
+      new composer::Composer(table.get(), &default_request()));
+  ConversionRequest conversion_request;
   Segments segments;
 
   // "あか"
   InitSegmentsFromInputSequence("\xe3\x81\x82\xe3\x81\x8b",
-                                composer.get(), &request, &segments);
+                                composer.get(), &conversion_request, &segments);
 
   {
     FLAGS_enable_expansion_for_user_history_predictor = true;
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(request,
+    UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3313,7 +3478,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
     string input_key;
     string base;
     scoped_ptr<Trie<string> > expanded;
-    UserHistoryPredictor::GetInputKeyFromSegments(request,
+    UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
                                                   &base,
@@ -3325,4 +3490,863 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
     EXPECT_TRUE(expanded.get() == NULL);
   }
 }
+
+TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  predictor->WaitForSyncer();
+  predictor->ClearAllHistory();
+  predictor->WaitForSyncer();
+
+  Segments segments;
+  {
+    // "わたしのなまえはなかのです"
+    const char kKey[] = "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae\xe3"
+        "\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf\xe3\x81\xaa\xe3\x81\x8b"
+        "\xe3\x81\xae\xe3\x81\xa7\xe3\x81\x99";
+    // "私の名前は中野です"
+    const char kValue[] = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d"
+        "\xe3\x81\xaf\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99";
+    MakeSegmentsForPrediction(kKey, &segments);
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->add_candidate();
+    CHECK(candidate);
+    candidate->Init();
+    candidate->value = kValue;
+    candidate->content_value = kValue;
+    candidate->key = kKey;
+    candidate->content_key = kKey;
+    // "わたしの, 私の"
+    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 2));
+    // "なまえは, 名前は"
+    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 3));
+    // "なかのです, 中野です"
+    candidate->inner_segment_boundary.push_back(pair<int, int>(5, 4));
+  }
+  predictor->Finish(&segments);
+  segments.Clear();
+
+  // "なかの"
+  MakeSegmentsForPrediction("\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae", &segments);
+  EXPECT_TRUE(predictor->Predict(&segments));
+  // "中野です"
+  EXPECT_TRUE(FindCandidateByValue(
+      "\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99", segments));
+
+  segments.Clear();
+  // "なまえ"
+  MakeSegmentsForPrediction("\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88", &segments);
+  EXPECT_TRUE(predictor->Predict(&segments));
+  // "名前は"
+  EXPECT_TRUE(FindCandidateByValue(
+      "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", segments));
+  // "名前は中野です"
+  EXPECT_TRUE(FindCandidateByValue(
+      "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf\xe4\xb8\xad\xe9\x87\x8e"
+      "\xe3\x81\xa7\xe3\x81\x99", segments));
+}
+
+TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  predictor->WaitForSyncer();
+  predictor->ClearAllHistory();
+  predictor->WaitForSyncer();
+
+  Segments segments;
+  {
+    // "わたしのなまえはなかのです"
+    const char kKey[] = "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae"
+        "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf\xe3\x81\xaa\xe3"
+        "\x81\x8b\xe3\x81\xae\xe3\x81\xa7\xe3\x81\x99";
+    // "私の名前は中野です"
+    const char kValue[] = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d"
+        "\xe3\x81\xaf\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99";
+    MakeSegmentsForPrediction(kKey, &segments);
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->add_candidate();
+    CHECK(candidate);
+    candidate->Init();
+    candidate->value = kValue;
+    candidate->content_value = kValue;
+    candidate->key = kKey;
+    candidate->content_key = kKey;
+    // "わたしの, 私の"
+    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 2));
+    // "なまえは, 名前は"
+    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 3));
+    // "なかのです, 中野です"
+    candidate->inner_segment_boundary.push_back(pair<int, int>(5, 4));
+  }
+  predictor->Finish(&segments);
+  segments.Clear();
+
+  // "わたしの"
+  MakeSegmentsForConversion(
+      "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae", &segments);
+  // "私の"
+  AddCandidate(0, "\xe7\xa7\x81\xe3\x81\xae", &segments);
+  predictor->Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  MakeSegmentsForSuggestion("", &segments);   // empty request
+  commands::Request request;
+  request.set_zero_query_suggestion(true);
+  const ConversionRequest conversion_request(NULL, &request);
+  EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
+  // "名前は"
+  EXPECT_TRUE(FindCandidateByValue(
+      "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", segments));
+}
+
+TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  predictor->WaitForSyncer();
+  predictor->ClearAllHistory();
+  predictor->WaitForSyncer();
+
+  commands::Request request;
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  const ConversionRequest conversion_request(NULL, &request);
+
+  Segments segments;
+  for (size_t i = 0; i < 3; ++i) {
+    // "よろしくおねがいします"
+    const char kKey[] = "\xe3\x82\x88\xe3\x82\x8d\xe3\x81\x97\xe3"
+        "\x81\x8f\xe3\x81\x8a\xe3\x81\xad\xe3\x81\x8c\xe3\x81\x84"
+        "\xe3\x81\x97\xe3\x81\xbe\xe3\x81\x99";
+    // "よろしくお願いします"
+    const char kValue[] = "\xe3\x82\x88\xe3\x82\x8d\xe3\x81\x97\xe3"
+        "\x81\x8f\xe3\x81\x8a\xe9\xa1\x98\xe3\x81\x84\xe3\x81\x97\xe3"
+        "\x81\xbe\xe3\x81\x99";
+    MakeSegmentsForPrediction(kKey, &segments);
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->add_candidate();
+    CHECK(candidate);
+    candidate->Init();
+    candidate->value = kValue;
+    candidate->content_value = kValue;
+    candidate->key = kKey;
+    candidate->content_key = kKey;
+    predictor->Finish(&segments);
+    segments.Clear();
+  }
+
+  // "よろ"
+  MakeSegmentsForPrediction("\xe3\x82\x88\xe3\x82\x8d", &segments);
+  EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
+  EXPECT_TRUE(FindCandidateByValue(
+      // "よろしくお願いします"
+      "\xe3\x82\x88\xe3\x82\x8d\xe3\x81\x97\xe3\x81\x8f\xe3\x81\x8a\xe9\xa1"
+      "\x98\xe3\x81\x84\xe3\x81\x97\xe3\x81\xbe\xe3\x81\x99", segments));
+}
+
+TEST_F(UserHistoryPredictorTest, EraseNextEntries) {
+  UserHistoryPredictor::Entry e;
+  e.add_next_entries()->set_entry_fp(100);
+  e.add_next_entries()->set_entry_fp(10);
+  e.add_next_entries()->set_entry_fp(30);
+  e.add_next_entries()->set_entry_fp(10);
+  e.add_next_entries()->set_entry_fp(100);
+
+  UserHistoryPredictor::EraseNextEntries(1234, &e);
+  EXPECT_EQ(5, e.next_entries_size());
+
+  UserHistoryPredictor::EraseNextEntries(30, &e);
+  ASSERT_EQ(4, e.next_entries_size());
+  for (size_t i = 0; i < 4; ++i) {
+    EXPECT_NE(30, e.next_entries(i).entry_fp());
+  }
+
+  UserHistoryPredictor::EraseNextEntries(10, &e);
+  ASSERT_EQ(2, e.next_entries_size());
+  for (size_t i = 0; i < 2; ++i) {
+    EXPECT_NE(10, e.next_entries(i).entry_fp());
+  }
+
+  UserHistoryPredictor::EraseNextEntries(100, &e);
+  EXPECT_EQ(0, e.next_entries_size());
+}
+
+TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Set up the following chain of next entries:
+  // ("abc", "ABC")
+  // (  "a",   "A") --- ("b", "B") --- ("c", "C")
+  UserHistoryPredictor::Entry *abc = InsertEntry(predictor, "abc", "ABC");
+  UserHistoryPredictor::Entry *a = InsertEntry(predictor, "a", "A");
+  UserHistoryPredictor::Entry *b = AppendEntry(predictor, "b", "B", a);
+  UserHistoryPredictor::Entry *c = AppendEntry(predictor, "c", "C", b);
+
+  vector<UserHistoryPredictor::Entry *> entries;
+  entries.push_back(abc);
+  entries.push_back(a);
+  entries.push_back(b);
+  entries.push_back(c);
+
+  // The method should return NOT_FOUND for key-value pairs not in the chain.
+  for (size_t i = 0; i < entries.size(); ++i) {
+    vector<StringPiece> dummy1, dummy2;
+    EXPECT_EQ(UserHistoryPredictor::NOT_FOUND,
+              predictor->RemoveNgramChain("hoge", "HOGE", entries[i],
+                                          &dummy1, 0, &dummy2, 0));
+  }
+  // Moreover, all nodes and links should be kept.
+  for (size_t i = 0; i < entries.size(); ++i) {
+    EXPECT_FALSE(entries[i]->removed());
+  }
+  EXPECT_TRUE(IsConnected(*a, *b));
+  EXPECT_TRUE(IsConnected(*b, *c));
+
+  {
+    // Try deleting the chain for "abc". Only the link from "b" to "c" should be
+    // removed.
+    vector<StringPiece> dummy1, dummy2;
+    EXPECT_EQ(UserHistoryPredictor::DONE,
+              predictor->RemoveNgramChain("abc", "ABC", a,
+                                          &dummy1, 0, &dummy2, 0));
+    for (size_t i = 0; i < entries.size(); ++i) {
+      EXPECT_FALSE(entries[i]->removed());
+    }
+    EXPECT_TRUE(IsConnected(*a, *b));
+    EXPECT_FALSE(IsConnected(*b, *c));
+  }
+  {
+    // Try deleting the chain for "a". Since this is the head of the chain, the
+    // function returns TAIL and nothing should be removed.
+    vector<StringPiece> dummy1, dummy2;
+    EXPECT_EQ(UserHistoryPredictor::TAIL,
+              predictor->RemoveNgramChain("a", "A", a,
+                                          &dummy1, 0, &dummy2, 0));
+    for (size_t i = 0; i < entries.size(); ++i) {
+      EXPECT_FALSE(entries[i]->removed());
+    }
+    EXPECT_TRUE(IsConnected(*a, *b));
+    EXPECT_FALSE(IsConnected(*b, *c));
+  }
+  {
+    // Further delete the chain for "ab".  Now all the links should be removed.
+    vector<StringPiece> dummy1, dummy2;
+    EXPECT_EQ(UserHistoryPredictor::DONE,
+              predictor->RemoveNgramChain("ab", "AB", a,
+                                          &dummy1, 0, &dummy2, 0));
+    for (size_t i = 0; i < entries.size(); ++i) {
+      EXPECT_FALSE(entries[i]->removed());
+    }
+    EXPECT_FALSE(IsConnected(*a, *b));
+    EXPECT_FALSE(IsConnected(*b, *c));
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Unigram) {
+  // Tests ClearHistoryEntry() for unigram history.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Add a unigram history ("japanese", "Japanese").
+  UserHistoryPredictor::Entry *e =
+      InsertEntry(predictor, "japanese", "Japanese");
+
+  // "Japanese" should be suggested and predicted from "japan".
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+
+  // Delete the history.
+  EXPECT_TRUE(predictor->ClearHistoryEntry("japanese", "Japanese"));
+
+  EXPECT_TRUE(e->removed());
+
+  // "Japanese" should be never be suggested nor predicted.
+  const string key = "japanese";
+  for (size_t i = 0; i < key.size(); ++i) {
+    const string &prefix = key.substr(0, i);
+    EXPECT_FALSE(IsSuggested(predictor, prefix, "Japanese"));
+    EXPECT_FALSE(IsPredicted(predictor, prefix, "Japanese"));
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteWhole) {
+  // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
+  // of whole sentence.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the history for ("japaneseinput", "JapaneseInput"). It's assumed that
+  // this sentence consists of two segments, "japanese" and "input". So, the
+  // following history entries are constructed:
+  //   ("japaneseinput", "JapaneseInput")  // Unigram
+  //   ("japanese", "Japanese") --- ("input", "Input")  // Bigram chain
+  UserHistoryPredictor::Entry *japaneseinput;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  InitHistory_JapaneseInput(predictor, &japaneseinput, &japanese, &input);
+
+  // Check the predictor functionality for the above history structure.
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "input", "Input"));
+
+  // Delete the unigram ("japaneseinput", "JapaneseInput").
+  EXPECT_TRUE(predictor->ClearHistoryEntry("japaneseinput", "JapaneseInput"));
+
+  EXPECT_TRUE(japaneseinput->removed());
+  EXPECT_FALSE(japanese->removed());
+  EXPECT_FALSE(input->removed());
+  EXPECT_FALSE(IsConnected(*japanese, *input));
+
+  // Now "JapaneseInput" should never be suggested nor predicted.
+  const string key = "japaneseinput";
+  for (size_t i = 0; i < key.size(); ++i) {
+    const string &prefix = key.substr(0, i);
+    EXPECT_FALSE(IsSuggested(predictor, prefix, "Japaneseinput"));
+    EXPECT_FALSE(IsPredicted(predictor, prefix, "Japaneseinput"));
+  }
+
+  // However, predictor should show "Japanese" and "Input".
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteFirst) {
+  // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
+  // of the first node of the bigram chain.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the history for ("japaneseinput", "JapaneseInput"), i.e., the same
+  // history structure as ClearHistoryEntry_Bigram_DeleteWhole is constructed.
+  UserHistoryPredictor::Entry *japaneseinput;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  InitHistory_JapaneseInput(predictor, &japaneseinput, &japanese, &input);
+
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "input", "Input"));
+
+  // Delete the first bigram node ("japanese", "Japanese").
+  EXPECT_TRUE(predictor->ClearHistoryEntry("japanese", "Japanese"));
+
+  // Note that the first node was removed but the connection to the second node
+  // is still valid.
+  EXPECT_FALSE(japaneseinput->removed());
+  EXPECT_TRUE(japanese->removed());
+  EXPECT_FALSE(input->removed());
+  EXPECT_TRUE(IsConnected(*japanese, *input));
+
+  // Now "Japanese" should never be suggested nor predicted.
+  const string key = "japaneseinput";
+  for (size_t i = 0; i < key.size(); ++i) {
+    const string &prefix = key.substr(0, i);
+    EXPECT_FALSE(IsSuggested(predictor, prefix, "Japanese"));
+    EXPECT_FALSE(IsPredicted(predictor, prefix, "Japanese"));
+  }
+
+  // However, predictor should show "JapaneseInput" and "Input".
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteSecond) {
+  // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
+  // of the first node of the bigram chain.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the history for ("japaneseinput", "JapaneseInput"), i.e., the same
+  // history structure as ClearHistoryEntry_Bigram_DeleteWhole is constructed.
+  UserHistoryPredictor::Entry *japaneseinput;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  InitHistory_JapaneseInput(predictor, &japaneseinput, &japanese, &input);
+
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "input", "Input"));
+
+  // Delete the second bigram node ("input", "Input").
+  EXPECT_TRUE(predictor->ClearHistoryEntry("input", "Input"));
+
+  EXPECT_FALSE(japaneseinput->removed());
+  EXPECT_FALSE(japanese->removed());
+  EXPECT_TRUE(input->removed());
+  EXPECT_TRUE(IsConnected(*japanese, *input));
+
+  // Now "Input" should never be suggested nor predicted.
+  const string key = "input";
+  for (size_t i = 0; i < key.size(); ++i) {
+    const string &prefix = key.substr(0, i);
+    EXPECT_FALSE(IsSuggested(predictor, prefix, "Input"));
+    EXPECT_FALSE(IsPredicted(predictor, prefix, "Input"));
+  }
+
+  // However, predictor should show "Japanese" and "JapaneseInput".
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteWhole) {
+  // Tests ClearHistoryEntry() for trigram history.  This case tests the
+  // deletion of the whole sentence.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the history for ("japaneseinputmethod", "JapaneseInputMethod"). It's
+  // assumed that this sentence consists of three segments, "japanese", "input"
+  // and "method". So, the following history entries are constructed:
+  //   ("japaneseinputmethod", "JapaneseInputMethod")  // Unigram
+  //   ("japanese", "Japanese") -- ("input", "Input") -- ("method", "Method")
+  UserHistoryPredictor::Entry *japaneseinputmethod;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry *method;
+  InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod,
+                                  &japanese, &input, &method);
+
+  // Delete the history of the whole sentence.
+  EXPECT_TRUE(predictor->ClearHistoryEntry(
+      "japaneseinputmethod", "JapaneseInputMethod"));
+
+  // Note that only the link from "input" to "method" was removed.
+  EXPECT_TRUE(japaneseinputmethod->removed());
+  EXPECT_FALSE(japanese->removed());
+  EXPECT_FALSE(input->removed());
+  EXPECT_FALSE(method->removed());
+  EXPECT_TRUE(IsConnected(*japanese, *input));
+  EXPECT_FALSE(IsConnected(*input, *method));
+
+  {
+    // Now "JapaneseInputMethod" should never be suggested nor predicted.
+    const string key = "japaneseinputmethod";
+    for (size_t i = 0; i < key.size(); ++i) {
+      const string &prefix = key.substr(0, i);
+      EXPECT_FALSE(IsSuggested(predictor, prefix, "JapaneseInputMethod"));
+      EXPECT_FALSE(IsPredicted(predictor, prefix, "JapaneseInputMethod"));
+    }
+  }
+  {
+    // Here's a limitation of chain cut.  Since we have cut the link from
+    // "input" to "method", the predictor cannot show "InputMethod" although it
+    // could before.  However, since "InputMethod" is not the direct input by
+    // the user (user's input was "JapaneseInputMethod" in this case), this
+    // limitation would be acceptable.
+    const string key = "inputmethod";
+    for (size_t i = 0; i < key.size(); ++i) {
+      const string &prefix = key.substr(0, i);
+      EXPECT_FALSE(IsSuggested(predictor, prefix, "InputMethod"));
+      EXPECT_FALSE(IsPredicted(predictor, prefix, "InputMethod"));
+    }
+  }
+
+  // The following can be still suggested and predicted.
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteFirst) {
+  // Tests ClearHistoryEntry() for trigram history.  This case tests the
+  // deletion of the first node of trigram.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
+  UserHistoryPredictor::Entry *japaneseinputmethod;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry *method;
+  InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod,
+                                  &japanese, &input, &method);
+
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+
+  // Delete the first node of the chain.
+  EXPECT_TRUE(predictor->ClearHistoryEntry("japanese", "Japanese"));
+
+  // Note that the two links are still alive.
+  EXPECT_FALSE(japaneseinputmethod->removed());
+  EXPECT_TRUE(japanese->removed());
+  EXPECT_FALSE(input->removed());
+  EXPECT_FALSE(method->removed());
+  EXPECT_TRUE(IsConnected(*japanese, *input));
+  EXPECT_TRUE(IsConnected(*input, *method));
+
+  {
+    // Now "Japanese" should never be suggested nor predicted.
+    const string key = "japaneseinputmethod";
+    for (size_t i = 0; i < key.size(); ++i) {
+      const string &prefix = key.substr(0, i);
+      EXPECT_FALSE(IsSuggested(predictor, prefix, "Japanese"));
+      EXPECT_FALSE(IsPredicted(predictor, prefix, "Japanese"));
+    }
+  }
+
+  // The following are still suggested and predicted.
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteSecond) {
+  // Tests ClearHistoryEntry() for trigram history.  This case tests the
+  // deletion of the second node of trigram.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
+  UserHistoryPredictor::Entry *japaneseinputmethod;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry *method;
+  InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod,
+                                  &japanese, &input, &method);
+
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+
+  // Delete the second node of the chain.
+  EXPECT_TRUE(predictor->ClearHistoryEntry("input", "Input"));
+
+  // Note that the two links are still alive.
+  EXPECT_FALSE(japaneseinputmethod->removed());
+  EXPECT_FALSE(japanese->removed());
+  EXPECT_TRUE(input->removed());
+  EXPECT_FALSE(method->removed());
+  EXPECT_TRUE(IsConnected(*japanese, *input));
+  EXPECT_TRUE(IsConnected(*input, *method));
+
+  {
+    // Now "Input" should never be suggested nor predicted.
+    const string key = "inputmethod";
+    for (size_t i = 0; i < key.size(); ++i) {
+      const string &prefix = key.substr(0, i);
+      EXPECT_FALSE(IsSuggested(predictor, prefix, "Input"));
+      EXPECT_FALSE(IsPredicted(predictor, prefix, "Input"));
+    }
+  }
+
+  // The following can still be shown by the predictor.
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteThird) {
+  // Tests ClearHistoryEntry() for trigram history.  This case tests the
+  // deletion of the third node of trigram.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
+  UserHistoryPredictor::Entry *japaneseinputmethod;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry *method;
+  InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod,
+                                  &japanese, &input, &method);
+
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+
+  // Delete the third node, "method".
+  EXPECT_TRUE(predictor->ClearHistoryEntry("method", "Method"));
+
+  // Note that the two links are still alive.
+  EXPECT_FALSE(japaneseinputmethod->removed());
+  EXPECT_FALSE(japanese->removed());
+  EXPECT_FALSE(input->removed());
+  EXPECT_TRUE(method->removed());
+  EXPECT_TRUE(IsConnected(*japanese, *input));
+  EXPECT_TRUE(IsConnected(*input, *method));
+
+  {
+    // Now "Method" should never be suggested nor predicted.
+    const string key = "method";
+    for (size_t i = 0; i < key.size(); ++i) {
+      const string &prefix = key.substr(0, i);
+      EXPECT_FALSE(IsSuggested(predictor, prefix, "Method"));
+      EXPECT_FALSE(IsPredicted(predictor, prefix, "Method"));
+    }
+  }
+
+  // The following can still be shown by the predictor.
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteFirstBigram) {
+  // Tests ClearHistoryEntry() for trigram history.  This case tests the
+  // deletion of the first bigram of trigram.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
+  UserHistoryPredictor::Entry *japaneseinputmethod;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry *method;
+  InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod,
+                                  &japanese, &input, &method);
+
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+
+  // Delete the sentence consisting of the first two nodes.
+  EXPECT_TRUE(predictor->ClearHistoryEntry("japaneseinput", "JapaneseInput"));
+
+  // Note that the node "japaneseinput" and the link from "japanese" to "input"
+  // were removed.
+  EXPECT_FALSE(japaneseinputmethod->removed());
+  EXPECT_FALSE(japanese->removed());
+  EXPECT_FALSE(input->removed());
+  EXPECT_FALSE(method->removed());
+  EXPECT_FALSE(IsConnected(*japanese, *input));
+  EXPECT_TRUE(IsConnected(*input, *method));
+
+  {
+    // Now "JapaneseInput" should never be suggested nor predicted.
+    const string key = "japaneseinputmethod";
+    for (size_t i = 0; i < key.size(); ++i) {
+      const string &prefix = key.substr(0, i);
+      EXPECT_FALSE(IsSuggested(predictor, prefix, "JapaneseInput"));
+      EXPECT_FALSE(IsPredicted(predictor, prefix, "JapaneseInput"));
+    }
+  }
+
+  // However, the following can still be available, including
+  // "JapaneseInputMethod".
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteSecondBigram) {
+  // Tests ClearHistoryEntry() for trigram history.  This case tests the
+  // deletion of the latter bigram of trigram.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
+  UserHistoryPredictor::Entry *japaneseinputmethod;
+  UserHistoryPredictor::Entry *japanese;
+  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry *method;
+  InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod,
+                                  &japanese, &input, &method);
+
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+
+  // Delete the latter bigram.
+  EXPECT_TRUE(predictor->ClearHistoryEntry("inputmethod", "InputMethod"));
+
+  // Note that only link from "input" to "method" was removed.
+  EXPECT_FALSE(japaneseinputmethod->removed());
+  EXPECT_FALSE(japanese->removed());
+  EXPECT_FALSE(input->removed());
+  EXPECT_FALSE(method->removed());
+  EXPECT_TRUE(IsConnected(*japanese, *input));
+  EXPECT_FALSE(IsConnected(*input, *method));
+
+  {
+    // Now "InputMethod" should never be suggested.
+    const string key = "inputmethod";
+    for (size_t i = 0; i < key.size(); ++i) {
+      const string &prefix = key.substr(0, i);
+      EXPECT_FALSE(IsSuggested(predictor, prefix, "InputMethod"));
+      EXPECT_FALSE(IsPredicted(predictor, prefix, "InputMethod"));
+    }
+  }
+
+  // However, the following are available.
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor,
+                                      "japan", "JapaneseInputMethod"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Scenario1) {
+  // Tests a common scenario: First, a user accidentally inputs an incomplete
+  // romaji sequence and the predictor learns it.  Then, the user deletes it.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Set up history. Convert "ぐーぐｒ" to "グーグr" 3 times.  This emulates a
+  // case that a user accidentally input incomplete sequence.
+  for (int i = 0; i < 3; ++i) {
+    Segments segments;
+    MakeSegmentsForConversion(
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xEF\xBD\x92",  // "ぐーぐｒ"
+        &segments);
+    AddCandidate(
+        "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\x72",  // "グーグr"
+        &segments);
+    predictor->Finish(&segments);
+  }
+
+  // Test if the predictor learned "グーグr".
+  EXPECT_TRUE(IsSuggested(
+      predictor,
+      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90",  // "ぐーぐ"
+      "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\x72"));  // "グーグr"
+  EXPECT_TRUE(IsPredicted(
+      predictor,
+      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90",  // "ぐーぐ"
+      "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\x72"));  // "グーグr"
+
+  // The user tris deleting the history ("ぐーぐｒ", "グーグr").
+  EXPECT_TRUE(predictor->ClearHistoryEntry(
+      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xEF\xBD\x92",  // "ぐーぐｒ"
+      "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\x72"));  // "グーグr"
+
+  // The predictor shouldn't show "グーグr" both for suggestion and prediction.
+  EXPECT_FALSE(IsSuggested(
+      predictor,
+      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90",  // "ぐーぐ"
+      "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\x72"));  // "グーグr"
+  EXPECT_FALSE(IsPredicted(
+      predictor,
+      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90",  // "ぐーぐ"
+      "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\x72"));  // "グーグr"
+}
+
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Scenario2) {
+  // Tests a common scenario: First, a user inputs a sentence ending with a
+  // symbol and it's learned by the predictor.  Then, the user deletes the
+  // history containing the symbol.
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Set up history. Convert "きょうもいいてんき！" to "今日もいい天気!" 3 times
+  // so that the predictor learns the sentence. We assume that this sentence
+  // consists of three segments: "今日も|いい天気|!".
+  for (int i = 0; i < 3; ++i) {
+    Segments segments;
+    segments.set_request_type(Segments::CONVERSION);
+
+    // The first segment: ("きょうも", "今日も")
+    Segment *seg = segments.add_segment();
+    seg->set_key(
+        // "きょうも"
+        "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x82\x82");
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->value = "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x82\x82";  // "今日も"
+    candidate->content_value = "\xE4\xBB\x8A\xE6\x97\xA5";  // "今日"
+    candidate->key = seg->key();
+    candidate->content_key =
+        "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86";  // "きょう"
+
+    // The second segment: ("いいてんき", "いい天気")
+    seg = segments.add_segment();
+    seg->set_key(
+        // "いいてんき
+        "\xE3\x81\x84\xE3\x81\x84\xE3\x81\xA6\xE3\x82\x93\xE3\x81\x8D");
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->value =
+        // "いい天気"
+        "\xE3\x81\x84\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97";
+    candidate->content_value = candidate->value;
+    candidate->key = seg->key();
+    candidate->content_key = seg->key();
+
+    // The third segment: ("！", "!")
+    seg = segments.add_segment();
+    seg->set_key("\xEF\xBC\x81");  // "！"
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->value = "!";
+    candidate->content_value = "!";
+    candidate->key = seg->key();
+    candidate->content_key = seg->key();
+
+    predictor->Finish(&segments);
+  }
+
+  // Check if the predictor learned the sentence.  Since the symbol is contained
+  // in one segment, both "今日もいい天気" and "今日もいい天気!" should be
+  // suggested and predicted.
+  EXPECT_TRUE(IsSuggestedAndPredicted(
+      predictor,
+      // "きょうも"
+      "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x82\x82",
+      // "今日もいい天気"
+      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x82\x82\xE3\x81\x84"
+      "\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97"));
+  EXPECT_TRUE(IsSuggestedAndPredicted(
+      predictor,
+      // "きょうも"
+      "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x82\x82",
+      // "今日もいい天気!"
+      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x82\x82\xE3\x81\x84"
+      "\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97\x21"));
+
+  // Now the user deletes the sentence containing the "!".
+  EXPECT_TRUE(predictor->ClearHistoryEntry(
+      // "きょうもいいてんき！"
+      "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x82\x82"
+      "\xE3\x81\x84\xE3\x81\x84\xE3\x81\xA6\xE3\x82\x93"
+      "\xE3\x81\x8D\xEF\xBC\x81",
+      // "今日もいい天気!"
+      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x82\x82\xE3\x81\x84"
+      "\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97\x21"));
+
+  // The sentence "今日もいい天気" should still be suggested and predicted.
+  EXPECT_TRUE(IsSuggestedAndPredicted(
+      predictor,
+      // "きょうも"
+      "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x82\x82",
+      // "今日もいい天気"
+      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x82\x82\xE3\x81\x84"
+      "\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97"));
+
+  // However, "今日もいい天気!" should be neither suggested nor predicted.
+  EXPECT_FALSE(IsSuggested(
+      predictor,
+      // "きょうも"
+      "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x82\x82",
+      // "今日もいい天気!"
+      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x82\x82\xE3\x81\x84"
+      "\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97\x21"));
+  EXPECT_FALSE(IsPredicted(
+      predictor,
+      // "きょうも"
+      "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x82\x82",
+      // "今日もいい天気!"
+      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x82\x82\xE3\x81\x84"
+      "\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97\x21"));
+}
+
 }  // namespace mozc

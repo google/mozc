@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,14 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "storage/lru_storage.h"
 
 namespace mozc {
 namespace sync {
 
-using mozc::storage::LRUStorage;
+using storage::LRUStorage;
 
 bool LearningPreferenceSyncUtil::CreateUpdate(
     const LRUStorage &storage,
@@ -118,7 +118,7 @@ bool LearningPreferenceSyncUtil::CreateMergePendingFile(
     }
   }
 
-  if (!Util::AtomicRename(filename_tmp, filename)) {
+  if (!FileUtil::AtomicRename(filename_tmp, filename)) {
     LOG(ERROR) << "AtomicRename failed";
     return false;
   }

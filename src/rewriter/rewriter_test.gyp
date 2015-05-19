@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,10 @@
       'type': 'executable',
       'sources': [
         'calculator_rewriter_test.cc',
+        'collocation_rewriter_test.cc',
         'collocation_util_test.cc',
-        'correction_rewriter_test.cc',
         'command_rewriter_test.cc',
+        'correction_rewriter_test.cc',
         'date_rewriter_test.cc',
         'dice_rewriter_test.cc',
         'dictionary_generator_test.cc',
@@ -50,8 +51,8 @@
         'focus_candidate_rewriter_test.cc',
         'fortune_rewriter_test.cc',
         'merger_rewriter_test.cc',
-        'number_rewriter_test.cc',
         'normalization_rewriter_test.cc',
+        'number_rewriter_test.cc',
         'remove_redundant_candidate_rewriter_test.cc',
         'rewriter_test.cc',
         'symbol_rewriter_test.cc',
@@ -72,6 +73,7 @@
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../session/session_base.gyp:request_test_util',
+        '../session/session_base.gyp:session_protocol',
         '../testing/testing.gyp:gtest_main',
         'calculator/calculator.gyp:calculator_mock',
         'rewriter.gyp:rewriter',
@@ -81,17 +83,31 @@
       },
       # TODO(horo): usage is available only in Mac and Win now.
       'conditions': [
-        ['OS=="mac" or OS=="win"', {
+        ['target_platform!="Android"', {
           'sources': [
+            'emoji_rewriter_test.cc',
             'usage_rewriter_test.cc',
+          ],
+          'dependencies': [
+            '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
           ],
         }],
         ['target_platform=="NaCl" and _toolset=="target"', {
           'sources!': [
+            'emoji_rewriter_test.cc',
             'user_boundary_history_rewriter_test.cc',
             'user_dictionary_rewriter_test.cc',
             'user_segment_history_rewriter_test.cc',
             'variants_rewriter_test.cc',
+          ],
+        }],
+        ['use_packed_dictionary==1', {
+          'dependencies': [
+            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
+          ],
+          'hard_dependency': 1,
+          'export_dependent_settings': [
+            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
           ],
         }],
       ],

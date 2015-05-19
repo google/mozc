@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -98,6 +98,9 @@ class UserDictionarySessionHandler {
                    UserDictionaryCommandStatus *status);
 
   void ImportData(const UserDictionaryCommand &command,
+                  UserDictionaryCommandStatus *status);
+
+  void GetStorage(const UserDictionaryCommand &command,
                   UserDictionaryCommandStatus *status);
 
   void set_dictionary_path(const string &dictionary_path) {

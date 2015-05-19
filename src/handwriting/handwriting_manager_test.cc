@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 
+#include "base/logging.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 

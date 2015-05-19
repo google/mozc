@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@ TEST(TextNormalizerTest, NormalizePreeditText) {
   // "ぐ〜ぐる"
   TextNormalizer::NormalizePreeditText("\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90"
                                           "\xe3\x82\x8b", &output);
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // "ぐ～ぐる"
   EXPECT_EQ("\xe3\x81\x90\xef\xbd\x9e\xe3\x81\x90\xe3\x82\x8b", output);
 #else
@@ -85,7 +85,7 @@ TEST(TextNormalizerTest, NormalizeTransliterationText) {
   // "ぐ〜ぐる"
   TextNormalizer::NormalizeTransliterationText(
       "\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90\xe3\x82\x8b", &output);
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // "ぐ～ぐる"
   EXPECT_EQ("\xe3\x81\x90\xef\xbd\x9e\xe3\x81\x90\xe3\x82\x8b", output);
 #else
@@ -95,7 +95,7 @@ TEST(TextNormalizerTest, NormalizeTransliterationText) {
 }
 
 TEST(TextNormalizerTest, NormalizeCandidateText) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   string output;
   // "ぐ〜ぐる"
   TextNormalizer::NormalizeCandidateText("\xe3\x81\x90\xe3\x80\x9c\xe3\x81"

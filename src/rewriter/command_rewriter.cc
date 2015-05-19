@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -173,6 +173,8 @@ Segment::Candidate *InsertCommandCandidate(
   candidate->description = kDescription;
   candidate->prefix = kPrefix;
   candidate->suffix = kSuffix;
+  candidate->inner_segment_boundary.clear();
+  DCHECK(candidate->IsValid());
   return candidate;
 }
 
@@ -186,10 +188,6 @@ bool IsSuggestionEnabled() {
 CommandRewriter::CommandRewriter() {}
 
 CommandRewriter::~CommandRewriter() {}
-
-int CommandRewriter::capability() const {
-  return RewriterInterface::CONVERSION;
-}
 
 void CommandRewriter::InsertIncognitoModeToggleCommand(
     Segment *segment, size_t reference_pos, size_t insert_pos) const {

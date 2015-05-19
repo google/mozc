@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -163,6 +163,21 @@ def GetRelPath(path, start):
 
   return os.sep.join(['..'] * (len(start_list) - common_prefix_count) +
                      path_list[common_prefix_count:])
+
+
+def FindFileFromPath(file_name):
+  """Find given file from PATH, like which command.
+
+  Args:
+    file_name: File name to find.
+  Returns:
+    Absolute path of given file or None if not found.
+  """
+  for path_dir in os.environ.get('PATH', '').split(os.pathsep):
+    full_path = os.path.join(path_dir, file_name)
+    if os.path.exists(full_path):
+      return full_path
+  return None
 
 
 def CheckFileOrDie(file_name):

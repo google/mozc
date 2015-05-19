@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "storage/encrypted_string_storage.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
 #endif
 
@@ -38,6 +38,7 @@
 
 #include "base/encryptor.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/password_manager.h"
@@ -89,6 +90,12 @@ bool EncryptedStringStorage::Load(string *output) const {
     output->assign(mmap.begin() + kSaltSize, mmap.size() - kSaltSize);
   }
 
+  return Decrypt(salt, output);
+}
+
+bool EncryptedStringStorage::Decrypt(const string &salt, string *data) const {
+  DCHECK(data);
+
   string password;
   if (!PasswordManager::GetPassword(&password)) {
     LOG(ERROR) << "PasswordManager::GetPassword() failed";
@@ -107,7 +114,7 @@ bool EncryptedStringStorage::Load(string *output) const {
     return false;
   }
 
-  if (!Encryptor::DecryptString(key, output)) {
+  if (!Encryptor::DecryptString(key, data)) {
     LOG(ERROR) << "Encryptor::DecryptString() failed";
     return false;
   }
@@ -117,35 +124,13 @@ bool EncryptedStringStorage::Load(string *output) const {
 
 bool EncryptedStringStorage::Save(const string &input) const {
   string output, salt;
+  // Generate salt.
+  salt.resize(kSaltSize);
+  Util::GetRandomSequence(&salt[0], kSaltSize);
 
-  {
-    string password;
-    if (!PasswordManager::GetPassword(&password)) {
-      LOG(ERROR) << "PasswordManager::GetPassword() failed";
-      return false;
-    }
-
-    if (password.empty()) {
-      LOG(ERROR) << "password is empty";
-      return false;
-    }
-
-    char tmp[kSaltSize];
-    memset(tmp, '\0', sizeof(tmp));
-    Util::GetSecureRandomSequence(tmp, sizeof(tmp));
-    salt.assign(tmp, sizeof(tmp));
-
-    Encryptor::Key key;
-    if (!key.DeriveFromPassword(password, salt)) {
-      LOG(ERROR) << "Encryptor::Key::DeriveFromPassword() failed";
-      return false;
-    }
-
-    output.assign(input);
-    if (!Encryptor::EncryptString(key, &output)) {
-      LOG(ERROR) << "Encryptor::EncryptString() failed";
-      return false;
-    }
+  output.assign(input);
+  if (!Encrypt(salt, &output)) {
+    return false;
   }
 
   // Even if histoy is empty, save to them into a file to
@@ -163,12 +148,12 @@ bool EncryptedStringStorage::Save(const string &input) const {
     ofs.write(output.data(), output.size());
   }
 
-  if (!Util::AtomicRename(tmp_filename, filename_)) {
+  if (!FileUtil::AtomicRename(tmp_filename, filename_)) {
     LOG(ERROR) << "AtomicRename failed";
     return false;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   wstring wfilename;
   Util::UTF8ToWide(filename_.c_str(), &wfilename);
   if (!::SetFileAttributes(wfilename.c_str(),
@@ -178,6 +163,34 @@ bool EncryptedStringStorage::Save(const string &input) const {
                << " " << ::GetLastError();
   }
 #endif
+
+  return true;
+}
+
+bool EncryptedStringStorage::Encrypt(const string &salt, string *data) const {
+  DCHECK(data);
+
+  string password;
+  if (!PasswordManager::GetPassword(&password)) {
+    LOG(ERROR) << "PasswordManager::GetPassword() failed";
+    return false;
+  }
+
+  if (password.empty()) {
+    LOG(ERROR) << "password is empty";
+    return false;
+  }
+
+  Encryptor::Key key;
+  if (!key.DeriveFromPassword(password, salt)) {
+    LOG(ERROR) << "Encryptor::Key::DeriveFromPassword() failed";
+    return false;
+  }
+
+  if (!Encryptor::EncryptString(key, data)) {
+    LOG(ERROR) << "Encryptor::EncryptString() failed";
+    return false;
+  }
 
   return true;
 }

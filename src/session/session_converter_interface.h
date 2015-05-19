@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@ class CandidateList;
 struct ConversionPreferences {
   bool use_history;
   int max_history_size;
+
 
   // This is a flag to check if the converter should return the suggestion
   // or not. Indeed, the design is actually twisted, because clients should
@@ -109,6 +110,10 @@ class SessionConverterInterface {
   // conversion.
   virtual const ConversionPreferences &conversion_preferences() const ABSTRACT;
 
+  // Gets the selected candidate. If no candidate is selected, returns NULL.
+  virtual const Segment::Candidate *
+  GetSelectedCandidateOfFocusedSegment() const ABSTRACT;
+
   // Send a conversion request to the converter.
   virtual bool Convert(const composer::Composer &composer) ABSTRACT;
   virtual bool ConvertWithPreferences(
@@ -158,13 +163,14 @@ class SessionConverterInterface {
   virtual void Reset() ABSTRACT;
 
   // Fix the conversion with the current status.
-  virtual void Commit() ABSTRACT;
+  virtual void Commit(const commands::Context &context) ABSTRACT;
 
   // Fix the suggestion candidate.  True is returned if teh selected
   // candidate is successfully commited.
   virtual bool CommitSuggestionByIndex(
       size_t index,
       const composer::Composer &composer,
+      const commands::Context &context,
       size_t *committed_key_size) ABSTRACT;
 
   // Select a candidate and commit the selected candidate.  True is
@@ -172,21 +178,18 @@ class SessionConverterInterface {
   virtual bool CommitSuggestionById(
       int id,
       const composer::Composer &composer,
+      const commands::Context &context,
       size_t *committed_key_size) ABSTRACT;
 
   // Fix only the conversion of the first segment, and keep the rest.
   // The caller should delete characters from composer based on returned
   // |committed_key_size|.
-  virtual void CommitFirstSegment(size_t *committed_key_size) ABSTRACT;
-
-  // Commit the preedit string without any modification with given |key|.
-  // Any transliteration or text normalization ("ゔ" -> "ヴ", or vender
-  // specific code replacement) will not be performed.
-  virtual void CommitPreeditString(const string &key,
-                                   const string &preedit) ABSTRACT;
+  virtual void CommitFirstSegment(const commands::Context &context,
+                                  size_t *committed_key_size) ABSTRACT;
 
   // Commit the preedit string represented by Composer.
-  virtual void CommitPreedit(const composer::Composer &composer) ABSTRACT;
+  virtual void CommitPreedit(const composer::Composer &composer,
+                             const commands::Context &context) ABSTRACT;
 
   // Commit prefix of the preedit string represented by Composer.
   // The caller should delete characters from composer based on returned
@@ -223,7 +226,6 @@ class SessionConverterInterface {
   virtual bool CandidateMoveToShortcut(char shortcut) ABSTRACT;
 
   // Operation for the candidate list.
-  virtual bool IsCandidateListVisible() const ABSTRACT;
   virtual void SetCandidateListVisible(bool visible) ABSTRACT;
 
   // Fill protocol buffers and update internal status.
@@ -238,25 +240,12 @@ class SessionConverterInterface {
   // Fill context information
   virtual void FillContext(commands::Context *context) const ABSTRACT;
 
-  // Get/Set segments
-  virtual void GetSegments(Segments *dest) const ABSTRACT;
-  virtual void SetSegments(const Segments &src) ABSTRACT;
-
   // Remove tail part of history segments
   virtual void RemoveTailOfHistorySegments(size_t num_of_characters) ABSTRACT;
 
   // Set setting by the request.
   // Currently this is especially for SessionConverter.
-  virtual void SetRequest(const commands::Request &request) ABSTRACT;
-
-  // Accessor
-  virtual const commands::Result &GetResult() const ABSTRACT;
-  virtual const CandidateList &GetCandidateList() const ABSTRACT;
-  virtual const OperationPreferences &GetOperationPreferences() const ABSTRACT;
-  virtual State GetState() const ABSTRACT;
-  virtual size_t GetSegmentIndex() const ABSTRACT;
-  virtual const Segment &GetPreviousSuggestions()
-      const ABSTRACT;
+  virtual void SetRequest(const commands::Request *request) ABSTRACT;
 
   // Clone instance.
   // Callee object doesn't have the ownership of the cloned instance.
@@ -265,6 +254,8 @@ class SessionConverterInterface {
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionConverterInterface);
 };
+
 }  // namespace session
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_SESSION_CONVERTER_INTERFACE_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,15 +33,14 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <fstream>
 #include <map>
 #include <sstream>
 #include <string>
 
 #include "base/clock_mock.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/thread.h"
@@ -49,22 +48,6 @@
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
-
-// Ad-hoc workadound against macro problem on Windows.
-// On Windows, following macros, defined when you include <Windows.h>,
-// should be removed here because they affects the method name definition of
-// Util class.
-// TODO(yukawa): Use different method name if applicable.
-#ifdef CreateDirectory
-#undef CreateDirectory
-#endif  // CreateDirectory
-#ifdef RemoveDirectory
-#undef RemoveDirectory
-#endif  // RemoveDirectory
-#ifdef CopyFile
-#undef CopyFile
-#endif  // CopyFile
 
 namespace mozc {
 
@@ -75,9 +58,9 @@ void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
 
   const char kCharacterSetTestFile[] =
       "data/test/character_set/character_set.tsv";
-  const string &path = Util::JoinPath(FLAGS_test_srcdir,
-                                      kCharacterSetTestFile);
-  CHECK(Util::FileExists(path)) << path << " does not exist.";
+  const string &path = FileUtil::JoinPath(FLAGS_test_srcdir,
+                                          kCharacterSetTestFile);
+  CHECK(FileUtil::FileExists(path)) << path << " does not exist.";
 
   map<string, Util::CharacterSet> character_set_type_map;
   character_set_type_map["ASCII"] = Util::ASCII;
@@ -93,7 +76,7 @@ void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
 
   // Read tsv file.
   string line;
-  while (getline(finput, line)) {
+  while (!getline(finput, line).fail()) {
     if (Util::StartsWith(line, "#")) {
       // Skip comment line.
       continue;
@@ -146,6 +129,34 @@ TEST(UtilTest, JoinStrings) {
   EXPECT_EQ("ab:cdef:ghr", output);
 }
 
+TEST(UtilTest, JoinStringPieces) {
+  {
+    vector<StringPiece> input;
+    input.push_back("ab");
+    string output;
+    Util::JoinStringPieces(input, ":", &output);
+    EXPECT_EQ("ab", output);
+  }
+  {
+    vector<StringPiece> input;
+    input.push_back("ab");
+    input.push_back("cdef");
+    input.push_back("ghr");
+    string output;
+    Util::JoinStringPieces(input, ":", &output);
+    EXPECT_EQ("ab:cdef:ghr", output);
+  }
+  {
+    vector<StringPiece> input;
+    input.push_back("ab");
+    input.push_back("cdef");
+    input.push_back("ghr");
+    string output;
+    Util::JoinStringPieces(input, "::", &output);
+    EXPECT_EQ("ab::cdef::ghr", output);
+  }
+}
+
 TEST(UtilTest, AppendStringWithDelimiter) {
   string result;
   string input;
@@ -170,6 +181,272 @@ TEST(UtilTest, AppendStringWithDelimiter) {
   }
 }
 
+TEST(UtilTest, SplitIterator_SingleDelimiter_SkipEmpty) {
+  typedef SplitIterator<SingleDelimiter, SkipEmpty> SplitIterator;
+  {
+    SplitIterator iter("", " ");
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    SplitIterator iter(StringPiece(), " ");
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    const char *s = "a b cde";
+    SplitIterator iter(s, " ");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("cde", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    const char *s = " a b  cde ";
+    SplitIterator iter(s, " ");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("cde", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    StringPiece s("a b  cde ", 5);  // s = "a b  ";
+    SplitIterator iter(s, " ");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+}
+
+TEST(UtilTest, SplitIterator_MultiDelimiter_SkipEmpty) {
+  typedef SplitIterator<MultiDelimiter, SkipEmpty> SplitIterator;
+  {
+    SplitIterator iter("", " \t,");
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    SplitIterator iter(StringPiece(), ",.");
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    const char *s = "a b\tcde:fg";
+    SplitIterator iter(s, " \t:");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("cde", iter.Get());
+    EXPECT_FALSE(iter.Done());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("fg", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    const char *s = "  \t:a b\t\tcde:fg:";
+    SplitIterator iter(s, " \t:");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("cde", iter.Get());
+    EXPECT_FALSE(iter.Done());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("fg", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+}
+
+TEST(UtilTest, SplitIterator_SingleDelimiter_AllowEmpty) {
+  typedef SplitIterator<SingleDelimiter, AllowEmpty> SplitIterator;
+  {
+    SplitIterator iter("", " ");
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    SplitIterator iter(StringPiece(), " ");
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    const char *s = "a b cde";
+    SplitIterator iter(s, " ");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("cde", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    const char *s = " a b  cde ";
+    SplitIterator iter(s, " ");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("cde", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    StringPiece s("a b  cde ", 5);  // s = "a b  ";
+    SplitIterator iter(s, " ");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+}
+
+TEST(UtilTest, SplitIterator_MultiDelimiter_AllowEmpty) {
+  typedef SplitIterator<MultiDelimiter, AllowEmpty> SplitIterator;
+  {
+    SplitIterator iter("", " \t,");
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    SplitIterator iter(StringPiece(), ",.");
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    const char *s = "a b\tcde:fg";
+    SplitIterator iter(s, " \t:");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("cde", iter.Get());
+    EXPECT_FALSE(iter.Done());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("fg", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+  {
+    const char *s = "a b\t\tcde:fg:";
+    SplitIterator iter(s, " \t:");
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("a", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("b", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("cde", iter.Get());
+    EXPECT_FALSE(iter.Done());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("fg", iter.Get());
+    iter.Next();
+    EXPECT_FALSE(iter.Done());
+    EXPECT_EQ("", iter.Get());
+    iter.Next();
+    EXPECT_TRUE(iter.Done());
+  }
+}
+
+TEST(UtilTest, SplitStringUsing) {
+  {
+    const string input = "a b  c def";
+    vector<string> output;
+    Util::SplitStringUsing(input, " ", &output);
+    EXPECT_EQ(output.size(), 4);
+    EXPECT_EQ("a", output[0]);
+    EXPECT_EQ("b", output[1]);
+    EXPECT_EQ("c", output[2]);
+    EXPECT_EQ("def", output[3]);
+  }
+  {
+    const string input = " a b  c";
+    vector<string> output;
+    Util::SplitStringUsing(input, " ", &output);
+    EXPECT_EQ(output.size(), 3);
+    EXPECT_EQ("a", output[0]);
+    EXPECT_EQ("b", output[1]);
+    EXPECT_EQ("c", output[2]);
+  }
+  {
+    const string input = "a b  c ";
+    vector<string> output;
+    Util::SplitStringUsing(input, " ", &output);
+    EXPECT_EQ(output.size(), 3);
+    EXPECT_EQ("a", output[0]);
+    EXPECT_EQ("b", output[1]);
+    EXPECT_EQ("c", output[2]);
+  }
+  {
+    const string input = "a:b  cd ";
+    vector<string> output;
+    Util::SplitStringUsing(input, ": ", &output);
+    EXPECT_EQ(output.size(), 3);
+    EXPECT_EQ("a", output[0]);
+    EXPECT_EQ("b", output[1]);
+    EXPECT_EQ("cd", output[2]);
+  }
+  {
+    const string input = "Empty delimiter";
+    vector<string> output;
+    Util::SplitStringUsing(input, "", &output);
+    EXPECT_EQ(output.size(), 1);
+    EXPECT_EQ(input, output[0]);
+  }
+}
+
 TEST(UtilTest, SplitStringAllowEmpty) {
   {
     const string input = "a b  c def";
@@ -182,7 +459,6 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("c", output[3]);
     EXPECT_EQ("def", output[4]);
   }
-
   {
     const string input = " a b  c";
     vector<string> output;
@@ -194,7 +470,6 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("", output[3]);
     EXPECT_EQ("c", output[4]);
   }
-
   {
     const string input = "a b  c ";
     vector<string> output;
@@ -206,7 +481,6 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("c", output[3]);
     EXPECT_EQ("", output[4]);
   }
-
   {
     const string input = "a:b  c ";
     vector<string> output;
@@ -217,6 +491,13 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("", output[2]);
     EXPECT_EQ("c", output[3]);
     EXPECT_EQ("", output[4]);
+  }
+  {
+    const string input = "Empty delimiter";
+    vector<string> output;
+    Util::SplitStringAllowEmpty(input, "", &output);
+    EXPECT_EQ(output.size(), 1);
+    EXPECT_EQ(input, output[0]);
   }
 }
 
@@ -526,6 +807,51 @@ TEST(UtilTest, CharsLen) {
   EXPECT_EQ(Util::CharsLen(src.c_str(), src.size()), 9);
 }
 
+TEST(UtilTest, SubStringPiece) {
+  // "私の名前は中野です"
+  const string src = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81"
+                     "\xaf\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99";
+  StringPiece result;
+
+  result = Util::SubStringPiece(src, 0, 2);
+  // "私の"
+  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", result);
+  // |result|'s data should point to the same memory block as src.
+  EXPECT_LE(src.data(), result.data());
+
+  result = Util::SubStringPiece(src, 4, 1);
+  // "は"
+  EXPECT_EQ("\xe3\x81\xaf", result);
+  EXPECT_LE(src.data(), result.data());
+
+  result = Util::SubStringPiece(src, 5, 3);
+  // "中野で"
+  EXPECT_EQ("\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7", result);
+  EXPECT_LE(src.data(), result.data());
+
+  result = Util::SubStringPiece(src, 6, 10);
+  // "野です"
+  EXPECT_EQ("\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99", result);
+  EXPECT_LE(src.data(), result.data());
+
+  result = Util::SubStringPiece(src, 4, 2);
+  // "は中"
+  EXPECT_EQ("\xe3\x81\xaf\xe4\xb8\xad", result);
+  EXPECT_LE(src.data(), result.data());
+
+  result = Util::SubStringPiece(src, 2, string::npos);
+  // "名前は中野です"
+  EXPECT_EQ("\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf\xe4\xb8\xad\xe9\x87"
+            "\x8e\xe3\x81\xa7\xe3\x81\x99",
+            result);
+  EXPECT_LE(src.data(), result.data());
+
+  result = Util::SubStringPiece(src, 5, string::npos);
+  // "中野です"
+  EXPECT_EQ("\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99", result);
+  EXPECT_LE(src.data(), result.data());
+}
+
 TEST(UtilTest, SubString) {
   // "私の名前は中野です"
   const string src = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81"
@@ -641,6 +967,29 @@ TEST(UtilTest, IsUTF16BOM) {
   EXPECT_FALSE(Util::IsUTF16BOM("\xff\xff"));
 }
 
+TEST(UtilTest, IsAndroidPuaEmoji) {
+  EXPECT_FALSE(Util::IsAndroidPuaEmoji(""));
+  EXPECT_FALSE(Util::IsAndroidPuaEmoji("A"));
+  EXPECT_FALSE(Util::IsAndroidPuaEmoji("a"));
+
+  string str;
+  Util::UCS4ToUTF8(0xFDFFF, &str);
+  EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
+  Util::UCS4ToUTF8(0xFE000, &str);
+  EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
+  Util::UCS4ToUTF8(0xFE800, &str);
+  EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
+  Util::UCS4ToUTF8(0xFEEA0, &str);
+  EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
+  Util::UCS4ToUTF8(0xFEEA1, &str);
+  EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
+
+  // If it has two ucs4 chars (or more), just expect false.
+  Util::UCS4ToUTF8(0xFE000, &str);
+  Util::UCS4ToUTF8Append(0xFE000, &str);
+  EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
+}
+
 MOZC_GCC_PUSH_WARNING();
 // On GCC, |EXPECT_EQ("", Util::StringPrintf(""))| may cause
 // "warning: zero-length printf format string" so we disable this check.
@@ -666,17 +1015,17 @@ TEST(UtilTest, StringPrintf) {
 
   // 64-bit integers
   EXPECT_EQ("-9223372036854775808",
-            Util::StringPrintf("%"GG_LL_FORMAT"d", kint64min));
+            Util::StringPrintf("%" GG_LL_FORMAT "d", kint64min));
   EXPECT_EQ("9223372036854775807",
-            Util::StringPrintf("%"GG_LL_FORMAT"d", kint64max));
+            Util::StringPrintf("%" GG_LL_FORMAT "d", kint64max));
   EXPECT_EQ("18446744073709551615",
-            Util::StringPrintf("%"GG_LL_FORMAT"u", kuint64max));
+            Util::StringPrintf("%" GG_LL_FORMAT "u", kuint64max));
   EXPECT_EQ("8000000000000000",
-            Util::StringPrintf("%"GG_LL_FORMAT"x", kint64min));
+            Util::StringPrintf("%" GG_LL_FORMAT "x", kint64min));
   EXPECT_EQ("7fffffffffffffff",
-            Util::StringPrintf("%"GG_LL_FORMAT"x", kint64max));
+            Util::StringPrintf("%" GG_LL_FORMAT "x", kint64max));
   EXPECT_EQ("FFFFFFFFFFFFFFFF",
-            Util::StringPrintf("%"GG_LL_FORMAT"X", kuint64max));
+            Util::StringPrintf("%" GG_LL_FORMAT "X", kuint64max));
 
   // Simple test for floating point numbers
   EXPECT_EQ("-1.75", Util::StringPrintf("%.2f", -1.75));
@@ -926,64 +1275,6 @@ TEST(UtilTest, IsEnglishTransliteration) {
       "\xE6\x9D\xB1\xE4\xBA\xAC"));
 }
 
-TEST(UtilTest, Basename) {
-#ifdef OS_WINDOWS
-  EXPECT_EQ("bar", Util::Basename("\\foo\\bar"));
-  EXPECT_EQ("foo.txt", Util::Basename("\\foo\\bar\\foo.txt"));
-  EXPECT_EQ("foo.txt", Util::Basename("foo.txt"));
-  EXPECT_EQ("foo.txt", Util::Basename(".\\foo.txt"));
-  EXPECT_EQ(".foo.txt", Util::Basename(".\\.foo.txt"));
-  EXPECT_EQ("", Util::Basename("\\"));
-  EXPECT_EQ("", Util::Basename("foo\\bar\\buz\\"));
-#else
-  EXPECT_EQ("bar", Util::Basename("/foo/bar"));
-  EXPECT_EQ("foo.txt", Util::Basename("/foo/bar/foo.txt"));
-  EXPECT_EQ("foo.txt", Util::Basename("foo.txt"));
-  EXPECT_EQ("foo.txt", Util::Basename("./foo.txt"));
-  EXPECT_EQ(".foo.txt", Util::Basename("./.foo.txt"));
-  EXPECT_EQ("", Util::Basename("/"));
-  EXPECT_EQ("", Util::Basename("foo/bar/buz/"));
-#endif
-}
-
-TEST(UtilTest, Dirname) {
-#ifdef OS_WINDOWS
-  EXPECT_EQ("\\foo", Util::Dirname("\\foo\\bar"));
-  EXPECT_EQ("\\foo\\bar", Util::Dirname("\\foo\\bar\\foo.txt"));
-  EXPECT_EQ("", Util::Dirname("foo.txt"));
-  EXPECT_EQ("", Util::Dirname("\\"));
-#else
-  EXPECT_EQ("/foo", Util::Dirname("/foo/bar"));
-  EXPECT_EQ("/foo/bar", Util::Dirname("/foo/bar/foo.txt"));
-  EXPECT_EQ("", Util::Dirname("foo.txt"));
-  EXPECT_EQ("", Util::Dirname("/"));
-#endif
-}
-
-TEST(UtilTest, NormalizeDirectorySeparator) {
-#ifdef OS_WINDOWS
-  EXPECT_EQ("\\foo\\bar", Util::NormalizeDirectorySeparator("\\foo\\bar"));
-  EXPECT_EQ("\\foo\\bar", Util::NormalizeDirectorySeparator("/foo\\bar"));
-  EXPECT_EQ("\\foo\\bar", Util::NormalizeDirectorySeparator("\\foo/bar"));
-  EXPECT_EQ("\\foo\\bar", Util::NormalizeDirectorySeparator("/foo/bar"));
-  EXPECT_EQ("\\foo\\bar\\", Util::NormalizeDirectorySeparator("\\foo\\bar\\"));
-  EXPECT_EQ("\\foo\\bar\\", Util::NormalizeDirectorySeparator("/foo/bar/"));
-  EXPECT_EQ("", Util::NormalizeDirectorySeparator(""));
-  EXPECT_EQ("\\", Util::NormalizeDirectorySeparator("/"));
-  EXPECT_EQ("\\", Util::NormalizeDirectorySeparator("\\"));
-#else
-  EXPECT_EQ("\\foo\\bar", Util::NormalizeDirectorySeparator("\\foo\\bar"));
-  EXPECT_EQ("/foo\\bar", Util::NormalizeDirectorySeparator("/foo\\bar"));
-  EXPECT_EQ("\\foo/bar", Util::NormalizeDirectorySeparator("\\foo/bar"));
-  EXPECT_EQ("/foo/bar", Util::NormalizeDirectorySeparator("/foo/bar"));
-  EXPECT_EQ("\\foo\\bar\\", Util::NormalizeDirectorySeparator("\\foo\\bar\\"));
-  EXPECT_EQ("/foo/bar/", Util::NormalizeDirectorySeparator("/foo/bar/"));
-  EXPECT_EQ("", Util::NormalizeDirectorySeparator(""));
-  EXPECT_EQ("/", Util::NormalizeDirectorySeparator("/"));
-  EXPECT_EQ("\\", Util::NormalizeDirectorySeparator("\\"));
-#endif
-}
-
 TEST(MutexTest, MutexTest) {
   mozc::Mutex mutex;
   mozc::scoped_lock l(&mutex);
@@ -1108,130 +1399,6 @@ TEST(UtilTest, TimeTestWithoutMock) {
   EXPECT_NEAR(get_time_of_day_sec, get_time_sec, margin)
       << ": This test have possibilities to fail "
       << "when system is busy and slow.";
-}
-
-// Initialize argc and argv for unittest.
-class Arguments {
- public:
-  Arguments(int argc, const char** argv)
-      : argc_(argc) {
-    argv_ = new char *[argc];
-    for (int i = 0; i < argc; ++i) {
-      int len = strlen(argv[i]);
-      argv_[i] = new char[len + 1];
-      strncpy(argv_[i], argv[i], len + 1);
-    }
-  }
-
-  virtual ~Arguments() {
-    for (int i = 0; i < argc_; ++i) {
-      delete [] argv_[i];
-    }
-    delete [] argv_;
-  }
-
-  int argc() { return argc_; }
-  char **argv() { return argv_; }
-
- private:
-  int argc_;
-  char **argv_;
-};
-
-TEST(UtilTest, CommandLineRotateArguments) {
-  const char *arguments[] = {"command",
-                             "--key1=value1",
-                             "--key2", "v2",
-                             "--k3=value3"};
-  Arguments arg(arraysize(arguments), arguments);
-  int argc = arg.argc();
-  char **argv = arg.argv();
-
-  Util::CommandLineRotateArguments(argc, &argv);
-  EXPECT_EQ(5, argc);
-  EXPECT_STREQ("--key1=value1", argv[0]);
-  EXPECT_STREQ("--key2", argv[1]);
-  EXPECT_STREQ("v2", argv[2]);
-  EXPECT_STREQ("--k3=value3", argv[3]);
-  EXPECT_STREQ("command", argv[4]);
-
-  --argc;
-  ++argv;
-  Util::CommandLineRotateArguments(argc, &argv);
-  EXPECT_EQ(4, argc);
-  EXPECT_STREQ("v2", argv[0]);
-  EXPECT_STREQ("--k3=value3", argv[1]);
-  EXPECT_STREQ("command", argv[2]);
-  EXPECT_STREQ("--key2", argv[3]);
-
-  Util::CommandLineRotateArguments(argc, &argv);
-  EXPECT_STREQ("--k3=value3", argv[0]);
-  EXPECT_STREQ("command", argv[1]);
-  EXPECT_STREQ("--key2", argv[2]);
-  EXPECT_STREQ("v2", argv[3]);
-
-  // Make sure the result of the rotations.
-  argc = arg.argc();
-  argv = arg.argv();
-  EXPECT_EQ(5, argc);
-  EXPECT_STREQ("--key1=value1", argv[0]);
-  EXPECT_STREQ("--k3=value3", argv[1]);
-  EXPECT_STREQ("command", argv[2]);
-  EXPECT_STREQ("--key2", argv[3]);
-  EXPECT_STREQ("v2", argv[4]);
-}
-
-
-TEST(UtilTest, CommandLineGetFlag) {
-  const char *arguments[] = {"command",
-                             "--key1=value1",
-                             "--key2", "v2",
-                             "invalid_value3",
-                             "--only_key3"};
-  Arguments arg(arraysize(arguments), arguments);
-  int argc = arg.argc();
-  char **argv = arg.argv();
-
-  string key, value;
-  int used_args = 0;
-
-  // The first argument should be skipped because it is the command name.
-  --argc;
-  ++argv;
-
-  // Parse "--key1=value1".
-  EXPECT_TRUE(Util::CommandLineGetFlag(argc, argv, &key, &value, &used_args));
-  EXPECT_EQ("key1", key);
-  EXPECT_EQ("value1", value);
-  EXPECT_EQ(1, used_args);
-  argc -= used_args;
-  argv += used_args;
-
-  // Parse "--key2" and "value2".
-  EXPECT_TRUE(Util::CommandLineGetFlag(argc, argv, &key, &value, &used_args));
-  EXPECT_EQ("key2", key);
-  EXPECT_EQ("v2", value);
-  EXPECT_EQ(2, used_args);
-  argc -= used_args;
-  argv += used_args;
-
-  // Parse "invalid_value3".
-  EXPECT_FALSE(Util::CommandLineGetFlag(argc, argv, &key, &value, &used_args));
-  EXPECT_TRUE(key.empty());
-  EXPECT_TRUE(value.empty());
-  EXPECT_EQ(1, used_args);
-  argc -= used_args;
-  argv += used_args;
-
-  // Parse "--only_key3".
-  EXPECT_TRUE(Util::CommandLineGetFlag(argc, argv, &key, &value, &used_args));
-  EXPECT_EQ("only_key3", key);
-  EXPECT_TRUE(value.empty());
-  EXPECT_EQ(1, used_args);
-  argc -= used_args;
-  argv += used_args;
-
-  EXPECT_EQ(0, argc);
 }
 
 TEST(UtilTest, EncodeURI) {
@@ -1819,104 +1986,7 @@ TEST(UtilTest, CharacterSet) {
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xF0\xA0\xAE\xB7"));
 }
 
-TEST(UtilTest, DirectoryExists) {
-  EXPECT_TRUE(Util::DirectoryExists(FLAGS_test_tmpdir));
-  const string filepath = Util::JoinPath(FLAGS_test_tmpdir, "testfile");
-
-  // Delete filepath, if it exists.
-  if (Util::FileExists(filepath)) {
-    Util::Unlink(filepath);
-  }
-  ASSERT_FALSE(Util::FileExists(filepath));
-
-  // Create a file.
-  ofstream file(filepath.c_str());
-  file << "test data" << endl;
-  file.close();
-
-  EXPECT_TRUE(Util::FileExists(filepath));
-  EXPECT_FALSE(Util::DirectoryExists(filepath));
-
-  // Delete the file.
-  Util::Unlink(filepath);
-  ASSERT_FALSE(Util::FileExists(filepath));
-}
-
-TEST(UtilTest, CreateDirectory) {
-  EXPECT_TRUE(Util::DirectoryExists(FLAGS_test_tmpdir));
-  // dirpath = FLAGS_test_tmpdir/testdir
-  const string dirpath = Util::JoinPath(FLAGS_test_tmpdir, "testdir");
-
-  // Delete dirpath, if it exists.
-  if (Util::FileExists(dirpath)) {
-    Util::RemoveDirectory(dirpath);
-  }
-  ASSERT_FALSE(Util::FileExists(dirpath));
-
-  // Create the directory.
-  EXPECT_TRUE(Util::CreateDirectory(dirpath));
-  EXPECT_TRUE(Util::DirectoryExists(dirpath));
-
-  // Delete the directory.
-  ASSERT_TRUE(Util::RemoveDirectory(dirpath));
-  ASSERT_FALSE(Util::FileExists(dirpath));
-}
-
-TEST(UtilTest, GetTotalPhysicalMemoryTest) {
-  EXPECT_GT(Util::GetTotalPhysicalMemory(), 0);
-}
-
-#ifdef OS_WINDOWS
-TEST(UtilTest, IsWindowsX64Test) {
-  // just make sure we can compile it.
-  Util::IsWindowsX64();
-}
-
-TEST(UtilTest, SetIsWindowsX64ModeForTest) {
-  Util::SetIsWindowsX64ModeForTest(Util::IS_WINDOWS_X64_EMULATE_64BIT_MACHINE);
-  EXPECT_TRUE(Util::IsWindowsX64());
-
-  Util::SetIsWindowsX64ModeForTest(Util::IS_WINDOWS_X64_EMULATE_32BIT_MACHINE);
-  EXPECT_FALSE(Util::IsWindowsX64());
-
-  // Clear the emulation.
-  Util::SetIsWindowsX64ModeForTest(Util::IS_WINDOWS_X64_DEFAULT_MODE);
-}
-
-TEST(UtilTest, GetFileVersion) {
-  const wchar_t kDllName[] = L"kernel32.dll";
-
-  wstring path = Util::GetSystemDir();
-  path += L"\\";
-  path += kDllName;
-
-  int major, minor, build, revision;
-  EXPECT_TRUE(Util::GetFileVersion(path, &major, &minor, &build, &revision));
-}
-
-TEST(UtilTest, GetFileVersionStringTest) {
-  const wchar_t kDllName[] = L"kernel32.dll";
-
-  wstring path = Util::GetSystemDir();
-  path += L"\\";
-  path += kDllName;
-
-  const string version_string = Util::GetFileVersionString(path);
-
-  vector<string> numbers;
-  Util::SplitStringUsing(version_string, ".", &numbers);
-
-  // must be 4 digits.
-  ASSERT_EQ(numbers.size(), 4);
-
-  // must be integer.
-  uint32 dummy = 0;
-  ASSERT_TRUE(NumberUtil::SafeStrToUInt32(numbers[0], &dummy));
-  ASSERT_TRUE(NumberUtil::SafeStrToUInt32(numbers[1], &dummy));
-  ASSERT_TRUE(NumberUtil::SafeStrToUInt32(numbers[2], &dummy));
-  ASSERT_TRUE(NumberUtil::SafeStrToUInt32(numbers[3], &dummy));
-}
-
+#ifdef OS_WIN
 TEST(UtilTest, WideCharsLen) {
   // "að ®b"
   const string input_utf8 = "a\360\240\256\237b";
@@ -1951,123 +2021,7 @@ TEST(UtilTest, WideToUTF8_SurrogatePairSupport) {
   EXPECT_EQ("\360\240\256\237", output_utf8);
   EXPECT_EQ(input_wide, output_wide);
 }
-#endif  // OS_WINDOWS
-
-TEST(UtilTest, CopyFile) {
-  // just test rename operation works as intended
-  const string from = Util::JoinPath(FLAGS_test_tmpdir,
-                                     "copy_from");
-  const string to = Util::JoinPath(FLAGS_test_tmpdir,
-                                   "copy_to");
-  Util::Unlink(from);
-  Util::Unlink(to);
-
-  const char kData[] = "This is a test";
-
-  {
-    OutputFileStream ofs(from.c_str(), ios::binary);
-    ofs.write(kData, arraysize(kData));
-  }
-
-  EXPECT_TRUE(Util::CopyFile(from, to));
-  Mmap mmap;
-  ASSERT_TRUE(mmap.Open(to.c_str()));
-
-  EXPECT_EQ(arraysize(kData), mmap.size());
-  EXPECT_EQ(0, memcmp(mmap.begin(), kData, mmap.size()));
-
-  Util::Unlink(from);
-  Util::Unlink(to);
-}
-
-TEST(UtilTest, IsEqualFile) {
-  const string filename1 = Util::JoinPath(FLAGS_test_tmpdir, "test1");
-  const string filename2 = Util::JoinPath(FLAGS_test_tmpdir, "test2");
-  Util::Unlink(filename1);
-  Util::Unlink(filename2);
-  EXPECT_FALSE(Util::IsEqualFile(filename1, filename2));
-
-  const char kTestData1[] = "test data1";
-  const char kTestData2[] = "test data2";
-
-  {
-    OutputFileStream ofs1(filename1.c_str());
-    ofs1 << kTestData1;
-  }
-  EXPECT_FALSE(Util::IsEqualFile(filename1, filename2));
-
-  {
-    OutputFileStream ofs2(filename2.c_str());
-    ofs2 << kTestData1;
-  }
-
-  EXPECT_TRUE(Util::IsEqualFile(filename1, filename2));
-
-  {
-    OutputFileStream ofs2(filename2.c_str());
-    ofs2 << kTestData1;
-    ofs2 << kTestData1;
-  }
-  EXPECT_FALSE(Util::IsEqualFile(filename1, filename2));
-
-  {
-    OutputFileStream ofs2(filename2.c_str());
-    ofs2 << kTestData2;
-  }
-  EXPECT_FALSE(Util::IsEqualFile(filename1, filename2));
-
-  Util::Unlink(filename1);
-  Util::Unlink(filename2);
-}
-
-TEST(UtilTest, AtomicRename) {
-  // just test rename operation works as intended
-  const string from = Util::JoinPath(FLAGS_test_tmpdir,
-                                     "atomic_rename_test_from");
-  const string to = Util::JoinPath(FLAGS_test_tmpdir,
-                                   "atomic_rename_test_to");
-  Util::Unlink(from);
-  Util::Unlink(to);
-
-  // |from| is not found
-  EXPECT_FALSE(Util::AtomicRename(from, to));
-  {
-    OutputFileStream ofs(from.c_str());
-    EXPECT_TRUE(ofs);
-    ofs << "test" << endl;
-  }
-
-  EXPECT_TRUE(Util::AtomicRename(from, to));
-
-  // from is deleted
-  EXPECT_FALSE(Util::FileExists(from));
-  EXPECT_FALSE(!Util::FileExists(to));
-
-  {
-    InputFileStream ifs(to.c_str());
-    EXPECT_TRUE(ifs);
-    string line;
-    getline(ifs, line);
-    EXPECT_EQ("test", line);
-  }
-
-  EXPECT_FALSE(Util::AtomicRename(from, to));
-
-  Util::Unlink(from);
-  Util::Unlink(to);
-
-  // overwrite the file
-  {
-    OutputFileStream ofs1(from.c_str());
-    ofs1 << "test";
-    OutputFileStream ofs2(to.c_str());
-    ofs2 << "test";
-  }
-  EXPECT_TRUE(Util::AtomicRename(from, to));
-
-  Util::Unlink(from);
-  Util::Unlink(to);
-}
+#endif  // OS_WIN
 
 TEST(UtilTest, IsKanaSymbolContained) {
   const string kFullstop("\xe3\x80\x82");  // "。"
@@ -2096,7 +2050,7 @@ TEST(UtilTest, Issue2190350) {
   EXPECT_EQ("\xE3\x81\x82", result);
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // The following "ToUTF" tests fail in the windows environment where the target
 // code pages are not installed.
 #else
@@ -2168,14 +2122,6 @@ TEST(UtilTest, Fingerprint32WithSeed_uint32) {
   EXPECT_EQ(num_hash, str_hash) << num_hash << " != " << str_hash;
 }
 
-#ifdef OS_ANDROID
-TEST(UtilTest, GetOSVersionStringTestForAndroid) {
-  string result = Util::GetOSVersionString();
-  // |result| must start with "Android ".
-  EXPECT_TRUE(Util::StartsWith(result, "Android "));
-}
-#endif  // OS_ANDROID
-
 TEST(UtilTest, RandomSeedTest) {
   Util::SetRandomSeed(0);
   const int first_try = Util::Random(INT_MAX);
@@ -2185,41 +2131,6 @@ TEST(UtilTest, RandomSeedTest) {
   // Reset the seed.
   Util::SetRandomSeed(0);
   EXPECT_EQ(first_try, Util::Random(INT_MAX));
-}
-
-#ifdef OS_WINDOWS
-TEST(UtilTest, WindowsMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-  EXPECT_EQ(-1, Util::MaybeMLock(addr, data_len));
-  EXPECT_EQ(-1, Util::MaybeMUnlock(addr, data_len));
-  free(addr);
-}
-#endif  // OS_WINDOWS
-
-#ifdef OS_MACOSX
-TEST(UtilTest, MacMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-  EXPECT_EQ(0, Util::MaybeMLock(addr, data_len));
-  EXPECT_EQ(0, Util::MaybeMUnlock(addr, data_len));
-  free(addr);
-}
-#endif  // OS_MACOSX
-
-TEST(UtilTest, LinuxMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-#ifdef OS_LINUX
-#if defined(OS_ANDROID) || defined(__native_client__)
-  EXPECT_EQ(-1, Util::MaybeMLock(addr, data_len));
-  EXPECT_EQ(-1, Util::MaybeMUnlock(addr, data_len));
-#else
-  EXPECT_EQ(0, Util::MaybeMLock(addr, data_len));
-  EXPECT_EQ(0, Util::MaybeMUnlock(addr, data_len));
-#endif  // defined(OS_ANDROID) || defined(__native_client__)
-#endif  // OS_LINUX
-  free(addr);
 }
 
 }  // namespace mozc

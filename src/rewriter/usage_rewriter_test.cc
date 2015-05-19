@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,18 @@
 #include "rewriter/usage_rewriter.h"
 
 #include <string>
-#include "base/base.h"
-#include "base/singleton.h"
-#include "base/util.h"
+
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
+#include "dictionary/user_dictionary.h"
+#include "dictionary/user_dictionary_storage.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -57,13 +60,21 @@ void AddCandidate(const string &key, const string &value,
 }
 }  // namespace
 
-class UsageRewriterTest : public testing::Test {
+class UsageRewriterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
+
+    data_manager_.reset(new testing::MockDataManager);
+
+    suppression_dictionary_.reset(new SuppressionDictionary);
+    user_dictionary_.reset(
+        new UserDictionary(new UserPOS(data_manager_->GetUserPOSData()),
+                           data_manager_->GetPOSMatcher(),
+                           suppression_dictionary_.get()));
   }
 
   virtual void TearDown() {
@@ -75,15 +86,21 @@ class UsageRewriterTest : public testing::Test {
 
   UsageRewriter *CreateUsageRewriter() const {
     return new UsageRewriter(
-        UserPosManager::GetUserPosManager()->GetPOSMatcher());
+        data_manager_.get(),
+        user_dictionary_.get());
   }
+
+  scoped_ptr<SuppressionDictionary> suppression_dictionary_;
+  scoped_ptr<UserDictionary> user_dictionary_;
+  scoped_ptr<testing::MockDataManager> data_manager_;
 };
 
 TEST_F(UsageRewriterTest, CapabilityTest) {
   scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  const ConversionRequest request;
   EXPECT_EQ(RewriterInterface::CONVERSION |
             RewriterInterface::PREDICTION,
-            rewriter->capability());
+            rewriter->capability(request));
 }
 
 TEST_F(UsageRewriterTest, ConjugationTest) {
@@ -105,7 +122,8 @@ TEST_F(UsageRewriterTest, ConjugationTest) {
                "\xE5\x94\xB1\xE3\x81\x88\xE3\x81\xB0",
                "\xE3\x81\x86\xE3\x81\x9F\xE3\x81\x88",
                "\xE5\x94\x84\xE3\x81\x88", seg);
-  EXPECT_TRUE(rewriter->Rewrite(ConversionRequest(), &segments));
+  const ConversionRequest default_request;
+  EXPECT_TRUE(rewriter->Rewrite(default_request, &segments));
   // "歌う"
   EXPECT_EQ("\xE6\xAD\x8C\xE3\x81\x86",
             segments.conversion_segment(0).candidate(0).usage_title);
@@ -452,4 +470,60 @@ TEST_F(UsageRewriterTest, GetKanjiPrefixAndOneHiragana) {
   EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana(
       "\xE3\x81\x82\xE5\x90\x88\xE3\x82\x8F\xE3\x81\x9B\xE3\x82\x8B"));
 }
+
+TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
+  // Load mock data
+  {
+    UserDictionaryStorage storage("");
+    UserDictionaryStorage::UserDictionary *dic = storage.add_dictionaries();
+
+    UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+    // key="うま", value="アルパカ", comment="アルパカコメント"
+    entry->set_key("\xE3\x81\x86\xE3\x81\xBE");
+    entry->set_value("\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x91\xE3\x82\xAB");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
+    entry->set_comment("\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x91\xE3\x82\xAB\xE3"
+                       "\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88");
+
+    user_dictionary_->Load(storage);
+  }
+
+  // Emulates the conversion of key="うま".
+  Segments segments;
+  segments.Clear();
+  Segment *seg = segments.push_back_segment();
+  // "うま"
+  seg->set_key("\xE3\x81\x86\xE3\x81\xBE");
+  // "うま", "Horse", "うま", "Horse",
+  AddCandidate("\xE3\x81\x86\xE3\x81\xBE",
+               "Horse",
+               "\xE3\x81\x86\xE3\x81\xBE",
+               "Horse", seg);
+  // "うま", "アルパカ", "うま", "アルパカ"
+  AddCandidate(
+      "\xE3\x81\x86\xE3\x81\xBE",
+      "\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x91\xE3\x82\xAB",
+      "\xE3\x81\x86\xE3\x81\xBE",
+      "\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x91\xE3\x82\xAB", seg);
+
+  const ConversionRequest request;
+  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+
+  // Result of ("うま", "Horse"). No comment is expected.
+  const Segment::Candidate &cand0 = segments.conversion_segment(0).candidate(0);
+  EXPECT_TRUE(cand0.usage_title.empty());
+  EXPECT_TRUE(cand0.usage_description.empty());
+
+  // Result of ("うま", "アルパカ"). Comment from user dictionary is expected.
+  const Segment::Candidate &cand1 = segments.conversion_segment(0).candidate(1);
+  // "アルパカ"
+  EXPECT_EQ("\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x91\xE3\x82\xAB",
+            cand1.usage_title);
+  // "アルパカコメント"
+  EXPECT_EQ("\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x91\xE3\x82\xAB\xE3"
+            "\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88",
+            cand1.usage_description);
+}
+
 }  // namespace mozc

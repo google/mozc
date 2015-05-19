@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,7 @@
 
 #include "base/mutex.h"
 
-#ifdef OS_ANDROID
-#include <android/api-level.h>  // for __ANDROID_API__
-#endif  // OS_ANDROID
-
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
 #else
 #include <pthread.h>
@@ -47,10 +43,14 @@
 #include "base/util.h"
 #include "base/win_util.h"
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 // We do not use pthread on Windows
-#elif defined(__ANDROID_API__) && (__ANDROID_API__ < 9)
-// pthread rwlock is not available for these targets.
+#elif defined(OS_ANDROID)
+// pthread rwlock is supported since API Level 9.
+// Currently minimum API Level is 7 so we cannot use it.
+// Note that we cannot use __ANDROID_API__ macro in above condition
+// because it is equal to target API Level, which is greater than
+// min sdk level. Causes runtime crash.
 #elif defined(__native_client__)
 // TODO(team): Consider to use glibc rwlock.
 #else
@@ -97,7 +97,7 @@ inline int InterlockedCompareExchange(volatile int *target,
 
 }  // namespace
 
-#ifdef OS_WINDOWS  // Hereafter, we have Win32 implementations
+#ifdef OS_WIN  // Hereafter, we have Win32 implementations
 namespace {
 
 template <typename T>
@@ -318,6 +318,12 @@ void Mutex::Unlock() {
   pthread_mutex_unlock(AsPthreadMutexT(&opaque_buffer_));
 }
 
+#ifdef MOZC_USE_PEPPER_FILE_IO
+pthread_mutex_t *Mutex::raw_mutex() {
+  return AsPthreadMutexT(&opaque_buffer_);
+}
+#endif  // MOZC_USE_PEPPER_FILE_IO
+
 #ifdef MOZC_PTHREAD_HAS_READER_WRITER_LOCK
 // Use pthread native reader writer lock.
 namespace {
@@ -393,7 +399,7 @@ bool ReaderWriterMutex::MultipleReadersThreadsSupported() {
 
 #endif  // MOZC_PTHREAD_HAS_READER_WRITER_LOCK
 
-#endif  // OS_WINDOWS or pthread
+#endif  // OS_WIN or pthread
 
 void CallOnce(once_t *once, void (*func)()) {
   if (once == NULL || func == NULL) {
@@ -414,9 +420,9 @@ void CallOnce(once_t *once, void (*func)()) {
     InterlockedCompareExchange(&(once->state), ONCE_DONE, ONCE_INIT);
   } else {
     while (once->state == ONCE_INIT) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
       ::YieldProcessor();
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
     }  // busy loop
   }
 }

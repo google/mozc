@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,15 +40,18 @@ namespace mozc {
 
 class ConversionRequest;
 class ConverterInterface;
+class DataManagerInterface;
+class EmbeddedDictionary;
 class Segment;
 class Segments;
 
 class SymbolRewriter : public RewriterInterface  {
  public:
-  explicit SymbolRewriter(const ConverterInterface *parent_converter);
+  explicit SymbolRewriter(const ConverterInterface *parent_converter,
+                          const DataManagerInterface *data_manager);
   virtual ~SymbolRewriter();
 
-  virtual int capability() const;
+  virtual int capability(const ConversionRequest &request) const;
 
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
@@ -94,9 +97,10 @@ class SymbolRewriter : public RewriterInterface  {
                               Segments *segments) const;
 
   // Insert symbols using single segment.
-  static bool RewriteEachCandidate(Segments *segments);
+  bool RewriteEachCandidate(Segments *segments) const;
 
   const ConverterInterface *parent_converter_;
+  scoped_ptr<EmbeddedDictionary> dictionary_;
 };
 
 }  // namespace mozc

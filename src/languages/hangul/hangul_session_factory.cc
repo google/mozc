@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #include "languages/hangul/hangul_session_factory.h"
 
 #include "base/singleton.h"
-#include "converter/empty_user_data_manager.h"
+#include "engine/empty_user_data_manager.h"
 #include "languages/hangul/session.h"
 
 namespace mozc {

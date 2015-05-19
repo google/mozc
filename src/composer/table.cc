@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,10 +40,10 @@
 #include "base/logging.h"
 #include "base/trie.h"
 #include "base/util.h"
+#include "composer/internal/typing_model.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 namespace mozc {
 namespace composer {
@@ -77,6 +77,8 @@ const char kQwertyMobileHiraganaNumberTableFile[]
     = "system://qwerty_mobile-hiragana-number.tsv";
 const char kQwertyMobileHalfwidthasciiTableFile[]
     = "system://qwerty_mobile-halfwidthascii.tsv";
+// Special tables for Godan
+const char kGodanHiraganaTableFile[] = "system://godan-hiragana.tsv";
 
 const char kNewChunkPrefix[] = "\t";
 const char kSpecialKeyOpen[] = "\x0F";  // Shift-In of ASCII
@@ -100,7 +102,8 @@ Entry::Entry(const string &input,
 // ========================================
 Table::Table()
     : entries_(new EntryTrie),
-      case_sensitive_(false) {}
+      case_sensitive_(false),
+      typing_model_(NULL) {}
 
 Table::~Table() {
   ResetEntrySet();
@@ -118,15 +121,11 @@ static const char kSquareOpen[]  = "[";
 static const char kSquareClose[] = "]";
 static const char kMiddleDot[]   = "\xE3\x83\xBB";  // "・"
 
-bool Table::Initialize() {
-  return InitializeWithRequestAndConfig(commands::RequestHandler::GetRequest(),
-                                        config::ConfigHandler::GetConfig());
-}
-
 bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
                                            const config::Config &config) {
   case_sensitive_ = false;
   bool result = false;
+  typing_model_ = TypingModel::GetTypingModel(request.special_romanji_table());
   if (request.special_romanji_table()
       != mozc::commands::Request::DEFAULT_TABLE) {
     const char *table_file_name;
@@ -171,6 +170,9 @@ bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
         break;
       case mozc::commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII:
         table_file_name = kQwertyMobileHalfwidthasciiTableFile;
+        break;
+      case mozc::commands::Request::GODAN_TO_HIRAGANA:
+        table_file_name = kGodanHiraganaTableFile;
         break;
       default:
         table_file_name = NULL;
@@ -275,12 +277,6 @@ bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
   // Load Kana combination rules.
   result = LoadFromFile(kKanaCombinationTableFile);
   return result;
-}
-
-bool Table::Reload() {
-  ResetEntrySet();
-  entries_.reset(new EntryTrie);
-  return Initialize();
 }
 
 bool Table::IsLoopingEntry(const string &input,
@@ -396,6 +392,10 @@ bool Table::LoadFromFile(const char *filepath) {
     return false;
   }
   return LoadFromStream(ifs.get());
+}
+
+const TypingModel* Table::typing_model() const {
+  return typing_model_;
 }
 
 namespace {
@@ -564,14 +564,14 @@ string Table::ParseSpecialKey(const string &input) {
   size_t close_pos = 0;
   for (size_t cursor = 0; cursor < input.size();) {
     if (!FindBlock(input, "{", "}", cursor, &open_pos, &close_pos)) {
-      output.append(input.substr(cursor));
+      output.append(input, cursor, input.size() - cursor);
       break;
     }
 
-    output.append(input.substr(cursor, open_pos - cursor));
+    output.append(input, cursor, open_pos - cursor);
 
     // The both sizes of "{" and "}" is 1.
-    const string key = input.substr(open_pos + 1, close_pos - open_pos - 1);
+    const string key(input, open_pos + 1, close_pos - open_pos - 1);
     if (key == "{") {
       // "{{}" is treated as "{".
       output.append("{");
@@ -595,11 +595,11 @@ string Table::DeleteSpecialKey(const string &input) {
   for (size_t cursor = 0; cursor < input.size();) {
     if (!FindBlock(input, kSpecialKeyOpen, kSpecialKeyClose,
                    cursor, &open_pos, &close_pos)) {
-      output.append(input.substr(cursor));
+      output.append(input, cursor, input.size() - cursor);
       break;
     }
 
-    output.append(input.substr(cursor, open_pos - cursor));
+    output.append(input, cursor, open_pos - cursor);
     // The size of kSpecialKeyClose is 1.
     cursor = close_pos + 1;
   }

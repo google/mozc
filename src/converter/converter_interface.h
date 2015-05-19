@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,14 @@
 #define MOZC_CONVERTER_CONVERTER_INTERFACE_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 
 namespace mozc {
-class UserDataManagerInterface;
 
 namespace composer {
-  class Composer;
+class Composer;
 }  // namespace composer
 
 class ConverterInterface {
@@ -150,8 +149,8 @@ class ConverterInterface {
 
   // Commit the first segment and move the candidate
   // into history segment temporally.
-  // Session can use this method for PartialSubmit.
-  virtual bool SubmitFirstSegment(Segments *segments,
+  // Session can use this method for PartialCommit.
+  virtual bool CommitFirstSegment(Segments *segments,
                                   size_t candidate_index) const = 0;
 
   // Resize segment_index-th segment by offset_length.
@@ -171,8 +170,6 @@ class ConverterInterface {
                              const uint8 *new_size_array,
                              size_t array_size) const = 0;
 
-  virtual UserDataManagerInterface *GetUserDataManager() = 0;
-
  protected:
   ConverterInterface() {}
 
@@ -180,20 +177,6 @@ class ConverterInterface {
   DISALLOW_COPY_AND_ASSIGN(ConverterInterface);
 };
 
-// static converter utilities
-class ConverterUtil {
- public:
-  // Make a segment having one candidate. The value of candidate is the
-  // same as the preedit.  This function can be used for error handling.
-  // When the converter fails, we can call this function to make a
-  // virtual segment.
-  static void InitSegmentsFromString(const string &key,
-                                     const string &preedit,
-                                     Segments *segments);
-
- private:
-  ConverterUtil() {}
-  ~ConverterUtil() {}
-};
 }  // namespace mozc
+
 #endif  // MOZC_CONVERTER_CONVERTER_INTERFACE_H_

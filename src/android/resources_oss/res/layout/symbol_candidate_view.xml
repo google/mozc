@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+  <LinearLayout
+      android:id="@+id/symbol_input_candidate_content_view"
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent"
+      android:orientation="horizontal" >
+    <view
+        android:id="@+id/symbol_input_candidate_view"
+        android:background="@color/input_frame_background"
+        android:layout_width="0dip"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        class="org.mozc.android.inputmethod.japanese.SymbolInputView$SymbolCandidateView" />
+
+    <org.mozc.android.inputmethod.japanese.ui.ScrollGuideView
+        android:id="@+id/symbol_input_scroll_guide_view"
+        android:layout_width="@dimen/candidate_scrollbar_width"
+        android:layout_height="fill_parent"
+        android:layout_weight="0"
+        android:background="@drawable/candidate__slidebar_background" />
+  </LinearLayout>
+
+  <!-- Following LinearLayout is shown only when there is no candidate. -->
+  <FrameLayout
+      android:id="@+id/symbol_input_no_history"
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent"
+      android:gravity="center"
+      android:padding="10dip"
+      android:visibility="gone" >
+
+    <TextView
+        android:id="@+id/symbol_input_no_history_text"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center"
+        android:text="@string/symbol_input_no_history"
+        android:textColor="@android:color/black"
+        android:textSize="@dimen/symbol_view_no_history_text_size" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|center_vertical"
+        android:background="@drawable/symbol__category_indicator_right" />
+  </FrameLayout>
+
+  <!-- Drop shadow between candidates and minor category tabs. -->
+  <View
+      android:layout_width="fill_parent"
+      android:layout_height="@dimen/translucent_border_height"
+      android:background="@drawable/dropshadow_top"
+      android:layout_gravity="bottom" />
+</FrameLayout>

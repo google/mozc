@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,21 +47,11 @@
         '../prediction/prediction.gyp:prediction',
         '../prediction/prediction.gyp:prediction_protocol',
         '../rewriter/rewriter.gyp:rewriter',
-        '../session/session_base.gyp:request_handler',
         '../session/session_base.gyp:session_protocol',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
+        'converter_base.gyp:conversion_request',
         'converter_base.gyp:immutable_converter',
-        'converter_base.gyp:segments',
-      ],
-    },
-    {
-      'target_name': 'converter_main',
-      'type': 'executable',
-      'sources': [
-        'converter_main.cc',
-       ],
-      'dependencies': [
-        '../composer/composer.gyp:composer',
-        'converter',
+        'converter_base.gyp:immutable_converter_interface',
         'converter_base.gyp:segments',
       ],
     },

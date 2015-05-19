@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ namespace config {
 // Interface class
 class StatsConfigUtilInterface {
  public:
-  virtual bool IsEnabled() const = 0;
+  virtual bool IsEnabled() = 0;
   virtual bool SetEnabled(bool val) = 0;
  protected:
   StatsConfigUtilInterface() {

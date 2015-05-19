@@ -1,0 +1,59 @@
+# Enable IME
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Set to Qwerty kana mode.
+SET_MOBILE_REQUEST
+UPDATE_MOBILE_KEYBOARD	QWERTY_MOBILE_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Send keys "watasino" to get composition "わたしの"
+SEND_KEYS	watasino
+EXPECT_PREEDIT	わたしの
+
+SEND_KEY	LEFT
+SEND_KEY	LEFT
+# Now preedit is "わた|しの"
+
+EXPECT_IN_ALL_CANDIDATE_WORDS	わた
+EXPECT_IN_ALL_CANDIDATE_WORDS	綿
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	私の
+
+# Submit 1st candidate
+SUBMIT_CANDIDATE	0
+
+EXPECT_PREEDIT	しの
+
+
+RESET_CONTEXT
+# Send keys "byouteki" to get composition "びょうてき"
+SEND_KEYS	byouteki
+EXPECT_PREEDIT	びょうてき
+
+# To get "びょう|てき"
+SEND_KEY	LEFT
+SEND_KEY	LEFT
+
+# Submit "猫"
+EXPECT_IN_ALL_CANDIDATE_WORDS	猫
+SUBMIT_CANDIDATE_BY_VALUE	猫
+EXPECT_PREEDIT	てき
+
+# Submit "的"
+EXPECT_IN_ALL_CANDIDATE_WORDS	的
+SUBMIT_CANDIDATE_BY_VALUE	的
+EXPECT_PREEDIT
+
+
+RESET_CONTEXT
+# Send keys "ababababababa" to get composition "あばばばばばば"
+SEND_KEYS	ababababababa
+EXPECT_PREEDIT	あばばばばばば
+
+# To get "あばばばばば|ば"
+SEND_KEY	LEFT
+
+# Submit "アバババババ"
+EXPECT_IN_ALL_CANDIDATE_WORDS	アバババババ
+SUBMIT_CANDIDATE_BY_VALUE	アバババババ
+EXPECT_PREEDIT	ば

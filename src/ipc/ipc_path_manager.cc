@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,8 @@
 #include "ipc/ipc_path_manager.h"
 
 #include <errno.h>
-#include <stdlib.h>
-#include <map>
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #include <psapi.h>   // GetModuleFileNameExW
 #else
@@ -41,23 +39,28 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#endif  // OS_WINDOWS
-
 #ifdef OS_MACOSX
 #include <sys/sysctl.h>
-#include "base/mac_util.h"
-#endif
+#endif  // OS_MACOSX
+#endif  // OS_WIN
+
+#include <cstdlib>
+#include <map>
 
 #include "base/base.h"
 #include "base/const.h"
 #include "base/file_stream.h"
-#include "base/mmap.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "base/mac_util.h"
 #include "base/mutex.h"
 #include "base/process_mutex.h"
 #include "base/scoped_handle.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "base/win_util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
 
@@ -70,7 +73,7 @@ const size_t kKeySize = 32;
 // Do not use ConfigFileStream, since client won't link
 // to the embedded resource files
 string GetIPCKeyFileName(const string &name) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   string basename;
 #else
   string basename = ".";    // hidden file
@@ -86,7 +89,7 @@ string GetIPCKeyFileName(const string &name) {
 #endif  // MOZC_LANGUAGE_SUFFIX_FOR_LINUX
   basename.append(".ipc");   // this is the extension part.
 
-  return Util::JoinPath(Util::GetUserProfileDirectory(), basename);
+  return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
 
 bool IsValidKey(const string &name) {
@@ -110,37 +113,25 @@ bool IsValidKey(const string &name) {
 
 void CreateIPCKey(char *value) {
   char buf[16];   // key is 128 bit
-  bool error = false;
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // LUID guaranties uniqueness
   LUID luid = { 0 };   // LUID is 64bit value
 
   DCHECK_EQ(sizeof(luid), sizeof(uint64));
 
   // first 64 bit is random sequence and last 64 bit is LUID
-  if (::AllocateLocallyUniqueId(&luid) &&
-      Util::GetSecureRandomSequence(buf, sizeof(buf) / 2)) {
+  if (::AllocateLocallyUniqueId(&luid)) {
+    Util::GetRandomSequence(buf, sizeof(buf) / 2);
     ::memcpy(buf + sizeof(buf) / 2, &luid, sizeof(buf) / 2);
   } else {
-    LOG(ERROR) << "Cannot make random key: " << ::GetLastError();
-    error = true;
+    // use random value for failsafe
+    Util::GetRandomSequence(buf, sizeof(buf));
   }
 #else
   // get 128 bit key: Note that collision will happen.
-  if (!Util::GetSecureRandomSequence(buf, sizeof(buf))) {
-    LOG(ERROR) << "Cannot make random key";
-    error = true;
-  }
+  Util::GetRandomSequence(buf, sizeof(buf));
 #endif
-
-  // use random value for failsafe
-  if (error) {
-    LOG(ERROR) << "make random key with rand()";
-    for (size_t i = 0; i < sizeof(buf); ++i) {
-      buf[i] = static_cast<char>(Util::Random(256));
-    }
-  }
 
   // escape
   for (size_t i = 0; i < sizeof(buf); ++i) {
@@ -181,6 +172,7 @@ class IPCPathManagerMap {
   map<string, IPCPathManager *> manager_map_;
   Mutex mutex_;
 };
+
 }  // namespace
 
 IPCPathManager::IPCPathManager(const string &name)
@@ -225,7 +217,7 @@ bool IPCPathManager::SavePathName() {
   ipc_path_info_->set_protocol_version(IPC_PROTOCOL_VERSION);
   ipc_path_info_->set_product_version(Version::GetMozcVersion());
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ipc_path_info_->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
   ipc_path_info_->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
 #else
@@ -274,15 +266,15 @@ bool IPCPathManager::GetPathName(string *ipc_name) const {
     return false;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   *ipc_name = mozc::kIPCPrefix;
 #elif defined(OS_MACOSX)
   ipc_name->assign(MacUtil::GetLabelForSuffix(""));
-#else  // not OS_WINDOWS nor OS_MACOSX
+#else  // not OS_WIN nor OS_MACOSX
   // GetUserIPCName("<name>") => "/tmp/.mozc.<key>.<name>"
   const char kIPCPrefix[] = "/tmp/.mozc.";
   *ipc_name = kIPCPrefix;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_LINUX
   // On Linux, use abstract namespace which is independent of the file system.
@@ -316,8 +308,12 @@ void IPCPathManager::Clear() {
 bool IPCPathManager::IsValidServer(uint32 pid,
                                    const string &server_path) {
   scoped_lock l(mutex_.get());
-  // for backward compatibility
-  if (pid == 0 || server_path.empty()) {
+  if (pid == 0) {
+    // For backward compatibility.
+    return true;
+  }
+  if (server_path.empty()) {
+    // This means that we do not check the server path.
     return true;
   }
 
@@ -326,39 +322,71 @@ bool IPCPathManager::IsValidServer(uint32 pid,
     return false;
   }
 
+#ifdef OS_WIN
+  // OpenProcess API seems to be unavailable on Win8/AppContainer. So we
+  // temporarily disable the verification of the path name of the peer.
+  bool in_appcontainer = false;
+  if (!WinUtil::IsProcessInAppContainer(::GetCurrentProcess(),
+                                        &in_appcontainer)) {
+    return false;
+  }
+  if (in_appcontainer) {
+    // Bypass security check.
+    // TODO(yukawa): Establish alternative verification mechanism for Metro.
+    server_pid_ = pid;
+    server_path_.clear();
+    return true;
+  }
+#endif  // OS_WIN
+
   // compare path name
   if (pid == server_pid_) {
     return (server_path == server_path_);
   }
 
-  server_pid_ = pid;
+  server_pid_ = 0;
   server_path_.clear();
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   {
-    ScopedHandle process_handle
-        (::OpenProcess
-         (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE,
-          static_cast<DWORD>(server_pid_)));
+    DCHECK(SystemUtil::IsVistaOrLater())
+        << "This verification is functional on Vista and later.";
 
-    if (process_handle.get() == NULL) {
-      LOG(ERROR) << "OpenProcess() failed: " << ::GetLastError();
+    wstring expected_server_ntpath;
+    const map<string, wstring>::const_iterator it =
+        expected_server_ntpath_cache_.find(server_path);
+    if (it != expected_server_ntpath_cache_.end()) {
+      expected_server_ntpath = it->second;
+    } else {
+      wstring wide_server_path;
+      Util::UTF8ToWide(server_path, &wide_server_path);
+      if (WinUtil::GetNtPath(wide_server_path, &expected_server_ntpath)) {
+        // Caches the relationship from |server_path| to
+        // |expected_server_ntpath| in case |server_path| is renamed later.
+        // (This can happen during the updating).
+        expected_server_ntpath_cache_[server_path] = expected_server_ntpath;
+      }
+    }
+
+    if (expected_server_ntpath.empty()) {
       return false;
     }
 
-    wchar_t filename[MAX_PATH];
-    const DWORD result = ::GetModuleFileNameExW(process_handle.get(),
-                                                NULL,
-                                                filename,
-                                                MAX_PATH);
-    if (result == 0 || result >= MAX_PATH) {
-      LOG(ERROR) << "GetModuleFileNameExW() failed: " << ::GetLastError();
+    wstring actual_server_ntpath;
+    if (!WinUtil::GetProcessInitialNtPath(pid, &actual_server_ntpath)) {
       return false;
     }
 
-    Util::WideToUTF8(filename, &server_path_);
+    if (expected_server_ntpath != actual_server_ntpath) {
+      return false;
+    }
+
+    // Here we can safely assume that |server_path| (expected one) should be
+    // the same to |server_path_| (actual one).
+    server_path_ = server_path;
+    server_pid_ = pid;
   }
-#endif
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
   int name[] = { CTL_KERN, KERN_PROCARGS, pid };
@@ -375,13 +403,14 @@ bool IPCPathManager::IsValidServer(uint32 pid,
     LOG(ERROR) << "sysctl KERN_PROCARGS failed";
     return false;
   }
-#endif
+  server_pid_ = pid;
+#endif  // OS_MACOSX
 
 #ifdef OS_LINUX
   // load from /proc/<pid>/exe
   char proc[128];
   char filename[512];
-  snprintf(proc, sizeof(proc) - 1, "/proc/%u/exe", server_pid_);
+  snprintf(proc, sizeof(proc) - 1, "/proc/%u/exe", pid);
   const ssize_t size = readlink(proc, filename, sizeof(filename) - 1);
   if (size == -1) {
     LOG(ERROR) << "readlink failed: " << strerror(errno);
@@ -390,7 +419,8 @@ bool IPCPathManager::IsValidServer(uint32 pid,
   filename[size] = '\0';
 
   server_path_ = filename;
-#endif
+  server_pid_ = pid;
+#endif  // OS_LINUX
 
   VLOG(1) << "server path: " << server_path << " " << server_path_;
   if (server_path == server_path_) {
@@ -406,13 +436,13 @@ bool IPCPathManager::IsValidServer(uint32 pid,
     server_path_ = server_path;
     return true;
   }
-#endif
+#endif  // OS_LINUX
 
   return false;
 }
 
 bool IPCPathManager::ShouldReload() const {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // In windows, no reloading mechanism is necessary because IPC files
   // are automatically removed.
   return false;
@@ -425,11 +455,11 @@ bool IPCPathManager::ShouldReload() const {
   }
 
   return true;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 time_t IPCPathManager::GetIPCFileTimeStamp() const {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // In windows, we don't need to get the exact file timestamp, so
   // just returns -1 at this time.
   return static_cast<time_t>(-1);
@@ -441,7 +471,7 @@ time_t IPCPathManager::GetIPCFileTimeStamp() const {
     return static_cast<time_t>(-1);
   }
   return filestat.st_mtime;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 bool IPCPathManager::LoadPathNameInternal() {
@@ -452,7 +482,7 @@ bool IPCPathManager::LoadPathNameInternal() {
 
   // Special code for Windows,
   // we want to pass FILE_SHRED_DELETE flag for CreateFile.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   wstring wfilename;
   Util::UTF8ToWide(filename.c_str(), &wfilename);
 

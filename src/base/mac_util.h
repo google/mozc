@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,16 @@ class MacUtil {
 
   // Adds the prelauncher to "Login Item"
   static void AddPrelauncherLoginItem();
+
+  // Gets the name and the owner name of the frontmost window.
+  // Returns false if an error occurred.
+  static bool GetFrontmostWindowNameAndOwner(string *name, string *owner);
+
+  // Returns true when Mozc's suggestion UI is expected to be surpressed on
+  // the window specified by |name| and |owner|.
+  static bool IsSuppressSuggestionWindow(const string &name,
+                                         const string &owner);
+
  private:
   MacUtil() {}
   ~MacUtil() {}

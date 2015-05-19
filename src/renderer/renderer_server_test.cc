@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,13 +28,15 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
-#include "base/base.h"
+
+#include "base/logging.h"
+#include "base/port.h"
+#include "base/system_util.h"
 #include "base/util.h"
-#include "ipc/ipc.h"
 #include "ipc/ipc_test_util.h"
-#include "renderer/renderer_interface.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_command.pb.h"
+#include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
 #include "testing/base/public/gunit.h"
 
@@ -134,12 +136,12 @@ class DummyRendererLauncher : public RendererLauncherInterface {
 class RendererServerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 };
 
 TEST_F(RendererServerTest, IPCTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   mozc::IPCClientFactoryOnMemory on_memory_client_factory;
 
   scoped_ptr<TestRendererServer> server(new TestRendererServer);
@@ -177,5 +179,5 @@ TEST_F(RendererServerTest, IPCTest) {
   server->Wait();
 }
 
-} // renderer
-} // mozc
+}  // namespace renderer
+}  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ namespace win32 {
 namespace {
 
 static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
-  if (himcc == NULL) {
+  if (himcc == nullptr) {
     return ::ImmCreateIMCC(size);
   } else {
     return ::ImmReSizeIMCC(himcc, size);
@@ -46,7 +46,7 @@ static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
 }  // namespace
 
 MessageQueue::MessageQueue(HIMC himc)
-    : himc_(himc), transmsg_(NULL), transmsg_count_(0) {
+    : himc_(himc), transmsg_(nullptr), transmsg_count_(0) {
 }
 
 void MessageQueue::Attach(LPTRANSMSGLIST transmsg) {
@@ -56,7 +56,7 @@ void MessageQueue::Attach(LPTRANSMSGLIST transmsg) {
 
 int MessageQueue::Detach() {
   const LPTRANSMSGLIST transmsg = transmsg_;
-  transmsg_ = NULL;
+  transmsg_ = nullptr;
   const int transmsg_count = transmsg_count_;
   transmsg_count_ = 0;
 
@@ -75,7 +75,7 @@ int MessageQueue::Detach() {
   ScopedHIMC<INPUTCONTEXT> context(himc_);
   // If anything wrong, return the message count in TRANSMSGLIST, the extra
   // messages will be saved in vector so they can be sent out later.
-  if (context.get() == NULL) {
+  if (context.get() == nullptr) {
     return transmsg_count;
   }
 
@@ -84,7 +84,7 @@ int MessageQueue::Detach() {
   const size_t total_bytes = total_num_messages * sizeof(TRANSMSG);
   context->hMsgBuf = InitializeHIMCC(context->hMsgBuf, total_bytes);
   ScopedHIMCC<TRANSMSG> message_buffer(context->hMsgBuf);
-  if (message_buffer.get() == NULL) {
+  if (message_buffer.get() == nullptr) {
     return transmsg_count;
   }
 
@@ -111,7 +111,7 @@ int MessageQueue::Detach() {
 void MessageQueue::AddMessage(UINT message, WPARAM wparam, LPARAM lparam) {
   // If transmsg_ is not big enough, we store extra messages in messages_
   // vector.
-  if ((transmsg_ != NULL) && (transmsg_count_ < transmsg_->uMsgCount)) {
+  if ((transmsg_ != nullptr) && (transmsg_count_ < transmsg_->uMsgCount)) {
     transmsg_->TransMsg[transmsg_count_].message = message;
     transmsg_->TransMsg[transmsg_count_].wParam = wparam;
     transmsg_->TransMsg[transmsg_count_].lParam = lparam;
@@ -126,7 +126,7 @@ void MessageQueue::AddMessage(UINT message, WPARAM wparam, LPARAM lparam) {
 bool MessageQueue::Send() {
   // Don't send if attached to a TRANSMSGLIST, these messages will be sent via
   // the buffer provided by ImeToAsciiEx.
-  if (transmsg_ != NULL) {
+  if (transmsg_ != nullptr) {
     return false;
   }
   if (messages_.size() == 0) {
@@ -134,14 +134,14 @@ bool MessageQueue::Send() {
   }
 
   ScopedHIMC<INPUTCONTEXT> context(himc_);
-  if (context.get() == NULL) {
+  if (context.get() == nullptr) {
     return false;
   }
 
   const int size = static_cast<int>(messages_.size()) * sizeof(TRANSMSG);
   context->hMsgBuf = InitializeHIMCC(context->hMsgBuf, size);
   ScopedHIMCC<TRANSMSG> message_buffer(context->hMsgBuf);
-  if (message_buffer.get() == NULL) {
+  if (message_buffer.get() == nullptr) {
     return false;
   }
 
@@ -159,6 +159,10 @@ bool MessageQueue::Send() {
   }
 
   return true;
+}
+
+const vector<TRANSMSG> &MessageQueue::messages() const {
+  return messages_;
 }
 
 }  // namespace win32

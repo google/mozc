@@ -1,0 +1,15 @@
+# This file contains a scenario for testing preedit text when a user uses
+# 12-key flick-toggle key layout on mobile.
+
+# Enable IME
+SEND_KEY	ON
+
+SET_MOBILE_REQUEST
+UPDATE_MOBILE_KEYBOARD	TOGGLE_FLICK_TO_HALFWIDTHASCII	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HALF_ASCII
+
+# See also http://b/issue?id=7593892.
+SEND_KEYS	2223
+
+EXPECT_IN_ALL_CANDIDATE_WORDS	cd
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	aaad

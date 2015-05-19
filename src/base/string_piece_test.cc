@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -561,6 +561,23 @@ TEST(StringPieceTest, CheckComparisons2) {
 TEST(StringPieceTest, HeterogenousStringPieceEquals) {
   ASSERT_TRUE(StringPiece("hello") == string("hello"));
   ASSERT_TRUE("hello" == StringPiece("hello"));
+}
+
+TEST(StringPieceTest, Constructors) {
+  // Tests for StringPiece(const char*, size_type)
+  ASSERT_EQ("123", StringPiece("12345", 3));
+  ASSERT_EQ("", StringPiece("12345", 0));
+  ASSERT_EQ("12345", StringPiece("12345", 5));
+
+  // Tests for StringPiece(const StringPiece, size_type)
+  ASSERT_EQ("45", StringPiece(StringPiece("12345"), 3));
+  ASSERT_EQ("12345", StringPiece(StringPiece("12345"), 0));
+  ASSERT_EQ("", StringPiece(StringPiece("12345"), 5));
+
+  // Tests for StringPiece(const StringPiece, size_type, size_type)
+  ASSERT_EQ("234", StringPiece("12345", 1, 3));
+  ASSERT_EQ("2345", StringPiece("12345", 1, 300));
+  ASSERT_EQ("", StringPiece("12345", 1, 0));
 }
 
 }  // namespace mozc

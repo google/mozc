@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,20 +44,16 @@ ChromeOsUserPosManager *ChromeOsUserPosManager::GetUserPosManager() {
 }
 
 namespace {
+
 // The following header file is automatically generated and contains the
 // definition of variable, kPOSToken, of type UserPOSImpl::POSToken.
 #include "data_manager/chromeos/user_pos_data.h"
 
-class ChromeOsUserPOS : public UserPOS {
- public:
-  ChromeOsUserPOS() : UserPOS(kPOSToken) {
-    DCHECK(kPOSToken != NULL);
-  }
-};
 }  // namespace
 
-const UserPOSInterface *ChromeOsUserPosManager::GetUserPOS() const {
-  return Singleton<ChromeOsUserPOS>::get();
+const UserPOS::POSToken *ChromeOsUserPosManager::GetUserPOSData() const {
+  DCHECK(kPOSToken != NULL);
+  return kPOSToken;
 }
 
 namespace {

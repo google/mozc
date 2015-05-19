@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,36 +41,39 @@ class PredictorInterface {
  public:
   virtual ~PredictorInterface() {}
 
-  // return suggestions.
+  // Returns suggestions.
   // You may need to change the behavior according to the
   // Segments::request_type flag
   // SUGGESTION: automatic suggestions
   // PREDICTION: invoked only when user pushes "tab" key.
   // less aggressive than SUGGESTION mode.
-  virtual bool Predict(Segments *segments) const = 0;
   virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const {
-    // Ignore the request (e.g., a composer in it) by default.
-    return Predict(segments);
-  }
+                                 Segments *segments) const = 0;
 
-  // Hook(s) for all mutable operations
+  // Hook(s) for all mutable operations.
   virtual void Finish(Segments *segments) {}
 
-  // Revert the last Finish operation
+  // Reverts the last Finish operation.
   virtual void Revert(Segments *segments) {}
 
-  // clear all history data of UserHistoryPredictor
+  // Clears all history data of UserHistoryPredictor.
   virtual bool ClearAllHistory() { return true; }
 
-  // clear unused history data of UserHistoryPredictor
+  // Clears unused history data of UserHistoryPredictor.
   virtual bool ClearUnusedHistory() { return true; }
 
-  // Sync user history to local disk.
+  // Clears a specific history data of UserHistoryPredictor.
+  virtual bool ClearHistoryEntry(const string &key,
+                                 const string &value) { return true; }
+
+  // Syncs user history to local disk.
   virtual bool Sync() { return true; }
 
-  // Reload user history data from local disk.
+  // Reloads user history data from local disk.
   virtual bool Reload() { return true; }
+
+  // Waits for syncer thread to complete.
+  virtual bool WaitForSyncerForTest() { return true; }
 
   virtual const string &GetPredictorName() const = 0;
 

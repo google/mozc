@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,19 +43,12 @@ namespace mozc {
 struct DictionaryFileSection;
 struct Token;
 
-#ifdef MOZC_USE_MOZC_LOUDS
 namespace storage {
 namespace louds {
 class BitVectorBasedArrayBuilder;
 class LoudsTrieBuilder;
 }  // namespace louds
 }  // namespace storage
-#else
-namespace rx {
-class RbxArrayBuilder;
-class RxTrieBuilder;
-}  // namespace rx
-#endif  // MOZC_USE_MOZC_LOUDS
 
 namespace dictionary {
 class SystemDictionaryCodecInterface;
@@ -73,8 +66,6 @@ class SystemDictionaryBuilder {
 
   SystemDictionaryBuilder();
   virtual ~SystemDictionaryBuilder();
-
-  void BuildFromFile(const string &input_file);
   void BuildFromTokens(const vector<Token *> &tokens);
 
   void WriteToFile(const string &output_file) const;
@@ -83,14 +74,6 @@ class SystemDictionaryBuilder {
 
  private:
   typedef deque<KeyInfo> KeyInfoList;
-
-#ifdef MOZC_USE_MOZC_LOUDS
-  typedef ::mozc::storage::louds::LoudsTrieBuilder TrieBuilder;
-  typedef ::mozc::storage::louds::BitVectorBasedArrayBuilder ArrayBuilder;
-#else
-  typedef ::mozc::rx::RxTrieBuilder TrieBuilder;
-  typedef ::mozc::rx::RbxArrayBuilder ArrayBuilder;
-#endif
 
   void ReadTokens(const vector<Token *>& tokens,
                   KeyInfoList *key_info_list) const;
@@ -111,14 +94,15 @@ class SystemDictionaryBuilder {
   void SetPosType(KeyInfoList *keyinfomap) const;
   void SetValueType(KeyInfoList *key_info_list) const;
 
-  scoped_ptr<TrieBuilder> value_trie_builder_;
-  scoped_ptr<TrieBuilder> key_trie_builder_;
-  scoped_ptr<ArrayBuilder> token_array_builder_;
+  scoped_ptr<mozc::storage::louds::LoudsTrieBuilder> value_trie_builder_;
+  scoped_ptr<mozc::storage::louds::LoudsTrieBuilder> key_trie_builder_;
+  scoped_ptr<mozc::storage::louds::BitVectorBasedArrayBuilder>
+      token_array_builder_;
 
   // mapping from {left_id, right_id} to POS index (0--255)
   map<uint32, int> frequent_pos_;
 
-  const dictionary::SystemDictionaryCodecInterface *codec_;
+  const SystemDictionaryCodecInterface *codec_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionaryBuilder);
 };

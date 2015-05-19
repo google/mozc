@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -98,8 +98,10 @@ MockBoolImplementation(ClearCloudSync, void);
 
 // Another boilerplate for the method with an "output" as its second
 // argument.
-#define MockImplementationWithOutput(method_name, argtype)                   \
-  bool ClientMock::method_name(argtype argument, commands::Output *output) { \
+#define MockImplementationWithContextAndOutput(method_name, argtype)         \
+  bool ClientMock::method_name(argtype argument,                             \
+                               const commands::Context &context,             \
+                               commands::Output *output) {                   \
     function_counter_[#method_name]++;                                       \
     called_##method_name##_.CopyFrom(argument);                              \
     map<string, commands::Output>::const_iterator it =                       \
@@ -115,11 +117,15 @@ MockBoolImplementation(ClearCloudSync, void);
     return false;                                                            \
   }
 
-MockImplementationWithOutput(SendKey, const commands::KeyEvent &);
-MockImplementationWithOutput(TestSendKey, const commands::KeyEvent &);
-MockImplementationWithOutput(SendCommand, const commands::SessionCommand &);
+MockImplementationWithContextAndOutput(SendKeyWithContext,
+                                       const commands::KeyEvent &);
+MockImplementationWithContextAndOutput(TestSendKeyWithContext,
+                                       const commands::KeyEvent &);
+MockImplementationWithContextAndOutput(SendCommandWithContext,
+                                       const commands::SessionCommand &);
 
-#undef MockImplementationWithOutput
+#undef MockImplementationWithContextAndOutput
+
 
 // Exceptional methods.
 // GetConfig needs to obtain the "called_config_".

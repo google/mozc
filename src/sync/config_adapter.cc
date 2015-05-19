@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/protobuf.h"
@@ -135,7 +136,7 @@ bool ConfigAdapter::SetDownloadedItems(const ime_sync::SyncItems &items) {
   }
 
   SYNC_VLOG(1) << "merging remote_config into current_config";
-   MergeConfig(*remote_config, &current_config);
+  MergeConfig(*remote_config, &current_config);
 
   SYNC_VLOG(1) << "updating current config. merged config is used now.";
   ConfigHandler::SetConfig(current_config);
@@ -143,7 +144,8 @@ bool ConfigAdapter::SetDownloadedItems(const ime_sync::SyncItems &items) {
   // Also modify the last uploaded file to prevent unnecessary upload.
   SYNC_VLOG(1) << "saving remote_config to " << GetLastUploadedConfigFileName();
   if (!ConfigFileStream::AtomicUpdate(
-          GetLastUploadedConfigFileName(), remote_config->SerializeAsString())) {
+          GetLastUploadedConfigFileName(),
+          remote_config->SerializeAsString())) {
     SYNC_VLOG(1) << "AtomicUpdate failed";
     return false;
   }
@@ -233,13 +235,13 @@ bool ConfigAdapter::Clear() {
       GetLastDownloadedConfigFileName());
   if (!last_downloaded_filename.empty()) {
     SYNC_VLOG(1) << "deleteing " << last_downloaded_filename;
-    Util::Unlink(last_downloaded_filename);
+    FileUtil::Unlink(last_downloaded_filename);
   }
   const string last_uploaded_filename = ConfigFileStream::GetFileName(
       GetLastUploadedConfigFileName());
   if (!last_uploaded_filename.empty()) {
     SYNC_VLOG(1) << "deleteing " << last_uploaded_filename;
-    Util::Unlink(last_uploaded_filename);
+    FileUtil::Unlink(last_uploaded_filename);
   }
   return true;
 }
@@ -273,26 +275,14 @@ bool ConfigAdapter::LoadConfigFromFile(const string &filename, Config *config) {
   return success;
 }
 
-void ConfigAdapter::SetConfigFileNameBase(const string &filename) {
-  config_filename_ = filename;
-}
-
-string ConfigAdapter::GetConfigFileNameBase() const {
-  if (!config_filename_.empty()) {
-    return config_filename_;
-  }
-
-  return ConfigHandler::GetConfigFileName();
-}
-
 string ConfigAdapter::GetLastDownloadedConfigFileName() const {
   const char kSuffix[] = ".last_downloaded";
-  return GetConfigFileNameBase() + kSuffix;
+  return ConfigHandler::GetConfigFileName() + kSuffix;
 }
 
 string ConfigAdapter::GetLastUploadedConfigFileName() const {
   const char kSuffix[] = ".last_uploaded";
-  return GetConfigFileNameBase() + kSuffix;
+  return ConfigHandler::GetConfigFileName() + kSuffix;
 }
 
 bool ConfigAdapter::IsSameConfig(const Config &config1, const Config &config2) {
@@ -307,5 +297,5 @@ bool ConfigAdapter::IsSameConfig(const Config &config1, const Config &config2) {
   return config1_string == config2_string;
 }
 
-}  // namespace mozc::sync
+}  // namespace sync
 }  // namespace mozc

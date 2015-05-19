@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,12 @@
 
 #include "unix/ibus/message_translator.h"
 
+#include <map>
 #include <string>
 #include <vector>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 
 namespace {
@@ -73,6 +76,9 @@ const TranslationMap kUTF8JapaneseMap[] = {
   { "Character Palette",
     "\xE6\x96\x87\xE5\xAD\x97"
     "\xE3\x83\x91\xE3\x83\xAC\xE3\x83\x83\xE3\x83\x88" },
+  // "入力モード"
+  { "Input Mode",
+    "\xE5\x85\xA5\xE5\x8A\x9B\xE3\x83\xA2\xE3\x83\xBC\xE3\x83\x89" },
   // "Mozc について"
   // TODO(team): This should be "Google 日本語入力について"
   //     for official branding build.

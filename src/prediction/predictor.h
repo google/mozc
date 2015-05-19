@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 #ifndef MOZC_PREDICTION_PREDICTOR_H_
 #define MOZC_PREDICTION_PREDICTOR_H_
 
+#include <string>
+
 #include "converter/conversion_request.h"
 #include "prediction/predictor_interface.h"
 
@@ -46,28 +48,32 @@ class BasePredictor : public PredictorInterface {
   virtual ~BasePredictor();
 
   // Overwrite predictor
-  virtual bool Predict(Segments *segments) const = 0;
-
   virtual bool PredictForRequest(const ConversionRequest &request,
                                  Segments *segments) const = 0;
 
-  // Hook(s) for all mutable operations
+  // Hook(s) for all mutable operations.
   virtual void Finish(Segments *segments);
 
-  // Revert the last Finish operation
+  // Reverts the last Finish operation.
   virtual void Revert(Segments *segments);
 
-  // clear all history data of UserHistoryPredictor
+  // Clears all history data of UserHistoryPredictor.
   virtual bool ClearAllHistory();
 
-  // clear unused history data of UserHistoryPredictor
+  // Clears unused history data of UserHistoryPredictor.
   virtual bool ClearUnusedHistory();
 
-  // Sync user history
+  // Clears a specific user history data of UserHistoryPredictor.
+  virtual bool ClearHistoryEntry(const string &key, const string &value);
+
+  // Syncs user history.
   virtual bool Sync();
 
-  // Reload usre history
+  // Reloads usre history.
   virtual bool Reload();
+
+  // Waits for syncer to complete.
+  virtual bool WaitForSyncerForTest();
 
   virtual const string &GetPredictorName() const = 0;
 
@@ -77,6 +83,7 @@ class BasePredictor : public PredictorInterface {
   scoped_ptr<PredictorInterface> extra_predictor_;
 };
 
+// TODO(team): The name should be DesktopPredictor
 class DefaultPredictor : public BasePredictor {
  public:
   static PredictorInterface *CreateDefaultPredictor(
@@ -92,8 +99,6 @@ class DefaultPredictor : public BasePredictor {
   virtual bool PredictForRequest(const ConversionRequest &request,
                                  Segments *segments) const;
 
-  virtual bool Predict(Segments *segments) const;
-
   virtual const string &GetPredictorName() const { return predictor_name_; }
 
  private:
@@ -101,6 +106,27 @@ class DefaultPredictor : public BasePredictor {
   const string predictor_name_;
 };
 
+class MobilePredictor : public BasePredictor {
+ public:
+  static PredictorInterface *CreateMobilePredictor(
+      PredictorInterface *dictionary_predictor,
+      PredictorInterface *user_history_predictor,
+      PredictorInterface *extra_predictor);
+
+  MobilePredictor(PredictorInterface *dictionary_predictor,
+                  PredictorInterface *user_history_predictor,
+                  PredictorInterface *extra_predictor);
+  virtual ~MobilePredictor();
+
+  virtual bool PredictForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
+
+  virtual const string &GetPredictorName() const { return predictor_name_; }
+
+ private:
+  const ConversionRequest empty_request_;
+  const string predictor_name_;
+};
 
 }  // namespace mozc
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,10 @@
 #include <string>
 
 #include "base/const.h"
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/mmap.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -56,7 +59,7 @@ FileVerifier::IntegrityType VerifyPEHeaderChecksum(const string &filename) {
   const IMAGE_NT_HEADERS *nt_header = ::CheckSumMappedFile(
       mapped_file.begin(), mapped_file.size(),
       &compile_time_check_sum, &actual_check_sum);
-  if (nt_header == NULL || compile_time_check_sum == 0) {
+  if (nt_header == nullptr || compile_time_check_sum == 0) {
     return FileVerifier::kIntegrityUnknown;
   }
   if (compile_time_check_sum != actual_check_sum) {
@@ -69,7 +72,7 @@ FileVerifier::IntegrityType VerifyPEHeaderChecksum(const string &filename) {
 
 FileVerifier::IntegrityType FileVerifier::VerifyIntegrity(
     FileVerifier::MozcSystemFile system_file, string *filename_with_version) {
-  if (filename_with_version == NULL) {
+  if (filename_with_version == nullptr) {
     return kIntegrityInvalidParameter;
   }
   filename_with_version->clear();
@@ -79,15 +82,15 @@ FileVerifier::IntegrityType FileVerifier::VerifyIntegrity(
   switch (system_file) {
     case kMozcServerFile:
       filename = kMozcServerName;
-      filepath = Util::GetServerPath();
+      filepath = SystemUtil::GetServerPath();
       break;
     case kMozcRendererFile:
       filename = kMozcRenderer;
-      filepath = Util::GetRendererPath();
+      filepath = SystemUtil::GetRendererPath();
       break;
     case kMozcToolFile:
       filename = kMozcTool;
-      filepath = Util::GetToolPath();
+      filepath = SystemUtil::GetToolPath();
       break;
   }
   if (filepath.empty()) {
@@ -106,8 +109,8 @@ FileVerifier::IntegrityType FileVerifier::VerifyIntegrity(
   int version_minor = 0;
   int version_build = 0;
   int version_revision = 0;
-  if (Util::GetFileVersion(wfilepath, &version_major, &version_minor,
-                           &version_build, &version_revision)) {
+  if (SystemUtil::GetFileVersion(wfilepath, &version_major, &version_minor,
+                                 &version_build, &version_revision)) {
     filename_with_version->assign(Util::StringPrintf(
         "%s (%d.%d.%d.%d)", filename.c_str(), version_major, version_minor,
         version_build, version_revision));
@@ -121,7 +124,7 @@ FileVerifier::IntegrityType FileVerifier::VerifyIntegrity(
 
 FileVerifier::IntegrityType FileVerifier::VerifyIntegrityImpl(
     const string &filepath) {
-  if (!Util::FileExists(filepath)) {
+  if (!FileUtil::FileExists(filepath)) {
     return kIntegrityFileNotFound;
   }
 
@@ -160,7 +163,7 @@ FileVerifier::IntegrityType FileVerifier::VerifyIntegrityImpl(
           ::WTHelperProvDataFromStateData(trust_data.hWVTStateData);
       const CRYPT_PROVIDER_SGNR* cps =
           ::WTHelperGetProvSignerFromChain(cpd, 0, FALSE, 0);
-      if (cps != NULL) {
+      if (cps != nullptr) {
         // In this case, the target file is actually signed.
         integrity_type = kIntegrityCorrupted;
       }
@@ -175,7 +178,7 @@ FileVerifier::IntegrityType FileVerifier::VerifyIntegrityImpl(
     }
   }
   trust_data.dwStateAction = WTD_STATEACTION_CLOSE;
-  ::WinVerifyTrust(NULL, &guid, &trust_data);
+  ::WinVerifyTrust(nullptr, &guid, &trust_data);
 
   // If the integrity state is still unknown, try to use PE header checksum
   // to detect the data corruption.

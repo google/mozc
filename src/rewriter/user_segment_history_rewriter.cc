@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,10 @@
 #include "base/base.h"
 #include "base/compiler_specific.h"
 #include "base/config_file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/string_piece.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "config/config.pb.h"
@@ -72,8 +74,12 @@ LRUStorage *g_lru_storage = NULL;
 
 // Temporarily disable unused private field warning against
 // FeatureValue::reserved_ from Clang.
+// We use MOZC_CLANG_HAS_WARNING to check whether "-Wunused-private-field" is
+// available, because XCode 4.4 clang (based on LLVM 3.1svn) doesn't have it.
 MOZC_CLANG_PUSH_WARNING();
+#if MOZC_CLANG_HAS_WARNING(unused-private-field)
 MOZC_CLANG_DISABLE_WARNING(unused-private-field);
+#endif
 class FeatureValue {
  public:
   FeatureValue() : feature_type_(1), reserved_(0) {}
@@ -100,8 +106,12 @@ bool IsPunctuationInternal(const string &str) {
 
 // Temporarily disable unused private field warning against
 // KeyTriggerValue::reserved_ from Clang.
+// We use MOZC_CLANG_HAS_WARNING to check whether "-Wunused-private-field" is
+// available, because XCode 4.4 clang (based on LLVM 3.1svn) doesn't have it.
 MOZC_CLANG_PUSH_WARNING();
+#if MOZC_CLANG_HAS_WARNING(unused-private-field)
 MOZC_CLANG_DISABLE_WARNING(unused-private-field);
+#endif
 class KeyTriggerValue {
  public:
   KeyTriggerValue()
@@ -154,6 +164,53 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
   return 0;
 }
 
+// JoinStringWithTabN joins N strings with TAB delimiters ('\t') in a way
+// similar to Util::JoinStrings() and/or Util::AppendStringWithDelimiter() but
+// in a more efficient way. Since this module is called every key stroke and
+// performs many string concatenation, we use these functions instead of ones
+// from Util.
+inline void JoinStringsWithTab2(
+    const StringPiece s1, const StringPiece s2, string *output) {
+  // Pre-allocate the buffer, including 1 TAB delimiter.
+  output->reserve(s1.size() + s2.size() + 1);
+  output->assign(s1.data(), s1.size()).append("\t")
+      .append(s2.data(), s2.size());
+}
+
+inline void JoinStringsWithTab3(
+    const StringPiece s1, const StringPiece s2, const StringPiece s3,
+    string *output) {
+  // Pre-allocate the buffer, including 2 TAB delimiters.
+  output->reserve(s1.size() + s2.size() + s3.size() + 2);
+  output->assign(s1.data(), s1.size()).append("\t")
+      .append(s2.data(), s2.size()).append("\t")
+      .append(s3.data(), s3.size());
+}
+
+inline void JoinStringsWithTab4(
+    const StringPiece s1, const StringPiece s2, const StringPiece s3,
+    const StringPiece s4, string *output) {
+  // Pre-allocate the buffer, including 3 TAB delimiters.
+  output->reserve(s1.size() + s2.size() + s3.size() + s4.size() + 3);
+  output->assign(s1.data(), s1.size()).append("\t")
+      .append(s2.data(), s2.size()).append("\t")
+      .append(s3.data(), s3.size()).append("\t")
+      .append(s4.data(), s4.size());
+}
+
+inline void JoinStringsWithTab5(
+    const StringPiece s1, const StringPiece s2, const StringPiece s3,
+    const StringPiece s4, const StringPiece s5, string *output) {
+  // Pre-allocate the buffer, including 4 TAB delimiters.
+  output->reserve(
+      s1.size() + s2.size() + s3.size() + s4.size() + s5.size() + 4);
+  output->assign(s1.data(), s1.size()).append("\t")
+      .append(s2.data(), s2.size()).append("\t")
+      .append(s3.data(), s3.size()).append("\t")
+      .append(s4.data(), s4.size()).append("\t")
+      .append(s5.data(), s5.size());
+}
+
 // Feature "Left Right"
 inline bool GetFeatureLR(const Segments &segments, size_t i,
                          const string &base_key,
@@ -164,10 +221,12 @@ inline bool GetFeatureLR(const Segments &segments, size_t i,
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i - 1));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i + 1));
-  *value = string("LR") + '\t' + base_key + '\t' +
-      segments.segment(i - 1).candidate(j1).value + '\t' +
-      base_value + '\t' +
-      segments.segment(i + 1).candidate(j2).value;
+  JoinStringsWithTab5(StringPiece("LR", 2),
+                      base_key,
+                      segments.segment(i - 1).candidate(j1).value,
+                      base_value,
+                      segments.segment(i + 1).candidate(j2).value,
+                      value);
   return true;
 }
 
@@ -181,10 +240,12 @@ inline bool GetFeatureLL(const Segments &segments, size_t i,
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i - 2));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i - 1));
-  *value = string("LL") + '\t' + base_key + '\t' +
-      segments.segment(i - 2).candidate(j1).value + '\t' +
-      segments.segment(i - 1).candidate(j2).value + '\t' +
-      base_value;
+  JoinStringsWithTab5(StringPiece("LL", 2),
+                      base_key,
+                      segments.segment(i - 2).candidate(j1).value,
+                      segments.segment(i - 1).candidate(j2).value,
+                      base_value,
+                      value);
   return true;
 }
 
@@ -198,10 +259,12 @@ inline bool GetFeatureRR(const Segments &segments, size_t i,
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i + 1));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i + 2));
-  *value = string("RR") + '\t' + base_key + '\t' +
-      base_value + '\t' +
-      segments.segment(i + 1).candidate(j1).value + '\t' +
-      segments.segment(i + 2).candidate(j2).value;
+  JoinStringsWithTab5(StringPiece("RR", 2),
+                      base_key,
+                      base_value,
+                      segments.segment(i + 1).candidate(j1).value,
+                      segments.segment(i + 2).candidate(j2).value,
+                      value);
   return true;
 }
 
@@ -214,9 +277,11 @@ inline bool GetFeatureL(const Segments &segments, size_t i,
     return false;
   }
   const int j = GetDefaultCandidateIndex(segments.segment(i - 1));
-  *value = string("L") + '\t' + base_key + '\t' +
-      segments.segment(i - 1).candidate(j).value + '\t' +
-      base_value;
+  JoinStringsWithTab4(StringPiece("L", 1),
+                      base_key,
+                      segments.segment(i - 1).candidate(j).value,
+                      base_value,
+                      value);
   return true;
 }
 
@@ -229,9 +294,11 @@ inline bool GetFeatureR(const Segments &segments, size_t i,
     return false;
   }
   const int j = GetDefaultCandidateIndex(segments.segment(i + 1));
-  *value = string("R") + '\t' + base_key + '\t' +
-      base_value + '\t' +
-      segments.segment(i + 1).candidate(j).value;
+  JoinStringsWithTab4(StringPiece("R", 1),
+                      base_key,
+                      base_value,
+                      segments.segment(i + 1).candidate(j).value,
+                      value);
   return true;
 }
 
@@ -240,7 +307,7 @@ inline bool GetFeatureC(const Segments &segments, size_t i,
                         const string &base_key,
                         const string &base_value, string *value) {
   DCHECK(value);
-  *value = string("C") + '\t' + base_key + '\t' + base_value;
+  JoinStringsWithTab3(StringPiece("C", 1), base_key, base_value, value);
   return true;
 }
 
@@ -252,7 +319,7 @@ inline bool GetFeatureS(const Segments &segments, size_t i,
   if (segments.segments_size() - segments.history_segments_size() != 1) {
     return false;
   }
-  *value = string("S") + '\t' + base_key + '\t' + base_value;
+  JoinStringsWithTab3(StringPiece("S", 1), base_key, base_value, value);
   return true;
 }
 
@@ -260,7 +327,7 @@ inline bool GetFeatureS(const Segments &segments, size_t i,
 // used for number rewrite
 inline bool GetFeatureN(uint16 type, string *value) {
   DCHECK(value);
-  *value = string("N") + '\t' + NumberUtil::SimpleItoa(type);
+  JoinStringsWithTab2(StringPiece("N", 1), NumberUtil::SimpleItoa(type), value);
   return true;
 }
 
@@ -716,6 +783,10 @@ bool UserSegmentHistoryRewriter::IsAvailable(const Segments &segments) const {
 }
 
 void UserSegmentHistoryRewriter::Finish(Segments *segments) {
+  if (segments->request_type() != Segments::CONVERSION) {
+    return;
+  }
+
   if (!IsAvailable(*segments)) {
     return;
   }
@@ -760,9 +831,9 @@ bool UserSegmentHistoryRewriter::Reload() {
   const string merge_pending_file = filename + kFileSuffix;
 
   // merge pending file does not always exist.
-  if (Util::FileExists(merge_pending_file)) {
+  if (FileUtil::FileExists(merge_pending_file)) {
     storage_->Merge(merge_pending_file.c_str());
-    Util::Unlink(merge_pending_file);
+    FileUtil::Unlink(merge_pending_file);
   }
 
   return true;
@@ -881,8 +952,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
   }
 
   // set BEST_CANDIDATE marker in advance
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
+  for (size_t i = 0; i < segments->segments_size(); ++i) {
     Segment *segment = segments->mutable_segment(i);
     DCHECK(segment);
     DCHECK_GT(segment->candidates_size(), 0);
@@ -915,10 +985,8 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
       continue;
     }
 
-    if (segment->candidates_size() < max_candidates_size) {
-      LOG(WARNING) << "cannot expand candidates. ignored."
-                   << "rewrite may be failed ";
-    }
+    DVLOG_IF(2, (segment->candidates_size() < max_candidates_size))
+        << "Cannot expand candidates. ignored. Rewrite may be failed";
 
     // for each all candidates expanded
     vector<ScoreType> scores;
@@ -934,7 +1002,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
       uint32 score = 0;
       uint32 last_access_time = 0;
       if (GetScore(*segments, i, j, &score, &last_access_time)) {
-        scores.resize(scores.size() + 1);
+        scores.push_back(ScoreType());
         scores.back().score = score;
         scores.back().last_access_time = last_access_time;
         scores.back().candidate = segment->mutable_candidate(j);
@@ -987,7 +1055,7 @@ bool UserSegmentHistoryRewriter::GetFeatureLN(const Segments &segments,
   if (pos_matcher_->IsNumber(candidate.rid) ||
       pos_matcher_->IsKanjiNumber(candidate.rid) ||
       Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    *value = string("LN") + '\t' + base_key + '\t' + base_value;
+    JoinStringsWithTab3(StringPiece("LN", 2), base_key, base_value, value);
     return true;
   }
   return false;
@@ -1008,7 +1076,7 @@ bool UserSegmentHistoryRewriter::GetFeatureRN(const Segments &segments,
   if (pos_matcher_->IsNumber(candidate.lid) ||
       pos_matcher_->IsKanjiNumber(candidate.lid) ||
       Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    *value = string("RN") + '\t' + base_key + '\t' + base_value;
+    JoinStringsWithTab3(StringPiece("RN", 2), base_key, base_value, value);
     return true;
   }
   return false;

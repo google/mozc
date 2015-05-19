@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include <vector>
 #include "base/port.h"
 #include "base/scoped_ptr.h"
+#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
@@ -60,6 +61,8 @@ class DictionaryImpl : public DictionaryInterface {
                  const POSMatcher *pos_matcher);
 
   virtual ~DictionaryImpl();
+
+  virtual bool HasValue(const StringPiece value) const;
 
   virtual Node *LookupPredictiveWithLimit(
       const char *str, int size, const Limit &limit,

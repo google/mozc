@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -110,12 +110,15 @@ class Client : public ClientInterface {
 
   bool CheckVersionOrRestartServer();
 
-  bool SendKey(const commands::KeyEvent &key,
-               commands::Output *output);
-  bool TestSendKey(const commands::KeyEvent &key,
-                   commands::Output *output);
-  bool SendCommand(const commands::SessionCommand &command,
-                   commands::Output *output);
+  bool SendKeyWithContext(const commands::KeyEvent &key,
+                          const commands::Context &context,
+                          commands::Output *output);
+  bool TestSendKeyWithContext(const commands::KeyEvent &key,
+                              const commands::Context &context,
+                              commands::Output *output);
+  bool SendCommandWithContext(const commands::SessionCommand &command,
+                              const commands::Context &context,
+                              commands::Output *output);
 
   bool GetConfig(config::Config *config);
   bool SetConfig(const config::Config &config);
@@ -251,7 +254,6 @@ class Client : public ClientInterface {
   scoped_ptr<ServerLauncherInterface> server_launcher_;
   scoped_array<char> result_;
   scoped_ptr<config::Config> preferences_;
-  bool use_cascading_window_;
   int timeout_;
   ServerStatus server_status_;
   uint32 server_protocol_version_;

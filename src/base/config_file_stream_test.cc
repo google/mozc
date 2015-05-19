@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <ios>  // for char_traits
+#include <stddef.h>
+#include <ios>
+#include <istream>
 
-#include "base/base.h"
 #include "base/config_file_stream.h"
-#include "base/util.h"
+#include "base/file_util.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -44,7 +47,7 @@ string GetFileData(const string &filename) {
   InputFileStream ifs(filename.c_str(), ios::binary);
   char c;
   string data;
-  while (ifs.get(c)) {
+  while (!ifs.get(c).fail()) {
     data.append(1, c);
   }
   return data;
@@ -69,12 +72,12 @@ bool IsEof(istream *input_stream) {
 class ConfigFileStreamTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    default_profile_directory_ = Util::GetUserProfileDirectory();
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    default_profile_directory_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
   virtual void TearDown() {
-    Util::SetUserProfileDirectory(default_profile_directory_);
+    SystemUtil::SetUserProfileDirectory(default_profile_directory_);
   }
 
  private:
@@ -111,23 +114,23 @@ TEST_F(ConfigFileStreamTest, AtomicUpdate) {
   const string filename = ConfigFileStream::GetFileName(prefixed_filename);
   const string tmp_filename = filename + ".tmp";
 
-  EXPECT_FALSE(Util::FileExists(filename));
-  EXPECT_FALSE(Util::FileExists(tmp_filename));
+  EXPECT_FALSE(FileUtil::FileExists(filename));
+  EXPECT_FALSE(FileUtil::FileExists(tmp_filename));
 
   const string contents = "123\n2\n3";
   ConfigFileStream::AtomicUpdate(prefixed_filename, contents);
-  EXPECT_TRUE(Util::FileExists(filename));
-  EXPECT_FALSE(Util::FileExists(tmp_filename));
+  EXPECT_TRUE(FileUtil::FileExists(filename));
+  EXPECT_FALSE(FileUtil::FileExists(tmp_filename));
   EXPECT_EQ(contents, GetFileData(filename));
 
   const string new_contents = "246\n4\n6";
   ConfigFileStream::AtomicUpdate(prefixed_filename, new_contents);
-  EXPECT_TRUE(Util::FileExists(filename));
-  EXPECT_FALSE(Util::FileExists(tmp_filename));
+  EXPECT_TRUE(FileUtil::FileExists(filename));
+  EXPECT_FALSE(FileUtil::FileExists(tmp_filename));
   EXPECT_EQ(new_contents, GetFileData(filename));
 
-  if (Util::FileExists(filename)) {
-    Util::Unlink(filename);
+  if (FileUtil::FileExists(filename)) {
+    FileUtil::Unlink(filename);
   }
 }
 
@@ -135,8 +138,8 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   // At first, generate a binary data file in (temporary) user directory
   // so that we can load it as "user://my_binary_file.dat"
   const char kTestFileName[] = "my_binary_file.dat";
-  const string &test_file_path = Util::JoinPath(
-      Util::GetUserProfileDirectory(), kTestFileName);
+  const string &test_file_path = FileUtil::JoinPath(
+      SystemUtil::GetUserProfileDirectory(), kTestFileName);
 
   const char kBinaryData[] = {
     ' ', ' ', '\r', ' ', '\n', ' ', '\r', '\n', ' ', '\0', ' ',
@@ -147,7 +150,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
     ofs.write(kBinaryData, kBinaryDataSize);
   }
 
-  ASSERT_TRUE(Util::FileExists(test_file_path));
+  ASSERT_TRUE(FileUtil::FileExists(test_file_path));
 
   {
     scoped_ptr<istream> ifs(ConfigFileStream::OpenReadBinary(
@@ -163,16 +166,16 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   }
 
   // Remove test file just in case.
-  EXPECT_TRUE(Util::Unlink(test_file_path));
-  EXPECT_FALSE(Util::FileExists(test_file_path));
+  EXPECT_TRUE(FileUtil::Unlink(test_file_path));
+  EXPECT_FALSE(FileUtil::FileExists(test_file_path));
 }
 
 TEST_F(ConfigFileStreamTest, OpenReadText) {
   // At first, generate a binary data file in (temporary) user directory
   // so that we can load it as "user://my_binary_file.dat"
   const char kTestFileName[] = "my_text_file.dat";
-  const string &test_file_path = Util::JoinPath(
-      Util::GetUserProfileDirectory(), kTestFileName);
+  const string &test_file_path = FileUtil::JoinPath(
+      SystemUtil::GetUserProfileDirectory(), kTestFileName);
 
   const char kSourceTextData[] = {
       'a', 'b', '\r', 'c', '\n', 'd', '\r', '\n', 'e',
@@ -183,9 +186,9 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
     ofs.write(kSourceTextData, sizeof(kSourceTextData));
   }
 
-  ASSERT_TRUE(Util::FileExists(test_file_path));
+  ASSERT_TRUE(FileUtil::FileExists(test_file_path));
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #define TRAILING_CARRIAGE_RETURN ""
 #else
 #define TRAILING_CARRIAGE_RETURN "\r"
@@ -201,7 +204,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
     ASSERT_TRUE(ifs.get());
     string line;
     int line_number = 0;  // note that this is 1-origin.
-    while(getline(*ifs.get(), line)) {
+    while (!getline(*ifs.get(), line).fail()) {
       ++line_number;
       ASSERT_LE(line_number, arraysize(kExpectedLines));
       EXPECT_EQ(line, kExpectedLines[line_number - 1])
@@ -210,8 +213,8 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   }
 
   // Remove test file just in case.
-  EXPECT_TRUE(Util::Unlink(test_file_path));
-  EXPECT_FALSE(Util::FileExists(test_file_path));
+  EXPECT_TRUE(FileUtil::Unlink(test_file_path));
+  EXPECT_FALSE(FileUtil::FileExists(test_file_path));
 }
 
 }  // namespace mozc

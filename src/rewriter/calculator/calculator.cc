@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@
 // causes build error.
 #include <stdio.h>
 #include <assert.h>
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <float.h>
 #endif
 #include <string.h>

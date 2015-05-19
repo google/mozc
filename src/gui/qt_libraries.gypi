@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -109,11 +109,29 @@
         }],
       ],
     }],
+    # Workarounds related with clang.
     ['clang==1', {
-      'cflags': [
-        # Temporal workaround against following false warning in Clang.
-        # http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-June/022477.html
-        '-Wno-uninitialized',
+      'conditions': [
+        ['OS=="linux"', {
+          'cflags': [
+            # Temporal workaround against following false warning in Clang.
+            # http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-June/022477.html
+            '-Wno-uninitialized',
+            # Suppress uncontrolable warnings on Qt 4.7.1 source code.
+            '-Wno-unused-private-field',
+          ],
+        }],
+        ['OS=="mac"', {
+          'xcode_settings': {
+            'WARNING_CFLAGS+': [
+              # Temporal workaround against following false warning in Clang.
+              # http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-June/022477.html
+              '-Wno-uninitialized',
+              # Suppress uncontrolable warnings on Qt 4.7.1 source code.
+              '-Wno-unused-private-field',
+            ],
+          },
+        }],
       ],
     }],
   ],

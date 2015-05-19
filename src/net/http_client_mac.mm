@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include <Cocoa/Cocoa.h>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "net/http_client_common.h"
 #include "net/http_client_mac.h"
 
@@ -96,7 +97,7 @@
 
   // TODO(horo): This HTTP status line is fake.
   //             NSHTTPURLResponse doesn't provide access to raw header data.
-  NSString *statusLine = [NSString stringWithFormat:@"HTTP/1.1 %ld OK\r\n",
+  NSString *statusLine = [NSString stringWithFormat:@"HTTP/1.1 %d OK\r\n",
                            status_code_];
   [headerData appendData:[statusLine dataUsingEncoding:NSUTF8StringEncoding]];
 
@@ -236,9 +237,9 @@ bool MacHTTPRequestHandler::Request(HTTPMethodType type,
   if (type == HTTP_POST) {
     [request setHTTPMethod:@"POST"];
     if (post_data != NULL) {
-      // The framework will automatically add the content type and 
+      // The framework will automatically add the content type and
       // content length, but we put it explicitly just in case.
-      NSString *length = [NSString stringWithFormat:@"%d", post_size];
+      NSString *length = [NSString stringWithFormat:@"%zd", post_size];
       [request setValue:length forHTTPHeaderField:@"Content-Length"];
       [request setValue:@"application/x-www-form-urlencoded"
       forHTTPHeaderField: @"Content-Type"];

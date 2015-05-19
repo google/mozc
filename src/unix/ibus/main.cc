@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -113,11 +113,7 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
   GList *engines = ibus_component_get_engines(component);
   for (GList *p = engines; p; p = p->next) {
     IBusEngineDesc *engine = reinterpret_cast<IBusEngineDesc*>(p->data);
-#if IBUS_CHECK_VERSION(1, 3, 99)
     const gchar * const engine_name = ibus_engine_desc_get_name(engine);
-#else
-    const gchar * const engine_name = engine->name;
-#endif
     ibus_factory_add_engine(
         factory, engine_name, mozc::ibus::MozcEngine::GetType());
   }

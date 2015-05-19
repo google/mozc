@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,19 +45,15 @@
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
-        # TODO(noriyukit): The following target is only necessary to link
-        # ConverterUtil. By defining it in another file, we can detach the
-        # dependency on converter itself from session_converter.
-        '../converter/converter.gyp:converter',
+        '../converter/converter_base.gyp:converter_util',
         '../rewriter/calculator/calculator.gyp:calculator',
-        '../storage/storage.gyp:storage',
         '../transliteration/transliteration.gyp:transliteration',
-        '../usage_stats/usage_stats.gyp:usage_stats',
-        'session_base.gyp:generic_storage_manager',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:key_parser',
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
         'session_base.gyp:session_protocol',
+        'session_base.gyp:session_usage_stats_util',
         'session_internal',
       ],
     },
@@ -94,7 +90,6 @@
         '../config/config.gyp:config_protocol',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         'session_base.gyp:generic_storage_manager',
-        'session_base.gyp:request_handler',
         'session_base.gyp:session_protocol',
       ],
       'conditions': [
@@ -121,11 +116,9 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../base/base.gyp:config_file_stream',
-        '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
-        '../usage_stats/usage_stats.gyp:usage_stats_uploader',
+        '../config/config.gyp:stats_config_util',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
+        '../usage_stats/usage_stats_base.gyp:usage_stats_protocol',
         'session_base.gyp:session_protocol',
       ],
     },
@@ -136,6 +129,9 @@
         'session_server.cc',
       ],
       'dependencies': [
+        # CAUTION: Don't forget to update android.gyp:mozc target as well!
+        # The target has almost the same dependency so if you update this
+        # dependency list you will have to update Android's.
         '../base/base.gyp:base',
         '../usage_stats/usage_stats.gyp:usage_stats_uploader',
         'session_base.gyp:session_protocol',

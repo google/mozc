@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,17 +29,17 @@
 
 #include "rewriter/emoticon_rewriter.h"
 
+#include <cstddef>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -79,7 +79,7 @@ class EmoticonRewriterTest : public testing::Test {
   ~EmoticonRewriterTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
   virtual void TearDown() {}
@@ -164,13 +164,17 @@ TEST_F(EmoticonRewriterTest, MobileEnvironmentTest) {
   commands::Request input;
   EmoticonRewriter rewriter;
 
-  input.set_mixed_conversion(true);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+  {
+    input.set_mixed_conversion(true);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+  }
 
-  input.set_mixed_conversion(false);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+  {
+    input.set_mixed_conversion(false);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
+  }
 }
 
 }  // namespace mozc

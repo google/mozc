@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -105,7 +105,6 @@ message RendererCommand {
     optional uint32 style_bits = 4 [ default = 0 ];  // 0 means Style::DEFAULT
   };
 
-  // This message is not ready to be externally released.
   // An equivalent to CANDIDATEFORM in IMM32. (For Windows only)
   // TODO(yukawa): make a common candidate form format for all platforms.
   message CandidateForm {
@@ -123,7 +122,6 @@ message RendererCommand {
     optional uint32 style_bits = 4 [ default = 0 ];  // 0 means Style::DEFAULT
   };
 
-  // This message is not ready to be externally released.
   // An equivalent to IMECHARPOSITION in IMM32. (For Windows only)
   // TODO(yukawa): make a common candidate form format for all platforms.
   message CharacterPosition {
@@ -140,6 +138,11 @@ message RendererCommand {
     optional Rectangle caret_rect = 2;
     optional uint32 target_window_handle = 3;
   }
+
+  // Visual information about mode indicator.
+  message IndicatorInfo {
+    optional Status status = 1;
+  };
 
   // Application information Mozc UI is attaching
   message ApplicationInfo {
@@ -216,6 +219,9 @@ message RendererCommand {
     // here.
     // TODO(nona): Make new message if necessary.
     optional string pango_font_description = 13;
+
+    // used in Windows:
+    optional IndicatorInfo indicator_info = 14;
   };
 
   optional ApplicationInfo application_info = 5;

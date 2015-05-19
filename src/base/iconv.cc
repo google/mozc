@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
 #include <iconv.h>
 #else
 #include <windows.h>
@@ -40,7 +40,7 @@
 
 namespace {
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
 bool IconvHelper(iconv_t ic, const string &input, string *output) {
   size_t ilen = input.size();
   size_t olen = ilen * 4;
@@ -170,7 +170,7 @@ inline bool Convert(const char *from, const char *to,
 
 namespace mozc {
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
 // The following functions don't work on Windows
 void Util::UTF8ToEUC(const string &input, string *output) {
   Convert("UTF8", "EUC-JP-MS", input, output);

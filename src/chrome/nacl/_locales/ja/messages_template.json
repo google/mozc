@@ -1,0 +1,153 @@
+// Copyright 2010-2013, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+{
+  "appName": {
+    "message": "@APP_NAME_JA@",
+    "description": "The title of the application, displayed in the web store."
+  },
+  "appDesc": {
+    "message": "@APP_NAME_JA@は、変換の煩わしさを感じさせない思いどおりの日本語入力を提供します。",
+    "description": "The description of the application, displayed in the web store."
+  },
+  "branding": {
+    "message": "@BRANDING@"
+  },
+  "compositionModeHiragana": {
+    "message": "ひらがな"
+  },
+  "compositionModeFullKatakana": {
+    "message": "全角カタカナ"
+  },
+  "compositionModeFullAscii": {
+    "message": "全角英数"
+  },
+  "compositionModeHalfKatakana": {
+    "message": "半角カタカナ"
+  },
+  "compositionModeHalfAscii": {
+    "message": "半角英数"
+  },
+  "compositionModeDirect": {
+    "message": "直接入力"
+  },
+  "configPunctuationMethod": {
+    "message": "句読点"
+  },
+  "configPreeditMethod": {
+    "message": "ローマ字入力・かな入力"
+  },
+  "configPreeditMethodRomaji": {
+    "message": "ローマ字入力"
+  },
+  "configPreeditMethodKana": {
+    "message": "かな入力"
+  },
+  "configSymbolMethod": {
+    "message": "記号"
+  },
+  "configSpaceCharacterForm": {
+    "message": "スペースの入力"
+  },
+  "configSpaceCharacterFormFollow": {
+    "message": "入力モードに従う"
+  },
+  "configSpaceCharacterFormFull": {
+    "message": "全角"
+  },
+  "configSpaceCharacterFormHalf": {
+    "message": "半角"
+  },
+  "configHistoryLarningLevel": {
+    "message": "学習機能"
+  },
+  "configHistoryLarningLevelDefault": {
+    "message": "学習機能有効"
+  },
+  "configHistoryLarningLevelReadOnly": {
+    "message": "学習機能有効(新規学習はしない)"
+  },
+  "configHistoryLarningLevelOff": {
+    "message": "学習機能無効"
+  },
+  "configSelectionShortcut": {
+    "message": "候補選択ショートカット"
+  },
+  "configSelectionShortcutNo": {
+    "message": "なし"
+  },
+  "configShiftKeyModeSwitch": {
+    "message": "シフトキーでの入力切替"
+  },
+  "configShiftKeyModeSwitchOff": {
+    "message": "オフ"
+  },
+  "configShiftKeyModeSwitchAlphanumeric": {
+    "message": "英数字"
+  },
+  "configShiftKeyModeSwitchKatakana": {
+    "message": "カタカナ"
+  },
+  "configSessionKeymap": {
+    "message": "キー設定の選択"
+  },
+  "configSessionKeymapAtok": {
+    "message": "ATOK"
+  },
+  "configSessionKeymapMsIme": {
+    "message": "MS-IME"
+  },
+  "configSessionKeymapKotoeri": {
+    "message": "ことえり"
+  },
+  "configIncognitoMode": {
+    "message": "一時的に学習機能、入力履歴からのサジェスト機能、ユーザ辞書機能を無効にする"
+  },
+  "configUseAutoImeTurnOff": {
+    "message": "自動英数変換を有効にする"
+  },
+  "configUseHistorySuggest": {
+    "message": "入力履歴からのサジェスト自動表示を有効にする"
+  },
+  "configUseDictionarySuggest": {
+    "message": "システム辞書からのサジェスト自動表示を有効にする"
+  },
+  "configSuggestionsSize": {
+    "message": "サジェストの最大候補数"
+  },
+  "configCreditsDescription": {
+    "message": "Copyright © 2012 Google Inc. All Rights Reserved."
+  },
+  "configOssCreditsDescription": {
+    "message": "本ソフトウェアは<a href=\"./credits_ja.html\">オープンソースソフトウェア</a>を利用しています。"
+  },
+  "configUploadUsageStats": {
+    "message": "使用統計データや障害レポートを Google に自動送信して Mozcの機能向上に役立てる"
+  }
+}

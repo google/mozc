@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <sys/types.h>
 #include <unistd.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <iostream>
 
@@ -69,21 +69,21 @@ void DisplayPreedit(const commands::Output &output) {
     for (size_t i = 0; i < output.preedit().segment_size(); ++i) {
       value += output.preedit().segment(i).value();
     }
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     string tmp;
     Util::UTF8ToSJIS(value, &tmp);
     cout << tmp << '\r';
 #else
     cout << value << '\r';
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   } else if (output.has_result()) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     string tmp;
     Util::UTF8ToSJIS(output.result().value(), &tmp);
     cout << tmp << endl;
 #else
     cout << output.result().value() << endl;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   }
 }
 }  // namespace
@@ -107,20 +107,20 @@ int main(int argc, char **argv) {
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {
-#if defined(OS_WINDOWS) || defined(OS_MACOSX)
-#ifdef OS_WINDOWS
+#if defined(OS_WIN) || defined(OS_MACOSX)
+#ifdef OS_WIN
     renderer_command.mutable_application_info()->set_process_id
         (::GetCurrentProcessId());
     renderer_command.mutable_application_info()->set_thread_id
         (::GetCurrentThreadId());
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
     renderer_command.mutable_preedit_rectangle()->set_right(200);
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
 #else
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
-#endif  // OS_WINDOWS || OS_MACOSX
+#endif  // OS_WIN || OS_MACOSX
     renderer_client.reset(new mozc::renderer::RendererClient);
     CHECK(renderer_client->Activate());
   }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,6 @@
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 namespace mozc {
 namespace {
@@ -214,14 +213,12 @@ bool RewriteCandidate(Segments *segments) {
       CHECK(token);
       uint32 n = 0;
       // use secure random not to predict the next emoticon.
-      if (Util::GetSecureRandomSequence(reinterpret_cast<char *>(&n),
-                                        sizeof(n))) {
-        value = token->value + n % token->value_size;
-        value_size = 1;
-        initial_insert_pos = 4;
-        initial_insert_size = 1;
-        is_no_learning = true;   // do not learn this candidate.
-      }
+      Util::GetRandomSequence(reinterpret_cast<char *>(&n), sizeof(n));
+      value = token->value + n % token->value_size;
+      value_size = 1;
+      initial_insert_pos = 4;
+      initial_insert_size = 1;
+      is_no_learning = true;   // do not learn this candidate.
     } else {
       const EmbeddedDictionary::Token *token
           = Singleton<EmoticonDictionary>::get()->GetDictionary()->Lookup(key);
@@ -254,8 +251,8 @@ EmoticonRewriter::EmoticonRewriter() {}
 
 EmoticonRewriter::~EmoticonRewriter() {}
 
-int EmoticonRewriter::capability() const {
-  if (GET_REQUEST(mixed_conversion)) {
+int EmoticonRewriter::capability(const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;

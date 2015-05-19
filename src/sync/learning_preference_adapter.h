@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,6 +59,7 @@ class LearningPreferenceAdapter : public AdapterInterface {
   virtual ime_sync::Component component_id() const;
 
  private:
+  friend class LearningPreferenceAdapterTest;
   FRIEND_TEST(LearningPreferenceAdapterTest, DISABLED_Storage);
   FRIEND_TEST(LearningPreferenceAdapterTest, BucketSize);
   FRIEND_TEST(LearningPreferenceAdapterTest, BucketId);

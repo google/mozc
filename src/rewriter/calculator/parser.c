@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@
 #line 7 "parser.y"
 
 #include <assert.h>
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <float.h>
 #endif
 #include <string.h>
@@ -62,7 +62,7 @@
 
 namespace {
 bool IsFinite(double x) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   return _finite(x);
 #else
   return isfinite(x);

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
   scoped_ptr<mozc::composer::Composer> composer(
-      new mozc::composer::Composer(&table, Request::default_instance()));
+      new mozc::composer::Composer(&table, &Request::default_instance()));
 
   string command;
   string left, focused, right;

@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
       'sources': [
         'clock_mock.cc',
         'cpu_stats.cc',
-        'crash_report_handler.cc',
         'crash_report_util.cc',
         'iconv.cc',
         'process.cc',
@@ -69,18 +68,6 @@
               '/usr/lib/libiconv.dylib',  # used in iconv.cc
             ],
           },
-          'conditions': [
-            ['branding=="GoogleJapaneseInput"', {
-              'dependencies': [
-                # We cannot add 'crash_report_handler.mm' to 'sources' here
-                # because we already have 'crash_report_handler.cc' in this
-                # target. When a static library target has multiple files
-                # with the same basenames in its 'sources' list,
-                # gyp (r1354+) treats it as an error.
-                'crash_report_handler_mac',
-              ],
-            }],
-          ],
         }],
         ['OS=="win"', {
           'sources': [
@@ -120,7 +107,6 @@
             'crash_report_handler.cc',
             'crash_report_util.cc',
             'process.cc',
-            'process_mutex.cc',
           ],
         }],
       ],
@@ -132,7 +118,9 @@
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.h',
+        'debug.cc',
         'file_stream.cc',
+        'file_util.cc',
         'flags.cc',
         'hash.cc',
         'init.cc',
@@ -143,6 +131,7 @@
         'scoped_handle.cc',
         'singleton.cc',
         'string_piece.cc',
+        'system_util.cc',
         'text_converter.cc',
         'text_normalizer.cc',
         'thread.cc',
@@ -167,6 +156,19 @@
               },
             },
           },
+        }],
+        ['target_platform=="Android" and _toolset=="target"', {
+          'sources': [
+            'android_util.cc',
+          ],
+          'dependencies': [
+            '../android/android_base.gyp:android_sysconf',
+          ],
+        }],
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'sources': [
+            'pepper_file_util.cc',
+          ],
         }],
       ],
     },
@@ -260,7 +262,8 @@
             ],
           }
         }],
-        ['OS=="linux" and target_platform!="Android"', {
+        ['OS=="linux" and target_platform!="Android" and '
+         'not (target_platform=="NaCl" and _toolset=="target")', {
           'cflags': [
             '<!@(<(pkg_config_command) --cflags-only-other openssl)',
           ],
@@ -285,9 +288,9 @@
           ],
         }],
         ['target_platform=="NaCl" and _toolset=="target"', {
-          'sources!': [
-            'encryptor.cc',
-            'password_manager.cc',
+          'dependencies': [
+            'openssl_crypto_aes',
+            'openssl_config',
           ],
         }],
       ],
@@ -358,6 +361,7 @@
             '../data/preedit/flick-number.tsv',
             '../data/preedit/hiragana-romanji.tsv',
             '../data/preedit/kana.tsv',
+            '../data/preedit/godan-hiragana.tsv',
             '../data/preedit/qwerty_mobile-halfwidthascii.tsv',
             '../data/preedit/qwerty_mobile-hiragana-number.tsv',
             '../data/preedit/qwerty_mobile-hiragana.tsv',
@@ -392,6 +396,50 @@
         'base',
       ],
     },
+    {
+      'target_name': 'multifile',
+      'type': 'static_library',
+      'toolsets': ['target', 'host'],
+      'sources': [
+        'multifile.cc',
+      ],
+      'dependencies': [
+        'base_core',
+      ],
+    },
+    {
+      'target_name': 'pepper_file_system_mock',
+      'type': 'static_library',
+      'sources': [
+        'pepper_file_system_mock.cc',
+      ],
+      'dependencies': [
+        'base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'crash_report_handler',
+      'type': 'static_library',
+      'toolsets': ['target'],
+      'sources': [
+        'crash_report_handler.cc',
+      ],
+      'dependencies': [
+        'base',
+      ],
+      'conditions': [
+        ['OS=="mac"', {
+          'dependencies': [
+            # We cannot add 'crash_report_handler.mm' to 'sources' here
+            # because we already have 'crash_report_handler.cc' in this
+            # target. When a static library target has multiple files
+            # with the same basenames in its 'sources' list,
+            # gyp (r1354+) treats it as an error.
+            'crash_report_handler_mac',
+          ],
+        }],
+      ],
+    },
   ],
   'conditions': [
     ['OS=="mac"', {
@@ -414,6 +462,75 @@
           ],
         },
       ]},
-    ]
+    ],
+    ['target_platform=="NaCl"', {
+      'targets': [
+        {
+          'target_name': 'openssl_crypto_aes',
+          'type': 'static_library',
+          'variables': {
+            'openssl_dir%': '<(DEPTH)/third_party/openssl/openssl',
+          },
+          'direct_dependent_settings': {
+            'defines': [
+              'HAVE_OPENSSL=1',
+            ],
+            'include_dirs': [
+              '<(gen_out_dir)/openssl/include',
+              '<(openssl_dir)/include',
+            ],
+          },
+          'cflags': [
+            # Suppresses warnings in third_party codes.
+            '-Wno-unused-value',
+          ],
+          'include_dirs': [
+            '<(gen_out_dir)/openssl/include',
+            '<(openssl_dir)',
+            '<(openssl_dir)/crypto',
+            '<(openssl_dir)/include',
+          ],
+          'hard_dependency': 1,
+          'sources': [
+            # The following files are the minumum set for 'encryptor.cc'
+            '<(openssl_dir)/crypto/aes/aes_cbc.c',
+            '<(openssl_dir)/crypto/aes/aes_core.c',
+            '<(openssl_dir)/crypto/aes/aes_misc.c',
+            '<(openssl_dir)/crypto/mem_clr.c',
+            '<(openssl_dir)/crypto/modes/cbc128.c',
+            '<(openssl_dir)/crypto/sha/sha1dgst.c',
+            '<(openssl_dir)/crypto/sha/sha1_one.c',
+            '<(openssl_dir)/crypto/sha/sha256.c',
+            '<(openssl_dir)/crypto/sha/sha512.c',
+            '<(openssl_dir)/crypto/sha/sha_dgst.c',
+            '<(openssl_dir)/crypto/sha/sha_one.c',
+          ],
+          'dependencies': [
+            'openssl_config',
+          ],
+          'export_dependent_settings': [
+            'openssl_config',
+          ],
+        },
+        {
+          'target_name': 'openssl_config',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'openssl_config',
+              'inputs': [
+                'openssl_config.sh',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/openssl/include/openssl/opensslconf.h',
+              ],
+              'action': [
+                'bash', 'openssl_config.sh', '<(gen_out_dir)', '$(abspath ./)',
+              ],
+            },
+          ],
+        },
+      ]},
+    ],
   ],
 }

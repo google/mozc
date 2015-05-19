@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,18 +28,20 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 vars = {
-  "breakpad_revision": "999",
-  "clang_helper_in_chromium_revision": "145022",
+  "breakpad_revision": "1126",
+  "clang_helper_in_chromium_revision": "171017",
   "cygwin_in_chromium_revision": "66844",
-  "gtest_revision": "617",
-  "gmock_revision": "407",
-  "gyp_revision": "1473",
+  "gtest_revision": "644",
+  "gmock_revision": "425",
+  "gyp_revision": "1589",
   "jsoncpp_revision": "249",
   "memory_watcher_in_chromium_revision": "81926",
-  "protobuf_revision": "375",
+  "protobuf_revision": "462",
   "python_in_chromium_revision": "89111",
   "wtl_revision": "459",
   "zinnia_revision": "16",
+  "openssl_revision": "164645",
+  "zlib_revision": "173801",
 }
 
 deps = {
@@ -85,9 +87,15 @@ deps_os = {
       "https://zinnia.svn.sourceforge.net/svnroot/zinnia/zinnia@" +
        Var("zinnia_revision"),
   },
-  "linux": {
+  "unix": {
     "src/third_party/clang/scripts":
       "https://src.chromium.org/chrome/trunk/src/tools/clang/scripts@" +
       Var("clang_helper_in_chromium_revision"),
+    "src/third_party/openssl":
+      "http://src.chromium.org/svn/trunk/deps/third_party/openssl@" +
+      Var("openssl_revision"),
+    "src/third_party/zlib/v1_2_3":
+      "https://src.chromium.org/chrome/trunk/src/third_party/zlib@" +
+      Var("zlib_revision"),
   },
 }

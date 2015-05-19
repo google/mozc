@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,58 +45,10 @@ namespace mozc {
 
 class DictionaryInterface;
 class ImmutableConverterInterface;
-class PosGroup;
 class POSMatcher;
+class PosGroup;
 class SegmenterInterface;
-
-// Helper class for ImmutableConverterImpl::Viterbi() performance.
-// In Viterbi, we are calculating connection type in the loop like this,
-//  for (rnode_loop ...) {
-//    for (lnode_loop ...) {
-//      GetConnectionType(lnode, rnode)
-//    }
-//  }
-// By pre-calculating the connection type using rnode outside the lnode loop,
-// We can reduce computation time.
-class ConnectionTypeHandler {
- public:
-  enum ConnectionType {
-    CONNECTED,
-    WEAK_CONNECTED,
-    NOT_CONNECTED,
-  };
-
-  ConnectionTypeHandler(const vector<uint16> &group,
-                        const Segments *segments,
-                        const SegmenterInterface *segmenter);
-
-  void SetRNode(const Node *rnode);
-
-  // Returns connection type using rnode.
-  ConnectionType GetConnectionType(Node *lnode) const;
-
- private:
-  FRIEND_TEST(ConnectionTypeHandlerTest, GetConnectionType);
-
-  enum ReturnType {
-    DEFAULT,
-    RETURN_NOT_CONNECTED,
-    RETURN_CONNECTED_IF_LNODE_IS_VALID
-  };
-
-  // Original GetConnectionType for unittesting.
-  static ConnectionType GetConnectionTypeForUnittest(
-      const Node *lnode, const Node *rnode, const vector<uint16> &group,
-      const Segments *segments, const SegmenterInterface *segmenter);
-
-  const Node *rnode_;
-  const vector<uint16> &group_;
-  const Segments *segments_;
-  const SegmenterInterface *segmenter_;
-  ReturnType ret_;
-  Segment::SegmentType rtype_;
-  bool is_prediction_;
-};
+class SuggestionFilter;
 
 class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
@@ -106,72 +58,117 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
                          const ConnectorInterface *connector,
                          const SegmenterInterface *segmenter,
                          const POSMatcher *pos_matcher,
-                         const PosGroup *pos_group);
+                         const PosGroup *pos_group,
+                         const SuggestionFilter *suggestion_filter);
   virtual ~ImmutableConverterImpl() {}
 
-  virtual bool Convert(Segments *segments) const;
+  virtual bool ConvertForRequest(
+      const ConversionRequest &request, Segments *segments) const;
 
  private:
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesCost);
+  FRIEND_TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary);
   FRIEND_TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey);
   FRIEND_TEST(ImmutableConverterTest, AddPredictiveNodes);
-  FRIEND_TEST(ConnectionTypeHandlerTest, GetConnectionType);
+  FRIEND_TEST(ImmutableConverterTest, NotConnectedTest);
+  friend class NBestGeneratorTest;
+  FRIEND_TEST(NBestGeneratorTest, MultiSegmentConnectionTest);
+  FRIEND_TEST(NBestGeneratorTest, SingleSegmentConnectionTest);
 
-  void ExpandCandidates(NBestGenerator *nbest, Segment *segment,
+  enum InsertCandidatesType {
+    MULTI_SEGMENTS,  // Normal conversion ("私の|名前は|中野です")
+    SINGLE_SEGMENT,  // Realtime conversion ("私の名前は中野です")
+    ONLY_FIRST_SEGMENT,  // Insert only first segment ("私の")
+  };
+
+  void ExpandCandidates(const string &original_key,
+                        NBestGenerator *nbest, Segment *segment,
                         Segments::RequestType request_type,
                         size_t expand_size) const;
   void InsertDummyCandidates(Segment *segment, size_t expand_size) const;
   Node *Lookup(const int begin_pos, const int end_pos,
+               const ConversionRequest &request,
                bool is_reverse,
                bool is_prediction,
                Lattice *lattice) const;
   Node *AddCharacterTypeBasedNodes(const char *begin, const char *end,
                                    Lattice *lattice, Node *nodes) const;
 
-  void Resegment(const string &history_key,
-                 const string &conversion_key,
-                 Segments *segments, Lattice *lattice) const;
+  void Resegment(const Segments &segments,
+                 const string &history_key, const string &conversion_key,
+                 Lattice *lattice) const;
 
   void ApplyResegmentRules(size_t pos, Lattice *lattice) const;
-  // return true resegmentation happened
+  // Returns true resegmentation happened
   bool ResegmentArabicNumberAndSuffix(size_t pos, Lattice *lattice) const;
   bool ResegmentPrefixAndArabicNumber(size_t pos, Lattice *lattice) const;
   bool ResegmentPersonalName(size_t pos, Lattice *lattice) const;
 
-  bool MakeLattice(Lattice *lattice, Segments *segments) const;
-  bool MakeLatticeNodesForHistorySegments(Lattice *lattice,
-                                          Segments *segments) const;
+  bool MakeLattice(const ConversionRequest &request,
+                   Segments *segments, Lattice *lattice) const;
+  bool MakeLatticeNodesForHistorySegments(
+      const Segments &segments, const ConversionRequest &request,
+      Lattice *lattice) const;
   void MakeLatticeNodesForConversionSegments(
-      const string &history_key,
-      Segments *segments, Lattice *lattice) const;
-  void MakeLatticeNodesForPredictiveNodes(Lattice *lattice,
-                                          Segments *segments) const;
+      const Segments &segments, const ConversionRequest &request,
+      const string &history_key, Lattice *lattice) const;
+  void MakeLatticeNodesForPredictiveNodes(
+      const Segments &segments, const ConversionRequest &request,
+      Lattice *lattice) const;
   void AddPredictiveNodes(const size_t &len,
                           const size_t &pos,
                           Lattice *lattice,
                           Node *result_node) const;
-  // Fix for "好む" vs "この|無", "大|代" vs "代々" preferences.
+  // Fixes for "好む" vs "この|無", "大|代" vs "代々" preferences.
   // If the last node ends with "prefix", give an extra
   // wcost penalty. In this case  "無" doesn't tend to appear at
   // user input.
   void ApplyPrefixSuffixPenalty(const string &conversion_key,
                                 Lattice *lattice) const;
 
-  bool Viterbi(Segments *segments,
-               const Lattice &lattice,
-               const vector<uint16> &group) const;
+  bool Viterbi(const Segments &segments, Lattice *lattice) const;
 
-  bool PredictionViterbi(Segments *segments,
-                         const Lattice &lattice) const;
+  bool PredictionViterbi(const Segments &segments, Lattice *lattice) const;
+  void PredictionViterbiInternal(
+      int calc_begin_pos, int calc_end_pos, Lattice *lattice) const;
 
-  void PredictionViterbiSub(Segments *segments,
-                            const Lattice &lattice,
-                            int calc_begin_pos,
-                            int calc_end_pos) const;
+  // TODO(toshiyuki): Change parameter order for mutable |segments|.
 
-  bool MakeSegments(Segments *segments,
+  // Inserts first segment from conversion result to candidates.
+  // Costs will be modified using the existing candidates.
+  void InsertFirstSegmentToCandidates(Segments *segments,
+                                      const Lattice &lattice,
+                                      const vector<uint16> &group,
+                                      size_t max_candidates_size) const;
+
+  void InsertCandidates(Segments *segments,
+                        const Lattice &lattice,
+                        const vector<uint16> &group,
+                        size_t max_candidates_size,
+                        InsertCandidatesType type) const;
+
+  // Helper function for InsertCandidates().
+  // Returns true if |node| is valid node for segment end.
+  bool IsSegmentEndNode(const Segments &segments,
+                        const Node *node,
+                        const vector<uint16> &group,
+                        bool is_single_segment) const;
+
+  // Helper function for InsertCandidates().
+  // Returns the segment for inserting candidates.
+  Segment *GetInsertTargetSegment(const Lattice &lattice,
+                                  const vector<uint16> &group,
+                                  InsertCandidatesType type,
+                                  size_t begin_pos,
+                                  const Node *node,
+                                  Segments *segments) const;
+
+  bool MakeSegments(const ConversionRequest &request,
                     const Lattice &lattice,
-                    const vector<uint16> &group) const;
+                    const vector<uint16> &group,
+                    Segments *segments) const;
+
+  void MakeGroup(const Segments &segments, vector<uint16> *group) const;
 
   inline int GetCost(const Node *lnode, const Node *rnode) const {
     const int kInvalidPenaltyCost = 100000;
@@ -188,6 +185,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   const SegmenterInterface *segmenter_;
   const POSMatcher *pos_matcher_;
   const PosGroup *pos_group_;
+  const SuggestionFilter *suggestion_filter_;
 
   // Cache for POS ids.
   const uint16 first_name_id_;

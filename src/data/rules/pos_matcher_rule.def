@@ -73,3 +73,12 @@ ContentNoun ^名詞,(一般|固有名詞|副詞可能|サ変接続),
 
 # Noun prefix
 NounPrefix ^接頭詞,名詞接続,
+
+# EOS symbols
+EOSSymbol ^(記号,(句点|読点|アルファベット|一般|括弧開|括弧閉))|^(名詞,数,(アラビア数字|区切り文字))
+
+# 副詞
+Adverb ^副詞,
+
+# 副詞節 suffix
+AdverbSegmentSuffix ^助詞,*,*,*,*,*,(から|で|と|に|にて|の|へ|を)$

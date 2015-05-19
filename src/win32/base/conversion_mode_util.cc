@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,11 @@
 
 #include "win32/base/conversion_mode_util.h"
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <windows.h>
 #include <imm.h>
 #include <msctf.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include "base/base.h"
 #include "base/logging.h"
@@ -53,7 +53,7 @@ const uint32 kEUDC = 0x200;
 const uint32 kSymbol = 0x400;
 const uint32 kFixed = 0x800;
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 // Check the equality of constans if header files are available.
 
 // kAlphaNumeric
@@ -122,7 +122,7 @@ COMPILE_ASSERT(
 // kFixed
 COMPILE_ASSERT(kFixed == IME_CMODE_FIXED, check_kFixed);
 COMPILE_ASSERT(kFixed == TF_CONVERSIONMODE_FIXED, check_kFixed);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 // Returns true if the specified bits are set in the |flag| with
 // unsetting the bits in the |flag|.
@@ -208,7 +208,7 @@ bool ConversionModeUtil::ToNativeMode(
 
 bool ConversionModeUtil::ToMozcMode(
       uint32 flag, mozc::commands::CompositionMode *mode) {
-  if (mode == NULL) {
+  if (mode == nullptr) {
     LOG(ERROR) << "|mode| is NULL";
     return false;
   }
@@ -331,10 +331,10 @@ bool ConversionModeUtil::ConvertStatusFromMozcToNative(
     return false;
   }
 
-  if (is_open != NULL) {
+  if (is_open != nullptr) {
     *is_open = status.activated();
   }
-  if (imm32_mode != NULL) {
+  if (imm32_mode != nullptr) {
     *imm32_mode = static_cast<DWORD>(native_mode);
   }
   return true;
@@ -353,7 +353,7 @@ bool ConversionModeUtil::ConvertStatusFromNativeToMozc(
   // We never returns DIRECT from ConversionModeUtil::ToMozcMode.
   DCHECK_NE(mozc::commands::DIRECT, mozc_mode);
 
-  if (status == NULL) {
+  if (status == nullptr) {
     // Nothing to do.
     return true;
   }

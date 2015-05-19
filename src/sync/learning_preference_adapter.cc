@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -270,11 +270,7 @@ uint32 LearningPreferenceAdapter::GetNextBucketId() const {
   // randomly select one bucket.
   // TODO(taku): have to care the case where duplicated ids are used.
   uint64 id = 0;
-  if (!Util::GetSecureRandomSequence(
-          reinterpret_cast<char *>(&id), sizeof(id))) {
-    LOG(ERROR) << "GetSecureRandomSequence() failed. use rand()";
-    id = static_cast<uint64>(Util::Random(RAND_MAX));
-  }
+  Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
 
   return static_cast<uint32>(id % bucket_size());
 }

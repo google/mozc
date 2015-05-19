@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/side_frame_width"
+    android:layout_height="fill_parent"
+    android:layout_gravity="right"
+    android:visibility="gone" >
+
+    <FrameLayout
+        android:id="@+id/left_dropshadow"
+        android:layout_width="@dimen/translucent_border_height"
+        android:layout_height="fill_parent"
+        android:layout_gravity="bottom|right"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:id="@+id/left_dropshadow_short"
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/input_frame_height_with_shadow"
+            android:layout_gravity="bottom"
+            android:orientation="vertical" >
+
+            <ImageView
+                android:id="@+id/dropshadow_left_short_top"
+                android:layout_width="fill_parent"
+                android:layout_height="@dimen/translucent_border_height" />
+
+            <ImageView
+                android:id="@+id/dropshadow_left_short_bottom"
+                android:layout_width="fill_parent"
+                android:layout_height="0dip"
+                android:layout_weight="1"
+                android:background="@drawable/dropshadow_left" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/left_dropshadow_long"
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/ime_window_height"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:visibility="gone" >
+
+            <ImageView
+                android:id="@+id/dropshadow_left_long_top"
+                android:layout_width="fill_parent"
+                android:layout_height="@dimen/translucent_border_height" />
+
+            <ImageView
+                android:id="@+id/dropshadow_left_long_bottom"
+                android:layout_width="fill_parent"
+                android:layout_height="0dip"
+                android:layout_weight="1"
+                android:background="@drawable/dropshadow_left" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <ImageView
+        android:id="@+id/left_adjust_button"
+        android:layout_width="@dimen/side_adjust_button_width"
+        android:layout_height="@dimen/side_adjust_button_height"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="100dip" />
+</FrameLayout>

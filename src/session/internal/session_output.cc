@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,10 +47,10 @@
 
 namespace mozc {
 namespace session {
-
 namespace {
+
 bool FillAnnotation(const Segment::Candidate &candidate_value,
-                           commands::Annotation *annotation) {
+                    commands::Annotation *annotation) {
   bool is_modified = false;
   if (!candidate_value.prefix.empty()) {
     annotation->set_prefix(candidate_value.prefix);
@@ -61,8 +61,12 @@ bool FillAnnotation(const Segment::Candidate &candidate_value,
     is_modified = true;
   }
   if (!candidate_value.description.empty()) {
-    annotation->set_description(
-        candidate_value.description);
+    annotation->set_description(candidate_value.description);
+    is_modified = true;
+  }
+  if (candidate_value.attributes &
+      Segment::Candidate::USER_HISTORY_PREDICTION) {
+    annotation->set_deletable(true);
     is_modified = true;
   }
   return is_modified;
@@ -112,6 +116,7 @@ void FillAllCandidateWordsInternal(
     }
   }
 }
+
 }  // namespace
 
 // static
@@ -284,13 +289,12 @@ void SessionOutput::FillSubLabel(commands::Footer *footer) {
   // place for the label.
   footer->clear_label();
 
-  string sub_label("build ");
-
   // Append third number of the version to sub_label.
   const string version = Version::GetMozcVersion();
   vector<string> version_numbers;
   Util::SplitStringUsing(version, ".", &version_numbers);
   if (version_numbers.size() > 2) {
+    string sub_label("build ");
     sub_label.append(version_numbers[2]);
     footer->set_sub_label(sub_label);
   } else {
@@ -307,6 +311,7 @@ bool SessionOutput::FillFooter(const commands::Category category,
     return false;
   }
 
+  bool show_build_number = true;
   commands::Footer *footer = candidates->mutable_footer();
   if (category == commands::SUGGESTION) {
     // TODO(komatsu): Enable to localized the message.
@@ -319,13 +324,37 @@ bool SessionOutput::FillFooter(const commands::Category category,
     // category is commands::PREDICTION or commands::CONVERSION.
     footer->set_index_visible(true);
     footer->set_logo_visible(true);
+
+#ifdef MOZC_ENABLE_HISTORY_DELETION
+    // If the selected candidate is a user prediction history, tell the user
+    // that it can be removed by Ctrl-Delete.
+    if (candidates->has_focused_index()) {
+      for (size_t i = 0; i < candidates->candidate_size(); ++i) {
+        const commands::Candidates::Candidate &cand = candidates->candidate(i);
+        if (cand.index() != candidates->focused_index()) {
+          continue;
+        }
+        if (cand.has_annotation() && cand.annotation().deletable()) {
+          // TODO(noriyukit): Change the message depending on user's keymap.
+          const char kDeleteInstruction[] =  // "Ctrl+Delで履歴から削除"
+              "\x43\x74\x72\x6C\x2B\x44\x65\x6C\xE3\x81\xA7\xE5\xB1\xA5"
+              "\xE6\xAD\xB4\xE3\x81\x8B\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+          footer->set_label(kDeleteInstruction);
+          show_build_number = false;
+        }
+        break;
+      }
+    }
+#endif  // MOZC_ENABLE_HISTORY_DELETION
   }
 
   // Show the build number on the footer label for debugging when the build
   // configuration is official dev channel.
+  if (show_build_number) {
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
-  FillSubLabel(footer);
+    FillSubLabel(footer);
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
+  }
 
   return true;
 }

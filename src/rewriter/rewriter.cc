@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,8 @@
 #include "rewriter/correction_rewriter.h"
 #include "rewriter/date_rewriter.h"
 #include "rewriter/dice_rewriter.h"
+#include "rewriter/embedded_dictionary.h"
+#include "rewriter/emoji_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
@@ -59,45 +61,73 @@
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
 #include "rewriter/zipcode_rewriter.h"
-#ifdef USE_USAGE_REWRITER
+#ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter.h"
-#endif  // USE_USAGE_REWRITER
+#endif  // NO_USAGE_REWRITER
 
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
+
+namespace {
+// When updating the emoji dictionary,
+// 1. Edit mozc/data/emoji/emoji_data.tsv,
+// 2. Run gen_emoji_rewriter_data.py and make emoji_rewriter_data.h,
+// 3. Make sure generated emoji_rewriter_data.h is correct.
+
+// This generated header file defines |kEmojiDataList|, |kEmojiValueList|
+// and |kEmojiTokenList|.
+#include "rewriter/emoji_rewriter_data.h"
+}  // namespace
 
 namespace mozc {
 
 RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
-                           const DataManagerInterface *data_manager)
-    : parent_converter_(parent_converter),
-      pos_matcher_(data_manager->GetPOSMatcher()),
-      pos_group_(data_manager->GetPosGroup()) {
-  DCHECK(parent_converter_);
+                           const DataManagerInterface *data_manager,
+                           const PosGroup *pos_group) {
+  Init(parent_converter, data_manager, pos_group, NULL);
+}
+
+RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
+                           const DataManagerInterface *data_manager,
+                           const PosGroup *pos_group,
+                           const UserDictionary *user_dictionary) {
+  Init(parent_converter, data_manager, pos_group, user_dictionary);
+}
+
+void RewriterImpl::Init(const ConverterInterface *parent_converter,
+                        const DataManagerInterface *data_manager,
+                        const PosGroup *pos_group,
+                        const UserDictionary *user_dictionary) {
+  DCHECK(parent_converter);
+  DCHECK(data_manager);
+  DCHECK(pos_group);
+  parent_converter_ = parent_converter;
+  pos_matcher_ = data_manager->GetPOSMatcher();
   DCHECK(pos_matcher_);
-  DCHECK(pos_group_);
-#ifndef __native_client__
+  // |user_dictionary| can be NULL
+
   AddRewriter(new UserDictionaryRewriter);
-#endif  // __native_client__
   AddRewriter(new FocusCandidateRewriter);
   AddRewriter(new TransliterationRewriter(*pos_matcher_));
   AddRewriter(new EnglishVariantsRewriter);
   AddRewriter(new NumberRewriter(pos_matcher_));
   AddRewriter(new CollocationRewriter(data_manager));
   AddRewriter(new SingleKanjiRewriter(*pos_matcher_));
+  AddRewriter(new EmojiRewriter(
+      kEmojiDataList, arraysize(kEmojiDataList),
+      kEmojiTokenList, arraysize(kEmojiTokenList),
+      kEmojiValueList));
   AddRewriter(new EmoticonRewriter);
   AddRewriter(new CalculatorRewriter(parent_converter_));
-  AddRewriter(new SymbolRewriter(parent_converter_));
+  AddRewriter(new SymbolRewriter(parent_converter_, data_manager));
   AddRewriter(new UnicodeRewriter(parent_converter_));
   AddRewriter(new VariantsRewriter(pos_matcher_));
   AddRewriter(new ZipcodeRewriter(pos_matcher_));
   AddRewriter(new DiceRewriter);
 
-#ifndef __native_client__
   if (FLAGS_use_history_rewriter) {
     AddRewriter(new UserBoundaryHistoryRewriter(parent_converter_));
-    AddRewriter(new UserSegmentHistoryRewriter(pos_matcher_, pos_group_));
+    AddRewriter(new UserSegmentHistoryRewriter(pos_matcher_, pos_group));
   }
-#endif  // __native_client__
 
   AddRewriter(new DateRewriter);
   AddRewriter(new FortuneRewriter);
@@ -107,9 +137,9 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
   AddRewriter(new CommandRewriter);
 #endif  // OS_ANDROID
-#ifdef USE_USAGE_REWRITER
-  AddRewriter(new UsageRewriter(pos_matcher_));
-#endif  // USE_USAGE_REWRITER
+#ifndef NO_USAGE_REWRITER
+  AddRewriter(new UsageRewriter(data_manager, user_dictionary));
+#endif  // NO_USAGE_REWRITER
 
   AddRewriter(new VersionRewriter);
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));

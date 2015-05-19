@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/string_piece.h"
 
 namespace mozc {
 
@@ -45,7 +46,7 @@ class CollocationUtil {
   // "一個" -> "個" (removes 'number' if |remove_number| is true)
   // "%％" -> "%%" (full width '%' to half width)
   static void GetNormalizedScript(
-      const string &str, bool remove_number, string *output);
+      const StringPiece str, bool remove_number, string *output);
 
   // Returns true if given char is number including kanji.
   static bool IsNumber(char32 c);
@@ -53,8 +54,9 @@ class CollocationUtil {
  private:
   // Removes characters for normalizing.
   static void RemoveExtraCharacters(
-      const string &input, bool remove_number, string *output);
+      const StringPiece input, bool remove_number, string *output);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_COLLOCATION_UTIL_H_

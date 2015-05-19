@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+  <!-- Unprintable keys, which are not defined in Unicode  -->
+  <!-- Keycodes defined in BaseKeyboard -->
+  <integer name="key_shift">-1</integer>
+  <!-- Our definition -->
+  <integer name="key_up">-10</integer>
+  <integer name="key_left">-11</integer>
+  <integer name="key_right">-12</integer>
+  <integer name="key_down">-13</integer>
+  <integer name="key_chartype_to_kana">-14</integer>
+  <integer name="key_chartype_to_123">-15</integer>
+  <integer name="key_chartype_to_abc">-16</integer>
+  <integer name="key_chartype_to_kana_123">-23</integer>
+  <integer name="key_chartype_to_abc_123">-24</integer>
+
+  <integer name="key_cursor">-17</integer>
+  <integer name="key_undo">-18</integer>
+  <integer name="key_symbol">-19</integer>
+  <integer name="key_alt">-20</integer>
+  <integer name="key_capslock">-21</integer>
+  <integer name="key_menu_dialog">-22</integer>
+  <!-- Next available value is -25. -->
+
+  <!-- Deprecate : Use uchar_backspace -->
+  <integer name="key_backspace">8</integer>
+
+  <!-- Deprecate : Use uchar_linefeed -->
+  <integer name="key_enter">10</integer>
+
+  <!--  Unicode characters. -->
+  <!--  Used as a keycode. -->
+  <!--  Key names are based on Unicode definition. -->
+  <integer name="uchar_backspace">8</integer>
+  <integer name="uchar_linefeed">10</integer>  <!-- aka. enter -->
+  <integer name="uchar_space">32</integer>  <!--   -->
+  <integer name="uchar_exclamation_mark">33</integer>  <!-- ! -->
+  <integer name="uchar_quotation_mark">34</integer>  <!-- " -->
+  <integer name="uchar_number_sign">35</integer>  <!-- # -->
+  <integer name="uchar_dollar_sign">36</integer>  <!-- $ -->
+  <integer name="uchar_percent_sign">37</integer>  <!-- % -->
+  <integer name="uchar_ampersand">38</integer>  <!-- & -->
+  <integer name="uchar_apostrophe">39</integer>  <!-- ' -->
+  <integer name="uchar_left_parenthesis">40</integer>  <!-- ( -->
+  <integer name="uchar_right_parenthesis">41</integer>  <!-- ) -->
+  <integer name="uchar_asterisk">42</integer>  <!-- * -->
+  <integer name="uchar_plus_sign">43</integer>  <!-- + -->
+  <integer name="uchar_comma">44</integer>  <!-- , -->
+  <integer name="uchar_hyphen_minus">45</integer>  <!-- - -->
+  <integer name="uchar_full_stop">46</integer>  <!-- . -->
+  <integer name="uchar_solidus">47</integer>  <!-- / -->
+  <integer name="uchar_digit_zero">48</integer>  <!-- 0 -->
+  <integer name="uchar_digit_one">49</integer>  <!-- 1 -->
+  <integer name="uchar_digit_two">50</integer>  <!-- 2 -->
+  <integer name="uchar_digit_three">51</integer>  <!-- 3 -->
+  <integer name="uchar_digit_four">52</integer>  <!-- 4 -->
+  <integer name="uchar_digit_five">53</integer>  <!-- 5 -->
+  <integer name="uchar_digit_six">54</integer>  <!-- 6 -->
+  <integer name="uchar_digit_seven">55</integer>  <!-- 7 -->
+  <integer name="uchar_digit_eight">56</integer>  <!-- 8 -->
+  <integer name="uchar_digit_nine">57</integer>  <!-- 9 -->
+  <integer name="uchar_colon">58</integer>  <!-- : -->
+  <integer name="uchar_semicolon">59</integer>  <!-- ; -->
+  <integer name="uchar_less_than_sign">60</integer>  <!-- < -->
+  <integer name="uchar_equals_sign">61</integer>  <!-- = -->
+  <integer name="uchar_greater_than_sign">62</integer>  <!-- > -->
+  <integer name="uchar_question_mark">63</integer>  <!-- ? -->
+  <integer name="uchar_commercial_at">64</integer>  <!-- @ -->
+  <integer name="uchar_latin_capital_letter_a">65</integer>  <!-- A -->
+  <integer name="uchar_latin_capital_letter_b">66</integer>  <!-- B -->
+  <integer name="uchar_latin_capital_letter_c">67</integer>  <!-- C -->
+  <integer name="uchar_latin_capital_letter_d">68</integer>  <!-- D -->
+  <integer name="uchar_latin_capital_letter_e">69</integer>  <!-- E -->
+  <integer name="uchar_latin_capital_letter_f">70</integer>  <!-- F -->
+  <integer name="uchar_latin_capital_letter_g">71</integer>  <!-- G -->
+  <integer name="uchar_latin_capital_letter_h">72</integer>  <!-- H -->
+  <integer name="uchar_latin_capital_letter_i">73</integer>  <!-- I -->
+  <integer name="uchar_latin_capital_letter_j">74</integer>  <!-- J -->
+  <integer name="uchar_latin_capital_letter_k">75</integer>  <!-- K -->
+  <integer name="uchar_latin_capital_letter_l">76</integer>  <!-- L -->
+  <integer name="uchar_latin_capital_letter_m">77</integer>  <!-- M -->
+  <integer name="uchar_latin_capital_letter_n">78</integer>  <!-- N -->
+  <integer name="uchar_latin_capital_letter_o">79</integer>  <!-- O -->
+  <integer name="uchar_latin_capital_letter_p">80</integer>  <!-- P -->
+  <integer name="uchar_latin_capital_letter_q">81</integer>  <!-- Q -->
+  <integer name="uchar_latin_capital_letter_r">82</integer>  <!-- R -->
+  <integer name="uchar_latin_capital_letter_s">83</integer>  <!-- S -->
+  <integer name="uchar_latin_capital_letter_t">84</integer>  <!-- T -->
+  <integer name="uchar_latin_capital_letter_u">85</integer>  <!-- U -->
+  <integer name="uchar_latin_capital_letter_v">86</integer>  <!-- V -->
+  <integer name="uchar_latin_capital_letter_w">87</integer>  <!-- W -->
+  <integer name="uchar_latin_capital_letter_x">88</integer>  <!-- X -->
+  <integer name="uchar_latin_capital_letter_y">89</integer>  <!-- Y -->
+  <integer name="uchar_latin_capital_letter_z">90</integer>  <!-- Z -->
+  <integer name="uchar_left_square_bracket">91</integer>  <!-- [ -->
+  <integer name="uchar_reverse_solidus">92</integer>  <!-- \ -->
+  <integer name="uchar_right_square_bracket">93</integer>  <!-- ] -->
+  <integer name="uchar_circumflex_accent">94</integer>  <!-- ^ -->
+  <integer name="uchar_low_line">95</integer>  <!-- _ -->
+  <integer name="uchar_grave_accent">96</integer>  <!-- ` -->
+  <integer name="uchar_latin_small_letter_a">97</integer>  <!-- a -->
+  <integer name="uchar_latin_small_letter_b">98</integer>  <!-- b -->
+  <integer name="uchar_latin_small_letter_c">99</integer>  <!-- c -->
+  <integer name="uchar_latin_small_letter_d">100</integer>  <!-- d -->
+  <integer name="uchar_latin_small_letter_e">101</integer>  <!-- e -->
+  <integer name="uchar_latin_small_letter_f">102</integer>  <!-- f -->
+  <integer name="uchar_latin_small_letter_g">103</integer>  <!-- g -->
+  <integer name="uchar_latin_small_letter_h">104</integer>  <!-- h -->
+  <integer name="uchar_latin_small_letter_i">105</integer>  <!-- i -->
+  <integer name="uchar_latin_small_letter_j">106</integer>  <!-- j -->
+  <integer name="uchar_latin_small_letter_k">107</integer>  <!-- k -->
+  <integer name="uchar_latin_small_letter_l">108</integer>  <!-- l -->
+  <integer name="uchar_latin_small_letter_m">109</integer>  <!-- m -->
+  <integer name="uchar_latin_small_letter_n">110</integer>  <!-- n -->
+  <integer name="uchar_latin_small_letter_o">111</integer>  <!-- o -->
+  <integer name="uchar_latin_small_letter_p">112</integer>  <!-- p -->
+  <integer name="uchar_latin_small_letter_q">113</integer>  <!-- q -->
+  <integer name="uchar_latin_small_letter_r">114</integer>  <!-- r -->
+  <integer name="uchar_latin_small_letter_s">115</integer>  <!-- s -->
+  <integer name="uchar_latin_small_letter_t">116</integer>  <!-- t -->
+  <integer name="uchar_latin_small_letter_u">117</integer>  <!-- u -->
+  <integer name="uchar_latin_small_letter_v">118</integer>  <!-- v -->
+  <integer name="uchar_latin_small_letter_w">119</integer>  <!-- w -->
+  <integer name="uchar_latin_small_letter_x">120</integer>  <!-- x -->
+  <integer name="uchar_latin_small_letter_y">121</integer>  <!-- y -->
+  <integer name="uchar_latin_small_letter_z">122</integer>  <!-- z -->
+  <integer name="uchar_left_curly_bracket">123</integer>  <!-- { -->
+  <integer name="uchar_vertical_line">124</integer>  <!-- | -->
+  <integer name="uchar_right_curly_bracket">125</integer>  <!-- } -->
+  <integer name="uchar_tilde">126</integer>  <!-- ~ -->
+</resources>

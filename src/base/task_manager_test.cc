@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -663,7 +663,7 @@ class TaskExecutorThread : public mozc::Thread {
 TEST_F(TaskManager_Test, SingleThreadTest) {
   for (int i = 0; i < 10; ++i) {
     TestRequest *request = new TestRequest("CompleteInStartTask");
-    request->set_initial_sleep_msec(100);
+    request->set_initial_sleep_msec(1000);
     task_manager_->AddTask(request, NULL, NULL);
   }
   {
@@ -674,7 +674,7 @@ TEST_F(TaskManager_Test, SingleThreadTest) {
   TaskExecutorThread executor_thread(task_manager_.get());
   executor_thread.Start();
 
-  Util::Sleep(250);
+  Util::Sleep(2500);
 
   task_manager_->ShutDown();
   executor_thread.Join();

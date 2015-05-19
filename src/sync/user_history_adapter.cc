@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,9 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/util.h"
 #include "storage/registry.h"
 #include "sync/sync.pb.h"
 #include "sync/sync_util.h"
@@ -108,7 +110,7 @@ bool UserHistoryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
 
   local_update_time_ = Util::GetTime();
 
-  if (!Util::FileExists(GetUserHistoryFileName())) {
+  if (!FileUtil::FileExists(GetUserHistoryFileName())) {
     LOG(WARNING) << GetUserHistoryFileName() << " does not exist.";
     return true;
   }
@@ -180,7 +182,7 @@ bool UserHistoryAdapter::MarkUploaded(
 }
 
 bool UserHistoryAdapter::Clear() {
-  if (!mozc::storage::Registry::Erase(kLastDownloadTimestampKey)) {
+  if (!storage::Registry::Erase(kLastDownloadTimestampKey)) {
     LOG(ERROR) << "cannot erase: " << kLastDownloadTimestampKey;
   }
   return true;
@@ -204,19 +206,15 @@ uint32 UserHistoryAdapter::GetNextBucketId() const {
   // randomly select one bucket.
   // TODO(taku): have to care the case where duplicated ids are used.
   uint64 id = 0;
-  if (!Util::GetSecureRandomSequence(
-          reinterpret_cast<char *>(&id), sizeof(id))) {
-    LOG(ERROR) << "GetSecureRandomSequence() failed. use random value.";
-    id = static_cast<uint64>(Util::Random(RAND_MAX));
-  }
+  Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
 
   return static_cast<uint32>(id % bucket_size());
 }
 
 bool UserHistoryAdapter::SetLastDownloadTimestamp(uint64 last_download_time) {
-  if (!mozc::storage::Registry::Insert(kLastDownloadTimestampKey,
-                                       last_download_time) ||
-      !mozc::storage::Registry::Sync()) {
+  if (!storage::Registry::Insert(kLastDownloadTimestampKey,
+                                 last_download_time) ||
+      !storage::Registry::Sync()) {
     LOG(ERROR) << "cannot save: "
                << kLastDownloadTimestampKey << " " << last_download_time;
     return false;
@@ -226,8 +224,8 @@ bool UserHistoryAdapter::SetLastDownloadTimestamp(uint64 last_download_time) {
 
 uint64 UserHistoryAdapter::GetLastDownloadTimestamp() const {
   uint64 last_download_time = 0;
-  if (!mozc::storage::Registry::Lookup(kLastDownloadTimestampKey,
-                                       &last_download_time)) {
+  if (!storage::Registry::Lookup(kLastDownloadTimestampKey,
+                                 &last_download_time)) {
     LOG(ERROR) << "cannot read: " << kLastDownloadTimestampKey;
     return static_cast<uint64>(0);
   }
@@ -237,5 +235,6 @@ uint64 UserHistoryAdapter::GetLastDownloadTimestamp() const {
 ime_sync::Component UserHistoryAdapter::component_id() const {
   return ime_sync::MOZC_USER_HISTORY_PREDICTION;
 }
+
 }  // namespace sync
 }  // namespace mozc

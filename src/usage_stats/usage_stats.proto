@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ message Stats {
     TIMING = 1;
     INTEGER = 2;
     BOOLEAN = 3;
+    VIRTUAL_KEYBOARD = 4;
   };
   required Type type = 2;
 
@@ -57,4 +58,29 @@ message Stats {
   // boolean
   optional bool boolean_value = 9;
 
+  message DoubleValueStats {
+    optional uint32 num = 1;
+    optional double total = 2;
+    optional double square_total = 3;
+  }
+  // virtual keyboard stats
+  message TouchEventStats {
+    optional uint32 source_id = 1;
+    // Start position x,y of a touch event.
+    // x, y: keyboard left-top is (0, 0), right-bottom is (1, 1).
+    // These values can be negative or greater than one,
+    // if a user's touching point is outside of the keyboard.
+    optional DoubleValueStats start_x_stats = 2;
+    optional DoubleValueStats start_y_stats = 3;
+    // Direction of touch event.
+    optional DoubleValueStats direction_x_stats = 4;
+    optional DoubleValueStats direction_y_stats = 5;
+    // Time length of touch event (in seconds).
+    optional DoubleValueStats time_length_stats = 6;
+  }
+  message VirtualKeyboardStats {
+    optional string keyboard_name = 1;
+    repeated TouchEventStats touch_event_stats = 2;
+  }
+  repeated VirtualKeyboardStats virtual_keyboard_stats = 11;
 };

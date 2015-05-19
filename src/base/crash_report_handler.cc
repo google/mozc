@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
-
 #include "base/crash_report_handler.h"
+
+#ifdef OS_WIN
 
 #include <Windows.h>
 #include <ShellAPI.h>  // for CommandLineToArgvW
@@ -39,6 +39,7 @@
 
 #include "base/const.h"
 #include "base/crash_report_util.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/util.h"
@@ -276,6 +277,7 @@ bool NamedPipeExist(const wchar_t *pipe_name) {
 namespace mozc {
 
 bool CrashReportHandler::Initialize(bool check_address) {
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   ScopedCriticalSection critical_section(g_critical_section);
   DCHECK_GE(g_reference_count, 0);
   ++g_reference_count;
@@ -284,7 +286,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
     // Give up to use the crash handler if the caller has a loader lock because
     // we cannot destroy the handler here if it is initialized for in-proc dump
     // generation.  http://b/1903139
-    if (!mozc::WinUtil::IsDLLSynchronizationHeld(&lock_held) || lock_held) {
+    if (!WinUtil::IsDLLSynchronizationHeld(&lock_held) || lock_held) {
       Uninitialize();
       return false;
     }
@@ -300,8 +302,8 @@ bool CrashReportHandler::Initialize(bool check_address) {
     const string acrashdump_directory =
       CrashReportUtil::GetCrashReportDirectory();
     // create a crash dump directory if not exist.
-    if (!Util::FileExists(acrashdump_directory)) {
-      Util::CreateDirectory(acrashdump_directory);
+    if (!FileUtil::FileExists(acrashdump_directory)) {
+      FileUtil::CreateDirectory(acrashdump_directory);
     }
 
     wstring crashdump_directory;
@@ -333,6 +335,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
 #endif  // DEBUG
     return true;
   }
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return false;
 }
 
@@ -342,6 +345,7 @@ bool CrashReportHandler::IsInitialized() {
 }
 
 bool CrashReportHandler::Uninitialize() {
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   ScopedCriticalSection critical_section(g_critical_section);
   --g_reference_count;
   DCHECK_GE(g_reference_count, 0);
@@ -350,6 +354,7 @@ bool CrashReportHandler::Uninitialize() {
     g_handler = NULL;
     return true;
   }
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return false;
 }
 
@@ -359,4 +364,24 @@ void CrashReportHandler::SetCriticalSection(
 }
 }  // namespace mozc
 
-#endif  // OS_WINDOWS
+#elif defined(OS_LINUX)  // OS_WIN
+
+namespace mozc {
+
+// Dummy implimentation of CrashReportHandler for Linux.
+// TODO(horo): Impliment this when we support official branding build on Linux.
+bool CrashReportHandler::Initialize(bool check_address) {
+  return false;
+}
+
+bool CrashReportHandler::IsInitialized() {
+  return false;
+}
+
+bool CrashReportHandler::Uninitialize() {
+  return false;
+}
+
+}  // namespace mozc
+
+#endif  // OS_WIN OS_LINUX

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,7 @@ BYTE GetAttributeImpl(const CompositionString &composition,
 
 // TODO(yukawa): Make a common library for this function.
 void FillOutputForSuggestion(commands::Output *output) {
-  DCHECK_NE(NULL, output);
+  DCHECK_NE(nullptr, output);
   output->Clear();
 
   output->set_mode(commands::HIRAGANA);
@@ -135,7 +135,6 @@ void FillOutputForSuggestion(commands::Output *output) {
       footer->set_sub_label("build 436");
     }
   }
-  output->set_elapsed_time(1000);
   {
     commands::Status *status = output->mutable_status();
     status->set_activated(true);
@@ -167,7 +166,7 @@ void FillOutputForSuggestion(commands::Output *output) {
 
 // TODO(yukawa): Make a common library for this function.
 void FillOutputForPrediction(commands::Output *output) {
-  DCHECK_NE(NULL, output);
+  DCHECK_NE(nullptr, output);
   output->Clear();
 
   output->set_mode(commands::HIRAGANA);
@@ -219,7 +218,6 @@ void FillOutputForPrediction(commands::Output *output) {
       footer->set_sub_label("build 436");
     }
   }
-  output->set_elapsed_time(1000);
   {
     commands::Status *status = output->mutable_status();
     status->set_activated(true);
@@ -254,7 +252,7 @@ void FillOutputForConversion(
     commands::Output *output, int focused_index, bool has_candidates) {
   DCHECK_LE(0, focused_index);
   DCHECK_GT(kNumCandidates, focused_index);
-  DCHECK_NE(NULL, output);
+  DCHECK_NE(nullptr, output);
   output->Clear();
 
   const int32 focused_value_length = kValueLengths[focused_index];
@@ -508,7 +506,6 @@ void FillOutputForConversion(
       footer->set_sub_label("build 436");
     }
   }
-  output->set_elapsed_time(1000);
   {
     commands::Status *status = output->mutable_status();
     status->set_activated(true);
@@ -601,7 +598,6 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionBecomesEmpty) {
 
   commands::Output output;
   output.set_consumed(true);
-  output.set_elapsed_time(1000);
   output.set_mode(mozc::commands::HIRAGANA);
   output.mutable_status()->set_activated(true);
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);
@@ -644,7 +640,6 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionIsCommited) {
 
   commands::Output output;
   output.set_consumed(true);
-  output.set_elapsed_time(1000);
   output.set_mode(mozc::commands::HIRAGANA);
   output.mutable_status()->set_activated(true);
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);
@@ -711,10 +706,8 @@ TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585) {
   output.mutable_result()->set_key(" ");
   output.mutable_result()->set_value("\343\200\200");  // Full-width space
   output.mutable_result()->set_type(mozc::commands::Result::STRING);
-  output.set_elapsed_time(1000);
   output.mutable_status()->set_activated(true);
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);
-  output.set_performed_command("Precomposition_InsertSpace");
 
   vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
@@ -766,7 +759,6 @@ TEST(ImeCompositionStringTest,
 
   commands::Output output;
   output.set_consumed(true);
-  output.set_elapsed_time(1000);
   output.set_mode(mozc::commands::HIRAGANA);
   output.mutable_status()->set_activated(true);
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);

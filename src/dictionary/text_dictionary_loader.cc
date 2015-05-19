@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,36 +27,103 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// NOTE(tabata): This code is used mainly by rx_builder to build
+// NOTE(tabata): This code is used mainly by louds trie builder to build
 // dictionary. Please check error handling, if you want to include
 // this to run within client.
 
 #include "dictionary/text_dictionary_loader.h"
 
-#include <climits>
-#include <cstring>
-#include <map>
+#include <algorithm>
+#include <limits>
+#include <string>
+#include <vector>
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/flags.h"
+#include "base/iterator_adapter.h"
 #include "base/logging.h"
+#include "base/multifile.h"
 #include "base/number_util.h"
+#include "base/stl_util.h"
+#include "base/string_piece.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 
+DEFINE_int32(tokens_reserve_size, 1400000,
+             "Reserve the specified size of token buffer in advance.");
+
 namespace mozc {
+namespace {
+
+// Functor to sort a sequence of Tokens first by value and then by key.
+struct OrderByValueThenByKey {
+  bool operator()(const Token *l, const Token *r) const {
+    const int comp = l->value.compare(r->value);
+    return comp == 0 ? (l->key < r->key) : (comp < 0);
+  }
+};
+
+// Provides a view of Token iterator as a pair of value and key.  Used to look
+// up tokens from a sorted range of Token pointers using value and key.
+struct AsValueAndKey : public AdapterBase<pair<StringPiece, StringPiece> > {
+  value_type operator()(vector<Token *>::const_iterator iter) const {
+    const Token *token = *iter;
+    return pair<StringPiece, StringPiece>(token->value, token->key);
+  }
+};
+
+// Provides a view of Token iterator as a value string.  Used to look up tokens
+// from a sorted range of Tokens using value.
+struct AsValue : public AdapterBase<StringPiece> {
+  value_type operator()(vector<Token *>::const_iterator iter) const {
+    return StringPiece((*iter)->value);
+  }
+};
+
+// Parses one line of reading correction file.  Since the result is returned as
+// StringPieces, |line| needs to outlive |value_key|.
+void ParseReadingCorrectionTSV(const string &line,
+                               pair<StringPiece, StringPiece> *value_key) {
+  // Format: value\terror\tcorrect
+  SplitIterator<SingleDelimiter> iter(line, "\t");
+  CHECK(!iter.Done());
+  value_key->first = iter.Get();
+  iter.Next();
+  CHECK(!iter.Done());
+  value_key->second = iter.Get();
+}
+
+// Helper function to parse an integer from a string.
+inline bool SafeStrToInt(StringPiece s, int *n) {
+  uint32 u32 = 0;
+  const bool ret = NumberUtil::SafeStrToUInt32(s, &u32);
+  *n = u32;
+  return ret;
+}
+
+// Helper functions to get const iterators.
+inline vector<Token *>::const_iterator CBegin(const vector<Token *> &tokens) {
+  return tokens.begin();
+}
+
+inline vector<Token *>::const_iterator CEnd(const vector<Token *> &tokens) {
+  return tokens.end();
+}
+
+}  // namespace
 
 TextDictionaryLoader::TextDictionaryLoader(const POSMatcher &pos_matcher)
     : pos_matcher_(&pos_matcher) {
 }
 
 TextDictionaryLoader::~TextDictionaryLoader() {
-  Close();
+  Clear();
 }
 
 bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
-                                               const string &label) {
+                                               StringPiece label) {
   CHECK(token);
   if (label.empty()) {
     return true;
@@ -80,136 +147,131 @@ bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
   return false;
 }
 
-bool TextDictionaryLoader::Open(const string &filename) {
-  Close();
-  return OpenWithLineLimit(filename, -1);
+void TextDictionaryLoader::Load(const string &dictionary_filename,
+                                const string &reading_correction_filename) {
+  LoadWithLineLimit(dictionary_filename, reading_correction_filename, -1);
 }
 
-bool TextDictionaryLoader::OpenWithLineLimit(const string &filename,
-                                             int limit) {
-  Close();
+void TextDictionaryLoader::LoadWithLineLimit(
+    const string &dictionary_filename,
+    const string &reading_correction_filename,
+    int limit) {
+  Clear();
+
+  // Roughly allocate buffers for Token pointers.
   if (limit < 0) {
-    limit = INT_MAX;
+    tokens_.reserve(FLAGS_tokens_reserve_size);
+    limit = numeric_limits<int>::max();
+  } else {
+    tokens_.reserve(limit);
   }
 
-  vector<string> filenames;
-  Util::SplitStringUsing(filename, ",", &filenames);
-  if (filenames.empty()) {
-    LOG(ERROR) << "filename is empty";
-    return false;
-  }
-
-  for (size_t i = 0; i < filenames.size(); ++i) {
-    LOG(INFO) << "Loading: " << filenames[i];
-    InputFileStream ifs(filenames[i].c_str());
-    if (!ifs) {
-      LOG(INFO) << "cannot open: " << filenames[i];
-      return false;
-    }
+  // Read system dictionary.
+  {
+    InputMultiFile file(dictionary_filename);
     string line;
-    while (limit > 0 && getline(ifs, line)) {
+    while (limit > 0 && file.ReadLine(&line)) {
       Util::ChopReturns(&line);
-      ParseTSV(line);
+      tokens_.push_back(ParseTSV(line));
       --limit;
     }
+    LOG(INFO) << tokens_.size() << " tokens from " << dictionary_filename;
   }
 
-  LOG(INFO) << tokens_.size() << " tokens from " << filename << "\n";
+  if (reading_correction_filename.empty() || limit <= 0) {
+    return;
+  }
 
-  return true;
+  // Prepare for loading reading corrections. We sort |tokens_| first by value
+  // and then by key so that we can perform the following operations both in
+  // O(log(N)), where N is the size of tokens.
+  //   1. Checking the existence of any key-value pairs: This can be done by
+  //      binary-searching for a pair of value and key.
+  //   2. Accessing all the tokens that have the same value: Since tokens are
+  //      also sorted in order of value, this can be done by finding a range of
+  //      tokens that have the same value.
+  sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
+
+  // Load reading correction entries.
+  int reading_correction_size = 0;
+  {
+    InputMultiFile file(reading_correction_filename);
+    string line;
+    while (file.ReadLine(&line)) {
+      if (line.empty() || line[0] == '#') {
+        continue;
+      }
+
+      // Parse TSV line in a pair of value and key (Note: first element is value
+      // and the second key).
+      Util::ChopReturns(&line);
+      pair<StringPiece, StringPiece> value_key;
+      ParseReadingCorrectionTSV(line, &value_key);
+
+      // Filter the entry if this key value pair already exists in the system
+      // dictionary.
+      if (binary_search(MakeIteratorAdapter(tokens_.begin(), AsValueAndKey()),
+                        MakeIteratorAdapter(tokens_.end(), AsValueAndKey()),
+                        value_key)) {
+        VLOG(1) << "System dictionary has the same key-value: " << line;
+        continue;
+      }
+
+      // Since reading correction entries lack POS and cost, we recover those
+      // fields from a token in the system dictionary that has the same value.
+      // Since multple tokens may have the same value, from such tokens, we
+      // select the one that has the maximum cost.
+      typedef vector<Token *>::const_iterator TokenIterator;
+      typedef IteratorAdapter<TokenIterator, AsValue> AsValueIterator;
+      typedef pair<AsValueIterator, AsValueIterator> Range;
+      Range range = equal_range(MakeIteratorAdapter(CBegin(tokens_), AsValue()),
+                                MakeIteratorAdapter(CEnd(tokens_), AsValue()),
+                                value_key.first);
+      TokenIterator begin = range.first.base(), end = range.second.base();
+      if (begin == end) {
+        VLOG(1) << "Cannot find the value in system dicitonary - ignored:"
+                << line;
+        continue;
+      }
+      // Now [begin, end) contains all the tokens that have the same value as
+      // this reading correction entry.  Next, find the token that has the
+      // maximum cost in [begin, end).  Note that linear search is sufficiently
+      // fast here because the size of the range is small.
+      const Token *max_cost_token = *begin;
+      for (++begin; begin != end; ++begin) {
+        if ((*begin)->cost > max_cost_token->cost) {
+          max_cost_token = *begin;
+        }
+      }
+
+      // The cost is calculated as -log(prob) * 500.
+      // We here assume that the wrong reading appear with 1/100 probability
+      // of the original (correct) reading.
+      const int kCostPenalty = 2302;      // -log(1/100) * 500;
+      scoped_ptr<Token> token(new Token);
+      value_key.second.CopyToString(&token->key);
+      token->value = max_cost_token->value;
+      token->lid = max_cost_token->lid;
+      token->rid = max_cost_token->rid;
+      token->cost = max_cost_token->cost + kCostPenalty;
+      // We don't set SPELLING_CORRECTION. The entries in reading_correction
+      // data are also stored in rewriter/correction_rewriter.cc.
+      // reading_correction_rewriter annotates the spelling correction
+      // notations.
+      token->attributes = Token::NONE;
+      tokens_.push_back(token.release());
+      ++reading_correction_size;
+      if (--limit <= 0) {
+        break;
+      }
+    }
+    LOG(INFO) << reading_correction_size << " tokens from "
+              << reading_correction_filename;
+  }
 }
 
-namespace {
-void UpdateMap(const string &key, const Token *token,
-               map<string, const Token *> *target_map) {
-  map<string, const Token *>::iterator it = target_map->find(key);
-  if (it == target_map->end() || it->second->cost > token->cost) {
-    target_map->insert(make_pair(key, token));
-  }
-}
-}   // namespace
-
-bool TextDictionaryLoader::OpenReadingCorrection(const string &filename) {
-  map<string, const Token *> value_map, key_value_map;
-
-  // TODO(all): we want to merge them off-line (in dictionary pipeline)
-  // in order to reduce the dictionary generation cost and speed.
-  // The benefit of merging them here is that we can allow third-party
-  // developers to integrate their own reading correction data.
-  for (size_t i = 0; i < tokens_.size(); ++i) {
-    if (tokens_[i]->attributes != Token::NONE) {
-      continue;
-    }
-    const string &value = tokens_[i]->value;
-    const string key_value = tokens_[i]->key + "\t" + tokens_[i]->value;
-    UpdateMap(value, tokens_[i], &value_map);
-    UpdateMap(key_value, tokens_[i], &key_value_map);
-  }
-
-  InputFileStream ifs(filename.c_str());
-  if (!ifs) {
-    LOG(INFO) << "cannot open: " << filename;
-    return false;
-  }
-
-  LOG(INFO) << "Loading reading correction: " << filename;
-  size_t reading_correction_size = 0;
-
-  string line;
-  while (getline(ifs, line)) {
-    if (line.empty() || line[0] == '#') {
-      continue;
-    }
-    // value, error, correct
-    vector<string> fields;
-    Util::SplitStringUsing(line, "\t", &fields);
-    CHECK_GE(fields.size(), 3);
-    const string key_value = fields[1] + "\t" + fields[0];
-    const string value = fields[0];
-    // No need to add this entry to the dictionary,
-    // as it is already registered.
-    if (key_value_map.find(key_value) != key_value_map.end()) {
-      continue;
-    }
-
-    // If the value is not in the system dictioanry, ignore this entry,
-    // as we can't calculate the emission cost.
-    map<string, const Token *>::const_iterator it = value_map.find(value);
-    if (it == value_map.end()) {
-      continue;
-    }
-
-    // The cost is calculated as -log(prob) * 500.
-    // We here assume that the wrong reading appear with 1/100 probability
-    // of the original (correct) reading.
-    const int kCostPenalty = 2302;      // -log(1/100) * 500;
-    const Token *org_token = it->second;
-    Token *token = new Token;
-    token->key   = fields[1];
-    token->value = org_token->value;
-    token->lid   = org_token->lid;
-    token->rid   = org_token->rid;
-    token->cost  = org_token->cost + kCostPenalty;
-    // We don't set SPELLING_CORRECTION. The entries in reading_correction
-    // data are also stored in rewriter/correction_rewriter.cc.
-    // reading_correction_rewriter annotates the spelling correction
-    // notations.
-    token->attributes = Token::NONE;
-    tokens_.push_back(token);
-    ++reading_correction_size;
-  }
-
-  LOG(INFO) << reading_correction_size << " tokens from " << filename << "\n";
-
-  return true;
-}
-
-void TextDictionaryLoader::Close() {
-  for (vector<Token *>::iterator it = tokens_.begin();
-       it != tokens_.end(); ++it) {
-    delete *it;
-  }
-  tokens_.clear();
+void TextDictionaryLoader::Clear() {
+  STLDeleteElements(&tokens_);
 }
 
 void TextDictionaryLoader::CollectTokens(vector<Token *> *res) {
@@ -218,31 +280,38 @@ void TextDictionaryLoader::CollectTokens(vector<Token *> *res) {
   res->insert(res->end(), tokens_.begin(), tokens_.end());
 }
 
-void TextDictionaryLoader::ParseTSV(const string &line) {
-  const int kNumFields = 5;
-  vector<string> fields;
-  Util::SplitStringUsing(line, "\t", &fields);
-  CHECK_GE(fields.size(), kNumFields) << "malformed line in dictionary:"
-                                      << line;
-  Token *token = new Token;
-  CHECK(token);
-  Util::NormalizeVoicedSoundMark(fields[0], &token->key);
-  uint32 lid, rid, cost;
-  CHECK(NumberUtil::SafeStrToUInt32(fields[1], &lid))
-      << "wrong lid: " << fields[1];
-  CHECK(NumberUtil::SafeStrToUInt32(fields[2], &rid))
-      << "wrong rid: " << fields[2];
-  CHECK(NumberUtil::SafeStrToUInt32(fields[3], &cost))
-      << "wrong cost: " << fields[3];
-  token->lid = lid;
-  token->rid = rid;
-  token->cost = cost;
-  Util::NormalizeVoicedSoundMark(fields[4], &token->value);
+Token *TextDictionaryLoader::ParseTSV(const string &line) {
+  scoped_ptr<Token> token(new Token);
 
-  const string label = fields.size() > 5 ? fields[5] : "";
-  CHECK(RewriteSpecialToken(token, label))
-      << "invalid label: " << line;
+  SplitIterator<SingleDelimiter> iter(line, "\t");
+  CHECK(!iter.Done()) << "Malformed line: " << line;
+  Util::NormalizeVoicedSoundMark(iter.Get(), &token->key);
 
-  tokens_.push_back(token);
+  iter.Next();
+  CHECK(!iter.Done()) << "Malformed line: " << line;
+  CHECK(SafeStrToInt(iter.Get(), &token->lid))
+      << "Wrong lid: " << iter.Get();
+
+  iter.Next();
+  CHECK(!iter.Done()) << "Malformed line: " << line;
+  CHECK(SafeStrToInt(iter.Get(), &token->rid))
+      << "Wrong rid: " << iter.Get();
+
+  iter.Next();
+  CHECK(!iter.Done()) << "Malformed line: " << line;
+  CHECK(SafeStrToInt(iter.Get(), &token->cost))
+      << "Wrong cost: " << iter.Get();
+
+  iter.Next();
+  CHECK(!iter.Done()) << "Malformed line: " << line;
+  Util::NormalizeVoicedSoundMark(iter.Get(), &token->value);
+
+  iter.Next();
+  const StringPiece label = iter.Done() ? StringPiece() : iter.Get();
+  CHECK(RewriteSpecialToken(token.get(), label))
+      << "Invalid label: " << line;
+
+  return token.release();
 }
+
 }  // namespace mozc

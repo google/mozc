@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ namespace {
 // Windows CP932 (shift-jis) maps WAVE_DASH to FULL_WIDTH_TILDA.
 // Since the font of WAVE-DASH is ugly on Windows, here we convert WAVE-DHASH to
 // FULL_WIDTH_TILDA as CP932 does.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 inline char32 ConvertVenderSpecificCharacter(char32 c) {
   switch (c) {
     case 0x00A5:   // YEN SIGN
@@ -88,50 +88,42 @@ inline char32 ConvertVenderSpecificCharacter(char32 c) {
 }
 #endif
 
-void ConvertVenderSpecificString(const string &input, string *output) {
-  const char *begin = input.data();
-  const char *end = begin + input.size();
+void ConvertVenderSpecificString(StringPiece input, string *output) {
   output->clear();
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
+    const char32 ucs4 = iter.Get();
     const char32 new_ucs4 = ConvertVenderSpecificCharacter(ucs4);
     if (new_ucs4 == ucs4) {  // the same code point
-      output->append(begin, mblen);
+      iter.GetUtf8().AppendToString(output);
     } else {
       Util::UCS4ToUTF8Append(new_ucs4, output);
     }
-    begin += mblen;
   }
 }
 
 }  // namespace
 
-void TextNormalizer::NormalizePreeditText(const string &input,
-                                          string *output) {
+void TextNormalizer::NormalizePreeditText(StringPiece input, string *output) {
   string tmp;
   // This is a workaround for hiragana v'
   //  Util::StringReplace(input, "ゔ", "ヴ", true, &tmp);
   Util::StringReplace(input, "\xE3\x82\x94", "\xE3\x83\xB4", true, &tmp);
-
   ConvertVenderSpecificString(tmp, output);
 }
 
-void TextNormalizer::NormalizeTransliterationText(const string &input,
+void TextNormalizer::NormalizeTransliterationText(StringPiece input,
                                                   string *output) {
   // Do the same thing with NormalizePreeditText at this morment.
   NormalizePreeditText(input, output);
 }
 
-void TextNormalizer::NormalizeConversionText(const string &input,
+void TextNormalizer::NormalizeConversionText(StringPiece input,
                                              string *output) {
   ConvertVenderSpecificString(input, output);
 }
 
-void TextNormalizer::NormalizeCandidateText(const string &input,
-                                            string *output) {
+void TextNormalizer::NormalizeCandidateText(StringPiece input, string *output) {
   ConvertVenderSpecificString(input, output);
 }
-
 
 }  // namespace mozc

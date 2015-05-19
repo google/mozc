@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,12 @@
 
 namespace mozc {
 namespace usage_stats {
+// We cannot use Stats::TouchEventStats because C++ does not allow
+// forward declaration of a nested-type.
+class Stats;
+class Stats_TouchEventStats;
 
+typedef map<uint32, Stats_TouchEventStats> TouchEventStatsMap;
 
 class UsageStats {
  public:
@@ -50,12 +55,7 @@ class UsageStats {
 
   // Updates timing value
   // Updates current value using given val
-  // input 'values' vector consists of each timing values.
-  //  for example, [3, 4, 2]
-  static void UpdateTimingBy(const string &name, const vector<uint32> &values);
-  static void UpdateTiming(const string &name, uint32 val) {
-    UpdateTimingBy(name, vector<uint32>(1, val));
-  }
+  static void UpdateTiming(const string &name, uint32 val);
 
   // Sets integer value
   // Replaces old value with val
@@ -69,12 +69,42 @@ class UsageStats {
   // (for debugging)
   static bool IsListed(const string &name);
 
+  // Stores virtual keyboard touch event stats.
+  // The map "touch_stats" structure is as following
+  //   (keyboard_name_01 : (source_id_1 : TouchEventStats,
+  //                        source_id_2 : TouchEventStats,
+  //                        source_id_3 : TouchEventStats),
+  //    keyboard_name_02 : (source_id_1 : TouchEventStats,
+  //                        source_id_2 : TouchEventStats,
+  //                        source_id_3 : TouchEventStats))
+  static void StoreTouchEventStats(
+      const string &name, const map<string, TouchEventStatsMap> &touch_stats);
 
-  // Sync usage data into disk
-  static void Sync();
+  // Synchronizes (writes) usage data into disk. Returns false on failure.
+  static bool Sync();
 
-  // Clears existing data.
+  // Clears existing data exept for Integer and Boolean stats.
   static void ClearStats();
+
+  // Clears all data.
+  static void ClearAllStatsForTest();
+
+  // NOTE: These methods are for unit tests.
+  // Reads a value from registry, and sets it in the value.
+  // Returns true if all steps go successfully.
+  // NULL pointers are accetable for the target arguments of GetTimingForTest().
+  static bool GetCountForTest(const string &name, uint32 *value);
+  static bool GetIntegerForTest(const string &name, int32 *value);
+  static bool GetBooleanForTest(const string &name, bool *value);
+  static bool GetTimingForTest(const string &name,
+                               uint64 *total_time,
+                               uint32 *num_timings,
+                               uint32 *avg_time,
+                               uint32 *min_time,
+                               uint32 *max_time);
+  static bool GetVirtualKeyboardForTest(const string &name, Stats *stats);
+  // This method doesn't check type of the stats.
+  static bool GetStatsForTest(const string &name, Stats *stats);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(UsageStats);

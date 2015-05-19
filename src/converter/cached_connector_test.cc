@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include "base/base.h"
-#include "base/thread.h"
 #include "converter/cached_connector.h"
+
+#include <string>
+#include <vector>
+#include "base/base.h"
+#include "base/scoped_ptr.h"
+#include "base/thread.h"
 #include "converter/connector_interface.h"
-#include "converter/sparse_connector.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -57,11 +59,7 @@ class TestConnector : public ConnectorInterface {
   int offset_;
 };
 
-// Use Thread Local Storage for Cache of the Connector.
 const int kCacheSize = 256;
-TLS_KEYWORD bool g_test_cache_initialized = false;
-TLS_KEYWORD int  g_test_cache_key[kCacheSize];
-TLS_KEYWORD int  g_test_cache_value[kCacheSize];
 
 class CachedConnectorThread : public Thread {
  public:
@@ -70,11 +68,7 @@ class CachedConnectorThread : public Thread {
   void Run() {
     // Create the connector in the new thread
     test_.reset(new TestConnector(offset_));
-    cached_.reset(new CachedConnector(test_.get(),
-                                      &g_test_cache_initialized,
-                                      g_test_cache_key,
-                                      g_test_cache_value,
-                                      kCacheSize));
+    cached_.reset(new CachedConnector(test_.get(), kCacheSize));
     // Clear Cache just in case.
     cached_->ClearCache();
 
@@ -104,11 +98,7 @@ class CachedConnectorThread : public Thread {
 
 class CachedConnectorTest : public testing::Test {
  protected:
-  CachedConnectorTest() : test_(0), cached_(&test_,
-                                            &g_test_cache_initialized,
-                                            g_test_cache_key,
-                                            g_test_cache_value,
-                                            kCacheSize) {}
+  CachedConnectorTest() : test_(0), cached_(&test_, kCacheSize) {}
 
   void SetUp() {
     // Clear the cache on this thread.  b/5119167.
@@ -126,8 +116,7 @@ class CachedConnectorTest : public testing::Test {
 
 TEST_F(CachedConnectorTest, CacheTest) {
   TestConnector test(0);
-  CachedConnector cached(&test, &g_test_cache_initialized,
-                         g_test_cache_key, g_test_cache_value, kCacheSize);
+  CachedConnector cached(&test, kCacheSize);
   for (int trial = 0; trial < 100; ++trial) {
     for (int i = 0; i < 100; ++i) {
       for (int j = 0; j < 100; ++j) {
@@ -139,7 +128,7 @@ TEST_F(CachedConnectorTest, CacheTest) {
 }
 
 TEST_F(CachedConnectorTest, CacheTestWithThread) {
-#ifdef HAVE_TLS
+  // Currently each connector has its own cache. So it must be thread safe.
   const int kSize = 10;
   vector<CachedConnectorThread *> threads;
   for (int i = 0; i < kSize; ++i) {
@@ -157,7 +146,6 @@ TEST_F(CachedConnectorTest, CacheTestWithThread) {
   for (int i = 0; i < kSize; ++i) {
     delete threads[i];
   }
-#endif
 }
 
 }  // namespace converter

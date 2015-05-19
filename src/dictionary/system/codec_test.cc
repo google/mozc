@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -317,22 +317,24 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
   const string GetSectionNameForValue() const { return "Mock"; }
   const string GetSectionNameForTokens() const { return "Mock"; }
   const string GetSectionNameForPos() const { return "Mock"; }
-  void EncodeKey(const string &src, string *dst) const {}
-  void DecodeKey(const string &src, string *dst) const {}
-  void EncodeValue(const string &src, string *dst) const {}
-  void DecodeValue(const string &src, string *dst) const {}
-  void EncodeTokens(
+  virtual void EncodeKey(const StringPiece src, string *dst) const {}
+  virtual void DecodeKey(const StringPiece src, string *dst) const {}
+  virtual size_t GetEncodedKeyLength(const StringPiece src) const { return 0; }
+  virtual size_t GetDecodedKeyLength(const StringPiece src) const { return 0; }
+  virtual void EncodeValue(const StringPiece src, string *dst) const {}
+  virtual void DecodeValue(const StringPiece src, string *dst) const {}
+  virtual void EncodeTokens(
       const vector<TokenInfo> &tokens, string *output) const {}
-  void DecodeTokens(
+  virtual void DecodeTokens(
       const uint8 *ptr, vector<TokenInfo> *tokens) const {}
-  bool DecodeToken(
+  virtual bool DecodeToken(
       const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const {
     *read_bytes = 0;
     return false;
   }
-  bool ReadTokenForReverseLookup(
+  virtual bool ReadTokenForReverseLookup(
       const uint8 *ptr, int *value_id, int *read_bytes) const { return false; }
-  uint8 GetTokensTerminationFlag() const { return 0xff; }
+  virtual uint8 GetTokensTerminationFlag() const { return 0xff; }
 };
 
 TEST_F(SystemDictionaryCodecTest, FactoryTest) {
@@ -351,9 +353,11 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecKanaTest) {
   codec->EncodeKey(original, &encoded);
   // hiragana should be encoded in 1 byte
   EXPECT_EQ(2, encoded.size());
+  EXPECT_EQ(encoded.size(), codec->GetEncodedKeyLength(original));
   string decoded;
   codec->DecodeKey(encoded, &decoded);
   EXPECT_EQ(original, decoded);
+  EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
 }
 
 
@@ -365,9 +369,11 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
   codec->EncodeKey(original, &encoded);
   // middle dot and prolonged sound should be encoded in 1 byte
   EXPECT_EQ(2, encoded.size());
+  EXPECT_EQ(encoded.size(), codec->GetEncodedKeyLength(original));
   string decoded;
   codec->DecodeKey(encoded, &decoded);
   EXPECT_EQ(original, decoded);
+  EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
@@ -802,9 +808,11 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
     }
     string encoded;
     codec->EncodeKey(original, &encoded);
+    EXPECT_EQ(encoded.size(), codec->GetEncodedKeyLength(original));
     string decoded;
     codec->DecodeKey(encoded, &decoded);
     EXPECT_EQ(original, decoded);
+    EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
   }
 }
 

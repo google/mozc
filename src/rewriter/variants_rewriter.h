@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ namespace mozc {
 class ConversionRequest;
 class POSMatcher;
 
-class VariantsRewriter : public RewriterInterface  {
+class VariantsRewriter : public RewriterInterface {
  public:
   // Annotation constants.
   static const char *kHiragana;
@@ -51,10 +51,11 @@ class VariantsRewriter : public RewriterInterface  {
   static const char *kHalfWidth;
   static const char *kPlatformDependent;
   static const char *kDidYouMean;
+  static const char *kYenKigou;
 
   explicit VariantsRewriter(const POSMatcher *pos_matcher);
   virtual ~VariantsRewriter();
-  virtual int capability() const;
+  virtual int capability(const ConversionRequest &request) const;
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
   virtual void Finish(Segments *segments);

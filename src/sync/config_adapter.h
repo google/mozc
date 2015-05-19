@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,12 +52,6 @@ class ConfigAdapter : public AdapterInterface {
   virtual bool Clear();
   virtual ime_sync::Component component_id() const;
 
-  // Set the base name for downloaded/uploaded config files.  This
-  // should be used to store uploaded/downloaded data into a real
-  // filesystem even if config itself is stored onmemory (memory://)
-  // like ChromeOS.
-  void SetConfigFileNameBase(const string &filename);
-
  private:
   // Calling SetConfigFileName() during SetUp()
   friend class ConfigAdapterTest;
@@ -88,21 +82,11 @@ class ConfigAdapter : public AdapterInterface {
   bool LoadConfigFromFile(
       const string &filename, mozc::config::Config *config);
 
-  // Returns the base name for downloaded/uploaded config files.  Default
-  // is the config file name.
-  string GetConfigFileNameBase() const;
-
   // Returns the last downloaded config file name.
   string GetLastDownloadedConfigFileName() const;
 
   // Returns the last uploaded config file name.
   string GetLastUploadedConfigFileName() const;
-
-  // Returns a file name to achieve atomic update of last
-  // downloaded/uploaded config files.
-  string GetTempConfigFileName() const;
-
-  string config_filename_;
 };
 
 }  // namespace mozc::sync

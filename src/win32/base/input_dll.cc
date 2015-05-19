@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,18 @@
 #include "win32/base/input_dll.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "base/win_util.h"
 
 namespace mozc {
 namespace win32 {
+
 const wchar_t kInputDllName[] = L"input.dll";
 
 const char kEnumEnabledLayoutOrTipName[]    = "EnumEnabledLayoutOrTip";
 const char kEnumLayoutOrTipForSetup[]       = "EnumLayoutOrTipForSetup";
+const char kInstallLayoutOrTipName[] = "InstallLayoutOrTip";
 const char kInstallLayoutOrTipUserRegName[] = "InstallLayoutOrTipUserReg";
 const char kSetDefaultLayoutOrTipName[]     = "SetDefaultLayoutOrTip";
 
@@ -48,7 +51,7 @@ bool InputDll::EnsureInitialized() {
     return false;
   }
 
-  if (module_ != NULL) {
+  if (module_ != nullptr) {
     // Already initialized.
     return true;
   }
@@ -65,7 +68,7 @@ bool InputDll::EnsureInitialized() {
   }
 
   const HMODULE input_dll = WinUtil::LoadSystemLibrary(kInputDllName);
-  if (input_dll == NULL) {
+  if (input_dll == nullptr) {
     const int last_error = ::GetLastError();
     DLOG(INFO) << "LoadSystemLibrary(\"" << kInputDllName << "\") failed. "
                << "error = " << last_error;
@@ -83,6 +86,10 @@ bool InputDll::EnsureInitialized() {
       reinterpret_cast<FPEnumLayoutOrTipForSetup>(
         ::GetProcAddress(input_dll, kEnumLayoutOrTipForSetup));
 
+  install_layout_or_tip_ =
+      reinterpret_cast<FPInstallLayoutOrTip>(
+        ::GetProcAddress(input_dll, kInstallLayoutOrTipName));
+
   install_layout_or_tip_user_reg_ =
       reinterpret_cast<FPInstallLayoutOrTipUserReg>(
         ::GetProcAddress(input_dll, kInstallLayoutOrTipUserRegName));
@@ -95,8 +102,8 @@ bool InputDll::EnsureInitialized() {
   // Check if this thread is the first thread which updated the |module_|.
   const HMODULE original = static_cast<HMODULE>(
     ::InterlockedCompareExchangePointer(
-          reinterpret_cast<volatile PVOID *>(&module_), input_dll, NULL));
-  if (original == NULL) {
+          reinterpret_cast<volatile PVOID *>(&module_), input_dll, nullptr));
+  if (original == nullptr) {
     // This is the first thread which updated the |module_| with valid handle.
     // Do not call FreeLibrary to keep the reference count positive.
   } else {
@@ -116,6 +123,10 @@ InputDll::FPEnumLayoutOrTipForSetup InputDll::enum_layout_or_tip_for_setup() {
   return enum_layout_or_tip_for_setup_;
 }
 
+InputDll::FPInstallLayoutOrTip InputDll::install_layout_or_tip() {
+  return install_layout_or_tip_;
+}
+
 InputDll::FPInstallLayoutOrTipUserReg
     InputDll::install_layout_or_tip_user_reg() {
   return install_layout_or_tip_user_reg_;
@@ -129,10 +140,11 @@ bool InputDll::not_found_;
 
 volatile HMODULE InputDll::module_;
 InputDll::FPEnumEnabledLayoutOrTip InputDll::enum_enabled_layout_or_tip_;
-InputDll::FPEnumLayoutOrTipForSetup
-    InputDll::enum_layout_or_tip_for_setup_;
+InputDll::FPEnumLayoutOrTipForSetup InputDll::enum_layout_or_tip_for_setup_;
+InputDll::FPInstallLayoutOrTip InputDll::install_layout_or_tip_;
 InputDll::FPInstallLayoutOrTipUserReg
     InputDll::install_layout_or_tip_user_reg_;
 InputDll::FPSetDefaultLayoutOrTip InputDll::set_default_layout_or_tip_;
+
 }  // namespace win32
 }  // namespace mozc

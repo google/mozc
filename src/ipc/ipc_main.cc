@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,9 @@
 #include <vector>
 #include <string>
 #include <iostream>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/thread.h"
 #include "ipc/ipc.h"
 
@@ -87,7 +89,8 @@ class EchoServerThread: public Thread {
  private:
   EchoServer *con_;
 };
-}
+
+}  // namespace mozc
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);

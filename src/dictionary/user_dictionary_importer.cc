@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,12 @@
 
 #include "dictionary/user_dictionary_importer.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #ifdef HAS_MSIME_HEADER
 #indlude <msime.h>
 #endif  // HAS_MSIME_HEADER
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <algorithm>
 #include <map>
@@ -58,7 +58,12 @@ using user_dictionary::UserDictionaryCommandStatus;
 namespace {
 uint64 EntryFingerprint(const UserDictionary::Entry &entry) {
   DCHECK_LE(0, entry.pos());
+MOZC_CLANG_PUSH_WARNING();
+#if MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
+MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
+#endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
   DCHECK_LE(entry.pos(), 255);
+MOZC_CLANG_POP_WARNING();
   return Util::Fingerprint(entry.key() + "\t" +
                            entry.value() + "\t" +
                            static_cast<char>(entry.pos()));
@@ -167,7 +172,7 @@ bool ConvertEntryInternal(
 }
 }  // namespace
 
-#if defined(OS_WINDOWS) && defined(HAS_MSIME_HEADER)
+#if defined(OS_WIN) && defined(HAS_MSIME_HEADER)
 namespace {
 typedef BOOL (WINAPI *FPCreateIFEDictionaryInstance)(VOID **);
 
@@ -388,15 +393,15 @@ class MSIMEImportIterator
   ULONG index_;
 };
 }  // namespace
-#endif  // OS_WINDOWS && HAS_MSIME_HEADER
+#endif  // OS_WIN && HAS_MSIME_HEADER
 
 UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromMSIME(
     UserDictionary *user_dic) {
   DCHECK(user_dic);
-#if defined(OS_WINDOWS) && defined(HAS_MSIME_HEADER)
+#if defined(OS_WIN) && defined(HAS_MSIME_HEADER)
   MSIMEImportIterator iter;
   return ImportFromIterator(&iter, user_dic);
-#endif  // OS_WINDOWS && HAS_MSIME_HEADER
+#endif  // OS_WIN && HAS_MSIME_HEADER
   return UserDictionaryImporter::IMPORT_NOT_SUPPORTED;
 }
 
@@ -476,11 +481,11 @@ UserDictionaryImporter::IStreamTextLineIterator::IStreamTextLineIterator(
 UserDictionaryImporter::IStreamTextLineIterator::~IStreamTextLineIterator() {}
 
 bool UserDictionaryImporter::IStreamTextLineIterator::IsAvailable() const {
-  return *is_;
+  return is_->good();
 }
 
 bool UserDictionaryImporter::IStreamTextLineIterator::Next(string *line) {
-  return getline(*is_, *line);
+  return !getline(*is_, *line).fail();
 }
 
 void UserDictionaryImporter::IStreamTextLineIterator::Reset() {
@@ -505,14 +510,14 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(string *line) {
 
   for (int i = position_; i < data_.length(); ++i) {
     if (data_[i] == '\n' || data_[i] == '\r') {
-      *line = data_.substr(position_, i - position_);
+      line->assign(data_, position_, i - position_);
       // Handles CR/LF issue.
       position_ = data_.compare(i, 2, "\r\n", 2) == 0 ? (i + 2) : (i + 1);
       return true;
     }
   }
 
-  *line = data_.substr(position_);
+  line->assign(data_, position_, data_.size() - position_);
   position_ = data_.length();
   return true;
 }
@@ -647,7 +652,7 @@ UserDictionaryImporter::GuessIMEType(const string &line) {
   // Old ATOK format (!!DICUT10) is not supported for now
   // http://b/2455897
   if (lower.find("!!dicut") == 0 && lower.size() > 7) {
-    const string version = lower.substr(7, lower.size() - 7);
+    const string version(lower, 7, lower.size() - 7);
     if (NumberUtil::SimpleAtoi(version) >= 11) {
       return UserDictionaryImporter::ATOK;
     } else {

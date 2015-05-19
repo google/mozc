@@ -1,4 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
 <ui version="4.0">
  <class>ConfigDialog</class>
  <widget class="QDialog" name="ConfigDialog">
@@ -29,7 +59,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Mozc settings</string>
+   <string>Mozc Settings</string>
   </property>
   <widget class="QWidget" name="centralwidget" native="true">
    <property name="geometry">
@@ -371,72 +401,79 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>230</y>
-        <width>441</width>
-        <height>111</height>
+        <y>220</y>
+        <width>456</width>
+        <height>121</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <widget class="QCheckBox" name="singleKanjiDictionaryCheckBox">
+        <widget class="QCheckBox" name="singleKanjiConversionCheckBox">
          <property name="text">
-          <string>Single kanji dictionary</string>
+          <string>Single kanji conversion</string>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QCheckBox" name="symbolDictionaryCheckBox">
+        <widget class="QCheckBox" name="symbolConversionCheckBox">
          <property name="text">
-          <string>Symbol dictionary</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QCheckBox" name="dateConversionCheckBox">
-         <property name="text">
-          <string>Date/time conversion</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QCheckBox" name="numberConversionCheckBox">
-         <property name="text">
-          <string>Special number conversion</string>
+          <string>Symbol conversion</string>
          </property>
         </widget>
        </item>
        <item row="2" column="0">
-        <widget class="QCheckBox" name="emoticonDictionaryCheckBox">
+        <widget class="QCheckBox" name="emoticonConversionCheckBox">
          <property name="text">
-          <string>Emoticon dictionary</string>
+          <string>Emoticon conversion</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
-        <widget class="QCheckBox" name="calculatorCheckBox">
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="t13nConversionCheckBox">
          <property name="text">
-          <string>Calculator</string>
+          <string>Katakana to English conversion</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="zipcodeConversionCheckBox">
+         <property name="text">
+          <string>Zip code conversion</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
         <widget class="QCheckBox" name="spellingCorrectionCheckBox">
          <property name="text">
           <string>Spelling correction</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
-        <widget class="QCheckBox" name="t13nDictionaryCheckBox">
+       <item row="3" column="1">
+        <widget class="QCheckBox" name="calculatorCheckBox">
          <property name="text">
-          <string>Katakana to English dictionary</string>
+          <string>Calculator</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QCheckBox" name="zipcodeDictionaryCheckBox">
+       <item row="2" column="1">
+        <widget class="QCheckBox" name="numberConversionCheckBox">
          <property name="text">
-          <string>Zip code dictionary</string>
+          <string>Special number conversion</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QCheckBox" name="dateConversionCheckBox">
+         <property name="text">
+          <string>Date/time conversion</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QCheckBox" name="emojiConversionCheckBox">
+         <property name="text">
+          <string>Emoji conversion</string>
          </property>
         </widget>
        </item>
@@ -461,38 +498,6 @@
        </item>
        <item>
         <widget class="Line" name="line">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_6">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>210</y>
-        <width>201</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_9">
-       <item>
-        <widget class="QLabel" name="additionalDictionariesLabel">
-         <property name="text">
-          <string>Additional dictionaries</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="Line" name="additionalDictionariesLine">
          <property name="sizePolicy">
           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -541,9 +546,9 @@
      <widget class="QWidget" name="horizontalLayoutWidget_7">
       <property name="geometry">
        <rect>
-        <x>240</x>
-        <y>210</y>
-        <width>241</width>
+        <x>20</x>
+        <y>200</y>
+        <width>461</width>
         <height>21</height>
        </rect>
       </property>
@@ -574,7 +579,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>160</y>
+        <y>150</y>
         <width>461</width>
         <height>20</height>
        </rect>
@@ -606,7 +611,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>180</y>
+        <y>170</y>
         <width>441</width>
         <height>32</height>
        </rect>
@@ -733,7 +738,7 @@
         <x>30</x>
         <y>40</y>
         <width>441</width>
-        <height>111</height>
+        <height>113</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_9">
@@ -1277,7 +1282,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>100</y>
+        <y>110</y>
         <width>441</width>
         <height>32</height>
        </rect>
@@ -1328,7 +1333,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>80</y>
+        <y>90</y>
         <width>401</width>
         <height>20</height>
        </rect>
@@ -1372,7 +1377,7 @@
         <x>29</x>
         <y>40</y>
         <width>441</width>
-        <height>31</height>
+        <height>41</height>
        </rect>
       </property>
       <property name="text">
@@ -1497,7 +1502,7 @@
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_5">
              <property name="spacing">
-              <number>-1</number>
+              <number>6</number>
              </property>
              <property name="margin">
               <number>0</number>
@@ -1606,7 +1611,7 @@
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
              <property name="spacing">
-              <number>-1</number>
+              <number>6</number>
              </property>
              <property name="margin">
               <number>0</number>
@@ -1968,7 +1973,7 @@
         </sizepolicy>
        </property>
        <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+        <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
        </property>
       </widget>
      </item>
@@ -2001,11 +2006,12 @@
   <tabstop>localUsageDictionaryCheckBox</tabstop>
   <tabstop>webUsageDictionaryCheckBox</tabstop>
   <tabstop>editWebServiceEntryButton</tabstop>
-  <tabstop>singleKanjiDictionaryCheckBox</tabstop>
-  <tabstop>symbolDictionaryCheckBox</tabstop>
-  <tabstop>emoticonDictionaryCheckBox</tabstop>
-  <tabstop>t13nDictionaryCheckBox</tabstop>
-  <tabstop>zipcodeDictionaryCheckBox</tabstop>
+  <tabstop>singleKanjiConversionCheckBox</tabstop>
+  <tabstop>symbolConversionCheckBox</tabstop>
+  <tabstop>emoticonConversionCheckBox</tabstop>
+  <tabstop>t13nConversionCheckBox</tabstop>
+  <tabstop>zipcodeConversionCheckBox</tabstop>
+  <tabstop>emojiConversionCheckBox</tabstop>
   <tabstop>dateConversionCheckBox</tabstop>
   <tabstop>numberConversionCheckBox</tabstop>
   <tabstop>calculatorCheckBox</tabstop>

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@
 
 #include "base/singleton.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include "base/base.h"
 #include "base/mutex.h"
@@ -54,7 +54,7 @@ SingletonFinalizer::FinalizerFunc g_finalizers[kMaxFinalizersSize];
 // is not good but better than an inifinite loop.
 void ExitWithError() {
   // This logic is copied from logging.h
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ::RaiseException(::GetLastError(),
                    EXCEPTION_NONCONTINUABLE,
                    NULL, NULL);

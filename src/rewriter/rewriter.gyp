@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
       'sources': [
         '<(gen_out_dir)/embedded_collocation_data.h',
         '<(gen_out_dir)/embedded_collocation_suppression_data.h',
+        '<(gen_out_dir)/emoji_rewriter_data.h',
         '<(gen_out_dir)/emoticon_rewriter_data.h',
         '<(gen_out_dir)/reading_correction_data.h',
         '<(gen_out_dir)/single_kanji_rewriter_data.h',
@@ -53,6 +54,7 @@
         'dice_rewriter.cc',
         'dictionary_generator.cc',
         'embedded_dictionary.cc',
+        'emoji_rewriter.cc',
         'emoticon_rewriter.cc',
         'english_variants_rewriter.cc',
         'focus_candidate_rewriter.cc',
@@ -80,13 +82,14 @@
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../converter/converter_base.gyp:conversion_request',
         '../converter/converter_base.gyp:immutable_converter',
         '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../session/session_base.gyp:session_protocol',
         '../storage/storage.gyp:storage',
-        '../usage_stats/usage_stats.gyp:usage_stats',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files#host',
       ],
@@ -95,17 +98,6 @@
           'sources!': [
             '<(gen_out_dir)/usage_rewriter_data.h',
             'usage_rewriter.cc',
-          ],
-        }, {  # else
-          'defines': [
-            'USE_USAGE_REWRITER',
-          ],
-        }],
-        ['target_platform=="NaCl" and _toolset=="target"', {
-          'sources!': [
-            'user_boundary_history_rewriter.cc',
-            'user_dictionary_rewriter.cc',
-            'user_segment_history_rewriter.cc',
           ],
         }],
       ]

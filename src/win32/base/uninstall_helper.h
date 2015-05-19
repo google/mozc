@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,12 @@ class UninstallHelper {
   static bool EnsureIMEIsRemovedForCurrentUser(
       bool disable_hkcu_cache);
 
+  // Returns true if installed the list of keyboard layout and TIP is
+  // retrieved in successful.
+  static bool GetInstalledProfilesByLanguage(
+      LANGID langid,
+      vector<LayoutProfileInfo> *installed_profiles);
+
  private:
   // This function is the main part of RestoreUserIMEEnvironmentMain for
   // Windows XP.
@@ -107,12 +113,6 @@ class UninstallHelper {
       LayoutProfileInfo *current_default,
       LayoutProfileInfo *new_default,
       vector<LayoutProfileInfo> *removed_profiles);
-
-  // Returns true if installed the list of keyboard layout and TIP is
-  // retrieved in successful.
-  static bool GetInstalledProfilesByLanguage(
-      LANGID langid,
-      vector<LayoutProfileInfo> *installed_profiles);
 
   // Returns true if the list of keyboard layout in 'Preload' key under HKCU
   // and 'Keyboard Layouts' key under HKLM are retrieved in successful.
@@ -154,6 +154,7 @@ class UninstallHelper {
 
   FRIEND_TEST(UninstallHelperTest, Issue_2950946);
   FRIEND_TEST(UninstallHelperTest, BasicCaseForVista);
+  FRIEND_TEST(UninstallHelperTest, BasicCaseForWin8);
   FRIEND_TEST(UninstallHelperTest, LoadKeyboardProfilesTest);
   FRIEND_TEST(UninstallHelperTest, ComposeProfileStringForVistaTest);
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,8 +64,8 @@ CompositionChangeAttributes::CompositionChangeAttributes()
       result_string(false),
       insert_char(false),
       move_caret(false),
-      original_flags(NULL),
-      remaining_flags(NULL) {}
+      original_flags(0),
+      remaining_flags(0) {}
 
 CompositionChangeAttributes::CompositionChangeAttributes(LPARAM lParam)
     : composition_attribute(BitwiseTest<GCS_COMPATTR>(lParam)),
@@ -114,8 +114,8 @@ ShowUIAttributes::ShowUIAttributes()
       candidate_window1(false),
       candidate_window2(false),
       candidate_window3(false),
-      original_flags(NULL),
-      remaining_flags(NULL) {}
+      original_flags(0),
+      remaining_flags(0) {}
 
 ShowUIAttributes::ShowUIAttributes(LPARAM lParam)
     : composition_window(BitwiseTest<ISC_SHOWUICOMPOSITIONWINDOW>(lParam)),
@@ -152,8 +152,8 @@ LPARAM ShowUIAttributes::GetRemainingBits(WPARAM lParam) {
 
 UIMessage::UIMessage()
     : message_(0),
-      lparam_(NULL),
-      wparam_(NULL) {}
+      lparam_(0),
+      wparam_(0) {}
 
 UIMessage::UIMessage(UINT message, WPARAM wparam, LPARAM lparam)
     : message_(message),

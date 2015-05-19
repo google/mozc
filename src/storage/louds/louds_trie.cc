@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -96,6 +96,69 @@ void LoudsTrie::Close() {
 
 namespace {
 
+// Implementation of exact search.
+class ExactSearcher {
+ public:
+  ExactSearcher(const Louds *trie,
+                const SimpleSuccinctBitVectorIndex *terminal_bit_vector,
+                const char *edge_character)
+      : trie_(trie),
+        terminal_bit_vector_(terminal_bit_vector),
+        edge_character_(edge_character) {
+  }
+
+  // Returns the ID of |key| if it's in the trie.  Returns -1 if it doesn't
+  // exist.
+  int Search(const StringPiece key) const {
+    int node_id = 1;  // Node id of the root node.
+    int bit_index = 2;  // Bit index of the root node.
+    for (StringPiece::const_iterator key_iter = key.begin();
+         key_iter != key.end(); ++key_iter) {
+      node_id = trie_->GetChildNodeId(bit_index);  // First child node
+      while (true) {
+        if (!trie_->IsEdgeBit(bit_index)) {
+          // No more edge at this node, meaning that key doesn't exist in this
+          // trie.
+          return -1;
+        }
+        if (edge_character_[node_id - 1] == *key_iter) {
+          // Found the key character currently searching for. Continue the
+          // search for the next key character by setting |bit_index| to the
+          // first edge of the current node.
+          bit_index = trie_->GetFirstEdgeBitIndex(node_id);
+          break;
+        }
+        // Search the next child. Because of the louds representation, all the
+        // child bits are consecutive (as all bits are output by BFS order).  So
+        // we can move to the next child by simply incrementing node id and bit
+        // index.
+        ++node_id;
+        ++bit_index;
+      }
+    }
+    // Found a node corresponding to |key|. If this node is terminal, return the
+    // index corresponding to this key.
+    return terminal_bit_vector_->Get(node_id - 1) ?
+        terminal_bit_vector_->Rank1(node_id - 1) : -1;
+  }
+
+ private:
+  const Louds *trie_;
+  const SimpleSuccinctBitVectorIndex *terminal_bit_vector_;
+  const char *edge_character_;
+
+  DISALLOW_COPY_AND_ASSIGN(ExactSearcher);
+};
+
+}  // namespace
+
+int LoudsTrie::ExactSearch(const StringPiece key) const {
+  ExactSearcher searcher(&trie_, &terminal_bit_vector_, edge_character_);
+  return searcher.Search(key);
+}
+
+namespace {
+
 // This class is the implementation of prefix search.
 class PrefixSearcher {
  public:
@@ -132,26 +195,35 @@ class PrefixSearcher {
         key_expansion_table_->ExpandKey(key_char);
     do {
       const char character = edge_character_[child_node_id - 1];
-      if (expanded_key.IsHit(character)) {
-        buffer_[key_index] = character;
-        // Hit the annotated character to the key char.
-        if (terminal_bit_vector_->Get(child_node_id - 1)) {
-          // The child node is terminal, so invoke the callback.
-          if (callback_->Run(buffer_, key_index + 1,
-                             terminal_bit_vector_->Rank1(child_node_id - 1))) {
-            // Terminate the search if callback returns true.
+      do {
+        if (expanded_key.IsHit(character)) {
+          buffer_[key_index] = character;
+          // Hit the annotated character to the key char.
+          if (terminal_bit_vector_->Get(child_node_id - 1)) {
+            // The child node is terminal, so invoke the callback.
+            LoudsTrie::Callback::ResultType callback_result =
+                callback_->Run(buffer_, key_index + 1,
+                               terminal_bit_vector_->Rank1(child_node_id - 1));
+            if (callback_result != LoudsTrie::Callback::SEARCH_CONTINUE) {
+              if (callback_result == LoudsTrie::Callback::SEARCH_DONE) {
+                return true;
+              }
+              DCHECK_EQ(callback_result, LoudsTrie::Callback::SEARCH_CULL);
+              // If the callback returns "culling", we do not search
+              // the child, but continue to search the sibling edges.
+              break;
+            }
+          }
+
+          // Search to the next child.
+          // Note: we use recursive callback, instead of the just simple loop
+          // here, in order to support key-expansion (in future).
+          const int child_index = trie_->GetFirstEdgeBitIndex(child_node_id);
+          if (Search(key_index + 1, child_index)) {
             return true;
           }
         }
-
-        // Search to the next child.
-        // Note: we use recursive callback, instead of the just simple loop
-        // here, in order to support key-expansion (in future).
-        const int child_index = trie_->GetFirstEdgeBitIndex(child_node_id);
-        if (Search(key_index + 1, child_index)) {
-          return true;
-        }
-      }
+      } while (false);
 
       // Note: Because of the representation of LOUDS, the child node id is
       // consecutive. So we don't need to invoke GetChildNodeId.
@@ -205,11 +277,11 @@ class PredictiveSearcher {
   }
 
   // Returns true if we shouldn't continue to search any more.
-  bool Search(size_t key_index, size_t bit_index) {
+  bool Search(size_t key_index, int node_id, size_t bit_index) {
     const char key_char = key_[key_index];
     if (key_char == '\0') {
       // Hit the end of the key. Start traverse.
-      return Traverse(key_index, bit_index);
+      return Traverse(key_index, node_id, &bit_index);
     }
 
     if (!trie_->IsEdgeBit(bit_index)) {
@@ -226,7 +298,7 @@ class PredictiveSearcher {
       if (expanded_key.IsHit(character)) {
         buffer_[key_index] = character;
         const int child_index = trie_->GetFirstEdgeBitIndex(child_node_id);
-        if (Search(key_index + 1, child_index)) {
+        if (Search(key_index + 1, child_node_id, child_index)) {
           return true;
         }
       }
@@ -250,34 +322,53 @@ class PredictiveSearcher {
   char buffer_[LoudsTrie::kMaxDepth + 1];
   LoudsTrie::Callback *callback_;
 
-  bool Traverse(size_t key_index, size_t bit_index) {
-    const int node_id = trie_->GetParentNodeId(bit_index);
+  // Returns true if the caller should NOT continue the traversing.
+  // *bit_index should store the current bit index for the traversing.
+  // After the invocation of Traverse is done;
+  //   *bit_index is the last traversed bit index if Traverse returns false, or
+  //   undefined if Traverse returns true.
+  bool Traverse(size_t key_index, int node_id, size_t *bit_index) {
     if (terminal_bit_vector_->Get(node_id - 1)) {
       // Invoke callback, if the node is terminal.
-      if (callback_->Run(buffer_, key_index,
-                         terminal_bit_vector_->Rank1(node_id - 1))) {
-        return true;
+      LoudsTrie::Callback::ResultType callback_result = callback_->Run(
+              buffer_, key_index, terminal_bit_vector_->Rank1(node_id - 1));
+      if (callback_result != LoudsTrie::Callback::SEARCH_CONTINUE) {
+        if (callback_result == LoudsTrie::Callback::SEARCH_DONE) {
+          return true;
+        }
+
+        // Move the bit_index to the end of this node.
+        // Note that we may be able to make this operation faster by checking
+        // non-zero bits.
+        while (trie_->IsEdgeBit(*bit_index)) {
+          ++*bit_index;
+        }
+        return false;
       }
     }
 
-    if (!trie_->IsEdgeBit(bit_index)) {
+    if (!trie_->IsEdgeBit(*bit_index)) {
       return false;
     }
 
     // Then traverse the children.
-    int child_node_id = Louds::GetChildNodeId(node_id, bit_index);
+    int child_node_id = Louds::GetChildNodeId(node_id, *bit_index);
+
+    // Because of the louds representation, all the child bits should be
+    // consecutive (as all bits are output by BFS order).
+    // So, we can skip the consecutive child bit index searching.
+    // Note: we probably can do this more efficiently, by caching the last
+    // bit index for each level.
+    size_t child_bit_index = trie_->GetFirstEdgeBitIndex(child_node_id);
     do {
       buffer_[key_index] = edge_character_[child_node_id - 1];
-      // TODO(hidehiko): We can remove GetFirstEdgeBitIndex by using the result
-      // of previous Traverse internal calculation.
-      // Check the performance and implement it if it's effective.
-      if (Traverse(
-              key_index + 1, trie_->GetFirstEdgeBitIndex(child_node_id))) {
+      if (Traverse(key_index + 1, child_node_id, &child_bit_index)) {
         return true;
       }
-      ++bit_index;
+      ++*bit_index;
+      ++child_bit_index;
       ++child_node_id;
-    } while (trie_->IsEdgeBit(bit_index));
+    } while (trie_->IsEdgeBit(*bit_index));
 
     return false;
   }
@@ -293,7 +384,7 @@ void LoudsTrie::PredictiveSearchWithKeyExpansion(
       &trie_, &terminal_bit_vector_, edge_character_, &key_expansion_table,
       key, callback);
 
-  searcher.Search(0, 2);
+  searcher.Search(0, 1, 2);
 }
 
 const char *LoudsTrie::Reverse(int key_id, char *buffer) const {

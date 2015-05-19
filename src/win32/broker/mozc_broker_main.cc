@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,21 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include "base/base.h"
-#include "base/crash_report_util.h"
-#include "base/util.h"
-#ifdef OS_WINDOWS
+#include "base/crash_report_handler.h"
+#include "base/system_util.h"
+#ifdef OS_WIN
 #include "base/winmain.h"
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #include "config/stats_config_util.h"
 
 DEFINE_string(mode, "", "mozc_broker mode");
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 namespace mozc {
 namespace win32 {
 int RunPrelaunchProcesses(int argc, char *argv[]);
@@ -50,21 +50,21 @@ int RunUnregisterIME(int argc, char *argv[]);
 int RunSetDefault(int argc, char *argv[]);
 }  // namespace win32
 }  // namespace mozc
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 int main(int argc, char *argv[]) {
   // Currently, mozc_broker does not care about runlevel because this process
   // might run on system account to support silent upgrading.
 
-  mozc::Util::DisableIME();
+  mozc::SystemUtil::DisableIME();
 
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
-    mozc::CrashReportUtil::InstallBreakpad();
+    mozc::CrashReportHandler::Initialize(false);
   }
   InitGoogle(argv[0], &argc, &argv, false);
 
   int result = 0;
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (FLAGS_mode == "register_ime") {
     result = mozc::win32::RunRegisterIME(argc, argv);
   } else if (FLAGS_mode == "set_default") {
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   } else if (FLAGS_mode == "prelaunch_processes") {
     result = mozc::win32::RunPrelaunchProcesses(argc, argv);
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   return result;
 }

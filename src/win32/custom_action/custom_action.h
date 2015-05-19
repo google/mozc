@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ UINT __stdcall RefreshPolicy(MSIHANDLE msi_handle);
 // Install Mozc as an IME.
 UINT __stdcall InstallIME(MSIHANDLE msi_handle);
 
-// A rollback custom action for RegisterServer.
+// A rollback custom action for InstallIME.
 UINT __stdcall InstallIMERollback(MSIHANDLE msi_handle);
 
 // Unregister Mozc from IMEs.
@@ -49,6 +49,18 @@ UINT __stdcall UninstallIME(MSIHANDLE msi_handle);
 
 // A rollback custom action for UninstallIME.
 UINT __stdcall UninstallIMERollback(MSIHANDLE msi_handle);
+
+// Install Mozc as a TIP.
+UINT __stdcall RegisterTIP(MSIHANDLE msi_handle);
+
+// A rollback custom action for RegisterTIP.
+UINT __stdcall RegisterTIPRollback(MSIHANDLE msi_handle);
+
+// Install Mozc as a TIP.
+UINT __stdcall UnregisterTIP(MSIHANDLE msi_handle);
+
+// A rollback custom action for UnregisterTIP.
+UINT __stdcall UnregisterTIPRollback(MSIHANDLE msi_handle);
 
 // Opens the uninstall survey page with the default browser.
 UINT __stdcall OpenUninstallSurveyPage(MSIHANDLE msi_handle);
@@ -94,13 +106,5 @@ UINT __stdcall WriteApValue(MSIHANDLE msi_handle);
 
 // A rollback custom action for WriteApValue.
 UINT __stdcall WriteApValueRollback(MSIHANDLE msi_handle);
-
-#ifndef NO_LOGGING
-// Disables Windows Error Reporting.
-UINT __stdcall DisableErrorReporting(MSIHANDLE msi_handle);
-
-// Test function for rollback test.
-UINT __stdcall Failure(MSIHANDLE msi_handle);
-#endif
 
 #endif  // MOZC_WIN32_CUSTOM_ACTION_CUSTOM_ACTION_H_

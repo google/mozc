@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,16 @@
 
 #include "base/timer.h"
 
-#ifndef OS_WINDWOS
+#ifndef OS_WIN
 #include "base/mutex.h"
 #include "base/thread.h"
 #include "base/unnamed_event.h"
-#endif  // !OS_WINDOWS
+#endif  // !OS_WIN
 #include "base/logging.h"
 #include "base/util.h"
 
 namespace mozc {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 bool Timer::Start(uint32 due_time, uint32 interval) {
   // http://msdn.microsoft.com/en-us/library/ms681985.aspx
   // Remarks:
@@ -131,7 +131,7 @@ void CALLBACK Timer::TimerCallback(void *ptr, BOOLEAN timer_or_wait) {
   p->Signaled();
 }
 
-#else   // OS_WINDOWS
+#else   // OS_WIN
 
 namespace {
 
@@ -140,7 +140,6 @@ class TimerThread: public Thread {
   TimerThread(uint32 due_time, uint32 interval,
               Timer *timer, UnnamedEvent *event)
       : Thread(),
-        first_(true),
         due_time_(due_time),
         interval_(interval),
         timer_(timer),
@@ -174,7 +173,6 @@ class TimerThread: public Thread {
   }
 
  private:
-  bool first_;
   uint32 due_time_;
   uint32 interval_;
   Timer *timer_;
@@ -218,6 +216,6 @@ Timer::Timer()
 Timer::~Timer() {
   Stop();
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 }  // namespace mozc

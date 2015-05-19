@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ class TransliterationRewriter : public RewriterInterface  {
   explicit TransliterationRewriter(const POSMatcher &pos_matcher);
   virtual ~TransliterationRewriter();
 
-  virtual int capability() const;
+  virtual int capability(const ConversionRequest &request) const;
 
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
@@ -67,6 +67,8 @@ class TransliterationRewriter : public RewriterInterface  {
   bool FillT13NsFromComposer(const ConversionRequest &request,
                              Segments *segments) const;
   bool FillT13NsFromKey(Segments *segments) const;
+  bool AddRawNumberT13NCandidates(const ConversionRequest &request,
+                                  Segments *segments) const;
 
   const uint16 unknown_id_;
 };

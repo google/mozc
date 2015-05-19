@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 #ifndef MOZC_IPC_PROCESS_WATCH_DOG_H_
 #define MOZC_IPC_PROCESS_WATCH_DOG_H_
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
 #include <sys/types.h>
-#endif  // !OS_WINDOWS
+#endif  // !OS_WIN
 
 #include "base/port.h"
 #include "base/scoped_handle.h"
@@ -53,9 +53,6 @@
 namespace mozc {
 
 class Mutex;
-#ifdef OS_WINDOWS
-class ScopedHandle;
-#endif  // OS_WINDOWS
 
 class ProcessWatchDog : public Thread {
  public:
@@ -72,7 +69,7 @@ class ProcessWatchDog : public Thread {
     TIMEOUT_SIGNALED               = 10, // timeout is signaled
   };
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   typedef uint32 ProcessID;
   typedef uint32 ThreadID;
 #else
@@ -107,7 +104,7 @@ class ProcessWatchDog : public Thread {
   virtual ~ProcessWatchDog();
 
  private:
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ScopedHandle event_;
 #endif
   ProcessID process_id_;

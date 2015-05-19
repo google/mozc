@@ -251,5 +251,9 @@
         <source>Reconvert</source>
         <translation>再変換</translation>
     </message>
+    <message>
+        <source>DeleteSelectedCandidate</source>
+        <translation>選択候補を履歴から削除</translation>
+    </message>
 </context>
 </TS>

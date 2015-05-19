@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,13 @@
 #include <strsafe.h>
 
 #include "google/protobuf/stubs/common.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
 #include "win32/base/immdev.h"
 #include "win32/base/string_util.h"
-#include "win32/ime/ime_scoped_context.h"
 #include "win32/ime/ime_message_queue.h"
+#include "win32/ime/ime_scoped_context.h"
 
 namespace mozc {
 namespace win32 {

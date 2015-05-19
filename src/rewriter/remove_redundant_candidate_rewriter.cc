@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 namespace mozc {
 
@@ -41,8 +40,9 @@ RemoveRedundantCandidateRewriter::RemoveRedundantCandidateRewriter() {}
 
 RemoveRedundantCandidateRewriter::~RemoveRedundantCandidateRewriter() {}
 
-int RemoveRedundantCandidateRewriter::capability() const {
-  if (GET_REQUEST(mixed_conversion)) {
+int RemoveRedundantCandidateRewriter::capability(
+    const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::NOT_AVAILABLE;

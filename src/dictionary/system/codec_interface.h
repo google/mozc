@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,15 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
-#include "dictionary/system/words_info.h"
+#include "base/port.h"
+#include "base/string_piece.h"
 
 namespace mozc {
 namespace dictionary {
+
+struct TokenInfo;
+
+// TODO(hidehiko): Use StringPiece.
 class SystemDictionaryCodecInterface {
  public:
   // Get section name functions are expected not to be called so often
@@ -55,14 +59,22 @@ class SystemDictionaryCodecInterface {
   virtual const string GetSectionNameForPos() const = 0;
 
   // Encode value(word) string
-  virtual void EncodeValue(const string &src, string *dst) const = 0;
+  virtual void EncodeValue(const StringPiece src, string *dst) const = 0;
+
   // Decode value(word) string
-  virtual void DecodeValue(const string &src, string *dst) const = 0;
+  virtual void DecodeValue(const StringPiece src, string *dst) const = 0;
 
   // Encode key(reading) string
-  virtual void EncodeKey(const string &src, string *dst) const = 0;
+  virtual void EncodeKey(const StringPiece src, string *dst) const = 0;
+
   // Decode key(reading) string
-  virtual void DecodeKey(const string &src, string *dst) const = 0;
+  virtual void DecodeKey(const StringPiece src, string *dst) const = 0;
+
+  // Returns the length of encoded key string.
+  virtual size_t GetEncodedKeyLength(const StringPiece src) const = 0;
+
+  // Returns the length of decoded key string.
+  virtual size_t GetDecodedKeyLength(const StringPiece src) const = 0;
 
   // Encode tokens(word info) for a certain key
   virtual void EncodeTokens(
@@ -101,9 +113,9 @@ class SystemDictionaryCodecFactory {
   static void SetCodec(SystemDictionaryCodecInterface *codec);
 
  private:
-  SystemDictionaryCodecFactory() {}
-  ~SystemDictionaryCodecFactory() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(SystemDictionaryCodecFactory);
 };
+
 }  // namespace dictionary
 }  // namespace
 

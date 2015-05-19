@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #import "DialogsController.h"
 
-#include "base/util.h"
+#include "base/file_util.h"
 #include "mac/UserHistoryTransition/user_history_transition.h"
 #include "prediction/user_history_predictor.h"
 
@@ -56,7 +56,7 @@ bool WaitForModalWindow(NSWindow *window) {
 - (void)awakeFromNib {
   const string deprecated_path = deprecatedUserHistoryPath();
   NSWindow *firstDialog = noNeedDialog_;
-  if (mozc::Util::FileExists(deprecated_path)) {
+  if (mozc::FileUtil::FileExists(deprecated_path)) {
     firstDialog = confirmDialog_;
   }
   [firstDialog orderFront:nil];

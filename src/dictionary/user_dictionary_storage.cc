@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/process_mutex.h"
@@ -52,8 +53,6 @@
 
 namespace mozc {
 namespace {
-// Maximum number of dictionary entries per dictionary.
-const size_t kMaxDictionaryNameSize =     300;
 
 // 512MByte
 // We expand the limit of serialized message from 64MB(default) to 512MB
@@ -79,7 +78,7 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 UserDictionaryStorage::UserDictionaryStorage(const string &file_name)
     : file_name_(file_name),
       last_error_type_(USER_DICTIONARY_STORAGE_NO_ERROR),
-      mutex_(new ProcessMutex(Util::Basename(file_name).c_str())) {}
+      mutex_(new ProcessMutex(FileUtil::Basename(file_name).c_str())) {}
 
 UserDictionaryStorage::~UserDictionaryStorage() {
   UnLock();
@@ -90,7 +89,7 @@ const string &UserDictionaryStorage::filename() const {
 }
 
 bool UserDictionaryStorage::Exists() const {
-  return Util::FileExists(file_name_);
+  return FileUtil::FileExists(file_name_);
 }
 
 bool UserDictionaryStorage::LoadInternal(bool run_migration) {
@@ -131,7 +130,8 @@ bool UserDictionaryStorage::LoadInternal(bool run_migration) {
   if (run_migration) {
     if (!UserDictionaryUtil::ResolveUnknownFieldSet(this)) {
       LOG(ERROR) << "Failed to resolve older fields.";
-      return false;
+      // Do *NOT* return false even if resolving is somehow failed,
+      // because some entries may get succeeded to be migrated.
     }
   }
 
@@ -289,7 +289,7 @@ bool UserDictionaryStorage::SaveCore() {
     }
   }
 
-  if (!Util::AtomicRename(tmp_file_name, file_name_)) {
+  if (!FileUtil::AtomicRename(tmp_file_name, file_name_)) {
     LOG(ERROR) << "AtomicRename failed";
     last_error_type_ = SYNC_FAILURE;
     return false;

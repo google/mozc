@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,13 @@
 #include <PyZy/Const.h>
 #include <PyZy/InputContext.h>
 #include <PyZy/Variant.h>
+
 #include <algorithm>
 #include <string>
 
+#include "base/logging.h"
 #include "base/scoped_ptr.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "languages/pinyin/session_config.h"
@@ -69,7 +71,7 @@ const char *kHao = "\xE5\xA5\xBD";
 class PinyinContextTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     PyZy::InputContext::init(FLAGS_test_tmpdir, FLAGS_test_tmpdir);
 
     config::Config config;

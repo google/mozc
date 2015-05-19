@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -72,6 +72,7 @@
         }],
       ],
       'message': 'Generating UI header files from <(RULE_INPUT_PATH)',
+      'msvs_cygwin_shell': 0,
     },
   ],
 

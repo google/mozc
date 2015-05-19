@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -117,12 +117,13 @@ def GenNounPrefix():
   """Generates noun prefix embedded dictioanry entries."""
   token_map = {}
   for entry in NOUN_PREFIX:
-    key = entry[0]
-    value = entry[1]
+    key = entry[0] if entry[0] != "" else None
+    value = entry[1] if entry[1] != "" else None
     rank = entry[2]
+
     token_map.setdefault(key, []).append(
         embedded_dictionary_compiler.Token(
-            key, value, '', '', 0, 0, rank))
+            key, value, None, None, 0, 0, rank))
 
   return token_map
 

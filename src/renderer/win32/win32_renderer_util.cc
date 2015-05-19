@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,7 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -144,7 +145,7 @@ CPoint ToPoint(const commands::RendererCommand::Point &point) {
   return CPoint(point.x(), point.y());
 }
 
-// Retruns an absolute font height of the composition font.
+// Returns an absolute font height of the composition font.
 // Note that this function does not take the DPI virtualization into
 // consideration so the caller is responsible to multiply an appropriate
 // scaling factor.
@@ -253,7 +254,8 @@ bool ExtractParams(
     if (char_pos.has_position() &&
         char_pos.has_top_left() &&
         IsValidPoint(char_pos.top_left()) &&
-        char_pos.has_line_height(),
+        char_pos.has_line_height() &&
+        char_pos.line_height() > 0 &&
         char_pos.has_document_area() &&
         IsValidRect(char_pos.document_area())) {
       // Positional fields are (logical) screen coordinate.
@@ -613,6 +615,38 @@ class NativeSystemPreferenceAPI : public SystemPreferenceInterface {
   }
 };
 
+class NativeWorkingAreaAPI : public WorkingAreaInterface {
+ public:
+  NativeWorkingAreaAPI() {}
+
+ private:
+  virtual bool GetWorkingAreaFromPoint(const POINT &point,
+                                       RECT *working_area) {
+    if (working_area == nullptr) {
+      return false;
+    }
+    ::SetRect(working_area, 0, 0, 0, 0);
+
+    // Obtain the monitor's working area
+    const HMONITOR monitor = ::MonitorFromPoint(point,
+                                                MONITOR_DEFAULTTONEAREST);
+    if (monitor == nullptr) {
+      return false;
+    }
+
+    MONITORINFO monitor_info = {};
+    monitor_info.cbSize = CCSIZEOF_STRUCT(MONITORINFO, dwFlags);
+    if (!::GetMonitorInfo(monitor, &monitor_info)) {
+      const DWORD error = GetLastError();
+      LOG(ERROR) << "GetMonitorInfo failed. Error: " << error;
+      return false;
+    }
+
+    *working_area = monitor_info.rcWork;
+    return true;
+  }
+};
+
 class NativeWindowPositionAPI : public WindowPositionInterface {
  public:
   NativeWindowPositionAPI()
@@ -650,7 +684,7 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     // screen coordinates (offset from the upper-left corner of the screen).
     // Note that the input coordinates are logical coordinates, which means you
     // should pass screen coordinates obtained in a DPI-unaware process to
-    // this API.  For example, coordinates retuened by ClientToScreen API in a
+    // this API.  For example, coordinates returned by ClientToScreen API in a
     // DPI-unaware process are logical coordinates.  You can copy these
     // coordinates to a DPI-aware process and convert them to physical screen
     // coordinates by LogicalToPhysicalPoint API.
@@ -734,7 +768,7 @@ struct WindowInfo {
       : scale_factor(1.0) {}
 };
 
-class SystemPreferenceEmulatorImpl : public SystemPreferenceEmulator {
+class SystemPreferenceEmulatorImpl : public SystemPreferenceInterface {
  public:
   explicit SystemPreferenceEmulatorImpl(const LOGFONTW &gui_font)
       : default_gui_font_(gui_font) {}
@@ -751,6 +785,23 @@ class SystemPreferenceEmulatorImpl : public SystemPreferenceEmulator {
 
  private:
   CLogFont default_gui_font_;
+};
+
+class WorkingAreaEmulatorImpl : public WorkingAreaInterface {
+ public:
+  explicit WorkingAreaEmulatorImpl(const CRect &area)
+      : area_(area) {}
+
+ private:
+  virtual bool GetWorkingAreaFromPoint(const POINT &point,
+                                       RECT *working_area) {
+    if (working_area == nullptr) {
+      return false;
+    }
+    *working_area = area_;
+    return true;
+  }
+  const CRect area_;
 };
 
 class WindowPositionEmulatorImpl : public WindowPositionEmulator {
@@ -907,7 +958,7 @@ bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
 // This is a helper function for LayoutCandidateWindowByCandidateForm.
 // Some applications give us only the base position of candidate window.
 // However, the exclude region is definitely important in terms of UX around
-// candaite/suggest window.  As a workaround, we try to use font height to
+// candidate/suggest window.  As a workaround, we try to use font height to
 // compose a virtual exclude region from the base position.
 //   Expected applications and controls are:
 //     - Candidate Window on Pidgin 2.6.1
@@ -1160,7 +1211,7 @@ bool LayoutCandidateWindowByCompositionForm(
   const int font_height = GetAbsoluteFontHeight(params);
 
   if (!is_vertical) {
-    // For horizontal writing, a valid |font_height| is neccesary to calculate
+    // For horizontal writing, a valid |font_height| is necessary to calculate
     // an appropriate position of suggest/candidate window.
     if (font_height == 0) {
       return false;
@@ -1251,7 +1302,7 @@ bool LayoutCandidateWindowByCaretInfo(
   const HWND target_window = params.window_handle.value();
   CRect exclude_region_in_logical_coord = params.caret_rect.value();
 
-  // Use font height if available to improve the accuracy of exlude region.
+  // Use font height if available to improve the accuracy of exclude region.
   const int font_height = GetAbsoluteFontHeight(params);
   const bool is_vertical = IsVerticalWriting(params);
 
@@ -1335,11 +1386,181 @@ bool LayoutCandidateWindowByClientRect(
   }
   return true;
 }
-}  // anonymous namespace
 
-SystemPreferenceEmulator *SystemPreferenceEmulator::Create(
+bool LayoutIndicatorWindowByCompositionTarget(
+    const CandidateWindowLayoutParams &params,
+    const LayoutManager &layout_manager,
+    CRect *target_rect) {
+  DCHECK(target_rect);
+  *target_rect = CRect();
+
+  if (!params.window_handle.has_value()) {
+    return false;
+  }
+  if (!params.char_pos.has_value()) {
+    return false;
+  }
+
+  const HWND target_window = params.window_handle.value();
+  const IMECHARPOSITION &char_pos = params.char_pos.value();
+
+  // From the behavior of MS Office, we assume that an application fills
+  // members in IMECHARPOSITION as follows, even though other interpretations
+  // might be possible from the document especially for the vertical writing.
+  //   http://msdn.microsoft.com/en-us/library/dd318162.aspx
+
+  const bool is_vertical = IsVerticalWriting(params);
+  CRect rect_in_logical_coord;
+  if (is_vertical) {
+    // [Vertical Writing]
+    //
+    //    |
+    //    +-----< (pt)
+    //    |     |
+    //    |-----+
+    //    | (cLineHeight)
+    //    |
+    //    |
+    //    v
+    //   (Base Line)
+    rect_in_logical_coord = CRect(
+        char_pos.pt.x - char_pos.cLineHeight,
+        char_pos.pt.y,
+        char_pos.pt.x,
+        char_pos.pt.y + 1);
+  } else {
+    // [Horizontal Writing]
+    //
+    //    (pt)
+    //     v_____
+    //     |     |
+    //     |     | (cLineHeight)
+    //     |     |
+    //   --+-----+---------->  (Base Line)
+    rect_in_logical_coord = CRect(
+        char_pos.pt.x,
+        char_pos.pt.y,
+        char_pos.pt.x + 1,
+        char_pos.pt.y + char_pos.cLineHeight);
+  }
+
+  layout_manager.GetRectInPhysicalCoords(
+      target_window, rect_in_logical_coord, target_rect);
+  return true;
+}
+
+bool LayoutIndicatorWindowByCompositionForm(
+    const CandidateWindowLayoutParams &params,
+    const LayoutManager &layout_manager,
+    CRect *target_rect) {
+  DCHECK(target_rect);
+  *target_rect = CRect();
+  if (!params.window_handle.has_value()) {
+    return false;
+  }
+  if (!params.composition_form_topleft.has_value()) {
+    return false;
+  }
+
+  const HWND target_window = params.window_handle.value();
+  const CPoint &topleft_in_logical_coord =
+      params.composition_form_topleft.value();
+  const bool is_vertical = IsVerticalWriting(params);
+  const int font_height = GetAbsoluteFontHeight(params);
+  if (font_height <= 0) {
+    return false;
+  }
+
+  const CRect rect_in_logical_coord(
+      topleft_in_logical_coord,
+      is_vertical ? CSize(font_height, 1) : CSize(1, font_height));
+
+  layout_manager.GetRectInPhysicalCoords(
+      target_window, rect_in_logical_coord, target_rect);
+  return true;
+}
+
+bool LayoutIndicatorWindowByCaretInfo(
+    const CandidateWindowLayoutParams &params,
+    const LayoutManager &layout_manager,
+    CRect *target_rect) {
+  DCHECK(target_rect);
+  *target_rect = CRect();
+  if (!params.window_handle.has_value()) {
+    return false;
+  }
+  if (!params.caret_rect.has_value()) {
+    return false;
+  }
+
+  const HWND target_window = params.window_handle.value();
+  CRect rect_in_logical_coord = params.caret_rect.value();
+
+  // Use font height if available to improve the accuracy of exlude region.
+  const int font_height = GetAbsoluteFontHeight(params);
+  const bool is_vertical = IsVerticalWriting(params);
+
+  if (font_height > 0) {
+    if (is_vertical &&
+        (rect_in_logical_coord.Width() < font_height)) {
+      // Vertical
+      rect_in_logical_coord.right =
+          rect_in_logical_coord.left + font_height;
+    } else if (!is_vertical &&
+               (rect_in_logical_coord.Height() < font_height)) {
+      // Horizontal
+      rect_in_logical_coord.bottom =
+          rect_in_logical_coord.top + font_height;
+    }
+  }
+
+  layout_manager.GetRectInPhysicalCoords(
+      target_window, rect_in_logical_coord, target_rect);
+  return true;
+}
+
+bool GetTargetRectForIndicator(
+    const CandidateWindowLayoutParams &params,
+    const LayoutManager &layout_manager,
+    CRect *focus_rect) {
+  if (focus_rect == nullptr) {
+    return false;
+  }
+
+  if (LayoutIndicatorWindowByCompositionTarget(params, layout_manager,
+                                               focus_rect)) {
+    return true;
+  }
+  if (LayoutIndicatorWindowByCompositionForm(params,
+                                             layout_manager,
+                                             focus_rect)) {
+    return true;
+  }
+  if (LayoutIndicatorWindowByCaretInfo(params,
+                                       layout_manager,
+                                       focus_rect)) {
+    return true;
+  }
+
+  // Clear the data just in case.
+  *focus_rect = CRect();
+  return false;
+}
+
+}  // namespace
+
+SystemPreferenceInterface *SystemPreferenceFactory::CreateMock(
     const LOGFONTW &gui_font) {
   return new SystemPreferenceEmulatorImpl(gui_font);
+}
+
+WorkingAreaInterface *WorkingAreaFactory::Create() {
+  return new NativeWorkingAreaAPI();
+}
+
+WorkingAreaInterface *WorkingAreaFactory::CreateMock(
+    const RECT &working_area) {
+  return new WorkingAreaEmulatorImpl(working_area);
 }
 
 WindowPositionEmulator *WindowPositionEmulator::Create() {
@@ -1402,6 +1623,16 @@ bool CandidateWindowLayout::initialized() const {
   return initialized_;
 }
 
+IndicatorWindowLayout::IndicatorWindowLayout()
+    : is_vertical(false) {
+  ::SetRect(&window_rect, 0, 0, 0, 0);
+}
+
+void IndicatorWindowLayout::Clear() {
+  is_vertical = false;
+  ::SetRect(&window_rect, 0, 0, 0, 0);
+}
+
 bool LayoutManager::CalcLayoutWithTextWrapping(
     const LOGFONTW &font,
     const wstring &text,
@@ -1438,7 +1669,7 @@ void LayoutManager::GetPointInPhysicalCoords(
     return;
   }
 
-  DCHECK_NE(NULL, window_position_);
+  DCHECK_NE(nullptr, window_position_.get());
   if (window_position_->LogicalToPhysicalPoint(
           window_handle, point, result)) {
     return;
@@ -1460,7 +1691,7 @@ void LayoutManager::GetRectInPhysicalCoords(
     return;
   }
 
-  DCHECK_NE(NULL, window_position_);
+  DCHECK_NE(nullptr, window_position_.get());
 
   CPoint top_left;
   GetPointInPhysicalCoords(
@@ -1493,12 +1724,7 @@ LayoutManager::LayoutManager(SystemPreferenceInterface *mock_system_preference,
     : system_preference_(mock_system_preference),
       window_position_(mock_window_position) {}
 
-LayoutManager::~LayoutManager() {
-  delete system_preference_;
-  delete window_position_;
-  system_preference_ = NULL;
-  window_position_ = NULL;
-}
+LayoutManager::~LayoutManager() {}
 
 // TODO(yukawa): Refactor this function into smaller functions as soon as
 //   possible so that you can update the functionality and add new unit tests
@@ -1533,7 +1759,7 @@ bool LayoutManager::LayoutCompositionWindow(
   if (!app.has_composition_font() ||
       !mozc::win32::FontUtil::ToLOGFONT(app.composition_font(), &logfont)) {
     // If the composition font is not available, use default GUI font as a
-    // fallback.
+    // fall back.
     if (!system_preference_->GetDefaultGuiFont(&logfont)) {
       LOG(ERROR) << "GetDefaultGuiFont failed.";
       return false;
@@ -1667,7 +1893,7 @@ bool LayoutManager::LayoutCompositionWindow(
   }
 
   // Ensure the escapement and orientation are consistent with writing
-  // direction.  Note that some applications alsays set 0 to |lfOrientation|.
+  // direction.  Note that some applications always set 0 to |lfOrientation|.
   if (is_vertical) {
     logfont.lfEscapement = 2700;
     logfont.lfOrientation = 2700;
@@ -1945,7 +2171,7 @@ bool LayoutManager::LayoutCompositionWindow(
   if (suggest_window_never_hides_preedit &&
       (composition_window_layouts->size() > 0) &&
       (candidate_layout != NULL)) {
-    // Initialize the |exclusion_area| with invalid data. These valuses will
+    // Initialize the |exclusion_area| with invalid data. These values will
     // be updated to be valid at the first turn of the next for-loop.
     // For example, |exclusion_area.left| will be updated as follows.
     //   exclusion_area.left = min(exclusion_area.left,
@@ -2347,6 +2573,32 @@ int LayoutManager::GetCompatibilityMode(
   }
 
   return mode;
+}
+
+bool LayoutManager::LayoutIndicatorWindow(
+      const commands::RendererCommand_ApplicationInfo &app_info,
+      IndicatorWindowLayout *indicator_layout) {
+  if (indicator_layout == nullptr) {
+    return false;
+  }
+  indicator_layout->Clear();
+
+  CandidateWindowLayoutParams params;
+  if (!ExtractParams(this,
+                     GetCompatibilityMode(app_info),
+                     app_info,
+                     &params)) {
+    return false;
+  }
+
+  CRect target_rect;
+  if (!GetTargetRectForIndicator(params, *this, &target_rect)) {
+    return false;
+  }
+
+  indicator_layout->is_vertical = IsVerticalWriting(params);
+  indicator_layout->window_rect = target_rect;
+  return true;
 }
 
 }  // namespace win32

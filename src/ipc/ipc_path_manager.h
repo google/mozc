@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,14 @@
 #ifndef MOZC_IPC_IPC_PATH_MANAGER_H_
 #define MOZC_IPC_IPC_PATH_MANAGER_H_
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <time.h>  // for time_t
 #else
 #include <sys/time.h>  // for time_t
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
+#ifdef OS_WIN
+#include <map>
+#endif  // OS_WIN
 #include <string>
 #include "base/base.h"
 #include "base/mutex.h"
@@ -84,12 +87,14 @@ class IPCPathManager {
   // return process id of the server
   uint32 GetServerProcessId() const;
 
-  // Check the server pid is the valid server specified with server_path.
+  // Checks the server pid is the valid server specified with server_path.
   // server pid can be obtained by OS dependent method.
   // This API is only available on Windows Vista or Linux.
-  // Always return true on other operating systems.
+  // Due to the restriction of OpenProcess API, always returns true under
+  // AppContainer sandbox on Windows 8 (No verification will be done).
+  // Always returns true on other operating systems.
   // See also: GetNamedPipeServerProcessId
-  // http://msdn.microsoft.com/en-us/library/aa365446(VS.85).aspx
+  // http://msdn.microsoft.com/en-us/library/aa365446.aspx
   // when pid of 0 is passed, IsValidServer() returns true.
   // when pid of static_cast<size_t>(-1) is passed, IsValidServer()
   // returns false.
@@ -126,6 +131,9 @@ class IPCPathManager {
   string server_path_;   // cache for server_path
   uint32 server_pid_;    // cache for pid of server_path
   time_t last_modified_;
+#ifdef OS_WIN
+  map<string, wstring> expected_server_ntpath_cache_;
+#endif  // OS_WIN
 };
 }  // namespace mozc
 

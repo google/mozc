@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "base/logging.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/unix/window_manager.h"
 
@@ -58,7 +59,7 @@ gboolean mozc_dispatch(GSource *source, GSourceFunc callback,
       = reinterpret_cast<UnixServer::MozcWatchSource*>(source);
   char buf[8];
   // Discards read data.
-  while (read(watch->poll_fd.fd, buf, 8) > 0);
+  while (read(watch->poll_fd.fd, buf, 8) > 0) {}
   watch->unix_server->Render();
   return TRUE;
 }

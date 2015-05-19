@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,8 +58,8 @@ wstring StringUtil::KeyToReading(const string &key) {
   }
 
   const UINT cp_sjis = 932;  // ANSI/OEM - Japanese, Shift-JIS
-  const int output_length = MultiByteToWideChar(cp_sjis, 0, hankaku, -1, NULL,
-                                                0);
+  const int output_length = MultiByteToWideChar(
+      cp_sjis, 0, hankaku, -1, nullptr, 0);
   if (output_length == 0) {
     return L"";
   }

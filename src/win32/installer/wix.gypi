@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -66,12 +66,12 @@
           }],
           ['debug_crt_merge_module_path!=""', {
             'additional_args+': [
-              '-dDebugCrtMergeModulePath="<(debug_crt_merge_module_path)"',
+              '-dDebugCrtMergeModulePath=<(debug_crt_merge_module_path)',
             ],
           }],
           ['release_crt_merge_module_path!=""', {
             'additional_args+': [
-              '-dReleaseCrtMergeModulePath="<(release_crt_merge_module_path)"',
+              '-dReleaseCrtMergeModulePath=<(release_crt_merge_module_path)',
             ],
           }],
           ['qtcore4_dll_path!=""', {
@@ -123,18 +123,23 @@
         '-dOmahaClientKey=<(omaha_client_key)',
         '-dOmahaClientStateKey=<(omaha_clientstate_key)',
         '-dOmahaChannelType=<(omaha_channel_type)',
-        '-dVSConfigurationName=$(ConfigurationName)',
+        '-dVSConfigurationName=<(CONFIGURATION_NAME)',
         '-dMozcToolElevationPolicyRegKey=<(tool_elevation_policy_key)',
         '-dMozcBroker32ElevationPolicyRegKey=<(broker32_elevation_policy_key)',
         '-dMozcBroker64ElevationPolicyRegKey=<(broker64_elevation_policy_key)',
         '-dAddRemoveProgramIconPath=<(icon_path)',
         '-dMozcIME32Path=<(mozc_ime32_path)',
         '-dMozcIME64Path=<(mozc_ime64_path)',
+        '-dMozcTIP32Path=<(mozc_tip32_path)',
+        '-dMozcTIP64Path=<(mozc_tip64_path)',
         '-dMozcBroker32Path=<(mozc_broker32_path)',
         '-dMozcBroker64Path=<(mozc_broker64_path)',
-        '-dMozcServerPath=<(mozc_server_path)',
-        '-dMozcCacheServicePath=<(mozc_cache_service_path)',
-        '-dMozcRendererPath=<(mozc_renderer_path)',
+        '-dMozcServer32Path=<(mozc_server32_path)',
+        '-dMozcServer64Path=<(mozc_server64_path)',
+        '-dMozcCacheService32Path=<(mozc_cache_service32_path)',
+        '-dMozcCacheService64Path=<(mozc_cache_service64_path)',
+        '-dMozcRenderer32Path=<(mozc_renderer32_path)',
+        '-dMozcRenderer64Path=<(mozc_renderer64_path)',
         '-dMozcToolPath=<(mozc_tool_path)',
         '-dCustomActions32Path=<(mozc_ca32_path)',
         '-dCustomActions64Path=<(mozc_ca64_path)',
@@ -153,7 +158,6 @@
       'inputs': [
         # vcbuild will invoke this action if any file listed here is
         # newer than files in 'outputs'.
-        '<@(dependent_binaries)',
         '<(wixobj_file)',
       ],
       'outputs': [
@@ -168,6 +172,7 @@
         '-sw1055',
         '-sice:ICE03',
         '-sice:ICE30',
+        '-sice:ICE60',
         '-sice:ICE82',
         '-sice:ICE83',
         # We intentionally remove *.ime from system folders as a part
@@ -182,8 +187,4 @@
       'message': 'light is generating <@(_outputs)',
     },
   ],
-  # It seems that gyp does not include setup_env.bat automatically for
-  # 'msvs_postbuild'.  Call python.bat directly instead.
-  # TODO(yukawa): Use postbuilds_win.gypi instead.
-  'msvs_postbuild': r'call <(DEPTH)\tools\python.bat <(DEPTH)\tools\postbuilds_win.py --targetpath=<(msi_file)',
 }

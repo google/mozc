@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ string Version::GetMozcVersion() {
   return version::kMozcVersion;
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 wstring Version::GetMozcVersionW() {
   wstring version;
   Util::UTF8ToWide(version::kMozcVersion, &version);

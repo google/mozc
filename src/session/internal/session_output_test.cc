@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -622,6 +622,37 @@ TEST(SessionOutputTest, FillFooter) {
   candidates.Clear();
   EXPECT_FALSE(SessionOutput::FillFooter(commands::USAGE, &candidates));
   EXPECT_FALSE(candidates.has_footer());
+
+#ifdef MOZC_ENABLE_HISTORY_DELETION
+  candidates.Clear();
+  for (int i = 0; i < 20; ++i) {
+    commands::Candidates::Candidate *c = candidates.add_candidate();
+    c->set_index(i);
+    c->set_value("dummy");
+    c->set_id(i);
+    // Candidates with even Id can be deleted.
+    c->mutable_annotation()->set_deletable(i % 2 == 0);
+  }
+  for (int i = 0; i < 20; ++i) {
+    candidates.clear_footer();
+    candidates.set_focused_index(i);
+    EXPECT_TRUE(SessionOutput::FillFooter(commands::PREDICTION, &candidates));
+    if (i % 2 == 0) {
+      ASSERT_TRUE(candidates.has_footer());
+      ASSERT_TRUE(candidates.footer().has_label());
+      const char kDeleteInstruction[] =  // "Ctrl+Delで履歴から削除"
+          "\x43\x74\x72\x6C\x2B\x44\x65\x6C\xE3\x81\xA7\xE5\xB1\xA5"
+          "\xE6\xAD\xB4\xE3\x81\x8B\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+      EXPECT_EQ(kDeleteInstruction, candidates.footer().label());
+#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+    } else {
+      EXPECT_FALSE(candidates.footer().has_label());
+      EXPECT_TRUE(candidates.footer().has_sub_label());
+      EXPECT_EQ(0, candidates.footer().sub_label().find("build "));
+#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
+    }
+  }
+#endif  // MOZC_ENABLE_HISTORY_DELETION
 }
 
 TEST(SessionOutputTest, FillSubLabel) {
@@ -690,7 +721,7 @@ TEST(SessionOutputTest, AddSegment) {
     string normalized_key;
     TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
-    // Normalization is performed in Rewriter.     
+    // Normalization is performed in Rewriter.
     string normalized_value = kValue;
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());

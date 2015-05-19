@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,22 @@
 
 #include "base/port.h"
 #include "base/scoped_ptr.h"
+#include "dictionary/pos_group.h"
 #include "engine/engine_interface.h"
 
 namespace mozc {
 
+class ConnectorInterface;
 class ConverterInterface;
 class DataManagerInterface;
 class DictionaryInterface;
 class ImmutableConverterInterface;
 class PredictorInterface;
 class RewriterInterface;
+class SegmenterInterface;
+class SuggestionFilter;
 class SuppressionDictionary;
+class UserDataManagerInterface;
 class UserDictionary;
 
 // Builds and manages a set of modules that are necessary for conversion engine.
@@ -53,6 +58,7 @@ class Engine : public EngineInterface {
 
   // Initializes the object by given a data manager (providing embedded data
   // set) and predictor factory function.
+  // Predictor factory is used to select DefaultPredictor and MobilePredictor.
   void Init(const DataManagerInterface *data_manager,
             PredictorInterface *(*predictor_factory)(PredictorInterface *,
                                                      PredictorInterface *,
@@ -66,11 +72,20 @@ class Engine : public EngineInterface {
 
   virtual bool Reload();
 
+  virtual UserDataManagerInterface *GetUserDataManager() {
+    return user_data_manager_.get();
+  }
+
  private:
   scoped_ptr<SuppressionDictionary> suppression_dictionary_;
+  scoped_ptr<const ConnectorInterface> connector_;
+  scoped_ptr<const SegmenterInterface> segmenter_;
   scoped_ptr<UserDictionary> user_dictionary_;
+  scoped_ptr<DictionaryInterface> suffix_dictionary_;
   scoped_ptr<DictionaryInterface> dictionary_;
+  scoped_ptr<const PosGroup> pos_group_;
   scoped_ptr<ImmutableConverterInterface> immutable_converter_;
+  scoped_ptr<const SuggestionFilter> suggestion_filter_;
 
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
   // but owned by converter_. Since this class creates these two, it'd be better
@@ -79,6 +94,7 @@ class Engine : public EngineInterface {
   RewriterInterface *rewriter_;
 
   scoped_ptr<ConverterInterface> converter_;
+  scoped_ptr<UserDataManagerInterface> user_data_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(Engine);
 };

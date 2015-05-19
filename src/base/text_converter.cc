@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,12 @@
 
 #include "base/text_converter.h"
 
-#include <string.h>
-#include <algorithm>
-#include <utility>
-#include <vector>
+#include <cstring>
 #include <string>
-#include "base/base.h"
+#include "base/string_piece.h"
 #include "base/util.h"
+
+namespace mozc {
 
 namespace {
 
@@ -72,22 +71,19 @@ int Lookup(const mozc::TextConverter::DoubleArray *array,
 
   return seekto;
 }
-}  // namespace
 
-namespace mozc {
+}  // namespace
 
 void TextConverter::Convert(const DoubleArray *da,
                             const char *ctable,
-                            const string &input,
+                            const StringPiece input,
                             string *output) {
   output->clear();
   const char *begin = input.data();
-  const char *end = input.data() + input.size();
+  const char *const end = input.data() + input.size();
   while (begin < end) {
     int result = 0;
-    size_t mblen = ::Lookup(da, begin,
-                            static_cast<int>(end - begin),
-                            &result);
+    size_t mblen = Lookup(da, begin, static_cast<int>(end - begin), &result);
     if (mblen > 0) {
       const char *p = &ctable[result];
       const size_t len = strlen(p);

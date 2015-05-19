@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,13 +34,18 @@
 'use strict';
 
 /**
+ * Namespace for this extension.
+ */
+var sampleImeForImeExtensionApi = window.sampleImeForImeExtensionApi || {};
+
+/**
  * Sample IME with IME extension API.
  * @constructor
  */
-function SampleIme() {
+sampleImeForImeExtensionApi.SampleIme = function() {
   /**
    * Context information which is provided by Chrome.
-   * @type {?Object}
+   * @type {Object}
    * @private
    */
   this.context_ = null;
@@ -52,53 +57,79 @@ function SampleIme() {
    */
   this.engineID_ = '';
 
-  /**
-   * Indicates IME suggests dummy candidates or not.
-   * @type {boolean}
-   * @private
-   */
-  this.useDummyCandidates_ = true;
+  // Some properties are initialized on
+  // {@code sampleImeForImeExtensionApi.SampleIme.clear_} and
+  // {@code sampleImeForImeExtensionApi.SampleIme.initializeMenuItems_}.
+  this.clear_();
+  this.initializeMenuItems_();
+};
 
-  /**
-   * Immutable conversion table. It is used to suggest special candidates.
-   * @type {Object}
-   * @private
-   */
-  this.conversionTable_ = {
-    star: '\u2606',  // '☆'
-    heart: '\u2661'  // '♡'
-  };
+/**
+ * Stringifies key event data.
+ * @param {!Object} keyData Key event data.
+ * @return {string} Stringified key event data.
+ * @private
+ */
+sampleImeForImeExtensionApi.SampleIme.prototype.stringifyKeyAndModifiers_ =
+    function(keyData) {
+  var keys = [keyData.key];
+  if (keyData.altKey) { keys.push('alt'); }
+  if (keyData.ctrlKey) { keys.push('ctrl'); }
+  if (keyData.shiftKey) { keys.push('shift'); }
+  return keys.join(' ');
+};
 
-  /**
-   * Ignore key table not to handle some keys.
-   * @type {Object}
-   * @private
-   */
-  this.ignoreKeySet_ = {};
-
-  var ignoreKeys = [
-    {  // PrintScreen
+/**
+ * Ignorable key set to determine we handle the key event or not.
+ * @type {!Object.<boolean>}
+ * @private
+ */
+sampleImeForImeExtensionApi.SampleIme.IGNORABLE_KEY_SET_ = (function() {
+  var IGNORABLE_KEYS = [
+    {  // PrintScreen shortcut.
       key: 'ChromeOSSwitchWindow',
       ctrlKey: true
-    }, {  // PrintScreen
+    }, {  // PrintScreen shortcut.
       key: 'ChromeOSSwitchWindow',
       ctrlKey: true,
       shiftKey: true
     }
   ];
-  for (var i = 0; i < ignoreKeys.length; ++i) {
-    this.ignoreKeySet_[this.stringifyKeyAndModifiers_(ignoreKeys[i])] = true;
+
+  var ignorableKeySet = [];
+  for (var i = 0; i < IGNORABLE_KEYS.length; ++i) {
+    var key = sampleImeForImeExtensionApi.SampleIme.prototype.
+        stringifyKeyAndModifiers_(IGNORABLE_KEYS[i]);
+    ignorableKeySet[key] = true;
   }
 
-  // Some properties are initialized on {@code SampleIme.clear_}.
-  this.clear_();
-}
+  return ignorableKeySet;
+})();
+
+/**
+ * Immutable conversion table. It is used to suggest special candidates.
+ * @type {!Object.<string>}
+ * @private
+ */
+sampleImeForImeExtensionApi.SampleIme.CONVERSION_TABLE_ = {
+  star: '\u2606',  // '☆'
+  heart: '\u2661'  // '♡'
+};
+
+/**
+ * Page size of a candidate list.
+ * This value should not be greater than 12 since we use Roman number to
+ * indicates the candidate number on the list.
+ * @type {number}
+ * @private
+ */
+sampleImeForImeExtensionApi.SampleIme.PAGE_SIZE_ = 5;
 
 /**
  * Enum of IME state.
  * @enum {number}
  */
-SampleIme.State = {
+sampleImeForImeExtensionApi.SampleIme.State = {
   /** IME doesn't have any input text. */
   PRECOMPOSITION: 0,
   /**
@@ -117,7 +148,7 @@ SampleIme.State = {
  * Segment information of a composition text.
  * @constructor
  */
-SampleIme.Segment = function() {
+sampleImeForImeExtensionApi.SampleIme.Segment = function() {
   /**
    * Start position of the segment.
    * @type {number}
@@ -126,7 +157,7 @@ SampleIme.Segment = function() {
 
   /**
    * Candidates list.
-   * @type {Array.<string>}
+   * @type {!Array.<string>}
    */
   this.candidates = [];
 
@@ -138,10 +169,107 @@ SampleIme.Segment = function() {
 };
 
 /**
+ * Initializes menu items and some member variables.
+ * @private
+ */
+sampleImeForImeExtensionApi.SampleIme.prototype.initializeMenuItems_ =
+    function() {
+  var menuItems = [];
+  var callbacks = {};
+  var that = this;
+
+  /**
+   * Indicates IME suggests dummy candidates or not.
+   * @type {boolean}
+   * @private
+   */
+  this.useDummyCandidates_ = true;
+
+  var radioItems = [{
+    id: 'enable_dummy_candidates',
+    label: 'Enable dummy candidates',
+    style: 'radio',
+    checked: true,
+    enabled: true,
+    visible: true
+  }, {
+    id: 'disable_dummy_candidates',
+    label: 'Disable dummy candidates',
+    style: 'radio',
+    checked: false,
+    enabled: true,
+    visible: true
+  }];
+  for (var i = 0; i < radioItems.length; ++i) {
+    callbacks[radioItems[i].id] = (function(index) {
+      return function() {
+        for (var j = 0; j < radioItems.length; ++j) {
+          var isChecked = (index == j);
+          radioItems[j].checked = isChecked;
+        }
+        var isEnabled = index == 0;
+        that.useDummyCandidates_ = isEnabled;
+      };
+    })(i);
+    menuItems.push(radioItems[i]);
+  }
+
+  var ENABLE_RADIO_MENU_TEXT = 'Enable radio menu';
+  var DISABLE_RADIO_MENU_TEXT = 'Disable radio menu';
+  var enableRadioMenuItem = {
+    id: 'enable_radio_menu',
+    label: DISABLE_RADIO_MENU_TEXT,
+    style: 'none'
+  };
+  menuItems.push(enableRadioMenuItem);
+  callbacks[enableRadioMenuItem.id] = function() {
+    var isEnabled = enableRadioMenuItem.label == ENABLE_RADIO_MENU_TEXT;
+    if (isEnabled) {
+      enableRadioMenuItem.label = DISABLE_RADIO_MENU_TEXT;
+    } else {
+      enableRadioMenuItem.label = ENABLE_RADIO_MENU_TEXT;
+    }
+    for (var i = 0; i < radioItems.length; ++i) {
+      radioItems[i].enabled = isEnabled;
+    }
+  };
+
+  var DISPLAY_RADIO_MENU_TEXT = 'Display radio menu';
+  var HIDE_RADIO_MENU_TEXT = 'Hide radio menu';
+  var displayRadioMenuItem = {
+    id: 'display_radio_menu',
+    label: HIDE_RADIO_MENU_TEXT,
+    style: 'none'
+  };
+  menuItems.push(displayRadioMenuItem);
+  callbacks[displayRadioMenuItem.id] = function() {
+    var isDisplayed = displayRadioMenuItem.label == DISPLAY_RADIO_MENU_TEXT;
+    if (isDisplayed) {
+      displayRadioMenuItem.label = HIDE_RADIO_MENU_TEXT;
+    } else {
+      displayRadioMenuItem.label = DISPLAY_RADIO_MENU_TEXT;
+    }
+    for (var i = 0; i < radioItems.length; ++i) {
+      radioItems[i].visible = isDisplayed;
+    }
+  };
+
+  /**
+   * Menu items of this IME.
+   */
+  this.menuItems_ = menuItems;
+
+  /**
+   * Callback function table which is called when menu item is clicked.
+   */
+  this.menuItemCallbackTable_ = callbacks;
+};
+
+/**
  * Clears properties of IME.
  * @private
  */
-SampleIme.prototype.clear_ = function() {
+sampleImeForImeExtensionApi.SampleIme.prototype.clear_ = function() {
   /**
    * Raw input text.
    * @type {string}
@@ -152,7 +280,7 @@ SampleIme.prototype.clear_ = function() {
   /**
    * Commit text.
    * This is a volatile property, and will be cleared by
-   * {@code SampleIme.updateCommitText_}.
+   * {@code sampleImeForImeExtensionApi.SampleIme.updateCommitText_}.
    * @type {?string}
    * @private
    */
@@ -160,7 +288,7 @@ SampleIme.prototype.clear_ = function() {
 
   /**
    * Segments information.
-   * @type {Array.<SampleIme.Segment>}
+   * @type {!Array.<!sampleImeForImeExtensionApi.SampleIme.Segment>}
    * @private
    */
   this.segments_ = [];
@@ -181,62 +309,60 @@ SampleIme.prototype.clear_ = function() {
 
   /**
    * The state of the IME.
-   * @type {SampleIme.State}
+   * @type {sampleImeForImeExtensionApi.SampleIme.State}
    * @private
    */
-  this.state_ = SampleIme.State.PRECOMPOSITION;
+  this.state_ = sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION;
 };
 
 /**
- * Stringify key event data.
- * @param {Object} keyData key event data.
- * @return {string} stringified key event data.
+ * Determines that IME is enabled or not using a context information.
+ * @return {boolean} IME is enabled or not.
  * @private
  */
-SampleIme.prototype.stringifyKeyAndModifiers_ = function(keyData) {
-  var keys = [keyData.key];
-  if (keyData.altKey) { keys.push('alt'); }
-  if (keyData.ctrlKey) { keys.push('ctrl'); }
-  if (keyData.shiftKey) { keys.push('shift'); }
-  return keys.join(' ');
+sampleImeForImeExtensionApi.SampleIme.prototype.isImeEnabled_ = function() {
+  return !!(this.context_ && this.context_.type == 'text');
 };
 
 /**
- * Append a new empty segment on SampleIme.segments.
+ * Appends a new empty segment on
+ * {@code sampleImeForImeExtensionApi.SampleIme.segments}.
  * @private
  */
-SampleIme.prototype.appendNewSegment_ = function() {
+sampleImeForImeExtensionApi.SampleIme.prototype.appendNewSegment_ = function() {
   var startPosition = this.inputText_.length;
-  if (this.segments_.length === 0) {
+  if (this.segments_.length == 0) {
     startPosition = 0;
   }
 
-  var newSegment = new SampleIme.Segment();
+  var newSegment = new sampleImeForImeExtensionApi.SampleIme.Segment();
   newSegment.start = startPosition;
 
   this.segments_.push(newSegment);
 };
 
 /**
- * Get input text on the segment.
- * @param {number=} opt_segmentIndex index of the segment you want to get
+ * Gets input text on the segment.
+ * @param {number=} opt_segmentIndex Index of the segment you want to get
  *     a text. this.focusedSegmentIndex_ is used as a default value.
- * @return {string} input text of the segment.
+ * @return {string} Input text of the segment.
  * @private
  */
-SampleIme.prototype.getInputTextOnSegment_ = function(opt_segmentIndex) {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.getInputTextOnSegment_ =
+    function(opt_segmentIndex) {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     return '';
   }
 
-  var segmentIndex = (opt_segmentIndex == null) ?
+  var segmentIndex = (opt_segmentIndex == undefined) ?
       this.focusedSegmentIndex_ : opt_segmentIndex;
   if (segmentIndex < 0 || this.segments_.length <= segmentIndex) {
     return '';
   }
 
   var start = this.segments_[segmentIndex].start;
-  var end = (segmentIndex + 1 === this.segments_.length) ?
+  var end = (segmentIndex + 1 == this.segments_.length) ?
       this.inputText_.length : this.segments_[segmentIndex + 1].start;
   var length = end - start;
 
@@ -245,16 +371,19 @@ SampleIme.prototype.getInputTextOnSegment_ = function(opt_segmentIndex) {
 
 /**
  * Generates and sets candidates of the segment.
- * @param {number=} opt_segmentIndex index of the segment you want to get
- *     a text. this.focusedSegmentIndex_ is used as a default value.
+ * @param {number=} opt_segmentIndex Index of the segment you want to get a
+ *     text. {@code sampleImeForImeExtensionApi.SampleIme.focusedSegmentIndex_}
+ *     is used as a default value.
  * @private
  */
-SampleIme.prototype.generateCandidates_ = function(opt_segmentIndex) {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.generateCandidates_ =
+    function(opt_segmentIndex) {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     return;
   }
 
-  var segmentIndex = (opt_segmentIndex == null) ?
+  var segmentIndex = (opt_segmentIndex == undefined) ?
       this.focusedSegmentIndex_ : opt_segmentIndex;
   if (segmentIndex < 0 || this.segments_.length <= segmentIndex) {
     return;
@@ -265,7 +394,7 @@ SampleIme.prototype.generateCandidates_ = function(opt_segmentIndex) {
 
   segment.focusedIndex = 0;
 
-  if (text === '') {
+  if (text == '') {
     segment.candidates = [];
     return;
   }
@@ -281,8 +410,9 @@ SampleIme.prototype.generateCandidates_ = function(opt_segmentIndex) {
     text.substr(0, 1).toUpperCase() + text.substr(1).toLowerCase()
   ];
 
-  if (text in this.conversionTable_) {
-    segment.candidates.push(this.conversionTable_[text]);
+  var table = sampleImeForImeExtensionApi.SampleIme.CONVERSION_TABLE_;
+  if (text in table) {
+    segment.candidates.push(table[text]);
   }
 
   if (this.useDummyCandidates_) {
@@ -293,11 +423,12 @@ SampleIme.prototype.generateCandidates_ = function(opt_segmentIndex) {
 
 /**
  * Gets preedit text.
- * @return {string} preedit text.
+ * @return {string} Preedit text.
  * @private
  */
-SampleIme.prototype.getPreeditText_ = function() {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.getPreeditText_ = function() {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     return '';
   }
 
@@ -313,10 +444,13 @@ SampleIme.prototype.getPreeditText_ = function() {
  * Updates preedit text.
  * @private
  */
-SampleIme.prototype.updatePreedit_ = function() {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.updatePreedit_ = function() {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     chrome.input.ime.clearComposition({
-      contextID: parseInt(this.context_.contextID)
+      contextID: this.context_.contextID
+    }, function(success) {
+      console.log('Composition is cleared. result=' + success);
     });
     return;
   }
@@ -324,7 +458,7 @@ SampleIme.prototype.updatePreedit_ = function() {
   var segmentsData = [];
   for (var i = 0; i < this.segments_.length; ++i) {
     var text = this.segments_[i].candidates[this.segments_[i].focusedIndex];
-    var start = (i === 0) ? 0 : segmentsData[i - 1].end;
+    var start = i == 0 ? 0 : segmentsData[i - 1].end;
     var end = start + text.length;
 
     segmentsData.push({
@@ -333,12 +467,12 @@ SampleIme.prototype.updatePreedit_ = function() {
       style: 'underline'
     });
   }
-  if (this.state_ === SampleIme.State.CONVERSION) {
+  if (this.state_ == sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
     segmentsData[this.focusedSegmentIndex_].style = 'doubleUnderline';
   }
 
   var cursorPos = 0;
-  if (this.state_ === SampleIme.State.CONVERSION) {
+  if (this.state_ == sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
     for (var i = 0; i < this.focusedSegmentIndex_; ++i) {
       var segment = this.segments_[i];
       cursorPos += segment.candidates[segment.focusedIndex].length;
@@ -354,42 +488,65 @@ SampleIme.prototype.updatePreedit_ = function() {
     cursor: cursorPos
   };
 
-  if (this.state_ === SampleIme.State.CONVERSION) {
+  if (this.state_ == sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
     composition.selectionStart = segmentsData[this.focusedSegmentIndex_].start;
     composition.selectionEnd = segmentsData[this.focusedSegmentIndex_].end;
   }
 
-  chrome.input.ime.setComposition(composition);
+  chrome.input.ime.setComposition(composition, function(success) {
+    console.log('Composition is set. result=' + success);
+  });
 };
 
 /**
  * Updates candidates.
  * @private
  */
-SampleIme.prototype.updateCandidates_ = function() {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.updateCandidates_ = function() {
+  var candidateWindowPropertiesCallback = function(success) {
+    console.log('Candidate window properties are updated. result=' + success);
+  };
+
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     chrome.input.ime.setCandidateWindowProperties({
       engineID: this.engineID_,
       properties: {
         visible: false,
         auxiliaryTextVisible: false
       }
-    });
+    }, candidateWindowPropertiesCallback);
   } else {
+    var PAGE_SIZE = sampleImeForImeExtensionApi.SampleIme.PAGE_SIZE_;
+
     var segment = this.segments_[this.focusedSegmentIndex_];
+    var labels = [];
+    for (var i = 0; i < PAGE_SIZE; ++i) {
+      // Roman number.
+      labels.push(String.fromCharCode(0x2160 + i));  // 'Ⅰ' + i
+    }
 
     chrome.input.ime.setCandidates({
       contextID: this.context_.contextID,
       candidates: segment.candidates.map(function(value, index) {
-        return {
+        var candidate = {
           candidate: value,
-          id: index
+          id: index,
+          label: labels[index % PAGE_SIZE]
         };
+        if (index == 0) {
+          candidate.annotation = '1st candidate';
+        }
+        return candidate;
       })
+    }, function(success) {
+      console.log('Candidates are set. result=' + success);
     });
     chrome.input.ime.setCursorPosition({
       contextID: this.context_.contextID,
       candidateID: segment.focusedIndex
+    }, function(success) {
+      console.log('Cursor position is set. result=' + success);
     });
     chrome.input.ime.setCandidateWindowProperties({
       engineID: this.engineID_,
@@ -397,11 +554,11 @@ SampleIme.prototype.updateCandidates_ = function() {
         visible: true,
         cursorVisible: true,
         vertical: true,
-        pageSize: 5,
+        pageSize: PAGE_SIZE,
         auxiliaryTextVisible: true,
         auxiliaryText: 'Sample IME'
       }
-    });
+    }, candidateWindowPropertiesCallback);
   }
 };
 
@@ -410,7 +567,7 @@ SampleIme.prototype.updateCandidates_ = function() {
  * This function clears {@code commitText_} since it is a volatile property.
  * @private
  */
-SampleIme.prototype.updateCommitText_ = function() {
+sampleImeForImeExtensionApi.SampleIme.prototype.updateCommitText_ = function() {
   if (this.commitText_ === null) {
     return;
   }
@@ -418,6 +575,8 @@ SampleIme.prototype.updateCommitText_ = function() {
   chrome.input.ime.commitText({
     contextID: this.context_.contextID,
     text: this.commitText_
+  }, function(success) {
+    console.log('Commited. result=' + success);
   });
 
   this.commitText_ = null;
@@ -427,7 +586,7 @@ SampleIme.prototype.updateCommitText_ = function() {
  * Updates output using IME Extension API.
  * @private
  */
-SampleIme.prototype.update_ = function() {
+sampleImeForImeExtensionApi.SampleIme.prototype.update_ = function() {
   this.updatePreedit_();
   this.updateCandidates_();
   this.updateCommitText_();
@@ -437,8 +596,9 @@ SampleIme.prototype.update_ = function() {
  * Commits a preedit text and clears a context.
  * @private
  */
-SampleIme.prototype.commit_ = function() {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.commit_ = function() {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     return;
   }
 
@@ -449,15 +609,17 @@ SampleIme.prototype.commit_ = function() {
 
 /**
  * Inserts characters into the cursor position.
- * @param {string} value text we want to insert into.
+ * @param {string} value Text we want to insert into.
  * @private
  */
-SampleIme.prototype.insertCharacters_ = function(value) {
-  if (this.state_ === SampleIme.State.CONVERSION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.insertCharacters_ =
+    function(value) {
+  if (this.state_ == sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
     return;
   }
 
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     this.appendNewSegment_();
     this.focusedSegmentIndex_ = 0;
   }
@@ -465,7 +627,7 @@ SampleIme.prototype.insertCharacters_ = function(value) {
   var text = this.inputText_;
   this.inputText_ =
       text.substr(0, this.cursor_) + value + text.substr(this.cursor_);
-  this.state_ = SampleIme.State.COMPOSITION;
+  this.state_ = sampleImeForImeExtensionApi.SampleIme.State.COMPOSITION;
   this.moveCursor_(this.cursor_ + value.length);
 
   this.generateCandidates_();
@@ -476,8 +638,9 @@ SampleIme.prototype.insertCharacters_ = function(value) {
  * @param {number} index index of the character you want to remove.
  * @private
  */
-SampleIme.prototype.removeCharacter_ = function(index) {
-  if (this.state_ !== SampleIme.State.COMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.removeCharacter_ =
+    function(index) {
+  if (this.state_ != sampleImeForImeExtensionApi.SampleIme.State.COMPOSITION) {
     return;
   }
 
@@ -488,7 +651,7 @@ SampleIme.prototype.removeCharacter_ = function(index) {
   this.inputText_ =
       this.inputText_.substr(0, index) + this.inputText_.substr(index + 1);
 
-  if (this.inputText_.length === 0) {
+  if (this.inputText_.length == 0) {
     this.clear_();
     return;
   }
@@ -505,8 +668,8 @@ SampleIme.prototype.removeCharacter_ = function(index) {
  * @param {number} index Cursor position.
  * @private
  */
-SampleIme.prototype.moveCursor_ = function(index) {
-  if (this.state_ !== SampleIme.State.COMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.moveCursor_ = function(index) {
+  if (this.state_ != sampleImeForImeExtensionApi.SampleIme.State.COMPOSITION) {
     return;
   }
 
@@ -521,12 +684,13 @@ SampleIme.prototype.moveCursor_ = function(index) {
  * Expands a focused segment.
  * @private
  */
-SampleIme.prototype.expandSegment_ = function() {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.expandSegment_ = function() {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     return;
   }
 
-  this.state_ = SampleIme.State.CONVERSION;
+  this.state_ = sampleImeForImeExtensionApi.SampleIme.State.CONVERSION;
 
   var index = this.focusedSegmentIndex_;
   var segments = this.segments_;
@@ -534,10 +698,10 @@ SampleIme.prototype.expandSegment_ = function() {
     return;
   }
 
-  if ((index + 2 === segments.length &&
-       segments[index + 1].start + 1 === this.inputText_.length) ||
+  if ((index + 2 == segments.length &&
+       segments[index + 1].start + 1 == this.inputText_.length) ||
       (index + 2 < segments.length &&
-       segments[index + 1].start + 1 === segments[index + 2].start)) {
+       segments[index + 1].start + 1 == segments[index + 2].start)) {
     segments.splice(index + 1, 1);
   } else {
     ++segments[index + 1].start;
@@ -551,17 +715,18 @@ SampleIme.prototype.expandSegment_ = function() {
  * Shrinks a focused segment.
  * @private
  */
-SampleIme.prototype.shrinkSegment_ = function() {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.shrinkSegment_ = function() {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     return;
   }
 
-  this.state_ = SampleIme.State.CONVERSION;
+  this.state_ = sampleImeForImeExtensionApi.SampleIme.State.CONVERSION;
 
   var segments = this.segments_;
   var index = this.focusedSegmentIndex_;
 
-  if (index + 1 === segments.length) {
+  if (index + 1 == segments.length) {
     if (this.inputText_.length - segments[index].start > 1) {
       this.appendNewSegment_();
       segments[index + 1].start = this.inputText_.length - 1;
@@ -581,8 +746,8 @@ SampleIme.prototype.shrinkSegment_ = function() {
  * Resets a segmentation data of the preedit text.
  * @private
  */
-SampleIme.prototype.resetSegments_ = function() {
-  if (this.state_ !== SampleIme.State.CONVERSION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.resetSegments_ = function() {
+  if (this.state_ != sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
     return;
   }
 
@@ -590,7 +755,7 @@ SampleIme.prototype.resetSegments_ = function() {
   this.appendNewSegment_();
   this.focusedSegmentIndex_ = 0;
   this.generateCandidates_();
-  this.state_ = SampleIme.State.COMPOSITION;
+  this.state_ = sampleImeForImeExtensionApi.SampleIme.State.COMPOSITION;
 };
 
 /**
@@ -598,8 +763,10 @@ SampleIme.prototype.resetSegments_ = function() {
  * @param {number} candidateID index of the candidate.
  * @private
  */
-SampleIme.prototype.focusCandidate_ = function(candidateID) {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.focusCandidate_ =
+    function(candidateID) {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     return;
   }
 
@@ -609,7 +776,7 @@ SampleIme.prototype.focusCandidate_ = function(candidateID) {
   }
 
   segment.focusedIndex = candidateID;
-  this.state_ = SampleIme.State.CONVERSION;
+  this.state_ = sampleImeForImeExtensionApi.SampleIme.State.CONVERSION;
 };
 
 /**
@@ -617,8 +784,9 @@ SampleIme.prototype.focusCandidate_ = function(candidateID) {
  * @param {number} segmentID index of the segment.
  * @private
  */
-SampleIme.prototype.focusSegment_ = function(segmentID) {
-  if (this.state_ !== SampleIme.State.CONVERSION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.focusSegment_ =
+    function(segmentID) {
+  if (this.state_ != sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
     return;
   }
 
@@ -631,11 +799,11 @@ SampleIme.prototype.focusSegment_ = function(segmentID) {
 
 /**
  * Handles a alphabet key.
- * @param {Object} keyData key event data.
+ * @param {!Object} keyData key event data.
  * @return {boolean} true if key event is consumed.
  * @private
  */
-SampleIme.prototype.handleKey_ = function(keyData) {
+sampleImeForImeExtensionApi.SampleIme.prototype.handleKey_ = function(keyData) {
   var keyValue = keyData.key;
 
   if (keyData.altKey || keyData.ctrlKey || keyData.shiftKey) {
@@ -646,7 +814,7 @@ SampleIme.prototype.handleKey_ = function(keyData) {
     return false;
   }
 
-  if (this.state_ === SampleIme.State.CONVERSION) {
+  if (this.state_ == sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
     this.commit_();
   }
 
@@ -659,12 +827,14 @@ SampleIme.prototype.handleKey_ = function(keyData) {
 
 /**
  * Handles a non-alphabet key.
- * @param {Object} keyData key event data.
+ * @param {!Object} keyData key event data.
  * @return {boolean} true if key event is consumed.
  * @private
  */
-SampleIme.prototype.handleSpecialKey_ = function(keyData) {
-  if (this.state_ === SampleIme.State.PRECOMPOSITION) {
+sampleImeForImeExtensionApi.SampleIme.prototype.handleSpecialKey_ =
+    function(keyData) {
+  if (this.state_ ==
+      sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
     return false;
   }
 
@@ -673,22 +843,24 @@ SampleIme.prototype.handleSpecialKey_ = function(keyData) {
   if (!keyData.altKey && !keyData.ctrlKey && !keyData.shiftKey) {
     switch (keyData.key) {
     case 'Backspace':
-      if (this.state_ === SampleIme.State.CONVERSION) {
+      if (this.state_ ==
+          sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
         this.resetSegments_();
-      } else if (this.cursor_ !== 0) {
+      } else if (this.cursor_ != 0) {
         this.removeCharacter_(this.cursor_ - 1);
       }
       break;
     case 'Delete':
-      if (this.state_ === SampleIme.State.CONVERSION) {
+      if (this.state_ ==
+          sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
         this.resetSegments_();
-      } else if (this.cursor_ !== this.inputText_.length) {
+      } else if (this.cursor_ != this.inputText_.length) {
         this.removeCharacter_(this.cursor_);
       }
       break;
     case 'Up':
       var previous_index = segment.focusedIndex - 1;
-      if (previous_index === -1) {
+      if (previous_index == -1) {
         previous_index = segment.candidates.length - 1;
       }
       this.focusCandidate_(previous_index);
@@ -696,14 +868,15 @@ SampleIme.prototype.handleSpecialKey_ = function(keyData) {
     case 'Down':
     case ' ':
       var next_index = segment.focusedIndex + 1;
-      if (next_index === segment.candidates.length) {
+      if (next_index == segment.candidates.length) {
         next_index = 0;
       }
       this.focusCandidate_(next_index);
       break;
     case 'Left':
-      if (this.state_ === SampleIme.State.CONVERSION) {
-        if (this.focusedSegmentIndex_ !== 0) {
+      if (this.state_ ==
+          sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
+        if (this.focusedSegmentIndex_ != 0) {
           this.focusSegment_(this.focusedSegmentIndex_ - 1);
         }
       } else {
@@ -711,8 +884,9 @@ SampleIme.prototype.handleSpecialKey_ = function(keyData) {
       }
       break;
     case 'Right':
-      if (this.state_ === SampleIme.State.CONVERSION) {
-        if (this.focusedSegmentIndex_ + 1 !== this.segments_.length) {
+      if (this.state_ ==
+          sampleImeForImeExtensionApi.SampleIme.State.CONVERSION) {
+        if (this.focusedSegmentIndex_ + 1 != this.segments_.length) {
           this.focusSegment_(this.focusedSegmentIndex_ + 1);
         }
       } else {
@@ -728,12 +902,14 @@ SampleIme.prototype.handleSpecialKey_ = function(keyData) {
   } else if (!keyData.altKey && !keyData.ctrlKey && keyData.shiftKey) {
     switch (keyData.key) {
     case 'Left':
-      if (this.state_ !== SampleIme.State.PRECOMPOSITION) {
+      if (this.state_ !=
+          sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
         this.shrinkSegment_();
       }
       break;
     case 'Right':
-      if (this.state_ !== SampleIme.State.PRECOMPOSITION) {
+      if (this.state_ !=
+          sampleImeForImeExtensionApi.SampleIme.State.PRECOMPOSITION) {
         this.expandSegment_();
       }
       break;
@@ -752,16 +928,12 @@ SampleIme.prototype.handleSpecialKey_ = function(keyData) {
  * Sets up a menu on a uber tray.
  * @private
  */
-SampleIme.prototype.setUpMenu_ = function() {
+sampleImeForImeExtensionApi.SampleIme.prototype.setUpMenu_ = function() {
   chrome.input.ime.setMenuItems({
     engineID: this.engineID_,
-    items: [
-      {
-        id: 'use_dummy_candidates',
-        label: 'Disable dummy candidates',
-        style: 'none'
-      }
-    ]
+    items: this.menuItems_
+  }, function() {
+    console.log('Menu items are set.');
   });
 };
 
@@ -769,8 +941,8 @@ SampleIme.prototype.setUpMenu_ = function() {
  * Callback method. It is called when IME is activated.
  * @param {string} engineID engine ID.
  */
-SampleIme.prototype.onActivate = function(engineID) {
-  console.log('onActivate [' + engineID + ']');
+sampleImeForImeExtensionApi.SampleIme.prototype.onActivate =
+    function(engineID) {
   this.engineID_ = engineID;
   this.clear_();
   this.setUpMenu_();
@@ -780,18 +952,17 @@ SampleIme.prototype.onActivate = function(engineID) {
  * Callback method. It is called when IME is deactivated.
  * @param {string} engineID engine ID.
  */
-SampleIme.prototype.onDeactivated = function(engineID) {
-  console.log('onDeactivated [' + engineID + ']');
+sampleImeForImeExtensionApi.SampleIme.prototype.onDeactivated =
+    function(engineID) {
   this.clear_();
   this.engineID_ = '';
 };
 
 /**
  * Callback method. It is called when a context acquires a focus.
- * @param {Object} context context information.
+ * @param {!Object} context context information.
  */
-SampleIme.prototype.onFocus = function(context) {
-  console.log('onFocus');
+sampleImeForImeExtensionApi.SampleIme.prototype.onFocus = function(context) {
   this.context_ = context;
   this.clear_();
 };
@@ -800,36 +971,39 @@ SampleIme.prototype.onFocus = function(context) {
  * Callback method. It is called when a context lost a focus.
  * @param {number} contextID ID of the context.
  */
-SampleIme.prototype.onBlur = function(contextID) {
-  console.log('onBlur');
+sampleImeForImeExtensionApi.SampleIme.prototype.onBlur = function(contextID) {
   this.clear_();
   this.context_ = null;
 };
 
 /**
  * Callback method. It is called when properties of the context is changed.
- * @param {Object} context context information.
+ * @param {!Object} context context information.
  */
-SampleIme.prototype.onInputContextUpdate = function(context) {
-  console.log('onInputContextUpdate');
+sampleImeForImeExtensionApi.SampleIme.prototype.onInputContextUpdate =
+    function(context) {
   this.context_ = context;
+  if (!this.isImeEnabled_()) {
+    this.clear_();
+  }
+
   this.update_();
 };
 
 /**
  * Callback method. It is called when IME catches a new key event.
- * @param {number} engineID ID of the engine.
- * @param {Object} keyData key event data.
+ * @param {string} engineID ID of the engine.
+ * @param {!Object} keyData key event data.
  * @return {boolean} true if the key event is consumed.
  */
-SampleIme.prototype.onKeyEvent = function(engineID, keyData) {
-  console.log('onKeyEvent [' + engineID + '] key: ' + keyData.key);
-
-  if (keyData.type !== 'keydown') {
+sampleImeForImeExtensionApi.SampleIme.prototype.onKeyEvent =
+    function(engineID, keyData) {
+  if (keyData.type != 'keydown' || !this.isImeEnabled_()) {
     return false;
   }
 
-  if (this.ignoreKeySet_[this.stringifyKeyAndModifiers_(keyData)]) {
+  var key = this.stringifyKeyAndModifiers_(keyData);
+  if (sampleImeForImeExtensionApi.SampleIme.IGNORABLE_KEY_SET_[key]) {
     return false;
   }
 
@@ -838,54 +1012,46 @@ SampleIme.prototype.onKeyEvent = function(engineID, keyData) {
 
 /**
  * Callback method. It is called when candidates on candidate window is clicked.
- * @param {number} engineID ID of the engine.
+ * @param {string} engineID ID of the engine.
  * @param {number} candidateID Index of the candidate.
  * @param {string} button Which mouse button was clicked.
  */
-SampleIme.prototype.onCandidateClicked =
+sampleImeForImeExtensionApi.SampleIme.prototype.onCandidateClicked =
     function(engineID, candidateID, button) {
-  console.log('onCandidateClicked [' + engineID + ']');
-  if (button === 'left') {
+  if (button == 'left') {
     this.focusCandidate_(candidateID);
+    this.update_();
   }
 };
 
 /**
  * Callback method. It is called when menu item on uber tray is activated.
- * @param {number} engineID ID of the engine.
+ * @param {string} engineID ID of the engine.
  * @param {string} name name of the menu item.
  */
-SampleIme.prototype.onMenuItemActivated = function(engineID, name) {
-  console.log('onMenuItemActivated [' + engineID + ']');
-
-  if (name !== 'use_dummy_candidates') {
+sampleImeForImeExtensionApi.SampleIme.prototype.onMenuItemActivated =
+    function(engineID, name) {
+  var callback = this.menuItemCallbackTable_[name];
+  if (typeof(callback) != 'function') {
     return;
   }
-  var menuItem = {
-    id: 'use_dummy_candidates',
-    style: 'none'
-  };
 
-  this.useDummyCandidates_ = !this.useDummyCandidates_;
-  if (this.useDummyCandidates_) {
-    menuItem.label = 'Disable dummy candidates';
-  } else {
-    menuItem.label = 'Enable dummy candidates';
-  }
+  callback();
 
   chrome.input.ime.updateMenuItems({
     engineID: engineID,
-    items: [menuItem]
+    items: this.menuItems_
+  }, function() {
+    console.log('Menu items are updated.');
   });
 };
 
 /**
- * Initializes IME.
+ * Registers IME.
  */
 document.addEventListener('readystatechange', function() {
-  if (document.readyState === 'complete') {
-    console.log('Initializing Sample IME...');
-    var sample_ime = new SampleIme;
+  if (document.readyState == 'complete') {
+    var sample_ime = new sampleImeForImeExtensionApi.SampleIme;
 
     chrome.input.ime.onActivate.addListener(
       function(engineID) { sample_ime.onActivate(engineID); });
@@ -910,4 +1076,4 @@ document.addEventListener('readystatechange', function() {
         sample_ime.onMenuItemActivated(engineID, name);
       });
   }
-});
+}, true);

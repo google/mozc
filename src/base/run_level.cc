@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,10 @@
 
 #include "base/run_level.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #include <aclapi.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_LINUX
 #include <unistd.h>
@@ -42,6 +42,7 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/scoped_handle.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_sandbox.h"
 #include "base/win_util.h"
@@ -52,7 +53,7 @@ namespace {
 const wchar_t kElevatedProcessDisabledName[]
 = L"elevated_process_disabled";
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // Returns true if both array have the same content.
 template <typename T, size_t ArraySize>
 bool AreEqualArray(const T (&lhs)[ArraySize], const T (&rhs)[ArraySize]) {
@@ -105,7 +106,7 @@ bool IsDifferentUser(const HANDLE hToken) {
 // This code is written by thatanaka
 bool IsElevatedByUAC(const HANDLE hToken) {
   // UAC is supported only on Vista or later.
-  if (!Util::IsVistaOrLater()) {
+  if (!SystemUtil::IsVistaOrLater()) {
     return false;
   }
 
@@ -149,11 +150,11 @@ bool IsElevatedByUAC(const HANDLE hToken) {
 
   return (SECURITY_MANDATORY_MEDIUM_RID < *pdwIntegrityLevelRID);
 }
-#endif   // OS_WINDOWS
+#endif   // OS_WIN
 }  // namespace
 
 RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   bool is_service_process = false;
   if (!WinUtil::IsServiceProcess(&is_service_process)) {
     // Returns DENY conservatively.
@@ -220,11 +221,11 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     // Get the server path before the process is sandboxed.
     // SHGetFolderPath may fail in a sandboxed process.
     // See http://b/2301066 for details.
-    const volatile string sys_dir = Util::GetServerDirectory();
+    const volatile string sys_dir = SystemUtil::GetServerDirectory();
 
     // Get the user profile path here because of the same reason.
     // See http://b/2301066 for details.
-    const string user_dir = Util::GetUserProfileDirectory();
+    const string user_dir = SystemUtil::GetUserProfileDirectory();
 
     wstring dir;
     Util::UTF8ToWide(user_dir.c_str(), &dir);
@@ -310,7 +311,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
 }
 
 bool RunLevel::IsProcessInJob() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Check to see if we're in a job where
   // we can't create a child in our sandbox
 
@@ -337,8 +338,8 @@ bool RunLevel::IsProcessInJob() {
 }
 
 bool RunLevel::IsElevatedByUAC() {
-#ifdef OS_WINDOWS
-  if (!Util::IsVistaOrLater()) {
+#ifdef OS_WIN
+  if (!SystemUtil::IsVistaOrLater()) {
     return false;
   }
 
@@ -358,7 +359,7 @@ bool RunLevel::IsElevatedByUAC() {
 }
 
 bool RunLevel::SetElevatedProcessDisabled(bool disable) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   HKEY key = 0;
   LONG result = ::RegCreateKeyExW(HKEY_CURRENT_USER,
                                   kElevatedProcessDisabledKey,
@@ -390,7 +391,7 @@ bool RunLevel::SetElevatedProcessDisabled(bool disable) {
 }
 
 bool RunLevel::GetElevatedProcessDisabled() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   HKEY  key = 0;
   LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER,
                                 kElevatedProcessDisabledKey,

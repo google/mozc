@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,8 @@
       'target_name': 'dictionary_test',
       'type': 'executable',
       'sources': [
-        'dictionary_mock_test.cc',
         'dictionary_impl_test.cc',
+        'dictionary_mock_test.cc',
         'suppression_dictionary_test.cc',
         'user_dictionary_importer_test.cc',
         'user_dictionary_session_handler_test.cc',
@@ -55,8 +55,8 @@
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../data_manager/testing/mock_data_manager_base.gyp:mock_user_pos_manager',
         '../testing/testing.gyp:gtest_main',
-        '../usage_stats/usage_stats.gyp:usage_stats',
-        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
+        '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'dictionary.gyp:dictionary',
         'dictionary.gyp:dictionary_mock',
         'dictionary_base.gyp:suppression_dictionary',

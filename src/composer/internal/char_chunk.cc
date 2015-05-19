@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -108,13 +108,13 @@ bool GetFromPending(const Table *table, const string &key,
 }
 }  // anonymous namespace
 
-CharChunk::CharChunk(const TransliteratorInterface *transliterator,
+CharChunk::CharChunk(Transliterators::Transliterator transliterator,
                      const Table *table)
-    : transliterator_((transliterator == NULL) ?
-                      Transliterators::GetConversionStringSelector() :
-                      transliterator),
+    : transliterator_(transliterator),
       table_(table),
-      attributes_(NO_TABLE_ATTRIBUTE) {}
+      attributes_(NO_TABLE_ATTRIBUTE) {
+  DCHECK_NE(Transliterators::LOCAL, transliterator);
+}
 
 void CharChunk::Clear() {
   raw_.clear();
@@ -123,24 +123,24 @@ void CharChunk::Clear() {
   ambiguous_.clear();
 }
 
-size_t CharChunk::GetLength(const TransliteratorInterface *t12r) const {
-  const string t13n =
-    GetTransliterator(t12r)->Transliterate(
-        Table::DeleteSpecialKey(raw_),
-        Table::DeleteSpecialKey(conversion_ + pending_));
+size_t CharChunk::GetLength(Transliterators::Transliterator t12r) const {
+  const string t13n = Transliterate(
+      t12r,
+      Table::DeleteSpecialKey(raw_),
+      Table::DeleteSpecialKey(conversion_ + pending_));
   return Util::CharsLen(t13n);
 }
 
-void CharChunk::AppendResult(const TransliteratorInterface *t12r,
+void CharChunk::AppendResult(Transliterators::Transliterator t12r,
                              string *result) const {
-  const string t13n =
-    GetTransliterator(t12r)->Transliterate(
-        Table::DeleteSpecialKey(raw_),
-        Table::DeleteSpecialKey(conversion_ + pending_));
+  const string t13n = Transliterate(
+      t12r,
+      Table::DeleteSpecialKey(raw_),
+      Table::DeleteSpecialKey(conversion_ + pending_));
   result->append(t13n);
 }
 
-void CharChunk::AppendTrimedResult(const TransliteratorInterface *t12r,
+void CharChunk::AppendTrimedResult(Transliterators::Transliterator t12r,
                                    string *result) const {
   // Only determined value (e.g. |conversion_| only) is added.
   string converted = conversion_;
@@ -152,12 +152,13 @@ void CharChunk::AppendTrimedResult(const TransliteratorInterface *t12r,
       converted.append(entry->result());
     }
   }
-  result->append(GetTransliterator(t12r)->Transliterate(
-                     Table::DeleteSpecialKey(raw_),
-                     Table::DeleteSpecialKey(converted)));
+  result->append(Transliterate(
+      t12r,
+      Table::DeleteSpecialKey(raw_),
+      Table::DeleteSpecialKey(converted)));
 }
 
-void CharChunk::AppendFixedResult(const TransliteratorInterface *t12r,
+void CharChunk::AppendFixedResult(Transliterators::Transliterator t12r,
                                   string *result) const {
   string converted = conversion_;
   if (!ambiguous_.empty()) {
@@ -172,9 +173,10 @@ void CharChunk::AppendFixedResult(const TransliteratorInterface *t12r,
     // appended.
     converted.append(pending_);
   }
-  result->append(GetTransliterator(t12r)->Transliterate(
-                     Table::DeleteSpecialKey(raw_),
-                     Table::DeleteSpecialKey(converted)));
+  result->append(Transliterate(
+      t12r,
+      Table::DeleteSpecialKey(raw_),
+      Table::DeleteSpecialKey(converted)));
 }
 
 // If we have the rule (roman),
@@ -216,8 +218,7 @@ void CharChunk::AppendFixedResult(const TransliteratorInterface *t12r,
 //
 // What we want to append here is the 'looped rule' in |kMaxRecursion| lookup.
 // Here, '{*}ぁ' -> '{*}あ' -> '{*}ぁ' is the loop.
-void CharChunk::GetExpandedResults(const TransliteratorInterface *t12r,
-                                   set<string> *results) const {
+void CharChunk::GetExpandedResults(set<string> *results) const {
   DCHECK(results);
 
   if (pending_.empty()) {
@@ -252,15 +253,15 @@ bool CharChunk::IsFixed() const {
   return pending_.empty();
 }
 
-bool CharChunk::IsAppendable(const TransliteratorInterface *t12r,
+bool CharChunk::IsAppendable(Transliterators::Transliterator t12r,
                              const Table *table) const {
   return !pending_.empty() &&
-      (t12r == NULL || t12r == transliterator_) &&
-      (table == table_);
+      (t12r == Transliterators::LOCAL || t12r == transliterator_) &&
+      table == table_;
 }
 
 bool CharChunk::IsConvertible(
-    const TransliteratorInterface *t12r,
+    Transliterators::Transliterator t12r,
     const Table *table,
     const string &input) const {
   if (!IsAppendable(t12r, table)) {
@@ -323,7 +324,7 @@ bool CharChunk::AddInputInternal(string *input) {
     key_length -= pending_.size();
 
     // Conversion data had only pending.
-    const string new_pending_chars = input->substr(0, key_length);
+    const string new_pending_chars(*input, 0, key_length);
     raw_.append(new_pending_chars);
     pending_.append(new_pending_chars);
     if (!ambiguous_.empty()) {
@@ -369,8 +370,8 @@ bool CharChunk::AddInputInternal(string *input) {
   DeleteEnd(pending_, &raw_);
 
   // A result was found without any ambiguity.
-  input->assign(key.substr(key_length));
-  raw_.append(key.substr(0, key_length));
+  input->assign(key, key_length, key.size() - key_length);
+  raw_.append(key, 0, key_length);
   conversion_.append(entry->result());
   pending_ = entry->pending();
   ambiguous_.clear();
@@ -464,7 +465,7 @@ void CharChunk::AddInputAndConvertedChar(string *key,
   // char_chunk.  This is not a preferred behavior, but there is no
   // better way to work around this limitation.
   key->clear();
-  converted_char->assign(input.substr(key_length));
+  converted_char->assign(input, key_length, input.size() - key_length);
 }
 
 bool CharChunk::ShouldCommit() const {
@@ -504,8 +505,10 @@ void CharChunk::AddCompositionInput(CompositionInput *input) {
 }
 
 void CharChunk::SetTransliterator(
-    const TransliteratorInterface *transliterator) {
-  if (transliterator == NULL) {
+    const Transliterators::Transliterator transliterator) {
+  if (transliterator == Transliterators::LOCAL) {
+    // LOCAL transliterator shouldn't be set as local transliterator.
+    // Just ignore.
     return;
   }
   transliterator_ = transliterator;
@@ -543,7 +546,7 @@ void CharChunk::set_ambiguous(const string &ambiguous) {
   ambiguous_ = ambiguous;
 }
 
-bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
+bool CharChunk::SplitChunk(Transliterators::Transliterator t12r,
                            const size_t position,
                            CharChunk **left_new_chunk) {
   if (position <= 0 || position >= GetLength(t12r)) {
@@ -552,7 +555,7 @@ bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
   }
 
   string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
-  GetTransliterator(t12r)->Split(
+  Transliterators::GetTransliterator(GetTransliterator(t12r))->Split(
       position,
       Table::DeleteSpecialKey(raw_),
       Table::DeleteSpecialKey(conversion_ + pending_),
@@ -564,7 +567,7 @@ bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
 
   if (converted_lhs.size() > conversion_.size()) {
     // [ conversion | pending ] => [ conv | pend#1 ] [ pend#2 ]
-    const string pending_lhs = converted_lhs.substr(conversion_.size());
+    const string pending_lhs(converted_lhs, conversion_.size());
     (*left_new_chunk)->set_conversion(conversion_);
     (*left_new_chunk)->set_pending(pending_lhs);
 
@@ -576,25 +579,36 @@ bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
     (*left_new_chunk)->set_conversion(converted_lhs);
     // left_new_chunk->set_pending("");
     const size_t pending_pos = converted_rhs.size() - pending_.size();
-    conversion_ = converted_rhs.substr(0, pending_pos);
+    conversion_.assign(converted_rhs, 0, pending_pos);
     // pending_ = pending_;
   }
   return true;
 }
 
-const TransliteratorInterface *CharChunk::GetTransliterator(
-    const TransliteratorInterface *transliterator) const {
-  if (transliterator != NULL) {
+Transliterators::Transliterator
+CharChunk::GetTransliterator(
+    Transliterators::Transliterator transliterator) const {
+  if (attributes_ && NO_TRANSLITERATION) {
+    if (transliterator == Transliterators::LOCAL ||
+        transliterator == Transliterators::HALF_ASCII ||
+        transliterator == Transliterators::FULL_ASCII) {
+      return Transliterators::CONVERSION_STRING;
+    }
     return transliterator;
   }
-
-  if (attributes_ & NO_TRANSLITERATION) {
-    return Transliterators::GetConversionStringSelector();
+  if (transliterator == Transliterators::LOCAL) {
+      return transliterator_;
   }
-
-  DCHECK(transliterator_);
-  return transliterator_;
+  return transliterator;
 }
+
+string CharChunk::Transliterate(
+    Transliterators::Transliterator transliterator,
+    const string &raw, const string &converted) const {
+  return Transliterators::GetTransliterator(
+      GetTransliterator(transliterator))->Transliterate(raw, converted);
+}
+
 
 CharChunk *CharChunk::Clone() const {
   // TODO(hsumita): Implements TransliteratorFactory and uses it instead of

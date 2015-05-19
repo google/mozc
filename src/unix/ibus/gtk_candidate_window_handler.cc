@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include <unistd.h>
 
+#include "base/logging.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/unix/const.h"

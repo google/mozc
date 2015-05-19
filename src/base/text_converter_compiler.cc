@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@ namespace mozc {
 static void Compile(const string &files,
                     const string &header_filename) {
   OutputFileStream ofs(header_filename.c_str());
-  CHECK(ofs);
+  CHECK(ofs.good());
 
   ofs << "namespace {" << endl;
 
@@ -70,11 +70,11 @@ static void Compile(const string &files,
     const string &filename = rules[i].first;
     const string &name = rules[i].second;
     InputFileStream ifs(filename.c_str());
-    CHECK(ifs);
+    CHECK(ifs.good());
     vector<string> col;
     string line, output;
     vector<pair<string, int> > dic;
-    while (getline(ifs, line)) {
+    while (!getline(ifs, line).fail()) {
       col.clear();
       mozc::Util::SplitStringUsing(line, "\t", &col);
       CHECK_GE(col.size(), 2) << "format error: " << line;

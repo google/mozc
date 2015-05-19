@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,7 @@ class CollocationRewriter : public RewriterInterface {
                                Segment *seg) const;
   bool RewriteCollocation(Segments *segments) const;
 
+  const POSMatcher *pos_matcher_;
   const uint16 first_name_id_;
   const uint16 last_name_id_;
 

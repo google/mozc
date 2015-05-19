@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,19 +34,19 @@
 #include "base/base.h"
 #include "base/const.h"
 #include "base/encryptor.h"
+#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/password_manager.h"
 #include "base/singleton.h"
 
 namespace mozc {
 //////////////////////////////////////////////////////////////////
-// DeprecatedMacPasswordManager copied from password_manager.cc
 namespace {
 static const char kMacPasswordManagerName[] = kProductPrefix;
 
 class DeprecatedMacPasswordManager : public PasswordManagerInterface {
  public:
-  DeprecatedMacPasswordManager(const string &key = kProductPrefix)
+  explicit DeprecatedMacPasswordManager(const string &key = kProductPrefix)
       : key_(key) {}
 
   bool FindKeychainItem(string *password, SecKeychainItemRef *item_ref) const {
@@ -128,7 +128,8 @@ const size_t kMaxFileSize = 64 * 1024 * 1024;
 }  // namespace
 
 namespace mac {
-DeprecatedUserHistoryStorage::DeprecatedUserHistoryStorage(const string &filename)
+DeprecatedUserHistoryStorage::DeprecatedUserHistoryStorage(
+    const string &filename)
     : filename_(filename) {}
 
 DeprecatedUserHistoryStorage::~DeprecatedUserHistoryStorage() {}
@@ -196,5 +197,5 @@ bool DeprecatedUserHistoryStorage::Load() {
   return true;
 }
 
-}  // namespace mozc::mac
+}  // namespace mac
 }  // namespace mozc

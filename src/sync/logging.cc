@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,22 +29,22 @@
 
 #include "sync/logging.h"
 
-#include <string>
-
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <sys/stat.h>
-#include <unistd.h>
 #endif
 
-#include "base/base.h"
+#include <cstddef>
+#include <string>
+
+#include "base/port.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
-#include "base/util.h"
-#include "config/config.pb.h"
-#include "config/config_handler.h"
+#include "base/system_util.h"
 
 DECLARE_string(log_dir);
 DEFINE_int32(sync_verbose_level, 1,
@@ -60,7 +60,7 @@ const size_t kMaxSyncLogSize = 1024 * 1024 * 5;  // 5MByte
 class LogStreamImpl {
  public:
   LogStreamImpl() {
-    Open(sync::Logging::GetLogFileName());
+    Open(Logging::GetLogFileName());
   }
 
   ostream &stream() {
@@ -69,13 +69,12 @@ class LogStreamImpl {
 
   void Reset() {
     stream_.reset(NULL);
-    const string &filename = sync::Logging::GetLogFileName();
-    Util::Unlink(filename);
+    const string &filename = Logging::GetLogFileName();
+    FileUtil::Unlink(filename);
     Open(filename);
   }
 
   void TruncateStream() {
-    scoped_lock l(&mutex_);
     CHECK(stream_.get());
     const size_t size = static_cast<size_t>(stream_->tellp());
     if (size < kMaxSyncLogSize) {
@@ -84,9 +83,9 @@ class LogStreamImpl {
 
     LOG(INFO) << "Truncating logging stream";
     stream_.reset(NULL);
-    const string filename = sync::Logging::GetLogFileName();
+    const string filename = Logging::GetLogFileName();
     const string tmp_filename = filename + ".tmp";
-    Util::AtomicRename(filename, tmp_filename);
+    FileUtil::AtomicRename(filename, tmp_filename);
     Open(filename);
     {
       InputFileStream ifs(tmp_filename.c_str());
@@ -99,22 +98,21 @@ class LogStreamImpl {
       }
       stream_->flush();
     }
-    Util::Unlink(tmp_filename);
+    FileUtil::Unlink(tmp_filename);
   }
 
  private:
   void Open(const string &filename) {
     stream_.reset(new OutputFileStream(filename.c_str(), ios::app));
     CHECK(stream_.get());
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
     ::chmod(filename.c_str(), 0600);
 #endif
   }
 
-  Mutex mutex_;
   scoped_ptr<ostream> stream_;
 };
-}
+}  // namespace
 
 // static
 ostream &Logging::GetLogStream() {
@@ -128,9 +126,9 @@ int Logging::GetVerboseLevel() {
 
 // static
 string Logging::GetLogFileName() {
-  return Util::JoinPath(FLAGS_log_dir.empty() ?
-                        Util::GetLoggingDirectory() :
-                        FLAGS_log_dir, kSyncLogFileName);
+  return FileUtil::JoinPath(FLAGS_log_dir.empty() ?
+                            SystemUtil::GetLoggingDirectory() :
+                            FLAGS_log_dir, kSyncLogFileName);
 }
 
 // static
@@ -138,9 +136,19 @@ void Logging::Reset() {
   Singleton<LogStreamImpl>::get()->Reset();
 }
 
+namespace {
+Mutex g_log_finalizer_mutex;
+}  // namespace
+
+LogFinalizer::LogFinalizer() {
+  g_log_finalizer_mutex.Lock();
+}
+
 LogFinalizer::~LogFinalizer() {
   Singleton<LogStreamImpl>::get()->stream() << endl;
   Singleton<LogStreamImpl>::get()->TruncateStream();
+  g_log_finalizer_mutex.Unlock();
 }
-}  // sync
-}  // mozc
+
+}  // namespace sync
+}  // namespace mozc

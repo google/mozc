@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -156,7 +156,7 @@ class ScopedCanidateInfoBuffer {
 
 // TODO(yukawa): Make a common library for this function.
 void FillOutputForSuggestion(commands::Output *output) {
-  DCHECK_NE(NULL, output);
+  DCHECK_NE(nullptr, output);
   output->Clear();
 
   output->set_mode(commands::HIRAGANA);
@@ -198,7 +198,6 @@ void FillOutputForSuggestion(commands::Output *output) {
       footer->set_sub_label("build 436");
     }
   }
-  output->set_elapsed_time(1000);
   {
     commands::Status *status = output->mutable_status();
     status->set_activated(true);
@@ -233,7 +232,7 @@ void FillOutputForConversion(
     commands::Output *output, int focused_index, bool has_candidates) {
   DCHECK_LE(0, focused_index);
   DCHECK_GT(kNumCandidates, focused_index);
-  DCHECK_NE(NULL, output);
+  DCHECK_NE(nullptr, output);
   output->Clear();
 
   const int32 focused_value_length = kValueLengths[focused_index];
@@ -487,7 +486,6 @@ void FillOutputForConversion(
       footer->set_sub_label("build 436");
     }
   }
-  output->set_elapsed_time(1000);
   {
     commands::Status *status = output->mutable_status();
     status->set_activated(true);

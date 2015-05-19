@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,32 +27,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 
 #include <QtGui/QApplication>
 #include <QtCore/QFile>
-#include "base/base.h"
+#include "base/logging.h"
+#include "base/system_util.h"
 #include "base/util.h"
-#include "handwriting/handwriting_manager.h"
-#include "handwriting/zinnia_handwriting.h"
 #include "gui/base/locale_util.h"
 #include "gui/base/win_util.h"
 #include "gui/character_pad/character_palette.h"
 #include "gui/character_pad/hand_writing.h"
 #include "gui/character_pad/selection_handler.h"
 #include "gui/character_pad/windows_selection_handler.h"
+#include "handwriting/handwriting_manager.h"
+#include "handwriting/zinnia_handwriting.h"
 
 namespace {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 void InstallStyleSheet(const string &style_sheet) {
   QFile file(style_sheet.c_str());
   file.open(QFile::ReadOnly);
   qApp->setStyleSheet(QLatin1String(file.readAll()));
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 enum {
   CHARACTER_PALETTE,
@@ -65,7 +66,7 @@ int RunCharacterPad(int argc, char *argv[],
   Q_INIT_RESOURCE(qrc_character_pad);
   QApplication app(argc, argv);
 
-  mozc::Util::DisableIME();
+  mozc::SystemUtil::DisableIME();
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("character_pad");
 
@@ -78,7 +79,7 @@ int RunCharacterPad(int argc, char *argv[],
   }
   CHECK(window.get());
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   mozc::gui::WindowsSelectionHandler callback;
   mozc::gui::SelectionHandler::SetSelectionCallback(&callback);
 
@@ -97,7 +98,7 @@ int RunCharacterPad(int argc, char *argv[],
   ::SetWindowLong(window->winId(), GWL_EXSTYLE, style);
 
   // Aero
-  if (mozc::Util::IsVistaOrLater()) {
+  if (mozc::SystemUtil::IsVistaOrLater()) {
     window->setContentsMargins(0, 0, 0, 0);
     mozc::gui::WinUtil::InstallStyleSheetsFiles(
         ":character_pad_win_aero_style.qss",

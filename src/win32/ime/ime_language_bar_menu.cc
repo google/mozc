@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,8 @@
 
 #include <limits>
 
-#include "base/util.h"
+#include "base/logging.h"
+#include "base/system_util.h"
 #include "base/win_util.h"
 #include "win32/ime/ime_impl_imm.h"
 #include "win32/ime/ime_language_bar.h"
@@ -81,23 +82,23 @@ HICON LoadIconFromResource(HINSTANCE instance,
     // reference count of the theme DLL while we call IsThemeActive API.
     const HMODULE theme_dll =
         mozc::WinUtil::GetSystemModuleHandleAndIncrementRefCount(kThemeDll);
-    if (theme_dll != NULL) {
+    if (theme_dll != nullptr) {
       FPIsThemeActive is_thread_active = reinterpret_cast<FPIsThemeActive>(
           ::GetProcAddress(theme_dll, "IsThemeActive"));
-      if (is_thread_active != NULL && is_thread_active()) {
+      if (is_thread_active != nullptr && is_thread_active()) {
         id = icon_id_for_theme;
       }
     }
-    if (theme_dll != NULL) {
+    if (theme_dll != nullptr) {
       ::FreeLibrary(theme_dll);
     }
   }
 
   if (id == 0) {
-    return NULL;
+    return nullptr;
   }
 
-  CDC desktop_dc(::GetDC(NULL));
+  CDC desktop_dc(::GetDC(nullptr));
   const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
   const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);
   const int icon_width = ::MulDiv(16, dpi_x, kDefaultDPI);
@@ -110,7 +111,7 @@ HICON LoadIconFromResource(HINSTANCE instance,
 
 // Retrieves the bitmap handle loaded by using an icon ID.
 // Returns true if the specified icons is available as bitmaps.
-// Caller can set NULL for |color| and/or |mask| to represent not to recieve
+// Caller can set nullptr for |color| and/or |mask| to represent not to recieve
 // the specified handle even if it exists.  Caller should releases any returned
 // bitmap handle and this function releases any handle which is not recieved
 // by the caller.
@@ -119,11 +120,11 @@ bool LoadIconAsBitmap(HINSTANCE instance,
                       UINT icon_id_for_theme,
                       HBITMAP *color,
                       HBITMAP *mask) {
-  if (color != NULL) {
-    *color = NULL;
+  if (color != nullptr) {
+    *color = nullptr;
   }
-  if (mask != NULL) {
-    *mask = NULL;
+  if (mask != nullptr) {
+    *mask = nullptr;
   }
 
   CIcon icon(LoadIconFromResource(
@@ -141,10 +142,10 @@ bool LoadIconAsBitmap(HINSTANCE instance,
   CBitmap color_bitmap(icon_info.hbmColor);
   CBitmap mask_bitmap(icon_info.hbmMask);
 
-  if (color != NULL) {
+  if (color != nullptr) {
     *color = color_bitmap.Detach();
   }
-  if (mask != NULL) {
+  if (mask != nullptr) {
     *mask = mask_bitmap.Detach();
   }
 
@@ -163,7 +164,7 @@ HRESULT ImeLangBarMenuDataArray::Init(
   for (int i = 0; i < count; ++i) {
     ImeLangBarMenuData data = {};
     int length = 0;
-    HICON icon = NULL;
+    HICON icon = nullptr;
     if ((menu[i].flags_ & TF_LBMENUF_SEPARATOR) == 0) {
       // Retrieve the menu text and button icon.
       length = ::LoadString(instance,
@@ -189,7 +190,7 @@ size_t ImeLangBarMenuDataArray::size() const {
 
 ImeLangBarMenuData* ImeLangBarMenuDataArray::data(size_t i) {
   if (i >= size()) {
-    return NULL;
+    return nullptr;
   }
   return &data_[i];
 }
@@ -197,9 +198,10 @@ ImeLangBarMenuData* ImeLangBarMenuDataArray::data(size_t i) {
 
 // Implements the constructor of the ImeLangBarMenu class.
 ImeLangBarMenu::ImeLangBarMenu(LangBarCallback *langbar_callback,
-                               const GUID& guid)
-    : item_sink_(NULL),
-      langbar_callback_(NULL),
+                               const GUID& guid,
+                               bool show_in_tray)
+    : item_sink_(nullptr),
+      langbar_callback_(nullptr),
       status_(0) {
   // Initialize its TF_LANGBARITEMINFO object, which contains the properties of
   // this item and is copied to the TSF manager in GetInfo() function.
@@ -211,9 +213,10 @@ ImeLangBarMenu::ImeLangBarMenu(LangBarCallback *langbar_callback,
   // document says "This flag is not currently supported".
   // http://msdn.microsoft.com/en-us/library/ms629078.aspx
   // http://b/2275633
-  // TODO(yukawa): Remove TF_LBI_STYLE_SHOWNINTRAY for "Tools" icon.
-  // http://b/2275683
-  item_info_.dwStyle = TF_LBI_STYLE_BTN_MENU | TF_LBI_STYLE_SHOWNINTRAY;
+  item_info_.dwStyle = TF_LBI_STYLE_BTN_MENU;
+  if (show_in_tray) {
+    item_info_.dwStyle |= TF_LBI_STYLE_SHOWNINTRAY;
+  }
   item_info_.ulSort = 0;
   item_info_.szDescription[0] = L'\0';
 
@@ -226,10 +229,10 @@ ImeLangBarMenu::ImeLangBarMenu(LangBarCallback *langbar_callback,
 // Implements the destructor of the ImeLangBarMenu class.
 ImeLangBarMenu::~ImeLangBarMenu() {
   // Release the owner LangBarCallback object.
-  if (langbar_callback_ != NULL) {
+  if (langbar_callback_ != nullptr) {
     langbar_callback_->Release();
   }
-  langbar_callback_ = NULL;
+  langbar_callback_ = nullptr;
 }
 
 // Implements the ITfLangBarItem::GetInfo() function.
@@ -294,7 +297,7 @@ STDAPI ImeLangBarMenu::AdviseSink(REFIID interface_id,
     return CONNECT_E_CANNOTCONNECT;
 
   // Exit if this object has a sink which advising ITfLangBarItemSink events.
-  if (item_sink_ != NULL)
+  if (item_sink_ != nullptr)
     return CONNECT_E_ADVISELIMIT;
 
   // Retrieve the ITfLangBarItemSink interface from the given object and store
@@ -302,7 +305,7 @@ STDAPI ImeLangBarMenu::AdviseSink(REFIID interface_id,
   HRESULT result = unknown->QueryInterface(IID_ITfLangBarItemSink,
       reinterpret_cast<void**>(&item_sink_));
   if (result != S_OK) {
-    item_sink_ = NULL;
+    item_sink_ = nullptr;
     return result;
   }
 
@@ -313,12 +316,12 @@ STDAPI ImeLangBarMenu::AdviseSink(REFIID interface_id,
 
 STDAPI ImeLangBarMenu::UnadviseSink(DWORD cookie) {
   // Return if the given cookie
-  if (cookie != kImeLangBarMenuCookie || item_sink_ == NULL)
+  if (cookie != kImeLangBarMenuCookie || item_sink_ == nullptr)
     return CONNECT_E_NOCONNECTION;
 
   // Release the copy of this event.
   item_sink_->Release();
-  item_sink_ = NULL;
+  item_sink_ = nullptr;
 
   return S_OK;
 }
@@ -347,7 +350,7 @@ HRESULT ImeLangBarMenu::Init(HINSTANCE instance,
 HRESULT ImeLangBarMenu::OnUpdate(DWORD update_flag) {
   // For some reason, this method might be called when the event sink is not
   // available. See b/2977835 for details.
-  if (item_sink_ == NULL) {
+  if (item_sink_ == nullptr) {
     return E_FAIL;
   }
   return item_sink_->OnUpdate(update_flag);
@@ -369,7 +372,7 @@ HRESULT ImeLangBarMenu::SetEnabled(bool enabled) {
 bool ImeLangBarMenu::CanContextMenuDisplay32bppIcon() {
   // Windows XP does not support a 32-bpp icon for a context menu icon on the
   // LangBar.  See http://b/2260057 for details.
-  if (!mozc::Util::IsVistaOrLater()) {
+  if (!mozc::SystemUtil::IsVistaOrLater()) {
     return false;
   }
 
@@ -377,7 +380,7 @@ bool ImeLangBarMenu::CanContextMenuDisplay32bppIcon() {
   // unless the current display mode is 32-bpp.  We cannot assume we can
   // display a 32-bpp icon for a context menu icon on the LangBar unless the
   // current display mode is 32-bpp.  See http://b/2260057
-  CDC display_dc(::GetDC(NULL));
+  CDC display_dc(::GetDC(nullptr));
   return !display_dc.IsNull() &&
          display_dc.GetDeviceCaps(PLANES) == 1 &&
          display_dc.GetDeviceCaps(BITSPIXEL) == 32;
@@ -436,13 +439,14 @@ STDAPI ImeLangBarMenu::QueryInterfaceBase(
   }
 
   // This object does not implement the given interface.
-  *object = NULL;
+  *object = nullptr;
   return E_NOINTERFACE;
 }
 
 ImeIconButtonMenu::ImeIconButtonMenu(LangBarCallback* langbar_callback,
-                                     const GUID& guid)
-    : ImeLangBarMenu(langbar_callback, guid),
+                                     const GUID& guid,
+                                     bool show_in_tray)
+    : ImeLangBarMenu(langbar_callback, guid, show_in_tray),
       reference_count_(0),
       menu_icon_id_for_theme_(0),
       menu_icon_id_for_non_theme_(0) {
@@ -497,7 +501,7 @@ STDAPI ImeIconButtonMenu::InitMenu(ITfMenu* menu) {
     CBitmap bitmap;
     CBitmap mask;
     // If LoadIconAsBitmap fails, |bitmap.m_hBitmap| and |mask.m_hBitmap|
-    // remain NULL bitmap handles.
+    // remain nullptr bitmap handles.
     LoadIconAsBitmap(ImeGetResource(),
                      data->icon_id_for_non_theme_,
                      icon_id_for_theme,
@@ -505,7 +509,7 @@ STDAPI ImeIconButtonMenu::InitMenu(ITfMenu* menu) {
                      &mask.m_hBitmap);
     result = menu->AddMenuItem(i, data->flags_, bitmap, mask,
                                data->text_, data->length_,
-                               NULL);
+                               nullptr);
     if (result != S_OK) {
       break;
     }
@@ -518,7 +522,7 @@ STDAPI ImeIconButtonMenu::OnMenuSelect(UINT menu_id) {
   // Call the LangBarCallback::OnMenuSelect() function to dispatch the
   // given event.
   ImeLangBarMenuData* data = menu_data(menu_id);
-  if (data == NULL) {
+  if (data == nullptr) {
     return E_INVALIDARG;
   }
   if (data->menu_id_ == LangBarCallback::kCancel) {
@@ -534,7 +538,7 @@ STDAPI ImeIconButtonMenu::OnMenuSelect(UINT menu_id) {
 STDAPI ImeIconButtonMenu::GetInfo(TF_LANGBARITEMINFO* item_info) {
   HRESULT result = S_OK;
 
-  if (item_info == NULL) {
+  if (item_info == nullptr) {
     return E_INVALIDARG;
   }
 
@@ -564,7 +568,7 @@ STDAPI ImeIconButtonMenu::GetInfo(TF_LANGBARITEMINFO* item_info) {
 
 
 STDAPI ImeIconButtonMenu::GetIcon(HICON* icon) {
-  if (icon == NULL) {
+  if (icon == nullptr) {
     return E_INVALIDARG;
   }
 
@@ -592,8 +596,9 @@ HRESULT ImeIconButtonMenu::Init(HINSTANCE instance,
 
 
 ImeToggleButtonMenu::ImeToggleButtonMenu(LangBarCallback* langbar_callback,
-                                         const GUID& guid)
-    : ImeLangBarMenu(langbar_callback, guid),
+                                         const GUID& guid,
+                                         bool show_in_tray)
+    : ImeLangBarMenu(langbar_callback, guid, show_in_tray),
       reference_count_(0),
       menu_selected_(0) {
 }
@@ -652,7 +657,7 @@ STDAPI_(ULONG) ImeToggleButtonMenu::Release() {
 STDAPI ImeToggleButtonMenu::GetInfo(TF_LANGBARITEMINFO* item_info) {
   HRESULT result = S_OK;
 
-  if (item_info == NULL) {
+  if (item_info == nullptr) {
     return E_INVALIDARG;
   }
 
@@ -690,9 +695,9 @@ STDAPI ImeToggleButtonMenu::InitMenu(ITfMenu* menu) {
   // Add the menu items of this object to the given ITfMenu object.
   for (size_t i = 0; i < menu_data_size(); ++i) {
     const ImeLangBarMenuData* data = menu_data(i);
-    result = menu->AddMenuItem(i, data->flags_, NULL, NULL,
+    result = menu->AddMenuItem(i, data->flags_, nullptr, nullptr,
                                data->text_, data->length_,
-                               NULL);
+                               nullptr);
     if (result != S_OK) {
       break;
     }
@@ -705,7 +710,7 @@ STDAPI ImeToggleButtonMenu::OnMenuSelect(UINT menu_id) {
   // Call the LangBarCallback::OnMenuSelect() function to dispatch the
   // given event.
   ImeLangBarMenuData* data = menu_data(menu_id);
-  if (data == NULL) {
+  if (data == nullptr) {
     return E_INVALIDARG;
   }
   if (data->menu_id_ == LangBarCallback::kCancel) {
@@ -724,7 +729,7 @@ STDAPI ImeToggleButtonMenu::OnMenuSelect(UINT menu_id) {
 }
 
 STDAPI ImeToggleButtonMenu::GetIcon(HICON* icon) {
-  if (icon == NULL) {
+  if (icon == nullptr) {
     return E_INVALIDARG;
   }
 
@@ -762,7 +767,7 @@ HRESULT ImeToggleButtonMenu::SelectMenuItem(UINT menu_id) {
       data->flags_ |= TF_LBMENUF_RADIOCHECKED;
       menu_selected_ = static_cast<UINT>(i);
     } else {
-      if (data->flags_ != NULL) {
+      if (data->flags_ != 0) {
         item_state_changed |= true;
       }
       data->flags_ &= ~TF_LBMENUF_RADIOCHECKED;
@@ -788,10 +793,10 @@ ImeSystemLangBarMenu::ImeSystemLangBarMenu(LangBarCallback *langbar_callback,
 // Implements the destructor of the ImeSystemLangBarMenu class.
 ImeSystemLangBarMenu::~ImeSystemLangBarMenu() {
   // Release the owner LangBarCallback object.
-  if (langbar_callback_ != NULL) {
+  if (langbar_callback_ != nullptr) {
     langbar_callback_->Release();
   }
-  langbar_callback_ = NULL;
+  langbar_callback_ = nullptr;
 }
 
 // Implements the IUnknown::QueryInterface() function.
@@ -812,7 +817,7 @@ STDAPI ImeSystemLangBarMenu::QueryInterface(REFIID interface_id,
     return S_OK;
   } else {
     // This object does not implement the given interface.
-    *object = NULL;
+    *object = nullptr;
     return E_NOINTERFACE;
   }
 }
@@ -860,7 +865,7 @@ STDAPI ImeSystemLangBarMenu::InitMenu(ITfMenu* menu) {
     CBitmap bitmap;
     CBitmap mask;
     // If LoadIconAsBitmap fails, |bitmap.m_hBitmap| and |mask.m_hBitmap|
-    // remain NULL bitmap handles.
+    // remain nullptr bitmap handles.
     LoadIconAsBitmap(ImeGetResource(),
                      data->icon_id_for_non_theme_,
                      icon_id_for_theme,
@@ -868,7 +873,7 @@ STDAPI ImeSystemLangBarMenu::InitMenu(ITfMenu* menu) {
                      &mask.m_hBitmap);
     result = menu->AddMenuItem(i, data->flags_, bitmap, mask,
                                data->text_, data->length_,
-                               NULL);
+                               nullptr);
     if (result != S_OK) {
       break;
     }
@@ -884,7 +889,7 @@ STDAPI ImeSystemLangBarMenu::OnMenuSelect(UINT menu_id) {
   // Call the LangBarCallback::OnMenuSelect() function to dispatch the
   // given event.
   ImeLangBarMenuData* data = menu_data_.data(menu_id);
-  if (data == NULL) {
+  if (data == nullptr) {
     return E_INVALIDARG;
   }
   if (data->menu_id_ == LangBarCallback::kCancel) {

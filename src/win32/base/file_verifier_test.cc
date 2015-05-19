@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include <string>
 
-#include "base/util.h"
+#include "base/file_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "win32/base/file_verifier.h"
@@ -49,8 +49,8 @@ class TestableFileVerifier : public FileVerifier {
 
 static string GetTestFile(const string &filename) {
   string result = FLAGS_test_srcdir;
-  result = Util::JoinPath(result, "data/test/win32/integrity");
-  result = Util::JoinPath(result, filename);
+  result = FileUtil::JoinPath(result, "data/test/win32/integrity");
+  result = FileUtil::JoinPath(result, filename);
   return result;
 }
 

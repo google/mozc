@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@
 //  #include "winmain.h"   // Use WinMain
 //  // here main() is automatically converted to WinMain
 //  int main(int argc,  char *argv[]) { .. }
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
 #include <ShellAPI.h>  // for CommandLineToArgvW
 #include "base/base.h"
@@ -139,5 +139,5 @@ int WINAPI WinMain(HINSTANCE hInstance,
   // call main()
   return WinMainToMain(argc, argv);
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #endif  // MOZC_BASE_WINMAIN_H_

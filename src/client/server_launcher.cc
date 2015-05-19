@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,31 +27,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <string.h>
 #include <windows.h>
 #include <sddl.h>
 #include <shlobj.h>
 #else
 #include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
-#include "base/base.h"
+#include <cstring>
+#include <string>
+
 #include "base/const.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/mac_util.h"
+#include "base/port.h"
 #include "base/process.h"
 #include "base/run_level.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "client/client.h"
+#include "client/client_interface.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
-#ifdef OS_MACOSX
-#include "base/mac_util.h"
-#endif  // OS_MACOSX
 
 namespace mozc {
 namespace client {
@@ -72,8 +73,8 @@ const uint32 kTrial = 20;
 // This should be enabled on debug build
 const string LoadServerFlags() {
   const char kServerFlagsFile[] = "mozc_server_flags.txt";
-  const string filename = Util::JoinPath(Util::GetUserProfileDirectory(),
-                                         kServerFlagsFile);
+  const string filename = FileUtil::JoinPath(
+      SystemUtil::GetUserProfileDirectory(), kServerFlagsFile);
   string flags;
   InputFileStream ifs(filename.c_str());
   if (ifs) {
@@ -87,7 +88,7 @@ const string LoadServerFlags() {
 
 // initialize default path
 ServerLauncher::ServerLauncher()
-    : server_program_(Util::GetServerPath()),
+    : server_program_(SystemUtil::GetServerPath()),
       restricted_(false),
       suppress_error_dialog_(false) {}
 
@@ -106,7 +107,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
 
   string arg;
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // When mozc is not used as a default IME and some applications (like notepad)
   // are registered in "Start up", mozc_server may not be launched successfully.
   // This is because the Explorer launches start-up processes inside a group job
@@ -138,7 +139,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
   const bool listener_is_available = listener.IsAvailable();
 
   size_t pid = 0;
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   mozc::WinSandbox::SecurityInfo info;
   // You cannot use WinSandbox::USER_INTERACTIVE here because restricted token
   // seems to prevent WinHTTP from using SSL. b/5502343
@@ -178,7 +179,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     LOG(ERROR) << "Can't start process: " << strerror(result);
     return false;
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   // maybe another process will launch mozc_server at the same time.
   if (client->PingServer()) {

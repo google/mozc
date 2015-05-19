@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+  <dimen name="key_preview_offset">0dip</dimen>
+  <dimen name="key_preview_height">74dip</dimen>
+  <dimen name="keyboard_vertical_correction">-8dip</dimen>
+  <dimen name="mini_keyboard_vertical_correction">-81dip</dimen>
+  <dimen name="key_hysteresis_distance">8dip</dimen>
+  <dimen name="default_flick_threshold">20dip</dimen>
+
+  <dimen name="candidate_text_size">20dip</dimen>
+  <dimen name="candidate_description_text_size">10dip</dimen>
+  <dimen name="candidate_description_horizontal_padding">0.7dip</dimen>
+  <dimen name="candidate_description_bottom_padding">4dip</dimen>
+  <dimen name="candidate_text_minimum_width">40dip</dimen>
+  <dimen name="candidate_horizontal_padding_size">3dip</dimen>
+  <dimen name="candidate_vertical_padding_size">8dip</dimen>
+  <dimen name="candidate_scrollbar_width">4.5dip</dimen>
+  <dimen name="candidate_scrollbar_minimum_height">10dip</dimen>
+  <!-- The size of the icon should equal to
+       (candidate_text_size + candidate_vertical_padding_size * 2) -->
+  <dimen name="keyboard_folding_icon_size">34dip</dimen>
+
+  <dimen name="pref_inputstyle_image_width">200dip</dimen>
+  <dimen name="pref_inputstyle_gallery_height">200dip</dimen>
+  <dimen name="pref_inputstyle_horizontal_span">10dip</dimen>
+  <dimen name="pref_inputstyle_description_height">50dip</dimen>
+  <dimen name="pref_inputstyle_title_fontsize">20dip</dimen>
+
+  <dimen name="symbol_horizontal_offset">7dip</dimen>
+  <dimen name="symbol_view_scroll_guide_width_per_page">35dip</dimen>
+  <dimen name="symbol_view_candidate_horizontal_padding_size">5dip</dimen>
+  <dimen name="symbol_description_text_size">10dip</dimen>
+  <dimen name="symbol_description_right_padding">2dip</dimen>
+  <dimen name="symbol_description_bottom_padding">4dip</dimen>
+  <dimen name="symbol_view_minor_category_height">53dip</dimen>
+  <dimen name="symbol_view_major_category_height">53dip</dimen>
+  <dimen name="symbol_view_scroll_height">21dip</dimen>
+  <dimen name="symbol_view_no_history_text_size">20dip</dimen>
+
+  <dimen name="symbol_view_minor_category_text_size">14dip</dimen>
+  <dimen name="symbol_view_minor_category_tab_widget_height">64dip</dimen>
+
+  <dimen name="symbol_view_symbol_min_column_width">64dip</dimen>
+  <dimen name="symbol_view_emoticon_min_column_width">88dip</dimen>
+  <dimen name="symbol_view_emoji_min_column_width">64dip</dimen>
+  <dimen name="symbol_view_candidate_height">48dip</dimen>
+
+  <dimen name="translucent_border_height">3.4dip</dimen>
+  <!-- "ime_window_height_{portrait|landscape}" should be defined only at "-port" (or empty)
+       resource directory. -->
+  <dimen name="ime_window_height_portrait">328.4dip</dimen>
+  <dimen name="ime_window_height_landscape">207.4dip</dimen>
+  <!-- The ime height to be applied is specified by referencing
+       ime_window_height_{portrait|landscape}.
+       And includes translucent_border_height.
+    -->
+  <dimen name="ime_window_height">@dimen/ime_window_height_portrait</dimen>
+  <dimen name="input_frame_height">240dip</dimen>
+  <!-- input_frame_height_width_shadow should be input_drame_height + translucent_border_height -->
+  <dimen name="input_frame_height_with_shadow">243.4dip</dimen>
+
+  <dimen name="ime_window_partial_width">300dip</dimen>
+  <dimen name="side_frame_width">40dip</dimen>
+  <dimen name="side_adjust_button_width">25dip</dimen>
+  <dimen name="side_adjust_button_height">35dip</dimen>
+  <dimen name="ime_window_region_inset_threshold">650dip</dimen>
+
+  <!-- Preferences used by the classes from LatinIME -->
+  <dimen name="key_preview_text_size_large">37dip</dimen>
+  <dimen name="mini_keyboard_slide_allowance">85dip</dimen>
+
+  <!--
+    If (PHYSICAL_SCREEN_HEIGHT - input_frame_height < fullscreen_threshold),
+    then fullscreen mode is applied as default.
+    This calculation is performed for Portrait and Landscape, respectively.
+   -->
+  <dimen name="fullscreen_threshold">200dip</dimen>
+
+  <dimen name="firsttime_app_name_text_size">22dip</dimen>
+  <dimen name="firsttime_description_text_size">14dip</dimen>
+  <dimen name="firsttime_padding_height">14dip</dimen>
+  <dimen name="firsttime_padding_width">20dip</dimen>
+
+  <dimen name="narrow_ime_window_height">125dip</dimen>
+  <dimen name="narrow_frame_height">40dip</dimen>
+</resources>

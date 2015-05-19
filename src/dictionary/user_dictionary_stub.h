@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_
 
+#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
@@ -38,6 +39,10 @@ class NodeAllocatorInterface;
 
 class UserDictionaryStub : public DictionaryInterface {
  public:
+  virtual bool HasValue(const StringPiece value) const {
+    return false;
+  }
+
   virtual Node *LookupPredictiveWithLimit(
       const char *str, int size, const Limit &limit,
       NodeAllocatorInterface *allocator) const {

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,8 @@ static const size_t kTokenSize = 1000;
 DictionaryGenerator::DictionaryGenerator()
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
       token_map_(new map<uint64, Token *>),
-      user_pos_(UserPosManager::GetUserPosManager()->GetUserPOS()),
+      user_pos_(
+          new UserPOS(UserPosManager::GetUserPosManager()->GetUserPOSData())),
       open_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()
                        ->GetOpenBracketId()),
       close_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()

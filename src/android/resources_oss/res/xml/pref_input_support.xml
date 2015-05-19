@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:mozc="http://schemas.android.com/apk/res-auto" >
+  <PreferenceCategory android:title="@string/pref_input_feedback_category_title" >
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_haptic_feedback_key"
+        android:summary="@string/pref_haptic_feedback_description"
+        android:title="@string/pref_haptic_feedback_title" />
+
+    <org.mozc.android.inputmethod.japanese.preference.SeekbarPreference
+        android:defaultValue="30"
+        android:key="pref_haptic_feedback_duration_key"
+        android:title="@string/pref_haptic_feedback_duration_title"
+        android:max="250"
+        android:dependency="pref_haptic_feedback_key"
+        mozc:seekbar_offset="0"
+        mozc:seekbar_low_text="@string/pref_haptic_feedback_duration_low_text"
+        mozc:seekbar_high_text="@string/pref_haptic_feedback_duration_high_text"
+        mozc:seekbar_unit="ms" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_sound_feedback_key"
+        android:summary="@string/pref_sound_feedback_description"
+        android:title="@string/pref_sound_feedback_title" />
+
+    <org.mozc.android.inputmethod.japanese.preference.SeekbarPreference
+        android:defaultValue="50"
+        android:key="pref_sound_feedback_volume_key"
+        android:title="@string/pref_sound_feedback_volume_title"
+        android:dependency="pref_sound_feedback_key"
+        android:max="100"
+        mozc:seekbar_offset="0"
+        mozc:seekbar_low_text="@string/pref_sound_feedback_volume_low_text"
+        mozc:seekbar_middle_text="@string/pref_sound_feedback_volume_middle_text"
+        mozc:seekbar_high_text="@string/pref_sound_feedback_volume_high_text" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="pref_popup_feedback_key"
+        android:summary="@string/pref_popup_feedback_description"
+        android:title="@string/pref_popup_feedback_title" />
+  </PreferenceCategory>
+
+  <PreferenceCategory android:title="@string/pref_other_input_support_preference_category_title">
+    <org.mozc.android.inputmethod.japanese.preference.MozcMultiSelectListPreference
+        android:defaultValue="@array/pref_fullscreen_default_values"
+        mozc:entries="@array/pref_fullscreen_entries"
+        mozc:entryKeys="@array/pref_fullscreen_keys"
+        android:summary="@string/pref_fullscreen_description"
+        android:title="@string/pref_fullscreen_title" />
+
+    <ListPreference
+        android:defaultValue="BLUE_LIGHTGRAY"
+        android:entries="@array/pref_skin_type_entries"
+        android:entryValues="@array/pref_skin_type_values"
+        android:key="pref_skin_type_key"
+        android:summary="@string/pref_skin_type_description"
+        android:title="@string/pref_skin_type_title" />
+
+    <ListPreference
+        android:defaultValue="JAPANESE109A"
+        android:entries="@array/pref_hardware_keymap_entries"
+        android:entryValues="@array/pref_hardware_keymap_values"
+        android:key="pref_hardware_keymap"
+        android:summary="@string/pref_hardware_keymap_description"
+        android:title="@string/pref_hardware_title" />
+  </PreferenceCategory>
+</PreferenceScreen>

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef IME_MOZC_DATA_MANAGER_OSS_OSS_USER_POS_MANAGER_H_
-#define IME_MOZC_DATA_MANAGER_OSS_OSS_USER_POS_MANAGER_H_
+#ifndef MOZC_DATA_MANAGER_OSS_OSS_USER_POS_MANAGER_H_
+#define MOZC_DATA_MANAGER_OSS_OSS_USER_POS_MANAGER_H_
 
 #include "base/base.h"
 #include "data_manager/data_manager_interface.h"
@@ -36,7 +36,6 @@
 namespace mozc {
 
 class POSMatcher;
-class PosGroup;
 
 namespace oss {
 
@@ -49,24 +48,36 @@ class OssUserPosManager : public DataManagerInterface {
 
   // Partially implement the interface because some binary only reqiures the
   // folloiwng embedded data.
-  virtual const UserPOSInterface *GetUserPOS() const;
+  // Returns the address to an array of UserPOS::POSToken.
+  virtual const UserPOS::POSToken *GetUserPOSData() const;
   virtual const POSMatcher *GetPOSMatcher() const;
 
   // The following are implemented in OssDataManager.
-  virtual const PosGroup *GetPosGroup() const { return NULL; }
-  virtual const ConnectorInterface *GetConnector() const { return NULL; }
-  virtual const SegmenterInterface *GetSegmenter() const { return NULL; }
-  virtual DictionaryInterface *CreateSystemDictionary() const { return NULL; }
-  virtual DictionaryInterface *CreateValueDictionary() const { return NULL; }
-  virtual const DictionaryInterface *GetSuffixDictionary() const {
-    return NULL;
-  }
+  virtual const uint8 *GetPosGroupData() const { return NULL; }
+  virtual void GetConnectorData(const char **data, size_t *size) const {}
+  virtual void GetSegmenterData(
+      size_t *l_num_elements, size_t *r_num_elements,
+      const uint16 **l_table, const uint16 **r_table,
+      size_t *bitarray_num_bytes, const char **bitarray_data,
+      const BoundaryData **boundary_data) const {}
+  virtual void GetSystemDictionaryData(const char **data, int *size) const {}
+  virtual void GetSuffixDictionaryData(const SuffixToken **data,
+                                       size_t *size) const {}
   virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
                                         size_t *size) const {}
   virtual void GetCollocationData(const char **array, size_t *size) const {}
   virtual void GetCollocationSuppressionData(const char **array,
                                              size_t *size) const {}
   virtual void GetSuggestionFilterData(const char **data, size_t *size) const {}
+  virtual void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
+                                     size_t *size) const {}
+#ifndef NO_USAGE_REWRITER
+  virtual void GetUsageRewriterData(
+      const ConjugationSuffix **base_conjugation_suffix,
+      const ConjugationSuffix **conjugation_suffix_data,
+      const int **conjugation_suffix_data_index,
+      const UsageDictItem **usage_data_value) const {}
+#endif  // NO_USAGE_REWRITER
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OssUserPosManager);
@@ -75,4 +86,4 @@ class OssUserPosManager : public DataManagerInterface {
 }  // namespace oss
 }  // namespace mozc
 
-#endif  // IME_MOZC_DATA_MANAGER_OSS_OSS_USER_POS_MANAGER_H_
+#endif  // MOZC_DATA_MANAGER_OSS_OSS_USER_POS_MANAGER_H_

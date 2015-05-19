@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,9 @@
 #       other required data. For example, '<(mozc_dir)/data/dictionary_oss'.
 # - boundary_def: Relative path to boundary rule definition file.
 # - dataset_tag: Unique data set tag name.
-# - use_1byte_cost_for_connection_data: Set to 'true' to compress connection
-#       data.
+# - use_1byte_cost_for_connection_data:
+#       Set to '1' or 'true' to compress connection data.
+#       Typically this variable is set by build_mozc.py as gyp's parameter.
 # - dictionary_files: A list of dictionary source files.
 {
   'targets': [
@@ -56,19 +57,22 @@
         '<(gen_out_dir)/embedded_dictionary_data.h',
         '<(gen_out_dir)/segmenter_data.h',
         '<(gen_out_dir)/suffix_data.h',
+        '<(gen_out_dir)/symbol_rewriter_data.h',
         '<(mozc_dir)/dictionary/pos_group.h',
         '<(dataset_tag)_data_manager.cc',
       ],
       'dependencies': [
         '<(dataset_tag)_data_manager_base.gyp:<(dataset_tag)_user_pos_manager',
         '<(mozc_dir)/base/base.gyp:base',
-        '<(mozc_dir)/converter/converter_base.gyp:connector_base',
-        '<(mozc_dir)/converter/converter_base.gyp:segmenter_base',
-        '<(mozc_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_dir)/dictionary/system/system_dictionary.gyp:system_dictionary',
-        '<(mozc_dir)/dictionary/system/system_dictionary.gyp:value_dictionary',
         'gen_<(dataset_tag)_embedded_data#host',
+      ],
+      'conditions': [
+        ['target_platform!="Android"', {
+          'sources': [
+            '<(SHARED_INTERMEDIATE_DIR)/rewriter/usage_rewriter_data.h',
+          ]
+        }],
       ],
     },
     {
@@ -86,7 +90,51 @@
         'gen_embedded_reading_correction_data_for_<(dataset_tag)#host',
         'gen_embedded_segmenter_data_for_<(dataset_tag)#host',
         'gen_embedded_suffix_data_for_<(dataset_tag)#host',
-        'gen_embedded_suggestion_filter_data_for_<(dataset_tag)#host'
+        'gen_embedded_suggestion_filter_data_for_<(dataset_tag)#host',
+        'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)#host'
+      ],
+      'conditions': [
+        ['target_platform!="Android"', {
+          'dependencies': [
+            '../../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
+          ]
+        }],
+      ],
+    },
+    {
+      'target_name': 'gen_dictionary_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'conditions': [
+        ['use_separate_dictionary==1',{
+            'dependencies': [
+              'gen_separate_dictionary_data_for_<(dataset_tag)#host',
+            ],
+          },
+          {
+            'dependencies': [
+              'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
+            ],
+          },
+        ]
+      ],
+    },
+    {
+      'target_name': 'gen_connection_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'conditions': [
+        ['use_separate_connection_data==1',{
+            'dependencies': [
+              'gen_separate_connection_data_for_<(dataset_tag)#host',
+            ],
+          },
+          {
+            'dependencies': [
+              'gen_embedded_connection_data_for_<(dataset_tag)#host',
+            ],
+          },
+        ]
       ],
     },
     {
@@ -184,6 +232,87 @@
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/embedded_dictionary_data.h.'),
+          'conditions': [
+            ['use_packed_dictionary==1', {
+              'inputs': [
+                '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
+              ],
+              'action': [
+                '--dataset=<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)',
+              ],
+            }],
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_connection_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        '<(mozc_dir)/build_tools/code_generator_util.py',
+        '<(mozc_dir)/data_manager/gen_connection_data.py',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_separate_connection_data_for_<(dataset_tag)',
+          'variables': {
+            'text_connection_file': '<(platform_data_dir)/connection.txt',
+            'id_file': '<(platform_data_dir)/id.def',
+            'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
+            'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',
+          },
+          'inputs': [
+            '<(text_connection_file)',
+            '<(id_file)',
+            '<(special_pos_file)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/connection_data.data',
+          ],
+          'action': [
+            'python', '<(mozc_dir)/data_manager/gen_connection_data.py',
+            '--text_connection_file',
+            '<(text_connection_file)',
+            '--id_file',
+            '<(id_file)',
+            '--special_pos_file',
+            '<(special_pos_file)',
+            '--binary_output_file',
+            '<@(_outputs)',
+            '--target_compiler',
+            '<(target_compiler)',
+            '--use_1byte_cost',
+            '<(use_1byte_cost_flag)',
+          ],
+          'message': ('[<(dataset_tag)] Generating ' +
+                      '<(gen_out_dir)/connection_data.data'),
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_dictionary_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_separate_dictionary_data',
+          'variables': {
+             'input_files%': '<(dictionary_files)',
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/system.dictionary',
+          ],
+          'action': [
+            '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
+            '--logtostderr',
+            '--input=<(input_files)',
+            '--output=<(gen_out_dir)/system.dictionary',
+          ],
+          'message': 'Generating <(gen_out_dir)/system.dictionary.',
         },
       ],
     },
@@ -359,12 +488,41 @@
       ],
     },
     {
+      'target_name': 'gen_separate_collocation_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_separate_collocation_data',
+          'variables': {
+            'input_files%': [
+              '<(platform_data_dir)/collocation.txt',
+            ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/collocation_data.data',
+          ],
+          'action': [
+            '<(mozc_build_tools_dir)/gen_collocation_data_main',
+            '--collocation_data=<@(input_files)',
+            '--output=<(gen_out_dir)/collocation_data.data',
+            '--binary_mode',
+          ],
+          'message': ('[<(dataset_tag)] Generating ' +
+                      '<(gen_out_dir)/collocation_data.data'),
+        },
+      ],
+    },
+    {
       'target_name': 'gen_embedded_collocation_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'actions': [
         {
-          'action_name': 'gen_collocation_data',
+          'action_name': 'gen_embedded_collocation_data',
           'variables': {
             'input_files%': [
               '<(platform_data_dir)/collocation.txt',
@@ -443,6 +601,47 @@
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/suggestion_filter_data.h'),
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/symbol/symbol.tsv',
+              '<(mozc_dir)/data/rules/sorting_map.tsv',
+              '<(mozc_dir)/data/symbol/ordering_rule.txt',
+            ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/symbol_rewriter_data.h',
+          ],
+          'action': [
+            '<(mozc_build_tools_dir)/gen_symbol_rewriter_dictionary_main',
+            '<@(input_files)',
+            '--logtostderr',
+            '--output=<(gen_out_dir)/symbol_rewriter_data.h',
+          ],
+          'message': ('[<(dataset_tag)] Generating ' +
+                      '<(gen_out_dir)/symbol_rewriter_data.h'),
+          'conditions': [
+            ['use_packed_dictionary==1', {
+              'inputs': [
+                '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
+              ],
+              'action': [
+                '--dataset=<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)',
+              ],
+            }],
+          ],
         },
       ],
     },

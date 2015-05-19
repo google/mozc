@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,10 @@
 
 #include "rewriter/rewriter.h"
 
+#include <cstddef>
 #include <string>
-#include "base/singleton.h"
-#include "base/util.h"
+
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
@@ -39,7 +40,6 @@
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/base/public/gunit.h"
 
@@ -64,13 +64,15 @@ size_t CommandCandidatesSize(const Segment &segment) {
 class RewriterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
     converter_mock_.reset(new ConverterMock);
     const testing::MockDataManager data_manager;
-    rewriter_.reset(new RewriterImpl(converter_mock_.get(), &data_manager));
+    pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
+    rewriter_.reset(new RewriterImpl(converter_mock_.get(), &data_manager,
+                                     pos_group_.get()));
   }
 
   virtual void TearDown() {
@@ -84,6 +86,7 @@ class RewriterTest : public ::testing::Test {
   }
 
   scoped_ptr<ConverterMock> converter_mock_;
+  scoped_ptr<const PosGroup> pos_group_;
   scoped_ptr<RewriterImpl> rewriter_;
 };
 

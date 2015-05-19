@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "base/process_mutex.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <errno.h>
@@ -37,23 +37,30 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <map>
 #include <string>
-#include "base/base.h"
+#include <utility>
+
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/mutex.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
+#ifdef OS_WIN
+#include "base/win_sandbox.h"
+#endif  // OS_WIN
 
 namespace mozc {
 
 namespace {
 
-string CreateProcessMutexFile(const char *name) {
+string CreateProcessMutexFileName(const char *name) {
   name = (name == NULL) ? "NULL" : name;
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   string basename;
 #else
   string basename = ".";
@@ -62,7 +69,7 @@ string CreateProcessMutexFile(const char *name) {
   basename += name;
   basename += ".lock";
 
-  return Util::JoinPath(Util::GetUserProfileDirectory(), basename);
+  return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
 }  // namespace
 
@@ -70,11 +77,11 @@ bool ProcessMutex::Lock() {
   return LockAndWrite("");
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
 ProcessMutex::ProcessMutex(const char *name)
     : handle_(INVALID_HANDLE_VALUE), locked_(false) {
-  filename_ = CreateProcessMutexFile(name);
+  filename_ = CreateProcessMutexFileName(name);
 }
 
 ProcessMutex::~ProcessMutex() {
@@ -93,9 +100,17 @@ bool ProcessMutex::LockAndWrite(const string &message) {
       FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
       FILE_ATTRIBUTE_TEMPORARY | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
       FILE_FLAG_DELETE_ON_CLOSE;
+
+  SECURITY_ATTRIBUTES serucity_attributes = {};
+  if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharableFileForRead,
+                                          &serucity_attributes)) {
+    return false;
+  }
   handle_.reset(::CreateFileW(
-      wfilename.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL,
+      wfilename.c_str(), GENERIC_WRITE, FILE_SHARE_READ, &serucity_attributes,
       CREATE_ALWAYS, kAttribute, NULL));
+  ::LocalFree(serucity_attributes.lpSecurityDescriptor);
+
   locked_ = (handle_.get() != NULL);
 
   if (!locked_) {
@@ -120,12 +135,56 @@ bool ProcessMutex::LockAndWrite(const string &message) {
 
 bool ProcessMutex::UnLock() {
   handle_.reset(NULL);
-  Util::Unlink(filename_);
+  FileUtil::Unlink(filename_);
   locked_ = false;
   return true;
 }
 
-#else   // OS_WINDOWS
+#elif defined(MOZC_USE_PEPPER_FILE_IO)  // OS_WIN
+namespace {
+
+// In NaCl we can't consider about the processes.
+// So we just implement inprocess named lock service.
+class NamedLockManager {
+ public:
+  NamedLockManager() {}
+  ~NamedLockManager() {}
+  bool Lock(const string &filename, const string &message) {
+    scoped_lock l(&mutex_);
+    return lock_map_.insert(make_pair(filename, message)).second;
+  }
+  void UnLock(const string &filename) {
+    scoped_lock l(&mutex_);
+    lock_map_.erase(filename);
+    return;
+  }
+
+ private:
+  Mutex mutex_;
+  map<string, string> lock_map_;
+  DISALLOW_COPY_AND_ASSIGN(NamedLockManager);
+};
+
+}  // namespace
+
+ProcessMutex::ProcessMutex(const char *name) : locked_(false) {
+  filename_ = CreateProcessMutexFileName(name);
+}
+
+ProcessMutex::~ProcessMutex() {
+  UnLock();
+}
+
+bool ProcessMutex::LockAndWrite(const string &message) {
+  return Singleton<NamedLockManager>::get()->Lock(filename_, message);
+}
+
+bool ProcessMutex::UnLock() {
+  Singleton<NamedLockManager>::get()->UnLock(filename_);
+  return true;
+}
+
+#else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
 
 namespace {
 // Special workaround for the bad treatment of fcntl.
@@ -203,7 +262,7 @@ class FileLockManager {
       return;
     }
     ::close(it->second);
-    Util::Unlink(filename);
+    FileUtil::Unlink(filename);
     fdmap_.erase(it);
   }
 
@@ -225,7 +284,7 @@ class FileLockManager {
 }  // namespace
 
 ProcessMutex::ProcessMutex(const char *name) : locked_(false) {
-  filename_ = CreateProcessMutexFile(name);
+  filename_ = CreateProcessMutexFileName(name);
 }
 
 ProcessMutex::~ProcessMutex() {

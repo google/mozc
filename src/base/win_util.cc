@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,11 @@
 
 #include "base/win_util.h"
 
-// skip all unless OS_WINDOWS
-#ifdef OS_WINDOWS
+// skip all unless OS_WIN
+#ifdef OS_WIN
 
 #include <Aux_ulib.h>
+#include <Psapi.h>
 #include <Winternl.h>
 
 // Workaround against KB813540
@@ -44,7 +45,9 @@
 
 #include "base/logging.h"
 #include "base/scoped_handle.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -55,13 +58,13 @@ class AuxLibInitializer {
     ::AuxUlibInitialize();
   }
   bool IsDLLSynchronizationHeld(bool *lock_status) const {
-    if (lock_status == NULL) {
+    if (lock_status == nullptr) {
       return false;
     }
 
     BOOL synchronization_held = FALSE;
     const BOOL result =
-      ::AuxUlibIsDLLSynchronizationHeld(&synchronization_held);
+        ::AuxUlibIsDLLSynchronizationHeld(&synchronization_held);
     if (!result) {
       const int error = ::GetLastError();
       DLOG(ERROR) << "AuxUlibIsDLLSynchronizationHeld failed. error = "
@@ -89,7 +92,7 @@ bool AdjustPrivilegesForShutdown() {
     return false;
   }
 
-  if (!::LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &LID)) {
+  if (!::LookupPrivilegeValue(nullptr, SE_SHUTDOWN_NAME, &LID)) {
     // LookupPrivilegeValue failed
     return false;
   }
@@ -99,7 +102,7 @@ bool AdjustPrivilegesForShutdown() {
   ns.PrivilegeCount = 1;
   ns.Privileges[0] = att;
 
-  if (!::AdjustTokenPrivileges(htoken, FALSE, &ns, NULL, NULL, NULL)) {
+  if (!::AdjustTokenPrivileges(htoken, FALSE, &ns, 0, nullptr, nullptr)) {
     // AdjustTokenPrivileges failed
     return false;
   }
@@ -144,14 +147,14 @@ bool IsCuasEnabledInternal(REGSAM additional_regsam) {
 }  // namespace
 
 HMODULE WinUtil::LoadSystemLibrary(const wstring &base_filename) {
-  wstring fullpath = Util::GetSystemDir();
+  wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
 
   const HMODULE module = ::LoadLibraryExW(fullpath.c_str(),
-                                          NULL,
+                                          nullptr,
                                           LOAD_WITH_ALTERED_SEARCH_PATH);
-  if (NULL == module) {
+  if (nullptr == module) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "LoadLibraryEx failed."
                   << " fullpath = " << fullpath.c_str()
@@ -162,14 +165,14 @@ HMODULE WinUtil::LoadSystemLibrary(const wstring &base_filename) {
 
 HMODULE WinUtil::LoadMozcLibrary(const wstring &base_filename) {
   wstring fullpath;
-  Util::UTF8ToWide(Util::GetServerDirectory().c_str(), &fullpath);
+  Util::UTF8ToWide(SystemUtil::GetServerDirectory().c_str(), &fullpath);
   fullpath += L"\\";
   fullpath += base_filename;
 
   const HMODULE module = ::LoadLibraryExW(fullpath.c_str(),
-                                          NULL,
+                                          nullptr,
                                           LOAD_WITH_ALTERED_SEARCH_PATH);
-  if (NULL == module) {
+  if (nullptr == module) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "LoadLibraryEx failed."
                   << " fullpath = " << fullpath.c_str()
@@ -179,11 +182,11 @@ HMODULE WinUtil::LoadMozcLibrary(const wstring &base_filename) {
 }
 
 HMODULE WinUtil::GetSystemModuleHandle(const wstring &base_filename) {
-  wstring fullpath = Util::GetSystemDir();
+  wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
 
-  HMODULE module = NULL;
+  HMODULE module = nullptr;
   if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                          fullpath.c_str(), &module) == FALSE) {
     const int last_error = ::GetLastError();
@@ -196,11 +199,11 @@ HMODULE WinUtil::GetSystemModuleHandle(const wstring &base_filename) {
 
 HMODULE WinUtil::GetSystemModuleHandleAndIncrementRefCount(
     const wstring &base_filename) {
-  wstring fullpath = Util::GetSystemDir();
+  wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
 
-  HMODULE module = NULL;
+  HMODULE module = nullptr;
   if (GetModuleHandleExW(0, fullpath.c_str(), &module) == FALSE) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "GetModuleHandleExW failed."
@@ -233,7 +236,7 @@ bool WinUtil::Win32EqualString(const wstring &lhs, const wstring &rhs,
       __in BOOL    bIgnoreCase);
 
   const HMODULE kernel = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
-  if (kernel == NULL) {
+  if (kernel == nullptr) {
     LOG(ERROR) << "GetSystemModuleHandle failed";
     return false;
   }
@@ -241,14 +244,14 @@ bool WinUtil::Win32EqualString(const wstring &lhs, const wstring &rhs,
   const FPCompareStringOrdinal compare_string_ordinal =
       reinterpret_cast<FPCompareStringOrdinal>(
           ::GetProcAddress(kernel, "CompareStringOrdinal"));
-  if (compare_string_ordinal == NULL) {
+  if (compare_string_ordinal == nullptr) {
     return false;
   }
   const int compare_result = compare_string_ordinal(
       lhs.c_str(), lhs.size(), rhs.c_str(), rhs.size(),
       (ignore_case ? TRUE : FALSE));
 
-  if (are_equal != NULL) {
+  if (are_equal != nullptr) {
     *are_equal = (compare_result == CSTR_EQUAL);
   }
 
@@ -259,12 +262,12 @@ bool WinUtil::NativeEqualString(const wstring &lhs, const wstring &rhs,
                                 bool ignore_case, bool *are_equal) {
   // http://msdn.microsoft.com/en-us/library/ff561854.aspx
   typedef BOOLEAN (NTAPI *FPRtlEqualUnicodeString)(
-      __in  PCUNICODE_STRING String1,
-      __in  PCUNICODE_STRING String2,
-      __in  BOOLEAN CaseInSensitive);
+      __in PCUNICODE_STRING String1,
+      __in PCUNICODE_STRING String2,
+      __in BOOLEAN CaseInSensitive);
 
   const HMODULE ntdll = GetSystemModuleHandle(L"ntdll.dll");
-  if (ntdll == NULL) {
+  if (ntdll == nullptr) {
     LOG(ERROR) << "GetSystemModuleHandle failed";
     return false;
   }
@@ -272,7 +275,7 @@ bool WinUtil::NativeEqualString(const wstring &lhs, const wstring &rhs,
   const FPRtlEqualUnicodeString rtl_equal_unicode_string =
       reinterpret_cast<FPRtlEqualUnicodeString>(
           ::GetProcAddress(ntdll, "RtlEqualUnicodeString"));
-  if (rtl_equal_unicode_string == NULL) {
+  if (rtl_equal_unicode_string == nullptr) {
     return false;
   }
 
@@ -289,7 +292,7 @@ bool WinUtil::NativeEqualString(const wstring &lhs, const wstring &rhs,
   const BOOL compare_result = rtl_equal_unicode_string(
     &lhs_string, &rhs_string, (ignore_case ? TRUE : FALSE));
 
-  if (are_equal != NULL) {
+  if (are_equal != nullptr) {
     *are_equal = (compare_result != FALSE);
   }
 
@@ -298,12 +301,12 @@ bool WinUtil::NativeEqualString(const wstring &lhs, const wstring &rhs,
 
 void WinUtil::CrtEqualString(const wstring &lhs, const wstring &rhs,
                              bool ignore_case, bool *are_equal) {
-  if (are_equal == NULL) {
+  if (are_equal == nullptr) {
     return;
   }
 
   if (!ignore_case) {
-    DCHECK_NE(NULL, are_equal);
+    DCHECK_NE(nullptr, are_equal);
     *are_equal = (rhs == lhs);
     return;
   }
@@ -312,7 +315,7 @@ void WinUtil::CrtEqualString(const wstring &lhs, const wstring &rhs,
   const int compare_result = _wcsicmp_l(lhs.c_str(), rhs.c_str(), locale_id);
   _free_locale(locale_id);
 
-  DCHECK_NE(NULL, are_equal);
+  DCHECK_NE(nullptr, are_equal);
   *are_equal = (compare_result == 0);
 }
 
@@ -349,7 +352,7 @@ bool WinUtil::SystemEqualString(
 }
 
 bool WinUtil::IsServiceUser(HANDLE hToken, bool *is_service) {
-  if (is_service == NULL) {
+  if (is_service == nullptr) {
     return false;
   }
 
@@ -378,11 +381,11 @@ bool WinUtil::IsServiceUser(HANDLE hToken, bool *is_service) {
 }
 
 bool WinUtil::IsServiceProcess(bool *is_service) {
-  if (is_service == NULL) {
+  if (is_service == nullptr) {
     return false;
   }
 
-  if (Util::IsVistaOrLater()) {
+  if (SystemUtil::IsVistaOrLater()) {
     // Session 0 is dedicated to services
     DWORD dwSessionId = 0;
     if (!::ProcessIdToSessionId(::GetCurrentProcessId(), &dwSessionId) ||
@@ -393,7 +396,7 @@ bool WinUtil::IsServiceProcess(bool *is_service) {
   }
 
   // Get process token
-  HANDLE hProcessToken = NULL;
+  HANDLE hProcessToken = nullptr;
   if (!::OpenProcessToken(::GetCurrentProcess(),
                           TOKEN_QUERY | TOKEN_QUERY_SOURCE,
                           &hProcessToken)) {
@@ -411,19 +414,19 @@ bool WinUtil::IsServiceProcess(bool *is_service) {
 }
 
 bool WinUtil::IsServiceThread(bool *is_service) {
-  if (is_service == NULL) {
+  if (is_service == nullptr) {
     return false;
   }
 
   // Get thread token (if any)
-  HANDLE hThreadToken = NULL;
+  HANDLE hThreadToken = nullptr;
   if (!::OpenThreadToken(::GetCurrentThread(),
                         TOKEN_QUERY, TRUE, &hThreadToken) &&
       ERROR_NO_TOKEN != ::GetLastError()) {
     return false;
   }
 
-  if (hThreadToken == NULL) {
+  if (hThreadToken == nullptr) {
     // No thread token.
     *is_service = false;
     return true;
@@ -439,7 +442,7 @@ bool WinUtil::IsServiceThread(bool *is_service) {
 }
 
 bool WinUtil::IsServiceAccount(bool *is_service) {
-  if (is_service == NULL) {
+  if (is_service == nullptr) {
     return false;
   }
 
@@ -471,13 +474,81 @@ bool WinUtil::IsServiceAccount(bool *is_service) {
   return true;
 }
 
+bool WinUtil::IsProcessImmersive(HANDLE process_handle,
+                                 bool *is_immersive) {
+  if (is_immersive == nullptr) {
+    return false;
+  }
+  *is_immersive = false;
+  // ImmersiveMode is supported only in Windows8 and later.
+  if (!SystemUtil::IsWindows8OrLater()) {
+    return true;
+  }
+
+  const HMODULE module = WinUtil::GetSystemModuleHandle(L"user32.dll");
+  if (module == nullptr) {
+    return false;
+  }
+
+  typedef BOOL (WINAPI* IsImmersiveProcessFunc)(HANDLE process);
+  IsImmersiveProcessFunc is_immersive_process =
+      reinterpret_cast<IsImmersiveProcessFunc>(
+          ::GetProcAddress(module, "IsImmersiveProcess"));
+  if (is_immersive_process == nullptr) {
+    return false;
+  }
+
+  *is_immersive = !!is_immersive_process(process_handle);
+  return true;
+}
+
+bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
+                                      bool *in_appcontainer) {
+  if (in_appcontainer == nullptr) {
+    return false;
+  }
+  *in_appcontainer = false;
+
+  // AppContainer is supported only in Windows8 and later.
+  if (!SystemUtil::IsWindows8OrLater()) {
+    return true;
+  }
+
+  HANDLE token = nullptr;
+  if (!::OpenProcessToken(process_handle, TOKEN_QUERY | TOKEN_QUERY_SOURCE,
+                          &token)) {
+    return false;
+  }
+
+  // TokenIsAppContainer is defined only in Windows SDK 8.0 and later.
+  ScopedHandle process_token(token);
+  const TOKEN_INFORMATION_CLASS kTokenIsAppContainer =
+      static_cast<TOKEN_INFORMATION_CLASS>(29);  // TokenIsAppContainer
+#if defined(_WIN32_WINNT_WIN8)
+  COMPILE_ASSERT(kTokenIsAppContainer == TokenIsAppContainer,
+                 TokenDeviceClaimAttributes_Check);
+#endif  // _WIN32_WINNT_WIN8
+  DWORD returned_size = 0;
+  DWORD retval = 0;
+  if (!GetTokenInformation(process_token.get(), kTokenIsAppContainer,
+                           &retval, sizeof(retval), &returned_size)) {
+    return false;
+  }
+  if (returned_size != sizeof(retval)) {
+    return false;
+  }
+
+  *in_appcontainer = (retval != 0);
+  return true;
+}
+
 bool WinUtil::IsCuasEnabled() {
-  if (Util::IsVistaOrLater()) {
+  if (SystemUtil::IsVistaOrLater()) {
     // CUAS is always enabled on Vista or later.
     return true;
   }
 
-  if (Util::IsWindowsX64()) {
+  if (SystemUtil::IsWindowsX64()) {
     // see both 64 bit and 32 bit registry keys
     return IsCuasEnabledInternal(KEY_WOW64_64KEY) &&
            IsCuasEnabledInternal(KEY_WOW64_32KEY);
@@ -486,8 +557,120 @@ bool WinUtil::IsCuasEnabled() {
   }
 }
 
+bool WinUtil::GetFileSystemInfoFromPath(
+    const wstring &path, BY_HANDLE_FILE_INFORMATION *info) {
+  // no read access is required.
+  ScopedHandle handle(::CreateFileW(
+      path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      nullptr, OPEN_EXISTING,
+      FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, nullptr));
+
+  // Caveats: handle.get() returns nullptr when it is initialized with
+  //     INVALID_HANDLE_VALUE.
+  if (handle.get() == nullptr) {
+    return false;
+  }
+  return !!::GetFileInformationByHandle(handle.get(), info);
+}
+
+bool WinUtil::AreEqualFileSystemObject(const wstring &left_path,
+                                       const wstring &right_path) {
+  BY_HANDLE_FILE_INFORMATION left_info = {};
+  if (!GetFileSystemInfoFromPath(left_path, &left_info)) {
+    return false;
+  }
+  BY_HANDLE_FILE_INFORMATION right_info = {};
+  if (!GetFileSystemInfoFromPath(right_path, &right_info)) {
+    return false;
+  }
+  return (left_info.nFileIndexLow == right_info.nFileIndexLow) &&
+         (left_info.nFileIndexHigh == right_info.nFileIndexHigh);
+}
+
+bool WinUtil::GetNtPath(const wstring &dos_path, wstring *nt_path) {
+  if (nt_path == nullptr) {
+    return false;
+  }
+
+  nt_path->clear();
+
+  typedef DWORD (WINAPI *GetFinalPathNameByHandleWFunc)(
+      __in HANDLE file,
+      __out wchar_t *buffer,
+      __in DWORD buffer_num_chars,
+      __in DWORD flags);
+  GetFinalPathNameByHandleWFunc get_final_path_name_by_handle =
+      reinterpret_cast<GetFinalPathNameByHandleWFunc>(
+          ::GetProcAddress(WinUtil::GetSystemModuleHandle(L"kernel32.dll"),
+                           "GetFinalPathNameByHandleW"));
+  if (get_final_path_name_by_handle == nullptr) {
+    return false;
+  }
+
+  ScopedHandle file_handle(::CreateFileW(
+      dos_path.c_str(), 0,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      nullptr, OPEN_EXISTING,
+      FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, nullptr));
+  if (file_handle.get() == nullptr) {
+    // Caveats: |file_handle.get()| becomes nullptr instead of
+    // INVALID_HANDLE_VALUE when failure.
+    return false;
+  }
+
+  const size_t kMaxPath = 4096;
+  scoped_array<wchar_t> ntpath_buffer(
+      new wchar_t[kMaxPath]);
+  const DWORD copied_len_without_null = get_final_path_name_by_handle(
+      file_handle.get(),
+      ntpath_buffer.get(),
+      kMaxPath,
+      FILE_NAME_NORMALIZED | VOLUME_NAME_NT);
+  if (copied_len_without_null == 0 ||
+      copied_len_without_null > kMaxPath) {
+    const DWORD error = ::GetLastError();
+    VLOG(1) << "GetFinalPathNameByHandleW() failed: " << error;
+    return false;
+  }
+
+  nt_path->assign(ntpath_buffer.get(), copied_len_without_null);
+  return true;
+}
+
+bool WinUtil::GetProcessInitialNtPath(DWORD pid, wstring *nt_path) {
+  if (nt_path == nullptr) {
+    return false;
+  }
+  nt_path->clear();
+
+  const DWORD required_access =
+      SystemUtil::IsVistaOrLater() ? PROCESS_QUERY_LIMITED_INFORMATION
+                                   : PROCESS_QUERY_INFORMATION;
+  ScopedHandle process_handle(::OpenProcess(required_access, FALSE, pid));
+
+  if (process_handle.get() == nullptr) {
+    VLOG(1) << "OpenProcess() failed: " << ::GetLastError();
+    return false;
+  }
+
+  const size_t kMaxPath = 4096;
+  scoped_array<wchar_t> ntpath_buffer(new wchar_t[kMaxPath]);
+  const DWORD copied_len_without_null =
+      ::GetProcessImageFileNameW(process_handle.get(),
+                                 ntpath_buffer.get(),
+                                 kMaxPath);
+  if (copied_len_without_null == 0 || copied_len_without_null > kMaxPath) {
+    const DWORD error = ::GetLastError();
+    VLOG(1) << "GetProcessImageFileNameW() failed: " << error;
+    return false;
+  }
+
+  nt_path->assign(ntpath_buffer.get(), copied_len_without_null);
+  return true;
+}
+
 ScopedCOMInitializer::ScopedCOMInitializer()
-    : hr_(::CoInitialize(NULL)) {
+    : hr_(::CoInitialize(nullptr)) {
 }
 
 ScopedCOMInitializer::~ScopedCOMInitializer() {
@@ -498,4 +681,4 @@ ScopedCOMInitializer::~ScopedCOMInitializer() {
 
 }  // namespace mozc
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN

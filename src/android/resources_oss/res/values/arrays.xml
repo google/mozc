@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<resources>
+  <!-- resources used in a preference view. -->
+  <string-array name="input_style_setting_entries">
+    <item>@string/pref_input_style_setting_entry_toggle</item>
+    <item>@string/pref_input_style_setting_entry_flick</item>
+    <item>@string/pref_input_style_setting_entry_toggle_and_flick</item>
+  </string-array>
+
+  <string-array name="input_style_setting_entry_values">
+    <item>TOGGLE</item>
+    <item>FLICK</item>
+    <item>TOGGLE_FLICK</item>
+  </string-array>
+
+  <string-array name="pref_emoji_provider_type_entries">
+    <item>@string/pref_emoji_provider_type_docomo</item>
+    <item>@string/pref_emoji_provider_type_kddi</item>
+    <item>@string/pref_emoji_provider_type_softbank</item>
+  </string-array>
+
+  <string-array name="pref_emoji_provider_type_values">
+    <item>DOCOMO</item>
+    <item>KDDI</item>
+    <item>SOFTBANK</item>
+  </string-array>
+
+  <string-array name="pref_fullscreen_default_values">
+    <item>false</item>
+    <item>false</item>
+  </string-array>
+
+  <string-array name="pref_fullscreen_entries">
+    <item>@string/pref_fullscreen_portrait</item>
+    <item>@string/pref_fullscreen_landscape</item>
+  </string-array>
+
+  <string-array name="pref_fullscreen_keys">
+    <item>pref_portrait_fullscreen_key</item>
+    <item>pref_landscape_fullscreen_key</item>
+  </string-array>
+
+  <string-array name="pref_skin_type_entries">
+    <item>@string/pref_skin_type_blue_lightgray</item>
+    <item>@string/pref_skin_type_orange_lightgray</item>
+    <item>@string/pref_skin_type_blue_darkgray</item>
+  </string-array>
+
+  <string-array name="pref_skin_type_values">
+    <item>BLUE_LIGHTGRAY</item>
+    <item>ORANGE_LIGHTGRAY</item>
+    <item>BLUE_DARKGRAY</item>
+  </string-array>
+
+  <string-array name="pref_hardware_keymap_entries">
+    <item>@string/pref_hardware_keymap_default</item>
+    <item>@string/pref_hardware_keymap_japanese109A</item>
+    <item>@string/pref_hardware_keymap_twelvekey</item>
+  </string-array>
+
+  <string-array name="pref_hardware_keymap_values">
+    <item>DEFAULT</item>
+    <item>JAPANESE109A</item>
+    <item>TWELVEKEY</item>
+  </string-array>
+
+  <string-array name="pref_dictionary_personalization_entries">
+    <item>@string/pref_dictionary_personalization_entry_enabled</item>
+    <item>@string/pref_dictionary_personalization_entry_readonly</item>
+    <item>@string/pref_dictionary_personalization_entry_disabled</item>
+  </string-array>
+
+  <string-array name="pref_dictionary_personalization_values">
+    <item>DEFAULT_HISTORY</item>
+    <item>READ_ONLY</item>
+    <item>NO_HISTORY</item>
+  </string-array>
+
+  <string-array name="menu_dialog_items">
+    <item>@string/menu_item_input_method</item>
+    <item>@string/menu_item_preferences</item>
+    <item>@string/menu_item_mushroom</item>
+  </string-array>
+
+  <string-array name="layout_adjustment_entries">
+    <item>@string/pref_layout_adjustment_entry_fill</item>
+    <item>@string/pref_layout_adjustment_entry_right</item>
+    <item>@string/pref_layout_adjustment_entry_left</item>
+  </string-array>
+
+  <string-array name="layout_adjustment_values">
+    <item>FILL</item>
+    <item>RIGHT</item>
+    <item>LEFT</item>
+  </string-array>
+
+</resources>

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <string>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/util.h"
 #include "sync/sync_util.h"
 #include "testing/base/public/gunit.h"
@@ -45,12 +46,10 @@ namespace sync {
 
 TEST(SyncUtil, CopyLastSyncedFile) {
   // just test rename operation works as intended
-  const string from = Util::JoinPath(FLAGS_test_tmpdir,
-                                     "copy_from");
-  const string to = Util::JoinPath(FLAGS_test_tmpdir,
-                                   "copy_to");
-  Util::Unlink(from);
-  Util::Unlink(to);
+  const string from = FileUtil::JoinPath(FLAGS_test_tmpdir, "copy_from");
+  const string to = FileUtil::JoinPath(FLAGS_test_tmpdir, "copy_to");
+  FileUtil::Unlink(from);
+  FileUtil::Unlink(to);
 
   EXPECT_FALSE(SyncUtil::CopyLastSyncedFile(from, to));
 
@@ -62,9 +61,9 @@ TEST(SyncUtil, CopyLastSyncedFile) {
   }
 
   EXPECT_TRUE(SyncUtil::CopyLastSyncedFile(from, to));
-  EXPECT_TRUE(Util::IsEqualFile(from, to));
+  EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // check filename has 'system hidden' attributes
   wstring wfilename;
   Util::UTF8ToWide(to.c_str(), &wfilename);
@@ -73,8 +72,9 @@ TEST(SyncUtil, CopyLastSyncedFile) {
   EXPECT_TRUE(attributes & FILE_ATTRIBUTE_SYSTEM);
 #endif
 
-  Util::Unlink(from);
-  Util::Unlink(to);
+  FileUtil::Unlink(from);
+  FileUtil::Unlink(to);
 }
-}  // sync
-}  // mozc
+
+}  // namespace sync
+}  // namespace mozc

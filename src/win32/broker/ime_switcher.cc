@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,13 +34,14 @@
 
 #include "base/base.h"
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/scoped_handle.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "base/win_util.h"
 #include "client/client.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/migration_util.h"
@@ -56,6 +57,7 @@ DEFINE_bool(set_default_do_not_ask_again, false,
 namespace mozc {
 namespace win32 {
 namespace {
+
 const char kProcessMutexPrefixForPerUserIMESettings[] =
     "mozc_hkcu_manipulation_for_ime.";
 
@@ -70,7 +72,7 @@ void NotifyFatalMessageImpl(const string &msg) {
   // through crash dump.
   LOG(FATAL) << msg;
 #else
-  ::MessageBoxA(NULL, msg.c_str(), "GoogleIMEJaBroker",
+  ::MessageBoxA(nullptr, msg.c_str(), "GoogleIMEJaBroker",
                 MB_OK | MB_ICONERROR);
 #endif
 }
@@ -83,7 +85,7 @@ void NotifyFatalMessage(const string &msg, int line) {
 
 string GetMutexName() {
   return (kProcessMutexPrefixForPerUserIMESettings +
-          mozc::Util::GetDesktopNameAsString());
+          SystemUtil::GetDesktopNameAsString());
 }
 
 HKL EnsureKeyboardLoaded() {
@@ -91,15 +93,15 @@ HKL EnsureKeyboardLoaded() {
   const KeyboardLayoutID &target_klid = ImmRegistrar::GetKLIDForIME();
   if (!target_klid.has_id()) {
     LOG(ERROR) << "KLID is not found.";
-    return NULL;
+    return nullptr;
   }
 
   HKL hkl = ::LoadKeyboardLayoutW(
       target_klid.ToString().c_str(), KLF_ACTIVATE | KLF_SUBSTITUTE_OK);
-  if (hkl == NULL) {
+  if (hkl == nullptr) {
     const int error = ::GetLastError();
     LOG(ERROR) << "LoadKeyboardLayoutW failed. error = " << error;
-    return NULL;
+    return nullptr;
   }
 
   // Unload the keyboard layout once to ensure that the situation reported in
@@ -108,15 +110,15 @@ HKL EnsureKeyboardLoaded() {
 
   hkl = ::LoadKeyboardLayoutW(
       target_klid.ToString().c_str(), KLF_ACTIVATE | KLF_SUBSTITUTE_OK);
-  if (hkl == NULL) {
+  if (hkl == nullptr) {
     const int error = ::GetLastError();
     LOG(ERROR) << "LoadKeyboardLayoutW failed. error = " << error;
-    return NULL;
+    return nullptr;
   }
 
   if (!MigrationUtil::RestorePreload()) {
     LOG(ERROR) << "RestorePreload() failed";
-    return NULL;
+    return nullptr;
   }
 
   return hkl;
@@ -140,9 +142,29 @@ bool ClearCheckDefault() {
   }
   return true;
 }
-}  // anonymous namespace
+
+int RunSetDefaultWin8() {
+  if (!ImeUtil::SetDefault()) {
+    NotifyFatalMessage("SetDefault() failed.", __LINE__);
+    return kErrorLevelGeneralError;
+  }
+
+  if (FLAGS_set_default_do_not_ask_again) {
+    if (!ClearCheckDefault()) {
+      // Notify the error to user but never treat this as an error.
+      NotifyFatalMessage("ClearCheckDefault() failed.", __LINE__);
+    }
+  }
+  return kErrorLevelSuccess;
+}
+
+}  // namespace
 
 int RunSetDefault(int argc, char *argv[]) {
+  if (SystemUtil::IsWindows8OrLater()) {
+    return RunSetDefaultWin8();
+  }
+
   const string mutex_name = GetMutexName();
 
   mozc::ProcessMutex mutex(mutex_name.c_str());
@@ -156,8 +178,8 @@ int RunSetDefault(int argc, char *argv[]) {
   mozc::ScopedCOMInitializer com_initializer;
 
   const HKL hkl = EnsureKeyboardLoaded();
-  if (hkl == NULL) {
-    NotifyFatalMessage("EnsureKeyboardLoaded returns NULL.", __LINE__);
+  if (hkl == nullptr) {
+    NotifyFatalMessage("EnsureKeyboardLoaded returns nullptr.", __LINE__);
     return kErrorLevelGeneralError;
   }
 
@@ -168,6 +190,7 @@ int RunSetDefault(int argc, char *argv[]) {
 
   if (FLAGS_set_default_do_not_ask_again) {
     if (!ClearCheckDefault()) {
+      // Notify the error to user but never treat this as an error.
       NotifyFatalMessage("ClearCheckDefault() failed.", __LINE__);
     }
   }

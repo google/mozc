@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,9 @@
 #include <clocale>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "base/win_util.h"
 #include "testing/base/public/gunit.h"
 #include "win32/base/omaha_util.h"
@@ -178,7 +179,7 @@ class RegistryEmulator {
     }
 #else
     // for 32-bit code
-    if (Util::IsWindowsX64()) {
+    if (SystemUtil::IsWindowsX64()) {
       // 64-bit OS
       const bool contain_wow64_64_key =
           ((regsam & KEY_WOW64_64KEY) == KEY_WOW64_64KEY);
@@ -224,7 +225,7 @@ class RegistryEmulator {
     if (returned_key == KRegKey_NotFound) {
       return ERROR_FILE_NOT_FOUND;
     }
-    if (result != NULL) {
+    if (result != nullptr) {
       *result = returned_key;
     }
     property()->set_omaha_key_exists(true);
@@ -233,7 +234,7 @@ class RegistryEmulator {
 
   static LSTATUS UpdateString(const wchar_t *value_name,
                               const wchar_t *src, DWORD num_data) {
-    wstring *target = NULL;
+    wstring *target = nullptr;
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {
       target = property()->mutable_ap_value();
     } else if (IsEqualInLowercase(
@@ -241,11 +242,11 @@ class RegistryEmulator {
       target = property()->mutable_installer_result_ui_string();
     }
 
-    if (target == NULL) {
+    if (target == nullptr) {
       return ERROR_FILE_NOT_FOUND;
     }
 
-    // This length includes null-termination.
+    // This length includes nullptr-termination.
     const size_t total_size_in_tchar = (num_data / sizeof(wchar_t));
     if (total_size_in_tchar > 0) {
       const size_t null_char_index = total_size_in_tchar - 1;
@@ -261,11 +262,11 @@ class RegistryEmulator {
 
   static LSTATUS UpdateDWORD(const wchar_t *value_name,
                              const DWORD *src, DWORD num_data) {
-    DWORD *target = NULL;
+    DWORD *target = nullptr;
     if (IsEqualInLowercase(value_name, kRegEntryNameForInstallerResult)) {
       target = property()->mutable_installer_result();
     }
-    if (target == NULL) {
+    if (target == nullptr) {
       return ERROR_FILE_NOT_FOUND;
     }
     DCHECK_EQ(sizeof(DWORD), num_data);
@@ -317,7 +318,7 @@ class RegistryEmulator {
     if (returned_key == KRegKey_NotFound) {
       return ERROR_FILE_NOT_FOUND;
     }
-    if (result != NULL) {
+    if (result != nullptr) {
       *result = returned_key;
     }
     return ERROR_SUCCESS;
@@ -341,19 +342,19 @@ class RegistryEmulator {
       return ERROR_FILE_NOT_FOUND;
     }
 
-    // Add 1 for NULL.
+    // Add 1 for nullptr.
     const size_t total_length_in_tchar = value.size() + 1;
     const DWORD value_length_in_byte =
         (total_length_in_tchar * sizeof(wchar_t));
 
-    if (dest == NULL) {
-      if (num_data != NULL) {
+    if (dest == nullptr) {
+      if (num_data != nullptr) {
         *num_data = value_length_in_byte;
       }
       return ERROR_SUCCESS;
     }
 
-    DCHECK_NE(NULL, num_data);
+    DCHECK_NE(nullptr, num_data);
     const DWORD dest_buffer_size = *num_data;
 
     if (dest_buffer_size <= value_length_in_byte) {
@@ -366,7 +367,7 @@ class RegistryEmulator {
     EXPECT_HRESULT_SUCCEEDED(result);
     *num_data = value_length_in_byte;
 
-    if (type != NULL) {
+    if (type != nullptr) {
       *type = REG_SZ;
     }
     return ERROR_SUCCESS;
@@ -386,14 +387,14 @@ class RegistryEmulator {
 
     const DWORD value_length_in_byte = sizeof(DWORD);
 
-    if (dest == NULL) {
-      if (num_data != NULL) {
+    if (dest == nullptr) {
+      if (num_data != nullptr) {
         *num_data = value_length_in_byte;
       }
       return ERROR_SUCCESS;
     }
 
-    DCHECK_NE(NULL, num_data);
+    DCHECK_NE(nullptr, num_data);
     const DWORD dest_buffer_size = *num_data;
 
     if (dest_buffer_size <= value_length_in_byte) {
@@ -403,7 +404,7 @@ class RegistryEmulator {
     *dest = value;
     *num_data = value_length_in_byte;
 
-    if (type != NULL) {
+    if (type != nullptr) {
       *type = REG_DWORD;
     }
     return ERROR_SUCCESS;
@@ -476,54 +477,58 @@ class RegistryEmulator {
 class OmahaUtilTestOn32bitMachine : public testing::Test {
  protected:
   static void SetUpTestCase() {
-    // A quick fix of b/2669319.  If mozc::Util::GetSystemDir is first called
-    // when registry APIs are hooked by sidestep, GetSystemDir fails
+    // A quick fix of b/2669319.  If mozc::SystemUtil::GetSystemDir is first
+    // called when registry APIs are hooked by sidestep, GetSystemDir fails
     // unexpectedly because GetSystemDir also depends on registry API
-    // internally.  The second call of mozc::Util::GetSystemDir works well
-    // because it caches the result of the first call.  So any registry API
-    // access occurs in the second call.  We call mozc::Util::GetSystemDir here
-    // so that it works even when registry APIs are hooked.
+    // internally.  The second call of mozc::SystemUtil::GetSystemDir works
+    // well because it caches the result of the first call.  So any registry
+    // API access occurs in the second call.  We call
+    // mozc::SystemUtil::GetSystemDir here so that it works even when registry
+    // APIs are hooked.
     // TODO(yukawa): remove this quick fix as a part of b/2769852.
-    Util::GetSystemDir();
+    SystemUtil::GetSystemDir();
 
     // Call IsWindowsX64 in case it internally uses registry.
-    Util::IsWindowsX64();
+    SystemUtil::IsWindowsX64();
   }
 
   virtual void SetUp() {
-    Util::SetIsWindowsX64ModeForTest(
-        Util::IS_WINDOWS_X64_EMULATE_32BIT_MACHINE);
+    SystemUtil::SetIsWindowsX64ModeForTest(
+        SystemUtil::IS_WINDOWS_X64_EMULATE_32BIT_MACHINE);
   }
 
   virtual void TearDown() {
-    Util::SetIsWindowsX64ModeForTest(Util::IS_WINDOWS_X64_DEFAULT_MODE);
+    SystemUtil::SetIsWindowsX64ModeForTest(
+        SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE);
   }
 };
 
 class OmahaUtilTestOn64bitMachine : public testing::Test {
  protected:
   static void SetUpTestCase() {
-    // A quick fix of b/2669319.  If mozc::Util::GetSystemDir is first called
-    // when registry APIs are hooked by sidestep, GetSystemDir fails
+    // A quick fix of b/2669319.  If mozc::SystemUtil::GetSystemDir is first
+    // called when registry APIs are hooked by sidestep, GetSystemDir fails
     // unexpectedly because GetSystemDir also depends on registry API
-    // internally.  The second call of mozc::Util::GetSystemDir works well
-    // because it caches the result of the first call.  So any registry API
-    // access occurs in the second call.  We call mozc::Util::GetSystemDir here
-    // so that it works even when registry APIs are hooked.
+    // internally.  The second call of mozc::SystemUtil::GetSystemDir works
+    // well because it caches the result of the first call.  So any registry
+    // API access occurs in the second call.  We call
+    // mozc::SystemUtil::GetSystemDir here so that it works even when registry
+    // APIs are hooked.
     // TODO(yukawa): remove this quick fix as a part of b/2769852.
-    Util::GetSystemDir();
+    SystemUtil::GetSystemDir();
 
     // Call IsWindowsX64 in case it internally uses registry.
-    Util::IsWindowsX64();
+    SystemUtil::IsWindowsX64();
   }
 
   virtual void SetUp() {
-    Util::SetIsWindowsX64ModeForTest(
-        Util::IS_WINDOWS_X64_EMULATE_64BIT_MACHINE);
+    SystemUtil::SetIsWindowsX64ModeForTest(
+        SystemUtil::IS_WINDOWS_X64_EMULATE_64BIT_MACHINE);
   }
 
   virtual void TearDown() {
-    Util::SetIsWindowsX64ModeForTest(Util::IS_WINDOWS_X64_DEFAULT_MODE);
+    SystemUtil::SetIsWindowsX64ModeForTest(
+        SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE);
   }
 };
 

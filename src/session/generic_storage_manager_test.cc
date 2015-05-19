@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/util.h"
 #include "session/generic_storage_manager.h"
 
+#include "base/file_util.h"
+#include "base/util.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -37,8 +38,8 @@ DECLARE_string(test_tmpdir);
 namespace {
 
 static const string GetTemporaryFilePath() {
-  return mozc::Util::JoinPath(FLAGS_test_tmpdir,
-                              "generic_storage_test.db");
+  return mozc::FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                  "generic_storage_test.db");
 }
 
 }  // namespace

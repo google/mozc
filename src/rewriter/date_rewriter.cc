@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,17 +47,15 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 namespace mozc {
-
-// const char kDatePrefix[] = "\xE2\x86\x92";  // "→" (ATOK style)
-const char *kDatePrefix = NULL;
 
 namespace {
 struct DateData {
@@ -1653,12 +1651,11 @@ bool ExpandYear(const string &prefix, int year, vector<string> *result) {
   return true;
 }
 
-void Insert(Segment *segment,
-            const Segment::Candidate &base_candidate,
+void Insert(const Segment::Candidate &base_candidate,
             int position,
             const string &value,
             const char *description,
-            const char *prefix) {
+            Segment *segment) {
   Segment::Candidate *c = segment->insert_candidate(position);
   DCHECK(c);
   c->Init();
@@ -1672,9 +1669,6 @@ void Insert(Segment *segment,
   c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   if (description != NULL) {
     c->description = description;
-  }
-  if (prefix != NULL) {
-    c->prefix = prefix;
   }
 }
 
@@ -1698,13 +1692,13 @@ bool AdToEraForCourt(const YearData *data, int size,
       if (year == data[i].ad) {
         ExpandYear(data[i].era, 1, results);
       }
-      ExpandYear(data[i-1].era, year - data[i-1].ad + 1, results);
+      ExpandYear(data[i - 1].era, year - data[i - 1].ad + 1, results);
       return true;
     } else if (i == 0 && data[i].ad <= year) {
       if (year == data[i].ad) {
         ExpandYear(data[i].era, 1, results);
       } else {
-        ExpandYear(data[i-1].era, year - data[i-1].ad + 1, results);
+        ExpandYear(data[i - 1].era, year - data[i - 1].ad + 1, results);
       }
       return true;
     }
@@ -1713,13 +1707,53 @@ bool AdToEraForCourt(const YearData *data, int size,
   return false;
 }
 
+// "ねん"
+const char kNenKey[] = "\xE3\x81\xAD\xE3\x82\x93";
+// "年"
+const char kNenValue[] = "\xE5\xB9\xB4";
+
+bool ExtractYearFromKey(const YearData &year_data,
+                        const string &key,
+                        int *year,
+                        string *description) {
+  // "がん"
+  const char kGanKey[] = "\xE3\x81\x8C\xE3\x82\x93";
+  // "元"
+  const char kGanValue[] = "\xE5\x85\x83";
+
+  // Util::EndsWith(key, kNenKey) is expected to always return true
+  DCHECK(Util::EndsWith(key, kNenKey));
+  if (!Util::StartsWith(key, year_data.key)) {
+    return false;
+  }
+  // key="しょうわ59ねん" -> era_year_str="59"
+  // key="へいせいがんねん" -> era_year_str="がん"
+  const size_t year_start = Util::CharsLen(year_data.key);
+  const size_t year_length = Util::CharsLen(key) -
+      year_start - Util::CharsLen(kNenKey);
+  string era_year_str(Util::SubString(key, year_start, year_length));
+
+  // "元年"
+  if (era_year_str == kGanKey) {
+    *year = 1;
+    description->assign(year_data.era).append(kGanValue).append(kNenValue);
+    return true;
+  }
+
+  if (!NumberUtil::IsArabicNumber(era_year_str)) {
+    return false;
+  }
+  *year = atoi32(era_year_str.c_str());
+  if (*year <= 0) {
+    return false;
+  }
+  *description = year_data.era + era_year_str + kNenValue;
+
+  return true;
+}
+
 bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
                      vector<string> *results, vector<string> *descriptions) {
-  // "ねん"
-  const char kNenKey[] = "\xE3\x81\xAD\xE3\x82\x93";
-  // "年"
-  const char kNenValue[] = "\xE5\xB9\xB4";
-
   if (!Util::EndsWith(key, kNenKey)) {
     return false;
   }
@@ -1731,19 +1765,12 @@ bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
       continue;
     }
 
-    // key="しょうわ59ねん" -> era_year_str="59"
-    const size_t year_start = Util::CharsLen(year_data.key);
-    const size_t year_length = Util::CharsLen(key) -
-        year_start - Util::CharsLen(kNenKey);
-    const string era_year_str(Util::SubString(key, year_start, year_length));
-    // "元年" is not supported yet.
-    if (!NumberUtil::IsArabicNumber(era_year_str)) {
+    // key="しょうわ59ねん" -> era_year=59, description="昭和59年"
+    // key="へいせいがんねん" -> era_year=1, description="平成元年"
+    int era_year = 0;
+    string description = "";
+    if (!ExtractYearFromKey(year_data, key, &era_year, &description)) {
       continue;
-    }
-
-    const int era_year = atoi32(era_year_str.c_str());
-    if (era_year <= 0) {
-      return false;
     }
     const int ad_year = era_year + year_data.ad - 1;
 
@@ -1768,7 +1795,7 @@ bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
         continue;
       }
       results->push_back(value);
-      descriptions->push_back(year_data.era + era_year_str + kNenValue);
+      descriptions->push_back(description);
     }
     modified = true;
   }
@@ -1949,7 +1976,7 @@ bool DateRewriter::ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
 
     // "Y年M月D日"
     results->push_back(Util::StringPrintf(
-        "%d\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
+        "%d" "\xE5\xB9\xB4" "%d" "\xE6\x9C\x88" "%d" "\xE6\x97\xA5",
         year, month, day));
 
     return true;
@@ -1991,96 +2018,103 @@ bool DateRewriter::RewriteTime(Segment *segment,
     }
     // Date candidates are too many, therefore highest candidate show at most
     // 3rd.
-    // TODO(nona): learn date candidate even if the date is chaned.
+    // TODO(nona): learn date candidate even if the date is changed.
     const size_t kMinimumDateCandidateIdx = 3;
     const size_t insert_idx = (size < kMinimumDateCandidateIdx) ?
         size : max(cand_idx + 1, kMinimumDateCandidateIdx);
 
     struct tm t_st;
-    string tmp;
     vector<string> era;
-    if (type == REWRITE_DATE) {
-      if (!Util::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
-        LOG(ERROR) << "GetTmWithOffsetSecond() failed";
-        return false;
-      }
-      vector<string> results;
-      ConvertDateWithYear(t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday,
-                          &results);
+    switch (type) {
+      case REWRITE_DATE: {
+        if (!Util::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
+          LOG(ERROR) << "GetTmWithOffsetSecond() failed";
+          return false;
+        }
+        vector<string> results;
+        ConvertDateWithYear(t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday,
+                            &results);
+        if (AdToEra(t_st.tm_year + 1900, &era) && !era.empty()) {
+          // "平成Y年M月D日"
+          results.push_back(Util::StringPrintf(
+              "%s" "\xE5\xB9\xB4" "%d" "\xE6\x9C\x88" "%d" "\xE6\x97\xA5",
+              era[0].c_str(), t_st.tm_mon + 1, t_st.tm_mday));
+        }
+        // "WDAY曜日"
+        results.push_back(Util::StringPrintf("%s" "\xE6\x9B\x9C\xE6\x97\xA5",
+                                             kWeekDayString[t_st.tm_wday]));
 
-      if (AdToEra(t_st.tm_year + 1900, &era) && !era.empty()) {
-        // "平成Y年M月D日"
-        results.push_back(Util::StringPrintf(
-            "%s\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
-            era[0].c_str(), t_st.tm_mon + 1, t_st.tm_mday));
+        for (vector<string>::reverse_iterator rit = results.rbegin();
+             rit != results.rend(); ++rit) {
+          Insert(cand, insert_idx , *rit, description, segment);
+        }
+        return true;
       }
 
-      // "WDAY曜日"
-      results.push_back(Util::StringPrintf("%s\xE6\x9B\x9C\xE6\x97\xA5",
-                                            kWeekDayString[t_st.tm_wday]));
-
-      for (vector<string>::reverse_iterator rit = results.rbegin();
-           rit != results.rend(); ++rit) {
-        Insert(segment, cand, insert_idx , *rit, description, kDatePrefix);
+      case REWRITE_MONTH: {
+        if (!Util::GetCurrentTm(&t_st)) {
+          LOG(ERROR) << "GetCurrentTm failed";
+          return false;
+        }
+        const int month = (t_st.tm_mon + diff + 12) % 12 + 1;
+        // "月"
+        Insert(cand, insert_idx, Util::StringPrintf("%d\xE6\x9C\x88", month),
+               description, segment);
+        Insert(cand, insert_idx, Util::StringPrintf("%d", month), description,
+               segment);
+        return true;
       }
 
-      return true;
-    } else if (type == REWRITE_MONTH) {
-      if (!Util::GetCurrentTm(&t_st)) {
-        LOG(ERROR) << "GetCurrentTm failed";
-        return false;
-      }
-      const int month = (t_st.tm_mon + diff + 12) % 12 + 1;
-      // "月"
-      tmp = Util::StringPrintf("%d\xE6\x9C\x88", month);
-      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
-      tmp = Util::StringPrintf("%d", month);
-      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
-      return true;
-    } else if (type == REWRITE_YEAR) {
-      if (!Util::GetCurrentTm(&t_st)) {
-        LOG(ERROR) << "GetCurrentTm failed";
-        return false;
-      }
-      const int year = (t_st.tm_year + diff + 1900);
-      if (AdToEra(year, &era) && !era.empty()) {
+      case REWRITE_YEAR: {
+        if (!Util::GetCurrentTm(&t_st)) {
+          LOG(ERROR) << "GetCurrentTm failed";
+          return false;
+        }
+        const int year = (t_st.tm_year + diff + 1900);
+        if (AdToEra(year, &era) && !era.empty()) {
+          // "年"
+          Insert(cand, insert_idx,
+                 Util::StringPrintf("%s\xE5\xB9\xB4", era[0].c_str()),
+                 description, segment);
+        }
         // "年"
-        tmp = Util::StringPrintf("%s\xE5\xB9\xB4", era[0].c_str());
-        Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
+        Insert(cand, insert_idx, Util::StringPrintf("%d\xE5\xB9\xB4", year),
+               description, segment);
+        Insert(cand, insert_idx, Util::StringPrintf("%d", year), description,
+               segment);
+        return true;
       }
-      // "年"
-      tmp = Util::StringPrintf("%d\xE5\xB9\xB4", year);
-      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
-      tmp = Util::StringPrintf("%d", year);
-      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
-      return true;
-    } else if (type == REWRITE_CURRENT_TIME) {
-      if (!Util::GetCurrentTm(&t_st)) {
-        LOG(ERROR) << "GetCurrentTm failed";
-        return false;
+
+      case REWRITE_CURRENT_TIME: {
+        if (!Util::GetCurrentTm(&t_st)) {
+          LOG(ERROR) << "GetCurrentTm failed";
+          return false;
+        }
+        vector<string> times;
+        ConvertTime(t_st.tm_hour, t_st.tm_min, &times);
+        for (vector<string>::reverse_iterator rit = times.rbegin();
+             rit != times.rend(); ++rit) {
+          Insert(cand, insert_idx, *rit, description, segment);
+        }
+        return true;
       }
-      vector<string> times;
-      ConvertTime(t_st.tm_hour, t_st.tm_min, &times);
-      for (vector<string>::reverse_iterator rit = times.rbegin();
-           rit != times.rend(); ++rit) {
-        Insert(segment, cand, insert_idx, *rit, description, kDatePrefix);
+
+      case REWRITE_DATE_AND_CURRENT_TIME: {
+        if (!Util::GetCurrentTm(&t_st)) {
+          LOG(ERROR) << "GetCurrentTm failed";
+          return false;
+        }
+        // Y/MM/DD H:MM
+        const string ymmddhmm = Util::StringPrintf("%d/%2.2d/%2.2d %2d:%2.2d",
+                                                   t_st.tm_year + 1900,
+                                                   t_st.tm_mon + 1,
+                                                   t_st.tm_mday,
+                                                   t_st.tm_hour,
+                                                   t_st.tm_min);
+        Insert(cand, insert_idx, ymmddhmm, description, segment);
+        return true;
       }
-      return true;
-    } else if (type == REWRITE_DATE_AND_CURRENT_TIME) {
-      if (!Util::GetCurrentTm(&t_st)) {
-        LOG(ERROR) << "GetCurrentTm failed";
-        return false;
-      }
-      // Y/MM/DD H:MM
-      tmp = Util::StringPrintf("%d/%2.2d/%2.2d %2d:%2.2d",
-                               t_st.tm_year + 1900,
-                               t_st.tm_mon + 1,
-                               t_st.tm_mday,
-                               t_st.tm_hour,
-                               t_st.tm_min);
-      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
     }
-    return true;
   }
 
   return false;
@@ -2215,8 +2249,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   }
 
   string year_str;
-  Util::FullWidthAsciiToHalfWidthAscii(current_key,
-                                       &year_str);
+  Util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
 
   const uint32 year = atoi32(year_str.c_str());
 
@@ -2233,11 +2266,11 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   // "和暦"
   const char kDescription[] = "\xE5\x92\x8C\xE6\x9A\xA6";
   for (int i = static_cast<int>(results.size()) - 1; i >= 0; --i) {
-    Insert(current_segment,
-           current_segment->candidate(0),
+    Insert(current_segment->candidate(0),
            position,
            results[i],
-           kDescription, NULL);
+           kDescription,
+           current_segment);
     current_segment->mutable_candidate(position)->attributes
         &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
   }
@@ -2247,9 +2280,11 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
 
 bool DateRewriter::RewriteAd(Segment *segment) const {
   const string &key = segment->key();
-  // "ねん"
-  const char kNenKey[] = "\xE3\x81\xAD\xE3\x82\x93";
   if (!Util::EndsWith(key, kNenKey)) {
+    return false;
+  }
+  if (segment->candidates_size() == 0) {
+    VLOG(2) << "No candidates are found";
     return false;
   }
   vector<string> results, descriptions;
@@ -2258,37 +2293,101 @@ bool DateRewriter::RewriteAd(Segment *segment) const {
   // Insert position is the last of candidates
   const int position = static_cast<int>(segment->candidates_size());
   for (size_t i = 0; i < results.size(); ++i)  {
-    Insert(segment,
-           segment->candidate(0),
+    Insert(segment->candidate(0),
            position,
            results[i],
            descriptions[i].c_str(),
-           NULL);
+           segment);
   }
   return ret;
 }
 
-bool DateRewriter::RewriteFourDigits(Segment *segment) const {
-  const string &current_value = segment->key();
+namespace {
+bool IsFourDigits(const string &value) {
+  return Util::CharsLen(value) == 4 &&
+         Util::GetScriptType(value) == Util::NUMBER;
+}
 
-  if (Util::GetScriptType(current_value) != Util::NUMBER) {
+// Gets four digits if possible.
+// Following trials will be performed in this order.
+// 1. Checks segment's key.
+// 2. Checks all the meta candidates.
+// 3. Checks raw input.
+//      This is mainly for mobile.
+//      On 12keys-toggle-alphabet mode, a user types "2223" to get "cd".
+//      In this case,
+//      - Segment's key is "cd".
+//      - All the meta candidates are based on "cd" (e.g. "CD", "Cd").
+//      Therefore to get "2223" we should access the raw input.
+// Prerequisit: |segments| has only one conversion segment.
+const bool GetFourDigits(const composer::Composer &composer,
+                         const Segments &segments,
+                         string *output) {
+  DCHECK(output);
+  DCHECK_EQ(1, segments.conversion_segments_size());
+  const Segment &segment = segments.conversion_segment(0);
+
+  // 1. Segment's key
+  if (IsFourDigits(segment.key())) {
+    *output = segment.key();
+    return true;
+  }
+
+  // 2. Meta candidates
+  for (size_t i = 0; i < segment.meta_candidates_size(); ++i) {
+    if (IsFourDigits(segment.meta_candidate(i).value)) {
+      *output = segment.meta_candidate(i).value;
+      return true;
+    }
+  }
+
+  // 3. Raw input
+  string raw;
+  // Note that given segment is the only segment in the Segments.
+  composer.GetRawText(0, Util::CharsLen(segment.key()), &raw);
+  if (IsFourDigits(raw)) {
+    *output = raw;
+    return true;
+  }
+
+  // No trials succeeded.
+  return false;
+}
+}  // namespace
+
+bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
+                                     Segments *segments) const {
+  if (segments->conversion_segments_size() != 1) {
+    // This method rewrites a segment only when the segments has only
+    // one conversion segment.
+    // This is spec matter.
+    // Rewriting multiple segments will not make users happier.
     return false;
   }
 
-  const size_t len = Util::CharsLen(current_value);
-  if (len != 4) {
+  string key;
+  if (!GetFourDigits(composer, *segments, &key)) {
+    // No four digit key is available.
     return false;
   }
+
+  Segment *segment = segments->mutable_conversion_segment(0);
 
   string number_str;
-  Util::FullWidthAsciiToHalfWidthAscii(current_value,
-                                       &number_str);
+  Util::FullWidthAsciiToHalfWidthAscii(key, &number_str);
 
   const uint32 number = atoi32(number_str.c_str());
   const uint32 upper_number = number / 100;
   const uint32 lower_number = number % 100;
 
-  const Segment::Candidate &cand = segment->candidate(0);
+  if (segment->candidates_size() == 0 &&
+      segment->meta_candidates_size() == 0) {
+    VLOG(2) << "No (meta) candidates are found";
+    return false;
+  }
+
+  const Segment::Candidate &cand = (segment->candidates_size() > 0) ?
+      segment->candidate(0) : segment->meta_candidate(0);
 
   bool is_modified = false;
   vector<string> result;
@@ -2298,8 +2397,8 @@ bool DateRewriter::RewriteFourDigits(Segment *segment) const {
     // Always insert after last candidate.
     const int position = static_cast<int>(segment->candidates_size());
     // "日付"
-    Insert(segment, cand, position, result[i], "\xE6\x97\xA5\xE4\xBB\x98",
-           kDatePrefix);
+    Insert(cand, position, result[i], "\xE6\x97\xA5\xE4\xBB\x98",
+           segment);
   }
 
   result.clear();
@@ -2309,8 +2408,8 @@ bool DateRewriter::RewriteFourDigits(Segment *segment) const {
     // Always insert after last candidate.
     const int position = static_cast<int>(segment->candidates_size());
     // "時刻"
-    Insert(segment, cand, position, result[i], "\xE6\x99\x82\xE5\x88\xBB",
-           kDatePrefix);
+    Insert(cand, position, result[i], "\xE6\x99\x82\xE5\x88\xBB",
+           segment);
   }
   return is_modified;
 }
@@ -2318,8 +2417,8 @@ bool DateRewriter::RewriteFourDigits(Segment *segment) const {
 DateRewriter::DateRewriter() {}
 DateRewriter::~DateRewriter() {}
 
-int DateRewriter::capability() const {
-  if (GET_REQUEST(mixed_conversion)) {
+int DateRewriter::capability(const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;
@@ -2360,7 +2459,10 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
       modified = true;
       ++i;  // skip one more
     }
-    modified |= RewriteFourDigits(seg);
+  }
+
+  if (request.has_composer()) {
+    modified |= RewriteFourDigits(request.composer(), segments);
   }
 
   return modified;

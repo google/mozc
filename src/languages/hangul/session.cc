@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/file_util.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -53,7 +54,7 @@ namespace mozc {
 namespace {
 // TODO(nona): Unify config updating mechanism like session_handler.
 uint64 g_last_config_updated = 0;
-}  // namespace anonymous
+}  // namespace
 
 namespace hangul {
 namespace {
@@ -598,8 +599,7 @@ bool Session::ProcessHangulMode(commands::Command *command) {
         return ProcessBSKey(command);
         break;
       case KeyEvent::HANJA:
-        HanjaLookup(command);
-        return true;
+        return HanjaLookup(command);
         break;
       default:
         // Hangul input treat non hangul key as default after committing.
@@ -882,7 +882,7 @@ void Session::set_application_info(
 }
 
 bool Session::ReloadSymbolDictionary(const string &symbol_dictionary_filename) {
-  if (Util::FileExists(symbol_dictionary_filename)) {
+  if (FileUtil::FileExists(symbol_dictionary_filename)) {
     symbol_table_ = ::hanja_table_load(symbol_dictionary_filename.c_str());
   } else {
     symbol_table_ = NULL;

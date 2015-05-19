@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,10 +52,12 @@ namespace {
 // Maximum string length in UserDictionaryEntry's field
 const size_t kMaxKeySize = 300;
 const size_t kMaxValueSize = 300;
-const size_t kMaxPOSSize = 300;
 const size_t kMaxCommentSize = 300;
 const char kInvalidChars[]= "\n\r\t";
 const char kUserDictionaryFile[] = "user://user_dictionary.db";
+
+const mozc::user_dictionary::UserDictionary::PosType kInvalidPosType =
+    static_cast<mozc::user_dictionary::UserDictionary::PosType>(-1);
 
 // Maximum string length for dictionary name.
 const size_t kMaxDictionaryNameSize = 300;
@@ -430,6 +432,58 @@ void RemoveUnknownFieldByTagNumber(
   unknown_field_set->Swap(&temporary_unknown_field_set);
 }
 
+struct RemovedPosTypeResolveTable {
+  const char *name;
+  mozc::user_dictionary::UserDictionary::PosType pos_type;
+};
+
+const RemovedPosTypeResolveTable kRemovedPosType[] = {
+  // Removed in CL/9909127.
+  // "名詞副詞可能"
+  { "\xE5\x90\x8D\xE8\xA9\x9E\xE5\x89\xAF\xE8\xA9\x9E\xE5\x8F\xAF\xE8\x83\xBD",
+    mozc::user_dictionary::UserDictionary::NOUN },
+  // "接頭形容詞接続"
+  { "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E"
+    "\xE6\x8E\xA5\xE7\xB6\x9A",
+    mozc::user_dictionary::UserDictionary::PREFIX },
+  // "接頭数接続"
+  { "\xE6\x8E\xA5\xE9\xA0\xAD\xE6\x95\xB0\xE6\x8E\xA5\xE7\xB6\x9A",
+    mozc::user_dictionary::UserDictionary::PREFIX },
+  // "接頭動詞接続"
+  { "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\x8B\x95\xE8\xA9\x9E\xE6\x8E\xA5\xE7\xB6\x9A",
+    mozc::user_dictionary::UserDictionary::PREFIX },
+  // "接頭名詞接続"
+  { "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\x90\x8D\xE8\xA9\x9E\xE6\x8E\xA5\xE7\xB6\x9A",
+    mozc::user_dictionary::UserDictionary::PREFIX },
+  // "形容詞アウオ段"
+  { "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E"
+    "\xE3\x82\xA2\xE3\x82\xA6\xE3\x82\xAA\xE6\xAE\xB5",
+    mozc::user_dictionary::UserDictionary::ADJECTIVE },
+  // "形容詞イ段"
+  { "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E\xE3\x82\xA4\xE6\xAE\xB5",
+    mozc::user_dictionary::UserDictionary::ADJECTIVE },
+
+  // Removed in CL/18000642.
+  // "括弧開"
+  { "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x8B",
+    mozc::user_dictionary::UserDictionary::SYMBOL },
+  // "括弧閉"
+  { "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x89",
+    mozc::user_dictionary::UserDictionary::SYMBOL },
+};
+
+mozc::user_dictionary::UserDictionary::PosType ResolveRemovedPosType(
+    const string &name) {
+  for (size_t i = 0; i < arraysize(kRemovedPosType); ++i) {
+    if (name == kRemovedPosType[i].name) {
+      return kRemovedPosType[i].pos_type;
+    }
+  }
+
+  // Not found. Return invalid pos type.
+  return kInvalidPosType;
+}
+
 // The deprecated tag number of "pos" field in UserDictionary::Entry.
 const int kDeprecatedPosTagNumber = 3;
 
@@ -439,9 +493,6 @@ bool UserDictionaryUtil::ResolveUnknownFieldSet(
     user_dictionary::UserDictionaryStorage *storage) {
   using mozc::user_dictionary::UserDictionary;
   typedef UserDictionary::Entry Entry;
-
-  static const UserDictionary::PosType kInvalidPosType =
-      static_cast<UserDictionary::PosType>(-1);
 
   bool result = true;
   for (int i = 0; i < storage->dictionaries_size(); ++i) {
@@ -469,6 +520,12 @@ bool UserDictionaryUtil::ResolveUnknownFieldSet(
           break;
         case UnknownField::TYPE_LENGTH_DELIMITED:
           pos_type = ToPosType(unknown_field->length_delimited().c_str());
+          if (pos_type == kInvalidPosType) {
+            // The value may be created by very old mozc dictionary tool.
+            // Try to find the value from a list containing removed pos names.
+            pos_type =
+                ResolveRemovedPosType(unknown_field->length_delimited());
+          }
           break;
         default:
           LOG(ERROR) << "Unknown deprecated pos type value: "
@@ -478,6 +535,11 @@ bool UserDictionaryUtil::ResolveUnknownFieldSet(
 
       if (pos_type == kInvalidPosType) {
         LOG(ERROR) << "Failed to resolve old pos data.";
+        if (!entry->has_pos()) {
+          // If there is no pos here, users cannot use this entry for the
+          // conversion. Thus, as a fallback, we fill NOUN by default.
+          entry->set_pos(UserDictionary::NOUN);
+        }
         result = false;
         continue;
       }
@@ -536,11 +598,13 @@ uint64 UserDictionaryUtil::CreateNewDictionaryId(
 
   uint64 id = kInvalidDictionaryId;
   while (id == kInvalidDictionaryId) {
-    if (!Util::GetSecureRandomSequence(
-            reinterpret_cast<char *>(&id), sizeof(id))) {
-      LOG(ERROR) << "GetSecureRandomSequence() failed. use random value.";
-      id = static_cast<uint64>(Util::Random(RAND_MAX));
-    }
+    Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
+
+#ifdef  __native_client__
+    // Because JavaScript does not support uint64, we downsize the dictionary id
+    // range from uint64 to uint32 in NaCl.
+    id = static_cast<uint32>(id);
+#endif  // __native_client__
 
     // Duplication check.
     for (int i = 0; i < storage.dictionaries_size(); ++i) {

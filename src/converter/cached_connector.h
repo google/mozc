@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,48 +31,42 @@
 #define MOZC_CONVERTER_CACHED_CONNECTOR_H_
 
 #include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "converter/connector_interface.h"
 
 namespace mozc {
 namespace converter {
-// The result of GetTransitionCost() is cached with TLS.
-// Note that the cache is created as a global variable. If you
-// pass two different connectors, the cache variable will be shared.
-// Since we can assume that real Connector is a singleton object,
-// this restriction will not be a big issue.
+
+// Provides cache mechanism for Connector.
 class CachedConnector : public ConnectorInterface {
  public:
-  // Use cache that defined at other place.
-  // cache_size should be 2^k form of value.
-  CachedConnector(ConnectorInterface *connector,
-                  bool *cache_initialized,
-                  int *cache_key,
-                  int *cache_value,
-                  int cache_size);
+  // |cache_size| should be 2^k form of value.
+  CachedConnector(ConnectorInterface *connector, int cache_size);
   virtual ~CachedConnector();
 
   virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
   virtual int GetResolution() const;
 
-  // Clear cache explicitly.
+  // Clears cache explicitly.
   void ClearCache();
 
  private:
   void InitializeCache() const;
 
   ConnectorInterface *connector_;
-  // Pointers to the chache.
-  // Cache should be created as global variables.
-  // For the performance, we are assuming the cache is an array, not vector.
-  bool *cache_initialized_;
-  int *cache_key_;
-  int *cache_value_;
+
+  // Cache data need to be mutable as they are modified in const methods. For
+  // the performance, we are assuming the cache is an array, not vector.
+  mutable bool cache_initialized_;
+  mutable scoped_array<int> cache_key_;
+  mutable scoped_array<int> cache_value_;
   const int cache_size_;
   const int hash_mask_;
 
 
   DISALLOW_COPY_AND_ASSIGN(CachedConnector);
 };
+
 }  // namespace converter
 }  // namespace mozc
 

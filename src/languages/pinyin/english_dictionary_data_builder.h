@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,17 +35,11 @@
 #include "base/base.h"
 
 namespace mozc {
-#ifdef MOZC_USE_MOZC_LOUDS
 namespace storage {
 namespace louds {
 class LoudsTrieBuilder;
-}
-}
-#else
-namespace rx {
-class RxTrieBuilder;
-}
-#endif  // MOZC_USE_MOZC_LOUDS
+}  // namespace louds
+}  // namespace storage
 
 namespace pinyin {
 namespace english {
@@ -61,13 +55,7 @@ class EnglishDictionaryDataBuilder {
   void WriteToStream(ostream *output_stream) const;
 
  private:
-#ifdef MOZC_USE_MOZC_LOUDS
-  typedef storage::louds::LoudsTrieBuilder TrieBuilderType;
-#else
-  typedef rx::RxTrieBuilder TrieBuilderType;
-#endif  // MOZC_USE_MOZC_LOUDS
-
-  scoped_ptr<TrieBuilderType> builder_;
+  scoped_ptr<mozc::storage::louds::LoudsTrieBuilder> builder_;
   scoped_array<float> louds_id_to_priority_;
   int words_num_;
 

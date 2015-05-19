@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <iostream>
 
+#include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/util.h"
@@ -127,7 +128,7 @@ void ProcessLoop() {
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
   if (FLAGS_suppress_stderr) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     const char path[] = "NUL";
 #else
     const char path[] = "/dev/null";

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,16 @@
 
 #include "gui/tool/mozc_tool_libmain.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 
 #include <QtGui/QtGui>
 #include "base/base.h"
 #include "base/const.h"
-#include "base/crash_report_util.h"
+#include "base/crash_report_handler.h"
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/password_manager.h"
 #include "base/run_level.h"
 #include "base/util.h"
@@ -64,13 +66,13 @@ int RunCharacterPalette(int argc, char *argv[]);
 int RunHandWriting(int argc, char *argv[]);
 #endif  // USE_ZINNIA
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // (SetDefault|PostInstall|RunAdministartion)Dialog are used for Windows only.
 int RunSetDefaultDialog(int argc, char *argv[]);
 int RunPostInstallDialog(int argc, char *argv[]);
 int RunAdministrationDialog(int argc, char *argv[]);
 int RunUpdateDialog(int argc, char *argv[]);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
 // Confirmation Dialog is used for the update dialog on Mac only.
@@ -82,7 +84,7 @@ int RunPrelaunchProcesses(int argc, char *argv[]);
 namespace {
 char *strdup_with_new(const char *str) {
   const size_t len = strlen(str);
-  char *v = new char [len + 1];
+  char *v = new char[len + 1];
   memcpy(v, str, len);
   v[len] = '\0';
   return v;
@@ -92,7 +94,7 @@ char *strdup_with_new(const char *str) {
 
 int RunMozcTool(int argc, char *argv[]) {
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
-    mozc::CrashReportUtil::InstallBreakpad();
+    mozc::CrashReportHandler::Initialize(false);
   }
 #ifdef OS_MACOSX
   // OSX's app won't accept command line flags.
@@ -113,7 +115,7 @@ int RunMozcTool(int argc, char *argv[]) {
 #ifdef OS_MACOSX
   // In Mac, we shares the same binary but changes the application
   // name.
-  string binary_name = mozc::Util::Basename(argv[0]);
+  string binary_name = mozc::FileUtil::Basename(argv[0]);
   if (binary_name == "AboutDialog") {
     FLAGS_mode = "about_dialog";
   } else if (binary_name == "ConfigDialog") {
@@ -151,10 +153,10 @@ int RunMozcTool(int argc, char *argv[]) {
   // we cannot install the translation of qt_ja_JP here.
   // as Qpplication is initialized inside Run* function
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Update JumpList if available.
   mozc::gui::WinUtil::KeepJumpListUpToDate();
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   if (FLAGS_mode == "config_dialog") {
     return RunConfigDialog(argc, argv);
@@ -172,7 +174,7 @@ int RunMozcTool(int argc, char *argv[]) {
   } else if (FLAGS_mode == "hand_writing") {
     return RunHandWriting(argc, argv);
 #endif  // USE_ZINNIA
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   } else if (FLAGS_mode == "set_default_dialog") {
     // set_default_dialog is used on Windows only.
     return RunSetDefaultDialog(argc, argv);
@@ -185,7 +187,7 @@ int RunMozcTool(int argc, char *argv[]) {
   } else if (FLAGS_mode == "update_dialog") {
     // update_dialog is used on Windows only.
     return RunUpdateDialog(argc, argv);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #ifdef OS_MACOSX
   } else if (FLAGS_mode == "confirmation_dialog") {
     // Confirmation Dialog is used for the update dialog on Mac only.

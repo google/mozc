@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,6 +72,10 @@ class SessionObserverHandler;
 class SessionObserverInterface;
 }  // namespace session
 
+namespace sync {
+class SyncHandler;
+}  // namespace sync
+
 namespace user_dictionary {
 class UserDictionarySessionHandler;
 }  // namespace user_dictionary
@@ -95,7 +99,7 @@ class SessionHandler : public SessionHandlerInterface {
 
   virtual void AddObserver(session::SessionObserverInterface *observer);
 
-  void SetSessionFactory(session::SessionFactoryInterface *new_factory);
+  virtual void SetSyncHandler(sync::SyncHandler *sync_handler);
 
  private:
   FRIEND_TEST(SessionHandlerTest, StorageTest);
@@ -148,7 +152,6 @@ class SessionHandler : public SessionHandlerInterface {
   // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   bool is_available_;
-  int keyevent_counter_;
   uint32 max_session_size_;
   uint64 last_session_empty_time_;
   uint64 last_cleanup_time_;
@@ -156,11 +159,12 @@ class SessionHandler : public SessionHandlerInterface {
 
   session::SessionFactoryInterface *session_factory_;
   scoped_ptr<session::SessionObserverHandler> observer_handler_;
+#ifdef ENABLE_CLOUD_SYNC
+  sync::SyncHandler *sync_handler_;
+#endif  // ENABLE_CLOUD_SYNC
   scoped_ptr<Stopwatch> stopwatch_;
-#ifndef __native_client__
   scoped_ptr<user_dictionary::UserDictionarySessionHandler>
       user_dictionary_session_handler_;
-#endif  // __native_client__
   scoped_ptr<composer::TableManager> table_manager_;
   scoped_ptr<commands::Request> request_;
 

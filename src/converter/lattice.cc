@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -232,6 +232,7 @@ void Lattice::Clear() {
   end_nodes_.clear();
   node_allocator_->Free();
   cache_info_.clear();
+  history_end_pos_ = 0;
 }
 
 void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
@@ -245,6 +246,14 @@ void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
 void Lattice::ResetDebugDisplayNode() {
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
   info->display_node_str_.clear();
+}
+
+void Lattice::set_history_end_pos(size_t pos) {
+  history_end_pos_ = pos;
+}
+
+size_t Lattice::history_end_pos() const {
+  return history_end_pos_;
 }
 
 void Lattice::UpdateKey(const string &new_key) {
@@ -349,7 +358,7 @@ void Lattice::ShrinkKey(const size_t new_len) {
   fill(cache_info_.begin() + new_len, cache_info_.end(), 0);
 
   // update key
-  key_ = key_.substr(0, new_len);
+  key_.erase(new_len);
 }
 
 size_t Lattice::cache_info(const size_t pos) const {

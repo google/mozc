@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,13 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/stl_util.h"
 #include "base/thread.h"
-#include "base/trie.h"
+#include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/node.h"
@@ -55,11 +56,18 @@ namespace mozc {
 
 namespace {
 
-class POSTokenLess {
- public:
+struct OrderByKey {
   bool operator()(const UserPOS::Token *lhs,
                   const UserPOS::Token *rhs) const {
     return lhs->key < rhs->key;
+  }
+};
+
+struct OrderByKeyThenById {
+  bool operator()(const UserPOS::Token *lhs,
+                  const UserPOS::Token *rhs) const {
+    const int comp = lhs->key.compare(rhs->key);
+    return comp == 0 ? (lhs->id < rhs->id) : (comp < 0);
   }
 };
 
@@ -103,7 +111,7 @@ class TokensIndex : public vector<UserPOS::Token *> {
     clear();
   }
 
-  void Load(const UserDictionaryStorage &storage) {
+  void Load(const user_dictionary::UserDictionaryStorage &storage) {
     Clear();
     set<uint64> seen;
     vector<UserPOS::Token> tokens;
@@ -142,7 +150,12 @@ class TokensIndex : public vector<UserPOS::Token *> {
         Util::NormalizeVoicedSoundMark(tmp, &reading);
 
         DCHECK_LE(0, entry.pos());
+MOZC_CLANG_PUSH_WARNING();
+#if MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
+MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
+#endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
         DCHECK_LE(entry.pos(), 255);
+MOZC_CLANG_POP_WARNING();
         const uint64 fp = Util::Fingerprint(reading +
                                             "\t" +
                                             entry.value() +
@@ -163,12 +176,14 @@ class TokensIndex : public vector<UserPOS::Token *> {
               UserDictionaryUtil::GetStringPosType(entry.pos()), &tokens);
           for (size_t k = 0; k < tokens.size(); ++k) {
             this->push_back(new UserPOS::Token(tokens[k]));
+            Util::StripWhiteSpaces(entry.comment(), &this->back()->comment);
           }
         }
       }
     }
 
-    sort(this->begin(), this->end(), POSTokenLess());
+    // Sort first by key and then by POS ID.
+    sort(this->begin(), this->end(), OrderByKeyThenById());
 
     suppression_dictionary_->UnLock();
 
@@ -246,14 +261,15 @@ class UserDictionaryReloader : public Thread {
 UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
                                const POSMatcher *pos_matcher,
                                SuppressionDictionary *suppression_dictionary)
-    : reloader_(new UserDictionaryReloader(this)),
+    : ALLOW_THIS_IN_INITIALIZER_LIST(
+          reloader_(new UserDictionaryReloader(this))),
       user_pos_(user_pos),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
       empty_limit_(Limit()),
-      tokens_(new TokensIndex(user_pos_, suppression_dictionary)),
+      tokens_(new TokensIndex(user_pos_.get(), suppression_dictionary)),
       mutex_(new ReaderWriterMutex) {
-  DCHECK(user_pos_);
+  DCHECK(user_pos_.get());
   DCHECK(pos_matcher_);
   DCHECK(suppression_dictionary_);
   Reload();
@@ -264,13 +280,21 @@ UserDictionary::~UserDictionary() {
   delete tokens_;
 }
 
+bool UserDictionary::HasValue(const StringPiece value) const {
+  // TODO(noriyukit): Currently, we don't support HasValue() for user dictionary
+  // because we need to search tokens linearly, which might be slow in extreme
+  // cases where 100K entries exist.  Note: HasValue() method is used only in
+  // UserHistoryPredictor for privacy sensitivity check.
+  return false;
+}
+
 Node *UserDictionary::LookupPredictiveWithLimit(
     const char *str, int size, const Limit &limit,
     NodeAllocatorInterface *allocator) const {
   scoped_reader_lock l(mutex_.get());
 
   if (size == 0) {
-    LOG(WARNING) << "string of length zero is passed.";
+    VLOG(2) << "string of length zero is passed.";
     return NULL;
   }
 
@@ -290,7 +314,7 @@ Node *UserDictionary::LookupPredictiveWithLimit(
   UserPOS::Token key_token;
   key_token.key = key;
   vector<UserPOS::Token *>::const_iterator it =
-      lower_bound(tokens_->begin(), tokens_->end(), &key_token, POSTokenLess());
+      lower_bound(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   for (; it != tokens_->end(); ++it) {
     if (!Util::StartsWith((*it)->key, key)) {
@@ -360,9 +384,9 @@ Node *UserDictionary::LookupPrefixWithLimit(
 
   // Look for a starting point of iteration over dictionary contents.
   UserPOS::Token key_token;
-  key_token.key = key.substr(0, Util::OneCharLen(key.c_str()));
+  key_token.key.assign(key, 0, Util::OneCharLen(key.c_str()));
   vector<UserPOS::Token *>::const_iterator it =
-      lower_bound(tokens_->begin(), tokens_->end(), &key_token, POSTokenLess());
+      lower_bound(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   for (; it != tokens_->end(); ++it) {
     if ((*it)->key > key) {
@@ -415,7 +439,7 @@ Node *UserDictionary::LookupExact(const char *str, int size,
   key_token.key.assign(str, size);
   typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
   pair<TokenIterator, TokenIterator> range =
-      equal_range(tokens_->begin(), tokens_->end(), &key_token, POSTokenLess());
+      equal_range(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   Node *head = NULL;
   for (; range.first != range.second; ++range.first) {
@@ -446,6 +470,35 @@ Node *UserDictionary::LookupReverse(const char *str, int size,
   }
 
   return NULL;
+}
+
+void UserDictionary::LookupComment(StringPiece key, StringPiece value,
+                                   string *comment) const {
+  comment->clear();
+
+  if (key.empty() || GET_CONFIG(incognito_mode)) {
+    return;
+  }
+
+  scoped_reader_lock l(mutex_.get());
+  if (tokens_->empty()) {
+    return;
+  }
+
+  UserPOS::Token key_token;
+  key.CopyToString(&key_token.key);
+  typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
+  pair<TokenIterator, TokenIterator> range =
+      equal_range(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+
+  // Set the comment that was found first.
+  for (; range.first != range.second; ++range.first) {
+    const UserPOS::Token *token = *range.first;
+    if (token->value == value && !token->comment.empty()) {
+      comment->assign(token->comment);
+      return;
+    }
+  }
 }
 
 bool UserDictionary::Reload() {
@@ -483,6 +536,7 @@ bool UserDictionary::AddToAutoRegisteredDictionary(
   return true;
 }
 
+// UserDictionary::WaitForReloader() is not implemented in NaCl.
 void UserDictionary::WaitForReloader() {
   reloader_->Join();
 }
@@ -497,7 +551,8 @@ void UserDictionary::Swap(TokensIndex *new_tokens) {
   delete old_tokens;
 }
 
-bool UserDictionary::Load(const UserDictionaryStorage &storage) {
+bool UserDictionary::Load(
+    const user_dictionary::UserDictionaryStorage &storage) {
   size_t size = 0;
   {
     scoped_reader_lock l(mutex_.get());
@@ -513,12 +568,13 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
 #endif
 
   if (size >= kVeryBigUserDictionarySize) {
-    TokensIndex *dummy_empty_tokens = new TokensIndex(user_pos_,
+    TokensIndex *dummy_empty_tokens = new TokensIndex(user_pos_.get(),
                                                       suppression_dictionary_);
     Swap(dummy_empty_tokens);
   }
 
-  TokensIndex *tokens = new TokensIndex(user_pos_, suppression_dictionary_);
+  TokensIndex *tokens = new TokensIndex(user_pos_.get(),
+                                        suppression_dictionary_);
   tokens->Load(storage);
   Swap(tokens);
   return true;

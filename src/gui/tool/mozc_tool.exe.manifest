@@ -9,6 +9,8 @@
   <compat:compatibility
        xmlns:compat="urn:schemas-microsoft-com:compatibility.v1">
     <compat:application>
+      <!--The ID below indicates application support for Windows 8 -->
+      <compat:supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"/>
       <!--The ID below indicates application support for Windows 7 -->
       <compat:supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"/>
       <!--The ID below indicates application support for Windows Vista -->

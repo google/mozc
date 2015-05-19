@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,74 @@
 
 #include "base/file_stream.h"
 
+#ifdef MOZC_USE_PEPPER_FILE_IO
+#include "base/pepper_file_util.h"
+#endif  // MOZC_USE_PEPPER_FILE_IO
 #include "base/util.h"
 
 namespace mozc {
+
+#ifdef MOZC_USE_PEPPER_FILE_IO
+
+InputFileStream::InputFileStream()
+    : istream() {
+  init(&string_buffer_);
+}
+
+InputFileStream::InputFileStream(const char* filename,
+                                 ios_base::openmode mode)
+    : istream() {
+  init(&string_buffer_);
+  InputFileStream::open(filename, mode);
+}
+
+void InputFileStream::open(const char* filename, ios_base::openmode mode) {
+  string buffer;
+  const bool ret = PepperFileUtil::ReadBinaryFile(filename, &buffer);
+  if (ret) {
+    string_buffer_.sputn(buffer.c_str(), buffer.length());
+  } else {
+    setstate(ios_base::failbit);
+  }
+}
+
+void InputFileStream::close() {}
+
+OutputFileStream::OutputFileStream()
+    : ostream(),
+      write_done_(false) {
+  init(&string_buffer_);
+}
+
+OutputFileStream::OutputFileStream(const char* filename,
+                                   ios_base::openmode mode)
+    : ostream(),
+      write_done_(false) {
+  init(&string_buffer_);
+  OutputFileStream::open(filename, mode);
+}
+
+OutputFileStream::~OutputFileStream() {
+  close();
+}
+
+void OutputFileStream::open(const char* filename, ios_base::openmode mode) {
+  filename_ = filename;
+}
+
+void OutputFileStream::close() {
+  if (write_done_) {
+    return;
+  }
+  if (!PepperFileUtil::WriteBinaryFile(filename_, string_buffer_.str())) {
+    LOG(ERROR) << "write error filename: \"" << filename_ << "\""
+               << "size:" << string_buffer_.str().length();
+  } else {
+    write_done_ = true;
+  }
+}
+
+# else  // MOZC_USE_PEPPER_FILE_IO
 
 InputFileStream::InputFileStream() {}
 
@@ -41,7 +106,7 @@ InputFileStream::InputFileStream(const char* filename,
 }
 
 void InputFileStream::open(const char* filename, ios_base::openmode mode) {
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |filename| from UTF-8 to UTF-16.
   wstring filename_wide;
@@ -61,7 +126,7 @@ OutputFileStream::OutputFileStream(const char* filename,
 }
 
 void OutputFileStream::open(const char* filename, ios_base::openmode mode) {
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |filename| from UTF-8 to UTF-16.
   wstring filename_wide;
@@ -72,5 +137,6 @@ void OutputFileStream::open(const char* filename, ios_base::openmode mode) {
   ofstream::open(filename, mode);
 #endif
 }
+#endif  // MOZC_USE_PEPPER_FILE_IO
 
 }  // namespace mozc

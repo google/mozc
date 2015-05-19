@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include "base/scoped_ptr.h"
 #include "client/client.h"
 #include "engine/mock_converter_engine.h"
+#include "session/commands.pb.h"
 #ifdef OS_CHROMEOS
 #include "session/japanese_session_factory.h"
 #include "session/session_factory_manager.h"
@@ -42,6 +43,9 @@
 
 namespace mozc {
 namespace ibus {
+
+namespace {
+const char kPrecedingText[] = "preceding_text";
 
 class ClientEnvironment : public testing::Environment {
  public:
@@ -57,6 +61,7 @@ class ClientEnvironment : public testing::Environment {
   scoped_ptr<mozc::MockConverterEngine> engine_;
   scoped_ptr<mozc::session::JapaneseSessionFactory> session_factory_;
 };
+}  // namespace
 
 class ClientTest : public testing::Test {
  protected:
@@ -88,9 +93,24 @@ TEST_F(ClientTest, CheckVersionOrRestartServer) {
 TEST_F(ClientTest, SendKey) {
   commands::KeyEvent key_event;
   key_event.set_key_code('a');
-
   commands::Output output;
-  EXPECT_TRUE(client_->TestSendKey(key_event, &output));
+  EXPECT_TRUE(client_->SendKey(key_event, &output));
+  EXPECT_NE(0, output.id());
+  EXPECT_TRUE(output.consumed());
+
+  output.Clear();
+  key_event.Clear();
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+  EXPECT_TRUE(client_->SendKey(key_event, &output));
+  EXPECT_NE(0, output.id());
+  EXPECT_TRUE(output.consumed());
+
+  commands::Context context;
+  output.Clear();
+  key_event.Clear();
+  key_event.set_key_code('a');
+  context.set_preceding_text(kPrecedingText);
+  EXPECT_TRUE(client_->SendKeyWithContext(key_event, context, &output));
   EXPECT_NE(0, output.id());
   EXPECT_TRUE(output.consumed());
 }
@@ -98,14 +118,16 @@ TEST_F(ClientTest, SendKey) {
 TEST_F(ClientTest, TestSendKey) {
   commands::KeyEvent key_event;
   key_event.set_key_code('a');
+
   commands::Output output;
-  EXPECT_TRUE(client_->SendKey(key_event, &output));
+  EXPECT_TRUE(client_->TestSendKey(key_event, &output));
   EXPECT_NE(0, output.id());
   EXPECT_TRUE(output.consumed());
 
-  key_event.Clear();
-  key_event.set_special_key(commands::KeyEvent::ENTER);
-  EXPECT_TRUE(client_->SendKey(key_event, &output));
+  commands::Context context;
+  output.Clear();
+  context.set_preceding_text(kPrecedingText);
+  EXPECT_TRUE(client_->TestSendKeyWithContext(key_event, context, &output));
   EXPECT_NE(0, output.id());
   EXPECT_TRUE(output.consumed());
 }
@@ -118,8 +140,20 @@ TEST_F(ClientTest, SendCommand) {
   EXPECT_TRUE(output.has_preedit());
 
   commands::SessionCommand session_command;
+  output.Clear();
   session_command.set_type(commands::SessionCommand::SUBMIT);
   EXPECT_TRUE(client_->SendCommand(session_command, &output));
+  EXPECT_FALSE(output.has_preedit());
+
+  output.Clear();
+  EXPECT_TRUE(client_->SendKey(key_event, &output));
+  EXPECT_TRUE(output.has_preedit());
+
+  commands::Context context;
+  output.Clear();
+  context.set_preceding_text(kPrecedingText);
+  EXPECT_TRUE(
+      client_->SendCommandWithContext(session_command, context, &output));
   EXPECT_FALSE(output.has_preedit());
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,14 +61,6 @@ class RunLevel {
 
   static bool IsValidClientRunLevel() {
     return (GetRunLevel(RunLevel::CLIENT) <= RunLevel::RESTRICTED);
-  }
-
-  static bool IsValidServerRunLevel() {
-    return (GetRunLevel(RunLevel::SERVER) <= RunLevel::RESTRICTED);
-  }
-
-  static bool IsValidRendererRunLevel() {
-    return (GetRunLevel(RunLevel::RENDERER) <= RunLevel::RESTRICTED);
   }
 
   // return true if the current process is in other JOB.

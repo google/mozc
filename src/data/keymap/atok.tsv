@@ -116,6 +116,7 @@ Prediction	Ctrl Down	ConvertNext
 Prediction	Ctrl Up	ConvertPrev
 Prediction	Down	ConvertNext
 Prediction	Up	ConvertPrev
+Prediction	Ctrl Delete	DeleteSelectedCandidate
 Suggestion	Ctrl Down	PredictAndConvert
 Suggestion	Ctrl Enter	CommitFirstSuggestion
 Suggestion	Down	PredictAndConvert

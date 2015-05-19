@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,47 +33,105 @@
 #include <string>
 
 #include "base/base.h"
-#include "base/logging.h"
 
 namespace mozc {
 namespace composer {
 class Composer;
-}
+}  // namespace composer
+namespace commands {
+class Request;
+}  // namespace commands
 
 // Contains utilizable information for conversion, suggestion and prediction,
 // including composition, preceding text, etc.
+// This class doesn't take ownerships of any Composer* argument.
 class ConversionRequest {
  public:
-  ConversionRequest() : composer_(NULL) {}
-  explicit ConversionRequest(const composer::Composer *c) : composer_(c) {}
+  enum ComposerKeySelection {
+    // Use Composer::GetQueryForConversion() to generate conversion key. This
+    // option uses the exact composition which user sees, e.g., "とうk".
+    CONVERSION_KEY,
 
-  bool has_composer() const { return composer_ != NULL; }
-  const composer::Composer &composer() const {
-    DCHECK(composer_);
-    return *composer_;
-  }
-  void set_composer(const composer::Composer *c) { composer_ = c; }
+    // Use Composer::GetQueryForPrediction() to generate conversion key. This
+    // option trims the trailing unresolved romaji. For example, if composition
+    // is "とうk", the conversion key becomes "とう". This option is mainly used
+    // in dictionary_predictor.cc for realtime conversion.
+    PREDICTION_KEY,
 
-  const string &preceding_text() const { return preceding_text_; }
-  void set_preceding_text(const string &preceding_text) {
-    preceding_text_ = preceding_text;
-  }
+    // TODO(team): We may want to implement other options. For instance,
+    // Composer::GetQueriesForPrediction() expands the trailing romaji to a set
+    // of possible hiragana.
+  };
 
-  // TODO(noriyukit): We may need CopyFrom() to perform undo.
+  ConversionRequest();
+  ConversionRequest(const composer::Composer *c,
+                    const commands::Request *request);
+  ~ConversionRequest();
+
+  bool has_composer() const;
+  const composer::Composer &composer() const;
+  void set_composer(const composer::Composer *c);
+
+  const string &preceding_text() const;
+  void set_preceding_text(const string &preceding_text);
+
+  bool use_actual_converter_for_realtime_conversion() const;
+  void set_use_actual_converter_for_realtime_conversion(bool value);
+
+  bool create_partial_candidates() const;
+  void set_create_partial_candidates(bool value);
+
+  ComposerKeySelection composer_key_selection() const;
+  void set_composer_key_selection(ComposerKeySelection selection);
+
+  const commands::Request &request() const;
+
+  void CopyFrom(const ConversionRequest &request);
+
+  // TODO(noriyukit): Remove these methods after removing skip_slow_rewriters_
+  // flag.
+  bool skip_slow_rewriters() const;
+  void set_skip_slow_rewriters(bool value);
+
+  bool IsKanaModifierInsensitiveConversion() const;
 
  private:
-  // Required field
-  // Input composer to generate a key for conversion.
+  // Required fields
+  // Input composer to generate a key for conversion, suggestion, etc.
   const composer::Composer *composer_;
 
-  // Optional field
+  // Input request.
+  const commands::Request *request_;
+
+  // Optional fields
   // If nonempty, utilizes this preceding text for conversion.
   string preceding_text_;
+
+  // If true, insert a top candidate from the actual (non-immutable) converter
+  // to realtime conversion results. Note that setting this true causes a big
+  // performance loss (3 times slower).
+  bool use_actual_converter_for_realtime_conversion_;
+
+  // Which composer's method to use for conversion key; see the comment around
+  // the definition of ComposerKeySelection above.
+  ComposerKeySelection composer_key_selection_;
+
+  // Don't use this flag directly. This flag is used by DictionaryPredictor to
+  // skip some heavy rewriters, such as UserBoundaryHistoryRewriter and
+  // TransliterationRewriter.
+  // TODO(noriyukit): Fix such a hacky handling for realtime conversion.
+  bool skip_slow_rewriters_;
+
+  // If true, partial candidates are created on prediction/suggestion.
+  // For example, "私の" is created from composition "わたしのなまえ".
+  bool create_partial_candidates_;
 
   // TODO(noriyukit): Moves all the members of Segments that are irrelevant to
   // this structure, e.g., Segments::user_history_enabled_ and
   // Segments::request_type_. Also, a key for conversion is eligible to live in
   // this class.
+
+  DISALLOW_COPY_AND_ASSIGN(ConversionRequest);
 };
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,8 @@
 #include <windows.h>
 
 #include <vector>
+
+#include "base/port.h"
 
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
@@ -100,7 +102,11 @@ class CandidateInfoUtil {
   FRIEND_TEST(CandidateInfoUtilTest, WriteResultTest);
   FRIEND_TEST(CandidateInfoUtilTest, WriteSafeDefaultTest);
   FRIEND_TEST(CandidateInfoUtilTest, PagingEmulation_Issue4077022);
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(CandidateInfoUtil);
 };
+
 }  // namespace win32
 }  // namespace mozc
 #endif  // MOZC_WIN32_IME_IME_CANDIDATE_INFO_H_

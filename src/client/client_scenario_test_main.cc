@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,19 @@
 // file format is same as one of session/session_client_main.
 
 #include <iostream>
-#include "base/base.h"
+#include <string>
+#include <vector>
+
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
+#include "session/commands.pb.h"
 #include "session/key_parser.h"
 
 DEFINE_bool(display_preedit, false, "display predit to tty");
@@ -55,7 +61,7 @@ namespace mozc {
 namespace {
 
 string UTF8ToTtyString(const string &text) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   string tmp;
   Util::UTF8ToSJIS(text, &tmp);
   return tmp;
@@ -121,8 +127,8 @@ int Loop(istream *input) {
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {
-#if defined(OS_WINDOWS) || defined(OS_MACOSX)
-#ifdef OS_WINDOWS
+#if defined(OS_WIN) || defined(OS_MACOSX)
+#ifdef OS_WIN
     renderer_command.mutable_application_info()->set_process_id
         (::GetCurrentProcessId());
     renderer_command.mutable_application_info()->set_thread_id
@@ -192,8 +198,8 @@ int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
   if (!FLAGS_profile_dir.empty()) {
-    mozc::Util::CreateDirectory(FLAGS_profile_dir);
-    mozc::Util::SetUserProfileDirectory(FLAGS_profile_dir);
+    mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);
+    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
   }
 
   scoped_ptr<mozc::InputFileStream> input_file(NULL);

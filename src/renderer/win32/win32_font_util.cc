@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ namespace win32 {
 bool FontUtil::ToWinLogFont(
     const LOGFONTW &log_font,
     mozc::commands::RendererCommand_WinLogFont *win_log_font) {
-  if (win_log_font == NULL) {
+  if (win_log_font == nullptr) {
     return false;
   }
 
@@ -81,7 +81,7 @@ bool FontUtil::ToWinLogFont(
 bool FontUtil::ToLOGFONT(
     const mozc::commands::RendererCommand_WinLogFont &win_log_font,
     LOGFONTW *log_font) {
-  if (log_font == NULL) {
+  if (log_font == nullptr) {
     return false;
   }
   if (!win_log_font.IsInitialized()) {
@@ -112,7 +112,7 @@ bool FontUtil::ToLOGFONT(
   face_name += L'\0';
   face_name = face_name.substr(0, face_name.find(L'\0') + 1);
 
-  // +1 is for NULL.
+  // +1 is for nullptr.
   if (face_name.size() + 1 > arraysize(log_font->lfFaceName)) {
     return false;
   }

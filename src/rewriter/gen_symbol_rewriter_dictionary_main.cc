@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "rewriter/dictionary_generator.h"
@@ -63,8 +64,8 @@ void GetSortingMap(const string &auto_file,
   string line;
   int sorting_key = 0;
   InputFileStream rule_ifs(rule_file.c_str());
-  CHECK(rule_ifs);
-  while (getline(rule_ifs, line)) {
+  CHECK(rule_ifs.good());
+  while (!getline(rule_ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
       continue;
     }
@@ -73,9 +74,9 @@ void GetSortingMap(const string &auto_file,
   }
 
   InputFileStream auto_ifs(auto_file.c_str());
-  CHECK(auto_ifs);
+  CHECK(auto_ifs.good());
 
-  while (getline(auto_ifs, line)) {
+  while (!getline(auto_ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
       continue;
     }
@@ -147,13 +148,13 @@ void MakeDictionary(const string &symbol_dictionary_file,
   GetSortingMap(sorting_map_file, ordering_rule_file, &sorting_map);
 
   InputFileStream ifs(symbol_dictionary_file.c_str());
-  CHECK(ifs);
+  CHECK(ifs.good());
 
   string line;
-  CHECK(getline(ifs, line));  // get first line
+  CHECK(!getline(ifs, line).fail());  // get first line
 
   vector<string> fields;
-  while (getline(ifs, line)) {
+  while (!getline(ifs, line).fail()) {
     fields.clear();
     // Format:
     // POS <tab> value <tab> readings(space delimitered) <tab>
@@ -218,7 +219,7 @@ int main(int argc, char **argv) {
   mozc::EmbeddedDictionary::Compile(kHeaderName,
                                     tmp_text_file,
                                     FLAGS_output);
-  mozc::Util::Unlink(tmp_text_file);
+  mozc::FileUtil::Unlink(tmp_text_file);
 
   return 0;
 }

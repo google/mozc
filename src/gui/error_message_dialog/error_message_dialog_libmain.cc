@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,20 +29,20 @@
 
 #include <QtGui/QApplication>
 #include <QtGui/QtGui>
-#include "base/base.h"
+#include "base/logging.h"
 #include "base/process_mutex.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "gui/base/locale_util.h"
 #include "gui/error_message_dialog/error_message_dialog.h"
 
 int RunErrorMessageDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_error_message_dialog);
 
-  mozc::Util::DisableIME();
+  mozc::SystemUtil::DisableIME();
   QApplication app(argc, argv);
 
   string name = "error_message_dialog.";
-  name += mozc::Util::GetDesktopNameAsString();
+  name += mozc::SystemUtil::GetDesktopNameAsString();
 
   mozc::ProcessMutex mutex(name.c_str());
   if (!mutex.Lock()) {

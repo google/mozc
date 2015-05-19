@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,15 @@
 
 #include "config/config_handler.h"
 
-#include "base/base.h"
+#include <algorithm>
+
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "config/config.pb.h"
@@ -48,11 +52,11 @@ namespace {
 
 static const char kFileNamePrefix[] = "user://config";
 
-void AddCharacterFormRule(config::Config *config,
-                          const char *group,
-                          config::Config::CharacterForm preedit_form,
-                          config::Config::CharacterForm conversion_form) {
-  config::Config::CharacterFormRule *rule =
+void AddCharacterFormRule(const char *group,
+                          const Config::CharacterForm preedit_form,
+                          const Config::CharacterForm conversion_form,
+                          Config *config) {
+  Config::CharacterFormRule *rule =
       config->add_character_form_rules();
   rule->set_group(group);
   rule->set_preedit_character_form(preedit_form);
@@ -86,10 +90,10 @@ class ConfigHandlerImpl {
   void UpdateMergedConfig();
 
   string filename_;
-  mozc::config::Config stored_config_;
-  mozc::config::Config imposed_config_;
+  Config stored_config_;
+  Config imposed_config_;
   // equals to config_.MergeFrom(imposed_config_)
-  mozc::config::Config merged_config_;
+  Config merged_config_;
 };
 
 ConfigHandlerImpl *GetConfigHandlerImpl() {
@@ -147,6 +151,19 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 #endif  // CHANNEL_DEV
 #endif  // OS_ANDROID
 
+  // Enable Unicode emoji conversion in default on specific platforms.
+  // Windows 8 or Mac 10.7(Lion) or later.
+  bool use_emoji_conversion_default = false;
+  if (SystemUtil::MacOSVersionIsGreaterOrEqual(10, 7, 0) ||
+      SystemUtil::IsWindows8OrLater()) {
+    use_emoji_conversion_default = true;
+  }
+
+  if (use_emoji_conversion_default &&
+      !stored_config_.has_use_emoji_conversion()) {
+    stored_config_.set_use_emoji_conversion(true);
+  }
+
   UpdateMergedConfig();
 
   return true;
@@ -193,12 +210,6 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 
 // Reload from file
 bool ConfigHandlerImpl::Reload() {
-#ifdef MOZC_USE_PEPPER_FILE_IO
-  // TODO(horo): We have to implement the user config file loader for NaCl.
-  LOG(ERROR) << "ConfigHandlerImpl::Reload is not implemented for NaCl now.";
-  Config input_proto;
-  return SetConfigInternal(input_proto);
-#else  // MOZC_USE_PEPPER_FILE_IO
   VLOG(1) << "Reloading config file: " << filename_;
   scoped_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
@@ -217,7 +228,6 @@ bool ConfigHandlerImpl::Reload() {
   ret_code |= SetConfigInternal(input_proto);
 
   return ret_code;
-#endif  // MOZC_USE_PEPPER_FILE_IO
 }
 
 void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
@@ -227,7 +237,10 @@ void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
 }
 
 string ConfigHandlerImpl::GetConfigFileName() {
-  return filename_;
+  // Copies filename_ string using c_str() here to prevent Copy-On-Write issues
+  // in multi-thread environment.
+  // See: http://stackoverflow.com/questions/1661154/c-stdstring-in-a-multi-threaded-program/
+  return filename_.c_str();
 }
 }  // namespace
 
@@ -267,35 +280,26 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   config->set_session_keymap(Config::MSIME);
 #endif  // OS_MACOSX
 
+  const Config::CharacterForm kFullWidth = Config::FULL_WIDTH;
+  const Config::CharacterForm kLastForm = Config::LAST_FORM;
   // "ア"
-  AddCharacterFormRule(config, "\xE3\x82\xA2",
-                       config::Config::FULL_WIDTH, config::Config::FULL_WIDTH);
-  AddCharacterFormRule(config, "A",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, "0",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, "(){}[]",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, ".,",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
+  AddCharacterFormRule("\xE3\x82\xA2", kFullWidth, kFullWidth, config);
+  AddCharacterFormRule("A", kFullWidth, kLastForm, config);
+  AddCharacterFormRule("0", kFullWidth, kLastForm, config);
+  AddCharacterFormRule("(){}[]", kFullWidth, kLastForm, config);
+  AddCharacterFormRule(".,", kFullWidth, kLastForm, config);
   // "。、",
-  AddCharacterFormRule(config, "\xE3\x80\x82\xE3\x80\x81",
-                       config::Config::FULL_WIDTH, config::Config::FULL_WIDTH);
+  AddCharacterFormRule("\xE3\x80\x82\xE3\x80\x81", kFullWidth, kFullWidth,
+                       config);
   // "・「」"
-  AddCharacterFormRule(config, "\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D",
-                       config::Config::FULL_WIDTH, config::Config::FULL_WIDTH);
-  AddCharacterFormRule(config, "\"'",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, ":;",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, "#%&@$^_|`\\",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, "~",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, "<>=+-/*",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, "?!",
-                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
+  AddCharacterFormRule("\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D",
+                       kFullWidth, kFullWidth, config);
+  AddCharacterFormRule("\"'", kFullWidth, kLastForm, config);
+  AddCharacterFormRule(":;", kFullWidth, kLastForm, config);
+  AddCharacterFormRule("#%&@$^_|`\\", kFullWidth, kLastForm, config);
+  AddCharacterFormRule("~", kFullWidth, kLastForm, config);
+  AddCharacterFormRule("<>=+-/*", kFullWidth, kLastForm, config);
+  AddCharacterFormRule("?!", kFullWidth, kLastForm, config);
 
 #ifdef OS_ANDROID
 #ifdef CHANNEL_DEV
@@ -303,6 +307,11 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
       ->set_upload_usage_stats(true);
 #endif  // CHANNEL_DEV
 #endif  // OS_ANDROID
+
+  if (SystemUtil::MacOSVersionIsGreaterOrEqual(10, 7, 0) ||
+      SystemUtil::IsWindows8OrLater()) {
+    config->set_use_emoji_conversion(true);
+  }
 }
 
 // Reload from file
@@ -324,7 +333,7 @@ void ConfigHandler::SetMetaData(Config *config) {
   general_config->set_config_version(CONFIG_VERSION);
   general_config->set_last_modified_time(Util::GetTime());
   general_config->set_last_modified_product_version(Version::GetMozcVersion());
-  general_config->set_platform(Util::GetOSVersionString());
+  general_config->set_platform(SystemUtil::GetOSVersionString());
 }
 
 }  // namespace config

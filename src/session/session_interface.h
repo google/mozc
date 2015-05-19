@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@ class SessionInterface {
   virtual void ReloadConfig() ABSTRACT;
 
   // Set Request. Currently, this is especial for session::Session.
-  virtual void SetRequest(const commands::Request &request) {}
+  virtual void SetRequest(const commands::Request *request) {}
 
   // Set composition Table. Currently, this is especial for session::Session.
   virtual void SetTable(const composer::Table *table) {}

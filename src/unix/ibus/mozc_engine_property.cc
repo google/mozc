@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,42 +40,42 @@ namespace {
 const MozcEngineProperty kMozcEnginePropertiesArray[] = {
   {
     commands::DIRECT,
-    "CompositionMode.Direct",
+    "InputMode.Direct",
     "Direct input",
     "A",
     "direct.png",
   },
   {
     commands::HIRAGANA,
-    "CompositionMode.Hiragana",
+    "InputMode.Hiragana",
     "Hiragana",
     "\xe3\x81\x82",  // Hiragana letter A
     "hiragana.png",
   },
   {
     commands::FULL_KATAKANA,
-    "CompositionMode.Katakana",
+    "InputMode.Katakana",
     "Katakana",
     "\xe3\x82\xa2",  // Katakana letter A
     "katakana_full.png",
   },
   {
     commands::HALF_ASCII,
-    "CompositionMode.Latin",
+    "InputMode.Latin",
     "Latin",
     "_A",
     "alpha_half.png",
   },
   {
     commands::FULL_ASCII,
-    "CompositionMode.WideLatin",
+    "InputMode.WideLatin",
     "Wide Latin",
     "\xef\xbc\xa1",  // Full width ASCII letter A
     "alpha_full.png",
   },
   {
     commands::HALF_KATAKANA,
-    "CompositionMode.HalfWidthKatakana",
+    "InputMode.HalfWidthKatakana",
     "Half width katakana",
     "_\xef\xbd\xb1",  // Half width Katakana letter A
     "katakana_half.png",

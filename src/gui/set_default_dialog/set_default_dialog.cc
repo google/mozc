@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,19 @@
 
 #include "gui/set_default_dialog/set_default_dialog.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 
 #include <QtGui/QtGui>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include "win32/base/migration_util.h"
 #endif
 
@@ -63,7 +64,7 @@ void SetDefaultDialog::accept() {
 // TODO(mazda): Implement SetDefault on Mac and Linux.
   const bool dont_ask_again =
       (dontAskAgainCheckBox->checkState() == Qt::Checked);
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // LaunchBrokerForSetDefault is responsible to do the same task of
   // |SetCheckDefault(false)| if |dont_ask_again| is true.
   if (!win32::MigrationUtil::LaunchBrokerForSetDefault(dont_ask_again)) {

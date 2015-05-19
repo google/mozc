@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,8 @@
 
 {
   "program": {
-    "x86-32": {"url": "nacl_session_handler_x86_32.nexe"}
-    "x86-64": {"url": "nacl_session_handler_x86_64.nexe"},
+    "arm": {"url": "nacl_session_handler_arm.nexe"},
+    "x86-32": {"url": "nacl_session_handler_x86_32.nexe"},
+    "x86-64": {"url": "nacl_session_handler_x86_64.nexe"}
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,28 @@
 #include "base/logging.h"
 #include "converter/boundary_struct.h"
 #include "converter/node.h"
+#include "data_manager/data_manager_interface.h"
 
 namespace mozc {
+
+SegmenterBase *SegmenterBase::CreateFromDataManager(
+    const DataManagerInterface &data_manager) {
+  size_t l_num_elements = 0;
+  size_t r_num_elements = 0;
+  const uint16 *l_table = NULL;
+  const uint16 *r_table = NULL;
+  size_t bitarray_num_bytes = 0;
+  const char *bitarray_data = NULL;
+  const BoundaryData *boundary_data = NULL;
+  data_manager.GetSegmenterData(&l_num_elements, &r_num_elements,
+                                &l_table, &r_table,
+                                &bitarray_num_bytes, &bitarray_data,
+                                &boundary_data);
+  return new SegmenterBase(l_num_elements, r_num_elements,
+                           l_table, r_table,
+                           bitarray_num_bytes, bitarray_data,
+                           boundary_data);
+}
 
 SegmenterBase::SegmenterBase(
     size_t l_num_elements, size_t r_num_elements, const uint16 *l_table,
@@ -70,8 +90,6 @@ bool SegmenterBase::IsBoundary(const Node *lnode, const Node *rnode,
     return false;
   }
 
-  const bool is_boundary = IsBoundary(lnode->rid, rnode->lid);
-
   // Concatenate particle and content word into one segment,
   // if lnode locates at the beginning of user input.
   // This hack is for handling ambiguous bunsetsu segmentation.
@@ -79,11 +97,11 @@ bool SegmenterBase::IsBoundary(const Node *lnode, const Node *rnode,
   // If we segment "に書く" into two segments, "二角" is never be shown.
   // There exits some implicit assumpution that user expects that his/her input
   // becomes one bunsetu. So, it would be better to keep "二角" even after "紙".
-  if (is_boundary && (lnode->attributes & Node::STARTS_WITH_PARTICLE)) {
+  if (lnode->attributes & Node::STARTS_WITH_PARTICLE) {
     return false;
   }
 
-  return is_boundary;
+  return IsBoundary(lnode->rid, rnode->lid);
 }
 
 bool SegmenterBase::IsBoundary(uint16 rid, uint16 lid) const {

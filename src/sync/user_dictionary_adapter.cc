@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,9 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/stl_util.h"
-#include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "storage/registry.h"
@@ -136,7 +136,7 @@ bool UserDictionaryAdapter::SetDownloadedItems(
   const string &cur_file = user_dictionary_filename();
 
   SYNC_VLOG(1) << "comparing " << prev_file << " with " << cur_file;
-  if (Util::IsEqualFile(prev_file, cur_file)) {
+  if (FileUtil::IsEqualFile(prev_file, cur_file)) {
     if (remote_updates.empty()) {
       SYNC_VLOG(1) << "no local_update and no remote_updates.";
       return true;
@@ -195,8 +195,8 @@ bool UserDictionaryAdapter::SetDownloadedItems(
     } else {
       // This case causes a conflict, so we make a backup just in case.
       SYNC_VLOG(1) << "making a backup " << cur_storage.filename() << ".bak";
-      if (!Util::CopyFile(cur_storage.filename(),
-                          cur_storage.filename() + ".bak")) {
+      if (!FileUtil::CopyFile(cur_storage.filename(),
+                              cur_storage.filename() + ".bak")) {
         SYNC_VLOG(1) << "cannot make backup file";
       }
 
@@ -239,7 +239,7 @@ bool UserDictionaryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
   DCHECK(items);
   SYNC_VLOG(1) << "Start GetItemsToUpload()";
 
-  if (!Util::FileExists(user_dictionary_filename())) {
+  if (!FileUtil::FileExists(user_dictionary_filename())) {
     SYNC_VLOG(1) << user_dictionary_filename() << " does not exist.";
     return true;
   }
@@ -248,7 +248,7 @@ bool UserDictionaryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
   const string &cur_file = user_dictionary_filename();
 
   // No updates found on the local.
-  if (Util::IsEqualFile(prev_file, cur_file)) {
+  if (FileUtil::IsEqualFile(prev_file, cur_file)) {
     SYNC_VLOG(1) << "No changes found in local dictionary files.";
     return true;
   }
@@ -286,7 +286,7 @@ bool UserDictionaryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
   // No need to update the file.
   if (local_update.dictionaries_size() == 0) {
     SYNC_VLOG(1) << "No local update";
-    Util::Unlink(tmp_file);
+    FileUtil::Unlink(tmp_file);
     return true;
   }
   UserDictionaryUtil::FillDesktopDeprecatedPosField(&local_update);
@@ -335,13 +335,13 @@ bool UserDictionaryAdapter::MarkUploaded(
   if (!uploaded) {
     // Rollback the last synced file by removing the pending file.
     SYNC_VLOG(1) << "rollbacking the last synced file: " << tmp_file;
-    Util::Unlink(tmp_file);
+    FileUtil::Unlink(tmp_file);
     return true;
   }
 
   // Push the pending last synced file atomically.
   SYNC_VLOG(1) << "AtomicRename " << tmp_file << " to " << prev_file;
-  if (!Util::AtomicRename(tmp_file, prev_file)) {
+  if (!FileUtil::AtomicRename(tmp_file, prev_file)) {
     SYNC_VLOG(1) << "cannot update: " << prev_file;
     return false;
   }
@@ -358,8 +358,8 @@ bool UserDictionaryAdapter::MarkUploaded(
 
 bool UserDictionaryAdapter::Clear() {
   SYNC_VLOG(1) << "start Clear()";
-  Util::Unlink(GetLastSyncedUserDictionaryFileName());
-  Util::Unlink(GetTempLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(GetTempLastSyncedUserDictionaryFileName());
   return true;
 }
 
@@ -369,12 +369,12 @@ ime_sync::Component UserDictionaryAdapter::component_id() const {
 
 string UserDictionaryAdapter::GetLastSyncedUserDictionaryFileName() const {
   const char kSuffix[] = ".last_synced";
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   return user_dictionary_filename() + kSuffix;
 #else
-  const string dirname = Util::Dirname(user_dictionary_filename());
-  const string basename = Util::Basename(user_dictionary_filename());
-  return Util::JoinPath(dirname, "." + basename + kSuffix);
+  const string dirname = FileUtil::Dirname(user_dictionary_filename());
+  const string basename = FileUtil::Basename(user_dictionary_filename());
+  return FileUtil::JoinPath(dirname, "." + basename + kSuffix);
 #endif
 }
 

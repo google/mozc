@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,9 +65,6 @@ class SessionWatchDog : public Thread {
 
   // inherited from Thread class
   void Terminate();
-
-  // return false if the watch dog thread receives stop signal
-  bool Wait(int32 timeout);
 
   // inherited from Thread class
   // start watch dog timer and return immediately

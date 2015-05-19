@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,13 @@
 #include "languages/hangul/unix/ibus/config_updater.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "languages/hangul/session.h"
 #include "unix/ibus/config_util.h"
 
@@ -48,7 +49,7 @@ namespace {
 const char kHangulSectionName[] = "engine/Hangul";
 const char kKeyboardLayout[] = "HangulKeyboard";
 const char kHanjaKeyBinding[] = "HanjaKeyBindings";
-}  // anonymous namespace
+}  // namespace
 
 ConfigUpdater::ConfigUpdater() {
   name_to_field_[kKeyboardLayout] = "KeyboardLayout";

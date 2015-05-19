@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,19 @@
 
 #include "gui/word_register_dialog/word_register_dialog.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 # include <windows.h>
 # include <imm.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <QtGui/QtGui>
+#include <cstdlib>
 #include <string>
 #include <vector>
-#include <stdlib.h>
 
 #include "base/base.h"
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "client/client.h"
@@ -65,7 +66,7 @@ const int kMaxEditLength = 100;
 const int kMaxReverseConversionLength = 30;
 
 QString GetEnv(const char *envname) {
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
   wstring wenvname;
   mozc::Util::UTF8ToWide(envname, &wenvname);
   const DWORD buffer_size =
@@ -80,7 +81,7 @@ QString GetEnv(const char *envname) {
     return QString::fromWCharArray(buffer.get());
   }
   return "";
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #if defined(OS_MACOSX) || defined(OS_LINUX)
   return ::getenv(envname);
 #endif  // OS_MACOSX or OS_LINUX
@@ -95,7 +96,8 @@ WordRegisterDialog::WordRegisterDialog()
           UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
       window_title_(tr("Mozc")),
-      user_pos_(UserPosManager::GetUserPosManager()->GetUserPOS()) {
+      user_pos_(new UserPOS(
+          UserPosManager::GetUserPosManager()->GetUserPOSData())) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
@@ -104,10 +106,10 @@ WordRegisterDialog::WordRegisterDialog()
   WordlineEdit->setMaxLength(kMaxEditLength);
 
   if (!SetDefaultEntryFromEnvironmentVariable()) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     // On Windows, try to use clipboard as a fallback.
     SetDefaultEntryFromClipboard();
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   }
 
   client_->set_timeout(kSessionTimeout);
@@ -403,7 +405,7 @@ void WordRegisterDialog::SetDefaultEntryFromClipboard() {
 }
 
 void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const HWND foreground_window = ::GetForegroundWindow();
   if (foreground_window == NULL) {
     LOG(ERROR) << "GetForegroundWindow() failed: " << ::GetLastError();
@@ -435,7 +437,7 @@ void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
   if (send_result == 0) {
     LOG(ERROR) << "SendMessageTimeout() failed: " << ::GetLastError();
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   return;
 }
@@ -462,13 +464,13 @@ const QString WordRegisterDialog::TrimValue(const QString &str) const {
 }
 
 void WordRegisterDialog::EnableIME() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // TODO(taku): implement it for other platform.
   HIMC himc = ::ImmGetContext(winId());
   if (himc != NULL) {
     ::ImmSetOpenStatus(himc, TRUE);
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 }  // namespace gui
 }  // namespace mozc

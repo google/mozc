@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,8 @@
 
 #include <iostream>
 #include <string>
-#include "base/base.h"
-#include "base/util.h"
+#include "base/port.h"
+#include "base/file_util.h"
 
 namespace mozc {
 namespace sync {
@@ -41,8 +41,8 @@ namespace sync {
 // We provide mozc::sync::Logging module separately from the
 // mozc::Logging module.
 // Syncer is doing lots of complicated operations and users might
-// encounter unexceptional behaviors depending on the server status,
-// storage status/size, and config settings. We will receive many error
+// encounter unexceptional behaviors depending on the server status and
+// storage status/size. We will receive many error
 // reports in our U2U. To make a prompt reply and quick investigation of
 // the cause of errors happening on the user environments, logging is
 // "must" feature.
@@ -54,16 +54,15 @@ namespace sync {
 // SYNC_VLOG(1) << "Sync started";
 // SYNC_VLOG(2) << "Downloaded: " << remote_proto->DebugString();
 //
-// The log file is generated at <user_profile_dir>/sync.log
+// The log file is generated at FLAGS_log_dir/sync.log
 // The verbose level is saved in FLAGS_sync_verbose_level now.
-// TODO(taku): better to move this parameter to config.
 
 class Logging {
  public:
   // Get logging stream. The log message can be written to the stream
   static ostream &GetLogStream();
 
-  // return config.sync_verbose_level()
+  // return FLAGS_sync_verbose_level.
   static int GetVerboseLevel();
 
   // return the filename of sync logging.
@@ -72,22 +71,25 @@ class Logging {
   // clear the contents of logging file and recreate it.
   // This method is used in unittesting.
   static void Reset();
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(Logging);
 };
 
 class LogFinalizer {
  public:
-  LogFinalizer() {}
+  LogFinalizer();
   ~LogFinalizer();
 
   void operator&(ostream&) {}
 };
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc
 
 #define SYNC_VLOG(verboselevel) \
- (mozc::sync::Logging::GetVerboseLevel() < (verboselevel)) ? (void) 0 : \
- mozc::sync::LogFinalizer() & mozc::sync::Logging::GetLogStream() \
- << mozc::Logging::GetLogMessageHeader() << " " \
- << mozc::Util::Basename(__FILE__) << "(" << __LINE__ << ") "
+  (mozc::sync::Logging::GetVerboseLevel() < (verboselevel)) ? (void) 0 : \
+  mozc::sync::LogFinalizer() & mozc::sync::Logging::GetLogStream() \
+  << mozc::Logging::GetLogMessageHeader() << " " \
+  << mozc::FileUtil::Basename(__FILE__) << "(" << __LINE__ << ") "
 
 #endif  // MOZC_BASE_SYNC_LOGGER_H_

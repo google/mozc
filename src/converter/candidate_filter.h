@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef IME_MOZC_CONVERTER_CANDIDATE_FILTER_H_
-#define IME_MOZC_CONVERTER_CANDIDATE_FILTER_H_
+#ifndef MOZC_CONVERTER_CANDIDATE_FILTER_H_
+#define MOZC_CONVERTER_CANDIDATE_FILTER_H_
 
 #include <set>
 #include <string>
@@ -40,6 +40,7 @@ namespace mozc {
 
 struct Node;
 class POSMatcher;
+class SuggestionFilter;
 class SuppressionDictionary;
 
 namespace converter {
@@ -47,7 +48,8 @@ namespace converter {
 class CandidateFilter {
  public:
   CandidateFilter(const SuppressionDictionary *suppression_dictionary,
-                  const POSMatcher *pos_matcher);
+                  const POSMatcher *pos_matcher,
+                  const SuggestionFilter *suggestion_filter);
   ~CandidateFilter();
 
   enum ResultType {
@@ -56,20 +58,24 @@ class CandidateFilter {
     STOP_ENUMERATION,  // Do not insert and stop enumurations
   };
 
-  // return ResultType
-  ResultType FilterCandidate(const Segment::Candidate *candidate,
-                             const vector<const Node *> &nodes);
+  // Checks if the candidate should be filtered out.
+  ResultType FilterCandidate(const string &original_key,
+                             const Segment::Candidate *candidate,
+                             const vector<const Node *> &nodes,
+                             Segments::RequestType request_type);
 
-  // reset internal state
+  // Resets the internal state.
   void Reset();
 
  private:
-  ResultType FilterCandidateInternal(
-      const Segment::Candidate *candidate,
-      const vector<const Node *> &nodes);
+  ResultType FilterCandidateInternal(const string &original_key,
+                                     const Segment::Candidate *candidate,
+                                     const vector<const Node *> &nodes,
+                                     Segments::RequestType request_type);
 
   const SuppressionDictionary *suppression_dictionary_;
   const POSMatcher *pos_matcher_;
+  const SuggestionFilter *suggestion_filter_;
 
   set<string> seen_;
   const Segment::Candidate *top_candidate_;
@@ -80,4 +86,4 @@ class CandidateFilter {
 }  // namespace converter
 }  // namespace mozc
 
-#endif  // IME_MOZC_CONVERTER_CANDIDATE_FILTER_H_
+#endif  // MOZC_CONVERTER_CANDIDATE_FILTER_H_

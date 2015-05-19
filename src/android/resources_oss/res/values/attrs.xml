@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+  <declare-styleable name="SeekBarPreference">
+    <attr name="seekbar_offset" format="integer" />
+    <attr name="seekbar_unit" format="string" />
+    <attr name="seekbar_low_text" format="string" />
+    <attr name="seekbar_middle_text" format="string" />
+    <attr name="seekbar_high_text" format="string" />
+  </declare-styleable>
+
+  <declare-styleable name="MozcMultiSelectListPreference">
+    <attr name="entryKeys" format="reference" />
+    <attr name="entries" format="reference" />
+  </declare-styleable>
+
+  <declare-styleable name="Keyboard">
+    <attr name="flickThreshold" format="dimension" />
+
+    <attr name="keyBackground">
+      <enum name="twelvekeysRegular" value="0" />
+      <enum name="twelvekeysFunction" value="1" />
+      <enum name="qwertyRegular" value="2" />
+      <enum name="qwertyFunction" value="3" />
+      <enum name="qwertyFunctionLightOn" value="4" />
+      <enum name="qwertyFunctionLightOff" value="5" />
+    </attr>
+
+    <attr name="keyWidth" format="dimension|fraction" />
+    <attr name="keyHeight" format="dimension|fraction" />
+    <attr name="horizontalGap" format="dimension|fraction" />
+    <attr name="verticalGap" format="dimension|fraction" />
+
+    <attr name="popUpWidth" format="dimension|fraction" />
+    <attr name="popUpHeight" format="dimension|fraction" />
+    <!-- following offset is diff between a center of a key and a center of the popup window. -->
+    <attr name="popUpXOffset" format="dimension|fraction" />
+    <attr name="popUpYOffset" format="dimension|fraction" />
+  </declare-styleable>
+
+  <declare-styleable name="Row">
+    <attr name="rowEdgeFlags">
+      <flag name="top" value="4" />
+      <flag name="bottom" value="8" />
+    </attr>
+  </declare-styleable>
+
+  <declare-styleable name="Key">
+    <attr name="keyEdgeFlags">
+      <flag name="left" value="1" />
+      <flag name="right" value="2" />
+    </attr>
+    <attr name="stick">
+      <enum name="even" value="0" />
+      <enum name="left" value="1" />
+      <enum name="right" value="2" />
+    </attr>
+    <attr name="isRepeatable" format="boolean" />
+    <attr name="isModifier" format="boolean" />
+    <attr name="isSticky" format="boolean" />
+  </declare-styleable>
+
+  <declare-styleable name="KeyState">
+    <!-- We now support four meta states here; shift, caps_lock, alt and unmodified.
+         Please also see KeyState.MetaState for more details.
+      -->
+    <attr name="metaState">
+      <!-- It is allowed to set multiple state here (by concatenating '|' separator).
+           If we don't specify this attribute it means unmodified state.
+        -->
+      <flag name="shift" value="1" />
+      <flag name="capsLock" value="2" />
+      <flag name="alt" value="4" />
+    </attr>
+    <attr name="nextMetaState">
+      <!-- Unlike the case of metaState attribute, we need to set exactly one nextMetaState
+           attribute for each modifier Key's KeyState.
+        -->
+      <enum name="unmodified" value="0" />
+      <enum name="shift" value="1" />
+      <enum name="capsLock" value="2" />
+      <enum name="alt" value="4" />
+    </attr>
+  </declare-styleable>
+
+  <declare-styleable name="Flick">
+    <attr name="direction">
+      <!-- A flick to the center here means just a tap of a key. -->
+      <enum name="center" value="0" />
+      <enum name="left" value="1" />
+      <enum name="right" value="2" />
+      <enum name="up" value="3" />
+      <enum name="down" value="4" />
+    </attr>
+  </declare-styleable>
+
+  <declare-styleable name="KeyEntity">
+    <attr name="sourceId" format="integer" />
+    <attr name="keyCode" format="integer|string" />
+    <attr name="longPressKeyCode" format="integer|string" />
+    <attr name="keyIcon" format="reference" />
+    <attr name="flickHighlight" format="boolean" />
+  </declare-styleable>
+
+  <declare-styleable name="PopUp">
+    <attr name="popUpIcon" format="reference" />
+  </declare-styleable>
+</resources>

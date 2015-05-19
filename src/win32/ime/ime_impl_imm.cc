@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,41 +33,47 @@
 #include "win32/ime/ime_impl_imm.h"
 
 #include <ime.h>
+
 #include <strsafe.h>
 
 #include "google/protobuf/stubs/common.h"
 #include "base/const.h"
 #include "base/crash_report_handler.h"
+#include "base/logging.h"
 #include "base/process.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/update_util.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
 #include "win32/base/conversion_mode_util.h"
+#include "win32/base/deleter.h"
+#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/immdev.h"
+#include "win32/base/input_state.h"
 #include "win32/base/string_util.h"
+#include "win32/base/surrogate_pair_observer.h"
+#include "win32/base/win32_window_util.h"
 #include "win32/ime/ime_candidate_info.h"
 #include "win32/ime/ime_composition_string.h"
 #include "win32/ime/ime_core.h"
-#include "win32/ime/ime_deleter.h"
 #include "win32/ime/ime_input_context.h"
 #include "win32/ime/ime_message_queue.h"
 #include "win32/ime/ime_mouse_tracker.h"
 #include "win32/ime/ime_private_context.h"
 #include "win32/ime/ime_scoped_context.h"
-#include "win32/ime/ime_state.h"
-#include "win32/ime/ime_surrogate_pair_observer.h"
 #include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_ui_context.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
 #include "win32/ime/ime_ui_window.h"
 
 namespace {
-HINSTANCE g_instance = NULL;
+
+HINSTANCE g_instance = nullptr;
 DWORD g_ime_system_info = MAXDWORD;
 // True if the boot mode is safe mode.
 bool g_in_safe_mode = true;
-// True when Util::EnsureVitalImmutableDataIsAvailable() returns false.
+// True when SystemUtil::EnsureVitalImmutableDataIsAvailable() returns false.
 bool g_fundamental_data_is_not_available = false;
 
 // Breakpad never be enabled except for official builds.
@@ -114,7 +120,7 @@ const size_t kMaxCharsForRegisterWord = 64;
 
 // If given string is too long, returns an empty string instead.
 wstring GetStringIfWithinLimit(const wchar_t *src, size_t size_limit) {
-  if (src == NULL) {
+  if (src == nullptr) {
     return wstring();
   }
   for (size_t i = 0; i < size_limit; ++i) {
@@ -136,8 +142,8 @@ void SetEnveronmentVariablesForWordRegisterDialog(
 
   if (word_value.empty()) {
     // Remove relevant variables.
-    ::SetEnvironmentVariable(word_value_env_name.c_str(), NULL);
-    ::SetEnvironmentVariable(word_reading_env_name.c_str(), NULL);
+    ::SetEnvironmentVariable(word_value_env_name.c_str(), nullptr);
+    ::SetEnvironmentVariable(word_reading_env_name.c_str(), nullptr);
   }
 
   ::SetEnvironmentVariable(word_value_env_name.c_str(),
@@ -145,7 +151,7 @@ void SetEnveronmentVariablesForWordRegisterDialog(
   if (word_reading.empty()) {
     // Remove relevant variable.
     ::SetEnvironmentVariable(word_reading_env_name.c_str(),
-                             NULL);
+                             nullptr);
   } else {
     ::SetEnvironmentVariable(word_reading_env_name.c_str(),
                              word_reading.c_str());
@@ -153,11 +159,46 @@ void SetEnveronmentVariablesForWordRegisterDialog(
 }
 
 static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
-  if (himcc == NULL) {
+  if (himcc == nullptr) {
     return ::ImmCreateIMCC(size);
   } else {
     return ::ImmReSizeIMCC(himcc, size);
   }
+}
+
+bool IsSuppressSuggestionTarget(HIMC himc) {
+  if (himc == nullptr) {
+    return false;
+  }
+  const INPUTCONTEXT *context = ::ImmLockIMC(himc);
+  if (context == nullptr) {
+    return false;
+  }
+  const HWND attached_window = context->hWnd;
+  ::ImmUnlockIMC(himc);
+  return mozc::win32::WindowUtil::IsSuppressSuggestionWindow(attached_window);
+}
+
+// Returns a bitmap of experimental features.
+uint32 GetExperimentalFeatures(HIMC himc) {
+  if (himc == nullptr) {
+    return mozc::win32::InputBehavior::NO_FEATURE;
+  }
+  const INPUTCONTEXT *context = ::ImmLockIMC(himc);
+  if (context == nullptr) {
+    return mozc::win32::InputBehavior::NO_FEATURE;
+  }
+  const HWND attached_window = context->hWnd;
+  ::ImmUnlockIMC(himc);
+
+  uint32 experimental_features = mozc::win32::InputBehavior::NO_FEATURE;
+  if (mozc::win32::WindowUtil::IsInChromeOmnibox(attached_window)) {
+    experimental_features |= mozc::win32::InputBehavior::CHROME_OMNIBOX;
+  }
+  if (mozc::win32::WindowUtil::IsInGoogleSearchBox(attached_window)) {
+    experimental_features |= mozc::win32::InputBehavior::GOOGLE_SEARCH_BOX;
+  }
+  return experimental_features;
 }
 
 }  // namespace
@@ -184,7 +225,7 @@ bool IsInLockdownMode() {
 BOOL OnDllProcessAttach(HINSTANCE instance, bool static_loading) {
   g_instance = instance;
 #if defined(USE_BREAKPAD)
-  if(!::InitializeCriticalSectionAndSpinCount(&g_critical_section_for_breakpad,
+  if (!::InitializeCriticalSectionAndSpinCount(&g_critical_section_for_breakpad,
                                               kSpinCountForCriticalSection)) {
     return FALSE;
   }
@@ -205,7 +246,7 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
   ThreadLocalMouseTracker::OnDllProcessDetach(instance, process_shutdown);
   UIWindowManager::OnDllProcessDetach(instance, process_shutdown);
 
-  g_instance = NULL;
+  g_instance = nullptr;
 
   if (!g_in_safe_mode) {
     // It is our responsibility to make sure that our code never touch protobuf
@@ -221,7 +262,7 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
   }
 
 #if defined(USE_BREAKPAD)
-  mozc::CrashReportHandler::SetCriticalSection(NULL);
+  mozc::CrashReportHandler::SetCriticalSection(nullptr);
   ::DeleteCriticalSection(&g_critical_section_for_breakpad);
 #endif  // USE_BREAKPAD
 
@@ -294,7 +335,7 @@ BOOL WINAPI ImeInquire(LPIMEINFO ime_info,
   }
 
   g_ime_system_info = system_info_flags;
-  if (!mozc::Util::EnsureVitalImmutableDataIsAvailable()) {
+  if (!mozc::SystemUtil::EnsureVitalImmutableDataIsAvailable()) {
     // This process might be sandboxed.
     g_fundamental_data_is_not_available = true;
   }
@@ -324,11 +365,6 @@ DWORD WINAPI ImeConversionList(HIMC himc,
 BOOL WINAPI ImeDestroy(UINT force) {
   DANGLING_CALLBACK_GUARD(FALSE);
   FUNCTION_ENTER();
-  // As commented above, ImeDestroy is not so reliable place to free global
-  // resources allocated in this DLL.
-  // TODO(yukawa): Find better place.
-  mozc::win32::UIWindowManager::OnImeDestroy();
-
   // Free all singleton instances
   mozc::SingletonFinalizer::Finalize();
 
@@ -383,8 +419,8 @@ BOOL WINAPI ImeSetActiveContext(HIMC himc, BOOL flag) {
   keyboard_state[VK_KANA] = 0;
   ::SetKeyboardState(keyboard_state);
 
-  // Occasionally this function is called with NULL in |himc|.
-  if (himc == NULL) {
+  // Occasionally this function is called with nullptr in |himc|.
+  if (himc == nullptr) {
     return TRUE;
   }
 
@@ -395,7 +431,7 @@ BOOL WINAPI ImeSetActiveContext(HIMC himc, BOOL flag) {
   // TODO(yukawa): Refactor HIMCLockerT to support this scenario.
   {
     INPUTCONTEXT *context = ::ImmLockIMC(himc);
-    if (context == NULL) {
+    if (context == nullptr) {
       return FALSE;
     }
 
@@ -408,7 +444,7 @@ BOOL WINAPI ImeSetActiveContext(HIMC himc, BOOL flag) {
     //   ImmSetOpenStatus and IMM subsystem generates UI messages as long as
     //   the |INPUTCONTEXT::hWnd| contains a valid window handle.
     if (!activated) {
-      context->hWnd = NULL;
+      context->hWnd = nullptr;
     }
     ::ImmUnlockIMC(himc);
   }
@@ -501,20 +537,25 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
     }
   }
 
-  mozc::win32::ImeState ime_state = *private_context->ime_state;
+  mozc::win32::InputState ime_state = *private_context->ime_state;
 
   // Update |private_context->ime_behavior| to support Kana/Roman input toggle
   // keys.  See b/3118905 for details.
   mozc::win32::KeyEventHandler::UpdateBehaviorInImeProcessKey(
-      vk, key_info, ime_state, private_context->ime_behavior);
+      vk, key_info.IsKeyDownInImeProcessKey(),
+      ime_state, private_context->ime_behavior);
 
-  // Make an immutable snapshot of |private_context->ime_behavior|, which
+  // Make an snapshot of |private_context->ime_behavior|, which
   // cannot be substituted for by const reference.
-  const mozc::win32::ImeBehavior behavior = *private_context->ime_behavior;
+  mozc::win32::InputBehavior behavior = *private_context->ime_behavior;
+  // TODO(komatsu): Delete this suppress_suggestion when
+  // experimental_features has replaced it.
+  behavior.suppress_suggestion = IsSuppressSuggestionTarget(himc);
+  behavior.experimental_features = GetExperimentalFeatures(himc);
 
   ime_state.conversion_status = context->fdwConversion;
   ime_state.open = context->fOpen;
-  mozc::win32::ImeState next_state;
+  mozc::win32::InputState next_state;
   mozc::commands::Output temporal_output;
   const mozc::win32::KeyEventHandlerResult result =
       mozc::win32::ImeCore::ImeProcessKey(private_context->client,
@@ -528,6 +569,17 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
 
   if (result.should_be_sent_to_server && temporal_output.has_consumed()) {
     private_context->last_output->CopyFrom(temporal_output);
+  }
+
+  const mozc::win32::IndicatorVisibilityTracker::Action indicator_action =
+      private_context->indicator_visibility_tracker->
+          OnTestKey(vk, key_info.IsKeyDownInImeProcessKey(),
+                    result.should_be_eaten);
+  if (indicator_action == mozc::win32::IndicatorVisibilityTracker::kUpdateUI) {
+    mozc::win32::MessageQueue message_queue(himc);
+    message_queue.AddMessage(
+        WM_IME_NOTIFY, IMN_PRIVATE, mozc::win32::kNotifyUpdateUI);
+    message_queue.Send();
   }
 
   // Mozc server sometimes assumes that characters left side of the caret have
@@ -688,7 +740,7 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   keyboard_state[VK_KANA] = 0;
   ::SetKeyboardState(keyboard_state);
 
-  if (himc == NULL) {
+  if (himc == nullptr) {
     return TRUE;
   }
 
@@ -725,7 +777,7 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   mozc::Logging::InitLogStream(kProductPrefix "_imm32_ui");
 
   mozc::win32::ScopedHIMC<mozc::win32::InputContext> context(himc);
-  if (context.get() == NULL) {
+  if (context.get() == nullptr) {
     return FALSE;
   }
 
@@ -748,7 +800,7 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   // Allocate composition string buffer.
   const HIMCC composition_string_handle = InitializeHIMCC(
       context->hCompStr, sizeof(mozc::win32::CompositionString));
-  if (composition_string_handle == NULL) {
+  if (composition_string_handle == nullptr) {
     return FALSE;
   }
   mozc::win32::ScopedHIMCC<mozc::win32::CompositionString>
@@ -759,7 +811,7 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
 
   context->hCandInfo =
       mozc::win32::CandidateInfoUtil::Initialize(context->hCandInfo);
-  if (context->hCandInfo == NULL) {
+  if (context->hCandInfo == nullptr) {
     return FALSE;
   }
 
@@ -860,11 +912,10 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   mozc::win32::VirtualKey vk =
       mozc::win32::VirtualKey::FromCombinedVirtualKey(virtual_key);
   const mozc::win32::KeyboardStatus keyboard_status(key_state);
-  const mozc::win32::ImeBehavior behavior = *private_context->ime_behavior;
-  mozc::win32::ImeState ime_state = *private_context->ime_state;
+  mozc::win32::InputState ime_state = *private_context->ime_state;
   ime_state.conversion_status = context->fdwConversion;
   ime_state.open = context->fOpen;
-  mozc::win32::ImeState next_state;
+  mozc::win32::InputState next_state;
   const BYTE raw_scan_code = static_cast<BYTE>(scan_code & 0xff);
   const bool is_key_down = ((scan_code & 0x8000) == 0);
   mozc::commands::Output temporal_output;
@@ -932,11 +983,19 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
     }
   }
 
+  bool send_update_ui = false;
+  bool should_be_sent_to_server = false;
   if (use_pending_status) {
     next_state = private_context->deleter->pending_ime_state();
     temporal_output.CopyFrom(
         private_context->deleter->pending_output());
+    should_be_sent_to_server = true;
   } else {
+    mozc::win32::InputBehavior behavior = *private_context->ime_behavior;
+    // TODO(komatsu): Delete this suppress_suggestion when
+    // experimental_features has replaced it.
+    behavior.suppress_suggestion = IsSuppressSuggestionTarget(himc);
+    behavior.experimental_features = GetExperimentalFeatures(himc);
     const mozc::win32::KeyEventHandlerResult result =
         mozc::win32::ImeCore::ImeToAsciiEx(
             private_context->client,
@@ -948,19 +1007,40 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
       return 0;
     }
 
-    if (!result.should_be_sent_to_server) {
-      // no message generated.
-      return 0;
-    }
+    const mozc::win32::IndicatorVisibilityTracker::Action indicator_action =
+        private_context->indicator_visibility_tracker->OnKey(
+            vk, is_key_down, result.should_be_eaten);
+    send_update_ui =
+        (indicator_action ==
+         mozc::win32::IndicatorVisibilityTracker::kUpdateUI);
+    should_be_sent_to_server = result.should_be_sent_to_server;
   }
 
   mozc::win32::MessageQueue message_queue(himc);
   message_queue.Attach(trans_buf);
 
-  if (!mozc::win32::ImeCore::UpdateContext(
-          himc, next_state, temporal_output, &message_queue)) {
-    // no message generated.
-    return 0;
+  if (should_be_sent_to_server) {
+    mozc::win32::ImeCore::UpdateContext(
+          himc, next_state, temporal_output, &message_queue);
+  }
+
+  // Generate NotifyUpdateUI message if not exists.
+  {
+    bool has_ui_message = false;
+    const vector<TRANSMSG> &messages = message_queue.messages();
+    for (size_t i = 0; i < messages.size(); ++i) {
+      const TRANSMSG &msg = messages[i];
+      if (msg.message == WM_IME_NOTIFY &&
+          msg.wParam == IMN_PRIVATE &&
+          msg.lParam == mozc::win32::kNotifyUpdateUI) {
+        has_ui_message = true;
+        break;
+      }
+    }
+    if (!has_ui_message) {
+      message_queue.AddMessage(
+          WM_IME_NOTIFY, IMN_PRIVATE, mozc::win32::kNotifyUpdateUI);
+    }
   }
 
   // MessageQueue::Detach returns the number of messages.
@@ -988,8 +1068,8 @@ BOOL WINAPI ImeConfigure(HKL hkl, HWND wnd, DWORD mode, LPVOID data) {
   }
 
   if (mode == IME_CONFIG_REGISTERWORD) {
-    if (data == NULL) {
-      // |data| must not be NULL if |mode| is IME_CONFIG_REGISTERWORD.
+    if (data == nullptr) {
+      // |data| must not be nullptr if |mode| is IME_CONFIG_REGISTERWORD.
       // http://msdn.microsoft.com/en-us/library/dd318173.aspx
       return FALSE;
     }

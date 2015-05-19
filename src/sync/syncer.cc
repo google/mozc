@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,20 +32,15 @@
 #include "base/base.h"
 #include "base/logging.h"
 #include "base/singleton.h"
+#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "storage/registry.h"
 #include "sync/adapter_interface.h"
-#include "sync/config_adapter.h"
 #include "sync/logging.h"
 #include "sync/mock_syncer.h"
 #include "sync/oauth2_client.h"
 #include "sync/oauth2_util.h"
 #include "sync/service_interface.h"
-#include "sync/user_dictionary_adapter.h"
-
-DEFINE_string(sync_url,
-              "",
-              "sync url");
 
 namespace mozc {
 namespace sync {
@@ -66,7 +61,7 @@ bool CheckConfigToSync(const Config &config, const uint32 component_id) {
 
   // Check config on each sync feature.
   const SyncConfig &sync_config = config.sync_config();
-  switch(component_id) {
+  switch (component_id) {
     case ime_sync::MOZC_SETTING:
       return sync_config.use_config_sync();
     case ime_sync::MOZC_USER_DICTIONARY:
@@ -82,8 +77,7 @@ bool CheckConfigToSync(const Config &config, const uint32 component_id) {
 }
 }  // anonymous namespace
 
-Syncer::Syncer(ServiceInterface *service)
-    : service_(service) {}
+Syncer::Syncer(ServiceInterface *service) : service_(service) {}
 
 Syncer::~Syncer() {}
 
@@ -153,15 +147,26 @@ bool Syncer::Clear() {
 
   SYNC_VLOG(1) << "clear is called successfully";
 
-  for (AdapterMap::const_iterator iter = adapters_.begin();
-       iter != adapters_.end(); ++iter) {
-    iter->second->Clear();
+  if (!ClearLocal()) {
+    return false;
   }
 
   SYNC_VLOG(1) << "initializing LastDownloadTimestamp";
   SetLastDownloadTimestamp(0);
 
   return true;
+}
+
+bool Syncer::ClearLocal() {
+  bool result = true;
+  for (AdapterMap::const_iterator iter = adapters_.begin();
+       iter != adapters_.end(); ++iter) {
+    if (!iter->second->Clear()) {
+      result = false;
+    }
+  }
+
+  return result;
 }
 
 bool Syncer::Download(bool *reload_required) {
@@ -354,57 +359,5 @@ void Syncer::SetLastDownloadTimestamp(uint64 value) {
   mozc::storage::Registry::Sync();
 }
 
-namespace {
-SyncerInterface *g_syncer = NULL;
-OAuth2Util *g_oauth2 = NULL;
-
-class DefaultSyncerCreator {
- public:
-  DefaultSyncerCreator()
-      : config_adapter_(new ConfigAdapter),
-        user_dictionary_adapter_(new UserDictionaryAdapter) {
-    if (g_oauth2 == NULL) {
-      SYNC_VLOG(1) << "set oauth2 service";
-      SyncerFactory::SetOAuth2(
-          new OAuth2Util(OAuth2Client::GetDefaultClient()));
-    }
-
-    syncer_.reset(new Syncer(service_.get()));
-    if (!syncer_->RegisterAdapter(config_adapter_.get())) {
-      SYNC_VLOG(1) << "cannot register ConfigAdapter";
-    }
-
-    if (!syncer_->RegisterAdapter(user_dictionary_adapter_.get())) {
-      SYNC_VLOG(1) << "cannot register UserDictionaryAdapter";
-    }
-  }
-
-  SyncerInterface *Get() {
-    return syncer_.get();
-  }
-
- private:
-  scoped_ptr<ServiceInterface>          service_;
-  scoped_ptr<Syncer>                    syncer_;
-  scoped_ptr<ConfigAdapter>             config_adapter_;
-  scoped_ptr<UserDictionaryAdapter>     user_dictionary_adapter_;
-};
-}
-
-SyncerInterface *SyncerFactory::GetSyncer() {
-  if (g_syncer == NULL) {
-    return Singleton<MockSyncer>::get();
-  } else {
-    return g_syncer;
-  }
-}
-
-void SyncerFactory::SetSyncer(SyncerInterface *syncer) {
-  g_syncer = syncer;
-}
-
-void SyncerFactory::SetOAuth2(OAuth2Util *oauth2) {
-  g_oauth2 = oauth2;
-}
 }  // namespace sync
 }  // namespace mozc

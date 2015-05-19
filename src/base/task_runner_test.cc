@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -92,7 +92,7 @@ class TestRunner : public TaskRunner {
   }
 
   virtual const TestRequest *request() const {
-    return dynamic_cast<const TestRequest*>(TaskRunner::request());
+    return static_cast<const TestRequest*>(TaskRunner::request());
   }
 
   virtual void StartTask() {
@@ -118,7 +118,6 @@ class TestRunner : public TaskRunner {
              TaskRunnerCallbackInterface *callback)
       : TaskRunner(token, request, callback) {
   }
-  virtual ~TestRunner() {}
   DISALLOW_IMPLICIT_CONSTRUCTORS(TestRunner);
 };
 
@@ -135,7 +134,7 @@ class TestCallback : public TaskRunnerCallbackInterface {
                           const TaskResponseInterface *response) {
     scoped_lock l(&mutex_);
     token_vector_.push_back(token);
-    response_vector_.push_back(dynamic_cast<const TestResponse*>(response));
+    response_vector_.push_back(static_cast<const TestResponse*>(response));
   }
   const vector<TaskToken> &token_vector() {
     return token_vector_;

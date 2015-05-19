@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,12 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/text_dictionary_loader.h"
@@ -54,6 +55,7 @@ DEFINE_int32(dictionary_test_size, 10000,
 namespace mozc {
 namespace dictionary {
 
+
 class SystemDictionaryBuilderTest : public testing::Test {
  protected:
   SystemDictionaryBuilderTest() {
@@ -66,14 +68,15 @@ TEST_F(SystemDictionaryBuilderTest, test) {
   const POSMatcher *pos_matcher =
       UserPosManager::GetUserPosManager()->GetPOSMatcher();
   TextDictionaryLoader loader(*pos_matcher);
-  const string dic_path = Util::JoinPath(FLAGS_test_srcdir, FLAGS_input);
+  const string dic_path = FileUtil::JoinPath(FLAGS_test_srcdir, FLAGS_input);
   LOG(INFO) << "Reading " << dic_path;
-  loader.OpenWithLineLimit(dic_path.c_str(), FLAGS_dictionary_test_size);
-  vector<Token *> tokens;
-  loader.CollectTokens(&tokens);
+  // TODO(noriyukit): Add test case for reading correction file.
+  loader.LoadWithLineLimit(dic_path, "", FLAGS_dictionary_test_size);
+  const vector<Token *> &tokens = loader.tokens();
   LOG(INFO) << "Read " << tokens.size() << "tokens";
   SystemDictionaryBuilder builder;
   builder.BuildFromTokens(tokens);
 }
+
 }  // namespace dictionary
 }  // namespace mozc

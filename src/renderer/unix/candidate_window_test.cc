@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include <sstream>
 
+#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "client/client_interface.h"

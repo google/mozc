@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,9 @@ DECLARE_bool(enable_expansion_for_user_history_predictor);
 namespace mozc {
 namespace {
 const int kPredictionSize = 100;
+// On Mobile mode PREDICTION (including PARTIAL_PREDICTION) behaves like as
+// conversion so very large limit is preferable.
+const int kMobilePredictionSize = 1000;
 
 size_t GetCandidatesSize(const Segments &segments) {
   if (segments.conversion_segments_size() <= 0) {
@@ -57,6 +60,11 @@ size_t GetCandidatesSize(const Segments &segments) {
   return segments.conversion_segment(0).candidates_size();
 }
 
+// TODO(taku): Is it OK to check only |zero_query_suggestion| and
+// |mixed_conversion|?
+bool IsZeroQuery(const ConversionRequest &request) {
+  return request.request().zero_query_suggestion();
+}
 
 }  // namespace
 
@@ -112,6 +120,14 @@ bool BasePredictor::ClearUnusedHistory() {
   return user_history_predictor_->ClearUnusedHistory();
 }
 
+bool BasePredictor::ClearHistoryEntry(const string &key, const string &value) {
+  return user_history_predictor_->ClearHistoryEntry(key, value);
+}
+
+bool BasePredictor::WaitForSyncerForTest() {
+  return user_history_predictor_->WaitForSyncerForTest();
+}
+
 bool BasePredictor::Sync() {
   return user_history_predictor_->Sync();
 }
@@ -136,14 +152,10 @@ DefaultPredictor::DefaultPredictor(PredictorInterface *dictionary_predictor,
     : BasePredictor(dictionary_predictor,
                     user_history_predictor,
                     extra_predictor),
-      empty_request_(ConversionRequest()),
+      empty_request_(),
       predictor_name_("DefaultPredictor") {}
 
 DefaultPredictor::~DefaultPredictor() {}
-
-bool DefaultPredictor::Predict(Segments *segments) const {
-  return PredictForRequest(empty_request_, segments);
-}
 
 bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
                                          Segments *segments) const {
@@ -192,4 +204,94 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
   return result;
 }
 
+// static
+PredictorInterface *MobilePredictor::CreateMobilePredictor(
+    PredictorInterface *dictionary_predictor,
+    PredictorInterface *user_history_predictor,
+    PredictorInterface *extra_predictor) {
+  return new MobilePredictor(dictionary_predictor,
+                             user_history_predictor,
+                             extra_predictor);
+}
+
+MobilePredictor::MobilePredictor(PredictorInterface *dictionary_predictor,
+                                 PredictorInterface *user_history_predictor,
+                                 PredictorInterface *extra_predictor)
+    : BasePredictor(dictionary_predictor,
+                    user_history_predictor,
+                    extra_predictor),
+      empty_request_(),
+      predictor_name_("MobilePredictor") {}
+
+MobilePredictor::~MobilePredictor() {}
+
+bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
+                                        Segments *segments) const {
+  DCHECK(segments->request_type() == Segments::PREDICTION ||
+         segments->request_type() == Segments::SUGGESTION ||
+         segments->request_type() == Segments::PARTIAL_PREDICTION ||
+         segments->request_type() == Segments::PARTIAL_SUGGESTION);
+
+  if (GET_CONFIG(presentation_mode)) {
+    return false;
+  }
+
+  DCHECK(segments);
+
+  bool result = false;
+  size_t size = 0;
+  size_t history_suggestion_size = IsZeroQuery(request) ? 3 : 2;
+
+  // TODO(taku,toshiyuki): Must rewrite the logic.
+  switch (segments->request_type()) {
+    case Segments::SUGGESTION: {
+      // Suggestion is triggered at every character insertion.
+      // So here we should use slow predictors.
+      size = GetCandidatesSize(*segments) + history_suggestion_size;
+      segments->set_max_prediction_candidates_size(size);
+      result |= user_history_predictor_->PredictForRequest(request, segments);
+
+      size = GetCandidatesSize(*segments) + 20;
+      segments->set_max_prediction_candidates_size(size);
+      result |= dictionary_predictor_->PredictForRequest(request, segments);
+
+      break;
+    }
+    case Segments::PARTIAL_SUGGESTION: {
+      // PARTIAL SUGGESTION can be triggered in a similar manner to that of
+      // SUGGESTION. We don't call slow predictors by the same reason.
+      size = GetCandidatesSize(*segments) + 20;
+      segments->set_max_prediction_candidates_size(size);
+      result |= dictionary_predictor_->PredictForRequest(request, segments);
+
+      break;
+    }
+    case Segments::PARTIAL_PREDICTION: {
+      segments->set_max_prediction_candidates_size(kMobilePredictionSize);
+      result |= dictionary_predictor_->PredictForRequest(request, segments);
+      break;
+    }
+    case Segments::PREDICTION: {
+      size = GetCandidatesSize(*segments) + history_suggestion_size;
+      segments->set_max_prediction_candidates_size(size);
+      result |= user_history_predictor_->PredictForRequest(request, segments);
+
+      segments->set_max_prediction_candidates_size(kMobilePredictionSize);
+      result |= dictionary_predictor_->PredictForRequest(request, segments);
+
+      if (extra_predictor_.get()) {
+        // TODO(matsuzakit): the size is TBD
+        size = GetCandidatesSize(*segments) + 40;
+        segments->set_max_prediction_candidates_size(size);
+        result |= extra_predictor_->PredictForRequest(request, segments);
+      }
+
+      break;
+    }
+    default: {
+    }  // Never reach here
+  }
+
+  return result;
+}
 }  // namespace mozc

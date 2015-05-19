@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:multifile',
         'pos_matcher',
       ],
     },
@@ -199,19 +200,11 @@
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
-        '../usage_stats/usage_stats.gyp:usage_stats',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
         'dictionary_protocol',
         'gen_pos_map#host',
-        'gen_pos_matcher#host',
+        'pos_matcher',
         'suppression_dictionary',
-      ],
-      'conditions': [
-        ['target_platform=="NaCl" and _toolset=="target"', {
-          'sources!': [
-            'user_dictionary.cc',
-            'user_dictionary_storage.cc',
-          ],
-        }],
       ],
     },
   ],

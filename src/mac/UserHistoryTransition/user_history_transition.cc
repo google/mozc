@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 #include <launch.h>
 
 #include "base/base.h"
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/util.h"
 #include "mac/UserHistoryTransition/deprecated_user_storage.h"
@@ -40,8 +42,9 @@
 
 namespace mozc {
 namespace {
+
 bool StopConverter() {
-  const string label = mozc::MacUtil::GetLabelForSuffix("Converter");
+  const string label = MacUtil::GetLabelForSuffix("Converter");
 
   launch_data_t stop_command =
       launch_data_alloc(LAUNCH_DATA_DICTIONARY);
@@ -81,7 +84,7 @@ bool StopConverter() {
       return true;
     }
     launch_data_free(process_info);
-    mozc::Util::Sleep(500);
+    Util::Sleep(500);
   }
 
   // Then trials are all failed.
@@ -96,12 +99,12 @@ bool UserHistoryTransition::DoTransition(
     return false;
   }
 
-  if (!mozc::Util::FileExists(deprecated_file)) {
+  if (!FileUtil::FileExists(deprecated_file)) {
     LOG(ERROR) << "the specified deprecated_file does not exist";
     return false;
   }
 
-  mozc::mac::DeprecatedUserHistoryStorage deprecated_storage(deprecated_file);
+  mac::DeprecatedUserHistoryStorage deprecated_storage(deprecated_file);
   if (!deprecated_storage.Load()) {
     LOG(INFO) << "Failed to load the deprecated data.  It means that the user "
               << "explicitly does not allow the access of keychain, or the "
@@ -112,8 +115,8 @@ bool UserHistoryTransition::DoTransition(
   LOG(INFO) << "successfully load the deprecated storage with "
             << deprecated_storage.entries_size() << " entries";
 
-  mozc::UserHistoryStorage storage(
-      mozc::UserHistoryPredictor::GetUserHistoryFileName());
+  UserHistoryStorage storage(
+      UserHistoryPredictor::GetUserHistoryFileName());
   if (!storage.Load()) {
     LOG(INFO) << "Failed to load the user history data.  It means that the "
               << "existing data is formatted in the deprecated way, but "
@@ -124,20 +127,20 @@ bool UserHistoryTransition::DoTransition(
               << storage.entries_size() << " entries";
   }
 
-  vector<const mozc::user_history_predictor::UserHistory *> history;
+  vector<const user_history_predictor::UserHistory *> history;
   history.push_back(&deprecated_storage);
   history.push_back(&storage);
 
-  mozc::UserHistoryStorage new_storage(
-      mozc::UserHistoryPredictor::GetUserHistoryFileName());
-  mozc::sync::UserHistorySyncUtil::MergeUpdates(history, &new_storage);
+  UserHistoryStorage new_storage(
+      UserHistoryPredictor::GetUserHistoryFileName());
+  sync::UserHistorySyncUtil::MergeUpdates(history, &new_storage);
   LOG(INFO) << "Merged storage with "
             << new_storage.entries_size() << " entries";
   if (new_storage.Save()) {
     LOG(INFO) << "Saved";
     if (StopConverter()) {
       if (remove_when_done) {
-        mozc::Util::Unlink(deprecated_file);
+        FileUtil::Unlink(deprecated_file);
       }
     } else {
       LOG(WARNING) << "Failed to stop converter.  Does not remove the file "

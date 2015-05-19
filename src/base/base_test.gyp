@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,22 @@
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
   'targets': [
+    # This is a mocking library of Java VM for android.
+    {
+      'target_name': 'android_jni_mock',
+      'conditions': [
+        ['target_platform=="Android"', {
+          'type': 'static_library',
+          'sources': [
+            'android_jni_mock.cc',
+          ],
+        }, {  # else
+          # This block is needed because this is an element of 'targets' block.
+          # Gyp assumes that each child element has 'target_name' and 'type'.
+          'type': 'none',
+        }],
+      ],
+    },
     {
       'target_name': 'base_test',
       'type': 'executable',
@@ -51,6 +67,11 @@
         'url_test.cc',
       ],
       'conditions': [
+        ['OS=="mac"', {
+          'sources': [
+            'mac_util_test.mm',
+          ],
+        }],
         ['OS=="win"', {
           'sources': [
             'win_sandbox_test.cc',
@@ -75,6 +96,7 @@
         'bitarray_test.cc',
         'flags_test.cc',
         'hash_tables_test.cc',
+        'iterator_adapter_test.cc',
         'logging_test.cc',
         'mmap_test.cc',
         'mutex_test.cc',
@@ -84,6 +106,13 @@
         'thread_test.cc',
         'text_normalizer_test.cc',
         'version_test.cc',
+      ],
+      'conditions': [
+        ['target_platform=="Android"', {
+          'sources': [
+            'android_util_test.cc',
+          ],
+        }],
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
@@ -125,6 +154,34 @@
       'type': 'executable',
       'sources': [
         'number_util_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base_core',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'file_util_test',
+      'type': 'executable',
+      'sources': [
+        'file_util_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base_core',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'system_util_test',
+      'type': 'executable',
+      'sources': [
+        'system_util_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
@@ -258,6 +315,17 @@
         'scheduler_stub',
       ],
     },
+    {
+      'target_name': 'multifile_test',
+      'type': 'executable',
+      'sources': [
+        'multifile_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:multifile',
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'base_all_test',
@@ -268,6 +336,9 @@
         'base_test',
         'config_file_stream_test',
         'encryptor_test',
+        'file_util_test',
+        'number_util_test',
+        'multifile_test',
         'scheduler_stub_test',
         'task_test',
         'trie_test',

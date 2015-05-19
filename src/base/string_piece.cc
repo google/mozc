@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,23 @@
 #include <iostream>
 #include <string>
 
+#include "base/logging.h"
+
 namespace mozc {
 
 typedef StringPiece::size_type size_type;
+
+StringPiece::StringPiece(const StringPiece str, size_type pos) :
+    ptr_(str.data() + pos),
+    length_(str.size() - pos) {
+  DCHECK_LE(pos, str.size());
+}
+
+StringPiece::StringPiece(const StringPiece str, size_type pos, size_type len) :
+    ptr_(str.data() + pos),
+    length_(min(len, str.size() - pos)) {
+  DCHECK_LE(pos, str.size());
+};
 
 ostream &operator<<(ostream &o, const StringPiece &piece) {
   o.write(piece.data(), static_cast<streamsize>(piece.size()));

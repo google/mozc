@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,11 @@ class OAuth2 {
     kServerError,
     kTemporarilyUnavailable,
 
+    // Unknown error returned by server.
     kUnknownError,
+    // Error not related to OAuth2.
+    // (JSON parse error, Invalid function call, etc)
+    kNonOAuth2Error,
   };
 
   // Make URI to get authorize token. 'scope' and 'state' are optional in
@@ -85,17 +89,15 @@ class OAuth2 {
   // to correspond Google API. Thus, only status can be empty string.
   // You can pass NULL to "refresh_token". The refresh token will be just
   // ignored in that case.
-  // Returns true if authorization succeed, false otherwise.
-  static bool AuthorizeToken(const string &authorize_token_uri,
-                             const string &client_id,
-                             const string &client_secret,
-                             const string &redirect_uri,
-                             const string &auth_token,
-                             const string &scope,
-                             const string &state,
-                             Error *error,
-                             string *access_token,
-                             string *refresh_token);
+  static Error AuthorizeToken(const string &authorize_token_uri,
+                              const string &client_id,
+                              const string &client_secret,
+                              const string &redirect_uri,
+                              const string &auth_token,
+                              const string &scope,
+                              const string &state,
+                              string *access_token,
+                              string *refresh_token);
 
   // Get protected resource as a string from resource server.
   // Returns true if this method gets information.
@@ -108,16 +110,15 @@ class OAuth2 {
   // true if updating "access_token" and "refresh_token" succeeded.
   // In case the server doesn't update the refresh token, it does not
   // update the "refresh_token".
-  static bool RefreshTokens(const string &refresh_uri,
-                            const string &client_id,
-                            const string &client_secret,
-                            const string &scope,
-                            Error *error,
-                            string *refresh_token,
-                            string *access_token);
+  static Error RefreshTokens(const string &refresh_uri,
+                             const string &client_id,
+                             const string &client_secret,
+                             const string &scope,
+                             string *refresh_token,
+                             string *access_token);
 
  protected:
-  static Error GetError(Json::Value &root);
+  static Error GetError(const Json::Value &root);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OAuth2);

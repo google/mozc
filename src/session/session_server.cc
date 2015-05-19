@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,11 +49,11 @@
 
 namespace {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 const int kNumConnections   = 1;
 #else
 const int kNumConnections   = 10;
-#endif  // OS_WINDOWS or not
+#endif  // OS_WIN
 
 const int kTimeOut = 5000;  // 5000msec
 const char kSessionName[] = "session";
@@ -65,12 +65,12 @@ namespace mozc {
 
 SessionServer::SessionServer()
     : IPCServer(kSessionName, kNumConnections, kTimeOut),
-      handler_(new SessionHandler()),
-      usage_observer_(new session::SessionUsageObserver()) {
+      usage_observer_(new session::SessionUsageObserver()),
+      session_handler_(new SessionHandler()) {
   using usage_stats::UsageStatsUploader;
   // start session watch dog timer
-  handler_->StartWatchDog();
-  handler_->AddObserver(usage_observer_.get());
+  session_handler_->StartWatchDog();
+  session_handler_->AddObserver(usage_observer_.get());
 
   // start usage stats timer
   // send usage stats within 5 min later
@@ -85,8 +85,9 @@ SessionServer::SessionServer()
       NULL));
 
 #ifdef ENABLE_CLOUD_SYNC
-  Scheduler::AddJob(
-      sync::SyncHandler::GetSchedulerJobSetting());
+  sync_handler_.reset(new sync::SyncHandler);
+  session_handler_->SetSyncHandler(sync_handler_.get());
+  Scheduler::AddJob(sync_handler_->GetSchedulerJobSetting());
 #endif  // ENABLE_CLOUD_SYNC
 
   // Send a notification event to the UI.
@@ -99,8 +100,8 @@ SessionServer::SessionServer()
 SessionServer::~SessionServer() {}
 
 bool SessionServer::Connected() const {
-  return (handler_.get() != NULL &&
-          handler_->IsAvailable() &&
+  return (session_handler_.get() != NULL &&
+          session_handler_->IsAvailable() &&
           IPCServer::Connected());
 }
 
@@ -108,7 +109,7 @@ bool SessionServer::Process(const char *request,
                             size_t request_size,
                             char *response,
                             size_t *response_size) {
-  if (handler_.get() == NULL) {
+  if (session_handler_.get() == NULL) {
     LOG(WARNING) << "handler is not available";
     return false;   // shutdown the server if handler doesn't exist
   }
@@ -120,7 +121,7 @@ bool SessionServer::Process(const char *request,
     return true;
   }
 
-  if (!handler_->EvalCommand(&command)) {
+  if (!session_handler_->EvalCommand(&command)) {
     LOG(WARNING) << "EvalCommand() returned false. Exiting the loop.";
     *response_size = 0;
     return false;

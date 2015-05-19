@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ struct MouseTrackerInfo {
   HHOOK mouse_hook_handle;
   bool left_button_pressed;
   MouseTrackerInfo()
-    : mouse_hook_handle(NULL),
+    : mouse_hook_handle(nullptr),
       left_button_pressed(false) {
   }
 };
@@ -48,7 +48,7 @@ struct MouseTrackerInfo {
 // This is why ThreadLocalStorage (TLS) is used here.
 MouseTrackerInfo *GetThreadLocalTrackerInfo(DWORD tls_index) {
   if (tls_index == 0) {
-    return NULL;
+    return nullptr;
   }
   return static_cast<MouseTrackerInfo *>(::TlsGetValue(tls_index));
 }
@@ -66,12 +66,12 @@ void SetThreadLocalTrackerInfo(DWORD tls_index, MouseTrackerInfo *info) {
 LRESULT CALLBACK ThreadLocalMouseTracker::HookMouseProc(
   int code, WPARAM wParam, LPARAM lParam) {
   MouseTrackerInfo *info = GetThreadLocalTrackerInfo(tls_index_);
-  if (info == NULL) {
+  if (info == nullptr) {
     return 0;
   }
 
   const HHOOK mouse_hook_handle = info->mouse_hook_handle;
-  if (mouse_hook_handle == NULL) {
+  if (mouse_hook_handle == nullptr) {
     return 0;
   }
 
@@ -93,31 +93,31 @@ LRESULT CALLBACK ThreadLocalMouseTracker::HookMouseProc(
 void ThreadLocalMouseTracker::EnsureInstalled() {
   // Ensure the current TLS has the pointer to an instance of MouseTrackerInfo.
   MouseTrackerInfo *info = GetThreadLocalTrackerInfo(tls_index_);
-  if (info == NULL) {
+  if (info == nullptr) {
     info = new MouseTrackerInfo();
     SetThreadLocalTrackerInfo(tls_index_, info);
   }
 
-  if (info->mouse_hook_handle != NULL) {
+  if (info->mouse_hook_handle != nullptr) {
     return;
   }
 
   info->mouse_hook_handle = ::SetWindowsHookEx(
-      WH_MOUSE, HookMouseProc, NULL, ::GetCurrentThreadId());
+      WH_MOUSE, HookMouseProc, nullptr, ::GetCurrentThreadId());
 }
 
 void ThreadLocalMouseTracker::EnsureUninstalled() {
   MouseTrackerInfo *info = GetThreadLocalTrackerInfo(tls_index_);
-  if (info == NULL) {
+  if (info == nullptr) {
     // Already uninstalled.  Nothing to do.
     return;
   }
-  SetThreadLocalTrackerInfo(tls_index_, NULL);
+  SetThreadLocalTrackerInfo(tls_index_, nullptr);
 
   const HHOOK mouse_hook_handle = info->mouse_hook_handle;
   delete info;
 
-  if (mouse_hook_handle == NULL) {
+  if (mouse_hook_handle == nullptr) {
     return;
   }
   ::UnhookWindowsHookEx(mouse_hook_handle);
@@ -125,7 +125,7 @@ void ThreadLocalMouseTracker::EnsureUninstalled() {
 
 bool ThreadLocalMouseTracker::WasLeftButtonPressed() {
   MouseTrackerInfo *info = GetThreadLocalTrackerInfo(tls_index_);
-  if (info == NULL) {
+  if (info == nullptr) {
     return false;
   }
   return info->left_button_pressed;
@@ -133,7 +133,7 @@ bool ThreadLocalMouseTracker::WasLeftButtonPressed() {
 
 void ThreadLocalMouseTracker::ResetWasLeftButtonPressed() {
   MouseTrackerInfo *info = GetThreadLocalTrackerInfo(tls_index_);
-  if (info == NULL) {
+  if (info == nullptr) {
     return;
   }
   info->left_button_pressed = false;
@@ -151,10 +151,10 @@ void ThreadLocalMouseTracker::OnDllProcessDetach(
   if (tls_index_ != 0) {
     MouseTrackerInfo *info =
         static_cast<MouseTrackerInfo *>(::TlsGetValue(tls_index_));
-    if (info != NULL) {
+    if (info != nullptr) {
       delete info;
-      info = NULL;
-      ::TlsSetValue(tls_index_, NULL);
+      info = nullptr;
+      ::TlsSetValue(tls_index_, nullptr);
     }
     ::TlsFree(tls_index_);
     tls_index_ = 0;

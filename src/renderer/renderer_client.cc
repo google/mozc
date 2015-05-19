@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,15 @@
 
 #include "renderer/renderer_client.h"
 
+#include <cstddef>
 #include <climits>
 #include <string>
-#include "base/base.h"
-#include "base/const.h"
+
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/process.h"
 #include "base/run_level.h"
+#include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "base/version.h"
@@ -126,7 +128,7 @@ class RendererLauncher : public RendererLauncherInterface,
     NamedEventListener listener(name_.c_str());
     const bool listener_is_available = listener.IsAvailable();
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     DWORD pid = 0;
     const bool process_in_job = RunLevel::IsProcessInJob();
     const string arg = process_in_job ? "--restricted" : "";
@@ -145,7 +147,7 @@ class RendererLauncher : public RendererLauncherInterface,
     // start renreder process
     const bool result = WinSandbox::SpawnSandboxedProcess(path_, arg, info,
                                                           &pid);
-#elif defined(OS_MACOSX)
+#elif defined(OS_MACOSX)  // OS_WIN
     // Start renderer process by using launch_msg API.
     pid_t pid = 0;
     const bool result = MacUtil::StartLaunchdService("Renderer", &pid);
@@ -153,7 +155,7 @@ class RendererLauncher : public RendererLauncherInterface,
     size_t tmp = 0;
     const bool result = Process::SpawnProcess(path_, "", &tmp);
     uint32 pid = static_cast<uint32>(tmp);
-#endif
+#endif  // OS_WIN, OS_MACOSX
 
     if (!result) {
       LOG(ERROR) << "Can't start process";
@@ -309,13 +311,13 @@ RendererClient::RendererClient()
   renderer_launcher_interface_ = renderer_launcher_.get();
 
   name_ = kServiceName;
-  const string desktop_name(Util::GetDesktopNameAsString());
+  const string desktop_name(SystemUtil::GetDesktopNameAsString());
   if (!desktop_name.empty()) {
     name_ += ".";
     name_ += desktop_name;
   }
 
-  renderer_path_ = Util::GetRendererPath();
+  renderer_path_ = SystemUtil::GetRendererPath();
 }
 
 RendererClient::~RendererClient() {
@@ -492,5 +494,5 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
 
   return true;
 }
-}  // renderer
-}  // mozc
+}  // namespace renderer
+}  // namespace mozc

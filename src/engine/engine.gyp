@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,20 +43,28 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../converter/converter.gyp:converter',
+        '../converter/converter_base.gyp:connector_base',
+        '../converter/converter_base.gyp:segmenter_base',
         '../dictionary/dictionary.gyp:dictionary_impl',
+        '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:pos_matcher#host',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../dictionary/dictionary_base.gyp:user_dictionary',
+        '../dictionary/dictionary_base.gyp:user_pos',
+        '../dictionary/system/system_dictionary.gyp:system_dictionary',
+        '../dictionary/system/system_dictionary.gyp:value_dictionary',
         '../prediction/prediction.gyp:prediction',
+        '../prediction/prediction_base.gyp:suggestion_filter',
         '../rewriter/rewriter.gyp:rewriter',
       ],
     },
     {
       'target_name': 'mock_converter_engine',
-      'type': 'none',
+      'type': 'static_library',
       'sources': [
-        'mock_converter_engine.h',
+        'mock_converter_engine.cc',
+        'user_data_manager_mock.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -77,19 +85,6 @@
       ],
     },
     {
-      'target_name': 'android_engine_factory',
-      'type': 'static_library',
-      'sources': [
-        'android_engine_factory.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../data_manager/android/android_data_manager.gyp:android_data_manager',
-        '../prediction/prediction.gyp:prediction',
-        'engine',
-      ],
-    },
-    {
       'target_name': 'oss_engine_factory',
       'type': 'static_library',
       'sources': [
@@ -98,6 +93,19 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
+        '../prediction/prediction.gyp:prediction',
+        'engine',
+      ],
+    },
+    {
+      'target_name': 'packed_engine_factory',
+      'type': 'static_library',
+      'sources': [
+        'packed_engine_factory.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../data_manager/packed/packed_data_manager_base.gyp:packed_data_manager',
         '../prediction/prediction.gyp:prediction',
         'engine',
       ],
@@ -112,6 +120,7 @@
         '../base/base.gyp:base',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../prediction/prediction.gyp:prediction',
+        '../session/session_base.gyp:session_protocol',
         'engine',
       ],
     },
@@ -123,6 +132,16 @@
       ],
       'dependencies': [
         'oss_engine_factory',
+      ],
+      'conditions': [
+        ['use_packed_dictionary==1', {
+          'dependencies': [
+            'packed_engine_factory'
+          ],
+          'dependencies!': [
+            'oss_engine_factory',
+          ]
+        }],
       ],
     },
   ],

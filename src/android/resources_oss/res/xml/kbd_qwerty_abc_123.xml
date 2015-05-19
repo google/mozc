@@ -1,0 +1,611 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<Keyboard
+    xmlns:mozc="http://schemas.android.com/apk/res-auto"
+    mozc:keyBackground="qwertyRegular"
+    mozc:keyWidth="10%p" mozc:keyHeight="20.5%"
+    mozc:horizontalGap="0.3%p" mozc:verticalGap="4%"
+    mozc:popUpWidth="@dimen/key_preview_height" mozc:popUpHeight="@dimen/key_preview_height"
+    mozc:popUpXOffset="0dip" mozc:popUpYOffset="@dimen/mini_keyboard_vertical_correction">
+  <Row mozc:rowEdgeFlags="top" mozc:keyHeight="0dip" mozc:verticalGap="4%p" />
+  <Row>
+    <Key mozc:keyEdgeFlags="left">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="1"
+                     mozc:keyCode="@integer/uchar_digit_one"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_one">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_one" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="2"
+                     mozc:keyCode="@integer/uchar_grave_accent"
+                     mozc:keyIcon="@raw/qwerty__keyicon__grave_accent">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__grave_accent" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="3"
+                     mozc:keyCode="@integer/uchar_digit_two"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_two">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_two" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="4"
+                     mozc:keyCode="@integer/uchar_tilde"
+                     mozc:keyIcon="@raw/qwerty__keyicon__tilde">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__tilde" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="5"
+                     mozc:keyCode="@integer/uchar_digit_three"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_three">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_three" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="6"
+                     mozc:keyCode="@integer/uchar_ampersand"
+                     mozc:keyIcon="@raw/qwerty__keyicon__ampersand">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__ampersand" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="7"
+                     mozc:keyCode="@integer/uchar_digit_four"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_four">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_four" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="8"
+                     mozc:keyCode="@integer/uchar_vertical_line"
+                     mozc:keyIcon="@raw/qwerty__keyicon__vertical_line">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__vertical_line" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="9"
+                     mozc:keyCode="@integer/uchar_digit_five"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_five">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_five" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="10"
+                     mozc:keyCode="@integer/uchar_circumflex_accent"
+                     mozc:keyIcon="@raw/qwerty__keyicon__circumflex_accent">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__circumflex_accent" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="11"
+                     mozc:keyCode="@integer/uchar_digit_six"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_six">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_six" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="12"
+                     mozc:keyCode="@integer/uchar_plus_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__plus_sign">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__plus_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="13"
+                     mozc:keyCode="@integer/uchar_digit_seven"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_seven">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_seven" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="14"
+                     mozc:keyCode="@integer/uchar_hyphen_minus"
+                     mozc:keyIcon="@raw/qwerty__keyicon__hyphen_minus">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__hyphen_minus" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="15"
+                     mozc:keyCode="@integer/uchar_digit_eight"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_eight">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_eight" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="16"
+                     mozc:keyCode="@integer/uchar_asterisk"
+                     mozc:keyIcon="@raw/qwerty__keyicon__asterisk">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__asterisk" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="17"
+                     mozc:keyCode="@integer/uchar_digit_nine"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_nine">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_nine" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="18"
+                     mozc:keyCode="@integer/uchar_solidus"
+                     mozc:keyIcon="@raw/qwerty__keyicon__solidus">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__solidus" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key mozc:keyEdgeFlags="right">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="19"
+                     mozc:keyCode="@integer/uchar_digit_zero"
+                     mozc:keyIcon="@raw/qwerty__keyicon__digit_zero">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__digit_zero" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="20"
+                     mozc:keyCode="@integer/uchar_equals_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__equals_sign">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__equals_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+  </Row>
+  <Row>
+    <Spacer mozc:horizontalGap="5%p" />
+    <Key mozc:keyEdgeFlags="left" >
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="21"
+                     mozc:keyCode="@integer/uchar_commercial_at"
+                     mozc:keyIcon="@raw/qwerty__keyicon__commercial_at">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__commercial_at" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="22"
+                     mozc:keyCode="@integer/uchar_reverse_solidus"
+                     mozc:keyIcon="@raw/qwerty__keyicon__reverse_solidus">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__reverse_solidus" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="23"
+                     mozc:keyCode="@integer/uchar_number_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__number_sign">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__number_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="24"
+                     mozc:keyCode="@integer/uchar_less_than_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__less_than_sign">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__less_than_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="25"
+                     mozc:keyCode="@integer/uchar_ampersand"
+                     mozc:keyIcon="@raw/qwerty__keyicon__ampersand">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__ampersand" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="26"
+                     mozc:keyCode="@integer/uchar_greater_than_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__greater_than_sign">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__greater_than_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="27"
+                     mozc:keyCode="@integer/uchar_hyphen_minus"
+                     mozc:keyIcon="@raw/qwerty__keyicon__hyphen_minus">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__hyphen_minus" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="28"
+                     mozc:keyCode="@integer/uchar_left_square_bracket"
+                     mozc:keyIcon="@raw/qwerty__keyicon__left_square_bracket">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__left_square_bracket" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="29"
+                     mozc:keyCode="@integer/uchar_solidus"
+                     mozc:keyIcon="@raw/qwerty__keyicon__solidus">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__solidus" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="30"
+                     mozc:keyCode="@integer/uchar_right_square_bracket"
+                     mozc:keyIcon="@raw/qwerty__keyicon__right_square_bracket">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__right_square_bracket" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="31"
+                     mozc:keyCode="@integer/uchar_dollar_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__dollar_sign">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__dollar_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="32"
+                     mozc:keyCode="@integer/uchar_left_curly_bracket"
+                     mozc:keyIcon="@raw/qwerty__keyicon__left_curly_bracket">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__left_curly_bracket" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="33"
+                     mozc:keyCode="@integer/uchar_percent_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__percent_sign">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__percent_sign" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt">
+        <Flick>
+          <KeyEntity mozc:sourceId="34"
+                     mozc:keyCode="@integer/uchar_right_curly_bracket"
+                     mozc:keyIcon="@raw/qwerty__keyicon__right_curly_bracket">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__right_curly_bracket" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="35"
+                     mozc:keyCode="@integer/uchar_left_parenthesis"
+                     mozc:keyIcon="@raw/qwerty__keyicon__left_parenthesis">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__left_parenthesis" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key mozc:keyEdgeFlags="right" >
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="36"
+                     mozc:keyCode="@integer/uchar_right_parenthesis"
+                     mozc:keyIcon="@raw/qwerty__keyicon__right_parenthesis">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__right_parenthesis" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:horizontalGap="5%p" />
+  </Row>
+  <Row>
+    <Key
+         mozc:keyWidth="13%p" mozc:keyEdgeFlags="left"
+         mozc:isModifier="true" mozc:isSticky="true">
+      <KeyState mozc:nextMetaState="alt"
+                mozc:keyBackground="qwertyFunctionLightOff" >
+        <Flick>
+          <KeyEntity mozc:sourceId="37"
+                     mozc:keyCode="@integer/key_alt"
+                     mozc:keyIcon="@raw/qwerty__function__alt__icon" />
+        </Flick>
+      </KeyState>
+      <KeyState mozc:metaState="alt" mozc:nextMetaState="unmodified"
+                mozc:keyBackground="qwertyFunctionLightOn" >
+        <Flick>
+          <KeyEntity mozc:sourceId="38"
+                     mozc:keyCode="@integer/key_alt"
+                     mozc:keyIcon="@raw/qwerty__function__alt__icon" />
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:horizontalGap="2%p" mozc:stick="right" />
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="39"
+                     mozc:keyCode="@integer/uchar_exclamation_mark"
+                     mozc:keyIcon="@raw/qwerty__keyicon__exclamation_mark">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__exclamation_mark" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="40"
+                     mozc:keyCode="@integer/uchar_question_mark"
+                     mozc:keyIcon="@raw/qwerty__keyicon__question_mark">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__question_mark" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="41"
+                     mozc:keyCode="@integer/uchar_apostrophe"
+                     mozc:keyIcon="@raw/qwerty__keyicon__apostrophe">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__apostrophe" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="42"
+                     mozc:keyCode="@integer/uchar_quotation_mark"
+                     mozc:keyIcon="@raw/qwerty__keyicon__quotation_mark">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__quotation_mark" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="43"
+                     mozc:keyCode="@integer/uchar_colon"
+                     mozc:keyIcon="@raw/qwerty__keyicon__colon">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__colon" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="44"
+                     mozc:keyCode="@integer/uchar_semicolon"
+                     mozc:keyIcon="@raw/qwerty__keyicon__semicolon">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__semicolon" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key>
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="45"
+                     mozc:keyCode="@integer/uchar_low_line"
+                     mozc:keyIcon="@raw/qwerty__keyicon__low_line">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__low_line" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Spacer mozc:horizontalGap="2%p" mozc:stick="left" />
+    <Key mozc:keyBackground="qwertyFunction"
+         mozc:keyWidth="13%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="46"
+                     mozc:keyCode="@integer/key_backspace"
+                     mozc:keyIcon="@raw/qwerty__function__delete__icon">
+            <PopUp mozc:popUpIcon="@raw/qwerty__function__delete__popup" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+  </Row>
+  <Row>
+    <Key mozc:keyBackground="qwertyFunction"
+         mozc:keyWidth="26%p" mozc:keyEdgeFlags="left">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="47"
+                     mozc:keyCode="@integer/key_chartype_to_abc"
+                     mozc:longPressKeyCode="@integer/key_menu_dialog"
+                     mozc:keyIcon="@raw/qwerty__function__text_alphabet__icon">
+            <PopUp mozc:popUpIcon="@raw/qwerty__function__text_alphabet__popup" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key mozc:keyBackground="qwertyFunction"
+         mozc:keyWidth="10%p">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="48"
+                     mozc:keyCode="@integer/uchar_comma"
+                     mozc:keyIcon="@raw/qwerty__function__comma">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__comma" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key mozc:keyBackground="qwertyFunction"
+         mozc:keyWidth="21%p">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="49"
+                     mozc:keyCode="@integer/uchar_space"
+                     mozc:keyIcon="@raw/qwerty__function__space__icon">
+            <PopUp mozc:popUpIcon="@raw/qwerty__function__space__popup" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key mozc:keyBackground="qwertyFunction"
+         mozc:keyWidth="10%p">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="50"
+                     mozc:keyCode="@integer/uchar_full_stop"
+                     mozc:keyIcon="@raw/qwerty__function__full_stop">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__full_stop" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key mozc:keyBackground="qwertyFunction"
+         mozc:keyWidth="10%p"
+         mozc:isRepeatable="true">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="55"
+                     mozc:keyCode="@integer/key_left"
+                     mozc:keyIcon="@raw/twelvekeys__function__left_arrow__icon">
+            <PopUp mozc:popUpIcon="@raw/twelvekeys__function__left_arrow__popup" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key mozc:keyBackground="qwertyFunction"
+         mozc:keyWidth="10%p"
+         mozc:isRepeatable="true">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="56"
+                     mozc:keyCode="@integer/key_right"
+                     mozc:keyIcon="@raw/twelvekeys__function__right_arrow__icon">
+            <PopUp mozc:popUpIcon="@raw/twelvekeys__function__right_arrow__popup" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+    <Key mozc:keyBackground="qwertyFunction"
+         mozc:keyWidth="13%p" mozc:keyEdgeFlags="right" mozc:isRepeatable="true">
+      <KeyState>
+        <Flick>
+          <KeyEntity mozc:sourceId="52"
+                     mozc:keyCode="@integer/uchar_linefeed"
+                     mozc:keyIcon="@raw/qwerty__function__enter__icon">
+            <PopUp mozc:popUpIcon="@raw/qwerty__function__enter__popup" />
+          </KeyEntity>
+        </Flick>
+      </KeyState>
+    </Key>
+  </Row>
+  <!-- Next sourceId: 57 -->
+</Keyboard>

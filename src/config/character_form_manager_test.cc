@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include "base/base.h"
-#include "base/util.h"
 #include "config/character_form_manager.h"
+
+#include <string>
+
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "testing/base/public/gunit.h"
@@ -45,7 +46,7 @@ class CharacterFormManagerTest : public testing::Test {
  public:
   virtual void SetUp() {
     // set default user profile directory
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
@@ -66,10 +67,6 @@ class CharacterFormManagerTest : public testing::Test {
 };
 
 TEST_F(CharacterFormManagerTest, DefaultTest) {
-  // set default user profile directory
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  string output;
-
   CharacterFormManager *manager =
       CharacterFormManager::GetCharacterFormManager();
 
@@ -115,8 +112,7 @@ TEST_F(CharacterFormManagerTest, DefaultTest) {
   EXPECT_EQ(
       config::Config::NO_CONVERSION,
       // "ABC012ほげ"
-      manager->GetConversionCharacterForm("\x41\x42\x43\x30\x31\x32\xe3\x81\xbb"
-                                          "\xe3\x81\x92"));
+      manager->GetConversionCharacterForm("ABC012" "\xe3\x81\xbb\xe3\x81\x92"));
 
   EXPECT_EQ(
       config::Config::FULL_WIDTH,
@@ -161,6 +157,7 @@ TEST_F(CharacterFormManagerTest, DefaultTest) {
       manager->GetConversionCharacterForm("\x41\x42\x43\x30\x31\x32\xe3\x81\xbb"
                                           "\xe3\x81\x92"));
 
+  string output;
   // "京都東京ABCインターネット"
   manager->ConvertPreeditString("\xe4\xba\xac\xe9\x83\xbd\xe6\x9d\xb1\xe4\xba"
                                 "\xac\x41\x42\x43\xe3\x82\xa4\xe3\x83\xb3\xe3"
@@ -800,7 +797,6 @@ TEST_F(CharacterFormManagerTest, DefaultTest) {
 }
 
 TEST_F(CharacterFormManagerTest, MixedFormTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   CharacterFormManager *manager =
       CharacterFormManager::GetCharacterFormManager();
 
@@ -821,8 +817,6 @@ TEST_F(CharacterFormManagerTest, MixedFormTest) {
 }
 
 TEST_F(CharacterFormManagerTest, GroupTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
   CharacterFormManager *manager =
       CharacterFormManager::GetCharacterFormManager();
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "dictionary/suffix_dictionary.h"
 
+#include <algorithm>
 #include <cstring>
 #include <string>
 
@@ -38,6 +39,7 @@
 #include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
+#include "dictionary/suffix_dictionary_token.h"
 
 namespace mozc {
 SuffixDictionary::SuffixDictionary(const SuffixToken *suffix_tokens,
@@ -54,23 +56,54 @@ Node *SuffixDictionary::LookupPredictive(
   return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
 }
 
+namespace {
+class SuffixTokenKeyPrefixComparator {
+ public:
+  explicit SuffixTokenKeyPrefixComparator(size_t size) : size_(size) {
+  }
+
+  bool operator()(const SuffixToken &t1, const SuffixToken &t2) const {
+    return std::strncmp(t1.key, t2.key, size_) < 0;
+  }
+
+ private:
+  size_t size_;
+};
+}  // namespace
+
+bool SuffixDictionary::HasValue(const StringPiece value) const {
+  // SuffixDictionary::HasValue() is never called and unnecessary to
+  // implement. To avoid accidental calls of this method, the method simply dies
+  // so that we can immediately notice this unimplemented method during
+  // development.
+  LOG(FATAL) << "bool SuffixDictionary::HasValue() is not implemented";
+  return false;
+}
+
 Node *SuffixDictionary::LookupPredictiveWithLimit(
     const char *str, int size, const Limit &limit,
     NodeAllocatorInterface *allocator) const {
+  size_t begin_index, end_index;
   if (str == NULL) {
     DCHECK(size == 0);
-    str = "";
+    begin_index = 0;
+    end_index = suffix_tokens_size_;
+  } else {
+    SuffixToken key;
+    key.key = str;
+    pair<const SuffixToken *, const SuffixToken *> range = equal_range(
+        suffix_tokens_, suffix_tokens_ + suffix_tokens_size_,
+        key, SuffixTokenKeyPrefixComparator(size));
+    begin_index = range.first - suffix_tokens_;
+    end_index = range.second - suffix_tokens_;
   }
 
   DCHECK(allocator);
 
   Node *result = NULL;
-  for (size_t i = 0; i < suffix_tokens_size_; ++i) {
+  for (size_t i = begin_index; i < end_index; ++i) {
     const SuffixToken &token = suffix_tokens_[i];
     DCHECK(token.key);
-    if (str[0] && std::strncmp(token.key, str, size) != 0) {
-      continue;
-    }
     // check begin with
     if (limit.begin_with_trie != NULL) {
       string value;
@@ -81,6 +114,7 @@ Node *SuffixDictionary::LookupPredictiveWithLimit(
         continue;
       }
     }
+
     Node *node = allocator->NewNode();
     DCHECK(node);
     node->Init();

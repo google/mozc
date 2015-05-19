@@ -1,0 +1,438 @@
+# value	category	description
+☆	GENERAL	ほし しろぼし しろほし ずけい
+★	GENERAL	ほし くろぼし くろほし ずけい
+‥	GENERAL	。。 .. ・・  ・ てん など きごう
+…	GENERAL	。。。 .  ... ・・・  ・ てん きごう あまり さんてん
+♪	GENERAL	おんぷ おんがく きごう
+♬	GENERAL	おんぷ おんがく きごう
+♭	GENERAL	ふらっと  おんがく きごう
+♯	GENERAL	しゃーぷ  おんがく # きごう
+♤	GENERAL	すぺーど
+♡	GENERAL	はーと
+♢	GENERAL	だいや ひしがた ひし
+♧	GENERAL	くらぶ くろーばー みつば
+♠	GENERAL	すぺーど
+♥	GENERAL	はーと
+♦	GENERAL	だいや ひしがた ひし
+♣	GENERAL	くらぶ くろーばー みつば
+〒	GENERAL	ゆうびん ゆうびんばんごう きごう
+℡	GENERAL	でんわ tel TEL
+☎	GENERAL	でんわ
+☏	GENERAL	でんわ
+■	GENERAL	しかく ずけい
+□	GENERAL	しかく ずけい
+▲	GENERAL	さんかく ずけい
+△	GENERAL	さんかく ずけい
+▼	GENERAL	さんかく ずけい ぎゃくさんかく
+▽	GENERAL	さんかく ずけい ぎゃくさんかく
+◆	GENERAL	しかく だいや ひしがた ひし ずけい
+◇	GENERAL	しかく だいや ひしがた ひし ずけい
+○	GENERAL	まる しろまる ずけい
+◎	GENERAL	にじゅうまる まる ずけい
+●	GENERAL	まる くろまる ずけい
+※	GENERAL	こめ * こめじるし きごう ほし
+
+✓	GENERAL	ちぇっく きごう
+✔	GENERAL	ちぇっく きごう
+✗	GENERAL	きごう ばつ ぺけ
+✘	GENERAL	きごう ばつ ぺけ
+♔	GENERAL	ちぇす きんぐ
+♕	GENERAL	ちぇす くいーん くぃーん
+♖	GENERAL	ちぇす るーく
+♗	GENERAL	ちぇす びしょっぷ
+♘	GENERAL	ちぇす ないと
+♙	GENERAL	ちぇす ぽーん
+♚	GENERAL	ちぇす きんぐ
+♛	GENERAL	ちぇす くいーん くぃーん
+♜	GENERAL	ちぇす るーく
+♝	GENERAL	ちぇす びしょっぷ
+♞	GENERAL	ちぇす ないと
+♟	GENERAL	ちぇす ぽーん
+⚀	GENERAL	さいころ
+⚁	GENERAL	さいころ
+⚂	GENERAL	さいころ
+⚃	GENERAL	さいころ
+⚄	GENERAL	さいころ
+⚅	GENERAL	さいころ
+♀	GENERAL	めす きごう きんせい せんせいじゅつ
+♂	GENERAL	おす きごう かせい せんせいじゅつ
+
+‥	GENERAL	。。 .. ・・  ・ てん など きごう
+…	GENERAL	。。。 .  ... ・・・  ・ てん きごう あまり さんてん
+仝	GENERAL	おなじ どう きごう
+彡	GENERAL	さん せん
+〃	GENERAL	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ
+々	GENERAL	おなじ くりかえし どう のま きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ
+〆	GENERAL	しめ きごう
+〓	GENERAL	げた きごう
+゛	GENERAL	だくてん " てん てんてん きごう
+゜	GENERAL	はんだくてん まる ' てん きごう
+ゝ	GENERAL	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ
+ゞ	GENERAL	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ  じゅうてん じょうじ
+・	GENERAL	てん なかてん なかぐろ ・ /
+ー	GENERAL	- ー － ―
+ヽ	GENERAL	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ
+ヾ	GENERAL	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ
+
+
+.	HALF	ぴりおど どっと . ． 。 てん
+,	HALF	かんま こんま , ， 、 てん
+!	HALF	かんたんふ . ! ！ えくすくらめーしょん びっくり
+?	HALF	ぎもんふ .  ?  ？ くえすちょん はてな ・
+'	HALF	あぽすとろふぃ くぉーと きごう '
+"	HALF	" だぶるくおーと だぶるくおーてーしょん くぉーと だぶるくぉーてしょん きごう
+:	HALF	ころん : ： てん
+;	HALF	せみころん ; ； てん
+/	HALF	すらっしゅ しゃせん ・ / きごう ななめ
+\	HALF	ばっくすらっしゅ ぎゃくしゃせん ・ / \ きごう しゃせん すらっしゅ ななめ
+~	HALF	ちるだ きごう
+_	HALF	_ きごう した
++	HALF	ぷらす たす すうがく + ＋
+-	HALF	- ー － ― はいふん まいなす きごう
+*	HALF	あすたりすく あすてりすく ほし *
+=	HALF	いこーる とうごう  すうがく =
+@	HALF	あっとまーく あっと @
+#	HALF	しゃーぷ なんばー いげた #
+%	HALF	ぱーせんと たんい %
+&	HALF	あんど あんぱさんど &
+(	HALF	 [ 「 ( ｢
+)	HALF	  ]  」 ) ｣
+<	HALF	ふとうごう しょうなり  すうがく <
+>	HALF	ふとうごう だいなり すうがく >
+^	HALF	^ きごう
+|	HALF	| たてぼう たてせん きごう
+$	HALF	どる だらー だら つうか $ たんい
+ 	HALF	すぺーす くうはく
+
+．	HALF	ぴりおど どっと . ． 。 てん
+，	HALF	かんま こんま , ， 、 てん
+！	HALF	かんたんふ . ! ！ えくすくらめーしょん びっくり
+？	HALF	ぎもんふ .  ?  ？ くえすちょん はてな ・
+‘	HALF	ばっくくおーと ばっくくぉーと ' " きごう
+’	HALF	くおーと くおーてーしょん くぉーと くぉーてーしょん ' " きごう
+：	HALF	ころん : ： てん
+；	HALF	せみころん ; ； てん
+／	HALF	すらっしゅ しゃせん ・ / きごう ななめ
+＼	HALF	ばっくすらっしゅ ぎゃくしゃせん ・ / \ きごう しゃせん すらっしゅ ななめ
+―	HALF	- ー － ― だっしゅ きごう
+＿	HALF	_ きごう した
+＋	HALF	ぷらす たす すうがく + ＋
+−	HALF	まいなす ひく はいふん  すうがく - ー
+＊	HALF	あすたりすく あすてりすく ほし *
+＝	HALF	いこーる とうごう  すうがく =
+＠	HALF	あっとまーく あっと @
+＃	HALF	しゃーぷ なんばー いげた #
+％	HALF	ぱーせんと たんい %
+＆	HALF	あんど あんぱさんど &
+（	HALF	 [ 「 ( ｢
+）	HALF	  ]  」 ) ｣
+＜	HALF	ふとうごう しょうなり  すうがく <
+＞	HALF	ふとうごう だいなり すうがく >
+＾	HALF	^ きごう
+｜	HALF	| たてぼう たてせん きごう
+＄	HALF	どる だらー だら つうか $ たんい
+￥	HALF	えん つうか \ ¥ たんい
+　	HALF	すぺーす くうはく
+
+
+(	PARENTHESIS	 [ 「 ( ｢
+)	PARENTHESIS	  ]  」 ) ｣
+[	PARENTHESIS	  [ 「 ( ｢
+]	PARENTHESIS	 ]  」 ) ｣
+{	PARENTHESIS	 {  [ ( 「 ｢
+}	PARENTHESIS	 }  ] )  」 ｣
+（	PARENTHESIS	 [ 「 ( ｢
+）	PARENTHESIS	  ]  」 ) ｣
+「	PARENTHESIS	[ 「 ( ｢
+」	PARENTHESIS	 ]  」 ) ｣
+【	PARENTHESIS	 [ 「 ( ｢
+】	PARENTHESIS	 ]  」 ) ｣
+『	PARENTHESIS	 [ 「 ( ｢
+』	PARENTHESIS	 ]  」 ) ｣
+［	PARENTHESIS	  [ 「 ( ｢
+］	PARENTHESIS	 ]  」 ) ｣
+〈	PARENTHESIS	<  (  [ 「 ｢
+〉	PARENTHESIS	> ) ]  」 ｣
+《	PARENTHESIS	 <<  (  [ 「 ｢
+》	PARENTHESIS	>>  ) ]  」 ｣
+“	PARENTHESIS	" ' だぶるくおーと だぶるくおーてーしょん くぉーと だぶるくぉーてしょん きごう
+”	PARENTHESIS	" ' だぶるくおーと だぶるくおーてーしょん くぉーと だぶるくぉーてしょん きごう
+〔	PARENTHESIS	  [ 「 ( ｢
+〕	PARENTHESIS	 ]  」 ) ｣
+｛	PARENTHESIS	 {  [ ( 「 ｢
+｝	PARENTHESIS	 }  ] )  」 ｣
+‘	PARENTHESIS	ばっくくおーと ばっくくぉーと ' " きごう
+’	PARENTHESIS	くおーと くおーてーしょん くぉーと くぉーてーしょん ' " きごう
+〝	PARENTHESIS	きごう
+〟	PARENTHESIS	きごう
+＜	PARENTHESIS	ふとうごう しょうなり  すうがく <
+＞	PARENTHESIS	ふとうごう だいなり すうがく >
+
+┌	PARENTHESIS	けいせん ほそわく ひだりうえ
+├	PARENTHESIS	けいせん
+└	PARENTHESIS	けいせん ほそわく ひだりした
+┝	PARENTHESIS	けいせん
+┐	PARENTHESIS	けいせん ほそわく みぎうえ
+┤	PARENTHESIS	けいせん
+┘	PARENTHESIS	けいせん ほそわく みぎした
+┥	PARENTHESIS	けいせん
+┬	PARENTHESIS	けいせん ほそわく
+┼	PARENTHESIS	けいせん まんなか
+┴	PARENTHESIS	けいせん ほそわく
+┰	PARENTHESIS	けいせん
+━	PARENTHESIS	けいせん ふとわく よこ
+│	PARENTHESIS	けいせん ほそわく たて
+┃	PARENTHESIS	けいせん ふとわく たて
+┸	PARENTHESIS	けいせん
+┏	PARENTHESIS	けいせん ふとわく ひだりうえ
+┣	PARENTHESIS	けいせん
+┗	PARENTHESIS	けいせん ふとわく ひだりした
+┠	PARENTHESIS	けいせん
+┓	PARENTHESIS	けいせん ふとわく みぎうえ
+┫	PARENTHESIS	けいせん
+┛	PARENTHESIS	けいせん ふとわく みぎした
+┨	PARENTHESIS	けいせん
+┳	PARENTHESIS	けいせん ふとわく
+╋	PARENTHESIS	けいせん まんなか
+┻	PARENTHESIS	けいせん ふとわく
+╂	PARENTHESIS	けいせん まんなか
+┯	PARENTHESIS	けいせん
+┿	PARENTHESIS	けいせん まんなか
+┷	PARENTHESIS	けいせん
+
+
+→	ARROW	やじるし  みぎや -> ー> みぎ
+←	ARROW	やじるし ひだりや <- <ー ひだり
+↑	ARROW	やじるし うえや うえ
+↓	ARROW	やじるし したや した
+⇒	ARROW	すうがく やじるし みぎや -> ならば  けいさん => きごう →
+⇐	ARROW	やじるし ひだりや ひだり <= ←
+⇑	ARROW	やじるし うえや うえ ↑
+⇓	ARROW	やじるし したや した ↓
+⇨	ARROW	やじるし みぎや みぎ →
+⇦	ARROW	やじるし ひだりや ひだり ←
+⇧	ARROW	やじるし うえや うえ ↑
+⇩	ARROW	やじるし したや した ↓
+⇢	ARROW	やじるし みぎや みぎ ...> →
+⇠	ARROW	やじるし ひだりや ひだり <... ←
+⇡	ARROW	やじるし うえや うえ ↑
+⇣	ARROW	やじるし したや した ↓
+↗	ARROW	やじるし → ↑
+↘	ARROW	やじるし → ↓
+↖	ARROW	やじるし ← ↑
+↙	ARROW	やじるし ← ↓
+⇗	ARROW	やじるし → ↑
+⇘	ARROW	やじるし → ↓
+⇖	ARROW	やじるし ← ↑
+⇙	ARROW	やじるし ← ↓
+⇛	ARROW	やじるし みぎや みぎ →
+⇚	ARROW	やじるし ひだりや ひだり ←
+☞	ARROW	みぎへ →
+☜	ARROW	ひだりへ →
+↕	ARROW	やじるし ↑↓ ↓↑
+↔	ARROW	やじるし ←→ <-> <ー>
+⇕	ARROW	やじるし ↑↓ ↓↑
+⇔	ARROW	すうがく やじるし <-> どうち  けいさん <=> きごう
+
+↷	ARROW	やじるし ↓
+↶	ARROW	やじるし ↓
+↺	ARROW	やじるし → ↑
+↻	ARROW	やじるし ← ↑
+↱	ARROW	やじるし →
+↰	ARROW	やじるし ←
+↳	ARROW	やじるし →
+↲	ARROW	やじるし ←
+↴	ARROW	やじるし ↓
+↵	ARROW	やじるし ←
+↪	ARROW	やじるし →
+↩	ARROW	やじるし ←
+⇇	ARROW	やじるし ← ←←
+⇉	ARROW	やじるし → →→
+⇈	ARROW	やじるし ↑ ↑↑
+⇊	ARROW	やじるし ↓ ↓↓
+⇄	ARROW	やじるし →←
+⇆	ARROW	やじるし ←→
+⇅	ARROW	やじるし ↑↓
+⤵	ARROW	やじるし ↓
+
+Ⅰ	ARROW	きごう ろーま
+Ⅱ	ARROW	きごう ろーま
+Ⅲ	ARROW	きごう ろーま
+Ⅳ	ARROW	きごう ろーま
+Ⅴ	ARROW	きごう ろーま
+Ⅵ	ARROW	きごう ろーま
+Ⅶ	ARROW	きごう ろーま
+Ⅷ	ARROW	きごう ろーま
+Ⅸ	ARROW	きごう ろーま
+Ⅹ	ARROW	きごう ろーま
+ⅰ	ARROW	きごう ろーま
+ⅱ	ARROW	きごう ろーま
+ⅲ	ARROW	きごう ろーま
+ⅳ	ARROW	きごう ろーま
+ⅴ	ARROW	きごう ろーま
+ⅵ	ARROW	きごう ろーま
+ⅶ	ARROW	きごう ろーま
+ⅷ	ARROW	きごう ろーま
+ⅸ	ARROW	きごう ろーま
+ⅹ	ARROW	きごう ろーま
+㈠	ARROW	かっこ1 かっこいち
+㈡	ARROW	かっこ2 かっこに
+㈢	ARROW	かっこ3 かっこさん
+㈣	ARROW	かっこ4 かっこよん
+㈤	ARROW	かっこ5 かっこご
+㈥	ARROW	かっこ6 かっころく
+㈦	ARROW	かっこ7 かっこなな かっこしち
+㈧	ARROW	かっこ8 かっこはち
+㈨	ARROW	かっこ9 かっこきゅう
+㈩	ARROW	かっこ10 かっこじゅう
+①	ARROW	きごう まる1 まるいち
+②	ARROW	きごう まる2 まるに
+③	ARROW	きごう まる3 まるさん
+④	ARROW	きごう まる4 まるよん まるし
+⑤	ARROW	きごう まる5 まるご
+⑥	ARROW	きごう まる6 まるろく
+⑦	ARROW	きごう まる7 まるなな まるしち
+⑧	ARROW	きごう まる8 まるはち
+⑨	ARROW	きごう まる9 まるきゅう まるく
+⑩	ARROW	きごう まる10 まるじゅう
+⑪	ARROW	きごう まる11 まるじゅういち
+⑫	ARROW	きごう まる12 まるじゅうに
+⑬	ARROW	きごう まる13 まるじゅうさん
+⑭	ARROW	きごう まる14 まるじゅうし まるじゅうよん
+⑮	ARROW	きごう まる15 まるじゅうご
+⑯	ARROW	きごう まる16 まるじゅうろく
+⑰	ARROW	きごう まる17 まるじゅうなな まるじゅうしち
+⑱	ARROW	きごう まる18 まるじゅうはち
+⑲	ARROW	きごう まる19 まるじゅうきゅう まるじゅうく
+⑳	ARROW	きごう まる20 まるにじゅう
+
+
+＋	MATH	ぷらす たす すうがく + ＋
+−	MATH	まいなす ひく はいふん  すうがく - ー
+×	MATH	かける  すうがく * ばつ ぺけ きごう
+÷	MATH	わる すうがく / ・ きごう
+±	MATH	ぷらすまいなす  すうがく きごう
+＝	MATH	いこーる とうごう  すうがく =
+≒	MATH	すうがく やく きんじ いこーる = けいさん きごう とうごう
+≠	MATH	ふとうごう のっといこーる  すうがく = きごう とうごう
+＜	MATH	ふとうごう しょうなり  すうがく <
+＞	MATH	ふとうごう だいなり すうがく >
+≦	MATH	ふとうごう しょうなりいこーる  すうがく < きごう
+≧	MATH	ふとうごう だいなりいこーる  すうがく > きごう
+≪	MATH	ふとうごう しょうなり すうがく  けいさん << きごう
+≫	MATH	ふとうごう だいなり すうがく けいさん >> きごう
+⊕	MATH	すうがく ちょくわ えっくすおあ けいさん きごう
+∅	MATH	すうがく くうしゅうごう
+⊂	MATH	すうがく  しゅうごう  けいさん きごう
+⊃	MATH	すうがく  しゅうごう  けいさん きごう
+⊆	MATH	すうがく  しゅうごう  けいさん きごう
+⊇	MATH	すうがく しゅうごう  けいさん きごう
+∩	MATH	すうがく きゃっぷ かっぷ あんど しゅうごう  けいさん きごう せきしゅうごう
+∪	MATH	すうがく きゃっぷ かっぷ おあ しゅうごう  けいさん U きごう わしゅうごう
+∧	MATH	すうがく かつ および あんど しゅうごう  けいさん きごう
+∨	MATH	すうがく または おあ しゅうごう  けいさん V きごう
+∈	MATH	すうがく しゅうごう  けいさん きごう ふくむ
+∉	MATH	すうがく しゅうごう  けいさん きごう ふくまない
+∋	MATH	すうがく しゅうごう  けいさん きごう ふくむ
+∌	MATH	すうがく しゅうごう  けいさん きごう ふくまない
+∑	MATH	すうがく しぐま けいさん
+√	MATH	るーと へいほうこん すうがく けいさん きごう こんごう
+∀	MATH	すうがく すべて  すべての たーんえー けいさん A きごう たーんA
+∂	MATH	すうがく  けいさん きごう へんびぶん らうんど
+∃	MATH	すうがく そんざい  けいさん E きごう
+∇	MATH	すうがく なぶら けいさん きごう
+⌒	MATH	すうがく こ  けいさん きごう
+¬	MATH	すうがく のっと ひてい しゅうごう  けいさん きごう
+¶	MATH	せくしょん だんらく だんらくきごう ぱらぐらふ きごう
+⊥	MATH	すうがく すいちょく  けいさん きごう かく
+⊿	MATH	すうがく さんかく さんかくけい とらいあんぐる けいさん でるた ちょっかくさんかく ちょっかくさんかくけい きごう
+‖	MATH	| || たてぼう たてせん きごう
+∝	MATH	すうがく ひれい けいさん きごう
+∞	MATH	むげんだい むげん  すうがく きごう
+∟	MATH	すうがく ちょっかく
+∠	MATH	すうがく かく  けいさん きごう
+∽	MATH	すうがく そうじ けいさん きごう
+≡	MATH	すうがく ごうどう  けいさん = きごう
+∴	MATH	ゆえに  すうがく きごう さんかく てん
+∵	MATH	すうがく なぜならば けいさん きごう さんかく てん
+
+¹	MATH	うわつき うえつき
+²	MATH	うわつき うえつき
+³	MATH	うわつき うえつき
+⁴	MATH	うわつき うえつき
+₁	MATH	したつき
+₂	MATH	したつき
+₃	MATH	したつき
+₄	MATH	したつき
+ⁿ	MATH	うわつき うえつき
+∫	MATH	すうがく いんてぐらる せきぶん けいさん きごう
+∬	MATH	すうがく いんてぐらる せきぶん にじゅうせきぶん けいさん きごう
+∮	MATH	すうがく いんてぐらる せきぶん へいろせきぶん けいさん ふぁい けいろせきぶん
+₰	MATH	つうか たんい ぺにひ ぺにひきごう
+₱	MATH	つうか たんい ぺそ ぺそきごう
+₲	MATH	つうか たんい ぐあらにー ぐあらにーきごう
+₳	MATH	つうか たんい あうすとらる あうすとらるきごう
+₴	MATH	つうか たんい ぐりぶな ふりヴにゃ ふりぶにゃ ぐりぶなきごう ふりヴにゃきごう ふりぶにゃきごう
+₵	MATH	つうか たんい せでぃ せでぃきごう
+№	MATH	なんばー no NO
+§	MATH	せくしょん きごう だんらく
+
+㍉	MATH	みり たんい
+㌢	MATH	せんち たんい
+㍍	MATH	めーとる たんい
+㌔	MATH	きろ たんい
+㎜	MATH	みりめーとる  たんい mm MM
+㎝	MATH	せんちめーとる  たんい cm CM
+m	MATH
+㎞	MATH	きろめーとる  たんい km KM
+㌘	MATH	ぐらむ たんい
+㌔	MATH	きろ たんい
+㌧	MATH	とん たんい
+㌍	MATH	かろりー たんい
+㎎	MATH	みりぐらむ  たんい mg MG
+㎏	MATH	きろぐらむ  たんい kg KG
+㌫	MATH	ぱーせんと たんい
+㍑	MATH	りっとる たんい
+㎡	MATH	へいほうめーとる  たんい へいべい mm MM
+㎥	MATH	りっぽうめーとる  たんい りゅうべい りゅーべー りゅーべ
+㌶	MATH	へくたーる たんい
+㌻	MATH	ぺーじ たんい
+℃	MATH	ど たんい C
+㍊	MATH	みりばーる たんい
+㌃	MATH	あーる たんい
+㍗	MATH	わっと たんい
+㍾	MATH	めいじ  ねんごう
+㍽	MATH	たいしょう  ねんごう
+㍼	MATH	しょうわ  ねんごう
+㍻	MATH	へいせい ねんごう
+
+㌣	MATH	せんと たんい
+㌦	MATH	どる たんい
+£	MATH	ぽんど  つうか たんい
+￥	MATH	えん つうか \ ¥ たんい
+¢	MATH	せんと  つうか たんい
+＄	MATH	どる だらー だら つうか $ たんい
+€	MATH	ゆーろ つうか たんい
+₠	MATH	つうか たんい おうしゅうつうかたんい えきゅー　きゅうゆーろ　えきゅーきごう　きゅうゆーろきごう
+₡	MATH	つうか たんい ころん ころんきごう
+₢	MATH	つうか たんい くるぜいろ くるぜいろきごう
+₣	MATH	つうか たんい ふらん ふらんきごう
+₤	MATH	つうか たんい りら りらきごう
+₥	MATH	つうか たんい みるきごう
+₦	MATH	つうか たんい ないら ないらきごう
+₧	MATH	つうか たんい ぺせた ぺせたきごう
+₨	MATH	つうか たんい るぴー るぴーきごう
+₩	MATH	つうか たんい うぉん うぉんきごう
+₪	MATH	つうか たんい しんしぇける しんしぇけるきごう
+₫	MATH	つうか たんい どん どんきごう
+₭	MATH	つうか たんい きーぷ きーぷきごう
+₮	MATH	つうか たんい どぐろぐ とぅぐるぐ とぅぐるく とぅぐりく どぐろぐきごう とぅぐるぐきごう とぅぐるくきごう とぅぐりくきごう
+₯	MATH	つうか たんい どらくま どらくまきごう
+㏄	MATH	しーしー たんい cc
+㏍	MATH	かぶしきがいしゃ kk
+°	MATH	ど たんい きごう
+%	MATH
+‰	MATH	ぱーみる  たんい きごう
+′	MATH	’ ふん たんい きごう
+″	MATH	” びょう たんい きごう
+Å	MATH	おんぐすとろーむ たんい A きごう

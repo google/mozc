@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,21 +34,24 @@
 #include <atlbase_mozc.h>
 #include <atlstr.h>
 #include <imm.h>
-#include <strsafe.h>
 #include <msctf.h>
+#include <strsafe.h>
 
 #include <string>
 #include <vector>
 
 #include "base/base.h"
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/scoped_handle.h"
 #include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
 #include "win32/base/imm_registrar.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/keyboard_layout_id.h"
+#include "win32/base/tsf_profile.h"
 
 namespace mozc {
 namespace win32 {
@@ -66,23 +69,21 @@ const wchar_t kCUASValueName[] = L"CUAS";
 const uint32 kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
 
 bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
-  vector<LAYOUTORTIPPROFILE> profiles;
-
   if (!InputDll::EnsureInitialized()) {
     return false;
   }
 
-  if (InputDll::enum_enabled_layout_or_tip() == NULL) {
+  if (InputDll::enum_enabled_layout_or_tip() == nullptr) {
     return false;
   }
 
-  const UINT num_element =
-      InputDll::enum_enabled_layout_or_tip()(NULL, NULL, NULL, NULL, 0);
+  const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
+      nullptr, nullptr, nullptr, nullptr, 0);
 
   scoped_array<LAYOUTORTIPPROFILE> buffer(new LAYOUTORTIPPROFILE[num_element]);
 
   const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
-      NULL, NULL, NULL, buffer.get(), num_element);
+      nullptr, nullptr, nullptr, buffer.get(), num_element);
 
   for (size_t i = 0; i < num_copied; ++i) {
     if ((buffer[i].dwFlags & LOT_DEFAULT) == LOT_DEFAULT) {
@@ -118,10 +119,83 @@ bool SetCuasEnabledInternal(bool enable, REGSAM additional_regsam) {
 const wchar_t kTIPKeyboardKey[] = L"Software\\Microsoft\\CTF\\Assemblies\\"
                                   L"0x00000411\\"
                                   L"{34745C63-B2F0-4784-8B67-5E12C8701A31}";
-}  // anonymous namespace
+
+bool IsDefaultWin8() {
+  LAYOUTORTIPPROFILE profile = {};
+  if (!GetDefaultLayout(&profile)) {
+    return false;
+  }
+  // Check if this profile looks like TSF version of Mozc;
+  if (profile.dwProfileType != LOTP_INPUTPROCESSOR) {
+    return false;
+  }
+  if (!IsEqualCLSID(profile.clsid, TsfProfile::GetTextServiceGuid())) {
+    return false;
+  }
+  if (!IsEqualGUID(profile.guidProfile, TsfProfile::GetProfileGuid())) {
+    return false;
+  }
+  return true;
+}
+
+bool SetDefaultWin8() {
+  if (!InputDll::EnsureInitialized()) {
+    return false;
+  }
+  if (InputDll::set_default_layout_or_tip() == nullptr) {
+    return false;
+  }
+  wchar_t clsid[64] = {};
+  if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), clsid,
+                         arraysize(clsid))) {
+    return E_OUTOFMEMORY;
+  }
+  wchar_t profile_id[64] = {};
+  if (!::StringFromGUID2(TsfProfile::GetProfileGuid(), profile_id,
+                         arraysize(profile_id))) {
+    return E_OUTOFMEMORY;
+  }
+
+  const wstring &profile = wstring(L"0x0411:") + clsid + profile_id;
+  if (!InputDll::install_layout_or_tip()(profile.c_str(), 0)) {
+    DLOG(ERROR) << "InstallLayoutOrTip failed";
+    return false;
+  }
+  if (!InputDll::set_default_layout_or_tip()(profile.c_str(), 0)) {
+    DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
+    return false;
+  }
+
+  // Activate the TSF Mozc.
+  ScopedCOMInitializer com_initializer;
+  CComPtr<ITfInputProcessorProfileMgr> profile_mgr;
+  if (FAILED(profile_mgr.CoCreateInstance(CLSID_TF_InputProcessorProfiles))) {
+    DLOG(ERROR) << "CoCreateInstance CLSID_TF_InputProcessorProfiles failed";
+    return false;
+  }
+  const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+  if (FAILED(profile_mgr->ActivateProfile(
+          TF_PROFILETYPE_INPUTPROCESSOR,
+          kLANGJaJP,
+          TsfProfile::GetTextServiceGuid(),
+          TsfProfile::GetProfileGuid(),
+          nullptr,
+          TF_IPPMF_FORPROCESS | TF_IPPMF_FORSESSION))) {
+    DLOG(ERROR) << "ActivateProfile failed";
+    return false;
+  }
+
+  return true;
+}
+
+}  // namespace
 
 bool ImeUtil::IsDefault() {
-  LAYOUTORTIPPROFILE profile;
+  if (SystemUtil::IsWindows8OrLater()) {
+    return IsDefaultWin8();
+  }
+
+  LAYOUTORTIPPROFILE profile = {};
   if (GetDefaultLayout(&profile)) {
     // Check if this profile looks like IMM32 version of Mozc;
     if (profile.dwProfileType != LOTP_KEYBOARDLAYOUT) {
@@ -157,7 +231,7 @@ bool ImeUtil::IsDefault() {
     return (default_klid.id() == mozc_klid.id());
   }
 
-  HKL hkl = NULL;
+  HKL hkl = nullptr;
   if (0 == ::SystemParametersInfo(SPI_GETDEFAULTINPUTLANG,
                                   0,
                                   reinterpret_cast<PVOID>(&hkl),
@@ -177,6 +251,10 @@ bool ImeUtil::IsDefault() {
 }
 
 bool ImeUtil::SetDefault() {
+  if (SystemUtil::IsWindows8OrLater()) {
+    return SetDefaultWin8();
+  }
+
   const KeyboardLayoutID &mozc_klid = win32::ImmRegistrar::GetKLIDForIME();
   if (!mozc_klid.has_id()) {
     LOG(ERROR) << "GetKLIDForIME failed: ";
@@ -184,7 +262,7 @@ bool ImeUtil::SetDefault() {
   }
 
   if (InputDll::EnsureInitialized() &&
-      InputDll::set_default_layout_or_tip() != NULL) {
+      InputDll::set_default_layout_or_tip() != nullptr) {
     // In most cases, we can use this method on Vista or later.
     const wstring &profile_list = L"0x0411:0x" + mozc_klid.ToString();
     if (!InputDll::set_default_layout_or_tip()(profile_list.c_str(), 0)) {
@@ -216,12 +294,12 @@ bool ImeUtil::SetDefault() {
 }
 
 bool ImeUtil::SetCuasEnabled(bool enable) {
-  if (mozc::Util::IsVistaOrLater()) {
+  if (SystemUtil::IsVistaOrLater()) {
     // No need to enable CUAS since it is always enabled on Vista or later.
     return true;
   }
 
-  if (mozc::Util::IsWindowsX64()) {
+  if (SystemUtil::IsWindowsX64()) {
     // see both 64 bit and 32 bit registry keys
     return SetCuasEnabledInternal(enable, KEY_WOW64_64KEY) &&
            SetCuasEnabledInternal(enable, KEY_WOW64_32KEY);
@@ -300,14 +378,14 @@ bool ImeUtil::ActivateForCurrentSession() {
 // work around b/5765783.
 bool ImeUtil::WaitForAsmCacheReady(uint32 timeout_msec) {
   wstring event_name;
-  if (Util::UTF8ToWide(Util::GetMSCTFAsmCacheReadyEventName(),
+  if (Util::UTF8ToWide(SystemUtil::GetMSCTFAsmCacheReadyEventName(),
                        &event_name) == 0) {
     LOG(ERROR) << "Failed to compose event name.";
     return false;
   }
   ScopedHandle handle(
       ::OpenEventW(SYNCHRONIZE, FALSE, event_name.c_str()));
-  if (handle.get() == NULL) {
+  if (handle.get() == nullptr) {
     // Event not found.
     // Returns true assuming that we need not to wait anything.
     return true;

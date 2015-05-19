@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,15 @@
 
 #include "rewriter/user_boundary_history_rewriter.h"
 
-#include "base/util.h"
+#include <cstddef>
+#include <cstring>
+#include <string>
+
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
-#include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "testing/base/public/googletest.h"
@@ -106,7 +110,7 @@ class UserBoundaryHistoryRewriterTest : public testing::Test {
   UserBoundaryHistoryRewriterTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
@@ -126,6 +130,8 @@ class UserBoundaryHistoryRewriterTest : public testing::Test {
     return mock_;
   }
 
+  const ConversionRequest default_request_;
+
  private:
   ConverterMock mock_;
 
@@ -135,7 +141,7 @@ class UserBoundaryHistoryRewriterTest : public testing::Test {
 TEST_F(UserBoundaryHistoryRewriterTest, CreateFile) {
   UserBoundaryHistoryRewriter rewriter(&mock());
   const string history_file = FLAGS_test_tmpdir + "/boundary.db";
-  EXPECT_TRUE(Util::FileExists(history_file));
+  EXPECT_TRUE(FileUtil::FileExists(history_file));
 }
 
 // "たんぽぽ" -> "たん|ぽぽ"
@@ -155,7 +161,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite1) {
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
 
-  EXPECT_TRUE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
   const string segments_str = segments.DebugString();
 
   // "たんぽぽ" -> "たん|ぽぽ"
@@ -200,7 +206,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite2) {
   SetBoundedSegments(&bounded_segments, false);
   bounded_segments.set_user_history_enabled(true);
 
-  EXPECT_TRUE(rewriter.Rewrite(ConversionRequest(), &bounded_segments));
+  EXPECT_TRUE(rewriter.Rewrite(default_request_, &bounded_segments));
   const string bounded_segments_str = bounded_segments.DebugString();
 
   // "たん|ぽぽ" -> "たんぽぽ"
@@ -245,7 +251,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenIncognito) {
   const string segments_str = segments.DebugString();
 
   SetIncognito(false);  // no_incognito when rewrite
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
@@ -268,7 +274,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
   segments.set_user_history_enabled(true);
   const string segments_str = segments.DebugString();
 
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
@@ -291,7 +297,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
   segments.set_user_history_enabled(true);
   const string segments_str = segments.DebugString();
 
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
@@ -314,7 +320,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
   segments.set_user_history_enabled(true);
   const string segments_str =segments.DebugString();
 
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
@@ -340,7 +346,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
   rewriter.Clear();
 
   const string segments_str = segments.DebugString();
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
@@ -364,7 +370,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenIncognito) {
 
   const string segments_str = segments.DebugString();
   SetIncognito(true);
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
@@ -388,7 +394,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
 
   const string segments_str =segments.DebugString();
   SetLearningLevel(config::Config::NO_HISTORY);
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str =segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
@@ -411,7 +417,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
   segments.set_user_history_enabled(false);
 
   const string segments_str =segments.DebugString();
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str =segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
@@ -435,7 +441,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
   segments.set_resized(true);
 
   const string segments_str = segments.DebugString();
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 
   const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);

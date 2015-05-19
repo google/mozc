@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "config/stats_config_util.h"
+
 #include <map>
 #include <string>
 
-#include "base/base.h"
+#include "base/file_util.h"
 #include "base/singleton.h"
-#include "base/util.h"
-#include "config/stats_config_util.h"
+#include "base/system_util.h"
 #include "testing/base/public/gunit.h"
-#if defined(OS_WINDOWS) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
 #endif
 
@@ -50,7 +51,7 @@ namespace mozc {
 namespace config {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
 namespace {
 const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
@@ -132,6 +133,7 @@ class RegistryEmulator {
     void set_run_level(int run_level) {
       run_level_ = run_level;
     }
+
    private:
     map<HKEY, DWORD> usagestats_map_;
     int              run_level_;
@@ -275,15 +277,15 @@ class RegistryEmulator {
 class StatsConfigUtilTestWin : public testing::Test {
  protected:
   static void SetUpTestCase() {
-    // A quick fix of b/2669319.  If mozc::Util::GetSystemDir is first called
+    // A quick fix of b/2669319.  If SystemUtil::GetSystemDir is first called
     // when registry APIs are hooked by sidestep, GetSystemDir fails
     // unexpectedly because GetSystemDir also depends on registry API
-    // internally.  The second call of mozc::Util::GetSystemDir works well
+    // internally.  The second call of SystemUtil::GetSystemDir works well
     // because it caches the result of the first call.  So any registry API
-    // access occurs in the second call.  We call mozc::Util::GetSystemDir here
+    // access occurs in the second call.  We call SystemUtil::GetSystemDir here
     // so that it works even when registry APIs are hooked.
     // TODO(yukawa): remove this quick fix as a part of b/2769852.
-    mozc::Util::GetSystemDir();
+    SystemUtil::GetSystemDir();
   }
 };
 }  // namespace
@@ -690,13 +692,13 @@ TEST_F(StatsConfigUtilTestWin, IsEnabled) {
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
 #endif  // !CHANNEL_DEV
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_ANDROID
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
-  const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
+  const string config_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
       "mozc_stats_config_util_test_tmp");
-  Util::Unlink(config_file);
+  FileUtil::Unlink(config_file);
   ConfigHandler::SetConfigFileName(config_file);
   EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
   ConfigHandler::Reload();

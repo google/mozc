@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@ bool ClockMock::GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
   const time_t current_sec = static_cast<time_t>(seconds_);
   const time_t modified_sec = current_sec + offset_sec;
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (_gmtime64_s(output, &modified_sec) != 0) {
     return false;
   }

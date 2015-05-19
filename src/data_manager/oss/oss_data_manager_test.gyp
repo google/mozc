@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,30 +43,36 @@
       ],
       'dependencies': [
         '../../testing/testing.gyp:gtest_main',
-        '../data_manager.gyp:data_manager_test_base',
+        '../data_manager_test.gyp:data_manager_test_base',
         'oss_data_manager.gyp:oss_data_manager',
         'oss_data_manager.gyp:gen_oss_segmenter_inl_header#host',
+        'install_oss_data_manager_test_data',
       ],
       'variables': {
         'test_size': 'small',
       },
-      'copies': [
-        {
-          'destination': '<(mozc_data_dir)/data/dictionary_oss/',
-          'files': [ '../../data/dictionary_oss/connection.txt',
-                     '../../data/dictionary_oss/dictionary00.txt',
-                     '../../data/dictionary_oss/dictionary01.txt',
-                     '../../data/dictionary_oss/dictionary02.txt',
-                     '../../data/dictionary_oss/dictionary03.txt',
-                     '../../data/dictionary_oss/dictionary04.txt',
-                     '../../data/dictionary_oss/dictionary05.txt',
-                     '../../data/dictionary_oss/dictionary06.txt',
-                     '../../data/dictionary_oss/dictionary07.txt',
-                     '../../data/dictionary_oss/dictionary08.txt',
-                     '../../data/dictionary_oss/dictionary09.txt',
-                     '../../data/dictionary_oss/suggestion_filter.txt' ],
-        },
-      ],
+    },
+    {
+      'target_name': 'install_oss_data_manager_test_data',
+      'type': 'none',
+      'variables': {
+        'test_data': [
+          '../../<(test_data_subdir)/connection.txt',
+          '../../<(test_data_subdir)/dictionary00.txt',
+          '../../<(test_data_subdir)/dictionary01.txt',
+          '../../<(test_data_subdir)/dictionary02.txt',
+          '../../<(test_data_subdir)/dictionary03.txt',
+          '../../<(test_data_subdir)/dictionary04.txt',
+          '../../<(test_data_subdir)/dictionary05.txt',
+          '../../<(test_data_subdir)/dictionary06.txt',
+          '../../<(test_data_subdir)/dictionary07.txt',
+          '../../<(test_data_subdir)/dictionary08.txt',
+          '../../<(test_data_subdir)/dictionary09.txt',
+          '../../<(test_data_subdir)/suggestion_filter.txt'
+        ],
+        'test_data_subdir': 'data/dictionary_oss',
+      },
+      'includes': ['../../gyp/install_testdata.gypi'],
     },
   ],
 }

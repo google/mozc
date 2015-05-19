@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/string_piece.h"
 
 namespace mozc {
 
@@ -44,13 +45,15 @@ class TextConverter {
 
   static void Convert(const DoubleArray *da,
                       const char *table,
-                      const string &input,
+                      const StringPiece input,
                       string *output);
 
-  // should never be allocated.
  private:
-  TextConverter() {}
-  virtual ~TextConverter() {}
+  // Should never be allocated.
+  TextConverter();
+  ~TextConverter();
 };
+
 }  // namespace mozc
+
 #endif  // MOZC_BASE_TEXT_CONVERTER_H_

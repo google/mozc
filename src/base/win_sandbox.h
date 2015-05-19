@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #ifndef MOZC_BASE_WIN_SANDBOX_H_
 #define MOZC_BASE_WIN_SANDBOX_H_
 
-// skip all unless OS_WINDOWS
-#ifdef OS_WINDOWS
+// skip all unless OS_WIN
+#ifdef OS_WIN
 
 #include <Windows.h>
 #include <AccCtrl.h>
@@ -93,40 +93,41 @@ class WinSandbox {
   // Please call ::LocalFree() to release the attributes.
   //
   // Usage:
-  // SECURITY_ATTRIBUTES SecurityAttributes;
-  // if (!MakeSecurityAttributes(&SecurityAttributes)) {
+  // SECURITY_ATTRIBUTES security_attributes;
+  // if (!MakeSecurityAttributes(WinSandbox::kSharablePipe,
+  //                             &security_attributes)) {
   //  LOG(ERROR) << "Cannot make SecurityAttributes";
   //  return;
   // }
   // handle_ = ::CreateNamedPipe(..
-  //                            PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED |
-  //                            ...
-  //                            0,
-  //                            &SecurityAttributes);
-  // ::LocalFree(SecurityAttributes.lpSecurityDescriptor);
-  static bool MakeSecurityAttributes(
-      SECURITY_ATTRIBUTES *security_attributes);
-
-  // changes the access type of the handle.
-  // Example:
-  // HANDLE h = CreateEvent(..,..&SecurityAttributes);
-  // SetMandatoryLabelW(handle, SE_KERNEL_OBJECT,
-  //                    SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
-  // handle can be accessed from low integrity level
-  static bool SetMandatoryLabelW(
-      const HANDLE handle,
-      const SE_OBJECT_TYPE object_type,
-      const wchar_t *desired_access_type,
-      const wchar_t *integrity_level);
+  //                             PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED |
+  //                             ...
+  //                             0,
+  //                             &security_attributes);
+  // ::LocalFree(security_attributes.lpSecurityDescriptor);
+  enum ObjectSecurityType {
+    // Used for an object that is inaccessible from lower sandbox level.
+    kPrivateObject = 0,
+    // Used for a namedpipe object that is accessible from lower sandbox level.
+    kSharablePipe = 1,
+    // Used for an event object that is accessible from lower sandbox level.
+    kSharableEvent = 2,
+    // Used for a mutex object that is accessible from lower sandbox level.
+    kSharableMutex = 3,
+    // Used for a file object that can be read from lower sandbox level.
+    kSharableFileForRead = 4,
+  };
+  static bool MakeSecurityAttributes(ObjectSecurityType shareble_object_type,
+                                     SECURITY_ATTRIBUTES *security_descriptor);
 
   // Adds an ACE represented by |known_sid| and |access| to the dacl of the
-  // kernel object referenced by |object|. |inhericance_flag| is a set of bit
+  // kernel object referenced by |object|. |inheritance_flag| is a set of bit
   // flags that determines whether other containers or objects can inherit the
   // ACE from the primary object to which the ACL is attached.
   // This method is basically compatible with the same name function in the
-  // Chromium sandbox library except for |inhericance_flag|.
+  // Chromium sandbox library except for |inheritance_flag|.
   static bool AddKnownSidToKernelObject(HANDLE object, const SID *known_sid,
-                                        DWORD inhericance_flag,
+                                        DWORD inheritance_flag,
                                         ACCESS_MASK access_mask);
 
   struct SecurityInfo {
@@ -178,8 +179,8 @@ class WinSandbox {
       ScopedHandle* restricted_token);
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(WinSandbox);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WinSandbox);
 };
 }  // namespace mozc
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #endif  // MOZC_BASE_WIN_SANDBOX_H_

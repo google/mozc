@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "base/update_util.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 #include <algorithm>
@@ -46,7 +46,7 @@ bool UpdateUtil::WriteActiveUsageInfo() {
   return false;
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const wchar_t kOmahaUsageKey[] = L"Software\\Google\\Update\\ClientState\\"
                                    L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
   HKEY key;
@@ -83,7 +83,7 @@ string UpdateUtil::GetAvailableVersion() {
   return "";
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const wchar_t kOmahaClientsKey[] = L"Software\\Google\\Update\\Clients\\"
                                      L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
   HKEY key;
@@ -133,7 +133,7 @@ bool UpdateUtil::IsNewVersionAvailable() {
   return false;
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const string available_version = GetAvailableVersion();
   if (available_version.empty()) {
     return false;

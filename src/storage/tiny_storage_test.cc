@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,16 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "storage/tiny_storage.h"
+
 #include <map>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 #include "base/base.h"
+#include "base/file_util.h"
 #include "base/scoped_ptr.h"
-#include "base/util.h"
 #include "storage/storage_interface.h"
-#include "storage/tiny_storage.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -71,8 +72,8 @@ class TinyStorageTest : public testing::Test {
 
   static void UnlinkDBFileIfExists() {
     const string path = GetTemporaryFilePath();
-    if (Util::FileExists(path)) {
-      Util::Unlink(path);
+    if (FileUtil::FileExists(path)) {
+      FileUtil::Unlink(path);
     }
   }
 
@@ -82,8 +83,9 @@ class TinyStorageTest : public testing::Test {
 
   static string GetTemporaryFilePath() {
     // This name should be unique to each test.
-    return Util::JoinPath(FLAGS_test_tmpdir, "TinyStorageTest_test.db");
+    return FileUtil::JoinPath(FLAGS_test_tmpdir, "TinyStorageTest_test.db");
   }
+
  private:
   DISALLOW_COPY_AND_ASSIGN(TinyStorageTest);
 };
@@ -95,7 +97,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
   static const int kSize[] = {10, 100, 1000};
 
   for (int i = 0; i < arraysize(kSize); ++i) {
-    Util::Unlink(filename);
+    FileUtil::Unlink(filename);
     scoped_ptr<StorageInterface> storage(CreateStorage());
 
     // Insert

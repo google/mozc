@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,36 +28,38 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "config/config.pb.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/lattice.h"
 #include "converter/segments.h"
-#include "engine/android_engine_factory.h"
+#include "engine/chromeos_engine_factory.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200,
              "maximum candidates size");
 DEFINE_string(user_profile_dir, "", "path to user profile directory");
 
-DEFINE_bool(mobile, false, "use mobile preference");
+DEFINE_string(engine, "default", "engine: (default, chromeos)");
 DEFINE_bool(output_debug_string, true, "output debug string for each input");
 
 namespace {
 bool ExecCommand(const mozc::ConverterInterface &converter,
                  mozc::Segments *segments,
-                 const string &line) {
+                 const string &line,
+                 const mozc::commands::Request &request) {
   vector<string> fields;
   mozc::Util::SplitStringUsing(line, "\t ", &fields);
 
@@ -70,12 +72,18 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
 
   const string &func = fields[0];
 
+  const mozc::config::Config config;
+
   segments->set_max_conversion_candidates_size(
       FLAGS_max_conversion_candidates_size);
 
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
-    return converter.StartConversion(segments, fields[1]);
+    mozc::composer::Table table;
+    mozc::composer::Composer composer(&table, &request);
+    composer.InsertCharacterPreedit(fields[1]);
+    mozc::ConversionRequest conversion_request(&composer, &request);
+    return converter.StartConversionForRequest(conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
     CHECK_FIELDS_LENGTH(5);
     mozc::Lattice::SetDebugDisplayNode(atoi32(fields[2].c_str()),  // begin pos
@@ -88,16 +96,26 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     CHECK_FIELDS_LENGTH(2);
     return converter.StartReverseConversion(segments, fields[1]);
   } else if (func == "startprediction" || func == "predict" || func == "p") {
+    mozc::composer::Table table;
+    mozc::composer::Composer composer(&table, &request);
     if (fields.size() >= 2) {
-      return converter.StartPrediction(segments, fields[1]);
+      composer.InsertCharacterPreedit(fields[1]);
+      mozc::ConversionRequest conversion_request(&composer, &request);
+      return converter.StartPredictionForRequest(conversion_request, segments);
     } else {
-      return converter.StartPrediction(segments, "");
+      mozc::ConversionRequest conversion_request(&composer, &request);
+      return converter.StartPredictionForRequest(conversion_request, segments);
     }
   } else if (func == "startsuggestion" || func == "suggest") {
+    mozc::composer::Table table;
+    mozc::composer::Composer composer(&table, &request);
     if (fields.size() >= 2) {
-      return converter.StartSuggestion(segments, fields[1]);
+      composer.InsertCharacterPreedit(fields[1]);
+      mozc::ConversionRequest conversion_request(&composer, &request);
+      return converter.StartSuggestionForRequest(conversion_request, segments);
     } else {
-      return converter.StartSuggestion(segments, "");
+      mozc::ConversionRequest conversion_request(&composer, &request);
+      return converter.StartSuggestionForRequest(conversion_request, segments);
     }
   } else if (func == "finishconversion" || func == "finish") {
     return converter.FinishConversion(segments);
@@ -123,9 +141,9 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     return converter.FocusSegmentValue(segments,
                                        atoi32(fields[1].c_str()),
                                        atoi32(fields[2].c_str()));
-  } else if (func == "submitfirstsegment") {
+  } else if (func == "commitfirstsegment") {
     CHECK_FIELDS_LENGTH(2);
-    return converter.SubmitFirstSegment(segments,
+    return converter.CommitFirstSegment(segments,
                                         atoi32(fields[1].c_str()));
 
   } else if (func == "freesegmentvalue" || func == "free") {
@@ -158,23 +176,21 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
   } else if (func == "convertwithprecedingtext" || func == "cwpt") {
     CHECK_FIELDS_LENGTH(3);
     mozc::composer::Table table;
-    table.Initialize();
-    mozc::composer::Composer composer(
-        &table, mozc::commands::Request::default_instance());
-    composer.InsertCharacter(fields[2]);
-    mozc::ConversionRequest request(&composer);
-    request.set_preceding_text(fields[1]);
-    converter.StartConversionForRequest(request, segments);
+    table.InitializeWithRequestAndConfig(request, config);
+    mozc::composer::Composer composer(&table, &request);
+    composer.InsertCharacterPreedit(fields[2]);
+    mozc::ConversionRequest conversion_request(&composer, &request);
+    conversion_request.set_preceding_text(fields[1]);
+    converter.StartConversionForRequest(conversion_request, segments);
   } else if (func == "predictwithprecedingtext" || func == "pwpt") {
     CHECK_FIELDS_LENGTH(3);
     mozc::composer::Table table;
-    table.Initialize();
-    mozc::composer::Composer composer(
-        &table, mozc::commands::Request::default_instance());
-    composer.InsertCharacter(fields[2]);
-    mozc::ConversionRequest request(&composer);
-    request.set_preceding_text(fields[1]);
-    converter.StartPredictionForRequest(request, segments);
+    table.InitializeWithRequestAndConfig(request, config);
+    mozc::composer::Composer composer(&table, &request);
+    composer.InsertCharacterPreedit(fields[2]);
+    mozc::ConversionRequest conversion_request(&composer, &request);
+    conversion_request.set_preceding_text(fields[1]);
+    converter.StartPredictionForRequest(conversion_request, segments);
   } else {
     LOG(WARNING) << "Unknown command: " <<  func;
     return false;
@@ -189,30 +205,33 @@ int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
   if (!FLAGS_user_profile_dir.empty()) {
-    mozc::Util::SetUserProfileDirectory(FLAGS_user_profile_dir);
+    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_dir);
   }
 
   scoped_ptr<mozc::EngineInterface> engine;
-  if (FLAGS_mobile) {
-    LOG(INFO) << "Using mobile preference and engine";
-    mozc::commands::Request request;
-    request.set_zero_query_suggestion(true);
-    request.set_mixed_conversion(true);
-    mozc::commands::RequestHandler::SetRequest(request);
-    engine.reset(mozc::AndroidEngineFactory::Create());
-  } else {
-    LOG(INFO) << "Using desktop preference and default engine";
+  mozc::commands::Request request;
+  if (FLAGS_engine == "default") {
+    LOG(INFO) << "Using default preference and engine";
     engine.reset(mozc::EngineFactory::Create());
   }
-  CHECK(engine.get());
+  if (FLAGS_engine == "chromeos") {
+    LOG(INFO) << "Using chromeos preference and engine";
+    engine.reset(mozc::ChromeOsEngineFactory::Create());
+  }
+  if (FLAGS_engine == "test") {
+    LOG(INFO) << "Using test preference and engine";
+    engine.reset(mozc::MockDataEngineFactory::Create());
+  }
+
+  CHECK(engine.get()) << "Invalid engine: " << FLAGS_engine;
   mozc::ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
   mozc::Segments segments;
   string line;
 
-  while (getline(cin, line)) {
-    if (ExecCommand(*converter, &segments, line)) {
+  while (!getline(cin, line).fail()) {
+    if (ExecCommand(*converter, &segments, line, request)) {
       if (FLAGS_output_debug_string) {
         cout << segments.DebugString();
       }

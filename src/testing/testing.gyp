@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,10 @@
               'libraries': ['-lppapi', '-lppapi_cpp'],
             },
           },
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../net/net.gyp:http_client',
+          ],
         }],
         ['clang==1', {
           'cflags+': [
@@ -148,6 +152,13 @@
           }],
         ],
       },
+      'conditions': [
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'dependencies': [
+            '../base/base.gyp:pepper_file_system_mock',
+          ],
+        }],
+      ],
     },
   ],
 }

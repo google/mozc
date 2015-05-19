@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -96,11 +96,6 @@ class ImeSwitchUtilImpl {
     }
     const char *keymap_file = keymap::KeyMapManager::GetKeyMapFileName(keymap);
     ReloadFromFile(keymap_file);
-  }
-
-  void GetTurnOnInDirectModeKeyEventList(
-      vector<commands::KeyEvent> *key_events) const {
-    *key_events = keyevents_;
   }
 
  private:

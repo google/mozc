@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "base/logging.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #define NO_MINMAX
 #include <windows.h>
 #else
@@ -55,8 +55,10 @@
 #include "base/const.h"
 #endif  // OS_ANDROID
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
 DEFINE_bool(colored_log, true, "Enables colored log messages on tty devices");
@@ -106,11 +108,12 @@ string Logging::GetLogMessageHeader() {
   char buf[512];
   snprintf(buf, sizeof(buf),
            "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d %u "
-#if !defined(OS_LINUX) || defined(__native_client__)
-// = OS_WINDOWS or OS_MACOSX or __native_client__
-           "%u",
-#else
+#if defined(__native_client__)
+           "%p",
+#elif defined(OS_LINUX)
            "%lu",
+#else  // = OS_WIN or OS_MACOSX
+           "%u",
 #endif
            1900 + tm_time.tm_year,
            1 + tm_time.tm_mon,
@@ -118,15 +121,19 @@ string Logging::GetLogMessageHeader() {
            tm_time.tm_hour,
            tm_time.tm_min,
            tm_time.tm_sec,
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
            ::GetCurrentProcessId(),
            ::GetCurrentThreadId()
 #elif defined(OS_MACOSX)
            ::getpid(),
            reinterpret_cast<uint32>(pthread_self())
+#elif defined(__native_client__)
+           ::getpid(),
+           // pthread_self() returns __nc_basic_thread_data*.
+           static_cast<void*>(pthread_self())
 #else  // = OS_LINUX
            ::getpid(),
-           // In NaCl it returns uint32, otherwise it returns unsigned long.
+           // It returns unsigned long.
            pthread_self()
 #endif
            );
@@ -236,19 +243,19 @@ void LogStreamImpl::Init(const char *argv0) {
 #else
   if (FLAGS_logtostderr) {
     stream_ = &cerr;
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
     // Disables on windows because cmd.exe doesn't support ANSI color escape
     // sequences.
     // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
     support_color_ = FLAGS_colored_log && isatty(fileno(stderr));
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   } else {
 #ifdef OS_ANDROID
     // Use ostringstream to output logging messages by android's logging
     // framework.
     stream_ = new ostringstream();
 #else
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     const char *slash = ::strrchr(argv0, '\\');
 #else
     const char *slash = ::strrchr(argv0, '/');
@@ -256,10 +263,11 @@ void LogStreamImpl::Init(const char *argv0) {
     const char *program_name = (slash == NULL) ? argv0 : slash + 1;
     const string log_base = string(program_name) + ".log";
     const string log_dir =
-        FLAGS_log_dir.empty() ? Util::GetLoggingDirectory() : FLAGS_log_dir;
-    const string filename = Util::JoinPath(log_dir, log_base);
+        FLAGS_log_dir.empty() ? SystemUtil::GetLoggingDirectory() :
+                                FLAGS_log_dir;
+    const string filename = FileUtil::JoinPath(log_dir, log_base);
     stream_ = new OutputFileStream(filename.c_str(), ios::app);
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
     ::chmod(filename.c_str(), 0600);
 #endif
 #endif  // OS_ANDROID
@@ -385,7 +393,7 @@ LogFinalizer::~LogFinalizer() {
   if (severity_ >= LOG_FATAL) {
     // On windows, call exception handler to
     // make stack trace and minidump
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     ::RaiseException(::GetLastError(),
                      EXCEPTION_NONCONTINUABLE,
                      NULL, NULL);
@@ -399,7 +407,7 @@ LogFinalizer::~LogFinalizer() {
 void LogFinalizer::operator&(ostream&) {}
 
 void NullLogFinalizer::OnFatal() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ::RaiseException(::GetLastError(),
                    EXCEPTION_NONCONTINUABLE,
                    NULL, NULL);

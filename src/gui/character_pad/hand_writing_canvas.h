@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,14 +30,13 @@
 #ifndef MOZC_GUI_CHARACTER_PAD_HAND_WRITING_CANVAS_H_
 #define MOZC_GUI_CHARACTER_PAD_HAND_WRITING_CANVAS_H_
 
-#include "base/base.h"
-#include "base/mmap.h"
-#include "gui/character_pad/hand_writing_thread.h"
-#include "handwriting/handwriting_manager.h"
-
 #include <QtGui/QWidget>
 #include <QtCore/QVector>
 #include <QtCore/QPair>
+
+#include "base/base.h"
+#include "gui/character_pad/hand_writing_thread.h"
+#include "handwriting/handwriting_manager.h"
 
 class QMouseEvent;
 class QListWidget;

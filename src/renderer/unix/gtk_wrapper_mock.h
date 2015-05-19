@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,12 @@ class GtkWrapperMock : public GtkWrapperInterface {
   MOCK_METHOD1(GtkWindowGetScreen, GdkScreen *(GtkWidget *window));
   MOCK_METHOD0(GtkDrawingAreaNew, GtkWidget *());
   MOCK_METHOD1(GtkWindowNew, GtkWidget *(GtkWindowType type));
-  MOCK_METHOD1(GdkScreenGetHeight, guint(GdkScreen *screen));
-  MOCK_METHOD1(GdkScreenGetWidth, guint(GdkScreen *screen));
+  MOCK_METHOD3(GdkScreenGetMonitorAtPoint, gint(GdkScreen *screen,
+                                                gint x,
+                                                gint y));
+  MOCK_METHOD3(GdkScreenGetMonitorGeometry, void(GdkScreen *screen,
+                                                  gint monitor,
+                                                  GdkRectangle *rectangle));
   MOCK_METHOD1(GObjectUnref, void(gpointer object));
   MOCK_METHOD4(GSignalConnect, void(gpointer instance,
                                     const gchar *signal,

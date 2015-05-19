@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,77 +31,359 @@
   'variables': {
     'relative_dir': 'chrome/nacl',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
-    'configuration_nacl_i686': '<(CONFIGURATION_NAME)_NaCl_i686',
-    'configuration_nacl_x86_64': '<(CONFIGURATION_NAME)_NaCl_x86-64',
     'dummy_input_file': 'nacl_extension.gyp',
-    # GYP's 'copies' rule cannot change the destination file name, so we use
-    # our own script to copy files.
-    'copy_file': ['python', '../../build_tools/copy_file.py'],
-    'product_nacl_i686_dir': '<(DEPTH)/$(builddir_name)/<(configuration_nacl_i686)',
-    'product_nacl_x86_64_dir': '<(DEPTH)/$(builddir_name)/<(configuration_nacl_x86_64)',
-    'build_for_nacl_with_args': [
-      'python', '../build_for_nacl.py',
-      '--build_base=<(build_base)',
-      '--depth=<(DEPTH)',
-      '--nacl_sdk_root=<(nacl_sdk_root)',
-      '--target_settings='
-      '[{"configuration": "<(configuration_nacl_i686)",'
-      '  "toolchain_dir": "linux_x86_newlib",'
-      '  "toolchain_prefix": "i686-nacl-"},'
-      ' {"configuration": "<(configuration_nacl_x86_64)",'
-      '  "toolchain_dir": "linux_x86_newlib",'
-      '  "toolchain_prefix": "x86_64-nacl-"}]',
+    # You should get browser_tester file from following URL to run end-to-end
+    # test.
+    # http://src.chromium.org/viewvc/chrome/trunk/src/ppapi/native_client/tools/
+    'browser_tester_dir': '../../third_party/browser_tester',
+    'nacl_mozc_files': [
+      '<(gen_out_dir)/nacl_mozc/_locales/en/messages.json',
+      '<(gen_out_dir)/nacl_mozc/_locales/ja/messages.json',
+      '<(gen_out_dir)/nacl_mozc/credits_en.html',
+      '<(gen_out_dir)/nacl_mozc/credits_ja.html',
+      '<(gen_out_dir)/nacl_mozc/manifest.json',
+      '<(gen_out_dir)/nacl_mozc/nacl_mozc.html',
+      '<(gen_out_dir)/nacl_mozc/nacl_mozc.js',
+      '<(gen_out_dir)/nacl_mozc/nacl_mozc_init.js',
+      '<(gen_out_dir)/nacl_mozc/nacl_session_handler.nmf',
+      '<(gen_out_dir)/nacl_mozc/nacl_session_handler_x86_32.nexe',
+      '<(gen_out_dir)/nacl_mozc/nacl_session_handler_x86_64.nexe',
+      '<(gen_out_dir)/nacl_mozc/nacl_session_handler_arm.nexe',
+      '<(gen_out_dir)/nacl_mozc/product_icon_32bpp-128.png',
+      '<(gen_out_dir)/nacl_mozc/option_page.js',
+      '<(gen_out_dir)/nacl_mozc/options.html',
+      '<(gen_out_dir)/nacl_mozc/options.js',
     ],
-    'nacl_test_targets': [
-      'rewriter/rewriter_test.gyp:rewriter_test',
-      'session/session_test.gyp:session_handler_test',
+    'conditions': [
+      ['branding=="Mozc"', {
+        'nacl_mozc_files': [
+          '<(gen_out_dir)/nacl_mozc/zipped_data_oss',
+        ],
+      }],
     ],
   },
   'targets': [
     {
-      'target_name': 'copy_nacl_session_handler_nexe',
+      'target_name': 'translate_nacl_session_handler',
+      'sources': [
+        '<(PRODUCT_DIR)/nacl_session_handler',
+      ],
+      'includes': ['pnacl_translate.gypi'],
+    },
+    {
+      'target_name': 'nacl_session_handler',
+      'type': 'executable',
+      'sources': [
+        'nacl_session_handler.cc',
+      ],
+      'link_settings': {
+        'libraries': ['-lppapi', '-lppapi_cpp'],
+      },
+      'dependencies': [
+        'dictionary_downloader',
+        '../../base/base.gyp:base',
+        '../../engine/engine.gyp:engine_factory',
+        '../../net/net.gyp:http_client',
+        '../../net/net.gyp:json_util',
+        '../../session/session_base.gyp:key_parser',
+        '../../session/session_base.gyp:session_protocol',
+        '../../session/session.gyp:session',
+        '../../session/session.gyp:session_handler',
+        '../../session/session.gyp:session_usage_observer',
+        '../../usage_stats/usage_stats_base.gyp:usage_stats',
+        '../../usage_stats/usage_stats.gyp:usage_stats_uploader',
+      ],
+    },
+    {
+      'target_name': 'dictionary_downloader',
+      'type': 'static_library',
+      'sources': [
+        'dictionary_downloader.cc',
+      ],
+      'dependencies': [
+        'url_loader_util',
+        '../../base/base.gyp:base',
+        '../../net/net.gyp:http_client',
+      ],
+      'link_settings': {
+        'libraries': ['-lppapi', '-lppapi_cpp'],
+      },
+    },
+    {
+      'target_name': 'url_loader_util',
+      'type': 'static_library',
+      'sources': [
+        'url_loader_util.cc',
+      ],
+      'dependencies': [
+        '../../base/base.gyp:base',
+      ],
+      'link_settings': {
+        'libraries': ['-lppapi', '-lppapi_cpp'],
+      },
+    },
+    {
+      'target_name': 'gather_nacl_net_test_files',
+      'type': 'none',
+      'copies': [{
+        'destination': '<(gen_out_dir)/nacl_net_test',
+        'files': [
+          '<(PRODUCT_DIR)/nacl_net_test_module_x86_64.nexe',
+          'browser_test/nacl_net_test/nacl_net_test_module.html',
+          'browser_test/nacl_net_test/nacl_net_test_module.nmf',
+          'browser_test/nacl_net_test/manifest.json',
+        ],
+      }],
+    },
+    {
+      'target_name': 'run_nacl_net_test',
       'type': 'none',
       'actions': [
         {
-          'action_name': 'copy_nacl_session_handler_x86_32',
-          'inputs': ['<(gen_out_dir)/build_nacl_session_handler_nexe_done'],
-          'outputs': ['<(gen_out_dir)/nacl/nacl_session_handler_x86_32.nexe'],
-          'action': [
-            '<@(copy_file)',
-            '--reference=<(gen_out_dir)/build_nacl_session_handler_nexe_done',
-            '<(product_nacl_i686_dir)/nacl_session_handler.nexe',
-            '<(gen_out_dir)/nacl/nacl_session_handler_x86_32.nexe',
+          'action_name': 'run_nacl_net_test',
+          'inputs': [
+            'nacl_net_test_server.py',
+            '<(gen_out_dir)/nacl_net_test/nacl_net_test_module_x86_64.nexe',
+            '<(gen_out_dir)/nacl_net_test/nacl_net_test_module.html',
+            '<(gen_out_dir)/nacl_net_test/nacl_net_test_module.nmf',
+            '<(gen_out_dir)/nacl_net_test/manifest.json',
           ],
-        },
-        {
-          'action_name': 'copy_nacl_session_handler_x86_64',
-          'inputs': ['<(gen_out_dir)/build_nacl_session_handler_nexe_done'],
-          'outputs': ['<(gen_out_dir)/nacl/nacl_session_handler_x86_64.nexe'],
+          'outputs': ['dummy_run_nacl_net_test'],
           'action': [
-            '<@(copy_file)',
-            '--reference=<(gen_out_dir)/build_nacl_session_handler_nexe_done',
-            '<(product_nacl_x86_64_dir)/nacl_session_handler.nexe',
-            '<(gen_out_dir)/nacl/nacl_session_handler_x86_64.nexe',
+            'xvfb-run',
+            '--auto-servernum',
+            'python',
+            'nacl_net_test_server.py',
+            '--browser_path=/usr/bin/google-chrome',
+            '--load_extension=<(gen_out_dir)/nacl_net_test',
+            '--timeout=100',
           ],
         },
       ],
       'dependencies': [
-        'build_nacl_session_handler_nexe',
+        'translate_nacl_net_test_module',
       ],
     },
     {
-      'target_name': 'build_nacl_session_handler_nexe',
+      'target_name': 'translate_nacl_net_test_module',
+      'sources': [
+        '<(PRODUCT_DIR)/nacl_net_test_module',
+      ],
+      'includes': ['pnacl_translate.gypi'],
+    },
+    {
+      'target_name': 'nacl_net_test_module',
+      'type': 'executable',
+      'sources': [
+        'nacl_net_test_module.cc',
+      ],
+      'link_settings': {
+        'libraries': ['-lppapi', '-lppapi_cpp'],
+      },
+      'dependencies': [
+        'dictionary_downloader',
+        '../../base/base.gyp:base',
+        '../../net/net.gyp:http_client',
+        '../../net/net.gyp:json_util',
+        '../../testing/testing.gyp:testing',
+      ],
+    },
+    {
+      'target_name': 'nacl_mozc_crx',
+      'type': 'none',
+      'copies': [
+        {
+          'destination': '<(PRODUCT_DIR)',
+          'files': [
+            '<(gen_out_dir)/nacl_mozc.crx',
+            '<(gen_out_dir)/nacl_mozc.pem',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'pack_nacl_mozc_crx',
       'type': 'none',
       'actions': [
         {
-          'action_name': 'build_nacl_session_handler_nexe',
-          'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_build_nacl_session_handler_nexe',
-                      '<(gen_out_dir)/build_nacl_session_handler_nexe_done'],
+          'action_name': 'pack_nacl_mozc_crx',
+          'inputs': [
+            '<@(nacl_mozc_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/nacl_mozc.crx',
+            '<(gen_out_dir)/nacl_mozc.pem',
+          ],
           'action': [
-            '<@(build_for_nacl_with_args)',
-            '--touch_when_done=<(gen_out_dir)/build_nacl_session_handler_nexe_done',
-            'chrome/nacl/nacl_executables.gyp:nacl_session_handler.nexe',
+            'xvfb-run',
+            '--auto-servernum',
+            'google-chrome',
+            '--pack-extension=<(gen_out_dir)/nacl_mozc',
+            # With --pack-extension-key=nacl_mozc.pem option, we should use the
+            # same private key to sign the extension. Otherwise, a new packed
+            # extension looks a different extension.
+            # Of course, the private key must be placed in a secure manner.
+            '--no-message-box',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'nacl_mozc_versioning',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'nacl_mozc_versioning',
+          'inputs': [
+            '../../mozc_version.txt',
+            '../../build_tools/versioning_files.py',
+            '<(PRODUCT_DIR)/nacl_mozc.zip',
+            '<(PRODUCT_DIR)/nacl-mozc.tgz',
+          ],
+          'outputs': [
+            '<(PRODUCT_DIR)/nacl_mozc_versioning_dummy',
+          ],
+          'action': [
+            'python',
+            '../../build_tools/versioning_files.py',
+            '--version_file', '../../mozc_version.txt',
+            '--configuration', '<(CONFIGURATION_NAME)',
+            '<(PRODUCT_DIR)/nacl_mozc.zip',
+            '<(PRODUCT_DIR)/nacl-mozc.tgz',
+          ],
+          'dependencies': [
+            'nacl_mozc',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'nacl_mozc',
+      'type': 'none',
+      'copies': [
+        {
+          'destination': '<(PRODUCT_DIR)',
+          'files': [
+            '<(gen_out_dir)/nacl_mozc.zip',
+            '<(gen_out_dir)/nacl-mozc.tgz',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'archive_nacl_mozc_files',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'archive_nacl_mozc_files',
+          'inputs': [
+            '../../mozc_version.txt',
+            'archive_files.py',
+            '<@(nacl_mozc_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/nacl_mozc.zip',
+            '<(gen_out_dir)/nacl-mozc.tgz',
+          ],
+          'action': [
+            'python',
+            'archive_files.py',
+            '--zip_output=<(gen_out_dir)/nacl_mozc.zip',
+            '--tgz_output=<(gen_out_dir)/nacl-mozc.tgz',
+            '--version_file', '../../mozc_version.txt',
+            '--top_dir_base', 'nacl-mozc',
+            '--base_path=<(gen_out_dir)/nacl_mozc/',
+            '<@(nacl_mozc_files)',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'gather_nacl_mozc_files',
+      'type': 'none',
+      'copies': [{
+        'destination': '<(gen_out_dir)/nacl_mozc',
+        'files': [
+          '../../data/images/product_icon_32bpp-128.png',
+          '../../data/installer/credits_en.html',
+          '../../data/installer/credits_ja.html',
+          '<(gen_out_dir)/manifest.json',
+          '<(PRODUCT_DIR)/nacl_session_handler_x86_32.nexe',
+          '<(PRODUCT_DIR)/nacl_session_handler_x86_64.nexe',
+          '<(PRODUCT_DIR)/nacl_session_handler_arm.nexe',
+          'nacl_mozc.html',
+          'nacl_mozc.js',
+          'nacl_mozc_init.js',
+          'nacl_session_handler.nmf',
+          'option_page.js',
+          'options.html',
+          'options.js',
+        ],
+        'conditions': [
+          ['branding=="Mozc"', {
+            'files': [
+              '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/zipped_data_oss',
+            ],
+          }],
+        ],
+      }],
+    },
+    {
+      'target_name': 'gen_manifest_and_messages',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_manifest',
+          'inputs': [
+            '../../mozc_version.txt',
+            '../../build_tools/replace_version.py',
+            'manifest/manifest_template.json',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/manifest.json',
+          ],
+          'action': [
+            'python', '../../build_tools/replace_version.py',
+            '--version_file', '../../mozc_version.txt',
+            '--input', 'manifest/manifest_template.json',
+            '--output', '<(gen_out_dir)/manifest.json',
+          ],
+        },
+        {
+          'action_name': 'gen_en_messages',
+          'inputs': [
+            '../../mozc_version.txt',
+            '../../build_tools/replace_version.py',
+            '_locales/en/messages_template.json',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/nacl_mozc/_locales/en/messages.json',
+          ],
+          'action': [
+            'python', '../../build_tools/replace_version.py',
+            '--version_file', '../../mozc_version.txt',
+            '--input', '_locales/en/messages_template.json',
+            '--output',
+            '<(gen_out_dir)/nacl_mozc/_locales/en/messages.json',
+          ],
+        },
+        {
+          'action_name': 'gen_ja_messages',
+          'inputs': [
+            '../../mozc_version.txt',
+            '../../build_tools/replace_version.py',
+            '_locales/ja/messages_template.json',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/nacl_mozc/_locales/ja/messages.json',
+          ],
+          'action': [
+            'python', '../../build_tools/replace_version.py',
+            '--version_file', '../../mozc_version.txt',
+            '--input', '_locales/ja/messages_template.json',
+            '--output',
+            '<(gen_out_dir)/nacl_mozc/_locales/ja/messages.json',
           ],
         },
       ],
@@ -109,38 +391,69 @@
     {
       'target_name': 'run_nacl_test',
       'type': 'none',
+      'hard_dependency': 1,
       'dependencies': [
+        'build_nacl_test',
+      ],
+      'export_dependent_settings': [
         'build_nacl_test',
       ],
       'actions': [
         {
-          'action_name': 'ran_nacl_test',
-          'inputs': ['<(dummy_input_file)',
-                     '<(gen_out_dir)/build_nacl_test_done'],
+          'action_name': 'run_nacl_test',
+          'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_run_nacl_test'],
           'action': [
             'python', 'run_nacl_test.py',
             '--nacl_sdk_root=<(nacl_sdk_root)',
-            '--test_bin_dir=<(product_nacl_x86_64_dir)',
+            '--test_bin_dir=<(PRODUCT_DIR)',
           ],
         },
       ],
     },
     {
       'target_name': 'build_nacl_test',
+      'sources': [
+        '<(PRODUCT_DIR)/rewriter_test',
+        '<(PRODUCT_DIR)/session_handler_test',
+      ],
+      'includes': ['pnacl_translate.gypi'],
+    },
+    # This test doesn't works well on general environment since it depends on
+    # external source code.
+    {
+      'target_name': 'run_nacl_end_to_end_test_target',
       'type': 'none',
       'actions': [
         {
-          'action_name': 'build_nacl_test',
-          'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_build_nacl_test',
-                      '<(gen_out_dir)/build_nacl_test_done'],
+          'action_name': 'run_nacl_end_to_end_test',
+          'inputs': [
+            '<(gen_out_dir)/nacl_mozc/manifest.json',
+            '<(gen_out_dir)/nacl_mozc/nacl_mozc.html',
+            '<(gen_out_dir)/nacl_mozc/nacl_mozc.js',
+            '<(gen_out_dir)/nacl_mozc/nacl_session_handler.nmf',
+            '<(gen_out_dir)/nacl_mozc/nacl_session_handler_x86_32.nexe',
+            '<(gen_out_dir)/nacl_mozc/nacl_session_handler_x86_64.nexe',
+            'browser_test/nacl_mozc_test.html',
+            'browser_test/nacl_mozc_test_util.js',
+          ],
+          'outputs': ['dummy_run_nacl_end_to_end_test'],
           'action': [
-            '<@(build_for_nacl_with_args)',
-            '--touch_when_done=<(gen_out_dir)/build_nacl_test_nexe_done',
-            '<@(nacl_test_targets)',
+            'xvfb-run',
+            '--auto-servernum',
+            'python',
+            '<(browser_tester_dir)/browser_tester.py',
+            '--browser_path=/usr/bin/google-chrome',
+            '--file=<(browser_tester_dir)/nacltest.js',
+            '--serving_dir=<(gen_out_dir)/nacl_mozc',
+            '--serving_dir=browser_test',
+            '--url=nacl_mozc_test.html',
+            '--timeout=15',
           ],
         },
+      ],
+      'dependencies': [
+        'gather_nacl_mozc_files',
       ],
     },
   ],

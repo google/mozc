@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+    <string name="subtype_ja">Japanese</string>
+    <string name="settings_activity">org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity</string>
+    <string name="mozc_software_keyboard_advanced_settings_preference_activity">org.mozc.android.inputmethod.japanese.preference.MozcClassicSoftwareKeyboardAdvancedSettingsPreferenceActivity</string>
+
+    <!-- Preference titles -->
+    <string name="pref_software_keyboard_category_title">Software keyboard</string>
+        <string name="pref_software_keyboard_advanced_settings_title">Software keyboard advanced settings</string>
+
+    <string name="pref_software_keyboard_preferences_portrait_title">Software keyboard preferences for portrait mode</string>
+    <string name="pref_software_keyboard_preferences_landscape_title">Software keyboard preferences for landscape mode</string>
+        <!-- Following entries are for configuration_dependent_preferences -->
+        <string name="pref_keyboard_layout_title">Keyboard layout</string>
+        <string name="pref_input_style_title">Input style</string>
+        <string name="pref_qwerty_layout_for_alphabet_title">QWERTY mode</string>
+        <string name="pref_flick_sensitivity_title">Flick sensitivity</string>
+        <string name="pref_use_portrait_keyboard_settings_for_landscape_title">Use portrait settings</string>
+        <string name="pref_keyboard_height_ratio_title">Keyboard height</string>
+    <string name="pref_input_feedback_category_title">Input feedback preferences</string>
+        <string name="pref_haptic_feedback_title">Haptic feedback</string>
+        <string name="pref_haptic_feedback_duration_title">Haptic feedback duration</string>
+        <string name="pref_sound_feedback_title">Audio feedback</string>
+        <string name="pref_sound_feedback_volume_title">Audio feedback volume</string>
+        <string name="pref_popup_feedback_title">Popup feedback</string>
+    <string name="pref_other_input_support_preference_category_title">Other input support preferences</string>
+        <string name="pref_fullscreen_title">Fullscreen mode</string>
+        <string name="pref_skin_type_title">Select Skin type</string>
+        <string name="pref_hardware_title">Preferences for hardware keyboards</string>
+    <string name="pref_conversion_category_title">Conversion preferences</string>
+        <string name="pref_layout_adjustment_title">Layout adjustment</string>
+        <string name="pref_space_character_form_title">Use half-width space</string>
+        <string name="pref_kana_modifier_insensitive_conversion_title">Modifier insensitive conversion</string>
+        <string name="pref_typing_correction_title">Typing correction</string>
+        <string name="pref_other_incognito_mode_title">Incognito mode</string>
+        <string name="pref_emoji_provider_type_title">Select Emoji provider</string>
+    <string name="pref_dictionry_category_title">Dictionary preferences</string>
+        <string name="pref_dictionary_personalization_title">Personalization</string>
+        <string name="pref_dictionary_user_dictionary_tool_title">Dictionary Tool</string>
+        <string name="pref_clear_category_title">Clear history</string>
+            <string name="pref_clear_conversion_history_title">Conversion history</string>
+            <string name="pref_clear_symbol_history_title">Symbol history</string>
+            <string name="pref_clear_user_dictionary_title">User dictionary</string>
+    <string name="pref_user_feedback_category_title">User feedback</string>
+      <string name="pref_other_usage_stats_title">Send usage statistics</string>
+    <string name="pref_about_about_this_software_title">About this software</string>
+        <string name="pref_about_version_title">Version</string>
+        <string name="pref_about_terms_of_service_title">Terms of service</string>
+        <string name="pref_about_privacy_policy_title">Privacy policy</string>
+        <string name="pref_about_oss_credits_title">Open source software</string>
+
+    <!-- Preference description -->
+    <!-- Configuration Dependent Preferences -->
+        <!-- Following entries are for configuration_dependent_preferences -->
+        <string name="pref_haptic_feedback_description">Vibrate on key press.</string>
+        <string name="pref_sound_feedback_description">Sound on key press.</string>
+        <string name="pref_popup_feedback_description">Popup on key press.</string>
+        <string name="pref_keyboard_layout_description">Switch keyboard layout.</string>
+            <string name="pref_keyboard_layout_title_12keys">12 keys</string>
+            <string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+            <string name="pref_keyboard_layout_title_godan">Godan Keyboard</string>
+            <string name="pref_keyboard_layout_description_12keys">Mobile phone layout.</string>
+            <string name="pref_keyboard_layout_description_qwerty">PC keyboard layout.</string>
+            <string name="pref_keyboard_layout_description_godan">Romaji-dedicated layout. <![CDATA[<a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&topic=25606&answer=2700298\'>Usage</a>]]></string>
+        <string name="pref_input_style_setting_description">Select input style.</string>
+        <string name="pref_qwerty_layout_for_alphabet_description">If checked, QWERTY layout will be used for alphabet input mode regardless of main layout.</string>
+        <string name="pref_fullscreen_description">If checked, target textbox shows in fullscreen mode.</string>
+        <string name="pref_flick_sensitivity_description">Tune the flick sensitivity.</string>
+        <string name="pref_layout_adjustment_description">Switch keyboard adjustment.</string>
+        <string name="pref_keyboard_height_ratio_description">Change the keyboard height.</string>
+        <string name="pref_space_character_form_description">Always use half-width space, no matter the input mode.</string>
+        <string name="pref_kana_modifier_insensitive_conversion_description">Use kana modifier insensitive conversion. Applied to 12 keys and Godan keyboard. e.g. かつこう→学校</string>
+        <string name="pref_typing_correction_description">Detect mistyping and show corrected candidates. e.g. すんかい→深海</string>
+        <string name="pref_emoji_provider_type_description">Select the Emoji provider properly to use emoji.</string>
+        <string name="pref_skin_type_description">Select the skin type to customize the software keyboard look.</string>
+    <!-- Hardware Keyboard -->
+        <string name="pref_hardware_keymap_description">Select key mapping for hardware keyboards.</string>
+    <!-- Dictionary -->
+        <string name="pref_dictionary_personalization_description">Enable personal suggestions based on past input.</string>
+        <string name="pref_dictionary_user_dictionary_tool_description">Edit user dictionaries.</string>
+        <string name="pref_clear_category_description">Clear personalization or suggestion data.</string>
+            <string name="pref_clear_conversion_history_description">Clear conversion history.</string>
+            <string name="pref_clear_symbol_history_description">Clear symbol input history.</string>
+            <string name="pref_clear_user_dictionary_description">Clear user dictionary.</string>
+    <!-- Other -->
+        <string name="pref_other_incognito_mode_description">Temporarily disable personalization, suggestions and user dictionary.</string>
+        <!-- TODO(matsuzakit): Needs an expert's check => need to check with legal -->
+        <string name="pref_other_usage_stats_description">Send usage statistics to %1$s. These will only be used to improve %1$s products and services.</string>
+    <!-- About -->
+        <string name="pref_about_terms_of_service_description">Display the terms of service (webpage).</string>
+        <string name="pref_about_privacy_policy_description">Display the privacy policy (webpage).</string>
+        <string name="pref_about_oss_credits_description">This software uses open source software: view the licenses.</string>
+
+    <!-- Preference Values -->
+    <string name="pref_input_style_setting_entry_toggle">Toggle</string>
+    <string name="pref_input_style_setting_entry_flick">Flick</string>
+    <string name="pref_input_style_setting_entry_toggle_and_flick">Toggle &amp; Flick</string>
+
+    <string name="pref_fullscreen_portrait">Enable on portrait</string>
+    <string name="pref_fullscreen_landscape">Enable on landscape</string>
+
+    <string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+    <string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+    <string name="pref_emoji_provider_type_softbank">SoftBank</string>
+
+    <string name="pref_skin_type_orange_lightgray">Orange/Light-gray</string>
+    <string name="pref_skin_type_blue_lightgray">Blue/Light-gray</string>
+    <string name="pref_skin_type_blue_darkgray">Blue/Dark-gray</string>
+
+    <string name="pref_hardware_keymap_default">System Default</string>
+    <string name="pref_hardware_keymap_japanese109A">Japanese 109A</string>
+    <string name="pref_hardware_keymap_twelvekey">12 keys</string>
+
+    <string name="pref_dictionary_personalization_entry_enabled">Enable</string>
+    <string name="pref_dictionary_personalization_entry_readonly">Frozen</string>
+    <string name="pref_dictionary_personalization_entry_disabled">Disable</string>
+
+    <!-- Preference url -->
+    <string name="pref_oss_credits_url">file:///android_asset/credits_en.html</string>
+
+    <string name="pref_layout_adjustment_entry_fill">Fill</string>
+    <string name="pref_layout_adjustment_entry_right">Right</string>
+    <string name="pref_layout_adjustment_entry_left">Left</string>
+
+    <!-- First time launch activity -->
+    <string name="firsttime_close_button">Next &gt;&gt;</string>
+    <!-- TODO(matsuzakit): Needs an expert's check -->
+    <string name="firsttime_description_thank_you">Thank you for using %s.</string>
+    <string name="firsttime_description_usage_stats"><![CDATA[In order for us to improve %s products and services, we kindly ask you to consider enabling usage statistics.\n\nThis setting can be changed from the preferences screen.]]></string>
+    <string name="firsttime_send_usage_stats_devchannel">Usage statistics are enabled because you are using a development version.</string>
+
+    <!-- Alert messages -->
+    <string name="pref_ime_enable_alert_title">Setup for text settings</string>
+    <string name="pref_ime_enable_alert_message">Please enable %s.</string>
+    <string name="pref_ime_switch_alert_title">Setup for input method</string>
+    <string name="pref_ime_switch_alert_message">Please change the input method to %s.</string>
+    <string name="pref_ime_alert_next">Next</string>
+    <string name="pref_ime_alert_cancel">Cancel</string>
+
+    <!-- Misc text for preferences -->
+    <string name="pref_flick_sensitivity_seekbar_low_text">Low</string>
+    <string name="pref_flick_sensitivity_seekbar_middle_text">Mid</string>
+    <string name="pref_flick_sensitivity_seekbar_high_text">High</string>
+
+    <string name="pref_haptic_feedback_duration_low_text">Short</string>
+    <string name="pref_haptic_feedback_duration_high_text">Long</string>
+
+    <string name="pref_sound_feedback_volume_low_text">Min</string>
+    <string name="pref_sound_feedback_volume_mid_text">Mid</string>
+    <string name="pref_sound_feedback_volume_high_text">Max</string>
+
+
+    <string name="symbol_input_no_history">No history.\n\nSwipe the screen\nto browse categories.</string>
+    <string name="symbol_emoji_disabled_message">This text field does not support Emoji input.</string>
+
+    <!-- Symbol minor category text -->
+    <!-- TODO(hidehiko): The line break looks very dirty on English. Fix it. -->
+    <string name="symbol_minor_symbol_history_title">History</string>
+    <string name="symbol_minor_symbol_general_title">General\nSymbol</string>
+    <string name="symbol_minor_symbol_half_title">Half\nFull</string>
+    <string name="symbol_minor_symbol_parenthesis_title">Paren.\nRule</string>
+    <string name="symbol_minor_symbol_arrow_title">Arrow\nNumber</string>
+    <string name="symbol_minor_symbol_math_title">Math\nUnit</string>
+
+    <string name="symbol_minor_emoticon_history_title">History</string>
+    <string name="symbol_minor_emoticon_smile_title">Smile\n(^^)</string>
+    <string name="symbol_minor_emoticon_sweat_title">Sweat\n(^^;)</string>
+    <string name="symbol_minor_emoticon_surprise_title">Surprise\n(゜д゜)</string>
+    <string name="symbol_minor_emoticon_sadness_title">Sadness\n(T_T)</string>
+    <string name="symbol_minor_emoticon_displeasure_title">Displeasure\n(-_-)</string>
+
+    <string name="symbol_minor_emoji_history_title">History</string>
+    <string name="symbol_minor_emoji_face_title">Face\nEmotion</string>
+    <string name="symbol_minor_emoji_food_title">Food\nPlay</string>
+    <string name="symbol_minor_emoji_activity_title">Activity\nLife</string>
+    <string name="symbol_minor_emoji_city_title">City\nWork</string>
+    <string name="symbol_minor_emoji_nature_title">Nature\nFigure</string>
+
+    <!--  Menu dialog -->
+    <string name="menu_dialog_title">Input options</string>
+    <string name="menu_item_input_method">Select input method</string>
+    <string name="menu_item_preferences">%s settings</string>
+    <string name="menu_item_mushroom">Launch Mushroom</string>
+
+    <!-- User Dictionary Tool -->
+    <string name="user_dictionary_tool_app_name">Dictionary tool</string>
+      <!-- Menu -->
+      <string name="user_dictionary_tool_menu_add_entry_title">New word</string>
+      <string name="user_dictionary_tool_menu_delete_entry_title">Delete word</string>
+      <string name="user_dictionary_tool_menu_undo_title">Undo</string>
+      <string name="user_dictionary_tool_menu_create_dictionary_title">New dictionary</string>
+      <string name="user_dictionary_tool_menu_rename_dictionary_title">Rename current dictionary</string>
+      <string name="user_dictionary_tool_menu_delete_dictionary_title">Delete current dictionary</string>
+
+      <!-- Dictionary editing -->
+      <string name="user_dictionary_tool_default_dictionary_name">User Dictionary 1</string>
+      <string name="user_dictionary_tool_create_dictionary_dialog_title">Create a new dictionary</string>
+      <string name="user_dictionary_tool_rename_dictionary_dialog_title">Edit the name of the dictionary</string>
+      <string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Name of the dictionary</string>
+
+      <!-- Word register dialog -->
+      <string name="user_dictionary_tool_add_entry_dialog_title">Add a new word</string>
+      <string name="user_dictionary_tool_edit_entry_dialog_title">Edit a word</string>
+      <string name="user_dictionary_tool_word_register_dialog_reading_label">Reading</string>
+      <string name="user_dictionary_tool_word_register_dialog_word_label">Word</string>
+      <string name="user_dictionary_tool_word_register_dialog_pos_label">Category</string>
+
+      <!-- Import dialog -->
+      <string name="user_dictionary_tool_zip_file_selection_dialog_title">Select import source</string>
+      <string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Select import destination</string>
+      <string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Import as a new dictionary</string>
+
+      <!-- Message -->
+      <string name="user_dictionary_tool_delete_done_message">Delete operation successful.</string>
+      <string name="user_dictionary_tool_undo_done_message">Undo operation successful.</string>
+
+      <!-- Error messages -->
+      <string name="user_dictionary_tool_error_delete_entries_without_check">Select the words you would like to delete.</string>
+      <string name="user_dictionary_tool_error_import_source_invalid_scheme">Data import only works on files.</string>
+      <string name="user_dictionary_tool_error_import_cannot_read_import_source">Could not read the file.</string>
+      <string name="user_dictionary_tool_error_import_no_zip_entry">The ZIP file is empty.</string>
+      <string name="user_dictionary_tool_status_error_general">The operation has failed.</string>
+      <string name="user_dictionary_tool_status_error_file_not_found">Could not open the file.</string>
+      <string name="user_dictionary_tool_status_error_invalid_file_format">Could not read the file.</string>
+      <string name="user_dictionary_tool_status_error_file_size_limit_exceeded">The data size exceeds the file size limit.</string>
+      <string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Can\'t create any more dictionaries.</string>
+      <string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Can\'t create any more entries in this dictionary.</string>
+      <string name="user_dictionary_tool_status_error_dictionary_name_empty">Please type a dictionary name.</string>
+      <string name="user_dictionary_tool_status_error_dictionary_name_too_long">The name is too long.</string>
+      <string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">The name contains invalid character(s).</string>
+      <string name="user_dictionary_tool_status_error_dictionary_name_duplicated">The name already exists.</string>
+      <string name="user_dictionary_tool_status_error_reading_empty">Please type the reading.</string>
+      <string name="user_dictionary_tool_status_error_reading_too_long">The reading is too long.</string>
+      <string name="user_dictionary_tool_status_error_reading_contains_invalid_character">The reading contains invalid character(s).</string>
+      <string name="user_dictionary_tool_status_error_word_empty">Please type the word.</string>
+      <string name="user_dictionary_tool_status_error_word_too_long">The word is too long.</string>
+      <string name="user_dictionary_tool_status_error_word_contains_invalid_character">Thw word contains invalid character(s).</string>
+      <string name="user_dictionary_tool_status_error_import_too_many_words">The import source contains too many words.</string>
+      <string name="user_dictionary_tool_status_error_import_invalid_entries">Some words could not be imported.</string>
+      <string name="user_dictionary_tool_status_error_no_undo_history">No more undo-able operation.</string>
+
+      <!-- List of Japanese POS -->
+      <string name="japanese_pos_noun">Noun</string>
+      <string name="japanese_pos_abbreviation">Abbreviation</string>
+      <string name="japanese_pos_suggestion_only">Suggestion only</string>
+      <string name="japanese_pos_proper_noun">Proper noun</string>
+      <string name="japanese_pos_personal_name">Personal name</string>
+      <string name="japanese_pos_family_name">Family name</string>
+      <string name="japanese_pos_first_name">First name</string>
+      <string name="japanese_pos_organization_name">Organization name</string>
+      <string name="japanese_pos_place_name">Place name</string>
+      <string name="japanese_pos_sa_irregular_conjugation_noun">SA-irregular conjugation noun</string>
+      <string name="japanese_pos_adjective_verbal_noun">Adjective verbal noun</string>
+      <string name="japanese_pos_number">Number</string>
+      <string name="japanese_pos_alphabet">Alphabet</string>
+      <string name="japanese_pos_symbol">Symbol</string>
+      <string name="japanese_pos_emoticon">Emoticon</string>
+      <string name="japanese_pos_adverb">Adverb</string>
+      <string name="japanese_pos_prenoun_adjectival">Prenoun adjectival</string>
+      <string name="japanese_pos_conjunction">Conjunction</string>
+      <string name="japanese_pos_interjection">Interjection</string>
+      <string name="japanese_pos_prefix">Prefix</string>
+      <string name="japanese_pos_counter_suffix">Counter suffix</string>
+      <string name="japanese_pos_generic_suffix">Generic suffix</string>
+      <string name="japanese_pos_person_name_suffix">Person name suffix</string>
+      <string name="japanese_pos_place_name_suffix">Place name suffix</string>
+      <string name="japanese_pos_wa_group1_verb">WA-Group1 verb</string>
+      <string name="japanese_pos_ka_group1_verb">KA-Group1 verb</string>
+      <string name="japanese_pos_sa_group1_verb">SA-Group1 verb</string>
+      <string name="japanese_pos_ta_group1_verb">TA-Group1 verb</string>
+      <string name="japanese_pos_na_group1_verb">NA-Group1 verb</string>
+      <string name="japanese_pos_ma_group1_verb">MA-Group1 verb</string>
+      <string name="japanese_pos_ra_group1_verb">RA-Group1 verb</string>
+      <string name="japanese_pos_ga_group1_verb">GA-Group1 verb</string>
+      <string name="japanese_pos_ba_group1_verb">BA-Group1 verb</string>
+      <string name="japanese_pos_ha_group1_verb">HA-Group1 verb</string>
+      <string name="japanese_pos_group2_verb">Group2 verb</string>
+      <string name="japanese_pos_kuru_group3_verb">Kuru-Group3 verb</string>
+      <string name="japanese_pos_suru_group3_verb">Suru-Group3 verb</string>
+      <string name="japanese_pos_zuru_group3_verb">Zuru-Group3 verb</string>
+      <string name="japanese_pos_ru_group3_verb">Ru-Group3 verb</string>
+      <string name="japanese_pos_adjective">Adjective</string>
+      <string name="japanese_pos_sentence_ending_particle">Sentence ending particle</string>
+      <string name="japanese_pos_punctuation">Punctuation</string>
+      <string name="japanese_pos_free_standing_word">Free standing word</string>
+      <string name="japanese_pos_suppression_word">Suppression word</string>
+
+</resources>

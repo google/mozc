@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,7 @@ void SetCandidate(const ReadingCorrectionItem *item,
       // "もしかして"
       "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6: " +
       string(item->correction) + ">";
+  DCHECK(candidate->IsValid());
 }
 
 struct ReadingCorrectionItemCompare {
@@ -161,6 +162,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
           top_candidate.functional_key();
       mutable_candidate->value = results[k]->value +
           top_candidate.functional_value();
+      mutable_candidate->inner_segment_boundary.clear();
       SetCandidate(results[k], mutable_candidate);
       modified = true;
     }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,9 @@
 #include <string>
 #include <vector>
 
-#include "base/trie.h"
 #include "base/port.h"
+#include "base/string_piece.h"
+#include "base/trie.h"
 
 namespace mozc {
 
@@ -60,8 +61,18 @@ class DictionaryInterface {
     //  We will not get 'convention', etc.
     // This does not have the ownership
     const Trie<string> *begin_with_trie;
-    Limit() : key_len_lower_limit(0), begin_with_trie(NULL)  {}
+
+    // For predictive and prefix lookup, enables ambiguous search.
+    bool kana_modifier_insensitive_lookup_enabled;
+    Limit() :
+        key_len_lower_limit(0),
+        begin_with_trie(NULL),
+        kana_modifier_insensitive_lookup_enabled(false) {
+    }
   };
+
+  // Returns true if the dictionary has an entry for the given value.
+  virtual bool HasValue(const StringPiece value) const = 0;
 
   // For Lookup methods, dictionary does not manage the ownerships of the
   // returned Node objects.

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,11 +46,11 @@ class UserPOSTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     const testing::MockUserPosManager user_pos_manager;
-    user_pos_ = user_pos_manager.GetUserPOS();
-    CHECK(user_pos_ != NULL);
+    user_pos_.reset(new UserPOS(user_pos_manager.GetUserPOSData()));
+    CHECK(user_pos_.get());
   }
 
-  const UserPOSInterface *user_pos_;
+  scoped_ptr<const UserPOSInterface> user_pos_;
 };
 
 TEST_F(UserPOSTest, UserPOSBasicTest) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,38 +43,20 @@
 #include "converter/conversion_request.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
-#include "converter/user_data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "rewriter/rewriter_interface.h"
-#include "session/request_handler.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
+
+using mozc::usage_stats::UsageStats;
 
 namespace mozc {
 namespace {
 
 const size_t kErrorIndex = static_cast<size_t>(-1);
-
-class UserDataManagerImpl : public UserDataManagerInterface {
- public:
-  explicit UserDataManagerImpl(PredictorInterface *predictor,
-                               RewriterInterface *rewriter)
-      : predictor_(predictor), rewriter_(rewriter) {}
-  ~UserDataManagerImpl();
-
-  virtual bool Sync();
-  virtual bool Reload();
-  virtual bool ClearUserHistory();
-  virtual bool ClearUserPrediction();
-  virtual bool ClearUnusedUserPrediction();
-
- private:
-  PredictorInterface *predictor_;
-  RewriterInterface *rewriter_;
-};
 
 size_t GetSegmentIndex(const Segments *segments,
                        size_t segment_index) {
@@ -101,12 +83,13 @@ void SetKey(Segments *segments, const string &key) {
   VLOG(2) << segments->DebugString();
 }
 
-bool IsMobile() {
-  return GET_REQUEST(zero_query_suggestion) &&
-      GET_REQUEST(mixed_conversion);
+bool IsMobile(const ConversionRequest &request) {
+  return request.request().zero_query_suggestion() &&
+      request.request().mixed_conversion();
 }
 
-bool IsValidSegments(const Segments &segments) {
+bool IsValidSegments(const ConversionRequest &request,
+                     const Segments &segments) {
   // All segments should have candidate
   for (size_t i = 0; i < segments.segments_size(); ++i) {
     if (segments.segment(i).candidates_size() != 0) {
@@ -116,19 +99,18 @@ bool IsValidSegments(const Segments &segments) {
     // So it's ok if we have meta candidates even if we don't have candidates
     // TODO(team): we may remove mobile check if other platforms accept
     // meta candidate only segemnt
-    if (IsMobile() && segments.segment(i).meta_candidates_size() != 0) {
+    if (IsMobile(request) && segments.segment(i).meta_candidates_size() != 0) {
       continue;
     }
     return false;
   }
   return true;
 }
+
 }  // namespace
 
 ConverterImpl::ConverterImpl() : pos_matcher_(NULL),
-                                 pos_group_(NULL),
                                  rewriter_(NULL),
-                                 user_data_manager_(NULL),
                                  immutable_converter_(NULL),
                                  general_noun_id_(kuint16max) {
 }
@@ -136,16 +118,15 @@ ConverterImpl::ConverterImpl() : pos_matcher_(NULL),
 ConverterImpl::~ConverterImpl() {}
 
 void ConverterImpl::Init(const POSMatcher *pos_matcher,
-                         const PosGroup *pos_group,
+                         const SuppressionDictionary *suppression_dictionary,
                          PredictorInterface *predictor,
                          RewriterInterface *rewriter,
                          ImmutableConverterInterface *immutable_converter) {
   // Initializes in order of declaration.
   pos_matcher_ = pos_matcher;
-  pos_group_ = pos_group;
+  suppression_dictionary_ = suppression_dictionary;
   predictor_.reset(predictor);
   rewriter_.reset(rewriter);
-  user_data_manager_.reset(new UserDataManagerImpl(predictor, rewriter));
   immutable_converter_ = immutable_converter;
   general_noun_id_ = pos_matcher_->GetGeneralNounId();
 }
@@ -201,25 +182,35 @@ bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
     }
   }
   string conversion_key;
-  request.composer().GetQueryForConversion(&conversion_key);
+  switch (request.composer_key_selection()) {
+    case ConversionRequest::CONVERSION_KEY:
+      request.composer().GetQueryForConversion(&conversion_key);
+      break;
+    case ConversionRequest::PREDICTION_KEY:
+      request.composer().GetQueryForPrediction(&conversion_key);
+      break;
+    default:
+      LOG(FATAL) << "Should never reach here";
+  }
   SetKey(segments, conversion_key);
   segments->set_request_type(Segments::CONVERSION);
-  if (!immutable_converter_->Convert(segments)) {
+  if (!immutable_converter_->ConvertForRequest(request, segments)) {
     return false;
   }
-  rewriter_->Rewrite(request, segments);
-  return IsValidSegments(*segments);
+  RewriteAndSuppressCandidates(request, segments);
+  return IsValidSegments(request, *segments);
 }
 
 bool ConverterImpl::StartConversion(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
   segments->set_request_type(Segments::CONVERSION);
-  if (!immutable_converter_->Convert(segments)) {
+  const ConversionRequest default_request;
+  if (!immutable_converter_->ConvertForRequest(default_request, segments)) {
     return false;
   }
-  rewriter_->Rewrite(ConversionRequest(), segments);
-  return IsValidSegments(*segments);
+  RewriteAndSuppressCandidates(default_request, segments);
+  return IsValidSegments(default_request, *segments);
 }
 
 bool ConverterImpl::StartReverseConversion(Segments *segments,
@@ -244,6 +235,31 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
     }
   }
   return true;
+}
+
+// static
+void ConverterImpl::MaybeSetConsumedKeySizeToCandidate(
+    size_t consumed_key_size, Segment::Candidate* candidate) {
+  if (candidate->attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+    // If PARTIALLY_KEY_CONSUMED is set already,
+    // the candidate has set appropriate attribute and size by predictor.
+    return;
+  }
+  candidate->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+  candidate->consumed_key_size = consumed_key_size;
+}
+
+// static
+void ConverterImpl::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
+                                                     Segment* segment) {
+  for (size_t i = 0; i < segment->candidates_size(); ++i) {
+    MaybeSetConsumedKeySizeToCandidate(consumed_key_size,
+                                       segment->mutable_candidate(i));
+  }
+  for (size_t i = 0; i < segment->meta_candidates_size(); ++i) {
+    MaybeSetConsumedKeySizeToCandidate(consumed_key_size,
+                                       segment->mutable_meta_candidate(i));
+  }
 }
 
 // TODO(noriyukit): |key| can be a member of ConversionRequest.
@@ -284,8 +300,23 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
   if (!predictor_->PredictForRequest(request, segments)) {
     return false;
   }
-  rewriter_->Rewrite(request, segments);
-  return IsValidSegments(*segments);
+  RewriteAndSuppressCandidates(request, segments);
+  if (request_type == Segments::PARTIAL_SUGGESTION ||
+      request_type == Segments::PARTIAL_PREDICTION) {
+    // Here 1st segment's key is the query string of
+    // the partial prediction/suggestion.
+    // e.g. If the composition is "わた|しは", the key is "わた".
+    // If partial prediction/suggestion candidate is submitted,
+    // all the characters which are located from the head to the cursor
+    // should be submitted (in above case "わた" should be submitted).
+    // To do this, PARTIALLY_KEY_CONSUMED and consumed_key_sizconsumed_key_size
+    // should be set.
+    // Note that this process should be done in a predictor because
+    // we have to do this on the candidates created by rewriters.
+    MaybeSetConsumedKeySizeToSegment(
+        Util::CharsLen(key), segments->mutable_conversion_segment(0));
+  }
+  return IsValidSegments(request, *segments);
 }
 
 bool ConverterImpl::StartPredictionForRequest(const ConversionRequest &request,
@@ -312,13 +343,13 @@ bool ConverterImpl::StartPredictionForRequest(const ConversionRequest &request,
 
 bool ConverterImpl::StartPrediction(Segments *segments,
                                     const string &key) const {
-  ConversionRequest default_request;
+  const ConversionRequest default_request;
   return Predict(default_request, key, Segments::PREDICTION, segments);
 }
 
 bool ConverterImpl::StartSuggestion(Segments *segments,
                                     const string &key) const {
-  ConversionRequest default_request;
+  const ConversionRequest default_request;
   return Predict(default_request, key, Segments::SUGGESTION, segments);
 }
 
@@ -332,7 +363,7 @@ bool ConverterImpl::StartSuggestionForRequest(const ConversionRequest &request,
 
 bool ConverterImpl::StartPartialSuggestion(Segments *segments,
                                            const string &key) const {
-  ConversionRequest default_request;
+  const ConversionRequest default_request;
   return Predict(default_request, key, Segments::PARTIAL_SUGGESTION, segments);
 }
 
@@ -353,7 +384,7 @@ bool ConverterImpl::StartPartialSuggestionForRequest(
 
 bool ConverterImpl::StartPartialPrediction(Segments *segments,
                                            const string &key) const {
-  ConversionRequest default_request;
+  const ConversionRequest default_request;
   return Predict(default_request, key, Segments::PARTIAL_PREDICTION, segments);
 }
 
@@ -374,7 +405,10 @@ bool ConverterImpl::StartPartialPredictionForRequest(
 }
 
 bool ConverterImpl::FinishConversion(Segments *segments) const {
-  for (int i = 0; i < segments->segments_size(); ++i) {
+  CommitUsageStats(segments, segments->history_segments_size(),
+                   segments->conversion_segments_size());
+
+  for (size_t i = 0; i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
     DCHECK(seg);
     // revert SUBMITTED segments to FIXED_VALUE
@@ -391,9 +425,7 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
   }
 
   segments->clear_revert_entries();
-  if (segments->request_type() == Segments::CONVERSION) {
-    rewriter_->Finish(segments);
-  }
+  rewriter_->Finish(segments);
   predictor_->Finish(segments);
 
   // Remove the front segments except for some segments which will be
@@ -471,16 +503,29 @@ bool ConverterImpl::CommitPartialSuggestionSegmentValue(
     const string &current_segment_key, const string &new_segment_key) const {
   DCHECK_GT(segments->conversion_segments_size(), 0);
 
-  size_t raw_segment_index = GetSegmentIndex(segments, segment_index);
+  const size_t raw_segment_index = GetSegmentIndex(segments, segment_index);
   if (!CommitSegmentValueInternal(segments, segment_index, candidate_index,
                                   Segment::SUBMITTED)) {
     return false;
   }
+  CommitUsageStats(segments, raw_segment_index, 1);
+
   Segment *segment = segments->mutable_segment(raw_segment_index);
+  DCHECK_LT(0, segment->candidates_size());
+  const Segment::Candidate &submitted_candidate = segment->candidate(0);
+  const bool auto_partial_suggestion =
+      Util::CharsLen(submitted_candidate.key) != Util::CharsLen(segment->key());
   segment->set_key(current_segment_key);
+
   Segment *new_segment = segments->insert_segment(raw_segment_index + 1);
   new_segment->set_key(new_segment_key);
   DCHECK_GT(segments->conversion_segments_size(), 0);
+
+  if (auto_partial_suggestion) {
+    UsageStats::IncrementCount("CommitAutoPartialSuggestion");
+  } else {
+    UsageStats::IncrementCount("CommitPartialSuggestion");
+  }
 
   return true;
 }
@@ -513,10 +558,15 @@ bool ConverterImpl::FreeSegmentValue(Segments *segments,
   return immutable_converter_->Convert(segments);
 }
 
-bool ConverterImpl::SubmitFirstSegment(Segments *segments,
+bool ConverterImpl::CommitFirstSegment(Segments *segments,
                                        size_t candidate_index) const {
-  return CommitSegmentValueInternal(segments, 0, candidate_index,
-                                    Segment::SUBMITTED);
+  const size_t conversion_segment_index = segments->history_segments_size();
+  if (CommitSegmentValueInternal(segments, 0, candidate_index,
+                                 Segment::SUBMITTED)) {
+    CommitUsageStats(segments, conversion_segment_index, 1);
+    return true;
+  }
+  return false;
 }
 
 bool ConverterImpl::ResizeSegment(Segments *segments,
@@ -624,11 +674,11 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_->Convert(segments)) {
+  if (!immutable_converter_->ConvertForRequest(request, segments)) {
     return false;
   }
 
-  rewriter_->Rewrite(request, segments);
+  RewriteAndSuppressCandidates(request, segments);
 
   return true;
 }
@@ -687,11 +737,11 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_->Convert(segments)) {
+  if (!immutable_converter_->ConvertForRequest(request, segments)) {
     return false;
   }
 
-  rewriter_->Rewrite(request, segments);
+  RewriteAndSuppressCandidates(request, segments);
 
   return true;
 }
@@ -748,60 +798,68 @@ void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
       }
     }
   }
-  LOG(WARNING) << "Cannot set lid/rid. use default value. "
-               << "key: " << candidate->key << ", "
-               << "value: " << candidate->value << ", "
-               << "lid: " << candidate->lid << ", "
-               << "rid: " << candidate->rid;
+  DVLOG(2) << "Cannot set lid/rid. use default value. "
+           << "key: " << candidate->key << ", "
+           << "value: " << candidate->value << ", "
+           << "lid: " << candidate->lid << ", "
+           << "rid: " << candidate->rid;
 }
 
-UserDataManagerInterface *ConverterImpl::GetUserDataManager() {
-  return user_data_manager_.get();
+void ConverterImpl::RewriteAndSuppressCandidates(
+    const ConversionRequest &request, Segments *segments) const {
+  if (!rewriter_->Rewrite(request, segments)) {
+    return;
+  }
+  // Optimization for common use case: Since most of users don't use suppression
+  // dictionary and we can skip the subsequent check.
+  if (suppression_dictionary_->IsEmpty()) {
+    return;
+  }
+  // Although the suppression dictionary is applied at node-level in dictionary
+  // layer, there's possibility that bad words are generated from multiple nodes
+  // and by rewriters. Hence, we need to apply it again at the last stage of
+  // converter.
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    Segment *seg = segments->mutable_conversion_segment(i);
+    for (size_t j = 0; j < seg->candidates_size(); ) {
+      const Segment::Candidate &cand = seg->candidate(j);
+      if (suppression_dictionary_->SuppressEntry(cand.key, cand.value)) {
+        seg->erase_candidate(j);
+      } else {
+        ++j;
+      }
+    }
+  }
 }
 
-UserDataManagerImpl::~UserDataManagerImpl() {}
+void ConverterImpl::CommitUsageStats(const Segments *segments,
+                                     size_t begin_segment_index,
+                                     size_t segment_length) const {
+  if (segment_length == 0) {
+    return;
+  }
+  if (begin_segment_index + segment_length > segments->segments_size()) {
+    LOG(ERROR) << "Invalid state. segments size: " << segments->segments_size()
+               << " required size: " << begin_segment_index + segment_length;
+    return;
+  }
 
-bool UserDataManagerImpl::Sync() {
-  return (rewriter_->Sync() && predictor_->Sync());
-}
+  // Timing stats are scaled by 1,000 to improve the accuracy of average values.
 
-bool UserDataManagerImpl::Reload() {
-  return (rewriter_->Reload() && predictor_->Reload());
-}
+  uint64 submitted_total_length = 0;
+  for (size_t i = 0; i < segment_length; ++i) {
+    const Segment &segment = segments->segment(begin_segment_index + i);
+    const uint32 submitted_length = Util::CharsLen(segment.candidate(0).value);
+    UsageStats::UpdateTiming("SubmittedSegmentLengthx1000",
+                             submitted_length * 1000);
+    submitted_total_length += submitted_length;
+  }
 
-bool UserDataManagerImpl::ClearUserHistory() {
-  rewriter_->Clear();
-  return true;
-}
-
-bool UserDataManagerImpl::ClearUserPrediction() {
-  predictor_->ClearAllHistory();
-  return true;
-}
-
-bool UserDataManagerImpl::ClearUnusedUserPrediction() {
-  predictor_->ClearUnusedHistory();
-  return true;
-}
-
-void ConverterUtil::InitSegmentsFromString(const string &key,
-                                           const string &preedit,
-                                           Segments *segments) {
-  segments->clear_conversion_segments();
-  // the request mode is CONVERSION, as the user experience
-  // is similar to conversion. UserHistryPredictor distinguishes
-  // CONVERSION from SUGGESTION now.
-  segments->set_request_type(Segments::CONVERSION);
-  Segment *segment = segments->add_segment();
-  segment->Clear();
-  segment->set_key(key);
-  segment->set_segment_type(Segment::FIXED_VALUE);
-  Segment::Candidate *c = segment->add_candidate();
-  c->Init();
-  c->value = preedit;
-  c->content_value = preedit;
-  c->key = key;
-  c->content_key = key;
+  UsageStats::UpdateTiming("SubmittedLengthx1000",
+                           submitted_total_length * 1000);
+  UsageStats::UpdateTiming("SubmittedSegmentNumberx1000",
+                           segment_length * 1000);
+  UsageStats::IncrementCountBy("SubmittedTotalLength", submitted_total_length);
 }
 
 }  // namespace mozc

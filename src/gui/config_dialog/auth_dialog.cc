@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,12 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/process.h"
 #include "base/util.h"
 #include "gui/config_dialog/auth_code_detector.h"
 #include "sync/oauth2_client.h"
+#include "sync/oauth2_server.h"
 #include "sync/oauth2_util.h"
 
 namespace mozc {
@@ -46,10 +48,10 @@ AuthDialog::AuthDialog(QWidget *parent)
       auth_code_detector_(new AuthCodeDetector) {
   setupUi(this);
   Qt::WindowFlags flags = windowFlags() | Qt::WindowStaysOnTopHint;
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Remove Context help button. b/5579590.
   flags &= ~Qt::WindowContextHelpButtonHint;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   setWindowFlags(flags);
 
   QObject::connect(openBrowserButton,
@@ -93,7 +95,8 @@ string AuthDialog::GetAuthCode() const {
 }
 
 void AuthDialog::browserButtonClicked() {
-  sync::OAuth2Util oauth2_util(sync::OAuth2Client::GetDefaultClient());
+  sync::OAuth2Util oauth2_util(sync::OAuth2Client::GetDefaultInstance(),
+                               sync::OAuth2Server::GetDefaultInstance());
   Process::OpenBrowser(oauth2_util.GetAuthenticateUri());
   openBrowserButton->setDefault(false);
   // Enables the line edit once clicked.
@@ -129,5 +132,5 @@ bool AuthDialog::Show(QWidget *parent, string *auth_code) {
   return result;
 }
 
-}  // namespace mozc::gui
+}  // namespace gui
 }  // namespace mozc

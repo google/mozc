@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -101,15 +101,15 @@ void EmbeddedDictionary::Compile(const string &name,
                                  const string &input,
                                  const string &output) {
   InputFileStream ifs(input.c_str());
-  CHECK(ifs);
+  CHECK(ifs.good());
 
   OutputFileStream ofs(output.c_str());
-  CHECK(ofs);
+  CHECK(ofs.good());
 
   string line;
   vector<string> fields;
   map<string, vector<CompilerToken> > dic;
-  while (getline(ifs, line)) {
+  while (!getline(ifs, line).fail()) {
     fields.clear();
     Util::SplitStringUsing(line, "\t", &fields);
     CHECK_GE(fields.size(), 4);

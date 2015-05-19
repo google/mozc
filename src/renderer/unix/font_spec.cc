@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "renderer/unix/font_spec.h"
 
+#include "base/logging.h"
 #include "renderer/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/unix/const.h"
@@ -173,7 +174,8 @@ PangoAttrList *FontSpec::GetFontAttributes(FONT_TYPE font_type) const {
   return fonts_[font_type].attributes;
 }
 
-const PangoFontDescription *FontSpec::GetFontDescription(FONT_TYPE font_type) const {
+const PangoFontDescription *FontSpec::GetFontDescription(
+    FONT_TYPE font_type) const {
   DCHECK(0 <= font_type && font_type < SIZE_OF_FONT_TYPE);
   return fonts_[font_type].font;
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,11 @@
 #include <string>
 
 #include "base/const.h"
-#include "base/util.h"
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/scoped_ptr.h"
+#include "base/system_util.h"
+#include "base/util.h"
 #include "base/win_util.h"
 #include "win32/base/display_name_resource.h"
 #include "win32/base/imm_util.h"
@@ -52,6 +55,7 @@
 
 namespace mozc {
 namespace win32 {
+
 namespace {
 const wchar_t kRegKeyboardLayouts[] =
     L"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts";
@@ -126,14 +130,14 @@ HRESULT SetLayoutDisplayName(const KeyboardLayoutID &klid,
 // to make ImmInstallIME happy.
 wstring GetFullPathForSystem(const string& basename) {
   string system_dir;
-  if (mozc::Util::WideToUTF8(mozc::Util::GetSystemDir(), &system_dir) <= 0) {
+  if (Util::WideToUTF8(SystemUtil::GetSystemDir(), &system_dir) <= 0) {
     return L"";
   }
 
-  const string fullpath = mozc::Util::JoinPath(system_dir, basename);
+  const string fullpath = FileUtil::JoinPath(system_dir, basename);
 
   wstring wfullpath;
-  if (mozc::Util::UTF8ToWide(fullpath.c_str(), &wfullpath) <= 0) {
+  if (Util::UTF8ToWide(fullpath.c_str(), &wfullpath) <= 0) {
     return L"";
   }
 
@@ -144,7 +148,7 @@ wstring GetFullPathForSystem(const string& basename) {
 // Returns ERROR_SUCCESS if the operation completes successfully.
 LONG RetrievePreloadValues(HKEY preload_key,
                            PreloadValueMap *keys) {
-  if (NULL == keys) {
+  if (nullptr == keys) {
     return ERROR_INVALID_PARAMETER;
   }
 
@@ -161,15 +165,15 @@ LONG RetrievePreloadValues(HKEY preload_key,
                                i,
                                value_name,
                                &value_name_length,
-                               NULL,  // reserved (must be NULL)
-                               NULL,  // type (optional)
+                               nullptr,  // reserved (must be NULL)
+                               nullptr,  // type (optional)
                                value,
                                &value_length);
 
     if (ERROR_NO_MORE_ITEMS == result) {
       break;
     } else if (ERROR_SUCCESS != result) {
-     return result;
+      return result;
     }
 
     const int ivalue_name = _wtoi(value_name);
@@ -200,14 +204,14 @@ unsigned int GetPreloadIndex(const KeyboardLayoutID &klid,
 
 wstring ToWideString(const string &str) {
   wstring wide;
-  if (mozc::Util::UTF8ToWide(str.c_str(), &wide) <= 0) {
+  if (Util::UTF8ToWide(str.c_str(), &wide) <= 0) {
     return L"";
   }
   return wide;
 }
 
 bool RemoveHotKey(HKL hkl) {
-  if (hkl == NULL) {
+  if (hkl == nullptr) {
     return false;
   }
 
@@ -216,7 +220,7 @@ bool RemoveHotKey(HKL hkl) {
        ++id) {
     UINT modifiers = 0;
     UINT virtual_key = 0;
-    HKL assigned_hkl = NULL;
+    HKL assigned_hkl = nullptr;
     BOOL result = ::ImmGetHotKey(id, &modifiers, &virtual_key, &assigned_hkl);
     if (result == FALSE) {
       continue;
@@ -226,7 +230,7 @@ bool RemoveHotKey(HKL hkl) {
     }
     // ImmSetHotKey fails when both 2nd and 3rd arguments are valid while 4th
     // argument is NULL.  To remove the HotKey, pass 0 to them.
-    result = ::ImmSetHotKey(id, 0, 0, NULL);
+    result = ::ImmSetHotKey(id, 0, 0, nullptr);
     if (result == FALSE) {
       succeeded = false;
     }
@@ -240,8 +244,8 @@ HRESULT ImmRegistrar::Register(const wstring &ime_filename,
                                const wstring &layout_display_name_resource_path,
                                int layout_display_name_resource_id,
                                HKL* hkl) {
-  HKL dummy_hkl = NULL;
-  if (hkl == NULL) {
+  HKL dummy_hkl = nullptr;
+  if (hkl == nullptr) {
     hkl = &dummy_hkl;
   }
 
@@ -261,7 +265,7 @@ HRESULT ImmRegistrar::Register(const wstring &ime_filename,
   IMEPROW dummy_ime_property = { 0 };
 
   const wstring &fullpath(
-      wstring(mozc::Util::GetSystemDir()) + L"\\" + ime_filename);
+      wstring(SystemUtil::GetSystemDir()) + L"\\" + ime_filename);
 
   // The path name of IME has hard limit. (http://b/2072809)
   if (fullpath.size() + 1 > arraysize(dummy_ime_property.szName)) {
@@ -320,7 +324,7 @@ HRESULT ImmRegistrar::Unregister(const wstring &ime_filename) {
 
   // Ensure the target IME is unloaded.
   {
-    const int num_keyboard_layout = ::GetKeyboardLayoutList(0, NULL);
+    const int num_keyboard_layout = ::GetKeyboardLayoutList(0, nullptr);
     scoped_array<HKL> keyboard_layouts(new HKL[num_keyboard_layout]);
     const size_t num_copied = ::GetKeyboardLayoutList(num_keyboard_layout,
                                                       keyboard_layouts.get());
@@ -352,7 +356,7 @@ HRESULT ImmRegistrar::Unregister(const wstring &ime_filename) {
 }
 
 bool ImmRegistrar::IsIME(HKL hkl, const wstring &ime_filename) {
-  if (hkl == NULL) {
+  if (hkl == nullptr) {
     return false;
   }
 
@@ -447,7 +451,7 @@ wstring ImmRegistrar::GetFullPathForIME() {
 wstring ImmRegistrar::GetLayoutName() {
   wstring layout_name;
   // We use English name here as culture-invariant layout name.
-  if (mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &layout_name) <= 0) {
+  if (Util::UTF8ToWide(kProductNameInEnglish, &layout_name) <= 0) {
     return L"";
   }
   return layout_name;
@@ -625,5 +629,6 @@ HRESULT ImmRegistrar::MovePreloadValueToTop(const KeyboardLayoutID &klid) {
 
   return S_OK;
 }
+
 }  // namespace win32
 }  // namespace mozc

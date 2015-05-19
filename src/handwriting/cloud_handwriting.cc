@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 // Handwriting module connecting to the cloud server.
 
 #include "handwriting/cloud_handwriting.h"
+
+#include "base/logging.h"
 
 
 

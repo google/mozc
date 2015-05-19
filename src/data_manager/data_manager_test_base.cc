@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,14 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/hash_tables.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "converter/connector_base.h"
 #include "converter/connector_interface.h"
 #include "converter/node.h"
+#include "converter/segmenter_base.h"
 #include "converter/segmenter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -53,7 +56,7 @@ namespace {
 
 // Get actual file path for testing
 string GetFilePath(const string &path) {
-  return Util::JoinPath(FLAGS_test_srcdir, path);
+  return FileUtil::JoinPath(FLAGS_test_srcdir, path);
 }
 
 bool ParseLineOfConnectionTxt(
@@ -72,6 +75,7 @@ bool ParseLineOfConnectionTxt(
   *cost = atoi32(tokens[2].c_str());
   return true;
 }
+
 }  // namespace
 
 DataManagerTestBase::DataManagerTestBase(DataManagerInterface *data_manager,
@@ -96,7 +100,8 @@ DataManagerTestBase::~DataManagerTestBase() {}
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
   // the expected boundary rule.
-  const SegmenterInterface *segmenter = data_manager_->GetSegmenter();
+  scoped_ptr<SegmenterInterface> segmenter(
+      SegmenterBase::CreateFromDataManager(*data_manager_));
   for (size_t rid = 0; rid < lsize_; ++rid) {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       EXPECT_EQ(is_boundary_(rid, lid),
@@ -106,7 +111,8 @@ void DataManagerTestBase::SegmenterTest_SameAsInternal() {
 }
 
 void DataManagerTestBase::SegmenterTest_LNodeTest() {
-  const SegmenterInterface *segmenter = data_manager_->GetSegmenter();
+  scoped_ptr<SegmenterInterface> segmenter(
+      SegmenterBase::CreateFromDataManager(*data_manager_));
 
   // lnode is BOS
   Node lnode, rnode;
@@ -123,7 +129,8 @@ void DataManagerTestBase::SegmenterTest_LNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_RNodeTest() {
-  const SegmenterInterface *segmenter = data_manager_->GetSegmenter();
+  scoped_ptr<SegmenterInterface> segmenter(
+      SegmenterBase::CreateFromDataManager(*data_manager_));
 
   // rnode is EOS
   Node lnode, rnode;
@@ -140,7 +147,8 @@ void DataManagerTestBase::SegmenterTest_RNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_NodeTest() {
-  const SegmenterInterface *segmenter = data_manager_->GetSegmenter();
+  scoped_ptr<SegmenterInterface> segmenter(
+      SegmenterBase::CreateFromDataManager(*data_manager_));
 
   Node lnode, rnode;
   lnode.node_type = Node::NOR_NODE;
@@ -157,7 +165,8 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
-  const SegmenterInterface *segmenter = data_manager_->GetSegmenter();
+  scoped_ptr<SegmenterInterface> segmenter(
+      SegmenterBase::CreateFromDataManager(*data_manager_));
   const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
 
   Node lnode, rnode;
@@ -181,7 +190,9 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
   string header_line;
   EXPECT_TRUE(getline(ifs, header_line));
 
-  const ConnectorInterface *connector = data_manager_->GetConnector();
+  scoped_ptr<const ConnectorInterface> connector(
+      ConnectorBase::CreateFromDataManager(*data_manager_));
+  ASSERT_TRUE(connector.get() != NULL);
 
   EXPECT_EQ(expected_resolution_, connector->GetResolution());
 

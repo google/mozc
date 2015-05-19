@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,14 +36,18 @@
 #include "session/common.h"
 
 namespace mozc {
+
 namespace commands {
 class Command;
-}
+}  // namespace commands
+
 namespace session {
 class SessionObserverInterface;
-}
+}  // namespace session
 
-class Session;
+namespace sync {
+class SyncHandler;
+}  // namespace sync
 
 class SessionHandlerInterface {
  public:
@@ -60,6 +64,9 @@ class SessionHandlerInterface {
 
   virtual void AddObserver(
       session::SessionObserverInterface *observer) ABSTRACT;
+
+  // This class doesn't take an ownership of |*sync_handler|.
+  virtual void SetSyncHandler(sync::SyncHandler *sync_handler) ABSTRACT;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerInterface);

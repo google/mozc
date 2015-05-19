@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,37 +28,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 #include "session/request_test_util.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-TEST(ScopedRequestForUnittest, CheckTheScope) {
-  EXPECT_FALSE(GET_REQUEST(mixed_conversion));
+namespace commands {
 
-  {
-    commands::Request request;
-    request.set_mixed_conversion(true);
-
-    EXPECT_FALSE(GET_REQUEST(mixed_conversion));
-
-    const commands::ScopedRequestForUnittest scoped_request(request);
-
-    EXPECT_TRUE(GET_REQUEST(mixed_conversion));
-  }
-
-  EXPECT_FALSE(GET_REQUEST(mixed_conversion));
+TEST(RequestForUnitTest, CheckFillMobileRequest) {
+  Request request;
+  RequestForUnitTest::FillMobileRequest(&request);
+  EXPECT_TRUE(request.zero_query_suggestion());
+  EXPECT_TRUE(request.mixed_conversion());
+  EXPECT_FALSE(request.update_input_mode_from_surrounding_text());
+  EXPECT_EQ(request.special_romanji_table(), Request::TWELVE_KEYS_TO_HIRAGANA);
 }
-
-TEST(ScopedMobileRequestForUnittest, CheckTheScope) {
-  EXPECT_FALSE(GET_REQUEST(zero_query_suggestion));
-
-  {
-    const commands::ScopedMobileRequestForUnittest scoped_mobile_request;
-
-    EXPECT_TRUE(GET_REQUEST(zero_query_suggestion));
-  }
-
-  EXPECT_FALSE(GET_REQUEST(zero_query_suggestion));
-}
+}  // namespace commands
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,20 +35,22 @@
 #include <atlbase_mozc.h>
 #include <atlcom.h>
 #include <msctf.h>
-#include <objbase.h>
 #include <strsafe.h>
+#include <objbase.h>
 
 #include <iomanip>
 #include <map>
 #include <sstream>
 
+#include "base/logging.h"
 #include "base/scoped_handle.h"
 #include "base/scoped_ptr.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "base/win_util.h"
 #include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/immdev.h"
+#include "win32/base/tsf_profile.h"
 
 namespace mozc {
 namespace win32 {
@@ -56,13 +58,14 @@ using ATL::CComPtr;
 using ATL::CRegKey;
 
 namespace {
+
 typedef map<int, DWORD> PreloadOrderToKLIDMap;
 
 // Windows NT 5.1
 const DWORD kDefaultKLIDForMSIMEJa = 0xE0010411;
 const wchar_t kDefaultMSIMEJaFileName[] = L"imjp81.ime";
 
-// Windows NT 6.0, 6.1
+// Windows NT 6.0, 6.1 and 6.2
 const CLSID CLSID_IMJPTIP = {
     0x03b5835f, 0xf03c, 0x411b, {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}
 };
@@ -115,7 +118,7 @@ wstring GetIMEFileNameFromKeyboardLayout(
 }
 
 bool GenerateKeyboardLayoutList(vector<KeyboardLayoutInfo> *keyboard_layouts) {
-  if (keyboard_layouts == NULL) {
+  if (keyboard_layouts == nullptr) {
     return false;
   }
   keyboard_layouts->clear();
@@ -158,7 +161,7 @@ bool GenerateKeyboardLayoutList(vector<KeyboardLayoutInfo> *keyboard_layouts) {
 }
 
 bool GenerateKeyboardLayoutMap(map<DWORD, wstring> *keyboard_layouts) {
-  if (keyboard_layouts == NULL) {
+  if (keyboard_layouts == nullptr) {
     return false;
   }
   vector<KeyboardLayoutInfo> keyboard_layout_list;
@@ -175,7 +178,7 @@ bool GenerateKeyboardLayoutMap(map<DWORD, wstring> *keyboard_layouts) {
 }
 
 wstring GetIMEFileName(HKL hkl) {
-  const UINT num_chars_without_null = ::ImmGetIMEFileName(hkl, NULL, 0);
+  const UINT num_chars_without_null = ::ImmGetIMEFileName(hkl, nullptr, 0);
   const size_t num_chars_with_null = num_chars_without_null + 1;
   scoped_array<wchar_t> buffer(new wchar_t[num_chars_with_null]);
   const UINT num_copied =
@@ -267,7 +270,7 @@ bool GetInstalledProfilesByLanguageForIMM32(
 }
 
 bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
-  if (preload_map == NULL) {
+  if (preload_map == nullptr) {
     return false;
   }
 
@@ -288,8 +291,8 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
                           i,
                           value_name,
                           &value_name_length,
-                          NULL,  // reserved (must be NULL)
-                          NULL,  // type (optional)
+                          nullptr,  // reserved (must be nullptr)
+                          nullptr,  // type (optional)
                           value,
                           &value_length);
     if (ERROR_NO_MORE_ITEMS == result) {
@@ -395,7 +398,7 @@ bool BroadcastNewTIPOnVista(const LayoutProfileInfo &profile) {
 
   hr = profile_manager->ActivateProfile(
       TF_PROFILETYPE_INPUTPROCESSOR, profile.langid, profile.clsid,
-      profile.profile_guid, NULL, activate_flags);
+      profile.profile_guid, nullptr, activate_flags);
   if (FAILED(hr)) {
     return false;
   }
@@ -427,7 +430,7 @@ bool EnableAndBroadcastNewLayout(
     }
     hr = profile_manager->ActivateProfile(
         TF_PROFILETYPE_INPUTPROCESSOR, profile.langid, profile.clsid,
-        profile.profile_guid, NULL, activate_flags);
+        profile.profile_guid, nullptr, activate_flags);
     if (FAILED(hr)) {
       DLOG(ERROR) << "ActivateProfile failed";
       return false;
@@ -452,12 +455,12 @@ bool EnableAndBroadcastNewLayout(
 }
 
 bool GetActiveKeyboardLayouts(vector<HKL> *keyboard_layouts) {
-  if (keyboard_layouts == NULL) {
+  if (keyboard_layouts == nullptr) {
     return false;
   }
   keyboard_layouts->clear();
 
-  const int num_keyboard_layout = ::GetKeyboardLayoutList(0, NULL);
+  const int num_keyboard_layout = ::GetKeyboardLayoutList(0, nullptr);
   scoped_array<HKL> buffer(new HKL[num_keyboard_layout]);
   const int num_copied = ::GetKeyboardLayoutList(num_keyboard_layout,
                                                  buffer.get());
@@ -507,7 +510,7 @@ void EnableAndSetDefaultIfLayoutIsTIP(const KeyboardLayoutInfo &layout) {
       continue;
     }
 
-    HKL hkl = NULL;
+    HKL hkl = nullptr;
     hr = substitute_layout->GetSubstituteKeyboardLayout(profile.clsid,
                                                         profile.langid,
                                                         profile.guidProfile,
@@ -658,12 +661,12 @@ bool RemoveHotKeyForIME(
        ++id) {
     UINT modifiers = 0;
     UINT virtual_key = 0;
-    HKL hkl = NULL;
+    HKL hkl = nullptr;
     BOOL result = ::ImmGetHotKey(id, &modifiers, &virtual_key, &hkl);
     if (result == FALSE) {
       continue;
     }
-    if (hkl == NULL) {
+    if (hkl == nullptr) {
       continue;
     }
     const wstring ime_name = GetIMEFileName(hkl);
@@ -676,8 +679,8 @@ bool RemoveHotKeyForIME(
         continue;
       }
       // ImmSetHotKey fails when both 2nd and 3rd arguments are valid while 4th
-      // argument is NULL.  To remove the HotKey, pass 0 to them.
-      result = ::ImmSetHotKey(id, 0, 0, NULL);
+      // argument is nullptr.  To remove the HotKey, pass 0 to them.
+      result = ::ImmSetHotKey(id, 0, 0, nullptr);
       if (result == FALSE) {
         succeeded = false;
       }
@@ -727,7 +730,8 @@ void RemoveHotKeyForVista(const vector<LayoutProfileInfo> &installed_profiles) {
     DLOG(ERROR) << "RemoveHotKeyForIME failed.";
   }
 }
-}  // anonymous namespace
+
+}  // namespace
 
 KeyboardLayoutInfo::KeyboardLayoutInfo()
     : klid(0) {}
@@ -747,7 +751,7 @@ bool UninstallHelper::GetNewPreloadLayoutsForXP(
     const vector<KeyboardLayoutInfo> &preload_layouts,
     const vector<KeyboardLayoutInfo> &installed_layouts,
     vector<KeyboardLayoutInfo> *new_preloads) {
-  if (new_preloads == NULL) {
+  if (new_preloads == nullptr) {
     return false;
   }
 
@@ -782,16 +786,16 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
     LayoutProfileInfo *current_default,
     LayoutProfileInfo *new_default,
     vector<LayoutProfileInfo> *removed_profiles) {
-  if (current_default == NULL) {
+  if (current_default == nullptr) {
     return false;
   }
   // Initialize in case no entry is marked as default.
   *current_default = LayoutProfileInfo();
 
-  if (new_default == NULL) {
+  if (new_default == nullptr) {
     return false;
   }
-  if (removed_profiles == NULL) {
+  if (removed_profiles == nullptr) {
     return false;
   }
   removed_profiles->clear();
@@ -804,13 +808,19 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
       *current_default = profile;
     }
 
-    if (!profile.is_tip) {
-      if (WinUtil::SystemEqualString(
-              profile.ime_filename, ImmRegistrar::GetFileNameForIME(), true)) {
-        // This is the full IMM32 version of Google Japanese Input.
-        removed_profiles->push_back(profile);
-        continue;
-      }
+    if (!profile.is_tip &&
+        WinUtil::SystemEqualString(
+            profile.ime_filename, ImmRegistrar::GetFileNameForIME(), true)) {
+      // This is the full IMM32 version of Google Japanese Input.
+      removed_profiles->push_back(profile);
+      continue;
+    }
+    if (profile.is_tip &&
+        ::IsEqualCLSID(TsfProfile::GetTextServiceGuid(), profile.clsid) &&
+        ::IsEqualGUID(TsfProfile::GetProfileGuid(), profile.profile_guid)) {
+      // This is the full TSF version of Google Japanese Input.
+      removed_profiles->push_back(profile);
+      continue;
     }
 
     if (!default_found && profile.is_enabled && profile.is_default) {
@@ -844,7 +854,7 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
 bool UninstallHelper::GetInstalledProfilesByLanguage(
     LANGID langid,
     vector<LayoutProfileInfo> *installed_profiles) {
-  if (installed_profiles == NULL) {
+  if (installed_profiles == nullptr) {
     return false;
   }
   installed_profiles->clear();
@@ -867,11 +877,11 @@ bool UninstallHelper::GetInstalledProfilesByLanguage(
 bool UninstallHelper::GetKeyboardLayoutsForXP(
     vector<KeyboardLayoutInfo> *preload_layouts,
     vector<KeyboardLayoutInfo> *installed_layouts) {
-  if (preload_layouts == NULL) {
+  if (preload_layouts == nullptr) {
     return false;
   }
   preload_layouts->clear();
-  if (installed_layouts == NULL) {
+  if (installed_layouts == nullptr) {
     return false;
   }
   installed_layouts->clear();
@@ -905,7 +915,7 @@ bool UninstallHelper::GetKeyboardLayoutsForXP(
 
 bool UninstallHelper::GetCurrentProfilesForVista(
     vector<LayoutProfileInfo> *current_profiles) {
-  if (current_profiles == NULL) {
+  if (current_profiles == nullptr) {
     return false;
   }
   current_profiles->clear();
@@ -913,7 +923,7 @@ bool UninstallHelper::GetCurrentProfilesForVista(
   if (!InputDll::EnsureInitialized()) {
     return false;
   }
-  if (InputDll::enum_enabled_layout_or_tip() == NULL) {
+  if (InputDll::enum_enabled_layout_or_tip() == nullptr) {
     return false;
   }
 
@@ -923,12 +933,12 @@ bool UninstallHelper::GetCurrentProfilesForVista(
   }
 
   {
-    const UINT num_element =
-        InputDll::enum_enabled_layout_or_tip()(NULL, NULL, NULL, NULL, 0);
+    const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
+        nullptr, nullptr, nullptr, nullptr, 0);
     scoped_array<LAYOUTORTIPPROFILE> buffer(
         new LAYOUTORTIPPROFILE[num_element]);
     const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
-        NULL, NULL, NULL, buffer.get(), num_element);
+        nullptr, nullptr, nullptr, buffer.get(), num_element);
 
     for (size_t i = 0; i < num_copied; ++i) {
       const LAYOUTORTIPPROFILE &src = buffer[i];
@@ -1048,7 +1058,7 @@ bool UninstallHelper::RemoveProfilesForVista(
   if (!InputDll::EnsureInitialized()) {
     return false;
   }
-  if (InputDll::install_layout_or_tip_user_reg() == NULL) {
+  if (InputDll::install_layout_or_tip_user_reg() == nullptr) {
     return false;
   }
 
@@ -1056,7 +1066,7 @@ bool UninstallHelper::RemoveProfilesForVista(
       profiles_to_be_removed);
 
   const BOOL result = InputDll::install_layout_or_tip_user_reg()(
-      NULL, NULL, NULL, profile_string.c_str(), ILOT_UNINSTALL);
+      nullptr, nullptr, nullptr, profile_string.c_str(), ILOT_UNINSTALL);
 
   return result != FALSE;
 }
@@ -1117,7 +1127,7 @@ bool UninstallHelper::SetDefaultForVista(
     return false;
   }
 
-  if (InputDll::set_default_layout_or_tip() == NULL) {
+  if (InputDll::set_default_layout_or_tip() == nullptr) {
     return false;
   }
 
@@ -1227,7 +1237,7 @@ bool UninstallHelper::RestoreUserIMEEnvironmentMain() {
   // start to use the new default IME.
   const bool kBroadcastNewIME = true;
 
-  if (Util::IsVistaOrLater()) {
+  if (SystemUtil::IsVistaOrLater()) {
     return RestoreUserIMEEnvironmentForVista(kBroadcastNewIME);
   } else {
     return RestoreUserIMEEnvironmentForXP(kBroadcastNewIME);
@@ -1254,7 +1264,7 @@ bool UninstallHelper::EnsureIMEIsRemovedForCurrentUser(
   // notification will not be sent in case it causes unwilling side-effects
   // against other important processes running in the service session.
   const bool kBroadcastNewIME = false;
-  if (Util::IsVistaOrLater()) {
+  if (SystemUtil::IsVistaOrLater()) {
     return RestoreUserIMEEnvironmentForVista(kBroadcastNewIME);
   } else {
     return RestoreUserIMEEnvironmentForXP(kBroadcastNewIME);

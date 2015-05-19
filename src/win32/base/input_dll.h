@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,7 @@ class InputDll {
   // become available. When this method returns true, the returned value of
   // each accessor method like |set_default_layout_or_tip()| is the same to
   // the returned address of GetProcAddress API.  If |EnsureInitialized()|
-  // returns true but the accessor method returns NULL, it means that the DLL
+  // returns true but the accessor method returns nullptr, it means that the DLL
   // exists on the system but the expected function is not exported.
   // You can call this method multiple times from multiple threads.  In other
   // words, you can use this method like 'IsInizialized'.
@@ -127,9 +127,9 @@ class InputDll {
   //   URL:
   //     http://msdn.microsoft.com/en-us/library/bb847908.aspx
   //   Return Value:
-  //     |pLayoutOrTip == NULL|
+  //     |pLayoutOrTip == nullptr|
   //        The number of elements to be returned.
-  //     |pLayoutOrTip != NULL|
+  //     |pLayoutOrTip != nullptr|
   //        The number of elements actually copied to |pLayoutOrTip|.
   typedef UINT (CALLBACK *FPEnumLayoutOrTipForSetup)(
     __in                     LANGID langid,
@@ -137,6 +137,30 @@ class InputDll {
     __in                     UINT uBufLength,
     __in                     DWORD dwFlags);
   static FPEnumLayoutOrTipForSetup enum_layout_or_tip_for_setup();
+
+  // Returns a function pointer to the InstallLayoutOrTip API, which is
+  // available on Vista or later via input.dll to enable the specified
+  // keyboard layouts or text services for the current user.
+  //
+  // InstallLayoutOrTip:
+  //   URL:
+  //     http://msdn.microsoft.com/en-us/library/bb847909.aspx
+  //   Remarks:
+  //     The string format of the layout list is:
+  //       <LangID 1>:<KLID 1>;[...<LangID N>:<KLID N>
+  //     The string format of the text service profile list is:
+  //       <LangID 1>:{CLSID of TIP}{GUID of LanguageProfile};
+  //     where GUID should be like {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}.
+  //     This format seems to be corresponding to the registry key, e.g.
+  //       HKLM\SOFTWARE\Microsoft\CTF\TIP\{CLSID of TIP}\LanguageProfile\
+  //       {Land ID}\{GUID of LanguageProfile}
+  //   Return Value:
+  //     TRUE: The function was successful.
+  //     FALSE: An unspecified error occurred.
+  typedef BOOL (CALLBACK *FPInstallLayoutOrTip)(
+    __in      LPCWSTR psz,
+    __in      DWORD dwFlags);
+  static FPInstallLayoutOrTip install_layout_or_tip();
 
   // Returns a function pointer to the InstallLayoutOrTipUserReg API, which
   // is available on Vista or later via input.dll to enable the specified
@@ -159,8 +183,8 @@ class InputDll {
   //     FALSE: An unspecified error occurred.
   //   Observational Facts:
   //     Like ImmInstallIME API, calling InstallLayoutOrTipUserReg from 32-bit
-  //     process on Windows 64-bit is not recommended.  Otherwise, we will see
-  //     some weird issues like b/2931871.
+  //     process to install x64 binaries is not recommended.  Otherwise, we
+  //     will see some weird issues like b/2931871.
   typedef BOOL (CALLBACK *FPInstallLayoutOrTipUserReg)(
     __in_opt  LPCWSTR pszUserReg,
     __in_opt  LPCWSTR pszSystemReg,
@@ -209,12 +233,13 @@ class InputDll {
   static bool not_found_;
   static FPEnumEnabledLayoutOrTip enum_enabled_layout_or_tip_;
   static FPEnumLayoutOrTipForSetup enum_layout_or_tip_for_setup_;
+  static FPInstallLayoutOrTip install_layout_or_tip_;
   static FPInstallLayoutOrTipUserReg install_layout_or_tip_user_reg_;
   static FPSetDefaultLayoutOrTip set_default_layout_or_tip_;
 
   FRIEND_TEST(InputDllTest, EnsureInitializedTest);
 
-  DISALLOW_COPY_AND_ASSIGN(InputDll);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(InputDll);
 };
 }  // namespace win32
 }  // namespace mozc

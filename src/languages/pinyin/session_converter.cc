@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "languages/pinyin/direct_context.h"
 #include "languages/pinyin/english_context.h"
@@ -53,7 +54,8 @@ SessionConverter::SessionConverter(const SessionConfig &session_config)
     : pinyin_context_(new PinyinContext(session_config)),
       direct_context_(new direct::DirectContext(session_config)),
       english_context_(new english::EnglishContext(session_config)),
-      punctuation_context_(new punctuation::PunctuationContext(session_config)) {
+      punctuation_context_(
+          new punctuation::PunctuationContext(session_config)) {
   context_ = pinyin_context_.get();
 }
 

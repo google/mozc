@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<project name="GoogleJapaneseInputTest" default="help">
+
+    <!-- The local.properties file is created and updated by the 'android' tool.
+         It contains the path to the SDK. It should *NOT* be checked into
+         Version Control Systems. -->
+    <property file="local.properties"/>
+
+    <!-- The ant.properties file can be created by you. It is only edited by the
+         'android' tool to add properties to it.
+         This is the place to change some Ant specific build properties.
+         Here are some properties you may want to change/update:
+
+         source.dir
+             The name of the source directory. Default is 'src'.
+         out.dir
+             The name of the output directory. Default is 'bin'.
+
+         For other overridable properties, look at the beginning of the rules
+         files in the SDK, at tools/ant/build.xml
+
+         Properties related to the SDK location or the project target should
+         be updated using the 'android' tool with the 'update' action.
+
+         This file is an integral part of the build system for your
+         application and should be checked into Version Control Systems.
+
+         -->
+    <loadproperties srcFile="ant.properties"/>
+
+    <!-- The project.properties file is created and updated by the 'android'
+         tool, as well as ADT.
+
+         This contains project specific properties such as project target, and library
+         dependencies. Lower level build properties are stored in ant.properties
+         (or in .classpath for Eclipse projects).
+
+         This file is an integral part of the build system for your
+         application and should be checked into Version Control Systems. -->
+    <loadproperties srcFile="project.properties"/>
+
+    <!-- quick check on sdk.dir -->
+    <fail
+            message="sdk.dir is missing. Make sure to generate local.properties using 'android update project'"
+            unless="sdk.dir"
+    />
+
+    <!-- Compiles Java source files for ourselves.
+
+         There is a bug in sdk that referenced projects (of tested projects)
+         are invisible from test projects.
+         In our case, protobuf project is referred from tested project,
+         but we also use protobuf in the test project.
+         Unfortunately, specifying the project in project.properties of test
+         project doesn't work, because they'd be included in test .apk file,
+         but what we need here is just reference of the library at compile
+         time.  (If we include it into test .apk, we'll see runtime error,
+         due to class file resolution.)
+         (cf. http://code.google.com/p/android/issues/detail?id=23365).
+
+         This hack compiles Java source files for the test project with
+         a customized class path.  "-pre-compile" target runs prior to
+         "-compile" target and generates the compiled class files.
+         When "-compile" target runs, it finds all the Java source files
+         have already been compiled and class files are up-to-date.
+         Then, it simply skips the compilation.
+
+         Reasons why not define our own "-compile" target are;
+         "-compile" target is not designed for customization while
+         "-pre-compile" is, and "-compile" target does more things than just
+         compilation.  We'd like to re-use the rest of them.
+
+         The following target is mostly copied from <javac> task in "-compile"
+         target in build.xml of r14/r15.  The difference is that Protocol Buffer
+         and Android Mock libraries are added to the class path.
+    -->
+    <target name="-pre-compile">
+      <condition property="extensible.classpath"
+                 value="${tested.project.absolute.dir}/bin/classes"
+                 else=".">
+        <isset property="tested.project.absolute.dir" />
+      </condition>
+      <condition property="extensible.libs.classpath"
+                 value="${tested.project.absolute.dir}/${jar.libs.dir}"
+                 else="${jar.libs.dir}">
+        <isset property="tested.project.absolute.dir" />
+      </condition>
+      <javac encoding="${java.encoding}"
+             source="${java.source}" target="${java.target}"
+             debug="true" extdirs=""
+             destdir="${out.classes.absolute.dir}"
+             bootclasspathref="project.target.class.path"
+             verbose="${verbose}"
+             classpath="${extensible.classpath}"
+             classpathref="project.all.jars.path">
+        <src path="${source.absolute.dir}" />
+        <src path="${gen.absolute.dir}" />
+        <classpath>
+          <fileset file="${tested.project.absolute.dir}/protobuf/bin/classes.jar" />
+          <fileset dir="${extensible.libs.classpath}" includes="*.jar" />
+        </classpath>
+      </javac>
+    </target>
+
+    <target name="run-tests"
+            description="Runs the test suite.">
+      <!-- Name of the application package extracted from manifest file
+           NOTE: Android SDK r14 doesn't extract manifest.package at "test"
+           target, though it should take care of it.
+           r15 has fixed this issue.
+           TODO(matsuzakit): Remove below hack if possible.
+      -->
+      <xpath input="AndroidManifest.xml" expression="/manifest/@package"
+             output="manifest.package"/>
+      <if>
+        <condition>
+          <equals arg1="${build_type}" arg2="Release_Android"/>
+        </condition>
+        <then>
+          <!-- If we could have an obfuscation stage here, it would be a good
+               testing. -->
+        </then>
+      </if>
+      <antcall target="installt"/>
+      <antcall target="test"/>
+    </target>
+
+    <!-- Import the actual build file.
+
+         To customize existing targets, there are two options:
+         - Customize only one target:
+             - copy/paste the target into this file, *before* the
+               <import> task.
+             - customize it to your needs.
+         - Customize the whole content of build.xml
+             - copy/paste the content of the rules files (minus the top node)
+               into this file, replacing the <import> task.
+             - customize to your needs.
+
+         ***********************
+         ****** IMPORTANT ******
+         ***********************
+         In all cases you must update the value of version-tag below to read 'custom' instead of an integer,
+         in order to avoid having your file be overridden by tools such as "android update project"
+    -->
+    <!-- version-tag: custom -->
+    <target name="test" depends="-test-project-check"
+                description="Runs tests from the package defined in test.package property">
+      <property name="tested.project.absolute.dir" location="${tested.project.dir}" />
+      <if condition="${mozc.stresstest}">
+        <then>
+          <property name="test.runner" value="org.mozc.android.inputmethod.japanese.stresstest.MozcStressTestRunner" />
+        </then>
+        <else>
+          <property name="test.runner" value="org.mozc.android.inputmethod.japanese.testing.MozcTestRunner" />
+        </else>
+      </if>
+      <!-- Application package of the tested project extracted from its manifest file -->
+      <xpath input="${tested.project.absolute.dir}/AndroidManifest.xml"
+             expression="/manifest/@package" output="tested.manifest.package" />
+      <property name="emma.dump.file"
+                value="/data/data/${tested.manifest.package}/coverage.ec" />
+      <run-tests-helper />
+    </target>
+    <import file="${sdk.dir}/tools/ant/build.xml"/>
+
+</project>

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -94,17 +94,39 @@ uint32 Util::Fingerprint32WithSeed(const char *str,
 
   c += static_cast<uint32>(length);
   switch (len) {
-    case 11: c += ((uint32)str[10] << 24);
-    case 10: c += ((uint32)str[9] << 16);
-    case 9 : c += ((uint32)str[8] << 8);
-    case 8 : b += ((uint32)str[7] << 24);
-    case 7 : b += ((uint32)str[6] << 16);
-    case 6 : b += ((uint32)str[5] << 8);
-    case 5 : b += str[4];
-    case 4 : a += ((uint32)str[3] << 24);
-    case 3 : a += ((uint32)str[2] << 16);
-    case 2 : a += ((uint32)str[1] << 8);
-    case 1 : a += str[0];
+    case 11:
+      c += ((uint32) str[10] << 24);
+      FALLTHROUGH_INTENDED;
+    case 10:
+      c += ((uint32) str[9] << 16);
+      FALLTHROUGH_INTENDED;
+    case 9:
+      c += ((uint32) str[8] << 8);
+      FALLTHROUGH_INTENDED;
+    case 8:
+      b += ((uint32) str[7] << 24);
+      FALLTHROUGH_INTENDED;
+    case 7:
+      b += ((uint32) str[6] << 16);
+      FALLTHROUGH_INTENDED;
+    case 6:
+      b += ((uint32) str[5] << 8);
+      FALLTHROUGH_INTENDED;
+    case 5:
+      b += str[4];
+      FALLTHROUGH_INTENDED;
+    case 4:
+      a += ((uint32) str[3] << 24);
+      FALLTHROUGH_INTENDED;
+    case 3:
+      a += ((uint32) str[2] << 16);
+      FALLTHROUGH_INTENDED;
+    case 2:
+      a += ((uint32) str[1] << 8);
+      FALLTHROUGH_INTENDED;
+    case 1:
+      a += str[0];
+      break;
   }
   mix(a, b, c);
 

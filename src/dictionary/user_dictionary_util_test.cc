@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -422,6 +422,159 @@ TEST(UserDictionaryUtilTest, ResolveUnknownFieldSet3) {
       ">\n",
       storage);
 }
+
+TEST(UserDictionaryUtilTest, ResolveUnknownFieldWithRemovedPosType1) {
+  user_dictionary::UserDictionaryStorage storage;
+  {
+    UserDictionary *dictionary = storage.add_dictionaries();
+    UserDictionary::Entry *entry = dictionary->add_entries();
+    entry->set_key("key");
+    entry->set_value("value");
+    entry->set_comment("comment");
+
+    UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
+    // "名詞副詞可能"
+    unknown_field_set->AddLengthDelimited(
+        3,
+        "\xE5\x90\x8D\xE8\xA9\x9E\xE5\x89\xAF\xE8\xA9\x9E"
+        "\xE5\x8F\xAF\xE8\x83\xBD");
+  }
+
+  // Migrate old string formatted pos to the actual Entry::pos.
+  UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
+  EXPECT_PROTO_EQ(
+      "dictionaries <\n"
+      "  entries <\n"
+      "    key: \"key\"\n"
+      "    value: \"value\"\n"
+      "    pos: NOUN\n"
+      "    comment: \"comment\"\n"
+      "  >\n"
+      ">\n",
+      storage);
+}
+
+TEST(UserDictionaryUtilTest, ResolveUnknownFieldWithRemovedPosType2) {
+  static const char *kTestLengthDelimited[] = {
+    // "接頭形容詞接続"
+    "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E"
+    "\xE6\x8E\xA5\xE7\xB6\x9A",
+    // "接頭数接続"
+    "\xE6\x8E\xA5\xE9\xA0\xAD\xE6\x95\xB0\xE6\x8E\xA5\xE7\xB6\x9A",
+    // "接頭動詞接続"
+    "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\x8B\x95\xE8\xA9\x9E\xE6\x8E\xA5\xE7\xB6\x9A",
+    // "接頭名詞接続"
+    "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\x90\x8D\xE8\xA9\x9E\xE6\x8E\xA5\xE7\xB6\x9A",
+  };
+
+  for (size_t test_case_index = 0;
+       test_case_index < arraysize(kTestLengthDelimited); ++test_case_index) {
+    user_dictionary::UserDictionaryStorage storage;
+    {
+      UserDictionary *dictionary = storage.add_dictionaries();
+      UserDictionary::Entry *entry = dictionary->add_entries();
+      entry->set_key("key");
+      entry->set_value("value");
+      entry->set_comment("comment");
+
+      UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
+      unknown_field_set->AddLengthDelimited(
+          3, kTestLengthDelimited[test_case_index]);
+    }
+
+    // Migrate old string formatted pos to the actual Entry::pos.
+    UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
+    EXPECT_PROTO_EQ(
+        "dictionaries <\n"
+        "  entries <\n"
+        "    key: \"key\"\n"
+        "    value: \"value\"\n"
+        "    pos: PREFIX\n"
+        "    comment: \"comment\"\n"
+        "  >\n"
+        ">\n",
+        storage);
+  }
+}
+
+TEST(UserDictionaryUtilTest, ResolveUnknownFieldWithRemovedPosType3) {
+  static const char *kTestLengthDelimited[] = {
+    // "形容詞アウオ段"
+    "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E"
+    "\xE3\x82\xA2\xE3\x82\xA6\xE3\x82\xAA\xE6\xAE\xB5",
+    // "形容詞イ段"
+    "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E\xE3\x82\xA4\xE6\xAE\xB5",
+  };
+
+  for (size_t test_case_index = 0;
+       test_case_index < arraysize(kTestLengthDelimited); ++test_case_index) {
+    user_dictionary::UserDictionaryStorage storage;
+    {
+      UserDictionary *dictionary = storage.add_dictionaries();
+      UserDictionary::Entry *entry = dictionary->add_entries();
+      entry->set_key("key");
+      entry->set_value("value");
+      entry->set_comment("comment");
+
+      UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
+      unknown_field_set->AddLengthDelimited(
+          3, kTestLengthDelimited[test_case_index]);
+    }
+
+    // Migrate old string formatted pos to the actual Entry::pos.
+    UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
+    EXPECT_PROTO_EQ(
+        "dictionaries <\n"
+        "  entries <\n"
+        "    key: \"key\"\n"
+        "    value: \"value\"\n"
+        "    pos: ADJECTIVE\n"
+        "    comment: \"comment\"\n"
+        "  >\n"
+        ">\n",
+        storage);
+  }
+}
+
+
+TEST(UserDictionaryUtilTest, ResolveUnknownFieldWithRemovedPosType4) {
+  static const char *kTestLengthDelimited[] = {
+    // "括弧開"
+    "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x8B",
+    // "括弧閉"
+    "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x89",
+  };
+
+  for (size_t test_case_index = 0;
+       test_case_index < arraysize(kTestLengthDelimited); ++test_case_index) {
+    user_dictionary::UserDictionaryStorage storage;
+    {
+      UserDictionary *dictionary = storage.add_dictionaries();
+      UserDictionary::Entry *entry = dictionary->add_entries();
+      entry->set_key("key");
+      entry->set_value("value");
+      entry->set_comment("comment");
+
+      UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
+      unknown_field_set->AddLengthDelimited(
+          3, kTestLengthDelimited[test_case_index]);
+    }
+
+    // Migrate old string formatted pos to the actual Entry::pos.
+    UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
+    EXPECT_PROTO_EQ(
+        "dictionaries <\n"
+        "  entries <\n"
+        "    key: \"key\"\n"
+        "    value: \"value\"\n"
+        "    pos: SYMBOL\n"
+        "    comment: \"comment\"\n"
+        "  >\n"
+        ">\n",
+        storage);
+  }
+}
+
 
 TEST(UserDictionaryUtilTest, CreateDictionary) {
   user_dictionary::UserDictionaryStorage storage;

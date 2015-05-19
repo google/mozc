@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,10 @@
 
 #include <pwd.h>
 
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/singleton.h"
-#include "base/util.h"
-#include "converter/empty_user_data_manager.h"
+#include "engine/empty_user_data_manager.h"
 #include "languages/chewing/session.h"
 
 #if defined(OS_CHROMEOS)
@@ -42,11 +43,12 @@ DEFINE_string(datapath, "/usr/share/chewing",
 #else
 DEFINE_string(datapath, "/usr/share/libchewing3/chewing",
               "the default path of libchewing");
-#endif
+#endif  // OS_CHROMEOS
 
 namespace mozc {
+
 string GetHashPath() {
-  // The logic below is copied from Util::GetUserProfileDirectory().
+  // The logic below is copied from SystemUtil::GetUserProfileDirectory().
   string dir;
   char buf[1024];
   struct passwd pw, *ppw;
@@ -56,14 +58,15 @@ string GetHashPath() {
   CHECK_LT(0, strlen(pw.pw_dir))
       << "Home directory for uid " << uid << " is not set.";
 #if defined(OS_CHROMEOS)
-  dir = Util::JoinPath(pw.pw_dir, "user/.chewing");
+  dir = FileUtil::JoinPath(pw.pw_dir, "user/.chewing");
 #else
-  dir = Util::JoinPath(pw.pw_dir, ".chewing");
-#endif
+  dir = FileUtil::JoinPath(pw.pw_dir, ".chewing");
+#endif  // OS_CHROMEOS
   return dir;
 }
 
 namespace chewing {
+
 // The default session factory implementation for chewing.  We do not
 // use the implementation in session/session_factory.cc.  We do not
 // even link to it because the default session factory refers to the
@@ -71,12 +74,12 @@ namespace chewing {
 // here.
 ChewingSessionFactory::ChewingSessionFactory() {
   string hash_path = GetHashPath();
-  if (!Util::DirectoryExists(hash_path)) {
-    string hash_dir = Util::Dirname(hash_path);
+  if (!FileUtil::DirectoryExists(hash_path)) {
+    string hash_dir = FileUtil::Dirname(hash_path);
     // In Chrome OS, hash_dir would be ~/user, which might not exist.
-    if (Util::DirectoryExists(hash_dir) ||
-        Util::CreateDirectory(hash_dir)) {
-      Util::CreateDirectory(hash_path);
+    if (FileUtil::DirectoryExists(hash_dir) ||
+        FileUtil::CreateDirectory(hash_dir)) {
+      FileUtil::CreateDirectory(hash_path);
     }
   }
   ::chewing_Init(FLAGS_datapath.c_str(), hash_path.c_str());
@@ -86,13 +89,13 @@ ChewingSessionFactory::~ChewingSessionFactory() {
   ::chewing_Terminate();
 }
 
-mozc::session::SessionInterface *ChewingSessionFactory::NewSession() {
-  return new mozc::chewing::Session();
+session::SessionInterface *ChewingSessionFactory::NewSession() {
+  return new Session();
 }
 
 UserDataManagerInterface *ChewingSessionFactory::GetUserDataManager() {
   return Singleton<EmptyUserDataManager>::get();
 }
 
-}  // namespace session
+}  // namespace chewing
 }  // namespace mozc

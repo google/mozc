@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,10 @@
 
 #include "base/base.h"
 #include "base/coordinates.h"
+#include "base/logging.h"
 #include "client/client_interface.h"
-#include "session/commands.pb.h"
 #include "renderer/mac/InfolistWindow.h"
+#include "session/commands.pb.h"
 
 using mozc::commands::Candidates;
 using mozc::commands::Output;

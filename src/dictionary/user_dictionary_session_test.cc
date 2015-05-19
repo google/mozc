@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,12 @@
 
 #include "dictionary/user_dictionary_session.h"
 
-#include "base/util.h"
+#ifndef OS_WIN
+#include <sys/stat.h>
+#endif  // OS_WIN
+
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "base/testing_util.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_storage.h"
@@ -55,7 +60,8 @@ const char kDictionaryData[] =
     "\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\t\xE9\x88\xB4"
     "\xE6\x9C\xA8\t\xE4\xBA\xBA\xE5\x90\x8D\n";
 
-using ::mozc::Util;
+using ::mozc::FileUtil;
+using ::mozc::SystemUtil;
 using ::mozc::user_dictionary::UserDictionary;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 using ::mozc::user_dictionary::UserDictionarySession;
@@ -64,21 +70,21 @@ using ::mozc::user_dictionary::UserDictionaryStorage;
 class UserDictionarySessionTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    original_user_profile_directory_ = Util::GetUserProfileDirectory();
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Util::Unlink(GetUserDictionaryFile());
+    original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    FileUtil::Unlink(GetUserDictionaryFile());
   }
 
   virtual void TearDown() {
-    Util::Unlink(GetUserDictionaryFile());
-    Util::SetUserProfileDirectory(original_user_profile_directory_);
+    FileUtil::Unlink(GetUserDictionaryFile());
+    SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
   }
 
   static string GetUserDictionaryFile() {
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
     chmod(FLAGS_test_tmpdir.c_str(), 0777);
-#endif
-    return Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+#endif  // OS_WIN
+    return FileUtil::JoinPath(FLAGS_test_tmpdir, "test.db");
   }
 
   void ResetEntry(
@@ -129,7 +135,7 @@ TEST_F(UserDictionarySessionTest, LoadWithEnsuringNonEmptyStorage) {
   EXPECT_PROTO_PEQ(
       "dictionaries: < name: \"abcde\" >",
       session.storage());
-#endif
+#endif  // ENABLE_CLOUD_SYNC
 }
 
 // Unfortunately the limit size of the stored file is hard coded in

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ class SingleKanjiRewriter : public RewriterInterface  {
   explicit SingleKanjiRewriter(const POSMatcher &pos_matcher);
   virtual ~SingleKanjiRewriter();
 
-  virtual int capability() const;
+  virtual int capability(const ConversionRequest &request) const;
 
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;

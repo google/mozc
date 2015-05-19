@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,20 +41,20 @@ namespace win32 {
 template <class T>
 class ScopedHIMC {
  public:
-  explicit ScopedHIMC(HIMC himc) : himc_(NULL), pointer_(NULL) {
+  explicit ScopedHIMC(HIMC himc) : himc_(nullptr), pointer_(nullptr) {
     pointer_ = static_cast<T*>(::ImmLockIMC(himc));
-    if (pointer_ == NULL) {
+    if (pointer_ == nullptr) {
       return;
     }
     himc_ = himc;
   }
 
   ~ScopedHIMC() {
-    if (himc_ != NULL) {
+    if (himc_ != nullptr) {
       ::ImmUnlockIMC(himc_);
-      himc_ = NULL;
+      himc_ = nullptr;
     }
-    pointer_ = NULL;
+    pointer_ = nullptr;
   }
 
   const T *get() const {
@@ -82,18 +82,18 @@ class ScopedHIMC {
 template <class T>
 class ScopedHIMCC {
  public:
-  explicit ScopedHIMCC(HIMCC himcc) : himcc_(himcc), pointer_(NULL) {
+  explicit ScopedHIMCC(HIMCC himcc) : himcc_(himcc), pointer_(nullptr) {
     pointer_ = static_cast<T*>(::ImmLockIMCC(himcc_));
-    if (pointer_ == NULL) {
-      himcc_ = NULL;
+    if (pointer_ == nullptr) {
+      himcc_ = nullptr;
     }
   }
 
   ~ScopedHIMCC() {
-    if (himcc_ != NULL) {
+    if (himcc_ != nullptr) {
       ::ImmUnlockIMCC(himcc_);
     }
-    pointer_ = NULL;
+    pointer_ = nullptr;
   }
 
   const T *get() const {

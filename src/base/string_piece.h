@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,8 +51,14 @@ class StringPiece {
       : ptr_(str), length_((str != NULL) ? strlen(str) : 0) {}
   StringPiece(const string &str)  // NOLINT
       : ptr_(str.data()), length_(str.size()) {}
+  // Constructs a StringPiece from char ptr and length.
+  // Caution! There are confusing two constructors which takes 2 arguments.
+  // This method's 2nd argument is *length*.
   StringPiece(const char *offset, size_type len)
       : ptr_(offset), length_(len) {}
+  // Caution! This method's 2nd argument is *position*.
+  StringPiece(const StringPiece str, size_type pos);
+  StringPiece(const StringPiece str, size_type pos, size_type len);
 
   // data() may return a pointer to a buffer with embedded NULs, and the
   // returned buffer may or may not be null terminated.  Therefore it is

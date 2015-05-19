@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,12 +39,8 @@
 namespace mozc {
 namespace composer {
 
-namespace {
-const TransliteratorInterface *kNullT12r = NULL;
-}  // namespace
-
 Composition::Composition(const Table *table)
-    : table_(table), input_t12r_(NULL) {}
+    : table_(table), input_t12r_(Transliterators::CONVERSION_STRING) {}
 
 Composition::~Composition() {
   Erase();
@@ -95,7 +91,7 @@ size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
     mutable_input.set_is_new_input(false);
   }
 
-  return GetPosition(kNullT12r, right_chunk);
+  return GetPosition(Transliterators::LOCAL, right_chunk);
 }
 
 // Deletes a right-hand character of the composition.
@@ -111,7 +107,7 @@ size_t Composition::DeleteAt(const size_t position) {
   // And DeleteAt(0) is invoked, we have to delete both chunks.
   while (!chunks_.empty() && GetLength() == original_size) {
     MaybeSplitChunkAt(position, &chunk_it);
-    new_position = GetPosition(kNullT12r, chunk_it);
+    new_position = GetPosition(Transliterators::LOCAL, chunk_it);
     if (chunk_it == chunks_.end()) {
       break;
     }
@@ -119,14 +115,14 @@ size_t Composition::DeleteAt(const size_t position) {
     // We have to consider 0-length chunk.
     // If a chunk contains only invisible characters,
     // the result of GetLength is 0.
-    if ((*chunk_it)->GetLength(kNullT12r) <= 1) {
+    if ((*chunk_it)->GetLength(Transliterators::LOCAL) <= 1) {
       delete *chunk_it;
       chunks_.erase(chunk_it);
       continue;
     }
 
     CharChunk *left_deleted_chunk_ptr = NULL;
-    (*chunk_it)->SplitChunk(kNullT12r, 1, &left_deleted_chunk_ptr);
+    (*chunk_it)->SplitChunk(Transliterators::LOCAL, 1, &left_deleted_chunk_ptr);
     scoped_ptr<CharChunk> left_deleted_chunk(left_deleted_chunk_ptr);
   }
   return new_position;
@@ -134,8 +130,8 @@ size_t Composition::DeleteAt(const size_t position) {
 
 size_t Composition::ConvertPosition(
     const size_t position_from,
-    const TransliteratorInterface *transliterator_from,
-    const TransliteratorInterface *transliterator_to) {
+    Transliterators::Transliterator transliterator_from,
+    Transliterators::Transliterator transliterator_to) {
   // TODO(komatsu) This is a hacky way.
   if (transliterator_from == transliterator_to) {
     return position_from;
@@ -188,7 +184,7 @@ size_t Composition::ConvertPosition(
 
 size_t Composition::SetDisplayMode(
     const size_t position,
-    const TransliteratorInterface *transliterator) {
+    Transliterators::Transliterator transliterator) {
   SetTransliterator(0, GetLength(), transliterator);
   SetInputMode(transliterator);
   return GetLength();
@@ -197,7 +193,7 @@ size_t Composition::SetDisplayMode(
 void Composition::SetTransliterator(
     const size_t position_from,
     const size_t position_to,
-    const TransliteratorInterface *transliterator) {
+    Transliterators::Transliterator transliterator) {
   if (position_from > position_to) {
     LOG(ERROR) << "position_from should not be greater than position_to.";
     return;
@@ -209,11 +205,12 @@ void Composition::SetTransliterator(
 
   CharChunkList::iterator chunk_it;
   size_t inner_position_from;
-  GetChunkAt(position_from, kNullT12r, &chunk_it, &inner_position_from);
+  GetChunkAt(position_from, Transliterators::LOCAL, &chunk_it,
+             &inner_position_from);
 
   CharChunkList::iterator end_it;
   size_t inner_position_to;
-  GetChunkAt(position_to, kNullT12r, &end_it, &inner_position_to);
+  GetChunkAt(position_to, Transliterators::LOCAL, &end_it, &inner_position_to);
 
   // chunk_it and end_it can be the same iterator from the beginning.
   while (chunk_it != end_it) {
@@ -223,21 +220,22 @@ void Composition::SetTransliterator(
   (*end_it)->SetTransliterator(transliterator);
 }
 
-const TransliteratorInterface *Composition::GetTransliterator(size_t position) {
+Transliterators::Transliterator
+Composition::GetTransliterator(size_t position) {
   // Due to GetChunkAt is not a const funcion, this function cannot be
   // a const function.
   CharChunkList::iterator chunk_it;
   size_t inner_position;
-  GetChunkAt(position, kNullT12r, &chunk_it, &inner_position);
-  return (*chunk_it)->GetTransliterator(kNullT12r);
+  GetChunkAt(position, Transliterators::LOCAL, &chunk_it, &inner_position);
+  return (*chunk_it)->GetTransliterator(Transliterators::LOCAL);
 }
 
 size_t Composition::GetLength() const {
-  return GetPosition(kNullT12r, chunks_.end());
+  return GetPosition(Transliterators::LOCAL, chunks_.end());
 }
 
 void Composition::GetStringWithModes(
-    const TransliteratorInterface* transliterator,
+    Transliterators::Transliterator transliterator,
     const TrimMode trim_mode,
     string* composition) const {
   composition->clear();
@@ -252,6 +250,7 @@ void Composition::GetStringWithModes(
   for (it = chunks_.begin(); *it != chunks_.back(); ++it) {
     (*it)->AppendResult(transliterator, composition);
   }
+
   switch (trim_mode) {
     case TRIM:
       (*it)->AppendTrimedResult(transliterator, composition);
@@ -270,11 +269,11 @@ void Composition::GetStringWithModes(
 
 void Composition::GetExpandedStrings(string *base,
                                      set<string> *expanded) const {
-  GetExpandedStringsWithTransliterator(kNullT12r, base, expanded);
+  GetExpandedStringsWithTransliterator(Transliterators::LOCAL, base, expanded);
 }
 
 void Composition::GetExpandedStringsWithTransliterator(
-    const TransliteratorInterface *transliterator,
+    Transliterators::Transliterator transliterator,
     string *base,
     set<string> *expanded) const {
   DCHECK(base);
@@ -293,7 +292,7 @@ void Composition::GetExpandedStringsWithTransliterator(
 
   chunks_.back()->AppendTrimedResult(transliterator, base);
   // Get expanded from the last chunk
-  chunks_.back()->GetExpandedResults(transliterator, expanded);
+  chunks_.back()->GetExpandedResults(expanded);
 }
 
 void Composition::GetString(string *composition) const {
@@ -306,19 +305,19 @@ void Composition::GetString(string *composition) const {
   for (CharChunkList::const_iterator it = chunks_.begin();
        it != chunks_.end();
        ++it) {
-    (*it)->AppendResult(kNullT12r, composition);
+    (*it)->AppendResult(Transliterators::LOCAL, composition);
   }
 }
 
 void Composition::GetStringWithTransliterator(
-    const TransliteratorInterface * transliterator,
+    Transliterators::Transliterator transliterator,
     string* output) const {
   GetStringWithModes(transliterator, FIX, output);
 }
 
 void Composition::GetStringWithTrimMode(const TrimMode trim_mode,
                                         string* output) const {
-  GetStringWithModes(kNullT12r, trim_mode, output);
+  GetStringWithModes(Transliterators::LOCAL, trim_mode, output);
 }
 
 void Composition::GetPreedit(
@@ -333,7 +332,7 @@ void Composition::GetPreedit(
 // This function is essentialy a const function, but chunks_.begin()
 // violates the constness of this function.
 void Composition::GetChunkAt(const size_t position,
-                             const TransliteratorInterface *transliterator,
+                             Transliterators::Transliterator transliterator,
                              CharChunkList::iterator *chunk_it,
                              size_t *inner_position) {
   if (chunks_.empty()) {
@@ -359,7 +358,7 @@ void Composition::GetChunkAt(const size_t position,
 }
 
 size_t Composition::GetPosition(
-    const TransliteratorInterface *transliterator,
+    Transliterators::Transliterator transliterator,
     const CharChunkList::const_iterator &cur_it) const {
   size_t position = 0;
   CharChunkList::const_iterator it;
@@ -368,7 +367,6 @@ size_t Composition::GetPosition(
   }
   return position;
 }
-
 
 // Return the left CharChunk and the right it.
 CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
@@ -380,16 +378,16 @@ CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
   }
 
   size_t inner_position;
-  GetChunkAt(pos, kNullT12r, it, &inner_position);
+  GetChunkAt(pos, Transliterators::LOCAL, it, &inner_position);
 
   CharChunk *chunk = **it;
-  if (inner_position == chunk->GetLength(kNullT12r)) {
+  if (inner_position == chunk->GetLength(Transliterators::LOCAL)) {
     ++(*it);
     return chunk;
   }
 
   CharChunk *left_chunk = NULL;
-  chunk->SplitChunk(kNullT12r, inner_position, &left_chunk);
+  chunk->SplitChunk(Transliterators::LOCAL, inner_position, &left_chunk);
   chunks_.insert(*it, left_chunk);
   return left_chunk;
 }
@@ -470,7 +468,7 @@ CharChunkList::iterator Composition::GetInsertionChunk(
   return InsertChunk(it);
 }
 
-void Composition::SetInputMode(const TransliteratorInterface *transliterator) {
+void Composition::SetInputMode(Transliterators::Transliterator transliterator) {
   input_t12r_ = transliterator;
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,11 +37,20 @@
 
 namespace mozc {
 
+class DataManagerInterface;
 struct Node;
 struct BoundaryData;
 
 class SegmenterBase : public SegmenterInterface {
  public:
+  static SegmenterBase *CreateFromDataManager(
+      const DataManagerInterface &data_manager);
+
+  // This class does not have the ownership of pointer parameters.
+  SegmenterBase(size_t l_num_elements, size_t r_num_elements,
+                const uint16 *l_table, const uint16 *r_table,
+                size_t bitarray_num_bytes, const char *bitarray_data,
+                const BoundaryData *boundary_data);
   virtual ~SegmenterBase();
 
   virtual bool IsBoundary(const Node *lnode, const Node *rnode,
@@ -52,13 +61,6 @@ class SegmenterBase : public SegmenterInterface {
   virtual int32 GetPrefixPenalty(uint16 lid) const;
 
   virtual int32 GetSuffixPenalty(uint16 rid) const;
-
- protected:
-  // This class does not have the ownership of pointer parameters.
-  SegmenterBase(size_t l_num_elements, size_t r_num_elements,
-                const uint16 *l_table, const uint16 *r_table,
-                size_t bitarray_num_bytes, const char *bitarray_data,
-                const BoundaryData *boundary_data);
 
  private:
   const size_t l_num_elements_;

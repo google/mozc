@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,23 @@
 
 #include "unix/ibus/property_handler.h"
 
+#include <string>
+
 #include "base/const.h"
-#include "base/util.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "base/system_util.h"
 #include "client/client.h"  // For client interface
+#include "unix/ibus/message_translator.h"
 #include "unix/ibus/mozc_engine_property.h"
 #include "unix/ibus/path_util.h"
-#include "unix/ibus/message_translator.h"
+
+// On Gnome Shell with IBus 1.5, new property named "symbol" is used to
+// represent the mode indicator on the system panel. Note that "symbol" does
+// not exist in IBus 1.4.x.
+#if IBUS_CHECK_VERSION(1, 5, 0)
+#define MOZC_IBUS_HAS_SYMBOL
+#endif  // IBus >= 1.5
 
 namespace mozc {
 namespace ibus {
@@ -48,7 +59,7 @@ const char kMozcToolIconPath[] = "tool.png";
 
 // Returns true if mozc_tool is installed.
 bool IsMozcToolAvailable() {
-  return mozc::Util::FileExists(mozc::Util::GetToolPath());
+  return FileUtil::FileExists(SystemUtil::GetToolPath());
 }
 }  // namespace
 
@@ -115,6 +126,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
 
   // Create items for the radio menu.
   string icon_path_for_panel;
+  const char *mode_symbol = NULL;
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
     const MozcEngineProperty &entry = kMozcEngineProperties[i];
     IBusText *label = ibus_text_new_from_string(
@@ -123,6 +135,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
     if (entry.composition_mode == kMozcEngineInitialCompositionMode) {
       state = PROP_STATE_CHECKED;
       icon_path_for_panel = GetIconPath(entry.icon);
+      mode_symbol = entry.label_for_panel;
     }
     IBusProperty *item = ibus_property_new(entry.key,
                                            PROP_TYPE_RADIO,
@@ -136,21 +149,35 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
     g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
     ibus_prop_list_append(sub_prop_list, item);
     // |sub_prop_list| owns |item| by calling g_object_ref_sink for the |item|.
-    // Due to api behavior changes, the label object is leak on ibus-1.2.x
-    // environment, but we decide to give up.
   }
   DCHECK(!icon_path_for_panel.empty());
+  DCHECK(mode_symbol != NULL);
+
+  const string &mode_label =
+      translator_->MaybeTranslate("Input Mode") + " (" + mode_symbol + ")";
+  IBusText *label = ibus_text_new_from_string(mode_label.c_str());
 
   // The label of |prop_composition_mode_| is shown in the language panel.
-  prop_composition_mode_ = ibus_property_new("CompositionMode",
+  // Note that the property name "InputMode" is hard-coded in the Gnome shell.
+  // Do not change the name. Othewise the Gnome shell fails to recognize that
+  // this property indicates Mozc's input mode.
+  // See /usr/share/gnome-shell/js/ui/status/keyboard.js for details.
+  prop_composition_mode_ = ibus_property_new("InputMode",
                                              PROP_TYPE_MENU,
-                                             NULL /* label */,
+                                             label,
                                              icon_path_for_panel.c_str(),
                                              NULL /* tooltip */,
                                              TRUE /* sensitive */,
                                              TRUE /* visible */,
                                              PROP_STATE_UNCHECKED,
                                              sub_prop_list);
+
+  // Gnome shell uses symbol property for the mode indicator text icon iff the
+  // property name is "InputMode".
+#ifdef MOZC_IBUS_HAS_SYMBOL
+  IBusText *symbol = ibus_text_new_from_static_string(mode_symbol);
+  ibus_property_set_symbol(prop_composition_mode_, symbol);
+#endif  // MOZC_IBUS_HAS_SYMBOL
 
   // Likewise, |prop_composition_mode_| owns |sub_prop_list|. We have to sink
   // |prop_composition_mode_| here so ibus_engine_update_property() call in
@@ -177,7 +204,7 @@ void PropertyHandler::AppendToolPropertyToPanel() {
         translator_->MaybeTranslate(entry.label).c_str());
     // TODO(yusukes): It would be better to use entry.icon here?
     IBusProperty *item = ibus_property_new(entry.mode,
-                                             PROP_TYPE_NORMAL,
+                                           PROP_TYPE_NORMAL,
                                            label,
                                            NULL /* icon */,
                                            NULL /* tooltip */,
@@ -187,8 +214,6 @@ void PropertyHandler::AppendToolPropertyToPanel() {
                                            NULL);
     g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
     ibus_prop_list_append(sub_prop_list, item);
-    // Due to api behavior changes, the label object is leak on ibus-1.2.x
-    // environment, but we decide to give up.
   }
 
   const string icon_path = GetIconPath(kMozcToolIconPath);
@@ -238,8 +263,6 @@ void PropertyHandler::AppendSwitchPropertyToPanel() {
     // We have to sink |*item| here so ibus_engine_update_property() call in
     // PropertyActivate() does not destruct the object.
     g_object_ref_sink(item);
-    // Due to api behavior changes, the label object is leak on ibus-1.2.x
-    // environment, but we decide to give up.
   }
 
   for (size_t i = 0; i < prop_switch_properties_.size(); ++i) {
@@ -297,6 +320,19 @@ void PropertyHandler::UpdateCompositionModeIcon(
     }
     // No need to call unref since ibus_prop_list_get does not add ref.
   }
+
+  const char *mode_symbol = entry->label_for_panel;
+  // Update the text icon for Gnome shell.
+#ifdef MOZC_IBUS_HAS_SYMBOL
+  IBusText *symbol = ibus_text_new_from_static_string(mode_symbol);
+  ibus_property_set_symbol(prop_composition_mode_, symbol);
+#endif  // MOZC_IBUS_HAS_SYMBOL
+
+  const string &mode_label =
+      translator_->MaybeTranslate("Input Mode") + " (" + mode_symbol + ")";
+  IBusText *label = ibus_text_new_from_string(mode_label.c_str());
+  ibus_property_set_label(prop_composition_mode_, label);
+
   ibus_engine_update_property(engine, prop_composition_mode_);
 }
 

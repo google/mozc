@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,20 +47,6 @@
       ],
     },
     {
-      'target_name': 'key_expansion_table_test',
-      'type': 'executable',
-      'sources': [
-        'key_expansion_table_test.cc',
-      ],
-      'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        'key_expansion_table',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'louds_trie',
       'type': 'static_library',
       'toolsets': ['target', 'host'],
@@ -85,21 +71,6 @@
         '../../base/base.gyp:base',
         'bit_stream',
       ],
-    },
-    {
-      'target_name': 'louds_trie_test',
-      'type': 'executable',
-      'sources': [
-        'louds_trie_test.cc',
-      ],
-      'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        'louds_trie',
-        'louds_trie_builder',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
     },
     # Implementation of an array of string based on bit vector.
     {
@@ -126,21 +97,6 @@
         'bit_stream',
       ],
     },
-    {
-      'target_name': 'bit_vector_based_array_test',
-      'type': 'executable',
-      'sources': [
-        'bit_vector_based_array_test.cc',
-      ],
-      'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        'bit_vector_based_array',
-        'bit_vector_based_array_builder',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
     # Implemantation of the succinct bit vector.
     {
       'target_name': 'simple_succinct_bit_vector_index',
@@ -153,20 +109,6 @@
         '../../base/base.gyp:base',
       ],
     },
-    {
-      'target_name': 'simple_succinct_bit_vector_index_test',
-      'type': 'executable',
-      'sources': [
-        'simple_succinct_bit_vector_index_test.cc',
-      ],
-      'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        'simple_succinct_bit_vector_index',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
     # Bit stream implementation for builders.
     {
       'target_name': 'bit_stream',
@@ -177,32 +119,6 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'bit_stream_test',
-      'type': 'executable',
-      'sources': [
-        'bit_stream_test.cc',
-      ],
-      'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        'bit_stream',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'storage_louds_all_test',
-      'type': 'none',
-      'dependencies': [
-        'bit_stream_test',
-        'bit_vector_based_array_test',
-        'key_expansion_table_test',
-        'louds_trie_test',
-        'simple_succinct_bit_vector_index_test',
       ],
     },
   ],

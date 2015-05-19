@@ -1,0 +1,125 @@
+# This file tests SEGMENT_WIDTH_{EXPAND,SHRINK} commands.
+
+################################################################################
+# Test for MS-IME keymap
+SET_CONFIG	session_keymap	MSIME
+
+# Enable IME with Hiragana mode
+SEND_KEY	ON
+RESET_CONTEXT
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Make Segments of size 3: わたしの|なまえは|なかのです
+SEND_KEYS	watashinonamaehanakanodesu
+EXPECT_PREEDIT	わたしのなまえはなかのです
+SEND_KEY	SPACE
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Test Shift-Right and Shift-Left (SegmentWidthExpand and SegmentWidthShrink)
+SEND_KEY	SHIFT RIGHT
+EXPECT_PREEDIT_IN_DETAIL	私のな	前は	中ノです
+SEND_KEY	SHIFT LEFT
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Test Ctrl-l and Ctrl-k (SegmentWidthExpand and SegmentWidthShrink)
+SEND_KEY	CTRL l
+EXPECT_PREEDIT_IN_DETAIL	私のな	前は	中ノです
+SEND_KEY	CTRL k
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Expand the first segment until it contains the whole input key.
+SEND_KEY	SHIFT RIGHT
+SEND_KEY	SHIFT RIGHT
+SEND_KEY	SHIFT RIGHT
+SEND_KEY	SHIFT RIGHT
+# The second segment is merged in the first segment and vanishes.
+EXPECT_PREEDIT_IN_DETAIL	私の名前は	中ノです
+SEND_KEY	SHIFT RIGHT
+SEND_KEY	SHIFT RIGHT
+SEND_KEY	SHIFT RIGHT
+SEND_KEY	SHIFT RIGHT
+SEND_KEY	SHIFT RIGHT
+# The third segment is merged in the current first segment and vanishes.
+EXPECT_PREEDIT_IN_DETAIL	私の名前は中ノです
+SEND_KEY	SHIFT RIGHT
+# Nothing happens anymore with expansion.
+EXPECT_PREEDIT_IN_DETAIL	私の名前は中ノです
+
+# Shrink the segment until the first segment consists of one Hiragana.
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+SEND_KEY	SHIFT LEFT
+EXPECT_PREEDIT_IN_DETAIL	わ	た	子の	名前は	中ノです
+# Nothing happens anymore with shrinking.
+SEND_KEY	SHIFT LEFT
+EXPECT_PREEDIT_IN_DETAIL	わ	た	子の	名前は	中ノです
+
+
+################################################################################
+# Test for Kotoeri keymap
+RESET_CONTEXT
+SET_CONFIG	session_keymap	KOTOERI
+
+# Make Segments of size 3: わたしの|なまえは|なかのです
+SEND_KEYS	watashinonamaehanakanodesu
+EXPECT_PREEDIT	わたしのなまえはなかのです
+SEND_KEY	SPACE
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Test Shift-Right and Shift-Left (SegmentWidthExpand and SegmentWidthShrink)
+SEND_KEY	SHIFT RIGHT
+EXPECT_PREEDIT_IN_DETAIL	私のな	前は	中ノです
+SEND_KEY	SHIFT LEFT
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Test Ctrl-o and Ctrl-i (SegmentWidthExpand and SegmentWidthShrink)
+SEND_KEY	CTRL o
+EXPECT_PREEDIT_IN_DETAIL	私のな	前は	中ノです
+SEND_KEY	CTRL i
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Test Ctrl-w and Ctrl-q (SegmentWidthExpand and SegmentWidthShrink)
+SEND_KEY	CTRL w
+EXPECT_PREEDIT_IN_DETAIL	私のな	前は	中ノです
+SEND_KEY	CTRL q
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+
+################################################################################
+# Test for ATOK keymap
+RESET_CONTEXT
+SET_CONFIG	session_keymap	ATOK
+
+# Make Segments of size 3: わたしの|なまえは|なかのです
+SEND_KEYS	watashinonamaehanakanodesu
+EXPECT_PREEDIT	わたしのなまえはなかのです
+SEND_KEY	SPACE
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Test Shift-Right and Shift-Left (SegmentWidthExpand and SegmentWidthShrink)
+SEND_KEY	RIGHT
+EXPECT_PREEDIT_IN_DETAIL	私のな	前は	中ノです
+SEND_KEY	LEFT
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Test Ctrl-Shift-Right and Ctrl-Shift-Left
+# (SegmentWidthExpand and SegmentWidthShrink)
+SEND_KEY	CTRL SHIFT RIGHT
+EXPECT_PREEDIT_IN_DETAIL	私のな	前は	中ノです
+SEND_KEY	CTRL SHIFT LEFT
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです
+
+# Test Ctrl-l and Ctrl-k (SegmentWidthExpand and SegmentWidthShrink)
+SEND_KEY	CTRL l
+EXPECT_PREEDIT_IN_DETAIL	私のな	前は	中ノです
+SEND_KEY	CTRL k
+EXPECT_PREEDIT_IN_DETAIL	私の	名前は	中ノです

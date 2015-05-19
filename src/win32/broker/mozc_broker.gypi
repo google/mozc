@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,11 +40,11 @@
       'sources': [
         '<(gen_out_dir)/mozc_broker_autogen.rc',
         'ime_switcher.cc',
-        'mozc_broker.exe.manifest',
         'prelauncher.cc',
         'register_ime.cc',
       ],
       'dependencies': [
+        '../../base/base.gyp:crash_report_handler',
         '../../client/client.gyp:client',
         '../../config/config.gyp:genproto_config',
         '../../config/config.gyp:stats_config_util',
@@ -55,6 +55,12 @@
         '../base/win32_base.gyp:win32_file_verifier',
         'gen_mozc_broker_resource_header',
       ],
+      'msvs_settings': {
+        'VCManifestTool': {
+          'AdditionalManifestFiles': 'mozc_broker.exe.manifest',
+          'EmbedManifest': 'false',
+        },
+      },
     }],
   ],
 }

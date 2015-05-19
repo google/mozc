@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,8 @@ class MessageQueue {
 
   // Send the messages to context if not attached to a message list.
   bool Send();
+
+  const vector<TRANSMSG> &messages() const;
 
  private:
   HIMC himc_;

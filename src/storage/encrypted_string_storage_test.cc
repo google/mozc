@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/scoped_ptr.h"
-#include "base/util.h"
-#include "base/file_stream.h"
 #include "storage/encrypted_string_storage.h"
+
+#include <iostream>
+
+#include "base/file_stream.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -38,14 +43,49 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace storage {
 
+namespace {
+#ifdef OS_ANDROID
+// Mock the encryption/decryption for android.
+// For android, we use Java's library for encryption. However, we cannot use
+// them, because we cannot launch JVM from native tests on Android.
+class TestEncryptedStringStorage : public EncryptedStringStorage {
+ public:
+  explicit TestEncryptedStringStorage(const string &filename)
+      : EncryptedStringStorage(filename) {
+  }
+ protected:
+  virtual bool Encrypt(const string &salt, string *data) const {
+    salt_ = salt;
+    original_data_ = *data;
+    *data = "123456789012345678901234567890";
+    return true;
+  }
+
+  virtual bool Decrypt(const string &salt, string *data) const {
+    if (salt_ != salt) {
+      return false;
+    }
+    CHECK_EQ(*data, "123456789012345678901234567890");
+    *data = original_data_;
+    return true;
+  }
+
+  mutable string salt_;
+  mutable string original_data_;
+};
+#else
+typedef EncryptedStringStorage TestEncryptedStringStorage;
+#endif  // OS_ANDROID
+}  // namespace
+
 class EncryptedStringStorageTest : public testing::Test {
  protected:
   void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    filename_ = Util::JoinPath(Util::GetUserProfileDirectory(),
-                               "encrypted_string_storage_for_test.db");
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    filename_ = FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
+                                   "encrypted_string_storage_for_test.db");
 
-    storage_.reset(new EncryptedStringStorage(filename_));
+    storage_.reset(new TestEncryptedStringStorage(filename_));
   }
 
   string filename_;
@@ -62,6 +102,9 @@ TEST_F(EncryptedStringStorageTest, SaveAndLoad) {
   EXPECT_EQ(kData, output);
 }
 
+#ifndef OS_ANDROID
+// Note: On Android, we cannot check the behavior of Encryption because
+// it depends on the JVM's behavior, which cannot be launched from native test.
 TEST_F(EncryptedStringStorageTest, Encrypt) {
   const string original_data = "abcdefghijklmnopqrstuvwxyz";
   ASSERT_TRUE(storage_->Save(original_data));
@@ -83,6 +126,7 @@ TEST_F(EncryptedStringStorageTest, Encrypt) {
   EXPECT_LT(original_data.size(), result.size());
   EXPECT_TRUE(result.find(original_data) == string::npos);
 }
+#endif  // OS_ANDROID
 
 }  // namespace storage
 }  // namespace mozc

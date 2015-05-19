@@ -20,6 +20,7 @@ Composition	Ctrl m	Commit
 Composition	Ctrl Right	MoveCursorToEnd
 Composition	Delete	Delete
 Composition	Eisu	ToggleAlphanumericMode
+Composition	End	MoveCursorToEnd
 Composition	Enter	Commit
 Composition	ESC	Cancel
 Composition	F10	DisplayAsHalfAlphanumeric
@@ -29,6 +30,7 @@ Composition	F7	DisplayAsFullKatakana
 Composition	F8	DisplayAsHalfWidth
 Composition	F9	DisplayAsFullAlphanumeric
 Composition	Hankaku/Zenkaku	IMEOff
+Composition	Home	MoveCursorToBeginning
 Composition	Kanji	IMEOff
 Composition	Left	MoveCursorLeft
 Composition	OFF	IMEOff
@@ -75,6 +77,7 @@ Conversion	Ctrl s	SegmentFocusLeft
 Conversion	Ctrl w	SegmentWidthExpand
 Conversion	Ctrl x	ConvertNext
 Conversion	Down	ConvertNext
+Conversion	End	SegmentFocusLast
 Conversion	Enter	Commit
 Conversion	ESC	Cancel
 Conversion	F1	ReportBug
@@ -85,6 +88,7 @@ Conversion	F7	DisplayAsFullKatakana
 Conversion	F8	DisplayAsHalfWidth
 Conversion	F9	DisplayAsFullAlphanumeric
 Conversion	Hankaku/Zenkaku	IMEOff
+Conversion	Home	SegmentFocusFirst
 Conversion	Kanji	IMEOff
 Conversion	Left	SegmentFocusLeft
 Conversion	OFF	IMEOff
@@ -128,6 +132,7 @@ Precomposition	OFF	IMEOff
 Precomposition	ON	IMEOn
 Precomposition	Shift Space	InsertAlternateSpace
 Precomposition	Space	InsertSpace
+Prediction	Ctrl Delete	DeleteSelectedCandidate
 Suggestion	Ctrl n	PredictAndConvert
 Suggestion	Down	PredictAndConvert
 Suggestion	Shift Enter	CommitFirstSuggestion

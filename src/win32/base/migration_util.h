@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 #ifndef MOZC_WIN32_BASE_MIGRATION_UTIL_H_
 #define MOZC_WIN32_BASE_MIGRATION_UTIL_H_
 
+#include "base/port.h"
+
 namespace mozc {
 namespace win32 {
 
@@ -40,6 +42,10 @@ class MigrationUtil {
   // Checks if the IMM32 version is available.
   // Returns true if the operation completed successfully.
   static bool IsFullIMEAvailable();
+
+  // Checks if the TSF version is available.
+  // Returns true if the operation completed successfully.
+  static bool IsFullTIPAvailable();
 
   // Ensures preload key for the new IME exists.
   // Returns true if the operation completed successfully.
@@ -54,9 +60,13 @@ class MigrationUtil {
   // Returns true if the operation completed successfully.
   static bool LaunchBrokerForSetDefault(bool do_not_ask_me_again);
 
+  // Returns true if 1) IMM32 Mozc is not installed, 2) IMM32 Mozc is
+  // already disabled for the current user, or 3) IMM32 Mozc is successfully
+  // disabled by this method.
+  static bool DisableLegacyMozcForCurrentUserOnWin8();
+
  private:
-  MigrationUtil() {}
-  virtual ~MigrationUtil() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(MigrationUtil);
 };
 
 }  // namespace win32

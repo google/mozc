@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,10 +46,12 @@ class GtkWrapperInterface {
   virtual GSource *GSourceNew(GSourceFuncs *source_funcs,
                               guint struct_size) = 0;
   virtual GdkScreen *GtkWindowGetScreen(GtkWidget *window) = 0;
+  virtual gint GdkScreenGetMonitorAtPoint(
+      GdkScreen *screen, gint x, gint y) = 0;
+  virtual void GdkScreenGetMonitorGeometry(
+      GdkScreen *screen, gint monitor, GdkRectangle *rectangle) = 0;
   virtual GtkWidget *GtkDrawingAreaNew() = 0;
   virtual GtkWidget *GtkWindowNew(GtkWindowType type) = 0;
-  virtual guint GdkScreenGetHeight(GdkScreen *screen) = 0;
-  virtual guint GdkScreenGetWidth(GdkScreen *screen) = 0;
   virtual void GObjectUnref(gpointer object) = 0;
   virtual void GSignalConnect(gpointer instance,
                               const gchar *signal,

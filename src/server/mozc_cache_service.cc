@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #define PSAPI_VERSION 1  // for <psapi.h>
 #include <windows.h>
 #if !defined(NO_LOGGING)
@@ -36,9 +36,10 @@
 #include <atlstr.h>  // for CString
 #endif  // !NO_LOGGING
 #include <psapi.h>
-#include "base/base.h"
+#include "base/file_util.h"
 #include "base/scoped_handle.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/winmain.h"   // use WinMain
 #include "server/cache_service_manager.h"
@@ -190,12 +191,13 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
     return true;
   }
 
-  if (!mozc::Util::IsVistaOrLater()) {
+  if (!mozc::SystemUtil::IsVistaOrLater()) {
     return true;
   }
 
   const string temp_path =
-      mozc::Util::JoinPath(mozc::Util::GetServerDirectory(), "delete_me.txt");
+      mozc::FileUtil::JoinPath(mozc::SystemUtil::GetServerDirectory(),
+                               "delete_me.txt");
   wstring wtemp_path;
   mozc::Util::UTF8ToWide(temp_path.c_str(), &wtemp_path);
   const HANDLE temp_file = ::CreateFileW(
@@ -276,7 +278,8 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   }
 
   wstring server_path;
-  mozc::Util::UTF8ToWide(mozc::Util::GetServerPath().c_str(), &server_path);
+  mozc::Util::UTF8ToWide(mozc::SystemUtil::GetServerPath().c_str(),
+                         &server_path);
 
   mozc::ScopedHandle file_handle(::CreateFile(server_path.c_str(),
                                               GENERIC_READ,

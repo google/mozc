@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,10 @@ namespace mozc {
 class Segments;
 class ConverterInterface;
 
+namespace commands {
+class Request;
+}  // namespace commands
+
 namespace quality_regression {
 
 class QualityRegressionUtil {
@@ -43,6 +47,8 @@ class QualityRegressionUtil {
     DESKTOP = 1,
     OSS = 2,
     MOBILE = 4,
+    MOBILE_AMBIGUOUS = 8,
+    CHROMEOS = 16,
   };
 
   struct TestItem {
@@ -68,8 +74,11 @@ class QualityRegressionUtil {
   bool ConvertAndTest(const TestItem &item,
                       string *actual_value);
 
+  void SetRequest(const commands::Request &request);
+
  private:
   ConverterInterface *converter_;
+  scoped_ptr<commands::Request> request_;
   scoped_ptr<Segments> segments_;
 };
 }  // quality_regression

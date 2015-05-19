@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ class RewriterInterface {
   // return capablity of this rewriter.
   // If (capability() & CONVERSION), this rewriter
   // is called after StartConversion().
-  virtual int capability() const {
+  virtual int capability(const ConversionRequest &request) const {
     return CONVERSION;
   }
 

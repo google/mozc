@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ int RunRegisterIME(int argc, char *argv[]) {
   }
 
   // Install IME and obtain the corresponding HKL value.
-  HKL hkl = NULL;
+  HKL hkl = nullptr;
   HRESULT result = mozc::win32::ImmRegistrar::Register(
       ime_filename, layout_name, ime_path,
       ImmRegistrar::GetLayoutDisplayNameResourceId(), &hkl);

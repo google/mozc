@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,22 +32,30 @@
 #include "base/base.h"
 #include "converter/cached_connector.h"
 #include "converter/sparse_connector.h"
+#include "data_manager/data_manager_interface.h"
 
 namespace mozc {
 
 using converter::CachedConnector;
 
+ConnectorBase *ConnectorBase::CreateFromDataManager(
+    const DataManagerInterface &data_manager) {
+#ifdef OS_ANDROID
+  const int kCacheSize = 256;
+#else
+  const int kCacheSize = 1024;
+#endif  // OS_ANDROID
+  const char *connection_data = NULL;
+  size_t connection_data_size = 0;
+  data_manager.GetConnectorData(&connection_data, &connection_data_size);
+  return new ConnectorBase(connection_data, connection_data_size, kCacheSize);
+}
+
 ConnectorBase::ConnectorBase(const char *connection_data,
                              size_t connection_size,
-                             bool *cache_initialized,
-                             int *cache_key,
-                             int *cache_value,
                              int cache_size)
     : sparse_connector_(new SparseConnector(connection_data, connection_size)),
       cached_connector_(new CachedConnector(sparse_connector_.get(),
-                                            cache_initialized,
-                                            cache_key,
-                                            cache_value,
                                             cache_size)) {}
 
 ConnectorBase::~ConnectorBase() {}

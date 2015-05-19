@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ SessionInterface *JapaneseSessionFactory::NewSession() {
 }
 
 UserDataManagerInterface *JapaneseSessionFactory::GetUserDataManager() {
-  return engine_->GetConverter()->GetUserDataManager();
+  return engine_->GetUserDataManager();
 }
 
 void JapaneseSessionFactory::Reload() {

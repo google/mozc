@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
@@ -70,12 +71,12 @@ const char* GetValue(const char *ptr) {
 }
 
 void Update(char *ptr) {
-  const uint32 last_access_time = static_cast<uint32>(mozc::Util::GetTime());
+  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
   memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
 }
 
 void Update(char *ptr, uint64 fp, const char *value, size_t value_size) {
-  const uint32 last_access_time = static_cast<uint32>(mozc::Util::GetTime());
+  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
   memcpy(ptr,     reinterpret_cast<const char *>(&fp), 8);
   memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
   memcpy(ptr + 12, value, value_size);
@@ -349,12 +350,7 @@ bool LRUStorage::OpenOrCreate(const char *filename,
                               size_t new_value_size,
                               size_t new_size,
                               uint32 new_seed) {
-#ifdef MOZC_USE_PEPPER_FILE_IO
-  // TODO(horo): We have to implement LRUStorage for NaCl.
-  LOG(ERROR) << "LRUStorage::OpenOrCreate is not implemented for NaCl now.";
-  return false;
-#else  // MOZC_USE_PEPPER_FILE_IO
-  if (!Util::FileExists(filename)) {
+  if (!FileUtil::FileExists(filename)) {
     // This is also an expected scenario. Let's create a new data file.
     VLOG(1) << filename << " does not exist. Creating a new one.";
     if (!LRUStorage::CreateStorageFile(filename,
@@ -410,7 +406,6 @@ bool LRUStorage::OpenOrCreate(const char *filename,
   }
 
   return true;
-#endif  // MOZC_USE_PEPPER_FILE_IO
 }
 
 bool LRUStorage::Open(const char *filename) {
@@ -510,9 +505,7 @@ const char* LRUStorage::Lookup(const string &key) const {
 
 const char* LRUStorage::Lookup(const string &key,
                                uint32 *last_access_time) const {
-  const uint64 fp = Util::FingerprintWithSeed(key.data(),
-                                              key.size(),
-                                              seed_);
+  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
   map<uint64, Node *>::const_iterator it = map_.find(fp);
   if (it == map_.end()) {
     return NULL;
@@ -544,9 +537,7 @@ bool LRUStorage::Touch(const string &key) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(),
-                                              key.size(),
-                                              seed_);
+  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value);
@@ -561,9 +552,7 @@ bool LRUStorage::Insert(const string &key, const char *value) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(),
-                                              key.size(),
-                                              seed_);
+  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);
@@ -601,9 +590,7 @@ bool LRUStorage::TryInsert(const string &key, const char *value) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(),
-                                              key.size(),
-                                              seed_);
+  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);

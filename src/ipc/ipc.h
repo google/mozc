@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -171,7 +171,7 @@ class IPCClient : public IPCClientInterface {
  private:
   void Init(const string &name, const string &server_path);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Windows
   ScopedHandle pipe_handle_;
   ScopedHandle pipe_event_;
@@ -282,7 +282,7 @@ class IPCServer {
   bool connected_;
   scoped_ptr<Thread> server_thread_;
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ScopedHandle pipe_handle_;
   ScopedHandle pipe_event_;
   ScopedHandle quit_event_;

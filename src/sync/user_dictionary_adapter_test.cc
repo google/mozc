@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,22 +29,26 @@
 
 #include "sync/user_dictionary_adapter.h"
 
-#include <map>
+#include <cstddef>
 #include <string>
+#include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/protobuf/unknown_field_set.h"
+#include "base/system_util.h"
 #include "base/testing_util.h"
 #include "base/util.h"
+#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_util.h"
 #include "storage/memory_storage.h"
 #include "storage/registry.h"
-#include "storage/tiny_storage.h"
+#include "storage/storage_interface.h"
 #include "sync/inprocess_service.h"
 #include "sync/sync.pb.h"
 #include "sync/sync_util.h"
@@ -57,19 +61,19 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace sync {
 
-using mozc::config::Config;
-using mozc::config::ConfigHandler;
-using mozc::config::SyncConfig;
-using mozc::protobuf::UnknownFieldSet;
-using mozc::protobuf::UnknownField;
-using mozc::testing::SerializeUnknownFieldSetAsString;
-using mozc::user_dictionary::UserDictionary;
+using config::Config;
+using config::ConfigHandler;
+using config::SyncConfig;
+using protobuf::UnknownFieldSet;
+using protobuf::UnknownField;
+using testing::SerializeUnknownFieldSetAsString;
+using user_dictionary::UserDictionary;
 
 class UserDictionaryAdapterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    backup_user_profile_directory_ = Util::GetUserProfileDirectory();
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    backup_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     backup_config_.CopyFrom(ConfigHandler::GetConfig());
     Config config;
@@ -83,7 +87,7 @@ class UserDictionaryAdapterTest : public ::testing::Test {
     // and clean them up here with test refactoring.
     storage::Registry::SetStorage(NULL);
     ConfigHandler::SetConfig(backup_config_);
-    Util::SetUserProfileDirectory(backup_user_profile_directory_);
+    SystemUtil::SetUserProfileDirectory(backup_user_profile_directory_);
   }
 
  private:
@@ -255,12 +259,12 @@ void ConvertUserDictionaryStorageToUnknownFieldSet(
 // Local and remote updates makes 'prev_dict' storage exceed its limit.
 TEST_F(UserDictionaryAdapterTest, TemporaryFileExceeds) {
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_dic_exceed");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_dic_exceed");
 
   UserDictionaryAdapter adapter;
   adapter.set_user_dictionary_filename(filename);
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 
   // Set up sync environment.
   ime_sync::SyncItems items;
@@ -318,8 +322,8 @@ TEST_F(UserDictionaryAdapterTest, TemporaryFileExceeds) {
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(prev_storage, storage));
   prev_storage.Load();
 
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 }
 
 TEST_F(UserDictionaryAdapterTest, RealScenarioTest) {
@@ -342,8 +346,8 @@ TEST_F(UserDictionaryAdapterTest, RealScenarioTest) {
     UserDictionaryAdapter *adapter = new UserDictionaryAdapter;
     CHECK(adapter);
     const string filename =
-        Util::JoinPath(FLAGS_test_tmpdir,
-                       "client." + NumberUtil::SimpleItoa(i));
+        FileUtil::JoinPath(FLAGS_test_tmpdir,
+                           "client." + NumberUtil::SimpleItoa(i));
     adapter->set_user_dictionary_filename(filename);
     syncer->RegisterAdapter(adapter);
     syncers.push_back(syncer);
@@ -393,7 +397,7 @@ TEST_F(UserDictionaryAdapterTest, RealScenarioTest) {
   }
 
   for (int i = 0; i < kClientsSize; ++i) {
-    Util::Unlink(filenames[i]);
+    FileUtil::Unlink(filenames[i]);
     delete syncers[i];
     delete adapters[i];
     delete memory_storages[i];
@@ -408,12 +412,12 @@ class UserDictionaryAdapterMigrationTest
 TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItems) {
   // Parse data in the older format with string-POS field.
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_dic");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_dic");
 
   UserDictionaryAdapter adapter;
   adapter.set_user_dictionary_filename(filename);
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 
   UserDictionaryStorage prev(adapter.GetLastSyncedUserDictionaryFileName());
   prev.Load();
@@ -467,18 +471,18 @@ TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItems) {
   storage.Load();
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(expected, storage));
 
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 }
 
 TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItemsSnapshot) {
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_dic");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_dic");
 
   UserDictionaryAdapter adapter;
   adapter.set_user_dictionary_filename(filename);
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 
   UserDictionaryStorage prev(adapter.GetLastSyncedUserDictionaryFileName());
   EXPECT_FALSE(prev.Load());
@@ -532,19 +536,19 @@ TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItemsSnapshot) {
   storage.Load();
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(expected, storage));
 
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 }
 
 // There are both local and remote update.
 TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItemsConflicts) {
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_dic");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_dic");
 
   UserDictionaryAdapter adapter;
   adapter.set_user_dictionary_filename(filename);
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 
   // Create seed
   UserDictionaryStorage seed(adapter.GetLastSyncedUserDictionaryFileName());
@@ -609,18 +613,18 @@ TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItemsConflicts) {
   storage.Load();
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(seed, storage));
 
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 }
 
 TEST_P(UserDictionaryAdapterMigrationTest, GetItemsToUpload) {
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_dic");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_dic");
 
   UserDictionaryAdapter adapter;
   adapter.set_user_dictionary_filename(filename);
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 
   UserDictionaryStorage prev(adapter.GetLastSyncedUserDictionaryFileName());
   EXPECT_FALSE(prev.Load());
@@ -704,7 +708,7 @@ TEST_P(UserDictionaryAdapterMigrationTest, GetItemsToUpload) {
     // update success.
     EXPECT_TRUE(adapter.MarkUploaded(item, true));
 
-    EXPECT_TRUE(Util::IsEqualFile(
+    EXPECT_TRUE(FileUtil::IsEqualFile(
         adapter.user_dictionary_filename(),
         adapter.GetLastSyncedUserDictionaryFileName()));
 
@@ -775,7 +779,7 @@ TEST_P(UserDictionaryAdapterMigrationTest, GetItemsToUpload) {
     // update failed.
     EXPECT_TRUE(adapter.MarkUploaded(item, false));
 
-    EXPECT_FALSE(Util::IsEqualFile(
+    EXPECT_FALSE(FileUtil::IsEqualFile(
         adapter.user_dictionary_filename(),
         adapter.GetLastSyncedUserDictionaryFileName()));
 
@@ -783,19 +787,19 @@ TEST_P(UserDictionaryAdapterMigrationTest, GetItemsToUpload) {
     EXPECT_EQ(201, adapter.GetNextBucketId());
   }
 
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 }
 
 TEST_P(UserDictionaryAdapterMigrationTest, GetItemsToUploadSnapShot) {
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_dic2");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_dic2");
 
   UserDictionaryAdapter adapter;
   adapter.set_user_dictionary_filename(filename);
 
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 
   UserDictionaryStorage prev(adapter.GetLastSyncedUserDictionaryFileName());
   EXPECT_FALSE(prev.Load());
@@ -864,7 +868,7 @@ TEST_P(UserDictionaryAdapterMigrationTest, GetItemsToUploadSnapShot) {
     // update success.
     EXPECT_TRUE(adapter.MarkUploaded(item, true));
 
-    EXPECT_TRUE(Util::IsEqualFile(
+    EXPECT_TRUE(FileUtil::IsEqualFile(
         adapter.user_dictionary_filename(),
         adapter.GetLastSyncedUserDictionaryFileName()));
   }
@@ -931,13 +935,13 @@ TEST_P(UserDictionaryAdapterMigrationTest, GetItemsToUploadSnapShot) {
     // update success.
     EXPECT_TRUE(adapter.MarkUploaded(item, true));
 
-    EXPECT_TRUE(Util::IsEqualFile(
+    EXPECT_TRUE(FileUtil::IsEqualFile(
         adapter.user_dictionary_filename(),
         adapter.GetLastSyncedUserDictionaryFileName()));
   }
 
-  Util::Unlink(adapter.user_dictionary_filename());
-  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+  FileUtil::Unlink(adapter.user_dictionary_filename());
+  FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
 }
 
 INSTANTIATE_TEST_CASE_P(

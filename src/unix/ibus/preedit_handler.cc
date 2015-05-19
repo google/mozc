@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "unix/ibus/preedit_handler.h"
+
 #include <string>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "session/commands.pb.h"
-#include "unix/ibus/preedit_handler.h"
 
 namespace mozc {
 namespace ibus {
@@ -126,12 +129,8 @@ bool PreeditHandler::Update(IBusEngine *engine,
     return true;
   }
   IBusText *text = ComposePreeditText(output.preedit());
-#if IBUS_CHECK_VERSION(1, 3, 99)
   ibus_engine_update_preedit_text_with_mode(engine, text, CursorPos(output),
                                             TRUE, IBUS_ENGINE_PREEDIT_COMMIT);
-#else
-  ibus_engine_update_preedit_text(engine, text, CursorPos(output), TRUE);
-#endif
   // |text| is released by ibus_engine_update_preedit_text.
   return true;
 }

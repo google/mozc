@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ class VersionRewriter : public RewriterInterface  {
   VersionRewriter();
   virtual ~VersionRewriter();
 
-  virtual int capability() const;
+  virtual int capability(const ConversionRequest &request) const;
 
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;

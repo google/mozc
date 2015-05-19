@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,27 +30,30 @@
 #include "sync/user_history_adapter.h"
 
 #include <algorithm>
-#include <cmath>
-#include <map>
+#include <cstddef>
+#include <cstdlib>
 #include <set>
 #include <string>
+#include <vector>
 
-#include "base/base.h"
 #include "base/clock_mock.h"
-#include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/freelist.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/stl_util.h"
+#include "base/system_util.h"
 #include "base/testing_util.h"
 #include "base/util.h"
+#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "prediction/user_history_predictor.h"
+#include "prediction/user_history_predictor.pb.h"
 #include "storage/memory_storage.h"
 #include "storage/registry.h"
-#include "storage/tiny_storage.h"
+#include "storage/storage_interface.h"
 #include "sync/inprocess_service.h"
 #include "sync/sync.pb.h"
-#include "sync/sync_util.h"
 #include "sync/syncer.h"
 #include "sync/user_history_sync_util.h"
 #include "testing/base/public/gunit.h"
@@ -63,11 +66,14 @@ namespace sync {
 class UserHistoryAdapterTest : public ::testing::Test {
  public:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     clock_mock_.reset(new ClockMock(0, 0));
     clock_mock_->SetAutoPutClockForward(1, 0);
     Util::SetClockHandler(clock_mock_.get());
+
+    storage_.reset(mozc::storage::MemoryStorage::New());
+    mozc::storage::Registry::SetStorage(storage_.get());
 
     config::Config config = config::ConfigHandler::GetConfig();
     config::SyncConfig *sync_config = config.mutable_sync_config();
@@ -76,11 +82,13 @@ class UserHistoryAdapterTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
-    storage::Registry::SetStorage(NULL);
+    mozc::storage::Registry::SetStorage(NULL);
+    storage_.reset();
     Util::SetClockHandler(NULL);
   }
 
   scoped_ptr<ClockMock> clock_mock_;
+  scoped_ptr<mozc::storage::StorageInterface> storage_;
 };
 
 TEST_F(UserHistoryAdapterTest, BucketSize) {
@@ -117,7 +125,7 @@ TEST_F(UserHistoryAdapterTest, LastDownloadTimestamp) {
 
 TEST_F(UserHistoryAdapterTest, SetDownloadedItems) {
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_history");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_history");
 
   UserHistoryAdapter adapter;
   adapter.SetUserHistoryFileName(filename);
@@ -172,7 +180,7 @@ TEST_F(UserHistoryAdapterTest, SetDownloadedItems) {
 
 TEST_F(UserHistoryAdapterTest, GetItemsToUpload) {
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_history");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_history");
 
   UserHistoryAdapter adapter;
   adapter.SetUserHistoryFileName(filename);
@@ -232,7 +240,7 @@ TEST_F(UserHistoryAdapterTest, GetItemsToUpload) {
 
 TEST_F(UserHistoryAdapterTest, MarkUploaded) {
   const string filename =
-      Util::JoinPath(FLAGS_test_tmpdir, "test_history");
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test_history");
 
   UserHistoryAdapter adapter;
   adapter.SetUserHistoryFileName(filename);
@@ -312,14 +320,15 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
   for (int i = 0; i < kClientsSize; ++i) {
     Syncer *syncer = new Syncer(&service);
     CHECK(syncer);
-    storage::StorageInterface *memory_storage = storage::MemoryStorage::New();
+    mozc::storage::StorageInterface *memory_storage =
+        mozc::storage::MemoryStorage::New();
     CHECK(memory_storage);
 
     UserHistoryAdapter *adapter = new UserHistoryAdapter;
     CHECK(adapter);
     const string filename =
-        Util::JoinPath(FLAGS_test_tmpdir,
-                       "client." + NumberUtil::SimpleItoa(i));
+        FileUtil::JoinPath(FLAGS_test_tmpdir,
+                           "client." + NumberUtil::SimpleItoa(i));
     adapter->SetUserHistoryFileName(filename);
     syncer->RegisterAdapter(adapter);
     syncers.push_back(syncer);
@@ -344,14 +353,14 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
 
     for (int i = 0; i < kClientsSize; ++i) {
       // Switch internal storage. A little tricky.
-      storage::Registry::SetStorage(memory_storages[i]);
+      mozc::storage::Registry::SetStorage(memory_storages[i]);
       syncers[i]->Sync(&reload_required);
     }
   }
 
   // Do sync on every client just in case.
   for (int i = 0; i < kClientsSize; ++i) {
-    storage::Registry::SetStorage(memory_storages[i]);
+    mozc::storage::Registry::SetStorage(memory_storages[i]);
     syncers[i]->Sync(&reload_required);
   }
 
@@ -372,7 +381,7 @@ TEST_F(UserHistoryAdapterTest, RealScenarioTest) {
   }
 
   for (int i = 0; i < kClientsSize; ++i) {
-    Util::Unlink(filenames[i]);
+    FileUtil::Unlink(filenames[i]);
   }
   STLDeleteElements(&syncers);
   STLDeleteElements(&adapters);
@@ -394,20 +403,21 @@ TEST_F(UserHistoryAdapterTest, DISABLED_EditAndDeleteAtTheSameTime) {
   vector<string> filenames;
   vector<Syncer *> syncers;
   vector<UserHistoryAdapter *> adapters;
-  vector<storage::StorageInterface *> memory_storages;
+  vector<mozc::storage::StorageInterface *> memory_storages;
 
   // Create sync clients.
   for (int i = 0; i < kClientsSize; ++i) {
     Syncer *syncer = new Syncer(&service);
     CHECK(syncer);
-    storage::StorageInterface *memory_storage = storage::MemoryStorage::New();
+    mozc::storage::StorageInterface *memory_storage =
+        mozc::storage::MemoryStorage::New();
     CHECK(memory_storage);
 
     UserHistoryAdapter *adapter = new UserHistoryAdapter;
     CHECK(adapter);
     const string filename =
-        Util::JoinPath(FLAGS_test_tmpdir,
-                       "client." + NumberUtil::SimpleItoa(i));
+        FileUtil::JoinPath(FLAGS_test_tmpdir,
+                           "client." + NumberUtil::SimpleItoa(i));
     adapter->SetUserHistoryFileName(filename);
     syncer->RegisterAdapter(adapter);
     syncers.push_back(syncer);
@@ -434,7 +444,7 @@ TEST_F(UserHistoryAdapterTest, DISABLED_EditAndDeleteAtTheSameTime) {
     // Do sync on every client to share the initial state.
     clock_mock_->SetTime(kTime0, 0);
     for (int i = 0; i < kClientsSize; ++i) {
-      storage::Registry::SetStorage(memory_storages[i]);
+      mozc::storage::Registry::SetStorage(memory_storages[i]);
       bool reload_required = false;
       syncers[i]->Sync(&reload_required);
       VLOG(1) << "UserHistoryStorage of " << i << ": "
@@ -498,7 +508,7 @@ TEST_F(UserHistoryAdapterTest, DISABLED_EditAndDeleteAtTheSameTime) {
 
     for (int i = 0; i < kClientsSize; ++i) {
       const int client_id = order[i];
-      storage::Registry::SetStorage(memory_storages[client_id]);
+      mozc::storage::Registry::SetStorage(memory_storages[client_id]);
       bool reload_required = false;
       syncers[client_id]->Sync(&reload_required);
     }
@@ -510,7 +520,7 @@ TEST_F(UserHistoryAdapterTest, DISABLED_EditAndDeleteAtTheSameTime) {
 
     // Do sync on every client to share the final server state.
     for (int i = 0; i < kClientsSize; ++i) {
-      storage::Registry::SetStorage(memory_storages[i]);
+      mozc::storage::Registry::SetStorage(memory_storages[i]);
       bool reload_required = false;
       syncers[i]->Sync(&reload_required);
       VLOG(1) << "Final state of client " << i << ": "
@@ -550,7 +560,7 @@ TEST_F(UserHistoryAdapterTest, DISABLED_EditAndDeleteAtTheSameTime) {
   }
 
   for (int i = 0; i < kClientsSize; ++i) {
-    Util::Unlink(filenames[i]);
+    FileUtil::Unlink(filenames[i]);
   }
   STLDeleteElements(&syncers);
   STLDeleteElements(&adapters);

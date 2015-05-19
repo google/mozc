@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,23 @@
 // Debug Utilities for Qt.
 #include "gui/base/debug_util.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 
 namespace mozc {
 namespace gui {
 namespace {
 void SendLogToDebugger(const char *msg) {
-#if defined(DEBUG) && defined(OS_WINDOWS)
+#if defined(DEBUG) && defined(OS_WIN)
   wstring wmsg;
   Util::UTF8ToWide(msg, &wmsg);
   ::OutputDebugString(wmsg.c_str());
-#endif  // OS_WINDOWS && DEBUG
+#endif  // OS_WIN && DEBUG
 }
 }  // namespace
 

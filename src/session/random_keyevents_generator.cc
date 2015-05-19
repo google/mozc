@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,10 @@ namespace session {
 namespace {
 
 #include "session/session_stress_test_data.h"
+
+// Constants for ProbableKeyEvent.
+const double kMostPossibleKeyProbability = 0.98;
+const size_t kProbableKeyEventSize = 8;
 
 const commands::KeyEvent::SpecialKey kSpecialKeys[] = {
   commands::KeyEvent::SPACE,
@@ -99,11 +103,15 @@ uint32 GetRandomAsciiKey() {
       Util::Random(static_cast<uint32>('~' - ' '));
 }
 
-void InitSeed() {
+void InitSeedWithRandomValue() {
   uint32 seed = 0;
-  mozc::Util::GetSecureRandomSequence(reinterpret_cast<char *>(&seed),
-                                      sizeof(seed));
+  mozc::Util::GetRandomSequence(reinterpret_cast<char *>(&seed), sizeof(seed));
   Util::SetRandomSeed(seed);
+}
+
+void DoNothing() {
+  // Do nothing.
+  // Used only for marking the seed initialized.
 }
 
 once_t seed_init_once = MOZC_ONCE_INIT;
@@ -118,20 +126,97 @@ void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
   }
 }
 
+// Generates KeyEvent instances based on |romaji| and stores into |keys|.
+void TypeRawKeys(StringPiece romaji, bool create_probable_key_events,
+                 vector<commands::KeyEvent> *keys) {
+  for (ConstChar32Iterator iter(romaji); !iter.Done(); iter.Next()) {
+    const uint32 ucs4 = iter.Get();
+    if (ucs4 < 0x20 || ucs4 > 0x7F) {
+      continue;
+    }
+    commands::KeyEvent key;
+    key.set_key_code(ucs4);
+    if (create_probable_key_events) {
+      commands::KeyEvent::ProbableKeyEvent *probable_key_event =
+          key.add_probable_key_event();
+        probable_key_event->set_key_code(ucs4);
+        probable_key_event->set_probability(kMostPossibleKeyProbability);
+      for (size_t i = 0; i < kProbableKeyEventSize; ++i) {
+        commands::KeyEvent::ProbableKeyEvent *probable_key_event =
+            key.add_probable_key_event();
+        probable_key_event->set_key_code(0x20 + Util::Random(0x7F - 0x20));
+        probable_key_event->set_probability(
+            (1.0 - kMostPossibleKeyProbability) / kProbableKeyEventSize);
+      }
+    }
+    keys->push_back(key);
+  }
+}
+
+// Converts from Hiragana to Romaji.
+string ToRomaji(StringPiece hiragana) {
+  string tmp, result;
+  Util::HiraganaToRomanji(hiragana, &tmp);
+  Util::FullWidthToHalfWidth(tmp, &result);
+  return result;
+}
+
+void RandomKeyEventsGenerator::InitSeed(uint32 seed) {
+  Util::SetRandomSeed(seed);
+  CallOnce(&seed_init_once, &DoNothing);
+}
+
+// Generates KeyEvent instances based on |sentence| and stores into |keys|.
+// And Enter key event is appended at the tail.
+// The instances have ProbableKeyEvent if |create_probable_key_events| is set.
+void GenerateMobileSequenceInternal(
+    StringPiece sentence, bool create_probable_key_events,
+    vector<commands::KeyEvent> *keys) {
+  const string input = ToRomaji(sentence);
+  VLOG(1) << input;
+
+  // Type the sentence
+  TypeRawKeys(input, create_probable_key_events, keys);
+
+  commands::KeyEvent key;
+  key.set_special_key(commands::KeyEvent::ENTER);
+  keys->push_back(key);
+}
+
+void RandomKeyEventsGenerator::GenerateMobileSequence(
+    bool create_probable_key_events, vector<commands::KeyEvent> *keys) {
+  CHECK(keys);
+  keys->clear();
+
+  // If seed was not initialized, set seed randomly.
+  CallOnce(&seed_init_once, &InitSeedWithRandomValue);
+
+  const StringPiece sentence(
+      kTestSentences[Util::Random(arraysize(kTestSentences))]);
+  CHECK(!sentence.empty());
+  for (size_t i = 0; i < sentence.size(); ) {
+    // To simulate mobile key events, split given sentence into smaller parts.
+    // Average 5, Min 1, Max 15
+    const size_t len = Util::Random(5) + Util::Random(5) + Util::Random(5);
+    GenerateMobileSequenceInternal(sentence.substr(i, len),
+                                   create_probable_key_events, keys);
+    i += len;
+  }
+}
+
 void RandomKeyEventsGenerator::GenerateSequence(
     vector<commands::KeyEvent> *keys) {
   CHECK(keys);
   keys->clear();
 
-  CallOnce(&seed_init_once, &InitSeed);
+  // If seed was not initialized, set seed randomly.
+  CallOnce(&seed_init_once, &InitSeedWithRandomValue);
 
   const string sentence =
       kTestSentences[Util::Random(arraysize(kTestSentences))];
   CHECK(!sentence.empty());
 
-  string tmp, input;
-  Util::HiraganaToRomanji(sentence, &tmp);
-  Util::FullWidthToHalfWidth(tmp, &input);
+  const string input = ToRomaji(sentence);
 
   VLOG(1) << input;
 
@@ -145,22 +230,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
   vector<commands::KeyEvent> basic_keys;
 
   // generate basic input
-  {
-    // first add a normal keys
-    const char *begin = input.data();
-    const char *end = input.data() + input.size();
-    while (begin < end) {
-      size_t mblen = 0;
-      const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
-      CHECK_GT(mblen, 0);
-      begin += mblen;
-      if (ucs2 >= 0x20 && ucs2 <= 0x7F) {
-        commands::KeyEvent key;
-        key.set_key_code(ucs2);
-        basic_keys.push_back(key);
-      }
-    }
-  }
+  TypeRawKeys(input, false, &basic_keys);
 
   // basic keys + conversion
   {

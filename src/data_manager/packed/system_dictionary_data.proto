@@ -1,0 +1,140 @@
+// Copyright 2010-2013, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+// Protocol messages to be used for system dictionary data.
+syntax = "proto2";
+
+package mozc.packed;
+
+message SystemDictionaryData {
+  // product version
+  optional string product_version = 1 [ default = "0.0.0.0" ];
+  optional uint32 format_version = 2;
+
+  message PosToken {
+    optional string pos = 1;
+    message ConjugationType {
+      optional string key_suffix = 1;
+      optional string value_suffix = 2;
+      optional uint32 id = 3;
+    };
+    repeated ConjugationType conjugation_forms = 2;
+  };
+  repeated PosToken pos_tokens = 3;
+
+  message PosMatcherData {
+    repeated uint32 rule_id_table = 1;
+    message RangeTable {
+      message Range {
+        optional uint32 lower = 1;
+        optional uint32 upper = 2;
+      };
+      repeated Range ranges = 2;
+    };
+    repeated RangeTable range_tables = 2;
+  };
+  optional PosMatcherData pos_matcher_data = 4;
+
+  optional bytes lid_group_data = 5;
+
+  message BoundaryData {
+    optional uint32 prefix_penalty = 1;
+    optional uint32 suffix_penalty = 2;
+  };
+  repeated BoundaryData boundary_data = 6;
+
+  message SuffixToken {
+    optional string key = 1;
+    optional string value = 2;
+    optional uint32 lid = 3;
+    optional uint32 rid = 4;
+    optional int32 wcost = 5;
+  };
+  repeated SuffixToken suffix_tokens = 7;
+
+  message ReadingCorrectionItem {
+    optional string value = 1;
+    optional string error = 2;
+    optional string correction = 3;
+  };
+  repeated ReadingCorrectionItem reading_corrections = 8;
+
+  message SegmenterData {
+    optional uint32 compressed_l_size = 1;
+    optional uint32 compressed_r_size = 2;
+    repeated uint32 compressed_lid_table = 3;
+    repeated uint32 compressed_rid_table = 4;
+    optional bytes bit_array_data = 5;
+  }
+  optional SegmenterData segmenter_data = 9;
+
+  message EmbeddedDictionary {
+    message Value {
+      optional string value = 1;
+      optional string description = 2;
+      optional string additional_description = 3;
+      optional uint32 lid = 4;
+      optional uint32 rid = 5;
+      optional int32 cost = 6;
+    }
+    message Token {
+      optional string key = 1;
+      repeated Value values = 2;
+    }
+    repeated Token tokens = 1;
+  }
+  optional EmbeddedDictionary symbol_dictionary = 10;
+
+  message UsageRewriterData {
+    message ConjugationSuffix {
+      optional string value_suffix = 1;
+      optional string key_suffix = 2;
+    }
+    message Conjugation {
+      optional ConjugationSuffix base_suffix = 1;
+      repeated ConjugationSuffix conjugation_suffixes = 2;
+    }
+    message UsageDictItem {
+      optional int32 id = 1;
+      optional string key = 2;
+      optional string value = 3;
+      optional int32 conjugation_id = 4;
+      optional string meaning = 5;
+    }
+    repeated Conjugation conjugations = 1;
+    repeated UsageDictItem usage_data_values = 2;
+  }
+  optional UsageRewriterData usage_rewriter_data = 11;
+
+  optional bytes suggestion_filter_data = 12;
+  optional bytes connection_data = 13;
+  optional bytes dictionary_data = 14;
+  optional bytes collocation_data = 15;
+  optional bytes collocation_suppression_data = 16;
+};
