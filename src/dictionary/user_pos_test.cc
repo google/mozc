@@ -41,6 +41,8 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace dictionary {
+namespace {
 
 class UserPOSTest : public ::testing::Test {
  protected:
@@ -143,4 +145,6 @@ TEST_F(UserPOSTest, ConjugationTest) {
   }
 }
 
+}  // namespace
+}  // namespace dictionary
 }  // namespace mozc

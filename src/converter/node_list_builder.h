@@ -45,7 +45,7 @@ static const int32 kKanaModifierInsensitivePenalty = 1700;
 // Provides basic functionality for building a list of nodes.
 // This class is defined inline because it contributes to the performance of
 // dictionary lookup.
-class BaseNodeListBuilder : public DictionaryInterface::Callback {
+class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
  public:
   BaseNodeListBuilder(NodeAllocator *allocator, int limit)
       : allocator_(allocator), limit_(limit), penalty_(0), result_(NULL) {
@@ -62,7 +62,7 @@ class BaseNodeListBuilder : public DictionaryInterface::Callback {
 
   // Creates a new node and prepends it to the current list.
   virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                             const Token &token) {
+                             const dictionary::Token &token) {
     Node *new_node = NewNodeFromToken(token);
     PrependNode(new_node);
     return (limit_ <= 0) ? TRAVERSE_DONE : TRAVERSE_CONTINUE;
@@ -73,7 +73,7 @@ class BaseNodeListBuilder : public DictionaryInterface::Callback {
   Node *result() const { return result_; }
   NodeAllocator *allocator() { return allocator_; }
 
-  Node *NewNodeFromToken(const Token &token) {
+  Node *NewNodeFromToken(const dictionary::Token &token) {
     Node *new_node = allocator_->NewNode();
     new_node->InitFromToken(token);
     new_node->wcost += penalty_;

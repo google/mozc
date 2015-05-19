@@ -39,7 +39,6 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
@@ -51,6 +50,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 
+using mozc::dictionary::POSMatcher;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::usage_stats::UsageStats;
 

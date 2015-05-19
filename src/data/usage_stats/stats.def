@@ -541,6 +541,7 @@ SubmittedCandidateRowGE10
 # The count of the fold/expand keyboard event.
 KeyboardFoldEvent
 KeyboardExpandEvent
+MushroomSelectionDialogOpen
 
 # for windows
 

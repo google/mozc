@@ -46,8 +46,9 @@
 #include "rewriter/rewriter_interface.h"
 #include "session/commands.pb.h"
 
-namespace mozc {
+using mozc::dictionary::POSMatcher;
 
+namespace mozc {
 namespace {
 
 struct SingleKanjiList {

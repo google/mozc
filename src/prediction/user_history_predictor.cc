@@ -59,6 +59,8 @@
 
 using mozc::commands::Request;
 using mozc::dictionary::SuppressionDictionary;
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::POSMatcher;
 
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.

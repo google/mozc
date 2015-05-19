@@ -40,6 +40,8 @@
 #include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "base/trie.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
@@ -54,8 +56,6 @@ class StringStorageInterface;
 }  // namespace storage
 
 class ConversionRequest;
-class DictionaryInterface;
-class POSMatcher;
 class Segment;
 class Segments;
 class UserHistoryPredictorSyncer;
@@ -84,8 +84,8 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
 class UserHistoryPredictor : public PredictorInterface {
  public:
   UserHistoryPredictor(
-      const DictionaryInterface *dictionary,
-      const POSMatcher *pos_matcher,
+      const dictionary::DictionaryInterface *dictionary,
+      const dictionary::POSMatcher *pos_matcher,
       const dictionary::SuppressionDictionary *suppression_dictionary,
       bool enable_content_word_learning);
   virtual ~UserHistoryPredictor();
@@ -493,8 +493,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // such like password.
   bool IsPrivacySensitive(const Segments *segments) const;
 
-  const DictionaryInterface *dictionary_;
-  const POSMatcher *pos_matcher_;
+  const dictionary::DictionaryInterface *dictionary_;
+  const dictionary::POSMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const string predictor_name_;
 

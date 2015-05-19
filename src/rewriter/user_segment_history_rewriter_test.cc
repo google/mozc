@@ -52,12 +52,14 @@
 
 DECLARE_string(test_tmpdir);
 
+using mozc::config::CharacterFormManager;
+using mozc::config::Config;
+using mozc::config::ConfigHandler;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosGroup;
+
 namespace mozc {
 namespace {
-
-using config::CharacterFormManager;
-using config::Config;
-using config::ConfigHandler;
 
 const size_t kCandidatesSize = 20;
 

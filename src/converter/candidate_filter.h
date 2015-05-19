@@ -36,12 +36,12 @@
 
 #include "base/port.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
 
 struct Node;
-class POSMatcher;
 class SuggestionFilter;
 
 namespace converter {
@@ -50,7 +50,7 @@ class CandidateFilter {
  public:
   CandidateFilter(
       const dictionary::SuppressionDictionary *suppression_dictionary,
-      const POSMatcher *pos_matcher,
+      const dictionary::POSMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter);
   ~CandidateFilter();
 
@@ -76,7 +76,7 @@ class CandidateFilter {
                                      Segments::RequestType request_type);
 
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  const POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher *pos_matcher_;
   const SuggestionFilter *suggestion_filter_;
 
   set<string> seen_;

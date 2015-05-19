@@ -36,11 +36,13 @@
 #include <string>
 #include <vector>
 
+#include "base/mmap.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 
 namespace mozc {
-class Mmap;
+namespace dictionary {
+
 struct DictionaryFileSection;
 
 class DictionaryFile {
@@ -60,13 +62,14 @@ class DictionaryFile {
   const char *GetSection(const string &section_name, int *len) const;
 
  private:
-  // This will be NULL if the mapping source is given as a pointer.
+  // This will be nullptr if the mapping source is given as a pointer.
   scoped_ptr<Mmap> mapping_;
-
   vector<DictionaryFileSection> sections_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryFile);
 };
-}
+
+}  // namespace dictionary
+}  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_

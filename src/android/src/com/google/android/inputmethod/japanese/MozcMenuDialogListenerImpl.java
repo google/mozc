@@ -44,10 +44,13 @@ import android.view.inputmethod.InputConnection;
  */
 class MozcMenuDialogListenerImpl implements MenuDialogListener {
   private final InputMethodService inputMethodService;
+  private final ViewEventListener eventListener;
   private boolean showInputMethodPicker = false;
 
-  MozcMenuDialogListenerImpl(InputMethodService inputMethodService) {
+  MozcMenuDialogListenerImpl(
+    InputMethodService inputMethodService, ViewEventListener eventListener) {
     this.inputMethodService = Preconditions.checkNotNull(inputMethodService);
+    this.eventListener = Preconditions.checkNotNull(eventListener);
   }
 
   @Override
@@ -96,11 +99,11 @@ class MozcMenuDialogListenerImpl implements MenuDialogListener {
       inputConnection.setComposingText("", MozcUtil.CURSOR_POSITION_TAIL);
     }
 
+    eventListener.onShowMushroomSelectionDialog();
+
     // Launch the activity.
     Intent intent = MushroomUtil.createMushroomSelectionActivityLaunchingIntent(
         context, inputMethodService.getCurrentInputEditorInfo().fieldId, composingText);
     context.startActivity(intent);
-
-    // TODO(hidehiko): Do we need to logging?
   }
 }

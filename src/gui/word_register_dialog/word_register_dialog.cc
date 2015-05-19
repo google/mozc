@@ -100,7 +100,7 @@ WordRegisterDialog::WordRegisterDialog()
           UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
       window_title_(tr("Mozc")),
-      user_pos_(new UserPOS(
+      user_pos_(new dictionary::UserPOS(
           UserPosManager::GetUserPosManager()->GetUserPOSData())) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);

@@ -91,7 +91,7 @@ class Connector::Row {
     if (use_1byte_value_) {
       *value = values_[value_position];
       if (*value == kInvalid1ByteCostValue) {
-        *value = ConnectorInterface::kInvalidCost;
+        *value = kInvalidCost;
       }
     } else {
       *value = reinterpret_cast<const uint16 *>(values_)[value_position];

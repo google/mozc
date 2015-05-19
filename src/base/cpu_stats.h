@@ -39,12 +39,12 @@ class CPUStatsInterface {
   CPUStatsInterface() {}
   virtual ~CPUStatsInterface() {}
 
-  // returns the percentage of total CPU load since the last time
+  // Returns the percentage of total CPU load since the last time
   // this method was called.
   // The return value must be in the range of [0.0 .. 1.0].
   virtual float GetSystemCPULoad() = 0;
 
-  // returns the percentage of current process's CPU load
+  // Returns the percentage of current process's CPU load
   // since the last time this method was called.
   // If the process has multi-threads, the return value
   // may be larger than 1.0.
@@ -59,6 +59,9 @@ class CPUStatsInterface {
 // default implementation
 class CPUStats : public CPUStatsInterface {
  public:
+  CPUStats();
+  virtual ~CPUStats();
+
   // return 0.0 if CPU load is unknown
   float GetSystemCPULoad();
 
@@ -68,15 +71,13 @@ class CPUStats : public CPUStatsInterface {
   // return the number of processors
   size_t GetNumberOfProcessors() const;
 
-  CPUStats();
-  virtual ~CPUStats();
-
  private:
   uint64 prev_system_total_times_;
   uint64 prev_system_cpu_times_;
   uint64 prev_current_process_total_times_;
   uint64 prev_current_process_cpu_times_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_CPU_STATS_H_

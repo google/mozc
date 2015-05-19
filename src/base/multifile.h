@@ -33,7 +33,6 @@
 #ifndef MOZC_BASE_MULTIFILE_H_
 #define MOZC_BASE_MULTIFILE_H_
 
-#include <fstream>
 #include <string>
 #include <vector>
 

@@ -67,7 +67,7 @@
         'converter.gyp:converter',
         'converter_base.gyp:connector',
         'converter_base.gyp:converter_mock',
-        'converter_base.gyp:segmenter_base',
+        'converter_base.gyp:segmenter',
         'converter_base.gyp:segments',
       ],
       'variables': {

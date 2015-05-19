@@ -30,18 +30,14 @@
 #ifndef MOZC_REWRITER_SINGLE_KANJI_REWRITER_H_
 #define MOZC_REWRITER_SINGLE_KANJI_REWRITER_H_
 
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class POSMatcher;
-class Segments;
-class POSMatcher;
-
 class SingleKanjiRewriter : public RewriterInterface  {
  public:
-  explicit SingleKanjiRewriter(const POSMatcher &pos_matcher);
+  explicit SingleKanjiRewriter(const dictionary::POSMatcher &pos_matcher);
   virtual ~SingleKanjiRewriter();
 
   virtual int capability(const ConversionRequest &request) const;
@@ -50,8 +46,9 @@ class SingleKanjiRewriter : public RewriterInterface  {
                        Segments *segments) const;
 
  private:
-  const POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher *pos_matcher_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_SINGLE_KANJI_REWRITER_H_

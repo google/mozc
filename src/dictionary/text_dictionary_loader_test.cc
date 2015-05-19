@@ -43,16 +43,18 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace dictionary {
 namespace {
 
 const char kTextLines[] =
-"key_test1\t0\t0\t1\tvalue_test1\n"
-"foo\t1\t2\t3\tbar\n"
-"buz\t10\t20\t30\tfoobar\n";
+    "key_test1\t0\t0\t1\tvalue_test1\n"
+    "foo\t1\t2\t3\tbar\n"
+    "buz\t10\t20\t30\tfoobar\n";
 
 const char kReadingCorrectionLines[] =
     "bar\tfoo\tfoo_correct\n"
     "foobar\tfoobar_error\tfoobar_correct\n";
+
 }  // namespace
 
 class TextDictionaryLoaderTest : public ::testing::Test {
@@ -254,4 +256,5 @@ TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
   EXPECT_EQ(30 + 2302, tokens[3]->cost);
 }
 
+}  // namespace dictionary
 }  // namespace mozc

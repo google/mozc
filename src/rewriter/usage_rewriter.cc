@@ -41,6 +41,9 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/dictionary_interface.h"
 
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
 
 UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,

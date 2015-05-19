@@ -140,6 +140,7 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
     c->key = base_candidate.key;
     c->content_key = base_candidate.content_key;
     // no full/half width normalizations
+    c->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
     c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     if (is_no_learning) {

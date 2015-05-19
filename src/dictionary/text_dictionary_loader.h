@@ -39,6 +39,7 @@
 // for FRIEND_TEST
 
 namespace mozc {
+namespace dictionary {
 
 struct Token;
 class POSMatcher;
@@ -109,6 +110,7 @@ class TextDictionaryLoader {
   FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_TEXT_DICTIONARY_LOADER_H_

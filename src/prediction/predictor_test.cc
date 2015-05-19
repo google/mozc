@@ -56,6 +56,7 @@ DECLARE_string(test_tmpdir);
 using ::testing::AtMost;
 using ::testing::Return;
 using ::testing::_;
+using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {

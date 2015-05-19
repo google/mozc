@@ -33,11 +33,11 @@
 #define MOZC_DICTIONARY_SYSTEM_WORDS_INFO_H_
 
 namespace mozc {
+namespace dictionary {
+
 struct Token;
 
-namespace dictionary {
 // TODO(toshiyuki): These could be implemented by protobuf
-
 // Represents each token info
 struct TokenInfo {
   enum PosType {

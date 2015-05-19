@@ -914,11 +914,17 @@ bool Util::IsUTF16BOM(const string &line) {
   return false;
 }
 
+namespace {
+// http://unicode.org/~scherer/emoji4unicode/snapshot/full.html
+static const char kUtf8MinGooglePuaEmoji[] = "\xf3\xbe\x80\x80";
+static const char kUtf8MaxGooglePuaEmoji[] = "\xf3\xbe\xba\xa0";
+static const char32 kUcs4MinGooglePuaEmoji = 0xFE000;
+static const char32 kUcs4MaxGooglePuaEmoji = 0xFEEA0;
+}
+
 bool Util::IsAndroidPuaEmoji(StringPiece s) {
-  static const char kUtf8MinAndroidPuaEmoji[] = "\xf3\xbe\x80\x80";
-  static const char kUtf8MaxAndroidPuaEmoji[] = "\xf3\xbe\xba\xa0";
   return (s.size() == 4 &&
-          kUtf8MinAndroidPuaEmoji <= s && s <= kUtf8MaxAndroidPuaEmoji);
+          kUtf8MinGooglePuaEmoji <= s && s <= kUtf8MaxGooglePuaEmoji);
 }
 
 string Util::StringPrintf(const char *format, ...) {
@@ -1668,7 +1674,8 @@ Util::ScriptType Util::GetScriptType(char32 w) {
       INRANGE(w, 0x1F600, 0x1F64F) ||  // Emoticons
       INRANGE(w, 0x1F680, 0x1F6FF) ||  // Transport And Map Symbols
       INRANGE(w, 0x1F700, 0x1F77F) ||  // Alchemical Symbols
-      w == 0x26CE) {                   // Ophiuchus
+      w == 0x26CE ||                   // Ophiuchus
+      INRANGE(w, kUcs4MinGooglePuaEmoji, kUcs4MaxGooglePuaEmoji)) {
     return EMOJI;
   }
 

@@ -34,23 +34,24 @@
 
 #include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "converter/connector_interface.h"
 
 namespace mozc {
 
 class DataManagerInterface;
 
-class Connector : public ConnectorInterface {
+class Connector {
  public:
+  static const int16 kInvalidCost = 30000;
+
   static Connector *CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
   Connector(const char *connection_data, size_t connection_size,
             int cache_size);
-  virtual ~Connector();
+  ~Connector();
 
-  virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
-  virtual int GetResolution() const;
+  int GetTransitionCost(uint16 rid, uint16 lid) const;
+  int GetResolution() const;
 
   void ClearCache();
 

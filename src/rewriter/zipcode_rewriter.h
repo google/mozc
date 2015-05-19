@@ -31,18 +31,16 @@
 #define MOZC_REWRITER_ZIPCODE_REWRITER_H_
 
 #include <string>
+
+#include "base/port.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class POSMatcher;
-class Segment;
-class Segments;
-
 class ZipcodeRewriter : public RewriterInterface  {
  public:
-  explicit ZipcodeRewriter(const POSMatcher *pos_matcher);
+  explicit ZipcodeRewriter(const dictionary::POSMatcher *pos_matcher);
   virtual ~ZipcodeRewriter();
 
   virtual bool Rewrite(const ConversionRequest &request,
@@ -58,8 +56,11 @@ class ZipcodeRewriter : public RewriterInterface  {
                        const string &address,
                        Segment *segment) const;
 
-  const POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher *pos_matcher_;
+
+  DISALLOW_COPY_AND_ASSIGN(ZipcodeRewriter);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_ZIPCODE_REWRITER_H_

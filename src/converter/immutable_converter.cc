@@ -44,7 +44,7 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/connector_interface.h"
+#include "converter/connector.h"
 #include "converter/conversion_request.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
@@ -52,7 +52,7 @@
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "converter/node_list_builder.h"
-#include "converter/segmenter_interface.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
@@ -61,7 +61,11 @@
 #include "prediction/suggestion_filter.h"
 #include "session/commands.pb.h"
 
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuppressionDictionary;
+using mozc::dictionary::Token;
 
 namespace mozc {
 namespace {
@@ -274,8 +278,8 @@ ImmutableConverterImpl::ImmutableConverterImpl(
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary,
     const SuppressionDictionary *suppression_dictionary,
-    const ConnectorInterface *connector,
-    const SegmenterInterface *segmenter,
+    const Connector *connector,
+    const Segmenter *segmenter,
     const POSMatcher *pos_matcher,
     const PosGroup *pos_group,
     const SuggestionFilter *suggestion_filter)
@@ -650,7 +654,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
           if ((lnode->value.size() + rnode->value.size())
               == compound_node->value.size() &&
               (lnode->value + rnode->value) == compound_node->value &&
-              segmenter_->IsBoundary(lnode, rnode, false)) {   // Constraint 3.
+              segmenter_->IsBoundary(*lnode, *rnode, false)) {  // Constraint 3.
             const int32 cost = lnode->wcost + GetCost(lnode, rnode);
             if (cost < best_cost) {   // choose the smallest ones
               best_last_name_node = lnode;
@@ -885,7 +889,7 @@ const int kVeryBigCost = (INT_MAX >> 2);
 // left_boundary should be the previous one, and right_boundary should be
 // the next).
 inline void ViterbiInternal(
-    const ConnectorInterface &connector, size_t pos, size_t right_boundary,
+    const Connector &connector, size_t pos, size_t right_boundary,
     Lattice *lattice) {
   for (Node *rnode = lattice->begin_nodes(pos);
        rnode != NULL; rnode = rnode->bnext) {
@@ -1767,7 +1771,7 @@ bool ImmutableConverterImpl::IsSegmentEndNode(
   }
 
   // Grammatically segmented.
-  if (segmenter_->IsBoundary(node, node->next, is_single_segment)) {
+  if (segmenter_->IsBoundary(*node, *node->next, is_single_segment)) {
     return true;
   }
 

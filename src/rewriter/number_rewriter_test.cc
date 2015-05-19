@@ -51,6 +51,8 @@
 
 DECLARE_string(test_tmpdir);
 
+using mozc::dictionary::POSMatcher;
+
 // To show the value of size_t, 'z' speficier should be used.
 // But MSVC doesn't support it yet so use 'l' instead.
 #ifdef _MSC_VER
@@ -60,8 +62,8 @@ DECLARE_string(test_tmpdir);
 #endif  // _MSC_VER
 
 namespace mozc {
-
 namespace {
+
 // const char kKanjiDescription[]  = 漢数字";
 // const char kArabicDescription[] = "数字";
 // const char kOldKanjiDescription[]  = "大字";

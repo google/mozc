@@ -29,12 +29,12 @@
 
 #include <numeric>
 
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
 #include "base/clock_mock.h"
 #include "base/scoped_ptr.h"
 #include "base/stopwatch.h"
 #include "base/util.h"
+#include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
 

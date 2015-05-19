@@ -38,6 +38,7 @@
 #include "dictionary/file/section.h"
 
 namespace mozc {
+namespace dictionary {
 
 DictionaryFile::DictionaryFile() {}
 
@@ -68,6 +69,8 @@ const char *DictionaryFile::GetSection(const string &section_name,
       return sections_[i].ptr;
     }
   }
-  return NULL;
+  return nullptr;
 }
+
+}  // namespace dictionary
 }  // namespace mozc

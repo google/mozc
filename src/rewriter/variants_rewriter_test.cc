@@ -46,19 +46,21 @@
 
 DECLARE_string(test_tmpdir);
 
+using mozc::config::CharacterFormManager;
+using mozc::config::Config;
+using mozc::config::ConfigHandler;
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
-
-using config::CharacterFormManager;
-using config::Config;
-using config::ConfigHandler;
-
 namespace {
+
 string AppendString(const string &lhs, const string &rhs) {
   if (!rhs.empty()) {
     return lhs + ' ' + rhs;
   }
   return lhs;
 }
+
 }  // namespace
 
 class VariantsRewriterTest : public testing::Test {

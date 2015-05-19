@@ -40,23 +40,14 @@
 #include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
+#include "storage/louds/louds_trie.h"
 
 namespace mozc {
-
 namespace dictionary {
-class SystemDictionaryCodecInterface;
-}  // namespace dictionary
-
-namespace storage {
-namespace louds {
-class LoudsTrie;
-}  // namespace louds
-}  // namespace storage
 
 class DictionaryFile;
 class POSMatcher;
-
-namespace dictionary {
+class SystemDictionaryCodecInterface;
 
 class ValueDictionary : public DictionaryInterface {
  public:
@@ -85,7 +76,7 @@ class ValueDictionary : public DictionaryInterface {
 
   bool OpenDictionaryFile();
 
-  scoped_ptr<mozc::storage::louds::LoudsTrie> value_trie_;
+  storage::louds::LoudsTrie value_trie_;
   scoped_ptr<DictionaryFile> dictionary_file_;
   const SystemDictionaryCodecInterface *codec_;
   const uint16 suggestion_only_word_id_;

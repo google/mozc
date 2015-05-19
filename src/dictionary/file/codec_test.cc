@@ -42,6 +42,7 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace dictionary {
 namespace {
 
 class CodecTest : public ::testing::Test {
@@ -222,4 +223,5 @@ TEST_F(CodecTest, CodecTest) {
 
 
 }  // namespace
+}  // namespace dictionary
 }  // namespace mozc

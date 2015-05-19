@@ -46,6 +46,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 
+using mozc::dictionary::POSMatcher;
 using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {

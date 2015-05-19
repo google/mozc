@@ -30,10 +30,10 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_
 
-#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
+namespace dictionary {
 
 class UserDictionaryStub : public DictionaryInterface {
  public:
@@ -66,6 +66,7 @@ class UserDictionaryStub : public DictionaryInterface {
   }
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_

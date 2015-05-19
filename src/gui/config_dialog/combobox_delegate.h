@@ -69,6 +69,8 @@ class ComboBoxDelegate : public QItemDelegate {
  private:
   QStringList item_list_;
 };
-}  // gui
-}  // mozc
+
+}  // namespace gui
+}  // namespace mozc
+
 #endif  // MOZC_GUI_CONFIG_DIALOG_COMBOBOX_DELEGATE_H_

@@ -47,6 +47,7 @@
 #include "prediction/suggestion_filter.h"
 #include "testing/base/public/gunit.h"
 
+using mozc::dictionary::POSMatcher;
 using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {

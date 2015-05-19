@@ -303,7 +303,7 @@ bool TransliterationRewriter::FillT13nsFromKey(Segments *segments) const {
 }
 
 TransliterationRewriter::TransliterationRewriter(
-    const POSMatcher &pos_matcher)
+    const dictionary::POSMatcher &pos_matcher)
     : unknown_id_(pos_matcher.GetUnknownId()) {}
 
 TransliterationRewriter::~TransliterationRewriter() {}

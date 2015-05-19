@@ -37,9 +37,8 @@
 #include "dictionary/suffix_dictionary_token.h"
 #include "testing/base/public/gunit.h"
 
-using ::mozc::dictionary::CollectTokenCallback;
-
 namespace mozc {
+namespace dictionary {
 
 TEST(SuffixDictionaryTest, LookupPredictive) {
   // Test SuffixDictionary with mock data.
@@ -85,4 +84,5 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
   }
 }
 
+}  // namespace dictionary
 }  // namespace mozc

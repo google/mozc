@@ -32,14 +32,17 @@
 
 #include <string>
 
+#include "base/port.h"
+
 namespace mozc {
+
 class Process {
  public:
-  // Open the URL with the default browser.  If this function is not
+  // Opens the URL with the default browser.  If this function is not
   // supported on the OS or failed, false is returned.
   static bool OpenBrowser(const string &url);
 
-  // Spawn a process specified by path using arg as options.
+  // Spawns a process specified by path using arg as options.
   // On Windows Vista the process is spawned as the same level as the parent
   // process.
   // Return true if process is successfully launched.
@@ -50,18 +53,18 @@ class Process {
   // specifies an directory ending with ".app", an application is
   // spawned in the OSX way.
   static bool SpawnProcess(
-      const string &path, const string& arg, size_t *pid = NULL);
+      const string &path, const string& arg, size_t *pid = nullptr);
 
   // A SpawnProcess wrapper to run an executable which is installed in
   // the Mozc server directory.
   static bool SpawnMozcProcess(
-      const string &filename, const string &arg, size_t *pid = NULL);
+      const string &filename, const string &arg, size_t *pid = nullptr);
 
-  // Wait process |pid| until it terminates.
-  // you can set timeout. if timeout is negative, wait forever.
+  // Waits for process |pid| to terminate up to |timeout|.
+  // If |timeout| is negative, waits forever.
   static bool WaitProcess(size_t pid, int timeout);
 
-  // return true if a process having |pid| is still alive.
+  // Returns true if a process having |pid| is still alive.
   // if the the current thread has no permission to get the status or
   // operation failed in system call, it returns |default_result|.
   // TODO(all):
@@ -71,7 +74,7 @@ class Process {
   // creation time if this kind of false-positive matters.
   static bool IsProcessAlive(size_t pid, bool default_result);
 
-  // return true if a thread having |thread_id| is still alive.
+  // Returns true if a thread having |thread_id| is still alive.
   // if the current thread has no permission to get the status or
   // operation failed in system call, it returns |default_result|.
   // On Posix, it always returns |default_result| as thread_id is not supported.
@@ -82,13 +85,13 @@ class Process {
   // creation time if this kind of false-positive matters.
   static bool IsThreadAlive(size_t thread_id, bool default_result);
 
-  // launch error message dialog
+  // Launches an error message dialog.
   static bool LaunchErrorMessageDialog(const string &type);
 
  private:
-  Process() {}
-  virtual ~Process() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(Process);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_PROCESS_H_

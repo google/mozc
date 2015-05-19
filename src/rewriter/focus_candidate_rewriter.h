@@ -36,10 +36,10 @@
 
 namespace mozc {
 
-class ConversionRequest;
 class DataManagerInterface;
-class POSMatcher;
 struct CounterSuffixEntry;
+
+namespace dictionary { class POSMatcher; }
 
 class FocusCandidateRewriter : public RewriterInterface  {
  public:
@@ -84,7 +84,7 @@ class FocusCandidateRewriter : public RewriterInterface  {
 
   const CounterSuffixEntry *suffix_array_;
   size_t suffix_array_size_;
-  const POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher *pos_matcher_;
 
   DISALLOW_COPY_AND_ASSIGN(FocusCandidateRewriter);
 };

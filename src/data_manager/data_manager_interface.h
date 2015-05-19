@@ -36,15 +36,18 @@
 
 namespace mozc {
 
-class POSMatcher;
 struct BoundaryData;
 struct CounterSuffixEntry;
 struct ReadingCorrectionItem;
-struct SuffixToken;
 #ifndef NO_USAGE_REWRITER
 struct ConjugationSuffix;
 struct UsageDictItem;
 #endif  // NO_USAGE_REWRITER
+
+namespace dictionary {
+class POSMatcher;
+struct SuffixToken;
+}  // namespace dictionary
 
 // Builds those objects that depend on a set of embedded data generated from
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
@@ -53,11 +56,11 @@ class DataManagerInterface {
   virtual ~DataManagerInterface() {}
 
   // Returns the address of an array of UserPOS::POSToken.
-  virtual const UserPOS::POSToken *GetUserPOSData() const = 0;
+  virtual const dictionary::UserPOS::POSToken *GetUserPOSData() const = 0;
 
   // Returns a reference to POSMatcher class handling POS rules. Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const POSMatcher *GetPOSMatcher() const = 0;
+  virtual const dictionary::POSMatcher *GetPOSMatcher() const = 0;
 
   // Returns the address of an array of lid group.
   virtual const uint8 *GetPosGroupData() const = 0;
@@ -76,7 +79,7 @@ class DataManagerInterface {
   virtual void GetSystemDictionaryData(const char **data, int *size) const = 0;
 
   // Returns the address of suffix dictionary and its size.
-  virtual void GetSuffixDictionaryData(const SuffixToken **tokens,
+  virtual void GetSuffixDictionaryData(const dictionary::SuffixToken **tokens,
                                        size_t *size) const = 0;
 
   // Gets a reference to reading correction data array and its size.

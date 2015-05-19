@@ -42,14 +42,12 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
-#include "converter/segmenter_base.h"
-#include "converter/segmenter_interface.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -59,6 +57,7 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
+#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
@@ -82,15 +81,19 @@
 DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::DictionaryMock;
+using mozc::dictionary::PosGroup;
+using mozc::dictionary::SuffixDictionary;
+using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
+using mozc::dictionary::Token;
+using mozc::dictionary::UserDictionaryStub;
 using mozc::dictionary::ValueDictionary;
 using mozc::usage_stats::UsageStats;
 
 namespace mozc {
-
-struct SuffixToken;
-
 namespace {
 
 class StubPredictor : public PredictorInterface {
@@ -177,8 +180,8 @@ class ConverterTest : public ::testing::Test {
     scoped_ptr<DictionaryInterface> user_dictionary;
     scoped_ptr<SuppressionDictionary> suppression_dictionary;
     scoped_ptr<DictionaryInterface> suffix_dictionary;
-    scoped_ptr<const ConnectorInterface> connector;
-    scoped_ptr<const SegmenterInterface> segmenter;
+    scoped_ptr<const Connector> connector;
+    scoped_ptr<const Segmenter> segmenter;
     scoped_ptr<DictionaryInterface> dictionary;
     scoped_ptr<const PosGroup> pos_group;
     scoped_ptr<const SuggestionFilter> suggestion_filter;
@@ -209,7 +212,7 @@ class ConverterTest : public ::testing::Test {
     ret->suffix_dictionary.reset(
         CreateSuffixDictionaryFromDataManager(data_manager));
     ret->connector.reset(Connector::CreateFromDataManager(data_manager));
-    ret->segmenter.reset(SegmenterBase::CreateFromDataManager(data_manager));
+    ret->segmenter.reset(Segmenter::CreateFromDataManager(data_manager));
     ret->immutable_converter.reset(
         new ImmutableConverterImpl(ret->dictionary.get(),
                                    ret->suffix_dictionary.get(),
@@ -1243,10 +1246,10 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       new PosGroup(data_manager.GetPosGroupData()));
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const ConnectorInterface> connector(
+  scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(data_manager));
+  scoped_ptr<const Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   scoped_ptr<ImmutableConverterInterface> immutable_converter(

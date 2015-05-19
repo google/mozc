@@ -38,6 +38,7 @@
 #include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -46,15 +47,13 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_allocator.h"
-#include "converter/segmenter_base.h"
-#include "converter/segmenter_interface.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -75,7 +74,15 @@
 #include "transliteration/transliteration.h"
 
 using ::testing::_;
+
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::DictionaryMock;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosGroup;
+using mozc::dictionary::SuffixDictionary;
+using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
+using mozc::dictionary::Token;
 
 DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_dictionary_predictor);
@@ -155,8 +162,8 @@ class TestableDictionaryPredictor : public DictionaryPredictor {
       const ImmutableConverterInterface *immutable_converter,
       const DictionaryInterface *dictionary,
       const DictionaryInterface *suffix_dictionary,
-      const ConnectorInterface *connector,
-      const SegmenterInterface *segmenter,
+      const Connector *connector,
+      const Segmenter *segmenter,
       const POSMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter)
       : DictionaryPredictor(converter,
@@ -222,7 +229,7 @@ class MockDataAndPredictor {
     connector_.reset(Connector::CreateFromDataManager(data_manager));
     CHECK(connector_.get());
 
-    segmenter_.reset(SegmenterBase::CreateFromDataManager(data_manager));
+    segmenter_.reset(Segmenter::CreateFromDataManager(data_manager));
     CHECK(segmenter_.get());
 
     pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
@@ -267,8 +274,8 @@ class MockDataAndPredictor {
  private:
   const POSMatcher *pos_matcher_;
   scoped_ptr<SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const ConnectorInterface> connector_;
-  scoped_ptr<const SegmenterInterface> segmenter_;
+  scoped_ptr<const Connector> connector_;
+  scoped_ptr<const Segmenter> segmenter_;
   scoped_ptr<const DictionaryInterface> suffix_dictionary_;
   scoped_ptr<const DictionaryInterface> dictionary_;
   DictionaryMock *dictionary_mock_;
@@ -1558,10 +1565,10 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
       new ImmutableConverterMock);
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const ConnectorInterface> connector(
+  scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(data_manager));
+  scoped_ptr<const Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   scoped_ptr<TestableDictionaryPredictor> predictor(
@@ -2097,7 +2104,54 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
         break;
       }
     }
-    EXPECT_EQ(test_case.expected_result, found);
+    EXPECT_EQ(test_case.expected_result, found) << test_case.history_value;
+  }
+}
+
+TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
+  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const DictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+  const ConversionRequest conversion_request;
+
+  const struct TestCase {
+    const char *history_key;
+    const char *history_value;
+    const char *find_value;
+    bool expected_result;
+  } kTestCases[] = {
+    { "@", "@",
+      "gmail.com", true },
+    { "!", "!",
+      "?", false },
+  };
+
+  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
+    Segments segments;
+    MakeSegmentsForSuggestion("", &segments);
+
+    const TestCase &test_case = kTestCases[i];
+    PrependHistorySegments(
+        test_case.history_key, test_case.history_value, &segments);
+    vector<DictionaryPredictor::Result> results;
+    predictor->AggregateSuffixPrediction(
+        DictionaryPredictor::SUFFIX,
+        conversion_request, segments, &results);
+    EXPECT_FALSE(results.empty());
+
+    bool found = false;
+    for (vector<DictionaryPredictor::Result>::const_iterator it =
+             results.begin();
+         it != results.end(); ++it) {
+      EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
+      if (it->value == test_case.find_value &&
+          it->lid == 0 /* EOS */) {
+        found = true;
+        break;
+      }
+    }
+    EXPECT_EQ(test_case.expected_result, found) << test_case.history_value;
   }
 }
 
@@ -3083,10 +3137,10 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
       new ImmutableConverterMock);
   scoped_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const ConnectorInterface> connector(
+  scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(data_manager));
+  scoped_ptr<const Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(data_manager));
   scoped_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   scoped_ptr<TestableDictionaryPredictor> predictor(

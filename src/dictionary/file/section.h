@@ -30,18 +30,22 @@
 #ifndef MOZC_DICTIONARY_FILE_SECTION_H_
 #define MOZC_DICTIONARY_FILE_SECTION_H_
 
+#include <cstddef>
 #include <string>
 
 namespace mozc {
+namespace dictionary {
+
 struct DictionaryFileSection {
+  DictionaryFileSection(const char *ptr, size_t len, const string &name)
+      : ptr(ptr), len(len), name(name) {}
+
   const char *ptr;
   size_t len;
   string name;
-
-  DictionaryFileSection(const char *ptr, size_t len, const string &name)
-      : ptr(ptr), len(len), name(name) {
-  }
 };
+
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_FILE_SECTION_H_

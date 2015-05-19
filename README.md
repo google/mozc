@@ -1,15 +1,78 @@
-Mozc Fcitx
-==========
+[Mozc - a Japanese Input Method Editor designed for multi-platform](https://github.com/google/mozc)
+===================================
 
-We use this repo to add fcitx support to mozc, due to release schedule and
-some other reason, we decide not to make it upstream.
+Copyright 2010-2015, Google Inc.
 
-master branch is the origin mozc, and will sync mozc trunk with git svn.
+Mozc is a Japanese Input Method Editor (IME) designed for multi-platform such as
+Android OS, Apple OS X, Chromium OS, GNU/Linux and Microsoft Windows.  This
+OpenSource project originates from
+[Google Japanese Input](http://www.google.com/intl/ja/ime/).
 
-All development will be under fcitx branch.
+Build Status
+------------
 
-So git diff origin/master origin/fcitx will generate patch for distribution
-packager.
+|Android |Windows |OS X |Linux |NaCl |
+|:------:|:------:|:---:|:----:|:---:|
+|N/A     |[![Build status](https://ci.appveyor.com/api/projects/status/qm7q355lenq5ogp6/branch/master?svg=true)](https://ci.appveyor.com/project/google/mozc/branch/master) |[![Build Status](https://travis-ci.org/google/mozc.svg?branch=master)](https://travis-ci.org/google/mozc) |N/A |N/A |
 
-There is some helper script for compile/install it yourself under scripts.
-Please run those scripts under src/.
+What's Mozc?
+------------
+For historical reasons, the project name *Mozc* has two different meanings:
+
+1. Internal code name of Google Japanese Input that is still commonly used
+   inside Google.
+2. Project name to release a subset of Google Japanese Input in the form of
+   source code under OSS license without any warranty nor user support.
+
+In this repository, *Mozc* means the second definition unless otherwise noted.
+
+Detailed differences between Google Japanese Input and Mozc are described in [About Branding](doc/about_branding.md).
+
+Build Instructions
+------------------
+
+* [How to build Mozc in Docker](doc/build_mozc_in_docker.md): Android, NaCl, and Linux desktop builds.
+* [How to build Mozc in OS X](doc/build_mozc_in_osx.md): OS X build.
+* [How to build Mozc in Windows](doc/build_mozc_in_windows.md): Windows build.
+
+Release Plan
+------------
+
+tl;dr. **There is no stable version.**
+
+As described in [About Branding](doc/about_branding.md) page, Google does
+not promise any official QA for OSS Mozc project.  Because of this,
+Mozc does not have a concept of *Stable Release*.  Instead we change version
+number every time when we introduce non-trivial change.  If you are
+interested in packaging Mozc source code, or developing your own products
+based on Mozc, feel free to pick up any version.  They should be equally
+stable (or equally unstable) in terms of no official QA process.
+
+[Release History](doc/release_history.md) page may have additional
+information and useful links about recent changes.
+
+License
+-------
+
+All Mozc code written by Google is released under
+[The BSD 3-Clause License](http://opensource.org/licenses/BSD-3-Clause).
+For thrid party code under [src/third_party](src/third_party) directory,
+see each sub directory to find the copyright notice.  Note also that
+outside [src/third_party](src/third_party) following directories contain
+thrid party code.
+
+###[src/data/dictionary_oss/](src/data/dictionary_oss)
+Mixed.
+See [src/data/dictionary_oss/README.txt](src/data/dictionary_oss/README.txt)
+
+###[src/data/test/dictionary/](src/data/test/dictionary)
+The same to [src/data/dictionary_oss/](src/data/dictionary_oss).
+See [src/data/dictionary_oss/README.txt](src/data/dictionary_oss/README.txt)
+
+###[src/data/test/stress_test/](src/data/test/stress_test)
+Public Domain.  See the comment in
+[src/data/test/stress_test/sentences.txt](src/data/test/stress_test/sentences.txt)
+
+###[src/data/unicode/](src/data/unicode)
+UNICODE, INC. LICENSE AGREEMENT.
+See each file header for details.

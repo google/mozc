@@ -34,9 +34,6 @@
 #include "data_manager/data_manager_interface.h"
 
 namespace mozc {
-
-class POSMatcher;
-
 namespace testing {
 
 class MockUserPosManager : public DataManagerInterface {
@@ -48,8 +45,8 @@ class MockUserPosManager : public DataManagerInterface {
 
   // Partially implement the interface because some binary only reqiures the
   // folloiwng embedded data.
-  virtual const UserPOS::POSToken *GetUserPOSData() const;
-  virtual const POSMatcher *GetPOSMatcher() const;
+  virtual const dictionary::UserPOS::POSToken *GetUserPOSData() const;
+  virtual const dictionary::POSMatcher *GetPOSMatcher() const;
 
   // The following are implemented in MockDataManager.
   virtual const uint8 *GetPosGroupData() const { return NULL; }
@@ -60,7 +57,7 @@ class MockUserPosManager : public DataManagerInterface {
       size_t *bitarray_num_bytes, const char **bitarray_data,
       const BoundaryData **boundary_data) const {}
   virtual void GetSystemDictionaryData(const char **data, int *size) const {}
-  virtual void GetSuffixDictionaryData(const SuffixToken **tokens,
+  virtual void GetSuffixDictionaryData(const dictionary::SuffixToken **tokens,
                                        size_t *size) const {}
   virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
                                         size_t *size) const {}

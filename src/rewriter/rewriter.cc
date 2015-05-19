@@ -68,6 +68,10 @@
 
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosGroup;
+
 namespace {
 // When updating the emoji dictionary,
 // 1. Edit mozc/data/emoji/emoji_data.tsv,

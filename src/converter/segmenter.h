@@ -27,43 +27,50 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_SEGMENTER_INTERFACE_H_
-#define MOZC_CONVERTER_SEGMENTER_INTERFACE_H_
+#ifndef MOZC_CONVERTER_SEGMENTER_H_
+#define MOZC_CONVERTER_SEGMENTER_H_
 
 #include "base/port.h"
 
 namespace mozc {
 
+class DataManagerInterface;
 struct Node;
+struct BoundaryData;
 
-class SegmenterInterface {
+class Segmenter {
  public:
-  virtual ~SegmenterInterface() {}
+  static Segmenter *CreateFromDataManager(
+      const DataManagerInterface &data_manager);
 
-  // Returns true if there is a segment boundary between |lnode| and |rnode|.
-  // If |is_single_segment| is true, this function basically reutrns false
-  // unless |lnode| or |rnode| is BOS/EOS.  |is_single_segment| is used for
-  // prediction/suggestion mode.
-  virtual bool IsBoundary(const Node *lnode, const Node *rnode,
-                          bool is_single_segment) const = 0;
+  // This class does not take the ownership of pointer parameters.
+  Segmenter(size_t l_num_elements, size_t r_num_elements,
+            const uint16 *l_table, const uint16 *r_table,
+            size_t bitarray_num_bytes, const char *bitarray_data,
+            const BoundaryData *boundary_data);
+  ~Segmenter();
 
-  virtual bool IsBoundary(uint16 rid, uint16 lid) const = 0;
+  bool IsBoundary(const Node &lnode, const Node &rnode,
+                  bool is_single_segment) const;
 
-  // Returns cost penalty of the word prefix.  We can add cost penalty if a
-  // node->lid exists at the begging of user input.
-  virtual int32 GetPrefixPenalty(uint16 lid) const = 0;
+  bool IsBoundary(uint16 rid, uint16 lid) const;
 
-  // Returns cost penalty of the word suffix.  We can add cost penalty if a
-  // node->rid exists at the end of user input.
-  virtual int32 GetSuffixPenalty(uint16 rid) const = 0;
+  int32 GetPrefixPenalty(uint16 lid) const;
 
- protected:
-  SegmenterInterface() {}
+  int32 GetSuffixPenalty(uint16 rid) const;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(SegmenterInterface);
+  const size_t l_num_elements_;
+  const size_t r_num_elements_;
+  const uint16 *l_table_;
+  const uint16 *r_table_;
+  const size_t bitarray_num_bytes_;
+  const char *bitarray_data_;
+  const BoundaryData *boundary_data_;
+
+  DISALLOW_COPY_AND_ASSIGN(Segmenter);
 };
 
 }  // namespace mozc
 
-#endif  // MOZC_CONVERTER_SEGMENTER_INTERFACE_H_
+#endif  // MOZC_CONVERTER_SEGMENTER_H_

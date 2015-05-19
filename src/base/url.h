@@ -32,20 +32,22 @@
 
 #include <string>
 
+#include "base/port.h"
+
 namespace mozc {
-// util class to get URLs
+
 class URL {
  public:
-  // composes a URL for an uninstallation survey.
-  // note that we should set version
-  // because in Mac OS, we can not get mozc version from uninstaller binary.
+  // Composes a URL for an uninstallation survey.  Note that we should set
+  // version because, in Mac OS, we can not get mozc version from uninstaller
+  // binary.
   static bool GetUninstallationSurveyURL(const string &version, string *url);
 
   // should never be allocated.
  private:
-  URL();
-  virtual ~URL();
+  DISALLOW_IMPLICIT_CONSTRUCTORS(URL);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_URL_H_

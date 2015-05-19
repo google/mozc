@@ -39,14 +39,12 @@
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 
-// TODO(team): Implement ambiguity expansion for rewriters.
-DEFINE_bool(enable_ambiguity_expansion, true,
-            "Enable ambiguity trigger expansion for predictions");
 DECLARE_bool(enable_expansion_for_dictionary_predictor);
 DECLARE_bool(enable_expansion_for_user_history_predictor);
 
 namespace mozc {
 namespace {
+
 const int kPredictionSize = 100;
 // On Mobile mode PREDICTION (including PARTIAL_PREDICTION) behaves like as
 // conversion so very large limit is preferable.
@@ -74,10 +72,10 @@ BasePredictor::BasePredictor(PredictorInterface *dictionary_predictor,
       user_history_predictor_(user_history_predictor) {
   DCHECK(dictionary_predictor_.get());
   DCHECK(user_history_predictor_.get());
-  FLAGS_enable_expansion_for_dictionary_predictor =
-      FLAGS_enable_ambiguity_expansion;
-  FLAGS_enable_expansion_for_user_history_predictor =
-      FLAGS_enable_ambiguity_expansion;
+  // TODO(noriyukit): Now the following features are stable, so remove these
+  // flags.
+  FLAGS_enable_expansion_for_dictionary_predictor = true;
+  FLAGS_enable_expansion_for_user_history_predictor = true;
 }
 
 BasePredictor::~BasePredictor() {}
@@ -263,4 +261,5 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
 
   return result;
 }
+
 }  // namespace mozc

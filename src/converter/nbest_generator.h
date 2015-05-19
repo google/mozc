@@ -39,13 +39,13 @@
 #include "converter/candidate_filter.h"
 #include "converter/segments.h"
 #include "dictionary/suppression_dictionary.h"
+#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 
-class ConnectorInterface;
+class Connector;
 class Lattice;
-class POSMatcher;
-class SegmenterInterface;
+class Segmenter;
 class SuggestionFilter;
 struct Node;
 
@@ -82,9 +82,9 @@ class NBestGenerator {
   // Try to enumurate N-best results between begin_node and end_node.
   NBestGenerator(
       const dictionary::SuppressionDictionary *suppression_dictionary,
-      const SegmenterInterface *segmenter,
-      const ConnectorInterface *connector,
-      const POSMatcher *pos_matcher,
+      const Segmenter *segmenter,
+      const Connector *connector,
+      const dictionary::POSMatcher *pos_matcher,
       const Lattice *lattice,
       const SuggestionFilter *suggestion_filter);
   ~NBestGenerator();
@@ -171,9 +171,9 @@ class NBestGenerator {
 
   // References to relevant modules.
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  const SegmenterInterface *segmenter_;
-  const ConnectorInterface *connector_;
-  const POSMatcher *pos_matcher_;
+  const Segmenter *segmenter_;
+  const Connector *connector_;
+  const dictionary::POSMatcher *pos_matcher_;
   const Lattice *lattice_;
 
   const Node *begin_node_;

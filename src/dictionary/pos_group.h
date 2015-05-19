@@ -33,12 +33,13 @@
 #include "base/port.h"
 
 namespace mozc {
+namespace dictionary {
 
 // Manages pos grouping rule.
 class PosGroup {
  public:
   explicit PosGroup(const uint8 *lid_group) : lid_group_(lid_group) {}
-  virtual ~PosGroup() {}
+  ~PosGroup() {}
 
   // Returns grouped pos id based on an array pre-generated from
   // data/rules/user_segment_history_pos_group.def.
@@ -49,6 +50,7 @@ class PosGroup {
   DISALLOW_COPY_AND_ASSIGN(PosGroup);
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_POS_GROUP_H_

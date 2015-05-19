@@ -56,12 +56,12 @@ class SystemDictionaryDataPacker {
   explicit SystemDictionaryDataPacker(const string &product_version);
   ~SystemDictionaryDataPacker();
   void SetPosTokens(
-      const UserPOS::POSToken *pos_token_data,
+      const dictionary::UserPOS::POSToken *pos_token_data,
       size_t token_count);
   void SetPosMatcherData(
       const uint16 *rule_id_table,
       size_t rule_id_table_count,
-      const POSMatcher::Range *const *range_tables,
+      const dictionary::POSMatcher::Range *const *range_tables,
       size_t range_tables_count);
   void SetLidGroupData(
       const void *lid_group_data,
@@ -70,7 +70,7 @@ class SystemDictionaryDataPacker {
       const BoundaryData *boundary_data,
       size_t boundary_data_count);
   void SetSuffixTokens(
-      const SuffixToken *suffix_tokens,
+      const dictionary::SuffixToken *suffix_tokens,
       size_t suffix_tokens_count);
   void SetReadingCorretions(
       const ReadingCorrectionItem *reading_corrections,

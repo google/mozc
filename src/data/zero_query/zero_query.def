@@ -1,0 +1,8 @@
+# Rules for triggering zero query suggestion/prediction.
+# File format:
+# trigger<TAB>candidate_1,candidate_2,...,candidate_n
+# ...
+# Note that '#' is special caracter for comment line, so it cannot be placed
+# at the beginning of a line.
+
+@	gmail.com

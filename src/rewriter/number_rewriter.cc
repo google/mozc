@@ -47,6 +47,8 @@
 #include "rewriter/number_compound_util.h"
 #include "session/commands.pb.h"
 
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
 namespace {
 

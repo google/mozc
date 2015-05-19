@@ -55,6 +55,10 @@ DEFINE_string(dataset,
 
 using std::unique_ptr;
 
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::SuffixToken;
+using mozc::dictionary::UserPOS;
+
 namespace mozc {
 namespace packed {
 namespace {

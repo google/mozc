@@ -36,13 +36,14 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "converter/candidate_filter.h"
-#include "converter/connector_interface.h"
+#include "converter/connector.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
-#include "converter/segmenter_interface.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 
+using mozc::dictionary::POSMatcher;
 using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {
@@ -106,8 +107,8 @@ inline void NBestGenerator::Agenda::Pop() {
 }
 
 NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
-                               const SegmenterInterface *segmenter,
-                               const ConnectorInterface *connector,
+                               const Segmenter *segmenter,
+                               const Connector *connector,
                                const POSMatcher *pos_matcher,
                                const Lattice *lattice,
                                const SuggestionFilter *suggestion_filter)
@@ -239,7 +240,7 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
       const Node *lnode = nodes[i - 1];
       const Node *rnode = nodes[i];
       const bool kMultipleSegments = false;
-      if (segmenter_->IsBoundary(lnode, rnode, kMultipleSegments)) {
+      if (segmenter_->IsBoundary(*lnode, *rnode, kMultipleSegments)) {
         candidate->PushBackInnerSegmentBoundary(
             key_len, value_len, content_key_len, content_value_len);
         key_len = 0;
@@ -498,7 +499,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
   // is_boundary is true if there is a grammer-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
-                            segmenter_->IsBoundary(lnode, rnode, false));
+                            segmenter_->IsBoundary(*lnode, *rnode, false));
   if (!is_edge && is_boundary) {
     // There is a boundary within the segment.
     return INVALID;
@@ -525,7 +526,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyEdge(
   // between lnode and rnode
   const bool is_boundary = (
       lnode->node_type == Node::HIS_NODE ||
-      segmenter_->IsBoundary(lnode, rnode, true));
+      segmenter_->IsBoundary(*lnode, *rnode, true));
   if (is_edge != is_boundary) {
     // on the edge, have a boudnary.
     // not on the edge, not the case.
@@ -547,7 +548,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
   // between lnode and rnode
   const bool is_boundary = (
       lnode->node_type == Node::HIS_NODE ||
-      segmenter_->IsBoundary(lnode, rnode, false));
+      segmenter_->IsBoundary(*lnode, *rnode, false));
 
   if (is_edge != is_boundary) {
     // on the edge, have a boudnary.

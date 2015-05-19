@@ -55,7 +55,7 @@ def main():
   # Sort entries in the key-incremental order.
   result.sort(key=lambda e: e[1][0])
 
-  print 'const SuffixToken kSuffixTokens[] = {'
+  print 'const ::mozc::dictionary::SuffixToken kSuffixTokens[] = {'
   for (line, (key, value, lid, rid, cost)) in result:
     print '// "%s"' % line
     print '{ %s, %s, %d, %d, %d },' % (

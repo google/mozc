@@ -32,10 +32,10 @@
 
 #include <cstddef>  // for size_t
 
-namespace mozc {
+#include "converter/conversion_request.h"
+#include "converter/segments.h"
 
-class ConversionRequest;
-class Segments;
+namespace mozc {
 
 class RewriterInterface {
  public:

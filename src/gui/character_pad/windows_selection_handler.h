@@ -29,11 +29,10 @@
 
 #ifndef MOZC_GUI_CHARACTER_PAD_WINDOWS_SELECTION_HANDLER_H_
 #define MOZC_GUI_CHARACTER_PAD_WINDOWS_SELECTION_HANDLER_H_
-
-#include <string>
-
 #ifdef OS_WIN
+
 #include <QtCore/QString>
+
 #include "gui/character_pad/selection_handler.h"
 
 namespace mozc {
@@ -41,11 +40,14 @@ namespace gui {
 
 class WindowsSelectionHandler : public SelectionCallbackInterface {
  public:
-  virtual void Select(const QString &str);
   WindowsSelectionHandler();
   virtual ~WindowsSelectionHandler();
+
+  virtual void Select(const QString &str);
 };
-}
-}
-#endif
+
+}  // namespace gui
+}  // namespace mozc
+
+#endif  // OS_WIN
 #endif  // MOZC_GUI_CHARACTER_PAD_WINDOWS_SELECTION_HANDLER_H_

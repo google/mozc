@@ -51,6 +51,10 @@
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
 
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::SuffixToken;
+using mozc::dictionary::UserPOS;
+
 namespace mozc {
 namespace packed {
 

@@ -50,7 +50,8 @@ namespace {
 
 }  // namespace
 
-const UserPOS::POSToken *MockUserPosManager::GetUserPOSData() const {
+const dictionary::UserPOS::POSToken *
+MockUserPosManager::GetUserPOSData() const {
   DCHECK(kPOSToken != NULL);
   return kPOSToken;
 }
@@ -60,13 +61,13 @@ namespace {
 // kRuleIdTable[] and kRangeTable[].
 #include "data_manager/testing/pos_matcher_data.h"
 
-class MockPOSMatcher : public POSMatcher {
+class MockPOSMatcher : public dictionary::POSMatcher {
  public:
   MockPOSMatcher() : POSMatcher(kRuleIdTable, kRangeTables) {}
 };
 }  // namespace
 
-const POSMatcher *MockUserPosManager::GetPOSMatcher() const {
+const dictionary::POSMatcher *MockUserPosManager::GetPOSMatcher() const {
   return Singleton<MockPOSMatcher>::get();
 }
 

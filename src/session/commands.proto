@@ -481,6 +481,7 @@ message SessionCommand {
     SUBMITTED_CANDIDATE_ROW_GE10 = 19;
     KEYBOARD_FOLD_EVENT = 20;
     KEYBOARD_EXPAND_EVENT = 21;
+    MUSHROOM_SELECTION_DIALOG_OPEN_EVENT = 22;
   }
   optional UsageStatsEvent usage_stats_event = 7;
   optional int32 usage_stats_event_int_value = 9;

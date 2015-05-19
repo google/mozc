@@ -33,6 +33,7 @@
 #include "base/port.h"
 
 namespace mozc {
+namespace dictionary {
 
 // One entry of suffix dictionary.
 struct SuffixToken {
@@ -43,6 +44,7 @@ struct SuffixToken {
   int16  wcost;
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_SUFFIX_DICTIONARY_TOKEN_H_

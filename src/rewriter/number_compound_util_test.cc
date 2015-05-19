@@ -34,6 +34,8 @@
 #include "rewriter/counter_suffix.h"
 #include "testing/base/public/gunit.h"
 
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
 namespace number_compound_util {
 

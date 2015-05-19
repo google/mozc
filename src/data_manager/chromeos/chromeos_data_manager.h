@@ -49,7 +49,7 @@ class ChromeOsDataManager : public ChromeOsUserPosManager {
       size_t *bitarray_num_bytes, const char **bitarray_data,
       const BoundaryData **boundary_data) const;
   virtual void GetSystemDictionaryData(const char **data, int *size) const;
-  virtual void GetSuffixDictionaryData(const SuffixToken **tokens,
+  virtual void GetSuffixDictionaryData(const dictionary::SuffixToken **tokens,
                                        size_t *size) const;
   virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
                                         size_t *size) const;

@@ -38,6 +38,7 @@
 #include "dictionary/user_pos_interface.h"
 
 namespace mozc {
+namespace dictionary {
 
 class UserPOS : public UserPOSInterface {
  public:
@@ -67,11 +68,12 @@ class UserPOS : public UserPOSInterface {
 
  private:
   const POSToken *pos_token_array_;
-  map<string, const POSToken*> pos_map_;
+  map<string, const POSToken *> pos_map_;
 
   DISALLOW_COPY_AND_ASSIGN(UserPOS);
 };
 
-}  // mozc
+}  // namespace dictionary
+}  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_USER_POS_H_

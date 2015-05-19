@@ -49,6 +49,8 @@ class CalculatorRewriter : public RewriterInterface {
   explicit CalculatorRewriter(const ConverterInterface *parent_converter);
   virtual ~CalculatorRewriter();
 
+  virtual int capability(const ConversionRequest &request) const;
+
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
 

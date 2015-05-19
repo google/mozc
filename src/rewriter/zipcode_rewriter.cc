@@ -38,6 +38,8 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 
+using mozc::dictionary::POSMatcher;
+
 namespace mozc {
 
 bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,

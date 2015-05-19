@@ -36,7 +36,7 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/segmenter_base.h"
+#include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
@@ -59,9 +59,13 @@
 #include "rewriter/rewriter_interface.h"
 
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::PosGroup;
+using mozc::dictionary::SuffixDictionary;
+using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::UserDictionary;
+using mozc::dictionary::UserPOS;
 using mozc::dictionary::ValueDictionary;
 
 namespace mozc {
@@ -174,7 +178,7 @@ void Engine::Init(
   connector_.reset(Connector::CreateFromDataManager(*data_manager));
   CHECK(connector_.get());
 
-  segmenter_.reset(SegmenterBase::CreateFromDataManager(*data_manager));
+  segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager));
   CHECK(segmenter_.get());
 
   pos_group_.reset(new PosGroup(data_manager->GetPosGroupData()));

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/bin/bash
 # Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
@@ -28,45 +28,4 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__author__ = "manabe"
-
-import sys
-
-
-def EscapeString(result):
-  return '"' + result.encode('string_escape') + '"'
-
-
-def main():
-  print "#ifndef MOZC_PREDICTION_ZERO_QUERY_NUM_DATA_H_"
-  print "#define MOZC_PREDICTION_ZERO_QUERY_NUM_DATA_H_"
-  print "namespace mozc {"
-  print "namespace {"
-
-  count = 0
-  for line in open(sys.argv[1], "r"):
-    if line.startswith("#"):
-      continue
-
-    line = line.rstrip("\r\n")
-    if line == "":
-      continue
-
-    fields = line.split("\t")
-    key = fields[0]
-    values = [key] + fields[1].split(",")
-    print "const char *ZeroQueryNum%d[] = {" % count
-    print "  " + ", ".join([EscapeString(s) for s in values] + ["0"])
-    print "};"
-    count += 1
-
-  print "}  // namespace"
-  print "const char **ZeroQueryNum[] = {"
-  print "  " + ", ".join(["ZeroQueryNum%d" % c for c in range(count)] + ["0"])
-  print "};"
-  print "}  // namespace mozc"
-  print "#endif  // MOZC_PREDICTION_ZERO_QUERY_NUM_DATA_H_"
-
-
-if __name__ == "__main__":
-  main()
+docker run --interactive --tty --rm $USER/mozc_fedora21

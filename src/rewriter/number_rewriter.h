@@ -31,14 +31,12 @@
 #define MOZC_REWRITER_NUMBER_REWRITER_H_
 
 #include "base/port.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class ConversionRequest;
 class DataManagerInterface;
-class POSMatcher;
-class Segments;
 struct CounterSuffixEntry;
 
 class NumberRewriter : public RewriterInterface  {
@@ -54,7 +52,7 @@ class NumberRewriter : public RewriterInterface  {
  private:
   const CounterSuffixEntry *suffix_array_;
   size_t suffix_array_size_;
-  const POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher *pos_matcher_;
 
   DISALLOW_COPY_AND_ASSIGN(NumberRewriter);
 };

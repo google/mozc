@@ -35,6 +35,7 @@
 #include "base/port.h"
 
 namespace mozc {
+namespace dictionary {
 
 struct Token {
   typedef uint8 AttributesBitfield;
@@ -63,6 +64,7 @@ struct Token {
   AttributesBitfield attributes;
 };
 
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_DICTIONARY_TOKEN_H_

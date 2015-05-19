@@ -59,6 +59,7 @@ import org.easymock.Capture;
 public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithMock {
   private Context context;
   private InputMethodService inputMethodService;
+  private ViewEventListener eventListener;
   private MenuDialogListener listener;
 
   @Override
@@ -66,7 +67,8 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
     super.setUp();
     context = createMock(MockContext.class);
     inputMethodService = createMock(InputMethodService.class);
-    listener = new MozcMenuDialogListenerImpl(inputMethodService);
+    eventListener = createMock(ViewEventListener.class);
+    listener = new MozcMenuDialogListenerImpl(inputMethodService, eventListener);
   }
 
   @Override
@@ -75,6 +77,7 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
     MozcUtil.cancelShowInputMethodPicker(context);
 
     listener = null;
+    eventListener = null;
     inputMethodService = null;
     context = null;
     super.tearDown();
@@ -166,6 +169,7 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
     editorInfo.fieldId = 10;
     expect(inputMethodService.getCurrentInputEditorInfo()).andStubReturn(editorInfo);
     expect(context.getPackageName()).andStubReturn("org.mozc.android.inputmethod.japanese");
+    eventListener.onShowMushroomSelectionDialog();
     Capture<Intent> intentCapture = new Capture<Intent>();
     context.startActivity(capture(intentCapture));
     replayAll();

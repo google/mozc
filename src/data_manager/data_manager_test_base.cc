@@ -38,11 +38,9 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/connector_base.h"
-#include "converter/connector_interface.h"
+#include "converter/connector.h"
 #include "converter/node.h"
 #include "converter/segmenter.h"
-#include "converter/segmenter_interface.h"
 #include "data_manager/connection_file_reader.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -51,6 +49,8 @@
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_srcdir);
+
+using mozc::dictionary::POSMatcher;
 
 namespace mozc {
 namespace {
@@ -85,8 +85,8 @@ DataManagerTestBase::~DataManagerTestBase() {}
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
   // the expected boundary rule.
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
   for (size_t rid = 0; rid < lsize_; ++rid) {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       EXPECT_EQ(is_boundary_(rid, lid),
@@ -96,8 +96,8 @@ void DataManagerTestBase::SegmenterTest_SameAsInternal() {
 }
 
 void DataManagerTestBase::SegmenterTest_LNodeTest() {
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
 
   // lnode is BOS
   Node lnode, rnode;
@@ -107,15 +107,15 @@ void DataManagerTestBase::SegmenterTest_LNodeTest() {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       lnode.rid = rid;
       lnode.lid = lid;
-      EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, false));
-      EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, true));
+      EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, false));
+      EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, true));
     }
   }
 }
 
 void DataManagerTestBase::SegmenterTest_RNodeTest() {
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
 
   // rnode is EOS
   Node lnode, rnode;
@@ -125,15 +125,15 @@ void DataManagerTestBase::SegmenterTest_RNodeTest() {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       lnode.rid = rid;
       lnode.lid = lid;
-      EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, false));
-      EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, true));
+      EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, false));
+      EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, true));
     }
   }
 }
 
 void DataManagerTestBase::SegmenterTest_NodeTest() {
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
 
   Node lnode, rnode;
   lnode.node_type = Node::NOR_NODE;
@@ -143,15 +143,15 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
       lnode.rid = rid;
       rnode.lid = lid;
       EXPECT_EQ(segmenter->IsBoundary(rid, lid),
-                segmenter->IsBoundary(&lnode, &rnode, false));
-      EXPECT_FALSE(segmenter->IsBoundary(&lnode, &rnode, true));
+                segmenter->IsBoundary(lnode, rnode, false));
+      EXPECT_FALSE(segmenter->IsBoundary(lnode, rnode, true));
     }
   }
 }
 
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
-  scoped_ptr<SegmenterInterface> segmenter(
-      SegmenterBase::CreateFromDataManager(*data_manager_));
+  scoped_ptr<Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(*data_manager_));
   const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
 
   Node lnode, rnode;
@@ -163,14 +163,14 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
   lnode.rid = pos_matcher->GetAcceptableParticleAtBeginOfSegmentId();
   // "名詞,サ変".
   rnode.lid = pos_matcher->GetUnknownId();
-  EXPECT_TRUE(segmenter->IsBoundary(&lnode, &rnode, false));
+  EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, false));
 
   lnode.attributes |= Node::STARTS_WITH_PARTICLE;
-  EXPECT_FALSE(segmenter->IsBoundary(&lnode, &rnode, false));
+  EXPECT_FALSE(segmenter->IsBoundary(lnode, rnode, false));
 }
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
-  scoped_ptr<const ConnectorInterface> connector(
+  scoped_ptr<const Connector> connector(
       Connector::CreateFromDataManager(*data_manager_));
   ASSERT_TRUE(connector.get() != NULL);
 
@@ -187,7 +187,7 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
     const int actual_cost =
         connector->GetTransitionCost(reader.rid_of_left_node(),
                                      reader.lid_of_right_node());
-    if (cost == ConnectorInterface::kInvalidCost) {
+    if (cost == Connector::kInvalidCost) {
       EXPECT_EQ(cost, actual_cost);
     } else {
       EXPECT_TRUE(cost == actual_cost ||

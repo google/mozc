@@ -34,6 +34,7 @@
 
 #include "base/scoped_ptr.h"
 #include "converter/converter_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
@@ -42,7 +43,6 @@ namespace mozc {
 
 class ConversionRequest;
 class ImmutableConverterInterface;
-class POSMatcher;
 class PredictorInterface;
 class RewriterInterface;
 class Segments;
@@ -53,7 +53,7 @@ class ConverterImpl : public ConverterInterface {
   virtual ~ConverterImpl();
 
   // Lazily initializes the internal members. Must be called before the use.
-  void Init(const POSMatcher *pos_matcher,
+  void Init(const dictionary::POSMatcher *pos_matcher,
             const dictionary::SuppressionDictionary *suppression_dictionary,
             PredictorInterface *predictor,
             RewriterInterface *rewriter,
@@ -168,7 +168,7 @@ class ConverterImpl : public ConverterInterface {
                              string *value,
                              uint16 *id) const;
 
-  const POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   scoped_ptr<PredictorInterface> predictor_;
   scoped_ptr<RewriterInterface> rewriter_;

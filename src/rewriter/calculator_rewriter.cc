@@ -40,6 +40,7 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "rewriter/calculator/calculator_interface.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 
@@ -50,6 +51,13 @@ CalculatorRewriter::CalculatorRewriter(
 }
 
 CalculatorRewriter::~CalculatorRewriter() {}
+
+int CalculatorRewriter::capability(const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
+    return RewriterInterface::ALL;
+  }
+  return RewriterInterface::CONVERSION;
+}
 
 // Rewrites candidates when conversion segments of |segments| represents an
 // expression that can be calculated. In such case, if |segments| consists
@@ -75,6 +83,9 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
   if (segments_size == 1) {
     const string &key = segments->conversion_segment(0).key();
     string result;
+    if (key.empty()) {
+      return false;
+    }
     if (!calculator->CalculateString(key, &result)) {
       return false;
     }
@@ -156,9 +167,8 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
     candidate->content_key = base_candidate.content_key;
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     candidate->attributes |= Segment::Candidate::NO_LEARNING;
-    // description "[expression] の計算結果"
-    candidate->description = expression +
-        " \xE3\x81\xAE\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
+    // "計算結果"
+    candidate->description = "\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
 
     if (n == 0) {   // without expression
       candidate->value = value;

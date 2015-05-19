@@ -42,11 +42,9 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/lattice.h"
-#include "converter/segmenter_base.h"
-#include "converter/segmenter_interface.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -54,6 +52,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/suffix_dictionary.h"
+#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
@@ -65,14 +64,17 @@
 DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryImpl;
+using mozc::dictionary::DictionaryInterface;
+using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosGroup;
+using mozc::dictionary::SuffixDictionary;
+using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
+using mozc::dictionary::UserDictionaryStub;
 using mozc::dictionary::ValueDictionary;
 
 namespace mozc {
-
-struct SuffixToken;
-
 namespace {
 
 void SetCandidate(const string &key, const string &value, Segment *segment) {
@@ -131,7 +133,7 @@ class MockDataAndImmutableConverter {
     connector_.reset(Connector::CreateFromDataManager(*data_manager_));
     CHECK(connector_.get());
 
-    segmenter_.reset(SegmenterBase::CreateFromDataManager(*data_manager_));
+    segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager_));
     CHECK(segmenter_.get());
 
     pos_group_.reset(new PosGroup(data_manager_->GetPosGroupData()));
@@ -163,8 +165,8 @@ class MockDataAndImmutableConverter {
  private:
   scoped_ptr<const DataManagerInterface> data_manager_;
   scoped_ptr<const SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const ConnectorInterface> connector_;
-  scoped_ptr<const SegmenterInterface> segmenter_;
+  scoped_ptr<const Connector> connector_;
+  scoped_ptr<const Segmenter> segmenter_;
   scoped_ptr<const DictionaryInterface> suffix_dictionary_;
   scoped_ptr<const DictionaryInterface> dictionary_;
   scoped_ptr<const PosGroup> pos_group_;

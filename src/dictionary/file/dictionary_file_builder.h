@@ -38,17 +38,17 @@
 #include "dictionary/file/section.h"
 
 namespace mozc {
+namespace dictionary {
+
 class DictionaryFileBuilder {
  public:
   DictionaryFileBuilder();
-
   virtual ~DictionaryFileBuilder();
 
-  // Add section from file
-  bool AddSectionFromFile(const string &section_name,
-                          const string &file_name);
+  // Adds a section from a file
+  bool AddSectionFromFile(const string &section_name, const string &file_name);
 
-  // Write image of dictionary file to file
+  // Writes the image of dictionary file to a file.
   void WriteImageToFile(const string &file_name) const;
 
  private:
@@ -57,6 +57,8 @@ class DictionaryFileBuilder {
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryFileBuilder);
 };
+
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_FILE_DICTIONARY_FILE_BUILDER_H_

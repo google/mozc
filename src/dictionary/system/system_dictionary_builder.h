@@ -41,9 +41,6 @@
 #include "dictionary/system/words_info.h"
 
 namespace mozc {
-struct DictionaryFileSection;
-struct Token;
-
 namespace storage {
 namespace louds {
 class BitVectorBasedArrayBuilder;
@@ -52,7 +49,9 @@ class LoudsTrieBuilder;
 }  // namespace storage
 
 namespace dictionary {
+
 class SystemDictionaryCodecInterface;
+struct Token;
 
 class SystemDictionaryBuilder {
  public:

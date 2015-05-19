@@ -39,10 +39,10 @@
   },
   'targets': [
     {
-      'target_name': 'segmenter_base',
+      'target_name': 'segmenter',
       'type': 'static_library',
       'sources': [
-        'segmenter_base.cc',
+        'segmenter.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -84,7 +84,9 @@
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction_base.gyp:suggestion_filter',
         '../transliteration/transliteration.gyp:transliteration',
+        'connector',
         'lattice',
+        'segmenter',
       ],
     },
     {
@@ -124,7 +126,9 @@
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
         '../session/session_base.gyp:session_protocol',
+        'connector',
         'immutable_converter_interface',
+        'segmenter',
         'segments',
       ],
     },

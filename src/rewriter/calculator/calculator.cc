@@ -111,6 +111,10 @@ CalculatorImpl::CalculatorImpl() {
 // TODO(tok): Add more number of operators.
 bool CalculatorImpl::CalculateString(const string &key, string *result) const {
   DCHECK(result);
+  if (key.empty()) {
+    LOG(ERROR) << "Key is empty.";
+    return false;
+  }
   string normalized_key;
   Util::FullWidthAsciiToHalfWidthAscii(key, &normalized_key);
 

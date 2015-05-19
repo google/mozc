@@ -32,6 +32,7 @@
 
 #include <ctime>
 
+#include "base/port.h"
 #include "base/util.h"
 
 namespace mozc {
