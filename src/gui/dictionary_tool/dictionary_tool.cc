@@ -44,7 +44,7 @@
 #include "base/util.h"
 #include "gui/base/win_util.h"
 #include "client/client.h"
-#include "data_manager/user_dictionary_manager.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
@@ -303,8 +303,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
       max_entry_size_(UserDictionaryStorage::max_entry_size()),
-      user_pos_(
-          UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS()) {
+      user_pos_(UserPosManager::GetUserPosManager()->GetUserPOS()) {
   setupUi(this);
 
   // Create and set up ImportDialog object.

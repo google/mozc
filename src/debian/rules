@@ -17,7 +17,7 @@
 export DH_OPTIONS
 
 BUILD_DIR=./out_linux
-TARGETS=unix/ibus/ibus.gyp:ibus_mozc unix/scim/scim.gyp:scim_mozc unix/scim/scim.gyp:scim_mozc_setup unix/emacs/emacs.gyp:mozc_emacs_helper server/server.gyp:mozc_server gui/gui.gyp:mozc_tool
+TARGETS=unix/ibus/ibus.gyp:ibus_mozc unix/emacs/emacs.gyp:mozc_emacs_helper server/server.gyp:mozc_server gui/gui.gyp:mozc_tool
 
 configure: configure-stamp
 configure-stamp:
@@ -25,12 +25,12 @@ configure-stamp:
 	touch configure-stamp
 
 
-#Architecture 
+#Architecture
 build: build-arch build-indep
 
 build-arch: build-arch-stamp
-build-arch-stamp: configure-stamp 
-	python build_mozc.py gyp --gypdir=/usr/bin
+build-arch-stamp: configure-stamp
+	python build_mozc.py gyp
 	python build_mozc.py build_tools -c Release
 	python build_mozc.py build $(TARGETS) -c Release
 	touch build-arch-stamp
@@ -44,7 +44,7 @@ clean:
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp #CONFIGURE-STAMP#
 	python build_mozc.py clean
-	dh_clean 
+	dh_clean
 
 install: install-arch install-indep
 
@@ -60,7 +60,7 @@ install-indep:
 install-arch:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -s 
+	dh_clean -k -s
 	dh_installdirs -s
 
 	mkdir -p $(CURDIR)/debian/ibus-mozc/usr/lib/ibus-mozc/
@@ -79,22 +79,6 @@ install-arch:
 	cp -p data/images/unix/ui-alpha_half.png $(CURDIR)/debian/ibus-mozc/usr/share/ibus-mozc/alpha_half.png
 	cp -p data/images/unix/ui-alpha_full.png $(CURDIR)/debian/ibus-mozc/usr/share/ibus-mozc/alpha_full.png
 
-	mkdir -p $(CURDIR)/debian/scim-mozc`pkg-config --variable=moduledir scim`/IMEngine/
-	cp -p $(BUILD_DIR)/Release/lib.target/libscim_mozc.so $(CURDIR)/debian/scim-mozc`pkg-config --variable=moduledir scim`/IMEngine/mozc.so
-	mkdir -p $(CURDIR)/debian/scim-mozc`pkg-config --variable=moduledir scim`/SetupUI/
-	cp -p $(BUILD_DIR)/Release/lib.target/libscim_mozc_setup.so $(CURDIR)/debian/scim-mozc`pkg-config --variable=moduledir scim`/SetupUI/mozc-setup.so
-	mkdir -p $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/
-	cp -p data/images/unix/ime_product_icon_opensource-32.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc.png
-	cp -p data/images/unix/ui-tool.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-tool.png
-	cp -p data/images/unix/ui-properties.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-properties.png
-	cp -p data/images/unix/ui-dictionary.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-dictionary.png
-	cp -p data/images/unix/ui-direct.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-direct.png
-	cp -p data/images/unix/ui-hiragana.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-hiragana.png
-	cp -p data/images/unix/ui-katakana_half.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-katakana_half.png
-	cp -p data/images/unix/ui-katakana_full.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-katakana_full.png
-	cp -p data/images/unix/ui-alpha_half.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-alpha_half.png
-	cp -p data/images/unix/ui-alpha_full.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-alpha_full.png
-
 	mkdir -p $(CURDIR)/debian/emacs-mozc-bin/usr/bin/
 	cp -p $(BUILD_DIR)/Release/mozc_emacs_helper $(CURDIR)/debian/emacs-mozc-bin/usr/bin/
 
@@ -112,12 +96,12 @@ install-arch:
 binary-common:
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs 
+	dh_installchangelogs
 	dh_installdocs
 	dh_installexamples
 #	dh_installmenu
-#	dh_installdebconf	
-#	dh_installlogrotate	
+#	dh_installdebconf
+#	dh_installlogrotate
 	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
@@ -127,7 +111,7 @@ binary-common:
 	dh_installman
 	dh_link
 	dh_strip
-	dh_compress 
+	dh_compress
 	dh_fixperms
 #	dh_perl
 #	dh_python

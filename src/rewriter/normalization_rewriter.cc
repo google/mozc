@@ -34,6 +34,7 @@
 #include "base/base.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 
 namespace mozc {
@@ -85,7 +86,8 @@ int NormalizationRewriter::capability() const {
   return RewriterInterface::ALL;
 }
 
-bool NormalizationRewriter::Rewrite(Segments *segments) const {
+bool NormalizationRewriter::Rewrite(const ConversionRequest &request,
+                                    Segments *segments) const {
   DCHECK(segments);
 
   bool modified = false;

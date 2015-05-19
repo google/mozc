@@ -49,7 +49,16 @@ namespace mozc {
 // functional word with this dictionary.
 class SuffixDictionary : public DictionaryInterface {
  public:
-  SuffixDictionary();
+  struct SuffixToken {
+    const char *key;
+    const char *value;
+    uint16 lid;
+    uint16 rid;
+    int16  wcost;
+  };
+
+  SuffixDictionary(const SuffixToken *suffix_tokens,
+                   size_t suffix_tokens_size);
   virtual ~SuffixDictionary();
 
   // Even if size == 0, suffix dictionary returns all the suffix
@@ -76,6 +85,8 @@ class SuffixDictionary : public DictionaryInterface {
                               NodeAllocatorInterface *allocator) const;
 
  private:
+  const SuffixToken *const suffix_tokens_;
+  const size_t suffix_tokens_size_;
   const Limit empty_limit_;
 
   DISALLOW_COPY_AND_ASSIGN(SuffixDictionary);

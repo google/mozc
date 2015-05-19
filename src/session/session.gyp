@@ -55,7 +55,6 @@
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
         'session_base.gyp:session_protocol',
-        'session_handler',
         'session_internal',
       ],
     },
@@ -115,6 +114,7 @@
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
         '../usage_stats/usage_stats.gyp:usage_stats_protocol',
+        '../usage_stats/usage_stats.gyp:usage_stats_uploader',
         'session_base.gyp:key_event_util',
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
@@ -144,7 +144,7 @@
       ],
       'dependencies': [
         '../config/config.gyp:config_protocol',
-        'gen_session_stress_test_data',
+        'gen_session_stress_test_data#host',
         'session',
         'session_base.gyp:session_protocol',
       ],
@@ -162,6 +162,7 @@
     {
       'target_name': 'gen_session_stress_test_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_session_stress_test_data',

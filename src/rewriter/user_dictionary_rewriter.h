@@ -34,17 +34,20 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
 // A special rewriter that tweaks the ranking of user dictionary candidates.
-class UserDictionaryRewriter: public RewriterInterface  {
+class UserDictionaryRewriter : public RewriterInterface  {
  public:
   UserDictionaryRewriter();
   virtual ~UserDictionaryRewriter();
 
   virtual int capability() const;
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 };
-}
+
+}  // namespace mozc
 #endif  // MOZC_REWRITER_USER_DICTIONARY_REWRITER_REWRITER_H_

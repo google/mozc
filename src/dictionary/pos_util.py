@@ -33,6 +33,7 @@
 __author__ = "hidehiko"
 
 
+from collections import defaultdict
 import logging
 import re
 
@@ -114,3 +115,64 @@ class PosMatcher(object):
 
   def GetOriginalPattern(self, name):
     return self._match_rule_map[name][0]
+
+
+class InflectionMap(object):
+  """Utility to handle inflection map.
+
+  Inflection map is a map from key to (form, value_suffix, key_suffix).
+  """
+  def __init__(self):
+    self._map = {}
+
+  def Parse(self, filepath):
+    result = defaultdict(list)
+    with open(filepath, 'r') as stream:
+      stream = code_generator_util.SkipLineComment(stream)
+      stream = code_generator_util.ParseColumnStream(stream, num_column=4)
+      for key, form, value_suffix, key_suffix in stream:
+        result[key].append((
+            form,
+            value_suffix if value_suffix != '*' else '',
+            key_suffix if key_suffix != '*' else ''))
+    self._map = result
+
+  def Get(self, key):
+    return self._map[key]
+
+
+class UserPos(object):
+  """Utility to handle user pos.
+
+  The data is assoc list from user_pos (string) to conjugation_list.
+  conjugation_list is a list of (value_suffix, key_suffix, pos_id).
+  """
+  def __init__(self, pos_database, inflection_map):
+    self._pos_database = pos_database
+    self._inflection_map = inflection_map
+    self.data = []
+
+  def Parse(self, filepath):
+    result = []
+    with open(filepath, 'r') as stream:
+      stream = code_generator_util.SkipLineComment(stream)
+      stream = code_generator_util.ParseColumnStream(stream, num_column=3)
+      for user_pos, ctype, feature in stream:
+        conjugation_list = []
+        if ctype == '*':
+          conjugation_list.append(
+              (None, None, self._pos_database.GetPosId(feature)))
+        else:
+          for form, value_suffix, key_suffix in self._inflection_map.Get(ctype):
+            # repalce <cfrom> with actual cform
+            pos_id = self._pos_database.GetPosId(
+                feature.replace('<cform>', form))
+
+            # Known error items.
+            # 動詞,自立,*,*,五段動詞,体言接続特殊２,*
+            # 形容詞,自立,*,*,形容詞・アウオ段,文語基本形,*
+            if pos_id is not None:
+              conjugation_list.append((value_suffix, key_suffix, pos_id))
+
+        result.append((user_pos, conjugation_list))
+    self.data = result

@@ -30,19 +30,34 @@
 #ifndef MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 #define MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 
+#include <string>
+#include <vector>
+
 #include "rewriter/rewriter_interface.h"
 #include "base/base.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 
 namespace mozc {
+class ConversionRequest;
 class LRUStorage;
+class POSMatcher;
+class PosGroup;
 
-class UserSegmentHistoryRewriter: public RewriterInterface {
+class UserSegmentHistoryRewriter : public RewriterInterface {
  public:
-  UserSegmentHistoryRewriter();
+  struct ScoreType {
+    uint32 last_access_time;
+    uint32 score;
+    const Segment::Candidate *candidate;
+  };
+
+  UserSegmentHistoryRewriter(const POSMatcher *pos_matcher,
+                             const PosGroup *pos_group);
   virtual ~UserSegmentHistoryRewriter();
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 
   virtual void Finish(Segments *segments);
 
@@ -72,9 +87,27 @@ class UserSegmentHistoryRewriter: public RewriterInterface {
   bool ShouldRewrite(const Segment &segment,
                      size_t *max_candidates_size) const;
   void InsertTriggerKey(const Segment &segment);
+  bool IsPunctuation(const Segment &seg,
+                     const Segment::Candidate &candidate) const;
+  bool GetFeatureLN(const Segments &segments,
+                    size_t i,
+                    const string &base_key,
+                    const string &base_value,
+                    string *value) const;
+  bool GetFeatureRN(const Segments &segments,
+                    size_t i,
+                    const string &base_key,
+                    const string &base_value,
+                    string *value) const;
+  bool SortCandidates(const vector<ScoreType> &sorted_scores,
+                      Segment *segment) const;
+
 
   scoped_ptr<LRUStorage> storage_;
+  const POSMatcher *pos_matcher_;
+  const PosGroup *pos_group_;
 };
-}
+
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_

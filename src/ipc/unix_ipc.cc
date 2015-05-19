@@ -289,7 +289,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
 
   for (size_t trial = 0; trial < 2; ++trial) {
     string server_address;
-    if (!manager->GetPathName(&server_address)) {
+    if (!manager->LoadPathName() || !manager->GetPathName(&server_address)) {
       continue;
     }
     sockaddr_un address;
@@ -394,11 +394,16 @@ IPCServer::IPCServer(const string &name,
                      int32 timeout)
     : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
-  if (!manager->CreateNewPathName() ||
-      !manager->GetPathName(&server_address_)) {
+  if (!manager->CreateNewPathName() && !manager->LoadPathName()) {
+    LOG(ERROR) << "Cannot prepare IPC path name";
+    return;
+  }
+
+  if (!manager->GetPathName(&server_address_)) {
     LOG(ERROR) << "Cannot make IPC path name";
     return;
   }
+  DCHECK(!server_address_.empty());
 
   const string dirname = Util::Dirname(server_address_);
   mkdir_p(dirname);

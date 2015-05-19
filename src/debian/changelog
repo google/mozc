@@ -1,3 +1,27 @@
+mozc (1.5.1053.102) lucid; urgency=low
+
+  * Ver. 1.5.1053.102 on 2012-04-18
+  * 'libcurl4-openssl-dev' is replaced with 'libssl-dev' in the build
+    dependencies on Linux.
+  * 'emacs-mozc' now works correctly even when the Homonym dictionary is
+    enabled.  (Issue 146)
+  * 'mozc_renderer' on Linux (a.k.a. 'gtk_renderer') (Issue 145):
+    - 'libgtk2.0-dev' is now required to build 'mozc_renderer' on Linux.
+    - 'ibus-mozc' now checks if 'mozc_renderer' exists along with 'mozc_server'
+      or not. If 'mozc_renderer' does not exist, 'ibus-mozc' behaves as if
+      --enable_gtk_renderer was not specified.
+    - Now 'mozc_renderer' can be built with GLib >=2.31.0.
+    - Now 'mozc_renderer' automatically adjusts its window location on the edge
+      of the display.
+    - Now 'mozc_renderer' uses custom font settings of IBus-panel if available.
+    - The position of candidate window no longer be disturbed by some background
+      applications such as GNU Emacs23, which periodically issue
+      set_cursor_position message even when they are background.
+    - Now 'ibus-mozc' uses IBus candidate window if the application does not
+      have the capability to show preedit string such as Emacs23 or xterm.
+
+ -- Tsuyoshi Matsuzaki <matsuzakit>  Wed, 18 Apr 2012 16:52:31 +0900
+
 mozc (1.4.1033.102) lucid; urgency=low
 
   * Ver. 1.4.1033.102 on 2012-03-23

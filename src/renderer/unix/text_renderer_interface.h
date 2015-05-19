@@ -55,6 +55,8 @@ class TextRendererInterface {
 
   virtual void RenderText(const string &text, const Rect &rect,
                           FontSpecInterface::FONT_TYPE font_type) = 0;
+
+  virtual void ReloadFontConfig(const string &font_description) = 0;
 };
 
 }  // namespace gtk

@@ -36,7 +36,6 @@
 #include "base/base.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "rewriter/rewriter_interface.h"
 #include "rewriter/user_segment_history_rewriter.h"
 #include "rewriter/user_boundary_history_rewriter.h"
 #include "storage/registry.h"
@@ -56,18 +55,13 @@ const char kLastDownloadTimestampKey[] =
 LearningPreferenceAdapter::LearningPreferenceAdapter()
     : local_update_time_(0) {
   ClearStorage();
-  RewriterInterface *rewriter = RewriterFactory::GetRewriter();
-  CHECK(rewriter);
 
-  // TODO(taku): We assume that UserSegmentHistoryRewriter and
-  // UserBoundaryHistoryRewriter are instantiated when we call
-  // GetRewriter(). This assumption makes an extra dependency
-  // to the real implementaion of RewriterFactory.
-  //
-  // It is better to let Rewriter call AddStorage() methods.
+  // TODO(peria): Make sure that these GetStorage() do not return NULL
+  //     if FLAGS_user_history_rewriter in rewriter/rewriter.cc is true.
+  //     It means UserSegmentHistoryRewriter and userBoundaryHistoryRewriter
+  //     must be created before the call of this constructor.
   AddStorage(LearningPreference::Entry::USER_SEGMENT_HISTORY,
              UserSegmentHistoryRewriter::GetStorage());
-
   AddStorage(LearningPreference::Entry::USER_BOUNDARY_HISTORY,
              UserBoundaryHistoryRewriter::GetStorage());
 }

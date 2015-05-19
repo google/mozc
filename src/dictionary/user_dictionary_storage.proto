@@ -55,6 +55,10 @@ message UserDictionaryStorage {
       // set true if this entry is removed.
       // This flag is used for cloud sync feature.
       optional bool  removed  = 10 [ default = false ];
+
+      // set true if this entry is automatically registered
+      // by converter.
+      optional bool auto_registered = 11 [ default = false ];
     };
 
     repeated Entry entries = 4;

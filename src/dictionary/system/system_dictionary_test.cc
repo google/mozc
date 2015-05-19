@@ -30,11 +30,13 @@
 #include "dictionary/system/system_dictionary.h"
 
 #include "base/base.h"
+#include "base/singleton.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
@@ -71,7 +73,7 @@ using dictionary::TokenInfo;
 class SystemDictionaryTest : public testing::Test {
  protected:
   SystemDictionaryTest()
-      : text_dict_(new TextDictionaryLoader),
+      : text_dict_(new TextDictionaryLoader(*Singleton<POSMatcher>::get())),
         dic_fn_(FLAGS_test_tmpdir + "/mozc.dic") {
     const string dic_path = Util::JoinPath(FLAGS_test_srcdir,
                                            FLAGS_dictionary_source);

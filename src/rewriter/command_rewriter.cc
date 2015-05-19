@@ -30,8 +30,10 @@
 #include "rewriter/command_rewriter.h"
 
 #include <algorithm>
+#include <string>
 #include <vector>
 #include "base/base.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
@@ -252,7 +254,8 @@ bool CommandRewriter::RewriteSegment(Segment *segment) const {
   return false;
 }
 
-bool CommandRewriter::Rewrite(Segments *segments) const {
+bool CommandRewriter::Rewrite(const ConversionRequest &request,
+                              Segments *segments) const {
   if (segments == NULL || segments->conversion_segments_size() != 1) {
     return false;
   }

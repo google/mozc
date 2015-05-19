@@ -615,7 +615,7 @@
        <item row="0" column="0">
         <widget class="QCheckBox" name="localUsageDictionaryCheckBox">
          <property name="text">
-          <string>homonym dictionary</string>
+          <string>Homonym dictionary</string>
          </property>
         </widget>
        </item>

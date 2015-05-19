@@ -30,6 +30,12 @@
 #include "dictionary/dictionary_impl.h"
 
 #include "base/singleton.h"
+#include "data_manager/user_dictionary_manager.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
+#include "dictionary/system/system_dictionary.h"
+#include "dictionary/system/value_dictionary.h"
+#include "dictionary/user_dictionary.h"
 
 namespace mozc {
 namespace {
@@ -48,8 +54,14 @@ int g_dictionary_size = kDictionaryData_size;
 
 class MozcDictionaryImpl : public DictionaryImpl {
  private:
-  MozcDictionaryImpl() : DictionaryImpl(g_dictionary_address,
-                                        g_dictionary_size) {}
+  MozcDictionaryImpl() : DictionaryImpl(
+      SystemDictionary::CreateSystemDictionaryFromImage(g_dictionary_address,
+                                                        g_dictionary_size),
+      ValueDictionary::CreateValueDictionaryFromImage(g_dictionary_address,
+                                                      g_dictionary_size),
+      UserDictionaryManager::GetUserDictionaryManager()->GetUserDictionary(),
+      SuppressionDictionary::GetSuppressionDictionary(),
+      Singleton<POSMatcher>::get()) {}
   virtual ~MozcDictionaryImpl() {}
 
   friend class Singleton<MozcDictionaryImpl>;

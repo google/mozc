@@ -41,17 +41,33 @@ Typical usage:
 __author__ = "komatsu"
 
 import glob
+import inspect
 import logging
 import optparse
 import os
 import re
 import shutil
-import stat
 import subprocess
 import sys
+import tempfile
+import threading
 
 from build_tools import mozc_version
+from build_tools.test_tools import task_scheduler
 
+from build_tools.util import CheckFileOrDie
+from build_tools.util import CopyFile
+from build_tools.util import GetNumberOfProcessors
+from build_tools.util import GetRelPath
+from build_tools.util import IsLinux
+from build_tools.util import IsMac
+from build_tools.util import IsWindows
+from build_tools.util import MakeFileWritableRecursively
+from build_tools.util import PrintErrorAndExit
+from build_tools.util import RemoveDirectoryRecursively
+from build_tools.util import RemoveFile
+from build_tools.util import RunOrDie
+from build_tools.util import RunOrDieError
 
 SRC_DIR = '.'
 # We need to obtain the absolute path of this script before we
@@ -60,71 +76,128 @@ SRC_DIR = '.'
 # Note that if any import above has already changed the current
 # directory, this code cannot work anymore.
 ABS_SCRIPT_PATH = os.path.abspath(__file__)
+TERMINAL_COLORS = {
+    'CLEAR': '\x1b[0m',
+    'BLACK': '\x1b[30m',
+    'RED': '\x1b[31m',
+    'GREEN': '\x1b[32m',
+    'YELLOW': '\x1b[33m',
+    'BLUE': '\x1b[34m',
+    'MAGENTA': '\x1b[35m',
+    'CYAN': '\x1b[36m',
+    'WHITE': '\x1b[37m',
+}
 
 sys.path.append(SRC_DIR)
 
-
-def IsWindows():
-  """Returns true if the platform is Windows."""
-  return os.name == 'nt'
-
-
-def IsMac():
-  """Returns true if the platform is Mac."""
-  return os.name == 'posix' and os.uname()[0] == 'Darwin'
+def GetMozcVersion():
+  """Returns MozcVersion instance."""
+  # TODO(matsuzakit): Caching might be better.
+  return mozc_version.MozcVersion('%s/mozc_version.txt' % SRC_DIR)
 
 
-def IsLinux():
-  """Returns true if the platform is Linux."""
-  return os.name == 'posix' and os.uname()[0] == 'Linux'
+def GetColoredText(text, color):
+  """Gets colored text for terminal."""
+  # TODO(hsumita): Considers dumb terminal.
+  # Disables on windows because cmd.exe doesn't support ANSI color escape
+  # sequences.
+  # TODO(team): Considers to use ctypes.windll.kernel32.SetConsoleTextAttribute
+  #             on Windows. b/6260694
+  if not IsWindows() and sys.stdout.isatty() and sys.stderr.isatty():
+    return TERMINAL_COLORS[color] + text + TERMINAL_COLORS['CLEAR']
+  return text
 
 
-# TODO(yukawa): Move this function to util.py (b/2715400)
-def GetNumberOfProcessors():
-  """Returns the number of CPU cores available.
+def GenerateMessageForLogging(message, tag, color, with_line_number=False,
+                              stack_frame_number=2):
+  """Generates a logging message."""
+  output = [GetColoredText(tag, color), str(message)]
+  if with_line_number:
+    stack_frame = inspect.stack(stack_frame_number)[stack_frame_number]
+    line_number_index = 2
+    output.append('[build_mozc.py:%d]' % stack_frame[line_number_index])
+  return ' '.join(output)
 
-  Returns:
-    An integer which represents the number of CPU cores available on
-    the host environment. Returns 1 if something fails.
+
+def PrintError(message, *args, **kwargs):
+  """Prints a error message."""
+  output = GenerateMessageForLogging(message, 'ERROR:', 'RED', True)
+  logging.error(output, *args, **kwargs)
+
+
+def PrintErrorAndExit(message, *args, **kwargs):
+  """Prints the error message and exists."""
+  output = GenerateMessageForLogging(message, 'ERROR:', 'RED', True)
+  logging.error('==========')
+  logging.error(output, *args, **kwargs)
+  logging.error('==========')
+
+  sys.exit(1)
+
+
+def PrintWarning(message, *args, **kwargs):
+  """Prints a warning message."""
+  output = GenerateMessageForLogging(message, 'WARNING:', 'YELLOW', True)
+  logging.warning(output, *args, **kwargs)
+
+
+def PrintInfo(message, *args, **kwargs):
+  """Prints a information message."""
+  output = GenerateMessageForLogging(message, 'INFO:', 'CYAN')
+  logging.info(output, *args, **kwargs)
+
+
+def PrintTestSuccess(message, *args):
+  """Prints the results of a successed test."""
+  output = GenerateMessageForLogging(message, '[  PASSED  ]', 'GREEN')
+  print output % args
+
+
+def PrintTestFailure(message, *args):
+  """Prints the results of a failed test."""
+  output = GenerateMessageForLogging(message, '[  FAILED  ]', 'RED')
+  print output % args
+
+
+def GetBuildBaseName(options, target_platform):
+  """Returns the build base directory.
+
+  Determination priority is;
+  1. options.build_base
+  2. target_platform (typically in mozc_version.txt)
+  3. options.target_platform
+
+  Args:
+    options: Options which might have build_base and/or target_platform
+    target_platform: Target platform (typically read from mozc_version.txt)
+      This can be None.
   """
-  count = 1
-  try:
-    if IsWindows():
-      count = int(os.environ.get('NUMBER_OF_PROCESSORS', '1'))
-    elif IsMac():
-      commands = ['sysctl', '-n', 'hw.ncpu']
-      process = subprocess.Popen(commands, stdout=subprocess.PIPE)
-      count = int(process.communicate()[0])
-    elif IsLinux():
-      # Count the number of 'vendor_id' in /proc/cpuinfo, assuming that
-      # each line corresponds to one logical CPU.
-      with open('/proc/cpuinfo', 'r') as cpuinfo:
-        count = len([line for line in cpuinfo if 'vendor_id' in line])
-    else:
-      logging.warning('failed to detect environment')
-  except BaseException as e:
-    logging.warning('GetNumberOfProcessors() failed: %s', e)
-  return max(1, count)
-
-
-def GetBuildBaseName(options):
-  """Returns the build base directory."""
   if options.build_base:
     return options.build_base
   # For some reason, xcodebuild does not accept absolute path names for
   # the -project parameter. Convert the original_directory_name to a
   # relative path from the build top level directory.
+  if target_platform is None:
+    target_platform = options.target_platform
   build_base = ''
-  if IsMac():
-    build_base = os.path.join(os.getcwd(), 'out_mac')
-  elif IsWindows():
-    build_base = os.path.join(os.getcwd(), 'out_win')
-  elif IsLinux():
-    # On Linux, seems there is no way to specify the build_base directory
-    # inside common.gypi
+
+  if target_platform == 'Windows':
+    build_base = 'out_win'
+  elif target_platform == 'Mac':
+    build_base = 'out_mac'
+  elif target_platform == 'Linux' or target_platform == 'ChromeOS':
     build_base = 'out_linux'
+  elif target_platform == 'Android':
+    build_base = 'out_android'
+  elif target_platform == 'NaCl':
+    build_base = 'out_nacl'
   else:
-    logging.error('Unsupported platform: %s', os.name)
+    PrintError('Unsupported platform: %s', target_platform)
+
+  # On Linux, seems there is no way to specify the build_base directory
+  # inside common.gypi
+  if IsWindows() or IsMac():
+    build_base = os.path.join(GetTopLevelSourceDirectoryName(), build_base)
 
   return build_base
 
@@ -150,7 +223,28 @@ def GetPkgConfigCommand():
   return os.environ.get('PKG_CONFIG', 'pkg-config')
 
 
-def GenerateVersionFile(version_template_path, version_path):
+# TODO(team): Move this to build_tools/util.py
+def PkgExists(*packages):
+  """Return if the specified package exists or not.
+
+  Args:
+    *packages: packages to be examined.
+
+  Returns:
+    True if the specified package exists.
+  """
+  try:
+    command_line = [GetPkgConfigCommand(), '--exists']
+    command_line.extend(packages)
+    RunOrDie(command_line)
+    return True
+  except RunOrDieError:
+    PrintInfo('%s failed' % ' '.join(command_line))
+  return False
+
+
+def GenerateVersionFile(version_template_path, version_path, target_platform,
+                        is_channel_dev):
   """Reads the version template file and stores it into version_path.
 
   This doesn't update the "version_path" if nothing will be changed to
@@ -159,31 +253,24 @@ def GenerateVersionFile(version_template_path, version_path):
   Args:
     version_template_path: a file name which contains the template of version.
     version_path: a file name to be stored the official version.
+    target_platform: target platform name. c.f. --target_platform option
+    is_channel_dev: True if dev channel. False if stable channel.
+      None if you want to use template file's configuration.
   """
-  version = mozc_version.MozcVersion(version_template_path, expand_daily=True)
-  version_definition = version.GetVersionInFormat(
-      'MAJOR=@MAJOR@\n'
-      'MINOR=@MINOR@\n'
-      'BUILD=@BUILD@\n'
-      'REVISION=@REVISION@\n'
-      'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@\n'
-      'FLAG=@FLAG@\n')
-  old_content = ''
-  if os.path.exists(version_path):
-    # if the target file already exists, need to check the necessity of update.
-    old_content = open(version_path).read()
-
-  if version_definition != old_content:
-    open(version_path, 'w').write(version_definition)
+  version_format = ('MAJOR=@MAJOR@\n'
+                    'MINOR=@MINOR@\n'
+                    'BUILD=@BUILD@\n'
+                    'REVISION=@REVISION@\n'
+                    'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@\n'
+                    'FLAG=@FLAG@\n'
+                    'TARGET_PLATFORM=@TARGET_PLATFORM@\n')
+  mozc_version.GenerateVersionFileFromTemplate(version_template_path,
+                                               version_path,
+                                               version_format,
+                                               target_platform=target_platform,
+                                               is_channel_dev=is_channel_dev)
 
 
-
-
-def GetVersionFileNames(options):
-  """Gets the (template of version file, version file) pair."""
-  template_path = '%s/%s' % (SRC_DIR, options.version_file)
-  version_path = '%s/mozc_version.txt' % SRC_DIR
-  return (template_path, version_path)
 
 
 def GetGypFileNames(options):
@@ -194,8 +281,7 @@ def GetGypFileNames(options):
   if not options.language == 'japanese':
     language_path = '%s/languages/%s' % (SRC_DIR, options.language)
     if not os.path.exists(language_path):
-      print >>sys.stderr, 'Can not find language directory: %s ' % language_path
-      sys.exit(1)
+      PrintErrorAndExit('Can not find language directory: %s ', language_path)
     mozc_top_level_names.append(language_path)
   # Exclude the gyp directory where we have special gyp files like
   # breakpad.gyp that we should exclude.
@@ -208,6 +294,8 @@ def GetGypFileNames(options):
   gyp_file_names.append('%s/gyp/tests.gyp' % SRC_DIR)
   # Include subdirectory of dictionary
   gyp_file_names.extend(glob.glob('%s/dictionary/*/*.gyp' % SRC_DIR))
+  # Include subdirectories of data_manager
+  gyp_file_names.extend(glob.glob('%s/data_manager/*/*.gyp' % SRC_DIR))
   # Include subdirectory of rewriter
   gyp_file_names.extend(glob.glob('%s/rewriter/*/*.gyp' % SRC_DIR))
   # Include subdirectory of win32 and breakpad for Windows
@@ -218,18 +306,11 @@ def GetGypFileNames(options):
     gyp_file_names.extend(glob.glob('%s/unix/*/*.gyp' % SRC_DIR))
     # Add ibus.gyp if ibus is installed.
     # Ubuntu 8.04 (Hardy) does not contain ibus package.
-    try:
-      RunOrDie([GetPkgConfigCommand(), '--exists', 'ibus-1.0'])
-    except RunOrDieError:
-      print 'ibus-1.0 was not found with pkg-config.'
+    if not PkgExists('ibus-1.0'):
+      PrintInfo('removing ibus.gyp.')
       gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
     # Check if Qt libraries are installed.
-    try:
-      RunOrDie([GetPkgConfigCommand(), '--exists', 'QtCore', 'QtGui'])
-      qt_found = True
-    except RunOrDieError:
-      print 'QtCore or QtGui was not found with pkg-config.'
-      qt_found = False
+    qt_found = PkgExists('QtCore', 'QtGui')
     if options.ensure_value('qtdir', None):
       qt_found = True
     if not qt_found:
@@ -238,11 +319,10 @@ def GetGypFileNames(options):
       options.ensure_value('noqt', True)
       options.noqt = True
     # Add scim.gyp if SCIM is installed.
-    try:
-      RunOrDie([GetPkgConfigCommand(), '--exists', 'scim'])
-    except RunOrDieError:
-      print 'scim was not found with pkg-config.'
+    if not PkgExists('scim'):
+      PrintInfo('removing scim.gyp.')
       gyp_file_names.remove('%s/unix/scim/scim.gyp' % SRC_DIR)
+  if options.target_platform == 'NaCl':
     # Add chrome skk gyp scripts.
     gyp_file_names.append('%s/chrome/skk/skk.gyp' % SRC_DIR)
     gyp_file_names.append('%s/chrome/skk/skk_dict.gyp' % SRC_DIR)
@@ -253,53 +333,11 @@ def GetGypFileNames(options):
   return gyp_file_names
 
 
-def RemoveFile(file_name):
-  """Removes the specified file."""
-  if not os.path.isfile(file_name):
-    return  # Do nothing if not exist.
-  if IsWindows():
-    # Read-only files cannot be deleted on Windows.
-    os.chmod(file_name, 0700)
-  print 'Removing file: %s' % file_name
-  os.unlink(file_name)
-
-
-def CopyFile(source, destination):
-  """Copies a file to the destination. Remove an old version if needed."""
-  if os.path.isfile(destination):  # Remove the old one if exists.
-    RemoveFile(destination)
-  dest_dirname = os.path.dirname(destination)
-  if not os.path.isdir(dest_dirname):
-    os.makedirs(dest_dirname)
-  print 'Copying file to: %s' % destination
-  shutil.copy(source, destination)
-
-
-def RemoveDirectoryRecursively(directory):
-  """Removes the specified directory recursively."""
-  if os.path.isdir(directory):
-    print 'Removing directory: %s' % directory
-    if IsWindows():
-      # Use RD because shutil.rmtree fails when the directory is readonly.
-      RunOrDie(['CMD.exe', '/C', 'RD', '/S', '/Q',
-                os.path.normpath(directory)])
-    else:
-      shutil.rmtree(directory, ignore_errors=True)
-
-
-def MakeFileWritableRecursively(path):
-  """Make files (including directories) writable recursively."""
-  for root, dirs, files in os.walk(path):
-    for name in dirs + files:
-      path = os.path.join(root, name)
-      os.chmod(path, os.lstat(path).st_mode | stat.S_IWRITE)
-
-
 def GetTopLevelSourceDirectoryName():
   """Gets the top level source directory name."""
-  if SRC_DIR == '.':
-    return SRC_DIR
   script_file_directory_name = os.path.dirname(ABS_SCRIPT_PATH)
+  if SRC_DIR == '.':
+    return script_file_directory_name
   num_components = len(SRC_DIR.split('/'))
   return os.path.join(script_file_directory_name, *(['..'] * num_components))
 
@@ -307,37 +345,6 @@ def GetTopLevelSourceDirectoryName():
 def MoveToTopLevelSourceDirectory():
   """Moves to the build top level directory."""
   os.chdir(GetTopLevelSourceDirectoryName())
-
-
-class RunOrDieError(StandardError):
-  """The exception class for RunOrDie."""
-
-  def __init__(self, message):
-    StandardError.__init__(self, message)
-
-
-def RunOrDie(argv):
-  """Run the command, or die if it failed."""
-  # Rest are the target program name and the parameters, but we special
-  # case if the target program name ends with '.py'
-  if argv[0].endswith('.py'):
-    argv.insert(0, sys.executable)  # Inject the python interpreter path.
-  # We don't capture stdout and stderr from Popen. The output will just
-  # be emitted to a terminal or console.
-  print 'Running: ' + ' '.join(argv)
-  process = subprocess.Popen(argv)
-
-  if process.wait() != 0:
-    raise RunOrDieError('\n'.join(['',
-                                   '==========',
-                                   ' ERROR: %s' % ' '.join(argv),
-                                   '==========']))
-
-
-def PrintErrorAndExit(error_message):
-  """Prints the error message and exists."""
-  print '\n==========\n ERROR: %s\n==========\n' % error_message
-  sys.exit(1)
 
 
 def RunPackageVerifiers(build_dir):
@@ -354,9 +361,16 @@ def AddCommonOptions(parser):
   """Adds the options common among the commands."""
   parser.add_option('--build_base', dest='build_base',
                     help='Specifies the base directory of the built binaries.')
-  # Linux environment can build both for Linux and ChromeOS.
-  # This option enables this script to know which build (Linux or ChromeOS)
+  parser.add_option('--language', dest='language', default='japanese',
+                    help='Specify the target language to build.')
+  return parser
+
+
+def AddTargetPlatformOption(parser):
+  # Linux environment can build for Linux, Android and ChromeOS.
+  # --target_platform option enables this script to know which build
   # should be done. If you want ChromeOS build, specify "ChromeOS".
+  # If you want Android build, specify "Android".
   if IsLinux():
     default_target = 'Linux'
   elif IsWindows():
@@ -365,13 +379,11 @@ def AddCommonOptions(parser):
     default_target = 'Mac'
   parser.add_option('--target_platform', dest='target_platform',
                     default=default_target,
-                    help=('Linux environment can build both for Linux and '
+                    help=('Linux environment can build for Linux, Android  and '
                           'ChromeOS. This option enables this script to know '
-                          'which build (Linux or ChromeOS) should be done. '
+                          'which build should be done. '
+                          'If you want Android build, specify "Android". '
                           'If you want ChromeOS build, specify "ChromeOS".'))
-  parser.add_option('--language', dest='language', default='japanese',
-                    help='Specify the target language to build.')
-  return parser
 
 
 def GetDefaultWixPath():
@@ -384,15 +396,11 @@ def ParseGypOptions(args=None, values=None):
   """Parses command line options for the gyp command."""
   parser = optparse.OptionParser(usage='Usage: %prog gyp [options]')
   AddCommonOptions(parser)
-  # DEPS file should exist in the same directory of the script.
-  default_deps_file = os.path.abspath(
-      os.path.join(os.path.dirname(ABS_SCRIPT_PATH), 'DEPS'))
-  parser.add_option('--deps_file', dest='deps_file', default=default_deps_file,
-                    help='Specifies the DEPS file.')
   parser.add_option('--gyp_generator', dest='gyp_generator',
                     help='Specifies the generator for GYP.')
   parser.add_option('--branding', dest='branding', default='Mozc')
-  parser.add_option('--gypdir', dest='gypdir', default='third_party/gyp')
+  parser.add_option('--gypdir', dest='gypdir',
+                    help='Specifies the location of GYP to be used.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
   parser.add_option('--qtdir', dest='qtdir',
                     default=os.getenv('QTDIR', None),
@@ -408,6 +416,7 @@ def ParseGypOptions(args=None, values=None):
                     default='mozc_version_template.txt')
   parser.add_option('--rsync', dest='rsync', default=False, action='store_true',
                     help='use rsync to copy files instead of builtin function')
+  AddTargetPlatformOption(parser)
 
   parser.add_option('--mac_dir', dest='mac_dir',
                     help='A path to the root directory of third party '
@@ -491,6 +500,9 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='cloud handwriting',
                    macro_name='ENABLE_CLOUD_HANDWRITING',
                    option_name='cloud_handwriting')
+  AddFeatureOption(parser, feature_name='http client',
+                   macro_name='MOZC_ENABLE_HTTP_CLIENT',
+                   option_name='http_client')
 
   # TODO(yukawa): Remove this option when Zinnia can be built on Windows with
   #               enabling Unicode.
@@ -523,7 +535,7 @@ def ParseGypOptions(args=None, values=None):
   return parser.parse_args(args, values)
 
 
-def ExpandMetaTarget(meta_target_name, target_platform):
+def ExpandMetaTarget(meta_target_name):
   """Returns a list of build targets with expanding meta target name.
 
   If the specified name is 'package', returns a list of build targets for
@@ -533,7 +545,6 @@ def ExpandMetaTarget(meta_target_name, target_platform):
 
   Args:
     meta_target_name: meta target name to be expanded.
-    target_platform: The target platform.
 
   Returns:
     A list of build targets with meta target names expanded.
@@ -541,17 +552,18 @@ def ExpandMetaTarget(meta_target_name, target_platform):
   if meta_target_name != 'package':
     return [meta_target_name]
 
-  if target_platform == 'ChromeOS':
-    targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
-               '%s/server/server.gyp:mozc_server',
-               '%s/gui/gui.gyp:mozc_tool']
+  target_platform = GetMozcVersion().GetTargetPlatform()
+
+  # Note that ChromeOS does not use this method.
+  if target_platform == 'Android':
+    targets = ['%s/android/android.gyp:apk']
   elif target_platform == 'Linux':
     targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
                '%s/server/server.gyp:mozc_server',
                '%s/gui/gui.gyp:mozc_tool']
-  elif IsMac():
+  elif target_platform == 'Mac':
     targets = ['%s/mac/mac.gyp:DiskImage']
-  elif IsWindows():
+  elif target_platform == 'Windows':
     targets = ['%s/win32/build32/build32.gyp:',
                '%s/win32/build64/build64.gyp:']
     targets += ['%s/win32/installer/installer.gyp:']
@@ -569,14 +581,11 @@ def ParseBuildOptions(args=None, values=None):
                       metavar='N', help='run build jobs in parallel')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
-  parser.add_option('--version_file', dest='version_file',
-                    help='use the specified version template file',
-                    default='mozc_version_template.txt')
 
   (options, args) = parser.parse_args(args, values)
   targets = []
   for arg in args:
-    targets.extend(ExpandMetaTarget(arg, options.target_platform))
+    targets.extend(ExpandMetaTarget(arg))
   return (options, targets)
 
 
@@ -590,6 +599,10 @@ def ParseRunTestsOptions(args=None, values=None):
     parser.add_option('--jobs', '-j', dest='jobs',
                       default=('%d' % default_build_concurrency),
                       metavar='N', help='run build jobs in parallel')
+  #TODO(nona): enable parallel testing on continuous build
+  parser.add_option('--test_jobs', dest='test_jobs', type='int',
+                    default=1,
+                    metavar='N', help='run test jobs in parallel')
   parser.add_option('--test_size', dest='test_size', default='small')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
@@ -602,12 +615,67 @@ def ParseCleanOptions(args=None, values=None):
   parser = optparse.OptionParser(
       usage='Usage: %prog clean [-- build options]')
   AddCommonOptions(parser)
+  AddTargetPlatformOption(parser)
 
   return parser.parse_args(args, values)
 
 
 def GypMain(options, unused_args):
   """The main function for the 'gyp' command."""
+  # Generate a version definition file.
+  # The version file is used in this method to check if this is dev channel.
+  PrintInfo('Generating version definition file...')
+  template_path = '%s/%s' % (SRC_DIR, options.version_file)
+  version_path = '%s/mozc_version.txt' % SRC_DIR
+  GenerateVersionFile(template_path, version_path, options.target_platform,
+                      options.channel_dev)
+  version = GetMozcVersion()
+  PrintInfo('Version string is %s' % version.GetVersionString())
+
+  # Back up the original 'PYTHONPATH' environment variable in case we change
+  # it in this function.
+  original_python_path = os.environ.get('PYTHONPATH', '')
+
+  # 'gypdir' option allows distributors/packages to specify the location of
+  # the system-installed version of gyp to conform their packaging policy.
+  if options.gypdir:
+    # When distributors/packages choose to use system-installed gyp, it is
+    # their responsibility to make sure if 'gyp' command works well on
+    # their environment.
+    gyp_dir = os.path.abspath(options.gypdir)
+    gyp_command = os.path.join(gyp_dir, 'gyp')
+  else:
+    # Use third_party/gyp/gyp when 'gypdir' option is not specified. This is
+    # the default and official way to build Mozc. In this case, you need to
+    # consider the case where a Python package named 'gyp' has already been
+    # installed in the target machine. So we update PYTHONPATH so that
+    # third_party/gyp/gyp can find its own library modules (they are
+    # installed under 'third_party/gyp/pylib') rather than system-installed
+    # GYP modules.
+    gyp_dir = os.path.abspath(os.path.join(
+        GetTopLevelSourceDirectoryName(), 'third_party', 'gyp'))
+    gyp_command = os.path.join(gyp_dir, 'gyp')
+    # Make sure if 'third_party/gyp/gyp' exists. Note that Mozc's tarball
+    # package no longer contains 'third_party/gyp/gyp'.
+    if not os.path.exists(gyp_command):
+      message = (
+          'GYP does not exist at %s. Please run "gclient" to download GYP. '
+          'If you want to use system-installed GYP, use --gypdir option to '
+          'specify its location. e.g., '
+          '"python build_mozc.py gyp --gypdir=/usr/bin"' % gyp_command)
+      PrintErrorAndExit(message)
+    os.environ['PYTHONPATH'] = os.pathsep.join(
+        [os.path.join(gyp_dir, 'pylib'), original_python_path])
+    mozc_dir = os.path.abspath(GetTopLevelSourceDirectoryName())
+    # Following script tests if 'import gyp' is now available and its
+    # location is expected one. By using this script, make sure
+    # 'import gyp' actually loads 'third_party/gyp/pylib/gyp'.
+    gyp_check_script = os.path.join(
+        mozc_dir, 'build_tools', 'ensure_gyp_module_path.py')
+    expected_gyp_module_path = os.path.join(gyp_dir, 'pylib', 'gyp')
+    RunOrDie([sys.executable, gyp_check_script,
+              '--expected=%s' % expected_gyp_module_path])
+
   # Copy rx.gyp and jsoncpp.gyp to the third party directory.
   CopyFile('%s/gyp/rx.gyp' % SRC_DIR,
            'third_party/rx/rx.gyp')
@@ -621,18 +689,17 @@ def GypMain(options, unused_args):
   # Determine the generator name.
   generator = GetGeneratorName(options.gyp_generator)
   os.environ['GYP_GENERATORS'] = generator
-  print 'Build tool: %s' % generator
+  PrintInfo('Build tool: %s', generator)
 
   # Get and show the list of .gyp file names.
   gyp_file_names = GetGypFileNames(options)
-  print 'GYP files:'
+  PrintInfo('GYP files:')
   for file_name in gyp_file_names:
-    print '- %s' % file_name
-  # We use the one in third_party/gyp
-  gyp_script = os.path.join(options.gypdir, 'gyp')
-  # Run GYP.
-  print 'Running GYP...'
-  command_line = [sys.executable, gyp_script,
+    PrintInfo('- %s', file_name)
+
+  # Build GYP command line.
+  PrintInfo('Building GYP command line...')
+  command_line = [sys.executable, gyp_command,
                   '--depth=.',
                   '--include=%s/gyp/common.gypi' % SRC_DIR]
   command_line.extend(['-D', 'python_executable=%s' % sys.executable])
@@ -656,7 +723,8 @@ def GypMain(options, unused_args):
   else:
     command_line.extend(['-D', 'use_wix=NO'])
 
-  command_line.extend(['-D', 'build_base=%s' % GetBuildBaseName(options)])
+  command_line.extend(['-D', 'build_base=%s' %
+                       GetBuildBaseName(options, version.GetTargetPlatform())])
 
   disable_unittest_if_not_available = True
   if disable_unittest_if_not_available:
@@ -665,8 +733,7 @@ def GypMain(options, unused_args):
       module_dir = os.path.abspath(
           os.path.join(GetTopLevelSourceDirectoryName(), 'third_party', module))
       if not os.path.exists(module_dir):
-        print '%s not found.' % module
-        print 'Disabling unittest.'
+        PrintWarning('%s not found. Disabling unittest.', module)
         command_line.extend(['-D', 'enable_unittest=0'])
         break
 
@@ -680,15 +747,14 @@ def GypMain(options, unused_args):
   # Check the version and determine if the building version is dev-channel or
   # not. Note that if --channel_dev is explicitly set, we don't check the
   # version number.
-  (template_path, unused_version_path) = GetVersionFileNames(options)
-  version = mozc_version.MozcVersion(template_path, expand_daily=False)
   if options.channel_dev is None:
     options.channel_dev = version.IsDevChannel()
   if options.channel_dev:
     command_line.extend(['-D', 'channel_dev=1'])
 
   def SetCommandLineForFeature(option_name, windows=False, mac=False,
-                               linux=False, chromeos=False, android=False):
+                               linux=False, chromeos=False, android=False,
+                               nacl=False):
     """Updates an option like '--enable_foober' and add a -D argument for gyp.
 
     This function ensures an option like '--enable_foober' exists and it has a
@@ -710,6 +776,8 @@ def GypMain(options, unused_args):
           option on ChromeOS platform.
       android: A boolean which replesents the default value of the target
           option on Android platform.
+      nacl: A boolean which replesents the default value of the target
+          option on NaCl.
 
     Raises:
       ValueError: An error occurred when 'option_name' is empty.
@@ -722,20 +790,21 @@ def GypMain(options, unused_args):
                        'Mac': mac,
                        'Linux': linux,
                        'ChromeOS': chromeos,
-                       'Android': android}[options.target_platform]
+                       'Android': android,
+                       'NaCl': nacl}[options.target_platform]
     enable_option_name = 'enable_%s' % option_name
     enabled = options.ensure_value(enable_option_name, default_enabled)
     command_line.extend(['-D',
                          '%s=%s' % (enable_option_name, 1 if enabled else 0)])
 
-  is_official_dev = ((options.language == 'japanese') and
-                     (options.branding == 'GoogleJapaneseInput') and
-                     options.channel_dev)
+  is_official = ((options.language == 'japanese') and
+                 (options.branding == 'GoogleJapaneseInput'))
+  is_official_dev = (is_official and options.channel_dev)
 
-  SetCommandLineForFeature(option_name='webservice_infolist')
   enable_gtk_renderer_by_default = False
   SetCommandLineForFeature(option_name='gtk_renderer',
                            linux=enable_gtk_renderer_by_default)
+  SetCommandLineForFeature(option_name='webservice_infolist')
   SetCommandLineForFeature(option_name='cloud_sync',
                            linux=is_official_dev,
                            windows=is_official_dev,
@@ -744,6 +813,13 @@ def GypMain(options, unused_args):
                            linux=is_official_dev,
                            windows=is_official_dev,
                            mac=is_official_dev)
+  enable_http_client_by_default = is_official
+  SetCommandLineForFeature(option_name='http_client',
+                           linux=enable_http_client_by_default,
+                           windows=enable_http_client_by_default,
+                           mac=enable_http_client_by_default,
+                           chromeos=False,  # not supported.
+                           android=enable_http_client_by_default)
 
   command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
 
@@ -765,7 +841,6 @@ def GypMain(options, unused_args):
       command_line.extend(['-D', 'use_libibus=1'])
     if '%s/unix/scim/scim.gyp' % SRC_DIR in gyp_file_names:
       command_line.extend(['-D', 'use_libscim=1'])
-
   if options.use_libprotobuf:
     command_line.extend(['-D', 'use_libprotobuf=1'])
 
@@ -792,50 +867,30 @@ def GypMain(options, unused_args):
     command_line.extend(['-D', 'pkg_config_command='])
 
 
-  if os.path.isdir(options.nacl_sdk_root):
-    nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
-  elif options.nacl_sdk_root:
-    PrintErrorAndExit('The directory specified with --nacl_sdk_root does not '
-                      'exist: %s' % options.nacl_sdk_root)
-  else:
-    nacl_sdk_root = ''
-  command_line.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
+  if options.target_platform == 'NaCl':
+    if os.path.isdir(options.nacl_sdk_root):
+      nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
+    elif options.nacl_sdk_root:
+      PrintErrorAndExit('The directory specified with --nacl_sdk_root does not '
+                      'exist: %s', options.nacl_sdk_root)
+    command_line.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
 
   command_line.extend(['-D', 'language=%s' % options.language])
 
   command_line.extend([
       '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
 
-  # Add options.gypdir/pylib to PYTHONPATH so gyp uses its own library modules,
-  # otherwise gyp can use ones of a different version.
-  original_python_path = os.environ.get('PYTHONPATH', '')
-  os.environ['PYTHONPATH'] = (os.path.abspath(os.path.join(options.gypdir,
-                                                           'pylib')) +
-                              os.pathsep + original_python_path)
+  # Run GYP.
+  PrintInfo('Running GYP...')
   RunOrDie(command_line)
-  os.environ['PYTHONPATH'] = original_python_path
+
+  # Restore PYTHONPATH just in case.
+  if not original_python_path:
+    os.environ['PYTHONPATH'] = original_python_path
 
 
   # Done!
-  print 'Done'
-
-
-def GetRelPath(path, start):
-  """Return a relative path to |path| from |start|."""
-  # NOTE: Python 2.6 provides os.path.relpath, which has almost the same
-  # functionality as this function. Since Python 2.6 is not the internal
-  # official version, we reimplement it.
-  path_list = os.path.abspath(os.path.normpath(path)).split(os.sep)
-  start_list = os.path.abspath(os.path.normpath(start)).split(os.sep)
-
-  common_prefix_count = 0
-  for i in range(0, min(len(path_list), len(start_list))):
-    if path_list[i] != start_list[i]:
-      break
-    common_prefix_count += 1
-
-  return os.sep.join(['..'] * (len(start_list) - common_prefix_count) +
-                     path_list[common_prefix_count:])
+  PrintInfo('Done')
 
 
 def BuildToolsMain(options, unused_args, original_directory_name):
@@ -857,7 +912,7 @@ def BuildToolsMain(options, unused_args, original_directory_name):
 def CanonicalTargetToGypFileAndTargetName(target):
   """Parses the target string."""
   if not ':' in target:
-    PrintErrorAndExit('Invalid target: ' + target)
+    PrintErrorAndExit('Invalid target: %s', target)
   (gyp_file_name, target_name) = target.split(':')
   return (gyp_file_name, target_name)
 
@@ -889,15 +944,11 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
   build_args = ['-j%s' % options.jobs,
                 'MAKE_JOBS=%s' % options.jobs,
                 'BUILDTYPE=%s' % options.configuration]
-  build_args.append('builddir_name=%s' % GetBuildBaseName(options))
+  build_args.append('builddir_name=%s' %
+                    GetBuildBaseName(options,
+                                     GetMozcVersion().GetTargetPlatform()))
 
   RunOrDie([make_command] + build_args + target_names)
-
-
-def CheckFileOrDie(file_name):
-  """Check the file exists or dies if not."""
-  if not os.path.isfile(file_name):
-    PrintErrorAndExit('No such file: ' + file_name)
 
 
 def BuildOnMac(options, targets, original_directory_name):
@@ -1051,11 +1102,7 @@ def BuildMain(options, targets, original_directory_name):
   python_path = os.pathsep.join([original_python_path, mozc_root])
   os.environ['PYTHONPATH'] = python_path
 
-  # Generate a version definition file.
-  print 'Generating version definition file...'
-  (template_path, version_path) = GetVersionFileNames(options)
-  GenerateVersionFile(template_path, version_path)
-
+  target_platform = GetMozcVersion().GetTargetPlatform()
 
   if IsMac():
     BuildOnMac(options, targets, original_directory_name)
@@ -1064,26 +1111,29 @@ def BuildMain(options, targets, original_directory_name):
   elif IsWindows():
     BuildOnWindows(options, targets, original_directory_name)
   else:
-    print 'Unsupported platform: ', os.name
+    PrintError('Unsupported platform: %s', os.name)
     return
 
   RunPackageVerifiers(
-      os.path.join(GetBuildBaseName(options), options.configuration))
+      os.path.join(GetBuildBaseName(options, target_platform),
+                   options.configuration))
 
   # Revert python path.
   os.environ['PYTHONPATH'] = original_python_path
 
 
-def RunTests(build_base, configuration):
+def RunTests(build_base, configuration, parallel_num):
   """Run built tests actually.
 
   Args:
     build_base: the base directory ('out_linux', 'out_mac', etc.)
     configuration: build configuration ('Release' or 'Debug')
+    parallel_num: allows specified jobs at once.
 
   Raises:
     RunOrDieError: One or more tests have failed.
   """
+  #TODO(nona): move this function to build_tools/test_tools
   base_path = os.path.join(build_base, configuration)
 
   options = []
@@ -1102,13 +1152,57 @@ def RunTests(build_base, configuration):
     executable_suffix = '.exe'
   test_binaries = glob.glob(
       os.path.join(base_path, '*_test' + executable_suffix))
-  for binary in test_binaries:
-    logging.info('running %s...', binary)
-    try:
-      RunOrDie([binary] + options)
-    except RunOrDieError, e:
-      print e
-      failed_tests.append(binary)
+
+  failed_tests = []
+  if parallel_num == 1:
+    for binary in test_binaries:
+      PrintInfo('running %s...', binary)
+      try:
+        RunOrDie([binary] + options)
+      except RunOrDieError, e:
+        PrintError(e)
+        failed_tests.append(binary)
+  else:
+    scheduler = task_scheduler.TaskScheduler()
+    lock = threading.RLock()
+
+    def OnFail(cmd, msg, unused_return_code, unused_user_data):
+      # TODO(nona): using xml reports
+      with lock:
+        failed_tests.append(' '.join(cmd))
+        # Prints bare output of test.
+        print msg
+        PrintTestFailure(' '.join(cmd))
+
+    def OnSuccess(cmd, msg, user_data):
+      # Even return code represents suceess, if there is no xml output file, it
+      # suppose to exit unexpected way.
+      with lock:
+        if not os.path.isfile(user_data['xmlpath']):
+          failed_tests.append(' '.join(cmd))
+          # Prints bare output of test.
+          print msg
+          PrintError('XML file does not exists. test process might crash.')
+          PrintTestFailure(' '.join(cmd))
+          return
+        PrintTestSuccess(cmd[0])
+
+    def OnFinish(unused_cmd, unused_msg, user_data):
+      try:
+        shutil.rmtree(user_data['tmp_dir'])
+      except OSError:
+        PrintWarning('Failed to clean up temporary directory.')
+
+    for binary in test_binaries:
+      tmp_dir = tempfile.mkdtemp()
+      xml_path = os.path.join(tmp_dir, '%s.xml' % binary)
+      additional_options = ['--test_tmpdir=%s' % tmp_dir,
+                            '--gunit_output=xml:%s' % xml_path,
+                            '--gtest_output=xml:%s' % xml_path]
+      scheduler.AddTask([binary] + options + additional_options, OnSuccess,
+                        OnFail, OnFinish,
+                        {'xmlpath': xml_path, 'tmp_dir': tmp_dir})
+    scheduler.Execute(parallel_num)
   if failed_tests:
     raise RunOrDieError('\n'.join(['following tests failed'] + failed_tests))
 
@@ -1152,9 +1246,11 @@ def RunTestsMain(options, args, original_directory_name):
     build_options.extend(['-c', options.configuration])
   if options.build_base:
     build_options.extend(['--build_base', options.build_base])
-  if options.target_platform:
-    build_options.extend(['--target_platform', options.target_platform])
 
+  target_platform = GetMozcVersion().GetTargetPlatform()
+  if target_platform == 'Android':
+    return RunTestsOnAndroid(options, targets, build_options,
+                             original_directory_name)
 
   if not targets:
     targets.append('%s/gyp/tests.gyp:unittests' % SRC_DIR)
@@ -1164,7 +1260,8 @@ def RunTestsMain(options, args, original_directory_name):
   BuildMain(build_opts, build_args, original_directory_name)
 
   # Run tests actually
-  RunTests(GetBuildBaseName(options), options.configuration)
+  RunTests(GetBuildBaseName(options, target_platform), options.configuration,
+           options.test_jobs)
 
 
 def CleanBuildFilesAndDirectories(options, unused_args):
@@ -1194,6 +1291,10 @@ def CleanBuildFilesAndDirectories(options, unused_args):
       file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                '*/*.target.mk')))
       file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*.host.mk')))
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*/*.host.mk')))
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                '*.Makefile')))
       file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                '*/*.Makefile')))
@@ -1203,7 +1304,10 @@ def CleanBuildFilesAndDirectories(options, unused_args):
   # Collect stuff in the top-level directory.
   directory_names.append('mozc_build_tools')
 
-  directory_names.append(GetBuildBaseName(options))
+  target_platform = GetBuildBaseName(options,
+                                     GetMozcVersion().GetTargetPlatform())
+  if target_platform:
+    directory_names.append(target_platform)
   if IsLinux():
     file_names.append('Makefile')
   elif IsWindows():
@@ -1236,6 +1340,8 @@ def ShowHelpAndExit():
 
 
 def main():
+  logging.basicConfig(level=logging.INFO, format='%(message)s')
+
   if len(sys.argv) < 2:
     ShowHelpAndExit()
 
@@ -1263,7 +1369,7 @@ def main():
     (cmd_opts, cmd_args) = ParseCleanOptions(args)
     CleanMain(cmd_opts, cmd_args)
   else:
-    print 'Unknown command: ' + command
+    PrintError('Unknown command: %s', command)
     ShowHelpAndExit()
 
 if __name__ == '__main__':

@@ -79,6 +79,7 @@ class GtkWrapperInterface {
   virtual bool GtkWindowIsActive(GtkWidget *window) = 0;
   virtual void GtkWindowMove(GtkWidget *window, int x, int y) = 0;
   virtual void GtkWindowResize(GtkWidget *window, int width, int height) = 0;
+  virtual void GtkWidgetAddEvents(GtkWidget *widget, gint events) = 0;
 };
 
 }  // namespace gtk

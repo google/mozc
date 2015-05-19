@@ -82,11 +82,27 @@ class GtkWindowBase : public GtkWindowInterface {
   virtual Size Update(const commands::Candidates &candidates);
   virtual Rect GetCandidateColumnInClientCord() const;
 
+  virtual void OnMouseLeftUp(const Point &pos);
+  virtual void OnMouseLeftDown(const Point &pos);
+  virtual void OnMouseRightUp(const Point &pos);
+  virtual void OnMouseRightDown(const Point &pos);
+  virtual void ReloadFontConfig(const string &font_description);
+
+  virtual bool SetSendCommandInterface(
+      client::SendCommandInterface *send_command_interface);
+
   // Callbacks
   MOZC_GTK_VIRTUAL_CALLBACK_0(GtkWindowBase, bool, OnDestroy)
   MOZC_GTK_VIRTUAL_CALLBACK_1(GtkWindowBase, bool, OnPaint, GdkEventExpose *)
+  MOZC_GTK_VIRTUAL_CALLBACK_1(GtkWindowBase, gboolean, OnMouseDown,
+                              GdkEventButton *)
+  MOZC_GTK_VIRTUAL_CALLBACK_1(GtkWindowBase, gboolean, OnMouseUp,
+                              GdkEventButton *)
 
   scoped_ptr<GtkWrapperInterface> gtk_;
+
+ protected:
+  client::SendCommandInterface *send_command_interface_;
 
  private:
   GtkWidget *window_;

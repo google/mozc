@@ -47,10 +47,22 @@ char *strdup_with_new(const char *str) {
   strcpy(result, str);
   return result;
 }
+
+class FlagsTest : public testing::Test {
+ protected:
+  void SetUp() {
+    FLAGS_test_string = "hogehoge";
+    FLAGS_test_int32 = 20;
+    FLAGS_test_int64 = 29051773239673121LL;
+    FLAGS_test_uint64 = 84467440737095516LL;
+    FLAGS_test_bool = false;
+    FLAGS_test_double = 0.5;
+  }
+};
 }   // namespace
 
 namespace {
-TEST(FlagsTest, FlagsBasicTest) {
+TEST_F(FlagsTest, FlagsBasicTest) {
   EXPECT_FALSE(FLAGS_test_bool);
   EXPECT_EQ(20, FLAGS_test_int32);
   EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
@@ -69,7 +81,7 @@ TEST(FlagsTest, FlagsBasicTest) {
   argv[6] = strdup_with_new("--test_uint64=9414041694169841");
   int argc = 7;
   mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
-  for (size_t i = 0; i < 7; ++i) {
+  for (size_t i = 0; i < argc; ++i) {
     delete [] argv[i];
   }
   delete [] argv;
@@ -82,5 +94,38 @@ TEST(FlagsTest, FlagsBasicTest) {
   EXPECT_LT(1.4, FLAGS_test_double);
   EXPECT_GT(1.6, FLAGS_test_double);
 }
+
+TEST_F(FlagsTest, NoValuesFlagsTest) {
+  EXPECT_FALSE(FLAGS_test_bool);
+  EXPECT_EQ(20, FLAGS_test_int32);
+  EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
+  EXPECT_EQ(84467440737095516LL, FLAGS_test_uint64);
+  EXPECT_EQ("hogehoge", FLAGS_test_string);
+  EXPECT_LT(0.4, FLAGS_test_double);
+  EXPECT_GT(0.6, FLAGS_test_double);
+
+  char **argv = new char * [3];
+  // We set only boolean and string values, because other types will stops
+  // the test process if empty values are set.
+  argv[0] = strdup_with_new("test");
+  argv[1] = strdup_with_new("--test_string");
+  argv[2] = strdup_with_new("--test_bool");
+  int argc = 3;
+  mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
+  for (size_t i = 0; i < argc; ++i) {
+    delete [] argv[i];
+  }
+  delete [] argv;
+
+  EXPECT_TRUE(FLAGS_test_bool);
+  EXPECT_EQ("", FLAGS_test_string);
+  // Following values are kept as default.
+  EXPECT_EQ(20, FLAGS_test_int32);
+  EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
+  EXPECT_EQ(84467440737095516LL, FLAGS_test_uint64);
+  EXPECT_LT(0.4, FLAGS_test_double);
+  EXPECT_GT(0.6, FLAGS_test_double);
+}
+
 }  // namespace
 }  // namespace mozc

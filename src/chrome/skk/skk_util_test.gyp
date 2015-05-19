@@ -37,7 +37,7 @@
         'skk_util_test.cc',
       ],
       'dependencies': [
-        '../../dictionary/dictionary.gyp:gen_embedded_dictionary_data',
+        '../../dictionary/dictionary.gyp:gen_embedded_dictionary_data#host',
         '../../dictionary/system/system_dictionary.gyp:system_dictionary',
         '../../testing/testing.gyp:gtest_main',
         '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',

@@ -34,6 +34,55 @@
   },
   'targets': [
     {
+      'target_name': 'pos_group_data',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_pos_group',
+          'variables': {
+            'input_files': [
+              '../data/dictionary/id.def',
+              '../data/rules/special_pos.def',
+              '../data/rules/user_segment_history_pos_group.def',
+            ],
+          },
+          'inputs': [
+            '../dictionary/gen_pos_rewrite_rule.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/pos_group_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/pos_group_data.h',
+            '../dictionary/gen_pos_rewrite_rule.py',
+            '<@(input_files)',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'user_pos_manager',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'toolsets': ['target', 'host'],
+      'sources': [
+        'user_pos_manager.cc',
+        '../dictionary/pos_group.h',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../dictionary/dictionary_base.gyp:user_pos',
+        '../dictionary/dictionary_base.gyp:user_pos_data',
+        'pos_group_data#host',
+      ],
+      'export_dependent_settings': [
+        'pos_group_data#host',
+      ],
+    },
+    {
       'target_name': 'user_dictionary_manager',
       'type': 'static_library',
       'sources': [
@@ -41,8 +90,10 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../dictionary/dictionary_base.gyp:user_pos',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../dictionary/dictionary_base.gyp:user_dictionary',
         '../dictionary/dictionary_base.gyp:user_pos_data',
+        'user_pos_manager',
       ],
     },
   ],

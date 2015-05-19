@@ -44,15 +44,22 @@ class ConversionRequest;
 class DictionaryInterface;
 class ImmutableConverterInterface;
 class NodeAllocatorInterface;
-class Segments;
+class POSMatcher;
 class SegmenterInterface;
+class Segments;
 struct Node;
 
 // Dictioanry-based predictor
-class DictionaryPredictor: public PredictorInterface {
+class DictionaryPredictor : public PredictorInterface {
  public:
-  DictionaryPredictor();
-  explicit DictionaryPredictor(SegmenterInterface *segmenter);
+  // Initializes a predictor with given references to submodules. Note that
+  // pointers are not owned by the class and to be deleted by the caller.
+  DictionaryPredictor(const ImmutableConverterInterface *immutable_converter,
+                      const DictionaryInterface *dictionary,
+                      const DictionaryInterface *suffix_dictionary,
+                      const ConnectorInterface *connector,
+                      const SegmenterInterface *segmenter,
+                      const POSMatcher &pos_matcher);
   virtual ~DictionaryPredictor();
 
   bool Predict(Segments *segments) const;
@@ -276,11 +283,12 @@ class DictionaryPredictor: public PredictorInterface {
   size_t GetUnigramCandidateCutoffThreshold(const Segments &segments,
                                             bool mixed_conversion) const;
 
-  DictionaryInterface *dictionary_;
-  DictionaryInterface *suffix_dictionary_;
-  ConnectorInterface *connector_;
+  const ImmutableConverterInterface *immutable_converter_;
+  const DictionaryInterface *dictionary_;
+  const DictionaryInterface *suffix_dictionary_;
+  const ConnectorInterface *connector_;
   const SegmenterInterface *segmenter_;
-  ImmutableConverterInterface *immutable_converter_;
+  const uint16 counter_suffix_word_id_;
 };
 }  // namespace mozc
 

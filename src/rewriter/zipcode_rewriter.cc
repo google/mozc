@@ -31,24 +31,24 @@
 
 #include <string>
 #include "base/base.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 
 namespace mozc {
-namespace {
 
-bool GetZipcodeCandidatePositions(const Segment &seg,
-                                  string *zipcode,
-                                  string *address,
-                                  size_t *insert_pos) {
+bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
+                                                   string *zipcode,
+                                                   string *address,
+                                                   size_t *insert_pos) const {
   DCHECK(zipcode);
   DCHECK(address);
   DCHECK(insert_pos);
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     const Segment::Candidate &c = seg.candidate(i);
-    if (!POSMatcher::IsZipcode(c.lid) || !POSMatcher::IsZipcode(c.rid)) {
+    if (!pos_matcher_->IsZipcode(c.lid) || !pos_matcher_->IsZipcode(c.rid)) {
       continue;
     }
     *zipcode = c.content_key;
@@ -60,10 +60,10 @@ bool GetZipcodeCandidatePositions(const Segment &seg,
 }
 
 // Insert zipcode into the |segment|
-bool InsertCandidate(size_t insert_pos,
-                     const string &zipcode,
-                     const string &address,
-                     Segment *segment) {
+bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
+                                      const string &zipcode,
+                                      const string &address,
+                                      Segment *segment) const {
   DCHECK(segment);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
@@ -106,8 +106,8 @@ bool InsertCandidate(size_t insert_pos,
   const string value = zipcode + space + address;
 
   candidate->Init();
-  candidate->lid = POSMatcher::GetZipcodeId();
-  candidate->rid = POSMatcher::GetZipcodeId();
+  candidate->lid = pos_matcher_->GetZipcodeId();
+  candidate->rid = pos_matcher_->GetZipcodeId();
   candidate->cost = base_candidate.cost;
   candidate->value = value;
   candidate->content_value = value;
@@ -123,13 +123,13 @@ bool InsertCandidate(size_t insert_pos,
   return true;
 }
 
-}  // namespace
-
-ZipcodeRewriter::ZipcodeRewriter() {}
+ZipcodeRewriter::ZipcodeRewriter(const POSMatcher *pos_matcher)
+    : pos_matcher_(pos_matcher) {}
 
 ZipcodeRewriter::~ZipcodeRewriter() {}
 
-bool ZipcodeRewriter::Rewrite(Segments *segments) const {
+bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
+                              Segments *segments) const {
   if (segments->conversion_segments_size() != 1) {
     return false;
   }
@@ -149,6 +149,6 @@ bool ZipcodeRewriter::Rewrite(Segments *segments) const {
   }
 
   return InsertCandidate(insert_pos, zipcode,
-                  address, segments->mutable_conversion_segment(0));
+                         address, segments->mutable_conversion_segment(0));
 }
 }  // namespace mozc

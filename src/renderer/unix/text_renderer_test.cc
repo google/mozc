@@ -45,7 +45,7 @@ class FontSpecMock : public FontSpecInterface {
   MOCK_CONST_METHOD1(GetFontAttributes, PangoAttrList *(FONT_TYPE font_type));
   MOCK_CONST_METHOD1(GetFontDescription,
                      const PangoFontDescription *(FONT_TYPE font_type));
-  MOCK_METHOD0(Reload, void());
+  MOCK_METHOD1(Reload, void(const string &font_description));
 };
 
 class PangoWrapperMock : public PangoWrapperInterface {
@@ -84,9 +84,9 @@ class TextRendererTest : public testing::Test {
 };
 
 TEST_F(TextRendererTest, GetPixelSizeTest) {
-  TextRenderer text_renderer;
+  FontSpecMock *font_spec_mock = new FontSpecMock();
+  TextRenderer text_renderer(font_spec_mock);
   PangoWrapperMock *pango_mock = SetUpPangoMock(&text_renderer);
-  FontSpecMock *font_spec_mock = SetUpFontSpecMock(&text_renderer);
 
   const string text = "hogehoge";
   PangoLayoutWrapperMock layout_mock;
@@ -96,7 +96,8 @@ TEST_F(TextRendererTest, GetPixelSizeTest) {
       = reinterpret_cast<PangoAttrList*>(0x237492);
   PangoFontDescription *font_desc
       = reinterpret_cast<PangoFontDescription*>(0x01abcdef);
-  FontSpec::FONT_TYPE font_type = FontSpec::FONTSET_FOOTER_LABEL;
+  FontSpecInterface::FONT_TYPE font_type
+      = FontSpecInterface::FONTSET_FOOTER_LABEL;
   Size size(12, 34);
 
   Expectation set_text_expectation
@@ -134,9 +135,9 @@ TEST_F(TextRendererTest, GetPixelSizeTest) {
 }
 
 TEST_F(TextRendererTest, GetMultilinePixelSizeTest) {
-  TextRenderer text_renderer;
+  FontSpecMock *font_spec_mock = new FontSpecMock();
+  TextRenderer text_renderer(font_spec_mock);
   PangoWrapperMock *pango_mock = SetUpPangoMock(&text_renderer);
-  FontSpecMock *font_spec_mock = SetUpFontSpecMock(&text_renderer);
 
   const string text = "hogehoge";
   PangoLayoutWrapperMock layout_mock;
@@ -146,7 +147,8 @@ TEST_F(TextRendererTest, GetMultilinePixelSizeTest) {
       = reinterpret_cast<PangoAttrList*>(0x237492);
   PangoFontDescription *font_desc
       = reinterpret_cast<PangoFontDescription*>(0x01abcdef);
-  FontSpec::FONT_TYPE font_type = FontSpec::FONTSET_FOOTER_LABEL;
+  FontSpecInterface::FONT_TYPE font_type
+      = FontSpecInterface::FONTSET_FOOTER_LABEL;
   int width = 12345;
   Size size(12, 34);
 
@@ -188,9 +190,9 @@ TEST_F(TextRendererTest, GetMultilinePixelSizeTest) {
 }
 
 TEST_F(TextRendererTest, RenderTextTest) {
-  TextRenderer text_renderer;
+  FontSpecMock *font_spec_mock = new FontSpecMock();
+  TextRenderer text_renderer(font_spec_mock);
   PangoWrapperMock *pango_mock = SetUpPangoMock(&text_renderer);
-  FontSpecMock *font_spec_mock = SetUpFontSpecMock(&text_renderer);
   PangoLayoutWrapperMock layout_mock;
 
   const string text = "hogehoge";
@@ -202,7 +204,8 @@ TEST_F(TextRendererTest, RenderTextTest) {
       = reinterpret_cast<PangoAttrList*>(0x237492);
   PangoFontDescription *font_desc
       = reinterpret_cast<PangoFontDescription*>(0x01abcdef);
-  FontSpec::FONT_TYPE font_type = FontSpec::FONTSET_FOOTER_LABEL;
+  FontSpecInterface::FONT_TYPE font_type
+      = FontSpecInterface::FONTSET_FOOTER_LABEL;
 
   EXPECT_CALL(*font_spec_mock, GetFontAlignment(font_type))
       .WillRepeatedly(Return(align));
@@ -249,6 +252,15 @@ TEST_F(TextRendererTest, RenderTextTest) {
           .After(get_pixel_size_expectation);
 
   text_renderer.RenderTextInternal(text, rect, font_type, &layout_mock);
+}
+
+TEST_F(TextRendererTest, ReloadFontConfigTest) {
+  FontSpecMock *font_spec_mock = new FontSpecMock();
+  TextRenderer text_renderer(font_spec_mock);
+  const char kDummyFontDescription[] = "Foo,Bar,Baz";
+
+  EXPECT_CALL(*font_spec_mock, Reload(kDummyFontDescription));
+  text_renderer.ReloadFontConfig(kDummyFontDescription);
 }
 
 }  // namespace gtk

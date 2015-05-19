@@ -47,9 +47,9 @@ def main():
       end   = int(m.group(2), 16)
       name = m.group(3)
       if start <= 0x2FFFF and end <= 0x2FFFF:
-        print "  { \"%s\", %d, %d }," % (name, start, end)
+        print "  { \"%s\", { %d, %d } }," % (name, start, end)
 
-  print "  { NULL, 0, 0 }"
+  print "  { NULL, { 0, 0 } }"
   print "};"
   print ""
 

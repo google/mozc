@@ -32,6 +32,7 @@
     {
       'target_name': 'codec',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
         'codec.cc',
       ],
@@ -57,6 +58,7 @@
     {
       'target_name': 'dictionary_file',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
         'dictionary_file.cc',
       ],
@@ -68,6 +70,7 @@
     {
       'target_name': 'dictionary_file_builder',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
         'dictionary_file_builder.cc',
       ],

@@ -34,40 +34,6 @@
   },
   'targets': [
     {
-      'target_name': 'user_dictionary',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/pos_map.h',
-        'user_dictionary.cc',
-        'user_dictionary_importer.cc',
-        'user_dictionary_storage.cc',
-        'user_dictionary_util.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:config_file_stream',
-        '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        '../data_manager/data_manager.gyp:user_dictionary_manager',
-        '../session/session_base.gyp:session_protocol',
-        '../usage_stats/usage_stats.gyp:usage_stats',
-        'dictionary_base.gyp:gen_pos_matcher',
-        'dictionary_protocol',
-        'gen_pos_map',
-        'suppression_dictionary',
-      ],
-    },
-    {
-      'target_name': 'suppression_dictionary',
-      'type': 'static_library',
-      'sources': [
-        'suppression_dictionary.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
-    },
-    {
       'target_name': 'suffix_dictionary',
       'type': 'static_library',
       'sources': [
@@ -75,7 +41,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'gen_suffix_data',
+        'gen_suffix_data#host',
       ],
     },
     {
@@ -86,13 +52,17 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../data_manager/data_manager.gyp:user_dictionary_manager',
+        '<(DEPTH)/third_party/rx/rx.gyp:rx',
+        'dictionary_base.gyp:dictionary_protocol',
+        'dictionary_base.gyp:gen_pos_matcher#host',
+        'dictionary_base.gyp:suppression_dictionary',
+        'dictionary_base.gyp:user_dictionary',
         'dictionary_impl',
-        'dictionary_protocol',
-        'gen_dictionary_data',
+        'gen_dictionary_data#host',
         'suffix_dictionary',
-        'suppression_dictionary',
         'system/system_dictionary.gyp:system_dictionary',
-        'user_dictionary',
+        'system/system_dictionary.gyp:value_dictionary',
       ],
     },
     {
@@ -103,20 +73,14 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '<(DEPTH)/third_party/rx/rx.gyp:rx',
-        'dictionary_base.gyp:gen_pos_matcher',
-        'dictionary_protocol',
-        'gen_dictionary_data',
-        'suffix_dictionary',
-        'suppression_dictionary',
-        'system/system_dictionary.gyp:system_dictionary',
-        'system/system_dictionary.gyp:value_dictionary',
-        'user_dictionary',
+        'dictionary_base.gyp:dictionary_protocol',
+        'dictionary_base.gyp:suppression_dictionary',
       ],
     },
     {
       'target_name': 'gen_dictionary_data',
       'type': 'none',
+      'toolsets': ['host'],
       'conditions': [
         ['use_separate_dictionary==1',{
             'dependencies': [
@@ -133,6 +97,7 @@
     {
       'target_name': 'gen_embedded_dictionary_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_embedded_dictionary_data',
@@ -171,6 +136,7 @@
     {
       'target_name': 'gen_separate_dictionary_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_separate_dictionary_data',
@@ -205,36 +171,9 @@
       ],
     },
     {
-      'target_name': 'gen_pos_map',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'gen_pos_map',
-          'variables': {
-            'input_files': [
-              '../data/rules/user_pos.def',
-              '../data/rules/third_party_pos_map.def',
-            ],
-          },
-          'inputs': [
-            'gen_pos_map.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/pos_map.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/pos_map.h',
-            'gen_pos_map.py',
-            '<@(input_files)',
-          ],
-        },
-      ],
-    },
-    {
       'target_name': 'gen_suffix_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_suffix_data',
@@ -260,33 +199,9 @@
       ],
     },
     {
-      'target_name': 'dictionary_protocol',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
-      ],
-      'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
-        'genproto_dictionary',
-      ],
-      'export_dependent_settings': [
-        'genproto_dictionary',
-      ],
-    },
-    {
-      'target_name': 'genproto_dictionary',
-      'type': 'none',
-      'sources': [
-        'user_dictionary_storage.proto',
-      ],
-      'includes': [
-        '../protobuf/genproto.gypi',
-      ],
-    },
-    {
       'target_name': 'gen_system_dictionary_data_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'gen_system_dictionary_data_main.cc',
       ],
@@ -299,6 +214,7 @@
     {
       'target_name': 'install_gen_system_dictionary_data_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_system_dictionary_data_main'
       },

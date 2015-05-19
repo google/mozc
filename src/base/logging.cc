@@ -43,6 +43,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <string>
 
 #include "base/base.h"
 #include "base/file_stream.h"
@@ -50,7 +51,7 @@
 #include "base/singleton.h"
 #include "base/util.h"
 
-
+DEFINE_bool(colored_log, true, "Enables colored log messages on tty devices");
 DEFINE_bool(logtostderr,
             false,
             "log messages go to stderr instead of logfiles");
@@ -74,7 +75,8 @@ string Logging::GetLogMessageHeader() {
   char buf[512];
   snprintf(buf, sizeof(buf),
            "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d %u "
-#ifndef OS_LINUX  // = OS_WINDOWS or OS_MACOSX
+#if !defined(OS_LINUX) || defined(__native_client__)
+// = OS_WINDOWS or OS_MACOSX or __native_client__
            "%u",
 #else
            "%lu",
@@ -93,7 +95,8 @@ string Logging::GetLogMessageHeader() {
            reinterpret_cast<uint32>(pthread_self())
 #else  // = OS_LINUX
            ::getpid(),
-           pthread_self()  // returns unsigned long.
+           // In NaCl it returns uint32, otherwise it returns unsigned long.
+           pthread_self()
 #endif
            );
   return buf;
@@ -115,7 +118,15 @@ NullLogStream &Logging::GetNullLogStream() {
   return *(Singleton<NullLogStream>::get());
 }
 
-const char  *Logging::GetLogSeverityName(LogSeverity severity) {
+const char *Logging::GetLogSeverityName(LogSeverity severity) {
+  return "";
+}
+
+const char *Logging::GetBeginColorEscapeSequence(LogSeverity severity) {
+  return "";
+}
+
+const char *Logging::GetEndColorEscapeSequence() {
   return "";
 }
 
@@ -156,26 +167,41 @@ class LogStreamImpl {
     config_verbose_level_ = level;
   }
 
+  bool support_color() const {
+    return support_color_;
+  }
+
   LogStreamImpl();
   virtual ~LogStreamImpl();
 
  private:
   ostream *stream_;
   int config_verbose_level_;
+  bool support_color_;
   Mutex mutex_;
 };
 
 LogStreamImpl::LogStreamImpl()
-    : stream_(NULL), config_verbose_level_(0) {}
+    : stream_(NULL), config_verbose_level_(0), support_color_(false) {
+}
 
 void LogStreamImpl::Init(const char *argv0) {
   scoped_lock l(&mutex_);
   if (stream_ != NULL) {
     return;
   }
-
+#ifdef __native_client__
+    // In NaCl, we only use stderr to output logs.
+    stream_ = &cerr;
+#else
   if (FLAGS_logtostderr) {
     stream_ = &cerr;
+#ifndef OS_WINDOWS
+    // Disables on windows because cmd.exe doesn't support ANSI color escape
+    // sequences.
+    // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
+    support_color_ = FLAGS_colored_log && isatty(fileno(stderr));
+#endif  // OS_WINDOWS
   } else {
 #ifdef OS_WINDOWS
     const char *slash = ::strrchr(argv0, '\\');
@@ -192,6 +218,7 @@ void LogStreamImpl::Init(const char *argv0) {
     ::chmod(filename.c_str(), 0600);
 #endif
   }
+#endif  // __native_client__
 
   *stream_ << "Log file created at: "
            << Logging::GetLogMessageHeader() << endl;
@@ -228,10 +255,47 @@ NullLogStream &Logging::GetNullLogStream() {
   return *(Singleton<NullLogStream>::get());
 }
 
+namespace {
+// ANSI Color escape sequences.
+// FYI: Other escape sequences are here.
+// Black:   "\x1b[30m"
+// Green    "\x1b[32m"
+// Blue:    "\x1b[34m"
+// Magenta: "\x1b[35m"
+// White    "\x1b[37m"
+const char *kClearEscapeSequence   = "\x1b[0m";
+const char *kRedEscapeSequence     = "\x1b[31m";
+const char *kYellowEscapeSequence  = "\x1b[33m";
+const char *kCyanEscapeSequence    = "\x1b[36m";
+
+const struct SeverityProperty {
+ public:
+  const char *label;
+  const char *color_escape_sequence;
+} kSeverityProperties[] = {
+  { "INFO",    kCyanEscapeSequence },
+  { "WARNING", kYellowEscapeSequence },
+  { "ERROR",   kRedEscapeSequence },
+  { "FATAL",   kRedEscapeSequence },
+};
+}  // namespace
+
 const char *Logging::GetLogSeverityName(LogSeverity severity) {
-  const char *kLogSeverityName[LOG_SEVERITY_SIZE] =
-      { "INFO", "WARNING", "ERROR", "FATAL" };
-  return kLogSeverityName[static_cast<int>(severity)];
+  return kSeverityProperties[severity].label;
+}
+
+const char *Logging::GetBeginColorEscapeSequence(LogSeverity severity) {
+  if (Singleton<LogStreamImpl>::get()->support_color()) {
+    return kSeverityProperties[severity].color_escape_sequence;
+  }
+  return "";
+}
+
+const char *Logging::GetEndColorEscapeSequence() {
+  if (Singleton<LogStreamImpl>::get()->support_color()) {
+    return kClearEscapeSequence;
+  }
+  return "";
 }
 
 int Logging::GetVerboseLevel() {

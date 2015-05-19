@@ -35,7 +35,6 @@
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "data_manager/user_dictionary_manager.h"
 #include "dictionary/user_pos_interface.h"
 
 namespace mozc {

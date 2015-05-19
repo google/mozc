@@ -43,12 +43,19 @@
 #include "converter/conversion_request.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_allocator.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "converter/user_data_manager_interface.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
+#include "prediction/dictionary_predictor.h"
+#include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/user_history_predictor.h"
+#include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "transliteration/transliteration.h"
 
@@ -59,7 +66,9 @@ const size_t kErrorIndex = static_cast<size_t>(-1);
 
 class UserDataManagerImpl : public UserDataManagerInterface {
  public:
-  UserDataManagerImpl();
+  explicit UserDataManagerImpl(PredictorInterface *predictor,
+                               RewriterInterface *rewriter)
+      : predictor_(predictor), rewriter_(rewriter) {}
   ~UserDataManagerImpl();
 
   virtual bool Sync();
@@ -67,6 +76,10 @@ class UserDataManagerImpl : public UserDataManagerInterface {
   virtual bool ClearUserHistory();
   virtual bool ClearUserPrediction();
   virtual bool ClearUnusedUserPrediction();
+
+ private:
+  PredictorInterface *predictor_;
+  RewriterInterface *rewriter_;
 };
 
 size_t GetSegmentIndex(const Segments *segments,
@@ -121,12 +134,57 @@ void ConverterFactory::SetConverter(ConverterInterface *converter) {
   g_converter = converter;
 }
 
+ConverterImpl::ConverterImpl(PredictorInterface *predictor,
+                             RewriterInterface *rewriter)
+    : pos_matcher_(Singleton<POSMatcher>::get()),
+      pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
+      predictor_(predictor),
+      rewriter_(rewriter),
+      user_data_manager_(new UserDataManagerImpl(predictor, rewriter)),
+      immutable_converter_(ImmutableConverterFactory::GetImmutableConverter()),
+      general_noun_id_(pos_matcher_->GetGeneralNounId()) {}
+
 ConverterImpl::ConverterImpl()
-    : user_data_manager_(new UserDataManagerImpl),
-      immutable_converter_(ImmutableConverterFactory::GetImmutableConverter()) {
+    : pos_matcher_(Singleton<POSMatcher>::get()),
+      pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
+      rewriter_(new RewriterImpl(this, pos_matcher_, pos_group_)),
+      immutable_converter_(ImmutableConverterFactory::GetImmutableConverter()),
+      general_noun_id_(pos_matcher_->GetGeneralNounId()) {
+  // TODO(noriyukit): Better to prepare a builder class that builds
+  // converter/predictor modules by appropriately setting parameters to the
+  // constructors of those classes.
+  PredictorInterface *dictionary_predictor =
+      new DictionaryPredictor(immutable_converter_,
+                              DictionaryFactory::GetDictionary(),
+                              SuffixDictionaryFactory::GetSuffixDictionary(),
+                              ConnectorFactory::GetConnector(),
+                              Singleton<Segmenter>::get(),
+                              *Singleton<POSMatcher>::get());
+  CHECK(dictionary_predictor);
+
+  PredictorInterface *user_history_predictor =
+      new UserHistoryPredictor(DictionaryFactory::GetDictionary(),
+                               Singleton<POSMatcher>::get());
+
+  PredictorInterface *extra_predictor = NULL;
+
+    predictor_.reset(
+        new DefaultPredictor(dictionary_predictor,
+                             user_history_predictor,
+                             extra_predictor));
+  user_data_manager_.reset(new UserDataManagerImpl(predictor_.get(),
+                                                   rewriter_.get()));
 }
 
 ConverterImpl::~ConverterImpl() {}
+
+void ConverterImpl::Init(PredictorInterface *predictor,
+                         RewriterInterface *rewriter) {
+  predictor_.reset(predictor);
+  rewriter_.reset(rewriter);
+  user_data_manager_.reset(new UserDataManagerImpl(predictor, rewriter));
+  immutable_converter_ = ImmutableConverterFactory::GetImmutableConverter();
+}
 
 bool ConverterImpl::SetupHistorySegmentsFromPrecedingText(
     const string &preceding_text, Segments *segments) const {
@@ -185,7 +243,7 @@ bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
   if (!immutable_converter_->Convert(segments)) {
     return false;
   }
-  RewriterFactory::GetRewriter()->RewriteForRequest(request, segments);
+  rewriter_->Rewrite(request, segments);
   return IsValidSegments(*segments);
 }
 
@@ -196,7 +254,7 @@ bool ConverterImpl::StartConversion(Segments *segments,
   if (!immutable_converter_->Convert(segments)) {
     return false;
   }
-  RewriterFactory::GetRewriter()->Rewrite(segments);
+  rewriter_->Rewrite(ConversionRequest(), segments);
   return IsValidSegments(*segments);
 }
 
@@ -259,10 +317,10 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
   DCHECK_EQ(key, segments->conversion_segment(0).key());
 
   segments->set_request_type(request_type);
-  if (!PredictorFactory::GetPredictor()->PredictForRequest(request, segments)) {
+  if (!predictor_->PredictForRequest(request, segments)) {
     return false;
   }
-  RewriterFactory::GetRewriter()->RewriteForRequest(request, segments);
+  rewriter_->Rewrite(request, segments);
   return IsValidSegments(*segments);
 }
 
@@ -370,9 +428,9 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
 
   segments->clear_revert_entries();
   if (segments->request_type() == Segments::CONVERSION) {
-    RewriterFactory::GetRewriter()->Finish(segments);
+    rewriter_->Finish(segments);
   }
-  PredictorFactory::GetPredictor()->Finish(segments);
+  predictor_->Finish(segments);
 
   // Remove the front segments except for some segments which will be
   // used as history segments.
@@ -408,7 +466,7 @@ bool ConverterImpl::RevertConversion(Segments *segments) const {
   if (segments->revert_entries_size() == 0) {
     return true;
   }
-  PredictorFactory::GetPredictor()->Revert(segments);
+  predictor_->Revert(segments);
   segments->clear_revert_entries();
   return true;
 }
@@ -471,8 +529,7 @@ bool ConverterImpl::FocusSegmentValue(Segments *segments,
     return false;
   }
 
-  return RewriterFactory::GetRewriter()->Focus(segments,
-                                               segment_index, candidate_index);
+  return rewriter_->Focus(segments, segment_index, candidate_index);
 }
 
 bool ConverterImpl::FreeSegmentValue(Segments *segments,
@@ -607,7 +664,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     return false;
   }
 
-  RewriterFactory::GetRewriter()->RewriteForRequest(request, segments);
+  rewriter_->Rewrite(request, segments);
 
   return true;
 }
@@ -670,7 +727,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     return false;
   }
 
-  RewriterFactory::GetRewriter()->RewriteForRequest(request, segments);
+  rewriter_->Rewrite(request, segments);
 
   return true;
 }
@@ -687,8 +744,8 @@ void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
 
   // Use general noun,  unknown word ("サ変") tend to produce
   // "する" "して", which are not always acceptable for non-sahen words.
-  candidate->lid = POSMatcher::GetGeneralNounId();
-  candidate->rid = POSMatcher::GetGeneralNounId();
+  candidate->lid = general_noun_id_;
+  candidate->rid = general_noun_id_;
   const size_t kExpandSizeStart = 5;
   const size_t kExpandSizeDiff = 50;
   const size_t kExpandSizeMax = 80;
@@ -734,33 +791,32 @@ UserDataManagerInterface *ConverterImpl::GetUserDataManager() {
   return user_data_manager_.get();
 }
 
-UserDataManagerImpl::UserDataManagerImpl() {}
 UserDataManagerImpl::~UserDataManagerImpl() {}
 
 bool UserDataManagerImpl::Sync() {
-  return (RewriterFactory::GetRewriter()->Sync() &&
-          PredictorFactory::GetPredictor()->Sync() &&
+  return (rewriter_->Sync() &&
+          predictor_->Sync() &&
           DictionaryFactory::GetDictionary()->Sync());
 }
 
 bool UserDataManagerImpl::Reload() {
-  return (RewriterFactory::GetRewriter()->Reload() &&
-          PredictorFactory::GetPredictor()->Reload() &&
+  return (rewriter_->Reload() &&
+          predictor_->Reload() &&
           DictionaryFactory::GetDictionary()->Reload());
 }
 
 bool UserDataManagerImpl::ClearUserHistory() {
-  RewriterFactory::GetRewriter()->Clear();
+  rewriter_->Clear();
   return true;
 }
 
 bool UserDataManagerImpl::ClearUserPrediction() {
-  PredictorFactory::GetPredictor()->ClearAllHistory();
+  predictor_->ClearAllHistory();
   return true;
 }
 
 bool UserDataManagerImpl::ClearUnusedUserPrediction() {
-  PredictorFactory::GetPredictor()->ClearUnusedHistory();
+  predictor_->ClearUnusedHistory();
   return true;
 }
 

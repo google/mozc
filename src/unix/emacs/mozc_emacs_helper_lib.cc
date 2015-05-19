@@ -351,6 +351,17 @@ void ErrorExit(const string &error, const string &message) {
   exit(1);
 }
 
+bool RemoveUsageData(mozc::commands::Output *output) {
+  if (!output->has_candidates()) {
+    return false;
+  }
+  if (!output->candidates().has_usages()) {
+    return false;
+  }
+  output->mutable_candidates()->mutable_usages()->Clear();
+  return true;
+}
+
 namespace {
 
 // Prints one entry of a protocol buffer in S-expression.

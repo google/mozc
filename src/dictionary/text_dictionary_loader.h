@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#include "base/port.h"
+#include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST
 
@@ -42,7 +44,7 @@ struct Token;
 
 class TextDictionaryLoader {
  public:
-  TextDictionaryLoader();
+  explicit TextDictionaryLoader(const POSMatcher& pos_matcher);
   virtual ~TextDictionaryLoader();
 
   // Reads source dictionary file.
@@ -69,6 +71,7 @@ class TextDictionaryLoader {
 
   void ParseTSV(const string &line);
 
+  const uint16 zip_code_id_;
   vector<Token *> tokens_;
 };
 }  // namespace mozc

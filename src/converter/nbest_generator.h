@@ -44,40 +44,32 @@ namespace mozc {
 class CandidateFilter;
 class ConnectorInterface;
 class Lattice;
+class POSMatcher;
 class SegmenterInterface;
+class SuppressionDictionary;
 struct Node;
 
 // TODO(toshiyuki): write unittest for NBestGenerator.
-//                  we can unittest this by making Mocks
-//                  for Connector and Lattice
 class NBestGenerator {
  public:
-  // constractor for compatibility
-  NBestGenerator();
-  explicit NBestGenerator(const SegmenterInterface *segmenter);
-  virtual ~NBestGenerator();
-
-  // set starting Node and ending Node --
   // Try to enumurate N-best results between begin_node and end_node.
-  void  Init(const Node *begin_node, const Node *end_node,
-             const Lattice *lattice, bool is_prediction);
+  NBestGenerator(const SuppressionDictionary *suppression_dictionary,
+                 const SegmenterInterface *segmenter,
+                 const ConnectorInterface *connector,
+                 const POSMatcher *pos_matcher,
+                 const Node *begin_node, const Node *end_node,
+                 const Lattice *lattice, bool is_prediction);
 
-  // reset internal priority queue. Reuse begin_node and eos_node
-  void Reset();
+  virtual ~NBestGenerator();
 
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
-  // candidate_begin/end_node:
-  //  nodes for generated candidate in Next().
-  //  they could be different from begin/end_node_, because Next() generates
-  //  candidates which have same boundaries with begin/end_node_ rather than
-  //  have exactly same nodes with begin/end_node_.
-  //  note that candidate_begin_node is inclusive
-  //  and candidate_end_node is exclusive.
-  bool Next(Segment::Candidate *candidate,
-            Segments::RequestType request_type);
+  bool Next(Segment::Candidate *candidate, Segments::RequestType request_type);
 
  private:
+  int InsertTopResult(Segment::Candidate *candidate,
+                      Segments::RequestType request_type);
+
   void MakeCandidate(Segment::Candidate *candidate,
                      int cost,
                      int structure_cost,
@@ -108,19 +100,23 @@ class NBestGenerator {
   typedef priority_queue<const QueueElement *, vector<const QueueElement *>,
                          QueueElementComp> Agenda;
 
+  // References to relevant modules.
+  const SuppressionDictionary *suppression_dictionary_;
+  const SegmenterInterface *segmenter_;
+  const ConnectorInterface *connector_;
+  const POSMatcher *pos_matcher_;
+  const Node *begin_node_;
+  const Node *end_node_;
+  const Lattice *lattice_;
+
   scoped_ptr<Agenda> agenda_;
   FreeList<QueueElement> freelist_;
   scoped_ptr<CandidateFilter> filter_;
-  const Node *begin_node_;
-  const Node *end_node_;
-  const ConnectorInterface *connector_;
-  const SegmenterInterface *segmenter_;
-  const Lattice *lattice_;
   bool viterbi_result_checked_;
   bool is_prediction_;
 
   DISALLOW_COPY_AND_ASSIGN(NBestGenerator);
 };
-}
+}  // namespace mozc
 
 #endif  // MOZC_CONVERTER_NBEST_GENERATOR_H_

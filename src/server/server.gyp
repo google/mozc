@@ -50,19 +50,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../base/base.gyp:config_file_stream',
-        '../client/client.gyp:client',
-        '../composer/composer.gyp:composer',
-        '../config/config.gyp:stats_config_util',
-        '../converter/converter.gyp:converter',
-        '../dictionary/dictionary.gyp:dictionary',
-        '../ipc/ipc.gyp:ipc',
-        '../net/net.gyp:net',
-        '../prediction/prediction.gyp:prediction',
-        '../rewriter/rewriter.gyp:rewriter',
         '../session/session.gyp:session',
-        '../storage/storage.gyp:storage',
-        '../transliteration/transliteration.gyp:transliteration',
         'mozc_server_lib',
       ],
       'conditions': [
@@ -203,6 +191,7 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
+            '../base/base.gyp:encryptor',
             'server_protocol',
           ],
         },

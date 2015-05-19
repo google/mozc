@@ -38,11 +38,11 @@ class Segments;
 // constraits are encoded in |segments|
 class ImmutableConverterInterface {
  public:
+  virtual ~ImmutableConverterInterface() {}
   virtual bool Convert(Segments *segments) const = 0;
 
  protected:
   ImmutableConverterInterface() {}
-  virtual ~ImmutableConverterInterface() {}
 };
 
 class ImmutableConverterFactory {

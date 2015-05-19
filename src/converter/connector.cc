@@ -48,20 +48,22 @@ const int kCacheSize = 1024;
 
 char* g_connection_data_address = const_cast<char*>(kConnectionData_data);
 int g_connection_data_size = kConnectionData_size;
+}  // namespace
 
+namespace connector_internal {
 // Use Thread Local Storage for Cache of the Connector.
 TLS_KEYWORD bool g_cache_initialized = false;
 TLS_KEYWORD int  g_cache_key[kCacheSize];
 TLS_KEYWORD int  g_cache_value[kCacheSize];
+}  // namespace connector_internal
 
-}  // namespace
-
-Connector::Connector() : ConnectorBase(g_connection_data_address,
-                                       g_connection_data_size,
-                                       &g_cache_initialized,
-                                       g_cache_key,
-                                       g_cache_value,
-                                       kCacheSize) {}
+Connector::Connector() : ConnectorBase(
+    g_connection_data_address,
+    g_connection_data_size,
+    &connector_internal::g_cache_initialized,
+    connector_internal::g_cache_key,
+    connector_internal::g_cache_value,
+    kCacheSize) {}
 
 void ConnectorFactory::SetConnector(ConnectorInterface *connector) {
   g_connector = connector;

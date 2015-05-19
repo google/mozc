@@ -37,7 +37,7 @@
 #include "session/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
-#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_uploader.h"
 
 #ifdef ENABLE_CLOUD_SYNC
 #include "sync/sync_handler.h"
@@ -56,7 +56,7 @@ SessionServer::SessionServer()
     : IPCServer(kSessionName, kNumConnections, kTimeOut),
       handler_(new SessionHandler()),
       usage_observer_(new session::SessionUsageObserver()) {
-  using usage_stats::UsageStats;
+  using usage_stats::UsageStatsUploader;
   // start session watch dog timer
   handler_->StartWatchDog();
   handler_->AddObserver(usage_observer_.get());
@@ -66,11 +66,11 @@ SessionServer::SessionServer()
   // attempt to send every 5 min -- 2 hours.
   Scheduler::AddJob(Scheduler::JobSetting(
       "UsageStatsTimer",
-      UsageStats::kDefaultScheduleInterval,
-      UsageStats::kDefaultScheduleMaxInterval,
-      UsageStats::kDefaultSchedulerDelay,
-      UsageStats::kDefaultSchedulerRandomDelay,
-      &UsageStats::Send,
+      UsageStatsUploader::kDefaultScheduleInterval,
+      UsageStatsUploader::kDefaultScheduleMaxInterval,
+      UsageStatsUploader::kDefaultSchedulerDelay,
+      UsageStatsUploader::kDefaultSchedulerRandomDelay,
+      &UsageStatsUploader::Send,
       NULL));
 
 #ifdef ENABLE_CLOUD_SYNC

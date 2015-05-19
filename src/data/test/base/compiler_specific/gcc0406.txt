@@ -1,0 +1,41 @@
+namespace mozc {
+namespace compiler_specific_internal {
+class SemicolonEater {};
+}
+}
+
+
+
+
+class GCC_GE_04_06;
+
+
+class GCC_LE_04_06;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma GCC diagnostic pop
+
+
+
+
+
+
+
+ using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma GCC diagnostic ignored "-Wconversion-null"
+ using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma GCC diagnostic ignored "-Wformat-zero-length"
+ using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma GCC diagnostic pop
+ using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma message "Hello"
+ using mozc::compiler_specific_internal::SemicolonEater;

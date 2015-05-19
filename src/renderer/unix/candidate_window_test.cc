@@ -32,6 +32,7 @@
 #include <sstream>
 
 #include "base/util.h"
+#include "client/client_interface.h"
 #include "renderer/table_layout_mock.h"
 #include "renderer/unix/cairo_factory_mock.h"
 #include "renderer/unix/cairo_wrapper_mock.h"
@@ -44,6 +45,8 @@
 
 using ::testing::DoAll;
 using ::testing::Expectation;
+using ::testing::Ne;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 using ::testing::StrEq;
@@ -157,21 +160,110 @@ string GetExpectedDescription(int index) {
   const string id_str = Util::SimpleItoa(index);
   return kSampleDescription + id_str;
 }
+
+class SendCommandInterfaceMock : public client::SendCommandInterface {
+ public:
+  MOCK_METHOD2(SendCommand, bool(const commands::SessionCommand &command,
+                                 commands::Output *output));
+};
+
+MATCHER_P(SelectCommandEq, id, "") {
+  if (!arg.has_type()) {
+    *result_listener << "type does not exists.";
+    return false;
+  }
+
+  if (!arg.has_id()) {
+    *result_listener << "id does not exists.";
+    return false;
+  }
+
+  if (arg.type() != commands::SessionCommand::SELECT_CANDIDATE) {
+    *result_listener << "type does not match\n"
+                     << "  expected: SessionCommand::SELECT_CANDIDATE\n"
+                     << "  actual  : " << arg.type();
+    return false;
+  }
+
+  if (arg.id() != id) {
+    *result_listener << "id does not match\n"
+                     << "  expected: " << id << "\n"
+                     << "  actual  :" << arg.id();
+    return false;
+  }
+  return true;
+}
+
+class MouseHandlingTestableCandidateWindow : public CandidateWindow {
+ public:
+  MouseHandlingTestableCandidateWindow(TableLayoutInterface *table_layout,
+                                       TextRendererInterface *text_renderer,
+                                       DrawToolInterface *draw_tool,
+                                       GtkWrapperInterface *gtk,
+                                       CairoFactoryInterface *cairo_factory)
+      : CandidateWindow(table_layout, text_renderer, draw_tool, gtk,
+                        cairo_factory) {}
+  virtual ~MouseHandlingTestableCandidateWindow() {}
+
+  MOCK_CONST_METHOD1(GetSelectedRowIndex, int(const Point &pos));
+  using CandidateWindow::OnMouseLeftUp;
+};
+
 }  // namespace
 
 class CandidateWindowTest : public testing::Test {
  protected:
-  struct CandidateWindowTestKit {
+  template <class WindowType>
+  struct GenericCandidateWindowTestKit {
     GtkWrapperMock *gtk_mock;
     TableLayoutMock *table_layout_mock;
     TextRendererMock *text_renderer_mock;
     DrawToolMock *draw_tool_mock;
     CairoFactoryMock *cairo_factory_mock;
-    CandidateWindow *window;
+    WindowType *window;
   };
 
-  void SetUpCandidateWindowConstractorCallExpectations(
-      CandidateWindowTestKit *testkit) {
+  typedef GenericCandidateWindowTestKit<CandidateWindow>
+      CandidateWindowTestKit;
+  typedef GenericCandidateWindowTestKit<MouseHandlingTestableCandidateWindow>
+      MouseHandlingTestableCandidateWindowTestKit;
+
+  template <class WindowType>
+  static void FinalizeTestKit(
+      GenericCandidateWindowTestKit<WindowType> *testkit) {
+    delete testkit->window;
+  }
+
+  static CandidateWindowTestKit SetUpCandidateWindow() {
+    return SetUpTestKit<CandidateWindow>(kUseVanillaMock);
+  }
+
+  static CandidateWindowTestKit SetUpCandidateWindowWithStrictMock() {
+    return SetUpTestKit<CandidateWindow>(kUseStrictMock);
+  }
+
+  static MouseHandlingTestableCandidateWindowTestKit
+      SetUpMouseHandlingTestableCandidateWindow() {
+    return SetUpTestKit<MouseHandlingTestableCandidateWindow>(
+        kUseVanillaMock);
+  }
+
+  static MouseHandlingTestableCandidateWindowTestKit
+      SetUpMouseHandlingTestableCandidateWindowWithStrictMock() {
+    return SetUpTestKit<MouseHandlingTestableCandidateWindow>(
+        kUseStrictMock);
+  }
+
+ private:
+  enum MockWrapperType {
+    kUseVanillaMock,
+    kUseStrictMock,
+    kUseNiceMock,
+  };
+
+  template <class WindowType>
+  static void SetUpCandidateWindowConstractorCallExpectations(
+      GenericCandidateWindowTestKit<WindowType> *testkit) {
     // Following functions are expected to be called by constructor.
     EXPECT_CALL(*testkit->gtk_mock, GtkWindowNew(GTK_WINDOW_POPUP))
         .WillOnce(Return(kDummyWindow));
@@ -181,50 +273,57 @@ class CandidateWindowTest : public testing::Test {
         kDummyWindow, StrEq("destroy"),
         G_CALLBACK(GtkWindowBase::OnDestroyThunk), _));
     EXPECT_CALL(*testkit->gtk_mock, GSignalConnect(
+        kDummyWindow, StrEq("button-press-event"),
+        G_CALLBACK(GtkWindowBase::OnMouseDownThunk), _));
+    EXPECT_CALL(*testkit->gtk_mock, GSignalConnect(
+        kDummyWindow, StrEq("button-release-event"),
+        G_CALLBACK(GtkWindowBase::OnMouseUpThunk), _));
+    EXPECT_CALL(*testkit->gtk_mock, GSignalConnect(
         kDummyCanvas, StrEq("expose-event"),
         G_CALLBACK(GtkWindowBase::OnPaintThunk), _));
     EXPECT_CALL(*testkit->gtk_mock,
                 GtkContainerAdd(kDummyWindow, kDummyCanvas));
+    EXPECT_CALL(*testkit->gtk_mock,
+                GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_PRESS_MASK));
+    EXPECT_CALL(*testkit->gtk_mock,
+                GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_RELEASE_MASK));
   }
 
-  CandidateWindowTestKit SetUpCandidateWindow() {
-    CandidateWindowTestKit testkit;
-    testkit.gtk_mock = new GtkWrapperMock();
-    testkit.table_layout_mock = new TableLayoutMock();
-    testkit.text_renderer_mock = new TextRendererMock();
-    testkit.draw_tool_mock = new DrawToolMock();
-    testkit.cairo_factory_mock = new CairoFactoryMock();
+  template <class TargetMockType>
+  static TargetMockType *CreateMock(MockWrapperType mock_wrapper_type) {
+    switch (mock_wrapper_type) {
+      case kUseStrictMock:
+        return new StrictMock<TargetMockType>();
+      case kUseNiceMock:
+        return new NiceMock<TargetMockType>();
+      case kUseVanillaMock:
+      default:
+        return new TargetMockType();
+    }
+  }
+
+  template <class WindowType>
+  static GenericCandidateWindowTestKit<WindowType>
+      SetUpTestKit(MockWrapperType mock_wrapper_type) {
+    GenericCandidateWindowTestKit<WindowType> testkit;
+    testkit.gtk_mock = CreateMock<GtkWrapperMock>(mock_wrapper_type);
+    testkit.table_layout_mock =
+        CreateMock<TableLayoutMock>(mock_wrapper_type);
+    testkit.text_renderer_mock =
+        CreateMock<TextRendererMock>(mock_wrapper_type);
+    testkit.draw_tool_mock =
+        CreateMock<DrawToolMock>(mock_wrapper_type);
+    testkit.cairo_factory_mock =
+        CreateMock<CairoFactoryMock>(mock_wrapper_type);
 
     SetUpCandidateWindowConstractorCallExpectations(&testkit);
 
-    testkit.window = new CandidateWindow(testkit.table_layout_mock,
-                                         testkit.text_renderer_mock,
-                                         testkit.draw_tool_mock,
-                                         testkit.gtk_mock,
-                                         testkit.cairo_factory_mock);
+    testkit.window = new WindowType(testkit.table_layout_mock,
+                                    testkit.text_renderer_mock,
+                                    testkit.draw_tool_mock,
+                                    testkit.gtk_mock,
+                                    testkit.cairo_factory_mock);
     return testkit;
-  }
-
-  CandidateWindowTestKit SetUpCandidateWindowWithStrictMock() {
-    CandidateWindowTestKit testkit;
-    testkit.gtk_mock = new StrictMock<GtkWrapperMock>();
-    testkit.table_layout_mock = new StrictMock<TableLayoutMock>();
-    testkit.text_renderer_mock = new StrictMock<TextRendererMock>();
-    testkit.draw_tool_mock = new StrictMock<DrawToolMock>();
-    testkit.cairo_factory_mock = new CairoFactoryMock();
-
-    SetUpCandidateWindowConstractorCallExpectations(&testkit);
-
-    testkit.window = new CandidateWindow(testkit.table_layout_mock,
-                                         testkit.text_renderer_mock,
-                                         testkit.draw_tool_mock,
-                                         testkit.gtk_mock,
-                                         testkit.cairo_factory_mock);
-    return testkit;
-  }
-
-  void FinalizeTestKit(CandidateWindowTestKit *testkit) {
-    delete testkit->window;
   }
 };
 
@@ -1286,6 +1385,89 @@ TEST_F(CandidateWindowTest, DrawFrameTest) {
   testkit.window->DrawFrame();
   FinalizeTestKit(&testkit);
 }
+
+TEST_F(CandidateWindowTest, OnMouseLeftUpTest) {
+  const Point kPos(10, 20);
+  const Rect kInRect(5, 5, 100, 100);
+  const Rect kOutRect(20, 30, 100, 100);
+  {
+    SCOPED_TRACE("SendCommandInterface does not exists");
+    CandidateWindowTestKit testkit = SetUpCandidateWindow();
+    testkit.window->OnMouseLeftUp(kPos);
+    // We expects doing nothing except just logging ERROR message. However we
+    // can't check.
+    FinalizeTestKit(&testkit);
+  }
+  {
+    SCOPED_TRACE("If selected pos is out of range, do nothing.");
+    SendCommandInterfaceMock interface_mock;
+    MouseHandlingTestableCandidateWindowTestKit testkit =
+        SetUpMouseHandlingTestableCandidateWindow();
+    testkit.window->SetSendCommandInterface(&interface_mock);
+    EXPECT_CALL(*testkit.window, GetSelectedRowIndex(_)).WillOnce(Return(-1));
+    EXPECT_CALL(interface_mock, SendCommand(_, _)).Times(0);
+    testkit.window->OnMouseLeftUp(kPos);
+    FinalizeTestKit(&testkit);
+  }
+  {
+    SCOPED_TRACE("Exepcted ID will be set by candidate index.");
+    const size_t kTestRound = 10;
+    for (size_t i = 0; i < kTestRound; ++i) {
+      SendCommandInterfaceMock interface_mock;
+      MouseHandlingTestableCandidateWindowTestKit testkit =
+          SetUpMouseHandlingTestableCandidateWindow();
+      testkit.window->SetSendCommandInterface(&interface_mock);
+      SetTestCandidates(kTestRound, true, true, true, true, true,
+                        &testkit.window->candidates_);
+      EXPECT_CALL(*testkit.window, GetSelectedRowIndex(_)).WillOnce(Return(i));
+      EXPECT_CALL(interface_mock, SendCommand(SelectCommandEq(i * 0x10), _))
+          .Times(1);
+      testkit.window->OnMouseLeftUp(kPos);
+      FinalizeTestKit(&testkit);
+    }
+  }
+}
+
+TEST_F(CandidateWindowTest, GetSelectedRowIndexTest) {
+  const Point kPos(10, 20);
+  const Rect kInRect(5, 5, 100, 100);
+  const Rect kOutRect(20, 30, 100, 100);
+  {
+    const size_t kTestRound = 10;
+    for (size_t i = 0; i < kTestRound; ++i) {
+      CandidateWindowTestKit testkit = SetUpCandidateWindow();
+      SetTestCandidates(kTestRound, true, true, true, true, true,
+                        &testkit.window->candidates_);
+      EXPECT_CALL(*testkit.table_layout_mock, GetRowRect(i))
+          .WillOnce(Return(kInRect));
+      EXPECT_CALL(*testkit.table_layout_mock, GetRowRect(Ne(i)))
+          .WillRepeatedly(Return(kOutRect));
+      EXPECT_EQ(i, testkit.window->GetSelectedRowIndex(kPos));
+      FinalizeTestKit(&testkit);
+    }
+  }
+  {
+    SCOPED_TRACE("The case of out of candidate area clicking.");
+    CandidateWindowTestKit testkit = SetUpCandidateWindow();
+    SetTestCandidates(10, true, true, true, true, true,
+                      &testkit.window->candidates_);
+    EXPECT_CALL(*testkit.table_layout_mock, GetRowRect(_))
+        .Times(10)
+        .WillRepeatedly(Return(kOutRect));
+    EXPECT_EQ(-1, testkit.window->GetSelectedRowIndex(kPos));
+    FinalizeTestKit(&testkit);
+  }
+}
+
+TEST_F(CandidateWindowTest, ReloadFontConfigTest) {
+  CandidateWindowTestKit testkit = SetUpCandidateWindow();
+  const char dummy_font[] = "Foo,Bar,Baz";
+  EXPECT_CALL(*testkit.text_renderer_mock,
+              ReloadFontConfig(StrEq(dummy_font)));
+  testkit.window->ReloadFontConfig(dummy_font);
+  FinalizeTestKit(&testkit);
+}
+
 }  // namespace gtk
 }  // namespace renderer
 }  // namespace mozc

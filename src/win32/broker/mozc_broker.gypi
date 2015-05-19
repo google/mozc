@@ -49,7 +49,7 @@
         '../../config/config.gyp:genproto_config',
         '../../config/config.gyp:stats_config_util',
         '../../ipc/ipc.gyp:ipc',
-        '../../renderer/renderer.gyp:renderer',
+        '../../renderer/renderer.gyp:renderer_client',
         '../../session/session_base.gyp:genproto_session',
         '../base/win32_base.gyp:ime_base',
         'gen_mozc_broker_resource_header',

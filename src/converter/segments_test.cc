@@ -404,10 +404,10 @@ TEST_F(SegmentsTest, CopyFromTest) {
 
   for (int i = 0; i < kSegmentsSize; ++i) {
     Segment *segment = src.add_segment();
-    segment->set_key("segment_" + i);
+    segment->set_key(Util::StringPrintf("segment_%d", i));
     for (int j = 0; j < kCandidatesSize; ++j) {
       Segment::Candidate *candidate = segment->add_candidate();
-      candidate->key = "candidate" + i;
+      candidate->key = Util::StringPrintf("candidate_%d", i);
     }
   }
   EXPECT_EQ(kSegmentsSize, src.segments_size());

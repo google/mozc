@@ -36,6 +36,7 @@
 #include "session/japanese_session_factory.h"
 #include "session/session_factory_manager.h"
 #endif
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -189,6 +190,7 @@ int main(int argc, char **argv) {
   // TODO(yukawa, team): Implement b/2805528 so that you can specify any option
   // given by gunit.
   InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitTestFlags();
   testing::InitGoogleTest(&argc, argv);
 
   // Without this flag, ::RaiseException makes the job stuck.

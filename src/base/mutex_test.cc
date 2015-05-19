@@ -36,11 +36,11 @@
 namespace mozc {
 namespace {
 
-int g_counter = 0;
+volatile int g_counter = 0;
 
-class TestThread : public Thread {
+class MutexTestThread : public Thread {
  public:
-  TestThread(Mutex *mutex, int loop, int sleep)
+  MutexTestThread(Mutex *mutex, int loop, int sleep)
       : mutex_(mutex), loop_(loop), sleep_(sleep) {}
 
   virtual void Run() {
@@ -62,7 +62,7 @@ class TestThread : public Thread {
 TEST(MutexTest, MutexBasicTest) {
   g_counter = 0;
   Mutex mutex;
-  TestThread t(&mutex, 1, 1000);
+  MutexTestThread t(&mutex, 1, 1000);
   t.Start();
 
   Util::Sleep(100);       // still g_counter is locked
@@ -75,13 +75,13 @@ TEST(MutexTest, MutexBasicTest) {
 TEST(MutexTest, MutexBatchTest) {
   const int kThreadsSize = 5;
   const int kLoopSize = 10;
-  vector<TestThread *> threads(kThreadsSize);
+  vector<MutexTestThread *> threads(kThreadsSize);
 
   g_counter = 0;
 
   Mutex mutex;
   for (int i = 0; i < kThreadsSize; ++i) {
-    threads[i] = new TestThread(&mutex, kLoopSize, 1);
+    threads[i] = new MutexTestThread(&mutex, kLoopSize, 1);
   }
 
   for (int i = 0; i < kThreadsSize; ++i) {
@@ -103,6 +103,83 @@ void CallbackFunc() {
   ++g_counter;
   Util::Sleep(20);
 }
+
+#ifdef HAVE_READER_WRITER_MUTEX
+class ReaderMutexTestThread : public Thread {
+ public:
+  explicit ReaderMutexTestThread(ReaderWriterMutex *mutex)
+      : counter_(0), mutex_(mutex) {}
+
+  static const int kStopCoutner = -1;
+
+  virtual void Run() {
+    while (g_counter != kStopCoutner) {
+      scoped_reader_lock l(mutex_);
+      counter_ = g_counter;
+    }
+  }
+
+  int counter() const { return counter_; }
+
+ private:
+  int counter_;
+  ReaderWriterMutex *mutex_;
+};
+
+TEST(MutexTest, ReaderWriterTest) {
+  const int kThreadsSize = 5;
+
+  vector<ReaderMutexTestThread *> threads(kThreadsSize);
+
+  // shared variable
+  g_counter = 1;
+
+  ReaderWriterMutex mutex;
+  for (int i = 0; i < kThreadsSize; ++i) {
+    threads[i] = new ReaderMutexTestThread(&mutex);
+  }
+
+  for (int i = 0; i < kThreadsSize; ++i) {
+    threads[i]->Start();
+  }
+
+  for (int counter = 1; counter < 10; ++counter) {
+    // every reader thread can get g_counter variable at the same time.
+    Util::Sleep(10);
+    for (int i = 0; i < kThreadsSize; ++i) {
+      EXPECT_EQ(counter, threads[i]->counter());
+    }
+
+    {
+      // stops the reader thread.
+      scoped_writer_lock l(&mutex);
+
+      // update counter
+      g_counter = counter + 1;
+
+      // Still the counter value is counter.
+      for (int i = 0; i < kThreadsSize; ++i) {
+        EXPECT_EQ(counter, threads[i]->counter());
+      }
+    }
+
+    Util::Sleep(10);
+    // coutner value becomes the same as g_counter
+    for (int i = 0; i < kThreadsSize; ++i) {
+      EXPECT_EQ(g_counter, threads[i]->counter());
+    }
+  }
+
+  mutex.WriterLock();
+  g_counter = ReaderMutexTestThread::kStopCoutner;
+  mutex.WriterUnlock();
+
+  for (int i = 0; i < kThreadsSize; ++i) {
+    threads[i]->Join();
+    delete threads[i];
+  }
+}
+#endif  // HAVE_READER_WRITER_MUTEX
 
 TEST(CallOnceTest, CallOnceBasicTest) {
   g_counter = 0;

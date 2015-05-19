@@ -37,20 +37,11 @@
 #include "converter/node.h"
 
 namespace mozc {
-namespace {
-
-struct SuffixToken {
-  const char *key;
-  const char *value;
-  uint16 lid;
-  uint16 rid;
-  int16  wcost;
-};
-
-#include "dictionary/suffix_data.h"
-}   // namespace
-
-SuffixDictionary::SuffixDictionary() : empty_limit_(Limit()) {}
+SuffixDictionary::SuffixDictionary(const SuffixToken *suffix_tokens,
+                                   size_t suffix_tokens_size)
+    : suffix_tokens_(suffix_tokens),
+      suffix_tokens_size_(suffix_tokens_size),
+      empty_limit_(Limit()) {}
 
 SuffixDictionary::~SuffixDictionary() {}
 
@@ -71,11 +62,10 @@ Node *SuffixDictionary::LookupPredictiveWithLimit(
   DCHECK(allocator);
 
   Node *result = NULL;
-  for (size_t i = 0; i < arraysize(kSuffixTokens); ++i) {
-    const SuffixToken *token = &kSuffixTokens[i];
-    DCHECK(token);
-    DCHECK(token->key);
-    if (!input_key.empty() && !Util::StartsWith(token->key, input_key)) {
+  for (size_t i = 0; i < suffix_tokens_size_; ++i) {
+    const SuffixToken &token = suffix_tokens_[i];
+    DCHECK(token.key);
+    if (!input_key.empty() && !Util::StartsWith(token.key, input_key)) {
       continue;
     }
     // check begin with
@@ -83,7 +73,7 @@ Node *SuffixDictionary::LookupPredictiveWithLimit(
       string value;
       size_t key_length = 0;
       bool has_subtrie = false;
-      if (!limit.begin_with_trie->LookUpPrefix(token->key + size, &value,
+      if (!limit.begin_with_trie->LookUpPrefix(token.key + size, &value,
                                                &key_length, &has_subtrie)) {
         continue;
       }
@@ -91,12 +81,12 @@ Node *SuffixDictionary::LookupPredictiveWithLimit(
     Node *node = allocator->NewNode();
     DCHECK(node);
     node->Init();
-    node->wcost = token->wcost;
-    node->key = token->key;
+    node->wcost = token.wcost;
+    node->key = token.key;
     // To save binary image, value is NULL if key == value.
-    node->value = token->value == NULL ? token->key : token->value;
-    node->lid = token->lid;
-    node->rid = token->rid;
+    node->value = (token.value == NULL) ? token.key : token.value;
+    node->lid = token.lid;
+    node->rid = token.rid;
     node->bnext = result;
     result = node;
   }
@@ -125,12 +115,22 @@ Node *SuffixDictionary::LookupReverse(
 }
 
 namespace {
+// TODO(noriyukit): Move this embedded data to data manager.
+#include "dictionary/suffix_data.h"
+
+class MozcSuffixDictionary : public SuffixDictionary {
+ public:
+  MozcSuffixDictionary() : SuffixDictionary(kSuffixTokens,
+                                            arraysize(kSuffixTokens)) {}
+  virtual ~MozcSuffixDictionary() {}
+};
+
 DictionaryInterface *g_suffix_dictionary = NULL;
 }   // namespace
 
 DictionaryInterface *SuffixDictionaryFactory::GetSuffixDictionary() {
   if (g_suffix_dictionary == NULL) {
-    return Singleton<SuffixDictionary>::get();
+    return Singleton<MozcSuffixDictionary>::get();
   } else {
     return g_suffix_dictionary;
   }

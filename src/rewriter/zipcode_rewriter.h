@@ -30,18 +30,35 @@
 #ifndef MOZC_REWRITER_ZIPCODE_REWRITER_H_
 #define MOZC_REWRITER_ZIPCODE_REWRITER_H_
 
+#include <string>
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
+class ConversionRequest;
+class POSMatcher;
+class Segment;
 class Segments;
 
-class ZipcodeRewriter: public RewriterInterface  {
+class ZipcodeRewriter : public RewriterInterface  {
  public:
-  ZipcodeRewriter();
+  explicit ZipcodeRewriter(const POSMatcher *pos_matcher);
   virtual ~ZipcodeRewriter();
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
+
+ private:
+  bool GetZipcodeCandidatePositions(const Segment &seg,
+                                    string *zipcode,
+                                    string *address,
+                                    size_t *insert_pos) const;
+  bool InsertCandidate(size_t insert_pos,
+                       const string &zipcode,
+                       const string &address,
+                       Segment *segment) const;
+
+  const POSMatcher *pos_matcher_;
 };
 }  // namespace mozc
 

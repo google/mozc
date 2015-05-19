@@ -179,6 +179,11 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // temporary workaround against b/6004671.
   void RemoveUnusedSyncDictionariesIfExist();
 
+  // Add new entry to the auto registered dictionary.
+  bool AddToAutoRegisteredDictionary(const string &key,
+                                     const string &value,
+                                     const string &pos);
+
   // return the number of dictionaries with "synclbe" being true.
   static int CountSyncableDictionaries(
       const user_dictionary::UserDictionaryStorage *storage);

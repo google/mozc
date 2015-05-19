@@ -1,19 +1,12 @@
 status	key	command
 Composition	ASCII	InsertCharacter
 Composition	Backspace	Backspace
-Composition	Ctrl 0	ConvertToHalfAlphanumeric
-Composition	Ctrl 2	ConvertWithoutHistory
-Composition	Ctrl 6	ConvertToHiragana
-Composition	Ctrl 7	ConvertToFullKatakana
-Composition	Ctrl 8	ConvertToHalfWidth
-Composition	Ctrl 9	ConvertToFullAlphanumeric
 Composition	Ctrl a	MoveCursorToBeginning
 Composition	Ctrl Alt F11	Abort
 Composition	Ctrl Backspace	Backspace
 Composition	Ctrl d	MoveCursorRight
 Composition	Ctrl Down	MoveCursorToEnd
 Composition	Ctrl e	MoveCursorToBeginning
-Composition	Ctrl Eisu	ToggleAlphanumericMode
 Composition	Ctrl Enter	Commit
 Composition	Ctrl f	MoveCursorToEnd
 Composition	Ctrl g	Delete
@@ -67,18 +60,12 @@ Composition	Shift Space	Convert
 Composition	Space	Convert
 Composition	Tab	PredictAndConvert
 Conversion	Backspace	Cancel
-Conversion	Ctrl 0	ConvertToHalfAlphanumeric
-Conversion	Ctrl 6	ConvertToHiragana
-Conversion	Ctrl 7	ConvertToFullKatakana
-Conversion	Ctrl 8	ConvertToHalfWidth
-Conversion	Ctrl 9	ConvertToFullAlphanumeric
 Conversion	Ctrl a	SegmentFocusFirst
 Conversion	Ctrl Alt F11	Abort
 Conversion	Ctrl Backspace	Cancel
 Conversion	Ctrl d	SegmentFocusRight
 Conversion	Ctrl Down	CommitOnlyFirstSegment
 Conversion	Ctrl e	ConvertPrev
-Conversion	Ctrl Eisu	ToggleAlphanumericMode
 Conversion	Ctrl Enter	Commit
 Conversion	Ctrl f	SegmentFocusLast
 Conversion	Ctrl g	Cancel
@@ -151,7 +138,6 @@ Precomposition	ASCII	InsertCharacter
 Precomposition	Backspace	Revert
 Precomposition	Ctrl Alt F11	Abort
 Precomposition	Ctrl Backspace	Undo
-Precomposition	Ctrl Eisu	ToggleAlphanumericMode
 Precomposition	Ctrl Shift Space	InsertFullSpace
 Precomposition	Eisu	ToggleAlphanumericMode
 Precomposition	Hankaku/Zenkaku	IMEOff

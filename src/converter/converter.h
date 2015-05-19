@@ -37,13 +37,21 @@
 namespace mozc {
 class ConversionRequest;
 class ImmutableConverterInterface;
+class PredictorInterface;
+class POSMatcher;
+class PosGroup;
+class RewriterInterface;
 class Segments;
 class UserDatamanagerInterface;
 
 class ConverterImpl : public ConverterInterface {
  public:
   ConverterImpl();
+  ConverterImpl(PredictorInterface *predictor, RewriterInterface *rewriter);
   virtual ~ConverterImpl();
+
+  // Lazily initializes the internal predictor and rewriter.
+  void Init(PredictorInterface *predictor, RewriterInterface *rewriter);
 
   bool Predict(const ConversionRequest &request,
                const string &key,
@@ -125,8 +133,13 @@ class ConverterImpl : public ConverterInterface {
   bool SetupHistorySegmentsFromPrecedingText(const string &preceding_text,
                                              Segments *segments) const;
 
+  const POSMatcher *pos_matcher_;
+  const PosGroup *pos_group_;
+  scoped_ptr<PredictorInterface> predictor_;
+  scoped_ptr<RewriterInterface> rewriter_;
   scoped_ptr<UserDataManagerInterface> user_data_manager_;
-  ImmutableConverterInterface *immutable_converter_;
+  const ImmutableConverterInterface *immutable_converter_;
+  const uint16 general_noun_id_;
 };
 }  // namespace mozc
 

@@ -44,6 +44,8 @@ class NodeAllocatorInterface;
 
 class DictionaryInterface {
  public:
+  virtual ~DictionaryInterface() {}
+
   // limitation for LookupPrefixWithLimit
   struct Limit {
     // For prefix lookup, to reduce redundant lookup for making lattice,
@@ -97,9 +99,8 @@ class DictionaryInterface {
   virtual bool Reload() { return true; }
 
  protected:
-  // Do not allow instantiation/destruction
+  // Do not allow instantiation
   DictionaryInterface() {}
-  virtual ~DictionaryInterface() {}
 };
 
 class DictionaryFactory {

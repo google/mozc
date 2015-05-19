@@ -51,19 +51,27 @@ class ProcessMutex;
 
 class IPCPathManager {
  public:
-  // Create new path name and save it inside internal memory.
-  // if the path is already created, return true and do nothing.
+  // Brief summary of CreateNew / Save / Load / Get PathName().
+  // CreateNewPathName: Generates a pathname and save it into the heap.
+  // SavePathName:      Saves a pathname into a file from the heap.
+  // LoadPathName:      Loads a pathname from a file and save it into the heap.
+  // GetPathName:       Sets a pathname on an argument using the heap.
+
+  // Create new pathname and save it into the heap. If pathname is not empty,
+  // do nothing.
   bool CreateNewPathName();
 
-  // Save ipc path to ~/.mozc/.ipc.<name>
-  // if server_ipc_key_ is empty, CreateNewPathName()
-  // is called automatically
+  // Save ipc path to ~/.mozc/.<name>.ipc
+  // if server_ipc_key_ is empty, CreateNewPathName() is called automatically.
   // If the file is already locked, return false
   bool SavePathName();
 
-  // Get the current path from memory.
-  // return false if LoadPathName() failed.
-  bool GetPathName(string *path_name);
+  // Load a pathname from a disk and updates |ipc_path_info_| if pathname is
+  // empty or ipc key file is updated. Returns false if it cannot load.
+  bool LoadPathName();
+
+  // Get a pathanem from the heap. If pathanme is empty, returns false.
+  bool GetPathName(string *path_name) const;
 
   // return protocol version.
   // return 0 if protocol version is not defined.
@@ -101,10 +109,9 @@ class IPCPathManager {
 
  private:
   FRIEND_TEST(IPCPathManagerTest, ReloadTest);
+  FRIEND_TEST(IPCPathManagerTest, PathNameTest);
 
-  // Load ipc name from ~/.mozc/.ipc
-  // Note that this method overwrites the ipc_key_
-  bool LoadPathName();
+  bool LoadPathNameInternal();
 
   // Returns true if the ipc file is updated after it load.
   bool ShouldReload() const;
@@ -120,6 +127,6 @@ class IPCPathManager {
   uint32 server_pid_;    // cache for pid of server_path
   time_t last_modified_;
 };
-}  // mozc
+}  // namespace mozc
 
 #endif  // MOZC_IPC_IPC_PATH_MANAGER_H_

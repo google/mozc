@@ -43,8 +43,10 @@
       ],
       'dependencies': [
         '../composer/composer.gyp:composer',
-        '../dictionary/dictionary_base.gyp:gen_pos_matcher',
+        '../data_manager/data_manager.gyp:user_pos_manager',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction.gyp:prediction',
+        '../prediction/prediction.gyp:prediction_protocol',
         '../rewriter/rewriter.gyp:rewriter',
         '../session/session_base.gyp:session_protocol',
         'converter_base.gyp:immutable_converter',

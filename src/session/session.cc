@@ -2447,7 +2447,8 @@ void Session::OutputWindowLocation(commands::Command *command) const {
   candidates->mutable_composition_rectangle()->CopyFrom(
       composition_rectangle_);
 
-  if (command->output().candidates().category() == commands::SUGGESTION) {
+  if (command->output().candidates().category() == commands::SUGGESTION ||
+      command->output().candidates().category() == commands::PREDICTION) {
     candidates->set_window_location(commands::Candidates::COMPOSITION);
   } else {
     candidates->set_window_location(commands::Candidates::CARET);

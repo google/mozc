@@ -107,6 +107,8 @@ void ProcessLoop() {
         ErrorExit(mozc::emacs::kErrVoidFunction, "Unknown function");
     }
 
+    mozc::emacs::RemoveUsageData(command.mutable_output());
+
     // Output results.
     vector<string> buffer;
     mozc::emacs::PrintMessage(command.output(), &buffer);

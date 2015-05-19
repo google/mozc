@@ -30,24 +30,57 @@
 #ifndef MOZC_REWRITER_TRANSLITERATION_REWRITER_H_
 #define MOZC_REWRITER_TRANSLITERATION_REWRITER_H_
 
+#include <string>
+#include <vector>
+#include "base/port.h"
+#include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class Segments;
 class ConversionRequest;
+class POSMatcher;
+class Segments;
+class Segment;
 
-class TransliterationRewriter: public RewriterInterface  {
+class TransliterationRewriter : public RewriterInterface  {
  public:
-  TransliterationRewriter();
+  struct T13NIds {
+    uint16 hiragana_lid;
+    uint16 hiragana_rid;
+    uint16 katakana_lid;
+    uint16 katakana_rid;
+    uint16 ascii_lid;
+    uint16 ascii_rid;
+    T13NIds() : hiragana_lid(0), hiragana_rid(0),
+                katakana_lid(0), katakana_rid(0),
+                ascii_lid(0), ascii_rid(0) {}
+  };
+
+  explicit TransliterationRewriter(const POSMatcher &pos_matcher);
   virtual ~TransliterationRewriter();
 
   virtual int capability() const;
 
-  virtual bool RewriteForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
+
+ private:
+  void InitT13NCandidate(const string &key,
+                         const string &value,
+                         uint16 lid,
+                         uint16 rid,
+                         Segment::Candidate *cand) const;
+  void SetTransliterations(const vector<string> &t13ns,
+                           const T13NIds &ids,
+                           Segment *segment) const;
+  bool FillT13NsFromComposer(const ConversionRequest &request,
+                             Segments *segments) const;
+  bool FillT13NsFromKey(Segments *segments) const;
+
+  const uint16 unknown_id_;
 };
-}
+
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_TRANSLITERATION_REWRITER_H_

@@ -322,7 +322,7 @@
     </message>
     <message>
         <location filename="config_dialog.ui" line="618"/>
-        <source>homonym dictionary</source>
+        <source>Homonym dictionary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

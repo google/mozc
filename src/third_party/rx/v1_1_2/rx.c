@@ -20,8 +20,8 @@
 #include <string.h>
 #include "rx.h"
 
-static const int MAX_DEPTH = 256;
-static const int CHUNK_SIZE = 32; /* bytes */
+#define MAX_DEPTH 256
+#define CHUNK_SIZE 32 /* bytes */
 
 #ifdef __GNUC__
 #define bitcount(x, z) (z?__builtin_popcount(x):32-__builtin_popcount(x))
@@ -193,6 +193,26 @@ static void push_bytes(struct bit_stream *bs,
   }
 }
 
+static int byte_order_swap(int s) {
+  return ((s << 24) & 0xff000000) |
+    ((s << 8) & 0x00ff0000) |
+    ((s >> 8) & 0x0000ff00) |
+    ((s >> 24) & 0x000000ff);
+}
+
+static int is_be() {
+  int x = 1;
+  char *p = (char *)&x;
+  return *p == 0;
+}
+
+static void push_int(struct bit_stream *bs, int num) {
+  if (is_be()) {
+    num = byte_order_swap(num);
+  }
+  push_bytes(bs, (unsigned char *)&num, 4);
+}
+
 static void copy_stream(struct bit_stream *bdst, struct bit_stream *bsrc) {
   ensure_bits(bdst, bsrc->nr_bits_in_array);
   assert((bsrc->nr_bits_in_array & 7) == 0);
@@ -224,18 +244,18 @@ static void write_transition(struct rx_builder *b,
 }
 
 static void write_tree(struct rx_builder *b) {
+  int i;
   int nr;
   int nth;
   int depth = 0;
   int nth_terminal = 0;
-  int i;
   /* copies str array. This reduces number of strings to be scanned
    * when depth is high */
   int nr_strs = b->nr_strs;
   char **strs = (char **)malloc(sizeof(char *) *nr_strs);
   char **back_strs = (char **)malloc(sizeof(char *) *nr_strs);
-  int *orig_indexes = (int *)malloc(sizeof(int) * nr_strs);
-  int *back_indexes = (int *)malloc(sizeof(int) * nr_strs);
+  int *orig_indexes = (int *)malloc(sizeof(int) *nr_strs);
+  int *back_indexes = (int *)malloc(sizeof(int) *nr_strs);
   for (i = 0; i < nr_strs; ++i) {
     orig_indexes[i] = i;
   }
@@ -378,10 +398,10 @@ int rx_builder_build(struct rx_builder *b) {
   printf("terminal_byte_count=%d\n", terminal_byte_count);
   printf("transition_byte_count=%d\n", transitions_byte_count);*/
   ensure_bits(&b->stream, 128);
-  push_bytes(&b->stream, (unsigned char *)&edge_byte_count, 4);
-  push_bytes(&b->stream, (unsigned char *)&terminal_byte_count, 4);
-  push_bytes(&b->stream, (unsigned char *)&b->nr_bits, 4);
-  push_bytes(&b->stream, (unsigned char *)&transitions_byte_count, 4);
+  push_int(&b->stream, edge_byte_count);
+  push_int(&b->stream, terminal_byte_count);
+  push_int(&b->stream, b->nr_bits);
+  push_int(&b->stream, transitions_byte_count);
   /**/
   copy_stream(&b->stream, &b->edges);
   copy_stream(&b->stream, &b->terminals);
@@ -565,6 +585,13 @@ static int bv_select(const struct bv *b, int n, int z) {
   return bv_select_naive(b, 0, n, z);
 }
 
+static int read_int(int im) {
+  if (is_be()) {
+    im = byte_order_swap(im);
+  }
+  return im;
+}
+
 struct rx *rx_open(const unsigned char *bits) {
   struct rx *r = (struct rx *)malloc(sizeof(*r));
   int *c = (int *)bits;
@@ -573,18 +600,18 @@ struct rx *rx_open(const unsigned char *bits) {
   printf("%d bits for transitions\n", c[2]);*/
 
   r->edges = &bits[16];
-  r->terminals = &bits[16 + c[0]];
-  r->transitions[0] = &bits[16 + (c[0] + c[1])];
-  r->nr_bits = c[2];
+  r->terminals = &bits[16 + read_int(c[0])];
+  r->transitions[0] = &bits[16 + (read_int(c[0]) + read_int(c[1]))];
+  r->nr_bits = read_int(c[2]);
   if (r->nr_bits < 8) {
     int i;
-    int size = c[3];
+    int size = read_int(c[3]);
     for (i = 1; i < r->nr_bits; ++i) {
       r->transitions[i] = &r->transitions[0][size * i];
     }
   }
-  r->ev = bv_alloc(r->edges, c[0]);
-  r->tv = bv_alloc(r->terminals, c[1]);
+  r->ev = bv_alloc(r->edges, read_int(c[0]));
+  r->tv = bv_alloc(r->terminals, read_int(c[1]));
   return r;
 }
 
@@ -594,7 +621,7 @@ void rx_close(struct rx *r) {
   free(r);
 }
 
-static char get_transition(const struct rx *r, int pos) {
+static unsigned char get_transition(const struct rx *r, int pos) {
   if (r->nr_bits != 8) {
     int idx = pos / 8;
     int mask = 1 << (pos & 7);
@@ -610,7 +637,7 @@ static char get_transition(const struct rx *r, int pos) {
   return r->transitions[0][pos];
 }
 
-static char *rx_upward(const struct rx *r, int pos, char *s) {
+static unsigned char *rx_upward(const struct rx *r, int pos, unsigned char *s) {
   int parent;
   do {
     int tv_rank = bv_rank(r->ev, pos, 1);
@@ -627,97 +654,126 @@ static char *rx_upward(const struct rx *r, int pos, char *s) {
 char *rx_reverse(const struct rx *r, int n, char *src, int len) {
   int tv_pos = bv_select(r->tv, n, 1);
   int ev_pos = bv_select(r->ev, tv_pos, 1);
-  char buf[MAX_DEPTH + 1];
-  char *res;
+  unsigned char buf[MAX_DEPTH + 1];
+  unsigned char *res;
   buf[MAX_DEPTH] = 0;
 
   res = rx_upward(r, ev_pos, &buf[MAX_DEPTH]);
-  if (strlen(res) < (size_t)len) {
-    strcpy(src, res);
+  if (strlen((char *)res) < (size_t)len) {
+    strcpy(src, (char *)res);
     return src;
   }
   return NULL;
 }
 
+#define FIND_EDGE 0
+#define FIND_TERMINAL 1
+
 static void rx_find(const struct rx *r,
 		    const unsigned char *src,
+                    unsigned char *buf,
 		    void *cookie,
 		    int (*cb)(void *cookie, const char *s, int len, int id),
-		    int terminal_only,
+                    const char *(cb_expand_chars)(const void *expansion_data,
+                                                  const char s),
+                    const void *expansion_data,
+		    int find_type,
 		    int cur, int pos) {
   if (!src[cur]) {
     return ;
   }
+
+  char dummy[2];
+  const char *expanded = NULL;
+
+  if (cb_expand_chars) {
+    const char *result = cb_expand_chars(expansion_data, src[cur]);
+    if (result && result[0]) {
+      expanded = result;
+    }
+  }
+  if (!expanded) {
+    /* No expansion so use only the original character. */
+    dummy[0] = src[cur];
+    dummy[1] = 0;
+    expanded = dummy;
+  }
+
   while (bv_get(r->ev, pos)) {
     int tv_rank = bv_rank(r->ev, pos, 1);
     /*printf("tv_rank=%d\n", tv_rank);*/
-    if (get_transition(r, tv_rank - 1) == src[cur]) {
-      if (!terminal_only ||
+    char ch = get_transition(r, tv_rank - 1);
+    if (strchr(expanded, ch)) {
+      buf[cur] = ch;
+      buf[cur + 1] = 0;
+      if (find_type == FIND_EDGE ||
 	  bv_get(r->tv, tv_rank - 1)) {
-        int id;
+	int id;
 	int rv;
-        if (terminal_only) {
-          /* rank of terminal */
-          id = bv_rank(r->tv, tv_rank - 1, 1) - 1;
-        } else {
-          /* rank of edge */
-          id = bv_rank(r->ev, pos, 1) - 2;
-        }
-        rv = cb(cookie, (const char *)src, cur + 1, id);
-	if (rv) {
-	  return ;
+	if (find_type == FIND_TERMINAL) {
+	  /* rank of terminal */
+	  id = bv_rank(r->tv, tv_rank -1, 1) - 1;
+	} else {
+	  /* rank of edge */
+	  id = bv_rank(r->ev, pos, 1) - 2;
 	}
+        rv = cb(cookie, (const char *)buf, cur + 1, id);
       }
       int child_pos = bv_select(r->ev, bv_rank(r->ev, pos, 1) - 1, 0) + 1;
       /*printf("match %d->%d (%c),%d\n", pos, child_pos,
 	r->transitions[tv_rank - 1], child_pos);*/
-      rx_find(r, src, cookie, cb, terminal_only, cur + 1, child_pos);
+      rx_find(r, src, buf, cookie, cb, cb_expand_chars, expansion_data,
+              find_type, cur + 1, child_pos);
     }
     /* move forward to next sibling */
     ++pos;
   }
 }
 
-struct key_info {
+struct traverse_stat {
   const struct rx *r;
-  int len;
-  int pos;
+  int flags;
+  int depth_limit;
+  int initial_edge_pos;
+  int initial_buf_index;
+  void *cookie;
+  int (*cb)(void *cookie, const char *s,
+	    int len, int id);
 };
 
-static int exact_find_cb(void *cookie, const char *c, int len, int edge_id) {
-  struct key_info *ki = (struct key_info *)cookie;
-  if (len == ki->len) {
-    ki->pos = bv_select(ki->r->ev, edge_id + 1, 1);
-    return 1;
-  }
-  return 0;
-}
-
-static int rx_traverse(const struct rx *r,
-                       void *cookie,
-                       int (*cb)(void *cookie, const char *s,
-                                 int len, int id),
-                       char *buf,
-                       int cur,
-                       int pos) {
+static int rx_traverse(struct traverse_stat *ts,
+		       unsigned char *buf,
+		       int buf_index,
+		       int edge_pos) {
+  const struct rx *r = ts->r;
   int child_pos;
   int tv_pos;
-  /*printf("%d-[%s]@%d\n", cur, buf, pos);*/
-  tv_pos = bv_rank(r->ev, pos, 1) - 1;
+  int found_terminal = 0;
+  /*printf("%d-[%s]@%d\n", buf_index, buf, edge_pos);*/
+  tv_pos = bv_rank(r->ev, edge_pos, 1) - 1;
   if (bv_get(r->tv, tv_pos)) {
     int id = bv_rank(r->tv, tv_pos, 1) - 1;
-    int rv = cb(cookie, buf, strlen(buf), id);
+    int rv = ts->cb(ts->cookie, (char *)buf, strlen((char *)buf), id);
     if (rv) {
       return rv;
     }
+    found_terminal = 1;
   }
-  child_pos = bv_select(r->ev, bv_rank(r->ev, pos, 1) - 1, 0) + 1;
+  if ((ts->flags & RX_SEARCH_1LEVEL) &&
+      edge_pos != ts->initial_edge_pos &&
+      found_terminal) {
+    return 0;
+  }
+  if (buf_index >= ts->initial_buf_index + ts->depth_limit) {
+    return 0;
+  }
+  child_pos = bv_select(r->ev, bv_rank(r->ev, edge_pos, 1) - 1, 0) + 1;
   while (bv_get(r->ev, child_pos)) {
-    int rv;
     int rank = bv_rank(r->ev, child_pos, 1) - 1;
-    buf[cur] = get_transition(r, rank);
-    buf[cur + 1] = 0;
-    rv = rx_traverse(r, cookie, cb, buf, cur + 1, child_pos);
+    int rv;
+    buf[buf_index] = get_transition(r, rank);
+    buf[buf_index + 1] = 0;
+    rv = rx_traverse(ts, buf, buf_index + 1, child_pos);
     if (rv) {
       return rv;
     }
@@ -726,26 +782,77 @@ static int rx_traverse(const struct rx *r,
   return 0;
 }
 
-void rx_search(const struct rx *r, int is_pred, const char *s,
+static int rx_start_traverse(const struct rx *r,
+			     int flags,
+			     void *cookie,
+			     int (*cb)(void *cookie, const char *s,
+				       int len, int id),
+			     unsigned char *buf,
+			     int buf_index,
+			     int edge_pos) {
+  struct traverse_stat ts;
+  ts.r = r;
+  ts.flags = flags;
+  ts.depth_limit = (flags & RX_SEARCH_DEPTH_MASK) >> RX_SEARCH_DEPTH_SHIFT;
+  if (ts.depth_limit == 0) {
+    ts.depth_limit = MAX_DEPTH;
+  }
+  ts.initial_buf_index = buf_index;
+  ts.initial_edge_pos = edge_pos;
+  ts.cookie = cookie;
+  ts.cb = cb;
+  return rx_traverse(&ts, buf, buf_index, edge_pos);
+}
+
+struct predict_info {
+  void *original_cookie;
+  const struct rx *r;
+  int (*cb)(void *cookie, const char *s, int len, int id);
+  int len;
+  int flags;
+};
+
+static int predict_cb(void *cookie, const char *c, int len, int edge_id) {
+  struct predict_info *pred = (struct predict_info *)cookie;
+  if (len == pred->len) {
+    char buf[MAX_DEPTH + 1];
+    strcpy(buf, c);
+    int pos = bv_select(pred->r->ev, edge_id + 1, 1);
+    rx_start_traverse(pred->r, pred->flags,
+                      pred->original_cookie, pred->cb,
+                      (unsigned char *)buf, len, pos);
+    return 1;
+  }
+  return 0;
+}
+
+void rx_search(const struct rx *r, int flags, const char *s,
 	       int (*cb)(void *cookie, const char *s, int len, int id),
 	       void *cookie) {
-  struct key_info ki;
-  char buf[MAX_DEPTH];
-  if (!is_pred) {
-    rx_find(r, (const unsigned char *)s, cookie, cb, 1, 0, 2);
+  rx_search_expand(r, flags, s, cb, cookie, 0, 0);
+}
+
+void rx_search_expand(const struct rx *r, int flags, const char *s,
+                      int (*cb)(void *cookie, const char *s, int len, int id),
+                      void *cookie,
+                      const char *(*cb_expand_chars)(const void *expansion_data,
+                                                     const char s),
+                      const void *expansion_data) {
+  struct predict_info pred;
+  unsigned char buf[MAX_DEPTH + 1];
+  if (!(flags & RX_SEARCH_PREDICTIVE)) {
+    /* find prefix strings */
+    rx_find(r, (const unsigned char *)s, buf, cookie, cb,
+            cb_expand_chars, expansion_data, FIND_TERMINAL, 0, 2);
     return ;
   }
-  ki.r = r;
-  ki.len = strlen(s);
-  ki.pos = -1;
-  rx_find(r, (const unsigned char *)s, &ki, exact_find_cb, 0, 0, 2);
-  if (ki.pos < 0) {
-    /* failed to find predict start */
-    return ;
-  }
-  strcpy(buf, s);
-  /*printf("predict start=%d %d [%s]\n", ki.pos, ki.len, buf);*/
-  rx_traverse(r, cookie, cb, buf, ki.len, ki.pos);
+  pred.original_cookie = cookie;
+  pred.r = r;
+  pred.cb = cb;
+  pred.len = strlen(s);
+  pred.flags = flags;
+  rx_find(r, (const unsigned char *)s, buf, &pred, predict_cb,
+          cb_expand_chars, expansion_data, FIND_EDGE, 0, 2);
 }
 
 /* rbx */
@@ -784,7 +891,7 @@ void rbx_builder_push(struct rbx_builder *b,
     elm_len = b->min_element_len;
   }
   /* element length */
-  ensure_bits(&b->len_marks, len * 8);
+  ensure_bits(&b->len_marks, len * 8 + 32);
   push_bit(&b->len_marks, 0);
   s = 0;
   for (i = b->min_element_len; i < elm_len; i += b->element_len_step) {
@@ -810,10 +917,10 @@ int rbx_builder_build(struct rbx_builder *b) {
   /* write header */
   len = b->len_marks.nr_bits_in_array / 8;
   ensure_bits(&b->output, 128);
-  push_bytes(&b->output, (unsigned char *)&len, 4);
-  push_bytes(&b->output, (unsigned char *)&b->min_element_len, 4);
-  push_bytes(&b->output, (unsigned char *)&b->element_len_step, 4);
-  push_bytes(&b->output, (unsigned char *)&dummy, 4);
+  push_int(&b->output, len);
+  push_int(&b->output, b->min_element_len);
+  push_int(&b->output, b->element_len_step);
+  push_int(&b->output, dummy);
   /* writes stream */
   copy_stream(&b->output, &b->len_marks);
   copy_stream(&b->output, &b->blobs);
@@ -845,10 +952,10 @@ struct rbx {
 struct rbx *rbx_open(const unsigned char *bits) {
   struct rbx *r = (struct rbx *)malloc(sizeof(*r));
   const int *c = (const int *)bits;
-  r->lv = bv_alloc((const unsigned char *)&c[4], c[0]);
-  r->base_len = c[1];
-  r->len_step = c[2];
-  r->body = &bits[c[0] + 16];
+  r->lv = bv_alloc((const unsigned char *)&c[4], read_int(c[0]));
+  r->base_len = read_int(c[1]);
+  r->len_step = read_int(c[2]);
+  r->body = &bits[read_int(c[0]) + 16];
   return r;
 }
 

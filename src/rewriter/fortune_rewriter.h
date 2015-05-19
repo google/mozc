@@ -34,15 +34,18 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
-class FortuneRewriter: public RewriterInterface  {
+class FortuneRewriter : public RewriterInterface  {
  public:
   FortuneRewriter();
   virtual ~FortuneRewriter();
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_FORTUNE_REWRITER_H_

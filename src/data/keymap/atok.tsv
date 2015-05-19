@@ -2,14 +2,7 @@ status	key	command
 Composition	Backspace	Backspace
 Composition	Ctrl [	Cancel
 Composition	Ctrl @	ConvertToHalfAlphanumeric
-Composition	Ctrl 0	ConvertToHalfAlphanumeric
-Composition	Ctrl 2	ConvertWithoutHistory
-Composition	Ctrl 6	ConvertToHiragana
-Composition	Ctrl 7	ConvertToFullKatakana
-Composition	Ctrl 8	ConvertToHalfWidth
-Composition	Ctrl 9	ConvertToFullAlphanumeric
 Composition	Ctrl Alt F11	Abort
-Composition	Ctrl Eisu	ToggleAlphanumericMode
 Composition	Ctrl g	Delete
 Composition	Ctrl h	Backspace
 Composition	Ctrl i	ConvertToFullKatakana
@@ -52,13 +45,7 @@ Composition	Tab	PredictAndConvert
 Conversion	Backspace	Cancel
 Conversion	Ctrl [	Cancel
 Conversion	Ctrl @	ConvertToHalfAlphanumeric
-Conversion	Ctrl 0	ConvertToHalfAlphanumeric
-Conversion	Ctrl 6	ConvertToHiragana
-Conversion	Ctrl 7	ConvertToFullKatakana
-Conversion	Ctrl 8	ConvertToHalfWidth
-Conversion	Ctrl 9	ConvertToFullAlphanumeric
 Conversion	Ctrl Alt F11	Abort
-Conversion	Ctrl Eisu	ToggleAlphanumericMode
 Conversion	Ctrl h	Cancel
 Conversion	Ctrl i	ConvertToFullKatakana
 Conversion	Ctrl k	SegmentWidthShrink
@@ -93,13 +80,11 @@ Conversion	Left	SegmentWidthShrink
 Conversion	OFF	CancelAndIMEOff
 Conversion	ON	IMEOn
 Conversion	Right	SegmentWidthExpand
-Conversion	Shift Down	ConvertNextPage
 Conversion	Shift Henkan	ConvertPrevPage
 Conversion	Shift Left	SegmentFocusLeft
 Conversion	Shift Right	SegmentFocusRight
 Conversion	Shift Space	ConvertNext
 Conversion	Shift Tab	ConvertPrev
-Conversion	Shift Up	ConvertPrevPage
 Conversion	Space	ConvertNext
 Conversion	Tab	PredictAndConvert
 Conversion	Up	ConvertPrev
@@ -110,10 +95,8 @@ DirectInput	Muhenkan	IMEOn
 DirectInput	ON	IMEOn
 DirectInput	Shift Henkan	Reconvert
 Precomposition	Backspace	Revert
-Precomposition	Ctrl 0	ToggleAlphanumericMode
 Precomposition	Ctrl Alt F11	Abort
 Precomposition	Ctrl Backspace	Undo
-Precomposition	Ctrl Eisu	ToggleAlphanumericMode
 Precomposition	Ctrl F12	LaunchConfigDialog
 Precomposition	Ctrl F7	LaunchWordRegisterDialog
 Precomposition	Eisu	ToggleAlphanumericMode

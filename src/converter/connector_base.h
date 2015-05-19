@@ -52,6 +52,7 @@ class ConnectorBase : public ConnectorInterface {
  private:
   scoped_ptr<SparseConnector> sparse_connector_;
   scoped_ptr<CachedConnector> cached_connector_;
+
 };
 }  // namespace mozc
 

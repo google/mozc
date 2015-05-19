@@ -58,7 +58,8 @@ class SystemDictionaryBuilderTest : public testing::Test {
 TEST_F(SystemDictionaryBuilderTest, test) {
   // This test is only testing that system dicionary does not make any errors.
   // Dictionary itself will be tested at sytem_dicitonary_test.
-  TextDictionaryLoader loader;
+  const POSMatcher pos_matcher;
+  TextDictionaryLoader loader(pos_matcher);
   const string dic_path = Util::JoinPath(FLAGS_test_srcdir, FLAGS_input);
   LOG(INFO) << "Reading " << dic_path;
   loader.OpenWithLineLimit(dic_path.c_str(), FLAGS_dictionary_test_size);

@@ -2,18 +2,13 @@ Source: mozc
 Section: utils
 Priority: extra
 Maintainer: Seigo Nonaka <nona>
-Build-Depends: debhelper (>= 4.0.0), libibus-dev | libibus-1.0-dev, libcurl4-openssl-dev, pkg-config, libqt4-dev, scim, libscim-dev, gyp, libzinnia-dev
+Build-Depends: debhelper (>= 4.0.0), libibus-dev | libibus-1.0-dev, libssl-dev, pkg-config, libqt4-dev, libzinnia-dev
 Standards-Version: 3.6.2
 
 Package: ibus-mozc
 Architecture: any
 Depends: ${shlibs:Depends}, ibus, mozc-server (= ${Source-Version})
 Description: IBus engine module for Mozc.
-
-Package: scim-mozc
-Architecture: any
-Depends: ${shlibs:Depends}, scim, mozc-server (= ${Source-Version})
-Description: SCIM IMEngine module for Mozc.
 
 Package: emacs-mozc
 Architecture: all

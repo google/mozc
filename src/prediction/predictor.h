@@ -37,7 +37,12 @@ namespace mozc {
 
 class BasePredictor : public PredictorInterface {
  public:
-  BasePredictor();
+  // Initializes the composite of predictor with given sub-predictors. All the
+  // predictors are owned by this class and deleted on destruction of this
+  // instance.
+  BasePredictor(PredictorInterface *dictionary_predictor,
+                PredictorInterface *user_history_predictor,
+                PredictorInterface *extra_predictor);
   virtual ~BasePredictor();
 
   // Overwrite predictor
@@ -63,12 +68,18 @@ class BasePredictor : public PredictorInterface {
 
   // Reload usre history
   virtual bool Reload();
+
+ protected:
+  scoped_ptr<PredictorInterface> dictionary_predictor_;
+  scoped_ptr<PredictorInterface> user_history_predictor_;
+  scoped_ptr<PredictorInterface> extra_predictor_;
 };
 
 class DefaultPredictor : public BasePredictor {
  public:
-  DefaultPredictor();
-
+  DefaultPredictor(PredictorInterface *dictionary_predictor,
+                   PredictorInterface *user_history_predictor,
+                   PredictorInterface *extra_predictor);
   virtual ~DefaultPredictor();
 
   virtual bool PredictForRequest(const ConversionRequest &request,

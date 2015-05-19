@@ -785,12 +785,10 @@ TEST(UtilTest, StrToFloat) {
   EXPECT_EQ(0.0, Util::StrToFloat("0.0"));
 }
 
-#include "base/push_warning_settings.h"
-#ifdef __GNUC__
+MOZC_GCC_PUSH_WARNING();
 // On GCC, |EXPECT_EQ("", Util::StringPrintf(""))| may cause
 // "warning: zero-length printf format string" so we disable this check.
-#pragma GCC diagnostic ignored "-Wformat-zero-length"
-#endif  // __GNUC__
+MOZC_GCC_DISABLE_WARNING_FILELEVEL(format-zero-length);
 TEST(UtilTest, StringPrintf) {
   // strings
   EXPECT_EQ("", Util::StringPrintf(""));
@@ -836,7 +834,7 @@ TEST(UtilTest, StringPrintf) {
                                             kLongStrB.c_str());
   EXPECT_EQ(kLongStrA + "\t" + kLongStrB + "\n", result);
 }
-#include "base/pop_warning_settings.h"
+MOZC_GCC_POP_WARNING();
 
 TEST(UtilTest, HiraganaToKatakana) {
   {
@@ -3210,7 +3208,7 @@ TEST(UtilTest, Fingerprint32WithSeed_uint32) {
   EXPECT_EQ(num_hash, str_hash) << num_hash << " != " << str_hash;
 }
 
-  // ArabicToWideArabic TEST
+// ArabicToWideArabic TEST
 TEST(UtilTest, ArabicToWideArabicTest) {
   string arabic;
   vector<Util::NumberString> output;
@@ -3273,137 +3271,119 @@ TEST(UtilTest, ArabicToWideArabicTest) {
   EXPECT_EQ(Util::NumberString::NUMBER_KANJI_ARABIC, output[0].style);
 }
 
-  // ArabicToKanji TEST
+namespace {
+const int kMaxCandsInArabicToKanjiTest = 4;
+struct ArabicToKanjiTestData {
+  const char *input;
+  const int expect_num;
+  const char *expect_value[kMaxCandsInArabicToKanjiTest];
+  const Util::NumberString::Style expect_style[kMaxCandsInArabicToKanjiTest];
+};
+}  // namespace
+
+// ArabicToKanji TEST
 TEST(UtilTest, ArabicToKanjiTest) {
-  string arabic;
-  vector<Util::NumberString> output;
+  const Util::NumberString::Style kOldKanji =
+      Util::NumberString::NUMBER_OLD_KANJI;
+  const Util::NumberString::Style kKanji =
+      Util::NumberString::NUMBER_KANJI;
+  const Util::NumberString::Style kHalfArabicKanji =
+      Util::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH;
+  const Util::NumberString::Style kFullArabicKanji =
+      Util::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
 
-  arabic = "2";
-  output.clear();
-  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 2);
-  // "二"
-  EXPECT_EQ("\xE4\xBA\x8C", output[0].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
-  // "弐"
-  EXPECT_EQ("\xE5\xBC\x90", output[1].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
+  const ArabicToKanjiTestData kData[] = {
+    // "零"
+    {"0", 1, {"\xE9\x9B\xB6"}, {kOldKanji}},
+    // "零"
+    {"00000", 1, {"\xE9\x9B\xB6"}, {kOldKanji}},
+    // "二", "弐"
+    {"2", 2, {"\xE4\xBA\x8C", "\xE5\xBC\x90"}, {kKanji, kOldKanji}},
+    // "十", "拾"
+    {"10", 2, {"\xE5\x8D\x81", "\xE6\x8B\xBE"}, {kKanji, kOldKanji}},
+    {"20", 3,
+     // "二十", "弐拾", "廿"
+     {"\xE4\xBA\x8C\xE5\x8D\x81", "\xE5\xBC\x90\xE6\x8B\xBE", "\xE5\xBB\xBF"},
+     {kKanji, kOldKanji, kOldKanji}},
+    {"12345", 4,
+     // "1万2345"
+     {"1" "\xE4\xB8\x87" "2345",
+      // "１万２３４５"
+      "\xEF\xBC\x91\xE4\xB8\x87\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94"
+      "\xEF\xBC\x95",
+      // "一万二千三百四十五"
+      "\xE4\xB8\x80\xE4\xB8\x87\xE4\xBA\x8C\xE5\x8D\x83\xE4\xB8\x89"
+      "\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81\xE4\xBA\x94",
+      // "壱萬弐阡参百四拾五"
+      "\xE5\xA3\xB1\xE8\x90\xAC\xE5\xBC\x90\xE9\x98\xA1\xE5\x8F\x82"
+      "\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE\xE4\xBA\x94"},
+     {kHalfArabicKanji, kFullArabicKanji, kKanji, kOldKanji}},
+    {"100002345", 4,
+     // "1億2345"
+     {"1" "\xE5\x84\x84" "2345",
+      // "１億２３４５"
+      "\xEF\xBC\x91\xE5\x84\x84\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94"
+      "\xEF\xBC\x95",
+      // "一億二千三百四十五"
+      "\xE4\xB8\x80\xE5\x84\x84\xE4\xBA\x8C\xE5\x8D\x83\xE4\xB8\x89"
+      "\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81\xE4\xBA\x94",
+      // "壱億弐阡参百四拾五"
+      "\xE5\xA3\xB1\xE5\x84\x84\xE5\xBC\x90\xE9\x98\xA1\xE5\x8F\x82"
+      "\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE\xE4\xBA\x94"},
+     {kHalfArabicKanji, kFullArabicKanji, kKanji, kOldKanji}},
+    {"18446744073709551615", 4,
+     // "1844京6744兆737億955万1615"
+     {"1844" "\xE4\xBA\xAC" "6744" "\xE5\x85\x86" "737" "\xE5\x84\x84"
+      "955" "\xE4\xB8\x87" "1615",
+      // "１８４４京６７４４兆７３７億９５５万１６１５"
+      "\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x94\xEF\xBC\x94\xE4\xBA\xAC"
+      "\xEF\xBC\x96\xEF\xBC\x97\xEF\xBC\x94\xEF\xBC\x94\xE5\x85\x86"
+      "\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x97\xE5\x84\x84\xEF\xBC\x99"
+      "\xEF\xBC\x95\xEF\xBC\x95\xE4\xB8\x87\xEF\xBC\x91\xEF\xBC\x96"
+      "\xEF\xBC\x91\xEF\xBC\x95",
+      // "千八百四十四京六千七百四十四兆七百三十七億九百五十五万千六百十五"
+      "\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81"
+      "\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD\xE5\x8D\x83\xE4\xB8\x83"
+      "\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86"
+      "\xE4\xB8\x83\xE7\x99\xBE\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x83"
+      "\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81"
+      "\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7\x99\xBE"
+      "\xE5\x8D\x81\xE4\xBA\x94",
+      // "阡八百四拾四京六阡七百四拾四兆七百参拾七億九百五拾五萬阡六百拾五"
+      "\xE9\x98\xA1\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
+      "\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD\xE9\x98\xA1\xE4\xB8\x83"
+      "\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86"
+      "\xE4\xB8\x83\xE7\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83"
+      "\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
+      "\xE4\xBA\x94\xE8\x90\xAC\xE9\x98\xA1\xE5\x85\xAD\xE7\x99\xBE"
+      "\xE6\x8B\xBE\xE4\xBA\x94"},
+     {kHalfArabicKanji, kFullArabicKanji, kKanji, kOldKanji}},
+  };
 
-  arabic = "10";
-  output.clear();
-  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 3);
-  // "十"
-  EXPECT_EQ("\xE5\x8D\x81", output[0].value);
-  // "壱拾"
-  EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE", output[1].value);
-  // "拾"
-  EXPECT_EQ("\xE6\x8B\xBE", output[2].value);
+  for (size_t i = 0; i < ARRAYSIZE(kData); ++i) {
+    vector<Util::NumberString> output;
+    ASSERT_LE(kData[i].expect_num, kMaxCandsInArabicToKanjiTest);
+    EXPECT_TRUE(Util::ArabicToKanji(kData[i].input, &output));
+    ASSERT_EQ(output.size(), kData[i].expect_num) << "i : " << i;
+    for (int j = 0; j < kData[i].expect_num; ++j) {
+      EXPECT_EQ(kData[i].expect_value[j], output[j].value)
+          << "input : " << kData[i].input << "\nj : " << j;
+      EXPECT_EQ(kData[i].expect_style[j], output[j].style)
+          << "input : " << kData[i].input << "\nj : " << j;
+    }
+  }
 
-  arabic = "15";
-  output.clear();
-  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 2);
-  // "十五"
-  EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x94", output[0].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
-  // "壱拾五"
-  EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE\xE4\xBA\x94", output[1].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
-
-  arabic = "20";
-  output.clear();
-  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 3);
-  // "二十"
-  EXPECT_EQ("\xE4\xBA\x8C\xE5\x8D\x81", output[0].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
-  // "弐拾"
-  EXPECT_EQ("\xE5\xBC\x90\xE6\x8B\xBE", output[1].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
-  // "廿"
-  EXPECT_EQ("\xE5\xBB\xBF", output[2].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[2].style);
-
-  arabic = "25";
-  output.clear();
-  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 3);
-  // "二十五"
-  EXPECT_EQ("\xE4\xBA\x8C\xE5\x8D\x81\xE4\xBA\x94", output[0].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
-  // "弐拾五"
-  EXPECT_EQ("\xE5\xBC\x90\xE6\x8B\xBE\xE4\xBA\x94", output[1].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
-  // "廿五"
-  EXPECT_EQ("\xE5\xBB\xBF\xE4\xBA\x94", output[2].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[2].style);
-
-  arabic = "12345";
-  output.clear();
-  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 5);
-  // "一万二千三百四十五"
-  EXPECT_EQ("\xE4\xB8\x80\xE4\xB8\x87\xE4\xBA\x8C\xE5\x8D\x83"
-            "\xE4\xB8\x89\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81"
-            "\xE4\xBA\x94", output[0].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
-
-  // "壱万弐千参百四拾五"
-  EXPECT_EQ("\xE5\xA3\xB1\xE4\xB8\x87\xE5\xBC\x90\xE5\x8D\x83"
-            "\xE5\x8F\x82\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
-            "\xE4\xBA\x94", output[1].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
-
-  // "壱万弐阡参百四拾五"
-  EXPECT_EQ("\xE5\xA3\xB1\xE4\xB8\x87\xE5\xBC\x90\xE9\x98\xA1"
-            "\xE5\x8F\x82\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
-            "\xE4\xBA\x94", output[2].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[2].style);
-
-  // "壱萬弐千参百四拾五"
-  EXPECT_EQ("\xE5\xA3\xB1\xE8\x90\xAC\xE5\xBC\x90\xE5\x8D\x83"
-            "\xE5\x8F\x82\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
-            "\xE4\xBA\x94", output[3].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[3].style);
-
-  // "壱萬弐阡参百四拾五"
-  EXPECT_EQ("\xE5\xA3\xB1\xE8\x90\xAC\xE5\xBC\x90\xE9\x98\xA1"
-            "\xE5\x8F\x82\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
-            "\xE4\xBA\x94", output[4].value);
-  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[4].style);
-
-  arabic = "asf56789";
-  output.clear();
-  EXPECT_FALSE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 0);
-
-  arabic = "0.001";
-  output.clear();
-  EXPECT_FALSE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 0);
-
-  arabic = "-100";
-  output.clear();
-  EXPECT_FALSE(Util::ArabicToKanji(arabic, &output));
-  ASSERT_EQ(output.size(), 0);
-
-  arabic = "18446744073709551615";  // UINT64_MAX  + 1
-  output.clear();
-  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
-  // "千八百四十四京六千七百四十四兆七百三十七億九百五十五万千六百十五"
-  EXPECT_EQ("\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE5\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD"
-            "\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83"
-            "\xE7\x99\xBE\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x83"
-            "\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94"
-            "\xE5\x8D\x81\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83"
-            "\xE5\x85\xAD\xE7\x99\xBE\xE5\x8D\x81\xE4\xBA\x94",
-            output[0].value);
+  const char *kFailInputs[] = {
+    "asf56789", "0.001", "-100", "123456789012345678901"
+  };
+  for (size_t i = 0; i < ARRAYSIZE(kFailInputs); ++i) {
+    vector<Util::NumberString> output;
+    EXPECT_FALSE(Util::ArabicToKanji(kFailInputs[i], &output));
+    ASSERT_EQ(output.size(), 0) << "input : " << kFailInputs[i];
+  }
 }
 
-  // ArabicToSeparatedArabic TEST
+// ArabicToSeparatedArabic TEST
 TEST(UtilTest, ArabicToSeparatedArabicTest) {
   string arabic;
   vector<Util::NumberString> output;
@@ -3462,7 +3442,7 @@ TEST(UtilTest, ArabicToSeparatedArabicTest) {
   EXPECT_EQ("18,446,744,073,709,551,616", output[0].value);
 }
 
-  // ArabicToOtherForms
+// ArabicToOtherForms
 TEST(UtilTest, ArabicToOtherFormsTest) {
   string arabic;
   vector<Util::NumberString> output;
@@ -3509,7 +3489,7 @@ TEST(UtilTest, ArabicToOtherFormsTest) {
   EXPECT_FALSE(Util::ArabicToOtherForms(arabic, &output));
 }
 
-  // ArabicToOtherRadixes
+// ArabicToOtherRadixes
 TEST(UtilTest, ArabicToOtherRadixesTest) {
   string arabic;
   vector<Util::NumberString> output;

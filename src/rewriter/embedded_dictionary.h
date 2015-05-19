@@ -88,6 +88,7 @@ class EmbeddedDictionary {
   const Token *token_;
   const size_t size_;
 };
-}  // mozc
+
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_EMBEDDED_DICTIONARY_H_

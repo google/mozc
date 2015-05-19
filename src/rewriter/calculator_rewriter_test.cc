@@ -29,13 +29,16 @@
 
 #include <string>
 
+#include "base/base.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/conversion_request.h"
+#include "converter/converter_mock.h"
 #include "converter/segments.h"
-#include "rewriter/calculator_rewriter.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
+#include "rewriter/calculator_rewriter.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -98,6 +101,11 @@ class CalculatorRewriterTest : public testing::Test {
     return calculator_mock_;
   }
 
+  CalculatorRewriter *BuildCalculatorRewriterWithConverterMock() {
+    converter_mock_.reset(new ConverterMock);
+    return new CalculatorRewriter(converter_mock_.get());
+  }
+
   void SetCalculatePair(const string &key,
                         const string &value,
                         bool return_value) {
@@ -118,16 +126,18 @@ class CalculatorRewriterTest : public testing::Test {
 
  private:
   CalculatorMock calculator_mock_;
+  scoped_ptr<ConverterInterface> converter_mock_;
 };
 
 TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
-  CalculatorRewriter calculator_rewriter;
+  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+      BuildCalculatorRewriterWithConverterMock());
 
   {
     Segment segment;
     segment.set_key("key");
     // Insertion should be failed if segment has no candidate beforehand
-    EXPECT_FALSE(InsertCandidate(calculator_rewriter, "value", 0, &segment));
+    EXPECT_FALSE(InsertCandidate(*calculator_rewriter, "value", 0, &segment));
   }
 
   // Test insertion at each position of candidates list
@@ -137,7 +147,7 @@ TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
     AddCandidate("key", "test", &segment);
     AddCandidate("key", "test2", &segment);
 
-    EXPECT_TRUE(InsertCandidate(calculator_rewriter, "value", i, &segment));
+    EXPECT_TRUE(InsertCandidate(*calculator_rewriter, "value", i, &segment));
     const Segment::Candidate &candidate = segment.candidate(i);
     EXPECT_EQ(candidate.value, "value");
     EXPECT_EQ(candidate.content_value, "value");
@@ -153,17 +163,19 @@ TEST_F(CalculatorRewriterTest, BasicTest) {
   // Pretend "key" is calculated to "value".
   calculator_mock().SetCalculatePair("key", "value", true);
 
-  CalculatorRewriter calculator_rewriter;
+  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+      BuildCalculatorRewriterWithConverterMock());
   const int counter_at_first = calculator_mock().calculation_counter();
+  const ConversionRequest request;
 
   Segments segments;
   SetSegment("test", "test", &segments);
-  calculator_rewriter.Rewrite(&segments);
+  calculator_rewriter->Rewrite(request, &segments);
   EXPECT_EQ(GetIndexOfCalculatedCandidate(segments), -1);
   EXPECT_EQ(calculator_mock().calculation_counter(), counter_at_first + 1);
 
   SetSegment("key", "key", &segments);
-  calculator_rewriter.Rewrite(&segments);
+  calculator_rewriter->Rewrite(request, &segments);
   int index = GetIndexOfCalculatedCandidate(segments);
   EXPECT_NE(index, -1);
   EXPECT_EQ(segments.segment(0).candidate(index).value, "value");
@@ -176,7 +188,12 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   // Pretend "1+1=" is calculated to "2".
   calculator_mock().SetCalculatePair("1+1=", "2", true);
 
-  CalculatorRewriter calculator_rewriter;
+  // Since this test depends on the actual implementation of
+  // Converter::ResizeSegments(), we cannot use converter mock here. However,
+  // the test itself is independent of data.
+  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+      new CalculatorRewriter(ConverterFactory::GetConverter()));
+  const ConversionRequest request;
 
   // Push back separated segments.
   Segments segments;
@@ -185,7 +202,7 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   AddSegment("1", "1", &segments);
   AddSegment("=", "=", &segments);
 
-  calculator_rewriter.Rewrite(&segments);
+  calculator_rewriter->Rewrite(request, &segments);
   EXPECT_EQ(segments.segments_size(), 1);  // merged
 
   int index = GetIndexOfCalculatedCandidate(segments);
@@ -213,13 +230,15 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
 
   // Pretend kExpression is calculated to "3"
   calculator_mock().SetCalculatePair(kExpression, "3", true);
+  const ConversionRequest request;
 
-  CalculatorRewriter calculator_rewriter;
+  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+      BuildCalculatorRewriterWithConverterMock());
 
   Segments segments;
   AddSegment(kExpression, kExpression, &segments);
 
-  calculator_rewriter.Rewrite(&segments);
+  calculator_rewriter->Rewrite(request, &segments);
   const int index = GetIndexOfCalculatedCandidate(segments);
 
   EXPECT_EQ(segments.segment(0).candidate(index).description, description);
@@ -232,7 +251,13 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
   config::ConfigHandler::GetDefaultConfig(&config);
 
   calculator_mock().SetCalculatePair("1+1=", "2", true);
-  CalculatorRewriter calculator_rewriter;
+  const ConversionRequest request;
+
+  // Since this test depends on the actual implementation of
+  // Converter::ResizeSegments(), we cannot use converter mock here. However,
+  // the test itself is independent of data.
+  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+      new CalculatorRewriter(ConverterFactory::GetConverter()));
 
   {
     Segments segments;
@@ -242,7 +267,7 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
     AddSegment("=", "=", &segments);
     config.set_use_calculator(true);
     config::ConfigHandler::SetConfig(config);
-    EXPECT_TRUE(calculator_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(calculator_rewriter->Rewrite(request, &segments));
   }
 
   {
@@ -253,7 +278,7 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
     AddSegment("=", "=", &segments);
     config.set_use_calculator(false);
     config::ConfigHandler::SetConfig(config);
-    EXPECT_FALSE(calculator_rewriter.Rewrite(&segments));
+    EXPECT_FALSE(calculator_rewriter->Rewrite(request, &segments));
   }
 }
 }  // namespace mozc

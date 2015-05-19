@@ -44,7 +44,8 @@
 
 namespace mozc {
 
-TextDictionaryLoader::TextDictionaryLoader() {
+TextDictionaryLoader::TextDictionaryLoader(const POSMatcher &pos_matcher)
+    : zip_code_id_(pos_matcher.GetZipcodeId()) {
 }
 
 TextDictionaryLoader::~TextDictionaryLoader() {
@@ -62,8 +63,8 @@ bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
     return true;
   }
   if (Util::StartsWith(label, "ZIP_CODE")) {
-    token->lid = POSMatcher::GetZipcodeId();
-    token->rid = POSMatcher::GetZipcodeId();
+    token->lid = zip_code_id_;
+    token->rid = zip_code_id_;
     return true;
   }
 

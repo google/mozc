@@ -57,20 +57,26 @@
   'cflags': ['<@(qt_cflags)'],
   'include_dirs': ['<@(qt_include_dirs)'],
   # link settings
+  # TODO(yukawa): Use 'link_settings' so that linker settings can be passed
+  #     to executables and loadable modules.
   'conditions': [
     ['OS=="mac"', {
       'conditions': [
         ['qt_dir', {
-          'xcode_settings': {
-            'LIBRARY_SEARCH_PATHS': [
-              '<(qt_dir)/lib',
+          # Supposing Qt libraries in qt_dir will be built as static libraries.
+          'link_settings': {
+            'xcode_settings': {
+              'LIBRARY_SEARCH_PATHS': [
+                '<(qt_dir)/lib',
+              ],
+            },
+            'libraries': [
+              '<(qt_dir)/lib/libQtCore.a',
+              '<(qt_dir)/lib/libQtGui.a',
+              '/usr/lib/libz.dylib',  # Qt on Mac always links to system zlib.
             ],
           },
-          'libraries': [
-            '<(qt_dir)/lib/libQtCore.a',
-            '<(qt_dir)/lib/libQtGui.a',
-          ],
-        }, {
+        }, {  # else
           'xcode_settings': {
             'LIBRARY_SEARCH_PATHS': [
               '<(qt_dir_env)/lib',

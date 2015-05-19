@@ -162,6 +162,10 @@ class Util {
         NUMBER_SEPARATED_ARABIC_HALFWIDTH,
         // "１２３，４５６，７８９"
         NUMBER_SEPARATED_ARABIC_FULLWIDTH,
+        // "123億456万7890"
+        NUMBER_ARABIC_AND_KANJI_HALFWIDTH,
+        // "１２３億４５６万７８９０"
+        NUMBER_ARABIC_AND_KANJI_FULLWIDTH,
         // "一億二千三百四十五万六千七百八十九"
         NUMBER_KANJI,
         // "壱億弐千参百四拾五万六千七百八拾九"
@@ -172,14 +176,14 @@ class Util {
         NUMBER_ROMAN_SMALL,
         // "①②③"
         NUMBER_CIRCLED,
+        // "ニ〇〇"
+        NUMBER_KANJI_ARABIC,
         // "0x4d2" (1234 in decimal)
         NUMBER_HEX,
         // "02322" (1234 in decimal)
         NUMBER_OCT,
         // "0b10011010010" (1234 in decimal)
         NUMBER_BIN,
-        // "ニ〇〇"
-        NUMBER_KANJI_ARABIC,
     };
 
     NumberString(const string &value, const string &description, Style style)

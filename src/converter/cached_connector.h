@@ -42,6 +42,7 @@ namespace mozc {
 class CachedConnector : public ConnectorInterface {
  public:
   // Use cache that defined at other place.
+  // cache_size should be 2^k form of value.
   CachedConnector(ConnectorInterface *connector,
                   bool *cache_initialized,
                   int *cache_key,
@@ -66,6 +67,8 @@ class CachedConnector : public ConnectorInterface {
   int *cache_key_;
   int *cache_value_;
   const int cache_size_;
+  const int hash_mask_;
+
 };
 }  // namespace mozc
 

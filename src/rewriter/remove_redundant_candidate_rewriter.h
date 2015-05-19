@@ -38,6 +38,7 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
 class RemoveRedundantCandidateRewriter : public RewriterInterface {
@@ -45,9 +46,11 @@ class RemoveRedundantCandidateRewriter : public RewriterInterface {
   RemoveRedundantCandidateRewriter();
   virtual ~RemoveRedundantCandidateRewriter();
 
-  bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 
   int capability() const;
 };
+
 }  // namespace mozc
 #endif  // MOZC_REWRITER_REMOVE_REDUNDANT_CANDIDATE_REWRITER_H_

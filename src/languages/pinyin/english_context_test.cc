@@ -66,15 +66,19 @@ class EnglishMockDictionary : public EnglishDictionaryInterface {
     output->clear();
 
     if (prefix.empty()) {
-      return true;
+      return false;
     }
 
+    string normalized_prefix = prefix;
+    Util::LowerString(&normalized_prefix);
+
     for (size_t i = 0; i < word_list_.size(); ++i) {
-      if (Util::StartsWith(word_list_[i], prefix)) {
+      if (Util::StartsWith(word_list_[i], normalized_prefix)) {
         output->push_back(word_list_[i]);
       }
     }
-    return true;
+
+    return !output->empty();
   }
 
   MOCK_METHOD1(LearnWord, void(const string &word));
@@ -411,11 +415,6 @@ TEST_F(EnglishContextTest, LongInput) {
 }
 
 TEST_F(EnglishContextTest, FullWidthMode) {
-  // "ａ"
-  const char *kFullA = "\xEF\xBD\x81";
-  // "ａａａ"
-  const char *kFullAaa = "\xEF\xBD\x81\xEF\xBD\x81\xEF\xBD\x81";
-
   session_config_->full_width_word_mode = true;
 
   {
@@ -426,16 +425,19 @@ TEST_F(EnglishContextTest, FullWidthMode) {
 
   {
     SCOPED_TRACE("Commits full width a");
+    EXPECT_CALL(dictionary_, LearnWord("a")).Times(1);
     context_->Commit();
-    CheckContext("", kFullA, 0);
+    // "ａ"
+    CheckContext("", "\xEF\xBD\x81", 0);
   }
 
   InsertCharacterChars("va");
 
   {
-    SCOPED_TRACE("Commits full width aaa");
+    SCOPED_TRACE("Selects aaa with full width mode");
+    EXPECT_CALL(dictionary_, LearnWord("aaa")).Times(1);
     context_->SelectCandidate(0);
-    CheckContext("", kFullAaa, 0);
+    CheckContext("", "aaa", 0);
   }
 }
 

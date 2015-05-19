@@ -36,6 +36,9 @@
 #include "renderer/renderer_command.pb.h"
 
 namespace mozc {
+namespace client {
+class SendCommandInterface;
+}  // namespace client
 namespace renderer {
 namespace gtk {
 
@@ -59,11 +62,15 @@ class GtkWindowInterface {
   virtual void Resize(const Size &size) = 0;
   virtual void Initialize() = 0;
   virtual void Redraw() = 0;
+  virtual void ReloadFontConfig(const string &font_description) = 0;
 
   virtual Size Update(const commands::Candidates &candidates) = 0;
 
   // This function is only avaialbe for CandidateWindow.
   virtual Rect GetCandidateColumnInClientCord() const = 0;
+
+  virtual bool SetSendCommandInterface(
+      client::SendCommandInterface *send_command_interface) = 0;
 };
 
 }  // namespace gtk

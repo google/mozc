@@ -65,6 +65,9 @@
       'cflags': [
         '<!@(<(pkg_config_command) --cflags <@(pkg_config_libs))',
       ],
+      'libraries': [
+        '-lz',
+      ],
       'defines': [
         '<@(scim_defines)',
       ],

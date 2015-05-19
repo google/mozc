@@ -46,6 +46,7 @@
 #include <string>
 
 #include "base/namespace.h"
+#include "base/port.h"
 
 
 namespace mozc {
@@ -62,37 +63,44 @@ class NullLogStream;
 
 class Logging {
  public:
-  // Initialize log stream. argv0 is the program name commonly
+  // Initializes log stream. argv0 is the program name commonly
   // storead as argv[0].
   // The default log file is <USER_PROFILE>/<program_name>.log
   static void           InitLogStream(const char *argv0 = "UNKNOWN");
 
-  // Close the logging stream
+  // Closes the logging stream
   static void           CloseLogStream();
 
-  // Get logging stream. The log message can be written to the stream
+  // Gets logging stream. The log message can be written to the stream
   static ostream       &GetLogStream();
 
-  // Get NullLogStream for NO_LOGGING mode
+  // Gets NullLogStream for NO_LOGGING mode
   static NullLogStream &GetNullLogStream();
 
-  // Convert LogSeverity to the string name
+  // Converts LogSeverity to the string name
   static const char    *GetLogSeverityName(LogSeverity severity);
 
-  // return "YYYY-MM-DD HH:MM:SS PID TID", e.g. "2008 11-16 19:40:21 100 20"
+  // Returns "YYYY-MM-DD HH:MM:SS PID TID", e.g. "2008 11-16 19:40:21 100 20"
   static string         GetLogMessageHeader();
 
-  // return FLAGS_v
+  // Returns FLAGS_v
   static int            GetVerboseLevel();
 
-  // set FLAGS_v
+  // Sets FLAGS_v
   static void           SetVerboseLevel(int verboselevel);
 
-  // set Verbose Level for Config.
+  // Sets Verbose Level for Config.
   // Since Config dialog will overwrite -v option, we separate
   // config_verbose_level and FLAGS_v.
   // real_config_level = max(FLAGS_v, config_verbose_level);
   static void           SetConfigVerboseLevel(int verboselevel);
+
+  // Gets an escape sequence to colorize log messages on tty devices.
+  static const char *GetBeginColorEscapeSequence(LogSeverity severity);
+  static const char *GetEndColorEscapeSequence();
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(Logging);
 };
 
 class LogFinalizer {
@@ -155,7 +163,7 @@ class NullLogFinalizer {
  private:
   LogSeverity severity_;
 };
-}  // mozc
+}  // namespace mozc
 
 // ad-hoc porting of google-glog
 #ifdef NO_LOGGING   // don't use logging feature.
@@ -183,23 +191,31 @@ class NullLogFinalizer {
 
 #define LOG(severity) \
   mozc::LogFinalizer(mozc::LOG_##severity) & mozc::Logging::GetLogStream() \
-  << mozc::Logging::GetLogMessageHeader() \
-  << " LOG(" << mozc::Logging::GetLogSeverityName(mozc::LOG_##severity) << ") " \
-  << __FILE__ << "(" << __LINE__ << ") "
+  << mozc::Logging::GetLogMessageHeader() << " " \
+  << __FILE__ << "(" << __LINE__ << ") " \
+  << mozc::Logging::GetBeginColorEscapeSequence(mozc::LOG_##severity) \
+  << "LOG(" << mozc::Logging::GetLogSeverityName(mozc::LOG_##severity) << ")" \
+  << mozc::Logging::GetEndColorEscapeSequence() << " " \
 
 #define LOG_IF(severity, condition) \
   (!(condition)) ? (void) 0 : \
   mozc::LogFinalizer(mozc::LOG_##severity) & mozc::Logging::GetLogStream() \
-  << mozc::Logging::GetLogMessageHeader() \
-  << " LOG(" << mozc::Logging::GetLogSeverityName(mozc::LOG_##severity) << ") " \
-  << __FILE__ << "(" << __LINE__ << ") [" << #condition << "] "
+  << mozc::Logging::GetLogMessageHeader() << " " \
+  << __FILE__ << "(" << __LINE__ << ") " \
+  << mozc::Logging::GetBeginColorEscapeSequence(mozc::LOG_##severity) \
+  << "LOG(" << mozc::Logging::GetLogSeverityName(mozc::LOG_##severity) << ")" \
+  << mozc::Logging::GetEndColorEscapeSequence() \
+  << " [" << #condition << "] "
 
 #define CHECK(condition) \
   (condition) ? (void) 0 : \
   mozc::LogFinalizer(mozc::LOG_FATAL) & \
-  mozc::Logging::GetLogStream() << mozc::Logging::GetLogMessageHeader() \
-  << " CHECK " << __FILE__ << "(" << __LINE__ << ") [" << #condition << "] "
-
+  mozc::Logging::GetLogStream() << mozc::Logging::GetLogMessageHeader() << " " \
+  << __FILE__ << "(" << __LINE__ << ") " \
+  << mozc::Logging::GetBeginColorEscapeSequence(mozc::LOG_FATAL) \
+  << "CHECK" \
+  << mozc::Logging::GetEndColorEscapeSequence() \
+  << " [" << #condition << "] "
 #endif  // end NO_LOGGING
 
 #define VLOG_IS_ON(verboselevel) \

@@ -39,11 +39,13 @@
 namespace mozc {
 
 struct Node;
+class POSMatcher;
 class SuppressionDictionary;
 
 class CandidateFilter {
  public:
-  explicit CandidateFilter();
+  CandidateFilter(const SuppressionDictionary *suppression_dictionary,
+                  const POSMatcher *pos_matcher);
   virtual ~CandidateFilter();
 
   enum ResultType {
@@ -64,9 +66,11 @@ class CandidateFilter {
       const Segment::Candidate *candidate,
       const vector<const Node *> nodes);
 
+  const SuppressionDictionary *suppression_dictionary_;
+  const POSMatcher *pos_matcher_;
+
   set<string> seen_;
   const Segment::Candidate *top_candidate_;
-  SuppressionDictionary *suppression_dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(CandidateFilter);
 };

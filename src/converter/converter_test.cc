@@ -30,6 +30,7 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -37,17 +38,22 @@
 #include "config/config_handler.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
+#include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_allocator.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "converter/user_data_manager_interface.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
+#include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
+#include "prediction/user_history_predictor.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
-#include "rewriter/rewriter_interface.h"
 
 #ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
 #include "converter/connection_data_injected_environment.h"
@@ -89,10 +95,8 @@ class ConverterTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
     SuffixDictionaryFactory::SetSuffixDictionary(NULL);
-
-    PredictorFactory::SetPredictor(NULL);
-    RewriterFactory::SetRewriter(NULL);
   }
+
 
 };
 
@@ -127,64 +131,97 @@ string ContextAwareConvert(const string &first_key,
   Segments segments;
   EXPECT_TRUE(converter->StartConversion(&segments, first_key));
 
-  int position = -1;
-  for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    if (first_value == segments.segment(0).candidate(i).value) {
-      position = static_cast<int>(i);
+  string converted;
+  int segment_num = 0;
+  while (1) {
+    int position = -1;
+    for (size_t i = 0; i < segments.segment(segment_num).candidates_size();
+         ++i) {
+      const string &value = segments.segment(segment_num).candidate(i).value;
+      if (first_value.substr(converted.size(), value.size()) == value) {
+        position = static_cast<int>(i);
+        converted += value;
+        break;
+      }
+    }
+
+    if (position < 0) {
+      break;
+    }
+
+    EXPECT_TRUE(converter->CommitSegmentValue(&segments, 0, position))
+        << first_value;
+
+    ++segment_num;
+
+    if (first_value == converted) {
       break;
     }
   }
-  EXPECT_GE(position, 0) << first_value;
-
-  EXPECT_TRUE(converter->CommitSegmentValue(&segments, 0, position))
-      << first_value;
+  EXPECT_EQ(first_value, converted) << first_value;
   EXPECT_TRUE(converter->FinishConversion(&segments));
 
   EXPECT_TRUE(converter->StartConversion(&segments, second_key));
-  EXPECT_EQ(2, segments.segments_size());
+  EXPECT_EQ(segment_num + 1, segments.segments_size());
 
-  return segments.segment(1).candidate(0).value;
+  return segments.segment(segment_num).candidate(0).value;
 }
 }  // anonymous namespace
 
 TEST_F(ConverterTest, ContextAwareConversionTest) {
+  // Desirable context aware conversions
   // EXPECT_EQ("一髪", ContextAwareConvert("きき", "危機", "いっぱつ"));
-  // EXPECT_EQ("大", ContextAwareConvert("きょうと", "京都", "だい"));
-  // EXPECT_EQ("点", ContextAwareConvert("もんだい", "問題", "てん"));
-  // EXPECT_EQ("陽水", ContextAwareConvert("いのうえ", "井上", "ようすい"));
-  // EXPECT_EQ("々", ContextAwareConvert("ねん", "年", "ねん"));
-  // EXPECT_EQ("々", ContextAwareConvert("ひと", "人", "びと"));
-
   EXPECT_EQ("\xE4\xB8\x80\xE9\xAB\xAA",
             ContextAwareConvert(
                 "\xE3\x81\x8D\xE3\x81\x8D",
                 "\xE5\x8D\xB1\xE6\xA9\x9F",
                 "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4"));
+
+  // EXPECT_EQ("大", ContextAwareConvert("きょうと", "京都", "だい"));
   EXPECT_EQ("\xE5\xA4\xA7",
             ContextAwareConvert(
                 "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
                 "\xE4\xBA\xAC\xE9\x83\xBD",
                 "\xE3\x81\xA0\xE3\x81\x84"));
+
+  // EXPECT_EQ("点", ContextAwareConvert("もんだい", "問題", "てん"));
   EXPECT_EQ("\xE7\x82\xB9",
             ContextAwareConvert(
                 "\xE3\x82\x82\xE3\x82\x93\xE3\x81\xA0\xE3\x81\x84",
                 "\xE5\x95\x8F\xE9\xA1\x8C",
                 "\xE3\x81\xA6\xE3\x82\x93"));
+
+  // EXPECT_EQ("陽水", ContextAwareConvert("いのうえ", "井上", "ようすい"));
   EXPECT_EQ("\xE9\x99\xBD\xE6\xB0\xB4",
             ContextAwareConvert(
                 "\xE3\x81\x84\xE3\x81\xAE\xE3\x81\x86\xE3\x81\x88",
                 "\xE4\xBA\x95\xE4\xB8\x8A",
                 "\xE3\x82\x88\xE3\x81\x86\xE3\x81\x99\xE3\x81\x84"));
-  EXPECT_EQ("\xE3\x80\x85",
-            ContextAwareConvert(
-                "\xE3\x81\xAD\xE3\x82\x93",
-                "\xE5\xB9\xB4",
-                "\xE3\x81\xAD\xE3\x82\x93"));
-  EXPECT_EQ("\xE3\x80\x85",
-            ContextAwareConvert(
-                "\xE3\x81\xB2\xE3\x81\xA8",
-                "\xE4\xBA\xBA",
-                "\xE3\x81\xB3\xE3\x81\xA8"));
+
+  // Undesirable context aware conversions
+  // EXPECT_NE("宗号", ContextAwareConvert("19じ", "19時", "しゅうごう"));
+  EXPECT_NE("\xE5\xAE\x97\xE5\x8F\xB7", ContextAwareConvert(
+      "19\xE3\x81\x98",
+      "19\xE6\x99\x82",
+      "\xE3\x81\x97\xE3\x82\x85\xE3\x81\x86\xE3\x81\x94\xE3\x81\x86"));
+
+  // EXPECT_NE("な前", ContextAwareConvert("の", "の", "なまえ"));
+  EXPECT_NE("\xE3\x81\xAA\xE5\x89\x8D", ContextAwareConvert(
+      "\xE3\x81\xAE",
+      "\xE3\x81\xAE",
+      "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88"));
+
+  // EXPECT_NE("し料", ContextAwareConvert("の", "の", "しりょう"));
+  EXPECT_NE("\xE3\x81\x97\xE6\x96\x99", ContextAwareConvert(
+      "\xE3\x81\xAE",
+      "\xE3\x81\xAE",
+      "\xE3\x81\x97\xE3\x82\x8A\xE3\x82\x87\xE3\x81\x86"));
+
+  // EXPECT_NE("し礼賛", ContextAwareConvert("ぼくと", "僕と", "しらいさん"));
+  EXPECT_NE("\xE3\x81\x97\xE7\xA4\xBC\xE8\xB3\x9B", ContextAwareConvert(
+      "\xE3\x81\xBC\xE3\x81\x8F\xE3\x81\xA8",
+      "\xE5\x83\x95\xE3\x81\xA8",
+      "\xE3\x81\x97\xE3\x82\x89\xE3\x81\x84\xE3\x81\x95\xE3\x82\x93"));
 }
 
 TEST_F(ConverterTest, CommitSegmentValue) {
@@ -388,8 +425,6 @@ TEST_F(ConverterTest, Regression3437022) {
   EXPECT_TRUE(converter->StartConversion(
       &segments, kKey1 + kKey2));
 
-  EXPECT_NE(1, segments.conversion_segments_size());
-
   int rest_size = 0;
   for (size_t i = 1; i < segments.conversion_segments_size(); ++i) {
     rest_size += Util::CharsLen(
@@ -397,8 +432,10 @@ TEST_F(ConverterTest, Regression3437022) {
   }
 
   // Expand segment so that the entire part will become one segment
-  EXPECT_TRUE(converter->ResizeSegment(
-      &segments, ConversionRequest(), 0, rest_size));
+  if (rest_size > 0) {
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, ConversionRequest(), 0, rest_size));
+  }
 
   EXPECT_EQ(1, segments.conversion_segments_size());
   EXPECT_NE(kValue1 + kValue2,
@@ -748,23 +785,22 @@ TEST_F(ConverterTest, Predict_SetKey) {
       {Segments::PARTIAL_SUGGESTION, kPredictionKey, true},
   };
 
-  ConverterImpl *converter;
-  converter = dynamic_cast<ConverterImpl*>(ConverterFactory::GetConverter());
-
-  CHECK(converter);
-
   class StubPredictor : public PredictorInterface {
-    bool Predict(Segments *segments) const { return true; };
+    bool Predict(Segments *segments) const {
+      return true;
+    };
   };
-  StubPredictor predictor;
 
   class StubRewriter : public RewriterInterface {
-    bool Rewrite(Segments *segments) const { return true; };
+    bool Rewrite(const ConversionRequest &request, Segments *segments) const {
+      return true;
+    };
   };
-  StubRewriter rewriter;
 
-  PredictorFactory::SetPredictor(&predictor);
-  RewriterFactory::SetRewriter(&rewriter);
+  scoped_ptr<ConverterImpl> converter(new ConverterImpl(new StubPredictor,
+                                                        new StubRewriter));
+  CHECK(converter.get());
+
   // Note that TearDown method will reset above stubs.
 
   for (size_t i = 0; i < ARRAYSIZE(test_data_list); ++i) {
@@ -824,7 +860,9 @@ TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
   }
 }
 
-TEST_F(ConverterTest, StartPredictionForRequest_Jyosushi) {
+// TODO(toshiyuki): Current test is dictionary data dependent and
+// we are not using preceding text for now. Make this enabled later.
+TEST_F(ConverterTest, DISABLED_StartPredictionForRequest_Jyosushi) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
   // To see preceding text helps prediction after number characters, consider
   // the case where user converts "ひき".

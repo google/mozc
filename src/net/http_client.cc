@@ -30,19 +30,23 @@
 #include "net/http_client.h"
 
 
+#ifdef MOZC_ENABLE_HTTP_CLIENT
 #if defined(OS_WINDOWS)
 #include <windows.h>
 #include <wininet.h>
 #elif defined(HAVE_CURL)
-#include "curl/curl.h"
+#include <curl/curl.h>
 #endif
+#endif  // MOZC_ENABLE_HTTP_CLIENT
 
 #include "base/base.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "net/http_client_common.h"
+#ifdef MOZC_ENABLE_HTTP_CLIENT
 #include "net/http_client_mac.h"
 #include "net/proxy_manager.h"
+#endif  // MOZC_ENABLE_HTTP_CLIENT
 
 namespace mozc {
 // We use a dummy user agent.
@@ -50,6 +54,7 @@ const char *kUserAgent = "Mozilla/5.0";
 const int kOKResponseCode = 200;
 
 namespace {
+#if defined(MOZC_ENABLE_HTTP_CLIENT)
 class HTTPStream {
  public:
   HTTPStream(string *output_string, ostream *output_stream,
@@ -396,7 +401,7 @@ bool RequestInternal(HTTPMethodType type,
                                         output_string, output_stream);
 }
 
-#else   // !defined(OS_WINDOWS) && !defined(OS_MACOSX)
+#elif defined(HAVE_CURL)
 
 class CurlInitializer {
  public:
@@ -541,7 +546,26 @@ bool RequestInternal(HTTPMethodType type,
 
   return result;
 }
+#else
+// None of OS_WINDOWS/OS_MACOSX/HAVE_CURL is defined.
+#error "HttpClient does not support your platform."
 #endif
+#else
+// MOZC_ENABLE_HTTP_CLIENT is not defined
+MOZC_COMPILE_MESSAGE("HTTPClient is disabled.");
+bool RequestInternal(HTTPMethodType type,
+                     const string &url,
+                     const char *post_data,
+                     size_t post_size,
+                     const HTTPClient::Option &option,
+                     string *output_string,
+                     ostream *output_stream) {
+  // Null implementation.
+  LOG(ERROR) << "HttpClient is not enabled.";
+  return false;
+}
+#endif  // MOZC_ENABLE_HTTP_CLIENT
+
 }  // namespace
 
 class HTTPClientImpl: public HTTPClientInterface {

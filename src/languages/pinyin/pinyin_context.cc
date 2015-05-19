@@ -116,26 +116,44 @@ void PinyinContext::ClearCommitText() {
 }
 
 bool PinyinContext::MoveCursorRight() {
+  if (context_->unselectCandidates()) {
+    return true;
+  }
   return context_->moveCursorRight();
 }
 
 bool PinyinContext::MoveCursorLeft() {
+  if (context_->unselectCandidates()) {
+    return true;
+  }
   return context_->moveCursorLeft();
 }
 
 bool PinyinContext::MoveCursorRightByWord() {
+  if (context_->unselectCandidates()) {
+    return true;
+  }
   return context_->moveCursorRightByWord();
 }
 
 bool PinyinContext::MoveCursorLeftByWord() {
+  if (context_->unselectCandidates()) {
+    return true;
+  }
   return context_->moveCursorLeftByWord();
 }
 
 bool PinyinContext::MoveCursorToBeginning() {
+  if (context_->unselectCandidates()) {
+    return true;
+  }
   return context_->moveCursorToBegin();
 }
 
 bool PinyinContext::MoveCursorToEnd() {
+  if (context_->unselectCandidates()) {
+    return true;
+  }
   return context_->moveCursorToEnd();
 }
 

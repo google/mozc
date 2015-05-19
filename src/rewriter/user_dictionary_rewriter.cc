@@ -32,6 +32,7 @@
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 
 namespace mozc {
@@ -48,7 +49,8 @@ int UserDictionaryRewriter::capability() const {
 // Since user expects that user-dictionary candidates may appear
 // on the top, we simply move user-dictoinary-candidate just
 // "after" the top candidate.
-bool UserDictionaryRewriter::Rewrite(Segments *segments) const {
+bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
+                                     Segments *segments) const {
   DCHECK(segments);
 
   bool modified = false;

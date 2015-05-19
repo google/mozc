@@ -49,6 +49,12 @@
 #endif  // qDebugBackup
 #endif
 
+// Show the build number on the title for debugging when the build
+// configuration is official dev channel.
+#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#define MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
+
 #include <QtCore/QTextCodec>
 #include <QtGui/QApplication>
 #include <QtGui/QtGui>
@@ -59,7 +65,9 @@
 #include "base/singleton.h"
 #include "base/scoped_cftyperef.h"
 #include "base/util.h"
+#ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"
+#endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 
 namespace mozc {
 namespace gui {
@@ -139,9 +147,9 @@ class TranslationDataImpl {
   QTranslator default_translator_;
   QString locale_name_;
   QFont font_;
-#ifdef CHANNEL_DEV
+#ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
   WindowTitleModifier window_title_modifier_;
-#endif
+#endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 };
 
 TranslationDataImpl::TranslationDataImpl()
@@ -192,11 +200,11 @@ TranslationDataImpl::TranslationDataImpl()
   }
 #endif
 
-#ifdef CHANNEL_DEV
-  // Install WindowTilteModifier for dev channel
+#ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+  // Install WindowTilteModifier for official dev channel
   // append a special footer (Dev x.x.x) to the all Windows.
   qApp->installEventFilter(&window_title_modifier_);
-#endif
+#endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 
 #ifdef OS_LINUX
   // Use system default messages.

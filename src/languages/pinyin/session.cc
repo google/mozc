@@ -49,6 +49,30 @@
 #include "session/commands.pb.h"
 #include "session/key_event_util.h"
 
+// To implement AutoCommit correctly, we implemented following steps.
+//
+// 1. Calls SelectFocusedCandidate() and fills protocol buffers with current
+//    context.
+// 2. Discards a current context and creates a Punctuation context.
+// 3. Inserts a character, which triggered AutoCommit.
+// 4. Calls SelectFocusedCandidate() and appends new commit text.
+// 5. Discards a Punctuation context and a create context.
+//
+// But it is not a natural implementation because filling a protocol buffer is a
+// task of SessionConverter.  I think following implementation is better.
+//
+// 1. Stores all contexts on SessionConverter. These contexts are not discarded
+//    until Session instance is destructed.
+// 2. Implements a new method for AutoCommit on SessionConverter.
+// 3. Session simply calls a new method. SessionConverter commits a current
+//    context, inserts a character which triggered AutoCommit to Punctuation
+//    context, commits Punctuation context, and merges a commit text of these
+//    contexts.
+//
+// TODO(hsumita): Refactors Session and SessionConverter to store all contexts
+// on SessionConverter. (But it might be hard to rewrite
+// session_converter_test.cc)
+
 namespace mozc {
 namespace pinyin {
 
@@ -69,6 +93,7 @@ Session::Session()
     : conversion_mode_(NONE),
       next_conversion_mode_(NONE),
       session_config_(new SessionConfig),
+      is_already_commited_(false),
       create_session_time_(Util::GetTime()),
       last_command_time_(0),
       last_config_updated_(0) {
@@ -94,9 +119,15 @@ bool Session::SendKey(commands::Command *command) {
   DCHECK(command);
 
   last_command_time_ = Util::GetTime();
+  is_already_commited_ = false;
+
   const bool consumed = ProcessKeyEvent(command);
   command->mutable_output()->set_consumed(consumed);
-  converter_->PopOutput(command->mutable_output());
+
+  if (!is_already_commited_) {
+    converter_->PopOutput(command->mutable_output());
+  }
+
   SwitchConversionMode(next_conversion_mode_);
 
   DLOG(INFO) << command->DebugString();
@@ -120,13 +151,18 @@ bool Session::SendCommand(commands::Command *command) {
   DCHECK(command);
 
   last_command_time_ = Util::GetTime();
+  is_already_commited_ = false;
   if (g_last_config_updated > last_config_updated_) {
     ResetConfig();
   }
 
   bool consumed = ProcessCommand(command);
   command->mutable_output()->set_consumed(consumed);
-  converter_->PopOutput(command->mutable_output());
+
+  if (!is_already_commited_) {
+    converter_->PopOutput(command->mutable_output());
+  }
+
   SwitchConversionMode(next_conversion_mode_);
 
   DLOG(INFO) << command->DebugString();
@@ -256,11 +292,29 @@ bool Session::ProcessKeyEvent(commands::Command *command) {
       converter_->Clear();
       break;
     case keymap::AUTO_COMMIT:
+      // TODO(hsumita): Moves these logics into SessionConverter.
+      // Details are written on the top of this file.
       converter_->SelectFocusedCandidate();
       if (converter_->IsConverterActive()) {
         converter_->Commit();
       }
-      consumed = false;
+      converter_->PopOutput(command->mutable_output());
+
+      {
+        const ConversionMode comeback_conversion_mode = conversion_mode_;
+        const string previous_commit_text = command->output().result().value();
+        SwitchConversionMode(PUNCTUATION);
+        converter_->Insert(key_event);
+        converter_->PopOutput(command->mutable_output());
+        const string punctuation_commit_text =
+            command->output().result().value();
+        command->mutable_output()->mutable_result()->set_value(
+            previous_commit_text + punctuation_commit_text);
+
+        is_already_commited_ = true;
+        next_conversion_mode_ = comeback_conversion_mode;
+      }
+
       break;
     case keymap::MOVE_CURSOR_RIGHT:
       converter_->MoveCursorRight();
@@ -402,7 +456,9 @@ bool Session::ProcessCommand(commands::Command *command) {
       break;
   }
 
-  if (conversion_mode_ == ENGLISH && !converter_->IsConverterActive() &&
+  // Turn on Pinyin mode from English or Punctuation mode.
+  if ((conversion_mode_ == ENGLISH || conversion_mode_ == PUNCTUATION) &&
+      !converter_->IsConverterActive() &&
       MaybePinyinModeCommandForSessionCommand(session_command)) {
     next_conversion_mode_ = PINYIN;
   }

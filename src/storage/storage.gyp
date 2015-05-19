@@ -32,6 +32,7 @@
     {
       'target_name': 'storage',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
         'existence_filter.cc',
         'lru_storage.cc',

@@ -60,6 +60,7 @@
     {
       'target_name': 'gen_mozc_data_dir_header',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_mozc_data_dir_header',
@@ -81,25 +82,41 @@
       ],
     },
     {
-      'target_name': 'gtest_main',
+      'target_name': 'googletest_lib',
       'type': 'static_library',
       'sources': [
         'base/internal/googletest.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'gen_mozc_data_dir_header#host',
+        'testing',
+      ],
+    },
+    {
+      'target_name': 'gtest_main',
+      'type': 'static_library',
+      'sources': [
         'base/internal/gtest_main.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'gen_mozc_data_dir_header',
+        'gen_mozc_data_dir_header#host',
+        'googletest_lib',
         'testing',
       ],
       'conditions': [
         ['OS=="win"', {
-          'direct_dependent_settings': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'SubSystem': '1',  # 1 == subSystemConsole
-              },
-            },
+          'link_settings': {
+            'target_conditions': [
+              ['_type=="executable"', {
+                'msvs_settings': {
+                  'VCLinkerTool': {
+                    'SubSystem': '1',  # 1 == subSystemConsole
+                  },
+                },
+              }],
+            ],
           },
         }],
       ],

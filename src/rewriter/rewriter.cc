@@ -27,7 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/singleton.h"
+#include "rewriter/rewriter.h"
+
+#include "converter/converter_interface.h"
+#include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"
 #include "rewriter/command_rewriter.h"
@@ -38,8 +42,8 @@
 #include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
 #include "rewriter/merger_rewriter.h"
-#include "rewriter/number_rewriter.h"
 #include "rewriter/normalization_rewriter.h"
+#include "rewriter/number_rewriter.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/single_kanji_rewriter.h"
@@ -55,61 +59,49 @@
 #ifdef USE_USAGE_REWRITER
 #include "rewriter/usage_rewriter.h"
 #endif  // USE_USAGE_REWRITER
+
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
-namespace {
 
-class RewriterImpl : public MergerRewriter {
- public:
-  RewriterImpl();
-};
-
-RewriterImpl::RewriterImpl() {
+RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
+                           const POSMatcher *pos_matcher,
+                           const PosGroup *pos_group)
+    : parent_converter_(parent_converter),
+      pos_matcher_(pos_matcher),
+      pos_group_(pos_group) {
+  DCHECK(parent_converter_);
+  DCHECK(pos_matcher_);
+  DCHECK(pos_group_);
   AddRewriter(new UserDictionaryRewriter);
   AddRewriter(new FocusCandidateRewriter);
-  AddRewriter(new TransliterationRewriter);
+  AddRewriter(new TransliterationRewriter(*pos_matcher_));
   AddRewriter(new EnglishVariantsRewriter);
-  AddRewriter(new NumberRewriter);
-  AddRewriter(new CollocationRewriter);
+  AddRewriter(new NumberRewriter(pos_matcher_));
+  AddRewriter(new CollocationRewriter(*pos_matcher_));
   AddRewriter(new SingleKanjiRewriter);
   AddRewriter(new EmoticonRewriter);
-  AddRewriter(new CalculatorRewriter);
-  AddRewriter(new SymbolRewriter);
-  AddRewriter(new UnicodeRewriter);
-  AddRewriter(new VariantsRewriter);
-  AddRewriter(new ZipcodeRewriter);
+  AddRewriter(new CalculatorRewriter(parent_converter_));
+  AddRewriter(new SymbolRewriter(parent_converter_));
+  AddRewriter(new UnicodeRewriter(parent_converter_));
+  AddRewriter(new VariantsRewriter(pos_matcher_));
+  AddRewriter(new ZipcodeRewriter(pos_matcher_));
   AddRewriter(new DiceRewriter);
 
   if (FLAGS_use_history_rewriter) {
-    AddRewriter(new UserBoundaryHistoryRewriter);
-    AddRewriter(new UserSegmentHistoryRewriter);
+    AddRewriter(new UserBoundaryHistoryRewriter(parent_converter_));
+    AddRewriter(new UserSegmentHistoryRewriter(pos_matcher_, pos_group_));
   }
   AddRewriter(new DateRewriter);
   AddRewriter(new FortuneRewriter);
   AddRewriter(new CommandRewriter);
   AddRewriter(new VersionRewriter);
 #ifdef USE_USAGE_REWRITER
-  AddRewriter(new UsageRewriter);
+  AddRewriter(new UsageRewriter(pos_matcher_));
 #endif  // USE_USAGE_REWRITER
   AddRewriter(new NormalizationRewriter);
   AddRewriter(new RemoveRedundantCandidateRewriter);
 }
 
-RewriterInterface *g_rewriter = NULL;
-
-}  // namespace
-
-RewriterInterface *RewriterFactory::GetRewriter() {
-  if (g_rewriter == NULL) {
-    return Singleton<RewriterImpl>::get();
-  } else {
-    return g_rewriter;
-  }
-}
-
-void RewriterFactory::SetRewriter(RewriterInterface *rewriter) {
-  g_rewriter = rewriter;
-}
 
 }  // namespace mozc

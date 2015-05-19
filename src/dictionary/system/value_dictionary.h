@@ -85,6 +85,7 @@ class ValueDictionary : public DictionaryInterface {
   scoped_ptr<DictionaryFile> dictionary_file_;
   const dictionary::SystemDictionaryCodecInterface *codec_;
   const Limit empty_limit_;
+  const uint16 suggestion_only_word_id_;
 
   DISALLOW_COPY_AND_ASSIGN(ValueDictionary);
 };

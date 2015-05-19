@@ -39,6 +39,7 @@
 namespace mozc {
 namespace commands {
 class Input;
+class Output;
 }  // namespace commands
 
 namespace emacs {
@@ -108,6 +109,12 @@ bool TokenizeSExpr(const string &input, vector<string> *output);
 
 // Prints an error message in S-expression and terminates with status code 1.
 void ErrorExit(const string &error, const string &message);
+
+// Removes unused usage information from output protocol buffers.
+// Usage data may contain line breaks, which have not been supported yet for IPC
+// in S-expression. Only single line S-expressions are supported so far.
+// This function retuns true if usage data is removed.
+bool RemoveUsageData(mozc::commands::Output *output);
 
 }  // namespace emacs
 }  // namespace mozc

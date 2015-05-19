@@ -102,8 +102,11 @@ class LengthArray {
 };
 }  // namespace
 
-UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter()
-    : storage_(new LRUStorage) {
+UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
+    const ConverterInterface *parent_converter)
+    : parent_converter_(parent_converter),
+      storage_(new LRUStorage) {
+  DCHECK(parent_converter_);
   g_lru_storage = storage_.get();
   Reload();
 }
@@ -143,11 +146,7 @@ void UserBoundaryHistoryRewriter::Finish(Segments *segments) {
   }
 }
 
-bool UserBoundaryHistoryRewriter::Rewrite(Segments *segments) const {
-  return RewriteForRequest(ConversionRequest(), segments);
-}
-
-bool UserBoundaryHistoryRewriter::RewriteForRequest(
+bool UserBoundaryHistoryRewriter::Rewrite(
     const ConversionRequest &request, Segments *segments) const {
   if (GET_CONFIG(incognito_mode)) {
     VLOG(2) << "incognito mode";
@@ -222,8 +221,6 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     return false;
   }
 
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-
   deque<pair<string, size_t> > keys(target_segments_size -
                                     history_segments_size);
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
@@ -262,11 +259,11 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
                     << " " << (int)length_array[2] << " " << (int)length_array[3]
                     << " " << (int)length_array[4] << " " << (int)length_array[5]
                     << " " << (int)length_array[6] << " " << (int)length_array[7];
-            converter->ResizeSegment(segments,
-                                     request,
-                                     i - history_segments_size,
-                                     j + 1,
-                                     length_array, 8);
+            parent_converter_->ResizeSegment(segments,
+                                             request,
+                                             i - history_segments_size,
+                                             j + 1,
+                                             length_array, 8);
             i += (j + target_segments_size - old_segments_size);
             result = true;
             break;

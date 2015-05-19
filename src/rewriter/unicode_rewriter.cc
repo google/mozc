@@ -39,7 +39,11 @@
 
 namespace mozc {
 
-UnicodeRewriter::UnicodeRewriter() {}
+UnicodeRewriter::UnicodeRewriter(const ConverterInterface *parent_converter)
+    : parent_converter_(parent_converter) {
+  DCHECK(parent_converter_);
+}
+
 UnicodeRewriter::~UnicodeRewriter() {}
 
 namespace {
@@ -88,12 +92,8 @@ bool IsAcceptableUnicode(uint32 ucs4) {
 
 }  // namespace
 
-bool UnicodeRewriter::Rewrite(Segments *segments) const {
-  return RewriteForRequest(ConversionRequest(), segments);
-}
-
-bool UnicodeRewriter::RewriteForRequest(const ConversionRequest &request,
-                                        Segments *segments) const {
+bool UnicodeRewriter::Rewrite(const ConversionRequest &request,
+                              Segments *segments) const {
   string key;
   DCHECK(segments);
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
@@ -119,11 +119,6 @@ bool UnicodeRewriter::RewriteForRequest(const ConversionRequest &request,
   if (output.empty()) {
     return false;
   }
-  mozc::ConverterInterface *converter
-      = mozc::ConverterFactory::GetConverter();
-  if (converter == NULL) {
-    return false;
-  }
 
   if (segments->conversion_segments_size() > 1) {
     if (segments->resized()) {
@@ -132,7 +127,7 @@ bool UnicodeRewriter::RewriteForRequest(const ConversionRequest &request,
     }
     const uint32 resize_len = Util::CharsLen(key) -
         Util::CharsLen(segments->conversion_segment(0).key());
-    if (!converter->ResizeSegment(segments, request, 0, resize_len)) {
+    if (!parent_converter_->ResizeSegment(segments, request, 0, resize_len)) {
       return false;
     }
   }

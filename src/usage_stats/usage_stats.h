@@ -34,45 +34,13 @@
 #include <string>
 #include <vector>
 #include "base/port.h"
-// FRIEND_TEST
-#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace usage_stats {
-class UploadUtil;
 
-
-class ClientIdInterface {
- public:
-  ClientIdInterface() {}
-  virtual ~ClientIdInterface() {}
-
-  // gets client id
-  virtual void GetClientId(string *output) = 0;
-};
 
 class UsageStats {
  public:
-  // Default values for scheduler.
-  static const uint32 kDefaultSchedulerDelay;
-  static const uint32 kDefaultSchedulerRandomDelay;
-  static const uint32 kDefaultScheduleInterval;
-  static const uint32 kDefaultScheduleMaxInterval;
-
-  UsageStats();
-  virtual ~UsageStats();
-
-  // Scheduler callback
-  // Sends daily usage stats
-  // Is called periodically (is not necessarily called 'daily')
-  // parameter 'data' is not used here
-  // (for interface compatibility with scheduler)
-  //
-  // NOTE:
-  //  This function is called from another thread.
-  //  So this should be thread-safe.
-  static bool Send(void *data);
-
   // Updates count value
   // Increments val to current value
   static void IncrementCountBy(const string &name, uint32 val);
@@ -97,30 +65,20 @@ class UsageStats {
   // Replaces old value with val
   static void SetBoolean(const string &name, bool val);
 
-  // Sync usage data into disk
-  static void Sync();
-
-  // Sets client id handler
-  static void SetClientIdHandler(ClientIdInterface *client_id_handler);
-
   // Returns true if given stats name is in the stats list
   // (for debugging)
   static bool IsListed(const string &name);
 
 
- private:
-  FRIEND_TEST(ClientIdTest, CreateClientIdTest);
-  FRIEND_TEST(ClientIdTest, GetClientIdTest);
-  FRIEND_TEST(ClientIdTest, GetClientIdFailTest);
+  // Sync usage data into disk
+  static void Sync();
 
-  static void LoadStats(UploadUtil *uploader);
+  // Clears existing data.
   static void ClearStats();
 
-  // Gets client id
-  static void GetClientId(string *output);
-
-  DISALLOW_COPY_AND_ASSIGN(UsageStats);
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(UsageStats);
 };
-}  // namespace mozc::usage_stats
+}  // namespace usage_stats
 }  // namespace mozc
 #endif  // GOOCLECLIENT_IME_MOZC_USAGE_STATS_USAGE_STATS_H_

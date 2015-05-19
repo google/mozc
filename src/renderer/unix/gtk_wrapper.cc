@@ -138,6 +138,10 @@ bool GtkWrapper::GtkWindowIsActive(GtkWidget *window) {
   return gtk_window_is_active(GTK_WINDOW(window));
 }
 
+void GtkWrapper::GtkWidgetAddEvents(GtkWidget *widget, gint events) {
+  gtk_widget_add_events(widget, events);
+}
+
 }  // namespace gtk
 }  // namespace renderer
 }  // namespace mozc

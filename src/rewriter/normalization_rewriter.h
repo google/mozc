@@ -34,16 +34,19 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
-class NormalizationRewriter: public RewriterInterface  {
+class NormalizationRewriter : public RewriterInterface  {
  public:
   NormalizationRewriter();
   virtual ~NormalizationRewriter();
 
   virtual int capability() const;
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 };
-}
+
+}  // namespace mozc
 #endif  // MOZC_REWRITER_NORALIZATION_REWRITER_REWRITER_H_

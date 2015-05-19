@@ -36,10 +36,20 @@ namespace gtk {
 
 GtkWindowBase::GtkWindowBase(GtkWrapperInterface *gtk)
     : gtk_(gtk),
+      send_command_interface_(NULL),
       window_(gtk_->GtkWindowNew(GTK_WINDOW_POPUP)),
       canvas_(gtk_->GtkDrawingAreaNew()) {
   gtk_->GSignalConnect(window_, "destroy", G_CALLBACK(OnDestroyThunk), this);
-  gtk_->GSignalConnect(canvas_, "expose-event", G_CALLBACK(OnPaintThunk), this);
+  gtk_->GtkWidgetAddEvents(window_, GDK_BUTTON_PRESS_MASK);
+  gtk_->GSignalConnect(window_, "button-press-event",
+                       G_CALLBACK(OnMouseDownThunk), this);
+
+  gtk_->GtkWidgetAddEvents(window_, GDK_BUTTON_RELEASE_MASK);
+  gtk_->GSignalConnect(window_, "button-release-event",
+                       G_CALLBACK(OnMouseUpThunk), this);
+
+  gtk_->GSignalConnect(canvas_, "expose-event", G_CALLBACK(OnPaintThunk),
+                       this);
   gtk_->GtkContainerAdd(window_, canvas_);
 }
 
@@ -124,6 +134,54 @@ Rect GtkWindowBase::GetCandidateColumnInClientCord() const {
   // Do nothing, this method should be overridden and only used by candidate
   // window.
   return Rect(0, 0, 0, 0);
+}
+
+gboolean GtkWindowBase::OnMouseDown(GtkWidget *widget, GdkEventButton *event) {
+  // GdkEventButton::x and y is defined as double, but they seems having only
+  // integral part.
+  Point pos(static_cast<int>(event->x), static_cast<int>(event->y));
+  if (event->state & GDK_BUTTON1_MASK) {  // Mouse left click mask
+    OnMouseLeftDown(pos);
+  } else if (event->state & GDK_BUTTON3_MASK) {  // Mouse right click mask
+    OnMouseRightDown(pos);
+  }
+  // TODO(nona): Change the interface design if we need to control whether the
+  //             event is consumed here or not.
+  return TRUE;  // event consumed.
+}
+
+gboolean GtkWindowBase::OnMouseUp(GtkWidget *widget, GdkEventButton *event) {
+  Point pos(static_cast<int>(event->x), static_cast<int>(event->y));
+  if (event->state & GDK_BUTTON1_MASK) {
+    OnMouseLeftUp(pos);
+  } else if (event->state & GDK_BUTTON3_MASK) {
+    OnMouseRightUp(pos);
+  }
+  // TODO(nona): Change the interface design if we need to control whether the
+  //             event is consumed here or not.
+  return TRUE;  // event consumed.
+}
+
+void GtkWindowBase::OnMouseLeftUp(const Point &pos) {
+}
+
+void GtkWindowBase::OnMouseLeftDown(const Point &pos) {
+}
+
+void GtkWindowBase::OnMouseRightUp(const Point &pos) {
+}
+
+void GtkWindowBase::OnMouseRightDown(const Point &pos) {
+}
+
+bool GtkWindowBase::SetSendCommandInterface(
+    client::SendCommandInterface *send_command_interface) {
+  send_command_interface_ = send_command_interface;
+  return true;
+}
+
+void GtkWindowBase::ReloadFontConfig(const string &font_description) {
+  // do nothing.
 }
 
 }  // namespace gtk

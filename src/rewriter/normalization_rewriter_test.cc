@@ -30,6 +30,7 @@
 #include <string>
 
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/normalization_rewriter.h"
 #include "testing/base/public/gunit.h"
@@ -66,17 +67,18 @@ class NormalizationRewriterTest : public testing::Test {
 TEST_F(NormalizationRewriterTest, NormalizationTest) {
   NormalizationRewriter normalization_rewriter;
   Segments segments;
+  const ConversionRequest request;
 
   segments.Clear();
   AddSegment("test", "test", &segments);
-  EXPECT_FALSE(normalization_rewriter.Rewrite(&segments));
+  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
   EXPECT_EQ("test", segments.segment(0).candidate(0).value);
 
   segments.Clear();
   //   AddSegment("きょうと", "京都", &segments);
   AddSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
              "\xE4\xBA\xAC\xE9\x83\xBD", &segments);
-  EXPECT_FALSE(normalization_rewriter.Rewrite(&segments));
+  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
   //  EXPECT_EQ("京都", segments.segment(0).candidate(0).value);
   EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD",
             segments.segment(0).candidate(0).value);
@@ -87,12 +89,12 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
   AddSegment("\xE3\x81\xAA\xE3\x81\xBF",
              "\xE3\x80\x9C", &segments);
 #ifdef OS_WINDOWS
-  EXPECT_TRUE(normalization_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
   // U+FF5E
   //  EXPECT_EQ("～", segments.segment(0).candidate(0).value);
   EXPECT_EQ("\xEF\xBD\x9E", segments.segment(0).candidate(0).value);
 #else
-  EXPECT_FALSE(normalization_rewriter.Rewrite(&segments));
+  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
   // U+301C
   //  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
   EXPECT_EQ("\xE3\x80\x9C", segments.segment(0).candidate(0).value);
@@ -105,7 +107,7 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
              "\xE3\x80\x9C", &segments);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
       Segment::Candidate::USER_DICTIONARY;
-  EXPECT_FALSE(normalization_rewriter.Rewrite(&segments));
+  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
   // U+301C
   //  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
   EXPECT_EQ("\xE3\x80\x9C", segments.segment(0).candidate(0).value);

@@ -57,7 +57,7 @@ class LearningPreferenceAdapter : public AdapterInterface {
   virtual ime_sync::Component component_id() const;
 
  private:
-  FRIEND_TEST(LearningPreferenceAdapterTest, Storage);
+  FRIEND_TEST(LearningPreferenceAdapterTest, DISABLED_Storage);
   FRIEND_TEST(LearningPreferenceAdapterTest, BucketSize);
   FRIEND_TEST(LearningPreferenceAdapterTest, BucketId);
   FRIEND_TEST(LearningPreferenceAdapterTest, LastDownloadTimestamp);

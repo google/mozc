@@ -37,6 +37,8 @@ class Segments;
 
 class PredictorInterface {
  public:
+  virtual ~PredictorInterface() {}
+
   // return suggestions.
   // You may need to change the behavior according to the
   // Segments::request_type flag
@@ -69,28 +71,10 @@ class PredictorInterface {
   virtual bool Reload() { return true; }
 
  protected:
-  // don't allow users to call constructor and destructor
+  // Disable the construction.
   PredictorInterface() {}
-  virtual ~PredictorInterface() {}
 };
 
-// factory for making "default" predictors
-class PredictorFactory {
- public:
-  // return singleton object
-  static PredictorInterface *GetPredictor();
-  static PredictorInterface *GetUserHistoryPredictor();
-  static PredictorInterface *GetDictionaryPredictor();
-
-  // dependency injection for unittesting
-  static void SetPredictor(PredictorInterface *predictor);
-  static void SetUserHistoryPredictor(PredictorInterface *predictor);
-  static void SetDictionaryPredictor(PredictorInterface *predictor);
-
- private:
-  PredictorFactory() {}
-  ~PredictorFactory() {}
-};
 }  // namespace mozc
 
 #endif  // MOZC_PREDICTION_PREDICTOR_INTERFACE_H_

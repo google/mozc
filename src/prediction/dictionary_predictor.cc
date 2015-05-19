@@ -39,8 +39,6 @@
 #include <vector>
 #include <algorithm>
 #include "base/base.h"
-#include "base/init.h"
-#include "base/singleton.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -51,16 +49,13 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
-#include "converter/segmenter.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "session/commands.pb.h"
-
 
 // This flag is set by predictor.cc
 DEFINE_bool(enable_expansion_for_dictionary_predictor,
@@ -77,21 +72,19 @@ const size_t kPredictionMaxNodesSize = 100000;
 
 }  // namespace
 
-DictionaryPredictor::DictionaryPredictor()
-    : dictionary_(DictionaryFactory::GetDictionary()),
-      suffix_dictionary_(SuffixDictionaryFactory::GetSuffixDictionary()),
-      connector_(ConnectorFactory::GetConnector()),
-      segmenter_(Singleton<Segmenter>::get()),
-      immutable_converter_(
-          ImmutableConverterFactory::GetImmutableConverter()) {}
-
-DictionaryPredictor::DictionaryPredictor(SegmenterInterface *segmenter)
-    : dictionary_(DictionaryFactory::GetDictionary()),
-      suffix_dictionary_(SuffixDictionaryFactory::GetSuffixDictionary()),
-      connector_(ConnectorFactory::GetConnector()),
+DictionaryPredictor::DictionaryPredictor(
+    const ImmutableConverterInterface *immutable_converter,
+    const DictionaryInterface *dictionary,
+    const DictionaryInterface *suffix_dictionary,
+    const ConnectorInterface *connector,
+    const SegmenterInterface *segmenter,
+    const POSMatcher &pos_matcher)
+    : immutable_converter_(immutable_converter),
+      dictionary_(dictionary),
+      suffix_dictionary_(suffix_dictionary),
+      connector_(connector),
       segmenter_(segmenter),
-      immutable_converter_(
-          ImmutableConverterFactory::GetImmutableConverter()) {}
+      counter_suffix_word_id_(pos_matcher.GetCounterSuffixWordId()) {}
 
 DictionaryPredictor::~DictionaryPredictor() {}
 

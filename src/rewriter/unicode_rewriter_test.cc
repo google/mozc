@@ -28,12 +28,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdlib>
+#include <string>
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/converter_interface.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/unicode_rewriter.h"
-
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -65,18 +67,25 @@ bool ContainCandidate(const Segments &segments, const string &candidate) {
   return false;
 }
 
+}  // namespace
+
 class UnicodeRewriterTest : public testing::Test {
+ protected:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
+    converter_ = ConverterFactory::GetConverter();
   }
+
+  const ConverterInterface *converter_;
 };
 
 TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
   Segments segments;
-  UnicodeRewriter rewriter;
+  UnicodeRewriter rewriter(converter_);
+  const ConversionRequest request;
 
   struct UCS4UTF8Data {
     const char *ucs4;
@@ -122,46 +131,47 @@ TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
   for (uint32 ascii = 0x20; ascii < 0x7F; ++ascii) {
     const string ucs4 = Util::StringPrintf("U+00%02X", ascii);
     InitSegments(ucs4, ucs4, &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(ascii, segments.segment(0).candidate(0).value.at(0));
   }
 
   // Mozc accepts Japanese characters
   for (size_t i = 0; i < ARRAYSIZE(kUcs4Utf8Data); ++i) {
     InitSegments(kUcs4Utf8Data[i].ucs4, kUcs4Utf8Data[i].ucs4, &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, kUcs4Utf8Data[i].utf8));
   }
 
   // Mozc does not accept other characters
   for (size_t i = 0; i < ARRAYSIZE(kMozcUnsupportedUtf8); ++i) {
     InitSegments(kMozcUnsupportedUtf8[i], kMozcUnsupportedUtf8[i], &segments);
-    EXPECT_FALSE(rewriter.Rewrite(&segments));
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }
 
   // invlaid style input
   InitSegments("U+1234567", "U+12345678", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(&segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 
   InitSegments("U+XYZ", "U+XYZ", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(&segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 
   InitSegments("12345", "12345", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(&segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 
   InitSegments("U12345", "U12345", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(&segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 }
 
 TEST_F(UnicodeRewriterTest, MultipleSegment) {
   Segments segments;
-  UnicodeRewriter rewriter;
+  UnicodeRewriter rewriter(converter_);
+  const ConversionRequest request;
 
   // Multiple segments are combined.
   InitSegments("U+0", "U+0", &segments);
   AddSegment("02", "02", &segments);
   AddSegment("0", "0", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   EXPECT_EQ(1, segments.conversion_segments_size());
   EXPECT_EQ(' ', segments.conversion_segment(0).candidate(0).value.at(0));
 
@@ -169,7 +179,7 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
   InitSegments("U+0020", "U+0020", &segments);
   AddSegment("U+0020", "U+0020", &segments);
   segments.set_resized(true);
-  EXPECT_FALSE(rewriter.Rewrite(&segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 
   // History segment has to be ignored.
   // In this case 1st segment is HISTORY
@@ -178,9 +188,8 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
   AddSegment("U+0020", "U+0020", &segments);
   segments.set_resized(true);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
-  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   EXPECT_EQ(' ', segments.conversion_segment(0).candidate(0).value.at(0));
 }
 
-}  // namespace
-}  // mozc namespace
+}  // namespace mozc

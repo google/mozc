@@ -61,9 +61,22 @@ class DummyMozcConnection : public mozc_unix_scim::MozcConnectionInterface {
   }
 
   virtual bool TrySendKeyEvent(const scim::KeyEvent &key,
+                               bool is_activated,
                                mozc::commands::CompositionMode composition_mode,
                                mozc::commands::Output *out,
                                string *out_error) const {
+    return true;
+  }
+
+  virtual bool TrySendImeOff(mozc::commands::CompositionMode next_mode,
+                             mozc::commands::Output *out,
+                             string *out_error) const {
+    return true;
+  }
+
+  virtual bool TrySendImeOn(mozc::commands::CompositionMode next_mode,
+                            mozc::commands::Output *out,
+                            string *out_error) const {
     return true;
   }
 

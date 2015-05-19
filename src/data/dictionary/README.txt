@@ -2,10 +2,9 @@ Open source mozc dictionary is different from the dictionary
 used for Google Japanese Input. The differences are as follows:
 
 - Large vocabulary set generated from the Web corpus is not included.
-- The vocabulary set is basically the same as that of IPAdic and
-  NAIST Japanese Dictionary (NAIST-jdic). The licenses of IPAdic and NAIST-jdic are found below.
-  Here's the version of IPAdic and NAIST-jdic Mozc uses.
-  * mecab-naist-jdic-0.4.3-20080917
+- The vocabulary set is basically the same as that of IPAdic.
+  The licenses of IPAdic is found below.
+  Here's the version of IPAdic Mozc uses.
   * mecab-ipadic-2.7.0-20070801 (ipadic-2.7.0)
 - Okinawa Dictionary is used to enrich named entities.
   http://sourceforge.jp/projects/o-dic/
@@ -15,7 +14,7 @@ used for Google Japanese Input. The differences are as follows:
   during the text processing over the Web data.
 - To improve the conversion quality of Mozc, several compound words
   (like 社員証, 再起動) are added. We basically collected these compounds from the Web
-  by using MeCab and mecab-ipadic.
+  by using MeCab and IPAdic.
 - Open source version doesn't include Japanese postal code dictionary.
 
 You can add zip code dictionary by follows:
@@ -99,40 +98,6 @@ grants independently of ICOT any specific warranty to the user in
 writing, such person, organization or entity, will also be exempted
 from and not be held liable to the user for any such damages as noted
 above as far as the program is concerned.
-
-
--------------------------------------------------------------------------------
-NAIST Japanese Dictionary is licensed as follows:
-
-Copyright (c) 2008, Nara Institute of Science and Technology, Japan.
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-Neither the name of the Nara Institute of Science and Technology
-(NAIST) nor the names of its contributors may be used to endorse or
-promote products derived from this software without specific prior
-written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -------------------------------------------------------------------------------
 Okinawa dictionary is licensed as follows

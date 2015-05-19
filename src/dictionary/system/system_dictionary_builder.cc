@@ -40,6 +40,7 @@
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/rx/rbx_array_builder.h"
 #include "dictionary/rx/rx_trie_builder.h"
 #include "dictionary/system/codec.h"
@@ -88,7 +89,8 @@ SystemDictionaryBuilder::~SystemDictionaryBuilder() {}
 
 void SystemDictionaryBuilder::BuildFromFile(const string &input_file) {
   VLOG(1) << "load file: " << input_file;
-  TextDictionaryLoader loader;
+  const POSMatcher pos_matcher;
+  TextDictionaryLoader loader(pos_matcher);
   loader.Open(input_file.c_str());
   // Get all tokens
   vector<Token *> tokens;

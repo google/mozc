@@ -125,13 +125,13 @@ TEST_F(CodecTest, FactoryTest) {
   vector<DictionaryFileSection> sections;
   {
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str());
+    ofs.open(test_file_.c_str(), ios_base::out | ios_base::binary);
     codec->WriteSections(sections, &ofs);
   }
   {
     EXPECT_TRUE(Util::FileExists(test_file_));
     InputFileStream ifs;
-    ifs.open(test_file_.c_str());
+    ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
     ifs.seekg(0, ios::end);
     const int len = ifs.tellg();
     ifs.seekg(0, ios::beg);
@@ -163,7 +163,7 @@ TEST_F(CodecTest, DefaultTest) {
     AddSection(codec, "Section 1", value1.data(), value1.size(),
                &write_sections);
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str());
+    ofs.open(test_file_.c_str(), ios_base::out | ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
   char buf[1024] = {};  // sections will reference this buffer.
@@ -171,7 +171,7 @@ TEST_F(CodecTest, DefaultTest) {
   {
     EXPECT_TRUE(Util::FileExists(test_file_));
     InputFileStream ifs;
-    ifs.open(test_file_.c_str());
+    ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
     ifs.read(buf, 1024);
     EXPECT_TRUE(codec->ReadSections(buf, 1024, &sections));
   }
@@ -200,7 +200,7 @@ TEST_F(CodecTest, CodecTest) {
     AddSection(codec, "Section 1", value1.data(), value1.size(),
                &write_sections);
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str());
+    ofs.open(test_file_.c_str(), ios_base::out | ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
   char buf[1024] = {};  // sections will reference this buffer.
@@ -208,7 +208,7 @@ TEST_F(CodecTest, CodecTest) {
   {
     EXPECT_TRUE(Util::FileExists(test_file_));
     InputFileStream ifs;
-    ifs.open(test_file_.c_str());
+    ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
     ifs.read(buf, 1024);
     EXPECT_TRUE(codec->ReadSections(buf, 1024, &sections));
   }

@@ -49,7 +49,8 @@ ValueDictionary::ValueDictionary()
     : value_trie_(new rx::RxTrie),
       dictionary_file_(new DictionaryFile),
       codec_(dictionary::SystemDictionaryCodecFactory::GetCodec()),
-      empty_limit_(Limit()) {
+      empty_limit_(Limit()),
+      suggestion_only_word_id_(POSMatcher().GetSuggestOnlyWordId()) {
 }
 
 ValueDictionary::~ValueDictionary() {}
@@ -161,8 +162,8 @@ Node *ValueDictionary::LookupPredictiveWithLimit(
     // Cost is also set without lookup.
     // TODO(toshiyuki): If necessary, implement simple cost lookup.
     // Bloom filter may be one option.
-    new_node->lid = POSMatcher::GetSuggestOnlyWordId();
-    new_node->rid = POSMatcher::GetSuggestOnlyWordId();
+    new_node->lid = suggestion_only_word_id_;
+    new_node->rid = suggestion_only_word_id_;
     new_node->wcost = 10000;
     new_node->key = value;
     new_node->value = value;

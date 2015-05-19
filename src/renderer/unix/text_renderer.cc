@@ -37,8 +37,8 @@ namespace mozc {
 namespace renderer {
 namespace gtk {
 
-TextRenderer::TextRenderer()
-  : font_spec_(new FontSpec()),
+TextRenderer::TextRenderer(FontSpecInterface *font_spec)
+  : font_spec_(font_spec),
     pango_(NULL) {
 }
 
@@ -47,7 +47,7 @@ void TextRenderer::Initialize(GdkDrawable *drawable) {
 }
 
 void TextRenderer::SetUpPangoLayout(const string &str,
-                                    FontSpec::FONT_TYPE font_type,
+                                    FontSpecInterface::FONT_TYPE font_type,
                                     PangoLayoutWrapperInterface *layout) {
   PangoAttrList *attributes = pango_->CopyAttributes(
       font_spec_->GetFontAttributes(font_type));
@@ -58,20 +58,20 @@ void TextRenderer::SetUpPangoLayout(const string &str,
   pango_->AttributesUnref(attributes);
 }
 
-Size TextRenderer::GetPixelSize(FontSpec::FONT_TYPE font_type,
+Size TextRenderer::GetPixelSize(FontSpecInterface::FONT_TYPE font_type,
                                 const string &str) {
   PangoLayoutWrapper layout(pango_->GetContext());
   return GetPixelSizeInternal(font_type, str, &layout);
 }
 
-Size TextRenderer::GetPixelSizeInternal(FontSpec::FONT_TYPE font_type,
+Size TextRenderer::GetPixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
                                         const string &str,
                                         PangoLayoutWrapperInterface *layout) {
   SetUpPangoLayout(str, font_type, layout);
   return layout->GetPixelSize();
 }
 
-Size TextRenderer::GetMultiLinePixelSize(FontSpec::FONT_TYPE font_type,
+Size TextRenderer::GetMultiLinePixelSize(FontSpecInterface::FONT_TYPE font_type,
                                          const string &str,
                                          const int width) {
   PangoLayoutWrapper layout(pango_->GetContext());
@@ -79,7 +79,7 @@ Size TextRenderer::GetMultiLinePixelSize(FontSpec::FONT_TYPE font_type,
 }
 
 Size TextRenderer::GetMultiLinePixelSizeInternal(
-    FontSpec::FONT_TYPE font_type,
+    FontSpecInterface::FONT_TYPE font_type,
     const string &str,
     const int width,
     PangoLayoutWrapperInterface *layout) {
@@ -90,14 +90,14 @@ Size TextRenderer::GetMultiLinePixelSizeInternal(
 
 void TextRenderer::RenderText(const string &text,
                               const Rect &rect,
-                              FontSpec::FONT_TYPE font_type) {
+                              FontSpecInterface::FONT_TYPE font_type) {
   PangoLayoutWrapper layout(pango_->GetContext());
   RenderTextInternal(text, rect, font_type, &layout);
 }
 
 void TextRenderer::RenderTextInternal(const string& text,
                                       const Rect &rect,
-                                      FontSpec::FONT_TYPE font_type,
+                                      FontSpecInterface::FONT_TYPE font_type,
                                       PangoLayoutWrapperInterface *layout) {
   SetUpPangoLayout(text, font_type, layout);
   layout->SetWidth(rect.size.width * PANGO_SCALE);
@@ -109,6 +109,10 @@ void TextRenderer::RenderTextInternal(const string& text,
 
   pango_->RendererDrawLayout(layout, rect.origin.x * PANGO_SCALE,
                              (rect.origin.y + delta_y) * PANGO_SCALE);
+}
+
+void TextRenderer::ReloadFontConfig(const string &font_description) {
+  font_spec_->Reload(font_description);
 }
 }  // namespace gtk
 }  // namespace renderer

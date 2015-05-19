@@ -39,18 +39,20 @@
 #include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
+namespace client {
+class SendCommandInterface;
+}  // namespace client
 namespace renderer {
 namespace gtk {
 
 class CandidateWindow : public GtkWindowBase {
  public:
   // GtkWindowBase (and super class) has ownership of all arguments.
-  explicit CandidateWindow(
-      TableLayoutInterface *table_layout,
-      TextRendererInterface *text_renderer,
-      DrawToolInterface *draw_tool,
-      GtkWrapperInterface *gtk,
-      CairoFactoryInterface *cairo_factory);
+  CandidateWindow(TableLayoutInterface *table_layout,
+                  TextRendererInterface *text_renderer,
+                  DrawToolInterface *draw_tool,
+                  GtkWrapperInterface *gtk,
+                  CairoFactoryInterface *cairo_factory);
   virtual ~CandidateWindow() {}
 
   virtual Size Update(const commands::Candidates &candidates);
@@ -67,9 +69,21 @@ class CandidateWindow : public GtkWindowBase {
     NUMBER_OF_COLUMNS,    // number of columns. (this item should be last)
   };
 
+  virtual bool SetSendCommandInterface(
+      client::SendCommandInterface *send_command_interface);
+  virtual void ReloadFontConfig(const string &font_description);
+
  protected:
   // Callbacks
   bool OnPaint(GtkWidget *widget, GdkEventExpose *event);
+
+  void OnMouseLeftUp(const Point &pos);
+
+  // Returns zero oriented row index which covers the argument position.
+  // If this function returns negative value, it means there are no row to
+  // cover the argument position.
+  // The reason for virtual function is for testing.
+  virtual int GetSelectedRowIndex(const Point &pos) const;
 
  private:
   void DrawBackground();
@@ -107,6 +121,7 @@ class CandidateWindow : public GtkWindowBase {
   void UpdateCandidatesSize(bool *has_description);
   void UpdateGap2Size(bool has_description);
 
+  // TODO(nona): Remove FRIEND_TEST
   FRIEND_TEST(CandidateWindowTest, DrawBackgroundTest);
   FRIEND_TEST(CandidateWindowTest, DrawShortcutBackgroundTest);
   FRIEND_TEST(CandidateWindowTest, DrawSelectedRectTest);
@@ -125,12 +140,15 @@ class CandidateWindow : public GtkWindowBase {
   FRIEND_TEST(CandidateWindowTest, UpdateGap1SizeTest);
   FRIEND_TEST(CandidateWindowTest, UpdateCandidatesSizeTest);
   FRIEND_TEST(CandidateWindowTest, UpdateGap2SizeTest);
+  FRIEND_TEST(CandidateWindowTest, OnMouseLeftUpTest);
+  FRIEND_TEST(CandidateWindowTest, GetSelectedRowIndexTest);
 
   commands::Candidates candidates_;
   scoped_ptr<TableLayoutInterface> table_layout_;
   scoped_ptr<TextRendererInterface> text_renderer_;
   scoped_ptr<DrawToolInterface> draw_tool_;
   scoped_ptr<CairoFactoryInterface> cairo_factory_;
+  client::SendCommandInterface *send_command_interface_;
   DISALLOW_COPY_AND_ASSIGN(CandidateWindow);
 };
 

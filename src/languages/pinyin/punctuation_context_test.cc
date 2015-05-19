@@ -77,9 +77,9 @@ class PunctuationContextTest : public testing::Test {
  protected:
   virtual void SetUp() {
     session_config_.reset(new SessionConfig);
-    session_config_.full_width_word_mode =false;
-    session_config_.full_width_punctuation_mode =true;
-    session_config_.simplified_chinese_mode = true;
+    session_config_->full_width_word_mode = false;
+    session_config_->full_width_punctuation_mode = true;
+    session_config_->simplified_chinese_mode = true;
 
     context_.reset(new PunctuationContext(*session_config_));
     table_.reset(new MockTable);
@@ -165,10 +165,10 @@ TEST_F(PunctuationContextTest, Insert) {
     EXPECT_CALL(*table_, GetDirectCommitTextForSimplifiedChinese('!', _))
         .WillOnce(Return(false));
 
-    EXPECT_FALSE(context_->Insert('!'));
+    EXPECT_TRUE(context_->Insert('!'));
     CheckComposition("", "", "");
     CheckCandidates(empty_candidates_, 0, "");
-    CheckResult("");
+    CheckResult("!");
   }
 
   {  // English Mode
@@ -518,9 +518,9 @@ TEST_F(PunctuationContextTest, Remove) {
 }
 
 TEST_F(PunctuationContextTest, Config) {
-  session_config_.full_width_word_mode = false;
-  session_config_.full_width_punctuation_mode = true;
-  session_config_.simplified_chinese_mode = true;
+  session_config_->full_width_word_mode = false;
+  session_config_->full_width_punctuation_mode = true;
+  session_config_->simplified_chinese_mode = true;
 
   {  // Full width punctuation with simplified chinese
     context_->Clear();
@@ -530,7 +530,7 @@ TEST_F(PunctuationContextTest, Config) {
   }
 
   {  // Full width punctuation with traditional chinese
-    session_config_.simplified_chinese_mode = false;
+    session_config_->simplified_chinese_mode = false;
     context_->Clear();
     EXPECT_CALL(*table_, GetDirectCommitTextForTraditionalChinese('!', _))
         .Times(1).WillOnce(Return(true));
@@ -538,7 +538,7 @@ TEST_F(PunctuationContextTest, Config) {
   }
 
   {  // Half width punctuation
-    session_config_.full_width_punctuation_mode = false;
+    session_config_->full_width_punctuation_mode = false;
     context_->Clear();
     EXPECT_CALL(*table_, GetDirectCommitTextForSimplifiedChinese('!', _))
         .Times(0);
@@ -549,7 +549,7 @@ TEST_F(PunctuationContextTest, Config) {
 
   {
     SCOPED_TRACE("Full width word");
-    session_config_.full_width_word_mode = false;
+    session_config_->full_width_word_mode = false;
     context_->Clear();
     EXPECT_TRUE(context_->Insert('!'));
     CheckResult("!");
@@ -557,7 +557,7 @@ TEST_F(PunctuationContextTest, Config) {
 
   {
     SCOPED_TRACE("Half width word");
-    session_config_.full_width_word_mode = true;
+    session_config_->full_width_word_mode = true;
     context_->Clear();
     EXPECT_TRUE(context_->Insert('!'));
     CheckResult("\xEF\xBC\x81");  // "！"

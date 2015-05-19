@@ -31,7 +31,6 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <fstream>
 #include <map>
 
 #ifdef OS_WINDOWS
@@ -251,14 +250,27 @@ bool IPCPathManager::SavePathName() {
   return true;
 }
 
-bool IPCPathManager::GetPathName(string *ipc_name) {
+bool IPCPathManager::LoadPathName() {
+  // On Windows, ShouldReload() always returns false.
+  // On other platform, it returns true when timestamp of the file is different
+  // from that of previous one.
+  if (ShouldReload() || ipc_path_info_->key().empty()) {
+    if (!LoadPathNameInternal()) {
+      LOG(ERROR) << "LoadPathName failed";
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IPCPathManager::GetPathName(string *ipc_name) const {
   if (ipc_name == NULL) {
     LOG(ERROR) << "ipc_name is NULL";
     return false;
   }
 
-  if ((ShouldReload() || ipc_path_info_->key().empty()) && !LoadPathName()) {
-    LOG(ERROR) << "GetPathName failed";
+  if (ipc_path_info_->key().empty()) {
+    LOG(ERROR) << "ipc_path_info_ is empty";
     return false;
   }
 
@@ -432,7 +444,7 @@ time_t IPCPathManager::GetIPCFileTimeStamp() const {
 #endif  // OS_WINDOWS
 }
 
-bool IPCPathManager::LoadPathName() {
+bool IPCPathManager::LoadPathNameInternal() {
   scoped_lock l(mutex_.get());
 
   // try the new file name first.

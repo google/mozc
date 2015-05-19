@@ -49,13 +49,15 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
+        '../data_manager/data_manager.gyp:user_dictionary_manager',
         '../testing/testing.gyp:gtest_main',
         '../usage_stats/usage_stats.gyp:usage_stats',
         '../usage_stats/usage_stats.gyp:usage_stats_protocol',
         'dictionary.gyp:dictionary',
         'dictionary.gyp:dictionary_mock',
-        'dictionary.gyp:suppression_dictionary',
-        'dictionary.gyp:user_dictionary',
+        'dictionary_base.gyp:suppression_dictionary',
+        'dictionary_base.gyp:user_dictionary',
+        'dictionary_base.gyp:pos_matcher',
       ],
       'variables': {
         'test_size': 'small',

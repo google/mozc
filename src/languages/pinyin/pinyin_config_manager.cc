@@ -48,21 +48,27 @@ void PinyinConfigManager::UpdateWithGlobalConfig(
     const config::PinyinConfig &pinyin_config) {
   PyZy::PinyinConfig &pyzy_config = PyZy::PinyinConfig::instance();
 
-  uint32 conversion_option = pyzy_config.option();
+  {  // Update conversion option
+    uint32 conversion_option = pyzy_config.option();
 
-  if (pinyin_config.has_correct_pinyin()) {
-    conversion_option = pinyin_config.correct_pinyin()
-        ? (conversion_option | kCorrectPinyinOption)
-        : (conversion_option & ~kCorrectPinyinOption);
-  }
-  if (pinyin_config.has_fuzzy_pinyin()) {
-    conversion_option = pinyin_config.fuzzy_pinyin()
-        ? (conversion_option | kFuzzyPinyinOption)
-        : (conversion_option & ~kFuzzyPinyinOption);
+    if (pinyin_config.has_correct_pinyin()) {
+      conversion_option = pinyin_config.correct_pinyin()
+          ? (conversion_option | kCorrectPinyinOption)
+          : (conversion_option & ~kCorrectPinyinOption);
+    }
+    if (pinyin_config.has_fuzzy_pinyin()) {
+      conversion_option = pinyin_config.fuzzy_pinyin()
+          ? (conversion_option | kFuzzyPinyinOption)
+          : (conversion_option & ~kFuzzyPinyinOption);
+    }
+
+    if (conversion_option != pyzy_config.option()) {
+      pyzy_config.setOption(conversion_option);
+    }
   }
 
-  if (conversion_option != pyzy_config.option()) {
-    pyzy_config.setOption(conversion_option);
+  if (pinyin_config.has_double_pinyin_schema()) {
+    pyzy_config.setDoublePinyinSchema(pinyin_config.double_pinyin_schema());
   }
 }
 

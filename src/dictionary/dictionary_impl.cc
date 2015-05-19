@@ -35,29 +35,33 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/node.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "dictionary/system/system_dictionary.h"
-#include "dictionary/system/value_dictionary.h"
-#include "dictionary/user_dictionary.h"
 
 namespace mozc {
 
-DictionaryImpl::DictionaryImpl(const char *dic_data, int dic_data_size)
-    : suppression_dictionary_(
-        SuppressionDictionary::GetSuppressionDictionary()),
-      system_dictionary_(SystemDictionary::CreateSystemDictionaryFromImage(
-          dic_data, dic_data_size)),
-      value_dictionary_(ValueDictionary::CreateValueDictionaryFromImage(
-          dic_data, dic_data_size)) {
-  CHECK(suppression_dictionary_ != NULL);
-  CHECK(system_dictionary_.get() != NULL);
-  CHECK(value_dictionary_.get() != NULL);
-
+DictionaryImpl::DictionaryImpl(
+    const DictionaryInterface *system_dictionary,
+    const DictionaryInterface *value_dictionary,
+    DictionaryInterface *user_dictionary,
+    const SuppressionDictionary *suppression_dictionary,
+    const POSMatcher *pos_matcher)
+    : system_dictionary_(system_dictionary),
+      value_dictionary_(value_dictionary),
+      user_dictionary_(user_dictionary),
+      suppression_dictionary_(suppression_dictionary),
+      pos_matcher_(pos_matcher) {
+  CHECK(system_dictionary_.get());
+  CHECK(value_dictionary_.get());
+  CHECK(user_dictionary_);
+  CHECK(suppression_dictionary_);
+  CHECK(pos_matcher_);
   dics_.push_back(system_dictionary_.get());
   dics_.push_back(value_dictionary_.get());
-  dics_.push_back(UserDictionary::GetUserDictionary());
+  dics_.push_back(user_dictionary_);
 }
+
 
 DictionaryImpl::~DictionaryImpl() {
   dics_.clear();
@@ -95,7 +99,7 @@ Node *DictionaryImpl::LookupReverse(const char *str, int size,
 }
 
 bool DictionaryImpl::Reload() {
-  return UserDictionary::GetUserDictionary()->Reload();
+  return user_dictionary_->Reload();
 }
 
 void DictionaryImpl::PopulateReverseLookupCache(
@@ -133,7 +137,7 @@ Node *DictionaryImpl::MaybeRemoveSpecialNodes(Node *node) const {
         continue;
       }
 
-      if (!use_zip_code_conversion && POSMatcher::IsZipcode(n->lid)) {
+      if (!use_zip_code_conversion && pos_matcher_->IsZipcode(n->lid)) {
         continue;
       }
 

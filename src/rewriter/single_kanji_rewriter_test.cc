@@ -30,6 +30,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "session/commands.pb.h"
@@ -71,7 +72,7 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
   candidate->content_value = "strange value";
 
   EXPECT_EQ(1, segment->candidates_size());
-  rewriter.Rewrite(&segments);
+  rewriter.Rewrite(ConversionRequest(), &segments);
   EXPECT_GT(segment->candidates_size(), 1);
   for (size_t i = 1; i < segment->candidates_size(); ++i) {
     EXPECT_EQ(kKey, segment->candidate(i).key);

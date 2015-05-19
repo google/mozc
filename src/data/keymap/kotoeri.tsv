@@ -3,18 +3,11 @@ Composition	Backspace	Backspace
 Composition	Ctrl ;	DisplayAsHalfWidth
 Composition	Ctrl :	DisplayAsHalfAlphanumeric
 Composition	Ctrl '	DisplayAsHalfAlphanumeric
-Composition	Ctrl 0	DisplayAsHalfAlphanumeric
-Composition	Ctrl 2	ConvertWithoutHistory
-Composition	Ctrl 6	DisplayAsHiragana
-Composition	Ctrl 7	DisplayAsFullKatakana
-Composition	Ctrl 8	DisplayAsHalfWidth
-Composition	Ctrl 9	DisplayAsFullAlphanumeric
 Composition	Ctrl a	MoveCursorToBeginning
 Composition	Ctrl Alt F11	Abort
 Composition	Ctrl b	MoveCursorLeft
 Composition	Ctrl d	Delete
 Composition	Ctrl e	MoveCursorToEnd
-Composition	Ctrl Eisu	ToggleAlphanumericMode
 Composition	Ctrl f	MoveCursorRight
 Composition	Ctrl g	Cancel
 Composition	Ctrl h	Backspace
@@ -24,11 +17,6 @@ Composition	Ctrl l	DisplayAsFullAlphanumeric
 Composition	Ctrl Left	MoveCursorToBeginning
 Composition	Ctrl m	Commit
 Composition	Ctrl m	Commit
-Composition	Ctrl Option 1	DisplayAsHiragana
-Composition	Ctrl Option 2	DisplayAsFullKatakana
-Composition	Ctrl Option 3	DisplayAsFullAlphanumeric
-Composition	Ctrl Option 4	DisplayAsHalfWidth
-Composition	Ctrl Option 5	DisplayAsHalfAlphanumeric
 Composition	Ctrl Right	MoveCursorToEnd
 Composition	Delete	Delete
 Composition	Eisu	ToggleAlphanumericMode
@@ -65,11 +53,6 @@ Conversion	Backspace	Cancel
 Conversion	Ctrl ;	DisplayAsHalfWidth
 Conversion	Ctrl :	DisplayAsHalfAlphanumeric
 Conversion	Ctrl '	DisplayAsHalfAlphanumeric
-Conversion	Ctrl 0	DisplayAsHalfAlphanumeric
-Conversion	Ctrl 6	DisplayAsHiragana
-Conversion	Ctrl 7	DisplayAsFullKatakana
-Conversion	Ctrl 8	DisplayAsHalfWidth
-Conversion	Ctrl 9	DisplayAsFullAlphanumeric
 Conversion	Ctrl a	SegmentFocusFirst
 Conversion	Ctrl Alt F11	Abort
 Conversion	Ctrl b	SegmentFocusLeft
@@ -85,11 +68,6 @@ Conversion	Ctrl Left	SegmentFocusFirst
 Conversion	Ctrl m	Commit
 Conversion	Ctrl n	ConvertNext
 Conversion	Ctrl o	SegmentWidthExpand
-Conversion	Ctrl Option 1	DisplayAsHiragana
-Conversion	Ctrl Option 2	DisplayAsFullKatakana
-Conversion	Ctrl Option 3	DisplayAsFullAlphanumeric
-Conversion	Ctrl Option 4	DisplayAsHalfWidth
-Conversion	Ctrl Option 5	DisplayAsHalfAlphanumeric
 Conversion	Ctrl p	ConvertPrev
 Conversion	Ctrl q	SegmentWidthShrink
 Conversion	Ctrl Right	SegmentFocusLast
@@ -142,7 +120,6 @@ DirectInput	ON	IMEOn
 Precomposition	Backspace	Revert
 Precomposition	Ctrl Alt F11	Abort
 Precomposition	Ctrl Backspace	Undo
-Precomposition	Ctrl Eisu	ToggleAlphanumericMode
 Precomposition	Ctrl Shift r	Reconvert
 Precomposition	Eisu	ToggleAlphanumericMode
 Precomposition	Hankaku/Zenkaku	IMEOff

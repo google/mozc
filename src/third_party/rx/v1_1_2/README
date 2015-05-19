@@ -1,14 +1,57 @@
-You might want to use Tx instead of this
-http://www-tsujii.is.s.u-tokyo.ac.jp/~hillbig/tx-j.htm
+About Rx:
+
+ project homepage http://sites.google.com/site/neonlightcompiler/rx
+
+Rx implements static key value storage with efficient storage usage.
+This library is heavily inspired by another implementation
+of similar functionality and data structure Tx.
+(You might want to use Tx instead of this
+ http://www-tsujii.is.s.u-tokyo.ac.jp/~hillbig/tx-j.htm)
 
 --
-Rx
- rx.c: implementation
- rx.h: API
- main.c: example of usage
+Package structure:
+ rx package contains following files.
+  rx.c: Implementation
+  rx.h: API definition
+  rx_example.c: Examples of usage
+  rx_test.c: Small tests
+  README: This file
+ Users may embed rx.c and rx.h into their application to use this.
 
-http://ofanim.net/~yusuke/rx/
+--
+API overview:
+ Rx contains two data storages rx and rbx.
+ * rx maps N distinct and sorted strings into numbers from 0 to N-1.
+ * rbx maps number from to 0 to N-1 into N arbitrary size binary objects.
+ With rx, user can perform prefix lookup and reverse lookup. By prefix
+ lookup, when the search key is "abc", rx also returns values for "a"
+ and "ab" if they exist.
 
+ Both storage has API for itself and its builder, so there ara APIs for 4
+ objects, rx, rx_builder, rbx and rbx_builder.
+
+ rx_builder and rbx_builder generates binary images from given set of
+ input. Users may store the image into file and open it later as rx or
+ rbx object.
+
+ Typical flow will be as follows.
+
+  /* build time */
+  rx_builder *builder = rx_builder_create();
+  for each key
+    rx_builder_add(builder, key);
+  rx_builder_build(builder);
+  unsigned char *image = rx_builder_get_image(builder);
+  int size = rx_builder_get_size(builder);
+  store image with size to a file.
+
+  /* use time */
+  rx *rx = rx_open(image);
+  rx_search(rx, 0, "abc", ...); /* do actual work */
+  rx_close(rx);
+
+--
+History:
 0.1: preliminary
 0.2: tweaked trie memory allocation
 0.3: released for private purpose
@@ -22,10 +65,14 @@ http://ofanim.net/~yusuke/rx/
    : utility rbx (blob array) added
 1.0rc1: fix type casts. fix reverse lookup bug. fast building without trie.
 1.0rc2: fixed a bug in rx_builder_get_key_index(). fixed wrong id for predictive lookup.
+1.0rc3: reorganized test and examples.
+1.0rc4: fixed signedness issue.
+1.0: fix a compiler warning.
+1.1: add 1 level lookup mode
+1.1.1: add depth limit
+1.1.2: add rx_search_expand() feature from manabe hiroshi-san.
 
 tabata.yusuke@gmail.com
-
-TO BE WRITTEN
 
 This licensing is tentative, please ask me when it is inconvenient for you.
 --

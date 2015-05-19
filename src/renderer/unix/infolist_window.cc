@@ -255,6 +255,10 @@ void InfolistWindow::Initialize() {
   text_renderer_->Initialize(GetCanvasWidget()->window);
 }
 
+void InfolistWindow::ReloadFontConfig(const string &font_description) {
+  text_renderer_->ReloadFontConfig(font_description);
+}
+
 }  // namespace gtk
 }  // namespace renderer
 }  // namespace mozc

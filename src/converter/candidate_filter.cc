@@ -79,11 +79,14 @@ const int32 kNoFilterIfSameIdRank    = 10;
 const int32 kStopEnmerationCacheSize = 15;
 }  // anonymous namespace
 
-CandidateFilter::CandidateFilter()
-    : top_candidate_(NULL),
-      suppression_dictionary_(
-          SuppressionDictionary::GetSuppressionDictionary()) {
+CandidateFilter::CandidateFilter(
+    const SuppressionDictionary *suppression_dictionary,
+    const POSMatcher *pos_matcher)
+    : suppression_dictionary_(suppression_dictionary),
+      pos_matcher_(pos_matcher),
+      top_candidate_(NULL) {
   CHECK(suppression_dictionary_);
+  CHECK(pos_matcher_);
 }
 
 CandidateFilter::~CandidateFilter() {}
@@ -131,7 +134,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   CHECK(!nodes.empty());
 
   // "短縮よみ" must only have 1 node.
-  if (POSMatcher::IsIsolatedWord(nodes[0]->lid) &&
+  if (pos_matcher_->IsIsolatedWord(nodes[0]->lid) &&
       (nodes.size() > 1 ||
        nodes[0]->prev == NULL ||
        nodes[0]->prev->node_type == Node::NOR_NODE ||
@@ -188,7 +191,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // nodes[1..] are non-functional candidates.
       // In other words, the node just after KatakanaT13n candidate should
       // be a functional word.
-      if (is_top_english_t13n && !POSMatcher::IsFunctional(nodes[i]->lid)) {
+      if (is_top_english_t13n && !pos_matcher_->IsFunctional(nodes[i]->lid)) {
         return CandidateFilter::BAD_CANDIDATE;
       }
     }
@@ -214,7 +217,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // TODO(taku): remove it after intorducing a word clustering for noun.
   if (candidate_size >= 1 && nodes.size() > 1 &&
       nodes[0]->lid == nodes[0]->rid &&
-      POSMatcher::IsWeakCompoundPrefix(nodes[0]->lid)) {
+      pos_matcher_->IsWeakCompoundPrefix(nodes[0]->lid)) {
     VLOG(1) << "removing noisy prefix pattern";
     return CandidateFilter::BAD_CANDIDATE;
   }
@@ -224,8 +227,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // We basically ignores the cost threadshould. Filter candidate
   // only with StructureCost
   int cost_offset = kCostOffset;
-  if (candidate->lid == POSMatcher::GetLastNameId() ||
-      candidate->lid == POSMatcher::GetFirstNameId()) {
+  if (candidate->lid == pos_matcher_->GetLastNameId() ||
+      candidate->lid == pos_matcher_->GetFirstNameId()) {
     cost_offset = INT_MAX;
   }
 

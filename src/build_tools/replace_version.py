@@ -54,7 +54,6 @@ def ParseOptions():
   parser.add_option("--version_file", dest="version_file")
   parser.add_option("--output", dest="output")
   parser.add_option("--input", dest="input")
-  parser.add_option("--target_platform", dest="target_platform")
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -72,9 +71,7 @@ def main():
     logging.error("--input is not specified.")
     exit(-1)
 
-  version = mozc_version.MozcVersion(options.version_file,
-                                     expand_daily=False,
-                                     target_platform=options.target_platform)
+  version = mozc_version.MozcVersion(options.version_file)
   open(options.output, 'w').write(
       version.GetVersionInFormat(open(options.input).read()))
 

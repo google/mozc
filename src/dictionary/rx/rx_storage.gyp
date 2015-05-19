@@ -32,6 +32,7 @@
     {
       'target_name': 'rx_trie',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
         'rx_trie.cc',
       ],
@@ -43,6 +44,7 @@
     {
       'target_name': 'rx_trie_builder',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
         'rx_trie_builder.cc'
       ],
@@ -54,6 +56,7 @@
     {
       'target_name': 'rbx_array',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
         'rbx_array.cc',
       ],
@@ -65,6 +68,7 @@
     {
       'target_name': 'rbx_array_builder',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
         'rbx_array_builder.cc'
       ],

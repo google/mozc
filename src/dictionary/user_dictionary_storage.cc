@@ -68,6 +68,10 @@ const size_t kCloudSyncBytesLimit = 1 << 19;  // 0.5MB
 // TODO(mukai): translate the name.
 const char kSyncDictionaryName[] = "Sync Dictionary";
 
+// "自動登録単語";
+const char kAutoRegisteredDictionaryName[] =
+  "\xE8\x87\xAA\xE5\x8B\x95\xE7\x99\xBB\xE9\x8C\xB2\xE5\x8D\x98\xE8\xAA\x9E";
+
 // Create Random ID for dictionary
 uint64 CreateID() {
   uint64 id = 0;
@@ -516,6 +520,72 @@ void UserDictionaryStorage::RemoveUnusedSyncDictionariesIfExist() {
   for (size_t i = 0; i < copied_dictionaries.size(); ++i) {
     add_dictionaries()->CopyFrom(copied_dictionaries[i]);
   }
+}
+
+  // Add new entry to the auto registered dictionary.
+bool UserDictionaryStorage::AddToAutoRegisteredDictionary(
+    const string &key, const string &value, const string &pos) {
+  if (!Lock()) {
+    LOG(ERROR) << "cannot lock the user dictionary storage";
+    return false;
+  }
+
+  int auto_index = -1;
+  for (int i = 0; i < dictionaries_size(); ++i) {
+    if (dictionaries(i).name() == kAutoRegisteredDictionaryName) {
+      auto_index = i;
+      break;
+    }
+  }
+
+  UserDictionary *dic = NULL;
+  if (auto_index == -1) {
+    if (dictionaries_size() >= kMaxDictionarySize) {
+      last_error_type_ = TOO_MANY_DICTIONARIES;
+      LOG(ERROR) << "too many dictionaries";
+      UnLock();
+      return false;
+    }
+    dic = add_dictionaries();
+    dic->set_id(CreateID());
+    dic->set_name(kAutoRegisteredDictionaryName);
+  } else {
+    dic = mutable_dictionaries(auto_index);
+  }
+
+  if (dic == NULL) {
+    LOG(ERROR) << "cannot add a new dictionary.";
+    UnLock();
+    return false;
+  }
+
+  if (dic->entries_size() >= max_entry_size()) {
+    last_error_type_ = TOO_MANY_ENTRIES;
+    LOG(ERROR) << "too many entries";
+    UnLock();
+    return false;
+  }
+
+  UserDictionaryEntry *entry = dic->add_entries();
+  if (entry == NULL) {
+    LOG(ERROR) << "cannot add new entry";
+    UnLock();
+    return false;
+  }
+
+  entry->set_key(key);
+  entry->set_value(value);
+  entry->set_pos(pos);
+  entry->set_auto_registered(true);
+
+  if (!Save()) {
+    UnLock();
+    LOG(ERROR) << "cannot save the user dictionary storage";
+    return false;
+  }
+
+  UnLock();
+  return true;
 }
 
 // static

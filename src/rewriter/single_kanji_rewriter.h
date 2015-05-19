@@ -34,17 +34,20 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
-class SingleKanjiRewriter: public RewriterInterface  {
+class SingleKanjiRewriter : public RewriterInterface  {
  public:
   SingleKanjiRewriter();
   virtual ~SingleKanjiRewriter();
 
   virtual int capability() const;
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_SINGLE_KANJI_REWRITER_H_

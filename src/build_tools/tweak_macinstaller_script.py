@@ -83,7 +83,7 @@ def main():
       logging.error("--%s is not specified." % flag)
       exit(-1)
 
-  version = mozc_version.MozcVersion(options.version_file, expand_daily=False)
+  version = mozc_version.MozcVersion(options.version_file)
 
   if options.build_type == "dev":
     omaha_tag = "external-dev"

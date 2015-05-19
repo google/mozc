@@ -46,9 +46,6 @@
 
     # This variable need to be set to 1 when you build Mozc for Chromium OS.
     'chromeos%': 0,
-    # Extra libraries for Linux. This can be used like:
-    # GYP_DEFINES='extra_linux_libs="-lfoo -lbar"' python build_mozc.py gyp
-    'extra_linux_libs%': [],
 
     # warning_cflags will be shared with Mac and Linux.
     'warning_cflags': [
@@ -59,7 +56,7 @@
       '-Wno-deprecated-declarations',
       '-Wwrite-strings',
     ],
-    # gcc_cflags will be shared with Mac and Linux.
+    # gcc_cflags will be shared with Mac and Linux except for NaCl.
     'gcc_cflags': [
       '-fmessage-length=0',
       '-fno-omit-frame-pointer',
@@ -69,14 +66,20 @@
       '-pipe',
       '-pthread',
     ],
+    # cflags for NaCl.
+    # -fno-omit-frame-pointer flag does not work correctly.
+    #   http://code.google.com/p/chromium/issues/detail?id=122623
+    'nacl_cflags': [
+      '-fmessage-length=0',
+      '-fno-strict-aliasing',
+      '-funsigned-char',
+      '-include', 'base/namespace.h',
+      '-pipe',
+      '-pthread',
+    ],
     # Libraries for GNU/Linux environment.
     'linux_ldflags': [
       '-pthread',
-    ],
-    'linux_libs': [
-      '-lcrypto',
-      '-lssl',
-      '-lz',
     ],
 
     # 'conditions' is put inside of 'variables' so that we can use
@@ -508,6 +511,7 @@
         ],
         'conditions': [
           # For GTEST
+          # TODO(team): Move below flags to global setting as much as possible.
           ['enable_unittest==1', {
             'defines+': [
               'GTEST_HAS_CLONE=0',
@@ -552,7 +556,7 @@
             'inherit_from': ['Common_Base', 'Android_Base', 'Optimize_Base', 'Release_Base'],
           },
         }],
-        ['target_platform=="Linux" and nacl_sdk_root!=""', {
+        ['target_platform=="NaCl"', {
           # The following configurations, i.e. directories, are meant for binary
           # files built with an NaCl toolchain.
           # A special hack in build_for_nacl.py sets environment variables such
@@ -587,6 +591,8 @@
       ['enable_unittest==1', {
         'defines+': [
           'GTEST_HAS_TR1_TUPLE=1',
+          'GTEST_HAS_RTTI=0',  # Android NDKr7 requires this.
+                               # TODO(team): Remove when it becomes unnecessary.
         ],
         'include_dirs+': [
           '<(third_party_dir)/gmock/include',
@@ -675,14 +681,12 @@
               'user32.lib',
               'uuid.lib',
             ],
-            'AdditionalOptions': [
-              '/DYNAMICBASE',  # 'RandomizedBaseAddress': 'true'
-              '/NXCOMPAT',
-            ],
+            'DataExecutionPrevention': '2',        # /NXCOMPAT
             'EnableCOMDATFolding': '2',            # /OPT:ICF
             'GenerateDebugInformation': 'true',    # /DEBUG
             'LinkIncremental': '1',                # /INCREMENTAL:NO
             'OptimizeReferences': '2',             # /OPT:REF
+            'RandomizedBaseAddress': '2',          # /DYNAMICBASE
             'target_conditions': [
               # /TSAWARE is valid only on executable target.
               ['_type=="executable"', {
@@ -707,7 +711,6 @@
           'MOZC_SERVER_DIRECTORY="<@(server_dir)"',
         ],
         'cflags': [
-          '<@(gcc_cflags)',
           '<@(warning_cflags)',
           '-fPIC',
           '-fno-exceptions',
@@ -718,18 +721,29 @@
           '-Wno-deprecated',
         ],
         'conditions': [
-          ['target_platform!="Android"', {
-            'link_settings': {
-              'libraries': [
-                '<@(linux_libs)',
-                '<@(extra_linux_libs)',
-              ],
-            },
-          }],
           ['chromeos==1', {
             'defines': [
               'OS_CHROMEOS',
             ],
+          }],
+          ['target_platform!="NaCl"', {
+            'cflags': [
+              '<@(gcc_cflags)',
+            ],
+          }],
+          ['target_platform=="NaCl"', {
+            'target_conditions' : [
+              ['_toolset=="host"', {
+                'cflags': [
+                  '<@(gcc_cflags)',
+                ],
+              }],
+              ['_toolset=="target"', {
+                'cflags': [
+                  '<@(nacl_cflags)',
+                ],
+              }],
+            ]
           }],
         ],
       }],
@@ -756,12 +770,8 @@
             '$(SDKROOT)/System/Library/Frameworks/IOKit.framework',
             '$(SDKROOT)/System/Library/Frameworks/Security.framework',
             '$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework',
-            '/usr/lib/libcrypto.dylib',
-            '/usr/lib/libiconv.dylib',
-            '/usr/lib/libssl.dylib',
-            '/usr/lib/libz.dylib',
           ],
-        }
+        },
       }],
     ],
   },

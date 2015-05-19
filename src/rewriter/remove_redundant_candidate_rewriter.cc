@@ -30,6 +30,7 @@
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 
 #include "base/base.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 
 namespace mozc {
@@ -42,7 +43,8 @@ int RemoveRedundantCandidateRewriter::capability() const {
   return RewriterInterface::NOT_AVAILABLE;
 }
 
-bool RemoveRedundantCandidateRewriter::Rewrite(Segments *segments) const {
+bool RemoveRedundantCandidateRewriter::Rewrite(const ConversionRequest &request,
+                                               Segments *segments) const {
   if (segments->conversion_segments_size() == 1 &&
       segments->conversion_segment(0).candidates_size() == 1 &&
       segments->conversion_segment(0).candidate(0).value ==

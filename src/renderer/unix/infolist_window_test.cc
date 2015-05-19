@@ -123,10 +123,20 @@ class InfolistWindowTest : public testing::Test {
         kDummyWindow, StrEq("destroy"),
         G_CALLBACK(GtkWindowBase::OnDestroyThunk), _));
     EXPECT_CALL(*testkit->gtk_mock, GSignalConnect(
+        kDummyWindow, StrEq("button-press-event"),
+        G_CALLBACK(GtkWindowBase::OnMouseDownThunk), _));
+    EXPECT_CALL(*testkit->gtk_mock, GSignalConnect(
+        kDummyWindow, StrEq("button-release-event"),
+        G_CALLBACK(GtkWindowBase::OnMouseUpThunk), _));
+    EXPECT_CALL(*testkit->gtk_mock, GSignalConnect(
         kDummyCanvas, StrEq("expose-event"),
         G_CALLBACK(GtkWindowBase::OnPaintThunk), _));
     EXPECT_CALL(*testkit->gtk_mock,
                 GtkContainerAdd(kDummyWindow, kDummyCanvas));
+    EXPECT_CALL(*testkit->gtk_mock,
+                GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_PRESS_MASK));
+    EXPECT_CALL(*testkit->gtk_mock,
+                GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_RELEASE_MASK));
   }
 
   InfolistWindowTestKit SetUpInfolistWindow() {
@@ -457,6 +467,15 @@ TEST_F(InfolistWindowTest, GetRenderingRectsTest) {
                                       font_type, ypos, &bg_rect, &text_rect);
     FinalizeTestKit(&testkit);
   }
+}
+
+TEST_F(InfolistWindowTest, ReloadFontConfigTest) {
+  InfolistWindowTestKit testkit = SetUpInfolistWindow();
+  const char kDummyFontDescription[] = "Foo,Bar,Baz";
+  EXPECT_CALL(*testkit.text_renderer_mock,
+              ReloadFontConfig(StrEq(kDummyFontDescription)));
+  testkit.window->ReloadFontConfig(kDummyFontDescription);
+  FinalizeTestKit(&testkit);
 }
 
 }  // namespace gtk

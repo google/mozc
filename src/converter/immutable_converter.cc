@@ -48,9 +48,12 @@
 #include "converter/segmenter.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
+#include "dictionary/suppression_dictionary.h"
 
 DECLARE_bool(disable_lattice_cache);
 DEFINE_bool(disable_predictive_realtime_conversion,
@@ -67,25 +70,9 @@ const int    kMaxCost                           = 32767;
 const int    kMinCost                           = -32767;
 const int    kDefaultNumberCost                 = 3000;
 
-enum {
-  CONNECTED,
-  WEAK_CONNECTED,
-  NOT_CONNECTED,
-};
-
-// TODO(taku): this is a tentative fix.
-// including the header file both in rewriter and converter are redudant.
-// we'd like to have a common module.
-#include "rewriter/user_segment_history_rewriter_rule.h"
-
-// return the POS group of the given candidate
-uint16 GetPosGroup(uint16 lid) {
-  return kLidGroup[lid];
-}
-
 void InsertCorrectedNodes(size_t pos, const string &key,
                           const KeyCorrector *key_corrector,
-                          DictionaryInterface *dictionary,
+                          const DictionaryInterface *dictionary,
                           Lattice *lattice) {
   if (key_corrector == NULL) {
     return;
@@ -226,38 +213,193 @@ Lattice *GetLattice(Segments *segments, bool is_prediction) {
       || FLAGS_disable_lattice_cache
       || Util::CharsLen(conversion_key) <= 1) {
     // Do not cache if conversion is not prediction, or disable_lattice_cache
-    // flag is used.
-    // Addition, if a user input the key right after a finish of conversion,
-    // reset the lattice to erase old nodes.
+    // flag is used.  In addition, if a user input the key right after the
+    // finish of conversion, reset the lattice to erase old nodes.
     lattice->Clear();
   }
 
   return lattice;
 }
-}   // anonymous namespace
 
-// Constractor for keeping compatibility
+}  // namespace
+
+ConnectionTypeHandler::ConnectionTypeHandler(
+    const vector<uint16> &group, const Segments *segments,
+    const SegmenterInterface *segmenter) :
+    group_(group), segments_(segments), segmenter_(segmenter),
+    is_prediction_(
+        segments_->request_type() == Segments::PREDICTION ||
+        segments_->request_type() == Segments::SUGGESTION ||
+        segments_->request_type() == Segments::PARTIAL_PREDICTION ||
+        segments_->request_type() == Segments::PARTIAL_SUGGESTION) {}
+
+void ConnectionTypeHandler::SetRNode(const Node *rnode) {
+  rnode_ = rnode;
+  // |rnode| does not fit the segment boundary
+  if (rnode_->node_type != Node::EOS_NODE &&
+      group_[rnode_->begin_pos] != group_[rnode_->end_pos - 1]) {
+    ret_ = RETURN_NOT_CONNECTED;
+    return;
+  }
+
+  // BOS/EOS node
+  if (rnode_->node_type == Node::EOS_NODE ||
+      rnode_->node_type == Node::HIS_NODE) {
+    ret_ = RETURN_CONNECTED_IF_LNODE_IS_VALID;
+    return;
+  }
+
+  ret_ = DEFAULT;
+  rtype_ = segments_->segment(group_[rnode_->begin_pos]).segment_type();
+}
+
+ConnectionTypeHandler::ConnectionType
+ConnectionTypeHandler::GetConnectionType(Node *lnode) const {
+  switch (ret_) {
+    case RETURN_NOT_CONNECTED: {
+      return NOT_CONNECTED;
+    }
+    case RETURN_CONNECTED_IF_LNODE_IS_VALID: {
+      if (lnode->node_type != Node::BOS_NODE &&
+          group_[lnode->begin_pos] != group_[lnode->end_pos - 1]) {
+        return NOT_CONNECTED;
+      } else {
+        return CONNECTED;
+      }
+    }
+    case DEFAULT: {
+      if (lnode->node_type != Node::BOS_NODE &&
+          group_[lnode->begin_pos] != group_[lnode->end_pos - 1]) {
+        return NOT_CONNECTED;
+      }
+      if (lnode->node_type == Node::BOS_NODE ||
+          lnode->node_type == Node::HIS_NODE) {
+        return CONNECTED;
+      }
+      if (rtype_ == Segment::FREE) {
+        const Segment::SegmentType ltype =
+            segments_->segment(group_[lnode->begin_pos]).segment_type();
+        if (ltype == Segment::FREE) {
+          return CONNECTED;
+        }
+      }
+      const bool is_rule_boundary = segmenter_->IsBoundary(
+          lnode, rnode_, is_prediction_);
+      const bool is_constraint_boundary =
+          group_[lnode->begin_pos] != group_[rnode_->begin_pos];
+      if (is_constraint_boundary && !is_rule_boundary) {
+        return WEAK_CONNECTED;
+      }
+      return CONNECTED;
+    }
+    default: {
+      LOG(FATAL) << "Should not come here.";
+      return NOT_CONNECTED;
+    }
+  }
+}
+
+ConnectionTypeHandler::ConnectionType
+ConnectionTypeHandler::GetConnectionTypeForUnittest(
+    const Node *lnode, const Node *rnode, const vector<uint16> &group,
+    const Segments *segments, const SegmenterInterface *segmenter) {
+  // |lnode| or |rnode| does not fit the segment boundary
+  if ((rnode->node_type != Node::EOS_NODE &&
+       group[rnode->begin_pos] != group[rnode->end_pos - 1]) ||
+      (lnode->node_type != Node::BOS_NODE &&
+       group[lnode->begin_pos] != group[lnode->end_pos - 1])) {
+    return NOT_CONNECTED;
+  }
+
+  // BOS/EOS nodes
+  if (lnode->node_type == Node::BOS_NODE ||
+      rnode->node_type == Node::EOS_NODE ||
+      lnode->node_type == Node::HIS_NODE ||
+      rnode->node_type == Node::HIS_NODE) {
+    return CONNECTED;
+  }
+  // lnode and rnode are both FREE Node
+  const Segment::SegmentType ltype =
+      segments->segment(group[lnode->begin_pos]).segment_type();
+  const Segment::SegmentType rtype =
+      segments->segment(group[rnode->begin_pos]).segment_type();
+  if (ltype == Segment::FREE && rtype == Segment::FREE) {
+    return CONNECTED;
+  }
+
+  const bool is_prediction =
+      (segments->request_type() == Segments::PREDICTION ||
+       segments->request_type() == Segments::SUGGESTION ||
+       segments->request_type() == Segments::PARTIAL_PREDICTION ||
+       segments->request_type() == Segments::PARTIAL_SUGGESTION);
+
+  const bool is_rule_boundary = segmenter->IsBoundary(lnode, rnode,
+                                                      is_prediction);
+  const bool is_constraint_boundary =
+      group[lnode->begin_pos] != group[rnode->begin_pos];
+
+  if (is_constraint_boundary && !is_rule_boundary) {
+    return WEAK_CONNECTED;
+  }
+
+  return CONNECTED;
+}
+
+// Constructor for keeping compatibility
 // TODO(team): Change code to use another constractor and
+
 // specify implementations.
 ImmutableConverterImpl::ImmutableConverterImpl()
-    : connector_(ConnectorFactory::GetConnector()),
-      dictionary_(DictionaryFactory::GetDictionary()),
+    : dictionary_(DictionaryFactory::GetDictionary()),
+      suffix_dictionary_(SuffixDictionaryFactory::GetSuffixDictionary()),
+      suppression_dictionary_(
+          SuppressionDictionary::GetSuppressionDictionary()),
+      connector_(ConnectorFactory::GetConnector()),
       segmenter_(Singleton<Segmenter>::get()),
-      last_to_first_name_transition_cost_(0) {
-  last_to_first_name_transition_cost_
-      = connector_->GetTransitionCost(
-          POSMatcher::GetLastNameId(), POSMatcher::GetFirstNameId());
+      pos_matcher_(Singleton<POSMatcher>::get()),
+      pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
+      first_name_id_(pos_matcher_->GetFirstNameId()),
+      last_name_id_(pos_matcher_->GetLastNameId()),
+      number_id_(pos_matcher_->GetNumberId()),
+      unknown_id_(pos_matcher_->GetUnknownId()),
+      last_to_first_name_transition_cost_(
+          connector_->GetTransitionCost(last_name_id_, first_name_id_)) {
+  DCHECK(dictionary_);
+  DCHECK(suffix_dictionary_);
+  DCHECK(connector_);
+  DCHECK(segmenter_);
+  DCHECK(pos_matcher_);
+  DCHECK(pos_group_);
 }
 
 ImmutableConverterImpl::ImmutableConverterImpl(
-    const SegmenterInterface *segmenter)
-    : connector_(ConnectorFactory::GetConnector()),
-      dictionary_(DictionaryFactory::GetDictionary()),
+    const DictionaryInterface *dictionary,
+    const DictionaryInterface *suffix_dictionary,
+    const SuppressionDictionary *suppression_dictionary,
+    const ConnectorInterface *connector,
+    const SegmenterInterface *segmenter,
+    const POSMatcher *pos_matcher,
+    const PosGroup *pos_group)
+    : dictionary_(dictionary),
+      suffix_dictionary_(suffix_dictionary),
+      suppression_dictionary_(suppression_dictionary),
+      connector_(connector),
       segmenter_(segmenter),
-      last_to_first_name_transition_cost_(0) {
-  last_to_first_name_transition_cost_
-      = connector_->GetTransitionCost(
-          POSMatcher::GetLastNameId(), POSMatcher::GetFirstNameId());
+      pos_matcher_(pos_matcher),
+      pos_group_(pos_group),
+      first_name_id_(pos_matcher_->GetFirstNameId()),
+      last_name_id_(pos_matcher_->GetLastNameId()),
+      number_id_(pos_matcher_->GetNumberId()),
+      unknown_id_(pos_matcher_->GetUnknownId()),
+      last_to_first_name_transition_cost_(
+          connector_->GetTransitionCost(last_name_id_, first_name_id_)) {
+  DCHECK(dictionary_);
+  DCHECK(suffix_dictionary_);
+  DCHECK(suppression_dictionary_);
+  DCHECK(connector_);
+  DCHECK(segmenter_);
+  DCHECK(pos_matcher_);
+  DCHECK(pos_group_);
 }
 
 void ImmutableConverterImpl::ExpandCandidates(
@@ -408,8 +550,8 @@ bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
   for (const Node *compound_node = bnode;
        compound_node != NULL; compound_node = compound_node->bnext) {
     if (!compound_node->value.empty() && !compound_node->key.empty() &&
-        POSMatcher::IsNumber(compound_node->lid) &&
-        !POSMatcher::IsNumber(compound_node->rid) &&
+        pos_matcher_->IsNumber(compound_node->lid) &&
+        !pos_matcher_->IsNumber(compound_node->rid) &&
         IsNumber(compound_node->value[0]) && IsNumber(compound_node->key[0])) {
       string number_value, number_key;
       string suffix_value, suffix_key;
@@ -560,8 +702,8 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
   for (const Node *compound_node = bnode;
        compound_node != NULL; compound_node = compound_node->bnext) {
     // left word is last name and right word is first name
-    if (compound_node->lid != POSMatcher::GetLastNameId() ||
-        compound_node->rid != POSMatcher::GetFirstNameId()) {
+    if (compound_node->lid != last_name_id_ ||
+        compound_node->rid != first_name_id_) {
       continue;
     }
 
@@ -620,15 +762,15 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
 
     // Constraint 4.a
     if (len >= 4 &&
-        (best_last_name_node->lid != POSMatcher::GetLastNameId() &&
-         best_first_name_node->rid != POSMatcher::GetFirstNameId())) {
+        (best_last_name_node->lid != last_name_id_ &&
+         best_first_name_node->rid != first_name_id_)) {
       continue;
     }
 
     // Constraint 4.b
     if (len == 3 &&
-        (best_last_name_node->lid != POSMatcher::GetLastNameId() ||
-         best_first_name_node->rid != POSMatcher::GetFirstNameId())) {
+        (best_last_name_node->lid != last_name_id_ ||
+         best_first_name_node->rid != first_name_id_)) {
       continue;
     }
 
@@ -642,7 +784,6 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
     // i.e,
     // last_name_cost = first_name_cost =
     // (compound_cost - transition_cost) / 2;
-
     const int32 wcost = (compound_node->wcost -
                          last_to_first_name_transition_cost_) / 2;
 
@@ -651,7 +792,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
     last_name_node->key = best_last_name_node->key;
     last_name_node->value = best_last_name_node->value;
     last_name_node->lid = compound_node->lid;
-    last_name_node->rid = POSMatcher::GetLastNameId();
+    last_name_node->rid = last_name_id_;
     last_name_node->wcost = wcost;
     last_name_node->node_type = Node::NOR_NODE;
     last_name_node->bnext = NULL;
@@ -663,7 +804,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
     CHECK(first_name_node);
     first_name_node->key = best_first_name_node->key;
     first_name_node->value = best_first_name_node->value;
-    first_name_node->lid = POSMatcher::GetFirstNameId();
+    first_name_node->lid = first_name_id_;
     first_name_node->rid = compound_node->rid;
     first_name_node->wcost = wcost;
     first_name_node->node_type = Node::NOR_NODE;
@@ -696,16 +837,16 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
   lattice->node_allocator()->set_max_nodes_size(8192);
   Node *result_node = NULL;
   if (is_reverse) {
-    result_node = dictionary_->LookupReverse(
-        begin, len, lattice->node_allocator());
+    result_node = dictionary_->LookupReverse(begin, len,
+                                             lattice->node_allocator());
   } else {
     if (is_prediction && !FLAGS_disable_lattice_cache) {
       DictionaryInterface::Limit limit;
       limit.key_len_lower_limit = lattice->cache_info(begin_pos) + 1;
 
       result_node =
-          DictionaryFactory::GetDictionary()->LookupPrefixWithLimit(
-          begin, len, limit, lattice->node_allocator());
+          dictionary_->LookupPrefixWithLimit(
+              begin, len, limit, lattice->node_allocator());
 
       // add ENABLE_CACHE attribute and set raw_wcost
       for (Node *node = result_node; node != NULL; node = node->bnext) {
@@ -716,8 +857,7 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
       lattice->SetCacheInfo(begin_pos, len);
     } else {
       // when cache feature is not used, look up normally
-      result_node =
-          DictionaryFactory::GetDictionary()->LookupPrefix(
+      result_node = dictionary_->LookupPrefix(
           begin, len, lattice->node_allocator());
     }
   }
@@ -738,11 +878,11 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(
     Node *new_node = lattice->NewNode();
     CHECK(new_node);
     if (first_script_type == Util::NUMBER) {
-      new_node->lid = POSMatcher::GetNumberId();
-      new_node->rid = POSMatcher::GetNumberId();
+      new_node->lid = number_id_;
+      new_node->rid = number_id_;
     } else {
-      new_node->lid = POSMatcher::GetUnknownId();
-      new_node->rid = POSMatcher::GetUnknownId();
+      new_node->lid = unknown_id_;
+      new_node->rid = unknown_id_;
     }
 
     new_node->wcost = kMaxCost;
@@ -781,11 +921,11 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(
     Node *new_node = lattice->NewNode();
     CHECK(new_node);
     if (first_script_type == Util::NUMBER) {
-      new_node->lid = POSMatcher::GetNumberId();
-      new_node->rid = POSMatcher::GetNumberId();
+      new_node->lid = number_id_;
+      new_node->rid = number_id_;
     } else {
-      new_node->lid = POSMatcher::GetUnknownId();
-      new_node->rid = POSMatcher::GetUnknownId();
+      new_node->lid = unknown_id_;
+      new_node->rid = unknown_id_;
     }
     new_node->wcost = kMaxCost / 2;
     new_node->value.assign(begin, mblen);
@@ -812,19 +952,21 @@ bool ImmutableConverterImpl::Viterbi(Segments *segments,
 
   const string &key = lattice.key();
 
+  ConnectionTypeHandler connection_type_handler(group, segments, segmenter_);
   for (size_t pos = 0; pos <= key.size(); ++pos) {
     for (Node *rnode = lattice.begin_nodes(pos);
          rnode != NULL; rnode = rnode->bnext) {
       int best_cost = INT_MAX;
       Node *best_node = NULL;
+      connection_type_handler.SetRNode(rnode);
       for (Node *lnode = lattice.end_nodes(pos);
            lnode != NULL; lnode = lnode->enext) {
         int cost = 0;
-        switch (GetConnectionType(lnode, rnode, group, segments)) {
-          case CONNECTED:
+        switch (connection_type_handler.GetConnectionType(lnode)) {
+          case ConnectionTypeHandler::CONNECTED:
             cost = lnode->cost + GetCost(lnode, rnode);
             break;
-          case WEAK_CONNECTED:
+          case ConnectionTypeHandler::WEAK_CONNECTED:
             // word boundary with WEAK_CONNECTED is created as follows
             // - [ABCD] becomes one segment with converter,
             //   where A, B, C and D a word
@@ -841,7 +983,7 @@ bool ImmutableConverterImpl::Viterbi(Segments *segments,
             cost = lnode->cost + GetCost(lnode, rnode) + kWeakConnectedPeanlty;
             rnode->attributes |= Node::WEAK_CONNECTED;
             break;
-          case NOT_CONNECTED:
+          case ConnectionTypeHandler::NOT_CONNECTED:
             cost = kVeryBigCost;
             break;
           default:
@@ -875,52 +1017,6 @@ bool ImmutableConverterImpl::Viterbi(Segments *segments,
   return true;
 }
 
-int ImmutableConverterImpl::GetConnectionType(const Node *lnode,
-                                              const Node *rnode,
-                                              const vector<uint16> &group,
-                                              const Segments *segments) const {
-  if ((rnode->node_type != Node::EOS_NODE &&
-       group[rnode->begin_pos] != group[rnode->end_pos - 1]) ||
-      (lnode->node_type != Node::BOS_NODE &&
-       group[lnode->begin_pos] != group[lnode->end_pos - 1])) {
-    return NOT_CONNECTED;
-  }
-
-  // BOS/EOS nodes
-  if (lnode->node_type == Node::BOS_NODE ||
-      rnode->node_type == Node::EOS_NODE ||
-      lnode->node_type == Node::HIS_NODE ||
-      rnode->node_type == Node::HIS_NODE) {
-    return CONNECTED;
-  }
-
-  // lnode and rnode are both FREE Node
-  const Segment::SegmentType ltype =
-      segments->segment(group[lnode->begin_pos]).segment_type();
-  const Segment::SegmentType rtype =
-      segments->segment(group[rnode->begin_pos]).segment_type();
-  if (ltype == Segment::FREE && rtype == Segment::FREE) {
-    return CONNECTED;
-  }
-
-  const bool is_prediction =
-      (segments->request_type() == Segments::PREDICTION ||
-       segments->request_type() == Segments::SUGGESTION ||
-       segments->request_type() == Segments::PARTIAL_PREDICTION ||
-       segments->request_type() == Segments::PARTIAL_SUGGESTION);
-
-  const bool is_rule_boundary = segmenter_->IsBoundary(lnode, rnode,
-                                                       is_prediction);
-  const bool is_constraint_boundary =
-      group[lnode->begin_pos] != group[rnode->begin_pos];
-
-  if (is_constraint_boundary && !is_rule_boundary) {
-    return WEAK_CONNECTED;
-  }
-
-  return CONNECTED;
-}
-
 // faster Viterbi algorithm for prediction
 //
 // Run simple Viterbi algorithm with contracting the same lid and rid.
@@ -938,6 +1034,10 @@ int ImmutableConverterImpl::GetConnectionType(const Node *lnode,
 //
 // We cannot apply this function in suggestion because in suggestion there are
 // WEAK_CONNECTED nodes and this function is not designed for them.
+//
+// TODO(toshiyuki): We may be able to use faster viterbi for
+// conversion/suggestion if we use richer info as contraction group.
+
 bool ImmutableConverterImpl::PredictionViterbi(Segments *segments,
                                                const Lattice &lattice) const {
   const size_t &key_length = lattice.key().size();
@@ -1058,10 +1158,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
       DCHECK_GE(key.size(), pos);
 
       const size_t str_len = key.size() - pos;
-      Node *result_node =
-          SuffixDictionaryFactory::GetSuffixDictionary()->LookupPredictive(
-              key.data() + pos, str_len,
-              lattice->node_allocator());
+      Node *result_node = suffix_dictionary_->LookupPredictive(
+          key.data() + pos, str_len, lattice->node_allocator());
       AddPredictiveNodes(suffix_len, pos, lattice, result_node);
     }
   }
@@ -1085,10 +1183,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
       }
 
       const size_t str_len = key.size() - pos;
-      Node *result_node =
-          DictionaryFactory::GetDictionary()->LookupPredictive(
-              key.data() + pos, str_len,
-              lattice->node_allocator());
+      Node *result_node = dictionary_->LookupPredictive(
+          key.data() + pos, str_len, lattice->node_allocator());
       AddPredictiveNodes(suffix_len, pos, lattice, result_node);
     }
   }
@@ -1109,22 +1205,22 @@ void ImmutableConverterImpl::AddPredictiveNodes(const size_t &len,
     int additional_cost = kPredictiveNodeDefaultPenalty;
 
     // bonus for suffix word
-    if (POSMatcher::IsSuffixWord(rnode->rid)
-        && POSMatcher::IsSuffixWord(rnode->lid)) {
+    if (pos_matcher_->IsSuffixWord(rnode->rid)
+        && pos_matcher_->IsSuffixWord(rnode->lid)) {
       const int kSuffixWordBonus = 700;
       additional_cost -= kSuffixWordBonus;
     }
 
     // penalty for unique noun word
-    if (POSMatcher::IsUniqueNoun(rnode->rid)
-        || POSMatcher::IsUniqueNoun(rnode->lid)) {
+    if (pos_matcher_->IsUniqueNoun(rnode->rid)
+        || pos_matcher_->IsUniqueNoun(rnode->lid)) {
       const int kUniqueNounPenalty = 500;
       additional_cost += kUniqueNounPenalty;
     }
 
     // penalty for number
-    if (POSMatcher::IsNumber(rnode->rid)
-        || POSMatcher::IsNumber(rnode->lid)) {
+    if (pos_matcher_->IsNumber(rnode->rid)
+        || pos_matcher_->IsNumber(rnode->lid)) {
       const int kNumberPenalty = 4000;
       additional_cost += kNumberPenalty;
     }
@@ -1294,7 +1390,16 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
       CHECK(rnode2);
       rnode2->lid = candidate.lid;
       rnode2->rid = 0;   // 0 is BOS/EOS
-      rnode2->wcost = 1500;  // =~ -500 * log(1/20)
+
+      // This cost was originally set to 1500.
+      // It turned out this penalty was so strong that it caused some
+      // undesirable conversions like "の-なまえ" -> "の-な前" etc., so we
+      // changed this to 0.
+      // Reducing the cost promotes context-unaware conversions, and this may
+      // have some unexpected side effects.
+      // TODO(team): Figure out a better way to set the cost using
+      // boundary.def-like approach.
+      rnode2->wcost = 0;
       rnode2->value = candidate.value;
       rnode2->key = segment.key();
       rnode2->node_type = Node::HIS_NODE;
@@ -1330,7 +1435,8 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
 
         // Must be in the same POS group.
         // http://b/issue?id=2977618
-        if (GetPosGroup(candidate.lid) != GetPosGroup(compound_node->lid)) {
+        if (pos_group_->GetPosGroup(candidate.lid)
+            != pos_group_->GetPosGroup(compound_node->lid)) {
           continue;
         }
 
@@ -1358,21 +1464,11 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
 
         // New cost recalcuration:
         //
-        // trans(last_rid, candidate.lid) + candidate.wcost
-        // + trans(candidate.rid, new_node->lid)
-        // + new_node->wcost ==
-        // trans(last_rid, compound_node->lid) + compound_node->wcost
-        //
-        // i.e.
-        // new_node->wcost =
-        // trans(last_rid, compound_node->lid) + compound_node->wcost
-        //   - trans(last_rid, candidate.lid) - candidate.wcost -
-        // trans(candidate.rid, new_node->lid)
+        // compound_node->wcost * (candidate len / compound_node len)
+        // - trans(candidate.rid, new_node.lid)
         new_node->wcost =
-            connector_->GetTransitionCost(last_rid, compound_node->lid)
-            + compound_node->wcost
-            - connector_->GetTransitionCost(last_rid, candidate.lid)
-            - candidate.wcost
+            compound_node->wcost *
+            candidate.value.size() / compound_node->value.size()
             - connector_->GetTransitionCost(candidate.rid, new_node->lid);
 
         VLOG(2) << " compound_node->lid=" << compound_node->lid
@@ -1432,7 +1528,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
       // is assigned.
       if (!history_key.empty() && pos == history_key.size()) {
         for (Node *node = rnode; node != NULL; node = node->bnext) {
-          if (POSMatcher::IsAcceptableParticleAtBeginOfSegment(node->lid) &&
+          if (pos_matcher_->IsAcceptableParticleAtBeginOfSegment(node->lid) &&
               node->lid == node->rid) {  // not a compound.
             node->attributes |= Node::STARTS_WITH_PARTICLE;
           }
@@ -1559,19 +1655,16 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
                (node->next->node_type != Node::EOS_NODE &&
                 group[node->begin_pos] != group[node->next->begin_pos]) ||
                segmenter_->IsBoundary(node, node->next, is_prediction)) {
+      scoped_ptr<NBestGenerator> nbest(new NBestGenerator(
+          suppression_dictionary_, segmenter_, connector_, pos_matcher_,
+          prev, node->next, &lattice, is_prediction));
+      CHECK(nbest.get());
       Segment *segment = is_prediction ?
           segments->mutable_segment(segments->segments_size() - 1) :
           segments->add_segment();
-      scoped_ptr<NBestGenerator> nbest(new NBestGenerator);
       CHECK(segment);
-      CHECK(nbest.get());
       if (!is_prediction) {
         segment->clear_candidates();
-      }
-      nbest->Init(prev, node->next, &lattice,
-                  is_prediction);
-      if (!is_prediction) {
-        // For prediction, segment is already set as a request key
         segment->set_key(key);
       }
       ExpandCandidates(nbest.get(), segment, segments->request_type(),

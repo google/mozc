@@ -44,6 +44,9 @@ namespace composer {
 
 class ConverterInterface {
  public:
+  // Allow deletion through the interface.
+  virtual ~ConverterInterface() {}
+
   // Starts conversion for given request.
   virtual bool StartConversionForRequest(const ConversionRequest &request,
                                          Segments *segments) const = 0;
@@ -215,7 +218,6 @@ class ConverterInterface {
   virtual UserDataManagerInterface *GetUserDataManager() = 0;
 
  protected:
-  virtual ~ConverterInterface() {}
   ConverterInterface() {}
 
  private:

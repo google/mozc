@@ -37,7 +37,7 @@ def ConvertString(result):
 
 
 def main():
-  print 'const SuffixToken kSuffixTokens[] = {'
+  print 'const SuffixDictionary::SuffixToken kSuffixTokens[] = {'
 
   n = 0
   for line in open(sys.argv[1], "r"):

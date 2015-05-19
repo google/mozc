@@ -220,7 +220,7 @@ class SessionConverterTest : public testing::Test {
                 preedit.segment(1).annotation());
       EXPECT_EQ(commands::Preedit::Segment::UNDERLINE,
                 preedit.segment(2).annotation());
-      EXPECT_EQ(1, preedit.highlighted_position());
+      EXPECT_EQ(Util::CharsLen(kSelectedText), preedit.highlighted_position());
       EXPECT_EQ(Util::CharsLen(kSelectedText), preedit.cursor());
     } else {
       EXPECT_FALSE(output.has_preedit());

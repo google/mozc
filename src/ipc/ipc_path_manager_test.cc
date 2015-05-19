@@ -27,11 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <vector>
+
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/process_mutex.h"
-#include "base/util.h"
 #include "base/thread.h"
+#include "base/util.h"
+#include "base/version.h"
+#include "ipc/ipc.h"
+#include "ipc/ipc.pb.h"
 #include "ipc/ipc_path_manager.h"
 #include "testing/base/public/gunit.h"
 
@@ -140,4 +145,29 @@ TEST_F(IPCPathManagerTest, ReloadTest) {
   EXPECT_TRUE(manager->ShouldReload());
 #endif  // OS_WINDOWS
 }
-}  // mozc
+
+TEST_F(IPCPathManagerTest, PathNameTest) {
+  mozc::IPCPathManager *manager =
+      mozc::IPCPathManager::GetIPCPathManager("path_name_test");
+
+  EXPECT_TRUE(manager->CreateNewPathName());
+  EXPECT_TRUE(manager->SavePathName());
+  const ipc::IPCPathInfo original_path = *(manager->ipc_path_info_);
+  EXPECT_EQ(IPC_PROTOCOL_VERSION, original_path.protocol_version());
+  // Checks that versions are same.
+  EXPECT_EQ(Version::GetMozcVersion(), original_path.product_version());
+  EXPECT_TRUE(original_path.has_key());
+  EXPECT_TRUE(original_path.has_process_id());
+  EXPECT_TRUE(original_path.has_thread_id());
+
+  manager->ipc_path_info_->Clear();
+  EXPECT_TRUE(manager->LoadPathName());
+
+  const ipc::IPCPathInfo loaded_path = *(manager->ipc_path_info_);
+  EXPECT_EQ(original_path.protocol_version(), loaded_path.protocol_version());
+  EXPECT_EQ(original_path.product_version(), loaded_path.product_version());
+  EXPECT_EQ(original_path.key(), loaded_path.key());
+  EXPECT_EQ(original_path.process_id(), loaded_path.process_id());
+  EXPECT_EQ(original_path.thread_id(), loaded_path.thread_id());
+}
+}  // namespace mozc

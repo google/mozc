@@ -51,6 +51,7 @@
 #include "renderer/unix/cairo_factory.h"
 #include "renderer/unix/candidate_window.h"
 #include "renderer/unix/draw_tool.h"
+#include "renderer/unix/font_spec.h"
 #include "renderer/unix/gtk_wrapper.h"
 #include "renderer/unix/infolist_window.h"
 #include "renderer/unix/text_renderer.h"
@@ -73,7 +74,11 @@ int main(int argc, char *argv[]) {
   mozc::ScopedCOMInitializer com_initializer;
 #elif defined(ENABLE_GTK_RENDERER)
   gtk_set_locale();
+#if !GLIB_CHECK_VERSION(2, 31, 0)
+  // There are not g_thread_init function in glib>=2.31.0.
+  //http://developer.gnome.org/glib/2.31/glib-Deprecated-Thread-APIs.html#g-thread-init
   g_thread_init(NULL);
+#endif  // GLIB>=2.31.0
   gdk_threads_init();
   gtk_init(&argc, &argv);
 #endif  // OS_WINDOWS, ENABLE_GTK_RENDERER
@@ -107,12 +112,16 @@ int main(int argc, char *argv[]) {
         new mozc::renderer::gtk::WindowManager(
             new mozc::renderer::gtk::CandidateWindow(
                 new mozc::renderer::TableLayout(),
-                new mozc::renderer::gtk::TextRenderer(),
+                new mozc::renderer::gtk::TextRenderer(
+                    new mozc::renderer::gtk::FontSpec(
+                        new mozc::renderer::gtk::GtkWrapper())),
                 new mozc::renderer::gtk::DrawTool(),
                 new mozc::renderer::gtk::GtkWrapper(),
                 new mozc::renderer::gtk::CairoFactory()),
             new mozc::renderer::gtk::InfolistWindow(
-                new mozc::renderer::gtk::TextRenderer(),
+                new mozc::renderer::gtk::TextRenderer(
+                    new mozc::renderer::gtk::FontSpec(
+                        new mozc::renderer::gtk::GtkWrapper())),
                 new mozc::renderer::gtk::DrawTool(),
                 new mozc::renderer::gtk::GtkWrapper(),
                 new mozc::renderer::gtk::CairoFactory()),

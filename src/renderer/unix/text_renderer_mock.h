@@ -47,6 +47,7 @@ class TextRendererMock : public TextRendererInterface {
                     const string &str, const int width));
   MOCK_METHOD3(RenderText, void(const string &text, const Rect &rect,
                                 FontSpecInterface::FONT_TYPE font_type));
+  MOCK_METHOD1(ReloadFontConfig, void(const string &font_description));
 };
 
 }  // namespace gtk

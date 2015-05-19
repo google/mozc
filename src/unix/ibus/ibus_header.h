@@ -27,32 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// This header file intentionally does not have include guard because
-// the purpose of this header file is embedding boilerplate code and
-// you may want to use this header file multiple times from a file.
+#ifndef MOZC_UNIX_IBUS_IBUS_HEADER_H_
+#define MOZC_UNIX_IBUS_IBUS_HEADER_H_
 
-// This header file provides a generic way to save compiler's warning
-// settings so that you can restore the settings later by
-// "pop_warning_settings.h" when you want to disable some unavoidable
-// warnings temporarily.
-// Currently Visual C++, GCC 4.6 and later, and Clang are supported.
-// On GCC 4.5 and prior, this header does nothing.
-//
-// Usage example:
-//   #include "base/push_warning_settings.h"
-//   #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 405)
-//   #pragma GCC diagnostic ignored "-Wconversion-null"
-//   #endif  // GCC 4.5 and greater
-//   EXPECT_EQ(false, false);
-//   #include "base/pop_warning_settings.h"
+#include <ibus.h>
 
-#if defined(_MSC_VER)
-  // Visual C++
-  #pragma warning(push)
-#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 406)
-  // G++ 4.6 and greater
-  #pragma GCC diagnostic push
-#elif defined(__clang__)
-  // Clang
-  #pragma clang diagnostic push
-#endif
+#endif  // MOZC_UNIX_IBUS_IBUS_HEADER_H_

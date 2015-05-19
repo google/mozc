@@ -31,10 +31,10 @@
 
 #include <string>
 #include <vector>
-
 #include "base/base.h"
 #include "base/util.h"
 #include "converter/character_form_manager.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
@@ -106,14 +106,17 @@ bool HasCharacterFormDescription(const string &value) {
 }
 }  // namespace
 
-VariantsRewriter::VariantsRewriter() {}
+VariantsRewriter::VariantsRewriter(const POSMatcher *pos_matcher)
+    : pos_matcher_(pos_matcher) {}
 
 VariantsRewriter::~VariantsRewriter() {}
 
 // static
 void VariantsRewriter::SetDescriptionForCandidate(
+    const POSMatcher &pos_matcher,
     Segment::Candidate *candidate) {
-  SetDescription(FULL_HALF_WIDTH |
+  SetDescription(pos_matcher,
+                 FULL_HALF_WIDTH |
                  CHARACTER_FORM |
                  PLATFORM_DEPENDENT_CHARACTER |
                  ZIPCODE |
@@ -123,8 +126,10 @@ void VariantsRewriter::SetDescriptionForCandidate(
 
 // static
 void VariantsRewriter::SetDescriptionForTransliteration(
+    const POSMatcher &pos_matcher,
     Segment::Candidate *candidate) {
-  SetDescription(FULL_HALF_WIDTH |
+  SetDescription(pos_matcher,
+                 FULL_HALF_WIDTH |
                  FULL_HALF_WIDTH_WITH_UNKNOWN |
                  CHARACTER_FORM |
                  PLATFORM_DEPENDENT_CHARACTER |
@@ -134,15 +139,18 @@ void VariantsRewriter::SetDescriptionForTransliteration(
 
 // static
 void VariantsRewriter::SetDescriptionForPrediction(
+    const POSMatcher &pos_matcher,
     Segment::Candidate *candidate) {
-  SetDescription(PLATFORM_DEPENDENT_CHARACTER |
+  SetDescription(pos_matcher,
+                 PLATFORM_DEPENDENT_CHARACTER |
                  ZIPCODE |
                  SPELLING_CORRECTION,
                  candidate);
 }
 
 // static
-void VariantsRewriter::SetDescription(int description_type,
+void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
+                                      int description_type,
                                       Segment::Candidate *candidate) {
   string description;
   string character_form_message;
@@ -235,7 +243,7 @@ void VariantsRewriter::SetDescription(int description_type,
   // TODO(taku): reconsider this behavior.
   // Zipcode description
   if ((description_type & ZIPCODE) &&
-      POSMatcher::IsZipcode(candidate->lid) &&
+      pos_matcher.IsZipcode(candidate->lid) &&
       candidate->lid == candidate->rid) {
     description = candidate->content_key;
     // Append default description because it may contain extra description.
@@ -275,7 +283,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     if (candidate->attributes & Segment::Candidate::NO_EXTRA_DESCRIPTION) {
       continue;
     }
-    SetDescriptionForTransliteration(candidate);
+    SetDescriptionForTransliteration(*pos_matcher_, candidate);
   }
 
   // Regular Candidate
@@ -290,7 +298,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
 
     if (original_candidate->attributes &
         Segment::Candidate::NO_VARIANTS_EXPANSION) {
-      SetDescriptionForCandidate(original_candidate);
+      SetDescriptionForCandidate(*pos_matcher_, original_candidate);
       VLOG(1) << "Canidate has NO_NORMALIZATION node";
       continue;
     }
@@ -300,7 +308,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
         ConvertConversionStringWithAlternative(
             original_candidate->value,
             &default_value, &alternative_value)) {
-      SetDescriptionForCandidate(original_candidate);
+      SetDescriptionForCandidate(*pos_matcher_, original_candidate);
       VLOG(1) << "ConvertConversionStringWithAlternative failed";
       continue;
     }
@@ -365,17 +373,19 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       new_candidate->lid = original_candidate->lid;
       new_candidate->rid = original_candidate->rid;
       new_candidate->description = original_candidate->description;
-      SetDescription(default_description_type, new_candidate);
+      SetDescription(*pos_matcher_, default_description_type, new_candidate);
 
       original_candidate->value = alternative_value;
       original_candidate->content_value = alternative_content_value;
-      SetDescription(alternative_description_type, original_candidate);
+      SetDescription(*pos_matcher_,
+                     alternative_description_type, original_candidate);
       ++i;  // skip inserted candidate
     } else if (type == SELECT_VARIANT) {
       // Rewrite original to default
       original_candidate->value = default_value;
       original_candidate->content_value = default_content_value;
-      SetDescription(default_description_type, original_candidate);
+      SetDescription(*pos_matcher_,
+                     default_description_type, original_candidate);
     }
     modified = true;
   }
@@ -421,7 +431,8 @@ void VariantsRewriter::Clear() {
   CharacterFormManager::GetCharacterFormManager()->ClearHistory();
 }
 
-bool VariantsRewriter::Rewrite(Segments *segments) const {
+bool VariantsRewriter::Rewrite(const ConversionRequest &request,
+                               Segments *segments) const {
   CHECK(segments);
   bool modified = false;
 
