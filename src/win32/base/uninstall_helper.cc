@@ -61,10 +61,6 @@ namespace {
 
 typedef map<int, DWORD> PreloadOrderToKLIDMap;
 
-// Windows NT 5.1
-const DWORD kDefaultKLIDForMSIMEJa = 0xE0010411;
-const wchar_t kDefaultMSIMEJaFileName[] = L"imjp81.ime";
-
 // Windows NT 6.0, 6.1 and 6.2
 const CLSID CLSID_IMJPTIP = {
     0x03b5835f, 0xf03c, 0x411b, {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}

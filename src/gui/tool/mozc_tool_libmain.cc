@@ -74,7 +74,6 @@ int RunHandWriting(int argc, char *argv[]);
 int RunSetDefaultDialog(int argc, char *argv[]);
 int RunPostInstallDialog(int argc, char *argv[]);
 int RunAdministrationDialog(int argc, char *argv[]);
-int RunUpdateDialog(int argc, char *argv[]);
 #endif  // OS_WIN
 
 #ifdef OS_MACOSX
@@ -187,9 +186,6 @@ int RunMozcTool(int argc, char *argv[]) {
   } else if (FLAGS_mode == "administration_dialog") {
     // administration_dialog is used on Windows only.
     return RunAdministrationDialog(argc, argv);
-  } else if (FLAGS_mode == "update_dialog") {
-    // update_dialog is used on Windows only.
-    return RunUpdateDialog(argc, argv);
 #endif  // OS_WIN
 #ifdef OS_MACOSX
   } else if (FLAGS_mode == "confirmation_dialog") {

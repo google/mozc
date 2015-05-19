@@ -49,7 +49,6 @@
         'stopwatch.cc',
         'timer.cc',
         'unnamed_event.cc',
-        'update_checker.cc',
         'update_util.cc',
         'url.cc',
       ],
@@ -163,9 +162,6 @@
         ['target_platform=="Android" and _toolset=="target"', {
           'sources': [
             'android_util.cc',
-          ],
-          'dependencies': [
-            '../android/android_base.gyp:android_sysconf',
           ],
         }],
         ['target_platform=="NaCl" and _toolset=="target"', {

@@ -32,7 +32,6 @@
 #include "server/cache_service_manager.h"
 
 #include <windows.h>
-#include <shlwapi.h>  // for SHLoadIndirectString
 #include <strsafe.h>
 #include <wincrypt.h>
 

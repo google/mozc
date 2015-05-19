@@ -29,31 +29,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="about_dialog.ui" line="165"/>
-        <source>Update</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="about_dialog.ui" line="193"/>
+        <location filename="about_dialog.ui" line="174"/>
         <source>Mozc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="about_dialog.ui" line="216"/>
+        <location filename="about_dialog.ui" line="197"/>
         <source>0.0.0.0</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>mozc::gui::AboutDialog</name>
-    <message>
-        <location filename="about_dialog.cc" line="137"/>
-        <source>New version is available</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="about_dialog.cc" line="148"/>
-        <source>You are using the latest version</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

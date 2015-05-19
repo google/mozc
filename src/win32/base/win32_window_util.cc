@@ -90,13 +90,11 @@ wstring WindowUtil::GetWindowClassName(HWND window_handle) {
 
 // static
 bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
-  typedef BOOL (WINAPI *FPChangeWindowMessageFilter)(UINT, DWORD);
   typedef BOOL (WINAPI *FPChangeWindowMessageFilterEx)(
       HWND, UINT, DWORD, LPVOID);
 
-  // Following constants are not available unless we change the WINVER
+  // The following constant is not available unless we change the WINVER
   // higher enough.
-  const int kMessageFilterAdd = 1;    // MSGFLT_ADD    (WINVER >=0x0600)
   const int kMessageFilterAllow = 1;  // MSGFLT_ALLOW  (WINVER >=0x0601)
 
   const HMODULE lib = WinUtil::GetSystemModuleHandle(L"user32.dll");
@@ -124,7 +122,7 @@ bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
   }
 
   // Windows Vista
-  if (!::ChangeWindowMessageFilter(message, kMessageFilterAdd)) {
+  if (!::ChangeWindowMessageFilter(message, MSGFLT_ADD)) {
     const int error = ::GetLastError();
     LOG(ERROR) << L"ChangeWindowMessageFilter failed. error = " << error;
     return false;

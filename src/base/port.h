@@ -98,12 +98,12 @@ static const  int32 kint32max  = (( int32) 0x7FFFFFFF);
 static const  int64 kint64min  = (( int64) GG_LONGLONG(0x8000000000000000));
 static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 
-#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-    TypeName(const TypeName&);             \
-    void operator=(const TypeName&)
+#define DISALLOW_COPY_AND_ASSIGN(TypeName)    \
+    TypeName(const TypeName&) = delete;       \
+    void operator=(const TypeName&) = delete
 
-#define DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
-    TypeName();                                  \
+#define DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName)  \
+    TypeName() = delete;                          \
     DISALLOW_COPY_AND_ASSIGN(TypeName)
 
 // Macro for annotating implicit fall-through

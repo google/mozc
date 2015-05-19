@@ -186,12 +186,12 @@ class TokenDecodeIterator {
  public:
   TokenDecodeIterator(
       const SystemDictionaryCodecInterface *codec,
-      const LoudsTrie *value_trie,
+      const LoudsTrie &value_trie,
       const uint32 *frequent_pos,
       StringPiece key,
       const uint8 *ptr)
       : codec_(codec),
-        value_trie_(value_trie),
+        value_trie_(&value_trie),
         frequent_pos_(frequent_pos),
         key_(key),
         state_(HAS_NEXT),
@@ -331,7 +331,7 @@ inline const uint8 *GetTokenArrayPtr(const BitVectorBasedArray &token_array,
 // a token directly without linear scan.
 //
 //  Usage:
-//    for (TokenScanIterator iter(codec_, token_array_.get());
+//    for (TokenScanIterator iter(codec_, token_array_);
 //         !iter.Done(); iter.Next()) {
 //      const TokenScanIterator::Result &result = iter.Get();
 //      // Do something with |result|.
@@ -351,14 +351,14 @@ class TokenScanIterator {
 
   TokenScanIterator(
       const SystemDictionaryCodecInterface *codec,
-      const storage::louds::BitVectorBasedArray *token_array)
+      const BitVectorBasedArray &token_array)
       : codec_(codec),
         termination_flag_(codec->GetTokensTerminationFlag()),
         state_(HAS_NEXT),
         offset_(0),
         tokens_offset_(0),
         index_(0) {
-    encoded_tokens_ptr_ = GetTokenArrayPtr(*token_array, 0);
+    encoded_tokens_ptr_ = GetTokenArrayPtr(token_array, 0);
     NextInternal();
   }
 
@@ -424,7 +424,7 @@ class ReverseLookupIndex {
  public:
   ReverseLookupIndex(
       const SystemDictionaryCodecInterface *codec,
-      const storage::louds::BitVectorBasedArray *token_array) {
+      const BitVectorBasedArray &token_array) {
     // Gets id size.
     int value_id_max = -1;
     for (TokenScanIterator iter(codec, token_array);
@@ -575,12 +575,9 @@ SystemDictionary *SystemDictionary::Builder::Build() {
 }
 
 SystemDictionary::SystemDictionary(const SystemDictionaryCodecInterface *codec)
-    : key_trie_(new LoudsTrie),
-      value_trie_(new LoudsTrie),
-      token_array_(new BitVectorBasedArray),
-      dictionary_file_(new DictionaryFile),
-      frequent_pos_(NULL),
-      codec_(codec) {}
+    : frequent_pos_(NULL),
+      codec_(codec),
+      dictionary_file_(new DictionaryFile) {}
 
 SystemDictionary::~SystemDictionary() {}
 
@@ -617,7 +614,7 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   const uint8 *key_image = reinterpret_cast<const uint8 *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForKey(), &len));
-  if (!key_trie_->Open(key_image)) {
+  if (!key_trie_.Open(key_image)) {
     LOG(ERROR) << "cannot open key trie";
     return false;
   }
@@ -626,14 +623,14 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   const uint8 *value_image = reinterpret_cast<const uint8 *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForValue(), &len));
-  if (!value_trie_->Open(value_image)) {
+  if (!value_trie_.Open(value_image)) {
     LOG(ERROR) << "can not open value trie";
     return false;
   }
 
   const unsigned char *token_image = reinterpret_cast<const unsigned char *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForTokens(), &len));
-  token_array_->Open(token_image);
+  token_array_.Open(token_image);
 
   frequent_pos_ = reinterpret_cast<const uint32*>(
       dictionary_file_->GetSection(codec_->GetSectionNameForPos(), &len));
@@ -653,21 +650,19 @@ void SystemDictionary::InitReverseLookupIndex() {
   if (reverse_lookup_index_.get() != NULL) {
     return;
   }
-
-  reverse_lookup_index_.reset(
-      new ReverseLookupIndex(codec_, token_array_.get()));
+  reverse_lookup_index_.reset(new ReverseLookupIndex(codec_, token_array_));
 }
 
 bool SystemDictionary::HasKey(StringPiece key) const {
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
-  return key_trie_->HasKey(encoded_key);
+  return key_trie_.HasKey(encoded_key);
 }
 
 bool SystemDictionary::HasValue(StringPiece value) const {
   string encoded_value;
   codec_->EncodeValue(value, &encoded_value);
-  if (value_trie_->HasKey(encoded_value)) {
+  if (value_trie_.HasKey(encoded_value)) {
     return true;
   }
 
@@ -683,7 +678,7 @@ bool SystemDictionary::HasValue(StringPiece value) const {
 
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
-  const int key_id = key_trie_->ExactSearch(encoded_key);
+  const int key_id = key_trie_.ExactSearch(encoded_key);
   if (key_id == -1) {
     return false;
   }
@@ -701,11 +696,11 @@ bool SystemDictionary::HasValue(StringPiece value) const {
   // true.
 
   // Get the block of tokens for this key.
-  const uint8 *encoded_tokens_ptr = GetTokenArrayPtr(*token_array_, key_id);
+  const uint8 *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, key_id);
 
   // Check tokens.
-  for (TokenDecodeIterator iter(
-           codec_, value_trie_.get(), frequent_pos_, key, encoded_tokens_ptr);
+  for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_, key,
+                                encoded_tokens_ptr);
        !iter.Done(); iter.Next()) {
     const Token *token = iter.Get().token;
     if (value == token->value) {
@@ -731,10 +726,10 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
       const char target_char = encoded_key[state.key_pos];
       const ExpandedKey &chars = table.ExpandKey(target_char);
 
-      for (key_trie_->MoveToFirstChild(&state.node);
-           key_trie_->IsValidNode(state.node);
-           key_trie_->MoveToNextSibling(&state.node)) {
-        const char c = key_trie_->GetEdgeLabelToParentNode(state.node);
+      for (key_trie_.MoveToFirstChild(&state.node);
+           key_trie_.IsValidNode(state.node);
+           key_trie_.MoveToNextSibling(&state.node)) {
+        const char c = key_trie_.GetEdgeLabelToParentNode(state.node);
         if (!chars.IsHit(c)) {
           continue;
         }
@@ -747,7 +742,7 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
     }
 
     // Collect prediction keys (state.key_pos >= encoded_key.size()).
-    if (key_trie_->IsTerminalNode(state.node)) {
+    if (key_trie_.IsTerminalNode(state.node)) {
       result->push_back(state);
     }
 
@@ -765,7 +760,7 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
           break;
         }
         DCHECK_EQ(state.key_pos, max_key_len);
-        if (key_trie_->IsTerminalNode(state.node)) {
+        if (key_trie_.IsTerminalNode(state.node)) {
           result->push_back(state);
         }
       }
@@ -773,9 +768,9 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
     }
 
     // Update traversal state for children.
-    for (key_trie_->MoveToFirstChild(&state.node);
-         key_trie_->IsValidNode(state.node);
-         key_trie_->MoveToNextSibling(&state.node)) {
+    for (key_trie_.MoveToFirstChild(&state.node);
+         key_trie_.IsValidNode(state.node);
+         key_trie_.MoveToNextSibling(&state.node)) {
       queue.push(PredictiveLookupSearchState(state.node,
                                              state.key_pos + 1,
                                              state.is_expanded));
@@ -824,7 +819,7 @@ void SystemDictionary::LookupPredictive(
     // encoded_actual_key = encode("ぐーぐる")  [expanded]
     // encoded_actual_key_prediction_suffix = encode("ぐる")
     const StringPiece encoded_actual_key =
-        key_trie_->RestoreKeyString(state.node, encoded_actual_key_buffer);
+        key_trie_.RestoreKeyString(state.node, encoded_actual_key_buffer);
     const StringPiece encoded_actual_key_prediction_suffix(
         encoded_actual_key,
         encoded_key.size(),
@@ -866,10 +861,10 @@ void SystemDictionary::LookupPredictive(
         break;
     }
 
-    const int key_id = key_trie_->GetKeyIdOfTerminalNode(state.node);
-    for (TokenDecodeIterator iter(codec_, value_trie_.get(),
+    const int key_id = key_trie_.GetKeyIdOfTerminalNode(state.node);
+    for (TokenDecodeIterator iter(codec_, value_trie_,
                                   frequent_pos_, actual_key,
-                                  GetTokenArrayPtr(*token_array_, key_id));
+                                  GetTokenArrayPtr(token_array_, key_id));
          !iter.Done(); iter.Next()) {
       const TokenInfo &token_info = iter.Get();
       const Callback::ResultType result =
@@ -902,9 +897,9 @@ namespace {
 //     A functor of signature bool(const TokenInfo &).  Only tokens for which
 //     this functor returns true are passed to callback function.
 template <typename Func>
-void RunCallbackOnEachPrefix(const LoudsTrie *key_trie,
-                             const LoudsTrie *value_trie,
-                             const BitVectorBasedArray *token_array,
+void RunCallbackOnEachPrefix(const LoudsTrie &key_trie,
+                             const LoudsTrie &value_trie,
+                             const BitVectorBasedArray &token_array,
                              const SystemDictionaryCodecInterface *codec,
                              const uint32 *frequent_pos,
                              const char *key,
@@ -914,11 +909,11 @@ void RunCallbackOnEachPrefix(const LoudsTrie *key_trie,
   typedef DictionaryInterface::Callback Callback;
   LoudsTrie::Node node;
   for (StringPiece::size_type i = 0; i < encoded_key.size(); ) {
-    if (!key_trie->MoveToChildByLabel(encoded_key[i], &node)) {
+    if (!key_trie.MoveToChildByLabel(encoded_key[i], &node)) {
       return;
     }
     ++i;  // Increment here for next loop and |encoded_prefix| defined below.
-    if (!key_trie->IsTerminalNode(node)) {
+    if (!key_trie.IsTerminalNode(node)) {
       continue;
     }
     const StringPiece encoded_prefix(encoded_key, 0, i);
@@ -944,9 +939,9 @@ void RunCallbackOnEachPrefix(const LoudsTrie *key_trie,
         break;
     }
 
-    const int key_id = key_trie->GetKeyIdOfTerminalNode(node);
+    const int key_id = key_trie.GetKeyIdOfTerminalNode(node);
     for (TokenDecodeIterator iter(codec, value_trie, frequent_pos, prefix,
-                                  GetTokenArrayPtr(*token_array, key_id));
+                                  GetTokenArrayPtr(token_array, key_id));
          !iter.Done(); iter.Next()) {
       const TokenInfo &token_info = iter.Get();
       if (!token_filter(token_info)) {
@@ -1024,7 +1019,7 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
   // This do-block handles a terminal node and callback.  do-block is used to
   // break the block and continue to the subsequent traversal phase.
   do {
-    if (!key_trie_->IsTerminalNode(node)) {
+    if (!key_trie_.IsTerminalNode(node)) {
       break;
     }
 
@@ -1051,10 +1046,10 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
       break;  // Go to the traversal phase.
     }
 
-    const int key_id = key_trie_->GetKeyIdOfTerminalNode(node);
-    for (TokenDecodeIterator iter(codec_, value_trie_.get(), frequent_pos_,
+    const int key_id = key_trie_.GetKeyIdOfTerminalNode(node);
+    for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_,
                                   *actual_prefix,
-                                  GetTokenArrayPtr(*token_array_, key_id));
+                                  GetTokenArrayPtr(token_array_, key_id));
          !iter.Done(); iter.Next()) {
       const TokenInfo &token_info = iter.Get();
       result = callback->OnToken(prefix, *actual_prefix, *token_info.token);
@@ -1074,9 +1069,9 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
   }
   const char current_char = encoded_key[key_pos];
   const ExpandedKey &chars = table.ExpandKey(current_char);
-  for (key_trie_->MoveToFirstChild(&node); key_trie_->IsValidNode(node);
-       key_trie_->MoveToNextSibling(&node)) {
-    const char c = key_trie_->GetEdgeLabelToParentNode(node);
+  for (key_trie_.MoveToFirstChild(&node); key_trie_.IsValidNode(node);
+       key_trie_.MoveToNextSibling(&node)) {
+    const char c = key_trie_.GetEdgeLabelToParentNode(node);
     if (!chars.IsHit(c)) {
       continue;
     }
@@ -1101,9 +1096,8 @@ void SystemDictionary::LookupPrefix(
   codec_->EncodeKey(key, &encoded_key);
 
   if (!use_kana_modifier_insensitive_lookup) {
-    RunCallbackOnEachPrefix(key_trie_.get(), value_trie_.get(),
-                            token_array_.get(), codec_, frequent_pos_,
-                            key.data(), encoded_key, callback,
+    RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, codec_,
+                            frequent_pos_, key.data(), encoded_key, callback,
                             SelectAllTokens());
     return;
   }
@@ -1121,7 +1115,7 @@ void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
   // Find the key in the key trie.
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
-  const int key_id = key_trie_->ExactSearch(encoded_key);
+  const int key_id = key_trie_.ExactSearch(encoded_key);
   if (key_id == -1) {
     return;
   }
@@ -1130,8 +1124,8 @@ void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
   }
 
   // Callback on each token.
-  for (TokenDecodeIterator iter(codec_, value_trie_.get(), frequent_pos_, key,
-                                GetTokenArrayPtr(*token_array_, key_id));
+  for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_, key,
+                                GetTokenArrayPtr(token_array_, key_id));
        !iter.Done(); iter.Next()) {
     if (callback->OnToken(key, key, *iter.Get().token) !=
         Callback::TRAVERSE_CONTINUE) {
@@ -1195,7 +1189,7 @@ void SystemDictionary::PopulateReverseLookupCache(
     const StringPiece suffix(str, pos);
     lookup_key.clear();
     codec_->EncodeValue(suffix, &lookup_key);
-    AddKeyIdsOfAllPrefixes(*value_trie_, lookup_key, &id_set);
+    AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
     pos += Util::OneCharLen(suffix.data());
   }
   // Collect tokens for all IDs.
@@ -1243,9 +1237,9 @@ void SystemDictionary::RegisterReverseLookupTokensForT13N(
   string hiragana_value, encoded_key;
   Util::KatakanaToHiragana(value, &hiragana_value);
   codec_->EncodeKey(hiragana_value, &encoded_key);
-  RunCallbackOnEachPrefix(key_trie_.get(), value_trie_.get(),
-                          token_array_.get(), codec_, frequent_pos_,
-                          hiragana_value.data(), encoded_key, callback,
+  RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, codec_,
+                          frequent_pos_, hiragana_value.data(),
+                          encoded_key, callback,
                           FilterTokenForRegisterReverseLookupTokensForT13N());
 }
 
@@ -1256,7 +1250,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
   codec_->EncodeValue(value, &lookup_key);
 
   set<int> id_set;
-  AddKeyIdsOfAllPrefixes(*value_trie_, lookup_key, &id_set);
+  AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
 
   const bool has_cache = (allocator != NULL &&
                           allocator->data().has(kReverseLookupCache));
@@ -1284,7 +1278,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
 void SystemDictionary::ScanTokens(
     const set<int> &id_set,
     multimap<int, ReverseLookupResult> *reverse_results) const {
-  for (TokenScanIterator iter(codec_, token_array_.get());
+  for (TokenScanIterator iter(codec_, token_array_);
        !iter.Done(); iter.Next()) {
     const TokenScanIterator::Result &result = iter.Get();
     if (result.value_id != -1 &&
@@ -1301,16 +1295,12 @@ void SystemDictionary::RegisterReverseLookupResults(
     const set<int> &id_set,
     const multimap<int, ReverseLookupResult> &reverse_results,
     Callback *callback) const {
-  const uint8 *encoded_tokens_ptr = GetTokenArrayPtr(*token_array_, 0);
+  const uint8 *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, 0);
   char buffer[LoudsTrie::kMaxDepth + 1];
   for (set<int>::const_iterator set_itr = id_set.begin();
        set_itr != id_set.end();
        ++set_itr) {
-    FilterInfo filter;
-    filter.conditions =
-        (FilterInfo::VALUE_ID | FilterInfo::NO_SPELLING_CORRECTION);
-    filter.value_id = *set_itr;
-
+    const int value_id = *set_itr;
     typedef multimap<int, ReverseLookupResult>::const_iterator ResultItr;
     pair<ResultItr, ResultItr> range = reverse_results.equal_range(*set_itr);
     for (ResultItr result_itr = range.first;
@@ -1319,66 +1309,25 @@ void SystemDictionary::RegisterReverseLookupResults(
       const ReverseLookupResult &reverse_result = result_itr->second;
 
       const StringPiece encoded_key =
-          key_trie_->RestoreKeyString(reverse_result.id_in_key_trie, buffer);
+          key_trie_.RestoreKeyString(reverse_result.id_in_key_trie, buffer);
       string tokens_key;
       codec_->DecodeKey(encoded_key, &tokens_key);
-      if (callback->OnKey(tokens_key) !=
-              SystemDictionary::Callback::TRAVERSE_CONTINUE) {
+      if (callback->OnKey(tokens_key) != Callback::TRAVERSE_CONTINUE) {
         continue;
       }
-
-      // actual_key is always the same as tokens_key for reverse conversions.
-      RegisterTokens(
-          filter,
-          tokens_key,
-          tokens_key,
-          encoded_tokens_ptr + reverse_result.tokens_offset,
-          callback);
+      for (TokenDecodeIterator iter(
+               codec_, value_trie_, frequent_pos_, tokens_key,
+               encoded_tokens_ptr  + reverse_result.tokens_offset);
+           !iter.Done(); iter.Next()) {
+        const TokenInfo &token_info = iter.Get();
+        if (token_info.token->attributes & Token::SPELLING_CORRECTION ||
+            token_info.id_in_value_trie != value_id) {
+          continue;
+        }
+        callback->OnToken(tokens_key, tokens_key, *token_info.token);
+      }
     }
   }
-}
-
-void SystemDictionary::RegisterTokens(
-    const FilterInfo &filter,
-    const string &tokens_key,
-    const string &actual_key,
-    const uint8 *encoded_tokens_ptr,
-    Callback *callback) const {
-  for (TokenDecodeIterator iter(codec_, value_trie_.get(), frequent_pos_,
-                                actual_key, encoded_tokens_ptr);
-       !iter.Done(); iter.Next()) {
-    const TokenInfo &token_info = iter.Get();
-    if (IsBadToken(filter, token_info)) {
-      continue;
-    }
-    callback->OnToken(tokens_key, actual_key, *token_info.token);
-  }
-}
-
-bool SystemDictionary::IsBadToken(
-    const FilterInfo &filter,
-    const TokenInfo &token_info) const {
-  if ((filter.conditions & FilterInfo::NO_SPELLING_CORRECTION) &&
-      (token_info.token->attributes & Token::SPELLING_CORRECTION)) {
-    return true;
-  }
-
-  if ((filter.conditions & FilterInfo::VALUE_ID) &&
-      token_info.id_in_value_trie != filter.value_id) {
-    return true;
-  }
-
-  if ((filter.conditions & FilterInfo::ONLY_T13N) &&
-      (token_info.value_type != TokenInfo::AS_IS_HIRAGANA &&
-       token_info.value_type != TokenInfo::AS_IS_KATAKANA)) {
-    // SAME_AS_PREV_VALUE may be t13n token.
-    string hiragana;
-    Util::KatakanaToHiragana(token_info.token->value, &hiragana);
-    if (token_info.token->key != hiragana) {
-      return true;
-    }
-  }
-  return false;
 }
 
 }  // namespace dictionary
