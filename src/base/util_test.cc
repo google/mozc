@@ -158,6 +158,22 @@ TEST(UtilTest, JoinStringPieces) {
   }
 }
 
+TEST(UtilTest, ConcatStrings) {
+  string s;
+
+  Util::ConcatStrings("", "", &s);
+  EXPECT_TRUE(s.empty());
+
+  Util::ConcatStrings("ABC", "", &s);
+  EXPECT_EQ("ABC", s);
+
+  Util::ConcatStrings("", "DEF", &s);
+  EXPECT_EQ("DEF", s);
+
+  Util::ConcatStrings("ABC", "DEF", &s);
+  EXPECT_EQ("ABCDEF", s);
+}
+
 TEST(UtilTest, AppendStringWithDelimiter) {
   string result;
   string input;
@@ -2237,65 +2253,6 @@ TEST(UtilTest, Issue2190350) {
   EXPECT_EQ(3, result.length());
   EXPECT_EQ("\xE3\x81\x82", result);
 }
-
-#ifdef OS_WIN
-// The following "ToUTF" tests fail in the windows environment where the target
-// code pages are not installed.
-#else
-TEST(UtilTest, ToUTF8) {
-  string result = "";
-  Util::ToUTF8("ISO8859-1", "\x61", &result);
-  EXPECT_EQ("a", result);
-
-  // http://en.wikipedia.org/wiki/ISO/IEC_8859
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-1", "\xc0", &result));
-  EXPECT_EQ("\xC3\x80", result) << "ISO8859-1";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-2", "\xc0", &result));
-  EXPECT_EQ("\xC5\x94", result) << "ISO8859-2";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-3", "\xc5", &result));
-  EXPECT_EQ("\xC4\x8A", result) << "ISO8859-3";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-4", "\xbb", &result));
-  EXPECT_EQ("\xC4\xA3", result) << "ISO8859-4";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-5", "\xbb", &result));
-  EXPECT_EQ("\xD0\x9B", result) << "ISO8859-5";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-6", "\xbf", &result));
-  EXPECT_EQ("\xD8\x9F", result) << "ISO8859-6";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-7", "\xbf", &result));
-  EXPECT_EQ("\xCE\x8F", result) << "ISO8859-7";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-8", "\xfa", &result));
-  EXPECT_EQ("\xD7\xAA", result) << "ISO8859-8";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-9", "\xbf", &result));
-  EXPECT_EQ("\xC2\xBF", result) << "ISO8859-9";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-13", "\xbf", &result));
-  EXPECT_EQ("\xC3\xA6", result) << "ISO8859-13";
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("ISO8859-15", "\xbf", &result));
-  EXPECT_EQ("\xC2\xBF", result) << "ISO8859-15";
-
-  // http://en.wikipedia.org/wiki/KOI8-R
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("KOI8-R", "\xc6", &result));
-  EXPECT_EQ("\xD1\x84", result) << "KOI8-R";
-
-  // http://en.wikipedia.org/wiki/Windows-1251
-  result.clear();
-  EXPECT_TRUE(Util::ToUTF8("windows-1251", "\xc6", &result));
-  EXPECT_EQ("\xD0\x96", result) << "windows-1251";
-
-  result.clear();
-  EXPECT_FALSE(Util::ToUTF8("DUMMY_CODE", "a", &result));
-}
-#endif
 #endif
 
 TEST(UtilTest, Fingerprint32WithSeed_uint32) {

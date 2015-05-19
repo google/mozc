@@ -148,11 +148,7 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 
   // Initialize platform specific configuration.
   if (stored_config_.session_keymap() == Config::NONE) {
-#ifdef OS_MACOSX
-    stored_config_.set_session_keymap(Config::KOTOERI);
-#else  // OS_MACOSX
-    stored_config_.set_session_keymap(Config::MSIME);
-#endif  // OS_MACOSX
+    stored_config_.set_session_keymap(ConfigHandler::GetDefaultKeyMap());
   }
 
 #if defined(OS_ANDROID) && defined(CHANNEL_DEV)
@@ -237,10 +233,15 @@ void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
 }
 
 string ConfigHandlerImpl::GetConfigFileName() {
-  // Copies filename_ string using c_str() here to prevent Copy-On-Write issues
-  // in multi-thread environment.
+#ifdef __native_client__
+  // Copies filename_ string here to prevent Copy-On-Write issues in
+  // multi-thread environment.
   // See: http://stackoverflow.com/questions/1661154/c-stdstring-in-a-multi-threaded-program/
-  return filename_.c_str();
+  // TODO(hsumita): Remove this hack if not necessary.
+  return string(filename_.data(), filename_.size());
+#else
+  return filename_;
+#endif  // __native_client__
 }
 }  // namespace
 
@@ -273,11 +274,7 @@ void ConfigHandler::SetImposedConfig(const Config &config) {
 
 void ConfigHandler::GetDefaultConfig(Config *config) {
   config->Clear();
-#ifdef OS_MACOSX
-  config->set_session_keymap(Config::KOTOERI);
-#else  // OS_MACOSX
-  config->set_session_keymap(Config::MSIME);
-#endif  // OS_MACOSX
+  config->set_session_keymap(ConfigHandler::GetDefaultKeyMap());
 
   const Config::CharacterForm kFullWidth = Config::FULL_WIDTH;
   const Config::CharacterForm kLastForm = Config::LAST_FORM;
@@ -329,6 +326,16 @@ void ConfigHandler::SetMetaData(Config *config) {
   general_config->set_last_modified_time(Util::GetTime());
   general_config->set_last_modified_product_version(Version::GetMozcVersion());
   general_config->set_platform(SystemUtil::GetOSVersionString());
+}
+
+Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
+#if defined(OS_MACOSX)
+  return config::Config::KOTOERI;
+#elif defined(__native_client__)  // OS_MACOSX
+  return config::Config::CHROMEOS;
+#else  // OS_MACOSX or __native_client__
+  return config::Config::MSIME;
+#endif  // OS_MACOSX or __native_client__
 }
 
 }  // namespace config

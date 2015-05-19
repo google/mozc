@@ -903,7 +903,7 @@ bool ReduceLeadingNumbersAsBase10System(
 // Returns false if a number greater than 10 was found or overflow happened.
 bool InterpretNumbersAsBase10System(const vector<uint64> &numbers,
                                     uint64 *output) {
-  vector<uint64>::const_iterator begin = numbers.begin();
+  auto begin = numbers.begin();
   const bool success =
       ReduceLeadingNumbersAsBase10System(&begin, numbers.end(), output);
   // Check if the whole numbers were reduced.
@@ -1056,7 +1056,7 @@ bool ReduceNumberLessThan10000(vector<uint64>::const_iterator *begin,
 bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
                                    uint64 *output) {
   uint64 last_base = kuint64max;
-  vector<uint64>::const_iterator begin = numbers.begin();
+  auto begin = numbers.begin();
   *output = 0;
   do {
     uint64 coef = 0;
@@ -1085,8 +1085,7 @@ bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
 // depending on the maximum number in the sequence.
 bool NormalizeNumbersHelper(const vector<uint64> &numbers,
                             uint64 *number_output) {
-  const vector<uint64>::const_iterator itr_max = max_element(numbers.begin(),
-                                                             numbers.end());
+  const auto itr_max = max_element(numbers.begin(), numbers.end());
   if (itr_max == numbers.end()) {
     return false;  // numbers is empty
   }

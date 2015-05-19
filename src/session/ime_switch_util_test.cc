@@ -135,7 +135,7 @@ TEST_F(ImeSwitchUtilTest, DefaultTest) {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
     // HENKAN key in MSIME is TurnOn key while it's not in KOTOERI.
-    if (keymap::KeyMapManager::GetDefaultKeyMap() == config::Config::MSIME) {
+    if (ConfigHandler::GetDefaultKeyMap() == config::Config::MSIME) {
       EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
     } else {
       EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
@@ -144,7 +144,7 @@ TEST_F(ImeSwitchUtilTest, DefaultTest) {
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("EISU", &key);
-    if (keymap::KeyMapManager::GetDefaultKeyMap() == config::Config::MSIME) {
+    if (ConfigHandler::GetDefaultKeyMap() == config::Config::MSIME) {
       EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
     } else {
       EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));

@@ -129,6 +129,7 @@
           'action_name': 'build_java_test',
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_java_test'],
+          'ninja_use_console': 1,
           'action': [
             '../build_tools/run_after_chdir.py', 'tests',
             'ant',
@@ -171,6 +172,7 @@
           'action_name': 'install',
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_install'],
+          'ninja_use_console': 1,
           'action': [
             'ant',
             'install',
@@ -207,6 +209,7 @@
           #   'bin/GoogleJapaneseInput-unsigned.apk'
           # depending on CONFIGURATION_NAME and/or key.store.
           'outputs': ['dummy_apk'],
+          'ninja_use_console': 1,
           'action': [
             'ant',
             'apk',

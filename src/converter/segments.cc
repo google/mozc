@@ -43,20 +43,16 @@ const size_t kMaxHistorySize = 32;
 const size_t kMaxConversionCandidatesSize = 200;
 }
 
-string Segment::Candidate::functional_key() const {
-  if (key.size() <= content_key.size()) {
-    return "";
-  }
-  return key.substr(content_key.size(),
-                    key.size() - content_key.size());
+StringPiece Segment::Candidate::functional_key() const {
+  return key.size() <= content_key.size() ?
+      StringPiece() : StringPiece(key.data() + content_key.size(),
+                                  key.size() - content_key.size());
 }
 
-string Segment::Candidate::functional_value() const {
-  if (value.size() <= content_value.size()) {
-    return "";
-  }
-  return value.substr(content_value.size(),
-                      value.size() - content_value.size());
+StringPiece Segment::Candidate::functional_value() const {
+  return value.size() <= content_value.size() ?
+      StringPiece() : StringPiece(value.data() + content_value.size(),
+                                  value.size() - content_value.size());
 }
 
 void Segment::Candidate::CopyFrom(const Candidate &src) {

@@ -27,12 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "unix/ibus/key_translator.h"
+
+#include <memory>
 #include <set>
 
-#include "base/scoped_ptr.h"
-#include "testing/base/public/gunit.h"
 #include "session/commands.pb.h"
-#include "unix/ibus/key_translator.h"
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace ibus {
@@ -140,7 +141,7 @@ class KeyTranslatorTest : public testing::Test {
     translator_.reset(new KeyTranslator);
   }
 
-  scoped_ptr<KeyTranslator> translator_;
+  std::unique_ptr<KeyTranslator> translator_;
 };
 
 TEST_F(KeyTranslatorTest, TranslateAscii) {

@@ -57,12 +57,7 @@ namespace {
 // symbols with the same names as symbols defined in other files, so we put the
 // whole thing in an anonymous namespace.
 
-// Temporarily disable unused function warning from Clang.
-// ParseTrace in parser.c is used only when NDEBUG is defined.
-MOZC_CLANG_PUSH_WARNING();
-MOZC_CLANG_DISABLE_WARNING(unused-function);
 #include "rewriter/calculator/parser.c"
-MOZC_CLANG_POP_WARNING();
 }  // namespace
 
 namespace mozc {

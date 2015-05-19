@@ -906,7 +906,7 @@ def ConvertFiles(svg_dir, output_dir):
     svg_dir: Path to a directory which has svg files (recursively).
     output_dir: Path of the destination directory.
   """
-  logging.info('Start SVG conversion. From:%s, To:%s', svg_dir, output_dir)
+  logging.debug('Start SVG conversion. From:%s, To:%s', svg_dir, output_dir)
   # Ensure that the output directory exists.
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -967,7 +967,7 @@ def ConvertFiles(svg_dir, output_dir):
       with open(pic_file, 'wb') as stream:
         stream.write(pic_data)
       number_of_conversion += 1
-  logging.info('%d files are converted.', number_of_conversion)
+  logging.debug('%d files are converted.', number_of_conversion)
 
 
 def ParseOptions():

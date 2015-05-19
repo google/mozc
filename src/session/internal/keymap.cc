@@ -57,14 +57,14 @@ static const char kATOKKeyMapFile[] = "system://atok.tsv";
 static const char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
 static const char kCustomKeyMapFile[] = "user://keymap.tsv";
 static const char kMobileKeyMapFile[] = "system://mobile.tsv";
+static const char kChromeOsKeyMapFile[] = "system://chromeos.tsv";
+}  // namespace
 
 #if defined(OS_MACOSX)
-const bool kInputModeXCommandSupported = false;
+const bool KeyMapManager::kInputModeXCommandSupported = false;
 #else
-const bool kInputModeXCommandSupported = true;
-#endif
-
-}  // anonymous namespace
+const bool KeyMapManager::kInputModeXCommandSupported = true;
+#endif  // OS_MACOSX
 
 KeyMapManager::KeyMapManager()
     : keymap_(config::Config::NONE) {
@@ -98,7 +98,8 @@ bool KeyMapManager::ReloadWithKeymap(
     const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
     if (custom_keymap_table.empty()) {
       LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-      const char *default_keymapfile = GetKeyMapFileName(GetDefaultKeyMap());
+      const char *default_keymapfile = GetKeyMapFileName(
+          config::ConfigHandler::GetDefaultKeyMap());
       return LoadFile(default_keymapfile);
     }
 #ifndef NO_LOGGING
@@ -119,7 +120,8 @@ bool KeyMapManager::ReloadWithKeymap(
     return true;
   }
 
-  const char *default_keymapfile = GetKeyMapFileName(GetDefaultKeyMap());
+  const char *default_keymapfile = GetKeyMapFileName(
+      config::ConfigHandler::GetDefaultKeyMap());
   return LoadFile(default_keymapfile);
 }
 
@@ -135,6 +137,8 @@ const char *KeyMapManager::GetKeyMapFileName(
       return kMSIMEKeyMapFile;
     case config::Config::KOTOERI:
       return kKotoeriKeyMapFile;
+    case config::Config::CHROMEOS:
+      return kChromeOsKeyMapFile;
     case config::Config::CUSTOM:
       return kCustomKeyMapFile;
     case config::Config::NONE:
@@ -142,24 +146,17 @@ const char *KeyMapManager::GetKeyMapFileName(
       // should not appear here.
       LOG(ERROR) << "Keymap type: " << keymap
                  << " appeared at key map initialization.";
-      const config::Config::SessionKeymap default_keymap = GetDefaultKeyMap();
+      const config::Config::SessionKeymap default_keymap =
+          config::ConfigHandler::GetDefaultKeyMap();
       DCHECK(default_keymap == config::Config::ATOK ||
              default_keymap == config::Config::MOBILE ||
              default_keymap == config::Config::MSIME ||
              default_keymap == config::Config::KOTOERI ||
+             default_keymap == config::Config::CHROMEOS ||
              default_keymap == config::Config::CUSTOM);
       // should never make loop.
       return GetKeyMapFileName(default_keymap);
   }
-}
-
-// static
-config::Config::SessionKeymap KeyMapManager::GetDefaultKeyMap() {
-#ifdef OS_MACOSX
-  return config::Config::KOTOERI;
-#else  // OS_MACOSX
-  return config::Config::MSIME;
-#endif  // OS_MACOSX
 }
 
 bool KeyMapManager::LoadFile(const char *filename) {
@@ -368,32 +365,29 @@ void KeyMapManager::RegisterConversionCommand(
 
 void KeyMapManager::InitCommandData() {
   RegisterDirectCommand("IMEOn", DirectInputState::IME_ON);
-  // Support InputMode command only on Windows for now.
-  // TODO(toshiyuki): delete #ifdef when we support them on Mac, and
-  // activate SessionTest.InputModeConsumedForTestSendKey.
-#ifdef OS_WIN
-  RegisterDirectCommand("InputModeHiragana",
-                        DirectInputState::INPUT_MODE_HIRAGANA);
-  RegisterDirectCommand("InputModeFullKatakana",
-                        DirectInputState::INPUT_MODE_FULL_KATAKANA);
-  RegisterDirectCommand("InputModeHalfKatakana",
-                        DirectInputState::INPUT_MODE_HALF_KATAKANA);
-  RegisterDirectCommand("InputModeFullAlphanumeric",
-                        DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC);
-  RegisterDirectCommand("InputModeHalfAlphanumeric",
-                        DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC);
-#else
-  RegisterDirectCommand("InputModeHiragana",
-                        DirectInputState::NONE);
-  RegisterDirectCommand("InputModeFullKatakana",
-                        DirectInputState::NONE);
-  RegisterDirectCommand("InputModeHalfKatakana",
-                        DirectInputState::NONE);
-  RegisterDirectCommand("InputModeFullAlphanumeric",
-                        DirectInputState::NONE);
-  RegisterDirectCommand("InputModeHalfAlphanumeric",
-                        DirectInputState::NONE);
-#endif  // OS_WIN
+  if (kInputModeXCommandSupported) {
+    RegisterDirectCommand("InputModeHiragana",
+                          DirectInputState::INPUT_MODE_HIRAGANA);
+    RegisterDirectCommand("InputModeFullKatakana",
+                          DirectInputState::INPUT_MODE_FULL_KATAKANA);
+    RegisterDirectCommand("InputModeHalfKatakana",
+                          DirectInputState::INPUT_MODE_HALF_KATAKANA);
+    RegisterDirectCommand("InputModeFullAlphanumeric",
+                          DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC);
+    RegisterDirectCommand("InputModeHalfAlphanumeric",
+                          DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC);
+  } else {
+    RegisterDirectCommand("InputModeHiragana",
+                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeFullKatakana",
+                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeHalfKatakana",
+                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeFullAlphanumeric",
+                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeHalfAlphanumeric",
+                          DirectInputState::NONE);
+  }
   RegisterDirectCommand("Reconvert",
                         DirectInputState::RECONVERT);
 

@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_COMPILER_SPECIFIC_H
-#define MOZC_BASE_COMPILER_SPECIFIC_H
+#ifndef MOZC_BASE_COMPILER_SPECIFIC_H_
+#define MOZC_BASE_COMPILER_SPECIFIC_H_
 
 // TODO(yukawa): Add unit tests against macros below.
 // TODO(yukawa): Support C++11's override/final keywords
@@ -227,4 +227,4 @@
 #endif  // _MSC_VER or !_MSC_VER
 // === End suppress warning C4355 macro definitions ===
 
-#endif  // MOZC_BASE_COMPILER_SPECIFIC_H
+#endif  // MOZC_BASE_COMPILER_SPECIFIC_H_

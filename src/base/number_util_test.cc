@@ -364,15 +364,15 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   EXPECT_EQ(-1.7976931348623158e308, value);
 
   // We don't strongly assert that a hexadecimal number can be accepted with
-  // Visual C++ and NDK.
-#if defined(_MSC_VER) || defined(OS_ANDROID)
+  // Visual C++.
+#if defined(_MSC_VER)
   if (NumberUtil::SafeStrToDouble("0x1234", &value)) {
     EXPECT_EQ(static_cast<double>(0x1234), value);
   }
 #else
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0x1234", &value));
   EXPECT_EQ(static_cast<double>(0x1234), value);
-#endif  // _MSC_VER, or OS_ANDROID, or else.
+#endif  // _MSC_VER or else.
 
   EXPECT_FALSE(
       NumberUtil::SafeStrToDouble("1.7976931348623159e308",
@@ -414,15 +414,15 @@ TEST(NumberUtilTest, SafeStrToFloat) {
   EXPECT_TRUE(NumberUtil::SafeStrToFloat("0.0", &value));
   EXPECT_EQ(0.0, value);
   // We don't strongly assert that a hexadecimal number can be accepted with
-  // Visual C++ and NDK.
-#if defined(_MSC_VER) || defined(OS_ANDROID)
+  // Visual C++.
+#if defined(_MSC_VER)
   if (NumberUtil::SafeStrToFloat("0x1234", &value)) {
     EXPECT_EQ(static_cast<float>(0x1234), value);
   }
 #else
   EXPECT_TRUE(NumberUtil::SafeStrToFloat("0x1234", &value));
   EXPECT_EQ(static_cast<float>(0x1234), value);
-#endif  // _MSC_VER, or OS_ANDROID, or else.
+#endif  // _MSC_VER or else.
 
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("3.4028236e38",  // overflow
                                           &value));

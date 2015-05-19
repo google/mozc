@@ -139,12 +139,8 @@ def _ParseVersionTemplateFile(template_path, target_platform,
   else:
     template_dict.setdefault('FLAG', 'RELEASE')
 
-  if template_dict['ANDROID_VERSION_CODE'] == 'daily':
-    android_base_version_code = num_of_days
-  else:
-    android_base_version_code = int(template_dict['ANDROID_VERSION_CODE'])
   template_dict['ANDROID_VERSION_CODE'] = (
-      str(_GetAndroidVersionCode(android_base_version_code, android_arch)))
+      str(_GetAndroidVersionCode(int(template_dict['BUILD']), android_arch)))
 
   template_dict['TARGET_PLATFORM'] = target_platform
   template_dict['ANDROID_APPLICATION_ID'] = android_application_id

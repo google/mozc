@@ -39,6 +39,7 @@
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/key_parser.h"
@@ -107,7 +108,7 @@ vector<KeyInformation> KeyInfoUtil::ExtractSortedDirectModeKeys(
     if (custom_keymap_table.empty()) {
       LOG(WARNING) << "custom_keymap_table is empty. use default setting";
       const char *default_keymapfile = keymap::KeyMapManager::GetKeyMapFileName(
-          keymap::KeyMapManager::GetDefaultKeyMap());
+          config::ConfigHandler::GetDefaultKeyMap());
       return ExtractSortedDirectModeKeysFromFile(default_keymapfile);
     }
     istringstream ifs(custom_keymap_table);

@@ -49,7 +49,7 @@ mozc.DEFAULT_CONFIG_ = {
   'check_default': true,
   'presentation_mode': false,
   'preedit_method': 'ROMAN',
-  'session_keymap': 'KOTOERI',
+  'session_keymap': 'CHROMEOS',
   'custom_keymap_table': '',
   'punctuation_method': 'KUTEN_TOUTEN',
   'symbol_method': 'CORNER_BRACKET_MIDDLE_DOT',
@@ -305,7 +305,14 @@ mozc.OPTION_SELECTIONS_ = [
     configId: 'session_keymap',
     name: chrome.i18n.getMessage('configSessionKeymap'),
     items: [
-      {name: chrome.i18n.getMessage('configSessionKeymapAtok'), value: 'ATOK'},
+      {
+        name: chrome.i18n.getMessage('configSessionKeymapChromeOs'),
+        value: 'CHROMEOS'
+      },
+      {
+        name: chrome.i18n.getMessage('configSessionKeymapAtok'),
+        value: 'ATOK'
+      },
       {
         name: chrome.i18n.getMessage('configSessionKeymapMsIme'),
         value: 'MSIME'

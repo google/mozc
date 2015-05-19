@@ -235,7 +235,7 @@ void *Thread::WrapperForPOSIX(void *ptr) {
   }
 #else
   {
-    // Covert: the pthread_cleanup_push/pthread_cleanup_pop pair should be put
+    // Caveat: the pthread_cleanup_push/pthread_cleanup_pop pair should be put
     //     in the same function. Never move them into any other function.
     pthread_cleanup_push(PThreadCleanupRoutine,
                          static_cast<void *>(&p->state_->is_running_));

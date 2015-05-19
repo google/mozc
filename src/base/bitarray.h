@@ -91,4 +91,4 @@ class BitArray {
   size_t size_;
 };
 }  // namespace mozc
-#endif  // MOZC_BITARRAY_H_
+#endif  // MOZC_BASE_BITARRAY_H_

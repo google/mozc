@@ -133,6 +133,7 @@ def GetBuildShortBaseName(options, target_platform):
 
 def GetBuildBaseName(options, target_platform):
   build_base = GetBuildShortBaseName(options, target_platform)
+
   # On Linux, seems there is no way to specify the build_base directory
   # inside common.gypi
   if IsWindows() or IsMac():
@@ -145,8 +146,6 @@ def GetGeneratorName(generator):
   """Gets the generator name based on the platform."""
   if generator:
     return generator
-  elif IsWindows():
-    return 'ninja'
   elif IsMac():
     return 'xcode'
   else:
@@ -753,9 +752,11 @@ def GypMain(options, unused_args, _):
   gyp_options.extend(['-D', 'android_stl=%s' % options.android_stl])
   gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
   gyp_options.extend(['-D', 'android_application_id=%s' %
-                       options.android_application_id])
+                      options.android_application_id])
   gyp_options.extend(['-D', 'build_base=%s' %
-                       GetBuildBaseName(options, target_platform)])
+                      GetBuildBaseName(options, target_platform)])
+  gyp_options.extend(['-D', 'build_short_base=%s' %
+                      GetBuildShortBaseName(options, target_platform)])
 
   disable_unittest_if_not_available = True
   if disable_unittest_if_not_available:
@@ -925,9 +926,9 @@ def GypMain(options, unused_args, _):
 
   # TODO(yukawa): Use ninja on OSX.
   if generator == 'ninja':
+    gyp_options.extend(['--generator-output=.'])
     short_basename = GetBuildShortBaseName(options, target_platform)
     gyp_options.extend(['-G', 'output_dir=%s' % short_basename])
-    gyp_options.extend(['--generator-output=.'])
 
   # Enable cross-compile
   # TODO(yukawa): Enable GYP_CROSSCOMPILE for Windows.
@@ -968,7 +969,6 @@ def GypMain(options, unused_args, _):
         GetBuildScriptDirectoryName(), 'build_tools', 'copy_dll_and_symbol.py')
     copy_modes = [
         {'configuration': 'DebugDynamic', 'basenames': 'QtCored4;QtGuid4'},
-        {'configuration': 'OptimizeDynamic', 'basenames': 'QtCore4;QtGui4'},
         {'configuration': 'ReleaseDynamic', 'basenames': 'QtCore4;QtGui4'}]
     for mode in copy_modes:
       copy_commands = [
@@ -985,22 +985,16 @@ def GypMain(options, unused_args, _):
 
 def BuildToolsMain(options, unused_args, original_directory_name):
   """The main function for 'build_tools' command."""
+  if not IsWindows():
+    logging.info('build_tools is deprecated on this platform.')
+    return
+
   build_tools_dir = os.path.join(GetRelPath(os.getcwd(),
                                             original_directory_name),
                                  SRC_DIR, 'build_tools')
-  # Build targets in this order.
-  if IsWindows():
-    build_tools_targets = [
-        'out_win/%s:build_tools' % options.configuration,
-    ]
-  else:
-    gyp_files = [
-        os.path.join(build_tools_dir, 'build_tools.gyp')
-    ]
-    build_tools_targets = []
-    for gyp_file in gyp_files:
-      (target, _) = os.path.splitext(os.path.basename(gyp_file))
-      build_tools_targets += ['%s:%s' % (gyp_file, target)]
+  build_tools_targets = [
+      'out_win/%s:build_tools' % options.configuration,
+  ]
 
   for build_tools_target in build_tools_targets:
     BuildMain(options, [build_tools_target], original_directory_name)
@@ -1023,12 +1017,13 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
     target_names.append(target_name)
 
   ninja = 'ninja'
+
   if hasattr(options, 'android_device'):
     # Only for android testing.
     os.environ['ANDROID_DEVICES'] = options.android_device
 
-  short_basename =  GetBuildShortBaseName(options,
-                                          GetMozcVersion().GetTargetPlatform())
+  short_basename = GetBuildShortBaseName(options,
+                                         GetMozcVersion().GetTargetPlatform())
   make_command = ninja
   build_args = ['-j %s' % options.jobs,
                 '-C', '%s/%s' % (short_basename, options.configuration)]
@@ -1320,9 +1315,8 @@ def RunTestsMain(options, args, original_directory_name):
   if target_platform == 'Android':
     RunTestsOnAndroid(options, build_options, original_directory_name)
   else:
-    RunTests(GetBuildShortBaseName(options, target_platform),
-             options.configuration, options.test_jobs)
-
+    RunTests(GetBuildBaseName(options, target_platform), options.configuration,
+             options.test_jobs)
 
 def CleanBuildFilesAndDirectories(options, unused_args):
   """Cleans build files and directories."""
@@ -1339,20 +1333,18 @@ def CleanBuildFilesAndDirectories(options, unused_args):
                       '*.vcxproj.filters', '*.vcxproj.user', 'gen_*_files.xml']:
         file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                  pattern)))
-      for build_type in ['Debug', 'Optimize', 'Release']:
+      for build_type in ['Debug', 'Release']:
         directory_names.append(os.path.join(gyp_directory_name,
                                             build_type))
     elif IsMac():
       directory_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                     '*.xcodeproj')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
-  # Collect stuff in the top-level directory.
-  directory_names.append('mozc_build_tools')
 
-  short_basename = GetBuildShortBaseName(options,
-                                         GetMozcVersion().GetTargetPlatform())
-  if short_basename:
-    directory_names.append(os.path.join(SRC_DIR, short_basename))
+  target_platform = GetBuildBaseName(options,
+                                     GetMozcVersion().GetTargetPlatform())
+  if target_platform:
+    directory_names.append(target_platform)
 
   if IsLinux():
     # Remove auto-generated files.

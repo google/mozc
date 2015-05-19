@@ -128,6 +128,13 @@
           ],
         }],
       ],
+      'xcode_settings': {
+        # Remove the force included file.  This is not necessary for third
+        # party libraries, and it causes a build error.
+        'OTHER_CFLAGS!' : [
+          '-include base/namespace.h',
+        ],
+      },
     },
     {
       'target_name': 'gen_mozc_data_dir_header',
@@ -190,12 +197,6 @@
                 'run_as': {
                   'working_directory': '$(TargetDir)',
                   'action': ['$(TargetPath)'],
-                },
-              }],
-              ['OS=="mac"', {
-                'run_as': {
-                  'working_directory': '${BUILT_PRODUCTS_DIR}',
-                  'action': ['${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}'],
                 },
               }],
             ],

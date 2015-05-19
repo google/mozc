@@ -94,24 +94,10 @@ static int GetCodepage(const char* name) {
     const char* name;
     int codepage;
   } kCodePageMap[] = {
-    { "UTF8",         CP_UTF8 },  // Unicode UTF-8
-    { "UTF-8",        CP_UTF8 },  // Unicode UTF-8
-    { "SJIS",         932     },  // ANSI/OEM - Japanese, Shift-JIS
-    { "EUC-JP-MS",    51932   },  // EUC - Japanese
-    { "JIS",          20932   },  // JIS X 0208-1990 & 0212-1990
-    { "ISO8859-1",    28591   },  // ISO8859-1
-    { "ISO8859-2",    28592   },  // ISO8859-2
-    { "ISO8859-3",    28593   },  // ISO8859-3
-    { "ISO8859-4",    28594   },  // ISO8859-4
-    { "ISO8859-5",    28595   },  // ISO8859-5
-    { "ISO8859-6",    28596   },  // ISO8859-6
-    { "ISO8859-7",    28597   },  // ISO8859-7
-    { "ISO8859-8",    28598   },  // ISO8859-8
-    { "ISO8859-9",    28599   },  // ISO8859-9
-    { "ISO8859-13",   28603   },  // ISO8859-13
-    { "ISO8859-15",   28605   },  // ISO8859-15
-    { "KOI8-R",       20866   },  // KOI8-R
-    { "windows-1251", 1251    },  // windows-1251
+    { "UTF8",      CP_UTF8 },  // Unicode UTF-8
+    { "SJIS",      932     },  // ANSI/OEM - Japanese, Shift-JIS
+    { "EUC-JP-MS", 51932   },  // EUC - Japanese
+    { "JIS",       20932   },  // JIS X 0208-1990 & 0212-1990
   };
 
   for (size_t i = 0; i < arraysize(kCodePageMap); i++) {
@@ -192,9 +178,5 @@ void Util::UTF8ToSJIS(const string &input, string *output) {
 
 void Util::SJISToUTF8(const string &input, string *output) {
   Convert("SJIS", "UTF8", input, output);
-}
-
-bool Util::ToUTF8(const char *from, const string &input, string *output) {
-  return Convert(from, "UTF8", input, output);
 }
 }  // namespace mozc

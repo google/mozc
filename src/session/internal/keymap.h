@@ -32,7 +32,7 @@
 #ifndef MOZC_SESSION_INTERNAL_KEYMAP_H_
 #define MOZC_SESSION_INTERNAL_KEYMAP_H_
 
-#include <istream>
+#include <istream>  // NOLINT
 #include <map>
 #include <set>
 #include <string>
@@ -123,10 +123,10 @@ class KeyMapManager {
 
   // Return the file name bound with the keymap enum.
   static const char *GetKeyMapFileName(config::Config::SessionKeymap keymap);
-  // Return the default keymap.
-  static config::Config::SessionKeymap GetDefaultKeyMap();
 
  private:
+  friend class KeyMapTest;
+
   void InitCommandData();
 
   bool ParseCommandDirect(const string &command_string,
@@ -145,6 +145,8 @@ class KeyMapManager {
                                   CompositionState::Commands command);
   void RegisterConversionCommand(const string &command_string,
                                  ConversionState::Commands command);
+
+  static const bool kInputModeXCommandSupported;
 
   config::Config::SessionKeymap keymap_;
   map<string, DirectInputState::Commands> command_direct_map_;

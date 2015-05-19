@@ -134,6 +134,7 @@ class Util {
   static void JoinStringPieces(const vector<StringPiece> &str,
                                const char *delm,
                                string *output);
+  static void ConcatStrings(StringPiece s1, StringPiece s2, string *output);
 
   static void AppendStringWithDelimiter(StringPiece delimiter,
                                         StringPiece append_string,
@@ -407,7 +408,6 @@ class Util {
 
   static void UTF8ToSJIS(const string &input, string *output);
   static void SJISToUTF8(const string &input, string *output);
-  static bool ToUTF8(const char *from, const string &input, string *output);
 
   static void EncodeURI(const string &input, string *output);
   static void DecodeURI(const string &input, string *output);

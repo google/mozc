@@ -63,19 +63,6 @@ void VerifyCalculation(const CalculatorInterface *calculator,
       << "result = " << result;
 }
 
-// Runs calculation without any verification.
-// For smoke test.
-// This method is not used on some build environment, so we need to suppress
-// warnings.
-MOZC_CLANG_PUSH_WARNING();
-MOZC_CLANG_DISABLE_WARNING(unused-function);
-void RunCalculation(const CalculatorInterface *calculator,
-                    const string &expression) {
-  string result;
-  calculator->CalculateString(expression, &result);
-}
-MOZC_CLANG_POP_WARNING();
-
 // Runs calculation and compare results in PRINTED string.
 void VerifyCalculationInString(const CalculatorInterface *calculator,
                                const string &expression,

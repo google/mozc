@@ -81,9 +81,16 @@ namespace {
 class UserProfileDirectoryImpl {
  public:
   UserProfileDirectoryImpl();
-  // Copies dir_ string using c_str() here to prevent Copy-On-Write issues in
-  // multi-thread environment.
-  string get() { return dir_.c_str(); }
+  string get() {
+#ifdef __native_client__
+    // Copies string here to prevent Copy-On-Write issues in multi-thread
+    // environment.
+    // TODO(hsumita): Remove this hack if not necessary.
+    return string(dir_.data(), dir_.size());
+#else
+    return dir_;
+#endif  // __native_client__
+  }
   void set(const string &dir) { dir_ = dir; }
  private:
   string dir_;

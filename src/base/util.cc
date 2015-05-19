@@ -378,6 +378,11 @@ void Util::JoinStringPieces(const vector<StringPiece> &pieces,
   }
 }
 
+void Util::ConcatStrings(StringPiece s1, StringPiece s2, string *output) {
+  s1.CopyToString(output);
+  s2.AppendToString(output);
+}
+
 void Util::AppendStringWithDelimiter(StringPiece delimiter,
                                      StringPiece append_string,
                                      string *output) {
@@ -1722,8 +1727,7 @@ Util::ScriptType Util::GetScriptType(const char *begin,
 
 namespace {
 
-Util::ScriptType GetScriptTypeInternal(const string &str,
-                                       bool ignore_symbols) {
+Util::ScriptType GetScriptTypeInternal(const string &str, bool ignore_symbols) {
   Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
 
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {

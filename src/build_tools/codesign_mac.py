@@ -39,6 +39,7 @@ Exapmle:
 
 import optparse
 import os
+import platform
 import sys
 
 
@@ -53,7 +54,16 @@ def RunOrDie(command):
 
 def Codesign(target, sign, flags):
   """Run the codesign command with the arguments."""
-  RunOrDie(" ".join(["/usr/bin/codesign -f",
+
+  # If the platform is Marvericks or greater, "--deep" should be used for
+  # codesign.
+  options = "-f --verbose"
+  mac_ver = platform.mac_ver()[0].split(".")
+  if mac_ver > [10, 9, 0]:
+    options += " --deep"
+
+  RunOrDie(" ".join(["/usr/bin/codesign",
+                     options,
                      "--sign \"%s\"" % sign,
                      flags,
                      target]))

@@ -246,6 +246,10 @@ bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
     default:
       LOG(FATAL) << "Should never reach here";
   }
+  if (conversion_key.empty()) {
+    return false;
+  }
+
   SetKey(segments, conversion_key);
   segments->set_request_type(Segments::CONVERSION);
   immutable_converter_->ConvertForRequest(request, segments);
@@ -255,6 +259,9 @@ bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
 
 bool ConverterImpl::StartConversion(Segments *segments,
                                     const string &key) const {
+  if (key.empty()) {
+    return false;
+  }
   SetKey(segments, key);
   segments->set_request_type(Segments::CONVERSION);
   const ConversionRequest default_request;

@@ -69,4 +69,4 @@ class CalculatorMock : public CalculatorInterface {
 
 }  // namespace mozc
 
-#endif  // MOZC_REWRITER_CALCULATOR_MOCK_H_
+#endif  // MOZC_REWRITER_CALCULATOR_CALCULATOR_MOCK_H_

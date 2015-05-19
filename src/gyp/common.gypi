@@ -56,7 +56,7 @@
 
     # Versioning stuff for Mac.
     'mac_sdk%': '10.8',
-    'mac_deployment_target%': '10.5',
+    'mac_deployment_target%': '10.7',
 
     # 'conditions' is put inside of 'variables' so that we can use
     # another 'conditions' in this gyp element level later. Note that
@@ -208,11 +208,7 @@
       '4996',
     ],
 
-    # We wanted to have this directory under the build output directory
-    # (ex. 'out' for Linux), but there is no variable defined for the top
-    # level source directory, hence we create the directory in the top
-    # level source directory.
-    'mozc_build_tools_dir': '<(abs_depth)/mozc_build_tools/<(OS)',
+    'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',
     'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
     'branding%': 'Mozc',
     # use_qt is 'YES' only if you want to use GUI binaries.
@@ -459,7 +455,7 @@
           },
         },
       },
-      'Win_Static_Optimize_CRT_Base': {
+      'Win_Static_Release_CRT_Base': {
         'abstract': 1,
         'msvs_settings': {
           'VCCLCompilerTool': {
@@ -475,7 +471,7 @@
           },
         },
       },
-      'Win_Dynamic_Optimize_CRT_Base': {
+      'Win_Dynamic_Release_CRT_Base': {
         'abstract': 1,
         'msvs_settings': {
           'VCCLCompilerTool': {
@@ -521,11 +517,14 @@
           }],
         ],
       },
-      'Optimize_Base': {
+      'Release_Base': {
         'abstract': 1,
         'defines': [
           'NDEBUG',
           'QT_NO_DEBUG',
+          'NO_LOGGING',
+          'IGNORE_HELP_FLAG',
+          'IGNORE_INVALID_FLAG'
         ],
         'xcode_settings': {
           'DEAD_CODE_STRIPPING': 'YES',  # -Wl,-dead_strip
@@ -549,25 +548,6 @@
             # are built with /O2.  We use the same optimization option between
             # Mozc and Qt just in case warning C4748 is true.
             'Optimization': '<(win_optimization_release)',
-          },
-        },
-        'conditions': [
-          ['OS=="linux"', {
-            'cflags': [
-              '<@(release_extra_cflags)',
-            ],
-          }],
-        ],
-      },
-      'Release_Base': {
-        'abstract': 1,
-        'defines': [
-          'NO_LOGGING',
-          'IGNORE_HELP_FLAG',
-          'IGNORE_INVALID_FLAG'
-        ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
             'WholeProgramOptimization': 'true',
           },
           'VCLibrarianTool': {
@@ -581,6 +561,13 @@
             'AdditionalOptions': ['/PDBALTPATH:%_PDB%'],
           },
         },
+        'conditions': [
+          ['OS=="linux"', {
+            'cflags': [
+              '<@(release_extra_cflags)',
+            ],
+          }],
+        ],
       },
       #
       # Concrete configurations
@@ -588,31 +575,22 @@
       'Debug': {
         'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
       },
-      'Optimize': {
-        'inherit_from': ['Common_Base', 'x86_Base', 'Optimize_Base', 'Win_Static_Optimize_CRT_Base'],
-      },
       'Release': {
-        'inherit_from': ['Optimize', 'Release_Base'],
+        'inherit_from': ['Common_Base', 'x86_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
       },
       'conditions': [
         ['OS=="win"', {
           'DebugDynamic': {
             'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base', 'Win_Dynamic_Debug_CRT_Base'],
           },
-          'OptimizeDynamic': {
-            'inherit_from': ['Common_Base', 'x86_Base', 'Optimize_Base', 'Win_Dynamic_Optimize_CRT_Base'],
-          },
           'ReleaseDynamic': {
-            'inherit_from': ['OptimizeDynamic', 'Release_Base'],
+            'inherit_from': ['Common_Base', 'x86_Base', 'Release_Base', 'Win_Dynamic_Release_CRT_Base'],
           },
           'Debug_x64': {
             'inherit_from': ['Common_Base', 'x64_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
           },
-          'Optimize_x64': {
-            'inherit_from': ['Common_Base', 'x64_Base', 'Optimize_Base', 'Win_Static_Optimize_CRT_Base'],
-          },
           'Release_x64': {
-            'inherit_from': ['Optimize_x64', 'Release_Base'],
+            'inherit_from': ['Common_Base', 'x64_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
           },
         }],
       ],
@@ -812,9 +790,14 @@
         'defines': [
           'OS_MACOSX',
         ],
+        'make_global_settings': [
+          ['CC', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang'],
+          ['CXX', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
+          ['LINK', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
+          ['LDPLUSPLUS', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
+        ],
         'mac_framework_dirs': [
           '<(mac_dir)/Releases/GoogleBreakpad',
-          '<(DEPTH)/mozc_build_tools/mac',
         ],
         'xcode_settings': {
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
@@ -826,8 +809,6 @@
           'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
           'SDKROOT': 'macosx<(mac_sdk)',
           'PYTHONPATH': '<(abs_depth)/',
-          'CC': '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang',
-          'LDPLUSPLUS': '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++',
           'CLANG_WARN_CXX0X_EXTENSIONS': 'NO',
           'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0',
           'WARNING_CFLAGS': [
@@ -835,8 +816,10 @@
             '-Wno-covered-switch-default',
             '-Wno-unnamed-type-template-args',
           ],
+          'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
+          'CLANG_CXX_LIBRARY': 'libc++',
           'OTHER_CPLUSPLUSFLAGS': [
-            '$(inherited)', '-std=gnu++11',
+            '$(inherited)',
           ],
         },
         'link_settings': {
@@ -863,10 +846,13 @@
         ['CXX', '<(pnacl_bin_dir)/pnacl-clang++'],
         ['LD', '<(pnacl_bin_dir)/pnacl-ld'],
         ['NM', '<(pnacl_bin_dir)/pnacl-nm'],
+        ['READELF', '<(pnacl_bin_dir)/pnacl-readelf'],
         ['AR.host', '<!(which ar)'],
         ['CC.host', '<!(which gcc)'],
         ['CXX.host', '<!(which g++)'],
         ['LD.host', '<!(which ld)'],
+        ['NM.host', '<!(which nm)'],
+        ['READELF.host', '<!(which readelf)'],
       ],
     }],
     ['target_platform=="Android"', {
@@ -899,10 +885,13 @@
         ['CXX', '<(ndk_bin_dir)/<(toolchain_prefix)-g++'],
         ['LD', '<(ndk_bin_dir)/<(toolchain_prefix)-ld'],
         ['NM', '<(ndk_bin_dir)/<(toolchain_prefix)-nm'],
+        ['READELF', '<(ndk_bin_dir)/<(toolchain_prefix)-readelf'],
         ['AR.host', '<!(which ar)'],
         ['CC.host', '<!(which gcc)'],
         ['CXX.host', '<!(which g++)'],
         ['LD.host', '<!(which ld)'],
+        ['NM.host', '<!(which nm)'],
+        ['READELF.host', '<!(which readelf)'],
       ],
     }],
   ],

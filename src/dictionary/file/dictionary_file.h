@@ -30,8 +30,8 @@
 // This code manages ar/cpio/tar like file structure that contains
 // multiple sections in a file. Each section has a name and size.
 
-#ifndef MOZC_DICTIONARY_DICTIONARY_FILE_H_
-#define MOZC_DICTIONARY_DICTIONARY_FILE_H_
+#ifndef MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
+#define MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 
 #include <string>
 #include <vector>
@@ -69,4 +69,4 @@ class DictionaryFile {
 };
 }
 
-#endif  // MOZC_DICTIONARY_DICTIONARY_FILE_H_
+#endif  // MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_

@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
@@ -157,10 +158,12 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
           segment->insert_candidate(kInsertPostion);
       DCHECK(mutable_candidate);
       mutable_candidate->CopyFrom(top_candidate);
-      mutable_candidate->key = results[k]->error +
-          top_candidate.functional_key();
-      mutable_candidate->value = results[k]->value +
-          top_candidate.functional_value();
+      Util::ConcatStrings(results[k]->error,
+                          top_candidate.functional_key(),
+                          &mutable_candidate->key);
+      Util::ConcatStrings(results[k]->value,
+                          top_candidate.functional_value(),
+                          &mutable_candidate->value);
       mutable_candidate->inner_segment_boundary.clear();
       SetCandidate(results[k], mutable_candidate);
       modified = true;

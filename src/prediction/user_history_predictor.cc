@@ -910,10 +910,10 @@ bool UserHistoryPredictor::LookupEntry(
   const Entry *last_entry = NULL;
 
   // last_access_time of the left-closest content word.
-  uint32 left_last_access_time = 0;
+  uint64 left_last_access_time = 0;
 
   // last_access_time of the left-most content word.
-  uint32 left_most_last_access_time = 0;
+  uint64 left_most_last_access_time = 0;
 
   // Example: [a|B|c|D]
   // a,c: functional word
@@ -965,7 +965,7 @@ bool UserHistoryPredictor::LookupEntry(
     string key = entry->key();
     string value = entry->value();
     const Entry *current_entry = entry;
-    set<uint64> seen;
+    set<uint32> seen;
     seen.insert(EntryFingerprint(*current_entry));
     // Until target entry gets longer than input_key.
     while (key.size() <= input_key.size()) {
@@ -1438,7 +1438,7 @@ void UserHistoryPredictor::InsertNextEntry(
     target_next_entry = entry->add_next_entries();
   } else {
     // Otherwise, find the oldest next_entry.
-    uint32 last_access_time = UINT_MAX;
+    uint64 last_access_time = kuint64max;
     for (int i = 0; i < entry->next_entries_size(); ++i) {
       // already has the same id
       if (next_entry.entry_fp() == entry->next_entries(i).entry_fp()) {
@@ -1508,7 +1508,7 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
     return;
   }
 
-  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
+  const uint64 last_access_time = Util::GetTime();
   const uint32 dic_key = Fingerprint("", "", type);
 
   CHECK(dic_.get());
@@ -1530,7 +1530,7 @@ void UserHistoryPredictor::Insert(const string &key,
                                   const string &description,
                                   bool is_suggestion_selected,
                                   uint32 next_fp,
-                                  uint32 last_access_time,
+                                  uint64 last_access_time,
                                   Segments *segments) {
   if (key.empty() || value.empty() ||
       key.size() > kMaxStringLength ||
@@ -1618,7 +1618,7 @@ void UserHistoryPredictor::Finish(Segments *segments) {
   }
 
   const bool is_suggestion = segments->request_type() != Segments::CONVERSION;
-  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
+  const uint64 last_access_time = Util::GetTime();
 
   // If user inputs a punctuation just after some long sentence,
   // we make a new candidate by concatinating the top element in LRU and
@@ -1626,26 +1626,23 @@ void UserHistoryPredictor::Finish(Segments *segments) {
   // the long sentence user input before.
   // This is a fix for http://b/issue?id=2216838
   if (dic_->Head() != NULL &&
+      dic_->Head()->value.last_access_time() + 5 > last_access_time &&
+      // Check if the current value is a punctuation.
       segments->conversion_segments_size() == 1 &&
-      segments->history_segments_size() > 0 &&
       segments->conversion_segment(0).candidates_size() > 0 &&
+      IsPunctuation(segments->conversion_segment(0).candidate(0).value) &&
+      // Check if the previous value looks like a sentence.
+      segments->history_segments_size() > 0 &&
       segments->history_segment(
-          segments->history_segments_size() - 1).candidates_size() > 0 &&
-      Util::CharsLen(
-          segments->conversion_segment(0).candidate(0).value) == 1 &&
-      IsPunctuation(
-          segments->conversion_segment(0).candidate(0).value) &&
-      dic_->Head()->value.last_access_time() + 5 > last_access_time) {
+          segments->history_segments_size() - 1).candidates_size() > 0) {
     const Entry *entry = &(dic_->Head()->value);
     DCHECK(entry);
     const string &last_value =
         segments->history_segment(
             segments->history_segments_size() - 1).candidate(0).value;
-    // Check that value in head element of LRU ends with the candidate value
-    // in history segments.
-    if (last_value.size() <= entry->value().size() &&
-        entry->value().substr(entry->value().size() - last_value.size(),
-                              last_value.size()) == last_value) {
+    // Check if the head value in LRU ends with the candidate value in history
+    // segments.
+    if (Util::EndsWith(entry->value(), last_value)) {
       const Segment::Candidate &candidate =
           segments->conversion_segment(0).candidate(0);
       const string key = entry->key() + candidate.key;
@@ -1731,13 +1728,13 @@ void UserHistoryPredictor::MakeLearningSegments(
 }
 
 void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
-                                         uint32 last_access_time,
+                                         uint64 last_access_time,
                                          Segments *segments) {
   SegmentsForLearning learning_segments;
   MakeLearningSegments(*segments, &learning_segments);
 
   string all_key, all_value;
-  set<uint64> seen;
+  set<uint32> seen;
   bool this_was_seen = false;
   const size_t history_segments_size =
       learning_segments.history_segments_size();
@@ -1775,7 +1772,7 @@ void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
            last_access_time, segments);
   }
 
-  // insert all_key/all_value
+  // Insert all_key/all_value
   if (learning_segments.conversion_segments_size() > 1 &&
       !all_key.empty() && !all_value.empty()) {
     Insert(all_key, all_value, "",
@@ -1783,24 +1780,24 @@ void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
            0, last_access_time, segments);
   }
 
-  // make a link from the right most history_segment to
-  // the left most segment or entire user input.
+  // Make a link from the last history_segment to the first conversion segment
+  // or to the entire user input.
   if (learning_segments.history_segments_size() > 0 &&
       learning_segments.conversion_segments_size() > 0) {
-    Entry *history_entry =
-        dic_->MutableLookupWithoutInsert(
-            LearningSegmentFingerprint(
-                learning_segments.history_segment(
-                    segments->history_segments_size() - 1)));
-
+    const SegmentForLearning &history_segment =
+        learning_segments.history_segment(
+            segments->history_segments_size() - 1);
+    const SegmentForLearning &conversion_segment =
+        learning_segments.conversion_segment(0);
+    Entry *history_entry = dic_->MutableLookupWithoutInsert(
+        LearningSegmentFingerprint(history_segment));
     NextEntry next_entry;
     if (segments->request_type() == Segments::CONVERSION) {
-      next_entry.set_entry_fp(
-          LearningSegmentFingerprint(learning_segments.conversion_segment(0)));
+      next_entry.set_entry_fp(LearningSegmentFingerprint(conversion_segment));
       InsertNextEntry(next_entry, history_entry);
     }
 
-    // entire user input or SUGGESTION
+    // Entire user input or SUGGESTION
     if (segments->request_type() != Segments::CONVERSION ||
         learning_segments.conversion_segments_size() > 1) {
       next_entry.set_entry_fp(Fingerprint(all_key, all_value));
@@ -1828,7 +1825,6 @@ void UserHistoryPredictor::Revert(Segments *segments) {
   }
 }
 
-// type
 // static
 UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
     const string &lstr, const string &rstr) {

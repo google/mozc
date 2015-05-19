@@ -135,15 +135,38 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
   ConverterInterface *converter = engine->GetConverter();
 
   CHECK(converter);
-  Segments segments;
-  // "りゅきゅけmぽ"
-  EXPECT_TRUE(converter->StartConversion(
-      &segments,
-      "\xE3\x82\x8A\xE3\x82\x85"
-      "\xE3\x81\x8D\xE3\x82\x85"
-      "\xE3\x81\x91"
-      "m"
-      "\xE3\x81\xBD"));
+  {
+    Segments segments;
+    // "りゅきゅけmぽ"
+    EXPECT_TRUE(converter->StartConversion(
+        &segments,
+        "\xE3\x82\x8A\xE3\x82\x85"
+        "\xE3\x81\x8D\xE3\x82\x85"
+        "\xE3\x81\x91"
+        "m"
+        "\xE3\x81\xBD"));
+  }
+  {
+    Segments segments;
+    EXPECT_TRUE(converter->StartConversion(&segments, "5.1,||t:1"));
+  }
+  {
+    Segments segments;
+    // Converter returns false, but not crash.
+    EXPECT_FALSE(converter->StartConversion(&segments, ""));
+  }
+  {
+    Segments segments;
+    ConversionRequest conv_request;
+    // Create an empty composer.
+    const Table table;
+    const commands::Request request;
+    composer::Composer composer(&table, &request);
+    conv_request.set_composer(&composer);
+    // Converter returns false, but not crash.
+    EXPECT_FALSE(converter->StartConversionForRequest(conv_request,
+                                                      &segments));
+  }
 }
 
 TEST_F(ConverterRegressionTest, Regression3323108) {

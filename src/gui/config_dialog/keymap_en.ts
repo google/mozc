@@ -13,7 +13,7 @@
     </message>
     <message>
         <source>DirectInput</source>
-        <translation>DirectInput</translation>
+        <translation>Direct input</translation>
     </message>
     <message>
         <source>Precomposition</source>

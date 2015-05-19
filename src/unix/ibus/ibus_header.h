@@ -42,5 +42,4 @@
 #endif  // !MOZC_ENABLE_IBUS_INPUT_PURPOSE
 #endif  // libibus (>=1.5.4)
 
-
 #endif  // MOZC_UNIX_IBUS_IBUS_HEADER_H_

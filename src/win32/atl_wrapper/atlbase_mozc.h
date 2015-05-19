@@ -31,18 +31,21 @@
 // http://support.microsoft.com/kb/813540.
 // See the following thread for details.
 // http://connect.microsoft.com/VisualStudio/feedback/details/535704/atlcomcli-h-cvartypeinfo-char-cannot-be-compiled-with-j-or-char-unsigned-flage-enabled
+//
+// TODO(yukawa): Remove this hack once we have switched to Visual C++ 2012 or
+// later.
 
 #ifndef MOZC_WIN32_ATL_WRAPPER_ATL_BASE_MOZC_H_
 #define MOZC_WIN32_ATL_WRAPPER_ATL_BASE_MOZC_H_
 
-#if _MSC_VER >= 1600
+#if _MSC_VER == 1600
 #include <atldef.h>
 #pragma push_macro("ATLSTATIC_ASSERT")
 #undef ATLSTATIC_ASSERT
 #define ATLSTATIC_ASSERT(a, b)
 #include <atlcomcli.h>
 #pragma pop_macro("ATLSTATIC_ASSERT")
-#endif  // _MSC_VER >= 1600
+#endif  // _MSC_VER == 1600
 #include <atlbase.h>
 
 #endif  // MOZC_WIN32_ATL_WRAPPER_ATL_BASE_MOZC_H_

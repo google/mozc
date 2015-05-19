@@ -768,79 +768,79 @@
 <context>
     <name>mozc::gui::KeyMapEditorDialog</name>
     <message>
-        <location filename="keymap_editor.cc" line="223"/>
+        <location filename="keymap_editor.cc" line="218"/>
         <source>New entry</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="225"/>
+        <location filename="keymap_editor.cc" line="220"/>
         <source>Remove selected entries</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="229"/>
+        <location filename="keymap_editor.cc" line="224"/>
         <source>Import predefined mapping</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="233"/>
+        <location filename="keymap_editor.cc" line="228"/>
         <source>ATOK</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="234"/>
+        <location filename="keymap_editor.cc" line="229"/>
         <source>MS-IME</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="235"/>
+        <location filename="keymap_editor.cc" line="230"/>
         <source>Kotoeri</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="239"/>
+        <location filename="keymap_editor.cc" line="234"/>
         <source>Import from file...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="241"/>
+        <location filename="keymap_editor.cc" line="236"/>
         <source>Export to file...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="282"/>
+        <location filename="keymap_editor.cc" line="277"/>
         <source>Mozc keymap editor</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="286"/>
+        <location filename="keymap_editor.cc" line="281"/>
         <source>Mode</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="286"/>
+        <location filename="keymap_editor.cc" line="281"/>
         <source>Key</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="286"/>
+        <location filename="keymap_editor.cc" line="281"/>
         <source>Command</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="371"/>
+        <location filename="keymap_editor.cc" line="370"/>
         <source>Current keymap table is empty. You might want to import a pre-defined keymap table first.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="411"/>
+        <location filename="keymap_editor.cc" line="410"/>
         <source>Invalid key:
 %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="430"/>
-        <source>The keymaps for IME ON and Reconversion will be applied after new applications.</source>
+        <location filename="keymap_editor.cc" line="429"/>
+        <source>Changes of keymaps for direct input mode will apply only to applications that are launched after making your modifications.</source>
         <translation></translation>
     </message>
     <message>

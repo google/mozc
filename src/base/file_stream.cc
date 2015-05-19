@@ -39,13 +39,13 @@ namespace mozc {
 #ifdef MOZC_USE_PEPPER_FILE_IO
 
 InputFileStream::InputFileStream()
-    : istream() {
+    : istream(nullptr) {
   init(&string_buffer_);
 }
 
 InputFileStream::InputFileStream(const char* filename,
                                  ios_base::openmode mode)
-    : istream() {
+    : istream(nullptr) {
   init(&string_buffer_);
   InputFileStream::open(filename, mode);
 }

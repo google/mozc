@@ -79,7 +79,7 @@
           },
         },
       },
-      'Optimize_Base': {
+      'Release_Base': {
         'msvs_settings': {
           'VCLinkerTool': {
             'AdditionalDependencies': [

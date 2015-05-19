@@ -47,120 +47,22 @@
 
 namespace mozc {
 namespace {
-// Verify the path name resides under the appropriate directory.
-bool VerifyBinary(const string &binary_path) {
-  const string server_directory = MacUtil::GetServerDirectory();
-  return binary_path.find(server_directory) == 0;
-}
-
-// The callback function to get all keys from LAUNCH_DATA_DICTIONARY.
-void LaunchDataDictKeys(
-    launch_data_t unued_data, const char *key, void *keys_vector) {
-  vector<string> *keys = static_cast<vector<string> *>(keys_vector);
-  DCHECK(keys);
-  keys->push_back(string(key));
-}
-
-// The callback function to update the mapping.  This function is
-// called from RefreshPortBinaryMap().  Each job_data holds the
-// launchd data for a job (like a file in /Library/LaunchAgents), and
-// key is the id (like com.google.inputmethod.Japanese.Converter).
-void UpdateMap(launch_data_t job_data, const char *key, void *map_data) {
-  if (launch_data_get_type(job_data) != LAUNCH_DATA_DICTIONARY) {
-    LOG(ERROR) << "job data is not a dictionary";
-    return;
-  }
-
-  launch_data_t program_name = launch_data_dict_lookup(
-      job_data, LAUNCH_JOBKEY_PROGRAM);
-  launch_data_t services = launch_data_dict_lookup(
-      job_data, LAUNCH_JOBKEY_MACHSERVICES);
-  if (program_name == NULL || services == NULL ||
-      launch_data_get_type(program_name) != LAUNCH_DATA_STRING ||
-      launch_data_get_type(services) != LAUNCH_DATA_DICTIONARY) {
-    return;
-  }
-
-  map<string, vector<string> > *new_map =
-      static_cast<map<string, vector<string> > *>(map_data);
-  string program(launch_data_get_string(program_name));
-  vector<string> service_names;
-  const string port_name_prefix = MacUtil::GetLabelForSuffix("");
-  launch_data_dict_iterate(services, LaunchDataDictKeys, &service_names);
-  for (vector<string>::const_iterator it = service_names.begin();
-       it != service_names.end(); ++it) {
-    DLOG(INFO) << *it;
-    if (it->find(port_name_prefix) == 0) {
-      // Port name relevant to our task
-      (*new_map)[*it].push_back(program);
-    }
-  }
-}
-
-const int kRefreshTimes = 1000;
-map<string, vector<string> > *kPortBinaryMap = NULL;
-
-void RefreshPortBinaryMap() {
-  map<string, vector<string> > *new_map = new map<string, vector<string> >;
-  // Get the all job data
-  launch_data_t request = launch_data_new_string(LAUNCH_KEY_GETJOBS);
-  launch_data_t jobs = launch_msg(request);
-  launch_data_free(request);
-  if (jobs == NULL) {
-    LOG(ERROR) << "jobs is NULL";
-    return;
-  }
-  if (launch_data_get_type(jobs) == LAUNCH_DATA_ERRNO) {
-    LOG(ERROR) << "Cannot get jobs data";
-    launch_data_free(jobs);
-    return;
-  }
-
-  // Scan the all jobs
-  launch_data_dict_iterate(jobs, UpdateMap, new_map);
-
-  map<string, vector<string> > *old_map = kPortBinaryMap;
-  kPortBinaryMap = new_map;
-  delete old_map;
-}
-
-// Get the Mach port name for the specified "name".  Returns false
-// something goes wrong during obtaining port name.
+// Returns the name of the service corresponding to the name.
+// Since the behavior of launch_msg() is changed from Yosemite (10.10),
+// this function no longer relies on the information from launch_msg().
+// When we add new services, we should update this function too.
 bool GetMachPortName(const string &name, string *port_name) {
-  // refresh_counter is not guarded by any locking algorithm but it's
-  // ok right now because it doesn't damage the processing itself.
-  static int refresh_counter = 0;
-  if (kPortBinaryMap == NULL || refresh_counter >= kRefreshTimes) {
-    RefreshPortBinaryMap();
-    refresh_counter = 0;
-  } else {
-    ++refresh_counter;
+  // Defined in data/mac/com.google.inputmethod.Japanese.Converter.plist
+  if (name == "session") {
+    port_name->assign(MacUtil::GetLabelForSuffix("") + "Converter.session");
+    return true;
   }
-
-  if (kPortBinaryMap == NULL) {
-    return false;
+  // Defined in data/mac/com.google.inputmethod.Japanese.Renderer.plist
+  if (name == "renderer") {
+    port_name->assign(MacUtil::GetLabelForSuffix("") + "Renderer.renderer");
+    return true;
   }
-
-  for (map<string, vector<string> >::const_iterator it =
-           kPortBinaryMap->begin(); it != kPortBinaryMap->end(); ++it) {
-    if (it->first.rfind(name) == it->first.size() - name.size()) {
-      // The port name has the suffix of the name
-      if (it->second.size() != 1) {
-        LOG(ERROR) << "Too many programs are waiting for the port";
-        return false;
-      }
-      if (!VerifyBinary(it->second[0])) {
-        LOG(ERROR) << "The server binary resides in a invalid directory: "
-                   << it->second[0];
-        return false;
-      }
-
-      port_name->assign(it->first);
-      return true;
-    }
-  }
-
-  LOG(ERROR) << "Port not found";
+  LOG(ERROR) << "Port not found: " << name;
   return false;
 }
 
