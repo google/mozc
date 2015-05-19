@@ -34,6 +34,10 @@
 #include <aclapi.h>
 #endif  // OS_WIN
 
+#ifdef OS_MACOSX
+#include <unistd.h>
+#endif  // OS_MACOSX
+
 #ifdef OS_LINUX
 #include <unistd.h>
 #include <sys/types.h>

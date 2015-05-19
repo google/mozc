@@ -85,7 +85,7 @@ def GetMozcVersion():
   return mozc_version.MozcVersion('%s/mozc_version.txt' % SRC_DIR)
 
 
-def GetBuildBaseName(options, target_platform):
+def GetBuildShortBaseName(options, target_platform):
   """Returns the build base directory.
 
   Determination priority is;
@@ -128,6 +128,11 @@ def GetBuildBaseName(options, target_platform):
   else:
     raise RuntimeError('Unsupported platform: %s' % target_platform)
 
+  return build_base
+
+
+def GetBuildBaseName(options, target_platform):
+  build_base = GetBuildShortBaseName(options, target_platform)
   # On Linux, seems there is no way to specify the build_base directory
   # inside common.gypi
   if IsWindows() or IsMac():
@@ -145,7 +150,7 @@ def GetGeneratorName(generator):
   elif IsMac():
     return 'xcode'
   else:
-    return 'make'
+    return 'ninja'
 
 
 def GetPkgConfigCommand():
@@ -918,10 +923,14 @@ def GypMain(options, unused_args, _):
     gyp_options.extend([
         '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
 
-  # TODO(yukawa): Use ninja on other platforms.
-  if IsWindows() and generator == 'ninja':
+  # TODO(yukawa): Use ninja on OSX.
+  if generator == 'ninja':
+    short_basename = GetBuildShortBaseName(options, target_platform)
+    gyp_options.extend(['-G', 'output_dir=%s' % short_basename])
     gyp_options.extend(['--generator-output=.'])
-    gyp_options.extend(['-G', 'output_dir=out_win'])
+
+  # Enable cross-compile
+  os.environ['GYP_CROSSCOMPILE'] = '1'
 
   # Run GYP.
   logging.info('Running GYP...')
@@ -1011,33 +1020,16 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
         CanonicalTargetToGypFileAndTargetName(target))
     target_names.append(target_name)
 
-  make_command = os.getenv('BUILD_COMMAND', 'make')
-  # flags for building in Chrome OS chroot environment
-  envvars = [
-      'CFLAGS',
-      'CXXFLAGS',
-      'CXX',
-      'CC',
-      'AR',
-      'AS',
-      'RANLIB',
-      'LD',
-  ]
-  for envvar in envvars:
-    if envvar in os.environ:
-      os.environ[envvar] = os.getenv(envvar)
-
-  build_args = ['-j%s' % options.jobs,
-                'MAKE_JOBS=%s' % options.jobs,
-                'BUILDTYPE=%s' % options.configuration]
+  ninja = 'ninja'
   if hasattr(options, 'android_device'):
     # Only for android testing.
     os.environ['ANDROID_DEVICES'] = options.android_device
 
-  build_args.append('builddir_name=%s' %
-                    GetBuildBaseName(options,
-                                     GetMozcVersion().GetTargetPlatform()))
-
+  short_basename =  GetBuildShortBaseName(options,
+                                          GetMozcVersion().GetTargetPlatform())
+  make_command = ninja
+  build_args = ['-j %s' % options.jobs,
+                '-C', '%s/%s' % (short_basename, options.configuration)]
   RunOrDie([make_command] + build_args + target_names)
 
 
@@ -1326,8 +1318,8 @@ def RunTestsMain(options, args, original_directory_name):
   if target_platform == 'Android':
     RunTestsOnAndroid(options, build_options, original_directory_name)
   else:
-    RunTests(GetBuildBaseName(options, target_platform), options.configuration,
-             options.test_jobs)
+    RunTests(GetBuildShortBaseName(options, target_platform),
+             options.configuration, options.test_jobs)
 
 
 def CleanBuildFilesAndDirectories(options, unused_args):
@@ -1351,29 +1343,16 @@ def CleanBuildFilesAndDirectories(options, unused_args):
     elif IsMac():
       directory_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                     '*.xcodeproj')))
-    elif IsLinux():
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*.target.mk')))
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*/*.target.mk')))
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*.host.mk')))
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*/*.host.mk')))
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*.Makefile')))
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*/*.Makefile')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
   # Collect stuff in the top-level directory.
   directory_names.append('mozc_build_tools')
 
-  target_platform = GetBuildBaseName(options,
-                                     GetMozcVersion().GetTargetPlatform())
-  if target_platform:
-    directory_names.append(target_platform)
+  short_basename = GetBuildShortBaseName(options,
+                                         GetMozcVersion().GetTargetPlatform())
+  if short_basename:
+    directory_names.append(os.path.join(SRC_DIR, short_basename))
+
   if IsLinux():
-    file_names.append('Makefile')
     # Remove auto-generated files.
     file_names.append(os.path.join(SRC_DIR, 'android', 'AndroidManifest.xml'))
     file_names.append(os.path.join(

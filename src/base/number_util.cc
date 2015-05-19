@@ -49,63 +49,63 @@ namespace {
 
 // Table of number character of Kansuji
 const char *const kNumKanjiDigits[] = {
-  //   "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", NULL
+  // "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", nullptr
   "\xe3\x80\x87", "\xe4\xb8\x80", "\xe4\xba\x8c", "\xe4\xb8\x89",
   "\xe5\x9b\x9b", "\xe4\xba\x94", "\xe5\x85\xad", "\xe4\xb8\x83",
-  "\xe5\x85\xab", "\xe4\xb9\x9d", NULL
+  "\xe5\x85\xab", "\xe4\xb9\x9d", nullptr
 };
 const char *const kNumKanjiOldDigits[] = {
-  //   NULL, "壱", "弐", "参", "四", "五", "六", "七", "八", "九"
-  NULL, "\xe5\xa3\xb1", "\xe5\xbc\x90", "\xe5\x8f\x82", "\xe5\x9b\x9b",
+  // nullptr, "壱", "弐", "参", "四", "五", "六", "七", "八", "九"
+  nullptr, "\xe5\xa3\xb1", "\xe5\xbc\x90", "\xe5\x8f\x82", "\xe5\x9b\x9b",
   "\xe4\xba\x94", "\xe5\x85\xad", "\xe4\xb8\x83", "\xe5\x85\xab",
   "\xe4\xb9\x9d"
 };
 const char *const kNumFullWidthDigits[] = {
-  //   "０", "１", "２", "３", "４", "５", "６", "７", "８", "９", NULL
+  // "０", "１", "２", "３", "４", "５", "６", "７", "８", "９", nullptr
   "\xef\xbc\x90", "\xef\xbc\x91", "\xef\xbc\x92", "\xef\xbc\x93",
   "\xef\xbc\x94", "\xef\xbc\x95", "\xef\xbc\x96", "\xef\xbc\x97",
-  "\xef\xbc\x98", "\xef\xbc\x99", NULL
+  "\xef\xbc\x98", "\xef\xbc\x99", nullptr
 };
 const char *const kNumHalfWidthDigits[] = {
-  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL
+  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", nullptr
 };
 
 // Table of Kanji number ranks
 const char *const kNumKanjiRanks[] = {
-  //   NULL, "", "十", "百", "千"
-  NULL, "", "\xe5\x8d\x81", "\xe7\x99\xbe", "\xe5\x8d\x83"
+  // nullptr, "", "十", "百", "千"
+  nullptr, "", "\xe5\x8d\x81", "\xe7\x99\xbe", "\xe5\x8d\x83"
 };
 const char *const kNumKanjiBiggerRanks[] = {
-  //   "", "万", "億", "兆", "京"
+  // "", "万", "億", "兆", "京"
   "", "\xe4\xb8\x87", "\xe5\x84\x84", "\xe5\x85\x86", "\xe4\xba\xac"
 };
 const char *const kNumKanjiOldRanks[] = {
-  //   NULL, "", "拾", "百", "阡"
-  NULL, "", "\xe6\x8b\xbe", "\xe7\x99\xbe", "\xe9\x98\xa1"
+  // nullptr, "", "拾", "百", "阡"
+  nullptr, "", "\xe6\x8b\xbe", "\xe7\x99\xbe", "\xe9\x98\xa1"
 };
 const char *const kNumKanjiBiggerOldRanks[] = {
-  //   "", "萬", "億", "兆", "京"
+  // "", "萬", "億", "兆", "京"
   "", "\xe8\x90\xac", "\xe5\x84\x84", "\xe5\x85\x86", "\xe4\xba\xac"
 };
 
 const char *const kRomanNumbersCapital[] = {
-  // NULL, "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ",
-  // "Ⅹ", "Ⅺ", "Ⅻ", NULL
-  NULL, "\xe2\x85\xa0", "\xe2\x85\xa1", "\xe2\x85\xa2", "\xe2\x85\xa3",
+  // nullptr, "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ",
+  // "Ⅹ", "Ⅺ", "Ⅻ", nullptr
+  nullptr, "\xe2\x85\xa0", "\xe2\x85\xa1", "\xe2\x85\xa2", "\xe2\x85\xa3",
   "\xe2\x85\xa4", "\xe2\x85\xa5", "\xe2\x85\xa6", "\xe2\x85\xa7",
-  "\xe2\x85\xa8", "\xe2\x85\xa9", "\xe2\x85\xaa", "\xe2\x85\xab", NULL
+  "\xe2\x85\xa8", "\xe2\x85\xa9", "\xe2\x85\xaa", "\xe2\x85\xab", nullptr
 };
 
 const char *const kRomanNumbersSmall[] = {
-  // NULL, "ⅰ", "ⅱ", "ⅲ", "ⅳ", "ⅴ", "ⅵ", "ⅶ", "ⅷ", "ⅸ",
-  // "ⅹ", "ⅺ", "ⅻ", NULL
-  NULL, "\xe2\x85\xb0", "\xe2\x85\xb1", "\xe2\x85\xb2", "\xe2\x85\xb3",
+  // nullptr, "ⅰ", "ⅱ", "ⅲ", "ⅳ", "ⅴ", "ⅵ", "ⅶ", "ⅷ", "ⅸ",
+  // "ⅹ", "ⅺ", "ⅻ", nullptr
+  nullptr, "\xe2\x85\xb0", "\xe2\x85\xb1", "\xe2\x85\xb2", "\xe2\x85\xb3",
   "\xe2\x85\xb4", "\xe2\x85\xb5", "\xe2\x85\xb6", "\xe2\x85\xb7",
-  "\xe2\x85\xb8", "\xe2\x85\xb9", "\xe2\x85\xba", "\xe2\x85\xbb", NULL
+  "\xe2\x85\xb8", "\xe2\x85\xb9", "\xe2\x85\xba", "\xe2\x85\xbb", nullptr
 };
 
 const char *const kCircledNumbers[] = {
-  NULL,
+  nullptr,
   // "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"
   "\xe2\x91\xa0", "\xe2\x91\xa1", "\xe2\x91\xa2", "\xe2\x91\xa3",
   "\xe2\x91\xa4", "\xe2\x91\xa5", "\xe2\x91\xa6", "\xe2\x91\xa7",
@@ -124,7 +124,7 @@ const char *const kCircledNumbers[] = {
   "\xE3\x8A\xB5", "\xE3\x8A\xB6", "\xE3\x8A\xB7", "\xE3\x8A\xB8",
   "\xE3\x8A\xB9", "\xE3\x8A\xBA", "\xE3\x8A\xBB", "\xE3\x8A\xBC",
   "\xE3\x8A\xBD", "\xE3\x8A\xBE", "\xE3\x8A\xBF",
-  NULL
+  nullptr
 };
 
 // Structure to store character set variations.
@@ -245,16 +245,16 @@ namespace {
 // http://ja.wikipedia.org/wiki/%E5%A4%A7%E5%AD%97_(%E6%95%B0%E5%AD%97)
 const NumberStringVariation kKanjiVariations[] = {
   // "数字"
-  {kNumHalfWidthDigits, 10, "\xE6\x95\xB0\xE5\xAD\x97", NULL, NULL,
+  {kNumHalfWidthDigits, 10, "\xE6\x95\xB0\xE5\xAD\x97", nullptr, nullptr,
    NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH},
   // "数字"
-  {kNumFullWidthDigits, 10, "\xE6\x95\xB0\xE5\xAD\x97", NULL, NULL,
+  {kNumFullWidthDigits, 10, "\xE6\x95\xB0\xE5\xAD\x97", nullptr, nullptr,
    NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH},
   // "漢数字"
-  {kNumKanjiDigits, 10, "\xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97", NULL, NULL,
-   NumberUtil::NumberString::NUMBER_KANJI},
+  {kNumKanjiDigits, 10, "\xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97",
+   nullptr, nullptr, NumberUtil::NumberString::NUMBER_KANJI},
   // "大字"
-  {kNumKanjiOldDigits, 10, "\xE5\xA4\xA7\xE5\xAD\x97", NULL, NULL,
+  {kNumKanjiOldDigits, 10, "\xE5\xA4\xA7\xE5\xAD\x97", nullptr, nullptr,
    NumberUtil::NumberString::NUMBER_OLD_KANJI},
 };
 
@@ -474,10 +474,10 @@ namespace {
 const NumberStringVariation kSingleDigitsVariations[] = {
   // "漢数字"
   {kNumKanjiDigits, 10, "\xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97",
-   NULL, NULL, NumberUtil::NumberString::NUMBER_KANJI_ARABIC},
+   nullptr, nullptr, NumberUtil::NumberString::NUMBER_KANJI_ARABIC},
   // "数字"
   {kNumFullWidthDigits, 10, "\xE6\x95\xB0\xE5\xAD\x97",
-   NULL, NULL, NumberUtil::NumberString::DEFAULT_STYLE},
+   nullptr, nullptr, NumberUtil::NumberString::DEFAULT_STYLE},
 };
 
 }  // namespace
@@ -513,16 +513,16 @@ const NumberStringVariation kSpecialNumericVariations[] = {
    // "ローマ数字(大文字)",
    "\xE3\x83\xAD\xE3\x83\xBC\xE3\x83\x9E\xE6\x95\xB0"
    "\xE5\xAD\x97(\xE5\xA4\xA7\xE6\x96\x87\xE5\xAD\x97)",
-   NULL, NULL, NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL},
+   nullptr, nullptr, NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL},
   {kRomanNumbersSmall, arraysize(kRomanNumbersSmall),
    // "ローマ数字(小文字)",
    "\xE3\x83\xAD\xE3\x83\xBC\xE3\x83\x9E\xE6\x95\xB0"
    "\xE5\xAD\x97(\xE5\xB0\x8F\xE6\x96\x87\xE5\xAD\x97)",
-   NULL, NULL, NumberUtil::NumberString::NUMBER_ROMAN_SMALL},
+   nullptr, nullptr, NumberUtil::NumberString::NUMBER_ROMAN_SMALL},
   {kCircledNumbers, arraysize(kCircledNumbers),
    // "丸数字"
    "\xE4\xB8\xB8\xE6\x95\xB0\xE5\xAD\x97",
-   NULL, NULL, NumberUtil::NumberString::NUMBER_CIRCLED},
+   nullptr, nullptr, NumberUtil::NumberString::NUMBER_CIRCLED},
 };
 
 }  // namespace
@@ -699,7 +699,7 @@ bool SafeStrToUInt64WithBase(StringPiece str, int base, uint64 *value) {
   memcpy(buf, str.data(), str.size());
   buf[str.size()] = '\0';
 
-  char *end_ptr = NULL;
+  char *end_ptr = nullptr;
   errno = 0;
   *value = StrToUint64(buf, &end_ptr, base);
   if (errno != 0 || end_ptr == buf) {  // Failed to parse uint64.
@@ -1193,7 +1193,7 @@ bool NumberUtil::NormalizeNumbers(StringPiece input,
                                   false,  // allow_suffix
                                   kanji_output,
                                   arabic_output,
-                                  NULL);
+                                  nullptr);
 }
 
 bool NumberUtil::NormalizeNumbersWithSuffix(StringPiece input,

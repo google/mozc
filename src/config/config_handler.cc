@@ -45,12 +45,10 @@
 #include "config/config.pb.h"
 
 namespace mozc {
-
 namespace config {
-
 namespace {
 
-static const char kFileNamePrefix[] = "user://config";
+const char kFileNamePrefix[] = "user://config";
 
 void AddCharacterFormRule(const char *group,
                           const Config::CharacterForm preedit_form,
@@ -61,6 +59,19 @@ void AddCharacterFormRule(const char *group,
   rule->set_group(group);
   rule->set_preedit_character_form(preedit_form);
   rule->set_conversion_character_form(conversion_form);
+}
+
+bool GetPlatformSpecificDefaultEmojiSetting() {
+  // Disable Unicode emoji conversion by default on specific platforms.
+  bool use_emoji_conversion_default = true;
+#if defined(OS_WIN)
+  if (!SystemUtil::IsWindows8OrLater()) {
+    use_emoji_conversion_default = false;
+  }
+#elif defined(OS_ANDROID)
+  use_emoji_conversion_default = false;
+#endif
+  return use_emoji_conversion_default;
 }
 
 class ConfigHandlerImpl {
@@ -148,17 +159,7 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
   stored_config_.mutable_general_config()->set_upload_usage_stats(true);
 #endif  // CHANNEL_DEV && OS_ANDROID
 
-  // Disable Unicode emoji conversion by default on specific platforms.
-  bool use_emoji_conversion_default = true;
-#if defined(OS_WIN)
-  if (!SystemUtil::IsWindows8OrLater()) {
-    use_emoji_conversion_default = false;
-  }
-#elif defined(OS_ANDROID)
-  use_emoji_conversion_default = false;
-#endif
-
-  if (use_emoji_conversion_default &&
+  if (GetPlatformSpecificDefaultEmojiSetting() &&
       !stored_config_.has_use_emoji_conversion()) {
     stored_config_.set_use_emoji_conversion(true);
   }
@@ -247,7 +248,7 @@ const Config &ConfigHandler::GetConfig() {
   return GetConfigHandlerImpl()->GetConfig();
 }
 
-// return current Config
+// Returns current Config
 bool ConfigHandler::GetConfig(Config *config) {
   return GetConfigHandlerImpl()->GetConfig(config);
 }
@@ -256,17 +257,16 @@ const Config &ConfigHandler::GetStoredConfig() {
   return GetConfigHandlerImpl()->GetStoredConfig();
 }
 
-// return Stored Config
+// Returns Stored Config
 bool ConfigHandler::GetStoredConfig(Config *config) {
   return GetConfigHandlerImpl()->GetStoredConfig(config);
 }
 
-// set config
 bool ConfigHandler::SetConfig(const Config &config) {
   return GetConfigHandlerImpl()->SetConfig(config);
 }
 
-// set overriding config
+// Sets overriding config
 void ConfigHandler::SetImposedConfig(const Config &config) {
   GetConfigHandlerImpl()->SetImposedConfig(config);
 }
@@ -300,15 +300,11 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   AddCharacterFormRule("<>=+-/*", kFullWidth, kLastForm, config);
   AddCharacterFormRule("?!", kFullWidth, kLastForm, config);
 
-#ifdef OS_ANDROID
-#ifdef CHANNEL_DEV
-  config->mutable_general_config()
-      ->set_upload_usage_stats(true);
-#endif  // CHANNEL_DEV
-#endif  // OS_ANDROID
+#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
+  config->mutable_general_config()->set_upload_usage_stats(true);
+#endif  // OS_ANDROID && CHANNEL_DEV
 
-  if (SystemUtil::MacOSVersionIsGreaterOrEqual(10, 7, 0) ||
-      SystemUtil::IsWindows8OrLater()) {
+  if (GetPlatformSpecificDefaultEmojiSetting()) {
     config->set_use_emoji_conversion(true);
   }
 }
@@ -336,5 +332,4 @@ void ConfigHandler::SetMetaData(Config *config) {
 }
 
 }  // namespace config
-
 }  // namespace mozc

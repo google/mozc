@@ -96,24 +96,18 @@ enum StreamOwner {
 };
 }  // namespace codegenstream
 
-template <class charT, class traits = char_traits<charT> >
-class BasicCodeGenByteArrayStreamBuf
-    : public std::basic_streambuf<charT, traits> {
+class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
  public:
-  typedef charT char_type;
-  typedef typename traits::int_type int_type;
-  typedef typename traits::pos_type pos_type;
-  typedef typename traits::off_type off_type;
-  typedef traits traits_type;
+  typedef char_traits<char> traits_type;
 
   // Args:
   //   output_stream: The output stream to which generated code is written.
   //   own_output_stream: The object pointed to by |output_stream| will be
   //       destroyed if |own_output_stream| equals to |OWN_STREAM|.
-  BasicCodeGenByteArrayStreamBuf(std::basic_ostream<char> *output_stream,
+  BasicCodeGenByteArrayStreamBuf(std::ostream *output_stream,
                                  codegenstream::StreamOwner own_output_stream)
       : internal_output_buffer_size_(kDefaultInternalBufferSize),
-        internal_output_buffer_(new char_type[internal_output_buffer_size_]),
+        internal_output_buffer_(new char[internal_output_buffer_size_]),
         output_stream_(output_stream), own_output_stream_(own_output_stream),
         is_open_(false), output_count_(0) {
     this->setp(internal_output_buffer_.get(),
@@ -195,7 +189,7 @@ class BasicCodeGenByteArrayStreamBuf
 
   // Writes a given character sequence.  The implementation is expected to be
   // more efficient than the one of the base class.
-  virtual std::streamsize xsputn(const char_type *s, std::streamsize n) {
+  virtual std::streamsize xsputn(const char *s, std::streamsize n) {
     if (n <= this->epptr() - this->pptr()) {
       traits_type::copy(this->pptr(), s, n);
       this->pbump(n);
@@ -209,7 +203,7 @@ class BasicCodeGenByteArrayStreamBuf
   }
 
   // Writes the data body of a variable definition.
-  virtual int_type overflow(int_type c = traits_type::eof()) {
+  virtual int overflow(int c = traits_type::eof()) {
     if (!is_open_) {
       return traits_type::eof();
     }
@@ -218,7 +212,7 @@ class BasicCodeGenByteArrayStreamBuf
                  reinterpret_cast<const char *>(this->pptr()));
     }
     if (!traits_type::eq_int_type(c, traits_type::eof())) {
-      char_type buf = static_cast<char_type>(c);
+      char buf = static_cast<char>(c);
       WriteBytes(reinterpret_cast<const char *>(&buf),
                  reinterpret_cast<const char *>(&buf + 1));
     }
@@ -288,13 +282,13 @@ class BasicCodeGenByteArrayStreamBuf
 #endif
 
   size_t internal_output_buffer_size_;
-  scoped_ptr<char_type[]> internal_output_buffer_;
+  scoped_ptr<char[]> internal_output_buffer_;
 
   std::basic_ostream<char> *output_stream_;
   codegenstream::StreamOwner own_output_stream_;
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   ios_base::fmtflags output_stream_format_flags_;
-  char_type output_stream_format_fill_;
+  char output_stream_format_fill_;
 #endif
 
   bool is_open_;
@@ -307,24 +301,16 @@ class BasicCodeGenByteArrayStreamBuf
   DISALLOW_COPY_AND_ASSIGN(BasicCodeGenByteArrayStreamBuf);
 };
 
-template <class charT, class traits = char_traits<charT> >
-class BasicCodeGenByteArrayOutputStream
-    : public std::basic_ostream<charT, traits> {
+class CodeGenByteArrayOutputStream : public std::ostream {
  public:
-  typedef charT char_type;
-  typedef typename traits::int_type int_type;
-  typedef typename traits::pos_type pos_type;
-  typedef typename traits::off_type off_type;
-  typedef traits traits_type;
-
   // Args:
   //   output_stream: The output stream to which generated code is written.
   //   own_output_stream: The object pointed to by |output_stream| will be
   //       destroyed if |own_output_stream| equals to |OWN_STREAM|.
-  BasicCodeGenByteArrayOutputStream(
-      std::basic_ostream<char> *output_stream,
+  CodeGenByteArrayOutputStream(
+      std::ostream *output_stream,
       codegenstream::StreamOwner own_output_stream)
-      : std::basic_ostream<char_type, traits_type>(NULL),
+      : std::ostream(NULL),
         streambuf_(output_stream, own_output_stream) {
     this->rdbuf(&streambuf_);
   }
@@ -347,12 +333,10 @@ class BasicCodeGenByteArrayOutputStream
   }
 
  private:
-  BasicCodeGenByteArrayStreamBuf<char_type, traits_type> streambuf_;
+  BasicCodeGenByteArrayStreamBuf streambuf_;
 
-  DISALLOW_COPY_AND_ASSIGN(BasicCodeGenByteArrayOutputStream);
+  DISALLOW_COPY_AND_ASSIGN(CodeGenByteArrayOutputStream);
 };
-
-typedef BasicCodeGenByteArrayOutputStream<char> CodeGenByteArrayOutputStream;
 
 }  // namespace mozc
 

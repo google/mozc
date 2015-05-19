@@ -58,6 +58,7 @@
     {
       'target_name': 'session_internal',
       'type' : 'static_library',
+      'hard_dependency': 1,
       'sources': [
         'internal/candidate_list.cc',
         'internal/ime_context.cc',
@@ -106,6 +107,7 @@
     {
       'target_name': 'session_usage_observer',
       'type': 'static_library',
+      'hard_dependency': 1,
       'sources': [
         'session_usage_observer.cc',
       ],

@@ -38,6 +38,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'config.gyp:config_handler',
+        'install_stats_config_util_test_data',
       ],
       'variables': {
         'test_size': 'small',

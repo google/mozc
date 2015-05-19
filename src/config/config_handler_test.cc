@@ -126,8 +126,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   output.mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(input.DebugString(), output.DebugString());
 
-#ifdef OS_ANDROID
-#ifdef CHANNEL_DEV
+#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
   input.Clear();
   EXPECT_FALSE(input.general_config().has_upload_usage_stats());
   EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
@@ -145,8 +144,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
-#endif  // CHANNEL_DEV
-#endif  // OS_ANDROID
+#endif  // OS_ANDROID && CHANNEL_DEV
 }
 
 TEST_F(ConfigHandlerTest, SetImposedConfig) {
@@ -270,7 +268,8 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
         FileUtil::JoinPath(KDataDir, file_name));
     const string &dest_path = FileUtil::JoinPath(
         SystemUtil::GetUserProfileDirectory(), file_name);
-    ASSERT_TRUE(FileUtil::CopyFile(src_path, dest_path));
+    ASSERT_TRUE(FileUtil::CopyFile(src_path, dest_path))
+        << "Copy failed: " << src_path << " to " << dest_path;
 
     ScopedSetConfigFileName scoped_config_file_name(
         "user://" + string(file_name));
@@ -342,11 +341,9 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
               testcases[i].conversion_character_form);
   }
 
-#ifdef OS_ANDROID
-#ifdef CHANNEL_DEV
+#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
-#endif  // CHANNEL_DEV
-#endif  // OS_ANDROID
+#endif  // OS_ANDROID && CHANNEL_DEV
 }
 }  // namespace mozc

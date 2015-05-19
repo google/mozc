@@ -36,6 +36,7 @@
     {
       'target_name': 'usage_stats',
       'type': 'static_library',
+      'hard_dependency': 1,
       'sources': [
         'usage_stats.cc',
       ],

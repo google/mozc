@@ -36,6 +36,7 @@
 
 #include "base/port.h"
 #include "session/session_observer_interface.h"
+#include "session/state.pb.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
@@ -49,8 +50,6 @@ class Output;
 }  // namespace commands
 
 namespace session {
-class SessionState;
-
 class SessionUsageObserver : public SessionObserverInterface {
  public:
   SessionUsageObserver();

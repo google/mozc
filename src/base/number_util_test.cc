@@ -1096,7 +1096,7 @@ TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
      "\xEF\xBC\x93\xEF\xBC\x94\xEF\xBC\x8C\xEF\xBC\x95\xEF\xBC\x96"
      "\xEF\xBC\x97\xEF\xBC\x8E\xEF\xBC\x98\xEF\xBC\x99"},
     // UINT64_MAX + 1
-    {"18446744073709551616", "18,446,744,073,709,551,616", NULL},
+    {"18446744073709551616", "18,446,744,073,709,551,616", nullptr},
   };
 
   for (size_t i = 0; i < arraysize(kSuccess); ++i) {

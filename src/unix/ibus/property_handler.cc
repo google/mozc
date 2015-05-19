@@ -269,10 +269,12 @@ void PropertyHandler::AppendToolPropertyToPanel() {
     ibus_prop_list_append(sub_prop_list, item);
   }
 
+  IBusText *tool_label = ibus_text_new_from_string(
+      translator_->MaybeTranslate("Tools").c_str());
   const string icon_path = GetIconPath(kMozcToolIconPath);
   prop_mozc_tool_ = ibus_property_new("MozcTool",
                                       PROP_TYPE_MENU,
-                                      NULL /* label */,
+                                      tool_label,
                                       icon_path.c_str(),
                                       NULL /* tooltip */,
                                       TRUE /* sensitive */,

@@ -319,36 +319,4 @@ TEST_F(CodeGenByteArrayStreamTest, FlushBeforeOpen) {
   EXPECT_FALSE(codegen_stream_->good());
 }
 
-// wide character type
-
-TEST_F(CodeGenByteArrayStreamTest, WideCharType) {
-  // Uses uint16 as the character type instead of built-in 'char' type.
-  typedef uint16 WideCharType;
-  typedef mozc::BasicCodeGenByteArrayOutputStream<WideCharType> CodeGenStream;
-
-  ostringstream *string_stream = new ostringstream();
-  CodeGenStream codegen_stream(string_stream, mozc::codegenstream::OWN_STREAM);
-
-  codegen_stream.OpenVarDef("WideChar");
-  codegen_stream.put(0x0000);
-  codegen_stream.put(0x1234);
-  codegen_stream.put(0xAB00);
-  codegen_stream.put(0x00CD);
-  codegen_stream.put(0x0000);
-  codegen_stream.CloseVarDef();
-
-  EXPECT_EQ(2, sizeof(WideCharType));
-#ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  const string expected = ExpectedOutput(
-      "WideChar", "10",
-      "0x00CDAB0012340000, 0x0000000000000000");
-#else
-  const string expected = ExpectedOutput(
-      "WideChar", "10",
-      "\"\\x00\\x00\\x34\\x12\\x00\\xAB\\xCD\\x00\\x00\\x00\"");
-#endif
-  EXPECT_EQ(expected, string_stream->str());
-  EXPECT_TRUE(codegen_stream_->good());
-}
-
 }  // namespace

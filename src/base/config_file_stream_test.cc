@@ -59,13 +59,13 @@ string GetFileData(const string &filename) {
 // yet. In other words, this method may change the internal state of
 // |input_stream| as a side effect.
 bool IsEof(istream *input_stream) {
-  return input_stream->peek() == istream::traits_type::eof() &&
-         input_stream->eof();
+  return (input_stream->peek() == istream::traits_type::eof() &&
+          // On some enviroment (e.g. Mac OS 10.8 w/ Xcode 4.5),
+          // peek() does not flip eofbit.  So calling get() is also
+          // required.
+          input_stream->get() == istream::traits_type::eof() &&
+          input_stream->eof());
 }
-
-// Note that this macro may change the internal state of |input_stream|.
-// See the comment of IsEof.
-#define EXPECT_EOF(input_stream) EXPECT_PRED1(IsEof, input_stream)
 
 }  // namespace
 
@@ -97,7 +97,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
     ifs->read(buf.get(), kData.size());
     buf.get()[kData.size()] = '\0';
     EXPECT_EQ(kData, buf.get());
-    EXPECT_EOF(ifs.get());
+    EXPECT_TRUE(IsEof(ifs.get()));
   }
 
   ConfigFileStream::ClearOnMemoryFiles();
@@ -105,7 +105,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
   {
     scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
     ASSERT_NE(nullptr, ifs.get());
-    EXPECT_EOF(ifs.get());
+    EXPECT_TRUE(IsEof(ifs.get()));
   }
 }
 
@@ -162,7 +162,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
     for (size_t i = 0; i < kBinaryDataSize; ++i) {
       EXPECT_EQ(static_cast<int>(kBinaryData[i]), static_cast<int>(buf[i]));
     }
-    EXPECT_EOF(ifs.get());
+    EXPECT_TRUE(IsEof(ifs.get()));
   }
 
   // Remove test file just in case.

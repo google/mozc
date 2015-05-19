@@ -31,7 +31,7 @@ vars = {
   "breakpad_revision": "1238",
   "gtest_revision": "681",
   "gmock_revision": "471",
-  "gyp_revision": "1875",
+  "gyp_revision": "1948",
   "jsoncpp_revision": "276",
   "protobuf_revision": "462",
   "wtl_revision": "459",

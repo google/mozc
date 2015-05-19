@@ -36,6 +36,7 @@
     {
       'target_name': 'prediction',
       'type': 'static_library',
+      'hard_dependency': 1,
       'sources': [
         'dictionary_predictor.cc',
         'predictor.cc',

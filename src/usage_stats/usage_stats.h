@@ -34,15 +34,11 @@
 #include <string>
 #include <vector>
 #include "base/port.h"
+#include "usage_stats/usage_stats.pb.h"
 
 namespace mozc {
 namespace usage_stats {
-// We cannot use Stats::TouchEventStats because C++ does not allow
-// forward declaration of a nested-type.
-class Stats;
-class Stats_TouchEventStats;
-
-typedef map<uint32, Stats_TouchEventStats> TouchEventStatsMap;
+typedef map<uint32, Stats::TouchEventStats> TouchEventStatsMap;
 
 class UsageStats {
  public:
