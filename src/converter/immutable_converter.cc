@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/base.h"
-#include "base/util.h"
 #include "base/logging.h"
 #include "base/stl_util.h"
 #include "base/util.h"
@@ -1621,6 +1620,9 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
   InsertCandidates(segments, lattice, group,
                    max_candidates_size,
                    ONLY_FIRST_SEGMENT);
+  // Note that inserted candidates might consume the entire key.
+  // e.g. key: "なのは", value: "ナノは"
+  // Erase them later.
   if (segments->conversion_segment(0).candidates_size() <=
       only_first_segment_candidate_pos) {
     return;
@@ -1642,17 +1644,25 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
           (first_segment.candidate(0).wcost -
            first_segment.candidate(only_first_segment_candidate_pos).wcost));
   for (size_t i = only_first_segment_candidate_pos;
-       i < first_segment.candidates_size();
-       ++i) {
+       i < first_segment.candidates_size();) {
     static const int kOnlyFirstSegmentOffset = 300;
     Segment::Candidate *candidate =
         segments->mutable_conversion_segment(0)->mutable_candidate(i);
+    // If the size of candidate's key is greater than or
+    // equal to 1st segment's key,
+    // it means that the result consumes the entire key.
+    // Such results are not appropriate for PARTIALLY_KEY_CONSUMED so erase it.
+    if (candidate->key.size() >= first_segment.key().size()) {
+      segments->mutable_conversion_segment(0)->erase_candidate(i);
+      continue;
+    }
     candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
     candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
     DCHECK(!(candidate->attributes &
              Segment::Candidate::PARTIALLY_KEY_CONSUMED));
     candidate->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
     candidate->consumed_key_size = Util::CharsLen(candidate->key);
+    ++i;
   }
 }
 

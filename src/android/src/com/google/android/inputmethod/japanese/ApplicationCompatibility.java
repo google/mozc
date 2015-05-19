@@ -38,20 +38,8 @@ import java.util.EnumSet;
  *
  */
 public class ApplicationCompatibility {
+
   private static enum CompatibilityMode {
-    // Set the selection position always. This operation can be dangerous.
-    //
-    // -- Background --
-    // This could have some unexpected behavior, especially if the target application modifies
-    // the composition text, or some sent operations via InputConnection.
-    // Unfortunately, under the current framework, there are no ways to treat a caret position
-    // *correctly*. For example, it is difficult to just keep the caret position at the end of
-    // the composition text, because onUpdateSelection caused by *something* other than Mozc
-    // are sometimes just skipped.
-    // So, this should be just our best effort. If we hit some bad situation,
-    // we should be able to modify (or simply remove) this behavior to keep the caret at
-    // the end of the composition text.
-    ALWAYS_SET_CURSOR,
 
     // A flag to check if the full screen mode is supported on the application.
     //
@@ -63,7 +51,16 @@ public class ApplicationCompatibility {
     // of the screen. So, we don't take care of if the connected field is Omnibar or not.
     FULLSCREEN_MODE_SUPPORTED,
 
-    // TODO(hidehiko): Move hack for WebView in SelectionTracker.
+    // A flag for the applications which requires special treatment like WebEditText.
+    //
+    // -- Background --
+    // WebEditText requires special treatment to track selection range.
+    // In addition some applications (e.g. Chrome) requires the same treatment.
+    // The treatment is for the applications/views where onUpdateSelection is not called back
+    // when they updates the composition.
+    // The treatment could be applicable always but the solution might be slight hacky so
+    // currently it is applied on white-listed applications.
+    PRETEND_WEB_EDIT_TEXT,
   }
 
   /** The default configuration */
@@ -72,12 +69,15 @@ public class ApplicationCompatibility {
 
   /** The special configuration for firefox. */
   private static final ApplicationCompatibility FIREFOX_INSTANCE =
-      new ApplicationCompatibility(EnumSet.of(CompatibilityMode.ALWAYS_SET_CURSOR,
-                                              CompatibilityMode.FULLSCREEN_MODE_SUPPORTED));
+      new ApplicationCompatibility(EnumSet.of(CompatibilityMode.FULLSCREEN_MODE_SUPPORTED));
 
   /** The special configuration for Chrome. */
   private static final ApplicationCompatibility CHROME_INSTANCE =
       new ApplicationCompatibility(EnumSet.noneOf(CompatibilityMode.class));
+
+  /** The special configuration for Evernote, of which onSelectionUpdate is unreliable. */
+  private static final ApplicationCompatibility EVERNOTE_INSTANCE =
+      new ApplicationCompatibility(EnumSet.of(CompatibilityMode.PRETEND_WEB_EDIT_TEXT));
 
   private final EnumSet<CompatibilityMode> compatibilityModeSet;
 
@@ -85,17 +85,14 @@ public class ApplicationCompatibility {
     this.compatibilityModeSet = compatibilityModeSet;
   }
 
-  /**
-   * @return {@code true} if we should send setSelection via inputConnection always when preedit
-   *   is set.
-   */
-  public boolean isAlwaysSetCursorEnabled() {
-    return compatibilityModeSet.contains(CompatibilityMode.ALWAYS_SET_CURSOR);
-  }
-
   /** @return {@code true} if the target application supports full screen mode. */
   public boolean isFullScreenModeSupported() {
     return compatibilityModeSet.contains(CompatibilityMode.FULLSCREEN_MODE_SUPPORTED);
+  }
+
+  /** @return {@code true} if the target application requires special behavior like WebEditText. */
+  public boolean isPretendingWebEditText() {
+    return compatibilityModeSet.contains(CompatibilityMode.PRETEND_WEB_EDIT_TEXT);
   }
 
   /**
@@ -103,10 +100,14 @@ public class ApplicationCompatibility {
    */
   public static ApplicationCompatibility getInstance(EditorInfo editorInfo) {
     if (editorInfo != null) {
-      if ("com.android.chrome".equals(editorInfo.packageName)) {
+      String packageName = editorInfo.packageName;
+      if ("com.android.chrome".equals(packageName) || "com.chrome.beta".equals(packageName)) {
         return CHROME_INSTANCE;
       }
-      if ("org.mozilla.firefox".equals(editorInfo.packageName)) {
+      if ("com.evernote".equals(packageName)) {
+        return EVERNOTE_INSTANCE;
+      }
+      if ("org.mozilla.firefox".equals(packageName)) {
         return FIREFOX_INSTANCE;
       }
     }

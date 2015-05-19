@@ -67,9 +67,6 @@ const size_t kMozcEnginePropertiesSize = arraysize(kMozcEnginePropertiesArray);
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
     commands::HIRAGANA;
 
-const MozcEngineSwitchProperty *kMozcEngineSwitchProperties = NULL;
-const size_t kMozcEngineSwitchPropertiesSize = 0;
-
 const MozcEngineToolProperty *kMozcEngineToolProperties = NULL;
 const size_t kMozcEngineToolPropertiesSize = 0;
 

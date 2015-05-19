@@ -44,6 +44,9 @@ class NumberUtil {
  public:
   // Convert the number to a string and append it to output.
   static string SimpleItoa(int32 number);
+  static string SimpleItoa(uint32 number);
+  static string SimpleItoa(int64 number);
+  static string SimpleItoa(uint64 number);
 
   // Convert the string to a number and return it.
   static int SimpleAtoi(StringPiece str);
@@ -145,8 +148,10 @@ class NumberUtil {
   static bool ArabicToOtherRadixes(StringPiece input_num,
                                    vector<NumberString> *output);
 
-  // Converts the string to a 32-/64-bit unsigned int.  Returns true if success
-  // or false if the string is in the wrong format.
+  // Converts the string to a 32-/64-bit signed/unsigned int.  Returns true if
+  // success or false if the string is in the wrong format.
+  static bool SafeStrToInt32(StringPiece str, int32 *value);
+  static bool SafeStrToInt64(StringPiece str, int64 *value);
   static bool SafeStrToUInt32(StringPiece str, uint32 *value);
   static bool SafeStrToUInt64(StringPiece str, uint64 *value);
   static bool SafeHexStrToUInt32(StringPiece str, uint32 *value);

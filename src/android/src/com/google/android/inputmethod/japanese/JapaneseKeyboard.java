@@ -77,7 +77,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     TWELVE_KEY_TOGGLE_QWERTY_ALPHABET(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_QWERTY_ALPHABET", 0, 2, 0),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_QWERTY_ALPHABET", 0, 3, 0),
         R.xml.kbd_12keys_qwerty_abc,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.QWERTY_MOBILE_TO_HALFWIDTHASCII,
@@ -87,7 +87,7 @@ public class JapaneseKeyboard extends Keyboard {
 
     // Flick mode.
     TWELVE_KEY_FLICK_KANA(
-        new KeyboardSpecificationName("TWELVE_KEY_FLICK_KANA", 0, 1, 1),
+        new KeyboardSpecificationName("TWELVE_KEY_FLICK_KANA", 0, 1, 2),
         R.xml.kbd_12keys_flick_kana,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.FLICK_TO_HIRAGANA,
@@ -114,7 +114,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.COMMIT_WITHOUT_CONSUMING),
 
     TWELVE_KEY_TOGGLE_FLICK_KANA(
-        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_FLICK_KANA", 0, 1, 1),
+        new KeyboardSpecificationName("TWELVE_KEY_TOGGLE_FLICK_KANA", 0, 1, 2),
         R.xml.kbd_12keys_flick_kana,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.TOGGLE_FLICK_TO_HIRAGANA,
@@ -142,7 +142,7 @@ public class JapaneseKeyboard extends Keyboard {
 
     // QWERTY keyboard.
     QWERTY_KANA(
-        new KeyboardSpecificationName("QWERTY_KANA", 0, 2, 0),
+        new KeyboardSpecificationName("QWERTY_KANA", 0, 3, 0),
         R.xml.kbd_qwerty_kana,
         CompositionMode.HIRAGANA,
         SpecialRomanjiTable.QWERTY_MOBILE_TO_HIRAGANA,
@@ -160,7 +160,7 @@ public class JapaneseKeyboard extends Keyboard {
         CrossingEdgeBehavior.DO_NOTHING),
 
     QWERTY_ALPHABET(
-        new KeyboardSpecificationName("QWERTY_ALPHABET", 0, 2, 0),
+        new KeyboardSpecificationName("QWERTY_ALPHABET", 0, 3, 0),
         R.xml.kbd_qwerty_abc,
         CompositionMode.HALF_ASCII,
         SpecialRomanjiTable.QWERTY_MOBILE_TO_HALFWIDTHASCII,

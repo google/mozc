@@ -228,7 +228,7 @@ Some imported words were not recognized by %3. Please check the original import 
     </message>
     <message>
         <location filename="dictionary_tool.cc" line="916"/>
-        <source>Microsoft IME dictioanry import function doesn&apos;t work on UAC-elevated process.</source>
+        <source>Microsoft IME dictionary import function doesn&apos;t work on UAC-elevated process.</source>
         <translation>UACで昇格されたアプリケーションからは、Microsoft IME のユーザ辞書を読み込むことができません。</translation>
     </message>
     <message>

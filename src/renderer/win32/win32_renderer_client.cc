@@ -32,6 +32,7 @@
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/scoped_handle.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_command.pb.h"
@@ -80,6 +81,21 @@ class SenderThread {
   }
 
   void RenderLoop() {
+    // Wait until desktop name is ready. b/10403163
+    while (SystemUtil::GetDesktopNameAsString().empty()) {
+      const DWORD wait_result = ::WaitForSingleObject(quit_event_.get(), 500);
+      const DWORD wait_error = ::GetLastError();
+      if (wait_result == WAIT_OBJECT_0) {
+        return;
+      }
+      if (wait_result == WAIT_TIMEOUT) {
+        continue;
+      }
+      LOG(ERROR) << "Unknown result: " << wait_result
+                 << ", error: " << wait_error;
+      return;
+    }
+
     mozc::renderer::RendererClient renderer_client;
     while (true) {
       const HANDLE handles[] = {quit_event_.get(), command_event_.get()};

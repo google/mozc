@@ -206,8 +206,9 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   const size_t dict_size = storage.dictionaries_size();
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
-    EXPECT_TRUE(storage.CreateDictionary("test" + NumberUtil::SimpleItoa(i),
-                                         &id[i]));
+    EXPECT_TRUE(storage.CreateDictionary(
+        "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)),
+        &id[i]));
     EXPECT_EQ(i + 1 + dict_size, storage.dictionaries_size());
   }
 
@@ -261,8 +262,9 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
     storage.Clear();
     vector<uint64> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
-      EXPECT_TRUE(storage.CreateDictionary("test" + NumberUtil::SimpleItoa(i),
-                                           &ids[i]));
+      EXPECT_TRUE(storage.CreateDictionary(
+          "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)),
+          &ids[i]));
     }
 
     vector<uint64> alive;
@@ -293,7 +295,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
 
   for (size_t i = 0; i < 1000; ++i) {
     UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-    const string prefix = NumberUtil::SimpleItoa(i);
+    const string prefix = NumberUtil::SimpleItoa(static_cast<uint32>(i));
     // set empty fields randomly
     entry->set_key(prefix + "key");
     entry->set_value(prefix + "value");
@@ -337,8 +339,8 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
       for (size_t i = 0; i < dic_size; ++i) {
         uint64 id = 0;
         EXPECT_TRUE(
-            storage1.CreateDictionary("test" + NumberUtil::SimpleItoa(i),
-                                      &id));
+            storage1.CreateDictionary(
+                "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)), &id));
         const size_t entry_size = Util::Random(100) + 1;
         for (size_t j = 0; j < entry_size; ++j) {
           UserDictionaryStorage::UserDictionary *dic =

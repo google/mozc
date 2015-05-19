@@ -155,6 +155,9 @@
             'VCLinkerTool': {
               'BaseAddress': '0x06000000',
             },
+            'VCManifestTool': {
+              'EmbedManifest': 'true',
+            },
           },
         },
       ]

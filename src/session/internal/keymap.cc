@@ -204,7 +204,7 @@ bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
   }
 
   commands::KeyEvent key_event;
-  KeyParser::ParseKey("ASCII", &key_event);
+  KeyParser::ParseKey("TextInput", &key_event);
   keymap_precomposition_.AddRule(key_event,
                                  PrecompositionState::INSERT_CHARACTER);
   keymap_composition_.AddRule(key_event, CompositionState::INSERT_CHARACTER);

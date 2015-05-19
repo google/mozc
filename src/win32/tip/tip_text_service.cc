@@ -161,6 +161,119 @@ const GUID kTipFunctionProvider = {
 #define SPI_SETTHREADLOCALINPUTSETTINGS 0x104F
 #endif  // SPI_SETTHREADLOCALINPUTSETTINGS
 
+// ITfFnGetPreferredTouchKeyboardLayout is available on Windows 8 SDK and later.
+#ifndef TKBL_UNDEFINED
+#define TKBL_UNDEFINED                             0x0000
+#define TKBL_CLASSIC_TRADITIONAL_CHINESE_PHONETIC  0x0404
+#define TKBL_CLASSIC_TRADITIONAL_CHINESE_CHANGJIE  0xF042
+#define TKBL_CLASSIC_TRADITIONAL_CHINESE_DAYI      0xF043
+#define TKBL_OPT_JAPANESE_ABC                      0x0411
+#define TKBL_OPT_KOREAN_HANGUL_2_BULSIK            0x0412
+#define TKBL_OPT_SIMPLIFIED_CHINESE_PINYIN         0x0804
+#define TKBL_OPT_TRADITIONAL_CHINESE_PHONETIC      0x0404
+
+enum TKBLayoutType {
+  TKBLT_UNDEFINED = 0,
+  TKBLT_CLASSIC = 1,
+  TKBLT_OPTIMIZED = 2
+};
+
+// {5F309A41-590A-4ACC-A97F-D8EFFF13FDFC}
+const IID IID_ITfFnGetPreferredTouchKeyboardLayout = {
+  0x5f309a41, 0x590a, 0x4acc, {0xa9, 0x7f, 0xd8, 0xef, 0xff, 0x13, 0xfd, 0xfc}
+};
+
+// Note: "5F309A41-590A-4ACC-A97F-D8EFFF13FDFC" is equivalent to
+// IID_ITfFnGetPreferredTouchKeyboardLayout
+struct __declspec(uuid("5F309A41-590A-4ACC-A97F-D8EFFF13FDFC"))
+ITfFnGetPreferredTouchKeyboardLayout : public ITfFunction {
+ public:
+  virtual HRESULT STDMETHODCALLTYPE GetLayout(TKBLayoutType *layout_type,
+                                              WORD *preferred_layout_id) = 0;
+};
+#endif  // !TKBL_UNDEFINED
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+const wchar_t kGetPreferredTouchKeyboardLayoutFunctionDisplayName[] =
+    L"Google Japanese Input: GetPreferredTouchKeyboardLayout Function";
+#else
+const wchar_t kGetPreferredTouchKeyboardLayoutFunctionDisplayName[] =
+    L"Mozc: GetPreferredTouchKeyboardLayout Function";
+#endif
+
+class ITfFnGetPreferredTouchKeyboardLayoutImpl
+    : public ITfFnGetPreferredTouchKeyboardLayout {
+ public:
+  static ITfFnGetPreferredTouchKeyboardLayout *New() {
+    return new ITfFnGetPreferredTouchKeyboardLayoutImpl();
+  }
+
+  // The IUnknown interface methods.
+  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
+    if (!object) {
+      return E_INVALIDARG;
+    }
+
+    // Find a matching interface from the ones implemented by this object.
+    // This object implements IUnknown and ITfEditSession.
+    if (::IsEqualIID(interface_id, IID_IUnknown)) {
+      *object = static_cast<IUnknown *>(this);
+    } else if (IsEqualIID(interface_id, IID_ITfFunction)) {
+      *object = static_cast<ITfFunction *>(this);
+    } else if (IsEqualIID(interface_id,
+                          IID_ITfFnGetPreferredTouchKeyboardLayout)) {
+      *object = static_cast<ITfFnGetPreferredTouchKeyboardLayout *>(this);
+    } else {
+      *object = nullptr;
+      return E_NOINTERFACE;
+    }
+
+    AddRef();
+    return S_OK;
+  }
+
+  STDMETHODIMP_(ULONG) AddRef() {
+    return ref_count_.AddRefImpl();
+  }
+
+  STDMETHODIMP_(ULONG) Release() {
+    const ULONG count = ref_count_.ReleaseImpl();
+    if (count == 0) {
+      delete this;
+    }
+    return count;
+  }
+
+ private:
+  ITfFnGetPreferredTouchKeyboardLayoutImpl() {}
+
+  // The ITfFunction interface method.
+  virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR *name) {
+    if (name == nullptr) {
+      return E_INVALIDARG;
+    }
+    *name =
+        CComBSTR(kGetPreferredTouchKeyboardLayoutFunctionDisplayName).Detach();
+    return S_OK;
+  }
+
+  // ITfFnGetPreferredTouchKeyboardLayout
+  virtual HRESULT STDMETHODCALLTYPE GetLayout(TKBLayoutType *layout_type,
+                                              WORD *preferred_layout_id) {
+    if (layout_type != nullptr) {
+      *layout_type = TKBLT_OPTIMIZED;
+    }
+    if (preferred_layout_id != nullptr) {
+      *preferred_layout_id = TKBL_OPT_JAPANESE_ABC;
+    }
+    return S_OK;
+  }
+
+  TipRefCount ref_count_;
+
+  DISALLOW_COPY_AND_ASSIGN(ITfFnGetPreferredTouchKeyboardLayoutImpl);
+};
+
 HRESULT SpawnTool(const string &command) {
   if (!Process::SpawnMozcProcess(kMozcTool, "--mode=" + command)) {
     return E_FAIL;
@@ -319,11 +432,10 @@ class CompositionSinkImpl : public ITfCompositionSink {
   // Implements the ITfCompositionSink::OnCompositionTerminated() function.
   // This function is called by Windows when an ongoing composition is
   // terminated by applications.
-  virtual STDMETHODIMP OnCompositionTerminated(TfEditCookie cookie,
+  virtual STDMETHODIMP OnCompositionTerminated(TfEditCookie write_cookie,
                                                ITfComposition *composition) {
-    TipEditSessionImpl::OnCompositionTerminated(
-        text_service_, context_, composition, cookie);
-    return S_OK;
+    return TipEditSessionImpl::OnCompositionTerminated(
+        text_service_, context_, composition, write_cookie);
   }
 
  private:
@@ -809,7 +921,6 @@ class TipTextServiceImpl
       }
     }
 
-
     return result;
   }
 
@@ -1038,6 +1149,11 @@ class TipTextServiceImpl
       (*unknown)->AddRef();
       return S_OK;
     }
+    if (::IsEqualGUID(IID_ITfFnGetPreferredTouchKeyboardLayout, iid)) {
+      *unknown = ITfFnGetPreferredTouchKeyboardLayoutImpl::New();
+      (*unknown)->AddRef();
+      return S_OK;
+    }
     return E_NOINTERFACE;
   }
 
@@ -1064,11 +1180,6 @@ class TipTextServiceImpl
       case TipLangBarCallback::kHalfAlphanumeric:
       case TipLangBarCallback::kFullAlphanumeric:
       case TipLangBarCallback::kHalfKatakana: {
-        bool use_kana_input = false;
-        TipPrivateContext *context = GetFocusedPrivateContext();
-        if (context != nullptr) {
-          use_kana_input = context->input_behavior().prefer_kana_input;
-        }
         const commands::CompositionMode mozc_mode = GetMozcMode(menu_id);
         return TipEditSession::SwitchInputModeAsync(this, mozc_mode);
       }
@@ -1095,11 +1206,6 @@ class TipTextServiceImpl
              ? S_OK : E_FAIL;
     }
 
-    bool use_kana_input = false;
-    TipPrivateContext *context = GetFocusedPrivateContext();
-    if (context != nullptr) {
-      use_kana_input = context->input_behavior().prefer_kana_input;
-    }
     // Like MSIME 2012, switch to Hiragana mode when the LangBar button is
     // clicked.
     return TipEditSession::SwitchInputModeAsync(this, commands::HIRAGANA);

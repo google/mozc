@@ -343,6 +343,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   // TODO(matsuzakit): The parameter is TBD (needs UX study?).
   protected final SnapScroller scroller = new SnapScroller();
   // The CandidateLayouter which calculates the layout of candidate words.
+  // This fields is not final but must be set in initialization in the subclasses.
   @VisibleForTesting CandidateLayouter layouter;
   // The calculated layout, created by this.layouter.
   protected CandidateLayout calculatedLayout;
@@ -390,10 +391,6 @@ abstract class CandidateWordView extends View implements MemoryManageable {
 
   CandidateLayouter getCandidateLayouter() {
     return layouter;
-  }
-
-  void setCandidateLayouter(CandidateLayouter layouter) {
-    this.layouter = layouter;
   }
 
   protected void setHorizontalPadding(int horizontalPadding) {

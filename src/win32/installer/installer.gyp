@@ -339,6 +339,34 @@
             'mozc_installers_win',
           ],
         },
+        {
+          'target_name': 'mozc_installers_win_size_check',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'mozc_installers_win_size_check',
+              'variables': {
+                'python_command': 'python',
+              },
+              'inputs': [
+                '<(mozc_32bit_msi)',
+                '<(mozc_64bit_msi)',
+              ],
+              'outputs': [
+                '<(PRODUCT_DIR)/mozc_installers_win_size_check_dummy',
+              ],
+              'action': [
+                '<(python_command)',
+                '../../build_tools/binary_size_checker.py',
+                '--target_filename',
+                '<(mozc_32bit_msi),<(mozc_64bit_msi)',
+              ],
+            },
+          ],
+          'dependencies': [
+            'mozc_installers_win',
+          ],
+        },
       ],
     }],
   ],

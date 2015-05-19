@@ -408,19 +408,30 @@ vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
   const int bitmap_width = pix_width * kDivision;
   const int bitmap_height = pix_height * kDivision;
 
-  BITMAPINFO bitmap_info = {};
-  bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-  bitmap_info.bmiHeader.biWidth = bitmap_width;
-  bitmap_info.bmiHeader.biHeight = -bitmap_height;  // top-down BMP
-  bitmap_info.bmiHeader.biPlanes = 1;
-  bitmap_info.bmiHeader.biBitCount = 1;
-  bitmap_info.bmiHeader.biCompression = BI_RGB;
-  bitmap_info.bmiHeader.biSizeImage = 0;
+  struct MonochromeBitmapInfo {
+    BITMAPINFOHEADER header;
+    RGBQUAD          color_palette[2];
+  };
+
+  const RGBQUAD kBackgroundColor = {0x00, 0x00, 0x00, 0x00};
+  const RGBQUAD kForegroundColor = {0xff, 0xff, 0xff, 0x00};
+
+  MonochromeBitmapInfo bitmap_info = {};
+  bitmap_info.header.biSize = sizeof(BITMAPINFOHEADER);
+  bitmap_info.header.biWidth = bitmap_width;
+  bitmap_info.header.biHeight = -bitmap_height;  // top-down BMP
+  bitmap_info.header.biPlanes = 1;
+  bitmap_info.header.biBitCount = 1;  // Color palettes must have 2 entries.
+  bitmap_info.header.biCompression = BI_RGB;
+  bitmap_info.header.biSizeImage = 0;
+  bitmap_info.color_palette[0] = kBackgroundColor;  // black
+  bitmap_info.color_palette[1] = kForegroundColor;  // white
 
   uint8 *buffer = nullptr;
   CBitmap dib;
-  dib.CreateDIBSection(nullptr, &bitmap_info, DIB_RGB_COLORS,
-                       reinterpret_cast<void **>(&buffer), nullptr, 0);
+  dib.CreateDIBSection(
+      nullptr, reinterpret_cast<const BITMAPINFO *>(&bitmap_info),
+      DIB_RGB_COLORS, reinterpret_cast<void **>(&buffer), nullptr, 0);
 
   CDC dc;
   dc.CreateCompatibleDC(nullptr);

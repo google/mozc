@@ -476,7 +476,8 @@ bool ConverterMock::StartPartialSuggestion(Segments *segments,
   }
 }
 
-bool ConverterMock::FinishConversion(Segments *segments) const {
+bool ConverterMock::FinishConversion(const ConversionRequest &request,
+                                     Segments *segments) const {
   VLOG(2) << "mock function: FinishConversion";
   finishconversion_input_.segments.CopyFrom(*segments);
 

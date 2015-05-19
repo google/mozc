@@ -219,102 +219,200 @@ bool GetUserSid(wstring *token_user_sid, wstring *token_primary_group_sid) {
   return true;
 }
 
-wstring GetSSDL(WinSandbox::ObjectSecurityType shareble_object_type,
-                const wstring &token_user_sid,
-                const wstring &token_primary_group_sid) {
-  const wstring &allow_user = L"(A;;GA;;;" + token_user_sid + L")";
-  const wchar_t allow_rw_low_integrity[] =
-      L"S:(ML;;" SDDL_NO_EXECUTE_UP L";;;" SDDL_ML_LOW L")";
+wstring Allow(const wstring &access_right, const wstring &account_sid) {
+  return (wstring(L"(") + SDDL_ACCESS_ALLOWED + L";;" +
+          access_right + L";;;" + account_sid + L")");
+}
 
-  const wchar_t allow_r_low_integrity[] =
-      L"S:(ML;;" SDDL_NO_WRITE_UP SDDL_NO_EXECUTE_UP
-      L";;;" SDDL_ML_LOW L")";
+wstring Deny(const wstring &access_right, const wstring &account_sid) {
+  return (wstring(L"(") + SDDL_ACCESS_DENIED + L";;" +
+          access_right + L";;;" + account_sid + L")");
+}
 
-  wstring ssdl = L"O:" + token_user_sid
-               + L"G:" + token_primary_group_sid;
+wstring MandatoryLevel(const wstring &mandatory_label,
+                       const wstring &integrity_levels) {
+  return (wstring(L"(") + SDDL_MANDATORY_LABEL + L";;" +
+          mandatory_label + L";;;" + integrity_levels + L")");
+}
 
+// SDDL_ALL_APP_PACKAGES is available on Windows SDK 8.0 and later.
+#ifndef SDDL_ALL_APP_PACKAGES
+#define SDDL_ALL_APP_PACKAGES L"AC"
+#endif  // SDDL_ALL_APP_PACKAGES
+
+// SDDL for PROCESS_QUERY_INFORMATION is not defined. So use hex digits instead.
+#ifndef SDDL_PROCESS_QUERY_INFORMATION
+static_assert(PROCESS_QUERY_INFORMATION == 0x0400,
+              "PROCESS_QUERY_INFORMATION must be 0x0400");
+#define SDDL_PROCESS_QUERY_INFORMATION  L"0x0400"
+#endif  // SDDL_PROCESS_QUERY_INFORMATION
+
+// SDDL for PROCESS_QUERY_LIMITED_INFORMATION is not defined. So use hex digits
+// instead.
+#ifndef SDDL_PROCESS_QUERY_LIMITED_INFORMATION
+static_assert(PROCESS_QUERY_LIMITED_INFORMATION == 0x1000,
+              "PROCESS_QUERY_LIMITED_INFORMATION must be 0x1000");
+#define SDDL_PROCESS_QUERY_LIMITED_INFORMATION  L"0x1000"
+#endif  // SDDL_PROCESS_QUERY_LIMITED_INFORMATION
+
+}  // namespace
+
+wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
+                            const wstring &token_user_sid,
+                            const wstring &token_primary_group_sid,
+                            bool is_windows_vista_or_later,
+                            bool is_windows_8_or_later) {
   // See http://social.msdn.microsoft.com/Forums/en-US/windowssecurity/thread/e92502b1-0b9f-4e02-9d72-e4e47e924a8f/
-  // for how to ccess named objects from an AppContainer.
+  // for how to acess named objects from an AppContainer.
+
+  wstring dacl;
+  wstring sacl;
   switch (shareble_object_type) {
     case WinSandbox::kSharablePipe:
-      // Sharable Named Pipe:
-      // - Deny Remote Acccess
-      // - Allow general access to LocalSystem
-      // - Allow general access to Built-in Administorators
-      // - Allow general access to the current user
-      // - Allow general access to ALL APPLICATION PACKAGES
-      // - Allow read/write access to low integrity
-      ssdl += L"D:(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)";
-      if (SystemUtil::IsWindows8OrLater()) {
-        ssdl += L"(A;;GA;;;AC)";
+      // Deny Remote Acccess
+      dacl += Deny(SDDL_GENERIC_ALL, SDDL_NETWORK);
+      // Allow general access to LocalSystem
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
+      // Allow general access to Built-in Administorators
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
+      if (is_windows_8_or_later) {
+        // Allow general access to ALL APPLICATION PACKAGES
+        dacl += Allow(SDDL_GENERIC_ALL, SDDL_ALL_APP_PACKAGES);
       }
-      ssdl += allow_user;
-      if (SystemUtil::IsVistaOrLater()) {
-        ssdl += allow_rw_low_integrity;
+      // Allow general access to the current user
+      dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
+      if (is_windows_vista_or_later) {
+        // Allow read/write access to low integrity
+        sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
+      }
+      break;
+    case WinSandbox::kLooseSharablePipe:
+      // Deny Remote Acccess
+      dacl += Deny(SDDL_GENERIC_ALL, SDDL_NETWORK);
+      // Allow general access to LocalSystem
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
+      // Allow general access to Built-in Administorators
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
+      if (is_windows_8_or_later) {
+        // Allow general access to ALL APPLICATION PACKAGES
+        dacl += Allow(SDDL_GENERIC_ALL, SDDL_ALL_APP_PACKAGES);
+      }
+      // Allow general access to the current user
+      dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
+      // Skip 2nd-phase ACL validation against restricted tokens.
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_RESTRICTED_CODE);
+      if (is_windows_vista_or_later) {
+        // Allow read/write access to low integrity
+        sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
       }
       break;
     case WinSandbox::kSharableEvent:
-      // Sharable Event:
-      // - Allow general access to LocalSystem
-      // - Allow general access to Built-in Administorators
-      // - Allow general access to the current user
-      // - Allow state change/synchronize to ALL APPLICATION PACKAGES
-      // - Allow read/write access to low integrity
-      ssdl += L"D:(A;;GA;;;SY)(A;;GA;;;BA)";
-      if (SystemUtil::IsWindows8OrLater()) {
-        ssdl += L"(A;;GX;;;AC)";
+      // Allow general access to LocalSystem
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
+      // Allow general access to Built-in Administorators
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
+      if (is_windows_8_or_later) {
+        // Allow state change/synchronize to ALL APPLICATION PACKAGES
+        dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_ALL_APP_PACKAGES);
       }
-      ssdl += allow_user;
-      if (SystemUtil::IsVistaOrLater()) {
-        ssdl += allow_rw_low_integrity;
+      // Allow general access to the current user
+      dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
+      // Skip 2nd-phase ACL validation against restricted tokens regarding
+      // change/synchronize.
+      dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_RESTRICTED_CODE);
+      if (is_windows_vista_or_later) {
+        // Allow read/write access to low integrity
+        sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
       }
       break;
     case WinSandbox::kSharableMutex:
-      // Sharable Mutex:
-      // - Allow general access to LocalSystem
-      // - Allow general access to Built-in Administorators
-      // - Allow general access to the current user
-      // - Allow state change/synchronize to ALL APPLICATION PACKAGES
-      // - Allow read/write access to low integrity
-      ssdl += L"D:(A;;GA;;;SY)(A;;GA;;;BA)";
-      if (SystemUtil::IsWindows8OrLater()) {
-        ssdl += L"(A;;GX;;;AC)";
+      // Allow general access to LocalSystem
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
+      // Allow general access to Built-in Administorators
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
+      if (is_windows_8_or_later) {
+        // Allow state change/synchronize to ALL APPLICATION PACKAGES
+        dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_ALL_APP_PACKAGES);
       }
-      ssdl += allow_user;
-      if (SystemUtil::IsVistaOrLater()) {
-        ssdl += allow_rw_low_integrity;
+      // Allow general access to the current user
+      dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
+      // Skip 2nd-phase ACL validation against restricted tokens regarding
+      // change/synchronize.
+      dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_RESTRICTED_CODE);
+      if (is_windows_vista_or_later) {
+        // Allow read/write access to low integrity
+        sacl += MandatoryLevel(SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
       }
       break;
     case WinSandbox::kSharableFileForRead:
-      // Sharable Mutex:
-      // - Allow general access to LocalSystem
-      // - Allow general access to Built-in Administorators
-      // - Allow general access to the current user
-      // - Allow general read access to ALL APPLICATION PACKAGES
-      // - Allow read access to low integrity
-      ssdl += L"D:(A;;GA;;;SY)(A;;GA;;;BA)";
-      if (SystemUtil::IsWindows8OrLater()) {
-        ssdl += L"(A;;GR;;;AC)";
+      // Allow general access to LocalSystem
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
+      // Allow general access to Built-in Administorators
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
+      // Allow read access to low integrity
+      if (is_windows_8_or_later) {
+        // Allow general read access to ALL APPLICATION PACKAGES
+        dacl += Allow(SDDL_GENERIC_READ, SDDL_ALL_APP_PACKAGES);
       }
-      ssdl += allow_user;
-      if (SystemUtil::IsVistaOrLater()) {
-        ssdl += allow_r_low_integrity;
+      // Allow general access to the current user
+      dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
+      // Skip 2nd-phase ACL validation against restricted tokens regarding
+      // general read access.
+      dacl += Allow(SDDL_GENERIC_READ, SDDL_RESTRICTED_CODE);
+      if (is_windows_vista_or_later) {
+        // Allow read access to low integrity
+        sacl += MandatoryLevel(
+            SDDL_NO_WRITE_UP SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
+      }
+      break;
+    case WinSandbox::kIPCServerProcess:
+      // Allow general access to LocalSystem
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
+      // Allow general access to Built-in Administorators
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
+      if (is_windows_8_or_later) {
+        // Allow PROCESS_QUERY_LIMITED_INFORMATION to ALL APPLICATION PACKAGES
+        dacl += Allow(SDDL_PROCESS_QUERY_LIMITED_INFORMATION,
+                      SDDL_ALL_APP_PACKAGES);
+      }
+      // Allow general access to the current user
+      dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
+      if (is_windows_vista_or_later) {
+        // Allow PROCESS_QUERY_LIMITED_INFORMATION to restricted tokens
+        dacl += Allow(SDDL_PROCESS_QUERY_LIMITED_INFORMATION,
+                      SDDL_RESTRICTED_CODE);
+      } else {
+        // Allow PROCESS_QUERY_INFORMATION to restricted tokens
+        dacl += Allow(SDDL_PROCESS_QUERY_INFORMATION, SDDL_RESTRICTED_CODE);
       }
       break;
     case WinSandbox::kPrivateObject:
     default:
-      // General private object:
-      // - Allow general access to LocalSystem
-      // - Allow general access to Built-in Administorators
-      // - Allow general access to the current user
-      ssdl += (L"D:(A;;GA;;;SY)(A;;GA;;;BA)" + allow_user);
+      // Allow general access to LocalSystem
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
+      // Allow general access to Built-in Administorators
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
+      // Allow general access to the current user
+      dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
       break;
   }
 
-  return ssdl;
-}
+  wstring sddl;
+  // Owner SID
+  sddl += ((SDDL_OWNER SDDL_DELIMINATOR) + token_user_sid);
+  // Primary Group SID
+  sddl += ((SDDL_GROUP SDDL_DELIMINATOR) + token_primary_group_sid);
+  // DACL
+  if (!dacl.empty()) {
+    sddl += ((SDDL_DACL SDDL_DELIMINATOR) + dacl);
+  }
+  // SACL
+  if (!sacl.empty()) {
+    sddl += ((SDDL_SACL SDDL_DELIMINATOR) + sacl);
+  }
 
-}  // namespace
+  return sddl;
+}
 
 Sid::Sid(const SID *sid) {
   ::CopySid(sizeof(sid_), sid_, const_cast<SID*>(sid));
@@ -379,13 +477,14 @@ bool WinSandbox::MakeSecurityAttributes(
     return false;
   }
 
-  const wstring &ssdl = GetSSDL(
-      shareble_object_type, token_user_sid, token_primary_group_sid);
+  const wstring &sddl = GetSDDL(
+      shareble_object_type, token_user_sid, token_primary_group_sid,
+      SystemUtil::IsVistaOrLater(), SystemUtil::IsWindows8OrLater());
 
   // Create self-relative SD
   PSECURITY_DESCRIPTOR self_relative_desc = nullptr;
   if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(
-          ssdl.c_str(),
+          sddl.c_str(),
           SDDL_REVISION_1,
           &self_relative_desc,
           nullptr)) {
@@ -574,7 +673,7 @@ bool CreateSuspendedRestrictedProcess(unique_ptr<wchar_t[]> *command_line,
 
   PSECURITY_ATTRIBUTES security_attributes_ptr = nullptr;
   SECURITY_ATTRIBUTES security_attributes = {};
-  if (WinSandbox::MakeSecurityAttributes(WinSandbox::kPrivateObject,
+  if (WinSandbox::MakeSecurityAttributes(WinSandbox::kIPCServerProcess,
                                          &security_attributes)) {
     security_attributes_ptr = &security_attributes;
     // Override the impersonation thread token's DACL to avoid http://b/1728895
@@ -690,7 +789,8 @@ bool SpawnSandboxedProcessImpl(unique_ptr<wchar_t[]> *command_line,
 
   return true;
 }
-}  // anonymous namespace
+
+}  // namespace
 
 WinSandbox::SecurityInfo::SecurityInfo()
   : primary_level(WinSandbox::USER_LOCKDOWN),
@@ -1098,7 +1198,8 @@ bool SetTokenIntegrityLevel(HANDLE token,
 
   return (result != FALSE);
 }
-}  // anonymous namespace
+
+}  // namespace
 
 vector<Sid> WinSandbox::GetSidsToDisable(HANDLE effective_token,
                                          TokenLevel security_level) {
@@ -1328,5 +1429,6 @@ bool WinSandbox::GetRestrictedTokenHandleForImpersonation(
   restricted_token->reset(restricted_token_ret);
   return true;
 }
+
 }   // namespace mozc
 #endif  // OS_WIN

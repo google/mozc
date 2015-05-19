@@ -122,7 +122,7 @@ TEST_F(KeyMapTest, GetCommand) {
   {
     KeyMap<PrecompositionState> keymap;
     commands::KeyEvent init_key_event;
-    init_key_event.set_key_code(97);
+    init_key_event.set_special_key(commands::KeyEvent::TEXT_INPUT);
     EXPECT_TRUE(keymap.AddRule(init_key_event,
                                PrecompositionState::INSERT_CHARACTER));
 
@@ -211,6 +211,39 @@ TEST_F(KeyMapTest, GetCommandForKeyString) {
     commands::KeyEvent key_event;
     PrecompositionState::Commands command;
     key_event.set_key_string("a");
+    EXPECT_FALSE(keymap.GetCommand(key_event, &command));
+  }
+
+  // After adding the rule of TEXT_INPUT -> INSERT_CHARACTER, the above cases
+  // should return INSERT_CHARACTER.
+  commands::KeyEvent text_input_key_event;
+  text_input_key_event.set_special_key(commands::KeyEvent::TEXT_INPUT);
+  keymap.AddRule(text_input_key_event, PrecompositionState::INSERT_CHARACTER);
+
+  // key_code = 97, key_string = empty
+  {
+    commands::KeyEvent key_event;
+    PrecompositionState::Commands command;
+    key_event.set_key_code(97);
+    EXPECT_TRUE(keymap.GetCommand(key_event, &command));
+    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+  }
+
+  // key_code = 97, key_string = "a"
+  {
+    commands::KeyEvent key_event;
+    PrecompositionState::Commands command;
+    key_event.set_key_code(97);
+    key_event.set_key_string("a");
+    EXPECT_TRUE(keymap.GetCommand(key_event, &command));
+    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+  }
+
+  // key_code = empty, key_string = "a"
+  {
+    commands::KeyEvent key_event;
+    PrecompositionState::Commands command;
+    key_event.set_key_string("a");
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
     EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
   }
@@ -219,7 +252,7 @@ TEST_F(KeyMapTest, GetCommandForKeyString) {
 TEST_F(KeyMapTest, GetCommandKeyStub) {
   KeyMap<PrecompositionState> keymap;
   commands::KeyEvent init_key_event;
-  init_key_event.set_special_key(commands::KeyEvent::ASCII);
+  init_key_event.set_special_key(commands::KeyEvent::TEXT_INPUT);
   EXPECT_TRUE(keymap.AddRule(init_key_event,
                              PrecompositionState::INSERT_CHARACTER));
 
@@ -249,9 +282,9 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
   istringstream iss("", istringstream::in);
   EXPECT_TRUE(manager.LoadStream(&iss));
 
-  {  // Check key bindings of ASCII.
+  {  // Check key bindings of TextInput.
     commands::KeyEvent key_event;
-    KeyParser::ParseKey("ASCII", &key_event);
+    KeyParser::ParseKey("TextInput", &key_event);
 
     PrecompositionState::Commands fund_command;
     EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &fund_command));

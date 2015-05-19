@@ -105,9 +105,9 @@ class MergerRewriter : public RewriterInterface {
   }
 
   // Hook(s) for all mutable operations
-  virtual void Finish(Segments *segments) {
+  virtual void Finish(const ConversionRequest &request, Segments *segments) {
     for (size_t i = 0; i < rewriters_.size(); ++i) {
-      rewriters_[i]->Finish(segments);
+      rewriters_[i]->Finish(request, segments);
     }
   }
 

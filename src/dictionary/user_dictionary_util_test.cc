@@ -293,7 +293,7 @@ TEST(UserDictionaryUtilTest, IsDictionaryFull) {
   EXPECT_TRUE(UserDictionaryUtil::IsDictionaryFull(dictionary));
 }
 
-TEST(UserDictioanryUtilTest, IsSyncDictionaryFull) {
+TEST(UserDictionaryUtilTest, IsSyncDictionaryFull) {
   UserDictionary dictionary;
   dictionary.set_syncable(true);
 

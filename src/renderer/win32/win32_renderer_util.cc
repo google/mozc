@@ -744,12 +744,23 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   static FPLogicalToPhysicalPoint GetLogicalToPhysicalPoint() {
     // LogicalToPhysicalPoint API is available in Vista or later.
     const HMODULE module = WinUtil::GetSystemModuleHandle(L"user32.dll");
-    if (module == NULL) {
-      return NULL;
+    if (module == nullptr) {
+      return nullptr;
     }
-    void *function = ::GetProcAddress(module, "LogicalToPhysicalPoint");
-    if (function == NULL) {
-      return NULL;
+    // Despite its name, LogicalToPhysicalPoint API no longer converts
+    // coordinates on Windows 8.1 and later. We must use
+    // LogicalToPhysicalPointForPerMonitorDPI API instead when it is available.
+    // See http://go.microsoft.com/fwlink/?LinkID=307061
+    void *function = ::GetProcAddress(
+        module, "LogicalToPhysicalPointForPerMonitorDPI");
+    if (function == nullptr) {
+      // When LogicalToPhysicalPointForPerMonitorDPI API does not exist but
+      // LogicalToPhysicalPoint API exists, LogicalToPhysicalPoint works fine.
+      // This is the case on Windows Vista, Windows 7 and Windows 8.
+      function = ::GetProcAddress(module, "LogicalToPhysicalPoint");
+      if (function == nullptr) {
+        return nullptr;
+      }
     }
     return reinterpret_cast<FPLogicalToPhysicalPoint>(function);
   }

@@ -49,6 +49,8 @@
 #include "config/config_handler.h"
 #include "config/config.pb.h"
 #include "data_manager/packed/packed_data_manager.h"
+#include "dictionary/user_dictionary_util.h"
+#include "dictionary/user_pos.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 #include "net/http_client.h"
@@ -177,6 +179,9 @@ class MozcSessionHandlerThread : public Thread {
     RegisterPepperInstanceForHTTPClient(instance_);
     PepperFileUtil::Initialize(instance_, kFileIoFileSystemExpectedSize);
     LoadDictionary();
+    user_pos_.reset(
+        new UserPOS(
+            packed::PackedDataManager::GetUserPosManager()->GetUserPOSData()));
 
     engine_.reset(mozc::EngineFactory::Create());
     session_factory_.reset(new JapaneseSessionFactory(engine_.get()));
@@ -240,11 +245,14 @@ class MozcSessionHandlerThread : public Thread {
       }
       if (message->isMember("event") && (*message)["event"].isMember("type")) {
         response["event"] = Json::objectValue;
-        response["event"]["type"] = (*message)["event"]["type"].asString();
-        if ((*message)["event"]["type"].asString() == "SyncToFile") {
+        const string event_type = (*message)["event"]["type"].asString();
+        response["event"]["type"] = event_type;
+        if (event_type == "SyncToFile") {
           response["event"]["result"] = PepperFileUtil::SyncMmapToFile();
-        } else if ((*message)["event"]["type"].asString() == "GetVersionInfo") {
+        } else if (event_type == "GetVersionInfo") {
           response["event"]["version"] = Version::GetMozcVersion();
+        } else if (event_type == "GetPosList") {
+          GetPosList(&response);
         } else {
           response["event"]["error"] = "Unsupported event";
         }
@@ -263,6 +271,7 @@ class MozcSessionHandlerThread : public Thread {
   }
 
  private:
+
   // Loads the dictionary.
   void LoadDictionary() {
     string output;
@@ -277,6 +286,23 @@ class MozcSessionHandlerThread : public Thread {
     CHECK(data_manager->InitWithZippedData(output));
     mozc::packed::RegisterPackedDataManager(data_manager.release());
   }
+
+
+  void GetPosList(Json::Value *response) {
+    (*response)["event"]["posList"] = Json::Value(Json::arrayValue);
+    Json::Value *pos_list = &(*response)["event"]["posList"];
+    vector<string> tmp_pos_vec;
+    user_pos_->GetPOSList(&tmp_pos_vec);
+    for (int i = 0; i < tmp_pos_vec.size(); ++i) {
+      (*pos_list)[i] = Json::Value(Json::objectValue);
+      const user_dictionary::UserDictionary::PosType pos_type =
+          UserDictionaryUtil::ToPosType(tmp_pos_vec[i].c_str());
+      (*pos_list)[i]["type"] =
+          Json::Value(user_dictionary::UserDictionary::PosType_Name(pos_type));
+      (*pos_list)[i]["name"] = Json::Value(tmp_pos_vec[i]);
+    }
+  }
+
   pp::Instance *instance_;
   BlockingQueue<Json::Value *> *message_queue_;
   pp::CompletionCallbackFactory<MozcSessionHandlerThread> factory_;
@@ -286,6 +312,7 @@ class MozcSessionHandlerThread : public Thread {
 #ifdef ENABLE_CLOUD_SYNC
   scoped_ptr<sync::SyncHandler> sync_handler_;
 #endif  // ENABLE_CLOUD_SYNC
+  scoped_ptr<const UserPOSInterface> user_pos_;
   DISALLOW_COPY_AND_ASSIGN(MozcSessionHandlerThread);
 };
 

@@ -34,9 +34,8 @@
 
   <dimen name="candidate_text_size">32dip</dimen>
   <dimen name="candidate_description_text_size">12dip</dimen>
-  <!-- The size of the icon should equal to
-       (candidate_text_size + candidate_vertical_padding_size * 2) -->
-  <dimen name="keyboard_folding_icon_size">48dip</dimen>
+  <dimen name="candidate_text_size_aligned_layout">20dip</dimen>
+  <dimen name="candidate_description_text_size_aligned_layout">10dip</dimen>
 
   <dimen name="symbol_view_scroll_guide_width_per_page">70dip</dimen>
   <dimen name="symbol_view_minor_category_height">79.5dip</dimen>

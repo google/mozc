@@ -72,6 +72,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
 import android.os.Build;
@@ -84,6 +85,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.CharacterStyle;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -302,14 +304,18 @@ public class MozcService extends InputMethodService {
     }
 
     @Override
-    public void onClickHardwareKeyboardCompositionModeButton() {
-      hardwareKeyboard.setCompositionMode(CompositionSwitchMode.TOGGLE);
-      viewManager.setHardwareKeyboardCompositionMode(hardwareKeyboard.getCompositionMode());
-      sendKeyWithKeyboardSpecification(
-          null, null,
-          hardwareKeyboard.getKeyboardSpecification(),
-          getResources().getConfiguration(),
-          Collections.<TouchEvent>emptyList());
+    public void onHardwareKeyboardCompositionModeChange(CompositionSwitchMode mode) {
+      CompositionMode oldMode = hardwareKeyboard.getCompositionMode();
+      hardwareKeyboard.setCompositionMode(mode);
+      CompositionMode newMode = hardwareKeyboard.getCompositionMode();
+      if (oldMode != newMode) {
+        viewManager.setHardwareKeyboardCompositionMode(newMode);
+        sendKeyWithKeyboardSpecification(
+            null, null,
+            hardwareKeyboard.getKeyboardSpecification(),
+            getResources().getConfiguration(),
+            Collections.<TouchEvent>emptyList());
+      }
     }
 
     @Override
@@ -429,16 +435,21 @@ public class MozcService extends InputMethodService {
   private static final String PREF_TWEAK_LOGGING_PROTOCOL_BUFFERS =
       "pref_tweak_logging_protocol_buffers";
 
+  // Foreground color of characters which also have background color span.
+  // Without this span default color (specified by the app) is used so
+  // if default color is similar to specified background color the characters are hard to be read.
+  @VisibleForTesting static final CharacterStyle SPAN_FOREGROUND_COLOR =
+      new ForegroundColorSpan(Color.DKGRAY);
+
   // Focused segment's attribute.
   @VisibleForTesting static final CharacterStyle SPAN_CONVERT_HIGHLIGHT =
-      new BackgroundColorSpan(0x8888FFFF);
+      new BackgroundColorSpan(0xFF88FFFF);
 
   // Cursor position.
   // Note that InputConnection seems not to be able to show cursor. This is a workaround.
   @VisibleForTesting static final CharacterStyle SPAN_BEFORE_CURSOR =
-      new BackgroundColorSpan(0x88FF88FF);
+      new BackgroundColorSpan(0xFFFFAAFF);
 
-  // To hide a caret, we use non-transparent background for partial conversion.
   private static final CharacterStyle SPAN_PARTIAL_SUGGESTION_COLOR =
       new BackgroundColorSpan(0xFFFFE0E0);
 
@@ -750,9 +761,16 @@ public class MozcService extends InputMethodService {
     }
   }
 
-  static boolean isWebEditText(EditorInfo editorInfo) {
+  /**
+   * @return true if connected view is WebEditText (or the application pretends it)
+   */
+  boolean isWebEditText(EditorInfo editorInfo) {
     if (editorInfo == null) {
       return false;
+    }
+
+    if (applicationCompatibility.isPretendingWebEditText()) {
+      return true;
     }
 
     // TODO(hidehiko): Refine the heuristic to check isWebEditText related stuff.
@@ -1020,6 +1038,14 @@ public class MozcService extends InputMethodService {
     showStatusIcon();
     // Remove memory trimming message.
     memoryTrimmingHandler.removeMessages(MemoryTrimmingHandler.WHAT);
+    // Ensure keyboard's request.
+    // The session might be deleted by trimMemory caused by onWindowHidden.
+    // Note that this logic must be placed *after* removing the messages in memoryTrimmingHandler.
+    // Otherwise the session might be unexpectedly deleted and newly re-created one will be used
+    // without appropriate request which is sent below.
+    changeKeyboardSpecificationAndSendKey(
+        null, null, currentKeyboardSpecification, getResources().getConfiguration(),
+        Collections.<TouchEvent>emptyList());
   }
 
   @Override
@@ -1219,11 +1245,10 @@ public class MozcService extends InputMethodService {
       builder.append(segment.getValue());
       if (segment.hasAnnotation() && segment.getAnnotation() == Annotation.HIGHLIGHT) {
         // Highlight for the focused conversion part.
-        builder.setSpan(
-            SPAN_CONVERT_HIGHLIGHT,
-            builder.length() - segment.getValue().length(),
-            builder.length(),
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int end = builder.length();
+        int begin = end - segment.getValue().length();
+        builder.setSpan(SPAN_CONVERT_HIGHLIGHT, begin, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        builder.setSpan(SPAN_FOREGROUND_COLOR, begin, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       }
     }
 
@@ -1240,10 +1265,13 @@ public class MozcService extends InputMethodService {
       if (cursor != builder.length()) {
         // This condition is workaround not to show unexpected background color for EditText.
         builder.setSpan(SPAN_PARTIAL_SUGGESTION_COLOR, cursor, builder.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        builder.setSpan(SPAN_FOREGROUND_COLOR, cursor, builder.length(),
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       }
       if (cursor > 0) {
         builder.setSpan(SPAN_BEFORE_CURSOR, 0, cursor, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        builder.setSpan(SPAN_FOREGROUND_COLOR, 0, cursor, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       }
     }
 
@@ -1262,12 +1290,9 @@ public class MozcService extends InputMethodService {
 
     Preedit preedit = output.getPreedit();
     int cursor = preedit.getCursor();
-    if (!applicationCompatibility.isAlwaysSetCursorEnabled() &&
-        (cursor == 0 || cursor == getPreeditLength(preedit))) {
+    if (cursor == 0 || cursor == getPreeditLength(preedit)) {
       // The cursor is at the beginning/ending of the preedit. So we don't anything about the
       // caret setting.
-      // Note that in some application, we need to set the caret position regardless of the
-      // spec. See also ApplicationCompatibility for details.
       return;
     }
 
@@ -1504,6 +1529,9 @@ public class MozcService extends InputMethodService {
 
     int updateStatus = selectionTracker.onUpdateSelection(
         oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd);
+    if (isDebugBuild) {
+      MozcLog.d(selectionTracker.toString());
+    }
     switch (updateStatus) {
       case SelectionTracker.DO_NOTHING:
         // Do nothing.

@@ -575,7 +575,7 @@ TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
     { "\xE3\x81\xB0\xE3\x81\xB3\xE3\x81\xB6",
       "\xE3\x83\x90\xE3\x83\x93\xE3\x83\x96" },
   };
-  const size_t kKeyValuesSize = ARRAYSIZE_UNSAFE(kKeyValues);
+  const size_t kKeyValuesSize = arraysize(kKeyValues);
   scoped_ptr<Token> tokens[kKeyValuesSize];
   vector<Token *> source_tokens(kKeyValuesSize);
   for (size_t i = 0; i < kKeyValuesSize; ++i) {
@@ -604,7 +604,7 @@ TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
       EXPECT_TRUE(result.end() != result.find(entry));
     }
     // The others should not be found.
-    for (size_t i = 5; i < ARRAYSIZE_UNSAFE(kKeyValues); ++i) {
+    for (size_t i = 5; i < arraysize(kKeyValues); ++i) {
       const pair<string, string> entry(
           kKeyValues[i].key, kKeyValues[i].value);
       EXPECT_TRUE(result.end() == result.find(entry));

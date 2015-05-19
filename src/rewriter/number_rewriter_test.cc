@@ -236,7 +236,7 @@ TEST_F(NumberRewriterTest, RequestType) {
 
   scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(test_data_list); ++i) {
+  for (size_t i = 0; i < arraysize(test_data_list); ++i) {
     TestData& test_data = test_data_list[i];
     Segments segments;
     segments.set_request_type(test_data.request_type_);

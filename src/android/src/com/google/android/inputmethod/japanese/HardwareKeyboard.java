@@ -42,7 +42,11 @@ import com.google.common.annotations.VisibleForTesting;
  *
  */
 public class HardwareKeyboard {
-  static enum CompositionSwitchMode {
+
+  /**
+   * Used to switch the composition mode of harwdware keyboard.
+   **/
+  public static enum CompositionSwitchMode {
     TOGGLE,
     KANA,
     ALPHABET

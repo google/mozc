@@ -34,8 +34,11 @@
 #include <string>
 #include <vector>
 
+#include "base/file_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+
+DECLARE_string(test_srcdir);
 
 namespace mozc {
 namespace handwriting {
@@ -43,8 +46,10 @@ namespace handwriting {
 class ZinniaHandwritingTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    zinnia_.reset(
-        new ZinniaHandwriting(ZinniaHandwriting::GetModelFileName()));
+    const string filepath = FileUtil::JoinPath(
+        FLAGS_test_srcdir,
+        "handwriting-ja.model");
+    zinnia_.reset(new ZinniaHandwriting(filepath));
   }
 
   scoped_ptr<ZinniaHandwriting> zinnia_;
@@ -59,13 +64,10 @@ TEST_F(ZinniaHandwritingTest, Recognize) {
   strokes.push_back(stroke);
 
   vector<string> results;
-
-  // This call returns an error because it failed to load the handwriting
-  // model file.  However there is no implementation to specify the file
-  // path of the model to the constructor.
-  // TODO(komatsu): Enable to specify the model file to ZinniaHandwriting.
   const HandwritingStatus status = zinnia_->Recognize(strokes, &results);
-  EXPECT_EQ(HANDWRITING_ERROR, status);
+  EXPECT_EQ(HANDWRITING_NO_ERROR, status);
+  // "一"
+  EXPECT_EQ("\xE4\xB8\x80", results[0]);
 }
 
 TEST_F(ZinniaHandwritingTest, Commit) {

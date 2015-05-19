@@ -652,16 +652,12 @@ void SessionConverter::MaybeExpandPrediction(
 
   const size_t previous_index = candidate_list_->focused_index();
   if (!PredictWithPreferences(composer, conversion_preferences_)) {
-    // TODO(komatsu): Consider the case when PredictWithPreferences fails.
     return;
   }
 
-  if (previous_index < candidate_list_->size()) {
-    candidate_list_->MoveToId(candidate_list_->candidate(previous_index).id());
-    UpdateSelectedCandidateIndex();
-  } else {
-    // Ideally this should not happen.
-  }
+  DCHECK_LT(previous_index, candidate_list_->size());
+  candidate_list_->MoveToId(candidate_list_->candidate(previous_index).id());
+  UpdateSelectedCandidateIndex();
 }
 
 void SessionConverter::Cancel() {
@@ -689,7 +685,8 @@ void SessionConverter::Reset() {
   ResetState();
 }
 
-void SessionConverter::Commit(const commands::Context &context) {
+void SessionConverter::Commit(const composer::Composer &composer,
+                              const commands::Context &context) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
 
@@ -705,7 +702,8 @@ void SessionConverter::Commit(const commands::Context &context) {
                                    GetCandidateIndexForConverter(i));
   }
   CommitUsageStats(state_, context);
-  converter_->FinishConversion(segments_.get());
+  ConversionRequest conversion_request(&composer, request_);
+  converter_->FinishConversion(conversion_request, segments_.get());
   ResetState();
 }
 
@@ -753,7 +751,8 @@ bool SessionConverter::CommitSuggestionInternal(
                                    0,
                                    GetCandidateIndexForConverter(0));
     CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
-    converter_->FinishConversion(segments_.get());
+    ConversionRequest conversion_request(&composer, request_);
+    converter_->FinishConversion(conversion_request, segments_.get());
     DCHECK_EQ(0, segments_->conversion_segments_size());
     ResetState();
   }
@@ -791,7 +790,8 @@ bool SessionConverter::CommitSuggestionById(
   return CommitSuggestionInternal(composer, context, consumed_key_size);
 }
 
-void SessionConverter::CommitFirstSegment(const commands::Context &context,
+void SessionConverter::CommitFirstSegment(const composer::Composer &composer,
+                                          const commands::Context &context,
                                           size_t *consumed_key_size) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
@@ -800,7 +800,7 @@ void SessionConverter::CommitFirstSegment(const commands::Context &context,
 
   // If the number of segments is one, just call Commit.
   if (segments_->conversion_segments_size() == 1) {
-    Commit(context);
+    Commit(composer, context);
     return;
   }
 
@@ -848,7 +848,8 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
                                         segments_.get());
 
   CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
-  converter_->FinishConversion(segments_.get());
+  ConversionRequest conversion_request(&composer, request_);
+  converter_->FinishConversion(conversion_request, segments_.get());
   ResetState();
 }
 

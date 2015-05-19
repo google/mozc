@@ -866,6 +866,9 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     return false;
   }
   NSInteger totalLength = [client length];
+  if (totalLength == 0 || totalLength == NSNotFound) {
+    return false;
+  }
   NSRange precedingRange = NSMakeRange(0, selectedRange.location);
   if (selectedRange.location > kMaxSurroundingLength) {
     precedingRange =

@@ -49,12 +49,18 @@ class TipTextService;
 class TipEditSession {
  public:
   // Begins a sync edit session with |new_output| to update the context. Note
-  // that  sync edit session is guaranteed to be capable only in key event
+  // that sync edit session is guaranteed to be capable only in key event
   // handler and ITfFnReconversion::QueryRange. In other cases, you should use
-  // an async edit session to update the context.
+  // OnOutputReceivedAsync instead.
   static bool OnOutputReceivedSync(TipTextService *text_service,
                                    ITfContext *context,
                                    const commands::Output &new_output);
+
+  // Begins an async edit session with |new_output| to update the context.
+  static bool OnOutputReceivedAsync(TipTextService *text_service,
+                                    ITfContext *context,
+                                    const commands::Output &new_output);
+
   // Begins a sync edit session to invoke reconversion that is initialized by
   // the application.
   static bool ReconvertFromApplicationSync(TipTextService *text_service,
@@ -77,8 +83,12 @@ class TipEditSession {
                                       ITfContext *context,
                                       WPARAM wparam,
                                       LPARAM lparam);
+
   // Begins an async edit session to submit the current candidate.
   static bool SubmitAsync(TipTextService *text_service, ITfContext *context);
+  // Begins an async edit session to cancel the current composition.
+  static bool CanceleCompositionAsync(TipTextService *text_service,
+                                      ITfContext *context);
   // Begins an async edit session to highlight the candidate specified by
   // |candidate_id|.
   static bool HilightCandidateAsync(TipTextService *text_service,

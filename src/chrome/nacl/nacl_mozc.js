@@ -137,11 +137,12 @@ mozc.NaclMozc = function(naclModule) {
   this.context_ = null;
 
   /**
-   * Session id of Mozc's session.
-   * @type {number}
+   * Session id of Mozc's session. This id is handled as uint64 in NaCl. But
+   * JavaScript can't handle uint64. So we handle it as string in JavaScript.
+   * @type {string}
    * @private
    */
-  this.sessionID_ = 0;
+  this.sessionID_ = '';
 
   /**
    * The list of candidates.
@@ -446,6 +447,15 @@ mozc.NaclMozc.prototype.sendUserDictionaryCommand = function(command,
  */
 mozc.NaclMozc.prototype.getVersionInfo = function(callback) {
   this.postNaclMozcEvent_({'type': 'GetVersionInfo'}, callback);
+};
+
+/**
+ * Gets POS list from NaCl Mozc module.
+ * @param {!function(Object)} callback Function to be called with results
+ *     from NaCl module.
+ */
+mozc.NaclMozc.prototype.getPosList = function(callback) {
+  this.postNaclMozcEvent_({'type': 'GetPosList'}, callback);
 };
 
 /**
@@ -937,7 +947,7 @@ mozc.NaclMozc.prototype.onBlur_ = function(contextID) {
   this.postMozcCommand_(
       {'input': {'type': 'DELETE_SESSION', 'id': this.sessionID_}},
       this.outputResponse_.bind(this));
-  this.sessionID_ = 0;
+  this.sessionID_ = '';
 };
 
 /**
@@ -1201,11 +1211,13 @@ mozc.NaclMozc.prototype.jsCallGetAuthToken_ = function(args) {
   }
   chrome.identity.getAuthToken(
       {interactive: !!args['interactive']},
-      (function(token) {
-        this.naclModule_['postMessage'](JSON.stringify({
-          'jscall': 'GetAuthToken',
-          'access_token': token
-        }));
+      /** @param {string=} opt_token */
+      (function(opt_token) {
+        var result = {'jscall': 'GetAuthToken'};
+        if (opt_token) {
+          result['access_token'] = opt_token;
+        }
+        this.naclModule_['postMessage'](JSON.stringify(result));
       }).bind(this));
 };
 
@@ -1288,12 +1300,11 @@ mozc.NaclMozc.prototype.onModuleError_ = function() {
 
 /**
  * New option page.
- * @param {!HTMLDocument} domDocument Document object of the option page.
- * @param {!Object} consoleObject Console object of the option page.
+ * @param {!Window} optionWindow Window object of the option page.
  * @return {!mozc.OptionPage} Option page object.
  */
-mozc.NaclMozc.prototype.newOptionPage = function(domDocument, consoleObject) {
-  var optionPage = new mozc.OptionPage(this, domDocument, consoleObject);
+mozc.NaclMozc.prototype.newOptionPage = function(optionWindow) {
+  var optionPage = new mozc.OptionPage(this, optionWindow);
   optionPage.initialize();
   return optionPage;
 };

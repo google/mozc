@@ -381,7 +381,7 @@ TEST_F(HangulSessionTest, CandidateTest) {
 
   const int kCandidatesPerPage = 10;  // TODO(nona): load from ibus
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kCandidates); ++i) {
+  for (size_t i = 0; i < arraysize(kCandidates); ++i) {
     EXPECT_EQ(kCandidates[i], GetNthCandidate(command, i % kCandidatesPerPage));
     EXPECT_TRUE(SendSpecialKey(commands::KeyEvent::RIGHT, session_, &command));
   }
@@ -823,7 +823,7 @@ TEST_F(HangulSessionTest, HanjaLockNumberSelectionTest) {
     "\xE7\x96\x8F\xE8\xA8\xBB"   // "疏註"
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kCandidates); ++i) {
+  for (size_t i = 0; i < arraysize(kCandidates); ++i) {
     EXPECT_TRUE(SendKey("t", session_, &command));
     EXPECT_TRUE(SendKey("h", session_, &command));
     EXPECT_TRUE(SendKey("w", session_, &command));
@@ -1039,7 +1039,7 @@ TEST_F(HangulSessionTest, NumpadSelectionTest) {
     commands::KeyEvent::NUMPAD9,
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kNumPadKeys); ++i) {
+  for (size_t i = 0; i < arraysize(kNumPadKeys); ++i) {
     EXPECT_TRUE(SendKey("e", session_, &command));
     EXPECT_TRUE(SendKey("k", session_, &command));
     EXPECT_TRUE(SendSpecialKey(commands::KeyEvent::HANJA, session_, &command));

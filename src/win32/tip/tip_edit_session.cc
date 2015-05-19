@@ -447,8 +447,9 @@ bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
   }
 
   TipSurroundingTextInfo info;
-  if (!TipSurroundingText::PrepareForReconversion(
-          text_service, context, &info)) {
+  bool need_async_edit_session = false;
+  if (!TipSurroundingText::PrepareForReconversionFromIme(
+          text_service, context, &info, &need_async_edit_session)) {
     return false;
   }
 
@@ -494,9 +495,11 @@ bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
     return false;
   }
 
-  // TSF spec guarantees that reconverting from application can always be a
-  // synchronous operation.
-  return TipEditSession::OnOutputReceivedSync(text_service, context, output);
+  if (need_async_edit_session) {
+    return TipEditSession::OnOutputReceivedAsync(text_service, context, output);
+  } else {
+    return TipEditSession::OnOutputReceivedSync(text_service, context, output);
+  }
 }
 
 bool UndoCommint(TipTextService *text_service, ITfContext *context) {
@@ -629,11 +632,16 @@ class SyncEditSessionImpl : public ITfEditSession {
   DISALLOW_COPY_AND_ASSIGN(SyncEditSessionImpl);
 };
 
-}  // namespace
+enum EditSessionMode {
+  kDontCare = 0,
+  kAsync,
+  kSync,
+};
 
-bool TipEditSession::OnOutputReceivedSync(TipTextService *text_service,
-                                          ITfContext *context,
-                                          const Output &new_output) {
+bool OnOutputReceivedImpl(TipTextService *text_service,
+                          ITfContext *context,
+                          const Output &new_output,
+                          EditSessionMode mode) {
   if (new_output.has_callback() &&
       new_output.callback().has_session_command() &&
       new_output.callback().session_command().has_type()) {
@@ -654,16 +662,46 @@ bool TipEditSession::OnOutputReceivedSync(TipTextService *text_service,
   CComPtr<ITfEditSession> edit_session(new SyncEditSessionImpl(
       text_service, context, new_output));
 
+  DWORD edit_session_flag = TF_ES_READWRITE;
+  switch (mode) {
+    case kAsync:
+      edit_session_flag |= TF_ES_ASYNC;
+      break;
+    case kSync:
+      edit_session_flag |= TF_ES_SYNC;
+      break;
+    case kDontCare:
+      edit_session_flag |= TF_ES_ASYNCDONTCARE;
+      break;
+    default:
+      DCHECK(false) << "unknown mode: " << mode;
+      break;
+  }
+
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
       text_service->GetClientID(),
       edit_session,
-      TF_ES_SYNC | TF_ES_READWRITE,
+      edit_session_flag,
       &edit_session_result);
   if (FAILED(hr)) {
     return false;
   }
   return SUCCEEDED(edit_session_result);
+}
+
+}  // namespace
+
+bool TipEditSession::OnOutputReceivedSync(TipTextService *text_service,
+                                          ITfContext *context,
+                                          const Output &new_output) {
+  return OnOutputReceivedImpl(text_service, context, new_output, kSync);
+}
+
+bool TipEditSession::OnOutputReceivedAsync(TipTextService *text_service,
+                                           ITfContext *context,
+                                           const Output &new_output) {
+  return OnOutputReceivedImpl(text_service, context, new_output, kAsync);
 }
 
 bool TipEditSession::OnLayoutChangedAsync(
@@ -691,10 +729,10 @@ bool TipEditSession::OnSetFocusAsync(TipTextService *text_service,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-    text_service->GetClientID(),
-    edit_session,
-    TF_ES_ASYNCDONTCARE | TF_ES_READ,
-    &edit_session_result);
+      text_service->GetClientID(),
+      edit_session,
+      TF_ES_ASYNCDONTCARE | TF_ES_READ,
+      &edit_session_result);
   if (FAILED(hr)) {
     return false;
   }
@@ -813,6 +851,13 @@ bool TipEditSession::SubmitAsync(TipTextService *text_service,
   SessionCommand session_command;
   session_command.set_type(SessionCommand::SUBMIT);
   return OnSessionCommandAsync(text_service, context, session_command);
+}
+
+bool TipEditSession::CanceleCompositionAsync(
+    TipTextService *text_service, ITfContext *context) {
+  SessionCommand command;
+  command.set_type(SessionCommand::REVERT);
+  return OnSessionCommandAsync(text_service, context, command);
 }
 
 bool TipEditSession::HilightCandidateAsync(TipTextService *text_service,

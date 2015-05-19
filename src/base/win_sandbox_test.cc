@@ -28,12 +28,23 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/win_sandbox.h"
+
 #include "base/scoped_handle.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace {
+
+class TestableWinSandbox : public WinSandbox {
+ public:
+  // Change access rights.
+  using WinSandbox::GetSDDL;
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(TestableWinSandbox);
+};
+
 void VerifySidContained(const vector<Sid> sids,
                         WELL_KNOWN_SID_TYPE expected_well_known_sid) {
   Sid expected_sid(expected_well_known_sid);
@@ -46,7 +57,6 @@ void VerifySidContained(const vector<Sid> sids,
   }
   EXPECT_TRUE(false) << "Not found. Expected SID: " << expected_well_known_sid;
 }
-}  // anonymous namespace
 
 TEST(WinSandboxTest, GetSidsToDisable) {
   HANDLE process_token_ret = NULL;
@@ -135,4 +145,162 @@ TEST(WinSandboxTest, GetSidsToRestrict) {
 
   VerifySidContained(interactive, WinBuiltinUsersSid);
 }
+
+const wchar_t kDummyUserSID[] = L"S-8";
+const wchar_t kDummyGroupSID[] = L"S-9";
+
+wstring GetSDDLForXP(WinSandbox::ObjectSecurityType type) {
+  return TestableWinSandbox::GetSDDL(
+      type, kDummyUserSID, kDummyGroupSID, false, false);
+}
+
+wstring GetSDDLForVista(WinSandbox::ObjectSecurityType type) {
+  return TestableWinSandbox::GetSDDL(
+      type, kDummyUserSID, kDummyGroupSID, true, false);
+}
+
+wstring GetSDDLForWin8(WinSandbox::ObjectSecurityType type) {
+  return TestableWinSandbox::GetSDDL(
+      type, kDummyUserSID, kDummyGroupSID, true, true);
+}
+
+TEST(WinSandboxTest, GetSDDLForSharablePipe) {
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)",
+      GetSDDLForXP(WinSandbox::kSharablePipe));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
+      L"S:(ML;;NX;;;LW)",
+      GetSDDLForVista(WinSandbox::kSharablePipe));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)(A;;GA;;;S-8)"
+      L"S:(ML;;NX;;;LW)",
+      GetSDDLForWin8(WinSandbox::kSharablePipe));
+}
+
+TEST(WinSandboxTest, GetSDDLForLooseSharablePipe) {
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GA;;;RC)",
+      GetSDDLForXP(WinSandbox::kLooseSharablePipe));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GA;;;RC)"
+      L"S:(ML;;NX;;;LW)",
+      GetSDDLForVista(WinSandbox::kLooseSharablePipe));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)(A;;GA;;;S-8)"
+      L"(A;;GA;;;RC)"
+      L"S:(ML;;NX;;;LW)",
+      GetSDDLForWin8(WinSandbox::kLooseSharablePipe));
+}
+
+TEST(WinSandboxTest, GetSDDLForSharableEvent) {
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GX;;;RC)",
+      GetSDDLForXP(WinSandbox::kSharableEvent));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GX;;;RC)"
+      L"S:(ML;;NX;;;LW)",
+      GetSDDLForVista(WinSandbox::kSharableEvent));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GX;;;AC)(A;;GA;;;S-8)(A;;GX;;;RC)"
+      L"S:(ML;;NX;;;LW)",
+      GetSDDLForWin8(WinSandbox::kSharableEvent));
+}
+
+TEST(WinSandboxTest, GetSDDLForSharableMutex) {
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GX;;;RC)",
+      GetSDDLForXP(WinSandbox::kSharableMutex));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GX;;;RC)"
+      L"S:(ML;;NX;;;LW)",
+      GetSDDLForVista(WinSandbox::kSharableMutex));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GX;;;AC)(A;;GA;;;S-8)(A;;GX;;;RC)"
+      L"S:(ML;;NX;;;LW)",
+      GetSDDLForWin8(WinSandbox::kSharableMutex));
+}
+
+TEST(WinSandboxTest, GetSDDLForSharableFileForRead) {
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GR;;;RC)",
+      GetSDDLForXP(WinSandbox::kSharableFileForRead));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GR;;;RC)"
+      L"S:(ML;;NWNX;;;LW)",
+      GetSDDLForVista(WinSandbox::kSharableFileForRead));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GR;;;AC)(A;;GA;;;S-8)(A;;GR;;;RC)"
+      L"S:(ML;;NWNX;;;LW)",
+      GetSDDLForWin8(WinSandbox::kSharableFileForRead));
+}
+
+TEST(WinSandboxTest, GetSDDLForIPCServerProcess) {
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;0x0400;;;RC)",
+      GetSDDLForXP(WinSandbox::kIPCServerProcess));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;0x1000;;;RC)",
+      GetSDDLForVista(WinSandbox::kIPCServerProcess));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;0x1000;;;AC)(A;;GA;;;S-8)"
+      L"(A;;0x1000;;;RC)",
+      GetSDDLForWin8(WinSandbox::kIPCServerProcess));
+}
+
+TEST(WinSandboxTest, GetSDDLForPrivateObject) {
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)",
+      GetSDDLForXP(WinSandbox::kPrivateObject));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)",
+      GetSDDLForVista(WinSandbox::kPrivateObject));
+  EXPECT_EQ(
+      L"O:S-8"
+      L"G:S-9"
+      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)",
+      GetSDDLForWin8(WinSandbox::kPrivateObject));
+}
+
+}  // namespace
 }  // namespace mozc

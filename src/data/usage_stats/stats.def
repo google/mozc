@@ -129,6 +129,10 @@ TransliterationCandidates8
 TransliterationCandidates9
 TransliterationCandidatesGE10
 
+# The count of language aware suggestions are displayed and committed.
+LanguageAwareSuggestionTriggered
+LanguageAwareSuggestionCommitted
+
 # The count of mouse selection command call
 MouseSelect
 
@@ -300,9 +304,11 @@ SendCommand_UsageStatsEvent
 SendCommand_UndoOrRewind
 SendCommand_ExpandSuggestion
 SendCommand_SendCaretLocation
-SendCommand_SendLanguageBarCommand
+SendCommand_ObsoleteSendLanguageBarCommand
 SendCommand_GetAsyncResult
 SendCommand_CommitRawText
+SendCommand_ConvertPrevPage
+SendCommand_ConvertNextPage
 
 # The count of revert in Chrome Omnibox or Google search box
 SendCommand_RevertInChromeOmnibox
@@ -382,7 +388,7 @@ DECIMAL
 DIVIDE
 # Numpad [=]
 EQUALS
-ASCII
+TEXT_INPUT
 HANKAKU
 KANJI
 KATAKANA

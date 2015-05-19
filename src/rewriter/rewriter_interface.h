@@ -71,7 +71,7 @@ class RewriterInterface {
   }
 
   // Hook(s) for all mutable operations
-  virtual void Finish(Segments *segments) {}
+  virtual void Finish(const ConversionRequest &request, Segments *segments) {}
 
   // sync internal data to local file system.
   virtual bool Sync() { return true; }

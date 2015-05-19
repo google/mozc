@@ -58,10 +58,14 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 括弧閉	〛	 ]  」 ) ｣	終わり二重大括弧		PARENTHESIS	機種依存文字
 括弧開	｛	 {  [ ( 「 ｢	始め中括弧		PARENTHESIS
 括弧閉	｝	 }  ] )  」 ｣	終わり中括弧		PARENTHESIS
-括弧開	〈	<  (  [ 「 ｢	始め山括弧		PARENTHESIS
+括弧開	〈	< (  [ 「 ｢	始め山括弧		PARENTHESIS
 括弧閉	〉	> ) ]  」 ｣	終わり山括弧		PARENTHESIS
+括弧開	‹	< (  [ 「 ｢	始め山括弧		PARENTHESIS
+括弧閉	›	> ) ]  」 ｣	終わり山括弧		PARENTHESIS
 括弧開	《	 <<  (  [ 「 ｢	始め二重山括弧		PARENTHESIS
 括弧閉	》	>>  ) ]  」 ｣	終わり二重山括弧		PARENTHESIS
+括弧開	«	ぎゅめ << ( [ 「 ｢	始め二重山括弧・ギュメ		PARENTHESIS
+括弧閉	»	ぎゅめ >> ) ]  」 ｣	終わり二重山括弧・ギュメ		PARENTHESIS
 括弧開	「	[ 「 ( ｢	始めかぎ括弧		PARENTHESIS
 括弧閉	」	 ]  」 ) ｣	終わりかぎ括弧		PARENTHESIS
 括弧開	『	 [ 「 ( ｢	始め二重かぎ括弧		PARENTHESIS
@@ -76,6 +80,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	｛｝	かっこ	中括弧
 記号	〈〉	かっこ 	山括弧
 記号	《》	かっこ	二重山括弧
+記号	«»	かっこ ぎゅめ	二重山括弧・ギュメ
+記号	‹›	かっこ	一重山括弧
 記号	「」	かっこ かぎかっこ 	かぎ括弧
 記号	『』	かっこ かぎかっこ	二重かぎ括弧
 記号	【】	かっこ 	すみつき括弧

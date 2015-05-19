@@ -434,7 +434,8 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   return modified;
 }
 
-void VariantsRewriter::Finish(Segments *segments) {
+void VariantsRewriter::Finish(const ConversionRequest &request,
+                              Segments *segments) {
   if (segments->request_type() != Segments::CONVERSION) {
     return;
   }

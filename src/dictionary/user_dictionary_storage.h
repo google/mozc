@@ -172,7 +172,7 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // return mutable UserDictionary corresponding to dic_id
   UserDictionary *GetUserDictionary(uint64 dic_id);
 
-  // Searches a dictionary from a dictioanry name, and the dictionary id is
+  // Searches a dictionary from a dictionary name, and the dictionary id is
   // stored in "dic_id".
   // Returns false if the name is not found.
   bool GetUserDictionaryId(const string &dic_name, uint64 *dic_id);

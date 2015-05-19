@@ -57,7 +57,7 @@ class UserBoundaryHistoryRewriter : public RewriterInterface {
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
 
-  virtual void Finish(Segments *segments);
+  virtual void Finish(const ConversionRequest &request, Segments *segments);
 
   virtual bool Reload();
 

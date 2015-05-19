@@ -63,12 +63,6 @@
         '../rewriter/rewriter_base.gyp:install_gen_usage_rewriter_dictionary_main',
       ],
       'conditions': [
-        ['language=="pinyin"', {
-          'dependencies': [
-            '../languages/pinyin/pinyin.gyp:'
-            'install_gen_pinyin_english_dictionary_data_main',
-          ]
-        }],
       ],
     },
   ],

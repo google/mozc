@@ -428,7 +428,7 @@ TEST_F(TypingCorrectorTest, TypingCorrection) {
       "\xE3\x81\x8B\xE3\x81\x84\xE3\x81\x97\xE3\x82\x83"},
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTestCases); ++i) {
+  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
     SCOPED_TRACE(string("key: ") + kTestCases[i].keys);
     InsertOneByOne(kTestCases[i].keys, &corrector);
     vector<TypeCorrectedQuery> queries;

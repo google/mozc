@@ -58,9 +58,8 @@ public class ConversionCandidateLayouterTest extends TestCase {
   };
 
   public void testSetViewSize() {
-    ConversionCandidateLayouter layouter = new ConversionCandidateLayouter(
-        DUMMY_SPAN_FACTORY, 0, 0, 0, 0, 0, 0);
-
+    ConversionCandidateLayouter layouter = new ConversionCandidateLayouter();
+    layouter.setSpanFactory(DUMMY_SPAN_FACTORY);
     layouter.setViewSize(0, 0);
 
     assertTrue(layouter.setViewSize(320, 240));
@@ -70,9 +69,10 @@ public class ConversionCandidateLayouterTest extends TestCase {
   }
 
   public void testPageSize() {
-    ConversionCandidateLayouter layouter = new ConversionCandidateLayouter(
-        DUMMY_SPAN_FACTORY, 0, 0, 0, VALUE_HEIGHT, 0, VALUE_VERTICAL_PADDING);
-
+    ConversionCandidateLayouter layouter = new ConversionCandidateLayouter();
+    layouter.setSpanFactory(DUMMY_SPAN_FACTORY);
+    layouter.setValueHeight(VALUE_HEIGHT);
+    layouter.setValueVerticalPadding(VALUE_VERTICAL_PADDING);
     layouter.setViewSize(320, 640);
 
     // The page width is equal to the view's width;

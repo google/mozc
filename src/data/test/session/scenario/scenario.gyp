@@ -28,39 +28,47 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
-  'type': 'executable',
-  'sources': [
-    'mozc_broker_main.cc',
-  ],
-  'dependencies': [
-    '../../base/base.gyp:base',
-  ],
-  'conditions': [
-    ['OS=="win"', {
-      'sources': [
-        '<(gen_out_dir)/mozc_broker_autogen.rc',
-        'ime_switcher.cc',
-        'prelauncher.cc',
-        'register_ime.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:crash_report_handler',
-        '../../client/client.gyp:client',
-        '../../config/config.gyp:genproto_config',
-        '../../config/config.gyp:stats_config_util',
-        '../../ipc/ipc.gyp:ipc',
-        '../../renderer/renderer.gyp:renderer_client',
-        '../../session/session_base.gyp:genproto_session',
-        '../base/win32_base.gyp:ime_base',
-        '../base/win32_base.gyp:win32_file_verifier',
-        'gen_mozc_broker_resource_header',
-      ],
-      'msvs_settings': {
-        'VCManifestTool': {
-          'AdditionalManifestFiles': 'mozc_broker.exe.manifest',
-          'EmbedManifest': 'true',
-        },
+  'variables': {
+    'relative_dir': 'data/test/session/scenario',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+  },
+  'targets': [
+    {
+      'target_name': 'install_session_handler_scenario_test_data',
+      'type': 'none',
+      'variables': {
+        'test_data': [
+          'auto_partial_suggestion.txt',
+          'b7132535_scenario.txt',
+          'b7321313_scenario.txt',
+          'b8703702_scenario.txt',
+          'change_request.txt',
+          'clear_user_prediction.txt',
+          'composition_display_as.txt',
+          'conversion.txt',
+          'conversion_display_as.txt',
+          'conversion_with_history_segment.txt',
+          'conversion_with_long_history_segments.txt',
+          'delete_history.txt',
+          'desktop_t13n_candidates.txt',
+          'insert_characters.txt',
+          'mobile_qwerty_transliteration_scenario.txt',
+          'mobile_t13n_candidates.txt',
+          'on_off_cancel.txt',
+          'partial_suggestion.txt',
+          'pending_character.txt',
+          'predict_and_convert.txt',
+          'reconvert.txt',
+          'revert.txt',
+          'segment_focus.txt',
+          'segment_width.txt',
+          'twelvekeys_switch_inputmode_scenario.txt',
+          'twelvekeys_toggle_hiragana_preedit_scenario.txt',
+          'undo.txt',
+        ],
+        'test_data_subdir': 'data/test/session/scenario',
       },
-    }],
+      'includes': ['../../../../gyp/install_testdata.gypi'],
+    },
   ],
 }

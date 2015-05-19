@@ -98,7 +98,7 @@ class VersionDataImpl {
 
     const string &version_string =
         kVersionRewriterVersionPrefix + Version::GetMozcVersion();
-    for (int i = 0; i < ARRAYSIZE_UNSAFE(kKeyCandList); ++i) {
+    for (int i = 0; i < arraysize(kKeyCandList); ++i) {
       entries_[kKeyCandList[i].key] =
           new VersionEntry(kKeyCandList[i].base_candidate,
                            version_string, 9);

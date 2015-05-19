@@ -1900,8 +1900,9 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
 
   vector<Command> commands(10000);
   for (size_t i = 0; i < commands.size(); ++i) {
-    commands[i].key = NumberUtil::SimpleItoa(i) + "key";
-    commands[i].value = NumberUtil::SimpleItoa(i) + "value";
+    commands[i].key = NumberUtil::SimpleItoa(static_cast<uint32>(i)) + "key";
+    commands[i].value = NumberUtil::SimpleItoa(static_cast<uint32>(i)) +
+                        "value";
     const int n = Util::Random(100);
     if (n == 0) {
       commands[i].type = Command::WAIT;
@@ -2971,10 +2972,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
       UserHistoryPredictor::LEFT_PREFIX_MATCH },
   };
 
-  // ARRAYSIZE_UNSAFE is less safe than arraysize, however we can't use
-  // arraysize for inner defined class.
-  // Please see base/port.h
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTests1); ++i) {
+  for (size_t i = 0; i < arraysize(kTests1); ++i) {
     EXPECT_EQ(kTests1[i].expect_type,
               UserHistoryPredictor::GetMatchTypeFromInput(
                   // "あ", "あ"
@@ -3001,7 +2999,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
       UserHistoryPredictor::LEFT_PREFIX_MATCH },
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTests2); ++i) {
+  for (size_t i = 0; i < arraysize(kTests2); ++i) {
     EXPECT_EQ(kTests2[i].expect_type,
               UserHistoryPredictor::GetMatchTypeFromInput(
                   "", "", expanded.get(), kTests2[i].target))
@@ -3049,10 +3047,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
       UserHistoryPredictor::LEFT_PREFIX_MATCH },
   };
 
-  // ARRAYSIZE_UNSAFE is less safe than arraysize, however we can't use
-  // arraysize for inner defined class.
-  // Please see base/port.h
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTests1); ++i) {
+  for (size_t i = 0; i < arraysize(kTests1); ++i) {
     EXPECT_EQ(kTests1[i].expect_type,
               UserHistoryPredictor::GetMatchTypeFromInput(
                   // "あし", "あ"
@@ -3082,7 +3077,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
       UserHistoryPredictor::LEFT_PREFIX_MATCH },
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTests2); ++i) {
+  for (size_t i = 0; i < arraysize(kTests2); ++i) {
     EXPECT_EQ(kTests2[i].expect_type,
               UserHistoryPredictor::GetMatchTypeFromInput(
                   // "し"

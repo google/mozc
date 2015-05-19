@@ -52,7 +52,7 @@ class SegmenterInterface;
 class Segments;
 class SuggestionFilter;
 
-// Dictioanry-based predictor
+// Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
   // Initializes a predictor with given references to submodules. Note that

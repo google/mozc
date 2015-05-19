@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
@@ -27,19 +28,65 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-  'variables': {
-    'chewing_libs': [
-      'chewing',
-    ],
-  },
-  'cflags': [
-    '<!@(<(pkg_config_command) --cflags <@(chewing_libs))',
-  ],
-  'libraries': [
-    '<!@(<(pkg_config_command) --libs-only-l <@(chewing_libs))',
-  ],
-  'ldflags': [
-    '<!@(<(pkg_config_command) --libs-only-L <@(chewing_libs))',
-  ],
-}
+"""Tweaks manifest file of NaCl Mozc.
+
+  % python tweak_manfest.py --output=out.txt --input=in.txt \
+      --version_file=version.txt
+
+See mozc_version.py for the detailed information for version.txt.
+"""
+
+__author__ = "horo"
+
+import json
+import logging
+import optparse
+
+from build_tools import mozc_version
+
+
+
+def ParseOptions():
+  """Parse command line options.
+
+  Returns:
+    An options data.
+  """
+  parser = optparse.OptionParser()
+  parser.add_option('--version_file', dest='version_file')
+  parser.add_option('--output', dest='output')
+  parser.add_option('--input', dest='input')
+  parser.add_option('--enable_cloud_sync',
+                    action='store_true',
+                    default=False,
+                    dest='enable_cloud_sync')
+
+  (options, unused_args) = parser.parse_args()
+  return options
+
+
+
+
+def main():
+  """The main function."""
+  options = ParseOptions()
+  if options.version_file is None:
+    logging.error('--version_file is not specified.')
+    exit(-1)
+  if options.output is None:
+    logging.error('--output is not specified.')
+    exit(-1)
+  if options.input is None:
+    logging.error('--input is not specified.')
+    exit(-1)
+
+  version = mozc_version.MozcVersion(options.version_file)
+  with open(options.input) as f:
+    result = f.read()
+  result = version.GetVersionInFormat(result)
+  with open(options.output, 'w') as f:
+    f.write(result)
+
+
+if __name__ == '__main__':
+  main()

@@ -148,8 +148,8 @@ u		ゆ	NoTransliteration
 よ*		ょ
 ょ*		よ
 よ`		ょ
-t		「	NoTransliteration
-v		」	NoTransliteration
+t		(	NoTransliteration
+v		)	NoTransliteration
 9		ら	NoTransliteration
 w		り	NoTransliteration
 x		る	NoTransliteration
@@ -159,9 +159,7 @@ z		ろ	NoTransliteration
 [			NoTransliteration
 ]			NoTransliteration
 `			NoTransliteration
-(		（	NoTransliteration
 '		’	NoTransliteration
-)		）	NoTransliteration
 0		わ	NoTransliteration
 わ*		ゎ
 ゎ*		わ

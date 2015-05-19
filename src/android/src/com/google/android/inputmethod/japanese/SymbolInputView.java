@@ -313,6 +313,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     private final EmojiProviderType emojiProviderType;
     private final TabHost tabHost;
     private final ViewPager viewPager;
+    private final float candidateTextSize;
+    private final float descriptionTextSize;
 
     private View historyViewCache = null;
     private int scrollState = ViewPager.SCROLL_STATE_IDLE;
@@ -322,7 +324,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
         ViewEventListener viewEventListener, CandidateSelectListener candidateSelectListener,
         MajorCategory majorCategory,
         SkinType skinType, EmojiProviderType emojiProviderType,
-        TabHost tabHost, ViewPager viewPager) {
+        TabHost tabHost, ViewPager viewPager,
+        float candidateTextSize, float descriptionTextSize) {
       Preconditions.checkNotNull(emojiProviderType);
 
       this.context = context;
@@ -334,6 +337,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       this.emojiProviderType = emojiProviderType;
       this.tabHost = tabHost;
       this.viewPager = viewPager;
+      this.candidateTextSize = candidateTextSize;
+      this.descriptionTextSize = descriptionTextSize;
     }
 
     private void maybeResetHistoryView() {
@@ -416,6 +421,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
           context.getResources().getDimension(majorCategory.minColumnWidthResourceId));
       symbolCandidateView.setSkinType(skinType);
       symbolCandidateView.setEmojiProviderType(emojiProviderType);
+      symbolCandidateView.setCandidateTextDimension(candidateTextSize, descriptionTextSize);
 
       // Set candidate contents.
       if (position == HISTORY_INDEX) {
@@ -543,10 +549,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     private View scrollGuideView = null;
     private GestureDetector gestureDetector = null;
 
-    {
-      setBackgroundDrawableType(DrawableType.SYMBOL_CANDIDATE_BACKGROUND);
-    }
-
     public SymbolCandidateView(Context context) {
       super(context, Orientation.VERTICAL);
     }
@@ -561,22 +563,29 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     // Shared instance initializer.
     {
+      setBackgroundDrawableType(DrawableType.SYMBOL_CANDIDATE_BACKGROUND);
       Resources resources = getResources();
       scroller.setDecayRate(
           resources.getInteger(R.integer.symbol_input_scroller_velocity_decay_rate) / 1000000f);
       scroller.setMinimumVelocity(
           resources.getInteger(R.integer.symbol_input_scroller_minimum_velocity));
+      layouter = new SymbolCandidateLayouter();
+    }
 
-      float valueTextSize = resources.getDimension(R.dimen.candidate_text_size);
+    void setCandidateTextDimension(float textSize, float descriptionTextSize) {
+      Preconditions.checkArgument(textSize > 0);
+      Preconditions.checkArgument(descriptionTextSize > 0);
+
+      Resources resources = getResources();
+
       float valueHorizontalPadding =
           resources.getDimension(R.dimen.candidate_horizontal_padding_size);
-      float descriptionTextSize = resources.getDimension(R.dimen.candidate_description_text_size);
       float descriptionHorizontalPadding =
           resources.getDimension(R.dimen.symbol_description_right_padding);
       float descriptionVerticalPadding =
           resources.getDimension(R.dimen.symbol_description_bottom_padding);
 
-      candidateLayoutRenderer.setValueTextSize(valueTextSize);
+      candidateLayoutRenderer.setValueTextSize(textSize);
       candidateLayoutRenderer.setValueHorizontalPadding(valueHorizontalPadding);
       candidateLayoutRenderer.setValueScalingPolicy(ValueScalingPolicy.UNIFORM);
       candidateLayoutRenderer.setDescriptionTextSize(descriptionTextSize);
@@ -585,13 +594,13 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       candidateLayoutRenderer.setDescriptionLayoutPolicy(DescriptionLayoutPolicy.OVERLAY);
 
       SpanFactory spanFactory = new SpanFactory();
-      spanFactory.setValueTextSize(valueTextSize);
+      spanFactory.setValueTextSize(textSize);
       spanFactory.setDescriptionTextSize(descriptionTextSize);
       spanFactory.setDescriptionDelimiter(DESCRIPTION_DELIMITER);
-      SymbolCandidateLayouter symbolCandidateLayouter = new SymbolCandidateLayouter(spanFactory);
-      symbolCandidateLayouter.setRowHeight(
-          resources.getDimensionPixelSize(R.dimen.symbol_view_candidate_height));
-      setCandidateLayouter(symbolCandidateLayouter);
+
+      SymbolCandidateLayouter layouter = SymbolCandidateLayouter.class.cast(this.layouter);
+      layouter.setSpanFactory(spanFactory);
+      layouter.setRowHeight(resources.getDimensionPixelSize(R.dimen.symbol_view_candidate_height));
     }
 
     @Override
@@ -699,6 +708,10 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
           MAJOR_CATEGORY_PRESSED_BOTTOM_COLOR,
           MAJOR_CATEGORY_SHADOW_COLOR,
           BUTTON_CORNOR_RADIUS * getResources().getDisplayMetrics().density);
+  // Candidate text size in dip.
+  private float candidateTextSize;
+  // Description text size in dip.
+  private float desciptionTextSize;
 
   public SymbolInputView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
@@ -778,7 +791,8 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     SymbolTabWidgetViewPagerAdapter adapter = new SymbolTabWidgetViewPagerAdapter(
         getContext(),
         symbolCandidateStorage, viewEventListener, symbolCandidateSelectListener,
-        currentMajorCategory, skinType, emojiProviderType, tabHost, candidateViewPager);
+        currentMajorCategory, skinType, emojiProviderType, tabHost, candidateViewPager,
+        candidateTextSize, desciptionTextSize);
     candidateViewPager.setAdapter(adapter);
     candidateViewPager.setOnPageChangeListener(adapter);
     tabHost.setOnTabChangedListener(adapter);
@@ -995,8 +1009,10 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   @Override
   public void setVisibility(int visibility) {
+    int previousVisibility = getVisibility();
     super.setVisibility(visibility);
-    if (viewEventListener != null && visibility != View.VISIBLE) {
+    if (viewEventListener != null
+        && previousVisibility == View.VISIBLE && visibility != View.VISIBLE) {
       viewEventListener.onCloseSymbolInputView();
     }
   }
@@ -1007,6 +1023,14 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   void setKeyEventHandler(KeyEventHandler keyEventHandler) {
     deleteKeyEventButtonTouchListener.setKeyEventHandler(keyEventHandler);
+  }
+
+  void setCandidateTextDimension(float candidateTextSize, float descriptionTextSize) {
+    Preconditions.checkArgument(candidateTextSize > 0);
+    Preconditions.checkArgument(descriptionTextSize > 0);
+
+    this.candidateTextSize = candidateTextSize;
+    this.desciptionTextSize = descriptionTextSize;
   }
 
   /**

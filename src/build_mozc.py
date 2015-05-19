@@ -203,10 +203,15 @@ def GetGypFileNames(options):
   gyp_file_names.extend(glob.glob('%s/build_tools/*/*.gyp' % SRC_DIR))
   # Include tests gyp
   gyp_file_names.append('%s/gyp/tests.gyp' % SRC_DIR)
-  # Include subdirectory of dictionary
-  gyp_file_names.extend(glob.glob('%s/dictionary/*/*.gyp' % SRC_DIR))
+  # Include subdirectories of data/test/session/scenario
+  gyp_file_names.extend(glob.glob('%s/data/test/session/scenario/*.gyp' %
+                                  SRC_DIR))
+  gyp_file_names.extend(glob.glob('%s/data/test/session/scenario/*/*.gyp' %
+                                  SRC_DIR))
   # Include subdirectories of data_manager
   gyp_file_names.extend(glob.glob('%s/data_manager/*/*.gyp' % SRC_DIR))
+  # Include subdirectory of dictionary
+  gyp_file_names.extend(glob.glob('%s/dictionary/*/*.gyp' % SRC_DIR))
   # Include subdirectory of rewriter
   gyp_file_names.extend(glob.glob('%s/rewriter/*/*.gyp' % SRC_DIR))
   # Include subdirectory of win32 and breakpad for Windows
@@ -247,17 +252,6 @@ def MoveToTopLevelSourceDirectory():
 def GetBuildScriptDirectoryName():
   """Gets the directory name of this script."""
   return os.path.dirname(ABS_SCRIPT_PATH)
-
-
-def RunPackageVerifiers(build_dir):
-  """Runs script to verify created packages/binaries.
-
-  Args:
-    build_dir: the directory where build results are.
-  """
-  binary_size_checker = os.path.join(
-      GetBuildScriptDirectoryName(), 'build_tools', 'binary_size_checker.py')
-  RunOrDie([binary_size_checker, '--target_directory', build_dir])
 
 
 def AddCommonOptions(parser):
@@ -427,12 +421,6 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='http client',
                    macro_name='MOZC_ENABLE_HTTP_CLIENT',
                    option_name='http_client')
-  AddFeatureOption(parser, feature_name='ambiguous search',
-                   macro_name='MOZC_ENABLE_AMBIGUOUS_SEARCH',
-                   option_name='ambiguous_search')
-  AddFeatureOption(parser, feature_name='typing correction',
-                   macro_name='MOZC_ENABLE_TYPING_CORRECTION',
-                   option_name='typing_correction')
   AddFeatureOption(parser, feature_name='mode_indicator',
                    macro_name='MOZC_ENABLE_MODE_INDICATOR',
                    option_name='mode_indicator')
@@ -828,19 +816,15 @@ def GypMain(options, unused_args):
                            windows=is_official_dev,
                            mac=is_official_dev)
   SetCommandLineForFeature(option_name='http_client',
-                           linux=is_official,
+                           linux=False,
                            windows=is_official,
                            mac=is_official,
                            chromeos=False,  # not supported.
                            android=is_official,
                            # System dictionary is read with HttpClient in NaCl.
                            nacl=True)
-  SetCommandLineForFeature(option_name='ambiguous_search',
-                           android=True)
-  SetCommandLineForFeature(option_name='typing_correction',
-                           android=True)
   SetCommandLineForFeature(option_name='mode_indicator',
-                           windows=is_official_dev_or_oss)
+                           windows=True)
 
   command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
 
@@ -1117,11 +1101,6 @@ def BuildMain(options, targets, original_directory_name):
   else:
     logging.error('Unsupported platform: %s', os.name)
     return
-
-  RunPackageVerifiers(
-      os.path.join(GetBuildBaseName(options,
-                                    GetMozcVersion().GetTargetPlatform()),
-                   options.configuration))
 
   # Revert python path.
   os.environ['PYTHONPATH'] = original_python_path

@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese;
 import org.mozc.android.inputmethod.japanese.CandidateView.ConversionCandidateWordView;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.ui.ConversionCandidateLayouter;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -59,10 +60,9 @@ import android.widget.ToggleButton;
  */
 public class ConversionCandidateWordContainerView extends ViewGroup {
 
-  private final int foldingIconSize =
-      getResources().getDimensionPixelSize(R.dimen.keyboard_folding_icon_size);
+  private float foldingIconSize;
 
- public ConversionCandidateWordContainerView(
+  public ConversionCandidateWordContainerView(
       Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
   }
@@ -73,6 +73,13 @@ public class ConversionCandidateWordContainerView extends ViewGroup {
 
   public ConversionCandidateWordContainerView(Context context) {
     super(context);
+  }
+
+  void setCandidateTextDimension(float candidateTextSize) {
+    Preconditions.checkArgument(candidateTextSize > 0);
+
+    foldingIconSize = candidateTextSize
+        + getResources().getDimension(R.dimen.candidate_vertical_padding_size) * 2;
   }
 
   @Override
@@ -89,11 +96,11 @@ public class ConversionCandidateWordContainerView extends ViewGroup {
     }
 
     ConversionCandidateLayouter layouter = candidateWordView.getCandidateLayouter();
-    int topMargin = (layouter.getRowHeight() - foldingIconSize) / 2;
-    int rightMargin = ((int) layouter.getChunkWidth() - foldingIconSize) / 2;
-    inputFrameFoldButton.layout(right - rightMargin - foldingIconSize,
-                                top + topMargin,
-                                right - rightMargin,
-                                top + topMargin + foldingIconSize);
+    float topMargin = (layouter.getRowHeight() - foldingIconSize) / 2;
+    float rightMargin = (layouter.getChunkWidth() - foldingIconSize) / 2;
+    inputFrameFoldButton.layout((int) (right - rightMargin - foldingIconSize),
+                                (int) (top + topMargin),
+                                (int) (right - rightMargin),
+                                (int) (top + topMargin + foldingIconSize));
   }
 }

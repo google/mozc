@@ -167,17 +167,6 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 #define AS_STRING_INTERNAL(x)   #x
 
 
-// ARRAYSIZE_UNSAFE performs essentially the same calculation as arraysize,
-// but can be used on anonymous types or types defined inside functions.
-// It's less safe than arraysize as it accepts some (although not all)
-// pointers.  Therefore, you should use arraysize whenever possible.
-
-#ifndef ARRAYSIZE_UNSAFE
-#define ARRAYSIZE_UNSAFE(a)       \
-    ((sizeof(a) / sizeof(*(a))) / \
-    static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
-#endif  // !ARRAYSIZE_UNSAFE
-
 #include "base/flags.h"
 #include "base/init.h"
 

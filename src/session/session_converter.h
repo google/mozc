@@ -130,7 +130,8 @@ class SessionConverter : public SessionConverterInterface {
   virtual void Reset();
 
   // Fixes the conversion with the current status.
-  virtual void Commit(const commands::Context &context);
+  virtual void Commit(const composer::Composer &composer,
+                      const commands::Context &context);
 
   // Fixes the suggestion candidate. Stores the number of characters in the key
   // of the committed candidate to committed_key_size.
@@ -179,7 +180,8 @@ class SessionConverter : public SessionConverterInterface {
   // so Commit() method is called instead. In this case, the caller
   // should not delete any characters.
   // c.f. CommitSuggestionInternal
-  virtual void CommitFirstSegment(const commands::Context &context,
+  virtual void CommitFirstSegment(const composer::Composer &composer,
+                                  const commands::Context &context,
                                   size_t *consumed_key_size);
 
   // Commits the preedit string represented by Composer.

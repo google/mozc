@@ -601,15 +601,52 @@ string GetObjectNameAsString(HANDLE handle) {
   return result;
 }
 
-bool GetCurrentSessionId(DWORD *session_id) {
+bool GetCurrentSessionId(uint32 *session_id) {
   DCHECK(session_id);
   *session_id = 0;
-  if (!::ProcessIdToSessionId(::GetCurrentProcessId(),
-                              session_id)) {
+  DWORD id = 0;
+  if (!::ProcessIdToSessionId(::GetCurrentProcessId(), &id)) {
     LOG(ERROR) << "cannot get session id: " << ::GetLastError();
     return false;
   }
+  static_assert(sizeof(DWORD) == sizeof(uint32),
+                "DWORD and uint32 must be equivalent");
+  *session_id = static_cast<uint32>(id);
   return true;
+}
+
+// Here we use the input desktop instead of the desktop associated with the
+// current thread. One reason behind this is that some applications such as
+// Adobe Reader XI use multiple desktops in a process. Basically the input
+// desktop is most appropriate and important desktop for our use case.
+// See http://blogs.adobe.com/asset/2012/10/new-security-capabilities-in-adobe-reader-and-acrobat-xi-now-available.html
+string GetInputDesktopName() {
+  const HDESK desktop_handle = OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS);
+  if (desktop_handle == nullptr) {
+    return "";
+  }
+  const string desktop_name = GetObjectNameAsString(desktop_handle);
+  ::CloseDesktop(desktop_handle);
+  return desktop_name;
+}
+
+string GetProcessWindowStationName() {
+  // We must not close the returned value of GetProcessWindowStation().
+  // http://msdn.microsoft.com/en-us/library/windows/desktop/ms683225.aspx
+  const HWINSTA window_station = ::GetProcessWindowStation();
+  if (window_station == nullptr) {
+    return "";
+  }
+
+  return GetObjectNameAsString(window_station);
+}
+
+string GetSessionIdString() {
+  uint32 session_id = 0;
+  if (!GetCurrentSessionId(&session_id)) {
+    return "";
+  }
+  return NumberUtil::SimpleItoa(session_id);
 }
 
 }  // namespace
@@ -627,21 +664,25 @@ string SystemUtil::GetDesktopNameAsString() {
   return "";
 
 #elif defined(OS_WIN)
-  DWORD session_id = 0;
-  if (!GetCurrentSessionId(&session_id)) {
+  const string &session_id = GetSessionIdString();
+  if (session_id.empty()) {
+    DLOG(ERROR) << "Failed to retrieve session id";
     return "";
   }
 
-  char id[64];
-  snprintf(id, sizeof(id), "%u", session_id);
+  const string &window_station_name = GetProcessWindowStationName();
+  if (window_station_name.empty()) {
+    DLOG(ERROR) << "Failed to retrieve window station name";
+    return "";
+  }
 
-  string result = id;
-  result += ".";
-  result += GetObjectNameAsString(::GetProcessWindowStation());
-  result += ".";
-  result += GetObjectNameAsString(::GetThreadDesktop(::GetCurrentThreadId()));
+  const string &desktop_name = GetInputDesktopName();
+  if (desktop_name.empty()) {
+    DLOG(ERROR) << "Failed to retrieve desktop name";
+    return "";
+  }
 
-  return result;
+  return (session_id + "." + window_station_name + "." + desktop_name);
 #endif  // OS_LINUX, OS_MACOSX, OS_WIN
 }
 
@@ -663,9 +704,8 @@ class IsWindowsVerXOrLaterCache {
       DWORDLONG conditional = 0;
       VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
       VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-      const BOOL result =
-        ::VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION,
-                            conditional);
+      const BOOL result = ::VerifyVersionInfo(
+          &osvi, VER_MAJORVERSION | VER_MINORVERSION, conditional);
       if (result != FALSE) {
         succeeded_ = true;
         is_ver_x_or_later_ = true;
@@ -682,9 +722,8 @@ class IsWindowsVerXOrLaterCache {
       DWORDLONG conditional = 0;
       VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_LESS);
       VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_LESS);
-      const BOOL result =
-        ::VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION,
-                            conditional);
+      const BOOL result = ::VerifyVersionInfo(
+          &osvi, VER_MAJORVERSION | VER_MINORVERSION, conditional);
       if (result != FALSE) {
         succeeded_ = true;
         is_ver_x_or_later_ = false;
@@ -711,6 +750,7 @@ class IsWindowsVerXOrLaterCache {
 typedef IsWindowsVerXOrLaterCache<6, 0> IsWindowsVistaOrLaterCache;
 typedef IsWindowsVerXOrLaterCache<6, 1> IsWindows7OrLaterCache;
 typedef IsWindowsVerXOrLaterCache<6, 2> IsWindows8OrLaterCache;
+typedef IsWindowsVerXOrLaterCache<6, 3> IsWindows8_1OrLaterCache;
 
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class SystemDirectoryCache {
@@ -746,6 +786,9 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
     return false;
   }
   if (!Singleton<IsWindows8OrLaterCache>::get()->succeeded()) {
+    return false;
+  }
+  if (!Singleton<IsWindows8_1OrLaterCache>::get()->succeeded()) {
     return false;
   }
   if (!Singleton<SystemDirectoryCache>::get()->succeeded()) {
@@ -942,6 +985,15 @@ bool SystemUtil::IsWindows8OrLater() {
 #endif  // OS_WIN
 }
 
+bool SystemUtil::IsWindows8_1OrLater() {
+#ifdef OS_WIN
+  DCHECK(Singleton<IsWindows8_1OrLaterCache>::get()->succeeded());
+  return Singleton<IsWindows8_1OrLaterCache>::get()->is_ver_x_or_later();
+#else
+  return false;
+#endif  // OS_WIN
+}
+
 namespace {
 volatile mozc::SystemUtil::IsWindowsX64Mode g_is_windows_x64_mode =
     mozc::SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE;
@@ -1062,13 +1114,13 @@ string SystemUtil::GetFileVersionString(const wstring &file_fullpath) {
 }
 
 string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
-  DWORD session_id = 0;
-  if (!GetCurrentSessionId(&session_id)) {
+  const string &session_id = GetSessionIdString();
+  if (session_id.empty()) {
+    DLOG(ERROR) << "Failed to retrieve session id";
     return "";
   }
 
-  const string &desktop_name =
-      GetObjectNameAsString(::GetThreadDesktop(::GetCurrentThreadId()));
+  const string &desktop_name = GetInputDesktopName();
 
   if (desktop_name.empty()) {
     DLOG(ERROR) << "Failed to retrieve desktop name";
@@ -1076,8 +1128,7 @@ string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
   }
 
   // Compose "Local\MSCTF.AsmCacheReady.<desktop name><session #>".
-  return ("Local\\MSCTF.AsmCacheReady." + desktop_name +
-          Util::StringPrintf("%u", session_id));
+  return ("Local\\MSCTF.AsmCacheReady." + desktop_name + session_id);
 }
 #endif  // OS_WIN
 
@@ -1089,8 +1140,10 @@ string SystemUtil::GetOSVersionString() {
   OSVERSIONINFOEX osvi = { 0 };
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
   if (GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&osvi))) {
-    ret += "." + NumberUtil::SimpleItoa(osvi.dwMajorVersion);
-    ret += "." + NumberUtil::SimpleItoa(osvi.dwMinorVersion);
+    ret += ".";
+    ret += NumberUtil::SimpleItoa(static_cast<uint32>(osvi.dwMajorVersion));
+    ret += ".";
+    ret += NumberUtil::SimpleItoa(static_cast<uint32>(osvi.dwMinorVersion));
     ret += "." + NumberUtil::SimpleItoa(osvi.wServicePackMajor);
     ret += "." + NumberUtil::SimpleItoa(osvi.wServicePackMinor);
   } else {

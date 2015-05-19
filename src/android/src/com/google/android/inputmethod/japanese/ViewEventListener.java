@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
+import org.mozc.android.inputmethod.japanese.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.SymbolInputView.MajorCategory;
@@ -115,8 +116,9 @@ public interface ViewEventListener {
 
   /**
    * Called when the hardware_composition_button is clicked.
+   * @param newParam TODO(matsuzakit):
    */
-  public void onClickHardwareKeyboardCompositionModeButton();
+  public void onHardwareKeyboardCompositionModeChange(CompositionSwitchMode mode);
 
   /**
    * Called when the key for editor action is pressed.

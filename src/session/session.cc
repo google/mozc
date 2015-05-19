@@ -363,6 +363,12 @@ bool Session::SendCommand(commands::Command *command) {
     case commands::SessionCommand::COMMIT_RAW_TEXT:
       result = CommitRawText(command);
       break;
+    case commands::SessionCommand::CONVERT_PREV_PAGE:
+      result = ConvertPrevPage(command);
+      break;
+    case commands::SessionCommand::CONVERT_NEXT_PAGE:
+      result = ConvertNextPage(command);
+      break;
     default:
       LOG(WARNING) << "Unknown command" << command->DebugString();
       result = DoNothing(command);
@@ -1733,7 +1739,8 @@ bool Session::Commit(commands::Command *command) {
     context_->mutable_converter()->CommitPreedit(context_->composer(),
                                                  command->input().context());
   } else {  // ImeContext::CONVERSION
-    context_->mutable_converter()->Commit(command->input().context());
+    context_->mutable_converter()->Commit(context_->composer(),
+                                          command->input().context());
   }
 
   SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
@@ -1829,7 +1836,8 @@ bool Session::CommitSegment(commands::Command *command) {
 
 void Session::CommitFirstSegmentInternal(const commands::Context &context) {
   size_t size;
-  context_->mutable_converter()->CommitFirstSegment(context, &size);
+  context_->mutable_converter()->CommitFirstSegment(
+      context_->composer(), context, &size);
   if (size > 0) {
     // Delete the key characters of the first segment from the preedit.
     context_->mutable_composer()->DeleteRange(0, size);
@@ -2546,6 +2554,9 @@ bool Session::ConvertNext(commands::Command *command) {
 }
 
 bool Session::ConvertNextPage(commands::Command *command) {
+  if (!(context_->state() & (ImeContext::CONVERSION))) {
+    return DoNothing(command);
+  }
   command->mutable_output()->set_consumed(true);
   context_->mutable_converter()->CandidateNextPage();
   Output(command);
@@ -2560,6 +2571,9 @@ bool Session::ConvertPrev(commands::Command *command) {
 }
 
 bool Session::ConvertPrevPage(commands::Command *command) {
+  if (!(context_->state() & (ImeContext::CONVERSION))) {
+    return DoNothing(command);
+  }
   command->mutable_output()->set_consumed(true);
   context_->mutable_converter()->CandidatePrevPage();
   Output(command);

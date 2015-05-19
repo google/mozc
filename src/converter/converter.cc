@@ -201,9 +201,7 @@ bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
   }
   SetKey(segments, conversion_key);
   segments->set_request_type(Segments::CONVERSION);
-  if (!immutable_converter_->ConvertForRequest(request, segments)) {
-    return false;
-  }
+  immutable_converter_->ConvertForRequest(request, segments);
   RewriteAndSuppressCandidates(request, segments);
   return IsValidSegments(request, *segments);
 }
@@ -213,9 +211,7 @@ bool ConverterImpl::StartConversion(Segments *segments,
   SetKey(segments, key);
   segments->set_request_type(Segments::CONVERSION);
   const ConversionRequest default_request;
-  if (!immutable_converter_->ConvertForRequest(default_request, segments)) {
-    return false;
-  }
+  immutable_converter_->ConvertForRequest(default_request, segments);
   RewriteAndSuppressCandidates(default_request, segments);
   return IsValidSegments(default_request, *segments);
 }
@@ -307,9 +303,7 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
   DCHECK_EQ(key, segments->conversion_segment(0).key());
 
   segments->set_request_type(request_type);
-  if (!predictor_->PredictForRequest(request, segments)) {
-    return false;
-  }
+  predictor_->PredictForRequest(request, segments);
   RewriteAndSuppressCandidates(request, segments);
   if (request_type == Segments::PARTIAL_SUGGESTION ||
       request_type == Segments::PARTIAL_PREDICTION) {
@@ -404,7 +398,8 @@ bool ConverterImpl::StartPartialPredictionForRequest(
                  Segments::PARTIAL_PREDICTION, segments);
 }
 
-bool ConverterImpl::FinishConversion(Segments *segments) const {
+bool ConverterImpl::FinishConversion(const ConversionRequest &request,
+                                     Segments *segments) const {
   CommitUsageStats(segments, segments->history_segments_size(),
                    segments->conversion_segments_size());
 
@@ -425,7 +420,7 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
   }
 
   segments->clear_revert_entries();
-  rewriter_->Finish(segments);
+  rewriter_->Finish(request, segments);
   predictor_->Finish(segments);
 
   // Remove the front segments except for some segments which will be
@@ -699,12 +694,8 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_->ConvertForRequest(request, segments)) {
-    return false;
-  }
-
+  immutable_converter_->ConvertForRequest(request, segments);
   RewriteAndSuppressCandidates(request, segments);
-
   return true;
 }
 
@@ -762,12 +753,8 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_->ConvertForRequest(request, segments)) {
-    return false;
-  }
-
+  immutable_converter_->ConvertForRequest(request, segments);
   RewriteAndSuppressCandidates(request, segments);
-
   return true;
 }
 

@@ -96,6 +96,7 @@ public class CandidateViewTest extends InstrumentationTestCaseWithMock {
   public void testCandidateWordView_update() {
     ConversionCandidateWordView candidateWordView =
         new ConversionCandidateWordView(getInstrumentation().getTargetContext(), null);
+    candidateWordView.setCandidateTextDimension(1, 1);
     candidateWordView.layout(0, 0, 320, 240);
     candidateWordView.scrollTo(100, 100);
 
@@ -127,7 +128,7 @@ public class CandidateViewTest extends InstrumentationTestCaseWithMock {
     CandidateLayouter layouter = createMock(CandidateLayouter.class);
     expect(layouter.layout(isA(CandidateList.class))).andReturn(layout);
     expect(layouter.getPageHeight()).andReturn(100);
-    candidateWordView.setCandidateLayouter(layouter);
+    candidateWordView.layouter = layouter;
     replayAll();
 
     candidateWordView.update(CandidateList.getDefaultInstance());

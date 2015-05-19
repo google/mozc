@@ -74,7 +74,6 @@ PropertyHandler::PropertyHandler(MessageTranslatorInterface *translator,
       is_activated_(true) {
 
   AppendCompositionPropertyToPanel();
-  AppendSwitchPropertyToPanel();
 #ifndef OS_CHROMEOS
   AppendToolPropertyToPanel();
 #endif
@@ -96,12 +95,6 @@ PropertyHandler::~PropertyHandler() {
     g_object_unref(prop_mozc_tool_);
     prop_mozc_tool_ = NULL;
   }
-
-  for (size_t i = 0; i < prop_switch_properties_.size(); ++i) {
-    // The ref counter will drop to one.
-    g_object_unref(prop_switch_properties_[i]);
-  }
-  prop_switch_properties_.clear();
 
   if (prop_root_) {
     // Destroy all objects under the root.
@@ -235,41 +228,6 @@ void PropertyHandler::AppendToolPropertyToPanel() {
   ibus_prop_list_append(prop_root_, prop_mozc_tool_);
 }
 
-// TODO(nona): do not use kMozcEngine*** directory.
-void PropertyHandler::AppendSwitchPropertyToPanel() {
-  if (kMozcEngineSwitchProperties == NULL ||
-      kMozcEngineSwitchPropertiesSize == 0) {
-    return;
-  }
-
-  for (size_t i = 0; i < kMozcEngineSwitchPropertiesSize; ++i) {
-    const MozcEngineSwitchProperty &entry = kMozcEngineSwitchProperties[i];
-    IBusText *label = ibus_text_new_from_string(
-        translator_->MaybeTranslate(entry.label).c_str());
-    IBusText *tooltip = ibus_text_new_from_string(
-        translator_->MaybeTranslate(entry.tooltip).c_str());
-    IBusProperty *item = ibus_property_new(entry.key,
-                                           PROP_TYPE_NORMAL,
-                                           label,
-                                           GetIconPath(entry.icon).c_str(),
-                                           tooltip,
-                                           TRUE,
-                                           TRUE,
-                                           PROP_STATE_UNCHECKED,
-                                           NULL);
-    g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
-    prop_switch_properties_.push_back(item);
-
-    // We have to sink |*item| here so ibus_engine_update_property() call in
-    // PropertyActivate() does not destruct the object.
-    g_object_ref_sink(item);
-  }
-
-  for (size_t i = 0; i < prop_switch_properties_.size(); ++i) {
-    ibus_prop_list_append(prop_root_, prop_switch_properties_[i]);
-  }
-}
-
 void PropertyHandler::Update(IBusEngine *engine,
                              const commands::Output &output) {
   if (output.has_status() &&
@@ -387,25 +345,6 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
     }
   }
 #endif
-
-  for (size_t i = 0; i < prop_switch_properties_.size(); ++i) {
-    IBusProperty *prop = prop_switch_properties_[i];
-    if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
-      const MozcEngineSwitchProperty *entry =
-          reinterpret_cast<const MozcEngineSwitchProperty *>(
-              g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
-      DCHECK(entry->id);
-      commands::Output output;
-      commands::SessionCommand command;
-      command.set_language_bar_command_id(entry->id);
-      command.set_type(commands::SessionCommand::SEND_LANGUAGE_BAR_COMMAND);
-      if (!client_->SendCommand(command, &output)) {
-        LOG(ERROR) << "cannot send command to update session config: "
-                   << entry->id;
-      }
-      return;
-    }
-  }
 
   if (property_state != PROP_STATE_CHECKED) {
     return;

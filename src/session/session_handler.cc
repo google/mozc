@@ -829,11 +829,6 @@ SessionID SessionHandler::CreateNewSessionID() {
   SessionID id = 0;
   while (true) {
     Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
-#ifdef  __native_client__
-    // Because JavaScript does not support uint64.
-    // So we downsize the session id range from uint64 to uint32 in NaCl.
-    id = static_cast<uint32>(id);
-#endif  // __native_client__
     // don't allow id == 0, as it is reserved for
     // "invalid id"
     if (id != 0 && !session_map_->HasKey(id)) {

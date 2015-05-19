@@ -109,7 +109,7 @@ static int InitComposition(Composition* comp) {
     // "っ"
     { "\xe3\x81\xa3", "ty", "tty" },
   };
-  static const int test_chunks_size = ARRAYSIZE_UNSAFE(test_chunks);
+  static const int test_chunks_size = arraysize(test_chunks);
   CharChunkList::iterator it;
   comp->MaybeSplitChunkAt(0, &it);
   for (int i = 0; i < test_chunks_size; ++i) {
@@ -156,7 +156,7 @@ TEST_F(CompositionTest, GetChunkLength) {
   };
   CharChunk *chunk = AppendChunk("", "", "", composition_.get());
 
-  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
+  for (int i = 0; i < arraysize(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     chunk->set_conversion(test.conversion);
     chunk->set_pending(test.pending);
@@ -315,7 +315,7 @@ TEST_F(CompositionTest, SplitRawChunk) {
     // "っ", "っ"
     { "\xe3\x81\xa3", "ty", "tty", 3, "", "", "", "\xe3\x81\xa3", "ty", "tty" },
   };
-  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
+  for (int i = 0; i < arraysize(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, NULL);
     right_orig_chunk.set_conversion(test.conversion);
@@ -369,7 +369,7 @@ TEST_F(CompositionTest, SplitConversionChunk) {
     // "っ", "っ"
     { "\xe3\x81\xa3", "ty", "tty", 3, "", "", "", "\xe3\x81\xa3", "ty", "tty" },
   };
-  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
+  for (int i = 0; i < arraysize(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, NULL);
     right_orig_chunk.set_conversion(test.conversion);
@@ -425,7 +425,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
     { 12, 5, 5 },
   };
   const size_t dummy_position = 0;
-  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
+  for (int i = 0; i < arraysize(test_cases); ++i) {
     const TestCase& test = test_cases[i];
 
     {  // Test RAW mode

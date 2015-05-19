@@ -257,7 +257,7 @@ TEST(KeyEventUtilTest, MaybeGetKeyStub) {
 
   KeyParser::ParseKey("a", &key_event);
   EXPECT_TRUE(KeyEventUtil::MaybeGetKeyStub(key_event, &key));
-  EXPECT_EQ(static_cast<KeyInformation>(KeyEvent::ASCII) << 32, key);
+  EXPECT_EQ(static_cast<KeyInformation>(KeyEvent::TEXT_INPUT) << 32, key);
 }
 
 namespace {
@@ -448,7 +448,7 @@ const struct IsNumpadKeyTestData {
   { "MULTIPLY",     true },
   { "EQUALS",       true },
   { "COMMA",        true },
-  { "ASCII",        false },
+  { "TEXTINPUT",    false },
 };
 }  // namespace
 

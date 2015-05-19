@@ -76,7 +76,7 @@ class TestRewriter : public RewriterInterface {
     return return_value_;
   }
 
-  virtual void Finish(Segments *segments) {
+  virtual void Finish(const ConversionRequest &request, Segments *segments) {
     buffer_->append(name_ + ".Finish();");
   }
 
@@ -220,11 +220,12 @@ TEST_F(MergerRewriterTest, Focus) {
 
 TEST_F(MergerRewriterTest, Finish) {
   string call_result;
+  const ConversionRequest request;
   MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
-  merger.Finish(NULL);
+  merger.Finish(request, NULL);
   EXPECT_EQ("a.Finish();"
             "b.Finish();"
             "c.Finish();",

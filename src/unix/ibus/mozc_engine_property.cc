@@ -134,9 +134,6 @@ static_assert(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
     commands::HIRAGANA;
 
-const MozcEngineSwitchProperty *kMozcEngineSwitchProperties = NULL;
-const size_t kMozcEngineSwitchPropertiesSize = 0;
-
 const MozcEngineToolProperty *kMozcEngineToolProperties =
     &kMozcEngineToolPropertiesArray[0];
 const size_t kMozcEngineToolPropertiesSize =

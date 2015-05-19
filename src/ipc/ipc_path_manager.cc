@@ -322,23 +322,6 @@ bool IPCPathManager::IsValidServer(uint32 pid,
     return false;
   }
 
-#ifdef OS_WIN
-  // OpenProcess API seems to be unavailable on Win8/AppContainer. So we
-  // temporarily disable the verification of the path name of the peer.
-  bool in_appcontainer = false;
-  if (!WinUtil::IsProcessInAppContainer(::GetCurrentProcess(),
-                                        &in_appcontainer)) {
-    return false;
-  }
-  if (in_appcontainer) {
-    // Bypass security check.
-    // TODO(yukawa): Establish alternative verification mechanism for Metro.
-    server_pid_ = pid;
-    server_path_.clear();
-    return true;
-  }
-#endif  // OS_WIN
-
   // compare path name
   if (pid == server_pid_) {
     return (server_path == server_path_);

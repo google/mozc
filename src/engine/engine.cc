@@ -236,7 +236,7 @@ void Engine::Init(
   rewriter_ = new RewriterImpl(converter_impl,
                                data_manager,
                                pos_group_.get(),
-                               user_dictionary_.get());
+                               dictionary_.get());
   CHECK(rewriter_);
 
   converter_impl->Init(data_manager->GetPOSMatcher(),

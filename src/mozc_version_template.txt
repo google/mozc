@@ -1,6 +1,6 @@
 MAJOR=1
 MINOR=11
-BUILD=1502
+BUILD=1522
 REVISION=102
 # ANDROID_VERSION_CODE should be the number of update times.
 # It must at least increase when the build updates.
