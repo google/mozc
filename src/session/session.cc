@@ -1492,7 +1492,7 @@ bool Session::InsertCharacter(commands::Command *command) {
   }
 
   if (should_commit) {
-    Commit(command);
+    CommitNotTriggeringZeroQuerySuggest(command);
     if (key.input_style() == commands::KeyEvent::DIRECT_INPUT) {
       // Do ClearUndoContext() because it is a direct input.
       ClearUndoContext();
@@ -1740,7 +1740,8 @@ bool Session::EditCancelAndIMEOff(commands::Command *command) {
   return true;
 }
 
-bool Session::Commit(commands::Command *command) {
+bool Session::CommitInternal(commands::Command *command,
+                             bool trigger_zero_query_suggest) {
   if (!(context_->state() & (ImeContext::COMPOSITION |
                              ImeContext::CONVERSION))) {
     return DoNothing(command);
@@ -1759,9 +1760,7 @@ bool Session::Commit(commands::Command *command) {
 
   SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
 
-  // Get suggestion if zero_query_suggestion is set.
-  // zero_query_suggestion is usually set where the client is a mobile.
-  if (context_->GetRequest().zero_query_suggestion()) {
+  if (trigger_zero_query_suggest) {
     Suggest(command->input());
   }
 
@@ -1769,6 +1768,15 @@ bool Session::Commit(commands::Command *command) {
   // Copy the previous output for Undo.
   context_->mutable_output()->CopyFrom(command->output());
   return true;
+}
+
+bool Session::Commit(commands::Command *command) {
+  return CommitInternal(command,
+                        context_->GetRequest().zero_query_suggestion());
+}
+
+bool Session::CommitNotTriggeringZeroQuerySuggest(commands::Command *command) {
+  return CommitInternal(command, false);
 }
 
 bool Session::CommitHead(size_t count, commands::Command *command) {

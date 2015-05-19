@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
@@ -27,40 +28,4 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-  'type': 'executable',
-  'sources': [
-    'mozc_broker_main.cc',
-  ],
-  'dependencies': [
-    '../../base/base.gyp:base',
-  ],
-  'conditions': [
-    ['OS=="win"', {
-      'sources': [
-        '<(gen_out_dir)/mozc_broker_autogen.rc',
-        'ime_switcher.cc',
-        'prelauncher.cc',
-        'register_ime.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:crash_report_handler',
-        '../../client/client.gyp:client',
-        '../../config/config.gyp:config_protocol',
-        '../../config/config.gyp:stats_config_util',
-        '../../ipc/ipc.gyp:ipc',
-        '../../renderer/renderer.gyp:renderer_client',
-        '../../session/session_base.gyp:session_protocol',
-        '../base/win32_base.gyp:ime_base',
-        '../base/win32_base.gyp:win32_file_verifier',
-        'gen_mozc_broker_resource_header',
-      ],
-      'msvs_settings': {
-        'VCManifestTool': {
-          'AdditionalManifestFiles': 'mozc_broker.exe.manifest',
-          'EmbedManifest': 'true',
-        },
-      },
-    }],
-  ],
-}
+docker build --rm -t $USER/mozc_ubuntu12.04 .
