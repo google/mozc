@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,12 +43,6 @@ namespace session {
 class SessionUsageObserver;
 }  // namespace session
 
-#ifdef ENABLE_CLOUD_SYNC
-namespace sync {
-class SyncHandler;
-}  // namespace sync
-#endif  // ENABLE_CLOUD_SYNC
-
 // Session IPC Server
 // Usage:
 // SessionServer server;
@@ -75,9 +69,6 @@ class SessionServer: public IPCServer {
   // Must be defined earlier than session_handler_, which depends on this.
   scoped_ptr<EngineInterface> engine_;
   scoped_ptr<session::SessionUsageObserver> usage_observer_;
-#ifdef ENABLE_CLOUD_SYNC
-  scoped_ptr<sync::SyncHandler> sync_handler_;
-#endif  // ENABLE_CLOUD_SYNC
   scoped_ptr<SessionHandlerInterface> session_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionServer);

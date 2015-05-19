@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -116,95 +116,6 @@ TEST_F(UserDictionaryStorageTest, LockTest) {
   EXPECT_TRUE(storage2.Lock());
   EXPECT_FALSE(storage1.Save());
   EXPECT_TRUE(storage2.Save());
-}
-
-TEST_F(UserDictionaryStorageTest, SyncDictionaryBinarySizeTest) {
-  UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load());
-#ifndef ENABLE_CLOUD_SYNC
-  // In binaries built without sync feature, we should make sync dictionary
-  // intentionally.
-  storage.EnsureSyncDictionaryExists();
-#endif  // ENABLE_CLOUD_SYNC
-
-  EXPECT_TRUE(storage.Lock());
-
-  EXPECT_TRUE(storage.Save());
-  {
-    // Creates an entry which exceeds the sync dictionary limit
-    // outside of the sync dictionary.
-    UserDictionaryStorage::UserDictionary *dic = storage.add_dictionaries();
-    dic->set_name("foo");
-    dic->set_syncable(false);
-    UserDictionaryStorage::UserDictionaryEntry *entry =
-        dic->add_entries();
-    entry->set_key(string(UserDictionaryStorage::max_sync_binary_size(), 'a'));
-    entry->set_value("value");
-    entry->set_pos(UserDictionary::NOUN);
-  }
-  // Okay to store such entry in the normal dictionary.
-  EXPECT_TRUE(storage.Save());
-
-  {
-    // Same on the sync dictionary.
-    UserDictionaryStorage::UserDictionary *dic =
-        storage.mutable_dictionaries(0);
-    EXPECT_TRUE(dic->syncable());  // just in case.
-    UserDictionaryStorage::UserDictionaryEntry *entry =
-        dic->add_entries();
-    entry->set_key(string(UserDictionaryStorage::max_sync_binary_size(), 'a'));
-    entry->set_value("value");
-    entry->set_pos(UserDictionary::NOUN);
-  }
-  // Such size is unacceptable for sync.
-  EXPECT_FALSE(storage.Save());
-  EXPECT_TRUE(storage.SaveWithoutSyncableDictionariesSizeCheck());
-
-  EXPECT_TRUE(storage.UnLock());
-}
-
-TEST_F(UserDictionaryStorageTest, SyncDictionaryEntrySizeTest) {
-  UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load());
-#ifndef ENABLE_CLOUD_SYNC
-  // In binaries built without sync feature, we should make sync dictionary
-  // intentionally.
-  storage.EnsureSyncDictionaryExists();
-#endif  // ENABLE_CLOUD_SYNC
-
-  EXPECT_TRUE(storage.Lock());
-
-  EXPECT_TRUE(storage.Save());
-  {
-    // Creates an entry which exceeds the sync dictionary limit
-    // outside of the sync dictionary.
-    UserDictionaryStorage::UserDictionary *dic = storage.add_dictionaries();
-    dic->set_name("foo");
-    dic->set_syncable(false);
-    for (size_t i = 0; i < UserDictionaryStorage::max_sync_entry_size() + 1;
-         ++i) {
-      // add empty entries.
-      dic->add_entries();
-    }
-  }
-  // Okay to store such entry in the normal dictionary.
-  EXPECT_TRUE(storage.Save());
-
-  {
-    // Same on the sync dictionary.
-    UserDictionaryStorage::UserDictionary *dic =
-        storage.mutable_dictionaries(0);
-    EXPECT_TRUE(dic->syncable());  // just in case.
-    for (size_t i = 0; i < UserDictionaryStorage::max_sync_entry_size() + 1;
-         ++i) {
-      // add empty entries.
-      dic->add_entries();
-    }
-  }
-  // Such entry size is unacceptable for sync.
-  EXPECT_FALSE(storage.Save());
-
-  EXPECT_TRUE(storage.UnLock());
 }
 
 TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
@@ -397,203 +308,126 @@ TEST_F(UserDictionaryStorageTest, GetUserDictionaryIdTest) {
   EXPECT_EQ(ret_id[1], id[1]);
 }
 
-// Following test is valid only when sync feature is enabled.
-#ifdef ENABLE_CLOUD_SYNC
-TEST_F(UserDictionaryStorageTest, SyncDictionaryTests) {
-  UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load());
-
-  // Always the storage has the sync dictionary.
-  EXPECT_EQ(1, storage.dictionaries_size());
-  const UserDictionaryStorage::UserDictionary &sync_dict =
-      storage.dictionaries(0);
-  uint64 sync_dict_id = sync_dict.id();
-  EXPECT_NE(0, sync_dict_id);
-  EXPECT_TRUE(sync_dict.syncable());
-
-  uint64 normal_dict_id = 0;
-  EXPECT_TRUE(storage.CreateDictionary("test", &normal_dict_id));
-  EXPECT_NE(sync_dict_id, normal_dict_id);
-
-  // Storing the file.
-  EXPECT_TRUE(storage.Lock());
-  EXPECT_TRUE(storage.Save());
-  EXPECT_TRUE(storage.UnLock());
-
-  // Clear and reload from the file again.
-  storage.Clear();
-  EXPECT_TRUE(storage.Load());
-  // Regardless of the existence of the user dictionary file,
-  // UserDictionaryStorage::Load() does not append a new sync dictionary if it
-  // already contains at least one sync dictionary.
-  EXPECT_EQ(2, storage.dictionaries_size());
-  bool has_sync_dict = false;
-  bool has_normal_dict = false;
-  for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
-    const UserDictionaryStorage::UserDictionary &dict =
-        storage.dictionaries(i);
-    if (dict.syncable()) {
-      // sync dictionary
-      EXPECT_EQ(sync_dict_id, dict.id());
-      has_sync_dict = true;
-    } else {
-      EXPECT_EQ(normal_dict_id, dict.id());
-      has_normal_dict = true;
-    }
-  }
-  EXPECT_TRUE(has_sync_dict);
-  EXPECT_TRUE(has_normal_dict);
-}
-#endif  // ENABLE_CLOUD_SYNC
-
-TEST_F(UserDictionaryStorageTest, SyncDictionaryOperations) {
-  UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load());
-#ifndef ENABLE_CLOUD_SYNC
-  // In binaries built without sync feature, we should make sync dictionary
-  // intentionally.
-  storage.EnsureSyncDictionaryExists();
-#endif  // ENABLE_CLOUD_SYNC
-
-  uint64 sync_dic_id = 0;
-  EXPECT_TRUE(storage.GetUserDictionaryId(
-      UserDictionaryStorage::default_sync_dictionary_name(), &sync_dic_id));
-
-  // Cannot delete.
-  EXPECT_FALSE(storage.DeleteDictionary(sync_dic_id));
-  // Cannot rename.
-  EXPECT_FALSE(storage.RenameDictionary(sync_dic_id, "foo"));
-  // Cannot copy.
-  uint64 dummy_id = 0;
-  EXPECT_FALSE(storage.CopyDictionary(sync_dic_id, "bar", &dummy_id));
-  EXPECT_EQ(0, dummy_id);
-}
-
-TEST_F(UserDictionaryStorageTest, CreateDefaultSyncDictionaryIfNeccesary) {
-  UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load());
-#ifdef ENABLE_CLOUD_SYNC
-  EXPECT_GT(UserDictionaryStorage::CountSyncableDictionaries(storage), 0) <<
-      "When ENABLE_CLOUD_SYNC is defined, at least one sync dictionary should "
-      "exist after |storage.Load() is finished. Currently this is by design.";
-#else
-  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(storage)) <<
-      "When ENABLE_CLOUD_SYNC is not defined, there should be no sync "
-      "dictionary by default.";
-#endif  // ENABLE_CLOUD_SYNC
-}
-
-#ifndef ENABLE_CLOUD_SYNC
-TEST_F(UserDictionaryStorageTest, Issue6004671) {
-  { // Emulate the situation in b/6004671.
-    UserDictionaryStorage storage(GetUserDictionaryFile());
-    EXPECT_FALSE(storage.Load());
-    ASSERT_TRUE(storage.EnsureSyncDictionaryExists());
-    ASSERT_GT(UserDictionaryStorage::CountSyncableDictionaries(storage), 0);
-    ASSERT_TRUE(storage.Lock());
-    ASSERT_TRUE(storage.Save());
-    ASSERT_TRUE(storage.UnLock());
-  }
-
-  {
-    UserDictionaryStorage storage(GetUserDictionaryFile());
-    ASSERT_TRUE(storage.Load());
-    EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(storage))
-        << "To work around Issue 6004671, we silently remove an empty sync "
-           "dictionary in UserDictionaryStorage::Load() when "
-           "ENABLE_CLOUD_SYNC is not defined.";
-  }
-}
-#endif  // ENABLE_CLOUD_SYNC
-
-TEST_F(UserDictionaryStorageTest, RemoveUnusedSyncDictionariesIfExist) {
+TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
   // "名詞"
-  static const UserDictionary::PosType kPos = UserDictionary::NOUN;
+  const UserDictionary::PosType kPos = UserDictionary::NOUN;
 
-  {
-    UserDictionaryStorage storage(GetUserDictionaryFile());
-    EXPECT_FALSE(storage.LoadWithoutChangingSyncDictionary()) <<
-        "At first, we expect there is not user dictionary file.";
+  const struct TestData {
+    bool is_sync_dictionary;
+    bool is_removed_dictionary;
+    bool has_normal_entry;
+    bool has_removed_entry;
+    string dictionary_name;
+  } test_data[] = {
+    { false, false, false, false, "non-sync dictionary (empty)" },
+    { false, false, true, false, "non-sync dictionary (normal entry)" },
+    { true, false, false, false, "sync dictionary (empty)" },
+    { true, false, false, true, "sync dictionary (removed entry)" },
+    { true, false, true, false, "sync dictionary (normal entry)" },
+    { true, false, true, true, "sync dictionary (normal & removed entries)" },
+    { true, true, false, false, "removed sync dictionary (empty)" },
+    { true, true, false, true, "removed sync dictionary (removed entry)" },
+    { true, true, true, false, "removed sync dictionary (normal entry)" },
+    { true, true, true, true,
+      "removed sync dictionary (normal & removed entries)" },
+    { true, false, true, false,
+      UserDictionaryStorage::default_sync_dictionary_name() },
+  };
 
-    { // Add an non-empty non-sync dictionary.
-      uint64 dict_id = 0;
-      ASSERT_TRUE(storage.CreateDictionary(
-          "Non-empty non-sync Dictionary", &dict_id));
-      UserDictionaryStorage::UserDictionary *dict =
-          storage.mutable_dictionaries(
-              storage.GetUserDictionaryIndex(dict_id));
-      dict->set_syncable(false);
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  EXPECT_FALSE(storage.Load())
+      << "At first, we expect there is not user dictionary file.";
+  EXPECT_FALSE(storage.ConvertSyncDictionariesToNormalDictionaries())
+      << "No sync dictionary available.";
+
+  for (size_t i = 0; i < arraysize(test_data); ++i) {
+    SCOPED_TRACE(Util::StringPrintf("add %d", static_cast<int>(i)));
+    const TestData &data = test_data[i];
+    CHECK(data.is_sync_dictionary ||
+          !(data.is_removed_dictionary || data.has_removed_entry))
+        << "Non-sync dictionary should NOT have removed dictionary / entry.";
+
+    uint64 dict_id = 0;
+    ASSERT_TRUE(storage.CreateDictionary(data.dictionary_name, &dict_id));
+    UserDictionaryStorage::UserDictionary *dict =
+        storage.mutable_dictionaries(storage.GetUserDictionaryIndex(dict_id));
+    dict->set_syncable(data.is_sync_dictionary);
+    dict->set_removed(data.is_removed_dictionary);
+    if (data.has_normal_entry) {
       UserDictionaryStorage::UserDictionaryEntry *entry = dict->add_entries();
-      entry->set_key("A");
-      entry->set_value("AA");
+      entry->set_key("normal");
+      entry->set_value("normal entry");
       entry->set_pos(kPos);
     }
-
-    { // Add an empty non-sync dictionary.
-      uint64 dict_id = 0;
-      ASSERT_TRUE(storage.CreateDictionary(
-          "Empty non-sync Dictionary", &dict_id));
-      UserDictionaryStorage::UserDictionary *dict =
-          storage.mutable_dictionaries(
-              storage.GetUserDictionaryIndex(dict_id));
-      dict->set_syncable(false);
-    }
-
-    { // Add an non-empty sync dictionary.
-      uint64 dict_id = 0;
-      ASSERT_TRUE(storage.CreateDictionary(
-          "Non-empty sync Dictionary", &dict_id));
-      UserDictionaryStorage::UserDictionary *dict =
-          storage.mutable_dictionaries(
-              storage.GetUserDictionaryIndex(dict_id));
-      dict->set_syncable(true);
+    if (data.has_removed_entry) {
       UserDictionaryStorage::UserDictionaryEntry *entry = dict->add_entries();
-      entry->set_key("A");
-      entry->set_value("AA");
+      entry->set_key("removed");
+      entry->set_value("removed entry");
       entry->set_pos(kPos);
+      entry->set_removed(true);
     }
+  }
+  EXPECT_EQ(9, UserDictionaryStorage::CountSyncableDictionaries(storage));
 
-    { // Add an empty sync dictionary.
-      uint64 dict_id = 0;
-      ASSERT_TRUE(storage.CreateDictionary("Empty sync Dictionary", &dict_id));
-      UserDictionaryStorage::UserDictionary *dict =
-          storage.mutable_dictionaries(
-              storage.GetUserDictionaryIndex(dict_id));
-      dict->set_syncable(true);
+  ASSERT_TRUE(storage.ConvertSyncDictionariesToNormalDictionaries());
+
+  // "同期用辞書"
+  const char *kDictionaryNameConvertedFromSyncableDictionary =
+      "\xE5\x90\x8C\xE6\x9C\x9F\xE7\x94\xA8\xE8\xBE\x9E\xE6\x9B\xB8";
+  const struct ExpectedData {
+    bool has_normal_entry;
+    string dictionary_name;
+  } expected_data[] = {
+    { false, "non-sync dictionary (empty)" },
+    { true, "non-sync dictionary (normal entry)" },
+    { true, "sync dictionary (normal entry)" },
+    { true, "sync dictionary (normal & removed entries)" },
+    { true, kDictionaryNameConvertedFromSyncableDictionary },
+  };
+
+  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(storage));
+  ASSERT_EQ(arraysize(expected_data), storage.dictionaries_size());
+  for (size_t i = 0; i < arraysize(expected_data); ++i) {
+    SCOPED_TRACE(Util::StringPrintf("verify %d", static_cast<int>(i)));
+    const ExpectedData &expected = expected_data[i];
+    const UserDictionaryStorage::UserDictionary &dict = storage.dictionaries(i);
+
+    EXPECT_EQ(expected.dictionary_name, dict.name());
+    EXPECT_FALSE(dict.syncable());
+    EXPECT_FALSE(dict.removed());
+    if (expected.has_normal_entry) {
+      ASSERT_EQ(1, dict.entries_size());
+      EXPECT_EQ("normal", dict.entries(0).key());
+    } else {
+      EXPECT_EQ(0, dict.entries_size());
     }
-
-    EXPECT_GT(UserDictionaryStorage::CountSyncableDictionaries(storage), 0);
-    EXPECT_TRUE(storage.Lock());
-    EXPECT_TRUE(storage.Save());
-    EXPECT_TRUE(storage.UnLock());
   }
 
-  ASSERT_TRUE(FileUtil::FileExists(GetUserDictionaryFile()))
-      << "A temporary user dictionary file shoudl exist.";
-
-  // Remove unused sync dictionaries.
+  // Test duplicated dictionary name.
+  storage.Clear();
   {
-    UserDictionaryStorage storage(GetUserDictionaryFile());
-    ASSERT_TRUE(storage.LoadWithoutChangingSyncDictionary()) <<
-        "Failed to load test user dictionary file.";
-    EXPECT_EQ(2, UserDictionaryStorage::CountSyncableDictionaries(storage));
-    storage.RemoveUnusedSyncDictionariesIfExist();
-    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(storage))
-        << "One sync dictionary should be removed because if is empty.";
-    EXPECT_TRUE(storage.Lock());
-    EXPECT_TRUE(storage.Save());
-    EXPECT_TRUE(storage.UnLock());
+    uint64 dict_id = 0;
+    storage.CreateDictionary(
+        UserDictionaryStorage::default_sync_dictionary_name(), &dict_id);
+    storage.CreateDictionary(
+        kDictionaryNameConvertedFromSyncableDictionary, &dict_id);
+    ASSERT_EQ(2, storage.dictionaries_size());
+    UserDictionaryStorage::UserDictionary *dict;
+    dict = storage.mutable_dictionaries(0);
+    dict->set_syncable(true);
+    dict->add_entries()->set_key("0");
+    dict = storage.mutable_dictionaries(1);
+    dict->set_syncable(false);
+    dict->add_entries()->set_key("1");
   }
-
-  // Reload and test it again.
-  {
-    UserDictionaryStorage storage(GetUserDictionaryFile());
-    ASSERT_TRUE(storage.LoadWithoutChangingSyncDictionary()) <<
-        "Failed to load test user dictionary file.";
-    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(storage));
-    storage.RemoveUnusedSyncDictionariesIfExist();
-    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(storage));
-  }
+  ASSERT_TRUE(storage.ConvertSyncDictionariesToNormalDictionaries());
+  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(storage));
+  EXPECT_EQ(2, storage.dictionaries_size());
+  EXPECT_EQ(Util::StringPrintf("%s_1",
+                               kDictionaryNameConvertedFromSyncableDictionary),
+            storage.dictionaries(0).name());
+  EXPECT_EQ(kDictionaryNameConvertedFromSyncableDictionary,
+            storage.dictionaries(1).name());
 }
 
 TEST_F(UserDictionaryStorageTest, AddToAutoRegisteredDictionary) {
@@ -660,13 +494,7 @@ TEST_F(UserDictionaryStorageTest, BackwardCompatibilityTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   ASSERT_TRUE(storage.LoadWithoutMigration());
 
-#ifndef ENABLE_CLOUD_SYNC
-  // In binaries built without sync feature, we should make sync dictionary
-  // intentionally.
-  storage.EnsureSyncDictionaryExists();
-#endif  // ENABLE_CLOUD_SYNC
-
-  ASSERT_EQ(2, storage.dictionaries_size());
+  ASSERT_EQ(1, storage.dictionaries_size());
   const UserDictionary &dictionary = storage.dictionaries(0);
   ASSERT_EQ(1, dictionary.entries_size());
   const UserDictionary::Entry &entry = dictionary.entries(0);
@@ -776,13 +604,7 @@ TEST_P(UserDictionaryStorageMigrationTest, Load) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   ASSERT_TRUE(storage.Load());
 
-#ifndef ENABLE_CLOUD_SYNC
-  // In binaries built without sync feature, we should make sync dictionary
-  // intentionally.
-  storage.EnsureSyncDictionaryExists();
-#endif  // ENABLE_CLOUD_SYNC
-
-  ASSERT_EQ(2, storage.dictionaries_size()) << storage.Utf8DebugString();
+  ASSERT_EQ(1, storage.dictionaries_size()) << storage.Utf8DebugString();
   const UserDictionary &dictionary = storage.dictionaries(0);
   ASSERT_EQ(UserDictionary::PosType_MAX - UserDictionary::PosType_MIN + 1,
             dictionary.entries_size())
@@ -812,13 +634,7 @@ TEST_P(UserDictionaryStorageMigrationTest, LoadWithoutMigration) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   ASSERT_TRUE(storage.LoadWithoutMigration());
 
-#ifndef ENABLE_CLOUD_SYNC
-  // In binaries built without sync feature, we should make sync dictionary
-  // intentionally.
-  storage.EnsureSyncDictionaryExists();
-#endif  // ENABLE_CLOUD_SYNC
-
-  ASSERT_EQ(2, storage.dictionaries_size()) << storage.Utf8DebugString();
+  ASSERT_EQ(1, storage.dictionaries_size()) << storage.Utf8DebugString();
   const UserDictionary &dictionary = storage.dictionaries(0);
   ASSERT_EQ(UserDictionary::PosType_MAX - UserDictionary::PosType_MIN + 1,
             dictionary.entries_size())

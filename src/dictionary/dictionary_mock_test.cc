@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,24 @@
 
 #include "dictionary/dictionary_mock.h"
 
+#include <string>
+#include <vector>
+
 #include "base/logging.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+using mozc::dictionary::CollectTokenCallback;
+
 namespace mozc {
 
-class DictionaryMockTest : public testing::Test {
+class DictionaryMockTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     mock_.reset(new DictionaryMock);
@@ -50,11 +56,14 @@ class DictionaryMockTest : public testing::Test {
     return mock_.get();
   }
 
-  Token *CreateToken(const string &key, const string &value);
-  bool SearchMatchingNode(const string &key,
-                          const string &value,
-                          uint32 attributes,
-                          const Node *node);
+  static Token *CreateToken(const string &key, const string &value);
+  static Token *CreateToken(const string &key, const string &value,
+                            Token::Attribute attr);
+  static bool SearchMatchingNode(const string &key,
+                                 const string &value,
+                                 uint32 attributes,
+                                 const Node *node);
+
   scoped_ptr<DictionaryMock> mock_;
 };
 
@@ -77,6 +86,19 @@ Token *DictionaryMockTest::CreateToken(const string &key, const string &value) {
   Token *token = new Token;
   token->key = key;
   token->value = value;
+  return token;
+}
+
+Token *DictionaryMockTest::CreateToken(const string &key, const string &value,
+                                       Token::Attribute attr) {
+  Token *token = new Token;
+  token->key = key;
+  token->value = value;
+  // The same dummy cost and POS IDs set by DictionaryMock.
+  token->cost = 0;
+  token->lid = 1;
+  token->rid = 1;
+  token->attributes = attr;
   return token;
 }
 
@@ -103,33 +125,33 @@ TEST_F(DictionaryMockTest, test_has_value) {
 }
 
 TEST_F(DictionaryMockTest, test_prefix) {
-  DictionaryInterface *dic = GetMock();
+  DictionaryMock *dic = GetMock();
 
-  // "は"
-  const string k0 = "\xe3\x81\xaf";
-  // "はひふへほ"
-  const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
-                    "\xbb";
+  scoped_ptr<Token> t0(CreateToken(
+      "\xe3\x81\xaf",  // "は"
+      "v0", Token::NONE));
+  scoped_ptr<Token> t1(CreateToken(
+      // "はひふへほ"
+      "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81\xbb",
+      "v1", Token::NONE));
 
-  vector<Token> tokens;
-  scoped_ptr<Token> t0(CreateToken(k0, "v0"));
-  scoped_ptr<Token> t1(CreateToken(k1, "v1"));
+  dic->AddLookupPrefix(t0->key, t0->key, t0->value, 0);
+  dic->AddLookupPrefix(t1->key, t1->key, t1->value, 0);
 
-  tokens.push_back(*t0.get());
-  tokens.push_back(*t1.get());
+  CollectTokenCallback callback;
+  dic->LookupPrefix(t0->key, false, &callback);
+  ASSERT_EQ(1, callback.tokens().size());
+  EXPECT_TOKEN_EQ(*t0, callback.tokens()[0]);
 
-  vector<Token>::iterator it = tokens.begin();
-  for (; it != tokens.end(); ++it) {
-    GetMock()->AddLookupPrefix(it->key, it->key, it->value, 0);
-  }
+  callback.Clear();
+  dic->LookupPrefix(t1->key, false, &callback);
+  ASSERT_EQ(2, callback.tokens().size());
+  EXPECT_TOKEN_EQ(*t0, callback.tokens()[0]);
+  EXPECT_TOKEN_EQ(*t1, callback.tokens()[1]);
 
-  NodeAllocator allocator;
-  Node *node = dic->LookupPrefix(k1.c_str(), k1.size(), &allocator);
-  CHECK(node) << "no nodes found";
-  EXPECT_TRUE(SearchMatchingNode(t1->key, t1->value, 0, node))
-              << "Failed to find " << t1->key;
-  EXPECT_TRUE(SearchMatchingNode(t0->key, t0->value, 0, node))
-              << "Failed to find " << t0->key;
+  callback.Clear();
+  dic->LookupPrefix("google", false, &callback);
+  EXPECT_TRUE(callback.tokens().empty());
 }
 
 TEST_F(DictionaryMockTest, test_reverse) {
@@ -196,27 +218,29 @@ TEST_F(DictionaryMockTest, test_predictive) {
 
 TEST_F(DictionaryMockTest, test_exact) {
   DictionaryInterface *dic = GetMock();
-  const string key = "\xE3\x81\xBB\xE3\x81\x92";  // "ほげ"
-  GetMock()->AddLookupExact(key, key, "value1", 0);
-  GetMock()->AddLookupExact(key, key, "value2", 0);
 
-  {
-    NodeAllocator allocator;
-    Node *node = dic->LookupExact(key.c_str(), key.size(), &allocator);
-    EXPECT_TRUE(node != NULL) << "no nodes found";
-    EXPECT_TRUE(SearchMatchingNode(key, "value1", 0, node));
-    EXPECT_TRUE(SearchMatchingNode(key, "value2", 0, node));
-  }
-  {
-    NodeAllocator allocator;
-    Node *node = dic->LookupExact("hoge", 4, &allocator);
-    EXPECT_TRUE(node == NULL);
-  }
-  {
-    NodeAllocator allocator;
-    // "ほ"
-    Node *node = dic->LookupExact("\xE3\x81\xBB", 3, &allocator);
-    EXPECT_TRUE(node == NULL);
-  }
+  const char *kKey = "\xE3\x81\xBB\xE3\x81\x92";  // "ほげ"
+
+  scoped_ptr<Token> t0(CreateToken(kKey, "value1", Token::NONE));
+  scoped_ptr<Token> t1(CreateToken(kKey, "value2", Token::NONE));
+
+  GetMock()->AddLookupExact(t0->key, t0->key, t0->value, 0);
+  GetMock()->AddLookupExact(t1->key, t1->key, t1->value, 0);
+
+  CollectTokenCallback callback;
+  dic->LookupExact(kKey, &callback);
+  ASSERT_EQ(2, callback.tokens().size());
+  EXPECT_TOKEN_EQ(*t0, callback.tokens()[0]);
+  EXPECT_TOKEN_EQ(*t1, callback.tokens()[1]);
+
+  callback.Clear();
+  dic->LookupExact("hoge", &callback);
+  EXPECT_TRUE(callback.tokens().empty());
+
+  callback.Clear();
+  dic->LookupExact("\xE3\x81\xBB",  // "ほ"
+                   &callback);
+  EXPECT_TRUE(callback.tokens().empty());
 }
+
 }  // namespace mozc

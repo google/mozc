@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2013, Google Inc.
+ * Copyright 2010-2014, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -151,6 +151,10 @@ input[type='text'] {
 input[type='text']:focus {
   border-color: rgb(77, 144, 254);
   outline: none;
+}
+
+input[type='text']:invalid {
+  background-color: pink;
 }
 
 label {
@@ -389,6 +393,10 @@ a:hover {
   text-shadow: rgb(255, 255, 255) 0px 1px 2px;
 }
 
+.alert_message_div {
+  margin-right: 20px;
+}
+
 .alert_ok_div {
   margin-right: 20px;
   margin-top: 10px;
@@ -455,20 +463,6 @@ a:hover {
   text-align: right;
 }
 
-#sync_config_page {
-  width: 400px;
-}
-
-.sync_advanced_settings_span {
-  margin: 10px 0 5px 10px;
-}
-
-#sync_config_ok_cancel_div {
-  margin-right: 20px;
-  margin-top: 10px;
-  text-align: right;
-}
-
 #clear_history_page {
   width: 400px;
 }
@@ -502,6 +496,8 @@ a:hover {
 }
 
 #dictionary_tool_dictionary_list_area {
+  background-color: rgb(235, 239, 249);
+  border: solid 1px rgb(217, 217, 217);
   -webkit-box-orient: vertical;
   display: -webkit-box;
 }
@@ -509,13 +505,11 @@ a:hover {
 #dictionary_tool_dictionary_list_title {
   font-size: 12px;
   font-weight: bold;
-  padding: 6px 3px 3px 7px;
+  padding: 6px 3px 7px 7px;
   width: 120px;
 }
 
 #dictionary_tool_dictionary_list_box {
-  background-color: rgb(235, 239, 249);
-  border: solid 1px rgb(217, 217, 217);
   -webkit-box-flex: 1;
   -webkit-box-orient: vertical;
   display: -webkit-box;
@@ -633,6 +627,7 @@ a:hover {
 }
 
 #dictionary_tool_content_area {
+  border: solid 1px rgb(217, 217, 217);
   -webkit-box-orient: vertical;
   display: -webkit-box;
   font-size: 12px;
@@ -648,29 +643,28 @@ a:hover {
 }
 
 #dictionary_tool_list_area {
-  border: solid 1px rgb(217, 217, 217);
   -webkit-box-flex: 1;
   overflow: auto;
 }
 
 #dictionary_tool_reading_title {
-  padding: 6px 3px 3px 7px;
+  padding: 6px 3px 7px 7px;
   width: 120px;
 }
 
 #dictionary_tool_word_title {
-  padding: 6px 3px 3px 7px;
+  padding: 6px 3px 7px 7px;
   width: 120px;
 }
 
 #dictionary_tool_category_title {
-  padding: 5px 0px 3px 10px;
+  padding: 5px 0px 7px 10px;
   width: 120px;
 }
 
 #dictionary_tool_comment_title {
   -webkit-box-flex: 1;
-  padding: 6px 3px 3px 7px;
+  padding: 6px 3px 7px 7px;
 }
 
 .dictionary_tool_entry {
@@ -839,16 +833,16 @@ a:hover {
       url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAQAAADZc7J/AAAA/ElEQVR4Xu3UsWrCUBiG4efGlIBoIMFbcnYolYJ3pg4iKGrGYFTRwaUFhYAekiDt0EG++X2W83N8/3J/DbwBMJJSsdQItcDY1VlCOImzq3Ed8OmicHASB3ns5KBw8VUNpDJrW7uAiJ3sbK1l0mqArpmFTUlQ5jYWZrrUAUSmT0SZm4qoA56JvVhs/5g3A7RLolA85A1ASOTye65NMxASK6syfxGITMzvMxG9CvRkliWwlOm9AsSOcitzU1NzK7mjuBkQvHtLK7iLBiB5PhttJSGpB8I8vM6kDuiHeUjoVwMfYR4SRtUAw1veIZzOjRhSBzCoyKFjgH/3K7+BHzg+Cgw0eSW3AAAAAElFTkSuQmCC) 2x);
 }
 
-#dictionary_import_page {
-  width: 300px;
+#dictionary_tool_dictionary_menu {
+  border-top: solid 1px rgb(217, 217, 217);
 }
 
-#dictionary_import_select {
-  min-width: 260px;
+#dictionary_tool_dictionary_menu_title {
+  font-size: 12px;
+  font-weight: bold;
+  padding-bottom: 10px;
 }
 
-#dictionary_import_ok_cancel_div {
-  margin-right: 20px;
-  margin-top: 10px;
-  text-align: right;
+#dictionary_tool_dictionary_menu_buttons {
+  padding: 5px;
 }

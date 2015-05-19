@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,15 +41,18 @@
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/util.h"
+#include "data_manager/testing/mock_user_pos_manager.h"
 #include "data_manager/user_pos_manager.h"
-#include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
 
 DEFINE_string(input, "", "space separated input text files");
 DEFINE_string(output, "", "output binary file");
 DEFINE_bool(make_header, false, "make header mode");
+DEFINE_bool(gen_test_dictionary, false,
+            "generate test dictionary (use mock POSManager)");
 
 
 namespace mozc {
@@ -98,6 +101,8 @@ int main(int argc, char **argv) {
                          &reading_correction_input);
 
   const mozc::POSMatcher *pos_matcher =
+      FLAGS_gen_test_dictionary ?
+      mozc::testing::MockUserPosManager::GetUserPosManager()->GetPOSMatcher() :
       mozc::UserPosManager::GetUserPosManager()->GetPOSMatcher();
   CHECK(pos_matcher);
 

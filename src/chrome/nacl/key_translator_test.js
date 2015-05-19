@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -281,38 +281,38 @@ function testDigit6Key_JP_KANA() {
                      keyDown('Digit6', '&'));
 }
 
-function testBackQuoteKey_US() {
-  assertObjectEquals({key_code: '`'.charCodeAt(0)}, keyDown('BackQuote', '`'));
+function testBackquoteKey_US() {
+  assertObjectEquals({key_code: '`'.charCodeAt(0)}, keyDown('Backquote', '`'));
   assertObjectEquals({}, keyDown('ShiftLeft', 'Shift'));
-  assertObjectEquals({key_code: '~'.charCodeAt(0)}, keyDown('BackQuote', '~'));
+  assertObjectEquals({key_code: '~'.charCodeAt(0)}, keyDown('Backquote', '~'));
 }
 
-function testBackQuoteKey_JP() {
+function testBackquoteKey_JP() {
   setKeyboardLayout('jp');
-  assertObjectEquals({}, keyDown('BackQuote', ''));
+  assertObjectEquals({}, keyDown('Backquote', ''));
   assertObjectEquals({}, keyDown('ShiftLeft', 'Shift'));
-  assertObjectEquals({modifier_keys: ['SHIFT']}, keyDown('BackQuote', ''));
+  assertObjectEquals({modifier_keys: ['SHIFT']}, keyDown('Backquote', ''));
 }
 
-function testBackQuoteKey_US_KANA() {
+function testBackquoteKey_US_KANA() {
   setKanaMode(true);
   assertObjectEquals({
                        key_code: '`'.charCodeAt(0),
                        key_string: '\u308D'  // 'ろ'
                      },
-                     keyDown('BackQuote', '`'));
+                     keyDown('Backquote', '`'));
   assertObjectEquals({}, keyDown('ShiftLeft', 'Shift'));
   assertObjectEquals({
                        key_code: '~'.charCodeAt(0),
                        key_string: '\u308D'  // 'ろ'
                      },
-                     keyDown('BackQuote', '~'));
+                     keyDown('Backquote', '~'));
 }
 
-function testBackQuoteKey_JP_KANA() {
+function testBackquoteKey_JP_KANA() {
   setKanaMode(true);
   setKeyboardLayout('jp');
-  assertObjectEquals({}, keyDown('BackQuote', ''));
+  assertObjectEquals({}, keyDown('Backquote', ''));
   assertObjectEquals({}, keyDown('ShiftLeft', 'Shift'));
-  assertObjectEquals({modifier_keys: ['SHIFT']}, keyDown('BackQuote', ''));
+  assertObjectEquals({modifier_keys: ['SHIFT']}, keyDown('Backquote', ''));
 }

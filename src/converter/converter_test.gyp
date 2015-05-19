@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -99,11 +99,11 @@
       ],
       'dependencies': [
         '../data_manager/data_manager.gyp:connection_file_reader',
+        '../data_manager/testing/mock_data_manager.gyp:gen_separate_connection_data_for_mock#host',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../data_manager/testing/mock_data_manager_test.gyp:install_test_connection_txt',
         '../testing/testing.gyp:gtest_main',
         'converter_base.gyp:sparse_connector',
-        'generate_test_connection_data_image',
       ],
       'variables': {
         'test_size': 'large',
@@ -122,44 +122,6 @@
       'variables': {
         'test_size': 'small',
       },
-    },
-    {
-      'target_name': 'generate_test_connection_data_image',
-      'type': 'none',
-      'sources': [
-        '../build_tools/code_generator_util.py',
-        '../data_manager/gen_connection_data.py',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_test_connection_data',
-          'variables': {
-            'text_connection_file': '../data/test/dictionary/connection_single_column.txt',
-            'id_file': '../data/test/dictionary/id.def',
-            'special_pos_file': '../data/rules/special_pos.def',
-            'use_1byte_cost_flag': 'false',
-          },
-          'inputs': [
-            '<(text_connection_file)',
-            '<(id_file)',
-            '<(special_pos_file)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/test_connection_data.data',
-          ],
-          'action': [
-            'python', '../data_manager/gen_connection_data.py',
-            '--text_connection_file=<(text_connection_file)',
-            '--id_file=<(id_file)',
-            '--special_pos_file=<(special_pos_file)',
-            '--binary_output_file=<(gen_out_dir)/test_connection_data.data',
-            '--target_compiler=<(target_compiler)',
-            '--use_1byte_cost=<(use_1byte_cost_flag)',
-          ],
-          'message': ('Generating ' +
-                      '<(gen_out_dir)/test_connection_data.data'),
-        },
-      ],
     },
     {
       'target_name': 'cached_connector_test',

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,7 @@ def RemoveFile(file_name):
   if IsWindows():
     # Read-only files cannot be deleted on Windows.
     os.chmod(file_name, 0700)
-  logging.info('Removing file: %s', file_name)
+  logging.debug('Removing file: %s', file_name)
   os.unlink(file_name)
 
 
@@ -122,7 +122,7 @@ def CopyFile(source, destination):
 def RemoveDirectoryRecursively(directory):
   """Removes the specified directory recursively."""
   if os.path.isdir(directory):
-    logging.info('Removing directory: %s', directory)
+    logging.debug('Removing directory: %s', directory)
     if IsWindows():
       # Use RD because shutil.rmtree fails when the directory is readonly.
       RunOrDie(['CMD.exe', '/C', 'RD', '/S', '/Q',

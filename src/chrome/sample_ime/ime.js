@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,30 @@ sampleImeForImeExtensionApi.SampleIme = function() {
   // {@code sampleImeForImeExtensionApi.SampleIme.initializeMenuItems_}.
   this.clear_();
   this.initializeMenuItems_();
+
+  var ime = this;
+  chrome.input.ime.onActivate.addListener(
+      function(engineID) { ime.onActivate(engineID); });
+  chrome.input.ime.onDeactivated.addListener(
+      function(engineID) { ime.onDeactivated(engineID); });
+  chrome.input.ime.onFocus.addListener(
+      function(context) { ime.onFocus(context); });
+  chrome.input.ime.onBlur.addListener(
+      function(contextID) { ime.onBlur(contextID); });
+  chrome.input.ime.onInputContextUpdate.addListener(
+      function(context) { ime.onInputContextUpdate(context); });
+  chrome.input.ime.onKeyEvent.addListener(
+      function(engineID, keyData) {
+        return ime.onKeyEvent(engineID, keyData);
+      });
+  chrome.input.ime.onCandidateClicked.addListener(
+      function(engineID, candidateID, button) {
+        ime.onCandidateClicked(engineID, candidateID, button);
+      });
+  chrome.input.ime.onMenuItemActivated.addListener(
+      function(engineID, name) {
+        ime.onMenuItemActivated(engineID, name);
+      });
 };
 
 /**
@@ -214,43 +238,31 @@ sampleImeForImeExtensionApi.SampleIme.prototype.initializeMenuItems_ =
     menuItems.push(radioItems[i]);
   }
 
-  var ENABLE_RADIO_MENU_TEXT = 'Enable radio menu';
-  var DISABLE_RADIO_MENU_TEXT = 'Disable radio menu';
   var enableRadioMenuItem = {
     id: 'enable_radio_menu',
-    label: DISABLE_RADIO_MENU_TEXT,
-    style: 'none'
+    label: 'Enable radio menu',
+    style: 'check',
+    checked: true
   };
   menuItems.push(enableRadioMenuItem);
   callbacks[enableRadioMenuItem.id] = function() {
-    var isEnabled = enableRadioMenuItem.label == ENABLE_RADIO_MENU_TEXT;
-    if (isEnabled) {
-      enableRadioMenuItem.label = DISABLE_RADIO_MENU_TEXT;
-    } else {
-      enableRadioMenuItem.label = ENABLE_RADIO_MENU_TEXT;
-    }
+    enableRadioMenuItem.checked = !enableRadioMenuItem.checked;
     for (var i = 0; i < radioItems.length; ++i) {
-      radioItems[i].enabled = isEnabled;
+      radioItems[i].enabled = enableRadioMenuItem.checked;
     }
   };
 
-  var DISPLAY_RADIO_MENU_TEXT = 'Display radio menu';
-  var HIDE_RADIO_MENU_TEXT = 'Hide radio menu';
   var displayRadioMenuItem = {
     id: 'display_radio_menu',
-    label: HIDE_RADIO_MENU_TEXT,
-    style: 'none'
+    label: 'Display radio menu',
+    style: 'check',
+    checked: true
   };
   menuItems.push(displayRadioMenuItem);
   callbacks[displayRadioMenuItem.id] = function() {
-    var isDisplayed = displayRadioMenuItem.label == DISPLAY_RADIO_MENU_TEXT;
-    if (isDisplayed) {
-      displayRadioMenuItem.label = HIDE_RADIO_MENU_TEXT;
-    } else {
-      displayRadioMenuItem.label = DISPLAY_RADIO_MENU_TEXT;
-    }
+    displayRadioMenuItem.checked = !displayRadioMenuItem.checked;
     for (var i = 0; i < radioItems.length; ++i) {
-      radioItems[i].visible = isDisplayed;
+      radioItems[i].visible = displayRadioMenuItem.checked;
     }
   };
 
@@ -321,7 +333,7 @@ sampleImeForImeExtensionApi.SampleIme.prototype.clear_ = function() {
  * @private
  */
 sampleImeForImeExtensionApi.SampleIme.prototype.isImeEnabled_ = function() {
-  return !!(this.context_ && this.context_.type == 'text');
+  return this.context_ != null;
 };
 
 /**
@@ -1045,35 +1057,3 @@ sampleImeForImeExtensionApi.SampleIme.prototype.onMenuItemActivated =
     console.log('Menu items are updated.');
   });
 };
-
-/**
- * Registers IME.
- */
-document.addEventListener('readystatechange', function() {
-  if (document.readyState == 'complete') {
-    var sample_ime = new sampleImeForImeExtensionApi.SampleIme;
-
-    chrome.input.ime.onActivate.addListener(
-      function(engineID) { sample_ime.onActivate(engineID); });
-    chrome.input.ime.onDeactivated.addListener(
-      function(engineID) { sample_ime.onDeactivated(engineID); });
-    chrome.input.ime.onFocus.addListener(
-      function(context) { sample_ime.onFocus(context); });
-    chrome.input.ime.onBlur.addListener(
-      function(contextID) { sample_ime.onBlur(contextID); });
-    chrome.input.ime.onInputContextUpdate.addListener(
-      function(context) { sample_ime.onInputContextUpdate(context); });
-    chrome.input.ime.onKeyEvent.addListener(
-      function(engineID, keyData) {
-        return sample_ime.onKeyEvent(engineID, keyData);
-      });
-    chrome.input.ime.onCandidateClicked.addListener(
-      function(engineID, candidateID, button) {
-        sample_ime.onCandidateClicked(engineID, candidateID, button);
-      });
-    chrome.input.ime.onMenuItemActivated.addListener(
-      function(engineID, name) {
-        sample_ime.onMenuItemActivated(engineID, name);
-      });
-  }
-}, true);

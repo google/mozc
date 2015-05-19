@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -121,7 +121,7 @@ void RendererBaseWindow::ResizeWindow(int32 width, int32 height) {
   [window_.get() setFrame:rect display:FALSE];
 }
 
-void RendererBaseWindow::SetWindowLevel(int32 window_level) {
+void RendererBaseWindow::SetWindowLevel(NSInteger window_level) {
   if (window_level_ != window_level) {
     window_level_ = window_level;
     [window_.get() setLevel:window_level_];

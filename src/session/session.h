@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -103,7 +103,7 @@ class Session : public SessionInterface {
   // composition.
   bool DeleteSelectedCandidateFromHistory(mozc::commands::Command *command);
 
-  // Reset the composer and clear conversion segments.
+  // Resets the composer and clear conversion segments.
   // History segments will not be cleared.
   // Therefore if a user commits "風"(かぜ) and Revert method is called,
   // preedit "ひいた"  will be converted into "邪引いた".
@@ -113,10 +113,10 @@ class Session : public SessionInterface {
   // on the situation described above.
   bool ResetContext(mozc::commands::Command *command);
 
-  // Return the current status such as a composition string, input mode, etc.
+  // Returns the current status such as a composition string, input mode, etc.
   bool GetStatus(mozc::commands::Command *command);
 
-  // Fill Output::Callback with the CONVERT_REVERSE SessionCommand to
+  // Fills Output::Callback with the CONVERT_REVERSE SessionCommand to
   // ask the client to send back the SessionCommand to the server.
   // This function is called when the key event representing the
   // ConvertReverse keybinding is called.
@@ -126,13 +126,13 @@ class Session : public SessionInterface {
   // is called when the CONVERT_REVERSE SessionCommand is called.
   bool ConvertReverse(mozc::commands::Command *command);
 
-  // Fill Output::Callback with the Undo SessionCommand to ask the
+  // Fills Output::Callback with the Undo SessionCommand to ask the
   // client to send back the SessionCommand to the server.
   // This function is called when the key event representing the
   // Undo keybinding is called.
   bool RequestUndo(mozc::commands::Command *command);
 
-  // Undo the commitment.  This function is called when the
+  // Undos the commitment.  This function is called when the
   // UNDO SessionCommand is called.
   bool Undo(mozc::commands::Command *command);
 
@@ -152,13 +152,13 @@ class Session : public SessionInterface {
   bool MoveCursorToBeginning(mozc::commands::Command *command);
   bool MoveCursorTo(mozc::commands::Command *command);
   bool Convert(mozc::commands::Command *command);
-  // Start conversion not using user history.  This is used for debugging.
+  // Starts conversion not using user history.  This is used for debugging.
   bool ConvertWithoutHistory(mozc::commands::Command *command);
   bool ConvertNext(mozc::commands::Command *command);
   bool ConvertPrev(mozc::commands::Command *command);
-  // Show the next page of candidates.
+  // Shows the next page of candidates.
   bool ConvertNextPage(mozc::commands::Command *command);
-  // Show the previous page of candidates.
+  // Shows the previous page of candidates.
   bool ConvertPrevPage(mozc::commands::Command *command);
   bool ConvertCancel(mozc::commands::Command *command);
   bool PredictAndConvert(mozc::commands::Command *command);
@@ -170,11 +170,11 @@ class Session : public SessionInterface {
   // Expands suggestion candidates.
   bool ExpandSuggestion(mozc::commands::Command *command);
 
-  // Commit only the first segment.
+  // Commits only the first segment.
   bool CommitSegment(mozc::commands::Command *command);
-  // Commit some characters at the head of the preedit.
+  // Commits some characters at the head of the preedit.
   bool CommitHead(size_t count, mozc::commands::Command *command);
-  // Commit preedit if in password mode.
+  // Commits preedit if in password mode.
   bool CommitIfPassword(mozc::commands::Command *command);
 
   bool SegmentFocusRight(mozc::commands::Command *command);
@@ -184,7 +184,7 @@ class Session : public SessionInterface {
   bool SegmentWidthExpand(mozc::commands::Command *command);
   bool SegmentWidthShrink(mozc::commands::Command *command);
 
-  // Select the transliteration candidate.  If the current state is
+  // Selects the transliteration candidate.  If the current state is
   // composition, candidates will be generated with only translitaration
   // candidates.
   bool ConvertToHiragana(mozc::commands::Command *command);

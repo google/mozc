@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -80,6 +80,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/testing/mock_data_manager_base.gyp:mock_user_pos_manager',
         'dictionary_base.gyp:pos_matcher',
         'system/system_dictionary.gyp:system_dictionary_builder',
       ],
@@ -108,6 +110,17 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'dictionary_test_util',
+      'type': 'static_library',
+      'sources': [
+        'dictionary_test_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:testing',
       ],
     },
   ],

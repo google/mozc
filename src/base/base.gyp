@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -307,6 +307,7 @@
             '--version_file', '../mozc_version.txt',
             '--input', 'version_def_template.h',
             '--output', '<(gen_out_dir)/version_def.h',
+            '--branding', '<(branding)',
           ],
         },
       ],
@@ -506,17 +507,6 @@
     ],
     ['target_platform=="NaCl"', {
       'targets': [
-        {
-          'target_name': 'nacl_js_proxy',
-          'type': 'static_library',
-          'sources': [
-            'nacl_js_proxy.cc'
-          ],
-          'dependencies': [
-            'base',
-            '../net/jsoncpp.gyp:jsoncpp',
-          ],
-        },
         {
           'target_name': 'pepper_file_system_mock',
           'type': 'static_library',

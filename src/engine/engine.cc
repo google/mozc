@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -129,10 +129,11 @@ bool UserDataManagerImpl::WaitForSyncerForTest() {
 Engine::Engine() {}
 Engine::~Engine() {}
 
+// Since the composite predictor class differs on desktop and mobile, Init()
+// takes a function pointer to create an instance of predictor class.
 void Engine::Init(
     const DataManagerInterface *data_manager,
     PredictorInterface *(*predictor_factory)(PredictorInterface *,
-                                             PredictorInterface *,
                                              PredictorInterface *)) {
   CHECK(data_manager);
   CHECK(predictor_factory);
@@ -225,11 +226,8 @@ void Engine::Init(
                                  suppression_dictionary_.get());
     CHECK(user_history_predictor);
 
-    PredictorInterface *extra_predictor = NULL;
-
     predictor_ = (*predictor_factory)(dictionary_predictor,
-                                      user_history_predictor,
-                                      extra_predictor);
+                                      user_history_predictor);
     CHECK(predictor_);
   }
 

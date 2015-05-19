@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,10 +44,6 @@
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"
 
-#ifdef ENABLE_CLOUD_SYNC
-#include "sync/sync_handler.h"
-#endif  // ENABLE_CLOUD_SYNC
-
 namespace {
 
 #ifdef OS_WIN
@@ -88,12 +84,6 @@ SessionServer::SessionServer()
       UsageStatsUploader::kDefaultSchedulerRandomDelay,
       &UsageStatsUploader::Send,
       NULL));
-
-#ifdef ENABLE_CLOUD_SYNC
-  sync_handler_.reset(new sync::SyncHandler);
-  session_handler_->SetSyncHandler(sync_handler_.get());
-  Scheduler::AddJob(sync_handler_->GetSchedulerJobSetting());
-#endif  // ENABLE_CLOUD_SYNC
 
   // Send a notification event to the UI.
   NamedEventNotifier notifier(kEventName);

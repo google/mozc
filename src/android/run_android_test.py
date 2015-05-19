@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,43 +51,18 @@ import time
 from xml.etree import cElementTree as ElementTree
 
 
-RESULT_FILE_NAME = 'result.xml'
-
-
-def VerifyResultXMLFile(xml_path):
-  test_suites = gtest_report.GetFromXMLFile(xml_path)
-  if not test_suites:
-    error_message = '[FAIL] Result XML file is invalid; %s' % xml_path
-  if test_suites.fail_num:
-    print '[FAIL] Test failures are found:'
-    error_message = test_suites.GetErrorSummary()
-  else:
-    print '[ OK ] All tests succeeded.'
-    error_message = None
-  if error_message:
-    print error_message
-  return error_message
-
-
 def FindTestBinaries(test_dir):
   """Returns the file names of tests."""
   logging.info('Gathering binaries in %s.', os.path.abspath(test_dir))
-  result = {}
+  result = []
 
-  for abi in os.listdir(test_dir):
-    dir_path = os.path.join(test_dir, abi)
-    if not os.path.isdir(dir_path):
-      continue
-    logging.info('ABI found : %s', abi)
-    binaries_for_abi = []
-    for f in os.listdir(dir_path):
-      path = os.path.join(dir_path, f)
-      # Test binaries are "executable file" and "its name ends with _test."
-      if (os.access(path, os.R_OK | os.X_OK) and
-          os.path.isfile(path) and
-          f.endswith('_test')):
-        binaries_for_abi.append(f)
-    result[abi] = binaries_for_abi
+  for f in os.listdir(test_dir):
+    path = os.path.join(test_dir, f)
+    # Test binaries are "executable file" and "its name ends with _test."
+    if (os.access(path, os.R_OK | os.X_OK) and
+        os.path.isfile(path) and
+        f.endswith('_test')):
+      result.append(f)
   return result
 
 
@@ -131,6 +106,8 @@ def ParseArgs():
                     help='[NATIVE] The directory which contains test binaries')
   parser.add_option('--test_case', dest='testcase', default='',
                     help='[NATIVE] Limits testcases to run.')
+  parser.add_option('--native_abi', dest='abi', default='armeabi',
+                    help='[JAVA][NATIVE] ABI of built test executables.')
   parser.add_option('--mozc_dictionary_data_file',
                     dest='mozc_dictionary_data_file', default=None,
                     help='[NATIVE] The relative path from mozc_root_dir to '
@@ -139,10 +116,18 @@ def ParseArgs():
                     dest='mozc_connection_data_file', default=None,
                     help='[NATIVE] The relative path from mozc_root_dir to '
                     'the connection.data file.')
+  parser.add_option('--mozc_connection_text_data_file',
+                    dest='mozc_connection_text_data_file', default=None,
+                    help='[NATIVE] The relative path from mozc_root_dir to '
+                    'the connection_single_column.txt file.')
   parser.add_option('--mozc_test_connection_data_file',
                     dest='mozc_test_connection_data_file', default=None,
                     help='[NATIVE] The relative path from mozc_root_dir to '
                     'the test_connection.data file.')
+  parser.add_option('--mozc_test_connection_text_data_file',
+                    dest='mozc_test_connection_text_data_file', default=None,
+                    help='[NATIVE] The relative path from mozc_root_dir to '
+                    'the connection_single_column.txt file.')
   parser.add_option('--mozc_data_dir',
                     dest='mozc_data_dir', default=None,
                     help='[NATIVE] The relative path from mozc_root_dir to '
@@ -151,6 +136,9 @@ def ParseArgs():
                     default=None,
                     help='[JAVA][NATIVE] Path to output gtest '
                     'reporting XML files')
+  parser.add_option('--android_home', dest='android_home',
+                    default=None,
+                    help='[JAVA][NATIVE] Path to the the SDK.')
   return parser.parse_args()[0]
 
 
@@ -174,8 +162,8 @@ def AppendPrefixToSuiteName(in_file_name, out_file_name, prefix):
 
 
 class AndroidDevice(android_util.AndroidDevice):
-  def __init__(self, serial):
-    android_util.AndroidDevice.__init__(self, serial)
+  def __init__(self, serial, android_home):
+    android_util.AndroidDevice.__init__(self, serial, android_home)
 
   def WaitForMount(self):
     """Wait until SD card is mounted."""
@@ -183,9 +171,9 @@ class AndroidDevice(android_util.AndroidDevice):
     sleep = 30
     for _ in xrange(retry):
       if self._RunCommand('mount').find('/sdcard') != -1:
-        logging.info('SD card has been mounted.')
+        self.GetLogger().info('SD card has been mounted.')
         return
-      logging.info(
+      self.GetLogger().info(
           'SD card has not been mounted. Wait and retry. '
           'Don\'t worry. This is typically expected behavior.')
       time.sleep(sleep)
@@ -203,18 +191,35 @@ class AndroidDevice(android_util.AndroidDevice):
         If 'pull', 'adb pull remote_path host_path' is executed.
     """
     if operation == 'push':
-      command_args = ['adb', '-s', self.serial, 'push', host_path, remote_path]
+      command_args = [os.path.join(self._android_home, 'platform-tools', 'adb'),
+                      '-s', self.serial, 'push', host_path, remote_path]
     elif operation == 'pull':
-      command_args = ['adb', '-s', self.serial, 'pull', remote_path, host_path]
+      command_args = [os.path.join(self._android_home, 'platform-tools', 'adb'),
+                      '-s', self.serial, 'pull', remote_path, host_path]
     else:
       raise ValueError('operation parameter must be push or pull but '
                        '%s is given.' % operation)
-    logging.info('Copying at %s: %s', self.serial, command_args)
+    self.GetLogger().info('Copying at %s: %s', self.serial, command_args)
     process = subprocess.Popen(command_args)
     if process.wait() == 0:
       return
     raise IOError(
         'Failed to copy a file: %s to %s' % (host_path, remote_path))
+
+  def _VerifyResultXMLFile(self, xml_path, test_name):
+    test_suites = gtest_report.GetFromXMLFile(xml_path)
+    if not test_suites:
+      error_message = ('[FAIL] Result XML file for %s is invalid; %s' %
+                       (test_name, xml_path))
+    else:
+      if test_suites.fail_num:
+        self.GetLogger().warning('[FAIL] %d of test failures for %s are found',
+                                 test_suites.fail_num, test_name)
+        error_message = test_suites.GetErrorSummary()
+      else:
+        self.GetLogger().info('[ OK ] All tests for %s succeeded.', test_name)
+        error_message = None
+    return error_message
 
   def _CopyAndVerifyResult(
       self, test_name, remote_result_path, host_result_path):
@@ -222,59 +227,68 @@ class AndroidDevice(android_util.AndroidDevice):
       self.CopyFile(host_path=host_result_path,
                     remote_path=remote_result_path,
                     operation='pull')
-      print '[ OK ] The process terminated with no crash.'
-      error_message = VerifyResultXMLFile(host_result_path)
+      self.GetLogger().info('[ OK ] %s result file is successfully pulled.',
+                            test_name)
+      error_message = self._VerifyResultXMLFile(host_result_path, test_name)
     except IOError:
+      self.GetLogger().warning('[FAIL] %s result file is not pulled.',
+                               test_name)
       error_message = ('[FAIL] Result file does not exist. '
                        'The process might crash: %s' % test_name)
     if error_message:
-      logging.critical(error_message)
+      self.GetLogger().warning(error_message)
     return error_message
 
-  def RunOneTest(self, test_bin_dir, abi, test_name, remote_dir,
+  def RunOneTest(self, test_bin_dir, test_name, remote_dir,
                  output_report_dir):
     """Execute each test."""
-    prefix = '%s::%s::' % (self._GetAvdName(), abi)
-    host_path = os.path.join(test_bin_dir, abi, test_name)
-    remote_path = os.path.join(remote_dir, test_name)
-    output_report_file_name = '%s%s.xml' % (prefix, test_name)
-    if output_report_dir:
-      output_report_path = os.path.join(output_report_dir,
-                                        output_report_file_name)
-    else:
-      output_report_path = os.tmpnam()
+    try:
+      prefix = '%s::' % (self._GetAvdName())
+      host_path = os.path.join(test_bin_dir, test_name)
+      remote_path = os.path.join(remote_dir, test_name)
+      remote_report_file_name = '%s.xml' % test_name
+      output_report_file_name = '%s%s.xml' % (prefix, test_name)
+      if output_report_dir:
+        output_report_path = os.path.join(output_report_dir,
+                                          output_report_file_name)
+      else:
+        output_report_path = os.tmpnam()
 
-    # Create default test report file.
-    CreateDefaultReportFile(output_report_path, test_name, prefix)
+      # Create default test report file.
+      CreateDefaultReportFile(output_report_path, test_name, prefix)
 
-    # Copy the binary file, run the test, and clean up the executable.
-    self.CopyFile(host_path=host_path,
-                  remote_path=remote_path,
-                  operation='push')
-    remote_report_path = os.path.abspath(os.path.join(remote_dir,
-                                                      RESULT_FILE_NAME))
-    # We should append colored_log=false to suppress escape sequences on
-    # continuous build.
-    command = ['cd', remote_dir, ';',
-               './' + test_name, '--test_srcdir=.', '--logtostderr',
-               '--gunit_output=xml:%s' % remote_report_path,
-               '--colored_log=false']
-    self._RunCommand(*command)
-    temporal_report_path = os.tmpnam()
-    error_message = self._CopyAndVerifyResult(
-        test_name, remote_report_path, temporal_report_path)
-    # Successfully the result file is pulled.
-    if not error_message:
-      # Append prefix to testsuite name.
-      # Otherwise duplicate testsuites name will be generated finally.
-      AppendPrefixToSuiteName(temporal_report_path, output_report_path,
-                              prefix)
-      self._RunCommand('rm', remote_path)
-      self._RunCommand('rm', remote_report_path)
-    return error_message
+      # Copy the binary file, run the test, and clean up the executable.
+      self.CopyFile(host_path=host_path,
+                    remote_path=remote_path,
+                    operation='push')
+      remote_report_path = os.path.abspath(
+          os.path.join(remote_dir, remote_report_file_name))
+      # We should append colored_log=false to suppress escape sequences on
+      # continuous build.
+      command = ['cd', remote_dir, ';',
+                 './' + test_name, '--test_srcdir=.', '--logtostderr',
+                 '--gunit_output=xml:%s' % remote_report_path,
+                 '--colored_log=false']
+      self._RunCommand(*command)
+      temporal_report_path = os.tmpnam()
+      error_message = self._CopyAndVerifyResult(
+          test_name, remote_report_path, temporal_report_path)
+      # Successfully the result file is pulled.
+      if not error_message:
+        # Append prefix to testsuite name.
+        # Otherwise duplicate testsuites name will be generated finally.
+        AppendPrefixToSuiteName(temporal_report_path, output_report_path,
+                                prefix)
+      return error_message
+    finally:
+      if remote_path:
+        self._RunCommand('rm', remote_path)
+      if remote_report_path:
+        self._RunCommand('rm', remote_report_path)
 
   def SetUpTest(self, device, mount_point, host_dir, remote_dir,
-                dictionary_data, connection_data, test_connection_data,
+                dictionary_data, connection_data, connection_text_data,
+                test_connection_data, test_connection_text_data,
                 mozc_data_dir):
     """Set up the android to run tests."""
     self.WaitForMount()
@@ -296,10 +310,20 @@ class AndroidDevice(android_util.AndroidDevice):
                   remote_path=os.path.join(remote_dir,
                                            'embedded_data', 'connection_data'),
                   operation='push')
+    self.CopyFile(host_path=os.path.join(host_dir, connection_text_data),
+                  remote_path=os.path.join(remote_dir,
+                                           'data_manager', 'android',
+                                           'connection_single_column.txt'),
+                  operation='push')
     self.CopyFile(host_path=os.path.join(host_dir, test_connection_data),
                   remote_path=os.path.join(remote_dir,
-                                           'converter',
-                                           'test_connection_data.data'),
+                                           'data_manager', 'testing',
+                                           'connection_data.data'),
+                  operation='push')
+    self.CopyFile(host_path=os.path.join(host_dir, test_connection_text_data),
+                  remote_path=os.path.join(remote_dir,
+                                           'data_manager', 'testing',
+                                           'connection_single_column.txt'),
                   operation='push')
     # mozc_data_dir contains both generated .h files and test data.
     # We want only test data and they are in mozc_data_dir/data.
@@ -312,43 +336,54 @@ class AndroidDevice(android_util.AndroidDevice):
   def TearDownTest(self, remote_dir):
     self._RunCommand('rm', '-r', remote_dir)
 
-  def RunNativeTests(self, options, binaries_for_abis):
-    logging.info('[NATIVE] Testing device=%s', self.serial)
+  def RunNativeTests(self, options, abi, binaries):
+    self.GetLogger().info('[NATIVE] Testing device=%s', self.serial)
+    if not self.IsAcceptableAbi(abi):
+      self.GetLogger().info('ABI %s is not compatible with built executables.',
+                            abi)
+      return []
     try:
       error_messages = []
       self.SetUpTest(options.remote_device, options.remote_mount_point,
                      options.mozc_root_dir, options.remote_dir,
                      options.mozc_dictionary_data_file,
                      options.mozc_connection_data_file,
+                     options.mozc_connection_text_data_file,
                      options.mozc_test_connection_data_file,
+                     options.mozc_test_connection_text_data_file,
                      options.mozc_data_dir)
       if options.testcase:
         test_list = options.testcase.split(',')
-      for abi in binaries_for_abis.iterkeys():
-        if not self.IsAcceptableAbi(abi):
+      else:
+        test_list = None
+      self.GetLogger().info('[NATIVE] Testing device=%s, abi=%s',
+                            self.serial, abi)
+      for test in binaries:
+        if test_list and test not in test_list:
           continue
-        logging.info('[NATIVE] Testing device=%s, abi=%s', self.serial, abi)
-        for test in binaries_for_abis[abi]:
-          if test_list and test not in test_list:
-            continue
-          logging.info('[NATIVE] Testing device=%s, abi=%s, test=%s',
-                       self.serial, abi, test)
-          error_message = self.RunOneTest(options.test_bin_dir, abi, test,
-                                          options.remote_dir,
-                                          options.output_report_dir)
-          if error_message:
-            error_messages.append(error_message)
+        self.GetLogger().info('[NATIVE] Testing device=%s, abi=%s, test=%s',
+                              self.serial, abi, test)
+        error_message = self.RunOneTest(options.test_bin_dir, test,
+                                        options.remote_dir,
+                                        options.output_report_dir)
+        if error_message:
+          error_messages.append(error_message)
       self.TearDownTest(options.remote_dir)
       return error_messages
     except Exception as e:  # pylint: disable=broad-except
       # Catches all the exceptions and returns string instead.
       # If an exception is thrown, multiprocessing module
       # complains because exceptions might not be able to be pickled.
-      return str(e)
+      return [str(e)]
 
-  def RunJavaTests(self, output_report_dir, configuration, app_package_name):
+  def RunJavaTests(self, output_report_dir, configuration,
+                   app_package_name, abi):
     try:
-      logging.info('[JAVA] Testing device=%s', self.serial)
+      if not self.IsAcceptableAbi(abi):
+        self.GetLogger().info(
+            'ABI %s is not compatible with built executables.', abi)
+        return []
+      self.GetLogger().info('[JAVA] Testing device=%s', self.serial)
       prefix = '%s::' % self._GetAvdName()
       report_file_name_remote = 'gtest-report.xml'
       report_file_name_host = prefix + 'java_layer.xml'
@@ -373,7 +408,7 @@ class AndroidDevice(android_util.AndroidDevice):
         self.CopyFile(host_path=temporal_report_path,
                       remote_path=remote_report_path,
                       operation='pull')
-        print '[ OK ] The process terminated with no crash.'
+        self.GetLogger().info('[ OK ] Java result file is successfully pulled.')
         # Append prefix to testsuite name.
         # Otherwise duplicate testsuites name will be generated finally.
         AppendPrefixToSuiteName(temporal_report_path, output_report_path,
@@ -381,6 +416,7 @@ class AndroidDevice(android_util.AndroidDevice):
         # XML file verification is omitted because
         # - Java's report XML doesn't fit verifier's expectation.
       except IOError:
+        self.GetLogger().warning('[FAIL] Java result file is not pulled.')
         return '[FAIL] Result file does not exist. The process might crash.'
 
       # TODO(matsuzakit): Verify reporting XML file here.
@@ -394,9 +430,10 @@ class AndroidDevice(android_util.AndroidDevice):
       return str(e)
 
   @staticmethod
-  def GetDevices():
-    return [AndroidDevice(super_device.serial)
-            for super_device in android_util.AndroidDevice.GetDevices()]
+  def GetDevices(android_home):
+    return [AndroidDevice(super_device.serial, android_home)
+            for super_device in
+            android_util.AndroidDevice.GetDevices(android_home)]
 
 
 def CreateDefaultReportFile(output_report_path, test_name, prefix):
@@ -411,16 +448,18 @@ def CreateDefaultReportFile(output_report_path, test_name, prefix):
 </testsuite>""" % (prefix, test_name))
 
 
-def RunTest(device, options, binaries_for_abis):
+def RunTest(device, options, binaries):
   error_messages = []
   if options.run_native_test:
-    native_error_messages = device.RunNativeTests(options, binaries_for_abis)
+    native_error_messages = device.RunNativeTests(options, options.abi,
+                                                  binaries)
     if native_error_messages:
       error_messages.extend(native_error_messages)
   if options.run_java_test:
     error_message = device.RunJavaTests(options.output_report_dir,
                                         options.configuration,
-                                        options.app_package_name)
+                                        options.app_package_name,
+                                        options.abi)
     if error_message:
       error_messages.append(error_message)
   return '\n'.join(error_messages)
@@ -432,11 +471,15 @@ def main():
 
   options = ParseArgs()
 
+  if not options.android_home:
+    logging.error('--android_home option must be specified.')
+    os.exit(1)
+
   if options.run_native_test:
-    binaries_for_abis = FindTestBinaries(options.test_bin_dir)
-    logging.info(binaries_for_abis)
+    binaries = FindTestBinaries(options.test_bin_dir)
+    logging.info(binaries)
   else:
-    binaries_for_abis = None
+    binaries = None
 
   # Prepare reporting directory.
   if options.output_report_dir:
@@ -450,7 +493,9 @@ def main():
       else:
         raise
 
-  devices = AndroidDevice.GetDevices()
+  android_home = options.android_home
+
+  devices = AndroidDevice.GetDevices(android_home)
   logging.info('All the activated devices are %s',
                [device.serial for device in devices])
   if options.android_devices:
@@ -465,7 +510,7 @@ def main():
 
   # Maximum # of devices is 10 so running them in the same time is possible.
   pool = multiprocessing.Pool(len(devices))
-  results = [pool.apply_async(RunTest, [device, options, binaries_for_abis])
+  results = [pool.apply_async(RunTest, [device, options, binaries])
              for device in devices]
   pool.close()
   # result.get() blocks until the test terminates.

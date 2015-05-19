@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,7 @@
 #include "converter/node.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/dictionary_file.h"
+#include "dictionary/node_list_builder.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
@@ -79,8 +80,6 @@ namespace {
 // rbx_array default setting
 const int kMinRbxBlobSize = 4;
 const char *kReverseLookupCache = "reverse_lookup_cache";
-// The cost is 500 * log(30): 30 times in freq.
-const int32 kKanaModifierInsensitivePenalty = 1700;
 
 class ReverseLookupCache : public NodeAllocatorData::Data {
  public:
@@ -299,6 +298,10 @@ class TokenDecodeIterator {
         LOG(DFATAL) << "unknown value_type: " << token_info_.value_type;
         break;
       }
+    }
+
+    if (token_info_.accent_encoding_type == TokenInfo::EMBEDDED_IN_TOKEN) {
+      token_.value += "_" + Util::StringPrintf("%d", token_info_.accent_type);
     }
 
     if (token_info_.pos_type == TokenInfo::FREQUENT_POS) {
@@ -551,13 +554,73 @@ class ReverseLookupIndex {
   DISALLOW_COPY_AND_ASSIGN(ReverseLookupIndex);
 };
 
-SystemDictionary::SystemDictionary()
+SystemDictionary::Builder::Builder(const string &filename)
+    : type_(FILENAME), filename_(filename),
+      ptr_(NULL), len_(-1), options_(NONE), codec_(NULL)  {}
+
+SystemDictionary::Builder::Builder(const char *ptr, int len)
+    : type_(IMAGE), filename_(""),
+      ptr_(ptr), len_(len), options_(NONE), codec_(NULL) {}
+
+SystemDictionary::Builder::~Builder() {}
+
+void SystemDictionary::Builder::SetOptions(Options options) {
+  options_ = options;
+}
+
+// This does not have the ownership of |codec|
+void SystemDictionary::Builder::SetCodec(
+    const SystemDictionaryCodecInterface *codec) {
+  codec_ = codec;
+}
+
+SystemDictionary *SystemDictionary::Builder::Build() {
+  if (codec_ == NULL) {
+    codec_ = SystemDictionaryCodecFactory::GetCodec();
+  }
+
+  scoped_ptr<SystemDictionary> instance(new SystemDictionary(codec_));
+
+  switch (type_) {
+    case FILENAME:
+      if (!instance->dictionary_file_->OpenFromFile(filename_)) {
+        LOG(ERROR) << "Failed to open system dictionary file";
+        return NULL;
+      }
+      break;
+    case IMAGE:
+      // Make the dictionary not to be paged out.
+      // We don't check the return value because the process doesn't necessarily
+      // has the priviledge to mlock.
+      // Note that we don't munlock the space because it's always better to keep
+      // the singleton system dictionary paged in as long as the process runs.
+      SystemUtil::MaybeMLock(ptr_, len_);
+      if (!instance->dictionary_file_->OpenFromImage(ptr_, len_)) {
+        LOG(ERROR) << "Failed to open system dictionary file";
+        return NULL;
+      }
+      break;
+    default:
+      LOG(ERROR) << "Invalid input type.";
+      return NULL;
+  }
+
+  if (!instance->OpenDictionaryFile(
+          (options_ & ENABLE_REVERSE_LOOKUP_INDEX) != 0)) {
+    LOG(ERROR) << "Failed to create system dictionary";
+    return NULL;
+  }
+
+  return instance.release();
+}
+
+SystemDictionary::SystemDictionary(const SystemDictionaryCodecInterface *codec)
     : key_trie_(new LoudsTrie),
       value_trie_(new LoudsTrie),
       token_array_(new BitVectorBasedArray),
       dictionary_file_(new DictionaryFile),
       frequent_pos_(NULL),
-      codec_(SystemDictionaryCodecFactory::GetCodec()),
+      codec_(codec),
       empty_limit_(Limit()) {
 }
 
@@ -566,18 +629,9 @@ SystemDictionary::~SystemDictionary() {}
 // static
 SystemDictionary *SystemDictionary::CreateSystemDictionaryFromFileWithOptions(
     const string &filename, Options options) {
-  scoped_ptr<SystemDictionary> instance(new SystemDictionary);
-  if (!instance->dictionary_file_->OpenFromFile(filename)) {
-    LOG(ERROR) << "Failed to open system dictionary file";
-    return NULL;
-  }
-  if (!instance->OpenDictionaryFile(
-          (options & ENABLE_REVERSE_LOOKUP_INDEX) != 0)) {
-    LOG(ERROR) << "Failed to create system dictionary";
-    return NULL;
-  }
-
-  return instance.release();
+  Builder builder(filename);
+  builder.SetOptions(options);
+  return builder.Build();
 }
 
 // static
@@ -589,23 +643,9 @@ SystemDictionary *SystemDictionary::CreateSystemDictionaryFromFile(
 // static
 SystemDictionary *SystemDictionary::CreateSystemDictionaryFromImageWithOptions(
     const char *ptr, int len, Options options) {
-  // Make the dictionary not to be paged out.
-  // We don't check the return value because the process doesn't necessarily
-  // has the priviledge to mlock.
-  // Note that we don't munlock the space because it's always better to keep
-  // the singleton system dictionary paged in as long as the process runs.
-  SystemUtil::MaybeMLock(ptr, len);
-  scoped_ptr<SystemDictionary> instance(new SystemDictionary);
-  if (!instance->dictionary_file_->OpenFromImage(ptr, len)) {
-    LOG(ERROR) << "Failed to open system dictionary file";
-    return NULL;
-  }
-  if (!instance->OpenDictionaryFile(
-          (options & ENABLE_REVERSE_LOOKUP_INDEX) != 0)) {
-    LOG(ERROR) << "Failed to create system dictionary";
-    return NULL;
-  }
-  return instance.release();
+  Builder builder(ptr, len);
+  builder.SetOptions(options);
+  return builder.Build();
 }
 
 // static
@@ -924,7 +964,8 @@ Node *SystemDictionary::LookupPredictiveWithLimit(
       size_t key_length = 0;
       bool has_subtrie = false;
       if (!lookup_limit.begin_with_trie->LookUpPrefix(
-              key.data() + size, &value, &key_length, &has_subtrie)) {
+              StringPiece(key).substr(size),
+              &value, &key_length, &has_subtrie)) {
         continue;
       }
     }
@@ -986,26 +1027,9 @@ class PrefixTraverser : public LoudsTrie::Callback {
 
   virtual ResultType Run(const char *trie_key,
                          size_t trie_key_len, int key_id) {
-    // Decode key and call back OnKey().
-    const StringPiece encoded_key =
-        original_encoded_key_.substr(0, trie_key_len);
-    string key;
-    codec_->DecodeKey(encoded_key, &key);
-    SystemDictionary::Callback::ResultType result = callback_->OnKey(key);
-    if (result != SystemDictionary::Callback::TRAVERSE_CONTINUE) {
-      return ConvertResultType(result);
-    }
-
-    // Decode actual key (expanded key) and call back OnActualKey().  To check
-    // if the actual key is expanded, compare the keys in encoded domain for
-    // performance (this is guaranteed as codec is a bijection).
-    const StringPiece encoded_actual_key(trie_key, trie_key_len);
-    string actual_key;
-    actual_key.reserve(key.size());
-    codec_->DecodeKey(encoded_actual_key, &actual_key);
-    const bool is_expanded = encoded_actual_key != encoded_key;
-    DCHECK_EQ(is_expanded, key != actual_key);
-    result = callback_->OnActualKey(key, actual_key, is_expanded);
+    string key, actual_key;
+    SystemDictionary::Callback::ResultType result = RunOnKeyAndOnActualKey(
+        trie_key, trie_key_len, key_id, &key, &actual_key);
     if (result != SystemDictionary::Callback::TRAVERSE_CONTINUE) {
       return ConvertResultType(result);
     }
@@ -1019,7 +1043,7 @@ class PrefixTraverser : public LoudsTrie::Callback {
              actual_key, encoded_tokens_ptr);
          !iter.Done(); iter.Next()) {
       const TokenInfo &token_info = iter.Get();
-      result = callback_->OnToken(key, actual_key, token_info);
+      result = callback_->OnToken(key, actual_key, *token_info.token);
       if (result != SystemDictionary::Callback::TRAVERSE_CONTINUE) {
         return ConvertResultType(result);
       }
@@ -1027,7 +1051,30 @@ class PrefixTraverser : public LoudsTrie::Callback {
     return SEARCH_CONTINUE;
   }
 
- private:
+ protected:
+  SystemDictionary::Callback::ResultType RunOnKeyAndOnActualKey(
+      const char *trie_key, size_t trie_key_len, int key_id,
+      string *key, string *actual_key) {
+    // Decode key and call back OnKey().
+    const StringPiece encoded_key =
+        original_encoded_key_.substr(0, trie_key_len);
+    codec_->DecodeKey(encoded_key, key);
+    SystemDictionary::Callback::ResultType result = callback_->OnKey(*key);
+    if (result != SystemDictionary::Callback::TRAVERSE_CONTINUE) {
+      return result;
+    }
+
+    // Decode actual key (expanded key) and call back OnActualKey().  To check
+    // if the actual key is expanded, compare the keys in encoded domain for
+    // performance (this is guaranteed as codec is a bijection).
+    const StringPiece encoded_actual_key(trie_key, trie_key_len);
+    actual_key->reserve(key->size());
+    codec_->DecodeKey(encoded_actual_key, actual_key);
+    const bool is_expanded = encoded_actual_key != encoded_key;
+    DCHECK_EQ(is_expanded, *key != *actual_key);
+    return callback_->OnActualKey(*key, *actual_key, is_expanded);
+  }
+
   const BitVectorBasedArray *token_array_;
   const LoudsTrie *value_trie_;
   const SystemDictionaryCodecInterface *codec_;
@@ -1035,98 +1082,14 @@ class PrefixTraverser : public LoudsTrie::Callback {
   const StringPiece original_encoded_key_;
   SystemDictionary::Callback *callback_;
 
+ private:
   DISALLOW_COPY_AND_ASSIGN(PrefixTraverser);
-};
-
-// Provides basic functionality for building a list of nodes.
-class BaseNodeListBuilder : public SystemDictionary::Callback {
- public:
-  BaseNodeListBuilder(NodeAllocatorInterface *allocator, int limit)
-      : allocator_(allocator), limit_(limit), penalty_(0), result_(NULL) {
-  }
-
-  // Determines a penalty for tokens of this (key, actual_key) pair.
-  virtual ResultType OnActualKey(const string &key,
-                                 const string &actual_key,
-                                 bool is_expanded) {
-    penalty_ = is_expanded ? kKanaModifierInsensitivePenalty : 0;
-    return TRAVERSE_CONTINUE;
-  }
-
-  // Creates a new node and prepends it to the current list.
-  virtual ResultType OnToken(const string &key, const string &actual_key,
-                             const TokenInfo &token_info) {
-    Node *new_node = CreateNodeFromToken(
-        allocator_, *token_info.token, penalty_);
-    new_node->bnext = result_;
-    result_ = new_node;
-    --limit_;
-    if (limit_ <= 0) {
-      return TRAVERSE_DONE;
-    }
-    return TRAVERSE_CONTINUE;
-  }
-
-  int limit() const {
-    return limit_;
-  }
-
-  Node *result() const {
-    return result_;
-  }
-
- private:
-  NodeAllocatorInterface *allocator_;
-  int limit_;
-  int penalty_;
-  Node *result_;
-
-  DISALLOW_COPY_AND_ASSIGN(BaseNodeListBuilder);
-};
-
-// Implements key filtering rule for LookupPrefix().
-class NodeListBuilderForLookupPrefix : public BaseNodeListBuilder {
- public:
-  NodeListBuilderForLookupPrefix(NodeAllocatorInterface *allocator,
-                                 int limit, size_t min_key_length)
-      : BaseNodeListBuilder(allocator, limit),
-        min_key_length_(min_key_length) {
-  }
-
-  virtual ResultType OnKey(const string &key) {
-    return key.size() < min_key_length_ ? TRAVERSE_NEXT_KEY : TRAVERSE_CONTINUE;
-  }
-
- private:
-  const size_t min_key_length_;
-  DISALLOW_COPY_AND_ASSIGN(NodeListBuilderForLookupPrefix);
 };
 
 }  // namespace
 
-Node *SystemDictionary::LookupPrefixWithLimit(
-    const char *str, int size,
-    const Limit &lookup_limit,
-    NodeAllocatorInterface *allocator) const {
-  const int max_nodes_size = (allocator == NULL) ?
-      numeric_limits<int>::max() : allocator->max_nodes_size();
-  NodeListBuilderForLookupPrefix builder(
-      allocator, max_nodes_size, lookup_limit.key_len_lower_limit);
-  LookupPrefixWithCallback(
-      StringPiece(str, size),
-      lookup_limit.kana_modifier_insensitive_lookup_enabled,
-      &builder);
-  return builder.result();
-}
-
-Node *SystemDictionary::LookupPrefix(
-    const char *str, int size, NodeAllocatorInterface *allocator) const {
-  // default limit
-  return LookupPrefixWithLimit(str, size, empty_limit_, allocator);
-}
-
-void SystemDictionary::LookupPrefixWithCallback(
-    const StringPiece key,
+void SystemDictionary::LookupPrefix(
+    StringPiece key,
     bool use_kana_modifier_insensitive_lookup,
     Callback *callback) const {
   string original_encoded_key;
@@ -1139,16 +1102,16 @@ void SystemDictionary::LookupPrefixWithCallback(
       original_encoded_key.c_str(), table, &traverser);
 }
 
-Node *SystemDictionary::LookupExact(
-    const char *str, int size, NodeAllocatorInterface *allocator) const {
-  const StringPiece key(str, size);
-
+void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
   // Find the key in the key trie.
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
   const int key_id = key_trie_->ExactSearch(encoded_key);
   if (key_id == -1) {
-    return NULL;
+    return;
+  }
+  if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
+    return;
   }
 
   // Get the block of tokens for this key.
@@ -1156,24 +1119,15 @@ Node *SystemDictionary::LookupExact(
   const uint8 *encoded_tokens_ptr = reinterpret_cast<const uint8*>(
       token_array_->Get(key_id, &dummy_length));
 
-  // Build a list of nodes from the tokens.
-  Node *result = NULL;
-  int limit = (allocator == NULL) ?
-      numeric_limits<int>::max() : allocator->max_nodes_size();
+  // Callback on each token.
   for (TokenDecodeIterator iter(
            codec_, value_trie_.get(), frequent_pos_, key, encoded_tokens_ptr);
        !iter.Done(); iter.Next()) {
-    if (limit <= 0) {
+    if (callback->OnToken(key, key, *iter.Get().token) !=
+        Callback::TRAVERSE_CONTINUE) {
       break;
     }
-    const TokenInfo &token_info = iter.Get();
-    Node *new_node = CreateNodeFromToken(allocator, *token_info.token, 0);
-    new_node->bnext = result;
-    result = new_node;
-    --limit;
   }
-
-  return result;
 }
 
 Node *SystemDictionary::AppendNodesFromTokens(
@@ -1336,32 +1290,59 @@ void SystemDictionary::ClearReverseLookupCache(
 
 namespace {
 
-// Provides token filtering rule for reverse lookup of T13N entries.
-class T13nNodeListBuilder : public BaseNodeListBuilder {
+// A traverser for prefix search over T13N entries.
+class T13nPrefixTraverser : public PrefixTraverser {
  public:
-  T13nNodeListBuilder(NodeAllocatorInterface *allocator, int limit)
-      : BaseNodeListBuilder(allocator, limit) {
-  }
+  T13nPrefixTraverser(const BitVectorBasedArray *token_array,
+                      const LoudsTrie *value_trie,
+                      const SystemDictionaryCodecInterface *codec,
+                      const uint32 *frequent_pos,
+                      const StringPiece original_encoded_key,
+                      SystemDictionary::Callback *callback)
+      : PrefixTraverser(token_array, value_trie, codec, frequent_pos,
+                        original_encoded_key, callback) {}
 
-  virtual ResultType OnToken(const string &key, const string &expanded_key,
-                             const TokenInfo &token_info) {
-    if (token_info.token->attributes & Token::SPELLING_CORRECTION) {
-      return TRAVERSE_CONTINUE;
+  virtual ResultType Run(const char *trie_key,
+                         size_t trie_key_len, int key_id) {
+    string key, actual_key;
+    SystemDictionary::Callback::ResultType result = RunOnKeyAndOnActualKey(
+        trie_key, trie_key_len, key_id, &key, &actual_key);
+    if (result != SystemDictionary::Callback::TRAVERSE_CONTINUE) {
+      return ConvertResultType(result);
     }
-    if (token_info.value_type != TokenInfo::AS_IS_HIRAGANA &&
-        token_info.value_type != TokenInfo::AS_IS_KATAKANA) {
-      // SAME_AS_PREV_VALUE may be t13n token.
-      string hiragana;
-      Util::KatakanaToHiragana(token_info.token->value, &hiragana);
-      if (token_info.token->key != hiragana) {
-        return TRAVERSE_CONTINUE;
+
+    // Decode tokens and call back OnToken() for each T13N token.
+    size_t dummy_length = 0;
+    const uint8 *encoded_tokens_ptr = reinterpret_cast<const uint8*>(
+        token_array_->Get(key_id, &dummy_length));
+    for (TokenDecodeIterator iter(
+             codec_, value_trie_, frequent_pos_,
+             actual_key, encoded_tokens_ptr);
+         !iter.Done(); iter.Next()) {
+      const TokenInfo &token_info = iter.Get();
+      // Skip spelling corrections.
+      if (token_info.token->attributes & Token::SPELLING_CORRECTION) {
+        continue;
+      }
+      if (token_info.value_type != TokenInfo::AS_IS_HIRAGANA &&
+          token_info.value_type != TokenInfo::AS_IS_KATAKANA) {
+        // SAME_AS_PREV_VALUE may be t13n token.
+        string hiragana;
+        Util::KatakanaToHiragana(token_info.token->value, &hiragana);
+        if (token_info.token->key != hiragana) {
+          continue;
+        }
+      }
+      result = callback_->OnToken(key, actual_key, *token_info.token);
+      if (result != SystemDictionary::Callback::TRAVERSE_CONTINUE) {
+        return ConvertResultType(result);
       }
     }
-    return BaseNodeListBuilder::OnToken(key, expanded_key, token_info);
+    return SEARCH_CONTINUE;
   }
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(T13nNodeListBuilder);
+  DISALLOW_COPY_AND_ASSIGN(T13nPrefixTraverser);
 };
 
 }  // namespace
@@ -1369,10 +1350,15 @@ class T13nNodeListBuilder : public BaseNodeListBuilder {
 Node *SystemDictionary::GetReverseLookupNodesForT13N(
     const StringPiece value, NodeAllocatorInterface *allocator,
     int *limit) const {
-  string hiragana;
+  string hiragana, original_encoded_key;
   Util::KatakanaToHiragana(value, &hiragana);
-  T13nNodeListBuilder builder(allocator, *limit);
-  LookupPrefixWithCallback(hiragana, false, &builder);
+  codec_->EncodeKey(hiragana, &original_encoded_key);
+  BaseNodeListBuilder builder(allocator, *limit);
+  T13nPrefixTraverser traverser(token_array_.get(), value_trie_.get(), codec_,
+                                frequent_pos_, original_encoded_key, &builder);
+  key_trie_->PrefixSearchWithKeyExpansion(
+      original_encoded_key.c_str(), KeyExpansionTable::GetDefaultInstance(),
+      &traverser);
   *limit = builder.limit();  // Update limit.
   return builder.result();
 }

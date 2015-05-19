@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,8 @@ GtkWindowBase::GtkWindowBase(GtkWrapperInterface *gtk)
   gtk_->GSignalConnect(canvas_, "expose-event", G_CALLBACK(OnPaintThunk),
                        this);
   gtk_->GtkContainerAdd(window_, canvas_);
+  gtk_->GtkWidgetRealize(window_);
+  gtk_->GdkWindowSetTypeHint(window_, GDK_WINDOW_TYPE_HINT_POPUP_MENU);
 }
 
 GtkWindowBase::~GtkWindowBase() {

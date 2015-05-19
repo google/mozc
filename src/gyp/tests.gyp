@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,6 @@
         '../session/session_test.gyp:session_all_test',
         '../storage/louds/louds_test.gyp:storage_louds_all_test',
         '../storage/storage_test.gyp:storage_all_test',
-        '../sync/sync.gyp:sync_all_test',
         '../transliteration/transliteration_test.gyp:transliteration_all_test',
         '../usage_stats/usage_stats_test.gyp:usage_stats_all_test',
       ],
@@ -78,6 +77,11 @@
         ['OS=="linux" and use_libibus==1', {
           'dependencies': [
             '../unix/ibus/ibus.gyp:ibus_all_test',
+          ],
+        }],
+        ['target_platform=="Android"', {
+          'dependencies': [
+            '../android/android.gyp:build_java_test',
           ],
         }],
       ],

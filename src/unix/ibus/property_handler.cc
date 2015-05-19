@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -347,9 +347,9 @@ void PropertyHandler::SetCompositionMode(
   if (kMozcEnginePropertyIMEOffState
       && is_activated_
       && composition_mode == kMozcEnginePropertyIMEOffState->composition_mode) {
-    commands::KeyEvent key;
-    key.set_special_key(mozc::commands::KeyEvent::OFF);
-    client_->SendKey(key, &output);
+    command.set_type(commands::SessionCommand::TURN_OFF_IME);
+    command.set_composition_mode(original_composition_mode_);
+    client_->SendCommand(command, &output);
   } else {
     command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
     command.set_composition_mode(composition_mode);

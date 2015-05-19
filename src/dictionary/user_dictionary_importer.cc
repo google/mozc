@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,6 @@
 #include <vector>
 
 #include "base/compiler_specific.h"
-#include "base/port.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/port.h"
@@ -384,10 +383,7 @@ UserDictionaryImporter::ImportFromIterator(
     return UserDictionaryImporter::IMPORT_FATAL;
   }
 
-  const int max_size =
-      user_dic->syncable() ?
-          static_cast<int>(UserDictionaryUtil::max_sync_entry_size()) :
-          static_cast<int>(UserDictionaryUtil::max_entry_size());
+  const int max_size = static_cast<int>(UserDictionaryUtil::max_entry_size());
 
   UserDictionaryImporter::ErrorType ret =
       UserDictionaryImporter::IMPORT_NO_ERROR;

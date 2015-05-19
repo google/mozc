@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
       'sources': [
         'dictionary_impl_test.cc',
         'dictionary_mock_test.cc',
+        'suffix_dictionary_test.cc',
         'suppression_dictionary_test.cc',
         'user_dictionary_importer_test.cc',
         'user_dictionary_session_handler_test.cc',
@@ -59,9 +60,10 @@
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'dictionary.gyp:dictionary',
         'dictionary.gyp:dictionary_mock',
+        'dictionary.gyp:dictionary_test_util',
+        'dictionary_base.gyp:pos_matcher',
         'dictionary_base.gyp:suppression_dictionary',
         'dictionary_base.gyp:user_dictionary',
-        'dictionary_base.gyp:pos_matcher',
       ],
       'variables': {
         'test_size': 'small',

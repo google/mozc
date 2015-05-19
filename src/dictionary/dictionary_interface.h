@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,13 +39,77 @@
 
 namespace mozc {
 
-// These structures are defined in converter
-struct Node;
-class NodeAllocatorInterface;
+class NodeAllocatorInterface;  // converter/node.h
+struct Node;                   // converter/node.h
+struct Token;                  // dictionary/dictionary_token.h
 
+// TODO(noriyukit): Move this interface into dictionary namespace.
 class DictionaryInterface {
  public:
-  virtual ~DictionaryInterface() {}
+  // Callback interface for dictionary traversal (currently implemented only for
+  // prefix and exact search). Each method is called in the following manner:
+  //
+  // for (each key found) {
+  //   OnKey(key);
+  //   OnActualKey(key, actual_key, key != actual_key);
+  //   for (each token in the token array for the key) {
+  //     OnToken(key, actual_key, token);
+  //   }
+  // }
+  //
+  // Using the return value of each call of the three methods, you can tell the
+  // traverser how to proceed. The meanings of the four values are as follows:
+  //   1) TRAVERSE_DONE
+  //       Quit the traversal, i.e., no more callbacks for keys and/or tokens.
+  //   2) TRAVERSE_NEXT_KEY
+  //       Finish the traversal for the current key and search for the next key.
+  //       If returned from OnToken(), the remaining tokens are discarded.
+  //   3) TRAVERSE_CULL
+  //       Similar to TRAVERSE_NEXT_KEY, finish the traversal for the current
+  //       key but search for the next key by using search culling. Namely,
+  //       traversal of the subtree starting with the current key is skipped,
+  //       which is the difference from TRAVERSE_NEXT_KEY.
+  //   4) TRAVERSE_CONTINUE
+  //       Continue the traversal for the current key or tokens, namely:
+  //         - If returned from OnKey(), OnActualKey() will be called back.
+  //         - If returned from OnActualKey(), a series of OnToken()'s will be
+  //           called back.
+  //         - If returned from OnToken(), OnToken() will be called back again
+  //           with the next token, provided that it exists. Proceed to the next
+  //           key if there's no more token.
+  class Callback {
+   public:
+    enum ResultType {
+      TRAVERSE_DONE,
+      TRAVERSE_NEXT_KEY,
+      TRAVERSE_CULL,
+      TRAVERSE_CONTINUE,
+    };
+
+    virtual ~Callback() {}
+
+    // Called back when key is found.
+    virtual ResultType OnKey(StringPiece key) {
+      return TRAVERSE_CONTINUE;
+    }
+
+    // Called back when actual key is decoded. The third argument is guaranteed
+    // to be (key != actual_key) but computed in an efficient way.
+    virtual ResultType OnActualKey(
+        StringPiece key, StringPiece actual_key, bool is_expanded) {
+      return TRAVERSE_CONTINUE;
+    }
+
+    // Called back when a token is decoded.
+    virtual ResultType OnToken(StringPiece key,
+                               StringPiece expanded_key,
+                               const Token &token_info) {
+      return TRAVERSE_CONTINUE;
+    }
+
+   protected:
+    Callback() {}
+  };
 
   // limitation for LookupPrefixWithLimit
   struct Limit {
@@ -71,8 +135,17 @@ class DictionaryInterface {
     }
   };
 
+  virtual ~DictionaryInterface() {}
+
   // Returns true if the dictionary has an entry for the given value.
   virtual bool HasValue(const StringPiece value) const = 0;
+
+  virtual void LookupPredictiveWithCallback(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const {
+    // TODO(noriyukit): Remove the default implementation after removing
+    // LookupPredictiveWithLimit and LookupPredictive.
+  }
 
   // For Lookup methods, dictionary does not manage the ownerships of the
   // returned Node objects.
@@ -85,16 +158,11 @@ class DictionaryInterface {
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const = 0;
 
-  virtual Node *LookupPrefixWithLimit(
-      const char *str, int size,
-      const Limit &limit,
-      NodeAllocatorInterface *allocator) const = 0;
+  virtual void LookupPrefix(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const = 0;
 
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const = 0;
-
-  virtual Node *LookupExact(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const = 0;
+  virtual void LookupExact(StringPiece key, Callback *callback) const = 0;
 
   // For reverse lookup, the reading is stored in Node::value and the word
   // is stored in Node::key.
@@ -125,4 +193,4 @@ class DictionaryInterface {
 
 }  // namespace mozc
 
-#endif  // MOZC_DICTIONARY_INTERFACE_H_
+#endif  // MOZC_DICTIONARY_DICTIONARY_INTERFACE_H_

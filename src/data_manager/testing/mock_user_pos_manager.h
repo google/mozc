@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,8 @@ class MockUserPosManager : public DataManagerInterface {
  public:
   MockUserPosManager() {}
   virtual ~MockUserPosManager() {}
+
+  static MockUserPosManager *GetUserPosManager();
 
   // Partially implement the interface because some binary only reqiures the
   // folloiwng embedded data.

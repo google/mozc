@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,14 +35,17 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include "base/logging.h"
+#include "base/string_piece.h"
 #include "base/util.h"
 
 namespace mozc {
-template<typename T> class Trie {
+
+template<typename T>
+class Trie {
  public:
-  Trie()
-    : has_data_(false) {}
+  Trie() : has_data_(false) {}
 
   virtual ~Trie() {
     typename SubTrie::iterator it;
@@ -51,7 +54,7 @@ template<typename T> class Trie {
     }
   }
 
-  void AddEntry(const string &key, T data) {
+  void AddEntry(StringPiece key, T data) {
     if (key.empty()) {
       data_ = data;
       has_data_ = true;
@@ -60,17 +63,17 @@ template<typename T> class Trie {
 
     Trie *sub_trie;
     if (HasSubTrie(GetKeyHead(key))) {
-      sub_trie = trie_[GetKeyHead(key)];
+      sub_trie = trie_[GetKeyHead(key).as_string()];
     } else {
       sub_trie = new Trie();
-      trie_[GetKeyHead(key)] = sub_trie;
+      trie_[GetKeyHead(key).as_string()] = sub_trie;
     }
 
-    const string key_tail = GetKeyTail(key);
+    const StringPiece key_tail = GetKeyTail(key);
     sub_trie->AddEntry(key_tail, data);
   }
 
-  bool DeleteEntry(const string &key) {
+  bool DeleteEntry(StringPiece key) {
     if (key.empty()) {
       if (trie_.empty()) {
         return true;
@@ -85,11 +88,11 @@ template<typename T> class Trie {
     }
 
     Trie *sub_trie = GetSubTrie(key);
-    const string sub_key = GetKeyTail(key);
+    const StringPiece sub_key = GetKeyTail(key);
     const bool should_delete_subtrie = sub_trie->DeleteEntry(sub_key);
     if (should_delete_subtrie) {
       delete sub_trie;
-      trie_.erase(GetKeyHead(key));
+      trie_.erase(GetKeyHead(key).as_string());
       // If the size of trie_ is 0, This trie should be deleted.
       return trie_.size() == 0;
     } else {
@@ -97,7 +100,7 @@ template<typename T> class Trie {
     }
   }
 
-  bool LookUp(const string &key, T *data) const {
+  bool LookUp(StringPiece key, T *data) const {
     if (key.empty()) {
       if (!has_data_) {
         return false;
@@ -111,7 +114,7 @@ template<typename T> class Trie {
     }
 
     Trie *sub_trie = GetSubTrie(key);
-    const string sub_key = GetKeyTail(key);
+    const StringPiece sub_key = GetKeyTail(key);
     return sub_trie->LookUp(sub_key, data);
   }
 
@@ -126,7 +129,7 @@ template<typename T> class Trie {
   //  -- Do not refer 'a' here.
   //  - Return true for the key, 'ac'
   //  -- Matches in prefix by 'a', and 'a' have data
-  bool LookUpPrefix(const string &key,
+  bool LookUpPrefix(StringPiece key,
                     T *data,
                     size_t *key_length,
                     bool *fixed) const {
@@ -143,7 +146,7 @@ template<typename T> class Trie {
     }
 
     Trie *sub_trie = GetSubTrie(key);
-    const string sub_key = GetKeyTail(key);
+    const StringPiece sub_key = GetKeyTail(key);
     if (sub_trie->LookUpPrefix(sub_key, data, key_length, fixed)) {
       *key_length += GetKeyHeadLength(key);
       return true;
@@ -165,7 +168,7 @@ template<typename T> class Trie {
   //  - Return 'abc', 'abd', 'a', for the key 'a'
   //  - Return 'abc', 'abd' for the key 'ab'
   //  - Return nothing for the key 'b'
-  void LookUpPredictiveAll(const string &key,
+  void LookUpPredictiveAll(StringPiece key,
                            vector<T> *data_list) const {
     DCHECK(data_list);
     if (!key.empty()) {
@@ -173,7 +176,7 @@ template<typename T> class Trie {
         return;
       }
       const Trie *sub_trie = GetSubTrie(key);
-      const string sub_key = GetKeyTail(key);
+      const StringPiece sub_key = GetKeyTail(key);
       return sub_trie->LookUpPredictiveAll(sub_key, data_list);
     }
 
@@ -187,10 +190,10 @@ template<typename T> class Trie {
     }
   }
 
-  bool HasSubTrie(const string &key) const {
-    const string head = GetKeyHead(key);
+  bool HasSubTrie(StringPiece key) const {
+    const StringPiece head = GetKeyHead(key);
 
-    const typename SubTrie::const_iterator it = trie_.find(head);
+    const typename SubTrie::const_iterator it = trie_.find(head.as_string());
     if (it == trie_.end()) {
       return false;
     }
@@ -203,20 +206,20 @@ template<typename T> class Trie {
   }
 
  private:
-  string GetKeyHead(const string &key) const {
-    return mozc::Util::SubString(key, 0, 1);
+  StringPiece GetKeyHead(StringPiece key) const {
+    return Util::SubStringPiece(key, 0, 1);
   }
 
-  size_t GetKeyHeadLength(const string &key) const {
-    return mozc::Util::OneCharLen(key.c_str());
+  size_t GetKeyHeadLength(StringPiece key) const {
+    return Util::OneCharLen(key.data());
   }
 
-  string GetKeyTail(const string &key) const {
-    return key.substr(mozc::Util::OneCharLen(key.c_str()));
+  StringPiece GetKeyTail(StringPiece key) const {
+    return key.substr(Util::OneCharLen(key.data()));
   }
 
-  Trie<T> *GetSubTrie(const string &key) const {
-    return trie_.find(GetKeyHead(key))->second;
+  Trie<T> *GetSubTrie(StringPiece key) const {
+    return trie_.find(GetKeyHead(key).as_string())->second;
   }
 
   typedef map<const string, Trie<T> *> SubTrie;
@@ -224,6 +227,7 @@ template<typename T> class Trie {
   bool has_data_;
   T data_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_TRIE_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -130,6 +130,14 @@ WordRegisterDialog::WordRegisterDialog()
     is_available_ = false;
     return;
   }
+
+#ifndef ENABLE_CLOUD_SYNC
+  if (session_->mutable_storage()
+      ->ConvertSyncDictionariesToNormalDictionaries()) {
+    LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
+    session_->mutable_storage()->Save();
+  }
+#endif  // !ENABLE_CLOUD_SYNC
 
   // Initialize ComboBox
   vector<string> pos_set;

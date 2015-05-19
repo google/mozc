@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -125,17 +125,9 @@ TEST_F(UserDictionarySessionTest, LoadWithEnsuringNonEmptyStorage) {
   ASSERT_EQ(UserDictionaryCommandStatus::FILE_NOT_FOUND,
             session.LoadWithEnsuringNonEmptyStorage());
 
-#ifdef ENABLE_CLOUD_SYNC
-  // If CLOUD_SYNC is enabled, Load automatically creates a Sync dictionary.
-  EXPECT_PROTO_PEQ(
-      "dictionaries: < name: \"Sync Dictionary\" syncable: true >\n"
-      "dictionaries: < name: \"abcde\" >",
-      session.storage());
-#else
   EXPECT_PROTO_PEQ(
       "dictionaries: < name: \"abcde\" >",
       session.storage());
-#endif  // ENABLE_CLOUD_SYNC
 }
 
 // Unfortunately the limit size of the stored file is hard coded in
@@ -372,7 +364,7 @@ TEST_F(UserDictionarySessionTest, AddEntry) {
                    session.storage());
 }
 
-TEST_F(UserDictionarySessionTest, AddEntryLimitExceededNoSync) {
+TEST_F(UserDictionarySessionTest, AddEntryLimitExceeded) {
   UserDictionarySession session(GetUserDictionaryFile());
   UserDictionary::Entry entry;
 
@@ -382,27 +374,6 @@ TEST_F(UserDictionarySessionTest, AddEntryLimitExceededNoSync) {
   ResetEntry("reading", "word", UserDictionary::NOUN, &entry);
 
   for (int i = 0; i < mozc::UserDictionaryStorage::max_entry_size(); ++i) {
-    ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              session.AddEntry(dictionary_id, entry));
-  }
-
-  EXPECT_EQ(UserDictionaryCommandStatus::ENTRY_SIZE_LIMIT_EXCEEDED,
-            session.AddEntry(dictionary_id, entry));
-}
-
-TEST_F(UserDictionarySessionTest, AddEntryLimitExceededSync) {
-  UserDictionarySession session(GetUserDictionaryFile());
-  UserDictionary::Entry entry;
-
-  uint64 dictionary_id;
-  ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-            session.CreateDictionary("user dictionary", &dictionary_id));
-  // Set syncable.
-  session.mutable_storage()->mutable_dictionaries(0)->set_syncable(true);
-  ResetEntry("reading", "word", UserDictionary::NOUN, &entry);
-
-  for (int i = 0; i < mozc::UserDictionaryStorage::max_sync_entry_size();
-       ++i) {
     ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
               session.AddEntry(dictionary_id, entry));
   }

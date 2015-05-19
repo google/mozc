@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -180,30 +180,6 @@ void UpdateConfigStats() {
                          config.use_japanese_layout());
   UsageStats::SetBoolean("IMEActivationKeyCustomized",
                          IMEActivationKeyCustomized());
-
-  const bool has_sync_config = config.has_sync_config();
-  const bool use_config_sync =
-      has_sync_config && config.sync_config().use_config_sync();
-  UsageStats::SetBoolean("ConfigUseConfigSync", use_config_sync);
-  const bool use_user_dictionary_sync =
-      has_sync_config && config.sync_config().use_user_dictionary_sync();
-  UsageStats::SetBoolean("ConfigUseUserDictionarySync",
-                         use_user_dictionary_sync);
-  const bool use_user_history_sync =
-      has_sync_config && config.sync_config().use_user_history_sync();
-  UsageStats::SetBoolean("ConfigUseHistorySync", use_user_history_sync);
-  const bool use_learning_preference_sync =
-      has_sync_config && config.sync_config().use_learning_preference_sync();
-  UsageStats::SetBoolean("ConfigUseLearningPreferenceSync",
-                         use_learning_preference_sync);
-  const bool use_contact_list_sync =
-      has_sync_config && config.sync_config().use_contact_list_sync();
-  UsageStats::SetBoolean("ConfigUseContactListSync", use_contact_list_sync);
-
-  const bool use_cloud_sync =
-      use_config_sync || use_user_dictionary_sync || use_user_history_sync ||
-      use_learning_preference_sync || use_contact_list_sync;
-  UsageStats::SetBoolean("ConfigUseCloudSync", use_cloud_sync);
 
   UsageStats::SetBoolean("ConfigAllowCloudHandwriting",
                          config.allow_cloud_handwriting());

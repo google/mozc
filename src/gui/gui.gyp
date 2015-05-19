@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -443,17 +443,6 @@
         '<(subdir)/keymap_editor.h',
         '<(subdir)/roman_table_editor.h',
       ],
-      'conditions': [
-        ['enable_cloud_sync==1', {
-          'sources': [
-            '<(subdir)/auth_code_detector.h',
-            '<(subdir)/auth_dialog.h',
-            '<(subdir)/auth_dialog.ui',
-            '<(subdir)/sync_customize_dialog.h',
-            '<(subdir)/sync_customize_dialog.ui',
-          ],
-        }],
-      ],
       'includes': [
         'qt_moc.gypi',
         'qt_rcc.gypi',
@@ -493,23 +482,7 @@
         '../session/session_base.gyp:key_parser',
         '../session/session_base.gyp:keymap',
         '../session/session_base.gyp:session_protocol',
-        '../sync/sync.gyp:oauth2_token_util',
         'gen_config_dialog_files',
-      ],
-      'conditions': [
-        ['enable_cloud_sync==1', {
-          'sources': [
-            '<(gen_out_dir)/config_dialog/moc_auth_code_detector.cc',
-            '<(gen_out_dir)/config_dialog/moc_auth_dialog.cc',
-            '<(gen_out_dir)/config_dialog/moc_sync_customize_dialog.cc',
-            'config_dialog/auth_code_detector.cc',
-            'config_dialog/auth_dialog.cc',
-            'config_dialog/sync_customize_dialog.cc',
-          ],
-          'dependencies': [
-            '../sync/sync.gyp:oauth2',
-          ],
-        }],
       ],
       'includes': [
         'qt_libraries.gypi',

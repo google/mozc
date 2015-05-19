@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,6 @@
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 
-using ::testing::Return;
 using ::testing::_;
 
 DECLARE_string(test_tmpdir);
@@ -294,19 +293,26 @@ class CallCheckDictionary : public DictionaryInterface {
                             const Limit &limit,
                             NodeAllocatorInterface *allocator));
   MOCK_CONST_METHOD3(LookupPrefix,
-                     Node *(const char *str, int size,
-                            NodeAllocatorInterface *allocator));
-  MOCK_CONST_METHOD3(LookupExact,
-                     Node *(const char *str, int size,
-                            NodeAllocatorInterface *allocator));
-  MOCK_CONST_METHOD4(LookupPrefixWithLimit,
-                     Node *(const char *str, int size,
-                            const Limit &limit,
-                            NodeAllocatorInterface *allocator));
+                     void(StringPiece key,
+                          bool use_kana_modifier_insensitive_lookup,
+                          Callback *callback));
+  MOCK_CONST_METHOD2(LookupExact,
+                     void(StringPiece key, Callback *callback));
   MOCK_CONST_METHOD3(LookupReverse,
                      Node *(const char *str, int size,
                             NodeAllocatorInterface *allocator));
 };
+
+// Action to call the third argument of LookupPrefix with the token
+// <key, value>.
+ACTION_P4(LookupPrefixOneToken, key, value, lid, rid) {
+  Token token;
+  token.key = key;
+  token.value = value;
+  token.lid = lid;
+  token.rid = rid;
+  arg2->OnToken(key, key, token);
+}
 
 void MakeSegmentsForSuggestion(const string key, Segments *segments) {
   segments->Clear();
@@ -650,18 +656,14 @@ class DictionaryPredictorTest : public ::testing::Test {
       composer.GetQueryForPrediction(&query);
       segment->set_key(query);
 
-      Node return_node_for_history;
-      // "ぐーぐる"
-      return_node_for_history.key =
-          "\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82\x8b";
-      // "グーグル"
-      return_node_for_history.value =
-          "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab";
-      return_node_for_history.lid = 1;
-      return_node_for_history.rid = 1;
-      // history key and value should be in the dictionary
+      // History key and value should be in the dictionary.
       EXPECT_CALL(*check_dictionary, LookupPrefix(_, _, _))
-          .WillOnce(Return(&return_node_for_history));
+          .WillOnce(LookupPrefixOneToken(
+              // "ぐーぐる"
+              "\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82\x8b",
+              // "グーグル"
+              "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab",
+              1, 1));
       if (use_expansion) {
         EXPECT_CALL(*check_dictionary, LookupPredictiveWithLimit(_, _, _, _));
       } else {
@@ -1732,27 +1734,18 @@ class TestSuffixDictionary : public DictionaryInterface {
     return NULL;
   }
 
-  virtual Node *LookupPrefixWithLimit(const char *str, int size,
-                                      const Limit &limit,
-                                      NodeAllocatorInterface *allocator) const {
-    return NULL;
-  }
+  virtual void LookupPrefix(
+      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      Callback *callback) const {}
 
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const {
-    return NULL;
-  }
-
-  virtual Node *LookupExact(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const {
-    return NULL;
-  }
+  virtual void LookupExact(StringPiece key, Callback *callback) const {}
 
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const {
     return NULL;
   }
 };
+
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, GetUnigramCandidateCutoffThreshold) {

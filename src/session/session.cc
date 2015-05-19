@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -679,7 +679,6 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
 
     case keymap::CompositionState::CONVERT_WITHOUT_HISTORY:
       return ConvertWithoutHistory(command);
-
 
     case keymap::CompositionState::PREDICT_AND_CONVERT:
       return PredictAndConvert(command);
@@ -2378,7 +2377,6 @@ bool Session::ConvertWithoutHistory(commands::Command *command) {
   Output(command);
   return true;
 }
-
 
 bool Session::CommitIfPassword(commands::Command *command) {
   if (context_->composer().GetInputFieldType() == commands::Context::PASSWORD) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,11 +69,9 @@ bool IsZeroQuery(const ConversionRequest &request) {
 }  // namespace
 
 BasePredictor::BasePredictor(PredictorInterface *dictionary_predictor,
-                             PredictorInterface *user_history_predictor,
-                             PredictorInterface *extra_predictor)
+                             PredictorInterface *user_history_predictor)
     : dictionary_predictor_(dictionary_predictor),
-      user_history_predictor_(user_history_predictor),
-      extra_predictor_(extra_predictor) {
+      user_history_predictor_(user_history_predictor) {
   DCHECK(dictionary_predictor_.get());
   DCHECK(user_history_predictor_.get());
   FLAGS_enable_expansion_for_dictionary_predictor =
@@ -87,9 +85,6 @@ BasePredictor::~BasePredictor() {}
 void BasePredictor::Finish(Segments *segments) {
   user_history_predictor_->Finish(segments);
   dictionary_predictor_->Finish(segments);
-  if (extra_predictor_.get()) {
-    extra_predictor_->Finish(segments);
-  }
 
   if (segments->conversion_segments_size() < 1 ||
       segments->request_type() == Segments::CONVERSION) {
@@ -139,19 +134,13 @@ bool BasePredictor::Reload() {
 // static
 PredictorInterface *DefaultPredictor::CreateDefaultPredictor(
     PredictorInterface *dictionary_predictor,
-    PredictorInterface *user_history_predictor,
-    PredictorInterface *extra_predictor) {
-  return new DefaultPredictor(dictionary_predictor,
-                              user_history_predictor,
-                              extra_predictor);
+    PredictorInterface *user_history_predictor) {
+  return new DefaultPredictor(dictionary_predictor, user_history_predictor);
 }
 
 DefaultPredictor::DefaultPredictor(PredictorInterface *dictionary_predictor,
-                                   PredictorInterface *user_history_predictor,
-                                   PredictorInterface *extra_predictor)
-    : BasePredictor(dictionary_predictor,
-                    user_history_predictor,
-                    extra_predictor),
+                                   PredictorInterface *user_history_predictor)
+    : BasePredictor(dictionary_predictor, user_history_predictor),
       empty_request_(),
       predictor_name_("DefaultPredictor") {}
 
@@ -195,31 +184,19 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
     return result;
   }
 
-  if (extra_predictor_.get()) {
-    segments->set_max_prediction_candidates_size(remained_size);
-    result |= extra_predictor_->PredictForRequest(request, segments);
-    remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
-  }
-
   return result;
 }
 
 // static
 PredictorInterface *MobilePredictor::CreateMobilePredictor(
     PredictorInterface *dictionary_predictor,
-    PredictorInterface *user_history_predictor,
-    PredictorInterface *extra_predictor) {
-  return new MobilePredictor(dictionary_predictor,
-                             user_history_predictor,
-                             extra_predictor);
+    PredictorInterface *user_history_predictor) {
+  return new MobilePredictor(dictionary_predictor, user_history_predictor);
 }
 
 MobilePredictor::MobilePredictor(PredictorInterface *dictionary_predictor,
-                                 PredictorInterface *user_history_predictor,
-                                 PredictorInterface *extra_predictor)
-    : BasePredictor(dictionary_predictor,
-                    user_history_predictor,
-                    extra_predictor),
+                                 PredictorInterface *user_history_predictor)
+    : BasePredictor(dictionary_predictor, user_history_predictor),
       empty_request_(),
       predictor_name_("MobilePredictor") {}
 
@@ -278,14 +255,6 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
 
       segments->set_max_prediction_candidates_size(kMobilePredictionSize);
       result |= dictionary_predictor_->PredictForRequest(request, segments);
-
-      if (extra_predictor_.get()) {
-        // TODO(matsuzakit): the size is TBD
-        size = GetCandidatesSize(*segments) + 40;
-        segments->set_max_prediction_candidates_size(size);
-        result |= extra_predictor_->PredictForRequest(request, segments);
-      }
-
       break;
     }
     default: {

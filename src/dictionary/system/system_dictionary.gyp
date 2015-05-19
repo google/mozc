@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,6 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
-        '../../data_manager/data_manager.gyp:user_pos_manager',
         '../../storage/louds/louds.gyp:bit_vector_based_array_builder',
         '../../storage/louds/louds.gyp:louds_trie_builder',
         '../dictionary_base.gyp:pos_matcher',

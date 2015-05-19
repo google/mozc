@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -287,23 +287,12 @@ TEST_F(UserDictionarySessionHandlerTest, LoadAndSave) {
   command_->set_type(UserDictionaryCommand::GET_USER_DICTIONARY_NAME_LIST);
   command_->set_session_id(session_id);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-#ifdef ENABLE_CLOUD_SYNC
-  // If CLOUD_SYNC is enabled, Load automatically creates a Sync dictionary.
-  EXPECT_PROTO_PEQ(
-      "status: USER_DICTIONARY_COMMAND_SUCCESS\n"
-      "storage: <\n"
-      "  dictionaries: < name: \"dictionary\" >\n"
-      "  dictionaries: < name: \"Sync Dictionary\" >\n"
-      ">",
-      *status_);
-#else
   EXPECT_PROTO_PEQ(
       "status: USER_DICTIONARY_COMMAND_SUCCESS\n"
       "storage: <\n"
       "  dictionaries: < name: \"dictionary\" >\n"
       ">",
       *status_);
-#endif  // ENABLE_CLOUD_SYNC
 
   // Delete the session.
   Clear();
@@ -339,23 +328,12 @@ TEST_F(UserDictionarySessionHandlerTest, LoadWithEnsuringNonEmptyStorage) {
   command_->set_type(UserDictionaryCommand::GET_USER_DICTIONARY_NAME_LIST);
   command_->set_session_id(session_id);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-#ifdef ENABLE_CLOUD_SYNC
-  // If CLOUD_SYNC is enabled, Load automatically creates a Sync dictionary.
-  EXPECT_PROTO_PEQ(
-      "status: USER_DICTIONARY_COMMAND_SUCCESS\n"
-      "storage: <\n"
-      "  dictionaries: < name: \"Sync Dictionary\" >\n"
-      "  dictionaries: < name: \"abcde\" >\n"
-      ">",
-      *status_);
-#else
   EXPECT_PROTO_PEQ(
       "status: USER_DICTIONARY_COMMAND_SUCCESS\n"
       "storage: <\n"
       "  dictionaries: < name: \"abcde\" >\n"
       ">",
       *status_);
-#endif  // ENABLE_CLOUD_SYNC
 
   // Delete the session.
   Clear();

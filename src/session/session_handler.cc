@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,9 +59,6 @@
 // TODO(kkojima): Remove this guard after
 // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
-#ifdef ENABLE_CLOUD_SYNC
-#include "sync/sync_handler.h"
-#endif  // ENABLE_CLOUD_SYNC
 #include "usage_stats/usage_stats.h"
 
 using mozc::usage_stats::UsageStats;
@@ -160,10 +157,6 @@ SessionHandler::SessionHandler(EngineInterface *engine)
   // TODO(kkojima): Remove this guard after
   // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
-
-#ifdef ENABLE_CLOUD_SYNC
-  sync_handler_ = NULL;
-#endif  // ENABLE_CLOUD_SYNC
 
   // allow [2..128] sessions
   max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
@@ -342,43 +335,6 @@ bool SessionHandler::SetRequest(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::StartCloudSync(commands::Command *command) {
-  VLOG(1) << "Start cloud sync operation";
-#ifdef ENABLE_CLOUD_SYNC
-  if (!sync_handler_) {
-    return false;
-  }
-  return sync_handler_->Sync();
-#else
-  return true;
-#endif  // ENABLE_CLOUD_SYNC
-}
-
-bool SessionHandler::GetCloudSyncStatus(commands::Command *command) {
-  VLOG(1) << "GetSyncStatus";
-#ifdef ENABLE_CLOUD_SYNC
-  if (!sync_handler_) {
-    return false;
-  }
-  return sync_handler_->GetCloudSyncStatus(
-      command->mutable_output()->mutable_cloud_sync_status());
-#else
-  return false;
-#endif  // ENABLE_CLOUD_SYNC
-}
-
-bool SessionHandler::AddAuthCode(commands::Command *command) {
-  VLOG(1) << "AddAuthCode";
-#ifdef ENABLE_CLOUD_SYNC
-  if (!sync_handler_) {
-    return false;
-  }
-  return sync_handler_->SetAuthorization(command->input().auth_code());
-#else
-  return false;
-#endif  // ENABLE_CLOUD_SYNC
-}
-
 bool SessionHandler::InsertToStorage(commands::Command *command) {
   VLOG(1) << "Insert to generic storage";
   if (!command->input().has_storage_entry()) {
@@ -521,15 +477,6 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     case commands::Input::CLEANUP:
       eval_succeeded = Cleanup(command);
       break;
-    case commands::Input::START_CLOUD_SYNC:
-      eval_succeeded = StartCloudSync(command);
-      break;
-    case commands::Input::GET_CLOUD_SYNC_STATUS:
-      eval_succeeded = GetCloudSyncStatus(command);
-      break;
-    case commands::Input::ADD_AUTH_CODE:
-      eval_succeeded = AddAuthCode(command);
-      break;
     case commands::Input::INSERT_TO_STORAGE:
       eval_succeeded = InsertToStorage(command);
       break;
@@ -580,12 +527,6 @@ session::SessionInterface *SessionHandler::NewSession() {
 
 void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
   observer_handler_->AddObserver(observer);
-}
-
-void SessionHandler::SetSyncHandler(sync::SyncHandler *sync_handler) {
-#ifdef ENABLE_CLOUD_SYNC
-  sync_handler_ = sync_handler;
-#endif  // ENABLE_CLOUD_SYNC
 }
 
 bool SessionHandler::SendKey(commands::Command *command) {
@@ -672,6 +613,12 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
   if (command->input().has_application_info()) {
     session->set_application_info(command->input().application_info());
+#ifdef __native_client__
+    if (command->input().application_info().has_timezone_offset()) {
+      Util::SetTimezoneOffset(
+          command->input().application_info().timezone_offset());
+    }
+#endif  // __native_client__
   }
 
   // Ensure the onmemory config is same as the locally stored one

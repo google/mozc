@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 
 /**
  * Function key mapping table.
+ * Keycode is defined on http://www.w3.org/TR/uievents/#keyboard-key-codes
  * @const
  * @type {!Object.<string, string>}
  * @private
@@ -55,6 +56,7 @@ mozc.FUNCTION_KEY_MAP_ = {
 
 /**
  * Normal key code mapping table for JP keyboard.
+ * Keycode is defined on http://www.w3.org/TR/uievents/#keyboard-key-codes
  * @const
  * @type {!Object.<string, !Array.<string>>}
  * @private
@@ -118,11 +120,15 @@ mozc.KEY_CODE_MAP_JP_ = {
 
 /**
  * Normal key code mapping table for US keyboard.
+ * Keycode is defined on http://www.w3.org/TR/uievents/#keyboard-key-codes
  * @const
  * @type {!Object.<string, !Array.<string>>}
  * @private
  */
 mozc.KEY_CODE_MAP_US_ = {
+  'Backquote': ['`', '~', '\u308D', '\u308D'],  // 'ろ', 'ろ'
+  // 'BackQuote' is used before Chrome 33.
+  // TODO(hsumita): Remove this.
   'BackQuote': ['`', '~', '\u308D', '\u308D'],  // 'ろ', 'ろ'
   'Digit1': ['1', '!', '\u306C', '\u306C'],  // 'ぬ', 'ぬ'
   'Digit2': ['2', '@', '\u3075', '\u3075'],  // 'ふ', 'ふ'
@@ -183,11 +189,15 @@ mozc.KEY_CODE_MAP_US_ = {
 
 /**
  * Special key code mapping table for JP keyboard.
+ * Keycode is defined on http://www.w3.org/TR/uievents/#keyboard-key-codes
  * @const
  * @type {!Object.<string, string>}
  * @private
  */
 mozc.SPECIAL_KEY_CODE_MAP_JP_ = {
+  'Escape': 'ESCAPE',
+  // 'Esc' is used before Chrome 33
+  // TODO(hsumita): Remove this.
   'Esc': 'ESCAPE',
   'Backspace': 'BACKSPACE',
   'Tab': 'TAB',
@@ -226,11 +236,15 @@ mozc.SPECIAL_KEY_CODE_MAP_JP_ = {
 
 /**
  * Special key code mapping table for US keyboard.
+ * Keycode is defined on http://www.w3.org/TR/uievents/#keyboard-key-codes
  * @const
  * @type {!Object.<string, string>}
  * @private
  */
 mozc.SPECIAL_KEY_CODE_MAP_US_ = {
+  'Escape': 'ESCAPE',
+  // 'Esc' is used before Chrome 33.
+  // TODO(hsumita): Remove this.
   'Esc': 'ESCAPE',
   'Backspace': 'BACKSPACE',
   'Tab': 'TAB',

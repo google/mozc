@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -332,6 +332,13 @@ class Util {
   // GetFrequency().
   static uint64 GetTicks();
 
+#ifdef __native_client__
+  // Sets the time difference between local time and UTC time in seconds.
+  // We use this function in NaCl Mozc because we can't know the local timezone
+  // in NaCl environment.
+  static void SetTimezoneOffset(int32 timezone_offset_sec);
+#endif  // __native_client__
+
   // Interface of the helper class.
   // Default implementation is defined in the .cc file.
   class ClockInterface {
@@ -344,6 +351,9 @@ class Util {
     // High accuracy clock.
     virtual uint64 GetFrequency() = 0;
     virtual uint64 GetTicks() = 0;
+#ifdef __native_client__
+    virtual void SetTimezoneOffset(int32 timezone_offset_sec) = 0;
+#endif  // __native_client__
   };
 
   // This function is provided for test.

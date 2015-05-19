@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,9 @@ namespace mozc {
 ClockMock::ClockMock(uint64 sec, uint32 usec)
     : seconds_(sec), micro_seconds_(usec),
       frequency_(1000000000), ticks_(0),
+#ifdef __native_client__
+      timezone_offset_sec_(0),
+#endif  // __native_client__
       delta_seconds_(0), delta_micro_seconds_(0) {
 }
 
@@ -61,7 +64,12 @@ bool ClockMock::GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
   if (_gmtime64_s(output, &modified_sec) != 0) {
     return false;
   }
-#else
+#elif defined(__native_client__)
+  const time_t localtime_sec = modified_sec + timezone_offset_sec_;
+  if (gmtime_r(&localtime_sec, output) == NULL) {
+    return false;
+  }
+#else  // !OS_WIN && !__native_client__
   if (gmtime_r(&modified_sec, output) == NULL) {
     return false;
   }
@@ -78,6 +86,12 @@ uint64 ClockMock::GetFrequency() {
 uint64 ClockMock::GetTicks() {
   return ticks_;
 }
+
+#ifdef __native_client__
+void ClockMock::SetTimezoneOffset(int32 timezone_offset_sec) {
+  timezone_offset_sec_ = timezone_offset_sec;
+}
+#endif  // __native_client__
 
 void ClockMock::PutClockForward(uint64 delta_sec, uint32 delta_usec) {
   const uint32 one_second = 1000000u;

@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,8 @@
 #       Set to '1' or 'true' to compress connection data.
 #       Typically this variable is set by build_mozc.py as gyp's parameter.
 # - dictionary_files: A list of dictionary source files.
+# - gen_test_dictionary: 'true' or 'false'. When 'true', generate test
+#       dictionary with test POS data.
 {
   'targets': [
     {
@@ -169,6 +171,35 @@
       ],
     },
     {
+      'target_name': 'gen_connection_single_column_txt_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        '<(mozc_dir)/build_tools/zlib_util.py',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_connection_single_column_txt_for_<(dataset_tag)',
+          'variables': {
+            'connection_deflate': '<(platform_data_dir)/connection.deflate',
+          },
+          'inputs': [
+            '<(connection_deflate)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/connection_single_column.txt',
+          ],
+          'action': [
+            'python', '<(mozc_dir)/build_tools/zlib_util.py', 'decompress',
+            '<(connection_deflate)',
+            '<(gen_out_dir)/connection_single_column.txt',
+          ],
+          'message': ('[<(dataset_tag)] Decompressing ' +
+                      '<(connection_deflate)'),
+        },
+      ],
+    },
+    {
       'target_name': 'gen_embedded_connection_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
@@ -176,11 +207,14 @@
         '<(mozc_dir)/build_tools/code_generator_util.py',
         '<(mozc_dir)/data_manager/gen_connection_data.py',
       ],
+      'dependencies': [
+        'gen_connection_single_column_txt_for_<(dataset_tag)#host',
+      ],
       'actions': [
         {
           'action_name': 'gen_embedded_connection_data_for_<(dataset_tag)',
           'variables': {
-            'text_connection_file': '<(platform_data_dir)/connection_single_column.txt',
+            'text_connection_file': '<(gen_out_dir)/connection_single_column.txt',
             'id_file': '<(platform_data_dir)/id.def',
             'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
             'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',
@@ -216,6 +250,7 @@
           'action_name': 'gen_embedded_dictionary_data_for_<(dataset_tag)',
           'variables': {
             'input_files%': '<(dictionary_files)',
+            'gen_test_dictionary_flag': '<(gen_test_dictionary)',
           },
           'inputs': [
             '<@(input_files)',
@@ -229,6 +264,7 @@
             '--logtostderr',
             '--input=<(input_files)',
             '--make_header',
+            '--gen_test_dictionary=<(gen_test_dictionary_flag)',
             '--output=<(gen_out_dir)/embedded_dictionary_data.h',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
@@ -254,11 +290,14 @@
         '<(mozc_dir)/build_tools/code_generator_util.py',
         '<(mozc_dir)/data_manager/gen_connection_data.py',
       ],
+      'dependencies': [
+        'gen_connection_single_column_txt_for_<(dataset_tag)#host',
+      ],
       'actions': [
         {
           'action_name': 'gen_separate_connection_data_for_<(dataset_tag)',
           'variables': {
-            'text_connection_file': '<(platform_data_dir)/connection_single_column.txt',
+            'text_connection_file': '<(gen_out_dir)/connection_single_column.txt',
             'id_file': '<(platform_data_dir)/id.def',
             'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
             'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ class MockDataManagerTest : public DataManagerTestBase {
                             kLSize,
                             kRSize,
                             IsBoundaryInternal,
-                            "data/test/dictionary/connection_single_column.txt",
+                            "data_manager/testing/connection_single_column.txt",
                             1,
                             "data/test/dictionary/dictionary.txt",
                             "data/test/dictionary/suggestion_filter.txt") {}

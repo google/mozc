@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,119 +63,11 @@
     'sdk_asset_dir': 'assets',
     'support_v4_jar_paths': [
       # Path of support-v4 has been changed for new SDK.
-      '<(android_sdk_home)/extras/android/compatibility/v4/android-support-v4.jar',
-      '<(android_sdk_home)/extras/android/support/v4/android-support-v4.jar',
+      '<(android_home)/extras/android/compatibility/v4/android-support-v4.jar',
+      '<(android_home)/extras/android/support/v4/android-support-v4.jar',
     ],
-    'ndk_app_dst_dir': 'libs',
-    'ndk_build_with_args': [
-      'ndk-build',
-      # Run make-jobs simultaneously.
-      '--jobs=$(lastword 4 $(MAKE_JOBS))',  # Defaults to 4 parallel jobs.
-      '-C', '<(DEPTH)',  # Change the current directory to the project root dir.
-      'NDK_LOG=1',
-      'APP_ABI=<(android_arch_abi)',  # Specified by build_mozc.py
-      'APP_BUILD_SCRIPT=Makefile',
-      # If target API level above 16, PIE (position-independent executables) is enabled by default.
-      # But our minimum support level is 7 so PIE shouldn't be built.
-      'APP_PIE=false',
-      # Set the build mode according to CONFIGURATION_NAME.
-      'NDK_DEBUG=$(if $(filter Release_Android,<(CONFIGURATION_NAME)),0,1)',
-      # On OSS version,
-      # find command returns the results like ./base/base.host.mk.
-      # But NO_LOAD doesn't accept the entries starting with ./ so
-      # remove them by filter script.
-      'NO_LOAD=$(shell find  -name \'*.host.mk\' | python <(relative_dir)/filter_find_result.py)',
-      # Link a static version of STLport.
-      'APP_STL=stlport_static',
-      # Do not invoke the default makefile target, which is usually 'all',
-      # because the 'all' target in <(DEPTH)/Makefile is used by GYP.
-      # Invoke the 'installed_modules' target instead, which is defined by
-      # Android NDK.
-      'installed_modules',
-    ],
-    # Tests and tools
-    'native_test_small_targets': [
-      # base
-      'base_core_test',
-      'base_init_test',
-      'base_test',
-      'encryptor_test',
-      'file_util_test',
-      'jni_proxy_test',
-      'number_util_test',
-      'scheduler_stub_test',
-      'task_test',
-      'trie_test',
-      'util_test',
-      # composer
-      'composer_test',
-      # config
-      'character_form_manager_test',
-      'config_handler_test',
-      'stats_config_util_test',
-      # converter
-      'cached_connector_test',
-      'converter_test',
-      'converter_regression_test',
-      'sparse_connector_test',
-      # dictionary
-      'dictionary_test',
-      'text_dictionary_loader_test',
-      # dictionary/file
-      'codec_test',
-      'dictionary_file_test',
-      # dictionary/system
-      'system_dictionary_builder_test',
-      'system_dictionary_codec_test',
-      'system_dictionary_test',
-      'value_dictionary_test',
-      # net
-      'http_client_mock_test',
-      # prediction
-      'prediction_test',
-      # rewriter
-      'rewriter_test',
-      'single_kanji_rewriter_test',
-      # rewriter/calculator
-      'calculator_test',
-      # session
-      'generic_storage_manager_test',
-      'random_keyevents_generator_test',
-      'request_test_util_test',
-      'session_converter_test',
-      'session_handler_scenario_test',
-      'session_handler_test',
-      'session_internal_test',
-      'session_module_test',
-      'session_regression_test',
-      'session_test',
-      # storage
-      'encrypted_string_storage_test',
-      'storage_test',
-      # storage/louds
-      'bit_stream_test',
-      'bit_vector_based_array_test',
-      'key_expansion_table_test',
-      'louds_trie_test',
-      'simple_succinct_bit_vector_index_test',
-      # transliteration
-      'transliteration_test',
-      # usage_stats
-      'usage_stats_test',
-      'usage_stats_uploader_test',
-    ],
-    'native_test_large_targets': [
-      # dictionary
-      'system_dictionary_test',
-      # session
-      'session_handler_stress_test',
-      'session_converter_stress_test',
-    ],
-    'native_tool_targets': [
-      # net
-      'http_client_main',
-    ],
-    'test_connection_data': '<(SHARED_INTERMEDIATE_DIR)/converter/test_connection_data.data',
+    'test_connection_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/testing/connection_data.data',
+    'test_connection_text_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/testing/connection_single_column.txt',
     # e.g. xxxx/out_android/gtest_report
     'test_report_dir': '<(SHARED_INTERMEDIATE_DIR)/../../gtest_report',
   },
@@ -196,10 +88,26 @@
         'jsr305_jar_path': '<(DEPTH)/third_party/findbug/jsr305-2.0.2.jar',
         'dictionary_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/system.dictionary',
         'connection_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/connection_data.data',
+        'connection_text_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/connection_single_column.txt',
         'native_test_small_targets': [
           'oss_data_manager_test',
         ],
         'resources_project_path': 'resources_oss',
+      },
+    }],
+    ['android_arch=="arm"', {
+      'variables': {
+        'abi': 'armeabi',
+      },
+    }],
+    ['android_arch=="x86"', {
+      'variables': {
+        'abi': 'x86',
+      },
+    }],
+    ['android_arch=="mips"', {
+      'variables': {
+        'abi': 'mips',
       },
     }],
   ],
@@ -213,7 +121,7 @@
         # may conflict it.  Let Ant take care of the build, but prepare things
         # that Ant doesn't know (code generation and native builds).
         'sdk_apk_dependencies',
-        'build_jnitestingbackdoor_library',
+        'jnitestingbackdoor',
       ],
       'actions': [
         {
@@ -225,28 +133,29 @@
             'ant',
             'debug',
             '-Dgyp.protobuf_root=<(protobuf_root)',
+            '-Dsdk.dir=<(android_home)',
           ],
         },
       ],
     },
     {
-      'target_name': 'run_test',
+      'target_name': 'run_java_test',
       'type': 'none',
-      'dependencies': [
-        'build_java_test',
-      ],
       'actions': [
         {
-          'action_name': 'run_test',
+          'action_name': 'run_java_test',
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_run_test'],
           'action': [
             'python', 'run_android_test.py',
             '--android_devices=$(ANDROID_DEVICES)',
+            '--android_home=<(android_home)',
             '--run_java_test',
             '--app_package_name=<(app_package_name)',
             '--configuration=<(CONFIGURATION_NAME)',
+            '--native_abi=<(abi)',
             '--output_report_dir=<(test_report_dir)',
+            '--run_java_test',
           ],
         },
       ],
@@ -303,6 +212,7 @@
             'apk',
             '-Dgyp.build_type=<(CONFIGURATION_NAME)',
             '-Dgyp.protobuf_root=<(protobuf_root)',
+            '-Dsdk.dir=<(android_home)',
           ],
         },
       ],
@@ -325,7 +235,7 @@
         'adt_gen_emoji_data',
         'adt_gen_emoticon_data',
         'adt_gen_symbol_data',
-        'build_jnitestingbackdoor_library',
+        'jnitestingbackdoor',
         'common_apk_dependencies',
         'genproto_java.gyp:adt_genproto_java',
       ],
@@ -336,7 +246,7 @@
       'dependencies': [
         'android_manifest',
         'assets',
-        'build_native_library',
+        'mozc',
         'gen_mozc_drawable',
         'guava_library',
         'support_libraries',
@@ -361,6 +271,7 @@
             '--version_file', '../mozc_version.txt',
             '--input', 'AndroidManifest_template.xml',
             '--output', 'AndroidManifest.xml',
+            '--branding', '<(branding)',
           ],
         },
         {
@@ -378,6 +289,7 @@
             '--version_file', '../mozc_version.txt',
             '--input', 'tests/AndroidManifest_template.xml',
             '--output', 'tests/AndroidManifest.xml',
+            '--branding', '<(branding)',
           ],
         },
       ],
@@ -707,110 +619,19 @@
       ],
     },
     {
-      'target_name': 'build_native_library',
-      'type': 'none',
-      'dependencies': [
-        'gen_native_build_deps#host',
-      ],
-      'actions': [
-        {
-          'action_name': 'build_native_library',
-          'inputs': [
-            '<(dummy_input_file)',
-            'libmozc.map'
-          ],
-          'outputs': ['dummy_build_native_library'],
-          'action': [
-            '<@(ndk_build_with_args)',
-            # A hack to invoke <(DEPTH)/Makefile as Android.mk being on <(DEPTH) as
-            # the current working directory.
-            'NDK_PROJECT_PATH=<(relative_dir)',
-            'NDK_APPLICATION_MK=<(relative_dir)/Application.mk',
-            'APP_MODULES=mozc',  # Build libmozc.so
-            'LOCAL_LDFLAGS=-Wl,--version-script,<(relative_dir)/libmozc.map',
-          ],
-        },
-      ],
-    },
-    {
-      # Generates all the code which is necessary to build libmozc.so.
-      #
-      # The target 'build_native_library' invokes 'ndk-build' command of
-      # Android NDK, which is a thin wrapper of 'make', and it builds
-      # binaries (static libraries, shared libraries and executables)
-      # for the target architectures.  However, ndk-build does not build
-      # or run any other gyp targets, especially code generation targets
-      # (this is a limitation of Gyp's Android NDK support).
-      # So we need to generate all the code beforehand which libmozc.so
-      # needs.
-      #
-      # Note: We need only code generation here and 'build_native_library'
-      # compiles it for specified architectures.  This is the reason why
-      # this target depends on genproto_xxx instead of xxx_protocol.
-      'target_name': 'gen_native_build_deps',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        '../base/base.gyp:gen_character_set',
-        '../base/base.gyp:gen_config_file_stream_data',
-        '../base/base.gyp:gen_version_def',
-        '../composer/composer.gyp:gen_typing_model',
-        '../config/config.gyp:genproto_config',
-        '../dictionary/dictionary_base.gyp:gen_pos_map',
-        '../dictionary/dictionary_base.gyp:genproto_dictionary',
-        '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../ipc/ipc.gyp:genproto_ipc',
-        '../prediction/prediction.gyp:gen_zero_query_number_data',
-        '../prediction/prediction.gyp:genproto_prediction',
-        '../rewriter/rewriter_base.gyp:gen_rewriter_files',
-        '../session/session_base.gyp:genproto_session',
-        '../usage_stats/usage_stats_base.gyp:gen_usage_stats_list',
-        '../usage_stats/usage_stats_base.gyp:genproto_usage_stats',
-      ],
-      'conditions': [
-        ['branding=="GoogleJapaneseInput"', {
-          'dependencies': [
-            '../data_manager/android/android_data_manager.gyp:gen_android_embedded_data#host',
-            '../data_manager/android/android_data_manager.gyp:gen_connection_data_for_android#host',
-            '../data_manager/android/android_data_manager.gyp:gen_dictionary_data_for_android#host',
-            '../data_manager/android/android_data_manager.gyp:gen_embedded_symbol_rewriter_data_for_android#host',
-          ]
-        }, {
-          'dependencies': [
-            '../data_manager/oss/oss_data_manager.gyp:gen_oss_embedded_data#host',
-            '../data_manager/oss/oss_data_manager.gyp:gen_connection_data_for_oss#host',
-            '../data_manager/oss/oss_data_manager.gyp:gen_dictionary_data_for_oss#host',
-            '../data_manager/oss/oss_data_manager.gyp:gen_embedded_symbol_rewriter_data_for_oss#host',
-          ]
-        }],
-      ],
-    },
-    {
-      'target_name': 'gen_native_test_deps',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        '../testing/testing.gyp:gen_mozc_data_dir_header',
-        'gen_native_build_deps',
-      ],
-      'conditions': [
-        ['branding=="GoogleJapaneseInput"', {
-          'dependencies': [
-            '../data_manager/android/android_data_manager.gyp:gen_android_segmenter_inl_header#host',
-          ]
-        }, {
-          'dependencies': [
-            '../data_manager/oss/oss_data_manager.gyp:gen_oss_segmenter_inl_header#host',
-          ]
-        }],
-      ],
-    },
-    {
+      # The final artifact of the native layer, libmozc.so.
+      # Gyp generates executable artifact to <(PRODUCT_DIR),
+      # but shared libraries are generated to local intermediate directory
+      # (e.g., out_andorid/Debug_Android/obj.target/....)
+      # which cannot be accessed from other targets.
+      # We use libmozc.so to build the .apk so explicitly set the destination
+      # through 'product_dir' field.
       'target_name': 'mozc',  # libmozc.so
       'type': 'shared_library',
       'sources': [
         'jni/mozcjni.cc',
       ],
+      'product_dir': '<(relative_dir)/libs/<(abi)',
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary.gyp:dictionary',
@@ -819,6 +640,11 @@
         '../session/session.gyp:session_handler',
         '../session/session.gyp:session_usage_observer',
         '../usage_stats/usage_stats.gyp:usage_stats_uploader',
+      ],
+      'ldflags': [
+         # -s: Strip unused symbols
+         # --version-script: Remove almost all exportable symbols
+         '-Wl,-s,--version-script,<(relative_dir)/libmozc.map',
       ],
       'conditions': [
         ['branding=="GoogleJapaneseInput"', {
@@ -833,32 +659,12 @@
       ],
     },
     {
-      'target_name': 'build_jnitestingbackdoor_library',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'build_jnitestingbackdoor_library',
-          'inputs': [
-            '<(dummy_input_file)',
-          ],
-          'outputs': ['dummy_build_jnitestingbackdoor_library'],
-          'action': [
-            '<@(ndk_build_with_args)',
-            # A hack to invoke <(DEPTH)/Makefile as Android.mk being on <(DEPTH) as
-            # the current working directory.
-            'NDK_PROJECT_PATH=<(relative_dir)/tests',
-            'NDK_APPLICATION_MK=<(relative_dir)/tests/Application.mk',
-            'APP_MODULES=jnitestingbackdoor',  # Build libjnitestingbackdoor.so
-          ],
-        },
-      ],
-    },
-    {
       'target_name': 'jnitestingbackdoor',  # libjnitestingbackdoor.so
       'type': 'shared_library',
       'sources': [
         'tests/jni/jnitestingbackdoor.cc',
       ],
+      'product_dir': '<(relative_dir)/tests/libs/<(abi)',
       'dependencies': [
         '../base/base.gyp:base',
         '../net/net.gyp:http_client',
@@ -889,132 +695,27 @@
       ],
     },
     {
-      'target_name': 'run_native_small_test',
+      'target_name': 'run_native_test',
       'type': 'none',
-      'dependencies': [
-        'build_native_small_test',
-      ],
       'actions': [
         {
-          'action_name': 'run_native_small_test',
+          'action_name': 'run_native_test',
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_run_native_small_test'],
           'action': [
             'python', 'run_android_test.py',
             '--android_devices=$(ANDROID_DEVICES)',
-            '--run_native_test',
-            '--test_bin_dir=<(ndk_app_dst_dir)',
-            # Make comma-separated test targets.
-            '--test_case='
-            '<!(<(python_executable)'
-            ' -c "import sys; print \\",\\".join(sys.argv[1:])"'
-            ' <(native_test_small_targets))',
-            '--mozc_dictionary_data_file=<(dictionary_data)',
+            '--android_home=<(android_home)',
             '--mozc_connection_data_file=<(connection_data)',
-            '--mozc_test_connection_data_file=<(test_connection_data)',
+            '--mozc_connection_text_data_file=<(connection_text_data)',
             '--mozc_data_dir=<(mozc_data_dir)',
-            '--output_report_dir=<(test_report_dir)',
-          ],
-        },
-      ],
-    },
-    {
-      'target_name': 'build_native_small_test',
-      'type': 'none',
-      'dependencies': [
-        # Generates all the code which is necessary to build unit tests.
-        # See the comment of 'gen_native_build_deps'.
-        '../converter/converter_test.gyp:generate_test_connection_data_image',
-        '../data_manager/testing/mock_data_manager.gyp:gen_mock_embedded_data#host',
-        '../session/session.gyp:gen_session_stress_test_data#host',
-        'gen_native_test_deps#host',
-        'install_native_test_data',
-      ],
-      'actions': [
-        {
-          'action_name': 'build_native_small_test',
-          'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_build_native_small_test'],
-          'action': [
-            '<@(ndk_build_with_args)',
-            # TODO(matsuzakit): '<(relative_dir)/tests' might be better.
-            'NDK_PROJECT_PATH=<(relative_dir)',
-            'APP_MODULES=<(native_test_small_targets)',
-          ],
-        },
-      ],
-    },
-    {
-      'target_name': 'run_native_large_test',
-      'type': 'none',
-      'dependencies': [
-        'build_native_large_test',
-      ],
-      'actions': [
-        {
-          'action_name': 'run_native_large_test',
-          'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_run_native_large_test'],
-          'action': [
-            'python', 'run_android_test.py',
-            '--android_devices=$(ANDROID_DEVICES)',
-            '--run_native_test',
-            '--test_bin_dir=<(ndk_app_dst_dir)',
-            # Make comma-separated test targets.
-            '--test_case='
-            '<!(<(python_executable)'
-            ' -c "import sys; print \\",\\".join(sys.argv[1:])"'
-            ' <(native_test_large_targets))',
-            '--mozc_connection_data_file=<(connection_data)',
-            '--mozc_test_connection_data_file=<(test_connection_data)',
             '--mozc_dictionary_data_file=<(dictionary_data)',
-            '--mozc_data_dir=<(mozc_data_dir)',
+            '--mozc_test_connection_data_file=<(test_connection_data)',
+            '--mozc_test_connection_text_data_file=<(test_connection_text_data)',
+            '--native_abi=<(abi)',
             '--output_report_dir=<(test_report_dir)',
-          ],
-        },
-      ],
-    },
-    {
-      'target_name': 'build_native_large_test',
-      'type': 'none',
-      'dependencies': [
-        # Generates all the code which is necessary to build unit tests.
-        # See the comment of 'gen_native_build_deps'.
-        '../session/session.gyp:gen_session_stress_test_data#host',
-        '../data_manager/testing/mock_data_manager.gyp:gen_mock_embedded_data#host',
-        'gen_native_test_deps#host',
-        'install_native_test_data',
-      ],
-      'actions': [
-        {
-          'action_name': 'build_native_large_test',
-          'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_build_native_large_test'],
-          'action': [
-            '<@(ndk_build_with_args)',
-            # TODO(matsuzakit): '<(relative_dir)/tests' might be better.
-            'NDK_PROJECT_PATH=<(relative_dir)',
-            'APP_MODULES=<(native_test_large_targets)',
-          ],
-        },
-      ],
-    },
-    {
-      'target_name': 'build_native_tool',
-      'type': 'none',
-      'dependencies': [
-        'gen_native_build_deps#host',
-      ],
-      'actions': [
-        {
-          'action_name': 'build_native_tool',
-          'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_build_native_tool'],
-          'action': [
-            '<@(ndk_build_with_args)',
-            # TODO(matsuzakit): '<(relative_dir)/tests' might be better.
-            'NDK_PROJECT_PATH=<(relative_dir)',
-            'APP_MODULES=<(native_tool_targets)',
+            '--run_native_test',
+            '--test_bin_dir=<(PRODUCT_DIR)',
           ],
         },
       ],

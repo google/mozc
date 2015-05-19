@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -186,80 +186,8 @@
   "configDialogOk": {
     "message": "OK"
   },
-  "configSyncConfigCancel": {
-    "message": "Cancel"
-  },
-  "configSyncConfigOk": {
-    "message": "OK"
-  },
-  "configSyncStartSync": {
-    "message": "Start Sync..."
-  },
-  "configSyncStopSync": {
-    "message": "Stop Sync"
-  },
-  "configSyncNotSyncedYet": {
-    "message": "Not synced yet"
-  },
-  "configSyncLastSyncedTime": {
-    "message": "Last synced time: "
-  },
-  "configSyncWaiting": {
-    "message": "Waiting for server to be ready"
-  },
-  "configSyncDuringSync": {
-    "message": "During synchronization"
-  },
-  "configSyncNoSync": {
-    "message": "Sync is not enabled"
-  },
-  "configSyncCustomization": {
-    "message": "Customize..."
-  },
-  "configSyncAdvancedSettings": {
-    "message": "Advanced sync settings"
-  },
-  "configSyncDescription": {
-    "message": "Mozc can securely syncs your settings and a user sync-dictionary among different machines. Synced data can be cleared by <a href=\"https://www.google.com/settings/dashboard\" target=\"_blank\">Google Dashboard</a>."
-  },
-  "configSyncTitle": {
-    "message": "Sync"
-  },
-  "configSyncAdvancedSettingsMessage": {
-    "message": "Choose what to sync"
-  },
-  "configUseConfigSync": {
-    "message": "Settings"
-  },
-  "configUseUserDictionarySync": {
-    "message": "User dictionary"
-  },
-  "configSyncAuthorizationFail": {
-    "message": "Authorization failed."
-  },
-  "configSyncUserDictionaryNumEntryExceeded": {
-    "message": "Cannot save dictionaries because Sync Dictionary exceeds its entry size limit."
-  },
-  "configSyncUserDictionaryByteSizeExceeded": {
-    "message": "Cannot save dictionaries because Sync Dictionary exceeds its binary size limit."
-  },
-  "configSyncUserDictionaryNumDictionaryExceeded": {
-    "message": "Cannot save dictionaries because the number of dictionaries for sync exceeds its limit."
-  },
-  "configSyncUnknownErrorFound": {
-    "message": "Unknown error was found."
-  },
-  "configSyncAuthorizationError": {
-    "message": "Authorization error"
-  },
-  "configSyncDictionaryError": {
-    "message": "Dictionary sync error"
-  },
-  "configSyncUnknownError": {
-    "message": "Unknown sync error"
-  },
   "configDictionaryToolTitle": {
-    "message": "User dictionary"
+    "message": "User dictionaries"
   },
   "configDictionaryToolDescription": {
     "message": "Add your own words to the user dictionary in order to customize the conversion candidates."
@@ -268,10 +196,10 @@
     "message": "Manage user dictionary..."
   },
   "dictionaryToolPageTitle": {
-    "message": "User dictionary"
+    "message": "User dictionaries"
   },
   "dictionaryToolDictionaryListTitle": {
-    "message": "Dictionary list"
+    "message": "Dictionaries"
   },
   "dictionaryToolReadingTitle": {
     "message": "Reading"
@@ -285,11 +213,14 @@
   "dictionaryToolCommentTitle": {
     "message": "Comment"
   },
+  "dictionaryToolMenuTitle": {
+    "message": "Dictionary management"
+  },
   "dictionaryToolExportButton": {
     "message": "Export"
   },
   "dictionaryToolImportButton": {
-    "message": "Import"
+    "message": "Import..."
   },
   "dictionaryToolDoneButton": {
     "message": "Done"
@@ -312,9 +243,6 @@
   "dictionaryToolNewDictionaryNamePlaceholder": {
     "message": "New dictionary"
   },
-  "dictionaryToolSyncableDictionaryName": {
-    "message": "Sync-able dictionary"
-  },
   "dictionaryToolDeleteDictionaryConfirm": {
     "message": "Do you want to delete $dictName$?",
     "placeholders": {
@@ -324,77 +252,86 @@
       }
     }
   },
-  "dictionaryToolStatuErrorGeneral": {
+  "dictionaryToolStatusErrorGeneral": {
     "message": "The operation has failed."
   },
-  "dictionaryToolStatuErrorFileNotFound": {
+  "dictionaryToolStatusErrorFileNotFound": {
     "message": "Could not open the file."
   },
-  "dictionaryToolStatuErrorInvalidFileFormat": {
+  "dictionaryToolStatusErrorInvalidFileFormat": {
     "message": "Could not read the file."
   },
-  "dictionaryToolStatuErrorEmptyFile": {
+  "dictionaryToolStatusErrorEmptyFile": {
     "message": "The file is empty."
   },
-  "dictionaryToolStatuErrorFileSizeLimitExceeded": {
+  "dictionaryToolStatusErrorFileSizeLimitExceeded": {
     "message": "The data size exceeds the file size limit."
   },
-  "dictionaryToolStatuErrorDictionarySizeLimitExceeded": {
+  "dictionaryToolStatusErrorDictionarySizeLimitExceeded": {
     "message": "Can't create any more dictionaries."
   },
-  "dictionaryToolStatuErrorEntrySizeLimitExceeded": {
+  "dictionaryToolStatusErrorEntrySizeLimitExceeded": {
     "message": "Can't create any more entries in this dictionary."
   },
-  "dictionaryToolStatuErrorDictionaryNameEmpty": {
+  "dictionaryToolStatusErrorDictionaryNameEmpty": {
     "message": "Please type a dictionary name."
   },
-  "dictionaryToolStatuErrorDictionaryNameTooLong": {
+  "dictionaryToolStatusErrorDictionaryNameTooLong": {
     "message": "The name is too long."
   },
-  "dictionaryToolStatuErrorDictionaryNameContainsInvalidCharacter": {
+  "dictionaryToolStatusErrorDictionaryNameContainsInvalidCharacter": {
     "message": "The name contains invalid character(s)."
   },
-  "dictionaryToolStatuErrorDictionaryNameDuplicated": {
+  "dictionaryToolStatusErrorDictionaryNameDuplicated": {
     "message": "The name already exists."
   },
-  "dictionaryToolStatuErrorReadingEmpty": {
+  "dictionaryToolStatusErrorReadingEmpty": {
     "message": "Please type the reading."
   },
-  "dictionaryToolStatuErrorReadingTooLong": {
+  "dictionaryToolStatusErrorReadingTooLong": {
     "message": "The reading is too long."
   },
-  "dictionaryToolStatuErrorReadingContainsInvalidCharacter": {
-    "message": "The reading contains invalid character(s)."
+  "dictionaryToolStatusErrorReadingContainsInvalidCharacter": {
+    "message": "The reading contains invalid character(s). You can use use ASCII characters, Hiragana, voiced sound mark(゛), semi-voiced sound mark(゜), middle dot(・), prolonged sound mark(ー), Japanese comma(、), Japanese period(。), Japanese brackets(「」『』) and Japanese wavedash(〜) in the reading."
   },
-  "dictionaryToolStatuErrorWordEmpty": {
+  "dictionaryToolStatusErrorWordEmpty": {
     "message": "Please type the word."
   },
-  "dictionaryToolStatuErrorWordTooLong": {
+  "dictionaryToolStatusErrorWordTooLong": {
     "message": "The word is too long."
   },
-  "dictionaryToolStatuErrorWordContainsInvalidCharacter": {
+  "dictionaryToolStatusErrorWordContainsInvalidCharacter": {
     "message": "Thw word contains invalid character(s)."
   },
-  "dictionaryToolStatuErrorImportTooManyWords": {
+  "dictionaryToolStatusErrorImportTooManyWords": {
     "message": "The import source contains too many words."
   },
-  "dictionaryToolStatuErrorImportInvalidEntries": {
+  "dictionaryToolStatusErrorImportInvalidEntries": {
     "message": "Some words could not be imported."
   },
-  "dictionaryToolStatuErrorNoUndoHistory": {
+  "dictionaryToolStatusErrorNoUndoHistory": {
     "message": "No more undo-able operation."
   },
-  "dictionaryImportTitle": {
-    "message": "Select import destination"
+  "dictionaryToolStatusErrorTitleCreateDictionary": {
+    "message": "Create dictionary error"
   },
-  "dictionaryImportNewDictionary": {
-    "message": "Import as a new dictionary"
+  "dictionaryToolStatusErrorTitleDeleteDictionary": {
+    "message": "Delete dictionary error"
   },
-  "dictionaryImportCancel": {
-    "message": "Cancel"
+  "dictionaryToolStatusErrorTitleRenameDictionary": {
+    "message": "Rename dictionary error"
   },
-  "dictionaryImportOk": {
-    "message": "OK"
+  "dictionaryToolStatusErrorTitleEditEntry": {
+    "message": "Edit entry error"
+  },
+  "dictionaryToolStatusErrorTitleDeleteEntry": {
+    "message": "Delete entry error"
+  },
+  "dictionaryToolStatusErrorTitleAddEntry": {
+    "message": "Add entry error"
+  },
+  "dictionaryToolStatusErrorTitleImportData": {
+    "message": "Import error"
   },
   "configUploadUsageStats": {
     "message": "Automatically send usage statistics and crash reports to Google"

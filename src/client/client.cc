@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -586,44 +586,6 @@ bool Client::PingServer() const {
   if (!client->Call(request.data(), request.size(),
                     result_.get(), &size, timeout_)) {
     LOG(ERROR) << "IPCClient::Call failed: " << client->GetLastIPCError();
-    return false;
-  }
-
-  return true;
-}
-
-bool Client::StartCloudSync() {
-  return CallCommand(commands::Input::START_CLOUD_SYNC);
-}
-
-bool Client::GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status) {
-  DCHECK(cloud_sync_status);
-  commands::Input input;
-  InitInput(&input);
-  input.set_type(commands::Input::GET_CLOUD_SYNC_STATUS);
-  commands::Output output;
-  if (!Call(input, &output)) {
-    LOG(ERROR) << "Call failed.  Server is not started.";
-    return false;
-  }
-
-  if (!output.has_cloud_sync_status()) {
-    LOG(ERROR) << "No CloudSyncStatus.  Server may be stale.";
-    return false;
-  }
-
-  cloud_sync_status->CopyFrom(output.cloud_sync_status());
-  return true;
-}
-
-bool Client::AddAuthCode(const commands::Input::AuthorizationInfo &auth_info) {
-  commands::Input input;
-  InitInput(&input);
-  input.set_type(commands::Input::ADD_AUTH_CODE);
-  input.mutable_auth_code()->CopyFrom(auth_info);
-  commands::Output output;
-  if (!Call(input, &output)) {
-    LOG(ERROR) << "Call failed.  Server is not started.";
     return false;
   }
 

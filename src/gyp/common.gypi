@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -64,15 +64,8 @@
           'extra_warning_cflags': '-Werror',
         }],
         ['OS=="win"', {
-          # Variable 'MSVS_VERSION' is available on Windows only.
-          'conditions': [
-            ['MSVS_VERSION=="2010"', {
-              'target_compiler': 'msvs2010',
-            }],
-            ['MSVS_VERSION=="2012"', {
-              'target_compiler': 'msvs2012',
-            }],
-          ],
+          # Variable 'MSVS_VERSION' is available only on Windows.
+          'target_compiler': 'msvs<(MSVS_VERSION)',
         }],
       ],
     },
@@ -194,7 +187,7 @@
     # (ex. 'out' for Linux), but there is no variable defined for the top
     # level source directory, hence we create the directory in the top
     # level source directory.
-    'mozc_build_tools_dir': '<(DEPTH)/mozc_build_tools/<(OS)',
+    'mozc_build_tools_dir': '<(abs_depth)/mozc_build_tools/<(OS)',
     'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
     'branding%': 'Mozc',
     # use_qt is 'YES' only if you want to use GUI binaries.
@@ -232,9 +225,6 @@
 
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
-
-    # enable_cloud_sync represents if cloud sync feature is enabled or not.
-    'enable_cloud_sync%': 0,
 
     # enable_cloud_handwriting represents if cloud handwriting feature is
     # enabled or not.
@@ -313,9 +303,6 @@
           ['use_packed_dictionary==1', {
             'defines': ['MOZC_USE_PACKED_DICTIONARY'],
           }],
-          ['enable_cloud_sync==1', {
-            'defines': ['ENABLE_CLOUD_SYNC'],
-          }],
           ['enable_cloud_handwriting==1', {
             'defines': ['ENABLE_CLOUD_HANDWRITING'],
           }],
@@ -343,7 +330,7 @@
         'msvs_settings': {
           'VCCLCompilerTool': {
             'conditions': [
-              ['target_compiler=="msvs2012"', {
+              ['target_compiler!="msvs2010"', {
                 # Windows 7 and prior still support CPUs that lack of SSE/SSE2.
                 # So we explicitly disable them. We can change this setting to
                 # /arch:SSE2 once Windows 7 is unsupported in Mozc.
@@ -544,6 +531,13 @@
         'ldflags': [
           '-llog',
         ],
+        'conditions': [
+          ['android_arch=="arm"', {
+            'cflags': [
+              '-mthumb',  # Force thumb interaction set for smaller file size.
+            ],
+          }],
+        ],
       },
       #
       # Concrete configurations
@@ -581,6 +575,9 @@
         ['target_platform=="Android"', {
           'Debug_Android': {
             'inherit_from': ['Common_Base', 'Android_Base', 'Debug_Base'],
+            # We won't debug target's .so file so remove debug symbol.
+            # If the symbol is required, remove following line.
+            'cflags!': ['-g'],
           },
           'Release_Android': {
             'inherit_from': ['Common_Base', 'Android_Base', 'Optimize_Base', 'Release_Base'],
@@ -829,6 +826,40 @@
         ['NM.target', '<(pnacl_bin_dir)/pnacl-nm'],
         ['RANLIB.target', '<(pnacl_bin_dir)/pnacl-ranlib'],
         ['STRIP.target', '<(pnacl_bin_dir)/pnacl-strip'],
+      ],
+    }],
+    ['target_platform=="Android"', {
+      'variables': {
+        'ndk_bin_dir%':
+            '<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)/bin',
+      },
+      'conditions': [
+        ['android_arch=="arm"', {
+          'variables': {
+            'toolchain_prefix': 'arm-linux-androideabi',
+          },
+        }],
+        ['android_arch=="x86"', {
+          'variables': {
+            'toolchain_prefix': 'i686-linux-android',
+          },
+        }],
+        ['android_arch=="mips"', {
+          'variables': {
+            'toolchain_prefix': 'mipsel-linux-android',
+          },
+        }],
+      ],
+      'make_global_settings': [
+        ['AR.target', '<(ndk_bin_dir)/<(toolchain_prefix)-ar'],
+        ['AS.target', '<(ndk_bin_dir)/<(toolchain_prefix)-as'],
+        ['CC.target', '<(ndk_bin_dir)/<(toolchain_prefix)-gcc'],
+        ['CXX.target', '<(ndk_bin_dir)/<(toolchain_prefix)-g++'],
+        ['LD.target', '<(ndk_bin_dir)/<(toolchain_prefix)-ld'],
+        ['LINK.target', '<(ndk_bin_dir)/<(toolchain_prefix)-g++'],
+        ['NM.target', '<(ndk_bin_dir)/<(toolchain_prefix)-nm'],
+        ['RANLIB.target', '<(ndk_bin_dir)/<(toolchain_prefix)-ranlib'],
+        ['STRIP.target', '<(ndk_bin_dir)/<(toolchain_prefix)-strip'],
       ],
     }],
   ],

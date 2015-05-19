@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,11 @@ struct TokenInfo {
     CAN_USE_SMALL_ENCODING = 1,
     COST_TYPE_SIZE = 2,
   };
+  enum AccentEncodingType {
+    ENCODED_IN_VALUE = 0,
+    EMBEDDED_IN_TOKEN = 1,
+    ACCENT_ENCODING_TYPE_SIZE = 2,
+  };
   explicit TokenInfo(Token *t) {
     Clear();
     token = t;
@@ -72,6 +77,8 @@ struct TokenInfo {
     pos_type = DEFAULT_POS;
     value_type = DEFAULT_VALUE;
     cost_type = DEFAULT_COST;
+    accent_encoding_type = ENCODED_IN_VALUE;
+    accent_type = -1;
   }
   // Do not delete |token| in destructor, because |token| can be
   // on-memory object owned by other module.
@@ -89,6 +96,8 @@ struct TokenInfo {
   PosType pos_type;
   ValueType value_type;
   CostType cost_type;
+  AccentEncodingType accent_encoding_type;
+  int accent_type;
 };
 
 }  // namespace dictionary

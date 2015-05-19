@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,6 @@
 #include "base/scoped_ptr.h"
 #include "config/config.pb.h"
 #include "gui/config_dialog/ui_config_dialog.h"
-#ifdef ENABLE_CLOUD_SYNC
-#include "gui/config_dialog/sync_customize_dialog.h"
-#endif  // ENABLE_CLOUD_SYNC
 
 namespace mozc {
 
@@ -86,9 +83,6 @@ class ConfigDialog : public QDialog,
   virtual void SelectAutoConversionSetting(int state);
   virtual void SelectSuggestionSetting(int state);
   virtual void LaunchAdministrationDialog();
-  virtual void SyncToggleButtonClicked();
-  virtual void LaunchSyncCustomizationDialog();
-  virtual void UpdateSyncStatus();
   virtual void EnableApplyButton();
 
  protected:
@@ -105,16 +99,6 @@ class ConfigDialog : public QDialog,
   void ConvertFromProto(const config::Config &config);
   bool Update();
   void Reload();
-#ifdef ENABLE_CLOUD_SYNC
-  void UpdateSyncToggleButtonText();
-  void StopSync();
-  void StopSyncForcely();
-  void LaunchAuthDialog();
-  void AddLastSyncedDateTime(uint64 timestamp, QString *output) const;
-  void SyncToggleButtonClickedImpl();
-  void LaunchSyncCustomizationDialogImpl();
-  void UpdateSyncStatusImpl();
-#endif  // ENABLE_CLOUD_SYNC
 
   scoped_ptr<client::ClientInterface> client_;
   string custom_keymap_table_;
@@ -124,12 +108,6 @@ class ConfigDialog : public QDialog,
   bool initial_use_keyboard_to_change_preedit_method_;
   bool initial_use_mode_indicator_;
   map<QString, config::Config::SessionKeymap> keymapname_sessionkeymap_map_;
-#ifdef ENABLE_CLOUD_SYNC
-  scoped_ptr<SyncCustomizeDialog> sync_customize_dialog_;
-  bool sync_running_;
-  scoped_ptr<QTimer> timer_;
-  uint64 last_synced_timestamp_;
-#endif  // ENABLE_CLOUD_SYNC
 };
 }  // namespace gui
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,6 @@ class Config;
 
 namespace commands {
 class Capability;
-class CloudSyncStatus;
 class KeyEvent;
 class Output;
 class SessionCommand;
@@ -199,15 +198,6 @@ class ClientInterface {
   // state may change. In almost all cases, you don't need to
   // call this method.
   virtual bool NoOperation() = 0;
-
-  // TODO(team): Add method descriptions.
-  virtual bool StartCloudSync() = 0;
-  virtual bool GetCloudSyncStatus(
-      commands::CloudSyncStatus *cloud_sync_status) = 0;
-  virtual bool AddAuthCode(
-      const commands::Input::AuthorizationInfo &auth_info) {
-    return false;
-  }
 
   // Enables or disables using cascading window.
   virtual void EnableCascadingWindow(bool enable) = 0;

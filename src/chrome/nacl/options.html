@@ -8,32 +8,6 @@
 </head>
 <body>
 
-<div id="sync_config_overlay" class="overlay">
-  <div id="sync_config_page" class="overlay_page">
-    <div id="sync_config_close" class="close_button"></div>
-    <section>
-      <h2 id="sync_advanced_settings_title">Advanced sync settings</h2>
-      <div id="sync_advanced_settings_message">Choose what to sync:</div>
-      <span class="controlled-setting-with-label sync_advanced_settings_span">
-        <input type="checkbox" id="sync_settings">
-        <span>
-          <label for="sync_settings" id="sync_settings_label">Sync settings</label>
-        </span>
-      </span>
-      <span class="controlled-setting-with-label sync_advanced_settings_span">
-        <input type="checkbox" id="sync_user_dictionary">
-        <span>
-          <label for="sync_user_dictionary" id="sync_user_dictionary_label">Sync user dictionary</label>
-        </span>
-      </span>
-      <div id="sync_config_ok_cancel_div">
-        <input type="button" id="sync_config_ok" value="OK">
-        <input type="button" id="sync_config_cancel" value="Cancel">
-      </div>
-    </section>
-  </div>
-</div>
-
 <div id="clear_history_overlay" class="overlay">
   <div id="clear_history_page" class="overlay_page">
     <div id="clear_history_close" class="close_button"></div>
@@ -74,24 +48,17 @@
         <div id="dictionary_tool_dictionary_list_box">
           <div id="dictionary_tool_dictionary_list" tabindex=0>
           </div>
-          <div id="dictionary_tool_dictionary_menu">
-            <input type="button" value="Export dictionary" id="export_dictionary_button">
-            <input type="button" value="Import dictionary" id="import_dictionary_button">
-          </div>
         </div>
       </div>
       <div id="dictionary_tool_content_area">
-        <div>
-          <div id="dictionary_tool_entry_title">
-            <div id="dictionary_tool_reading_title"></div>
-            <div id="dictionary_tool_word_title"></div>
-            <div id="dictionary_tool_category_title"></div>
-            <div id="dictionary_tool_comment_title"></div>
-          </div>
+        <div id="dictionary_tool_entry_title">
+          <div id="dictionary_tool_reading_title"></div>
+          <div id="dictionary_tool_word_title"></div>
+          <div id="dictionary_tool_category_title"></div>
+          <div id="dictionary_tool_comment_title"></div>
         </div>
         <div id="dictionary_tool_list_area">
-          <div id="dictionary_tool_current_area">
-          </div>
+          <div id="dictionary_tool_current_area"></div>
           <div id="dictionary_tool_entry_new">
             <div id="dictionary_tool_reading_new">
               <input type="text" id="dictionary_tool_reading_new_input">
@@ -108,27 +75,18 @@
             </div>
           </div>
         </div>
+        <div id="dictionary_tool_dictionary_menu">
+          <div id="dictionary_tool_dictionary_menu_title">Dictionary management</div>
+          <div id="dictionary_tool_dictionary_menu_buttons">
+            <input type="button" value="Export dictionary" id="export_dictionary_button">
+            <input type="button" value="Import dictionary" id="import_dictionary_button">
+          </div>
+        </div>
       </div>
     </div>
     <div id="user_dictionary_done_div">
       <input type="button" value="Close" id="dictionary_tool_done_button">
     </div>
-  </div>
-</div>
-
-<div id="dictionary_import_overlay" class="overlay">
-  <div id="dictionary_import_page" class="overlay_page">
-    <div id="dictionary_import_close" class="close_button"></div>
-    <section>
-      <h2 id="dictionary_import_title">Select import destination</h2>
-      <span class="controlled-setting-with-label">
-        <select id="dictionary_import_select"></select>
-      </span>
-      <div id="dictionary_import_ok_cancel_div">
-        <input type="button" id="dictionary_import_ok" value="Import">
-        <input type="button" id="dictionary_import_cancel" value="Cancel">
-      </div>
-    </section>
   </div>
 </div>
 
@@ -225,24 +183,6 @@
           <span class="controlled-setting-with-label">
             <span class="selection-label" id="suggestions_size_label">Number of suggestions:</span>
             <select id="suggestions_size"></select>
-          </span>
-        </div>
-      </section>
-    </div>
-
-    <div id="cloud_sync_div">
-      <section>
-        <h3 id="sync_title">Sync</h3>
-        <div>
-          <span class="controlled-setting-with-label" id="sync_description">
-          Google Japanese Input can securely syncs your settings and a user sync-dictionary among different machines. Synced data can be cleared by <a href="https://www.google.com/settings/dashboard">Google Dashboard</a>.
-          </span>
-          <span class="controlled-setting-with-label"  id="sync_status"></span>
-        </div>
-        <div>
-          <span class="controlled-setting-with-label">
-            <input type="button" value="Start Sync" id="sync_toggle_button">
-            <input type="button" value="Customize..." id="sync_customization_button" disabled>
           </span>
         </div>
       </section>

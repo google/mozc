@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,9 @@
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
+#include "dictionary/dictionary_token.h"
+#include "dictionary/node_list_builder.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_pos.h"
@@ -243,19 +246,41 @@ class UserDictionaryTest : public ::testing::Test {
     }
   }
 
+  class EntryCollector : public DictionaryInterface::Callback {
+   public:
+    virtual ResultType OnToken(StringPiece,  // key
+                               StringPiece,  // actual_key
+                               const Token &token) {
+      // Collect only user dictionary entries.
+      if (token.attributes & Token::USER_DICTIONARY) {
+        entries_.push_back(Entry());
+        entries_.back().key = token.key;
+        entries_.back().value = token.value;
+        entries_.back().lid = token.lid;
+        entries_.back().rid = token.rid;
+      }
+      return TRAVERSE_CONTINUE;
+    }
+
+    const vector<Entry> &entries() const { return entries_; }
+
+   private:
+    vector<Entry> entries_;
+  };
+
   static void TestLookupPrefixHelper(const Entry *expected,
                                      size_t expected_size,
                                      const char *key,
                                      size_t key_size,
                                      const UserDictionary &dic) {
-    NodeAllocator allocator;
-    Node *node = dic.LookupPrefix(key, key_size, &allocator);
+    EntryCollector collector;
+    dic.LookupPrefix(StringPiece(key, key_size), false, &collector);
 
     if (expected == NULL || expected_size == 0) {
-      EXPECT_TRUE(NULL == node);
+      EXPECT_TRUE(collector.entries().empty());
     } else {
-      ASSERT_TRUE(NULL != node);
-      CompareEntries(expected, expected_size, node);
+      ASSERT_FALSE(collector.entries().empty());
+      CompareEntries(expected, expected_size, collector.entries());
     }
   }
 
@@ -264,30 +289,38 @@ class UserDictionaryTest : public ::testing::Test {
                                     const char *key,
                                     size_t key_size,
                                     const UserDictionary &dic) {
-    NodeAllocator allocator;
-    Node *node = dic.LookupExact(key, key_size, &allocator);
+    EntryCollector collector;
+    dic.LookupExact(StringPiece(key, key_size), &collector);
 
     if (expected == NULL || expected_size == 0) {
-      EXPECT_TRUE(NULL == node);
+      EXPECT_TRUE(collector.entries().empty());
     } else {
-      ASSERT_TRUE(NULL != node);
-      CompareEntries(expected, expected_size, node);
+      ASSERT_FALSE(collector.entries().empty());
+      CompareEntries(expected, expected_size, collector.entries());
     }
+  }
+
+  static string EncodeEntry(const Entry &entry) {
+    return entry.key + "\t" +
+           entry.value + "\t" +
+           NumberUtil::SimpleItoa(entry.lid) + "\t" +
+           NumberUtil::SimpleItoa(entry.rid) + "\n";
+  }
+
+  static string EncodeEntries(const Entry *array, size_t size) {
+    vector<string> encoded_items;
+    for (size_t i = 0; i < size; ++i) {
+      encoded_items.push_back(EncodeEntry(array[i]));
+    }
+    sort(encoded_items.begin(), encoded_items.end());
+    string result;
+    Util::JoinStrings(encoded_items, "", &result);
+    return result;
   }
 
   static void CompareEntries(const Entry *expected, size_t expected_size,
                              const Node *node) {
-    vector<string> expected_encode_items;
-    for (size_t i = 0; i < expected_size; ++i) {
-      const Entry &entry = expected[i];
-      expected_encode_items.push_back(entry.key + "\t" +
-                                      entry.value + "\t" +
-                                      NumberUtil::SimpleItoa(entry.lid) + "\t" +
-                                      NumberUtil::SimpleItoa(entry.rid) + "\n");
-    }
-    sort(expected_encode_items.begin(), expected_encode_items.end());
-    string expected_encode;
-    Util::JoinStrings(expected_encode_items, "", &expected_encode);
+    const string expected_encode = EncodeEntries(expected, expected_size);
 
     vector<string> actual_encode_items;
     for ( ; node != NULL; node = node->bnext) {
@@ -301,6 +334,13 @@ class UserDictionaryTest : public ::testing::Test {
     Util::JoinStrings(actual_encode_items, "", &actual_encode);
 
     EXPECT_EQ(expected_encode, actual_encode);
+  }
+
+  static void CompareEntries(const Entry *expected, size_t expected_size,
+                             const vector<Entry> &actual) {
+    const string expected_encoded = EncodeEntries(expected, expected_size);
+    const string actual_encoded = EncodeEntries(actual.data(), actual.size());
+    EXPECT_EQ(expected_encoded, actual_encoded);
   }
 
   static void LoadFromString(const string &contents,
@@ -492,8 +532,9 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
 
   // Invalid input values should be just ignored.
   TestLookupPrefixHelper(NULL, 0, "", 0, *dic.get());
-  TestLookupPrefixHelper(NULL, 0, "\xE6\xB0\xB4\xE9\x9B\xB2",  // "水雲"
-                         strlen("\xE6\xB0\xB4\xE9\x9B\xB2"), *dic.get());
+  TestLookupPrefixHelper(
+      NULL, 0, "\xE6\xB0\xB4\xE9\x9B\xB2",  // "水雲"
+      strlen("\xE6\xB0\xB4\xE9\x9B\xB2"), *dic.get());
 
   // Make a change to the dictionary file and load it again.
   {
@@ -508,7 +549,7 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
     { "ending", "ending", 220, 220 },
   };
   TestLookupPrefixHelper(kExpected2, arraysize(kExpected2),
-                         "ending", 6, *dic.get());
+                                     "ending", 6, *dic.get());
 
   // Lookup for entries which are gone should returns empty result.
   TestLookupPrefixHelper(NULL, 0, "started", 7, *dic.get());
@@ -547,6 +588,45 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
                          strlen("\xE6\xB0\xB4\xE9\x9B\xB2"), *dic.get());
 }
 
+TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
+  scoped_ptr<UserDictionary> user_dic(CreateDictionary());
+  user_dic->WaitForReloader();
+
+  // Create dictionary
+  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                             "suggestion_only_test.db");
+  FileUtil::Unlink(filename);
+  UserDictionaryStorage storage(filename);
+  {
+    uint64 id = 0;
+    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    UserDictionaryStorage::UserDictionary *dic =
+        storage.mutable_dictionaries(0);
+
+    // "名詞"
+    UserDictionaryStorage::UserDictionaryEntry *entry =
+        dic->add_entries();
+    entry->set_key("key");
+    entry->set_value("noun");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
+
+    // "サジェストのみ"
+    entry = dic->add_entries();
+    entry->set_key("key");
+    entry->set_value("suggest_only");
+    entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);
+
+    user_dic->Load(storage);
+  }
+
+  // "suggestion_only" should not be looked up.
+  const testing::MockUserPosManager user_pos_manager;
+  const uint16 kNounId = user_pos_manager.GetPOSMatcher()->GetGeneralNounId();
+  const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
+  TestLookupExactHelper(kExpected1, arraysize(kExpected1),
+                        "key", 3, *user_dic.get());
+}
+
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
   config::Config config;
   config::ConfigHandler::GetConfig(&config);
@@ -565,13 +645,15 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
 
   NodeAllocator allocator;
 
-  EXPECT_EQ(NULL, dic->LookupPrefix("start", 4, &allocator));
+  TestLookupPrefixHelper(NULL, 0, "start", 4, *dic);
   EXPECT_EQ(NULL, dic->LookupPredictive("s", 1, &allocator));
 
   config.set_incognito_mode(false);
   config::ConfigHandler::SetConfig(config);
 
-  EXPECT_FALSE(NULL == dic->LookupPrefix("start", 4, &allocator));
+  EntryCollector collector;
+  dic->LookupPrefix("start", false, &collector);
+  EXPECT_FALSE(collector.entries().empty());
   EXPECT_FALSE(NULL == dic->LookupPredictive("s", 1, &allocator));
 }
 
@@ -616,8 +698,8 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
       random_shuffle(keys.begin(), keys.end());
       dic->Reload();
       for (int i = 0; i < 1000; ++i) {
-        dic->LookupPrefix(keys[i].c_str(),
-                          keys[i].size(), &allocator);
+        BaseNodeListBuilder builder(&allocator, allocator.max_nodes_size());
+        dic->LookupPrefix(keys[i], false, &builder);
       }
     }
     dic->WaitForReloader();
@@ -657,13 +739,8 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
   {
     UserDictionaryStorage storage(filename);
     EXPECT_TRUE(storage.Load());
-#ifdef ENABLE_CLOUD_SYNC
-    int index = 1;
-    EXPECT_EQ(2, storage.dictionaries_size());
-#else
     int index = 0;
     EXPECT_EQ(1, storage.dictionaries_size());
-#endif
     EXPECT_EQ(100, storage.dictionaries(index).entries_size());
     for (int i = 0; i < 100; ++i) {
       EXPECT_EQ("key" + NumberUtil::SimpleItoa(i),
@@ -704,21 +781,12 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
   {
     UserDictionaryStorage storage(filename);
     EXPECT_TRUE(storage.Load());
-#ifdef ENABLE_CLOUD_SYNC
-    EXPECT_EQ(2, storage.dictionaries_size());
-    EXPECT_EQ(1, storage.dictionaries(1).entries_size());
-    EXPECT_EQ("key", storage.dictionaries(1).entries(0).key());
-    EXPECT_EQ("value", storage.dictionaries(1).entries(0).value());
-    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
-              storage.dictionaries(1).entries(0).pos());
-#else
     EXPECT_EQ(1, storage.dictionaries_size());
     EXPECT_EQ(1, storage.dictionaries(0).entries_size());
     EXPECT_EQ("key", storage.dictionaries(0).entries(0).key());
     EXPECT_EQ("value", storage.dictionaries(0).entries(0).value());
     EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
               storage.dictionaries(0).entries(0).pos());
-#endif
   }
 }
 
@@ -843,8 +911,9 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
 
   {
     const char kKey[] = "key0123";
-    const Node *node = user_dic->LookupPrefix(kKey, strlen(kKey),
-                                              &allocator);
+    BaseNodeListBuilder builder(&allocator, allocator.max_nodes_size());
+    user_dic->LookupPrefix(kKey, false, &builder);
+    const Node *node = builder.result();
     CHECK(node);
     for (; node != NULL; node = node->bnext) {
       EXPECT_TRUE("suggest_only" != node->value && "default" == node->value);
@@ -887,7 +956,6 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
   }
   {
     UserDictionaryStorage::UserDictionary *dic2 = storage.add_dictionaries();
-    dic2->set_syncable(true);
     CHECK(dic2);
     UserDictionaryStorage::UserDictionaryEntry *entry;
     entry = dic2->add_entries();
@@ -909,7 +977,6 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
   dic->Load(storage);
 
   EXPECT_INTEGER_STATS("UserRegisteredWord", 5);
-  EXPECT_INTEGER_STATS("UserRegisteredSyncWord", 3);
 }
 
 TEST_F(UserDictionaryTest, LookupComment) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -155,7 +155,6 @@ class PredictorTest : public testing::Test {
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
   scoped_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(new NullPredictor(true),
-                           new NullPredictor(true),
                            new NullPredictor(true)));
   Segments segments;
   {
@@ -170,7 +169,6 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
 TEST_F(PredictorTest, MixedReturnValue) {
   scoped_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(new NullPredictor(true),
-                           new NullPredictor(false),
                            new NullPredictor(false)));
   Segments segments;
   {
@@ -185,7 +183,6 @@ TEST_F(PredictorTest, MixedReturnValue) {
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
   scoped_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(new NullPredictor(false),
-                           new NullPredictor(false),
                            new NullPredictor(false)));
   Segments segments;
   {
@@ -200,7 +197,6 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
   scoped_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(
-          new CheckCandSizePredictor(GET_CONFIG(suggestions_size)),
           new CheckCandSizePredictor(GET_CONFIG(suggestions_size)),
           new CheckCandSizePredictor(GET_CONFIG(suggestions_size))));
   Segments segments;
@@ -217,7 +213,6 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
   const int kPredictionSize = 100;
   scoped_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(new CheckCandSizePredictor(kPredictionSize),
-                           new CheckCandSizePredictor(kPredictionSize),
                            new CheckCandSizePredictor(kPredictionSize)));
   Segments segments;
   {
@@ -233,10 +228,8 @@ TEST_F(PredictorTest, CallPredictForRequet) {
   // To be owned by DefaultPredictor
   MockPredictor *predictor1 = new MockPredictor;
   MockPredictor *predictor2 = new MockPredictor;
-  MockPredictor *predictor3 = new MockPredictor;
   scoped_ptr<DefaultPredictor> predictor(new DefaultPredictor(predictor1,
-                                                              predictor2,
-                                                              predictor3));
+                                                              predictor2));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -248,17 +241,13 @@ TEST_F(PredictorTest, CallPredictForRequet) {
       .Times(AtMost(1)).WillOnce(Return(true));
   EXPECT_CALL(*predictor2, PredictForRequest(_, _))
       .Times(AtMost(1)).WillOnce(Return(true));
-  EXPECT_CALL(*predictor3, PredictForRequest(_, _))
-      .Times(AtMost(1)).WillOnce(Return(true));
   EXPECT_TRUE(predictor->PredictForRequest(*default_request_, &segments));
 }
 
 TEST_F(PredictorTest, CallPredictorsForMobileSuggestion) {
   scoped_ptr<MobilePredictor> predictor(
       new MobilePredictor(new CheckCandSizePredictor(20),
-                          new CheckCandSizePredictor(3),
-                          // We don't call cloud predictor
-                          new CheckCandSizePredictor(-1)));
+                          new CheckCandSizePredictor(3)));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -273,8 +262,6 @@ TEST_F(PredictorTest, CallPredictorsForMobilePartialSuggestion) {
   scoped_ptr<MobilePredictor> predictor(
       new MobilePredictor(new CheckCandSizePredictor(20),
                           // We don't call history predictior
-                          new CheckCandSizePredictor(-1),
-                          // We don't call cloud predictor
                           new CheckCandSizePredictor(-1)));
   Segments segments;
   {
@@ -289,8 +276,7 @@ TEST_F(PredictorTest, CallPredictorsForMobilePartialSuggestion) {
 TEST_F(PredictorTest, CallPredictorsForMobilePrediction) {
   scoped_ptr<MobilePredictor> predictor(
       new MobilePredictor(new CheckCandSizePredictor(1000),
-                          new CheckCandSizePredictor(3),
-                          new CheckCandSizePredictor(40)));
+                          new CheckCandSizePredictor(3)));
   Segments segments;
   {
     segments.set_request_type(Segments::PREDICTION);
@@ -303,15 +289,13 @@ TEST_F(PredictorTest, CallPredictorsForMobilePrediction) {
 
 TEST_F(PredictorTest, CallPredictorsForMobilePartialPrediction) {
   DictionaryMock dictionary_mock;
-  PredictorInterface *extra_predictor = NULL;
   scoped_ptr<MobilePredictor> predictor(
       new MobilePredictor(
           new CheckCandSizePredictor(1000),
           new UserHistoryPredictor(
               &dictionary_mock,
               UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-              Singleton<SuppressionDictionary>::get()),
-          extra_predictor));
+              Singleton<SuppressionDictionary>::get())));
   Segments segments;
   {
     segments.set_request_type(Segments::PARTIAL_PREDICTION);
@@ -326,10 +310,8 @@ TEST_F(PredictorTest, CallPredictForRequetMobile) {
   // Will be owned by MobilePredictor
   MockPredictor *predictor1 = new MockPredictor;
   MockPredictor *predictor2 = new MockPredictor;
-  PredictorInterface *extra_predictor = NULL;
-
   scoped_ptr<MobilePredictor> predictor(
-      new MobilePredictor(predictor1, predictor2, extra_predictor));
+      new MobilePredictor(predictor1, predictor2));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -348,8 +330,7 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   NullPredictor *predictor1 = new NullPredictor(true);
   NullPredictor *predictor2 = new NullPredictor(true);
   scoped_ptr<DefaultPredictor> predictor(new DefaultPredictor(predictor1,
-                                                              predictor2,
-                                                              NULL));
+                                                              predictor2));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);

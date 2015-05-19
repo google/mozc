@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,25 +32,6 @@
 
 #ifndef _WINDOWS
 
-#ifdef OS_ANDROID  /* OS_ANDROID */
-
-/* the name of <hash_map> */
-#define HASH_MAP_CLASS hash_map
-
-/* the location of <unordered_map> or <hash_map> */
-#define HASH_MAP_H <hash_map>
-
-/* the namespace of hash_map/hash_set */
-#define HASH_NAMESPACE std
-
-/* the name of <hash_set> */
-#define HASH_SET_CLASS hash_set
-
-/* the location of <unordered_set> or <hash_set> */
-#define HASH_SET_H <hash_set>
-
-#else  /* !OS_ANDROID */
-
 /* the name of <hash_map> */
 /* TODO(yukawa): use unordered_map if available */
 #define HASH_MAP_CLASS hash_map
@@ -70,8 +51,6 @@
 /* the location of <unordered_set> or <hash_set> */
 /* TODO(yukawa): use <tr1/unordered_set> or <unordered_set> if available */
 #define HASH_SET_H <ext/hash_set>
-
-#endif  /* !OS_ANDROID */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1

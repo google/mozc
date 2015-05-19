@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -282,7 +282,7 @@ public class ProbableKeyEventGuesser {
         inputStream = statsFileAccessor.openStream(japaneseKeyboard, configuration);
         readStream(new DataInputStream(inputStream), result);
       } catch (IOException e) {
-        MozcLog.i("Stream access fails.", e);
+        MozcLog.d("Stream access fails.", e);
         return;
       } finally {
         try {

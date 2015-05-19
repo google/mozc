@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -389,12 +389,14 @@ LogFinalizer::LogFinalizer(LogSeverity severity)
 LogFinalizer::~LogFinalizer() {
   mozc::Logging::GetLogStream() << endl;
 #ifdef OS_ANDROID
-  ostringstream *log_stream =
-      static_cast<ostringstream*>(&mozc::Logging::GetLogStream());
+  ostream *log_stream = &mozc::Logging::GetLogStream();
   if (log_stream != &cerr) {
-    __android_log_write(severity_, kProductPrefix, log_stream->str().c_str());
+    ostringstream *log_stringstream = static_cast<ostringstream*>(log_stream);
+     __android_log_write(severity_,
+                         kProductPrefix,
+                         log_stringstream->str().c_str());
+    log_stringstream->str("");
   }
-  log_stream->str("");
 #endif  // OS_ANDROID
   if (severity_ >= LOG_FATAL) {
     // On windows, call exception handler to

@@ -1,4 +1,4 @@
-# Copyright 2010-2013, Google Inc.
+# Copyright 2010-2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,8 +51,10 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
+        '../../data_manager/data_manager.gyp:user_pos_manager',
         '../../session/session_base.gyp:request_test_util',
         '../../testing/testing.gyp:gtest_main',
+        '../dictionary.gyp:dictionary_test_util',
         'system_dictionary.gyp:install_system_dictionary_test_data',
         'system_dictionary.gyp:system_dictionary',
         'system_dictionary.gyp:system_dictionary_builder',
@@ -71,6 +73,7 @@
         '../../base/base.gyp:base_core',
         '../../data_manager/data_manager.gyp:user_pos_manager',
         '../../testing/testing.gyp:gtest_main',
+        '../dictionary.gyp:dictionary_test_util',
         'system_dictionary.gyp:system_dictionary_builder',
         'system_dictionary.gyp:value_dictionary',
       ],

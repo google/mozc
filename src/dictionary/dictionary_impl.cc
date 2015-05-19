@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,8 @@
 #include "config/config_handler.h"
 #include "converter/node.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
+#include "dictionary/node_list_builder.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 
@@ -91,21 +93,95 @@ Node *DictionaryImpl::LookupPredictive(
   return LookupInternal(str, size, PREDICTIVE, Limit(), allocator);
 }
 
-Node *DictionaryImpl::LookupPrefixWithLimit(
-    const char *str, int size,
-    const Limit &limit,
-    NodeAllocatorInterface *allocator) const {
-  return LookupInternal(str, size, PREFIX, limit, allocator);
+namespace {
+
+// This class wraps implementation of DictionaryInterface::Callback to provide
+// it with the same token filtering rule as combination of
+// MaybeRemoveSpecialNodes() and SuppressNodes().
+class CallbackWithFilter : public DictionaryInterface::Callback {
+ public:
+  CallbackWithFilter(const bool use_spelling_correction,
+                     const bool use_zip_code_conversion,
+                     const bool use_t13n_conversion,
+                     const POSMatcher *pos_matcher,
+                     const SuppressionDictionary *suppression_dictionary,
+                     DictionaryInterface::Callback *callback)
+      : use_spelling_correction_(use_spelling_correction),
+        use_zip_code_conversion_(use_zip_code_conversion),
+        use_t13n_conversion_(use_t13n_conversion),
+        pos_matcher_(pos_matcher),
+        suppression_dictionary_(suppression_dictionary),
+        callback_(callback) {}
+
+  virtual ResultType OnKey(StringPiece key) {
+    return callback_->OnKey(key);
+  }
+
+  virtual ResultType OnActualKey(StringPiece key, StringPiece actual_key,
+                                 bool is_expanded) {
+    return callback_->OnActualKey(key, actual_key, is_expanded);
+  }
+
+  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
+                             const Token &token) {
+    if (!(token.attributes & Token::USER_DICTIONARY)) {
+      if (!use_spelling_correction_ &&
+          (token.attributes & Token::SPELLING_CORRECTION)) {
+        return TRAVERSE_CONTINUE;
+      }
+      if (!use_zip_code_conversion_ && pos_matcher_->IsZipcode(token.lid)) {
+        return TRAVERSE_CONTINUE;
+      }
+      if (!use_t13n_conversion_ &&
+          Util::IsEnglishTransliteration(token.value)) {
+        return TRAVERSE_CONTINUE;
+      }
+    }
+    if (suppression_dictionary_->SuppressEntry(token.key, token.value)) {
+      return TRAVERSE_CONTINUE;
+    }
+    return callback_->OnToken(key, actual_key, token);
+  }
+
+ private:
+  const bool use_spelling_correction_;
+  const bool use_zip_code_conversion_;
+  const bool use_t13n_conversion_;
+  const POSMatcher *pos_matcher_;
+  const SuppressionDictionary *suppression_dictionary_;
+  DictionaryInterface::Callback *callback_;
+};
+
+}  // namespace
+
+void DictionaryImpl::LookupPrefix(
+    StringPiece key,
+    bool use_kana_modifier_insensitive_lookup,
+    Callback *callback) const {
+  CallbackWithFilter callback_with_filter(
+      GET_CONFIG(use_spelling_correction),
+      GET_CONFIG(use_zip_code_conversion),
+      GET_CONFIG(use_t13n_conversion),
+      pos_matcher_,
+      suppression_dictionary_,
+      callback);
+  for (size_t i = 0; i < dics_.size(); ++i) {
+    dics_[i]->LookupPrefix(
+        key, use_kana_modifier_insensitive_lookup, &callback_with_filter);
+  }
 }
 
-Node *DictionaryImpl::LookupPrefix(const char *str, int size,
-                                   NodeAllocatorInterface *allocator) const {
-  return LookupInternal(str, size, PREFIX, Limit(), allocator);
-}
-
-Node *DictionaryImpl::LookupExact(const char *str, int size,
-                                  NodeAllocatorInterface *allocator) const {
-  return LookupInternal(str, size, EXACT, Limit(), allocator);
+void DictionaryImpl::LookupExact(StringPiece key, Callback *callback) const {
+  CallbackWithFilter callback_with_filter(
+      GET_CONFIG(use_spelling_correction),
+      GET_CONFIG(use_zip_code_conversion),
+      GET_CONFIG(use_t13n_conversion),
+      pos_matcher_,
+      suppression_dictionary_,
+      callback);
+  for (size_t i = 0; i < dics_.size(); ++i) {
+    dics_[i]->LookupExact(key, &callback_with_filter);
+  }
 }
 
 Node *DictionaryImpl::LookupReverse(const char *str, int size,
@@ -204,7 +280,7 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
         break;
       }
       case PREFIX: {
-        nodes = dics_[i]->LookupPrefixWithLimit(str, size, limit, allocator);
+        LOG(FATAL) << "LookupInternal for PREFIX is deprecated.";
         break;
       }
       case REVERSE: {
@@ -212,7 +288,7 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
         break;
       }
       case EXACT: {
-        nodes = dics_[i]->LookupExact(str, size, allocator);
+        LOG(FATAL) << "LookupInternal for EXACT is deprecated.";
         break;
       }
     }

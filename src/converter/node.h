@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,9 @@
 
 #include <map>
 #include <string>
+
 #include "base/base.h"
+#include "dictionary/dictionary_token.h"
 
 namespace mozc {
 
@@ -206,6 +208,33 @@ struct Node {
     actual_key.clear();
     value.clear();
   }
+
+  inline void InitFromToken(const Token &token) {
+    prev = NULL;
+    next = NULL;
+    bnext = NULL;
+    enext = NULL;
+    constrained_prev = NULL;
+    rid = token.rid;
+    lid = token.lid;
+    begin_pos = 0;
+    end_pos = 0;
+    node_type = NOR_NODE;
+    wcost = token.cost;
+    cost = 0;
+    raw_wcost = 0;
+    attributes = 0;
+    if (token.attributes & Token::SPELLING_CORRECTION) {
+      attributes |= SPELLING_CORRECTION;
+    }
+    if (token.attributes & Token::USER_DICTIONARY) {
+      attributes |= USER_DICTIONARY;
+      attributes |= NO_VARIANTS_EXPANSION;
+    }
+    key = token.key;
+    actual_key.clear();
+    value = token.value;
+  }
 };
 
 // this class keep multiple types of data.
@@ -278,5 +307,7 @@ class NodeAllocatorInterface {
   size_t max_nodes_size_;
   NodeAllocatorData data_;
 };
+
 }  // namespace mozc
-#endif  // MOZC_CONVERTER_NODE_H_;
+
+#endif  // MOZC_CONVERTER_NODE_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1235,6 +1235,22 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
     EXPECT_EQ(1, conversion.segment_size());
     // "abc"
     EXPECT_EQ("abc", conversion.segment(0).value());
+  }
+
+  EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  {  // Make sure the output
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    // "ABC"
+    EXPECT_EQ("ABC", conversion.segment(0).value());
   }
 }
 

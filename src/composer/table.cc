@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -609,7 +609,8 @@ string Table::DeleteSpecialKey(const string &input) {
 // ========================================
 // TableContainer
 // ========================================
-TableManager::TableManager() {
+TableManager::TableManager()
+    : custom_roman_table_fingerprint_(Util::Fingerprint32("")) {
 }
 
 TableManager::~TableManager() {

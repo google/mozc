@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,16 +44,16 @@ namespace mozc {
 
 namespace {
 const char kTestConnectionDataImagePath[] =
-    "converter/test_connection_data.data";
+    "data_manager/testing/connection_data.data";
 const char kTestConnectionFilePath[] =
-    "data/test/dictionary/connection_single_column.txt";
+    "data_manager/testing/connection_single_column.txt";
 }  // namespace
 
 TEST(SarseConnectorTest, SparseConnectorTest) {
   const string path = FileUtil::JoinPath(
       FLAGS_test_srcdir, kTestConnectionDataImagePath);
   Mmap cmmap;
-  CHECK(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
+  ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
   scoped_ptr<SparseConnector> connector(
       new SparseConnector(cmmap.begin(), cmmap.size()));
   ASSERT_EQ(1, connector->GetResolution());

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -389,38 +389,6 @@ mozc.NaclMozc.prototype.clearUserPrediction = function(opt_callback) {
 };
 
 /**
- * Sends START_CLOUD_SYNC command to NaCl module.
- * @param {function(!mozc.Command)=} opt_callback Function to be called with
- *     results from NaCl module.
- */
-mozc.NaclMozc.prototype.startCloudSync = function(opt_callback) {
-  this.postMozcCommand_(this.createMozcCommand_('START_CLOUD_SYNC'),
-                        opt_callback);
-};
-
-/**
- * Sends GET_CLOUD_SYNC_STATUS command to NaCl module.
- * @param {function(!mozc.Command)=} opt_callback Function to be called with
- *     results from NaCl module.
- */
-mozc.NaclMozc.prototype.getCloudSyncStatus = function(opt_callback) {
-  this.postMozcCommand_(this.createMozcCommand_('GET_CLOUD_SYNC_STATUS'),
-                        opt_callback);
-};
-
-/**
- * Sends ADD_AUTH_CODE command to NaCl module.
- * @param {!mozc.AuthorizationInfo} authInfo Authorization information for Sync.
- * @param {function(!mozc.Command)=} opt_callback Function to be called with
- *     results from NaCl module.
- */
-mozc.NaclMozc.prototype.addAuthCode = function(authInfo, opt_callback) {
-  var mozcCommand = this.createMozcCommand_('ADD_AUTH_CODE');
-  mozcCommand.input.auth_code = authInfo;
-  this.postMozcCommand_(mozcCommand, opt_callback);
-};
-
-/**
  * Sets preedit method
  * @param {mozc.PreeditMethod_} newMethod The new preedit method to be set to.
  */
@@ -479,6 +447,19 @@ mozc.NaclMozc.prototype.getVersionInfo = function(callback) {
  */
 mozc.NaclMozc.prototype.getPosList = function(callback) {
   this.postNaclMozcEvent_(this.createMozcEvent_('GetPosList'), callback);
+};
+
+/**
+ * Check if all characters in the given string is a legitimate character
+ * for reading.
+ * @param {string} text The string to check.
+ * @param {function(!mozc.Event)} callback Function to be called with results
+ *     from NaCl module.
+ */
+mozc.NaclMozc.prototype.isValidReading = function(text, callback) {
+  var event = this.createMozcEvent_('IsValidReading');
+  event.data = text;
+  this.postNaclMozcEvent_(event, callback);
 };
 
 /**
@@ -862,12 +843,12 @@ mozc.NaclMozc.prototype.updateCandidates_ = function(opt_mozcCandidates) {
     this.candidates_ = newCandidates;
   }
 
-  if (focusedID != null) {
-    chrome.input.ime.setCursorPosition({
-      'contextID': this.context_.contextID,
-      'candidateID': focusedID
-    });
-  }
+  // We have to call setCursorPosition even if there is no focused candidate.
+  // This is because the last set cusor position will be used to scroll the page
+  // of the candidates if we don't set.
+  chrome.input.ime.setCursorPosition({
+    'contextID': this.context_.contextID,
+    'candidateID': (focusedID != null) ? focusedID : 0});
 
   var auxiliaryText = '';
   if (opt_mozcCandidates.footer) {
@@ -931,9 +912,9 @@ mozc.NaclMozc.prototype.commitResult_ = function(opt_mozcResult) {
 mozc.NaclMozc.prototype.onActivate_ = function(engineID) {
   this.engine_id_ = engineID;
   // Sets keyboardLayout_.
-  var appDetails = chrome.app.getDetails();
-  if (appDetails) {
-    var input_components = chrome.app.getDetails()['input_components'];
+  var getManifest = chrome.runtime.getManifest;
+  if (getManifest) {
+    var input_components = getManifest()['input_components'];
     for (var i = 0; i < input_components.length; ++i) {
       if (input_components[i].id == engineID) {
         this.keyboardLayout_ = input_components[i]['layouts'][0];
@@ -963,6 +944,9 @@ mozc.NaclMozc.prototype.onFocus_ = function(context) {
   mozcCommand.input.capability =
       /** @type {!mozc.Capability} */
       ({text_deletion: 'DELETE_PRECEDING_TEXT'});
+  mozcCommand.input.application_info =
+      /** @type {!mozc.ApplicationInfo} */
+      ({timezone_offset: -(new Date()).getTimezoneOffset() * 60});
   this.postMozcCommand_(
       mozcCommand,
       /**
@@ -1219,37 +1203,6 @@ mozc.NaclMozc.prototype.updateMenuItems_ = function() {
 };
 
 /**
- * Calls chrome.identity.getAuthToken and returns the result to NaCl module.
- * This method is called from NaCl via NaclJsProxy.
- * @param {!Object} args arguments which are used to call getAuthToken.
- * @private
- */
-mozc.NaclMozc.prototype.jsCallGetAuthToken_ = function(args) {
-  if (!chrome.identity ||
-      !chrome.identity.getAuthToken) {
-    // chrome.identity.getAuthToken is available from ChromeOS 29.
-    // See: https://code.google.com/p/chromium/issues/detail?id=233250
-    this.naclModule_['postMessage'](JSON.stringify({
-      'jscall': 'GetAuthToken'
-    }));
-    return;
-  }
-  chrome.identity.getAuthToken(
-      {interactive: !!args['interactive']},
-      /**
-       * @this {!mozc.NaclMozc}
-       * @param {string=} opt_token
-       */
-      (function(opt_token) {
-        var result = {'jscall': 'GetAuthToken'};
-        if (opt_token) {
-          result.access_token = opt_token;
-        }
-        this.naclModule_['postMessage'](JSON.stringify(result));
-      }).bind(this));
-};
-
-/**
  * Callback method called when the NaCl module has loaded.
  * @private
  */
@@ -1286,12 +1239,6 @@ mozc.NaclMozc.prototype.onModuleMessage_ = function(message) {
     }
     this.executeWatingEventHandlers_();
     return;
-  }
-  if (mozcResponse.jscall) {
-    if (mozcResponse.jscall == 'GetAuthToken') {
-      this.jsCallGetAuthToken_(mozcResponse.args ? mozcResponse.args : {});
-      return;
-    }
   }
 
   var callback = this.naclMessageCallbacks_[mozcResponse.id];

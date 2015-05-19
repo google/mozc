@@ -1,4 +1,4 @@
-;; Copyright 2010-2013, Google Inc.
+;; Copyright 2010-2014, Google Inc.
 ;; All rights reserved.
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -136,18 +136,6 @@
 
 
 ;;;; Macros
-
-(defmacro mozc-define-error (symbol-name message &rest conditions)
-  "Define an error symbol.
-SYMBOL-NAME is the name of an error symbol and MESSAGE is its error message.
-CONDITIONS is a list of error conditions and shouldn't include symbol `error',
-`mozc-error' and SYMBOL-NAME itself.  They are included by default."
-  (let ((conditions-list (if (eq symbol-name 'mozc-error)
-                             `(error mozc-error ,@conditions)
-                           `(error mozc-error ,@conditions ,symbol-name))))
-    `(progn
-       (put ',symbol-name 'error-conditions ',conditions-list)
-       (put ',symbol-name 'error-message ,message))))
 
 (defmacro mozc-with-undo-list-unchanged (&rest body)
   "Evaluate BODY forms without changing the undo list.
@@ -430,13 +418,103 @@ back and treated as if it's the first event of a next key sequence."
 (defsubst mozc-clean-up-session ()
   "Clean up all changes on the current buffer and destroy the current session."
   (mozc-clean-up-changes-on-buffer)
-  (mozc-session-delete))
+  (mozc-session-delete)
+  (mozc-clear-cached-header-line-height))
 
 (defsubst mozc-clean-up-changes-on-buffer ()
   "Clean up all changes on the current buffer.
 Clean up the preedit and candidate window."
   (mozc-preedit-clean-up)
   (mozc-candidate-clean-up))
+
+
+
+;;;; Modifications on the buffer
+
+(defvar mozc-buffer-placeholder-char ?*
+  "The default character to be used as a placeholder of overlays.")
+
+(defmacro mozc-buffer-placeholder-setq (symbol &rest args)
+  "Insert a placeholder and store its region in SYMBOL.
+ARGS are either strings or characters.  ARGS defaults to
+`mozc-buffer-placeholder-char'."
+  `(progn
+     (mozc-buffer-delete-region ,symbol)
+     (setq ,symbol (mozc-buffer-insert ,@args))))
+
+(defmacro mozc-buffer-placeholder-setq-char (symbol &optional character count)
+  "Insert a placeholder and store its region in SYMBOL.
+CHARACTER is the character to be inserted and defaults to
+`mozc-buffer-placeholder-char'.  COUNT is the number of copies to be inserted
+and defaults to 1."
+  `(progn
+     (mozc-buffer-delete-region ,symbol)
+     (setq ,symbol (mozc-buffer-insert-char ,character ,count))))
+
+(defmacro mozc-buffer-placeholder-push (symbol &rest args)
+  "Insert a placeholder and add its region to SYMBOL.
+ARGS are either strings or characters.  ARGS defaults to
+`mozc-buffer-placeholder-char'."
+  `(push (mozc-buffer-insert ,@args) ,symbol))
+
+(defmacro mozc-buffer-placeholder-push-char (symbol &optional character count)
+  "Insert a placeholder and add its region to SYMBOL.
+CHARACTER is the character to be inserted and defaults to
+`mozc-buffer-placeholder-char'.  COUNT is the number of copies to be inserted
+and defaults to 1."
+  `(push (mozc-buffer-insert-char ,character ,count) ,symbol))
+
+(defmacro mozc-buffer-placeholder-delete (symbol)
+  "Delete a placeholder pointed to by SYMBOL.
+SYMBOL is set to nil after the deletion."
+  `(progn
+     (mozc-buffer-delete-region ,symbol)
+     (setq ,symbol nil)))
+
+(defmacro mozc-buffer-placeholder-delete-all (symbol)
+  "Delete all placeholders in SYMBOL.
+SYMBOL is set to nil after the deletion."
+  `(progn
+     (mozc-buffer-delete-all-regions ,symbol)
+     (setq ,symbol nil)))
+
+(defun mozc-buffer-insert (&rest args)
+  "Insert ARGS, either strings or characters, and return the region of them.
+The undo list will not be affected.  ARGS defaults to
+`mozc-buffer-placeholder-char'.
+
+The return value is a cons which holds two markers which point to the region of
+added characters."
+  (let ((beg (point-marker)))
+    (mozc-with-undo-list-unchanged
+     (if args
+         (apply #'insert args)
+       (insert mozc-buffer-placeholder-char)))
+    (cons beg (point-marker))))
+
+(defun mozc-buffer-insert-char (&optional character count)
+  "Insert CHARACTERs and return the region of them.
+COUNT copies of CHARACTER are inserted.  The undo list will not be affected.
+CHARACTER and COUNT default to `mozc-buffer-placeholder-char' and 1
+respectively.
+
+The return value is a cons which holds two markers which point to the region of
+added characters."
+  (let ((beg (point-marker)))
+    (mozc-with-undo-list-unchanged
+     (insert-char (or character mozc-buffer-placeholder-char) (or count 1)))
+    (cons beg (point-marker))))
+
+(defun mozc-buffer-delete-region (region)
+  "Delete the text in the REGION."
+  (when region
+    (mozc-with-undo-list-unchanged
+     (delete-region (car region) (cdr region)))))
+
+(defun mozc-buffer-delete-all-regions (regions)
+  "Delete each text in the REGIONS.
+REGIONS must be a list of regions."
+  (mapc #'mozc-buffer-delete-region regions))
 
 
 
@@ -519,11 +597,11 @@ CANDIDATES must be the candidates field in a response protobuf if any."
   "An overlay which shows the preedit.")
 (make-variable-buffer-local 'mozc-preedit-overlay)
 
-(defvar mozc-preedit-overlay-temporary-region nil
+(defvar mozc-preedit-overlay-placeholder-region nil
   "A region which is temporarily added for showing the preedit.
 This is a cons which holds two markers which point to the region of
 a temporarily added character.")
-(make-variable-buffer-local 'mozc-preedit-overlay-temporary-region)
+(make-variable-buffer-local 'mozc-preedit-overlay-placeholder-region)
 
 (defun mozc-preedit-overlay-make-overlay (origin)
   "Create a new overlay at ORIGIN to show the preedit.
@@ -532,27 +610,22 @@ The preedit is stored in `mozc-preedit-overlay' and removed by
   (mozc-preedit-overlay-delete-overlay)
   (save-excursion
     (goto-char origin)
-    (mozc-with-undo-list-unchanged
-     (insert-char ?\s 1))
-    (setq mozc-preedit-overlay-temporary-region
-          (cons origin (1+ origin))))
+    (mozc-buffer-placeholder-setq mozc-preedit-overlay-placeholder-region))
   (setq mozc-preedit-overlay
-        (make-overlay origin (1+ origin) (marker-buffer origin))))
+        (make-overlay (car mozc-preedit-overlay-placeholder-region)
+                      (cdr mozc-preedit-overlay-placeholder-region)
+                      (marker-buffer origin))))
 
 (defun mozc-preedit-overlay-put-text (text)
   "Change the display property of the preedit overlay to TEXT."
   (overlay-put mozc-preedit-overlay 'display text))
 
 (defun mozc-preedit-overlay-delete-overlay ()
-  "Remove the preedit overlay and the temporary region."
+  "Remove the preedit overlay and the placeholder region."
   (when mozc-preedit-overlay
     (delete-overlay mozc-preedit-overlay)
     (setq mozc-preedit-overlay nil))
-  (when mozc-preedit-overlay-temporary-region
-    (let ((region-to-be-removed mozc-preedit-overlay-temporary-region))
-      (setq mozc-preedit-overlay-temporary-region nil)
-      (mozc-with-undo-list-unchanged
-       (delete-region (car region-to-be-removed) (cdr region-to-be-removed))))))
+  (mozc-buffer-placeholder-delete mozc-preedit-overlay-placeholder-region))
 
 (defun mozc-preedit-make-text (preedit &optional decor-left decor-right
                                        separator)
@@ -699,7 +772,7 @@ CANDIDATES must be the candidates field in a response protobuf."
 
 (defun mozc-cand-echo-area-clear ()
   "Clear the candidate list."
-  (mozc-cand-echo-area-delete-temporary-region))
+  (mozc-buffer-placeholder-delete mozc-cand-echo-area-placeholder-region))
 
 (defun mozc-cand-echo-area-update (candidates)
   "Update the candidate list in the echo area.
@@ -714,10 +787,11 @@ CANDIDATES must be the candidates field in a response protobuf."
       ;; very limited.  Show only the preedit.
       )
      (t
-      (mozc-cand-echo-area-delete-temporary-region)
+      (mozc-buffer-placeholder-delete mozc-cand-echo-area-placeholder-region)
       (save-excursion
         (goto-char (point-max))
-        (mozc-cand-echo-area-insert-temporary-region "\n" contents))))))
+        (mozc-buffer-placeholder-setq mozc-cand-echo-area-placeholder-region
+                                      ?\n contents))))))
 
 (defun mozc-cand-echo-area-make-contents (candidates)
   "Make a list of candidates as an echo area message.
@@ -757,34 +831,9 @@ Return a string formatted to suit for the echo area."
                          'face 'mozc-cand-echo-area-annotation-face)))))
       (mozc-protobuf-get candidates 'candidate)))))
 
-(defvar mozc-cand-echo-area-temporary-region nil
-  "A region which is temporarily added for showing a candidate list.
-This is a cons which holds two markers which point to the region of
-temporarily added characters.
-`mozc-cand-echo-area-delete-temporary-region' removes the region.")
-(make-variable-buffer-local 'mozc-cand-echo-area-temporary-region)
-
-(defun mozc-cand-echo-area-insert-temporary-region (&rest strings)
-  "Insert STRINGS temporarily.
-`mozc-cand-echo-area-delete-temporary-region' removes the strings.
-The function signals an error when the strings have already been added."
-  (if mozc-cand-echo-area-temporary-region
-      (signal 'mozc-internal-error mozc-cand-echo-area-temporary-region))
-  (let ((beg (point-marker)))
-    (mozc-with-undo-list-unchanged
-     (apply #'insert strings))
-    (let ((end (point-marker)))
-      (setq mozc-cand-echo-area-temporary-region (cons beg end)))))
-
-(defun mozc-cand-echo-area-delete-temporary-region ()
-  "Remove temporarily-added characters to show a candidate list.
-See also `mozc-cand-echo-area-temporary-region'."
-  (let ((region-to-be-removed mozc-cand-echo-area-temporary-region))
-    (when region-to-be-removed
-      (setq mozc-cand-echo-area-temporary-region nil)
-      (mozc-with-undo-list-unchanged
-       (delete-region (car region-to-be-removed)
-                      (cdr region-to-be-removed))))))
+(defvar mozc-cand-echo-area-placeholder-region nil
+  "A region which is temporarily added for showing a candidate list.")
+(make-variable-buffer-local 'mozc-cand-echo-area-placeholder-region)
 
 (defface mozc-cand-echo-area-focused-face
   '((((type graphic x w32) (class color) (background dark))
@@ -839,15 +888,15 @@ candidates in the echo area candidate window."
 
 (defun mozc-cand-overlay-clean-up ()
   "Clean up the current candidate session.
-Remove all overlays and temporary characters."
+Remove all overlays and placeholder characters."
   (mozc-cand-overlay-clear))
 
 (defun mozc-cand-overlay-clear ()
   "Clear the candidate window.
-Remove all overlays and temporary characters."
+Remove all overlays and placeholder characters."
   (mozc-cand-overlay-delete-overlays)
   (mozc-with-buffer-modified-p-unchanged
-   (mozc-cand-overlay-delete-temporary-regions)))
+   (mozc-buffer-placeholder-delete-all mozc-cand-overlay-placeholder-regions)))
 
 (defun mozc-cand-overlay-update (candidates)
   "Update the candidate window using overlays.
@@ -942,24 +991,23 @@ CONTENTS is text contents for a candidate window returned by
 `mozc-cand-overlay-make-contents'.
 Optional SPACE-WIDTH is width of padding space between text, and
 defaults to `frame-char-width'."
-  (mozc-with-undo-list-unchanged
-   (save-excursion
-     (insert ?*)
-     (let ((overlay (make-overlay (1- (point)) (point))))
-       (unwind-protect
-           (progn
-             (mozc-cand-overlay-put-space overlay 0)
-             (let ((posn-origin (mozc-posn-at-point))
-                   (space-width (or space-width (frame-char-width))))
-               (apply #'max
-                      (mapcar (lambda (content)
-                                (mozc-cand-overlay-estimate-width
-                                 (car content) (cadr content) space-width
-                                 (caddr content)
-                                 overlay posn-origin))
-                              contents))))
-         (delete-overlay overlay)
-         (delete-char -1))))))
+  (save-excursion
+    (let* ((placeholder (mozc-buffer-insert-char))
+           (overlay (make-overlay (car placeholder) (cdr placeholder))))
+      (unwind-protect
+          (progn
+            (mozc-cand-overlay-put-space overlay 0)
+            (let ((posn-origin (mozc-posn-at-point))
+                  (space-width (or space-width (frame-char-width))))
+              (apply #'max
+                     (mapcar (lambda (content)
+                               (mozc-cand-overlay-estimate-width
+                                (car content) (cadr content) space-width
+                                (caddr content)
+                                overlay posn-origin))
+                             contents))))
+        (delete-overlay overlay)
+        (mozc-buffer-delete-region placeholder)))))
 
 (defun mozc-cand-overlay-estimate-width
   (left-text right-text space-width face overlay posn-origin)
@@ -1002,7 +1050,7 @@ The function returns non-nil on success, and nil on failure."
     (condition-case nil
         (save-excursion
           (when (>= relative-start-row 0)  ; Make sure there are enough lines.
-            (mozc-cand-overlay-insert-temporary-newlines (length contents)))
+            (mozc-cand-overlay-insert-placeholder-newlines (length contents)))
           (vertical-motion relative-start-row)
           (while contents
             (while (and max-scroll-lines  ; Scroll up if necessary.
@@ -1028,14 +1076,15 @@ The function returns non-nil on success, and nil on failure."
          (set-window-start nil window-start-pos))
        nil))))  ; Return nil on failure.
 
-(defun mozc-cand-overlay-insert-temporary-newlines (contents-lines)
+(defun mozc-cand-overlay-insert-placeholder-newlines (contents-lines)
   "Insert newlines temporarily if necessary.
 CONTENTS-LINES is the number of lines needed below the point."
   (save-excursion
     (let ((lines-short (- contents-lines (vertical-motion contents-lines))))
       (when (> lines-short 0)
         (goto-char (point-max))
-        (mozc-cand-overlay-insert-temporary-char ?\n lines-short)))))
+        (mozc-buffer-placeholder-push-char mozc-cand-overlay-placeholder-regions
+                                           ?\n lines-short)))))
 
 (defun mozc-cand-overlay-draw-row (left-text right-text face x width)
   "Draw a row of a candidate window.
@@ -1086,7 +1135,8 @@ This function may change the point."
          (p2 (if (>= cols min-cols)  ; Revise p2 if short of columns.
                  p2
                (goto-char p2)  ; Insert temporary characters.
-               (mozc-cand-overlay-insert-temporary-char ?s (- min-cols cols))
+               (mozc-buffer-placeholder-push-char
+                mozc-cand-overlay-placeholder-regions nil (- min-cols cols))
                (+ p1 min-cols))))
     ;; left margin
     (if (or (/= (mozc-posn-col posn1) 0)
@@ -1148,36 +1198,12 @@ Optionally change the face property of OVERLAY to FACE."
 
 (defun mozc-cand-overlay-delete-overlays ()
   "Remove overlays used for showing candidate windows."
-  (mapc 'delete-overlay mozc-cand-overlay-overlays)
+  (mapc #'delete-overlay mozc-cand-overlay-overlays)
   (setq mozc-cand-overlay-overlays nil))
 
-(defvar mozc-cand-overlay-temporary-regions nil
-  "Regions which are temporarily added for showing candidate windows.
-This is a list of pairs of two markers which point to regions of
-temporarily added characters.
-`mozc-cand-overlay-delete-temporary-regions' removes these regions.")
-(make-variable-buffer-local 'mozc-cand-overlay-temporary-regions)
-
-(defun mozc-cand-overlay-insert-temporary-char (character count)
-  "Insert characters temporarily.
-CHARACTER is an integer specifying a character.  COUNT is the number of
-copies of a character.
-`mozc-cand-overlay-delete-temporary-regions' removes all characters
-added temporarily."
-  (let ((beg (point-marker)))
-    (mozc-with-undo-list-unchanged
-     (insert-char character count))
-    (let ((end (point-marker)))
-      (push (cons beg end) mozc-cand-overlay-temporary-regions))))
-
-(defun mozc-cand-overlay-delete-temporary-regions ()
-  "Remove temporarily-added characters to replace with overlays.
-See also `mozc-cand-overlay-temporary-regions'."
-  (let ((regions-to-be-removed mozc-cand-overlay-temporary-regions))
-    (setq mozc-cand-overlay-temporary-regions nil)
-    (mozc-with-undo-list-unchanged
-     (mapc (lambda (region) (delete-region (car region) (cdr region)))
-           regions-to-be-removed))))
+(defvar mozc-cand-overlay-placeholder-regions nil
+  "Regions which are temporarily added for showing candidate windows.")
+(make-variable-buffer-local 'mozc-cand-overlay-placeholder-regions)
 
 (defface mozc-cand-overlay-focused-face
   '((((type graphic x w32) (class color) (background dark))
@@ -1222,6 +1248,9 @@ See also `mozc-cand-overlay-temporary-regions'."
 
 
 ;;;; Utilities for position and window coordinates
+
+(defvar mozc-cached-header-line-height nil
+  "Cached height of the header line.")
 
 (defun mozc-posn-at-point (&optional pos window)
   "Return the same position information as `posn-at-point'.
@@ -1278,14 +1307,44 @@ In a word, this function is a fixed version of `posn-at-point'."
   (car (posn-x-y position)))
 
 (defsubst mozc-posn-y (position)
-  "Return the y coordinate in POSITION."
-  (cdr (posn-x-y position)))
+  "Return the y coordinate in POSITION.
+
+This function returns y offset from the top of the buffer area including
+the header line.  This definition could be changed in future.
+
+Note: On Emacs 22 and 23, y offset, returned by `posn-at-point' and taken
+by `posn-at-x-y', is relative to the top of the buffer area including
+the header line.
+However, on Emacs 24, y offset returned by `posn-at-point' is relative to
+the text area excluding the header line, while y offset taken by
+`posn-at-x-y' is relative to the buffer area including the header line.
+This asymmetry is by design according to GNU Emacs team.
+
+This function fixes the asymmetry between them on Emacs 24 and later versions.
+This hack could be moved to mozc-posn-at-x-y in a future version."
+  (let ((y (cdr (posn-x-y position))))
+    (if (or (null header-line-format) (<= emacs-major-version 23))
+        y
+      (+ y (or mozc-cached-header-line-height
+               (setq mozc-cached-header-line-height (mozc-header-line-height))
+               0)))))
 
 (defsubst mozc-window-width (&optional window)
   "Return the width of WINDOW in pixel.
 WINDOW defaults to the selected window."
   (let ((rect (window-inside-pixel-edges window)))
     (- (third rect) (first rect))))
+
+(defun mozc-header-line-height ()
+  "Return the height of the header line.
+If there is no header line, return nil."
+  (let ((posn (posn-at-x-y 0 0)))
+    (if (eq (posn-area posn) 'header-line)
+        (cdr (posn-object-width-height posn)))))
+
+(defun mozc-clear-cached-header-line-height ()
+  "Clear the cached height of the header line."
+  (setq mozc-cached-header-line-height nil))
 
 
 
@@ -1798,6 +1857,18 @@ KEYCODE must be an integer representing a key code to remove."
 
 
 ;;;; Errors
+
+(defmacro mozc-define-error (symbol-name message &rest conditions)
+  "Define an error symbol.
+SYMBOL-NAME is the name of an error symbol and MESSAGE is its error message.
+CONDITIONS is a list of error conditions and shouldn't include symbol `error',
+`mozc-error' and SYMBOL-NAME itself.  They are included by default."
+  (let ((conditions-list (if (eq symbol-name 'mozc-error)
+                             `(error mozc-error ,@conditions)
+                           `(error mozc-error ,@conditions ,symbol-name))))
+    `(progn
+       (put ',symbol-name 'error-conditions ',conditions-list)
+       (put ',symbol-name 'error-message ,message))))
 
 (mozc-define-error mozc-error "Error happened inside Mozc")
 

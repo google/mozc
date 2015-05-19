@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -109,6 +109,7 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
         &actual_script_type));
     EXPECT_EQ(kSplittableCases[i].expected_number, actual_number);
     EXPECT_EQ(kSplittableCases[i].expected_suffix, actual_suffix);
+    EXPECT_EQ(kSplittableCases[i].expected_script_type, actual_script_type);
   }
 
   // Test cases for unsplittable compounds.

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,8 +48,6 @@ class UserDictionaryUtil {
   // Following methods return limits of dictionary/entry size.
   static size_t max_dictionary_size();
   static size_t max_entry_size();
-  static size_t max_sync_dictionary_size();
-  static size_t max_sync_entry_size();
 
   // Returns true if all characters in the given string is a legitimate
   // character for reading.

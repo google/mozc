@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include "converter/boundary_struct.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
+#include "data_manager/packed/system_dictionary_format_version.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
@@ -57,7 +58,6 @@ using std::unique_ptr;
 namespace mozc {
 namespace packed {
 namespace {
-const int kSystemDictionaryFormatVersion = 2;
 // Default value of the total bytes limit defined in protobuf library is 64MB.
 // Our big dictionary size is about 50MB. So we don't need to change it.
 const size_t kDefaultTotalBytesLimit = 64 << 20;

@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -258,23 +258,15 @@ class KeyCheckDictionary : public DictionaryInterface {
     return LookupPredictive(str, size, allocator);
   }
 
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const {
+  virtual void LookupPrefix(
+      StringPiece key,
+      bool use_kana_modifier_insensitive_looukp,
+      Callback *callback) const {
     // No check
-    return NULL;
   }
 
-  virtual Node *LookupPrefixWithLimit(const char *str, int size,
-                                      const Limit &limit,
-                                      NodeAllocatorInterface *allocator) const {
+  virtual void LookupExact(StringPiece key, Callback *callback) const {
     // No check
-    return NULL;
-  }
-
-  virtual Node *LookupExact(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const {
-    // No check
-    return NULL;
   }
 
   virtual Node *LookupReverse(const char *str, int size,

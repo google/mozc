@@ -1,4 +1,4 @@
-// Copyright 2010-2013, Google Inc.
+// Copyright 2010-2014, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -74,6 +74,25 @@ TEST(ClockMockTest, GetCurrentTmWithOffsetTest) {
   EXPECT_EQ(0, current_tm.tm_sec);
   EXPECT_EQ(3, current_tm.tm_wday);
 }
+
+#ifdef __native_client__
+TEST(ClockMockTest, GetCurrentTmWithOffsetWithTimezoneOffsetTest) {
+  // 2020-12-23 13:24:00 (Wed)
+  ClockMock mock(kTestSeconds, kTestMicroSeconds);
+  mock.SetTimezoneOffset(3600);
+  const int offset = -35;
+  tm current_tm;
+
+  EXPECT_TRUE(mock.GetTmWithOffsetSecond(offset, &current_tm));
+  EXPECT_EQ(120, current_tm.tm_year);
+  EXPECT_EQ(11, current_tm.tm_mon);
+  EXPECT_EQ(23, current_tm.tm_mday);
+  EXPECT_EQ(14, current_tm.tm_hour);
+  EXPECT_EQ(24, current_tm.tm_min);
+  EXPECT_EQ(0, current_tm.tm_sec);
+  EXPECT_EQ(3, current_tm.tm_wday);
+}
+#endif  // __native_client__
 
 TEST(ClockMockTest, GetFrequencyAndTicks) {
   ClockMock mock(0, 0);
