@@ -30,16 +30,20 @@
 #ifndef MOZC_REWRITER_FOCUS_CANDIDATE_REWRITER_H_
 #define MOZC_REWRITER_FOCUS_CANDIDATE_REWRITER_H_
 
+#include "base/port.h"
+#include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
 class ConversionRequest;
-class Segments;
+class DataManagerInterface;
+class POSMatcher;
+struct CounterSuffixEntry;
 
 class FocusCandidateRewriter : public RewriterInterface  {
  public:
-  FocusCandidateRewriter();
+  explicit FocusCandidateRewriter(const DataManagerInterface *data_manager);
   virtual ~FocusCandidateRewriter();
 
   // Changed the focus of "segment_index"-th segment to be "candidate_index".
@@ -55,7 +59,36 @@ class FocusCandidateRewriter : public RewriterInterface  {
                        Segments *segments) const {
     return false;
   }
+
+ private:
+  // Performs reranking of number candidates to make numbers consistent across
+  // multiple segments.
+  bool RerankNumberCandidates(Segments *segments,
+                              size_t segment_index,
+                              int candidate_index) const;
+
+  // Finds an index of candidate in |seg| that matches the given number script
+  // type and suffix.  Returns -1 if there's no candidate matching the
+  // condition.
+  int FindMatchingCandidates(
+      const Segment &seg, uint32 ref_script_type, StringPiece ref_suffix) const;
+
+  // Parses the value of a candidate into number and counter suffix.
+  // Simultaneously checks the script type of number.  Here, number candiate is
+  // defined to be the following pattern:
+  //   * [数][助数詞][並立助詞]?  (e.g., 一階, 二回, ３階や, etc.)
+  // Returns false if the value of candidate doesn't match the pattern.
+  bool ParseNumberCandidate(const Segment::Candidate &cand,
+                            StringPiece* number, StringPiece* suffix,
+                            uint32 *script_type) const;
+
+  const CounterSuffixEntry *suffix_array_;
+  size_t suffix_array_size_;
+  const POSMatcher *pos_matcher_;
+
+  DISALLOW_COPY_AND_ASSIGN(FocusCandidateRewriter);
 };
 
 }  // namespace mozc
+
 #endif  // MOZC_REWRITER_FOCUS_CANDIDATE_REWRITER_H_

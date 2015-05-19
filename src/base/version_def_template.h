@@ -44,6 +44,7 @@ const int kMozcVersionBuildNumber = @BUILD@;
 const int kMozcVersionRevision = @REVISION@;
 const Version::BuildType kMozcBuildType = Version::@FLAG@;
 
+
 }  // namespace version
 }  // namespace mozc
 

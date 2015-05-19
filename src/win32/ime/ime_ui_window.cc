@@ -49,6 +49,7 @@
 #include "base/run_level.h"
 #include "base/scoped_handle.h"
 #include "base/singleton.h"
+#include "base/win_util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "renderer/renderer_command.pb.h"
@@ -123,6 +124,30 @@ void LaunchSetDefaultDialog() {
   // the process with ProcessMutex.
   mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
                                   "--mode=set_default_dialog");
+}
+
+bool IsProcessSandboxedImpl() {
+  bool is_restricted = false;
+  if (!WinUtil::IsProcessRestricted(::GetCurrentProcess(), &is_restricted)) {
+    return true;
+  }
+  if (is_restricted) {
+    return true;
+  }
+
+  bool in_appcontainer = false;
+  if (!WinUtil::IsProcessInAppContainer(::GetCurrentProcess(),
+                                        &in_appcontainer)) {
+    return true;
+  }
+
+  return in_appcontainer;
+}
+
+bool IsProcessSandboxed() {
+  // Thread safety is not required.
+  static bool sandboxed = IsProcessSandboxedImpl();
+  return sandboxed;
 }
 
 // This class is expected to be used a singleton object to enable Win32
@@ -506,14 +531,11 @@ class LangBarCallbackImpl : public LangBarCallback {
 // TODO(yukawa): Refactor for unit tests and better integration with ImeCore.
 class DefaultUIWindow {
  public:
-  // ID of the timer that send callback command.
-  static const int kCallbackTimerID = 1;
-
   explicit DefaultUIWindow(HWND hwnd)
       : hwnd_(hwnd),
         langbar_callback_(new LangBarCallbackImpl(hwnd)),
-        language_bar_(new LanguageBar) {
-    Win32RendererClient::EnsureUIThreadInitialized();
+        language_bar_(new LanguageBar),
+        has_pending_langbar_update_(false) {
   }
 
   ~DefaultUIWindow() {
@@ -522,6 +544,7 @@ class DefaultUIWindow {
   }
 
   void UninitLangBar() {
+    CancelDeferredLangBarUpdateIfExists();
     language_bar_->UninitLanguageBar();
   }
 
@@ -551,7 +574,7 @@ class DefaultUIWindow {
         break;
       case IMN_SETCONVERSIONMODE:
         UpdateIndicator(context);
-        result = (UpdateLangBar(context) ? 0 : 1);
+        result = (UpdateLangBar(context, kDeferred) ? 0 : 1);
         break;
       case IMN_SETSENTENCEMODE:
         // Do nothing because we only support IME_SMODE_PHRASEPREDICT, which
@@ -560,7 +583,7 @@ class DefaultUIWindow {
         break;
       case IMN_SETOPENSTATUS:
         UpdateIndicator(context);
-        result = (UpdateLangBar(context) ? 0 : 1);
+        result = (UpdateLangBar(context, kDeferred) ? 0 : 1);
         break;
       case IMN_SETCANDIDATEPOS: {
         if (lParam & 0x1) {
@@ -589,12 +612,12 @@ class DefaultUIWindow {
         break;
       case IMN_PRIVATE:
         if (lParam == kNotifyUpdateUI) {
-          UpdateLangBar(context);
+          UpdateLangBar(context, kDeferred);
           UpdateCandidate(context, kNoEvent);
         } else if (lParam == kNotifyReconvertFromIME) {
           TurnOnIMEAndTryToReconvertFromIME(hwnd_);
         } else if (lParam == kNotifyDelayedCallback) {
-          SetCallbackTimer(context);
+          SetMozcEventCallbackTimer(context);
         }
         break;
     }
@@ -613,7 +636,13 @@ class DefaultUIWindow {
       context.ui_visibility_tracker()->OnSetContext(show_ui_attributes);
     }
     UpdateCandidate(context, activated ? kNoEvent : kDissociateContext);
-    return (UpdateLangBar(context) ? 0 : 1);
+    if (activated) {
+      // Invalidate the LangBar state cache because the actual state of LangBar
+      // can be changed by other IMEs or applications.
+      InvalidateLangBarInfoCache();
+    }
+    UpdateLangBar(context, kImmediate);
+    return 0;
   }
 
   LRESULT OnControl(const UIContext &context, DWORD sub_message,
@@ -631,14 +660,14 @@ class DefaultUIWindow {
       return;
     }
     UpdateCandidate(context, kNoEvent);
-    UpdateLangBar(context);
+    UpdateLangBar(context, kImmediate);
 
     // If the application does not allow the IME to show any UI component,
     // it would be better not to show the set default dialog.
     // We use the visibility of suggest window as a launch condition of
     // SetDefaultDialog.
     if (context.ui_visibility_tracker()->IsSuggestWindowVisible()) {
-      if (RunLevel::IsValidClientRunLevel()) {
+      if (!IsProcessSandboxed() && RunLevel::IsValidClientRunLevel()) {
         CallOnce(&g_launch_set_default_dialog,
                  &LaunchSetDefaultDialog);
       }
@@ -723,7 +752,7 @@ class DefaultUIWindow {
       if ((message == WM_IME_SELECT) && (wParam == FALSE)) {
         UninitLangBar();
       } else {
-        UpdateLangBar(context);
+        UpdateLangBar(context, kDeferred);
       }
       return 0;
     }
@@ -771,31 +800,52 @@ class DefaultUIWindow {
     return 0;
   }
 
-  // Timer callback function which is set in SetCallbackTimer.
-  void OnTimer(WPARAM idEvent) {
-    if (idEvent != kCallbackTimerID) {
-      return;
+  void OnTimer(WPARAM event_id) {
+    switch (event_id) {
+      case kMozcEventCallbackTimerId:
+        OnDeferredMozcEventCallback();
+        break;
+      case kDeferredLangBarUpdateTimerId:
+        OnDeferredUpdateLangBar();
+        break;
     }
-    ::KillTimer(hwnd_, idEvent);
-    const HIMC himc = GetSafeHIMC(hwnd_);
-    const bool generate_message = mozc::win32::ImeCore::IsActiveContext(himc);
-    ImeCore::SendCallbackCommand(himc, generate_message);
   }
 
  private:
+  // Timer for the delayed callback to Mozc server.
+  static const UINT_PTR kMozcEventCallbackTimerId = 1;
+
+  // Timer for the langbar update.
+  static const UINT_PTR kDeferredLangBarUpdateTimerId = 2;
+  static const DWORD kLangBarUpdateDelayMilliSec = 50;
+
+  enum LangBarUpdateMode {
+    kDeferred = 0,
+    kImmediate = 1,
+  };
+
   enum IndicatorEventType {
     kNoEvent,
     kMoveFocusedWindow,
     kDissociateContext,
   };
 
+  struct LangBarInfo {
+    LangBarInfo()
+        : enabled(false),
+          mode(commands::DIRECT) {}
+
+    bool enabled;
+    commands::CompositionMode mode;
+  };
+
   // Sets the timer that send callback command.
-  void SetCallbackTimer(const UIContext &context) {
+  void SetMozcEventCallbackTimer(const UIContext &context) {
     commands::Output output;
     context.GetLastOutput(&output);
     if (output.has_callback() && output.callback().has_delay_millisec()) {
       ::SetTimer(hwnd_,
-                 kCallbackTimerID,
+                 kMozcEventCallbackTimerId,
                  output.callback().delay_millisec(),
                  NULL);
     }
@@ -850,38 +900,119 @@ class DefaultUIWindow {
     }
   }
 
-  bool UpdateLangBar(const UIContext &context) {
-    // Ensure the LangBar is initialized.
-    language_bar_->InitLanguageBar(langbar_callback_);
+  bool UpdateLangBar(const UIContext &context, LangBarUpdateMode update_mode) {
+    bool enabled = false;
+    commands::CompositionMode mode = commands::DIRECT;
 
     if (context.IsEmpty()) {
-      language_bar_->UpdateLangbarMenu(commands::DIRECT);
-      language_bar_->SetLangbarMenuEnabled(false);
-      return true;
-    }
-    if (!context.GetOpenStatus()) {
+      enabled = false;
+      mode = commands::DIRECT;
+    } else if (!context.GetOpenStatus()) {
       // Closed
-      language_bar_->UpdateLangbarMenu(commands::DIRECT);
-      language_bar_->SetLangbarMenuEnabled(true);
-      return true;
+      enabled = true;
+      mode = commands::DIRECT;
+    } else {
+      DWORD imm32_visible_mode = 0;
+      if (!context.GetVisibleConversionMode(&imm32_visible_mode)) {
+        return false;
+      }
+      commands::CompositionMode mozc_mode = commands::HIRAGANA;
+      if (!win32::ConversionModeUtil::ToMozcMode(imm32_visible_mode,
+                                                 &mozc_mode)) {
+          return false;
+      }
+      enabled = true;
+      mode = mozc_mode;
     }
-    DWORD imm32_visible_mode = 0;
-    if (!context.GetVisibleConversionMode(&imm32_visible_mode)) {
-      return false;
-    }
-    commands::CompositionMode mozc_mode = commands::HIRAGANA;
-    if (!win32::ConversionModeUtil::ToMozcMode(imm32_visible_mode,
-                                               &mozc_mode)) {
+
+    switch (update_mode) {
+      case kDeferred:
+        SetDeferredLangBarUpdate(true, mode);
+        break;
+      case kImmediate:
+        UpdateLangBarAndCancelUpdateTimer(enabled, mode);
+        break;
+      default:
+        DCHECK(false) << "Unknown mode: " << update_mode;
         return false;
     }
-    language_bar_->UpdateLangbarMenu(mozc_mode);
-    language_bar_->SetLangbarMenuEnabled(true);
+
     return true;
   }
 
+  void InvalidateLangBarInfoCache() {
+    langbar_info_cache_.reset(nullptr);
+  }
+
+  void SetDeferredLangBarUpdate(bool enabled, commands::CompositionMode mode) {
+    CancelDeferredLangBarUpdateIfExists();
+
+    deferred_langbar_update_request_.enabled = enabled;
+    deferred_langbar_update_request_.mode = mode;
+    const auto result = ::SetTimer(
+        hwnd_, kDeferredLangBarUpdateTimerId,
+        kLangBarUpdateDelayMilliSec, nullptr);
+    if (result != 0) {
+      has_pending_langbar_update_ = true;
+    }
+  }
+
+  void CancelDeferredLangBarUpdateIfExists() {
+    if (!has_pending_langbar_update_) {
+      return;
+    }
+    ::KillTimer(hwnd_, kDeferredLangBarUpdateTimerId);
+    has_pending_langbar_update_ = false;
+  }
+
+  void UpdateLangBarAndCancelUpdateTimer(bool enabled,
+                                         commands::CompositionMode mode) {
+    CancelDeferredLangBarUpdateIfExists();
+
+    // Ensure the LangBar is initialized.
+    language_bar_->InitLanguageBar(langbar_callback_);
+
+    const bool is_redundant_call = (langbar_info_cache_.get() != nullptr &&
+                                    langbar_info_cache_->enabled == enabled &&
+                                    langbar_info_cache_->mode == mode);
+
+    if (!is_redundant_call) {
+      language_bar_->SetLangbarMenuEnabled(enabled);
+      language_bar_->UpdateLangbarMenu(mode);
+    }
+
+    if (langbar_info_cache_.get() == nullptr) {
+      langbar_info_cache_.reset(new LangBarInfo);
+    }
+    langbar_info_cache_->enabled = enabled;
+    langbar_info_cache_->mode = mode;
+  }
+
+  void OnDeferredUpdateLangBar() {
+    UpdateLangBarAndCancelUpdateTimer(deferred_langbar_update_request_.enabled,
+                                      deferred_langbar_update_request_.mode);
+  }
+
+  void OnDeferredMozcEventCallback() {
+    ::KillTimer(hwnd_, kMozcEventCallbackTimerId);
+    const HIMC himc = GetSafeHIMC(hwnd_);
+    const bool generate_message = mozc::win32::ImeCore::IsActiveContext(himc);
+    ImeCore::SendCallbackCommand(himc, generate_message);
+  }
+
   HWND hwnd_;
+  // TODO(yukawa): Make a wrapper class to encapsulate LangBar implementation
+  // including cache mechanism to reduce API calls.
   unique_ptr<LanguageBar> language_bar_;
   LangBarCallbackImpl *langbar_callback_;
+  // Represents the LangBarInfo that should be set to the LangBar when deferred
+  // timer is fired.
+  LangBarInfo deferred_langbar_update_request_;
+  // True while the deferred timer that updates the LangBar is scheduled.
+  bool has_pending_langbar_update_;
+  // Represents the last LangBarInfo that is set to the LangBar. nullpter if
+  // no cached data is available.
+  unique_ptr<LangBarInfo> langbar_info_cache_;
 
   DISALLOW_COPY_AND_ASSIGN(DefaultUIWindow);
 };

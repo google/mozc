@@ -36,7 +36,6 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 
-#include "base/base.h"
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/util.h"

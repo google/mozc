@@ -33,7 +33,6 @@
 
 #import <Carbon/Carbon.h>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "session/commands.pb.h"

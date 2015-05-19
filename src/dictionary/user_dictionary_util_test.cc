@@ -29,12 +29,12 @@
 
 #include "dictionary/user_dictionary_util.h"
 
-#include "base/testing_util.h"
 #include "base/util.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/unknown_field_set.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/testing_util.h"
 
 namespace mozc {
 

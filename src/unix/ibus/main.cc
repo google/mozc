@@ -32,10 +32,6 @@
 #include "base/flags.h"
 #include "base/logging.h"
 #include "base/version.h"
-#include "config/config_handler.h"
-#include "engine/engine_factory.h"
-#include "engine/engine_interface.h"
-#include "session/japanese_session_factory.h"
 #include "unix/ibus/main.h"
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
@@ -47,7 +43,6 @@ namespace {
 IBusBus *g_bus = NULL;
 IBusConfig *g_config = NULL;
 
-#ifndef OS_CHROMEOS
 #ifndef NO_LOGGING
 void EnableVerboseLog() {
   const int kDefaultVerboseLevel = 1;
@@ -55,7 +50,7 @@ void EnableVerboseLog() {
     mozc::Logging::SetVerboseLevel(kDefaultVerboseLevel);
   }
 }
-#endif
+#endif  // NO_LOGGING
 
 void IgnoreSigChild() {
   // Don't wait() child process termination.
@@ -66,7 +61,6 @@ void IgnoreSigChild() {
   CHECK_EQ(0, ::sigaction(SIGCHLD, &sa, NULL));
   // TODO(taku): move this function inside client::Session::LaunchTool
 }
-#endif
 
 // Creates a IBusComponent object and add engine(s) to the object.
 IBusComponent *GetIBusComponent() {
@@ -130,22 +124,13 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
 
 int main(gint argc, gchar **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
-#ifdef OS_CHROMEOS
-  // On Chrome OS, mozc does not store the config data to a local file.
-  mozc::config::ConfigHandler::SetConfigFileName("memory://config.1.db");
-  scoped_ptr<mozc::EngineInterface> engine(mozc::EngineFactory::Create());
-  mozc::session::JapaneseSessionFactory session_factory(engine.get());
-  mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
-#endif  // OS_CHROMEOS
   ibus_init();
   InitIBusComponent(FLAGS_ibus);
   mozc::ibus::MozcEngine::InitConfig(g_config);
-#ifndef OS_CHROMEOS
 #ifndef NO_LOGGING
   EnableVerboseLog();
 #endif  // NO_LOGGING
   IgnoreSigChild();
-#endif  // OS_CHROMEOS
   ibus_main();
 
   if (g_config) {

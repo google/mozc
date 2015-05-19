@@ -27,11 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/scoped_ptr.h"
+#include "renderer/unix/font_spec.h"
+
 #include "renderer/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/unix/const.h"
-#include "renderer/unix/font_spec.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "testing/base/public/gunit.h"
 

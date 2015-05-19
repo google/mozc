@@ -56,7 +56,6 @@ namespace sync {
 namespace {
 
 const char kAuthToken[] = "4/correct_authorization_token";
-const char kWrongAuthToken[] = "4/wrong_authorization_token_a";
 const char kAccessToken[] = "1/first_correct_access_token_bbbbbbbbbbbbbbbb";
 const char kRefreshToken[] = "1/first_correct_refresh_token_ccccccccccccccc";
 const char kAccessToken2[] = "1/second_correct_access_token_bbbbbbbbbbbbbbb";

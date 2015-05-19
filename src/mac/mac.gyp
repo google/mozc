@@ -183,13 +183,16 @@
           'sources': [
             'ActivatePane/ActivatePane.m',
           ],
+          'dependencies': [
+            'gen_client_info_plist',
+          ],
           'mac_bundle_resources': [
             'ActivatePane/ActivatePane.xib',
-            'ActivatePane/English.lproj/Localizable.strings',
-            'ActivatePane/Japanese.lproj/Localizable.strings',
+            '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
+            '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
           ],
           'xcode_settings': {
-            'INFOPLIST_FILE': 'ActivatePane/Info.plist',
+            'INFOPLIST_FILE': '<(gen_out_dir)/ActivatePane/Info.plist',
             'GCC_C_LANGUAGE_STANDARD': 'c99',
           },
           'link_settings': {
@@ -231,8 +234,10 @@
             'Uninstaller/Uninstaller.mm',
             'Uninstaller/Uninstaller_main.mm',
           ],
+          'product_name': 'Uninstall<(branding)',
           'dependencies': [
             '../base/base.gyp:base',
+            'gen_client_info_plist',
           ],
           'mac_bundle_resources': [
             '../data/images/mac/product_icon.icns',
@@ -242,7 +247,7 @@
             'Uninstaller/Japanese.lproj/InfoPlist.strings',
           ],
           'xcode_settings': {
-            'INFOPLIST_FILE': 'Uninstaller/Info.plist',
+            'INFOPLIST_FILE': '<(gen_out_dir)/Uninstaller/Info.plist',
           },
           'link_settings': {
             'libraries': [
@@ -354,6 +359,72 @@
               ],
             },
             {
+              'action_name': 'generateActivatePaneInfoPlist',
+              'inputs': [
+                'ActivatePane/Info.plist',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/ActivatePane/Info.plist',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist.py',
+                '--output', '<(gen_out_dir)/ActivatePane/Info.plist',
+                '--input', 'ActivatePane/Info.plist',
+                '--version_file', '../mozc_version.txt',
+                '--branding', '<(branding)',
+              ],
+            },
+            {
+              'action_name': 'generateUninstallerInfoPlist',
+              'inputs': [
+                'Uninstaller/Info.plist',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/Uninstaller/Info.plist',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist.py',
+                '--output', '<(gen_out_dir)/Uninstaller/Info.plist',
+                '--input', 'Uninstaller/Info.plist',
+                '--version_file', '../mozc_version.txt',
+                '--branding', '<(branding)',
+              ],
+            },
+            {
+              'action_name': 'generate_ActivatePane_english_strings',
+              'inputs': [
+                'ActivatePane/English.lproj/Localizable.strings',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist_strings.py',
+                '--output',
+                '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
+                '--input',
+                'ActivatePane/English.lproj/Localizable.strings',
+                '--branding', '<(branding)',
+              ],
+            },
+            {
+              'action_name': 'generate_ActivatePane_japanese_strings',
+              'inputs': [
+                'ActivatePane/Japanese.lproj/Localizable.strings',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist_strings.py',
+                '--output',
+                '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
+                '--input',
+                'ActivatePane/Japanese.lproj/Localizable.strings',
+                '--branding', '<(branding)',
+              ],
+            },
+            {
               'action_name': 'generate_english_strings',
               'inputs': [
                 'English.lproj/InfoPlist.strings',
@@ -424,6 +495,99 @@
               'variables': {
                 'domain_prefix': 'org.mozc',
               },
+            }],
+          ],
+        },
+        {
+          'target_name': 'gen_packproj_files',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'tweak_preflight',
+              'inputs': [ 'installer/preflight_template.sh', ],
+              'outputs': [ '<(gen_out_dir)/preflight.sh' ],
+              'action': [
+                'python', '../build_tools/tweak_macinstaller_script.py',
+                '--output', '<(gen_out_dir)/preflight.sh',
+                '--input', 'installer/preflight_template.sh',
+                '--version_file', '../mozc_version.txt',
+                '--build_type', '<(build_type)',
+              ],
+            },
+            {
+              'action_name': 'tweak_postflight',
+              'inputs': [ 'installer/postflight_template.sh', ],
+              'outputs': [ '<(gen_out_dir)/postflight.sh' ],
+              'action': [
+                'python', '../build_tools/tweak_macinstaller_script.py',
+                '--output', '<(gen_out_dir)/postflight.sh',
+                '--input', 'installer/postflight_template.sh',
+                '--version_file', '../mozc_version.txt',
+                '--build_type', '<(build_type)',
+              ],
+            },
+            {
+              'action_name': 'tweak_pkgproj',
+              'inputs': [ 'installer/<(branding)_template.pkgproj', ],
+              'outputs': [ '<(gen_out_dir)/<(branding).pkgproj' ],
+              'action': [
+                'python', '../build_tools/tweak_pkgproj.py',
+                '--output', '<(gen_out_dir)/<(branding).pkgproj',
+                '--input', 'installer/<(branding)_template.pkgproj',
+                '--version_file', '../mozc_version.txt',
+                '--gen_out_dir', '<(gen_out_dir)',
+                '--build_dir', '$(BUILT_PRODUCTS_DIR)',
+                '--keystone_dir', '<(mac_dir)/Releases/Keystone',
+                '--build_type', '<(build_type)',
+              ],
+            },
+          ],
+        },
+        # Installer-related actions and targets
+        {
+          'target_name': 'Installer',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'generate',
+              'inputs': [
+                '$(BUILT_PRODUCTS_DIR)/ActivePane.bundle',
+                '$(BUILT_PRODUCTS_DIR)/<(branding).app',
+                '$(BUILT_PRODUCTS_DIR)/Uninstall<(branding).app',
+                '<(gen_out_dir)/<(branding).pkgproj',
+              ],
+              'outputs': [
+                '$(BUILT_PRODUCTS_DIR)/<(branding).pkg',
+              ],
+              'action': [
+                'python', '../build_tools/build_and_sign_pkg_mac.py',
+                '--pkgproj', '<(gen_out_dir)/<(branding).pkgproj',
+              ],
+              'conditions': [
+                ['branding=="GoogleJapaneseInput"', {
+                  'inputs': [
+                    '$(BUILT_PRODUCTS_DIR)/DevConfirmPane.bundle',
+                  ],
+                  'action': [
+                    '--signpkg', '$(BUILT_PRODUCTS_DIR)/<(branding).pkg',
+                  ],
+                }],
+              ],
+            },
+          ],
+          'dependencies': [
+            'ActivatePane',
+            'GoogleJapaneseInput',
+            'UninstallGoogleJapaneseInput',
+            'gen_packproj_files',
+            'gen_launchd_confs',
+          ],
+          'conditions': [
+            ['branding=="GoogleJapaneseInput"', {
+              'dependencies': [
+                'DevConfirmPane',
+                'codesign_client',
+              ],
             }],
           ],
         },

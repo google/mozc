@@ -137,4 +137,5 @@ message SystemDictionaryData {
   optional bytes dictionary_data = 14;
   optional bytes collocation_data = 15;
   optional bytes collocation_suppression_data = 16;
+  repeated string counter_suffix_data = 17;
 };

@@ -43,7 +43,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"

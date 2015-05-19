@@ -60,6 +60,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
@@ -69,6 +70,12 @@
 
 
 namespace {
+
+#if MOZC_MSVC_VERSION_LT(18, 0)
+void va_copy(va_list &a, va_list &b) {
+  a = b;
+}
+#endif  // Visual C++ 2012 and prior
 
 // Lower-level routine that takes a va_list and appends to a specified
 // string.  All other routines of sprintf family are just convenience
@@ -292,7 +299,7 @@ void Util::SplitStringToUtf8Chars(const string &str, vector<string> *output) {
 }
 
 void Util::SplitCSV(const string &input, vector<string> *output) {
-  scoped_array<char> tmp(new char[input.size() + 1]);
+  scoped_ptr<char[]> tmp(new char[input.size() + 1]);
   char *str = tmp.get();
   memcpy(str, input.data(), input.size());
   str[input.size()] = '\0';
@@ -791,35 +798,30 @@ void Util::UCS4ToUTF8Append(char32 c, string *output) {
 }
 
 #ifdef OS_WIN
-size_t Util::WideCharsLen(const char *src) {
-  const int len = ::MultiByteToWideChar(CP_UTF8, 0, src, -1, NULL, 0);
-  if (len <= 0) {
+size_t Util::WideCharsLen(StringPiece src) {
+  const int num_chars =
+      ::MultiByteToWideChar(CP_UTF8, 0, src.begin(), src.size(), NULL, 0);
+  if (num_chars <= 0) {
     return 0;
   }
-  return len - 1;  // -1 represents Null termination.
+  return num_chars;
 }
 
-size_t Util::WideCharsLen(const string &src) {
-  return WideCharsLen(src.c_str());
-}
-
-int Util::UTF8ToWide(const char *input, wstring *output) {
-  const int output_length = WideCharsLen(input);
+int Util::UTF8ToWide(StringPiece input, wstring *output) {
+  const size_t output_length = WideCharsLen(input);
   if (output_length == 0) {
     return 0;
   }
 
-  scoped_array<wchar_t> input_wide(new wchar_t[output_length + 1]);
-  const int result = MultiByteToWideChar(CP_UTF8, 0, input, -1,
-                                         input_wide.get(), output_length + 1);
-  if (result > 0) {
-    output->assign(input_wide.get());
+  const size_t buffer_len = output_length + 1;
+  scoped_ptr<wchar_t[]> input_wide(new wchar_t[buffer_len]);
+  const int copied_num_chars = ::MultiByteToWideChar(
+      CP_UTF8, 0, input.begin(), input.size(), input_wide.get(),
+      buffer_len);
+  if (0 <= copied_num_chars && copied_num_chars < buffer_len) {
+    output->assign(input_wide.get(), copied_num_chars);
   }
-  return result;
-}
-
-int Util::UTF8ToWide(const string &input, wstring *output) {
-  return UTF8ToWide(input.c_str(), output);
+  return copied_num_chars;
 }
 
 int Util::WideToUTF8(const wchar_t *input, string *output) {
@@ -829,7 +831,7 @@ int Util::WideToUTF8(const wchar_t *input, string *output) {
     return 0;
   }
 
-  scoped_array<char> input_encoded(new char[output_length + 1]);
+  scoped_ptr<char[]> input_encoded(new char[output_length + 1]);
   const int result = WideCharToMultiByte(CP_UTF8, 0, input, -1,
                                          input_encoded.get(),
                                          output_length + 1, NULL, NULL);
@@ -1011,6 +1013,10 @@ void Util::GetRandomAsciiSequence(char *buf, size_t buf_size) {
 }
 
 int Util::Random(int size) {
+  DLOG_IF(FATAL, size < 0) << "|size| should be positive or 0. size: " << size;
+  // Caveat: RAND_MAX is likely to be too small to achieve fine-grained
+  // uniform distribution.
+  // TODO(yukawa): Improve the resolution.
   return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
 }
 

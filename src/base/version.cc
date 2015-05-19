@@ -94,4 +94,5 @@ Version::BuildType Version::GetMozcBuildType() {
   return version::kMozcBuildType;
 }
 
+
 }  // namespace mozc

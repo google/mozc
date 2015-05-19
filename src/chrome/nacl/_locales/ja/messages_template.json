@@ -124,7 +124,7 @@
     "message": "カスタム"
   },
   "configIncognitoMode": {
-    "message": "一時的に学習機能、入力履歴からのサジェスト機能、ユーザ辞書機能を無効にする"
+    "message": "学習機能、入力履歴からのサジェスト機能、ユーザ辞書機能を無効にする"
   },
   "configUseAutoImeTurnOff": {
     "message": "自動英数変換を有効にする"
@@ -136,7 +136,7 @@
     "message": "システム辞書からのサジェスト自動表示を有効にする"
   },
   "configSuggestionsSize": {
-    "message": "サジェストの最大候補数:"
+    "message": "サジェストの候補数:"
   },
   "configSettingsTitle": {
     "message": "日本語入力の設定"
@@ -154,10 +154,13 @@
     "message": "プライバシー"
   },
   "configClearHistory": {
-    "message": "入力履歴の削除..."
+    "message": "入力履歴の消去..."
   },
   "configClearHistoryTitle": {
-    "message": "入力履歴の削除"
+    "message": "入力履歴を消去する"
+  },
+  "configClearHistoryMessage": {
+    "message": "次のアイテムを消去:"
   },
   "configClearHistoryConversionHistory": {
     "message": "変換履歴"
@@ -166,7 +169,7 @@
     "message": "サジェスト用履歴"
   },
   "configClearHistoryOkButton": {
-    "message": "履歴データの削除"
+    "message": "入力履歴を消去する"
   },
   "configClearHistoryCancelButton": {
     "message": "キャンセル"
@@ -222,11 +225,14 @@
   "configSyncTitle": {
     "message": "同期"
   },
+  "configSyncAdvancedSettingsMessage": {
+    "message": "同期するデータ タイプを選択"
+  },
   "configUseConfigSync": {
-    "message": "設定の同期"
+    "message": "設定"
   },
   "configUseUserDictionarySync": {
-    "message": "ユーザー辞書の同期"
+    "message": "ユーザー辞書"
   },
   "configSyncAuthorizationFail": {
     "message": "認証に失敗しました。"
@@ -264,6 +270,9 @@
   "dictionaryToolPageTitle": {
     "message": "ユーザー辞書"
   },
+  "dictionaryToolDictionaryListTitle": {
+    "message": "辞書一覧"
+  },
   "dictionaryToolReadingTitle": {
     "message": "よみ"
   },
@@ -276,17 +285,11 @@
   "dictionaryToolCommentTitle": {
     "message": "コメント"
   },
-  "dictionaryToolCreateButton": {
-    "message": "辞書を作成"
-  },
-  "dictionaryToolRenameButton": {
-    "message": "辞書名を変更"
-  },
-  "dictionaryToolDeleteButton": {
-    "message": "辞書を削除"
-  },
   "dictionaryToolExportButton": {
-    "message": "辞書をエクスポート"
+    "message": "エクスポート"
+  },
+  "dictionaryToolImportButton": {
+    "message": "インポート"
   },
   "dictionaryToolDoneButton": {
     "message": "完了"
@@ -300,8 +303,14 @@
   "dictionaryToolCommentNewInput": {
     "message": "コメント"
   },
+  "dictionaryToolDeleteDictionaryTitle": {
+    "message": "辞書を削除"
+  },
   "dictionaryToolDictionaryName": {
     "message": "辞書名"
+  },
+  "dictionaryToolNewDictionaryNamePlaceholder": {
+    "message": "新規辞書"
   },
   "dictionaryToolSyncableDictionaryName": {
     "message": "同期用辞書"
@@ -323,6 +332,9 @@
   },
   "dictionaryToolStatuErrorInvalidFileFormat": {
     "message": "ファイルを読み込めません。"
+  },
+  "dictionaryToolStatuErrorEmptyFile": {
+    "message": "空のファイルです。"
   },
   "dictionaryToolStatuErrorFileSizeLimitExceeded": {
     "message": "ファイルが大きすぎます。"
@@ -372,7 +384,19 @@
   "dictionaryToolStatuErrorNoUndoHistory": {
     "message": "これ以上操作を取り消せません。"
   },
+  "dictionaryImportTitle": {
+    "message": "インポート先辞書の選択"
+  },
+  "dictionaryImportNewDictionary": {
+    "message": "新規辞書にインポート"
+  },
+  "dictionaryImportCancel": {
+    "message": "キャンセル"
+  },
+  "dictionaryImportOk": {
+    "message": "OK"
+  },
   "configUploadUsageStats": {
-    "message": "使用統計データや障害レポートを Google に自動送信して Mozcの機能向上に役立てる"
+    "message": "使用統計データや障害レポートを Google に自動送信する"
   }
 }

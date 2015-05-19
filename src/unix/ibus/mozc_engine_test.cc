@@ -27,11 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "unix/ibus/mozc_engine.h"
+
+#include <memory>
+
 #include "base/port.h"
 #include "client/client_mock.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
-#include "unix/ibus/mozc_engine.h"
+
+using std::unique_ptr;
 
 namespace mozc {
 namespace ibus {
@@ -56,7 +61,7 @@ class LaunchToolTest : public testing::Test {
   }
 
   client::ClientMock* mock_;
-  scoped_ptr<MozcEngine> mozc_engine_;
+  unique_ptr<MozcEngine> mozc_engine_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(LaunchToolTest);

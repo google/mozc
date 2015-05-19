@@ -32,7 +32,7 @@
         <translation>Mozc プロパティ</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1335"/>
+        <location filename="config_dialog.ui" line="1321"/>
         <source>Mozc can securely syncs your settings and a user sync-dictionary among different machines. Synced data can be cleared by &lt;a href=&quot;https://www.google.com/settings/dashboard&quot;&gt;Google Dashboard&lt;/a&gt;.</source>
         <translation>設定や同期用ユーザー辞書を、異なるコンピュータ間で安全に同期します。同期済みのデータは &lt;a href=&quot;https://www.google.com/settings/dashboard&quot;&gt;Google ダッシュボード&lt;/a&gt; から削除できます。</translation>
     </message>
@@ -79,8 +79,7 @@
     <message>
         <location filename="config_dialog.ui" line="185"/>
         <location filename="config_dialog.ui" line="192"/>
-        <location filename="config_dialog.ui" line="607"/>
-        <location filename="config_dialog.ui" line="1293"/>
+        <location filename="config_dialog.ui" line="1279"/>
         <source>Customize...</source>
         <translation>編集...</translation>
     </message>
@@ -95,7 +94,7 @@
         <translation>¥キーで入力する文字</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1012"/>
+        <location filename="config_dialog.ui" line="998"/>
         <source>Privacy</source>
         <translation>プライバシー</translation>
     </message>
@@ -105,17 +104,17 @@
         <translation>キー設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1227"/>
+        <location filename="config_dialog.ui" line="1213"/>
         <source>Cloud</source>
         <translation>クラウド</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1242"/>
+        <location filename="config_dialog.ui" line="1228"/>
         <source>Sync</source>
         <translation>同期</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1280"/>
+        <location filename="config_dialog.ui" line="1266"/>
         <source>Start Sync</source>
         <translation>同期する</translation>
     </message>
@@ -180,67 +179,62 @@
         <translation>同音異義語辞書</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="600"/>
-        <source>Web extention</source>
-        <translation>Web 拡張</translation>
-    </message>
-    <message>
-        <location filename="config_dialog.ui" line="629"/>
+        <location filename="config_dialog.ui" line="615"/>
         <source>Advanced</source>
         <translation>入力補助</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="718"/>
+        <location filename="config_dialog.ui" line="704"/>
         <source>Automatically switch to halfwidth</source>
         <translation>自動英数変換を有効にする</translation>
     </message>
     <message utf8="true">
-        <location filename="config_dialog.ui" line="748"/>
+        <location filename="config_dialog.ui" line="734"/>
         <source>、</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="761"/>
+        <location filename="config_dialog.ui" line="747"/>
         <source>?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="768"/>
+        <location filename="config_dialog.ui" line="754"/>
         <source>Convert at punctuations</source>
         <translation>句読点変換を有効にする</translation>
     </message>
     <message utf8="true">
-        <location filename="config_dialog.ui" line="781"/>
+        <location filename="config_dialog.ui" line="767"/>
         <source>。</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="794"/>
+        <location filename="config_dialog.ui" line="780"/>
         <source>!</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="804"/>
+        <location filename="config_dialog.ui" line="790"/>
         <source>Always use Ja keyboard layout for Japanese input</source>
         <translation>日本語入力では常に日本語キー配列を使う</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="838"/>
+        <location filename="config_dialog.ui" line="824"/>
         <source>Source data</source>
         <translation>サジェストの種類</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="870"/>
+        <location filename="config_dialog.ui" line="856"/>
         <source>Other settings</source>
         <translation>その他の設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="937"/>
+        <location filename="config_dialog.ui" line="923"/>
         <source>Use input history</source>
         <translation>入力履歴からのサジェスト自動表示を有効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="957"/>
+        <location filename="config_dialog.ui" line="943"/>
         <source>Use system dictionary</source>
         <translation>システム辞書からのサジェスト自動表示を有効にする</translation>
     </message>
@@ -285,154 +279,154 @@
         <translation>ユーザー辞書</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="654"/>
+        <location filename="config_dialog.ui" line="640"/>
         <source>Input Assistance</source>
         <translation>入力補助</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="686"/>
+        <location filename="config_dialog.ui" line="672"/>
         <source>Fullwidth/Halfwidth</source>
         <translation>半角・全角</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="725"/>
+        <location filename="config_dialog.ui" line="711"/>
         <source>Shift key mode switch</source>
         <translation>シフトキーでの入力切替</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="814"/>
+        <location filename="config_dialog.ui" line="800"/>
         <source>Show input mode indicator near the cursor</source>
         <translation>カーソル周辺に入力モードを表示する</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="823"/>
+        <location filename="config_dialog.ui" line="809"/>
         <source>Suggest</source>
         <translation>サジェスト</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="902"/>
+        <location filename="config_dialog.ui" line="888"/>
         <source>Maximum number of suggestions</source>
         <translation>サジェストの最大候補数</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="950"/>
+        <location filename="config_dialog.ui" line="936"/>
         <source>Clear all history</source>
         <translation>全入力履歴を削除</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="970"/>
+        <location filename="config_dialog.ui" line="956"/>
         <source>Clear unused history</source>
         <translation>未使用の履歴を削除</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1003"/>
+        <location filename="config_dialog.ui" line="989"/>
         <source>Use realtime conversion</source>
         <translation>リアルタイム変換を有効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1097"/>
+        <location filename="config_dialog.ui" line="1083"/>
         <source>Secret mode</source>
         <translation>シークレットモード</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1148"/>
+        <location filename="config_dialog.ui" line="1134"/>
         <source>Temporarily disable conversion personalization, history-based suggestions and user dictionary</source>
         <translation>一時的に学習機能、入力履歴からのサジェスト機能、ユーザ辞書機能を無効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1189"/>
+        <location filename="config_dialog.ui" line="1175"/>
         <source>Temporarily disable all suggestions</source>
         <translation>一時的にすべてのサジェスト機能を無効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1205"/>
+        <location filename="config_dialog.ui" line="1191"/>
         <source>Presentation mode</source>
         <translation>プレゼンテーションモード</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1322"/>
+        <location filename="config_dialog.ui" line="1308"/>
         <source>latest sync</source>
         <translation>最終同期時刻</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1370"/>
+        <location filename="config_dialog.ui" line="1356"/>
         <source>Other Cloud based feature</source>
         <translation>その他のクラウド機能</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1392"/>
+        <location filename="config_dialog.ui" line="1378"/>
         <source>Misc</source>
         <translation>その他</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1692"/>
+        <location filename="config_dialog.ui" line="1678"/>
         <source>Startup</source>
         <translation>スタートアップ</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1730"/>
+        <location filename="config_dialog.ui" line="1716"/>
         <source>Start conversion engine on login</source>
         <translation>ログイン時に変換エンジンプログラムを起動する</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1823"/>
+        <location filename="config_dialog.ui" line="1809"/>
         <source>Logging level (debug only)</source>
         <translation>ログレベル（デバッグ）</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1779"/>
+        <location filename="config_dialog.ui" line="1765"/>
         <source>Logging</source>
         <translation>ログ</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1576"/>
+        <location filename="config_dialog.ui" line="1562"/>
         <source>Administration</source>
         <translation>管理</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1176"/>
-        <location filename="config_dialog.ui" line="1633"/>
+        <location filename="config_dialog.ui" line="1162"/>
+        <location filename="config_dialog.ui" line="1619"/>
         <source>Settings...</source>
         <translation>設定変更...</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1620"/>
+        <location filename="config_dialog.ui" line="1606"/>
         <source>Dictionary preloading and UAC settings</source>
         <translation>オンメモリ辞書とUACの設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1065"/>
+        <location filename="config_dialog.ui" line="1051"/>
         <source>Usage statistics and crash reports</source>
         <translation>使用統計情報と障害レポート</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1046"/>
+        <location filename="config_dialog.ui" line="1032"/>
         <source>Help make Mozc better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
         <translation>使用統計データや障害レポートを Google に自動送信して
 Mozcの機能向上に役立てる（再ログイン後に変更は完了します）</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1354"/>
+        <location filename="config_dialog.ui" line="1340"/>
         <source>Enable Cloud handwriting recognition</source>
         <translation>クラウド手書き文字認識を有効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1514"/>
+        <location filename="config_dialog.ui" line="1500"/>
         <source>Check if Mozc is the default IME on startup</source>
         <translation>起動時に Mozcが既定の IME であるか確認する</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1524"/>
+        <location filename="config_dialog.ui" line="1510"/>
         <source>Disable Keyboard layout hotkey (Ctrl+Shift)</source>
         <translation>ホットキー(Ctrl+Shift)による IME の切り替えを無効化する</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1467"/>
+        <location filename="config_dialog.ui" line="1453"/>
         <source>Default IME</source>
         <translation>既定の IME</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1904"/>
+        <location filename="config_dialog.ui" line="1890"/>
         <source>Reset to defaults</source>
         <translation>初期値に戻す</translation>
     </message>
@@ -466,44 +460,44 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
 <context>
     <name>QObject</name>
     <message>
-        <location filename="character_form_editor.cc" line="16"/>
-        <location filename="character_form_editor.cc" line="31"/>
+        <location filename="character_form_editor.cc" line="15"/>
+        <location filename="character_form_editor.cc" line="30"/>
         <source>Fullwidth</source>
         <translation>全角</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="19"/>
-        <location filename="character_form_editor.cc" line="33"/>
+        <location filename="character_form_editor.cc" line="18"/>
+        <location filename="character_form_editor.cc" line="32"/>
         <source>Halfwidth</source>
         <translation>半角</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="22"/>
-        <location filename="character_form_editor.cc" line="35"/>
+        <location filename="character_form_editor.cc" line="21"/>
+        <location filename="character_form_editor.cc" line="34"/>
         <source>Remember</source>
         <translation>学習</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="25"/>
+        <location filename="character_form_editor.cc" line="24"/>
         <source>Unknown</source>
         <translation>不明</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="44"/>
-        <location filename="character_form_editor.cc" line="54"/>
-        <location filename="character_form_editor.cc" line="124"/>
+        <location filename="character_form_editor.cc" line="43"/>
+        <location filename="character_form_editor.cc" line="53"/>
+        <location filename="character_form_editor.cc" line="123"/>
         <source>Katakana</source>
         <translation>カタカナ</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="46"/>
-        <location filename="character_form_editor.cc" line="57"/>
+        <location filename="character_form_editor.cc" line="45"/>
+        <location filename="character_form_editor.cc" line="56"/>
         <source>Numbers</source>
         <translation>数字</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="48"/>
-        <location filename="character_form_editor.cc" line="59"/>
+        <location filename="character_form_editor.cc" line="47"/>
+        <location filename="character_form_editor.cc" line="58"/>
         <source>Alphabets</source>
         <translation>アルファベット</translation>
     </message>
@@ -534,37 +528,37 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
 <context>
     <name>mozc::gui::CharacterFormEditor</name>
     <message>
-        <location filename="character_form_editor.cc" line="69"/>
+        <location filename="character_form_editor.cc" line="68"/>
         <source>Fullwidth</source>
         <translation>全角</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="69"/>
+        <location filename="character_form_editor.cc" line="68"/>
         <source>Halfwidth</source>
         <translation>半角</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="69"/>
+        <location filename="character_form_editor.cc" line="68"/>
         <source>Remember</source>
         <translation>学習</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="73"/>
+        <location filename="character_form_editor.cc" line="72"/>
         <source>Character form editor</source>
         <translation>半角・全角設定</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="91"/>
+        <location filename="character_form_editor.cc" line="90"/>
         <source>Group</source>
         <translation>文字グループ</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="91"/>
+        <location filename="character_form_editor.cc" line="90"/>
         <source>Composition</source>
         <translation>変換前文字列</translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="91"/>
+        <location filename="character_form_editor.cc" line="90"/>
         <source>Conversion</source>
         <translation>変換中文字列</translation>
     </message>
@@ -572,182 +566,177 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
 <context>
     <name>mozc::gui::ConfigDialog</name>
     <message>
-        <location filename="config_dialog.cc" line="144"/>
+        <location filename="config_dialog.cc" line="140"/>
         <source>Kotoeri</source>
         <translation>ことえり</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="141"/>
+        <location filename="config_dialog.cc" line="137"/>
         <source>Custom keymap</source>
         <translation>カスタム</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="74"/>
+        <location filename="config_dialog.cc" line="71"/>
         <source>Mozc Preferences</source>
         <translation>Mozc 環境設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="142"/>
+        <location filename="config_dialog.cc" line="138"/>
         <source>ATOK</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="143"/>
+        <location filename="config_dialog.cc" line="139"/>
         <source>MS-IME</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="150"/>
+        <location filename="config_dialog.cc" line="146"/>
         <source>Romaji</source>
         <translation>ローマ字入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="151"/>
+        <location filename="config_dialog.cc" line="147"/>
         <source>Kana</source>
         <translation>かな入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="155"/>
+        <location filename="config_dialog.cc" line="151"/>
         <source>Romaji (switchable)</source>
         <translation>ローマ字入力 (切替可)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="156"/>
+        <location filename="config_dialog.cc" line="152"/>
         <source>Kana (switchable)</source>
         <translation>かな入力 (切替可)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="159"/>
-        <location filename="config_dialog.cc" line="175"/>
+        <location filename="config_dialog.cc" line="155"/>
+        <location filename="config_dialog.cc" line="171"/>
         <source>Follow input mode</source>
         <translation>入力モードに従う</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="160"/>
-        <location filename="config_dialog.cc" line="176"/>
+        <location filename="config_dialog.cc" line="156"/>
+        <location filename="config_dialog.cc" line="172"/>
         <source>Fullwidth</source>
         <translation>全角</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="161"/>
-        <location filename="config_dialog.cc" line="177"/>
+        <location filename="config_dialog.cc" line="157"/>
+        <location filename="config_dialog.cc" line="173"/>
         <source>Halfwidth</source>
         <translation>半角</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="163"/>
+        <location filename="config_dialog.cc" line="159"/>
         <source>No shortcut</source>
         <translation>なし</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="164"/>
+        <location filename="config_dialog.cc" line="160"/>
         <source>1 -- 9</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="165"/>
+        <location filename="config_dialog.cc" line="161"/>
         <source>A -- L</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="167"/>
+        <location filename="config_dialog.cc" line="163"/>
         <source>Yes</source>
         <translation>有効</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="168"/>
+        <location filename="config_dialog.cc" line="164"/>
         <source>Yes (don&apos;t record new data)</source>
         <translation>有効（新規学習はしない）</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="169"/>
+        <location filename="config_dialog.cc" line="165"/>
         <source>No</source>
         <translation>無効</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="171"/>
+        <location filename="config_dialog.cc" line="167"/>
         <source>Off</source>
         <translation>オフ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="172"/>
+        <location filename="config_dialog.cc" line="168"/>
         <source>Alphanumeric</source>
         <translation>英数字</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="173"/>
+        <location filename="config_dialog.cc" line="169"/>
         <source>Katakana</source>
         <translation>カタカナ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="178"/>
+        <location filename="config_dialog.cc" line="174"/>
         <source>Direct input</source>
         <translation>直接入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="180"/>
+        <location filename="config_dialog.cc" line="176"/>
         <source>0</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="181"/>
+        <location filename="config_dialog.cc" line="177"/>
         <source>1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="182"/>
+        <location filename="config_dialog.cc" line="178"/>
         <source>2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="184"/>
+        <location filename="config_dialog.cc" line="180"/>
         <source>Yen Sign Â¥</source>
         <translation>円記号(¥)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="185"/>
+        <location filename="config_dialog.cc" line="181"/>
         <source>Backslash \</source>
         <translation>バックスラッシュ(\)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="427"/>
+        <location filename="config_dialog.cc" line="404"/>
         <source>Failed to get current config values.</source>
         <translation>設定の取得に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="459"/>
+        <location filename="config_dialog.cc" line="436"/>
         <source>Romaji/Kana setting is enabled from new applications.</source>
         <translation>ローマ字・かな入力の設定は新しいアプリケーションから有効になります。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="470"/>
+        <location filename="config_dialog.cc" line="447"/>
         <source>Input mode indicator setting is enabled from new applications.</source>
         <translation>入力モード表示の設定は新しいアプリケーションから有効になります。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="664"/>
+        <location filename="config_dialog.cc" line="637"/>
         <source>Checking sync status</source>
         <translation>同期状態を確認する</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="666"/>
-        <location filename="config_dialog.cc" line="1191"/>
+        <location filename="config_dialog.cc" line="639"/>
+        <location filename="config_dialog.cc" line="1153"/>
         <source>Sync is not enabled</source>
         <translation>同期機能：オフ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="824"/>
-        <location filename="config_dialog.cc" line="846"/>
+        <location filename="config_dialog.cc" line="793"/>
+        <location filename="config_dialog.cc" line="815"/>
         <source>Mozc Converter is not running. Settings were not saved.</source>
         <translation>変換サーバが反応していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="948"/>
-        <source>Web Service extension enables Mozc to display third party usage dictionaries provided as an Web service API, e.g. REST (POX/JSON over HTTP). Note that candidate/preedit strings are sent to the Web service when this feature is enabled. Do you want to use Web Service extension?</source>
-        <translation>Web 拡張を有効にすると、Web サービス (REST, POX/JSON over HTTP) が提供するコンテンツを Mozcの用例辞書として表示可能となります。候補ウインドウに表示中の文字列が外部サーバに送信されることにご注意下さい。続けますか?</translation>
-    </message>
-    <message>
-        <location filename="config_dialog.cc" line="971"/>
+        <location filename="config_dialog.cc" line="933"/>
         <source>When you reset Mozc settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
  - Personalization data
  - Input history
@@ -762,119 +751,119 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
  - 管理者用設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1026"/>
+        <location filename="config_dialog.cc" line="988"/>
         <source>Stop Sync</source>
         <translation>同期の解除</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1028"/>
+        <location filename="config_dialog.cc" line="990"/>
         <source>Start Sync</source>
         <translation>同期する</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1044"/>
+        <location filename="config_dialog.cc" line="1006"/>
         <source>Stop sync and reset the auth token</source>
         <translation>同期の解除と認証コードのクリア</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1045"/>
+        <location filename="config_dialog.cc" line="1007"/>
         <source>You are trying to stop sync and reset the auth token. To restart sync, you will need to get a new auth token.
 Do you really want to continue?</source>
         <translation>同期の解除と認証コードのクリアを行います。同期を再開するには、新しい認証コードを取得する必要があります。
 実行しますか？</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1138"/>
+        <location filename="config_dialog.cc" line="1100"/>
         <source>Not synced yet</source>
         <translation>同期されていません</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1142"/>
+        <location filename="config_dialog.cc" line="1104"/>
         <source>Last synced time: </source>
         <translation>最終同期時刻: </translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1181"/>
+        <location filename="config_dialog.cc" line="1143"/>
         <source>Waiting for server to be ready</source>
         <translation>サーバの状態を確認しています.. この処理は最大2分かかります</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1207"/>
+        <location filename="config_dialog.cc" line="1169"/>
         <source>Authorization failed.</source>
         <translation>認証に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1210"/>
+        <location filename="config_dialog.cc" line="1172"/>
         <source>Cannot save dictionaries because Sync Dictionary exceeds its entry size limit.</source>
         <translation>単語数の上限を超えたため同期用辞書をセーブできません。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1214"/>
+        <location filename="config_dialog.cc" line="1176"/>
         <source>Cannot save dictionaries because Sync Dictionary exceeds its binary size limit.</source>
         <translation>ファイルサイズの上限を超えたため同期用辞書をセーブできません。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1218"/>
+        <location filename="config_dialog.cc" line="1180"/>
         <source>Cannot save dictionaries because the number of dictionaries for sync exceeds its limit.</source>
         <translation>同期用辞書の数が上限を超えたため辞書をセーブできません。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1222"/>
+        <location filename="config_dialog.cc" line="1184"/>
         <source>Unknown error was found.</source>
         <translation>未知のエラーです。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1234"/>
+        <location filename="config_dialog.cc" line="1196"/>
         <source>Authorization error</source>
         <translation>認証失敗</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1239"/>
+        <location filename="config_dialog.cc" line="1201"/>
         <source>Dictionary sync error</source>
         <translation>辞書同期エラー</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1242"/>
+        <location filename="config_dialog.cc" line="1204"/>
         <source>Unknown sync error</source>
         <translation>未知の同期エラー</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1186"/>
+        <location filename="config_dialog.cc" line="1148"/>
         <source>During synchronization</source>
         <translation>同期中です</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="321"/>
+        <location filename="config_dialog.cc" line="306"/>
         <source>Dictionary preloading</source>
         <translation>オンメモリ辞書の設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="446"/>
+        <location filename="config_dialog.cc" line="423"/>
         <source>The current custom keymap table is empty. When custom keymap is selected, you must customize it.</source>
         <translation>有効なキー設定がありません。カスタム キーマップを選択した場合は、キーマップを編集する必要があります。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="478"/>
+        <location filename="config_dialog.cc" line="455"/>
         <source>Failed to update config</source>
         <translation>設定の反映に失敗しました</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="810"/>
+        <location filename="config_dialog.cc" line="779"/>
         <source>Do you want to clear personalization data? Input history is not reset with this operation. Please open &quot;suggestion&quot; tab to remove input history data.</source>
         <translation>学習結果がリセットされます。実行しますか？ 入力履歴データはリセットされません。入力履歴データのリセットは「サジェスト→全入力履歴の削除」で行えます。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="868"/>
+        <location filename="config_dialog.cc" line="837"/>
         <source>Mozc Converter is not running. Operation was not executed.</source>
         <translation>Mozcコンバーターが起動していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="834"/>
+        <location filename="config_dialog.cc" line="803"/>
         <source>Do you want to clear all history data?</source>
         <translation>すべての入力履歴が削除されます。実行しますか？</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="856"/>
+        <location filename="config_dialog.cc" line="825"/>
         <source>Do you want to clear unused history data?</source>
         <translation>サジェスト経由で入力されなかった履歴が削除されます。実行しますか？</translation>
     </message>
@@ -882,63 +871,63 @@ Do you really want to continue?</source>
 <context>
     <name>mozc::gui::GenericTableEditorDialog</name>
     <message>
-        <location filename="generic_table_editor.cc" line="60"/>
+        <location filename="generic_table_editor.cc" line="59"/>
         <source>Edit</source>
         <translation>編集</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="137"/>
-        <location filename="generic_table_editor.cc" line="203"/>
+        <location filename="generic_table_editor.cc" line="136"/>
+        <location filename="generic_table_editor.cc" line="202"/>
         <source>No entry is selected</source>
         <translation>エントリーが選択されていません</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="214"/>
+        <location filename="generic_table_editor.cc" line="213"/>
         <source>You can&apos;t have more than %1 entries</source>
         <translation>%1 個以上のエントリーは登録できません</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="223"/>
+        <location filename="generic_table_editor.cc" line="222"/>
         <source>import from file</source>
         <translation>インポート</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="233"/>
+        <location filename="generic_table_editor.cc" line="232"/>
         <source>File not found</source>
         <translation>ファイルが見つかりません</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="241"/>
+        <location filename="generic_table_editor.cc" line="240"/>
         <source>The specified file is too large (&gt;=100K byte)</source>
         <translation>ファイルサイズが大きすぎて読み込めません</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="249"/>
+        <location filename="generic_table_editor.cc" line="248"/>
         <source>Import failed</source>
         <translation>インポートに失敗しました</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="260"/>
+        <location filename="generic_table_editor.cc" line="259"/>
         <source>export to file</source>
         <translation>エクスポート</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="271"/>
+        <location filename="generic_table_editor.cc" line="270"/>
         <source>Export failed</source>
         <translation>エクスポートに失敗しました</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="308"/>
+        <location filename="generic_table_editor.cc" line="307"/>
         <source>Edit entry</source>
         <translation>エントリーを編集</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="310"/>
+        <location filename="generic_table_editor.cc" line="309"/>
         <source>New entry</source>
         <translation>エントリーを追加</translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="311"/>
+        <location filename="generic_table_editor.cc" line="310"/>
         <source>Remove entry</source>
         <translation>エントリーを削除</translation>
     </message>
@@ -1031,162 +1020,77 @@ Do you really want to continue?</source>
 <context>
     <name>mozc::gui::RomanTableEditorDialog</name>
     <message>
-        <location filename="roman_table_editor.cc" line="34"/>
+        <location filename="roman_table_editor.cc" line="33"/>
         <source>New entry</source>
         <translation>新しいエントリー</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="36"/>
+        <location filename="roman_table_editor.cc" line="35"/>
         <source>Remove selected entries</source>
         <translation>選択されたエントリーを削除</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="39"/>
+        <location filename="roman_table_editor.cc" line="38"/>
         <source>Import from file...</source>
         <translation>インポート...</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="41"/>
+        <location filename="roman_table_editor.cc" line="40"/>
         <source>Export to file...</source>
         <translation>エクスポート...</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="44"/>
+        <location filename="roman_table_editor.cc" line="43"/>
         <source>Reset to defaults</source>
         <translation>初期値に戻す</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="46"/>
+        <location filename="roman_table_editor.cc" line="45"/>
         <source>Mozc Romaji table editor</source>
         <translation>Mozcローマ字テーブル設定</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="50"/>
+        <location filename="roman_table_editor.cc" line="49"/>
         <source>Input</source>
         <translation>入力</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="50"/>
+        <location filename="roman_table_editor.cc" line="49"/>
         <source>Output</source>
         <translation>出力</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="50"/>
+        <location filename="roman_table_editor.cc" line="49"/>
         <source>Next input</source>
         <translation>次の入力</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="129"/>
-        <location filename="roman_table_editor.cc" line="150"/>
-        <location filename="roman_table_editor.cc" line="190"/>
-        <location filename="roman_table_editor.cc" line="217"/>
+        <location filename="roman_table_editor.cc" line="128"/>
+        <location filename="roman_table_editor.cc" line="149"/>
+        <location filename="roman_table_editor.cc" line="189"/>
+        <location filename="roman_table_editor.cc" line="216"/>
         <source>Mozc settings</source>
         <translation>Mozcプロパティ</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="130"/>
+        <location filename="roman_table_editor.cc" line="129"/>
         <source>You can&apos;t have more than %1 entries</source>
         <translation>%1 個以上のエントリーは登録できません</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="151"/>
+        <location filename="roman_table_editor.cc" line="150"/>
         <source>Romaji to Kana table is empty.</source>
         <translation>ローマ字テーブルが空です</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="191"/>
+        <location filename="roman_table_editor.cc" line="190"/>
         <source>Input fields contain capital characters. &quot;Shift-mode-switch&quot; function is disabled with this new mapping.</source>
         <translation>入力フィールドに大文字のアルファベットが含まれています。新しい設定では「シフトキーによる入力切替」は無効になります。</translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="218"/>
+        <location filename="roman_table_editor.cc" line="217"/>
         <source>Do you want to overwrite the current roman table?</source>
         <translation>現在のローマ字テーブルを上書きしますか？</translation>
-    </message>
-</context>
-<context>
-    <name>mozc::gui::WebServiceInfolistEditorDialog</name>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="65"/>
-        <source>New entry</source>
-        <translation>新しいエントリー</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="67"/>
-        <source>Remove selected entries</source>
-        <translation>選択されたエントリーを削除</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="70"/>
-        <source>Import from file...</source>
-        <translation>インポート...</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="72"/>
-        <source>Export to file...</source>
-        <translation>エクスポート...</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="75"/>
-        <source>Help...</source>
-        <translation>ヘルプ...</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="77"/>
-        <source>Mozc Web Service Usage Dictionary table editor</source>
-        <translation>Mozc Web 拡張用例辞書設定</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="83"/>
-        <source>Name</source>
-        <translation>名前</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="83"/>
-        <source>URL</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="83"/>
-        <source>Xpath/Jsonpath</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="145"/>
-        <source>Enter name of Web service</source>
-        <translation>Web サービスの名称を入力します</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="146"/>
-        <source>Enter URL for of Web service.
-&quot;%s&quot; is expanded to the candidate string.
-&quot;%r&quot; is expanded to the all preedit string.
-
-Example:   http://api.sample.com/keyword/%s</source>
-        <translation>外部 Web サービスのURLを入力します
-以下のマクロが使用できます
-&quot;%s&quot; : 候補ウインドウに表示されている文字列
-&quot;%r&quot; : 変換文字列全体
-
-例:   http://api.sample.com/keyword/%s</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="150"/>
-        <source>Enter Xpath or Jsonpath.
-This query is used for extracting the content from URL.
-
-Example of Xpath:   //content/node
-Example of Jsonpath:   $.content.node</source>
-        <translation>XPath または Jsonpath クエリを入力します
-対象の URL からこのクエリにマッチする文字列を用例辞書として表示します
-
-Xpath の例:   //content/node
-Jsonpath の例:   $.content.node</translation>
-    </message>
-    <message>
-        <location filename="webservice_infolist_editor.cc" line="184"/>
-        <source>You can&apos;t have more than %1 entries</source>
-        <translation>%1 個以上のエントリーは登録できません</translation>
     </message>
 </context>
 </TS>

@@ -27,181 +27,136 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/update_util.h"
+
 #include <string>
 
-#include "base/update_util.h"
-#include "base/version.h"
+#ifdef OS_WIN
+#include "base/win_api_test_helper.h"
+#endif  // OS_WIN
 #include "testing/base/public/gunit.h"
-#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
-#include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
-#endif  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD
+
+namespace mozc {
+namespace {
 
 #ifdef OS_WIN
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-
-namespace {
-HKEY g_created_key;
-wstring g_created_key_path;
-wstring g_written_value_name;
-wstring g_written_value;
-DWORD g_written_type;
-wstring g_queried_value_name;
-wstring g_query_value_returned;
-HKEY g_opened_key;
-wstring g_opened_key_path;
-
-LSTATUS WINAPI TestRegCreateKeyExW(
-    HKEY hkey, LPCWSTR sub_key, DWORD reserved, LPWSTR class_name,
-    DWORD options, REGSAM sam, LPSECURITY_ATTRIBUTES security_attributes,
-    PHKEY result, LPDWORD disposition) {
-  g_created_key = hkey;
-  g_created_key_path = sub_key;
-  return ERROR_SUCCESS;
-}
-
-LSTATUS WINAPI TestRegSetValueEx(
-    HKEY key, LPCTSTR value_name, DWORD reserved, DWORD type,
-    const BYTE *data, DWORD num_data) {
-  g_written_value_name = value_name;
-  g_written_value = wstring(reinterpret_cast<const wchar_t*>(data));
-  g_written_type = type;
-  return ERROR_SUCCESS;
-}
-
-LSTATUS WINAPI TestRegCloseKey(HKEY key) {
-  return ERROR_SUCCESS;
-}
-
-LSTATUS WINAPI TestRegOpenKeyEx(
-    HKEY key, LPCWSTR sub_key, DWORD options, REGSAM sam, PHKEY result) {
-  g_opened_key = key;
-  g_opened_key_path = sub_key;
-  return ERROR_SUCCESS;
-}
-
-LSTATUS WINAPI TestRegQueryValueEx(
-    HKEY key, LPCTSTR value_name, LPDWORD reserved, LPDWORD type, LPBYTE data,
-    LPDWORD num_data) {
-  g_queried_value_name = value_name;
-  copy(g_query_value_returned.begin(), g_query_value_returned.end(),
-       reinterpret_cast<wchar_t*>(data));
-  *num_data = g_query_value_returned.size() * sizeof(wchar_t);
-  *type = REG_SZ;
-  return ERROR_SUCCESS;
-}
 
 class UpdateUtilTestWin : public testing::Test {
  protected:
+  struct CallResult {
+    CallResult()
+        : created_key(nullptr),
+          reg_create_key_ex_called(false),
+          reg_set_value_ex_called(false),
+          written_type(0),
+          reg_close_key_called(false) {}
+
+    HKEY created_key;
+    bool reg_create_key_ex_called;
+    wstring created_key_path;
+    bool reg_set_value_ex_called;
+    wstring written_value_name;
+    wstring written_value;
+    DWORD written_type;
+    bool reg_close_key_called;
+  };
+
   static void SetUpTestCase() {
-    hook_reg_create_ =
-      sidestep::MakeTestingHook(RegCreateKeyExW, TestRegCreateKeyExW);
-    hook_reg_set_ =
-      sidestep::MakeTestingHook(RegSetValueEx, TestRegSetValueEx);
-    hook_reg_close_ =
-      sidestep::MakeTestingHook(RegCloseKey, TestRegCloseKey);
-    hook_reg_open_ =
-      sidestep::MakeTestingHook(RegOpenKeyEx, TestRegOpenKeyEx);
-    hook_reg_query_ =
-      sidestep::MakeTestingHook(RegQueryValueEx, TestRegQueryValueEx);
+    vector<WinAPITestHelper::HookRequest> requests;
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegCreateKeyExW, HookRegCreateKeyExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegSetValueExW, HookRegSetValueExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegCloseKey, HookRegCloseKey));
+
+    hook_restore_info_ = WinAPITestHelper::DoHook(
+        ::GetModuleHandle(nullptr), requests);
   }
 
   static void TearDownTestCase() {
-    delete hook_reg_create_;
-    hook_reg_create_ = NULL;
-    delete hook_reg_set_;
-    hook_reg_set_ = NULL;
-    delete hook_reg_close_;
-    hook_reg_close_ = NULL;
-    delete hook_reg_open_;
-    hook_reg_open_ = NULL;
-    delete hook_reg_query_;
-    hook_reg_query_ = NULL;
+    WinAPITestHelper::RestoreHook(hook_restore_info_);
+    hook_restore_info_ = nullptr;
+    delete call_result_;
+    call_result_ = nullptr;
   }
 
   virtual void SetUp() {
-    g_created_key = NULL;
-    g_created_key_path.clear();
-    g_written_value_name.clear();
-    g_written_value.clear();
-    g_written_type = 0;
-    g_queried_value_name.clear();
-    g_opened_key = NULL;
-    g_opened_key_path.clear();
-    g_query_value_returned = L"1.2.3.4";
+    call_result_ = new CallResult();
   }
   virtual void TearDown() {
+    delete call_result_;
+    call_result_ = nullptr;
   }
+
+  static const CallResult& call_result() {
+    return *call_result_;
+  }
+
  private:
-  static sidestep::AutoTestingHookBase *hook_reg_create_;
-  static sidestep::AutoTestingHookBase *hook_reg_set_;
-  static sidestep::AutoTestingHookBase *hook_reg_close_;
-  static sidestep::AutoTestingHookBase *hook_reg_open_;
-  static sidestep::AutoTestingHookBase *hook_reg_query_;
+  static LSTATUS WINAPI HookRegCreateKeyExW(
+      HKEY hkey, LPCWSTR sub_key, DWORD reserved, LPWSTR class_name,
+      DWORD options, REGSAM sam,
+      const LPSECURITY_ATTRIBUTES security_attributes, PHKEY result,
+      LPDWORD disposition) {
+    call_result_->reg_create_key_ex_called = true;
+    call_result_->created_key = hkey;
+    call_result_->created_key_path = sub_key;
+    return ERROR_SUCCESS;
+  }
+
+  static LSTATUS WINAPI HookRegSetValueExW(
+      HKEY key, LPCTSTR value_name, DWORD reserved, DWORD type,
+      const BYTE *data, DWORD num_data) {
+    call_result_->reg_set_value_ex_called = true;
+    call_result_->written_value_name = value_name;
+    call_result_->written_value =
+        wstring(reinterpret_cast<const wchar_t*>(data));
+    call_result_->written_type = type;
+    return ERROR_SUCCESS;
+  }
+
+  static LSTATUS WINAPI HookRegCloseKey(HKEY key) {
+    call_result_->reg_close_key_called = true;
+    return ERROR_SUCCESS;
+  }
+
+  static CallResult *call_result_;
+  static WinAPITestHelper::RestoreInfo *hook_restore_info_;
 };
 
-sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_create_;
-sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_set_;
-sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_close_;
-sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_open_;
-sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_query_;
-}  // namespace
+UpdateUtilTestWin::CallResult *UpdateUtilTestWin::call_result_ = nullptr;
+WinAPITestHelper::RestoreInfo *UpdateUtilTestWin::hook_restore_info_ = nullptr;
 
-namespace mozc {
-
+// For official branding build on Windows
 TEST_F(UpdateUtilTestWin, WriteActiveUsageInfo) {
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   EXPECT_TRUE(UpdateUtil::WriteActiveUsageInfo());
-  EXPECT_EQ(HKEY_CURRENT_USER, g_created_key);
+  ASSERT_TRUE(call_result().reg_create_key_ex_called);
+  EXPECT_EQ(HKEY_CURRENT_USER, call_result().created_key);
   EXPECT_EQ(L"Software\\Google\\Update\\ClientState"
-            L"\\{DDCCD2A9-025E-4142-BCEB-F467B88CF830}", g_created_key_path);
-  EXPECT_EQ(L"dr", g_written_value_name);
-  EXPECT_EQ(L"1", g_written_value);
-}
-
-TEST_F(UpdateUtilTestWin, GetAvailableVersion) {
-  string available_version =  UpdateUtil::GetAvailableVersion();
-  EXPECT_EQ(HKEY_LOCAL_MACHINE, g_opened_key);
-  EXPECT_EQ(L"Software\\Google\\Update\\Clients"
-            L"\\{DDCCD2A9-025E-4142-BCEB-F467B88CF830}", g_opened_key_path);
-  EXPECT_EQ(L"pv", g_queried_value_name);
-  EXPECT_EQ("1.2.3.4", available_version);
-}
-
-TEST_F(UpdateUtilTestWin, IsNewVersionAvailable) {
-  g_query_value_returned = L"0.0.0.1";
-  EXPECT_FALSE(UpdateUtil::IsNewVersionAvailable());
-  g_query_value_returned = L"1000.0.0.0";
-  EXPECT_TRUE(UpdateUtil::IsNewVersionAvailable());
-}
-
-}  // namespace mozc
-
+            L"\\{DDCCD2A9-025E-4142-BCEB-F467B88CF830}",
+            call_result().created_key_path);
+  ASSERT_TRUE(call_result().reg_set_value_ex_called);
+  EXPECT_EQ(L"dr", call_result().written_value_name);
+  EXPECT_EQ(L"1", call_result().written_value);
+  ASSERT_TRUE(call_result().reg_close_key_called);
 #else
+  EXPECT_FALSE(UpdateUtil::WriteActiveUsageInfo());
+  ASSERT_FALSE(call_result().reg_create_key_ex_called);
+  ASSERT_FALSE(call_result().reg_set_value_ex_called);
+  ASSERT_FALSE(call_result().reg_close_key_called);
+#endif
+}
 
-// On Non-GoogleJapaneseInput build, all the methods related to Omaha
-// must never be functional.
-namespace mozc {
+#else  // OS_WIN
 
-TEST(UpdateUtilTestWin, WriteActiveUsageInfo) {
+// UpdateUtil::WriteActiveUsageInfo is not implemented except for Windows.
+TEST(UpdateUtilTest, WriteActiveUsageInfo) {
   EXPECT_FALSE(UpdateUtil::WriteActiveUsageInfo());
 }
 
-TEST(UpdateUtilTestWin, GetAvailableVersion) {
-  EXPECT_EQ("", UpdateUtil::GetAvailableVersion());
-}
+#endif
 
-TEST(UpdateUtilTestWin, IsNewVersionAvailable) {
-  EXPECT_FALSE(UpdateUtil::IsNewVersionAvailable());
-}
-
-}  // namespace mozc
-
-#endif  // branding (GOOGLE_JAPANESE_INPUT_BUILD or not)
-#endif  // OS_WIN
-
-namespace mozc {
-
-TEST(UpdateUtilTest, GetCurrentVersion) {
-  EXPECT_EQ(UpdateUtil::GetCurrentVersion(), Version::GetMozcVersion());
-}
-
+}  // namespace
 }  // namespace mozc

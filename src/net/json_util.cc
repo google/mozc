@@ -458,26 +458,37 @@ bool JsonValueToProtobufRepeatedFieldValue(
 bool JsonUtil::ProtobufMessageToJsonValue(
     const Message &message, Json::Value *value) {
   *value = Json::Value(Json::objectValue);
+  const Descriptor *descriptor = message.GetDescriptor();
   const Reflection *reflection = message.GetReflection();
-  vector<const FieldDescriptor*> fields;
-  reflection->ListFields(message, &fields);
-
+  const int field_count = descriptor->field_count();
   bool result = true;
-  for (size_t i = 0; i < fields.size(); ++i) {
-    if (fields[i]->is_repeated()) {
-      Json::Value *items = &(*value)[fields[i]->name()];
+  for (size_t i = 0; i < field_count; ++i) {
+    const FieldDescriptor *field = descriptor->field(i);
+    if (!field) {
+      result = false;
+      continue;
+    }
+    if (field->is_repeated()) {
+      Json::Value *items = &(*value)[field->name()];
       *items = Json::Value(Json::arrayValue);
-      const int count = reflection->FieldSize(message, fields[i]);
+      const int count = reflection->FieldSize(message, field);
       for (int j = 0; j < count; ++j) {
-        if (!ProtobufRepeatedFieldValueToJsonValue(
-             message, *reflection, *fields[i], j, &(*items)[j])) {
+        if (!ProtobufRepeatedFieldValueToJsonValue(message,
+                                                   *reflection,
+                                                   *field,
+                                                   j,
+                                                   &(*items)[j])) {
           result = false;
         }
       }
     } else {
-      if (!ProtobufFieldValueToJsonValue(message, *reflection, *fields[i],
-                                         &(*value)[fields[i]->name()])) {
+      if (reflection->HasField(message, field) || field->is_required()) {
+        if (!ProtobufFieldValueToJsonValue(message,
+                                           *reflection,
+                                           *field,
+                                           &(*value)[field->name()])) {
           result = false;
+        }
       }
     }
   }

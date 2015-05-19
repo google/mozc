@@ -140,10 +140,10 @@ def ParseColumnStream(stream, num_column=None, delimiter=None):
   """Returns parsed columns read from stream."""
   if num_column is None:
     for line in stream:
-      yield line.split(delimiter)
+      yield line.rstrip('\n').split(delimiter)
   else:
     for line in stream:
-      yield line.split(delimiter)[:num_column]
+      yield line.rstrip('\n').split(delimiter)[:num_column]
 
 
 def SelectColumn(stream, column_index):

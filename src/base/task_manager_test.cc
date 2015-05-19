@@ -32,9 +32,9 @@
 #include <map>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "base/stl_util.h"
 #include "base/task_runner.h"
 #include "base/task_token.h"
@@ -60,6 +60,8 @@ class TestRequest : public TaskRequestInterface {
  private:
   int initial_sleep_msec_;
   string data_;
+
+  DISALLOW_COPY_AND_ASSIGN(TestRequest);
 };
 
 class TestResponse : public TaskResponseInterface {
@@ -72,6 +74,7 @@ class TestResponse : public TaskResponseInterface {
 
  private:
   string data_;
+  DISALLOW_COPY_AND_ASSIGN(TestResponse);
 };
 
 class TestRunner : public TaskRunner {
@@ -114,8 +117,8 @@ class TestRunner : public TaskRunner {
   DISALLOW_COPY_AND_ASSIGN(TestRunner);
 };
 
-static const int kNumThreads = 5;
-static const int kNumTasksPerThread = 10000;
+const int kNumThreads = 5;
+const int kNumTasksPerThread = 10000;
 
 class FinishTaskCallerThread : public mozc::Thread {
  public:
@@ -194,8 +197,6 @@ void CheckTaskManagerStatus(TaskManager *task_manager,
   EXPECT_EQ(expected_completed, completed);
   EXPECT_EQ(expected_canceled, canceled);
 }
-
-}  // namespace
 
 class TaskManager_Test : public testing::Test {
  protected:
@@ -322,7 +323,6 @@ TEST_F(TaskManager_Test, StartOldestTaskTest) {
   }
 }
 
-
 TEST_F(TaskManager_Test, AnotherThreadFinishTest) {
   TestRequest *request = new TestRequest("test");
   EXPECT_TRUE(request != NULL);
@@ -409,8 +409,6 @@ TEST_F(TaskManager_Test, AnotherThreadFinishWaitTest) {
   finish_caller_thread.Join();
 }
 
-namespace {
-
 class TestTaskManagerCallback {
  public:
   TestTaskManagerCallback() : delete_task_flag_(false) {}
@@ -446,8 +444,6 @@ class TestTaskManagerCallback {
   vector<string> response_data_vector_;
   DISALLOW_COPY_AND_ASSIGN(TestTaskManagerCallback);
 };
-
-}  // namespace
 
 TEST_F(TaskManager_Test, CallbackTest) {
   TestRequest *request1 = new TestRequest("test");
@@ -631,8 +627,6 @@ TEST_F(TaskManager_Test, CancelTaskTest) {
   }
 }
 
-namespace {
-
 class TaskExecutorThread : public mozc::Thread {
  public:
   explicit TaskExecutorThread(TaskManager *task_manager)
@@ -657,8 +651,6 @@ class TaskExecutorThread : public mozc::Thread {
  private:
   TaskManager *task_manager_;  // Does not take the ownership.
 };
-
-}  // namespace
 
 TEST_F(TaskManager_Test, SingleThreadTest) {
   for (int i = 0; i < 10; ++i) {
@@ -740,4 +732,5 @@ TEST_F(TaskManager_Test, MultiThreadTest) {
   mozc::STLDeleteElements(&executor_thread_list);
 }
 
+}  // namespace
 }  // namespace mozc

@@ -32,7 +32,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "dictionary/file/codec_interface.h"

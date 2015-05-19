@@ -31,7 +31,6 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 

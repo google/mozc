@@ -32,9 +32,9 @@
 #include <algorithm>
 #include <climits>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"

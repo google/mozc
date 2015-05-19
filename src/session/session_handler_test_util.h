@@ -29,25 +29,21 @@
 
 // Utilities for testing related to sessions.
 
-#ifndef IME_MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
-#define IME_MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
+#ifndef MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
+#define MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
 
 #include <string>
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "config/config.pb.h"
 #include "session/commands.pb.h"
-#include "session/japanese_session_factory.h"
 #include "testing/base/public/gunit.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 
 class EngineInterface;
-class SessionFactoryInterface;
 class SessionHandlerInterface;
-
-namespace config {
-class StatsConfigUtilMock;
-}  // namespace config
 
 namespace session {
 class SessionObserverInterface;
@@ -64,51 +60,49 @@ bool CreateSession(SessionHandlerInterface *handler, uint64 *id);
 bool DeleteSession(SessionHandlerInterface *handler, uint64 id);
 
 // Sends CLEANUP command to the given handler, and returns its result.
-bool CleanUp(SessionHandlerInterface *handler);
+bool CleanUp(SessionHandlerInterface *handler, uint64 id);
 
 // Sends CLEAR_USER_PREDICTION command to the given handler and returns its
 // result.
-bool CleanUserPrediction(SessionHandlerInterface *handler);
+bool CleanUserPrediction(SessionHandlerInterface *handler, uint64 id);
 
 // Returns the session represented by the given id is "good" or not, based
 // on sending a SPACE key. See the implementation for the detail.
 bool IsGoodSession(SessionHandlerInterface *handler, uint64 id);
 
-// Base implementation of test cases based on JapaneseSessionFactory.
-class JapaneseSessionHandlerTestBase : public ::testing::Test {
+// Base implementation of test cases.
+class SessionHandlerTestBase : public ::testing::Test {
  protected:
   virtual void SetUp();
   virtual void TearDown();
 
   // This class should not be instantiated directly.
-  JapaneseSessionHandlerTestBase();
-  virtual ~JapaneseSessionHandlerTestBase();
+  SessionHandlerTestBase();
+  virtual ~SessionHandlerTestBase();
 
   void ClearState();
-
-  void ResetEngine(EngineInterface *engine);
-
-  // Injecting point to create an engine instance.
-  // The returned instance will be owned by this (base) class.
-  virtual EngineInterface *CreateEngine();
-
-  EngineInterface *engine() { return engine_.get(); }
 
  private:
   // Keep the global configurations here, and restore them in tear down phase.
   string user_profile_directory_backup_;
   config::Config config_backup_;
-  SessionFactoryInterface *session_factory_backup_;
+  int32 flags_max_session_size_backup_;
+  int32 flags_create_session_min_interval_backup_;
+  int32 flags_watch_dog_interval_backup_;
+  int32 flags_last_command_timeout_backup_;
+  int32 flags_last_create_session_timeout_backup_;
+  bool flags_restricted_backup_;
 
-  scoped_ptr<config::StatsConfigUtilMock> stats_config_util_;
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<JapaneseSessionFactory> session_factory_;
+  const usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
+
+  DISALLOW_COPY_AND_ASSIGN(SessionHandlerTestBase);
 };
 
 // Session utility for stress tests.
 class TestSessionClient {
  public:
-  TestSessionClient();
+  // This class doesn't take an ownership of *engine.
+  explicit TestSessionClient(EngineInterface *engine);
   ~TestSessionClient();
 
   bool CreateSession();
@@ -148,10 +142,12 @@ class TestSessionClient {
   scoped_ptr<SessionObserverInterface> usage_observer_;
   scoped_ptr<SessionHandlerInterface> handler_;
   string callback_text_;
+
+  DISALLOW_COPY_AND_ASSIGN(TestSessionClient);
 };
 
 }  // namespace testing
 }  // namespace session
 }  // namespace mozc
 
-#endif  // IME_MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
+#endif  // MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_

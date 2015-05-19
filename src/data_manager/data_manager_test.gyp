@@ -45,6 +45,8 @@
         '../converter/converter_base.gyp:segmenter_base',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction_base.gyp:suggestion_filter',
+        '../testing/testing.gyp:testing',
+        'data_manager.gyp:connection_file_reader',
       ],
     },
   ],

@@ -138,7 +138,7 @@ class Composer {
 
   void InsertCharacter(const string &input);
   void InsertCharacterPreedit(const string &input);
-  void InsertCharacterKeyAndPreedit(const string &key, const string &preedit);
+  bool InsertCharacterKeyAndPreedit(const string &key, const string &preedit);
   void InsertCharacterForProbableKeyEvents(
       const string &input,
       const ProbableKeyEvents &probable_key_events);

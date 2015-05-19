@@ -27,14 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <vector>
-#include "base/base.h"
 #include "base/bitarray.h"
+
+#include <vector>
+
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace {
+
 TEST(BitArray, BitArraySizeTest) {
   {
     BitArray array(0);
@@ -92,4 +95,6 @@ TEST(BitArray, BitArrayTest) {
     }
   }
 }
+
+}  // namespace
 }  // namespace mozc

@@ -37,6 +37,7 @@
 
 #include "base/base.h"
 #include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/connector_interface.h"
@@ -158,6 +159,54 @@ bool ExtractLastTokenWithScriptType(const string &text,
   return true;
 }
 
+// Tries normalizing input text as a math expression, where full-width numbers
+// and math symbols are converted to their half-width equivalents except for
+// some special symbols, e.g., "×", "÷", and "・". Returns false if the input
+// string contains non-math characters.
+bool TryNormalizingKeyAsMathExpression(StringPiece s, string *key) {
+  key->reserve(s.size());
+  for (ConstChar32Iterator iter(s); !iter.Done(); iter.Next()) {
+    // Half-width arabic numbers.
+    if ('0' <= iter.Get() && iter.Get() <= '9') {
+      key->append(1, static_cast<char>(iter.Get()));
+      continue;
+    }
+    // Full-width arabic numbers ("０" -- "９")
+    if (0xFF10 <= iter.Get() && iter.Get() <= 0xFF19) {
+      const char c = iter.Get() - 0xFF10 + '0';
+      key->append(1, c);
+      continue;
+    }
+    switch (iter.Get()) {
+      case 0x002B: case 0xFF0B: // "+", "＋"
+        key->append(1, '+');
+        break;
+      case 0x002D: case 0x30FC: // "-", "ー"
+        key->append(1, '-');
+        break;
+      case 0x002A: case 0xFF0A: case 0x00D7: // "*", "＊", "×"
+        key->append(1, '*');
+        break;
+      case 0x002F: case 0xFF0F: case 0x30FB: case 0x00F7:
+        // "/",  "／", "・", "÷"
+        key->append(1, '/');
+        break;
+      case 0x0028: case 0xFF08:  // "(", "（"
+        key->append(1, '(');
+        break;
+      case 0x0029: case 0xFF09:  // ")", "）"
+        key->append(1, ')');
+        break;
+      case 0x003D: case 0xFF1D:  // "=", "＝"
+        key->append(1, '=');
+        break;
+      default:
+        return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace
 
 ConverterImpl::ConverterImpl() : pos_matcher_(NULL),
@@ -223,6 +272,22 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
     return false;
   }
   SetKey(segments, key);
+
+  // Check if |key| looks like a math expression.  In such case, there's no
+  // chance to get the correct reading by the immutable converter.  Rather,
+  // simply returns normalized value.
+  {
+    string value;
+    if (TryNormalizingKeyAsMathExpression(key, &value)) {
+      Segment::Candidate *cand =
+          segments->mutable_segment(0)->push_back_candidate();
+      cand->Init();
+      cand->key = key;
+      cand->value.swap(value);
+      return true;
+    }
+  }
+
   segments->set_request_type(Segments::REVERSE_CONVERSION);
   if (!immutable_converter_->Convert(segments)) {
     return false;

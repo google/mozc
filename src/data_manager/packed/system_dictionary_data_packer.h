@@ -30,7 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_PACKED_SYSTEM_DICTIONARY_DATA_PACKER_H_
 #define MOZC_DATA_MANAGER_PACKED_SYSTEM_DICTIONARY_DATA_PACKER_H_
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "converter/boundary_struct.h"
 #include "dictionary/pos_matcher.h"
@@ -45,6 +45,7 @@ namespace mozc {
 struct ConjugationSuffix;
 struct UsageDictItem;
 #endif  // NO_USAGE_REWRITER
+struct CounterSuffixEntry;
 
 namespace packed {
 
@@ -110,12 +111,16 @@ class SystemDictionaryDataPacker {
       size_t usage_data_size,
       const UsageDictItem *usage_data_value);
 #endif  // NO_USAGE_REWRITER
+  void SetCounterSuffixSortedArray(
+      const CounterSuffixEntry *suffix_array, size_t size);
 
   bool Output(const string &file_path, bool use_gzip);
   bool OutputHeader(const string &file_path, bool use_gzip);
 
  private:
   scoped_ptr<SystemDictionaryData> system_dictionary_;
+
+  DISALLOW_COPY_AND_ASSIGN(SystemDictionaryDataPacker);
 };
 
 }  // namespace packed

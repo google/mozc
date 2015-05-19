@@ -31,7 +31,7 @@
 #define MOZC_DICTIONARY_SUFFIX_DICTIONARY_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 

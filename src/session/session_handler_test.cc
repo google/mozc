@@ -38,6 +38,7 @@
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "engine/mock_converter_engine.h"
+#include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
 #include "session/commands.pb.h"
 #include "session/generic_storage_manager.h"
@@ -60,20 +61,33 @@ using mozc::session::testing::CreateSession;
 using mozc::session::testing::CleanUp;
 using mozc::session::testing::IsGoodSession;
 
-using mozc::session::testing::JapaneseSessionHandlerTestBase;
+using mozc::session::testing::SessionHandlerTestBase;
 
-class SessionHandlerTest : public JapaneseSessionHandlerTestBase {
+class SessionHandlerTest : public SessionHandlerTestBase {
+ protected:
+  virtual void SetUp() {
+    SessionHandlerTestBase::SetUp();
+    Util::SetClockHandler(NULL);
+  }
+
+  virtual void TearDown() {
+    Util::SetClockHandler(NULL);
+    SessionHandlerTestBase::TearDown();
+  }
 };
 
 TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   uint32 expected_session_created_num = 0;
-  FLAGS_create_session_min_interval = 1;
+  const int32 interval_time = FLAGS_create_session_min_interval = 10;  // 10 sec
+  ClockMock clock(1000, 0);
+  Util::SetClockHandler(&clock);
 
   // The oldest item is remvoed
   const size_t session_size = 3;
   FLAGS_max_session_size = static_cast<int32>(session_size);
   {
-    SessionHandler handler;
+    scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+    SessionHandler handler(engine.get());
 
     // Create session_size + 1 sessions
     vector<uint64> ids;
@@ -83,7 +97,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       ++expected_session_created_num;
       EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
-      Util::Sleep(1500);  // 1.5 sec
+      clock.PutClockForward(interval_time, 0);
     }
 
     for (int i = static_cast<int>(ids.size() - 1); i >= 0; --i) {
@@ -97,7 +111,8 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 
   FLAGS_max_session_size = static_cast<int32>(session_size);
   {
-    SessionHandler handler;
+    scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+    SessionHandler handler(engine.get());
 
     // Create session_size sessions
     vector<uint64> ids;
@@ -107,7 +122,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       ++expected_session_created_num;
       EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
-      Util::Sleep(1500);  // 1.5 sec
+      clock.PutClockForward(interval_time, 0);
     }
 
     random_shuffle(ids.begin(), ids.end());
@@ -128,65 +143,62 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 }
 
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
-  const size_t timeout = 2;
-  FLAGS_create_session_min_interval = static_cast<int32>(timeout);
-  SessionHandler handler;
+  const int32 interval_time = FLAGS_create_session_min_interval = 10;  // 10 sec
+  ClockMock clock(1000, 0);
+  Util::SetClockHandler(&clock);
+
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
 
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
-
-  // cannot do it
   EXPECT_FALSE(CreateSession(&handler, &id));
 
-  // wait 0.5 * timeout sec
-  Util::Sleep(timeout * 1000 / 2);
-
+  clock.PutClockForward(interval_time - 1, 0);
   EXPECT_FALSE(CreateSession(&handler, &id));
 
-  // wait timeout
-  Util::Sleep(timeout * 1000);
-
+  clock.PutClockForward(1, 0);
   EXPECT_TRUE(CreateSession(&handler, &id));
 }
 
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
-  FLAGS_last_create_session_timeout = 2;  // 2 sec
-  SessionHandler handler;
+  const int32 timeout = FLAGS_last_create_session_timeout = 10;  // 10 sec
+  ClockMock clock(1000, 0);
+  Util::SetClockHandler(&clock);
+
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
 
-  // wait 3 sec
-  Util::Sleep(3000);
-  EXPECT_TRUE(CleanUp(&handler));
+  clock.PutClockForward(timeout, 0);
+  EXPECT_TRUE(CleanUp(&handler, id));
 
   // the session is removed by server
   EXPECT_FALSE(IsGoodSession(&handler, id));
 }
 
 TEST_F(SessionHandlerTest, LastCommandTimeout) {
-  FLAGS_last_command_timeout = 10;  // 10 sec
-  SessionHandler handler;
+  const int32 timeout = FLAGS_last_command_timeout = 10;  // 10 sec
+  ClockMock clock(1000, 0);
+  Util::SetClockHandler(&clock);
+
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
 
-  EXPECT_TRUE(CleanUp(&handler));
-
-  Util::Sleep(200);
+  EXPECT_TRUE(CleanUp(&handler, id));
   EXPECT_TRUE(IsGoodSession(&handler, id));
 
-  Util::Sleep(200);
-  EXPECT_TRUE(IsGoodSession(&handler, id));
-
-  Util::Sleep(200);
-  EXPECT_TRUE(IsGoodSession(&handler, id));
-
-  Util::Sleep(12000);
-  EXPECT_TRUE(CleanUp(&handler));
+  clock.PutClockForward(timeout, 0);
+  EXPECT_TRUE(CleanUp(&handler, id));
   EXPECT_FALSE(IsGoodSession(&handler, id));
 }
 
 TEST_F(SessionHandlerTest, ShutdownTest) {
-  SessionHandler handler;
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
@@ -214,7 +226,8 @@ TEST_F(SessionHandlerTest, ShutdownTest) {
 }
 
 TEST_F(SessionHandlerTest, ClearHistoryTest) {
-  SessionHandler handler;
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
@@ -253,14 +266,14 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
 }
 
 TEST_F(SessionHandlerTest, ElapsedTimeTest) {
-  SessionHandler handler;
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
   uint64 id = 0;
 
-  ClockMock clock(0, 0);
+  ClockMock clock(1000, 0);
   Util::SetClockHandler(&clock);
   EXPECT_TRUE(CreateSession(&handler, &id));
   EXPECT_TIMING_STATS("ElapsedTimeUSec", 0, 1, 0, 0);
-  Util::SetClockHandler(NULL);
 }
 
 TEST_F(SessionHandlerTest, ConfigTest) {
@@ -269,7 +282,8 @@ TEST_F(SessionHandlerTest, ConfigTest) {
   config.set_incognito_mode(false);
   config::ConfigHandler::SetConfig(config);
 
-  SessionHandler handler;
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
@@ -309,20 +323,18 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
     commands::Input::CLEANUP,
   };
   for (size_t i = 0; i < arraysize(command_types); ++i) {
-    // Set up engine with mock converter, where engine is owned by
-    // SessionHandlerTest class through ResetEngine().
-    MockConverterEngine *engine = new MockConverterEngine;
-    ResetEngine(engine);
+    MockConverterEngine engine;
 
     // Set the mock user data manager to the converter mock created above. This
     // user_data_manager_mock is owned by the converter mock inside the engine
     // instance.
     UserDataManagerMock *user_data_mgr_mock = new UserDataManagerMock();
-    engine->SetUserDataManager(user_data_mgr_mock);
+    engine.SetUserDataManager(user_data_mgr_mock);
 
     // Set up a session handler and a input command.
-    SessionHandler handler;
+    SessionHandler handler(&engine);
     commands::Command command;
+    command.mutable_input()->set_id(0);
     command.mutable_input()->set_type(command_types[i]);
 
     // Check if Sync() is called after evaluating the command.
@@ -350,7 +362,7 @@ class MockStorage : public GenericStorageInterface {
     EXPECT_EQ(string(insert_expect[insert_count]), string(value));
     ++insert_count;
     return true;
-  };
+  }
 
   virtual const char *Lookup(const string &key) {
     return NULL;
@@ -394,7 +406,8 @@ TEST_F(SessionHandlerTest, StorageTest) {
   // Inject mock objects.
   MockStorageManager storageManager;
   GenericStorageManagerFactory::SetGenericStorageManager(&storageManager);
-  SessionHandler handler;
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  SessionHandler handler(engine.get());
   {
     // InsertToStorage
     MockStorage mock_storage;

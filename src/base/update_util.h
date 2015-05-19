@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_UPDATE_UTIL_H_
 #define MOZC_BASE_UPDATE_UTIL_H_
 
-#include <string>
+#include "base/port.h"
 
 namespace mozc {
 
@@ -40,25 +40,8 @@ class UpdateUtil {
   // Returns true if the value is successfully written.
   static bool WriteActiveUsageInfo();
 
-  // Returns the version which is available after reboot.
-  // If no update is available returns the current version.
-  static string GetAvailableVersion();
-
-  // Returns the version of Mozc which is currently running.
-  static string GetCurrentVersion();
-
-  // Returns true if new version is available after reboot.
-  static bool IsNewVersionAvailable();
-
-  // Returns true if lhs is less than rhs in the lexical order.
-  // CompareVersion("1.2.3.4", "1.2.3.4") => false
-  // CompareVersion("1.2.3.4", "5.2.3.4") => true
-  // CompareVersion("1.25.3.4", "1.2.3.4") => false
-  static bool CompareVersion(const string &lhs, const string &rhs);
-
  private:
-  UpdateUtil() {}
-  virtual ~UpdateUtil() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(UpdateUtil);
 };
 
 }  // namespace mozc

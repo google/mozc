@@ -213,12 +213,10 @@ class Util {
   // given UTF-8 string. Note that the result of this method becomes greater
   // than that of Util::CharsLen if |src| contains any character which is
   // encoded by the surrogate-pair in UTF-16.
-  static size_t WideCharsLen(const char *src);
-  static size_t WideCharsLen(const string &src);
+  static size_t WideCharsLen(StringPiece src);
   // Converts the encoding of the specified string from UTF-8 to UTF-16, and
   // vice versa.
-  static int UTF8ToWide(const char *input, wstring *output);
-  static int UTF8ToWide(const string &input, wstring *output);
+  static int UTF8ToWide(StringPiece input, wstring *output);
   static int WideToUTF8(const wchar_t *input, string *output);
   static int WideToUTF8(const wstring &input, string *output);
 #endif  // OS_WIN
@@ -301,6 +299,10 @@ class Util {
   // Return random variable whose range is [0..size-1].
   // This function uses rand() internally, so don't use it for
   // security-sensitive purpose.
+  // Caveats: The returned value does not have good granularity especially
+  // when |size| is larger than |RAND_MAX|.
+  // TODO(yukawa): Improve the granularity.
+  // TODO(yukawa): Clarify the semantics when |size| is 0 or smaller.
   static int Random(int size);
 
   // Set the seed of Util::Random().

@@ -41,10 +41,7 @@
 #include "converter/connector_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "engine/engine_factory.h"
-#include "engine/engine_interface.h"
 #include "session/commands.pb.h"
-#include "session/japanese_session_factory.h"
-#include "session/session_factory_manager.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"
@@ -57,19 +54,26 @@ namespace {
 jobject g_connection_data_buffer;
 jobject g_dictionary_buffer;
 
-class SessionFactoryManager {
+// Adapter class to make a SessionHandlerInterface (held by this class)
+// singleton.
+// Must be accessed via mozc::Singleton<SessionHandlerSingletonAdapter>.
+class SessionHandlerSingletonAdapter {
  public:
-  SessionFactoryManager()
-      : engine_(EngineFactory::Create()),
-        session_factory_(new session::JapaneseSessionFactory(engine_.get())) {}
+  SessionHandlerSingletonAdapter()
+      : engine_(mozc::EngineFactory::Create()),
+        session_handler_(new mozc::SessionHandler(engine_.get())) {}
+  ~SessionHandlerSingletonAdapter() {}
 
-  session::JapaneseSessionFactory *mutable_session_factory() {
-    return session_factory_.get();
+  SessionHandlerInterface *getHandler() {
+    return session_handler_.get();
   }
 
  private:
+  // Must be defined earlier than session_handler_, which depends on this.
   scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<session::JapaneseSessionFactory> session_factory_;
+  scoped_ptr<SessionHandlerInterface> session_handler_;
+
+  DISALLOW_COPY_AND_ASSIGN(SessionHandlerSingletonAdapter);
 };
 
 void Initialize(
@@ -92,15 +96,12 @@ void Initialize(
   mozc::oss::OssDataManager::SetConnectionData(
       connection_data_address, connection_data_size);
 
-  // Initialize the session factory.
-  session::SessionFactoryManager::SetSessionFactory(
-      Singleton<SessionFactoryManager>::get()->mutable_session_factory());
-  Singleton<SessionHandler>::get()->
-      AddObserver(Singleton<session::SessionUsageObserver>::get());
+  mozc::Singleton<SessionHandlerSingletonAdapter>::get()->getHandler()
+      ->AddObserver(Singleton<session::SessionUsageObserver>::get());
 
   // Start usage stats timer.
   using usage_stats::UsageStatsUploader;
-  Scheduler::AddJob(Scheduler::JobSetting(
+  mozc::Scheduler::AddJob(Scheduler::JobSetting(
       "UsageStatsTimer",
       UsageStatsUploader::kDefaultScheduleInterval,
       UsageStatsUploader::kDefaultScheduleMaxInterval,
@@ -119,7 +120,8 @@ jbyteArray JNICALL evalCommand(JNIEnv *env,
   const jsize in_size = env->GetArrayLength(in_bytes_array);
   mozc::commands::Command command;
   command.ParseFromArray(in_bytes, in_size);
-  mozc::Singleton<mozc::SessionHandler>::get()->EvalCommand(&command);
+  mozc::Singleton<SessionHandlerSingletonAdapter>::get()->getHandler()
+      ->EvalCommand(&command);
 
   // Use JNI_ABORT because in_bytes is read only.
   env->ReleaseByteArrayElements(in_bytes_array, in_bytes, JNI_ABORT);

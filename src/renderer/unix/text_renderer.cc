@@ -39,7 +39,7 @@ namespace gtk {
 
 TextRenderer::TextRenderer(FontSpecInterface *font_spec)
   : font_spec_(font_spec),
-    pango_(NULL) {
+    pango_(nullptr) {
 }
 
 void TextRenderer::Initialize(GdkDrawable *drawable) {

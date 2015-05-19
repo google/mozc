@@ -29,123 +29,24 @@
 
 #include "base/timer.h"
 
-#ifndef OS_WIN
-#include "base/mutex.h"
+#include "base/logging.h"
 #include "base/thread.h"
 #include "base/unnamed_event.h"
-#endif  // !OS_WIN
-#include "base/logging.h"
 #include "base/util.h"
 
 namespace mozc {
-#ifdef OS_WIN
-bool Timer::Start(uint32 due_time, uint32 interval) {
-  // http://msdn.microsoft.com/en-us/library/ms681985.aspx
-  // Remarks:
-  // If you call ChangeTimerQueueTimer on a one-shot timer (its period is zero)
-  // that has already expired, the timer is not updated.
-  const bool is_oneshot_signaled = (num_signaled_ > 0 && one_shot_);
 
-  one_shot_ = (interval == 0);
-
-  if (!is_oneshot_signaled &&
-      timer_handle_ != NULL && timer_queue_ != NULL) {
-    VLOG(2) << "ChangeTimerQueueTimer() is called "
-            << due_time << " " << interval;
-    if (!::ChangeTimerQueueTimer(timer_queue_,
-                                 timer_handle_,
-                                 due_time,
-                                 interval)) {
-      LOG(ERROR) << "ChangeTimerQueueTime() failed: " << ::GetLastError();
-      return false;
-    }
-    return true;
-  }
-
-  Stop();
-
-  VLOG(2) << "Creating Timer Queue";
-  timer_queue_ = ::CreateTimerQueue();
-  if (NULL == timer_queue_) {
-    LOG(ERROR) << "CreateTimerQueue() failed: " << ::GetLastError();
-    return false;
-  }
-
-  VLOG(2) << "CreateTimerQueueTimer() is called: "
-          << due_time << " " << interval;
-  if (!::CreateTimerQueueTimer(&timer_handle_,
-                               timer_queue_,
-                               &Timer::TimerCallback,
-                               reinterpret_cast<void *>(this),
-                               due_time,
-                               interval,
-                               WT_EXECUTEINIOTHREAD)) {
-    Stop();
-    LOG(ERROR) << "CreateTimerQueueTimer() failed: " << ::GetLastError();
-    return false;
-  }
-
-  VLOG(2) << "Timer has started";
-
-  return true;
-}
-
-void Timer::Stop() {
-  if (NULL != timer_handle_) {
-    VLOG(2) << "Deleting Timer Queue Timer";
-    // If the last param is  INVALID_HANDLE_VALUE,
-    // the function waits for the timer callback function to
-    // complete before returning.
-    // It is far safer than killing the thread.
-    if (!::DeleteTimerQueueTimer(timer_queue_, timer_handle_,
-                                 INVALID_HANDLE_VALUE)) {
-      LOG(ERROR) << "DeleteTimerQueueTimer failed: " << ::GetLastError();
-    }
-  }
-
-  if (NULL != timer_queue_) {
-    VLOG(2) << "Deleting Timer Queue";
-    if (!::DeleteTimerQueueEx(timer_queue_,
-                              INVALID_HANDLE_VALUE)) {
-      LOG(ERROR) << "DeleteTimerQueueEx failed: " << ::GetLastError();
-    }
-  }
-
-  VLOG(2) << "Timer has stopped";
-  timer_handle_ = NULL;
-  timer_queue_ = NULL;
-  num_signaled_ = 0;
-}
-
-Timer::Timer()
-    : timer_queue_(NULL), timer_handle_(NULL), one_shot_(false),
-      num_signaled_(0) {}
-
-Timer::~Timer() {
-  Stop();
-}
-
-void CALLBACK Timer::TimerCallback(void *ptr, BOOLEAN timer_or_wait) {
-  Timer *p = static_cast<Timer *>(ptr);
-  p->num_signaled_++;
-  p->Signaled();
-}
-
-#else   // OS_WIN
-
-namespace {
-
-class TimerThread: public Thread {
+class Timer::TimerThread : public Thread {
  public:
-  TimerThread(uint32 due_time, uint32 interval,
-              Timer *timer, UnnamedEvent *event)
+  TimerThread(uint32 due_time, uint32 interval, Timer *timer)
       : Thread(),
         due_time_(due_time),
         interval_(interval),
         timer_(timer),
-        event_(event) {}
+        event_(new UnnamedEvent) {}
 
   virtual ~TimerThread() {
+    SignalQuit();
     Join();
   }
 
@@ -172,50 +73,51 @@ class TimerThread: public Thread {
     }
   }
 
+  void SignalQuit() {
+    const bool result = event_->Notify();
+    DCHECK(result);
+  }
+
  private:
   uint32 due_time_;
   uint32 interval_;
   Timer *timer_;
-  UnnamedEvent *event_;
+  scoped_ptr<UnnamedEvent> event_;
+
+  DISALLOW_COPY_AND_ASSIGN(TimerThread);
 };
 
-}  // namespace
-
 void Timer::TimerCallback() {
-  scoped_lock l(mutex_.get());
   num_signaled_++;
   Signaled();
 }
 
 bool Timer::Start(uint32 due_time, uint32 interval) {
-  if (timer_thread_.get() != NULL) {
-    Stop();
-  }
   VLOG(1) << "Starting " << due_time << " " << interval;
-  event_.reset(new UnnamedEvent);
-  timer_thread_.reset(new TimerThread(due_time, interval, this, event_.get()));
+  // Note: We can simply destroy |*timer_thread_.get()| since
+  // TimerThread::~TimerThread internally joins its background thread.
+  timer_thread_.reset(new TimerThread(due_time, interval, this));
   timer_thread_->Start();
   return true;
 }
 
 void Timer::Stop() {
-  if (timer_thread_.get() == NULL) {
-    return;
-  }
-  scoped_lock l(mutex_.get());
-  event_->Notify();
-  timer_thread_->Join();
+  // Note: We can simply destroy |*timer_thread_.get()| since
+  // TimerThread::~TimerThread internally joins its background thread.
   timer_thread_.reset(NULL);
-  event_.reset(NULL);
 }
 
 Timer::Timer()
-    : mutex_(new Mutex),
-      num_signaled_(0) {}
+    : num_signaled_(0) {}
 
 Timer::~Timer() {
   Stop();
 }
-#endif  // OS_WIN
+
+void Timer::Signaled() {
+  // Note: This code can be called back even if a subclass overrides this
+  // method when the main thread reached to Timer::~Timer. Do not make this
+  // method pure-virtual.
+}
 
 }  // namespace mozc

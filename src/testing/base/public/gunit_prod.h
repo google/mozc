@@ -30,13 +30,12 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_
 #define MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_
 
-// TODO(yukawa): undef MOZC_ENABLE_UNITTEST for NaCl build in the gyp layer.
-#if !defined(MOZC_ENABLE_UNITTEST) || defined(__native_client__)
-// Just use the following macro definition when unittest is not available.
-#define FRIEND_TEST(test_case_name, test_name)\
+// The following macro is originally defined in <gtest/gtest_prod.h>.
+// Here we use a private copy instead to avoid dependency on
+// <gtest/gtest_prod.h> from production code.
+#ifndef FRIEND_TEST
+#define FRIEND_TEST(test_case_name, test_name)  \
 friend class test_case_name##_##test_name##_Test
-#else
-#include "gtest/gtest_prod.h"
-#endif  // !MOZC_ENABLE_UNITTEST || defined(__native_client__)
+#endif  // FRIEND_TEST
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_

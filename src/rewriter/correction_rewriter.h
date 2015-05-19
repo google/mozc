@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

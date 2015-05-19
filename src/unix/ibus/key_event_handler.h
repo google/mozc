@@ -30,10 +30,10 @@
 #ifndef MOZC_UNIX_IBUS_KEY_EVENT_HANDLER_H_
 #define MOZC_UNIX_IBUS_KEY_EVENT_HANDLER_H_
 
+#include <memory>
 #include <set>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "config/config.pb.h"
 #include "session/commands.pb.h"
 #include "unix/ibus/key_translator.h"
@@ -62,7 +62,7 @@ class KeyEventHandler {
   bool ProcessModifiers(bool is_key_up, guint keyval,
                         commands::KeyEvent *key_event);
 
-  scoped_ptr<KeyTranslator> key_translator_;
+  std::unique_ptr<KeyTranslator> key_translator_;
   // Non modifier key is pressed or not after all keys are released.
   bool is_non_modifier_key_pressed_;
   // Currently pressed modifier keys.  It is set of keyval.

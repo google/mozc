@@ -32,7 +32,7 @@
 
 #include <windows.h>
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace client {

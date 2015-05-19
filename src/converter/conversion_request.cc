@@ -114,7 +114,6 @@ bool ConversionRequest::IsKanaModifierInsensitiveConversion() const {
 void ConversionRequest::CopyFrom(const ConversionRequest &request) {
   composer_ = request.composer_;
   request_ = request.request_;
-  preceding_text_ = request.preceding_text_;
   use_actual_converter_for_realtime_conversion_ =
       request.use_actual_converter_for_realtime_conversion_;
   composer_key_selection_ = request.composer_key_selection_;

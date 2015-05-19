@@ -68,6 +68,7 @@
 
 namespace mozc {
 
+class Mutex;
 class ProcessMutex;
 
 // Inherit from ProtocolBuffer
@@ -131,15 +132,16 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   //     RemoveUnusedSyncDictionariesIfExist().
   bool LoadWithoutChangingSyncDictionary();
 
-  // Serialzie user dictionary to local file after some checks.
-  // Need to call Lock() the dictionary before calling Save()
+  // Serialzie user dictionary to local file.
+  // Need to call Lock() the dictionary before calling Save().
   bool Save();
 
-  // Serialzie user dictionary to local file without checks.
-  // Need to call Lock() the dictionary before calling SaveCore() directly.
-  bool SaveCore();
+  // Serialzie user dictionary to local file.
+  // This method doesn't check the size of syncable dictionaries.
+  // Need to call Lock() the dictionary before calling SaveWithoutSizeCheck().
+  bool SaveWithoutSyncableDictionariesSizeCheck();
 
-  // Lock the dictionary so that other process/threads cannot
+  // Lock the dictionary so that other processes/threads cannot
   // execute mutable operations on this dictionary.
   bool Lock();
 
@@ -196,7 +198,7 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
 
   // return the number of dictionaries with "synclbe" being true.
   static int CountSyncableDictionaries(
-      const user_dictionary::UserDictionaryStorage *storage);
+      const user_dictionary::UserDictionaryStorage &storage);
 
   // maxium number of dictionaries this storage can hold
   static size_t max_dictionary_size();
@@ -220,6 +222,10 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
                                      bool remove_empty_sync_dictionaries,
                                      bool run_migration);
 
+  // Save user dictionary. This method checks the size and the entry number of
+  // syncable dictionaries if checkSyncableDictionariesSize is true.
+  bool SaveImpl(bool checkSyncableDictionariesSize);
+
   // Return true if this object can accept the given dictionary name.
   // This changes the internal state.
   bool IsValidDictionaryName(const string &name);
@@ -230,8 +236,9 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   string file_name_;
   bool locked_;
   UserDictionaryStorageErrorType last_error_type_;
-  scoped_ptr<ProcessMutex> mutex_;
+  scoped_ptr<Mutex> local_mutex_;
+  scoped_ptr<ProcessMutex> process_mutex_;
 };
 }  // namespace mozc
 
-#endif  // MOZC_DICTIONARY_USERDIC_STORAGE_INTERFACE_H_
+#endif  // MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_

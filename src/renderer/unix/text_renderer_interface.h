@@ -34,7 +34,6 @@
 
 #include "renderer/unix/font_spec_interface.h"
 #include "base/coordinates.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace renderer {

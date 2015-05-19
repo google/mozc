@@ -63,7 +63,9 @@ bool EngineRegistrar::Register(EngineInterface *engine,
   engine_class->reset = Reset;
   engine_class->set_capabilities = SetCapabilities;
   engine_class->set_cursor_location = SetCursorLocation;
-
+#if defined(MOZC_ENABLE_IBUS_INPUT_PURPOSE)
+  engine_class->set_content_type = SetContentType;
+#endif  // MOZC_ENABLE_IBUS_INPUT_PURPOSE
   return true;
 }
 
@@ -87,6 +89,9 @@ EngineInterface *EngineRegistrar::Unregister(IBusEngineClass *engine_class) {
   engine_class->reset = NULL;
   engine_class->set_capabilities = NULL;
   engine_class->set_cursor_location = NULL;
+#if defined(MOZC_ENABLE_IBUS_INPUT_PURPOSE)
+  engine_class->set_content_type = NULL;
+#endif  // MOZC_ENABLE_IBUS_INPUT_PURPOSE
 
   mozc::ibus::EngineInterface *previous = g_engine;
   g_engine = NULL;
@@ -177,6 +182,13 @@ void EngineRegistrar::SetCursorLocation(
     gint w,
     gint h) {
   g_engine->SetCursorLocation(engine, x, y, w, h);
+}
+
+void EngineRegistrar::SetContentType(
+    IBusEngine *engine,
+    guint purpose,
+    guint hints) {
+  g_engine->SetContentType(engine, purpose, hints);
 }
 
 }  // namespace ibus

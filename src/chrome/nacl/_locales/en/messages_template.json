@@ -124,7 +124,7 @@
     "message": "Custom keymap"
   },
   "configIncognitoMode": {
-    "message": "Temporarily disable conversion personalization, history-based suggestions and user dictionary"
+    "message": "Disable personalized conversions and suggestions as well as user dictionary"
   },
   "configUseAutoImeTurnOff": {
     "message": "Automatically switch to halfwidth"
@@ -158,6 +158,9 @@
   },
   "configClearHistoryTitle": {
     "message": "Clear personalization data"
+  },
+  "configClearHistoryMessage": {
+    "message": "Obliterate the following items:"
   },
   "configClearHistoryConversionHistory": {
     "message": "Conversion history"
@@ -222,11 +225,14 @@
   "configSyncTitle": {
     "message": "Sync"
   },
+  "configSyncAdvancedSettingsMessage": {
+    "message": "Choose what to sync"
+  },
   "configUseConfigSync": {
-    "message": "Sync settings"
+    "message": "Settings"
   },
   "configUseUserDictionarySync": {
-    "message": "Sync user dictionary"
+    "message": "User dictionary"
   },
   "configSyncAuthorizationFail": {
     "message": "Authorization failed."
@@ -264,6 +270,9 @@
   "dictionaryToolPageTitle": {
     "message": "User dictionary"
   },
+  "dictionaryToolDictionaryListTitle": {
+    "message": "Dictionary list"
+  },
   "dictionaryToolReadingTitle": {
     "message": "Reading"
   },
@@ -276,17 +285,11 @@
   "dictionaryToolCommentTitle": {
     "message": "Comment"
   },
-  "dictionaryToolCreateButton": {
-    "message": "New dictionary"
-  },
-  "dictionaryToolRenameButton": {
-    "message": "Rename"
-  },
-  "dictionaryToolDeleteButton": {
-    "message": "Delete"
-  },
   "dictionaryToolExportButton": {
     "message": "Export"
+  },
+  "dictionaryToolImportButton": {
+    "message": "Import"
   },
   "dictionaryToolDoneButton": {
     "message": "Done"
@@ -300,8 +303,14 @@
   "dictionaryToolCommentNewInput": {
     "message": "Comment"
   },
+  "dictionaryToolDeleteDictionaryTitle": {
+    "message": "Delete dictionary"
+  },
   "dictionaryToolDictionaryName": {
     "message": "Dictionary Name"
+  },
+  "dictionaryToolNewDictionaryNamePlaceholder": {
+    "message": "New dictionary"
   },
   "dictionaryToolSyncableDictionaryName": {
     "message": "Sync-able dictionary"
@@ -323,6 +332,9 @@
   },
   "dictionaryToolStatuErrorInvalidFileFormat": {
     "message": "Could not read the file."
+  },
+  "dictionaryToolStatuErrorEmptyFile": {
+    "message": "The file is empty."
   },
   "dictionaryToolStatuErrorFileSizeLimitExceeded": {
     "message": "The data size exceeds the file size limit."
@@ -372,7 +384,19 @@
   "dictionaryToolStatuErrorNoUndoHistory": {
     "message": "No more undo-able operation."
   },
+  "dictionaryImportTitle": {
+    "message": "Select import destination"
+  },
+  "dictionaryImportNewDictionary": {
+    "message": "Import as a new dictionary"
+  },
+  "dictionaryImportCancel": {
+    "message": "Cancel"
+  },
+  "dictionaryImportOk": {
+    "message": "OK"
+  },
   "configUploadUsageStats": {
-    "message": "Help make Mozc better by automatically sending usage statistics and crash reports to Google"
+    "message": "Automatically send usage statistics and crash reports to Google"
   }
 }

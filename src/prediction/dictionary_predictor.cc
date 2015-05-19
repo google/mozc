@@ -40,7 +40,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/base.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/trie.h"

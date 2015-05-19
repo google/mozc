@@ -29,7 +29,6 @@
 
 #include "data_manager/chromeos/chromeos_user_pos_manager.h"
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "dictionary/pos_group.h"

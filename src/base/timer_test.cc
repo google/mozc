@@ -27,9 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
-#include "base/util.h"
 #include "base/timer.h"
+
+#include "base/port.h"
+#include "base/util.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -48,6 +49,8 @@ class TestTimer : public Timer {
 
  private:
   int counter_;
+
+  DISALLOW_COPY_AND_ASSIGN(TestTimer);
 };
 
 static int g_counter = 0;
@@ -70,8 +73,10 @@ class DelayTimer : public Timer {
   }
 
   int *v;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(DelayTimer);
 };
-}  // namespace
 
 TEST(TimerTest, TimerTestOneShot) {
   TestTimer test_timer;
@@ -129,4 +134,6 @@ TEST(TimerTest, TimerTestOverrun) {
   Util::Sleep(2000);
   EXPECT_EQ(1, g_counter);
 }
+
+}  // namespace
 }  // namespace mozc

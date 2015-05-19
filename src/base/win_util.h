@@ -115,6 +115,11 @@ class WinUtil {
   static bool IsProcessImmersive(HANDLE process_handle, bool *is_immersive);
 
   // Returns true if succeeds to determine whether the process specified by
+  // |process_handle| is running with RestrictedToken or not. Otherwise,
+  // returns false.
+  static bool IsProcessRestricted(HANDLE process_handle, bool *is_restricted);
+
+  // Returns true if succeeds to determine whether the process specified by
   // |process_handle| is running under AppContainer sandbox environment or not.
   // Otherwise, returns false.
   static bool IsProcessInAppContainer(HANDLE process_handle,

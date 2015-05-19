@@ -34,7 +34,7 @@
     <!-- The local.properties file is created and updated by the 'android' tool.
          It contains the path to the SDK. It should *NOT* be checked into
          Version Control Systems. -->
-    <property file="local.properties"/>
+    <property file="local.properties" />
 
     <!-- The ant.properties file can be created by you. It is only edited by the
          'android' tool to add properties to it.
@@ -56,7 +56,16 @@
          application and should be checked into Version Control Systems.
 
          -->
-    <loadproperties srcFile="ant.properties"/>
+    <property file="ant.properties" />
+
+    <!-- if sdk.dir was not set from one of the property file, then
+         get it from the ANDROID_HOME env var.
+         This must be done before we load project.properties since
+         the proguard config can use sdk.dir -->
+    <property environment="env" />
+    <condition property="sdk.dir" value="${env.ANDROID_HOME}">
+        <isset property="env.ANDROID_HOME" />
+    </condition>
 
     <!-- The project.properties file is created and updated by the 'android'
          tool, as well as ADT.
@@ -67,29 +76,27 @@
 
          This file is an integral part of the build system for your
          application and should be checked into Version Control Systems. -->
-    <loadproperties srcFile="project.properties"/>
+    <loadproperties srcFile="project.properties" />
 
     <!-- quick check on sdk.dir -->
     <fail
-            message="sdk.dir is missing. Make sure to generate local.properties using 'android update project'"
+            message="sdk.dir is missing. Make sure to generate local.properties using 'android update project' or to inject it through the ANDROID_HOME environment variable."
             unless="sdk.dir"
     />
 
-    <target name="apk"
-            description="Invokes 'release' or 'debug' target, based on
-                         gyp.build_type property.">
-      <if>
-        <condition>
-          <equals arg1="${gyp.build_type}" arg2="Release_Android"/>
-        </condition>
-        <then>
-          <antcall target="release"/>
-        </then>
-        <else>
-          <antcall target="debug"/>
-        </else>
-      </if>
-    </target>
+    <!--
+        Import per project custom build rules if present at the root of the project.
+        This is the place to put custom intermediary targets such as:
+            -pre-build
+            -pre-compile
+            -post-compile (This is typically used for code obfuscation.
+                           Compiled code location: ${out.classes.absolute.dir}
+                           If this is not done in place, override ${out.dex.input.absolute.dir})
+            -post-package
+            -post-build
+            -pre-clean
+    -->
+    <import file="custom_rules.xml" optional="true" />
 
     <!-- Import the actual build file.
 
@@ -109,7 +116,7 @@
          In all cases you must update the value of version-tag below to read 'custom' instead of an integer,
          in order to avoid having your file be overridden by tools such as "android update project"
     -->
-    <!-- version-tag: custom -->
-    <import file="${sdk.dir}/tools/ant/build.xml"/>
+    <!-- version-tag: 1 -->
+    <import file="${sdk.dir}/tools/ant/build.xml" />
 
 </project>

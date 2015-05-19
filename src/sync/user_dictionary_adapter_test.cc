@@ -39,7 +39,6 @@
 #include "base/number_util.h"
 #include "base/protobuf/unknown_field_set.h"
 #include "base/system_util.h"
-#include "base/testing_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -55,6 +54,7 @@
 #include "sync/syncer.h"
 #include "sync/user_dictionary_sync_util.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/testing_util.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -140,23 +140,27 @@ TEST_F(UserDictionaryAdapterTest, SetDownloadedItemsEmptyItems) {
 }
 
 namespace {
-bool AddSyncEntry(UserDictionaryStorage *storage) {
-  CHECK(storage);
-  storage->EnsureSyncDictionaryExists();
+UserDictionarySyncUtil::UserDictionary *GetFirstSyncableDictionary(
+    UserDictionaryStorage *storage) {
   for (int i = 0; i < storage->dictionaries_size(); ++i) {
-    UserDictionarySyncUtil::UserDictionary *dict =
-        storage->mutable_dictionaries(i);
-    if (dict->syncable()) {
-      UserDictionarySyncUtil::UserDictionaryEntry *entry =
-          dict->add_entries();
-      DCHECK(entry);
-      entry->set_key(SyncUtil::GenRandomString(5));
-      entry->set_value(SyncUtil::GenRandomString(5));
-      entry->set_pos(UserDictionary::NOUN);
-      return true;
+    if (storage->dictionaries(i).syncable()) {
+      return storage->mutable_dictionaries(i);
     }
   }
-  return false;
+  return NULL;
+}
+
+void AddSyncEntry(UserDictionaryStorage *storage) {
+  CHECK(storage);
+  storage->EnsureSyncDictionaryExists();
+  UserDictionarySyncUtil::UserDictionary *dict =
+      GetFirstSyncableDictionary(storage);
+  CHECK(dict);
+  UserDictionarySyncUtil::UserDictionaryEntry *entry = dict->add_entries();
+  CHECK(entry);
+  entry->set_key(SyncUtil::GenRandomString(5));
+  entry->set_value(SyncUtil::GenRandomString(5));
+  entry->set_pos(UserDictionary::NOUN);
 }
 
 // Helper method to convert UserDictionaryStorage protobuf family into
@@ -254,6 +258,50 @@ void ConvertUserDictionaryStorageToUnknownFieldSet(
   }
 }
 
+ime_sync::SyncItems CreateUpdateSyncItem(
+    const UserDictionaryStorage &from,
+    const UserDictionaryStorage &to,
+    uint32 bucket_id,
+    SerializedPosType serialized_pos_type,
+    UserDictionarySyncUtil::UserDictionaryStorageBase *remote_update) {
+  ime_sync::SyncItems items;
+  ime_sync::SyncItem *item = items.Add();
+  item->set_component(ime_sync::MOZC_USER_DICTIONARY);
+
+  sync::UserDictionaryKey *key =
+      item->mutable_key()->MutableExtension(sync::UserDictionaryKey::ext);
+  sync::UserDictionaryValue *value =
+      item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
+
+  key->set_bucket_id(bucket_id);
+
+  // Obtain remote update.
+  UserDictionarySyncUtil::UserDictionaryStorageBase orig_remote_update;
+  if (bucket_id == 0) {
+    UserDictionarySyncUtil::CreateSnapshot(to, &orig_remote_update);
+  } else {
+    UserDictionarySyncUtil::CreateUpdate(from, to, &orig_remote_update);
+  }
+  UnknownFieldSet converted_remote_update;
+  ConvertUserDictionaryStorageToUnknownFieldSet(
+      orig_remote_update, serialized_pos_type, &converted_remote_update);
+  value->mutable_user_dictionary_storage()->ParseFromString(
+      SerializeUnknownFieldSetAsString(converted_remote_update));
+
+  if (remote_update != NULL) {
+    remote_update->CopyFrom(orig_remote_update);
+  }
+  return items;
+}
+
+ime_sync::SyncItems CreateSnapshotSyncItem(
+    const UserDictionaryStorage &storage,
+    SerializedPosType serialized_pos_type,
+    UserDictionarySyncUtil::UserDictionaryStorageBase *remote_update) {
+  return CreateUpdateSyncItem(storage, storage, 0, serialized_pos_type,
+                              remote_update);
+}
+
 }  // namespace
 
 // Local and remote updates makes 'prev_dict' storage exceed its limit.
@@ -265,19 +313,6 @@ TEST_F(UserDictionaryAdapterTest, TemporaryFileExceeds) {
   adapter.set_user_dictionary_filename(filename);
   FileUtil::Unlink(adapter.user_dictionary_filename());
   FileUtil::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
-
-  // Set up sync environment.
-  ime_sync::SyncItems items;
-  ime_sync::SyncItem *item = items.Add();
-  CHECK(item);
-  item->set_component(adapter.component_id());
-  sync::UserDictionaryKey *key =
-      item->mutable_key()->MutableExtension(sync::UserDictionaryKey::ext);
-  CHECK(key);
-  sync::UserDictionaryValue *value =
-      item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
-  CHECK(value);
-  key->set_bucket_id(0);
 
   // Create a user dictionary
   UserDictionaryStorage storage(adapter.user_dictionary_filename());
@@ -306,16 +341,15 @@ TEST_F(UserDictionaryAdapterTest, TemporaryFileExceeds) {
   UserDictionaryStorage remote("");
   remote.CopyFrom(storage);
   AddSyncEntry(&remote);
-  UserDictionarySyncUtil::UserDictionaryStorageBase *remote_update =
-      value->mutable_user_dictionary_storage();
-  CHECK(remote_update);
-  UserDictionarySyncUtil::CreateUpdate(storage, remote, remote_update);
+  UserDictionarySyncUtil::UserDictionaryStorageBase remote_update;
+  const ime_sync::SyncItems items =
+      CreateUpdateSyncItem(storage, remote, 10, NEW_ENUM_POS, &remote_update);
 
   // The number of entries in prev_storage must exceed its limit.
   EXPECT_TRUE(adapter.SetDownloadedItems(items));
 
   // Here emulate the coflicts resolve.
-  UserDictionarySyncUtil::MergeUpdate(*remote_update, &prev_storage);
+  UserDictionarySyncUtil::MergeUpdate(remote_update, &prev_storage);
   UserDictionarySyncUtil::MergeUpdate(local_update, &prev_storage);
 
   storage.Load();
@@ -404,6 +438,17 @@ TEST_F(UserDictionaryAdapterTest, RealScenarioTest) {
   }
 }
 
+TEST_F(UserDictionaryAdapterTest, LastDownloadTimestamp) {
+  UserDictionaryAdapter adapter;
+  EXPECT_TRUE(adapter.SetLastDownloadTimestamp(1234));
+  EXPECT_EQ(1234, adapter.GetLastDownloadTimestamp());
+
+  for (int i = 0; i < 100; ++i) {
+    EXPECT_TRUE(adapter.SetLastDownloadTimestamp(i));
+    EXPECT_EQ(i, adapter.GetLastDownloadTimestamp());
+  }
+}
+
 class UserDictionaryAdapterMigrationTest
     : public UserDictionaryAdapterTest,
       public ::testing::WithParamInterface<SerializedPosType> {
@@ -426,39 +471,18 @@ TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItems) {
   EXPECT_TRUE(prev.Save());
   EXPECT_TRUE(prev.UnLock());
 
+  UserDictionaryStorage storage(adapter.user_dictionary_filename());
+  storage.CopyFrom(prev);
+  storage.add_dictionaries()->set_name("unsyncable");
+  EXPECT_TRUE(storage.Lock());  // keep Locking
+  EXPECT_TRUE(storage.Save());
+
   UserDictionaryStorage expected("");
   expected.CopyFrom(prev);
   AddSyncEntry(&expected);
 
-  UserDictionaryStorage storage(adapter.user_dictionary_filename());
-  storage.CopyFrom(prev);
-  EXPECT_TRUE(storage.Lock());  // keep Locking
-  EXPECT_TRUE(storage.Save());
-
-  ime_sync::SyncItems items;
-  ime_sync::SyncItem *item = items.Add();
-  CHECK(item);
-
-  item->set_component(adapter.component_id());
-
-  sync::UserDictionaryKey *key =
-      item->mutable_key()->MutableExtension(sync::UserDictionaryKey::ext);
-  sync::UserDictionaryValue *value =
-      item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
-  CHECK(key);
-  CHECK(value);
-
-  key->set_bucket_id(10);
-  {
-    // Obtain local update.
-    UserDictionarySyncUtil::UserDictionaryStorageBase remote_update;
-    UserDictionarySyncUtil::CreateUpdate(prev, expected, &remote_update);
-    UnknownFieldSet converted_remote_update;
-    ConvertUserDictionaryStorageToUnknownFieldSet(
-        remote_update, GetParam(), &converted_remote_update);
-    value->mutable_user_dictionary_storage()->ParseFromString(
-        SerializeUnknownFieldSetAsString(converted_remote_update));
-  }
+  const ime_sync::SyncItems items =
+      CreateUpdateSyncItem(prev, expected, 10, GetParam(), NULL);
 
   // storage is locked
   EXPECT_FALSE(adapter.SetDownloadedItems(items));
@@ -469,6 +493,8 @@ TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItems) {
   EXPECT_TRUE(adapter.SetDownloadedItems(items));
 
   storage.Load();
+  // storage has a unsyncable dictionary.
+  EXPECT_EQ(expected.dictionaries_size() + 1, storage.dictionaries_size());
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(expected, storage));
 
   FileUtil::Unlink(adapter.user_dictionary_filename());
@@ -500,30 +526,8 @@ TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItemsSnapshot) {
   EXPECT_TRUE(storage.Lock());  // keep Locking
   EXPECT_TRUE(storage.Save());
 
-  ime_sync::SyncItems items;
-  ime_sync::SyncItem *item = items.Add();
-  CHECK(item);
-
-  item->set_component(adapter.component_id());
-
-  sync::UserDictionaryKey *key =
-      item->mutable_key()->MutableExtension(sync::UserDictionaryKey::ext);
-  sync::UserDictionaryValue *value =
-      item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
-  CHECK(key);
-  CHECK(value);
-
-  key->set_bucket_id(0);
-  {
-    // Obtain remote update.
-    UserDictionarySyncUtil::UserDictionaryStorageBase remote_update;
-    UserDictionarySyncUtil::CreateSnapshot(expected, &remote_update);
-    UnknownFieldSet converted_remote_update;
-    ConvertUserDictionaryStorageToUnknownFieldSet(
-        remote_update, GetParam(), &converted_remote_update);
-    value->mutable_user_dictionary_storage()->ParseFromString(
-        SerializeUnknownFieldSetAsString(converted_remote_update));
-  }
+  const ime_sync::SyncItems items =
+      CreateSnapshotSyncItem(expected, GetParam(), NULL);
 
   // storage is locked
   EXPECT_FALSE(adapter.SetDownloadedItems(items));
@@ -572,31 +576,9 @@ TEST_P(UserDictionaryAdapterMigrationTest, SetDownloadedItemsConflicts) {
   remote.CopyFrom(seed);
   AddSyncEntry(&remote);
 
-  ime_sync::SyncItems items;
-  ime_sync::SyncItem *item = items.Add();
-  CHECK(item);
-
-  item->set_component(adapter.component_id());
-
-  sync::UserDictionaryKey *key =
-      item->mutable_key()->MutableExtension(sync::UserDictionaryKey::ext);
-  sync::UserDictionaryValue *value =
-      item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
-  CHECK(key);
-  CHECK(value);
-
-  key->set_bucket_id(0);
-
   UserDictionarySyncUtil::UserDictionaryStorageBase remote_update;
-  {
-    // Obtain remote update.
-    UserDictionarySyncUtil::CreateUpdate(seed, remote, &remote_update);
-    UnknownFieldSet converted_remote_update;
-    ConvertUserDictionaryStorageToUnknownFieldSet(
-        remote_update, GetParam(), &converted_remote_update);
-    value->mutable_user_dictionary_storage()->ParseFromString(
-        SerializeUnknownFieldSetAsString(converted_remote_update));
-  }
+  const ime_sync::SyncItems items =
+      CreateUpdateSyncItem(seed, remote, 10, GetParam(), &remote_update);
 
   // storage is locked
   EXPECT_FALSE(adapter.SetDownloadedItems(items));
@@ -874,14 +856,11 @@ TEST_P(UserDictionaryAdapterMigrationTest, GetItemsToUploadSnapShot) {
   }
 
   // add more than 1024 diffs in a sync dictionary.
-  for (int i = 0; i < storage.dictionaries_size(); ++i) {
+  {
     UserDictionarySyncUtil::UserDictionary *dict =
-        storage.mutable_dictionaries(i);
-    if (dict->syncable()) {
-      for (int j = 0; j < 1500; ++j) {
-        dict->add_entries();
-      }
-      break;
+        GetFirstSyncableDictionary(&storage);
+    for (int i = 0; i < 1500; ++i) {
+      dict->add_entries();
     }
   }
 

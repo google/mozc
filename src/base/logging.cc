@@ -50,12 +50,12 @@
 #endif  // OS_ANDROID
 #include <string>
 
-#include "base/base.h"
 #ifdef OS_ANDROID
 #include "base/const.h"
 #endif  // OS_ANDROID
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/system_util.h"

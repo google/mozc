@@ -81,12 +81,10 @@ class ConfigDialog : public QDialog,
   virtual void EditUserDictionary();
   virtual void EditKeymap();
   virtual void EditRomanTable();
-  virtual void EditInforlistConfig();
   virtual void ResetToDefaults();
   virtual void SelectInputModeSetting(int index);
   virtual void SelectAutoConversionSetting(int state);
   virtual void SelectSuggestionSetting(int state);
-  virtual void SelectWebUsageDictionarySetting(bool checked);
   virtual void LaunchAdministrationDialog();
   virtual void SyncToggleButtonClicked();
   virtual void LaunchSyncCustomizationDialog();

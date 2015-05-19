@@ -30,20 +30,10 @@
 #ifndef MOZC_BASE_TIMER_H_
 #define MOZC_BASE_TIMER_H_
 
-#ifdef OS_WIN
-#include <windows.h>  // for HANDLE
-#endif  // OS_WIN
-
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 
 namespace mozc {
-
-#ifndef OS_WIN
-class Mutex;
-class Thread;
-class UnnamedEvent;
-#endif  // !OS_WIN
 
 class Timer {
  public:
@@ -69,33 +59,26 @@ class Timer {
   // Timer() call Stop() internally, so it is blocking
   virtual ~Timer();
 
-#ifndef OS_WIN
   void TimerCallback();
-#endif  // !OS_WIN
 
  protected:
-  // overwrite this function to implement
-  // signal handler.
-  virtual void Signaled() = 0;
+  // overwrite this function to implement signal handler.
+  // Caveat: Even if you overrides this methods, the timer stop calling back
+  // the overridden version once the object destruction reached to
+  // Timer::~Timer(). This is because the callback is internally implemented
+  // as |this->Signaled()| but the vtable dynamically changes during
+  // object construction and destruction. This also means you cannot make
+  // this method pure-virtual, because this method can be called back when
+  // the main thread is running inside Timer::~Timer()
+  // TODO(yukawa): Switch to more robust design.
+  virtual void Signaled();
 
  private:
-#ifdef OS_WIN
-  // Covert: ScopedHandle cannot be used for them as they cannot be closed by
-  //     ::CloseHandle API.
-  HANDLE timer_queue_;
-  HANDLE timer_handle_;
-  bool one_shot_;
-#else
-  scoped_ptr<Mutex> mutex_;
-  scoped_ptr<UnnamedEvent> event_;
-  scoped_ptr<Thread> timer_thread_;
-#endif
-
+  class TimerThread;
+  scoped_ptr<TimerThread> timer_thread_;
   uint32 num_signaled_;
 
-#ifdef OS_WIN
-  static void CALLBACK TimerCallback(void *ptr, BOOLEAN timer_or_wait);
-#endif  // OS_WIN
+  DISALLOW_COPY_AND_ASSIGN(Timer);
 };
 
 }  // namespace mozc

@@ -29,10 +29,10 @@
 
 #include "data_manager/data_manager_test_base.h"
 
+#include <cstring>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/hash_tables.h"
@@ -43,37 +43,22 @@
 #include "converter/node.h"
 #include "converter/segmenter_base.h"
 #include "converter/segmenter_interface.h"
+#include "data_manager/connection_file_reader.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
+#include "rewriter/counter_suffix.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_srcdir);
 
 namespace mozc {
-
 namespace {
+
 
 // Get actual file path for testing
 string GetFilePath(const string &path) {
   return FileUtil::JoinPath(FLAGS_test_srcdir, path);
-}
-
-bool ParseLineOfConnectionTxt(
-    const string &line, uint16 *rid, uint16 *lid, int *cost) {
-  DCHECK(rid);
-  DCHECK(lid);
-  DCHECK(cost);
-  vector<string> tokens;
-  Util::SplitStringUsing(line, " ", &tokens);
-  if (tokens.size() != 3) {
-    return false;
-  }
-
-  *rid = atoi32(tokens[0].c_str());
-  *lid = atoi32(tokens[1].c_str());
-  *cost = atoi32(tokens[2].c_str());
-  return true;
 }
 
 }  // namespace
@@ -185,28 +170,23 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
 }
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
-  InputFileStream ifs(GetFilePath(connection_txt_file_).c_str());
-  ASSERT_TRUE(ifs != NULL);
-  string header_line;
-  EXPECT_TRUE(getline(ifs, header_line));
-
   scoped_ptr<const ConnectorInterface> connector(
       ConnectorBase::CreateFromDataManager(*data_manager_));
   ASSERT_TRUE(connector.get() != NULL);
 
   EXPECT_EQ(expected_resolution_, connector->GetResolution());
-
-  string line;
-  while (getline(ifs, line)) {
-    uint16 rid = 0, lid = 0;
-    int cost = -1;
-    // connection data have several millions of entries
+  for (ConnectionFileReader reader(GetFilePath(connection_txt_file_));
+       !reader.done(); reader.Next()) {
+    // Randomly sample test entries because connection data have several
+    // millions of entries.
     if (Util::Random(100000) != 0) {
       continue;
     }
-    EXPECT_TRUE(ParseLineOfConnectionTxt(line, &rid, &lid, &cost));
+    const int cost = reader.cost();
     EXPECT_GE(cost, 0);
-    const int actual_cost = connector->GetTransitionCost(rid, lid);
+    const int actual_cost =
+        connector->GetTransitionCost(reader.rid_of_left_node(),
+                                     reader.lid_of_right_node());
     if (cost == ConnectorInterface::kInvalidCost) {
       EXPECT_EQ(cost, actual_cost);
     } else {
@@ -293,6 +273,24 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   EXPECT_LT(error_ratio, kErrorRatio);
 }
 
+void DataManagerTestBase::CounterSuffixTest_ValidateTest() {
+  const CounterSuffixEntry *suffix_array = nullptr;
+  size_t size = 0;
+  data_manager_->GetCounterSuffixSortedArray(&suffix_array, &size);
+
+  const char *prev_suffix = "";  // The smallest string.
+  for (size_t i = 0; i < size; ++i) {
+    const CounterSuffixEntry &entry = suffix_array[i];
+
+    // |entry.size| must be the length of |entry.suffix|.
+    EXPECT_EQ(entry.size, strlen(entry.suffix));
+
+    // Check if the array is sorted in ascending order of suffix string.
+    EXPECT_GE(0, strcmp(prev_suffix, entry.suffix));
+    prev_suffix = entry.suffix;
+  }
+}
+
 void DataManagerTestBase::RunAllTests() {
   ConnectorTest_RandomValueCheck();
   SegmenterTest_LNodeTest();
@@ -301,6 +299,7 @@ void DataManagerTestBase::RunAllTests() {
   SegmenterTest_RNodeTest();
   SegmenterTest_SameAsInternal();
   SuggestionFilterTest_IsBadSuggestion();
+  CounterSuffixTest_ValidateTest();
 }
 
 }  // namespace mozc

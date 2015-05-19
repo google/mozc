@@ -31,7 +31,6 @@
 
 #include "renderer/window_util.h"
 
-#include "base/base.h"
 #include "base/coordinates.h"
 #include "testing/base/public/gunit.h"
 
@@ -253,5 +252,6 @@ TEST_F(WindowUtilTest, MonitorErrors) {
   EXPECT_EQ(70, result.Left());
   EXPECT_EQ(32, result.Top());
 }
-}  // namespace mozc::renderer
+
+}  // namespace renderer
 }  // namespace mozc

@@ -325,12 +325,6 @@ class SessionConverter : public SessionConverterInterface {
 
   bool IsEmptySegment(const Segment &segment) const;
 
-  // Propagates config proto to |output|.
-  // Renderer might need to refer mozc config saved in |output|.
-  // In order to reduce IPC latency, we only propagate config only
-  // when it is really required.
-  void PropagateConfigToRenderer(commands::Output *output) const;
-
   // Handles selected_indices for usage stats.
   void InitializeSelectedCandidateIndices();
   void UpdateSelectedCandidateIndex();

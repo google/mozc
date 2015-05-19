@@ -52,11 +52,6 @@ class Win32RendererClient {
   static void OnModuleLoaded(HMODULE module_handle);
   // Must be called when the DLL is unloaded.
   static void OnModuleUnloaded();
-  // A utility function to ensure that the required initialization is finished.
-  // OnUpdated calls this method actually so you need not to call this method.
-  // Returns true when the required initialization is finished successfully.
-  // Otherwise returns false.
-  static bool EnsureUIThreadInitialized();
   // Must be called when a UI thread is about to be shut down.
   static void OnUIThreadUninitialized();
   // Passes the |command| to the renderer. This function returns

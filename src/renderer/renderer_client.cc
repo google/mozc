@@ -274,11 +274,10 @@ class RendererLauncher : public RendererLauncherInterface,
     scoped_lock l(&pending_command_mutex_);
     if (ipc_client_factory_interface_ != NULL &&
         pending_command_.get() != NULL) {
-      scoped_ptr<IPCClientInterface> client(
-          ipc_client_factory_interface_->
-          NewClient(name_,
-                    disable_renderer_path_check_ ? "" : path_));
-      CallCommand(client.get(), *(pending_command_.get()));
+      scoped_ptr<IPCClientInterface> client(CreateIPCClient());
+      if (client.get() != NULL) {
+        CallCommand(client.get(), *(pending_command_.get()));
+      }
     }
     pending_command_.reset(NULL);
 
@@ -287,6 +286,16 @@ class RendererLauncher : public RendererLauncherInterface,
     // RendererClint checks the status AGAIN after SetPendingCommand.
     renderer_status_ = RendererLauncher::RENDERER_READY;
     error_times_ = 0;
+  }
+
+  IPCClientInterface *CreateIPCClient() const {
+    if (ipc_client_factory_interface_ == NULL) {
+      return NULL;
+    }
+    if (disable_renderer_path_check_) {
+      return ipc_client_factory_interface_->NewClient(name_, "");
+    }
+    return ipc_client_factory_interface_->NewClient(name_, path_);
   }
 
   string name_;
@@ -358,10 +367,7 @@ bool RendererClient::IsAvailable() const {
 }
 
 bool RendererClient::Shutdown(bool force) {
-  scoped_ptr<IPCClientInterface> client(
-      ipc_client_factory_interface_->
-      NewClient(name_,
-                disable_renderer_path_check_ ? "" : renderer_path_));
+  scoped_ptr<IPCClientInterface> client(CreateIPCClient());
 
   if (client.get() == NULL) {
     LOG(ERROR) << "Cannot make client object";
@@ -428,10 +434,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
 
   VLOG(2) << "Sending: " << command.DebugString();
 
-  scoped_ptr<IPCClientInterface> client(
-      ipc_client_factory_interface_->
-      NewClient(name_,
-                disable_renderer_path_check_ ? "" : renderer_path_));
+  scoped_ptr<IPCClientInterface> client(CreateIPCClient());
 
   // In case IPCClient::Init fails with timeout error, the last error should be
   // checked here.  See also b/3264926.
@@ -494,5 +497,16 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
 
   return true;
 }
+
+IPCClientInterface *RendererClient::CreateIPCClient() const {
+  if (ipc_client_factory_interface_ == NULL) {
+    return NULL;
+  }
+  if (disable_renderer_path_check_) {
+    return ipc_client_factory_interface_->NewClient(name_, "");
+  }
+  return ipc_client_factory_interface_->NewClient(name_, renderer_path_);
+}
+
 }  // namespace renderer
 }  // namespace mozc

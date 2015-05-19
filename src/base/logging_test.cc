@@ -27,13 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <sstream>
 #include "base/logging.h"
 
-#include "base/base.h"
+#include <sstream>
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace {
+
 TEST(LoggingTest, CompileTest) {
   if (false) {
     LOG(INFO) << "";
@@ -212,4 +214,6 @@ TEST(LoggingTest, RightHandSideEvaluation) {
 
   EXPECT_EQ(0, g_counter);
 }
+
+}  // namespace
 }  // namespace mozc

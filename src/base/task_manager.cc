@@ -31,7 +31,6 @@
 
 #include <map>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/stl_util.h"

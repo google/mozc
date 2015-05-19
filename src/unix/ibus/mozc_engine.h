@@ -30,10 +30,11 @@
 #ifndef MOZC_UNIX_IBUS_MOZC_ENGINE_H_
 #define MOZC_UNIX_IBUS_MOZC_ENGINE_H_
 
+#include <memory>
 #include <set>
 #include <vector>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit_prod.h"
 #include "unix/ibus/engine_interface.h"
@@ -99,6 +100,9 @@ class MozcEngine : public EngineInterface {
                          gint y,
                          gint w,
                          gint h);
+  void SetContentType(IBusEngine *engine,
+                      guint purpose,
+                      guint hints);
 
   // Returns the GType which this class represents.
   static GType GetType();
@@ -158,18 +162,20 @@ class MozcEngine : public EngineInterface {
       IBusEngine *engine);
 
   uint64 last_sync_time_;
-  scoped_ptr<KeyEventHandler> key_event_handler_;
-  scoped_ptr<client::ClientInterface> client_;
+  std::unique_ptr<KeyEventHandler> key_event_handler_;
+  std::unique_ptr<client::ClientInterface> client_;
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
-  scoped_ptr<SelectionMonitorInterface> selection_monitor_;
+  std::unique_ptr<SelectionMonitorInterface> selection_monitor_;
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
-  scoped_ptr<PropertyHandlerInterface> property_handler_;
-  scoped_ptr<PreeditHandlerInterface> preedit_handler_;
+  std::unique_ptr<PropertyHandlerInterface> property_handler_;
+  std::unique_ptr<PreeditHandlerInterface> preedit_handler_;
 
   // TODO(nona): Introduce CandidateWindowHandlerManager to avoid direct access.
-  scoped_ptr<CandidateWindowHandlerInterface> gtk_candidate_window_handler_;
-  scoped_ptr<CandidateWindowHandlerInterface> ibus_candidate_window_handler_;
+  std::unique_ptr<CandidateWindowHandlerInterface>
+      gtk_candidate_window_handler_;
+  std::unique_ptr<CandidateWindowHandlerInterface>
+      ibus_candidate_window_handler_;
   config::Config::PreeditMethod preedit_method_;
 
   // Unique IDs of candidates that are currently shown.

@@ -32,14 +32,14 @@
 #include <set>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/stl_util.h"
 #include "base/thread.h"
 #include "testing/base/public/gunit.h"
 
-using mozc::TaskToken;
-using mozc::ThreadSafeTaskTokenManager;
+namespace mozc {
+namespace {
 
 TEST(TaskToken, TaskTokenTest) {
   EXPECT_TRUE(TaskToken(0) == TaskToken(0));
@@ -132,11 +132,10 @@ TEST(ThreadSafeTaskTokenManager, LargeTest) {
   EXPECT_EQ(kNumTokens, token_set.size());
 }
 
-namespace {
-static const int kNumThreads = 10;
-static const int kNumTokensPerThread = 10000;
+const int kNumThreads = 10;
+const int kNumTokensPerThread = 10000;
 
-class TokenConsumer : public mozc::Thread {
+class TokenConsumer : public Thread {
  public:
   explicit TokenConsumer(ThreadSafeTaskTokenManager *token_manager)
       : token_manager_(token_manager) {}
@@ -156,8 +155,6 @@ class TokenConsumer : public mozc::Thread {
   DISALLOW_COPY_AND_ASSIGN(TokenConsumer);
 };
 
-}  // namespace
-
 TEST(ThreadSafeTaskTokenManager, MultiThreadTest) {
   ThreadSafeTaskTokenManager token_manager;
   vector<TokenConsumer*> consumers(kNumThreads);
@@ -173,11 +170,14 @@ TEST(ThreadSafeTaskTokenManager, MultiThreadTest) {
 
   set<TaskToken> token_set;
   for (size_t i = 0; i < kNumThreads; ++i) {
-    for (set<TaskToken>::const_iterator it = consumers[i]->token_set().begin();
+    for (auto it = consumers[i]->token_set().begin();
          it != consumers[i]->token_set().end(); ++it) {
       token_set.insert(*it);
     }
   }
   EXPECT_EQ(kNumTokensPerThread * kNumThreads, token_set.size());
-  mozc::STLDeleteElements(&consumers);
+  STLDeleteElements(&consumers);
 }
+
+}  // namespace
+}  // namespace mozc

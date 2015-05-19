@@ -28,19 +28,35 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
-  'variables': {
-    'relative_dir': 'net',
-  },
   'targets': [
     {
       'target_name': 'jsoncpp',
-      'type': 'none',
+      'type': 'static_library',
+      'variables': {
+        'jsoncpp_root': '<(third_party_dir)/jsoncpp',
+        'jsoncpp_srcs': [
+          '<(jsoncpp_root)/src/lib_json/json_reader.cpp',
+          '<(jsoncpp_root)/src/lib_json/json_value.cpp',
+          '<(jsoncpp_root)/src/lib_json/json_writer.cpp',
+        ],
+        'jsoncpp_include_dirs': ['<(jsoncpp_root)/include'],
+        'jsoncpp_additional_macros': ['JSON_USE_EXCEPTION=0'],
+      },
+      'defines': [
+        '<@(jsoncpp_additional_macros)',
+      ],
       'sources': [
+        '<@(jsoncpp_srcs)',
         'jsoncpp.h',
       ],
-      'dependencies': [
-        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp_do_not_directly_use',
+      'include_dirs': [
+        '<@(jsoncpp_include_dirs)',
       ],
+      'all_dependent_settings': {
+        'defines': [
+          '<@(jsoncpp_additional_macros)',
+        ],
+      },
     },
   ],
 }

@@ -62,7 +62,6 @@
         '<(RULE_INPUT_PATH)',
       ],
       'message': 'Generatinc moc files from <(RULE_INPUT_PATH)',
-      'msvs_cygwin_shell': 0,
     },
   ],
 

@@ -252,7 +252,6 @@ BOOL OnDllProcessAttach(HINSTANCE instance, bool static_loading) {
       &g_critical_section_for_breakpad);
 #endif  // USE_BREAKPAD
 
-  ATOM atom = INVALID_ATOM;
   if (!UIWindowManager::OnDllProcessAttach(instance, static_loading)) {
     return FALSE;
   }

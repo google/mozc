@@ -32,9 +32,10 @@
 
 #include <gtk/gtk.h>
 
+#include <memory>
+
 #include "base/coordinates.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "renderer/unix/gtk_window_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 
@@ -100,7 +101,7 @@ class GtkWindowBase : public GtkWindowInterface {
   MOZC_GTK_VIRTUAL_CALLBACK_1(GtkWindowBase, gboolean, OnMouseUp,
                               GdkEventButton *)
 
-  scoped_ptr<GtkWrapperInterface> gtk_;
+  std::unique_ptr<GtkWrapperInterface> gtk_;
 
  protected:
   client::SendCommandInterface *send_command_interface_;

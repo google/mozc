@@ -31,10 +31,9 @@
 #define MOZC_SYNC_SYNCER_H_
 
 #include <map>
-#include "base/base.h"
-// for FRIEND_TEST()
+
+#include "base/port.h"
 #include "sync/syncer_interface.h"
-#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace sync {
@@ -45,9 +44,11 @@ class ServiceInterface;
 // Adapter, dispatching adapters request to service.
 class Syncer : public SyncerInterface {
  public:
+  // This class doesn't take an ownership of *service.
   explicit Syncer(ServiceInterface *service);
   virtual ~Syncer();
 
+  // This class doesn't take an ownership of *adapter.
   bool RegisterAdapter(AdapterInterface *adapter);
 
   virtual bool Start();
@@ -56,24 +57,23 @@ class Syncer : public SyncerInterface {
 
   virtual bool Clear();
 
+  // Clear local information around the work of sync.
+  // Synced information is kept as it is.
   virtual bool ClearLocal();
 
+ protected:
+  virtual bool Download(uint64 *download_timestamp, bool *reload_required);
+  virtual bool Upload();
+
+  virtual uint64 GetLastDownloadTimestamp() const;
+  virtual void SetLastDownloadTimestamp(uint64 value);
+
  private:
-  FRIEND_TEST(SyncerTest, Timestamp);
-  FRIEND_TEST(SyncerTest, Clear);
-  FRIEND_TEST(SyncerTest, Download);
-  FRIEND_TEST(SyncerTest, Upload);
-  FRIEND_TEST(SyncerTest, CheckConfig);
-
-  bool Download(bool *reload_required);
-  bool Upload();
-
-  uint64 GetLastDownloadTimestamp() const;
-  void SetLastDownloadTimestamp(uint64 value);
-
   typedef map<uint32, AdapterInterface*> AdapterMap;
   ServiceInterface *service_;
   AdapterMap adapters_;
+
+  DISALLOW_COPY_AND_ASSIGN(Syncer);
 };
 }  // namespace sync
 }  // namespace mozc

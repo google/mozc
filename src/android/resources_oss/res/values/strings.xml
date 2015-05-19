@@ -175,7 +175,7 @@
     <string name="pref_haptic_feedback_duration_high_text">Long</string>
 
     <string name="pref_sound_feedback_volume_low_text">Min</string>
-    <string name="pref_sound_feedback_volume_mid_text">Mid</string>
+    <string name="pref_sound_feedback_volume_middle_text">Mid</string>
     <string name="pref_sound_feedback_volume_high_text">Max</string>
 
 

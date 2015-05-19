@@ -624,20 +624,6 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
-        <widget class="QCheckBox" name="webUsageDictionaryCheckBox">
-         <property name="text">
-          <string>Web extention</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QPushButton" name="editWebServiceEntryButton">
-         <property name="text">
-          <string>Customize...</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="1">
         <spacer name="horizontalSpacer_5">
          <property name="orientation">
@@ -1988,8 +1974,6 @@
   <tabstop>clearUserHistoryButton</tabstop>
   <tabstop>editUserDictionaryButton</tabstop>
   <tabstop>localUsageDictionaryCheckBox</tabstop>
-  <tabstop>webUsageDictionaryCheckBox</tabstop>
-  <tabstop>editWebServiceEntryButton</tabstop>
   <tabstop>singleKanjiConversionCheckBox</tabstop>
   <tabstop>symbolConversionCheckBox</tabstop>
   <tabstop>emoticonConversionCheckBox</tabstop>

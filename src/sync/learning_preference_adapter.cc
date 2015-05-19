@@ -33,8 +33,8 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "rewriter/user_boundary_history_rewriter.h"
@@ -51,7 +51,27 @@ const uint32 kBucketSize = 512;
 const uint32 kMaxEntriesSize = 128;
 const char kLastDownloadTimestampKey[] =
     "sync.learning_preference_last_download_time";
-}  // anonymous namespace
+const char kLastAccessTimestampKey[] =
+    "sync.learning_preference_last_access_time";
+
+bool SetTimestamp(const string &key, uint64 timestamp) {
+  if (!mozc::storage::Registry::Insert(key, timestamp)) {
+    LOG(ERROR) << "cannot save: " << key << " " << timestamp;
+    return false;
+  }
+  return true;
+}
+
+uint64 GetTimestamp(const string &key) {
+  uint64 timestamp = 0;
+  if (!mozc::storage::Registry::Lookup(key, &timestamp)) {
+    LOG(ERROR) << "cannot read: " << key;
+    return static_cast<uint64>(0);
+  }
+  return timestamp;
+}
+
+}  // namespace
 
 LearningPreferenceAdapter::LearningPreferenceAdapter()
     : local_update_time_(0) {
@@ -72,17 +92,14 @@ LearningPreferenceAdapter::~LearningPreferenceAdapter() {}
 bool LearningPreferenceAdapter::Start() {
   local_update_.Clear();
 
-  const uint64 last_access_time = GetLastDownloadTimestamp();
+  const uint64 last_access_time = min(GetLastAccessTimestamp(),
+                                      GetLastDownloadTimestamp());
 
   local_update_time_ = Util::GetTime();
 
   for (size_t i = 0; i < GetStorageSize(); ++i) {
     const Storage &storage = GetStorage(i);
     DCHECK(storage.lru_storage);
-    if (storage.lru_storage == NULL) {
-      LOG(ERROR) << "storage: " << storage.type << " is NULL";
-      continue;
-    }
     // TODO(taku): since storage.lru_storage is managed by
     // UserHistorySegmentRewriter or UserBoundaryHistoryRewriter,
     // storages may become NULL or invalid if the ower of them
@@ -133,10 +150,7 @@ bool LearningPreferenceAdapter::SetDownloadedItems(
 
   for (size_t i = 0; i < GetStorageSize(); ++i) {
     const Storage &storage = GetStorage(i);
-    if (storage.lru_storage == NULL) {
-      LOG(ERROR) << "storage: " << storage.type << " is NULL";
-      continue;
-    }
+    DCHECK(storage.lru_storage);
     // make *.merge_pending file at this stage, as this logic
     // is executed outside of the main converter thread.
     // After sync finishes, the sync thread sends Reload commands
@@ -184,6 +198,11 @@ bool LearningPreferenceAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
       DCHECK(key);
       DCHECK(value);
       key->set_bucket_id(GetNextBucketId());
+      if (!item->IsInitialized()) {
+        LOG(ERROR) << "Upload item of LearningPreferenceAdapter is not"
+                   << " initialized correctly.";
+        return false;
+      }
     }
     DCHECK(value);
     value->mutable_learning_preference()->add_entries()->CopyFrom(
@@ -209,7 +228,7 @@ bool LearningPreferenceAdapter::MarkUploaded(
     return true;
   }
 
-  if (!SetLastDownloadTimestamp(local_update_time_)) {
+  if (!SetLastAccessTimestamp(local_update_time_)) {
     LOG(ERROR) << "Cannot set synced time";
     return false;
   }
@@ -220,6 +239,9 @@ bool LearningPreferenceAdapter::MarkUploaded(
 bool LearningPreferenceAdapter::Clear() {
   if (!mozc::storage::Registry::Erase(kLastDownloadTimestampKey)) {
     LOG(ERROR) << "cannot erase: " << kLastDownloadTimestampKey;
+  }
+  if (!mozc::storage::Registry::Erase(kLastAccessTimestampKey)) {
+    LOG(ERROR) << "cannot erase: " << kLastAccessTimestampKey;
   }
   return true;
 }
@@ -276,25 +298,21 @@ uint32 LearningPreferenceAdapter::GetNextBucketId() const {
 }
 
 bool LearningPreferenceAdapter::SetLastDownloadTimestamp(
-    uint64 last_download_time) {
-  if (!mozc::storage::Registry::Insert(kLastDownloadTimestampKey,
-                                       last_download_time) ||
-      !mozc::storage::Registry::Sync()) {
-    LOG(ERROR) << "cannot save: "
-               << kLastDownloadTimestampKey << " " << last_download_time;
-    return false;
-  }
-  return true;
+    uint64 last_download_timestamp) {
+  return SetTimestamp(kLastDownloadTimestampKey, last_download_timestamp);
 }
 
 uint64 LearningPreferenceAdapter::GetLastDownloadTimestamp() const {
-  uint64 last_download_time = 0;
-  if (!mozc::storage::Registry::Lookup(kLastDownloadTimestampKey,
-                                       &last_download_time)) {
-    LOG(ERROR) << "cannot read: " << kLastDownloadTimestampKey;
-    return static_cast<uint64>(0);
-  }
-  return last_download_time;
+  return GetTimestamp(kLastDownloadTimestampKey);
+}
+
+bool LearningPreferenceAdapter::SetLastAccessTimestamp(
+    uint64 last_access_timestamp) {
+  return SetTimestamp(kLastAccessTimestampKey, last_access_timestamp);
+}
+
+uint64 LearningPreferenceAdapter::GetLastAccessTimestamp() const {
+  return GetTimestamp(kLastAccessTimestampKey);
 }
 
 ime_sync::Component LearningPreferenceAdapter::component_id() const {

@@ -72,7 +72,6 @@
         }],
       ],
       'message': 'Generating UI header files from <(RULE_INPUT_PATH)',
-      'msvs_cygwin_shell': 0,
     },
   ],
 

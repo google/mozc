@@ -33,8 +33,8 @@
 #include <windows.h>
 #include <string>
 
-#include "base/base.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
 
@@ -74,8 +74,9 @@ class Win32Server : public RendererServer,
 
   DISALLOW_COPY_AND_ASSIGN(Win32Server);
 };
-}  // win32
-}  // renderer
-}  // mozc
+
+}  // namespace win32
+}  // namespace renderer
+}  // namespace mozc
 
 #endif  // MOZC_RENDERER_WIN32_WIN32_SERVER_H_

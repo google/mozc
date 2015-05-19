@@ -942,7 +942,6 @@ TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
   mozc::commands::Context context;
   [controller_ fillSurroundingContext:&context client:(id)mock_client_];
   EXPECT_EQ("ab", context.preceding_text());
-  EXPECT_EQ("de", context.following_text());
   EXPECT_EQ(1, [mock_client_ getCounter:"selectedRange"]);
   EXPECT_EQ(0, [mock_client_ getCounter:"markedRange"]);
 
@@ -953,14 +952,12 @@ TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
   mock_client_.expectedRange = NSMakeRange(1, 0);
   [controller_ fillSurroundingContext:&context client:(id)mock_client_];
   EXPECT_EQ("0", context.preceding_text());
-  EXPECT_EQ("12345678901234567890", context.following_text());
   EXPECT_EQ(2, [mock_client_ getCounter:"selectedRange"]);
   EXPECT_EQ(0, [mock_client_ getCounter:"markedRange"]);
 
   mock_client_.expectedRange = NSMakeRange(22, 1);
   [controller_ fillSurroundingContext:&context client:(id)mock_client_];
   EXPECT_EQ("2345678901234567890a", context.preceding_text());
-  EXPECT_EQ("cde", context.following_text());
   EXPECT_EQ(3, [mock_client_ getCounter:"selectedRange"]);
   EXPECT_EQ(0, [mock_client_ getCounter:"markedRange"]);
 
@@ -975,7 +972,6 @@ TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
   mock_client_.expectedRange = NSMakeRange(3, 3);
   [controller_ fillSurroundingContext:&context client:(id)mock_client_];
   EXPECT_EQ("012", context.preceding_text());
-  EXPECT_EQ("345", context.following_text());
-  EXPECT_EQ(3, [mock_client_ getCounter:"selectedRange"]);
-  EXPECT_EQ(1, [mock_client_ getCounter:"markedRange"]);
+  EXPECT_EQ(4, [mock_client_ getCounter:"selectedRange"]);
+  EXPECT_EQ(0, [mock_client_ getCounter:"markedRange"]);
 }

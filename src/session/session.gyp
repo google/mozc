@@ -37,7 +37,6 @@
       'target_name': 'session',
       'type': 'static_library',
       'sources': [
-        'japanese_session_factory.cc',
         'session.cc',
         'session_converter.cc',
       ],
@@ -77,16 +76,17 @@
       'target_name': 'session_handler',
       'type': 'static_library',
       'sources': [
-        'session_factory_manager.cc',
         'session_handler.cc',
         'session_observer_handler.cc',
         'session_watch_dog.cc',
       ],
       'dependencies': [
         '../client/client.gyp:client',
+        '../engine/engine.gyp:engine_factory',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         'session_base.gyp:generic_storage_manager',
         'session_base.gyp:session_protocol',

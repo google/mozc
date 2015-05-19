@@ -202,7 +202,6 @@ class ClientInterface {
 
   // TODO(team): Add method descriptions.
   virtual bool StartCloudSync() = 0;
-  virtual bool ClearCloudSync() = 0;
   virtual bool GetCloudSyncStatus(
       commands::CloudSyncStatus *cloud_sync_status) = 0;
   virtual bool AddAuthCode(

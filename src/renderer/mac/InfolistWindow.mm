@@ -32,7 +32,6 @@
 
 #import "InfolistView.h"
 
-#include "base/base.h"
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "client/client_interface.h"

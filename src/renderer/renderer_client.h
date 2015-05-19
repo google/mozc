@@ -38,6 +38,7 @@
 namespace mozc {
 
 class IPCClientFactoryInterface;
+class IPCClientInterface;
 
 namespace renderer {
 
@@ -123,6 +124,8 @@ class RendererClient : public RendererInterface {
   void set_suppress_error_dialog(bool suppress);
 
  private:
+  IPCClientInterface *CreateIPCClient() const;
+
   bool is_window_visible_;
   bool disable_renderer_path_check_;
   int  version_mismatch_nums_;

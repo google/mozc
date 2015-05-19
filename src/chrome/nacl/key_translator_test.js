@@ -289,10 +289,9 @@ function testBackQuoteKey_US() {
 
 function testBackQuoteKey_JP() {
   setKeyboardLayout('jp');
-  assertObjectEquals({special_key: 'HANKAKU'}, keyDown('BackQuote', ''));
+  assertObjectEquals({}, keyDown('BackQuote', ''));
   assertObjectEquals({}, keyDown('ShiftLeft', 'Shift'));
-  assertObjectEquals({special_key: 'HANKAKU', modifier_keys: ['SHIFT']},
-                     keyDown('BackQuote', ''));
+  assertObjectEquals({modifier_keys: ['SHIFT']}, keyDown('BackQuote', ''));
 }
 
 function testBackQuoteKey_US_KANA() {
@@ -313,8 +312,7 @@ function testBackQuoteKey_US_KANA() {
 function testBackQuoteKey_JP_KANA() {
   setKanaMode(true);
   setKeyboardLayout('jp');
-  assertObjectEquals({special_key: 'HANKAKU'}, keyDown('BackQuote', ''));
+  assertObjectEquals({}, keyDown('BackQuote', ''));
   assertObjectEquals({}, keyDown('ShiftLeft', 'Shift'));
-  assertObjectEquals({special_key: 'HANKAKU', modifier_keys: ['SHIFT']},
-                     keyDown('BackQuote', ''));
+  assertObjectEquals({modifier_keys: ['SHIFT']}, keyDown('BackQuote', ''));
 }

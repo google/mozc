@@ -56,26 +56,13 @@
     # Android SDK
     'sdk_gen_dir': 'gen',
     'sdk_protobuf_gen_dir': 'protobuf/gen',
+    'genproto_java_common': [
+      'python', '../build_tools/protoc_wrapper.py',
+      '--project_root=<(DEPTH)',
+      '--protoc_command=protoc<(EXECUTABLE_SUFFIX)',
+      '--protoc_dir=<(mozc_build_tools_dir)',
+    ],
   },
-  'conditions': [
-    ['OS!="linux"', {
-      'variables': {
-        'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
-      },
-    }, {
-      'conditions': [
-        ['use_libprotobuf==0', {
-          'variables': {
-            'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
-          },
-        }, {
-          'variables': {
-            'protoc_command%': 'protoc<(EXECUTABLE_SUFFIX)',
-          },
-        }],
-      ],
-    }],
-  ],
   'targets': [
     {
       'target_name': 'sdk_genproto_java',
@@ -114,23 +101,16 @@
         {
           'action_name': 'genproto_descriptor',
           'inputs': [
-            '../protobuf/files/src/google/protobuf/descriptor.proto',
+            '<(protobuf_root)/src/google/protobuf/descriptor.proto',
           ],
           'outputs': [
             '<(adt_protobuf_gen_dir)/com/google/protobuf/DescriptorProtos.java',
           ],
           'action': [
-            'python', '../build_tools/run_after_chdir.py',
-            '<(DEPTH)',
-            '<(protoc_command)',
-            '--java_out=<(relative_dir)/<(adt_protobuf_gen_dir)',
-            # Make a list of inputs replacing /^\.\.\// with ''.
-            '<!@(<(python_executable)'
-            ' -c "import re, sys;'
-            ' print \\" \\".join('
-              '[re.sub(r\\"^\\\\.\\\\./\\", \\"\\", i)'
-              ' for i in sys.argv[1:]])"'
-            ' <(_inputs))',
+            '<@(genproto_java_common)',
+            '--proto=<(_inputs)',
+            '--proto_path=<(protobuf_root)',
+            '--java_out=<(DEPTH)/<(relative_dir)/<(adt_protobuf_gen_dir)',
           ],
         },
       ],
@@ -158,17 +138,9 @@
             '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoConfig.java',
           ],
           'action': [
-            'python', '../build_tools/run_after_chdir.py',
-            '<(DEPTH)',
-            '<(protoc_command)',
-            '--java_out=<(relative_dir)/<(adt_gen_dir)',
-            # Make a list of inputs replacing /^\.\.\// with ''.
-            '<!@(<(python_executable)'
-            ' -c "import re, sys;'
-            ' print \\" \\".join('
-              '[re.sub(r\\"^\\\\.\\\\./\\", \\"\\", i)'
-              ' for i in sys.argv[1:]])"'
-            ' <(_inputs))',
+            '<@(genproto_java_common)',
+            '--proto=<(_inputs)',
+            '--java_out=<(DEPTH)/<(relative_dir)/<(adt_gen_dir)',
           ],
         },
       ],
@@ -196,17 +168,9 @@
             '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoUserDictionaryStorage.java',
           ],
           'action': [
-            'python', '../build_tools/run_after_chdir.py',
-            '<(DEPTH)',
-            '<(protoc_command)',
-            '--java_out=<(relative_dir)/<(adt_gen_dir)',
-            # Make a list of inputs replacing /^\.\.\// with ''.
-            '<!@(<(python_executable)'
-            ' -c "import re, sys;'
-            ' print \\" \\".join('
-              '[re.sub(r\\"^\\\\.\\\\./\\", \\"\\", i)'
-              ' for i in sys.argv[1:]])"'
-            ' <(_inputs))',
+            '<@(genproto_java_common)',
+            '--proto=<(_inputs)',
+            '--java_out=<(DEPTH)/<(relative_dir)/<(adt_gen_dir)',
           ],
         },
       ],
@@ -237,17 +201,9 @@
             '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoCommands.java',
           ],
           'action': [
-            'python', '../build_tools/run_after_chdir.py',
-            '<(DEPTH)',
-            '<(protoc_command)',
-            '--java_out=<(relative_dir)/<(adt_gen_dir)',
-            # Make a list of inputs replacing /^\.\.\// with ''.
-            '<!@(<(python_executable)'
-            ' -c "import re, sys;'
-            ' print \\" \\".join('
-              '[re.sub(r\\"^\\\\.\\\\./\\", \\"\\", i)'
-              ' for i in sys.argv[1:]])"'
-            ' <(_inputs))',
+            '<@(genproto_java_common)',
+            '--proto=<(_inputs)',
+            '--java_out=<(DEPTH)/<(relative_dir)/<(adt_gen_dir)',
           ],
         },
       ],

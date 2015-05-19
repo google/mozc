@@ -37,12 +37,16 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 
 /**
@@ -148,6 +152,7 @@ public class ApplicationInitializerFactory {
                                        boolean isWelcomeActivityPreferred,
                                        int abiIndependentVersionCode) {
       SharedPreferences.Editor editor = sharedPreferences.edit();
+      Resources resources = context.getResources();
       try {
         Optional<Integer> lastVersionCode;
         boolean isActivityShown;
@@ -163,7 +168,6 @@ public class ApplicationInitializerFactory {
         // Preferences: Update if this is the first launch
         if (!lastVersionCode.isPresent()) {
           // Store full-screen relating preferences.
-          Resources resources = context.getResources();
           storeDefaultFullscreenMode(
               sharedPreferences,
               getPortraitDisplayMetrics(resources.getDisplayMetrics(),
@@ -178,8 +182,8 @@ public class ApplicationInitializerFactory {
               sharedPreferences, telephonyManager);
         }
 
-        // Usage Stats: Make pref_other_usage_stats_key enabled when dev channel.
         if (isDevChannel) {
+          // Usage Stats: Make pref_other_usage_stats_key enabled when dev channel.
           editor.putBoolean(PreferenceUtil.PREF_OTHER_USAGE_STATS_KEY, true);
         }
 

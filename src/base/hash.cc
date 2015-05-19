@@ -30,15 +30,14 @@
 #include <string.h>
 #include <string>
 #include "base/util.h"
-#include "base/base.h"
-
-namespace {
-static const uint32 kFingerPrint32Seed = 0xfd12deff;
-static const uint32 kFingerPrintSeed0 = 0x6d6f;
-static const uint32 kFingerPrintSeed1 = 0x7a63;
-}
 
 namespace mozc {
+namespace {
+const uint32 kFingerPrint32Seed = 0xfd12deff;
+const uint32 kFingerPrintSeed0 = 0x6d6f;
+const uint32 kFingerPrintSeed1 = 0x7a63;
+}  // namespace
+
 #define mix(a,b,c) { \
   a -= b; a -= c; a ^= (c >> 13); \
   b -= c; b -= a; b ^= (a << 8); \
@@ -164,4 +163,5 @@ uint64 Util::FingerprintWithSeed(const char *str, size_t length, uint32 seed) {
   }
   return result;
 }
+
 }  // namespace mozc

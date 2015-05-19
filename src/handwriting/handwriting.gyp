@@ -40,7 +40,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../gui/zinnia.gyp:zinnia',
+        'zinnia.gyp:zinnia',
       ],
       'conditions': [
         ['target_platform=="Linux" and use_libzinnia==1', {

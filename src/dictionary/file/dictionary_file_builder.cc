@@ -31,7 +31,6 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "dictionary/file/codec.h"

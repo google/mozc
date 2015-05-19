@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"

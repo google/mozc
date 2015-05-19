@@ -75,8 +75,20 @@ class Session : public SessionInterface {
   // Perform the SEND_COMMAND command defined commands.proto.
   virtual bool SendCommand(mozc::commands::Command *command);
 
+  // Turn on IME. Do nothing (but the keyevent is consumed) when IME is already
+  // turned on.
   bool IMEOn(mozc::commands::Command *command);
+
+  // Turn off IME. Do nothing (but the keyevent is consumed) when IME is already
+  // turned off.
   bool IMEOff(mozc::commands::Command *command);
+
+  // Unlike IMEOn/IMEOff, these commands 1) can update compositioin mode, and
+  // 2) are functional even when IME is already turned on/off.
+  // TODO(team): Merge these into IMEOn/Off once b/10250883 is fixed.
+  bool MakeSureIMEOn(mozc::commands::Command *command);
+  bool MakeSureIMEOff(mozc::commands::Command *command);
+
   bool EchoBack(mozc::commands::Command *command);
   bool EchoBackAndClearUndoContext(mozc::commands::Command *command);
   bool DoNothing(mozc::commands::Command *command);

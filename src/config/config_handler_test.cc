@@ -29,6 +29,10 @@
 
 #include "config/config_handler.h"
 
+#ifdef OS_WIN
+#include <windows.h>
+#endif  // OS_WIN
+
 #include <string>
 
 #include "base/file_util.h"
@@ -36,6 +40,7 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/system_util.h"
+#include "base/util.h"
 #include "config/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -232,15 +237,14 @@ TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
 
 TEST_F(ConfigHandlerTest, SetConfigFileName) {
   config::Config mozc_config;
-  mozc_config.mutable_hangul_config()->set_keyboard_type(
-      config::HangulConfig::KEYBOARD_SebeolsikFinal);
+  const bool default_incognito_mode = mozc_config.incognito_mode();
+  mozc_config.set_incognito_mode(!default_incognito_mode);
   config::ConfigHandler::SetConfig(mozc_config);
   // ScopedSetConfigFileName internally calls SetConfigFileName.
   ScopedSetConfigFileName scoped_config_file_name(
-      "memory://hangul_config.test.db");
+      "memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
-  EXPECT_EQ(config::HangulConfig::KEYBOARD_Dubeolsik,
-            GET_CONFIG(hangul_config).keyboard_type());
+  EXPECT_EQ(default_incognito_mode, GET_CONFIG(incognito_mode));
 }
 
 #ifndef OS_ANDROID
@@ -276,6 +280,13 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     config::Config default_config;
     EXPECT_TRUE(config::ConfigHandler::GetConfig(&default_config))
         << "failed to GetConfig from: " << file_name;
+
+#ifdef OS_WIN
+    // Reset the file attributes since it may contain FILE_ATTRIBUTE_READONLY.
+    wstring wdest_path;
+    Util::UTF8ToWide(dest_path.c_str(), &wdest_path);
+    ::SetFileAttributesW(wdest_path.c_str(), FILE_ATTRIBUTE_NORMAL);
+#endif  // OS_WIN
 
     // Remove test file just in case.
     ASSERT_TRUE(FileUtil::Unlink(dest_path));
@@ -330,10 +341,6 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
     EXPECT_EQ(output.character_form_rules(i).conversion_character_form(),
               testcases[i].conversion_character_form);
   }
-
-#ifdef OS_CHROMEOS
-  EXPECT_FALSE(output.use_auto_conversion());
-#endif
 
 #ifdef OS_ANDROID
 #ifdef CHANNEL_DEV

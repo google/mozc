@@ -41,16 +41,13 @@
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "engine/engine_factory.h"
-#include "engine/engine_interface.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/commands.pb.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
-#include "session/japanese_session_factory.h"
 #include "session/key_parser.h"
 #include "session/candidates.pb.h"
 #include "session/session.h"
-#include "session/session_factory_manager.h"
 #include "session/session_converter_interface.h"
 #include "session/session_handler.h"
 #include "session/request_test_util.h"
@@ -144,10 +141,7 @@ class SessionRegressionTest : public testing::Test {
     // internally depends on global flags, e.g., for creation of rewriters.
     engine_.reset(EngineFactory::Create());
 
-    session_factory_.reset(new session::JapaneseSessionFactory(engine_.get()));
-    session::SessionFactoryManager::SetSessionFactory(session_factory_.get());
-
-    handler_.reset(new SessionHandler());
+    handler_.reset(new SessionHandler(engine_.get()));
     ResetSession();
     CHECK(session_.get());
   }
@@ -208,7 +202,6 @@ class SessionRegressionTest : public testing::Test {
   scoped_ptr<SessionHandler> handler_;
   scoped_ptr<session::Session> session_;
   scoped_ptr<composer::Table> table_;
-  scoped_ptr<session::JapaneseSessionFactory> session_factory_;
   config::Config config_;
 };
 

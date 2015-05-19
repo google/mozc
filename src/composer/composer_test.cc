@@ -161,6 +161,11 @@ TEST_F(ComposerTest, Reset) {
   composer_->InsertCharacter("mozuku");
 
   composer_->SetInputMode(transliteration::HALF_ASCII);
+
+  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetOutputMode());
+  composer_->SetOutputMode(transliteration::HALF_ASCII);
+  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetOutputMode());
+
   composer_->SetInputFieldType(commands::Context::PASSWORD);
   composer_->Reset();
 
@@ -169,6 +174,8 @@ TEST_F(ComposerTest, Reset) {
   EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
   EXPECT_EQ(commands::Context::PASSWORD,
             composer_->GetInputFieldType());
+  // The output mode should be reset.
+  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetOutputMode());
 }
 
 TEST_F(ComposerTest, ResetInputMode) {

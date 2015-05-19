@@ -46,7 +46,7 @@ class MockDataManagerTest : public DataManagerTestBase {
                             kLSize,
                             kRSize,
                             IsBoundaryInternal,
-                            "data/test/dictionary/connection.txt",
+                            "data/test/dictionary/connection_single_column.txt",
                             1,
                             "data/test/dictionary/dictionary.txt",
                             "data/test/dictionary/suggestion_filter.txt") {}

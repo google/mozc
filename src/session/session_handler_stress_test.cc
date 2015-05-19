@@ -35,7 +35,6 @@
 #include "base/file_util.h"
 #include "engine/engine_factory.h"
 #include "session/commands.pb.h"
-#include "session/japanese_session_factory.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"
 #include "session/session_handler_test_util.h"
@@ -65,8 +64,8 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
+using session::testing::SessionHandlerTestBase;
 using session::testing::TestSessionClient;
-using session::testing::JapaneseSessionHandlerTestBase;
 
 namespace {
 #ifdef OS_ANDROID
@@ -105,7 +104,7 @@ class AndroidInitializer {
 #endif  // OS_ANDROID
 }  // namespace
 
-class SessionHandlerStressTest : public JapaneseSessionHandlerTestBase {
+class SessionHandlerStressTest : public SessionHandlerTestBase {
  protected:
   virtual EngineInterface *CreateEngine() {
 #ifdef OS_ANDROID
@@ -118,7 +117,8 @@ class SessionHandlerStressTest : public JapaneseSessionHandlerTestBase {
 TEST_F(SessionHandlerStressTest, BasicStressTest) {
   vector<commands::KeyEvent> keys;
   commands::Output output;
-  TestSessionClient client;
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  TestSessionClient client(engine.get());
   size_t keyevents_size = 0;
   const size_t kMaxEventSize = 10000;
   ASSERT_TRUE(client.CreateSession());

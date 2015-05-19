@@ -73,6 +73,23 @@ message SubMsg {
   repeated string repeated_string_value = 114;
   repeated bytes repeated_bytes_value = 115;
   repeated TestEnum repeated_enum_value = 116;
+
+  required double required_double_value = 201 [ default = 201.0 ];
+  required float required_float_value = 202 [ default = 202.0 ];
+  required int32 required_int32_value = 203 [ default = 203 ];
+  required int64 required_int64_value = 204 [ default = 204 ];
+  required uint32 required_uint32_value = 205 [ default = 205 ];
+  required uint64 required_uint64_value = 206 [ default = 206 ];
+  required sint32 required_sint32_value = 207 [ default = 207 ];
+  required sint64 required_sint64_value = 208 [ default = 208 ];
+  required fixed32 required_fixed32_value = 209 [ default = 209 ];
+  required fixed64 required_fixed64_value = 210 [ default = 210 ];
+  required sfixed32 required_sfixed32_value = 211 [ default = 211 ];
+  required sfixed64 required_sfixed64_value = 212 [ default = 212 ];
+  required bool required_bool_value = 213 [ default = true ];
+  required string required_string_value = 214 [ default = 'TEST' ];
+  required bytes required_bytes_value = 215 [ default = 'TEST' ];
+  required TestEnum required_enum_value = 216 [ default = ENUM_C ];
 }
 
 message TestMsg {
@@ -117,6 +134,25 @@ message TestMsg {
   repeated TestEnum repeated_enum_value = 116;
   repeated TestInnerEnum repeated_innerenum_value = 117;
 
-  optional SubMsg sub_message = 200;
-  repeated SubMsg repeated_sub_message = 201;
+  required double required_double_value = 201 [ default = 201.0 ];
+  required float required_float_value = 202 [ default = 202.0 ];
+  required int32 required_int32_value = 203 [ default = 203 ];
+  required int64 required_int64_value = 204 [ default = 204 ];
+  required uint32 required_uint32_value = 205 [ default = 205 ];
+  required uint64 required_uint64_value = 206 [ default = 206 ];
+  required sint32 required_sint32_value = 207 [ default = 207 ];
+  required sint64 required_sint64_value = 208 [ default = 208 ];
+  required fixed32 required_fixed32_value = 209 [ default = 209 ];
+  required fixed64 required_fixed64_value = 210 [ default = 210 ];
+  required sfixed32 required_sfixed32_value = 211 [ default = 211 ];
+  required sfixed64 required_sfixed64_value = 212 [ default = 212 ];
+  required bool required_bool_value = 213 [ default = true ];
+  required string required_string_value = 214 [ default = 'TEST' ];
+  required bytes required_bytes_value = 215 [ default = 'TEST' ];
+  required TestEnum required_enum_value = 216 [ default = ENUM_C ];
+  required TestInnerEnum required_innerenum_value = 217 [ default = ENUM_2 ];
+
+  optional SubMsg sub_message = 300;
+  repeated SubMsg repeated_sub_message = 301;
+  required SubMsg required_sub_message = 302;
 };

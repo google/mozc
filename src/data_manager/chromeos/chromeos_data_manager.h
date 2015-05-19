@@ -66,6 +66,8 @@ class ChromeOsDataManager : public ChromeOsUserPosManager {
       const int **conjugation_suffix_data_index,
       const UsageDictItem **usage_data_value) const;
 #endif  // NO_USAGE_REWRITER
+  virtual void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+                                           size_t *size) const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ChromeOsDataManager);

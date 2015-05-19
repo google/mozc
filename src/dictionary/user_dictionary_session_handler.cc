@@ -29,9 +29,9 @@
 
 #include "dictionary/user_dictionary_session_handler.h"
 
-#include "base/base.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_session.h"

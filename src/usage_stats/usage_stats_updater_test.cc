@@ -117,8 +117,6 @@ TEST_F(UsageStatsUpdaterTest, UpdaterTest) {
     "ConfigUseCloudSync",
     "ConfigAllowCloudHandwriting",
     "ConfigUseLocalUsageDictionary",
-    "ConfigUseWebUsageDictionary",
-    "WebServiceEntrySize",
     "ConfigUseModeIndicator",
 
     // Other stats

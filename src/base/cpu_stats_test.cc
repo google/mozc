@@ -27,12 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
 #include "base/cpu_stats.h"
+
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace {
 TEST(CPUStats, CPUStatsTest) {
   CPUStats stats;
   EXPECT_GE(stats.GetSystemCPULoad(), 0.0);
@@ -42,4 +43,5 @@ TEST(CPUStats, CPUStatsTest) {
 
   EXPECT_GE(stats.GetNumberOfProcessors(), 1);
 }
+}  // namespace
 }  // namespace mozc

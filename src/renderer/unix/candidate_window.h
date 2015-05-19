@@ -30,6 +30,8 @@
 #ifndef MOZC_RENDERER_UNIX_CANDIDATE_WINDOW_H_
 #define MOZC_RENDERER_UNIX_CANDIDATE_WINDOW_H_
 
+#include <memory>
+
 #include "renderer/table_layout_interface.h"
 #include "renderer/unix/cairo_factory_interface.h"
 #include "renderer/unix/const.h"
@@ -144,10 +146,10 @@ class CandidateWindow : public GtkWindowBase {
   FRIEND_TEST(CandidateWindowTest, GetSelectedRowIndexTest);
 
   commands::Candidates candidates_;
-  scoped_ptr<TableLayoutInterface> table_layout_;
-  scoped_ptr<TextRendererInterface> text_renderer_;
-  scoped_ptr<DrawToolInterface> draw_tool_;
-  scoped_ptr<CairoFactoryInterface> cairo_factory_;
+  std::unique_ptr<TableLayoutInterface> table_layout_;
+  std::unique_ptr<TextRendererInterface> text_renderer_;
+  std::unique_ptr<DrawToolInterface> draw_tool_;
+  std::unique_ptr<CairoFactoryInterface> cairo_factory_;
   client::SendCommandInterface *send_command_interface_;
   DISALLOW_COPY_AND_ASSIGN(CandidateWindow);
 };

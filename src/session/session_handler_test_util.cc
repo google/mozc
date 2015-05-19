@@ -34,22 +34,23 @@
 #include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "config/stats_config_util.h"
-#include "config/stats_config_util_mock.h"
 #include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
-#include "engine/mock_data_engine_factory.h"
-#include "engine/user_data_manager_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "session/commands.pb.h"
-#include "session/japanese_session_factory.h"
-#include "session/session_factory_manager.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 
 DECLARE_string(test_tmpdir);
+
+DECLARE_int32(max_session_size);
+DECLARE_int32(create_session_min_interval);
+DECLARE_int32(watch_dog_interval);
+DECLARE_int32(last_command_timeout);
+DECLARE_int32(last_create_session_timeout);
+DECLARE_bool(restricted);
 
 namespace mozc {
 namespace session {
@@ -77,14 +78,16 @@ bool DeleteSession(SessionHandlerInterface *handler, uint64 id) {
   return handler->EvalCommand(&command);
 }
 
-bool CleanUp(SessionHandlerInterface *handler) {
+bool CleanUp(SessionHandlerInterface *handler, uint64 id) {
   Command command;
+  command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEANUP);
   return handler->EvalCommand(&command);
 }
 
-bool ClearUserPrediction(SessionHandlerInterface *handler) {
+bool ClearUserPrediction(SessionHandlerInterface *handler, uint64 id) {
   Command command;
+  command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEAR_USER_PREDICTION);
   return handler->EvalCommand(&command);
 }
@@ -99,71 +102,55 @@ bool IsGoodSession(SessionHandlerInterface *handler, uint64 id) {
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-JapaneseSessionHandlerTestBase::JapaneseSessionHandlerTestBase() {
+SessionHandlerTestBase::SessionHandlerTestBase() {
 }
-JapaneseSessionHandlerTestBase::~JapaneseSessionHandlerTestBase() {
+SessionHandlerTestBase::~SessionHandlerTestBase() {
 }
 
-void JapaneseSessionHandlerTestBase::SetUp() {
+void SessionHandlerTestBase::SetUp() {
+  flags_max_session_size_backup_ = FLAGS_max_session_size;
+  flags_create_session_min_interval_backup_ = FLAGS_create_session_min_interval;
+  flags_watch_dog_interval_backup_ = FLAGS_watch_dog_interval;
+  flags_last_command_timeout_backup_ = FLAGS_last_command_timeout;
+  flags_last_create_session_timeout_backup_ = FLAGS_last_create_session_timeout;
+  flags_restricted_backup_ = FLAGS_restricted;
+
   user_profile_directory_backup_ = SystemUtil::GetUserProfileDirectory();
   SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
   ConfigHandler::GetConfig(&config_backup_);
   ClearState();
-
-  stats_config_util_.reset(new config::StatsConfigUtilMock);
-  mozc::config::StatsConfigUtil::SetHandler(stats_config_util_.get());
-
-  // Store the origianl to restore it in TearDown.
-  session_factory_backup_ = SessionFactoryManager::GetSessionFactory();
-
-  FileUtil::Unlink(UserHistoryPredictor::GetUserHistoryFileName());
-  ResetEngine(CreateEngine());
 }
 
-void JapaneseSessionHandlerTestBase::TearDown() {
-  SessionFactoryManager::SetSessionFactory(session_factory_backup_);
+void SessionHandlerTestBase::TearDown() {
   ClearState();
   ConfigHandler::SetConfig(config_backup_);
   SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
-  FileUtil::Unlink(UserHistoryPredictor::GetUserHistoryFileName());
+
+  FLAGS_max_session_size = flags_max_session_size_backup_;
+  FLAGS_create_session_min_interval = flags_create_session_min_interval_backup_;
+  FLAGS_watch_dog_interval = flags_watch_dog_interval_backup_;
+  FLAGS_last_command_timeout = flags_last_command_timeout_backup_;
+  FLAGS_last_create_session_timeout = flags_last_create_session_timeout_backup_;
+  FLAGS_restricted = flags_restricted_backup_;
 }
 
-void JapaneseSessionHandlerTestBase::ClearState() {
-  config::StatsConfigUtil::SetHandler(NULL);
-
+void SessionHandlerTestBase::ClearState() {
   config::Config config;
   ConfigHandler::GetDefaultConfig(&config);
   ConfigHandler::SetConfig(config);
 
   // Some destructors may save the state on storages. To clear the state, we
   // explicitly call destructors before clearing storages.
-  session_factory_.reset();
-  engine_.reset();
-  stats_config_util_.reset();
-
   storage::Registry::Clear();
   FileUtil::Unlink(ConfigFileStream::GetFileName("user://boundary.db"));
   FileUtil::Unlink(ConfigFileStream::GetFileName("user://segment.db"));
   FileUtil::Unlink(UserHistoryPredictor::GetUserHistoryFileName());
 }
 
-EngineInterface *JapaneseSessionHandlerTestBase::CreateEngine() {
-  EngineInterface *engine = MockDataEngineFactory::Create();
-  engine->GetUserDataManager()->ClearUserHistory();
-  return engine;
-}
-
-void JapaneseSessionHandlerTestBase::ResetEngine(EngineInterface *engine) {
-  engine_.reset(engine);
-  session_factory_.reset(new JapaneseSessionFactory(engine_.get()));
-  SessionFactoryManager::SetSessionFactory(session_factory_.get());
-}
-
-TestSessionClient::TestSessionClient()
+TestSessionClient::TestSessionClient(EngineInterface *engine)
   : id_(0),
     usage_observer_(new SessionUsageObserver),
-    handler_(new SessionHandler) {
+    handler_(new SessionHandler(engine)) {
   handler_->AddObserver(usage_observer_.get());
 }
 
@@ -179,11 +166,11 @@ bool TestSessionClient::DeleteSession() {
 }
 
 bool TestSessionClient::CleanUp() {
-  return ::mozc::session::testing::CleanUp(handler_.get());
+  return ::mozc::session::testing::CleanUp(handler_.get(), id_);
 }
 
 bool TestSessionClient::ClearUserPrediction() {
-  return ::mozc::session::testing::ClearUserPrediction(handler_.get());
+  return ::mozc::session::testing::ClearUserPrediction(handler_.get(), id_);
 }
 
 bool TestSessionClient::SendKeyWithOption(const commands::KeyEvent &key,

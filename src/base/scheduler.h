@@ -48,6 +48,7 @@
 
 #include <string>
 
+#include "base/port.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -75,7 +76,7 @@ class Scheduler {
         callback_(callback),
         data_(data) {}
 
-    virtual ~JobSetting() {}
+    ~JobSetting() {}
 
     string name() const { return name_; }
     uint32 default_interval() const { return default_interval_; }
@@ -122,10 +123,9 @@ class Scheduler {
     virtual void RemoveAllJobs() = 0;
   };
 
-  // should never be allocated.
  private:
-  Scheduler();
-  virtual ~Scheduler();
+  // should never be allocated.
+  DISALLOW_IMPLICIT_CONSTRUCTORS(Scheduler);
 };
 }  // namespace mozc
 #endif  // MOZC_BASE_SCHEDULER_H_

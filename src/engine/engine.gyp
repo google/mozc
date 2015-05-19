@@ -71,7 +71,7 @@
         '../converter/converter_base.gyp:converter_mock'
       ],
     },
-    {
+    {  # An engine just for converter/converter_main.cc.
       'target_name': 'chromeos_engine_factory',
       'type': 'static_library',
       'sources': [

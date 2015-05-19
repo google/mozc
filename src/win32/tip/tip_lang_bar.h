@@ -114,9 +114,6 @@ class TipLangBar {
   ATL::CComPtr<ITfLangBarItemButton> input_button_menu_;
   ATL::CComPtr<ITfLangBarItemButton> input_mode_button_for_win8_;
 
-  // The cookie issued for installing ITfLangBarItemSink of input_button_menu_.
-  DWORD input_button_cookie_;
-
   // Represents the tool button menu in the language bar.
   ATL::CComPtr<ITfLangBarItemButton> tool_button_menu_;
 

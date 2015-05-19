@@ -32,7 +32,7 @@
 
 #include <string>
 #include <vector>
-#include "base/base.h"
+#include "base/port.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "sync/adapter_interface.h"
 // for FRIEND_TEST()
@@ -49,6 +49,8 @@ class UserDictionaryAdapter : public AdapterInterface {
   virtual bool GetItemsToUpload(ime_sync::SyncItems *items);
   virtual bool MarkUploaded(
       const ime_sync::SyncItem &item, bool uploaded);
+  virtual uint64 GetLastDownloadTimestamp() const;
+  virtual bool SetLastDownloadTimestamp(uint64 value);
   virtual bool Clear();
   virtual ime_sync::Component component_id() const;
 
@@ -87,6 +89,8 @@ class UserDictionaryAdapter : public AdapterInterface {
   string GetTempLastSyncedUserDictionaryFileName() const;
 
   string user_dictionary_filename_;
+
+  DISALLOW_COPY_AND_ASSIGN(UserDictionaryAdapter);
 };
 
 }  // namespace sync

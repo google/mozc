@@ -35,10 +35,10 @@
 
 #include <algorithm>
 
-#include "base/base.h"
 #include "base/compiler_specific.h"
 #include "base/const.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/system_util.h"
 #include "client/client_interface.h"
 #include "config/config.pb.h"  // for Config
@@ -113,6 +113,7 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
 
  private:
   RendererServer *renderer_server_;
+  DISALLOW_COPY_AND_ASSIGN(ParentApplicationWatchDog);
 };
 
 class RendererServerSendCommand : public client::SendCommandInterface {
@@ -162,6 +163,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
 
  private:
   uint32 receiver_handle_;
+  DISALLOW_COPY_AND_ASSIGN(RendererServerSendCommand);
 };
 
 RendererServer::RendererServer()
@@ -182,7 +184,6 @@ RendererServer::RendererServer()
   const config::Config &config = config::ConfigHandler::GetConfig();
   Logging::SetConfigVerboseLevel(config.verbose_level());
 #endif  // NO_LOGGING
-
 }
 
 RendererServer::~RendererServer() {}

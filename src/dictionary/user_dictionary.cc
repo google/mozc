@@ -33,7 +33,6 @@
 #include <set>
 #include <string>
 
-#include "base/base.h"
 #include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "base/mutex.h"
@@ -256,6 +255,8 @@ class UserDictionaryReloader : public Thread {
   string key_;
   string value_;
   user_dictionary::UserDictionary::PosType pos_;
+
+  DISALLOW_COPY_AND_ASSIGN(UserDictionaryReloader);
 };
 
 UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
@@ -581,4 +582,5 @@ bool UserDictionary::Load(
 void UserDictionary::SetUserDictionaryName(const string &filename) {
   Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
 }
+
 }  // namespace mozc

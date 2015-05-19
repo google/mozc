@@ -33,41 +33,57 @@
 #include <vector>
 
 #include "base/number_util.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#include "testing/base/public/gunit.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
+
 void AddCandidate(Segment *segment, const string &value) {
   Segment::Candidate *c = segment->add_candidate();
   c->Init();
   c->value = value;
   c->content_value = value;
 }
+
+void AddCandidateWithContentValue(Segment *segment,
+                                  const string &value,
+                                  const string &content_value) {
+  Segment::Candidate *c = segment->add_candidate();
+  c->Init();
+  c->value = value;
+  c->content_value = content_value;
+}
+
 }  // namespace
 
-class FocusCandidateRewriterTest : public testing::Test {
+class FocusCandidateRewriterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
+
+    rewriter_.reset(new FocusCandidateRewriter(&mock_data_manager_));
   }
 
   const RewriterInterface *GetRewriter() {
-    return &rewriter_;
+    return rewriter_.get();
   }
 
  private:
-  FocusCandidateRewriter rewriter_;
+  scoped_ptr<FocusCandidateRewriter> rewriter_;
   config::Config default_config_;
+  testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterInvalidQuery) {
@@ -451,14 +467,12 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
 
   seg[6]->mutable_candidate(2)->style = NumberUtil::NumberString::NUMBER_KANJI;
 
-  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0,
-                                   0));
+  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 0));
   EXPECT_EQ("2", seg[0]->candidate(0).content_value);
   EXPECT_EQ("3", seg[2]->candidate(0).content_value);
   EXPECT_EQ("4", seg[3]->candidate(0).content_value);
 
-  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0,
-                                   1));
+  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
   //  EXPECT_EQ("３", seg[2]->candidate(0).content_value);
   //  EXPECT_EQ("４", seg[3]->candidate(0).content_value);
   EXPECT_EQ("\xEF\xBC\x93", seg[2]->candidate(0).content_value);
@@ -467,8 +481,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   EXPECT_EQ("4",  seg[6]->candidate(0).content_value);  // far from
 
 
-  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0,
-                                   2));
+  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 2));
   //  EXPECT_EQ("三", seg[2]->candidate(0).content_value);
   //  EXPECT_EQ("四", seg[3]->candidate(0).content_value);
   EXPECT_EQ("\xE4\xB8\x89", seg[2]->candidate(0).content_value);
@@ -476,8 +489,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
 
   EXPECT_EQ("4",  seg[6]->candidate(0).content_value);  // far from
 
-  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0,
-                                   3));
+  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 3));
   //  EXPECT_EQ("参", seg[2]->candidate(0).content_value);
   EXPECT_EQ("\xE5\x8F\x82", seg[2]->candidate(0).content_value);
   EXPECT_EQ("4",  seg[6]->candidate(0).content_value);  // far from
@@ -500,8 +512,7 @@ TEST_F(FocusCandidateRewriterTest, DontChangeNonNumberSegment) {
 
   // Should not change a segment that doesn't have a number as its first
   // candidate.
-  EXPECT_FALSE(GetRewriter()->Focus(&segments, 0,
-                                   1));
+  EXPECT_FALSE(GetRewriter()->Focus(&segments, 0, 1));
   EXPECT_NE("\xEF\xBC\x95", seg[1]->candidate(0).content_value);
 }
 
@@ -538,8 +549,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
     AddCandidate(seg[5], "\xE9\x9A\x8E");  // "解"
 
 
-    EXPECT_TRUE(GetRewriter()->Focus(&segments, 1,
-                                     1));
+    EXPECT_TRUE(GetRewriter()->Focus(&segments, 1, 1));
     // "階"
     EXPECT_EQ("\xE9\x9A\x8E", seg[3]->candidate(0).content_value);
     EXPECT_EQ("\xE9\x9A\x8E", seg[5]->candidate(0).content_value);
@@ -565,8 +575,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
     seg[2]->set_key("\xE3\x81\x8B\xE3\x81\x84");
     AddCandidate(seg[2], "\xE5\x9B\x9E");  // "回"
     AddCandidate(seg[2], "\xE9\x9A\x8E");  // "階"
-    EXPECT_FALSE(GetRewriter()->Focus(&segments, 0,
-                                      1));
+    EXPECT_FALSE(GetRewriter()->Focus(&segments, 0, 1));
   }
 
   // No Number
@@ -589,8 +598,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
     seg[2]->set_key("\xE3\x81\x8B\xE3\x81\x84");
     AddCandidate(seg[2], "\xE5\x9B\x9E");  // "回"
     AddCandidate(seg[2], "\xE9\x9A\x8E");  // "階"
-    EXPECT_FALSE(GetRewriter()->Focus(&segments, 0,
-                                      1));
+    EXPECT_FALSE(GetRewriter()->Focus(&segments, 0, 1));
   }
 
   // No number
@@ -616,4 +624,304 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
     EXPECT_FALSE(GetRewriter()->Focus(&segments, 1, 1));
   }
 }
+
+TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
+  // Test for reranking of number compound pattern:
+  {
+    // Test scenario: Construct the following segments:
+    //           Seg 0       Seg 1
+    //        | "いっかい" | "にかい" |
+    // cand 0 | "一階"    | "2階"   |
+    // cand 1 | "一回"    | "二階"   |
+    // cand 2 |          | "二回"   |
+    //
+    // Then, focusing on (Seg 0, cand 1) should move "二回" in Seg 1 to the top.
+    Segments segments;
+    Segment *seg[2];
+    for (int i = 0; i < arraysize(seg); ++i) {
+      seg[i] = segments.add_segment();
+    }
+    // "いっかい"
+    seg[0]->set_key("\xE3\x81\x84\xE3\x81\xA3\xE3\x81\x8B\xE3\x81\x84");
+    // value = "一階", content_value = "一階"
+    AddCandidate(seg[0], "\xE4\xB8\x80\xE9\x9A\x8E");
+    // value = "一回", content_value = "一回"
+    AddCandidate(seg[0], "\xE4\xB8\x80\xE5\x9B\x9E");
+
+    // "にかい"
+    seg[1]->set_key("\xE3\x81\xAB\xE3\x81\x8B\xE3\x81\x84");
+    AddCandidate(seg[1], "\x32\xE9\x9A\x8E");  // "2階"
+    AddCandidate(seg[1], "\xE4\xBA\x8C\xE9\x9A\x8E");  // "二階"
+    AddCandidate(seg[1], "\xE4\xBA\x8C\xE5\x9B\x9E");  // "二回"
+
+    EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
+    EXPECT_EQ("\xE4\xBA\x8C\xE5\x9B\x9E", seg[1]->candidate(0).value);
+  }
+  // Test for reranking of number compound + parallel marker pattern:
+  // http://mozcsuorg.appspot.com/#issue/49
+  {
+    // Test scenario: Similar to the above case, but construct the following
+    // segments with parallel marker:
+    //           Seg 0       Seg 1
+    //        | "いっかいや" | "にかい" |
+    // cand 0 | "一階や"    | "2階"    |
+    // cand 1 | "一回や"    | "二階"   |
+    // cand 2 |            | "二回"   |
+    //
+    // Then, focusing on (Seg 0, cand 1) should move "二回" in Seg 1 to the top.
+    Segments segments;
+    Segment *seg[2];
+    for (int i = 0; i < arraysize(seg); ++i) {
+      seg[i] = segments.add_segment();
+    }
+
+    const int kNounId = 1939;
+    const int kParallelMarkerYa = 290;
+
+    seg[0]->set_key(
+        // "いっかいや"
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\x8B\xE3\x81\x84\xE3\x82\x84");
+
+    // value = "一階や", content_value = "一階"
+    AddCandidateWithContentValue(seg[0],
+                                 "\xE4\xB8\x80\xE9\x9A\x8E\xE3\x82\x84",
+                                 "\xE4\xB8\x80\xE9\x9A\x8E");
+    seg[0]->mutable_candidate(0)->lid = kNounId;
+    seg[0]->mutable_candidate(0)->rid = kParallelMarkerYa;
+
+    // value = "一回や", content_value = "一回"
+    AddCandidateWithContentValue(seg[0],
+                                 "\xE4\xB8\x80\xE5\x9B\x9E\xE3\x82\x84",
+                                 "\xE4\xB8\x80\xE5\x9B\x9E");
+    seg[0]->mutable_candidate(1)->lid = kNounId;
+    seg[0]->mutable_candidate(1)->rid = kParallelMarkerYa;
+
+    seg[1]->set_key(
+        // "にかい"
+        "\xE3\x81\xAB\xE3\x81\x8B\xE3\x81\x84");
+    AddCandidate(seg[1], "\x32\xE9\x9A\x8E");  // "2階"
+    seg[1]->mutable_candidate(0)->lid = kNounId;
+    seg[1]->mutable_candidate(0)->rid = kNounId;
+    AddCandidate(seg[1], "\xE4\xBA\x8C\xE9\x9A\x8E");  // "二階"
+    seg[1]->mutable_candidate(1)->lid = kNounId;
+    seg[1]->mutable_candidate(1)->rid = kNounId;
+    AddCandidate(seg[1], "\xE4\xBA\x8C\xE5\x9B\x9E");  // "二回"
+    seg[1]->mutable_candidate(2)->lid = kNounId;
+    seg[1]->mutable_candidate(2)->rid = kNounId;
+
+    EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
+    EXPECT_EQ("\xE4\xBA\x8C\xE5\x9B\x9E", seg[1]->candidate(0).value);
+  }
+  // Test for reranking of number compound + parallel marker pattern for 3
+  // segments.
+  {
+    // Test scenario: Similar to the above case, but construct the following
+    // segments with parallel marker:
+    //           Seg 0       Seg 1      Seg 2
+    //        | "いっかいや" | "にかいや" | "さんかい"
+    // cand 0 | "一階や"    | "2階や"    | "参回"
+    // cand 1 | "一回や"    | "二階や"   | "3階"
+    // cand 2 |            | "二回や"   | "三回"
+    //
+    // Then, focusing on (Seg 0, cand 1) should move "二回や" in Seg 1 and "三回
+    // " in Seg 2 to the top of each segment.
+    Segments segments;
+    Segment *seg[3];
+    for (int i = 0; i < arraysize(seg); ++i) {
+      seg[i] = segments.add_segment();
+    }
+
+    const int kNounId = 1939;
+    const int kParallelMarkerYa = 290;
+
+    seg[0]->set_key(
+        // "いっかいや"
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\x8B\xE3\x81\x84\xE3\x82\x84");
+
+    // value = "一階や", content_value = "一階"
+    AddCandidateWithContentValue(seg[0],
+                                 "\xE4\xB8\x80\xE9\x9A\x8E\xE3\x82\x84",
+                                 "\xE4\xB8\x80\xE9\x9A\x8E");
+    seg[0]->mutable_candidate(0)->lid = kNounId;
+    seg[0]->mutable_candidate(0)->rid = kParallelMarkerYa;
+
+    // value = "一回や", content_value = "一回"
+    AddCandidateWithContentValue(seg[0],
+                                 "\xE4\xB8\x80\xE5\x9B\x9E\xE3\x82\x84",
+                                 "\xE4\xB8\x80\xE5\x9B\x9E");
+    seg[0]->mutable_candidate(1)->lid = kNounId;
+    seg[0]->mutable_candidate(1)->rid = kParallelMarkerYa;
+
+    seg[1]->set_key(
+        // "にかいや"
+        "\xE3\x81\xAB\xE3\x81\x8B\xE3\x81\x84\xE3\x82\x84");
+    //value = "2階や", content_value = "2階"
+    AddCandidateWithContentValue(seg[1],
+                                 "\x32\xE9\x9A\x8E\xE3\x82\x84",
+                                 "\x32\xE9\x9A\x8E");
+    seg[1]->mutable_candidate(0)->lid = kNounId;
+    seg[1]->mutable_candidate(0)->rid = kParallelMarkerYa;
+    // value = "二階や", content_value = "二階"
+    AddCandidateWithContentValue(seg[1],
+                                 "\xE4\xBA\x8C\xE9\x9A\x8E\xE3\x82\x84",
+                                 "\xE4\xBA\x8C\xE9\x9A\x8E");
+    seg[1]->mutable_candidate(1)->lid = kNounId;
+    seg[1]->mutable_candidate(1)->rid = kParallelMarkerYa;
+    // value = "二回や", content_value = "二回"
+    AddCandidateWithContentValue(seg[1],
+                                 "\xE4\xBA\x8C\xE5\x9B\x9E\xE3\x82\x84",
+                                 "\xE4\xBA\x8C\xE5\x9B\x9E");
+    seg[1]->mutable_candidate(2)->lid = kNounId;
+    seg[1]->mutable_candidate(2)->rid = kParallelMarkerYa;
+
+    seg[2]->set_key(
+        // "さんかいや"
+        "\xE3\x81\x95\xE3\x82\x93\xE3\x81\x8B\xE3\x81\x84\xE3\x82\x84");
+    AddCandidate(seg[2], "\xE5\x8F\x82\xE5\x9B\x9E");  // "参回"
+    seg[2]->mutable_candidate(0)->lid = kNounId;
+    seg[2]->mutable_candidate(0)->rid = kNounId;
+    AddCandidate(seg[2], "\x33\xE9\x9A\x8E");  // "3階"
+    seg[2]->mutable_candidate(1)->lid = kNounId;
+    seg[2]->mutable_candidate(1)->rid = kNounId;
+    AddCandidate(seg[2], "\xE4\xB8\x89\xE5\x9B\x9E");  // "三回"
+    seg[2]->mutable_candidate(2)->lid = kNounId;
+    seg[2]->mutable_candidate(2)->rid = kNounId;
+
+    EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
+    // "二回や"
+    EXPECT_EQ("\xE4\xBA\x8C\xE5\x9B\x9E\xE3\x82\x84",
+              seg[1]->candidate(0).value);
+    // "三回"
+    EXPECT_EQ("\xE4\xB8\x89\xE5\x9B\x9E", seg[2]->candidate(0).value);
+  }
+  // Test case where two number segments are too far to be rewritten.
+  {
+    // Test scenario: Similar to the above case, but construct the following
+    // segments with parallel marker:
+    //           Seg 0       Seg 1 Seg 2   Seg 3 Seg 4
+    //        | "いっかいや" | "あ" | "あ" | "あ" | "にかい"
+    // cand 0 | "一階や"    | "あ" | "あ" | "あ" | "2階"
+    // cand 1 | "一回や"    |      |     |      | "二回"
+    //
+    // Then, focusing on (Seg 0, cand 1) cannot move "二回" in Seg 3 to the top.
+    Segments segments;
+    Segment *seg[5];
+    for (int i = 0; i < arraysize(seg); ++i) {
+      seg[i] = segments.add_segment();
+    }
+
+    const int kNounId = 1939;
+    const int kParallelMarkerYa = 290;
+
+    seg[0]->set_key(
+        // "いっかいや"
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\x8B\xE3\x81\x84\xE3\x82\x84");
+
+    // value = "一階や", content_value = "一階"
+    AddCandidateWithContentValue(seg[0],
+                                 "\xE4\xB8\x80\xE9\x9A\x8E\xE3\x82\x84",
+                                 "\xE4\xB8\x80\xE9\x9A\x8E");
+    seg[0]->mutable_candidate(0)->lid = kNounId;
+    seg[0]->mutable_candidate(0)->rid = kParallelMarkerYa;
+
+    // value = "一回や", content_value = "一回"
+    AddCandidateWithContentValue(seg[0],
+                                 "\xE4\xB8\x80\xE5\x9B\x9E\xE3\x82\x84",
+                                 "\xE4\xB8\x80\xE5\x9B\x9E");
+    seg[0]->mutable_candidate(1)->lid = kNounId;
+    seg[0]->mutable_candidate(1)->rid = kParallelMarkerYa;
+
+    for (size_t i = 1; i <= 3; ++i) {
+      seg[i]->set_key("\xE3\x81\x82");  // "あ"
+      AddCandidate(seg[i], "\xE3\x81\x82");  // "あ"
+      seg[i]->mutable_candidate(0)->lid = kNounId;
+      seg[i]->mutable_candidate(0)->rid = kNounId;
+    }
+
+    seg[4]->set_key(
+        // "にかい"
+        "\xE3\x81\xAB\xE3\x81\x8B\xE3\x81\x84");
+    AddCandidate(seg[4], "\x32\xE9\x9A\x8E");  // "2階"
+    seg[4]->mutable_candidate(0)->lid = kNounId;
+    seg[4]->mutable_candidate(0)->rid = kNounId;
+    AddCandidate(seg[4], "\xE4\xBA\x8C\xE5\x9B\x9E");  // "ニ回"
+    seg[4]->mutable_candidate(0)->lid = kNounId;
+    seg[4]->mutable_candidate(0)->rid = kNounId;
+
+    EXPECT_FALSE(GetRewriter()->Focus(&segments, 0, 1));
+  }
+  // Test for the case where we shouldn't rewrite.
+  {
+    // Test scenario: Similar to the above cases, but construct the following
+    // segments with particles へ and は:
+    //           Seg 0       Seg 1        Seg 2
+    //        | "いっかいへは" | "にかい" | "いった"
+    // cand 0 | "一階へは"    | "二回"   | "行った"
+    // cand 1 | "一回へは"    | "ニ階"   |
+    // cand 2 |              | "2回"   |
+    //
+    // Here, "一階へは" has the following structure:
+    // "一階(noun)" + "へ(格助詞)" + "は(係助詞)"
+    // For this case, focusing on (Seg 0, cand 1) should not move "二階" in Seg
+    // 1 to the top.
+    Segments segments;
+    Segment *seg[3];
+    for (int i = 0; i < arraysize(seg); ++i) {
+      seg[i] = segments.add_segment();
+    }
+
+    // "名詞,一般,*,*,*,*,*"
+    const int kNounId = 1939;
+    // "助詞,係助詞,*,*,*,*,は"
+    const int kKakariJoshiHa = 299;
+    // "動詞,非自立,*,*,五段・カ行促音便,連用タ接続,行く"
+    const int kIkuTaSetsuzoku = 1501;
+    // "助動詞,*,*,*,特殊・タ,基本形,た"
+    const int kJodoushiTa = 161;
+
+    seg[0]->set_key(
+        // "いっかいへは"
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\x8B\xE3\x81\x84"
+        "\xE3\x81\xB8\xE3\x81\xAF");
+
+    // value = "一階へは", content_value = "一階"
+    AddCandidateWithContentValue(
+        seg[0],
+        "\xE4\xB8\x80\xE9\x9A\x8E\xE3\x81\xB8\xE3\x81\xAF",
+        "\xE4\xB8\x80\xE9\x9A\x8E");
+    seg[0]->mutable_candidate(0)->lid = kNounId;
+    seg[0]->mutable_candidate(0)->rid = kKakariJoshiHa;
+
+    // value = "一回へは", content_value = "一回"
+    AddCandidateWithContentValue(
+        seg[0],
+        "\xE4\xB8\x80\xE5\x9B\x9E\xE3\x81\xB8\xE3\x81\xAF",
+        "\xE4\xB8\x80\xE5\x9B\x9E");
+    seg[0]->mutable_candidate(1)->lid = kNounId;
+    seg[0]->mutable_candidate(1)->rid = kKakariJoshiHa;
+
+    seg[1]->set_key(
+        // "にかい"
+        "\xE3\x81\xAB\xE3\x81\x8B\xE3\x81\x84");
+    AddCandidate(seg[1], "\xE4\xBA\x8C\xE5\x9B\x9E");  // "二回"
+    seg[1]->mutable_candidate(0)->lid = kNounId;
+    seg[1]->mutable_candidate(0)->rid = kNounId;
+    AddCandidate(seg[1], "\xE4\xBA\x8C\xE9\x9A\x8E");  // "二階"
+    seg[1]->mutable_candidate(1)->lid = kNounId;
+    seg[1]->mutable_candidate(1)->rid = kNounId;
+    AddCandidate(seg[1], "\x32\xE9\x9A\x8E");  // "2階"
+    seg[1]->mutable_candidate(2)->lid = kNounId;
+    seg[1]->mutable_candidate(2)->rid = kNounId;
+
+    seg[2]->set_key(
+        // "いった"
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\x9F");
+    AddCandidate(seg[2], "\xE8\xA1\x8C\xE3\x81\xA3\xE3\x81\x9F");  // "行った"
+    seg[2]->mutable_candidate(0)->lid = kIkuTaSetsuzoku;
+    seg[2]->mutable_candidate(0)->rid = kJodoushiTa;
+
+    EXPECT_FALSE(GetRewriter()->Focus(&segments, 0, 1));
+  }
+}
+
 }  // namespace mozc

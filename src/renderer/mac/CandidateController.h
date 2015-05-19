@@ -30,7 +30,7 @@
 #ifndef MOZC_RENDERER_MAC_CANDIDATE_CONTROLLER_H_
 #define MOZC_RENDERER_MAC_CANDIDATE_CONTROLLER_H_
 
-#include "base/base.h"
+#include "base/port.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 

@@ -27,8 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/init.h"
+
 #include <string.h>
-#include "base/base.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -55,6 +56,7 @@ TEST(InitTest, InitBasicTest) {
   RunFinalizers();
   EXPECT_EQ(4, g_counter);
 }
+
 
 }  // namespace
 }  // namespace mozc

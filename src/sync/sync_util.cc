@@ -52,22 +52,16 @@ string SyncUtil::GenRandomString(int size) {
   return result;
 }
 
-bool SyncUtil::CopyLastSyncedFile(const string &current,
-                                  const string &prev) {
-  if (!FileUtil::CopyFile(current, prev)) {
-    LOG(ERROR) << "cannot copy " << current << " prev " << prev;
+bool SyncUtil::CopyLastSyncedFile(const string &from,
+                                  const string &to) {
+  if (!FileUtil::CopyFile(from, to)) {
+    LOG(ERROR) << "cannot copy from " << from << " to " << to;
     return false;
   }
 
 #ifdef OS_WIN
-  // make the file |prev| 'system hidden'.
-  wstring wfilename;
-  Util::UTF8ToWide(prev.c_str(), &wfilename);
-  if (!::SetFileAttributes(wfilename.c_str(),
-                           FILE_ATTRIBUTE_HIDDEN |
-                           FILE_ATTRIBUTE_SYSTEM)) {
-    LOG(ERROR) << "Cannot make hidden: " << prev
-               << " " << ::GetLastError();
+  if (!FileUtil::HideFile(to)) {
+    LOG(ERROR) << "Cannot make hidden: " << to << " " << ::GetLastError();
   }
 #endif
 

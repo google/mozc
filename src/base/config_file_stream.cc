@@ -35,7 +35,6 @@
 
 #include <cstring>
 #include <map>
-#include <fstream>
 #include <sstream>
 #include "base/file_stream.h"
 #include "base/file_util.h"
@@ -191,14 +190,10 @@ bool ConfigFileStream::AtomicUpdate(const string &filename,
   // If file name doesn't end with ".db", the file
   // is more likely a temporary file.
   if (!Util::EndsWith(real_filename, ".db")) {
-    wstring wfilename;
-    Util::UTF8ToWide(real_filename.c_str(), &wfilename);
     // TODO(yukawa): Provide a way to
     // integrate ::SetFileAttributesTransacted with
     // AtomicRename.
-    if (!::SetFileAttributes(wfilename.c_str(),
-                             FILE_ATTRIBUTE_HIDDEN |
-                             FILE_ATTRIBUTE_SYSTEM)) {
+    if (!FileUtil::HideFile(real_filename)) {
       LOG(ERROR) << "Cannot make hidden: " << real_filename
                  << " " << ::GetLastError();
     }

@@ -43,7 +43,6 @@
 #include "base/number_util.h"
 #include "base/stl_util.h"
 #include "base/system_util.h"
-#include "base/testing_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -57,6 +56,7 @@
 #include "sync/syncer.h"
 #include "sync/user_history_sync_util.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/testing_util.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -117,7 +117,7 @@ TEST_F(UserHistoryAdapterTest, LastDownloadTimestamp) {
   EXPECT_TRUE(adapter.SetLastDownloadTimestamp(1234));
   EXPECT_EQ(1234, adapter.GetLastDownloadTimestamp());
 
-  for (int i = 0; i < 1000; ++i) {
+  for (int i = 0; i < 100; ++i) {
     EXPECT_TRUE(adapter.SetLastDownloadTimestamp(i));
     EXPECT_EQ(i, adapter.GetLastDownloadTimestamp());
   }

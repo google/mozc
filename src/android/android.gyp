@@ -221,7 +221,10 @@
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_java_test'],
           'action': [
-            '../build_tools/run_after_chdir.py', 'tests', 'ant', 'debug',
+            '../build_tools/run_after_chdir.py', 'tests',
+            'ant',
+            'debug',
+            '-Dgyp.protobuf_root=<(protobuf_root)',
           ],
         },
       ],
@@ -260,7 +263,10 @@
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_install'],
           'action': [
-            'ant', 'install', '-Dgyp.build_type=<(CONFIGURATION_NAME)',
+            'ant',
+            'install',
+            '-Dgyp.build_type=<(CONFIGURATION_NAME)',
+            '-Dgyp.protobuf_root=<(protobuf_root)',
           ],
         },
       ],
@@ -293,7 +299,10 @@
           # depending on CONFIGURATION_NAME and/or key.store.
           'outputs': ['dummy_apk'],
           'action': [
-            'ant', 'apk', '-Dgyp.build_type=<(CONFIGURATION_NAME)',
+            'ant',
+            'apk',
+            '-Dgyp.build_type=<(CONFIGURATION_NAME)',
+            '-Dgyp.protobuf_root=<(protobuf_root)',
           ],
         },
       ],
@@ -805,6 +814,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary.gyp:dictionary',
+        '../engine/engine.gyp:engine_factory',
         '../session/session.gyp:session',
         '../session/session.gyp:session_handler',
         '../session/session.gyp:session_usage_observer',
@@ -814,12 +824,10 @@
         ['branding=="GoogleJapaneseInput"', {
           'dependencies': [
             '../data_manager/android/android_data_manager.gyp:android_data_manager',
-            '../engine/engine.gyp:android_engine_factory',
           ]
         }, {
           'dependencies': [
             '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
-            '../engine/engine.gyp:oss_engine_factory',
           ]
         }],
       ],
@@ -861,6 +869,7 @@
       'type': 'none',
       'dependencies': [
         '../base/base_test.gyp:install_util_test_data',
+        '../data_manager/testing/mock_data_manager_test.gyp:install_test_connection_txt',
         '../dictionary/system/system_dictionary.gyp:install_system_dictionary_test_data',
         '../config/config_test.gyp:install_stats_config_util_test_data',
         '../rewriter/calculator/calculator.gyp:install_calculator_test_data',
@@ -972,6 +981,7 @@
         # Generates all the code which is necessary to build unit tests.
         # See the comment of 'gen_native_build_deps'.
         '../session/session.gyp:gen_session_stress_test_data#host',
+        '../data_manager/testing/mock_data_manager.gyp:gen_mock_embedded_data#host',
         'gen_native_test_deps#host',
         'install_native_test_data',
       ],

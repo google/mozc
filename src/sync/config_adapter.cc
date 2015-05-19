@@ -29,31 +29,30 @@
 
 #include "sync/config_adapter.h"
 
-#include <set>
 #include <string>
-#include <vector>
+
+#define SYNC_VLOG_MODULENAME "ConfigAdapter"
 
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/protobuf/descriptor.h"
-#include "base/protobuf/protobuf.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "base/singleton.h"
 #include "config/config_handler.h"
+#include "storage/registry.h"
 #include "sync/logging.h"
 #include "sync/sync.pb.h"
 #include "sync/sync_util.h"
 
-using mozc::protobuf::Reflection;
-using mozc::protobuf::FieldDescriptor;
 using mozc::config::Config;
 using mozc::config::ConfigHandler;
+using mozc::storage::Registry;
 
 namespace mozc {
 namespace sync {
 namespace {
 const size_t kConfigFileSizeLimit = 128 * 1024;  // 128KiB
+const char kLastDownloadTimestampKey[] = "sync.config_last_download_timestamp";
 
 void StripUnnecessaryConfigFields(Config *config) {
   CHECK(config);
@@ -72,7 +71,7 @@ void MergeConfig(const Config &source, Config *target) {
   target->mutable_general_config()->CopyFrom(target_general);
   target->mutable_sync_config()->CopyFrom(target_sync);
 }
-}  // anonymous namespace
+}  // namespace
 
 ConfigAdapter::ConfigAdapter() {
 }
@@ -192,6 +191,10 @@ bool ConfigAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
   CHECK(key);
   CHECK(value);
   value->mutable_config()->CopyFrom(current_config);
+  if (!item->IsInitialized()) {
+    LOG(ERROR) << "Upload item of ConfigAdapter is not initialized correctly.";
+    return false;
+  }
 
   return true;
 }
@@ -230,8 +233,27 @@ bool ConfigAdapter::MarkUploaded(
   return true;
 }
 
+bool ConfigAdapter::SetLastDownloadTimestamp(uint64 value) {
+  if (!Registry::Insert(kLastDownloadTimestampKey, value)) {
+    SYNC_VLOG(1) << "cannot save: "<< kLastDownloadTimestampKey;
+    return false;
+  }
+  return true;
+}
+
+uint64 ConfigAdapter::GetLastDownloadTimestamp() const {
+  uint64 value = 0;
+  if (!Registry::Lookup(kLastDownloadTimestampKey, &value)) {
+    SYNC_VLOG(1) << "cannot read: " << kLastDownloadTimestampKey;
+  }
+  VLOG(1) << "GetLastDownloadTimestamp: " << value;
+  return value;
+}
+
 bool ConfigAdapter::Clear() {
   SYNC_VLOG(1) << "start Clear()";
+
+  Registry::Erase(kLastDownloadTimestampKey);
   const string last_downloaded_filename = ConfigFileStream::GetFileName(
       GetLastDownloadedConfigFileName());
   if (!last_downloaded_filename.empty()) {

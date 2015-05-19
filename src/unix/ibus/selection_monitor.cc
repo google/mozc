@@ -175,8 +175,8 @@ class SelectionMonitorServer {
     }
 
     ::xcb_flush(connection_);
-    scoped_ptr_malloc<xcb_generic_event_t> event(
-        ::xcb_wait_for_event(connection_));
+    unique_ptr<xcb_generic_event_t, void (*)(void*)> event(
+        ::xcb_wait_for_event(connection_), &std::free);
 
     if (event.get() == NULL) {
       LOG(ERROR) << "NULL event returned.";
@@ -593,7 +593,7 @@ class SelectionMonitorImpl : public SelectionMonitorInterface,
   }
 
  private:
-  scoped_ptr<SelectionMonitorServer> server_;
+  unique_ptr<SelectionMonitorServer> server_;
   const size_t max_text_bytes_;
   volatile bool quit_;
   Mutex mutex_;
@@ -612,7 +612,7 @@ SelectionInfo::SelectionInfo()
 
 SelectionMonitorInterface *SelectionMonitorFactory::Create(
     size_t max_text_bytes) {
-  scoped_ptr<SelectionMonitorServer> server(new SelectionMonitorServer());
+  unique_ptr<SelectionMonitorServer> server(new SelectionMonitorServer());
   if (!server->Init()) {
     return NULL;
   }

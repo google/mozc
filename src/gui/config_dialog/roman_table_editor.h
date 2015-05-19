@@ -68,7 +68,7 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
   static string GetDefaultRomanTable();
 
  private:
-  scoped_array<QAction *> actions_;
+  scoped_ptr<QAction *[]> actions_;
 };
 }  // namespace gui
 }  // namespace mozc

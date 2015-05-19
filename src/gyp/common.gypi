@@ -34,11 +34,12 @@
 # http://src.chromium.org/viewvc/chrome/trunk/src/build/common.gypi
 {
   'variables': {
-    # Top directory of third party libraries.
-    'third_party_dir%': '<(DEPTH)/third_party',
 
-    # Top directory of third party libraries for Windows.
-    'third_party_dir_win%': '<(DEPTH)/third_party',
+    # Top directory of third party libraries.
+    'third_party_dir': '<(DEPTH)/third_party',
+
+    # Top directory of additional third party libraries.
+    'additional_third_party_dir': '<(DEPTH)/third_party',
 
     # Set this to true when building with Clang.
     'clang%': 0,
@@ -47,9 +48,6 @@
     # In order to conform this assertion, we cannot use <(DEPTH) here because
     # <(DEPTH) will be expanded to a relative path for each gyp file.
     'clang_bin_dir%': '<(abs_depth)/third_party/llvm-build/Release+Asserts/bin',
-
-    # This variable need to be set to 1 when you build Mozc for Chromium OS.
-    'chromeos%': 0,
 
     # Versioning stuff for Mac.
     'mac_sdk%': '10.8',
@@ -138,8 +136,6 @@
     'msvs_libs_x64%': [],
 
     # enable_unittest represents if gtest-based unittest is available or not.
-    # This flag is valid on all the platforms except for NaCl.
-    # TODO(yukawa): Support NaCl environment.
     'enable_unittest%': '1',
 
     'conditions': [
@@ -148,11 +144,11 @@
         'clang_bin_dir': '/Applications/Xcode.app/Contents/Developer/Toolchains'
                          '/XcodeDefault.xctoolchain/usr/bin/',
       }],
-      # enable_gtk_renderer represents if mozc_renderer is supported on Linux
-      # or not.
-      ['target_platform=="Linux" and language=="japanese"', {
+      ['target_platform=="Linux"', {
+        # enable_gtk_renderer represents if mozc_renderer is supported on Linux
+        # or not.
         'enable_gtk_renderer%': 1,
-      }, { # else
+      }, {  # else
         'enable_gtk_renderer%': 0,
       }],
     ],
@@ -208,6 +204,10 @@
     # installed. This option is only for Linux.
     'server_dir%': '/usr/lib/mozc',
 
+    # Represents the directory where the source code of protobuf is
+    # extracted. This value is ignored when 'use_libprotobuf' is 1.
+    'protobuf_root': '<(additional_third_party_dir)/protobuf',
+
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
     # You should not set this flag if you want to use "dlopen" to
@@ -239,10 +239,6 @@
     # enable_cloud_handwriting represents if cloud handwriting feature is
     # enabled or not.
     'enable_cloud_handwriting%': 0,
-
-    # enable_webservice_infolist represents if webservice infolist feature is
-    # enabled or not.
-    'enable_webservice_infolist%': 0,
 
     # enable_http_client represents if http client feature is enabled or not.
     'enable_http_client%': 0,
@@ -300,20 +296,6 @@
           ['channel_dev==1', {
             'defines': ['CHANNEL_DEV'],
           }],
-          ['not(OS=="linux" and use_libprotobuf!=0)', {
-            'include_dirs': [
-              '../protobuf/files/src',
-            ],
-          }],
-          # In order to extend language support of Mozc on Linux, we use
-          # additional suffix except for Japanese so that multiple
-          # converter processes can coexist. Note that Mozc on ChromeOS does
-          # not use IPC so this kind of special treatment is not required.
-          ['language!="japanese" and target_platform=="Linux"', {
-            'defines': [
-              'MOZC_LANGUAGE_SUFFIX_FOR_LINUX="_<(language)"',
-            ],
-          }],
           ['OS=="linux"', {
             'ldflags': [
               '<@(linux_ldflags)',
@@ -336,9 +318,6 @@
           }],
           ['enable_cloud_handwriting==1', {
             'defines': ['ENABLE_CLOUD_HANDWRITING'],
-          }],
-          ['enable_webservice_infolist==1', {
-            'defines': ['ENABLE_WEBSERVICE_INFOLIST'],
           }],
           ['enable_http_client==1', {
             # TODO(peria): Considers of moving the definition and control of
@@ -537,24 +516,16 @@
           'IGNORE_HELP_FLAG',
           'IGNORE_INVALID_FLAG'
         ],
-        'conditions': [
-          ['target_compiler=="msvs2010" or target_compiler=="msvs2012"', {
-            'msvs_settings': {
-              'VCCLCompilerTool': {
-                'WholeProgramOptimization': 'true',
-              },
-              'VCLibrarianTool': {
-                'LinkTimeCodeGeneration': 'true',
-              },
-              'VCLinkerTool': {
-                # 1 = 'LinkTimeCodeGenerationOptionUse'
-                'LinkTimeCodeGeneration': '1',
-              },
-            },
-          }],
-        ],
         'msvs_settings': {
+          'VCCLCompilerTool': {
+            'WholeProgramOptimization': 'true',
+          },
+          'VCLibrarianTool': {
+            'LinkTimeCodeGeneration': 'true',
+          },
           'VCLinkerTool': {
+            # 1 = 'LinkTimeCodeGenerationOptionUse'
+            'LinkTimeCodeGeneration': '1',
             # /PDBALTPATH is documented in Visual C++ 2010
             # http://msdn.microsoft.com/en-us/library/dd998269(VS.100).aspx
             'AdditionalOptions': ['/PDBALTPATH:%_PDB%'],
@@ -566,31 +537,12 @@
         'defines': [
           'OS_ANDROID',
           'MOZC_ANDROID_APPLICATION_ID="<(android_application_id)"',
-          # For Protobuf
-          'GOOGLE_PROTOBUF_NO_RTTI',
-        ],
-        'include_dirs!': [
-          '<(third_party_dir)/breakpad/src',
         ],
         'ldflags!': [  # Remove all libraries for GNU/Linux.
           '<@(linux_ldflags)',
         ],
         'ldflags': [
           '-llog',
-        ],
-        'conditions': [
-          # For GTEST
-          # TODO(team): Move below flags to global setting as much as possible.
-          ['enable_unittest==1', {
-            'defines+': [
-              'GTEST_HAS_CLONE=0',
-              'GTEST_HAS_GLOBAL_WSTRING=0',
-              'GTEST_HAS_POSIX_RE=0',
-              'GTEST_HAS_STD_WSTRING=0',
-              'GTEST_OS_LINUX=1',
-              'GTEST_OS_LINUX_ANDROID=1',
-            ],
-          }],
         ],
       },
       #
@@ -642,23 +594,9 @@
     ],
     'include_dirs': [
       '<(DEPTH)',
-      '<(third_party_dir)/breakpad/src',
       '<(SHARED_INTERMEDIATE_DIR)',
-      '<(SHARED_INTERMEDIATE_DIR)/proto_out',
     ],
     'conditions': [
-      # For GTEST
-      ['enable_unittest==1', {
-        'defines+': [
-          'GTEST_HAS_TR1_TUPLE=1',
-          'GTEST_HAS_RTTI=0',  # Android NDKr7 requires this.
-                               # TODO(team): Remove when it becomes unnecessary.
-        ],
-        'include_dirs+': [
-          '<(third_party_dir)/gmock/include',
-          '<(third_party_dir)/gtest/include',
-        ],
-      }],
       ['OS=="win"', {
         'defines': [
           'COMPILER_MSVC',
@@ -677,7 +615,6 @@
           '_MIDL_USE_GUIDDEF_',
           '_STL_MSVC',
           '_UNICODE',
-          '_VARIADIC_MAX=10',  # for gtest/gmock on VC++ 2012
           '_WIN32',
           '_WIN32_WINDOWS=0x0501',
           '_WIN32_WINNT=0x0501',
@@ -685,19 +622,14 @@
         ],
         'include_dirs': [
           '<@(msvs_includes)',
-          '<(third_party_dir_win)/wtl/files/include',
+          '<(additional_third_party_dir)/wtl/files/include',
           # Add atl_wrapper dir into the 'include_dirs' so that we can
           # include the header file as <atlbase_mozc.h>, which
           # is more lintian-friendly than "atlbase_mozc.h".
           # See b/5101916 for the background information.
           '<(DEPTH)/win32/atl_wrapper',
         ],
-        # We don't have cygwin in our tree, but we need to have
-        # setup_env.bat in the directory specified in 'msvs_cygwin_dirs'
-        # for GYP to be happy.
-        'msvs_cygwin_dirs': [
-          '<(third_party_dir)/cygwin',
-        ],
+        'msvs_cygwin_shell': 0,
         'msvs_disabled_warnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX
         'msvs_settings': {
           'VCCLCompilerTool': {
@@ -768,11 +700,6 @@
           '-Wno-deprecated',
         ],
         'conditions': [
-          ['target_platform=="ChromeOS"', {
-            'defines': [
-              'OS_CHROMEOS',
-            ],
-          }],
           ['clang==1', {
             'cflags': [
               '-Wtype-limits',
@@ -787,9 +714,6 @@
           ['clang==0 and target_platform!="Windows"', {
             'cflags_cc': [
               '-std=gnu++0x',
-            ],
-            'defines': [
-              'GTEST_LANG_CXX11=0',
             ],
           }],
           ['target_platform!="NaCl"', {

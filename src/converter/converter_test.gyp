@@ -98,13 +98,29 @@
         'sparse_connector_test.cc',
       ],
       'dependencies': [
+        '../data_manager/data_manager.gyp:connection_file_reader',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../data_manager/testing/mock_data_manager_test.gyp:install_test_connection_txt',
         '../testing/testing.gyp:gtest_main',
         'converter_base.gyp:sparse_connector',
         'generate_test_connection_data_image',
       ],
       'variables': {
         'test_size': 'large',
+      },
+    },
+    {
+      'target_name': 'pos_id_printer_test',
+      'type': 'executable',
+      'sources': [
+        'pos_id_printer_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'converter_base.gyp:pos_id_printer',
+      ],
+      'variables': {
+        'test_size': 'small',
       },
     },
     {
@@ -118,7 +134,7 @@
         {
           'action_name': 'gen_test_connection_data',
           'variables': {
-            'text_connection_file': '../data/test/dictionary/connection.txt',
+            'text_connection_file': '../data/test/dictionary/connection_single_column.txt',
             'id_file': '../data/test/dictionary/id.def',
             'special_pos_file': '../data/rules/special_pos.def',
             'use_1byte_cost_flag': 'false',

@@ -217,15 +217,6 @@ void UpdateConfigStats() {
       config.information_list_config().use_local_usage_dictionary();
   UsageStats::SetBoolean("ConfigUseLocalUsageDictionary",
                          use_local_usage_dictionary);
-  const bool use_web_usage_dictionary =
-      has_information_list_config &&
-      config.information_list_config().use_web_usage_dictionary();
-  UsageStats::SetBoolean("ConfigUseWebUsageDictionary",
-                         use_web_usage_dictionary);
-  const uint32 web_service_entries_size =
-      has_information_list_config ?
-      config.information_list_config().web_service_entries_size() : 0;
-  UsageStats::SetInteger("WebServiceEntrySize", web_service_entries_size);
 }
 }  // namespace
 

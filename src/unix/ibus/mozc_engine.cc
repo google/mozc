@@ -45,10 +45,10 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "client/client.h"
 #include "config/config.pb.h"
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
-#include "unix/ibus/config_util.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/key_event_handler.h"
@@ -58,14 +58,6 @@
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
 #include "unix/ibus/surrounding_text_util.h"
-
-#ifdef OS_CHROMEOS
-// use standalone (in-process) session
-#include "unix/ibus/client.h"
-#else
-// use server/client session
-#include "client/client.h"
-#endif
 
 #ifdef ENABLE_GTK_RENDERER
 #include "renderer/renderer_client.h"
@@ -100,35 +92,6 @@ const char kMozcDefaultUILocale[] = "en_US.UTF-8";
 // for every 5 minutes, call SyncData
 const uint64 kSyncDataInterval = 5 * 60;
 
-#ifdef OS_CHROMEOS
-// IBus config names for Mozc.
-// This list must match the preference names of ibus-mozc for Chrome OS.
-// Check the following file in the chrome repository when you modify this list.
-// chrome/browser/chromeos/language_preferences.cc
-const gchar* kMozcConfigNames[] = {
-  "incognito_mode",
-  "use_auto_ime_turn_off",
-  "use_date_conversion",
-  "use_single_kanji_conversion",
-  "use_symbol_conversion",
-  "use_number_conversion",
-  "use_history_suggest",
-  "use_dictionary_suggest",
-  "use_realtime_conversion",
-  "preedit_method",
-  "session_keymap",
-  "punctuation_method",
-  "symbol_method",
-  "space_character_form",
-  "history_learning_level",
-  //  "selection_shortcut",  // currently not supported
-  "shift_key_mode_switch",
-  "numpad_character_form",
-  "suggestions_size",
-};
-#endif  // OS_CHROMEOS
-
-#ifndef OS_CHROMEOS
 const char *kUILocaleEnvNames[] = {
   "LC_ALL",
   "LC_MESSAGES",
@@ -145,7 +108,22 @@ string GetMessageLocale() {
   }
   return kMozcDefaultUILocale;
 }
-#endif  // !OS_CHROMEOS
+
+bool GetString(GVariant *value, string *out_string) {
+  if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
+    return false;
+  }
+  *out_string = static_cast<const char *>(g_variant_get_string(value, NULL));
+  return true;
+}
+
+bool GetBoolean(GVariant *value, bool *out_boolean) {
+  if (g_variant_classify(value) != G_VARIANT_CLASS_BOOLEAN) {
+    return false;
+  }
+  *out_boolean = (g_variant_get_boolean(value) != FALSE);
+  return true;
+}
 
 struct IBusMozcEngineClass {
   IBusEngineClass parent;
@@ -198,25 +176,6 @@ namespace mozc {
 namespace ibus {
 
 namespace {
-client::ClientInterface *CreateClient() {
-#ifdef OS_CHROMEOS
-  return new ibus::Client();
-#else
-  return client::ClientFactory::NewClient();
-#endif
-}
-
-MessageTranslatorInterface *CreateTranslator() {
-// It is OK not to translate messages in our side on ChromeOS, where built-in
-// translation mechanism exists.
-#ifdef OS_CHROMEOS
-  return new NullMessageTranslator();
-#else
-  return new LocaleBasedMessageTranslator(GetMessageLocale());
-#endif
-}
-
-
 struct SurroundingTextInfo {
   SurroundingTextInfo()
       : relative_selected_length(0) {}
@@ -281,12 +240,12 @@ bool GetSurroundingText(IBusEngine *engine,
 MozcEngine::MozcEngine()
     : last_sync_time_(Util::GetTime()),
       key_event_handler_(new KeyEventHandler),
-      client_(CreateClient()),
+      client_(client::ClientFactory::NewClient()),
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
       selection_monitor_(SelectionMonitorFactory::Create(1024)),
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
-      property_handler_(new PropertyHandler(CreateTranslator(),
-                                            client_.get())),
+      property_handler_(new PropertyHandler(
+          new LocaleBasedMessageTranslator(GetMessageLocale()), client_.get())),
       preedit_handler_(new PreeditHandler()),
 #ifdef ENABLE_GTK_RENDERER
       gtk_candidate_window_handler_(new GtkCandidateWindowHandler(
@@ -372,6 +331,7 @@ void MozcEngine::FocusIn(IBusEngine *engine) {
 
 void MozcEngine::FocusOut(IBusEngine *engine) {
   GetCandidateWindowHandler(engine)->Hide(engine);
+  property_handler_->ResetContentType(engine);
 
   // Do not call SubmitSession or RevertSession. Preedit string will commit on
   // Focus Out event automatically by ibus_engine_update_preedit_text_with_mode
@@ -397,6 +357,9 @@ gboolean MozcEngine::ProcessKeyEvent(
   VLOG(2) << "keyval: " << keyval
           << ", keycode: " << keycode
           << ", modifiers: " << modifiers;
+  if (property_handler_->IsDisabled()) {
+    return FALSE;
+  }
 
   // Send current caret location to mozc_server to manage suggest window
   // position.
@@ -406,19 +369,6 @@ gboolean MozcEngine::ProcessKeyEvent(
                     engine->cursor_area.y,
                     engine->cursor_area.width,
                     engine->cursor_area.height);
-
-  // Since IBus for ChromeOS is based on in-process conversion,
-  // it is basically ok to call GetConfig() at every keyevent.
-  // On the other hands, IBus for Linux is based on out-process (IPC)
-  // conversion and user may install large keybinding/roman-kana tables.
-  // To reduce IPC overheads, we don't call UpdatePreeditMethod()
-  // at every keyevent. When user changes the preedit method via
-  // config dialog, the dialog shows a message saying that
-  // "preedit method is enabled after new applications.".
-  // This behavior is the same as Google Japanese Input for Windows.
-#ifdef OS_CHROMEOS
-  UpdatePreeditMethod();
-#endif
 
   // TODO(yusukes): use |layout| in IBusEngineDesc if possible.
   const bool layout_is_jp =
@@ -442,7 +392,6 @@ gboolean MozcEngine::ProcessKeyEvent(
   key.set_mode(property_handler_->GetOriginalCompositionMode());
 
   commands::Context context;
-#ifndef OS_CHROMEOS
   SurroundingTextInfo surrounding_text_info;
   if (GetSurroundingText(engine,
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
@@ -452,7 +401,6 @@ gboolean MozcEngine::ProcessKeyEvent(
     context.set_preceding_text(surrounding_text_info.preceding_text);
     context.set_following_text(surrounding_text_info.following_text);
   }
-#endif  // !OS_CHROMEOS
   commands::Output output;
   if (!client_->SendKeyWithContext(key, context, &output)) {
     LOG(ERROR) << "SendKey failed";
@@ -499,6 +447,18 @@ void MozcEngine::SetCursorLocation(IBusEngine *engine,
                                    gint w,
                                    gint h) {
   // Do nothing
+}
+
+void MozcEngine::SetContentType(IBusEngine *engine,
+                                guint purpose,
+                                guint hints) {
+  const bool prev_disabled =
+      property_handler_->IsDisabled();
+  property_handler_->UpdateContentType(engine);
+  if (!prev_disabled && property_handler_->IsDisabled()) {
+    // Make sure on-going composition is reverted.
+    RevertSession(engine);
+  }
 }
 
 GType MozcEngine::GetType() {
@@ -552,16 +512,16 @@ void MozcEngine::InitRendererConfig(IBusConfig *config) {
   GVariant *use_custom_font_value = ibus_config_get_value(config,
                                                           kMozcPanelSectionName,
                                                           "use_custom_font");
-  gboolean use_custom_font;
-  if (ConfigUtil::GetBoolean(use_custom_font_value, &use_custom_font)) {
+  bool use_custom_font;
+  if (GetBoolean(use_custom_font_value, &use_custom_font)) {
     gtk_candidate_window_handler_->OnIBusUseCustomFontDescriptionChanged(
-        static_cast<bool>(use_custom_font != FALSE));
+        use_custom_font);
   } else {
     LOG(ERROR) << "Initialize Failed: "
                << "Cannot get panel:use_custom_font configuration.";
   }
-  const gchar *font_description;
-  if (ConfigUtil::GetString(custom_font_value, &font_description)) {
+  string font_description;
+  if (GetString(custom_font_value, &font_description)) {
     gtk_candidate_window_handler_->OnIBusCustomFontDescriptionChanged(
        font_description);
   } else {
@@ -577,19 +537,7 @@ void MozcEngine::InitConfig(IBusConfig *config) {
   MozcEngine *engine = mozc::Singleton<MozcEngine>::get();
   engine->InitRendererConfig(config);
 #endif  // ENABLE_GTK_RENDERER
-#ifdef OS_CHROMEOS
-  map<string, const char*> name_to_field;
-  for (size_t i = 0; i < arraysize(kMozcConfigNames); ++i) {
-    // Mozc uses identical names for ibus config names and protobuf config
-    // field names.
-    name_to_field.insert(make_pair(kMozcConfigNames[i], kMozcConfigNames[i]));
-  }
-  // Initialize the mozc config with the config loaded from ibus-memconf, which
-  // is the primary config storage on Chrome OS.
-  ConfigUtil::InitConfig(config, kMozcSectionName, name_to_field);
-#endif  // OS_CHROMEOS
 }
-
 
 bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
   UpdateDeletionRange(engine, output);
@@ -664,16 +612,16 @@ void MozcEngine::UpdateConfig(const gchar *section,
   // TODO(nona): Introduce ConfigHandler
   if (g_strcmp0(section, kMozcPanelSectionName) == 0) {
     if (g_strcmp0(name, "use_custom_font") == 0) {
-      gboolean use_custom_font;
-      if (!ConfigUtil::GetBoolean(value, &use_custom_font)) {
+      bool use_custom_font;
+      if (!GetBoolean(value, &use_custom_font)) {
         LOG(ERROR) << "Cannot get " << section << ":" << name << " value.";
         return;
       }
       gtk_candidate_window_handler_->OnIBusUseCustomFontDescriptionChanged(
-          static_cast<bool>(use_custom_font != FALSE));
+          use_custom_font);
     } else if (g_strcmp0(name, "custom_font") == 0) {
-      const gchar *font_description;
-      if (!ConfigUtil::GetString(value, &font_description)) {
+      string font_description;
+      if (!GetString(value, &font_description)) {
         LOG(ERROR) << "Cannot get " << section << ":" << name << " value.";
         return;
       }
@@ -682,18 +630,6 @@ void MozcEngine::UpdateConfig(const gchar *section,
     }
   }
 #endif  // ENABLE_GTK_RENDERER
-#ifdef OS_CHROMEOS
-  if (g_strcmp0(section, kMozcSectionName) == 0) {
-    config::Config mozc_config;
-    client_->GetConfig(&mozc_config);
-    ConfigUtil::SetFieldForName(name, value, &mozc_config);
-
-    // Update config1.db.
-    client_->SetConfig(mozc_config);
-    client_->SyncData();  // TODO(yusukes): remove this call?
-    VLOG(2) << "Client::SetConfig() is called: " << name;
-  }
-#endif  // OS_CHROMEOS
 }
 
 void MozcEngine::UpdatePreeditMethod() {

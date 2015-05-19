@@ -1044,6 +1044,52 @@ TEST_F(SystemDictionaryTest, test_reverse) {
       << "Missed node for non exact transliterated index" << key;
 }
 
+TEST_F(SystemDictionaryTest, test_reverse_index) {
+  const vector<Token *> &source_tokens = text_dict_->tokens();
+  BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
+
+  scoped_ptr<SystemDictionary> system_dic_without_index(
+      SystemDictionary::CreateSystemDictionaryFromFileWithOptions(
+          dic_fn_, SystemDictionary::NONE));
+  ASSERT_TRUE(system_dic_without_index.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+  scoped_ptr<SystemDictionary> system_dic_with_index(
+      SystemDictionary::CreateSystemDictionaryFromFileWithOptions(
+          dic_fn_, SystemDictionary::ENABLE_REVERSE_LOOKUP_INDEX));
+  ASSERT_TRUE(system_dic_with_index.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  vector<Token *>::const_iterator it;
+  int size = FLAGS_dictionary_reverse_lookup_test_size;
+  for (it = source_tokens.begin();
+       size > 0 && it != source_tokens.end(); ++it, --size) {
+    const Token *t = *it;
+    Node *node1 = system_dic_without_index->LookupReverse(t->value.c_str(),
+                                                          t->value.size(),
+                                                          NULL);
+    Node *node2 = system_dic_with_index->LookupReverse(t->value.c_str(),
+                                                       t->value.size(),
+                                                       NULL);
+
+    while (node1 != NULL) {
+      EXPECT_EQ(node1->key, node2->key)
+          << string(node1->key) << ": " << string(node2->key);
+      EXPECT_EQ(node1->value, node2->value)
+          << string(node1->value) << ": " << string(node2->value);
+      {
+        Node *tmp_node1 = node1;
+        node1 = node1->bnext;
+        delete tmp_node1;
+      }
+      {
+        Node *tmp_node2 = node2;
+        node2 = node2->bnext;
+        delete tmp_node2;
+      }
+    }
+  }
+}
+
 TEST_F(SystemDictionaryTest, test_reverse_cache) {
   const string kDoraemon =
       "\xe3\x83\x89\xe3\x83\xa9\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";

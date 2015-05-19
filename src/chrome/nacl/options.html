@@ -13,13 +13,14 @@
     <div id="sync_config_close" class="close_button"></div>
     <section>
       <h2 id="sync_advanced_settings_title">Advanced sync settings</h2>
-      <span class="controlled-setting-with-label">
+      <div id="sync_advanced_settings_message">Choose what to sync:</div>
+      <span class="controlled-setting-with-label sync_advanced_settings_span">
         <input type="checkbox" id="sync_settings">
         <span>
           <label for="sync_settings" id="sync_settings_label">Sync settings</label>
         </span>
       </span>
-      <span class="controlled-setting-with-label">
+      <span class="controlled-setting-with-label sync_advanced_settings_span">
         <input type="checkbox" id="sync_user_dictionary">
         <span>
           <label for="sync_user_dictionary" id="sync_user_dictionary_label">Sync user dictionary</label>
@@ -38,13 +39,14 @@
     <div id="clear_history_close" class="close_button"></div>
     <section>
       <h2 id="clear_history_title">Clear personalization data</h2>
-      <span class="controlled-setting-with-label">
+      <div id="clear_history_message">Obliterate the following items:</div>
+      <span class="controlled-setting-with-label clear_history_check_span">
         <input type="checkbox" id="clear_history_conversion_history">
         <span>
           <label for="clear_history_conversion_history" id="clear_history_conversion_history_label">Conversion history</label>
         </span>
       </span>
-      <span class="controlled-setting-with-label">
+      <span class="controlled-setting-with-label clear_history_check_span">
         <input type="checkbox" id="clear_history_suggestion_history">
         <span>
           <label for="clear_history_suggestion_history" id="clear_history_suggestion_history_label">Suggestion history</label>
@@ -62,43 +64,48 @@
   <div id="dictionary_tool_page" class="overlay_page">
     <div id="dictionary_tool_close" class="close_button"></div>
     <div>
-    <section>
-      <h2 id="dictionary_tool_page_title">Dictionary tool</h2>
-      <span id="dictionary_tool_menu_span" class="controlled-setting-with-label">
-        <select id="user_dictionary_select">
-        </select>
-        <input type="button" value="Create dictionary" id="create_dictionary_button">
-        <input type="button" value="Rename dictionary" id="rename_dictionary_button">
-        <input type="button" value="Delete dictionary" id="delete_dictionary_button">
-        <input type="button" value="Export dictionary" id="export_dictionary_button">
-      </span>
-    </section>
+      <section>
+        <h2 id="dictionary_tool_page_title">Dictionary tool</h2>
+      </section>
     </div>
-    <div id="dictionary_tool_content_area">
-      <div>
-        <div id="dictionary_tool_entry_title">
-          <div id="dictionary_tool_reading_title"></div>
-          <div id="dictionary_tool_word_title"></div>
-          <div id="dictionary_tool_category_title"></div>
-          <div id="dictionary_tool_comment_title"></div>
+    <div id="dictionary_tool_dictionary_and_content">
+      <div id="dictionary_tool_dictionary_list_area">
+        <div id="dictionary_tool_dictionary_list_title">Dictionary list</div>
+        <div id="dictionary_tool_dictionary_list_box">
+          <div id="dictionary_tool_dictionary_list" tabindex=0>
+          </div>
+          <div id="dictionary_tool_dictionary_menu">
+            <input type="button" value="Export dictionary" id="export_dictionary_button">
+            <input type="button" value="Import dictionary" id="import_dictionary_button">
+          </div>
         </div>
       </div>
-      <div id="dictionary_tool_list_area">
-        <div id="dictionary_tool_current_area">
+      <div id="dictionary_tool_content_area">
+        <div>
+          <div id="dictionary_tool_entry_title">
+            <div id="dictionary_tool_reading_title"></div>
+            <div id="dictionary_tool_word_title"></div>
+            <div id="dictionary_tool_category_title"></div>
+            <div id="dictionary_tool_comment_title"></div>
+          </div>
         </div>
-        <div id="dictionary_tool_entry_new">
-          <div id="dictionary_tool_reading_new">
-            <input type="text" id="dictionary_tool_reading_new_input">
+        <div id="dictionary_tool_list_area">
+          <div id="dictionary_tool_current_area">
           </div>
-          <div id="dictionary_tool_word_new">
-            <input type="text" id="dictionary_tool_word_new_input">
-          </div>
-          <div id="dictionary_tool_category_new">
-            <select id="dictionary_tool_category_new_select">
-            </select>
-          </div>
-          <div id="dictionary_tool_comment_new">
-            <input type="text" id="dictionary_tool_comment_new_input">
+          <div id="dictionary_tool_entry_new">
+            <div id="dictionary_tool_reading_new">
+              <input type="text" id="dictionary_tool_reading_new_input">
+            </div>
+            <div id="dictionary_tool_word_new">
+              <input type="text" id="dictionary_tool_word_new_input">
+            </div>
+            <div id="dictionary_tool_category_new">
+              <select id="dictionary_tool_category_new_select">
+              </select>
+            </div>
+            <div id="dictionary_tool_comment_new">
+              <input type="text" id="dictionary_tool_comment_new_input">
+            </div>
           </div>
         </div>
       </div>
@@ -106,6 +113,22 @@
     <div id="user_dictionary_done_div">
       <input type="button" value="Close" id="dictionary_tool_done_button">
     </div>
+  </div>
+</div>
+
+<div id="dictionary_import_overlay" class="overlay">
+  <div id="dictionary_import_page" class="overlay_page">
+    <div id="dictionary_import_close" class="close_button"></div>
+    <section>
+      <h2 id="dictionary_import_title">Select import destination</h2>
+      <span class="controlled-setting-with-label">
+        <select id="dictionary_import_select"></select>
+      </span>
+      <div id="dictionary_import_ok_cancel_div">
+        <input type="button" id="dictionary_import_ok" value="Import">
+        <input type="button" id="dictionary_import_cancel" value="Cancel">
+      </div>
+    </section>
   </div>
 </div>
 
@@ -269,10 +292,11 @@
     </div>
 
     <footer>
-    <div id="credits_title">Copyright © 2013 Google Inc. All Rights Reserved.</div>
+    <div id="credits_title">Copyright c 2013 Google Inc. All Rights Reserved.</div>
     <div id="oss_credits_title">This software is made possible by <a href="credits_en.html">open source software</a>.</div>
     </footer>
   </div>
 </div>
 </body>
 </html>
+

@@ -40,7 +40,6 @@
 #include <string>
 #include <algorithm>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"

@@ -50,11 +50,11 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../base/base.gyp:testing_util',
         '../config/config.gyp:config_handler',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../data_manager/testing/mock_data_manager_base.gyp:mock_user_pos_manager',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:testing_util',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'dictionary.gyp:dictionary',

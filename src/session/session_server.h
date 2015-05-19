@@ -32,10 +32,11 @@
 #ifndef MOZC_SESSION_SESSION_SERVER_H_
 #define MOZC_SESSION_SESSION_SERVER_H_
 
-#include "base/base.h"
+#include "base/port.h"
 #include "ipc/ipc.h"
 
 namespace mozc {
+class EngineInterface;
 class SessionHandlerInterface;
 
 namespace session {
@@ -71,6 +72,8 @@ class SessionServer: public IPCServer {
                        size_t *response_size);
 
  private:
+  // Must be defined earlier than session_handler_, which depends on this.
+  scoped_ptr<EngineInterface> engine_;
   scoped_ptr<session::SessionUsageObserver> usage_observer_;
 #ifdef ENABLE_CLOUD_SYNC
   scoped_ptr<sync::SyncHandler> sync_handler_;

@@ -58,6 +58,7 @@ struct Token;
 namespace dictionary {
 
 class SystemDictionaryCodecInterface;
+class ReverseLookupIndex;
 
 class SystemDictionary : public DictionaryInterface {
  public:
@@ -127,7 +128,17 @@ class SystemDictionary : public DictionaryInterface {
     Callback() {}
   };
 
+  // System dictionary options represented as bitwise enum.
+  enum Options {
+    NONE = 0,
+    // If ENABLE_REVERSE_LOOKUP_INDEX is set, we will have the index in heap
+    // from the id in value trie to the id in key trie.
+    // That consumes more memory but we can perform reverse lookup more quickly.
+    ENABLE_REVERSE_LOOKUP_INDEX = 1,
+  };
+
   struct ReverseLookupResult {
+    ReverseLookupResult() : tokens_offset(-1), id_in_key_trie(-1) {}
     // Offset from the tokens section beginning.
     // (token_array_->Get(id_in_key_trie) ==
     //  token_array_->Get(0) + tokens_offset)
@@ -141,8 +152,14 @@ class SystemDictionary : public DictionaryInterface {
   static SystemDictionary *CreateSystemDictionaryFromFile(
       const string &filename);
 
+  static SystemDictionary *CreateSystemDictionaryFromFileWithOptions(
+      const string &filename, Options options);
+
   static SystemDictionary *CreateSystemDictionaryFromImage(
       const char *ptr, int len);
+
+  static SystemDictionary *CreateSystemDictionaryFromImageWithOptions(
+      const char *ptr, int len, Options options);
 
   // Implementation of DictionaryInterface.
   virtual bool HasValue(const StringPiece value) const;
@@ -195,7 +212,7 @@ class SystemDictionary : public DictionaryInterface {
 
   SystemDictionary();
 
-  bool OpenDictionaryFile();
+  bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 
   // Allocates nodes from |allocator| and append them to |node|.
   // Token info will be filled using |tokens_key|, |actual_key| and |tokens|
@@ -233,10 +250,15 @@ class SystemDictionary : public DictionaryInterface {
   const storage::louds::KeyExpansionTable &GetExpansionTableBySetting(
       const Limit &limit) const;
 
+  void InitReverseLookupIndex();
+
   scoped_ptr<storage::louds::LoudsTrie> key_trie_;
   scoped_ptr<storage::louds::LoudsTrie> value_trie_;
   scoped_ptr<storage::louds::BitVectorBasedArray> token_array_;
   scoped_ptr<DictionaryFile> dictionary_file_;
+
+  scoped_ptr<ReverseLookupIndex> reverse_lookup_index_;
+
   const uint32 *frequent_pos_;
   const SystemDictionaryCodecInterface *codec_;
   const Limit empty_limit_;

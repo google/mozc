@@ -444,11 +444,6 @@
         '<(subdir)/roman_table_editor.h',
       ],
       'conditions': [
-        ['enable_webservice_infolist==1', {
-          'sources': [
-            '<(subdir)/webservice_infolist_editor.h',
-          ],
-        }],
         ['enable_cloud_sync==1', {
           'sources': [
             '<(subdir)/auth_code_detector.h',
@@ -502,12 +497,6 @@
         'gen_config_dialog_files',
       ],
       'conditions': [
-        ['enable_webservice_infolist==1', {
-          'sources': [
-            '<(gen_out_dir)/config_dialog/moc_webservice_infolist_editor.cc',
-            'config_dialog/webservice_infolist_editor.cc',
-          ],
-        }],
         ['enable_cloud_sync==1', {
           'sources': [
             '<(gen_out_dir)/config_dialog/moc_auth_code_detector.cc',
@@ -519,11 +508,6 @@
           ],
           'dependencies': [
             '../sync/sync.gyp:oauth2',
-          ],
-        }],
-        ['enable_webservice_infolist==1', {
-          'dependencies': [
-              '../net/jsoncpp.gyp:jsoncpp',
           ],
         }],
       ],
@@ -995,6 +979,11 @@
             'prelauncher_lib',
           ],
           'conditions': [
+            ['branding=="GoogleJapaneseInput"', {
+              'includes': [
+                '../gyp/breakpad_mac.gypi',
+              ],
+            }],
             ['use_qt=="YES"', {
               'postbuilds': [
                 {
@@ -1173,6 +1162,46 @@
           ],
         },
         {
+          'target_name': 'gen_mozc_tool_info_strings',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'generate_config_dialog_english_strings',
+              'inputs': [
+                '../data/mac/ConfigDialog/English.lproj/InfoPlist.strings',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist_strings.py',
+                '--output',
+                '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
+                '--input',
+                '../data/mac/ConfigDialog/English.lproj/InfoPlist.strings',
+                '--branding', '<(branding)',
+              ],
+            },
+            {
+              'action_name': 'generate_config_dialog_japanese_strings',
+              'inputs': [
+                '../data/mac/ConfigDialog/Japanese.lproj/InfoPlist.strings',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist_strings.py',
+                '--output',
+                '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
+                '--input',
+                '../data/mac/ConfigDialog/Japanese.lproj/InfoPlist.strings',
+                '--branding', '<(branding)',
+              ],
+            },
+          ],
+        },
+        {
           'target_name': 'about_dialog_mac',
           'type': 'executable',
           'mac_bundle': 1,
@@ -1193,13 +1222,16 @@
           'variables': {
             'product_name': 'ConfigDialog',
           },
+          'dependencies': [
+            'gen_mozc_tool_info_strings',
+          ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
           },
           'mac_bundle_resources': [
             '../data/images/mac/product_icon.icns',
-            '../data/mac/ConfigDialog/English.lproj/InfoPlist.strings',
-            '../data/mac/ConfigDialog/Japanese.lproj/InfoPlist.strings',
+            '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
+            '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
           ],
           'includes': [
             'mac_gui.gypi',

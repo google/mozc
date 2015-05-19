@@ -176,5 +176,15 @@
         '../session/session_base.gyp:session_protocol',
       ],
     },
+    {
+      'target_name': 'pos_id_printer',
+      'type': 'static_library',
+      'sources': [
+        'pos_id_printer.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
   ],
 }

@@ -29,36 +29,28 @@
 
 #include "sync/user_dictionary_sync_util.h"
 
-#include <algorithm>
-#include <map>
 #include <set>
 #include <string>
+#include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
-#include "base/mutex.h"
-#include "base/protobuf/protobuf.h"
+#include "base/port.h"
 #include "base/protobuf/repeated_field.h"
-#include "base/protobuf/unknown_field_set.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_util.h"
 #include "sync/sync_status_manager.h"
-#include "sync/sync_util.h"
 
 namespace mozc {
 namespace sync {
 
-using mozc::protobuf::Reflection;
 using mozc::protobuf::RepeatedPtrField;
-using mozc::protobuf::UnknownFieldSet;
 
 namespace {
 
-void CreateStorageSet(
+void CreateStorageFingerprintSortedVector(
     const UserDictionarySyncUtil::UserDictionaryStorageBase &storage,
-    set<uint64> *contains) {
+    vector<uint64> *contains) {
   DCHECK(contains);
   for (int i = 0; i < storage.dictionaries_size(); ++i) {
     const UserDictionarySyncUtil::UserDictionary &dic = storage.dictionaries(i);
@@ -67,8 +59,7 @@ void CreateStorageSet(
     }
     const string &name = dic.name();
     const bool enabled = dic.enabled();
-    contains->insert(Util::Fingerprint(name) + '\t'
-                     + (enabled ? '1' : '0'));
+    contains->push_back(Util::Fingerprint(name + '\t' + (enabled ? '1' : '0')));
     for (int j = 0; j < dic.entries_size(); ++j) {
       const UserDictionarySyncUtil::UserDictionaryEntry &entry = dic.entries(j);
       if (entry.removed()) {
@@ -80,31 +71,60 @@ void CreateStorageSet(
           entry.value() + '\t' +
           static_cast<char>(entry.pos()) + '\t' +
           entry.comment());
-      contains->insert(fp);
+      contains->push_back(fp);
     }
   }
+  sort(contains->begin(), contains->end());
 }
-}  // anonymous namespace
+}  // namespace
 
 bool UserDictionarySyncUtil::IsEqualStorage(
     const UserDictionaryStorageBase &storage1,
     const UserDictionaryStorageBase &storage2) {
-  if (UserDictionaryStorage::CountSyncableDictionaries(&storage1) !=
-      UserDictionaryStorage::CountSyncableDictionaries(&storage2)) {
+  if (UserDictionaryStorage::CountSyncableDictionaries(storage1) !=
+      UserDictionaryStorage::CountSyncableDictionaries(storage2)) {
     return false;
   }
-  set<uint64> storage_set1, storage_set2;
-  CreateStorageSet(storage1, &storage_set1);
-  CreateStorageSet(storage2, &storage_set2);
-  return storage_set1 == storage_set2;
+  vector<uint64> storage_vec1, storage_vec2;
+  CreateStorageFingerprintSortedVector(storage1, &storage_vec1);
+  CreateStorageFingerprintSortedVector(storage2, &storage_vec2);
+  return storage_vec1 == storage_vec2;
 }
 
 uint64 UserDictionarySyncUtil::EntryFingerprint(
-    const UserDictionarySyncUtil::UserDictionaryEntry &entry) {
+    const UserDictionaryEntry &entry) {
   return Util::Fingerprint(entry.key() + '\t' +
                            entry.value() + '\t' +
                            static_cast<char>(entry.pos()) + '\t' +
                            entry.comment());
+}
+
+void UserDictionarySyncUtil::RemoveDuplicatedEntries(
+    UserDictionaryStorageBase *storage) {
+  DCHECK(storage);
+
+  for (int i = 0; i < storage->dictionaries_size(); ++i) {
+    const UserDictionary &dictionary = storage->dictionaries(i);
+    if (!dictionary.syncable()) {
+      continue;
+    }
+
+    RepeatedPtrField<UserDictionaryEntry> new_entries;
+    set<uint64> entries_set;
+
+    for (int j = 0; j < dictionary.entries_size(); ++j) {
+      const UserDictionaryEntry &entry = dictionary.entries(j);
+      const uint64 fingerprint = EntryFingerprint(entry);
+      if (entries_set.insert(fingerprint).second) {
+        new_entries.Add()->CopyFrom(entry);
+      }
+    }
+
+    if (dictionary.entries_size() != new_entries.size()) {
+      storage->mutable_dictionaries(i)->mutable_entries()->CopyFrom(
+          new_entries);
+    }
+  }
 }
 
 namespace {
@@ -129,13 +149,14 @@ int FindDictionary(
   }
   return -1;
 }
-}  // anonymous namaespace
+}  // namespace
 
 bool UserDictionarySyncUtil::CreateSnapshot(
     const UserDictionaryStorageBase &storage_new,
     UserDictionaryStorageBase *update) {
   CHECK(update);
-  update->CopyFrom(storage_new);
+  update->Clear();
+  CopyDictionaries(storage_new, update);
   update->set_storage_type(UserDictionaryStorageBase::SNAPSHOT);
   return true;
 }
@@ -266,16 +287,20 @@ void MergeDictionary(
     const UserDictionarySyncUtil::UserDictionary &update,
     UserDictionarySyncUtil::UserDictionary *dictionary) {
   DCHECK(dictionary);
+
+  set<uint64> entries_set;
+  CreateEntriesSet(*dictionary, &entries_set);
+
   set<uint64> removed_set;
   for (int i = 0; i < update.entries_size(); ++i) {
+    const uint64 fingerprint =
+        UserDictionarySyncUtil::EntryFingerprint(update.entries(i));
     if (update.entries(i).removed()) {
-      removed_set.insert(
-          UserDictionarySyncUtil::EntryFingerprint(
-              update.entries(i)));
+      removed_set.insert(fingerprint);
     } else {
-      // TODO(taku): if the entry is already in the
-      // dictionary, we don't need to call add_entries().
-      dictionary->add_entries()->CopyFrom(update.entries(i));
+      if (entries_set.insert(fingerprint).second) {
+        dictionary->add_entries()->CopyFrom(update.entries(i));
+      }
     }
   }
 
@@ -293,9 +318,8 @@ void MergeDictionary(
   new_dictionary.set_syncable(dictionary->syncable());
 
   for (int i = 0; i < dictionary->entries_size(); ++i) {
-    if (removed_set.find(
-            UserDictionarySyncUtil::EntryFingerprint(
-                dictionary->entries(i))) == removed_set.end()) {
+    if (removed_set.find(UserDictionarySyncUtil::EntryFingerprint(
+            dictionary->entries(i))) == removed_set.end()) {
       new_dictionary.add_entries()->CopyFrom(dictionary->entries(i));
     }
   }
@@ -312,28 +336,24 @@ void DeleteDictionary(
       storage->mutable_dictionaries();
   DCHECK(dics);
 
-  UserDictionarySyncUtil::UserDictionary **data = dics->mutable_data();
-  DCHECK(data);
   for (int i = delete_index; i < storage->dictionaries_size() - 1; ++i) {
-    swap(data[i], data[i + 1]);
+    storage->mutable_dictionaries()->SwapElements(i, i + 1);
   }
 
   dics->RemoveLast();
 }
-}  // anonymous namespace
+}  // namespace
 
 // Merge one |update| to the current |storage|
 bool UserDictionarySyncUtil::MergeUpdate(
     const UserDictionaryStorageBase &update,
     UserDictionaryStorageBase *storage) {
   for (int i = 0; i < update.dictionaries_size(); ++i) {
-    const UserDictionarySyncUtil::UserDictionary &update_dictionary
-        = update.dictionaries(i);
+    const UserDictionary &update_dictionary = update.dictionaries(i);
     const int target_index = FindDictionary(*storage,
                                             update_dictionary.name());
     if (target_index >= 0) {   // found in the storage.
-      UserDictionarySyncUtil::UserDictionary *dictionary =
-          storage->mutable_dictionaries(target_index);
+      UserDictionary *dictionary = storage->mutable_dictionaries(target_index);
       DCHECK(dictionary);
       DCHECK_EQ(update_dictionary.name(), dictionary->name());
 
@@ -350,8 +370,7 @@ bool UserDictionarySyncUtil::MergeUpdate(
         LOG(WARNING) << "update is incosistent. "
                      << "cannot find dictionary: " << update_dictionary.name();
       } else {
-        UserDictionarySyncUtil::UserDictionary *dictionary
-            = storage->add_dictionaries();
+        UserDictionary *dictionary = storage->add_dictionaries();
         DCHECK(dictionary);
         dictionary->CopyFrom(update_dictionary);
       }
@@ -360,8 +379,8 @@ bool UserDictionarySyncUtil::MergeUpdate(
 
   for (int i = storage->dictionaries_size() - 1; i >= 0 ; --i) {
     if (storage->dictionaries(i).removed()) {
-      LOG(WARNING) << "We cannot remove sync dictionary.";
-      // This function must fail.
+      LOG(DFATAL)
+          << "Shouldn't reach here since we cannot remove sync dictionary.";
       DeleteDictionary(i, storage);
     }
   }
@@ -396,7 +415,7 @@ bool UserDictionarySyncUtil::MergeUpdates(
         continue;
       }
 
-      int update_index = FindDictionary(*update, dictionary->name());
+      const int update_index = FindDictionary(*update, dictionary->name());
       if (update_index >= 0) {
         dictionary->CopyFrom(update->dictionaries(update_index));
       }
@@ -411,6 +430,48 @@ bool UserDictionarySyncUtil::MergeUpdates(
   }
 
   return true;
+}
+
+void UserDictionarySyncUtil::CopyDictionaries(
+    const UserDictionaryStorageBase &from, UserDictionaryStorageBase *to) {
+  DCHECK(to);
+
+  set<string> copied_names;
+  for (int i = to->dictionaries_size() - 1; i >= 0; --i) {
+    UserDictionary *dict = to->mutable_dictionaries(i);
+    if (!dict->syncable()) {
+      continue;
+    }
+    int from_dict_index = FindDictionary(from, dict->name());
+    if (from_dict_index >= 0) {
+      dict->CopyFrom(from.dictionaries(from_dict_index));
+      copied_names.insert(dict->name());
+    } else {
+      DeleteDictionary(i, to);
+    }
+  }
+
+  for (int i = 0; i < from.dictionaries_size(); ++i) {
+    const UserDictionary &dict = from.dictionaries(i);
+    if (!dict.syncable() ||
+        copied_names.find(dict.name()) != copied_names.end()) {
+      continue;
+    }
+    to->add_dictionaries()->CopyFrom(dict);
+  }
+}
+
+void UserDictionarySyncUtil::RemoveUnsyncableDictionaries(
+    UserDictionaryStorageBase *storage) {
+  DCHECK(storage);
+
+  for (int i = storage->dictionaries_size() - 1; i >= 0; --i) {
+    UserDictionary *dict = storage->mutable_dictionaries(i);
+    if (dict->syncable()) {
+      continue;
+    }
+    DeleteDictionary(i, storage);
+  }
 }
 
 bool UserDictionarySyncUtil::VerifyLockAndSaveStorage(
@@ -442,7 +503,7 @@ bool UserDictionarySyncUtil::LockAndSaveStorage(
     LOG(ERROR) << "cannot lock the storage: " << storage->filename();
     return false;
   }
-  if (!storage->SaveCore()) {
+  if (!storage->SaveWithoutSyncableDictionariesSizeCheck()) {
     LOG(ERROR) << "cannot save the storage: " << storage->filename();
     storage->UnLock();
     return false;

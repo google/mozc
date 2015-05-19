@@ -162,9 +162,8 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
 
     Util::SetClockHandler(NULL);
 
-    testing::MockDataManager data_manager;
-    pos_matcher_ = data_manager.GetPOSMatcher();
-    pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
+    pos_matcher_ = mock_data_manager_.GetPOSMatcher();
+    pos_group_.reset(new PosGroup(mock_data_manager_.GetPosGroupData()));
     ASSERT_TRUE(pos_matcher_ != NULL);
     ASSERT_TRUE(pos_group_.get() != NULL);
   }
@@ -187,7 +186,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   }
 
   NumberRewriter *CreateNumberRewriter() const {
-    return new NumberRewriter(pos_matcher_);
+    return new NumberRewriter(&mock_data_manager_);
   }
 
   UserSegmentHistoryRewriter *CreateUserSegmentHistoryRewriter() const {
@@ -195,6 +194,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   }
 
  private:
+  const testing::MockDataManager mock_data_manager_;
   const POSMatcher *pos_matcher_;
   scoped_ptr<const PosGroup> pos_group_;
   DISALLOW_COPY_AND_ASSIGN(UserSegmentHistoryRewriterTest);

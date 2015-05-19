@@ -36,7 +36,6 @@
 #include <iostream>
 #include <vector>
 
-#include "base/base.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/logging.h"
 #include "base/util.h"

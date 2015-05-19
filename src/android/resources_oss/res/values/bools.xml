@@ -32,5 +32,6 @@
 <resources>
 
     <bool name="im_is_default">false</bool>
+    <bool name="enable_user_dictionary_tools_activity">true</bool>
 
 </resources>

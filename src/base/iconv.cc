@@ -31,16 +31,21 @@
 #include <iconv.h>
 #else
 #include <windows.h>
+#include <memory>
 #endif
 
 #include <string>
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
+
+#ifdef OS_WIN
+using std::unique_ptr;
+#endif  // OS_WIN
 
 namespace {
 
 #ifndef OS_WIN
+
 bool IconvHelper(iconv_t ic, const string &input, string *output) {
   size_t ilen = input.size();
   size_t olen = ilen * 4;
@@ -134,7 +139,7 @@ inline bool Convert(const char *from, const char *to,
     return false;
   }
 
-  scoped_array<wchar_t> wide(new wchar_t[wide_length + 1]);
+  unique_ptr<wchar_t[]> wide(new wchar_t[wide_length + 1]);
   if (wide.get() == NULL) {
     return false;
   }
@@ -149,7 +154,7 @@ inline bool Convert(const char *from, const char *to,
     return false;
   }
 
-  scoped_array<char> multibyte(new char[output_length + 1]);
+  unique_ptr<char[]> multibyte(new char[output_length + 1]);
   if (multibyte.get() == NULL) {
     return false;
   }

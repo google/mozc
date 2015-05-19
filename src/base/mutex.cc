@@ -39,7 +39,7 @@
 #include <libkern/OSAtomic.h>
 #endif  // OS_MACOSX
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "base/win_util.h"
 
@@ -220,6 +220,10 @@ void Mutex::Lock() {
   ::EnterCriticalSection(AsCriticalSection(&opaque_buffer_));
 }
 
+bool Mutex::TryLock() {
+  return ::TryEnterCriticalSection(AsCriticalSection(&opaque_buffer_));
+}
+
 void Mutex::Unlock() {
   ::LeaveCriticalSection(AsCriticalSection(&opaque_buffer_));
 }
@@ -316,6 +320,10 @@ Mutex::~Mutex() {
 
 void Mutex::Lock() {
   pthread_mutex_lock(AsPthreadMutexT(&opaque_buffer_));
+}
+
+bool Mutex::TryLock() {
+  return pthread_mutex_trylock(AsPthreadMutexT(&opaque_buffer_)) == 0;
 }
 
 void Mutex::Unlock() {

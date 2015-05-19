@@ -73,8 +73,8 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   // This is used for deciding whether the user has changed the settings for
   // ime switch or not.
   set<string> ime_switch_keymap_;
-  scoped_array<QAction *> actions_;
-  scoped_array<QAction *> import_actions_;
+  scoped_ptr<QAction *[]> actions_;
+  scoped_ptr<QAction *[]> import_actions_;
   scoped_ptr<ComboBoxDelegate> status_delegate_;
   scoped_ptr<ComboBoxDelegate> commands_delegate_;
   scoped_ptr<KeyBindingEditorDelegate> keybinding_delegate_;

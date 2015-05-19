@@ -53,7 +53,7 @@
       'copies': [
         {
           'destination': '<(mozc_data_dir)/data/dictionary_chromeos/',
-          'files': [ '../../data/dictionary_chromeos/connection.txt',
+          'files': [ '../../data/dictionary_chromeos/connection_single_column.txt',
                      '../../data/dictionary_chromeos/dictionary00.txt',
                      '../../data/dictionary_chromeos/dictionary01.txt',
                      '../../data/dictionary_chromeos/dictionary02.txt',

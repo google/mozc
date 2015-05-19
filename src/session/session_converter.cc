@@ -1119,9 +1119,6 @@ void SessionConverter::FillOutput(
     FillAllCandidateWords(output->mutable_all_candidate_words());
   }
 #endif  // __native_client__
-
-  // Propagate config information to renderer.
-  PropagateConfigToRenderer(output);
 }
 
 // static
@@ -1544,21 +1541,6 @@ void SessionConverter::FillAllCandidateWords(
   const Segment &segment = segments_->conversion_segment(segment_index_);
   SessionOutput::FillAllCandidateWords(
       segment, *candidate_list_, category, candidates);
-}
-
-void SessionConverter::PropagateConfigToRenderer(
-    commands::Output *output) const {
-  DCHECK(output);
-  if (!candidate_list_visible_ || !CheckState(PREDICTION | CONVERSION)) {
-    return;
-  }
-  const config::Config &config = config::ConfigHandler::GetConfig();
-  if (config.has_information_list_config() &&
-      config.information_list_config().use_web_usage_dictionary() &&
-      config.information_list_config().web_service_entries_size() > 0) {
-    output->mutable_config()->mutable_information_list_config()->CopyFrom(
-        config.information_list_config());
-  }
 }
 
 void SessionConverter::SetRequest(const commands::Request *request) {

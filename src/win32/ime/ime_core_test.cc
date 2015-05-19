@@ -173,22 +173,21 @@ TEST(ImeCoreTest, OpenIME) {
   mock_output.mutable_status()->set_mode(commands::FULL_KATAKANA);
 
   MockClient mock_client(mock_output);
-  const DWORD next_mode = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE |
-                          IME_CMODE_ROMAN | IME_CMODE_KATAKANA;
-  EXPECT_TRUE(ImeCore::OpenIME(&mock_client, next_mode));
+  const DWORD kFullKatakana =
+      IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN |
+      IME_CMODE_KATAKANA;
+  EXPECT_TRUE(ImeCore::OpenIME(&mock_client, kFullKatakana));
   {
     commands::Input actual_input;
-    EXPECT_TRUE(mock_client.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
-    EXPECT_TRUE(actual_input.has_key());
-    EXPECT_FALSE(actual_input.key().has_key_code());
-    EXPECT_FALSE(actual_input.key().has_key_string());
-    EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::FULL_KATAKANA, actual_input.key().mode());
-    EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
-    EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::ON, actual_input.key().special_key());
+    ASSERT_TRUE(mock_client.GetGeneratedRequest(&actual_input));
+    EXPECT_EQ(commands::Input::SEND_COMMAND, actual_input.type());
+    ASSERT_TRUE(actual_input.has_command());
+    ASSERT_TRUE(actual_input.command().has_type());
+    EXPECT_EQ(commands::SessionCommand::TURN_ON_IME,
+              actual_input.command().type());
+    ASSERT_TRUE(actual_input.command().has_composition_mode());
+    EXPECT_EQ(commands::FULL_KATAKANA,
+              actual_input.command().composition_mode());
   }
 }
 
@@ -197,24 +196,27 @@ TEST(ImeCoreTest, CloseIME) {
   mock_output.set_consumed(true);
   mock_output.set_mode(commands::DIRECT);
   mock_output.mutable_status()->set_activated(false);
-  mock_output.mutable_status()->set_mode(commands::HIRAGANA);
+  mock_output.mutable_status()->set_mode(commands::FULL_KATAKANA);
 
   MockClient mock_client(mock_output);
 
+  const DWORD kFullKatakana =
+      IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN |
+      IME_CMODE_KATAKANA;
+
   commands::Output output;
-  EXPECT_TRUE(ImeCore::CloseIME(&mock_client, &output));
+  EXPECT_TRUE(ImeCore::CloseIME(&mock_client, kFullKatakana, &output));
   {
     commands::Input actual_input;
-    EXPECT_TRUE(mock_client.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
-    EXPECT_TRUE(actual_input.has_key());
-    EXPECT_FALSE(actual_input.key().has_key_code());
-    EXPECT_FALSE(actual_input.key().has_key_string());
-    EXPECT_FALSE(actual_input.key().has_mode());
-    EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
-    EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::OFF, actual_input.key().special_key());
+    ASSERT_TRUE(mock_client.GetGeneratedRequest(&actual_input));
+    EXPECT_EQ(commands::Input::SEND_COMMAND, actual_input.type());
+    ASSERT_TRUE(actual_input.has_command());
+    ASSERT_TRUE(actual_input.command().has_type());
+    EXPECT_EQ(commands::SessionCommand::TURN_OFF_IME,
+              actual_input.command().type());
+    ASSERT_TRUE(actual_input.command().has_composition_mode());
+    EXPECT_EQ(commands::FULL_KATAKANA,
+              actual_input.command().composition_mode());
   }
 }
 

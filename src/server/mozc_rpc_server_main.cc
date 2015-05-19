@@ -50,13 +50,11 @@
 
 #include "base/number_util.h"
 #include "base/singleton.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "engine/engine_factory.h"
-#include "engine/engine_interface.h"
 #include "session/commands.pb.h"
-#include "session/japanese_session_factory.h"
 #include "session/random_keyevents_generator.h"
-#include "session/session_factory_manager.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 
@@ -131,7 +129,8 @@ void CloseSocket(int client_socket) {
 class RPCServer {
  public:
   RPCServer() : server_socket_(kInvalidSocket),
-                handler_(new SessionHandler) {
+                engine_(EngineFactory::Create()),
+                handler_(new SessionHandler(engine_.get())) {
     struct sockaddr_in sin;
 
     server_socket_ = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -164,8 +163,7 @@ class RPCServer {
     CHECK_GE(::listen(server_socket_, SOMAXCONN), 0) << "listen failed";
     CHECK_NE(server_socket_, 0);
 
-    handler_->AddObserver(
-        Singleton<session::SessionUsageObserver>::get());
+    handler_->AddObserver(Singleton<session::SessionUsageObserver>::get());
   }
 
   ~RPCServer() {
@@ -197,7 +195,7 @@ class RPCServer {
       CHECK_LT(request_size, kMaxRequestSize);
 
       // Receive the body of serialized protobuf.
-      scoped_array<char> request_str(new char[request_size]);
+      scoped_ptr<char[]> request_str(new char[request_size]);
       if (!Recv(client_socket,
                 request_str.get(), request_size, FLAGS_rpc_timeout)) {
         LOG(ERROR) << "cannot receive body of request.";
@@ -237,6 +235,7 @@ class RPCServer {
 
  private:
   int server_socket_;
+  scoped_ptr<EngineInterface> engine_;
   scoped_ptr<SessionHandler> handler_;
 };
 
@@ -322,7 +321,7 @@ class RPCClient {
     CHECK_GT(output_size, 0);
     CHECK_LT(output_size, kMaxOutputSize);
 
-    scoped_array<char> output_str(new char[output_size]);
+    scoped_ptr<char[]> output_str(new char[output_size]);
     CHECK(Recv(client_socket,
                output_str.get(), output_size, FLAGS_rpc_timeout));
 
@@ -385,9 +384,6 @@ int main(int argc, char *argv[]) {
     CHECK(client.DeleteSession());
     return 0;
   } else if (FLAGS_server) {
-    scoped_ptr<mozc::EngineInterface> engine(mozc::EngineFactory::Create());
-    static mozc::session::JapaneseSessionFactory session_factory(engine.get());
-    mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
     mozc::RPCServer server;
     server.Loop();
   } else {

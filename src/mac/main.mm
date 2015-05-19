@@ -34,7 +34,6 @@
 #import "mac/GoogleJapaneseInputController.h"
 #import "mac/GoogleJapaneseInputServer.h"
 
-#include "base/base.h"
 #include "base/const.h"
 #include "base/crash_report_handler.h"
 #include "base/logging.h"

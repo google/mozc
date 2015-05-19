@@ -37,9 +37,9 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/system/system_dictionary_builder.h"

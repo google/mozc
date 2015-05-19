@@ -27,11 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_BASE_INPUT_STATE_
-#define MOZC_WIN32_BASE_INPUT_STATE_
+#ifndef MOZC_WIN32_BASE_INPUT_STATE_H_
+#define MOZC_WIN32_BASE_INPUT_STATE_H_
 
 #include <windows.h>
 
+#include <vector>
+
+#include "session/key_info_util.h"
 #include "win32/base/keyboard.h"
 
 namespace mozc {
@@ -56,9 +59,10 @@ struct InputBehavior {
   bool prefer_kana_input;
   bool use_mode_indicator;
   bool use_romaji_key_to_toggle_input_style;
+  vector<KeyInformation> direct_mode_keys;
   InputBehavior();
 };
 
 }  // namespace win32
 }  // namespace mozc
-#endif  // MOZC_WIN32_BASE_INPUT_STATE_
+#endif  // MOZC_WIN32_BASE_INPUT_STATE_H_

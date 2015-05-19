@@ -31,8 +31,8 @@
 
 #include <cstdio>
 
-#include "base/base.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "dictionary/file/dictionary_file_builder.h"
 #include "testing/base/public/googletest.h"

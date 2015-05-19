@@ -34,7 +34,7 @@
 #define MOZC_BASE_TEXT_NORMALIZER_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
 #include "base/string_piece.h"
 
 namespace mozc {
@@ -47,9 +47,7 @@ class TextNormalizer {
   static void NormalizeCandidateText(StringPiece input, string *output);
 
  private:
-  TextNormalizer();
-  ~TextNormalizer();
-  DISALLOW_COPY_AND_ASSIGN(TextNormalizer);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(TextNormalizer);
 };
 
 }  // namespace mozc

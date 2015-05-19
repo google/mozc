@@ -52,13 +52,11 @@
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "engine/engine_factory.h"
-#include "engine/engine_interface.h"
 #include "net/http_client.h"
 #include "net/http_client_pepper.h"
 #include "net/jsoncpp.h"
 #include "net/json_util.h"
 #include "session/commands.pb.h"
-#include "session/japanese_session_factory.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #ifdef ENABLE_CLOUD_SYNC
@@ -184,9 +182,7 @@ class MozcSessionHandlerThread : public Thread {
             packed::PackedDataManager::GetUserPosManager()->GetUserPOSData()));
 
     engine_.reset(mozc::EngineFactory::Create());
-    session_factory_.reset(new JapaneseSessionFactory(engine_.get()));
-    SessionFactoryManager::SetSessionFactory(session_factory_.get());
-    handler_.reset(new SessionHandler());
+    handler_.reset(new SessionHandler(engine_.get()));
 
 
 #ifdef ENABLE_CLOUD_SYNC
@@ -308,7 +304,6 @@ class MozcSessionHandlerThread : public Thread {
   pp::CompletionCallbackFactory<MozcSessionHandlerThread> factory_;
   scoped_ptr<EngineInterface> engine_;
   scoped_ptr<SessionHandlerInterface> handler_;
-  scoped_ptr<JapaneseSessionFactory> session_factory_;
 #ifdef ENABLE_CLOUD_SYNC
   scoped_ptr<sync::SyncHandler> sync_handler_;
 #endif  // ENABLE_CLOUD_SYNC

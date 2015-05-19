@@ -34,8 +34,8 @@
 #include <cstring>
 #include <sstream>
 
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/hash_tables.h"
 #include "base/logging.h"
 #include "base/util.h"

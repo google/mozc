@@ -31,8 +31,8 @@
 
 #include "base/run_level.h"
 #include "client/client_interface.h"
-#include "config/config_handler.h"
 #include "session/commands.pb.h"
+#include "win32/base/config_snapshot.h"
 #include "win32/base/deleter.h"
 #include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/input_state.h"
@@ -160,19 +160,15 @@ bool PrivateContextUtil::EnsurePrivateContextIsInitialized(
     return false;
   }
 
-  // Try to retrieve the config's kana input mode and reflect it into the
-  // current kana lock state.
-  const mozc::config::Config &config =
-      mozc::config::ConfigHandler::GetConfig();
-  private_context_allocator->ime_behavior->prefer_kana_input =
-      (config.preedit_method() == mozc::config::Config::KANA);
-
-  private_context_allocator->ime_behavior->
-      use_romaji_key_to_toggle_input_style =
-          config.use_keyboard_to_change_preedit_method();
-
-  private_context_allocator->ime_behavior->use_mode_indicator =
-      config.use_mode_indicator();
+  // Try to reflect the current config to the IME behavior.
+  const auto &snapshot =
+      ConfigSnapshot::Get(private_context_allocator->client);
+  auto *behavior = private_context_allocator->ime_behavior;
+  behavior->prefer_kana_input = snapshot.use_kana_input;
+  behavior->use_romaji_key_to_toggle_input_style =
+      snapshot.use_keyboard_to_change_preedit_method;
+  behavior->use_mode_indicator = snapshot.use_mode_indicator;
+  behavior->direct_mode_keys = snapshot.direct_mode_keys;
 
   return true;
 }

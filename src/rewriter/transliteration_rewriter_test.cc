@@ -48,7 +48,6 @@
 #include "data_manager/packed/packed_data_mock.h"
 #endif  // MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/user_pos_manager.h"
-#include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
@@ -97,7 +96,6 @@ class TransliterationRewriterTest : public testing::Test {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
-    dictionary_mock_.reset(new DictionaryMock);
   }
 
   virtual void TearDown() {
@@ -107,14 +105,12 @@ class TransliterationRewriterTest : public testing::Test {
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
 #endif  // MOZC_USE_PACKED_DICTIONARY
-    dictionary_mock_.reset(NULL);
     usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   TransliterationRewriter *CreateTransliterationRewriter() const {
     return new TransliterationRewriter(
-        *UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-        dictionary_mock_.get());
+        *UserPosManager::GetUserPosManager()->GetPOSMatcher());
   }
 
   const commands::Request &default_request() const {
@@ -125,7 +121,6 @@ class TransliterationRewriterTest : public testing::Test {
     return default_config_;
   }
 
-  scoped_ptr<DictionaryMock> dictionary_mock_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
  private:
@@ -259,7 +254,9 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
   Segment *segment = segments.add_segment();
   CHECK(segment);
 
-  ConversionRequest request(&composer, &default_request());
+  commands::Request input;
+  input.set_mixed_conversion(true);
+  ConversionRequest request(&composer, &input);
   {
     // Although the segment key is "っ" as a partical string of the full
     // composition, the transliteration key should be "っsh" as the
@@ -1127,180 +1124,6 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
 
     const Segment &seg = segments.conversion_segment(0);
     EXPECT_EQ("s", seg.meta_candidate(transliteration::HALF_ASCII).value);
-  }
-}
-
-namespace {
-bool RewriteWithLanguageAwareInput(const TransliterationRewriter *rewriter,
-                                   const string &key,
-                                   string *composition,
-                                   Segments *segments) {
-  commands::Request client_request;
-  client_request.set_language_aware_input(
-      commands::Request::LANGUAGE_AWARE_SUGGESTION);
-
-  composer::Table table;
-  config::Config default_config;
-  table.InitializeWithRequestAndConfig(client_request, default_config);
-
-  composer::Composer composer(&table, &client_request);
-  InsertASCIISequence(key, &composer);
-  composer.GetStringForPreedit(composition);
-
-  // Perform the rewrite command.
-  segments->set_request_type(Segments::SUGGESTION);
-  Segment *segment = segments->add_segment();
-  segment->set_key(*composition);
-  ConversionRequest request(&composer, &client_request);
-
-  return rewriter->Rewrite(request, segments);
-}
-}  // namespace
-
-TEST_F(TransliterationRewriterTest, LanguageAwareInput) {
-  dictionary_mock_->AddLookupExact("query", "query", "query", 0);
-
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
-      CreateTransliterationRewriter());
-
-  const string &kPrefix = "\xE2\x86\x92 ";  // "→ "
-  const string &kDidYouMean =
-      // "もしかして"
-      "\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6";
-
-  {
-    // "python" is composed to "ｐｙてょｎ", but "python" should be suggested,
-    // because alphabet characters are in the middle of the word.
-    string composition;
-    Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(t13n_rewriter.get(), "python",
-                                              &composition, &segments));
-
-    // "ｐｙてょｎ"
-    EXPECT_EQ("\xEF\xBD\x90\xEF\xBD\x99\xE3\x81\xA6\xE3\x82\x87\xEF\xBD\x8E",
-              composition);
-    const Segment::Candidate &candidate =
-        segments.conversion_segment(0).candidate(0);
-    EXPECT_EQ("python", candidate.key);
-    EXPECT_EQ("python", candidate.value);
-    EXPECT_EQ(kPrefix, candidate.prefix);
-    EXPECT_EQ(kDidYouMean, candidate.description);
-  }
-
-  {
-    // "mozuk" is composed to "もずｋ", then "mozuk" is not suggested.
-    // The tailing alphabet characters are not counted.
-    string composition;
-    Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(t13n_rewriter.get(), "mozuk",
-                                              &composition, &segments));
-
-    // "もずｋ"
-    EXPECT_EQ("\xE3\x82\x82\xE3\x81\x9A\xEF\xBD\x8B", composition);
-    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
-  }
-
-  {
-    // "query" is composed to "くえｒｙ".  Since "query" is in the dictionary
-    // dislike the above "mozuk" case, "query" should be suggested.
-    string composition;
-    Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(t13n_rewriter.get(), "query",
-                                              &composition, &segments));
-
-    // "くえｒｙ"
-    EXPECT_EQ("\xE3\x81\x8F\xE3\x81\x88\xEF\xBD\x92\xEF\xBD\x99", composition);
-    const Segment::Candidate &candidate =
-        segments.conversion_segment(0).candidate(0);
-    EXPECT_EQ("query", candidate.key);
-    EXPECT_EQ("query", candidate.value);
-    EXPECT_EQ(kPrefix, candidate.prefix);
-    EXPECT_EQ(kDidYouMean, candidate.description);
-  }
-}
-
-TEST_F(TransliterationRewriterTest, LanguageAwareInputUsageStats) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
-      CreateTransliterationRewriter());
-
-  usage_stats::UsageStats::ClearAllStatsForTest();
-  uint32 triggered = 0;
-  EXPECT_TRUE(usage_stats::UsageStats::IsListed(
-      "LanguageAwareSuggestionTriggered"));
-  EXPECT_FALSE(usage_stats::UsageStats::GetCountForTest(
-      "LanguageAwareSuggestionTriggered", &triggered));
-  EXPECT_EQ(0, triggered);
-
-  uint32 committed = 0;
-  EXPECT_TRUE(usage_stats::UsageStats::IsListed(
-      "LanguageAwareSuggestionCommitted"));
-  EXPECT_FALSE(usage_stats::UsageStats::GetCountForTest(
-      "LanguageAwareSuggestionCommitted", &committed));
-  EXPECT_EQ(0, committed);
-
-  const string kPyTeyoN =
-      // "ｐｙてょｎ"
-      "\xEF\xBD\x90\xEF\xBD\x99\xE3\x81\xA6\xE3\x82\x87\xEF\xBD\x8E";
-
-  {
-    // "python" is composed to "ｐｙてょｎ", but "python" should be suggested,
-    // because alphabet characters are in the middle of the word.
-    string composition;
-    Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(t13n_rewriter.get(), "python",
-                                              &composition, &segments));
-    EXPECT_EQ(kPyTeyoN, composition);
-
-    const Segment::Candidate &candidate =
-        segments.conversion_segment(0).candidate(0);
-    EXPECT_EQ("python", candidate.key);
-    EXPECT_EQ("python", candidate.value);
-
-    EXPECT_TRUE(usage_stats::UsageStats::GetCountForTest(
-        "LanguageAwareSuggestionTriggered", &triggered));
-    EXPECT_EQ(1, triggered);
-  }
-
-  {
-    // Call Rewrite with "python" again, then call Finish.  Both ...Triggered
-    // and ...Committed should be incremented.
-    // Note, RewriteWithLanguageAwareInput is not used here, because
-    // Finish also requires ConversionRequest.
-    string composition;
-    Segments segments;
-
-    commands::Request client_request;
-    client_request.set_language_aware_input(
-        commands::Request::LANGUAGE_AWARE_SUGGESTION);
-
-    composer::Table table;
-    config::Config default_config;
-    table.InitializeWithRequestAndConfig(client_request, default_config);
-
-    composer::Composer composer(&table, &client_request);
-    InsertASCIISequence("python", &composer);
-    composer.GetStringForPreedit(&composition);
-    EXPECT_EQ(kPyTeyoN, composition);
-
-    // Perform the rewrite command.
-    segments.set_request_type(Segments::SUGGESTION);
-    Segment *segment = segments.add_segment();
-    segment->set_key(composition);
-    ConversionRequest request(&composer, &client_request);
-
-    EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
-
-    usage_stats::UsageStats::GetCountForTest(
-        "LanguageAwareSuggestionTriggered", &triggered);
-    EXPECT_EQ(2, triggered);
-
-    segment->set_segment_type(Segment::FIXED_VALUE);
-    EXPECT_LT(0, segment->candidates_size());
-
-    t13n_rewriter->Finish(request, &segments);
-    usage_stats::UsageStats::GetCountForTest(
-        "LanguageAwareSuggestionCommitted", &committed);
-    EXPECT_EQ(1, committed);
   }
 }
 }  // namespace mozc

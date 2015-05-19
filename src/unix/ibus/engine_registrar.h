@@ -84,6 +84,9 @@ class EngineRegistrar {
                                 gint y,
                                 gint w,
                                 gint h);
+  static void SetContentType(IBusEngine *engine,
+                             guint purpose,
+                             guint hints);
 };
 
 }  // namespace ibus

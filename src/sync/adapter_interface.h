@@ -30,6 +30,7 @@
 #ifndef MOZC_SYNC_ADAPTER_INTERFACE_H_
 #define MOZC_SYNC_ADAPTER_INTERFACE_H_
 
+#include "base/port.h"
 
 namespace google {
 namespace protobuf {
@@ -56,12 +57,12 @@ class AdapterInterface {
     return true;
   }
 
-  // SetDownloadedItems, GetItemsToUpload and MarkUploaded are called
-  // outside of main converter thread.
+  // Following methods are called outside of main converter thread.
   virtual bool SetDownloadedItems(const ime_sync::SyncItems &items) = 0;
   virtual bool GetItemsToUpload(ime_sync::SyncItems *items) = 0;
-  virtual bool MarkUploaded(
-      const ime_sync::SyncItem &item, bool uploaded) = 0;
+  virtual bool MarkUploaded(const ime_sync::SyncItem &item, bool uploaded) = 0;
+  virtual uint64 GetLastDownloadTimestamp() const = 0;
+  virtual bool SetLastDownloadTimestamp(uint64 last_download_time) = 0;
 
   // Clear is called after Syncer::Clear finishes.
   // internal status, like timestamp, last_synced_file can be

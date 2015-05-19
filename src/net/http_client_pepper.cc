@@ -36,12 +36,15 @@
 #include <ppapi/cpp/var.h>
 #include <ppapi/utility/completion_callback_factory.h>
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/pepper_scoped_obj.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
+
+using std::unique_ptr;
 
 namespace mozc {
 namespace {
@@ -75,7 +78,7 @@ class PepperURLLoader {
   bool result_;
   bool finished_;
   bool timeouted_;
-  scoped_array<char> tmp_buffer_;
+  unique_ptr<char[]> tmp_buffer_;
   pp::CompletionCallbackFactory<PepperURLLoader> cc_factory_;
   scoped_main_thread_destructed_object<pp::URLRequestInfo> url_request_;
   scoped_main_thread_destructed_object<pp::URLLoader> url_loader_;

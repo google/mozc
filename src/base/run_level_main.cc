@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <vector>
-#include <string>
-#include <iostream>
-#include "base/base.h"
 #include "base/run_level.h"
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "base/flags.h"
 
 DEFINE_bool(server, false, "server mode");
 DEFINE_bool(client, false, "client mode");

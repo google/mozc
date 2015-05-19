@@ -34,24 +34,15 @@
 #include <string>
 #include <vector>
 
-#include "base/config_file_stream.h"
-#include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
-#include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "session/commands.pb.h"
-#include "session/internal/keymap.h"
-#include "session/key_event_util.h"
-#include "session/key_parser.h"
+#include "session/key_info_util.h"
 
 namespace mozc {
 namespace config {
 namespace {
-const char kModeDirect[] = "Direct";
-const char kModeDirectInput[] = "DirectInput";
 
 class ImeSwitchUtilImpl {
  public:
@@ -59,83 +50,20 @@ class ImeSwitchUtilImpl {
     Reload();
   }
 
-  virtual ~ImeSwitchUtilImpl() {}
-
-  bool IsDirectModeCommand(const commands::KeyEvent &key_event) const {
-    KeyInformation key;
-    if (!KeyEventUtil::GetKeyInformation(key_event, &key)) {
-      return false;
-    }
-    for (size_t i = 0; i < keyevents_.size(); ++i) {
-      KeyInformation ime_on_key;
-      if (!KeyEventUtil::GetKeyInformation(keyevents_[i], &ime_on_key)) {
-        continue;
-      }
-      if (key == ime_on_key) {
-        return true;
-      }
-    }
-    return false;
+  bool IsDirectModeCommand(const commands::KeyEvent &key) const {
+    return KeyInfoUtil::ContainsKey(direct_mode_keys_, key);
   }
 
   void Reload() {
-    keyevents_.clear();
-    const config::Config::SessionKeymap keymap = GET_CONFIG(session_keymap);
-    if (keymap == Config::CUSTOM) {
-      const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
-      if (custom_keymap_table.empty()) {
-        LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-        const char *default_keymapfile =
-            keymap::KeyMapManager::GetKeyMapFileName(
-                keymap::KeyMapManager::GetDefaultKeyMap());
-        ReloadFromFile(default_keymapfile);
-        return;
-      }
-      istringstream ifs(custom_keymap_table);
-      ReloadFromStream(&ifs);
-      return;
-    }
-    const char *keymap_file = keymap::KeyMapManager::GetKeyMapFileName(keymap);
-    ReloadFromFile(keymap_file);
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    direct_mode_keys_ = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   }
 
  private:
-  void ReloadFromStream(istream *ifs) {
-    string line;
-    getline(*ifs, line);  // Skip the first line.
-    while (!ifs->eof()) {
-      getline(*ifs, line);
-      Util::ChopReturns(&line);
-      if (line.empty() || line[0] == '#') {
-        // empty or comment
-        continue;
-      }
-      vector<string> rules;
-      Util::SplitStringUsing(line, "\t", &rules);
-      if (rules.size() != 3) {
-        LOG(ERROR) << "Invalid format: " << line;
-        continue;
-      }
-      if (!(rules[0] == kModeDirect || rules[0] == kModeDirectInput)) {
-        continue;
-      }
-      commands::KeyEvent key_event;
-      KeyParser::ParseKey(rules[1], &key_event);
-      keyevents_.push_back(key_event);
-    }
-  }
+  vector<KeyInformation> direct_mode_keys_;
 
-  void ReloadFromFile(const string &filename) {
-    scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
-    if (ifs.get() == NULL) {
-      DLOG(FATAL) << "could not open file: " << filename;
-      return;
-    }
-    return ReloadFromStream(ifs.get());
-  }
-
-  // original forms
-  vector<commands::KeyEvent> keyevents_;
+  DISALLOW_COPY_AND_ASSIGN(ImeSwitchUtilImpl);
 };
 
 }  // namespace
@@ -147,5 +75,6 @@ bool ImeSwitchUtil::IsDirectModeCommand(const commands::KeyEvent &key) {
 void ImeSwitchUtil::Reload() {
   Singleton<ImeSwitchUtilImpl>::get()->Reload();
 }
+
 }  // namespace config
 }  // namespace mozc

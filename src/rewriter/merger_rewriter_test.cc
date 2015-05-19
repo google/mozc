@@ -136,6 +136,70 @@ TEST_F(MergerRewriterTest, Rewrite) {
             call_result);
 }
 
+TEST_F(MergerRewriterTest, RewriteSuggestion) {
+  string call_result;
+  MergerRewriter merger;
+  Segments segments;
+  const ConversionRequest request;
+
+  segments.set_request_type(Segments::SUGGESTION);
+  merger.AddRewriter(
+      new TestRewriter(&call_result, "a", true, RewriterInterface::SUGGESTION));
+
+  EXPECT_EQ(0, segments.conversion_segments_size());
+  Segment *segment = segments.push_back_segment();
+  EXPECT_EQ(1, segments.conversion_segments_size());
+
+  EXPECT_EQ(0, segment->candidates_size());
+  segment->push_back_candidate();
+  segment->push_back_candidate();
+  segment->push_back_candidate();
+  segment->push_back_candidate();
+  EXPECT_EQ(4, segment->candidates_size());
+  EXPECT_EQ(3, GET_CONFIG(suggestions_size));
+
+  EXPECT_TRUE(merger.Rewrite(request, &segments));
+  EXPECT_EQ("a.Rewrite();", call_result);
+
+  EXPECT_EQ(3, segment->candidates_size());
+}
+
+TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
+  string call_result;
+  MergerRewriter merger;
+  Segments segments;
+
+  // Initialize a ConversionRequest with mixed_conversion == true, which
+  // should result that the merger rewriter does not trim exceeded suggestions.
+  const composer::Composer *kNullComposer = NULL;
+  commands::Request commands_request;
+  commands_request.set_mixed_conversion(true);
+  ConversionRequest request(kNullComposer, &commands_request);
+  EXPECT_TRUE(request.request().mixed_conversion());
+
+  segments.set_request_type(Segments::SUGGESTION);
+  merger.AddRewriter(
+      new TestRewriter(&call_result, "a", true, RewriterInterface::SUGGESTION));
+
+  EXPECT_EQ(0, segments.conversion_segments_size());
+  Segment *segment = segments.push_back_segment();
+  EXPECT_EQ(1, segments.conversion_segments_size());
+
+  EXPECT_EQ(0, segment->candidates_size());
+  segment->push_back_candidate();
+  segment->push_back_candidate();
+  segment->push_back_candidate();
+  segment->push_back_candidate();
+  EXPECT_EQ(4, segment->candidates_size());
+  EXPECT_EQ(3, GET_CONFIG(suggestions_size));
+
+  EXPECT_TRUE(merger.Rewrite(request, &segments));
+  EXPECT_EQ("a.Rewrite();", call_result);
+
+  // If mixed_conversion is true, the suggestions are not deleted.
+  EXPECT_EQ(4, segment->candidates_size());
+}
+
 TEST_F(MergerRewriterTest, RewriteCheckTest) {
   string call_result;
   MergerRewriter merger;

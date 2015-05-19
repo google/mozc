@@ -33,11 +33,17 @@
 #include <string>
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/win_util.h"
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/dictionary_tool/dictionary_tool.h"
 
 int RunDictionaryTool(int argc, char *argv[]) {
+#ifdef OS_WIN
+  // For MSIMEImportIterator.
+  mozc::ScopedCOMInitializer com_initializer;
+#endif  // OS_WIN
+
   Q_INIT_RESOURCE(qrc_dictionary_tool);
   QApplication app(argc, argv);
 

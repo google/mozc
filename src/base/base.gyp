@@ -48,7 +48,6 @@
         'run_level.cc',
         'scheduler.cc',
         'stopwatch.cc',
-        'svm.cc',
         'timer.cc',
         'unnamed_event.cc',
         'update_checker.cc',
@@ -72,14 +71,8 @@
         }],
         ['OS=="win"', {
           'sources': [
+            'win_api_test_helper.cc',
             'win_sandbox.cc',
-          ],
-          'conditions': [
-            ['branding=="GoogleJapaneseInput"', {
-              'dependencies': [
-                '<(DEPTH)/third_party/breakpad/breakpad.gyp:breakpad',
-              ],
-            }],
           ],
         }],
         # When the target platform is 'Android', build settings are currently
@@ -230,32 +223,6 @@
       ],
     },
     {
-      'target_name': 'jni_proxy',
-      'type': 'static_library',
-      'conditions': [
-        ['target_platform=="Android"', {
-          'sources': [
-            'android_jni_proxy.cc'
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'nacl_js_proxy',
-      'type': 'static_library',
-      'conditions': [
-        ['target_platform=="NaCl"', {
-          'sources': [
-            'nacl_js_proxy.cc'
-          ],
-        }],
-      ],
-      'dependencies': [
-        'base',
-        '../net/jsoncpp.gyp:jsoncpp',
-      ],
-    },
-    {
       'target_name': 'encryptor',
       'type': 'static_library',
       'sources': [
@@ -318,17 +285,6 @@
             'openssl_config',
           ],
         }],
-      ],
-    },
-    {
-      'target_name': 'testing_util',
-      'type': 'static_library',
-      'sources': [
-        'testing_util.cc',
-      ],
-      'dependencies': [
-        'base_core',
-        '../protobuf/protobuf.gyp:protobuf',
       ],
     },
     {
@@ -433,19 +389,8 @@
       ],
     },
     {
-      'target_name': 'pepper_file_system_mock',
-      'type': 'static_library',
-      'sources': [
-        'pepper_file_system_mock.cc',
-      ],
-      'dependencies': [
-        'base.gyp:base',
-      ],
-    },
-    {
       'target_name': 'crash_report_handler',
       'type': 'static_library',
-      'toolsets': ['target'],
       'sources': [
         'crash_report_handler.cc',
       ],
@@ -453,16 +398,10 @@
         'base',
       ],
       'conditions': [
-        ['OS=="win"', {
-          'link_settings': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'AdditionalDependencies': [
-                  'DbgHelp.lib',  # used in 'crash_report_handler.cc'
-                ],
-              },
-            },
-          },
+        ['OS=="win" and branding=="GoogleJapaneseInput"', {
+          'dependencies': [
+            'breakpad',
+          ],
         }],
         ['OS=="mac"', {
           'sources': [
@@ -476,6 +415,81 @@
     },
   ],
   'conditions': [
+    ['target_platform=="Android"', {
+      'targets': [
+        {
+          'target_name': 'jni_proxy',
+          'type': 'static_library',
+          'sources': [
+            'android_jni_proxy.cc'
+          ],
+        },
+      ],
+    }],
+    ['OS=="win" and branding=="GoogleJapaneseInput"', {
+      'targets': [
+        {
+          'target_name': 'breakpad',
+          'type': 'static_library',
+          'variables': {
+            'breakpad_root': '<(third_party_dir)/breakpad',
+          },
+          'include_dirs': [
+            # Use the local glog configured for Windows.
+            # See b/2954681 for details.
+            '<(breakpad_root)/src/third_party/glog/glog/src/windows',
+            '<(breakpad_root)/src',
+          ],
+          'sources': [
+            '<(breakpad_root)/src/client/windows/crash_generation/client_info.cc',
+            '<(breakpad_root)/src/client/windows/crash_generation/crash_generation_client.cc',
+            '<(breakpad_root)/src/client/windows/crash_generation/crash_generation_server.cc',
+            '<(breakpad_root)/src/client/windows/crash_generation/minidump_generator.cc',
+            '<(breakpad_root)/src/client/windows/handler/exception_handler.cc',
+            '<(breakpad_root)/src/client/windows/sender/crash_report_sender.cc',
+            '<(breakpad_root)/src/common/windows/guid_string.cc',
+            '<(breakpad_root)/src/common/windows/http_upload.cc'
+          ],
+          'direct_dependent_settings': {
+            'include_dirs': [
+              '<(breakpad_root)/src',
+            ],
+          },
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'dbghelp.lib',
+                ],
+              },
+            },
+          },
+        },
+      ]},
+    ],
+    ['OS=="win"', {
+      'targets': [
+        {
+          'target_name': 'win_font_test_helper',
+          'type': 'static_library',
+          'sources': [
+            'win_font_test_helper.cc',
+          ],
+          'dependencies': [
+            'base',
+          ],
+          'copies': [
+            {
+              'files': [
+                '<(DEPTH)/third_party/ipa_font/ipaexg.ttf',
+                '<(DEPTH)/third_party/ipa_font/ipaexm.ttf',
+              ],
+              'destination': '<(PRODUCT_DIR)/data',
+            },
+          ],
+        },
+      ]},
+    ],
     ['OS=="mac"', {
       'targets': [
         {
@@ -492,6 +506,27 @@
     ],
     ['target_platform=="NaCl"', {
       'targets': [
+        {
+          'target_name': 'nacl_js_proxy',
+          'type': 'static_library',
+          'sources': [
+            'nacl_js_proxy.cc'
+          ],
+          'dependencies': [
+            'base',
+            '../net/jsoncpp.gyp:jsoncpp',
+          ],
+        },
+        {
+          'target_name': 'pepper_file_system_mock',
+          'type': 'static_library',
+          'sources': [
+            'pepper_file_system_mock.cc',
+          ],
+          'dependencies': [
+            'base.gyp:base',
+          ],
+        },
         {
           'target_name': 'openssl_crypto_aes',
           'type': 'static_library',

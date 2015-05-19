@@ -32,7 +32,6 @@
 #include <map>
 #include <vector>
 
-#include "base/base.h"
 #include "base/mutex.h"
 #include "base/stl_util.h"
 #include "base/task_token.h"
@@ -82,6 +81,7 @@ class TestResponse : public TaskResponseInterface {
 
  private:
   string data_;
+  DISALLOW_COPY_AND_ASSIGN(TestResponse);
 };
 
 class TestRunner : public TaskRunner {
@@ -121,7 +121,6 @@ class TestRunner : public TaskRunner {
   DISALLOW_IMPLICIT_CONSTRUCTORS(TestRunner);
 };
 
-
 class TestCallback : public TaskRunnerCallbackInterface {
  public:
   TestCallback() {}
@@ -149,7 +148,6 @@ class TestCallback : public TaskRunnerCallbackInterface {
   vector<const TestResponse*> response_vector_;
   DISALLOW_COPY_AND_ASSIGN(TestCallback);
 };
-}  // namespace
 
 TEST(TestRunner, NormalTaskTest) {
   TestCallback callback;
@@ -225,9 +223,8 @@ TEST(TestRunner, MultiTaskTest) {
   EXPECT_EQ("test3:ok", callback.response_vector()[3]->data());
 }
 
-namespace {
-static const int kNumThreads = 5;
-static const int kNumTasksPerThread = 10000;
+const int kNumThreads = 5;
+const int kNumTasksPerThread = 10000;
 
 class FinishTaskCallerThread : public Thread {
  public:
@@ -257,7 +254,6 @@ class FinishTaskCallerThread : public Thread {
   uint32 interval_sleep_msec_;
   DISALLOW_IMPLICIT_CONSTRUCTORS(FinishTaskCallerThread);
 };
-}  // namespace
 
 TEST(TestRunner, MultiThreadTaskTest) {
   TestCallback callback;
@@ -292,4 +288,5 @@ TEST(TestRunner, MultiThreadTaskTest) {
   STLDeleteElements(&finish_caller_thread);
 }
 
+}  // namespace
 }  // namespace mozc

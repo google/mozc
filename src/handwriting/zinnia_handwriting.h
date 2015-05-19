@@ -67,8 +67,6 @@ class ZinniaHandwriting : public HandwritingInterface {
   scoped_ptr<zinnia::Recognizer> recognizer_;
   scoped_ptr<zinnia::Character> character_;
   scoped_ptr<Mmap> mmap_;
-  size_t width_;
-  size_t height_;
   bool zinnia_model_error_;
 
   DISALLOW_COPY_AND_ASSIGN(ZinniaHandwriting);

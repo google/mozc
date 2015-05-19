@@ -29,7 +29,6 @@
 
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 
-#include "base/base.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"

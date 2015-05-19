@@ -30,6 +30,7 @@
 #include "base/android_jni_proxy.h"
 
 #include <jni.h>
+
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/scoped_ptr.h"
@@ -133,7 +134,7 @@ bool CopyJByteArrayToBuf(JNIEnv *env, const jbyteArray &source,
 void AssignJByteArrayToString(JNIEnv *env, const jbyteArray &source,
                               string *dest) {
   size_t size = env->GetArrayLength(source);
-  scoped_array<char> buf(new char[size]);
+  scoped_ptr<char[]> buf(new char[size]);
   CHECK(CopyJByteArrayToBuf(env, source, buf.get(), &size));
   dest->assign(buf.get(), size);
 }

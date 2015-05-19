@@ -47,6 +47,7 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
+#include "base/win_font_test_helper.h"
 #include "net/jsoncpp.h"
 #include "testing/base/public/gunit.h"
 
@@ -81,13 +82,13 @@ class BalloonImageTest : public testing::Test,
     // On Windows XP, the availability of typical Japanese fonts such are as
     // MS Gothic depends on the language edition and language packs.
     // So we will register a private font for unit test.
-    RegisterFonts();
+    EXPECT_TRUE(WinFontTestHelper::Initialize());
   }
 
   static void TearDownTestCase() {
     // Free private fonts although the system automatically frees them when
     // this process is terminated.
-    UnregisterFonts();
+    WinFontTestHelper::Uninitialize();
 
     UninitGdiplus();
   }
@@ -221,59 +222,6 @@ class BalloonImageTest : public testing::Test,
 
   static void UninitGdiplus() {
     Gdiplus::GdiplusShutdown(gdiplus_token_);
-  }
-
-  static void RegisterFonts() {
-    const wchar_t *font_name = L"data\\ipaexg.ttf";
-
-    wchar_t w_path[MAX_PATH] = {};
-    const DWORD char_size =
-        ::GetModuleFileNameW(nullptr, w_path, ARRAYSIZE(w_path));
-    const DWORD get_module_file_name_error = ::GetLastError();
-    if (char_size == 0) {
-      LOG(ERROR) << "GetModuleFileNameW failed.  error = "
-                  << get_module_file_name_error;
-      return;
-    } else if (char_size == ARRAYSIZE(w_path)) {
-      LOG(ERROR) << "The result of GetModuleFileNameW was truncated.";
-      return;
-    }
-    if (!::PathRemoveFileSpec(w_path)) {
-      LOG(ERROR) << "PathRemoveFileSpec failed.";
-      return;
-    }
-    if (!::PathAppend(w_path, font_name)) {
-      LOG(ERROR) << "PathAppend failed.";
-      return;
-    }
-    string path;
-    Util::WideToUTF8(w_path, &path);
-
-    Mmap mmap;
-    if (!mmap.Open(path.c_str())) {
-      LOG(ERROR) << "Mmap::Open failed.";
-      return;
-    }
-
-    DWORD num_font = 0;
-    const HANDLE handle =
-        ::AddFontMemResourceEx(mmap.begin(), mmap.size(), nullptr, &num_font);
-    if (handle == nullptr) {
-      const int error = ::GetLastError();
-      LOG(ERROR) << "AddFontMemResourceEx failed. error = " << error;
-      return;
-    }
-    font_handle_ = handle;
-  }
-
-  static void UnregisterFonts() {
-    if (font_handle_ != nullptr) {
-      if (!::RemoveFontMemResourceEx(font_handle_)) {
-        const int error = ::GetLastError();
-        LOG(ERROR) << "RemoveFontMemResourceEx failed. error = " << error;
-      }
-      font_handle_ = nullptr;
-    }
   }
 
   static int32 ColorToInteger(RGBColor color) {

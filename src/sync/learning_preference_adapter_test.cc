@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <string>
 
+#include "base/clock_mock.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/scoped_ptr.h"
@@ -59,6 +60,7 @@ class LearningPreferenceAdapterTest : public testing::Test {
  public:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    Util::SetClockHandler(NULL);
 
     storage_.reset(mozc::storage::MemoryStorage::New());
     mozc::storage::Registry::SetStorage(storage_.get());
@@ -71,6 +73,7 @@ class LearningPreferenceAdapterTest : public testing::Test {
     adapter_.reset();
     mozc::storage::Registry::SetStorage(NULL);
     storage_.reset();
+    Util::SetClockHandler(NULL);
   }
 
   LRUStorage *CreateStorage(const string &filename) {
@@ -157,38 +160,34 @@ TEST_F(LearningPreferenceAdapterTest, GetItemsToUpload) {
   adapter->AddStorage(LearningPreference::Entry::USER_BOUNDARY_HISTORY,
                      storage2.get());
 
-  {
-    adapter->SetLastDownloadTimestamp(10);
+  const struct TestData {
+    const uint64 download_timestamp;
+    const uint64 access_timestamp;
+    const uint64 expect_entry_size;
+  } test_data_list[] = {
+    {10, 10, 5},
+    {100, 100, 0},
+    {0, 0, 7},
+    {10, 100, 5},
+    {100, 10, 5},
+  };
+
+  for (int i = 0; i < arraysize(test_data_list); ++i) {
+    SCOPED_TRACE(Util::StringPrintf("i=%d", i));
+
+    const TestData &test_data = test_data_list[i];
+    adapter->SetLastDownloadTimestamp(test_data.download_timestamp);
+    adapter->SetLastAccessTimestamp(test_data.access_timestamp);
     adapter->Start();
     const LearningPreference &update = adapter->local_update();
     LearningPreference update_expected;
     update_expected.CopyFrom(update);
-    EXPECT_EQ(5, update.entries_size());
-    ime_sync::SyncItems items;
-    adapter->GetItemsToUpload(&items);
-    EXPECT_EQ(1, items.size());
-    const ime_sync::SyncItem &item = items.Get(0);
-    const sync::LearningPreferenceValue &value =
-        item.value().GetExtension(sync::LearningPreferenceValue::ext);
-    EXPECT_TRUE(value.has_learning_preference());
-    EXPECT_EQ(value.learning_preference().DebugString(),
-              update_expected.DebugString());
-  }
+    EXPECT_EQ(test_data.expect_entry_size, update.entries_size());
 
-  {
-    adapter->SetLastDownloadTimestamp(100);
-    adapter->Start();
-    const LearningPreference &update = adapter->local_update();
-    EXPECT_EQ(0, update.entries_size());
-  }
+    if (test_data.expect_entry_size == 0) {
+      continue;
+    }
 
-  {
-    adapter->SetLastDownloadTimestamp(0);
-    adapter->Start();
-    const LearningPreference &update = adapter->local_update();
-    LearningPreference update_expected;
-    update_expected.CopyFrom(update);
-    EXPECT_EQ(7, update.entries_size());
     ime_sync::SyncItems items;
     adapter->GetItemsToUpload(&items);
     EXPECT_EQ(1, items.size());
@@ -267,7 +266,7 @@ TEST_F(LearningPreferenceAdapterTest, LastDownloadTimestamp) {
   EXPECT_TRUE(adapter->SetLastDownloadTimestamp(1234));
   EXPECT_EQ(1234, adapter->GetLastDownloadTimestamp());
 
-  for (int i = 0; i < 1000; ++i) {
+  for (int i = 0; i < 100; ++i) {
     EXPECT_TRUE(adapter->SetLastDownloadTimestamp(i));
     EXPECT_EQ(i, adapter->GetLastDownloadTimestamp());
   }
@@ -275,6 +274,8 @@ TEST_F(LearningPreferenceAdapterTest, LastDownloadTimestamp) {
 
 TEST_F(LearningPreferenceAdapterTest, MarkUploaded) {
   LearningPreferenceAdapter *adapter = GetAdapter();
+  ClockMock clock(0, 0);
+  Util::SetClockHandler(&clock);
 
   ime_sync::SyncItem item;
   item.set_component(adapter->component_id());
@@ -288,19 +289,18 @@ TEST_F(LearningPreferenceAdapterTest, MarkUploaded) {
   CHECK(value);
   key->set_bucket_id(0);
 
-  const uint64 synced_time = Util::GetTime();
+  adapter->SetLastDownloadTimestamp(11111);
+  adapter->SetLastAccessTimestamp(11100);
+  clock.SetTime(12345, 0);
   adapter->Start();
 
   // last_access_time is not updated.
-  adapter->SetLastDownloadTimestamp(1234);
   adapter->MarkUploaded(item, false);
-  EXPECT_EQ(1234, adapter->GetLastDownloadTimestamp());
+  EXPECT_EQ(11100, adapter->GetLastAccessTimestamp());
 
   // last_access_time is updated.
   adapter->MarkUploaded(item, true);
-  const int diff = abs(static_cast<int>(synced_time -
-                                        adapter->GetLastDownloadTimestamp()));
-  EXPECT_LE(diff, 2);
+  EXPECT_EQ(12345, adapter->GetLastAccessTimestamp());
 }
 
 }  // namespace sync

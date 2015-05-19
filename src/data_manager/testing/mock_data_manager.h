@@ -30,7 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_TESTING_MOCK_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_TESTING_MOCK_DATA_MANAGER_H_
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
 
@@ -67,6 +67,8 @@ class MockDataManager : public MockUserPosManager {
       const int **conjugation_suffix_data_index,
       const UsageDictItem **usage_data_value) const;
 #endif  // NO_USAGE_REWRITER
+  virtual void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+                                           size_t *size) const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MockDataManager);

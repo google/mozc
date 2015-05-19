@@ -30,14 +30,16 @@
 #include "sync/user_dictionary_sync_util.h"
 
 #include <algorithm>
-#include <cstddef>
 #include <string>
+#include <vector>
 
 #include "base/clock_mock.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/freelist.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -82,6 +84,43 @@ class UserDictionarySyncUtilTest : public testing::Test {
  private:
   string original_user_profile_dir_;
 };
+
+vector<uint64> CreateStorageSortedVectorForUnsyncableDictionaries(
+    const UserDictionarySyncUtil::UserDictionaryStorageBase &storage) {
+  vector<uint64> result;
+  for (int i = 0; i < storage.dictionaries_size(); ++i) {
+    const UserDictionarySyncUtil::UserDictionary &dic = storage.dictionaries(i);
+    if (dic.syncable()) {
+      continue;
+    }
+    const string &name = dic.name();
+    const bool enabled = dic.enabled();
+    result.push_back(Util::Fingerprint(name) + '\t' + (enabled ? '1' : '0'));
+    for (int j = 0; j < dic.entries_size(); ++j) {
+      const UserDictionarySyncUtil::UserDictionaryEntry &entry = dic.entries(j);
+      if (entry.removed()) {
+        continue;
+      }
+      const uint64 fp = Util::Fingerprint(
+          name + '\t' +
+          entry.key() + '\t' +
+          entry.value() + '\t' +
+          static_cast<char>(entry.pos()) + '\t' +
+          entry.comment());
+      result.push_back(fp);
+    }
+  }
+  sort(result.begin(), result.end());
+  return result;
+}
+
+bool IsEqualUnsyncableDictionaries(
+    UserDictionarySyncUtil::UserDictionaryStorageBase storage1,
+    UserDictionarySyncUtil::UserDictionaryStorageBase storage2) {
+  return
+      CreateStorageSortedVectorForUnsyncableDictionaries(storage1) ==
+      CreateStorageSortedVectorForUnsyncableDictionaries(storage2);
+}
 
 }  // namespace
 
@@ -131,8 +170,10 @@ TEST_F(UserDictionarySyncUtilTest, IsEqualStorage) {
       entry->set_pos(UserDictionary::NOUN);
     }
   }
-  EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
+  EXPECT_FALSE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
 
+  storage2.CopyFrom(storage1);
+  EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
   {
     // additional unsyncable dictionary doesn't affect.
     UserDictionarySyncUtil::UserDictionary *dic =
@@ -186,20 +227,99 @@ TEST_F(UserDictionarySyncUtilTest, EntryFingerprint) {
             UserDictionarySyncUtil::EntryFingerprint(entry2));
 }
 
+TEST_F(UserDictionarySyncUtilTest, RemoveDuplicatedEntries) {
+  UserDictionaryStorage storage("");
+  {
+    UserDictionary *dictionary = storage.add_dictionaries();
+    dictionary->set_id(100);
+    dictionary->set_name("dictionary_1");
+    dictionary->set_syncable(true);
+    UserDictionarySyncUtil::UserDictionaryEntry *entry1 =
+        dictionary->add_entries();
+    entry1->set_key("key1");
+    entry1->set_value("value1");
+    entry1->set_pos(UserDictionary::NOUN);
+    entry1->set_comment("comment1");
+    UserDictionarySyncUtil::UserDictionaryEntry *entry2 =
+        dictionary->add_entries();
+    entry2->set_key("key2");
+    entry2->set_value("value2");
+    entry2->set_pos(UserDictionary::ADVERB);
+    entry2->set_comment("comment2");
+  }
+  {
+    UserDictionary *dictionary = storage.add_dictionaries();
+    dictionary->CopyFrom(storage.dictionaries(0));
+    dictionary->set_id(200);
+    dictionary->set_name("test_dictionary_2");
+  }
+  {
+    UserDictionary *dictionary = storage.add_dictionaries();
+    dictionary->CopyFrom(storage.dictionaries(0));
+    dictionary->set_id(300);
+    dictionary->set_name("test_dictionary_3");
+    dictionary->set_syncable(false);
+  }
+
+  UserDictionaryStorage orig_storage("");
+  orig_storage.CopyFrom(storage);
+  ASSERT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage, orig_storage));
+
+  for (int i = 0; i < storage.dictionaries_size(); ++i) {
+    storage.CopyFrom(orig_storage);
+
+    UserDictionary *dictionary = storage.mutable_dictionaries(i);
+    // Add a duplicated entry.
+    dictionary->add_entries()->CopyFrom(dictionary->entries(0));
+
+    const int orig_entries_size = orig_storage.dictionaries(i).entries_size();
+    if (dictionary->syncable()) {
+      EXPECT_NE(dictionary->entries_size(), orig_entries_size);
+      EXPECT_FALSE(
+          UserDictionarySyncUtil::IsEqualStorage(storage, orig_storage));
+      UserDictionarySyncUtil::RemoveDuplicatedEntries(&storage);
+      EXPECT_EQ(dictionary->entries_size(), orig_entries_size);
+      EXPECT_TRUE(
+          UserDictionarySyncUtil::IsEqualStorage(storage, orig_storage));
+    } else {
+      // IsEqualStorage() and RemoveDuplicatedEntries() doesn't do nothing to
+      // non-syncable dictionaries.
+      EXPECT_NE(dictionary->entries_size(), orig_entries_size);
+      EXPECT_TRUE(
+          UserDictionarySyncUtil::IsEqualStorage(storage, orig_storage));
+      UserDictionarySyncUtil::RemoveDuplicatedEntries(&storage);
+      EXPECT_NE(dictionary->entries_size(), orig_entries_size);
+      EXPECT_TRUE(
+          UserDictionarySyncUtil::IsEqualStorage(storage, orig_storage));
+    }
+  }
+}
+
 namespace {
 typedef FreeList<UserDictionarySyncUtil::UserDictionaryStorageBase>
     UserDictionaryStorageAllocator;
 
 // Add random modifications to |storage|. Sync dictionary must have any
-// midification. This function is used for unittesting.
+// midification.
 void AddRandomUpdates(UserDictionaryStorage *storage) {
   CHECK(storage);
 
   // In 10% cases, clean out the storage.
   if (Util::Random(10) == 0) {
     storage->Clear();
-    storage->EnsureSyncDictionaryExists();
   }
+
+  // In 20% cases, remove a dictionary.
+  if (Util::Random(5) == 0) {
+    const int dictionary_num = storage->dictionaries_size();
+    if (dictionary_num != 0) {
+      storage->mutable_dictionaries()->SwapElements(
+          Util::Random(dictionary_num), dictionary_num - 1);
+      storage->mutable_dictionaries()->RemoveLast();
+    }
+  }
+
+  storage->EnsureSyncDictionaryExists();
 
   // In 50% cases, add an unsync dictionary.
   if (Util::Random(2) == 0) {
@@ -317,11 +437,30 @@ TEST_F(UserDictionarySyncUtilTest, CreateAndMergeTest) {
 
     // The number of syncable dictionaries must be 1.
     int num_sync_dict =
-        UserDictionaryStorage::CountSyncableDictionaries(&storage_orig);
+        UserDictionaryStorage::CountSyncableDictionaries(storage_orig);
     // Check maximum number of dictionaries.
     EXPECT_GE(UserDictionaryStorage::max_sync_dictionary_size(), num_sync_dict);
     // Check minimum number of dictionaries.
     EXPECT_LT(0, num_sync_dict);
+  }
+}
+
+TEST_F(UserDictionarySyncUtilTest, MergeDuplicatedEntryTest) {
+  UserDictionaryStorage storage("");
+  storage.EnsureSyncDictionaryExists();
+
+  for (int i = 0; i < 100; ++i) {
+    UserDictionarySyncUtil::UserDictionaryStorageBase prev;
+    prev.CopyFrom(storage);
+    AddRandomUpdates(&storage);
+    UserDictionarySyncUtil::UserDictionaryStorageBase update;
+    EXPECT_TRUE(UserDictionarySyncUtil::CreateUpdate(prev, storage, &update));
+
+    // Merge the update twice and second one does nothing.
+    EXPECT_TRUE(UserDictionarySyncUtil::MergeUpdate(update, &prev));
+    EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(prev, storage));
+    EXPECT_TRUE(UserDictionarySyncUtil::MergeUpdate(update, &prev));
+    EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(prev, storage));
   }
 }
 
@@ -428,6 +567,133 @@ TEST_F(UserDictionarySyncUtilTest, ShouldCreateSnapshot) {
   }
 
   EXPECT_TRUE(UserDictionarySyncUtil::ShouldCreateSnapshot(update));
+}
+
+TEST_F(UserDictionarySyncUtilTest, CreateSnapshot) {
+  {
+    UserDictionaryStorage storage(""), update("");
+    update.add_dictionaries()->set_syncable(true);
+    update.add_dictionaries()->set_syncable(false);
+    ASSERT_EQ(0, storage.dictionaries_size());
+    ASSERT_EQ(2, update.dictionaries_size());
+    UserDictionarySyncUtil::CreateSnapshot(storage, &update);
+    EXPECT_EQ(0, update.dictionaries_size());
+    EXPECT_EQ(UserDictionaryStorage::SNAPSHOT, update.storage_type());
+  }
+
+  {
+    UserDictionaryStorage storage(""), update("");
+    storage.add_dictionaries()->set_syncable(true);
+    storage.mutable_dictionaries(0)->add_entries()->set_key("aaa");
+    storage.add_dictionaries()->set_syncable(false);
+    ASSERT_EQ(2, storage.dictionaries_size());
+    ASSERT_EQ(0, update.dictionaries_size());
+    UserDictionarySyncUtil::CreateSnapshot(storage, &update);
+    UserDictionarySyncUtil::IsEqualStorage(storage, update);
+    EXPECT_EQ(UserDictionaryStorage::CountSyncableDictionaries(update),
+              update.dictionaries_size());
+    EXPECT_EQ(UserDictionaryStorage::SNAPSHOT, update.storage_type());
+  }
+
+  {
+    UserDictionaryStorage storage(""), update("");
+    for (int i = 0; i < 1000; ++i) {
+      AddRandomUpdates(&storage);
+      UserDictionarySyncUtil::CreateSnapshot(storage, &update);
+      EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage, update));
+      EXPECT_EQ(UserDictionaryStorage::CountSyncableDictionaries(update),
+                update.dictionaries_size());
+      EXPECT_EQ(UserDictionaryStorage::SNAPSHOT, update.storage_type());
+    }
+  }
+}
+
+TEST_F(UserDictionarySyncUtilTest, CopySyncableDictionaries) {
+  UserDictionaryStorage from(""), to("");
+  from.EnsureSyncDictionaryExists();
+
+  for (int i = 0; i < 1000; ++i) {
+    to.CopyFrom(from);
+    AddRandomUpdates(&to);
+    const bool is_unsyncable_changed = IsEqualUnsyncableDictionaries(from, to);
+    UserDictionarySyncUtil::CopyDictionaries(from, &to);
+    EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(from, to));
+    EXPECT_EQ(is_unsyncable_changed, IsEqualUnsyncableDictionaries(from, to));
+  }
+
+  // Check the order of the destination dictionaries.
+  // from:   a(syncable), b, c(syncable), d, e(syncable), f
+  // to:     g, h(syncable), e(syncable), d, c(syncable), b
+  // copied: g, e(syncable), d, c(syncable), b, a(syncable)
+  // - The order of ["g", "e", "d", "c", "b"] is kept.
+  // - "a" is added at the end since it is a syncable dictionary.
+  // - "f" is not added since it is an unsyncable dictionary.
+  // - "g" is not removed since it is an unsyncable dictionary.
+  // - "h" is removed since it is a syncable dictionary.
+  from.Clear();
+  from.add_dictionaries()->set_name("a");
+  from.add_dictionaries()->set_name("b");
+  from.add_dictionaries()->set_name("c");
+  from.add_dictionaries()->set_name("d");
+  from.add_dictionaries()->set_name("e");
+  from.add_dictionaries()->set_name("f");
+  from.mutable_dictionaries(0)->set_syncable(true);
+  from.mutable_dictionaries(2)->set_syncable(true);
+  from.mutable_dictionaries(4)->set_syncable(true);
+  to.Clear();
+  to.add_dictionaries()->set_name("g");
+  to.add_dictionaries()->set_name("h");
+  to.add_dictionaries()->set_name("e");
+  to.add_dictionaries()->set_name("d");
+  to.add_dictionaries()->set_name("c");
+  to.add_dictionaries()->set_name("b");
+  to.mutable_dictionaries(1)->set_syncable(true);
+  to.mutable_dictionaries(2)->set_syncable(true);
+  to.mutable_dictionaries(4)->set_syncable(true);
+
+  UserDictionarySyncUtil::CopyDictionaries(from, &to);
+  EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(from, to));
+  EXPECT_EQ(6, to.dictionaries_size());
+  EXPECT_EQ("g", to.dictionaries(0).name());
+  EXPECT_EQ("e", to.dictionaries(1).name());
+  EXPECT_EQ("d", to.dictionaries(2).name());
+  EXPECT_EQ("c", to.dictionaries(3).name());
+  EXPECT_EQ("b", to.dictionaries(4).name());
+  EXPECT_EQ("a", to.dictionaries(5).name());
+}
+
+TEST_F(UserDictionarySyncUtilTest, RemoveUnsyncableDictionaries) {
+  UserDictionaryStorage storage("");
+
+  for (int i = 0; i < 100; ++i) {
+    AddRandomUpdates(&storage);
+    UserDictionaryStorage original_storage("");
+    original_storage.CopyFrom(storage);
+    UserDictionarySyncUtil::RemoveUnsyncableDictionaries(&storage);
+    EXPECT_TRUE(
+        UserDictionarySyncUtil::IsEqualStorage(original_storage, storage));
+  }
+
+  storage.Clear();
+  storage.add_dictionaries()->set_name("0");
+  storage.add_dictionaries()->set_name("1");
+  storage.add_dictionaries()->set_name("2");
+  storage.add_dictionaries()->set_name("3");
+  storage.add_dictionaries()->set_name("4");
+  storage.add_dictionaries()->set_name("5");
+  storage.add_dictionaries()->set_name("6");
+  storage.add_dictionaries()->set_name("7");
+  storage.mutable_dictionaries(1)->set_syncable(true);
+  storage.mutable_dictionaries(2)->set_syncable(true);
+  storage.mutable_dictionaries(5)->set_syncable(true);
+  storage.mutable_dictionaries(7)->set_syncable(true);
+
+  UserDictionarySyncUtil::RemoveUnsyncableDictionaries(&storage);
+  EXPECT_EQ(4, storage.dictionaries_size());
+  EXPECT_EQ("1", storage.dictionaries(0).name());
+  EXPECT_EQ("2", storage.dictionaries(1).name());
+  EXPECT_EQ("5", storage.dictionaries(2).name());
+  EXPECT_EQ("7", storage.dictionaries(3).name());
 }
 
 namespace {

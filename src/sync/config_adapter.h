@@ -32,6 +32,7 @@
 
 #include <string>
 
+#include "base/port.h"
 #include "config/config.pb.h"
 #include "sync/adapter_interface.h"
 // for FRIEND_TEST()
@@ -49,6 +50,8 @@ class ConfigAdapter : public AdapterInterface {
   virtual bool GetItemsToUpload(ime_sync::SyncItems *items);
   virtual bool MarkUploaded(
       const ime_sync::SyncItem &item, bool uploaded);
+  virtual bool SetLastDownloadTimestamp(uint64 last_download_timestamp);
+  virtual uint64 GetLastDownloadTimestamp() const;
   virtual bool Clear();
   virtual ime_sync::Component component_id() const;
 
@@ -79,17 +82,18 @@ class ConfigAdapter : public AdapterInterface {
                     const mozc::config::Config &config2);
 
   // Load the config from the file.  Returns true when succeeded.
-  bool LoadConfigFromFile(
-      const string &filename, mozc::config::Config *config);
+  bool LoadConfigFromFile(const string &filename, mozc::config::Config *config);
 
   // Returns the last downloaded config file name.
   string GetLastDownloadedConfigFileName() const;
 
   // Returns the last uploaded config file name.
   string GetLastUploadedConfigFileName() const;
+
+  DISALLOW_COPY_AND_ASSIGN(ConfigAdapter);
 };
 
-}  // namespace mozc::sync
+}  // namespace sync
 }  // namespace mozc
 
 #endif  // MOZC_SYNC_CONFIG_ADAPTER_H_

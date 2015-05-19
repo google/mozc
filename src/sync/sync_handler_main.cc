@@ -43,7 +43,6 @@
 
 DEFINE_string(service, "goopy", "service");
 DEFINE_string(source, "ime-goopy", "source");
-DEFINE_bool(clear, false, "clear data");
 DEFINE_string(work_dir, "", "working directory");
 DEFINE_bool(oauth2_login, false, "try to oauth2 login");
 DEFINE_bool(oauth2_token_refresh, false,
@@ -134,13 +133,7 @@ bool Sync(SyncHandler *sync_handler, bool use_oauth2) {
     return false;
   }
 
-  if (FLAGS_clear) {
-    return sync_handler->Clear();
-  } else {
-    return sync_handler->Sync();
-  }
-
-  return true;
+  return sync_handler->Sync();
 }
 }   // namespace
 }   // namespace sync

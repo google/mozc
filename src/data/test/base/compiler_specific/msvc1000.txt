@@ -1,18 +1,12 @@
-namespace mozc {
-namespace compiler_specific_internal {
-class SemicolonEater {};
-}
-}
-
-class MSVS_LE_10_01;
-__pragma(warning(push)) using mozc::compiler_specific_internal::SemicolonEater;
-__pragma(warning(disable:4001)) using mozc::compiler_specific_internal::SemicolonEater;
-__pragma(warning(pop)) using mozc::compiler_specific_internal::SemicolonEater;
-using mozc::compiler_specific_internal::SemicolonEater;
-using mozc::compiler_specific_internal::SemicolonEater;
-using mozc::compiler_specific_internal::SemicolonEater;
-using mozc::compiler_specific_internal::SemicolonEater;
-using mozc::compiler_specific_internal::SemicolonEater;
-using mozc::compiler_specific_internal::SemicolonEater;
-using mozc::compiler_specific_internal::SemicolonEater;
-__pragma(message ("Hello")) using mozc::compiler_specific_internal::SemicolonEater;
+class MSVS_LT_10_01;
+__pragma(warning(push)) static_assert(true, "");
+__pragma(warning(disable:4001)) static_assert(true, "");
+__pragma(warning(pop)) static_assert(true, "");
+static_assert(true, "");
+static_assert(true, "");
+static_assert(true, "");
+static_assert(true, "");
+static_assert(true, "");
+static_assert(true, "");
+static_assert(true, "");
+__pragma(message ("Hello")) static_assert(true, "");

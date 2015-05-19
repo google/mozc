@@ -34,7 +34,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "unix/ibus/ibus_extra_keysyms.h"
 
 namespace {
 
@@ -91,19 +90,6 @@ const struct SpecialKeyMap {
   {IBUS_Page_Up, mozc::commands::KeyEvent::PAGE_UP},
   {IBUS_Page_Down, mozc::commands::KeyEvent::PAGE_DOWN},
 
-#ifdef OS_CHROMEOS
-  {IBUS_Back, mozc::commands::KeyEvent::F1},
-  {IBUS_Forward, mozc::commands::KeyEvent::F2},
-  {IBUS_Reload, mozc::commands::KeyEvent::F3},
-  {IBUS_LaunchB, mozc::commands::KeyEvent::F4},
-  {IBUS_LaunchA, mozc::commands::KeyEvent::F5},
-  {IBUS_MonBrightnessDown, mozc::commands::KeyEvent::F6},
-  {IBUS_MonBrightnessUp, mozc::commands::KeyEvent::F7},
-  {IBUS_AudioMute, mozc::commands::KeyEvent::F8},
-  {IBUS_AudioLowerVolume, mozc::commands::KeyEvent::F9},
-  {IBUS_AudioRaiseVolume, mozc::commands::KeyEvent::F10},
-#endif  // OS_CHROMEOS
-
   // Keypad (10-key).
   {IBUS_KP_0, mozc::commands::KeyEvent::NUMPAD0},
   {IBUS_KP_1, mozc::commands::KeyEvent::NUMPAD1},
@@ -136,10 +122,6 @@ const struct SpecialKeyMap {
   {IBUS_KP_Delete, mozc::commands::KeyEvent::DEL},
   {IBUS_KP_Insert, mozc::commands::KeyEvent::INSERT},
   {IBUS_Caps_Lock, mozc::commands::KeyEvent::CAPS_LOCK},
-
-  // This key event is for hangul IME. Do not handle this key event on Japanese
-  // IME.
-  {IBUS_Hangul_Hanja, mozc::commands::KeyEvent::HANJA},
 
   // Shift+TAB.
   {IBUS_ISO_Left_Tab, mozc::commands::KeyEvent::TAB},

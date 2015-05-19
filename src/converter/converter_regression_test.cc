@@ -125,13 +125,9 @@ class ConverterRegressionTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
   }
 
-  const Request &default_request() const { return default_request_; }
-
  private:
   string user_profile_directory_backup_;
   Config config_backup_;
-
-  const Request default_request_;
 };
 
 TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
@@ -164,8 +160,7 @@ TEST_F(ConverterRegressionTest, Regression3323108) {
       "\xE3\x81\x90"));
   EXPECT_EQ(3, segments.conversion_segments_size());
   const ConversionRequest default_request;
-  EXPECT_TRUE(converter->ResizeSegment(
-      &segments, default_request, 1, 2));
+  EXPECT_TRUE(converter->ResizeSegment(&segments, default_request, 1, 2));
   EXPECT_EQ(2, segments.conversion_segments_size());
 
   // "きものをぬぐ"

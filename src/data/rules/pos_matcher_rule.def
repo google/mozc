@@ -82,3 +82,6 @@ Adverb ^副詞,
 
 # 副詞節 suffix
 AdverbSegmentSuffix ^助詞,*,*,*,*,*,(から|で|と|に|にて|の|へ|を)$
+
+# 並立助詞
+ParallelMarker ^助詞,並立助詞

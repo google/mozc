@@ -29,7 +29,6 @@
 
 #import "renderer/mac/CandidateView.h"
 
-#include "base/base.h"
 #include "base/coordinates.h"
 #include "renderer/table_layout.h"
 #include "renderer/window_util.h"

@@ -165,30 +165,29 @@ const char kAsciiZero = '0';
 const char kAsciiOne = '1';
 const char kAsciiNine = '9';
 
+template <typename T>
+string SimpleItoaImpl(T number) {
+  stringstream ss;
+  ss << number;
+  return ss.str();
+}
+
 }  // namespace
 
 string NumberUtil::SimpleItoa(int32 number) {
-  char buffer[kInt32BufferSize];
-  const int length = snprintf(buffer, kInt32BufferSize, "%d", number);
-  return string(buffer, length);
+  return SimpleItoaImpl(number);
 }
 
 string NumberUtil::SimpleItoa(uint32 number) {
-  char buffer[kUInt32BufferSize];
-  const int length = snprintf(buffer, kUInt32BufferSize, "%u", number);
-  return string(buffer, length);
+  return SimpleItoaImpl(number);
 }
 
 string NumberUtil::SimpleItoa(int64 number) {
-  char buffer[kInt64BufferSize];
-  const int length = snprintf(buffer, kInt64BufferSize, "%lld", number);
-  return string(buffer, length);
+  return SimpleItoaImpl(number);
 }
 
 string NumberUtil::SimpleItoa(uint64 number) {
-  char buffer[kUInt64BufferSize];
-  const int length = snprintf(buffer, kUInt64BufferSize, "%llu", number);
-  return string(buffer, length);
+  return SimpleItoaImpl(number);
 }
 
 int NumberUtil::SimpleAtoi(StringPiece str) {

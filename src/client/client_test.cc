@@ -27,20 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#include "client/client.h"
+
 #include <map>
-#include "base/base.h"
+#include <string>
+
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "client/client.h"
 #include "ipc/ipc_mock.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-
 namespace client {
 
 namespace {
@@ -191,6 +192,9 @@ class ClientTest : public testing::Test {
 
   void GetGeneratedInput(commands::Input *input) {
     input->ParseFromString(client_factory_->GetGeneratedRequest());
+    if (input->type() != commands::Input::CREATE_SESSION) {
+      ASSERT_TRUE(input->has_id());
+    }
   }
 
   void SetupProductVersion(int version_diff) {
@@ -776,8 +780,7 @@ class SessionPlaybackTest : public testing::Test {
   DISALLOW_COPY_AND_ASSIGN(SessionPlaybackTest);
 };
 
-// TODO(toshiyuki): Update these test after the implementation for Mac.
-
+// b/2797557
 TEST_F(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -813,15 +816,16 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest) {
   EXPECT_EQ(0, history.size());
 }
 
+// b/2797557
 TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
-#ifdef OS_WIN
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
   commands::KeyEvent key_event;
   key_event.set_special_key(commands::KeyEvent::ENTER);
+  key_event.set_mode(commands::HIRAGANA);
+  key_event.set_activated(true);
 
-  // On Windows, mode initializer should be added if the output contains mode.
   commands::Output mock_output;
   mock_output.set_id(mock_id);
   mock_output.set_consumed(true);
@@ -851,21 +855,30 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
   EXPECT_EQ(mock_output.consumed(), output.consumed());
-  // history is reset, but initializer should be added.
   client_->GetHistoryInputs(&history);
+#ifdef OS_MACOSX
+  // history is reset, but initializer should be added because the last mode
+  // is not DIRECT.
+  // TODO(team): fix b/10250883 to remove this special treatment.
   EXPECT_EQ(1, history.size());
+  // Implicit IMEOn key must be added. See b/2797557 and b/>10250883.
+  EXPECT_EQ(commands::Input::SEND_KEY, history[0].type());
+  EXPECT_EQ(commands::KeyEvent::ON, history[0].key().special_key());
+  EXPECT_EQ(commands::HIRAGANA, history[0].key().mode());
+#else
+  // history is reset, but initializer is not required.
+  EXPECT_EQ(0, history.size());
 #endif
 }
 
+// b/2797557
 TEST_F(SessionPlaybackTest, PushAndResetHistoryWithDirectTest) {
-#ifdef OS_WIN
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
   commands::KeyEvent key_event;
   key_event.set_special_key(commands::KeyEvent::ENTER);
 
-  // On Windows, mode initializer should be added if the output contains mode.
   commands::Output mock_output;
   mock_output.set_id(mock_id);
   mock_output.set_consumed(true);
@@ -896,10 +909,10 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithDirectTest) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
   EXPECT_EQ(mock_output.consumed(), output.consumed());
+
   // history is reset, and initializer should not be added.
   client_->GetHistoryInputs(&history);
   EXPECT_EQ(0, history.size());
-#endif
 }
 
 TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
@@ -943,15 +956,14 @@ TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
 #endif
 }
 
+// b/2797557
 TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
-#ifdef OS_WIN
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
   commands::KeyEvent key_event;
   key_event.set_special_key(commands::KeyEvent::ENTER);
 
-  // On Windows, mode initializer should be added if the output contains mode.
   commands::Output mock_output;
   mock_output.set_id(mock_id);
   mock_output.set_consumed(true);
@@ -990,10 +1002,17 @@ TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
   EXPECT_EQ(mock_output.consumed(), output.consumed());
-  // history is reset, but initializer should be added.
   client_->GetHistoryInputs(&history);
+#ifdef OS_MACOSX
+  // history is reset, but initializer should be added.
+  // TODO(team): fix b/10250883 to remove this special treatment.
   EXPECT_EQ(1, history.size());
+  EXPECT_EQ(commands::Input::SEND_KEY, history[0].type());
+  EXPECT_EQ(commands::KeyEvent::ON, history[0].key().special_key());
   EXPECT_EQ(commands::FULL_KATAKANA, history[0].key().mode());
+#else
+  // history is reset, but initializer is not required.
+  EXPECT_EQ(0, history.size());
 #endif
 }
 

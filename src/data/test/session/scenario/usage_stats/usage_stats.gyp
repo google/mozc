@@ -62,6 +62,7 @@
           "auto_partial_suggestion.txt",
           "insert_space.txt",
           "numpad_in_direct_input_mode.txt",
+          "language_aware_input.txt",
         ],
         'test_data_subdir': 'data/test/session/scenario/usage_stats',
       },

@@ -47,7 +47,8 @@
 #ifdef OS_WIN
 #include <Windows.h>
 #include <ShellAPI.h>  // for CommandLineToArgvW
-#include "base/base.h"
+
+#include "base/port.h"
 #include "base/util.h"
 #include "base/const.h"
 
@@ -90,6 +91,8 @@ class WinCommandLine {
  private:
   int argc_;
   char **argv_;
+
+  DISALLOW_COPY_AND_ASSIGN(WinCommandLine);
 };
 }  // namespace
 // force to use WinMain.

@@ -27,11 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/encryptor.h"
+
 #include <iostream>
 #include <string>
-#include "base/base.h"
-#include "base/encryptor.h"
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"

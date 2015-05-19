@@ -30,7 +30,7 @@
 #ifndef MOZC_SYNC_CONTACT_SYNCER_H_
 #define MOZC_SYNC_CONTACT_SYNCER_H_
 
-#include "base/base.h"
+#include "base/port.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "net/jsoncpp.h"
 #include "sync/oauth2_util.h"
@@ -45,8 +45,8 @@ namespace sync {
 // Contact list is stored in Google data server.
 class ContactSyncer : public SyncerInterface {
  public:
-  ContactSyncer(OAuth2Util* oauth2_util);
-  ~ContactSyncer() {}
+  explicit ContactSyncer(OAuth2Util* oauth2_util);
+  virtual ~ContactSyncer() {}
 
   // Merge information
   virtual bool Start();
@@ -73,6 +73,8 @@ class ContactSyncer : public SyncerInterface {
   string GetUserDictionaryFileName() const;
   bool GetLastDownloadTimestamp(string *time_stamp) const;
   void SetLastDownloadTimestamp(const string &time_stamp);
+
+  DISALLOW_COPY_AND_ASSIGN(ContactSyncer);
 };
 }  // namespace sync
 }  // namespace mozc

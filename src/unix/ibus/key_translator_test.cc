@@ -32,7 +32,6 @@
 #include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 #include "session/commands.pb.h"
-#include "unix/ibus/ibus_extra_keysyms.h"
 #include "unix/ibus/key_translator.h"
 
 namespace mozc {
@@ -119,19 +118,6 @@ struct {
   {IBUS_KP_Insert, commands::KeyEvent::INSERT},
   {IBUS_Caps_Lock, commands::KeyEvent::CAPS_LOCK},
   {IBUS_ISO_Left_Tab, commands::KeyEvent::TAB},
-  {IBUS_Hangul_Hanja, commands::KeyEvent::HANJA},
-#ifdef OS_CHROMEOS
-  {IBUS_Back, commands::KeyEvent::F1},
-  {IBUS_Forward, commands::KeyEvent::F2},
-  {IBUS_Reload, commands::KeyEvent::F3},
-  {IBUS_LaunchB, commands::KeyEvent::F4},
-  {IBUS_LaunchA, commands::KeyEvent::F5},
-  {IBUS_MonBrightnessDown, commands::KeyEvent::F6},
-  {IBUS_MonBrightnessUp, commands::KeyEvent::F7},
-  {IBUS_AudioMute, commands::KeyEvent::F8},
-  {IBUS_AudioLowerVolume, commands::KeyEvent::F9},
-  {IBUS_AudioRaiseVolume, commands::KeyEvent::F10},
-#endif  // OS_CHROMEOS
 };
 
 // Checks "container" contains "key" value or not

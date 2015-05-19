@@ -41,8 +41,8 @@
 #include <sys/time.h>
 #endif  // OS_MACOSX
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace {

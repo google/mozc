@@ -300,20 +300,21 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
     }
     Output output;
     if (!open_) {
-      // The next on/off mode is OFF. Send Off special key.
-      KeyEvent key_event;
-      key_event.set_special_key(commands::KeyEvent_SpecialKey_OFF);
-      key_event.set_mode(mozc_mode);
-      if (!private_context->GetClient()->SendKey(key_event, &output)) {
+      // The next on/off mode is OFF. Send TURN_OFF_IME to update the converter
+      // state.
+      SessionCommand command;
+      command.set_type(commands::SessionCommand::TURN_OFF_IME);
+      command.set_composition_mode(mozc_mode);
+      if (!private_context->GetClient()->SendCommand(command, &output)) {
         return E_FAIL;
       }
     } else if (!input_mode_manager->GetEffectiveOpenClose()) {
       // The next on/off mode is ON but the state of input mode manager is
-      // OFF. Send ON key to update the converter state.
-      KeyEvent key_event;
-      key_event.set_special_key(commands::KeyEvent_SpecialKey_ON);
-      key_event.set_mode(mozc_mode);
-      if (!private_context->GetClient()->SendKey(key_event, &output)) {
+      // OFF. Send TURN_ON_IME to update the converter state.
+      SessionCommand command;
+      command.set_type(commands::SessionCommand::TURN_ON_IME);
+      command.set_composition_mode(mozc_mode);
+      if (!private_context->GetClient()->SendCommand(command, &output)) {
         return E_FAIL;
       }
     } else {
@@ -853,7 +854,7 @@ bool TipEditSession::SubmitAsync(TipTextService *text_service,
   return OnSessionCommandAsync(text_service, context, session_command);
 }
 
-bool TipEditSession::CanceleCompositionAsync(
+bool TipEditSession::CancelCompositionAsync(
     TipTextService *text_service, ITfContext *context) {
   SessionCommand command;
   command.set_type(SessionCommand::REVERT);

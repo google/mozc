@@ -314,71 +314,84 @@ class AndroidDevice(android_util.AndroidDevice):
 
   def RunNativeTests(self, options, binaries_for_abis):
     logging.info('[NATIVE] Testing device=%s', self.serial)
-    error_messages = []
-    self.SetUpTest(options.remote_device, options.remote_mount_point,
-                   options.mozc_root_dir, options.remote_dir,
-                   options.mozc_dictionary_data_file,
-                   options.mozc_connection_data_file,
-                   options.mozc_test_connection_data_file,
-                   options.mozc_data_dir)
-    if options.testcase:
-      test_list = options.testcase.split(',')
-    for abi in binaries_for_abis.iterkeys():
-      if not self.IsAcceptableAbi(abi):
-        continue
-      logging.info('[NATIVE] Testing device=%s, abi=%s', self.serial, abi)
-      for test in binaries_for_abis[abi]:
-        if test_list and test not in test_list:
+    try:
+      error_messages = []
+      self.SetUpTest(options.remote_device, options.remote_mount_point,
+                     options.mozc_root_dir, options.remote_dir,
+                     options.mozc_dictionary_data_file,
+                     options.mozc_connection_data_file,
+                     options.mozc_test_connection_data_file,
+                     options.mozc_data_dir)
+      if options.testcase:
+        test_list = options.testcase.split(',')
+      for abi in binaries_for_abis.iterkeys():
+        if not self.IsAcceptableAbi(abi):
           continue
-        logging.info('[NATIVE] Testing device=%s, abi=%s, test=%s',
-                     self.serial, abi, test)
-        error_message = self.RunOneTest(options.test_bin_dir, abi, test,
-                                        options.remote_dir,
-                                        options.output_report_dir)
-        if error_message:
-          error_messages.append(error_message)
-    self.TearDownTest(options.remote_dir)
-    return error_messages
+        logging.info('[NATIVE] Testing device=%s, abi=%s', self.serial, abi)
+        for test in binaries_for_abis[abi]:
+          if test_list and test not in test_list:
+            continue
+          logging.info('[NATIVE] Testing device=%s, abi=%s, test=%s',
+                       self.serial, abi, test)
+          error_message = self.RunOneTest(options.test_bin_dir, abi, test,
+                                          options.remote_dir,
+                                          options.output_report_dir)
+          if error_message:
+            error_messages.append(error_message)
+      self.TearDownTest(options.remote_dir)
+      return error_messages
+    except Exception as e:  # pylint: disable=broad-except
+      # Catches all the exceptions and returns string instead.
+      # If an exception is thrown, multiprocessing module
+      # complains because exceptions might not be able to be pickled.
+      return str(e)
 
   def RunJavaTests(self, output_report_dir, configuration, app_package_name):
-    logging.info('[JAVA] Testing device=%s', self.serial)
-    prefix = '%s::' % self._GetAvdName()
-    report_file_name_remote = 'gtest-report.xml'
-    report_file_name_host = prefix + 'java_layer.xml'
-    output_report_path = os.path.join(output_report_dir,
-                                      report_file_name_host)
-    CreateDefaultReportFile(output_report_path, 'JUnit all tests', prefix)
-    # Run 'run-tests' target on specified device.
-    # This target does build (testee and tester), install (both) and run.
-    args = ['ant', 'run-tests',
-            '-Dadb.device.arg=-s %s' % self.serial,
-            '-Dgyp.build_type=%s' % configuration]
-    process = subprocess.Popen(args, cwd='tests')
-    process.wait()
-    if process.wait() != 0:
-      return '[FAIL] [JAVA] run_test target fails'
-
-    remote_report_path = os.path.join('data', 'data',
-                                      app_package_name, report_file_name_remote)
     try:
-      temporal_report_path = os.tmpnam()
-      self.CopyFile(host_path=temporal_report_path,
-                    remote_path=remote_report_path,
-                    operation='pull')
-      print '[ OK ] The process terminated with no crash.'
-      # Append prefix to testsuite name.
-      # Otherwise duplicate testsuites name will be generated finally.
-      AppendPrefixToSuiteName(temporal_report_path, output_report_path,
-                              prefix)
-      # XML file verification is omitted because
-      # - Java's report XML doesn't fit verifier's expectation.
-    except IOError:
-      return '[FAIL] Result file does not exist. The process might crash.'
+      logging.info('[JAVA] Testing device=%s', self.serial)
+      prefix = '%s::' % self._GetAvdName()
+      report_file_name_remote = 'gtest-report.xml'
+      report_file_name_host = prefix + 'java_layer.xml'
+      output_report_path = os.path.join(output_report_dir,
+                                        report_file_name_host)
+      CreateDefaultReportFile(output_report_path, 'JUnit all tests', prefix)
+      # Run 'run-tests' target on specified device.
+      # This target does build (testee and tester), install (both) and run.
+      args = ['ant', 'run-tests',
+              '-Dadb.device.arg=-s %s' % self.serial,
+              '-Dgyp.build_type=%s' % configuration]
+      process = subprocess.Popen(args, cwd='tests')
+      process.wait()
+      if process.wait() != 0:
+        return '[FAIL] [JAVA] run_test target fails'
 
-    # TODO(matsuzakit): Verify reporting XML file here.
-    # gtest_report.GetFromXMLFile() is not applicable becuase of
-    # format difference.
-    return None
+      remote_report_path = os.path.join('data', 'data',
+                                        app_package_name,
+                                        report_file_name_remote)
+      try:
+        temporal_report_path = os.tmpnam()
+        self.CopyFile(host_path=temporal_report_path,
+                      remote_path=remote_report_path,
+                      operation='pull')
+        print '[ OK ] The process terminated with no crash.'
+        # Append prefix to testsuite name.
+        # Otherwise duplicate testsuites name will be generated finally.
+        AppendPrefixToSuiteName(temporal_report_path, output_report_path,
+                                prefix)
+        # XML file verification is omitted because
+        # - Java's report XML doesn't fit verifier's expectation.
+      except IOError:
+        return '[FAIL] Result file does not exist. The process might crash.'
+
+      # TODO(matsuzakit): Verify reporting XML file here.
+      # gtest_report.GetFromXMLFile() is not applicable becuase of
+      # format difference.
+      return None
+    except Exception as e:  # pylint: disable=broad-except
+      # Catches all the exceptions and returns string instead.
+      # If an exception is thrown, multiprocessing module
+      # complains because exceptions might not be able to be pickled.
+      return str(e)
 
   @staticmethod
   def GetDevices():

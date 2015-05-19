@@ -52,6 +52,7 @@
 #endif  // OS_ANDROID || __native_client__
 
 namespace mozc {
+class EngineInterface;
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 class SessionWatchDog;
 #else  // MOZC_DISABLE_SESSION_WATCHDOG
@@ -66,7 +67,6 @@ class Command;
 }  // namespace commands
 
 namespace session {
-class SessionFactoryInterface;
 class SessionInterface;
 class SessionObserverHandler;
 class SessionObserverInterface;
@@ -82,7 +82,8 @@ class UserDictionarySessionHandler;
 
 class SessionHandler : public SessionHandlerInterface {
  public:
-  SessionHandler();
+  // This class doesn't take an ownership of |engine|.
+  explicit SessionHandler(EngineInterface *engine);
   virtual ~SessionHandler();
 
   // Returns true if SessionHandle is available.
@@ -129,7 +130,6 @@ class SessionHandler : public SessionHandlerInterface {
   bool SetImposedConfig(commands::Command *command);
   bool SetRequest(commands::Command *command);
   bool StartCloudSync(commands::Command *command);
-  bool ClearCloudSync(commands::Command *command);
   bool GetCloudSyncStatus(commands::Command *command);
   bool AddAuthCode(commands::Command *command);
 
@@ -157,7 +157,7 @@ class SessionHandler : public SessionHandlerInterface {
   uint64 last_cleanup_time_;
   uint64 last_create_session_time_;
 
-  session::SessionFactoryInterface *session_factory_;
+  EngineInterface *engine_;
   scoped_ptr<session::SessionObserverHandler> observer_handler_;
 #ifdef ENABLE_CLOUD_SYNC
   sync::SyncHandler *sync_handler_;

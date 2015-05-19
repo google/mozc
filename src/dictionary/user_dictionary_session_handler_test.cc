@@ -34,9 +34,9 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/system_util.h"
-#include "base/testing_util.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/testing_util.h"
 
 DECLARE_string(test_tmpdir);
 

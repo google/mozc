@@ -37,6 +37,7 @@ __author__ = "yukawa"
 
 import optparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -58,23 +59,6 @@ def ParseOption():
   return opts
 
 
-def PostProcessOnWindows(opts):
-  """Apply post-processes for Windows binaries.
-
-  Update the specified executable to be 'release quality' by
-  - bind import functions by bind.exe
-  - Set 'freeze' bit in the PE header.
-  - Code signing.
-  See the following issues for details.
-    http://b/1504561, http://b/1507272, http://b/2289857, http://b/1893852
-
-  Args:
-    opts: build options to be used to update the executable.
-  """
-  abs_target_path = os.path.abspath(opts.targetpath)
-  abs_target_dir = os.path.abspath(os.path.dirname(abs_target_path))
-  abs_script_dir = os.path.abspath(os.path.dirname(__file__))
-  abs_touch_file_path = abs_target_path + '.postbuild'
 
   # Touch the timestamp file.
   if os.path.exists(abs_touch_file_path):
