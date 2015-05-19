@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,9 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateL
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-
-import android.util.FloatMath;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,7 +83,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
       Preconditions.checkNotNull(span);
       float compressedValueWidth =
           compressValueWidth(span.getValueWidth(), compressionRatio, horizontalPadding, minWidth);
-      return (int) FloatMath.ceil((compressedValueWidth + span.getDescriptionWidth()) / chunkWidth);
+      return (int) Math.ceil((compressedValueWidth + span.getDescriptionWidth()) / chunkWidth);
     }
 
     static float compressValueWidth(
@@ -196,7 +195,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
   }
 
   public int getRowHeight() {
-    return (int) FloatMath.ceil(valueHeight + valueVerticalPadding * 2);
+    return (int) Math.ceil(valueHeight + valueVerticalPadding * 2);
   }
 
   @Override
@@ -252,6 +251,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
    *
    * The order of the candidates will be kept.
    */
+  @VisibleForTesting
   static List<Row> buildRowList(
       CandidateList candidateList, SpanFactory spanFactory,
       int numChunks, ChunkMetrics chunkMetrics, boolean enableSpan) {
@@ -297,6 +297,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
    * The size of the buffer must be equal to or greater than {@code spanList.size()}.
    * Its elements needn't be initialized.
    */
+  @VisibleForTesting
   static void layoutSpanList(
       List<Span> spanList, int pageWidth,
       int numChunks, ChunkMetrics chunkMetrics, int[] numAllocatedChunks) {
@@ -317,10 +318,9 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
       }
     }
 
-    // Then assign remaining chunks to each span as even as possible by round-robin
-    // from tail to head to keep the backward compatibility.
-    for (int index = spanList.size() - 1; numRemainingChunks > 0;
-         --numRemainingChunks, index = (index + spanList.size() - 1) % spanList.size()) {
+    // Then assign remaining chunks to each span as even as possible by round-robin.
+    for (int index = 0; numRemainingChunks > 0;
+         --numRemainingChunks, index = (index + 1) % spanList.size()) {
       ++numAllocatedChunks[index];
     }
 
@@ -344,6 +344,7 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
   }
 
   /** Sets top, width and height to the each row. */
+  @VisibleForTesting
   static void layoutRowList(List<Row> rowList, int pageWidth, int rowHeight) {
     int top = 0;
     for (Row row : Preconditions.checkNotNull(rowList)) {

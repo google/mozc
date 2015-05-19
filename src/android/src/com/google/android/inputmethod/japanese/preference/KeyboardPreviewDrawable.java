@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,14 @@ import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardParser;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardViewBackgroundSurface;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
-import com.google.common.base.Optional;
+import org.mozc.android.inputmethod.japanese.view.Skin;
+import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -51,8 +51,6 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
-import android.graphics.Shader.TileMode;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -62,6 +60,8 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import javax.annotation.Nullable;
 
 /**
  * A Drawable to render keyboard preview.
@@ -118,7 +118,7 @@ public class KeyboardPreviewDrawable extends Drawable {
 
     private final Map<KeyboardLayout, Bitmap> map =
         new EnumMap<KeyboardLayout, Bitmap>(KeyboardLayout.class);
-    private SkinType skinType = null;
+    private Skin skin = Skin.getFallbackInstance();
     private final WeakHashMap<CacheReferenceKey, Object> referenceMap =
         new WeakHashMap<CacheReferenceKey, Object>();
 
@@ -129,12 +129,13 @@ public class KeyboardPreviewDrawable extends Drawable {
       return INSTANCE;
     }
 
-    Bitmap get(KeyboardLayout keyboardLayout, int width, int height, SkinType skinType) {
-      if (keyboardLayout == null || width <= 0 || height <= 0 || skinType == null) {
+    @Nullable Bitmap get(KeyboardLayout keyboardLayout, int width, int height, Skin skin) {
+      Preconditions.checkNotNull(skin);
+      if (keyboardLayout == null || width <= 0 || height <= 0) {
         return null;
       }
 
-      if (skinType != this.skinType) {
+      if (!skin.equals(this.skin)) {
         return null;
       }
 
@@ -149,14 +150,15 @@ public class KeyboardPreviewDrawable extends Drawable {
       return result;
     }
 
-    void put(KeyboardLayout keyboardLayout, SkinType skinType, Bitmap bitmap) {
-      if (keyboardLayout == null || skinType == null || bitmap == null) {
+    void put(@Nullable KeyboardLayout keyboardLayout, Skin skin, @Nullable Bitmap bitmap) {
+      Preconditions.checkNotNull(skin);
+      if (keyboardLayout == null || bitmap == null) {
         return;
       }
 
-      if (skinType != this.skinType) {
+      if (!skin.equals(this.skin)) {
         clear();
-        this.skinType = skinType;
+        this.skin = skin;
       }
 
       Bitmap oldBitmap = map.put(keyboardLayout, bitmap);
@@ -187,23 +189,23 @@ public class KeyboardPreviewDrawable extends Drawable {
       }
 
       map.clear();
-      skinType = null;
+      skin = Skin.getFallbackInstance();
     }
   }
 
   private final Resources resources;
   private final KeyboardLayout keyboardLayout;
-  private final int keyboardResourceId;
+  private final KeyboardSpecification specification;
   private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-  private SkinType skinType = SkinType.BLUE_LIGHTGRAY;
+  private Skin skin = Skin.getFallbackInstance();
   private boolean enabled = true;
 
   KeyboardPreviewDrawable(
-      Resources resources, KeyboardLayout keyboardLayout, int keyboardResourceId) {
+      Resources resources, KeyboardLayout keyboardLayout, KeyboardSpecification specification) {
     this.resources = resources;
     this.keyboardLayout = keyboardLayout;
-    this.keyboardResourceId = keyboardResourceId;
+    this.specification = specification;
   }
 
   @Override
@@ -215,12 +217,13 @@ public class KeyboardPreviewDrawable extends Drawable {
 
     // Look up cache.
     BitmapCache cache = BitmapCache.getInstance();
-    Bitmap bitmap = cache.get(keyboardLayout, bounds.width(), bounds.height(), skinType);
+    Bitmap bitmap = cache.get(keyboardLayout, bounds.width(), bounds.height(), skin);
     if (bitmap == null) {
       bitmap = createBitmap(
-          resources, keyboardResourceId, bounds.width(), bounds.height(), skinType);
+          resources, specification, bounds.width(), bounds.height(),
+          resources.getDimensionPixelSize(R.dimen.pref_inputstyle_reference_width), skin);
       if (bitmap != null) {
-        cache.put(keyboardLayout, skinType, bitmap);
+        cache.put(keyboardLayout, skin, bitmap);
       }
     }
 
@@ -234,48 +237,48 @@ public class KeyboardPreviewDrawable extends Drawable {
     }
   }
 
+  /**
+   * @param width width of returned {@code Bitmap}
+   * @param height height of returned {@code Bitmap}
+   * @param virtualWidth virtual width of keyboard. This value is used when rendering.
+   *        virtualHeight is internally calculated based on given arguments keeping aspect ratio.
+   */
+  @Nullable
   private static Bitmap createBitmap(
-      Resources resources, int resourceId, int width, int height, SkinType skinType) {
-    Keyboard keyboard = getParsedKeyboard(resources, resourceId, width, height);
+      Resources resources, KeyboardSpecification specification, int width, int height,
+      int virtualWidth, Skin skin) {
+    Preconditions.checkNotNull(skin);
+    // Scaling is required because some icons are draw with specified fixed size.
+    float scale = width / (float) virtualWidth;
+    int virtualHeight = (int) (height / scale);
+    Keyboard keyboard = getParsedKeyboard(resources, specification, virtualWidth, virtualHeight);
     if (keyboard == null) {
       return null;
     }
 
     Bitmap bitmap = MozcUtil.createBitmap(width, height, Config.ARGB_8888);
     Canvas canvas = new Canvas(bitmap);
-    DrawableCache drawableCache = new DrawableCache(new MozcDrawableFactory(resources));
-    drawableCache.setSkinType(skinType);
+    canvas.scale(scale, scale);
+    DrawableCache drawableCache = new DrawableCache(resources);
+    drawableCache.setSkin(skin);
 
     // Fill background.
     {
-      Optional<Drawable> optionalKeyboardBackground =
-          drawableCache.getDrawable(skinType.windowBackgroundResourceId);
-      if (!optionalKeyboardBackground.isPresent()) {
-        // Default black drawing.
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(0xFF000000);
-        canvas.drawRect(0, 0, bitmap.getWidth(), bitmap.getHeight(), paint);
-      } else {
-        Drawable keyboardBackground = optionalKeyboardBackground.get();
-        if (keyboardBackground instanceof BitmapDrawable) {
-          // If the background is bitmap resource, set repeat mode.
-          BitmapDrawable.class.cast(keyboardBackground).setTileModeXY(
-              TileMode.REPEAT, TileMode.REPEAT);
-        }
-        keyboardBackground.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
-        keyboardBackground.draw(canvas);
-      }
+      Drawable keyboardBackground =
+          skin.windowBackgroundDrawable.getConstantState().newDrawable();
+      keyboardBackground.setBounds(0, 0, virtualWidth, virtualHeight);
+      keyboardBackground.draw(canvas);
     }
 
     // Draw keyboard layout.
     {
       BackgroundDrawableFactory backgroundDrawableFactory =
-          new BackgroundDrawableFactory(resources.getDisplayMetrics().density);
-      backgroundDrawableFactory.setSkinType(skinType);
+          new BackgroundDrawableFactory(resources);
+      backgroundDrawableFactory.setSkin(skin);
       KeyboardViewBackgroundSurface backgroundSurface =
           new KeyboardViewBackgroundSurface(backgroundDrawableFactory, drawableCache);
       backgroundSurface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
-      backgroundSurface.requestUpdateSize(bitmap.getWidth(), bitmap.getHeight());
+      backgroundSurface.requestUpdateSize(virtualWidth, virtualHeight);
       backgroundSurface.update();
       backgroundSurface.draw(canvas);
       backgroundSurface.reset();  // Release the background bitmap and its canvas.
@@ -285,10 +288,11 @@ public class KeyboardPreviewDrawable extends Drawable {
   }
 
   /** Create a Keyboard instance which fits the current bitmap. */
+  @Nullable
   private static Keyboard getParsedKeyboard(
-      Resources resources, int resourceId, int width, int height) {
+      Resources resources, KeyboardSpecification specification, int width, int height) {
     KeyboardParser parser = new KeyboardParser(
-        resources, resources.getXml(resourceId), width, height);
+        resources, width, height, specification);
     try {
       return parser.parseKeyboard();
     } catch (XmlPullParserException e) {
@@ -300,8 +304,8 @@ public class KeyboardPreviewDrawable extends Drawable {
     return null;
   }
 
-  void setSkinType(SkinType skinType) {
-    this.skinType = skinType;
+  void setSkin(Skin skin) {
+    this.skin = skin;
     invalidateSelf();
   }
 

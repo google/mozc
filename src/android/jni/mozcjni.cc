@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,7 @@
 #include "usage_stats/usage_stats_uploader.h"
 
 #include "data_manager/oss/oss_data_manager.h"
+typedef mozc::oss::OssDataManager DataManagerType;
 
 namespace mozc {
 namespace jni {
@@ -90,10 +91,9 @@ void Initialize(
 #endif  // MOZC_ENABLE_HTTP_CLIENT
 
   // Initialize dictionary data.
-  mozc::oss::OssDataManager::SetDictionaryData(
-      dictionary_address, dictionary_size);
-  mozc::oss::OssDataManager::SetConnectionData(
-      connection_data_address, connection_data_size);
+  DataManagerType::SetDictionaryData(dictionary_address, dictionary_size);
+  DataManagerType::SetConnectionData(connection_data_address,
+                                     connection_data_size);
 
   mozc::Singleton<SessionHandlerSingletonAdapter>::get()->getHandler()
       ->AddObserver(Singleton<session::SessionUsageObserver>::get());
@@ -124,14 +124,6 @@ jbyteArray JNICALL evalCommand(JNIEnv *env,
 
   // Use JNI_ABORT because in_bytes is read only.
   env->ReleaseByteArrayElements(in_bytes_array, in_bytes, JNI_ABORT);
-
-  // Remove candidates field.
-  // On Android all_candidate_words is always used instead and
-  // candiadtes field is ignored.
-  // Parsing protobuf message is expensive so remove such unused field.
-  // This is quick hack. Ideally also removing the logic where the candidate
-  // field is filled but currently simple solusion is employed.
-  command.mutable_output()->clear_candidates();
 
   const int out_size = command.ByteSize();
   jbyteArray out_bytes_array = env->NewByteArray(out_size);

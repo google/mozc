@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -80,9 +80,12 @@
             '../unix/ibus/ibus.gyp:ibus_all_test',
           ],
         }],
+        # Java tests are defined in android/android.gyp:build_java_test.
+        # However asset files (e.g., system.dictionary) are required to run
+        # native tests.
         ['target_platform=="Android"', {
           'dependencies': [
-            '../android/android.gyp:build_java_test',
+            '../android/android.gyp:assets',
           ],
         }],
       ],

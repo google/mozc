@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese.session;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
+import com.google.common.base.Preconditions;
 
 import java.nio.Buffer;
 
@@ -53,6 +54,11 @@ class MozcJNI {
   static void load(
       String userProfileDirectoryPath, Buffer dictionaryBuffer, Buffer connectionDataBuffer,
       String expectedVersion) {
+    Preconditions.checkNotNull(userProfileDirectoryPath);
+    Preconditions.checkNotNull(dictionaryBuffer);
+    Preconditions.checkNotNull(connectionDataBuffer);
+    Preconditions.checkNotNull(expectedVersion);
+
     if (isLoaded) {
       return;
     }

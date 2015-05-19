@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -193,5 +193,10 @@ public class ComposingTextTrackingInputConnection implements InputConnection {
       return ComposingTextTrackingInputConnection.class.cast(baseConnection);
     }
     return new ComposingTextTrackingInputConnection(baseConnection);
+  }
+
+  @Override
+  public boolean requestCursorUpdates(int cursorUpdateMode) {
+    return baseConnection.requestCursorUpdates(cursorUpdateMode);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,29 +29,36 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+
 /**
  */
 public class PopUp {
+
   private final int popUpIconResourceId;
-  private final int width;
+  private final int longPressPopUpIconResourceId;
   private final int height;
   private final int xOffset;
   private final int yOffset;
+  private final int iconWidth;
+  private final int iconHeight;
 
-  public PopUp(int popUpIconResourceId, int width, int height, int xOffset, int yOffset) {
+  public PopUp(int popUpIconResourceId, int popUpLongPressIconResourceId,
+               int height, int xOffset, int yOffset, int iconWidth, int iconHeight) {
     this.popUpIconResourceId = popUpIconResourceId;
-    this.width = width;
+    this.longPressPopUpIconResourceId = popUpLongPressIconResourceId;
     this.height = height;
     this.xOffset = xOffset;
     this.yOffset = yOffset;
+    this.iconWidth = iconWidth;
+    this.iconHeight = iconHeight;
   }
 
   public int getPopUpIconResourceId() {
     return popUpIconResourceId;
   }
 
-  public int getWidth() {
-    return width;
+  public int getPopUpLongPressIconResourceId() {
+    return longPressPopUpIconResourceId;
   }
 
   public int getHeight() {
@@ -64,5 +71,13 @@ public class PopUp {
 
   public int getYOffset() {
     return yOffset;
+  }
+
+  public int getIconWidth() {
+    return iconWidth;
+  }
+
+  public int getIconHeight() {
+    return iconHeight;
   }
 }

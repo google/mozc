@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,12 @@
       '<(gen_out_dir)/nacl_mozc/options.css',
       '<(gen_out_dir)/nacl_mozc/options.html',
       '<(gen_out_dir)/nacl_mozc/options.js',
+      '<(gen_out_dir)/nacl_mozc/config',
+      '<(gen_out_dir)/nacl_mozc/images',
+      '<(gen_out_dir)/nacl_mozc/inputview.html',
+      '<(gen_out_dir)/nacl_mozc/inputview.js',
+      '<(gen_out_dir)/nacl_mozc/inputview_css.css',
+      '<(gen_out_dir)/nacl_mozc/inputview_layouts',
     ],
     'partial_supported_messages': [
       '<(gen_out_dir)/nacl_mozc/_locales/am/messages.json',
@@ -389,6 +395,12 @@
           'options.css',
           'options.html',
           'options.js',
+          'inputview/config',
+          'inputview/images',
+          'inputview/inputview.html',
+          'inputview/inputview.js',
+          'inputview/inputview_css.css',
+          'inputview/inputview_layouts',
         ],
         'conditions': [
           ['branding=="GoogleJapaneseInput"', {

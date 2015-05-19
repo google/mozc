@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Optional;
@@ -57,7 +58,6 @@ import java.util.Set;
  *   <li> {@code edgeFlags}: flags whether the key should stick to keyboard's boundary.
  *   <li> {@code isRepeatable}: whether the key long press cause a repeated key tapping.
  *   <li> {@code isModifier}: whether the key is modifier (e.g. shift key).
- *   <li> {@code isSticky}: whether the key behaves sticky (e.g. caps lock).
  * </ul>
  *
  * The {@code &lt;Key&gt;} element can have (at most) two {@code &lt;KeyState&gt;} elements.
@@ -86,16 +86,24 @@ public class Key {
   private final int edgeFlags;
   private final boolean isRepeatable;
   private final boolean isModifier;
-  private final boolean isSticky;
   private final Stick stick;
   // Default KeyState.
   // Absent if this is a spacer.
   private final Optional<KeyState> defaultKeyState;
+  private final DrawableType keyBackgroundDrawableType;
+
   private final List<KeyState> keyStateList;
 
   public Key(int x, int y, int width, int height, int horizontalGap,
-             int edgeFlags, boolean isRepeatable, boolean isModifier, boolean isSticky,
-             Stick stick, List<? extends KeyState> keyStateList) {
+             int edgeFlags, boolean isRepeatable, boolean isModifier,
+             Stick stick, DrawableType keyBackgroundDrawableType,
+             List<? extends KeyState> keyStateList) {
+    Preconditions.checkNotNull(stick);
+    Preconditions.checkNotNull(keyBackgroundDrawableType);
+    Preconditions.checkNotNull(keyStateList);
+    Preconditions.checkArgument(width >= 0);
+    Preconditions.checkArgument(height >= 0);
+
     this.x = x;
     this.y = y;
     this.width = width;
@@ -104,28 +112,29 @@ public class Key {
     this.edgeFlags = edgeFlags;
     this.isRepeatable = isRepeatable;
     this.isModifier = isModifier;
-    this.isSticky = isSticky;
     this.stick = stick;
+    this.keyBackgroundDrawableType = keyBackgroundDrawableType;
 
     List<KeyState> tmpKeyStateList = null;  // Lazy creation.
     Optional<KeyState> defaultKeyState = Optional.absent();
     for (KeyState keyState : keyStateList) {
       Set<KeyState.MetaState> metaStateSet = keyState.getMetaStateSet();
-      if (metaStateSet.isEmpty()) {
+      if (metaStateSet.isEmpty() || metaStateSet.contains(KeyState.MetaState.FALLBACK)) {
         if (defaultKeyState.isPresent()) {
           throw new IllegalArgumentException("Found duplicate default meta state");
         }
         defaultKeyState = Optional.of(keyState);
-        continue;
+        if (metaStateSet.size() <= 1) {  // metaStateSet contains only FALLBACK
+          continue;
+        }
       }
       if (tmpKeyStateList == null) {
         tmpKeyStateList = new ArrayList<KeyState>();
       }
       tmpKeyStateList.add(keyState);
     }
-    if (!defaultKeyState.isPresent() && tmpKeyStateList != null) {
-      throw new IllegalArgumentException("Default KeyState is mandatory for non-spacer.");
-    }
+    Preconditions.checkArgument(defaultKeyState.isPresent() || tmpKeyStateList == null,
+                                "Default KeyState is mandatory for non-spacer.");
     this.defaultKeyState = defaultKeyState;
     this.keyStateList = tmpKeyStateList == null
         ? Collections.<KeyState>emptyList()
@@ -164,12 +173,12 @@ public class Key {
     return isModifier;
   }
 
-  public boolean isSticky() {
-    return isSticky;
-  }
-
   public Stick getStick() {
     return stick;
+  }
+
+  public DrawableType getKeyBackgroundDrawableType() {
+    return keyBackgroundDrawableType;
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,10 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
-import org.mozc.android.inputmethod.japanese.MozcLog;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.SparseArray;
 
@@ -43,21 +43,21 @@ import android.util.SparseArray;
 public class DrawableCache {
 
   private final SparseArray<Drawable> cacheMap = new SparseArray<Drawable>(128);
-  private final MozcDrawableFactory mozcDrawableFactory;
-  private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
+  private Skin skin = Skin.getFallbackInstance();
+  private final Resources resources;
 
-  public DrawableCache(MozcDrawableFactory mozcDrawableFactory) {
-    this.mozcDrawableFactory = Preconditions.checkNotNull(mozcDrawableFactory);
+  public DrawableCache(Resources resources) {
+    this.resources = Preconditions.checkNotNull(resources);
   }
 
-  public void setSkinType(SkinType skinType) {
-    if (this.skinType == Preconditions.checkNotNull(skinType)) {
+  public void setSkin(Skin skin) {
+    Preconditions.checkNotNull(skin);
+    if (this.skin.equals(skin)) {
       return;
     }
 
-    this.skinType = skinType;
+    this.skin = skin;
     cacheMap.clear();
-    mozcDrawableFactory.setSkinType(skinType);
   }
 
   /**
@@ -74,12 +74,8 @@ public class DrawableCache {
     Integer key = Integer.valueOf(resourceId);
     Optional<Drawable> drawable = Optional.fromNullable(cacheMap.get(key));
     if (!drawable.isPresent()) {
-      drawable = mozcDrawableFactory.getDrawable(resourceId);
-      if (drawable.isPresent()) {
-        cacheMap.put(key, drawable.get());
-      } else {
-        MozcLog.e("Failed to load: " + resourceId);
-      }
+      drawable = Optional.of(skin.getDrawable(resources, resourceId));
+      cacheMap.put(key, drawable.get());
     }
     return drawable;
   }

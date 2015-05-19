@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -310,6 +310,42 @@ TEST_F(SymbolRewriterTest, MobileEnvironmentTest) {
     const ConversionRequest request(NULL, &input);
     EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
   }
+}
+
+TEST_F(SymbolRewriterTest, ExpandSpace) {
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
+  Segments segments;
+  const ConversionRequest request;
+
+  Segment *segment = segments.push_back_segment();
+  segment->set_key(" ");
+  Segment::Candidate *candidate = segment->add_candidate();
+  candidate->Init();
+  candidate->key = " ";
+  candidate->value = " ";
+  candidate->content_key = " ";
+  candidate->content_value = " ";
+  candidate->PushBackInnerSegmentBoundary(1, 1, 1, 1);
+
+  EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
+  EXPECT_LE(2, segment->candidates_size());
+
+  const Segment::Candidate &cand0 = segment->candidate(0);
+  EXPECT_EQ(" ", cand0.key);
+  EXPECT_EQ(" ", cand0.value);
+  EXPECT_EQ(" ", cand0.content_key);
+  EXPECT_EQ(" ", cand0.content_value);
+  ASSERT_EQ(1, cand0.inner_segment_boundary.size());
+  EXPECT_EQ(Segment::Candidate::EncodeLengths(1, 1, 1, 1),
+            cand0.inner_segment_boundary[0]);
+
+  const char *kFullWidthSpace = "\xe3\x80\x80";
+  const Segment::Candidate &cand1 = segment->candidate(1);
+  EXPECT_EQ(" ", cand1.key);
+  EXPECT_EQ(kFullWidthSpace, cand1.value);
+  EXPECT_EQ(" ", cand1.content_key);
+  EXPECT_EQ(kFullWidthSpace, cand1.content_value);
+  EXPECT_TRUE(cand1.inner_segment_boundary.empty());
 }
 
 }  // namespace mozc

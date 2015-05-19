@@ -1,0 +1,28 @@
+URL: https://noto.googlecode.com/git/third_party/noto_cjk/NotoSansJP-Regular.otf
+Version: 1.001
+License: Apache License, version 2.0
+License File: LICENSE
+
+URL: http://material-design.storage.googleapis.com/publish/v_1/quantumexternal/0B08MbvYZK1iNZGNoWmJqVEhQYTQ/RobotoTTF.zip
+Version: 2.000980; 2014
+License: Apache License, version 2.0
+License File: LICENSE
+
+Description:
+Noto-Roboto2-Regular.otf is a derivative work of NotoSansJP font and Roboto2 font, where Japanese characters are covered by Noto font and ASCII characters are coverted by Roboto font.
+
+Local Modifications:
+Noto-Roboto2-Regular.otf is generated as follows with FontForge 20120731 and libfontforge 20120731-ML on Ubuntu 14.04.01.
+1. Install FontForge
+2. Open NotoSansJP-Regular.otf with FontForge
+3. You will see the warning that indicates there is no applicable cidmap.
+   Open cidmap for NotoSansJP.cidmap, which can be found in the same directory of this README.
+4. Open Roboto-Regular.ttf with FontForge
+5. For Roboto, Element -> Font Info -> General.
+   Change Em Size to 1000 to adjust with NotoSansJP.otf.
+6. For Noto, click 'CID' menu, then select 'NotoSansJP-Regular-PropotionalDigits'
+7. Copy and paste characters "0123456789" from Roboto to Noto.
+6. For Noto, click 'CID' menu, then select 'NotoSansJP-Regular-Propotional'
+7. Copy and paste characters "!"#$%&'()*+,-./" from Roboto to Noto.
+8. Copy and paste characters ":;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~" from Roboto to Noto.
+9. For Noto, click File - Generate Fonts, then save it as "Noto-Roboto2-Regular.otf" with file type: 'OpenType CID'. You may see validation errors, but please ignore them.

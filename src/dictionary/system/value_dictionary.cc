@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -105,6 +105,14 @@ bool ValueDictionary::OpenDictionaryFile() {
     return false;
   }
   return true;
+}
+
+// ValueDictionary is supposed to use the same data with SystemDictionary
+// and SystemDictionary::HasKey should return the same result with
+// ValueDictionary::HasKey.  So we can skip the actual logic of HasKey
+// and return just false.
+bool ValueDictionary::HasKey(StringPiece key) const {
+  return false;
 }
 
 // ValueDictionary is supposed to use the same data with SystemDictionary

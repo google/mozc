@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,7 @@ class UserDictionary : public DictionaryInterface {
                  SuppressionDictionary *suppression_dictionary);
   virtual ~UserDictionary();
 
+  virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
   // Lookup methods don't support kana modifier insensitive lookup, i.e.,
   // Callback::OnActualKey() is never called.

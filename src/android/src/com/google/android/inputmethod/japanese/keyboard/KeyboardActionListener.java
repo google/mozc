@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,11 @@ import java.util.List;
 
 /**
  * A listener of keyboard actions.
- * 
+ *
  */
 public interface KeyboardActionListener {
   public void onCancel();
   public void onPress(int keycode);
   public void onRelease(int keycode);
-  public void onKey(int primaryCode, List<? extends TouchEvent> touchEventList);
+  public void onKey(int primaryCode, List<TouchEvent> touchEventList);
 }

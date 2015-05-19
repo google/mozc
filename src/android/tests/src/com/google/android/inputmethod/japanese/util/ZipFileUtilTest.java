@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@ public class ZipFileUtilTest extends InstrumentationTestCase {
       succeeded = true;
       return expected;
     } finally {
-      MozcUtil.close(zipInputStream, !succeeded);
+      MozcUtil.close(apkFile, !succeeded);
     }
   }
 

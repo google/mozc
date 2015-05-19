@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,8 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.test.UiThreadTest;
+import android.test.mock.MockContext;
+import android.test.mock.MockPackageManager;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.webkit.WebView;
 
@@ -98,8 +100,8 @@ public class MiniBrowserActivityTest extends InstrumentationTestCaseWithMock {
       for (boolean isDefaultBrowserExistent : new boolean[] {true, false}) {
         MozcLog.i(testData.toString());
         resetAll();
-        PackageManager packageManager = createNiceMock(PackageManager.class);
-        Context context = createNiceMock(Context.class);
+        PackageManager packageManager = createNiceMock(MockPackageManager.class);
+        Context context = createNiceMock(MockContext.class);
         Capture<Intent> queryIntentCapture = new Capture<Intent>();
         Capture<Intent> activityIntentCapture = new Capture<Intent>();
         if (testData.expectedDelegate) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,13 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
 import org.mozc.android.inputmethod.japanese.keyboard.ProbableKeyEventGuesser;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.ProbableKeyEvent;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.Context;
@@ -43,8 +45,6 @@ import android.content.res.Resources;
 import android.view.KeyEvent;
 
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 /**
  * Converter from primary key code (≒ code point) to Mozc's key event.
@@ -60,10 +60,7 @@ public class PrimaryKeyCodeConverter {
   public final int keyCodeBackspace;
   public final int keyCodeEnter;
   public final int keyCodeChartypeToKana;
-  public final int keyCodeChartypeTo123;
   public final int keyCodeChartypeToAbc;
-  public final int keyCodeChartypeToKana123;
-  public final int keyCodeChartypeToAbc123;
   public final int keyCodeSymbol;
   public final int keyCodeUndo;
   public final int keyCodeCapslock;
@@ -90,10 +87,7 @@ public class PrimaryKeyCodeConverter {
     keyCodeBackspace = res.getInteger(R.integer.key_backspace);
     keyCodeEnter = res.getInteger(R.integer.key_enter);
     keyCodeChartypeToKana = res.getInteger(R.integer.key_chartype_to_kana);
-    keyCodeChartypeTo123 = res.getInteger(R.integer.key_chartype_to_123);
     keyCodeChartypeToAbc = res.getInteger(R.integer.key_chartype_to_abc);
-    keyCodeChartypeToKana123 = res.getInteger(R.integer.key_chartype_to_kana_123);
-    keyCodeChartypeToAbc123 = res.getInteger(R.integer.key_chartype_to_abc_123);
     keyCodeSymbol = res.getInteger(R.integer.key_symbol);
     keyCodeUndo = res.getInteger(R.integer.key_undo);
     keyCodeCapslock = res.getInteger(R.integer.key_capslock);
@@ -103,63 +97,63 @@ public class PrimaryKeyCodeConverter {
     this.guesser = Preconditions.checkNotNull(guesser);
   }
 
-  public void setJapaneseKeyboard(@Nullable JapaneseKeyboard japaneseKeyboard) {
-    guesser.setJapaneseKeyboard(japaneseKeyboard);
+  public void setKeyboard(Keyboard keyboard) {
+    guesser.setKeyboard(Preconditions.checkNotNull(keyboard));
   }
 
   public void setConfiguration(Configuration newConfig) {
-    guesser.setConfiguration(Preconditions.checkNotNull(newConfig));
+    guesser.setConfiguration(Optional.of(newConfig));
   }
 
-  public ProtoCommands.KeyEvent createMozcKeyEvent(
-      int primaryCode, List<? extends TouchEvent> touchEventList) {
+  public Optional<ProtoCommands.KeyEvent> createMozcKeyEvent(
+      int primaryCode, List<TouchEvent> touchEventList) {
+    Preconditions.checkNotNull(touchEventList);
+
     // Space
     if (primaryCode == ' ') {
-      return KeycodeConverter.SPECIALKEY_SPACE;
+      return Optional.of(KeycodeConverter.SPECIALKEY_SPACE);
     }
 
     // Enter
     if (primaryCode == keyCodeEnter) {
-      return KeycodeConverter.SPECIALKEY_VIRTUAL_ENTER;
+      return Optional.of(KeycodeConverter.SPECIALKEY_VIRTUAL_ENTER);
     }
 
     // Backspace
     if (primaryCode == keyCodeBackspace) {
-      return KeycodeConverter.SPECIALKEY_BACKSPACE;
+      return Optional.of(KeycodeConverter.SPECIALKEY_BACKSPACE);
     }
 
     // Up arrow.
     if (primaryCode == keyCodeUp) {
-      return KeycodeConverter.SPECIALKEY_UP;
+      return Optional.of(KeycodeConverter.SPECIALKEY_UP);
     }
 
     // Left arrow.
     if (primaryCode == keyCodeLeft) {
-      return KeycodeConverter.SPECIALKEY_VIRTUAL_LEFT;
+      return Optional.of(KeycodeConverter.SPECIALKEY_VIRTUAL_LEFT);
     }
 
     // Right arrow.
     if (primaryCode == keyCodeRight) {
-      return KeycodeConverter.SPECIALKEY_VIRTUAL_RIGHT;
+      return Optional.of(KeycodeConverter.SPECIALKEY_VIRTUAL_RIGHT);
     }
 
     // Down arrow.
     if (primaryCode == keyCodeDown) {
-      return KeycodeConverter.SPECIALKEY_DOWN;
+      return Optional.of(KeycodeConverter.SPECIALKEY_DOWN);
     }
 
     if (primaryCode > 0) {
       ProtoCommands.KeyEvent.Builder builder =
           ProtoCommands.KeyEvent.newBuilder().setKeyCode(primaryCode);
-      if (guesser != null && touchEventList != null) {
+      if (!touchEventList.isEmpty()) {
         List<ProbableKeyEvent> probableKeyEvents = guesser.getProbableKeyEvents(touchEventList);
-        if (probableKeyEvents != null) {
-          builder.addAllProbableKeyEvent(probableKeyEvents);
-        }
+        builder.addAllProbableKeyEvent(probableKeyEvents);
       }
-      return builder.build();
+      return Optional.of(builder.build());
     }
-    return null;
+    return Optional.<ProtoCommands.KeyEvent>absent();
   }
 
   public KeyEventInterface getPrimaryCodeKeyEvent(int primaryCode) {
@@ -268,8 +262,8 @@ public class PrimaryKeyCodeConverter {
     }
 
     @Override
-    public KeyEvent getNativeEvent() {
-      return null;
+    public Optional<KeyEvent> getNativeEvent() {
+      return Optional.<KeyEvent>absent();
     }
   }
 }

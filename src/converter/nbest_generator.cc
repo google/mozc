@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -223,27 +223,49 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
 
   candidate->inner_segment_boundary.clear();
   if (check_mode_ == ONLY_EDGE) {
-    // For realtime conversion.
-    // Set inner segment boundary for user history prediction from
-    // realtime conversion result.
-    int key_len, value_len;
-    key_len = Util::CharsLen(nodes[0]->key);
-    value_len = Util::CharsLen(nodes[0]->value);
+    // For realtime conversion.  Set inner segment boundary for user history
+    // prediction from realtime conversion result.
+    size_t key_len = nodes[0]->key.size(), value_len = nodes[0]->value.size();
+    size_t content_key_len = key_len, content_value_len = value_len;
+    bool is_content_boundary = false;
+    if (pos_matcher_->IsFunctional(nodes[0]->rid)) {
+      is_content_boundary = true;
+      content_key_len = 0;
+      content_value_len = 0;
+    }
     for (size_t i = 1; i < nodes.size(); ++i) {
       const Node *lnode = nodes[i - 1];
       const Node *rnode = nodes[i];
       const bool kMultipleSegments = false;
       if (segmenter_->IsBoundary(lnode, rnode, kMultipleSegments)) {
-        candidate->inner_segment_boundary.push_back(
-            pair<int, int>(key_len, value_len));
+        candidate->PushBackInnerSegmentBoundary(
+            key_len, value_len, content_key_len, content_value_len);
         key_len = 0;
         value_len = 0;
+        content_key_len = 0;
+        content_value_len = 0;
+        is_content_boundary = false;
       }
-      key_len += Util::CharsLen(rnode->key);
-      value_len += Util::CharsLen(rnode->value);
+      key_len += rnode->key.size();
+      value_len += rnode->value.size();
+      if (is_content_boundary) {
+        continue;
+      }
+      // Set boundary only after content nouns or pronouns.  For example,
+      // "走った" is formed as
+      //     "走っ" (content word) + "た" (functional).
+      // Since the content word is incomplete, we don't want to learn "走っ".
+      if ((pos_matcher_->IsContentNoun(lnode->rid) ||
+           pos_matcher_->IsPronoun(lnode->rid)) &&
+          pos_matcher_->IsFunctional(rnode->lid)) {
+        is_content_boundary = true;
+      } else {
+        content_key_len += rnode->key.size();
+        content_value_len += rnode->value.size();
+      }
     }
-    candidate->inner_segment_boundary.push_back(
-        pair<int, int>(key_len, value_len));
+    candidate->PushBackInnerSegmentBoundary(
+        key_len, value_len, content_key_len, content_value_len);
   }
 }
 

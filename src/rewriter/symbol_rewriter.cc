@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -107,6 +107,8 @@ void SymbolRewriter::ExpandSpace(Segment *segment) {
       // "　"
       c->value = "\xe3\x80\x80";
       c->content_value = "\xe3\x80\x80";
+      // Boundary is invalidated and unnecessary for space.
+      c->inner_segment_boundary.clear();
       return;
     // "　"
     } else if (segment->candidate(i).value == "\xe3\x80\x80") {
@@ -114,6 +116,8 @@ void SymbolRewriter::ExpandSpace(Segment *segment) {
       *c = segment->candidate(i);
       c->value = " ";
       c->content_value = " ";
+      // Boundary is invalidated and unnecessary for space.
+      c->inner_segment_boundary.clear();
       return;
     }
   }

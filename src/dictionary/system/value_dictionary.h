@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@ class ValueDictionary : public DictionaryInterface {
       const POSMatcher& pos_matcher, const char *ptr, int len);
 
   // Implementation of DictionaryInterface
+  virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
   virtual void LookupPredictive(
       StringPiece key, bool use_kana_modifier_insensitive_lookup,

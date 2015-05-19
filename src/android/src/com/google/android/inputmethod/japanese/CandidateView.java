@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import org.mozc.android.inputmethod.japanese.MozcView.InputFrameFoldButtonClickListener;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
@@ -40,18 +41,22 @@ import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayoutRenderer.DescriptionLayoutPolicy;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayoutRenderer.ValueScalingPolicy;
 import org.mozc.android.inputmethod.japanese.ui.ConversionCandidateLayouter;
+import org.mozc.android.inputmethod.japanese.ui.InputFrameFoldButtonView;
 import org.mozc.android.inputmethod.japanese.ui.ScrollGuideView;
 import org.mozc.android.inputmethod.japanese.ui.SpanFactory;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.Skin;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.animation.Animation;
-import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 
 /**
  * The view to show candidates.
@@ -59,25 +64,21 @@ import android.widget.CompoundButton;
  */
 public class CandidateView extends InOutAnimatedFrameLayout implements MemoryManageable {
 
-  /**
-   * Adapter for conversion candidate selection.
-   */
+  /** Adapter for conversion candidate selection. */
+  @VisibleForTesting
   static class ConversionCandidateSelectListener implements CandidateSelectListener {
     private final ViewEventListener viewEventListener;
 
     ConversionCandidateSelectListener(ViewEventListener viewEventListener) {
-      if (viewEventListener == null) {
-        throw new NullPointerException("viewEventListener should be non-null.");
-      }
-      this.viewEventListener = viewEventListener;
+      this.viewEventListener = Preconditions.checkNotNull(viewEventListener);
     }
 
     @Override
-    public void onCandidateSelected(CandidateWord candidateWord) {
-      viewEventListener.onConversionCandidateSelected(candidateWord.getId());
+    public void onCandidateSelected(CandidateWord candidateWord, Optional<Integer> rowIndex) {
+      viewEventListener.onConversionCandidateSelected(candidateWord.getId(),
+                                                      Preconditions.checkNotNull(rowIndex));
     }
   }
-
 
   private class OutAnimationAdapter extends AnimationAdapter {
     @Override
@@ -92,6 +93,8 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     private static final String DESCRIPTION_DELIMITER = " \t\n\r\f";
 
     ScrollGuideView scrollGuideView = null;
+    InputFrameFoldButtonView inputFrameFoldButtonView = null;
+    @VisibleForTesting int foldButtonBackgroundVisibilityThreshold = 0;
 
     // TODO(hidehiko): Simplify the interface as this is needed just for expandSuggestion.
     private ViewEventListener viewEventListener;
@@ -102,7 +105,7 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     private boolean isExpanded = false;
 
     {
-      setBackgroundDrawableType(DrawableType.CANDIDATE_BACKGROUND);
+      setSpanBackgroundDrawableType(DrawableType.CANDIDATE_BACKGROUND);
       layouter = new ConversionCandidateLayouter();
     }
 
@@ -115,6 +118,7 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
           resources.getInteger(R.integer.candidate_scroller_minimum_velocity));
     }
 
+    @VisibleForTesting
     void setCandidateTextDimension(float candidateTextSize, float descriptionTextSize) {
       Preconditions.checkArgument(candidateTextSize > 0);
       Preconditions.checkArgument(descriptionTextSize > 0);
@@ -128,7 +132,9 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
           resources.getDimension(R.dimen.symbol_description_right_padding);
       float descriptionVerticalPadding =
           resources.getDimension(R.dimen.symbol_description_bottom_padding);
+      float separatorWidth = resources.getDimensionPixelSize(R.dimen.candidate_separator_width);
 
+      carrierEmojiRenderHelper.setCandidateTextSize(candidateTextSize);
       candidateLayoutRenderer.setValueTextSize(candidateTextSize);
       candidateLayoutRenderer.setValueHorizontalPadding(valueHorizontalPadding);
       candidateLayoutRenderer.setValueScalingPolicy(ValueScalingPolicy.HORIZONTAL);
@@ -136,6 +142,7 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
       candidateLayoutRenderer.setDescriptionHorizontalPadding(descriptionHorizontalPadding);
       candidateLayoutRenderer.setDescriptionVerticalPadding(descriptionVerticalPadding);
       candidateLayoutRenderer.setDescriptionLayoutPolicy(DescriptionLayoutPolicy.EXCLUSIVE);
+      candidateLayoutRenderer.setSeparatorWidth(separatorWidth);
 
       SpanFactory spanFactory = new SpanFactory();
       spanFactory.setValueTextSize(candidateTextSize);
@@ -158,6 +165,8 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
       layouter.setValueHeight(candidateTextSize);
       layouter.setValueHorizontalPadding(valueHorizontalPadding);
       layouter.setValueVerticalPadding(valueVerticalPadding);
+
+      foldButtonBackgroundVisibilityThreshold = (int) (1.8 * valueVerticalPadding);
     }
 
     @Override
@@ -169,7 +178,9 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
       this.viewEventListener = viewEventListener;
     }
 
+    @Override
     void reset() {
+      super.reset();
       isExpanded = false;
     }
 
@@ -177,6 +188,10 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     protected void onScrollChanged(int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
       super.onScrollChanged(scrollX, scrollY, oldScrollX, oldScrollY);
       updateScrollGuide();
+      if (inputFrameFoldButtonView != null) {
+        inputFrameFoldButtonView.showBackgroundForScrolled(
+            scrollY > foldButtonBackgroundVisibilityThreshold);
+      }
       expandSuggestionIfNeeded();
     }
 
@@ -226,6 +241,17 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
       super.update(candidateList);
       updateScrollGuide();
     }
+
+    @Override
+    protected Drawable getViewBackgroundDrawable(Skin skin) {
+      return skin.conversionCandidateViewBackgroundDrawable;
+    }
+
+    @Override
+    public void setSkin(Skin skin) {
+      super.setSkin(skin);
+      candidateLayoutRenderer.setSeparatorColor(skin.candidateBackgroundSeparatorColor);
+    }
   }
 
   public CandidateView(Context context) {
@@ -248,32 +274,36 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     ConversionCandidateWordView conversionCandidateWordView = getConversionCandidateWordView();
     scrollGuideView.setScroller(conversionCandidateWordView.scroller);
     conversionCandidateWordView.scrollGuideView = scrollGuideView;
-
-    // Initialize inputFrameFoldButton.
-    CompoundButton inputFrameFoldButton = getInputFrameFoldButton();
-    inputFrameFoldButton.setBackgroundDrawable(
-        new MozcDrawableFactory(getResources()).getDrawable(R.raw.keyboard__fold__tab).orNull());
+    conversionCandidateWordView.inputFrameFoldButtonView = getInputFrameFoldButton();
+    // To use Canvas#drawPicture(), the view shouldn't be h/w accelerated.
+    getInputFrameFoldButton().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
     reset();
   }
 
-  CompoundButton getInputFrameFoldButton() {
-    return CompoundButton.class.cast(findViewById(R.id.input_frame_fold_button));
+  @VisibleForTesting InputFrameFoldButtonView getInputFrameFoldButton() {
+    return InputFrameFoldButtonView.class.cast(findViewById(R.id.input_frame_fold_button));
   }
 
-  ConversionCandidateWordView getConversionCandidateWordView() {
+  @VisibleForTesting ConversionCandidateWordView getConversionCandidateWordView() {
     return ConversionCandidateWordView.class.cast(findViewById(R.id.candidate_word_view));
   }
 
-  ScrollGuideView getScrollGuideView() {
+  private ConversionCandidateWordContainerView getConversionCandidateWordContainerView() {
+    return ConversionCandidateWordContainerView.class.cast(
+        findViewById(R.id.conversion_candidate_word_container_view));
+  }
+
+  @VisibleForTesting ScrollGuideView getScrollGuideView() {
     return ScrollGuideView.class.cast(findViewById(R.id.candidate_scroll_guide_view));
   }
 
-  /**
-   * Updates the view based on {@code Command}.
-   * Exposed as protected for testing purpose.
-   */
-  protected void update(Command outCommand) {
+  @VisibleForTesting LinearLayout getCandidateWordFrame() {
+    return LinearLayout.class.cast(findViewById(R.id.candidate_word_frame));
+  }
+
+  /** Updates the view based on {@code Command}. */
+  void update(Command outCommand) {
     if (outCommand == null) {
       getConversionCandidateWordView().update(null);
       return;
@@ -281,8 +311,8 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
 
     Input input = outCommand.getInput();
     CandidateList allCandidateWords = outCommand.getOutput().getAllCandidateWords();
-    if (input.getType() == CommandType.SEND_COMMAND &&
-        input.getCommand().getType() == SessionCommand.CommandType.EXPAND_SUGGESTION) {
+    if (input.getType() == CommandType.SEND_COMMAND
+        && input.getCommand().getType() == SessionCommand.CommandType.EXPAND_SUGGESTION) {
       getConversionCandidateWordView().updateForExpandSuggestion(allCandidateWords);
     } else {
       getConversionCandidateWordView().update(allCandidateWords);
@@ -291,19 +321,18 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
 
   /**
    * Register callback object.
-   * Note: exposed as a protected method for testing purpose.
    * @param listener
    */
-  protected void setViewEventListener(ViewEventListener listener,
-                                      OnClickListener inputFrameFoldButtonClickListner) {
-    if (listener == null) {
-      throw new NullPointerException("lister must be non-null.");
-    }
+  void setViewEventListener(ViewEventListener listener) {
+    Preconditions.checkNotNull(listener);
     ConversionCandidateWordView conversionCandidateWordView = getConversionCandidateWordView();
     conversionCandidateWordView.setViewEventListener(listener);
     conversionCandidateWordView.setCandidateSelectListener(
         new ConversionCandidateSelectListener(listener));
-    getInputFrameFoldButton().setOnClickListener(inputFrameFoldButtonClickListner);
+  }
+
+  void setInputFrameFoldButtonOnClickListener(InputFrameFoldButtonClickListener listener) {
+    getInputFrameFoldButton().setOnClickListener(Preconditions.checkNotNull(listener));
   }
 
   void reset() {
@@ -315,9 +344,14 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
     getInputFrameFoldButton().setChecked(checked);
   }
 
-  void setSkinType(SkinType skinType) {
-    getScrollGuideView().setSkinType(skinType);
-    getConversionCandidateWordView().setSkinType(skinType);
+  @SuppressWarnings("deprecation")
+  void setSkin(Skin skin) {
+    Preconditions.checkNotNull(skin);
+    getScrollGuideView().setSkin(skin);
+    getConversionCandidateWordView().setSkin(skin);
+    getInputFrameFoldButton().setSkin(skin);
+    getCandidateWordFrame().setBackgroundColor(skin.candidateBackgroundBottomColor);
+    invalidate();
   }
 
   void setCandidateTextDimension(float candidateTextSize, float descriptionTextSize) {
@@ -326,12 +360,13 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
 
     getConversionCandidateWordView().setCandidateTextDimension(candidateTextSize,
                                                                descriptionTextSize);
+    getConversionCandidateWordContainerView().setCandidateTextDimension(candidateTextSize);
   }
 
-  void setNarrowMode(boolean narrowMode) {
-    getInputFrameFoldButton().setVisibility(narrowMode ? GONE : VISIBLE);
+  void enableFoldButton(boolean enabled) {
+    getInputFrameFoldButton().setVisibility(enabled ? VISIBLE : GONE);
     getConversionCandidateWordView().getCandidateLayouter()
-        .reserveEmptySpanForInputFoldButton(!narrowMode);
+        .reserveEmptySpanForInputFoldButton(enabled);
   }
 
   @Override

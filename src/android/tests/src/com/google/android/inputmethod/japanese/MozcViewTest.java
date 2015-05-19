@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,10 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import static org.mozc.android.inputmethod.japanese.testing.MozcMatcher.sameOptional;
 import static org.easymock.EasyMock.anyFloat;
 import static org.easymock.EasyMock.anyInt;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -38,40 +40,48 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.same;
 
+import org.mozc.android.inputmethod.japanese.CandidateViewManager.KeyboardCandidateViewHeightListener;
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.InOutAnimatedFrameLayout.VisibilityChangeListener;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.LayoutParamsAnimator.InterpolationListener;
 import org.mozc.android.inputmethod.japanese.MozcView.DimensionPixelSize;
 import org.mozc.android.inputmethod.japanese.MozcView.HeightLinearInterpolationListener;
-import org.mozc.android.inputmethod.japanese.MozcView.InsetsCalculator;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
-import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardView;
 import org.mozc.android.inputmethod.japanese.keyboard.Row;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
+import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.model.SymbolMinorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
 import org.mozc.android.inputmethod.japanese.resources.R;
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.ui.SideFrameStubProxy;
+import org.mozc.android.inputmethod.japanese.view.MozcImageView;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.base.Optional;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService.Insets;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.test.mock.MockResources;
@@ -89,48 +99,60 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import org.easymock.Capture;
+import org.easymock.IMockBuilder;
 
 import java.util.Collections;
+import java.util.EnumSet;
 
 /**
  */
 public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
+  private IMockBuilder<CandidateViewManager> createCandidateViewManagerMockBuilder() {
+    return createMockBuilder(CandidateViewManager.class)
+        .withConstructor(CandidateView.class, FloatingCandidateView.class)
+        .withArgs(createViewMockBuilder(CandidateView.class).createNiceMock(),
+                  createViewMockBuilder(FloatingCandidateView.class).createNiceMock());
+  }
+
   @SmallTest
   public void testSetViewEventListener() {
+    Context context = getInstrumentation().getContext();
+
+    CandidateViewManager candidateViewManager =
+        createCandidateViewManagerMockBuilder().createMock();
     ViewEventListener viewEventListener = createMock(ViewEventListener.class);
     OnClickListener widenButtonClickListener = createMock(OnClickListener.class);
-    CandidateView candidateView = createViewMock(CandidateView.class);
-    candidateView.setViewEventListener(same(viewEventListener), isA(OnClickListener.class));
     SymbolInputView symbolInputView = createViewMock(SymbolInputView.class);
-    symbolInputView.setViewEventListener(same(viewEventListener),
-                                         isA(OnClickListener.class));
-    ImageView hardwareCompositionButton = new ImageView(getInstrumentation().getContext());
-    ImageView widenButton = new ImageView(getInstrumentation().getContext());
-
     OnClickListener leftAdjustButtonClickListener = createMock(OnClickListener.class);
     OnClickListener rightAdjustButtonClickListener = createMock(OnClickListener.class);
-
+    OnClickListener mictophoneButtonClickListener = createMock(OnClickListener.class);
+    NarrowFrameView narrowFrameView = createViewMock(NarrowFrameView.class);
+    MozcImageView microphoneButton = new MozcImageView(context);
     MozcView mozcView = createViewMockBuilder(MozcView.class)
         .addMockedMethods(
-            "checkInflated", "getCandidateView", "getSymbolInputView",
-            "getHardwareCompositionButton", "getWidenButton")
+            "checkInflated", "getSymbolInputView", "getNarrowFrame", "getMicrophoneButton")
         .createMock();
+    mozcView.candidateViewManager = candidateViewManager;
+
+    resetAll();
+
+    symbolInputView.setEventListener(
+        same(viewEventListener), isA(OnClickListener.class), isA(OnClickListener.class));
+    candidateViewManager.setEventListener(
+        same(viewEventListener), isA(KeyboardCandidateViewHeightListener.class));
     mozcView.checkInflated();
     expectLastCall().asStub();
-    expect(mozcView.getCandidateView()).andStubReturn(candidateView);
     expect(mozcView.getSymbolInputView()).andStubReturn(symbolInputView);
-    expect(mozcView.getHardwareCompositionButton()).andStubReturn(hardwareCompositionButton);
-    expect(mozcView.getWidenButton()).andStubReturn(widenButton);
-    viewEventListener.onHardwareKeyboardCompositionModeChange(CompositionSwitchMode.TOGGLE);
-    widenButtonClickListener.onClick(widenButton);
+    expect(mozcView.getNarrowFrame()).andStubReturn(narrowFrameView);
+    expect(mozcView.getMicrophoneButton()).andStubReturn(microphoneButton);
+    narrowFrameView.setEventListener(viewEventListener, widenButtonClickListener);
 
     replayAll();
 
     mozcView.setEventListener(viewEventListener, widenButtonClickListener,
-                              leftAdjustButtonClickListener, rightAdjustButtonClickListener);
-    mozcView.getHardwareCompositionButton().performClick();
-    mozcView.getWidenButton().performClick();
+                              leftAdjustButtonClickListener, rightAdjustButtonClickListener,
+                              mictophoneButtonClickListener);
 
     verifyAll();
 
@@ -148,7 +170,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   public void testSetKeyEventHandler() {
     KeyEventHandler keyEventHandler = new KeyEventHandler(
         Looper.getMainLooper(), createNiceMock(KeyboardActionListener.class), 0, 0, 0);
-    JapaneseKeyboardView keyboardView = createViewMock(JapaneseKeyboardView.class);
+    KeyboardView keyboardView = createViewMock(KeyboardView.class);
     keyboardView.setKeyEventHandler(keyEventHandler);
     SymbolInputView symbolInputView = createViewMock(SymbolInputView.class);
     symbolInputView.setKeyEventHandler(keyEventHandler);
@@ -173,11 +195,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testGetJapaneseKeyboard() {
-    JapaneseKeyboard keyboard = new JapaneseKeyboard(
+    Keyboard keyboard = new Keyboard(
         Optional.<String>absent(),
         Collections.<Row>emptyList(), 1, KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA);
-    JapaneseKeyboardView keyboardView = createViewMock(JapaneseKeyboardView.class);
-    expect(keyboardView.getJapaneseKeyboard()).andStubReturn(keyboard);
+    KeyboardView keyboardView = createViewMock(KeyboardView.class);
+    expect(keyboardView.getKeyboard()).andStubReturn(Optional.of(keyboard));
     MozcView mozcView = createViewMockBuilder(MozcView.class)
         .addMockedMethods("checkInflated", "getKeyboardView")
         .createMock();
@@ -187,28 +209,37 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
     replayAll();
 
-    assertSame(keyboard, mozcView.getJapaneseKeyboard());
+    assertSame(keyboard, mozcView.getKeyboard());
 
     verifyAll();
   }
 
   @SmallTest
   public void testSetJapaneseKeyboard() {
-    JapaneseKeyboard keyboard = new JapaneseKeyboard(
+    Keyboard keyboard = new Keyboard(
         Optional.<String>absent(),
         Collections.<Row>emptyList(), 1, KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA);
-    JapaneseKeyboardView keyboardView = createViewMock(JapaneseKeyboardView.class);
-    keyboardView.setJapaneseKeyboard(keyboard);
+    KeyboardView keyboardView = createViewMock(KeyboardView.class);
+    NarrowFrameView narrowFrame = createViewMock(NarrowFrameView.class);
+    CandidateViewManager candidateViewManager =
+        createCandidateViewManagerMockBuilder().createNiceMock();
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("checkInflated", "getKeyboardView")
+        .addMockedMethods("checkInflated", "getKeyboardView", "getNarrowFrame")
         .createMock();
+    mozcView.candidateViewManager = candidateViewManager;
+
+    resetAll();
+
     mozcView.checkInflated();
     expectLastCall().asStub();
     expect(mozcView.getKeyboardView()).andStubReturn(keyboardView);
+    expect(mozcView.getNarrowFrame()).andStubReturn(narrowFrame);
+    keyboardView.setKeyboard(keyboard);
+    narrowFrame.setHardwareCompositionButtonImage(CompositionMode.HIRAGANA);
 
     replayAll();
 
-    mozcView.setJapaneseKeyboard(keyboard);
+    mozcView.setKeyboard(keyboard);
 
     verifyAll();
   }
@@ -257,29 +288,48 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
   }
 
+  @SuppressWarnings("deprecation")
   @SmallTest
   public void testSetSkinType() {
-    CandidateView candidateView = createViewMock(CandidateView.class);
-    JapaneseKeyboardView keyboardView = createViewMock(JapaneseKeyboardView.class);
+    Context context = getInstrumentation().getTargetContext();
+
+    CandidateViewManager candidateViewManager =
+        createCandidateViewManagerMockBuilder().createMock();
+    KeyboardView keyboardView = createViewMock(KeyboardView.class);
     SymbolInputView symbolInputView = createViewMock(SymbolInputView.class);
+    NarrowFrameView narrowFrameView = createViewMock(NarrowFrameView.class);
+    MozcImageView microphoneButton = createViewMock(MozcImageView.class);
+    View separatorView = createViewMock(View.class);
+    View buttonFrame = createViewMock(View.class);
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("checkInflated", "getKeyboardView", "getCandidateView",
-                          "getSymbolInputView")
+        .addMockedMethods("checkInflated", "getKeyboardView", "getSymbolInputView",
+                          "getNarrowFrame", "getMicrophoneButton", "getButtonFrame",
+                          "getMicrophoneButton", "getKeyboardFrameSeparator")
         .createMock();
+    mozcView.candidateViewManager = candidateViewManager;
 
     for (SkinType skinType : SkinType.values()) {
       resetAll();
       mozcView.checkInflated();
       expectLastCall().asStub();
       expect(mozcView.getKeyboardView()).andStubReturn(keyboardView);
-      expect(mozcView.getCandidateView()).andStubReturn(candidateView);
       expect(mozcView.getSymbolInputView()).andStubReturn(symbolInputView);
-      keyboardView.setSkinType(skinType);
-      candidateView.setSkinType(skinType);
-      symbolInputView.setSkinType(skinType);
+      expect(mozcView.getNarrowFrame()).andStubReturn(narrowFrameView);
+      expect(mozcView.getMicrophoneButton()).andStubReturn(microphoneButton);
+      expect(mozcView.getButtonFrame()).andStubReturn(buttonFrame);
+      expect(mozcView.getKeyboardFrameSeparator()).andStubReturn(separatorView);
+      Skin skin = skinType.getSkin(context.getResources());
+      keyboardView.setSkin(skin);
+      candidateViewManager.setSkin(skin);
+      symbolInputView.setSkin(skin);
+      microphoneButton.setSkin(skin);
+      microphoneButton.setBackgroundDrawable(anyObject(Drawable.class));
+      narrowFrameView.setSkin(skin);
+      buttonFrame.setBackgroundDrawable(anyObject(Drawable.class));
+      separatorView.setBackgroundDrawable(anyObject(Drawable.class));
       replayAll();
 
-      mozcView.setSkinType(skinType);
+      mozcView.setSkin(skin);
 
       verifyAll();
     }
@@ -287,18 +337,21 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testSetPopupEnabled() {
-    JapaneseKeyboardView keyboardView = createViewMock(JapaneseKeyboardView.class);
+    KeyboardView keyboardView = createViewMock(KeyboardView.class);
+    SymbolInputView symbolInputView = createViewMock(SymbolInputView.class);
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("checkInflated", "getKeyboardView")
+        .addMockedMethods("checkInflated", "getKeyboardView", "getSymbolInputView")
         .createMock();
 
     boolean parameters[] = { true, false };
     for (boolean popupEnabled : parameters) {
       resetAll();
       keyboardView.setPopupEnabled(popupEnabled);
+      symbolInputView.setPopupEnabled(popupEnabled);
       mozcView.checkInflated();
       expectLastCall().asStub();
       expect(mozcView.getKeyboardView()).andStubReturn(keyboardView);
+      expect(mozcView.getSymbolInputView()).andStubReturn(symbolInputView);
       replayAll();
 
       mozcView.setPopupEnabled(popupEnabled);
@@ -307,13 +360,15 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @SmallTest
   public void testSetCommand() {
-    CandidateView candidateView = createViewMock(CandidateView.class);
+    CandidateViewManager candidateViewManager =
+        createCandidateViewManagerMockBuilder().createMock();
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("checkInflated", "getCandidateView", "startCandidateViewInAnimation",
-                          "startCandidateViewOutAnimation")
+        .addMockedMethods("checkInflated", "updateMetaStatesBasedOnOutput")
         .createMock();
+    mozcView.candidateViewManager = candidateViewManager;
 
     // Set non-empty command.
     {
@@ -323,11 +378,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
                   .addCandidates(CandidateWord.getDefaultInstance())))
           .buildPartial();
 
-      candidateView.update(command);
-      mozcView.startCandidateViewInAnimation();
+      resetAll();
+      candidateViewManager.update(command);
       mozcView.checkInflated();
       expectLastCall().asStub();
-      expect(mozcView.getCandidateView()).andStubReturn(candidateView);
+      mozcView.updateMetaStatesBasedOnOutput(anyObject(Output.class));
       replayAll();
 
       mozcView.setCommand(command);
@@ -337,17 +392,61 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
     // Set empty command.
     {
+      Command emptyCommand = Command.getDefaultInstance();
+
       resetAll();
-      mozcView.startCandidateViewOutAnimation();
       mozcView.checkInflated();
       expectLastCall().asStub();
-      expect(mozcView.getCandidateView()).andStubReturn(candidateView);
+      candidateViewManager.update(emptyCommand);
+      mozcView.updateMetaStatesBasedOnOutput(anyObject(Output.class));
       replayAll();
 
-      mozcView.setCommand(Command.getDefaultInstance());
+      mozcView.setCommand(emptyCommand);
 
       verifyAll();
     }
+  }
+
+  @SmallTest
+  public void testUpdateMetaStatesBasedOnOutput() {
+    MozcView mozcView = createViewMockBuilder(MozcView.class)
+        .addMockedMethods("getKeyboardView")
+        .createMock();
+    KeyboardView keyboard = createViewMockBuilder(KeyboardView.class)
+        .addMockedMethod("updateMetaStates")
+        .createMock();
+
+    {
+      // No preedit field -> Remove COMPOSING
+      resetAll();
+      keyboard.updateMetaStates(Collections.<MetaState>emptySet(), EnumSet.of(MetaState.COMPOSING));
+      expect(mozcView.getKeyboardView()).andStubReturn(keyboard);
+      replayAll();
+      mozcView.updateMetaStatesBasedOnOutput(Output.getDefaultInstance());
+      verifyAll();
+    }
+    {
+      // No segments -> Remove COMPOSING
+      resetAll();
+      keyboard.updateMetaStates(Collections.<MetaState>emptySet(), EnumSet.of(MetaState.COMPOSING));
+      expect(mozcView.getKeyboardView()).andStubReturn(keyboard);
+      replayAll();
+      mozcView.updateMetaStatesBasedOnOutput(
+          Output.newBuilder().setPreedit(Preedit.getDefaultInstance()).buildPartial());
+      verifyAll();
+    }
+    {
+      // With segments -> Add COMPOSING
+      resetAll();
+      keyboard.updateMetaStates(EnumSet.of(MetaState.COMPOSING), Collections.<MetaState>emptySet());
+      expect(mozcView.getKeyboardView()).andStubReturn(keyboard);
+      replayAll();
+      mozcView.updateMetaStatesBasedOnOutput(
+          Output.newBuilder().setPreedit(Preedit.newBuilder().addSegment(
+              Segment.getDefaultInstance()).buildPartial()).buildPartial());
+      verifyAll();
+    }
+
   }
 
   @SmallTest
@@ -360,7 +459,6 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       keyboardFrame.setVisibility(View.GONE);
       keyboardFrame.getLayoutParams().height = 0;
 
-      mozcView.getCandidateView().startInAnimation();
       mozcView.getSymbolInputView().startInAnimation();
     }
 
@@ -368,26 +466,53 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
     assertEquals(View.VISIBLE, mozcView.getKeyboardFrame().getVisibility());
     assertTrue(mozcView.getKeyboardFrame().getLayoutParams().height > 0);
-
-    assertEquals(View.GONE, mozcView.getCandidateView().getVisibility());
-    assertNull(mozcView.getCandidateView().getAnimation());
-
+    assertFalse(mozcView.candidateViewManager.isKeyboardCandidateViewVisible());
     assertEquals(View.GONE, mozcView.getSymbolInputView().getVisibility());
     assertNull(mozcView.getSymbolInputView().getAnimation());
+  }
+
+  @SmallTest
+  public void testSetGlobeButtonEnabled() {
+    LayoutInflater inflater = LayoutInflater.from(getInstrumentation().getTargetContext());
+    MozcView mozcView = MozcView.class.cast(inflater.inflate(R.layout.mozc_view, null));
+
+    assertEquals(EnumSet.of(MetaState.NO_GLOBE), mozcView.getKeyboardView().getMetaStates());
+
+    mozcView.setGlobeButtonEnabled(false);
+    assertEquals(EnumSet.of(MetaState.NO_GLOBE), mozcView.getKeyboardView().getMetaStates());
+
+    mozcView.setGlobeButtonEnabled(true);
+    assertEquals(EnumSet.of(MetaState.GLOBE), mozcView.getKeyboardView().getMetaStates());
+
+    mozcView.getKeyboardView().updateMetaStates(EnumSet.of(MetaState.ACTION_GO, MetaState.CAPS_LOCK,
+        MetaState.VARIATION_EMAIL_ADDRESS, MetaState.GLOBE), EnumSet.allOf(MetaState.class));
+    mozcView.setGlobeButtonEnabled(false);
+    assertEquals(EnumSet.of(MetaState.NO_GLOBE,
+                            MetaState.ACTION_GO,
+                            MetaState.CAPS_LOCK,
+                            MetaState.VARIATION_EMAIL_ADDRESS),
+                 mozcView.getKeyboardView().getMetaStates());
+    mozcView.setGlobeButtonEnabled(true);
+    assertEquals(EnumSet.of(MetaState.ACTION_GO,
+                            MetaState.CAPS_LOCK,
+                            MetaState.VARIATION_EMAIL_ADDRESS,
+                            MetaState.GLOBE),
+                 mozcView.getKeyboardView().getMetaStates());
+
+    mozcView.reset();
+    assertEquals(EnumSet.of(MetaState.NO_GLOBE), mozcView.getKeyboardView().getMetaStates());
   }
 
   @SmallTest
   public void testGetVisibleViewHeight() {
     Resources resources = getInstrumentation().getTargetContext().getResources();
 
-    int imeWindowHeight =
-        resources.getDimensionPixelSize(R.dimen.ime_window_height)
-        - resources.getDimensionPixelSize(R.dimen.translucent_border_height);
+    int imeWindowHeight = resources.getDimensionPixelSize(R.dimen.ime_window_height);
     int inputFrameHeight =
         resources.getDimensionPixelSize(R.dimen.input_frame_height);
-    int narrowImeWindowHeight =
-        resources.getDimensionPixelSize(R.dimen.narrow_ime_window_height)
-        - resources.getDimensionPixelSize(R.dimen.translucent_border_height);
+    int buttonFrameHeight = resources.getDimensionPixelSize(R.dimen.button_frame_height);
+    int symbolInputFrameHeight = inputFrameHeight + buttonFrameHeight;
+    int narrowImeWindowHeight = resources.getDimensionPixelSize(R.dimen.narrow_ime_window_height);
     int narrowFrameHeight =
         resources.getDimensionPixelSize(R.dimen.narrow_frame_height);
 
@@ -409,11 +534,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
         // At normal view mode.
         // If both candidate view and symbol input view are hidden, the height of the view
         // equals to input frame height.
-        new TestData(false, View.GONE, View.GONE, inputFrameHeight),
+        new TestData(false, View.GONE, View.GONE, inputFrameHeight + buttonFrameHeight),
         // If either candidate view or symbol input view are visible, the height of the view
         // equals to ime window height.
         new TestData(false, View.VISIBLE, View.GONE, imeWindowHeight),
-        new TestData(false, View.GONE, View.VISIBLE, imeWindowHeight),
+        new TestData(false, View.GONE, View.VISIBLE, symbolInputFrameHeight),
 
         // At narrow view mode.
         // If both candidate view and symbol input view are hidden, the height of the view
@@ -427,9 +552,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
     LayoutInflater inflater = LayoutInflater.from(getInstrumentation().getTargetContext());
     MozcView mozcView = MozcView.class.cast(inflater.inflate(R.layout.mozc_view, null));
+    mozcView.allowFloatingCandidateMode = false;
     for (TestData testData : testDataList) {
       mozcView.setLayoutAdjustmentAndNarrowMode(LayoutAdjustment.FILL, testData.narrowMode);
-      mozcView.getCandidateView().setVisibility(testData.candidateViewVisibility);
+      mozcView.candidateViewManager.keyboardCandidateView.setVisibility(
+          testData.candidateViewVisibility);
       mozcView.getSymbolInputView().setVisibility(testData.symbolInputViewVisibility);
       assertEquals(testData.toString(),
                    testData.expectedHeight, mozcView.getVisibleViewHeight());
@@ -440,7 +567,6 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   public void testSymbolInputViewInitializationLazily() {
     LayoutInflater inflater = LayoutInflater.from(getInstrumentation().getTargetContext());
     MozcView mozcView = MozcView.class.cast(inflater.inflate(R.layout.mozc_view, null));
-    mozcView.isDropShadowExpanded = true;
     SymbolCandidateStorage candidateStorage = createMockBuilder(SymbolCandidateStorage.class)
         .withConstructor(SymbolHistoryStorage.class)
         .withArgs(createMock(SymbolHistoryStorage.class))
@@ -454,7 +580,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     assertFalse(mozcView.getSymbolInputView().isInflated());
 
     // Once symbol input view is shown, the view (and its children) should be inflated.
-    assertTrue(mozcView.showSymbolInputView());
+    assertTrue(mozcView.showSymbolInputView(Optional.<SymbolMajorCategory>absent()));
     assertTrue(mozcView.getSymbolInputView().isInflated());
 
     // Even after closing the view, the inflation state should be kept.
@@ -466,9 +592,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   public void testUpdateInputFrameHeight() {
     Resources resources = getInstrumentation().getTargetContext().getResources();
 
-    int shadowHeight = resources.getDimensionPixelSize(R.dimen.translucent_border_height);
     int imeWindowHeight = resources.getDimensionPixelSize(R.dimen.ime_window_height);
     int inputFrameHeight = resources.getDimensionPixelSize(R.dimen.input_frame_height);
+    int buttonFrameHeight = resources.getDimensionPixelSize(R.dimen.button_frame_height);
     int narrowImeWindowHeight = resources.getDimensionPixelSize(R.dimen.narrow_ime_window_height);
     int narrowFrameHeight =  resources.getDimensionPixelSize(R.dimen.narrow_frame_height);
 
@@ -491,7 +617,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
         // At fullscreen mode and narrow mode
         // If candidate view is hidden, the height of the view
         // equals to narrow frame height.
-        new TestData(true, true, View.GONE, narrowFrameHeight + shadowHeight),
+        new TestData(true, true, View.GONE, narrowFrameHeight),
         // If candidate view is visible, the height of the view
         // equals to narrow ime window height.
         new TestData(true, true, View.VISIBLE, narrowImeWindowHeight),
@@ -499,7 +625,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
         // At fullscreen mode and not narrow mode
         // If candidate view is hidden, the height of the view
         // equals to input frame height.
-        new TestData(true, false, View.GONE, inputFrameHeight + shadowHeight),
+        new TestData(true, false, View.GONE, inputFrameHeight + buttonFrameHeight),
         // If candidate view is visible, the height of the view
         // equals to ime window height.
         new TestData(true, false, View.VISIBLE, imeWindowHeight),
@@ -517,11 +643,13 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
     LayoutInflater inflater = LayoutInflater.from(getInstrumentation().getTargetContext());
     MozcView mozcView = MozcView.class.cast(inflater.inflate(R.layout.mozc_view, null));
+    mozcView.allowFloatingCandidateMode = false;
     for (TestData testData : testDataList) {
       mozcView.setFullscreenMode(testData.fullscreenMode);
       mozcView.resetFullscreenMode();
       mozcView.setLayoutAdjustmentAndNarrowMode(LayoutAdjustment.FILL, testData.narrowMode);
-      mozcView.getCandidateView().setVisibility(testData.candidateViewVisibility);
+      mozcView.candidateViewManager.keyboardCandidateView.setVisibility(
+          testData.candidateViewVisibility);
       mozcView.updateInputFrameHeight();
 
       assertEquals(testData.toString(),
@@ -549,24 +677,38 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     Context context = getInstrumentation().getTargetContext();
     LayoutInflater inflater = LayoutInflater.from(context);
     MozcView mozcView = MozcView.class.cast(inflater.inflate(R.layout.mozc_view, null));
+    CandidateViewManager candidateViewManager =
+        createCandidateViewManagerMockBuilder().createMock();
+    mozcView.allowFloatingCandidateMode = false;
+    mozcView.candidateViewManager = candidateViewManager;
     View overlayView =  mozcView.getOverlayView();
     LinearLayout textInputFrame = mozcView.getTextInputFrame();
     VisibilityChangeListener onVisibilityChangeListener = mozcView.onVisibilityChangeListener;
 
+    resetAll();
+    candidateViewManager.setOnVisibilityChangeListener(sameOptional(onVisibilityChangeListener));
+    candidateViewManager.setExtractedMode(true);
+    expect(candidateViewManager.isKeyboardCandidateViewVisible()).andStubReturn(false);
+    replayAll();
     mozcView.setFullscreenMode(true);
     mozcView.resetFullscreenMode();
-    assertEquals(0, overlayView.getLayoutParams().height);
+    verifyAll();
+    assertEquals(View.GONE, overlayView.getVisibility());
     assertEquals(FrameLayout.LayoutParams.WRAP_CONTENT, textInputFrame.getLayoutParams().height);
-    assertSame(onVisibilityChangeListener,
-               mozcView.getCandidateView().onVisibilityChangeListener);
     assertSame(onVisibilityChangeListener,
                mozcView.getSymbolInputView().onVisibilityChangeListener);
 
+    resetAll();
+    candidateViewManager.setOnVisibilityChangeListener(
+        Optional.<InOutAnimatedFrameLayout.VisibilityChangeListener>absent());
+    expect(candidateViewManager.isKeyboardCandidateViewVisible()).andStubReturn(false);
+    candidateViewManager.setExtractedMode(false);
+    replayAll();
     mozcView.setFullscreenMode(false);
     mozcView.resetFullscreenMode();
-    assertEquals(LinearLayout.LayoutParams.MATCH_PARENT, overlayView.getLayoutParams().height);
+    verifyAll();
+    assertEquals(View.VISIBLE, overlayView.getVisibility());
     assertEquals(FrameLayout.LayoutParams.MATCH_PARENT, textInputFrame.getLayoutParams().height);
-    assertNull(mozcView.getCandidateView().onVisibilityChangeListener);
     assertNull(mozcView.getSymbolInputView().onVisibilityChangeListener);
   }
 
@@ -580,7 +722,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
     replayAll();
 
-    onVisibilityChangeListener.onVisibilityChange(View.GONE, View.GONE);
+    onVisibilityChangeListener.onVisibilityChange();
 
     verifyAll();
   }
@@ -591,7 +733,8 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     MozcView mozcView =
         MozcView.class.cast(LayoutInflater.from(context).inflate(R.layout.mozc_view, null));
     View keyboardFrame = mozcView.getKeyboardFrame();
-    View inputFrameButton = mozcView.getCandidateView().getInputFrameFoldButton();
+    View inputFrameButton =
+        mozcView.candidateViewManager.keyboardCandidateView.getInputFrameFoldButton();
     View narrowFrame = mozcView.getNarrowFrame();
 
     mozcView.setLayoutAdjustmentAndNarrowMode(LayoutAdjustment.FILL, true);
@@ -634,17 +777,23 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testSetLayoutAdjustmentAndNarrowMode() {
+    Context context = getInstrumentation().getTargetContext();
+    Resources resources = context.getResources();
+
     MozcView mozcView = createViewMockBuilder(MozcView.class)
         .addMockedMethods("checkInflated", "getForegroundFrame", "getInputFrameHeight",
                           "updateBackgroundColor", "updateInputFrameHeight", "getSymbolInputView",
-                          "getCandidateView", "getConversionCandidateWordContainerView",
-                          "getKeyboardFrame", "getNarrowFrame", "resetKeyboardFrameVisibility")
+                          "getKeyboardFrame", "getNarrowFrame", "getButtonFrame",
+                          "resetKeyboardFrameVisibility")
         .createMock();
+    CandidateViewManager candidateViewManager =
+        createCandidateViewManagerMockBuilder().createMock();
+    mozcView.candidateViewManager = candidateViewManager;
     View foreGroundFrame = createViewMockBuilder(View.class)
         .addMockedMethods("getLayoutParams", "setLayoutParams")
         .createMock();
-    View keyboardFrame = new View(getInstrumentation().getTargetContext());
-    FrameLayout narrowFrame = new FrameLayout(getInstrumentation().getTargetContext());
+    View keyboardFrame = new View(context);
+    NarrowFrameView narrowFrameView = new NarrowFrameView(context);
     SideFrameStubProxy leftFrameStubProxy = createMock(SideFrameStubProxy.class);
     SideFrameStubProxy rightFrameStubProxy = createMock(SideFrameStubProxy.class);
     VisibilityProxy.setField(mozcView, "leftFrameStubProxy", leftFrameStubProxy);
@@ -652,13 +801,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     SymbolInputView symbolInputView = createViewMockBuilder(SymbolInputView.class)
         .addMockedMethods("setCandidateTextDimension")
         .createMock();
-    CandidateView candidateView = createViewMockBuilder(CandidateView.class)
-        .addMockedMethods("setCandidateTextDimension", "setNarrowMode")
-        .createMock();
-    ConversionCandidateWordContainerView conversionCandidateWordContainerView =
-        createViewMockBuilder(ConversionCandidateWordContainerView.class)
-            .addMockedMethods("setCandidateTextDimension")
-            .createMock();
+    View buttonFrame = new View(context);
 
     class TestData extends Parameter {
       final LayoutAdjustment layoutAdjustment;
@@ -681,7 +824,6 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       }
     }
 
-    Resources resources = getInstrumentation().getTargetContext().getResources();
     int displayWidth = resources.getDisplayMetrics().widthPixels;
     int partialWidth = resources.getDimensionPixelSize(R.dimen.ime_window_partial_width)
         + resources.getDimensionPixelSize(R.dimen.side_frame_width);
@@ -701,6 +843,13 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
                    displayWidth, Gravity.BOTTOM, View.GONE, View.GONE),
     };
 
+    boolean isCursorAnchorInfoEnabled = Build.VERSION.SDK_INT >= 21;
+    resetAll();
+    candidateViewManager.setAllowFloatingMode(isCursorAnchorInfoEnabled);
+    replayAll();
+    mozcView.setCursorAnchorInfoEnabled(isCursorAnchorInfoEnabled);
+    verifyAll();
+
     for (TestData testData : testDataList) {
       Capture<FrameLayout.LayoutParams> layoutCapture = new Capture<FrameLayout.LayoutParams>();
       resetAll();
@@ -709,19 +858,16 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       expect(mozcView.getInputFrameHeight()).andStubReturn(100);
       expect(mozcView.getForegroundFrame()).andReturn(foreGroundFrame);
       expect(foreGroundFrame.getLayoutParams()).andReturn(new FrameLayout.LayoutParams(0, 0));
-      expect(mozcView.getCandidateView()).andStubReturn(candidateView);
       expect(mozcView.getSymbolInputView()).andStubReturn(symbolInputView);
-      expect(mozcView.getConversionCandidateWordContainerView())
-          .andStubReturn(conversionCandidateWordContainerView);
-      candidateView.setCandidateTextDimension(anyFloat(), anyFloat());
-      candidateView.setNarrowMode(testData.narrowMode);
+      candidateViewManager.setCandidateTextDimension(anyFloat(), anyFloat());
+      candidateViewManager.setNarrowMode(testData.narrowMode);
       symbolInputView.setCandidateTextDimension(anyFloat(), anyFloat());
-      conversionCandidateWordContainerView.setCandidateTextDimension(anyFloat());
       foreGroundFrame.setLayoutParams(capture(layoutCapture));
       leftFrameStubProxy.setFrameVisibility(testData.expectLeftFrameVisibility);
       rightFrameStubProxy.setFrameVisibility(testData.expectRightFrameVisibility);
       expect(mozcView.getKeyboardFrame()).andStubReturn(keyboardFrame);
-      expect(mozcView.getNarrowFrame()).andStubReturn(narrowFrame);
+      expect(mozcView.getNarrowFrame()).andStubReturn(narrowFrameView);
+      expect(mozcView.getButtonFrame()).andStubReturn(buttonFrame);
       if (!testData.narrowMode) {
         mozcView.resetKeyboardFrameVisibility();
       }
@@ -729,8 +875,8 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       mozcView.updateBackgroundColor();
 
       replayAll();
-      mozcView.setLayoutAdjustmentAndNarrowMode(testData.layoutAdjustment, testData.narrowMode);
 
+      mozcView.setLayoutAdjustmentAndNarrowMode(testData.layoutAdjustment, testData.narrowMode);
       verifyAll();
       assertEquals(testData.toString(), testData.layoutAdjustment, mozcView.layoutAdjustment);
       assertEquals(testData.toString(),
@@ -738,14 +884,14 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       assertEquals(testData.toString(),
                    testData.expectForegroundFrameGravity, layoutCapture.getValue().gravity);
       assertEquals(testData.narrowMode ? View.GONE : View.VISIBLE, keyboardFrame.getVisibility());
-      assertEquals(testData.narrowMode ? View.VISIBLE : View.GONE, narrowFrame.getVisibility());
+      assertEquals(testData.narrowMode ? View.VISIBLE : View.GONE, narrowFrameView.getVisibility());
     }
   }
 
   @SmallTest
   public void testUpdateBackgroundColor() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("getBottomBackground")
+        .addMockedMethods("getBottomBackground", "isFloatingMode")
         .createMock();
 
     View bottomBackground = createViewMockBuilder(View.class)
@@ -755,25 +901,15 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     class TestData extends Parameter {
       final boolean fullscreenMode;
       final boolean narrowMode;
-      final InsetsCalculator insetsCalculator;
+      final boolean isFloatable;
 
       final int expectResourceId;
 
-      TestData(boolean fullscreenMode, boolean narrowMode, final boolean isFloatable,
+      TestData(boolean fullscreenMode, boolean narrowMode, boolean isFloatable,
                int expectedResourceId) {
         this.fullscreenMode = fullscreenMode;
         this.narrowMode = narrowMode;
-        this.insetsCalculator = new InsetsCalculator() {
-          @Override
-          public void setInsets(
-              MozcView mozcView, int contentViewWidth, int contentViewHeight, Insets outInsets) {
-          }
-
-          @Override
-          public boolean isFloatingMode(MozcView mozcView) {
-            return isFloatable;
-          }
-        };
+        this.isFloatable = isFloatable;
         this.expectResourceId = expectedResourceId;
       }
     }
@@ -791,7 +927,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
       resetAll();
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
-      VisibilityProxy.setField(mozcView, "insetsCalculator", testData.insetsCalculator);
+      expect(mozcView.isFloatingMode()).andStubReturn(testData.isFloatable);
       bottomBackground.setBackgroundResource(testData.expectResourceId);
 
       replayAll();
@@ -802,37 +938,34 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testDefaultInsetsCalculator() {
+  public void testInsetsCalculator_static() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethod("getVisibleViewHeight")
+        .addMockedMethods("getVisibleViewHeight", "isFloatingMode")
         .createMock();
-    InsetsCalculator insetsCalculator = new MozcView.DefaultInsetsCalculator();
     int visibleViewHeight = 240;
     int contentViewWidth = 800;
     int contentViewHeight = 400;
     expect(mozcView.getVisibleViewHeight()).andStubReturn(visibleViewHeight);
+    expect(mozcView.isFloatingMode()).andStubReturn(false);
     replayAll();
 
-    assertFalse(insetsCalculator.isFloatingMode(mozcView));
     Insets outInsets = new Insets();
-    insetsCalculator.setInsets(mozcView, contentViewWidth, contentViewHeight, outInsets);
+    mozcView.setInsets(contentViewWidth, contentViewHeight, outInsets);
     assertEquals(Insets.TOUCHABLE_INSETS_CONTENT, outInsets.touchableInsets);
     assertEquals(contentViewHeight - visibleViewHeight, outInsets.contentTopInsets);
     assertEquals(contentViewHeight - visibleViewHeight, outInsets.visibleTopInsets);
   }
 
   @SmallTest
-  @ApiLevel(11)
-  @TargetApi(11)
-  public void testRegionInsetsCalculator() {
+  public void testInsetsCalculator_floating() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("getVisibleViewHeight", "getResources", "getSideAdjustedWidth")
+        .addMockedMethods("getVisibleViewHeight", "getResources", "getSideAdjustedWidth",
+                          "isFloatingMode")
         .createMock();
     Resources resources = createMockBuilder(MockResources.class)
         .addMockedMethods("getDisplayMetrics", "getDimensionPixelSize")
         .createMock();
 
-    InsetsCalculator insetsCalculator = new MozcView.RegionInsetsCalculator();
     int visibleViewHeight = 240;
     int contentViewWidth = 800;
     int contentViewHeight = 400;
@@ -847,6 +980,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     expect(resources.getDimensionPixelSize(anyInt())).andStubReturn(0);
     expect(mozcView.getVisibleViewHeight()).andStubReturn(visibleViewHeight);
     expect(mozcView.getSideAdjustedWidth()).andStubReturn(width);
+    expect(mozcView.isFloatingMode()).andStubReturn(true);
 
     replayAll();
 
@@ -854,23 +988,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     VisibilityProxy.setField(mozcView, "dimensionPixelSize", dimensionPixelSize);
 
     {
-      mozcView.layoutAdjustment = LayoutAdjustment.FILL;
-      assertFalse(insetsCalculator.isFloatingMode(mozcView));
-
-      Insets outInsets = new Insets();
-      insetsCalculator.setInsets(mozcView, contentViewWidth, contentViewHeight, outInsets);
-      assertEquals(Insets.TOUCHABLE_INSETS_CONTENT, outInsets.touchableInsets);
-      assertEquals(contentViewHeight - visibleViewHeight, outInsets.contentTopInsets);
-      assertEquals(contentViewHeight - visibleViewHeight, outInsets.visibleTopInsets);
-    }
-
-    {
       mozcView.layoutAdjustment = LayoutAdjustment.LEFT;
       mozcView.narrowMode = false;
-      assertTrue(insetsCalculator.isFloatingMode(mozcView));
 
       Insets outInsets = new Insets();
-      insetsCalculator.setInsets(mozcView, contentViewWidth, contentViewHeight, outInsets);
+      mozcView.setInsets(contentViewWidth, contentViewHeight, outInsets);
       assertEquals(Insets.TOUCHABLE_INSETS_REGION, outInsets.touchableInsets);
       Rect bounds = outInsets.touchableRegion.getBounds();
       assertEquals(0, bounds.left);
@@ -884,10 +1006,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     {
       mozcView.layoutAdjustment = LayoutAdjustment.RIGHT;
       mozcView.narrowMode = false;
-      assertTrue(insetsCalculator.isFloatingMode(mozcView));
 
       Insets outInsets = new Insets();
-      insetsCalculator.setInsets(mozcView, contentViewWidth, contentViewHeight, outInsets);
+      mozcView.setInsets(contentViewWidth, contentViewHeight, outInsets);
       assertEquals(Insets.TOUCHABLE_INSETS_REGION, outInsets.touchableInsets);
       Rect bounds = outInsets.touchableRegion.getBounds();
       assertEquals(contentViewWidth - width, bounds.left);
@@ -900,11 +1021,10 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testExpandDropShadowAndBackground() {
+  public void testExpandBottomBackgroundView() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("getDropShadowTop", "getBottomBackground")
+        .addMockedMethods("getBottomBackground")
         .createMock();
-    View dropShadowTop = createViewMock(View.class);
     View bottomBackground = createViewMockBuilder(View.class)
         .addMockedMethods("getLayoutParams", "setLayoutParams")
         .createMock();
@@ -912,45 +1032,34 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     SideFrameStubProxy rightFrameStubProxy = createMock(SideFrameStubProxy.class);
     VisibilityProxy.setField(mozcView, "leftFrameStubProxy", leftFrameStubProxy);
     VisibilityProxy.setField(mozcView, "rightFrameStubProxy", rightFrameStubProxy);
-    Resources resources = getInstrumentation().getTargetContext().getResources();
     int imeWindowHeight = 100;
 
     {
       resetAll();
       mozcView.imeWindowHeight = imeWindowHeight;
-      expect(mozcView.getDropShadowTop()).andStubReturn(dropShadowTop);
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
-      leftFrameStubProxy.flipDropShadowVisibility(View.INVISIBLE);
-      rightFrameStubProxy.flipDropShadowVisibility(View.INVISIBLE);
-      dropShadowTop.setVisibility(View.VISIBLE);
       expect(bottomBackground.getLayoutParams()).andStubReturn(new LayoutParams(0, 0));
       Capture<LayoutParams> captureBottomBackground = new Capture<LayoutParams>();
       bottomBackground.setLayoutParams(capture(captureBottomBackground));
 
       replayAll();
       mozcView.fullscreenMode = false;
-      mozcView.expandDropShadowAndBackground();
+      mozcView.changeBottomBackgroundHeight(imeWindowHeight);
 
       verifyAll();
-      assertEquals(imeWindowHeight
-                       - resources.getDimensionPixelSize(R.dimen.translucent_border_height),
-                   captureBottomBackground.getValue().height);
+      assertEquals(imeWindowHeight, captureBottomBackground.getValue().height);
     }
     {
       resetAll();
       mozcView.imeWindowHeight = imeWindowHeight;
-      expect(mozcView.getDropShadowTop()).andStubReturn(dropShadowTop);
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
-      leftFrameStubProxy.flipDropShadowVisibility(View.INVISIBLE);
-      rightFrameStubProxy.flipDropShadowVisibility(View.INVISIBLE);
-      dropShadowTop.setVisibility(View.VISIBLE);
       expect(bottomBackground.getLayoutParams()).andStubReturn(new LayoutParams(0, 0));
       Capture<LayoutParams> captureBottomBackground = new Capture<LayoutParams>();
       bottomBackground.setLayoutParams(capture(captureBottomBackground));
 
       replayAll();
       mozcView.fullscreenMode = true;
-      mozcView.expandDropShadowAndBackground();
+      mozcView.changeBottomBackgroundHeight(imeWindowHeight);
 
       verifyAll();
       assertEquals(imeWindowHeight, captureBottomBackground.getValue().height);
@@ -958,12 +1067,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testCollapseDropShadowAndBackground() {
+  public void testCollapseBottomBackgroundView() {
     Resources resources = getInstrumentation().getTargetContext().getResources();
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("getDropShadowTop", "getBottomBackground", "getInputFrameHeight")
+        .addMockedMethods("getBottomBackground", "getInputFrameHeight")
         .createMock();
-    View dropShadowTop = createViewMock(View.class);
     View bottomBackground = createViewMockBuilder(View.class)
         .addMockedMethods("getLayoutParams", "setLayoutParams")
         .createMock();
@@ -972,103 +1080,66 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     VisibilityProxy.setField(mozcView, "leftFrameStubProxy", leftFrameStubProxy);
     VisibilityProxy.setField(mozcView, "rightFrameStubProxy", rightFrameStubProxy);
     int inputFrameHeight = 100;
+    int buttonFrameHeight = resources.getDimensionPixelSize(R.dimen.button_frame_height);
 
     {
       resetAll();
       expect(mozcView.getInputFrameHeight()).andStubReturn(inputFrameHeight);
-      expect(mozcView.getDropShadowTop()).andStubReturn(dropShadowTop);
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
-      leftFrameStubProxy.flipDropShadowVisibility(View.VISIBLE);
-      rightFrameStubProxy.flipDropShadowVisibility(View.VISIBLE);
-      dropShadowTop.setVisibility(View.INVISIBLE);
       expect(bottomBackground.getLayoutParams()).andStubReturn(new LayoutParams(0, 0));
       Capture<LayoutParams> captureBottomBackground = new Capture<LayoutParams>();
       bottomBackground.setLayoutParams(capture(captureBottomBackground));
 
       replayAll();
       mozcView.fullscreenMode = false;
-      mozcView.collapseDropShadowAndBackground();
+      mozcView.resetBottomBackgroundHeight();
 
       verifyAll();
-      assertEquals(inputFrameHeight, captureBottomBackground.getValue().height);
+      assertEquals(inputFrameHeight + buttonFrameHeight, captureBottomBackground.getValue().height);
     }
     {
       resetAll();
       expect(mozcView.getInputFrameHeight()).andStubReturn(inputFrameHeight);
-      expect(mozcView.getDropShadowTop()).andStubReturn(dropShadowTop);
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
-      leftFrameStubProxy.flipDropShadowVisibility(View.VISIBLE);
-      rightFrameStubProxy.flipDropShadowVisibility(View.VISIBLE);
-      dropShadowTop.setVisibility(View.VISIBLE);
       expect(bottomBackground.getLayoutParams()).andStubReturn(new LayoutParams(0, 0));
       Capture<LayoutParams> captureBottomBackground = new Capture<LayoutParams>();
       bottomBackground.setLayoutParams(capture(captureBottomBackground));
 
       replayAll();
       mozcView.fullscreenMode = true;
-      mozcView.collapseDropShadowAndBackground();
+      mozcView.resetBottomBackgroundHeight();
 
       verifyAll();
-      assertEquals(inputFrameHeight
-                       + resources.getDimensionPixelSize(R.dimen.translucent_border_height),
-                   captureBottomBackground.getValue().height);
+      assertEquals(inputFrameHeight + buttonFrameHeight, captureBottomBackground.getValue().height);
     }
   }
 
   @SmallTest
   public void testStartAnimation() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("getCandidateView", "getSymbolInputView",
-                          "expandDropShadowAndBackground", "collapseDropShadowAndBackground",
-                          "startDropShadowAnimation")
+        .addMockedMethods("getSymbolInputView",
+                          "changeBottomBackgroundHeight", "resetBottomBackgroundHeight")
         .createMock();
-    CandidateView candidateView = createViewMockBuilder(CandidateView.class)
-        .addMockedMethods("startInAnimation", "startOutAnimation", "getVisibility")
-        .createMock();
+    CandidateViewManager candidateViewManager =
+        createCandidateViewManagerMockBuilder().createMock();
+    mozcView.candidateViewManager = candidateViewManager;
     SymbolInputView symbolInputView = createViewMockBuilder(SymbolInputView.class)
         .addMockedMethods("startInAnimation", "startOutAnimation", "getVisibility")
         .createMock();
 
-    Animation candidateViewInAnimation = createMock(Animation.class);
-    Animation candidateViewOutAnimation = createMock(Animation.class);
     Animation symbolInputViewInAnimation = createMock(Animation.class);
     Animation symbolInputViewOutAnimation = createMock(Animation.class);
-    Animation dropShadowCandidateViewInAnimation = createMock(Animation.class);
-    Animation dropShadowCandidateViewOutAnimation = createMock(Animation.class);
-    Animation dropShadowSymbolInputViewInAnimation = createMock(Animation.class);
-    Animation dropShadowSymbolInputViewOutAnimation = createMock(Animation.class);
-    mozcView.candidateViewInAnimation = candidateViewInAnimation;
-    mozcView.candidateViewOutAnimation = candidateViewOutAnimation;
     mozcView.symbolInputViewInAnimation = symbolInputViewInAnimation;
     mozcView.symbolInputViewOutAnimation = symbolInputViewOutAnimation;
-    mozcView.dropShadowCandidateViewInAnimation = dropShadowCandidateViewInAnimation;
-    mozcView.dropShadowCandidateViewOutAnimation = dropShadowCandidateViewOutAnimation;
-    mozcView.dropShadowSymbolInputViewInAnimation = dropShadowSymbolInputViewInAnimation;
-    mozcView.dropShadowSymbolInputViewOutAnimation = dropShadowSymbolInputViewOutAnimation;
 
     // Test startCandidateViewInAnimation.
     {
       resetAll();
-      mozcView.isDropShadowExpanded = true;
-      expect(mozcView.getCandidateView()).andReturn(candidateView);
-      candidateView.startInAnimation();
+      mozcView.imeWindowHeight = 100;
+      mozcView.changeBottomBackgroundHeight(100);
 
       replayAll();
-      mozcView.startCandidateViewInAnimation();
-
-      verifyAll();
-    }
-    {
-      resetAll();
-      mozcView.isDropShadowExpanded = false;
-      expect(mozcView.getCandidateView()).andReturn(candidateView);
-      candidateView.startInAnimation();
-      mozcView.expandDropShadowAndBackground();
-      mozcView.startDropShadowAnimation(candidateViewInAnimation,
-                                        dropShadowCandidateViewInAnimation);
-
-      replayAll();
-      mozcView.startCandidateViewInAnimation();
+      mozcView.softwareKeyboardHeightListener.onExpanded();
 
       verifyAll();
     }
@@ -1076,29 +1147,22 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     // Test startCandidateViewOutAnimation.
     {
       resetAll();
-      expect(mozcView.getCandidateView()).andReturn(candidateView);
-      candidateView.startOutAnimation();
       expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
       expect(symbolInputView.getVisibility()).andReturn(View.VISIBLE);
 
       replayAll();
-      mozcView.startCandidateViewOutAnimation();
+      mozcView.softwareKeyboardHeightListener.onCollapse();
 
       verifyAll();
     }
     {
       resetAll();
-      mozcView.isDropShadowExpanded = true;
-      expect(mozcView.getCandidateView()).andReturn(candidateView);
-      candidateView.startOutAnimation();
       expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
       expect(symbolInputView.getVisibility()).andReturn(View.INVISIBLE);
-      mozcView.collapseDropShadowAndBackground();
-      mozcView.startDropShadowAnimation(candidateViewOutAnimation,
-                                        dropShadowCandidateViewOutAnimation);
+      mozcView.resetBottomBackgroundHeight();
 
       replayAll();
-      mozcView.startCandidateViewOutAnimation();
+      mozcView.softwareKeyboardHeightListener.onCollapse();
 
       verifyAll();
     }
@@ -1106,24 +1170,10 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     // Test startSymbolInputViewInAnimation.
     {
       resetAll();
-      mozcView.isDropShadowExpanded = true;
       expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
       symbolInputView.startInAnimation();
-
-      replayAll();
-      mozcView.startSymbolInputViewInAnimation();
-
-      verifyAll();
-    }
-    {
-      resetAll();
-      mozcView.isDropShadowExpanded = false;
-      expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
-      symbolInputView.startInAnimation();
-
-      mozcView.expandDropShadowAndBackground();
-      mozcView.startDropShadowAnimation(symbolInputViewInAnimation,
-                                        dropShadowSymbolInputViewInAnimation);
+      mozcView.symbolInputViewHeight = 200;
+      mozcView.changeBottomBackgroundHeight(200);
 
       replayAll();
       mozcView.startSymbolInputViewInAnimation();
@@ -1136,24 +1186,8 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
       symbolInputView.startOutAnimation();
-      expect(mozcView.getCandidateView()).andReturn(candidateView);
-      expect(candidateView.getVisibility()).andReturn(View.VISIBLE);
-
-      replayAll();
-      mozcView.startSymbolInputViewOutAnimation();
-
-      verifyAll();
-    }
-    {
-      resetAll();
-      mozcView.isDropShadowExpanded = true;
-      expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
-      symbolInputView.startOutAnimation();
-      expect(mozcView.getCandidateView()).andReturn(candidateView);
-      expect(candidateView.getVisibility()).andReturn(View.INVISIBLE);
-      mozcView.collapseDropShadowAndBackground();
-      mozcView.startDropShadowAnimation(symbolInputViewOutAnimation,
-                                        dropShadowSymbolInputViewOutAnimation);
+      expect(candidateViewManager.isKeyboardCandidateViewVisible()).andReturn(false);
+      mozcView.resetBottomBackgroundHeight();
 
       replayAll();
       mozcView.startSymbolInputViewOutAnimation();
@@ -1165,15 +1199,15 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testSetKeyboardHeight() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
-        .addMockedMethods("checkInflated", "getResources",
+        .addMockedMethods("checkInflated", "getSymbolInputView",
                           "updateInputFrameHeight", "resetHeightDependingComponents")
         .createMock();
-    Resources resources = createMock(MockResources.class);
+    SymbolInputView symbolInputView = createViewMockBuilder(SymbolInputView.class)
+        .addMockedMethods("setVerticalDimension")
+        .createMock();
     mozcView.checkInflated();
-    expect(mozcView.getResources()).andStubReturn(resources);
-    expect(resources.getDimensionPixelSize(R.dimen.ime_window_height)).andStubReturn(300);
-    expect(resources.getDimensionPixelSize(R.dimen.input_frame_height)).andStubReturn(200);
-    createViewMock(SymbolInputView.class);
+    expect(mozcView.getSymbolInputView()).andStubReturn(symbolInputView);
+    symbolInputView.setVerticalDimension(anyInt(), eq(1.2f, 1e-5f));
     mozcView.updateInputFrameHeight();
     mozcView.resetHeightDependingComponents();
 
@@ -1181,8 +1215,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     mozcView.setKeyboardHeightRatio(120);
 
     verifyAll();
-    assertEquals(360, mozcView.imeWindowHeight);
-    assertEquals(240, mozcView.getInputFrameHeight());
+    Resources resources = getInstrumentation().getTargetContext().getResources();
+    float originalImeWindowHeight = resources.getDimension(R.dimen.ime_window_height);
+    float originalInputFrameHeight = resources.getDimension(R.dimen.input_frame_height);
+    assertEquals(Math.round(originalImeWindowHeight * 1.2f), mozcView.imeWindowHeight);
+    assertEquals(Math.round(originalInputFrameHeight * 1.2f), mozcView.getInputFrameHeight());
   }
 
   @SmallTest
@@ -1199,26 +1236,16 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     // Not inflated.
     assertNotNull(mozcView.findViewById(R.id.stub_left_frame));
     assertNull(mozcView.findViewById(R.id.left_frame));
-    assertNull(mozcView.findViewById(R.id.dropshadow_left_short_top));
-    assertNull(mozcView.findViewById(R.id.dropshadow_left_long_top));
     assertNull(mozcView.findViewById(R.id.left_adjust_button));
-    assertNull(mozcView.findViewById(R.id.left_dropshadow_short));
-    assertNull(mozcView.findViewById(R.id.left_dropshadow_long));
     assertFalse(sideFrameStubProxy.inflated);
     sideFrameStubProxy.setButtonOnClickListener(buttonClickListener);
-    sideFrameStubProxy.flipDropShadowVisibility(View.VISIBLE);
-    sideFrameStubProxy.setDropShadowHeight(3, 4);
     sideFrameStubProxy.resetAdjustButtonBottomMargin(100);
 
     // Inflate.
     sideFrameStubProxy.setFrameVisibility(View.VISIBLE);
     assertNull(mozcView.findViewById(R.id.stub_left_frame));
     assertNotNull(mozcView.findViewById(R.id.left_frame));
-    assertNotNull(mozcView.findViewById(R.id.dropshadow_left_short_top));
-    assertNotNull(mozcView.findViewById(R.id.dropshadow_left_long_top));
     assertNotNull(mozcView.findViewById(R.id.left_adjust_button));
-    assertNotNull(mozcView.findViewById(R.id.left_dropshadow_short));
-    assertNotNull(mozcView.findViewById(R.id.left_dropshadow_long));
     assertTrue(sideFrameStubProxy.inflated);
     ImageView imageView = ImageView.class.cast(mozcView.findViewById(R.id.left_adjust_button));
     imageView.performClick();
@@ -1226,33 +1253,16 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     FrameLayout.LayoutParams layoutParams = FrameLayout.LayoutParams.class.cast(
         imageView.getLayoutParams());
     assertEquals((100 - layoutParams.height) / 2, layoutParams.bottomMargin);
-    assertEquals(View.VISIBLE, mozcView.findViewById(R.id.left_dropshadow_short).getVisibility());
-    assertEquals(View.INVISIBLE, mozcView.findViewById(R.id.left_dropshadow_long).getVisibility());
-    assertEquals(3, mozcView.findViewById(R.id.left_dropshadow_short).getLayoutParams().height);
-    assertEquals(4, mozcView.findViewById(R.id.left_dropshadow_long).getLayoutParams().height);
 
     verifyAll();
 
     sideFrameStubProxy.setFrameVisibility(View.INVISIBLE);
-    sideFrameStubProxy.flipDropShadowVisibility(View.INVISIBLE);
-    sideFrameStubProxy.setDropShadowHeight(5, 6);
-    Animation animation1 = createNiceMock(Animation.class);
-    Animation animation2 = createNiceMock(Animation.class);
-    sideFrameStubProxy.startDropShadowAnimation(animation1, animation2);
-
     assertEquals(View.INVISIBLE, mozcView.findViewById(R.id.left_frame).getVisibility());
-    assertEquals(View.INVISIBLE, mozcView.findViewById(R.id.left_dropshadow_short).getVisibility());
-    assertEquals(View.VISIBLE, mozcView.findViewById(R.id.left_dropshadow_long).getVisibility());
-    assertEquals(5, mozcView.findViewById(R.id.left_dropshadow_short).getLayoutParams().height);
-    assertEquals(6, mozcView.findViewById(R.id.left_dropshadow_long).getLayoutParams().height);
-    assertEquals(animation1, mozcView.findViewById(R.id.left_dropshadow_short).getAnimation());
-    assertEquals(animation2, mozcView.findViewById(R.id.left_dropshadow_long).getAnimation());
   }
 
   @SmallTest
   public void testCandidateViewListener() {
     ViewEventListener eventListener = createMock(ViewEventListener.class);
-
     View keyboardView = new View(getInstrumentation().getTargetContext());
 
     android.view.animation.Interpolator foldKeyboardViewInterpolator =
@@ -1267,15 +1277,16 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     Capture<InterpolationListener> interpolationListenerCapture =
         new Capture<InterpolationListener>();
     MozcView mozcView = createViewMock(MozcView.class);
+    mozcView.viewEventListener = eventListener;
     CompoundButton inputFrameFoldButton = createViewMock(CompoundButton.class);
 
     MozcView.InputFrameFoldButtonClickListener candidateViewListener =
         mozcView.new InputFrameFoldButtonClickListener(
-            eventListener, keyboardView,
-            300, foldKeyboardViewInterpolator, 400, expandKeyboardViewInterpolator,
-            layoutParamsAnimator);
+            keyboardView, 200, 300L, foldKeyboardViewInterpolator,
+            400L, expandKeyboardViewInterpolator, layoutParamsAnimator);
 
     {
+      resetAll();
       keyboardView.layout(0, 0, 250, 200);
       eventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_FOLD);
       layoutParamsAnimator.startAnimation(same(keyboardView), capture(interpolationListenerCapture),
@@ -1304,9 +1315,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       interpolationListenerCapture.reset();
       eventListener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
       inputFrameFoldButton.setChecked(false);
-
       layoutParamsAnimator.startAnimation(same(keyboardView), capture(interpolationListenerCapture),
           same(expandKeyboardViewInterpolator), eq(400L), eq(0L));
+
       replayAll();
 
       candidateViewListener.onClick(inputFrameFoldButton);

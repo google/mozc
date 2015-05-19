@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,11 @@ package org.mozc.android.inputmethod.japanese.keyboard;
 import org.mozc.android.inputmethod.japanese.MemoryManageable;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
+import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.graphics.Bitmap;
@@ -48,6 +51,8 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import javax.annotation.Nullable;
 
 /**
  * Implementation of the background surface for {@link KeyboardView}.
@@ -73,7 +78,7 @@ import java.util.Set;
  * backgroundSurface.requestUpdateKey(key3, Flick.Direction.RIGHT);
  *
  * // Set flick direction to null means the key is released.
- * backgroundSurface.requestUpdateKey(key1, null);
+ * backgroundSurface.requestUpdateKey(key1, Optional.<Direction>absent());
  *
  * // Actual update is done below.
  * backgroundSurface.update();
@@ -85,12 +90,12 @@ import java.util.Set;
  * This class is exposed as public in order to mock for testing purpose.
  *
  */
-public class KeyboardViewBackgroundSurface implements MemoryManageable {
+@VisibleForTesting public class KeyboardViewBackgroundSurface implements MemoryManageable {
 
   /**
    * A simple rendering related utilities for keyboard rendering.
    */
-  interface SurfaceCanvas {
+  @VisibleForTesting interface SurfaceCanvas {
 
     /**
      * Clears a rectangle region of
@@ -123,12 +128,11 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
     private final Canvas canvas;
 
     SurfaceCanvasImpl(Canvas canvas) {
-      this.canvas = canvas;
+      this.canvas = Preconditions.checkNotNull(canvas);
     }
 
     @Override
     public void clearRegion(int x, int y, int width, int height) {
-      Canvas canvas = this.canvas;
       int saveCount = canvas.save();
       try {
         canvas.clipRect(x, y, x + width, y + height, Op.REPLACE);
@@ -139,7 +143,7 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
     }
 
     @Override
-    public void drawDrawable(Drawable drawable, int x, int y, int width, int height) {
+    public void drawDrawable(@Nullable Drawable drawable, int x, int y, int width, int height) {
       if (drawable == null) {
         return;
       }
@@ -149,7 +153,7 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
 
     @Override
     public void drawDrawableAtCenterWithKeepAspectRatio(
-        Drawable drawable, int x, int y, int width, int height) {
+        @Nullable Drawable drawable, int x, int y, int width, int height) {
       if (drawable == null) {
         return;
       }
@@ -164,8 +168,6 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
 
     private void drawDrawableInternal(Drawable drawable, int x, int y, int width, int height,
                                       float scale) {
-      Canvas canvas = this.canvas;
-
       int saveCount = canvas.save();
       try {
         canvas.translate(x, y);
@@ -205,24 +207,23 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
   private final BackgroundDrawableFactory backgroundDrawableFactory;
   private final DrawableCache drawableCache;
 
-  public KeyboardViewBackgroundSurface(
-      BackgroundDrawableFactory backgroundDrawableFactory, DrawableCache drawableCache) {
-    this.backgroundDrawableFactory = backgroundDrawableFactory;
-    this.drawableCache = drawableCache;
-  }
-
   // The current image and its rendering object.
-  // surfaceCanvas is package private for testing purpose.
-  private Bitmap surfaceBitmap;
-  SurfaceCanvas surfaceCanvas;
+  private Optional<Bitmap> surfaceBitmap = Optional.absent();
+  @VisibleForTesting Optional<SurfaceCanvas> surfaceCanvas = Optional.absent();
 
   // Width and height this background surface is to be in pixels
   private int requestedWidth;
   private int requestedHeight;
 
   private boolean fullUpdateRequested;
-  private Keyboard requestedKeyboard;
-  private Set<MetaState> requestedMetaState;
+  private Optional<Keyboard> requestedKeyboard = Optional.absent();
+  private Set<MetaState> requestedMetaState = Collections.emptySet();
+
+  public KeyboardViewBackgroundSurface(
+      BackgroundDrawableFactory backgroundDrawableFactory, DrawableCache drawableCache) {
+    this.backgroundDrawableFactory = Preconditions.checkNotNull(backgroundDrawableFactory);
+    this.drawableCache = Preconditions.checkNotNull(drawableCache);
+  }
 
   /**
    * A set of pending keys to be updated.
@@ -233,29 +234,30 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
    * TODO(hidehiko): We should have direction state in somewhere else, not in the pending requests,
    *   so that we can re-render the correct image even if we have any sequence of requests.
    */
-  private final Map<Key, Flick.Direction> pendingKeys = new HashMap<Key, Flick.Direction>();
+  @VisibleForTesting
+  final Map<Key, Optional<Flick.Direction>> pendingKeys =
+      new HashMap<Key, Optional<Flick.Direction>>();
 
   /**
    * Resets and release the current image this instance holds.
    * By this method's invocation, we assume all key's directions are also reset.
    */
   public void reset() {
-    if (surfaceBitmap != null) {
-      surfaceBitmap.recycle();
-      surfaceBitmap = null;
+    if (surfaceBitmap.isPresent()) {
+      surfaceBitmap.get().recycle();
+      surfaceBitmap = Optional.absent();
     }
-    surfaceCanvas = null;
+    surfaceCanvas = Optional.absent();
     pendingKeys.clear();
   }
 
   /**
    * Adds the given {@code key} to the pending key set to render it lazily.
    * In other words, the key isn't rendered until {@link #update()} is invoked.
-   * If {@code key} is {@code null}, it will be just ignored.
    */
-  public void requestUpdateKey(Key key, Flick.Direction flickDirection) {
-    if ((key != null) && !key.isSpacer()) {
-      pendingKeys.put(key, flickDirection);
+  public void requestUpdateKey(Key key, Optional<Flick.Direction> flickDirection) {
+    if (!Preconditions.checkNotNull(key).isSpacer()) {
+      pendingKeys.put(key, Preconditions.checkNotNull(flickDirection));
     }
   }
 
@@ -273,13 +275,48 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
    * This also cancels all key's direction for now.
    */
   public void requestUpdateKeyboard(Keyboard keyboard, Set<MetaState> metaState) {
-    requestedKeyboard = Preconditions.checkNotNull(keyboard);
+    requestedKeyboard = Optional.of(keyboard);
     requestedMetaState = Preconditions.checkNotNull(metaState);
     fullUpdateRequested = true;
 
     // We set all keyboard update request here, and it overwrites the current pending key update
     // requests.
     pendingKeys.clear();
+  }
+
+  /**
+   * Requests new {@code metaState} to be rendered on this surface.
+   *
+   * This method requests redraw only the keys which are required to be redrawn according to
+   * metastate's change.
+   * This also cancels such keys' direction for now.
+   */
+  public void requestMetaState(Set<MetaState> newMetaState) {
+    Preconditions.checkNotNull(newMetaState);
+
+    Set<MetaState> previousMetaState = requestedMetaState;
+    requestedMetaState = newMetaState;
+
+    if (newMetaState.equals(previousMetaState) || !requestedKeyboard.isPresent()) {
+      return;
+    }
+
+    // Update only the keys which should update corresponding KeyState based on given metaState.
+    for (Row row : requestedKeyboard.get().getRowList()) {
+      for (Key key : row.getKeyList()) {
+        KeyState previousKeyState = key.getKeyState(previousMetaState).orNull();
+        KeyState newKeyState = key.getKeyState(newMetaState).orNull();
+        // Intentionally using != operator instead of equals method.
+        // - Faster than full-spec equals method.
+        // - The values of Optional which are returned by Key#getKeyState are always
+        //   the same object so equals is overkill.
+        if (previousKeyState != newKeyState) {
+          // Request to draw the key.
+          // pendingKeys may have already contained corresponding key but overwrite here.
+          pendingKeys.put(key, Optional.<Direction>absent());
+        }
+      }
+    }
   }
 
   /**
@@ -292,7 +329,7 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
       fullUpdateRequested = true;
     }
 
-    if (requestedKeyboard == null) {
+    if (!requestedKeyboard.isPresent()) {
       // We have nothing to do.
       return;
     }
@@ -311,25 +348,26 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
   }
 
   /**
-   * Returns {@code true} iff (re-)initialization is needed. This method is package private
-   * just for testing purpose.
+   * Returns {@code true} iff (re-)initialization is needed.
    */
-  boolean isInitializationNeeded() {
+  @VisibleForTesting boolean isInitializationNeeded() {
     // We need to re-create background buffer if
     // - no initialization is done (after construction or reset).
     // - the size of view has been changed.
-    Bitmap bitmap = this.surfaceBitmap;
-    return (bitmap == null)
-        || (bitmap.getWidth() != requestedWidth)
-        || (bitmap.getHeight() != requestedHeight);
+    Optional<Bitmap> bitmap = surfaceBitmap;
+    return (!bitmap.isPresent())
+        || (bitmap.get().getWidth() != requestedWidth)
+        || (bitmap.get().getHeight() != requestedHeight);
   }
 
   void initialize() {
-    if (surfaceBitmap != null) {
-      surfaceBitmap.recycle();
+    if (surfaceBitmap.isPresent()) {
+      surfaceBitmap.get().recycle();
     }
-    surfaceBitmap = MozcUtil.createBitmap(requestedWidth, requestedHeight, Bitmap.Config.ARGB_8888);
-    surfaceCanvas = new SurfaceCanvasImpl(new Canvas(surfaceBitmap));
+    surfaceBitmap = Optional.of(
+        MozcUtil.createBitmap(requestedWidth, requestedHeight, Bitmap.Config.ARGB_8888));
+    surfaceCanvas = Optional.<SurfaceCanvas>of(
+        new SurfaceCanvasImpl(new Canvas(surfaceBitmap.get())));
   }
 
   /**
@@ -337,57 +375,84 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
    * It is required to invoke update() method before this method's invocation.
    */
   public void draw(Canvas canvas) {
-    canvas.drawBitmap(surfaceBitmap, requestedKeyboard.contentLeft, requestedKeyboard.contentTop,
-                      null);
+    canvas.drawBitmap(
+        surfaceBitmap.orNull(), requestedKeyboard.get().contentLeft,
+        requestedKeyboard.get().contentTop, null);
   }
 
   private void clearCanvas() {
-    Bitmap bitmap = this.surfaceBitmap;
-    surfaceCanvas.clearRegion(0, 0, bitmap.getWidth(), bitmap.getHeight());
+    if (surfaceBitmap.isPresent() && surfaceCanvas.isPresent()) {
+      Bitmap bitmap = surfaceBitmap.get();
+      surfaceCanvas.get().clearRegion(0, 0, bitmap.getWidth(), bitmap.getHeight());
+    }
   }
 
-  private void renderKey(Key key, Flick.Direction flickDirection) {
+  private void renderKey(Key key, Optional<Flick.Direction> flickDirection) {
+    Preconditions.checkNotNull(key);
+    Preconditions.checkNotNull(flickDirection);
+    Preconditions.checkState(surfaceCanvas.isPresent());
+    Preconditions.checkState(requestedKeyboard.isPresent());
+    SurfaceCanvas canvas = surfaceCanvas.get();
+
     int horizontalGap = key.getHorizontalGap();
     int leftGap = horizontalGap / 2;
-    boolean isPressed = flickDirection != null;
+    boolean isPressed = flickDirection.isPresent();
 
     // We split the gap to both sides evenly.
-    int x = key.getX() + leftGap - requestedKeyboard.contentLeft;
-    int y = key.getY() - requestedKeyboard.contentTop;
-    int width = key.getWidth() - horizontalGap;
-    int height = key.getHeight();
+    int x = key.getX() + leftGap - requestedKeyboard.get().contentLeft;
+    int y = key.getY() - requestedKeyboard.get().contentTop;
+    // Given width/height for the key.
+    // The icon is drawn inside the width/height.
+    int givenWidth = key.getWidth() - horizontalGap;
+    int givenHeight = key.getHeight();
 
-    KeyEntity keyEntity = getKeyEntityForRendering(key, requestedMetaState, flickDirection);
-    surfaceCanvas.drawDrawable(getKeyBackground(keyEntity, isPressed), x, y, width, height);
-    if (keyEntity != null && keyEntity.isFlickHighlightEnabled() &&
-        KeyEventContext.getKeyEntity(key, requestedMetaState, flickDirection) == keyEntity) {
-      surfaceCanvas.drawDrawable(
-          backgroundDrawableFactory.getDrawable(FLICK_DRAWABLE_TYPE_MAP.get(flickDirection)),
-          x, y, width, height);
+    canvas.drawDrawable(getKeyBackground(key, isPressed).orNull(), x, y, givenWidth, givenHeight);
+    Optional<KeyEntity> keyEntity =
+        getKeyEntityForRendering(key, requestedMetaState, flickDirection);
+    if (flickDirection.isPresent() && keyEntity.isPresent()
+        && keyEntity.get().isFlickHighlightEnabled()
+        && KeyEventContext.getKeyEntity(key, requestedMetaState, flickDirection)
+            .equals(keyEntity)) {
+      DrawableType drawableType = FLICK_DRAWABLE_TYPE_MAP.get(flickDirection.get());
+      Drawable backgroundDrawable = (drawableType != null)
+          ? backgroundDrawableFactory.getDrawable(drawableType) : null;
+      canvas.drawDrawable(backgroundDrawable, x, y, givenWidth, givenHeight);
     }
-    surfaceCanvas.drawDrawableAtCenterWithKeepAspectRatio(
-        getKeyIcon(drawableCache, keyEntity, isPressed), x, y, width, height);
+    int horizontalPadding = keyEntity.isPresent() ? keyEntity.get().getHorizontalPadding() : 0;
+    int verticalPadding = keyEntity.isPresent() ? keyEntity.get().getVerticalPadding() : 0;
+    int iconWidth = keyEntity.isPresent() ? keyEntity.get().getIconWidth() : givenWidth;
+    int iconHeight = keyEntity.isPresent() ? keyEntity.get().getIconHeight() : givenHeight;
+    iconWidth = Math.min(iconWidth, givenWidth - horizontalPadding * 2);
+    iconHeight = Math.min(iconHeight, givenHeight - verticalPadding * 2);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        getKeyIcon(drawableCache, keyEntity, isPressed).orNull(),
+        x + (givenWidth - iconWidth) / 2, y + (givenHeight - iconHeight) / 2,
+        iconWidth, iconHeight);
   }
 
   /**
    * Draws all keys in the keyboard.
    */
   private void renderKeyboard() {
-    for (Row row : requestedKeyboard.getRowList()) {
+    for (Row row : requestedKeyboard.get().getRowList()) {
       for (Key key : row.getKeyList()) {
-        if (!key.isSpacer()) {
-          renderKey(key, pendingKeys.get(key));
+        Optional<Direction> direction = pendingKeys.get(key);
+        if (direction == null) {
+          renderKey(key, Optional.<Direction>absent());
+        } else {
+          renderKey(key, direction);
         }
       }
     }
   }
 
   private void renderPendingKeys() {
+    Preconditions.checkState(surfaceCanvas.isPresent());
     // The canvas object is used many times, so cache it on local stack.
-    SurfaceCanvas canvas = this.surfaceCanvas;
-    int offsetX = requestedKeyboard.contentLeft;
-    int offsetY = requestedKeyboard.contentTop;
-    for (Map.Entry<Key, Flick.Direction> entry : pendingKeys.entrySet()) {
+    SurfaceCanvas canvas = surfaceCanvas.get();
+    int offsetX = requestedKeyboard.get().contentLeft;
+    int offsetY = requestedKeyboard.get().contentTop;
+    for (Map.Entry<Key, Optional<Flick.Direction>> entry : pendingKeys.entrySet()) {
       Key key = entry.getKey();
 
       // Clear the key's region and then draw the key there.
@@ -399,55 +464,52 @@ public class KeyboardViewBackgroundSurface implements MemoryManageable {
 
   /**
    * Returns KeyEntity which should be used for the {@code key}'s rendering with the given state.
-   * {@code null} will be returned if we don't need to render the key.
-   * This is package private for testing purpose.
+   * {@code Optional.absent()} will be returned if we don't need to render the key.
    */
-  static KeyEntity getKeyEntityForRendering(
-      Key key, Set<MetaState> metaState, Flick.Direction flickDirection) {
-    if (flickDirection != null) {
+  @VisibleForTesting static Optional<KeyEntity> getKeyEntityForRendering(
+      Key key, Set<MetaState> metaState, Optional<Flick.Direction> flickDirection) {
+    if (flickDirection.isPresent()) {
       // If the key is under flick state, check if there is corresponding key entity for the
       // direction first.
-      KeyEntity keyEntity = KeyEventContext.getKeyEntity(key, metaState, flickDirection);
-      if (keyEntity != null) {
+      Optional<KeyEntity> keyEntity = KeyEventContext.getKeyEntity(key, metaState, flickDirection);
+      if (keyEntity.isPresent()) {
         return keyEntity;
       }
     }
 
     // Use CENTER direction for released key, or a key flicked to a unsupported direction.
-    return KeyEventContext.getKeyEntity(key, metaState, Flick.Direction.CENTER);
+    return KeyEventContext.getKeyEntity(key, metaState, Optional.of(Flick.Direction.CENTER));
   }
 
-  private static Drawable setDrawableState(Drawable drawable, boolean isPressed) {
-    if (drawable != null) {
-      drawable.setState(isPressed ? STATE_PRESSED : STATE_DEFAULT);
+  private static Optional<Drawable> setDrawableState(
+      Optional<Drawable> drawable, boolean isPressed) {
+    if (drawable.isPresent()) {
+      drawable.get().setState(isPressed ? STATE_PRESSED : STATE_DEFAULT);
     }
     return drawable;
   }
 
   /**
    * Returns {@code Drawable} for the given key's background with setting appropriate state.
-   * This method is package private just for testing purpose.
    */
-  Drawable getKeyBackground(KeyEntity keyEntity, boolean isPressed) {
-    if (keyEntity == null) {
-      return null;
-    }
+  @VisibleForTesting Optional<Drawable> getKeyBackground(Key key, boolean isPressed) {
+    Preconditions.checkNotNull(key);
     return setDrawableState(
-        backgroundDrawableFactory.getDrawable(keyEntity.getKeyBackgroundDrawableType()),
+        Optional.of(backgroundDrawableFactory.getDrawable(key.getKeyBackgroundDrawableType())),
         isPressed);
  }
 
   /**
    * Returns {@code Drawable} for the given key's icon with setting appropriate state.
-   * This method is package private just for testing purpose.
    */
-  static Drawable getKeyIcon(
-      DrawableCache drawableCache, KeyEntity keyEntity, boolean isPressed) {
-    if (keyEntity == null) {
-      return null;
+  @VisibleForTesting static Optional<Drawable> getKeyIcon(
+      DrawableCache drawableCache, Optional<KeyEntity> keyEntity, boolean isPressed) {
+    if (!keyEntity.isPresent()) {
+      return Optional.absent();
     }
+
     return setDrawableState(
-        drawableCache.getDrawable(keyEntity.getKeyIconResourceId()).orNull(), isPressed);
+        drawableCache.getDrawable(keyEntity.get().getKeyIconResourceId()), isPressed);
   }
 
   @Override

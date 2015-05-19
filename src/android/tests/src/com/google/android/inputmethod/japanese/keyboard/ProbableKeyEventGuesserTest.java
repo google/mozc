@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboardTest;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.keyboard.ProbableKeyEventGuesser.LikelihoodCalculator;
 import org.mozc.android.inputmethod.japanese.keyboard.ProbableKeyEventGuesser.LikelihoodCalculatorImpl;
 import org.mozc.android.inputmethod.japanese.keyboard.ProbableKeyEventGuesser.StatisticsLoader;
@@ -99,9 +97,9 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
                     .addStroke(TouchPosition.newBuilder().setAction(TouchAction.TOUCH_UP))
                     .build());
 
-  private static String getFormattedKeyboardName(JapaneseKeyboard japaneseKeyboard,
+  private static String getFormattedKeyboardName(Keyboard keyboard,
                                                  Configuration configuration) {
-    return japaneseKeyboard.getSpecification().getKeyboardSpecificationName()
+    return keyboard.getSpecification().getKeyboardSpecificationName()
                .formattedKeyboardName(configuration);
   }
 
@@ -140,25 +138,25 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
     final InputStream testStream = createStream(sourceIdList, statsList);
     final Configuration configuration = new Configuration();
     configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
-    final JapaneseKeyboard japaneseKeyboard = JapaneseKeyboardTest.createJapaneseKeyboard(
+    final Keyboard keyboard = KeyboardTest.createKeyboard(
         KeyboardSpecification.GODAN_KANA, getInstrumentation());
     final Capture<SparseArray<float[]>> capture = new Capture<SparseArray<float[]>>();
     StatisticsLoader loader = new StatisticsLoader(
         new StatsFileAccessor() {
           @Override
           public InputStream openStream(
-              JapaneseKeyboard japaneseKeyboardToLoad, Configuration configurationToLoad) {
-            assertSame(japaneseKeyboard, japaneseKeyboardToLoad);
+              Keyboard keyboardToLoad, Configuration configurationToLoad) {
+            assertSame(keyboard, keyboardToLoad);
             assertSame(configuration, configurationToLoad);
             return testStream;
           }},
-          japaneseKeyboard,
+          keyboard,
         configuration,
         new UpdateStatsListener() {
           @Override
           public void updateStats(String formattedKeyboardName, SparseArray<float[]> stats) {
             assertEquals(
-                getFormattedKeyboardName(japaneseKeyboard, configuration),
+                getFormattedKeyboardName(keyboard, configuration),
                 formattedKeyboardName);
             capture.setValue(stats);
           }
@@ -184,12 +182,11 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
         new StatsFileAccessor() {
           @Override
           public InputStream openStream(
-              JapaneseKeyboard japaneseKeyboard, Configuration configuration) throws IOException {
+              Keyboard keyboard, Configuration configuration) throws IOException {
             throw new IOException("No file found");
           }
         },
-        JapaneseKeyboardTest.createJapaneseKeyboard(KeyboardSpecification.GODAN_KANA,
-                                                    getInstrumentation()),
+        KeyboardTest.createKeyboard(KeyboardSpecification.GODAN_KANA, getInstrumentation()),
         configuration,
         new UpdateStatsListener() {
           @Override
@@ -210,7 +207,7 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
         new StatsFileAccessor() {
           @Override
           public InputStream openStream(
-              JapaneseKeyboard japaneseKeyboard, Configuration configuration) {
+              Keyboard keyboard, Configuration configuration) {
             return new InputStream() {
               @Override
               public int read() throws IOException {
@@ -218,7 +215,7 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
               }
             };
           }},
-        JapaneseKeyboardTest.createJapaneseKeyboard(
+        KeyboardTest.createKeyboard(
             KeyboardSpecification.GODAN_KANA, getInstrumentation()),
         configuration,
         new UpdateStatsListener() {
@@ -273,29 +270,14 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
 
   @SmallTest
   public void testSetJapaneseKeyboardWithNullConfig() {
-    JapaneseKeyboard godanKana = JapaneseKeyboardTest.createJapaneseKeyboard(
+    Keyboard godanKana = KeyboardTest.createKeyboard(
         KeyboardSpecification.GODAN_KANA, getInstrumentation());
     ProbableKeyEventGuesser guesser = createFakeGuesser(0);
 
     // JapaneseKeyboard == godanKana
     // Configuration == null
-    guesser.setJapaneseKeyboard(godanKana);
-    guesser.setConfiguration(null);
-
-    MoreAsserts.assertEmpty(
-        guesser.getProbableKeyEvents(Arrays.asList(TouchEvent.getDefaultInstance())));
-  }
-
-  @SmallTest
-  public void testSetConfigWithNullJanapaneseKeyboard() {
-    Configuration configuration = new Configuration();
-    configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
-    ProbableKeyEventGuesser guesser = createFakeGuesser(0);
-
-    // JapaneseKeyboard == null
-    // Configuration == non-null
-    guesser.setJapaneseKeyboard(null);
-    guesser.setConfiguration(configuration);
+    guesser.setKeyboard(godanKana);
+    guesser.setConfiguration(Optional.<Configuration>absent());
 
     MoreAsserts.assertEmpty(
         guesser.getProbableKeyEvents(Arrays.asList(TouchEvent.getDefaultInstance())));
@@ -305,16 +287,16 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
   public void testNonExistentJanapaneseKeyboard() {
     // This test expects that HARDWARE_QWERTY_ALPHABET doesn't have corresponding
     // typing correction stats.
-    JapaneseKeyboard keyboard =
-        new JapaneseKeyboard(
+    Keyboard keyboard =
+        new Keyboard(
             Optional.<String>absent(),
             Collections.<Row>emptyList(), 0f, KeyboardSpecification.HARDWARE_QWERTY_ALPHABET);
     Configuration configuration = new Configuration();
     configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
     ProbableKeyEventGuesser guesser = createFakeGuesser(0);
 
-    guesser.setConfiguration(configuration);
-    guesser.setJapaneseKeyboard(keyboard);
+    guesser.setConfiguration(Optional.of(configuration));
+    guesser.setKeyboard(keyboard);
 
     MoreAsserts.assertEmpty(
         guesser.getProbableKeyEvents(Arrays.asList(TouchEvent.getDefaultInstance())));
@@ -322,44 +304,43 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
 
   @SmallTest
   public void testCorrectKeyboard() {
-    JapaneseKeyboard godanKana = JapaneseKeyboardTest.createJapaneseKeyboard(
+    Keyboard godanKana = KeyboardTest.createKeyboard(
         KeyboardSpecification.GODAN_KANA, getInstrumentation());
     Configuration configuration = new Configuration();
     configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
     ProbableKeyEventGuesser guesser = createFakeGuesser(Double.NEGATIVE_INFINITY);
 
-    guesser.setConfiguration(configuration);
-    guesser.setJapaneseKeyboard(godanKana);
+    guesser.setConfiguration(Optional.of(configuration));
+    guesser.setKeyboard(godanKana);
 
     MoreAsserts.assertNotEmpty(guesser.getProbableKeyEvents(TOUCH_DOWN_UP_EVENT_LIST));
   }
 
   @SmallTest
   public void testFilterLessProbableEvents() {
-    JapaneseKeyboard godanKana = JapaneseKeyboardTest.createJapaneseKeyboard(
+    Keyboard godanKana = KeyboardTest.createKeyboard(
         KeyboardSpecification.GODAN_KANA, getInstrumentation());
     Configuration configuration = new Configuration();
     configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
     ProbableKeyEventGuesser guesser = createFakeGuesser(Double.POSITIVE_INFINITY);
 
-    guesser.setConfiguration(configuration);
-    guesser.setJapaneseKeyboard(godanKana);
+    guesser.setConfiguration(Optional.of(configuration));
+    guesser.setKeyboard(godanKana);
 
     MoreAsserts.assertEmpty(guesser.getProbableKeyEvents(TOUCH_DOWN_UP_EVENT_LIST));
   }
 
   @SmallTest
   public void testEmptyTouchEvent() {
-    JapaneseKeyboard godanKana = JapaneseKeyboardTest.createJapaneseKeyboard(
+    Keyboard godanKana = KeyboardTest.createKeyboard(
         KeyboardSpecification.GODAN_KANA, getInstrumentation());
     Configuration configuration = new Configuration();
     configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
     ProbableKeyEventGuesser guesser = createFakeGuesser(0);
 
-    guesser.setConfiguration(configuration);
-    guesser.setJapaneseKeyboard(godanKana);
+    guesser.setConfiguration(Optional.of(configuration));
+    guesser.setKeyboard(godanKana);
 
-    MoreAsserts.assertEmpty(guesser.getProbableKeyEvents(null));
     MoreAsserts.assertEmpty(guesser.getProbableKeyEvents(Collections.<TouchEvent>emptyList()));
     MoreAsserts.assertEmpty(guesser.getProbableKeyEvents(
         Collections.<TouchEvent>singletonList(TouchEvent.getDefaultInstance())));
@@ -367,7 +348,7 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
 
   @SmallTest
   public void testVariousStatistics() {
-    final JapaneseKeyboard godanKana = JapaneseKeyboardTest.createJapaneseKeyboard(
+    final Keyboard godanKana = KeyboardTest.createKeyboard(
         KeyboardSpecification.GODAN_KANA, getInstrumentation());
     final Configuration configuration = new Configuration();
     configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
@@ -453,9 +434,8 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
     for (final TestData testData : testDataList) {
       StatsFileAccessor assetManager = new StatsFileAccessor() {
         @Override
-        public InputStream openStream(
-            JapaneseKeyboard japaneseKeyboardToLoad, Configuration configurationToLoad) {
-          assertSame(godanKana, japaneseKeyboardToLoad);
+        public InputStream openStream(Keyboard keyboardToLoad, Configuration configurationToLoad) {
+          assertSame(godanKana, keyboardToLoad);
           assertSame(configuration, configurationToLoad);
           return createStream(testData.sourceIds, testData.stats);
         }
@@ -468,8 +448,8 @@ public class ProbableKeyEventGuesserTest extends InstrumentationTestCaseWithMock
               new BlockingThreadPoolExecutor(),
               new BlockingExecutor(),
               fakeCalculator);
-      guesser.setConfiguration(configuration);
-      guesser.setJapaneseKeyboard(godanKana);
+      guesser.setConfiguration(Optional.of(configuration));
+      guesser.setKeyboard(godanKana);
 
       List<TouchEvent> touchEventList =
           Collections.singletonList(

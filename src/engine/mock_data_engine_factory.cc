@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ EngineInterface *MockDataEngineFactory::Create() {
   Engine *engine = new Engine;
   DCHECK(engine);
   const testing::MockDataManager data_manager;
-  engine->Init(&data_manager, DefaultPredictor::CreateDefaultPredictor);
+  engine->Init(&data_manager, DefaultPredictor::CreateDefaultPredictor, false);
   return engine;
 }
 

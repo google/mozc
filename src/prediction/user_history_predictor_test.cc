@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -299,7 +299,8 @@ class UserHistoryPredictorTest : public ::testing::Test {
     ret->predictor.reset(
         new UserHistoryPredictor(ret->dictionary.get(),
                                  data_manager.GetPOSMatcher(),
-                                 ret->suppression_dictionary.get()));
+                                 ret->suppression_dictionary.get(),
+                                 false));
     return ret;
   }
 
@@ -997,6 +998,92 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
   EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
             "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99"
             "\xE3\x80\x82",
+            segments.segment(0).candidate(1).value);
+}
+
+TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  predictor->WaitForSyncer();
+  predictor->ClearAllHistory();
+  predictor->WaitForSyncer();
+
+  Segments segments;
+
+  // Scenario 1: A user have commited "亜" by prediction and then commit "。".
+  // Then, the unigram "亜" is learned but the bigram "亜。" shouldn't.
+  // "あ"
+  MakeSegmentsForPrediction("\xE3\x81\x82", &segments);
+  // "亜"
+  AddCandidate(0, "\xE4\xBA\x9C", &segments);
+  predictor->Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  // "。"
+  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
+  AddCandidate(1, "\xE3\x80\x82", &segments);
+  predictor->Finish(&segments);
+
+  segments.Clear();
+  MakeSegmentsForPrediction("\xE3\x81\x82", &segments);  // "あ"
+  ASSERT_TRUE(predictor->Predict(&segments)) << segments.DebugString();
+  // "亜"
+  EXPECT_EQ("\xE4\xBA\x9C", segments.segment(0).candidate(0).value);
+
+  segments.Clear();
+
+  // Scenario 2: the opposite case to Scenario 1, i.e., "。亜".  Nothing is
+  // suggested from symbol "。".
+  // "。"
+  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
+  // "。"
+  AddCandidate(0, "\xE3\x80\x82", &segments);
+  predictor->Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  // "あ"
+  MakeSegmentsForPrediction("\xE3\x81\x82", &segments);
+  // "亜"
+  AddCandidate(1, "\xE4\xBA\x9C", &segments);
+  predictor->Finish(&segments);
+
+  segments.Clear();
+  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);  // "。"
+  EXPECT_FALSE(predictor->Predict(&segments)) << segments.DebugString();
+
+  segments.Clear();
+
+  // Scenario 3: If the history segment looks like a sentence and committed
+  // value is a punctuation, the concatenated entry is also learned.
+  MakeSegmentsForPrediction(
+      // "おつかれさまです"
+      "\xE3\x81\x8A\xE3\x81\xA4\xE3\x81\x8B\xE3\x82\x8C\xE3\x81\x95"
+      "\xE3\x81\xBE\xE3\x81\xA7\xE3\x81\x99",
+      &segments);
+  AddCandidate(0,
+               // "お疲れ様です"
+               "\xE3\x81\x8A\xE7\x96\xB2\xE3\x82\x8C\xE6\xA7\x98"
+               "\xE3\x81\xA7\xE3\x81\x99",
+               &segments);
+  predictor->Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  // "。"
+  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
+  AddCandidate(1, "\xE3\x80\x82", &segments);
+  predictor->Finish(&segments);
+
+  segments.Clear();
+  // "おつかれ"
+  MakeSegmentsForPrediction("\xE3\x81\x8A\xE3\x81\xA4\xE3\x81\x8B\xE3\x82\x8C",
+                            &segments);
+  ASSERT_TRUE(predictor->Predict(&segments)) << segments.DebugString();
+  // "お疲れ様です"
+  EXPECT_EQ("\xE3\x81\x8A\xE7\x96\xB2\xE3\x82\x8C\xE6\xA7\x98"
+            "\xE3\x81\xA7\xE3\x81\x99",
+            segments.segment(0).candidate(0).value);
+  // "お疲れ様です。"
+  EXPECT_EQ("\xE3\x81\x8A\xE7\x96\xB2\xE3\x82\x8C\xE6\xA7\x98"
+            "\xE3\x81\xA7\xE3\x81\x99\xE3\x80\x82",
             segments.segment(0).candidate(1).value);
 }
 
@@ -3508,12 +3595,12 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
     candidate->content_value = kValue;
     candidate->key = kKey;
     candidate->content_key = kKey;
-    // "わたしの, 私の"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 2));
-    // "なまえは, 名前は"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 3));
-    // "なかのです, 中野です"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(5, 4));
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    // "なまえは, 名前は", "なまえ, 名前"
+    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    // "なかのです, 中野です", "なかの, 中野"
+    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
   }
   predictor->Finish(&segments);
   segments.Clear();
@@ -3562,12 +3649,12 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
     candidate->content_value = kValue;
     candidate->key = kKey;
     candidate->content_key = kKey;
-    // "わたしの, 私の"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 2));
-    // "なまえは, 名前は"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 3));
-    // "なかのです, 中野です"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(5, 4));
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    // "なまえは, 名前は", "なまえ, 名前"
+    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    // "なかのです, 中野です", "なかの, 中野"
+    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
   }
   predictor->Finish(&segments);
   segments.Clear();
@@ -4340,6 +4427,69 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Scenario2) {
       // "今日もいい天気!"
       "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x82\x82\xE3\x81\x84"
       "\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97\x21"));
+}
+
+TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  predictor->set_content_word_learning_enabled(true);
+
+  Segments segments;
+  {
+    // "とうきょうかなごやにいきたい"
+    const char kKey[] =
+        "\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86"
+        "\xE3\x81\x8B\xE3\x81\xAA\xE3\x81\x94\xE3\x82\x84\xE3\x81\xAB"
+        "\xE3\x81\x84\xE3\x81\x8D\xE3\x81\x9F\xE3\x81\x84";
+    // "東京か名古屋に行きたい"
+    const char kValue[] =
+        "\xE6\x9D\xB1\xE4\xBA\xAC\xE3\x81\x8B\xE5\x90\x8D\xE5\x8F\xA4"
+        "\xE5\xB1\x8B\xE3\x81\xAB\xE8\xA1\x8C\xE3\x81\x8D\xE3\x81\x9F"
+        "\xE3\x81\x84";
+    MakeSegmentsForPrediction(kKey, &segments);
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->add_candidate();
+    candidate->Init();
+    candidate->key = kKey;
+    candidate->value = kValue;
+    candidate->content_key = kKey;
+    candidate->content_value = kValue;
+    // "とうきょうか", "東京か", "とうきょう", "東京"
+    candidate->PushBackInnerSegmentBoundary(18, 9, 15, 6);
+    // "なごやに", "名古屋に", "なごや", "名古屋"
+    candidate->PushBackInnerSegmentBoundary(12, 12, 9, 9);
+    // "いきたい", "行きたい", "いきたい", "行きたい"
+    candidate->PushBackInnerSegmentBoundary(12, 12, 12, 12);
+    predictor->Finish(&segments);
+  }
+
+  segments.Clear();
+  // "と"
+  MakeSegmentsForPrediction("\xE3\x81\xA8", &segments);
+  EXPECT_TRUE(predictor->Predict(&segments));
+  // "東京"
+  EXPECT_TRUE(FindCandidateByValue("\xE6\x9D\xB1\xE4\xBA\xAC", segments));
+  // "東京か"
+  EXPECT_TRUE(FindCandidateByValue("\xE6\x9D\xB1\xE4\xBA\xAC\xE3\x81\x8B",
+                                   segments));
+
+  segments.Clear();
+  // "な"
+  MakeSegmentsForPrediction("\xE3\x81\xAA", &segments);
+  EXPECT_TRUE(predictor->Predict(&segments));
+  // "名古屋"
+  EXPECT_TRUE(FindCandidateByValue("\xE5\x90\x8D\xE5\x8F\xA4\xE5\xB1\x8B",
+                                   segments));
+  // "名古屋に"
+  EXPECT_TRUE(FindCandidateByValue(
+      "\xE5\x90\x8D\xE5\x8F\xA4\xE5\xB1\x8B\xE3\x81\xAB", segments));
+
+  segments.Clear();
+  // "い"
+  MakeSegmentsForPrediction("\xE3\x81\x84", &segments);
+  EXPECT_TRUE(predictor->Predict(&segments));
+  // "行きたい"
+  EXPECT_TRUE(FindCandidateByValue(
+      "\xE8\xA1\x8C\xE3\x81\x8D\xE3\x81\x9F\xE3\x81\x84", segments));
 }
 
 }  // namespace mozc

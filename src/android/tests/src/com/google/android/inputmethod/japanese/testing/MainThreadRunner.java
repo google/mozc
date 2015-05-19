@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese.testing;
 
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboardView;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardView;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -113,12 +113,11 @@ public class MainThreadRunner {
     return runner.result;
   }
 
-  public void setJapaneseKeyboard(final JapaneseKeyboardView view,
-                                  final JapaneseKeyboard keyboard) {
+  public void setKeyboard(final KeyboardView view, final Keyboard keyboard) {
     runOnMainSync(new Runnable() {
       @Override
       public void run() {
-        view.setJapaneseKeyboard(keyboard);
+        view.setKeyboard(keyboard);
       }
     });
   }

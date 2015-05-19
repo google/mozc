@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -78,8 +78,7 @@ public class ConversionCandidateWordContainerView extends ViewGroup {
   void setCandidateTextDimension(float candidateTextSize) {
     Preconditions.checkArgument(candidateTextSize > 0);
 
-    foldingIconSize = candidateTextSize
-        + getResources().getDimension(R.dimen.candidate_vertical_padding_size) * 2;
+    foldingIconSize = getResources().getDimension(R.dimen.candidate_fold_icon_width);
   }
 
   @Override

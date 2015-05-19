@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,18 +30,24 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiUtil;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard;
+import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
+import org.mozc.android.inputmethod.japanese.keyboard.KeyboardFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.ProbableKeyEventGuesser;
 import org.mozc.android.inputmethod.japanese.model.JapaneseSoftwareKeyboardModel;
 import org.mozc.android.inputmethod.japanese.model.JapaneseSoftwareKeyboardModel.KeyboardMode;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
+import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
+import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.HardwareKeyMap;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
@@ -52,11 +58,12 @@ import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
 import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -65,6 +72,7 @@ import android.inputmethodservice.InputMethodService;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
+import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -72,6 +80,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 
 import java.util.Collections;
@@ -89,53 +98,49 @@ public class ViewManager implements ViewManagerInterface {
    * An small wrapper to inject keyboard view resizing when a user selects a candidate.
    */
   class ViewManagerEventListener extends ViewEventDelegator {
+
     ViewManagerEventListener(ViewEventListener delegated) {
       super(delegated);
     }
 
     @Override
-    public void onConversionCandidateSelected(int candidateId) {
+    public void onConversionCandidateSelected(int candidateId, Optional<Integer> rowIndex) {
       // Restore the keyboard frame if hidden.
       if (mozcView != null) {
         mozcView.resetKeyboardFrameVisibility();
       }
-      super.onConversionCandidateSelected(candidateId);
+      super.onConversionCandidateSelected(candidateId, rowIndex);
     }
   }
 
   /**
    * Converts S/W Keyboard's keycode to KeyEvent instance.
-   * Exposed as protected for testing purpose.
    */
-  protected void onKey(int primaryCode, List<? extends TouchEvent> touchEventList) {
-    if (primaryCode == keycodeCapslock ||
-        primaryCode == keycodeAlt) {
+  void onKey(int primaryCode, List<TouchEvent> touchEventList) {
+    if (primaryCode == keycodeCapslock || primaryCode == keycodeAlt) {
       // Ignore those key events because they are handled by KeyboardView,
       // but send touchEventList for logging usage stats.
-      if (eventListener != null) {
-        eventListener.onKeyEvent(null, null, null, touchEventList);
-      }
+      eventListener.onKeyEvent(null, null, null, touchEventList);
       return;
     }
 
     // Keyboard switch event.
-    if (primaryCode == keycodeChartypeToKana ||
-        primaryCode == keycodeChartypeTo123 ||
-        primaryCode == keycodeChartypeToAbc ||
-        primaryCode == keycodeChartypeToKana123 ||
-        primaryCode == keycodeChartypeToAbc123) {
+    if (primaryCode == keycodeChartypeToKana
+        || primaryCode == keycodeChartypeToAbc
+        || primaryCode == keycodeChartypeToAbc123) {
       if (primaryCode == keycodeChartypeToKana) {
         japaneseSoftwareKeyboardModel.setKeyboardMode(KeyboardMode.KANA);
       } else if (primaryCode == keycodeChartypeToAbc) {
         japaneseSoftwareKeyboardModel.setKeyboardMode(KeyboardMode.ALPHABET);
-      } else if (primaryCode == keycodeChartypeTo123 ||
-                 primaryCode == keycodeChartypeToKana123) {
-        japaneseSoftwareKeyboardModel.setKeyboardMode(KeyboardMode.KANA_NUMBER);
       } else if (primaryCode == keycodeChartypeToAbc123) {
         japaneseSoftwareKeyboardModel.setKeyboardMode(KeyboardMode.ALPHABET_NUMBER);
       }
-      setJapaneseKeyboard(
-          japaneseSoftwareKeyboardModel.getKeyboardSpecification(), touchEventList);
+      propagateSoftwareKeyboardChange(touchEventList);
+      return;
+    }
+
+    if (primaryCode == keycodeGlobe) {
+      imeSwitcher.switchToNextInputMethod(false);
       return;
     }
 
@@ -144,9 +149,7 @@ public class ViewManager implements ViewManagerInterface {
       if (mozcView != null) {
         mozcView.resetKeyboardViewState();
       }
-      if (eventListener != null) {
-        eventListener.onShowMenuDialog(touchEventList);
-      }
+      eventListener.onShowMenuDialog(touchEventList);
       if (primaryCode == keycodeMenuDialog) {
         showMenuDialog();
       } else if (primaryCode == keycodeImePickerDialog) {
@@ -156,34 +159,30 @@ public class ViewManager implements ViewManagerInterface {
     }
 
     if (primaryCode == keycodeSymbol) {
-      if (eventListener != null) {
-        eventListener.onSubmitPreedit();
-      }
       if (mozcView != null) {
-        mozcView.resetKeyboardViewState();
-        mozcView.showSymbolInputView();
-        if (eventListener != null) {
-          eventListener.onShowSymbolInputView(touchEventList);
-        }
+        mozcView.showSymbolInputView(Optional.<SymbolMajorCategory>absent());
+      }
+      return;
+    }
+
+    if (primaryCode == keycodeSymbolEmoji) {
+      if (mozcView != null) {
+        mozcView.showSymbolInputView(Optional.of(SymbolMajorCategory.EMOJI));
       }
       return;
     }
 
     if (primaryCode == keycodeUndo) {
-      if (eventListener != null) {
-        eventListener.onUndo(touchEventList);
-      }
+      eventListener.onUndo(touchEventList);
       return;
     }
 
-    ProtoCommands.KeyEvent mozcKeyEvent =
+    Optional<ProtoCommands.KeyEvent> mozcKeyEvent =
         primaryKeyCodeConverter.createMozcKeyEvent(primaryCode, touchEventList);
-    if (eventListener != null) {
-      eventListener.onKeyEvent(mozcKeyEvent,
-                               primaryKeyCodeConverter.getPrimaryCodeKeyEvent(primaryCode),
-                               japaneseSoftwareKeyboardModel.getKeyboardSpecification(),
-                               touchEventList);
-    }
+    eventListener.onKeyEvent(mozcKeyEvent.orNull(),
+                             primaryKeyCodeConverter.getPrimaryCodeKeyEvent(primaryCode),
+                             getActiveSoftwareKeyboardModel().getKeyboardSpecification(),
+                             touchEventList);
   }
 
   /**
@@ -196,19 +195,105 @@ public class ViewManager implements ViewManagerInterface {
     }
 
     @Override
-    public void onKey(int primaryCode, List<? extends TouchEvent> touchEventList) {
+    public void onKey(int primaryCode, List<TouchEvent> touchEventList) {
       ViewManager.this.onKey(primaryCode, touchEventList);
     }
 
     @Override
     public void onPress(int primaryCode) {
-      if (eventListener != null && primaryCode != KeyEntity.INVALID_KEY_CODE) {
+      if (primaryCode != KeyEntity.INVALID_KEY_CODE) {
         eventListener.onFireFeedbackEvent(FeedbackEvent.KEY_DOWN);
       }
     }
 
     @Override
     public void onRelease(int primaryCode) {
+    }
+  }
+
+  @VisibleForTesting class ViewLayerEventHandler {
+    private static final int NEXUS_KEYBOARD_VENDOR_ID = 0x0D62;
+    private static final int NEXUS_KEYBOARD_PRODUCT_ID = 0x160B;
+    private boolean isEmojiKeyDownAvailable = false;
+    private boolean isEmojiInvoking = false;
+    private int pressedKeyNum = 0;
+    @VisibleForTesting boolean disableDeviceCheck = false;
+
+    @SuppressLint("NewApi")
+    private boolean hasPhysicalEmojiKey(KeyEvent event) {
+      InputDevice device = InputDevice.getDevice(event.getDeviceId());
+      return disableDeviceCheck
+          || (Build.VERSION.SDK_INT >= 19
+              && device != null
+              && device.getVendorId() == NEXUS_KEYBOARD_VENDOR_ID
+              && device.getProductId() == NEXUS_KEYBOARD_PRODUCT_ID);
+    }
+
+    private boolean isEmojiKey(KeyEvent event) {
+      if (!hasPhysicalEmojiKey(event)) {
+        return false;
+      }
+      if (event.getKeyCode() != KeyEvent.KEYCODE_ALT_LEFT
+          && event.getKeyCode() != KeyEvent.KEYCODE_ALT_RIGHT) {
+        return false;
+      }
+      if (event.getAction() == KeyEvent.ACTION_UP) {
+        return event.hasNoModifiers();
+      } else {
+        return event.hasModifiers(KeyEvent.META_ALT_ON);
+      }
+    }
+
+    public boolean evaluateKeyEvent(KeyEvent event) {
+      Preconditions.checkNotNull(event);
+      if (event.getAction() == KeyEvent.ACTION_DOWN) {
+        ++pressedKeyNum;
+      } else if (event.getAction() == KeyEvent.ACTION_UP) {
+        pressedKeyNum = Math.max(0, pressedKeyNum - 1);
+      } else {
+        return false;
+      }
+
+      if (isEmojiKey(event)) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+          isEmojiKeyDownAvailable = true;
+          isEmojiInvoking = false;
+        } else if (isEmojiKeyDownAvailable && pressedKeyNum == 0) {
+          isEmojiKeyDownAvailable = false;
+          isEmojiInvoking = true;
+        }
+      } else {
+        isEmojiKeyDownAvailable = false;
+        isEmojiInvoking = false;
+      }
+      return isEmojiInvoking;
+    }
+
+    public void invoke() {
+      if (!isEmojiInvoking) {
+        return;
+      }
+      isEmojiInvoking = false;
+      if (mozcView != null) {
+        if (isSymbolInputViewVisible) {
+          mozcView.hideSymbolInputView();
+          if (!isNarrowMode()) {
+            setNarrowMode(true);
+          }
+        } else {
+          isSymbolInputViewShownByEmojiKey = true;
+          if (isNarrowMode()) {
+            setNarrowMode(false);
+          }
+          mozcView.showSymbolInputView(Optional.of(SymbolMajorCategory.EMOJI));
+        }
+      }
+    }
+
+    public void reset() {
+      isEmojiKeyDownAvailable = false;
+      isEmojiInvoking = false;
+      pressedKeyNum = 0;
     }
   }
 
@@ -225,38 +310,83 @@ public class ViewManager implements ViewManagerInterface {
   // IME switcher instance to detect that voice input is available or not.
   private final ImeSwitcher imeSwitcher;
 
-  // Called back by keyboards.
+  /** Key event handler to handle events on Mozc server. */
   private final KeyEventHandler keyEventHandler;
 
-  // Model to represent the current software keyboard state.
-  @VisibleForTesting final JapaneseSoftwareKeyboardModel japaneseSoftwareKeyboardModel =
+  /** Key event handler to handle events on view layer. */
+  @VisibleForTesting final ViewLayerEventHandler viewLayerKeyEventHandler =
+      new ViewLayerEventHandler();
+
+  /**
+   * Model to represent the current software keyboard state.
+   * All the setter methods don't affect symbolNumberSoftwareKeyboardModel but
+   * japaneseSoftwareKeyboardModel.
+   */
+  private final JapaneseSoftwareKeyboardModel japaneseSoftwareKeyboardModel =
+      new JapaneseSoftwareKeyboardModel();
+  /**
+   * Model to represent the number software keyboard state.
+   * Its keyboard mode is set in the constructor to KeyboardMode.SYMBOL_NUMBER and will never be
+   * changed.
+   */
+  private final JapaneseSoftwareKeyboardModel symbolNumberSoftwareKeyboardModel =
       new JapaneseSoftwareKeyboardModel();
 
-  // The factory of parsed keyboard data.
-  private final JapaneseKeyboardFactory japaneseKeyboardFactory = new JapaneseKeyboardFactory();
+  @VisibleForTesting final HardwareKeyboard hardwareKeyboard;
+
+  /** True if symbol input view is visible. */
+  private boolean isSymbolInputViewVisible;
+
+  /** True if symbol input view is shown by the Emoji key on physical keyboard. */
+  private boolean isSymbolInputViewShownByEmojiKey;
+
+  /** The factory of parsed keyboard data. */
+  private final KeyboardFactory keyboardFactory = new KeyboardFactory();
 
   private final SymbolCandidateStorage symbolCandidateStorage;
 
-  // Current fullscreen mode
+  /** Current fullscreen mode */
   private boolean fullscreenMode = false;
 
-  // Current narrow mode
+  /** Current narrow mode */
   private boolean narrowMode = false;
 
-  // Current popup enabled state.
+  /** Current popup enabled state. */
   private boolean popupEnabled = true;
 
-  // Current voice input allowed state.
-  private boolean voiceInputAllowed = false;
+  /** Current Globe button enabled state. */
+  private boolean globeButtonEnabled = false;
+
+  /** True if CursorAnchorInfo is enabled. */
+  private boolean cursorAnchroInfoEnabled = false;
+
+  /** True if hardware keyboard exists. */
+  private boolean hardwareKeyboardExist = false;
+
+  /**
+   * True if voice input is eligible.
+   * <p>
+   * This conditions is calculated based on following conditions.
+   * <ul>
+   * <li>VoiceIME's status: If VoiceIME is not available, this flag becomes false.
+   * <li>EditorInfo: If current editor does not want to use voice input, this flag becomes false.
+   *   <ul>
+   *   <li>Voice input might be explicitly forbidden by the editor.
+   *   <li>Voice input should be useless for the number input editors.
+   *   <li>Voice input should be useless for password field.
+   *   <ul>
+   * </ul>
+   */
+  private boolean isVoiceInputEligible = false;
+
+  private boolean isVoiceInputEnabledByPreference = true;
 
   private int flickSensitivity = 0;
-
-  private CompositionMode hardwareCompositionMode = CompositionMode.HIRAGANA;
 
   @VisibleForTesting EmojiProviderType emojiProviderType = EmojiProviderType.NONE;
 
   /** Current skin type. */
-  private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
+  private Skin skin = Skin.getFallbackInstance();
 
   private LayoutAdjustment layoutAdjustment = LayoutAdjustment.FILL;
 
@@ -269,47 +399,51 @@ public class ViewManager implements ViewManagerInterface {
   // but such name like "KEYCODE_LEFT" makes Lint unhappy
   // because they are not "static final".
   private final int keycodeChartypeToKana;
-  private final int keycodeChartypeTo123;
   private final int keycodeChartypeToAbc;
-  private final int keycodeChartypeToKana123;
   private final int keycodeChartypeToAbc123;
+  private final int keycodeGlobe;
   private final int keycodeSymbol;
+  private final int keycodeSymbolEmoji;
   private final int keycodeUndo;
   private final int keycodeCapslock;
   private final int keycodeAlt;
   private final int keycodeMenuDialog;
   private final int keycodeImePickerDialog;
 
-  // Handles software keyboard event and sends it to the service.
+  /** Handles software keyboard event and sends it to the service. */
   private final KeyboardActionAdapter keyboardActionListener;
 
   private final PrimaryKeyCodeConverter primaryKeyCodeConverter;
 
-  public ViewManager(Context context, final ViewEventListener listener,
+  public ViewManager(Context context, ViewEventListener listener,
                      SymbolHistoryStorage symbolHistoryStorage, ImeSwitcher imeSwitcher,
                      MenuDialogListener menuDialogListener) {
     this(context, listener, symbolHistoryStorage, imeSwitcher, menuDialogListener,
-         new ProbableKeyEventGuesser(context.getAssets()));
+         new ProbableKeyEventGuesser(context.getAssets()), new HardwareKeyboard());
   }
 
   @VisibleForTesting
   ViewManager(Context context, ViewEventListener listener,
               SymbolHistoryStorage symbolHistoryStorage, ImeSwitcher imeSwitcher,
-              @Nullable MenuDialogListener menuDialogListener, ProbableKeyEventGuesser guesser) {
+              @Nullable MenuDialogListener menuDialogListener, ProbableKeyEventGuesser guesser,
+              HardwareKeyboard hardwareKeyboard) {
     Preconditions.checkNotNull(context);
     Preconditions.checkNotNull(listener);
     Preconditions.checkNotNull(imeSwitcher);
+    Preconditions.checkNotNull(hardwareKeyboard);
 
     primaryKeyCodeConverter = new PrimaryKeyCodeConverter(context, guesser);
+
+    symbolNumberSoftwareKeyboardModel.setKeyboardMode(KeyboardMode.SYMBOL_NUMBER);
 
     // Prefetch keycodes from resource
     Resources res = context.getResources();
     keycodeChartypeToKana = res.getInteger(R.integer.key_chartype_to_kana);
-    keycodeChartypeTo123 = res.getInteger(R.integer.key_chartype_to_123);
     keycodeChartypeToAbc = res.getInteger(R.integer.key_chartype_to_abc);
-    keycodeChartypeToKana123 = res.getInteger(R.integer.key_chartype_to_kana_123);
     keycodeChartypeToAbc123 = res.getInteger(R.integer.key_chartype_to_abc_123);
+    keycodeGlobe = res.getInteger(R.integer.key_globe);
     keycodeSymbol = res.getInteger(R.integer.key_symbol);
+    keycodeSymbolEmoji = res.getInteger(R.integer.key_symbol_emoji);
     keycodeUndo = res.getInteger(R.integer.key_undo);
     keycodeCapslock = res.getInteger(R.integer.key_capslock);
     keycodeAlt = res.getInteger(R.integer.key_alt);
@@ -330,6 +464,7 @@ public class ViewManager implements ViewManagerInterface {
     this.imeSwitcher = imeSwitcher;
     this.menuDialogListener = menuDialogListener;
     this.symbolCandidateStorage = new SymbolCandidateStorage(symbolHistoryStorage);
+    this.hardwareKeyboard = hardwareKeyboard;
   }
 
   /**
@@ -356,35 +491,46 @@ public class ViewManager implements ViewManagerInterface {
     // until all the updates done in this method are finished. Just in case.
     mozcView.setVisibility(View.GONE);
     mozcView.setKeyboardHeightRatio(keyboardHeightRatio);
+    mozcView.setCursorAnchorInfoEnabled(cursorAnchroInfoEnabled);
+    OnClickListener widenButtonClickListener = new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        eventListener.onFireFeedbackEvent(FeedbackEvent.NARROW_FRAME_WIDEN_BUTTON_DOWN);
+        setNarrowMode(!narrowMode);
+      }
+    };
+    OnClickListener leftAdjustButtonClickListener = new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        eventListener.onUpdateKeyboardLayoutAdjustment(LayoutAdjustment.LEFT);
+      }
+    };
+    OnClickListener rightAdjustButtonClickListener = new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        eventListener.onUpdateKeyboardLayoutAdjustment(LayoutAdjustment.RIGHT);
+      }
+    };
+
+    OnClickListener microphoneButtonClickListener = new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        eventListener.onFireFeedbackEvent(FeedbackEvent.MICROPHONE_BUTTON_DOWN);
+        imeSwitcher.switchToVoiceIme("ja-jp");
+      }
+    };
     mozcView.setEventListener(
         eventListener,
-        new OnClickListener() {
-          @Override
-          public void onClick(View v) {
-            setNarrowMode(!narrowMode);
-          }
-        },
+        widenButtonClickListener,
         // User pushes these buttons to move position in order to see hidden text in editing rather
         // than to change his/her favorite position. So we should not apply it to preferences.
-        new OnClickListener() {
-          @Override
-          public void onClick(View v) {
-            setLayoutAdjustment(v.getContext().getResources(), LayoutAdjustment.LEFT);
-            mozcView.startLayoutAdjustmentAnimation();
-          }
-        },
-        new OnClickListener() {
-          @Override
-          public void onClick(View v) {
-            setLayoutAdjustment(v.getContext().getResources(), LayoutAdjustment.RIGHT);
-            mozcView.startLayoutAdjustmentAnimation();
-          }
-        });
+        leftAdjustButtonClickListener,
+        rightAdjustButtonClickListener,
+        microphoneButtonClickListener);
 
     mozcView.setKeyEventHandler(keyEventHandler);
 
-    setJapaneseKeyboard(japaneseSoftwareKeyboardModel.getKeyboardSpecification(),
-                        Collections.<TouchEvent>emptyList());
+    propagateSoftwareKeyboardChange(Collections.<TouchEvent>emptyList());
     mozcView.setFullscreenMode(fullscreenMode);
     mozcView.setLayoutAdjustmentAndNarrowMode(layoutAdjustment, narrowMode);
     // At the moment, it is necessary to set the storage to the view, *before* setting emoji
@@ -392,10 +538,9 @@ public class ViewManager implements ViewManagerInterface {
     // TODO(hidehiko): Remove the restriction.
     mozcView.setSymbolCandidateStorage(symbolCandidateStorage);
     mozcView.setEmojiProviderType(emojiProviderType);
-    mozcView.setHardwareCompositionButtonImage(hardwareCompositionMode);
     mozcView.setPopupEnabled(popupEnabled);
     mozcView.setFlickSensitivity(flickSensitivity);
-    mozcView.setSkinType(skinType);
+    mozcView.setSkin(skin);
 
     // Clear the menu dialog.
     menuDialog = null;
@@ -412,9 +557,7 @@ public class ViewManager implements ViewManagerInterface {
       return;
     }
 
-    boolean voiceInputEnabled = voiceInputAllowed && imeSwitcher.isVoiceImeAvailable();
-    menuDialog = new MenuDialog(
-        mozcView.getContext(), Optional.fromNullable(menuDialogListener), voiceInputEnabled);
+    menuDialog = new MenuDialog(mozcView.getContext(), Optional.fromNullable(menuDialogListener));
     IBinder windowToken = mozcView.getWindowToken();
     if (windowToken == null) {
       MozcLog.w("Unknown window token");
@@ -454,8 +597,8 @@ public class ViewManager implements ViewManagerInterface {
     if (mozcView == null) {
       return;
     }
-    if (outCommand.getOutput().getAllCandidateWords().getCandidatesCount() == 0 &&
-        !outCommand.getInput().getRequestSuggestion()) {
+    if (outCommand.getOutput().getAllCandidateWords().getCandidatesCount() == 0
+        && !outCommand.getInput().getRequestSuggestion()) {
       // The server doesn't return the suggestion result, because there is following
       // key sequence, which will trigger the suggest and the new suggestion will overwrite
       // the current suggest. In order to avoid chattering the candidate window,
@@ -475,26 +618,32 @@ public class ViewManager implements ViewManagerInterface {
    * @return the current keyboard specification.
    */
   @Override
-  public KeyboardSpecification getJapaneseKeyboardSpecification() {
-    return japaneseSoftwareKeyboardModel.getKeyboardSpecification();
+  public KeyboardSpecification getKeyboardSpecification() {
+    return getActiveSoftwareKeyboardModel().getKeyboardSpecification();
   }
 
-  /**
-   * Set {@code EditorInfo} instance to the current view.
-   */
+  /** Set {@code EditorInfo} instance to the current view. */
   @Override
   public void setEditorInfo(EditorInfo attribute) {
-    mozcView.setEmojiEnabled(
-        EmojiUtil.isUnicodeEmojiAvailable(Build.VERSION.SDK_INT),
-        EmojiUtil.isCarrierEmojiAllowed(attribute));
-    mozcView.setPasswordField(MozcUtil.isPasswordField(attribute));
-    mozcView.setEditorInfo(attribute);
-    voiceInputAllowed = MozcUtil.isVoiceInputAllowed(attribute);
+    if (mozcView != null) {
+      mozcView.setEmojiEnabled(
+          EmojiUtil.isUnicodeEmojiAvailable(Build.VERSION.SDK_INT),
+          EmojiUtil.isCarrierEmojiAllowed(attribute));
+      mozcView.setPasswordField(MozcUtil.isPasswordField(attribute.inputType));
+      mozcView.setEditorInfo(attribute);
+    }
+    isVoiceInputEligible = MozcUtil.isVoiceInputPreferred(attribute);
 
     japaneseSoftwareKeyboardModel.setInputType(attribute.inputType);
-    setJapaneseKeyboard(
-        japaneseSoftwareKeyboardModel.getKeyboardSpecification(),
-        Collections.<TouchEvent>emptyList());
+    // TODO(hsumita): Set input type on Hardware keyboard, too. Otherwise, Hiragana input can be
+    //                enabled unexpectedly. (e.g. Number text field.)
+    propagateSoftwareKeyboardChange(Collections.<TouchEvent>emptyList());
+  }
+
+  private boolean shouldVoiceImeBeEnabled() {
+    // Disable voice IME if hardware keyboard exists to avoid a framework bug.
+    return isVoiceInputEligible && isVoiceInputEnabledByPreference && !hardwareKeyboardExist
+        && imeSwitcher.isVoiceImeAvailable();
   }
 
   @Override
@@ -509,6 +658,12 @@ public class ViewManager implements ViewManagerInterface {
     }
     MozcView mozcView = this.mozcView;
 
+    if (isSymbolInputViewShownByEmojiKey) {
+      setNarrowMode(true);
+      mozcView.hideSymbolInputView();
+      return true;
+    }
+
     // Try to hide a sub view from front to back.
     if (mozcView.hideSymbolInputView()) {
       return true;
@@ -519,22 +674,66 @@ public class ViewManager implements ViewManagerInterface {
 
   /**
    * Creates and sets a keyboard represented by the resource id to the input frame.
-   *
+   * <p>
    * Note that this method requires inputFrameView is not null, and its first child is
    * the JapaneseKeyboardView.
-   * @param specification Keyboard specification for the next
    */
-  private void setJapaneseKeyboard(
-      KeyboardSpecification specification, List<? extends TouchEvent> touchEventList) {
-    eventListener.onKeyEvent(null, null, specification, touchEventList);
-    if (mozcView != null) {
-      Rect size = mozcView.getKeyboardSize();
-      JapaneseKeyboard japaneseKeyboard =
-          japaneseKeyboardFactory.get(mozcView.getResources(), specification,
-                                      size.width(), size.height());
-      mozcView.setJapaneseKeyboard(japaneseKeyboard);
-      primaryKeyCodeConverter.setJapaneseKeyboard(japaneseKeyboard);
+  private void updateKeyboardView() {
+    if (mozcView == null) {
+      return;
     }
+    Rect size = mozcView.getKeyboardSize();
+    Keyboard keyboard = keyboardFactory.get(
+        mozcView.getResources(), japaneseSoftwareKeyboardModel.getKeyboardSpecification(),
+        size.width(), size.height());
+    mozcView.setKeyboard(keyboard);
+    primaryKeyCodeConverter.setKeyboard(keyboard);
+  }
+
+  /**
+   * Propagates the change of S/W keyboard to the view layer and the H/W keyboard configuration.
+   */
+  private void propagateSoftwareKeyboardChange(List<TouchEvent> touchEventList) {
+    KeyboardSpecification specification = japaneseSoftwareKeyboardModel.getKeyboardSpecification();
+
+    // TODO(team): The purpose of the following call of onKeyEvent() is to tell the change of
+    // software keyboard specification to Mozc server through the event listener registered by
+    // MozcService. Obviously, calling onKeyEvent() for this purpose is abuse and should be fixed.
+    eventListener.onKeyEvent(null, null, specification, touchEventList);
+
+    // Update H/W keyboard specification to keep a consistency with S/W keyboard.
+    hardwareKeyboard.setCompositionMode(
+        specification.getCompositionMode() == CompositionMode.HIRAGANA
+        ? CompositionSwitchMode.KANA : CompositionSwitchMode.ALPHABET);
+
+    updateKeyboardView();
+  }
+
+  private void propagateHardwareKeyboardChange() {
+    propagateHardwareKeyboardChangeAndSendKey(null);
+  }
+
+  /**
+   * Propagates the change of S/W keyboard to the view layer and the H/W keyboard configuration, and
+   * the send key event to Mozc server.
+   */
+  private void propagateHardwareKeyboardChangeAndSendKey(@Nullable KeyEvent event) {
+    KeyboardSpecification specification = hardwareKeyboard.getKeyboardSpecification();
+
+    if (event == null) {
+      eventListener.onKeyEvent(null, null, specification, Collections.<TouchEvent>emptyList());
+    } else {
+      eventListener.onKeyEvent(
+          hardwareKeyboard.getMozcKeyEvent(event), hardwareKeyboard.getKeyEventInterface(event),
+          specification, Collections.<TouchEvent>emptyList());
+    }
+
+    // Update S/W keyboard specification to keep a consistency with H/W keyboard.
+    japaneseSoftwareKeyboardModel.setKeyboardMode(
+        specification.getCompositionMode() == CompositionMode.HIRAGANA
+        ? KeyboardMode.KANA : KeyboardMode.ALPHABET);
+
+    updateKeyboardView();
   }
 
   /**
@@ -548,13 +747,11 @@ public class ViewManager implements ViewManagerInterface {
 
     if (japaneseSoftwareKeyboardModel.getKeyboardLayout() != keyboardLayout) {
       // If changed, clear the keyboard cache.
-      japaneseKeyboardFactory.clear();
+      keyboardFactory.clear();
     }
 
     japaneseSoftwareKeyboardModel.setKeyboardLayout(keyboardLayout);
-    setJapaneseKeyboard(
-        japaneseSoftwareKeyboardModel.getKeyboardSpecification(),
-        Collections.<TouchEvent>emptyList());
+    propagateSoftwareKeyboardChange(Collections.<TouchEvent>emptyList());
   }
 
   /**
@@ -569,26 +766,22 @@ public class ViewManager implements ViewManagerInterface {
 
     if (japaneseSoftwareKeyboardModel.getInputStyle() != inputStyle) {
       // If changed, clear the keyboard cache.
-      japaneseKeyboardFactory.clear();
+      keyboardFactory.clear();
     }
 
     japaneseSoftwareKeyboardModel.setInputStyle(inputStyle);
-    setJapaneseKeyboard(
-        japaneseSoftwareKeyboardModel.getKeyboardSpecification(),
-        Collections.<TouchEvent>emptyList());
+    propagateSoftwareKeyboardChange(Collections.<TouchEvent>emptyList());
   }
 
   @Override
   public void setQwertyLayoutForAlphabet(boolean qwertyLayoutForAlphabet) {
     if (japaneseSoftwareKeyboardModel.isQwertyLayoutForAlphabet() != qwertyLayoutForAlphabet) {
       // If changed, clear the keyboard cache.
-      japaneseKeyboardFactory.clear();
+      keyboardFactory.clear();
     }
 
     japaneseSoftwareKeyboardModel.setQwertyLayoutForAlphabet(qwertyLayoutForAlphabet);
-    setJapaneseKeyboard(
-        japaneseSoftwareKeyboardModel.getKeyboardSpecification(),
-        Collections.<TouchEvent>emptyList());
+    propagateSoftwareKeyboardChange(Collections.<TouchEvent>emptyList());
   }
 
   @Override
@@ -623,13 +816,41 @@ public class ViewManager implements ViewManagerInterface {
   }
 
   /**
-   * @param isNarrowMode Whether mozc view shows in narrow mode or normal.
+   * Updates whether Globe button should be enabled or not based on
+   * {@code InputMethodManager#shouldOfferSwitchingToNextInputMethod(IBinder)}
    */
   @Override
-  public void setNarrowMode(boolean isNarrowMode) {
-    this.narrowMode = isNarrowMode;
+  public void updateGlobeButtonEnabled() {
+    this.globeButtonEnabled = imeSwitcher.shouldOfferSwitchingToNextInputMethod();
     if (mozcView != null) {
-      mozcView.setLayoutAdjustmentAndNarrowMode(layoutAdjustment, isNarrowMode);
+      mozcView.setGlobeButtonEnabled(globeButtonEnabled);
+    }
+  }
+
+  /**
+   * Updates whether Microphone button should be enabled or not based on
+   * availability of voice input method.
+   */
+  @Override
+  public void updateMicrophoneButtonEnabled() {
+    if (mozcView != null) {
+      mozcView.setMicrophoneButtonEnabled(shouldVoiceImeBeEnabled());
+    }
+  }
+
+  /**
+   * @param newNarrowMode Whether mozc view shows in narrow mode or normal.
+   */
+  @Override
+  public void setNarrowMode(boolean newNarrowMode) {
+    boolean previousNarrowMode = this.narrowMode;
+    this.narrowMode = newNarrowMode;
+    if (mozcView != null) {
+      mozcView.setLayoutAdjustmentAndNarrowMode(layoutAdjustment, newNarrowMode);
+    }
+    updateMicrophoneButtonEnabled();
+    if (previousNarrowMode != newNarrowMode) {
+      eventListener.onNarrowModeChanged(newNarrowMode);
     }
   }
 
@@ -646,20 +867,19 @@ public class ViewManager implements ViewManagerInterface {
   @Override
   public void maybeTransitToNarrowMode(Command command, KeyEventInterface keyEventInterface) {
     Preconditions.checkNotNull(command);
-    // Surely we don't anthing when on narrow mode already.
+    // Surely we don't anything when on narrow mode already.
     if (isNarrowMode()) {
       return;
     }
     // Do nothing for the input from software keyboard.
-    if (keyEventInterface == null || keyEventInterface.getNativeEvent() == null) {
+    if (keyEventInterface == null || !keyEventInterface.getNativeEvent().isPresent()) {
       return;
     }
-    // Do nothing if the key event doesn't have printable character without modifier.
-    if (!command.getInput().hasKey()
-        || !command.getInput().getKey().hasKeyCode()
-        || command.getInput().getKey().hasModifiers()) {
+    // Do nothing if input doesn't have a key. (e.g. pure modifier key)
+    if (!command.getInput().hasKey()) {
       return;
     }
+
     // Passed all the check. Transit to narrow mode.
     hideSubInputView();
     setNarrowMode(true);
@@ -671,6 +891,11 @@ public class ViewManager implements ViewManagerInterface {
   }
 
   @Override
+  public boolean isFloatingCandidateMode() {
+    return mozcView != null && mozcView.isFloatingCandidateMode();
+  }
+
+  @Override
   public void setPopupEnabled(boolean popupEnabled) {
     this.popupEnabled = popupEnabled;
     if (mozcView != null) {
@@ -679,28 +904,53 @@ public class ViewManager implements ViewManagerInterface {
   }
 
   @Override
-  public void setHardwareKeyboardCompositionMode(CompositionMode compositionMode) {
-    hardwareCompositionMode = compositionMode;
-    if (mozcView != null) {
-      mozcView.setHardwareCompositionButtonImage(compositionMode);
+  public void switchHardwareKeyboardCompositionMode(CompositionSwitchMode mode) {
+    Preconditions.checkNotNull(mode);
+
+    CompositionMode oldMode = hardwareKeyboard.getCompositionMode();
+    hardwareKeyboard.setCompositionMode(mode);
+    CompositionMode newMode = hardwareKeyboard.getCompositionMode();
+    if (oldMode != newMode) {
+      propagateHardwareKeyboardChange();
     }
   }
 
   @Override
-  public void setSkinType(SkinType skinType) {
-    this.skinType = skinType;
+  public void setHardwareKeyMap(HardwareKeyMap hardwareKeyMap) {
+    hardwareKeyboard.setHardwareKeyMap(Preconditions.checkNotNull(hardwareKeyMap));
+  }
+
+  @Override
+  public void setSkin(Skin skin) {
+    this.skin = Preconditions.checkNotNull(skin);
     if (mozcView != null) {
-      mozcView.setSkinType(skinType);
+      mozcView.setSkin(skin);
     }
   }
 
   @Override
-  public void setLayoutAdjustment(Resources resources, LayoutAdjustment layoutAdjustment) {
-    this.layoutAdjustment = layoutAdjustment;
+  public void setMicrophoneButtonEnabledByPreference(boolean microphoneButtonEnabled) {
+    this.isVoiceInputEnabledByPreference = microphoneButtonEnabled;
+    updateMicrophoneButtonEnabled();
+  }
 
+  /**
+   * Set layout adjustment and show animation if required.
+   * <p>
+   * Note that this method does *NOT* update SharedPreference.
+   * If you want to update it, use ViewEventListener#onUpdateKeyboardLayoutAdjustment(),
+   * which updates SharedPreference and indirectly calls this method.
+   */
+  @Override
+  public void setLayoutAdjustment(LayoutAdjustment layoutAdjustment) {
+    Preconditions.checkNotNull(layoutAdjustment);
     if (mozcView != null) {
       mozcView.setLayoutAdjustmentAndNarrowMode(layoutAdjustment, narrowMode);
+      if (this.layoutAdjustment != layoutAdjustment) {
+        mozcView.startLayoutAdjustmentAnimation();
+      }
     }
+    this.layoutAdjustment = layoutAdjustment;
   }
 
   @Override
@@ -723,6 +973,8 @@ public class ViewManager implements ViewManagerInterface {
     if (mozcView != null) {
       mozcView.reset();
     }
+
+    viewLayerKeyEventHandler.reset();
 
     // Reset menu dialog.
     maybeDismissMenuDialog();
@@ -771,16 +1023,33 @@ public class ViewManager implements ViewManagerInterface {
   @Override
   public void onConfigurationChanged(Configuration newConfig) {
     primaryKeyCodeConverter.setConfiguration(newConfig);
+    hardwareKeyboardExist = newConfig.keyboard != Configuration.KEYBOARD_NOKEYS;
   }
 
   @Override
   public boolean isKeyConsumedOnViewAsynchronously(KeyEvent event) {
-    return false;
+    return viewLayerKeyEventHandler.evaluateKeyEvent(Preconditions.checkNotNull(event));
   }
 
   @Override
   public void consumeKeyOnViewSynchronously(KeyEvent event) {
-    throw new IllegalArgumentException("ViewManager doesn't consume any key event.");
+    viewLayerKeyEventHandler.invoke();
+  }
+
+  @Override
+  public void onHardwareKeyEvent(KeyEvent event) {
+    // Maybe update the composition mode based on the event.
+    // For example, zen/han key toggles the composition mode (hiragana <--> alphabet).
+    CompositionMode compositionMode = hardwareKeyboard.getCompositionMode();
+    hardwareKeyboard.setCompositionModeByKey(event);
+    CompositionMode currentCompositionMode = hardwareKeyboard.getCompositionMode();
+    if (compositionMode != currentCompositionMode) {
+      propagateHardwareKeyboardChangeAndSendKey(event);
+    } else {
+      eventListener.onKeyEvent(
+          hardwareKeyboard.getMozcKeyEvent(event), hardwareKeyboard.getKeyEventInterface(event),
+          hardwareKeyboard.getKeyboardSpecification(), Collections.<TouchEvent>emptyList());
+    }
   }
 
   @Override
@@ -799,10 +1068,18 @@ public class ViewManager implements ViewManagerInterface {
     return eventListener;
   }
 
+  /**
+   * Returns active (shown) JapaneseSoftwareKeyboardModel.
+   * If symbol picker is shown, symbol-number keyboard's is returned.
+   */
   @VisibleForTesting
   @Override
-  public JapaneseSoftwareKeyboardModel getJapaneseSoftwareKeyboardModel() {
-    return japaneseSoftwareKeyboardModel;
+  public JapaneseSoftwareKeyboardModel getActiveSoftwareKeyboardModel() {
+    if (isSymbolInputViewVisible) {
+      return symbolNumberSoftwareKeyboardModel;
+    } else {
+      return japaneseSoftwareKeyboardModel;
+    }
   }
 
   @VisibleForTesting
@@ -825,8 +1102,14 @@ public class ViewManager implements ViewManagerInterface {
 
   @VisibleForTesting
   @Override
-  public SkinType getSkinType() {
-    return skinType;
+  public Skin getSkin() {
+    return skin;
+  }
+
+  @VisibleForTesting
+  @Override
+  public boolean isMicrophoneButtonEnabledByPreference() {
+    return isVoiceInputEnabledByPreference;
   }
 
   @VisibleForTesting
@@ -841,6 +1124,12 @@ public class ViewManager implements ViewManagerInterface {
     return keyboardHeightRatio;
   }
 
+  @VisibleForTesting
+  @Override
+  public HardwareKeyMap getHardwareKeyMap() {
+    return hardwareKeyboard.getHardwareKeyMap();
+  }
+
   @Override
   public void trimMemory() {
     if (mozcView != null) {
@@ -851,5 +1140,32 @@ public class ViewManager implements ViewManagerInterface {
   @Override
   public KeyboardActionListener getKeyboardActionListener() {
     return keyboardActionListener;
+  }
+
+  @Override
+  public void setCursorAnchorInfo(CursorAnchorInfo cursorAnchorInfo) {
+    if (mozcView != null) {
+      mozcView.setCursorAnchorInfo(cursorAnchorInfo);
+    }
+  }
+
+  @Override
+  public void setCursorAnchorInfoEnabled(boolean enabled) {
+    this.cursorAnchroInfoEnabled = enabled;
+    if (mozcView != null) {
+      mozcView.setCursorAnchorInfoEnabled(enabled);
+    }
+  }
+
+  @Override
+  public void onShowSymbolInputView() {
+    isSymbolInputViewVisible = true;
+    mozcView.resetKeyboardViewState();
+  }
+
+  @Override
+  public void onCloseSymbolInputView() {
+    isSymbolInputViewVisible = false;
+    isSymbolInputViewShownByEmojiKey = false;
   }
 }

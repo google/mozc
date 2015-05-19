@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@ import android.content.res.Resources;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceGroup;
+import android.test.mock.MockContext;
 import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
@@ -151,7 +152,7 @@ public class PreferenceUtilTest extends InstrumentationTestCaseWithMock {
           .andStubReturn(prefLandscapeGroup);
       expect(preferenceManager.findPreference(isA(String.class))).andStubReturn(null);
 
-      Context contextMock = createMock(Context.class);
+      Context contextMock = createMock(MockContext.class);
       Resources resources = createMock(MockResources.class);
       expect(prefPortraitGroup.getContext()).andStubReturn(contextMock);
       expect(contextMock.getResources()).andStubReturn(resources);

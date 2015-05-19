@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -159,9 +159,8 @@ public class InOutAnimatedFrameLayoutTest extends InstrumentationTestCaseWithMoc
 
     int[] nextVisibilities = {View.VISIBLE, View.INVISIBLE, View.GONE};
     for (int nextVisibility : nextVisibilities) {
-      int currentVisibility = view.getVisibility();
       resetAll();
-      onVisibilityChangeListener.onVisibilityChange(currentVisibility, nextVisibility);
+      onVisibilityChangeListener.onVisibilityChange();
       replayAll();
 
       view.setVisibility(nextVisibility);

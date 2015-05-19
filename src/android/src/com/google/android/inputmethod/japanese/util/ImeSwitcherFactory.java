@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@ package org.mozc.android.inputmethod.japanese.util;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 import android.annotation.TargetApi;
 import android.inputmethodservice.InputMethodService;
@@ -60,20 +62,12 @@ import java.util.Map;
  */
 public class ImeSwitcherFactory {
 
-  // Subtype is available since API Level 11
-  // but InputMethodSubtype#isAuxiliary is since API Level 14.
-  // isAuxiliary is important for aux IME (e.g. voice IME) and such devices of which API Level is
-  // 11, 12 or 13 are not so many. Thus we limit this feature since 14.
-  static final int SUBTYPE_TARGTET_API_LEVEL = 14;
-  static final int SWITCH_NEXT_TARGTET_API_LEVEL = 16;
-
   private static final String GOOGLE_PACKAGE_ID_PREFIX = "com.google.android";
   private static final String VOICE_IME_MODE = "voice";
 
   /**
    * A container of an InputMethodInfo and an InputMethodSubtype.
    */
-  @TargetApi(SUBTYPE_TARGTET_API_LEVEL)
   private static class InputMethodSubtypeInfo {
 
     private final InputMethodInfo inputMethodInfo;
@@ -99,8 +93,6 @@ public class ImeSwitcherFactory {
 
   /**
    * A class to switch default (==current) input method subtype.
-   *
-   * This class handles only subtype and its newer API so works only since API Level 14.
    */
   public interface ImeSwitcher {
 
@@ -139,39 +131,19 @@ public class ImeSwitcherFactory {
      * @return true if the switching succeeds
      */
     boolean switchToNextInputMethod(boolean onlyCurrentIme);
-  }
 
-  /**
-   * A switcher for lower API Level where IME switching is not available.
-   */
-  static class StubImeSwitcher implements ImeSwitcher {
-    public StubImeSwitcher(InputMethodService inputMethodService) {
-      if (inputMethodService == null) {
-        throw new NullPointerException("inputMethodService must be non-null.");
-      }
-    }
-
-    @Override
-    public boolean isVoiceImeAvailable() {
-      return false;
-    }
-
-    @Override
-    public boolean switchToVoiceIme(String locale) {
-      return false;
-    }
-
-    @Override
-    public boolean switchToNextInputMethod(boolean onlyCurrentIme) {
-      return false;
-    }
+    /**
+     * @see InputMethodManager#shouldOfferSwitchingToNextInputMethod(IBinder)
+     *
+     * If not supported the API, returns false.
+     */
+    boolean shouldOfferSwitchingToNextInputMethod();
   }
 
   /**
    * A switcher for later OS where IME subtype is available.
    */
-  @TargetApi(SUBTYPE_TARGTET_API_LEVEL)
-  static class SubtypeImeSwitcher extends StubImeSwitcher {
+  static class SubtypeImeSwitcher implements ImeSwitcher {
 
     interface InputMethodManagerProxy {
       Map<InputMethodInfo, List<InputMethodSubtype>> getShortcutInputMethodsAndSubtypes();
@@ -196,10 +168,9 @@ public class ImeSwitcherFactory {
       });
     }
 
-    // For testing
+    @VisibleForTesting
     SubtypeImeSwitcher(InputMethodService inputMethodService,
                        InputMethodManagerProxy inputMethodManagerProxy) {
-      super(inputMethodService);
       this.inputMethodService = inputMethodService;
       this.inputMethodManagerProxy = inputMethodManagerProxy;
     }
@@ -251,15 +222,25 @@ public class ImeSwitcherFactory {
           inputMethod.getSubtype());
       return true;
     }
+
+    @Override
+    public boolean switchToNextInputMethod(boolean onlyCurrentIme) {
+      return false;
+    }
+
+    @Override
+    public boolean shouldOfferSwitchingToNextInputMethod() {
+      return false;
+    }
   }
 
   /**
    * A switcher for much later OS where switchToNextInputMethod is available.
    */
-  @TargetApi(SWITCH_NEXT_TARGTET_API_LEVEL)
-  static class NextInputSwitchableImeSwitcher extends SubtypeImeSwitcher {
+  @TargetApi(16)
+  static class ImeSwitcher16 extends SubtypeImeSwitcher {
 
-    public NextInputSwitchableImeSwitcher(final InputMethodService inputMethodService) {
+    public ImeSwitcher16(InputMethodService inputMethodService) {
       super(inputMethodService);
     }
 
@@ -270,18 +251,35 @@ public class ImeSwitcherFactory {
     }
   }
 
+  /**
+   * A switcher for much later OS where switchToNextInputMethod is available.
+   */
+  @TargetApi(19)
+  static class ImeSwitcher21 extends ImeSwitcher16 {
+
+    public ImeSwitcher21(InputMethodService inputMethodService) {
+      super(inputMethodService);
+    }
+
+    @Override
+    public boolean shouldOfferSwitchingToNextInputMethod() {
+      return MozcUtil.getInputMethodManager(inputMethodService)
+          .shouldOfferSwitchingToNextInputMethod(getToken());
+    }
+  }
+
   // A constructor of concrete switcher class.
   // Null if reflection fails.
   static final Constructor<? extends ImeSwitcher> switcherConstructor;
 
   static {
     Class<? extends ImeSwitcher> clazz;
-    if (Build.VERSION.SDK_INT >= SWITCH_NEXT_TARGTET_API_LEVEL) {
-      clazz = NextInputSwitchableImeSwitcher.class;
-    } else if (Build.VERSION.SDK_INT >= SUBTYPE_TARGTET_API_LEVEL) {
-      clazz = SubtypeImeSwitcher.class;
+    if (Build.VERSION.SDK_INT >= 21) {
+      clazz = ImeSwitcher21.class;
+    } else if (Build.VERSION.SDK_INT >= 16) {
+      clazz = ImeSwitcher16.class;
     } else {
-      clazz = StubImeSwitcher.class;
+      clazz = SubtypeImeSwitcher.class;
     }
     Constructor<? extends ImeSwitcher> constructor = null;
     try {
@@ -294,15 +292,9 @@ public class ImeSwitcherFactory {
 
   /**
    * Gets an {@link ImeSwitcher}.
-   *
-   * ImeSwitcher handles only subtype and its newer API so concrete factory will be returned
-   * only since API Level 14.
-   * On older OS *stub* factory will be returned.
    */
   public static ImeSwitcher getImeSwitcher(InputMethodService inputMethodService) {
-    if (inputMethodService == null) {
-      throw new NullPointerException("inputMethodService must be non-null.");
-    }
+    Preconditions.checkNotNull(inputMethodService);
     if (switcherConstructor != null) {
       try {
         return switcherConstructor.newInstance(inputMethodService);
@@ -316,6 +308,6 @@ public class ImeSwitcherFactory {
         MozcLog.e(e.getMessage(), e);
       }
     }
-    return new StubImeSwitcher(inputMethodService);
+    return new SubtypeImeSwitcher(inputMethodService);
   }
 }

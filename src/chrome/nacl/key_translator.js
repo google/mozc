@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -422,10 +422,21 @@ mozc.KeyTranslator.prototype.translateKeyEvent = function(keyData,
   // Do not disturb taking screenshot.
   if (keyData.ctrlKey && keyData.key == 'ChromeOSSwitchWindow') {
     return /** @type {!mozc.KeyEvent} */ ({});
-  } else if (mozc.MODIFIER_KEY_CODE_MASK_MAP_[keyData.code]) {
-    return this.translateModifierKeyEvent_(keyData);
-  } else if (keyData.type == 'keydown') {
-    return this.translateKeyDownEvent_(keyData, isKanaMode, keyboardLayout);
+  } else {
+    // Since IME API can't send the correct upper case alphabet.
+    // Need to make a transform first. JP IME use shift status to input upper
+    // case letter.
+    var key = keyData.key;
+    if (keyData.capsLock && key) {
+      if (key.toUpperCase() != key) {
+        keyData.shiftKey = !keyData.shiftKey;
+      }
+    }
+    if (mozc.MODIFIER_KEY_CODE_MASK_MAP_[keyData.code]) {
+      return this.translateModifierKeyEvent_(keyData);
+    } else if (keyData.type == 'keydown') {
+      return this.translateKeyDownEvent_(keyData, isKanaMode, keyboardLayout);
+    }
   }
   return /** @type {!mozc.KeyEvent} */ ({});
 };

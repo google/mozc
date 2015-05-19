@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,12 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
+import com.google.common.base.Optional;
 
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -45,6 +47,7 @@ import java.util.EnumSet;
 /**
  */
 public class KeyEventContextTest extends TestCase {
+
   private PopUp defaultPopUp;
   private PopUp leftPopUp;
   private KeyEntity defaultEntity;
@@ -54,18 +57,30 @@ public class KeyEventContextTest extends TestCase {
   private KeyState defaultState;
   private KeyState modifiedState;
   private Key modifiableKey;
+  private Key longpressableKeyWithTimeoutTrigger;
+  private Key longpressableKeyWithoutTimeoutTrigger;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
-    defaultPopUp = new PopUp(0, 0, 0, 0, 0);
-    leftPopUp = new PopUp(0, 0, 0, 0, 0);
+    defaultPopUp = new PopUp(0, 0, 0, 0, 0, 0, 0);
+    leftPopUp = new PopUp(0, 0, 0, 0, 0, 0, 0);
 
-    defaultEntity = new KeyEntity(1, 'a', 'A', 0, null, false, defaultPopUp);
-    leftFlickEntity = new KeyEntity(2, 'b', 'B',  0, null, false, leftPopUp);
-    modifiedCenterEntity = new KeyEntity(3, 'c', 'C', 0, null, false, null);
-    modifiedLeftEntity = new KeyEntity(4, 'd', 'D', 0, null, false, null);
+    defaultEntity = new KeyEntity(
+        1, 'a', 'A', true, 0, Optional.<String>absent(), false, Optional.of(defaultPopUp),
+        0, 0, 0, 0);
+    leftFlickEntity = new KeyEntity(
+        2, 'b', 'B', true, 0, Optional.<String>absent(), false, Optional.of(leftPopUp), 0, 0, 0, 0);
+    modifiedCenterEntity = createKeyEntity(3, 'c', 'C');
+    modifiedLeftEntity = createKeyEntity(4, 'd', 'D');
+
+    KeyEntity longpressableEntityWithTimeoutTrigger = new KeyEntity(
+        5, 'e', 'E', true, 0, Optional.<String>absent(), false, Optional.of(defaultPopUp),
+        0, 0, 0, 0);
+    KeyEntity longpressableEntityWithoutTimeoutTrigger = new KeyEntity(
+        6, 'f', 'F', false, 0, Optional.<String>absent(), false, Optional.of(defaultPopUp),
+        0, 0, 0, 0);
 
     defaultState = new KeyState(
         "", Collections.<MetaState>emptySet(),
@@ -78,8 +93,25 @@ public class KeyEventContextTest extends TestCase {
         Arrays.asList(new Flick(Flick.Direction.CENTER, modifiedCenterEntity),
                       new Flick(Flick.Direction.LEFT, modifiedLeftEntity)));
 
-    modifiableKey = new Key(0, 0, 16, 16, 0, 0, false, false, false, Stick.EVEN,
+    modifiableKey = new Key(0, 0, 16, 16, 0, 0, false, false, Stick.EVEN,
+                            DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                             Arrays.asList(defaultState, modifiedState));
+    longpressableKeyWithTimeoutTrigger = new Key(0, 0, 16, 16, 0, 0, false, false, Stick.EVEN,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+        Collections.singletonList(
+            new KeyState("", Collections.<MetaState>emptySet(),
+                         Collections.<MetaState>emptySet(), Collections.<MetaState>emptySet(),
+                         Collections.singletonList(
+                             new Flick(Flick.Direction.CENTER,
+                                       longpressableEntityWithTimeoutTrigger)))));
+    longpressableKeyWithoutTimeoutTrigger = new Key(0, 0, 16, 16, 0, 0, false, false, Stick.EVEN,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+        Collections.singletonList(
+            new KeyState("", Collections.<MetaState>emptySet(),
+                         Collections.<MetaState>emptySet(), Collections.<MetaState>emptySet(),
+                         Collections.singletonList(
+                             new Flick(Flick.Direction.CENTER,
+                                       longpressableEntityWithoutTimeoutTrigger)))));
   }
 
   @Override
@@ -97,10 +129,17 @@ public class KeyEventContextTest extends TestCase {
     super.tearDown();
   }
 
+  private static KeyEntity createKeyEntity(int sourceId, int keyCode, int longPressKeyCode) {
+    return new KeyEntity(
+        sourceId, keyCode, longPressKeyCode, true, 0,
+        Optional.<String>absent(), false, Optional.<PopUp>absent(), 0, 0, 0, 0);
+  }
+
   @SmallTest
   public void testIsContained() {
     Key key = new Key(
-        0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN, Collections.<KeyState>emptyList());
+        0, 0, 30, 50, 0, 0, false, false, Stick.EVEN,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, Collections.<KeyState>emptyList());
     assertTrue(KeyEventContext.isContained(15, 25, key));
     assertTrue(KeyEventContext.isContained(10, 5, key));
     assertTrue(KeyEventContext.isContained(29, 45, key));
@@ -114,16 +153,16 @@ public class KeyEventContextTest extends TestCase {
   public void testIsFlickable() {
     // If the key doesn't return KeyState, isFlickable should return false.
     assertFalse(KeyEventContext.isFlickable(
-        new Key(0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN,
-                Collections.<KeyState>emptyList()),
+        new Key(0, 0, 30, 50, 0, 0, false, false, Stick.EVEN,
+            DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, Collections.<KeyState>emptyList()),
         Collections.<MetaState>emptySet()));
 
     // If the key doesn't have flick related data other than CENTER, it is not flickable.
-    KeyEntity dummyKeyEntity =
-        new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, 0, null, false, null);
+    KeyEntity dummyKeyEntity = createKeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE);
     Flick center = new Flick(Flick.Direction.CENTER, dummyKeyEntity);
     assertFalse(KeyEventContext.isFlickable(
-        new Key(0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN,
+        new Key(0, 0, 30, 50, 0, 0, false, false, Stick.EVEN,
+                DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                 Collections.singletonList(
                     new KeyState("",
                                  Collections.<MetaState>emptySet(),
@@ -135,7 +174,8 @@ public class KeyEventContextTest extends TestCase {
     // If the key has flick related data other than CENTER, it is flickable.
     Flick left = new Flick(Flick.Direction.LEFT, dummyKeyEntity);
     assertTrue(KeyEventContext.isFlickable(
-        new Key(0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN,
+        new Key(0, 0, 30, 50, 0, 0, false, false, Stick.EVEN,
+                DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                 Collections.singletonList(
                     new KeyState("",
                                  Collections.<MetaState>emptySet(),
@@ -149,48 +189,60 @@ public class KeyEventContextTest extends TestCase {
   public void testGetKeyEntity() {
     assertSame(defaultEntity,
                KeyEventContext.getKeyEntity(
-                   modifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.CENTER));
+                   modifiableKey, Collections.<MetaState>emptySet(),
+                   Optional.of(Flick.Direction.CENTER)).get());
     assertSame(leftFlickEntity,
                KeyEventContext.getKeyEntity(
-                   modifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.LEFT));
+                   modifiableKey, Collections.<MetaState>emptySet(),
+                   Optional.of(Flick.Direction.LEFT)).get());
     assertSame(modifiedCenterEntity,
                KeyEventContext.getKeyEntity(
-                   modifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.CENTER));
+                   modifiableKey, EnumSet.of(MetaState.CAPS_LOCK),
+                   Optional.of(Flick.Direction.CENTER)).get());
     assertSame(modifiedLeftEntity,
                KeyEventContext.getKeyEntity(
-                   modifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.LEFT));
+                   modifiableKey, EnumSet.of(MetaState.CAPS_LOCK),
+                   Optional.of(Flick.Direction.LEFT)).get());
 
     // If a key entity for the flick direction is not specified,
-    // null should be returned.
-    assertNull(KeyEventContext.getKeyEntity(
-        modifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.RIGHT));
-    assertNull(KeyEventContext.getKeyEntity(
-        modifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.RIGHT));
+    // Optional.absent() should be returned.
+    assertFalse(KeyEventContext.getKeyEntity(
+        modifiableKey, Collections.<MetaState>emptySet(),
+        Optional.of(Flick.Direction.RIGHT)).isPresent());
+    assertFalse(KeyEventContext.getKeyEntity(
+        modifiableKey, EnumSet.of(MetaState.CAPS_LOCK),
+        Optional.of(Flick.Direction.RIGHT)).isPresent());
 
-    Key unmodifiableKey = new Key(0, 0, 0, 0, 0, 0, false, false, false, Stick.EVEN,
+    Key unmodifiableKey = new Key(0, 0, 0, 0, 0, 0, false, false, Stick.EVEN,
+                                  DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                                   Collections.singletonList(defaultState));
 
     // If a key doesn't have modified state, default state should be used as its fall back.
     assertSame(defaultEntity,
                KeyEventContext.getKeyEntity(
-                   unmodifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.CENTER));
+                   unmodifiableKey, Collections.<MetaState>emptySet(),
+                   Optional.of(Flick.Direction.CENTER)).get());
     assertSame(leftFlickEntity,
                KeyEventContext.getKeyEntity(
-                   unmodifiableKey, Collections.<MetaState>emptySet(), Flick.Direction.LEFT));
+                   unmodifiableKey, Collections.<MetaState>emptySet(),
+                   Optional.of(Flick.Direction.LEFT)).get());
     assertSame(defaultEntity,
                KeyEventContext.getKeyEntity(
-                   unmodifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.CENTER));
+                   unmodifiableKey, EnumSet.of(MetaState.CAPS_LOCK),
+                   Optional.of(Flick.Direction.CENTER)).get());
     assertSame(leftFlickEntity,
                KeyEventContext.getKeyEntity(
-                   unmodifiableKey, EnumSet.of(MetaState.CAPS_LOCK), Flick.Direction.LEFT));
+                   unmodifiableKey, EnumSet.of(MetaState.CAPS_LOCK),
+                   Optional.of(Flick.Direction.LEFT)).get());
 
-    // If both state is not specified, null should be returned.
-    Key spacer = new Key(0, 0, 0, 0, 0, 0, false, false, false, Stick.EVEN,
+    // If both state is not specified, Optional.absent() should be returned.
+    Key spacer = new Key(0, 0, 0, 0, 0, 0, false, false, Stick.EVEN,
+                         DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                          Collections.<KeyState>emptyList());
-    assertNull(KeyEventContext.getKeyEntity(spacer, Collections.<MetaState>emptySet(),
-                                            Flick.Direction.CENTER));
-    assertNull(KeyEventContext.getKeyEntity(spacer, EnumSet.of(MetaState.CAPS_LOCK),
-                                            Flick.Direction.CENTER));
+    assertFalse(KeyEventContext.getKeyEntity(spacer, Collections.<MetaState>emptySet(),
+                                             Optional.of(Flick.Direction.CENTER)).isPresent());
+    assertFalse(KeyEventContext.getKeyEntity(spacer, EnumSet.of(MetaState.CAPS_LOCK),
+                                             Optional.of(Flick.Direction.CENTER)).isPresent());
   }
 
   @SmallTest
@@ -202,9 +254,31 @@ public class KeyEventContextTest extends TestCase {
     assertEquals('b', keyEventContext.getKeyCode());
     keyEventContext.flickDirection = Flick.Direction.RIGHT;
     assertEquals(KeyEntity.INVALID_KEY_CODE, keyEventContext.getKeyCode());
-    keyEventContext.longPressSent = true;
+    keyEventContext.pastLongPressSentTimeout = true;
     keyEventContext.flickDirection = Flick.Direction.CENTER;
     assertEquals(KeyEntity.INVALID_KEY_CODE, keyEventContext.getKeyCode());
+  }
+
+  @SmallTest
+  public void testGetKeyCodeForLongPressWithTimeoutTrigger() {
+    KeyEventContext keyEventContext =
+        new KeyEventContext(longpressableKeyWithTimeoutTrigger, 0, 0, 0, 100, 100, 1,
+                            Collections.<MetaState>emptySet());
+    keyEventContext.pastLongPressSentTimeout = false;
+    assertEquals('e', keyEventContext.getKeyCode());
+    keyEventContext.pastLongPressSentTimeout = true;
+    assertEquals(KeyEntity.INVALID_KEY_CODE, keyEventContext.getKeyCode());
+  }
+
+  @SmallTest
+  public void testGetKeyCodeForLongPressWithoutTimeoutTrigger() {
+    KeyEventContext keyEventContext =
+        new KeyEventContext(longpressableKeyWithoutTimeoutTrigger, 0, 0, 0, 100, 100, 1,
+                            Collections.<MetaState>emptySet());
+    keyEventContext.pastLongPressSentTimeout = false;
+    assertEquals('f', keyEventContext.getKeyCode());
+    keyEventContext.pastLongPressSentTimeout = true;
+    assertEquals('F', keyEventContext.getKeyCode());
   }
 
   @SmallTest
@@ -213,7 +287,7 @@ public class KeyEventContextTest extends TestCase {
         new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1,
                             Collections.<MetaState>emptySet());
     assertEquals('A', keyEventContext.getLongPressKeyCode());
-    keyEventContext.longPressSent = true;
+    keyEventContext.pastLongPressSentTimeout = true;
     assertEquals(KeyEntity.INVALID_KEY_CODE, keyEventContext.getLongPressKeyCode());
   }
 
@@ -227,7 +301,7 @@ public class KeyEventContextTest extends TestCase {
     assertEquals('a', keyEventContext.getPressedKeyCode());
     keyEventContext.flickDirection = Flick.Direction.RIGHT;
     assertEquals('a', keyEventContext.getPressedKeyCode());
-    keyEventContext.longPressSent = true;
+    keyEventContext.pastLongPressSentTimeout = true;
     keyEventContext.flickDirection = Flick.Direction.CENTER;
     assertEquals('a', keyEventContext.getPressedKeyCode());
   }
@@ -252,7 +326,8 @@ public class KeyEventContextTest extends TestCase {
         Collections.<MetaState>emptySet(),
         EnumSet.of(MetaState.CAPS_LOCK),
         Collections.singletonList(new Flick(Flick.Direction.CENTER, defaultEntity)));
-    Key capsLockKey = new Key(0, 0, 10, 10, 0, 0, false, true, false, Stick.EVEN,
+    Key capsLockKey = new Key(0, 0, 10, 10, 0, 0, false, true, Stick.EVEN,
+                              DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                               Arrays.asList(onUnmodified, onShift, onCapsLock));
     assertEquals(
         EnumSet.of(MetaState.SHIFT),
@@ -270,19 +345,21 @@ public class KeyEventContextTest extends TestCase {
 
   @SmallTest
   public void testIsMetaStateToggleEvent() {
-    Key key = new Key(0, 0, 30, 50, 0, 0, false, false, false, Stick.EVEN,
+    Key key = new Key(0, 0, 30, 50, 0, 0, false, false, Stick.EVEN,
+                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                       Collections.<KeyState>emptyList());
     KeyEventContext keyEventContext =
         new KeyEventContext(key, 0, 0, 0, 100, 100, 1, Collections.<MetaState>emptySet());
     assertFalse(keyEventContext.isMetaStateToggleEvent());
-    Key modifierKey = new Key(0, 0, 30, 50, 0, 0, false, true, false, Stick.EVEN,
+    Key modifierKey = new Key(0, 0, 30, 50, 0, 0, false, true, Stick.EVEN,
+                              DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                               Collections.<KeyState>emptyList());
     KeyEventContext modifierKeyEventContext =
         new KeyEventContext(modifierKey, 0, 0, 0, 100, 100, 1, Collections.<MetaState>emptySet());
     assertTrue(modifierKeyEventContext.isMetaStateToggleEvent());
-    modifierKeyEventContext.longPressSent = true;
+    modifierKeyEventContext.pastLongPressSentTimeout = true;
     assertFalse(modifierKeyEventContext.isMetaStateToggleEvent());
-    modifierKeyEventContext.longPressSent = false;
+    modifierKeyEventContext.pastLongPressSentTimeout = false;
     modifierKeyEventContext.flickDirection = Flick.Direction.LEFT;
     assertFalse(modifierKeyEventContext.isMetaStateToggleEvent());
   }
@@ -292,23 +369,23 @@ public class KeyEventContextTest extends TestCase {
     KeyEventContext keyEventContext =
         new KeyEventContext(modifiableKey, 0, 0, 0, 100, 100, 1,
                             Collections.<MetaState>emptySet());
-    assertSame(defaultPopUp, keyEventContext.getCurrentPopUp());
+    assertSame(defaultPopUp, keyEventContext.getCurrentPopUp().get());
     keyEventContext.flickDirection = Flick.Direction.LEFT;
-    assertSame(leftPopUp, keyEventContext.getCurrentPopUp());
+    assertSame(leftPopUp, keyEventContext.getCurrentPopUp().get());
     keyEventContext.flickDirection = Flick.Direction.RIGHT;
-    assertNull(keyEventContext.getCurrentPopUp());
-    keyEventContext.longPressSent = true;
+    assertFalse(keyEventContext.getCurrentPopUp().isPresent());
+    keyEventContext.pastLongPressSentTimeout = true;
     keyEventContext.flickDirection = Flick.Direction.CENTER;
-    assertNull(keyEventContext.getCurrentPopUp());
+    assertFalse(keyEventContext.getCurrentPopUp().isPresent());
   }
 
   @SmallTest
   public void testUpdate() {
-    KeyEntity centerEntity = new KeyEntity(1, 'a', 'A', 0, null, false, null);
-    KeyEntity leftEntity = new KeyEntity(2, 'b', 'B', 0, null, false, null);
-    KeyEntity upEntity = new KeyEntity(3, 'c', 'C', 0, null, false, null);
-    KeyEntity rightEntity = new KeyEntity(4, 'd', 'D', 0, null, false, null);
-    KeyEntity downEntity = new KeyEntity(5, 'e', 'E', 0, null, false, null);
+    KeyEntity centerEntity = createKeyEntity(1, 'a', 'A');
+    KeyEntity leftEntity = createKeyEntity(2, 'b', 'B');
+    KeyEntity upEntity = createKeyEntity(3, 'c', 'C');
+    KeyEntity rightEntity = createKeyEntity(4, 'd', 'D');
+    KeyEntity downEntity = createKeyEntity(5, 'e', 'E');
 
     KeyState keyState = new KeyState(
         "",
@@ -321,7 +398,8 @@ public class KeyEventContextTest extends TestCase {
                       new Flick(Flick.Direction.RIGHT, rightEntity),
                       new Flick(Flick.Direction.DOWN, downEntity)));
 
-    Key key = new Key(0, 0, 16, 16, 0, 0, false, false, false, Stick.EVEN,
+    Key key = new Key(0, 0, 16, 16, 0, 0, false, false, Stick.EVEN,
+                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                       Collections.singletonList(keyState));
     KeyEventContext keyEventContext =
         new KeyEventContext(key, 0, 8, 8, 64, 64, 50, Collections.<MetaState>emptySet());
@@ -333,58 +411,65 @@ public class KeyEventContextTest extends TestCase {
             .addStroke(
                 KeyEventContext.createTouchPosition(TouchAction.TOUCH_DOWN, 8, 8, 64, 64, 0))
             .build(),
-         keyEventContext.getTouchEvent());
+         keyEventContext.getTouchEvent().get());
 
     class TestData {
       final int x;
       final int y;
       final long timestamp;
+      final boolean pastLongPressSentTimeout;
       final boolean expectedUpdateResult;
       final Flick.Direction expectedDirection;
       final int expectedSourceId;
+      final boolean expectedPastLongPressSentTimeout;
 
-      TestData(int x, int y, long timestamp,
+      TestData(int x, int y, long timestamp, boolean pastLongPressSentTimeout,
                boolean expectedUpdateResult, Flick.Direction expectedDirection,
-               int expectedSourceId) {
+               int expectedSourceId, boolean expectedPastLongPressSentTimeout) {
         this.x = x;
         this.y = y;
         this.timestamp = timestamp;
+        this.pastLongPressSentTimeout = pastLongPressSentTimeout;
         this.expectedUpdateResult = expectedUpdateResult;
         this.expectedDirection = expectedDirection;
         this.expectedSourceId = expectedSourceId;
+        this.expectedPastLongPressSentTimeout = expectedPastLongPressSentTimeout;
       }
     }
 
     TestData[] testDataList = {
         // Center
-        new TestData(4, 4, 10, false, Flick.Direction.CENTER, 1),
+        new TestData(4, 4, 10, false, false, Flick.Direction.CENTER, 1, false),
 
         // Up
-        new TestData(8, -16, 20, true, Flick.Direction.UP, 3),
-        new TestData(8, -32, 30, false, Flick.Direction.UP, 3),
+        new TestData(8, -16, 20, false, true, Flick.Direction.UP, 3, false),
+        new TestData(8, -32, 30, false, false, Flick.Direction.UP, 3, false),
 
         // Left
-        new TestData(-16, 8, 40, true, Flick.Direction.LEFT, 2),
-        new TestData(-32, 8, 50, false, Flick.Direction.LEFT, 2),
+        new TestData(-16, 8, 40, false, true, Flick.Direction.LEFT, 2, false),
+        new TestData(-32, 8, 50, false, false, Flick.Direction.LEFT, 2, false),
 
         // Down
-        new TestData(8, 32, 60, true, Flick.Direction.DOWN, 5),
-        new TestData(8, 48, 70, false, Flick.Direction.DOWN, 5),
+        new TestData(8, 32, 60, true, true, Flick.Direction.DOWN, 5, false),
+        new TestData(8, 48, 70, true, false, Flick.Direction.DOWN, 5, true),
 
         // Right
-        new TestData(32, 8, 80, true, Flick.Direction.RIGHT, 4),
-        new TestData(48, 8, 90, false, Flick.Direction.RIGHT, 4),
+        new TestData(32, 8, 80, true, true, Flick.Direction.RIGHT, 4, false),
+        new TestData(48, 8, 90, true, false, Flick.Direction.RIGHT, 4, true),
 
         // Back to center
-        new TestData(8, 8, 100, true, Flick.Direction.CENTER, 1),
-        new TestData(4, 4, 110, false, Flick.Direction.CENTER, 1),
+        new TestData(8, 8, 100, true, true, Flick.Direction.CENTER, 1, false),
+        new TestData(4, 4, 110, true, false, Flick.Direction.CENTER, 1, true),
     };
 
     for (TestData testData : testDataList) {
+      keyEventContext.pastLongPressSentTimeout = testData.pastLongPressSentTimeout;
       assertEquals(testData.expectedUpdateResult,
                    keyEventContext.update(testData.x, testData.y,
                                           TouchAction.TOUCH_MOVE, testData.timestamp));
       assertEquals(testData.expectedDirection, keyEventContext.flickDirection);
+      assertEquals(testData.expectedPastLongPressSentTimeout,
+                   keyEventContext.pastLongPressSentTimeout);
       assertEquals(
           TouchEvent.newBuilder()
               .setSourceId(testData.expectedSourceId)
@@ -393,7 +478,7 @@ public class KeyEventContextTest extends TestCase {
               .addStroke(KeyEventContext.createTouchPosition(
                   TouchAction.TOUCH_MOVE, testData.x, testData.y, 64, 64, testData.timestamp))
               .build(),
-          keyEventContext.getTouchEvent());
+          keyEventContext.getTouchEvent().get());
     }
 
     // Release the key.
@@ -404,19 +489,20 @@ public class KeyEventContextTest extends TestCase {
         .addStroke(KeyEventContext.createTouchPosition(TouchAction.TOUCH_DOWN, 8, 8, 64, 64, 0))
         .addStroke(KeyEventContext.createTouchPosition(TouchAction.TOUCH_UP, 4, 4, 64, 64, 120))
         .build();
-    assertEquals(expectedEvent, keyEventContext.getTouchEvent());
+    assertEquals(expectedEvent, keyEventContext.getTouchEvent().get());
   }
 
   @SmallTest
   public void testUpdateNonFlickable() {
-    KeyEntity keyEntity = new KeyEntity(256, 'a', 'A', 0, null, false, null);
+    KeyEntity keyEntity = createKeyEntity(256, 'a', 'A');
     KeyState keyState = new KeyState(
         "",
         Collections.<MetaState>emptySet(),
         Collections.<MetaState>emptySet(),
         Collections.<MetaState>emptySet(),
         Collections.singletonList(new Flick(Flick.Direction.CENTER, keyEntity)));
-    Key key = new Key(0, 0, 10, 10, 0, 0, false, false, false, Stick.EVEN,
+    Key key = new Key(0, 0, 10, 10, 0, 0, false, false, Stick.EVEN,
+                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
                       Collections.singletonList(keyState));
 
     // For unflickable keys, moving inside the key's region is NOT a flick action
@@ -438,6 +524,6 @@ public class KeyEventContextTest extends TestCase {
     assertTrue(keyEventContext.update(-10, 5, TouchAction.TOUCH_MOVE, 40));
     assertEquals(Flick.Direction.LEFT, keyEventContext.flickDirection);
 
-    assertNull(keyEventContext.getTouchEvent());
+    assertFalse(keyEventContext.getTouchEvent().isPresent());
   }
 }

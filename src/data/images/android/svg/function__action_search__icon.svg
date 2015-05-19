@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+ Copyright 2010-2015, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<!--
+Preprocesses for this file;
+- Imported .ai file into Inkscape.
+- Combine all pathes into one (Path > Combine).
+- Export as optimized .svg.
+- Removed following elements manually.
+  - metadata
+  - defs
+- Removed ignorable <g> elements.
+- Added id attribute.
+-->
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns="http://www.w3.org/2000/svg"
+     xml:space="preserve"
+     xmlns:cc="http://creativecommons.org/ns#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     version="1.1"
+     width="80"
+     height="80">
+  <circle id="style-keyicon-enter-circle" cx="40" cy="40" r="40" style="fill-rule:evenodd;fill:#7fcac3" />
+  <path id="style-keyicon-enter" d="m50.471876,46.325293h-2.248993l-0.843373-0.70281c2.670676-3.232928,4.357426-7.309228,4.357426-11.947777,0-10.120469-8.152603-18.273069-18.273075-18.273069-9.979907,0-18.132506,8.1526-18.132506,18.273069,0,10.12047,8.152599,18.27307,18.273068,18.27307,4.497989,0,8.714853-1.686745,11.947779-4.357424l0.843373,0.702809v2.248993l14.05621,14.056208,4.21686-4.216862-14.196769-14.056207zm-16.867452,0c-7.028103,0-12.650586-5.622483-12.650586-12.650587,0-7.028103,5.622483-12.650586,12.650586-12.650586,7.028107,0,12.65059,5.622483,12.65059,12.650586,0,7.028104-5.622483,12.650587-12.65059,12.650587z"/>
+</svg>

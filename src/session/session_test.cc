@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -681,7 +681,7 @@ class SessionTest : public testing::Test {
       const commands::Request &request) {
     session->SetRequest(&request);
     table_.reset(new composer::Table());
-    table_.get()->InitializeWithRequestAndConfig(
+    table_->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::GetConfig());
     session->SetTable(table_.get());
   }
@@ -8285,7 +8285,7 @@ TEST_F(SessionTest, Issue4437420) {
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(&request);
   scoped_ptr<composer::Table> table(new composer::Table());
-  table.get()->InitializeWithRequestAndConfig(
+  table->InitializeWithRequestAndConfig(
       request, config::ConfigHandler::GetConfig());
   session.SetTable(table.get());
   // Type "2*" to produce "A".
@@ -8297,22 +8297,6 @@ TEST_F(SessionTest, Issue4437420) {
   session.SendKey(&command);
   EXPECT_EQ("A", GetComposition(command));
 
-  // Change to 12keys-number mode.
-  SwitchInputMode(commands::HALF_ASCII, &session);
-
-  command.Clear();
-  request.set_special_romanji_table(commands::Request::TWELVE_KEYS_TO_NUMBER);
-  session.SetRequest(&request);
-  table.reset(new composer::Table());
-  table.get()->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::GetConfig());
-  session.SetTable(table.get());
-  // Type "2" to produce "A2".
-  SetSendKeyCommand("2", &command);
-  command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
-  session.SendKey(&command);
-  EXPECT_EQ("A2", GetComposition(command));
-
   // Change to 12keys-halfascii mode.
   SwitchInputMode(commands::HALF_ASCII, &session);
 
@@ -8321,14 +8305,14 @@ TEST_F(SessionTest, Issue4437420) {
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(&request);
   table.reset(new composer::Table());
-  table.get()->InitializeWithRequestAndConfig(
+  table->InitializeWithRequestAndConfig(
       request, config::ConfigHandler::GetConfig());
   session.SetTable(table.get());
-  // Type "2" to produce "A2a".
+  // Type "2" to produce "Aa".
   SetSendKeyCommand("2", &command);
   command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
   session.SendKey(&command);
-  EXPECT_EQ("A2a", GetComposition(command));
+  EXPECT_EQ("Aa", GetComposition(command));
   command.Clear();
 }
 

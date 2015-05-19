@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,20 +37,17 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchA
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.Sets;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Shader.TileMode;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Looper;
 import android.support.v4.view.ViewCompat;
 import android.text.InputType;
@@ -74,30 +71,84 @@ import java.util.Set;
  *
  */
 public class KeyboardView extends View implements MemoryManageable {
+
   private final BackgroundDrawableFactory backgroundDrawableFactory =
-      new BackgroundDrawableFactory(getResources().getDisplayMetrics().density);
-  private final DrawableCache drawableCache =
-      new DrawableCache(new MozcDrawableFactory(getResources()));
+      new BackgroundDrawableFactory(getResources());
+  private final DrawableCache drawableCache = new DrawableCache(getResources());
   private final PopUpPreview.Pool popupPreviewPool =
       new PopUpPreview.Pool(
           this, Looper.getMainLooper(), backgroundDrawableFactory, drawableCache);
   private final long popupDismissDelay;
 
-  private Keyboard keyboard;
+  private Optional<Keyboard> keyboard = Optional.absent();
   // Do not update directly. Use setMetaState instead.
   @VisibleForTesting Set<MetaState> metaState;
   @VisibleForTesting final KeyboardViewBackgroundSurface backgroundSurface =
       new KeyboardViewBackgroundSurface(backgroundDrawableFactory, drawableCache);
   @VisibleForTesting boolean isKeyPressed;
 
-  private final int keycodeSymbol;
   private final float scaledDensity;
 
   private int flickSensitivity;
   private boolean popupEnabled = true;
-  private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
 
   private final KeyboardAccessibilityDelegate accessibilityDelegate;
+
+  /**
+   * Decorator class for {@code Map} for {@code KeyEventContextMap}.
+   * <p>
+   * When the number of the content is changed, meta state "HANDLING_TOUCH_EVENT"
+   * is updated.
+   */
+  private final class KeyEventContextMap extends ForwardingMap<Integer, KeyEventContext>{
+
+    private final Map<Integer, KeyEventContext> delegate;
+
+    private KeyEventContextMap(Map<Integer, KeyEventContext> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    protected Map<Integer, KeyEventContext> delegate() {
+      return delegate;
+    }
+
+    @Override
+    public void clear() {
+      super.clear();
+      updateHandlingTouchEventMetaState();
+    }
+
+    @Override
+    public KeyEventContext put(Integer key, KeyEventContext value) {
+      KeyEventContext result = super.put(key, value);
+      updateHandlingTouchEventMetaState();
+      return result;
+    }
+
+    @Override
+    public void putAll(Map<? extends Integer, ? extends KeyEventContext> map) {
+      super.putAll(map);
+      updateHandlingTouchEventMetaState();
+    }
+
+    @Override
+    public KeyEventContext remove(Object object) {
+      KeyEventContext result = super.remove(object);
+      updateHandlingTouchEventMetaState();
+      return result;
+    }
+
+    private void updateHandlingTouchEventMetaState() {
+      if (keyEventContextMap.isEmpty()) {
+        updateMetaStates(Collections.<MetaState>emptySet(),
+                         Collections.singleton(MetaState.HANDLING_TOUCH_EVENT));
+      } else {
+        updateMetaStates(Collections.singleton(MetaState.HANDLING_TOUCH_EVENT),
+                         Collections.<MetaState>emptySet());
+      }
+    }
+  }
 
   // A map from pointerId to KeyEventContext.
   // Note: the pointerId should be small integers, e.g. 0, 1, 2... So if it turned out
@@ -107,9 +158,9 @@ public class KeyboardView extends View implements MemoryManageable {
   // in the pressing order in flushPendingKeyEvent.
   // Its initial capacity (16) and load factor (0.75) are just heuristics.
   @VisibleForTesting public final Map<Integer, KeyEventContext> keyEventContextMap =
-      new LinkedHashMap<Integer, KeyEventContext>(16, 0.75f, false);
+      new KeyEventContextMap(new LinkedHashMap<Integer, KeyEventContext>(16, 0.75f, false));
 
-  private KeyEventHandler keyEventHandler = null;
+  private Optional<KeyEventHandler> keyEventHandler = Optional.absent();
 
   // This constructor is package private for this unit test.
   public KeyboardView(Context context) {
@@ -129,11 +180,37 @@ public class KeyboardView extends View implements MemoryManageable {
     Context context = getContext();
     Resources res = context.getResources();
     popupDismissDelay = res.getInteger(R.integer.config_popup_dismiss_delay);
-    keycodeSymbol = res.getInteger(R.integer.key_symbol);
     scaledDensity = res.getDisplayMetrics().scaledDensity;
-    accessibilityDelegate = new KeyboardAccessibilityDelegate(this);
+    accessibilityDelegate = new KeyboardAccessibilityDelegate(
+        this, new KeyboardAccessibilityDelegate.TouchEventEmulator() {
+          @Override
+          public void emulateLongPress(Key key) {
+            Preconditions.checkNotNull(key);
+            emulateImpl(key, true);
+          }
+
+          @Override
+          public void emulateKeyInput(Key key) {
+            Preconditions.checkNotNull(key);
+            emulateImpl(key, false);
+          }
+
+          private void emulateImpl(Key key, boolean isLongPress) {
+            KeyEventContext keyEventContext = new KeyEventContext(key, 0, 0, 0, 0, 0, 0, metaState);
+            processKeyEventContextForOnDownEvent(keyEventContext);
+            if (isLongPress && keyEventHandler.isPresent()) {
+              keyEventHandler.get().handleMessageLongPress(keyEventContext);
+            }
+            processKeyEventContextForOnUpEvent(keyEventContext);
+            // Without the invalidation this view cannot know that its content
+            // has been updated.
+            invalidate();
+          }
+        });
     ViewCompat.setAccessibilityDelegate(this, accessibilityDelegate);
-    setMetaStates(Collections.<MetaState>emptySet());
+    // Not sure if globe is really activated.
+    // However metastate requires GLOBE or NO_GLOBE state.
+    setMetaStates(EnumSet.of(MetaState.NO_GLOBE));
   }
 
   /**
@@ -153,24 +230,23 @@ public class KeyboardView extends View implements MemoryManageable {
     return -flickSensitivity * 1.5f * scaledDensity;
   }
 
-  KeyEventContext getKeyEventContextByKey(Key key) {
+  private Optional<KeyEventContext> getKeyEventContextByKey(Key key) {
+    Preconditions.checkNotNull(key);
     for (KeyEventContext keyEventContext : keyEventContextMap.values()) {
-      if (keyEventContext != null && key == keyEventContext.key) {
-        return keyEventContext;
+      if (key == keyEventContext.key) {
+        return Optional.of(keyEventContext);
       }
     }
-    return null;
+    return Optional.absent();
   }
 
   private void disposeKeyEventContext(KeyEventContext keyEventContext) {
-    if (keyEventContext == null) {
-      return;
+    Preconditions.checkNotNull(keyEventContext);
+    if (keyEventHandler.isPresent()) {
+      keyEventHandler.get().cancelDelayedKeyEvent(keyEventContext);
     }
-    if (keyEventHandler != null) {
-      keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
-    }
-    backgroundSurface.requestUpdateKey(keyEventContext.key, null);
-    if (popupEnabled) {
+    backgroundSurface.requestUpdateKey(keyEventContext.key, Optional.<Flick.Direction>absent());
+    if (popupEnabled || keyEventContext.longPressCallback.isPresent()) {
       popupPreviewPool.releaseDelayed(keyEventContext.pointerId, popupDismissDelay);
     }
   }
@@ -186,7 +262,9 @@ public class KeyboardView extends View implements MemoryManageable {
     keyEventContextMap.clear();
   }
 
-  private void flushPendingKeyEvent(TouchEvent relativeTouchEvent) {
+  private void flushPendingKeyEvent(Optional<TouchEvent> relativeTouchEvent) {
+    Preconditions.checkNotNull(relativeTouchEvent);
+
     // Back up values and clear the map first to avoid stack overflow
     // in case this method is invoked recursively from the callback.
     // TODO(hidehiko): Refactor around keyEventHandler and keyEventContext. Also we should be
@@ -194,30 +272,30 @@ public class KeyboardView extends View implements MemoryManageable {
     KeyEventContext[] keyEventContextArray =
         keyEventContextMap.values().toArray(new KeyEventContext[keyEventContextMap.size()]);
     keyEventContextMap.clear();
-    KeyEventHandler keyEventHandler = this.keyEventHandler;
 
     for (KeyEventContext keyEventContext : keyEventContextArray) {
       int keyCode = keyEventContext.getKeyCode();
       int pressedKeyCode = keyEventContext.getPressedKeyCode();
       disposeKeyEventContext(keyEventContext);
-      if (keyEventHandler != null) {
+      if (keyEventHandler.isPresent()) {
         // Send relativeTouchEvent as well if exists.
-        List<TouchEvent> touchEventList = relativeTouchEvent == null
-            ? Collections.singletonList(keyEventContext.getTouchEvent())
-            : Arrays.asList(relativeTouchEvent, keyEventContext.getTouchEvent());
-        keyEventHandler.sendKey(keyCode, touchEventList);
-        keyEventHandler.sendRelease(pressedKeyCode);
+        // TODO(hsumita): Confirm that we can put null on touchEventList or not.
+        List<TouchEvent> touchEventList = relativeTouchEvent.isPresent()
+            ? Arrays.asList(relativeTouchEvent.get(), keyEventContext.getTouchEvent().orNull())
+            : Collections.singletonList(keyEventContext.getTouchEvent().orNull());
+        keyEventHandler.get().sendKey(keyCode, touchEventList);
+        keyEventHandler.get().sendRelease(pressedKeyCode);
       }
     }
   }
 
   /** Set a given keyboard to this view, and send a request to update. */
   public void setKeyboard(Keyboard keyboard) {
-    flushPendingKeyEvent(null);
+    flushPendingKeyEvent(Optional.<TouchEvent>absent());
 
-    this.keyboard = keyboard;
+    this.keyboard = Optional.of(keyboard);
     updateMetaStates(Collections.<MetaState>emptySet(), MetaState.CHAR_TYPE_EXCLUSIVE_GROUP);
-    accessibilityDelegate.setKeyboard(Optional.fromNullable(keyboard));
+    accessibilityDelegate.setKeyboard(this.keyboard);
     this.drawableCache.clear();
     backgroundSurface.requestUpdateKeyboard(keyboard, metaState);
     backgroundSurface.requestUpdateSize(keyboard.contentRight - keyboard.contentLeft,
@@ -244,93 +322,107 @@ public class KeyboardView extends View implements MemoryManageable {
   }
 
   /** @return the current keyboard instance */
-  public Keyboard getKeyboard() {
+  public Optional<Keyboard> getKeyboard() {
     return keyboard;
   }
 
-  public void setSkinType(SkinType skinType) {
-    this.skinType = skinType;
-    drawableCache.setSkinType(skinType);
-    backgroundDrawableFactory.setSkinType(skinType);
-    resetBackground();
-    if (keyboard != null) {
-      backgroundSurface.requestUpdateKeyboard(keyboard, metaState);
-    }
-  }
-
   @SuppressWarnings("deprecation")
-  private void resetBackground() {
-    Optional<Drawable> optionalKeyboardBackground =
-        drawableCache.getDrawable(skinType.windowBackgroundResourceId);
-    if (!optionalKeyboardBackground.isPresent()) {
-      setBackgroundColor(Color.BLACK);  // Set default background color.
-    } else {
-      Drawable keyboardBackground = optionalKeyboardBackground.get();
-      if (keyboardBackground instanceof BitmapDrawable) {
-        // If the background is bitmap resource, set repeat mode.
-        BitmapDrawable.class.cast(keyboardBackground).setTileModeXY(
-            TileMode.REPEAT, TileMode.REPEAT);
-      }
-      setBackgroundDrawable(keyboardBackground);
+  public void setSkin(Skin skin) {
+    Preconditions.checkNotNull(skin);
+    drawableCache.setSkin(skin);
+    backgroundDrawableFactory.setSkin(skin);
+    if (keyboard.isPresent()) {
+      backgroundSurface.requestUpdateKeyboard(keyboard.get(), metaState);
     }
+    setBackgroundDrawable(skin.windowBackgroundDrawable.getConstantState().newDrawable());
   }
 
   public void setKeyEventHandler(KeyEventHandler keyEventHandler) {
     // This method needs to be invoked from a thread which the looper held by older keyEventHandler
     // points. Otherwise, there can be inconsistent state.
-    KeyEventHandler oldKeyEventHandler = this.keyEventHandler;
-    if (oldKeyEventHandler != null) {
+    Optional<KeyEventHandler> oldKeyEventHandler = this.keyEventHandler;
+    if (oldKeyEventHandler.isPresent()) {
       // Cancel pending key event messages sent by this view.
       for (KeyEventContext keyEventContext : keyEventContextMap.values()) {
-        oldKeyEventHandler.cancelDelayedKeyEvent(keyEventContext);
+        oldKeyEventHandler.get().cancelDelayedKeyEvent(keyEventContext);
       }
     }
-
-    this.keyEventHandler = keyEventHandler;
-    accessibilityDelegate.setKeyEventHandler(Optional.fromNullable(keyEventHandler));
+    this.keyEventHandler = Optional.of(keyEventHandler);
   }
 
   @Override
   public void onDraw(Canvas canvas) {
     super.onDraw(canvas);
 
-    if (keyboard == null) {
+    if (!keyboard.isPresent()) {
       // We have nothing to do.
       return;
     }
-
+    // Draw keyboard.
     backgroundSurface.update();
     backgroundSurface.draw(canvas);
   }
 
+  @SuppressLint("InlinedApi")
   private static int getPointerIndex(int action) {
     return
         (action & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
   }
 
   private void onDown(MotionEvent event) {
+    Preconditions.checkState(keyboard.isPresent());
+
     int pointerIndex = getPointerIndex(event.getAction());
     float x = event.getX(pointerIndex);
     float y = event.getY(pointerIndex);
 
-    Key key = getKeyByCoord(x, y);
-    if (key == null) {
+    Optional<Key> optionalKey = getKeyByCoord(x, y);
+    if (!optionalKey.isPresent()) {
       // Just ignore if a key isn't found.
       return;
     }
 
-    if (getKeyEventContextByKey(key) != null) {
+    if (getKeyEventContextByKey(optionalKey.get()).isPresent()) {
       // If the key is already pressed, we simply ignore event sequence related to this press.
       return;
     }
 
     // Create a new key event context.
     int pointerId = event.getPointerId(pointerIndex);
-    float flickThreshold = Math.max(keyboard.getFlickThreshold() + getFlickSensitivityInDip(), 1);
-    KeyEventContext keyEventContext = new KeyEventContext(
-        key, pointerId, x, y, getWidth(), getHeight(),
+    float flickThreshold =
+        Math.max(keyboard.get().getFlickThreshold() + getFlickSensitivityInDip(), 1);
+    final KeyEventContext keyEventContext = new KeyEventContext(
+        optionalKey.get(), pointerId, x, y, getWidth(), getHeight(),
         flickThreshold * flickThreshold, metaState);
 
+    // Show popup.
+    updatePopUp(keyEventContext, false);
+    Optional<KeyEntity> keyEntity =
+        KeyEventContext.getKeyEntity(keyEventContext.key, metaState,
+                                     Optional.of(Flick.Direction.CENTER));
+    if (keyEntity.isPresent() && keyEntity.get().getPopUp().isPresent()
+        && !keyEntity.get().isLongPressTimeoutTrigger()) {
+      keyEventContext.setLongPressCallback(new Runnable() {
+          @Override
+          public void run() {
+            updatePopUp(keyEventContext, true);
+          }
+        });
+    }
+
+    // Process the KeyEventContext (e.g., sending messages to KeyEventHandler, updating the surface,
+    // flushing pending key events and so on)
+    processKeyEventContextForOnDownEvent(keyEventContext);
+    // keyEventContextMap contains older event.
+    // TODO(hidehiko): Switch to ignoring new event, or overwriting the old event
+    //   not to show unknown exceptions to users.
+    Preconditions.checkState(
+        keyEventContextMap.put(pointerId, keyEventContext) == null,
+        "Conflicting keyEventContext is found: " + pointerId);
+  }
+
+  private void processKeyEventContextForOnDownEvent(
+      final KeyEventContext keyEventContext) {
     Set<MetaState> nextMetaStates = keyEventContext.getNextMetaStates(metaState);
 
     if (!nextMetaStates.equals(metaState)) {
@@ -350,41 +442,29 @@ public class KeyboardView extends View implements MemoryManageable {
       // Update the metaState and request to update the full keyboard image
       // to update all key icons.
       setMetaStates(nextMetaStates);
-      backgroundSurface.requestUpdateKeyboard(keyboard, nextMetaStates);
+      backgroundSurface.requestUpdateKeyboard(keyboard.get(), nextMetaStates);
     } else {
       // Remember if a non-modifier key is pressed.
       isKeyPressed = true;
 
       // Request to update the image of only this key on the view.
-      backgroundSurface.requestUpdateKey(key, keyEventContext.flickDirection);
+      backgroundSurface.requestUpdateKey(keyEventContext.key,
+                                         Optional.of(keyEventContext.flickDirection));
     }
-
-    if (keyEventContextMap.put(pointerId, keyEventContext) != null) {
-      // keyEventContextMap contains older event.
-      // TODO(hidehiko): Switch to ignoring new event, or overwriting the old event
-      //   not to show unknown exceptions to users.
-      throw new IllegalStateException("Conflicting keyEventContext is found: " + pointerId);
-    }
-
-    // Show popup.
-    if (popupEnabled) {
-      popupPreviewPool.getInstance(pointerId)
-          .showIfNecessary(key, keyEventContext.getCurrentPopUp());
-    }
-
-    if (keyEventHandler != null) {
+    if (keyEventHandler.isPresent()) {
       // Clear pending key events and overwrite by this press key's one.
       for (KeyEventContext context : keyEventContextMap.values()) {
-        keyEventHandler.cancelDelayedKeyEvent(context);
+        keyEventHandler.get().cancelDelayedKeyEvent(context);
       }
-      keyEventHandler.maybeStartDelayedKeyEvent(keyEventContext);
-
+      keyEventHandler.get().maybeStartDelayedKeyEvent(keyEventContext);
       // Finally we send a notification to listeners.
-      keyEventHandler.sendPress(keyEventContext.getPressedKeyCode());
+      keyEventHandler.get().sendPress(keyEventContext.getPressedKeyCode());
     }
   }
 
   private void onUp(MotionEvent event) {
+    Preconditions.checkState(keyboard.isPresent());
+
     int pointerIndex = getPointerIndex(event.getAction());
     KeyEventContext keyEventContext = keyEventContextMap.remove(event.getPointerId(pointerIndex));
     if (keyEventContext == null) {
@@ -396,21 +476,22 @@ public class KeyboardView extends View implements MemoryManageable {
     float y = event.getY(pointerIndex);
     keyEventContext.update(x, y, TouchAction.TOUCH_UP, event.getEventTime() - event.getDownTime());
 
-    int keyCode = keyEventContext.getKeyCode();
-    int pressedKeyCode = keyEventContext.getPressedKeyCode();
+    processKeyEventContextForOnUpEvent(keyEventContext);
+  }
+
+  private void processKeyEventContextForOnUpEvent(KeyEventContext keyEventContext) {
     disposeKeyEventContext(keyEventContext);
 
-    if (keyEventHandler != null) {
-      // In multi touch event, CursorView and SymbolInputView can't show by not primary touch event
-      // because user may intend to input characters rapidly by multi touch, not change mode.
-      // TODO(yoichio): Move this logic to ViewManager. "In theory" this should be done
-      // in the class.
-      if (keyCode != KeyEntity.INVALID_KEY_CODE &&
-          (keyCode != keycodeSymbol || event.getAction() == MotionEvent.ACTION_UP)) {
-        keyEventHandler.sendKey(keyCode,
-            Collections.singletonList(keyEventContext.getTouchEvent()));
+    int keyCode = keyEventContext.getKeyCode();
+    int pressedKeyCode = keyEventContext.getPressedKeyCode();
+
+    if (keyEventHandler.isPresent()) {
+      if (keyCode != KeyEntity.INVALID_KEY_CODE) {
+        // TODO(hsumita): Confirm that we can put null as a touch event or not.
+        keyEventHandler.get().sendKey(keyCode,
+            Collections.singletonList(keyEventContext.getTouchEvent().orNull()));
       }
-      keyEventHandler.sendRelease(pressedKeyCode);
+      keyEventHandler.get().sendRelease(pressedKeyCode);
     }
 
     if (keyEventContext.isMetaStateToggleEvent()) {
@@ -420,7 +501,7 @@ public class KeyboardView extends View implements MemoryManageable {
         // reset the keyboard's meta state to unmodified.
         flushPendingKeyEvent(keyEventContext.getTouchEvent());
         updateMetaStates(Collections.<MetaState>emptySet(), MetaState.CHAR_TYPE_EXCLUSIVE_GROUP);
-        backgroundSurface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
+        backgroundSurface.requestUpdateKeyboard(keyboard.get(), Collections.<MetaState>emptySet());
       }
     } else {
       if (!metaState.isEmpty() && keyEventContextMap.isEmpty()) {
@@ -434,7 +515,8 @@ public class KeyboardView extends View implements MemoryManageable {
         }
         if (!nextMetaState.equals(metaState)) {
           setMetaStates(nextMetaState);
-          backgroundSurface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
+          backgroundSurface.requestUpdateKeyboard(
+              keyboard.get(), Collections.<MetaState>emptySet());
         }
       }
     }
@@ -451,17 +533,17 @@ public class KeyboardView extends View implements MemoryManageable {
       Key key = keyEventContext.key;
       if (keyEventContext.update(event.getX(i), event.getY(i), TouchAction.TOUCH_MOVE,
                                  event.getEventTime() - event.getDownTime())) {
-        // The key's state is updated from, at least, initial state, so we'll cancel the
-        // pending key events.
-        if (keyEventHandler != null) {
-          keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
+        if (keyEventHandler.isPresent()) {
+          // The key's state is updated from, at least, initial state, so we'll cancel the
+          // pending key events, and invoke new pending key events if necessary.
+          keyEventHandler.get().cancelDelayedKeyEvent(keyEventContext);
+          if (keyEventContext.flickDirection == Flick.Direction.CENTER) {
+            keyEventHandler.get().maybeStartDelayedKeyEvent(keyEventContext);
+          }
         }
-        if (popupEnabled) {
-          popupPreviewPool.getInstance(keyEventContext.pointerId).showIfNecessary(
-              key, keyEventContext.getCurrentPopUp());
-        }
+        updatePopUp(keyEventContext, false);
       }
-      backgroundSurface.requestUpdateKey(key, keyEventContext.flickDirection);
+      backgroundSurface.requestUpdateKey(key, Optional.of(keyEventContext.flickDirection));
     }
   }
 
@@ -469,16 +551,14 @@ public class KeyboardView extends View implements MemoryManageable {
   // other onXXX methods defined above.
   private void onCancel(@SuppressWarnings("unused") MotionEvent event) {
     resetState();
-    if (keyEventHandler != null) {
-      keyEventHandler.sendCancel();
+    if (keyEventHandler.isPresent()) {
+      keyEventHandler.get().sendCancel();
     }
   }
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    // Note: Once we get rid of supporting API Level 7 or lower, we can switch this
-    // to event.getActionMasked().
-    switch (event.getAction() & MotionEvent.ACTION_MASK) {
+    switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN:
       case MotionEvent.ACTION_POINTER_DOWN:
         onDown(event);
@@ -507,30 +587,31 @@ public class KeyboardView extends View implements MemoryManageable {
    * Finds a key containing the given coordinate.
    * @param x {@code x}-coordinate.
    * @param y {@code y}-coordinate.
-   * @return A corresponding {@code Key} instance, or {@code null} if not found.
+   * @return A corresponding {@code Key} instance, or {@code Optional.<Key>absent()} if not found.
    */
-  @VisibleForTesting Key getKeyByCoord(float x, float y) {
-    if (y < 0 || keyboard == null || keyboard.getRowList().isEmpty()) {
-      return null;
+  @VisibleForTesting Optional<Key> getKeyByCoord(float x, float y) {
+    if (y < 0 || !keyboard.isPresent() || keyboard.get().getRowList().isEmpty()) {
+      return Optional.absent();
     }
 
+    List<Row> rowList = keyboard.get().getRowList();
     int rowBottom = 0;
-    Row lastRow = keyboard.getRowList().get(keyboard.getRowList().size() - 1);
-    for (Row row : keyboard.getRowList()) {
+    Row lastRow = rowList.get(rowList.size() - 1);
+    for (Row row : rowList) {
       rowBottom += row.getHeight() + row.getVerticalGap();
       Key prevKey = null;
       for (Key key : row.getKeyList()) {
         if ((// Stick vertical gaps to the keys above.
-             y < key.getY() + key.getHeight() + row.getVerticalGap() ||
+             y < key.getY() + key.getHeight() + row.getVerticalGap()
              // Or the key is at the bottom of the keyboard.
              // Note: Some devices sense touch events of out-side of screen.
              //   So, for better user experiences, we return the bottom row
              //   if a user touches below the screen bottom boundary.
-             row == lastRow ||
-             key.getY() + key.getHeight() >= keyboard.contentBottom) &&
+             || row == lastRow
+             || key.getY() + key.getHeight() >= keyboard.get().contentBottom)
             // Horizontal gap is included in the width,
             // so we don't need to calculate horizontal gap in addition to width.
-            x < key.getX() + key.getWidth() &&
+            && x < key.getX() + key.getWidth()
             // The following condition selects a key hit in A, C, or D
             // (C and D are on the same key), and excludes a key hit in B.
             //                +---+---+
@@ -541,21 +622,21 @@ public class KeyboardView extends View implements MemoryManageable {
             // The condition y < rowBottom allows hits on A and C, and the other
             // condition key.getX() <= x allows hits on C and D but not B.
             // Hence, the hits on B are excluded.
-            (y < rowBottom || key.getX() <= x)) {
+            && (y < rowBottom || key.getX() <= x)) {
           if (!key.isSpacer()) {
-            return key;  // Found a key.
+            return Optional.of(key);  // Found a key.
           }
 
           switch (key.getStick()) {
             case LEFT:
               if (prevKey != null) {
-                return prevKey;
+                return Optional.of(prevKey);
               }
               break;
             case EVEN:
               // Split the spacer evenly, assuming we don't have any consecutive spacers.
               if (x < key.getX() + key.getWidth() / 2 && prevKey != null) {
-                return prevKey;
+                return Optional.of(prevKey);
               }
               break;
             case RIGHT:
@@ -569,11 +650,11 @@ public class KeyboardView extends View implements MemoryManageable {
       }
 
       if ((y < rowBottom || row == lastRow) && prevKey != null) {
-        return prevKey;
+        return Optional.of(prevKey);
       }
     }
 
-    return null;  // Not found.
+    return Optional.absent();  // Not found.
   }
 
   @Override
@@ -585,6 +666,7 @@ public class KeyboardView extends View implements MemoryManageable {
 
   @Override
   public boolean dispatchTouchEvent(MotionEvent event) {
+    Preconditions.checkNotNull(event);
     if (AccessibilityUtil.isTouchExplorationEnabled(getContext())) {
       return accessibilityDelegate.dispatchTouchEvent(event);
     }
@@ -593,6 +675,7 @@ public class KeyboardView extends View implements MemoryManageable {
 
   @Override
   public boolean dispatchHoverEvent(MotionEvent event) {
+    Preconditions.checkNotNull(event);
     if (AccessibilityUtil.isTouchExplorationEnabled(getContext())) {
       return accessibilityDelegate.dispatchHoverEvent(event);
     }
@@ -600,7 +683,7 @@ public class KeyboardView extends View implements MemoryManageable {
   }
 
   @VisibleForTesting
-  Set<MetaState> getMetaStates() {
+  public Set<MetaState> getMetaStates() {
     return this.metaState;
   }
 
@@ -609,6 +692,7 @@ public class KeyboardView extends View implements MemoryManageable {
     Preconditions.checkArgument(MetaState.isValidSet(metaState));
     this.metaState = metaState;
     accessibilityDelegate.setMetaState(metaState);
+    backgroundSurface.requestMetaState(metaState);
   }
 
   public void updateMetaStates(Set<MetaState> addedMetaStates, Set<MetaState> removedMetaStates) {
@@ -617,6 +701,7 @@ public class KeyboardView extends View implements MemoryManageable {
 
     setMetaStates(Sets.union(Sets.difference(metaState, removedMetaStates),
                              addedMetaStates).immutableCopy());
+    invalidate();
   }
 
   public void setPasswordField(boolean isPasswordField) {
@@ -627,31 +712,35 @@ public class KeyboardView extends View implements MemoryManageable {
     Preconditions.checkNotNull(editorInfo);
 
     Set<MetaState> metaStates = EnumSet.noneOf(MetaState.class);
-    switch (editorInfo.imeOptions & EditorInfo.IME_MASK_ACTION) {
-      case EditorInfo.IME_ACTION_DONE:
-        metaStates.add(MetaState.ACTION_DONE);
-        break;
-      case EditorInfo.IME_ACTION_GO:
-        metaStates.add(MetaState.ACTION_GO);
-        break;
-      case EditorInfo.IME_ACTION_NEXT:
-        metaStates.add(MetaState.ACTION_NEXT);
-        break;
-      case EditorInfo.IME_ACTION_NONE:
-        metaStates.add(MetaState.ACTION_NONE);
-        break;
-      case EditorInfo.IME_ACTION_PREVIOUS:
-        metaStates.add(MetaState.ACTION_PREVIOUS);
-        break;
-      case EditorInfo.IME_ACTION_SEARCH:
-        metaStates.add(MetaState.ACTION_SEARCH);
-        break;
-      case EditorInfo.IME_ACTION_SEND:
-        metaStates.add(MetaState.ACTION_SEND);
-        break;
-      default:
-        // Do nothing
+    // If IME_FLAG_NO_ENTER_ACTION is set, normal action icon should be shown.
+    if ((editorInfo.imeOptions & EditorInfo.IME_FLAG_NO_ENTER_ACTION) == 0) {
+      switch (editorInfo.imeOptions & EditorInfo.IME_MASK_ACTION) {
+        case EditorInfo.IME_ACTION_DONE:
+          metaStates.add(MetaState.ACTION_DONE);
+          break;
+        case EditorInfo.IME_ACTION_GO:
+          metaStates.add(MetaState.ACTION_GO);
+          break;
+        case EditorInfo.IME_ACTION_NEXT:
+          metaStates.add(MetaState.ACTION_NEXT);
+          break;
+        case EditorInfo.IME_ACTION_NONE:
+          metaStates.add(MetaState.ACTION_NONE);
+          break;
+        case EditorInfo.IME_ACTION_PREVIOUS:
+          metaStates.add(MetaState.ACTION_PREVIOUS);
+          break;
+        case EditorInfo.IME_ACTION_SEARCH:
+          metaStates.add(MetaState.ACTION_SEARCH);
+          break;
+        case EditorInfo.IME_ACTION_SEND:
+          metaStates.add(MetaState.ACTION_SEND);
+          break;
+        default:
+          // Do nothing
+      }
     }
+
     // InputType variation is *NOT* bit-fields in fact.
     int clazz = editorInfo.inputType & InputType.TYPE_MASK_CLASS;
     int variation = editorInfo.inputType & InputType.TYPE_MASK_VARIATION;
@@ -675,5 +764,26 @@ public class KeyboardView extends View implements MemoryManageable {
 
     updateMetaStates(metaStates, Sets.union(MetaState.ACTION_EXCLUSIVE_GROUP,
                                             MetaState.VARIATION_EXCLUSIVE_GROUP));
+  }
+
+  public void setGlobeButtonEnabled(boolean isGlobeButtonEnabled) {
+    if (isGlobeButtonEnabled) {
+      updateMetaStates(EnumSet.of(MetaState.GLOBE), EnumSet.of(MetaState.NO_GLOBE));
+    } else {
+      updateMetaStates(EnumSet.of(MetaState.NO_GLOBE), EnumSet.of(MetaState.GLOBE));
+    }
+  }
+
+  private void updatePopUp(KeyEventContext keyEventContext, boolean isDelayedPopUp) {
+    PopUpPreview popUpPreview = popupPreviewPool.getInstance(keyEventContext.pointerId);
+    // Even if popup is disabled by preference, delayed popup (== popup for long-press)
+    // is shown otherwise a user cannot know how long (s)he has to press the key
+    // to get a character corresponding to long-press.
+    if (popupEnabled || isDelayedPopUp) {
+      popUpPreview.showIfNecessary(
+          keyEventContext.key, keyEventContext.getCurrentPopUp(), isDelayedPopUp);
+    } else {
+      popUpPreview.dismiss();
+    }
   }
 }

@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2010-2015, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<!-- This file is a part of ViewManager so please maintain in parallel. -->
+<!--
+MozcView hierarchy
+
+Syntax:
+"Type parent-id
+     Type child-id0
+     Type child-id1
+     ..."
+
+Type:
+  Frame: FrameLayout
+  Linear-V: LinearLayout orientation=vertical
+  Linear-H: LinearLayout orientation=horizontal
+  Image: ImageView
+
+MozcView(Frame)
+    Linear-V
+        View overlay_view
+
+        Frame bottom_frame
+            View bottom_background
+
+            Linear-H foreground_frame
+                Frame left_frame
+                    Image left_adjust_botton
+
+                Linear-V center_frame
+                    Frame input_frame
+                        Linear-V textinput_frame
+                            Frame
+                                Linear-H button_frame
+                                CandidateView candidate_view
+
+                            NarrowFrameView narrow_frame
+                                View narrow_frame_separator
+                                Frame
+                                    Image hardware_composition_button
+                                    Image widen_button
+
+                            Frame keyboard_frame
+                                JapaneseKeyboardView keyboard_view
+
+                        SymbolInputView symbol_input_view
+
+                Frame right_frame
+                    Image right_adjust_botton
+
+    FloatingCandidateView floating_candidate_view
+-->
+<org.mozc.android.inputmethod.japanese.MozcView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mozc="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:visibility="gone" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:gravity="bottom"
+        android:orientation="vertical" >
+
+        <!--
+         This invisible view overlays on target activity
+         and makes a touchable region during candidate dragging.
+         TODO(hsumita): Remove overlay view if it is no longer necessary.
+        -->
+        <View
+            android:id="@+id/overlay_view"
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1" />
+
+        <FrameLayout
+            android:id="@+id/bottom_frame"
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/ime_window_height"
+            android:gravity="bottom"
+            android:layout_weight="0" >
+
+            <View
+                android:id="@+id/bottom_background"
+                android:layout_width="fill_parent"
+                android:layout_height="@dimen/input_frame_height"
+                android:layout_gravity="bottom" />
+
+            <LinearLayout
+                android:id="@+id/foreground_frame"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_gravity="bottom"
+                android:gravity="bottom"
+                android:orientation="horizontal" >
+
+                <ViewStub
+                    android:id="@+id/stub_left_frame"
+                    android:layout_width="@dimen/side_frame_width"
+                    android:layout_height="fill_parent"
+                    android:layout_gravity="right"
+                    android:inflatedId="@+id/left_frame"
+                    android:layout="@layout/left_frame"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/center_frame"
+                    android:layout_width="0dip"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:gravity="bottom"
+                    android:orientation="vertical" >
+
+                    <FrameLayout
+                        android:id="@+id/input_frame"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:gravity="bottom" >
+
+                        <LinearLayout
+                            android:id="@+id/textinput_frame"
+                            android:layout_width="fill_parent"
+                            android:layout_height="fill_parent"
+                            android:layout_gravity="bottom"
+                            android:baselineAligned="false"
+                            android:gravity="bottom"
+                            android:orientation="vertical" >
+
+                            <!--
+                             An include tag must have the attributes which the included tag has,
+                             otherwise LayoutInflator.inflate causes memory leak.
+                            -->
+
+                            <FrameLayout
+                                android:layout_width="fill_parent"
+                                android:layout_height="0dip"
+                                android:layout_weight="1" >
+
+                                <include
+                                    android:id="@+id/button_frame"
+                                    android:layout_width="fill_parent"
+                                    android:layout_height="@dimen/button_frame_height"
+                                    android:layout_gravity="fill_horizontal|bottom"
+                                    layout="@layout/button_frame" />
+
+                                <include
+                                    android:id="@+id/candidate_view"
+                                    android:layout_width="fill_parent"
+                                    android:layout_height="fill_parent"
+                                    layout="@layout/candidate_view" />
+                            </FrameLayout>
+
+                            <org.mozc.android.inputmethod.japanese.NarrowFrameView
+                                android:id="@+id/narrow_frame"
+                                android:layout_width="fill_parent"
+                                android:layout_height="@dimen/narrow_frame_height"
+                                android:layout_gravity="bottom"
+                                android:orientation="vertical"
+                                android:visibility="gone" >
+
+                                <View
+                                    android:id="@+id/narrow_frame_separator"
+                                    android:layout_width="fill_parent"
+                                    android:layout_height="1dip"
+                                    android:layout_gravity="top" />
+
+                                <FrameLayout
+                                    android:layout_width="fill_parent"
+                                    android:layout_height="fill_parent"
+                                    android:layout_gravity="bottom" >
+
+                                    <org.mozc.android.inputmethod.japanese.view.MozcImageView
+                                        android:id="@+id/hardware_composition_button"
+                                        android:layout_width="64dip"
+                                        android:layout_height="fill_parent"
+                                        android:layout_gravity="left|bottom"
+                                        android:soundEffectsEnabled="false"
+                                        mozc:maxImageHeight="@dimen/default_function_icon_height" />
+
+                                    <org.mozc.android.inputmethod.japanese.view.MozcImageView
+                                        android:id="@+id/widen_button"
+                                        android:layout_width="64dip"
+                                        android:layout_height="fill_parent"
+                                        android:layout_gravity="right|bottom"
+                                        android:soundEffectsEnabled="false"
+                                        android:contentDescription="@string/cd_narrow_frame_widen_button"
+                                        mozc:maxImageHeight="@dimen/default_function_icon_height" />
+                                </FrameLayout>
+                            </org.mozc.android.inputmethod.japanese.NarrowFrameView>
+
+                            <FrameLayout
+                                android:id="@+id/keyboard_frame"
+                                android:layout_width="fill_parent"
+                                android:layout_height="@dimen/input_frame_height" >
+
+                                <org.mozc.android.inputmethod.japanese.keyboard.KeyboardView
+                                    android:id="@+id/keyboard_view"
+                                    android:layout_width="fill_parent"
+                                    android:layout_height="fill_parent" />
+
+                                <View
+                                    android:id="@+id/keyboard_frame_separator"
+                                    android:layout_width="fill_parent"
+                                    android:layout_height="1dip"
+                                    android:layout_gravity="top" />
+                            </FrameLayout>
+                        </LinearLayout>
+
+                        <!--
+                             In order not to send tapping events of "unclickable region" on
+                             SymbolInputView to behind views (usually keyboard view), we set
+                             "clickable=true" to this view, so that this view consumes click
+                             events. -->
+
+                        <org.mozc.android.inputmethod.japanese.SymbolInputView
+                            android:id="@+id/symbol_input_view"
+                            android:layout_width="fill_parent"
+                            android:layout_height="@dimen/symbol_view_height"
+                            android:layout_gravity="bottom"
+                            android:clickable="true"
+                            android:visibility="gone"
+                            android:soundEffectsEnabled="false" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <ViewStub
+                    android:id="@+id/stub_right_frame"
+                    android:layout_width="@dimen/side_frame_width"
+                    android:layout_height="fill_parent"
+                    android:layout_gravity="right"
+                    android:inflatedId="@+id/right_frame"
+                    android:layout="@layout/right_frame"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- TODO(hsumita): Replace this view by ViewStub for performance. -->
+    <org.mozc.android.inputmethod.japanese.FloatingCandidateView
+        android:id="@+id/floating_candidate_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="gone" />
+
+</org.mozc.android.inputmethod.japanese.MozcView>

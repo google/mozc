@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -780,6 +780,47 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
               character_form_manager->GetConversionCharacterForm("abc"));
 
     EXPECT_EQ("abc", segments.segment(0).candidate(0).value);
+  }
+  {
+    // Test for candidate with inner segment boundary.
+    Segments segments;
+    segments.set_request_type(Segments::SUGGESTION);
+
+    Segment *segment = segments.push_back_segment();
+    segment->set_key("\xE3\x81\xBE\xE3\x81\x98\x21");  // "まじ!"
+
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->Init();
+    candidate->key = "\xE3\x81\xBE\xE3\x81\x98\x21";  // "まじ!"
+    candidate->content_key = candidate->key;
+    candidate->value = "\xE3\x83\x9E\xE3\x82\xB8\x21";  // "マジ!"
+    candidate->content_value = candidate->value;
+    candidate->inner_segment_boundary.push_back(
+        Segment::Candidate::EncodeLengths(6, 6, 6, 6));  // 6 bytes for "まじ"
+    candidate->inner_segment_boundary.push_back(
+        Segment::Candidate::EncodeLengths(1, 1, 1, 1));  // 1 byte for "!"
+
+    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    ASSERT_EQ(1, segments.segments_size());
+    ASSERT_EQ(1, segments.segment(0).candidates_size());
+
+    const Segment::Candidate &rewritten_candidate =
+        segments.segment(0).candidate(0);
+    EXPECT_EQ("\xE3\x83\x9E\xE3\x82\xB8\xEF\xBC\x81",  // "マジ！" (full-width)
+              rewritten_candidate.value);
+    EXPECT_EQ("\xE3\x83\x9E\xE3\x82\xB8\xEF\xBC\x81",  // "マジ！" (full-width)
+              rewritten_candidate.content_value);
+    ASSERT_EQ(2, rewritten_candidate.inner_segment_boundary.size());
+
+    // Boundary information for
+    // key="まじ", value="マジ", ckey="まじ", cvalue="マジ"
+    EXPECT_EQ(Segment::Candidate::EncodeLengths(6, 6, 6, 6),
+              rewritten_candidate.inner_segment_boundary[0]);
+    // Boundary information for
+    // key="!", value="！", ckey="!", cvalue="！".
+    // Values are converted to full-width.
+    EXPECT_EQ(Segment::Candidate::EncodeLengths(1, 3, 1, 3),
+              rewritten_candidate.inner_segment_boundary[1]);
   }
 }
 

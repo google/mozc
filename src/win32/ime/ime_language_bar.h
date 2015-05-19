@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,7 @@
 #include <rpcsal.h>
 #include <msctf.h>
 #include <ctffunc.h>
-// Workaround against KB813540
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 
 #include "base/port.h"
 #include "session/commands.pb.h"

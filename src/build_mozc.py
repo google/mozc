@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,6 @@
 Typical usage:
 
   % python build_mozc.py gyp
-  % python build_mozc.py build_tools -c Release
   % python build_mozc.py build base/base.gyp:base
 """
 
@@ -47,9 +46,7 @@ import os
 import re
 import sys
 
-from build_tools import android_util
 from build_tools import mozc_version
-from build_tools.android_util import Emulator
 from build_tools.mozc_version import GenerateVersionFile
 from build_tools.test_tools import test_launcher
 from build_tools.util import CheckFileOrDie
@@ -67,6 +64,11 @@ from build_tools.util import RemoveDirectoryRecursively
 from build_tools.util import RemoveFile
 from build_tools.util import RunOrDie
 from build_tools.util import RunOrDieError
+
+if not IsWindows():
+  # android_util depends on fcntl module which doesn't exist in Windows.
+  # pylint: disable=g-import-not-at-top
+  from build_tools.android_util import Emulator
 
 SRC_DIR = '.'
 # We need to obtain the absolute path of this script before we
@@ -198,7 +200,6 @@ def GetGypFileNames(options):
 
   for name in mozc_top_level_names:
     gyp_file_names.extend(glob.glob(name + '/*.gyp'))
-  gyp_file_names.extend(glob.glob('%s/build_tools/*/*.gyp' % SRC_DIR))
   # Include subdirectories of data/test/session/scenario
   gyp_file_names.extend(glob.glob('%s/data/test/session/scenario/*.gyp' %
                                   SRC_DIR))
@@ -222,6 +223,9 @@ def GetGypFileNames(options):
   elif options.target_platform == 'NaCl':
     # Add chrome NaCl Mozc gyp scripts.
     gyp_file_names.append('%s/chrome/nacl/nacl_extension.gyp' % SRC_DIR)
+  elif options.target_platform == 'Android':
+    # Add Android Mozc gyp scripts.
+    gyp_file_names.extend(glob.glob('%s/android/*/*.gyp' % SRC_DIR))
   gyp_file_names.sort()
   return gyp_file_names
 
@@ -234,8 +238,11 @@ def GetTopLevelSourceDirectoryName():
   num_components = len(SRC_DIR.split('/'))
   return os.path.join(script_file_directory_name, *(['..'] * num_components))
 
-
-
+def GetAdditionalThirdPartyDir():
+  """Returns the addtitional third party dir."""
+  additional_third_party_path = 'third_party'
+  return os.path.abspath(os.path.join(GetTopLevelSourceDirectoryName(),
+                                      additional_third_party_path))
 
 def GetAndroidHome(options):
   """Gets the root directory of the SDK from options, ANDROID_HOME or PATH."""
@@ -374,16 +381,20 @@ def ParseGypOptions(args=None, values=None):
   # Android
   parser.add_option('--android_arch', dest='android_arch',
                     type='choice',
-                    choices=('arm', 'x86', 'mips',
-                            ),
+                    choices=('arm', 'x86', 'mips', 'arm64', 'x86_64', 'mips64'),
                     default='arm',
                     help='[Android build only] Android architecture '
                     '(arm, x86, mips)')
   parser.add_option('--android_stl', dest='android_stl',
                     type='choice',
-                    choices=('stlport', 'gnustl', 'libcxx'),
-                    default='stlport',
+                    choices=('gnustl', 'libcxx'),
+                    default='libcxx',
                     help='[Android build only] Standard C++ library')
+  parser.add_option('--android_compiler', dest='android_compiler',
+                    type='choice',
+                    choices=('gcc', 'clang'),
+                    default='gcc',
+                    help='[Android build only] Compiler')
   parser.add_option('--android_application_id', dest='android_application_id',
                     default='org.mozc.android.inputmethod.japanese',
                     help='[Android build only] Android\'s application id'
@@ -474,10 +485,10 @@ def ParseGypOptions(args=None, values=None):
                       help='A path to the binary directory of wix.')
 
     # For internal Windows builds, gyp is expected to generate solution files
-    # for Visual Studio 2010, which is a default compiler for Mozc.  However,
+    # for Visual Studio 2013, which is a default compiler for Mozc.  However,
     # you can specify the target version explicitly via 'msvs_version' option
     # as follows.
-    parser.add_option('--msvs_version', dest='msvs_version', default='2010',
+    parser.add_option('--msvs_version', dest='msvs_version', default='2013',
                       help='Specifies the target MSVS version.')
 
   return parser.parse_args(args, values)
@@ -585,10 +596,6 @@ def ParseRunTestsOptions(args=None, values=None):
                     help='[Android build only] specify which emulator/device '
                     'you test on. '
                     'If not specified emulators are launched and used.')
-  parser.add_option('--android_min_port', dest='android_min_port',
-                    default='5554',
-                    help='Minimum port number of emulators which will be '
-                    'launched by this script (inclusive).')
 
   return parser.parse_args(args, values)
 
@@ -703,6 +710,8 @@ def GypMain(options, unused_args, _):
 
   mozc_root = os.path.abspath(GetTopLevelSourceDirectoryName())
   gyp_options.extend(['-D', 'abs_depth=%s' % mozc_root])
+  gyp_options.extend(['-D', ('additional_third_party_dir=%s'
+                             % GetAdditionalThirdPartyDir())])
 
   gyp_options.extend(['-D', 'python_executable=%s' % sys.executable])
 
@@ -750,6 +759,7 @@ def GypMain(options, unused_args, _):
   gyp_options.extend(['-D', 'android_home=%s' % android_home])
   gyp_options.extend(['-D', 'android_arch=%s' % options.android_arch])
   gyp_options.extend(['-D', 'android_stl=%s' % options.android_stl])
+  gyp_options.extend(['-D', 'android_compiler=%s' % options.android_compiler])
   gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
   gyp_options.extend(['-D', 'android_application_id=%s' %
                       options.android_application_id])
@@ -869,7 +879,7 @@ def GypMain(options, unused_args, _):
   else:
     gyp_options.extend(['-D', 'use_dynamically_linked_qt=0'])
 
-  if options.use_zinnia:
+  if options.use_zinnia and target_platform not in ['Android', 'NaCl']:
     gyp_options.extend(['-D', 'use_zinnia=YES'])
   else:
     gyp_options.extend(['-D', 'use_zinnia=NO'])
@@ -913,11 +923,14 @@ def GypMain(options, unused_args, _):
     gyp_options.extend(['-D', 'pkg_config_command='])
 
   if target_platform == 'NaCl':
-    if os.path.isdir(options.nacl_sdk_root):
+    if options.nacl_sdk_root:
       nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
     else:
-      PrintErrorAndExit('The directory specified with --nacl_sdk_root does not '
-                        'exist: %s' % options.nacl_sdk_root)
+      nacl_sdk_root = os.path.abspath(os.path.join(GetAdditionalThirdPartyDir(),
+                                                   'nacl_sdk', 'pepper_27'))
+    if not os.path.isdir(nacl_sdk_root):
+      PrintErrorAndExit('The nacl_sdk_root directory (%s) does not exist.'
+                        % options.nacl_sdk_root)
     gyp_options.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
 
   if options.server_dir:
@@ -981,23 +994,6 @@ def GypMain(options, unused_args, _):
       RunOrDie(copy_commands)
 
 
-
-
-def BuildToolsMain(options, unused_args, original_directory_name):
-  """The main function for 'build_tools' command."""
-  if not IsWindows():
-    logging.info('build_tools is deprecated on this platform.')
-    return
-
-  build_tools_dir = os.path.join(GetRelPath(os.getcwd(),
-                                            original_directory_name),
-                                 SRC_DIR, 'build_tools')
-  build_tools_targets = [
-      'out_win/%s:build_tools' % options.configuration,
-  ]
-
-  for build_tools_target in build_tools_targets:
-    BuildMain(options, [build_tools_target], original_directory_name)
 
 
 def CanonicalTargetToGypFileAndTargetName(target):
@@ -1174,56 +1170,76 @@ def RunTestsOnAndroid(options, build_args, original_directory_name):
     if options.android_device:
       serialnumbers.append(options.android_device)
     else:
-      # Set up the environment.
-      # Copy ANDROID_SDK_HOME directory.
-      # Copied directory will be overwritten by StartAndroidEmulator
-      # (inflating compressed file and being added emulator's temp files).
-      # Thus this setup must be done only once.
-      android_sdk_home_original = os.path.join(
-          SRC_DIR, 'android', 'android_sdk_home')
+      # Temporary AVDs are created beneath android_sdk_home.
       android_sdk_home = os.path.join(
           GetBuildBaseName(options, GetMozcVersion().GetTargetPlatform()),
           options.configuration,
           'android_sdk_home')
       android_home = GetAndroidHome(options)
-      android_util.SetUpTestingSdkHomeDirectory(android_sdk_home_original,
-                                                android_sdk_home,
-                                                android_home)
-      available_ports = [i for i
-                         in android_util.GetAvailableEmulatorPorts(android_home)
-                         if i >= int(options.android_min_port)]
-      if GetMozcVersion().GetAndroidArch() == 'arm':
-        acceptable_abi = ['armeabi', 'armeabi-v7a']
+
+      android_arch = GetMozcVersion().GetAndroidArch()
+      if android_arch == 'arm':
+        avd_configs = [
+            {'--name': 'Nexus5-Api21-arm-WVGA800',
+             '--target': 'android-21',
+             '--abi': 'default/armeabi-v7a',
+             '--device': 'Nexus 5',
+             '--skin': 'WVGA800'},
+            {'--name': 'Nexus10-Api21-arm-WXGA800',
+             '--target': 'android-21',
+             '--abi': 'default/armeabi-v7a',
+             '--device': 'Nexus 10',
+             '--skin': 'WXGA800'},]
+      elif android_arch == 'x86':
+        avd_configs = [
+            {'--name': 'Nexus5-Api21-x86-WVGA800',
+             '--target': 'android-21',
+             '--abi': 'default/x86',
+             '--device': 'Nexus 5',
+             '--skin': 'WVGA800'},
+            {'--name': 'Nexus10-Api21-x86-WXGA800',
+             '--target': 'android-21',
+             '--abi': 'default/x86',
+             '--device': 'Nexus 10',
+             '--skin': 'WXGA800'},]
+      elif android_arch == 'mips':
+        avd_configs = [
+            {'--name': 'NexusS-Api15-mips-WVGA800',
+             '--target': 'android-15',
+             '--abi': 'default/mips',
+             '--device': 'Nexus S',
+             '--skin': 'WVGA800'},
+            # As of 2014-05-27, the latest target of MIPS is 17.
+            {'--name': 'Nexus5-Api17-mips-WVGA800',
+             '--target': 'android-17',
+             '--abi': 'default/mips',
+             '--device': 'Nexus 5',
+             '--skin': 'WVGA800'},
+            {'--name': 'Nexus10-Api17-mips-WXGA800',
+             '--target': 'android-17',
+             '--abi': 'default/mips',
+             '--device': 'Nexus 10',
+             '--skin': 'WXGA800'},]
       else:
-        acceptable_abi = [GetMozcVersion().GetAndroidArch()]
-      avd_names = [i for i in android_util.GetAvdNames(android_sdk_home)
-                   if android_util.GetAvdProperties(
-                       android_sdk_home, i)['abi.type'] in acceptable_abi]
-      logging.info('Launching following AVDs; %s', avd_names)
-      if len(available_ports) < len(avd_names):
-        PrintErrorAndExit('available_ports (%d) is smaller than avd_names (%d)'
-                          % (len(available_ports), len(avd_names)))
-      emulators = []
-      # Invokes all the available emulators.
-      for avd_name in avd_names:
-        emulator = Emulator(android_sdk_home, avd_name, android_home)
-        logging.info('Creating SD card for %s', avd_name)
-        emulator.CreateBlankSdCard(300 * 1024 * 1024)
-        logging.info('Launching %s at port %d', avd_name, available_ports[0])
-        emulator.Launch(available_ports[0])
-        logging.info('Waiting for %s', avd_name)
-        emulator.GetAndroidDevice(android_home).WaitForDevice()
-        available_ports = available_ports[1:]
-        emulators.append(emulator)
-        serialnumbers.append(emulator.serial)
-        logging.info('Successfully launched %s', avd_name)
+        avd_configs = []
+
+      emulators = Emulator.LaunchAll(android_sdk_home, avd_configs,
+                                     android_home)
+      serialnumbers.extend([emulator.serial for emulator in emulators])
 
     # Run native and Java tests.
+    # If --configuration is Release, Java tests are skipped.
+    if options.configuration == 'Release':
+      targets = ['run_native_test']
+      logging.info('As this is Relase configuration, Java tests are skipped.')
+    else:
+      # run_java_test must be executed after run_native_test
+      # because package manager, which is mandatory to run Java tests,
+      # requires minutes to get ready.
+      targets = ['run_native_test', 'run_java_test']
+
     android_gyp = os.path.join(SRC_DIR, 'android', 'android.gyp')
-    # run_java_test must be executed after run_native_test
-    # because package manager, which is mandatory to run Java tests,
-    # requires minutes to get ready.
-    for target in ('run_native_test', 'run_java_test'):
+    for target in targets:
       (build_options, build_targets) = ParseBuildOptions(
           build_args + ['%s:%s' % (android_gyp, target)])
       # Injects android_device attribute to build_options.
@@ -1306,6 +1322,9 @@ def RunTestsMain(options, args, original_directory_name):
       targets.append('out_win/%s:unittests' % options.configuration)
     else:
       targets.append('%s/gyp/tests.gyp:unittests' % SRC_DIR)
+    if target_platform == 'Android' and options.configuration != 'Release':
+      targets.append('%s/android/android.gyp:build_java_test' % SRC_DIR)
+
 
   # Build the test targets
   (build_opts, build_args) = ParseBuildOptions(build_options + targets)
@@ -1317,6 +1336,7 @@ def RunTestsMain(options, args, original_directory_name):
   else:
     RunTests(GetBuildBaseName(options, target_platform), options.configuration,
              options.test_jobs)
+
 
 def CleanBuildFilesAndDirectories(options, unused_args):
   """Cleans build files and directories."""
@@ -1345,18 +1365,19 @@ def CleanBuildFilesAndDirectories(options, unused_args):
                                      GetMozcVersion().GetTargetPlatform())
   if target_platform:
     directory_names.append(target_platform)
-
   if IsLinux():
     # Remove auto-generated files.
     file_names.append(os.path.join(SRC_DIR, 'android', 'AndroidManifest.xml'))
     file_names.append(os.path.join(
         SRC_DIR, 'android', 'tests', 'AndroidManifest.xml'))
+    # Remove a symbolic link to android/resources/res
+    file_names.append(os.path.join(SRC_DIR, 'android', 'resources', 'res'))
     directory_names.append(os.path.join(SRC_DIR, 'android', 'assets'))
     # Delete files/dirs generated by Android SDK/NDK.
     android_library_projects = [
         '',
         'protobuf',
-        'resources_oss',
+        'resources',
         'tests',
         ]
     android_generated_dirs = ['bin', 'gen', 'obj', 'libs', 'gen_for_adt']
@@ -1364,10 +1385,6 @@ def CleanBuildFilesAndDirectories(options, unused_args):
       for directory in android_generated_dirs:
         directory_names.append(
             os.path.join(SRC_DIR, 'android', project, directory))
-    # In addition, remove resources/res/raw directory, which contains
-    # generated .pic files.
-    directory_names.append(
-        os.path.join(SRC_DIR, 'android', 'resources', 'res', 'raw'))
 
   # Remove files.
   for file_name in file_names:
@@ -1388,7 +1405,6 @@ def ShowHelpAndExit():
   print 'Commands: '
   print '  gyp          Generate project files.'
   print '  build        Build the specified target.'
-  print '  build_tools  Build tools used by the build command.'
   print '  runtests     Build all tests and run them.'
   print '  clean        Clean all the build files and directories.'
   print ''
@@ -1414,7 +1430,6 @@ def main():
 
   command_to_procedure = {
       'gyp': (ParseGypOptions, GypMain),
-      'build_tools': (ParseBuildOptions, BuildToolsMain),
       'build': (ParseBuildOptions, BuildMain),
       'runtests': (ParseRunTestsOptions, RunTestsMain),
       'clean': (ParseCleanOptions, CleanMain)}

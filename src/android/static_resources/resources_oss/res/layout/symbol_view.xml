@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2015, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mozc="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:clickable="true" >
+
+    <!--
+       TODO(hidehiko): Replace base class of SymbolInputView by LinearLayout so that we
+       don't need this nested view. We need to refactor InOutAnimatedFrameLayout for it.
+    -->
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:baselineAligned="false"
+        android:orientation="vertical" >
+
+        <FrameLayout
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1" >
+
+            <TabHost
+                android:id="@android:id/tabhost"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent" >
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:orientation="vertical" >
+
+                    <FrameLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content" >
+
+                        <LinearLayout
+                            android:id="@+id/symbol_minor_category"
+                            android:layout_width="fill_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal" >
+
+                            <TabWidget
+                                android:id="@android:id/tabs"
+                                android:layout_width="0dip"
+                                android:layout_height="@dimen/button_frame_height"
+                                android:layout_weight="6"
+                                android:showDividers="none" />
+
+                            <View
+                                android:id="@+id/symbol_view_backspace_separator"
+                                android:layout_width="1dip"
+                                android:layout_height="fill_parent"
+                                android:layout_weight="0" />
+
+                            <org.mozc.android.inputmethod.japanese.view.MozcImageView
+                                android:id="@+id/symbol_view_delete_button"
+                                android:layout_width="0dip"
+                                android:layout_height="fill_parent"
+                                android:layout_gravity="center"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_symbol_window_backspace"
+                                android:focusable="true"
+                                android:scaleType="fitCenter"
+                                mozc:rawSrc="@raw/twelvekeys__function__delete__icon"
+                                mozc:maxImageHeight="@dimen/default_function_icon_height" />
+                        </LinearLayout>
+                    </FrameLayout>
+
+                    <View
+                        android:id="@+id/symbol_separator_1"
+                        android:layout_width="fill_parent"
+                        android:layout_height="1dip" />
+
+                    <android.support.v4.view.ViewPager
+                        android:id="@+id/symbol_input_candidate_view_pager"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:soundEffectsEnabled="false" >
+
+                        <FrameLayout
+                            android:id="@android:id/tabcontent"
+                            android:layout_width="fill_parent"
+                            android:layout_height="fill_parent"
+                            android:visibility="gone" >
+
+                          <View
+                              android:id="@+id/symbol_input_dummy"
+                              android:layout_width="0dip"
+                              android:layout_height="0dip"
+                              android:minHeight="0dip"
+                              android:minWidth="0dip" />
+                        </FrameLayout>
+                    </android.support.v4.view.ViewPager>
+                </LinearLayout>
+            </TabHost>
+
+            <FrameLayout
+                android:id="@+id/number_frame"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_gravity="bottom"
+                    android:orientation="vertical" >
+
+                    <FrameLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="0dip"
+                        android:layout_weight="1" >
+
+                        <!--
+                            An include tag must have the attributes which the included tag has,
+                            otherwise LayoutInflator.inflate causes memory leak.
+                        -->
+
+                        <include
+                            android:id="@+id/button_frame_in_symbol_view"
+                            android:layout_width="fill_parent"
+                            android:layout_height="@dimen/button_frame_height"
+                            layout="@layout/button_frame" />
+
+                        <include
+                            android:id="@+id/candidate_view_in_symbol_view"
+                            android:layout_width="fill_parent"
+                            android:layout_height="fill_parent"
+                            layout="@layout/candidate_view" />
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:id="@+id/number_keyboard_frame"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content" >
+
+                        <org.mozc.android.inputmethod.japanese.keyboard.KeyboardView
+                            android:id="@+id/number_keyboard"
+                            android:layout_width="fill_parent"
+                            android:layout_height="@dimen/symbol_view_number_keyboard_height" />
+
+                        <View
+                            android:id="@+id/symbol_separator_3"
+                            android:layout_width="fill_parent"
+                            android:layout_height="1dip"
+                            android:layout_gravity="top" />
+                    </FrameLayout>
+
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- Displayed when emoji major category is selected on the non-emoji-allowed text view. -->
+
+            <TextView
+                android:id="@+id/symbol_emoji_disabled_message_view"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="#C0000000"
+                android:clickable="true"
+                android:gravity="center"
+                android:shadowColor="@android:color/black"
+                android:shadowRadius="5"
+                android:text="@string/symbol_emoji_disabled_message"
+                android:textColor="@android:color/white"
+                android:textSize="20dip"
+                android:visibility="gone" />
+
+            <View
+                android:id="@+id/symbol_separator_2"
+                android:layout_width="fill_parent"
+                android:layout_height="1dip"
+                android:layout_gravity="bottom" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/symbol_major_category"
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/symbol_view_major_category_height"
+            android:gravity="center"
+            android:paddingBottom="2dip"
+            android:paddingLeft="1dip"
+            android:paddingRight="1dip"
+            android:paddingTop="2dip"
+            android:soundEffectsEnabled="false" >
+
+            <org.mozc.android.inputmethod.japanese.view.MozcImageView
+                android:id="@+id/symbol_view_close_button"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_gravity="center"
+                android:layout_weight="17.3"
+                android:contentDescription="@string/cd_close_symbol_window"
+                android:scaleType="fitCenter"
+                android:soundEffectsEnabled="false"
+                mozc:rawSrc="@raw/symbol__function__close"
+                mozc:maxImageWidth="@dimen/symbol_close_button_width" />
+
+            <View
+                android:id="@+id/symbol_view_close_button_separator"
+                android:layout_width="1dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="0" />
+
+            <org.mozc.android.inputmethod.japanese.view.MozcImageButton
+                android:id="@+id/category_selector_major_number"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="16.55"
+                android:contentDescription="@string/cd_symbol_window_number"
+                android:padding="0dip"
+                android:scaleType="fitCenter"
+                android:soundEffectsEnabled="false"
+                mozc:maxImageHeight="@dimen/symbol_major_number_height" />
+
+            <org.mozc.android.inputmethod.japanese.view.MozcImageButton
+                android:id="@+id/category_selector_major_symbol"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="16.55"
+                android:contentDescription="@string/cd_symbol_window_symbol"
+                android:padding="0dip"
+                android:scaleType="fitCenter"
+                android:soundEffectsEnabled="false"
+                mozc:maxImageHeight="@dimen/symbol_major_symbol_height" />
+
+            <org.mozc.android.inputmethod.japanese.view.MozcImageButton
+                android:id="@+id/category_selector_major_emoticon"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="16.55"
+                android:contentDescription="@string/cd_symbol_window_emoticon"
+                android:padding="0dip"
+                android:scaleType="fitCenter"
+                android:soundEffectsEnabled="false"
+                mozc:maxImageHeight="@dimen/symbol_major_emoticon_height" />
+
+            <org.mozc.android.inputmethod.japanese.view.MozcImageButton
+                android:id="@+id/category_selector_major_emoji"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="16.55"
+                android:contentDescription="@string/cd_symbol_window_emoji"
+                android:padding="0dip"
+                android:scaleType="fitCenter"
+                android:soundEffectsEnabled="false"
+                mozc:maxImageHeight="@dimen/symbol_major_emoji_height" />
+
+            <View
+                android:id="@+id/symbol_view_enter_button_separator"
+                android:layout_width="1dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="0" />
+
+            <org.mozc.android.inputmethod.japanese.view.MozcImageView
+                android:id="@+id/symbol_view_enter_button"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_gravity="center"
+                android:layout_weight="17.3"
+                android:contentDescription="@string/cd_symbol_window_enter"
+                android:focusable="true"
+                android:scaleType="fitCenter"
+                mozc:rawSrc="@raw/function__enter__icon"
+                mozc:maxImageWidth="@dimen/keyboard_enter_width" />
+        </LinearLayout>
+    </LinearLayout>
+
+</merge>

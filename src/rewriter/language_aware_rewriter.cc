@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -130,11 +130,16 @@ bool IsRawQuery(const composer::Composer &composer,
     return true;
   }
 
+  // If the composition is storead as a key in the dictionary like
+  // "はな" (hana), "たけ" (take), the query is not handled as a raw query.
+  // It is a little conservative, but a safer way.
+  if (dictionary->HasKey(key)) {
+    return false;
+  }
+
   // If the input text is stored in the dictionary, it is perhaps a raw query.
   // For example, the input characters of "れもヴぇ" (remove) is in the
-  // dictionary, so it is treated as a raw text.  This logic is a little
-  // aggressive because "たけ" (take), "ほうせ" (house) and so forth are also
-  // treated as raw texts.
+  // dictionary, so it is treated as a raw text.
   if (dictionary->HasValue(raw_text)) {
     *rank = 2;
     return true;

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,9 @@ package org.mozc.android.inputmethod.japanese;
 import org.mozc.android.inputmethod.japanese.MozcUtil.TelephonyManagerInterface;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
+import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil.PreferenceManagerStaticInterface;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import org.mozc.android.inputmethod.japanese.util.LauncherIconManagerFactory.LauncherIconManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -90,9 +92,6 @@ public class ApplicationInitializerFactory {
   @VisibleForTesting
   static final String PREF_LAUNCHED_AT_LEAST_ONCE = "pref_launched_at_least_once";
   @VisibleForTesting
-  static final String PREF_LAST_LAUNCH_ABI_INDEPENDENT_VERSION_CODE =
-      "pref_last_launch_abi_independent_version_code";
-  @VisibleForTesting
   static final String PREF_WELCOME_ACTIVITY_SHOWN = "pref_welcome_activity_shown";
 
   private static class ApplicationInitializerImpl implements ApplicationInitializationStatus {
@@ -113,11 +112,13 @@ public class ApplicationInitializerFactory {
 
     @Override
     public Optional<Integer> getLastLaunchAbiIndependentVersionCode() {
-      if (!this.sharedPreferences.contains(PREF_LAST_LAUNCH_ABI_INDEPENDENT_VERSION_CODE)) {
+      if (!this.sharedPreferences.contains(
+          PreferenceUtil.PREF_LAST_LAUNCH_ABI_INDEPENDENT_VERSION_CODE)) {
         return Optional.absent();
       }
       return Optional.of(
-          this.sharedPreferences.getInt(PREF_LAST_LAUNCH_ABI_INDEPENDENT_VERSION_CODE, 0));
+          this.sharedPreferences.getInt(
+              PreferenceUtil.PREF_LAST_LAUNCH_ABI_INDEPENDENT_VERSION_CODE, 0));
     }
 
     @Override
@@ -149,10 +150,45 @@ public class ApplicationInitializerFactory {
       this.telephonyManager = Preconditions.checkNotNull(telephonyManager);
     }
 
-    public Optional<Intent> initialize(boolean omitWelcomeActivity,
+    /**
+     * Initializes the application.
+     *
+     * <p>Updates some preferences.
+     * Here we use three preference items.
+     * <ul>
+     * <li>pref_welcome_activity_shown: True if the "Welcome" activity has shown at least once.
+     * <li>pref_last_launch_abi_independent_version_code: The latest version number which
+     * has launched at least once.
+     * <li>pref_launched_at_least_once: Deprecated. True if the the IME has launched at least once.
+     * </ul>
+     * Some preferences should be set at the first time launch.
+     * If the IME is a system application (preinstalled), it shouldn't show "Welcome" activity.
+     * If an update is performed (meaning that the IME becomes non-system app),
+     * the activity should be shown at the first time launch.
+     *
+     * We have to do migration process.
+     * If pref_launched_at_least_once exists, pref_welcome_activity_shown is recognized as
+     * true and pref_last_launch_abi_independent_version_code is recognized as
+     * LAUNCHED_AT_LEAST_ONCE_DEPRECATED_VERSION_CODE. And then pref_launched_at_least_once is
+     * removed.
+     *
+     * @param isSystemApplication true if the app is a system application (== preinstall)
+     * @param isDevChannel true if the app is built for dev channel
+     * @param isWelcomeActivityPreferred true if the configuration prefers to shown welcome activity
+     *        if it's not been shown yet.
+     * @param abiIndependentVersionCode ABI independent version code, typically obtained
+     *        from {@link MozcUtil#getAbiIndependentVersionCode(Context)}
+     *
+     * @return if forwarding is needed Intent is returned. The caller side should invoke the Intent.
+     */
+    public Optional<Intent> initialize(boolean isSystemApplication,
                                        boolean isDevChannel,
                                        boolean isWelcomeActivityPreferred,
-                                       int abiIndependentVersionCode) {
+                                       int abiIndependentVersionCode,
+                                       LauncherIconManager launcherIconManager,
+                                       PreferenceManagerStaticInterface preferenceManager) {
+      Preconditions.checkNotNull(launcherIconManager);
+      Preconditions.checkNotNull(preferenceManager);
       SharedPreferences.Editor editor = sharedPreferences.edit();
       Resources resources = context.getResources();
       try {
@@ -175,27 +211,43 @@ public class ApplicationInitializerFactory {
         // Preferences: Update if this is the first launch
         if (!lastVersionCode.isPresent()) {
           // Store full-screen relating preferences.
+          DisplayMetrics portraitMetrics = getPortraitDisplayMetrics(
+              resources.getDisplayMetrics(), resources.getConfiguration().orientation);
           storeDefaultFullscreenMode(
-              sharedPreferences,
-              getPortraitDisplayMetrics(resources.getDisplayMetrics(),
-                                        resources.getConfiguration().orientation),
-              resources.getDimension(R.dimen.fullscreen_threshold),
-              resources.getDimension(R.dimen.ime_window_height_portrait),
-              resources.getDimension(R.dimen.ime_window_height_landscape));
+              sharedPreferences, portraitMetrics.heightPixels, portraitMetrics.widthPixels,
+              (int) Math.ceil(getDimensionForOrientation(
+                  resources, R.dimen.input_frame_height, Configuration.ORIENTATION_PORTRAIT)),
+              (int) Math.ceil(getDimensionForOrientation(
+                  resources, R.dimen.input_frame_height, Configuration.ORIENTATION_LANDSCAPE)),
+              resources.getDimensionPixelOffset(R.dimen.fullscreen_threshold));
 
           // Run emoji provider type detection, so that the detected provider will be
           // used as the default values of the preference activity.
           EmojiProviderType.maybeSetDetectedEmojiProviderType(
               sharedPreferences, telephonyManager);
         }
+        // Update launcher icon visibility and relating preference.
+        launcherIconManager.updateLauncherIconVisibility(context);
+        // Save default preference to the storage.
+        // NOTE: This method must NOT be called before updateLauncherIconVisibility() above.
+        //       Above method requires PREF_LAUNCHER_ICON_VISIBILITY_KEY is not filled with
+        //       the default value.
+        //       If PREF_LAUNCHER_ICON_VISIBILITY_KEY is filled prior to
+        //       updateLauncherIconVisibility(), the launcher icon will be unexpectedly shown
+        //       when 2.16.1955.3 (preinstall version) is overwritten by PlayStore version.
+        PreferenceUtil.setDefaultValues(
+            preferenceManager, context, MozcUtil.isDebug(context),
+            resources.getBoolean(R.bool.sending_information_features_enabled));
 
         if (isDevChannel) {
           // Usage Stats: Make pref_other_usage_stats_key enabled when dev channel.
           editor.putBoolean(PreferenceUtil.PREF_OTHER_USAGE_STATS_KEY, true);
+          maybeShowNotificationForDevChannel(abiIndependentVersionCode,
+              lastVersionCode);
         }
 
         // Welcome Activity
-        if (!isActivityShown && !omitWelcomeActivity && isWelcomeActivityPreferred) {
+        if (!isActivityShown && !isSystemApplication && isWelcomeActivityPreferred) {
           editor.putBoolean(PREF_WELCOME_ACTIVITY_SHOWN, true);
           Intent intent = new Intent(context, FirstTimeLaunchActivity.class);
           intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -204,9 +256,14 @@ public class ApplicationInitializerFactory {
         return Optional.absent();
       } finally {
         editor.remove(PREF_LAUNCHED_AT_LEAST_ONCE);
-        editor.putInt(PREF_LAST_LAUNCH_ABI_INDEPENDENT_VERSION_CODE, abiIndependentVersionCode);
+        editor.putInt(PreferenceUtil.PREF_LAST_LAUNCH_ABI_INDEPENDENT_VERSION_CODE,
+                      abiIndependentVersionCode);
         editor.commit();
       }
+    }
+
+    private void maybeShowNotificationForDevChannel(
+        int abiIndependentVersionCode, Optional<Integer> lastVersionCode) {
     }
 
     /**
@@ -214,8 +271,6 @@ public class ApplicationInitializerFactory {
      *
      * If current orientation is PORTRAIT, given {@code currentMetrics} is returned.
      * Otherwise {@code currentMetrics}'s {@code heightPixels} and {@code widthPixels} are swapped.
-     *
-     * Package private for testing purpose.
      */
     @VisibleForTesting
     static DisplayMetrics getPortraitDisplayMetrics(DisplayMetrics currentMetrics,
@@ -232,27 +287,43 @@ public class ApplicationInitializerFactory {
     }
 
     /**
+     * Get a dimension for the specified orientation.
+     * This method may be heavy since it updates the {@code resources} twice.
+     */
+    @VisibleForTesting
+    static float getDimensionForOrientation(Resources resources, int id, int orientation) {
+      Configuration configuration = resources.getConfiguration();
+      if (configuration.orientation == orientation) {
+        return resources.getDimension(id);
+      }
+
+      Configuration originalConfiguration = new Configuration(resources.getConfiguration());
+      try {
+        configuration.orientation = orientation;
+        resources.updateConfiguration(configuration, null);
+        return resources.getDimension(id);
+      } finally {
+        resources.updateConfiguration(originalConfiguration, null);
+      }
+    }
+
+    /**
      * Stores the default value of "fullscreen mode" to the shared preference.
-     *
-     * Package private for testing purpose.
      */
     @VisibleForTesting
     static void storeDefaultFullscreenMode(
-        SharedPreferences sharedPreferences, DisplayMetrics displayMetrics,
-        float fullscreenThresholdInPixel,
-        float portraitImeHeightInPixel, float landscapeImeHeightInPixel) {
+        SharedPreferences sharedPreferences,
+        int portraitDisplayHeight, int landscapeDisplayHeight,
+        int portraitInputFrameHeight, int landscapeInputFrameHeight, int fullscreenThreshold) {
       Preconditions.checkNotNull(sharedPreferences);
-      Preconditions.checkNotNull(displayMetrics);
 
       SharedPreferences.Editor editor = sharedPreferences.edit();
       editor.putBoolean(
           "pref_portrait_fullscreen_key",
-          displayMetrics.heightPixels - portraitImeHeightInPixel
-              < fullscreenThresholdInPixel);
+          portraitDisplayHeight - portraitInputFrameHeight < fullscreenThreshold);
       editor.putBoolean(
           "pref_landscape_fullscreen_key",
-          displayMetrics.widthPixels - landscapeImeHeightInPixel
-              < fullscreenThresholdInPixel);
+          landscapeDisplayHeight - landscapeInputFrameHeight < fullscreenThreshold);
       editor.commit();
     }
   }

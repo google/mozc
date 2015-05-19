@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -526,6 +526,21 @@ CharacterPaletteCommit
 SoftwareKeyboardLayoutLandscape
 # Selected software keyboard layout for portrait.
 SoftwareKeyboardLayoutPortrait
+# The count of submitted candidate in n-th row (0-origin)
+SubmittedCandidateRow0
+SubmittedCandidateRow1
+SubmittedCandidateRow2
+SubmittedCandidateRow3
+SubmittedCandidateRow4
+SubmittedCandidateRow5
+SubmittedCandidateRow6
+SubmittedCandidateRow7
+SubmittedCandidateRow8
+SubmittedCandidateRow9
+SubmittedCandidateRowGE10
+# The count of the fold/expand keyboard event.
+KeyboardFoldEvent
+KeyboardExpandEvent
 
 # for windows
 

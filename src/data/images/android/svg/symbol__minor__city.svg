@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+ Copyright 2010-2015, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg3556" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="80" width="80" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata3561">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <path id="style-symbol-minor" fill-rule="nonzero" fill="#000" d="m63.495858,47.667609c-3.674569,0-6.65334-2.978771-6.65334-6.65334s2.978771-6.652155,6.65334-6.652155,6.652155,2.977586,6.652155,6.652155-2.977586,6.65334-6.652155,6.65334m-45.621551,0c-3.674569,0-6.652155-2.978771-6.652155-6.65334s2.977586-6.652155,6.652155-6.652155,6.653341,2.977586,6.653341,6.652155-2.978772,6.65334-6.653341,6.65334m1.901293-29.663254c0.950647-1.901293,2.85194-1.901293,2.85194-1.901293h35.165624c1.901293,0,1.901293,1.901293,1.901293,1.901293l5.701509,12.89181h-50.372413s3.801401-10.990517,4.752047-12.89181m43.720258-2.651616s-0.950647-3.801401-4.752047-3.801401h-37.066918c-3.802586,0-4.752047,3.801401-4.752047,3.801401l-9.9248919,22.810775v14.256142h65.9999989v-14.256142l-9.504095-22.810775zm-56.4959039,49.830236c0,2.846013,3.4137929,3.265625,3.4137929,3.265625h6.615409c2.846013,0,2.488039-3.265625,2.488039-3.265625v-5.837823h41.15043v5.837823c0,2.846013,2.846013,3.265625,2.846013,3.265625h6.640302c2.846013,0,2.846013-3.265625,2.846013-3.265625v-9.251616h-65.9999989v9.251616z"/>
+</svg>

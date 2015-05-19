@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,7 @@ import android.text.TextPaint;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.TextView;
 
 import java.util.Arrays;
@@ -187,6 +188,17 @@ public class CarrierEmojiRenderHelper {
      */
     void measureInternal(int width, int height) {
       super.measure(width, height);
+    }
+
+    /**
+     * Ignores accessibility events.
+     * <p>
+     * As {@link #isShown()} is overridden with fake, without this hack
+     * the framework thinks this view is shown correctly and calls {@link #getParent()},
+     * which throws NPE as this view has no parent.
+     */
+    @Override
+    public void sendAccessibilityEventUnchecked(AccessibilityEvent event) {
     }
   }
 

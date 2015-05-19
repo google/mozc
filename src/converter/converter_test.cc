@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -238,7 +238,7 @@ class ConverterTest : public ::testing::Test {
   EngineInterface *CreateEngineWithMobilePredictor() {
     Engine *engine = new Engine;
     testing::MockDataManager data_manager;
-    engine->Init(&data_manager, MobilePredictor::CreateMobilePredictor);
+    engine->Init(&data_manager, MobilePredictor::CreateMobilePredictor, true);
     return engine;
   }
 
@@ -988,38 +988,6 @@ TEST_F(ConverterTest, Regression5502496) {
   EXPECT_TRUE(found);
 }
 
-TEST_F(ConverterTest, EmoticonsAboveSymbols) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  ConverterInterface *converter = engine->GetConverter();
-  Segments segments;
-
-  // "かおもじ"
-  const char kKey[] = "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98";
-
-  const char kEmoticon[] = "^^;";
-  // "☹": A platform-dependent symbol
-  const char kSymbol[] = "\xE2\x98\xB9";
-
-  EXPECT_TRUE(converter->StartConversion(
-      &segments, kKey));
-  EXPECT_EQ(1, segments.conversion_segments_size());
-  const Segment &segment = segments.conversion_segment(0);
-  bool found_emoticon = false;
-  bool found_symbol = false;
-
-  for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    if (segment.candidate(i).value == kEmoticon) {
-      found_emoticon = true;
-    } else if (segment.candidate(i).value == kSymbol) {
-      found_symbol = true;
-    }
-    if (found_symbol) {
-      break;
-    }
-  }
-  EXPECT_TRUE(found_emoticon);
-}
-
 TEST_F(ConverterTest, StartSuggestionForRequest) {
   commands::Request client_request;
   client_request.set_mixed_conversion(true);
@@ -1308,7 +1276,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                           suggegstion_filter.get()),
                       new UserHistoryPredictor(dictionary.get(),
                                                data_manager.GetPOSMatcher(),
-                                               suppression_dictionary.get())),
+                                               suppression_dictionary.get(),
+                                               false)),
                   new RewriterImpl(converter.get(),
                                    &data_manager,
                                    pos_group.get(),

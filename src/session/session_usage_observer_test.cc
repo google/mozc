@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -228,6 +228,41 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsSoftwareKeyboardLayout) {
   observer.EvalCommandHandler(command);
   EXPECT_INTEGER_STATS("SoftwareKeyboardLayoutLandscape", 2);
   EXPECT_INTEGER_STATS("SoftwareKeyboardLayoutPortrait", 3);
+}
+
+TEST_F(SessionUsageObserverTest, SubmittedCandidateRow) {
+  SessionUsageObserver observer;
+
+  // create session
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
+  command.mutable_input()->set_id(1);
+  command.mutable_output()->set_id(1);
+  observer.EvalCommandHandler(command);
+
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow0");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow1");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow2");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow3");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow4");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow5");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow6");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow7");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow8");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRow9");
+  EXPECT_STATS_NOT_EXIST("SubmittedCandidateRowGE10");
+
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+  commands::SessionCommand *session_command =
+      command.mutable_input()->mutable_command();
+  session_command->set_type(commands::SessionCommand::USAGE_STATS_EVENT);
+  session_command->set_usage_stats_event(
+      commands::SessionCommand::SUBMITTED_CANDIDATE_ROW_0);
+  observer.EvalCommandHandler(command);
+  EXPECT_COUNT_STATS("SubmittedCandidateRow0", 1);
+
+  observer.EvalCommandHandler(command);
+  EXPECT_COUNT_STATS("SubmittedCandidateRow0", 2);
 }
 
 TEST_F(SessionUsageObserverTest, LogTouchEvent) {

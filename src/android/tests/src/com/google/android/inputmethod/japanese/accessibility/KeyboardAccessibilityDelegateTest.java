@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,23 +34,21 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 
+import org.mozc.android.inputmethod.japanese.accessibility.KeyboardAccessibilityDelegate.TouchEventEmulator;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Flick;
 import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.Key;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
-import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
-import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
+import org.mozc.android.inputmethod.japanese.keyboard.PopUp;
 import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import com.google.common.base.Optional;
 
 import android.content.Context;
-import android.os.Looper;
 import android.support.v4.view.accessibility.AccessibilityEventCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -88,8 +86,8 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
   private static Optional<Key> createOptionalKey() {
     // Currently following values are not used.
     KeyEntity keyEntity =
-        new KeyEntity(SOURCE_ID, KEY_CODE, LONGPRESS_KEY_CODE, 0,
-                      DrawableType.TWELVEKEYS_CENTER_FLICK, false, null);
+        new KeyEntity(SOURCE_ID, KEY_CODE, LONGPRESS_KEY_CODE, true, 0,
+                      Optional.<String>absent(), false, Optional.<PopUp>absent(), 0, 0, 0, 0);
     Flick flick = new Flick(Direction.CENTER, keyEntity);
     List<KeyState> keyStates =
         Collections.singletonList(
@@ -98,22 +96,13 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
                          Collections.<MetaState>emptySet(),
                          Collections.<MetaState>emptySet(),
                          Collections.singletonList(flick)));
-    return Optional.of(new Key(0, 0, 10, 10, 0, 0, false, false, false,
-                               Stick.EVEN, keyStates));
+    return Optional.of(new Key(0, 0, 10, 10, 0, 0, false, false, Stick.EVEN,
+                               DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, keyStates));
   }
 
   private KeyboardAccessibilityNodeProvider createMockProvider(View view) {
     return createMockBuilder(KeyboardAccessibilityNodeProvider.class)
         .withConstructor(View.class).withArgs(view).createMock();
-  }
-
-  private KeyEventHandler createMockKeyEventHandler() {
-    return createMockBuilder(KeyEventHandler.class)
-        .withConstructor(Looper.class, KeyboardActionListener.class,
-                         Integer.TYPE, Integer.TYPE, Integer.TYPE)
-        .withArgs(Looper.getMainLooper(), createNiceMock(KeyboardActionListener.class), 0, 0, 0)
-        .addMockedMethod("sendKey")
-        .createMock();
   }
 
   @SmallTest
@@ -127,7 +116,15 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
     KeyboardAccessibilityNodeProvider provider = createMockProvider(view);
     expect(provider.getKey(anyInt(), anyInt())).andReturn(Optional.<Key>absent());
     replayAll();
-    KeyboardAccessibilityDelegate delegate = new KeyboardAccessibilityDelegate(view, provider, 0);
+    KeyboardAccessibilityDelegate delegate =
+        new KeyboardAccessibilityDelegate(view, provider, 0, new TouchEventEmulator() {
+          @Override
+          public void emulateLongPress(Key key) {
+          }
+          @Override
+          public void emulateKeyInput(Key key) {
+          }
+        });
     assertFalse(delegate.dispatchHoverEvent(createMotionEvent(MotionEvent.ACTION_CANCEL)));
     verifyAll();
   }
@@ -145,13 +142,12 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
                                  MotionEvent.ACTION_HOVER_EXIT}) {
       resetAll();
       View view = createViewMock(View.class);
-      KeyEventHandler keyEventHandler = createMockKeyEventHandler();
+      TouchEventEmulator emulator = createMock(TouchEventEmulator.class);
       KeyboardAccessibilityNodeProvider provider = createMockProvider(view);
       expect(provider.getKey(anyInt(), anyInt())).andReturn(Optional.<Key>absent());
       replayAll();
       KeyboardAccessibilityDelegate delegate =
-          new KeyboardAccessibilityDelegate(view, provider, 0);
-      delegate.setKeyEventHandler(Optional.of(keyEventHandler));
+          new KeyboardAccessibilityDelegate(view, provider, 0, emulator);
       assertFalse(delegate.dispatchHoverEvent(createMotionEvent(action)));
       verifyAll();
     }
@@ -170,7 +166,7 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
                                  MotionEvent.ACTION_HOVER_MOVE}) {
       resetAll();
       View view = createViewMock(View.class);
-      KeyEventHandler keyEventHandler = createMockKeyEventHandler();
+      TouchEventEmulator emulator = createMock(TouchEventEmulator.class);
       KeyboardAccessibilityNodeProvider provider = createMockProvider(view);
       expect(provider.getKey(anyInt(), anyInt())).andReturn(createOptionalKey());
       provider.sendAccessibilityEventForKeyIfAccessibilityEnabled(
@@ -180,8 +176,7 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
           .andReturn(true);
       replayAll();
       KeyboardAccessibilityDelegate delegate =
-          new KeyboardAccessibilityDelegate(view, provider, 0);
-      delegate.setKeyEventHandler(Optional.of(keyEventHandler));
+          new KeyboardAccessibilityDelegate(view, provider, 0, emulator);
       assertTrue(delegate.dispatchHoverEvent(createMotionEvent(action)));
       verifyAll();
     }
@@ -196,12 +191,12 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
     //   - KeyEventHandler#onKey is invoked.
     //   - MotionEvent is consumed.
     View view = createViewMock(View.class);
-    KeyEventHandler keyEventHandler = createMockKeyEventHandler();
+    TouchEventEmulator emulator = createMock(TouchEventEmulator.class);
     KeyboardAccessibilityNodeProvider provider = createMockProvider(view);
 
     Optional<Key> optionalKey = createOptionalKey();
     expect(provider.getKey(anyInt(), anyInt())).andReturn(optionalKey);
-    keyEventHandler.sendKey(KEY_CODE, Collections.<TouchEvent>emptyList());
+    emulator.emulateKeyInput(anyObject(Key.class));
     provider.sendAccessibilityEventForKeyIfAccessibilityEnabled(
         anyObject(Key.class), eq(AccessibilityEventCompat.TYPE_VIEW_HOVER_EXIT));
     expect(provider.performActionForKey(
@@ -209,8 +204,7 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
         .andReturn(true);
     replayAll();
     KeyboardAccessibilityDelegate delegate =
-        new KeyboardAccessibilityDelegate(view, provider, 0);
-    delegate.setKeyEventHandler(Optional.of(keyEventHandler));
+        new KeyboardAccessibilityDelegate(view, provider, 0, emulator);
     assertTrue(delegate.dispatchHoverEvent(createMotionEvent(MotionEvent.ACTION_HOVER_EXIT)));
     verifyAll();
   }
@@ -225,11 +219,10 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
     //   - No methods in the KeyEventHandler are called back.
     //   - MotionEvent is consumed.
     View view = createViewMock(View.class);
-    KeyEventHandler keyEventHandler = createMockKeyEventHandler();
+    TouchEventEmulator emulator = createMock(TouchEventEmulator.class);
     KeyboardAccessibilityNodeProvider provider = createMockProvider(view);
     KeyboardAccessibilityDelegate delegate =
-        new KeyboardAccessibilityDelegate(view, provider, 0);
-    delegate.setKeyEventHandler(Optional.of(keyEventHandler));
+        new KeyboardAccessibilityDelegate(view, provider, 0, emulator);
     // Preparing precondition.
     expect(provider.getKey(anyInt(), anyInt())).andReturn(createOptionalKey());
     provider.sendAccessibilityEventForKeyIfAccessibilityEnabled(
@@ -266,11 +259,10 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
     //   - No methods in the KeyEventHandler are called back.
     //   - MotionEvent is consumed.
     View view = createViewMock(View.class);
-    KeyEventHandler keyEventHandler = createMockKeyEventHandler();
+    TouchEventEmulator emulator = createMock(TouchEventEmulator.class);
     KeyboardAccessibilityNodeProvider provider = createMockProvider(view);
     KeyboardAccessibilityDelegate delegate =
-        new KeyboardAccessibilityDelegate(view, provider, 0);
-    delegate.setKeyEventHandler(Optional.of(keyEventHandler));
+        new KeyboardAccessibilityDelegate(view, provider, 0, emulator);
     // Preparing precondition.
     expect(provider.getKey(anyInt(), anyInt())).andReturn(createOptionalKey());
     provider.sendAccessibilityEventForKeyIfAccessibilityEnabled(
@@ -303,9 +295,10 @@ public class KeyboardAccessibilityDelegateTest extends InstrumentationTestCaseWi
         .addMockedMethods("isWiredHeadsetOn", "isBluetoothA2dpOn")
         .createMock();
     AccessibilityUtil.setAudioManagerForTesting(Optional.of(audioManager));
+    TouchEventEmulator emulator = createMock(TouchEventEmulator.class);
     KeyboardAccessibilityNodeProvider provider = createMockProvider(view);
     KeyboardAccessibilityDelegate delegate =
-        new KeyboardAccessibilityDelegate(view, provider, 0);
+        new KeyboardAccessibilityDelegate(view, provider, 0, emulator);
     for (boolean isPasswordField : new boolean[] {true, false}) {
       for (boolean isAccessibilityEnabled : new boolean[] {true, false}) {
         AccessibilityUtil.setAccessibilityEnabled(Optional.of(isAccessibilityEnabled));

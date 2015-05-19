@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -140,6 +140,7 @@ class SystemDictionary : public DictionaryInterface {
       const char *ptr, int len, Options options);
 
   // Implementation of DictionaryInterface.
+  virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
 
   // Predictive lookup

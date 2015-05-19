@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2014, Google Inc.
+ Copyright 2010-2015, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@
                    android:targetPackage="@ANDROID_APPLICATION_ID@"
                    android:label="Tests for org.mozc.android.inputmethod.japanese"/>
 
-  <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="19" />
+  <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="21" />
   <!-- Google Japanese Input (the main code) requires the following permissions. -->
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <uses-permission android:name="android.permission.INTERNET" />

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Flick;
 import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.Key;
@@ -37,8 +38,10 @@ import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventContext;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState;
+import org.mozc.android.inputmethod.japanese.keyboard.PopUp;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 
 import android.view.MotionEvent;
 import android.view.View;
@@ -54,6 +57,7 @@ import java.util.Collections;
  *
  */
 public class KeyEventButtonTouchListener implements OnTouchListener {
+
   private final int sourceId;
   private final int keyCode;
   private KeyEventHandler keyEventHandler = null;
@@ -95,9 +99,11 @@ public class KeyEventButtonTouchListener implements OnTouchListener {
    * {@code keyCode}.
    * This is exported as package private for testing.
    */
-  static Key createKey(View button, int sourceId, int keyCode) {
-    KeyEntity keyEntity =
-        new KeyEntity(sourceId, keyCode, KeyEntity.INVALID_KEY_CODE, 0, null, null, false, null);
+  @VisibleForTesting static Key createKey(View button, int sourceId, int keyCode) {
+    KeyEntity keyEntity = new KeyEntity(
+            sourceId, keyCode, KeyEntity.INVALID_KEY_CODE, true, 0,
+            Optional.<String>absent(), false,
+            Optional.<PopUp>absent(), 0, 0, 0, 0);
     Flick flick = new Flick(Direction.CENTER, keyEntity);
     KeyState keyState =
         new KeyState("",
@@ -105,9 +111,10 @@ public class KeyEventButtonTouchListener implements OnTouchListener {
                      Collections.<KeyState.MetaState>emptySet(),
                      Collections.<KeyState.MetaState>emptySet(),
                      Collections.singletonList(flick));
-    // Now, we support repetable keys only.
+    // Now, we support repeatable keys only.
     return new Key(0, 0, button.getWidth(), button.getHeight(), 0, 0,
-                   true, false, false, Stick.EVEN, Collections.singletonList(keyState));
+                   true, false, Stick.EVEN, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+                   Collections.singletonList(keyState));
   }
 
   private static KeyEventContext createKeyEventContext(
@@ -157,8 +164,9 @@ public class KeyEventButtonTouchListener implements OnTouchListener {
     if (keyEventHandler != null && keyEventContext != null) {
       keyEventContext.update(x, y, TouchAction.TOUCH_UP, timestamp);
       keyEventHandler.cancelDelayedKeyEvent(keyEventContext);
+      // TODO(hsumita): Confirm that we can put null as a touch event or not.
       keyEventHandler.sendKey(keyEventContext.getKeyCode(),
-                              Collections.singletonList(keyEventContext.getTouchEvent()));
+                              Collections.singletonList(keyEventContext.getTouchEvent().orNull()));
       keyEventHandler.sendRelease(keyEventContext.getPressedKeyCode());
     }
     this.keyEventContext = null;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!--
- Copyright 2010-2014, Google Inc.
+ Copyright 2010-2015, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,7 @@
 <!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="16px" height="16px" viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
-<circle style="fill:none;stroke:#231F20;stroke-width:0.75;stroke-miterlimit:10;" cx="8" cy="8" r="7"/>
-<g>
-	<path style="fill:#231F20;" d=""/>
-</g>
+	width="16px" height="16px" viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
+<circle id="style-symbol-major-emoji-disable-circle" cx="8" cy="8" r="7"/>
+<path id="style-symbol-major" d="M8.864,9.947H7.153v-5.59h1.711V9.947z M8.864,12.889H7.153v-1.5h1.711V12.889z"/>
 </svg>

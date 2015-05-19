@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,24 +40,18 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.WindowManager.LayoutParams;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -111,7 +105,6 @@ class UserDictionaryUtil {
 
     UserDictionaryBaseDialog(Context context, int titleResourceId, int viewResourceId,
                              UserDictionaryBaseDialogListener listener,
-                             OnDismissListener dismissListener,
                              ToastManager toastManager) {
       super(context);
       this.listener = listener;
@@ -130,27 +123,11 @@ class UserDictionaryUtil {
       setButton(DialogInterface.BUTTON_NEGATIVE, context.getText(android.R.string.cancel),
                 DialogInterface.OnClickListener.class.cast(null));
       setCancelable(true);
-      setOnDismissListener(dismissListener);
     }
 
     @Override
     protected void onCreate(Bundle savedInstance) {
       super.onCreate(savedInstance);
-
-      ViewGroup contentGroup = ViewGroup.class.cast(findViewById(android.R.id.content));
-      if (contentGroup != null && contentGroup.getChildCount() > 0) {
-        // Wrap the content view by ScrollView so that we can scroll the dialog window
-        // in order to avoid shrinking the main edit text fields.
-        ScrollView view = ScrollView.class.cast(
-            LayoutInflater.from(getContext()).inflate(
-                R.layout.user_dictionary_tool_empty_scrollview, null));
-        View contentView = contentGroup.getChildAt(0);
-        contentGroup.removeViewAt(0);
-        FrameLayout.class.cast(
-            view.findViewById(R.id.user_dictionary_tool_empty_scroll_view_content))
-            .addView(contentView);
-        contentGroup.addView(view, 0);
-      }
 
       // To override the default behavior that the dialog is dismissed after user's clicking
       // a button regardless of any action inside listener, we set the callback directly
@@ -262,7 +239,6 @@ class UserDictionaryUtil {
   static class WordRegisterDialog extends UserDictionaryBaseDialog {
     WordRegisterDialog(Context context, int titleResourceId,
                        final WordRegisterDialogListener listener,
-                       OnDismissListener dismissListener,
                        ToastManager toastManager) {
       super(context, titleResourceId, R.layout.user_dictionary_tool_word_register_dialog_view,
             new UserDictionaryBaseDialogListener() {
@@ -273,8 +249,7 @@ class UserDictionaryUtil {
                     getText(view, R.id.user_dictionary_tool_word_register_dialog_reading),
                     getPos(view, R.id.user_dictionary_tool_word_register_dialog_pos));
               }
-            },
-            dismissListener, toastManager);
+            }, toastManager);
       // TODO(hidehiko): Attach a callback for un-focused event on "word" EditText.
       //   and invoke reverse conversion (if necessary) to fill reading automatically.
     }
@@ -320,7 +295,6 @@ class UserDictionaryUtil {
   static class DictionaryNameDialog extends UserDictionaryBaseDialog {
     DictionaryNameDialog(Context context, int titleResourceId,
                          final DictionaryNameDialogListener listener,
-                         OnDismissListener dismissListener,
                          ToastManager toastManager) {
       super(context, titleResourceId, R.layout.user_dictionary_tool_dictionary_name_dialog_view,
             new UserDictionaryBaseDialogListener() {
@@ -329,8 +303,7 @@ class UserDictionaryUtil {
                 return listener.onPositiveButtonClicked(
                     getText(view, R.id.user_dictionary_tool_dictionary_name_dialog_name));
               }
-            },
-            dismissListener, toastManager);
+            }, toastManager);
     }
 
     /**
@@ -344,8 +317,6 @@ class UserDictionaryUtil {
       editText.selectAll();
     }
   }
-
-  private static final int DIALOG_WIDTH_THRESHOLD = 480;  // in dip.
 
   /** A map from PosType to the string resource id for i18n. */
   private static final Map<PosType, Integer> POS_RESOURCE_MAP;
@@ -518,9 +489,8 @@ class UserDictionaryUtil {
    */
   static WordRegisterDialog createWordRegisterDialog(
       Context context, int titleResourceId, WordRegisterDialogListener listener,
-      OnDismissListener dismissListener, ToastManager toastManager) {
-    return new WordRegisterDialog(
-        context, titleResourceId, listener, dismissListener, toastManager);
+      ToastManager toastManager) {
+    return new WordRegisterDialog(context, titleResourceId, listener, toastManager);
   }
 
   /**
@@ -528,9 +498,8 @@ class UserDictionaryUtil {
    */
   static DictionaryNameDialog createDictionaryNameDialog(
       Context context, int titleResourceId, DictionaryNameDialogListener listener,
-      OnDismissListener dismissListener, ToastManager toastManager) {
-    return new DictionaryNameDialog(
-        context, titleResourceId, listener, dismissListener, toastManager);
+      ToastManager toastManager) {
+    return new DictionaryNameDialog(context, titleResourceId, listener, toastManager);
   }
 
   /**
@@ -540,11 +509,10 @@ class UserDictionaryUtil {
       Context context, int titleResourceId,
       DialogInterface.OnClickListener positiveButtonListener,
       DialogInterface.OnClickListener negativeButtonListener,
-      DialogInterface.OnCancelListener cancelListener,
-      OnDismissListener dismissListener) {
+      DialogInterface.OnCancelListener cancelListener) {
     return createSimpleSpinnerDialog(
         context, titleResourceId, positiveButtonListener, negativeButtonListener,
-        cancelListener, dismissListener);
+        cancelListener);
   }
 
   /**
@@ -554,30 +522,26 @@ class UserDictionaryUtil {
       Context context, int titleResourceId,
       DialogInterface.OnClickListener positiveButtonListener,
       DialogInterface.OnClickListener negativeButtonListener,
-      DialogInterface.OnCancelListener cancelListener,
-      OnDismissListener dismissListener) {
+      DialogInterface.OnCancelListener cancelListener) {
     return createSimpleSpinnerDialog(
-        context, titleResourceId, positiveButtonListener, negativeButtonListener,
-        cancelListener, dismissListener);
+        context, titleResourceId, positiveButtonListener, negativeButtonListener, cancelListener);
   }
 
   private static Dialog createSimpleSpinnerDialog(
       Context context, int titleResourceId,
       DialogInterface.OnClickListener positiveButtonListener,
       DialogInterface.OnClickListener negativeButtonListener,
-      DialogInterface.OnCancelListener cancelListener,
-      OnDismissListener dismissListener) {
+      DialogInterface.OnCancelListener cancelListener) {
     View view = LayoutInflater.from(context).inflate(
         R.layout.user_dictionary_tool_simple_spinner_dialog_view, null);
     AlertDialog dialog = new AlertDialog.Builder(context)
         .setTitle(titleResourceId)
         .setView(view)
-        .setPositiveButton(android.R.string.yes, positiveButtonListener)
+        .setPositiveButton(android.R.string.ok, positiveButtonListener)
         .setNegativeButton(android.R.string.cancel, negativeButtonListener)
         .setOnCancelListener(cancelListener)
         .setCancelable(true)
         .create();
-    dialog.setOnDismissListener(dismissListener);
     return dialog;
   }
 
@@ -586,31 +550,6 @@ class UserDictionaryUtil {
    */
   static void showInputMethod(Dialog dialog) {
     dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-  }
-
-  /**
-   * The default size of dialog looks not good on some devices, such as tablets.
-   * So, modify the dialog size to make the look better.
-   *
-   * The current strategy is:
-   * - if the display is small, we tries to fill the display width by the dialog.
-   * - otherwise, set w480dip to the window.
-   */
-  static void setDialogWindowSize(Dialog dialog) {
-    DisplayMetrics metrics = dialog.getContext().getResources().getDisplayMetrics();
-    LayoutParams params = dialog.getWindow().getAttributes();
-    float dialogWidthThreshold = DIALOG_WIDTH_THRESHOLD * metrics.scaledDensity;
-    if (metrics.widthPixels > dialogWidthThreshold) {
-      params.width = (int) dialogWidthThreshold;
-    } else {
-      params.width = LayoutParams.MATCH_PARENT;
-    }
-    if (dialog instanceof UserDictionaryBaseDialog) {
-      // If the ScrollView hack is used for the dialog to make it scrollable,
-      // it is necessary to set its height parameter MATCH_PARENT as a part of the hack.
-      params.height = LayoutParams.MATCH_PARENT;
-    }
-    dialog.getWindow().setAttributes(params);
   }
 
   /**

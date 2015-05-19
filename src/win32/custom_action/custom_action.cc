@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
 #include "win32/custom_action/custom_action.h"
 
 #include <windows.h>
-// Workaround against KB813540
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 #if !defined(NO_LOGGING)
 #include <atlstr.h>
 #endif  // !NO_LOGGING

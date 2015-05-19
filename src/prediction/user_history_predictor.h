@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -85,8 +85,13 @@ class UserHistoryPredictor : public PredictorInterface {
  public:
   UserHistoryPredictor(const DictionaryInterface *dictionary,
                        const POSMatcher *pos_matcher,
-                       const SuppressionDictionary *suppression_dictionary);
+                       const SuppressionDictionary *suppression_dictionary,
+                       bool enable_content_word_learning);
   virtual ~UserHistoryPredictor();
+
+  void set_content_word_learning_enabled(bool value) {
+    content_word_learning_enabled_ = value;
+  }
 
   virtual bool Predict(Segments *segments) const;
   virtual bool PredictForRequest(const ConversionRequest &request,
@@ -145,6 +150,8 @@ class UserHistoryPredictor : public PredictorInterface {
   struct SegmentForLearning {
     string key;
     string value;
+    string content_key;
+    string content_value;
     string description;
   };
   static uint32 LearningSegmentFingerprint(const SegmentForLearning &segment);
@@ -208,6 +215,7 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorClearTest);
   FRIEND_TEST(UserHistoryPredictorTest,
               UserHistoryPredictorTrailingPunctuation);
+  FRIEND_TEST(UserHistoryPredictorTest, HistoryToPunctuation);
   FRIEND_TEST(UserHistoryPredictorTest,
               UserHistoryPredictorPreceedingPunctuation);
   FRIEND_TEST(UserHistoryPredictorTest, StartsWithPunctuations);
@@ -489,6 +497,7 @@ class UserHistoryPredictor : public PredictorInterface {
   const SuppressionDictionary *suppression_dictionary_;
   const string predictor_name_;
 
+  bool content_word_learning_enabled_;
   bool updated_;
   scoped_ptr<DicCache> dic_;
   mutable scoped_ptr<UserHistoryPredictorSyncer> syncer_;

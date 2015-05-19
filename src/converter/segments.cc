@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -87,20 +87,53 @@ void Segment::Candidate::CopyFrom(const Candidate &src) {
 }
 
 bool Segment::Candidate::IsValid() const {
-  if (!inner_segment_boundary.empty()) {
-    // The sums of the lengths of key and value components must coincide with
-    // those of key and value, respectively.
-    size_t sum_key_len = 0, sum_value_len = 0;
-    for (size_t i = 0; i < inner_segment_boundary.size(); ++i) {
-      sum_key_len += inner_segment_boundary[i].first;
-      sum_value_len += inner_segment_boundary[i].second;
-    }
-    if (sum_key_len != Util::CharsLen(key) ||
-        sum_value_len != Util::CharsLen(value)) {
-      return false;
-    }
+  if (inner_segment_boundary.empty()) {
+    return true;
+  }
+  // The sums of the lengths of key, value, content key and content value
+  // components must coincide with those of key, value, content_key and
+  // content_value, respectively.
+  size_t sum_key_len = 0, sum_value_len = 0;
+  size_t sum_content_key_len = 0, sum_content_value_len = 0;
+  for (InnerSegmentIterator iter(this); !iter.Done(); iter.Next()) {
+    sum_key_len += iter.GetKey().size();
+    sum_value_len += iter.GetValue().size();
+    sum_content_key_len += iter.GetContentKey().size();
+    sum_content_value_len += iter.GetContentValue().size();
+  }
+  if (sum_key_len != key.size() ||
+      sum_value_len != value.size() ||
+      sum_content_key_len != content_key.size() ||
+      sum_content_value_len != content_value.size()) {
+    return false;
   }
   return true;
+}
+
+bool Segment::Candidate::EncodeLengths(
+    size_t key_len, size_t value_len,
+    size_t content_key_len, size_t content_value_len, uint32 *result) {
+  if (key_len > kuint8max || value_len > kuint8max ||
+      content_key_len > kuint8max || content_value_len > kuint8max) {
+    return false;
+  }
+  *result = (static_cast<uint32>(key_len) << 24) |
+            (static_cast<uint32>(value_len) << 16) |
+            (static_cast<uint32>(content_key_len) << 8) |
+            static_cast<uint32>(content_value_len);
+  return true;
+}
+
+bool Segment::Candidate::PushBackInnerSegmentBoundary(
+    size_t key_len, size_t value_len,
+    size_t content_key_len, size_t content_value_len) {
+  uint32 encoded;
+  if (EncodeLengths(key_len, value_len, content_key_len, content_value_len,
+                    &encoded)) {
+    inner_segment_boundary.push_back(encoded);
+    return true;
+  }
+  return false;
 }
 
 string Segment::Candidate::DebugString() const {
@@ -128,13 +161,48 @@ string Segment::Candidate::DebugString() const {
   if (!inner_segment_boundary.empty()) {
     os << " segbdd=";
     for (size_t i = 0; i < inner_segment_boundary.size(); ++i) {
-      os << Util::StringPrintf("<%d,%d>",
-                               inner_segment_boundary[i].first,
-                               inner_segment_boundary[i].second);
+      const uint32 encoded_lengths = inner_segment_boundary[i];
+      const int key_len = encoded_lengths >> 24;
+      const int value_len = (encoded_lengths >> 16) & 0xff;
+      const int content_key_len = (encoded_lengths >> 8) & 0xff;
+      const int content_value_len = encoded_lengths & 0xff;
+      os << Util::StringPrintf("<%d,%d,%d,%d>", key_len, value_len,
+                               content_key_len, content_value_len);
     }
   }
   os << ")" << endl;
   return os.str();
+}
+
+void Segment::Candidate::InnerSegmentIterator::Next() {
+  DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
+  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_++];
+  key_offset_ += encoded_lengths >> 24;
+  value_offset_ += (encoded_lengths >> 16) & 0xff;
+}
+
+StringPiece Segment::Candidate::InnerSegmentIterator::GetKey() const {
+  DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
+  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_];
+  return StringPiece(key_offset_, encoded_lengths >> 24);
+}
+
+StringPiece Segment::Candidate::InnerSegmentIterator::GetValue() const {
+  DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
+  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_];
+  return StringPiece(value_offset_, (encoded_lengths >> 16) & 0xff);
+}
+
+StringPiece Segment::Candidate::InnerSegmentIterator::GetContentKey() const {
+  DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
+  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_];
+  return StringPiece(key_offset_, (encoded_lengths >> 8) & 0xff);
+}
+
+StringPiece Segment::Candidate::InnerSegmentIterator::GetContentValue() const {
+  DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
+  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_];
+  return StringPiece(value_offset_, encoded_lengths & 0xff);
 }
 
 Segment::Segment()

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboardSp
 import org.mozc.android.inputmethod.japanese.preference.KeyboardPreviewDrawable.BitmapCache;
 import org.mozc.android.inputmethod.japanese.preference.KeyboardPreviewDrawable.CacheReferenceKey;
 import org.mozc.android.inputmethod.japanese.resources.R;
+import org.mozc.android.inputmethod.japanese.util.LauncherIconManagerFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 
@@ -60,11 +61,9 @@ import android.provider.Settings;
  * The same information might be stored in both SharedPreference and Config.
  * In this case SharedPreference is the master and Config is just a copy.
  *
- * Note: Seems like due to the bug of Android 2.1, it is necessary to put this class
- *   into the same package as MozcService.
- *
  */
 public class MozcBasePreferenceActivity extends PreferenceActivity {
+
   private static class ImeEnableDialogClickListener implements OnClickListener {
     private final Context context;
 
@@ -157,12 +156,13 @@ public class MozcBasePreferenceActivity extends PreferenceActivity {
   @VisibleForTesting
   void onPostResumeInternal(ApplicationInitializer initializer) {
     Context context = getApplicationContext();
-    boolean omitWelcomeActivity = false;
     Optional<Intent> forwardIntent = initializer.initialize(
-        omitWelcomeActivity,
+        MozcUtil.isSystemApplication(context),
         MozcUtil.isDevChannel(context),
         DependencyFactory.getDependency(getApplicationContext()).isWelcomeActivityPreferrable(),
-        MozcUtil.getAbiIndependentVersionCode(context));
+        MozcUtil.getAbiIndependentVersionCode(context),
+        LauncherIconManagerFactory.getDefaultInstance(),
+        PreferenceUtil.getDefaultPreferenceManagerStatic());
     if (forwardIntent.isPresent()) {
       startActivity(forwardIntent.get());
     } else {

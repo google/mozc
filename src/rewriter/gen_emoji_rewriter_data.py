@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -126,7 +126,7 @@ def ReadEmojiTsv(stream):
                             kddi_description))
 
     # \xe3\x80\x80 is a full-width space
-    for reading in re.split(r'( |\xe3\x80\x80)+', readings.strip()):
+    for reading in re.split(r'(?: |\xe3\x80\x80)+', readings.strip()):
       token_dict[reading].append(index)
 
   return (emoji_data_list, token_dict)

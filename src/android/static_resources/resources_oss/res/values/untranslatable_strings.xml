@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2015, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+    <!-- Default skin for pre-L -->
+    <string name="pref_skin_type_default" translatable="false">BLUE_DARKGRAY</string>
+
+    <!-- Preference url -->
+    <string name="pref_oss_credits_url" translatable="false">file:///android_asset/credits_en.html</string>
+
+    <!-- User Dictionary Tool -->
+      <!-- List of Japanese POS for user dictionary export feature -->
+      <!-- You should keep a consistency with japanese_pos_*. -->
+      <string name="japanese_pos_for_dictionary_export_noun" translatable="false">名詞</string>
+      <string name="japanese_pos_for_dictionary_export_abbreviation" translatable="false">短縮よみ</string>
+      <string name="japanese_pos_for_dictionary_export_suggestion_only" translatable="false">サジェストのみ</string>
+      <string name="japanese_pos_for_dictionary_export_proper_noun" translatable="false">固有名詞</string>
+      <string name="japanese_pos_for_dictionary_export_personal_name" translatable="false">人名</string>
+      <string name="japanese_pos_for_dictionary_export_family_name" translatable="false">姓</string>
+      <string name="japanese_pos_for_dictionary_export_first_name" translatable="false">名</string>
+      <string name="japanese_pos_for_dictionary_export_organization_name" translatable="false">組織</string>
+      <string name="japanese_pos_for_dictionary_export_place_name" translatable="false">地名</string>
+      <string name="japanese_pos_for_dictionary_export_sa_irregular_conjugation_noun" translatable="false">名詞サ変</string>
+      <string name="japanese_pos_for_dictionary_export_adjective_verbal_noun" translatable="false">名詞形動</string>
+      <string name="japanese_pos_for_dictionary_export_number" translatable="false">数字</string>
+      <string name="japanese_pos_for_dictionary_export_alphabet" translatable="false">アルファベット</string>
+      <string name="japanese_pos_for_dictionary_export_symbol" translatable="false">記号</string>
+      <string name="japanese_pos_for_dictionary_export_emoticon" translatable="false">顔文字</string>
+      <string name="japanese_pos_for_dictionary_export_adverb" translatable="false">副詞</string>
+      <string name="japanese_pos_for_dictionary_export_prenoun_adjectival" translatable="false">連体詞</string>
+      <string name="japanese_pos_for_dictionary_export_conjunction" translatable="false">接続詞</string>
+      <string name="japanese_pos_for_dictionary_export_interjection" translatable="false">感動詞</string>
+      <string name="japanese_pos_for_dictionary_export_prefix" translatable="false">接頭語</string>
+      <string name="japanese_pos_for_dictionary_export_counter_suffix" translatable="false">助数詞</string>
+      <string name="japanese_pos_for_dictionary_export_generic_suffix" translatable="false">接尾一般</string>
+      <string name="japanese_pos_for_dictionary_export_person_name_suffix" translatable="false">接尾人名</string>
+      <string name="japanese_pos_for_dictionary_export_place_name_suffix" translatable="false">接尾地名</string>
+      <string name="japanese_pos_for_dictionary_export_wa_group1_verb" translatable="false">動詞ワ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_ka_group1_verb" translatable="false">動詞カ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_sa_group1_verb" translatable="false">動詞サ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_ta_group1_verb" translatable="false">動詞タ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_na_group1_verb" translatable="false">動詞ナ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_ma_group1_verb" translatable="false">動詞マ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_ra_group1_verb" translatable="false">動詞ラ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_ga_group1_verb" translatable="false">動詞ガ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_ba_group1_verb" translatable="false">動詞バ行五段</string>
+      <string name="japanese_pos_for_dictionary_export_ha_group1_verb" translatable="false">動詞ハ行四段</string>
+      <string name="japanese_pos_for_dictionary_export_group2_verb" translatable="false">動詞一段</string>
+      <string name="japanese_pos_for_dictionary_export_kuru_group3_verb" translatable="false">動詞カ変</string>
+      <string name="japanese_pos_for_dictionary_export_suru_group3_verb" translatable="false">動詞サ変</string>
+      <string name="japanese_pos_for_dictionary_export_zuru_group3_verb" translatable="false">動詞ザ変</string>
+      <string name="japanese_pos_for_dictionary_export_ru_group3_verb" translatable="false">動詞ラ変</string>
+      <string name="japanese_pos_for_dictionary_export_adjective" translatable="false">形容詞</string>
+      <string name="japanese_pos_for_dictionary_export_sentence_ending_particle" translatable="false">終助詞</string>
+      <string name="japanese_pos_for_dictionary_export_punctuation" translatable="false">句読点</string>
+      <string name="japanese_pos_for_dictionary_export_free_standing_word" translatable="false">独立語</string>
+      <string name="japanese_pos_for_dictionary_export_suppression_word" translatable="false">抑制単語</string>
+
+</resources>

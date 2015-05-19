@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,13 +41,6 @@
       'type': 'static_library',
       'sources': [
         'jni/sysconf.cc',
-      ],
-    },
-    {
-      'target_name': 'android_pthread_once',
-      'type': 'static_library',
-      'sources': [
-        'jni/pthread_once.c',
       ],
     },
   ],

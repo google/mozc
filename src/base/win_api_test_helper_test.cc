@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,6 @@ DWORD WINAPI GetVersionHook() {
 }
 
 TEST(WinAPITestHelperTest, BasicTest) {
-  const auto true_version = GetVersion();
-
   vector<WinAPITestHelper::HookRequest> requests;
   requests.push_back(DEFINE_HOOK("kernel32.dll", GetVersion, GetVersionHook));
 
@@ -53,7 +51,7 @@ TEST(WinAPITestHelperTest, BasicTest) {
   WinAPITestHelper::RestoreHook(restore_info);
   restore_info = nullptr;
 
-  EXPECT_EQ(GetVersion(), true_version);
+  EXPECT_NE(GetVersion(), kFakeWindowsVersion);
 }
 
 }  // namespace

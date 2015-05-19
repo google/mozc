@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1182,8 +1182,7 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
-  // "部分確定"
-  const char kBubun[] = "<\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A>";
+  const char kBubun[] = "\xE9\x83\xA8\xE5\x88\x86";  // "部分"
   Segments segments;
   {
     Segment *seg = segments.push_back_segment();

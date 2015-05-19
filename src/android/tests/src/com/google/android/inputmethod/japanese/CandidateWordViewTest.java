@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,10 +48,13 @@ import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.SnapScroller;
+import org.mozc.android.inputmethod.japanese.view.DummyDrawable;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.base.Optional;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.MotionEvent;
 import android.view.View;
@@ -73,6 +76,11 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     public void invalidate() {
       // We are not willing to test rendering routine running background of event processing test.
       // So just ignore this method's invocation.
+    }
+
+    @Override
+    protected Drawable getViewBackgroundDrawable(Skin skin) {
+      return DummyDrawable.getInstance();
     }
   }
 
@@ -224,7 +232,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
       candidateSelectListener.onCandidateSelected(
-          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get());
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get(), Optional.<Integer>of(0));
       replayAll();
       events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
@@ -232,17 +240,31 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
       verifyAll();
 
-      // Slide within a candidate.
+      // Slide within a candidate (top-left corner).
       resetAll();
       expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
       candidateSelectListener.onCandidateSelected(
-          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get());
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get(), Optional.<Integer>of(0));
       replayAll();
-      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 20, 10, 0));
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
-      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 29, 10, 0));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 12, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
-      events.add(MotionEvent.obtain(0, 2000, MotionEvent.ACTION_UP, 25, 10, 0));
+      events.add(MotionEvent.obtain(0, 2000, MotionEvent.ACTION_UP, 11, 10, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      verifyAll();
+
+      // Slide within a candidate (bottom-right corner).
+      resetAll();
+      expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
+      candidateSelectListener.onCandidateSelected(
+          ROW_DATA.get(0).getSpanList().get(0).getCandidateWord().get(), Optional.<Integer>of(0));
+      replayAll();
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 29, 27, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 29, 29, 0));
+      assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
+      events.add(MotionEvent.obtain(0, 2000, MotionEvent.ACTION_UP, 29, 28, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
       verifyAll();
 
@@ -250,7 +272,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
       replayAll();
-      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 20, 10, 0));
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 29, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
       events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 30, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
@@ -262,13 +284,13 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(mockLayout.getRowList()).andStubReturn(ROW_DATA);
       replayAll();
-      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 20, 10, 0));
+      events.add(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 29, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
-      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 31, 10, 0));
+      events.add(MotionEvent.obtain(0, 1000, MotionEvent.ACTION_MOVE, 30, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
-      events.add(MotionEvent.obtain(0, 2000, MotionEvent.ACTION_MOVE, 15, 10, 0));
+      events.add(MotionEvent.obtain(0, 2000, MotionEvent.ACTION_MOVE, 29, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
-      events.add(MotionEvent.obtain(0, 3000, MotionEvent.ACTION_UP, 15, 10, 0));
+      events.add(MotionEvent.obtain(0, 3000, MotionEvent.ACTION_UP, 29, 10, 0));
       assertTrue(candidateWordView.onTouchEvent(events.get(events.size() - 1)));
       verifyAll();
 

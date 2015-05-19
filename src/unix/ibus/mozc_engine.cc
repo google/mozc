@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -75,12 +75,8 @@ DEFINE_bool(use_mozc_renderer, true,
 
 namespace {
 
-// A key which associates an IBusProperty object with MozcEngineProperty.
-const char kGObjectDataKey[] = "ibus-mozc-aux-data";
-// An ID for a candidate which is not associated with a text.
+// The ID for candidates which are not associated with texts.
 const int32 kBadCandidateId = -1;
-// The ibus-memconf section name in which we're interested.
-const char kMozcSectionName[] = "engine/Mozc";
 
 #ifdef ENABLE_GTK_RENDERER
 const char kMozcPanelSectionName[] = "panel";
@@ -335,9 +331,14 @@ void MozcEngine::FocusOut(IBusEngine *engine) {
   GetCandidateWindowHandler(engine)->Hide(engine);
   property_handler_->ResetContentType(engine);
 
-  // Do not call SubmitSession or RevertSession. Preedit string will commit on
-  // Focus Out event automatically by ibus_engine_update_preedit_text_with_mode
-  // which called in UpdatePreedit method.
+  // Note that the preedit string (if any) will be committed by IBus runtime
+  // because we are specifying |IBUS_ENGINE_PREEDIT_COMMIT| flag to
+  // |ibus_engine_update_preedit_text_with_mode|. All we need to do here is
+  // simply resetting the current session in case there is a non-empty
+  // preedit text. Note that |RevertSession| is supposed to do nothing when
+  // there is no preedit text.
+  // See https://code.google.com/p/mozc/issues/detail?id=255 for details.
+  RevertSession(engine);
   SyncData(false);
 }
 
@@ -668,6 +669,8 @@ bool MozcEngine::LaunchTool(const commands::Output &output) const {
 }
 
 void MozcEngine::RevertSession(IBusEngine *engine) {
+  // TODO(team): We should skip following actions when there is no on-going
+  // omposition.
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::REVERT);
   commands::Output output;

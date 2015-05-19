@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,11 +38,14 @@ import android.test.suitebuilder.annotation.SmallTest;
 /**
  */
 public class ScrollGuideViewTest extends InstrumentationTestCase {
+
   @SmallTest
   public void testScrollGuideViewSkin() {
     ScrollGuideView view = new ScrollGuideView(getInstrumentation().getTargetContext());
-    Drawable drawable = view.scrollBarDrawable;
-    view.setSkinType(SkinType.TEST);
-    assertNotSame(drawable, view.scrollBarDrawable);
+    Drawable scrollBarDrawable = view.scrollBarDrawable;
+    Drawable backgroundDrawable = view.getBackground();
+    view.setSkin(SkinType.TEST.getSkin(getInstrumentation().getTargetContext().getResources()));
+    assertNotSame(scrollBarDrawable, view.scrollBarDrawable);
+    assertNotSame(backgroundDrawable, view.getBackground());
   }
 }

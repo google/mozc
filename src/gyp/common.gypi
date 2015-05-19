@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,15 +34,11 @@
 # http://src.chromium.org/viewvc/chrome/trunk/src/build/common.gypi
 {
   'variables': {
-    # Set 1 when using two-pass build
-    'enable_two_pass_build%': 0,
-
-
     # Top directory of third party libraries.
     'third_party_dir': '<(DEPTH)/third_party',
 
     # Top directory of additional third party libraries.
-    'additional_third_party_dir': '<(DEPTH)/third_party',
+    'additional_third_party_dir%': '<(abs_depth)/third_party',
 
     # Compiler to build binaries that run in the target environment.
     # e.g. "clang", "gcc", "msvs".
@@ -130,18 +126,6 @@
     'conditions': [
       ['OS=="win"', {
         'conditions': [
-          ['MSVS_VERSION=="2010"', {
-            'compiler_target': 'msvs',
-            'compiler_target_version_int': 1600,  # Visual C++ 2010 or higher
-            'compiler_host': 'msvs',
-            'compiler_host_version_int': 1600,  # Visual C++ 2010 or higher
-          }],
-          ['MSVS_VERSION=="2012"', {
-            'compiler_target': 'msvs',
-            'compiler_target_version_int': 1700,  # Visual C++ 2012 or higher
-            'compiler_host': 'msvs',
-            'compiler_host_version_int': 1700,  # Visual C++ 2012 or higher
-          }],
           ['MSVS_VERSION=="2013"', {
             'compiler_target': 'msvs',
             'compiler_target_version_int': 1800,  # Visual C++ 2013 or higher
@@ -156,25 +140,31 @@
         'compiler_host': 'clang',
         'compiler_host_version_int': 303,  # Clang 3.3 or higher
       }],
-      ['target_platform=="Android"', {
+      ['target_platform=="Android" and android_compiler=="clang"', {
+        'compiler_target': 'clang',
+        'compiler_target_version_int': 305,  # Clang 3.5 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 305,  # Clang 3.5 or higher
+      }],
+      ['target_platform=="Android" and android_compiler=="gcc"', {
         'compiler_target': 'gcc',
-        'compiler_target_version_int': 406,  # GCC 4.6 or higher
-        'compiler_host': 'gcc',
-        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+        'compiler_target_version_int': 409,  # GCC 4.9 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 305,  # Clang 3.5 or higher
       }],
       ['target_platform=="NaCl"', {
         'compiler_target': 'clang',
         'compiler_target_version_int': 303,  # Clang 3.3 or higher
-        'compiler_host': 'gcc',
-        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 305,  # Clang 3.5 or higher
       }],
       ['target_platform=="Linux"', {
         # enable_gtk_renderer represents if mozc_renderer is supported on Linux
         # or not.
-        'compiler_target': 'gcc',
-        'compiler_target_version_int': 406,  # GCC 4.6 or higher
-        'compiler_host': 'gcc',
-        'compiler_host_version_int': 406,  # GCC 4.6 or higher
+        'compiler_target': 'clang',
+        'compiler_target_version_int': 305,  # Clang 3.5 or higher
+        'compiler_host': 'clang',
+        'compiler_host_version_int': 305,  # Clang 3.5 or higher
         'enable_gtk_renderer%': 1,
       }, {  # else
         'enable_gtk_renderer%': 0,
@@ -223,7 +213,7 @@
     'protobuf_root': '<(third_party_dir)/protobuf',
 
     # For Android
-    'protobuf_java_root': '<(third_party_dir)/protobuf/java/src/main',
+    'protobuf_java_root': '<(additional_third_party_dir)/protobuf/java/src/main',
 
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
@@ -344,10 +334,28 @@
           ['target_platform=="Android"', {
             'defines': ['NO_USAGE_REWRITER'],
             'target_conditions' : [
+              ['_toolset=="target" and _type=="executable"', {
+                # For unittest:
+                # Android 5.0+ requires standalone native executables to be PIE.
+                # See crbug.com/373219.
+                'ldflags': [
+                  '-pie',
+                ],
+              }],
               ['_toolset=="target"', {
                 'defines': [
                   'OS_ANDROID',
+                  # For the ambiguity of wcsstr.
+                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
                   'MOZC_ANDROID_APPLICATION_ID="<(android_application_id)"',
+                ],
+                'cflags': [
+                  # For unittest:
+                  # Android 5.0+ requires standalone native executables to be
+                  # PIE. Note that we can specify this option even for ICS
+                  # unless we ship a standalone native executable.
+                  # See crbug.com/373219.
+                  '-fPIE',
                 ],
                 'ldflags!': [  # Remove all libraries for GNU/Linux.
                   '<@(linux_ldflags)',
@@ -357,13 +365,16 @@
                 ],
                 'conditions': [
                   ['android_arch=="arm"', {
-                    'cflags': [
-                      '-mthumb',  # Force thumb interaction set for smaller file size.
+                    'ldflags+': [
+                      # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
+                      '-march=armv7-a',
                     ],
-                  }],
-                  ['android_stl=="stlport"', {
-                    'defines': [
-                      'MOZC_USE_STLPORT',
+                    'cflags': [
+                      # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
+                      '-march=armv7-a',
+                      '-mfloat-abi=softfp',
+                      '-mfpu=vfpv3-d16',
+                      '-mthumb',  # Force thumb interaction set for smaller file size.
                     ],
                   }],
                 ],
@@ -412,6 +423,7 @@
             'EnableUAC': 'true',
             'UACExecutionLevel': '0',  # level="asInvoker"
             'UACUIAccess': 'false',    # uiAccess="false"
+            'MinimumRequiredVersion': '6.00',
           },
         },
         'msvs_configuration_attributes': {
@@ -654,8 +666,8 @@
           'OS_WIN',
           'UNICODE',
           'WIN32',
-          'WIN32_IE=0x0600',
-          'WINVER=0x0501',
+          'WIN32_IE=0x0800',
+          'WINVER=0x0600',
           'WIN32_LEAN_AND_MEAN',
           '_ATL_ALL_WARNINGS',
           '_ATL_ALLOW_CHAR_UNSIGNED',
@@ -665,18 +677,13 @@
           '_STL_MSVC',
           '_UNICODE',
           '_WIN32',
-          '_WIN32_WINDOWS=0x0501',
-          '_WIN32_WINNT=0x0501',
+          '_WIN32_WINDOWS=0x0600',
+          '_WIN32_WINNT=0x0600',
           '_WINDOWS',
         ],
         'include_dirs': [
           '<@(msvs_includes)',
           '<(additional_third_party_dir)/wtl/files/include',
-          # Add atl_wrapper dir into the 'include_dirs' so that we can
-          # include the header file as <atlbase_mozc.h>, which
-          # is more lintian-friendly than "atlbase_mozc.h".
-          # See b/5101916 for the background information.
-          '<(DEPTH)/win32/atl_wrapper',
         ],
         'msvs_cygwin_shell': 0,
         'msvs_disabled_warnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX
@@ -848,11 +855,21 @@
         ['NM', '<(pnacl_bin_dir)/pnacl-nm'],
         ['READELF', '<(pnacl_bin_dir)/pnacl-readelf'],
         ['AR.host', '<!(which ar)'],
-        ['CC.host', '<!(which gcc)'],
-        ['CXX.host', '<!(which g++)'],
+        ['CC.host', '<!(which clang)'],
+        ['CXX.host', '<!(which clang++)'],
         ['LD.host', '<!(which ld)'],
         ['NM.host', '<!(which nm)'],
         ['READELF.host', '<!(which readelf)'],
+      ],
+    }],
+    ['target_platform=="Linux"', {
+      'make_global_settings': [
+        ['AR', '<!(which ar)'],
+        ['CC', '<!(which clang)'],
+        ['CXX', '<!(which clang++)'],
+        ['LD', '<!(which ld)'],
+        ['NM', '<!(which nm)'],
+        ['READELF', '<!(which readelf)'],
       ],
     }],
     ['target_platform=="Android"', {
@@ -876,19 +893,46 @@
             'toolchain_prefix': 'mipsel-linux-android',
           },
         }],
+        ['android_arch=="arm64"', {
+          'variables': {
+            'toolchain_prefix': 'aarch64-linux-android',
+          },
+        }],
+        ['android_arch=="x86_64"', {
+          'variables': {
+            'toolchain_prefix': 'x86_64-linux-android',
+          },
+        }],
+        ['android_arch=="mips64"', {
+          'variables': {
+            'toolchain_prefix': 'mips64el-linux-android',
+          },
+        }],
+        ['android_compiler=="gcc"', {
+          'variables': {
+            'c_compiler': 'gcc',
+            'cxx_compiler': 'g++',
+          }
+        }],
+        ['android_compiler=="clang"', {
+          'variables': {
+            'c_compiler': 'clang',
+            'cxx_compiler': 'clang++',
+          }
+        }],
       ],
       # To use clang only CC and CXX should point clang directly.
       # c.f., https://android.googlesource.com/platform/ndk/+/tools_ndk_r9d/docs/text/STANDALONE-TOOLCHAIN.text
       'make_global_settings': [
         ['AR', '<(ndk_bin_dir)/<(toolchain_prefix)-ar'],
-        ['CC', '<(ndk_bin_dir)/<(toolchain_prefix)-gcc'],
-        ['CXX', '<(ndk_bin_dir)/<(toolchain_prefix)-g++'],
+        ['CC', '<(ndk_bin_dir)/<(toolchain_prefix)-<(c_compiler)'],
+        ['CXX', '<(ndk_bin_dir)/<(toolchain_prefix)-<(cxx_compiler)'],
         ['LD', '<(ndk_bin_dir)/<(toolchain_prefix)-ld'],
         ['NM', '<(ndk_bin_dir)/<(toolchain_prefix)-nm'],
         ['READELF', '<(ndk_bin_dir)/<(toolchain_prefix)-readelf'],
         ['AR.host', '<!(which ar)'],
-        ['CC.host', '<!(which gcc)'],
-        ['CXX.host', '<!(which g++)'],
+        ['CC.host', '<!(which clang)'],
+        ['CXX.host', '<!(which clang++)'],
         ['LD.host', '<!(which ld)'],
         ['NM.host', '<!(which nm)'],
         ['READELF.host', '<!(which readelf)'],

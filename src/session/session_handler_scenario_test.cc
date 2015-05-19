@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -130,6 +130,7 @@ const char *kScenarioFileList[] = {
   DATA_DIR "auto_partial_suggestion.txt",
   DATA_DIR "b12751061_scenario.txt",
   DATA_DIR "b16123009_scenario.txt",
+  DATA_DIR "b18112966_scenario.txt",
   DATA_DIR "b7132535_scenario.txt",
   DATA_DIR "b7321313_scenario.txt",
   DATA_DIR "b7548679_scenario.txt",
@@ -167,6 +168,7 @@ const char *kScenarioFileList[] = {
   DATA_DIR "segment_focus.txt",
   DATA_DIR "segment_width.txt",
   DATA_DIR "twelvekeys_switch_inputmode_scenario.txt",
+  DATA_DIR "twelvekeys_toggle_flick_alphabet_scenario.txt",
   DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario.txt",
   DATA_DIR "undo.txt",
 #undef DATA_DIR

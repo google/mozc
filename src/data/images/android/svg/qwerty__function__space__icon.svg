@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
- Copyright 2010-2014, Google Inc.
+ Copyright 2010-2015, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,16 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="qwerty_x5F__x5F_function_x5F__x5F_space_x5F__x5F_icon"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="70px" height="74px"
-	 viewBox="0 0 70 74" style="enable-background:new 0 0 70 74;" xml:space="preserve">
-<polygon id="style-keyicon-function_7_" style="fill:#DDDDDD;" points="45.634,36 45.634,43.266 22.367,43.266 22.367,36 17.5,36 
-	17.5,47.999 50.5,47.999 50.5,36 "/>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg3674" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" width="285" height="122" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata3679">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <text id="style-keyicon-qwerty-function" x="142.5" y="61" style="font-size:45px;text-anchor:middle;dominant-baseline:central;">日本語</text>
 </svg>

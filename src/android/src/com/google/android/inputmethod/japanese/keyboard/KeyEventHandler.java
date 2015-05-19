@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@ package org.mozc.android.inputmethod.japanese.keyboard;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -44,13 +45,13 @@ import java.util.List;
  *
  */
 public class KeyEventHandler implements Handler.Callback {
+
   // A dummy argument which is passed to the callback's message.
   private static final int DUMMY_ARG = 0;
 
   // Keys to figure out what message is sent in the callback.
-  // Package private for testing purpose.
-  static final int REPEAT_KEY = 1;
-  static final int LONG_PRESS_KEY = 2;
+  @VisibleForTesting static final int REPEAT_KEY = 1;
+  @VisibleForTesting static final int LONG_PRESS_KEY = 2;
 
   @VisibleForTesting final Handler handler;
   private final KeyboardActionListener keyboardActionListener;
@@ -67,14 +68,8 @@ public class KeyEventHandler implements Handler.Callback {
   public KeyEventHandler(
       Looper looper, KeyboardActionListener keyboardActionListener,
       int repeatKeyDelay, int repeatKeyInterval, int longPressKeyDelay) {
-    if (looper == null) {
-      throw new NullPointerException("looper is null.");
-    }
-    if (keyboardActionListener == null) {
-      throw new NullPointerException("keyboardActionListener is null.");
-    }
-    this.handler = new Handler(looper, this);
-    this.keyboardActionListener = keyboardActionListener;
+    this.handler = new Handler(Preconditions.checkNotNull(looper), this);
+    this.keyboardActionListener = Preconditions.checkNotNull(keyboardActionListener);
     this.repeatKeyDelay = repeatKeyDelay;
     this.repeatKeyInterval = repeatKeyInterval;
     this.longPressKeyDelay = longPressKeyDelay;
@@ -82,23 +77,49 @@ public class KeyEventHandler implements Handler.Callback {
 
   @Override
   public boolean handleMessage(Message message) {
-    int keyCode = message.arg1;
     KeyEventContext context = KeyEventContext.class.cast(message.obj);
-    keyboardActionListener.onKey(keyCode, Collections.singletonList(context.getTouchEvent()));
-
     switch (message.what) {
       case REPEAT_KEY: {
-        Message newMessage = handler.obtainMessage(REPEAT_KEY, keyCode, DUMMY_ARG, context);
-        handler.sendMessageDelayed(newMessage, repeatKeyInterval);
+        handleMessageRepeatKey(context);
         break;
       }
       case LONG_PRESS_KEY:
-        // Set a flag that means long-press-key-event has been sent.
-        context.longPressSent = true;
+        handleMessageLongPress(context);
         break;
     }
 
     return true;
+  }
+
+  private void handleMessageRepeatKey(KeyEventContext context) {
+    int keyCode = context.getPressedKeyCode();
+    // TODO(hsumita): confirm that we can put null as a touch event or not.
+    keyboardActionListener.onKey(
+        keyCode, Collections.singletonList(context.getTouchEvent().orNull()));
+    Message newMessage = handler.obtainMessage(REPEAT_KEY, keyCode, DUMMY_ARG, context);
+    handler.sendMessageDelayed(newMessage, repeatKeyInterval);
+  }
+
+  /**
+   * Does the things which should be done when long-press operation is done.
+   * <p>
+   * This is public because this is called from KeyboardView directory in order to implement
+   * accessibility feature.
+   */
+  public void handleMessageLongPress(KeyEventContext context) {
+    int keyCode = context.getLongPressKeyCode();
+    if (context.isLongPressTimeoutTrigger()) {
+      // TODO(hsumita): confirm that we can put null as a touch event or not.
+      keyboardActionListener.onKey(
+          keyCode, Collections.singletonList(context.getTouchEvent().orNull()));
+    }
+    // Callback a function if present then flip the flag for long-press timeout.
+    // If isLongPressTimeoutTrigger is true, key-code for long-press has already been sent.
+    // If false, touch-up event for the context will send long-press key code.
+    if (context.longPressCallback.isPresent()) {
+      context.longPressCallback.get().run();
+    }
+    context.pastLongPressSentTimeout = true;
   }
 
   public void sendPress(int keyCode) {
@@ -109,7 +130,7 @@ public class KeyEventHandler implements Handler.Callback {
     keyboardActionListener.onRelease(keyCode);
   }
 
-  public void sendKey(int keyCode, List<? extends TouchEvent> touchEventList) {
+  public void sendKey(int keyCode, List<TouchEvent> touchEventList) {
     keyboardActionListener.onKey(keyCode, touchEventList);
   }
 
@@ -117,9 +138,8 @@ public class KeyEventHandler implements Handler.Callback {
     keyboardActionListener.onCancel();
   }
 
-  private void startDelayedKeyEventInternal(
-      int what, int keyCode, KeyEventContext context, int delay) {
-    Message message = handler.obtainMessage(what, keyCode, DUMMY_ARG, context);
+  private void startDelayedKeyEventInternal(int what, KeyEventContext context, int delay) {
+    Message message = handler.obtainMessage(what, DUMMY_ARG, DUMMY_ARG, context);
     handler.sendMessageDelayed(message, delay);
   }
 
@@ -128,16 +148,16 @@ public class KeyEventHandler implements Handler.Callback {
    * based on the given {@code context}.
    */
   public void maybeStartDelayedKeyEvent(KeyEventContext context) {
-    Key key = context.key;
+    Key key = Preconditions.checkNotNull(context).key;
     if (key.isRepeatable()) {
       int keyCode = context.getPressedKeyCode();
       if (keyCode != KeyEntity.INVALID_KEY_CODE) {
-        startDelayedKeyEventInternal(REPEAT_KEY, keyCode, context, repeatKeyDelay);
+        startDelayedKeyEventInternal(REPEAT_KEY, context, repeatKeyDelay);
       }
     } else {
       int longPressKeyCode = context.getLongPressKeyCode();
       if (longPressKeyCode != KeyEntity.INVALID_KEY_CODE) {
-        startDelayedKeyEventInternal(LONG_PRESS_KEY, longPressKeyCode, context, longPressKeyDelay);
+        startDelayedKeyEventInternal(LONG_PRESS_KEY, context, longPressKeyDelay);
       }
     }
   }

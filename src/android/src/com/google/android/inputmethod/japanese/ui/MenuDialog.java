@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,9 +43,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnDismissListener;
+import android.content.DialogInterface.OnShowListener;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.IBinder;
+import android.view.InflateException;
+import android.view.WindowManager;
 
 import java.util.Collections;
 import java.util.List;
@@ -73,9 +76,6 @@ public class MenuDialog {
     /** Invoked when "Launch Preference Activity" item is selected. */
     public void onLaunchPreferenceActivitySelected(Context context);
 
-    /** Invoked when "Voice input" item is selected. */
-    public void onLaunchVoiceInputActivitySelected(Context context);
-
     /** Invoked when "Launch Mushroom" item is selected. */
     public void onShowMushroomSelectionDialogSelected(Context context);
   }
@@ -84,7 +84,8 @@ public class MenuDialog {
    * Internal implementation of callback invocation dispatching.
    */
   @VisibleForTesting
-  static class MenuDialogListenerHandler implements OnClickListener, OnDismissListener {
+  static class MenuDialogListenerHandler
+      implements OnClickListener, OnDismissListener, OnShowListener {
     private final Context context;
     /** Table to convert from a menu item index to a string resource id. */
     private final int[] indexToIdTable;
@@ -97,8 +98,8 @@ public class MenuDialog {
       this.listener = Preconditions.checkNotNull(listener);
     }
 
-    // TODO(hidehiko): use DialogInterface.OnShowListener when we get rid of API level 7.
-    public void onShow() {
+    @Override
+    public void onShow(DialogInterface dialog) {
       if (!listener.isPresent()) {
         return;
       }
@@ -126,9 +127,6 @@ public class MenuDialog {
         case R.string.menu_item_preferences:
           listener.get().onLaunchPreferenceActivitySelected(context);
           break;
-        case R.string.menu_item_voice_input:
-          listener.get().onLaunchVoiceInputActivitySelected(context);
-          break;
         case R.string.menu_item_mushroom:
           listener.get().onShowMushroomSelectionDialogSelected(context);
           break;
@@ -138,11 +136,10 @@ public class MenuDialog {
     }
   }
 
-  private final AlertDialog dialog;
+  private final Optional<AlertDialog> dialog;
   private final MenuDialogListenerHandler listenerHandler;
 
-  public MenuDialog(
-      Context context, Optional<MenuDialogListener> listener, boolean isVoiceInputEnabled) {
+  public MenuDialog(Context context, Optional<MenuDialogListener> listener) {
     Preconditions.checkNotNull(context);
     Preconditions.checkNotNull(listener);
 
@@ -150,7 +147,7 @@ public class MenuDialog {
     String appName = resources.getString(R.string.app_name);
 
     // R.string.menu_item_* resources needs to be formatted.
-    List<Integer> menuItemIds = getEnabledMenuIds(context, isVoiceInputEnabled);
+    List<Integer> menuItemIds = getEnabledMenuIds(context);
     int menuNum = menuItemIds.size();
     String[] menuTextList = new String[menuNum];
     int[] indexToIdTable = new int[menuNum];
@@ -162,30 +159,43 @@ public class MenuDialog {
 
     listenerHandler = new MenuDialogListenerHandler(
         context, indexToIdTable, listener);
-    dialog = new AlertDialog.Builder(context)
-        .setTitle(R.string.menu_dialog_title)
-        .setItems(menuTextList, listenerHandler)
-        .create();
-    dialog.setOnDismissListener(listenerHandler);
+
+    AlertDialog tempDialog = null;
+    try {
+      tempDialog = new AlertDialog.Builder(context)
+          .setTitle(R.string.menu_dialog_title)
+          .setItems(menuTextList, listenerHandler)
+          .create();
+      tempDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+      tempDialog.getWindow().getAttributes().dimAmount = 0.60f;
+      tempDialog.setOnDismissListener(listenerHandler);
+      tempDialog.setOnShowListener(listenerHandler);
+    } catch (InflateException e) {
+      // Ignore the exception.
+    }
+    dialog = Optional.fromNullable(tempDialog);
   }
 
   public void show() {
-    // Note that unfortunately, we don't have a callback which is invoked when the dialog is
-    // shown on API level 7. So, instead, we manually invoke the method here.
-    listenerHandler.onShow();
-    dialog.show();
+    if (dialog.isPresent()) {
+      dialog.get().show();
+    }
   }
 
   public void dismiss() {
-    dialog.dismiss();
+    if (dialog.isPresent()) {
+      dialog.get().dismiss();
+    }
   }
 
   public void setWindowToken(IBinder windowToken) {
-    MozcUtil.setWindowToken(Preconditions.checkNotNull(windowToken), dialog);
+    if (dialog.isPresent()) {
+      MozcUtil.setWindowToken(Preconditions.checkNotNull(windowToken), dialog.get());
+    }
   }
 
   @VisibleForTesting
-  static List<Integer> getEnabledMenuIds(Context context, boolean isVoiceInputEnabled) {
+  static List<Integer> getEnabledMenuIds(Context context) {
     // "Mushroom" item is enabled only when Mushroom-aware applications are available.
     PackageManager packageManager = Preconditions.checkNotNull(context).getPackageManager();
     boolean isMushroomEnabled = !MushroomUtil.getMushroomApplicationList(packageManager).isEmpty();
@@ -193,9 +203,6 @@ public class MenuDialog {
     List<Integer> menuItemIds = Lists.newArrayListWithCapacity(4);
     menuItemIds.add(R.string.menu_item_input_method);
     menuItemIds.add(R.string.menu_item_preferences);
-    if (isVoiceInputEnabled) {
-      menuItemIds.add(R.string.menu_item_voice_input);
-    }
     if (isMushroomEnabled) {
       menuItemIds.add(R.string.menu_item_mushroom);
     }

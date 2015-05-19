@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import com.google.common.base.Preconditions;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -50,7 +52,7 @@ public class Row {
   private final int verticalGap;
 
   public Row(List<? extends Key> keyList, int height, int verticalGap) {
-    this.keyList = Collections.unmodifiableList(keyList);
+    this.keyList = Collections.unmodifiableList(Preconditions.checkNotNull(keyList));
     this.height = height;
     this.verticalGap = verticalGap;
   }

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,23 +42,23 @@ import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayoutRenderer;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.SnapScroller;
-import org.mozc.android.inputmethod.japanese.view.SkinType;
+import org.mozc.android.inputmethod.japanese.view.CarrierEmojiRenderHelper;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Paint.Align;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.support.v4.view.ViewCompat;
-import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EdgeEffect;
 
 import javax.annotation.Nullable;
 
@@ -73,14 +73,16 @@ abstract class CandidateWordView extends View implements MemoryManageable {
    * Handles gestures to scroll candidate list and choose a candidate.
    */
   class CandidateWordGestureDetector {
+
     class CandidateWordViewGestureListener extends SimpleOnGestureListener {
+
       @Override
       public boolean onFling(
           MotionEvent event1, MotionEvent event2, float velocityX, float velocityY) {
         float velocity = orientationTrait.projectVector(velocityX, velocityY);
         // As fling is started, current action is not tapping.
         // Reset pressing state so that candidate selection is not triggered at touch up event.
-        releaseCandidate();
+        reset();
         // Fling makes scrolling.
         scroller.fling(-(int) velocity);
         invalidate();
@@ -96,7 +98,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
         orientationTrait.scrollTo(CandidateWordView.this, scroller.getScrollPosition());
         // As scroll is started, current action is not tapping.
         // Reset pressing state so that candidate selection is not triggered at touch up event.
-        releaseCandidate();
+        reset();
 
         // Edge effect. Now, in production, we only support vertical scroll.
         if (oldScrollPosition + distance < 0) {
@@ -119,7 +121,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     // GestureDetector cannot handle all complex gestures which we need.
     // But we use GestureDetector for some gesture recognition
     // because implementing whole gesture detection logic by ourselves is a bit tedious.
-    final GestureDetector gestureDetector;
+    private final GestureDetector gestureDetector;
 
     /**
      * Points to an instance of currently pressed candidate word. Or {@code null} if any
@@ -128,12 +130,15 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     @Nullable
     private CandidateWord pressedCandidate;
     private final RectF candidateRect = new RectF();
+    private Optional<Integer> pressedRowIndex = Optional.absent();
 
     public CandidateWordGestureDetector(Context context) {
       gestureDetector = new GestureDetector(context, new CandidateWordViewGestureListener());
     }
 
-    private void pressCandidate(Row row, Span span) {
+    private void pressCandidate(int rowIndex, Span span) {
+      Row row = calculatedLayout.getRowList().get(rowIndex);
+      pressedRowIndex = Optional.of(rowIndex);
       pressedCandidate = span.getCandidateWord().orNull();
       // TODO(yamaguchi):maybe better to make this rect larger by several pixels to avoid that
       // users fail to select a candidate by unconscious small movement of tap point.
@@ -143,8 +148,10 @@ abstract class CandidateWordView extends View implements MemoryManageable {
                         span.getRight(), row.getTop() + row.getHeight());
     }
 
-    private void releaseCandidate() {
+    void reset() {
       pressedCandidate = null;
+      pressedRowIndex = Optional.absent();
+      // NOTE: candidateRect doesn't need reset.
     }
 
     CandidateWord getPressedCandidate() {
@@ -166,7 +173,8 @@ abstract class CandidateWordView extends View implements MemoryManageable {
       if (calculatedLayout == null) {
         return false;
       }
-      for (Row row : calculatedLayout.getRowList()) {
+      for (int rowIndex = 0; rowIndex < calculatedLayout.getRowList().size(); ++rowIndex) {
+        Row row = calculatedLayout.getRowList().get(rowIndex);
         if (scrolledY < row.getTop()) {
           break;
         }
@@ -180,7 +188,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
           if (scrolledX >= span.getRight()) {
             continue;
           }
-          pressCandidate(row, span);
+          pressCandidate(rowIndex, span);
           invalidate();
           return true;
         }
@@ -190,6 +198,14 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     }
 
     boolean onTouchEvent(MotionEvent event) {
+      // Before delegation to gesture detector, handle ACTION_UP event
+      // in order to release edge effect.
+      if (event.getAction() == MotionEvent.ACTION_UP) {
+        topEdgeEffect.onRelease();
+        bottomEdgeEffect.onRelease();
+        invalidate();
+      }
+
       if (gestureDetector.onTouchEvent(event)) {
         return true;
       }
@@ -202,32 +218,34 @@ abstract class CandidateWordView extends View implements MemoryManageable {
           scroller.stopScrolling();
           if (!topEdgeEffect.isFinished()) {
             topEdgeEffect.onRelease();
+            invalidate();
           }
           if (!bottomEdgeEffect.isFinished()) {
             bottomEdgeEffect.onRelease();
+            invalidate();
           }
           return true;
         case MotionEvent.ACTION_MOVE:
           if (pressedCandidate != null) {
             // Turn off highlighting if contact point gets out of the candidate.
             if (!candidateRect.contains(scrolledX, scrolledY)) {
-              releaseCandidate();
+              reset();
               invalidate();
             }
           }
           return true;
         case MotionEvent.ACTION_CANCEL:
           if (pressedCandidate != null) {
-            releaseCandidate();
+            reset();
             invalidate();
           }
           return true;
         case MotionEvent.ACTION_UP:
           if (pressedCandidate != null) {
             if (candidateRect.contains(scrolledX, scrolledY) && candidateSelectListener != null) {
-              candidateSelectListener.onCandidateSelected(pressedCandidate);
+              candidateSelectListener.onCandidateSelected(pressedCandidate, pressedRowIndex);
             }
-            releaseCandidate();
+            reset();
             invalidate();
           }
           return true;
@@ -341,8 +359,8 @@ abstract class CandidateWordView extends View implements MemoryManageable {
 
   // Finally, we only need vertical scrolling.
   // TODO(hidehiko): Remove horizontal scrolling related codes.
-  private final EdgeEffectCompat topEdgeEffect = new EdgeEffectCompat(getContext());
-  private final EdgeEffectCompat bottomEdgeEffect = new EdgeEffectCompat(getContext());
+  private final EdgeEffect topEdgeEffect = new EdgeEffect(getContext());
+  private final EdgeEffect bottomEdgeEffect = new EdgeEffect(getContext());
 
   // The Scroller which manages the status of scrolling the view.
   // Default behavior of ScrollView does not suffice our UX design
@@ -362,8 +380,10 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   // No padding by default.
   private int horizontalPadding = 0;
 
+  protected final CarrierEmojiRenderHelper carrierEmojiRenderHelper =
+      new CarrierEmojiRenderHelper(this);
   protected final CandidateLayoutRenderer candidateLayoutRenderer =
-      new CandidateLayoutRenderer(this);
+      new CandidateLayoutRenderer();
 
   CandidateWordGestureDetector candidateWordGestureDetector =
       new CandidateWordGestureDetector(getContext());
@@ -372,7 +392,7 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   private final OrientationTrait orientationTrait;
 
   protected final BackgroundDrawableFactory backgroundDrawableFactory =
-      new BackgroundDrawableFactory(getResources().getDisplayMetrics().density);
+      new BackgroundDrawableFactory(getResources());
   private DrawableType backgroundDrawableType = null;
 
   private final CandidateWindowAccessibilityDelegate accessibilityDelegate;
@@ -397,6 +417,12 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   {
     accessibilityDelegate = new CandidateWindowAccessibilityDelegate(this);
     ViewCompat.setAccessibilityDelegate(this, accessibilityDelegate);
+  }
+
+  void reset() {
+    calculatedLayout = null;
+    currentCandidateList = null;
+    candidateWordGestureDetector.reset();
   }
 
   void setCandidateSelectListener(CandidateSelectListener candidateSelectListener) {
@@ -431,19 +457,18 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   @Override
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
-    candidateLayoutRenderer.onAttachedToWindow();
+    carrierEmojiRenderHelper.onAttachedToWindow();
   }
 
   @Override
   protected void onDetachedFromWindow() {
-    candidateLayoutRenderer.onDetachedFromWindow();
+    carrierEmojiRenderHelper.onDetachedFromWindow();
     super.onDetachedFromWindow();
   }
 
   public void setEmojiProviderType(EmojiProviderType providerType) {
     Preconditions.checkNotNull(providerType);
-
-    candidateLayoutRenderer.setEmojiProviderType(providerType);
+    carrierEmojiRenderHelper.setEmojiProviderType(providerType);
   }
 
   @Override
@@ -501,7 +526,8 @@ abstract class CandidateWordView extends View implements MemoryManageable {
       CandidateWord pressedCandidate = candidateWordGestureDetector.getPressedCandidate();
       int pressedCandidateIndex = (pressedCandidate != null && pressedCandidate.hasIndex())
           ? pressedCandidate.getIndex() : -1;
-      candidateLayoutRenderer.drawCandidateLayout(canvas, calculatedLayout, pressedCandidateIndex);
+      candidateLayoutRenderer.drawCandidateLayout(
+          canvas, calculatedLayout, pressedCandidateIndex, carrierEmojiRenderHelper);
     } finally {
       canvas.restoreToCount(saveCount);
     }
@@ -520,11 +546,13 @@ abstract class CandidateWordView extends View implements MemoryManageable {
           topEdgeEffect.onAbsorb(velocity.intValue());
           if (!bottomEdgeEffect.isFinished()) {
             bottomEdgeEffect.onRelease();
+            invalidate();
           }
         } else if (velocity > 0) {
           bottomEdgeEffect.onAbsorb(velocity.intValue());
           if (!topEdgeEffect.isFinished()) {
             topEdgeEffect.onRelease();
+            invalidate();
           }
         }
       }
@@ -581,7 +609,9 @@ abstract class CandidateWordView extends View implements MemoryManageable {
   void update(CandidateList candidateList) {
     CandidateList previousCandidateList = currentCandidateList;
     currentCandidateList = candidateList;
-    candidateLayoutRenderer.setCandidateList(Optional.fromNullable(candidateList));
+    Optional<CandidateList> optionalCandidateList = Optional.fromNullable(candidateList);
+    candidateLayoutRenderer.setCandidateList(optionalCandidateList);
+    carrierEmojiRenderHelper.setCandidateList(optionalCandidateList);
     if (layouter != null && !equals(candidateList, previousCandidateList)) {
       updateCalculatedLayout();
     }
@@ -650,32 +680,29 @@ abstract class CandidateWordView extends View implements MemoryManageable {
     return currentCandidateList;
   }
 
-  /**
-   * Utility method for creating paint instance.
-   */
-  protected static Paint createPaint(
-      boolean antiAlias, int color, Align textAlign, float textSize) {
-    Paint paint = new Paint();
-    paint.setAntiAlias(antiAlias);
-    paint.setColor(color);
-    paint.setTextAlign(textAlign);
-    paint.setTextSize(textSize);
-    return paint;
-  }
-
-  protected void setBackgroundDrawableType(DrawableType drawableType) {
+  protected void setSpanBackgroundDrawableType(DrawableType drawableType) {
     backgroundDrawableType = drawableType;
-    resetBackground();
+    resetSpanBackground();
   }
 
-  private void resetBackground() {
-    candidateLayoutRenderer.setSpanBackgroundDrawable(
-        Optional.fromNullable(backgroundDrawableFactory.getDrawable(backgroundDrawableType)));
+  private void resetSpanBackground() {
+    Drawable drawable = (backgroundDrawableType != null)
+        ? backgroundDrawableFactory.getDrawable(backgroundDrawableType) : null;
+    candidateLayoutRenderer.setSpanBackgroundDrawable(Optional.fromNullable(drawable));
   }
 
-  void setSkinType(SkinType skinType) {
-    backgroundDrawableFactory.setSkinType(skinType);
-    resetBackground();
+  /**
+   * Returns a Drawable which should be set as the view's background.
+   */
+  protected abstract Drawable getViewBackgroundDrawable(Skin skin);
+
+  @SuppressWarnings("deprecation")
+  void setSkin(Skin skin) {
+    backgroundDrawableFactory.setSkin(Preconditions.checkNotNull(skin));
+    resetSpanBackground();
+    candidateLayoutRenderer.setSkin(skin);
+    setBackgroundDrawable(
+        getViewBackgroundDrawable(skin).getConstantState().newDrawable());
   }
 
   @Override
@@ -691,5 +718,16 @@ abstract class CandidateWordView extends View implements MemoryManageable {
       return accessibilityDelegate.dispatchHoverEvent(event);
     }
     return false;
+  }
+
+  @Override
+  protected void onVisibilityChanged(View changedView, int visibility) {
+    super.onVisibilityChanged(changedView, visibility);
+    // If this view gets invisible, reset the internal state of the gesture detector.
+    // Otherwise UP event, which is sent after this view being invisible, will cause
+    // unexpected onCandidateSelected callback.
+    if (visibility != View.VISIBLE) {
+      candidateWordGestureDetector.reset();
+    }
   }
 }

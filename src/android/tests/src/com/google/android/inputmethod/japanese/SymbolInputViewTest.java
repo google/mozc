@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,11 +41,13 @@ import org.mozc.android.inputmethod.japanese.model.SymbolMajorCategory;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
+import com.google.common.base.Optional;
 
 import android.app.AlertDialog;
 import android.content.Context;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
+import android.view.View.OnClickListener;
 
 import java.util.Collections;
 
@@ -83,7 +85,7 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     symbolInputView.sharedPreferences = null;
 
     AlertDialog dialog = createDialogMock(AlertDialog.class);
-    symbolInputView.emojiProviderDialog = dialog;
+    symbolInputView.emojiProviderDialog = Optional.of(dialog);
 
     symbolInputView.maybeInitializeEmojiProviderDialog(context);
     expect(symbolInputView.getWindowToken()).andReturn(null);
@@ -119,14 +121,29 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     view.reset();
 
     ViewEventListener listener = createMock(ViewEventListener.class);
-    view.setViewEventListener(listener, null);
+    view.setEventListener(
+        listener, createNiceMock(OnClickListener.class), createNiceMock(OnClickListener.class));
 
     checkConsistency(view);
 
+    // NUMBER
+    resetAll();
+    replayAll();
+
+    view.setMajorCategory(SymbolMajorCategory.NUMBER);
+
+    verifyAll();
+    checkConsistency(view);
+
+    // The others
     for (SymbolMajorCategory category : SymbolMajorCategory.values()) {
+      if (category == SymbolMajorCategory.NUMBER) {
+        continue;
+      }
+
       resetAll();
       expect(historyStorage.getAllHistory(category)).andReturn(Collections.<String>emptyList());
-      listener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
+      listener.onSubmitPreedit();
       replayAll();
 
       view.setMajorCategory(category);
@@ -149,14 +166,31 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     view.reset();
 
     ViewEventListener listener = createMock(ViewEventListener.class);
-    view.setViewEventListener(listener, null);
+    view.setEventListener(
+        listener, createNiceMock(OnClickListener.class), createNiceMock(OnClickListener.class));
     checkConsistency(view);
+
+    // NUMBER
+    resetAll();
+    replayAll();
+
+    view.setMajorCategory(SymbolMajorCategory.NUMBER);
+
+    verifyAll();
+    checkConsistency(view);
+
+    // The others
     for (final SymbolMajorCategory category : SymbolMajorCategory.values()) {
+      if (category == SymbolMajorCategory.NUMBER) {
+        continue;
+      }
+
       resetAll();
       expect(historyStorage.getAllHistory(category))
           .andReturn(Collections.singletonList(category.name()));
-      listener.onFireFeedbackEvent(FeedbackEvent.INPUTVIEW_EXPAND);
+      listener.onFireFeedbackEvent(FeedbackEvent.SYMBOL_INPUTVIEW_MINOR_CATEGORY_SELECTED);
       expectLastCall().asStub();
+      listener.onSubmitPreedit();
       replayAll();
 
       view.setMajorCategory(category);
@@ -180,14 +214,15 @@ public class SymbolInputViewTest extends InstrumentationTestCaseWithMock {
     view.setMajorCategory(SymbolMajorCategory.EMOTICON);
 
     ViewEventListener viewEventListener = createMock(ViewEventListener.class);
-    view.setViewEventListener(viewEventListener, null);
+    view.setEventListener(viewEventListener, createNiceMock(OnClickListener.class),
+        createNiceMock(OnClickListener.class));
 
     resetAll();
     viewEventListener.onSymbolCandidateSelected(SymbolMajorCategory.EMOTICON, "(^_^)", true);
     replayAll();
 
     view.new SymbolCandidateSelectListener().onCandidateSelected(
-        CandidateWord.newBuilder().setValue("(^_^)").buildPartial());
+        CandidateWord.newBuilder().setValue("(^_^)").buildPartial(), Optional.<Integer>absent());
 
     verifyAll();
   }

@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM ubuntu:14.04
+FROM ubuntu:14.04.1
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -35,11 +35,11 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN dpkg --add-architecture i386
 RUN apt-get update
 ## Common packages for linux build environment
-RUN apt install -y g++ python pkg-config subversion git curl bzip2 unzip make
+RUN apt install -y clang-3.5 python pkg-config subversion git curl bzip2 unzip make
 ## Packages for linux desktop version
 RUN apt install -y libibus-1.0-dev libdbus-1-dev libglib2.0-dev subversion libqt4-dev libzinnia-dev tegaki-zinnia-japanese libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
-RUN apt install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless ant libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386
+RUN apt install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless ant libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386 zip
 ## Packages for NaCl
 RUN apt install -y libc6:i386 libstdc++6:i386
 ## For emacsian
@@ -52,20 +52,26 @@ USER mozc_builder
 # SDK setup
 RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
+
 ## Android SDK/NDK
-RUN curl -L http://dl.google.com/android/ndk/android-ndk-r10c-linux-x86_64.bin -O && chmod u+x android-ndk-r10c-linux-x86_64.bin && ./android-ndk-r10c-linux-x86_64.bin && rm android-ndk-r10c-linux-x86_64.bin
-RUN curl -LO http://dl.google.com/android/adt/22.6.2/adt-bundle-linux-x86_64-20140321.zip && unzip adt-bundle-linux-x86_64-20140321.zip && rm adt-bundle-linux-x86_64-20140321.zip
+RUN curl -L http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin -O && chmod u+x android-ndk-r10d-linux-x86_64.bin && ./android-ndk-r10d-linux-x86_64.bin && rm android-ndk-r10d-linux-x86_64.bin
+RUN curl -L http://dl.google.com/android/android-sdk_r24.0.2-linux.tgz | tar -zx
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10d
+ENV ANDROID_HOME /home/mozc_builder/work/android-sdk-linux
+ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
+RUN echo y | android update sdk --all --force --no-ui --filter android-21
+RUN echo y | android update sdk --all --force --no-ui --filter build-tools-21.0.2
+RUN echo y | android update sdk --all --force --no-ui --filter extra-android-support
+RUN echo y | android update sdk --all --force --no-ui --filter platform-tool
+
 ## NaCl SDK
 RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip
 RUN cd nacl_sdk && ./naclsdk install pepper_27
+ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_27
+
 ## depot_tools
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-
-# env setup
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r10c
-ENV ANDROID_HOME /home/mozc_builder/work/adt-bundle-linux-x86_64-20140321/sdk
-ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_27
-ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}:/home/mozc_builder/work/depot_tools
+ENV PATH $PATH:/home/mozc_builder/work/depot_tools
 
 # check out Mozc source
 RUN mkdir -p /home/mozc_builder/work/mozc

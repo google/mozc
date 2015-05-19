@@ -7,32 +7,20 @@ SEND_KEY	ON
 # Following scenario is emulation of http://b/issue?id=5844621.
 RESET_CONTEXT
 
-# Set to 12keys-number keyboard layout.
-SET_MOBILE_REQUEST
-UPDATE_MOBILE_KEYBOARD	TOGGLE_FLICK_TO_NUMBER	COMMIT
-SWITCH_INPUT_MODE	HALF_ASCII
-
-# Type "3" and "0" consecutively.
-SEND_KEYS	30
-EXPECT_PREEDIT	30
-
 # Switch to 12keys-hiragana keyboard layout.
 UPDATE_MOBILE_KEYBOARD	TOGGLE_FLICK_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
 SWITCH_INPUT_MODE	HIRAGANA
 
-# Send backspace.
-SEND_KEY	BACKSPACE
-
 # The flick SA-key to the left to input "SHI", which is translated to 'd' key
 # in the Java client.
 SEND_KEYS	d
-EXPECT_PREEDIT	3し
+EXPECT_PREEDIT	し
 
 
 # Another scenario.
 RESET_CONTEXT
 
-# Set to 12keys-number keyboard layout.
+# Set to number keyboard layout.
 UPDATE_MOBILE_KEYBOARD	TOGGLE_FLICK_TO_HALFWIDTHASCII	COMMIT
 SWITCH_INPUT_MODE	HALF_ASCII
 

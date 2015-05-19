@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,8 @@ EngineInterface *PackedEngineFactory::Create() {
   Engine *engine = new Engine;
   DCHECK(engine);
   engine->Init(packed::GetPackedDataManager(),
-               DefaultPredictor::CreateDefaultPredictor);
+               DefaultPredictor::CreateDefaultPredictor,
+               false);
   return engine;
 }
 

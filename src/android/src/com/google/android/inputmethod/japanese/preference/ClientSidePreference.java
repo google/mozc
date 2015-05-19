@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,12 +31,14 @@ package org.mozc.android.inputmethod.japanese.preference;
 
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 
 /**
  * This class expresses the client-side preferences which corresponds to current
@@ -87,7 +89,6 @@ public class ClientSidePreference {
   public enum HardwareKeyMap {
     DEFAULT,
     JAPANESE109A,
-    TWELVEKEY,
   }
 
   private final boolean isHapticFeedbackEnabled;
@@ -103,6 +104,7 @@ public class ClientSidePreference {
   private final EmojiProviderType emojiProviderType;
   private final HardwareKeyMap hardwareKeyMap;
   private final SkinType skinType;
+  private final boolean isMicrophoneButtonEnabled;
   private final LayoutAdjustment layoutAdjustment;
 
   /** Percentage of keyboard height */
@@ -110,14 +112,15 @@ public class ClientSidePreference {
 
   /**
    * If you want to use this method,
-   * consider using {@link #ClientSidePreference(SharedPreferences, int)} instead.
+   * consider using {@link #ClientSidePreference(SharedPreferences, Resources, int)} instead.
    */
   @VisibleForTesting public ClientSidePreference(
       boolean isHapticFeedbackEnabled, long hapticFeedbackDuration, boolean isSoundFeedbackEnabled,
       int soundFeedbackVolume, boolean isPopupFeedbackEnabled, KeyboardLayout keyboardLayout,
       InputStyle inputStyle, boolean qwertyLayoutForAlphabet, boolean fullscreenMode,
       int flickSensitivity, EmojiProviderType emojiProviderType, HardwareKeyMap hardwareKeyMap,
-      SkinType skinType, LayoutAdjustment layoutAdjustment, int keyboardHeightRatio) {
+      SkinType skinType, boolean isMicrophoneButtonEnabled, LayoutAdjustment layoutAdjustment,
+      int keyboardHeightRatio) {
     this.isHapticFeedbackEnabled = isHapticFeedbackEnabled;
     this.hapticFeedbackDuration = hapticFeedbackDuration;
     this.isSoundFeedbackEnabled = isSoundFeedbackEnabled;
@@ -131,11 +134,13 @@ public class ClientSidePreference {
     this.emojiProviderType = Preconditions.checkNotNull(emojiProviderType);
     this.hardwareKeyMap = Preconditions.checkNotNull(hardwareKeyMap);
     this.skinType = Preconditions.checkNotNull(skinType);
+    this.isMicrophoneButtonEnabled = isMicrophoneButtonEnabled;
     this.layoutAdjustment = Preconditions.checkNotNull(layoutAdjustment);
     this.keyboardHeightRatio = keyboardHeightRatio;
   }
 
-  public ClientSidePreference(SharedPreferences sharedPreferences, int deviceOrientation) {
+  public ClientSidePreference(
+      SharedPreferences sharedPreferences, Resources resources, int deviceOrientation) {
     Preconditions.checkNotNull(sharedPreferences);
 
     isHapticFeedbackEnabled =
@@ -148,6 +153,8 @@ public class ClientSidePreference {
         sharedPreferences.getInt(PreferenceUtil.PREF_SOUND_FEEDBACK_VOLUME_KEY, 50);
     isPopupFeedbackEnabled =
         sharedPreferences.getBoolean(PreferenceUtil.PREF_POPUP_FEEDBACK_KEY, true);
+    isMicrophoneButtonEnabled =
+        sharedPreferences.getBoolean(PreferenceUtil.PREF_VOICE_INPUT_KEY, true);
 
     String keyboardLayoutKey;
     String inputStyleKey;
@@ -197,9 +204,11 @@ public class ClientSidePreference {
         EmojiProviderType.NONE);
 
     hardwareKeyMap = PreferenceUtil.getEnum(
-        sharedPreferences, PreferenceUtil.PREF_HARDWARE_KEYMAP, HardwareKeyMap.class, null);
+        sharedPreferences, PreferenceUtil.PREF_HARDWARE_KEYMAP, HardwareKeyMap.class,
+        HardwareKeyMap.DEFAULT);
     skinType = PreferenceUtil.getEnum(
-        sharedPreferences, PreferenceUtil.PREF_SKIN_TYPE, SkinType.class, SkinType.BLUE_LIGHTGRAY);
+        sharedPreferences, resources.getString(R.string.pref_skin_type_key),
+        SkinType.class, SkinType.valueOf(resources.getString(R.string.pref_skin_type_default)));
     layoutAdjustment = PreferenceUtil.getEnum(
         sharedPreferences, layoutAdjustmentKey, LayoutAdjustment.class, LayoutAdjustment.FILL);
     keyboardHeightRatio = sharedPreferences.getInt(keyboardHeightRatioKey, 100);
@@ -255,6 +264,10 @@ public class ClientSidePreference {
 
   public SkinType getSkinType() {
     return skinType;
+  }
+
+  public boolean isMicrophoneButtonEnabled() {
+    return isMicrophoneButtonEnabled;
   }
 
   public LayoutAdjustment getLayoutAdjustment() {

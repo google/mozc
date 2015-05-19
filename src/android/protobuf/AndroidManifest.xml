@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2014, Google Inc.
+ Copyright 2010-2015, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -33,4 +33,5 @@
           package="com.google.protobuf"
           android:versionCode="1"
           android:versionName="1.0">
+  <uses-sdk android:minSdkVersion="14" />
 </manifest>

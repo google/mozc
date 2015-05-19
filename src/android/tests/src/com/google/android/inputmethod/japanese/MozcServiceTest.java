@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese;
 
 import static org.mozc.android.inputmethod.japanese.testing.MozcMatcher.matchesKeyEvent;
+import static org.mozc.android.inputmethod.japanese.testing.MozcMatcher.sameOptional;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
@@ -37,19 +38,17 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.isNull;
 import static org.easymock.EasyMock.same;
 
 import org.mozc.android.inputmethod.japanese.DependencyFactory.Dependency;
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackListener;
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.MozcService.SymbolHistoryStorageImpl;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
-import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard;
 import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.model.JapaneseSoftwareKeyboardModel;
 import org.mozc.android.inputmethod.japanese.model.SelectionTracker;
 import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
@@ -59,6 +58,8 @@ import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.Har
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.Category;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
@@ -77,7 +78,6 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Result.Resul
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.SessionCommand;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config.SelectionShortcut;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config.SessionKeymap;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor.EvaluationCallback;
 import org.mozc.android.inputmethod.japanese.session.SessionHandlerFactory;
@@ -86,6 +86,7 @@ import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWith
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
 import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
@@ -96,6 +97,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
@@ -181,13 +183,14 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
   private MozcService createInitializedService(SessionExecutor sessionExecutor) {
     MozcService service = createService();
-    invokeOnCreateInternal(service, null, null, getDefaultDeviceConfiguration(), sessionExecutor);
+    invokeOnCreateInternal(
+        service, null, getSharedPreferences(), getDefaultDeviceConfiguration(), sessionExecutor);
     return service;
   }
 
   private MozcService initializeMozcService(MozcService service,
                                             SessionExecutor sessionExecutor) {
-    invokeOnCreateInternal(initializeService(service), null, null,
+    invokeOnCreateInternal(initializeService(service), null, getSharedPreferences(),
                            getDefaultDeviceConfiguration(), sessionExecutor);
     return service;
   }
@@ -226,9 +229,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     ViewEventListener eventListener = service.new MozcEventListener();
     service.onCreateInternal(
         eventListener, viewManager, sharedPreferences, deviceConfiguration, sessionExecutor);
-    if (sharedPreferences != null) {
-      sharedPreferenceChangeListeners.add(service.sharedPreferenceChangeListener);
-    }
+    sharedPreferenceChangeListeners.add(service.sharedPreferenceChangeListener);
   }
 
   @SmallTest
@@ -236,7 +237,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   @UiThreadTest
   public void testOnCreate() {
     SharedPreferences preferences = getSharedPreferences();
-    // Client-side conifg
+    // Client-side config
     preferences.edit()
         .putBoolean("pref_haptic_feedback_key", true)
         .putBoolean("pref_other_anonimous_mode_key", true)
@@ -247,12 +248,14 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     sessionExecutor.setLogging(anyBoolean());
     sessionExecutor.setImposedConfig(isA(Config.class));
     sessionExecutor.setConfig(ConfigUtil.toConfig(preferences));
-    sessionExecutor.switchInputMode(isNull(KeyEventInterface.class), isA(CompositionMode.class),
+    sessionExecutor.switchInputMode(same(Optional.<KeyEventInterface>absent()),
+                                    isA(CompositionMode.class),
                                     anyObject(EvaluationCallback.class));
     expectLastCall().asStub();
     sessionExecutor.updateRequest(isA(Request.class), eq(Collections.<TouchEvent>emptyList()));
     expectLastCall().asStub();
-    sessionExecutor.preferenceUsageStatsEvent(anyObject(SharedPreferences.class));
+    sessionExecutor.preferenceUsageStatsEvent(
+        anyObject(SharedPreferences.class), anyObject(Resources.class));
 
     ViewManager viewManager = createMockBuilder(ViewManager.class)
         .withConstructor(Context.class, ViewEventListener.class,
@@ -306,7 +309,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   public void testOnCreate_viewManager() {
     MozcService service = createService();
     try {
-      invokeOnCreateInternal(service, null, null, getDefaultDeviceConfiguration(),
+      invokeOnCreateInternal(service, null, getSharedPreferences(), getDefaultDeviceConfiguration(),
                              createNiceMock(SessionExecutor.class));
       assertSame(ViewManager.class, service.viewManager.getClass());
 
@@ -322,7 +325,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
     replayAll();
 
-    invokeOnCreateInternal(service, null, null, getDefaultDeviceConfiguration(), sessionExecutor);
+    invokeOnCreateInternal(
+        service, null, getSharedPreferences(), getDefaultDeviceConfiguration(), sessionExecutor);
 
     verifyAll();
     assertNotNull(service.onCreateInputView());
@@ -335,17 +339,13 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
     KeyboardSpecification defaultSpecification = service.currentKeyboardSpecification;
     sessionExecutor.updateRequest(
-        MozcUtil.getRequestForKeyboard(
-            defaultSpecification.getKeyboardSpecificationName(),
-            Optional.of(defaultSpecification.getSpecialRomanjiTable()),
-            Optional.of(defaultSpecification.getSpaceOnAlphanumeric()),
-            Optional.of(defaultSpecification.isKanaModifierInsensitiveConversion()),
-            Optional.of(defaultSpecification.getCrossingEdgeBehavior()),
-            getDefaultDeviceConfiguration()),
+        MozcUtil.getRequestBuilder(
+            service.getResources(), defaultSpecification, getDefaultDeviceConfiguration()).build(),
         Collections.<TouchEvent>emptyList());
 
     replayAll();
-    invokeOnCreateInternal(service, null, null, getDefaultDeviceConfiguration(), sessionExecutor);
+    invokeOnCreateInternal(
+        service, null, getSharedPreferences(), getDefaultDeviceConfiguration(), sessionExecutor);
     verifyAll();
   }
 
@@ -447,7 +447,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     // Exactly one message is issued to switch composition mode.
     // It should not render a result in order to preserve
     // the existent text. b/5181946
-    sessionExecutor.switchInputMode(isNull(KeyEventInterface.class), eq(CompositionMode.HIRAGANA),
+    sessionExecutor.switchInputMode(same(Optional.<KeyEventInterface>absent()),
+                                    eq(CompositionMode.HIRAGANA),
                                     anyObject(EvaluationCallback.class));
     replayAll();
 
@@ -509,20 +510,24 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
         .addMockedMethods("isInputViewShown", "sendKeyWithKeyboardSpecification")
         .createMock();
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
-    HardwareKeyboard hardwareKeyboard = createNiceMock(HardwareKeyboard.class);
     ViewEventListener eventListener = createNiceMock(ViewEventListener.class);
     ViewManager viewManager = createMockBuilder(ViewManager.class)
         .withConstructor(Context.class, ViewEventListener.class,
                          SymbolHistoryStorage.class, ImeSwitcher.class, MenuDialogListener.class)
         .withArgs(context, eventListener, createNiceMock(SymbolHistoryStorage.class),
                   createNiceMock(ImeSwitcher.class), createNiceMock(MenuDialogListener.class))
+        .addMockedMethods("onHardwareKeyEvent")
         .createNiceMock();
+    service.sendKeyWithKeyboardSpecification(
+        same(ProtoCommands.KeyEvent.class.cast(null)), same(KeyEventInterface.class.cast(null)),
+        anyObject(KeyboardSpecification.class), anyObject(Configuration.class),
+        eq(Collections.<TouchEvent>emptyList()));
+    expectLastCall().asStub();
 
     // Before test, we need to setup mock instances with some method calls.
     // Because the calls is out of this test, we do it by NiceMock and replayAll.
     replayAll();
     initializeMozcService(service, sessionExecutor);
-    service.hardwareKeyboard = hardwareKeyboard;
     SharedPreferences sharedPreferences = getSharedPreferences();
     invokeOnCreateInternal(service, viewManager, sharedPreferences,
                            context.getResources().getConfiguration(), sessionExecutor);
@@ -533,54 +538,11 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     resetAll();
 
     KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A);
-    ProtoCommands.KeyEvent mozcKeyEvent =
-        ProtoCommands.KeyEvent.newBuilder().setKeyCode('a').build();
-    KeyboardSpecification keyboardSpecification = KeyboardSpecification.HARDWARE_QWERTY_KANA;
-
     expect(service.isInputViewShown()).andStubReturn(true);
-
     ClientSidePreference clientSidePreference = service.propagatedClientSidePreference;
     assertNotNull(clientSidePreference);
-    assertNull(clientSidePreference.getHardwareKeyMap());
-    hardwareKeyboard.setHardwareKeyMap(anyObject(HardwareKeyMap.class));
-
-    expect(hardwareKeyboard.getCompositionMode()).andStubReturn(CompositionMode.HIRAGANA);
-
-    expect(hardwareKeyboard.setCompositionModeByKey(event)).andReturn(false);
-    expect(hardwareKeyboard.getMozcKeyEvent(event)).andReturn(mozcKeyEvent);
-    expect(hardwareKeyboard.getKeyEventInterface(event))
-        .andReturn(KeycodeConverter.getKeyEventInterface(event));
-    expect(hardwareKeyboard.getKeyboardSpecification()).andReturn(keyboardSpecification);
-    service.sendKeyWithKeyboardSpecification(
-        same(mozcKeyEvent), matchesKeyEvent(event),
-        same(keyboardSpecification),
-        eq(getDefaultDeviceConfiguration()),
-        eq(Collections.<TouchEvent>emptyList()));
-
-    replayAll();
-
-    assertTrue(service.onKeyDownInternal(0, event, getDefaultDeviceConfiguration()));
-
-    verifyAll();
-
-    // Change CompositionMode.
-    resetAll();
-
-    expect(service.isInputViewShown()).andStubReturn(true);
-
-    expect(hardwareKeyboard.getCompositionMode()).andReturn(CompositionMode.HIRAGANA);
-    expect(hardwareKeyboard.setCompositionModeByKey(event)).andReturn(false);
-    expect(hardwareKeyboard.getCompositionMode()).andReturn(CompositionMode.HALF_ASCII);
-    viewManager.setHardwareKeyboardCompositionMode(CompositionMode.HALF_ASCII);
-    expect(hardwareKeyboard.getMozcKeyEvent(event)).andReturn(mozcKeyEvent);
-    expect(hardwareKeyboard.getKeyEventInterface(event))
-        .andReturn(KeycodeConverter.getKeyEventInterface(event));
-    expect(hardwareKeyboard.getKeyboardSpecification()).andReturn(keyboardSpecification);
-    service.sendKeyWithKeyboardSpecification(
-        same(mozcKeyEvent), matchesKeyEvent(event),
-        same(keyboardSpecification),
-        eq(getDefaultDeviceConfiguration()),
-        eq(Collections.<TouchEvent>emptyList()));
+    assertEquals(HardwareKeyMap.DEFAULT, clientSidePreference.getHardwareKeyMap());
+    viewManager.onHardwareKeyEvent(event);
 
     replayAll();
 
@@ -620,20 +582,17 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     verifyAll();
 
     // Send "a" with keyboard specification change. [HARDWARE_QWERTY_KANA]
+    // This is transition from software to hardware keyboard, so submit() is called.
     resetAll();
 
     mozcKeyEvent = ProtoCommands.KeyEvent.newBuilder().setKeyCode('a').build();
     keyEvent = KeycodeConverter.getKeyEventInterface(KeyEvent.KEYCODE_A);
     keyboardSpecification = KeyboardSpecification.HARDWARE_QWERTY_KANA;
 
+    sessionExecutor.submit(same(service.renderResultCallback));
     sessionExecutor.updateRequest(
-        MozcUtil.getRequestForKeyboard(
-            keyboardSpecification.getKeyboardSpecificationName(),
-            Optional.of(keyboardSpecification.getSpecialRomanjiTable()),
-            Optional.of(keyboardSpecification.getSpaceOnAlphanumeric()),
-            Optional.of(keyboardSpecification.isKanaModifierInsensitiveConversion()),
-            Optional.of(keyboardSpecification.getCrossingEdgeBehavior()),
-            getDefaultDeviceConfiguration()),
+        MozcUtil.getRequestBuilder(
+            service.getResources(), keyboardSpecification, getDefaultDeviceConfiguration()).build(),
         Collections.<TouchEvent>emptyList());
     sessionExecutor.sendKey(
         ProtoCommands.KeyEvent.newBuilder(mozcKeyEvent)
@@ -675,16 +634,12 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     keyboardSpecification = KeyboardSpecification.TWELVE_KEY_FLICK_KANA;
 
     sessionExecutor.updateRequest(
-        MozcUtil.getRequestForKeyboard(
-            keyboardSpecification.getKeyboardSpecificationName(),
-            Optional.of(keyboardSpecification.getSpecialRomanjiTable()),
-            Optional.of(keyboardSpecification.getSpaceOnAlphanumeric()),
-            Optional.of(keyboardSpecification.isKanaModifierInsensitiveConversion()),
-            Optional.of(keyboardSpecification.getCrossingEdgeBehavior()),
-            getDefaultDeviceConfiguration()),
+        MozcUtil.getRequestBuilder(
+            service.getResources(), keyboardSpecification, getDefaultDeviceConfiguration()).build(),
         Collections.<TouchEvent>emptyList());
-    sessionExecutor.switchInputMode(keyEvent, keyboardSpecification.getCompositionMode(),
-                                    renderResultCallback);
+    sessionExecutor.switchInputMode(same(Optional.<KeyEventInterface>absent()),
+                                    eq(keyboardSpecification.getCompositionMode()),
+                                    same(renderResultCallback));
 
     replayAll();
 
@@ -721,17 +676,13 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     resetAll();
 
     keyboardSpecification = KeyboardSpecification.HARDWARE_QWERTY_KANA;
+    sessionExecutor.submit(same(service.renderResultCallback));
     sessionExecutor.updateRequest(
-        MozcUtil.getRequestForKeyboard(
-            keyboardSpecification.getKeyboardSpecificationName(),
-            Optional.of(keyboardSpecification.getSpecialRomanjiTable()),
-            Optional.of(keyboardSpecification.getSpaceOnAlphanumeric()),
-            Optional.of(keyboardSpecification.isKanaModifierInsensitiveConversion()),
-            Optional.of(keyboardSpecification.getCrossingEdgeBehavior()),
-            getDefaultDeviceConfiguration()),
+        MozcUtil.getRequestBuilder(
+            service.getResources(), keyboardSpecification, getDefaultDeviceConfiguration()).build(),
         Collections.<TouchEvent>emptyList());
     sessionExecutor.switchInputMode(
-        same(keyEvent), isA(CompositionMode.class), same(service.renderResultCallback));
+        sameOptional(keyEvent), isA(CompositionMode.class), same(service.renderResultCallback));
 
     replayAll();
 
@@ -822,8 +773,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
     Preedit preedit = Preedit.newBuilder()
         .addSegment(Segment.newBuilder()
-            .setValue("0")
-            .setAnnotation(Annotation.UNDERLINE)
+            .setValue("\uD83D\uDC31")  // a character meaning a cat
+            .setAnnotation(Annotation.HIGHLIGHT)
             .setValueLength(1))
         .addSegment(Segment.newBuilder()
             .setValue("1")
@@ -831,13 +782,15 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             .setValueLength(1))
         .addSegment(Segment.newBuilder()
             .setValue("2")
-            .setAnnotation(Annotation.HIGHLIGHT)
+            .setAnnotation(Annotation.UNDERLINE)
             .setValueLength(1))
-        .setCursor(3)
+        .setCursor(1)
         .build();
     Command command = Command.newBuilder()
         .setInput(Input.newBuilder().setType(Input.CommandType.SEND_KEY))
-        .setOutput(Output.newBuilder().setConsumed(true).setPreedit(preedit))
+        .setOutput(Output.newBuilder()
+            .setConsumed(true).setPreedit(preedit)
+            .setAllCandidateWords(CandidateList.newBuilder().setCategory(Category.SUGGESTION)))
         .build();
 
     resetAll();
@@ -847,6 +800,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     // the cursor is at the tail
     expect(inputConnection.setComposingText(capture(spannableStringBuilderCapture), eq(1)))
         .andReturn(true);
+    expect(selectionTracker.getPreeditStartPosition()).andReturn(0);
+    expect(inputConnection.setSelection(1, 1)).andReturn(true);
     selectionTracker.onRender(null, null, preedit);
     expect(inputConnection.endBatchEdit()).andReturn(true);
     replayAll();
@@ -855,11 +810,13 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
     verifyAll();
     SpannableStringBuilder sb = spannableStringBuilderCapture.getValue();
-    assertEquals("012", sb.toString());
+    assertEquals("\uD83D\uDC3112", sb.toString());
     assertEquals(0, sb.getSpanStart(MozcService.SPAN_UNDERLINE));
-    assertEquals(3, sb.getSpanEnd(MozcService.SPAN_UNDERLINE));
-    assertEquals(2, sb.getSpanStart(MozcService.SPAN_CONVERT_HIGHLIGHT));
-    assertEquals(3, sb.getSpanEnd(MozcService.SPAN_CONVERT_HIGHLIGHT));
+    assertEquals(4, sb.getSpanEnd(MozcService.SPAN_UNDERLINE));
+    assertEquals(2, sb.getSpanStart(MozcService.SPAN_PARTIAL_SUGGESTION_COLOR));
+    assertEquals(4, sb.getSpanEnd(MozcService.SPAN_PARTIAL_SUGGESTION_COLOR));
+    assertEquals(0, sb.getSpanStart(MozcService.SPAN_BEFORE_CURSOR));
+    assertEquals(2, sb.getSpanEnd(MozcService.SPAN_BEFORE_CURSOR));
   }
 
   @SmallTest
@@ -1003,7 +960,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
         .setOutput(Output.newBuilder()
             .setConsumed(true)
             .setResult(Result.newBuilder().setValue("commit").setType(ResultType.STRING))
-            .setPreedit(preedit))
+            .setPreedit(preedit)
+            .setAllCandidateWords(CandidateList.newBuilder().setCategory(Category.CONVERSION)))
         .build();
 
     resetAll();
@@ -1227,7 +1185,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
       verifyAll();
 
-      // If the subview (SymbolInputView or CursorView) is shown, close it and do not pass the event
+      // If SymbolInputView is shown, close it and do not pass the event
       // to the client application.
       resetAll();
       expect(service.isInputViewShown()).andReturn(true);
@@ -1256,7 +1214,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
   public void testSendKeyEventEnter() {
     MozcService service = createMockBuilder(MozcService.class)
         .addMockedMethods("requestHideSelf", "sendDownUpKeyEvents", "isInputViewShown",
-                          "sendDefaultEditorAction")
+                          "sendDefaultEditorAction", "getCurrentInputEditorInfo")
         .createMock();
     ViewEventListener eventListener = createNiceMock(ViewEventListener.class);
     ViewManager viewManager =
@@ -1287,6 +1245,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
       resetAll();
       expect(service.isInputViewShown()).andReturn(true);
       expect(service.sendDefaultEditorAction(true)).andReturn(true);
+      expect(service.getCurrentInputEditorInfo()).andStubReturn(new EditorInfo());
       replayAll();
 
       service.sendKeyEvent(keyEvent);
@@ -1367,15 +1326,10 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     KeyboardSpecification newSpecification = KeyboardSpecification.QWERTY_KANA;
 
     sessionExecutor.updateRequest(
-        MozcUtil.getRequestForKeyboard(
-            newSpecification.getKeyboardSpecificationName(),
-            Optional.of(newSpecification.getSpecialRomanjiTable()),
-            Optional.of(newSpecification.getSpaceOnAlphanumeric()),
-            Optional.of(newSpecification.isKanaModifierInsensitiveConversion()),
-            Optional.of(newSpecification.getCrossingEdgeBehavior()),
-            getDefaultDeviceConfiguration()),
+        MozcUtil.getRequestBuilder(
+            service.getResources(), newSpecification, getDefaultDeviceConfiguration()).build(),
         touchEventList);
-    sessionExecutor.switchInputMode(isNull(KeyEventInterface.class),
+    sessionExecutor.switchInputMode(same(Optional.<KeyEventInterface>absent()),
                                     eq(newSpecification.getCompositionMode()),
                                     anyObject(EvaluationCallback.class));
 
@@ -1417,11 +1371,13 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     sessionExecutor.setImposedConfig(isA(Config.class));
     sessionExecutor.updateRequest(isA(Request.class), eq(Collections.<TouchEvent>emptyList()));
     expectLastCall().asStub();
-    sessionExecutor.switchInputMode(isNull(KeyEventInterface.class), isA(CompositionMode.class),
+    sessionExecutor.switchInputMode(same(Optional.<KeyEventInterface>absent()),
+                                    isA(CompositionMode.class),
                                     anyObject(EvaluationCallback.class));
     expectLastCall().asStub();
     sessionExecutor.setConfig(isA(Config.class));
-    sessionExecutor.preferenceUsageStatsEvent(sharedPreferences);
+    sessionExecutor.preferenceUsageStatsEvent(
+        sharedPreferences, getInstrumentation().getTargetContext().getResources());
     replayAll();
 
     invokeOnCreateInternal(service, null, sharedPreferences, getDefaultDeviceConfiguration(),
@@ -1432,7 +1388,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
     // Make sure the UI is initialized expectedly.
     assertEquals(KeyboardLayout.QWERTY,
-        service.viewManager.getJapaneseSoftwareKeyboardModel().getKeyboardLayout());
+        service.viewManager.getActiveSoftwareKeyboardModel().getKeyboardLayout());
   }
 
   @SmallTest
@@ -1532,11 +1488,13 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     feedbackListener.onSound(AudioManager.FX_KEY_CLICK, 0.5f);
     feedbackListener.onVibrate(100L);
 
-    sessionExecutor.submitCandidate(eq(0), isA(EvaluationCallback.class));
+    sessionExecutor.submitCandidate(eq(0), eq(Optional.<Integer>absent()),
+                                    isA(EvaluationCallback.class));
     replayAll();
 
     // Invoke onConversionCandidateSelected.
-    service.viewManager.getEventListener().onConversionCandidateSelected(0);
+    service.viewManager.getEventListener()
+        .onConversionCandidateSelected(0, Optional.<Integer>absent());
 
     verifyAll();
   }
@@ -1579,33 +1537,50 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     verifyAll();
   }
 
+  @SuppressWarnings("unchecked")
   @SmallTest
-  public void testMozcEventListener_onClickHardwareKeyboardCompositionModeButton() {
-    MozcService service = createService();
+  public void testMozcEventListener_onNarrowModeChanged() {
+    SessionExecutor sessionExecutorMock = createMock(SessionExecutor.class);
+    MozcService service = initializeMozcService(new MozcService(), sessionExecutorMock);
+    ViewManagerInterface viewManagerMock = createMock(ViewManagerInterface.class);
+    service.viewManager = viewManagerMock;
     ViewEventListener viewEventListener = service.new MozcEventListener();
-    ViewManager viewManager =
-        createViewManagerMock(getInstrumentation().getTargetContext(), viewEventListener);
-    invokeOnCreateInternal(service, viewManager, null, getDefaultDeviceConfiguration(),
-                           createNiceMock(SessionExecutor.class));
-    HardwareKeyboard hardwareKeyboard = createMock(HardwareKeyboard.class);
-    service.hardwareKeyboard = hardwareKeyboard;
 
+    Capture<Config> configCapture = new Capture<Config>();
+
+    // On transition from narrow mode to non-narrow mode, submit() should be called.
     resetAll();
-
-    hardwareKeyboard.setCompositionMode(CompositionSwitchMode.TOGGLE);
-    // As current composition mode
-    expect(hardwareKeyboard.getCompositionMode()).andReturn(CompositionMode.HIRAGANA);
-    // As updated composition mode
-    expect(hardwareKeyboard.getCompositionMode()).andReturn(CompositionMode.HALF_ASCII);
-    viewManager.setHardwareKeyboardCompositionMode(CompositionMode.HALF_ASCII);
-    expect(hardwareKeyboard.getKeyboardSpecification())
-        .andReturn(KeyboardSpecification.HARDWARE_QWERTY_ALPHABET);
-
+    expect(viewManagerMock.isNarrowMode()).andStubReturn(false);
+    expect(viewManagerMock.isFloatingCandidateMode()).andStubReturn(false);
+    sessionExecutorMock.submit(same(service.renderResultCallback));
+    sessionExecutorMock.setImposedConfig(capture(configCapture));
     replayAll();
-
-    viewEventListener.onHardwareKeyboardCompositionModeChange(CompositionSwitchMode.TOGGLE);
-
+    viewEventListener.onNarrowModeChanged(false);
     verifyAll();
+    assertEquals(SelectionShortcut.NO_SHORTCUT,
+                 configCapture.getValue().getSelectionShortcut());
+
+    // On the opposite transition, submit() should not be called.
+    resetAll();
+    expect(viewManagerMock.isNarrowMode()).andStubReturn(true);
+    expect(viewManagerMock.isFloatingCandidateMode()).andStubReturn(true);
+    sessionExecutorMock.setImposedConfig(capture(configCapture));
+    replayAll();
+    viewEventListener.onNarrowModeChanged(true);
+    verifyAll();
+    assertEquals(SelectionShortcut.SHORTCUT_123456789,
+                 configCapture.getValue().getSelectionShortcut());
+
+    // Don't use shortcut keys if floating candidate window is disabled.
+    resetAll();
+    expect(viewManagerMock.isNarrowMode()).andStubReturn(true);
+    expect(viewManagerMock.isFloatingCandidateMode()).andStubReturn(false);
+    sessionExecutorMock.setImposedConfig(capture(configCapture));
+    replayAll();
+    viewEventListener.onNarrowModeChanged(true);
+    verifyAll();
+    assertEquals(SelectionShortcut.NO_SHORTCUT,
+                 configCapture.getValue().getSelectionShortcut());
   }
 
   @SmallTest
@@ -1654,7 +1629,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testPropagateClientSidePreference_touchUI() {
-
+    Resources resoureces = getInstrumentation().getTargetContext().getResources();
     SessionExecutor sessionExecutor = createNiceMock(SessionExecutor.class);
     replayAll();
     MozcService service = createInitializedService(sessionExecutor);
@@ -1667,7 +1642,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
           new ClientSidePreference(
               true, 100, true, 100, false, KeyboardLayout.QWERTY, InputStyle.TOGGLE, false, false,
               0, EmojiProviderType.DOCOMO, HardwareKeyMap.JAPANESE109A, SkinType.ORANGE_LIGHTGRAY,
-              LayoutAdjustment.FILL, 100);
+              true, LayoutAdjustment.FILL, 100);
       service.propagateClientSidePreference(clientSidePreference);
 
       // Check all the fields are propagated.
@@ -1675,16 +1650,16 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
       assertTrue(feedbackManager.isHapticFeedbackEnabled());
       assertEquals(feedbackManager.getHapticFeedbackDuration(), 100L);
       assertTrue(feedbackManager.isSoundFeedbackEnabled());
-      assertEquals(feedbackManager.getSoundFeedbackVolume(), 0.2f);
+      assertEquals(feedbackManager.getSoundFeedbackVolume(), 0.8f);
       assertFalse(viewManager.isPopupEnabled());
-      JapaneseSoftwareKeyboardModel model = viewManager.getJapaneseSoftwareKeyboardModel();
+      JapaneseSoftwareKeyboardModel model = viewManager.getActiveSoftwareKeyboardModel();
       assertEquals(KeyboardLayout.QWERTY, model.getKeyboardLayout());
       assertEquals(InputStyle.TOGGLE, model.getInputStyle());
       assertFalse(model.isQwertyLayoutForAlphabet());
       assertFalse(viewManager.isFullscreenMode());
       assertFalse(service.onEvaluateFullscreenMode());
       assertEquals(EmojiProviderType.DOCOMO, viewManager.getEmojiProviderType());
-      assertEquals(HardwareKeyMap.JAPANESE109A, service.hardwareKeyboard.getHardwareKeyMap());
+      assertEquals(HardwareKeyMap.JAPANESE109A, service.viewManager.getHardwareKeyMap());
       assertEquals(LayoutAdjustment.FILL, viewManager.getLayoutAdjustment());
       assertEquals(100, viewManager.getKeyboardHeightRatio());
     }
@@ -1704,7 +1679,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
       final int expectFlickSensitivity;
       final EmojiProviderType expectEmojiProviderType;
       final HardwareKeyMap expectHardwareKeyMap;
-      final SkinType expectSkinType;
+      final Skin expectSkin;
+      final boolean expectMicrophoneButtonEnabledByPreference;
       final LayoutAdjustment expectLayoutAdjustment;
       final int expectKeyboardHeight;
 
@@ -1719,7 +1695,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
                int expectFlickSensitivity,
                EmojiProviderType expectEmojiProviderType,
                HardwareKeyMap expectHardwareKeyMap,
-               SkinType expectSkinType,
+               Skin expectSkin,
+               boolean expectMicrophoneButtonEnabledByPreference,
                LayoutAdjustment expectLayoutAdjustment,
                int expectKeyboardHeight) {
         this.clientSidePreference = clientSidePreference;
@@ -1735,7 +1712,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
         this.expectFlickSensitivity = expectFlickSensitivity;
         this.expectEmojiProviderType = expectEmojiProviderType;
         this.expectHardwareKeyMap = expectHardwareKeyMap;
-        this.expectSkinType = expectSkinType;
+        this.expectSkin = expectSkin;
+        this.expectMicrophoneButtonEnabledByPreference = expectMicrophoneButtonEnabledByPreference;
         this.expectLayoutAdjustment = expectLayoutAdjustment;
         this.expectKeyboardHeight = expectKeyboardHeight;
       }
@@ -1747,11 +1725,11 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             new ClientSidePreference(
                 false, 10, true, 10, true, KeyboardLayout.QWERTY, InputStyle.TOGGLE, false, false,
                 0, EmojiProviderType.DOCOMO, HardwareKeyMap.DEFAULT, SkinType.ORANGE_LIGHTGRAY,
-                LayoutAdjustment.FILL, 100),
+                true, LayoutAdjustment.FILL, 100),
             false,
             10,
             true,
-            0.02f,
+            0.08f,
             true,
             KeyboardLayout.QWERTY,
             InputStyle.TOGGLE,
@@ -1760,18 +1738,19 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             0,
             EmojiProviderType.DOCOMO,
             HardwareKeyMap.DEFAULT,
-            SkinType.ORANGE_LIGHTGRAY,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            true,
             LayoutAdjustment.FILL,
             100),
         new TestData(
             new ClientSidePreference(
                 false, 20, true, 20, false, KeyboardLayout.QWERTY, InputStyle.TOGGLE, false, false,
                 -1, EmojiProviderType.DOCOMO, HardwareKeyMap.DEFAULT, SkinType.ORANGE_LIGHTGRAY,
-                LayoutAdjustment.FILL, 100),
+                false, LayoutAdjustment.FILL, 100),
             false,
             20,
             true,
-            0.04f,
+            0.16f,
             false,
             KeyboardLayout.QWERTY,
             InputStyle.TOGGLE,
@@ -1780,18 +1759,19 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             -1,
             EmojiProviderType.DOCOMO,
             HardwareKeyMap.DEFAULT,
-            SkinType.ORANGE_LIGHTGRAY,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            false,
             LayoutAdjustment.FILL,
             100),
         new TestData(
             new ClientSidePreference(
                 false, 30, false, 30, true, KeyboardLayout.QWERTY, InputStyle.TOGGLE, false, false,
                 2, EmojiProviderType.KDDI, HardwareKeyMap.DEFAULT, SkinType.ORANGE_LIGHTGRAY,
-                LayoutAdjustment.FILL, 100),
+                true, LayoutAdjustment.FILL, 100),
             false,
             30,
             false,
-            0.06f,
+            0.24f,
             true,
             KeyboardLayout.QWERTY,
             InputStyle.TOGGLE,
@@ -1800,18 +1780,19 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             2,
             EmojiProviderType.KDDI,
             HardwareKeyMap.DEFAULT,
-            SkinType.ORANGE_LIGHTGRAY,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            true,
             LayoutAdjustment.FILL,
             100),
         new TestData(
             new ClientSidePreference(
                 false, 40, false, 40, true, KeyboardLayout.TWELVE_KEYS, InputStyle.TOGGLE,
                 false, false, -3, EmojiProviderType.SOFTBANK, HardwareKeyMap.DEFAULT,
-                SkinType.ORANGE_LIGHTGRAY, LayoutAdjustment.FILL, 100),
+                SkinType.ORANGE_LIGHTGRAY, true, LayoutAdjustment.FILL, 100),
             false,
             40,
             false,
-            0.08f,
+            0.32f,
             true,
             KeyboardLayout.TWELVE_KEYS,
             InputStyle.TOGGLE,
@@ -1820,18 +1801,19 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             -3,
             EmojiProviderType.SOFTBANK,
             HardwareKeyMap.DEFAULT,
-            SkinType.ORANGE_LIGHTGRAY,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            true,
             LayoutAdjustment.FILL,
             100),
         new TestData(
             new ClientSidePreference(
                 false, 50, false, 50, true, KeyboardLayout.TWELVE_KEYS, InputStyle.FLICK,
                 false, false, 4, EmojiProviderType.DOCOMO, HardwareKeyMap.DEFAULT,
-                SkinType.ORANGE_LIGHTGRAY, LayoutAdjustment.FILL, 100),
+                SkinType.ORANGE_LIGHTGRAY, false, LayoutAdjustment.FILL, 100),
             false,
             50,
             false,
-            0.1f,
+            0.4f,
             true,
             KeyboardLayout.TWELVE_KEYS,
             InputStyle.FLICK,
@@ -1840,18 +1822,19 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             4,
             EmojiProviderType.DOCOMO,
             HardwareKeyMap.DEFAULT,
-            SkinType.ORANGE_LIGHTGRAY,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            false,
             LayoutAdjustment.FILL,
             100),
         new TestData(
             new ClientSidePreference(
                 false, 60, false, 60, true, KeyboardLayout.TWELVE_KEYS, InputStyle.FLICK,
                 true, false, -5, EmojiProviderType.KDDI, HardwareKeyMap.DEFAULT,
-                SkinType.ORANGE_LIGHTGRAY, LayoutAdjustment.FILL, 100),
+                SkinType.ORANGE_LIGHTGRAY, true, LayoutAdjustment.FILL, 100),
             false,
             60,
             false,
-            0.12f,
+            0.48f,
             true,
             KeyboardLayout.TWELVE_KEYS,
             InputStyle.FLICK,
@@ -1860,18 +1843,19 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             -5,
             EmojiProviderType.KDDI,
             HardwareKeyMap.DEFAULT,
-            SkinType.ORANGE_LIGHTGRAY,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            true,
             LayoutAdjustment.FILL,
             100),
         new TestData(
             new ClientSidePreference(
                 false, 70, false, 70, true, KeyboardLayout.TWELVE_KEYS, InputStyle.FLICK,
                 true, true, 6, EmojiProviderType.SOFTBANK, HardwareKeyMap.DEFAULT,
-                SkinType.ORANGE_LIGHTGRAY, LayoutAdjustment.FILL, 100),
+                SkinType.ORANGE_LIGHTGRAY, false, LayoutAdjustment.FILL, 100),
             false,
             70,
             false,
-            0.14f,
+            0.56f,
             true,
             KeyboardLayout.TWELVE_KEYS,
             InputStyle.FLICK,
@@ -1880,17 +1864,18 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             6,
             EmojiProviderType.SOFTBANK,
             HardwareKeyMap.DEFAULT,
-            SkinType.ORANGE_LIGHTGRAY,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            false,
             LayoutAdjustment.FILL, 100),
         new TestData(
             new ClientSidePreference(
                 false, 80, false, 80, true, KeyboardLayout.TWELVE_KEYS, InputStyle.FLICK,
                 true, true, -7, EmojiProviderType.SOFTBANK, HardwareKeyMap.JAPANESE109A,
-                SkinType.ORANGE_LIGHTGRAY, LayoutAdjustment.FILL, 100),
+                SkinType.ORANGE_LIGHTGRAY, false, LayoutAdjustment.FILL, 100),
             false,
             80,
             false,
-            0.16f,
+            0.64f,
             true,
             KeyboardLayout.TWELVE_KEYS,
             InputStyle.FLICK,
@@ -1899,18 +1884,19 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             -7,
             EmojiProviderType.SOFTBANK,
             HardwareKeyMap.JAPANESE109A,
-            SkinType.ORANGE_LIGHTGRAY,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            false,
             LayoutAdjustment.FILL,
             100),
         new TestData(
             new ClientSidePreference(
                 false, 90, false, 90, true, KeyboardLayout.TWELVE_KEYS, InputStyle.FLICK,
-                true, true, 8, EmojiProviderType.SOFTBANK, HardwareKeyMap.TWELVEKEY,
-                SkinType.ORANGE_LIGHTGRAY, LayoutAdjustment.RIGHT, 100),
+                true, true, 8, EmojiProviderType.SOFTBANK, HardwareKeyMap.DEFAULT,
+                SkinType.ORANGE_LIGHTGRAY, true, LayoutAdjustment.RIGHT, 100),
             false,
             90,
             false,
-            0.18f,
+            0.72f,
             true,
             KeyboardLayout.TWELVE_KEYS,
             InputStyle.FLICK,
@@ -1918,19 +1904,20 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             true,
             8,
             EmojiProviderType.SOFTBANK,
-            HardwareKeyMap.TWELVEKEY,
-            SkinType.ORANGE_LIGHTGRAY,
+            HardwareKeyMap.DEFAULT,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            true,
             LayoutAdjustment.RIGHT,
             100),
         new TestData(
             new ClientSidePreference(
                 false, 100, false, 100, true, KeyboardLayout.TWELVE_KEYS, InputStyle.FLICK,
-                true, true, 8, EmojiProviderType.SOFTBANK, HardwareKeyMap.TWELVEKEY,
-                SkinType.ORANGE_LIGHTGRAY, LayoutAdjustment.RIGHT, 120),
+                true, true, 8, EmojiProviderType.SOFTBANK, HardwareKeyMap.DEFAULT,
+                SkinType.ORANGE_LIGHTGRAY, true, LayoutAdjustment.RIGHT, 120),
             false,
             100,
             false,
-            0.2f,
+            0.8f,
             true,
             KeyboardLayout.TWELVE_KEYS,
             InputStyle.FLICK,
@@ -1938,8 +1925,9 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
             true,
             8,
             EmojiProviderType.SOFTBANK,
-            HardwareKeyMap.TWELVEKEY,
-            SkinType.ORANGE_LIGHTGRAY,
+            HardwareKeyMap.DEFAULT,
+            SkinType.ORANGE_LIGHTGRAY.getSkin(resoureces),
+            true,
             LayoutAdjustment.RIGHT,
             120),
     };
@@ -1963,7 +1951,7 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
       assertEquals(testData.toString(),
                    testData.expectPopupFeedback,
                    viewManager.isPopupEnabled());
-      JapaneseSoftwareKeyboardModel model = viewManager.getJapaneseSoftwareKeyboardModel();
+      JapaneseSoftwareKeyboardModel model = viewManager.getActiveSoftwareKeyboardModel();
       assertEquals(testData.toString(), testData.expectKeyboardLayout, model.getKeyboardLayout());
       assertEquals(testData.toString(), testData.expectInputStyle, model.getInputStyle());
       assertEquals(testData.toString(),
@@ -1980,10 +1968,13 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
                    testData.expectEmojiProviderType,
                    viewManager.getEmojiProviderType());
       assertEquals(testData.toString(),
-                   testData.expectHardwareKeyMap, service.hardwareKeyboard.getHardwareKeyMap());
+                   testData.expectHardwareKeyMap, service.viewManager.getHardwareKeyMap());
       assertEquals(testData.toString(),
-                   testData.expectSkinType,
-                   viewManager.getSkinType());
+                   testData.expectSkin,
+                   viewManager.getSkin());
+      assertEquals(testData.toString(),
+                   testData.expectMicrophoneButtonEnabledByPreference,
+                   viewManager.isMicrophoneButtonEnabledByPreference());
       assertEquals(testData.toString(),
                    testData.expectLayoutAdjustment,
                    viewManager.getLayoutAdjustment());
@@ -2019,20 +2010,14 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
                   createNiceMock(SymbolHistoryStorage.class),
                   createNiceMock(ImeSwitcher.class),
                   createNiceMock(MenuDialogListener.class))
-        .addMockedMethods("isNarrowMode", "hideSubInputView", "setNarrowMode",
-                          "onConfigurationChanged")
+        .addMockedMethods("onConfigurationChanged")
         .createMock();
     MozcService service = createService();
-    invokeOnCreateInternal(service, viewManager, null, getDefaultDeviceConfiguration(),
-                           sessionExecutor);
+    invokeOnCreateInternal(
+        service, viewManager, getSharedPreferences(), getDefaultDeviceConfiguration(),
+        sessionExecutor);
     service.selectionTracker = selectionTracker;
     service.inputBound = true;
-
-    Config expectedConfig = Config.newBuilder()
-        .setSessionKeymap(SessionKeymap.MOBILE)
-        .setSelectionShortcut(SelectionShortcut.NO_SHORTCUT)
-        .setUseEmojiConversion(true)
-        .build();
 
     Configuration deviceConfig = new Configuration();
     deviceConfig.keyboard = Configuration.KEYBOARD_NOKEYS;
@@ -2051,8 +2036,8 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
     selectionTracker.onConfigurationChanged();
 
     sessionExecutor.resetContext();
-    sessionExecutor.setImposedConfig(expectedConfig);
-    sessionExecutor.switchInputMode(isNull(KeyEventInterface.class), isA(CompositionMode.class),
+    sessionExecutor.switchInputMode(same(Optional.<KeyEventInterface>absent()),
+                                    isA(CompositionMode.class),
                                     anyObject(EvaluationCallback.class));
     expectLastCall().asStub();
     sessionExecutor.updateRequest(isA(Request.class), eq(Collections.<TouchEvent>emptyList()));
@@ -2188,23 +2173,18 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
       }
     }
     TestData[] testDataList = {
-        new TestData((InputType.TYPE_CLASS_TEXT |
-                      InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD),
+        new TestData((InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD),
                      InputFieldType.PASSWORD),
-        new TestData((InputType.TYPE_CLASS_TEXT |
-                      InputType.TYPE_TEXT_VARIATION_URI |
-                      InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE),
+        new TestData((InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI
+                      | InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE),
                      InputFieldType.NORMAL),
-        new TestData((InputType.TYPE_CLASS_TEXT |
-                      InputType.TYPE_TEXT_VARIATION_PASSWORD |
-                      InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS),
+        new TestData((InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD
+                      | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS),
                      InputFieldType.PASSWORD),
-        new TestData((InputType.TYPE_CLASS_TEXT |
-                      InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE |
-                      InputType.TYPE_TEXT_FLAG_AUTO_CORRECT),
+        new TestData((InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE
+                      | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT),
                      InputFieldType.NORMAL),
-        new TestData((InputType.TYPE_CLASS_NUMBER |
-                      InputType.TYPE_NUMBER_FLAG_SIGNED),
+        new TestData((InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED),
                       InputFieldType.NUMBER),
         new TestData(InputType.TYPE_CLASS_PHONE,
                      InputFieldType.TEL),
@@ -2231,28 +2211,21 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
                   createNiceMock(SymbolHistoryStorage.class),
                   createNiceMock(ImeSwitcher.class),
                   createNiceMock(MenuDialogListener.class))
-        .addMockedMethod("setHardwareKeyboardCompositionMode")
+        .addMockedMethod("switchHardwareKeyboardCompositionMode")
         .createMock();
-    invokeOnCreateInternal(service, viewManager, null, getDefaultDeviceConfiguration(),
-                           createNiceMock(SessionExecutor.class));
+    invokeOnCreateInternal(
+        service, viewManager, getSharedPreferences(), getDefaultDeviceConfiguration(),
+        createNiceMock(SessionExecutor.class));
     MozcView mozcView = viewManager.createMozcView(context);
-    HardwareKeyboard hardwareKeyboard = createMockBuilder(HardwareKeyboard.class)
-        .addMockedMethods("setCompositionMode", "getCompositionMode").createMock();
-    service.hardwareKeyboard = hardwareKeyboard;
 
     resetAll();
-    expect(service.isInputViewShown()).andStubReturn(true);
 
-    hardwareKeyboard.setCompositionMode(CompositionSwitchMode.TOGGLE);
-    // As current composition mode
-    expect(hardwareKeyboard.getCompositionMode()).andReturn(CompositionMode.HALF_ASCII);
-    // As updated composition mode
-    expect(hardwareKeyboard.getCompositionMode()).andReturn(CompositionMode.HIRAGANA);
-    viewManager.setHardwareKeyboardCompositionMode(CompositionMode.HIRAGANA);
+    expect(service.isInputViewShown()).andStubReturn(true);
+    viewManager.switchHardwareKeyboardCompositionMode(CompositionSwitchMode.TOGGLE);
 
     replayAll();
 
-    mozcView.getHardwareCompositionButton().performClick();
+    mozcView.findViewById(R.id.hardware_composition_button).performClick();
 
     verifyAll();
   }
@@ -2263,52 +2236,46 @@ public class MozcServiceTest extends InstrumentationTestCaseWithMock {
         getInstrumentation().getTargetContext(),
         createNiceMock(ViewEventListener.class));
     MozcService service = createService();
-    invokeOnCreateInternal(service, viewManager, null, getDefaultDeviceConfiguration(),
-                           createNiceMock(SessionExecutor.class));
+
+    resetAll();
+    SessionExecutor sessionExecutorMock = createNiceMock(SessionExecutor.class);
+    expect(viewManager.isNarrowMode()).andStubReturn(false);
+    expect(viewManager.isFloatingCandidateMode()).andStubReturn(false);
+    viewManager.onConfigurationChanged(anyObject(Configuration.class));
+    replayAll();
+    invokeOnCreateInternal(
+        service, viewManager, null, getDefaultDeviceConfiguration(), sessionExecutorMock);
+    verifyAll();
 
     Configuration configuration = new Configuration();
 
     resetAll();
-
     expect(viewManager.isNarrowMode()).andReturn(false);
     expect(viewManager.hideSubInputView()).andReturn(true);
     viewManager.setNarrowMode(true);
-
     replayAll();
-
     configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
     service.maybeSetNarrowMode(configuration);
-
     verifyAll();
 
     resetAll();
-
     expect(viewManager.isNarrowMode()).andReturn(true);
     viewManager.setNarrowMode(false);
-
     replayAll();
-
     configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
     service.maybeSetNarrowMode(configuration);
-
     verifyAll();
 
     resetAll();
-
     replayAll();
-
     configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
     service.maybeSetNarrowMode(configuration);
-
     verifyAll();
 
     resetAll();
-
     replayAll();
-
     configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_UNDEFINED;
     service.maybeSetNarrowMode(configuration);
-
     verifyAll();
   }
 

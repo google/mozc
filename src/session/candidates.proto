@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -219,7 +219,7 @@ message Candidates {
     COMPOSITION = 1;
   }
   optional CandidateWindowLocation window_location = 17;
+
+  // The number of candidates per page.
+  optional uint32 page_size = 18 [ default = 9 ];
 };
-
-
-

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,9 @@ public class SymbolMajorCategoryTest extends InstrumentationTestCaseWithMock {
                      SymbolMajorCategory.findMajorCategory(minorCategory));
       } else if (minorCategory.name().startsWith("EMOJI")) {
         assertEquals(SymbolMajorCategory.EMOJI,
+                     SymbolMajorCategory.findMajorCategory(minorCategory));
+      } else if (minorCategory == SymbolMinorCategory.NUMBER) {
+        assertEquals(SymbolMajorCategory.NUMBER,
                      SymbolMajorCategory.findMajorCategory(minorCategory));
       } else {
         fail("Unexpected category name");

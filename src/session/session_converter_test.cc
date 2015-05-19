@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -3952,6 +3952,17 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
         << "history segments are consistent with the preceding text "
         << "even when the revision number is changed.";
   }
+}
+
+// Test whether Request::candidate_page_size is correctly propagated to
+// CandidateList.page_size in SessionConverter.  The tests for the behavior
+// of CandidateList.page_size is in session/internal/candidate_list_test.cc
+TEST_F(SessionConverterTest, CandidatePageSize) {
+  const size_t kPageSize = 3;
+  Request request;
+  request.set_candidate_page_size(kPageSize);
+  SessionConverter converter(convertermock_.get(), &request);
+  EXPECT_EQ(kPageSize, GetCandidateList(converter).page_size());
 }
 
 }  // namespace session

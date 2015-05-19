@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2015, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+
+    <!-- Keyboard name -->
+    <string name="cd_keyboard_kana">Kana keyboard</string>
+    <string name="cd_keyboard_alphabet">Alphabet keyboard</string>
+    <string name="cd_keyboard_number">Number keyboard</string>
+
+    <!-- Keys -->
+    <!--
+         Policy: Use Kanji as long as possible in order to improve the quality of TTS.
+         If written down in Hiragana, many information which is required for accent lacks.
+         But some entries are written down. For example, raw 'g' is spoken as "ぐらむ"
+         so explicitly "じー" is used instead.
+    -->
+
+    <string name="cd_key_shift" translation_description="When 'Shift' key in the keyboard is pressed, this string is spoken up for accessibility">shift</string>
+    <string name="cd_key_up" translation_description="When 'Up' arrow key in the keyboard is pressed, this string is spoken up for accessibility">up</string>
+    <string name="cd_key_left" translation_description="When 'Left' arrow key in the keyboard is pressed, this string is spoken up for accessibility">left</string>
+    <string name="cd_key_right" translation_description="When 'Right' arrow key in the keyboard is pressed, this string is spoken up for accessibility">right</string>
+    <string name="cd_key_down" translation_description="When 'Down' arrow key in the keyboard is pressed, this string is spoken up for accessibility">down</string>
+    <string name="cd_key_chartype_to_kana" translation_description="When the keyboard is switched to the 'Kana' (Japanese phonogram) mode, this string is spoken up for accessibility">switch to Kana keyboard</string>
+    <string name="cd_key_chartype_to_abc" translation_description="When the keyboard is switched to the 'Alphabet' mode, this string is spoken up for accessibility">switch to Alphabet keyboard</string>
+    <string name="cd_key_chartype_to_abc_123" translation_description="When the keyboard is switched to the 'Symbol' mode, this string is spoken up for accessibility">switch to symbol keyboard</string>
+    <string name="cd_key_undo" translation_description="When 'Undo' key in the keyboard is pressed, this string is spoken up for accessibility">undo</string>
+    <string name="cd_key_symbol" translation_description="When 'Symbol' key in the keyboard is pressed, this string is spoken up for accessibility">symbol input screen</string>
+    <string name="cd_key_alt" translation_description="When the keyboard is switched into alternative symbol mode, this string is spoken up for accessibility">alternative symbols</string>
+    <string name="cd_key_alt_unmodified" translation_description="When the keyboard is swtiched back from alternative symbol mode to normal symbole mode, this string is spoken up for accessibility">normal symbols</string>
+    <string name="cd_key_capslock" translation_description="When the keyboard is switched into caps lock mode, this string is spoken up for accessibility">caps lock</string>
+    <string name="cd_key_capsunlock" translation_description="When the keyboard is swtiched back from caps lock mode to normal mode, this string is spoken up for accessibility">caps unlock</string>
+    <string name="cd_key_menu_dialog" translation_description="When the menu dialog is opened, this string is spoken up for accessibility.  'Open' is a verb.">open menu</string>
+    <string name="cd_key_globe" translation_description="When the input method is switched to another, this string is spoken up for accessibility">switch input method</string>
+    <string name="cd_key_uchar_backspace" translation_description="When 'Backspace' key in the keyboard is pressed, this string is spoken up for accessibility">backspace</string>
+    <string name="cd_key_uchar_linefeed" translation_description="When 'Linefeed' key in the keyboard is pressed, this string is spoken up for accessibility">linefeed</string>
+    <string name="cd_key_uchar_space" translation_description="When 'Space' key in the keyboard is pressed, this string is spoken up for accessibility">space</string>
+    <string name="cd_key_uchar_exclamation_mark" translation_description="When '!' key in the keyboard is pressed, this string is spoken up for accessibility">exclamation mark</string>
+    <string name="cd_key_uchar_quotation_mark" translation_description="When [&quot;] key in the keyboard is pressed, this string is spoken up for accessibility">quotation mark</string>
+    <string name="cd_key_uchar_number_sign" translation_description="When '#' key in the keyboard is pressed, this string is spoken up for accessibility">number sign</string>
+    <string name="cd_key_uchar_dollar_sign" translation_description="When '$' key in the keyboard is pressed, this string is spoken up for accessibility">dollar sign</string>
+    <string name="cd_key_uchar_percent_sign" translation_description="When '%' key in the keyboard is pressed, this string is spoken up for accessibility">percent sign</string>
+    <string name="cd_key_uchar_ampersand" translation_description="When '&amp;' key in the keyboard is pressed, this string is spoken up for accessibility">ampersand</string>
+    <string name="cd_key_uchar_apostrophe" translation_description="When [&apos;] key in the keyboard is pressed, this string is spoken up for accessibility">apostrophe</string>
+    <string name="cd_key_uchar_left_parenthesis" translation_description="When '(' key in the keyboard is pressed, this string is spoken up for accessibility">left parenthesis</string>
+    <string name="cd_key_uchar_right_parenthesis" translation_description="When ')' key in the keyboard is pressed, this string is spoken up for accessibility">right parenthesis</string>
+    <string name="cd_key_uchar_asterisk" translation_description="When '*' key in the keyboard is pressed, this string is spoken up for accessibility">asterisk</string>
+    <string name="cd_key_uchar_plus_sign" translation_description="When '+' key in the keyboard is pressed, this string is spoken up for accessibility">plus sign</string>
+    <string name="cd_key_uchar_comma" translation_description="When ',' key in the keyboard is pressed, this string is spoken up for accessibility">comma</string>
+    <string name="cd_key_uchar_hyphen_minus" translation_description="When '-' key in the keyboard is pressed, this string is spoken up for accessibility">hyphen</string>
+    <string name="cd_key_uchar_full_stop" translation_description="When '.' key in the keyboard is pressed, this string is spoken up for accessibility">period</string>
+    <string name="cd_key_uchar_solidus" translation_description="When '/' key in the keyboard is pressed, this string is spoken up for accessibility">slash</string>
+    <string name="cd_key_uchar_digit_zero" translation_description="When '0' key in the keyboard is pressed, this string is spoken up for accessibility">0</string>
+    <string name="cd_key_uchar_digit_one" translation_description="When '1' key in the keyboard is pressed, this string is spoken up for accessibility">1</string>
+    <string name="cd_key_uchar_digit_two" translation_description="When '2' key in the keyboard is pressed, this string is spoken up for accessibility">2</string>
+    <string name="cd_key_uchar_digit_three" translation_description="When '3' key in the keyboard is pressed, this string is spoken up for accessibility">3</string>
+    <string name="cd_key_uchar_digit_four" translation_description="When '4' key in the keyboard is pressed, this string is spoken up for accessibility">4</string>
+    <string name="cd_key_uchar_digit_five" translation_description="When '5' key in the keyboard is pressed, this string is spoken up for accessibility">5</string>
+    <string name="cd_key_uchar_digit_six" translation_description="When '6' key in the keyboard is pressed, this string is spoken up for accessibility">6</string>
+    <string name="cd_key_uchar_digit_seven" translation_description="When '7' key in the keyboard is pressed, this string is spoken up for accessibility">7</string>
+    <string name="cd_key_uchar_digit_eight" translation_description="When '8' key in the keyboard is pressed, this string is spoken up for accessibility">8</string>
+    <string name="cd_key_uchar_digit_nine" translation_description="When '9' key in the keyboard is pressed, this string is spoken up for accessibility">9</string>
+    <string name="cd_key_uchar_colon" translation_description="When ':' key in the keyboard is pressed, this string is spoken up for accessibility">colon</string>
+    <string name="cd_key_uchar_semicolon" translation_description="When ';' key in the keyboard is pressed, this string is spoken up for accessibility">semicolon</string>
+    <string name="cd_key_uchar_less_than_sign" translation_description="When '&lt;' key in the keyboard is pressed, this string is spoken up for accessibility">less than sign</string>
+    <string name="cd_key_uchar_equals_sign" translation_description="When '=' key in the keyboard is pressed, this string is spoken up for accessibility">equals sign</string>
+    <string name="cd_key_uchar_greater_than_sign" translation_description="When '&gt;' key in the keyboard is pressed, this string is spoken up for accessibility">greater than sign</string>
+    <string name="cd_key_uchar_question_mark" translation_description="When '?' key in the keyboard is pressed, this string is spoken up for accessibility">question mark</string>
+    <string name="cd_key_uchar_commercial_at" translation_description="When '@' key in the keyboard is pressed, this string is spoken up for accessibility">at mark</string>
+    <string name="cd_key_uchar_latin_capital_letter_a" translation_description="When 'A' key in the keyboard is pressed, this string is spoken up for accessibility">A</string>
+    <string name="cd_key_uchar_latin_capital_letter_b" translation_description="When 'B' key in the keyboard is pressed, this string is spoken up for accessibility">B</string>
+    <string name="cd_key_uchar_latin_capital_letter_c" translation_description="When 'C' key in the keyboard is pressed, this string is spoken up for accessibility">C</string>
+    <string name="cd_key_uchar_latin_capital_letter_d" translation_description="When 'D' key in the keyboard is pressed, this string is spoken up for accessibility">D</string>
+    <string name="cd_key_uchar_latin_capital_letter_e" translation_description="When 'E' key in the keyboard is pressed, this string is spoken up for accessibility">E</string>
+    <string name="cd_key_uchar_latin_capital_letter_f" translation_description="When 'F' key in the keyboard is pressed, this string is spoken up for accessibility">F</string>
+    <string name="cd_key_uchar_latin_capital_letter_g" translation_description="When 'G' key in the keyboard is pressed, this string is spoken up for accessibility">G</string>
+    <string name="cd_key_uchar_latin_capital_letter_h" translation_description="When 'H' key in the keyboard is pressed, this string is spoken up for accessibility">H</string>
+    <string name="cd_key_uchar_latin_capital_letter_i" translation_description="When 'I' key in the keyboard is pressed, this string is spoken up for accessibility">I</string>
+    <string name="cd_key_uchar_latin_capital_letter_j" translation_description="When 'J' key in the keyboard is pressed, this string is spoken up for accessibility">J</string>
+    <string name="cd_key_uchar_latin_capital_letter_k" translation_description="When 'K' key in the keyboard is pressed, this string is spoken up for accessibility">K</string>
+    <string name="cd_key_uchar_latin_capital_letter_l" translation_description="When 'L' key in the keyboard is pressed, this string is spoken up for accessibility">L</string>
+    <string name="cd_key_uchar_latin_capital_letter_m" translation_description="When 'M' key in the keyboard is pressed, this string is spoken up for accessibility">M</string>
+    <string name="cd_key_uchar_latin_capital_letter_n" translation_description="When 'N' key in the keyboard is pressed, this string is spoken up for accessibility">N</string>
+    <string name="cd_key_uchar_latin_capital_letter_o" translation_description="When 'O' key in the keyboard is pressed, this string is spoken up for accessibility">O</string>
+    <string name="cd_key_uchar_latin_capital_letter_p" translation_description="When 'P' key in the keyboard is pressed, this string is spoken up for accessibility">P</string>
+    <string name="cd_key_uchar_latin_capital_letter_q" translation_description="When 'Q' key in the keyboard is pressed, this string is spoken up for accessibility">Q</string>
+    <string name="cd_key_uchar_latin_capital_letter_r" translation_description="When 'R' key in the keyboard is pressed, this string is spoken up for accessibility">R</string>
+    <string name="cd_key_uchar_latin_capital_letter_s" translation_description="When 'S' key in the keyboard is pressed, this string is spoken up for accessibility">S</string>
+    <string name="cd_key_uchar_latin_capital_letter_t" translation_description="When 'T' key in the keyboard is pressed, this string is spoken up for accessibility">T</string>
+    <string name="cd_key_uchar_latin_capital_letter_u" translation_description="When 'U' key in the keyboard is pressed, this string is spoken up for accessibility">U</string>
+    <string name="cd_key_uchar_latin_capital_letter_v" translation_description="When 'V' key in the keyboard is pressed, this string is spoken up for accessibility">V</string>
+    <string name="cd_key_uchar_latin_capital_letter_w" translation_description="When 'W' key in the keyboard is pressed, this string is spoken up for accessibility">W</string>
+    <string name="cd_key_uchar_latin_capital_letter_x" translation_description="When 'X' key in the keyboard is pressed, this string is spoken up for accessibility">X</string>
+    <string name="cd_key_uchar_latin_capital_letter_y" translation_description="When 'Y' key in the keyboard is pressed, this string is spoken up for accessibility">Y</string>
+    <string name="cd_key_uchar_latin_capital_letter_z" translation_description="When 'Z' key in the keyboard is pressed, this string is spoken up for accessibility">Z</string>
+    <string name="cd_key_uchar_left_square_bracket" translation_description="When '[' key in the keyboard is pressed, this string is spoken up for accessibility">left square bracket</string>
+    <string name="cd_key_uchar_reverse_solidus" translation_description="When '\' key in the keyboard is pressed, this string is spoken up for accessibility">back slash</string>
+    <string name="cd_key_uchar_right_square_bracket" translation_description="When ']' key in the keyboard is pressed, this string is spoken up for accessibility">right square bracket</string>
+    <string name="cd_key_uchar_circumflex_accent" translation_description="When '^' key in the keyboard is pressed, this string is spoken up for accessibility">hat</string>
+    <string name="cd_key_uchar_low_line" translation_description="When '_' key in the keyboard is pressed, this string is spoken up for accessibility">under score</string>
+    <string name="cd_key_uchar_grave_accent" translation_description="When '`' key in the keyboard is pressed, this string is spoken up for accessibility">grave</string>
+    <string name="cd_key_uchar_latin_small_letter_a" translation_description="When 'a' key in the keyboard is pressed, this string is spoken up for accessibility">a</string>
+    <string name="cd_key_uchar_latin_small_letter_b" translation_description="When 'b' key in the keyboard is pressed, this string is spoken up for accessibility">b</string>
+    <string name="cd_key_uchar_latin_small_letter_c" translation_description="When 'c' key in the keyboard is pressed, this string is spoken up for accessibility">c</string>
+    <string name="cd_key_uchar_latin_small_letter_d" translation_description="When 'd' key in the keyboard is pressed, this string is spoken up for accessibility">d</string>
+    <string name="cd_key_uchar_latin_small_letter_e" translation_description="When 'e' key in the keyboard is pressed, this string is spoken up for accessibility">e</string>
+    <string name="cd_key_uchar_latin_small_letter_f" translation_description="When 'f' key in the keyboard is pressed, this string is spoken up for accessibility">f</string>
+    <string name="cd_key_uchar_latin_small_letter_g" translation_description="When 'g' key in the keyboard is pressed, this string is spoken up for accessibility">g</string>
+    <string name="cd_key_uchar_latin_small_letter_h" translation_description="When 'h' key in the keyboard is pressed, this string is spoken up for accessibility">h</string>
+    <string name="cd_key_uchar_latin_small_letter_i" translation_description="When 'i' key in the keyboard is pressed, this string is spoken up for accessibility">i</string>
+    <string name="cd_key_uchar_latin_small_letter_j" translation_description="When 'j' key in the keyboard is pressed, this string is spoken up for accessibility">j</string>
+    <string name="cd_key_uchar_latin_small_letter_k" translation_description="When 'k' key in the keyboard is pressed, this string is spoken up for accessibility">k</string>
+    <string name="cd_key_uchar_latin_small_letter_l" translation_description="When 'l' key in the keyboard is pressed, this string is spoken up for accessibility">l</string>
+    <string name="cd_key_uchar_latin_small_letter_m" translation_description="When 'm' key in the keyboard is pressed, this string is spoken up for accessibility">m</string>
+    <string name="cd_key_uchar_latin_small_letter_n" translation_description="When 'n' key in the keyboard is pressed, this string is spoken up for accessibility">n</string>
+    <string name="cd_key_uchar_latin_small_letter_o" translation_description="When 'o' key in the keyboard is pressed, this string is spoken up for accessibility">o</string>
+    <string name="cd_key_uchar_latin_small_letter_p" translation_description="When 'p' key in the keyboard is pressed, this string is spoken up for accessibility">p</string>
+    <string name="cd_key_uchar_latin_small_letter_q" translation_description="When 'q' key in the keyboard is pressed, this string is spoken up for accessibility">q</string>
+    <string name="cd_key_uchar_latin_small_letter_r" translation_description="When 'r' key in the keyboard is pressed, this string is spoken up for accessibility">r</string>
+    <string name="cd_key_uchar_latin_small_letter_s" translation_description="When 's' key in the keyboard is pressed, this string is spoken up for accessibility">s</string>
+    <string name="cd_key_uchar_latin_small_letter_t" translation_description="When 't' key in the keyboard is pressed, this string is spoken up for accessibility">t</string>
+    <string name="cd_key_uchar_latin_small_letter_u" translation_description="When 'u' key in the keyboard is pressed, this string is spoken up for accessibility">u</string>
+    <string name="cd_key_uchar_latin_small_letter_v" translation_description="When 'v' key in the keyboard is pressed, this string is spoken up for accessibility">v</string>
+    <string name="cd_key_uchar_latin_small_letter_w" translation_description="When 'w' key in the keyboard is pressed, this string is spoken up for accessibility">w</string>
+    <string name="cd_key_uchar_latin_small_letter_x" translation_description="When 'x' key in the keyboard is pressed, this string is spoken up for accessibility">x</string>
+    <string name="cd_key_uchar_latin_small_letter_y" translation_description="When 'y' key in the keyboard is pressed, this string is spoken up for accessibility">y</string>
+    <string name="cd_key_uchar_latin_small_letter_z" translation_description="When 'z' key in the keyboard is pressed, this string is spoken up for accessibility">z</string>
+    <string name="cd_key_uchar_left_curly_bracket" translation_description="When '{' key in the keyboard is pressed, this string is spoken up for accessibility">left curly bracket</string>
+    <string name="cd_key_uchar_vertical_line" translation_description="When '|' key in the keyboard is pressed, this string is spoken up for accessibility">vertical line</string>
+    <string name="cd_key_uchar_right_curly_bracket" translation_description="When '}' key in the keyboard is pressed, this string is spoken up for accessibility">right curly bracket</string>
+    <string name="cd_key_uchar_tilde" translation_description="When '~' key in the keyboard is pressed, this string is spoken up for accessibility">tilde</string>
+    <string name="cd_key_action_done" translation_description="When 'done' key in the keyboard is pressed, this string is spoken up for accessibility">done</string>
+    <string name="cd_key_action_go" translation_description="When 'go' key in the keyboard is pressed, this string is spoken up for accessibility">go</string>
+    <string name="cd_key_action_next" translation_description="When 'next' key in the keyboard is pressed, this string is spoken up for accessibility">next</string>
+    <string name="cd_key_action_previous" translation_description="When 'previous' key in the keyboard is pressed, this string is spoken up for accessibility">previous</string>
+    <string name="cd_key_action_search" translation_description="When 'search' key in the keyboard is pressed, this string is spoken up for accessibility">search</string>
+    <string name="cd_key_action_send" translation_description="When 'send' key in the keyboard is pressed, this string is spoken up for accessibility.  This key is used when the composed text will be sent like chat app.">send</string>
+    <string name="cd_key_composing_done" translation_description="When 'submit' key in the keyboard is pressed, this string is spoken up for accessibility.  This key is generically used when text composing is finished.">submit</string>
+
+    <!-- Keys in Kana keyboard -->
+    <string name="cd_key_kana_line_a" translation_description="This string is spoken up for accessibility, when the button of Japanese A column (あ行: A, I, U, E, O) in the keyboard is pressed.">A column</string>
+    <string name="cd_key_kana_line_ka" translation_description="This string is spoken up for accessibility, when the button of Japanese KA column (か行: KA, KI, KU, KE, KO) in the keyboard is pressed.">KA column</string>
+    <string name="cd_key_kana_line_sa" translation_description="This string is spoken up for accessibility, when the button of Japanese SA column (さ行: SA, SHI, SU, SE, SO) in the keyboard is pressed.">SA column</string>
+    <string name="cd_key_kana_line_ta" translation_description="This string is spoken up for accessibility, when the button of Japanese TA column (た行: TA, CHI, TSU, TE, TO) in the keyboard is pressed.">TA column</string>
+    <string name="cd_key_kana_line_na" translation_description="This string is spoken up for accessibility, when the button of Japanese NA column (な行: NA, NI, NU, NE, NO) in the keyboard is pressed.">NA column</string>
+    <string name="cd_key_kana_line_ha" translation_description="This string is spoken up for accessibility, when the button of Japanese HA column (は行: HA, HI, FU, HE, HO) in the keyboard is pressed.">HA column</string>
+    <string name="cd_key_kana_line_ma" translation_description="This string is spoken up for accessibility, when the button of Japanese MA column (ま行: MA, MI, MU, ME, MO) in the keyboard is pressed.">MA column</string>
+    <string name="cd_key_kana_line_ya" translation_description="This string is spoken up for accessibility, when the button of Japanese YA column (や行: YA, YU, YO) in the keyboard is pressed.">YA column</string>
+    <string name="cd_key_kana_line_ra" translation_description="This string is spoken up for accessibility, when the button of Japanese RA column (ら行: RA, RI, RU, RE, RO) in the keyboard is pressed.">RA column</string>
+    <string name="cd_key_kana_modifier" translation_description="This string is spoken up for accessibility, when the button of Japanese voiced sound mark (゛) in the keyboard is pressed.">voiced sound mark</string>
+    <string name="cd_key_kana_line_wa" translation_description="This string is spoken up for accessibility, when the button of Japanese WA column (わ行: WA, WO, N) in the keyboard is pressed.">WA column</string>
+    <string name="cd_key_kana_punctuation" translation_description="This string is spoken up for accessibility, when the button of Japanese punctuation mark (、 。) in the keyboard is pressed.">punctuation</string>
+    <string name="cd_key_uchar_katakana_middle_dot" translation_description="This string is spoken up for accessibility, when the button of middle dot mark (・) in the keyboard s pressed.">middle dot</string>
+    <string name="cd_key_uchar_ideographic_comma" translation_description="This string is spoken up for accessibility, when the button of Japanese comma character (、) in the keyboard is pressed.">comma</string>
+    <string name="cd_key_uchar_ideographic_full_stop" translation_description="This string is spoken up for accessibility, when the button of Japanese period character (。) in the keyboard is pressed.">period</string>
+    <string name="cd_key_uchar_katakana_hiragana_prolonged_sound_mark" translation_description="This string is spoken up for accessibility, when the button of Japanese prolonged sound mark (ー) in the keyboard is pressed.">prolonged sound mark</string>
+
+    <!-- Keys in Alphabet keyboard -->
+    <string name="cd_key_alphabet_abc" translation_description="This string is spoken up for accessibility, when the button of ABC characters in the keyboard is pressed.">ABC</string>
+    <string name="cd_key_alphabet_def" translation_description="This string is spoken up for accessibility, when the button of DEF characters in the keyboard is pressed.">DEF</string>
+    <string name="cd_key_alphabet_ghi" translation_description="This string is spoken up for accessibility, when the button of GHI characters in the keyboard is pressed.">GHI</string>
+    <string name="cd_key_alphabet_jkl" translation_description="This string is spoken up for accessibility, when the button of JKL characters in the keyboard is pressed.">JKL</string>
+    <string name="cd_key_alphabet_mno" translation_description="This string is spoken up for accessibility, when the button of MNO characters in the keyboard is pressed.">MNO</string>
+    <string name="cd_key_alphabet_pqrs" translation_description="This string is spoken up for accessibility, when the button of PQRS characters in the keyboard is pressed.">PQRS</string>
+    <string name="cd_key_alphabet_tuv" translation_description="This string is spoken up for accessibility, when the button of TUV characters in the keyboard is pressed.">TUV</string>
+    <string name="cd_key_alphabet_wxyz" translation_description="This string is spoken up for accessibility, when the button of WXYZ characters in the keyboard is pressed.">WXYZ</string>
+    <string name="cd_key_alphabet_capitalize" translation_description="This string is spoken up for accessibility, when the button to capitalize alphabet characters in the keyboard is pressed.">capitalize</string>
+    <string name="spoken_use_headphone_for_password" translation_description="This string is spoken up for accessibility, when the system starts reading the characters in the passowrd field.">Plug in a headset to hear password keys spoken aloud</string>
+    <string name="cd_keyboard_fold_button" translation_description="This string is spoken up for accessibility, when the button to expand/fold the candidate word list is pressed.　　More details are described in Page 33 of http://goo.gl/jLDD7P">Change the size of candidate window</string>
+
+    <!-- Views -->
+    <string name="cd_close_symbol_window" translation_description="This string is spoken up for accessibility, when the button to back to the keyboard is pressed.">Back to keyboard</string>
+    <string name="cd_symbol_window_number" translation_description="This string is spoken up for accessibility, when the button to go to the number keyboard is pressed.">Number</string>
+    <string name="cd_symbol_window_symbol" translation_description="This string is spoken up for accessibility, when the button to go to the symbol keyboard is pressed.">Symbol</string>
+    <string name="cd_symbol_window_emoticon" translation_description="This string is spoken up for accessibility, when the button to go to the emoticon keyboard is pressed.">Emoticon</string>
+    <string name="cd_symbol_window_emoji" translation_description="This string is spoken up for accessibility, when the button to go to the emoji keyboard is pressed.">Emoji</string>
+    <string name="cd_symbol_window_enter" translation_description="This string is spoken up for accessibility, when the enter key is pressed.">Linefeed</string>
+    <string name="cd_symbol_window_backspace" translation_description="This string is spoken up for accessibility, when the backspace key is pressed.">Backspace</string>
+    <string name="cd_symbol_window_minor_history" translation_description="This string is spoken up for accessibility, when the button to show symbol/emoticon/emoji history is pressed.">History</string>
+    <string name="cd_symbol_window_minor_symbol_general" translation_description="This string is spoken up for accessibility, when the button to show general symbols is pressed.">General symbol</string>
+    <string name="cd_symbol_window_minor_symbol_half" translation_description="This string is spoken up for accessibility, when the button to show full and half width symbols is pressed.">Full and half width symbol</string>
+    <string name="cd_symbol_window_minor_symbol_parenthesis" translation_description="This string is spoken up for accessibility, when the button to show parenthesis is pressed.">Parenthesis symbol</string>
+    <string name="cd_symbol_window_minor_symbol_arrow" translation_description="This string is spoken up for accessibility, when the button to show arrow symbols is pressed.">Arrow symbol</string>
+    <string name="cd_symbol_window_minor_symbol_math" translation_description="This string is spoken up for accessibility, when the button to show math symbols is pressed.">Math symbol</string>
+    <string name="cd_symbol_window_minor_emoticon_smile" translation_description="This string is spoken up for accessibility, when the button to show smile emoticon is pressed.">Smile emoticon</string>
+    <string name="cd_symbol_window_minor_emoticon_sweat" translation_description="This string is spoken up for accessibility, when the button to show sweat emoticon is pressed.">Sweat emoticon</string>
+    <string name="cd_symbol_window_minor_emoticon_surprise" translation_description="This string is spoken up for accessibility, when the button to show surprise emoticon is pressed.">Surprise emoticon</string>
+    <string name="cd_symbol_window_minor_emoticon_sadness" translation_description="This string is spoken up for accessibility, when the button to show sadness emoticon is pressed.">Sadness emoticon</string>
+    <string name="cd_symbol_window_minor_emoticon_displeasure" translation_description="This string is spoken up for accessibility, when the button to show displeasure emoticon is pressed.">Displeasure emoticon</string>
+    <string name="cd_symbol_window_minor_emoji_face" translation_description="This string is spoken up for accessibility, when the button to show face emoji is pressed.">Face emoji</string>
+    <string name="cd_symbol_window_minor_emoji_food" translation_description="This string is spoken up for accessibility, when the button to show food emoji is pressed.">Food emoji</string>
+    <string name="cd_symbol_window_minor_emoji_activity" translation_description="This string is spoken up for accessibility, when the button to show activity emoji is pressed.">Activity emoji</string>
+    <string name="cd_symbol_window_minor_emoji_city" translation_description="This string is spoken up for accessibility, when the button to show city emoji is pressed.">City emoji</string>
+    <string name="cd_symbol_window_minor_emoji_nature" translation_description="This string is spoken up for accessibility, when the button to show nature emoji is pressed.">Nature emoji</string>
+    <string name="help_userdictionary_dictionary_name" translation_description="Label asking the user to input the dictionary name.">Input dictionary name</string>
+    <string name="help_userdictionary_edit_word_value" translation_description="Label asking the user to input the word.">Input word</string>
+    <string name="help_userdictionary_edit_word_key" translation_description="Label asking the user to input the reading (pronunciation) of the word.">Input reading</string>
+    <string name="cd_voice_input" translation_description="This string is spoken up for accessibility, when voice input button is being pressed. Note that typically suffix 'button' is also spoken (e.g., 'Voice input button' in English).">Voice input</string>
+    <string name="cd_narrow_frame_widen_button" translation_description="This string is spoken up for accessibility, when the button to show the software keyboard is pressed. This button is available iff a physical keyboard is available.">Show the keyboard</string>
+</resources>

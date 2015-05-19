@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef MOZC_GUI_CHARACTER_PAD_WINDOWS_SELECTION_HANDLER_H_
-#define MOZC_IPC_CHARACTER_PAD_WINDOWS_SELECTION_HANDLER_H_
+#define MOZC_GUI_CHARACTER_PAD_WINDOWS_SELECTION_HANDLER_H_
 
 #include <string>
 
@@ -48,4 +48,4 @@ class WindowsSelectionHandler : public SelectionCallbackInterface {
 }
 }
 #endif
-#endif  // MOZC_IPC_CHARACTER_PAD_WINDOWS_SELECTION_HANDLER_H_
+#endif  // MOZC_GUI_CHARACTER_PAD_WINDOWS_SELECTION_HANDLER_H_

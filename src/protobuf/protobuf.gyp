@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -152,22 +152,20 @@
               '<(protobuf_root)/src',
             ],
           },
-          'xcode_settings': {
-            'WARNING_CFLAGS': [
-              '-Wno-error',
-              # For GetEnumNumber in wire_format.cc:60.
-              '-Wno-unused-function',
-            ],
-          },
           'msvs_disabled_warnings': [
             '<@(msvc_disabled_warnings_for_protoc)',
           ],
           'conditions': [
             ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
-            '(_toolset=="host" and (compiler_host=="clang" or compiler_target=="gcc"))', {
+             '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
                 '-Wno-conversion-null',  # coded_stream.cc uses NULL to bool.
                 '-Wno-unused-function',
+                # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
+                # TODO(komatsu): Update the following two lines when we stop
+                # supporting GCC 4.6 or GCC itself.
+                '-Wno-unknown-warning-option',
+                '-Wno-unused-local-typedefs',  # only GCC 4.8 or later
               ],
             }],
             ['OS=="win"', {
@@ -186,9 +184,6 @@
         ['target_platform=="Android" and _toolset=="target"', {
           'defines': [
             'GOOGLE_PROTOBUF_NO_RTTI'
-          ],
-          'dependencies': [
-            '../android/android_base.gyp:android_pthread_once',
           ],
         }],
         ['use_packed_dictionary==1', {
@@ -210,29 +205,28 @@
         '<(protobuf_root)/src',
       ],
       'conditions': [
-        ['OS=="linux"', {
-          'conditions': [
-            ['use_libprotobuf!=1', {
-              'cflags': [
-                '-Wno-unused-result',  # protoc has unused result.
-              ],
-              'sources': ['<@(protoc_sources)'],
-            }],
-          ],
-        }],
-        ['OS=="mac"', {
+        ['use_libprotobuf==0', {
           'sources': ['<@(protoc_sources)'],
-          'xcode_settings': {
-            'WARNING_CFLAGS': ['-Wno-error'],
-          },
-        }],
-        ['OS=="win"', {
-          'sources': ['<@(protoc_sources)'],
-          'defines!': [
-            'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
-          ],
           'msvs_disabled_warnings': [
             '<@(msvc_disabled_warnings_for_protoc)',
+          ],
+          'conditions': [
+            ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
+             '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
+              'cflags': [
+                '-Wno-unused-result',  # protoc has unused result.
+                # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
+                # TODO(komatsu): Update the following two lines when we stop
+                # supporting GCC 4.6 or GCC itself.
+                '-Wno-unknown-warning-option',
+                '-Wno-unused-local-typedefs',  # only GCC 4.8 or later
+              ],
+            }],
+            ['OS=="win"', {
+              'defines!': [
+                'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
+              ],
+            }],
           ],
         }],
       ],

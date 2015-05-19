@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,6 @@ import java.util.List;
 
 /**
  * Fragment based preference UI for API Level &gt;= 11.
- *
- * Deprecated APIs (which {@link MozcClassicPreferenceActivity} uses) are not used.
- * Instead newly introduced ones are used.
  *
  */
 public abstract class MozcFragmentBasePreferenceActivity extends MozcBasePreferenceActivity {

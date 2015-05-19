@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -154,6 +154,7 @@ void SessionOutput::FillCandidates(const Segment &segment,
     candidates_proto->set_focused_index(candidate_list.focused_index());
   }
   candidates_proto->set_size(candidate_list.size());
+  candidates_proto->set_page_size(candidate_list.page_size());
   candidates_proto->set_position(position);
 
   size_t c_begin = 0;

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@ package org.mozc.android.inputmethod.japanese;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.ModifierKey;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.SpecialKey;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 /**
  * Converts Androids's KeyEvent to Mozc's KeyEvent.
@@ -52,7 +54,7 @@ public class KeycodeConverter {
    */
   public interface KeyEventInterface {
     int getKeyCode();
-    android.view.KeyEvent getNativeEvent();
+    Optional<android.view.KeyEvent> getNativeEvent();
   }
 
   private static final int ASCII_MIN = 32; // Space.
@@ -112,6 +114,7 @@ public class KeycodeConverter {
   }
 
   public static KeyEventInterface getKeyEventInterface(final android.view.KeyEvent keyEvent) {
+    Preconditions.checkNotNull(keyEvent);
     return new KeyEventInterface() {
 
       @Override
@@ -120,8 +123,8 @@ public class KeycodeConverter {
       }
 
       @Override
-      public android.view.KeyEvent getNativeEvent() {
-        return keyEvent;
+      public Optional<android.view.KeyEvent> getNativeEvent() {
+        return Optional.of(keyEvent);
       }
     };
   }
@@ -135,14 +138,14 @@ public class KeycodeConverter {
       }
 
       @Override
-      public android.view.KeyEvent getNativeEvent() {
-        return null;
+      public Optional<android.view.KeyEvent> getNativeEvent() {
+        return Optional.<android.view.KeyEvent>absent();
       }
     };
   }
 
   public static boolean isMetaKey(android.view.KeyEvent keyEvent) {
-    int keyCode = keyEvent.getKeyCode();
+    int keyCode = Preconditions.checkNotNull(keyEvent).getKeyCode();
     return keyCode == android.view.KeyEvent.KEYCODE_SHIFT_LEFT ||
         keyCode == android.view.KeyEvent.KEYCODE_SHIFT_RIGHT ||
         keyCode == android.view.KeyEvent.KEYCODE_CTRL_LEFT ||

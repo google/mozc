@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -167,13 +167,13 @@ TEST(CalculatorTest, StressTest) {
     const size_t query_length = index_of_equal + 1;
     const string query(line, 0, query_length);
 
-#if defined(OS_ANDROID) && defined(__i386__)
-    // StressTest seems to be overkill. Many false-positives makes maintainance
-    // harder.
-    // So it might be better to use this test case as "smoke test".
-    // But for now we do it only for x86 Android, which faces test failure.
-    RunCalculation(calculator, query);
-#else  // OS_ANDROID && __i386__
+    // Smoke test.
+    // If (OS_ANDROID && x86) the result differs from expectation
+    // because of floating point specification so on such environment
+    // Following verification is skipped.
+    string unused_result;
+    calculator->CalculateString(query, &unused_result);
+#if !defined(OS_ANDROID) || !defined(__i386__)
     if (line.size() == query_length) {
       // False test
       VerifyRejection(calculator, line);
@@ -181,7 +181,7 @@ TEST(CalculatorTest, StressTest) {
     }
     const string answer(line, query_length);
     VerifyCalculation(calculator, query, answer);
-#endif  // OS_ANDROID && __i386__
+#endif  // !defined(OS_ANDROID) || !defined(__i386__)
   }
   LOG(INFO) << "done " << lineno << " tests from " << filename << endl;
 }

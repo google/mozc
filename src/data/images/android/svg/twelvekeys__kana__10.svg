@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!--
- Copyright 2010-2014, Google Inc.
+ Copyright 2010-2015, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -30,27 +30,22 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="twelvekeys_x5F__x5F_kana_x5F__x5F_10"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="105px" height="87px"
-	 viewBox="0 0 105 87" style="enable-background:new 0 0 105 87;" xml:space="preserve">
-<g id="style-keyicon-main">
-	<path style="fill:#272727;" d=""/>
-</g>
+<svg version="1.1" id="twelvekeys_kana_10" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="105px" height="87px" viewBox="0 0 105 87" style="enable-background:new 0 0 105 87;" xml:space="preserve">
+<polyline id="style-keyicon-bound_1_" style="fill:none;stroke:#CCCBCB;stroke-miterlimit:10;" points="32.499,24.998 27.499,24.998 27.499,41.998 44.499,41.998 44.499,33.498 "/>
 <g id="style-keyicon-main_1_">
-	<path style="fill:#272727;" d=""/>
+  <text x="32.5" y="40" style="font-size:48px;text-anchor:middle;dominant-baseline:central;fill:#272727;">゛</text>
 </g>
-<polyline id="style-keyicon-bound_1_" style="fill:none;stroke:#CCCBCB;stroke-miterlimit:10;" points="31.999,24.998 
-	26.999,24.998 26.999,41.998 43.999,41.998 43.999,33.498 "/>
-<polyline id="style-keyicon-bound" style="fill:none;stroke:#CCCBCB;stroke-miterlimit:10;" points="65,25 60,25 60,42 77,42 
-	77,33.5 "/>
+<polyline id="style-keyicon-bound_2_" style="fill:none;stroke:#CCCBCB;stroke-miterlimit:10;" points="65,25 60,25 60,42 77,42 77,33.5 "/>
 <g id="style-keyicon-main_2_">
-	<path style="fill:#272727;" d=""/>
+  <text x="62.5" y="40" style="font-size:48px;text-anchor:middle;dominant-baseline:central;fill:#272727;">゜</text>
 </g>
 <g id="style-keyicon-main_3_">
-	<path style="fill:#272727;" d=""/>
+  <text x="35" y="57.5" style="font-size:16px;text-anchor:middle;dominant-baseline:central;fill:#272727;">大</text>
 </g>
 <g id="style-keyicon-main_4_">
-	<path style="fill:#272727;" d=""/>
+  <text x="52.5" y="57.5" style="font-size:16px;text-anchor:middle;dominant-baseline:central;fill:#272727;">⇔</text>
+</g>
+<g id="style-keyicon-main_5_">
+  <text x="70" y="57.5" style="font-size:16px;text-anchor:middle;dominant-baseline:central;fill:#272727;">小</text>
 </g>
 </svg>

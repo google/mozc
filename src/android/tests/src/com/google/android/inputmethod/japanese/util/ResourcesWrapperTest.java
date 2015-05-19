@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@ import static org.easymock.EasyMock.same;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.testing.MockInputStream;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -438,7 +439,7 @@ public class ResourcesWrapperTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOpenRawResource1() {
-    InputStream stream = createMock(InputStream.class);
+    InputStream stream = createMock(MockInputStream.class);
     TypedValue value = new TypedValue();
     expect(base.openRawResource(eq(10), same(value))).andReturn(stream);
     replayAll();
@@ -450,7 +451,7 @@ public class ResourcesWrapperTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOpenRawResource2() throws NotFoundException {
-    InputStream stream = createMock(InputStream.class);
+    InputStream stream = createMock(MockInputStream.class);
     expect(base.openRawResource(10)).andReturn(stream);
     replayAll();
 

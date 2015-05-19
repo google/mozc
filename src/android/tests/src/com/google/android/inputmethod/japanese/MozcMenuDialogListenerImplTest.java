@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,6 @@ import org.easymock.Capture;
 public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithMock {
   private Context context;
   private InputMethodService inputMethodService;
-  private ImeSwitcher imeSwitcher;
   private MenuDialogListener listener;
 
   @Override
@@ -67,8 +66,7 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
     super.setUp();
     context = createMock(MockContext.class);
     inputMethodService = createMock(InputMethodService.class);
-    imeSwitcher = createMock(ImeSwitcher.class);
-    listener = new MozcMenuDialogListenerImpl(inputMethodService, imeSwitcher);
+    listener = new MozcMenuDialogListenerImpl(inputMethodService);
   }
 
   @Override
@@ -111,9 +109,8 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
   public void testLaunchPreferenceActivitySelected() {
     final ViewManagerInterface stubViewManager = createNiceMock(ViewManagerInterface.class);
     final Activity stubPreferenceActivity = createNiceMock(Activity.class);
-    final Activity stubSoftwareKeyboardAdvancedSettingActivity = createNiceMock(Activity.class);
 
-    Context context = createNiceMock(Context.class);
+    Context context = createNiceMock(MockContext.class);
     String packageName = "test.package.name";
 
     try {
@@ -130,13 +127,6 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
             @Override
             public Class<? extends Activity> getPreferenceActivityClass() {
               return stubPreferenceActivity.getClass();
-            }
-
-            @Override
-            public Optional<Class<? extends Activity>>
-                getSoftwareKeyboardAdvancedSettingActivityClass() {
-              return Optional.<Class<? extends Activity>>of(
-                  stubSoftwareKeyboardAdvancedSettingActivity.getClass());
             }
 
             @Override

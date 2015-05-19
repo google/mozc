@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
- Copyright 2010-2014, Google Inc.
+ Copyright 2010-2015, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,15 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="qwerty_x5F__x5F_function_x5F__x5F_delete_x5F__x5F_icon"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="70px" height="74px"
-	 viewBox="0 0 70 74" style="enable-background:new 0 0 70 74;" xml:space="preserve">
-<path id="" style="fill-rule:evenodd;clip-rule:evenodd;fill:#DDDDDD;" d="M42.434,38.667l-1.797,1.766
-	l-2.702-2.666l-2.7,2.666l-1.801-1.766l2.7-2.667l-2.7-2.667l1.801-1.766l2.7,2.666l2.702-2.666l1.797,1.8L39.735,36L42.434,38.667z
-	 M27.233,24v0.066h-0.034L15,36.033L27.199,48l0.034-0.032V48h23.769L53,46.034V26.067L51.034,24H27.233z"/>
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:cc="http://creativecommons.org/ns#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     version="1.1"
+     width="68"
+     height="56">
+  <!-- Original size: 71.018707 x 54 -->
+  <g transform="matrix(0.594,0,0,0.594,12.74,12.07)">
+    <path id="style-keyicon-qwerty-function" fill-rule="nonzero" fill="#000" d="m51.696666,12.71-10.542,10.542-10.5-10.5-3.747,3.747,10.75,10.75-10.919,10.753,3.833,4,10.604-10.146,10.229,10.146,4-4-10.247-10.92,10.456-10.455-3.917-3.917zm13.322,41.29-44,0s-3.834-0.084-6-3.917001l-13.9999993-20s-2.292-2.582999,0-6c1.8259996-2.722,12.9999993-19.999999,12.9999993-19.999999s2.625-4.00000046,7-4.00000046l44-0.08300000417s5.917001,0,6,6.083000464v41.999999s0,5.917001-6,5.917001"/>
+  </g>
 </svg>

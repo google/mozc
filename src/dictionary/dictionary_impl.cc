@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,15 @@ DictionaryImpl::DictionaryImpl(
 
 DictionaryImpl::~DictionaryImpl() {
   dics_.clear();
+}
+
+bool DictionaryImpl::HasKey(StringPiece key) const {
+  for (size_t i = 0; i < dics_.size(); ++i) {
+    if (dics_[i]->HasKey(key)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool DictionaryImpl::HasValue(StringPiece value) const {

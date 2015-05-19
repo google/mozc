@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -156,6 +156,12 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
   dictionary_mock_->AddLookupExact("house", "house", "house", Token::NONE);
   dictionary_mock_->AddLookupExact("query", "query", "query", Token::NONE);
   dictionary_mock_->AddLookupExact("google", "google", "google", Token::NONE);
+  dictionary_mock_->AddLookupExact("naru", "naru", "naru", Token::NONE);
+  // "なる"
+  dictionary_mock_->AddLookupExact("\xE3\x81\xAA\xE3\x82\x8B",
+                                   "\xE3\x81\xAA\xE3\x82\x8B",
+                                   "naru",
+                                   Token::NONE);
 
   scoped_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
 
@@ -257,6 +263,19 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "google",
                                                &composition, &segments));
     EXPECT_EQ("google", composition);
+  }
+
+  {
+    // The key "なる" has two value "naru" and "なる".
+    // In this case, language aware rewriter should not be triggered.
+    string composition;
+    Segments segments;
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "naru",
+                                               &composition, &segments));
+
+    // "なる"
+    EXPECT_EQ("\xE3\x81\xAA\xE3\x82\x8B", composition);
+    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
   }
 }
 

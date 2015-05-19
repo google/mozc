@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,26 +29,45 @@
 
 package org.mozc.android.inputmethod.japanese;
 
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
+import static org.easymock.EasyMock.expect;
+
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.CrossingEdgeBehavior;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpaceOnAlphanumeric;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.SpecialRomanjiTable;
+import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.test.InstrumentationTestCase;
 import android.test.mock.MockContext;
+import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.InputType;
 import android.view.inputmethod.EditorInfo;
 
 /**
  */
-public class MozcUtilTest extends InstrumentationTestCase {
+public class MozcUtilTest extends InstrumentationTestCaseWithMock {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    clearnUpMozcUtil();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    clearnUpMozcUtil();
+    super.tearDown();
+  }
+
+  private void clearnUpMozcUtil() {
+    MozcUtil.setSystemApplication(Optional.<Boolean>absent());
+    MozcUtil.setUpdatedSystemApplication(Optional.<Boolean>absent());
+  }
+
   @SmallTest
   public void testIsDevChannel() {
     class TestData extends Parameter {
@@ -90,82 +109,41 @@ public class MozcUtilTest extends InstrumentationTestCase {
   @SmallTest
   public void testGetRequest() {
     Configuration configuration = new Configuration();
+    int floatingCandidatePageSize = 9;
+    MockResources mockResources = createNiceMock(MockResources.class);
+    resetAll();
+    expect(mockResources.getInteger(R.integer.floating_candidate_candidate_num)).andStubReturn(
+        floatingCandidatePageSize);
+    replayAll();
+
     for (KeyboardSpecification specification : KeyboardSpecification.values()) {
       for (int orientation : new int[] {Configuration.ORIENTATION_PORTRAIT,
                                         Configuration.ORIENTATION_LANDSCAPE}) {
         configuration.orientation = orientation;
-        Request request = MozcUtil.getRequestForKeyboard(
-            specification.getKeyboardSpecificationName(),
-            Optional.of(specification.getSpecialRomanjiTable()),
-            Optional.of(specification.getSpaceOnAlphanumeric()),
-            Optional.of(specification.isKanaModifierInsensitiveConversion()),
-            Optional.of(specification.getCrossingEdgeBehavior()),
-            configuration);
+        Request request =
+            MozcUtil.getRequestBuilder(mockResources, specification, configuration).build();
         assertEquals(specification.getKeyboardSpecificationName()
                          .formattedKeyboardName(configuration),
                      request.getKeyboardName());
         assertEquals(specification.getSpecialRomanjiTable(), request.getSpecialRomanjiTable());
         assertEquals(specification.getSpaceOnAlphanumeric(), request.getSpaceOnAlphanumeric());
+
+        if (specification.isHardwareKeyboard()) {
+          assertFalse(request.getMixedConversion());
+          assertFalse(request.getZeroQuerySuggestion());
+          assertTrue(request.getUpdateInputModeFromSurroundingText());
+          assertFalse(request.getAutoPartialSuggestion());
+          assertEquals(floatingCandidatePageSize, request.getCandidatePageSize());
+        } else {
+          assertTrue(request.getMixedConversion());
+          assertTrue(request.getZeroQuerySuggestion());
+          assertFalse(request.getUpdateInputModeFromSurroundingText());
+          assertTrue(request.getAutoPartialSuggestion());
+        }
       }
     }
-  }
 
-  @SmallTest
-  public void testGetRequest_pseudoKeyboards() {
-    Configuration configuration = new Configuration();
-    {
-      Request request =
-          MozcUtil.getRequestForKeyboard(new KeyboardSpecificationName("baseName", 1, 2, 3),
-                                         Optional.of(SpecialRomanjiTable.DEFAULT_TABLE),
-                                         Optional.<SpaceOnAlphanumeric>absent(),
-                                         Optional.<Boolean>absent(),
-                                         Optional.<CrossingEdgeBehavior>absent(),
-                                         configuration);
-      assertEquals(SpecialRomanjiTable.DEFAULT_TABLE, request.getSpecialRomanjiTable());
-      assertFalse(request.hasSpaceOnAlphanumeric());
-      assertFalse(request.hasKanaModifierInsensitiveConversion());
-      assertFalse(request.hasCrossingEdgeBehavior());
-    }
-    {
-      Request request =
-          MozcUtil.getRequestForKeyboard(new KeyboardSpecificationName("baseName", 1, 2, 3),
-                                         Optional.<SpecialRomanjiTable>absent(),
-                                         Optional.of(SpaceOnAlphanumeric.COMMIT),
-                                         Optional.<Boolean>absent(),
-                                         Optional.<CrossingEdgeBehavior>absent(),
-                                         configuration);
-      assertFalse(request.hasSpecialRomanjiTable());
-      assertEquals(SpaceOnAlphanumeric.COMMIT, request.getSpaceOnAlphanumeric());
-      assertFalse(request.hasKanaModifierInsensitiveConversion());
-      assertFalse(request.hasCrossingEdgeBehavior());
-    }
-    {
-      Request request =
-          MozcUtil.getRequestForKeyboard(new KeyboardSpecificationName("baseName", 1, 2, 3),
-                                         Optional.<SpecialRomanjiTable>absent(),
-                                         Optional.<SpaceOnAlphanumeric>absent(),
-                                         Optional.of(Boolean.TRUE),
-                                         Optional.<CrossingEdgeBehavior>absent(),
-                                         configuration);
-      assertFalse(request.hasSpaceOnAlphanumeric());
-      assertFalse(request.hasSpecialRomanjiTable());
-      assertTrue(request.getKanaModifierInsensitiveConversion());
-      assertFalse(request.hasCrossingEdgeBehavior());
-    }
-    {
-      Request request =
-          MozcUtil.getRequestForKeyboard(new KeyboardSpecificationName("baseName", 1, 2, 3),
-                                         Optional.<SpecialRomanjiTable>absent(),
-                                         Optional.<SpaceOnAlphanumeric>absent(),
-                                         Optional.<Boolean>absent(),
-                                         Optional.of(CrossingEdgeBehavior.COMMIT_WITHOUT_CONSUMING),
-                                         configuration);
-      assertFalse(request.hasSpaceOnAlphanumeric());
-      assertFalse(request.hasSpecialRomanjiTable());
-      assertFalse(request.hasKanaModifierInsensitiveConversion());
-      assertEquals(CrossingEdgeBehavior.COMMIT_WITHOUT_CONSUMING,
-                   request.getCrossingEdgeBehavior());
-    }
+    verifyAll();
   }
 
   @SmallTest
@@ -211,39 +189,7 @@ public class MozcUtilTest extends InstrumentationTestCase {
     };
 
     for (TestData testData : testDataList) {
-      EditorInfo editorInfo = new EditorInfo();
-      editorInfo.inputType = testData.inputType;
-      assertEquals(testData.expectedPasswordField, MozcUtil.isPasswordField(editorInfo));
-    }
-  }
-
-  @SmallTest
-  public void testIsVoiceInputAllowed() {
-    class TestData extends Parameter {
-      final String privateImeOptions;
-      final boolean expectedIsVoiceInputAllowed;
-      TestData(String privateImeOptions, boolean expectedIsVoiceInputAllowed) {
-        this.privateImeOptions = privateImeOptions;
-        this.expectedIsVoiceInputAllowed = expectedIsVoiceInputAllowed;
-      }
-    }
-
-    TestData[] testDataList = {
-        new TestData(null, true),
-        new TestData("", true),
-        new TestData("nnm", true),
-        new TestData("nnm,a", true),
-        new TestData("nm", false),
-        new TestData("a,nm", false),
-        new TestData("nm,b", false),
-        new TestData("a,nm,b", false),
-        new TestData("com.google.android.inputmethod.latin.noMicrophoneKey", false),
-    };
-
-    for (TestData testData : testDataList) {
-      EditorInfo editorInfo = new EditorInfo();
-      editorInfo.privateImeOptions = testData.privateImeOptions;
-      assertEquals(testData.expectedIsVoiceInputAllowed, MozcUtil.isVoiceInputAllowed(editorInfo));
+      assertEquals(testData.expectedPasswordField, MozcUtil.isPasswordField(testData.inputType));
     }
   }
 
@@ -315,6 +261,63 @@ public class MozcUtilTest extends InstrumentationTestCase {
       } finally {
         MozcUtil.setVersionCode(Optional.<Integer>absent());
       }
+    }
+  }
+
+  @SmallTest
+  public void testIsVoiceInputPreferred() {
+    class TestData extends Parameter {
+      final int inputType;
+      final String privateImeOptions;
+      final boolean expectPreffered;
+      TestData(int inputType, String privateImeOptions, boolean expectEligible) {
+        this.inputType = inputType;
+        this.privateImeOptions = Preconditions.checkNotNull(privateImeOptions);
+        this.expectPreffered = expectEligible;
+      }
+    }
+    TestData[] testDataList = {
+        new TestData(0, "", true),
+        new TestData(InputType.TYPE_CLASS_TEXT, "", true),
+        new TestData(InputType.TYPE_CLASS_NUMBER, "", false),
+        new TestData(InputType.TYPE_CLASS_PHONE, "", false),
+        new TestData(InputType.TYPE_CLASS_DATETIME, "", false),
+        new TestData(InputType.TYPE_CLASS_TEXT
+                     | InputType.TYPE_TEXT_VARIATION_PASSWORD, "", false),
+        new TestData(InputType.TYPE_CLASS_TEXT
+                     | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD, "", false),
+        new TestData(InputType.TYPE_CLASS_TEXT
+                     | InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD, "", false),
+        new TestData(InputType.TYPE_CLASS_TEXT
+                     | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, "", false),
+        new TestData(InputType.TYPE_CLASS_TEXT
+                     | InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS, "", false),
+        new TestData(InputType.TYPE_CLASS_TEXT
+                     | InputType.TYPE_TEXT_VARIATION_EMAIL_SUBJECT, "", true),
+        new TestData(InputType.TYPE_CLASS_TEXT
+                     | InputType.TYPE_TEXT_VARIATION_URI, "", false),
+        new TestData(0, "a", true),
+        new TestData(0, "nm", false),
+        new TestData(0, "a,nm", false),
+        new TestData(0, "nm,a", false),
+        new TestData(0, "a,nm,a", false),
+        new TestData(0, "com.google.android.inputmethod.latin.noMicrophoneKey", false),
+        new TestData(InputType.TYPE_CLASS_TEXT, "a", true),
+        new TestData(InputType.TYPE_CLASS_NUMBER, "a", false),
+        new TestData(InputType.TYPE_CLASS_PHONE, "a", false),
+        new TestData(InputType.TYPE_CLASS_DATETIME, "a", false),
+        new TestData(InputType.TYPE_CLASS_TEXT, "nm", false),
+        new TestData(InputType.TYPE_CLASS_NUMBER, "nm", false),
+        new TestData(InputType.TYPE_CLASS_PHONE, "nm", false),
+        new TestData(InputType.TYPE_CLASS_DATETIME, "nm", false),
+    };
+
+    EditorInfo editorInfo = new EditorInfo();
+    for (TestData testData : testDataList) {
+      editorInfo.inputType = testData.inputType;
+      editorInfo.privateImeOptions = testData.privateImeOptions;
+      assertEquals(testData.toString(),
+                   testData.expectPreffered, MozcUtil.isVoiceInputPreferred(editorInfo));
     }
   }
 }

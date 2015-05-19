@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.session;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.util.ZipFileUtil;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import android.content.Context;
@@ -50,6 +51,7 @@ import java.util.zip.ZipFile;
  *
  */
 class LocalSessionHandler implements SessionHandler {
+
   private static final String USER_PROFILE_DIRECTORY_NAME = ".mozc";
   // The file name of the system dictionary and connection data file in the apk.
   // This is determined in build.xml.
@@ -60,7 +62,7 @@ class LocalSessionHandler implements SessionHandler {
   @Override
   public void initialize(Context context) {
     try {
-      ApplicationInfo info = context.getApplicationInfo();
+      ApplicationInfo info = Preconditions.checkNotNull(context).getApplicationInfo();
 
       // Ensure the user profile directory exists.
       File userProfileDirectory = new File(info.dataDir, USER_PROFILE_DIRECTORY_NAME);
@@ -104,7 +106,7 @@ class LocalSessionHandler implements SessionHandler {
 
   @Override
   public Command evalCommand(Command command) {
-    byte[] inBytes = command.toByteArray();
+    byte[] inBytes = Preconditions.checkNotNull(command).toByteArray();
     byte[] outBytes = null;
     outBytes = MozcJNI.evalCommand(inBytes);
     try {

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,18 +30,21 @@
 package org.mozc.android.inputmethod.japanese.keyboard;
 
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
+import org.mozc.android.inputmethod.japanese.resources.R;
+import org.mozc.android.inputmethod.japanese.ui.PopUpLayouter;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
+import android.annotation.SuppressLint;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.SparseArray;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewGroup.MarginLayoutParams;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
@@ -57,7 +60,7 @@ import java.util.List;
  * Production clients shouldn't use this class from outside of this package.
  *
  */
-public class PopUpPreview {
+@VisibleForTesting public class PopUpPreview {
 
   /**
    * For performance reason, we want to reuse instances of {@link PopUpPreview}.
@@ -68,6 +71,7 @@ public class PopUpPreview {
    *
    */
   static class Pool {
+
     // Typically 2 or 3 popups are shown in maximum.
     private final SparseArray<PopUpPreview> pool = new SparseArray<PopUpPreview>(3);
     private final List<PopUpPreview> freeList = new ArrayList<PopUpPreview>();
@@ -78,13 +82,13 @@ public class PopUpPreview {
 
     Pool(View parent, Looper looper,
          BackgroundDrawableFactory backgroundDrawableFactory, DrawableCache drawableCache) {
-      this.parent = parent;
-      this.backgroundDrawableFactory = backgroundDrawableFactory;
-      this.drawableCache = drawableCache;
-      this.dismissHandler = new Handler(looper, new Handler.Callback() {
+      this.parent = Preconditions.checkNotNull(parent);
+      this.backgroundDrawableFactory = Preconditions.checkNotNull(backgroundDrawableFactory);
+      this.drawableCache = Preconditions.checkNotNull(drawableCache);
+      this.dismissHandler = new Handler(Preconditions.checkNotNull(looper), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
-          PopUpPreview preview = PopUpPreview.class.cast(message.obj);
+          PopUpPreview preview = PopUpPreview.class.cast(Preconditions.checkNotNull(message).obj);
           preview.dismiss();
           freeList.add(preview);
           return true;
@@ -133,96 +137,81 @@ public class PopUpPreview {
     }
   }
 
-  private static final float POPUP_VIEW_PADDING = 12f;
-
-  private final int padding;
-  private final View parent;
   private final BackgroundDrawableFactory backgroundDrawableFactory;
   private final DrawableCache drawableCache;
-  @VisibleForTesting final ImageView popupView;
+  @VisibleForTesting final PopUpLayouter<ImageView> popUp;
 
   protected PopUpPreview(
       View parent, BackgroundDrawableFactory backgroundDrawableFactory,
       DrawableCache drawableCache) {
-    this.parent = parent;
-    this.backgroundDrawableFactory = backgroundDrawableFactory;
-    this.drawableCache = drawableCache;
-    this.popupView = new ImageView(parent.getContext());
-    popupView.setVisibility(View.GONE);
-    View rootView = parent.getRootView();
-    if (rootView != null) {
-      FrameLayout screenContent =
-          FrameLayout.class.cast(rootView.findViewById(android.R.id.content));
-      if (screenContent != null) {
-        screenContent.addView(
-            popupView, new FrameLayout.LayoutParams(0, 0, Gravity.LEFT | Gravity.TOP));
-      }
-    }
-    padding = (int) (popupView.getResources().getDisplayMetrics().density * POPUP_VIEW_PADDING);
+    this.backgroundDrawableFactory = Preconditions.checkNotNull(backgroundDrawableFactory);
+    this.drawableCache = Preconditions.checkNotNull(drawableCache);
+    ImageView popUpView = new ImageView(Preconditions.checkNotNull(parent).getContext());
+    // To use Canvas#drawPicture(), the view shouldn't be h/w accelerated.
+    popUpView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+    popUpView.setVisibility(View.GONE);
+    this.popUp = new PopUpLayouter<ImageView>(parent, popUpView);
   }
 
   /**
-   * Shows the popup preview of the given {@code key} and {@code popup} if needed.
+   * Shows the pop-up preview of the given {@code key} and {@code optionalPopup} if needed.
    */
+  @SuppressLint("NewApi")
   @SuppressWarnings("deprecation")
-  protected void showIfNecessary(Key key, PopUp popup) {
-    if (key == null || popup == null) {
-      // No images to be rendered.
+  protected void showIfNecessary(Key key, Optional<PopUp> optionalPopup, boolean isDelayedPopup) {
+    Preconditions.checkNotNull(key);
+    if (!Preconditions.checkNotNull(optionalPopup).isPresent()) {
+      hidePopupView();
+      return;
+    }
+    PopUp popup = optionalPopup.get();
+    Optional<Drawable> popUpIconDrawable = drawableCache.getDrawable(isDelayedPopup
+        ? popup.getPopUpLongPressIconResourceId() : popup.getPopUpIconResourceId());
+    if (!popUpIconDrawable.isPresent()) {
       hidePopupView();
       return;
     }
 
-    // Set images.
-    popupView.setImageDrawable(drawableCache.getDrawable(popup.getPopUpIconResourceId()).orNull());
+    ImageView popupView = popUp.getContentView();
+    Resources resources = popupView.getContext().getResources();
+    float density = resources.getDisplayMetrics().density;
+    int popUpWindowPadding = (int) (BackgroundDrawableFactory.POPUP_WINDOW_PADDING * density);
+    int width =
+        Math.min(key.getWidth(), resources.getDimensionPixelSize(R.dimen.popup_width_limitation))
+        + popUpWindowPadding * 2;
+    int height = popup.getHeight() + popUpWindowPadding * 2;
+
+    popupView.setImageDrawable(popUpIconDrawable.get());
     popupView.setBackgroundDrawable(
         backgroundDrawableFactory.getDrawable(DrawableType.POPUP_BACKGROUND_WINDOW));
-    popupView.setPadding(padding, padding, padding, padding);
 
-    // Calculate the location to show the popup in window's coordinate system.
+    Preconditions.checkState(popup.getIconWidth() != 0 || popup.getIconHeight() != 0);
+    int horizontalPadding = (popup.getIconWidth() == 0)
+        ? popUpWindowPadding : (width - popup.getIconWidth()) / 2;
+    int verticalPadding = (popup.getIconHeight() == 0)
+        ? popUpWindowPadding : (height - popup.getIconHeight()) / 2;
+    popupView.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
+
+    // Calculate the location to show the pop-up in window's coordinate system.
     int centerX = key.getX() + key.getWidth() / 2;
     int centerY = key.getY() + key.getHeight() / 2;
 
-    int width = popup.getWidth();
-    int height = popup.getHeight();
-
-    ViewGroup.LayoutParams layoutParams = popupView.getLayoutParams();
-    if (layoutParams != null) {
-      layoutParams.width = width;
-      layoutParams.height = height;
-    }
-
-    if (MarginLayoutParams.class.isInstance(layoutParams)) {
-      int x = centerX + popup.getXOffset() - width / 2;
-      int y = centerY + popup.getYOffset() - height / 2;
-
-      int[] location = new int[2];
-      parent.getLocationInWindow(location);
-      x += location[0];
-      y += location[1];
-
-      MarginLayoutParams marginLayoutParams = MarginLayoutParams.class.cast(layoutParams);
-      // Clip XY.
-      View root = View.class.cast(popupView.getParent());
-      if (root != null) {
-        x = Math.max(Math.min(x, root.getWidth() - width), 0);
-        y = Math.max(Math.min(y, root.getHeight() - height), 0);
-      }
-      marginLayoutParams.setMargins(x, y, 0, 0);
-    }
-    popupView.setLayoutParams(layoutParams);
+    int left = centerX + popup.getXOffset() - width / 2;
+    int top = centerY + popup.getYOffset() - height / 2;
+    popUp.setBounds(left, top, left + width, top + height);
     popupView.setVisibility(View.VISIBLE);
   }
 
   /**
    * Hides the pop up preview.
-   * protected only for testing.
    */
-  protected void dismiss() {
+  void dismiss() {
     hidePopupView();
   }
 
   @SuppressWarnings("deprecation")
   private void hidePopupView() {
+    ImageView popupView = popUp.getContentView();
     popupView.setVisibility(View.GONE);
     popupView.setImageDrawable(null);
     popupView.setBackgroundDrawable(null);

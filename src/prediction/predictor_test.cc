@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -293,7 +293,8 @@ TEST_F(PredictorTest, CallPredictorsForMobilePartialPrediction) {
           new UserHistoryPredictor(
               &dictionary_mock,
               UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-              Singleton<SuppressionDictionary>::get())));
+              Singleton<SuppressionDictionary>::get(),
+              true)));
   Segments segments;
   {
     segments.set_request_type(Segments::PARTIAL_PREDICTION);

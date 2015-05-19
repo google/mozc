@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
- Copyright 2010-2014, Google Inc.
+ Copyright 2010-2015, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -29,17 +29,16 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="symbol_x5F__x5F_major_x5F__x5F_emoji_x5F_selected"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="37px" height="66px"
-	 viewBox="0 0 37 66" style="enable-background:new 0 0 37 66;" xml:space="preserve">
-<g id="style-symbol-major-selected">
-	<circle style="fill:#F9F9F9;" cx="12.13" cy="29.582" r="2.578"/>
-	<circle style="fill:#F9F9F9;" cx="24.694" cy="29.582" r="2.578"/>
-	<path style="fill:#F9F9F9;" d=""/>
-	<g>
-		<path style="fill-rule:evenodd;clip-rule:evenodd;fill:#F9F9F9;" d=""/>
-	</g>
-</g>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg3191" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="77" width="77" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata3196">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <path id="style-symbol-major-selected" fill-rule="nonzero" fill="#000" d="m38.5,59.301797c14.310181,0,18.988765-13.160478,18.988765-13.160478h-37.97753s4.678584,13.160478,18.988765,13.160478m13.636803-36.074056c-3.152906,0-5.708598,2.555692-5.708598,5.708598s2.555692,5.708598,5.708598,5.708598c3.152907,0,5.708598-2.555692,5.708598-5.708598s-2.555691-5.708598-5.708598-5.708598m-27.273606,11.416838c3.152906,0,5.708598-2.555691,5.708598-5.708598,0-3.152906-2.555692-5.708598-5.708598-5.708598-3.152907,0-5.708598,2.555692-5.708598,5.708598,0,3.152907,2.555691,5.708598,5.708598,5.708598m13.636803,34.124168c-16.690577,0-30.268142-13.578777-30.268142-30.268145,0-16.690577,13.577565-30.2693503,30.268142-30.2693503s30.26814,13.5787733,30.26814,30.2693503c0,16.689368-13.577563,30.268145-30.26814,30.268145m0-67.7681443c-20.677649,0-37.5,16.8223503-37.5,37.4999993,0,20.676435,16.822351,37.498795,37.5,37.498795,20.67765,0,37.5-16.82236,37.5-37.498795,0-20.677649-16.82235-37.4999993-37.5-37.4999993"/>
 </svg>

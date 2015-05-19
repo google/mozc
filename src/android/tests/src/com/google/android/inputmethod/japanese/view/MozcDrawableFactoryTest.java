@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,8 @@ public class MozcDrawableFactoryTest extends InstrumentationTestCaseWithMock {
   @SmallTest
   public void testGetDrawableRaw() {
     Resources resources = getInstrumentation().getTargetContext().getResources();
-    MozcDrawableFactory factory = new MozcDrawableFactory(resources);
+    MozcDrawableFactory factory =
+        new MozcDrawableFactory(resources, new Skin());
 
     // Unfortunately it is difficult to check if the returned drawable renders as what we want,
     // because PictureDrawable renders in native code so we cannot intercept the Canvas,
@@ -88,7 +89,7 @@ public class MozcDrawableFactoryTest extends InstrumentationTestCaseWithMock {
     expect(resources.getDrawable(1)).andReturn(drawable);
     replayAll();
 
-    MozcDrawableFactory factory = new MozcDrawableFactory(resources);
+    MozcDrawableFactory factory = new MozcDrawableFactory(resources, new Skin());
     assertSame(drawable, factory.getDrawable(1).get());
 
     verifyAll();
@@ -98,7 +99,7 @@ public class MozcDrawableFactoryTest extends InstrumentationTestCaseWithMock {
   public void testEmojiDrawable() {
     // Try to parse all emoji Drawable.
     Resources resources = getInstrumentation().getTargetContext().getResources();
-    MozcDrawableFactory factory = new MozcDrawableFactory(resources);
+    MozcDrawableFactory factory = new MozcDrawableFactory(resources, new Skin());
 
     for (String prefix : new String[] { "docomo_emoji_", "softbank_emoji_", "kddi_emoji_" }) {
       for (int codePoint = 0xFE000; codePoint <= 0xFEEA0; ++codePoint) {

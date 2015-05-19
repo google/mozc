@@ -6,7 +6,6 @@
     <message>
         <location filename="about_dialog.ui" line="32"/>
         <source>About Mozc</source>
-        <oldsource>About Google Japanese Inpt</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16,7 +15,7 @@
     </message>
     <message utf8="true">
         <location filename="about_dialog.ui" line="80"/>
-        <source>Copyright © 2014 Google Inc. All Rights Reserved.</source>
+        <source>Copyright © 2015 Google Inc. All Rights Reserved.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,28 +60,24 @@ const char kKanaCombinationTableFile[] = "system://kana.tsv";
 const char k12keysHiraganaTableFile[] = "system://12keys-hiragana.tsv";
 const char k12keysHalfwidthasciiTableFile[]
     = "system://12keys-halfwidthascii.tsv";
-const char k12keysNumberTableFile[]
-    = "system://12keys-number.tsv";
 const char kFlickHiraganaTableFile[] = "system://flick-hiragana.tsv";
 const char kFlickHalfwidthasciiTableFile[]
     = "system://flick-halfwidthascii.tsv";
-const char kFlickNumberTableFile[]
-    = "system://flick-number.tsv";
 const char kToggleFlickHiraganaTableFile[]
     = "system://toggle_flick-hiragana.tsv";
 const char kToggleFlickHalfwidthasciiTableFile[]
     = "system://toggle_flick-halfwidthascii.tsv";
-const char kToggleFlickNumberTableFile[]
-    = "system://toggle_flick-number.tsv";
 // Special tables for QWERTY mobile
 const char kQwertyMobileHiraganaTableFile[]
     = "system://qwerty_mobile-hiragana.tsv";
-const char kQwertyMobileHiraganaNumberTableFile[]
-    = "system://qwerty_mobile-hiragana-number.tsv";
 const char kQwertyMobileHalfwidthasciiTableFile[]
     = "system://qwerty_mobile-halfwidthascii.tsv";
 // Special tables for Godan
 const char kGodanHiraganaTableFile[] = "system://godan-hiragana.tsv";
+const char kNotouchHiraganaTableFile[] = "system://notouch-hiragana.tsv";
+// Reuse qwerty_mobile-halfwidthascii table
+const char kNotouchHalfwidthasciiTableFile[]
+    = "system://qwerty_mobile-halfwidthascii.tsv";
 
 const char kNewChunkPrefix[] = "\t";
 const char kSpecialKeyOpen[] = "\x0F";  // Shift-In of ASCII
@@ -139,26 +135,17 @@ bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
       case mozc::commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII:
         table_file_name = k12keysHalfwidthasciiTableFile;
         break;
-      case mozc::commands::Request::TWELVE_KEYS_TO_NUMBER:
-        table_file_name = k12keysNumberTableFile;
-        break;
       case mozc::commands::Request::FLICK_TO_HIRAGANA:
         table_file_name = kFlickHiraganaTableFile;
         break;
       case mozc::commands::Request::FLICK_TO_HALFWIDTHASCII:
         table_file_name = kFlickHalfwidthasciiTableFile;
         break;
-      case mozc::commands::Request::FLICK_TO_NUMBER:
-        table_file_name = kFlickNumberTableFile;
-        break;
       case mozc::commands::Request::TOGGLE_FLICK_TO_HIRAGANA:
         table_file_name = kToggleFlickHiraganaTableFile;
         break;
       case mozc::commands::Request::TOGGLE_FLICK_TO_HALFWIDTHASCII:
         table_file_name = kToggleFlickHalfwidthasciiTableFile;
-        break;
-      case mozc::commands::Request::TOGGLE_FLICK_TO_NUMBER:
-        table_file_name = kToggleFlickNumberTableFile;
         break;
       case mozc::commands::Request::QWERTY_MOBILE_TO_HIRAGANA:
         // This table is almost as same as "romaji-hiragana.tsv",
@@ -168,14 +155,17 @@ bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
         // TODO(hidehiko): refactor this code to clean up.
         table_file_name = kQwertyMobileHiraganaTableFile;
         break;
-      case mozc::commands::Request::QWERTY_MOBILE_TO_HIRAGANA_NUMBER:
-        table_file_name = kQwertyMobileHiraganaNumberTableFile;
-        break;
       case mozc::commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII:
         table_file_name = kQwertyMobileHalfwidthasciiTableFile;
         break;
       case mozc::commands::Request::GODAN_TO_HIRAGANA:
         table_file_name = kGodanHiraganaTableFile;
+        break;
+      case mozc::commands::Request::NOTOUCH_TO_HIRAGANA:
+        table_file_name = kNotouchHiraganaTableFile;
+        break;
+      case mozc::commands::Request::NOTOUCH_TO_HALFWIDTHASCII:
+        table_file_name = kNotouchHalfwidthasciiTableFile;
         break;
       default:
         table_file_name = NULL;

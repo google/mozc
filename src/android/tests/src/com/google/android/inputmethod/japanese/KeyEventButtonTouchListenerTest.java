@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 
+import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.Key;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventContext;
@@ -70,8 +71,9 @@ public class KeyEventButtonTouchListenerTest extends InstrumentationTestCaseWith
   }
 
   private KeyEventContext createKeyEventContextMock() {
-    Key key = new Key(0, 0, 0, 0, 0, 0, false, false, false, Stick.EVEN,
-        Collections.<KeyState>emptyList());
+    Key key = new Key(0, 0, 0, 0, 0, 0, false, false, Stick.EVEN,
+                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+                      Collections.<KeyState>emptyList());
     return createMockBuilder(KeyEventContext.class)
         .withConstructor(Key.class, int.class, float.class, float.class,
                          int.class, int.class, float.class, Set.class)

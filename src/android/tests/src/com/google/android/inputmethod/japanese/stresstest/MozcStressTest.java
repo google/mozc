@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,10 @@
 
 package org.mozc.android.inputmethod.japanese.stresstest;
 
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.MozcService;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.ViewManager;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
@@ -40,7 +40,7 @@ import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
 import org.mozc.android.inputmethod.japanese.testing.MemoryLogger;
 import org.mozc.android.inputmethod.japanese.testing.mocking.MozcMockSupport;
-import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -66,8 +66,8 @@ import java.util.Random;
 public class MozcStressTest extends InstrumentationTestCase {
   class OnCreateRunner implements Runnable {
     @Override
-    public void run(){
-       service = new MozcService(){
+    public void run() {
+       service = new MozcService() {
          /*
           * In tests which is set up here, this method returns false. This blocks our
           * tests and we don't concern this method. So this is little hacky.
@@ -100,17 +100,17 @@ public class MozcStressTest extends InstrumentationTestCase {
     Instrumentation instrumentation = getInstrumentation();
     mockSupport = new MozcMockSupport(instrumentation);
 
-    activity = launchActivity(
-        "org.mozc.android.inputmethod.japanese", Activity.class, null);
+    activity = Preconditions.checkNotNull(launchActivity(
+        "org.mozc.android.inputmethod.japanese", Activity.class, null));
     instrumentation.runOnMainSync(new OnCreateRunner());
     context = instrumentation.getTargetContext();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    if (activity != null) {
-      activity.finish();
-    }
+    activity.finish();
+
+    activity = null;
     service = null;
     inputView = null;
     viewManager = null;
@@ -179,16 +179,12 @@ public class MozcStressTest extends InstrumentationTestCase {
     viewManager.setKeyboardLayout(KeyboardLayout.TWELVE_KEYS);
 
     final int actions = 500;
+    Context context = getInstrumentation().getTargetContext();
 
-    SessionExecutor session = SessionExecutor.getInstance(null);
-    KeyboardSpecification specification = viewManager.getJapaneseKeyboardSpecification();
-    Request request = MozcUtil.getRequestForKeyboard(
-        specification.getKeyboardSpecificationName(),
-        Optional.of(specification.getSpecialRomanjiTable()),
-        Optional.of(specification.getSpaceOnAlphanumeric()),
-        Optional.of(specification.isKanaModifierInsensitiveConversion()),
-        Optional.of(specification.getCrossingEdgeBehavior()),
-        getInstrumentation().getTargetContext().getResources().getConfiguration());
+    SessionExecutor session = SessionExecutor.getInstance(context);
+    KeyboardSpecification specification = viewManager.getKeyboardSpecification();
+    Request request = MozcUtil.getRequestBuilder(
+        context.getResources(), specification, context.getResources().getConfiguration()).build();
     List<TouchEvent> touchEventList = Collections.emptyList();
 
     memoryLogger.logMemory("start");

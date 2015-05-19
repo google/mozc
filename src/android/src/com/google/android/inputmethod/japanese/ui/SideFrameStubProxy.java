@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,22 +29,16 @@
 
 package org.mozc.android.inputmethod.japanese.ui;
 
-import org.mozc.android.inputmethod.japanese.resources.R;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
+import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.GradientDrawable.Orientation;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.ViewStub.OnInflateListener;
-import android.view.animation.Animation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -64,35 +58,22 @@ public class SideFrameStubProxy {
   private int inputFrameHeight = 0;
   private Optional<OnClickListener> buttonOnClickListener = Optional.absent();
 
-  private Optional<View> dropshadowShort = Optional.absent();
-  private Optional<View> dropshadowLong = Optional.absent();
-  private int dropShadowShortVisibility = View.GONE;
-  private int dropShadowShortLayoutHeight = 0;
-  private int dropShadowLongLayoutHeight = 0;
+  private int adjustButtonResourceId;
+  private Skin skin = Skin.getFallbackInstance();
 
-  private static void setLayoutHeight(View view, int height) {
-    ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-    layoutParams.height = height;
-    view.setLayoutParams(layoutParams);
+  private Resources resources;
+
+  private void updateAdjustButtonImage() {
+    Preconditions.checkState(adjustButton.isPresent());
+    adjustButton.get().setImageDrawable(skin.getDrawable(resources, adjustButtonResourceId));
   }
 
-  private static Drawable createDropShadowGradientDrawable(
-      int startColor, int endColor, float radius, float centerX, float centerY) {
-    GradientDrawable gradientDrawable =
-        new GradientDrawable(Orientation.TL_BR, new int[]{startColor, endColor});
-    gradientDrawable.setGradientType(GradientDrawable.RADIAL_GRADIENT);
-    gradientDrawable.setGradientRadius(radius);
-    gradientDrawable.setGradientCenter(centerX, centerY);
-    return gradientDrawable;
-  }
-
-  public void initialize(View view, int stubId, final int dropShadowShortTopId,
-                         final int dropShadowLongTopId, final int adjustButtonId,
-                         final int adjustButtonResouceId, final float dropShadowGradientCenterX,
-                         final int dropshadowShortId,
-                         final int dropshadowLongId) {
+  public void initialize(View view, int stubId, final int adjustButtonId,
+                         int adjustButtonResourceId) {
+    this.resources = Preconditions.checkNotNull(view).getResources();
     ViewStub viewStub = ViewStub.class.cast(view.findViewById(stubId));
     currentView = Optional.<View>of(viewStub);
+    this.adjustButtonResourceId = adjustButtonResourceId;
 
     viewStub.setOnInflateListener(new OnInflateListener() {
 
@@ -103,30 +84,20 @@ public class SideFrameStubProxy {
 
         currentView = Optional.of(view);
         currentView.get().setVisibility(View.VISIBLE);
-        dropshadowShort = Optional.of(view.findViewById(dropshadowShortId));
-        dropshadowLong = Optional.of(view.findViewById(dropshadowLongId));
         adjustButton = Optional.of(ImageView.class.cast(view.findViewById(adjustButtonId)));
         adjustButton.get().setOnClickListener(buttonOnClickListener.orNull());
-        Resources resources = view.getResources();
-        MozcDrawableFactory drawableFactory = new MozcDrawableFactory(resources);
-        adjustButton.get().setImageDrawable(
-            drawableFactory.getDrawable(adjustButtonResouceId).orNull());
-
-        // Create dropshadow corner drawable.
-        // Because resource xml cannot set gradientRadius in dip style, code it.
-        int startColor = resources.getColor(R.color.dropshadow_start);
-        int endColor = resources.getColor(R.color.dropshadow_end);
-        float radius = resources.getDimensionPixelSize(R.dimen.translucent_border_height);
-        Drawable gradientTop = createDropShadowGradientDrawable(startColor, endColor, radius,
-                                                                dropShadowGradientCenterX, 1.0f);
-        view.findViewById(dropShadowShortTopId).setBackgroundDrawable(gradientTop);
-        view.findViewById(dropShadowLongTopId).setBackgroundDrawable(gradientTop);
-
+        adjustButton.get().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        updateAdjustButtonImage();
         resetAdjustButtonBottomMarginInternal(inputFrameHeight);
-        flipDropShadowVisibilityInternal(dropShadowShortVisibility);
-        setDropShadowHeightInternal(dropShadowShortLayoutHeight, dropShadowLongLayoutHeight);
       }
     });
+  }
+
+  public void setSkin(Skin skin) {
+    this.skin = Preconditions.checkNotNull(skin);
+    if (adjustButton.isPresent()) {
+      updateAdjustButtonImage();
+    }
   }
 
   public void setButtonOnClickListener(OnClickListener onClickListener) {
@@ -141,7 +112,7 @@ public class SideFrameStubProxy {
 
   private void resetAdjustButtonBottomMarginInternal(int inputFrameHeight) {
     if (adjustButton.isPresent()) {
-      ImageView imageView = ImageView.class.cast(adjustButton.get());
+      ImageView imageView = adjustButton.get();
       FrameLayout.LayoutParams layoutParams = FrameLayout.LayoutParams.class.cast(
           imageView.getLayoutParams());
       layoutParams.bottomMargin = (inputFrameHeight - layoutParams.height) / 2;
@@ -154,44 +125,5 @@ public class SideFrameStubProxy {
       resetAdjustButtonBottomMarginInternal(inputFrameHeight);
     }
     this.inputFrameHeight = inputFrameHeight;
-  }
-
-  private void flipDropShadowVisibilityInternal(int shortVisibility) {
-    if (dropshadowShort.isPresent() && dropshadowLong.isPresent()) {
-      dropshadowShort.get().setVisibility(shortVisibility);
-      dropshadowLong.get().setVisibility(
-          shortVisibility == View.VISIBLE ? View.INVISIBLE : View.VISIBLE);
-    }
-  }
-
-  public void flipDropShadowVisibility(int shortVisibility) {
-    if (inflated) {
-      flipDropShadowVisibilityInternal(shortVisibility);
-      return;
-    }
-    dropShadowShortVisibility = shortVisibility;
-  }
-
-  private void setDropShadowHeightInternal(int shortHeight, int longHeight) {
-    if (dropshadowShort.isPresent() && dropshadowLong.isPresent()) {
-      setLayoutHeight(dropshadowShort.get(), shortHeight);
-      setLayoutHeight(dropshadowLong.get(), longHeight);
-    }
-  }
-
-  public void setDropShadowHeight(int shortHeight, int longHeight) {
-    if (inflated) {
-      setDropShadowHeightInternal(shortHeight, longHeight);
-      return;
-    }
-    dropShadowShortLayoutHeight = shortHeight;
-    dropShadowLongLayoutHeight = longHeight;
-  }
-
-  public void startDropShadowAnimation(Animation shortAnimation, Animation longAnimation) {
-    if (inflated && dropshadowShort.isPresent() && dropshadowLong.isPresent()) {
-      dropshadowShort.get().startAnimation(Preconditions.checkNotNull(shortAnimation));
-      dropshadowLong.get().startAnimation(Preconditions.checkNotNull(longAnimation));
-    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,9 @@ package org.mozc.android.inputmethod.japanese.accessibility;
 import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.Key;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEntity;
-import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchEvent;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
@@ -71,8 +69,6 @@ public class KeyboardAccessibilityDelegate extends AccessibilityDelegateCompat {
   private final View view;
   private final KeyboardAccessibilityNodeProvider nodeProvider;
   private Optional<Key> lastHoverKey = Optional.absent();
-  // Handler which is called back when key-input should be simulated.
-  private Optional<KeyEventHandler> keyEventHandler = Optional.absent();
   // Handler for long-press callback.
   // Contains 0 or 1 delayed message.
   private final Handler handler;
@@ -84,6 +80,15 @@ public class KeyboardAccessibilityDelegate extends AccessibilityDelegateCompat {
   // In such case touch-up shouldn't send any key events.
   // Reset to false when new touch sequence is started.
   private boolean consumedByLongpress = false;
+  private final TouchEventEmulator emulator;
+
+  /**
+   * Emulator interface for touch events (Key input and long press).
+   */
+  public interface TouchEventEmulator {
+    public void emulateKeyInput(Key key);
+    public void emulateLongPress(Key key);
+  }
 
   private class LongTapHandler implements Handler.Callback {
     @Override
@@ -96,20 +101,23 @@ public class KeyboardAccessibilityDelegate extends AccessibilityDelegateCompat {
   }
 
 
-  public KeyboardAccessibilityDelegate(View view) {
+  public KeyboardAccessibilityDelegate(View view, TouchEventEmulator emulator) {
     this(view, new KeyboardAccessibilityNodeProvider(view),
          view.getContext().getResources().getInteger(
-             R.integer.config_long_press_key_delay_accessibility));
+             R.integer.config_long_press_key_delay_accessibility),
+         emulator);
   }
 
   @VisibleForTesting
   KeyboardAccessibilityDelegate(View view,
                                 KeyboardAccessibilityNodeProvider nodeProvider,
-                                int longpressDelay) {
+                                int longpressDelay,
+                                TouchEventEmulator emulator) {
     this.view = Preconditions.checkNotNull(view);
     this.nodeProvider = Preconditions.checkNotNull(nodeProvider);
     this.handler = new Handler(new LongTapHandler());
     this.longpressDelay = longpressDelay;
+    this.emulator = Preconditions.checkNotNull(emulator);
   }
 
   private Context getContext() {
@@ -210,13 +218,11 @@ public class KeyboardAccessibilityDelegate extends AccessibilityDelegateCompat {
     if (!keyState.isPresent()) {
       return;
     }
-    int keyCode = keyState.get().getFlick(Direction.CENTER).getKeyEntity().getKeyCode();
-    if (keyCode == KeyEntity.INVALID_KEY_CODE
-        || !keyEventHandler.isPresent()
-        || consumedByLongpress) {
+    int keyCode = keyState.get().getFlick(Direction.CENTER).get().getKeyEntity().getKeyCode();
+    if (keyCode == KeyEntity.INVALID_KEY_CODE || consumedByLongpress) {
       return;
     }
-    keyEventHandler.get().sendKey(keyCode, Collections.<TouchEvent>emptyList());
+    emulator.emulateKeyInput(key);
   }
 
   private void simulateLongPress(Key key) {
@@ -225,14 +231,12 @@ public class KeyboardAccessibilityDelegate extends AccessibilityDelegateCompat {
     if (!keyState.isPresent()) {
       return;
     }
-    int longPressKeyCode = keyState.get().getFlick(Direction.CENTER)
-                                   .getKeyEntity().getLongPressKeyCode();
-    if (longPressKeyCode == KeyEntity.INVALID_KEY_CODE
-        || !keyEventHandler.isPresent()
-        || consumedByLongpress) {
+    int longPressKeyCode =
+        keyState.get().getFlick(Direction.CENTER).get().getKeyEntity().getLongPressKeyCode();
+    if (longPressKeyCode == KeyEntity.INVALID_KEY_CODE || consumedByLongpress) {
       return;
     }
-    keyEventHandler.get().sendKey(longPressKeyCode, Collections.<TouchEvent>emptyList());
+    emulator.emulateLongPress(key);
     consumedByLongpress = true;
   }
 
@@ -354,9 +358,5 @@ public class KeyboardAccessibilityDelegate extends AccessibilityDelegateCompat {
 
     // Don't speak if the IME is connected to a password field.
     return isPasswordField;
-  }
-
-  public void setKeyEventHandler(Optional<KeyEventHandler> keyEventHandler) {
-    this.keyEventHandler = Preconditions.checkNotNull(keyEventHandler);
   }
 }

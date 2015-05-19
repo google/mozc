@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -289,6 +289,13 @@ UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
 UserDictionary::~UserDictionary() {
   reloader_->Join();
   delete tokens_;
+}
+
+bool UserDictionary::HasKey(StringPiece key) const {
+  // TODO(noriyukit): Currently, we don't support HasKey() for user dictionary
+  // because we need to search tokens linearly, which might be slow in extreme
+  // cases where 100K entries exist.
+  return false;
 }
 
 bool UserDictionary::HasValue(StringPiece value) const {

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -228,8 +228,8 @@ TEST_F(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
   // "てすと"
   SetCandidate("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8", "test", &segment);
   Segment::Candidate *c = segment.mutable_candidate(0);
-  c->inner_segment_boundary.push_back(pair<int, int>(1, 2));
-  c->inner_segment_boundary.push_back(pair<int, int>(2, 2));
+  c->PushBackInnerSegmentBoundary(3, 2, 3, 2);
+  c->PushBackInnerSegmentBoundary(6, 2, 6, 2);
   EXPECT_TRUE(c->IsValid());
 
   data_and_converter->GetConverter()->InsertDummyCandidates(&segment, 10);
@@ -247,6 +247,7 @@ class KeyCheckDictionary : public DictionaryInterface {
       : target_query_(query), received_target_query_(false) {}
   virtual ~KeyCheckDictionary() {}
 
+  virtual bool HasKey(StringPiece key) const { return false; }
   virtual bool HasValue(StringPiece value) const { return false; }
 
   virtual void LookupPredictive(
@@ -374,14 +375,38 @@ TEST_F(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
 
   // Result will be, "私の|名前は|中ノです" with mock dictionary.
   const Segment::Candidate &cand = segments.segment(0).candidate(0);
-  ASSERT_EQ(3, cand.inner_segment_boundary.size());
-  EXPECT_EQ(4, cand.inner_segment_boundary[0].first);
-  EXPECT_EQ(4, cand.inner_segment_boundary[1].first);
-  EXPECT_EQ(5, cand.inner_segment_boundary[2].first);
+  vector<StringPiece> keys, values, content_keys, content_values;
+  for (Segment::Candidate::InnerSegmentIterator iter(&cand);
+       !iter.Done(); iter.Next()) {
+    keys.push_back(iter.GetKey());
+    values.push_back(iter.GetValue());
+    content_keys.push_back(iter.GetContentKey());
+    content_values.push_back(iter.GetContentValue());
+  }
+  ASSERT_EQ(3, keys.size());
+  // "わたしの" | "なまえは" | "なかのです"
+  EXPECT_EQ("\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae", keys[0]);
+  EXPECT_EQ("\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf", keys[1]);
+  EXPECT_EQ("\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae\xe3\x81\xa7\xe3\x81\x99",
+            keys[2]);
 
-  EXPECT_EQ(2, cand.inner_segment_boundary[0].second);
-  EXPECT_EQ(3, cand.inner_segment_boundary[1].second);
-  EXPECT_EQ(4, cand.inner_segment_boundary[2].second);
+  // "私の" | "名前は" | "中ノです"
+  ASSERT_EQ(3, values.size());
+  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", values[0]);
+  EXPECT_EQ("\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", values[1]);
+  EXPECT_EQ("\xe4\xb8\xad\xe3\x83\x8e\xe3\x81\xa7\xe3\x81\x99", values[2]);
+
+  ASSERT_EQ(3, content_keys.size());
+  // "わたし" | "なまえ" | "なかの"
+  EXPECT_EQ("\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97", content_keys[0]);
+  EXPECT_EQ("\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88", content_keys[1]);
+  EXPECT_EQ("\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae", content_keys[2]);
+
+  // "私" | "名前" | "中ノ"
+  ASSERT_EQ(3, content_values.size());
+  EXPECT_EQ("\xe7\xa7\x81", content_values[0]);
+  EXPECT_EQ("\xe5\x90\x8d\xe5\x89\x8d", content_values[1]);
+  EXPECT_EQ("\xe4\xb8\xad\xe3\x83\x8e", content_values[2]);
 }
 
 TEST_F(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {

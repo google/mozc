@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -80,8 +80,11 @@ bool OutputData(const string &file_path) {
   }
   packed::SystemDictionaryDataPacker packer(dictionary_version);
   packer.SetPosTokens(kPOSToken, arraysize(kPOSToken));
-  packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable),
-                           kRangeTables, arraysize(kRangeTables));
+  // The following two arrays contain sentinel elements but the packer doesn't
+  // expect them.  So pass the shinked ranges of the arrays.  Note that sentinel
+  // elements are not required at runtime.
+  packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
+                           kRangeTables, arraysize(kRangeTables) - 1);
   packer.SetLidGroupData(kLidGroup, arraysize(kLidGroup));
   packer.SetBoundaryData(kBoundaryData, arraysize(kBoundaryData));
   packer.SetSuffixTokens(kSuffixTokens, arraysize(kSuffixTokens));

@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,6 @@ const char kCP932Name[]    = "Shift JIS";
 const char kJISX0201Name[] = "JISX 0201";
 const char kJISX0208Name[] = "JISX 0208";
 const char kJISX0212Name[] = "JISX 0212";
-const char kJISX0213Name[] = "JISX 0213";
 
 const CharacterPalette::UnicodeRange kUCS2Range = { 0, 0xffff };
 

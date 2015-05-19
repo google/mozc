@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,8 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.KeyEvent.Spe
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -63,10 +65,10 @@ public class PrimaryKeyCodeConverterTest extends InstrumentationTestCaseWithMock
     PrimaryKeyCodeConverter primaryKeyCodeConverter = new PrimaryKeyCodeConverter(context);
 
     // Invalid Keycode.
-    ProtoCommands.KeyEvent keyEvent = primaryKeyCodeConverter.createMozcKeyEvent(
+    Optional<ProtoCommands.KeyEvent> keyEvent = primaryKeyCodeConverter.createMozcKeyEvent(
         Integer.MIN_VALUE, Collections.<TouchEvent>emptyList());
 
-    assertNull(keyEvent);
+    assertFalse(keyEvent.isPresent());
   }
 
   @SmallTest
@@ -85,16 +87,16 @@ public class PrimaryKeyCodeConverterTest extends InstrumentationTestCaseWithMock
 
     class TestData extends Parameter {
       final int keyCode;
-      final List<? extends TouchEvent> touchEventList;
+      final List<TouchEvent> touchEventList;
       final ProtoCommands.KeyEvent expectKeyEvent;
       final int expectKeyCode;
 
       TestData(
-          int keyCode, List<? extends TouchEvent> touchEventList,
+          int keyCode, List<TouchEvent> touchEventList,
           ProtoCommands.KeyEvent expectKeyEvent, int expectKeyCode) {
         this.keyCode = keyCode;
-        this.touchEventList = touchEventList;
-        this.expectKeyEvent = expectKeyEvent;
+        this.touchEventList = Preconditions.checkNotNull(touchEventList);
+        this.expectKeyEvent = Preconditions.checkNotNull(expectKeyEvent);
         this.expectKeyCode = expectKeyCode;
       }
     }
@@ -104,32 +106,32 @@ public class PrimaryKeyCodeConverterTest extends InstrumentationTestCaseWithMock
     TestData[] testDataList = {
         // White space.
         new TestData(
-            ' ', null,
+            ' ', Collections.<TouchEvent>emptyList(),
             ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.SPACE).build(),
             KeyEvent.KEYCODE_SPACE),
         // Enter.
         new TestData(
-            resources.getInteger(R.integer.key_enter), null,
+            resources.getInteger(R.integer.key_enter), Collections.<TouchEvent>emptyList(),
             ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.VIRTUAL_ENTER).build(),
             KeyEvent.KEYCODE_ENTER),
         // Delete.
         new TestData(
-            resources.getInteger(R.integer.key_backspace), null,
+            resources.getInteger(R.integer.key_backspace), Collections.<TouchEvent>emptyList(),
             ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.BACKSPACE).build(),
             KeyEvent.KEYCODE_DEL),
         // Left.
         new TestData(
-            resources.getInteger(R.integer.key_left), null,
+            resources.getInteger(R.integer.key_left), Collections.<TouchEvent>emptyList(),
             ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.VIRTUAL_LEFT).build(),
             KeyEvent.KEYCODE_DPAD_LEFT),
         // Right.
         new TestData(
-            resources.getInteger(R.integer.key_right), null,
+            resources.getInteger(R.integer.key_right), Collections.<TouchEvent>emptyList(),
             ProtoCommands.KeyEvent.newBuilder().setSpecialKey(SpecialKey.VIRTUAL_RIGHT).build(),
             KeyEvent.KEYCODE_DPAD_RIGHT),
         // Normal character with no correction stats.
         new TestData(
-            'a', null,
+            'a', Collections.<TouchEvent>emptyList(),
             ProtoCommands.KeyEvent.newBuilder().setKeyCode('a').build(),
             KeyEvent.KEYCODE_A),
         // Normal character with correction stats.
@@ -155,9 +157,9 @@ public class PrimaryKeyCodeConverterTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     for (TestData testData : testDataList) {
-      ProtoCommands.KeyEvent keyEvent = primaryKeyCodeConverter.createMozcKeyEvent(
+      Optional<ProtoCommands.KeyEvent> keyEvent = primaryKeyCodeConverter.createMozcKeyEvent(
           testData.keyCode, testData.touchEventList);
-      assertEquals(testData.toString(), testData.expectKeyEvent, keyEvent);
+      assertEquals(testData.toString(), testData.expectKeyEvent, keyEvent.orNull());
 
       KeyEventInterface primaryCodeKeyEvent = primaryKeyCodeConverter.getPrimaryCodeKeyEvent(
           testData.keyCode);

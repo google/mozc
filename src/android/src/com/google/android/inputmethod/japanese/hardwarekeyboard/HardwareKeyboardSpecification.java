@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,11 @@
 
 package org.mozc.android.inputmethod.japanese.hardwarekeyboard;
 
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.hardwarekeyboard.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.hardwarekeyboard.KeyEventMapperFactory.KeyEventMapper;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.HardwareKeyMap;
 import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
@@ -98,15 +98,7 @@ public enum HardwareKeyboardSpecification {
   JAPANESE109A(HardwareKeyMap.JAPANESE109A,
                KeyEventMapperFactory.JAPANESE_KEYBOARD_MAPPER,
                KeyboardSpecification.HARDWARE_QWERTY_KANA,
-               KeyboardSpecification.HARDWARE_QWERTY_ALPHABET),
-
-  /**
-   * Represents Japanese Mobile "12" Keyboard
-   */
-  TWELVEKEY(HardwareKeyMap.TWELVEKEY,
-            KeyEventMapperFactory.TWELVEKEY_KEYBOARD_MAPPER,
-            KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
-            KeyboardSpecification.TWELVE_KEY_TOGGLE_ALPHABET);
+               KeyboardSpecification.HARDWARE_QWERTY_ALPHABET);
 
   /**
    * Returns true if the given {@code codepoint} is printable.
@@ -116,6 +108,7 @@ public enum HardwareKeyboardSpecification {
    */
   @VisibleForTesting
   static boolean isPrintable(int codepoint) {
+    Preconditions.checkArgument(codepoint >= 0);
     if (Character.isISOControl(codepoint)) {
       return false;
     }
@@ -213,10 +206,8 @@ public enum HardwareKeyboardSpecification {
     HardwareKeyMap detectedKeyMap = null;
     switch(configuration.keyboard) {
       case Configuration.KEYBOARD_12KEY:
-        detectedKeyMap = HardwareKeyMap.TWELVEKEY;
-        break;
       case Configuration.KEYBOARD_QWERTY:
-        detectedKeyMap = HardwareKeyMap.JAPANESE109A;
+        detectedKeyMap = HardwareKeyMap.DEFAULT;
         break;
       case Configuration.KEYBOARD_NOKEYS:
       case Configuration.KEYBOARD_UNDEFINED:
@@ -476,8 +467,8 @@ public enum HardwareKeyboardSpecification {
       }
 
       @Override
-      public android.view.KeyEvent getNativeEvent() {
-        return keyEvent;
+      public Optional<android.view.KeyEvent> getNativeEvent() {
+        return Optional.of(keyEvent);
       }
     };
   }

@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,11 @@
 # in order to be called back from native layer.
 -keepclasseswithmembers class org.mozc.android.inputmethod.japanese.nativecallback.* {
     public static <methods>;
+}
+
+# Skin's fields are accessed by reflection.
+-keepclassmembers class org.mozc.android.inputmethod.japanese.view.Skin {
+    <fields>;
 }
 
 # Needed for Guava library.

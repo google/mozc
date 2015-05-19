@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -128,12 +128,12 @@ class ImmutableConverterMock : public ImmutableConverterInterface {
                       "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf"
                       "\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae\xe3\x81\xa7"
                       "\xe3\x81\x99");
-    // "わたしの, 私の"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 2));
-    // "なまえは, 名前は"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(4, 3));
-    // "なかのです, 中野です"
-    candidate->inner_segment_boundary.push_back(pair<int, int>(5, 4));
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    // "なまえは, 名前は", "なまえ, 名前"
+    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    // "なかのです, 中野です", "なかの, 中野"
+    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
   }
 
   virtual bool ConvertForRequest(
@@ -283,6 +283,8 @@ class CallCheckDictionary : public DictionaryInterface {
   CallCheckDictionary() {}
   virtual ~CallCheckDictionary() {}
 
+  MOCK_CONST_METHOD1(HasKey,
+                     bool(StringPiece));
   MOCK_CONST_METHOD1(HasValue,
                      bool(StringPiece));
   MOCK_CONST_METHOD3(LookupPredictive,
@@ -1690,6 +1692,10 @@ class TestSuffixDictionary : public DictionaryInterface {
   TestSuffixDictionary() {}
   virtual ~TestSuffixDictionary() {}
 
+  virtual bool HasKey(StringPiece value) const {
+    return false;
+  }
+
   virtual bool HasValue(StringPiece value) const {
     return false;
   }
@@ -3031,16 +3037,14 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
     string description;
     DictionaryPredictor::SetDescription(
         TestableDictionaryPredictor::TYPING_CORRECTION, 0, &description);
-    // "<入力補正>"
-    EXPECT_EQ("<\xE5\x85\xA5\xE5\x8A\x9B\xE8\xA3\x9C\xE6\xAD\xA3>",
-              description);
+    // "補正"
+    EXPECT_EQ("\xE8\xA3\x9C\xE6\xAD\xA3", description);
 
     description.clear();
     DictionaryPredictor::SetDescription(
         0, Segment::Candidate::AUTO_PARTIAL_SUGGESTION, &description);
-    // "<部分確定>"
-    EXPECT_EQ("<\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A>",
-              description);
+    // "部分"
+    EXPECT_EQ("\xE9\x83\xA8\xE5\x88\x86", description);
   }
 }
 
@@ -3051,7 +3055,7 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
         TestableDictionaryPredictor::UNIGRAM |
         TestableDictionaryPredictor::ENGLISH;
     DictionaryPredictor::SetDebugDescription(types, &description);
-    EXPECT_EQ("Unigram English", description);
+    EXPECT_EQ("UE", description);
   }
   {
     string description = "description";
@@ -3059,7 +3063,7 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
         TestableDictionaryPredictor::REALTIME |
         TestableDictionaryPredictor::BIGRAM;
     DictionaryPredictor::SetDebugDescription(types, &description);
-    EXPECT_EQ("description Bigram Realtime", description);
+    EXPECT_EQ("description BR", description);
   }
   {
     string description;
@@ -3068,7 +3072,7 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
         TestableDictionaryPredictor::REALTIME |
         TestableDictionaryPredictor::SUFFIX;
     DictionaryPredictor::SetDebugDescription(types, &description);
-    EXPECT_EQ("Bigram Realtime Suffix", description);
+    EXPECT_EQ("BRS", description);
   }
 }
 

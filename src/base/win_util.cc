@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,9 @@
 #include <Psapi.h>
 #include <Winternl.h>
 
-// Workaround against KB813540
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase_mozc.h>
+#include <atlbase.h>
 
 #include <clocale>
 #include <memory>

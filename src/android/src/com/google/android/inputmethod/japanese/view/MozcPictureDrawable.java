@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@ import com.google.common.base.Preconditions;
 import android.graphics.Canvas;
 import android.graphics.Picture;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PictureDrawable;
 
 /**
@@ -48,6 +49,9 @@ public class MozcPictureDrawable extends PictureDrawable {
 
   @Override
   public void draw(Canvas canvas) {
+    Preconditions.checkArgument(!canvas.isHardwareAccelerated(),
+        "MozcPictureDrawable doesn't accept h/w accelerated canvas, "
+        + "which doesn't support drawPicture().");
     Picture picture = getPicture();
     if (picture == null) {
       return;
@@ -64,5 +68,20 @@ public class MozcPictureDrawable extends PictureDrawable {
     } finally {
       canvas.restoreToCount(saveCount);
     }
+  }
+
+  @Override
+  public ConstantState getConstantState() {
+    return new ConstantState() {
+      @Override
+      public int getChangingConfigurations() {
+        return 0;
+      }
+
+      @Override
+      public Drawable newDrawable() {
+        return new MozcPictureDrawable(getPicture());
+      }
+    };
   }
 }

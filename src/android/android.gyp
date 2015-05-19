@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,74 +44,7 @@
 # (recommended) or project.properties when you need to sign the package with
 # the release key.
 {
-  'variables': {
-    'app_package_name': '<(android_application_id)',
-    'relative_dir': 'android',
-    'abs_android_dir': '<(abs_depth)/<(relative_dir)',
-    # Actions with an existing input and non-existing output behave like
-    # phony rules.  Nothing matters for an input but its existence, so
-    # we use 'android.gyp' as a dummy input since it must exist.
-    'dummy_input_file': 'android.gyp',
-    # GYP's 'copies' rule cannot copy a whole directory recursively, so we use
-    # our own script to copy files.
-    'copy_file': ['python', '../build_tools/copy_file.py'],
-    # Android Development Tools
-    'adt_gen_dir': 'gen_for_adt',
-    'adt_test_gen_dir': 'tests/gen_for_adt',
-    # Android SDK
-    'sdk_gen_dir': 'gen',
-    'sdk_test_gen_dir': 'tests/gen',
-    'sdk_asset_dir': 'assets',
-    'support_v13_jar_paths': [
-      # Path of support-v13 has been changed for new SDK. Try both.
-      '<(android_home)/extras/android/compatibility/v13/android-support-v13.jar',
-      '<(android_home)/extras/android/support/v13/android-support-v13.jar',
-    ],
-    'test_connection_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/testing/connection_data.data',
-    'test_connection_text_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/testing/connection_single_column.txt',
-    # e.g. xxxx/out_android/gtest_report
-    'test_report_dir': '<(SHARED_INTERMEDIATE_DIR)/../../gtest_report',
-  },
-  'conditions': [
-    ['branding=="GoogleJapaneseInput"', {
-    }, {
-      'variables': {
-        # Currently dexmaker* and easymock* properties are not used.
-        # TODO(matsuzakit): Support Java-side unit test.
-        'dexmaker_jar_path': '<(DEPTH)/third_party/dexmaker/dexmaker-0.9.jar',
-        # TODO(matsuzakit): Make copy_and_patch.py support non-jar file tree.
-        'dexmaker_src_path': '<(DEPTH)/third_party/dexmaker/src/main/java',
-        'easymock_jar_path': '<(DEPTH)/third_party/easymock/easymock-3_1.jar',
-        # TODO(matsuzakit): Make copy_and_patch.py support non-jar file tree.
-        'easymock_src_path': '<(DEPTH)/third_party/easymock/src/main/java',
-        'guava_jar_path': '<(DEPTH)/third_party/guava/guava-jdk5-13.0.jar',
-        'guava_testlib_jar_path': '<(DEPTH)/third_party/guava/guava-testlib-jdk5-13.0.jar',
-        'jsr305_jar_path': '<(DEPTH)/third_party/findbug/jsr305-2.0.2.jar',
-        'dictionary_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/system.dictionary',
-        'connection_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/connection_data.data',
-        'connection_text_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/connection_single_column.txt',
-        'native_test_small_targets': [
-          'oss_data_manager_test',
-        ],
-        'resources_project_path': 'resources_oss',
-      },
-    }],
-    ['android_arch=="arm"', {
-      'variables': {
-        'abi': 'armeabi',
-      },
-    }],
-    ['android_arch=="x86"', {
-      'variables': {
-        'abi': 'x86',
-      },
-    }],
-    ['android_arch=="mips"', {
-      'variables': {
-        'abi': 'mips',
-      },
-    }],
-  ],
+  'includes': ['android_env.gypi'],
   'targets': [
     {
       'target_name': 'build_java_test',
@@ -129,6 +62,7 @@
           'action_name': 'build_java_test',
           'inputs': ['<(dummy_input_file)'],
           'outputs': ['dummy_java_test'],
+          # TODO(komatsu): use ant.gypi when the build rule is moved to tests/.
           'ninja_use_console': 1,
           'action': [
             '../build_tools/run_after_chdir.py', 'tests',
@@ -162,31 +96,13 @@
       ],
     },
     {
-      'target_name': 'install',
-      'type': 'none',
-      'dependencies': [
-        'apk',
-      ],
-      'actions': [
-        {
-          'action_name': 'install',
-          'inputs': ['<(dummy_input_file)'],
-          'outputs': ['dummy_install'],
-          'ninja_use_console': 1,
-          'action': [
-            'ant',
-            'install',
-            '-Dgyp.build_type=<(CONFIGURATION_NAME)',
-            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
-          ],
-        },
-      ],
-    },
-    {
       'target_name': 'apk',
       'type': 'none',
       'dependencies': [
+        'protobuf/protobuf.gyp:protobuf_java',
+        'resources/resources.gyp:resources',
         'sdk_apk_dependencies',
+        'userfeedback/userfeedback.gyp:userfeedback',
       ],
       'actions': [
         {
@@ -197,11 +113,6 @@
             'project.properties',
             'ant.properties',
             'proguard-project.txt',
-            # Protocol Buffer
-            'protobuf/AndroidManifest.xml',
-            'protobuf/build.xml',
-            'protobuf/project.properties',
-            'protobuf/ant.properties',
           ],
           # The actual output is one of
           #   'bin/GoogleJapaneseInput-debug.apk'
@@ -209,14 +120,7 @@
           #   'bin/GoogleJapaneseInput-unsigned.apk'
           # depending on CONFIGURATION_NAME and/or key.store.
           'outputs': ['dummy_apk'],
-          'ninja_use_console': 1,
-          'action': [
-            'ant',
-            'apk',
-            '-Dgyp.build_type=<(CONFIGURATION_NAME)',
-            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
-            '-Dsdk.dir=<(android_home)',
-          ],
+          'includes': ['ant.gypi'],
         },
       ],
     },
@@ -250,8 +154,10 @@
         'android_manifest',
         'assets',
         'mozc',
-        'gen_mozc_drawable',
         'guava_library',
+        'userfeedback/userfeedback.gyp:userfeedback_project',
+        'subset_font',
+        'resources/resources.gyp:resources_project',
         'support_libraries',
       ],
     },
@@ -315,7 +221,6 @@
         'files': [
           # Copies the copyright and credit info.
           '../data/installer/credits_en.html',
-          '../data/installer/credits_ja.html',
         ],
       }],
     },
@@ -337,7 +242,7 @@
                 'action': [
                   # Note that multiple output files cannot be handled
                   # by copy_file script.
-                  '<@(copy_file)', '<@(_inputs)', '<(_outputs)',
+                  '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
                 ],
               },
             ],
@@ -363,7 +268,7 @@
                 'action': [
                   # Note that multiple output files cannot be handled
                   # by copy_file script.
-                  '<@(copy_file)', '<@(_inputs)', '<(_outputs)',
+                  '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
                 ],
               },
             ],
@@ -386,9 +291,10 @@
         'make_standalone_toolchain_commands': [
           'bash',
           '<(android_ndk_home)/build/tools/make-standalone-toolchain.sh',
-          '--arch=<(android_arch)',
+          '--toolchain=<(toolchain)',
           '--stl=<(android_stl)',
           '--install-dir=<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)',
+          '--platform=<(platform)',
         ],
         'make_standalone_toolchain_result': '<!(<(make_standalone_toolchain_commands))',
       },
@@ -502,7 +408,7 @@
           'outputs': ['dummy_touch_stat_data'],
           'action': [
             'python', 'gen_touch_event_stats.py',
-            '--output_dir', 'assets',
+            '--output_dir', '<(sdk_asset_dir)',
             '--stats_data', '../data/typing/touch_event_stats.csv',
             '--collected_keyboards', 'collected_keyboards.csv',
           ],
@@ -623,22 +529,34 @@
       ],
     },
     {
-      'target_name': 'gen_mozc_drawable',
+      'target_name': 'subset_font',
       'type': 'none',
+      'dependencies': [
+        # TODO(komatsu): Is it better to move android_base.gyp?
+        'resources/resources.gyp:copy_asis_svg',
+        'resources/resources.gyp:transform_template_svg',
+      ],
+      'variables': {
+        'input_font': '<(font_dir)/Noto-Roboto2-Regular.otf',
+        'fonttools_path': '<(third_party_dir)/fontTools/Lib/fontTools',
+      },
       'actions': [
         {
-          'action_name': 'generate_pic_files',
+          'action_name': 'make_subset_font',
           'inputs': [
-            '<(dummy_input_file)',
-            'gen_mozc_drawable.py',
+            '<(input_font)',
+            'gen_subset_font.py',
           ],
           'outputs': [
-            'dummy_gen_mozc_drawable_output',
+            '<(sdk_asset_dir)/subset_font.otf',
           ],
           'action': [
-            'python', 'gen_mozc_drawable.py',
-            '--svg_dir=../data/images/android/svg',
-            '--output_dir=<(resources_project_path)/res/raw',
+            'python',
+            'gen_subset_font.py',
+            '--svg_paths=<(shared_intermediate_mozc_dir)/data/images/android/svg/transformed.zip,<(shared_intermediate_mozc_dir)/data/images/android/svg/asis.zip',
+            '--input_font', '<(input_font)',
+            '--output_font', '<@(_outputs)',
+            '--fonttools_path', '<(fonttools_path)',
           ],
         },
       ],

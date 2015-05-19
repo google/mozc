@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.hardwarekeyboard;
 
-import org.mozc.android.inputmethod.japanese.JapaneseKeyboard.KeyboardSpecification;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.HardwareKeyMap;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
@@ -84,29 +84,6 @@ public class HardwareKeyboardTest extends InstrumentationTestCaseWithMock {
     hardwareKeyboard.setCompositionModeByKey(zenhan);
     assertEquals(CompositionMode.HIRAGANA, hardwareKeyboard.getCompositionMode());
     assertEquals(KeyboardSpecification.HARDWARE_QWERTY_KANA,
-                 hardwareKeyboard.getKeyboardSpecification());
-  }
-
-  @SmallTest
-  public void test12KeysKeyboard() {
-    HardwareKeyboard hardwareKeyboard = new HardwareKeyboard();
-    hardwareKeyboard.setHardwareKeyMap(HardwareKeyMap.TWELVEKEY);
-    assertEquals(HardwareKeyMap.TWELVEKEY, hardwareKeyboard.getHardwareKeyMap());
-
-    KeyEvent zenhan = new KeyEvent(0, 0, 0, KeyEvent.KEYCODE_ZENKAKU_HANKAKU, 0);
-
-    assertEquals(CompositionMode.HIRAGANA, hardwareKeyboard.getCompositionMode());
-    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
-                 hardwareKeyboard.getKeyboardSpecification());
-
-    hardwareKeyboard.setCompositionModeByKey(zenhan);
-    assertEquals(CompositionMode.HALF_ASCII, hardwareKeyboard.getCompositionMode());
-    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_ALPHABET,
-                 hardwareKeyboard.getKeyboardSpecification());
-
-    hardwareKeyboard.setCompositionModeByKey(zenhan);
-    assertEquals(CompositionMode.HIRAGANA, hardwareKeyboard.getCompositionMode());
-    assertEquals(KeyboardSpecification.TWELVE_KEY_TOGGLE_KANA,
                  hardwareKeyboard.getKeyboardSpecification());
   }
 }

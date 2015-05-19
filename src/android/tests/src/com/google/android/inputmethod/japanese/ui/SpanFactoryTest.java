@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,11 @@ import static android.test.MoreAsserts.assertEmpty;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.Annotation;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
-import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Span;
 
 import android.test.suitebuilder.annotation.SmallTest;
 
 import junit.framework.TestCase;
-
-import java.util.Arrays;
 
 /**
  * Unit test for {@link SpanFactory}.
@@ -81,41 +78,5 @@ public class SpanFactoryTest extends TestCase {
     Span mergedSpan = spanFactory.newInstance(mergedCandidate);
     assertEquals(valueSpan.getValueWidth(), mergedSpan.getValueWidth());
     assertEquals(descriptionSpan.getDescriptionWidth(), mergedSpan.getDescriptionWidth());
-  }
-
-  @SmallTest
-  public void testSplitDescriptionList() {
-    class TestData extends Parameter {
-      final String description;
-      final String[] expectedResult;
-
-      TestData(String description, String[] expectedResult) {
-        super();
-        this.description = description;
-        this.expectedResult = expectedResult;
-      }
-    }
-    TestData[] testDataList = {
-        new TestData("", new String[]{}),
-        new TestData("a", new String[]{"a"}),
-        new TestData("a b", new String[]{"a", "b"}),
-        new TestData("a b c d", new String[]{"a", "b", "c", "d"}),
-        new TestData("a b c d e", new String[]{"a", "b", "c", "d", "e"}),
-        // NG words
-        new TestData("ひらがな", new String[]{}),
-        new TestData("a ひらがな b", new String[]{"a", "b"}),
-    };
-
-    SpanFactory spanFactory = new SpanFactory();
-    spanFactory.setDescriptionDelimiter(" ");
-    for (TestData testData : testDataList) {
-      CandidateWord candidateWord = CandidateWord.newBuilder()
-          .setAnnotation(Annotation.newBuilder()
-              .setDescription(testData.description))
-          .build();
-      assertEquals(testData.toString(),
-                   Arrays.asList(testData.expectedResult),
-                   spanFactory.newInstance(candidateWord).getSplitDescriptionList());
-    }
   }
 }

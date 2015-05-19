@@ -1,4 +1,4 @@
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -309,20 +309,17 @@
             '../data/keymap/ms-ime.tsv',
             '../data/preedit/12keys-halfwidthascii.tsv',
             '../data/preedit/12keys-hiragana.tsv',
-            '../data/preedit/12keys-number.tsv',
             '../data/preedit/flick-halfwidthascii.tsv',
             '../data/preedit/flick-hiragana.tsv',
-            '../data/preedit/flick-number.tsv',
             '../data/preedit/hiragana-romanji.tsv',
             '../data/preedit/kana.tsv',
+            '../data/preedit/notouch-hiragana.tsv',
             '../data/preedit/godan-hiragana.tsv',
             '../data/preedit/qwerty_mobile-halfwidthascii.tsv',
-            '../data/preedit/qwerty_mobile-hiragana-number.tsv',
             '../data/preedit/qwerty_mobile-hiragana.tsv',
             '../data/preedit/romanji-hiragana.tsv',
             '../data/preedit/toggle_flick-halfwidthascii.tsv',
             '../data/preedit/toggle_flick-hiragana.tsv',
-            '../data/preedit/toggle_flick-number.tsv',
           ],
           'outputs': [
             '<(gen_out_dir)/config_file_stream_data.h',

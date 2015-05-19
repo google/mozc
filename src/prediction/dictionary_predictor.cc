@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -538,47 +538,60 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
                                          uint32 attributes,
                                          string *description) {
   if (types & TYPING_CORRECTION) {
-    // <入力補正>
+    // "補正"
     Util::AppendStringWithDelimiter(
         " ",
-        "<" "\xE5\x85\xA5\xE5\x8A\x9B\xE8\xA3\x9C\xE6\xAD\xA3" ">",
+        "\xE8\xA3\x9C\xE6\xAD\xA3",
         description);
   }
   if (attributes & Segment::Candidate::AUTO_PARTIAL_SUGGESTION) {
-    // <部分確定>
+    // "部分"
     Util::AppendStringWithDelimiter(
         " ",
-        "<" "\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A" ">",
+        "\xE9\x83\xA8\xE5\x88\x86",
         description);
   }
 }
 
 void DictionaryPredictor::SetDebugDescription(PredictionTypes types,
                                               string *description) {
+  string debug_desc;
   if (types & UNIGRAM) {
-    Util::AppendStringWithDelimiter(" ", "Unigram", description);
+    debug_desc.append(1, 'U');
   }
   if (types & BIGRAM) {
-    Util::AppendStringWithDelimiter(" ", "Bigram", description);
+    debug_desc.append(1, 'B');
   }
   if (types & REALTIME_TOP) {
-    Util::AppendStringWithDelimiter(" ", "Realtime Top", description);
+    debug_desc.append("R1");
   } else if (types & REALTIME) {
-    Util::AppendStringWithDelimiter(" ", "Realtime", description);
+    debug_desc.append(1, 'R');
   }
   if (types & SUFFIX) {
-    Util::AppendStringWithDelimiter(" ", "Suffix", description);
+    debug_desc.append(1, 'S');
   }
   if (types & ENGLISH) {
-    Util::AppendStringWithDelimiter(" ", "English", description);
+    debug_desc.append(1, 'E');
   }
   // Note that description for TYPING_CORRECTION is omitted
   // because it is appended by SetDescription.
+  if (!debug_desc.empty()) {
+    Util::AppendStringWithDelimiter(" ", debug_desc, description);
+  }
 }
 
-// return transition_cost[rid][result.lid] + result.wcost (+ penalties).
+// Returns cost for |result| when it's transitioned from |rid|.  Suffix penalty
+// is also added for non-realtime results.
 int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
-  int lm_cost = connector_->GetTransitionCost(rid, result.lid) + result.wcost;
+  // Sometimes transition cost is too high and causes a bug like b/18112966.
+  // For example, "接続詞 が" -> "始まる 動詞,五段活用,基本形" has very large cost
+  // and "始まる" is demoted.  To prevent such cases, ImmutableConverter
+  // computes transition from BOS/EOS too; see
+  // ImmutableConverterImpl::MakeLatticeNodesForHistorySegments().
+  // Here, taking the minimum of |cost1| and |cost2| has a similar effect.
+  const int cost1 = connector_->GetTransitionCost(rid, result.lid);
+  const int cost2 = connector_->GetTransitionCost(0, result.lid);
+  int lm_cost = min(cost1, cost2) + result.wcost;
   if (!(result.types & REALTIME)) {
     // Relatime conversion already adds perfix/suffix penalties to the result.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
@@ -1063,16 +1076,29 @@ bool DictionaryPredictor::PushBackTopConversionResult(
   // construct it manually here.
   // TODO(noriyukit): This is code duplicate in converter/nbest_generator.cc and
   // we should refactor code after finding more good design.
+  bool inner_segment_boundary_success = true;
   for (size_t i = 0; i < tmp_segments.conversion_segments_size(); ++i) {
     const Segment &segment = tmp_segments.conversion_segment(i);
     const Segment::Candidate &candidate = segment.candidate(0);
     result->value.append(candidate.value);
     result->wcost += candidate.cost;
-    result->inner_segment_boundary.push_back(
-        make_pair(Util::CharsLen(candidate.key),
-                  Util::CharsLen(candidate.value)));
-  }
 
+    uint32 encoded_lengths;
+    if (inner_segment_boundary_success &&
+        Segment::Candidate::EncodeLengths(candidate.key.size(),
+                                          candidate.value.size(),
+                                          candidate.content_key.size(),
+                                          candidate.content_value.size(),
+                                          &encoded_lengths)) {
+      result->inner_segment_boundary.push_back(encoded_lengths);
+    } else {
+      inner_segment_boundary_success = false;
+    }
+  }
+  if (!inner_segment_boundary_success) {
+    LOG(WARNING) << "Failed to construct inner segment boundary";
+    result->inner_segment_boundary.clear();
+  }
   return true;
 }
 

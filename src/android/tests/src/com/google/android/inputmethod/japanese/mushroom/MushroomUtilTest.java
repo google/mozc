@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWith
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.test.mock.MockPackageManager;
 
 import org.easymock.Capture;
 
@@ -48,7 +49,7 @@ import java.util.List;
  */
 public class MushroomUtilTest extends InstrumentationTestCaseWithMock {
   public void testGetMushroomApplicationList() {
-    PackageManager manager = createMock(PackageManager.class);
+    PackageManager manager = createMock(MockPackageManager.class);
     Capture<Intent> intentCapture = new Capture<Intent>();
 
     List<ResolveInfo> result = Collections.emptyList();

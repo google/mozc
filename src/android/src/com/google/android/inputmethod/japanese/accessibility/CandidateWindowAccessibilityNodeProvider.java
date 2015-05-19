@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -113,6 +114,7 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
     return Optional.fromNullable(virtualViewIdToRow.get().get(virtualViewId));
   }
 
+  @SuppressLint("InlinedApi")
   private Optional<AccessibilityNodeInfoCompat> createNodeInfoForId(int virtualViewId) {
     Optional<Row> optionalRow = getRow(virtualViewId);
     if (!optionalRow.isPresent()) {
@@ -209,6 +211,9 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
    * @param y vertical location in screen coordinate (pixel)
    */
   Optional<CandidateWord> getCandidateWord(int x, int y) {
+    if (!layout.isPresent()) {
+      return Optional.absent();
+    }
     for (Row row : layout.get().getRowList()) {
       if (y < row.getTop() || y >= row.getTop() + row.getHeight()) {
         continue;

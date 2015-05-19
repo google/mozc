@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2014, Google Inc.
+# Copyright 2010-2015, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,8 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
+import zipfile
 
 
 def IsWindows():
@@ -99,7 +101,7 @@ def RunOrDie(argv):
 
 def RemoveFile(file_name):
   """Removes the specified file."""
-  if not os.path.isfile(file_name):
+  if not (os.path.isfile(file_name) or os.path.islink(file_name)):
     return  # Do nothing if not exist.
   if IsWindows():
     # Read-only files cannot be deleted on Windows.
@@ -237,3 +239,24 @@ class ColoredLoggingFilter(logging.Filter):
       record.levelname = ColoredText(level_name, level_no)
 
     return True
+
+
+def WalkFileContainers(comma_separated_paths):
+  """Walks like os.walk() accepting comma separated directory or zip file paths.
+
+  Args:
+    comma_separated_paths: e.g., "directory/path,zip/file/path.zip"
+  Yields:
+    See os.walk()
+  """
+  for path in comma_separated_paths.split(','):
+    if os.path.isdir(path):
+      for dirpath, dirnames, filenames in os.walk(path):
+        yield dirpath, dirnames, filenames
+    else:
+      tempdir = tempfile.mkdtemp()
+      with zipfile.ZipFile(path, 'r') as z:
+        z.extractall(tempdir)
+        for dirpath, dirnames, filenames in os.walk(tempdir):
+          yield dirpath, dirnames, filenames
+

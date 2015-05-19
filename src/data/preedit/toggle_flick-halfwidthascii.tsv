@@ -2,22 +2,21 @@
 -		{*}-	NoTransliteration
 _		{*}_	NoTransliteration
 /		{*}/	NoTransliteration
-&		{*}&	NoTransliteration
+@	1		NoTransliteration
 {?}@1		{?}-
 {?}-1		{?}_
 {?}_1		{?}/
-{?}/1		{?}&
-{?}&1		{?}1
+{?}/1		{?}1
 {?}11		{?}@
 {?}@{<}		{?}1
 {?}-{<}		{?}@
 {?}_{<}		{?}-
 {?}/{<}		{?}_
-{?}&{<}		{?}/
-{?}1{<}		{?}&
+{?}1{<}		{?}/
 2		{?}a	NewChunk NoTransliteration
 b		{*}b	NoTransliteration
 c		{*}c	NoTransliteration
+|	2		NoTransliteration
 {?}a2		{?}b
 {?}b2		{?}c
 {?}c2		{?}A
@@ -47,6 +46,7 @@ c		{*}c	NoTransliteration
 3		{?}d	NewChunk NoTransliteration
 e		{*}e	NoTransliteration
 f		{*}f	NoTransliteration
+~	3		NoTransliteration
 {?}d3		{?}e
 {?}e3		{?}f
 {?}f3		{?}D
@@ -76,6 +76,7 @@ f		{*}f	NoTransliteration
 4		{?}g	NewChunk NoTransliteration
 h		{*}h	NoTransliteration
 i		{*}i	NoTransliteration
+$	4		NoTransliteration
 {?}g4		{?}h
 {?}h4		{?}i
 {?}i4		{?}G
@@ -105,6 +106,7 @@ i		{*}i	NoTransliteration
 5		{?}j	NewChunk NoTransliteration
 k		{*}k	NoTransliteration
 l		{*}l	NoTransliteration
+%	5		NoTransliteration
 {?}j5		{?}k
 {?}k5		{?}l
 {?}l5		{?}J
@@ -134,6 +136,7 @@ l		{*}l	NoTransliteration
 6		{?}m	NewChunk NoTransliteration
 n		{*}n	NoTransliteration
 o		{*}o	NoTransliteration
+&	6		NoTransliteration
 {?}m6		{?}n
 {?}n6		{?}o
 {?}o6		{?}M
@@ -164,6 +167,7 @@ o		{*}o	NoTransliteration
 q		{*}q	NoTransliteration
 r		{*}r	NoTransliteration
 s		{*}s	NoTransliteration
+<	7		NoTransliteration
 {?}p7		{?}q
 {?}q7		{?}r
 {?}r7		{?}s
@@ -201,6 +205,7 @@ s		{*}s	NoTransliteration
 8		{?}t	NewChunk NoTransliteration
 u		{*}u	NoTransliteration
 v		{*}v	NoTransliteration
+^	8		NoTransliteration
 {?}t8		{?}u
 {?}u8		{?}v
 {?}v8		{?}T
@@ -231,6 +236,7 @@ v		{*}v	NoTransliteration
 x		{*}x	NoTransliteration
 y		{*}y	NoTransliteration
 z		{*}z	NoTransliteration
+>	9		NoTransliteration
 {?}w9		{?}x
 {?}x9		{?}y
 {?}y9		{?}z
@@ -270,6 +276,7 @@ z		{*}z	NoTransliteration
 "		{*}"	NoTransliteration
 :		{*}:	NoTransliteration
 ;		{*};	NoTransliteration
+#	0		NoTransliteration
 {?}'0		{?}"
 {?}"0		{?}:
 {?}:0		{?};

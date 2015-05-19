@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,6 @@ class RendererServer : public IPCServer {
   RendererInterface *renderer_interface_;
   scoped_ptr<ParentApplicationWatchDog> watch_dog_;
   scoped_ptr<RendererServerSendCommand> send_command_;
-
 
   DISALLOW_COPY_AND_ASSIGN(RendererServer);
 };

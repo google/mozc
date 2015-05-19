@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,55 +35,75 @@ import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.
 import org.mozc.android.inputmethod.japanese.keyboard.Flick.Direction;
 import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
+import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardViewBackgroundSurface.SurfaceCanvas;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.testing.MockResourcesWithDisplayMetrics;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
-import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import com.google.common.base.Optional;
 
+import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.test.MoreAsserts;
-import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import org.easymock.IMocksControl;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  */
 public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWithMock {
+
   private static final int WIDTH = 50;
   private static final int HEIGHT = 30;
   private static final int HORIZONTAL_GAP = 4;
 
   private DrawableCache createDrawableCacheMock() {
     return createMockBuilder(DrawableCache.class)
-        .withConstructor(MozcDrawableFactory.class)
-        .withArgs(new MozcDrawableFactory(new MockResources()))
+        .withConstructor(Resources.class)
+        .withArgs(new MockResourcesWithDisplayMetrics())
         .createMock();
   }
 
   private static Key createDummyKey(int x, int y, int iconResourceId, DrawableType drawableType) {
     KeyEntity keyEntity = new KeyEntity(
-        1, 'a', KeyEntity.INVALID_KEY_CODE, iconResourceId, drawableType, false, null);
+        1, 'a', KeyEntity.INVALID_KEY_CODE, true, iconResourceId, Optional.<String>absent(),
+        false, Optional.<PopUp>absent(), 0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
     Flick centerFlick = new Flick(Direction.CENTER, keyEntity);
     KeyState keyState = new KeyState("",
                                      Collections.<MetaState>emptySet(),
                                      Collections.<MetaState>emptySet(),
                                      Collections.<MetaState>emptySet(),
                                      Collections.singletonList(centerFlick));
-    return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false,
-                   Stick.EVEN, Collections.singletonList(keyState));
+    return new Key(x, y, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false,
+                   Stick.EVEN, drawableType, Collections.singletonList(keyState));
+  }
+
+  private static KeyEntity createInvalidKeyEntity(
+      int sourceId, int keyCode, int keyIconResourceId) {
+    return new KeyEntity(
+        sourceId, keyCode, KeyEntity.INVALID_KEY_CODE, true, keyIconResourceId,
+        Optional.<String>absent(), false, Optional.<PopUp>absent(),
+        0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
+  }
+
+  private static KeyEntity createInvalidKeyEntity() {
+    return createInvalidKeyEntity(1, 'a', 0);
   }
 
   @SmallTest
   public void testInitialize() {
-    KeyboardViewBackgroundSurface surface = new KeyboardViewBackgroundSurface(null, null);
+    Resources resources = createNiceMock(MockResourcesWithDisplayMetrics.class);
+    KeyboardViewBackgroundSurface surface = new KeyboardViewBackgroundSurface(
+        new BackgroundDrawableFactory(resources),
+        new DrawableCache(resources));
 
     // If the surface is an instance constructed right now, initialization is needed later.
     surface.requestUpdateSize(100, 100);
@@ -106,17 +126,14 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
 
   @SmallTest
   public void testGetKeyEntityForRendering() {
-    KeyEntity centerEntity =
-        new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, 0,
-                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, false, null);
-    KeyEntity leftEntity =
-        new KeyEntity(2, 'b', KeyEntity.INVALID_KEY_CODE, 0,
-                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, false, null);
+    KeyEntity centerEntity = createInvalidKeyEntity(1, 'a', 0);
+    KeyEntity leftEntity = createInvalidKeyEntity(2, 'b', 0);
     Flick centerFlick = new Flick(Direction.CENTER, centerEntity);
     Flick leftFlick = new Flick(Direction.LEFT, leftEntity);
 
     Key key = new Key(
-        0, 0, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false, Stick.EVEN,
+        0, 0, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, Stick.EVEN,
+        DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
         Collections.singletonList(
             new KeyState("",
                          Collections.<MetaState>emptySet(),
@@ -128,84 +145,72 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     assertSame(
         centerEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, Collections.<MetaState>emptySet(), null));
+            key, Collections.<MetaState>emptySet(), Optional.<Direction>absent()).get());
 
     // If this is the pressed key without flick, the center key entity should be returned.
     assertSame(
         centerEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, Collections.<MetaState>emptySet(), Direction.CENTER));
+            key, Collections.<MetaState>emptySet(), Optional.of(Direction.CENTER)).get());
 
     // If the flick state is set to the pressedKey, it should be returned.
     assertSame(
         leftEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, Collections.<MetaState>emptySet(), Direction.LEFT));
+            key, Collections.<MetaState>emptySet(), Optional.of(Direction.LEFT)).get());
 
     // If the key doesn't have a KeyEntity for the current state, the default key entity
     // should be returned.
     assertSame(
         centerEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, EnumSet.of(MetaState.CAPS_LOCK), Direction.RIGHT));
+            key, EnumSet.of(MetaState.CAPS_LOCK), Optional.of(Direction.RIGHT)).get());
     assertSame(
         centerEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, EnumSet.of(MetaState.CAPS_LOCK), null));
+            key, EnumSet.of(MetaState.CAPS_LOCK), Optional.<Direction>absent()).get());
     assertSame(
         centerEntity,
         KeyboardViewBackgroundSurface.getKeyEntityForRendering(
-            key, EnumSet.of(MetaState.CAPS_LOCK), Direction.CENTER));
-  }
-
-  @SmallTest
-  public void testGetKeyBackground_withoutBackground() {
-    KeyboardViewBackgroundSurface surface =
-        new KeyboardViewBackgroundSurface(new BackgroundDrawableFactory(1f), null);
-
-    // Null should be returned for null KeyEntity.
-    assertNull(surface.getKeyBackground(null, true));
-    assertNull(surface.getKeyBackground(null, false));
-
-    // Null should be returned for a KeyEntity without background.
-    KeyEntity keyEntity = new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, 0, null, false, null);
-    assertNull(surface.getKeyBackground(keyEntity, true));
-    assertNull(surface.getKeyBackground(keyEntity, false));
+            key, EnumSet.of(MetaState.CAPS_LOCK), Optional.of(Direction.CENTER)).get());
   }
 
   @SmallTest
   public void testGetKeyBackground_withBackground() {
-    BackgroundDrawableFactory factory = new BackgroundDrawableFactory(1f);
+    BackgroundDrawableFactory factory =
+        new BackgroundDrawableFactory(createNiceMock(MockResourcesWithDisplayMetrics.class));
 
     Drawable background = factory.getDrawable(DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
     replayAll();
 
-    KeyEntity keyEntity =
-        new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, 0,
-                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, false, null);
-
-    KeyboardViewBackgroundSurface surface = new KeyboardViewBackgroundSurface(factory, null);
+    Key key = createDummyKey(0, 0, 0, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
+    KeyboardViewBackgroundSurface surface = new KeyboardViewBackgroundSurface(
+        factory, new DrawableCache(new MockResourcesWithDisplayMetrics()));
 
     // The icon should be returned with appropriate state.
-    assertSame(background, surface.getKeyBackground(keyEntity, false));
+    assertSame(background, surface.getKeyBackground(key, false).get());
     MoreAsserts.assertEquals(new int[]{}, background.getState());
 
-    assertSame(background, surface.getKeyBackground(keyEntity, true));
+    assertSame(background, surface.getKeyBackground(key, true).get());
     MoreAsserts.assertEquals(new int[]{ android.R.attr.state_pressed }, background.getState());
   }
 
   @SmallTest
   public void testGetKeyIcon_withoutIcon() {
-    DrawableCache drawableCache = new DrawableCache(new MozcDrawableFactory(new MockResources()));
+    DrawableCache drawableCache = new DrawableCache(new MockResourcesWithDisplayMetrics());
 
-    // Null should be returned for null KeyEntity.
-    assertNull(KeyboardViewBackgroundSurface.getKeyIcon(drawableCache, null, true));
-    assertNull(KeyboardViewBackgroundSurface.getKeyIcon(drawableCache, null, false));
+    // Optional.absent() should be returned for Optional.absent() KeyEntity.
+    assertFalse(KeyboardViewBackgroundSurface.getKeyIcon(
+        drawableCache, Optional.<KeyEntity>absent(), true).isPresent());
+    assertFalse(KeyboardViewBackgroundSurface.getKeyIcon(
+        drawableCache, Optional.<KeyEntity>absent(), false).isPresent());
 
-    // Null should be returned for a KeyEntity without icon.
-    KeyEntity keyEntity = new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, 0, null, false, null);
-    assertNull(KeyboardViewBackgroundSurface.getKeyIcon(drawableCache, keyEntity, true));
-    assertNull(KeyboardViewBackgroundSurface.getKeyIcon(drawableCache, keyEntity, false));
+    // Optional.absent() should be returned for a KeyEntity without icon.
+    KeyEntity keyEntity = createInvalidKeyEntity();
+    assertFalse(KeyboardViewBackgroundSurface.getKeyIcon(
+        drawableCache, Optional.of(keyEntity), true).isPresent());
+    assertFalse(KeyboardViewBackgroundSurface.getKeyIcon(
+        drawableCache, Optional.of(keyEntity), false).isPresent());
   }
 
   @SmallTest
@@ -215,14 +220,15 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     DrawableCache drawableCache = createDrawableCacheMock();
     expect(drawableCache.getDrawable(iconResourceId)).andStubReturn(Optional.of(icon));
     replayAll();
-    KeyEntity keyEntity =
-        new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, iconResourceId, null, false, null);
+    KeyEntity keyEntity = createInvalidKeyEntity(1, 'a', iconResourceId);
 
     // The icon should be returned with appropriate state.
-    assertSame(icon, KeyboardViewBackgroundSurface.getKeyIcon(drawableCache, keyEntity, false));
+    assertSame(icon, KeyboardViewBackgroundSurface.getKeyIcon(
+        drawableCache, Optional.of(keyEntity), false).get());
     MoreAsserts.assertEquals(new int[]{}, icon.getState());
 
-    assertSame(icon, KeyboardViewBackgroundSurface.getKeyIcon(drawableCache, keyEntity, true));
+    assertSame(icon, KeyboardViewBackgroundSurface.getKeyIcon(
+        drawableCache, Optional.of(keyEntity), true).get());
     MoreAsserts.assertEquals(new int[]{ android.R.attr.state_pressed }, icon.getState());
   }
 
@@ -230,8 +236,8 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
   public void testSenarioTest() {
     IMocksControl drawableCacheControl = createControl();
     DrawableCache drawableCache = createMockBuilder(DrawableCache.class)
-        .withConstructor(MozcDrawableFactory.class)
-        .withArgs(new MozcDrawableFactory(new MockResources()))
+        .withConstructor(Resources.class)
+        .withArgs(new MockResourcesWithDisplayMetrics())
         .createMock(drawableCacheControl);
 
     Drawable icon1 = new ColorDrawable();
@@ -274,21 +280,18 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     Drawable leftIcon7 = new ColorDrawable();
     int icon7ResourceId = 13;
     int leftIcon7ResourceId = 15;
-    Flick centerFlick7 = new Flick(
-        Direction.CENTER,
-        new KeyEntity(1, 'a', KeyEntity.INVALID_KEY_CODE, icon7ResourceId,
-                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, false, null));
-    Flick leftFlick7 = new Flick(
-        Direction.LEFT,
-        new KeyEntity(2, 'a', KeyEntity.INVALID_KEY_CODE, leftIcon7ResourceId,
-                      DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND, false, null));
+    Flick centerFlick7 =
+        new Flick(Direction.CENTER, createInvalidKeyEntity(1, 'a', icon7ResourceId));
+    Flick leftFlick7 =
+        new Flick(Direction.LEFT, createInvalidKeyEntity(2, 'a', leftIcon7ResourceId));
     KeyState keyState = new KeyState("",
                                      Collections.<MetaState>emptySet(),
                                      Collections.<MetaState>emptySet(),
                                      Collections.<MetaState>emptySet(),
                                      Arrays.asList(centerFlick7, leftFlick7));
-    Key key7 = new Key(0, HEIGHT * 2, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false, false,
-                       Stick.EVEN, Collections.singletonList(keyState));
+    Key key7 = new Key(0, HEIGHT * 2, WIDTH, HEIGHT, HORIZONTAL_GAP, 0, false, false,
+                       Stick.EVEN, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+                       Collections.singletonList(keyState));
     expect(drawableCache.getDrawable(icon7ResourceId)).andStubReturn(Optional.of(icon7));
     expect(drawableCache.getDrawable(leftIcon7ResourceId)).andStubReturn(Optional.of(leftIcon7));
 
@@ -311,7 +314,8 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
             new Row(Arrays.asList(key1, key2, key3), HEIGHT, 0),
             new Row(Arrays.asList(key4, key5, key6), HEIGHT, 0),
             new Row(Arrays.asList(key7, key8, key9), HEIGHT, 0)),
-        1);
+        1,
+        KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA);
 
     IMocksControl canvasControl = createControl();
     final SurfaceCanvas canvas = canvasControl.createMock(SurfaceCanvas.class);
@@ -320,7 +324,8 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     int expectedKeyWidth = WIDTH - HORIZONTAL_GAP;
     int expectedKeyHeight = HEIGHT;
 
-    BackgroundDrawableFactory factory = new BackgroundDrawableFactory(1f);
+    BackgroundDrawableFactory factory =
+        new BackgroundDrawableFactory(createNiceMock(MockResourcesWithDisplayMetrics.class));
     Drawable background = factory.getDrawable(DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
 
     // The first case is just a simple senario, just setting a new keyboard.
@@ -362,7 +367,7 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
       @Override
       void initialize() {
         super.initialize();
-        this.surfaceCanvas = canvas;
+        this.surfaceCanvas = Optional.of(canvas);
       }
     };
 
@@ -385,8 +390,8 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
         leftIcon7, 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
     canvasControl.replay();
 
-    surface.requestUpdateKey(key5, Direction.CENTER);
-    surface.requestUpdateKey(key7, Direction.LEFT);
+    surface.requestUpdateKey(key5, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key7, Optional.of(Direction.LEFT));
     surface.update();
 
     canvasControl.verify();
@@ -405,18 +410,18 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
 
     canvasControl.replay();
 
-    surface.requestUpdateKey(key8, Direction.CENTER);
-    surface.requestUpdateKey(key8, Direction.LEFT);
-    surface.requestUpdateKey(key8, Direction.RIGHT);
-    surface.requestUpdateKey(key8, Direction.CENTER);
-    surface.requestUpdateKey(key8, Direction.UP);
-    surface.requestUpdateKey(key8, Direction.DOWN);
-    surface.requestUpdateKey(key8, null);
+    surface.requestUpdateKey(key8, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key8, Optional.of(Direction.LEFT));
+    surface.requestUpdateKey(key8, Optional.of(Direction.RIGHT));
+    surface.requestUpdateKey(key8, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key8, Optional.of(Direction.UP));
+    surface.requestUpdateKey(key8, Optional.of(Direction.DOWN));
+    surface.requestUpdateKey(key8, Optional.<Direction>absent());
 
-    surface.requestUpdateKey(key1, Direction.CENTER);
-    surface.requestUpdateKey(key1, Direction.UP);
-    surface.requestUpdateKey(key1, Direction.DOWN);
-    surface.requestUpdateKey(key1, Direction.CENTER);
+    surface.requestUpdateKey(key1, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key1, Optional.of(Direction.UP));
+    surface.requestUpdateKey(key1, Optional.of(Direction.DOWN));
+    surface.requestUpdateKey(key1, Optional.of(Direction.CENTER));
 
     surface.update();
 
@@ -457,8 +462,8 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
         icon9, WIDTH * 2 + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
     canvasControl.replay();
 
-    surface.requestUpdateKey(key5, Direction.CENTER);
-    surface.requestUpdateKey(key7, Direction.LEFT);
+    surface.requestUpdateKey(key5, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key7, Optional.of(Direction.LEFT));
 
     surface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
     surface.update();
@@ -500,28 +505,75 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
         icon9, WIDTH * 2 + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
     canvasControl.replay();
 
-    surface.requestUpdateKey(key5, Direction.CENTER);
-    surface.requestUpdateKey(key2, Direction.LEFT);
+    surface.requestUpdateKey(key5, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key2, Optional.of(Direction.LEFT));
 
     surface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
 
-    surface.requestUpdateKey(key8, Direction.CENTER);
-    surface.requestUpdateKey(key8, Direction.LEFT);
-    surface.requestUpdateKey(key8, Direction.RIGHT);
-    surface.requestUpdateKey(key8, Direction.CENTER);
-    surface.requestUpdateKey(key8, Direction.UP);
-    surface.requestUpdateKey(key8, Direction.DOWN);
-    surface.requestUpdateKey(key8, null);
+    surface.requestUpdateKey(key8, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key8, Optional.of(Direction.LEFT));
+    surface.requestUpdateKey(key8, Optional.of(Direction.RIGHT));
+    surface.requestUpdateKey(key8, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key8, Optional.of(Direction.UP));
+    surface.requestUpdateKey(key8, Optional.of(Direction.DOWN));
+    surface.requestUpdateKey(key8, Optional.<Direction>absent());
 
-    surface.requestUpdateKey(key1, Direction.CENTER);
-    surface.requestUpdateKey(key1, Direction.UP);
-    surface.requestUpdateKey(key1, Direction.DOWN);
-    surface.requestUpdateKey(key1, Direction.CENTER);
+    surface.requestUpdateKey(key1, Optional.of(Direction.CENTER));
+    surface.requestUpdateKey(key1, Optional.of(Direction.UP));
+    surface.requestUpdateKey(key1, Optional.of(Direction.DOWN));
+    surface.requestUpdateKey(key1, Optional.of(Direction.CENTER));
 
-    surface.requestUpdateKey(key7, Direction.LEFT);
+    surface.requestUpdateKey(key7, Optional.of(Direction.LEFT));
 
     surface.update();
 
     canvasControl.verify();
+  }
+
+  @SmallTest
+  public void testRequestMetaState() {
+    Set<MetaState> empty = EnumSet.noneOf(MetaState.class);
+    Collection<Flick> center = Collections.singleton(
+        new Flick(Direction.CENTER,
+                  new KeyEntity(0, 0, 0, true, 0,
+                                Optional.<String>absent(), false, Optional.<PopUp>absent(),
+                                0, 0, 0, 0)));
+    Key keyWithNoMetaStates = new Key(
+        0, 0, 0, 0, 0, 0, false, false,
+        Stick.EVEN, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+        Arrays.asList(
+            new KeyState("", empty, empty, empty, center)));
+    Key keyWithCapsLock = new Key(
+        0, 0, 0, 0, 0, 0, false, false,
+        Stick.EVEN, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
+        Arrays.asList(
+            new KeyState("", empty, empty, empty, center),
+            new KeyState("", EnumSet.of(MetaState.CAPS_LOCK), empty, empty, center)));
+    Keyboard keyboard = new Keyboard(Optional.of(""), Arrays.asList(
+        new Row(Arrays.asList(keyWithNoMetaStates, keyWithCapsLock), 0, 0)), 0,
+        KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA);
+
+    KeyboardViewBackgroundSurface surface = new KeyboardViewBackgroundSurface(
+        new BackgroundDrawableFactory(createNiceMock(MockResourcesWithDisplayMetrics.class)),
+        createDrawableCacheMock());
+
+    surface.requestUpdateKeyboard(keyboard, EnumSet.noneOf(MetaState.class));
+
+    assertTrue(surface.pendingKeys.isEmpty());
+
+    // keyWithCapsLock is requested to be redrawn.
+    surface.requestMetaState(EnumSet.of(MetaState.CAPS_LOCK));
+    assertEquals(1, surface.pendingKeys.size());
+    assertSame(keyWithCapsLock, surface.pendingKeys.keySet().toArray()[0]);
+
+    // Same metastates. No update.
+    surface.pendingKeys.clear();
+    surface.requestMetaState(EnumSet.of(MetaState.CAPS_LOCK));
+    assertTrue(surface.pendingKeys.isEmpty());
+
+    // No metastete -> keyWithGlobe and keyWithCapsLock are redrawn.
+    surface.pendingKeys.clear();
+    surface.requestMetaState(EnumSet.noneOf(MetaState.class));
+    assertEquals(1, surface.pendingKeys.size());
   }
 }

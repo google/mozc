@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <!--
- Copyright 2010-2014, Google Inc.
+ Copyright 2010-2015, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,7 @@
 
     <Package Keywords='Installer' Description='Google 日本語入力 インストーラー'
         Manufacturer='Google Inc.' Languages='1041' SummaryCodepage='932'
-        InstallerVersion='300' InstallPrivileges='elevated'
+        InstallerVersion='405' InstallPrivileges='elevated'
         Compressed='yes' Platform='x64' />
 
     <!-- Check if the user have the administrative privileges. -->

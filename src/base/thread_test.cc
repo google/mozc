@@ -1,4 +1,4 @@
-// Copyright 2010-2014, Google Inc.
+// Copyright 2010-2015, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,6 @@
 
 #include "base/thread.h"
 
-#include <stdlib.h>
-
-#include "base/mutex.h"
-#include "base/unnamed_event.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -41,9 +37,8 @@ namespace {
 
 class TestThread : public Thread {
  public:
-  explicit TestThread(int time)
-      : time_(time),
-        invoked_(false) {}
+  explicit TestThread(int time) : time_(time), invoked_(false) {}
+  virtual ~TestThread() {}
 
   virtual void Run() {
     invoked_ = true;
@@ -61,6 +56,7 @@ class TestThread : public Thread {
   int time_;
   bool invoked_;
 };
+
 }  // namespace
 
 TEST(ThreadTest, BasicThreadTest) {
@@ -115,89 +111,6 @@ TEST(ThreadTest, RestartTest) {
     t.Join();
     EXPECT_TRUE(t.invoked());
     EXPECT_FALSE(t.IsRunning());
-  }
-}
-
-namespace {
-TLS_KEYWORD int g_tls_value = 0;
-TLS_KEYWORD int g_tls_values[100] =  { 0 };
-
-class TLSThread : public Thread {
- public:
-  virtual void Run() {
-    ++g_tls_value;
-    ++g_tls_value;
-    ++g_tls_value;
-    for (int i = 0; i < 100; ++i) {
-      g_tls_values[i] = i;
-    }
-    for (int i = 0; i < 100; ++i) {
-      g_tls_values[i] += i;
-    }
-    int result = 0;
-    for (int i = 0; i < 100; ++i) {
-      result += g_tls_values[i];
-    }
-    EXPECT_EQ(3, g_tls_value);
-    EXPECT_EQ(9900, result);
-  }
-};
-}
-
-TEST(ThreadTest, TLSTest) {
-#ifdef HAVE_TLS
-  vector<TLSThread *> threads;
-  for (int i = 0; i < 10; ++i) {
-    threads.push_back(new TLSThread);
-  }
-  for (int i = 0; i < 10; ++i) {
-    threads[i]->Start();
-  }
-
-  for (int i = 0; i < 10; ++i) {
-    threads[i]->Join();
-    delete threads[i];
-  }
-#endif
-}
-
-namespace {
-
-class SampleDetachedThread : public DetachedThread {
- public:
-  explicit SampleDetachedThread(int time, Mutex *mutex, bool *done_flag,
-                                UnnamedEvent *event)
-      : mutex_(mutex), time_(time), done_flag_(done_flag), event_(event) {
-  }
-  virtual ~SampleDetachedThread() {
-    scoped_lock l(mutex_);
-    *done_flag_ = true;
-    event_->Notify();
-  }
-  virtual void Run() {
-    Util::Sleep(time_);
-  }
-
- private:
-  Mutex *mutex_;
-  int time_;
-  bool *done_flag_;
-  UnnamedEvent *event_;
-};
-
-}  // namespace
-
-TEST(DetachedThread, SimpleTest) {
-  Mutex mutex;
-  UnnamedEvent event;
-  bool done_flag = false;
-  SampleDetachedThread *thread =
-      new SampleDetachedThread(50, &mutex, &done_flag, &event);
-  thread->Start();
-  ASSERT_TRUE(event.Wait(-1));
-  {
-    scoped_lock l(&mutex);
-    EXPECT_TRUE(done_flag);
   }
 }
 
