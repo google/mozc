@@ -236,6 +236,7 @@ void FcitxMozc::init()
     VLOG ( 1 ) << "init";
     boolean flag = true;
     FcitxInstanceSetContext(instance, CONTEXT_DISABLE_AUTOENG, &flag);
+    FcitxInstanceSetContext(instance, CONTEXT_DISABLE_FULLWIDTH, &flag);
     FcitxInstanceSetContext(instance, CONTEXT_DISABLE_QUICKPHRASE, &flag);
     FcitxInstanceSetContext(instance, CONTEXT_IM_KEYBOARD_LAYOUT, "jp");
     FcitxInstanceSetContext(instance, "CONTEXT_DISABLE_AUTO_FIRST_CANDIDATE_HIGHTLIGHT", &flag);
