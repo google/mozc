@@ -816,24 +816,17 @@ bool UninstallHelper::GetCurrentProfilesForVista(
   }
   current_profiles->clear();
 
-  if (!InputDll::EnsureInitialized()) {
-    return false;
-  }
-  if (InputDll::enum_enabled_layout_or_tip() == nullptr) {
-    return false;
-  }
-
   map<DWORD, wstring> keyboard_layouts;
   if (!GenerateKeyboardLayoutMap(&keyboard_layouts)) {
     return false;
   }
 
   {
-    const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
+    const UINT num_element = ::EnumEnabledLayoutOrTip(
         nullptr, nullptr, nullptr, nullptr, 0);
     unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
         new LAYOUTORTIPPROFILE[num_element]);
-    const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
+    const UINT num_copied = ::EnumEnabledLayoutOrTip(
         nullptr, nullptr, nullptr, buffer.get(), num_element);
 
     for (size_t i = 0; i < num_copied; ++i) {
@@ -892,17 +885,10 @@ bool UninstallHelper::RemoveProfilesForVista(
     return true;
   }
 
-  if (!InputDll::EnsureInitialized()) {
-    return false;
-  }
-  if (InputDll::install_layout_or_tip_user_reg() == nullptr) {
-    return false;
-  }
-
   const wstring &profile_string = ComposeProfileStringForVista(
       profiles_to_be_removed);
 
-  const BOOL result = InputDll::install_layout_or_tip_user_reg()(
+  const BOOL result = ::InstallLayoutOrTipUserReg(
       nullptr, nullptr, nullptr, profile_string.c_str(), ILOT_UNINSTALL);
 
   return result != FALSE;
@@ -946,14 +932,6 @@ bool UninstallHelper::SetDefaultForVista(
     return true;
   }
 
-  if (!InputDll::EnsureInitialized()) {
-    return false;
-  }
-
-  if (InputDll::set_default_layout_or_tip() == nullptr) {
-    return false;
-  }
-
   if (!EnableAndBroadcastNewLayout(new_default, broadcast_change)) {
     // We do not return false here because the main task of this function is
     // setting the specified profile to default.
@@ -974,8 +952,7 @@ bool UninstallHelper::SetDefaultForVista(
     flag = SDLOT_NOAPPLYTOCURRENTSESSION;
   }
 
-  if (InputDll::set_default_layout_or_tip()(profile_string.c_str(), flag) ==
-      FALSE) {
+  if (!::SetDefaultLayoutOrTip(profile_string.c_str(), flag)) {
     DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
     return false;
   }

@@ -27,123 +27,70 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "win32/base/input_dll.h"
+// This file will be used to create an import library.  Functions in this
+// file must not be called directly.
+
+#include <windows.h>
 
 #include "base/logging.h"
-#include "base/util.h"
-#include "base/win_util.h"
 
-namespace mozc {
-namespace win32 {
+struct LAYOUTORTIPPROFILE;
+struct LAYOUTORTIP;
 
-const wchar_t kInputDllName[] = L"input.dll";
-
-const char kEnumEnabledLayoutOrTipName[]    = "EnumEnabledLayoutOrTip";
-const char kEnumLayoutOrTipForSetup[]       = "EnumLayoutOrTipForSetup";
-const char kInstallLayoutOrTipName[]        = "InstallLayoutOrTip";
-const char kInstallLayoutOrTipUserRegName[] = "InstallLayoutOrTipUserReg";
-const char kSetDefaultLayoutOrTipName[]     = "SetDefaultLayoutOrTip";
-
-bool InputDll::EnsureInitialized() {
-  if (not_found_) {
-    // Previous trial was not successful.  give up.
-    return false;
-  }
-
-  if (module_ != nullptr) {
-    // Already initialized.
-    return true;
-  }
-
-  bool lock_held = false;
-  if (!WinUtil::IsDLLSynchronizationHeld(&lock_held)) {
-    LOG(ERROR) << "IsDLLSynchronizationHeld failed.";
-    return false;
-  }
-  if (lock_held) {
-    LOG(INFO) << "This thread has loader lock. "
-              << "LoadLibrary should not be called.";
-    return false;
-  }
-
-  const HMODULE input_dll = WinUtil::LoadSystemLibrary(kInputDllName);
-  if (input_dll == nullptr) {
-    const int last_error = ::GetLastError();
-    DLOG(INFO) << "LoadSystemLibrary(\"" << kInputDllName << "\") failed. "
-               << "error = " << last_error;
-    if (last_error == ERROR_MOD_NOT_FOUND) {
-      not_found_ = true;
-    }
-    return false;
-  }
-
-  enum_enabled_layout_or_tip_ =
-      reinterpret_cast<FPEnumEnabledLayoutOrTip>(
-          ::GetProcAddress(input_dll, kEnumEnabledLayoutOrTipName));
-
-  enum_layout_or_tip_for_setup_ =
-      reinterpret_cast<FPEnumLayoutOrTipForSetup>(
-          ::GetProcAddress(input_dll, kEnumLayoutOrTipForSetup));
-
-  install_layout_or_tip_ =
-      reinterpret_cast<FPInstallLayoutOrTip>(
-          ::GetProcAddress(input_dll, kInstallLayoutOrTipName));
-
-  install_layout_or_tip_user_reg_ =
-      reinterpret_cast<FPInstallLayoutOrTipUserReg>(
-          ::GetProcAddress(input_dll, kInstallLayoutOrTipUserRegName));
-
-  set_default_layout_or_tip_ =
-      reinterpret_cast<FPSetDefaultLayoutOrTip>(
-          ::GetProcAddress(input_dll, kSetDefaultLayoutOrTipName));
-
-  // Other threads may load the same DLL concurrently.
-  // Check if this thread is the first thread which updated the |module_|.
-  const HMODULE original = static_cast<HMODULE>(
-    ::InterlockedCompareExchangePointer(
-          reinterpret_cast<volatile PVOID *>(&module_), input_dll, nullptr));
-  if (original == nullptr) {
-    // This is the first thread which updated the |module_| with valid handle.
-    // Do not call FreeLibrary to keep the reference count positive.
-  } else {
-    // |module_| has already been updated by another thread.  Call FreeLibrary
-    // to decrement the reference count which this thread owns.
-    ::FreeLibrary(input_dll);
-  }
-
-  return true;
+extern "C"
+UINT WINAPI EnumEnabledLayoutOrTip(
+    __in_opt  LPCWSTR pszUserReg,
+    __in_opt  LPCWSTR pszSystemReg,
+    __in_opt  LPCWSTR pszSoftwareReg,
+    __out     LAYOUTORTIPPROFILE *pLayoutOrTipProfile,
+    __in      UINT uBufLength) {
+  CHECK(false)
+      << "This is a stub function to create an import library. "
+      << "Shouldn't be called from anywhere.";
+  return 0;
 }
 
-InputDll::FPEnumEnabledLayoutOrTip InputDll::enum_enabled_layout_or_tip() {
-  return enum_enabled_layout_or_tip_;
+extern "C"
+UINT WINAPI EnumLayoutOrTipForSetup(
+    __in                     LANGID langid,
+    __out_ecount(uBufLength) LAYOUTORTIP *pLayoutOrTip,
+    __in                     UINT uBufLength,
+    __in                     DWORD dwFlags) {
+  CHECK(false)
+      << "This is a stub function to create an import library. "
+      << "Shouldn't be called from anywhere.";
+  return 0;
 }
 
-InputDll::FPEnumLayoutOrTipForSetup InputDll::enum_layout_or_tip_for_setup() {
-  return enum_layout_or_tip_for_setup_;
+extern "C"
+BOOL WINAPI InstallLayoutOrTip(
+    __in      LPCWSTR psz,
+    __in      DWORD dwFlags) {
+  CHECK(false)
+      << "This is a stub function to create an import library. "
+      << "Shouldn't be called from anywhere.";
+  return FALSE;
 }
 
-InputDll::FPInstallLayoutOrTip InputDll::install_layout_or_tip() {
-  return install_layout_or_tip_;
+extern "C"
+BOOL WINAPI InstallLayoutOrTipUserReg(
+    __in_opt  LPCWSTR pszUserReg,
+    __in_opt  LPCWSTR pszSystemReg,
+    __in_opt  LPCWSTR pszSoftwareReg,
+    __in      LPCWSTR psz,
+    __in      DWORD dwFlags) {
+  CHECK(false)
+      << "This is a stub function to create an import library. "
+      << "Shouldn't be called from anywhere.";
+  return FALSE;
 }
 
-InputDll::FPInstallLayoutOrTipUserReg
-    InputDll::install_layout_or_tip_user_reg() {
-  return install_layout_or_tip_user_reg_;
+extern "C"
+BOOL WINAPI SetDefaultLayoutOrTip(
+    __in  LPCWSTR psz,
+    DWORD dwFlags) {
+  CHECK(false)
+      << "This is a stub function to create an import library. "
+      << "Shouldn't be called from anywhere.";
+  return FALSE;
 }
-
-InputDll::FPSetDefaultLayoutOrTip InputDll::set_default_layout_or_tip() {
-  return set_default_layout_or_tip_;
-}
-
-bool InputDll::not_found_;
-
-volatile HMODULE InputDll::module_;
-InputDll::FPEnumEnabledLayoutOrTip InputDll::enum_enabled_layout_or_tip_;
-InputDll::FPEnumLayoutOrTipForSetup InputDll::enum_layout_or_tip_for_setup_;
-InputDll::FPInstallLayoutOrTip InputDll::install_layout_or_tip_;
-InputDll::FPInstallLayoutOrTipUserReg
-InputDll::install_layout_or_tip_user_reg_;
-InputDll::FPSetDefaultLayoutOrTip InputDll::set_default_layout_or_tip_;
-
-}  // namespace win32
-}  // namespace mozc
