@@ -121,7 +121,7 @@ python build_mozc.py build -c {Release, Debug} [gyp_path_1.gyp:gyp_target_name1]
 
 ## Android specific topics
 
-### Aplication package name
+### Application package name
 
 **CAUTION**: Currently the application package is fixed (org.mozc.android.inputmethod.japanese). Don't publish the built package. If you want to publish, specify `--android_application_id` to `build_mozc.py gyp` command and manually update related files.
 
