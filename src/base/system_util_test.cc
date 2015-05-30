@@ -239,39 +239,4 @@ TEST_F(SystemUtilTest, GetOSVersionStringTestForAndroid) {
 }
 #endif  // OS_ANDROID
 
-#ifdef OS_WIN
-TEST_F(SystemUtilTest, WindowsMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-  EXPECT_EQ(-1, SystemUtil::MaybeMLock(addr, data_len));
-  EXPECT_EQ(-1, SystemUtil::MaybeMUnlock(addr, data_len));
-  free(addr);
-}
-#endif  // OS_WIN
-
-#ifdef OS_MACOSX
-TEST_F(SystemUtilTest, MacMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-  EXPECT_EQ(0, SystemUtil::MaybeMLock(addr, data_len));
-  EXPECT_EQ(0, SystemUtil::MaybeMUnlock(addr, data_len));
-  free(addr);
-}
-#endif  // OS_MACOSX
-
-TEST_F(SystemUtilTest, LinuxMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-#ifdef OS_LINUX
-#if defined(OS_ANDROID) || defined(__native_client__)
-  EXPECT_EQ(-1, SystemUtil::MaybeMLock(addr, data_len));
-  EXPECT_EQ(-1, SystemUtil::MaybeMUnlock(addr, data_len));
-#else
-  EXPECT_EQ(0, SystemUtil::MaybeMLock(addr, data_len));
-  EXPECT_EQ(0, SystemUtil::MaybeMUnlock(addr, data_len));
-#endif  // defined(OS_ANDROID) || defined(__native_client__)
-#endif  // OS_LINUX
-  free(addr);
-}
-
 }  // namespace mozc

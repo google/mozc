@@ -37,7 +37,6 @@
 
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"

@@ -56,9 +56,9 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/mmap.h"
 #include "base/port.h"
 #include "base/string_piece.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/dictionary_file.h"
@@ -598,7 +598,7 @@ SystemDictionary *SystemDictionary::Builder::Build() {
       // has the priviledge to mlock.
       // Note that we don't munlock the space because it's always better to keep
       // the singleton system dictionary paged in as long as the process runs.
-      SystemUtil::MaybeMLock(spec_->ptr, spec_->len);
+      Mmap::MaybeMLock(spec_->ptr, spec_->len);
       if (!instance->dictionary_file_->OpenFromImage(spec_->ptr, spec_->len)) {
         LOG(ERROR) << "Failed to open system dictionary image";
         return NULL;

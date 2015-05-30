@@ -44,7 +44,6 @@
 
 #include "base/port.h"
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 
 #ifdef OS_WIN
@@ -181,7 +180,7 @@ bool Mmap::Open(const char *filename, const char *mode) {
     return false;
   }
 
-  SystemUtil::MaybeMLock(ptr, size_);
+  MaybeMLock(ptr, size_);
   text_ = reinterpret_cast<char *>(ptr);
   size_ = st.st_size;
   return true;
@@ -189,7 +188,7 @@ bool Mmap::Open(const char *filename, const char *mode) {
 
 void Mmap::Close() {
   if (text_ != NULL) {
-    SystemUtil::MaybeMUnlock(text_, size_);
+    MaybeMUnlock(text_, size_);
     munmap(reinterpret_cast<char *>(text_), size_);
   }
 
@@ -255,5 +254,26 @@ bool Mmap::SyncToFile() {
                                          string(text_.get(), size_));
 }
 #endif  // MOZC_USE_PEPPER_FILE_IO
+
+int Mmap::MaybeMLock(const void *addr, size_t len) {
+  // TODO(yukawa): Integrate mozc_cache service.
+#if defined(OS_WIN) || defined(OS_ANDROID) || defined(__native_client__)
+  return -1;
+#else  // defined(OS_WIN) || defined(OS_ANDROID) ||
+       // defined(__native_client__)
+  return mlock(addr, len);
+#endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
+        // defined(__native_client__)
+}
+
+int Mmap::MaybeMUnlock(const void *addr, size_t len) {
+#if defined(OS_WIN) || defined(OS_ANDROID) || defined(__native_client__)
+  return -1;
+#else  // defined(OS_WIN) || defined(OS_ANDROID) ||
+       // defined(__native_client__)
+  return munlock(addr, len);
+#endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
+        // defined(__native_client__)
+}
 
 }  // namespace mozc

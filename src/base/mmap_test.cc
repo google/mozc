@@ -97,5 +97,37 @@ TEST(MmapTest, MmapTest) {
     FileUtil::Unlink(filename);
   }
 }
+
+#if defined(OS_WIN)
+TEST(MmapTest, WindowsMaybeMLockTest) {
+  size_t data_len = 32;
+  void *addr = malloc(data_len);
+  EXPECT_EQ(-1, Mmap::MaybeMLock(addr, data_len));
+  EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr, data_len));
+  free(addr);
+}
+#elif defined(OS_MACOSX)
+TEST(MmapTest, MacMaybeMLockTest) {
+  size_t data_len = 32;
+  void *addr = malloc(data_len);
+  EXPECT_EQ(0, Mmap::MaybeMLock(addr, data_len));
+  EXPECT_EQ(0, Mmap::MaybeMUnlock(addr, data_len));
+  free(addr);
+}
+#else
+TEST(MmapTest, LinuxMaybeMLockTest) {
+  size_t data_len = 32;
+  void *addr = malloc(data_len);
+#if defined(OS_ANDROID) || defined(__native_client__)
+  EXPECT_EQ(-1, Mmap::MaybeMLock(addr, data_len));
+  EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr, data_len));
+#else
+  EXPECT_EQ(0, Mmap::MaybeMLock(addr, data_len));
+  EXPECT_EQ(0, Mmap::MaybeMUnlock(addr, data_len));
+#endif  // defined(OS_ANDROID) || defined(__native_client__)
+  free(addr);
+}
+#endif  // OS_WIN, OS_MACOSX, else.
+
 }  // namespace
 }  // namespace mozc
