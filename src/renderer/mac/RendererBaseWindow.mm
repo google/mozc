@@ -35,7 +35,7 @@
 #include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/port.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/RendererBaseWindow.h"
 
 

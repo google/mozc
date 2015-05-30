@@ -39,7 +39,7 @@
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 using mozc::config::CharacterFormManager;
 using mozc::dictionary::POSMatcher;

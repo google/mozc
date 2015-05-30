@@ -53,7 +53,7 @@
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
 #include "ipc/ipc.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
 
 namespace {

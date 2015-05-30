@@ -45,12 +45,12 @@
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
         '../converter/converter_base.gyp:converter_util',
+        '../protocol/protocol.gyp:commands_proto',
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:key_parser',
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
-        'session_base.gyp:session_protocol',
         'session_base.gyp:session_usage_stats_util',
         'session_internal',
       ],
@@ -70,7 +70,7 @@
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
-        'session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
       ],
     },
     {
@@ -91,7 +91,7 @@
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:generic_storage_manager',
-        'session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
       ],
       'conditions': [
         ['(target_platform=="NaCl" and _toolset=="target") or target_platform=="Android"', {
@@ -116,7 +116,7 @@
         '../config/config.gyp:stats_config_util',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         '../usage_stats/usage_stats_base.gyp:usage_stats_protocol',
-        'session_base.gyp:session_protocol',
+        'session_base.gyp:state_proto',
       ],
     },
     {
@@ -131,7 +131,7 @@
         # dependency list you will have to update Android's.
         '../base/base.gyp:base',
         '../usage_stats/usage_stats.gyp:usage_stats_uploader',
-        'session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         'session_handler',
         'session_usage_observer',
       ],
@@ -145,9 +145,9 @@
       ],
       'dependencies': [
         '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         'gen_session_stress_test_data#host',
         'session',
-        'session_base.gyp:session_protocol',
       ],
     },
     {

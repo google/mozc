@@ -30,8 +30,8 @@
 // Protocol messages for session state
 syntax = "proto2";
 
-import "session/candidates.proto";
-import "session/commands.proto";
+import "protocol/candidates.proto";
+import "protocol/commands.proto";
 
 package mozc.session;
 

@@ -124,8 +124,8 @@
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
+        '../protocol/protocol.gyp:commands_proto',
         '../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
-        '../session/session_base.gyp:session_protocol',
         'connector',
         'immutable_converter_interface',
         'segmenter',
@@ -140,7 +140,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         'segments',
         'conversion_request',
       ],
@@ -164,7 +164,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
       ],
     },
     {

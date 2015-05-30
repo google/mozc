@@ -32,7 +32,7 @@
 #include <imm.h>
 #endif  // OS_WIN
 
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "win32/base/conversion_mode_util.h"

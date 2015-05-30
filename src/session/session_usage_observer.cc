@@ -42,7 +42,7 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/state.pb.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"

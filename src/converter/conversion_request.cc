@@ -30,7 +30,7 @@
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "base/logging.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 

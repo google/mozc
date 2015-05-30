@@ -46,7 +46,7 @@
         '../engine/engine.gyp:engine',
         '../engine/engine.gyp:engine_factory',
         '../engine/engine.gyp:mock_data_engine_factory',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         'converter.gyp:converter',
         'converter_base.gyp:pos_id_printer',
         'converter_base.gyp:segments',

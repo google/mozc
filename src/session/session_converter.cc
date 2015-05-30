@@ -45,7 +45,7 @@
 #include "converter/converter_interface.h"
 #include "converter/converter_util.h"
 #include "converter/segments.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
 #include "session/session_usage_stats_util.h"

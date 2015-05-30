@@ -31,7 +31,7 @@
 #include "testing/base/public/gunit.h"
 
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/ime/ime_composition_string.h"
 
 namespace mozc {

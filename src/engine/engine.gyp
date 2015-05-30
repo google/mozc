@@ -56,8 +56,8 @@
         '../dictionary/system/system_dictionary.gyp:value_dictionary',
         '../prediction/prediction.gyp:prediction',
         '../prediction/prediction_base.gyp:suggestion_filter',
+        '../protocol/protocol.gyp:commands_proto',
         '../rewriter/rewriter.gyp:rewriter',
-        '../session/session_base.gyp:session_protocol',
       ],
     },
     {
@@ -121,7 +121,7 @@
         '../base/base.gyp:base',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../prediction/prediction.gyp:prediction',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         'engine',
       ],
     },

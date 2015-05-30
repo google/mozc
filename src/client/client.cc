@@ -52,7 +52,7 @@
 #include "base/version.h"
 #include "config/config.pb.h"
 #include "ipc/ipc.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 #ifdef OS_MACOSX
 #include "base/mac_process.h"

@@ -40,7 +40,7 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "rewriter/calculator/calculator_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 

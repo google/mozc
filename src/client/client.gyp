@@ -44,7 +44,7 @@
         '../base/base.gyp:base',
         '../config/config.gyp:config_protocol',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
       ],
     },
     {
@@ -56,7 +56,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_protocol',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
       ],
     },
   ],

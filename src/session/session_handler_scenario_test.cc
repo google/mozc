@@ -41,7 +41,7 @@
 #include "converter/converter_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/key_parser.h"
 #include "session/request_test_util.h"
 #include "session/session_handler_test_util.h"

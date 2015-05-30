@@ -34,9 +34,9 @@
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "client/client_interface.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/mac_view_util.h"
 #include "renderer/table_layout.h"
-#include "session/commands.pb.h"
 #include "renderer/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 

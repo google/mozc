@@ -36,7 +36,7 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 GoogleJapaneseInputServer *g_imkServer = nil;
 

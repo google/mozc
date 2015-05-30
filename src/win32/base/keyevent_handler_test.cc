@@ -40,7 +40,7 @@
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "win32/base/input_state.h"

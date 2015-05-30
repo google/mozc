@@ -50,7 +50,7 @@
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/generic_storage_manager.h"
 #include "session/session.h"
 #include "session/session_observer_handler.h"

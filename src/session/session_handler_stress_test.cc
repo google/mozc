@@ -37,7 +37,7 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "engine/engine_factory.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/gunit.h"

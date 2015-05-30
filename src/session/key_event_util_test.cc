@@ -31,7 +31,7 @@
 
 #include "base/number_util.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/key_parser.h"
 #include "testing/base/public/gunit.h"
 

@@ -33,7 +33,7 @@
 
 #include "base/port.h"
 #include "client/client_mock.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 using std::unique_ptr;

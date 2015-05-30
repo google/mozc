@@ -55,7 +55,7 @@
 #include "net/http_client_pepper.h"
 #include "net/jsoncpp.h"
 #include "net/json_util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats.h"

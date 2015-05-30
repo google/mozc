@@ -33,7 +33,7 @@
 #include <map>
 #include <string>
 #include "client/client_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace client {

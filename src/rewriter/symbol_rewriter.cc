@@ -43,9 +43,9 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
+#include "protocol/commands.pb.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
-#include "session/commands.pb.h"
 
 // SymbolRewriter:
 // When updating the rule

@@ -41,7 +41,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         'client.gyp:client',
       ],
       'actions': [

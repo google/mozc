@@ -40,7 +40,7 @@
 
 #include "base/util.h"
 #include "client/client_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/input_state.h"
 #include "win32/base/string_util.h"

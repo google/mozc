@@ -57,10 +57,9 @@
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
         '../protobuf/protobuf.gyp:protobuf',
+        '../protocol/protocol.gyp:commands_proto',
         '../session/session_base.gyp:key_event_util',
         '../session/session_base.gyp:key_parser',
-        # This is needed. GYP is not smart enough about indirect dependencies.
-        '../session/session_base.gyp:session_protocol',
         '../transliteration/transliteration.gyp:transliteration',
       ],
     },
@@ -81,8 +80,8 @@
       'dependencies': [
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         '../session/session_base.gyp:request_test_util',
-        '../session/session_base.gyp:session_protocol',
         '../testing/testing.gyp:gtest_main',
         'composer',
       ],

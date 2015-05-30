@@ -42,7 +42,7 @@
 #include "composer/internal/typing_corrector.h"
 #include "composer/internal/transliterators.h"
 #include "composer/type_corrected_query.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "transliteration/transliteration.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"

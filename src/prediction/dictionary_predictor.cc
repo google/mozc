@@ -60,7 +60,7 @@
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_data.h"
 #include "prediction/zero_query_number_data.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.

@@ -48,7 +48,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/suppression_dictionary.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"

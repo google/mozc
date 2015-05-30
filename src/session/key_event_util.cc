@@ -33,7 +33,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 using commands::KeyEvent;

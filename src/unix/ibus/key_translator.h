@@ -33,7 +33,7 @@
 #include <map>
 
 #include "base/port.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "unix/ibus/ibus_header.h"
 
 namespace mozc {

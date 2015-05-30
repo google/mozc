@@ -44,8 +44,8 @@
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/commands.pb.h"
 #include "rewriter/number_compound_util.h"
-#include "session/commands.pb.h"
 
 using mozc::dictionary::POSMatcher;
 

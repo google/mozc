@@ -213,8 +213,8 @@
       'type': 'none',
       'variables': {
         'proto_files': [
-          '../session/candidates.proto',
-          '../session/commands.proto',
+          '../protocol/candidates.proto',
+          '../protocol/commands.proto',
         ],
       },
       'actions': [

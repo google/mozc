@@ -41,7 +41,7 @@
 #include "converter/segments.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 #ifdef OS_ANDROID

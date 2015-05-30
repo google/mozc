@@ -34,7 +34,7 @@
 #import "mac/common.h"
 
 #include "base/const.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace renderer {

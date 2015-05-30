@@ -44,7 +44,7 @@
 #include "gui/character_pad/data/local_character_map.h"
 #include "gui/character_pad/data/unicode_blocks.h"
 #include "gui/character_pad/selection_handler.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace gui {

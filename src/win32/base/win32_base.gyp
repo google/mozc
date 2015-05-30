@@ -91,7 +91,7 @@
           ],
           'dependencies': [
             '../../base/base.gyp:base',
-            '../../session/session_base.gyp:session_protocol',
+            '../../protocol/protocol.gyp:commands_proto',
             '../../testing/testing.gyp:gtest_main',
             'imframework_util',
           ],
@@ -122,8 +122,8 @@
             '../../base/base.gyp:base',
             '../../config/config.gyp:config_handler',
             '../../config/config.gyp:config_protocol',
+            '../../protocol/protocol.gyp:commands_proto',
             '../../session/session_base.gyp:key_info_util',
-            '../../session/session_base.gyp:session_protocol',
             '../../session/session_base.gyp:output_util',
           ],
           'link_settings': {
@@ -181,7 +181,7 @@
           ],
           'dependencies': [
             '../../base/base.gyp:base',
-            '../../session/session_base.gyp:session_protocol',
+            '../../protocol/protocol.gyp:commands_proto',
             '../../testing/testing.gyp:gtest_main',
             'ime_base',
           ],

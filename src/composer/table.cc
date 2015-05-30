@@ -46,7 +46,7 @@
 #include "composer/internal/typing_model.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace composer {

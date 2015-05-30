@@ -27,52 +27,75 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# session_base.gyp defines targets for lower layers to link to the session
+# modules, so modules in lower layers do not depend on ones in higher layers,
+# avoiding circular dependencies.
 {
   'variables': {
-    'relative_dir': 'prediction',
+    'relative_dir': 'protocol',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
   'targets': [
     {
-      'target_name': 'prediction_test',
-      'type': 'executable',
-      'sources': [
-        'dictionary_predictor_test.cc',
-        'user_history_predictor_test.cc',
-        'predictor_test.cc',
-      ],
-      'dependencies': [
-        '../composer/composer.gyp:composer',
-        '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        '../converter/converter_base.gyp:connector',
-        '../converter/converter_base.gyp:converter_mock',
-        '../converter/converter_base.gyp:immutable_converter',
-        '../converter/converter_base.gyp:segmenter',
-        '../converter/converter_base.gyp:segments',
-        '../data_manager/data_manager.gyp:user_pos_manager',
-        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '../dictionary/dictionary.gyp:dictionary',
-        '../dictionary/dictionary.gyp:dictionary_mock',
-        '../dictionary/dictionary.gyp:suffix_dictionary',
-        '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../dictionary/system/system_dictionary.gyp:system_dictionary',
-        '../dictionary/system/system_dictionary.gyp:value_dictionary',
-        '../protocol/protocol.gyp:commands_proto',
-        '../session/session_base.gyp:request_test_util',
-        '../testing/testing.gyp:gtest_main',
-        'prediction.gyp:prediction',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'prediction_all_test',
+      'target_name': 'genproto_candidates_proto',
       'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'candidates.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
       'dependencies': [
-        'prediction_test',
+        '../config/config.gyp:genproto_config',
+      ],
+    },
+    {
+      'target_name': 'candidates_proto',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/candidates.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_candidates_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_candidates_proto#host',
+      ],
+    },
+    {
+      'target_name': 'genproto_commands_proto',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'commands.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+      'dependencies': [
+        '../config/config.gyp:genproto_config',
+        '../dictionary/dictionary_base.gyp:genproto_dictionary',
+      ],
+    },
+    {
+      'target_name': 'commands_proto',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/commands.pb.cc',
+      ],
+      'dependencies': [
+        '../config/config.gyp:config_protocol',
+        '../protobuf/protobuf.gyp:protobuf',
+        '../dictionary/dictionary_base.gyp:dictionary_protocol',
+        'candidates_proto',
+        'genproto_commands_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_commands_proto#host',
       ],
     },
   ],

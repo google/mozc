@@ -40,7 +40,7 @@
 #include <string>
 
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_ref_count.h"

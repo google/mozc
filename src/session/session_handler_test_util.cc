@@ -37,7 +37,7 @@
 #include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
 #include "prediction/user_history_predictor.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
 #include "session/session_usage_observer.h"

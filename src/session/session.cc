@@ -47,7 +47,7 @@
 #include "config/config_handler.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/key_event_transformer.h"
 #include "session/internal/keymap-inl.h"

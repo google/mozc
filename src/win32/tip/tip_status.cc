@@ -37,7 +37,7 @@
 #include <string>
 
 #include "base/logging.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/tip/tip_compartment_util.h"
 

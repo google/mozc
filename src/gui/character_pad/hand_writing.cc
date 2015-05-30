@@ -52,7 +52,7 @@
 #include "gui/base/win_util.h"
 #include "handwriting/handwriting_manager.h"
 #include "handwriting/zinnia_handwriting.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 

@@ -39,7 +39,7 @@
 #include "base/system_util.h"
 #include "base/version.h"
 #include "engine/engine_factory.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"

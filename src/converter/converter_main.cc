@@ -50,7 +50,7 @@
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200, "maximum candidates size");
 DEFINE_string(user_profile_dir, "", "path to user profile directory");

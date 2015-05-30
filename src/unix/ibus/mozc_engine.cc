@@ -47,7 +47,7 @@
 #include "base/util.h"
 #include "client/client.h"
 #include "config/config.pb.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/ime_switch_util.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"

@@ -34,9 +34,9 @@
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "client/client_interface.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/mac_view_util.h"
 #include "renderer/table_layout.h"
-#include "session/commands.pb.h"
 #include "renderer/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 
@@ -138,7 +138,7 @@ using mozc::CallOnce;
                        title_rect.size.height;
 
   if (usages.has_focused_index() && (row == usages.focused_index())) {
-    NSRect focused_rect = NSMakeRect(infostyle.window_border(), ypos, 
+    NSRect focused_rect = NSMakeRect(infostyle.window_border(), ypos,
         infostyle.window_width() - infostyle.window_border() * 2,
         title_rect.size.height + desc_rect.size.height
          + infostyle.row_rect_padding() * 2);
@@ -155,14 +155,14 @@ using mozc::CallOnce;
     [NSBezierPath strokeRect:focused_rect];
   } else {
     if (title_style.has_background_color()) {
-      NSRect rect = NSMakeRect(infostyle.window_border(), ypos, 
+      NSRect rect = NSMakeRect(infostyle.window_border(), ypos,
           infostyle.window_width() - infostyle.window_border() * 2,
           title_rect.size.height + infostyle.row_rect_padding());
       [MacViewUtil::ToNSColor(title_style.background_color()) set];
       [NSBezierPath fillRect:rect];
     }
     if (desc_style.has_background_color()) {
-      NSRect rect = NSMakeRect(infostyle.window_border(), 
+      NSRect rect = NSMakeRect(infostyle.window_border(),
           ypos + title_rect.size.height + infostyle.row_rect_padding(),
           infostyle.window_width() - infostyle.window_border() * 2,
           desc_rect.size.height + infostyle.row_rect_padding());
@@ -188,7 +188,7 @@ using mozc::CallOnce;
   const InformationList &usages = candidates_.usages();
 
   int ypos = infostyle.window_border();
-  
+
   if (draw_flag && infostyle.has_caption_string()) {
     const RendererStyle::TextStyle &caption_style =
       infostyle.caption_style();

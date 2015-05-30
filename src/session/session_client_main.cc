@@ -39,7 +39,7 @@
 #include "base/util.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/key_parser.h"
 #include "session/session.h"
 

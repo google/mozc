@@ -37,7 +37,7 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/key_event_util.h"
 
 namespace mozc {

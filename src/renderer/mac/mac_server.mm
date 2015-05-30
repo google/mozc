@@ -37,7 +37,7 @@
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/mac_server_send_command.h"
 #include "renderer/mac/CandidateController.h"
 

@@ -30,7 +30,7 @@
 #include "unix/ibus/mozc_engine_property.h"
 
 #include "base/port.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace ibus {

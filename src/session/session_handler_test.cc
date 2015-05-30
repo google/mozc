@@ -40,7 +40,7 @@
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/generic_storage_manager.h"
 #include "session/session_handler.h"
 #include "session/session_handler_test_util.h"

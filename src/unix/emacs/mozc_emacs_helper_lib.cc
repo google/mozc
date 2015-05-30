@@ -39,7 +39,7 @@
 #include "base/port.h"
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/key_parser.h"
 
 namespace mozc {

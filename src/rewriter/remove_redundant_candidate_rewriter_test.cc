@@ -29,9 +29,9 @@
 
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "testing/base/public/gunit.h"
-#include "session/commands.pb.h"
 
 namespace mozc {
 TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {

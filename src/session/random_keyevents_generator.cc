@@ -36,7 +36,7 @@
 #include "base/mutex.h"
 #include "base/port.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace session {

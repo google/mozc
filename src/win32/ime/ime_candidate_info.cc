@@ -38,7 +38,7 @@
 #include "google/protobuf/stubs/common.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/ime/ime_ui_window.h"
 
 namespace mozc {

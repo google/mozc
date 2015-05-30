@@ -35,7 +35,7 @@
 
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 using mozc::commands::KeyEvent;
 using mozc::once_t;

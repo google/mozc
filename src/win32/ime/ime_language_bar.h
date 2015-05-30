@@ -37,7 +37,7 @@
 #include <atlbase.h>
 
 #include "base/port.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 class ImeSystemLangBarMenu;
 class ImeCandidateList;

@@ -45,7 +45,7 @@
 #include "gui/base/table_util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/key_parser.h"
 // TODO(komatsu): internal files should not be used from external modules.

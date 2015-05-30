@@ -36,7 +36,7 @@
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "composer/internal/typing_model.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
