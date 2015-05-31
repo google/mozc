@@ -33,7 +33,7 @@ syntax = "proto2";
 import "protocol/candidates.proto";
 import "protocol/commands.proto";
 
-package mozc.session;
+package mozc.protocol;
 
 message SessionState {
   // session id

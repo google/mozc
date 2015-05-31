@@ -114,9 +114,9 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:stats_config_util',
+        '../protocol/protocol.gyp:state_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         '../usage_stats/usage_stats_base.gyp:usage_stats_protocol',
-        'session_base.gyp:state_proto',
       ],
     },
     {

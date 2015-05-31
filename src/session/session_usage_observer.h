@@ -35,8 +35,8 @@
 #include <vector>
 
 #include "base/port.h"
+#include "protocol/state.pb.h"
 #include "session/session_observer_interface.h"
-#include "session/state.pb.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
@@ -83,24 +83,24 @@ class SessionUsageObserver : public SessionObserverInterface {
 
   void EvalCreateSession(const commands::Input &input,
                         const commands::Output &output,
-                        map<uint64, SessionState> *states);
+                        map<uint64, protocol::SessionState> *states);
   // Update state and update stats using input and output.
   void UpdateState(const commands::Input &input,
                    const commands::Output &output,
-                   SessionState *state);
+                   protocol::SessionState *state);
   // Update client side stats.
   void UpdateClientSideStats(const commands::Input &input,
-                             SessionState *state);
+                             protocol::SessionState *state);
   // Evals touch events and saves touch event stats.
   void LogTouchEvent(const commands::Input &input,
                      const commands::Output &output,
-                     const SessionState &state);
+                     const protocol::SessionState &state);
   // Stores KeyTouch message to TouchEventStats.
   void StoreTouchEventStats(
        const commands::Input_TouchEvent &touch_event,
        usage_stats::TouchEventStatsMap *touch_event_stats_map);
 
-  map<uint64, SessionState> states_;
+  map<uint64, protocol::SessionState> states_;
   UsageCache usage_cache_;
 
   // last_touchevents_ is used to keep the touch_events of last SEND_KEY

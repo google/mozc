@@ -142,37 +142,5 @@
         '../storage/storage.gyp:storage',
       ]
     },
-    {
-      'target_name': 'genproto_state_proto',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        'state.proto',
-      ],
-      'includes': [
-        '../protobuf/genproto.gypi',
-      ],
-      'dependencies': [
-        '../protocol/protocol.gyp:genproto_candidates_proto',
-        '../protocol/protocol.gyp:genproto_commands_proto',
-      ],
-    },
-    {
-      'target_name': 'state_proto',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/state.pb.cc',
-      ],
-      'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
-        '../protocol/protocol.gyp:candidates_proto',
-        '../protocol/protocol.gyp:commands_proto',
-        'genproto_state_proto#host',
-      ],
-      'export_dependent_settings': [
-        'genproto_state_proto#host',
-      ],
-    },
   ],
 }
