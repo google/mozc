@@ -32,8 +32,8 @@
 #ifndef MOZC_SESSION_INTERNAL_KEYMAP_INL_H_
 #define MOZC_SESSION_INTERNAL_KEYMAP_INL_H_
 
+#include "composer/key_event_util.h"
 #include "session/internal/keymap.h"
-#include "session/key_event_util.h"
 
 namespace mozc {
 
@@ -92,4 +92,4 @@ void KeyMap<T>::Clear() {
 }  // namespace keymap
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_INTERNAL_KEYMAP_INTERFACE_INL_H_
+#endif  // MOZC_SESSION_INTERNAL_KEYMAP_INL_H_

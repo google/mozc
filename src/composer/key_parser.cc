@@ -29,7 +29,7 @@
 
 // Parser of key events
 
-#include "session/key_parser.h"
+#include "composer/key_parser.h"
 
 #include <map>
 #include <set>

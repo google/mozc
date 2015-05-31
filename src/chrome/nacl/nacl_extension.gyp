@@ -170,6 +170,7 @@
       'dependencies': [
         'dictionary_downloader',
         '../../base/base.gyp:base',
+        '../../composer/composer.gyp:key_parser',
         '../../config/config.gyp:config_handler',
         '../../config/config.gyp:config_protocol',
         '../../dictionary/dictionary_base.gyp:user_dictionary',
@@ -180,7 +181,6 @@
         '../../session/session.gyp:session',
         '../../session/session.gyp:session_handler',
         '../../session/session.gyp:session_usage_observer',
-        '../../session/session_base.gyp:key_parser',
         '../../usage_stats/usage_stats.gyp:usage_stats_uploader',
         '../../usage_stats/usage_stats_base.gyp:usage_stats',
       ],

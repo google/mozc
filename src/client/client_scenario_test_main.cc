@@ -43,10 +43,10 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "client/client.h"
+#include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_command.pb.h"
-#include "session/key_parser.h"
 
 DEFINE_bool(display_preedit, false, "display predit to tty");
 DEFINE_string(input, "", "Input file");

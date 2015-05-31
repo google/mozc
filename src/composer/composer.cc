@@ -39,13 +39,13 @@
 #include "composer/internal/mode_switching_handler.h"
 #include "composer/internal/transliterators.h"
 #include "composer/internal/typing_corrector.h"
+#include "composer/key_event_util.h"
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
-#include "session/key_event_util.h"
 
 // Use flags instead of constant for performance evaluation.
 DEFINE_uint64(max_typing_correction_query_candidates, 40,

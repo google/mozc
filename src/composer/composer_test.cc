@@ -38,12 +38,12 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
+#include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
-#include "session/key_parser.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

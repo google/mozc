@@ -29,8 +29,8 @@
 
 // Parser of key events
 
-#ifndef MOZC_SESSION_KEY_PARSER_H_
-#define MOZC_SESSION_KEY_PARSER_H_
+#ifndef MOZC_COMPOSER_KEY_PARSER_H_
+#define MOZC_COMPOSER_KEY_PARSER_H_
 
 #include <string>
 #include <vector>
@@ -55,4 +55,4 @@ class KeyParser {
 
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_KEY_PARSER_H_
+#endif  // MOZC_COMPOSER_KEY_PARSER_H_

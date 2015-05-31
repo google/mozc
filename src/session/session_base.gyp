@@ -48,18 +48,6 @@
       ],
     },
     {
-      'target_name': 'key_parser',
-      'type': 'static_library',
-      'sources': [
-        'key_parser.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
-        '../protocol/protocol.gyp:commands_proto',
-      ],
-    },
-    {
       'target_name': 'keymap',
       'type': 'static_library',
       'sources': [
@@ -67,11 +55,11 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../composer/composer.gyp:key_event_util',
+        '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
         '../protocol/protocol.gyp:commands_proto',
-        'key_event_util',
-        'key_parser',
       ],
     },
     {
@@ -102,17 +90,6 @@
       ],
     },
     {
-      'target_name': 'key_event_util',
-      'type': 'static_library',
-      'sources': [
-        'key_event_util.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../protocol/protocol.gyp:commands_proto',
-      ],
-    },
-    {
       'target_name': 'key_info_util',
       'type': 'static_library',
       'sources': [
@@ -121,11 +98,10 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../composer/composer.gyp:key_event_util',
+        '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
-        '../protocol/protocol.gyp:commands_proto',
-        'key_event_util',
-        'key_parser',
         'keymap',
       ],
     },

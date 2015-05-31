@@ -42,12 +42,12 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "composer/key_parser.h"
 #include "gui/base/table_util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
-#include "session/key_parser.h"
 // TODO(komatsu): internal files should not be used from external modules.
 
 namespace mozc {

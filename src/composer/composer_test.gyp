@@ -28,50 +28,62 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
-  'variables': {
-    'relative_dir': 'unix/emacs',
-  },
   'targets': [
     {
-      'target_name': 'mozc_emacs_helper',
+      'target_name': 'composer_test',
       'type': 'executable',
       'sources': [
-        'mozc_emacs_helper.cc',
+        'composer_test.cc',
+        'internal/char_chunk_test.cc',
+        'internal/composition_input_test.cc',
+        'internal/composition_test.cc',
+        'internal/converter_test.cc',
+        'internal/mode_switching_handler_test.cc',
+        'internal/transliterators_test.cc',
+        'internal/typing_corrector_test.cc',
+        'table_test.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
-        '../../config/config.gyp:config_handler',
-        '../../config/config.gyp:config_protocol',
-        '../../ipc/ipc.gyp:ipc',
-        '../../protocol/protocol.gyp:commands_proto',
-        'mozc_emacs_helper_lib',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../session/session_base.gyp:request_test_util',
+        '../testing/testing.gyp:gtest_main',
+        'composer.gyp:composer',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
     {
-      'target_name': 'mozc_emacs_helper_lib',
-      'type': 'static_library',
-      'sources': [
-        'mozc_emacs_helper_lib.cc',
-        'client_pool.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base',
-        '../../client/client.gyp:client',
-        '../../composer/composer.gyp:key_parser',
-        '../../config/config.gyp:config_protocol',
-        '../../protocol/protocol.gyp:commands_proto',
-        '../../storage/storage.gyp:storage',
-      ],
-    },
-    {
-      'target_name': 'mozc_emacs_helper_lib_test',
+      'target_name': 'key_event_util_test',
       'type': 'executable',
       'sources': [
-        'mozc_emacs_helper_lib_test.cc',
+        'key_event_util_test.cc',
       ],
       'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        'mozc_emacs_helper_lib',
+        '../base/base.gyp:base',
+        '../config/config.gyp:config_handler',
+        '../testing/testing.gyp:gtest_main',
+        'composer.gyp:key_event_util',
+        'composer.gyp:key_parser',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'key_parser_test',
+      'type': 'executable',
+      'sources': [
+        'key_parser_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../config/config.gyp:config_handler',
+        '../testing/testing.gyp:gtest_main',
+        'composer.gyp:key_event_util',
+        'composer.gyp:key_parser',
       ],
       'variables': {
         'test_size': 'small',
@@ -79,11 +91,14 @@
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
-      'target_name': 'emacs_all_test',
+      'target_name': 'composer_all_test',
       'type': 'none',
       'dependencies': [
-        'mozc_emacs_helper_lib_test',
+        'composer_test',
+        'key_event_util_test',
+        'key_parser_test',
       ],
     },
   ],
 }
+

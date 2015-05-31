@@ -35,10 +35,10 @@
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "composer/key_event_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
-#include "session/key_event_util.h"
 
 namespace mozc {
 namespace session {

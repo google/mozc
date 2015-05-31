@@ -188,9 +188,7 @@
       'type': 'executable',
       'sources': [
         'ime_switch_util_test.cc',
-        'key_event_util_test.cc',
         'key_info_util_test.cc',
-        'key_parser_test.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -198,8 +196,6 @@
         '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
         'session_base.gyp:ime_switch_util',
-        'session_base.gyp:key_event_util',
-        'session_base.gyp:key_parser',
       ],
       'variables': {
         'test_size': 'small',
