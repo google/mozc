@@ -120,7 +120,7 @@
             '../../config/config.gyp:config_protocol',
             '../../ipc/ipc.gyp:ipc',
             '../../protocol/protocol.gyp:commands_proto',
-            '../../renderer/renderer.gyp:renderer_protocol',
+            '../../protocol/protocol.gyp:renderer_proto',
             '../../renderer/renderer.gyp:win32_font_util',
             '../../renderer/renderer.gyp:win32_renderer_client',
             '../base/win32_base.gyp:ime_base',

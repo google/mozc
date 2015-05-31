@@ -39,7 +39,7 @@
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/composition_window.h"

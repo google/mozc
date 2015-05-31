@@ -103,7 +103,7 @@
             '../../config/config.gyp:stats_config_util',
             '../../protobuf/protobuf.gyp:protobuf',
             '../../protocol/protocol.gyp:commands_proto',
-            '../../renderer/renderer.gyp:renderer_protocol',
+            '../../protocol/protocol.gyp:renderer_proto',
             '../../renderer/renderer.gyp:renderer_style_handler',
             '../../renderer/renderer.gyp:table_layout',
             '../../renderer/renderer.gyp:win32_renderer_client',

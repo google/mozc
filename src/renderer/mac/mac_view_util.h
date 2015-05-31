@@ -32,7 +32,7 @@
 
 #import <Cocoa/Cocoa.h>
 #include "base/coordinates.h"
-#include "renderer/renderer_style.pb.h"
+#include "protocol/renderer_style.pb.h"
 
 namespace mozc {
 namespace renderer {

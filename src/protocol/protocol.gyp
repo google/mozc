@@ -98,5 +98,35 @@
         'genproto_commands_proto#host',
       ],
     },
+    {
+      'target_name': 'genproto_renderer_proto',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'renderer_command.proto',
+        'renderer_style.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'renderer_proto',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/renderer_command.pb.cc',
+        '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
+      ],
+      'dependencies': [
+        '../config/config.gyp:config_protocol',
+        '../protobuf/protobuf.gyp:protobuf',
+        '../protocol/protocol.gyp:commands_proto',
+        'genproto_renderer_proto#host'
+      ],
+      'export_dependent_settings': [
+        'genproto_renderer_proto#host',
+      ],
+    },
   ],
 }

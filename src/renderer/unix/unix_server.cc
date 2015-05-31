@@ -35,7 +35,7 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/unix/window_manager.h"
 
 using std::unique_ptr;

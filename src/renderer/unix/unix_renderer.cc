@@ -30,7 +30,7 @@
 #include "renderer/unix/unix_renderer.h"
 
 #include "base/logging.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 
 namespace mozc {
 namespace renderer {

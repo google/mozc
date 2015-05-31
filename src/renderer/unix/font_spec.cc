@@ -30,7 +30,7 @@
 #include "renderer/unix/font_spec.h"
 
 #include "base/logging.h"
-#include "renderer/renderer_style.pb.h"
+#include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/unix/const.h"
 

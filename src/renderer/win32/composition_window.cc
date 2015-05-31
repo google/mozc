@@ -46,7 +46,7 @@
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_renderer_util.h"
 
 namespace mozc {

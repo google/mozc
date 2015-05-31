@@ -35,7 +35,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "renderer/renderer_client.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 
 namespace mozc {
 namespace renderer {

@@ -31,7 +31,7 @@
 #define MOZC_RENDERER_MAC_CANDIDATE_CONTROLLER_H_
 
 #include "base/port.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 
 namespace mozc {

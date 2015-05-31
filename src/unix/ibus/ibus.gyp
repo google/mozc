@@ -250,8 +250,8 @@
             'gtk_candidate_window_handler.cc',
           ],
           'dependencies': [
+            '../../protocol/protocol.gyp:renderer_proto',
             '../../renderer/renderer.gyp:renderer_client',
-            '../../renderer/renderer.gyp:renderer_protocol',
             'ibus_build_environment',
           ],
         },
