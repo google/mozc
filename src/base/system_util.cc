@@ -66,9 +66,6 @@
 #include "base/win_util.h"
 
 #ifdef OS_ANDROID
-// HACK to avoid a bug in sysconf in android.
-#include "android/jni/sysconf.h"
-#define sysconf mysysconf
 #include "base/android_util.h"
 #endif  // OS_ANDROID
 
