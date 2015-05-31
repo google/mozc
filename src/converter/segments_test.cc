@@ -35,8 +35,8 @@
 #include "base/number_util.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

@@ -41,7 +41,6 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "config/config.pb.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/lattice.h"
@@ -51,6 +50,7 @@
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200, "maximum candidates size");
 DEFINE_string(user_profile_dir, "", "path to user profile directory");

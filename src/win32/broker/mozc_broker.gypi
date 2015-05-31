@@ -46,8 +46,8 @@
       'dependencies': [
         '../../base/base.gyp:crash_report_handler',
         '../../client/client.gyp:client',
-        '../../config/config.gyp:config_protocol',
         '../../config/config.gyp:stats_config_util',
+        '../../protocol/protocol.gyp:config_proto',
         '../../renderer/renderer.gyp:renderer_client',
         '../base/win32_base.gyp:ime_base',
         '../base/win32_base.gyp:win32_file_verifier',

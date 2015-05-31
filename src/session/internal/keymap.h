@@ -37,7 +37,7 @@
 #include <set>
 #include <string>
 #include "composer/key_event_util.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap_interface.h"
 
 namespace mozc {

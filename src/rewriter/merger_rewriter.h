@@ -33,11 +33,11 @@
 #include <vector>
 
 #include "base/stl_util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

@@ -41,8 +41,8 @@
 #include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 #include "storage/lru_storage.h"
 
 namespace mozc {

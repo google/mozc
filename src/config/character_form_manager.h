@@ -35,7 +35,7 @@
 #include <utility>
 #include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 

@@ -42,10 +42,10 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../engine/engine.gyp:engine_factory',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         '../testing/testing.gyp:testing',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session',
@@ -214,13 +214,13 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
         '../converter/converter_base.gyp:converter_mock',
         '../engine/engine.gyp:mock_converter_engine',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:testing_util',
         'session.gyp:session',
-        '../protocol/protocol.gyp:commands_proto',
       ],
       'variables': {
         'test_size': 'small',

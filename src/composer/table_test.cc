@@ -33,9 +33,9 @@
 #include "base/port.h"
 #include "base/system_util.h"
 #include "composer/internal/composition_input.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

@@ -45,8 +45,8 @@
       ],
       'dependencies': [
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
         'composer.gyp:composer',

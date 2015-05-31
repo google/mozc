@@ -35,8 +35,8 @@
 #include <string>
 #include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "config/config.pb.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats_testing_util.h"
 

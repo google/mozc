@@ -33,7 +33,7 @@
 
 #include "base/port.h"
 #include "base/freelist.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 
 namespace mozc {

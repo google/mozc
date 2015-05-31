@@ -34,13 +34,13 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "rewriter/calculator/calculator_interface.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "rewriter/calculator/calculator_interface.h"
 
 namespace mozc {
 

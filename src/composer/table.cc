@@ -44,9 +44,9 @@
 #include "base/trie.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace composer {

@@ -34,8 +34,8 @@
 #include <set>
 
 #include "base/port.h"
-#include "config/config.pb.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "unix/ibus/key_translator.h"
 
 namespace mozc {

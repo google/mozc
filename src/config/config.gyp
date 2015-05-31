@@ -42,33 +42,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
-        'config_protocol',
-      ],
-    },
-    {
-      'target_name': 'genproto_config',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        'config.proto',
-      ],
-      'includes': [
-        '../protobuf/genproto.gypi',
-      ],
-    },
-    {
-      'target_name': 'config_protocol',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/config.pb.cc',
-      ],
-      'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
-        'genproto_config#host',
-      ],
-      'export_dependent_settings': [
-        'genproto_config#host',
+        '../protocol/protocol.gyp:config_proto',
       ],
     },
     {
@@ -85,7 +59,7 @@
          '(target_platform=="NaCl" and _toolset=="target")', {
           'dependencies': [
             'config_handler',
-            'config_protocol',
+            '../protocol/protocol.gyp:config_proto',
           ],
         }],
       ],
@@ -98,9 +72,9 @@
       ],
       'dependencies': [
         'config_handler',
-        'config_protocol',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../protocol/protocol.gyp:config_proto',
         # storage.gyp:storage is depended by character_form_manager.
         # TODO(komatsu): delete this line.
         '../storage/storage.gyp:storage',

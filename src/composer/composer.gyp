@@ -57,7 +57,7 @@
         '../composer/composer.gyp:key_parser',
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:config_proto',
         '../protobuf/protobuf.gyp:protobuf',
         '../protocol/protocol.gyp:commands_proto',
         '../transliteration/transliteration.gyp:transliteration',
@@ -226,7 +226,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:config_proto',
         '../protocol/protocol.gyp:commands_proto',
       ],
     },

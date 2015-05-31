@@ -36,8 +36,8 @@
 
 #include "base/port.h"
 #include "base/singleton.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 #include "session/key_info_util.h"
 
 namespace mozc {

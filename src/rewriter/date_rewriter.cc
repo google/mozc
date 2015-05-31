@@ -48,11 +48,11 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 

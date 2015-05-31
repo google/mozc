@@ -36,12 +36,12 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "config/config.pb.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

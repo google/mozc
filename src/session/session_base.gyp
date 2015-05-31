@@ -43,8 +43,8 @@
         'request_test_util.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:config_protocol',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
       ],
     },
     {
@@ -58,8 +58,8 @@
         '../composer/composer.gyp:key_event_util',
         '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
       ],
     },
     {
@@ -70,8 +70,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         'keymap',
       ],
     },
@@ -84,8 +84,8 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         'key_info_util',
       ],
     },
@@ -101,7 +101,7 @@
         '../composer/composer.gyp:key_event_util',
         '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:config_proto',
         'keymap',
       ],
     },

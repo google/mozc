@@ -27,9 +27,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# session_base.gyp defines targets for lower layers to link to the session
-# modules, so modules in lower layers do not depend on ones in higher layers,
-# avoiding circular dependencies.
 {
   'variables': {
     'relative_dir': 'protocol',
@@ -47,7 +44,7 @@
         '../protobuf/genproto.gypi',
       ],
       'dependencies': [
-        '../config/config.gyp:genproto_config',
+        'genproto_config_proto',
       ],
     },
     {
@@ -76,7 +73,7 @@
         '../protobuf/genproto.gypi',
       ],
       'dependencies': [
-        '../config/config.gyp:genproto_config',
+        'genproto_config_proto',
         'genproto_user_dictionary_storage_proto',
       ],
     },
@@ -88,14 +85,40 @@
         '<(proto_out_dir)/<(relative_dir)/commands.pb.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:config_protocol',
         '../protobuf/protobuf.gyp:protobuf',
         'candidates_proto',
+        'config_proto',
         'genproto_commands_proto#host',
         'user_dictionary_storage_proto',
       ],
       'export_dependent_settings': [
         'genproto_commands_proto#host',
+      ],
+    },
+    {
+      'target_name': 'genproto_config_proto',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'config.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'config_proto',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/config.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_config_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_config_proto#host',
       ],
     },
     {
@@ -119,9 +142,9 @@
         '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:config_protocol',
         '../protobuf/protobuf.gyp:protobuf',
         'commands_proto',
+        'config_proto',
         'genproto_renderer_proto#host'
       ],
       'export_dependent_settings': [

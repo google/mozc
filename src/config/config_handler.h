@@ -35,7 +35,7 @@
 #include <string>
 
 #include "base/port.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace config {

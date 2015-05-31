@@ -30,9 +30,9 @@
 #include "session/key_info_util.h"
 
 #include "composer/key_parser.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 

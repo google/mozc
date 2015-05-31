@@ -73,8 +73,8 @@
       ],
       'dependencies': [
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../net/net.gyp:http_client_mock',
+        '../protocol/protocol.gyp:config_proto',
         '../testing/testing.gyp:gtest_main',
         'usage_stats.gyp:usage_stats_uploader',
         'usage_stats_base.gyp:usage_stats_protocol',

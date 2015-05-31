@@ -35,11 +35,11 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace {

@@ -33,7 +33,6 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
@@ -43,6 +42,7 @@
 #endif  // MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

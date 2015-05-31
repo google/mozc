@@ -42,9 +42,9 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
         '../ipc/ipc.gyp:ipc',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
       ],
     },
     {
@@ -55,8 +55,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
       ],
     },
   ],

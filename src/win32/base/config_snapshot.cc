@@ -31,8 +31,8 @@
 
 #include "base/win_util.h"
 #include "client/client_interface.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace win32 {

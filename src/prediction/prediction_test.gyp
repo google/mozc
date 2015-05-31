@@ -44,7 +44,6 @@
       'dependencies': [
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../converter/converter_base.gyp:connector',
         '../converter/converter_base.gyp:converter_mock',
         '../converter/converter_base.gyp:immutable_converter',
@@ -59,6 +58,7 @@
         '../dictionary/system/system_dictionary.gyp:system_dictionary',
         '../dictionary/system/system_dictionary.gyp:value_dictionary',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
         'prediction.gyp:prediction',

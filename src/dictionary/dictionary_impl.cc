@@ -34,12 +34,12 @@
 #include "base/logging.h"
 #include "base/string_piece.h"
 #include "base/util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace dictionary {

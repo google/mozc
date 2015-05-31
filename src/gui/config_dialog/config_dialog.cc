@@ -46,7 +46,6 @@
 #include "base/run_level.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "config/stats_config_util.h"
 #include "gui/base/win_util.h"
@@ -54,6 +53,7 @@
 #include "gui/config_dialog/roman_table_editor.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 
 namespace {

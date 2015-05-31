@@ -41,8 +41,8 @@
 #include "composer/internal/typing_model.h"
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 
 DEFINE_bool(enable_typing_correction, false,
             "Force enabling typing correction feature "

@@ -51,9 +51,9 @@
 #include "base/process.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "config/config.pb.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"
 #include "session/ime_switch_util.h"
 

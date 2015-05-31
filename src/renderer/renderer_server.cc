@@ -41,11 +41,11 @@
 #include "base/port.h"
 #include "base/system_util.h"
 #include "client/client_interface.h"
-#include "config/config.pb.h"  // for Config
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "ipc/process_watch_dog.h"
+#include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 

@@ -30,10 +30,10 @@
 #include "rewriter/correction_rewriter.h"
 
 #include <string>
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

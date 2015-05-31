@@ -140,7 +140,7 @@
       'type': 'none',
       'variables': {
         'proto_files': [
-          '../config/config.proto',
+          '../protocol/config.proto',
         ],
       },
       'actions': [

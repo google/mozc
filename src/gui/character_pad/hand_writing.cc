@@ -41,9 +41,9 @@
 #endif
 
 #ifdef ENABLE_CLOUD_HANDWRITING
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "handwriting/cloud_handwriting.h"
+#include "protocol/config.pb.h"
 #endif  // ENABLE_CLOUD_HANDWRITING
 
 #include "base/logging.h"
