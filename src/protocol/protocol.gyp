@@ -77,7 +77,7 @@
       ],
       'dependencies': [
         '../config/config.gyp:genproto_config',
-        '../dictionary/dictionary_base.gyp:genproto_dictionary',
+        'genproto_user_dictionary_storage_proto',
       ],
     },
     {
@@ -90,9 +90,9 @@
       'dependencies': [
         '../config/config.gyp:config_protocol',
         '../protobuf/protobuf.gyp:protobuf',
-        '../dictionary/dictionary_base.gyp:dictionary_protocol',
         'candidates_proto',
         'genproto_commands_proto#host',
+        'user_dictionary_storage_proto',
       ],
       'export_dependent_settings': [
         'genproto_commands_proto#host',
@@ -126,6 +126,32 @@
       ],
       'export_dependent_settings': [
         'genproto_renderer_proto#host',
+      ],
+    },
+    {
+      'target_name': 'genproto_user_dictionary_storage_proto',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'user_dictionary_storage.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'user_dictionary_storage_proto',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_user_dictionary_storage_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_user_dictionary_storage_proto#host',
       ],
     },
   ],

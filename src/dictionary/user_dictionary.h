@@ -39,8 +39,8 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_pos_interface.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 

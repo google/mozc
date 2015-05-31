@@ -37,8 +37,8 @@
 #include "base/protobuf/repeated_field.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_util.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 namespace user_dictionary {

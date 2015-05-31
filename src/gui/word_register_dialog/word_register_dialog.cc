@@ -49,9 +49,9 @@
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 namespace gui {

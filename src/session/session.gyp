@@ -83,15 +83,15 @@
       ],
       'dependencies': [
         '../client/client.gyp:client',
-        '../engine/engine.gyp:engine_factory',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
-        '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:user_dictionary',
+        '../engine/engine.gyp:engine_factory',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:generic_storage_manager',
-        '../protocol/protocol.gyp:commands_proto',
       ],
       'conditions': [
         ['(target_platform=="NaCl" and _toolset=="target") or target_platform=="Android"', {

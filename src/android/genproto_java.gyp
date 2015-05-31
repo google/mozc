@@ -176,7 +176,7 @@
       'type': 'none',
       'variables': {
         'proto_files': [
-          '../dictionary/user_dictionary_storage.proto',
+          '../protocol/user_dictionary_storage.proto',
         ],
       },
       'actions': [

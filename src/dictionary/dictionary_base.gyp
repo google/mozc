@@ -113,32 +113,6 @@
       ],
     },
     {
-      'target_name': 'genproto_dictionary',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        'user_dictionary_storage.proto',
-      ],
-      'includes': [
-        '../protobuf/genproto.gypi',
-      ],
-    },
-    {
-      'target_name': 'dictionary_protocol',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
-      ],
-      'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
-        'genproto_dictionary#host',
-      ],
-      'export_dependent_settings': [
-        'genproto_dictionary#host',
-      ],
-    },
-    {
       'target_name': 'gen_pos_map',
       'type': 'none',
       'toolsets': ['host'],
@@ -200,8 +174,8 @@
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
-        'dictionary_protocol',
         'gen_pos_map#host',
         'pos_matcher',
         'suppression_dictionary',
