@@ -42,7 +42,6 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"

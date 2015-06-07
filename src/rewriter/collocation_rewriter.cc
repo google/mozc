@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/singleton.h"
 #include "base/string_piece.h"
 #include "base/util.h"
 #include "converter/conversion_request.h"

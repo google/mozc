@@ -33,7 +33,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "composer/key_event_util.h"
 #include "config/config_handler.h"

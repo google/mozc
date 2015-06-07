@@ -39,7 +39,6 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/scheduler.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
 #include "protocol/commands.pb.h"

@@ -37,7 +37,6 @@
 #include <psapi.h>
 #include "base/file_util.h"
 #include "base/scoped_handle.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/winmain.h"   // use WinMain

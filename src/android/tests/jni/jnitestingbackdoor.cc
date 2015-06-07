@@ -35,7 +35,6 @@
 #include "base/android_util.h"
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/singleton.h"
 #include "net/http_client.h"
 
 namespace mozc {

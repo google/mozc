@@ -31,7 +31,6 @@
 #define MOZC_DATA_MANAGER_OSS_OSS_DATA_MANAGER_H_
 
 #include "base/port.h"
-#include "base/singleton.h"
 #include "data_manager/oss/oss_user_pos_manager.h"
 
 namespace mozc {
