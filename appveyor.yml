@@ -56,5 +56,5 @@ install:
 - svn export http://svn.code.sf.net/p/zinnia/code@16 src/third_party/zinnia/v0_04
 build_script:
 - python src\build_mozc.py gyp --noqt
-- python src\build_mozc.py build -c Release package
+- ninja -C src\out_win\Release mozc_win32_build32
 test: off
