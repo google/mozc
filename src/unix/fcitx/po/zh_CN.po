@@ -3,89 +3,90 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
-# Xuetian Weng <wengxt@gmail.com>, 2013
-# Xuetian Weng <wengxt@gmail.com>, 2012
+# csslayer <wengxt@gmail.com>, 2013
+# csslayer <wengxt@gmail.com>, 2012
 # wwj402 <wwj402@gmail.com>, 2013
-# Xuetian Weng <wengxt@gmail.com>, 2012-2013
+# wwj402 <wwj402@gmail.com>, 2013
+# csslayer <wengxt@gmail.com>, 2012-2013
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2013-11-14 13:55-0500\n"
-"PO-Revision-Date: 2013-11-14 18:58+0000\n"
-"Last-Translator: Xuetian Weng <wengxt@gmail.com>\n"
-"Language-Team: Chinese (China) (http://www.transifex.com/projects/p/fcitx/"
-"language/zh_CN/)\n"
+"POT-Creation-Date: 2015-07-08 18:02+0200\n"
+"PO-Revision-Date: 2013-11-16 14:13+0000\n"
+"Last-Translator: csslayer <wengxt@gmail.com>\n"
+"Language-Team: Chinese (China) (http://www.transifex.com/p/fcitx/language/"
+"zh_CN/)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../eim.cc:184
+#: ../eim.cc:181
 msgid "Press Escape to go back"
 msgstr "按下 Escape 返回"
 
-#: ../fcitx_mozc.cc:68
+#: ../fcitx_mozc.cc:65
 msgid "Direct"
 msgstr "直接键盘输入"
 
-#: ../fcitx_mozc.cc:73
+#: ../fcitx_mozc.cc:70
 msgid "Hiragana"
 msgstr "平假名"
 
-#: ../fcitx_mozc.cc:78
+#: ../fcitx_mozc.cc:75
 msgid "Full Katakana"
 msgstr "全角片假名"
 
-#: ../fcitx_mozc.cc:83
+#: ../fcitx_mozc.cc:80
 msgid "Half ASCII"
 msgstr "半角 ASCII"
 
-#: ../fcitx_mozc.cc:88
+#: ../fcitx_mozc.cc:85
 msgid "Full ASCII"
 msgstr "全角 ASCII"
 
-#: ../fcitx_mozc.cc:93
+#: ../fcitx_mozc.cc:90
 msgid "Half Katakana"
 msgstr "半角片假名"
 
-#: ../fcitx_mozc.cc:410 ../fcitx_mozc.cc:411 ../fcitx_mozc.cc:484
+#: ../fcitx_mozc.cc:405 ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:474
 msgid "Composition Mode"
 msgstr "编辑模式"
 
-#: ../fcitx_mozc.cc:421 ../fcitx_mozc.cc:422
+#: ../fcitx_mozc.cc:416 ../fcitx_mozc.cc:417
 msgid "Tool"
 msgstr "工具"
 
-#: ../fcitx_mozc.cc:497
+#: ../fcitx_mozc.cc:487
 msgid "Mozc Tool"
 msgstr "Mozc 工具"
 
-#: ../fcitx_mozc.cc:503
+#: ../fcitx_mozc.cc:493
 msgid "Configuration Tool"
 msgstr "配置工具"
 
-#: ../fcitx_mozc.cc:504
+#: ../fcitx_mozc.cc:494
 msgid "Dictionary Tool"
 msgstr "词典工具"
 
-#: ../fcitx_mozc.cc:505
+#: ../fcitx_mozc.cc:495
 msgid "Hand Writing"
 msgstr "手写输入"
 
-#: ../fcitx_mozc.cc:506
+#: ../fcitx_mozc.cc:496
 msgid "Character Palette"
 msgstr "字符映射表"
 
-#: ../fcitx_mozc.cc:507
+#: ../fcitx_mozc.cc:497
 msgid "Add Word"
 msgstr "添加单词"
 
-#: ../fcitx_mozc.cc:508
+#: ../fcitx_mozc.cc:498
 msgid "About Mozc"
 msgstr "关于 Mozc"
 
-#: ../mozc_response_parser.cc:374
+#: ../mozc_response_parser.cc:366
 msgid "Press Ctrl+Alt+H to show usages."
 msgstr "按下 Ctrl+Alt+H 显示用法。"
