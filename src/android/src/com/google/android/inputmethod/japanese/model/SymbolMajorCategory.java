@@ -45,6 +45,7 @@ public enum SymbolMajorCategory {
   NUMBER(
       R.id.category_selector_major_number,
       R.raw.symbol__major__number,
+      R.raw.symbol__major__number_selected,
       R.dimen.symbol_major_number_height,
       Collections.singletonList(SymbolMinorCategory.NUMBER),
       R.dimen.symbol_view_symbol_min_column_width,
@@ -52,6 +53,7 @@ public enum SymbolMajorCategory {
   SYMBOL(
       R.id.category_selector_major_symbol,
       R.raw.symbol__major__symbol,
+      R.raw.symbol__major__symbol_selected,
       R.dimen.symbol_major_symbol_height,
       Arrays.asList(
           SymbolMinorCategory.SYMBOL_HISTORY,
@@ -66,6 +68,7 @@ public enum SymbolMajorCategory {
   EMOTICON(
       R.id.category_selector_major_emoticon,
       R.raw.symbol__major__emoticon,
+      R.raw.symbol__major__emoticon_selected,
       R.dimen.symbol_major_emoticon_height,
       Arrays.asList(
           SymbolMinorCategory.EMOTICON_HISTORY,
@@ -80,6 +83,7 @@ public enum SymbolMajorCategory {
   EMOJI(
       R.id.category_selector_major_emoji,
       R.raw.symbol__major__emoji,
+      R.raw.symbol__major__emoji_selected,
       R.dimen.symbol_major_emoji_height,
       Arrays.asList(
           SymbolMinorCategory.EMOJI_HISTORY,
@@ -96,6 +100,7 @@ public enum SymbolMajorCategory {
   // All fields are invariant so access directly.
   public final int buttonResourceId;
   public final int buttonImageResourceId;
+  public final int buttonSelectedImageResourceId;
   public final int maxImageHeightResourceId;
   public final List<SymbolMinorCategory> minorCategories;
   public final int minColumnWidthResourceId;
@@ -105,6 +110,8 @@ public enum SymbolMajorCategory {
    * @param buttonResourceId the resource id (R.id.xxxx) of corresponding selector button.
    * @param buttonImageResourceId is the resource id (R.raw.xxx) of corresponding major
    *        category button image.
+   * @param buttonSelectedImageResourceId is the resource id (R.raw.xxx) of corresponding major
+   *        category button image for selected state.
    * @param minorCategories the minor categories which belong to this SymbolMajorCategory.
    *        {@code minorCategories.get(0)} is treated as default one.
    * @param minColumnWidthResourceId the resource id (R.dimen.xxxx) which represents
@@ -113,6 +120,7 @@ public enum SymbolMajorCategory {
   private SymbolMajorCategory(
       int buttonResourceId,
       int buttonImageResourceId,
+      int buttonSelectedImageResourceId,
       int maxImageHeightResourceId,
       List<SymbolMinorCategory> minorCategories,
       int minColumnWidthResourceId,
@@ -121,6 +129,7 @@ public enum SymbolMajorCategory {
     // because we cannot obtain them here (Context instance is needed).
     this.buttonResourceId = buttonResourceId;
     this.buttonImageResourceId = buttonImageResourceId;
+    this.buttonSelectedImageResourceId = buttonSelectedImageResourceId;
     this.maxImageHeightResourceId = maxImageHeightResourceId;
     this.minorCategories = Preconditions.checkNotNull(minorCategories);
     this.minColumnWidthResourceId = minColumnWidthResourceId;

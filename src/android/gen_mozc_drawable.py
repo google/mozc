@@ -54,7 +54,6 @@ from build_tools import util
 
 # State const values defined in android.R.attr.
 STATE_PRESSED = 0x010100a7
-STATE_SELECTED = 0x010100a1
 
 DRAWABLE_PICTURE = 1
 DRAWABLE_STATE_LIST = 2
@@ -1078,11 +1077,9 @@ def ConvertFiles(svg_paths, output_dir):
         continue
 
       # Filename hack to generate stateful .pic files.
-      if basename.endswith('_release') or basename.endswith('_selected'):
+      if basename.endswith('_release'):
         # 'XXX_release.svg' files will be processed with corresponding
         # '_center.svg' files. So just skip them.
-        # As similar to it, '_selected.svg' files will be processed with
-        # corresponding non-selected .svg files.
         continue
 
       logging.debug('Converting %s...', filename)
@@ -1096,13 +1093,6 @@ def ConvertFiles(svg_paths, output_dir):
         pic_file = os.path.join(output_dir, basename + '.pic')
         pic_data = converter.ConvertStateListDrawable(
             [([STATE_PRESSED], center_svg_file), ([], release_svg_file)])
-      elif os.path.exists(os.path.join(dirpath, basename + '_selected.svg')):
-        # Process '_selected.svg' file at the same time if necessary.
-        unselected_svg_file = os.path.join(dirpath, filename)
-        selected_svg_file = os.path.join(dirpath, basename + '_selected.svg')
-        pic_file = os.path.join(output_dir, basename + '.pic')
-        pic_data = converter.ConvertStateListDrawable(
-            [([STATE_SELECTED], selected_svg_file), ([], unselected_svg_file)])
       else:
         # Normal .svg file.
         svg_file = os.path.join(dirpath, filename)

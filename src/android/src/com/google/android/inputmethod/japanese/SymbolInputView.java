@@ -755,7 +755,9 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
               majorCategoryButtonDrawableFactory.createCenterButtonDrawable());
           break;
       }
-      view.setImageDrawable(skin.getDrawable(resources, majorCategory.buttonImageResourceId));
+      view.setImageDrawable(BackgroundDrawableFactory.createSelectableDrawable(
+          skin.getDrawable(resources, majorCategory.buttonSelectedImageResourceId),
+          Optional.of(skin.getDrawable(resources, majorCategory.buttonImageResourceId))));
       // Update the padding since setBackgroundDrawable() overwrites it.
       view.setMaxImageHeight(
           resources.getDimensionPixelSize(majorCategory.maxImageHeightResourceId));
@@ -850,18 +852,25 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     TabWidget tabWidget = getTabWidget();
     List<SymbolMinorCategory> minorCategoryList = currentMajorCategory.minorCategories;
     int definedTabSize = Math.min(minorCategoryList.size(), tabWidget.getChildCount());
+    Resources resources = getResources();
     for (int i = 0; i < definedTabSize; ++i) {
       MozcImageView view = MozcImageView.class.cast(tabWidget.getChildTabViewAt(i));
       SymbolMinorCategory symbolMinorCategory = minorCategoryList.get(i);
-      view.setRawId(symbolMinorCategory.drawableResourceId);
+      if (symbolMinorCategory.drawableResourceId != SymbolMinorCategory.INVALID_RESOURCE_ID
+          && symbolMinorCategory.selectedDrawableResourceId
+                 != SymbolMinorCategory.INVALID_RESOURCE_ID) {
+        view.setImageDrawable(BackgroundDrawableFactory.createSelectableDrawable(
+            skin.getDrawable(resources, symbolMinorCategory.selectedDrawableResourceId),
+            Optional.of(skin.getDrawable(resources, symbolMinorCategory.drawableResourceId))));
+      }
       if (symbolMinorCategory.maxImageHeightResourceId != SymbolMinorCategory.INVALID_RESOURCE_ID) {
         view.setMaxImageHeight(
-            getResources().getDimensionPixelSize(symbolMinorCategory.maxImageHeightResourceId));
+            resources.getDimensionPixelSize(symbolMinorCategory.maxImageHeightResourceId));
       }
       if (symbolMinorCategory.contentDescriptionResourceId
           != SymbolMinorCategory.INVALID_RESOURCE_ID) {
         view.setContentDescription(
-            getResources().getString(symbolMinorCategory.contentDescriptionResourceId));
+            resources.getString(symbolMinorCategory.contentDescriptionResourceId));
       }
     }
   }
