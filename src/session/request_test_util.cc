@@ -31,7 +31,7 @@
 
 #include "session/request_test_util.h"
 
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace commands {

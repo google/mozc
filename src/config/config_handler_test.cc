@@ -41,7 +41,7 @@
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 

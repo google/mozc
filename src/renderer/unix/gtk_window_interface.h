@@ -33,7 +33,7 @@
 #include <gtk/gtk.h>
 
 #include "base/coordinates.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 
 namespace mozc {
 namespace client {

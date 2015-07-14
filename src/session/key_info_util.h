@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "session/key_event_util.h"
+#include "composer/key_event_util.h"
 
 namespace mozc {
 namespace commands {

@@ -33,12 +33,11 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/singleton.h"
 #include "base/util.h"
-#include "config/config.pb.h"
+#include "composer/key_event_util.h"
 #include "config/config_handler.h"
-#include "session/commands.pb.h"
-#include "session/key_event_util.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace session {

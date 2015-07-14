@@ -32,7 +32,7 @@
 
 #include "base/flags.h"
 #include "dictionary/user_dictionary_importer.h"
-#include "dictionary/user_dictionary_storage.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);

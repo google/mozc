@@ -33,13 +33,13 @@
 #include <string>
 
 #include "base/system_util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
+#include "protocol/config.pb.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/base/public/gunit.h"
 

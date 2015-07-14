@@ -57,10 +57,10 @@
         'base/window_title_modifier.cc',
       ],
       'dependencies': [
-        '../dictionary/dictionary_base.gyp:user_dictionary',
         '../ipc/ipc.gyp:ipc',
         '../ipc/ipc.gyp:window_info_protocol',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:user_dictionary_storage_proto',
         'gen_base_files',
       ],
       'includes': [
@@ -371,7 +371,7 @@
         '../config/config.gyp:stats_config_util',
         '../handwriting/handwriting.gyp:handwriting_manager',
         '../handwriting/handwriting.gyp:zinnia_handwriting',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         'gen_character_pad_files',
         'gen_character_pad_cp932_data',
         'gen_character_pad_data',
@@ -384,7 +384,7 @@
         ['enable_cloud_handwriting==1', {
           'dependencies': [
             '../handwriting/handwriting.gyp:cloud_handwriting',
-            '../session/session_base.gyp:session_protocol',
+            '../protocol/protocol.gyp:commands_proto',
           ],
         }],
         ['use_libzinnia==1 and OS=="linux"', {
@@ -476,12 +476,12 @@
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../client/client.gyp:client',
+        '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../config/config.gyp:stats_config_util',
-        '../session/session_base.gyp:key_parser',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         '../session/session_base.gyp:keymap',
-        '../session/session_base.gyp:session_protocol',
         'gen_config_dialog_files',
       ],
       'includes': [
@@ -593,11 +593,11 @@
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../data_manager/data_manager.gyp:user_pos_manager',
-        '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:user_dictionary',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
+        '../protocol/protocol.gyp:user_dictionary_storage_proto',
         'gen_config_dialog_files',
         'gen_dictionary_tool_files',
       ],
@@ -650,10 +650,10 @@
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../data_manager/data_manager.gyp:user_pos_manager',
-        '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:user_dictionary',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:user_dictionary_storage_proto',
         'gen_word_register_dialog_files',
       ],
       'includes': [
@@ -751,7 +751,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'gen_post_install_dialog_files',
       ],
@@ -809,9 +809,9 @@
       ],
       'dependencies': [
         '../client/client.gyp:client',
-        '../config/config.gyp:config_protocol',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         'gen_set_default_dialog_files',
       ],
       'conditions': [
@@ -862,8 +862,8 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client',
+        '../protocol/protocol.gyp:commands_proto',
         '../renderer/renderer.gyp:renderer_client',
-        '../session/session_base.gyp:session_protocol',
       ],
     },
     {

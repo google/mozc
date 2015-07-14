@@ -32,11 +32,11 @@
 #include <string>
 
 #include "base/logging.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/config.pb.h"
 
 using mozc::dictionary::POSMatcher;
 

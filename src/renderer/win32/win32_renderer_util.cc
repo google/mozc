@@ -54,7 +54,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "base/win_util.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 
 namespace mozc {

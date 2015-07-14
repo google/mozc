@@ -38,7 +38,7 @@
 #include "base/util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/output_util.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"

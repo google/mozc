@@ -35,7 +35,7 @@
 
 #include "base/win_util.h"
 #include "client/client_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/key_info_util.h"
 #include "win32/base/config_snapshot.h"
 #include "win32/base/deleter.h"

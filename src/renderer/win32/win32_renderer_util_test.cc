@@ -40,7 +40,7 @@
 #include "base/mmap.h"
 #include "base/util.h"
 #include "base/win_font_test_helper.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "testing/base/public/gunit.h"

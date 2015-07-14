@@ -32,11 +32,11 @@
 #include <string>
 
 #include "base/system_util.h"
-#include "config/config.pb.h"
+#include "composer/key_parser.h"
 #include "config/config_handler.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
-#include "session/key_parser.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 

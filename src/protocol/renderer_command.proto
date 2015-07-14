@@ -35,7 +35,7 @@
 
 syntax = "proto2";
 
-import "session/commands.proto";
+import "protocol/commands.proto";
 
 package mozc.commands;
 

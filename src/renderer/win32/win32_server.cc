@@ -35,7 +35,7 @@
 #include "base/port.h"
 #include "base/run_level.h"
 #include "base/util.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/window_manager.h"
 
 using std::unique_ptr;

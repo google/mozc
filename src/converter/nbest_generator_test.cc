@@ -35,7 +35,6 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/system_util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
 #include "converter/conversion_request.h"
@@ -54,6 +53,7 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "prediction/suggestion_filter.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

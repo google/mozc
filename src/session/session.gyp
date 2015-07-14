@@ -42,15 +42,15 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../converter/converter_base.gyp:converter_util',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
-        'session_base.gyp:key_parser',
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
-        'session_base.gyp:session_protocol',
         'session_base.gyp:session_usage_stats_util',
         'session_internal',
       ],
@@ -69,8 +69,8 @@
         '../base/base.gyp:base',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        'session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
       ],
     },
     {
@@ -83,15 +83,15 @@
       ],
       'dependencies': [
         '../client/client.gyp:client',
-        '../engine/engine.gyp:engine_factory',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:user_dictionary',
+        '../engine/engine.gyp:engine_factory',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
+        '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:generic_storage_manager',
-        'session_base.gyp:session_protocol',
       ],
       'conditions': [
         ['(target_platform=="NaCl" and _toolset=="target") or target_platform=="Android"', {
@@ -114,9 +114,9 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:stats_config_util',
+        '../protocol/protocol.gyp:state_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         '../usage_stats/usage_stats_base.gyp:usage_stats_protocol',
-        'session_base.gyp:session_protocol',
       ],
     },
     {
@@ -131,7 +131,7 @@
         # dependency list you will have to update Android's.
         '../base/base.gyp:base',
         '../usage_stats/usage_stats.gyp:usage_stats_uploader',
-        'session_base.gyp:session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
         'session_handler',
         'session_usage_observer',
       ],
@@ -144,10 +144,10 @@
         'random_keyevents_generator.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         'gen_session_stress_test_data#host',
         'session',
-        'session_base.gyp:session_protocol',
       ],
     },
     {

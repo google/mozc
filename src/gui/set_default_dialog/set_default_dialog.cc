@@ -37,8 +37,8 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 
 #ifdef OS_WIN
 #include "win32/base/migration_util.h"

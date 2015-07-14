@@ -32,7 +32,7 @@
 #include <unistd.h>
 
 #include "base/logging.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/unix/const.h"
 

@@ -32,7 +32,7 @@
 #include <string>
 
 #include "base/util.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"

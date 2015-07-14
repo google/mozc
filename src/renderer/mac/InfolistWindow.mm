@@ -35,8 +35,8 @@
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "client/client_interface.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/InfolistWindow.h"
-#include "session/commands.pb.h"
 
 using mozc::commands::Candidates;
 using mozc::commands::Output;

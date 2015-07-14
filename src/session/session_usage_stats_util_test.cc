@@ -29,8 +29,8 @@
 
 #include "session/session_usage_stats_util.h"
 
-#include "session/commands.pb.h"
-#include "session/key_parser.h"
+#include "protocol/commands.pb.h"
+#include "composer/key_parser.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"

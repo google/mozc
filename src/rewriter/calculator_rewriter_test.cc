@@ -34,7 +34,6 @@
 #include "base/logging.h"
 #include "base/scoped_ptr.h"
 #include "base/system_util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
@@ -42,9 +41,10 @@
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
-#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

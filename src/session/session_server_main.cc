@@ -30,8 +30,8 @@
 // Mocked Session Server runner used just for testing.
 #include <stdio.h>
 
+#include "protocol/commands.pb.h"
 #include "session/session_server.h"
-#include "session/commands.pb.h"
 
 static const int kMaxBufSize = 1024;
 

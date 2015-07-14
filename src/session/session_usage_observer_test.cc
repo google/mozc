@@ -39,7 +39,7 @@
 #include "base/util.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"

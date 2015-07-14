@@ -41,7 +41,6 @@
 #include "base/stl_util.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -49,6 +48,7 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "protocol/config.pb.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {

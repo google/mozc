@@ -68,10 +68,10 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:session_protocol',
-        'renderer_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
+        '../protocol/protocol.gyp:renderer_proto',
       ],
     },
     {
@@ -85,8 +85,8 @@
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:session_protocol',
-        'renderer_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:renderer_proto',
       ],
     },
     {
@@ -154,7 +154,7 @@
         'renderer_style_handler.cc',
       ],
       'dependencies': [
-        'renderer_protocol',
+        '../protocol/protocol.gyp:renderer_proto',
       ],
       'variables': {
         'test_size': 'small',
@@ -167,43 +167,13 @@
         'renderer_style_handler_test.cc',
       ],
       'dependencies': [
+        '../protocol/protocol.gyp:renderer_proto',
         '../testing/testing.gyp:gtest_main',
-        'renderer_protocol',
         'renderer_style_handler',
       ],
       'variables': {
         'test_size': 'small',
       },
-    },
-    {
-      'target_name': 'genproto_renderer',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        'renderer_command.proto',
-        'renderer_style.proto',
-      ],
-      'includes': [
-        '../protobuf/genproto.gypi',
-      ],
-    },
-    {
-      'target_name': 'renderer_protocol',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/renderer_command.pb.cc',
-        '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
-      ],
-      'dependencies': [
-        '../config/config.gyp:config_protocol',
-        '../protobuf/protobuf.gyp:protobuf',
-        '../session/session_base.gyp:session_protocol',
-        'genproto_renderer#host'
-      ],
-      'export_dependent_settings': [
-        'genproto_renderer#host',
-      ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
@@ -260,9 +230,9 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            '../config/config.gyp:config_protocol',
-            '../session/session_base.gyp:session_protocol',
-            'renderer_protocol',
+            '../protocol/protocol.gyp:commands_proto',
+            '../protocol/protocol.gyp:config_proto',
+            '../protocol/protocol.gyp:renderer_proto',
           ],
         },
         {
@@ -288,9 +258,9 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            '../config/config.gyp:config_protocol',
-            '../session/session_base.gyp:session_protocol',
-            'renderer_protocol',
+            '../protocol/protocol.gyp:commands_proto',
+            '../protocol/protocol.gyp:config_proto',
+            '../protocol/protocol.gyp:renderer_proto',
             'win32_font_util',
           ],
         },
@@ -387,7 +357,7 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            'renderer_protocol',
+            '../protocol/protocol.gyp:renderer_proto',
             'renderer_style_handler',
           ],
         },
@@ -409,12 +379,12 @@
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',
-            '../config/config.gyp:config_protocol',
             '../config/config.gyp:stats_config_util',
             '../ipc/ipc.gyp:ipc',
-            '../session/session_base.gyp:session_protocol',
+            '../protocol/protocol.gyp:commands_proto',
+            '../protocol/protocol.gyp:config_proto',
+            '../protocol/protocol.gyp:renderer_proto',
             'gen_mozc_renderer_resource_header#host',
-            'renderer_protocol',
             'renderer_server',
             'renderer_style_handler',
             'table_layout',
@@ -437,8 +407,8 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            'renderer.gyp:renderer_client',
-            'renderer.gyp:renderer_protocol',
+            '../protocol/protocol.gyp:renderer_proto',
+            'renderer_client',
           ],
         },
       ],
@@ -470,12 +440,12 @@
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',
-            '../config/config.gyp:config_protocol',
             '../config/config.gyp:stats_config_util',
             '../ipc/ipc.gyp:ipc',
-            '../session/session_base.gyp:session_protocol',
+            '../protocol/protocol.gyp:commands_proto',
+            '../protocol/protocol.gyp:config_proto',
+            '../protocol/protocol.gyp:renderer_proto',
             'gen_renderer_files#host',
-            'renderer_protocol',
             'renderer_server',
             'renderer_style_handler',
             'table_layout',
@@ -576,11 +546,10 @@
           'dependencies': [
             '../base/base.gyp:base',
             '../client/client.gyp:client',
-            '../config/config.gyp:genproto_config#host',
             '../config/config.gyp:stats_config_util',
             '../ipc/ipc.gyp:ipc',
-            '../session/session_base.gyp:genproto_session#host',
-            'renderer_protocol',
+            '../protocol/protocol.gyp:genproto_config_proto#host',
+            '../protocol/protocol.gyp:renderer_proto',
             'gtk2_build_environment',
             'renderer_server',
             'renderer_style_handler',

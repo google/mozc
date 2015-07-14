@@ -30,9 +30,9 @@
 #import "renderer/mac/CandidateView.h"
 
 #include "base/coordinates.h"
+#include "protocol/commands.pb.h"
 #include "renderer/table_layout.h"
 #include "renderer/window_util.h"
-#include "session/commands.pb.h"
 #include "renderer/mac/CandidateController.h"
 #include "renderer/mac/CandidateWindow.h"
 #include "renderer/mac/InfolistWindow.h"

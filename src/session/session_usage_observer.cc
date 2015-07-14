@@ -39,14 +39,14 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/scheduler.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
-#include "session/commands.pb.h"
-#include "session/state.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/state.pb.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
 
+using mozc::protocol::SessionState;
 using mozc::usage_stats::UsageStats;
 
 namespace mozc {

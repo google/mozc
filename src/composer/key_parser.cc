@@ -29,7 +29,7 @@
 
 // Parser of key events
 
-#include "session/key_parser.h"
+#include "composer/key_parser.h"
 
 #include <map>
 #include <set>
@@ -40,7 +40,7 @@
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 using commands::KeyEvent;

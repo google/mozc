@@ -35,7 +35,7 @@
 #include "google/protobuf/stubs/common.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/base/immdev.h"
 #include "win32/base/string_util.h"
 #include "win32/ime/ime_message_queue.h"

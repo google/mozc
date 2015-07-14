@@ -36,7 +36,7 @@
 #include "base/scoped_ptr.h"
 #include "composer/composition_interface.h"
 #include "composer/table.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "transliteration/transliteration.h"
 
 DEFINE_string(table, "system://romanji-hiragana.tsv",

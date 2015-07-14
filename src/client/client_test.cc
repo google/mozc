@@ -38,7 +38,7 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc_mock.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

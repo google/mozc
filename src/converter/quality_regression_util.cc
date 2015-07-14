@@ -44,7 +44,7 @@
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace quality_regression {

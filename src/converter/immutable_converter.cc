@@ -42,7 +42,6 @@
 #include "base/stl_util.h"
 #include "base/string_piece.h"
 #include "base/util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
 #include "converter/conversion_request.h"
@@ -59,7 +58,8 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;

@@ -44,8 +44,8 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
-#include "renderer/renderer_command.pb.h"
 #include "session/random_keyevents_generator.h"
 
 // TODO(taku)

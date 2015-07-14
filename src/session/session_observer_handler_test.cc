@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
 #include "testing/base/public/gunit.h"

@@ -31,7 +31,7 @@
 
 #include <unistd.h>  // for getpid()
 
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_mock.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"

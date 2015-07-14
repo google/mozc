@@ -27,79 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#include "win32/base/input_dll.h"
 
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "win32/base/input_dll.h"
 
-namespace mozc {
-namespace win32 {
+namespace {
 
-class InputDllTest : public testing::Test {
- public:
- protected:
-  InputDllTest() {}
-
-  virtual ~InputDllTest() {}
-
-  virtual void SetUp() {
-    // TODO(yukawa): Implement injection mechanism to ::LoadLibrary API
-    // TODO(yukawa): Inject custom LoadLibrary to make this test independent
-    //   of test environment.
-  }
-
-  virtual void TearDown() {
-    // TODO(yukawa): Implement injection mechanism to ::LoadLibrary API
-    // TODO(yukawa): Remove custom LoadLibrary injection not to affect
-    //   subsequent tests.
-  }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(InputDllTest);
-};
-
-// Currently this test is not independent of test environment.
-// TODO(yukawa): Implement injection mechanism to ::LoadLibrary API to make
-//   the code flow predictable.
-TEST_F(InputDllTest, EnsureInitializedTest) {
-  if (InputDll::EnsureInitialized()) {
-    // Check internal status.
-    EXPECT_FALSE(InputDll::not_found_);
-    // gtest will cause compilation error if we use <volatile HMODULE> here.
-    // Use <void *> instead.
-    EXPECT_NE(nullptr, static_cast<void *>(InputDll::module_));
-
-    // Actually input.dll exists on Windows XP.  However, it does not always
-    // mean that input.dll exports the functions in which we are interested.
-
-    // Assume that the following funcsions are available on Vista and later.
-    EXPECT_NE(nullptr, InputDll::enum_enabled_layout_or_tip());
-    EXPECT_NE(nullptr, InputDll::enum_layout_or_tip_for_setup());
-    EXPECT_NE(nullptr, InputDll::install_layout_or_tip());
-    EXPECT_NE(nullptr, InputDll::install_layout_or_tip_user_reg());
-    EXPECT_NE(nullptr, InputDll::set_default_layout_or_tip());
-
-    // Check the consistency of the retuls of second call.
-    EXPECT_TRUE(InputDll::EnsureInitialized());
-    return;
-  }
-
-  // Check internal status.
-  EXPECT_TRUE(InputDll::not_found_);
-  // gtest will cause compilation error if we use <volatile HMODULE> here.
-  // Use <void *> instead.
-  EXPECT_EQ(nullptr, static_cast<void *>(InputDll::module_));
-
-  EXPECT_EQ(nullptr, InputDll::enum_enabled_layout_or_tip());
-  EXPECT_EQ(nullptr, InputDll::enum_layout_or_tip_for_setup());
-  EXPECT_EQ(nullptr, InputDll::install_layout_or_tip());
-  EXPECT_EQ(nullptr, InputDll::install_layout_or_tip_user_reg());
-  EXPECT_EQ(nullptr, InputDll::set_default_layout_or_tip());
-
-  // Check the consistency of the retuls of second call.
-  EXPECT_FALSE(InputDll::EnsureInitialized());
+TEST(InputDllTest, EnumEnabledLayoutOrTipTest) {
+  const UINT num_element = ::EnumEnabledLayoutOrTip(
+      nullptr, nullptr, nullptr, nullptr, 0);
+  EXPECT_LT(0, num_element);
 }
 
-}  // namespace win32
-}  // namespace mozc
+}  // namespace

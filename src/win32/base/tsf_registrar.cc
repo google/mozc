@@ -312,18 +312,11 @@ HRESULT TsfRegistrar::GetProfileEnabled(BOOL *enabled) {
   }
   *enabled = FALSE;
 
-  // Check if input.dll is exporting EnumEnabledLayoutOrTIP API, which is the
-  // best way to enumerate enabled profiles for the current user.
-  if (InputDll::EnsureInitialized() ||
-      (InputDll::enum_enabled_layout_or_tip() == nullptr)) {
-    return E_FAIL;
-  }
-
-  const int num_profiles = InputDll::enum_enabled_layout_or_tip()(
+  const int num_profiles = ::EnumEnabledLayoutOrTip(
       nullptr, nullptr, nullptr, nullptr, 0);
   unique_ptr<LAYOUTORTIPPROFILE[]> profiles(
       new LAYOUTORTIPPROFILE[num_profiles]);
-  const int num_copied = InputDll::enum_enabled_layout_or_tip()(
+  const int num_copied = ::EnumEnabledLayoutOrTip(
       nullptr, nullptr, nullptr, profiles.get(), num_profiles);
 
   for (size_t i = 0; i < num_copied; ++i) {

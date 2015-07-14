@@ -34,13 +34,13 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "usage_stats/usage_stats.h"
 
 using mozc::dictionary::DictionaryInterface;

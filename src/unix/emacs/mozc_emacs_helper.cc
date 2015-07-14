@@ -39,7 +39,7 @@
 #include "base/version.h"
 #include "client/client.h"
 #include "config/config_handler.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "unix/emacs/client_pool.h"
 
 DEFINE_bool(suppress_stderr, false,

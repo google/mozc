@@ -31,7 +31,7 @@
 
 #include "base/run_level.h"
 #include "client/client_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/base/config_snapshot.h"
 #include "win32/base/deleter.h"
 #include "win32/base/focus_hierarchy_observer.h"

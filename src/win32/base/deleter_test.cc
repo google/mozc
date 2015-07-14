@@ -30,7 +30,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/base/deleter.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"

@@ -42,7 +42,7 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/win_util.h"
-#include "renderer/renderer_style.pb.h"
+#include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 
 namespace mozc {

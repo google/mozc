@@ -30,7 +30,7 @@
 #ifndef MOZC_UNIX_IBUS_MOZC_ENGINE_PROPERTY_H_
 #define MOZC_UNIX_IBUS_MOZC_ENGINE_PROPERTY_H_
 
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace ibus {

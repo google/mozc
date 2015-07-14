@@ -31,8 +31,8 @@
 
 #include "base/port.h"
 #include "base/singleton.h"
-#include "config/config.pb.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 #include "testing/base/public/gunit.h"
 

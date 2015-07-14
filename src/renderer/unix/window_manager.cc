@@ -30,7 +30,7 @@
 #include "renderer/unix/window_manager.h"
 
 #include "base/logging.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/unix/gtk_wrapper.h"
 #include "renderer/window_util.h"
 

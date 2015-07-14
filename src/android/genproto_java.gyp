@@ -140,7 +140,7 @@
       'type': 'none',
       'variables': {
         'proto_files': [
-          '../config/config.proto',
+          '../protocol/config.proto',
         ],
       },
       'actions': [
@@ -176,7 +176,7 @@
       'type': 'none',
       'variables': {
         'proto_files': [
-          '../dictionary/user_dictionary_storage.proto',
+          '../protocol/user_dictionary_storage.proto',
         ],
       },
       'actions': [
@@ -213,8 +213,8 @@
       'type': 'none',
       'variables': {
         'proto_files': [
-          '../session/candidates.proto',
-          '../session/commands.proto',
+          '../protocol/candidates.proto',
+          '../protocol/commands.proto',
         ],
       },
       'actions': [

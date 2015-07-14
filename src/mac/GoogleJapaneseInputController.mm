@@ -51,10 +51,10 @@
 #include "base/process.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "config/config.pb.h"
 #include "ipc/ipc.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"
-#include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
 
 using mozc::commands::Candidates;
@@ -608,7 +608,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
       if (selectedRange.location != NSNotFound ||
           selectedRange.length != NSNotFound ||
           selectedRange.location + deletion_range.offset() > 0) {
-        // The offset is a negative value.  See session/commands.proto for
+        // The offset is a negative value.  See protocol/commands.proto for
         // the details.
         selectedRange.location += deletion_range.offset();
         selectedRange.length += deletion_range.length();

@@ -38,8 +38,8 @@
 
 #include <unordered_map>
 
-#include "renderer/renderer_command.pb.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "win32/base/input_state.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"

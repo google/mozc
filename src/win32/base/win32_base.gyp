@@ -48,19 +48,37 @@
       #     TSF Mozc is completed.
       'targets': [
         {
+          'target_name': 'input_dll_import_lib',
+          'type': 'shared_library',
+          'sources': [
+            'input_dll.cc',
+            'input_dll.def',
+          ],
+          'dependencies': [
+            '../../base/base.gyp:base',
+          ],
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalOptions': [
+                '/ignore:4070',
+              ],
+            },
+          },
+        },
+        {
           'target_name': 'imframework_util',
           'type': 'static_library',
           'sources': [
             'imm_reconvert_string.cc',
             'imm_registrar.cc',
             'imm_util.cc',
-            'input_dll.cc',
             'keyboard_layout_id.cc',
             'tsf_profile.cc',
             'tsf_registrar.cc',
           ],
           'dependencies': [
             '../../base/base.gyp:base',
+            'input_dll_import_lib',
           ],
         },
         {
@@ -73,7 +91,7 @@
           ],
           'dependencies': [
             '../../base/base.gyp:base',
-            '../../session/session_base.gyp:session_protocol',
+            '../../protocol/protocol.gyp:commands_proto',
             '../../testing/testing.gyp:gtest_main',
             'imframework_util',
           ],
@@ -103,9 +121,9 @@
           'dependencies': [
             '../../base/base.gyp:base',
             '../../config/config.gyp:config_handler',
-            '../../config/config.gyp:config_protocol',
+            '../../protocol/protocol.gyp:commands_proto',
+            '../../protocol/protocol.gyp:config_proto',
             '../../session/session_base.gyp:key_info_util',
-            '../../session/session_base.gyp:session_protocol',
             '../../session/session_base.gyp:output_util',
           ],
           'link_settings': {
@@ -163,7 +181,7 @@
           ],
           'dependencies': [
             '../../base/base.gyp:base',
-            '../../session/session_base.gyp:session_protocol',
+            '../../protocol/protocol.gyp:commands_proto',
             '../../testing/testing.gyp:gtest_main',
             'ime_base',
           ],

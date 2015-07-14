@@ -37,7 +37,7 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "client/client_interface.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 

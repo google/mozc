@@ -34,9 +34,9 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/mmap.h"
 #include "base/port.h"
 #include "base/string_piece.h"
-#include "base/system_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
@@ -80,7 +80,7 @@ ValueDictionary *ValueDictionary::CreateValueDictionaryFromImage(
   // has the priviledge to mlock.
   // Note that we don't munlock the space because it's always better to keep
   // the singleton system dictionary paged in as long as the process runs.
-  SystemUtil::MaybeMLock(ptr, len);
+  Mmap::MaybeMLock(ptr, len);
   scoped_ptr<ValueDictionary> instance(new ValueDictionary(pos_matcher));
   DCHECK(instance.get());
   if (!instance->dictionary_file_->OpenFromImage(ptr, len)) {

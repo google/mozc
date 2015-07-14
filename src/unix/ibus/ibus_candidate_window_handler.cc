@@ -33,7 +33,7 @@
 #include <cstdlib>
 
 #include "base/logging.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "unix/ibus/mozc_engine_property.h"
 
 namespace mozc {

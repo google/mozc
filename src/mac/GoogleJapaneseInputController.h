@@ -31,7 +31,7 @@
 #import "mac/common.h"
 
 // For mozc::commands::CompositionMode
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 
 @class NSMenu;
 @class KeyCodeMap;

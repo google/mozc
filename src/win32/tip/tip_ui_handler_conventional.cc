@@ -38,7 +38,7 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_renderer_client.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/indicator_visibility_tracker.h"

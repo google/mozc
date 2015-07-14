@@ -31,7 +31,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/singleton.h"
 #include "converter/boundary_struct.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary_token.h"

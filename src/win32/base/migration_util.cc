@@ -134,18 +134,12 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
     return true;
   }
 
-  if (!InputDll::EnsureInitialized()) {
-    return false;
-  }
-  if (InputDll::enum_enabled_layout_or_tip() == nullptr) {
-    return false;
-  }
-  const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
+  const UINT num_element = ::EnumEnabledLayoutOrTip(
       nullptr, nullptr, nullptr, nullptr, 0);
 
   unique_ptr<LAYOUTORTIPPROFILE[]> buffer(new LAYOUTORTIPPROFILE[num_element]);
 
-  const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
+  const UINT num_copied = ::EnumEnabledLayoutOrTip(
       nullptr, nullptr, nullptr, buffer.get(), num_element);
 
   // Look up IMM32 Mozc from |buffer|.
@@ -202,7 +196,7 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
       }
 
       const wstring &profile = wstring(L"0x0411:") + clsid + profile_id;
-      if (!InputDll::set_default_layout_or_tip()(profile.c_str(), 0)) {
+      if (!::SetDefaultLayoutOrTip(profile.c_str(), 0)) {
         DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
         return false;
       }
@@ -216,7 +210,7 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
                                    klid.ToString().c_str()))) {
         return false;
       }
-      if (!InputDll::install_layout_or_tip()(profile_str, ILOT_DISABLED)) {
+      if (!::InstallLayoutOrTip(profile_str, ILOT_DISABLED)) {
         DLOG(ERROR) << "InstallLayoutOrTip failed";
         return false;
       }

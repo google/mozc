@@ -32,7 +32,7 @@
 #include <memory>
 #include <set>
 
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

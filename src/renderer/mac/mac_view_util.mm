@@ -28,8 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/coordinates.h"
+#include "protocol/renderer_style.pb.h"
 #include "renderer/mac/mac_view_util.h"
-#include "renderer/renderer_style.pb.h"
 
 namespace mozc {
 namespace renderer {

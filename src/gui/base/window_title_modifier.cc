@@ -32,7 +32,6 @@
 #include <QtGui/QApplication>
 #include <QtGui/QWidget>
 
-#include "base/singleton.h"
 #include "base/version.h"
 #include "gui/base/window_title_modifier.h"
 

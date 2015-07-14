@@ -42,15 +42,15 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         '../engine/engine.gyp:engine_factory',
         '../engine/engine.gyp:mock_data_engine_factory',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         '../testing/testing.gyp:testing',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session',
         'session.gyp:session_handler',
         'session.gyp:session_usage_observer',
-        'session_base.gyp:session_protocol',
       ],
     },
     {
@@ -161,6 +161,7 @@
         '../client/client.gyp:client_mock',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:stats_config_util',
+        '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
@@ -169,7 +170,6 @@
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
         'session_base.gyp:output_util',
-        'session_base.gyp:session_protocol',
         'session_base.gyp:session_usage_stats_util',
       ],
       'conditions': [
@@ -188,18 +188,14 @@
       'type': 'executable',
       'sources': [
         'ime_switch_util_test.cc',
-        'key_event_util_test.cc',
         'key_info_util_test.cc',
-        'key_parser_test.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
+        '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
         'session_base.gyp:ime_switch_util',
-        'session_base.gyp:key_event_util',
-        'session_base.gyp:key_parser',
-        'session_base.gyp:session_protocol',
       ],
       'variables': {
         'test_size': 'small',
@@ -218,13 +214,13 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
         '../converter/converter_base.gyp:converter_mock',
         '../engine/engine.gyp:mock_converter_engine',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:testing_util',
         'session.gyp:session',
-        'session_base.gyp:session_protocol',
       ],
       'variables': {
         'test_size': 'small',
@@ -255,9 +251,9 @@
         'random_keyevents_generator_test.cc',
       ],
       'dependencies': [
+        '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:random_keyevents_generator',
-        'session_base.gyp:session_protocol',
       ],
       'variables': {
         'test_size': 'large',
@@ -318,11 +314,11 @@
         '../base/base.gyp:base',
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
+        '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session_handler',
         'session_base.gyp:request_test_util',
-        'session_base.gyp:session_protocol',
         'session_handler_test_util',
       ],
       'variables': {

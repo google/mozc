@@ -46,7 +46,7 @@
 
 #include "base/singleton.h"
 #include "client/client_interface.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "win32/base/immdev.h"
 #include "win32/base/indicator_visibility_tracker.h"

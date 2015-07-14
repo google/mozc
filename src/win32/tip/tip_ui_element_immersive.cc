@@ -43,11 +43,11 @@
 #include <unordered_map>
 
 #include "base/util.h"
+#include "protocol/commands.pb.h"
 #include "renderer/table_layout.h"
 #include "renderer/win32/text_renderer.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "renderer/window_util.h"
-#include "session/commands.pb.h"
 #include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session.h"

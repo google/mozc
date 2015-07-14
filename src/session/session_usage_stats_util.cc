@@ -36,7 +36,7 @@
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "usage_stats/usage_stats.h"
 
 using mozc::commands::Command;

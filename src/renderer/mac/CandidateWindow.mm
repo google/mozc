@@ -34,8 +34,8 @@
 
 #include "base/logging.h"
 #include "base/coordinates.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/CandidateWindow.h"
-#include "session/commands.pb.h"
 
 using mozc::commands::Candidates;
 

@@ -41,7 +41,7 @@
 #include <unordered_map>
 
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_text_service.h"

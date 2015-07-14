@@ -43,7 +43,7 @@
 #include "base/util.h"
 #include "client/client.h"
 #include "config/config_handler.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 
 DEFINE_string(server_path, "", "specify server path");

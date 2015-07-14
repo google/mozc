@@ -38,7 +38,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "gui/base/table_util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace gui {

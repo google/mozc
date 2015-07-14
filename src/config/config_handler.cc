@@ -42,7 +42,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace config {

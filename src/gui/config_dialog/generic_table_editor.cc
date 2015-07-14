@@ -40,7 +40,7 @@
 #include <vector>
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace gui {

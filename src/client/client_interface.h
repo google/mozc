@@ -34,7 +34,7 @@
 
 #include <string>
 #include "base/port.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 

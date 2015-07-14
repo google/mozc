@@ -32,11 +32,11 @@
 #include <string>
 
 #include "base/system_util.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
-#include "config/config_handler.h"
-#include "config/config.pb.h"
 
 DECLARE_string(test_tmpdir);
 

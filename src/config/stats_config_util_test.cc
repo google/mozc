@@ -40,7 +40,7 @@
 
 #ifdef OS_ANDROID
 #include "config/config_handler.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 
 DECLARE_string(test_tmpdir);
 #endif  // OS_ANDROID

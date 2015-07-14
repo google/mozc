@@ -288,7 +288,7 @@ Performed_Conversion_InputModeHalfAlphanumeric
 Performed_Conversion_ReportBug
 Performed_Conversion_DeleteSelectedCandidate
 
-# The count of some SessionCommands defined in session/commands.proto
+# The count of some SessionCommands defined in protocol/commands.proto
 SendCommand_Revert
 SendCommand_Submit
 SendCommand_SelectCandidate

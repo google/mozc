@@ -34,10 +34,10 @@
 
 #include "base/flags.h"
 #include "base/logging.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 DECLARE_bool(enable_expansion_for_dictionary_predictor);
 DECLARE_bool(enable_expansion_for_user_history_predictor);

@@ -33,7 +33,7 @@
 #include <map>
 
 #include "base/freelist.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace keymap {

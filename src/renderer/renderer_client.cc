@@ -43,7 +43,7 @@
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
-#include "renderer/renderer_command.pb.h"
+#include "protocol/renderer_command.pb.h"
 
 #ifdef OS_MACOSX
 #include "base/mac_util.h"

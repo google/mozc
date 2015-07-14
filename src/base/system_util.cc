@@ -1072,25 +1072,4 @@ bool SystemUtil::IsLittleEndian() {
 #endif  // OS_WIN
 }
 
-int SystemUtil::MaybeMLock(const void *addr, size_t len) {
-  // TODO(yukawa): Integrate mozc_cache service.
-#if defined(OS_WIN) || defined(OS_ANDROID) || defined(__native_client__)
-  return -1;
-#else  // defined(OS_WIN) || defined(OS_ANDROID) ||
-       // defined(__native_client__)
-  return mlock(addr, len);
-#endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
-        // defined(__native_client__)
-}
-
-int SystemUtil::MaybeMUnlock(const void *addr, size_t len) {
-#if defined(OS_WIN) || defined(OS_ANDROID) || defined(__native_client__)
-  return -1;
-#else  // defined(OS_WIN) || defined(OS_ANDROID) ||
-       // defined(__native_client__)
-  return munlock(addr, len);
-#endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
-        // defined(__native_client__)
-}
-
 }  // namespace mozc

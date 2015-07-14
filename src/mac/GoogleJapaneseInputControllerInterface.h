@@ -29,7 +29,7 @@
 
 @class NSURL;
 
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 @interface GoogleJapaneseInputController ()
 // Updates |composedString_| from the result of a key event and put

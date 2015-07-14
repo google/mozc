@@ -64,7 +64,7 @@
 #include <string>
 #include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "dictionary/user_dictionary_storage.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 

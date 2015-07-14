@@ -70,20 +70,12 @@ const wchar_t kCUASValueName[] = L"CUAS";
 const uint32 kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
 
 bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
-  if (!InputDll::EnsureInitialized()) {
-    return false;
-  }
-
-  if (InputDll::enum_enabled_layout_or_tip() == nullptr) {
-    return false;
-  }
-
-  const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
+  const UINT num_element = ::EnumEnabledLayoutOrTip(
       nullptr, nullptr, nullptr, nullptr, 0);
 
   unique_ptr<LAYOUTORTIPPROFILE[]> buffer(new LAYOUTORTIPPROFILE[num_element]);
 
-  const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
+  const UINT num_copied =::EnumEnabledLayoutOrTip(
       nullptr, nullptr, nullptr, buffer.get(), num_element);
 
   for (size_t i = 0; i < num_copied; ++i) {
@@ -140,12 +132,6 @@ bool IsDefaultWin8() {
 }
 
 bool SetDefaultWin8() {
-  if (!InputDll::EnsureInitialized()) {
-    return false;
-  }
-  if (InputDll::set_default_layout_or_tip() == nullptr) {
-    return false;
-  }
   wchar_t clsid[64] = {};
   if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), clsid,
                          arraysize(clsid))) {
@@ -158,11 +144,11 @@ bool SetDefaultWin8() {
   }
 
   const wstring &profile = wstring(L"0x0411:") + clsid + profile_id;
-  if (!InputDll::install_layout_or_tip()(profile.c_str(), 0)) {
+  if (!::InstallLayoutOrTip(profile.c_str(), 0)) {
     DLOG(ERROR) << "InstallLayoutOrTip failed";
     return false;
   }
-  if (!InputDll::set_default_layout_or_tip()(profile.c_str(), 0)) {
+  if (!::SetDefaultLayoutOrTip(profile.c_str(), 0)) {
     DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
     return false;
   }
@@ -262,29 +248,10 @@ bool ImeUtil::SetDefault() {
     return false;
   }
 
-  if (InputDll::EnsureInitialized() &&
-      InputDll::set_default_layout_or_tip() != nullptr) {
-    // In most cases, we can use this method on Vista or later.
-    const wstring &profile_list = L"0x0411:0x" + mozc_klid.ToString();
-    if (!InputDll::set_default_layout_or_tip()(profile_list.c_str(), 0)) {
-      DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
-      return false;
-    }
-  } else {
-    // We cannot use const HKL because |&mozc_hkl| will be cast into PVOID.
-    HKL hkl = ::LoadKeyboardLayout(mozc_klid.ToString().c_str(), KLF_ACTIVATE);
-    if (0 == ::SystemParametersInfo(SPI_SETDEFAULTINPUTLANG,
-                                    0,
-                                    &hkl,
-                                    SPIF_SENDCHANGE)) {
-      LOG(ERROR) << "SystemParameterInfo failed: " << GetLastError();
-      return false;
-    }
-
-    if (S_OK != ImmRegistrar::MovePreloadValueToTop(mozc_klid)) {
-      LOG(ERROR) << "MovePreloadValueToTop failed";
-      return false;
-    }
+  const wstring &profile_list = L"0x0411:0x" + mozc_klid.ToString();
+  if (!::SetDefaultLayoutOrTip(profile_list.c_str(), 0)) {
+    DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
+    return false;
   }
 
   if (!ActivateForCurrentSession()) {

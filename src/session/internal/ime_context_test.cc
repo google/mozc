@@ -37,7 +37,7 @@
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "engine/mock_converter_engine.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/session_converter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"

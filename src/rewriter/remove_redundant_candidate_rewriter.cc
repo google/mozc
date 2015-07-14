@@ -31,7 +31,7 @@
 
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 

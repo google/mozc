@@ -39,7 +39,7 @@
 #include "engine/engine_factory.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"

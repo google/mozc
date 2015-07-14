@@ -37,7 +37,7 @@
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/system_util.h"
-#include "dictionary/user_dictionary_storage.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
 

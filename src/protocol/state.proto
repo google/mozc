@@ -27,32 +27,40 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Parser of key events
+// Protocol messages for session state
+syntax = "proto2";
 
-#ifndef MOZC_SESSION_KEY_PARSER_H_
-#define MOZC_SESSION_KEY_PARSER_H_
+import "protocol/candidates.proto";
+import "protocol/commands.proto";
 
-#include <string>
-#include <vector>
+package mozc.protocol;
 
-#include "base/port.h"
+message SessionState {
+  // session id
+  required uint64 id = 1;
+  // session created time
+  optional uint64 created_time = 2;
 
-namespace mozc {
-namespace commands {
-class KeyEvent;
-}
+  // whether session is just after commitment
+  optional bool committed = 3 [default = false];
 
-class KeyParser {
- public:
-  static bool ParseKey(const string &key_string,
-                       commands::KeyEvent *key_event);
-  static bool ParseKeyVector(const vector<string> &keys,
-                             commands::KeyEvent *key_event);
+  optional uint64 start_preedit_time = 10;
+  optional uint64 start_conversion_window_time = 11;
+  optional uint64 start_prediction_window_time = 12;
+  optional uint64 start_suggestion_window_time = 13;
+  optional uint64 start_infolist_window_time = 14;
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(KeyParser);
+  // last preedit state
+  optional mozc.commands.Preedit preedit = 20;
+
+  // last candidates state
+  optional mozc.commands.Candidates candidates = 21;
+
+  // last candidates result
+  optional mozc.commands.Result result = 23;
+
+  // last request
+  optional mozc.commands.Request request = 24;
+
+  optional mozc.commands.Context.InputFieldType input_field_type = 25;
 };
-
-}  // namespace mozc
-
-#endif  // MOZC_SESSION_KEY_PARSER_H_

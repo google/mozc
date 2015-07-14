@@ -54,7 +54,7 @@
 
 #if defined(OS_ANDROID) || defined(__native_client__)
 #include "config/config_handler.h"
-#include "config/config.pb.h"
+#include "protocol/config.pb.h"
 #endif  // OS_ANDROID || __native_client__
 
 #include "base/file_util.h"

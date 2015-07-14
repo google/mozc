@@ -40,7 +40,7 @@
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 // For T13n normalize
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"

@@ -45,7 +45,6 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
 #include "converter/conversion_request.h"
@@ -60,7 +59,8 @@
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_data.h"
 #include "prediction/zero_query_number_data.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.

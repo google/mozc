@@ -42,12 +42,11 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
-#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 #include "usage_stats/usage_stats.h"
 

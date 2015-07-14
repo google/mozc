@@ -43,20 +43,8 @@
         'request_test_util.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:config_protocol',
-        'session_protocol',
-      ],
-    },
-    {
-      'target_name': 'key_parser',
-      'type': 'static_library',
-      'sources': [
-        'key_parser.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
-        'session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
       ],
     },
     {
@@ -67,11 +55,11 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../composer/composer.gyp:key_event_util',
+        '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        'key_event_util',
-        'key_parser',
-        'session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
       ],
     },
     {
@@ -82,9 +70,9 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         'keymap',
-        'session_protocol',
       ],
     },
     {
@@ -96,20 +84,9 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
         'key_info_util',
-        'session_protocol',
-      ],
-    },
-    {
-      'target_name': 'key_event_util',
-      'type': 'static_library',
-      'sources': [
-        'key_event_util.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'session_protocol',
       ],
     },
     {
@@ -121,12 +98,11 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../composer/composer.gyp:key_event_util',
+        '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        'key_event_util',
-        'key_parser',
+        '../protocol/protocol.gyp:config_proto',
         'keymap',
-        'session_protocol',
       ],
     },
     {
@@ -137,7 +113,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'session_protocol',
+        '../protocol/protocol.gyp:commands_proto',
       ],
     },
     {
@@ -149,8 +125,8 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../protobuf/protobuf.gyp:protobuf',
+        '../protocol/protocol.gyp:commands_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
-        'session_protocol',
       ],
     },
     {
@@ -162,45 +138,9 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../protocol/protocol.gyp:commands_proto',
         '../storage/storage.gyp:storage',
-        'session_protocol',
       ]
-    },
-    {
-      'target_name': 'genproto_session',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        'candidates.proto',
-        'commands.proto',
-        'state.proto',
-      ],
-      'includes': [
-        '../protobuf/genproto.gypi',
-      ],
-      'dependencies': [
-        '../config/config.gyp:genproto_config',
-        '../dictionary/dictionary_base.gyp:genproto_dictionary',
-      ],
-    },
-    {
-      'target_name': 'session_protocol',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/candidates.pb.cc',
-        '<(proto_out_dir)/<(relative_dir)/commands.pb.cc',
-        '<(proto_out_dir)/<(relative_dir)/state.pb.cc',
-      ],
-      'dependencies': [
-        '../config/config.gyp:config_protocol',
-        '../protobuf/protobuf.gyp:protobuf',
-        '../dictionary/dictionary_base.gyp:dictionary_protocol',
-        'genproto_session#host',
-      ],
-      'export_dependent_settings': [
-        'genproto_session#host',
-      ],
     },
   ],
 }

@@ -29,8 +29,8 @@
 
 // Utilities for commands::KeyEvent.
 
-#ifndef MOZC_SESSION_KEY_EVENT_UTIL_H_
-#define MOZC_SESSION_KEY_EVENT_UTIL_H_
+#ifndef MOZC_COMPOSER_KEY_EVENT_UTIL_H_
+#define MOZC_COMPOSER_KEY_EVENT_UTIL_H_
 
 #include "base/port.h"
 
@@ -98,4 +98,4 @@ class KeyEventUtil {
 
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_KEY_EVENT_UTIL_H_
+#endif  // MOZC_COMPOSER_KEY_EVENT_UTIL_H_

@@ -98,7 +98,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
-        '../../session/session_base.gyp:session_protocol',
+        '../../protocol/protocol.gyp:commands_proto',
         'ibus_build_environment',
       ],
     },
@@ -109,7 +109,7 @@
         'property_handler.cc',
       ],
       'dependencies': [
-        '../../session/session_base.gyp:session_protocol',
+        '../../protocol/protocol.gyp:commands_proto',
         'ibus_build_environment',
         'message_translator',
         'path_util',
@@ -149,8 +149,8 @@
       ],
       'dependencies': [
         '../../client/client.gyp:client',
+        '../../protocol/protocol.gyp:commands_proto',
         '../../session/session_base.gyp:ime_switch_util',
-        '../../session/session_base.gyp:session_protocol',
         'ibus_property_handler',
         'message_translator',
         'path_util',
@@ -217,8 +217,8 @@
         '../../base/base.gyp:base',
         '../../client/client.gyp:client',
         '../../client/client.gyp:client_mock',
-        '../../session/session_base.gyp:key_event_util',
-        '../../session/session_base.gyp:session_protocol',
+        '../../composer/composer.gyp:key_event_util',
+        '../../protocol/protocol.gyp:commands_proto',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
         'ibus_mozc_metadata',
@@ -250,8 +250,8 @@
             'gtk_candidate_window_handler.cc',
           ],
           'dependencies': [
+            '../../protocol/protocol.gyp:renderer_proto',
             '../../renderer/renderer.gyp:renderer_client',
-            '../../renderer/renderer.gyp:renderer_protocol',
             'ibus_build_environment',
           ],
         },

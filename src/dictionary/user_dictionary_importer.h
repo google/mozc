@@ -34,7 +34,7 @@
 
 #include "base/port.h"
 #include "base/string_piece.h"
-#include "dictionary/user_dictionary_storage.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 
