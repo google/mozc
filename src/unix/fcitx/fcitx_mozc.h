@@ -39,7 +39,7 @@
 
 #include "base/port.h"
 #include "base/run_level.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "client/client_interface.h"
 #include "mozc_connection.h"
 

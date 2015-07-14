@@ -35,8 +35,8 @@
 #include <memory>
 
 #include "base/port.h"
-#include "config/config.pb.h"
-#include "session/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "protocol/commands.pb.h"
 #include "unix/fcitx/fcitx_key_translator.h"
 
 namespace mozc {

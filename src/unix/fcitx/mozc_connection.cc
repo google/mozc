@@ -36,7 +36,7 @@
 #include "base/util.h"
 #include "client/client.h"
 #include "ipc/ipc.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/ime_switch_util.h"
 #include "unix/fcitx/fcitx_key_event_handler.h"
 #include "unix/fcitx/surrounding_text_util.h"

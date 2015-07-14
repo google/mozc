@@ -36,7 +36,7 @@
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include "unix/fcitx/fcitx_mozc.h"
 #include "unix/fcitx/surrounding_text_util.h"
 #include <fcitx/candidate.h>

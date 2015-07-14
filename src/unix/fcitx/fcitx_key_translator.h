@@ -38,7 +38,7 @@
 #include <fcitx-config/hotkey.h>
 
 #include "base/port.h"
-#include "session/commands.pb.h"
+#include "protocol/commands.pb.h"
 #include <fcitx/ime.h>
 
 namespace mozc {
