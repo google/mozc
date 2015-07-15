@@ -143,6 +143,7 @@
     <!-- Character size of keyboard, depending on the screen size. -->
     <dimen name="keyboard_godan_default_height">42dip</dimen>
     <dimen name="keyboard_twelvekeys_default_height">56dip</dimen>
+    <!-- TODO(hsumita): Remove if not necessary. -->
     <dimen name="keyboard_qwerty_default_height">32dip</dimen>
     <!--
         Popup icon size is 20% bigger than key icon.
