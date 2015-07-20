@@ -29,10 +29,7 @@
 
 type OVERLAY
 
-key GRAVE {
-  base: fallback ZENKAKU_HANKAKU
-  alt: fallback SWITCH_CHARSET
-}
+map key 41 ZENKAKU_HANKAKU
 
 key 1 {
   label: '1'
