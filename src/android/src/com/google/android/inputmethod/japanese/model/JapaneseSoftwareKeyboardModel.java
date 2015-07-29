@@ -40,6 +40,10 @@ import com.google.common.base.Preconditions;
 import android.inputmethodservice.InputMethodService;
 import android.text.InputType;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * Model class to represent Mozc's software keyboard.
  *
@@ -80,8 +84,19 @@ public class JapaneseSoftwareKeyboardModel {
     KANA, ALPHABET, ALPHABET_NUMBER, NUMBER, SYMBOL_NUMBER,
   }
 
+  /**
+   * Keyboard modes which can be kept even if a focused text field is changed.
+   */
+  private static final Set<KeyboardMode> REMEMBERABLE_KEYBOARD_MODE_SET =
+      Collections.unmodifiableSet(EnumSet.of(
+          KeyboardMode.KANA,
+          KeyboardMode.ALPHABET,
+          KeyboardMode.ALPHABET_NUMBER));
+
+  private static final KeyboardMode DEFAULT_KEYBOARD_MODE = KeyboardMode.KANA;
+
   private KeyboardLayout keyboardLayout = KeyboardLayout.TWELVE_KEYS;
-  private KeyboardMode keyboardMode = KeyboardMode.KANA;
+  private KeyboardMode keyboardMode = DEFAULT_KEYBOARD_MODE;
   private InputStyle inputStyle = InputStyle.TOGGLE;
   private boolean qwertyLayoutForAlphabet = false;
   private int inputType;
@@ -103,7 +118,7 @@ public class JapaneseSoftwareKeyboardModel {
   public void setKeyboardLayout(KeyboardLayout keyboardLayout) {
     Preconditions.checkNotNull(keyboardLayout);
     Optional<KeyboardMode> optionalMode = getPreferredKeyboardMode(this.inputType, keyboardLayout);
-    KeyboardMode mode = optionalMode.isPresent() ? optionalMode.get() : KeyboardMode.KANA;
+    KeyboardMode mode = optionalMode.or(DEFAULT_KEYBOARD_MODE);
 
     this.keyboardLayout = keyboardLayout;
     // Reset keyboard mode as well.
@@ -155,6 +170,9 @@ public class JapaneseSoftwareKeyboardModel {
     this.inputType = inputType;
     if (mode.isPresent()) {
       this.keyboardMode = mode.get();
+    } else if (!REMEMBERABLE_KEYBOARD_MODE_SET.contains(this.keyboardMode)) {
+      // Disable a non-rememberable keyboard here since neither mode nor saved mode are specified.
+      this.keyboardMode = DEFAULT_KEYBOARD_MODE;
     }
   }
 
