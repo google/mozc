@@ -541,10 +541,11 @@ The undo list will not be affected.  ARGS defaults to
 The return value is a cons which holds two markers which point to the region of
 added characters."
   (let ((beg (point-marker)))
-    (mozc-with-undo-list-unchanged
-     (if args
-         (apply #'insert args)
-       (insert mozc-buffer-placeholder-char)))
+    (mozc-with-buffer-modified-p-unchanged
+     (mozc-with-undo-list-unchanged
+      (if args
+          (apply #'insert args)
+        (insert mozc-buffer-placeholder-char))))
     (cons beg (point-marker))))
 
 (defun mozc-buffer-insert-char (&optional character count)
@@ -563,8 +564,9 @@ added characters."
 (defun mozc-buffer-delete-region (region)
   "Delete the text in the REGION."
   (when region
-    (mozc-with-undo-list-unchanged
-     (delete-region (car region) (cdr region)))))
+    (mozc-with-buffer-modified-p-unchanged
+     (mozc-with-undo-list-unchanged
+      (delete-region (car region) (cdr region))))))
 
 (defun mozc-buffer-delete-all-regions (regions)
   "Delete each text in the REGIONS.
