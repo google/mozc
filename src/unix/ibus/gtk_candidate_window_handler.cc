@@ -54,15 +54,24 @@ GtkCandidateWindowHandler::~GtkCandidateWindowHandler() {
 }
 
 bool GtkCandidateWindowHandler::SendUpdateCommand(
-    const commands::Output &output, bool visibility) const {
+    IBusEngine *engine,
+    const commands::Output &output,
+    bool visibility) const {
   using commands::RendererCommand;
-
   RendererCommand command;
-  command.mutable_output()->CopyFrom(output);
-  command.set_type(commands::RendererCommand::UPDATE);
+
+  *command.mutable_output() = output;
+  command.set_type(RendererCommand::UPDATE);
   command.set_visible(visibility);
   RendererCommand::ApplicationInfo *appinfo
       = command.mutable_application_info();
+
+  auto *preedit_rectangle = command.mutable_preedit_rectangle();
+  const auto &cursor_area = engine->cursor_area;
+  preedit_rectangle->set_left(cursor_area.x);
+  preedit_rectangle->set_top(cursor_area.y);
+  preedit_rectangle->set_right(cursor_area.x + cursor_area.width);
+  preedit_rectangle->set_bottom(cursor_area.y + cursor_area.height);
 
   // Set pid
   static_assert(sizeof(::getpid()) <= sizeof(appinfo->process_id()),
@@ -83,17 +92,24 @@ bool GtkCandidateWindowHandler::SendUpdateCommand(
 
 void GtkCandidateWindowHandler::Update(IBusEngine *engine,
                                        const commands::Output &output) {
-  last_update_output_->CopyFrom(output);
+  *last_update_output_ = output;
 
-  SendUpdateCommand(output, output.candidates().candidate_size() != 0);
+  UpdateCursorRect(engine);
+}
+
+void GtkCandidateWindowHandler::UpdateCursorRect(IBusEngine *engine) {
+  const bool has_candidates =
+      last_update_output_->has_candidates() &&
+      last_update_output_->candidates().candidate_size() > 0;
+  SendUpdateCommand(engine, *last_update_output_, has_candidates);
 }
 
 void GtkCandidateWindowHandler::Hide(IBusEngine *engine) {
-  SendUpdateCommand(*(last_update_output_.get()), false);
+  SendUpdateCommand(engine, *last_update_output_, false);
 }
 
 void GtkCandidateWindowHandler::Show(IBusEngine *engine) {
-  SendUpdateCommand(*(last_update_output_.get()), true);
+  SendUpdateCommand(engine, *last_update_output_, true);
 }
 
 void GtkCandidateWindowHandler::OnIBusCustomFontDescriptionChanged(

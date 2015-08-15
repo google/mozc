@@ -36,6 +36,9 @@
 #include "unix/ibus/candidate_window_handler_interface.h"
 
 namespace mozc {
+namespace commands {
+class RendererCommand;
+}  // namespace commands
 namespace renderer {
 class RendererInterface;
 }  // namespace renderer
@@ -48,6 +51,7 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
   virtual ~GtkCandidateWindowHandler();
 
   virtual void Update(IBusEngine *engine, const commands::Output &output);
+  virtual void UpdateCursorRect(IBusEngine *engine);
   virtual void Hide(IBusEngine *engine);
   virtual void Show(IBusEngine *engine);
 
@@ -58,7 +62,9 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
       bool use_custom_font_description);
 
  protected:
-  bool SendUpdateCommand(const commands::Output &output, bool visibility) const;
+  bool SendUpdateCommand(IBusEngine *engine,
+                         const commands::Output &output,
+                         bool visibility) const;
 
   std::unique_ptr<renderer::RendererInterface> renderer_;
   std::unique_ptr<commands::Output> last_update_output_;

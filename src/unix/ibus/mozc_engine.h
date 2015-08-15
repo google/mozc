@@ -155,9 +155,6 @@ class MozcEngine : public EngineInterface {
   // message, then hides a preedit string and the candidate window.
   void RevertSession(IBusEngine *engine);
 
-  // Sends current caret location to mozc_server.
-  void SendCaretLocation(uint32 x, uint32 y, uint32 width, uint32 height);
-
   CandidateWindowHandlerInterface *GetCandidateWindowHandler(
       IBusEngine *engine);
 

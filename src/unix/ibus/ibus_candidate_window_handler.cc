@@ -92,6 +92,11 @@ void IBusCandidateWindowHandler::Update(IBusEngine *engine,
   UpdateAuxiliaryText(engine, output);
 }
 
+void IBusCandidateWindowHandler::UpdateCursorRect(IBusEngine *engine) {
+  // Nothing to do because IBus takes care of where to show its candidate
+  // window.
+}
+
 void IBusCandidateWindowHandler::Hide(IBusEngine *engine) {
   ibus_engine_hide_lookup_table(engine);
   ibus_engine_hide_auxiliary_text(engine);

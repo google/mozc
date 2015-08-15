@@ -41,6 +41,7 @@ class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
   virtual ~IBusCandidateWindowHandler();
 
   virtual void Update(IBusEngine *engine, const commands::Output &output);
+  virtual void UpdateCursorRect(IBusEngine *engine);
   virtual void Hide(IBusEngine *engine);
   virtual void Show(IBusEngine *engine);
 

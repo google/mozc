@@ -364,15 +364,6 @@ gboolean MozcEngine::ProcessKeyEvent(
     return FALSE;
   }
 
-  // Send current caret location to mozc_server to manage suggest window
-  // position.
-  // TODO(nona): Merge SendKey event to reduce IPC cost.
-  // TODO(nona): Add a unit test against b/6209562.
-  SendCaretLocation(engine->cursor_area.x,
-                    engine->cursor_area.y,
-                    engine->cursor_area.width,
-                    engine->cursor_area.height);
-
   // TODO(yusukes): use |layout| in IBusEngineDesc if possible.
   const bool layout_is_jp =
       !g_strcmp0(ibus_engine_get_name(engine), "mozc-jp");
@@ -448,7 +439,7 @@ void MozcEngine::SetCursorLocation(IBusEngine *engine,
                                    gint y,
                                    gint w,
                                    gint h) {
-  // Do nothing
+  GetCandidateWindowHandler(engine)->UpdateCursorRect(engine);
 }
 
 void MozcEngine::SetContentType(IBusEngine *engine,
@@ -788,19 +779,6 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
   // TODO(nona): Check executable bit for renderer.
   return gtk_candidate_window_handler_.get();
 #endif  // not ENABLE_GTK_RENDERER
-}
-
-void MozcEngine::SendCaretLocation(uint32 x, uint32 y, uint32 width,
-                                   uint32 height) {
-  commands::Output output;
-  commands::SessionCommand command;
-  command.set_type(commands::SessionCommand::SEND_CARET_LOCATION);
-  commands::Rectangle *caret_rectangle = command.mutable_caret_rectangle();
-  caret_rectangle->set_x(x);
-  caret_rectangle->set_y(y);
-  caret_rectangle->set_width(width);
-  caret_rectangle->set_height(height);
-  client_->SendCommand(command, &output);
 }
 
 }  // namespace ibus
