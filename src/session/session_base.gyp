@@ -101,6 +101,7 @@
         '../composer/composer.gyp:key_event_util',
         '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
+        '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         'keymap',
       ],
