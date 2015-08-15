@@ -1,6 +1,40 @@
 Release History
 ===============
 
+2.17.2094.102 - 2.17.2111.102 / *2015-05-10* - *2015-08-15*
+--------------------------------------------------
+You can check out Mozc [2.17.2111.102](https://github.com/google/mozc/commit/d7b6196aeac52dd908ca051ba65e97b389f4503a) as follows.
+
+```
+gclient sync --revision=d7b6196aeac52dd908ca051ba65e97b389f4503a
+```
+
+Summary of changes between [2.17.2094.102](https://github.com/google/mozc/commit/c57a78e2b84880718f2621b9e8e4791419bee923) and [2.17.2111.102](https://github.com/google/mozc/commit/d7b6196aeac52dd908ca051ba65e97b389f4503a).
+
+  * DEPS changes:
+    * none
+  * Build related changes:
+    * Android build requires NDK r10e.
+    * `*.proto` files are moved to `src/protocol/` to simplify build dependency.  Downstream projects may need to update include path and/or `.gyp` file accordingly.
+    * Commit hashes between 2.17.2098.102 and 2.17.2106.102 were once changed [#292](https://github.com/google/mozc/issues/292).
+    * Possible build failures in releases from 2.17.2099.102 (dbe800583e5676896ce603494ef3b306f38f7b85) to 2.17.2106.102 (3648b9bf06d5d9b36bed2425640bfd18ae05b588) due to [#295](https://github.com/google/mozc/issues/295).
+  * Major changes:
+    * ibus-mozc no longer enables `undo-commit` unless `IBUS_CAP_SURROUNDING_TEXT` is specified (0796f5143400e2beb3d18156ae426f8ce06b0c0d).
+    * ibus-mozc no longer tries to align suggestion window to the left edge of the composing text (9fbcdd5e27cf26ff16d72bd2d92f269334912ede).
+  * Known issues:
+    * [#263](https://github.com/google/mozc/issues/263): Voiced sound marks on the key pad is not placed at correct position in Android
+    * [#273](https://github.com/google/mozc/issues/273): Compilation errors in Android arm64 and mips64 build
+  * Fixed issues:
+    * [#243](https://github.com/google/mozc/issues/243): ibus predict window is shown at the previous cursor position
+      * [Mozilla Bug 1120851](https://bugzilla.mozilla.org/show_bug.cgi?id=1120851): Candidate window sometimes doesn't set correct position with ibus + mozc when starting composition
+    * [#254](https://github.com/google/mozc/issues/254): Preedit and candidate changes buffer modification flag
+    * [#291](https://github.com/google/mozc/issues/291): Fix a typo
+    * [#295](https://github.com/google/mozc/issues/295): Possible build failure due to missing dependency on `commands_proto` from `key_info_util`
+    * [#296](https://github.com/google/mozc/issues/296): ibus-mozc should enable undo-commit if and only if `IBUS_CAP_SURROUNDING_TEXT` is set
+  * Total commits:
+    * [24 commits](https://github.com/google/mozc/compare/c57a78e2b84880718f2621b9e8e4791419bee923...d7b6196aeac52dd908ca051ba65e97b389f4503a).
+
+
 2.17.2073.102 - 2.17.2095.102 / *2015-04-11* - *2015-05-10*
 --------------------------------------------------
 You can check out Mozc [2.17.2095.102](https://github.com/google/mozc/commit/321e0656b0f2e233ab1c164bd86c58568c9e92f2) as follows.
