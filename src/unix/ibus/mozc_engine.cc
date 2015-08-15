@@ -716,14 +716,12 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
 
   switch (callback_command.type()) {
     case commands::SessionCommand::UNDO:
-      // As far as I've tested on Ubuntu 11.10, most of applications which
-      // accept 'ibus_engine_delete_surrounding_text' doe not set
-      // IBUS_CAP_SURROUNDING_TEXT bit.
-      // So we should carefully uncomment the following code.
-      // -----
-      // if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
-      //   return false;
-      // }
+      // Having |IBUS_CAP_SURROUNDING_TEXT| does not necessarily mean that the
+      // client supports |ibus_engine_delete_surrounding_text()|, but there is
+      // no other good criteria.
+      if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
+        return false;
+      }
       break;
     case commands::SessionCommand::CONVERT_REVERSE: {
       if (!GetSurroundingText(engine,
