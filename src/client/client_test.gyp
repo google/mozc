@@ -34,40 +34,6 @@
   },
   'targets': [
     {
-      'target_name': 'client_quality_test_main',
-      'type': 'executable',
-      'sources': [
-        'client_quality_test_main.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../protocol/protocol.gyp:commands_proto',
-        'client.gyp:client',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_client_quality_test_data',
-          'variables' : {
-            'input_files': [
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/client_quality_test_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/client_quality_test_data.h',
-            'gen_client_quality_test_data.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/client_quality_test_data.h',
-        },
-      ],
-    },
-    {
       'target_name': 'client_test',
       'type': 'executable',
       'sources': [
