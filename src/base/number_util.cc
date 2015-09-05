@@ -39,6 +39,7 @@
 #include <string>
 #include <vector>
 
+#include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/text_converter.h"
 #include "base/util.h"
@@ -1208,19 +1209,10 @@ bool NumberUtil::NormalizeNumbersWithSuffix(StringPiece input,
                                   suffix);
 }
 
-namespace {
-
-// Load  Rules
-// TODO(peria): Split following header file.  No need to include Janapese
-//     character constants.
-#include "base/japanese_util_rule.h"
-
-}  // namespace
-
 void NumberUtil::KanjiNumberToArabicNumber(StringPiece input,
                                            string *output) {
-  TextConverter::Convert(kanjinumber_to_arabicnumber_da,
-                         kanjinumber_to_arabicnumber_table,
+  TextConverter::Convert(japanese_util_rule::kanjinumber_to_arabicnumber_da,
+                         japanese_util_rule::kanjinumber_to_arabicnumber_table,
                          input,
                          output);
 }

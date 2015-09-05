@@ -49,7 +49,11 @@ static void Compile(const string &files,
   OutputFileStream ofs(header_filename.c_str());
   CHECK(ofs.good());
 
-  ofs << "namespace {" << endl;
+  ofs << "#include \"googleclient/ime/mozc/base/japanese_util_rule.h\"\n"
+      << "\n"
+      << "namespace mozc {\n"
+      << "namespace japanese_util_rule {\n"
+      << endl;
 
   vector<pair<string, string> > rules;
   {
@@ -106,12 +110,12 @@ static void Compile(const string &files,
 
     string escaped;
     Util::Escape(output, &escaped);
-    ofs << "static const char " << name
+    ofs << "const char " << name
         << "_table[] = \"" << escaped << "\";" << endl;
 
     const TextConverter::DoubleArray *array =
         reinterpret_cast<const TextConverter::DoubleArray *>(da.array());
-    ofs << "static const mozc::TextConverter::DoubleArray "
+    ofs << "const mozc::TextConverter::DoubleArray "
         << name << "_da[] = {";
     for (size_t k = 0; k < da.size(); ++k) {
       if (k != 0) ofs << ",";
@@ -119,7 +123,11 @@ static void Compile(const string &files,
     }
     ofs << "};" << endl;
   }
-  ofs << "}" << endl;
+
+  ofs << "\n"
+      << "}  // namespace japanese_util_rule\n"
+      << "}  // namespace mozc"
+      << endl;
 }
 
 }  // namespace mozc

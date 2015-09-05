@@ -122,6 +122,7 @@
         'flags.cc',
         'hash.cc',
         'init.cc',
+        'japanese_util_rule.cc',
         'logging.cc',
         'mmap.cc',
         'mutex.cc',

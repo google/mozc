@@ -61,6 +61,7 @@
 #include <vector>
 
 #include "base/compiler_specific.h"
+#include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
@@ -1231,12 +1232,9 @@ void EscapeInternal(char input, const string &prefix, string *output) {
 
 }  // namespace
 
-// Load  Rules
-#include "base/japanese_util_rule.h"
-
 void Util::HiraganaToKatakana(StringPiece input, string *output) {
-  TextConverter::Convert(hiragana_to_katakana_da,
-                         hiragana_to_katakana_table,
+  TextConverter::Convert(japanese_util_rule::hiragana_to_katakana_da,
+                         japanese_util_rule::hiragana_to_katakana_table,
                          input,
                          output);
 }
@@ -1245,77 +1243,83 @@ void Util::HiraganaToHalfwidthKatakana(StringPiece input,
                                        string *output) {
   // combine two rules
   string tmp;
-  TextConverter::Convert(hiragana_to_katakana_da,
-                         hiragana_to_katakana_table,
+  TextConverter::Convert(japanese_util_rule::hiragana_to_katakana_da,
+                         japanese_util_rule::hiragana_to_katakana_table,
                          input, &tmp);
-  TextConverter::Convert(fullwidthkatakana_to_halfwidthkatakana_da,
-                         fullwidthkatakana_to_halfwidthkatakana_table,
-                         tmp, output);
+  TextConverter::Convert(
+      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
+      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table,
+      tmp, output);
 }
 
 void Util::HiraganaToRomanji(StringPiece input, string *output) {
-  TextConverter::Convert(hiragana_to_romanji_da,
-                         hiragana_to_romanji_table,
+  TextConverter::Convert(japanese_util_rule::hiragana_to_romanji_da,
+                         japanese_util_rule::hiragana_to_romanji_table,
                          input,
                          output);
 }
 
 void Util::HalfWidthAsciiToFullWidthAscii(StringPiece input,
                                           string *output) {
-  TextConverter::Convert(halfwidthascii_to_fullwidthascii_da,
-                         halfwidthascii_to_fullwidthascii_table,
-                         input,
-                         output);
+  TextConverter::Convert(
+      japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
+      japanese_util_rule::halfwidthascii_to_fullwidthascii_table,
+      input,
+      output);
 }
 
 void Util::FullWidthAsciiToHalfWidthAscii(StringPiece input,
                                           string *output) {
-  TextConverter::Convert(fullwidthascii_to_halfwidthascii_da,
-                         fullwidthascii_to_halfwidthascii_table,
-                         input,
-                         output);
+  TextConverter::Convert(
+      japanese_util_rule::fullwidthascii_to_halfwidthascii_da,
+      japanese_util_rule::fullwidthascii_to_halfwidthascii_table,
+      input,
+      output);
 }
 
 void Util::HiraganaToFullwidthRomanji(StringPiece input, string *output) {
   string tmp;
-  TextConverter::Convert(hiragana_to_romanji_da,
-                         hiragana_to_romanji_table,
+  TextConverter::Convert(japanese_util_rule::hiragana_to_romanji_da,
+                         japanese_util_rule::hiragana_to_romanji_table,
                          input,
                          &tmp);
-  TextConverter::Convert(halfwidthascii_to_fullwidthascii_da,
-                         halfwidthascii_to_fullwidthascii_table,
-                         tmp,
-                         output);
+  TextConverter::Convert(
+      japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
+      japanese_util_rule::halfwidthascii_to_fullwidthascii_table,
+      tmp,
+      output);
 }
 
 void Util::RomanjiToHiragana(StringPiece input, string *output) {
-  TextConverter::Convert(romanji_to_hiragana_da,
-                         romanji_to_hiragana_table,
+  TextConverter::Convert(japanese_util_rule::romanji_to_hiragana_da,
+                         japanese_util_rule::romanji_to_hiragana_table,
                          input,
                          output);
 }
 
 void Util::KatakanaToHiragana(StringPiece input, string *output) {
-  TextConverter::Convert(katakana_to_hiragana_da,
-                         katakana_to_hiragana_table,
+  TextConverter::Convert(japanese_util_rule::katakana_to_hiragana_da,
+                         japanese_util_rule::katakana_to_hiragana_table,
                          input,
                          output);
 }
 
 void Util::HalfWidthKatakanaToFullWidthKatakana(StringPiece input,
                                                 string *output) {
-  TextConverter::Convert(halfwidthkatakana_to_fullwidthkatakana_da,
-                         halfwidthkatakana_to_fullwidthkatakana_table,
-                         input,
-                         output);
+  TextConverter::Convert(
+      japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_da,
+      japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_table,
+      input,
+      output);
 }
 
 void Util::FullWidthKatakanaToHalfWidthKatakana(StringPiece input,
                                                 string *output) {
-  TextConverter::Convert(fullwidthkatakana_to_halfwidthkatakana_da,
-                         fullwidthkatakana_to_halfwidthkatakana_table,
-                         input,
-                         output);
+  TextConverter::Convert(
+      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
+      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table,
+      input,
+      output);
 }
 
 void Util::FullWidthToHalfWidth(StringPiece input, string *output) {
@@ -1336,8 +1340,8 @@ void Util::HalfWidthToFullWidth(StringPiece input, string *output) {
 // of some UNICODE only characters (required to display
 // and commit for old clients)
 void Util::NormalizeVoicedSoundMark(StringPiece input, string *output) {
-  TextConverter::Convert(normalize_voiced_sound_da,
-                         normalize_voiced_sound_table,
+  TextConverter::Convert(japanese_util_rule::normalize_voiced_sound_da,
+                         japanese_util_rule::normalize_voiced_sound_table,
                          input,
                          output);
 }
