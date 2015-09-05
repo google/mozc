@@ -61,15 +61,6 @@ const wchar_t kTipInProcServer32[] = L"InProcServer32";
 const wchar_t kTipThreadingModel[] = L"ThreadingModel";
 const wchar_t kTipTextServiceModel[] = L"Apartment";
 
-// GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT
-const GUID KGuidTfcatTipcapImmersiveSupport = {
-  0x13a016df, 0x560b, 0x46cd, {0x94, 0x7a, 0x4c, 0x3a, 0xf1, 0xe0, 0xe3, 0x5d}
-};
-// GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT
-const GUID KGuidTfcatTipcapSystraySupport = {
-  0x25504fb4, 0x7bab, 0x4bc1, {0x9c, 0x69, 0xcf, 0x81, 0x89, 0x0f, 0x0e, 0xf5}
-};
-
 // The categories this text service is registered under.
 const GUID kCategories[] = {
   GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER,     // It supports inline input.
@@ -77,8 +68,8 @@ const GUID kCategories[] = {
   GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT,  // It supports input mode.
   GUID_TFCAT_TIPCAP_UIELEMENTENABLED,      // It supports UI less mode.
   GUID_TFCAT_TIP_KEYBOARD,                 // It's a keyboard input method.
-  KGuidTfcatTipcapImmersiveSupport,        // It supports Metro mode.
-  KGuidTfcatTipcapSystraySupport,          // It supports Win8 systray.
+  GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT,      // It supports Metro mode.
+  GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,        // It supports Win8 systray.
 };
 
 }  // namespace

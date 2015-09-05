@@ -151,11 +151,6 @@ const GUID kTipFunctionProvider = {
 
 #endif
 
-// This flag is available in Windows SDK 8.0 and later.
-#ifndef TF_TMF_IMMERSIVEMODE
-#define TF_TMF_IMMERSIVEMODE  0x40000000
-#endif  // !TF_TMF_IMMERSIVEMODE
-
 HRESULT SpawnTool(const string &command) {
   if (!Process::SpawnMozcProcess(kMozcTool, "--mode=" + command)) {
     return E_FAIL;
