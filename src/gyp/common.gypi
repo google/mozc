@@ -679,6 +679,9 @@
     ],
     'conditions': [
       ['OS=="win"', {
+        'variables': {
+          'wtl_dir': '<(additional_third_party_dir)/wtl',
+        },
         'defines': [
           'COMPILER_MSVC',
           'BUILD_MOZC',  # for ime_shared library
@@ -703,7 +706,7 @@
         ],
         'include_dirs': [
           '<@(msvs_includes)',
-          '<(additional_third_party_dir)/wtl/files/include',
+          '<(wtl_dir)/include',
         ],
         'msvs_cygwin_shell': 0,
         'msvs_disabled_warnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX

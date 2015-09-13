@@ -35,7 +35,6 @@ vars = {
   "gyp_revision": "cdf037c1edc0ba3b5d25f8e3973661efe00980cc",
   "jsoncpp_revision": "11086dd6a7eba04289944367ca82cea71299ed70",
   "protobuf_revision": "172019c40bf548908ab09bfd276074c929d48415",
-  "wtl_revision": "587",
   "zinnia_revision": "16",
   "jsr305_version": "2.0.2",
   "zlib_revision": "50893291621658f355bc5b4d450a8d06a563053d",
@@ -64,9 +63,6 @@ deps_os = {
     "src/third_party/breakpad":
       "http://google-breakpad.googlecode.com/svn/trunk@" +
       Var("breakpad_revision"),
-    "src/third_party/wtl/files/include":
-      "http://svn.code.sf.net/p/wtl/code/trunk/wtl/Include@" +
-      Var("wtl_revision"),
     "src/third_party/zinnia/v0_04":
       "http://svn.code.sf.net/p/zinnia/code@" +
       Var("zinnia_revision"),

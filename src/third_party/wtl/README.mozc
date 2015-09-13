@@ -1,0 +1,11 @@
+URL: http://sourceforge.net/projects/wtl/files/WTL%209.0/WTL%209.0.4140%20Final/
+Version: WTL version 9.0.4140
+License:  Common Public License 1.0
+License File: LICENSE
+
+Local Modifications:
+Removed following non-essential directories, to save space.
+  - AppWiz/
+  - AppWizCE/
+  - AppWizMobile/
+  - Samples/
