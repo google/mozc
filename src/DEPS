@@ -28,7 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 vars = {
-  "breakpad_revision": "1391",
+  "breakpad_revision": "1419",
   "fonttools_revision": "5ba7d98a4153fad57258fca23b0bcb238717aec3",
   "gtest_revision": "700",
   "gmock_revision": "501",

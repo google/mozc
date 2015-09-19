@@ -51,7 +51,7 @@ install:
 - git submodule add https://github.com/hiroyuki-komatsu/japanese-usage-dictionary.git src/third_party/japanese_usage_dictionary
 - git -C src/third_party/japanese_usage_dictionary checkout e5b3425575734c323e1d947009dd74709437b684
 - git submodule add https://chromium.googlesource.com/breakpad/breakpad src/third_party/breakpad
-- git -C src/third_party/breakpad checkout 962f1b0e60eca939232dc0d46780da4fdbbcfd85
+- git -C src/third_party/breakpad checkout d2904bb42181bc32c17b26ac4a0604c0e57473cc
 - svn export http://svn.code.sf.net/p/zinnia/code@16 src/third_party/zinnia/v0_04
 build_script:
 - python src\build_mozc.py gyp --noqt
