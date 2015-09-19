@@ -40,10 +40,10 @@ install:
 - gclient
 - git submodule add https://github.com/open-source-parsers/jsoncpp.git src/third_party/jsoncpp
 - git -C src/third_party/jsoncpp checkout 11086dd6a7eba04289944367ca82cea71299ed70
-- git submodule add https://chromium.googlesource.com/external/gmock src/third_party/gmock
-- git -C src/third_party/gmock checkout 29763965ab52f24565299976b936d1265cb6a271
-- git submodule add https://chromium.googlesource.com/external/gtest src/third_party/gtest
-- git -C src/third_party/gtest checkout 8245545b6dc9c4703e6496d1efd19e975ad2b038
+- git submodule add https://github.com/google/googlemock.git src/third_party/gmock
+- git -C src/third_party/gmock checkout 61adbcc5c6b8e0385e3e2bf4262771d20a375002
+- git submodule add https://github.com/google/googletest.git src/third_party/gtest
+- git -C src/third_party/gtest checkout 102b50483a4b515a94a5b1c75db468eb071cf172
 - git submodule add https://chromium.googlesource.com/external/gyp src/third_party/gyp
 - git -C src/third_party/gyp checkout cdf037c1edc0ba3b5d25f8e3973661efe00980cc
 - git submodule add https://github.com/google/protobuf.git src/third_party/protobuf
