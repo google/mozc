@@ -33,23 +33,7 @@ os:
 language: objective-c
 
 install:
-  - git submodule add https://github.com/open-source-parsers/jsoncpp.git src/third_party/jsoncpp
-  - git -C src/third_party/jsoncpp checkout 11086dd6a7eba04289944367ca82cea71299ed70
-  - git submodule add https://github.com/google/googlemock.git src/third_party/gmock
-  - git -C src/third_party/gmock checkout d478a1f46d51ac2baa3f3b3896139897f24dc2d1
-  - git submodule add https://github.com/google/googletest.git src/third_party/gtest
-  - git -C src/third_party/gtest checkout 1d53731f2c210557caab5660dbe2c578dce6114f
-  - git submodule add https://chromium.googlesource.com/external/gyp src/third_party/gyp
-  - git -C src/third_party/gyp checkout cdf037c1edc0ba3b5d25f8e3973661efe00980cc
-  - git submodule add https://github.com/google/protobuf.git src/third_party/protobuf
-  - git -C src/third_party/protobuf checkout 172019c40bf548908ab09bfd276074c929d48415
-  - git submodule add https://github.com/hiroyuki-komatsu/japanese-usage-dictionary.git src/third_party/japanese_usage_dictionary
-  - git -C src/third_party/japanese_usage_dictionary checkout e5b3425575734c323e1d947009dd74709437b684
-  - git submodule add https://github.com/googlei18n/fonttools.git src/third_party/fontTools
-  - git -C src/third_party/fontTools checkout 5ba7d98a4153fad57258fca23b0bcb238717aec3
-  - git submodule add https://github.com/taku910/zinnia.git src/third_party/zinnia
-  - git -C src/third_party/zinnia checkout 44dddcf96c0970a806d666030295706f45cbd045
-  - git submodule add https://chromium.googlesource.com/chromium/tools/depot_tools.git src/third_party/depot_tools
+  - git -C src/third_party clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
   - export PATH="$PATH":`pwd`/src/third_party/depot_tools
 
 script:

@@ -1,0 +1,27 @@
+[submodule "src/third_party/breakpad"]
+	path = src/third_party/breakpad
+	url = https://chromium.googlesource.com/breakpad/breakpad
+[submodule "src/third_party/fontTools"]
+	path = src/third_party/fontTools
+	url = https://github.com/googlei18n/fonttools.git
+[submodule "src/third_party/gmock"]
+	path = src/third_party/gmock
+	url = https://github.com/google/googlemock.git
+[submodule "src/third_party/gtest"]
+	path = src/third_party/gtest
+	url = https://github.com/google/googletest.git
+[submodule "src/third_party/gyp"]
+	path = src/third_party/gyp
+	url = https://chromium.googlesource.com/external/gyp
+[submodule "src/third_party/japanese_usage_dictionary"]
+	path = src/third_party/japanese_usage_dictionary
+	url = https://github.com/hiroyuki-komatsu/japanese-usage-dictionary.git
+[submodule "src/third_party/jsoncpp"]
+	path = src/third_party/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "src/third_party/protobuf"]
+	path = src/third_party/protobuf
+	url = https://github.com/google/protobuf.git
+[submodule "src/third_party/zinnia"]
+	path = src/third_party/zinnia
+	url = https://github.com/taku910/zinnia.git
