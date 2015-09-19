@@ -71,7 +71,10 @@
         'easymock_src_path': '<(DEPTH)/third_party/easymock/src/main/java',
         'guava_jar_path': '<(DEPTH)/third_party/guava/guava-jdk5-13.0.jar',
         'guava_testlib_jar_path': '<(DEPTH)/third_party/guava/guava-testlib-jdk5-13.0.jar',
-        'jsr305_jar_path': '<(DEPTH)/third_party/findbug/jsr305-2.0.2.jar',
+        # Absorb the difference in file names between Debian/Ubuntu (jsr305.jar)
+        # and Fedora (jsr-305.jar).
+        # TODO(yukawa): We should not rely on "find" command here.
+        'jsr305_jar_path': '<!(find /usr/share/java -name "jsr305.jar" -o -name "jsr-305.jar")',
         'dictionary_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/system.dictionary',
         'connection_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/connection_data.data',
         'connection_text_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/connection_single_column.txt',

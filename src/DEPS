@@ -36,7 +36,6 @@ vars = {
   "jsoncpp_revision": "11086dd6a7eba04289944367ca82cea71299ed70",
   "protobuf_revision": "172019c40bf548908ab09bfd276074c929d48415",
   "zinnia_revision": "16",
-  "jsr305_version": "2.0.2",
   "zlib_revision": "50893291621658f355bc5b4d450a8d06a563053d",
   "japanese_usage_dictionary_revision": "e5b3425575734c323e1d947009dd74709437b684",
 }
@@ -73,12 +72,6 @@ deps_os = {
        Var("zinnia_revision"),
   },
   "unix": {
-    "src/third_party/findbug":
-      # We need only a jar file so avoiding to sync entire tree.
-      # Findbug project keeps release-jar files in their repository.
-      File("http://findbugs.googlecode.com/"
-           + "svn/repos/release-repository/com/google/code/findbugs/jsr305/"
-           + Var("jsr305_version") + "/jsr305-" + Var("jsr305_version") + ".jar"),
     "src/third_party/fontTools":
       "https://github.com/googlei18n/fonttools.git@" +
       Var("fonttools_revision"),
