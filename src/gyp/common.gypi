@@ -225,9 +225,9 @@
     # for the background information.
     'use_libprotobuf%': 0,
 
-    # use_libzinnia represents if zinnia library is used or not.
-    # This option is only for Linux.
-    'use_libzinnia%': 1,
+    # Set '1' to use system-instaleld zinnia library.  Otherwise
+    # zinnia will be built from source as needed.
+    'use_libzinnia%': 0,
 
     # use_libxml represents if libxml library is used or not.
     # This option is only for Linux.

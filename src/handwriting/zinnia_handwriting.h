@@ -39,12 +39,7 @@
 #include "base/string_piece.h"
 #include "handwriting/handwriting_manager.h"
 
-#ifdef USE_LIBZINNIA
-// Use default zinnia installed in /usr/include
 #include <zinnia.h>
-#else  // USE_LIBZINNIA
-#include "third_party/zinnia/v0_04/zinnia.h"
-#endif  // USE_LIBZINNIA
 
 namespace mozc {
 class Mmap;

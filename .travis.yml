@@ -47,6 +47,8 @@ install:
   - git -C src/third_party/japanese_usage_dictionary checkout e5b3425575734c323e1d947009dd74709437b684
   - git submodule add https://github.com/googlei18n/fonttools.git src/third_party/fontTools
   - git -C src/third_party/fontTools checkout 5ba7d98a4153fad57258fca23b0bcb238717aec3
+  - git submodule add https://github.com/taku910/zinnia.git src/third_party/zinnia
+  - git -C src/third_party/zinnia checkout 44dddcf96c0970a806d666030295706f45cbd045
   - git submodule add https://chromium.googlesource.com/chromium/tools/depot_tools.git src/third_party/depot_tools
   - export PATH="$PATH":`pwd`/src/third_party/depot_tools
 

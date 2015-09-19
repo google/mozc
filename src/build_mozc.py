@@ -469,16 +469,6 @@ def ParseGypOptions(args=None, values=None):
                    macro_name='MOZC_ENABLE_MODE_INDICATOR',
                    option_name='mode_indicator')
 
-  # TODO(yukawa): Remove this option when Zinnia can be built on Windows with
-  #               enabling Unicode.
-  use_zinnia_default = True
-  if IsWindows():
-    # Zinnia on Windows cannot be enabled because of compile error.
-    use_zinnia_default = False
-  parser.add_option('--use_zinnia', dest='use_zinnia',
-                    default=use_zinnia_default,
-                    help='Use Zinnia if specified.')
-
   if IsWindows():
     parser.add_option('--wix_dir', dest='wix_dir',
                       default=GetDefaultWixPath(),
@@ -879,15 +869,9 @@ def GypMain(options, unused_args, _):
   else:
     gyp_options.extend(['-D', 'use_dynamically_linked_qt=0'])
 
-  if options.use_zinnia and target_platform not in ['Android', 'NaCl']:
-    gyp_options.extend(['-D', 'use_zinnia=YES'])
-  else:
-    gyp_options.extend(['-D', 'use_zinnia=NO'])
-
   if (options.target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
     gyp_options.extend(['-D', 'use_libibus=1'])
-
 
   # Dictionary configuration
   if target_platform == 'Android':

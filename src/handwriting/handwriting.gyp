@@ -43,12 +43,7 @@
         'zinnia.gyp:zinnia',
       ],
       'conditions': [
-        ['target_platform=="Linux" and use_libzinnia==1', {
-          'defines': [
-            'USE_LIBZINNIA',
-          ],
-        }],
-        ['target_platform=="Linux" and use_libzinnia==1 and zinnia_model_file!=""', {
+        ['zinnia_model_file!=""', {
           'defines': [
             'MOZC_ZINNIA_MODEL_FILE="<(zinnia_model_file)"',
           ],

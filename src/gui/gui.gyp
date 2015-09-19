@@ -387,11 +387,6 @@
             '../protocol/protocol.gyp:commands_proto',
           ],
         }],
-        ['use_libzinnia==1 and OS=="linux"', {
-          'defines': [
-            'USE_LIBZINNIA',
-          ],
-        }],
       ],
     },
     {
@@ -877,6 +872,7 @@
         '../config/config.gyp:stats_config_util',
         'about_dialog_lib',
         'administration_dialog_lib',
+        'character_pad_lib',
         'config_dialog_lib',
         'confirmation_dialog_lib',
         'dictionary_tool_lib',
@@ -923,14 +919,6 @@
           ],
         }, {
           'type': 'static_library',
-        }],
-        ['use_zinnia=="YES"', {
-          'dependencies+': [
-            'character_pad_lib',
-          ],
-          'defines': [
-            'USE_ZINNIA',
-          ],
         }],
       ],
     },

@@ -35,7 +35,7 @@ vars = {
   "gyp_revision": "cdf037c1edc0ba3b5d25f8e3973661efe00980cc",
   "jsoncpp_revision": "11086dd6a7eba04289944367ca82cea71299ed70",
   "protobuf_revision": "172019c40bf548908ab09bfd276074c929d48415",
-  "zinnia_revision": "16",
+  "zinnia_revision": "44dddcf96c0970a806d666030295706f45cbd045",
   "zlib_revision": "50893291621658f355bc5b4d450a8d06a563053d",
   "japanese_usage_dictionary_revision": "e5b3425575734c323e1d947009dd74709437b684",
 }
@@ -55,6 +55,8 @@ deps = {
   "src/third_party/japanese_usage_dictionary":
     "https://github.com/hiroyuki-komatsu/japanese-usage-dictionary.git@" +
     Var("japanese_usage_dictionary_revision"),
+  "src/third_party/zinnia":
+    "https://github.com/taku910/zinnia.git@" + Var("zinnia_revision"),
 }
 
 deps_os = {
@@ -62,14 +64,6 @@ deps_os = {
     "src/third_party/breakpad":
       "https://chromium.googlesource.com/breakpad/breakpad@" +
       Var("breakpad_revision"),
-    "src/third_party/zinnia/v0_04":
-      "http://svn.code.sf.net/p/zinnia/code@" +
-      Var("zinnia_revision"),
-  },
-  "mac": {
-    "src/third_party/zinnia/v0_04":
-      "http://svn.code.sf.net/p/zinnia/code@" +
-       Var("zinnia_revision"),
   },
   "unix": {
     "src/third_party/fontTools":

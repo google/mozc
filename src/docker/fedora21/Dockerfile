@@ -32,9 +32,9 @@ FROM fedora:21
 # Package installation
 RUN yum -y update
 ## Common packages for linux build environment
-RUN yum install -y clang libstdc++-static python subversion git curl bzip2 unzip
+RUN yum install -y clang libstdc++-static python git curl bzip2 unzip
 ## Packages for linux desktop version
-RUN yum install -y ibus-devel glib2-devel qt-devel zinnia-devel zinnia-tomoe-ja gtk2-devel libxcb-devel
+RUN yum install -y ibus-devel glib2-devel qt-devel zinnia-tomoe-ja gtk2-devel libxcb-devel
 ## Packages for Android
 RUN yum install -y java-1.7.0-openjdk-devel jsr-305 ant glibc.i686 glibc-devel.i686 libstdc++.i686 ncurses-devel.i686 zlib-devel.i686 zip
 ## For emacsian
