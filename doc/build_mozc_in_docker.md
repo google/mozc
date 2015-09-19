@@ -29,15 +29,6 @@ sudo docker run --interactive --tty --rm $USER/mozc_fedora21
 ### Hint
 Don't forget to rebuild Docker container when Dockerfile is updated.
 
-### Update the source tree
-If Dockerfile is not updated but GitHub Mozc repository is updated, you can fetch the latest source code as follows.
-
-```
-cd ../
-gclient sync
-cd src/
-```
-
 # Build in the container
 Before explaining detailed build configurations and options, let's walk through the simplest cases to see how it looks like.
 

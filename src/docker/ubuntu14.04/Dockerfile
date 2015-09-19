@@ -69,15 +69,12 @@ RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nac
 RUN cd nacl_sdk && ./naclsdk install pepper_40
 ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_40
 
-## depot_tools
+## depot_tools for Ninja prebuilt
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 ENV PATH $PATH:/home/mozc_builder/work/depot_tools
 
-# check out Mozc source
-RUN mkdir -p /home/mozc_builder/work/mozc
-WORKDIR /home/mozc_builder/work/mozc
-RUN gclient config https://github.com/google/mozc.git --name=. --deps-file=src/DEPS
-RUN gclient sync
+# check out Mozc source with submodules
+RUN git clone https://github.com/google/mozc.git --recursive
 
 WORKDIR /home/mozc_builder/work/mozc/src
 ENTRYPOINT bash
