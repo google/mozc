@@ -32,10 +32,6 @@ os:
 
 language: objective-c
 
-install:
-  - git -C src/third_party clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-  - export PATH="$PATH":`pwd`/src/third_party/depot_tools
-
 script:
   - cd ./src
   - GYP_DEFINES="mac_sdk=10.9 mac_deployment_target=10.8" python build_mozc.py gyp --noqt

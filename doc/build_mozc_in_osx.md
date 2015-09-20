@@ -10,7 +10,6 @@ We only support OS X 10.7 or later intel only.
 Building on Mac requires the following software.
 
   * Xcode
-  * [Ninja](https://github.com/martine/ninja)
 
 If you don't need to run gui tools like about dialog, config dialog, or dictionary tool, you can omit installing Qt.  Candidate window still shows without Qt.  See below for the detailed information.
 
