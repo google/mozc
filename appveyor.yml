@@ -37,6 +37,7 @@ install:
 - git submodule update --init --recursive
 - choco install ninja -version 1.6.0
 build_script:
-- python src\build_mozc.py gyp --noqt
-- ninja -C src\out_win\Release mozc_cache_service mozc_renderer mozc_ime mozc_tip32 mozc_broker32 rewriter composer
+- cd src
+- python build_mozc.py gyp --noqt
+- python build_mozc.py build -c Release package
 test: off
