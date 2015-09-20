@@ -1,6 +1,46 @@
 Release History
 ===============
 
+2.17.2112.102 - 2.17.2123.102 / *2015-09-05* - *2015-09-19*
+--------------------------------------------------
+You can check out Mozc [2.17.2123.102](https://github.com/google/mozc/commit/e398317a086a78c0cf0004505eb8f56586e925b2) as follows.
+
+```
+git clone https://github.com/google/mozc.git
+cd mozc
+git checkout e398317a086a78c0cf0004505eb8f56586e925b2
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2112.102](https://github.com/google/mozc/commit/25ae18a0ed595e5fee4bf546f21fbde2386a3da8) and [2.17.2123.102](https://github.com/google/mozc/commit/e398317a086a78c0cf0004505eb8f56586e925b2) as follows.
+
+  * Third party libraries:
+    * breakpad: [962f1b0e (r1391) -> d2904bb4 (r1419)](https://chromium.googlesource.com/breakpad/breakpad/+log/962f1b0e60eca939232dc0d46780da4fdbbcfd85%5E..d2904bb42181bc32c17b26ac4a0604c0e57473cc/)
+    * gtest: [102b5048 (r700) -> 1d53731f (r707)](https://github.com/google/googletest/compare/102b50483a4b515a94a5b1c75db468eb071cf172%5E...1d53731f2c210557caab5660dbe2c578dce6114f)
+    * gmock: [61adbcc5 (r501) -> d478a1f4 (r513)](https://github.com/google/googlemock/compare/61adbcc5c6b8e0385e3e2bf4262771d20a375002%5E...d478a1f46d51ac2baa3f3b3896139897f24dc2d1)
+    * zinnia: [b84ad858 (0.0.4) -> 44dddcf9 (0.0.6)](https://github.com/taku910/zinnia/compare/7bdc645d7212c51d4bba234acea9ae0c6da2bbb8...44dddcf96c0970a806d666030295706f45cbd045)
+    * Repository URL changes:
+      * [GoogleCode] googlemock -> [GitHub] google/googlemock
+      * [GoogleCode] googletest -> [GitHub] google/googletest
+      * [GoogleCode] google-breakpad -> chromium.googlesource.com/breakpad/breakpad
+      * [GoogleCode] japanese-usage-dictionary -> [GitHub] hiroyuki-komatsu/japanese-usage-dictionary
+      * [SourceForge] zinnia -> [GitHub] taku910/zinnia
+    * `src/DEPS` was deprecated and removed.  We use `git submodule` to track and check out dependent third party source code.
+    * WTL is directly imported under `src/third_party` so as not to depend on subversion.
+  * Build related changes:
+    * Zinnia is now built from source and linked statically by default.  To link to system-installed Zinnia, specify `GYP_DEFINES="use_libzinnia=1"`.  Note that `build_mozc.py gyp --use_zinnia` is also deprecated.  
+  * Major changes:
+    * Windows build now supports hand-writing with Zinnia.
+  * Known issues:
+    * [#263](https://github.com/google/mozc/issues/263): Voiced sound marks on the key pad is not placed at correct position in Android
+    * [#273](https://github.com/google/mozc/issues/273): Compilation errors in Android arm64 and mips64 build
+  * Fixed issues:
+    * [#299](https://github.com/google/mozc/issues/299): Stop depending on subversion repositories in DEPS file
+    * [#300](https://github.com/google/mozc/pull/300): Replace gclient/DEPS with git sub-modules
+  * Total commits:
+    * [16 commits](https://github.com/google/mozc/compare/25ae18a0ed595e5fee4bf546f21fbde2386a3da8%5E...e398317a086a78c0cf0004505eb8f56586e925b2).
+
+
 2.17.2094.102 - 2.17.2111.102 / *2015-05-10* - *2015-08-15*
 --------------------------------------------------
 You can check out Mozc [2.17.2111.102](https://github.com/google/mozc/commit/d7b6196aeac52dd908ca051ba65e97b389f4503a) as follows.
