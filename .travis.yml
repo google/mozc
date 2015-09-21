@@ -27,12 +27,34 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+sudo: false
+
 os:
+  - linux
   - osx
 
-language: objective-c
+language: cpp
+
+compiler: clang
+
+addons:
+  apt:
+    packages:
+    - clang-3.4
+    - libglib2.0-dev
+    - libgtk2.0-dev
+    - libibus-1.0-dev
+    - libqt4-dev
+    - libxcb-xfixes0-dev
+    - pkg-config
+
+install:
+  - if [ $TRAVIS_OS_NAME == linux ]; then git -C src/third_party clone https://chromium.googlesource.com/chromium/tools/depot_tools.git; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then export PATH="$PATH":`pwd`/src/third_party/depot_tools; fi
 
 script:
   - cd ./src
-  - GYP_DEFINES="mac_sdk=10.9 mac_deployment_target=10.8" python build_mozc.py gyp --noqt
-  - python build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gyp:gen_launchd_confs
+  - if [ $TRAVIS_OS_NAME == linux ]; then python build_mozc.py gyp; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then python build_mozc.py build -c Release package; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then GYP_DEFINES="mac_sdk=10.9 mac_deployment_target=10.8" python build_mozc.py gyp --noqt; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then python build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gyp:gen_launchd_confs; fi
