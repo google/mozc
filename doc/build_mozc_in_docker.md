@@ -11,7 +11,7 @@ Currently, only Ubuntu 14.04 is tested to host the Docker container to build Moz
 
 ```
 mkdir ubuntu14.04 && cd ubuntu14.04
-curl -O https://raw.githubusercontent.com/google/mozc/master/src/docker/ubuntu14.04/Dockerfile
+curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu14.04/Dockerfile
 sudo docker build --rm -t $USER/mozc_ubuntu14.04 .
 sudo docker run --interactive --tty --rm $USER/mozc_ubuntu14.04
 ```
@@ -21,7 +21,7 @@ Fedora 21 container is also provided just for your reference.
 
 ```
 mkdir fedora21 && cd fedora21
-curl -O https://raw.githubusercontent.com/google/mozc/master/src/docker/fedora21/Dockerfile
+curl -O https://raw.githubusercontent.com/google/mozc/master/docker/fedora21/Dockerfile
 sudo docker build --rm -t $USER/mozc_fedora21 .
 sudo docker run --interactive --tty --rm $USER/mozc_fedora21
 ```
