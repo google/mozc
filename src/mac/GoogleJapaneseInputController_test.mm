@@ -654,10 +654,7 @@ TEST_F(GoogleJapaneseInputControllerTest, commitText) {
   EXPECT_EQ(1, [mock_client_ getCounter:"insertText:replacementRange:"]);
   EXPECT_TRUE([@"foo" isEqualToString:mock_client_.insertedText]);
   // location has to be cleared after the commit.
-  // Do not use NSNotFound directly in EXPECT_EQ because type checker
-  // gets confused for the comparision of enums.
-  int expected = NSNotFound;
-  EXPECT_EQ(expected, [controller_ replacementRange].location);
+  EXPECT_EQ(NSNotFound, [controller_ replacementRange].location);
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, handleConfig) {
