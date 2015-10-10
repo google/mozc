@@ -84,10 +84,12 @@ script:
   - if [ $TARGET_PLATFORM == Android ]; then python build_mozc.py build -c Release package; fi
   - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py gyp --target_platform=Linux; fi
   - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py build -c Release package; fi
+  - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py runtests -c Release; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then python build_mozc.py gyp --target_platform=NaCl --nacl_sdk_root=`pwd`/third_party/nacl_sdk/pepper_40; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then python build_mozc.py build -c Release package; fi
   - if [ $TARGET_PLATFORM == Mac ]; then GYP_DEFINES="mac_sdk=10.9 mac_deployment_target=10.8" python build_mozc.py gyp --noqt; fi
   - if [ $TARGET_PLATFORM == Mac ]; then python build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gyp:gen_launchd_confs; fi
+  - if [ $TARGET_PLATFORM == Mac ]; then python build_mozc.py runtests -c Release; fi
 
 matrix:
   exclude:
