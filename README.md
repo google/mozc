@@ -11,9 +11,9 @@ OpenSource project originates from
 Build Status
 ------------
 
-|Android |Windows |OS X + Linux + NaCl |
-|:------:|:------:|:------------------:|
-|N/A     |[![Build status](https://ci.appveyor.com/api/projects/status/1rvmtp7f80jv7ehf/branch/master?svg=true)](https://ci.appveyor.com/project/google/mozc/branch/master) |[![Build Status](https://travis-ci.org/google/mozc.svg?branch=master)](https://travis-ci.org/google/mozc) |
+|Android + OS X + Linux + NaCl |Windows |
+|:----------------------------:|:------:|
+[![Build Status](https://travis-ci.org/google/mozc.svg?branch=master)](https://travis-ci.org/google/mozc) |[![Build status](https://ci.appveyor.com/api/projects/status/1rvmtp7f80jv7ehf/branch/master?svg=true)](https://ci.appveyor.com/project/google/mozc/branch/master) |
 
 What's Mozc?
 ------------

@@ -49,8 +49,16 @@ addons:
     - pkg-config
     - libc6:i386
     - libstdc++6:i386
+    - openjdk-7-jdk
+    - openjdk-7-jre-headless
+    - ant
+    - libncurses5:i386
+    - libjsr305-java
+    - zlib1g:i386
+    - zip
 
 env:
+  - TARGET_PLATFORM=Android
   - TARGET_PLATFORM=Linux
   - TARGET_PLATFORM=NaCl
   - TARGET_PLATFORM=Mac
@@ -61,9 +69,19 @@ install:
   - if [ $TRAVIS_OS_NAME == linux ]; then unset CC; fi
   - if [ $TRAVIS_OS_NAME == linux ]; then unset CXX; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then cd src/third_party && curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip && cd nacl_sdk && ./naclsdk install pepper_40 && cd ../../../; fi
+  - if [ $TARGET_PLATFORM == Android ]; then cd src/third_party && curl -L http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin -O && chmod u+x android-ndk-r10e-linux-x86_64.bin && ./android-ndk-r10e-linux-x86_64.bin > /dev/null && rm android-ndk-r10e-linux-x86_64.bin && curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx && cd ../../; fi
+  - if [ $TARGET_PLATFORM == Android ]; then export ANDROID_NDK_HOME=`pwd`/src/third_party/android-ndk-r10e ; fi
+  - if [ $TARGET_PLATFORM == Android ]; then export ANDROID_HOME=`pwd`/src/third_party/android-sdk-linux ; fi
+  - if [ $TARGET_PLATFORM == Android ]; then export PATH="$PATH":${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}; fi
+  - if [ $TARGET_PLATFORM == Android ]; then echo y | android update sdk --all --force --no-ui --filter android-22; fi
+  - if [ $TARGET_PLATFORM == Android ]; then echo y | android update sdk --all --force --no-ui --filter build-tools-22.0.0; fi
+  - if [ $TARGET_PLATFORM == Android ]; then echo y | android update sdk --all --force --no-ui --filter extra-android-support; fi
+  - if [ $TARGET_PLATFORM == Android ]; then echo y | android update sdk --all --force --no-ui --filter platform-tool; fi
 
 script:
   - cd ./src
+  - if [ $TARGET_PLATFORM == Android ]; then python build_mozc.py gyp --target_platform=Android; fi
+  - if [ $TARGET_PLATFORM == Android ]; then python build_mozc.py build -c Release package; fi
   - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py gyp --target_platform=Linux; fi
   - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py build -c Release package; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then python build_mozc.py gyp --target_platform=NaCl --nacl_sdk_root=`pwd`/third_party/nacl_sdk/pepper_40; fi
@@ -75,6 +93,8 @@ matrix:
   exclude:
   - os: linux
     env: TARGET_PLATFORM=Mac
+  - os: osx
+    env: TARGET_PLATFORM=Android
   - os: osx
     env: TARGET_PLATFORM=Linux
   - os: osx
