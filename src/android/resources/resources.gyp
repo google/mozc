@@ -153,7 +153,7 @@
             'dummy_make_symbolic_link',
           ],
           'action': [
-            'ln', '-r', '-s', '-f',
+            'ln', '-s', '-f',
             '<(sdk_resources_dir)/res',
             'res',
           ],
