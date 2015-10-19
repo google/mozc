@@ -322,6 +322,7 @@
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
         '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session_handler',
         'session_base.gyp:request_test_util',

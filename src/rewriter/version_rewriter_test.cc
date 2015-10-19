@@ -111,7 +111,7 @@ TEST_F(VersionRewriterTest, RewriteTest_Version) {
 #else
   static const char kVersionPrefixExpected[] = "Mozc-";
   static const char kVersionPrefixUnexpected[] = "GoogleJapaneseInput-";
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
   VersionRewriter version_rewriter;
 
@@ -130,6 +130,5 @@ TEST_F(VersionRewriterTest, RewriteTest_Version) {
   EXPECT_FALSE(VersionRewriterTest::FindCandidateWithPrefix(
       kVersionPrefixUnexpected, segments));
 }
-
 
 }  // namespace mozc

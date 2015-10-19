@@ -38,6 +38,9 @@
 #include <iterator>
 #include <string>
 
+// Include namespace.h instead of port.h to reduce a dependency.
+#include "base/namespace.h"
+
 namespace mozc {
 
 

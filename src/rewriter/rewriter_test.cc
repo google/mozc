@@ -102,9 +102,9 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
 #ifdef OS_ANDROID
     EXPECT_EQ(0, CommandCandidatesSize(*seg));
-#else
+#else  // OS_ANDROID
     EXPECT_EQ(2, CommandCandidatesSize(*seg));
-#endif
+#endif  // OS_ANDROID
     seg->clear_candidates();
   }
 
@@ -119,9 +119,9 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
 #ifdef OS_ANDROID
     EXPECT_EQ(0, CommandCandidatesSize(*seg));
-#else
+#else  // OS_ANDROID
     EXPECT_EQ(1, CommandCandidatesSize(*seg));
-#endif
+#endif  // OS_ANDROID
     seg->clear_candidates();
   }
 }

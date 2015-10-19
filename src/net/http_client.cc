@@ -32,13 +32,14 @@
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 #if defined(OS_WIN)
-#include <windows.h>
-#include <wininet.h>
+# include <windows.h>
+# include <wininet.h>
 #elif defined(OS_ANDROID)
-#include "base/android_jni_proxy.h"
+# include "base/android_jni_proxy.h"
 #elif defined(HAVE_CURL)
-#include <curl/curl.h>
-#endif
+# include <curl/curl.h>
+#endif  // defined(OS_WIN), defined(OS_ANDROID), defined(HAVE_CURL)
+
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 

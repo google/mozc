@@ -49,8 +49,8 @@
 #include "protocol/config.pb.h"
 #include "session/request_test_util.h"
 #include "session/session_handler_test_util.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
@@ -345,11 +345,7 @@ bool IsInAllCandidateWords(
 
 TEST_P(SessionHandlerScenarioTest, TestImpl) {
   // Open the scenario file.
-  string scenario_file = GetParam();
-  const string &scenario_path =
-      FileUtil::JoinPath(FLAGS_test_srcdir, scenario_file);
-  ASSERT_TRUE(FileUtil::FileExists(scenario_path))
-      << "Scenario file is not found: " << scenario_path;
+  const string &scenario_path = mozc::testing::GetSourceFileOrDie({GetParam()});
   InputFileStream input_stream(scenario_path.c_str());
 
   // Set up session.
@@ -362,7 +358,7 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
     ++line_number;
     SCOPED_TRACE(Util::StringPrintf("Scenario: %s [%s:%d]",
                                     line_text.c_str(),
-                                    scenario_file.c_str(),
+                                    scenario_path.c_str(),
                                     line_number));
 
     if (line_text.empty() || line_text[0] == '#') {

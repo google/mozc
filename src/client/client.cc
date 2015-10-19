@@ -191,7 +191,7 @@ void Client::DumpQueryOfDeath() {
 }
 
 void Client::DumpHistorySnapshot(const string &filename,
-                                  const string &label) const {
+                                 const string &label) const {
   const string snapshot_file =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), filename);
   // open with append mode

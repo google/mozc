@@ -70,7 +70,7 @@ bool GetPlatformSpecificDefaultEmojiSetting() {
   }
 #elif defined(OS_ANDROID)
   use_emoji_conversion_default = false;
-#endif
+#endif  // defined(OS_WIN), defined(OS_ANDROID)
   return use_emoji_conversion_default;
 }
 

@@ -133,7 +133,6 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
 #ifndef NO_USAGE_REWRITER
   AddRewriter(new UsageRewriter(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER
-
   AddRewriter(new VersionRewriter);
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
   AddRewriter(new NormalizationRewriter);

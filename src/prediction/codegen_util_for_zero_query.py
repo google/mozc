@@ -62,7 +62,8 @@ import os
 from build_tools import code_generator_util as cgu
 
 
-_MOZC_DIR_FOR_INCLUDE_GUARD = 'GOOGLECLIENT_IME_MOZC'
+_MOZC_DIR_FOR_INCLUDE_GUARD = (
+    'MOZC')
 
 ZERO_QUERY_TYPE_NONE = 0
 ZERO_QUERY_TYPE_NUMBER_SUFFIX = 1
