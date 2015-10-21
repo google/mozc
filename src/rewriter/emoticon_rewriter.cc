@@ -167,7 +167,7 @@ bool RewriteCandidate(Segments *segments) {
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     const string &key = segments->conversion_segment(i).key();
     if (key.empty()) {
-      LOG(ERROR) << "Key is empty";
+      // This case happens for zero query suggestion.
       continue;
     }
     bool is_no_learning = false;
