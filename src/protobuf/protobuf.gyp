@@ -51,6 +51,9 @@
     ],
     'protobuf_cpp_root' : '<(protobuf_root)/src/google/protobuf',
     'protobuf_sources': [
+      '<(protobuf_cpp_root)/any.cc',
+      '<(protobuf_cpp_root)/arena.cc',
+      '<(protobuf_cpp_root)/arenastring.cc',
       '<(protobuf_cpp_root)/compiler/importer.cc',
       '<(protobuf_cpp_root)/compiler/parser.cc',
       '<(protobuf_cpp_root)/descriptor.cc',
@@ -64,10 +67,12 @@
       '<(protobuf_cpp_root)/io/coded_stream.cc',
       '<(protobuf_cpp_root)/io/gzip_stream.cc',
       '<(protobuf_cpp_root)/io/printer.cc',
+      '<(protobuf_cpp_root)/io/strtod.cc',
       '<(protobuf_cpp_root)/io/tokenizer.cc',
       '<(protobuf_cpp_root)/io/zero_copy_stream.cc',
       '<(protobuf_cpp_root)/io/zero_copy_stream_impl.cc',
       '<(protobuf_cpp_root)/io/zero_copy_stream_impl_lite.cc',
+      '<(protobuf_cpp_root)/map_field.cc',
       '<(protobuf_cpp_root)/message.cc',
       '<(protobuf_cpp_root)/message_lite.cc',
       '<(protobuf_cpp_root)/reflection_ops.cc',
@@ -76,7 +81,10 @@
       '<(protobuf_cpp_root)/stubs/atomicops_internals_x86_gcc.cc',
       '<(protobuf_cpp_root)/stubs/atomicops_internals_x86_msvc.cc',
       '<(protobuf_cpp_root)/stubs/common.cc',
+      '<(protobuf_cpp_root)/stubs/int128.cc',
       '<(protobuf_cpp_root)/stubs/once.cc',
+      '<(protobuf_cpp_root)/stubs/status.cc',
+      '<(protobuf_cpp_root)/stubs/stringpiece.cc',
       '<(protobuf_cpp_root)/stubs/stringprintf.cc',
       '<(protobuf_cpp_root)/stubs/structurally_valid.cc',
       '<(protobuf_cpp_root)/stubs/strutil.cc',
@@ -87,6 +95,9 @@
       '<(protobuf_cpp_root)/wire_format_lite.cc',
     ],
     'protoc_sources': [
+      '<(protobuf_cpp_root)/any.cc',
+      '<(protobuf_cpp_root)/arena.cc',
+      '<(protobuf_cpp_root)/arenastring.cc',
       '<(protobuf_cpp_root)/compiler/code_generator.cc',
       '<(protobuf_cpp_root)/compiler/command_line_interface.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_enum.cc',
@@ -96,31 +107,92 @@
       '<(protobuf_cpp_root)/compiler/cpp/cpp_file.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_generator.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_helpers.cc',
+      '<(protobuf_cpp_root)/compiler/cpp/cpp_map_field.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_message.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_message_field.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_primitive_field.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_service.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_string_field.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_doc_comment.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_enum.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_enum_field.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_field_base.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_generator.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_helpers.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_map_field.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_message.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_message_field.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_primitive_field.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_repeated_enum_field.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_repeated_message_field.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_repeated_primitive_field.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_source_generator_base.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_umbrella_class.cc',
+      '<(protobuf_cpp_root)/compiler/csharp/csharp_wrapper_field.cc',
+      '<(protobuf_cpp_root)/compiler/importer.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_context.cc',
       '<(protobuf_cpp_root)/compiler/java/java_doc_comment.cc',
       '<(protobuf_cpp_root)/compiler/java/java_enum.cc',
       '<(protobuf_cpp_root)/compiler/java/java_enum_field.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_enum_field_lite.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_enum_lite.cc',
       '<(protobuf_cpp_root)/compiler/java/java_extension.cc',
       '<(protobuf_cpp_root)/compiler/java/java_field.cc',
       '<(protobuf_cpp_root)/compiler/java/java_file.cc',
       '<(protobuf_cpp_root)/compiler/java/java_generator.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_generator_factory.cc',
       '<(protobuf_cpp_root)/compiler/java/java_helpers.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_lazy_message_field.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_lazy_message_field_lite.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_map_field.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_map_field_lite.cc',
       '<(protobuf_cpp_root)/compiler/java/java_message.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_message_builder.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_message_builder_lite.cc',
       '<(protobuf_cpp_root)/compiler/java/java_message_field.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_message_field_lite.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_message_lite.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_name_resolver.cc',
       '<(protobuf_cpp_root)/compiler/java/java_primitive_field.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_primitive_field_lite.cc',
       '<(protobuf_cpp_root)/compiler/java/java_service.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_shared_code_generator.cc',
       '<(protobuf_cpp_root)/compiler/java/java_string_field.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_string_field_lite.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_enum.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_enum_field.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_extension.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_field.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_file.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_generator.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_helpers.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_map_field.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_message.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_message_field.cc',
+      '<(protobuf_cpp_root)/compiler/javanano/javanano_primitive_field.cc',
       '<(protobuf_cpp_root)/compiler/main.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_enum.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_enum_field.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_extension.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_field.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_file.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_generator.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_helpers.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_map_field.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_message.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_message_field.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_oneof.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_primitive_field.cc',
+      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_generator.cc',
+      '<(protobuf_cpp_root)/compiler/parser.cc',
       '<(protobuf_cpp_root)/compiler/plugin.cc',
       '<(protobuf_cpp_root)/compiler/plugin.pb.cc',
       '<(protobuf_cpp_root)/compiler/python/python_generator.cc',
+      '<(protobuf_cpp_root)/compiler/ruby/ruby_generator.cc',
       '<(protobuf_cpp_root)/compiler/subprocess.cc',
       '<(protobuf_cpp_root)/compiler/zip_writer.cc',
-      '<(protobuf_cpp_root)/stubs/stringprintf.cc',
+      '<(protobuf_cpp_root)/io/strtod.cc',
+      '<(protobuf_cpp_root)/map_field.cc',
     ],
   },
   'targets': [
@@ -150,7 +222,6 @@
         }, {  # else
           'sources': ['<@(protobuf_sources)'],
           'include_dirs': [
-            '.',  # for config.h
             '<(protobuf_root)/src',
           ],
           'all_dependent_settings': {
@@ -161,6 +232,9 @@
           'msvs_disabled_warnings': [
             '<@(msvc_disabled_warnings_for_protoc)',
           ],
+          'xcode_settings': {
+            'USE_HEADERMAP': 'NO',
+          },
           'conditions': [
             ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
              '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
@@ -179,6 +253,11 @@
                 'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
               ],
             }],
+            ['OS!="win"', {
+              'defines': [
+                'HAVE_PTHREAD',  # only needed in google/protobuf/stubs/common.cc for now.
+              ],
+            }],
             ['(_toolset=="target" and compiler_target=="clang" and compiler_target_version_int>=304) or '
              '(_toolset=="host" and compiler_host=="clang" and compiler_host_version_int>=304)', {
               'cflags_cc': [
@@ -189,12 +268,15 @@
         }],
         ['target_platform=="Android" and _toolset=="target"', {
           'defines': [
-            'GOOGLE_PROTOBUF_NO_RTTI'
+            'GOOGLE_PROTOBUF_NO_RTTI',
           ],
         }],
         ['use_packed_dictionary==1', {
+          'defines': [
+            'HAVE_ZLIB',
+          ],
           'dependencies': [
-            'zlib'
+            'zlib',
           ],
         }],
       ],
@@ -207,7 +289,6 @@
         'protobuf',
       ],
       'include_dirs': [
-        '.',  # for config.h
         '<(protobuf_root)/src',
       ],
       'conditions': [
@@ -216,11 +297,16 @@
           'msvs_disabled_warnings': [
             '<@(msvc_disabled_warnings_for_protoc)',
           ],
+          'xcode_settings': {
+            'USE_HEADERMAP': 'NO',
+          },
           'conditions': [
             ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
              '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
                 '-Wno-unused-result',  # protoc has unused result.
+                '-Wno-unused-function',
+                '-Wno-unused-private-field',
                 # For sizeof_uint64_is_not_sizeof_long_long in stubs/strutil.h
                 # TODO(komatsu): Update the following two lines when we stop
                 # supporting GCC 4.6 or GCC itself.
