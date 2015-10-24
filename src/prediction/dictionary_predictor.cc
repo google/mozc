@@ -1744,12 +1744,12 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
   for (size_t i = 0; i < result_rule->entries_size; ++i) {
     const ZeroQueryEntry &entry = result_rule->entries[i];
     if (entry.type != ZERO_QUERY_EMOJI) {
-      results->push_back(make_pair(entry.value, entry.type));
+      results->push_back(std::make_pair(entry.value, entry.type));
       continue;
     }
     if (available_emoji_carrier & Request::UNICODE_EMOJI &&
         entry.emoji_type & EMOJI_UNICODE) {
-      results->push_back(make_pair(entry.value, entry.type));
+      results->push_back(std::make_pair(entry.value, entry.type));
       continue;
     }
 
@@ -1761,7 +1761,7 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
          entry.emoji_type & EMOJI_KDDI)) {
       string android_pua;
       Util::UCS4ToUTF8(entry.emoji_android_pua, &android_pua);
-      results->push_back(make_pair(android_pua, entry.type));
+      results->push_back(std::make_pair(android_pua, entry.type));
     }
   }
   return !results->empty();

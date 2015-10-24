@@ -123,8 +123,8 @@ bool KeyMapManager::ReloadConfig(const config::Config &config) {
   const string filename = ConfigFileStream::GetFileName(keymap_file);
   OutputFileStream ofs(filename.c_str());
   if (ofs) {
-    ofs << "# This is a copy of keymap table for debugging." << endl;
-    ofs << "# Nothing happens when you edit this file manually." << endl;
+    ofs << "# This is a copy of keymap table for debugging." << std::endl;
+    ofs << "# Nothing happens when you edit this file manually." << std::endl;
     ofs << custom_keymap_table;
   }
 #endif
