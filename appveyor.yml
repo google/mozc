@@ -29,7 +29,7 @@
 
 version: '{branch} build {build}'
 skip_tags: true
-clone_depth: 1
+clone_depth: 50
 clone_folder: c:\projects\mozc
 init:
 - git config --global core.autocrlf input
