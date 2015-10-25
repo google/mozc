@@ -725,6 +725,16 @@ bool SafeCast(SrcType src, DestType *dest) {
 }
 
 template <>
+bool SafeCast(int64 src, int16 *dest) {
+  if (src < static_cast<int64>(kint16min) ||
+      static_cast<int64>(kint16max) < src) {
+    return false;
+  }
+  *dest = static_cast<int16>(src);
+  return true;
+}
+
+template <>
 bool SafeCast(int64 src, int32 *dest) {
   if (src < static_cast<int64>(kint32min) ||
       static_cast<int64>(kint32max) < src) {
@@ -740,6 +750,15 @@ bool SafeCast(uint64 src, int64 *dest) {
     return false;
   }
   *dest = static_cast<int64>(src);
+  return true;
+}
+
+template <>
+bool SafeCast(uint64 src, uint16 *dest) {
+  if (src > static_cast<uint64>(kuint16max)) {
+    return false;
+  }
+  *dest = static_cast<uint16>(src);
   return true;
 }
 
@@ -777,6 +796,14 @@ bool SafeUnaryNegation(uint64 src, int64 *dest) {
 
 }  // namespace
 
+bool NumberUtil::SafeStrToInt16(StringPiece str, int16 *value) {
+  int64 tmp;
+  if (!SafeStrToInt64(str, &tmp)) {
+    return false;
+  }
+  return SafeCast(tmp, value);
+}
+
 bool NumberUtil::SafeStrToInt32(StringPiece str, int32 *value) {
   int64 tmp;
   if (!SafeStrToInt64(str, &tmp)) {
@@ -800,6 +827,14 @@ bool NumberUtil::SafeStrToInt64(StringPiece str, int64 *value) {
     }
     return SafeUnaryNegation(tmp, value);
   }
+  if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
+    return false;
+  }
+  return SafeCast(tmp, value);
+}
+
+bool NumberUtil::SafeStrToUInt16(StringPiece str, uint16 *value) {
+  uint64 tmp;
   if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
     return false;
   }
