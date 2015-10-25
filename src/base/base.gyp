@@ -116,7 +116,6 @@
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.h',
-        'debug.cc',
         'file_stream.cc',
         'file_util.cc',
         'flags.cc',
@@ -374,6 +373,13 @@
             'crash_report_handler.cc',
           ]
         }],
+      ],
+    },
+    {
+      'target_name': 'debug',
+      'type': 'static_library',
+      'sources': [
+        'debug.cc',
       ],
     },
   ],
