@@ -268,9 +268,10 @@ bool ExecCommand(const ConverterInterface &converter,
     return converter.StartConversionForRequest(conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
     CHECK_FIELDS_LENGTH(5);
-    Lattice::SetDebugDisplayNode(atoi32(fields[2].c_str()),  // begin pos
-                                 atoi32(fields[3].c_str()),  // end pos
-                                 fields[4]);
+    Lattice::SetDebugDisplayNode(
+        NumberUtil::SimpleAtoi(fields[2]),  // begin pos
+        NumberUtil::SimpleAtoi(fields[3]),  // end pos
+        fields[4]);
     const bool result = converter.StartConversion(segments, fields[1]);
     Lattice::ResetDebugDisplayNode();
     return result;
@@ -311,8 +312,8 @@ bool ExecCommand(const ConverterInterface &converter,
   } else if (func == "commitsegmentvalue" || func == "commit" || func == "c") {
     CHECK_FIELDS_LENGTH(3);
     return converter.CommitSegmentValue(segments,
-                                        atoi32(fields[1].c_str()),
-                                        atoi32(fields[2].c_str()));
+                                        NumberUtil::SimpleAtoi(fields[1]),
+                                        NumberUtil::SimpleAtoi(fields[2]));
   } else if (func == "commitallandfinish") {
     for (int i = 0; i < segments->conversion_segments_size(); ++i) {
       if (segments->conversion_segment(i).segment_type() !=
@@ -327,33 +328,34 @@ bool ExecCommand(const ConverterInterface &converter,
   } else if (func == "focussegmentvalue" || func == "focus") {
     CHECK_FIELDS_LENGTH(3);
     return converter.FocusSegmentValue(segments,
-                                       atoi32(fields[1].c_str()),
-                                       atoi32(fields[2].c_str()));
+                                       NumberUtil::SimpleAtoi(fields[1]),
+                                       NumberUtil::SimpleAtoi(fields[2]));
   } else if (func == "commitfirstsegment") {
     CHECK_FIELDS_LENGTH(2);
     vector<size_t> singleton_vector;
-    singleton_vector.push_back(static_cast<size_t>(atoi32(fields[1].c_str())));
+    singleton_vector.push_back(NumberUtil::SimpleAtoi(fields[1]));
     return converter.CommitSegments(segments, singleton_vector);
   } else if (func == "freesegmentvalue" || func == "free") {
     CHECK_FIELDS_LENGTH(2);
     return converter.FreeSegmentValue(segments,
-                                      atoi32(fields[1].c_str()));
+                                      NumberUtil::SimpleAtoi(fields[1]));
   } else if (func == "resizesegment" || func == "resize") {
     const ConversionRequest request;
     if (fields.size() == 3) {
       return converter.ResizeSegment(segments,
                                      request,
-                                     atoi32(fields[1].c_str()),
-                                     atoi32(fields[2].c_str()));
+                                     NumberUtil::SimpleAtoi(fields[1]),
+                                     NumberUtil::SimpleAtoi(fields[2]));
     } else if (fields.size() > 3) {
       vector<uint8> new_arrays;
       for (size_t i = 3; i < fields.size(); ++i) {
-        new_arrays.push_back(static_cast<uint8>(atoi32(fields[i].c_str())));
+        new_arrays.push_back(
+            static_cast<uint8>(NumberUtil::SimpleAtoi(fields[i])));
       }
       return converter.ResizeSegment(segments,
                                      request,
-                                     atoi32(fields[1].c_str()),  // start
-                                     atoi32(fields[2].c_str()),
+                                     NumberUtil::SimpleAtoi(fields[1]),
+                                     NumberUtil::SimpleAtoi(fields[2]),
                                      &new_arrays[0],
                                      new_arrays.size());
     }

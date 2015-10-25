@@ -1742,7 +1742,7 @@ bool ExtractYearFromKey(const YearData &year_data,
   if (!NumberUtil::IsArabicNumber(era_year_str)) {
     return false;
   }
-  *year = atoi32(era_year_str.c_str());
+  *year = NumberUtil::SimpleAtoi(era_year_str);
   if (*year <= 0) {
     return false;
   }
@@ -2250,7 +2250,10 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   string year_str;
   Util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
 
-  const uint32 year = atoi32(year_str.c_str());
+  uint32 year = 0;
+  if (!NumberUtil::SafeStrToUInt32(year_str, &year)) {
+    return false;
+  }
 
   vector<string> results;
   if (!AdToEra(year, &results)) {
@@ -2377,7 +2380,10 @@ bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
   string number_str;
   Util::FullWidthAsciiToHalfWidthAscii(key, &number_str);
 
-  const uint32 number = atoi32(number_str.c_str());
+  uint32 number = 0;
+  if (!NumberUtil::SafeStrToUInt32(number_str, &number)) {
+    return false;
+  }
   const uint32 upper_number = number / 100;
   const uint32 lower_number = number % 100;
 

@@ -35,11 +35,11 @@
 
 #include "base/file_stream.h"
 #include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "rewriter/embedded_dictionary.h"
 
 namespace mozc {
-
 namespace {
 
 struct CompilerToken {
@@ -64,6 +64,7 @@ struct CompareByCost {
     return (t1.cost < t2.cost);
   }
 };
+
 }  // namespace
 
 EmbeddedDictionary::EmbeddedDictionary(const EmbeddedDictionary::Token *token,
@@ -115,9 +116,9 @@ void EmbeddedDictionary::Compile(const string &name,
     CompilerToken token;
     const string &key = fields[0];
     token.value = fields[4];
-    token.lid   = atoi32(fields[1].c_str());
-    token.rid   = atoi32(fields[2].c_str());
-    token.cost  = atoi32(fields[3].c_str());
+    CHECK(NumberUtil::SafeStrToUInt16(fields[1], &token.lid));
+    CHECK(NumberUtil::SafeStrToUInt16(fields[2], &token.rid));
+    CHECK(NumberUtil::SafeStrToInt16(fields[3], &token.cost));
     token.description = (fields.size() > 5) ? fields[5] : "";
     token.additional_description = (fields.size() > 6) ? fields[6] : "";
     dic[key].push_back(token);
