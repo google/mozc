@@ -1116,17 +1116,14 @@ class ClockImpl : public Util::ClockInterface {
     return static_cast<uint64>(
         1.0e9 * timebase_info.denom / timebase_info.numer);
 #elif defined(OS_LINUX)
-#if defined(HAVE_LIBRT)
-    return 1000000000uLL;
-#else  // HAVE_LIBRT
     return 1000000uLL;
-#endif  // HAVE_LIBRT
 #else  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
 #error "Not supported platform"
 #endif  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
   }
 
   virtual uint64 GetTicks() {
+    // TODO(team): Use functions in <chrono> once the use of it is approved.
 #if defined(OS_WIN)
     LARGE_INTEGER timestamp;
     // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
@@ -1136,21 +1133,10 @@ class ClockImpl : public Util::ClockInterface {
 #elif defined(OS_MACOSX)
     return static_cast<uint64>(mach_absolute_time());
 #elif defined(OS_LINUX)
-#if defined(HAVE_LIBRT)
-    struct timespec timestamp;
-    if (-1 == clock_gettime(CLOCK_REALTIME, &timestamp)) {
-      return 0;
-    }
-    return timestamp.tv_sec * 1000000000uLL + timestamp.tv_nsec;
-#else  // HAVE_LIBRT
-    // librt is not linked on Android, so we uses GetTimeOfDay instead.
-    // GetFrequency() always returns 1MHz when librt is not available,
-    // so we uses microseconds as ticks.
     uint64 sec;
     uint32 usec;
     GetTimeOfDay(&sec, &usec);
     return sec * 1000000 + usec;
-#endif  // HAVE_LIBRT
 #else  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
 #error "Not supported platform"
 #endif  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)

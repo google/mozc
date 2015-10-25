@@ -73,21 +73,6 @@
             'win_sandbox.cc',
           ],
         }],
-        # When the target platform is 'Android', build settings are currently
-        # shared among *host* binaries and *target* binaries. This means that
-        # you should implement *host* binaries by using limited libraries
-        # which are also available on NDK.
-        ['OS=="linux" and target_platform!="Android" and '
-         'not (target_platform=="NaCl" and _toolset=="target")', {
-          'defines': [
-            'HAVE_LIBRT=1',
-          ],
-          'link_settings': {
-            'libraries': [
-              '-lrt',  # used in util.cc for Util::GetTicks()/GetFrequency()
-            ],
-          },
-        }],
         ['target_platform=="Android"', {
           'sources!': [
             'process.cc',
