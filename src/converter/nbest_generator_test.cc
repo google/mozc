@@ -29,11 +29,11 @@
 
 #include "converter/nbest_generator.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
@@ -54,9 +54,8 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryImpl;
 using mozc::dictionary::DictionaryInterface;
@@ -145,15 +144,15 @@ class MockDataAndImmutableConverter {
   }
 
  private:
-  scoped_ptr<const DataManagerInterface> data_manager_;
-  scoped_ptr<const SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const Connector> connector_;
-  scoped_ptr<const Segmenter> segmenter_;
-  scoped_ptr<const DictionaryInterface> suffix_dictionary_;
-  scoped_ptr<const DictionaryInterface> dictionary_;
-  scoped_ptr<const PosGroup> pos_group_;
-  scoped_ptr<const SuggestionFilter> suggestion_filter_;
-  scoped_ptr<ImmutableConverterImpl> immutable_converter_;
+  std::unique_ptr<const DataManagerInterface> data_manager_;
+  std::unique_ptr<const SuppressionDictionary> suppression_dictionary_;
+  std::unique_ptr<const Connector> connector_;
+  std::unique_ptr<const Segmenter> segmenter_;
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
+  std::unique_ptr<const DictionaryInterface> dictionary_;
+  std::unique_ptr<const PosGroup> pos_group_;
+  std::unique_ptr<const SuggestionFilter> suggestion_filter_;
+  std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
   UserDictionaryStub user_dictionary_stub_;
 };
 
@@ -204,7 +203,7 @@ class NBestGeneratorTest : public ::testing::Test {
 };
 
 TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
@@ -233,7 +232,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
-  scoped_ptr<NBestGenerator> nbest_generator(
+  std::unique_ptr<NBestGenerator> nbest_generator(
       data_and_converter->CreateNBestGenerator(&lattice));
 
   const bool kSingleSegment = false;  // For 'normal' conversion
@@ -272,7 +271,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
 }
 
 TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
@@ -298,7 +297,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
-  scoped_ptr<NBestGenerator> nbest_generator(
+  std::unique_ptr<NBestGenerator> nbest_generator(
       data_and_converter->CreateNBestGenerator(&lattice));
 
 
@@ -335,7 +334,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
 }
 
 TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
@@ -361,7 +360,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
-  scoped_ptr<NBestGenerator> nbest_generator(
+  std::unique_ptr<NBestGenerator> nbest_generator(
       data_and_converter->CreateNBestGenerator(&lattice));
 
   const bool kSingleSegment = true;  // For realtime conversion

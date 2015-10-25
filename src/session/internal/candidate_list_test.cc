@@ -29,9 +29,9 @@
 
 #include "session/internal/candidate_list.h"
 
+#include <memory>
 #include <string>
 
-#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -76,11 +76,11 @@ class CandidateListTest : public testing::Test {
     sub_sub_list_2_1_->AddCandidate(212, "212");  // subsub212
   }
 
-  scoped_ptr<CandidateList> main_list_;
+  std::unique_ptr<CandidateList> main_list_;
   // sub_list_1_ will be initialized on the fly.
   CandidateList *sub_list_1_;
-  scoped_ptr<CandidateList> sub_list_2_;
-  scoped_ptr<CandidateList> sub_sub_list_2_1_;
+  std::unique_ptr<CandidateList> sub_list_2_;
+  std::unique_ptr<CandidateList> sub_sub_list_2_1_;
 };
 
 TEST_F(CandidateListTest, MoveToId) {

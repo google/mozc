@@ -29,10 +29,10 @@
 
 #include "rewriter/symbol_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -43,9 +43,8 @@
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -123,9 +122,9 @@ class SymbolRewriterTest : public ::testing::Test {
     config::ConfigHandler::SetConfig(config);
   }
 
-  scoped_ptr<EngineInterface> engine_;
+  std::unique_ptr<EngineInterface> engine_;
   const ConverterInterface *converter_;
-  scoped_ptr<testing::MockDataManager> data_manager_;
+  std::unique_ptr<testing::MockDataManager> data_manager_;
 };
 
 // Note that these tests are using default symbol dictionary.

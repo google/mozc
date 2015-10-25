@@ -30,6 +30,7 @@
 #include "rewriter/emoji_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -196,7 +197,7 @@ class EmojiRewriterTest : public ::testing::Test {
   }
 
   const ConversionRequest request_;
-  scoped_ptr<EmojiRewriter> rewriter_;
+  std::unique_ptr<EmojiRewriter> rewriter_;
 
  private:
   string original_profile_directory_;

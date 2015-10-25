@@ -35,6 +35,7 @@
 
 #include "session/session_converter.h"
 
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -60,8 +61,6 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace session {
@@ -408,11 +407,11 @@ class SessionConverterTest : public ::testing::Test {
         ->mutable_candidate(canidate_index)->command = command;
   }
 
-  scoped_ptr<ConverterMock> convertermock_;
+  std::unique_ptr<ConverterMock> convertermock_;
 
-  scoped_ptr<composer::Composer> composer_;
-  scoped_ptr<composer::Table> table_;
-  scoped_ptr<Request> mobile_request_;
+  std::unique_ptr<composer::Composer> composer_;
+  std::unique_ptr<composer::Table> table_;
+  std::unique_ptr<Request> mobile_request_;
   const Request default_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
@@ -1739,7 +1738,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
 
   // FinishConversion is expected to return empty Segments.
   convertermock_->SetFinishConversion(
-      scoped_ptr<Segments>(new Segments).get(), true);
+      std::unique_ptr<Segments>(new Segments).get(), true);
 
   size_t committed_key_size = 0;
   converter.CommitSuggestionByIndex(1, *composer_.get(),
@@ -1804,7 +1803,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
 
   // FinishConversion is expected to return empty Segments.
   convertermock_->SetFinishConversion(
-      scoped_ptr<Segments>(new Segments).get(), true);
+      std::unique_ptr<Segments>(new Segments).get(), true);
 
   const int kCandidateIndex = 1;
   size_t committed_key_size = 0;
@@ -2856,7 +2855,7 @@ TEST_F(SessionConverterTest, Clone) {
 
   {  // validation
     // Copy and validate
-    scoped_ptr<SessionConverter> dest(src.Clone());
+    std::unique_ptr<SessionConverter> dest(src.Clone());
     ASSERT_TRUE(dest.get() != NULL);
     ExpectSameSessionConverter(src, *dest);
 

@@ -29,6 +29,7 @@
 
 #include "session/key_info_util.h"
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -36,7 +37,6 @@
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
@@ -90,7 +90,7 @@ vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(istream *ifs) {
 
 vector<KeyInformation> ExtractSortedDirectModeKeysFromFile(
       const string &filename) {
-  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
+  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs.get() == NULL) {
     DLOG(FATAL) << "could not open file: " << filename;
     return vector<KeyInformation>();

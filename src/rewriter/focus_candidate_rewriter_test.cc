@@ -29,11 +29,11 @@
 
 #include "rewriter/focus_candidate_rewriter.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/number_util.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -81,7 +81,7 @@ class FocusCandidateRewriterTest : public ::testing::Test {
   }
 
  private:
-  scoped_ptr<FocusCandidateRewriter> rewriter_;
+  std::unique_ptr<FocusCandidateRewriter> rewriter_;
   config::Config default_config_;
   testing::MockDataManager mock_data_manager_;
 };

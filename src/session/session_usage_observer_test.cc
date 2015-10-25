@@ -29,6 +29,7 @@
 
 #include "session/session_usage_observer.h"
 
+#include <memory>
 #include <string>
 
 #include "base/clock.h"
@@ -36,7 +37,6 @@
 #include "base/logging.h"
 #include "base/scheduler.h"
 #include "base/scheduler_stub.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
@@ -115,14 +115,14 @@ class SessionUsageObserverTest : public testing::Test {
                         event_stats->mutable_time_length_stats());
   }
 
-  scoped_ptr<SchedulerStub> scheduler_stub_;
-  scoped_ptr<config::StatsConfigUtilMock> stats_config_util_mock_;
+  std::unique_ptr<SchedulerStub> scheduler_stub_;
+  std::unique_ptr<config::StatsConfigUtilMock> stats_config_util_mock_;
 };
 
 TEST_F(SessionUsageObserverTest, DoNotSaveWhenDeleted) {
   stats_config_util_mock_->SetEnabled(false);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  std::unique_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 
   // Add command
   commands::Command command;
@@ -139,7 +139,7 @@ TEST_F(SessionUsageObserverTest, DoNotSaveWhenDeleted) {
 }
 
 TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  std::unique_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 
   // create session
   {
@@ -268,7 +268,7 @@ TEST_F(SessionUsageObserverTest, SubmittedCandidateRow) {
 }
 
 TEST_F(SessionUsageObserverTest, LogTouchEvent) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  std::unique_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 
   // create session
   {
@@ -484,7 +484,7 @@ TEST_F(SessionUsageObserverTest, LogTouchEvent) {
 }
 
 TEST_F(SessionUsageObserverTest, LogTouchEventPasswordField) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  std::unique_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 
   // create session
   {

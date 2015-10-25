@@ -30,9 +30,9 @@
 #ifndef MOZC_CONVERTER_CONVERTER_H_
 #define MOZC_CONVERTER_CONVERTER_H_
 
+#include <memory>
 #include <string>
 
-#include "base/scoped_ptr.h"
 #include "converter/converter_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -170,8 +170,8 @@ class ConverterImpl : public ConverterInterface {
 
   const dictionary::POSMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  scoped_ptr<PredictorInterface> predictor_;
-  scoped_ptr<RewriterInterface> rewriter_;
+  std::unique_ptr<PredictorInterface> predictor_;
+  std::unique_ptr<RewriterInterface> rewriter_;
   const ImmutableConverterInterface *immutable_converter_;
   uint16 general_noun_id_;
 };

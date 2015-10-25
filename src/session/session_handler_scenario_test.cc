@@ -27,13 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
+
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/number_util.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
@@ -45,12 +46,10 @@
 #include "protocol/config.pb.h"
 #include "session/request_test_util.h"
 #include "session/session_handler_test_util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
 
 namespace {
 
@@ -117,11 +116,11 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<TestSessionClient> client_;
-  scoped_ptr<Config> config_;
-  scoped_ptr<Output> last_output_;
-  scoped_ptr<Request> request_;
+  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<TestSessionClient> client_;
+  std::unique_ptr<Config> config_;
+  std::unique_ptr<Output> last_output_;
+  std::unique_ptr<Request> request_;
 };
 
 // Tests should be passed.

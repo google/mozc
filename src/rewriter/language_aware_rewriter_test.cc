@@ -29,10 +29,10 @@
 
 #include "rewriter/language_aware_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -49,11 +49,12 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
-DECLARE_string(test_tmpdir);
+using std::unique_ptr;
 
 using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::Token;
@@ -81,7 +82,7 @@ class LanguageAwareRewriterTest : public testing::Test {
     usage_stats::UsageStats::ClearAllStatsForTest();
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Registers mocked PackedDataManager.
-    scoped_ptr<packed::PackedDataManager>
+    unique_ptr<packed::PackedDataManager>
         data_manager(new packed::PackedDataManager());
     CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
                                     kPackedSystemDictionary_size)));
@@ -110,7 +111,7 @@ class LanguageAwareRewriterTest : public testing::Test {
         dictionary_mock_.get());
   }
 
-  scoped_ptr<DictionaryMock> dictionary_mock_;
+  unique_ptr<DictionaryMock> dictionary_mock_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
  private:
@@ -167,7 +168,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
                                    "naru",
                                    Token::NONE);
 
-  scoped_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
 
   const string &kPrefix = "\xE2\x86\x92 ";  // "→ "
   const string &kDidYouMean =
@@ -284,7 +285,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
 }
 
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
-  scoped_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
 
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionTriggered");
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");

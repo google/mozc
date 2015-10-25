@@ -29,6 +29,7 @@
 
 #include "session/session_converter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/clock.h"
@@ -107,7 +108,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   const string kRomajiHiraganaTable = "system://romanji-hiragana.tsv";
   const commands::Request default_request;
 
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface* converter = engine->GetConverter();
   SessionConverter sconverter(converter, &default_request);
   composer::Table table;

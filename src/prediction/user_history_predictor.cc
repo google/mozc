@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cctype>
 #include <climits>
+#include <memory>
 #include <string>
 #include <unordered_set>
 
@@ -60,11 +61,13 @@
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
 
+using std::unique_ptr;
+using std::unordered_set;
+
 using mozc::commands::Request;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
-using std::unordered_set;
 
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.
@@ -1332,7 +1335,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   // |input_key| is "あｋ" and |base_key| is "あ"
   string input_key;
   string base_key;
-  scoped_ptr<Trie<string> > expanded;
+  unique_ptr<Trie<string>> expanded;
   GetInputKeyFromSegments(request, segments, &input_key, &base_key, &expanded);
 
   int trial = 0;
@@ -1367,7 +1370,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
 void UserHistoryPredictor::GetInputKeyFromSegments(
     const ConversionRequest &request, const Segments &segments,
     string *input_key, string *base,
-    scoped_ptr<Trie<string> > *expanded) {
+    unique_ptr<Trie<string>> *expanded) {
   DCHECK(input_key);
   DCHECK(base);
 

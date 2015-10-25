@@ -30,11 +30,11 @@
 #ifndef MOZC_CONVERTER_LATTICE_H_
 #define MOZC_CONVERTER_LATTICE_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
@@ -124,7 +124,7 @@ class Lattice {
   size_t history_end_pos_;
   vector<Node *> begin_nodes_;
   vector<Node *> end_nodes_;
-  scoped_ptr<NodeAllocator> node_allocator_;
+  std::unique_ptr<NodeAllocator> node_allocator_;
 
   // cache_info_ holds cache information about lookup.
   // If cache_info_[pos] equals to len, it means key.substr(pos, k)

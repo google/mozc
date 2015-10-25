@@ -36,11 +36,12 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
+#include <memory>
+
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
@@ -73,7 +74,7 @@ int main(int argc, char **argv) {
   CHECK(client.EnsureSession()) << "EnsureSession failed";
   CHECK(client.NoOperation()) << "Server is not respoinding";
 
-  scoped_ptr<mozc::renderer::RendererClient> renderer_client;
+  std::unique_ptr<mozc::renderer::RendererClient> renderer_client;
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {

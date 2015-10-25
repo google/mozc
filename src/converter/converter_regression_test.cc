@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
 #include <string>
 
 #include "base/file_util.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -131,7 +131,7 @@ class ConverterRegressionTest : public ::testing::Test {
 };
 
 TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
 
   CHECK(converter);
@@ -170,7 +170,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
 }
 
 TEST_F(ConverterRegressionTest, Regression3323108) {
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 

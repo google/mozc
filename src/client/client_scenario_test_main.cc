@@ -32,6 +32,7 @@
 // events specified by FLAGS_input file or interactive standard input.  Input
 // file format is same as one of session/session_client_main.
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -100,7 +101,7 @@ int Loop(istream *input) {
   CHECK(client.EnsureSession()) << "EnsureSession failed";
   CHECK(client.NoOperation()) << "Server is not responding";
 
-  scoped_ptr<mozc::renderer::RendererClient> renderer_client;
+  std::unique_ptr<mozc::renderer::RendererClient> renderer_client;
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {
@@ -175,7 +176,7 @@ int main(int argc, char **argv) {
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
   }
 
-  scoped_ptr<mozc::InputFileStream> input_file;
+  std::unique_ptr<mozc::InputFileStream> input_file;
   istream *input = NULL;
 
   if (!FLAGS_input.empty()) {

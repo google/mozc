@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -63,7 +64,7 @@ class EmoticonDictionary {
   }
 
  private:
-  scoped_ptr<EmbeddedDictionary> dic_;
+  std::unique_ptr<EmbeddedDictionary> dic_;
 };
 
 class ValueCostCompare {

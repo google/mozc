@@ -32,9 +32,10 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
 #define MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
 
+#include <memory>
 #include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
@@ -139,8 +140,8 @@ class TestSessionClient {
                            bool allow_callback);
 
   uint64 id_;
-  scoped_ptr<SessionObserverInterface> usage_observer_;
-  scoped_ptr<SessionHandlerInterface> handler_;
+  std::unique_ptr<SessionObserverInterface> usage_observer_;
+  std::unique_ptr<SessionHandlerInterface> handler_;
   string callback_text_;
 
   DISALLOW_COPY_AND_ASSIGN(TestSessionClient);

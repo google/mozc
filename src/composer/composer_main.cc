@@ -30,10 +30,10 @@
 #include "composer/composer.h"
 
 #include <iostream>  // NOLINT
+#include <memory>
 #include <string>
 
 #include "base/flags.h"
-#include "base/scoped_ptr.h"
 #include "composer/composition_interface.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
-  scoped_ptr<mozc::composer::Composer> composer(
+  std::unique_ptr<mozc::composer::Composer> composer(
       new mozc::composer::Composer(&table, &Request::default_instance()));
 
   string command;

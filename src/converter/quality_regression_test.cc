@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,9 +46,10 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/request_test_util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
+using std::unique_ptr;
 
 using mozc::quality_regression::QualityRegressionUtil;
 
@@ -169,14 +171,14 @@ class QualityRegressionTest : public testing::Test {
 
 
 TEST_F(QualityRegressionTest, ChromeOSTest) {
-  scoped_ptr<EngineInterface> chromeos_engine(ChromeOsEngineFactory::Create());
+  unique_ptr<EngineInterface> chromeos_engine(ChromeOsEngineFactory::Create());
   QualityRegressionUtil util(chromeos_engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::CHROMEOS, &util);
 }
 
 // Test for desktop
 TEST_F(QualityRegressionTest, BasicTest) {
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  unique_ptr<EngineInterface> engine(EngineFactory::Create());
   QualityRegressionUtil util(engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::DESKTOP, &util);
 }

@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 #define MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -96,7 +97,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                       Segment *segment) const;
 
 
-  scoped_ptr<storage::LRUStorage> storage_;
+  std::unique_ptr<storage::LRUStorage> storage_;
   const dictionary::POSMatcher *pos_matcher_;
   const dictionary::PosGroup *pos_group_;
 };

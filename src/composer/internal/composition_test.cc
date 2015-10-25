@@ -30,6 +30,7 @@
 #include "composer/internal/composition.h"
 
 #include <algorithm>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -41,7 +42,6 @@
 
 namespace mozc {
 namespace composer {
-
 namespace {
 
 string GetString(const Composition &composition) {
@@ -77,7 +77,7 @@ size_t InsertCharacters(const string &input,
   return pos;
 }
 
-}  // anonymous namespace
+}  // namespace
 
 class CompositionTest : public testing::Test {
  protected:
@@ -87,8 +87,8 @@ class CompositionTest : public testing::Test {
     composition_->SetInputMode(Transliterators::CONVERSION_STRING);
   }
 
-  scoped_ptr<Table> table_;
-  scoped_ptr<Composition> composition_;
+  std::unique_ptr<Table> table_;
+  std::unique_ptr<Composition> composition_;
 };
 
 static int InitComposition(Composition* comp) {
@@ -324,7 +324,7 @@ TEST_F(CompositionTest, SplitRawChunk) {
     CharChunk *left_new_chunk_ptr = NULL;
     right_orig_chunk.SplitChunk(Transliterators::RAW_STRING,
                                 test.position, &left_new_chunk_ptr);
-    scoped_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
+    std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
 
     if (left_new_chunk.get() != NULL) {
     EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
@@ -378,7 +378,7 @@ TEST_F(CompositionTest, SplitConversionChunk) {
     CharChunk *left_new_chunk_ptr = NULL;
     right_orig_chunk.SplitChunk(Transliterators::CONVERSION_STRING,
                                 test.position, &left_new_chunk_ptr);
-    scoped_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
+    std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
 
     if (left_new_chunk.get() != NULL) {
     EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
@@ -456,8 +456,8 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
 namespace {
 string GetDeletedString(Transliterators::Transliterator t12r,
                         const int position) {
-  scoped_ptr<Table> table(new Table);
-  scoped_ptr<Composition> comp(new Composition(table.get()));
+  std::unique_ptr<Table> table(new Table);
+  std::unique_ptr<Composition> comp(new Composition(table.get()));
 
   InitComposition(comp.get());
   comp->SetDisplayMode(0, t12r);
@@ -585,9 +585,9 @@ void InitTable(Table* table) {
 string GetInsertedString(Transliterators::Transliterator t12r,
                          const size_t position,
                          const string &input) {
-  scoped_ptr<Table> table(new Table);
+  std::unique_ptr<Table> table(new Table);
   InitTable(table.get());
-  scoped_ptr<Composition> comp(new Composition(table.get()));
+  std::unique_ptr<Composition> comp(new Composition(table.get()));
   InitComposition(comp.get());
 
   comp->SetTable(table.get());
@@ -2036,7 +2036,7 @@ TEST_F(CompositionTest, Clone) {
   EXPECT_EQ(Transliterators::FULL_KATAKANA, src.input_t12r());
   EXPECT_EQ(3, src.chunks().size());
 
-  scoped_ptr<Composition> dest(src.CloneImpl());
+  std::unique_ptr<Composition> dest(src.CloneImpl());
   ASSERT_NE(nullptr, dest.get());
   EXPECT_EQ(src.table(), dest->table());
   EXPECT_EQ(src.input_t12r(), dest->input_t12r());

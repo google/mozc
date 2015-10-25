@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -91,8 +92,8 @@ class PosIdPrintUtil {
     return Util::StringPrintf("%s (%d)", pos_string.c_str(), id);
   }
 
-  scoped_ptr<InputFileStream> pos_id_;
-  scoped_ptr<internal::PosIdPrinter> pos_id_printer_;
+  std::unique_ptr<InputFileStream> pos_id_;
+  std::unique_ptr<internal::PosIdPrinter> pos_id_printer_;
 
   friend class Singleton<PosIdPrintUtil>;
   DISALLOW_COPY_AND_ASSIGN(PosIdPrintUtil);
@@ -382,7 +383,7 @@ int main(int argc, char **argv) {
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_dir);
   }
 
-  scoped_ptr<mozc::EngineInterface> engine;
+  std::unique_ptr<mozc::EngineInterface> engine;
   mozc::commands::Request request;
   if (FLAGS_engine == "default") {
     LOG(INFO) << "Using default preference and engine";

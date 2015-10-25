@@ -30,6 +30,7 @@
 #include "rewriter/collocation_rewriter.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -551,7 +552,7 @@ class CollocationRewriter::CollocationFilter {
   }
 
  private:
-  scoped_ptr<ExistenceFilter> filter_;
+  std::unique_ptr<ExistenceFilter> filter_;
 
   DISALLOW_COPY_AND_ASSIGN(CollocationFilter);
 };
@@ -575,7 +576,7 @@ class CollocationRewriter::SuppressionFilter {
   }
 
  private:
-  scoped_ptr<ExistenceFilter> filter_;
+  std::unique_ptr<ExistenceFilter> filter_;
 
   DISALLOW_COPY_AND_ASSIGN(SuppressionFilter);
 };

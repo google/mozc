@@ -30,6 +30,7 @@
 #include "client/client.h"
 
 #include <map>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -220,8 +221,8 @@ class ClientTest : public testing::Test {
     return client_->EnsureConnection();
   }
 
-  scoped_ptr<IPCClientFactoryMock> client_factory_;
-  scoped_ptr<Client> client_;
+  std::unique_ptr<IPCClientFactoryMock> client_factory_;
+  std::unique_ptr<Client> client_;
   TestServerLauncher *server_launcher_;
   int version_diff_;
 
@@ -771,9 +772,9 @@ class SessionPlaybackTest : public testing::Test {
     ipc_client_factory_->SetMockResponse(response);
   }
 
-  scoped_ptr<IPCClientFactoryMock> ipc_client_factory_;
-  scoped_ptr<IPCClientMock> ipc_client_;
-  scoped_ptr<Client> client_;
+  std::unique_ptr<IPCClientFactoryMock> ipc_client_factory_;
+  std::unique_ptr<IPCClientMock> ipc_client_;
+  std::unique_ptr<Client> client_;
   SessionPlaybackTestServerLauncher *server_launcher_;
 
  private:

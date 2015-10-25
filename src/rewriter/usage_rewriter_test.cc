@@ -29,6 +29,7 @@
 
 #include "rewriter/usage_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/system_util.h"
@@ -96,13 +97,13 @@ class UsageRewriterTest : public ::testing::Test {
         user_dictionary_.get());
   }
 
-  scoped_ptr<SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<UserDictionary> user_dictionary_;
-  scoped_ptr<testing::MockDataManager> data_manager_;
+  std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
+  std::unique_ptr<UserDictionary> user_dictionary_;
+  std::unique_ptr<testing::MockDataManager> data_manager_;
 };
 
 TEST_F(UsageRewriterTest, CapabilityTest) {
-  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   const ConversionRequest request;
   EXPECT_EQ(RewriterInterface::CONVERSION |
             RewriterInterface::PREDICTION,
@@ -111,7 +112,7 @@ TEST_F(UsageRewriterTest, CapabilityTest) {
 
 TEST_F(UsageRewriterTest, ConjugationTest) {
   Segments segments;
-  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
 
   segments.Clear();
@@ -142,7 +143,7 @@ TEST_F(UsageRewriterTest, ConjugationTest) {
 
 TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
   Segments segments;
-  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
   const ConversionRequest request;
 
@@ -177,7 +178,7 @@ TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
 
 TEST_F(UsageRewriterTest, ConfigTest) {
   Segments segments;
-  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
   const ConversionRequest request;
 
@@ -236,7 +237,7 @@ TEST_F(UsageRewriterTest, ConfigTest) {
 
 TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   Segments segments;
-  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
   const ConversionRequest request;
 
@@ -331,7 +332,7 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
 
 TEST_F(UsageRewriterTest, MultiSegmentsTest) {
   Segments segments;
-  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
   const ConversionRequest request;
 
@@ -390,7 +391,7 @@ TEST_F(UsageRewriterTest, MultiSegmentsTest) {
 
 TEST_F(UsageRewriterTest, SameUsageTest) {
   Segments segments;
-  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
   const ConversionRequest request;
 
@@ -513,7 +514,7 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
       "\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x91\xE3\x82\xAB", seg);
 
   const ConversionRequest request;
-  scoped_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
+  std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   EXPECT_TRUE(rewriter->Rewrite(request, &segments));
 
   // Result of ("うま", "Horse"). No comment is expected.

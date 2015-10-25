@@ -31,7 +31,6 @@
 #define MOZC_REWRITER_COLLOCATION_REWRITER_H_
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -66,13 +65,13 @@ class CollocationRewriter : public RewriterInterface {
   // Used to test if pairs of strings are in collocation data. Since it's a
   // bloom filter, non-collocation words are sometimes mistakenly boosted,
   // although the possibility is very low (0.001% by default).
-  scoped_ptr<CollocationFilter> collocation_filter_;
+  std::unique_ptr<CollocationFilter> collocation_filter_;
 
   // Used to test if pairs of content key and value are "ateji". Since it's a
   // bloom filter, non-ateji words are sometimes mistakenly classified as ateji,
   // resulting in passing on the right collocations, though the possibility is
   // very low (0.001% by default).
-  scoped_ptr<SuppressionFilter> suppression_filter_;
+  std::unique_ptr<SuppressionFilter> suppression_filter_;
 };
 
 }  // namespace mozc

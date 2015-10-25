@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include "base/file_stream.h"
@@ -35,7 +36,6 @@
 #include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
@@ -49,9 +49,10 @@ DEFINE_string(output, "", "Output file");
 DEFINE_string(profile_dir, "", "Profile dir");
 
 namespace mozc {
+
 void Loop(istream *input, ostream *output) {
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
-  scoped_ptr<session::Session> session(new session::Session(engine.get()));
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<session::Session> session(new session::Session(engine.get()));
 
   commands::Command command;
   string line;
@@ -86,8 +87,8 @@ void Loop(istream *input, ostream *output) {
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
-  scoped_ptr<mozc::InputFileStream> input_file;
-  scoped_ptr<mozc::OutputFileStream> output_file;
+  std::unique_ptr<mozc::InputFileStream> input_file;
+  std::unique_ptr<mozc::OutputFileStream> output_file;
   istream *input = NULL;
   ostream *output = NULL;
 

@@ -30,6 +30,7 @@
 // This is a test with the actual converter.  So the result of the
 // conversion may differ from previous versions.
 
+#include <memory>
 #include <string>
 
 #include "base/file_util.h"
@@ -198,10 +199,10 @@ class SessionRegressionTest : public testing::Test {
   }
 
   bool orig_use_history_rewriter_;
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<SessionHandler> handler_;
-  scoped_ptr<session::Session> session_;
-  scoped_ptr<composer::Table> table_;
+  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<SessionHandler> handler_;
+  std::unique_ptr<session::Session> session_;
+  std::unique_ptr<composer::Table> table_;
   config::Config config_;
 };
 

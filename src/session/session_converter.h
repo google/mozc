@@ -32,11 +32,11 @@
 #ifndef MOZC_SESSION_SESSION_CONVERTER_H_
 #define MOZC_SESSION_SESSION_CONVERTER_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
@@ -355,7 +355,7 @@ class SessionConverter : public SessionConverterInterface {
   SessionConverterInterface::State state_;
 
   const ConverterInterface *converter_;
-  scoped_ptr<Segments> segments_;
+  std::unique_ptr<Segments> segments_;
   size_t segment_index_;
 
   // Previous suggestions to be merged with the current predictions.
@@ -367,9 +367,9 @@ class SessionConverter : public SessionConverterInterface {
   // Preferences for user's operation.
   OperationPreferences operation_preferences_;
 
-  scoped_ptr<commands::Result> result_;
+  std::unique_ptr<commands::Result> result_;
 
-  scoped_ptr<CandidateList> candidate_list_;
+  std::unique_ptr<CandidateList> candidate_list_;
   bool candidate_list_visible_;
 
   const commands::Request *request_;

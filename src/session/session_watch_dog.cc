@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include <numeric>
 #include <string>
 
@@ -38,7 +39,6 @@
 #include "base/cpu_stats.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/unnamed_event.h"
 #include "client/client_interface.h"
@@ -98,14 +98,14 @@ void SessionWatchDog::Terminate() {
 }
 
 void SessionWatchDog::Run() {
-  scoped_ptr<client::ClientInterface> client_impl;
+  std::unique_ptr<client::ClientInterface> client_impl;
   if (client_ == NULL) {
     VLOG(2) << "default client is used";
     client_impl.reset(client::ClientFactory::NewClient());
     client_ = client_impl.get();
   }
 
-  scoped_ptr<CPUStatsInterface> cpu_stats_impl;
+  std::unique_ptr<CPUStatsInterface> cpu_stats_impl;
   if (cpu_stats_ == NULL) {
     VLOG(2) << "default cpu_stats is used";
     cpu_stats_impl.reset(new CPUStats);

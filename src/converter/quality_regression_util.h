@@ -30,11 +30,11 @@
 #ifndef MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
 #define MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 class Segments;
@@ -85,8 +85,8 @@ class QualityRegressionUtil {
 
  private:
   ConverterInterface *converter_;
-  scoped_ptr<commands::Request> request_;
-  scoped_ptr<Segments> segments_;
+  std::unique_ptr<commands::Request> request_;
+  std::unique_ptr<Segments> segments_;
 
   DISALLOW_COPY_AND_ASSIGN(QualityRegressionUtil);
 };

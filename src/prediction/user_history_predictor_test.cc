@@ -29,6 +29,7 @@
 
 #include "prediction/user_history_predictor.h"
 
+#include <memory>
 #include <set>
 #include <string>
 
@@ -53,8 +54,9 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_user_history_predictor);
+
+using std::unique_ptr;
 
 using mozc::commands::Request;
 using mozc::dictionary::DictionaryMock;
@@ -302,9 +304,9 @@ class UserHistoryPredictorTest : public ::testing::Test {
 
  private:
   struct DataAndPredictor {
-    scoped_ptr<DictionaryMock> dictionary;
-    scoped_ptr<SuppressionDictionary> suppression_dictionary;
-    scoped_ptr<UserHistoryPredictor> predictor;
+    unique_ptr<DictionaryMock> dictionary;
+    unique_ptr<SuppressionDictionary> suppression_dictionary;
+    unique_ptr<UserHistoryPredictor> predictor;
   };
 
   DataAndPredictor *CreateDataAndPredictor() const {
@@ -323,10 +325,10 @@ class UserHistoryPredictorTest : public ::testing::Test {
   config::Config default_config_;
   const commands::Request default_request_;
   commands::Request mobile_request_;
-  scoped_ptr<ConversionRequest> default_conversion_request_;
-  scoped_ptr<ConversionRequest> mobile_conversion_request_;
+  unique_ptr<ConversionRequest> default_conversion_request_;
+  unique_ptr<ConversionRequest> mobile_conversion_request_;
   const bool default_expansion_;
-  scoped_ptr<DataAndPredictor> data_and_predictor_;
+  unique_ptr<DataAndPredictor> data_and_predictor_;
 };
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
@@ -2877,7 +2879,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   // input_key: "あｋ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
-  scoped_ptr<Trie<string> > expanded(new Trie<string>);
+  unique_ptr<Trie<string>> expanded(new Trie<string>);
   // "か"
   expanded->AddEntry("\xe3\x81\x8b", "");
   // "き"
@@ -2963,7 +2965,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   // input_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
-  scoped_ptr<Trie<string> > expanded(new Trie<string>);
+  unique_ptr<Trie<string>> expanded(new Trie<string>);
   // "し"
   expanded->AddEntry("\xe3\x81\x97", "");
   // "じ"
@@ -3053,7 +3055,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   // input_key: "あ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
-  scoped_ptr<Trie<string> > expanded(new Trie<string>);
+  unique_ptr<Trie<string>> expanded(new Trie<string>);
   // "か", "か"
   expanded->AddEntry("\xe3\x81\x8b", "\xe3\x81\x8b");
   // "き", "き"
@@ -3128,7 +3130,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   // input_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
-  scoped_ptr<Trie<string> > expanded(new Trie<string>);
+  unique_ptr<Trie<string>> expanded(new Trie<string>);
   // "し", "し"
   expanded->AddEntry("\xe3\x81\x97", "\xe3\x81\x97");
   // "じ", "じ"
@@ -3231,9 +3233,9 @@ void InitSegmentsFromInputSequence(const string &text,
 }  // namespace
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3247,7 +3249,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
     FLAGS_enable_expansion_for_user_history_predictor = true;
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3273,7 +3275,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
     FLAGS_enable_expansion_for_user_history_predictor = false;
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3296,9 +3298,9 @@ uint32 GetRandomAscii() {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3318,7 +3320,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
                                   &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3331,9 +3333,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
 // input_key != base by compoesr modification.
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3345,7 +3347,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
                                   &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3356,11 +3358,11 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
-  scoped_ptr<ConversionRequest> conversion_request;
+  unique_ptr<ConversionRequest> conversion_request;
   Segments segments;
 
   {
@@ -3369,7 +3371,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   conversion_request.get(), &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3398,7 +3400,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   conversion_request.get(), &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3419,7 +3421,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   conversion_request.get(), &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3440,7 +3442,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   conversion_request.get(), &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3465,9 +3467,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://flick-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3477,7 +3479,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
                                   &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3501,9 +3503,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://12keys-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3516,7 +3518,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
                                   &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3539,9 +3541,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
 }
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://kana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3554,7 +3556,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
     FLAGS_enable_expansion_for_user_history_predictor = true;
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3580,7 +3582,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
     FLAGS_enable_expansion_for_user_history_predictor = false;
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,

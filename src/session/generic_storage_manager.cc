@@ -30,6 +30,7 @@
 #include "session/generic_storage_manager.h"
 
 #include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -37,7 +38,6 @@
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "storage/lru_storage.h"
 
@@ -144,7 +144,7 @@ bool GenericLruStorage::EnsureStorage() {
     // We already have prepared storage.
     return true;
   }
-  scoped_ptr<LRUStorage> new_storage;
+  std::unique_ptr<LRUStorage> new_storage;
   new_storage.reset(new LRUStorage());
   const string &filename =
       ConfigFileStream::GetFileName(file_name_);

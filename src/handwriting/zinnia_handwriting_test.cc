@@ -31,14 +31,13 @@
 
 #include "handwriting/zinnia_handwriting.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
 
 namespace mozc {
 namespace handwriting {
@@ -52,7 +51,7 @@ class ZinniaHandwritingTest : public ::testing::Test {
     zinnia_.reset(new ZinniaHandwriting(filepath));
   }
 
-  scoped_ptr<ZinniaHandwriting> zinnia_;
+  std::unique_ptr<ZinniaHandwriting> zinnia_;
 };
 
 TEST_F(ZinniaHandwritingTest, Recognize) {

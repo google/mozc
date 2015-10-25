@@ -30,9 +30,9 @@
 #include "rewriter/single_kanji_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -42,9 +42,8 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::POSMatcher;
 
@@ -77,12 +76,12 @@ class SingleKanjiRewriterTest : public ::testing::Test {
   const ConversionRequest default_request_;
 
  private:
-  scoped_ptr<testing::MockDataManager> data_manager_;
+  std::unique_ptr<testing::MockDataManager> data_manager_;
   const POSMatcher *pos_matcher_;
 };
 
 TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
-  scoped_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
+  std::unique_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
 
   commands::Request client_request;
   client_request.set_mixed_conversion(false);
@@ -91,7 +90,7 @@ TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
-  scoped_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
+  std::unique_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
 
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -116,7 +115,7 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
 
 TEST_F(SingleKanjiRewriterTest, MobileEnvironmentTest) {
   commands::Request client_request;
-  scoped_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
+  std::unique_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
 
   {
     client_request.set_mixed_conversion(true);

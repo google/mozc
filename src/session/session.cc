@@ -31,6 +31,7 @@
 
 #include "session/session.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -1546,7 +1547,7 @@ bool Session::IsFullWidthInsertSpace(const commands::Input &input) const {
   // To achieve this, we create a temporary composer object to which the
   // new input mode will be stored when |input| has a new input mode.
   const composer::Composer* target_composer = &context_->composer();
-  scoped_ptr<composer::Composer> temporary_composer;
+  std::unique_ptr<composer::Composer> temporary_composer;
   if (input.has_key() && input.key().has_mode()) {
     // Allocate an object only when it is necessary.
     temporary_composer.reset(new composer::Composer(NULL, NULL));

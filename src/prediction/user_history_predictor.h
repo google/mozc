@@ -30,6 +30,7 @@
 #ifndef MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 #define MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 
+#include <memory>
 #include <queue>
 #include <set>
 #include <string>
@@ -37,7 +38,6 @@
 #include <vector>
 
 #include "base/freelist.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "base/trie.h"
 #include "dictionary/dictionary_interface.h"
@@ -73,7 +73,7 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
   bool Save() const;
 
  private:
-  scoped_ptr<storage::StringStorageInterface> storage_;
+  std::unique_ptr<storage::StringStorageInterface> storage_;
 };
 
 // UserHistoryPredictor is NOT thread safe.
@@ -433,7 +433,7 @@ class UserHistoryPredictor : public PredictorInterface {
   static void GetInputKeyFromSegments(
       const ConversionRequest &request, const Segments &segments,
       string *input_key, string *base,
-      scoped_ptr<Trie<string> >*expanded);
+      std::unique_ptr<Trie<string>>*expanded);
 
   bool InsertCandidates(RequestType request_type,
                         const ConversionRequest &request, Segments *segments,
@@ -518,8 +518,8 @@ class UserHistoryPredictor : public PredictorInterface {
 
   bool content_word_learning_enabled_;
   bool updated_;
-  scoped_ptr<DicCache> dic_;
-  mutable scoped_ptr<UserHistoryPredictorSyncer> syncer_;
+  std::unique_ptr<DicCache> dic_;
+  mutable std::unique_ptr<UserHistoryPredictorSyncer> syncer_;
 };
 
 }  // namespace mozc

@@ -33,8 +33,9 @@
 #ifndef MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 #define MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {
@@ -157,9 +158,9 @@ class ImeContext {
   uint64 create_time_;
   uint64 last_command_time_;
 
-  scoped_ptr<composer::Composer> composer_;
+  std::unique_ptr<composer::Composer> composer_;
 
-  scoped_ptr<SessionConverterInterface> converter_;
+  std::unique_ptr<SessionConverterInterface> converter_;
 
   State state_;
 
@@ -187,4 +188,5 @@ class ImeContext {
 
 }  // namespace session
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_INTERNAL_IME_CONTEXT_H_

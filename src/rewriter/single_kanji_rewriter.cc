@@ -30,9 +30,10 @@
 #include "rewriter/single_kanji_rewriter.h"
 
 #include <algorithm>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "base/logging.h"
 #include "base/singleton.h"
@@ -86,7 +87,7 @@ class NounPrefixDictionary {
   }
 
  private:
-  scoped_ptr<EmbeddedDictionary> dic_;
+  std::unique_ptr<EmbeddedDictionary> dic_;
 };
 
 struct SingleKanjiListCompare {

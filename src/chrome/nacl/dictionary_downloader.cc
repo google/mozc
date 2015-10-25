@@ -33,9 +33,8 @@
 
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/port.h"
 #include "base/pepper_file_util.h"
-#include "base/scoped_ptr.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "chrome/nacl/url_loader_util.h"
 #include "net/http_client_pepper.h"

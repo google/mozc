@@ -34,6 +34,7 @@
 #include <ppapi/cpp/var.h>
 #include <ppapi/utility/completion_callback_factory.h>
 
+#include <memory>
 #include <queue>
 #include <string>
 
@@ -239,7 +240,7 @@ class MozcSessionHandlerThread : public Thread {
 
     while (true) {
       bool stopped = false;
-      scoped_ptr<Json::Value> message;
+      std::unique_ptr<Json::Value> message;
       message.reset(message_queue_->take(&stopped));
       if (stopped) {
         LOG(ERROR) << " message_queue_ stopped";
@@ -302,7 +303,7 @@ class MozcSessionHandlerThread : public Thread {
       LOG(ERROR) << "PepperFileUtil::ReadBinaryFile error";
       return false;
     }
-    scoped_ptr<mozc::packed::PackedDataManager>
+    std::unique_ptr<mozc::packed::PackedDataManager>
         data_manager(new mozc::packed::PackedDataManager());
     if (!data_manager->InitWithZippedData(buffer)) {
       LOG(ERROR) << "InitWithZippedData error";
@@ -340,7 +341,7 @@ class MozcSessionHandlerThread : public Thread {
     const string data_file_name = "./zipped_data_oss";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
     CHECK(HTTPClient::Get(data_file_name, option, &output));
-    scoped_ptr<mozc::packed::PackedDataManager>
+    std::unique_ptr<mozc::packed::PackedDataManager>
         data_manager(new mozc::packed::PackedDataManager());
     CHECK(data_manager->InitWithZippedData(output));
     mozc::packed::RegisterPackedDataManager(data_manager.release());
@@ -405,12 +406,12 @@ class MozcSessionHandlerThread : public Thread {
   pp::Instance *instance_;
   BlockingQueue<Json::Value *> *message_queue_;
   pp::CompletionCallbackFactory<MozcSessionHandlerThread> factory_;
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<SessionHandlerInterface> handler_;
-  scoped_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<SessionHandlerInterface> handler_;
+  std::unique_ptr<const UserPOSInterface> user_pos_;
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-  scoped_ptr<SessionUsageObserver> usage_observer_;
-  scoped_ptr<chrome::nacl::DictionaryDownloader> downloader_;
+  std::unique_ptr<SessionUsageObserver> usage_observer_;
+  std::unique_ptr<chrome::nacl::DictionaryDownloader> downloader_;
   string big_dictionary_version_;
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   DISALLOW_COPY_AND_ASSIGN(MozcSessionHandlerThread);
@@ -425,7 +426,7 @@ class NaclSessionHandlerInstance : public pp::Instance {
  private:
   void CheckStatusAndStartMozcSessionHandlerThread();
 
-  scoped_ptr<MozcSessionHandlerThread> mozc_thread_;
+  std::unique_ptr<MozcSessionHandlerThread> mozc_thread_;
   BlockingQueue<Json::Value *> message_queue_;
 
   DISALLOW_COPY_AND_ASSIGN(NaclSessionHandlerInstance);
@@ -442,7 +443,7 @@ void NaclSessionHandlerInstance::HandleMessage(const pp::Var &var_message) {
     return;
   }
 
-  scoped_ptr<Json::Value> message(new Json::Value);
+  std::unique_ptr<Json::Value> message(new Json::Value);
   if (Json::Reader().parse(var_message.AsString(), *message.get())) {
     message_queue_.put(message.release());
   }

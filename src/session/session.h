@@ -32,11 +32,11 @@
 #ifndef MOZC_SESSION_SESSION_H_
 #define MOZC_SESSION_SESSION_H_
 
+#include <memory>
 #include <string>
 
 #include "base/coordinates.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "composer/composer.h"
 #include "session/session_interface.h"
 #include "transliteration/transliteration.h"
@@ -287,8 +287,8 @@ class Session : public SessionInterface {
   //      history, user dictionary, etc.
   mozc::EngineInterface *engine_;
 
-  scoped_ptr<ImeContext> context_;
-  scoped_ptr<ImeContext> prev_context_;
+  std::unique_ptr<ImeContext> context_;
+  std::unique_ptr<ImeContext> prev_context_;
 
   void InitContext(ImeContext *context) const;
 

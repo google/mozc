@@ -29,10 +29,10 @@
 
 #include "rewriter/calculator_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
@@ -129,12 +129,12 @@ class CalculatorRewriterTest : public testing::Test {
 
  private:
   CalculatorMock calculator_mock_;
-  scoped_ptr<ConverterInterface> converter_mock_;
+  std::unique_ptr<ConverterInterface> converter_mock_;
   config::Config default_config_;
 };
 
 TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       BuildCalculatorRewriterWithConverterMock());
 
   {
@@ -166,7 +166,7 @@ TEST_F(CalculatorRewriterTest, BasicTest) {
   // Pretend "key" is calculated to "value".
   calculator_mock().SetCalculatePair("key", "value", true);
 
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       BuildCalculatorRewriterWithConverterMock());
   const int counter_at_first = calculator_mock().calculation_counter();
   const ConversionRequest request;
@@ -194,8 +194,8 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
-  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
   const ConversionRequest request;
 
@@ -235,7 +235,7 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
   calculator_mock().SetCalculatePair(kExpression, "3", true);
   const ConversionRequest request;
 
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       BuildCalculatorRewriterWithConverterMock());
 
   Segments segments;
@@ -259,8 +259,8 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
-  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
   {
     Segments segments;
@@ -287,8 +287,8 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
 
 TEST_F(CalculatorRewriterTest, MobileEnvironmentTest) {
   commands::Request input;
-  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  scoped_ptr<CalculatorRewriter> rewriter(
+  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<CalculatorRewriter> rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
 
   {
@@ -309,8 +309,8 @@ TEST_F(CalculatorRewriterTest, EmptyKeyTest) {
   config::ConfigHandler::GetDefaultConfig(&config);
 
   const ConversionRequest request;
-  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
   {
     Segments segments;

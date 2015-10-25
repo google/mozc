@@ -30,6 +30,7 @@
 #include "rewriter/number_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -47,9 +48,8 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::POSMatcher;
 
@@ -136,7 +136,7 @@ class NumberRewriterTest : public ::testing::Test {
     // TODO(noriyukit): Currently this test uses mock data manager.  Check if we
     // can remove this registration of packed data manager.
     // Registers mocked PackedDataManager.
-    scoped_ptr<packed::PackedDataManager>
+    std::unique_ptr<packed::PackedDataManager>
         data_manager(new packed::PackedDataManager());
     CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
                                     kPackedSystemDictionary_size)));
@@ -175,7 +175,7 @@ struct ExpectResult {
 }  // namespace
 
 TEST_F(NumberRewriterTest, BasicTest) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -247,7 +247,7 @@ TEST_F(NumberRewriterTest, RequestType) {
       TestData(Segments::SUGGESTION, 8),
   };
 
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   for (size_t i = 0; i < arraysize(test_data_list); ++i) {
     TestData& test_data = test_data_list[i];
@@ -266,7 +266,7 @@ TEST_F(NumberRewriterTest, RequestType) {
 }
 
 TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -324,7 +324,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
 }
 
 TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -353,7 +353,7 @@ TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
 }
 
 TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -400,7 +400,7 @@ TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
 }
 
 TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
 
   // Special forms doesn't have zeros.
@@ -447,7 +447,7 @@ TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
 }
 
 TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -499,7 +499,7 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
 }
 
 TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -520,7 +520,7 @@ TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsZero) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -562,7 +562,7 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsZeroZero) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -602,7 +602,7 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
 }
 
 TEST_F(NumberRewriterTest, NumberIs19Digit) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -686,7 +686,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -791,7 +791,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsGoogol) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -865,7 +865,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
 TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
   // If kanji candidate is higher before we rewrite segments,
   // kanji should have higher raking.
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -901,7 +901,7 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
 TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
   // Modify exsisting ranking even if the converter returns unusual results
   // due to dictionary noise, etc.
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -948,7 +948,7 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
 }
 
 TEST_F(NumberRewriterTest, EraseExistingCandidates) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -1003,7 +1003,7 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
 }
 
 TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   // Expected data to succeed tests.
   const char* kSuccess[][3] = {
@@ -1070,7 +1070,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
 // In this case, NumberRewriter should not clear
 // Segment::Candidate::USER_DICTIONARY bit in the base candidate.
 TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   {
     Segments segments;
     {
@@ -1110,7 +1110,7 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
 
 TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
   // To reproduce issue b/6714268.
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *segment = segments.push_back_segment();
@@ -1149,7 +1149,7 @@ TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
 
 TEST_F(NumberRewriterTest, MobileEnvironmentTest) {
   commands::Request input;
-  scoped_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
 
   {
     input.set_mixed_conversion(true);
@@ -1166,7 +1166,7 @@ TEST_F(NumberRewriterTest, MobileEnvironmentTest) {
 
 TEST_F(NumberRewriterTest, NonNumberNounTest) {
   // Test if "百舌鳥" is not rewritten to "100舌鳥", etc.
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
   Segment *segment = segments.push_back_segment();
   segment->set_key("\xE3\x82\x82\xE3\x81\x9A");  // "もず"
@@ -1182,7 +1182,7 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
 }
 
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   const char kBubun[] = "\xE9\x83\xA8\xE5\x88\x86";  // "部分"
   Segments segments;

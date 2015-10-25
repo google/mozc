@@ -33,10 +33,10 @@
 #define MOZC_SESSION_SESSION_HANDLER_H_
 
 #include <map>
+#include <memory>
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "composer/table.h"
 #include "session/common.h"
 #include "session/session_handler_interface.h"
@@ -134,9 +134,9 @@ class SessionHandler : public SessionHandlerInterface {
   SessionID CreateNewSessionID();
   bool DeleteSessionID(SessionID id);
 
-  scoped_ptr<SessionMap> session_map_;
+  std::unique_ptr<SessionMap> session_map_;
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  scoped_ptr<SessionWatchDog> session_watch_dog_;
+  std::unique_ptr<SessionWatchDog> session_watch_dog_;
 #else  // MOZC_DISABLE_SESSION_WATCHDOG
   // Session watch dog is not aviable from android mozc and nacl mozc for now.
   // TODO(kkojima): Remove this guard after
@@ -149,12 +149,12 @@ class SessionHandler : public SessionHandlerInterface {
   uint64 last_create_session_time_;
 
   EngineInterface *engine_;
-  scoped_ptr<session::SessionObserverHandler> observer_handler_;
-  scoped_ptr<Stopwatch> stopwatch_;
-  scoped_ptr<user_dictionary::UserDictionarySessionHandler>
+  std::unique_ptr<session::SessionObserverHandler> observer_handler_;
+  std::unique_ptr<Stopwatch> stopwatch_;
+  std::unique_ptr<user_dictionary::UserDictionarySessionHandler>
       user_dictionary_session_handler_;
-  scoped_ptr<composer::TableManager> table_manager_;
-  scoped_ptr<commands::Request> request_;
+  std::unique_ptr<composer::TableManager> table_manager_;
+  std::unique_ptr<commands::Request> request_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandler);
 };

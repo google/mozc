@@ -30,9 +30,10 @@
 #ifndef MOZC_RENDERER_RENDERER_CLIENT_H_
 #define MOZC_RENDERER_RENDERER_CLIENT_H_
 
+#include <memory>
 #include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "renderer/renderer_interface.h"
 
 namespace mozc {
@@ -134,9 +135,11 @@ class RendererClient : public RendererInterface {
 
   IPCClientFactoryInterface *ipc_client_factory_interface_;
 
-  scoped_ptr<RendererLauncherInterface> renderer_launcher_;
+  std::unique_ptr<RendererLauncherInterface> renderer_launcher_;
   RendererLauncherInterface *renderer_launcher_interface_;
 };
-}  // renderer
-}  // mozc
+
+}  // namespace renderer
+}  // namespace mozc
+
 #endif  // MOZC_RENDERER_RENDERER_CLIENT_H_

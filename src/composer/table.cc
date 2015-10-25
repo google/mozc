@@ -33,6 +33,7 @@
 
 #include <istream>  // NOLINT
 #include <map>
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -41,7 +42,6 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
@@ -381,7 +381,7 @@ bool Table::LoadFromString(const string &str) {
 }
 
 bool Table::LoadFromFile(const char *filepath) {
-  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filepath));
+  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filepath));
   if (ifs.get() == NULL) {
     return false;
   }
@@ -651,7 +651,7 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
     }
   }
 
-  scoped_ptr<Table> table(new Table());
+  std::unique_ptr<Table> table(new Table());
   if (!table->InitializeWithRequestAndConfig(request, config)) {
     return NULL;
   }
@@ -660,5 +660,6 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
   table_map_[hash] = table_to_cache;
   return table_to_cache;
 }
+
 }  // namespace composer
 }  // namespace mozc

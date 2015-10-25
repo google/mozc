@@ -29,8 +29,9 @@
 
 #include "renderer/renderer_client.h"
 
-#include <cstddef>
 #include <climits>
+#include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/clock.h"
@@ -279,7 +280,7 @@ class RendererLauncher : public RendererLauncherInterface,
     scoped_lock l(&pending_command_mutex_);
     if (ipc_client_factory_interface_ != NULL &&
         pending_command_.get() != NULL) {
-      scoped_ptr<IPCClientInterface> client(CreateIPCClient());
+      std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
       if (client.get() != NULL) {
         CallCommand(client.get(), *(pending_command_.get()));
       }
@@ -311,7 +312,7 @@ class RendererLauncher : public RendererLauncherInterface,
   bool disable_renderer_path_check_;
   bool suppress_error_dialog_;
   IPCClientFactoryInterface *ipc_client_factory_interface_;
-  scoped_ptr<commands::RendererCommand> pending_command_;
+  std::unique_ptr<commands::RendererCommand> pending_command_;
   Mutex pending_command_mutex_;
 };
 
@@ -372,7 +373,7 @@ bool RendererClient::IsAvailable() const {
 }
 
 bool RendererClient::Shutdown(bool force) {
-  scoped_ptr<IPCClientInterface> client(CreateIPCClient());
+  std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
 
   if (client.get() == NULL) {
     LOG(ERROR) << "Cannot make client object";
@@ -439,7 +440,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
 
   VLOG(2) << "Sending: " << command.DebugString();
 
-  scoped_ptr<IPCClientInterface> client(CreateIPCClient());
+  std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
 
   // In case IPCClient::Init fails with timeout error, the last error should be
   // checked here.  See also b/3264926.
