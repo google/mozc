@@ -42,6 +42,7 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "rewriter/dictionary_generator.h"

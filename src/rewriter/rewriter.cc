@@ -29,6 +29,7 @@
 
 #include "rewriter/rewriter.h"
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"

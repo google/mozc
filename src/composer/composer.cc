@@ -31,8 +31,8 @@
 
 #include "composer/composer.h"
 
+#include "base/flags.h"
 #include "base/logging.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"

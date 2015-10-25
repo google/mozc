@@ -32,6 +32,7 @@
 
 #include <windows.h>
 #include <ime.h>
+#include <string>
 
 #include "base/port.h"
 

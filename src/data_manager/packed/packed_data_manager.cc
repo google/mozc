@@ -31,6 +31,7 @@
 
 #include <memory>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/protobuf/coded_stream.h"

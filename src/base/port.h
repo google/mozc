@@ -130,8 +130,4 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)
 #define AS_STRING_INTERNAL(x)   #x
 
-
-// TODO(yukawa): Simplify following includes
-#include "base/flags.h"
-
 #endif  // MOZC_BASE_PORT_H_

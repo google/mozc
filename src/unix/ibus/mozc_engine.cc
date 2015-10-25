@@ -39,6 +39,7 @@
 
 #include "base/const.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"

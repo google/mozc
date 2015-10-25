@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "base/flags.h"
 #include "base/init.h"
 #include "base/logging.h"
 #include "base/port.h"

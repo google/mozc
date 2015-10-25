@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "base/const.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/scoped_handle.h"

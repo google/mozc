@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/string_piece.h"
 #include "base/util.h"

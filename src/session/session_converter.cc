@@ -35,6 +35,7 @@
 #include <limits>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/text_normalizer.h"

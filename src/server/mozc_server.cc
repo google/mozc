@@ -37,6 +37,7 @@
 #include <string>
 
 #include "base/crash_report_handler.h"
+#include "base/flags.h"
 #include "base/init.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"

@@ -28,8 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Mocked Session Server runner used just for testing.
-#include <stdio.h>
+#include <cstdio>
 
+#include "base/flags.h"
 #include "protocol/commands.pb.h"
 #include "session/session_server.h"
 

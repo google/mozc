@@ -48,9 +48,10 @@
 #include <vector>
 #include <string>
 
+#include "base/flags.h"
 #include "base/number_util.h"
-#include "base/singleton.h"
 #include "base/scoped_ptr.h"
+#include "base/singleton.h"
 #include "base/system_util.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"

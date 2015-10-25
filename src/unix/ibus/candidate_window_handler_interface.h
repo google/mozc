@@ -30,6 +30,8 @@
 #ifndef MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_INTERFACE_H_
 #define MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_INTERFACE_H_
 
+#include <string>
+
 #include "base/port.h"
 #include "unix/ibus/ibus_header.h"
 

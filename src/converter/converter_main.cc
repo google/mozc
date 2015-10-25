@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"

@@ -37,6 +37,7 @@
 
 #include "base/compiler_specific.h"
 #include "base/const.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"

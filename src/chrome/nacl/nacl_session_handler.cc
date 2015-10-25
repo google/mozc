@@ -37,6 +37,7 @@
 #include <queue>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/pepper_file_util.h"

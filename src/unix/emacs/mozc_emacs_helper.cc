@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <iostream>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
