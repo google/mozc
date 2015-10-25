@@ -31,11 +31,10 @@
 
 #include <memory>
 
+#include "base/clock.h"
+#include "base/clock_mock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-#include "base/clock_mock.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace win32 {
@@ -54,11 +53,11 @@ class IndicatorVisibilityTrackerTest : public testing::Test {
     clock_mock_.reset(new ClockMock(0, 0));
     // 1 kHz (Accuracy = 1msec)
     clock_mock_->SetFrequency(1000uLL);
-    Util::SetClockHandler(clock_mock_.get());
+    Clock::SetClockForUnitTest(clock_mock_.get());
   }
 
   virtual void TearDown() {
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(nullptr);
   }
 
   void PutForwardMilliseconds(uint64 milli_sec) {

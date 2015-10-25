@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/logging.h"
 #include "base/scheduler.h"
@@ -60,7 +61,7 @@ class SessionUsageObserverTest : public testing::Test {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     UsageStats::ClearAllStatsForTest();
 
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(nullptr);
 
     scheduler_stub_.reset(new SchedulerStub);
     Scheduler::SetSchedulerHandler(scheduler_stub_.get());
@@ -70,9 +71,9 @@ class SessionUsageObserverTest : public testing::Test {
   }
 
   virtual void TearDown() {
-    Util::SetClockHandler(NULL);
-    Scheduler::SetSchedulerHandler(NULL);
-    config::StatsConfigUtil::SetHandler(NULL);
+    Clock::SetClockForUnitTest(nullptr);
+    Scheduler::SetSchedulerHandler(nullptr);
+    config::StatsConfigUtil::SetHandler(nullptr);
 
     UsageStats::ClearAllStatsForTest();
   }
@@ -151,7 +152,7 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   // prepare command
   commands::Command orig_show_command, orig_hide_command;

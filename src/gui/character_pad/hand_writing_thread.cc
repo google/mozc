@@ -33,8 +33,8 @@
 #include <QtCore/QMutexLocker>
 #include <QtGui/QtGui>
 
+#include "base/clock.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "config/stats_config_util.h"
 
 namespace {
@@ -95,7 +95,7 @@ void HandWritingThread::Start() {
 void HandWritingThread::SetStrokes(const handwriting::Strokes &strokes) {
   CopyStrokes(strokes, &strokes_, &strokes_mutex_);
   // This is absolutely thread-unsafe but practically no problems.
-  Util::GetTimeOfDay(&strokes_sec_, &strokes_usec_);
+  Clock::GetTimeOfDay(&strokes_sec_, &strokes_usec_);
 }
 
 void HandWritingThread::GetCandidates(vector<string> *candidates) {

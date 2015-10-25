@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -162,7 +163,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
     ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->Reload();
 
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(NULL);
 
     pos_matcher_ = mock_data_manager_.GetPOSMatcher();
     pos_group_.reset(new PosGroup(mock_data_manager_.GetPosGroupData()));
@@ -171,7 +172,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(NULL);
 
     scoped_ptr<UserSegmentHistoryRewriter> rewriter(
         CreateUserSegmentHistoryRewriter());
@@ -473,7 +474,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   {
     InitSegments(&segments, 1);
@@ -577,7 +578,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   {
     InitSegments(&segments, 1);
@@ -1471,7 +1472,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   InitSegments(&segments, 1);
   segments.mutable_segment(0)->move_candidate(2, 0);
@@ -1615,7 +1616,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   rewriter->Clear();
   for (int i = 0; i < 5; ++i) {

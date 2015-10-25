@@ -67,13 +67,13 @@ class SessionHandlerTest : public SessionHandlerTestBase {
  protected:
   virtual void SetUp() {
     SessionHandlerTestBase::SetUp();
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(NULL);
     GenericStorageManagerFactory::SetGenericStorageManager(NULL);
   }
 
   virtual void TearDown() {
     GenericStorageManagerFactory::SetGenericStorageManager(NULL);
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(NULL);
     SessionHandlerTestBase::TearDown();
   }
 };
@@ -82,7 +82,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   uint32 expected_session_created_num = 0;
   const int32 interval_time = FLAGS_create_session_min_interval = 10;  // 10 sec
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   // The oldest item is remvoed
   const size_t session_size = 3;
@@ -147,7 +147,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
   const int32 interval_time = FLAGS_create_session_min_interval = 10;  // 10 sec
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
@@ -166,7 +166,7 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
   const int32 timeout = FLAGS_last_create_session_timeout = 10;  // 10 sec
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
@@ -183,7 +183,7 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
 TEST_F(SessionHandlerTest, LastCommandTimeout) {
   const int32 timeout = FLAGS_last_command_timeout = 10;  // 10 sec
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
@@ -273,7 +273,7 @@ TEST_F(SessionHandlerTest, ElapsedTimeTest) {
   uint64 id = 0;
 
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
   EXPECT_TRUE(CreateSession(&handler, &id));
   EXPECT_TIMING_STATS("ElapsedTimeUSec", 0, 1, 0, 0);
 }

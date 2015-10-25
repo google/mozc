@@ -32,12 +32,10 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
-#include <ctime>
 #include <map>
 #include <sstream>
 #include <string>
 
-#include "base/clock_mock.h"
 #include "base/compiler_specific.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
@@ -1493,95 +1491,6 @@ TEST(UtilTest, ChopReturns) {
   line = "line\n\n\n";
   EXPECT_TRUE(Util::ChopReturns(&line));
   EXPECT_EQ("line", line);
-}
-
-// 2020-12-23 13:24:35 (Wed) UTC
-// 123456 [usec]
-const uint64 kTestSeconds = 1608729875uLL;
-const uint32 kTestMicroSeconds = 123456u;
-
-// time utility test with mock clock
-TEST(UtilTest, TimeTestWithMock) {
-  scoped_ptr<ClockMock> mock_clock(
-      new ClockMock(kTestSeconds, kTestMicroSeconds));
-  Util::SetClockHandler(mock_clock.get());
-
-  // GetTime,
-  {
-    EXPECT_EQ(kTestSeconds, Util::GetTime());
-  }
-
-  // GetTimeOfDay
-  {
-    uint64 current_sec;
-    uint32 current_usec;
-    Util::GetTimeOfDay(&current_sec, &current_usec);
-    EXPECT_EQ(kTestSeconds, current_sec);
-    EXPECT_EQ(kTestMicroSeconds, current_usec);
-  }
-
-  // GetCurrentTm
-  // 2020-12-23 13:24:35 (Wed)
-  {
-    tm current_tm;
-    Util::GetCurrentTm(&current_tm);
-    EXPECT_EQ(120, current_tm.tm_year);
-    EXPECT_EQ(11,  current_tm.tm_mon);
-    EXPECT_EQ(23,  current_tm.tm_mday);
-    EXPECT_EQ(13,  current_tm.tm_hour);
-    EXPECT_EQ(24,  current_tm.tm_min);
-    EXPECT_EQ(35,  current_tm.tm_sec);
-    EXPECT_EQ(3,   current_tm.tm_wday);
-  }
-
-  // GetTmWithoutOffsetSecond
-  // 2024/02/23 23:11:15 (Fri)
-  {
-    const int offset_seconds = 100000000;
-    tm offset_tm;
-    Util::GetTmWithOffsetSecond(&offset_tm, offset_seconds);
-    EXPECT_EQ(124, offset_tm.tm_year);
-    EXPECT_EQ(1,   offset_tm.tm_mon);
-    EXPECT_EQ(23,  offset_tm.tm_mday);
-    EXPECT_EQ(23,  offset_tm.tm_hour);
-    EXPECT_EQ(11,  offset_tm.tm_min);
-    EXPECT_EQ(15,  offset_tm.tm_sec);
-    EXPECT_EQ(5,   offset_tm.tm_wday);
-  }
-
-  // GetFrequency / GetTicks
-  {
-    const uint64 kFrequency = 12345;
-    const uint64 kTicks = 54321;
-    mock_clock->SetFrequency(kFrequency);
-    EXPECT_EQ(kFrequency, Util::GetFrequency());
-    mock_clock->SetTicks(kTicks);
-    EXPECT_EQ(kTicks, Util::GetTicks());
-  }
-
-  // unset clock handler
-  Util::SetClockHandler(NULL);
-
-  // GetFrequency / GetTicks without ClockMock
-  {
-    EXPECT_NE(0, Util::GetFrequency());
-    EXPECT_NE(0, Util::GetTicks());
-  }
-}
-
-// time utility test without mock clock
-TEST(UtilTest, TimeTestWithoutMock) {
-  uint64 get_time_of_day_sec, get_time_sec;
-  uint32 get_time_of_day_usec;
-
-  Util::GetTimeOfDay(&get_time_of_day_sec, &get_time_of_day_usec);
-  get_time_sec = Util::GetTime();
-
-  // hmm, unstable test.
-  const int margin = 1;
-  EXPECT_NEAR(get_time_of_day_sec, get_time_sec, margin)
-      << ": This test have possibilities to fail "
-      << "when system is busy and slow.";
 }
 
 TEST(UtilTest, EncodeURI) {

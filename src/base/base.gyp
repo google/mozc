@@ -100,6 +100,7 @@
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.h',
+        'clock.cc',
         'file_stream.cc',
         'file_util.cc',
         'flags.cc',

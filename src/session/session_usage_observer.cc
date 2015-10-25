@@ -34,12 +34,12 @@
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/scheduler.h"
-#include "base/util.h"
 #include "config/stats_config_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
@@ -73,7 +73,7 @@ void AddToDoubleValueStats(
 uint64 GetTimeInMilliSecond() {
   uint64 second = 0;
   uint32 micro_second = 0;
-  Util::GetTimeOfDay(&second, &micro_second);
+  Clock::GetTimeOfDay(&second, &micro_second);
   return second * 1000 + micro_second / 1000;
 }
 

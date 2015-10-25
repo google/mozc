@@ -35,6 +35,7 @@
 #include <string>
 #include <unordered_set>
 
+#include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/flags.h"
 #include "base/hash.h"
@@ -1544,7 +1545,7 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
     return;
   }
 
-  const uint64 last_access_time = Util::GetTime();
+  const uint64 last_access_time = Clock::GetTime();
   const uint32 dic_key = Fingerprint("", "", type);
 
   CHECK(dic_.get());
@@ -1654,7 +1655,7 @@ void UserHistoryPredictor::Finish(Segments *segments) {
   }
 
   const bool is_suggestion = segments->request_type() != Segments::CONVERSION;
-  const uint64 last_access_time = Util::GetTime();
+  const uint64 last_access_time = Clock::GetTime();
 
   // If user inputs a punctuation just after some long sentence,
   // we make a new candidate by concatinating the top element in LRU and

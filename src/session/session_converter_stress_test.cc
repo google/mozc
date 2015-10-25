@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "base/clock.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -65,7 +66,7 @@ class SessionConverterStressTest : public testing::Test {
  public:
   SessionConverterStressTest() {
     if (!FLAGS_test_deterministic) {
-      FLAGS_test_srand_seed = static_cast<int32>(Util::GetTime());
+      FLAGS_test_srand_seed = static_cast<int32>(Clock::GetTime());
     }
     Util::SetRandomSeed(static_cast<uint32>(FLAGS_test_srand_seed));
   }

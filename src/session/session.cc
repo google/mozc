@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/process.h"
@@ -219,7 +220,7 @@ Session::Session(EngineInterface *engine)
 Session::~Session() {}
 
 void Session::InitContext(ImeContext *context) const {
-  context->set_create_time(Util::GetTime());
+  context->set_create_time(Clock::GetTime());
   context->set_last_command_time(0);
   context->set_composer(new composer::Composer(NULL, &context->GetRequest()));
   context->set_converter(
@@ -2845,7 +2846,7 @@ bool Session::CanStartAutoConversion(
 }
 
 void Session::UpdateTime() {
-  context_->set_last_command_time(Util::GetTime());
+  context_->set_last_command_time(Clock::GetTime());
 }
 
 void Session::TransformInput(commands::Input *input) {

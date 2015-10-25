@@ -34,13 +34,13 @@
 #include <numeric>
 #include <string>
 
+#include "base/clock.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/unnamed_event.h"
-#include "base/util.h"
 #include "client/client_interface.h"
 
 namespace mozc {
@@ -138,7 +138,7 @@ void SessionWatchDog::Run() {
 
   fill(cpu_loads, cpu_loads + arraysize(cpu_loads), 0.0);
 
-  uint64 last_cleanup_time = Util::GetTime();
+  uint64 last_cleanup_time = Clock::GetTime();
 
   while (true) {
     VLOG(1) << "Start sleeping " << idle_interval_msec;
@@ -171,7 +171,7 @@ void SessionWatchDog::Run() {
 
     DCHECK_GT(cpu_loads_index, 0);
 
-    const uint64 current_cleanup_time = Util::GetTime();
+    const uint64 current_cleanup_time = Clock::GetTime();
     if (!CanSendCleanupCommand(cpu_loads,
                                cpu_loads_index,
                                current_cleanup_time,

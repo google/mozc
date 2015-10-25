@@ -37,6 +37,7 @@
 #include <queue>
 #include <string>
 
+#include "base/clock.h"
 #include "base/flags.h"
 #include "base/logging.h"
 #include "base/mutex.h"
@@ -170,7 +171,7 @@ class MozcSessionHandlerThread : public Thread {
   }
 
   virtual void Run() {
-    Util::SetRandomSeed(static_cast<uint32>(Util::GetTime()));
+    Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
     RegisterPepperInstanceForHTTPClient(instance_);
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
     const bool filesystem_available =

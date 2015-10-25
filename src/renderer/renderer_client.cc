@@ -33,6 +33,7 @@
 #include <climits>
 #include <string>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/process.h"
@@ -95,7 +96,7 @@ class RendererLauncher : public RendererLauncherInterface,
       case RendererLauncher::RENDERER_TIMEOUT:
       case RendererLauncher::RENDERER_TERMINATED:
         if (error_times_ <= kMaxErrorTimes &&
-            Util::GetTime() - last_launch_time_ >= kRetryIntervalTime) {
+            Clock::GetTime() - last_launch_time_ >= kRetryIntervalTime) {
           return true;
         }
         VLOG(1) << "never re-launch renderer";
@@ -127,7 +128,7 @@ class RendererLauncher : public RendererLauncherInterface,
   }
 
   void Run() {
-    last_launch_time_ = Util::GetTime();
+    last_launch_time_ = Clock::GetTime();
 
     NamedEventListener listener(name_.c_str());
     const bool listener_is_available = listener.IsAvailable();

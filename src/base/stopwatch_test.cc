@@ -27,13 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/stopwatch.h"
+
 #include <numeric>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/scoped_ptr.h"
-#include "base/stopwatch.h"
-#include "base/util.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -44,11 +44,11 @@ class StopwatchTest : public testing::Test {
     clock_mock_.reset(new ClockMock(0, 0));
     // 1GHz (Accuracy = 1ns)
     clock_mock_->SetFrequency(1000000000uLL);
-    Util::SetClockHandler(clock_mock_.get());
+    Clock::SetClockForUnitTest(clock_mock_.get());
   }
 
   void TearDown() {
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(nullptr);
   }
 
   void PutForwardNanoseconds(uint64 nano_sec) {

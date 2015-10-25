@@ -43,6 +43,7 @@
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
@@ -1863,7 +1864,7 @@ bool IsValidDate(uint32 year, uint32 month, uint32 day) {
 // Checks given date is valid or not in this year
 bool IsValidDateInThisYear(uint32 month, uint32 day) {
   struct tm t_st;
-  if (!Util::GetTmWithOffsetSecond(&t_st, 0)) {
+  if (!Clock::GetTmWithOffsetSecond(&t_st, 0)) {
     LOG(ERROR) << "GetTmWithOffsetSecond() failed";
     return false;
   }
@@ -2026,7 +2027,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
     vector<string> era;
     switch (type) {
       case REWRITE_DATE: {
-        if (!Util::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
+        if (!Clock::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
           LOG(ERROR) << "GetTmWithOffsetSecond() failed";
           return false;
         }
@@ -2051,7 +2052,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_MONTH: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2065,7 +2066,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_YEAR: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2085,7 +2086,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_CURRENT_TIME: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2099,7 +2100,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_DATE_AND_CURRENT_TIME: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2166,7 +2167,7 @@ bool DateRewriter::RewriteYear(Segment *segment) const {
 
 bool DateRewriter::RewriteWeekday(Segment *segment) const {
   struct tm t_st;
-  if (!Util::GetCurrentTm(&t_st)) {
+  if (!Clock::GetCurrentTm(&t_st)) {
     LOG(ERROR) << "GetCurrentTm failed";
     return false;
   }

@@ -27,10 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string.h>
-#include "base/logging.h"
 #include "base/mutex.h"
+
+#include "base/clock.h"
+#include "base/logging.h"
 #include "base/thread.h"
+#include "base/thread_annotations.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -131,7 +133,7 @@ TEST(MutexTest, TryLockTest) NO_THREAD_SAFETY_ANALYSIS {
 
     uint64 start_sec;
     uint32 start_usec;
-    Util::GetTimeOfDay(&start_sec, &start_usec);
+    Clock::GetTimeOfDay(&start_sec, &start_usec);
     t.Start();
 
     Util::Sleep(100);
@@ -142,7 +144,7 @@ TEST(MutexTest, TryLockTest) NO_THREAD_SAFETY_ANALYSIS {
 
     uint64 end_sec;
     uint32 end_usec;
-    Util::GetTimeOfDay(&end_sec, &end_usec);
+    Clock::GetTimeOfDay(&end_sec, &end_usec);
     const uint64 elapsed_usec =
       (end_sec - start_sec) * 1000000 + end_usec - start_usec;
     EXPECT_GE(1000000, elapsed_usec);

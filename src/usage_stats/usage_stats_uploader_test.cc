@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -216,7 +217,7 @@ class UsageStatsUploaderTest : public ::testing::Test {
 };
 
 TEST_F(UsageStatsUploaderTest, SendTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   const uint32 last_upload_sec = current_sec - kOneDaySec;
   SetUpMetaData(last_upload_sec);
   SetValidResult();
@@ -238,7 +239,7 @@ TEST_F(UsageStatsUploaderTest, SendTest) {
 }
 
 TEST_F(UsageStatsUploaderTest, FirstTimeSendTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   // Don't call SetUpMetaData()..
   SetValidResult();
 
@@ -262,7 +263,7 @@ TEST_F(UsageStatsUploaderTest, FirstTimeSendTest) {
 }
 
 TEST_F(UsageStatsUploaderTest, SendFailTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   const uint32 last_upload_sec = current_sec - kHalfDaySec;
   SetUpMetaData(last_upload_sec);
   SetValidResult();
@@ -278,7 +279,7 @@ TEST_F(UsageStatsUploaderTest, SendFailTest) {
 }
 
 TEST_F(UsageStatsUploaderTest, InvalidLastUploadTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   // future time
   // for example: time zone has changed
   const uint32 invalid_sec = current_sec + kHalfDaySec;
@@ -297,7 +298,7 @@ TEST_F(UsageStatsUploaderTest, InvalidLastUploadTest) {
 }
 
 TEST_F(UsageStatsUploaderTest, MozcVersionMismatchTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   const uint32 last_upload_sec = current_sec - kOneDaySec;
   SetUpMetaDataWithMozcVersion(last_upload_sec, "invalid_mozc_version");
   SetValidResult();
@@ -332,7 +333,7 @@ class TestStorage: public storage::StorageInterface {
 };
 
 TEST_F(UsageStatsUploaderTest, SaveMetadataFailTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   const uint32 last_upload_sec = current_sec - kOneDaySec;
   const string current_version = Version::GetMozcVersion();
   SetUpMetaData(last_upload_sec);
@@ -365,7 +366,7 @@ TEST_F(UsageStatsUploaderTest, SaveMetadataFailTest) {
 }
 
 TEST_F(UsageStatsUploaderTest, UploadFailTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   const uint32 last_upload_sec = current_sec - kOneDaySec;
   SetUpMetaData(last_upload_sec);
   SetValidResult();
@@ -390,7 +391,7 @@ TEST_F(UsageStatsUploaderTest, UploadFailTest) {
 }
 
 TEST_F(UsageStatsUploaderTest, UploadRetryTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   const uint32 last_upload_sec = current_sec - kOneDaySec;
   SetUpMetaData(last_upload_sec);
   SetValidResult();
@@ -427,7 +428,7 @@ TEST_F(UsageStatsUploaderTest, UploadRetryTest) {
 }
 
 TEST_F(UsageStatsUploaderTest, UploadDataTest) {
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   const uint32 last_upload_sec = current_sec - kOneDaySec;
   SetUpMetaData(last_upload_sec);
   SetValidResult();
@@ -493,7 +494,7 @@ void SetEventStats(
 
 TEST_F(UsageStatsUploaderTest, UploadTouchEventStats) {
   // save last_upload
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   const uint32 last_upload_sec = current_sec - kOneDaySec;
   SetUpMetaData(last_upload_sec);
   SetValidResult();

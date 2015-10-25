@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/hash.h"
@@ -73,12 +74,12 @@ const char* GetValue(const char *ptr) {
 }
 
 void Update(char *ptr) {
-  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
+  const uint32 last_access_time = static_cast<uint32>(Clock::GetTime());
   memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
 }
 
 void Update(char *ptr, uint64 fp, const char *value, size_t value_size) {
-  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
+  const uint32 last_access_time = static_cast<uint32>(Clock::GetTime());
   memcpy(ptr,     reinterpret_cast<const char *>(&fp), 8);
   memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
   memcpy(ptr + 12, value, value_size);

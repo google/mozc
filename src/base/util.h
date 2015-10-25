@@ -282,58 +282,6 @@ class Util {
   // Set the seed of Util::Random().
   static void SetRandomSeed(uint32 seed);
 
-  // Get the current time info using gettimeofday-like functions.
-  // sec: number of seconds from epoch
-  // usec: micro-second passed: [0,1000000)
-  static void GetTimeOfDay(uint64 *sec, uint32 *usec);
-
-  // Get the current time info using time-like function
-  // For Windows, _time64() is used.
-  // For Linux/Mac, time() is used.
-  static uint64 GetTime();
-
-  // Get the current local time to current_time.  Returns true if succeeded.
-  static bool GetCurrentTm(tm *current_time);
-  // Get local time, which is offset_sec seconds after now. Returns true if
-  // succeeded.
-  static bool GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec);
-
-  // Get the system frequency to calculate the time from ticks.
-  static uint64 GetFrequency();
-
-  // Get the current ticks. It may return incorrect value on Virtual Machines.
-  // If you'd like to get a value in secs, it is necessary to divide a result by
-  // GetFrequency().
-  static uint64 GetTicks();
-
-#ifdef __native_client__
-  // Sets the time difference between local time and UTC time in seconds.
-  // We use this function in NaCl Mozc because we can't know the local timezone
-  // in NaCl environment.
-  static void SetTimezoneOffset(int32 timezone_offset_sec);
-#endif  // __native_client__
-
-  // Interface of the helper class.
-  // Default implementation is defined in the .cc file.
-  class ClockInterface {
-   public:
-    virtual ~ClockInterface() {}
-    virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) = 0;
-    virtual uint64 GetTime() = 0;
-    virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) = 0;
-
-    // High accuracy clock.
-    virtual uint64 GetFrequency() = 0;
-    virtual uint64 GetTicks() = 0;
-#ifdef __native_client__
-    virtual void SetTimezoneOffset(int32 timezone_offset_sec) = 0;
-#endif  // __native_client__
-  };
-
-  // This function is provided for test.
-  // The behavior of system clock can be customized by replacing this handler.
-  static void SetClockHandler(Util::ClockInterface *handler);
-
   // Suspends the execution of the current thread until
   // the time-out interval elapses.
   static void Sleep(uint32 msec);

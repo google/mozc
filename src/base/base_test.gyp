@@ -199,6 +199,20 @@
       },
     },
     {
+      'target_name': 'clock_test',
+      'type': 'executable',
+      'sources': [
+        'clock_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'encoding_util_test',
       'type': 'executable',
       'sources': [
@@ -376,6 +390,7 @@
         'base_core_test',
         'base_init_test',
         'base_test',
+        'clock_test',
         'config_file_stream_test',
         'encoding_util_test',
         'encryptor_test',

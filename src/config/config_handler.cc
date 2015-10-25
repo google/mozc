@@ -33,6 +33,7 @@
 
 #include <algorithm>
 
+#include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/number_util.h"
@@ -40,7 +41,6 @@
 #include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "protocol/config.pb.h"
 
@@ -323,7 +323,7 @@ string ConfigHandler::GetConfigFileName() {
 void ConfigHandler::SetMetaData(Config *config) {
   GeneralConfig *general_config = config->mutable_general_config();
   general_config->set_config_version(CONFIG_VERSION);
-  general_config->set_last_modified_time(Util::GetTime());
+  general_config->set_last_modified_time(Clock::GetTime());
   general_config->set_last_modified_product_version(Version::GetMozcVersion());
   general_config->set_platform(SystemUtil::GetOSVersionString());
 }

@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/flags.h"
 #include "base/init.h"
 #include "base/logging.h"
@@ -142,7 +143,7 @@ bool IsCarrierEmoji(const string &utf8_str) {
 SessionHandler::SessionHandler(EngineInterface *engine)
     : is_available_(false),
       max_session_size_(0),
-      last_session_empty_time_(Util::GetTime()),
+      last_session_empty_time_(Clock::GetTime()),
       last_cleanup_time_(0),
       last_create_session_time_(0),
       engine_(engine),
@@ -596,7 +597,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   const int create_session_minimum_interval =
       max(0, min(FLAGS_create_session_min_interval, 10));
 
-  uint64 current_time = Util::GetTime();
+  uint64 current_time = Clock::GetTime();
   if (last_create_session_time_ != 0 &&
       (current_time - last_create_session_time_) <
       create_session_minimum_interval) {
@@ -642,7 +643,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
     session->set_application_info(command->input().application_info());
 #ifdef __native_client__
     if (command->input().application_info().has_timezone_offset()) {
-      Util::SetTimezoneOffset(
+      Clock::SetTimezoneOffset(
           command->input().application_info().timezone_offset());
     }
 #endif  // __native_client__
@@ -674,7 +675,7 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
 // no active session and client doesn't send any conversion
 // request to the server for FLAGS_timeout sec.
 bool SessionHandler::Cleanup(commands::Command *command) {
-  const uint64 current_time = Util::GetTime();
+  const uint64 current_time = Clock::GetTime();
 
   // suspend/hibernation may happen
   uint64 suspend_time = 0;
@@ -795,7 +796,7 @@ bool SessionHandler::DeleteSessionID(SessionID id) {
   // if session gets empty, save the timestamp
   if (last_session_empty_time_ == 0 &&
       session_map_->Size() == 0) {
-    last_session_empty_time_ = Util::GetTime();
+    last_session_empty_time_ = Clock::GetTime();
   }
 
   return true;
