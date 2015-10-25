@@ -35,6 +35,7 @@
 
 #include <cstring>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "base/file_stream.h"
@@ -42,7 +43,6 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace storage {
@@ -334,7 +334,7 @@ bool TinyStorageImpl::Clear() {
 }  // namespace
 
 StorageInterface *TinyStorage::Create(const char *filename) {
-  scoped_ptr<TinyStorageImpl> storage(new TinyStorageImpl);
+  std::unique_ptr<TinyStorageImpl> storage(new TinyStorageImpl);
   if (!storage->Open(filename)) {
     LOG(ERROR) << "cannot open " << filename;
     return NULL;

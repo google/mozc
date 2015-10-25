@@ -31,9 +31,11 @@
 #define MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_
 
 #include <QtGui/QWidget>
+
+#include <memory>
 #include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/config_dialog/generic_table_editor.h"
 
 class QAbstractButton;
@@ -42,7 +44,8 @@ namespace mozc {
 namespace gui {
 
 class RomanTableEditorDialog : public GenericTableEditorDialog {
- Q_OBJECT;
+  Q_OBJECT;
+
  public:
   explicit RomanTableEditorDialog(QWidget *parent);
   virtual ~RomanTableEditorDialog();
@@ -68,8 +71,10 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
   static string GetDefaultRomanTable();
 
  private:
-  scoped_ptr<QAction *[]> actions_;
+  std::unique_ptr<QAction *[]> actions_;
 };
+
 }  // namespace gui
 }  // namespace mozc
+
 #endif  // MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_

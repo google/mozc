@@ -30,8 +30,9 @@
 #ifndef MOZC_GUI_BASE_SETUP_UTIL_H_
 #define MOZC_GUI_BASE_SETUP_UTIL_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -72,12 +73,13 @@ class SetupUtil {
   // Imports MS-IME's user dictionary to Mozc' dictionary
   bool MigrateDictionaryFromMSIME();
 
-  scoped_ptr<UserDictionaryStorage> storage_;
+  std::unique_ptr<UserDictionaryStorage> storage_;
 
   bool is_userdictionary_locked_;
 
   DISALLOW_COPY_AND_ASSIGN(SetupUtil);
 };
+
 }  // namespace gui
 }  // namespace mozc
 

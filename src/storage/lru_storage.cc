@@ -34,6 +34,7 @@
 #include <cstring>
 #include <ctime>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -45,7 +46,6 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -186,7 +186,7 @@ class LRUStorage::LRUList {
 };
 
 LRUStorage *LRUStorage::Create(const char *filename) {
-  scoped_ptr<LRUStorage> n(new LRUStorage);
+  std::unique_ptr<LRUStorage> n(new LRUStorage);
   if (!n->Open(filename)) {
     LOG(ERROR) << "could not open LRUStorage";
     return NULL;
@@ -198,7 +198,7 @@ LRUStorage *LRUStorage::Create(const char *filename,
                                size_t value_size,
                                size_t size,
                                uint32 seed) {
-  scoped_ptr<LRUStorage> n(new LRUStorage);
+  std::unique_ptr<LRUStorage> n(new LRUStorage);
   if (!n->OpenOrCreate(filename, value_size, size, seed)) {
     LOG(ERROR) << "could not open LRUStorage";
     return NULL;

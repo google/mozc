@@ -34,14 +34,16 @@
 #endif
 
 #include <QtGui/QtGui>
+
+#ifdef OS_MACOSX
+#include <memory>
+#endif
+
 #include "base/const.h"
 #include "base/crash_report_handler.h"
 #include "base/file_util.h"
 #include "base/flags.h"
 #include "base/logging.h"
-#ifdef OS_MACOSX
-#include "base/scoped_ptr.h"
-#endif
 #include "base/password_manager.h"
 #include "base/run_level.h"
 #include "base/util.h"
@@ -92,7 +94,7 @@ int RunMozcTool(int argc, char *argv[]) {
 #ifdef OS_MACOSX
   // OSX's app won't accept command line flags.
   // Here we read the flags by using --fromenv option
-  scoped_ptr<char *[]> tmp(new char * [2]);
+  std::unique_ptr<char *[]> tmp(new char * [2]);
   tmp[0] = strdup_with_new(argv[0]);
   tmp[1] = strdup_with_new(
        "--fromenv=mode,error_type,confirmation_type,register_prelauncher");

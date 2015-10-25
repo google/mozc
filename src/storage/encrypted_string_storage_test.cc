@@ -30,15 +30,14 @@
 #include "storage/encrypted_string_storage.h"
 
 #include <iostream>
+#include <memory>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace storage {
@@ -89,7 +88,7 @@ class EncryptedStringStorageTest : public testing::Test {
   }
 
   string filename_;
-  scoped_ptr<EncryptedStringStorage> storage_;
+  std::unique_ptr<EncryptedStringStorage> storage_;
 };
 
 TEST_F(EncryptedStringStorageTest, SaveAndLoad) {

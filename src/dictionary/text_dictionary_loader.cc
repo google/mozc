@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -273,7 +274,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     // We here assume that the wrong reading appear with 1/100 probability
     // of the original (correct) reading.
     const int kCostPenalty = 2302;      // -log(1/100) * 500;
-    scoped_ptr<Token> token(new Token);
+    std::unique_ptr<Token> token(new Token);
     value_key.second.CopyToString(&token->key);
     token->value = max_cost_token->value;
     token->lid = max_cost_token->lid;
@@ -314,7 +315,7 @@ Token *TextDictionaryLoader::ParseTSV(
     const vector<StringPiece> &columns) const {
   CHECK_LE(5, columns.size()) << "Lack of columns: " << columns.size();
 
-  scoped_ptr<Token> token(new Token);
+  std::unique_ptr<Token> token(new Token);
 
   // Parse key, lid, rid, cost, value.
   Util::NormalizeVoicedSoundMark(columns[0], &token->key);

@@ -32,12 +32,15 @@
 #include <QtCore/QFile>
 #include <QtGui/QFileDialog>
 #include <QtGui/QtGui>
+
 #include <algorithm>  // for unique
 #include <cctype>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/singleton.h"
@@ -503,7 +506,7 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
                import_index < arraysize(kKeyMaps)) {
       const char *keymap_file =
           keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[import_index]);
-      scoped_ptr<istream> ifs(
+      std::unique_ptr<istream> ifs(
           ConfigFileStream::LegacyOpen(keymap_file));
       CHECK(ifs.get() != NULL);  // should never happen
       CHECK(LoadFromStream(ifs.get()));

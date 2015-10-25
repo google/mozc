@@ -29,13 +29,13 @@
 
 #include "storage/existence_filter.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -115,7 +115,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
       ExistenceFilter::MinFilterSizeInBytesForErrorRate(kErrorRate,
                                                         words.size());
 
-  scoped_ptr<ExistenceFilter> filter(
+  std::unique_ptr<ExistenceFilter> filter(
       ExistenceFilter::CreateOptimal(num_bytes, words.size()));
 
   for (int i = 0; i < words.size(); ++i) {
@@ -125,7 +125,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
   char *buf = NULL;
   size_t size = 0;
   filter->Write(&buf, &size);
-  scoped_ptr<ExistenceFilter> filter_read(
+  std::unique_ptr<ExistenceFilter> filter_read(
       ExistenceFilter::Read(buf, size));
 
   for (int i = 0; i < words.size(); ++i) {
@@ -152,7 +152,7 @@ TEST(ExistenceFilterTest, InsertAndExistsTest) {
       ExistenceFilter::MinFilterSizeInBytesForErrorRate(kErrorRate,
                                                         words.size());
 
-  scoped_ptr<ExistenceFilter> filter(
+  std::unique_ptr<ExistenceFilter> filter(
       ExistenceFilter::CreateOptimal(num_bytes, words.size()));
 
   for (int i = 0; i < words.size(); ++i) {

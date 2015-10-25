@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 #include "base/codegen_bytearray_stream.h"
@@ -55,7 +56,7 @@ void GenExistenceData(const vector<string> &entries,
       error_rate, n);
   LOG(INFO) << "entry: " << n << " err: " << error_rate << " bytes: " << m;
 
-  scoped_ptr<ExistenceFilter> filter(ExistenceFilter::CreateOptimal(m, n));
+  std::unique_ptr<ExistenceFilter> filter(ExistenceFilter::CreateOptimal(m, n));
   DCHECK(filter.get());
 
   for (size_t i = 0; i < entries.size(); ++i) {
