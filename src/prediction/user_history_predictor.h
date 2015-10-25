@@ -99,7 +99,7 @@ class UserHistoryPredictor : public PredictorInterface {
                                  Segments *segments) const;
 
   // Hook(s) for all mutable operations.
-  virtual void Finish(Segments *segments);
+  virtual void Finish(const ConversionRequest &request, Segments *segments);
 
   // Revert last Finish operation.
   virtual void Revert(Segments *segments);
@@ -273,6 +273,8 @@ class UserHistoryPredictor : public PredictorInterface {
               ClearHistoryEntry_Trigram_DeleteSecondBigram);
   FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Scenario1);
   FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Scenario2);
+  FRIEND_TEST(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile);
+  FRIEND_TEST(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop);
 
   enum MatchType {
     NO_MATCH,            // no match
@@ -386,7 +388,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // |prev_entry| is an optional field. If set NULL, this field is just ignored.
   // This method adds a new result entry with score, pair<score, entry>, to
   // |results|.
-  bool LookupEntry(const string &input_key,
+  bool LookupEntry(RequestType request_type,
+                   const string &input_key,
                    const string &key_base,
                    const Trie<string> *key_expanded,
                    const Entry *entry,
@@ -419,6 +422,7 @@ class UserHistoryPredictor : public PredictorInterface {
                                  EntryPriorityQueue *results) const;
 
   void GetResultsFromHistoryDictionary(
+      RequestType request_type,
       const ConversionRequest &request,
       const Segments &segments,
       const Entry *prev_entry,
@@ -467,7 +471,8 @@ class UserHistoryPredictor : public PredictorInterface {
       const Entry *entry,
       EntryPriorityQueue *results) const;
 
-  void InsertHistory(bool is_suggestion_selected,
+  void InsertHistory(RequestType request_type,
+                     bool is_suggestion_selected,
                      uint64 last_access_time,
                      Segments *segments);
 

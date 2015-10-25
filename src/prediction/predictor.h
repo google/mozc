@@ -52,7 +52,7 @@ class BasePredictor : public PredictorInterface {
                                  Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations.
-  virtual void Finish(Segments *segments);
+  virtual void Finish(const ConversionRequest &request, Segments *segments);
 
   // Reverts the last Finish operation.
   virtual void Revert(Segments *segments);

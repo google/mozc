@@ -492,7 +492,7 @@ bool ConverterImpl::FinishConversion(const ConversionRequest &request,
 
   segments->clear_revert_entries();
   rewriter_->Finish(request, segments);
-  predictor_->Finish(segments);
+  predictor_->Finish(request, segments);
 
   // Remove the front segments except for some segments which will be
   // used as history segments.

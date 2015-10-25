@@ -1017,6 +1017,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
 }
 
 bool UserHistoryPredictor::LookupEntry(
+    RequestType request_type,
     const string &input_key,
     const string &key_base,
     const Trie<string> *key_expanded,
@@ -1080,17 +1081,28 @@ bool UserHistoryPredictor::LookupEntry(
     // In this case, recursively traverse "next_entries" until
     // target entry gets longer than input_key.
     // e.g., |input_key|="foobar", |entry->key()|="foo"
-    string key, value;
-    left_last_access_time = entry->last_access_time();
-    left_most_last_access_time = IsContentWord(entry->value()) ?
-        left_last_access_time : 0;
-    if (!GetKeyValueForExactAndRightPrefixMatch(
-            input_key, entry, &last_entry,
-            &left_last_access_time, &left_most_last_access_time,
-            &key, &value)) {
-      return false;
+    if (request_type == ZERO_QUERY_SUGGESTION && mtype == EXACT_MATCH) {
+      // For mobile, we don't generate joined result.
+      result = AddEntry(*entry, results);
+      if (result) {
+        last_entry = entry;
+        left_last_access_time = entry->last_access_time();
+        left_most_last_access_time = IsContentWord(entry->value()) ?
+            left_last_access_time : 0;
+      }
+    } else {
+      string key, value;
+      left_last_access_time = entry->last_access_time();
+      left_most_last_access_time = IsContentWord(entry->value()) ?
+          left_last_access_time : 0;
+      if (!GetKeyValueForExactAndRightPrefixMatch(
+              input_key, entry, &last_entry,
+              &left_last_access_time, &left_most_last_access_time,
+              &key, &value)) {
+        return false;
+      }
+      result = AddEntryWithNewKeyValue(key, value, *entry, results);
     }
-    result = AddEntryWithNewKeyValue(key, value, *entry, results);
   } else {
     LOG(ERROR) << "Unknown match mode: " << mtype;
     return false;
@@ -1112,6 +1124,11 @@ bool UserHistoryPredictor::LookupEntry(
 
   if (!result->removed()) {
     results->Push(result);
+  }
+
+  if (request_type == ZERO_QUERY_SUGGESTION) {
+    // For mobile, we don't generate joined result.
+    return true;
   }
 
   // Generates joined result using |last_entry|.
@@ -1227,7 +1244,8 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
   }
 
   EntryPriorityQueue results;
-  GetResultsFromHistoryDictionary(request, *segments, prev_entry, &results);
+  GetResultsFromHistoryDictionary(
+      request_type, request, *segments, prev_entry, &results);
   if (results.size() == 0) {
     VLOG(2) << "no prefix match candiate is found.";
     return false;
@@ -1282,6 +1300,7 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
 }
 
 void UserHistoryPredictor::GetResultsFromHistoryDictionary(
+    RequestType request_type,
     const ConversionRequest &request,
     const Segments &segments, const Entry *prev_entry,
     EntryPriorityQueue *results) const {
@@ -1331,8 +1350,8 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
     // Lookup key from elm_value and prev_entry.
     // If a new entry is found, the entry is pushed to the results.
     // TODO(team): make KanaFuzzyLookupEntry().
-    if (!LookupEntry(input_key, base_key, expanded.get(), &(elm->value),
-                     prev_entry, results) &&
+    if (!LookupEntry(request_type, input_key, base_key, expanded.get(),
+                     &(elm->value), prev_entry, results) &&
         !RomanFuzzyLookupEntry(roman_input_key, &(elm->value), results)) {
       continue;
     }
@@ -1633,7 +1652,8 @@ void UserHistoryPredictor::Insert(const string &key,
   updated_ = true;
 }
 
-void UserHistoryPredictor::Finish(Segments *segments) {
+void UserHistoryPredictor::Finish(const ConversionRequest &request,
+                                  Segments *segments) {
   if (segments->request_type() == Segments::REVERSE_CONVERSION) {
     // Do nothing for REVERSE_CONVERSION.
     return;
@@ -1654,6 +1674,8 @@ void UserHistoryPredictor::Finish(Segments *segments) {
     return;
   }
 
+  const RequestType request_type = request.request().zero_query_suggestion() ?
+      ZERO_QUERY_SUGGESTION : DEFAULT;
   const bool is_suggestion = segments->request_type() != Segments::CONVERSION;
   const uint64 last_access_time = Clock::GetTime();
 
@@ -1662,7 +1684,10 @@ void UserHistoryPredictor::Finish(Segments *segments) {
   // the punctuation user input. The top element in LRU is supposed to be
   // the long sentence user input before.
   // This is a fix for http://b/issue?id=2216838
-  if (dic_->Head() != nullptr &&
+  //
+  // Note: We don't make such candidates for mobile.
+  if (request_type != ZERO_QUERY_SUGGESTION &&
+      dic_->Head() != nullptr &&
       dic_->Head()->value.last_access_time() + 5 > last_access_time &&
       // Check if the current value is a punctuation.
       segments->conversion_segments_size() == 1 &&
@@ -1719,7 +1744,7 @@ void UserHistoryPredictor::Finish(Segments *segments) {
     return;
   }
 
-  InsertHistory(is_suggestion, last_access_time, segments);
+  InsertHistory(request_type, is_suggestion, last_access_time, segments);
   return;
 }
 
@@ -1763,7 +1788,8 @@ void UserHistoryPredictor::MakeLearningSegments(
   }
 }
 
-void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
+void UserHistoryPredictor::InsertHistory(RequestType request_type,
+                                         bool is_suggestion_selected,
                                          uint64 last_access_time,
                                          Segments *segments) {
   SegmentsForLearning learning_segments;
@@ -1818,7 +1844,9 @@ void UserHistoryPredictor::InsertHistory(bool is_suggestion_selected,
   }
 
   // Inserts all_key/all_value.
-  if (learning_segments.conversion_segments_size() > 1 &&
+  // We don't insert it for mobile.
+  if (request_type != ZERO_QUERY_SUGGESTION &&
+      learning_segments.conversion_segments_size() > 1 &&
       !all_key.empty() && !all_value.empty()) {
     Insert(all_key, all_value, "",
            is_suggestion_selected,
@@ -1915,7 +1943,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
     return GetMatchType(key_base, target);
   }
 
-  // We can assume key_expanded != nullpt from here.
+  // We can assume key_expanded != nullptr from here.
   if (key_base.empty()) {
       string value;
       size_t key_length = 0;
