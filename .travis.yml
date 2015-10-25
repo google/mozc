@@ -40,22 +40,22 @@ compiler: clang
 addons:
   apt:
     packages:
+    - ant
     - clang-3.4
+    - libc6:i386
     - libglib2.0-dev
     - libgtk2.0-dev
     - libibus-1.0-dev
+    - libjsr305-java
+    - libncurses5:i386
     - libqt4-dev
-    - libxcb-xfixes0-dev
-    - pkg-config
-    - libc6:i386
     - libstdc++6:i386
+    - libxcb-xfixes0-dev
     - openjdk-7-jdk
     - openjdk-7-jre-headless
-    - ant
-    - libncurses5:i386
-    - libjsr305-java
-    - zlib1g:i386
+    - pkg-config
     - zip
+    - zlib1g:i386
 
 env:
   - TARGET_PLATFORM=Android
