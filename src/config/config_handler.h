@@ -85,6 +85,7 @@ class ConfigHandler {
   // Using this function is safer than
   // using an uninitialized config value.
   static void GetDefaultConfig(Config *config);
+  static const Config &DefaultConfig();
 
   // Reloads config from storage.
   //

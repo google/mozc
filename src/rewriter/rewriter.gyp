@@ -34,6 +34,13 @@
   },
   'targets': [
     {
+      'target_name': 'embedded_dictionary',
+      'type': 'static_library',
+      'sources': [
+        'embedded_dictionary.cc',
+      ],
+    },
+    {
       'target_name': 'rewriter',
       'type': 'static_library',
       'sources': [
@@ -53,7 +60,6 @@
         'date_rewriter.cc',
         'dice_rewriter.cc',
         'dictionary_generator.cc',
-        'embedded_dictionary.cc',
         'emoji_rewriter.cc',
         'emoticon_rewriter.cc',
         'english_variants_rewriter.cc',
@@ -92,6 +98,7 @@
         '../protocol/protocol.gyp:config_proto',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
+        ':embedded_dictionary',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files#host',
       ],

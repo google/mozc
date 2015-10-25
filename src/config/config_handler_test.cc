@@ -346,4 +346,11 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 #endif  // OS_ANDROID && CHANNEL_DEV
 }
+
+TEST_F(ConfigHandlerTest, DefaultConfig) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  EXPECT_EQ(config.DebugString(),
+            config::ConfigHandler::DefaultConfig().DebugString());
+}
 }  // namespace mozc

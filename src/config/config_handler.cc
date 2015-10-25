@@ -82,10 +82,12 @@ class ConfigHandlerImpl {
     filename_ += NumberUtil::SimpleItoa(CONFIG_VERSION);
     filename_ += ".db";
     Reload();
+    ConfigHandler::GetDefaultConfig(&default_config_);
   }
   virtual ~ConfigHandlerImpl() {}
   const Config &GetConfig() const;
   bool GetConfig(Config *config) const;
+  const Config &DefaultConfig() const;
   const Config &GetStoredConfig() const;
   bool GetStoredConfig(Config *config) const;
   bool SetConfig(const Config &config);
@@ -105,6 +107,7 @@ class ConfigHandlerImpl {
   Config imposed_config_;
   // equals to config_.MergeFrom(imposed_config_)
   Config merged_config_;
+  Config default_config_;
 };
 
 ConfigHandlerImpl *GetConfigHandlerImpl() {
@@ -119,6 +122,10 @@ const Config &ConfigHandlerImpl::GetConfig() const {
 bool ConfigHandlerImpl::GetConfig(Config *config) const {
   config->CopyFrom(merged_config_);
   return true;
+}
+
+const Config &ConfigHandlerImpl::DefaultConfig() const {
+  return default_config_;
 }
 
 const Config &ConfigHandlerImpl::GetStoredConfig() const {
@@ -272,6 +279,7 @@ void ConfigHandler::SetImposedConfig(const Config &config) {
   GetConfigHandlerImpl()->SetImposedConfig(config);
 }
 
+// static
 void ConfigHandler::GetDefaultConfig(Config *config) {
   config->Clear();
   config->set_session_keymap(ConfigHandler::GetDefaultKeyMap());
@@ -304,6 +312,11 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   if (GetPlatformSpecificDefaultEmojiSetting()) {
     config->set_use_emoji_conversion(true);
   }
+}
+
+// static
+const Config& ConfigHandler::DefaultConfig() {
+  return GetConfigHandlerImpl()->DefaultConfig();
 }
 
 // Reload from file
