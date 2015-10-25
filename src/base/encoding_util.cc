@@ -101,8 +101,6 @@ static int GetCodepage(const char* name) {
   } kCodePageMap[] = {
     { "UTF8",      CP_UTF8 },  // Unicode UTF-8
     { "SJIS",      932     },  // ANSI/OEM - Japanese, Shift-JIS
-    { "EUC-JP-MS", 51932   },  // EUC - Japanese
-    { "JIS",       20932   },  // JIS X 0208-1990 & 0212-1990
   };
 
   for (size_t i = 0; i < arraysize(kCodePageMap); i++) {
@@ -165,17 +163,6 @@ inline bool Convert(const char *from, const char *to,
 }   // namespace
 
 namespace mozc {
-
-#ifndef OS_WIN
-// The following functions don't work on Windows
-void EncodingUtil::UTF8ToEUC(const string &input, string *output) {
-  Convert("UTF8", "EUC-JP-MS", input, output);
-}
-
-void EncodingUtil::EUCToUTF8(const string &input, string *output) {
-  Convert("EUC-JP-MS", "UTF8", input, output);
-}
-#endif  // OS_WIN
 
 void EncodingUtil::UTF8ToSJIS(const string &input, string *output) {
   Convert("UTF8", "SJIS", input, output);

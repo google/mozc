@@ -41,12 +41,6 @@ namespace mozc {
 
 class EncodingUtil {
  public:
-#ifndef OS_WIN
-  // The following functions don't work on Windows.
-  static void UTF8ToEUC(const string &input, string *output);
-  static void EUCToUTF8(const string &input, string *output);
-#endif  // OS_WIN
-
   static void UTF8ToSJIS(const string &input, string *output);
   static void SJISToUTF8(const string &input, string *output);
 
