@@ -40,7 +40,7 @@ TEST(StringUtilTest, InvalidCases) {
   EXPECT_EQ("", StringUtil::KeyToReadingA(""));
   // KeyToReadingA fails if the resultant string is longer than 512 characters.
   string longa(10000, 'a');
-  EXPECT_EQ("", StringUtil::KeyToReadingA(longa.c_str()));
+  EXPECT_EQ("", StringUtil::KeyToReadingA(longa));
 }
 
 TEST(StringUtilTest, Hiragana) {
