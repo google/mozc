@@ -393,6 +393,20 @@ class UserHistoryPredictor : public PredictorInterface {
                    const Entry *prev_entry,
                    EntryPriorityQueue *results) const;
 
+  // For the EXACT and RIGHT_PREFIX match, we will generate joined
+  // candidates by looking up the history link.
+  // Gets key value pair and assigns them to |result_key| and |result_value|
+  // for prediction result. The last entry which was joined
+  // will be assigned to |result_last_entry|.
+  // Returns false if we don't have the result for this match.
+  // |left_last_access_time| and |left_most_last_access_time| will be updated
+  // according to the entry lookup.
+  bool GetKeyValueForExactAndRightPrefixMatch(
+      const string &input_key,
+      const Entry *entry, const Entry **result_last_entry,
+      uint64 *left_last_access_time, uint64 *left_most_last_access_time,
+      string *result_key, string *result_value) const;
+
   const Entry *LookupPrevEntry(const Segments &segments,
                                uint32 available_emoji_carrier) const;
 
@@ -474,8 +488,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Insert a new |next_entry| into |entry|.
   // it makes a bigram connection from entry to next_entry.
-  void InsertNextEntry(const NextEntry &next_entry,
-                       UserHistoryPredictor::Entry *entry) const;
+  void InsertNextEntry(const NextEntry &next_entry, Entry *entry) const;
 
   static void EraseNextEntries(uint32 fp, Entry *entry);
 
