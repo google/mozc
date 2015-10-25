@@ -39,6 +39,8 @@ compiler: clang
 
 addons:
   apt:
+    sources:
+    - ubuntu-toolchain-r-test
     packages:
     - ant
     - clang-3.4
@@ -49,6 +51,7 @@ addons:
     - libjsr305-java
     - libncurses5:i386
     - libqt4-dev
+    - libstdc++-4.8-dev
     - libstdc++6:i386
     - libxcb-xfixes0-dev
     - openjdk-7-jdk
