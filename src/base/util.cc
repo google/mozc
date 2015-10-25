@@ -60,7 +60,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/double_array.h"
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
@@ -69,14 +68,7 @@
 #include "base/singleton.h"
 #include "base/string_piece.h"
 
-
 namespace {
-
-#if MOZC_MSVC_VERSION_LT(18, 0)
-void va_copy(va_list &a, va_list &b) {
-  a = b;
-}
-#endif  // Visual C++ 2012 and prior
 
 // Lower-level routine that takes a va_list and appends to a specified
 // string.  All other routines of sprintf family are just convenience
@@ -125,6 +117,7 @@ void StringAppendV(string *dst, const char *format, va_list ap) {
     delete[] buf;
   }
 }
+
 }   // namespace
 
 namespace mozc {
