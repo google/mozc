@@ -38,6 +38,7 @@
 
 #include <iostream>  // NOLINT
 
+#include "base/encoding_util.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/logging.h"
@@ -74,7 +75,7 @@ void DisplayPreedit(const commands::Output &output) {
     }
 #ifdef OS_WIN
     string tmp;
-    Util::UTF8ToSJIS(value, &tmp);
+    EncodingUtil::UTF8ToSJIS(value, &tmp);
     cout << tmp << '\r';
 #else
     cout << value << '\r';
@@ -82,7 +83,7 @@ void DisplayPreedit(const commands::Output &output) {
   } else if (output.has_result()) {
 #ifdef OS_WIN
     string tmp;
-    Util::UTF8ToSJIS(output.result().value(), &tmp);
+    EncodingUtil::UTF8ToSJIS(output.result().value(), &tmp);
     cout << tmp << endl;
 #else
     cout << output.result().value() << endl;

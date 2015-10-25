@@ -31,6 +31,7 @@
 
 #include <memory>
 
+#include "base/encoding_util.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 
@@ -51,7 +52,7 @@ wstring StringUtil::KeyToReading(StringPiece key) {
   DWORD lcid = MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT),
                         SORT_JAPANESE_XJIS);
   string sjis;
-  mozc::Util::UTF8ToSJIS(katakana, &sjis);
+  mozc::EncodingUtil::UTF8ToSJIS(katakana, &sjis);
 
   // Convert "\x81\x65" (backquote in SJIFT-JIS) to ` by myself since
   // LCMapStringA converts it to ' for some reason.

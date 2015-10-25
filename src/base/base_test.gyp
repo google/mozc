@@ -185,6 +185,21 @@
       },
     },
     {
+      'target_name': 'encoding_util_test',
+      'type': 'executable',
+      'sources': [
+        'encoding_util_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base',
+        'install_util_test_data',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'number_util_test',
       'type': 'executable',
       'sources': [
@@ -349,6 +364,7 @@
         'base_init_test',
         'base_test',
         'config_file_stream_test',
+        'encoding_util_test',
         'encryptor_test',
         'file_util_test',
         'multifile_test',

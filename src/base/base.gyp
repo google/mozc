@@ -41,7 +41,7 @@
       'sources': [
         'clock_mock.cc',
         'cpu_stats.cc',
-        'iconv.cc',
+        'encoding_util.cc',
         'process.cc',
         'process_mutex.cc',
         'run_level.cc',
@@ -90,7 +90,6 @@
         }],
         ['target_platform=="Android"', {
           'sources!': [
-            'iconv.cc',
             'process.cc',
           ],
         }],

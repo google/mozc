@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "base/compiler_specific.h"
+#include "base/encoding_util.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/port.h"
@@ -259,7 +260,8 @@ class MSIMEImportIterator
 
     string name;
     for (int i = 0; i < pos_size; ++i) {
-      Util::SJISToUTF8(reinterpret_cast<char *>(pos_table->szName), &name);
+      EncodingUtil::SJISToUTF8(
+          reinterpret_cast<char *>(pos_table->szName), &name);
       pos_map_.insert(make_pair(pos_table->nPos, name));
       ++pos_table;
     }
@@ -320,7 +322,7 @@ class MSIMEImportIterator
       // set comment
       if (buf_[index_].pvComment != NULL) {
         if (buf_[index_].uct == IFED_UCT_STRING_SJIS) {
-          Util::SJISToUTF8(
+          EncodingUtil::SJISToUTF8(
               reinterpret_cast<const char *>(buf_[index_].pvComment),
               &entry->comment);
         } else if (buf_[index_].uct == IFED_UCT_STRING_UNICODE) {

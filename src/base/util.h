@@ -403,15 +403,6 @@ class Util {
   // corresponding open bracket is assigned.
   static bool IsCloseBracket(const string &key, string *open_bracket);
 
-  // Code converter
-#ifndef OS_WIN
-  static void UTF8ToEUC(const string &input, string *output);
-  static void EUCToUTF8(const string &input, string *output);
-#endif  // OS_WIDNWOS
-
-  static void UTF8ToSJIS(const string &input, string *output);
-  static void SJISToUTF8(const string &input, string *output);
-
   static void EncodeURI(const string &input, string *output);
   static void DecodeURI(const string &input, string *output);
 

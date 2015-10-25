@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "base/encoding_util.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
@@ -64,7 +65,7 @@ namespace {
 string UTF8ToTtyString(const string &text) {
 #ifdef OS_WIN
   string tmp;
-  Util::UTF8ToSJIS(text, &tmp);
+  EncodingUtil::UTF8ToSJIS(text, &tmp);
   return tmp;
 #else
   return text;

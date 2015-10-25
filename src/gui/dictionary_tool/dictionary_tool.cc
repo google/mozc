@@ -42,6 +42,7 @@
 #include <string>
 #include <vector>
 
+#include "base/encoding_util.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/run_level.h"
@@ -228,7 +229,7 @@ class MultiByteTextLineIterator
     // We won't enable it as it increases the binary size.
     if (encoding_type_ == UserDictionaryImporter::SHIFT_JIS) {
       const string input = *line;
-      Util::SJISToUTF8(input, line);
+      EncodingUtil::SJISToUTF8(input, line);
     }
 
     // strip UTF8 BOM
