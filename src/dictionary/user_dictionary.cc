@@ -35,6 +35,7 @@
 #include <string>
 
 #include "base/compiler_specific.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
@@ -161,7 +162,7 @@ MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
 #endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
         DCHECK_LE(entry.pos(), 255);
 MOZC_CLANG_POP_WARNING();
-        const uint64 fp = Util::Fingerprint(reading +
+        const uint64 fp = Hash::Fingerprint(reading +
                                             "\t" +
                                             entry.value() +
                                             "\t" +

@@ -40,6 +40,7 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/port.h"
@@ -506,7 +507,7 @@ const char* LRUStorage::Lookup(const string &key) const {
 
 const char* LRUStorage::Lookup(const string &key,
                                uint32 *last_access_time) const {
-  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
+  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
   map<uint64, Node *>::const_iterator it = map_.find(fp);
   if (it == map_.end()) {
     return NULL;
@@ -538,7 +539,7 @@ bool LRUStorage::Touch(const string &key) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
+  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value);
@@ -553,7 +554,7 @@ bool LRUStorage::Insert(const string &key, const char *value) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
+  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);
@@ -591,7 +592,7 @@ bool LRUStorage::TryInsert(const string &key, const char *value) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
+  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);

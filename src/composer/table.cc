@@ -38,6 +38,7 @@
 
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
@@ -603,7 +604,7 @@ string Table::DeleteSpecialKey(const string &input) {
 // TableContainer
 // ========================================
 TableManager::TableManager()
-    : custom_roman_table_fingerprint_(Util::Fingerprint32("")) {
+    : custom_roman_table_fingerprint_(Hash::Fingerprint32("")) {
 }
 
 TableManager::~TableManager() {
@@ -632,7 +633,7 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
       config.has_custom_roman_table() &&
       !config.custom_roman_table().empty()) {
     const uint32 custom_roman_table_fingerprint =
-        Util::Fingerprint32(config.custom_roman_table());
+        Hash::Fingerprint32(config.custom_roman_table());
     if (custom_roman_table_fingerprint != custom_roman_table_fingerprint_) {
       update_custom_roman_table = true;
       custom_roman_table_fingerprint_ = custom_roman_table_fingerprint;

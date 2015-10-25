@@ -2219,18 +2219,6 @@ TEST(UtilTest, IsKanaSymbolContained) {
   EXPECT_FALSE(Util::IsKanaSymbolContained(""));
 }
 
-TEST(UtilTest, Fingerprint32WithSeed_uint32) {
-  const uint32 seed = 0xabcdef;
-
-  const uint32 num = 0x12345678;    // Assumed little endian
-  const uint32 num_hash = Util::Fingerprint32WithSeed(num, seed);
-
-  const char* str = "\x78\x56\x34\x12";
-  const uint32 str_hash = Util::Fingerprint32WithSeed(str, 4, seed);
-
-  EXPECT_EQ(num_hash, str_hash) << num_hash << " != " << str_hash;
-}
-
 TEST(UtilTest, RandomSeedTest) {
   Util::SetRandomSeed(0);
   const int first_try = Util::Random(INT_MAX);

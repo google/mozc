@@ -37,6 +37,7 @@
 
 #include "base/config_file_stream.h"
 #include "base/flags.h"
+#include "base/hash.h"
 #include "base/init.h"
 #include "base/logging.h"
 #include "base/thread.h"
@@ -330,7 +331,7 @@ UserHistoryPredictor::EntryPriorityQueue::~EntryPriorityQueue() {}
 
 bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
   DCHECK(entry);
-  if (!seen_.insert(Util::Fingerprint32(entry->value())).second) {
+  if (!seen_.insert(Hash::Fingerprint32(entry->value())).second) {
     VLOG(2) << "found dups";
     return false;
   }
@@ -1966,10 +1967,9 @@ uint32 UserHistoryPredictor::Fingerprint(const string &key,
     // Since we have already used the fingerprint function for next entries and
     // next entries are saved in user's local machine, we are not able
     // to change the Fingerprint function for the old key/value type.
-    return Util::Fingerprint32(key + kDelimiter + value);
+    return Hash::Fingerprint32(key + kDelimiter + value);
   } else {
-    uint8 id = static_cast<uint8>(type);
-    return Util::Fingerprint32(reinterpret_cast<char *>(&id), sizeof(id));
+    return Hash::Fingerprint32(static_cast<uint8>(type));
   }
 }
 

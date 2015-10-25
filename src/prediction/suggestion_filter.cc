@@ -29,6 +29,7 @@
 
 #include "prediction/suggestion_filter.h"
 
+#include "base/hash.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
 
@@ -36,20 +37,19 @@ namespace mozc {
 
 SuggestionFilter::SuggestionFilter(const char *data, size_t size) {
   filter_.reset(mozc::storage::ExistenceFilter::Read(data, size));
-  LOG_IF(ERROR, filter_.get() == NULL)
+  LOG_IF(ERROR, filter_.get() == nullptr)
       << "SuggestionFilterData is broken";
 }
 
 SuggestionFilter::~SuggestionFilter() {}
 
 bool SuggestionFilter::IsBadSuggestion(const string &text) const {
-  if (filter_.get() == NULL) {
+  if (filter_.get() == nullptr) {
     return false;
   }
   string lower_text = text;
   Util::LowerString(&lower_text);
-  return filter_->Exists(Util::Fingerprint(lower_text.data(),
-                                           lower_text.size()));
+  return filter_->Exists(Hash::Fingerprint(lower_text));
 }
 
 }  // namespace mozc

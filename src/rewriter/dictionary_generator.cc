@@ -38,8 +38,8 @@
 
 #include "base/file_stream.h"
 #include "base/freelist.h"
+#include "base/hash.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
@@ -74,7 +74,7 @@ void Token::MergeFrom(const Token &token) {
 }
 
 uint64 Token::GetID() const {
-  return Util::Fingerprint(key_ + "\t" + value_ + "\t" + pos_);
+  return Hash::Fingerprint(key_ + "\t" + value_ + "\t" + pos_);
 }
 
 static const size_t kTokenSize = 1000;

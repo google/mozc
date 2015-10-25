@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "base/flags.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/string_piece.h"
 #include "base/util.h"
@@ -545,7 +546,7 @@ class CollocationRewriter::CollocationFilter {
     string key;
     key.reserve(left.size() + right.size());
     key.assign(left).append(right);
-    const uint64 id = Util::Fingerprint(key);
+    const uint64 id = Hash::Fingerprint(key);
     return filter_->Exists(id);
   }
 
@@ -569,7 +570,7 @@ class CollocationRewriter::SuppressionFilter {
     string key;
     key.reserve(cand.content_value.size() + 1 + cand.content_key.size());
     key.assign(cand.content_value).append("\t").append(cand.content_key);
-    const uint64 id = Util::Fingerprint(key);
+    const uint64 id = Hash::Fingerprint(key);
     return filter_->Exists(id);
   }
 

@@ -33,6 +33,7 @@
 #include <climits>
 
 #include "base/file_stream.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"

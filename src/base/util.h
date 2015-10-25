@@ -265,28 +265,6 @@ class Util {
   // given line.
   static bool ChopReturns(string *line);
 
-  // 32bit Fingerprint
-  static uint32 Fingerprint32(const string &key);
-  static uint32 Fingerprint32(const char *str, size_t length);
-  static uint32 Fingerprint32(const char *str);
-
-  static uint32 Fingerprint32WithSeed(const string &key,
-                                      uint32 seed);
-  static uint32 Fingerprint32WithSeed(const char *str,
-                                      size_t length, uint32 seed);
-  static uint32 Fingerprint32WithSeed(const char *str,
-                                      uint32 seed);
-  static uint32 Fingerprint32WithSeed(uint32 num, uint32 seed);
-
-  // 64bit Fingerprint
-  static uint64 Fingerprint(const string &key);
-  static uint64 Fingerprint(const char *str, size_t length);
-
-  static uint64 FingerprintWithSeed(const string &key, uint32 seed);
-
-  static uint64 FingerprintWithSeed(const char *str,
-                                    size_t length, uint32 seed);
-
   // Generate a random sequence. It uses secure method if possible, or Random()
   // as a fallback method.
   static void GetRandomSequence(char *buf, size_t buf_size);

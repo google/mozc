@@ -37,9 +37,9 @@
 #include <vector>
 
 #include "base/freelist.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace session {
@@ -163,7 +163,7 @@ void CandidateList::AddCandidateWithAttributes(const int id,
 
   // If the value has already been stored in the candidate list, reuse it and
   // update the alternative_ids_.
-  const uint64 fp = Util::Fingerprint(value);
+  const uint64 fp = Hash::Fingerprint(value);
 
   const pair<map<uint64, int>::iterator, bool> result =
     added_candidates_->insert(make_pair(fp, id));

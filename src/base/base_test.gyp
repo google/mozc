@@ -185,6 +185,20 @@
       },
     },
     {
+      'target_name': 'hash_test',
+      'type': 'executable',
+      'sources': [
+        'hash_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base_core',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'encoding_util_test',
       'type': 'executable',
       'sources': [
@@ -193,7 +207,6 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'base.gyp:base',
-        'install_util_test_data',
       ],
       'variables': {
         'test_size': 'small',
@@ -367,6 +380,7 @@
         'encoding_util_test',
         'encryptor_test',
         'file_util_test',
+        'hash_test',
         'multifile_test',
         'number_util_test',
         'obfuscator_support_test',

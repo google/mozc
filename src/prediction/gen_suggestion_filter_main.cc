@@ -33,6 +33,7 @@
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
@@ -54,7 +55,7 @@ void ReadWords(const string &name, vector<uint64> *words) {
     }
     string lower_value = line;
     mozc::Util::LowerString(&lower_value);
-    words->push_back(mozc::Util::Fingerprint(lower_value));
+    words->push_back(mozc::Hash::Fingerprint(lower_value));
   }
 }
 

@@ -44,6 +44,7 @@
 
 #include "base/compiler_specific.h"
 #include "base/encoding_util.h"
+#include "base/hash.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/port.h"
@@ -67,7 +68,7 @@ MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
 #endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
   DCHECK_LE(entry.pos(), 255);
 MOZC_CLANG_POP_WARNING();
-  return Util::Fingerprint(entry.key() + "\t" +
+  return Hash::Fingerprint(entry.key() + "\t" +
                            entry.value() + "\t" +
                            static_cast<char>(entry.pos()));
 }
