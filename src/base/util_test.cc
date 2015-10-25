@@ -42,9 +42,8 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/number_util.h"
-#include "base/thread.h"
+#include "base/scoped_ptr.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -110,15 +109,6 @@ Util::CharacterSet GetExpectedCharacterSet(
 }
 
 }  // namespace
-
-class ThreadTest: public Thread {
- public:
-  virtual void Run() {
-    for (int i = 0; i < 3; ++i) {
-      Util::Sleep(1000);
-    }
-  }
-};
 
 TEST(UtilTest, JoinStrings) {
   vector<string> input;
@@ -1477,17 +1467,6 @@ TEST(UtilTest, IsEnglishTransliteration) {
       "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88"));
   EXPECT_FALSE(Util::IsEnglishTransliteration(
       "\xE6\x9D\xB1\xE4\xBA\xAC"));
-}
-
-TEST(MutexTest, MutexTest) {
-  mozc::Mutex mutex;
-  mozc::scoped_lock l(&mutex);
-}
-
-TEST(ThreadTest, ThreadTest) {
-  ThreadTest test;
-//  test.SetJoinable(true);
-//  test.Join();
 }
 
 TEST(UtilTest, ChopReturns) {
