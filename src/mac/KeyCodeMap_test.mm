@@ -64,7 +64,7 @@ class KeyCodeMapTest : public testing::Test {
 
   bool CreateKeyEvent(NSString *characters, NSString *unmodCharacters,
                       int flags, uint16 keyCode, KeyEvent *mozcKeyEvent) {
-    if (mozcKeyEvent == NULL) {
+    if (mozcKeyEvent == nullptr) {
       return false;
     }
 

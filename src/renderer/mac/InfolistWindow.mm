@@ -72,7 +72,7 @@ namespace mac {
 namespace {
 bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
                          const SessionCommand::UsageStatsEvent &event) {
-  if (command_sender == NULL) {
+  if (command_sender == nullptr) {
     return false;
   }
   SessionCommand command;
@@ -84,8 +84,8 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
 }  // anonymous namespace
 
 InfolistWindow::InfolistWindow()
-    : lasttimer_(NULL),
-      command_sender_(NULL) {
+    : lasttimer_(nullptr),
+      command_sender_(nullptr) {
  timer_handler_.reset([[InfolistWindowTimerHandler alloc]
      initWithInfolistWindow:this]);
 }

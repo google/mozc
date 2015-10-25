@@ -420,10 +420,10 @@ BOOL SendKeyEvent(unsigned short keyCode,
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, UpdateComposedString) {
-  // If preedit is NULL, it still calls setMarkedText, with an empty string.
+  // If preedit is nullptr, it still calls setMarkedText, with an empty string.
   NSMutableAttributedString *expected =
       [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
-  [controller_ updateComposedString:NULL];
+  [controller_ updateComposedString:nullptr];
   EXPECT_TRUE([expected
                 isEqualToAttributedString:[controller_ composedString:nil]]);
 
@@ -474,7 +474,7 @@ TEST_F(GoogleJapaneseInputControllerTest, ClearCandidates) {
 
 TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // When output is null, same as ClearCandidate
-  [controller_ updateCandidates:NULL];
+  [controller_ updateCandidates:nullptr];
   // Run the runloop so "delayedUpdateCandidates" can be called
   [[NSRunLoop currentRunLoop]
       runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
