@@ -30,10 +30,10 @@
 #include <string>
 #include <vector>
 
+#include "base/double_array.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/logging.h"
-#include "base/text_converter.h"
 #include "base/util.h"
 #include "third_party/darts/v0_32/darts.h"
 
@@ -106,17 +106,18 @@ static void Compile(const string &files,
     }
 
     Darts::DoubleArray da;
-    CHECK_EQ(0, da.build(dic.size(), const_cast<const char **>(&ary[0]), 0, &values[0]));
+    const int result = da.build(dic.size(), const_cast<const char **>(&ary[0]),
+                                0, &values[0]);
+    CHECK_EQ(0, result);
 
     string escaped;
     Util::Escape(output, &escaped);
     ofs << "const char " << name
         << "_table[] = \"" << escaped << "\";" << endl;
 
-    const TextConverter::DoubleArray *array =
-        reinterpret_cast<const TextConverter::DoubleArray *>(da.array());
-    ofs << "const mozc::TextConverter::DoubleArray "
-        << name << "_da[] = {";
+    const japanese_util_rule::DoubleArray *array =
+        reinterpret_cast<const japanese_util_rule::DoubleArray *>(da.array());
+    ofs << "const DoubleArray " << name << "_da[] = {";
     for (size_t k = 0; k < da.size(); ++k) {
       if (k != 0) ofs << ",";
       ofs << "{" << array[k].base << "," << array[k].check << "}";

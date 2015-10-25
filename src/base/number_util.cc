@@ -41,7 +41,6 @@
 
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
-#include "base/text_converter.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -1246,10 +1245,11 @@ bool NumberUtil::NormalizeNumbersWithSuffix(StringPiece input,
 
 void NumberUtil::KanjiNumberToArabicNumber(StringPiece input,
                                            string *output) {
-  TextConverter::Convert(japanese_util_rule::kanjinumber_to_arabicnumber_da,
-                         japanese_util_rule::kanjinumber_to_arabicnumber_table,
-                         input,
-                         output);
+  Util::ConvertUsingDoubleArray(
+      japanese_util_rule::kanjinumber_to_arabicnumber_da,
+      japanese_util_rule::kanjinumber_to_arabicnumber_table,
+      input,
+      output);
 }
 
 }  // namespace mozc

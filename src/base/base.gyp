@@ -130,7 +130,6 @@
         'singleton.cc',
         'string_piece.cc',
         'system_util.cc',
-        'text_converter.cc',
         'text_normalizer.cc',
         'thread.cc',
         'util.cc',

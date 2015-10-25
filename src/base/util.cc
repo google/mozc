@@ -61,13 +61,13 @@
 #include <vector>
 
 #include "base/compiler_specific.h"
+#include "base/double_array.h"
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/string_piece.h"
-#include "base/text_converter.h"
 
 
 namespace {
@@ -1230,38 +1230,98 @@ void EscapeInternal(char input, const string &prefix, string *output) {
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
 
+int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
+                      const char *key, int len, int *result) {
+  int seekto = 0;
+  int n = 0;
+  int b = array[0].base;
+  uint32 p = 0;
+  *result = -1;
+  uint32 num = 0;
+
+  for (int i = 0; i < len; ++i) {
+    p = b;
+    n = array[p].base;
+    if (static_cast<uint32>(b) == array[p].check && n < 0) {
+      seekto = i;
+      *result = - n - 1;
+      ++num;
+    }
+    p = b + static_cast<uint8>(key[i]) + 1;
+    if (static_cast<uint32>(b) == array[p].check) {
+      b = array[p].base;
+    } else {
+      return seekto;
+    }
+  }
+  p = b;
+  n = array[p].base;
+  if (static_cast<uint32>(b) == array[p].check && n < 0) {
+    seekto = len;
+    *result = -n - 1;
+  }
+
+  return seekto;
+}
+
 }  // namespace
 
+void Util::ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
+                                   const char *ctable,
+                                   StringPiece input,
+                                   string *output) {
+  output->clear();
+  const char *begin = input.data();
+  const char *const end = input.data() + input.size();
+  while (begin < end) {
+    int result = 0;
+    int mblen = LookupDoubleArray(da, begin, static_cast<int>(end - begin),
+                                  &result);
+    if (mblen > 0) {
+      const char *p = &ctable[result];
+      const size_t len = strlen(p);
+      output->append(p, len);
+      mblen -= static_cast<int32>(p[len + 1]);
+      begin += mblen;
+    } else {
+      mblen = OneCharLen(begin);
+      output->append(begin, mblen);
+      begin += mblen;
+    }
+  }
+}
+
 void Util::HiraganaToKatakana(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::hiragana_to_katakana_da,
-                         japanese_util_rule::hiragana_to_katakana_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_katakana_da,
+                          japanese_util_rule::hiragana_to_katakana_table,
+                          input,
+                          output);
 }
 
 void Util::HiraganaToHalfwidthKatakana(StringPiece input,
                                        string *output) {
   // combine two rules
   string tmp;
-  TextConverter::Convert(japanese_util_rule::hiragana_to_katakana_da,
-                         japanese_util_rule::hiragana_to_katakana_table,
-                         input, &tmp);
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
+      japanese_util_rule::hiragana_to_katakana_da,
+      japanese_util_rule::hiragana_to_katakana_table,
+      input, &tmp);
+  ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table,
       tmp, output);
 }
 
 void Util::HiraganaToRomanji(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::hiragana_to_romanji_da,
-                         japanese_util_rule::hiragana_to_romanji_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_romanji_da,
+                          japanese_util_rule::hiragana_to_romanji_table,
+                          input,
+                          output);
 }
 
 void Util::HalfWidthAsciiToFullWidthAscii(StringPiece input,
                                           string *output) {
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
       japanese_util_rule::halfwidthascii_to_fullwidthascii_table,
       input,
@@ -1270,7 +1330,7 @@ void Util::HalfWidthAsciiToFullWidthAscii(StringPiece input,
 
 void Util::FullWidthAsciiToHalfWidthAscii(StringPiece input,
                                           string *output) {
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthascii_to_halfwidthascii_da,
       japanese_util_rule::fullwidthascii_to_halfwidthascii_table,
       input,
@@ -1279,11 +1339,11 @@ void Util::FullWidthAsciiToHalfWidthAscii(StringPiece input,
 
 void Util::HiraganaToFullwidthRomanji(StringPiece input, string *output) {
   string tmp;
-  TextConverter::Convert(japanese_util_rule::hiragana_to_romanji_da,
-                         japanese_util_rule::hiragana_to_romanji_table,
-                         input,
-                         &tmp);
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_romanji_da,
+                          japanese_util_rule::hiragana_to_romanji_table,
+                          input,
+                          &tmp);
+  ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
       japanese_util_rule::halfwidthascii_to_fullwidthascii_table,
       tmp,
@@ -1291,22 +1351,22 @@ void Util::HiraganaToFullwidthRomanji(StringPiece input, string *output) {
 }
 
 void Util::RomanjiToHiragana(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::romanji_to_hiragana_da,
-                         japanese_util_rule::romanji_to_hiragana_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::romanji_to_hiragana_da,
+                          japanese_util_rule::romanji_to_hiragana_table,
+                          input,
+                          output);
 }
 
 void Util::KatakanaToHiragana(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::katakana_to_hiragana_da,
-                         japanese_util_rule::katakana_to_hiragana_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::katakana_to_hiragana_da,
+                          japanese_util_rule::katakana_to_hiragana_table,
+                          input,
+                          output);
 }
 
 void Util::HalfWidthKatakanaToFullWidthKatakana(StringPiece input,
                                                 string *output) {
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_da,
       japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_table,
       input,
@@ -1315,7 +1375,7 @@ void Util::HalfWidthKatakanaToFullWidthKatakana(StringPiece input,
 
 void Util::FullWidthKatakanaToHalfWidthKatakana(StringPiece input,
                                                 string *output) {
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table,
       input,
@@ -1340,10 +1400,10 @@ void Util::HalfWidthToFullWidth(StringPiece input, string *output) {
 // of some UNICODE only characters (required to display
 // and commit for old clients)
 void Util::NormalizeVoicedSoundMark(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::normalize_voiced_sound_da,
-                         japanese_util_rule::normalize_voiced_sound_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::normalize_voiced_sound_da,
+                          japanese_util_rule::normalize_voiced_sound_table,
+                          input,
+                          output);
 }
 
 namespace {

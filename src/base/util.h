@@ -36,11 +36,10 @@
 #include <utility>
 #include <vector>
 
+#include "base/double_array.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/string_piece.h"
-
-struct tm;
 
 namespace mozc {
 
@@ -362,6 +361,10 @@ class Util {
   static void Sleep(uint32 msec);
 
   // Japanese utilities for character form transliteration.
+  static void ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
+                                      const char *table,
+                                      StringPiece input,
+                                      string *output);
   static void HiraganaToKatakana(StringPiece input, string *output);
   static void HiraganaToHalfwidthKatakana(StringPiece input, string *output);
   static void HiraganaToRomanji(StringPiece input, string *output);

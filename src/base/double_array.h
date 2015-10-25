@@ -27,32 +27,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_TEXT_CONVERTER_H_
-#define MOZC_BASE_TEXT_CONVERTER_H_
-
-#include <string>
+#ifndef MOZC_BASE_DOUBLE_ARRAY_H_
+#define MOZC_BASE_DOUBLE_ARRAY_H_
 
 #include "base/port.h"
-#include "base/string_piece.h"
 
 namespace mozc {
+namespace japanese_util_rule {
 
-class TextConverter {
- public:
-  struct DoubleArray {
-    int32 base;
-    uint32 check;
-  };
-
-  static void Convert(const DoubleArray *da,
-                      const char *table,
-                      const StringPiece input,
-                      string *output);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TextConverter);
+struct DoubleArray {
+  int32 base;
+  uint32 check;
 };
 
+}  // namespace japanese_util_rule
 }  // namespace mozc
 
-#endif  // MOZC_BASE_TEXT_CONVERTER_H_
+#endif  // MOZC_BASE_DOUBLE_ARRAY_H_

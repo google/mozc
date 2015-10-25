@@ -30,14 +30,14 @@
 #ifndef MOZC_BASE_JAPANESE_UTIL_RULE_H_
 #define MOZC_BASE_JAPANESE_UTIL_RULE_H_
 
-#include "base/text_converter.h"
+#include "base/double_array.h"
 
 namespace mozc {
 namespace japanese_util_rule {
 
 #define DECLARE_RULE(name)                              \
   extern const char name##_table[];                     \
-  extern const TextConverter::DoubleArray name##_da[]
+  extern const DoubleArray name##_da[]
 
 DECLARE_RULE(hiragana_to_katakana);
 DECLARE_RULE(hiragana_to_romanji);
