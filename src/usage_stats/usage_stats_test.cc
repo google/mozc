@@ -33,7 +33,6 @@
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"

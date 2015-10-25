@@ -30,8 +30,9 @@
 #ifndef MOZC_USAGE_STATS_USAGE_STATS_TESTING_UTIL_H_
 #define MOZC_USAGE_STATS_USAGE_STATS_TESTING_UTIL_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -106,7 +107,7 @@ class scoped_usage_stats_enabler {
   ~scoped_usage_stats_enabler();
 
  private:
-  scoped_ptr<mozc::config::StatsConfigUtilMock> stats_config_util_;
+  std::unique_ptr<mozc::config::StatsConfigUtilMock> stats_config_util_;
   DISALLOW_COPY_AND_ASSIGN(scoped_usage_stats_enabler);
 };
 

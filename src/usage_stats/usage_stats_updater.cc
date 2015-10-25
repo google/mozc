@@ -30,6 +30,7 @@
 #include "usage_stats/usage_stats_updater.h"
 
 #include <algorithm>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <vector>
@@ -41,7 +42,6 @@
 #include "base/mac_util.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -93,7 +93,7 @@ bool IMEActivationKeyCustomized() {
   for (size_t i = 0; i < arraysize(kKeyMaps); ++i) {
     const char *keymap_file =
         keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[i]);
-    scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(keymap_file));
+    std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(keymap_file));
     if (ifs.get() == NULL) {
       LOG(ERROR) << "can not open default keymap table " << i;
       continue;

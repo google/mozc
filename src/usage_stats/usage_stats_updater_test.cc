@@ -32,7 +32,6 @@
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
