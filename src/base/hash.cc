@@ -27,136 +27,103 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string.h>
-#include <string>
-#include "base/util.h"
+#include "base/hash.h"
+
+#include "base/port.h"
 
 namespace mozc {
 namespace {
+
 const uint32 kFingerPrint32Seed = 0xfd12deff;
 const uint32 kFingerPrintSeed0 = 0x6d6f;
 const uint32 kFingerPrintSeed1 = 0x7a63;
+
 }  // namespace
 
-#define mix(a,b,c) { \
+#define Mix(a, b, c) {            \
   a -= b; a -= c; a ^= (c >> 13); \
-  b -= c; b -= a; b ^= (a << 8); \
+  b -= c; b -= a; b ^= (a << 8);  \
   c -= a; c -= b; c ^= (b >> 13); \
-  a -= b; a -= c; a ^= (c >> 12);  \
+  a -= b; a -= c; a ^= (c >> 12); \
   b -= c; b -= a; b ^= (a << 16); \
-  c -= a; c -= b; c ^= (b >> 5); \
+  c -= a; c -= b; c ^= (b >> 5);  \
   a -= b; a -= c; a ^= (c >> 3);  \
   b -= c; b -= a; b ^= (a << 10); \
   c -= a; c -= b; c ^= (b >> 15); \
 }
 
-uint32 Util::Fingerprint32(const string &key) {
-  return Fingerprint32WithSeed(key.data(), key.size(),
-                               kFingerPrint32Seed);
+uint32 Hash::Fingerprint32(StringPiece str) {
+  return Fingerprint32WithSeed(str, kFingerPrint32Seed);
 }
 
-uint32 Util::Fingerprint32(const char *str, size_t length) {
-  return Fingerprint32WithSeed(str, length,
-                               kFingerPrint32Seed);
-}
+uint32 Hash::Fingerprint32WithSeed(StringPiece str, uint32 seed) {
+#define U32(x) static_cast<uint32>(x)
+#define ToUint32(a, b, c, d) \
+  (U32(a) + (U32(b) << 8) + (U32(c) << 16) + (U32(d) << 24))
 
-uint32 Util::Fingerprint32(const char *str) {
-  return Fingerprint32WithSeed(str, strlen(str),
-                               kFingerPrint32Seed);
-}
-
-uint32 Util::Fingerprint32WithSeed(const string &key,
-                                   uint32 seed) {
-  return Fingerprint32WithSeed(key.data(), key.size(),
-                               seed);
-}
-
-uint32 Util::Fingerprint32WithSeed(const char *str,
-                                   size_t length,
-                                   uint32 seed) {
-  uint32 len = static_cast<uint32>(length);
+  const uint32 str_len = U32(str.size());
   uint32 a = 0x9e3779b9;
   uint32 b = a;
   uint32 c = seed;
 
-  while (len >= 12) {
-    a += (str[0] + ((uint32)str[1] << 8) + ((uint32)str[2] << 16)
-          + ((uint32)str[3] << 24));
-    b += (str[4] + ((uint32)str[5] << 8) + ((uint32)str[6] << 16)
-          + ((uint32)str[7] << 24));
-    c += (str[8] + ((uint32)str[9] << 8) + ((uint32)str[10] << 16)
-          + ((uint32)str[11] << 24));
-    mix(a, b, c);
-    str += 12;
-    len -= 12;
+  while (str.size() >= 12) {
+    a += ToUint32(str[0], str[1], str[2], str[3]);
+    b += ToUint32(str[4], str[5], str[6], str[7]);
+    c += ToUint32(str[8], str[9], str[10], str[11]);
+    Mix(a, b, c);
+    str.remove_prefix(12);
   }
 
-  c += static_cast<uint32>(length);
-  switch (len) {
+  c += U32(str_len);
+  switch (str.size()) {
     case 11:
-      c += ((uint32) str[10] << 24);
+      c += U32(str[10]) << 24;
       FALLTHROUGH_INTENDED;
     case 10:
-      c += ((uint32) str[9] << 16);
+      c += U32(str[9]) << 16;
       FALLTHROUGH_INTENDED;
     case 9:
-      c += ((uint32) str[8] << 8);
+      c += U32(str[8]) << 8;
       FALLTHROUGH_INTENDED;
     case 8:
-      b += ((uint32) str[7] << 24);
+      b += U32(str[7]) << 24;
       FALLTHROUGH_INTENDED;
     case 7:
-      b += ((uint32) str[6] << 16);
+      b += U32(str[6]) << 16;
       FALLTHROUGH_INTENDED;
     case 6:
-      b += ((uint32) str[5] << 8);
+      b += U32(str[5]) << 8;
       FALLTHROUGH_INTENDED;
     case 5:
-      b += str[4];
+      b += U32(str[4]);
       FALLTHROUGH_INTENDED;
     case 4:
-      a += ((uint32) str[3] << 24);
+      a += U32(str[3]) << 24;
       FALLTHROUGH_INTENDED;
     case 3:
-      a += ((uint32) str[2] << 16);
+      a += U32(str[2]) << 16;
       FALLTHROUGH_INTENDED;
     case 2:
-      a += ((uint32) str[1] << 8);
+      a += U32(str[1]) << 8;
       FALLTHROUGH_INTENDED;
     case 1:
-      a += str[0];
+      a += U32(str[0]);
       break;
   }
-  mix(a, b, c);
+  Mix(a, b, c);
 
   return c;
+#undef ToUint32
+#undef U32
 }
 
-uint32 Util::Fingerprint32WithSeed(const char *str,
-                                   uint32 seed) {
-  return Fingerprint32WithSeed(str, strlen(str), seed);
+uint64 Hash::Fingerprint(StringPiece str) {
+  return FingerprintWithSeed(str, kFingerPrintSeed0);
 }
 
-uint32 Util::Fingerprint32WithSeed(uint32 num, uint32 seed) {
-  const char* str = reinterpret_cast<const char*>(&num);
-  return Fingerprint32WithSeed(str, sizeof(num), seed);
-}
-
-uint64 Util::Fingerprint(const string &key) {
-  return Fingerprint(key.data(), key.size());
-}
-
-uint64 Util::Fingerprint(const char *str, size_t length) {
-  return FingerprintWithSeed(str, length, kFingerPrintSeed0);
-}
-
-uint64 Util::FingerprintWithSeed(const string &str, uint32 seed) {
-  return FingerprintWithSeed(str.data(), str.size(), seed);
-}
-
-uint64 Util::FingerprintWithSeed(const char *str, size_t length, uint32 seed) {
-  const uint32 hi = Fingerprint32WithSeed(str, length, seed);
-  const uint32 lo = Fingerprint32WithSeed(str, length, kFingerPrintSeed1);
+uint64 Hash::FingerprintWithSeed(StringPiece str, uint32 seed) {
+  const uint32 hi = Fingerprint32WithSeed(str, seed);
+  const uint32 lo = Fingerprint32WithSeed(str, kFingerPrintSeed1);
   uint64 result = static_cast<uint64>(hi) << 32 | static_cast<uint64>(lo);
   if ((hi == 0) && (lo < 2)) {
     result ^= GG_ULONGLONG(0x130f9bef94a0a928);

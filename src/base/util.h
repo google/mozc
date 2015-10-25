@@ -36,11 +36,10 @@
 #include <utility>
 #include <vector>
 
+#include "base/double_array.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/string_piece.h"
-
-struct tm;
 
 namespace mozc {
 
@@ -266,28 +265,6 @@ class Util {
   // given line.
   static bool ChopReturns(string *line);
 
-  // 32bit Fingerprint
-  static uint32 Fingerprint32(const string &key);
-  static uint32 Fingerprint32(const char *str, size_t length);
-  static uint32 Fingerprint32(const char *str);
-
-  static uint32 Fingerprint32WithSeed(const string &key,
-                                      uint32 seed);
-  static uint32 Fingerprint32WithSeed(const char *str,
-                                      size_t length, uint32 seed);
-  static uint32 Fingerprint32WithSeed(const char *str,
-                                      uint32 seed);
-  static uint32 Fingerprint32WithSeed(uint32 num, uint32 seed);
-
-  // 64bit Fingerprint
-  static uint64 Fingerprint(const string &key);
-  static uint64 Fingerprint(const char *str, size_t length);
-
-  static uint64 FingerprintWithSeed(const string &key, uint32 seed);
-
-  static uint64 FingerprintWithSeed(const char *str,
-                                    size_t length, uint32 seed);
-
   // Generate a random sequence. It uses secure method if possible, or Random()
   // as a fallback method.
   static void GetRandomSequence(char *buf, size_t buf_size);
@@ -305,63 +282,15 @@ class Util {
   // Set the seed of Util::Random().
   static void SetRandomSeed(uint32 seed);
 
-  // Get the current time info using gettimeofday-like functions.
-  // sec: number of seconds from epoch
-  // usec: micro-second passed: [0,1000000)
-  static void GetTimeOfDay(uint64 *sec, uint32 *usec);
-
-  // Get the current time info using time-like function
-  // For Windows, _time64() is used.
-  // For Linux/Mac, time() is used.
-  static uint64 GetTime();
-
-  // Get the current local time to current_time.  Returns true if succeeded.
-  static bool GetCurrentTm(tm *current_time);
-  // Get local time, which is offset_sec seconds after now. Returns true if
-  // succeeded.
-  static bool GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec);
-
-  // Get the system frequency to calculate the time from ticks.
-  static uint64 GetFrequency();
-
-  // Get the current ticks. It may return incorrect value on Virtual Machines.
-  // If you'd like to get a value in secs, it is necessary to divide a result by
-  // GetFrequency().
-  static uint64 GetTicks();
-
-#ifdef __native_client__
-  // Sets the time difference between local time and UTC time in seconds.
-  // We use this function in NaCl Mozc because we can't know the local timezone
-  // in NaCl environment.
-  static void SetTimezoneOffset(int32 timezone_offset_sec);
-#endif  // __native_client__
-
-  // Interface of the helper class.
-  // Default implementation is defined in the .cc file.
-  class ClockInterface {
-   public:
-    virtual ~ClockInterface() {}
-    virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) = 0;
-    virtual uint64 GetTime() = 0;
-    virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) = 0;
-
-    // High accuracy clock.
-    virtual uint64 GetFrequency() = 0;
-    virtual uint64 GetTicks() = 0;
-#ifdef __native_client__
-    virtual void SetTimezoneOffset(int32 timezone_offset_sec) = 0;
-#endif  // __native_client__
-  };
-
-  // This function is provided for test.
-  // The behavior of system clock can be customized by replacing this handler.
-  static void SetClockHandler(Util::ClockInterface *handler);
-
   // Suspends the execution of the current thread until
   // the time-out interval elapses.
   static void Sleep(uint32 msec);
 
   // Japanese utilities for character form transliteration.
+  static void ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
+                                      const char *table,
+                                      StringPiece input,
+                                      string *output);
   static void HiraganaToKatakana(StringPiece input, string *output);
   static void HiraganaToHalfwidthKatakana(StringPiece input, string *output);
   static void HiraganaToRomanji(StringPiece input, string *output);
@@ -399,15 +328,6 @@ class Util {
   // Returns true if key is a close bracket.  If key is a close bracket,
   // corresponding open bracket is assigned.
   static bool IsCloseBracket(const string &key, string *open_bracket);
-
-  // Code converter
-#ifndef OS_WIN
-  static void UTF8ToEUC(const string &input, string *output);
-  static void EUCToUTF8(const string &input, string *output);
-#endif  // OS_WIDNWOS
-
-  static void UTF8ToSJIS(const string &input, string *output);
-  static void SJISToUTF8(const string &input, string *output);
 
   static void EncodeURI(const string &input, string *output);
   static void DecodeURI(const string &input, string *output);

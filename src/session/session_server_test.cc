@@ -29,14 +29,14 @@
 
 #include "session/session_server.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/scheduler.h"
 #include "base/system_util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -74,9 +74,9 @@ class SessionServerTest : public testing::Test {
 };
 
 TEST_F(SessionServerTest, SetSchedulerJobTest) {
-  scoped_ptr<JobRecorder> job_recorder(new JobRecorder);
+  std::unique_ptr<JobRecorder> job_recorder(new JobRecorder);
   Scheduler::SetSchedulerHandler(job_recorder.get());
-  scoped_ptr<SessionServer> session_server(new SessionServer);
+  std::unique_ptr<SessionServer> session_server(new SessionServer);
   const vector<Scheduler::JobSetting> &job_settings =
       job_recorder->job_settings();
   EXPECT_LE(2, job_settings.size());

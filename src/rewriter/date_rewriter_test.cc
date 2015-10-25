@@ -30,10 +30,11 @@
 #include "rewriter/date_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -220,9 +221,9 @@ class DateRewriterTest : public testing::Test {
 };
 
 TEST_F(DateRewriterTest, DateRewriteTest) {
-  scoped_ptr<ClockMock> mock_clock(
+  std::unique_ptr<ClockMock> mock_clock(
       new ClockMock(kTestSeconds, kTestMicroSeconds));
-  Util::SetClockHandler(mock_clock.get());
+  Clock::SetClockForUnitTest(mock_clock.get());
 
   DateRewriter rewriter;
   Segments segments;
@@ -471,7 +472,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     }
   }
 
-  Util::SetClockHandler(NULL);
+  Clock::SetClockForUnitTest(nullptr);
 }
 
 TEST_F(DateRewriterTest, ADToERA) {

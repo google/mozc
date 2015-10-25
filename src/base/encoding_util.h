@@ -27,75 +27,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/text_converter.h"
+#ifndef MOZC_BASE_ENCODING_UTIL_H_
+#define MOZC_BASE_ENCODING_UTIL_H_
 
-#include <cstring>
+// Currently EncodingUtil is not available on Android.
+#ifndef OS_ANDROID
+
 #include <string>
-#include "base/string_piece.h"
-#include "base/util.h"
+
+#include "base/port.h"
 
 namespace mozc {
 
-namespace {
+class EncodingUtil {
+ public:
+  static void UTF8ToSJIS(const string &input, string *output);
+  static void SJISToUTF8(const string &input, string *output);
 
-int Lookup(const mozc::TextConverter::DoubleArray *array,
-           const char *key, int len, int *result) {
-  int32 seekto = 0;
-  int n = 0;
-  int b = array[0].base;
-  uint32 p = 0;
-  *result = -1;
-  uint32 num = 0;
-
-  for (int i = 0; i < len; ++i) {
-    p = b;
-    n = array[p].base;
-    if (static_cast<uint32>(b) == array[p].check && n < 0) {
-      seekto = i;
-      *result = - n - 1;
-      ++num;
-    }
-    p = b + static_cast<uint8>(key[i]) + 1;
-    if (static_cast<uint32 >(b) == array[p].check) {
-      b = array[p].base;
-    } else {
-      return seekto;
-    }
-  }
-  p = b;
-  n = array[p].base;
-  if (static_cast<uint32>(b) == array[p].check && n < 0) {
-    seekto = len;
-    *result = -n - 1;
-  }
-
-  return seekto;
-}
-
-}  // namespace
-
-void TextConverter::Convert(const DoubleArray *da,
-                            const char *ctable,
-                            const StringPiece input,
-                            string *output) {
-  output->clear();
-  const char *begin = input.data();
-  const char *const end = input.data() + input.size();
-  while (begin < end) {
-    int result = 0;
-    size_t mblen = Lookup(da, begin, static_cast<int>(end - begin), &result);
-    if (mblen > 0) {
-      const char *p = &ctable[result];
-      const size_t len = strlen(p);
-      output->append(p, len);
-      mblen -= static_cast<int32>(p[len + 1]);
-      begin += mblen;
-    } else {
-      mblen = Util::OneCharLen(begin);
-      output->append(begin, mblen);
-      begin += mblen;
-    }
-  }
-}
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(EncodingUtil);
+};
 
 }  // namespace mozc
+
+#endif  // OS_ANDROID
+
+#endif  // MOZC_BASE_ENCODING_UTIL_H_

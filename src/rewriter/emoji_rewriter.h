@@ -30,9 +30,8 @@
 #ifndef MOZC_REWRITER_EMOJI_REWRITER_H_
 #define MOZC_REWRITER_EMOJI_REWRITER_H_
 
-#include <stddef.h>
+#include <cstddef>
 
-#include "base/scoped_ptr.h"
 #include "converter/segments.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"

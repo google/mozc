@@ -29,7 +29,9 @@
 
 #include "rewriter/correction_rewriter.h"
 
+#include <memory>
 #include <string>
+
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
@@ -78,7 +80,7 @@ class CorrectionRewriterTest : public testing::Test {
     config::ConfigHandler::SetConfig(default_config_);
   }
 
-  scoped_ptr<CorrectionRewriter> rewriter_;
+  std::unique_ptr<CorrectionRewriter> rewriter_;
 
  private:
   config::Config default_config_;

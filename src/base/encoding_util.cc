@@ -27,8 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/encoding_util.h"
+
+// No implementation for Android.
+#ifndef OS_ANDROID
+
 #ifndef OS_WIN
 #include <iconv.h>
+#include <algorithm>
 #else
 #include <windows.h>
 #include <memory>
@@ -36,7 +42,6 @@
 
 #include <string>
 #include "base/logging.h"
-#include "base/util.h"
 
 #ifdef OS_WIN
 using std::unique_ptr;
@@ -96,8 +101,6 @@ static int GetCodepage(const char* name) {
   } kCodePageMap[] = {
     { "UTF8",      CP_UTF8 },  // Unicode UTF-8
     { "SJIS",      932     },  // ANSI/OEM - Japanese, Shift-JIS
-    { "EUC-JP-MS", 51932   },  // EUC - Japanese
-    { "JIS",       20932   },  // JIS X 0208-1990 & 0212-1990
   };
 
   for (size_t i = 0; i < arraysize(kCodePageMap); i++) {
@@ -120,13 +123,13 @@ inline bool Convert(const char *from, const char *to,
   }
 
   const int wide_length = MultiByteToWideChar(codepage_from, 0, input.c_str(),
-                                              -1, NULL, 0);
+                                              -1, nullptr, 0);
   if (wide_length == 0) {
     return false;
   }
 
   unique_ptr<wchar_t[]> wide(new wchar_t[wide_length + 1]);
-  if (wide.get() == NULL) {
+  if (wide.get() == nullptr) {
     return false;
   }
 
@@ -135,19 +138,19 @@ inline bool Convert(const char *from, const char *to,
     return false;
 
   const int output_length = WideCharToMultiByte(codepage_to, 0, wide.get(), -1,
-                                                NULL, 0, NULL, NULL);
+                                                nullptr, 0, nullptr, nullptr);
   if (output_length == 0) {
     return false;
   }
 
   unique_ptr<char[]> multibyte(new char[output_length + 1]);
-  if (multibyte.get() == NULL) {
+  if (multibyte.get() == nullptr) {
     return false;
   }
 
   const int result = WideCharToMultiByte(codepage_to, 0, wide.get(),
                                          wide_length, multibyte.get(),
-                                         output_length + 1, NULL, NULL);
+                                         output_length + 1, nullptr, nullptr);
   if (result == 0) {
     return false;
   }
@@ -161,22 +164,14 @@ inline bool Convert(const char *from, const char *to,
 
 namespace mozc {
 
-#ifndef OS_WIN
-// The following functions don't work on Windows
-void Util::UTF8ToEUC(const string &input, string *output) {
-  Convert("UTF8", "EUC-JP-MS", input, output);
-}
-
-void Util::EUCToUTF8(const string &input, string *output) {
-  Convert("EUC-JP-MS", "UTF8", input, output);
-}
-#endif
-
-void Util::UTF8ToSJIS(const string &input, string *output) {
+void EncodingUtil::UTF8ToSJIS(const string &input, string *output) {
   Convert("UTF8", "SJIS", input, output);
 }
 
-void Util::SJISToUTF8(const string &input, string *output) {
+void EncodingUtil::SJISToUTF8(const string &input, string *output) {
   Convert("SJIS", "UTF8", input, output);
 }
+
 }  // namespace mozc
+
+#endif  // OS_ANDROID

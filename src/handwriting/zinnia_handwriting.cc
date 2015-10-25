@@ -31,6 +31,9 @@
 
 #include "handwriting/zinnia_handwriting.h"
 
+#include <memory>
+#include <string>
+
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mac_util.h"
@@ -104,9 +107,9 @@ HandwritingStatus ZinniaHandwriting::Recognize(
   }
 
   const int kMaxResultSize = 100;
-  scoped_ptr<zinnia::Result> result(recognizer_->classify(*character_,
-                                                          kMaxResultSize));
-  if (result.get() == NULL) {
+  std::unique_ptr<zinnia::Result> result(
+      recognizer_->classify(*character_, kMaxResultSize));
+  if (result == nullptr) {
     return HANDWRITING_ERROR;
   }
 

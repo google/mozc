@@ -42,6 +42,7 @@
 
 #include "base/crash_report_handler.h"
 #include "base/init.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -49,7 +50,6 @@
 DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
 
 namespace mozc_flags {
-
 namespace {
 
 typedef map<string, mozc_flags::Flag *> FlagMap;
@@ -125,18 +125,19 @@ bool FlagUtil::SetFlag(const string &name, const string &value) {
 
   switch (flag->type) {
     case I:
-      *(reinterpret_cast<int32 *>(flag->storage)) = atoi32(v.c_str());
+      mozc::NumberUtil::SafeStrToInt32(
+          v, reinterpret_cast<int32 *>(flag->storage));
       break;
     case B:
       *(reinterpret_cast<bool *>(flag->storage)) = IsTrue(v.c_str());
       break;
     case I64:
-      *(reinterpret_cast<int64 *>(flag->storage)) =
-          strtoll(v.c_str(), NULL, 10);
+      mozc::NumberUtil::SafeStrToInt64(
+          v, reinterpret_cast<int64 *>(flag->storage));
       break;
     case U64:
-      *(reinterpret_cast<uint64 *>(flag->storage)) =
-          strtoull(v.c_str(), NULL, 10);
+      mozc::NumberUtil::SafeStrToUInt64(
+          v, reinterpret_cast<uint64 *>(flag->storage));
       break;
     case D:
       *(reinterpret_cast<double *>(flag->storage)) = strtod(v.c_str(), NULL);

@@ -29,8 +29,10 @@
 
 #include "rewriter/user_segment_history_rewriter.h"
 
+#include <memory>
 #include <string>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -49,8 +51,6 @@
 #include "rewriter/variants_rewriter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 using mozc::config::CharacterFormManager;
 using mozc::config::Config;
@@ -162,7 +162,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
     ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->Reload();
 
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(NULL);
 
     pos_matcher_ = mock_data_manager_.GetPOSMatcher();
     pos_group_.reset(new PosGroup(mock_data_manager_.GetPosGroupData()));
@@ -171,9 +171,9 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(NULL);
 
-    scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+    std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
         CreateUserSegmentHistoryRewriter());
     rewriter->Clear();
     // reset config of test_tmpdir.
@@ -198,12 +198,12 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
  private:
   const testing::MockDataManager mock_data_manager_;
   const POSMatcher *pos_matcher_;
-  scoped_ptr<const PosGroup> pos_group_;
+  std::unique_ptr<const PosGroup> pos_group_;
   DISALLOW_COPY_AND_ASSIGN(UserSegmentHistoryRewriterTest);
 };
 
 TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const string history_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
                                                  "/segment.db");
@@ -214,7 +214,7 @@ TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   SetIncognito(false);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   segments.Clear();
   const ConversionRequest default_request;
@@ -225,7 +225,7 @@ TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {
 TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -268,7 +268,7 @@ TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
 TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
   SetIncognito(false);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -317,7 +317,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DisableTest) {
   SetIncognito(false);
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -366,7 +366,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DisableTest) {
 TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -464,7 +464,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
 TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -473,7 +473,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   {
     InitSegments(&segments, 1);
@@ -568,7 +568,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
 TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -577,7 +577,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   {
     InitSegments(&segments, 1);
@@ -628,7 +628,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
 TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -684,7 +684,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
 TEST_F(UserSegmentHistoryRewriterTest, ContextSensitive) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -739,7 +739,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContextSensitive) {
 TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -860,7 +860,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
 TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -990,7 +990,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
 TEST_F(UserSegmentHistoryRewriterTest, NotReplaceableForDifferentId) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1022,7 +1022,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NotReplaceableForDifferentId) {
 TEST_F(UserSegmentHistoryRewriterTest, ReplaceableForSameId) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1054,7 +1054,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableForSameId) {
 TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1087,7 +1087,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
 TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1149,7 +1149,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
 TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1188,7 +1188,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
 TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1247,9 +1247,9 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
 TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   const ConversionRequest request;
 
   rewriter->Clear();
@@ -1297,9 +1297,9 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   SetNumberForm(Config::HALF_WIDTH);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   const ConversionRequest request;
 
   rewriter->Clear();
@@ -1350,9 +1350,9 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   SetNumberForm(Config::FULL_WIDTH);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   const ConversionRequest request;
 
   rewriter->Clear();
@@ -1400,9 +1400,9 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   SetNumberForm(Config::HALF_WIDTH);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   const ConversionRequest request;
 
   rewriter->Clear();
@@ -1462,7 +1462,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
 TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1471,7 +1471,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   InitSegments(&segments, 1);
   segments.mutable_segment(0)->move_candidate(2, 0);
@@ -1519,7 +1519,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
 TEST_F(UserSegmentHistoryRewriterTest, Regression2459520) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1548,7 +1548,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459520) {
 TEST_F(UserSegmentHistoryRewriterTest, PuntuationsTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1585,7 +1585,7 @@ TEST_F(UserSegmentHistoryRewriterTest, PuntuationsTest) {
 TEST_F(UserSegmentHistoryRewriterTest, Regression3264619) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
@@ -1608,14 +1608,14 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression3264619) {
 TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   rewriter->Clear();
   for (int i = 0; i < 5; ++i) {
@@ -1640,7 +1640,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
 TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
   SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
-  scoped_ptr<UserSegmentHistoryRewriter> rewriter(
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const ConversionRequest request;
 

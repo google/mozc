@@ -29,6 +29,7 @@
 
 #include "prediction/user_history_predictor.h"
 
+#include <memory>
 #include <set>
 #include <string>
 
@@ -53,8 +54,9 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_user_history_predictor);
+
+using std::unique_ptr;
 
 using mozc::commands::Request;
 using mozc::dictionary::DictionaryMock;
@@ -136,8 +138,14 @@ bool FindCandidateByValue(const string &value, const Segments &segments) {
 
 class UserHistoryPredictorTest : public ::testing::Test {
  public:
-  UserHistoryPredictorTest() :
-      default_expansion_(FLAGS_enable_expansion_for_user_history_predictor) {}
+  UserHistoryPredictorTest()
+      : default_expansion_(FLAGS_enable_expansion_for_user_history_predictor) {
+    commands::RequestForUnitTest::FillMobileRequest(&mobile_request_);
+    mobile_conversion_request_.reset(
+        new ConversionRequest(NULL, &mobile_request_));
+
+    default_conversion_request_.reset(new ConversionRequest());
+  }
 
   virtual ~UserHistoryPredictorTest() {
     FLAGS_enable_expansion_for_user_history_predictor = default_expansion_;
@@ -178,6 +186,14 @@ class UserHistoryPredictorTest : public ::testing::Test {
 
   const commands::Request &default_request() const {
     return default_request_;
+  }
+
+  const ConversionRequest &default_conversion_request() const {
+    return *default_conversion_request_;
+  }
+
+  const ConversionRequest &mobile_conversion_request() const {
+    return *mobile_conversion_request_;
   }
 
   static bool IsSuggested(UserHistoryPredictor *predictor,
@@ -288,9 +304,9 @@ class UserHistoryPredictorTest : public ::testing::Test {
 
  private:
   struct DataAndPredictor {
-    scoped_ptr<DictionaryMock> dictionary;
-    scoped_ptr<SuppressionDictionary> suppression_dictionary;
-    scoped_ptr<UserHistoryPredictor> predictor;
+    unique_ptr<DictionaryMock> dictionary;
+    unique_ptr<SuppressionDictionary> suppression_dictionary;
+    unique_ptr<UserHistoryPredictor> predictor;
   };
 
   DataAndPredictor *CreateDataAndPredictor() const {
@@ -308,8 +324,11 @@ class UserHistoryPredictorTest : public ::testing::Test {
 
   config::Config default_config_;
   const commands::Request default_request_;
+  commands::Request mobile_request_;
+  unique_ptr<ConversionRequest> default_conversion_request_;
+  unique_ptr<ConversionRequest> mobile_conversion_request_;
   const bool default_expansion_;
-  scoped_ptr<DataAndPredictor> data_and_predictor_;
+  unique_ptr<DataAndPredictor> data_and_predictor_;
 };
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
@@ -353,7 +372,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
           "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
           "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
           "\xE3\x81\x99", &segments);
-      predictor->Finish(&segments);
+      predictor->Finish(default_conversion_request(), &segments);
 
       // "わたしの"
       MakeSegmentsForSuggestion(
@@ -525,7 +544,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion) {
     MakeSegmentsForSuggestion("\xE3\x81\xBE", &segments);
     // "摩"
     AddCandidate(1, "\xE6\x91\xA9", &segments);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
 
     // All added items must be suggestion entries.
     const UserHistoryPredictor::DicCache::Element *element;
@@ -592,7 +611,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
           "\xE3\x81\x99",
           kDescription,
           &segments);
-      predictor->Finish(&segments);
+      predictor->Finish(default_conversion_request(), &segments);
 
       // "わたしの"
       MakeSegmentsForSuggestion(
@@ -770,7 +789,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
 
     // once
     segments.set_request_type(Segments::SUGGESTION);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
 
     segments.Clear();
     // "ひろすえりょうこ"
@@ -783,7 +802,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
     segments.set_request_type(Segments::CONVERSION);
 
     // conversion
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
 
     // sync
     predictor->Sync();
@@ -875,7 +894,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
       "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
       "\xE3\x81\x99", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   // Before Revert, Suggest works
   // "わたしの"
@@ -913,7 +932,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
     // "テストテスト"
     AddCandidate("\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88"
                  "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88", &segments);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
   }
 
   predictor->ClearAllHistory();
@@ -926,7 +945,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
     // "テストテスト"
     AddCandidate("\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88"
                  "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88", &segments);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
   }
 
   // frequency is cleared as well.
@@ -967,7 +986,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
   MakeSegmentsForConversion("\xE3\x80\x82", &segments);
   AddCandidate(1, "\xE3\x80\x82", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
   // "わたしの"
@@ -1017,13 +1036,13 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   MakeSegmentsForPrediction("\xE3\x81\x82", &segments);
   // "亜"
   AddCandidate(0, "\xE4\xBA\x9C", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   // "。"
   MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
   AddCandidate(1, "\xE3\x80\x82", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
   MakeSegmentsForPrediction("\xE3\x81\x82", &segments);  // "あ"
@@ -1039,14 +1058,14 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
   // "。"
   AddCandidate(0, "\xE3\x80\x82", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   // "あ"
   MakeSegmentsForPrediction("\xE3\x81\x82", &segments);
   // "亜"
   AddCandidate(1, "\xE4\xBA\x9C", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
   MakeSegmentsForPrediction("\xE3\x80\x82", &segments);  // "。"
@@ -1066,13 +1085,13 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
                "\xE3\x81\x8A\xE7\x96\xB2\xE3\x82\x8C\xE6\xA7\x98"
                "\xE3\x81\xA7\xE3\x81\x99",
                &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   // "。"
   MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
   AddCandidate(1, "\xE3\x80\x82", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
   // "おつかれ"
@@ -1115,7 +1134,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreceedingPunctuation) {
       "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
       "\xE3\x81\x99", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
   // "わたしの"
@@ -1184,7 +1203,7 @@ TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
                    "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88"
                    "\xe6\x96\x87\xe7\xab\xa0",
                    &segments);
-      predictor->Finish(&segments);
+      predictor->Finish(default_conversion_request(), &segments);
     }
     segments.Clear();
     {
@@ -1199,7 +1218,7 @@ TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
                    first_char +
                    "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88"
                    "\xe6\x96\x87\xe7\xab\xa0", &segments);
-      predictor->Finish(&segments);
+      predictor->Finish(default_conversion_request(), &segments);
     }
     segments.Clear();
     {
@@ -1247,14 +1266,14 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x82\x8D"
                               "\xE3\x81\x86\xE3\x81\xAF", &segments);
     AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
     // "はなこに/花子に"
     MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
                               "\xE3\x81\x93\xE3\x81\xAB", &segments);
     AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
     segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
     // "きょうと/京都"
@@ -1265,7 +1284,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     AddCandidate(1, "\xE4\xBA\xAC\xE9\x83\xBD",
                  &segments);
     Util::Sleep(2000);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
     segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
     // "おおさか/大阪"
@@ -1276,7 +1295,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     AddCandidate(1, "\xE5\xA4\xA7\xE9\x98\xAA",
                  &segments);
     Util::Sleep(2000);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
     segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
     // Zero query suggestion is disabled.
@@ -1331,7 +1350,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
                               "\xE3\x81\x93\xE3\x81\xAB", &segments);
     AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
 
     segments.Clear();
     // "たろうは/太郎は"
@@ -1373,14 +1392,14 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x82\x8D"
                             "\xE3\x81\x86\xE3\x81\xAF", &segments);
   AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   // "はなこに/花子に"
   MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
                             "\xE3\x81\x93\xE3\x81\xAB", &segments);
   AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
   // "むずかしい/難しい"
@@ -1389,7 +1408,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
                             "\xE3\x81\x8B\xE3\x81\x97"
                             "\xE3\x81\x84", &segments);
   AddCandidate(2, "\xE9\x9B\xA3\xE3\x81\x97\xE3\x81\x84", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(2)->set_segment_type(Segment::HISTORY);
 
   // "ほんを/本を"
@@ -1397,7 +1416,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   MakeSegmentsForConversion("\xE3\x81\xBB"
                             "\xE3\x82\x93\xE3\x82\x92", &segments);
   AddCandidate(3, "\xE6\x9C\xAC\xE3\x82\x92", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(3)->set_segment_type(Segment::HISTORY);
 
   // "よませた/読ませた"
@@ -1406,7 +1425,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
                             "\xE3\x81\x9B\xE3\x81\x9F", &segments);
   AddCandidate(4, "\xE8\xAA\xAD\xE3\x81\xBE"
                "\xE3\x81\x9B\xE3\x81\x9F", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   // "た", Too short inputs
   segments.Clear();
@@ -1466,13 +1485,13 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x82\x8D"
                             "\xE3\x81\x86\xE3\x81\xAF", &segments);
   AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\x97"
                             "\xE3\x81\x93\xE3\x81\xAB", &segments);
   AddCandidate(1, "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
   // "たろうは"
@@ -1519,7 +1538,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   AddCandidate(4, "\xE8\xAA\xAD\xE3\x81\xBE"
                "\xE3\x81\x9B\xE3\x81\x9F", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   // "たろうは"
   segments.Clear();
@@ -1580,13 +1599,13 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x82\x8D"
                             "\xE3\x81\x86\xE3\x81\xAF", &segments);
   AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\x97"
                             "\xE3\x81\x93\xE3\x81\xAB", &segments);
   AddCandidate(1, "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
   // "たろうは"
@@ -1631,7 +1650,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
   MakeSegmentsForConversion("\xE3\x80\x82", &segments);
   AddCandidate(3, "\xE3\x80\x82", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
 
@@ -1661,7 +1680,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
   MakeSegmentsForConversion("\xE3\x80\x82", &segments);
   AddCandidate(3, "\xE3\x80\x82", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
 
@@ -1739,7 +1758,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case2) {
   MakeSegmentsForConversion("\xE3\x80\x82", &segments);
   AddCandidate(10, "\xE3\x80\x82", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
 
@@ -1789,7 +1808,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
   MakeSegmentsForConversion("\xE3\x80\x82", &segments);
   AddCandidate(5, "\xE3\x80\x82", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   Util::Sleep(2000);
 
@@ -1819,7 +1838,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
   MakeSegmentsForConversion("\xE3\x80\x82", &segments);
   AddCandidate(5, "\xE3\x80\x82", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
 
@@ -1864,7 +1883,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
                "\xE9\xA1\x98\xE3\x81\x84"
                "\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x99", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
 
@@ -1936,7 +1955,7 @@ TEST_F(UserHistoryPredictorTest, DuplicateString) {
   MakeSegmentsForConversion("\xEF\xBC\x89", &segments);
   AddCandidate(7, "\xEF\xBC\x89", &segments);
 
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
 
   segments.Clear();
 
@@ -2017,7 +2036,7 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
         segments.Clear();
         MakeSegmentsForConversion(commands[i].key, &segments);
         AddCandidate(commands[i].value, &segments);
-        predictor->Finish(&segments);
+        predictor->Finish(default_conversion_request(), &segments);
         break;
       case Command::LOOKUP:
         segments.Clear();
@@ -2557,7 +2576,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
       Segments segments;
       MakeSegmentsForConversion(input, &segments);
       AddCandidate(0, output, &segments);
-      predictor->Finish(&segments);
+      predictor->Finish(default_conversion_request(), &segments);
     }
 
     // TODO(yukawa): Refactor the scenario runner below by making
@@ -2622,7 +2641,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveMultiSegmentsTest) {
     MakeSegmentsForConversion("abc!", &segments);
     AddCandidate(0, "123", &segments);
     AddCandidate(1, "abc!", &segments);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
   }
 
   {
@@ -2860,7 +2879,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   // input_key: "あｋ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
-  scoped_ptr<Trie<string> > expanded(new Trie<string>);
+  unique_ptr<Trie<string>> expanded(new Trie<string>);
   // "か"
   expanded->AddEntry("\xe3\x81\x8b", "");
   // "き"
@@ -2900,6 +2919,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   for (size_t i = 0; i < arraysize(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
     EXPECT_EQ(kTests1[i].expect_result, predictor->LookupEntry(
+        UserHistoryPredictor::DEFAULT,
         // "あｋ", "あ"
         "\xe3\x81\x82\xef\xbd\x8b", "\xe3\x81\x82",
         expanded.get(), &entry, NULL, &results))
@@ -2929,6 +2949,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   for (size_t i = 0; i < arraysize(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
     EXPECT_EQ(kTests2[i].expect_result, predictor->LookupEntry(
+        UserHistoryPredictor::DEFAULT,
         "", "", expanded.get(), &entry, NULL, &results))
         << kTests2[i].entry_key;
   }
@@ -2944,7 +2965,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   // input_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
-  scoped_ptr<Trie<string> > expanded(new Trie<string>);
+  unique_ptr<Trie<string>> expanded(new Trie<string>);
   // "し"
   expanded->AddEntry("\xe3\x81\x97", "");
   // "じ"
@@ -2984,6 +3005,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   for (size_t i = 0; i < arraysize(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
     EXPECT_EQ(kTests1[i].expect_result, predictor->LookupEntry(
+        UserHistoryPredictor::DEFAULT,
         // "あし", "あ"
         "\xe3\x81\x82\xe3\x81\x97", "\xe3\x81\x82",
         expanded.get(), &entry, NULL, &results))
@@ -3013,6 +3035,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   for (size_t i = 0; i < arraysize(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
     EXPECT_EQ(kTests2[i].expect_result, predictor->LookupEntry(
+        UserHistoryPredictor::DEFAULT,
         // "し"
         "\xe3\x81\x97", "", expanded.get(), &entry, NULL, &results))
         << kTests2[i].entry_key;
@@ -3032,7 +3055,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   // input_key: "あ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
-  scoped_ptr<Trie<string> > expanded(new Trie<string>);
+  unique_ptr<Trie<string>> expanded(new Trie<string>);
   // "か", "か"
   expanded->AddEntry("\xe3\x81\x8b", "\xe3\x81\x8b");
   // "き", "き"
@@ -3107,7 +3130,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   // input_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
-  scoped_ptr<Trie<string> > expanded(new Trie<string>);
+  unique_ptr<Trie<string>> expanded(new Trie<string>);
   // "し", "し"
   expanded->AddEntry("\xe3\x81\x97", "\xe3\x81\x97");
   // "じ", "じ"
@@ -3210,9 +3233,9 @@ void InitSegmentsFromInputSequence(const string &text,
 }  // namespace
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3226,7 +3249,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
     FLAGS_enable_expansion_for_user_history_predictor = true;
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3252,7 +3275,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
     FLAGS_enable_expansion_for_user_history_predictor = false;
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3275,9 +3298,9 @@ uint32 GetRandomAscii() {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3297,7 +3320,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
                                   &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3310,9 +3333,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
 // input_key != base by compoesr modification.
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3324,7 +3347,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
                                   &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3335,11 +3358,11 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
-  scoped_ptr<ConversionRequest> conversion_request;
+  unique_ptr<ConversionRequest> conversion_request;
   Segments segments;
 
   {
@@ -3348,7 +3371,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   conversion_request.get(), &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3377,7 +3400,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   conversion_request.get(), &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3398,7 +3421,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   conversion_request.get(), &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3419,7 +3442,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   conversion_request.get(), &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3444,9 +3467,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://flick-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3456,7 +3479,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
                                   &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3480,9 +3503,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
   FLAGS_enable_expansion_for_user_history_predictor = true;
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://12keys-hiragana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3495,7 +3518,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
                                   &segments);
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3518,9 +3541,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
 }
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
-  scoped_ptr<composer::Table> table(new composer::Table);
+  unique_ptr<composer::Table> table(new composer::Table);
   table->LoadFromFile("system://kana.tsv");
-  scoped_ptr<composer::Composer> composer(
+  unique_ptr<composer::Composer> composer(
       new composer::Composer(table.get(), &default_request()));
   ConversionRequest conversion_request;
   Segments segments;
@@ -3533,7 +3556,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
     FLAGS_enable_expansion_for_user_history_predictor = true;
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3559,7 +3582,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
     FLAGS_enable_expansion_for_user_history_predictor = false;
     string input_key;
     string base;
-    scoped_ptr<Trie<string> > expanded;
+    unique_ptr<Trie<string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(conversion_request,
                                                   segments,
                                                   &input_key,
@@ -3604,7 +3627,7 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
     // "なかのです, 中野です", "なかの, 中野"
     candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
   }
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.Clear();
 
   // "なかの"
@@ -3658,7 +3681,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
     // "なかのです, 中野です", "なかの, 中野"
     candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
   }
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.Clear();
 
   // "わたしの"
@@ -3666,7 +3689,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
       "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae", &segments);
   // "私の"
   AddCandidate(0, "\xe7\xa7\x81\xe3\x81\xae", &segments);
-  predictor->Finish(&segments);
+  predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   MakeSegmentsForSuggestion("", &segments);   // empty request
@@ -3708,7 +3731,7 @@ TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
     candidate->content_value = kValue;
     candidate->key = kKey;
     candidate->content_key = kKey;
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
     segments.Clear();
   }
 
@@ -4292,7 +4315,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Scenario1) {
     AddCandidate(
         "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\x72",  // "グーグr"
         &segments);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
   }
 
   // Test if the predictor learned "グーグr".
@@ -4374,7 +4397,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Scenario2) {
     candidate->key = seg->key();
     candidate->content_key = seg->key();
 
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
   }
 
   // Check if the predictor learned the sentence.  Since the symbol is contained
@@ -4461,7 +4484,7 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
     candidate->PushBackInnerSegmentBoundary(12, 12, 9, 9);
     // "いきたい", "行きたい", "いきたい", "行きたい"
     candidate->PushBackInnerSegmentBoundary(12, 12, 12, 12);
-    predictor->Finish(&segments);
+    predictor->Finish(default_conversion_request(), &segments);
   }
 
   segments.Clear();
@@ -4492,6 +4515,122 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
   // "行きたい"
   EXPECT_TRUE(FindCandidateByValue(
       "\xE8\xA1\x8C\xE3\x81\x8D\xE3\x81\x9F\xE3\x81\x84", segments));
+}
+
+TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  predictor->WaitForSyncer();
+  predictor->ClearAllHistory();
+  predictor->WaitForSyncer();
+
+  Segments segments;
+
+  // "わたしの"
+  MakeSegmentsForConversion(
+      "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae", &segments);
+  // "私の"
+  AddCandidate(0, "\xe7\xa7\x81\xe3\x81\xae", &segments);
+
+  // "なまえは"
+  MakeSegmentsForConversion(
+      "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf", &segments);
+  // "名前は"
+  AddCandidate(1, "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", &segments);
+
+  predictor->Finish(mobile_conversion_request(), &segments);
+  segments.Clear();
+
+  // "わたし"
+  MakeSegmentsForSuggestion("\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97", &segments);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(mobile_conversion_request(), &segments));
+  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  // "私の"
+  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", segments.segment(0).candidate(0).value);
+  segments.Clear();
+
+  // "わたしの"
+  MakeSegmentsForPrediction(
+      "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae", &segments);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(mobile_conversion_request(), &segments));
+  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  // "私の"
+  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", segments.segment(0).candidate(0).value);
+  segments.Clear();
+
+  // "わたしのな"
+  MakeSegmentsForPrediction(
+      "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae\xe3\x81\xaa",
+      &segments);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(mobile_conversion_request(), &segments));
+  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  // "私の名前は"
+  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf",
+            segments.segment(0).candidate(0).value);
+  segments.Clear();
+}
+
+TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  predictor->WaitForSyncer();
+  predictor->ClearAllHistory();
+  predictor->WaitForSyncer();
+
+  Segments segments;
+
+  // "わたしの"
+  MakeSegmentsForConversion(
+      "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae", &segments);
+  // "私の"
+  AddCandidate(0, "\xe7\xa7\x81\xe3\x81\xae", &segments);
+
+  // "なまえは"
+  MakeSegmentsForConversion(
+      "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf", &segments);
+  // "名前は"
+  AddCandidate(1, "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", &segments);
+
+  predictor->Finish(default_conversion_request(), &segments);
+
+  segments.Clear();
+
+  // "わたし"
+  MakeSegmentsForSuggestion("\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97", &segments);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(default_conversion_request(), &segments));
+  EXPECT_EQ(2, segments.segment(0).candidates_size());
+  // "私の"
+  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", segments.segment(0).candidate(0).value);
+  // "私の名前は"
+  EXPECT_EQ(
+      "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf",
+      segments.segment(0).candidate(1).value);
+  segments.Clear();
+
+  // "わたしの"
+  MakeSegmentsForPrediction(
+      "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae", &segments);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(default_conversion_request(), &segments));
+  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  // "私の名前は"
+  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf",
+            segments.segment(0).candidate(0).value);
+  segments.Clear();
+
+  // "わたしのな"
+  MakeSegmentsForPrediction(
+      "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae\xe3\x81\xaa",
+      &segments);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(default_conversion_request(), &segments));
+  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  // "私の名前は"
+  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf",
+            segments.segment(0).candidate(0).value);
+  segments.Clear();
 }
 
 }  // namespace mozc

@@ -37,8 +37,10 @@
 #include <sstream>
 #include <string>
 
+#include "base/clock.h"
 #include "base/const.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
@@ -243,7 +245,7 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
 }  // namespace
 
 MozcEngine::MozcEngine()
-    : last_sync_time_(Util::GetTime()),
+    : last_sync_time_(Clock::GetTime()),
       key_event_handler_(new KeyEventHandler),
       client_(CreateAndConfigureClient()),
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
@@ -640,7 +642,7 @@ void MozcEngine::SyncData(bool force) {
     return;
   }
 
-  const uint64 current_time = Util::GetTime();
+  const uint64 current_time = Clock::GetTime();
   if (force ||
       (current_time >= last_sync_time_ &&
        current_time - last_sync_time_ >= kSyncDataInterval)) {

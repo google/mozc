@@ -29,12 +29,12 @@
 
 #include "converter/converter.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -73,12 +73,11 @@
 #include "protocol/config.pb.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-
-DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryImpl;
 using mozc::dictionary::DictionaryInterface;
@@ -177,16 +176,16 @@ class ConverterTest : public ::testing::Test {
 
   // This struct holds resources used by converter.
   struct ConverterAndData {
-    scoped_ptr<DictionaryInterface> user_dictionary;
-    scoped_ptr<SuppressionDictionary> suppression_dictionary;
-    scoped_ptr<DictionaryInterface> suffix_dictionary;
-    scoped_ptr<const Connector> connector;
-    scoped_ptr<const Segmenter> segmenter;
-    scoped_ptr<DictionaryInterface> dictionary;
-    scoped_ptr<const PosGroup> pos_group;
-    scoped_ptr<const SuggestionFilter> suggestion_filter;
-    scoped_ptr<ImmutableConverterInterface> immutable_converter;
-    scoped_ptr<ConverterImpl> converter;
+    std::unique_ptr<DictionaryInterface> user_dictionary;
+    std::unique_ptr<SuppressionDictionary> suppression_dictionary;
+    std::unique_ptr<DictionaryInterface> suffix_dictionary;
+    std::unique_ptr<const Connector> connector;
+    std::unique_ptr<const Segmenter> segmenter;
+    std::unique_ptr<DictionaryInterface> dictionary;
+    std::unique_ptr<const PosGroup> pos_group;
+    std::unique_ptr<const SuggestionFilter> suggestion_filter;
+    std::unique_ptr<ImmutableConverterInterface> immutable_converter;
+    std::unique_ptr<ConverterImpl> converter;
   };
 
   ConverterAndData *CreateConverterAndData(RewriterInterface *rewriter) {
@@ -276,7 +275,7 @@ class ConverterTest : public ::testing::Test {
 // just checking whether this causes segmentation fault or not.
 // TODO(toshiyuki): make dictionary mock and test strictly.
 TEST_F(ConverterTest, CanConvertTest) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   {
@@ -297,7 +296,7 @@ namespace {
 string ContextAwareConvert(const string &first_key,
                            const string &first_value,
                            const string &second_key) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
@@ -431,7 +430,7 @@ TEST_F(ConverterTest, ContextAwareConversionTest) {
 }
 
 TEST_F(ConverterTest, CommitSegmentValue) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -483,7 +482,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
 }
 
 TEST_F(ConverterTest, CommitSegments) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -569,7 +568,7 @@ TEST_F(ConverterTest, CommitSegments) {
 }
 
 TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -615,7 +614,7 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
 }
 
 TEST_F(ConverterTest, CommitPartialSuggestionUsageStats) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -708,7 +707,7 @@ TEST_F(ConverterTest, CommitPartialSuggestionUsageStats) {
 }
 
 TEST_F(ConverterTest, CommitAutoPartialSuggestionUsageStats) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -786,7 +785,7 @@ TEST_F(ConverterTest, CommitAutoPartialSuggestionUsageStats) {
 }
 
 TEST_F(ConverterTest, CandidateKeyTest) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -804,7 +803,7 @@ TEST_F(ConverterTest, CandidateKeyTest) {
 }
 
 TEST_F(ConverterTest, Regression3437022) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
@@ -895,7 +894,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
     "\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99"
   };
 
-  scoped_ptr<ConverterAndData> converter_and_data(
+  std::unique_ptr<ConverterAndData> converter_and_data(
       CreateStubbedConverterAndData());
   ConverterImpl *converter = converter_and_data->converter.get();
   for (size_t i = 0; i < arraysize(kTestKeys); ++i) {
@@ -934,7 +933,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
 
 TEST_F(ConverterTest, Regression3046266) {
   // Shouldn't correct nodes at the beginning of a sentence.
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
@@ -970,7 +969,7 @@ TEST_F(ConverterTest, Regression3046266) {
 
 TEST_F(ConverterTest, Regression5502496) {
   // Make sure key correction works for the first word of a sentence.
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
@@ -996,7 +995,7 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
   commands::Request client_request;
   client_request.set_mixed_conversion(true);
 
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
@@ -1041,7 +1040,7 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
 }
 
 TEST_F(ConverterTest, StartPartialPrediction) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -1059,7 +1058,7 @@ TEST_F(ConverterTest, StartPartialPrediction) {
 }
 
 TEST_F(ConverterTest, StartPartialSuggestion) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -1077,7 +1076,7 @@ TEST_F(ConverterTest, StartPartialSuggestion) {
 }
 
 TEST_F(ConverterTest, StartPartialPrediction_mobile) {
-  scoped_ptr<EngineInterface> engine(CreateEngineWithMobilePredictor());
+  std::unique_ptr<EngineInterface> engine(CreateEngineWithMobilePredictor());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -1095,7 +1094,7 @@ TEST_F(ConverterTest, StartPartialPrediction_mobile) {
 }
 
 TEST_F(ConverterTest, StartPartialSuggestion_mobile) {
-  scoped_ptr<EngineInterface> engine(CreateEngineWithMobilePredictor());
+  std::unique_ptr<EngineInterface> engine(CreateEngineWithMobilePredictor());
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -1179,7 +1178,7 @@ TEST_F(ConverterTest, Predict_SetKey) {
       {Segments::PARTIAL_SUGGESTION, kPredictionKey, true},
   };
 
-  scoped_ptr<ConverterAndData> converter_and_data(
+  std::unique_ptr<ConverterAndData> converter_and_data(
       CreateStubbedConverterAndData());
   ConverterImpl *converter = converter_and_data->converter.get();
   ASSERT_NE(nullptr, converter);
@@ -1212,7 +1211,7 @@ TEST_F(ConverterTest, Predict_SetKey) {
 TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   // Create Converter with mock user dictionary
   testing::MockDataManager data_manager;
-  scoped_ptr<DictionaryMock> mock_user_dictionary(new DictionaryMock);
+  std::unique_ptr<DictionaryMock> mock_user_dictionary(new DictionaryMock);
 
   mock_user_dictionary->AddLookupPredictive(
       // "てすと"
@@ -1228,31 +1227,31 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
       "<>!?",
       Token::USER_DICTIONARY);
-  scoped_ptr<SuppressionDictionary> suppression_dictionary(
+  std::unique_ptr<SuppressionDictionary> suppression_dictionary(
       new SuppressionDictionary);
 
   const char *dictionary_data = NULL;
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
-  scoped_ptr<DictionaryInterface> dictionary(new DictionaryImpl(
+  std::unique_ptr<DictionaryInterface> dictionary(new DictionaryImpl(
       SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
       ValueDictionary::CreateValueDictionaryFromImage(
           *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
       mock_user_dictionary.get(),
       suppression_dictionary.get(),
       data_manager.GetPOSMatcher()));
-  scoped_ptr<const PosGroup> pos_group(
+  std::unique_ptr<const PosGroup> pos_group(
       new PosGroup(data_manager.GetPosGroupData()));
-  scoped_ptr<const DictionaryInterface> suffix_dictionary(
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const Connector> connector(
+  std::unique_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const Segmenter> segmenter(
+  std::unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
-  scoped_ptr<const SuggestionFilter> suggestion_filter(
+  std::unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
-  scoped_ptr<ImmutableConverterInterface> immutable_converter(
+  std::unique_ptr<ImmutableConverterInterface> immutable_converter(
       new ImmutableConverterImpl(dictionary.get(),
                                  suffix_dictionary.get(),
                                  suppression_dictionary.get(),
@@ -1261,9 +1260,9 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                                  data_manager.GetPOSMatcher(),
                                  pos_group.get(),
                                  suggestion_filter.get()));
-  scoped_ptr<const SuggestionFilter> suggegstion_filter(
+  std::unique_ptr<const SuggestionFilter> suggegstion_filter(
       CreateSuggestionFilter(data_manager));
-  scoped_ptr<ConverterImpl> converter(new ConverterImpl);
+  std::unique_ptr<ConverterImpl> converter(new ConverterImpl);
   const DictionaryInterface *kNullDictionary = NULL;
   converter->Init(data_manager.GetPOSMatcher(),
                   suppression_dictionary.get(),
@@ -1323,7 +1322,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
 }
 
 TEST_F(ConverterTest, ComposerKeySelection) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   composer::Table table;
   {
@@ -1354,7 +1353,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
 }
 
 TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
-  scoped_ptr<ConverterAndData> ret(
+  std::unique_ptr<ConverterAndData> ret(
       CreateConverterAndDataWithInsertDummyWordsRewriter());
 
   // Set up suppression dictionary
@@ -1382,7 +1381,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
 
 TEST_F(ConverterTest, EmptyConvertReverse_Issue8661091) {
   // This is a test case against b/8661091.
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
 
   Segments segments;
@@ -1390,7 +1389,7 @@ TEST_F(ConverterTest, EmptyConvertReverse_Issue8661091) {
 }
 
 TEST_F(ConverterTest, StartReverseConversion) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   const ConverterInterface *converter = engine->GetConverter();
 
   const string kHonKanji = "\xE6\x9C\xAC";  // "本"
@@ -1551,7 +1550,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
 }
 
 TEST_F(ConverterTest, GetLastConnectivePart) {
-  scoped_ptr<ConverterAndData> converter_and_data(
+  std::unique_ptr<ConverterAndData> converter_and_data(
       CreateStubbedConverterAndData());
   ConverterImpl *converter = converter_and_data->converter.get();
 
@@ -1628,7 +1627,7 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
 }
 
 TEST_F(ConverterTest, ReconstructHistory) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
 
   // "１０"

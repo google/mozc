@@ -34,6 +34,7 @@
 #endif  // OS_WIN, ENABLE_GTK_RENDERER
 
 #include "base/crash_report_handler.h"
+#include "base/flags.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
 #include "base/util.h"

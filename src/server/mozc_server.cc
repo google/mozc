@@ -34,9 +34,11 @@
 #endif
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/crash_report_handler.h"
+#include "base/flags.h"
 #include "base/init.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
@@ -123,8 +125,8 @@ int MozcServer::Run() {
   }
 
   {
-    scoped_ptr<mozc::SessionServer> session_server
-        (new mozc::SessionServer);
+    std::unique_ptr<mozc::SessionServer> session_server(
+        new mozc::SessionServer);
     g_session_server = session_server.get();
     CHECK(g_session_server);
     if (!g_session_server->Connected()) {

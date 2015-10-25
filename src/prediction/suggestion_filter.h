@@ -30,10 +30,10 @@
 #ifndef MOZC_PREDICTION_SUGGESTION_FILTER_H_
 #define MOZC_PREDICTION_SUGGESTION_FILTER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace storage {
@@ -49,10 +49,11 @@ class SuggestionFilter {
   bool IsBadSuggestion(const string &text) const;
 
  private:
-  scoped_ptr<mozc::storage::ExistenceFilter> filter_;
+  std::unique_ptr<mozc::storage::ExistenceFilter> filter_;
 
   DISALLOW_COPY_AND_ASSIGN(SuggestionFilter);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_PREDICTION_SUGGESTION_FILTER_H_

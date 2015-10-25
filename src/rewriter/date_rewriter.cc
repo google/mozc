@@ -43,6 +43,7 @@
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
@@ -1742,7 +1743,7 @@ bool ExtractYearFromKey(const YearData &year_data,
   if (!NumberUtil::IsArabicNumber(era_year_str)) {
     return false;
   }
-  *year = atoi32(era_year_str.c_str());
+  *year = NumberUtil::SimpleAtoi(era_year_str);
   if (*year <= 0) {
     return false;
   }
@@ -1863,7 +1864,7 @@ bool IsValidDate(uint32 year, uint32 month, uint32 day) {
 // Checks given date is valid or not in this year
 bool IsValidDateInThisYear(uint32 month, uint32 day) {
   struct tm t_st;
-  if (!Util::GetTmWithOffsetSecond(&t_st, 0)) {
+  if (!Clock::GetTmWithOffsetSecond(&t_st, 0)) {
     LOG(ERROR) << "GetTmWithOffsetSecond() failed";
     return false;
   }
@@ -2026,7 +2027,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
     vector<string> era;
     switch (type) {
       case REWRITE_DATE: {
-        if (!Util::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
+        if (!Clock::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
           LOG(ERROR) << "GetTmWithOffsetSecond() failed";
           return false;
         }
@@ -2051,7 +2052,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_MONTH: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2065,7 +2066,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_YEAR: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2085,7 +2086,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_CURRENT_TIME: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2099,7 +2100,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_DATE_AND_CURRENT_TIME: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2166,7 +2167,7 @@ bool DateRewriter::RewriteYear(Segment *segment) const {
 
 bool DateRewriter::RewriteWeekday(Segment *segment) const {
   struct tm t_st;
-  if (!Util::GetCurrentTm(&t_st)) {
+  if (!Clock::GetCurrentTm(&t_st)) {
     LOG(ERROR) << "GetCurrentTm failed";
     return false;
   }
@@ -2250,7 +2251,10 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   string year_str;
   Util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
 
-  const uint32 year = atoi32(year_str.c_str());
+  uint32 year = 0;
+  if (!NumberUtil::SafeStrToUInt32(year_str, &year)) {
+    return false;
+  }
 
   vector<string> results;
   if (!AdToEra(year, &results)) {
@@ -2377,7 +2381,10 @@ bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
   string number_str;
   Util::FullWidthAsciiToHalfWidthAscii(key, &number_str);
 
-  const uint32 number = atoi32(number_str.c_str());
+  uint32 number = 0;
+  if (!NumberUtil::SafeStrToUInt32(number_str, &number)) {
+    return false;
+  }
   const uint32 upper_number = number / 100;
   const uint32 lower_number = number % 100;
 

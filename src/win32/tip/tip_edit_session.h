@@ -31,6 +31,7 @@
 #define MOZC_WIN32_TIP_TIP_EDIT_SESSION_H_
 
 #include <msctf.h>
+#include <string>
 
 #include "base/port.h"
 

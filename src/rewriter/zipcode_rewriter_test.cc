@@ -29,6 +29,7 @@
 
 #include "rewriter/zipcode_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -100,7 +101,7 @@ class ZipcodeRewriterTest : public ::testing::Test {
   virtual void SetUp() {
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Registers mocked PackedDataManager.
-    scoped_ptr<packed::PackedDataManager>
+    std::unique_ptr<packed::PackedDataManager>
         data_manager(new packed::PackedDataManager());
     CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
                                     kPackedSystemDictionary_size)));
@@ -132,7 +133,7 @@ class ZipcodeRewriterTest : public ::testing::Test {
 };
 
 TEST_F(ZipcodeRewriterTest, BasicTest) {
-  scoped_ptr<ZipcodeRewriter> zipcode_rewriter(CreateZipcodeRewriter());
+  std::unique_ptr<ZipcodeRewriter> zipcode_rewriter(CreateZipcodeRewriter());
 
   const string kZipcode = "107-0052";
   const string kAddress =

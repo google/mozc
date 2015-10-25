@@ -32,12 +32,13 @@
 // events specified by FLAGS_input file or interactive standard input.  Input
 // file format is same as one of session/session_client_main.
 
-#include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -48,7 +49,6 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 
-DEFINE_bool(display_preedit, false, "display predit to tty");
 DEFINE_string(input, "", "Input file");
 DEFINE_int32(key_duration, 10, "Key duration (msec)");
 DEFINE_string(profile_dir, "", "Profile dir");
@@ -59,28 +59,6 @@ DEFINE_bool(test_testsendkey, true, "Test TestSendKey");
 
 namespace mozc {
 namespace {
-
-string UTF8ToTtyString(const string &text) {
-#ifdef OS_WIN
-  string tmp;
-  Util::UTF8ToSJIS(text, &tmp);
-  return tmp;
-#else
-  return text;
-#endif
-}
-
-void DisplayPreedit(const commands::Output &output) {
-  if (output.has_preedit()) {
-    string value;
-    for (size_t i = 0; i < output.preedit().segment_size(); ++i) {
-      value += output.preedit().segment(i).value();
-    }
-    cout << UTF8ToTtyString(value) << '\r';
-  } else if (output.has_result()) {
-    cout << UTF8ToTtyString(output.result().value()) << endl;
-  }
-}
 
 // Parses key events.  If |input| gets EOF, returns false.
 bool ReadKeys(istream *input,
@@ -123,7 +101,7 @@ int Loop(istream *input) {
   CHECK(client.EnsureSession()) << "EnsureSession failed";
   CHECK(client.NoOperation()) << "Server is not responding";
 
-  scoped_ptr<mozc::renderer::RendererClient> renderer_client;
+  std::unique_ptr<mozc::renderer::RendererClient> renderer_client;
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {
@@ -177,10 +155,6 @@ int Loop(istream *input) {
         VLOG(2) << "Sending to Renderer: " << renderer_command.DebugString();
         renderer_client->ExecCommand(renderer_command);
       }
-
-      if (FLAGS_display_preedit) {
-        mozc::DisplayPreedit(output);
-      }
     }
     if (!answer.empty() && (output.result().value() != answer)) {
       LOG(ERROR) << "wrong value: " << output.result().value()
@@ -202,7 +176,7 @@ int main(int argc, char **argv) {
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
   }
 
-  scoped_ptr<mozc::InputFileStream> input_file;
+  std::unique_ptr<mozc::InputFileStream> input_file;
   istream *input = NULL;
 
   if (!FLAGS_input.empty()) {

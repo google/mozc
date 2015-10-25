@@ -32,7 +32,8 @@
 
 #include <QtGui/QMainWindow>
 
-#include "base/scoped_ptr.h"
+#include <memory>
+
 #include "gui/character_pad/ui_hand_writing.h"
 
 namespace mozc {
@@ -71,7 +72,7 @@ class HandWriting : public QMainWindow,
 
   void updateHandwritingSource(int index);
 
-  scoped_ptr<client::ClientInterface> client_;
+  std::unique_ptr<client::ClientInterface> client_;
   bool usage_stats_enabled_;
 // Do not depend on CloudHandwriting class to keep dependencies
 // minimum.
@@ -84,9 +85,9 @@ class HandWriting : public QMainWindow,
   // necessary and updates the current config as
   // |config.set_allow_cloud_handwriting(true)| when it is allowed.
   bool TryToEnableCloudHandwriting();
-  scoped_ptr<mozc::handwriting::HandwritingInterface> cloud_handwriting_;
+  std::unique_ptr<mozc::handwriting::HandwritingInterface> cloud_handwriting_;
 #endif  // ENABLE_CLOUD_HANDWRITING
-  scoped_ptr<mozc::handwriting::HandwritingInterface> zinnia_handwriting_;
+  std::unique_ptr<mozc::handwriting::HandwritingInterface> zinnia_handwriting_;
 };
 }  // namespace gui
 }  // namespace mozc

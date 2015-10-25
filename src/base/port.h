@@ -50,16 +50,10 @@ typedef unsigned long long uint64;
 typedef long long           int64;
 #endif  // OS_WIN
 
-#define atoi32 atoi
-#define strto32 strtol
-#define strto64 strtoll
-
 #include <stdint.h>
 
 #ifdef _MSC_VER
 #define snprintf _snprintf_s
-#define strtoull _strtoui64
-#define strtoll  _strtoi64
 #endif  // _MSC_VER
 
 template <typename T, size_t N>
@@ -129,9 +123,5 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)
 #define AS_STRING_INTERNAL(x)   #x
-
-
-// TODO(yukawa): Simplify following includes
-#include "base/flags.h"
 
 #endif  // MOZC_BASE_PORT_H_

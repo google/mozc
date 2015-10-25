@@ -34,10 +34,12 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
+
 #include <map>
+#include <memory>
 #include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/config_dialog/ui_config_dialog.h"
 #include "protocol/config.pb.h"
 
@@ -100,7 +102,7 @@ class ConfigDialog : public QDialog,
   bool Update();
   void Reload();
 
-  scoped_ptr<client::ClientInterface> client_;
+  std::unique_ptr<client::ClientInterface> client_;
   string custom_keymap_table_;
   string custom_roman_table_;
   config::Config::InformationListConfig information_list_config_;

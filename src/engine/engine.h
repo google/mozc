@@ -30,8 +30,9 @@
 #ifndef MOZC_ENGINE_ENGINE_H_
 #define MOZC_ENGINE_ENGINE_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/user_dictionary.h"
@@ -76,15 +77,15 @@ class Engine : public EngineInterface {
   }
 
  private:
-  scoped_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const Connector> connector_;
-  scoped_ptr<const Segmenter> segmenter_;
-  scoped_ptr<dictionary::UserDictionary> user_dictionary_;
-  scoped_ptr<dictionary::DictionaryInterface> suffix_dictionary_;
-  scoped_ptr<dictionary::DictionaryInterface> dictionary_;
-  scoped_ptr<const dictionary::PosGroup> pos_group_;
-  scoped_ptr<ImmutableConverterInterface> immutable_converter_;
-  scoped_ptr<const SuggestionFilter> suggestion_filter_;
+  std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
+  std::unique_ptr<const Connector> connector_;
+  std::unique_ptr<const Segmenter> segmenter_;
+  std::unique_ptr<dictionary::UserDictionary> user_dictionary_;
+  std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary_;
+  std::unique_ptr<dictionary::DictionaryInterface> dictionary_;
+  std::unique_ptr<const dictionary::PosGroup> pos_group_;
+  std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
+  std::unique_ptr<const SuggestionFilter> suggestion_filter_;
 
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
   // but owned by converter_. Since this class creates these two, it'd be better
@@ -92,8 +93,8 @@ class Engine : public EngineInterface {
   PredictorInterface *predictor_;
   RewriterInterface *rewriter_;
 
-  scoped_ptr<ConverterInterface> converter_;
-  scoped_ptr<UserDataManagerInterface> user_data_manager_;
+  std::unique_ptr<ConverterInterface> converter_;
+  std::unique_ptr<UserDataManagerInterface> user_data_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(Engine);
 };

@@ -31,10 +31,12 @@
 #define MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_
 
 #include <QtGui/QWidget>
+
+#include <memory>
 #include <set>
 #include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/config_dialog/generic_table_editor.h"
 
 class QAbstractButton;
@@ -73,15 +75,17 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   // This is used for deciding whether the user has changed the settings that
   // are valid only for new applications.
   set<string> direct_mode_commands_;
-  scoped_ptr<QAction *[]> actions_;
-  scoped_ptr<QAction *[]> import_actions_;
-  scoped_ptr<ComboBoxDelegate> status_delegate_;
-  scoped_ptr<ComboBoxDelegate> commands_delegate_;
-  scoped_ptr<KeyBindingEditorDelegate> keybinding_delegate_;
+  std::unique_ptr<QAction *[]> actions_;
+  std::unique_ptr<QAction *[]> import_actions_;
+  std::unique_ptr<ComboBoxDelegate> status_delegate_;
+  std::unique_ptr<ComboBoxDelegate> commands_delegate_;
+  std::unique_ptr<KeyBindingEditorDelegate> keybinding_delegate_;
 
   map<string, string> normalized_command_map_;
   map<string, string> normalized_status_map_;
 };
+
 }  // namespace gui
 }  // namespace mozc
+
 #endif  // MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_

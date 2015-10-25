@@ -29,6 +29,8 @@
 
 #include <QtGui/QApplication>
 #include <QtGui/QtGui>
+
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"

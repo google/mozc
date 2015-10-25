@@ -30,8 +30,10 @@
 #ifndef MOZC_RENDERER_MAC_MAC_SERVER_H_
 #define MOZC_RENDERER_MAC_MAC_SERVER_H_
 
-#include <string>
 #include <pthread.h>
+
+#include <memory>
+#include <string>
 
 #include "base/mutex.h"
 #include "base/port.h"
@@ -41,6 +43,7 @@
 namespace mozc {
 namespace renderer {
 namespace mac {
+
 class CandidateController;
 
 // This is an implementation class of UI-renderer server based on
@@ -49,6 +52,7 @@ class CandidateController;
 class MacServer : public RendererServer {
  public:
   MacServer(int argc, const char **argv);
+
   virtual bool AsyncExecCommand(string *proto_message);
   virtual int StartMessageLoop();
 
@@ -63,14 +67,15 @@ class MacServer : public RendererServer {
   Mutex mutex_;
   pthread_cond_t event_;
   string message_;
-  scoped_ptr<CandidateController> controller_;
+  std::unique_ptr<CandidateController> controller_;
   int argc_;
   const char **argv_;
 
   DISALLOW_COPY_AND_ASSIGN(MacServer);
 };
-}  // mac
-}  // renderer
-}  // mozc
+
+}  // namespace mac
+}  // namespace renderer
+}  // namespace mozc
 
 #endif  // MOZC_RENDERER_MAC_MAC_SERVER_H_

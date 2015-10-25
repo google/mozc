@@ -29,8 +29,10 @@
 
 #include "session/session_usage_observer.h"
 
+#include <memory>
 #include <string>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/logging.h"
 #include "base/scheduler.h"
@@ -60,7 +62,7 @@ class SessionUsageObserverTest : public testing::Test {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     UsageStats::ClearAllStatsForTest();
 
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(nullptr);
 
     scheduler_stub_.reset(new SchedulerStub);
     Scheduler::SetSchedulerHandler(scheduler_stub_.get());
@@ -70,9 +72,9 @@ class SessionUsageObserverTest : public testing::Test {
   }
 
   virtual void TearDown() {
-    Util::SetClockHandler(NULL);
-    Scheduler::SetSchedulerHandler(NULL);
-    config::StatsConfigUtil::SetHandler(NULL);
+    Clock::SetClockForUnitTest(nullptr);
+    Scheduler::SetSchedulerHandler(nullptr);
+    config::StatsConfigUtil::SetHandler(nullptr);
 
     UsageStats::ClearAllStatsForTest();
   }
@@ -113,14 +115,14 @@ class SessionUsageObserverTest : public testing::Test {
                         event_stats->mutable_time_length_stats());
   }
 
-  scoped_ptr<SchedulerStub> scheduler_stub_;
-  scoped_ptr<config::StatsConfigUtilMock> stats_config_util_mock_;
+  std::unique_ptr<SchedulerStub> scheduler_stub_;
+  std::unique_ptr<config::StatsConfigUtilMock> stats_config_util_mock_;
 };
 
 TEST_F(SessionUsageObserverTest, DoNotSaveWhenDeleted) {
   stats_config_util_mock_->SetEnabled(false);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  std::unique_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 
   // Add command
   commands::Command command;
@@ -137,7 +139,7 @@ TEST_F(SessionUsageObserverTest, DoNotSaveWhenDeleted) {
 }
 
 TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  std::unique_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 
   // create session
   {
@@ -151,7 +153,7 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   const uint64 kSeconds = 0;
   const uint32 kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   // prepare command
   commands::Command orig_show_command, orig_hide_command;
@@ -266,7 +268,7 @@ TEST_F(SessionUsageObserverTest, SubmittedCandidateRow) {
 }
 
 TEST_F(SessionUsageObserverTest, LogTouchEvent) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  std::unique_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 
   // create session
   {
@@ -482,7 +484,7 @@ TEST_F(SessionUsageObserverTest, LogTouchEvent) {
 }
 
 TEST_F(SessionUsageObserverTest, LogTouchEventPasswordField) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  std::unique_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
 
   // create session
   {

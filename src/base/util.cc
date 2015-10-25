@@ -60,23 +60,15 @@
 #include <utility>
 #include <vector>
 
-#include "base/compiler_specific.h"
+#include "base/double_array.h"
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/string_piece.h"
-#include "base/text_converter.h"
-
 
 namespace {
-
-#if MOZC_MSVC_VERSION_LT(18, 0)
-void va_copy(va_list &a, va_list &b) {
-  a = b;
-}
-#endif  // Visual C++ 2012 and prior
 
 // Lower-level routine that takes a va_list and appends to a specified
 // string.  All other routines of sprintf family are just convenience
@@ -125,6 +117,7 @@ void StringAppendV(string *dst, const char *format, va_list ap) {
     delete[] buf;
   }
 }
+
 }   // namespace
 
 namespace mozc {
@@ -1037,175 +1030,6 @@ void Util::SetRandomSeed(uint32 seed) {
   ::srand(seed);
 }
 
-namespace {
-class ClockImpl : public Util::ClockInterface {
- public:
-#ifndef __native_client__
-  ClockImpl() {}
-#else  // __native_client__
-  ClockImpl() : timezone_offset_sec_(0) {}
-#endif  // __native_client__
-  virtual ~ClockImpl() {}
-
-  virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) {
-#ifdef OS_WIN
-    FILETIME file_time;
-    GetSystemTimeAsFileTime(&file_time);
-    ULARGE_INTEGER time_value;
-    time_value.HighPart = file_time.dwHighDateTime;
-    time_value.LowPart = file_time.dwLowDateTime;
-    // Convert into microseconds
-    time_value.QuadPart /= 10;
-    // kDeltaEpochInMicroSecs is difference between January 1, 1970 and
-    // January 1, 1601 in microsecond.
-    // This number is calculated as follows.
-    // ((1970 - 1601) * 365 + 89) * 24 * 60 * 60 * 1000000
-    // 89 is the number of leap years between 1970 and 1601.
-    const uint64 kDeltaEpochInMicroSecs = 11644473600000000ULL;
-    // Convert file time to unix epoch
-    time_value.QuadPart -= kDeltaEpochInMicroSecs;
-    *sec = static_cast<uint64>(time_value.QuadPart / 1000000UL);
-    *usec = static_cast<uint32>(time_value.QuadPart % 1000000UL);
-#else  // OS_WIN
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    *sec = tv.tv_sec;
-    *usec = tv.tv_usec;
-#endif  // OS_WIN
-  }
-
-  virtual uint64 GetTime() {
-#ifdef OS_WIN
-    return static_cast<uint64>(_time64(NULL));
-#else
-    return static_cast<uint64>(time(NULL));
-#endif  // OS_WIN
-  }
-
-  virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
-    const time_t current_sec = static_cast<time_t>(this->GetTime());
-    const time_t modified_sec = current_sec + offset_sec;
-
-#ifdef OS_WIN
-    if (_localtime64_s(output, &modified_sec) != 0) {
-      return false;
-    }
-#elif defined(__native_client__)
-    const time_t localtime_sec = modified_sec + timezone_offset_sec_;
-    if (gmtime_r(&localtime_sec, output) == NULL) {
-      return false;
-    }
-#else  // !OS_WIN && !__native_client__
-    if (localtime_r(&modified_sec, output) == NULL) {
-      return false;
-    }
-#endif  // OS_WIN
-    return true;
-  }
-
-  virtual uint64 GetFrequency() {
-#if defined(OS_WIN)
-    LARGE_INTEGER timestamp;
-    // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
-    // available.
-    const BOOL result = ::QueryPerformanceFrequency(&timestamp);
-    return static_cast<uint64>(timestamp.QuadPart);
-#elif defined(OS_MACOSX)
-    static mach_timebase_info_data_t timebase_info;
-    mach_timebase_info(&timebase_info);
-    return static_cast<uint64>(
-        1.0e9 * timebase_info.denom / timebase_info.numer);
-#elif defined(OS_LINUX)
-#if defined(HAVE_LIBRT)
-    return 1000000000uLL;
-#else  // HAVE_LIBRT
-    return 1000000uLL;
-#endif  // HAVE_LIBRT
-#else  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
-#error "Not supported platform"
-#endif  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
-  }
-
-  virtual uint64 GetTicks() {
-#if defined(OS_WIN)
-    LARGE_INTEGER timestamp;
-    // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
-    // available.
-    const BOOL result = ::QueryPerformanceCounter(&timestamp);
-    return static_cast<uint64>(timestamp.QuadPart);
-#elif defined(OS_MACOSX)
-    return static_cast<uint64>(mach_absolute_time());
-#elif defined(OS_LINUX)
-#if defined(HAVE_LIBRT)
-    struct timespec timestamp;
-    if (-1 == clock_gettime(CLOCK_REALTIME, &timestamp)) {
-      return 0;
-    }
-    return timestamp.tv_sec * 1000000000uLL + timestamp.tv_nsec;
-#else  // HAVE_LIBRT
-    // librt is not linked on Android, so we uses GetTimeOfDay instead.
-    // GetFrequency() always returns 1MHz when librt is not available,
-    // so we uses microseconds as ticks.
-    uint64 sec;
-    uint32 usec;
-    GetTimeOfDay(&sec, &usec);
-    return sec * 1000000 + usec;
-#endif  // HAVE_LIBRT
-#else  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
-#error "Not supported platform"
-#endif  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
-  }
-
-#ifdef __native_client__
-  virtual void SetTimezoneOffset(int32 timezone_offset_sec) {
-    timezone_offset_sec_ = timezone_offset_sec;
-  }
-
- private:
-  int32 timezone_offset_sec_;
-#endif  // __native_client__
-};
-
-Util::ClockInterface *g_clock_handler = NULL;
-
-Util::ClockInterface *GetClockHandler() {
-  if (g_clock_handler != NULL) {
-    return g_clock_handler;
-  } else {
-    return Singleton<ClockImpl>::get();
-  }
-}
-
-}  // namespace
-
-void Util::SetClockHandler(Util::ClockInterface *handler) {
-  g_clock_handler = handler;
-}
-
-void Util::GetTimeOfDay(uint64 *sec, uint32 *usec) {
-  GetClockHandler()->GetTimeOfDay(sec, usec);
-}
-
-uint64 Util::GetTime() {
-  return GetClockHandler()->GetTime();
-}
-
-bool Util::GetCurrentTm(tm *current_time) {
-  return GetTmWithOffsetSecond(current_time, 0);
-}
-
-bool Util::GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec) {
-  return GetClockHandler()->GetTmWithOffsetSecond(offset_sec, time_with_offset);
-}
-
-uint64 Util::GetFrequency() {
-  return GetClockHandler()->GetFrequency();
-}
-
-uint64 Util::GetTicks() {
-  return GetClockHandler()->GetTicks();
-}
-
 void Util::Sleep(uint32 msec) {
 #ifdef OS_WIN
   ::Sleep(msec);
@@ -1213,12 +1037,6 @@ void Util::Sleep(uint32 msec) {
   usleep(msec * 1000);
 #endif  // OS_WIN
 }
-
-#ifdef __native_client__
-void Util::SetTimezoneOffset(int32 timezone_offset_sec) {
-  return GetClockHandler()->SetTimezoneOffset(timezone_offset_sec);
-}
-#endif  // __native_client__
 
 namespace {
 
@@ -1230,38 +1048,98 @@ void EscapeInternal(char input, const string &prefix, string *output) {
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
 
+int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
+                      const char *key, int len, int *result) {
+  int seekto = 0;
+  int n = 0;
+  int b = array[0].base;
+  uint32 p = 0;
+  *result = -1;
+  uint32 num = 0;
+
+  for (int i = 0; i < len; ++i) {
+    p = b;
+    n = array[p].base;
+    if (static_cast<uint32>(b) == array[p].check && n < 0) {
+      seekto = i;
+      *result = - n - 1;
+      ++num;
+    }
+    p = b + static_cast<uint8>(key[i]) + 1;
+    if (static_cast<uint32>(b) == array[p].check) {
+      b = array[p].base;
+    } else {
+      return seekto;
+    }
+  }
+  p = b;
+  n = array[p].base;
+  if (static_cast<uint32>(b) == array[p].check && n < 0) {
+    seekto = len;
+    *result = -n - 1;
+  }
+
+  return seekto;
+}
+
 }  // namespace
 
+void Util::ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
+                                   const char *ctable,
+                                   StringPiece input,
+                                   string *output) {
+  output->clear();
+  const char *begin = input.data();
+  const char *const end = input.data() + input.size();
+  while (begin < end) {
+    int result = 0;
+    int mblen = LookupDoubleArray(da, begin, static_cast<int>(end - begin),
+                                  &result);
+    if (mblen > 0) {
+      const char *p = &ctable[result];
+      const size_t len = strlen(p);
+      output->append(p, len);
+      mblen -= static_cast<int32>(p[len + 1]);
+      begin += mblen;
+    } else {
+      mblen = OneCharLen(begin);
+      output->append(begin, mblen);
+      begin += mblen;
+    }
+  }
+}
+
 void Util::HiraganaToKatakana(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::hiragana_to_katakana_da,
-                         japanese_util_rule::hiragana_to_katakana_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_katakana_da,
+                          japanese_util_rule::hiragana_to_katakana_table,
+                          input,
+                          output);
 }
 
 void Util::HiraganaToHalfwidthKatakana(StringPiece input,
                                        string *output) {
   // combine two rules
   string tmp;
-  TextConverter::Convert(japanese_util_rule::hiragana_to_katakana_da,
-                         japanese_util_rule::hiragana_to_katakana_table,
-                         input, &tmp);
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
+      japanese_util_rule::hiragana_to_katakana_da,
+      japanese_util_rule::hiragana_to_katakana_table,
+      input, &tmp);
+  ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table,
       tmp, output);
 }
 
 void Util::HiraganaToRomanji(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::hiragana_to_romanji_da,
-                         japanese_util_rule::hiragana_to_romanji_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_romanji_da,
+                          japanese_util_rule::hiragana_to_romanji_table,
+                          input,
+                          output);
 }
 
 void Util::HalfWidthAsciiToFullWidthAscii(StringPiece input,
                                           string *output) {
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
       japanese_util_rule::halfwidthascii_to_fullwidthascii_table,
       input,
@@ -1270,7 +1148,7 @@ void Util::HalfWidthAsciiToFullWidthAscii(StringPiece input,
 
 void Util::FullWidthAsciiToHalfWidthAscii(StringPiece input,
                                           string *output) {
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthascii_to_halfwidthascii_da,
       japanese_util_rule::fullwidthascii_to_halfwidthascii_table,
       input,
@@ -1279,11 +1157,11 @@ void Util::FullWidthAsciiToHalfWidthAscii(StringPiece input,
 
 void Util::HiraganaToFullwidthRomanji(StringPiece input, string *output) {
   string tmp;
-  TextConverter::Convert(japanese_util_rule::hiragana_to_romanji_da,
-                         japanese_util_rule::hiragana_to_romanji_table,
-                         input,
-                         &tmp);
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_romanji_da,
+                          japanese_util_rule::hiragana_to_romanji_table,
+                          input,
+                          &tmp);
+  ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
       japanese_util_rule::halfwidthascii_to_fullwidthascii_table,
       tmp,
@@ -1291,22 +1169,22 @@ void Util::HiraganaToFullwidthRomanji(StringPiece input, string *output) {
 }
 
 void Util::RomanjiToHiragana(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::romanji_to_hiragana_da,
-                         japanese_util_rule::romanji_to_hiragana_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::romanji_to_hiragana_da,
+                          japanese_util_rule::romanji_to_hiragana_table,
+                          input,
+                          output);
 }
 
 void Util::KatakanaToHiragana(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::katakana_to_hiragana_da,
-                         japanese_util_rule::katakana_to_hiragana_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::katakana_to_hiragana_da,
+                          japanese_util_rule::katakana_to_hiragana_table,
+                          input,
+                          output);
 }
 
 void Util::HalfWidthKatakanaToFullWidthKatakana(StringPiece input,
                                                 string *output) {
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_da,
       japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_table,
       input,
@@ -1315,7 +1193,7 @@ void Util::HalfWidthKatakanaToFullWidthKatakana(StringPiece input,
 
 void Util::FullWidthKatakanaToHalfWidthKatakana(StringPiece input,
                                                 string *output) {
-  TextConverter::Convert(
+  ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table,
       input,
@@ -1340,10 +1218,10 @@ void Util::HalfWidthToFullWidth(StringPiece input, string *output) {
 // of some UNICODE only characters (required to display
 // and commit for old clients)
 void Util::NormalizeVoicedSoundMark(StringPiece input, string *output) {
-  TextConverter::Convert(japanese_util_rule::normalize_voiced_sound_da,
-                         japanese_util_rule::normalize_voiced_sound_table,
-                         input,
-                         output);
+  ConvertUsingDoubleArray(japanese_util_rule::normalize_voiced_sound_da,
+                          japanese_util_rule::normalize_voiced_sound_table,
+                          input,
+                          output);
 }
 
 namespace {

@@ -39,6 +39,7 @@
 #endif  // OS_WIN
 
 #include <cstddef>
+#include <memory>
 
 #include "base/const.h"
 #include "base/file_stream.h"
@@ -553,7 +554,7 @@ bool Client::PingServer() const {
   input.set_type(commands::Input::NO_OPERATION);
 
   // Call IPC
-  scoped_ptr<IPCClientInterface> client(
+  std::unique_ptr<IPCClientInterface> client(
       client_factory_->NewClient(kServerAddress,
                                  server_launcher_->server_program()));
 
@@ -624,7 +625,7 @@ bool Client::Call(const commands::Input &input,
   input.SerializeToString(&request);
 
   // Call IPC
-  scoped_ptr<IPCClientInterface> client(
+  std::unique_ptr<IPCClientInterface> client(
       client_factory_->NewClient(kServerAddress,
                                  server_launcher_->server_program()));
 

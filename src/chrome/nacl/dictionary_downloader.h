@@ -30,10 +30,10 @@
 #ifndef MOZC_CHROME_NACL_DICTIONARY_DOWNLOADER_H_
 #define MOZC_CHROME_NACL_DICTIONARY_DOWNLOADER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace chrome {
@@ -67,7 +67,7 @@ class DictionaryDownloader {
 
  private:
   class Impl;
-  scoped_ptr<Impl> impl_;
+  std::unique_ptr<Impl> impl_;
   DISALLOW_COPY_AND_ASSIGN(DictionaryDownloader);
 };
 

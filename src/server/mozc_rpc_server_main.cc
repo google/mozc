@@ -45,12 +45,13 @@
 
 #include <cstddef>
 #include <cstring>
-#include <vector>
+#include <memory>
 #include <string>
+#include <vector>
 
+#include "base/flags.h"
 #include "base/number_util.h"
 #include "base/singleton.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
@@ -195,7 +196,7 @@ class RPCServer {
       CHECK_LT(request_size, kMaxRequestSize);
 
       // Receive the body of serialized protobuf.
-      scoped_ptr<char[]> request_str(new char[request_size]);
+      std::unique_ptr<char[]> request_str(new char[request_size]);
       if (!Recv(client_socket,
                 request_str.get(), request_size, FLAGS_rpc_timeout)) {
         LOG(ERROR) << "cannot receive body of request.";
@@ -235,8 +236,8 @@ class RPCServer {
 
  private:
   int server_socket_;
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<SessionHandler> handler_;
+  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<SessionHandler> handler_;
 };
 
 // Standalone RPCClient.
@@ -321,7 +322,7 @@ class RPCClient {
     CHECK_GT(output_size, 0);
     CHECK_LT(output_size, kMaxOutputSize);
 
-    scoped_ptr<char[]> output_str(new char[output_size]);
+    std::unique_ptr<char[]> output_str(new char[output_size]);
     CHECK(Recv(client_socket,
                output_str.get(), output_size, FLAGS_rpc_timeout));
 

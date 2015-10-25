@@ -33,12 +33,12 @@
 #ifndef MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 #define MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/mmap.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace dictionary {
@@ -63,7 +63,7 @@ class DictionaryFile {
 
  private:
   // This will be nullptr if the mapping source is given as a pointer.
-  scoped_ptr<Mmap> mapping_;
+  std::unique_ptr<Mmap> mapping_;
   vector<DictionaryFileSection> sections_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryFile);

@@ -29,10 +29,11 @@
 
 // Keymap utils of Mozc interface.
 
+#include <memory>
 #include <sstream>
 #include <vector>
+
 #include "base/config_file_stream.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
@@ -41,9 +42,8 @@
 #include "session/internal/keymap-inl.h"
 #include "session/internal/keymap.h"
 #include "session/internal/keymap_factory.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace keymap {
@@ -324,7 +324,8 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
 TEST_F(KeyMapTest, LoadStreamWithErrors) {
   KeyMapManager manager;
   vector<string> errors;
-  scoped_ptr<istream> is(ConfigFileStream::LegacyOpen("system://atok.tsv"));
+  std::unique_ptr<istream> is(
+      ConfigFileStream::LegacyOpen("system://atok.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 

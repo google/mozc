@@ -29,9 +29,9 @@
 
 #include "session/internal/ime_context.h"
 
+#include <memory>
 #include <string>
 
-#include "base/scoped_ptr.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/converter_interface.h"
@@ -79,7 +79,7 @@ TEST(ImeContextTest, BasicTest) {
   EXPECT_EQ(composer, &context.composer());
   EXPECT_EQ(composer, context.mutable_composer());
 
-  scoped_ptr<ConverterMock> converter_mock(new ConverterMock);
+  std::unique_ptr<ConverterMock> converter_mock(new ConverterMock);
   SessionConverter *converter = new SessionConverter(
       converter_mock.get(), &default_request);
   context.set_converter(converter);
@@ -120,7 +120,7 @@ TEST(ImeContextTest, CopyContext) {
   // "な"
   table.AddRule("na", "\xE3\x81\xAA", "");
 
-  scoped_ptr<MockConverterEngine> engine(new MockConverterEngine);
+  std::unique_ptr<MockConverterEngine> engine(new MockConverterEngine);
 
   Segments segments;
   Segment *segment = segments.add_segment();

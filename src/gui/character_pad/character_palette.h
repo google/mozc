@@ -32,8 +32,10 @@
 
 #include <QtCore/QMap>
 #include <QtGui/QMainWindow>
+
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/character_pad/ui_character_palette.h"
 
 class QTextCodec;
@@ -86,7 +88,7 @@ class CharacterPalette :  public QMainWindow,
   bool winEvent(MSG *message, long *result);
 #endif  // OS_WIN
 
-  scoped_ptr<client::ClientInterface> client_;
+  std::unique_ptr<client::ClientInterface> client_;
   bool usage_stats_enabled_;
 
  private:

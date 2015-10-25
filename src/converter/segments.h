@@ -31,13 +31,13 @@
 #define MOZC_CONVERTER_SEGMENTS_H_
 
 #include <deque>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "converter/lattice.h"
 
@@ -340,7 +340,7 @@ class Segment {
   string key_;
   deque<Candidate *> candidates_;
   vector<Candidate>  meta_candidates_;
-  scoped_ptr<ObjectPool<Candidate> > pool_;
+  std::unique_ptr<ObjectPool<Candidate>> pool_;
   DISALLOW_COPY_AND_ASSIGN(Segment);
 };
 
@@ -481,10 +481,10 @@ class Segments {
   bool user_history_enabled_;
 
   RequestType request_type_;
-  scoped_ptr<ObjectPool<Segment> > pool_;
+  std::unique_ptr<ObjectPool<Segment>> pool_;
   deque<Segment *> segments_;
   vector<RevertEntry> revert_entries_;
-  scoped_ptr<Lattice> cached_lattice_;
+  std::unique_ptr<Lattice> cached_lattice_;
 
   DISALLOW_COPY_AND_ASSIGN(Segments);
 };

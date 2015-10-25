@@ -32,10 +32,11 @@
 #ifndef MOZC_CLIENT_CLIENT_H_
 #define MOZC_CLIENT_CLIENT_H_
 
+#include <memory>
 #include <string>
 #include <vector>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit_prod.h"
@@ -242,9 +243,9 @@ class Client : public ClientInterface {
 
   uint64 id_;
   IPCClientFactoryInterface *client_factory_;
-  scoped_ptr<ServerLauncherInterface> server_launcher_;
-  scoped_ptr<char[]> result_;
-  scoped_ptr<config::Config> preferences_;
+  std::unique_ptr<ServerLauncherInterface> server_launcher_;
+  std::unique_ptr<char[]> result_;
+  std::unique_ptr<config::Config> preferences_;
   int timeout_;
   ServerStatus server_status_;
   uint32 server_protocol_version_;

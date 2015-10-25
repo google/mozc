@@ -29,15 +29,14 @@
 
 #include "converter/pos_id_printer.h"
 
+#include <memory>
 #include <string>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
-#include "base/scoped_ptr.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
 
 namespace mozc {
 namespace internal {
@@ -55,8 +54,8 @@ class PosIdPrinterTest : public ::testing::Test {
     pos_id_printer_.reset(new PosIdPrinter(pos_id_.get()));
   }
 
-  scoped_ptr<InputFileStream> pos_id_;
-  scoped_ptr<PosIdPrinter> pos_id_printer_;
+  std::unique_ptr<InputFileStream> pos_id_;
+  std::unique_ptr<PosIdPrinter> pos_id_printer_;
 };
 
 TEST_F(PosIdPrinterTest, BasicIdTest) {

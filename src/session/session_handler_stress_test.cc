@@ -30,12 +30,12 @@
 #include "session/session_handler.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_util.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
@@ -46,7 +46,7 @@
 #include "base/mmap.h"
 #include "base/singleton.h"
 #include "data_manager/android/android_data_manager.h"
-#endif
+#endif  // OS_ANDROID
 
 namespace {
 uint32 GenerateRandomSeed() {
@@ -119,7 +119,7 @@ class SessionHandlerStressTest : public SessionHandlerTestBase {
 TEST_F(SessionHandlerStressTest, BasicStressTest) {
   vector<commands::KeyEvent> keys;
   commands::Output output;
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   TestSessionClient client(engine.get());
   size_t keyevents_size = 0;
   const size_t kMaxEventSize = 10000;

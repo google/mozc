@@ -32,13 +32,13 @@
 #ifndef MOZC_COMPOSER_COMPOSER_H_
 #define MOZC_COMPOSER_COMPOSER_H_
 
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
 #include "base/protobuf/repeated_field.h"
-#include "base/scoped_ptr.h"
 #include "composer/internal/typing_corrector.h"
 #include "composer/internal/transliterators.h"
 #include "composer/type_corrected_query.h"
@@ -260,7 +260,7 @@ class Composer {
   commands::Context::InputFieldType input_field_type_;
 
   size_t shifted_sequence_count_;
-  scoped_ptr<CompositionInterface> composition_;
+  std::unique_ptr<CompositionInterface> composition_;
 
   TypingCorrector typing_corrector_;
 

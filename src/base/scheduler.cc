@@ -33,6 +33,7 @@
 #include <map>
 #include <utility>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/port.h"
@@ -143,7 +144,7 @@ class Job {
 class SchedulerImpl : public Scheduler::SchedulerInterface {
  public:
   SchedulerImpl() {
-    Util::SetRandomSeed(static_cast<uint32>(Util::GetTime()));
+    Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
   }
 
   virtual ~SchedulerImpl() {

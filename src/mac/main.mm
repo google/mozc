@@ -31,11 +31,14 @@
 #import <Cocoa/Cocoa.h>
 #import <InputMethodKit/IMKServer.h>
 
+#include <memory>
+
 #import "mac/GoogleJapaneseInputController.h"
 #import "mac/GoogleJapaneseInputServer.h"
 
 #include "base/const.h"
 #include "base/crash_report_handler.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/run_level.h"
 #include "client/client.h"
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]) {
   // Start the converter server at this time explicitly to prevent the
   // slow-down of the response for initial key event.
   {
-    scoped_ptr<mozc::client::Client> client(new mozc::client::Client);
+    std::unique_ptr<mozc::client::Client> client(new mozc::client::Client);
     client->PingServer();
   }
   NSApplicationMain(argc, (const char **)argv);

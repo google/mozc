@@ -27,9 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <QtGui/QtGui>
-#include "config/config_handler.h"
 #include "gui/config_dialog/character_form_editor.h"
+
+#include <QtGui/QtGui>
+
+#include <memory>
+
+#include "config/config_handler.h"
 #include "gui/config_dialog/combobox_delegate.h"
 
 namespace mozc {
@@ -117,7 +121,7 @@ void CharacterFormEditor::Load(const config::Config &config) {
   header << tr("Group") << tr("Composition") << tr("Conversion");
   setHorizontalHeaderLabels(header);
 
-  scoped_ptr<config::Config> default_config;
+  std::unique_ptr<config::Config> default_config;
   const config::Config *target_config = &config;
 
   // make sure that table isn't empty.

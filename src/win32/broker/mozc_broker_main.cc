@@ -32,6 +32,7 @@
 #endif  // OS_WIN
 
 #include "base/crash_report_handler.h"
+#include "base/flags.h"
 #include "base/system_util.h"
 #ifdef OS_WIN
 #include "base/winmain.h"

@@ -29,13 +29,13 @@
 
 #include "converter/immutable_converter.h"
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -59,9 +59,8 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::DictionaryImpl;
 using mozc::dictionary::DictionaryInterface;
@@ -163,15 +162,15 @@ class MockDataAndImmutableConverter {
   }
 
  private:
-  scoped_ptr<const DataManagerInterface> data_manager_;
-  scoped_ptr<const SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const Connector> connector_;
-  scoped_ptr<const Segmenter> segmenter_;
-  scoped_ptr<const DictionaryInterface> suffix_dictionary_;
-  scoped_ptr<const DictionaryInterface> dictionary_;
-  scoped_ptr<const PosGroup> pos_group_;
-  scoped_ptr<const SuggestionFilter> suggestion_filter_;
-  scoped_ptr<ImmutableConverterImpl> immutable_converter_;
+  std::unique_ptr<const DataManagerInterface> data_manager_;
+  std::unique_ptr<const SuppressionDictionary> suppression_dictionary_;
+  std::unique_ptr<const Connector> connector_;
+  std::unique_ptr<const Segmenter> segmenter_;
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
+  std::unique_ptr<const DictionaryInterface> dictionary_;
+  std::unique_ptr<const PosGroup> pos_group_;
+  std::unique_ptr<const SuggestionFilter> suggestion_filter_;
+  std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
   UserDictionaryStub user_dictionary_stub_;
 };
 
@@ -194,7 +193,7 @@ class ImmutableConverterTest : public ::testing::Test {
 };
 
 TEST_F(ImmutableConverterTest, KeepKeyForPrediction) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
@@ -212,7 +211,7 @@ TEST_F(ImmutableConverterTest, KeepKeyForPrediction) {
 }
 
 TEST_F(ImmutableConverterTest, DummyCandidatesCost) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segment segment;
   // "てすと"
@@ -224,7 +223,7 @@ TEST_F(ImmutableConverterTest, DummyCandidatesCost) {
 }
 
 TEST_F(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segment segment;
   // "てすと"
@@ -320,7 +319,7 @@ TEST_F(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
   // "ないか"
   KeyCheckDictionary *dictionary =
       new KeyCheckDictionary("\xe3\x81\xaa\xe3\x81\x84\xe3\x81\x8b");
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter(dictionary, dictionary));
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
   const ConversionRequest request;
@@ -349,7 +348,7 @@ TEST_F(ImmutableConverterTest, AddPredictiveNodes) {
   // "しま"
   KeyCheckDictionary *dictionary =
       new KeyCheckDictionary("\xe3\x81\x97\xe3\x81\xbe");
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter(dictionary, dictionary));
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
   const ConversionRequest request;
@@ -358,7 +357,7 @@ TEST_F(ImmutableConverterTest, AddPredictiveNodes) {
 }
 
 TEST_F(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
@@ -411,7 +410,7 @@ TEST_F(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
 }
 
 TEST_F(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
   segments.set_request_type(Segments::CONVERSION);
@@ -432,7 +431,7 @@ TEST_F(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
 }
 
 TEST_F(ImmutableConverterTest, NotConnectedTest) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
@@ -523,7 +522,7 @@ TEST_F(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
 
   // Verify that history segments are cleared due to its length limit and at
   // least one candidate is generated.
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
   EXPECT_EQ(0, segments.history_segments_size());
@@ -534,7 +533,7 @@ TEST_F(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
 
 namespace {
 bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
@@ -592,7 +591,7 @@ TEST_F(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
   ConversionRequest conversion_request(NULL, &request);
   conversion_request.set_create_partial_candidates(true);
 
-  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   const string kRequestKeys[] = {
       // "たかまち"

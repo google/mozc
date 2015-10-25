@@ -33,6 +33,7 @@
 #include <ctime>
 #include <string>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
@@ -75,7 +76,7 @@ class FortuneData {
   void ChangeFortune() {
     const int *levels = kNormalLevels;
     tm today;
-    if (Util::GetCurrentTm(&today)) {
+    if (Clock::GetCurrentTm(&today)) {
       // Modify once per one day
       if (today.tm_yday == last_update_yday_ &&
           today.tm_year == last_update_year_) {

@@ -33,11 +33,12 @@
 #define MOZC_COMPOSER_TABLE_H_
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/trie.h"
 
 namespace mozc {
@@ -153,7 +154,7 @@ class Table {
   void ResetEntrySet();
 
   typedef Trie<const Entry*> EntryTrie;
-  scoped_ptr<EntryTrie> entries_;
+  std::unique_ptr<EntryTrie> entries_;
   typedef set<const Entry*> EntrySet;
   EntrySet entry_set_;
 

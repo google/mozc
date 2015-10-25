@@ -29,6 +29,8 @@
 
 #include "renderer/win32/win32_renderer_client.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/scoped_handle.h"
@@ -189,7 +191,7 @@ SenderThread *CreateSenderThread() {
     return nullptr;
   }
 
-  scoped_ptr<SenderThread> thread(new SenderThread(
+  std::unique_ptr<SenderThread> thread(new SenderThread(
       command_event.take(), quit_event.take()));
 
   // Resume the thread.

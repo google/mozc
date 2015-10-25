@@ -29,6 +29,8 @@
 
 #include "engine/engine_factory.h"
 
+#include <memory>
+
 #include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
 #include "testing/base/public/gunit.h"
@@ -36,7 +38,7 @@
 namespace mozc {
 
 TEST(EngineFactoryTest, MobilePredictorOnAndroid) {
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   PredictorInterface *predictor = engine->GetPredictor();
 #ifdef OS_ANDROID
   EXPECT_EQ("MobilePredictor", predictor->GetPredictorName());

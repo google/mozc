@@ -33,6 +33,9 @@
 
 #include <QtGui/QApplication>
 #include <QtCore/QFile>
+
+#include <memory>
+
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -59,6 +62,7 @@ enum {
   CHARACTER_PALETTE,
   HAND_WRITING
 };
+
 }  // namespace
 
 int RunCharacterPad(int argc, char *argv[],
@@ -70,7 +74,7 @@ int RunCharacterPad(int argc, char *argv[],
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("character_pad");
 
-  scoped_ptr<QMainWindow> window;
+  std::unique_ptr<QMainWindow> window;
 
   if (mode == HAND_WRITING) {
     window.reset(new mozc::gui::HandWriting);

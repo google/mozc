@@ -27,10 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
+
+#include "base/flags.h"
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
 #endif  // OS_MACOSX
-#include "base/scoped_ptr.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
 
@@ -47,14 +49,14 @@ int RunPrelaunchProcesses(int argc, char *argv[]) {
 #endif  // OS_MACOSX
 
   {
-    scoped_ptr<mozc::client::ClientInterface> converter_client(
+    std::unique_ptr<mozc::client::ClientInterface> converter_client(
         mozc::client::ClientFactory::NewClient());
     converter_client->set_suppress_error_dialog(true);
     converter_client->EnsureConnection();
   }
 
   {
-    scoped_ptr<mozc::renderer::RendererClient> renderer_client(
+    std::unique_ptr<mozc::renderer::RendererClient> renderer_client(
         new mozc::renderer::RendererClient);
     renderer_client->set_suppress_error_dialog(true);
     renderer_client->Activate();

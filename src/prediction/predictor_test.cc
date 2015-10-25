@@ -30,6 +30,7 @@
 #include "prediction/predictor.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -51,13 +52,13 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
+using std::unique_ptr;
 
-using ::testing::AtMost;
-using ::testing::Return;
-using ::testing::_;
 using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::SuppressionDictionary;
+using testing::AtMost;
+using testing::Return;
+using testing::_;
 
 namespace mozc {
 namespace {
@@ -147,14 +148,14 @@ class PredictorTest : public testing::Test {
     config::ConfigHandler::SetConfig(config);
   }
 
-  scoped_ptr<commands::Request> mobile_client_request_;
-  scoped_ptr<mozc::composer::Composer> mobile_composer_;
-  scoped_ptr<ConversionRequest> default_request_;
-  scoped_ptr<ConversionRequest> mobile_request_;
+  unique_ptr<commands::Request> mobile_client_request_;
+  unique_ptr<mozc::composer::Composer> mobile_composer_;
+  unique_ptr<ConversionRequest> default_request_;
+  unique_ptr<ConversionRequest> mobile_request_;
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
-  scoped_ptr<DefaultPredictor> predictor(
+  unique_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(new NullPredictor(true),
                            new NullPredictor(true)));
   Segments segments;
@@ -168,7 +169,7 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
 }
 
 TEST_F(PredictorTest, MixedReturnValue) {
-  scoped_ptr<DefaultPredictor> predictor(
+  unique_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(new NullPredictor(true),
                            new NullPredictor(false)));
   Segments segments;
@@ -182,7 +183,7 @@ TEST_F(PredictorTest, MixedReturnValue) {
 }
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
-  scoped_ptr<DefaultPredictor> predictor(
+  unique_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(new NullPredictor(false),
                            new NullPredictor(false)));
   Segments segments;
@@ -196,7 +197,7 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
 }
 
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
-  scoped_ptr<DefaultPredictor> predictor(
+  unique_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(
           new CheckCandSizePredictor(GET_CONFIG(suggestions_size)),
           new CheckCandSizePredictor(GET_CONFIG(suggestions_size))));
@@ -212,7 +213,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
 
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
   const int kPredictionSize = 100;
-  scoped_ptr<DefaultPredictor> predictor(
+  unique_ptr<DefaultPredictor> predictor(
       new DefaultPredictor(new CheckCandSizePredictor(kPredictionSize),
                            new CheckCandSizePredictor(kPredictionSize)));
   Segments segments;
@@ -229,7 +230,7 @@ TEST_F(PredictorTest, CallPredictForRequet) {
   // To be owned by DefaultPredictor
   MockPredictor *predictor1 = new MockPredictor;
   MockPredictor *predictor2 = new MockPredictor;
-  scoped_ptr<DefaultPredictor> predictor(new DefaultPredictor(predictor1,
+  unique_ptr<DefaultPredictor> predictor(new DefaultPredictor(predictor1,
                                                               predictor2));
   Segments segments;
   {
@@ -246,7 +247,7 @@ TEST_F(PredictorTest, CallPredictForRequet) {
 }
 
 TEST_F(PredictorTest, CallPredictorsForMobileSuggestion) {
-  scoped_ptr<MobilePredictor> predictor(
+  unique_ptr<MobilePredictor> predictor(
       new MobilePredictor(new CheckCandSizePredictor(20),
                           new CheckCandSizePredictor(3)));
   Segments segments;
@@ -260,7 +261,7 @@ TEST_F(PredictorTest, CallPredictorsForMobileSuggestion) {
 }
 
 TEST_F(PredictorTest, CallPredictorsForMobilePartialSuggestion) {
-  scoped_ptr<MobilePredictor> predictor(
+  unique_ptr<MobilePredictor> predictor(
       new MobilePredictor(new CheckCandSizePredictor(20),
                           // We don't call history predictior
                           new CheckCandSizePredictor(-1)));
@@ -275,7 +276,7 @@ TEST_F(PredictorTest, CallPredictorsForMobilePartialSuggestion) {
 }
 
 TEST_F(PredictorTest, CallPredictorsForMobilePrediction) {
-  scoped_ptr<MobilePredictor> predictor(
+  unique_ptr<MobilePredictor> predictor(
       new MobilePredictor(new CheckCandSizePredictor(1000),
                           new CheckCandSizePredictor(3)));
   Segments segments;
@@ -290,7 +291,7 @@ TEST_F(PredictorTest, CallPredictorsForMobilePrediction) {
 
 TEST_F(PredictorTest, CallPredictorsForMobilePartialPrediction) {
   DictionaryMock dictionary_mock;
-  scoped_ptr<MobilePredictor> predictor(
+  unique_ptr<MobilePredictor> predictor(
       new MobilePredictor(
           new CheckCandSizePredictor(1000),
           new UserHistoryPredictor(
@@ -312,7 +313,7 @@ TEST_F(PredictorTest, CallPredictForRequetMobile) {
   // Will be owned by MobilePredictor
   MockPredictor *predictor1 = new MockPredictor;
   MockPredictor *predictor2 = new MockPredictor;
-  scoped_ptr<MobilePredictor> predictor(
+  unique_ptr<MobilePredictor> predictor(
       new MobilePredictor(predictor1, predictor2));
   Segments segments;
   {
@@ -331,7 +332,7 @@ TEST_F(PredictorTest, CallPredictForRequetMobile) {
 TEST_F(PredictorTest, DisableAllSuggestion) {
   NullPredictor *predictor1 = new NullPredictor(true);
   NullPredictor *predictor2 = new NullPredictor(true);
-  scoped_ptr<DefaultPredictor> predictor(new DefaultPredictor(predictor1,
+  unique_ptr<DefaultPredictor> predictor(new DefaultPredictor(predictor1,
                                                               predictor2));
   Segments segments;
   {

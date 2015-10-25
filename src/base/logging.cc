@@ -53,13 +53,13 @@
 #ifdef OS_ANDROID
 #include "base/const.h"
 #endif  // OS_ANDROID
+#include "base/clock.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 
 DEFINE_bool(colored_log, true, "Enables colored log messages on tty devices");
 DEFINE_bool(logtostderr,
@@ -103,7 +103,7 @@ COMPARE_LOG_LEVEL(LOG_SILENT, ANDROID_LOG_SILENT);
 string Logging::GetLogMessageHeader() {
 #ifndef OS_ANDROID
   tm tm_time;
-  Util::GetCurrentTm(&tm_time);
+  Clock::GetCurrentTm(&tm_time);
 
   char buf[512];
   snprintf(buf, sizeof(buf),

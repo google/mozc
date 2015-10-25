@@ -30,6 +30,8 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_SESSION_HANDLER_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_SESSION_HANDLER_H_
 
+#include <string>
+
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 

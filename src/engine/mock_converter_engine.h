@@ -30,8 +30,9 @@
 #ifndef MOZC_ENGINE_MOCK_CONVERTER_ENGINE_H_
 #define MOZC_ENGINE_MOCK_CONVERTER_ENGINE_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "engine/engine_interface.h"
 
 namespace mozc {
@@ -58,8 +59,8 @@ class MockConverterEngine : public EngineInterface {
   ConverterMock* mutable_converter_mock();
 
  private:
-  scoped_ptr<ConverterMock> converter_mock_;
-  scoped_ptr<UserDataManagerMock> user_data_manager_mock_;
+  std::unique_ptr<ConverterMock> converter_mock_;
+  std::unique_ptr<UserDataManagerMock> user_data_manager_mock_;
 
   DISALLOW_COPY_AND_ASSIGN(MockConverterEngine);
 };

@@ -30,16 +30,14 @@
 #ifndef MOZC_BASE_CLOCK_MOCK_H_
 #define MOZC_BASE_CLOCK_MOCK_H_
 
-#include <ctime>
-
+#include "base/clock.h"
 #include "base/port.h"
-#include "base/util.h"
 
 namespace mozc {
 
 // Standard mock clock implementation.
 // This mock behaves in UTC
-class ClockMock : public Util::ClockInterface {
+class ClockMock : public ClockInterface {
  public:
   ClockMock(uint64 sec, uint32 usec);
   virtual ~ClockMock();

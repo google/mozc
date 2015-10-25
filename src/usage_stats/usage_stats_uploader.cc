@@ -35,6 +35,7 @@
 #ifdef OS_ANDROID
 #include "base/android_util.h"
 #endif  // OS_ANDROID
+#include "base/clock.h"
 #include "base/encryptor.h"
 #include "base/mutex.h"
 #include "base/port.h"
@@ -296,7 +297,7 @@ void UsageStatsUploader::GetClientId(string *output) {
 
 bool UsageStatsUploader::Send(void *data) {
   const string upload_key = string(kRegistryPrefix) + kLastUploadKey;
-  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 current_sec = static_cast<uint32>(Clock::GetTime());
   uint32 last_upload_sec = 0;
   const string mozc_version_key = string(kRegistryPrefix) + kMozcVersionKey;
   const string &current_mozc_version = Version::GetMozcVersion();

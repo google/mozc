@@ -31,10 +31,10 @@
 
 #include <cctype>
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -50,12 +50,11 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -87,7 +86,7 @@ class TransliterationRewriterTest : public testing::Test {
     usage_stats::UsageStats::ClearAllStatsForTest();
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Registers mocked PackedDataManager.
-    scoped_ptr<packed::PackedDataManager>
+    std::unique_ptr<packed::PackedDataManager>
         data_manager(new packed::PackedDataManager());
     CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
                                     kPackedSystemDictionary_size)));
@@ -129,7 +128,7 @@ class TransliterationRewriterTest : public testing::Test {
 };
 
 TEST_F(TransliterationRewriterTest, T13nFromKeyTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -180,7 +179,7 @@ TEST_F(TransliterationRewriterTest, T13nFromKeyTest) {
 }
 
 TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
@@ -241,7 +240,7 @@ TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
 
 
 TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
@@ -284,7 +283,7 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
 
 
 TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
@@ -337,7 +336,7 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
 }
 
 TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
@@ -400,7 +399,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
 }
 
 TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
@@ -539,7 +538,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
 }
 
 TEST_F(TransliterationRewriterTest, NoKeyTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   Segments segments;
@@ -559,7 +558,7 @@ TEST_F(TransliterationRewriterTest, NoKeyTest) {
 }
 
 TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
@@ -586,7 +585,7 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
 }
 
 TEST_F(TransliterationRewriterTest, NoRewriteTest) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
@@ -603,7 +602,7 @@ TEST_F(TransliterationRewriterTest, NoRewriteTest) {
 }
 
 TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
@@ -633,8 +632,8 @@ TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
 
 TEST_F(TransliterationRewriterTest, MobileEnvironmentTest) {
   commands::Request input;
-  scoped_ptr<TransliterationRewriter> rewriter(CreateTransliterationRewriter());
-
+  std::unique_ptr<TransliterationRewriter> rewriter(
+      CreateTransliterationRewriter());
   {
     input.set_mixed_conversion(true);
     const ConversionRequest request(NULL, &input);
@@ -649,7 +648,7 @@ TEST_F(TransliterationRewriterTest, MobileEnvironmentTest) {
 }
 
 TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   commands::Request request;
@@ -720,7 +719,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
 }
 
 TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   commands::Request request;
@@ -792,7 +791,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
 }
 
 TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   commands::Request request;
@@ -863,7 +862,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
 }
 
 TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   commands::Request client_request;
@@ -916,7 +915,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
 }
 
 TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   commands::Request request;
@@ -985,7 +984,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
 }
 
 TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   commands::Request request;
@@ -1062,7 +1061,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
 }
 
 TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   commands::Request client_request;
@@ -1094,7 +1093,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
 }
 
 TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
-  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   commands::Request client_request;

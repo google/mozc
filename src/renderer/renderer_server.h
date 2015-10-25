@@ -30,7 +30,9 @@
 #ifndef MOZC_RENDERER_RENDERER_SERVER_H_
 #define MOZC_RENDERER_RENDERER_SERVER_H_
 
+#include <memory>
 #include <string>
+
 #include "base/port.h"
 #include "ipc/ipc.h"
 #include "renderer/renderer_interface.h"
@@ -45,7 +47,7 @@ class ParentApplicationWatchDog;
 // RendererServer base class. Implement Async* method.
 class RendererServer : public IPCServer {
  public:
-  explicit RendererServer();
+  RendererServer();
   virtual ~RendererServer();
 
   void SetRendererInterface(RendererInterface *renderer_interface);
@@ -91,11 +93,13 @@ class RendererServer : public IPCServer {
  private:
   uint32 timeout_;
   RendererInterface *renderer_interface_;
-  scoped_ptr<ParentApplicationWatchDog> watch_dog_;
-  scoped_ptr<RendererServerSendCommand> send_command_;
+  std::unique_ptr<ParentApplicationWatchDog> watch_dog_;
+  std::unique_ptr<RendererServerSendCommand> send_command_;
 
   DISALLOW_COPY_AND_ASSIGN(RendererServer);
 };
+
 }  // namespace renderer
 }  // namespace mozc
+
 #endif  // MOZC_RENDERER_RENDERER_SERVER_H_

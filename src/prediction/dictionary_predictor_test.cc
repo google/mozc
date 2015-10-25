@@ -30,6 +30,7 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <algorithm>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -73,7 +74,7 @@
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 
-using ::testing::_;
+using std::unique_ptr;
 
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::DictionaryMock;
@@ -83,6 +84,7 @@ using mozc::dictionary::SuffixDictionary;
 using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::Token;
+using testing::_;
 
 DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_dictionary_predictor);
@@ -273,17 +275,17 @@ class MockDataAndPredictor {
 
  private:
   const POSMatcher *pos_matcher_;
-  scoped_ptr<SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const Connector> connector_;
-  scoped_ptr<const Segmenter> segmenter_;
-  scoped_ptr<const DictionaryInterface> suffix_dictionary_;
-  scoped_ptr<const DictionaryInterface> dictionary_;
+  unique_ptr<SuppressionDictionary> suppression_dictionary_;
+  unique_ptr<const Connector> connector_;
+  unique_ptr<const Segmenter> segmenter_;
+  unique_ptr<const DictionaryInterface> suffix_dictionary_;
+  unique_ptr<const DictionaryInterface> dictionary_;
   DictionaryMock *dictionary_mock_;
-  scoped_ptr<const PosGroup> pos_group_;
-  scoped_ptr<ImmutableConverterInterface> immutable_converter_;
-  scoped_ptr<ConverterMock> converter_;
-  scoped_ptr<const SuggestionFilter> suggestion_filter_;
-  scoped_ptr<TestableDictionaryPredictor> dictionary_predictor_;
+  unique_ptr<const PosGroup> pos_group_;
+  unique_ptr<ImmutableConverterInterface> immutable_converter_;
+  unique_ptr<ConverterMock> converter_;
+  unique_ptr<const SuggestionFilter> suggestion_filter_;
+  unique_ptr<TestableDictionaryPredictor> dictionary_predictor_;
 };
 
 class CallCheckDictionary : public DictionaryInterface {
@@ -596,7 +598,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     composer::Table table;
     table.LoadFromFile("system://romanji-hiragana.tsv");
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor;
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -636,7 +638,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     composer::Table table;
     table.LoadFromFile("system://romanji-hiragana.tsv");
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor;
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -701,7 +703,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     composer::Table table;
     table.LoadFromFile("system://romanji-hiragana.tsv");
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor.
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -760,7 +762,7 @@ class DictionaryPredictorTest : public ::testing::Test {
       transliteration::TransliterationType input_mode,
       const char *key, const char *expected_prefix,
       const char *expected_values[], size_t expected_values_size) {
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         CreateDictionaryPredictorWithMockData());
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
@@ -815,7 +817,7 @@ class DictionaryPredictorTest : public ::testing::Test {
     qwerty_request.set_special_romanji_table(
         commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         CreateDictionaryPredictorWithMockData());
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
@@ -853,11 +855,11 @@ class DictionaryPredictorTest : public ::testing::Test {
   const composer::Composer default_composer_;
   const ConversionRequest default_conversion_request_;
   const bool default_expansion_flag_;
-  scoped_ptr<ImmutableConverterInterface> immutable_converter_;
+  unique_ptr<ImmutableConverterInterface> immutable_converter_;
 };
 
 TEST_F(DictionaryPredictorTest, OnOffTest) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -893,7 +895,7 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
 }
 
 TEST_F(DictionaryPredictorTest, PartialSuggestion) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   {
     // Set up mock converter.
@@ -941,7 +943,7 @@ TEST_F(DictionaryPredictorTest, BigramTest) {
                          "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB",
                          &segments);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -967,7 +969,7 @@ TEST_F(DictionaryPredictorTest, BigramTestWithZeroQuery) {
                          "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB",
                          &segments);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -990,7 +992,7 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
                          "\xE4\xBA\xAC\xE9\x83\xBD",
                          &segments);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1210,7 +1212,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
   commands::Request request;
   request.set_zero_query_suggestion(true);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1332,7 +1334,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
 
 TEST_F(DictionaryPredictorTest, AggregateUnigramPrediction) {
   Segments segments;
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1370,7 +1372,7 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1449,7 +1451,7 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1520,7 +1522,7 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
 }
 
 TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1559,19 +1561,19 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
 
 TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   testing::MockDataManager data_manager;
-  scoped_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
-  scoped_ptr<ConverterMock> converter(new ConverterMock);
-  scoped_ptr<ImmutableConverterInterface> immutable_converter(
+  unique_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
+  unique_ptr<ConverterMock> converter(new ConverterMock);
+  unique_ptr<ImmutableConverterInterface> immutable_converter(
       new ImmutableConverterMock);
-  scoped_ptr<const DictionaryInterface> suffix_dictionary(
+  unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const Connector> connector(
+  unique_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const Segmenter> segmenter(
+  unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
-  scoped_ptr<const SuggestionFilter> suggestion_filter(
+  unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
-  scoped_ptr<TestableDictionaryPredictor> predictor(
+  unique_ptr<TestableDictionaryPredictor> predictor(
       new TestableDictionaryPredictor(converter.get(),
                                       immutable_converter.get(),
                                       dictionary.get(),
@@ -1751,7 +1753,7 @@ class TestSuffixDictionary : public DictionaryInterface {
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, GetCandidateCutoffThreshold) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1768,7 +1770,7 @@ TEST_F(DictionaryPredictorTest, GetCandidateCutoffThreshold) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor);
   data_and_predictor->Init(NULL, new TestSuffixDictionary());
 
@@ -1951,7 +1953,7 @@ TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2037,7 +2039,7 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2109,7 +2111,7 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2157,7 +2159,7 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
 
 TEST_F(DictionaryPredictorTest, GetHistoryKeyAndValue) {
   Segments segments;
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2189,7 +2191,7 @@ TEST_F(DictionaryPredictorTest, IsZipCodeRequest) {
 }
 
 TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2261,7 +2263,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
   config.set_use_realtime_conversion(true);
   config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2308,7 +2310,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
   config.set_use_realtime_conversion(true);
   config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2364,7 +2366,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
 }
 
 TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2408,7 +2410,7 @@ TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
 }
 
 TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2588,7 +2590,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
 
   composer::Table table;
   table.LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2668,7 +2670,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
 
   composer::Table table;
   table.LoadFromFile("system://kana.tsv");
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2751,7 +2753,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
 }
 
 TEST_F(DictionaryPredictorTest, SetLMCost) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2812,7 +2814,7 @@ TEST_F(DictionaryPredictorTest, SetLMCost) {
 TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2836,7 +2838,7 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
 TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2860,7 +2862,7 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
 TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2901,7 +2903,7 @@ TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
 TEST_F(DictionaryPredictorTest, MobileZeroQuerySuggestion) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2942,7 +2944,7 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuerySuggestion) {
 TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -3017,7 +3019,7 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
 }
 
 TEST_F(DictionaryPredictorTest, PropagateUserDictionaryAttribute) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3131,19 +3133,19 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
 
 TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
   testing::MockDataManager data_manager;
-  scoped_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
-  scoped_ptr<ConverterInterface> converter(new ConverterMock);
-  scoped_ptr<ImmutableConverterInterface> immutable_converter(
+  unique_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
+  unique_ptr<ConverterInterface> converter(new ConverterMock);
+  unique_ptr<ImmutableConverterInterface> immutable_converter(
       new ImmutableConverterMock);
-  scoped_ptr<const DictionaryInterface> suffix_dictionary(
+  unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const Connector> connector(
+  unique_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const Segmenter> segmenter(
+  unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
-  scoped_ptr<const SuggestionFilter> suggestion_filter(
+  unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
-  scoped_ptr<TestableDictionaryPredictor> predictor(
+  unique_ptr<TestableDictionaryPredictor> predictor(
       new TestableDictionaryPredictor(converter.get(),
                                       immutable_converter.get(),
                                       dictionary.get(),
@@ -3184,7 +3186,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
 }
 
 TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3219,7 +3221,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
 }
 
 TEST_F(DictionaryPredictorTest, PredictNCandidates) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3260,7 +3262,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
 }
 
 TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3313,7 +3315,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
 }
 
 TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();

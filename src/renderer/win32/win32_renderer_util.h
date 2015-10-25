@@ -31,11 +31,12 @@
 #define MOZC_RENDERER_WIN32_WIN32_RENDERER_UTIL_H_
 
 #include <Windows.h>
-#include <vector>
+
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 
@@ -423,8 +424,8 @@ class LayoutManager {
       int initial_offset,
       vector<LineLayout> *line_layouts);
 
-  scoped_ptr<SystemPreferenceInterface> system_preference_;
-  scoped_ptr<WindowPositionInterface> window_position_;
+  std::unique_ptr<SystemPreferenceInterface> system_preference_;
+  std::unique_ptr<WindowPositionInterface> window_position_;
 
   DISALLOW_COPY_AND_ASSIGN(LayoutManager);
 };

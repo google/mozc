@@ -28,11 +28,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <memory>
 #include <string>
 
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
@@ -54,7 +56,7 @@ void ReadWords(const string &name, vector<uint64> *words) {
     }
     string lower_value = line;
     mozc::Util::LowerString(&lower_value);
-    words->push_back(mozc::Util::Fingerprint(lower_value));
+    words->push_back(mozc::Hash::Fingerprint(lower_value));
   }
 }
 
@@ -88,7 +90,7 @@ int main(int argc, char **argv) {
 
   LOG(INFO) << "num_bytes: " << num_bytes;
 
-  scoped_ptr<ExistenceFilter> filter(
+  std::unique_ptr<ExistenceFilter> filter(
       ExistenceFilter::CreateOptimal(num_bytes, words.size()));
   for (size_t i = 0; i < words.size(); ++i) {
     filter->Insert(words[i]);

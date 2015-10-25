@@ -33,11 +33,11 @@
 #define MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -156,23 +156,24 @@ class CandidateList {
   size_t focused_index_;
   bool focused_;
   string name_;
-  scoped_ptr<ObjectPool<Candidate> > candidate_pool_;
-  scoped_ptr<vector<Candidate *> > candidates_;
+  std::unique_ptr<ObjectPool<Candidate>> candidate_pool_;
+  std::unique_ptr<vector<Candidate *>> candidates_;
   int next_available_id_;
 
   // Map marking added candidate values.  The keys are fingerprints of
   // the candidate values, the values of the map are candidate ids.
-  scoped_ptr<map<uint64, int> > added_candidates_;
+  std::unique_ptr<map<uint64, int>> added_candidates_;
 
   // Id-to-id map.  The key and value ids have the same candidate
   // value.  (ex. {id:0, value:"kanji"} and {id:-5, value:"kanji"}).
   // The key ids are not directly stored in candidates, so accessing
   // these ids, they should be converted with this map.
-  scoped_ptr<map<int, int> > alternative_ids_;
+  std::unique_ptr<map<int, int>> alternative_ids_;
 
   DISALLOW_COPY_AND_ASSIGN(CandidateList);
 };
 
 }  // namespace session
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_

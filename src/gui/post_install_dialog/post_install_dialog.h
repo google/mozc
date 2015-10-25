@@ -30,12 +30,14 @@
 #ifndef MOZC_GUI_POST_INSTALL_DIALOG_H_
 #define MOZC_GUI_POST_INSTALL_DIALOG_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/post_install_dialog/ui_post_install_dialog.h"
 
 namespace mozc {
 namespace gui {
+
 class SetupUtil;
 
 // Shows additional information to the user after installation.
@@ -77,8 +79,10 @@ class PostInstallDialog : public QDialog,
   // Returns true if showing the help page is required.
   static bool IsShowHelpPageRequired();
 
-  scoped_ptr<SetupUtil> setuputil_;
+  std::unique_ptr<SetupUtil> setuputil_;
 };
+
 }  // namespace gui
 }  // namespace mozc
+
 #endif  // MOZC_GUI_POST_INSTALL_DIALOG_H_

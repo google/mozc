@@ -32,13 +32,13 @@
 #include <algorithm>
 #include <cctype>
 #include <climits>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/stl_util.h"
 #include "base/string_piece.h"
 #include "base/util.h"
@@ -1581,7 +1581,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
       (segments.request_type() == Segments::CONVERSION);
   // Do not use KeyCorrector if user changes the boundary.
   // http://b/issue?id=2804996
-  scoped_ptr<KeyCorrector> key_corrector;
+  std::unique_ptr<KeyCorrector> key_corrector;
   if (is_conversion && !segments.resized()) {
     KeyCorrector::InputMode mode = KeyCorrector::ROMAN;
     if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {

@@ -29,8 +29,10 @@
 
 #include "session/session_converter.h"
 
+#include <memory>
 #include <string>
 
+#include "base/clock.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -65,7 +67,7 @@ class SessionConverterStressTest : public testing::Test {
  public:
   SessionConverterStressTest() {
     if (!FLAGS_test_deterministic) {
-      FLAGS_test_srand_seed = static_cast<int32>(Util::GetTime());
+      FLAGS_test_srand_seed = static_cast<int32>(Clock::GetTime());
     }
     Util::SetRandomSeed(static_cast<uint32>(FLAGS_test_srand_seed));
   }
@@ -106,7 +108,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   const string kRomajiHiraganaTable = "system://romanji-hiragana.tsv";
   const commands::Request default_request;
 
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface* converter = engine->GetConverter();
   SessionConverter sconverter(converter, &default_request);
   composer::Table table;

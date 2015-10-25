@@ -41,7 +41,7 @@
       'sources': [
         'clock_mock.cc',
         'cpu_stats.cc',
-        'iconv.cc',
+        'encoding_util.cc',
         'process.cc',
         'process_mutex.cc',
         'run_level.cc',
@@ -73,24 +73,8 @@
             'win_sandbox.cc',
           ],
         }],
-        # When the target platform is 'Android', build settings are currently
-        # shared among *host* binaries and *target* binaries. This means that
-        # you should implement *host* binaries by using limited libraries
-        # which are also available on NDK.
-        ['OS=="linux" and target_platform!="Android" and '
-         'not (target_platform=="NaCl" and _toolset=="target")', {
-          'defines': [
-            'HAVE_LIBRT=1',
-          ],
-          'link_settings': {
-            'libraries': [
-              '-lrt',  # used in util.cc for Util::GetTicks()/GetFrequency()
-            ],
-          },
-        }],
         ['target_platform=="Android"', {
           'sources!': [
-            'iconv.cc',
             'process.cc',
           ],
         }],
@@ -116,7 +100,7 @@
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.h',
-        'debug.cc',
+        'clock.cc',
         'file_stream.cc',
         'file_util.cc',
         'flags.cc',
@@ -131,7 +115,6 @@
         'singleton.cc',
         'string_piece.cc',
         'system_util.cc',
-        'text_converter.cc',
         'text_normalizer.cc',
         'thread.cc',
         'util.cc',
@@ -374,6 +357,13 @@
             'crash_report_handler.cc',
           ]
         }],
+      ],
+    },
+    {
+      'target_name': 'debug',
+      'type': 'static_library',
+      'sources': [
+        'debug.cc',
       ],
     },
   ],

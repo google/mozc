@@ -27,32 +27,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_TEXT_CONVERTER_H_
-#define MOZC_BASE_TEXT_CONVERTER_H_
+#include "base/encoding_util.h"
 
 #include <string>
 
-#include "base/port.h"
-#include "base/string_piece.h"
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace {
 
-class TextConverter {
- public:
-  struct DoubleArray {
-    int32 base;
-    uint32 check;
-  };
+#ifdef OS_ANDROID
+// At the moment, encoding is not the target of build for Android.
+#else
+TEST(EncodingUtilTest, Issue2190350) {
+  string result = "";
+  // "\xE3\x81\x82" == Hiragana a in UTF8
+  EncodingUtil::UTF8ToSJIS("\xE3\x81\x82", &result);
+  EXPECT_EQ(2, result.length());
+  // "\x82\xA0" == Hiragana a in Shift-JIS
+  EXPECT_EQ("\x82\xA0", result);
 
-  static void Convert(const DoubleArray *da,
-                      const char *table,
-                      const StringPiece input,
-                      string *output);
+  result = "";
+  EncodingUtil::SJISToUTF8("\x82\xA0", &result);
+  EXPECT_EQ(3, result.length());
+  EXPECT_EQ("\xE3\x81\x82", result);
+}
+#endif  // OS_ANDROID
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TextConverter);
-};
-
+}  // namespace
 }  // namespace mozc
-
-#endif  // MOZC_BASE_TEXT_CONVERTER_H_

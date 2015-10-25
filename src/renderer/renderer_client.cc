@@ -29,10 +29,12 @@
 
 #include "renderer/renderer_client.h"
 
-#include <cstddef>
 #include <climits>
+#include <cstddef>
+#include <memory>
 #include <string>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/process.h"
@@ -95,7 +97,7 @@ class RendererLauncher : public RendererLauncherInterface,
       case RendererLauncher::RENDERER_TIMEOUT:
       case RendererLauncher::RENDERER_TERMINATED:
         if (error_times_ <= kMaxErrorTimes &&
-            Util::GetTime() - last_launch_time_ >= kRetryIntervalTime) {
+            Clock::GetTime() - last_launch_time_ >= kRetryIntervalTime) {
           return true;
         }
         VLOG(1) << "never re-launch renderer";
@@ -127,7 +129,7 @@ class RendererLauncher : public RendererLauncherInterface,
   }
 
   void Run() {
-    last_launch_time_ = Util::GetTime();
+    last_launch_time_ = Clock::GetTime();
 
     NamedEventListener listener(name_.c_str());
     const bool listener_is_available = listener.IsAvailable();
@@ -278,7 +280,7 @@ class RendererLauncher : public RendererLauncherInterface,
     scoped_lock l(&pending_command_mutex_);
     if (ipc_client_factory_interface_ != NULL &&
         pending_command_.get() != NULL) {
-      scoped_ptr<IPCClientInterface> client(CreateIPCClient());
+      std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
       if (client.get() != NULL) {
         CallCommand(client.get(), *(pending_command_.get()));
       }
@@ -310,7 +312,7 @@ class RendererLauncher : public RendererLauncherInterface,
   bool disable_renderer_path_check_;
   bool suppress_error_dialog_;
   IPCClientFactoryInterface *ipc_client_factory_interface_;
-  scoped_ptr<commands::RendererCommand> pending_command_;
+  std::unique_ptr<commands::RendererCommand> pending_command_;
   Mutex pending_command_mutex_;
 };
 
@@ -371,7 +373,7 @@ bool RendererClient::IsAvailable() const {
 }
 
 bool RendererClient::Shutdown(bool force) {
-  scoped_ptr<IPCClientInterface> client(CreateIPCClient());
+  std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
 
   if (client.get() == NULL) {
     LOG(ERROR) << "Cannot make client object";
@@ -438,7 +440,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
 
   VLOG(2) << "Sending: " << command.DebugString();
 
-  scoped_ptr<IPCClientInterface> client(CreateIPCClient());
+  std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
 
   // In case IPCClient::Init fails with timeout error, the last error should be
   // checked here.  See also b/3264926.

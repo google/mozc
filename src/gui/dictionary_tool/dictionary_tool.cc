@@ -39,9 +39,11 @@
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "base/encoding_util.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/run_level.h"
@@ -171,8 +173,8 @@ class UTF16TextLineIterator
 
  private:
   QFile file_;
-  scoped_ptr<QTextStream> stream_;
-  scoped_ptr<QProgressDialog> progress_;
+  std::unique_ptr<QTextStream> stream_;
+  std::unique_ptr<QProgressDialog> progress_;
 };
 
 class MultiByteTextLineIterator
@@ -228,7 +230,7 @@ class MultiByteTextLineIterator
     // We won't enable it as it increases the binary size.
     if (encoding_type_ == UserDictionaryImporter::SHIFT_JIS) {
       const string input = *line;
-      Util::SJISToUTF8(input, line);
+      EncodingUtil::SJISToUTF8(input, line);
     }
 
     // strip UTF8 BOM
@@ -252,8 +254,8 @@ class MultiByteTextLineIterator
 
  private:
   UserDictionaryImporter::EncodingType encoding_type_;
-  scoped_ptr<InputFileStream> ifs_;
-  scoped_ptr<QProgressDialog> progress_;
+  std::unique_ptr<InputFileStream> ifs_;
+  std::unique_ptr<QProgressDialog> progress_;
   bool first_line_;
 };
 
@@ -643,7 +645,7 @@ void DictionaryTool::SetupDicContentEditor(
   dic_content_->setRowCount(dic->entries_size());
 
   {
-    scoped_ptr<QProgressDialog> progress(CreateProgressDialog(
+    std::unique_ptr<QProgressDialog> progress(CreateProgressDialog(
         tr("Updating the current view data..."),
         this,
         dic->entries_size()));
@@ -886,7 +888,7 @@ void DictionaryTool::ImportHelper(
   SyncToStorage();
 
   // Open dictionary
-  scoped_ptr<UserDictionaryImporter::TextLineIteratorInterface> iter(
+  std::unique_ptr<UserDictionaryImporter::TextLineIteratorInterface> iter(
       CreateTextLineIterator(encoding_type, file_name, this));
   if (iter.get() == NULL) {
     LOG(ERROR) << "CreateTextLineIterator returns NULL";
@@ -1084,7 +1086,7 @@ void DictionaryTool::DeleteWord() {
   setUpdatesEnabled(false);
 
   {
-    scoped_ptr<QProgressDialog> progress(
+    std::unique_ptr<QProgressDialog> progress(
         CreateProgressDialog(
             tr("Deleting the selected words..."),
             this,
@@ -1168,7 +1170,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
   {
     // add |rows.size()| items and remove |rows.size()| items
     const int progress_max = rows.size() * 2;
-    scoped_ptr<QProgressDialog> progress(
+    std::unique_ptr<QProgressDialog> progress(
         CreateProgressDialog(
             tr("Moving the selected words..."),
             this,

@@ -29,6 +29,7 @@
 
 #include "composer/composer.h"
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -148,9 +149,9 @@ class ComposerTest : public testing::Test {
     ConfigHandler::SetConfig(config);
   }
 
-  scoped_ptr<Composer> composer_;
-  scoped_ptr<Table> table_;
-  scoped_ptr<Request> default_request_;
+  std::unique_ptr<Composer> composer_;
+  std::unique_ptr<Table> table_;
+  std::unique_ptr<Request> default_request_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ComposerTest);
@@ -3341,9 +3342,9 @@ class TypingCorrectionTest : public ::testing::Test {
     return queries.empty();
   }
 
-  scoped_ptr<Request> request_;
-  scoped_ptr<Composer> composer_;
-  scoped_ptr<Table> table_;
+  std::unique_ptr<Request> request_;
+  std::unique_ptr<Composer> composer_;
+  std::unique_ptr<Table> table_;
   Config config_backup_;
 };
 

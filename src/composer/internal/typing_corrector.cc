@@ -34,6 +34,8 @@
 #include <cstring>
 #include <string>
 #include <vector>
+
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "composer/internal/composition.h"

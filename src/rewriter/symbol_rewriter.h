@@ -30,9 +30,9 @@
 #ifndef MOZC_REWRITER_SYMBOL_REWRITER_H_
 #define MOZC_REWRITER_SYMBOL_REWRITER_H_
 
+#include <memory>
 #include <string>
 
-#include "base/scoped_ptr.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 // for FRIEND_TEST()
@@ -102,7 +102,7 @@ class SymbolRewriter : public RewriterInterface  {
   bool RewriteEachCandidate(Segments *segments) const;
 
   const ConverterInterface *parent_converter_;
-  scoped_ptr<EmbeddedDictionary> dictionary_;
+  std::unique_ptr<EmbeddedDictionary> dictionary_;
 };
 
 }  // namespace mozc

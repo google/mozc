@@ -27,7 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/session_handler.h"
+
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -42,7 +45,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/generic_storage_manager.h"
-#include "session/session_handler.h"
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -53,7 +55,6 @@ DECLARE_int32(max_session_size);
 DECLARE_int32(create_session_min_interval);
 DECLARE_int32(last_command_timeout);
 DECLARE_int32(last_create_session_timeout);
-
 
 namespace mozc {
 
@@ -67,13 +68,13 @@ class SessionHandlerTest : public SessionHandlerTestBase {
  protected:
   virtual void SetUp() {
     SessionHandlerTestBase::SetUp();
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(NULL);
     GenericStorageManagerFactory::SetGenericStorageManager(NULL);
   }
 
   virtual void TearDown() {
     GenericStorageManagerFactory::SetGenericStorageManager(NULL);
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(NULL);
     SessionHandlerTestBase::TearDown();
   }
 };
@@ -82,13 +83,13 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   uint32 expected_session_created_num = 0;
   const int32 interval_time = FLAGS_create_session_min_interval = 10;  // 10 sec
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
   // The oldest item is remvoed
   const size_t session_size = 3;
   FLAGS_max_session_size = static_cast<int32>(session_size);
   {
-    scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+    std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
     SessionHandler handler(engine.get());
 
     // Create session_size + 1 sessions
@@ -113,7 +114,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 
   FLAGS_max_session_size = static_cast<int32>(session_size);
   {
-    scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+    std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
     SessionHandler handler(engine.get());
 
     // Create session_size sessions
@@ -147,9 +148,9 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
   const int32 interval_time = FLAGS_create_session_min_interval = 10;  // 10 sec
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
 
   uint64 id = 0;
@@ -166,9 +167,9 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
   const int32 timeout = FLAGS_last_create_session_timeout = 10;  // 10 sec
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
@@ -183,9 +184,9 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
 TEST_F(SessionHandlerTest, LastCommandTimeout) {
   const int32 timeout = FLAGS_last_command_timeout = 10;  // 10 sec
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
 
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
@@ -199,7 +200,7 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
 }
 
 TEST_F(SessionHandlerTest, ShutdownTest) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
@@ -228,7 +229,7 @@ TEST_F(SessionHandlerTest, ShutdownTest) {
 }
 
 TEST_F(SessionHandlerTest, ClearHistoryTest) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
@@ -268,12 +269,12 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
 }
 
 TEST_F(SessionHandlerTest, ElapsedTimeTest) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
   uint64 id = 0;
 
   ClockMock clock(1000, 0);
-  Util::SetClockHandler(&clock);
+  Clock::SetClockForUnitTest(&clock);
   EXPECT_TRUE(CreateSession(&handler, &id));
   EXPECT_TIMING_STATS("ElapsedTimeUSec", 0, 1, 0, 0);
 }
@@ -284,7 +285,7 @@ TEST_F(SessionHandlerTest, ConfigTest) {
   config.set_incognito_mode(false);
   config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
@@ -408,7 +409,7 @@ TEST_F(SessionHandlerTest, StorageTest) {
   // Inject mock objects.
   MockStorageManager storageManager;
   GenericStorageManagerFactory::SetGenericStorageManager(&storageManager);
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
   {
     // InsertToStorage
@@ -462,7 +463,7 @@ TEST_F(SessionHandlerTest, StorageTest) {
 }
 
 TEST_F(SessionHandlerTest, EmojiUsageStatsTest) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   SessionHandler handler(engine.get());
 
   commands::Command command;

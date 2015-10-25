@@ -27,6 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "renderer/renderer_server.h"
+
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -37,9 +40,8 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_interface.h"
-#include "renderer/renderer_server.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace renderer {
@@ -142,7 +144,7 @@ TEST_F(RendererServerTest, IPCTest) {
   SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   mozc::IPCClientFactoryOnMemory on_memory_client_factory;
 
-  scoped_ptr<TestRendererServer> server(new TestRendererServer);
+  std::unique_ptr<TestRendererServer> server(new TestRendererServer);
   TestRenderer renderer;
   server->SetRendererInterface(&renderer);
 #ifdef OS_MACOSX

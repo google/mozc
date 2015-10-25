@@ -30,6 +30,7 @@
 #include "rewriter/collocation_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -136,7 +137,8 @@ class CollocationRewriterTest : public ::testing::Test {
 
  private:
   config::Config config_backup_;
-  scoped_ptr<const CollocationRewriter> collocation_rewriter_;
+  std::unique_ptr<const CollocationRewriter> collocation_rewriter_;
+
   DISALLOW_COPY_AND_ASSIGN(CollocationRewriterTest);
 };
 

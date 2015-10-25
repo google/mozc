@@ -32,8 +32,9 @@
 #ifndef MOZC_SESSION_SESSION_WATCH_DOG_H_
 #define MOZC_SESSION_SESSION_WATCH_DOG_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/thread.h"
 
 namespace mozc {
@@ -87,9 +88,11 @@ class SessionWatchDog : public Thread {
   int32 interval_sec_;
   client::ClientInterface *client_;
   CPUStatsInterface *cpu_stats_;
-  scoped_ptr<UnnamedEvent> event_;
+  std::unique_ptr<UnnamedEvent> event_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionWatchDog);
 };
+
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_SESSION_WATCH_DOG_H_

@@ -46,6 +46,7 @@
 #include <string>
 
 #include "base/const.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -92,7 +93,7 @@ const string NamedEventUtil::GetEventPath(const char *name) {
   //  character."
   const size_t kEventPathLength = 14;
   char buf[32];
-  snprintf(buf, kEventPathLength, "/%llx", Util::Fingerprint(event_name));
+  snprintf(buf, kEventPathLength, "/%llx", Hash::Fingerprint(event_name));
   return buf;
 #endif
 }
