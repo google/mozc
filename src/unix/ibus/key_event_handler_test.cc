@@ -32,6 +32,7 @@
 #include <map>
 #include <memory>
 
+#include "base/clock.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "composer/key_event_util.h"
@@ -425,7 +426,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
     IBUS_a,
   };
   const size_t kKeySetSize = arraysize(kKeySet);
-  Util::SetRandomSeed(static_cast<uint32>(Util::GetTime()));
+  Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
 
   const int kTrialNum = 1000;
   for (int trial = 0; trial < kTrialNum; ++trial) {
