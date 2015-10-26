@@ -83,7 +83,6 @@
         'cpu_stats_test.cc',
         'process_mutex_test.cc',
         'stopwatch_test.cc',
-        'timer_test.cc',
         'unnamed_event_test.cc',
       ],
       'conditions': [

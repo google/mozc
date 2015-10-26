@@ -45,7 +45,6 @@
         'run_level.cc',
         'scheduler.cc',
         'stopwatch.cc',
-        'timer.cc',
         'unnamed_event.cc',
       ],
       'dependencies': [

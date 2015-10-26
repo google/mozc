@@ -30,6 +30,7 @@
 #include "base/scheduler.h"
 
 #include <cstdlib>
+#include <functional>
 #include <map>
 #include <utility>
 
@@ -38,38 +39,90 @@
 #include "base/mutex.h"
 #include "base/port.h"
 #include "base/singleton.h"
-#include "base/timer.h"
+#include "base/thread.h"
+#include "base/unnamed_event.h"
 #include "base/util.h"
 
 namespace mozc {
 namespace {
-class QueueTimer : public Timer {
+
+class TimerThread final : public Thread {
  public:
-  QueueTimer(void (*callback)(void *),  // NOLINT
-             void *arg,
-             uint32 due_time,
-             uint32 period)
-  : callback_(callback),
-    arg_(arg),
-    due_time_(due_time),
-    period_(period) {
+  TimerThread(std::function<void()> callback,
+              uint32 due_time,
+              uint32 interval)
+      : callback_(callback),
+        due_time_(due_time),
+        interval_(interval) {
+    CHECK(due_time_ != 0 || interval_ != 0)
+        << "Either of due_time or interval must be non 0.";
   }
 
-  virtual ~QueueTimer() {}
-
-  bool Start() {
-    return Timer::Start(due_time_, period_);
+  ~TimerThread() override {
+    SignalQuit();
+    Join();
   }
 
-  virtual void Signaled() {
-    callback_(arg_);
+  void Run() override {
+    if (event_.Wait(due_time_)) {
+      VLOG(1) << "Received notification event";
+      return;
+    }
+
+    VLOG(2) << "call TimerCallback()";
+    callback_();
+
+    if (interval_ == 0) {
+      VLOG(2) << "Run() end";
+      return;
+    }
+
+    while (true) {
+      if (event_.Wait(interval_)) {
+        VLOG(1) << "Received notification event";
+        return;
+      }
+      VLOG(2) << "call TimerCallback()";
+      callback_();
+    }
   }
 
  private:
-  void (*callback_)(void *);
-  void *arg_;
+  void SignalQuit() {
+    const bool result = event_.Notify();
+    DCHECK(result);
+  }
+
+  std::function<void()> callback_;
+
+  // The amount of time to elapse before the timer is to be set to the
+  // signaled state for the first time, in milliseconds.
   uint32 due_time_;
-  uint32 period_;
+
+  // The period of the timer, in milliseconds. If this is zero, the
+  // timer is one-shot timer. If this is greater than zero, the timer
+  // is periodic.
+  uint32 interval_;
+
+  UnnamedEvent event_;
+
+  DISALLOW_COPY_AND_ASSIGN(TimerThread);
+};
+
+class QueueTimer final {
+ public:
+  QueueTimer(std::function<void()> callback,
+             uint32 due_time,
+             uint32 period)
+      : timer_thread_(callback, due_time, period) {
+  }
+
+  void Start() {
+    timer_thread_.Start();
+  }
+
+ private:
+  TimerThread timer_thread_;
 
   DISALLOW_COPY_AND_ASSIGN(QueueTimer);
 };
@@ -184,19 +237,14 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     const uint32 delay = CalcDelay(job_setting);
     // DON'T copy job instance after set_timer() not to delete timer twice.
     // TODO(hsumita): Make Job class uncopiable.
-    job->set_timer(new QueueTimer(&TimerCallback, job, delay,
+    job->set_timer(new QueueTimer(std::bind(TimerCallback, job), delay,
                                   job_setting.default_interval()));
     if (job->timer() == NULL) {
       LOG(ERROR) << "failed to create QueueTimer";
       return false;
     }
-    const bool started = job->mutable_timer()->Start();
-    if (started) {
-      return true;
-    } else {
-      job->set_timer(NULL);
-      return false;
-    }
+    job->mutable_timer()->Start();
+    return true;
   }
 
   virtual bool RemoveJob(const string &name) {
