@@ -231,6 +231,9 @@
     {
       'target_name': 'ibus_all_test',
       'type': 'none',
+      'dependencies': [
+        'ibus_mozc_test',
+      ],
       'conditions': [
         ['enable_gtk_renderer==1', {
           'dependencies': [
