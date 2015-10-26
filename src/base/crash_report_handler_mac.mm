@@ -42,7 +42,7 @@ namespace mozc {
 // The reference count for GoogleBreakpad
 int g_reference_count = 0;
 
-GoogleBreakpadRef g_breakpad = NULL;
+GoogleBreakpadRef g_breakpad = nullptr;
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 bool CrashReportHandler::Initialize(bool check_address) {
@@ -50,7 +50,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
   ++g_reference_count;
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSDictionary *plist = [[NSBundle mainBundle] infoDictionary];
-  if (1 == g_reference_count && NULL != plist && NULL == g_breakpad) {
+  if (g_reference_count == 1 && plist != nullptr && g_breakpad == nullptr) {
     g_breakpad = GoogleBreakpadCreate(plist);
     [pool release];
     return true;
@@ -63,9 +63,9 @@ bool CrashReportHandler::Initialize(bool check_address) {
 bool CrashReportHandler::Uninitialize() {
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   --g_reference_count;
-  if (0 == g_reference_count && NULL != g_breakpad) {
+  if (g_reference_count == 0 && g_breakpad != nullptr) {
     GoogleBreakpadRelease(g_breakpad);
-    g_breakpad = NULL;
+    g_breakpad = nullptr;
     return true;
   }
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD

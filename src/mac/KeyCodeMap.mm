@@ -67,7 +67,7 @@ static const unichar kYenMark = 0xA5;
   CallOnce(&kOnceForKanaMap, InitKanaMap);
   CallOnce(&kOnceForSpecialKeyMap, InitSpecialKeyMap);
   CallOnce(&kOnceForSpecialCharMap, InitSpecialCharMap);
-  if (kSpecialKeyMap == NULL) {
+  if (kSpecialKeyMap == nullptr) {
     self = nil;
     return self;
   }

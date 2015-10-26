@@ -75,13 +75,13 @@ using mozc::MacProcess;
 
 namespace {
 // set of bundle IDs of applications on which Mozc should not open urls.
-const set<string> *gNoOpenLinkApps = NULL;
+const set<string> *gNoOpenLinkApps = nullptr;
 // The mapping from the CompositionMode enum to the actual id string
 // of composition modes.
-const map<CompositionMode, NSString *> *gModeIdMap = NULL;
-const set<string> *gNoSelectedRangeApps = NULL;
-const set<string> *gNoDisplayModeSwitchApps = NULL;
-const set<string> *gNoSurroundingTextApps = NULL;
+const map<CompositionMode, NSString *> *gModeIdMap = nullptr;
+const set<string> *gNoSelectedRangeApps = nullptr;
+const set<string> *gNoDisplayModeSwitchApps = nullptr;
+const set<string> *gNoSurroundingTextApps = nullptr;
 
 // TODO(horo): This value should be get from system configuration.
 //  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
@@ -98,7 +98,7 @@ NSString *GetLabelForSuffix(const string &suffix) {
 }
 
 CompositionMode GetCompositionMode(NSString *modeID) {
-  if (modeID == NULL) {
+  if (modeID == nullptr) {
     LOG(ERROR) << "modeID could not be initialized.";
     return mozc::commands::DIRECT;
   }
@@ -146,7 +146,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 
 bool IsBannedApplication(const set<string>* bundleIdSet,
                          const string& bundleId) {
-  return bundleIdSet == NULL || bundleId.empty() ||
+  return bundleIdSet == nullptr || bundleId.empty() ||
       bundleIdSet->find(bundleId) != bundleIdSet->end();
 }
 }  // anonymous namespace
@@ -217,7 +217,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     if (!candidateController_->Activate()) {
       LOG(ERROR) << "Cannot activate renderer";
       delete candidateController_;
-      candidateController_ = NULL;
+      candidateController_ = nullptr;
     }
     [self setupClientBundle:inputClient];
     [self setupCapability];
@@ -432,7 +432,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     [self commitText:output.result().value().c_str() client:sender];
   }
   if ([composedString_ length] > 0) {
-    [self updateComposedString:NULL];
+    [self updateComposedString:nullptr];
     [self clearCandidates];
   }
 }
@@ -472,7 +472,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 - (void)switchDisplayMode {
-  if (gModeIdMap == NULL) {
+  if (gModeIdMap == nullptr) {
     LOG(ERROR) << "gModeIdMap is not initialized correctly.";
     return;
   }
@@ -490,7 +490,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 - (void)commitText:(const char *)text client:(id)sender {
-  if (text == NULL) {
+  if (text == nullptr) {
     return;
   }
 
@@ -579,7 +579,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 - (void)processOutput:(const mozc::commands::Output *)output client:(id)sender {
-  if (output == NULL) {
+  if (output == nullptr) {
     return;
   }
   if (!output->consumed()) {
@@ -708,14 +708,14 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   // If the last and the current composed string length is 0,
   // we don't call updateComposition.
   if (([composedString_ length] == 0) &&
-      ((preedit == NULL || preedit->segment_size() == 0))) {
+      ((preedit == nullptr || preedit->segment_size() == 0))) {
     return;
   }
 
   [composedString_
     deleteCharactersInRange:NSMakeRange(0, [composedString_ length])];
   cursorPosition_ = NSNotFound;
-  if (preedit != NULL) {
+  if (preedit != nullptr) {
     cursorPosition_ = preedit->cursor();
     for (size_t i = 0; i < preedit->segment_size(); ++i) {
       NSDictionary *highlightAttributes =
@@ -757,7 +757,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   command.set_type(SessionCommand::SUBMIT);
   mozcClient_->SendCommand(command, &output);
   [self clearCandidates];
-  [self updateComposedString:NULL];
+  [self updateComposedString:nullptr];
 }
 
 - (id)composedString:(id)sender {
@@ -837,7 +837,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 - (void)updateCandidates:(const Output *)output {
-  if (output == NULL) {
+  if (output == nullptr) {
     [self clearCandidates];
     return;
   }
@@ -1049,7 +1049,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 - (void)outputResult:(mozc::commands::Output *)output {
-  if (output == NULL || !output->has_result()) {
+  if (output == nullptr || !output->has_result()) {
     return;
   }
   [self commitText:output->result().value().c_str() client:[self client]];

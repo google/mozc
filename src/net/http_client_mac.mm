@@ -55,7 +55,7 @@
   if (self == nil) {
     return nil;
   }
-  if (NULL != output_string_) {
+  if (output_string_ != nullptr) {
     output_string_->clear();
   }
   request_ = request;
@@ -77,7 +77,7 @@
     LOG(WARNING) << "too long data max_data_size=" << max_data_size_;
   }
 
-  if (output_string_ != NULL) {
+  if (output_string_ != nullptr) {
     VLOG(2) << "Recived: " << size << " bytes to std::string";
     output_string_->append((const char*)buf, size);
   }
@@ -235,7 +235,7 @@ bool MacHTTPRequestHandler::Request(HTTPMethodType type,
   // The default HTTP method is “GET”.
   if (type == HTTP_POST) {
     [request setHTTPMethod:@"POST"];
-    if (post_data != NULL) {
+    if (post_data != nullptr) {
       // The framework will automatically add the content type and
       // content length, but we put it explicitly just in case.
       NSString *length = [NSString stringWithFormat:@"%zd", post_size];

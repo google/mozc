@@ -44,7 +44,7 @@ namespace renderer {
 namespace mac {
 
 CandidateWindow::CandidateWindow()
-    : command_sender_(NULL) {
+    : command_sender_(nullptr) {
 }
 
 CandidateWindow::~CandidateWindow() {
