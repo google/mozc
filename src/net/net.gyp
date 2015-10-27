@@ -84,7 +84,7 @@
               ],
             }],
           ],
-        }, {  # blanding!=GoogleJapaneseInput
+        }, {  # branding!=GoogleJapaneseInput
           'sources': [
             'http_client_null.cc',
           ],
