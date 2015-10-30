@@ -29,7 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.util;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
@@ -133,7 +133,7 @@ public class CandidateDescriptionUtil {
 
   private static String shortenDescriptionFragment(String descriptionFragment) {
     Preconditions.checkNotNull(descriptionFragment);
-    return Objects.firstNonNull(DESCRIPTION_SHORTEN_MAP.get(descriptionFragment),
+    return MoreObjects.firstNonNull(DESCRIPTION_SHORTEN_MAP.get(descriptionFragment),
                                 descriptionFragment);
   }
 }

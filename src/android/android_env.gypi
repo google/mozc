@@ -69,8 +69,8 @@
         'easymock_jar_path': '<(DEPTH)/third_party/easymock/easymock-3_1.jar',
         # TODO(matsuzakit): Make copy_and_patch.py support non-jar file tree.
         'easymock_src_path': '<(DEPTH)/third_party/easymock/src/main/java',
-        'guava_jar_path': '<(DEPTH)/third_party/guava/guava-jdk5-13.0.jar',
-        'guava_testlib_jar_path': '<(DEPTH)/third_party/guava/guava-testlib-jdk5-13.0.jar',
+        'guava_jar_path': '<(DEPTH)/third_party/guava/guava-18.0.jar',
+        'guava_testlib_jar_path': '<(DEPTH)/third_party/guava/guava-testlib-18.0.jar',
         # Absorb the difference in file names between Debian/Ubuntu (jsr305.jar)
         # and Fedora (jsr-305.jar).
         # TODO(yukawa): We should not rely on "find" command here.

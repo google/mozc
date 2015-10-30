@@ -34,7 +34,7 @@ import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.DeletionRange;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 import android.util.Log;
 
@@ -90,7 +90,7 @@ public class SelectionTracker {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
           .add("candidates", candidatesStart).addValue(candidatesEnd)
           .add("selection", selectionStart).addValue(selectionEnd).toString();
     }
@@ -227,7 +227,7 @@ public class SelectionTracker {
    */
   public void onRender(DeletionRange deletionRange, String commitText, Preedit preedit) {
     if (MozcLog.isLoggable(Log.DEBUG)) {
-      MozcLog.d("onRender: " + Objects.firstNonNull(preedit, "").toString());
+      MozcLog.d("onRender: " + MoreObjects.firstNonNull(preedit, "").toString());
     }
     int preeditStartPosition = getPreeditStartPosition();
     if (deletionRange != null) {
@@ -427,7 +427,7 @@ public class SelectionTracker {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("recordQueue", recordQueue)
         .add("initialSelectionStart", initialSelectionStart)
         .add("initialSelectionEnd", initialSelectionEnd)
