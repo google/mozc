@@ -571,7 +571,7 @@ def ParseRunTestsOptions(args=None, values=None):
     parser.add_option('--jobs', '-j', dest='jobs',
                       default=('%d' % default_build_concurrency),
                       metavar='N', help='run build jobs in parallel')
-  default_test_jobs = GetNumberOfProcessors() * 2
+  default_test_jobs = GetNumberOfProcessors()
   parser.add_option('--test_jobs', dest='test_jobs', type='int',
                     default=default_test_jobs,
                     metavar='N', help='run test jobs in parallel')
