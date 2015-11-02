@@ -537,11 +537,6 @@ def ParseBuildOptions(args=None, values=None):
   """Parses command line options for the build command."""
   parser = optparse.OptionParser(usage='Usage: %prog build [options]')
   AddCommonOptions(parser)
-  if IsLinux():
-    default_build_concurrency = GetNumberOfProcessors() * 2
-    parser.add_option('--jobs', '-j', dest='jobs',
-                      default=('%d' % default_build_concurrency),
-                      metavar='N', help='run build jobs in parallel')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
 
@@ -566,11 +561,6 @@ def ParseRunTestsOptions(args=None, values=None):
   parser = optparse.OptionParser(
       usage='Usage: %prog runtests [options] [test_targets] [-- build options]')
   AddCommonOptions(parser)
-  if IsLinux():
-    default_build_concurrency = GetNumberOfProcessors() * 2
-    parser.add_option('--jobs', '-j', dest='jobs',
-                      default=('%d' % default_build_concurrency),
-                      metavar='N', help='run build jobs in parallel')
   default_test_jobs = GetNumberOfProcessors()
   parser.add_option('--test_jobs', dest='test_jobs', type='int',
                     default=default_test_jobs,
@@ -1005,8 +995,7 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
   short_basename = GetBuildShortBaseName(options,
                                          GetMozcVersion().GetTargetPlatform())
   make_command = ninja
-  build_args = ['-j %s' % options.jobs,
-                '-C', '%s/%s' % (short_basename, options.configuration)]
+  build_args = ['-C', '%s/%s' % (short_basename, options.configuration)]
   RunOrDie([make_command] + build_args + target_names)
 
 
