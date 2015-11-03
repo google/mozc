@@ -490,6 +490,6 @@ void IPCServer::Terminate() {
   server_thread_->Terminate();
 }
 
-};  // namespace mozc
+}  // namespace mozc
 
 #endif  // OS_LINUX && !OS_ANDROID

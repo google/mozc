@@ -68,6 +68,6 @@ class RendererInterface {
   virtual void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface) {}
 };
-}  // renderer
-}  // mozc
+}  // namespace renderer
+}  // namespace mozc
 #endif  // MOZC_RENDERER_RENDERER_INTERFACE_H_

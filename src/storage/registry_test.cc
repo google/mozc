@@ -91,5 +91,5 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_EQ(expected, value);
   }
 }
-}  // storage
-}  // mozc
+}  // namespace storage
+}  // namespace mozc

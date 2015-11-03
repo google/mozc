@@ -109,7 +109,7 @@ class ShutdownHandler : public RegisterModuleHandler {
   }
 };
 }  // namespace
-}  // mozc
+}  // namespace mozc
 
 
 namespace mozc {
@@ -155,4 +155,4 @@ void RunShutdownHandlers() {
   Singleton<ShutdownHandler>::get()->Call();
 }
 
-}  // mozc
+}  // namespace mozc
