@@ -164,12 +164,12 @@ def _GetAndroidVersionCode(base_version_code, arch):
     RuntimeError: arch is unexpected one or base_version_code is too big.
 
   Version code format:
-   0005BBBBBA
+   0006BBBBBA
    A: ABI (0: Fat, 6: x86_64, 5:arm64, 4:mips64, 3: x86, 2: armeabi-v7a, 1:mips)
    B: ANDROID_VERSION_CODE
 
   Note:
-  - Prefix 5 is introduced because of historical reason.
+  - Prefix 6 is introduced because of historical reason.
     Previously ANDROID_VERSION_CODE (B) was placed after ABI (A) but
     it's found that swpping the order is reasonable.
     Previously version code for x86 was always greater than that for armeabi.
@@ -190,7 +190,7 @@ def _GetAndroidVersionCode(base_version_code, arch):
   if base_version_code >= 10000:
     raise RuntimeError('Version code is greater than 10000. '
                        'It is time to revisit version code scheme.')
-  return int('5%05d%d' % (base_version_code, abi_code))
+  return int('6%05d%d' % (base_version_code, abi_code))
 
 
 def _GetVersionInFormat(properties, version_format):

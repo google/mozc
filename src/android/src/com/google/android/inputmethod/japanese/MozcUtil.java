@@ -341,13 +341,13 @@ public final class MozcUtil {
   public static int getAbiIndependentVersionCode(Context context) {
     // Version code format:
     // 00000BBBBB or
-    // 0005BBBBBA
+    // 0006BBBBBA
     // A: ABI (0: Fat, 6: x86_64, 5:arm64, 4:mips64, 3: x86, 2: armeabi-v7a, 1:mips)
     // B: ANDROID_VERSION_CODE
     Preconditions.checkNotNull(context);
     int rawVersionCode = getVersionCode(context);
     String versionCode = Integer.toString(getVersionCode(context));
-    if (versionCode.length() == 7 && versionCode.charAt(0) == '5') {
+    if (versionCode.length() == 7 && versionCode.charAt(0) == '6') {
       return Integer.valueOf(versionCode.substring(1, versionCode.length() - 1));
     }
     return rawVersionCode;

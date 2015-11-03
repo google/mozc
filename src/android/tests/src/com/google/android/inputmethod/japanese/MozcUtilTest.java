@@ -248,8 +248,10 @@ public class MozcUtilTest extends InstrumentationTestCaseWithMock {
         new TestData(1, 1),
         new TestData(0, 0),
         new TestData(123456, 123456),
-        new TestData(5000001, 0),
-        new TestData(5123456, 12345),
+        new TestData(5000001, 5000001),
+        new TestData(5123456, 5123456),
+        new TestData(6000001, 0),
+        new TestData(6123456, 12345),
     };
     for (TestData testData : testDataList) {
       try {
