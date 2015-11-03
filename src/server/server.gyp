@@ -46,7 +46,7 @@
       'target_name': 'mozc_server',
       'type': 'executable',
       'sources': [
-        'server_main.cc',
+        'mozc_server_main.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
