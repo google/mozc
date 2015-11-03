@@ -34,6 +34,7 @@
 //  --output="output.h"
 //  --make_header
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -111,7 +112,7 @@ int main(int argc, char **argv) {
   mozc::dictionary::SystemDictionaryBuilder builder;
   builder.BuildFromTokens(loader.tokens());
 
-  scoped_ptr<ostream> output_stream(
+  std::unique_ptr<ostream> output_stream(
       new mozc::OutputFileStream(FLAGS_output.c_str(),
                                  FLAGS_make_header
                                  ? ios::out

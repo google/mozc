@@ -30,6 +30,7 @@
 #include "dictionary/dictionary_impl.h"
 
 #include <cstring>
+#include <memory>
 #include <string>
 
 #include "base/port.h"
@@ -46,19 +47,18 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace dictionary {
 namespace {
 
 struct DictionaryData {
-  scoped_ptr<DictionaryInterface> user_dictionary;
-  scoped_ptr<SuppressionDictionary> suppression_dictionary;
+  std::unique_ptr<DictionaryInterface> user_dictionary;
+  std::unique_ptr<SuppressionDictionary> suppression_dictionary;
   const POSMatcher *pos_matcher;
-  scoped_ptr<DictionaryInterface> dictionary;
+  std::unique_ptr<DictionaryInterface> dictionary;
 };
 
 DictionaryData *CreateDictionaryData() {
@@ -200,7 +200,7 @@ class DictionaryImplTest : public ::testing::Test {
 };
 
 TEST_F(DictionaryImplTest, WordSuppressionTest) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
   SuppressionDictionary *s = data->suppression_dictionary.get();
 
@@ -242,7 +242,7 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
 }
 
 TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
 
   // "あぼがど" -> "アボカド", which is in the test dictionary.
@@ -278,7 +278,7 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
 }
 
 TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
 
   // "100-0000" -> "東京都千代田区", which is in the test dictionary.
@@ -313,7 +313,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
 }
 
 TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
   NodeAllocator allocator;
 
@@ -350,7 +350,7 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
 }
 
 TEST_F(DictionaryImplTest, LookupComment) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
   NodeAllocator allocator;
 

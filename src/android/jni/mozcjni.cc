@@ -31,10 +31,11 @@
 
 #include <jni.h>
 
+#include <memory>
+
 #include "base/android_jni_proxy.h"
 #include "base/android_util.h"
 #include "base/scheduler.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -69,8 +70,8 @@ class SessionHandlerSingletonAdapter {
 
  private:
   // Must be defined earlier than session_handler_, which depends on this.
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<SessionHandlerInterface> session_handler_;
+  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<SessionHandlerInterface> session_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerSingletonAdapter);
 };

@@ -30,8 +30,9 @@
 #ifndef MOZC_DATA_MANAGER_PACKED_PACKED_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_PACKED_PACKED_DATA_MANAGER_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "data_manager/data_manager_interface.h"
 
 namespace mozc {
@@ -85,7 +86,8 @@ class PackedDataManager : public DataManagerInterface {
   const void *GetRangeTablesForTest() const;
 
   class Impl;
-  scoped_ptr<Impl> manager_impl_;
+  std::unique_ptr<Impl> manager_impl_;
+
   DISALLOW_COPY_AND_ASSIGN(PackedDataManager);
 };
 

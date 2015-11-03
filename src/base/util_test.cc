@@ -41,14 +41,10 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_srcdir);
-
 namespace mozc {
-
 namespace {
 
 void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {

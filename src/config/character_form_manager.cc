@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -38,7 +39,6 @@
 #include "base/init.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -566,9 +566,9 @@ class CharacterFormManager::Data {
   }
 
  private:
-  scoped_ptr<PreeditCharacterFormManagerImpl> preedit_;
-  scoped_ptr<ConversionCharacterFormManagerImpl> conversion_;
-  scoped_ptr<LRUStorage> storage_;
+  std::unique_ptr<PreeditCharacterFormManagerImpl> preedit_;
+  std::unique_ptr<ConversionCharacterFormManagerImpl> conversion_;
+  std::unique_ptr<LRUStorage> storage_;
 };
 
 CharacterFormManager::Data::Data() {

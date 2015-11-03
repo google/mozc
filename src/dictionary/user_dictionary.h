@@ -30,11 +30,11 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -104,12 +104,12 @@ class UserDictionary : public DictionaryInterface {
   // Swaps internal tokens index to |new_tokens|.
   void Swap(TokensIndex *new_tokens);
 
-  scoped_ptr<UserDictionaryReloader> reloader_;
-  scoped_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<UserDictionaryReloader> reloader_;
+  std::unique_ptr<const UserPOSInterface> user_pos_;
   const POSMatcher *pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
   TokensIndex *tokens_;
-  mutable scoped_ptr<ReaderWriterMutex> mutex_;
+  mutable std::unique_ptr<ReaderWriterMutex> mutex_;
 
   friend class UserDictionaryTest;
   DISALLOW_COPY_AND_ASSIGN(UserDictionary);

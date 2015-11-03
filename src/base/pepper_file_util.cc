@@ -44,7 +44,6 @@
 #include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/pepper_scoped_obj.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/unnamed_event.h"
 

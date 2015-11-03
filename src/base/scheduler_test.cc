@@ -30,9 +30,9 @@
 #include "base/scheduler.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/unnamed_event.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
@@ -274,7 +274,8 @@ class NameCheckScheduler : public Scheduler::SchedulerInterface {
 };
 
 TEST(SchedulerInterfaceTest, SchedulerHandler) {
-  scoped_ptr<NameCheckScheduler> scheduler_mock(new NameCheckScheduler("test"));
+  std::unique_ptr<NameCheckScheduler> scheduler_mock(
+      new NameCheckScheduler("test"));
   Scheduler::SetSchedulerHandler(scheduler_mock.get());
   EXPECT_TRUE(Scheduler::AddJob(
       Scheduler::JobSetting("test", 0, 0, 0, 0, nullptr, nullptr)));

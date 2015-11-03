@@ -34,9 +34,10 @@
 #include <sys/types.h>
 #endif  // !OS_WIN
 
+#include <memory>
+
 #include "base/port.h"
 #include "base/scoped_handle.h"
-#include "base/scoped_ptr.h"
 #include "base/thread.h"
 
 // Usage:
@@ -111,8 +112,9 @@ class ProcessWatchDog : public Thread {
   ThreadID thread_id_;
   int timeout_;
   volatile bool is_finished_;
-  scoped_ptr<Mutex> mutex_;
+  std::unique_ptr<Mutex> mutex_;
 };
 
 }  // namespace mozc
+
 #endif  // MOZC_IPC_PROCESS_WATCH_DOG_H_

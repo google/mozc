@@ -30,10 +30,10 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_IMPL_H_
 #define MOZC_DICTIONARY_DICTIONARY_IMPL_H_
 
+#include <memory>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -89,8 +89,8 @@ class DictionaryImpl : public DictionaryInterface {
   const POSMatcher *pos_matcher_;
 
   // Main three dictionaries.
-  scoped_ptr<const DictionaryInterface> system_dictionary_;
-  scoped_ptr<const DictionaryInterface> value_dictionary_;
+  std::unique_ptr<const DictionaryInterface> system_dictionary_;
+  std::unique_ptr<const DictionaryInterface> value_dictionary_;
   DictionaryInterface *user_dictionary_;
 
   // Convenient container to handle the above three dictionaries as one

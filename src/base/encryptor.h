@@ -30,9 +30,10 @@
 #ifndef MOZC_BASE_ENCRYPTOR_H_
 #define MOZC_BASE_ENCRYPTOR_H_
 
+#include <memory>
 #include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -83,7 +84,7 @@ class Encryptor {
     ~Key();
 
     struct InternalData;
-    scoped_ptr<InternalData> data_;
+    std::unique_ptr<InternalData> data_;
   };
 
   // Encrypt character buffer. set the size of character buffer

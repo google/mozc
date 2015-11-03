@@ -29,7 +29,8 @@
 
 #include "dictionary/suffix_dictionary.h"
 
-#include "base/scoped_ptr.h"
+#include <memory>
+
 #include "base/util.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -42,7 +43,7 @@ namespace dictionary {
 
 TEST(SuffixDictionaryTest, LookupPredictive) {
   // Test SuffixDictionary with mock data.
-  scoped_ptr<const SuffixDictionary> dic;
+  std::unique_ptr<const SuffixDictionary> dic;
   {
     const testing::MockDataManager manager;
     const SuffixToken *tokens = NULL;

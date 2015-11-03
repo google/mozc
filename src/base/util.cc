@@ -56,6 +56,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -64,7 +65,6 @@
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/string_piece.h"
 
@@ -293,7 +293,7 @@ void Util::SplitStringToUtf8Chars(const string &str, vector<string> *output) {
 }
 
 void Util::SplitCSV(const string &input, vector<string> *output) {
-  scoped_ptr<char[]> tmp(new char[input.size() + 1]);
+  std::unique_ptr<char[]> tmp(new char[input.size() + 1]);
   char *str = tmp.get();
   memcpy(str, input.data(), input.size());
   str[input.size()] = '\0';
@@ -813,7 +813,7 @@ int Util::UTF8ToWide(StringPiece input, wstring *output) {
   }
 
   const size_t buffer_len = output_length + 1;
-  scoped_ptr<wchar_t[]> input_wide(new wchar_t[buffer_len]);
+  std::unique_ptr<wchar_t[]> input_wide(new wchar_t[buffer_len]);
   const int copied_num_chars = ::MultiByteToWideChar(
       CP_UTF8, 0, input.begin(), input.size(), input_wide.get(),
       buffer_len);
@@ -830,7 +830,7 @@ int Util::WideToUTF8(const wchar_t *input, string *output) {
     return 0;
   }
 
-  scoped_ptr<char[]> input_encoded(new char[output_length + 1]);
+  std::unique_ptr<char[]> input_encoded(new char[output_length + 1]);
   const int result = WideCharToMultiByte(CP_UTF8, 0, input, -1,
                                          input_encoded.get(),
                                          output_length + 1, NULL, NULL);

@@ -29,17 +29,19 @@
 
 #include "dictionary/system/codec.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+
+using std::unique_ptr;
 
 namespace mozc {
 namespace dictionary {
@@ -338,7 +340,7 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
 };
 
 TEST_F(SystemDictionaryCodecTest, FactoryTest) {
-  scoped_ptr<SystemDictionaryCodecMock> mock(new SystemDictionaryCodecMock);
+  unique_ptr<SystemDictionaryCodecMock> mock(new SystemDictionaryCodecMock);
   SystemDictionaryCodecFactory::SetCodec(mock.get());
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
@@ -377,7 +379,7 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
-  scoped_ptr<SystemDictionaryCodec> codec(new SystemDictionaryCodec);
+  unique_ptr<SystemDictionaryCodec> codec(new SystemDictionaryCodec);
   // TODO(toshiyuki): Use 0x10ffff instead when UCS4 is supported.
   const char32 kMaxUniChar = 0x10ffff;
   for (char32 c = 0x01; c <= kMaxUniChar; ++c) {
@@ -738,7 +740,7 @@ TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, CodecTest) {
-  scoped_ptr<SystemDictionaryCodec> impl(new SystemDictionaryCodec);
+  unique_ptr<SystemDictionaryCodec> impl(new SystemDictionaryCodec);
   SystemDictionaryCodecFactory::SetCodec(impl.get());
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
@@ -815,6 +817,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
     EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
   }
 }
+
 
 }  // namespace dictionary
 }  // namespace mozc

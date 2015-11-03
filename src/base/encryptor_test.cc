@@ -27,14 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
+
 #include "base/encryptor.h"
 #include "base/password_manager.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -192,7 +192,7 @@ TEST(EncryptorTest, EncryptBatch) {
                                 10000, 16000, 100000 };
 
   for (size_t i = 0; i < arraysize(kSizeTable); ++i) {
-    scoped_ptr<char[]> buf(new char[kSizeTable[i]]);
+    std::unique_ptr<char[]> buf(new char[kSizeTable[i]]);
     Util::GetRandomSequence(buf.get(), kSizeTable[i]);
 
     Encryptor::Key key1, key2, key3, key4;
@@ -246,7 +246,7 @@ TEST(EncryptorTest, ProtectData) {
   const size_t kSizeTable[] = { 1, 10, 100, 1000, 10000, 100000 };
 
   for (size_t i = 0; i < arraysize(kSizeTable); ++i) {
-    scoped_ptr<char[]> buf(new char[kSizeTable[i]]);
+    std::unique_ptr<char[]> buf(new char[kSizeTable[i]]);
     Util::GetRandomSequence(buf.get(), kSizeTable[i]);
     string input(buf.get(), kSizeTable[i]);
     string output;
@@ -257,4 +257,5 @@ TEST(EncryptorTest, ProtectData) {
     EXPECT_EQ(result, input);
   }
 }
+
 }  // namespace mozc

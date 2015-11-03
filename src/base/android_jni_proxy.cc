@@ -31,9 +31,10 @@
 
 #include <jni.h>
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/scoped_ptr.h"
 #include "net/http_client_common.h"
 
 namespace {
@@ -129,7 +130,7 @@ bool CopyJByteArrayToBuf(JNIEnv *env, const jbyteArray &source,
 void AssignJByteArrayToString(JNIEnv *env, const jbyteArray &source,
                               string *dest) {
   size_t size = env->GetArrayLength(source);
-  scoped_ptr<char[]> buf(new char[size]);
+  std::unique_ptr<char[]> buf(new char[size]);
   CHECK(CopyJByteArrayToBuf(env, source, buf.get(), &size));
   dest->assign(buf.get(), size);
 }
@@ -148,7 +149,8 @@ const char *HTTPMethodTypeToChars(mozc::HTTPMethodType type) {
   }
 }
 
-// Utility to enlarge the java's local frame, as RAII idiom, like scoped_ptr.
+// Utility to enlarge the java's local frame, as RAII idiom, like
+// std::unique_ptr.
 class ScopedJavaLocalFrame {
  public:
   ScopedJavaLocalFrame(JNIEnv *env, jint capacity) : env_(env) {
@@ -228,7 +230,9 @@ class JavaHttpClientDescriptor {
 
   DISALLOW_COPY_AND_ASSIGN(JavaHttpClientDescriptor);
 };
-scoped_ptr<JavaHttpClientDescriptor> http_client_descriptor;
+
+std::unique_ptr<JavaHttpClientDescriptor> http_client_descriptor;
+
 }  // namespace
 
 namespace mozc {

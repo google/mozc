@@ -30,6 +30,7 @@
 #include "dictionary/system/system_dictionary.h"
 
 #include <cstdlib>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -49,6 +50,8 @@
 #include "dictionary/text_dictionary_loader.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+
+using std::unique_ptr;
 
 using mozc::dictionary::CollectTokenCallback;
 
@@ -120,7 +123,7 @@ class SystemDictionaryTest : public testing::Test {
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
 
-  scoped_ptr<TextDictionaryLoader> text_dict_;
+  unique_ptr<TextDictionaryLoader> text_dict_;
   const string dic_fn_;
   int original_flags_min_key_length_to_use_small_cost_encoding_;
 };
@@ -235,7 +238,7 @@ TEST_F(SystemDictionaryTest, HasValue) {
 
   BuildSystemDictionary(tokens, tokens.size());
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -283,7 +286,7 @@ TEST_F(SystemDictionaryTest, HasValue) {
 
 TEST_F(SystemDictionaryTest, NormalWord) {
   vector<Token *> source_tokens;
-  scoped_ptr<Token> t0(new Token);
+  unique_ptr<Token> t0(new Token);
   // "あ"
   t0->key = "\xe3\x81\x82";
   // "亜"
@@ -294,7 +297,7 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   source_tokens.push_back(t0.get());
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -355,7 +358,7 @@ TEST_F(SystemDictionaryTest, SameWord) {
   }
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -371,7 +374,7 @@ TEST_F(SystemDictionaryTest, LookupAllWords) {
   const vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -391,8 +394,8 @@ TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
   // "はひふへほ"
   const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
                     "\xbb";
-  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
-  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
+  unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  unique_ptr<Token> t1(CreateToken(k1, "bb"));
 
   vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
@@ -400,7 +403,7 @@ TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -500,7 +503,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
       "\xE3\x83\x90\xE3\x83\x93\xE3\x83\x96" },
   };
   const size_t kKeyValuesSize = arraysize(kKeyValues);
-  scoped_ptr<Token> tokens[kKeyValuesSize];
+  unique_ptr<Token> tokens[kKeyValuesSize];
   vector<Token *> source_tokens(kKeyValuesSize);
   for (size_t i = 0; i < kKeyValuesSize; ++i) {
     tokens[i].reset(CreateToken(kKeyValues[i].key, kKeyValues[i].value));
@@ -508,7 +511,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   }
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, kKeyValuesSize);
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -630,7 +633,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
     text_dict_->CollectTokens(&source_tokens);  // Load test data.
     BuildSystemDictionary(source_tokens, 10000);
   }
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
@@ -657,7 +660,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
       "\xE6\xA0\xBC\xE5\xA5\xBD"));
 
   BuildSystemDictionary(tokens, 100);
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
@@ -692,7 +695,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
     text_dict_->CollectTokens(&source_tokens);  // Load test data.
     BuildSystemDictionary(source_tokens, 10000);
   }
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
@@ -716,14 +719,14 @@ TEST_F(SystemDictionaryTest, LookupExact) {
   const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
                     "\xbb";
 
-  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
-  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
+  unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  unique_ptr<Token> t1(CreateToken(k1, "bb"));
   source_tokens.push_back(t0.get());
   source_tokens.push_back(t1.get());
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -744,7 +747,7 @@ TEST_F(SystemDictionaryTest, LookupExact) {
 }
 
 TEST_F(SystemDictionaryTest, LookupReverse) {
-  scoped_ptr<Token> t0(new Token);
+  unique_ptr<Token> t0(new Token);
   // "ど"
   t0->key = "\xe3\x81\xa9";
   // "ド"
@@ -752,7 +755,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t0->cost = 1;
   t0->lid = 2;
   t0->rid = 3;
-  scoped_ptr<Token> t1(new Token);
+  unique_ptr<Token> t1(new Token);
   // "どらえもん"
   t1->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
   // "ドラえもん"
@@ -760,7 +763,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t1->cost = 1;
   t1->lid = 2;
   t1->rid = 3;
-  scoped_ptr<Token> t2(new Token);
+  unique_ptr<Token> t2(new Token);
   // "といざらす®"
   t2->key = "\xe3\x81\xa8\xe3\x81\x84\xe3\x81\x96\xe3\x82\x89\xe3\x81\x99\xc2"
             "\xae";
@@ -770,7 +773,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t2->cost = 1;
   t2->lid = 2;
   t2->rid = 3;
-  scoped_ptr<Token> t3(new Token);
+  unique_ptr<Token> t3(new Token);
   // "ああああああ"
   // Both t3 and t4 will be encoded into 3 bytes.
   t3->key = "\xe3\x81\x82\xe3\x81\x82\xe3\x81\x82"
@@ -779,11 +782,11 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t3->cost = 32000;
   t3->lid = 1;
   t3->rid = 1;
-  scoped_ptr<Token> t4(new Token);
+  unique_ptr<Token> t4(new Token);
   *t4 = *t3;
   t4->lid = 1;
   t4->rid = 2;
-  scoped_ptr<Token> t5(new Token);
+  unique_ptr<Token> t5(new Token);
   // "いいいいいい"
   // t5 will be encoded into 3 bytes.
   t5->key = "\xe3\x81\x84\xe3\x81\x84\xe3\x81\x84"
@@ -793,7 +796,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t5->lid = 1;
   t5->rid = 1;
   // spelling correction token should not be retrieved by reverse lookup.
-  scoped_ptr<Token> t6(new Token);
+  unique_ptr<Token> t6(new Token);
   // "どらえもん"
   t6->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
   // "ドラえもん"
@@ -802,7 +805,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t6->lid = 2;
   t6->rid = 3;
   t6->attributes = Token::SPELLING_CORRECTION;
-  scoped_ptr<Token> t7(new Token);
+  unique_ptr<Token> t7(new Token);
   // "こんさーと"
   t7->key = "\xe3\x81\x93\xe3\x82\x93\xe3\x81\x95\xe3\x83\xbc\xe3\x81\xa8";
   // "コンサート"
@@ -811,7 +814,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t7->lid = 1;
   t7->rid = 1;
   // "バージョン" should not return a result with the key "ヴァージョン".
-  scoped_ptr<Token> t8(new Token);
+  unique_ptr<Token> t8(new Token);
   // "ばーじょん"
   t8->key = "\xE3\x81\xB0\xE3\x83\xBC\xE3\x81\x98\xE3\x82\x87\xE3\x82\x93";
   // "バージョン"
@@ -834,7 +837,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -900,13 +903,13 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
   const vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> system_dic_without_index(
+  unique_ptr<SystemDictionary> system_dic_without_index(
       SystemDictionary::Builder(dic_fn_)
       .SetOptions(SystemDictionary::NONE)
       .Build());
   ASSERT_TRUE(system_dic_without_index.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
-  scoped_ptr<SystemDictionary> system_dic_with_index(
+  unique_ptr<SystemDictionary> system_dic_with_index(
       SystemDictionary::Builder(dic_fn_)
       .SetOptions(SystemDictionary::ENABLE_REVERSE_LOOKUP_INDEX)
       .Build());
@@ -952,7 +955,7 @@ TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
   Token target_token = source_token;
   target_token.key.swap(target_token.value);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -1004,7 +1007,7 @@ TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
   }
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -1029,7 +1032,7 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   // "がっこう"
   const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
 
-  scoped_ptr<Token> tokens[5];
+  unique_ptr<Token> tokens[5];
   tokens[0].reset(CreateToken(k0, "aa"));
   tokens[1].reset(CreateToken(k1, "bb"));
   tokens[2].reset(CreateToken(k2, "cc"));
@@ -1043,7 +1046,7 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -1085,13 +1088,13 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
 
 TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   // "ていすてぃんぐ", "テイスティング"
-  scoped_ptr<Token> t0(CreateToken(
+  unique_ptr<Token> t0(CreateToken(
       "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
       "\xe3\x81\x83\xe3\x82\x93\xe3\x81\x90",
       "\xe3\x83\x86\xe3\x82\xa4\xe3\x82\xb9\xe3\x83\x86"
       "\xe3\x82\xa3\xe3\x83\xb3\xe3\x82\xb0"));
   // "てすとです", "てすとです"
-  scoped_ptr<Token> t1(CreateToken(
+  unique_ptr<Token> t1(CreateToken(
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99",
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99"));
 
@@ -1102,7 +1105,7 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -1128,11 +1131,11 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
   // "がっこう"
   const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
 
-  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
-  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
-  scoped_ptr<Token> t2(CreateToken(k2, "cc"));
-  scoped_ptr<Token> t3(CreateToken(k3, "dd"));
-  scoped_ptr<Token> t4(CreateToken(k4, "ee"));
+  unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  unique_ptr<Token> t1(CreateToken(k1, "bb"));
+  unique_ptr<Token> t2(CreateToken(k2, "cc"));
+  unique_ptr<Token> t3(CreateToken(k3, "dd"));
+  unique_ptr<Token> t4(CreateToken(k4, "ee"));
 
   vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
@@ -1144,7 +1147,7 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;

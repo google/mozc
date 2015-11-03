@@ -27,20 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/text_dictionary_loader.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
+using std::unique_ptr;
 
 namespace mozc {
 namespace dictionary {
@@ -76,7 +77,7 @@ class TextDictionaryLoaderTest : public ::testing::Test {
 
 TEST_F(TextDictionaryLoaderTest, BasicTest) {
   {
-    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
     loader->CollectTokens(&tokens);
     EXPECT_TRUE(tokens.empty());
@@ -89,7 +90,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   }
 
   {
-    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     loader->Load(filename, "");
     const vector<Token *> &tokens = loader->tokens();
 
@@ -118,7 +119,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   }
 
   {
-    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     loader->LoadWithLineLimit(filename, "", 2);
     const vector<Token *> &tokens = loader->tokens();
 
@@ -141,7 +142,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   }
 
   {
-    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     // open twice -- tokens are cleared everytime
     loader->Load(filename, "");
     loader->Load(filename, "");
@@ -153,7 +154,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
 }
 
 TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
-  scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+  unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
   {
     Token token;
     token.lid = 100;
@@ -220,7 +221,7 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   }
 
   {
-    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     loader->Load(filename, "");
     EXPECT_EQ(6, loader->tokens().size());
   }
@@ -230,7 +231,7 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
 }
 
 TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
-  scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+  unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
 
   const string dic_filename =
       FileUtil::JoinPath(FLAGS_test_tmpdir, "test.tsv");

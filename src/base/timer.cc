@@ -29,6 +29,8 @@
 
 #include "base/timer.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/thread.h"
 #include "base/unnamed_event.h"
@@ -82,7 +84,7 @@ class Timer::TimerThread : public Thread {
   uint32 due_time_;
   uint32 interval_;
   Timer *timer_;
-  scoped_ptr<UnnamedEvent> event_;
+  std::unique_ptr<UnnamedEvent> event_;
 
   DISALLOW_COPY_AND_ASSIGN(TimerThread);
 };

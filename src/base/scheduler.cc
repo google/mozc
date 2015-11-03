@@ -37,7 +37,6 @@
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/timer.h"
 #include "base/util.h"
