@@ -122,7 +122,7 @@ TEST_F(SessionHandlerStressTest, BasicStressTest) {
   std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   TestSessionClient client(engine.get());
   size_t keyevents_size = 0;
-  const size_t kMaxEventSize = 10000;
+  const size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());
 
   const uint32 random_seed = static_cast<uint32>(FLAGS_random_seed);
