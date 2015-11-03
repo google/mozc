@@ -29,12 +29,10 @@
 
 
 #ifdef OS_WIN
-// Do not change the order of the following headers required for Windows.
-#include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
-#define ssize_t SSIZE_T
+using ssize_t = SSIZE_T;
 #else
 #include <fcntl.h>
 #include <netdb.h>
