@@ -36,8 +36,6 @@
 #include <atlmisc.h>
 #include <atlgdi.h>
 
-#include <shlwapi.h>
-
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
