@@ -29,6 +29,7 @@
 
 #include "dictionary/user_dictionary_session_handler.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -192,9 +193,9 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     return status_->entry_size();
   }
 
-  scoped_ptr<UserDictionarySessionHandler> handler_;
-  scoped_ptr<UserDictionaryCommand> command_;
-  scoped_ptr<UserDictionaryCommandStatus> status_;
+  std::unique_ptr<UserDictionarySessionHandler> handler_;
+  std::unique_ptr<UserDictionaryCommand> command_;
+  std::unique_ptr<UserDictionaryCommandStatus> status_;
 
  private:
   string original_user_profile_directory_;

@@ -84,7 +84,7 @@ class scoped_nsobject {
     object_ = temp;
   }
 
-  // scoped_nsobject<>::release() is like scoped_ptr<>::release.  It is NOT
+  // scoped_nsobject<>::release() is like std::unique_ptr<>::release.  It is NOT
   // a wrapper for [object_ release].  To force a scoped_nsobject<> object to
   // call [object_ release], use scoped_nsobject<>::reset().
   NST* release() {

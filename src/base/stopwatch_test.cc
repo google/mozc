@@ -29,11 +29,11 @@
 
 #include "base/stopwatch.h"
 
+#include <memory>
 #include <numeric>
 
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -55,7 +55,7 @@ class StopwatchTest : public testing::Test {
     clock_mock_->PutClockForwardByTicks(nano_sec);
   }
 
-  scoped_ptr<ClockMock> clock_mock_;
+  std::unique_ptr<ClockMock> clock_mock_;
 };
 
 TEST_F(StopwatchTest, MultipleGetElapsedMillisecondsTest) {

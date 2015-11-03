@@ -29,6 +29,7 @@
 
 #include "dictionary/system/value_dictionary.h"
 
+#include <memory>
 #include <vector>
 
 #include "base/file_util.h"
@@ -43,8 +44,6 @@
 #include "dictionary/system/system_dictionary_builder.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace dictionary {
@@ -106,7 +105,7 @@ TEST_F(ValueDictionaryTest, HasValue) {
   // "わーるど"
   AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x82\x8B\xE3\x81\xA9", "world");
   BuildDictionary();
-  scoped_ptr<ValueDictionary> dictionary(
+  std::unique_ptr<ValueDictionary> dictionary(
       ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
                                                      dict_name_));
 
@@ -135,7 +134,7 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   // "わーるど"
   AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x82\x8B\xE3\x81\xA9", "world");
   BuildDictionary();
-  scoped_ptr<ValueDictionary> dictionary(
+  std::unique_ptr<ValueDictionary> dictionary(
       ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
                                                      dict_name_));
 
@@ -186,7 +185,7 @@ TEST_F(ValueDictionaryTest, LookupExact) {
   AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\xA9", "word");
   BuildDictionary();
 
-  scoped_ptr<ValueDictionary> dictionary(
+  std::unique_ptr<ValueDictionary> dictionary(
       ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
                                                      dict_name_));
   CollectTokenCallback callback;

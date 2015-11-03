@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_session.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "base/logging.h"
 #include "base/port.h"
@@ -105,7 +106,7 @@ class UndoDeleteDictionaryCommand : public UserDictionarySession::UndoCommand {
 
  private:
   int index_;
-  scoped_ptr<UserDictionary> dictionary_;
+  std::unique_ptr<UserDictionary> dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(UndoDeleteDictionaryCommand);
 };
@@ -128,7 +129,7 @@ class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
   }
 
  private:
-  scoped_ptr<UserDictionary> dictionary_;
+  std::unique_ptr<UserDictionary> dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(
       UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand);
@@ -452,7 +453,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::Undo() {
     return UserDictionaryCommandStatus::NO_UNDO_HISTORY;
   }
 
-  scoped_ptr<UndoCommand> undo_command(undo_history_.back());
+  std::unique_ptr<UndoCommand> undo_command(undo_history_.back());
   undo_history_.pop_back();
   return undo_command->RunUndo(storage_.get()) ?
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS :

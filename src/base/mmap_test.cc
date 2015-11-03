@@ -29,15 +29,14 @@
 
 #include "base/mmap.h"
 
-#include <string.h>
+#include <cstring>
+#include <memory>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -48,7 +47,7 @@ TEST(MmapTest, MmapTest) {
   const size_t kFileNameSize[] = { 1, 100, 1024, 8192 };
   for (int i = 0; i < arraysize(kFileNameSize); ++i) {
     FileUtil::Unlink(filename);
-    scoped_ptr<char[]> buf(new char[kFileNameSize[i]]);
+    std::unique_ptr<char[]> buf(new char[kFileNameSize[i]]);
     memset(buf.get(), 0, kFileNameSize[i]);
 
     {

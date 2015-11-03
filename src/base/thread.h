@@ -30,8 +30,9 @@
 #ifndef MOZC_BASE_THREAD_H_
 #define MOZC_BASE_THREAD_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -58,7 +59,7 @@ class Thread {
   static void *WrapperForPOSIX(void *ptr);
 #endif  // OS_WIN
 
-  scoped_ptr<ThreadInternalState> state_;
+  std::unique_ptr<ThreadInternalState> state_;
 
   DISALLOW_COPY_AND_ASSIGN(Thread);
 };

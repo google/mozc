@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -233,7 +234,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   }
 
   virtual void Run() {
-    scoped_ptr<UserDictionaryStorage> storage(new UserDictionaryStorage(
+    std::unique_ptr<UserDictionaryStorage> storage(new UserDictionaryStorage(
         Singleton<UserDictionaryFileManager>::get()->GetFileName()));
 
     // Load from file

@@ -31,10 +31,10 @@
 
 #include <climits>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/stl_util.h"
 #include "base/string_piece.h"
 #include "base/util.h"
@@ -77,7 +77,7 @@ bool HasValueInternal(const map<string, vector<Token *>> &dic,
 
 Token *CreateToken(const string &str, const string &key, const string &value,
                    Token::AttributesBitfield attributes) {
-  scoped_ptr<Token> token(new Token());
+  std::unique_ptr<Token> token(new Token());
   token->key = key;
   token->value = value;
   // TODO(noriyukit): Currently, we cannot set cost and POS IDs.

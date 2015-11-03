@@ -30,6 +30,7 @@
 #include "data_manager/data_manager_test_base.h"
 
 #include <cstring>
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -46,9 +47,8 @@
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
 #include "rewriter/counter_suffix.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
 
 using mozc::dictionary::POSMatcher;
 
@@ -85,7 +85,7 @@ DataManagerTestBase::~DataManagerTestBase() {}
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
   // the expected boundary rule.
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
   for (size_t rid = 0; rid < lsize_; ++rid) {
     for (size_t lid = 0; lid < rsize_; ++lid) {
@@ -96,7 +96,7 @@ void DataManagerTestBase::SegmenterTest_SameAsInternal() {
 }
 
 void DataManagerTestBase::SegmenterTest_LNodeTest() {
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
 
   // lnode is BOS
@@ -114,7 +114,7 @@ void DataManagerTestBase::SegmenterTest_LNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_RNodeTest() {
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
 
   // rnode is EOS
@@ -132,7 +132,7 @@ void DataManagerTestBase::SegmenterTest_RNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_NodeTest() {
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
 
   Node lnode, rnode;
@@ -150,7 +150,7 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
   const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
 
@@ -170,7 +170,7 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
 }
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
-  scoped_ptr<const Connector> connector(
+  std::unique_ptr<const Connector> connector(
       Connector::CreateFromDataManager(*data_manager_));
   ASSERT_TRUE(connector.get() != NULL);
 
@@ -201,7 +201,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   const double kErrorRatio = 0.0001;
 
   // Load embedded suggestion filter (bloom filter)
-  scoped_ptr<SuggestionFilter> suggestion_filter;
+  std::unique_ptr<SuggestionFilter> suggestion_filter;
   {
     const char *data = NULL;
     size_t size;

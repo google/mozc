@@ -50,6 +50,7 @@
 #include <cstring>
 #include <limits>
 #include <map>
+#include <memory>
 #include <queue>
 #include <string>
 #include <utility>
@@ -175,7 +176,7 @@ class TokenDecodeIterator {
         key_(key),
         state_(HAS_NEXT),
         ptr_(ptr),
-        token_info_(NULL) {
+        token_info_(nullptr) {
     key.CopyToString(&token_.key);
     NextInternal();
   }
@@ -489,7 +490,7 @@ class SystemDictionary::ReverseLookupIndex {
       }
     }
 
-    CHECK(index_.get() != NULL);
+    CHECK(index_ != nullptr);
   }
 
   ~ReverseLookupIndex() {}
@@ -508,15 +509,15 @@ class SystemDictionary::ReverseLookupIndex {
  private:
   struct ReverseLookupResultArray {
     ReverseLookupResultArray() : size(0) {}
-    // Use scoped_ptr for reducing memory consumption as possible.
+    // Use std::unique_ptr for reducing memory consumption as possible.
     // Using vector requires 90 MB even when we call resize explicitly.
-    // On the other hand, scoped_ptr requires 57 MB.
-    scoped_ptr<ReverseLookupResult[]> results;
+    // On the other hand, std::unique_ptr requires 57 MB.
+    std::unique_ptr<ReverseLookupResult[]> results;
     size_t size;
   };
 
   // Use scoped array for reducing memory consumption as possible.
-  scoped_ptr<ReverseLookupResultArray[]> index_;
+  std::unique_ptr<ReverseLookupResultArray[]> index_;
   size_t index_size_;
 
   DISALLOW_COPY_AND_ASSIGN(ReverseLookupIndex);
@@ -558,11 +559,11 @@ struct SystemDictionary::Builder::Specification {
 
 SystemDictionary::Builder::Builder(const string &filename)
     : spec_(new Specification(Specification::FILENAME,
-                              filename, NULL, -1, NONE, NULL)) {}
+                              filename, nullptr, -1, NONE, nullptr)) {}
 
 SystemDictionary::Builder::Builder(const char *ptr, int len)
     : spec_(new Specification(Specification::IMAGE,
-                              "", ptr, len, NONE, NULL)) {}
+                              "", ptr, len, NONE, nullptr)) {}
 
 SystemDictionary::Builder::~Builder() {}
 
@@ -579,17 +580,18 @@ SystemDictionary::Builder &SystemDictionary::Builder::SetCodec(
 }
 
 SystemDictionary *SystemDictionary::Builder::Build() {
-  if (spec_->codec == NULL) {
+  if (spec_->codec == nullptr) {
     spec_->codec = SystemDictionaryCodecFactory::GetCodec();
   }
 
-  scoped_ptr<SystemDictionary> instance(new SystemDictionary(spec_->codec));
+  std::unique_ptr<SystemDictionary> instance(
+      new SystemDictionary(spec_->codec));
 
   switch (spec_->type) {
     case Specification::FILENAME:
       if (!instance->dictionary_file_->OpenFromFile(spec_->filename)) {
         LOG(ERROR) << "Failed to open system dictionary file";
-        return NULL;
+        return nullptr;
       }
       break;
     case Specification::IMAGE:
@@ -601,25 +603,25 @@ SystemDictionary *SystemDictionary::Builder::Build() {
       Mmap::MaybeMLock(spec_->ptr, spec_->len);
       if (!instance->dictionary_file_->OpenFromImage(spec_->ptr, spec_->len)) {
         LOG(ERROR) << "Failed to open system dictionary image";
-        return NULL;
+        return nullptr;
       }
       break;
     default:
       LOG(ERROR) << "Invalid input type.";
-      return NULL;
+      return nullptr;
   }
 
   if (!instance->OpenDictionaryFile(
           (spec_->options & ENABLE_REVERSE_LOOKUP_INDEX) != 0)) {
     LOG(ERROR) << "Failed to create system dictionary";
-    return NULL;
+    return nullptr;
   }
 
   return instance.release();
 }
 
 SystemDictionary::SystemDictionary(const SystemDictionaryCodecInterface *codec)
-    : frequent_pos_(NULL),
+    : frequent_pos_(nullptr),
       codec_(codec),
       dictionary_file_(new DictionaryFile) {}
 
@@ -650,7 +652,7 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   frequent_pos_ = reinterpret_cast<const uint32*>(
       dictionary_file_->GetSection(codec_->GetSectionNameForPos(), &len));
-  if (frequent_pos_ == NULL) {
+  if (frequent_pos_ == nullptr) {
     LOG(ERROR) << "can not find frequent pos section";
     return false;
   }
@@ -663,7 +665,7 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 }
 
 void SystemDictionary::InitReverseLookupIndex() {
-  if (reverse_lookup_index_.get() != NULL) {
+  if (reverse_lookup_index_ != nullptr) {
     return;
   }
   reverse_lookup_index_.reset(new ReverseLookupIndex(codec_, token_array_));
@@ -1182,7 +1184,7 @@ inline void AddKeyIdsOfAllPrefixes(const LoudsTrie &trie, StringPiece key,
 }  // namespace
 
 void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
-  if (reverse_lookup_index_ != NULL) {
+  if (reverse_lookup_index_ != nullptr) {
     // We don't need to prepare cache for the current reverse conversion,
     // as we have already built the index for reverse lookup.
     return;
@@ -1207,7 +1209,7 @@ void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
 }
 
 void SystemDictionary::ClearReverseLookupCache() const {
-  reverse_lookup_cache_.reset(NULL);
+  reverse_lookup_cache_.reset(nullptr);
 }
 
 namespace {
@@ -1260,12 +1262,12 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
   set<int> id_set;
   AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
 
-  ReverseLookupCache *results = NULL;
+  ReverseLookupCache *results = nullptr;
   ReverseLookupCache non_cached_results;
-  if (reverse_lookup_index_ != NULL) {
+  if (reverse_lookup_index_ != nullptr) {
     reverse_lookup_index_->FillResultMap(id_set, &non_cached_results.results);
     results = &non_cached_results;
-  } else if (reverse_lookup_cache_.get() != NULL &&
+  } else if (reverse_lookup_cache_ != nullptr &&
              reverse_lookup_cache_->IsAvailable(id_set)) {
     results = reverse_lookup_cache_.get();
   } else {
@@ -1273,7 +1275,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
     ScanTokens(id_set, &non_cached_results);
     results = &non_cached_results;
   }
-  DCHECK(results != NULL);
+  DCHECK(results != nullptr);
 
   RegisterReverseLookupResults(id_set, *results, callback);
 }

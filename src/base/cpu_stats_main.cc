@@ -29,11 +29,13 @@
 
 #include "base/cpu_stats.h"
 
-#include <string>
 #include <iostream>
+#include <memory>
+#include <string>
+
 #include "base/flags.h"
-#include "base/thread.h"
 #include "base/port.h"
+#include "base/thread.h"
 #include "base/util.h"
 
 DEFINE_int32(iterations, 1000, "number of iterations");
@@ -60,7 +62,7 @@ class DummyThread : public mozc::Thread {
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
-  scoped_ptr<DummyThread[]> threads;
+  std::unique_ptr<DummyThread[]> threads;
 
   if (FLAGS_dummy_threads_size > 0) {
     threads.reset(new DummyThread[FLAGS_dummy_threads_size]);

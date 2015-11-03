@@ -31,8 +31,8 @@
 #define MOZC_DICTIONARY_USER_DICTIONARY_SESSION_H_
 
 #include <deque>
+#include <memory>
 
-#include "base/scoped_ptr.h"
 #include "base/port.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -133,7 +133,7 @@ class UserDictionarySession {
   void ClearUndoHistory();
   void AddUndoCommand(UndoCommand *undo_command);
 
-  scoped_ptr<mozc::UserDictionaryStorage> storage_;
+  std::unique_ptr<mozc::UserDictionaryStorage> storage_;
   string default_dictionary_name_;
   deque<UndoCommand*> undo_history_;
 

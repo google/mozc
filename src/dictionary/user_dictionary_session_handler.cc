@@ -34,7 +34,6 @@
 #include "base/port.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_util.h"

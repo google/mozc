@@ -30,8 +30,9 @@
 #ifndef MOZC_DATA_MANAGER_PACKED_SYSTEM_DICTIONARY_DATA_PACKER_H_
 #define MOZC_DATA_MANAGER_PACKED_SYSTEM_DICTIONARY_DATA_PACKER_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "converter/boundary_struct.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary_token.h"
@@ -118,7 +119,7 @@ class SystemDictionaryDataPacker {
   bool OutputHeader(const string &file_path, bool use_gzip);
 
  private:
-  scoped_ptr<SystemDictionaryData> system_dictionary_;
+  std::unique_ptr<SystemDictionaryData> system_dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionaryDataPacker);
 };

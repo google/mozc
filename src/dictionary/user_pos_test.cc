@@ -29,15 +29,14 @@
 
 #include "dictionary/user_pos.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "base/scoped_ptr.h"
-#include "base/util.h"
 #include "base/logging.h"
+#include "base/util.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
 #include "dictionary/user_pos_interface.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -52,7 +51,7 @@ class UserPOSTest : public ::testing::Test {
     CHECK(user_pos_.get());
   }
 
-  scoped_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<const UserPOSInterface> user_pos_;
 };
 
 TEST_F(UserPOSTest, UserPOSBasicTest) {

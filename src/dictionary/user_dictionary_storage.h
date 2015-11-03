@@ -61,9 +61,10 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
 
+#include <memory>
 #include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -208,9 +209,10 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   string file_name_;
   bool locked_;
   UserDictionaryStorageErrorType last_error_type_;
-  scoped_ptr<Mutex> local_mutex_;
-  scoped_ptr<ProcessMutex> process_mutex_;
+  std::unique_ptr<Mutex> local_mutex_;
+  std::unique_ptr<ProcessMutex> process_mutex_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_

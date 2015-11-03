@@ -30,8 +30,9 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -68,7 +69,7 @@ class DataManagerTestBase : public ::testing::Test {
   void SuggestionFilterTest_IsBadSuggestion();
   void CounterSuffixTest_ValidateTest();
 
-  scoped_ptr<DataManagerInterface> data_manager_;
+  std::unique_ptr<DataManagerInterface> data_manager_;
   const uint16 lsize_;
   const uint16 rsize_;
   IsBoundaryFunc is_boundary_;

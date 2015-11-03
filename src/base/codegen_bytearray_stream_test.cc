@@ -37,6 +37,7 @@
 
 #include "base/codegen_bytearray_stream.h"
 
+#include <memory>
 #include <sstream>
 
 #include "base/port.h"
@@ -83,8 +84,8 @@ class CodeGenByteArrayStreamTest : public testing::Test {
     return result_stream_->str();
   }
 
-  scoped_ptr<mozc::CodeGenByteArrayOutputStream> codegen_stream_;
-  scoped_ptr<ostringstream> result_stream_;
+  std::unique_ptr<mozc::CodeGenByteArrayOutputStream> codegen_stream_;
+  std::unique_ptr<ostringstream> result_stream_;
 };
 
 TEST_F(CodeGenByteArrayStreamTest, NoInput) {

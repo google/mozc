@@ -32,13 +32,13 @@
 #include "config/config_handler.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -214,7 +214,7 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 // Reload from file
 bool ConfigHandlerImpl::Reload() {
   VLOG(1) << "Reloading config file: " << filename_;
-  scoped_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
+  std::unique_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
   bool ret_code = true;
 

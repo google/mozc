@@ -34,10 +34,10 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_
 #define MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_
 
+#include <memory>
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "storage/louds/louds_trie.h"
@@ -77,7 +77,7 @@ class ValueDictionary : public DictionaryInterface {
   bool OpenDictionaryFile();
 
   storage::louds::LoudsTrie value_trie_;
-  scoped_ptr<DictionaryFile> dictionary_file_;
+  std::unique_ptr<DictionaryFile> dictionary_file_;
   const SystemDictionaryCodecInterface *codec_;
   const uint16 suggestion_only_word_id_;
 

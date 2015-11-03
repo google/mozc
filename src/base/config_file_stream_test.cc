@@ -27,17 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <stddef.h>
+#include <cstddef>
 #include <ios>
 #include <istream>
+#include <memory>
 
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -91,9 +90,9 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
   ConfigFileStream::AtomicUpdate(kPath, kData);
 
   {
-    scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
+    std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
     ASSERT_NE(nullptr, ifs.get());
-    scoped_ptr<char[]> buf(new char[kData.size() + 1]);
+    std::unique_ptr<char[]> buf(new char[kData.size() + 1]);
     ifs->read(buf.get(), kData.size());
     buf.get()[kData.size()] = '\0';
     EXPECT_EQ(kData, buf.get());
@@ -103,7 +102,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
   ConfigFileStream::ClearOnMemoryFiles();
 
   {
-    scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
+    std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
     ASSERT_NE(nullptr, ifs.get());
     EXPECT_TRUE(IsEof(ifs.get()));
   }
@@ -153,10 +152,10 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   ASSERT_TRUE(FileUtil::FileExists(test_file_path));
 
   {
-    scoped_ptr<istream> ifs(ConfigFileStream::OpenReadBinary(
+    std::unique_ptr<istream> ifs(ConfigFileStream::OpenReadBinary(
         "user://" + string(kTestFileName)));
     ASSERT_NE(nullptr, ifs.get());
-    scoped_ptr<char[]> buf(new char[kBinaryDataSize]);
+    std::unique_ptr<char[]> buf(new char[kBinaryDataSize]);
     ifs->read(buf.get(), kBinaryDataSize);
     // Check if all the data are loaded as binary mode.
     for (size_t i = 0; i < kBinaryDataSize; ++i) {
@@ -199,7 +198,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
 #undef TRAILING_CARRIAGE_RETURN
 
   {
-    scoped_ptr<istream> ifs(ConfigFileStream::OpenReadText(
+    std::unique_ptr<istream> ifs(ConfigFileStream::OpenReadText(
         "user://" + string(kTestFileName)));
     ASSERT_NE(nullptr, ifs.get());
     string line;
