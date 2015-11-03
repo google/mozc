@@ -55,6 +55,9 @@ struct Token {
   };
 
   Token() : cost(0), lid(0), rid(0), attributes(NONE) {}
+  Token(const string &k, const string &v, int c, int l, int r,
+        AttributesBitfield a) : key(k), value(v), cost(c), lid(l), rid(r),
+                                attributes(a) {}
 
   string key;
   string value;
