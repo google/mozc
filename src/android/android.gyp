@@ -292,7 +292,7 @@
           'bash',
           '<(android_ndk_home)/build/tools/make-standalone-toolchain.sh',
           '--toolchain=<(toolchain)',
-          '--stl=<(android_stl)',
+          '--stl=libcxx',
           '--install-dir=<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)',
           '--platform=<(platform)',
         ],

@@ -376,11 +376,6 @@ def ParseGypOptions(args=None, values=None):
                     default='arm',
                     help='[Android build only] Android architecture '
                     '(arm, x86, mips)')
-  parser.add_option('--android_stl', dest='android_stl',
-                    type='choice',
-                    choices=('gnustl', 'libcxx'),
-                    default='libcxx',
-                    help='[Android build only] Standard C++ library')
   parser.add_option('--android_compiler', dest='android_compiler',
                     type='choice',
                     choices=('gcc', 'clang'),
@@ -723,7 +718,6 @@ def GypMain(options, unused_args, _):
 
   gyp_options.extend(['-D', 'android_home=%s' % android_home])
   gyp_options.extend(['-D', 'android_arch=%s' % options.android_arch])
-  gyp_options.extend(['-D', 'android_stl=%s' % options.android_stl])
   gyp_options.extend(['-D', 'android_compiler=%s' % options.android_compiler])
   gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
   gyp_options.extend(['-D', 'android_application_id=%s' %
