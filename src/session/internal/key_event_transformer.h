@@ -30,8 +30,8 @@
 // Transform key event accoding to config.
 // This class is designed for using with Singleton class.
 
-#ifndef MOZC_SESSION_INTERNAL_TRANSFORM_TABLE_H_
-#define MOZC_SESSION_INTERNAL_TRANSFORM_TABLE_H_
+#ifndef MOZC_SESSION_INTERNAL_KEY_EVENT_TRANSFORMER_H_
+#define MOZC_SESSION_INTERNAL_KEY_EVENT_TRANSFORMER_H_
 
 #include <map>
 #include <string>
@@ -77,4 +77,4 @@ class KeyEventTransformer {
 }  // namespace session
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_INTERNAL_TRANSFORM_TABLE_H_
+#endif  // MOZC_SESSION_INTERNAL_KEY_EVENT_TRANSFORMER_H_
