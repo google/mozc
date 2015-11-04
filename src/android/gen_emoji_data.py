@@ -52,14 +52,20 @@ def ReadData(stream):
   stream = code_generator_util.SelectColumn(stream, [0, 2, 8, 9, 10, 11, 12])
   for (code, pua_code, japanese_name, docomo_name, softbank_name, kddi_name,
        category_index) in stream:
-    if not pua_code or pua_code[0] == '>':
-      continue
     if not code:
       if japanese_name:
         logging.fatal('No Unicode emoji code point found.')
         sys.exit(-1)
       # Use dummy code point
       code = '0'
+    if not pua_code:
+      # Use dummy code point
+      pua_code = '0'
+    if pua_code[0] == '>':
+      # Don't skip entires which has non-primary PUA codepoint since they also
+      # has unique Unicode codepoint.
+      # e.g. "BLACK SQUARE BUTTON" and "LARGE BLUE CIRCLE"
+      pua_code = pua_code[1:]
 
     (category, index) = category_index.split('-')
     category_map[category].append(
