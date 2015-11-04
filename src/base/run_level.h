@@ -86,5 +86,5 @@ class RunLevel {
   RunLevel() {}
   virtual ~RunLevel() {}
 };
-}  // namsepace mozc
+}  // namespace mozc
 #endif  // MOZC_BASE_RUN_LEVEL_H_

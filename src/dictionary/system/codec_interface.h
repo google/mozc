@@ -118,6 +118,6 @@ class SystemDictionaryCodecFactory {
 };
 
 }  // namespace dictionary
-}  // namespace
+}  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_SYSTEM_CODEC_INTERFACE_H_

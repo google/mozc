@@ -29,8 +29,6 @@
 
 #include "renderer/win32/win32_image_util.h"
 
-#include <Shlwapi.h>
-
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>

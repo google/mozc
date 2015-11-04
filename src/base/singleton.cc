@@ -86,4 +86,4 @@ void SingletonFinalizer::Finalize() {
   }
   g_finalizers_size = 0;
 }
-}  // mozc
+}  // namespace mozc

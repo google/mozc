@@ -57,38 +57,38 @@ TEST(NumberUtilTest, SimpleAtoi) {
 }
 
 TEST(NumberUtilTest, SafeStrToInt16) {
-  int16 value = 0xBEEF;
+  int16 value = 0x4321;
 
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("0", &value));
   EXPECT_EQ(0, value);
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("+0", &value));
   EXPECT_EQ(0, value);
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-0", &value));
   EXPECT_EQ(0, value);
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" \t\r\n\v\f0 \t\r\n\v\f", &value));
   EXPECT_EQ(0, value);
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" \t\r\n\v\f-0 \t\r\n\v\f", &value));
   EXPECT_EQ(0, value);
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("012345", &value));
   EXPECT_EQ(12345, value);
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-012345", &value));
   EXPECT_EQ(-12345, value);
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-32768", &value));
   EXPECT_EQ(kint16min, value);  // min of 16-bit signed integer
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("32767", &value));
   EXPECT_EQ(kint16max, value);  // max of 16-bit signed integer
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" 1", &value));
   EXPECT_EQ(1, value);
-  value = 0xBEEF;
+  value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("2 ", &value));
   EXPECT_EQ(2, value);
 

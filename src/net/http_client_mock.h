@@ -115,6 +115,6 @@ class HTTPClientMock : public HTTPClientInterface {
   HTTPClient::Option option_;
 };
 
-};  // namespace mozc
+}  // namespace mozc
 
 #endif  // MOZC_NET_HTTP_CLIENT_MOCK_H_

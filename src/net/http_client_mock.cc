@@ -105,4 +105,4 @@ bool HTTPClientMock::DoRequest(const string &url,
   return true;
 }
 
-};  // namespace mozc
+}  // namespace mozc

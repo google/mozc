@@ -87,7 +87,7 @@ const TestData kTestData[] = {
     "\x01\x1D\x2C\xD7\xAA\x55\x05\x0F\x4E\xD5\x73\xC0\xCB\xE2\x10\x69", 64
   }
 };
-}
+}  // namespace
 
 TEST(EncryptorTest, VerificationTest) {
   {
