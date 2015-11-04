@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/util.h"
 #include "converter/quality_regression_util.h"
 #include "engine/engine_factory.h"
@@ -45,7 +46,7 @@ using mozc::EngineInterface;
 using mozc::quality_regression::QualityRegressionUtil;
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   QualityRegressionUtil util(engine->GetConverter());

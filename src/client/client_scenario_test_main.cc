@@ -39,6 +39,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -169,7 +170,7 @@ int Loop(istream *input) {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (!FLAGS_profile_dir.empty()) {
     mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);

@@ -34,6 +34,7 @@
 
 
 #include <string>
+
 #include "base/port.h"
 
 namespace mozc_flags {
@@ -49,18 +50,15 @@ class FlagRegister {
                const void *default_storage,
                int shorttpe,
                const char *help);
-  virtual ~FlagRegister();
+  ~FlagRegister();
+
  private:
   Flag *flag_;
 };
 
-uint32 ParseCommandLineFlags(int *argc, char*** argv,
-                             bool remove_flags);
-}  // mozc_flags
+uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags);
 
-void InitGoogle(const char *arg0,
-                int *argc, char ***argv,
-                bool remove_flags);
+}  // mozc_flags
 
 #define DEFINE_VARIABLE(type, shorttype, name, value, help) \
 namespace mozc_flags_fL##shorttype { \

@@ -35,19 +35,20 @@
 
 #include "base/crash_report_handler.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
 
 #ifdef OS_WIN
-#include "base/winmain.h"
 #include "base/win_util.h"
+#include "base/winmain.h"
 #include "renderer/win32/win32_server.h"
 #elif defined(OS_MACOSX)
+#include "renderer/mac/CandidateController.h"
 #include "renderer/mac/mac_server.h"
 #include "renderer/mac/mac_server_send_command.h"
-#include "renderer/mac/CandidateController.h"
 #elif defined(ENABLE_GTK_RENDERER)
 #include "renderer/renderer_client.h"
 #include "renderer/table_layout.h"
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]) {
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   int result_code = 0;
 

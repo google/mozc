@@ -27,9 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstddef>
 #include <cstdio>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/version.h"
 #include "unix/ibus/main.h"
@@ -123,7 +125,7 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
 }  // namespace
 
 int main(gint argc, gchar **argv) {
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
   ibus_init();
   InitIBusComponent(FLAGS_ibus);
   mozc::ibus::MozcEngine::InitConfig(g_config);

@@ -33,16 +33,17 @@
 //    --ordering_rule=ordering_rule_file
 //    --input=input.tsv --output=output_header
 
+#include <algorithm>
 #include <climits>
 #include <map>
-#include <vector>
 #include <set>
 #include <string>
-#include <algorithm>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "rewriter/dictionary_generator.h"
@@ -197,7 +198,7 @@ void MakeDictionary(const string &symbol_dictionary_file,
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
 
   if ((FLAGS_input.empty() ||
        FLAGS_sorting_table.empty() ||

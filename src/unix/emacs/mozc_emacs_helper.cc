@@ -27,12 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "unix/emacs/mozc_emacs_helper_lib.h"
-
 #include <cstdio>
 #include <iostream>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
@@ -42,6 +41,7 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "unix/emacs/client_pool.h"
+#include "unix/emacs/mozc_emacs_helper_lib.h"
 
 DEFINE_bool(suppress_stderr, false,
             "Discards all the output to stderr.");
@@ -127,7 +127,7 @@ void ProcessLoop() {
 
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
   if (FLAGS_suppress_stderr) {
 #ifdef OS_WIN
     const char path[] = "NUL";

@@ -40,6 +40,7 @@
 
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -61,7 +62,7 @@ DEFINE_bool(test_testsendkey, true, "test TestSendKey");
 DECLARE_bool(logtostderr);
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   FLAGS_logtostderr = true;
 

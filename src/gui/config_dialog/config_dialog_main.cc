@@ -30,11 +30,12 @@
 // The main function of configure dialog for Mozc.
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/winmain.h"
 
 int RunConfigDialog(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
   return RunConfigDialog(argc, argv);
 }

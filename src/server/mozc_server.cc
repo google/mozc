@@ -40,6 +40,7 @@
 #include "base/crash_report_handler.h"
 #include "base/flags.h"
 #include "base/init.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
@@ -76,10 +77,10 @@ REGISTER_MODULE_SHUTDOWN_HANDLER(shutdown_session,
 
 namespace server {
 
-void InitGoogleAndMozcServer(const char *arg0,
-                             int *argc,
-                             char ***argv,
-                             bool remove_flags) {
+void InitMozcAndMozcServer(const char *arg0,
+                           int *argc,
+                           char ***argv,
+                           bool remove_flags) {
   mozc::SystemUtil::DisableIME();
 
   // Big endian is not supported. The storage for user history is endian
@@ -92,8 +93,8 @@ void InitGoogleAndMozcServer(const char *arg0,
   ::SetProcessShutdownParameters(0x100, SHUTDOWN_NORETRY);
 #endif
 
-  // call GetRunLevel before InitGoogle().
-  // InitGoogle() will do all static initialization and may access
+  // call GetRunLevel before mozc::InitMozc().
+  // mozc::InitMozc() will do all static initialization and may access
   // local resources.
   const mozc::RunLevel::RunLevelType run_level =
       mozc::RunLevel::GetRunLevel(mozc::RunLevel::SERVER);
@@ -106,7 +107,7 @@ void InitGoogleAndMozcServer(const char *arg0,
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
-  InitGoogle(arg0, argc, argv, remove_flags);
+  mozc::InitMozc(arg0, argc, argv, remove_flags);
 
   if (run_level == mozc::RunLevel::RESTRICTED) {
     VLOG(1) << "Mozc server starts with timeout mode";

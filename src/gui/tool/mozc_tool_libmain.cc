@@ -43,6 +43,7 @@
 #include "base/crash_report_handler.h"
 #include "base/file_util.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/password_manager.h"
 #include "base/run_level.h"
@@ -100,11 +101,11 @@ int RunMozcTool(int argc, char *argv[]) {
        "--fromenv=mode,error_type,confirmation_type,register_prelauncher");
   int new_argc = 2;
   char **new_argv = tmp.get();
-  InitGoogle(new_argv[0], &new_argc, &new_argv, false);
+  mozc::InitMozc(new_argv[0], &new_argc, &new_argv, false);
   delete [] tmp[0];
   delete [] tmp[1];
 #else  // OS_MACOSX
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 #endif  // OS_MACOSX
 
 #ifdef OS_MACOSX

@@ -31,6 +31,7 @@
 #include <cstdio>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "protocol/commands.pb.h"
 #include "session/session_server.h"
 
@@ -55,7 +56,7 @@ void SendCommand(SessionServer *server,
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::SessionServer server;
   mozc::commands::Input input;

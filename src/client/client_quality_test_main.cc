@@ -35,6 +35,7 @@
 
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/multifile.h"
 #include "base/port.h"
@@ -200,7 +201,7 @@ double CalculateMean(const vector<double>& scores) {
 
 
 int main(int argc, char* argv[]) {
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
 
   mozc::client::Client client;
   if (!FLAGS_server_path.empty()) {

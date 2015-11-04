@@ -27,13 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/run_level.h"
-
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
+#include "base/run_level.h"
 
 DEFINE_bool(server, false, "server mode");
 DEFINE_bool(client, false, "client mode");
@@ -41,7 +41,7 @@ DEFINE_bool(client, false, "client mode");
 // This is a simple command line tool
 // too check RunLevel class
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::RunLevel::RequestType type = mozc::RunLevel::SERVER;
 

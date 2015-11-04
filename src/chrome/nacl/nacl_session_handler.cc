@@ -40,6 +40,7 @@
 
 #include "base/clock.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/pepper_file_util.h"
@@ -470,12 +471,12 @@ class NaclSessionHandlerModule : public pp::Module {
 namespace pp {
 
 Module *CreateModule() {
-  // We use dummy argc and argv to call InitGoogle().
+  // We use dummy argc and argv to call mozc::InitMozc().
   int argc = 1;
   char argv0[] = "NaclModule";
   char *argv_body[] = {argv0, NULL};
   char **argv = argv_body;
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
 
   return new mozc::session::NaclSessionHandlerModule();
 }

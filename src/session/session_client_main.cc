@@ -34,6 +34,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -86,7 +87,7 @@ void Loop(istream *input, ostream *output) {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
   std::unique_ptr<mozc::InputFileStream> input_file;
   std::unique_ptr<mozc::OutputFileStream> output_file;
   istream *input = NULL;

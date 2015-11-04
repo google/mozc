@@ -27,13 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "ipc/named_event.h"
-
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "ipc/named_event.h"
 
 DEFINE_bool(listener, true, "listener mode");
 DEFINE_bool(notifier, false, "notifier mode");
@@ -42,7 +42,7 @@ DEFINE_int32(pid, -1, "process id");
 DEFINE_string(name, "named_event_test", "name for named event");
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (FLAGS_notifier) {
     mozc::NamedEventNotifier notifier(FLAGS_name.c_str());

@@ -31,11 +31,12 @@
 #include <cmath>
 #include <iostream>  // NOLINT
 #include <iterator>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -365,7 +366,7 @@ class Conversion : public TestScenarioInterface {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   vector<mozc::TestScenarioInterface *> tests;
   vector<mozc::Result *> results;

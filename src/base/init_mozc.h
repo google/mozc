@@ -27,44 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>  // NOLINT
-#include <sstream>
+#ifndef MOZC_BASE_INIT_MOZC_H_
+#define MOZC_BASE_INIT_MOZC_H_
 
-#include "base/flags.h"
-#include "base/init_mozc.h"
-#include "composer/internal/composition.h"
-#include "composer/table.h"
+namespace mozc {
 
-DEFINE_string(table, "system://romanji-hiragana.tsv",
-              "preedit conversion table file.");
+// Initializes all the modules, such as flags and logging.
+void InitMozc(const char *arg0, int *argc, char ***argv, bool remove_flags);
 
+}  // namespace mozc
 
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
-
-  mozc::composer::Table table;
-  table.LoadFromFile(FLAGS_table.c_str());
-
-  mozc::composer::Composition composition(&table);
-
-  string command;
-  string result;
-  size_t pos = 0;
-
-  while (getline(cin, command)) {
-    char initial = command[0];
-    if (initial == '-' || (initial >= '0' && initial <= '9')) {
-      stringstream ss;
-      int delta;
-      ss << command;
-      ss >> delta;
-      pos += delta;
-    } else if (initial == '!') {
-      pos = composition.DeleteAt(pos);
-    } else {
-      pos = composition.InsertAt(pos, command);
-    }
-    composition.GetString(&result);
-    cout << result << " : " << pos << endl;
-  }
-}
+#endif  // MOZC_BASE_INIT_MOZC_H_

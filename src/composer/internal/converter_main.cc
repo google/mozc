@@ -31,6 +31,7 @@
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "composer/internal/converter.h"
 #include "composer/table.h"
 
@@ -38,7 +39,7 @@ DEFINE_string(table, "system://romanji-hiragana.tsv",
               "preedit conversion table file.");
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());

@@ -52,11 +52,11 @@ class RunLevel {
   // return the runlevel of current process
   // NOTE:
   // DO NOT USE logging library inside this method,
-  // since GetRunLevel() is called  before InitGoogle().
+  // since GetRunLevel() is called  before mozc::InitMozc().
   // Logging stream and flags may not be initialized.
   // Also, make sure that the code inside this function
   // never raises any exceptions. Exception handler is installed
-  // inside InitGoogle().
+  // inside mozc::InitMozc().
   static RunLevelType GetRunLevel(RunLevel::RequestType type);
 
   static bool IsValidClientRunLevel() {

@@ -35,10 +35,10 @@
 namespace mozc {
 namespace server {
 
-void InitGoogleAndMozcServer(const char *arg0,
-                             int *argc,
-                             char ***argv,
-                             bool remove_flags);
+void InitMozcAndMozcServer(const char *arg0,
+                           int *argc,
+                           char ***argv,
+                           bool remove_flags);
 
 class MozcServer {
  public:
