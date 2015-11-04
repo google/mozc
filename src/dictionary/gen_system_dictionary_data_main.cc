@@ -41,6 +41,7 @@
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/util.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
 #include "data_manager/user_pos_manager.h"
@@ -93,7 +94,7 @@ void GetInputFileName(const string &input_file,
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   string system_dictionary_input, reading_correction_input;
   mozc::GetInputFileName(FLAGS_input,

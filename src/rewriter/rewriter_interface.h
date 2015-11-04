@@ -86,7 +86,6 @@ class RewriterInterface {
   RewriterInterface() {}
 };
 
-
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_REWRITER_INTERFACE_H_

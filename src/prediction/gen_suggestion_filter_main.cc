@@ -35,6 +35,7 @@
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/hash.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
@@ -68,7 +69,7 @@ using mozc::storage::ExistenceFilter;
 // read per-line word list and generate
 // bloom filter in raw byte array or header file format
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
 
   if ((FLAGS_input.empty() ||
        FLAGS_output.empty()) && argc > 2) {

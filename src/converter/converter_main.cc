@@ -35,6 +35,7 @@
 
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
@@ -377,7 +378,7 @@ bool ExecCommand(const ConverterInterface &converter,
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (!FLAGS_user_profile_dir.empty()) {
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_dir);

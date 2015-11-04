@@ -27,14 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "ipc/ipc_path_manager.h"
-
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "ipc/ipc_path_manager.h"
 
 DEFINE_bool(client, false, "client mode");
 DEFINE_bool(server, false, "server mode");
@@ -42,7 +42,7 @@ DEFINE_string(name, "test", "ipc name");
 
 // command line tool to check the behavior of IPCPathManager
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::IPCPathManager *manager =
       mozc::IPCPathManager::GetIPCPathManager(FLAGS_name);

@@ -33,6 +33,7 @@
 #include "base/double_array.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "third_party/darts/v0_32/darts.h"
@@ -134,7 +135,7 @@ static void Compile(const string &files,
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
   mozc::Compile(FLAGS_input, FLAGS_output);
   return 0;
 }

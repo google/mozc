@@ -27,13 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "composer/composer.h"
-
 #include <iostream>  // NOLINT
 #include <memory>
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
+#include "composer/composer.h"
 #include "composer/composition_interface.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
@@ -45,7 +45,7 @@ DEFINE_string(table, "system://romanji-hiragana.tsv",
 using ::mozc::commands::Request;
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());

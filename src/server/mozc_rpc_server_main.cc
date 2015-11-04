@@ -48,6 +48,7 @@ using ssize_t = SSIZE_T;
 #include <vector>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -357,7 +358,7 @@ class ScopedWSAData {
 }  // namespace mozc
 
 int main(int argc, char *argv[]) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::ScopedWSAData wsadata;
 

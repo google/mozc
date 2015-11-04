@@ -42,6 +42,7 @@
 
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "rewriter/gen_existence_data.h"
 
@@ -88,7 +89,7 @@ void Convert() {
 }  // namespace mozc
 
 int main(int argc, char *argv[]) {
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
 
   if (FLAGS_collocation_data.empty() && argc > 1) {
     FLAGS_collocation_data = argv[1];

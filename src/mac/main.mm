@@ -39,6 +39,7 @@
 #include "base/const.h"
 #include "base/crash_report_handler.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/run_level.h"
 #include "client/client.h"
@@ -55,7 +56,7 @@ int main(int argc, char *argv[]) {
     mozc::CrashReportHandler::Initialize(false);
   }
 #endif
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   IMKServer *imkServer = [GoogleJapaneseInputServer getServer];
   if (!imkServer) {

@@ -30,24 +30,17 @@
 
 #include "base/flags.h"
 
-#include <stdlib.h>  // for atexit, getenv
-#ifdef OS_WIN
-#include <windows.h>
-#endif  // OS_WIN
+#include <cstdlib>  // for getenv
 #include <cstring>
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "base/crash_report_handler.h"
-#include "base/init.h"
 #include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
-
-DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
 
 namespace mozc_flags {
 namespace {
@@ -258,49 +251,4 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
 }
 
 }  // namespace mozc_flags
-
-namespace {
-
-#ifdef OS_WIN
-LONG CALLBACK ExitProcessExceptionFilter(
-    EXCEPTION_POINTERS *ExceptionInfo) {
-  // Currently, we haven't found good way to perform both
-  // "send mininump" and "exit the process gracefully".
-  ::ExitProcess(static_cast<UINT>(-1));
-  return EXCEPTION_EXECUTE_HANDLER;
-}
-#endif  // OS_WIN
-
-void InitGoogleInternal(const char *argv0,
-                        int *argc, char ***argv,
-                        bool remove_flags) {
-  mozc_flags::FlagUtil::SetFlag("program_invocation_name", *argv[0]);
-  mozc_flags::ParseCommandLineFlags(argc, argv, remove_flags);
-  if (*argc > 0) {
-    mozc::Logging::InitLogStream((*argv)[0]);
-  } else {
-    mozc::Logging::InitLogStream();
-  }
-
-  mozc::RunInitializers();  // do all static initialization
-}
-
-}  // namespace
-
-// not install breakpad
-// This function is defined in global namespace.
-void InitGoogle(const char *arg0,
-                int *argc, char ***argv,
-                bool remove_flags) {
-#ifdef OS_WIN
-  // InitGoogle() is supposed to be used for code generator or
-  // other programs which are not included in the production code.
-  // In these code, we don't want to show any error messages when
-  // exceptions are raised. This is important to keep
-  // our continuous build stable.
-  ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
-#endif  // OS_WIN
-
-  InitGoogleInternal(arg0, argc, argv, remove_flags);
-}
 

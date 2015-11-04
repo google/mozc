@@ -27,44 +27,52 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>  // NOLINT
-#include <sstream>
+#include "base/init_mozc.h"
+
+#ifdef OS_WIN
+#include <windows.h>
+#endif  // OS_WIN
 
 #include "base/flags.h"
-#include "base/init_mozc.h"
-#include "composer/internal/composition.h"
-#include "composer/table.h"
+#include "base/init.h"
+#include "base/logging.h"
 
-DEFINE_string(table, "system://romanji-hiragana.tsv",
-              "preedit conversion table file.");
+DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
 
+namespace mozc {
 
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+#ifdef OS_WIN
+namespace {
 
-  mozc::composer::Table table;
-  table.LoadFromFile(FLAGS_table.c_str());
-
-  mozc::composer::Composition composition(&table);
-
-  string command;
-  string result;
-  size_t pos = 0;
-
-  while (getline(cin, command)) {
-    char initial = command[0];
-    if (initial == '-' || (initial >= '0' && initial <= '9')) {
-      stringstream ss;
-      int delta;
-      ss << command;
-      ss >> delta;
-      pos += delta;
-    } else if (initial == '!') {
-      pos = composition.DeleteAt(pos);
-    } else {
-      pos = composition.InsertAt(pos, command);
-    }
-    composition.GetString(&result);
-    cout << result << " : " << pos << endl;
-  }
+LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
+  // Currently, we haven't found a good way to perform both
+  // "send mininump" and "exit the process gracefully".
+  ::ExitProcess(static_cast<UINT>(-1));
+  return EXCEPTION_EXECUTE_HANDLER;
 }
+
+}  // namespace
+#endif  // OS_WIN
+
+void InitMozc(const char *arg0, int *argc, char ***argv, bool remove_flags) {
+#ifdef OS_WIN
+  // InitMozc() is supposed to be used for code generator or
+  // other programs which are not included in the production code.
+  // In these code, we don't want to show any error messages when
+  // exceptions are raised. This is important to keep
+  // our continuous build stable.
+  ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
+#endif  // OS_WIN
+  FLAGS_program_invocation_name = *argv[0];
+  mozc_flags::ParseCommandLineFlags(argc, argv, remove_flags);
+
+  if (*argc > 0) {
+    Logging::InitLogStream((*argv)[0]);
+  } else {
+    Logging::InitLogStream();
+  }
+
+  RunInitializers();
+}
+
+}  // namespace mozc

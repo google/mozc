@@ -30,6 +30,7 @@
 #include <iostream>  // NOLINT
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "client/client.h"
 
@@ -38,7 +39,7 @@ DEFINE_bool(shutdown, false,
 
 // simple command line tool to launch mozc server
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
   mozc::client::Client client;
 
   if (FLAGS_shutdown) {

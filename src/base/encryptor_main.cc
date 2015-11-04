@@ -27,12 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/encryptor.h"
-
 #include <iostream>
 #include <string>
+
+#include "base/encryptor.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
@@ -61,7 +62,7 @@ string Escape(const string &buf) {
 }  // namespace
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (!FLAGS_iv.empty()) {
     CHECK_EQ(16, FLAGS_iv.size()) << "iv size must be 16 byte";

@@ -27,15 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
 #include <iostream>
+#include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::user_dictionary::UserDictionary user_dic;
   mozc::UserDictionaryImporter::ImportFromMSIME(&user_dic);

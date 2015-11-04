@@ -27,18 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/stopwatch.h"
-
-#include <string>
 #include <iostream>
+#include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
+#include "base/stopwatch.h"
 #include "base/util.h"
 
 DEFINE_int32(sleep_time, 1000, "sleep time");
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::Stopwatch stopwatch;
   stopwatch.Start();

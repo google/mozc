@@ -35,13 +35,14 @@
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 
 DEFINE_int32(sleep_time, 30, "sleep 30 sec");
 DEFINE_string(name, "named_event_test", "name for named event");
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::ProcessMutex mutex(FLAGS_name.c_str());
 

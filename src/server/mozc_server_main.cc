@@ -32,7 +32,7 @@
 #include "server/mozc_server.h"
 
 int main(int argc, char* argv[]) {
-  mozc::server::InitGoogleAndMozcServer(argv[0], &argc, &argv, false);
+  mozc::server::InitMozcAndMozcServer(argv[0], &argc, &argv, false);
 
   const int return_value = mozc::server::MozcServer::Run();
   mozc::server::MozcServer::Finalize();

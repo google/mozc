@@ -27,12 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/mac_util.h"
-
 #include <string>
 #include <vector>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
+#include "base/mac_util.h"
 #include "base/util.h"
 
 DEFINE_bool(label_for_suffix, false,
@@ -56,7 +56,7 @@ DEFINE_string(service_name, "", "The service name to be launched");
 using mozc::MacUtil;
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (FLAGS_label_for_suffix) {
     cout << MacUtil::GetLabelForSuffix(FLAGS_suffix) << endl;

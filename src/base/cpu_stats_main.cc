@@ -27,13 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/cpu_stats.h"
-
 #include <iostream>
 #include <memory>
 #include <string>
 
+#include "base/cpu_stats.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/port.h"
 #include "base/thread.h"
 #include "base/util.h"
@@ -60,7 +60,7 @@ class DummyThread : public mozc::Thread {
 }  // namespace
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   std::unique_ptr<DummyThread[]> threads;
 
