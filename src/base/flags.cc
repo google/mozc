@@ -37,7 +37,7 @@
 #include <string>
 #include <vector>
 
-#include "base/number_util.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -62,6 +62,40 @@ bool IsTrue(const char *value) {
     }
   }
   return false;
+}
+
+// Wraps std::sto* functions by a template class so that appropriate functions
+// are chosen for platform-dependent integral types by type deduction.  For
+// example, if int64 is defined as long long, then StrToNumberImpl<int64>::Do()
+// is mapped to StrToNumberImpl::Do<long long>().  Here, struct (class) is
+// intentionally used instead of a template function because, if we use a
+// function, compiler may warn of "unused function".
+template <typename T> struct StrToNumberImpl;
+
+template <> struct StrToNumberImpl<int> {
+  static int Do(const string &s) { return std::stoi(s); }
+};
+
+template <> struct StrToNumberImpl<long> {                  // NOLINT
+  static long Do(const string &s) { return std::stol(s); }  // NOLINT
+};
+
+template <> struct StrToNumberImpl<long long> {                   // NOLINT
+  static long long Do(const string &s) { return std::stoll(s); }  // NOLINT
+};
+
+template <> struct StrToNumberImpl<unsigned long> {                   // NOLINT
+  static unsigned long Do(const string &s) { return std::stoul(s); }  // NOLINT
+};
+
+template <> struct StrToNumberImpl<unsigned long long> {  // NOLINT
+  static unsigned long long Do(const string &s) {         // NOLINT
+    return std::stoull(s);
+  }
+};
+
+template <typename T> inline T StrToNumber(const string &s) {
+  return StrToNumberImpl<T>::Do(s);
 }
 
 }  // namespace
@@ -118,25 +152,22 @@ bool FlagUtil::SetFlag(const string &name, const string &value) {
 
   switch (flag->type) {
     case I:
-      mozc::NumberUtil::SafeStrToInt32(
-          v, reinterpret_cast<int32 *>(flag->storage));
+      *reinterpret_cast<int32 *>(flag->storage) = StrToNumber<int32>(v);
       break;
     case B:
       *(reinterpret_cast<bool *>(flag->storage)) = IsTrue(v.c_str());
       break;
     case I64:
-      mozc::NumberUtil::SafeStrToInt64(
-          v, reinterpret_cast<int64 *>(flag->storage));
+      *reinterpret_cast<int64 *>(flag->storage) = StrToNumber<int64>(v);
       break;
     case U64:
-      mozc::NumberUtil::SafeStrToUInt64(
-          v, reinterpret_cast<uint64 *>(flag->storage));
+      *reinterpret_cast<uint64 *>(flag->storage) = StrToNumber<uint64>(v);
       break;
     case D:
-      *(reinterpret_cast<double *>(flag->storage)) = strtod(v.c_str(), NULL);
+      *reinterpret_cast<double *>(flag->storage) = strtod(v.c_str(), nullptr);
       break;
     case S:
-      *(reinterpret_cast<string *>(flag->storage)) = v;
+      *reinterpret_cast<string *>(flag->storage) = v;
       break;
     default:
       break;
