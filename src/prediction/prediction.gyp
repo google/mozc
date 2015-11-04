@@ -78,16 +78,16 @@
             ],
           },
           'inputs': [
-            'gen_embedded_string_array_for_zero_query.py',
+            'gen_zero_query_number_data.py',
+            'codegen_util_for_zero_query.py',
             '<@(input_files)',
           ],
           'outputs': [
             '<(gen_out_dir)/zero_query_number_data.h',
           ],
           'action': [
-            'python', 'gen_embedded_string_array_for_zero_query.py',
+            'python', 'gen_zero_query_number_data.py',
             '--input=<@(input_files)',
-            '--var_name=kZeroQueryNum',
             '--output=<(gen_out_dir)/zero_query_number_data.h',
           ],
           'message': 'Generating <(gen_out_dir)/zero_query_number_data.h',
@@ -102,21 +102,28 @@
         {
           'action_name': 'gen_zero_query_data',
           'variables': {
-            'input_files': [
-              '../data/zero_query/zero_query.def',
-            ],
+            'input_rule': '../data/zero_query/zero_query.def',
+            'input_symbol': '../data/symbol/symbol.tsv',
+            'input_emoji': '../data/emoji/emoji_data.tsv',
+            'input_emoticon': '../data/emoticon/categorized.tsv',
           },
           'inputs': [
-            'gen_embedded_string_array_for_zero_query.py',
-            '<@(input_files)',
+            'gen_zero_query_data.py',
+            'codegen_util_for_zero_query.py',
+            '<(input_rule)',
+            '<(input_symbol)',
+            '<(input_emoji)',
+            '<(input_emoticon)',
           ],
           'outputs': [
             '<(gen_out_dir)/zero_query_data.h',
           ],
           'action': [
-            'python', 'gen_embedded_string_array_for_zero_query.py',
-            '--input=<@(input_files)',
-            '--var_name=kZeroQueryData',
+            'python', 'gen_zero_query_data.py',
+            '--input_rule=<(input_rule)',
+            '--input_symbol=<(input_symbol)',
+            '--input_emoji=<(input_emoji)',
+            '--input_emoticon=<(input_emoticon)',
             '--output=<(gen_out_dir)/zero_query_data.h',
           ],
           'message': 'Generating <(gen_out_dir)/zero_query_data.h',

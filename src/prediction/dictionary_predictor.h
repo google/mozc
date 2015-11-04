@@ -35,22 +35,22 @@
 #include <vector>
 
 #include "base/util.h"
+#include "converter/connector.h"
+#include "converter/conversion_request.h"
+#include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/segmenter.h"
+#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/suggestion_filter.h"
+#include "prediction/zero_query_list.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
-
-class Connector;
-class ConversionRequest;
-class ConverterInterface;
-class ImmutableConverterInterface;
-class Segmenter;
-class Segments;
-class SuggestionFilter;
 
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
@@ -178,12 +178,6 @@ class DictionaryPredictor : public PredictorInterface {
                                          const Segments &segments,
                                          vector<Result> *results) const;
 
-  bool AggregateNumberZeroQueryPrediction(const Segments &segments,
-                                          vector<Result> *results) const;
-
-  bool AggregateZeroQueryPrediction(const Segments &segments,
-                                    vector<Result> *result) const;
-
   void ApplyPenaltyForKeyExpansion(const Segments &segments,
                                    vector<Result> *results) const;
 
@@ -220,11 +214,34 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, SetLMCost);
   FRIEND_TEST(DictionaryPredictorTest, SetDescription);
   FRIEND_TEST(DictionaryPredictorTest, SetDebugDescription);
+  FRIEND_TEST(DictionaryPredictorTest, GetZeroQueryCandidates);
+
+  // Looks up the given range and appends zero query candidate list for |key|
+  // to |results|.
+  // Returns false if there is no result for |key|.
+  static bool GetZeroQueryCandidatesForKey(const ConversionRequest &request,
+                                           const string &key,
+                                           const ZeroQueryList *begin,
+                                           const ZeroQueryList *end,
+                                           vector<string> *results);
+
+  static void AppendZeroQueryToResults(const vector<string> &candidates,
+                                       uint16 lid, uint16 rid,
+                                       vector<Result> *results);
 
   // Returns false if no results were aggregated.
   bool AggregatePrediction(const ConversionRequest &request,
                            Segments *segments,
                            vector<Result> *results) const;
+
+  bool AggregateNumberZeroQueryPrediction(const ConversionRequest &request,
+                                          const Segments &segments,
+                                          vector<Result> *results) const;
+
+  bool AggregateZeroQueryPrediction(const ConversionRequest &request,
+                                    const Segments &segments,
+                                    vector<Result> *result) const;
+
 
   void SetCost(const ConversionRequest &request,
                const Segments &segments, vector<Result> *results) const;
