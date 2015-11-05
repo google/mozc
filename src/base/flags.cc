@@ -41,6 +41,14 @@
 #include "base/singleton.h"
 
 namespace mozc_flags {
+
+struct Flag {
+  int type;
+  void *storage;
+  const void *default_storage;
+  string help;
+};
+
 namespace {
 
 typedef map<string, mozc_flags::Flag *> FlagMap;
@@ -108,34 +116,11 @@ inline bool StartsWith(const string &s, const string &prefix) {
 
 }  // namespace
 
-// TODO(noriyukit): Move this utility into anonymous namespace.
-class FlagUtil {
- public:
-  static void PrintFlags(string *output);
-
-  // Gets a pair of key and value from argv, and returns the number of
-  // arguments used for the pair of key and value.  If the argv
-  // contains invalid format, this function returns false and the
-  // number of checked arguments.  Otherwise returns true.
-  static bool CommandLineGetFlag(int argc,
-                                 char **argv,
-                                 string *key,
-                                 string *value,
-                                 int *used_args);
-};
-
-struct Flag {
-  int type;
-  void *storage;
-  const void *default_storage;
-  string help;
-};
-
 FlagRegister::FlagRegister(const char *name,
                            void *storage,
                            const void *default_storage,
                            int shorttpe,
-                           const char *help): flag_(new Flag) {
+                           const char *help) : flag_(new Flag) {
   flag_->type = shorttpe;
   flag_->storage = storage;
   flag_->default_storage = default_storage;
@@ -193,7 +178,11 @@ bool SetFlag(const string &name, const string &value) {
   return true;
 }
 
-void FlagUtil::PrintFlags(string *output) {
+namespace {
+
+#ifndef IGNORE_HELP_FLAG
+
+void PrintFlags(string *output) {
   ostringstream os;
   for (map<string, Flag *>::const_iterator it = GetFlagMap()->begin();
        it != GetFlagMap()->end(); ++it) {
@@ -232,11 +221,13 @@ void FlagUtil::PrintFlags(string *output) {
   *output = os.str();
 }
 
-bool FlagUtil::CommandLineGetFlag(int argc,
-                                  char **argv,
-                                  string *key,
-                                  string *value,
-                                  int *used_args) {
+#endif  // IGNORE_HELP_FLAG
+
+bool CommandLineGetFlag(int argc,
+                        char **argv,
+                        string *key,
+                        string *value,
+                        int *used_args) {
   key->clear();
   value->clear();
   *used_args = 0;
@@ -276,12 +267,14 @@ bool FlagUtil::CommandLineGetFlag(int argc,
   return true;
 }
 
+}  // namespace
+
 uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
   int used_argc = 0;
   string key, value;
   for (int i = 1; i < *argc; i += used_argc) {
-    if (!FlagUtil::CommandLineGetFlag(*argc - i, *argv + i,
-                                      &key, &value, &used_argc)) {
+    if (!CommandLineGetFlag(*argc - i, *argv + i,
+                            &key, &value, &used_argc)) {
       // TODO(komatsu): Do error handling
       continue;
     }
@@ -289,7 +282,7 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
     if (key == "help") {
 #ifndef IGNORE_HELP_FLAG
       string help;
-      FlagUtil::PrintFlags(&help);
+      PrintFlags(&help);
       cout << help;
       exit(0);
 #endif
