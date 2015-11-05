@@ -36,8 +36,11 @@
 #include <QtGui/QtGui>
 
 #ifdef OS_MACOSX
-#include <memory>
-#endif
+#include <cstdlib>
+#ifndef IGNORE_INVALID_FLAG
+#include <iostream>
+#endif  // IGNORE_INVALID_FLAG
+#endif  // OS_MACOSX
 
 #include "base/const.h"
 #include "base/crash_report_handler.h"
@@ -78,13 +81,20 @@ int RunPrelaunchProcesses(int argc, char *argv[]);
 
 #ifdef OS_MACOSX
 namespace {
-char *strdup_with_new(const char *str) {
-  const size_t len = strlen(str);
-  char *v = new char[len + 1];
-  memcpy(v, str, len);
-  v[len] = '\0';
-  return v;
+
+void SetFlagFromEnv(const string &key) {
+  const string flag_name = "FLAGS_" + key;
+  const char *env = getenv(flag_name.c_str());
+  if (env == nullptr) {
+    return;
+  }
+  if (!mozc_flags::SetFlag(key, env)) {
+#ifndef IGNORE_INVALID_FLAG
+    cerr << "Unknown/Invalid flag " << key << endl;
+#endif
+  }
 }
+
 }  // namespace
 #endif  // OS_MACOSX
 
@@ -93,20 +103,14 @@ int RunMozcTool(int argc, char *argv[]) {
     mozc::CrashReportHandler::Initialize(false);
   }
 #ifdef OS_MACOSX
-  // OSX's app won't accept command line flags.
-  // Here we read the flags by using --fromenv option
-  std::unique_ptr<char *[]> tmp(new char * [2]);
-  tmp[0] = strdup_with_new(argv[0]);
-  tmp[1] = strdup_with_new(
-       "--fromenv=mode,error_type,confirmation_type,register_prelauncher");
-  int new_argc = 2;
-  char **new_argv = tmp.get();
-  mozc::InitMozc(new_argv[0], &new_argc, &new_argv, false);
-  delete [] tmp[0];
-  delete [] tmp[1];
-#else  // OS_MACOSX
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  // OSX's app won't accept command line flags.  Here we preset flags from
+  // environment variables.
+  SetFlagFromEnv("mode");
+  SetFlagFromEnv("error_type");
+  SetFlagFromEnv("confirmation_type");
+  SetFlagFromEnv("register_prelauncher");
 #endif  // OS_MACOSX
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
 #ifdef OS_MACOSX
   // In Mac, we shares the same binary but changes the application

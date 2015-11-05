@@ -131,5 +131,27 @@ TEST_F(FlagsTest, NoValuesFlagsTest) {
   EXPECT_GT(0.6, FLAGS_test_double);
 }
 
+TEST_F(FlagsTest, SetFlag) {
+  mozc_flags::SetFlag("test_bool", "true");
+  EXPECT_TRUE(FLAGS_test_bool);
+  mozc_flags::SetFlag("test_bool", "false");
+  EXPECT_FALSE(FLAGS_test_bool);
+
+  mozc_flags::SetFlag("test_int32", "12345");
+  EXPECT_EQ(12345, FLAGS_test_int32);
+
+  mozc_flags::SetFlag("test_int64", "10000000000000000");
+  EXPECT_EQ(10000000000000000LL, FLAGS_test_int64);
+
+  mozc_flags::SetFlag("test_uint64", "50000000000000000");
+  EXPECT_EQ(50000000000000000LL, FLAGS_test_uint64);
+
+  mozc_flags::SetFlag("test_string", "Tokyo");
+  EXPECT_EQ("Tokyo", FLAGS_test_string);
+
+  mozc_flags::SetFlag("test_double", "3.14");
+  EXPECT_DOUBLE_EQ(3.14, FLAGS_test_double);
+}
+
 }  // namespace
 }  // namespace mozc
