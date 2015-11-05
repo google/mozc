@@ -44,7 +44,7 @@ template <LPARAM bit>
 bool BitwiseTest(LPARAM lParam) {
   return (lParam & bit) == bit;
 }
-}  // anonymous namespace
+}  // namespace
 
 const LPARAM kNotifyUpdateUI = 0x10000;
 const LPARAM kNotifyReconvertFromIME = 0x10001;

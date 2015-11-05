@@ -39,7 +39,7 @@ namespace {
 InputContext *AsContext(INPUTCONTEXT *context_pointer) {
   return reinterpret_cast<InputContext *>(context_pointer);
 }
-}  // anonymous namespace
+}  // namespace
 
 TEST(InputContextTest, InitializeTest) {
   // If the conversion mode is not initialized, initialize it with

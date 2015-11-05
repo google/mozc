@@ -55,7 +55,7 @@ bool IsHexadecimalDigit(wchar_t c) {
   }
   return false;
 }
-}  // anonymous namespace
+}  // namespace
 
 namespace mozc {
 namespace win32 {

@@ -142,7 +142,7 @@ bool RunReboot(const AuthorizationRef &auth) {
       auth, rebootPath, kAuthorizationFlagDefaults, args, nullptr);
   return status == errAuthorizationSuccess;
 }
-}  // anonymous namespace
+}  // namespace
 
 @implementation Uninstaller
 

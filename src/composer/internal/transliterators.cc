@@ -264,7 +264,7 @@ class FullAsciiTransliterator : public TransliteratorInterface {
   }
 };
 
-}  // anonymous namespace
+}  // namespace
 
 
 // static

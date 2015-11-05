@@ -117,7 +117,7 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
 
   return prelauncher_item;
 }
-}  // anonymous namespace
+}  // namespace
 
 string MacUtil::GetLabelForSuffix(const string &suffix) {
   return string(kProjectPrefix) + suffix;

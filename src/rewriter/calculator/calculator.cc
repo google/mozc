@@ -229,7 +229,7 @@ bool CalculatorImpl::CalculateTokens(const TokenSequence &tokens,
 }
 
 CalculatorInterface *g_calculator = NULL;
-}  // anonymous namespace
+}  // namespace
 
 CalculatorInterface *CalculatorFactory::GetCalculator() {
   if (g_calculator == NULL) {

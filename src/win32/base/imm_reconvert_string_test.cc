@@ -65,7 +65,7 @@ struct FixedReconvertString : public RECONVERTSTRING {
     dwTargetStrOffset = sizeof(wchar_t) * offset_in_chars;
   }
 };
-}  // anonymous namespace
+}  // namespace
 
 TEST(ReconvertStringTest, BasicTest) {
   FixedReconvertString reconvert_string;

@@ -197,7 +197,7 @@ bool TestGetChunkAt(Composition *comp,
   }
   return true;
 }
-}  // anonymous namespace
+}  // namespace
 
 TEST_F(CompositionTest, GetChunkAt) {
   InitComposition(composition_.get());
@@ -469,7 +469,7 @@ string GetDeletedString(Transliterators::Transliterator t12r,
   table.reset();
   return composition;
 }
-}  // anonymous namespace
+}  // namespace
 
 TEST_F(CompositionTest, DeleteAt) {
   // "あkyきったっty" is the original string
@@ -602,7 +602,7 @@ string GetInsertedString(Transliterators::Transliterator t12r,
 
   return composition;
 }
-}  // anonymous namespace
+}  // namespace
 
 TEST_F(CompositionTest, InsertAt) {
   // "あkyきったっty" is the original string

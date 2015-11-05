@@ -239,7 +239,7 @@ bool RemoveHotKey(HKL hkl) {
   }
   return succeeded;
 }
-}  // anonymous namespace
+}  // namespace
 
 HRESULT ImmRegistrar::Register(const wstring &ime_filename,
                                const wstring &layout_name,

@@ -68,7 +68,7 @@ bool IsFinite(double x) {
   return isfinite(x);
 #endif
 }
-}  // anonymous namespace
+}  // namespace
 
 // Contents of parser.h is manually inserted here.
 #define PLUS                            1

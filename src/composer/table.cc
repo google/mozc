@@ -414,7 +414,7 @@ TableAttributes ParseAttributes(const string &input) {
   }
   return attributes;
 }
-}  // anonymous namespace
+}  // namespace
 
 bool Table::LoadFromStream(istream *is) {
   DCHECK(is);
@@ -549,7 +549,7 @@ bool FindBlock(const string &input, const string &open, const string &close,
 
   return true;
 }
-}  // anonymous namespace
+}  // namespace
 
 // static
 string Table::ParseSpecialKey(const string &input) {

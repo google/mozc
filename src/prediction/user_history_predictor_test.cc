@@ -134,7 +134,7 @@ bool FindCandidateByValue(const string &value, const Segments &segments) {
   }
   return false;
 }
-}   // anonymous namespace
+}   // namespace
 
 class UserHistoryPredictorTest : public ::testing::Test {
  public:

@@ -526,7 +526,7 @@ void FillOutputForConversion(
     candidate_list->set_category(commands::CONVERSION);
   }
 }
-}  // anonymous namespace
+}  // namespace
 
 TEST(ImeCompositionStringTest, StartCompositionTest) {
   CompositionString compstr;

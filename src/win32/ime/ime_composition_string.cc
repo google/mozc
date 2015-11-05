@@ -52,7 +52,7 @@ const DWORD kResultUpdateFlags =
      GCS_RESULTCLAUSE);
 const DWORD kPreeditAndResultUpdateFlags =
     (kPreeditUpdateFlags | kResultUpdateFlags);
-}  // anonymous namespace
+}  // namespace
 
 bool CompositionString::Initialize() {
   ::ZeroMemory(this, sizeof(*this));

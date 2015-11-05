@@ -82,7 +82,7 @@ void VerifyRejection(const CalculatorInterface *calculator,
       << "expression: " << wrong_key << endl;
 }
 
-}  // anonymous namespace
+}  // namespace
 
 TEST(CalculatorTest, BasicTest) {
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();

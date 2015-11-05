@@ -188,7 +188,7 @@ struct mach_ipc_receive_message {
   mach_msg_trailer_t trailer;
 };
 
-}  // anonymous namespace
+}  // namespace
 
 // Client implementation
 IPCClient::IPCClient(const string &name)

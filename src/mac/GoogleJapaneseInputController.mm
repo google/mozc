@@ -149,7 +149,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   return bundleIdSet == nullptr || bundleId.empty() ||
       bundleIdSet->find(bundleId) != bundleIdSet->end();
 }
-}  // anonymous namespace
+}  // namespace
 
 
 @implementation GoogleJapaneseInputController

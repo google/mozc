@@ -118,7 +118,7 @@ void SetCharPosition(const IMECHARPOSITION &position,
   rect->set_bottom(position.rcDocument.bottom);
   rect->set_right(position.rcDocument.right);
 }
-}  // Anonymous namespace
+}  // namespace
 
 UIContext::UIContext(HIMC context_handle)
     : context_handle_(context_handle),

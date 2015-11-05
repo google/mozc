@@ -116,7 +116,7 @@ Rect GetWindowRectForMainWindowFromPreeditRectVertical(
 
   return window_rect;
 }
-}  // anonymous namespace
+}  // namespace
 
 Rect WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
     const Rect &preedit_rect, const Size &window_size,

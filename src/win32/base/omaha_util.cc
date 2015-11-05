@@ -62,7 +62,7 @@ LONG OpenClientStateKey(CRegKey *key, REGSAM base_sam) {
                      REG_NONE, REG_OPTION_NON_VOLATILE,
                      sam_desired);
 }
-}  // anonymous namespace
+}  // namespace
 
 // Writes a REG_SZ channel name into "ap" in Mozc's client state key.
 bool OmahaUtil::WriteChannel(const wstring &value) {

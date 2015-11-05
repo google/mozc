@@ -523,7 +523,7 @@ void GetComboboxForPreeditMethod(const QComboBox *combobox,
     config->set_use_keyboard_to_change_preedit_method(false);
   }
 }
-}  // anonymous namespace
+}  // namespace
 
 
 // TODO(taku)

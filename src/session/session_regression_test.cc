@@ -124,7 +124,7 @@ class AndroidInitializer {
 };
 #endif  // OS_ANDROID
 
-}  // anonymous namespace
+}  // namespace
 
 class SessionRegressionTest : public testing::Test {
  protected:

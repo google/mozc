@@ -20,7 +20,7 @@ bool IsFinite(double x) {
   return isfinite(x);
 #endif
 }
-}  // anonymous namespace
+}  // namespace
 
 #include "parser.h"
 

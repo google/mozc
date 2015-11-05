@@ -89,7 +89,7 @@ class MockHandwriting : public HandwritingInterface {
   int commit_counter_;
   HandwritingStatus return_status_;
 };
-}  // anonymous namespace
+}  // namespace
 
 class HandwritingManagerTest : public testing::Test {
  public:

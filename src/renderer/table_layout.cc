@@ -39,7 +39,7 @@ namespace renderer {
 namespace {
 // The minimum height of the indicator in the VScrollBar.
 const int kMinimumIndicatorHeight = 1;
-}  // anonymous namespace
+}  // namespace
 
 // ------------------------------------------------------------------------
 // Initializations

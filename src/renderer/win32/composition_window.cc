@@ -257,7 +257,7 @@ class CompositionWindowListImpl : public CompositionWindowList {
   vector<CompositionLineWindow *> line_windows_;
   DISALLOW_COPY_AND_ASSIGN(CompositionWindowListImpl);
 };
-}  // anonymous namespace
+}  // namespace
 
 CompositionWindowList *CompositionWindowList::CreateInstance() {
   return new CompositionWindowListImpl();

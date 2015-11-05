@@ -81,7 +81,7 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
   Output dummy_output;
   return command_sender->SendCommand(command, &dummy_output);
 }
-}  // anonymous namespace
+}  // namespace
 
 InfolistWindow::InfolistWindow()
     : lasttimer_(nullptr),

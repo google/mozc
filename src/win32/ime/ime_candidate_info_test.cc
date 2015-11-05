@@ -512,7 +512,7 @@ string ToUTF8(const wstring &wstr) {
   Util::WideToUTF8(wstr, &result);
   return result;
 }
-}  // anonymous namespace
+}  // namespace
 
 // Some games such as EMIL CHRONICLE ONLINE assumes that
 // CANDIDATELIST::dwPageSize never be zero nor grater than 10 despite that

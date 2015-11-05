@@ -92,7 +92,7 @@ QString GetEnv(const char *envname) {
   // TODO(team): Support other platforms.
   return "";
 }
-}  // anonymous namespace
+}  // namespace
 
 WordRegisterDialog::WordRegisterDialog()
     : is_available_(true),

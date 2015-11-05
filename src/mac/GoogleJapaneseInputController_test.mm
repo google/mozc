@@ -210,7 +210,7 @@ BOOL openURL_test(id self, SEL selector, NSURL *url) {
 NSArray *dummy_screens(id self, SEL selector) {
   return [NSArray arrayWithObject:[[[MockScreen alloc] init] autorelease]];
 }
-}  // anonymous namespace
+}  // namespace
 
 
 class MockRenderer : public mozc::renderer::RendererInterface {

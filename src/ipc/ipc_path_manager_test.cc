@@ -82,7 +82,7 @@ class BatchGetPathNameThread : public Thread {
     }
   }
 };
-}  // anonymous namespace
+}  // namespace
 
 class IPCPathManagerTest : public ::testing::Test {
  protected:

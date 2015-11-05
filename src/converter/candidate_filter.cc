@@ -80,7 +80,7 @@ const int   kStructureCostOffset     = 3453;
 const int   kMinStructureCostOffset  = 1151;
 const int32 kStopEnmerationCacheSize = 15;
 
-}  // anonymous namespace
+}  // namespace
 
 CandidateFilter::CandidateFilter(
     const SuppressionDictionary *suppression_dictionary,

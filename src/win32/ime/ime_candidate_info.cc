@@ -147,7 +147,7 @@ bool GetCandidateCount(HIMCC candidate_info_handle, DWORD *count) {
   ::ImmUnlockIMCC(candidate_info_handle);
   return result;
 }
-}  // anonymous namespace
+}  // namespace
 
 CandidateInfo::CandidateInfo()
     : candidate_info_size(0),

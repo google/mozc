@@ -105,7 +105,7 @@ int GetBaseScreenHeight() {
   return baseFrame.size.height;
 }
 
-}  // anonymous namespace
+}  // namespace
 
 
 CandidateController::CandidateController()

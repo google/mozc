@@ -1433,7 +1433,7 @@ const wchar_t *kCharTableMenuActive[] = {
   kNoCharGenKey,
   kNoCharGenKey,
 };
-}  // anonymous namespace
+}  // namespace
 
 wchar_t JapaneseKeyboardLayoutEmulator::GetCharacterForKeyDown(
     BYTE virtual_key,

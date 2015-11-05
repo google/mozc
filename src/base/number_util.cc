@@ -1214,7 +1214,7 @@ bool NormalizeNumbersInternal(StringPiece input,
   return true;
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 // Convert Kanji numbers into Arabic numbers:
 // e.g. "百二十万" -> 1200000

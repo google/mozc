@@ -430,7 +430,7 @@ bool GetServiceConfig(const ScopedSCHandle &service_handle,
   buf.swap(*result);
   return true;
 }
-}  // anonymous namespace
+}  // namespace
 
 bool CacheServiceManager::IsInstalled() {
   ScopedSCHandle service_handle;

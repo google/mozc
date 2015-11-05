@@ -36,7 +36,7 @@ namespace win32 {
 namespace {
 const BYTE kPressed = 0x80;
 const BYTE kToggled = 0x01;
-}  // anonymous namespace
+}  // namespace
 
 class ImeKeyboardTest : public testing::Test {
  protected:

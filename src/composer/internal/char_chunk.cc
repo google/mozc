@@ -106,7 +106,7 @@ bool GetFromPending(const Table *table, const string &key,
   }
   return true;
 }
-}  // anonymous namespace
+}  // namespace
 
 CharChunk::CharChunk(Transliterators::Transliterator transliterator,
                      const Table *table)

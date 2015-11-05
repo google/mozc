@@ -339,7 +339,7 @@ string ContextAwareConvert(const string &first_key,
 
   return segments.segment(segment_num).candidate(0).value;
 }
-}  // anonymous namespace
+}  // namespace
 
 TEST_F(ConverterTest, ContextAwareConversionTest) {
   // Desirable context aware conversions

@@ -91,7 +91,7 @@ void Init%(mapname)s() {
 
   def PrintFooter(self):
     print """}
-}  // anonymous namespace
+}  // namespace
 """ % {'mapname': self._mapname}
 
   def Print(self):

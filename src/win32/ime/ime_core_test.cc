@@ -163,7 +163,7 @@ class MockClient : public client::Client {
 
   DISALLOW_COPY_AND_ASSIGN(MockClient);
 };
-}  // anonymous namespace
+}  // namespace
 
 TEST(ImeCoreTest, OpenIME) {
   commands::Output mock_output;
@@ -373,7 +373,7 @@ const UIMessage kMsgCloseCandidate(WM_IME_NOTIFY,
 #define EXPECT_CLOSECANDIDATE_MSG(actual_msg)                               \
     EXPECT_UI_MSG(WM_IME_NOTIFY, IMN_CLOSECANDIDATE, kCandidateFormIndex,   \
                   (actual_msg))
-}  // anonymous namespace
+}  // namespace
 
 
 // Check UI message order for

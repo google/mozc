@@ -326,7 +326,7 @@ class PasswordManagerImpl {
   PasswordManagerInterface *password_manager_;
   Mutex mutex_;
 };
-}  // anonymous namespace
+}  // namespace
 
 bool PasswordManager::InitPassword() {
   return Singleton<PasswordManagerImpl>::get()->InitPassword();

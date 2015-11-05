@@ -41,7 +41,7 @@ bool kDefaultCandidateWindowActivated = false;
 // of the suggest window must be true.
 bool kDefaultSuggestWindowActivated = true;
 bool kDefaultCompositionWindowActivated = false;
-}  // anonymous namespace
+}  // namespace
 
 UIVisibilityTracker::UIVisibilityTracker()
     : ui_activated_(kDefaultUIActivated),
