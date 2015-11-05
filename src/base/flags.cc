@@ -39,7 +39,6 @@
 
 #include "base/port.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
 #include "base/util.h"
 
 namespace mozc_flags {
@@ -100,10 +99,21 @@ template <typename T> inline T StrToNumber(const string &s) {
 
 }  // namespace
 
+// TODO(noriyukit): Move this utility into anonymous namespace.
 class FlagUtil {
  public:
   static bool SetFlag(const string &name, const string &value);
   static void PrintFlags(string *output);
+
+  // Gets a pair of key and value from argv, and returns the number of
+  // arguments used for the pair of key and value.  If the argv
+  // contains invalid format, this function returns false and the
+  // number of checked arguments.  Otherwise returns true.
+  static bool CommandLineGetFlag(int argc,
+                                 char **argv,
+                                 string *key,
+                                 string *value,
+                                 int *used_args);
 };
 
 struct Flag {
@@ -214,13 +224,56 @@ void FlagUtil::PrintFlags(string *output) {
   *output = os.str();
 }
 
-uint32 ParseCommandLineFlags(int *argc, char*** argv,
-                             bool remove_flags) {
+bool FlagUtil::CommandLineGetFlag(int argc,
+                                  char **argv,
+                                  string *key,
+                                  string *value,
+                                  int *used_args) {
+  key->clear();
+  value->clear();
+  *used_args = 0;
+  if (argc < 1) {
+    return false;
+  }
+
+  *used_args = 1;
+  const char *start = argv[0];
+  if (start[0] != '-') {
+    return false;
+  }
+
+  ++start;
+  if (start[0] == '-') ++start;
+  const string arg = start;
+  const size_t n = arg.find("=");
+  if (n != string::npos) {
+    *key = arg.substr(0, n);
+    *value = arg.substr(n + 1, arg.size() - n);
+    return true;
+  }
+
+  key->assign(arg);
+  value->clear();
+
+  if (argc == 1) {
+    return true;
+  }
+  start = argv[1];
+  if (start[0] == '-') {
+    return true;
+  }
+
+  *used_args = 2;
+  value->assign(start);
+  return true;
+}
+
+uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
   int used_argc = 0;
   string key, value;
   for (int i = 1; i < *argc; i += used_argc) {
-    if (!mozc::SystemUtil::CommandLineGetFlag(*argc - i, *argv + i,
-                                              &key, &value, &used_argc)) {
+    if (!FlagUtil::CommandLineGetFlag(*argc - i, *argv + i,
+                                      &key, &value, &used_argc)) {
       // TODO(komatsu): Do error handling
       continue;
     }

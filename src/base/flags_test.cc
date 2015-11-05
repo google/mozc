@@ -29,9 +29,8 @@
 
 #include "base/flags.h"
 
-#include <string.h>
+#include <cstring>
 
-#include "base/util.h"
 #include "testing/base/public/gunit.h"
 
 DEFINE_string(test_string, "hogehoge", "test_string");
@@ -71,7 +70,7 @@ TEST_F(FlagsTest, FlagsBasicTest) {
   EXPECT_LT(0.4, FLAGS_test_double);
   EXPECT_GT(0.6, FLAGS_test_double);
 
-  char **argv = new char * [7];
+  char **argv = new char * [8];
   argv[0] = strdup_with_new("test");
   argv[1] = strdup_with_new("--test_int32=11214141");
   argv[2] = strdup_with_new("--test_string=test");
@@ -79,13 +78,16 @@ TEST_F(FlagsTest, FlagsBasicTest) {
   argv[4] = strdup_with_new("--test_double=1.5");
   argv[5] = strdup_with_new("--test_int64=8172141141413124");
   argv[6] = strdup_with_new("--test_uint64=9414041694169841");
-  int argc = 7;
-  mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
+  argv[7] = strdup_with_new("invalid_value");
+  int argc = 8;
+  const uint32 used_argc =
+      mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
   for (size_t i = 0; i < argc; ++i) {
     delete [] argv[i];
   }
   delete [] argv;
 
+  EXPECT_EQ(8u, used_argc);
   EXPECT_EQ(true, FLAGS_test_bool);
   EXPECT_EQ(11214141, FLAGS_test_int32);
   EXPECT_EQ(8172141141413124LL, FLAGS_test_int64);
@@ -111,12 +113,14 @@ TEST_F(FlagsTest, NoValuesFlagsTest) {
   argv[1] = strdup_with_new("--test_string");
   argv[2] = strdup_with_new("--test_bool");
   int argc = 3;
-  mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
+  const uint32 used_argc =
+      mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
   for (size_t i = 0; i < argc; ++i) {
     delete [] argv[i];
   }
   delete [] argv;
 
+  EXPECT_EQ(3u, used_argc);
   EXPECT_TRUE(FLAGS_test_bool);
   EXPECT_EQ("", FLAGS_test_string);
   // Following values are kept as default.
