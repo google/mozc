@@ -68,6 +68,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "prediction/zero_query_list.h"
 #include "session/request_test_util.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
@@ -3337,6 +3338,154 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
       FindCandidateByValue(segments.conversion_segment(0),
                            "\xe3\x83\x95\xe3\x82\xa3\xe3\x83\xab\xe3\x82"
                            "\xbf\xe3\x83\xbc\xe5\xaf\xbe\xe8\xb1\xa1"));
+}
+
+namespace {
+const char *kTestKey0 = "\xe3\x81\x82";  // "あ"
+const ZeroQueryEntry kTestValues0[] = {
+  // emoji exclamation
+  {ZERO_QUERY_EMOJI, "", EMOJI_DOCOMO | EMOJI_SOFTBANK, 0xfeb04},
+  {ZERO_QUERY_EMOJI, "\xE2\x9D\x95", EMOJI_UNICODE, 0xfeb0b},  // "❕"
+  {ZERO_QUERY_NONE, "\xE2\x9D\xA3", EMOJI_NONE, 0x0},  // "❣"
+};
+const char *kTestKey1 = "\xe3\x81\x82\xe3\x81\x82";  // "ああ"
+const ZeroQueryEntry kTestValues1[] = {
+  // "( •̀ㅁ•́;)"
+  {
+    ZERO_QUERY_EMOTICON,
+    "\x28\x20\xE2\x80\xA2\xCC\x80\xE3\x85\x81\xE2\x80\xA2\xCC\x81\x3B\x29",
+    EMOJI_NONE, 0x0
+  },
+};
+const ZeroQueryList kTestData_data[] = {
+  {kTestKey0, kTestValues0, 3},
+  {kTestKey1, kTestValues1, 1},
+};
+const size_t kTestData_size = 2;
+
+struct TestEntry {
+  int32 available_emoji_carrier;
+  string key;
+  bool expected_result;
+  vector<string> expected_candidates;
+
+  string DebugString() const {
+    string candidates;
+    Util::JoinStrings(expected_candidates, ", ", &candidates);
+    return Util::StringPrintf(
+        "available_emoji_carrier: %d\n"
+        "key: %s\n"
+        "expected_result: %d\n"
+        "expected_candidates: %s",
+        available_emoji_carrier,
+        key.c_str(),
+        expected_result,
+        candidates.c_str());
+  }
+};
+}  // namespace
+
+TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
+  vector<TestEntry> test_entries;
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = 0;
+    entry.key = "a";
+    entry.expected_result = false;
+    entry.expected_candidates.clear();
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = 0;
+    entry.key = "\xe3\x82\x93";  // "ん"
+    entry.expected_result = false;
+    entry.expected_candidates.clear();
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = 0;
+    entry.key = "\xe3\x81\x82\xe3\x81\x82";  // "ああ"
+    entry.expected_result = true;
+    entry.expected_candidates.push_back(
+        // "( •̀ㅁ•́;)"
+        "\x28\x20\xE2\x80\xA2\xCC\x80\xE3\x85\x81\xE2\x80\xA2\xCC\x81\x3B\x29");
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = 0;
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = commands::Request::UNICODE_EMOJI;
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    entry.expected_candidates.push_back("\xE2\x9D\x95");   // "❕"
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = commands::Request::DOCOMO_EMOJI;
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    string candidate;
+    Util::UCS4ToUTF8(0xfeb04, &candidate);  // exclamation
+    entry.expected_candidates.push_back(candidate);
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = commands::Request::KDDI_EMOJI;
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier =
+        (commands::Request::DOCOMO_EMOJI |
+         commands::Request::SOFTBANK_EMOJI |
+         commands::Request::UNICODE_EMOJI);
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    string candidate;
+    Util::UCS4ToUTF8(0xfeb04, &candidate);  // exclamation
+    entry.expected_candidates.push_back(candidate);
+    entry.expected_candidates.push_back("\xE2\x9D\x95");   // "❕"
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    test_entries.push_back(entry);
+  }
+
+  for (size_t i = 0; i < test_entries.size(); ++i) {
+    const TestEntry &test_entry = test_entries[i];
+
+    commands::Request client_request;
+    client_request.set_available_emoji_carrier(
+        test_entry.available_emoji_carrier);
+    composer::Table table;
+    composer::Composer composer(&table, &client_request);
+    const ConversionRequest request(&composer, &client_request);
+
+    vector<string> actual_candidates;
+    const bool actual_result =
+        DictionaryPredictor::GetZeroQueryCandidatesForKey(
+            request, test_entry.key,
+            kTestData_data, kTestData_data + kTestData_size,
+            &actual_candidates);
+    EXPECT_EQ(test_entry.expected_result, actual_result)
+        << test_entry.DebugString();
+    EXPECT_EQ(test_entry.expected_candidates, actual_candidates)
+        << test_entry.DebugString();
+  }
 }
 
 }  // namespace mozc

@@ -58,6 +58,7 @@
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_data.h"
+#include "prediction/zero_query_list.h"
 #include "prediction/zero_query_number_data.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -79,6 +80,9 @@ using mozc::dictionary::POSMatcher;
 using mozc::dictionary::Token;
 
 namespace mozc {
+
+using commands::Request;
+
 namespace {
 
 // Used to emulate positive infinity for cost. This value is set for those
@@ -93,34 +97,6 @@ const int kInfinity = (2 << 20);
 // Number of prediction calls should be minimized.
 const size_t kSuggestionMaxResultsSize = 256;
 const size_t kPredictionMaxResultsSize = 100000;
-
-void GetNumberSuffixArray(const string &history_input,
-                          vector<string> *suffixes) {
-  DCHECK(suffixes);
-  const char kDefault[] = "default";
-  const string default_str(kDefault);
-
-  int default_num = -1;
-  int suffix_num = -1;
-
-  for (int i = 0; i < kZeroQueryNum_size; ++i) {
-    if (default_str == kZeroQueryNum_data[i][0]) {
-      default_num = i;
-    } else if (history_input == kZeroQueryNum_data[i][0]) {
-      suffix_num = i;
-    }
-  }
-  DCHECK_GE(default_num, 0);
-
-  if (suffix_num != -1) {
-    for (int j = 1; kZeroQueryNum_data[suffix_num][j]; ++j) {
-      suffixes->push_back(kZeroQueryNum_data[suffix_num][j]);
-    }
-  }
-  for (int j = 1; kZeroQueryNum_data[default_num][j]; ++j) {
-    suffixes->push_back(kZeroQueryNum_data[default_num][j]);
-  }
-}
 
 // Returns true if the |target| may be reduncant result.
 bool MaybeRedundant(const string &reference, const string &target) {
@@ -168,9 +144,9 @@ bool IsTypingCorrectionEnabled() {
          FLAGS_enable_typing_correction;
 }
 
-struct ZeroQueryRuleCompare {
-  bool operator()(const char **lhs, const char **rhs) const {
-    return (strcmp(lhs[0], rhs[0]) < 0);
+struct ZeroQueryListCompare {
+  bool operator()(const ZeroQueryList &lhs, const ZeroQueryList &rhs) const {
+    return (strcmp(lhs.key, rhs.key) < 0);
   }
 };
 }  // namespace
@@ -507,8 +483,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     candidate->wcost = result.wcost;
     candidate->cost = result.cost;
     candidate->attributes = result.candidate_attributes;
-    if (!(candidate->attributes & Segment::Candidate::SPELLING_CORRECTION) &&
-        IsLatinInputMode(request)) {
+    if ((!(candidate->attributes & Segment::Candidate::SPELLING_CORRECTION) &&
+         IsLatinInputMode(request)) || (result.types & SUFFIX)) {
       candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
       candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
     }
@@ -1627,41 +1603,110 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
   }
 }
 
-// Returns true if we add zero query result.
-bool DictionaryPredictor::AggregateNumberZeroQueryPrediction(
-    const Segments &segments, vector<Result> *results) const {
-  string number_key;
-  if (!GetNumberHistory(segments, &number_key)) {
+// static
+bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
+    const ConversionRequest &request,
+    const string &key, const ZeroQueryList *begin, const ZeroQueryList *end,
+    vector<string> *results) {
+  const int32 available_emoji_carrier =
+      request.request().available_emoji_carrier();
+
+  DCHECK(results);
+  results->clear();
+  const ZeroQueryList key_item = {key.c_str(), NULL, 0};
+  const ZeroQueryList *result_rule =
+      lower_bound(begin, end, key_item, ZeroQueryListCompare());
+  if (result_rule == end || key != result_rule->key) {
     return false;
   }
 
-  // Use number suffixes and do not add normal zero query.
-  vector<string> suffixes;
-  GetNumberSuffixArray(number_key, &suffixes);
-  DCHECK_GT(suffixes.size(), 0);
+  for (size_t i = 0; i < result_rule->entries_size; ++i) {
+    const ZeroQueryEntry &entry = result_rule->entries[i];
+    if (entry.type != ZERO_QUERY_EMOJI) {
+      results->push_back(entry.value);
+      continue;
+    }
+    if (available_emoji_carrier & Request::UNICODE_EMOJI &&
+        entry.emoji_type & EMOJI_UNICODE) {
+      results->push_back(entry.value);
+      continue;
+    }
+
+    if ((available_emoji_carrier & Request::DOCOMO_EMOJI &&
+         entry.emoji_type & EMOJI_DOCOMO) ||
+        (available_emoji_carrier & Request::SOFTBANK_EMOJI &&
+         entry.emoji_type & EMOJI_SOFTBANK) ||
+        (available_emoji_carrier & Request::KDDI_EMOJI &&
+         entry.emoji_type & EMOJI_KDDI)) {
+      string android_pua;
+      Util::UCS4ToUTF8(entry.emoji_android_pua, &android_pua);
+      results->push_back(android_pua);
+    }
+  }
+  return !results->empty();
+}
+
+// static
+void DictionaryPredictor::AppendZeroQueryToResults(
+    const vector<string> &candidates, uint16 lid, uint16 rid,
+    vector<Result> *results) {
   int cost = 0;
 
-  for (size_t i = 0; i < suffixes.size(); ++i) {
-    const auto &suffix = suffixes[i];
+  for (size_t i = 0; i < candidates.size(); ++i) {
     // Increment cost to show the candidates in order.
     const int kSuffixPenalty = 10;
 
     results->push_back(Result());
     Result *result = &results->back();
     result->SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
-    result->key = suffix;
-    result->value = suffix;
+    result->key = candidates[i];
+    result->value = candidates[i];
     result->wcost = cost;
-    result->lid = counter_suffix_word_id_;
-    result->rid = counter_suffix_word_id_;
+    result->lid = lid;
+    result->rid = rid;
 
     cost += kSuffixPenalty;
   }
+}
+
+// Returns true if we add zero query result.
+bool DictionaryPredictor::AggregateNumberZeroQueryPrediction(
+    const ConversionRequest &request,
+    const Segments &segments, vector<Result> *results) const {
+  string number_key;
+  if (!GetNumberHistory(segments, &number_key)) {
+    return false;
+  }
+
+  vector<string> candidates_for_number_key;
+  GetZeroQueryCandidatesForKey(request,
+                               number_key,
+                               kZeroQueryNum_data,
+                               kZeroQueryNum_data + kZeroQueryNum_size,
+                               &candidates_for_number_key);
+
+  vector<string> default_candidates_for_number;
+  GetZeroQueryCandidatesForKey(request,
+                               "default",
+                               kZeroQueryNum_data,
+                               kZeroQueryNum_data + kZeroQueryNum_size,
+                               &default_candidates_for_number);
+  DCHECK(!default_candidates_for_number.empty());
+
+  AppendZeroQueryToResults(candidates_for_number_key,
+                           counter_suffix_word_id_,
+                           counter_suffix_word_id_,
+                           results);
+  AppendZeroQueryToResults(default_candidates_for_number,
+                           counter_suffix_word_id_,
+                           counter_suffix_word_id_,
+                           results);
   return true;
 }
 
 // Returns true if we add zero query result.
 bool DictionaryPredictor::AggregateZeroQueryPrediction(
+    const ConversionRequest &request,
     const Segments &segments, vector<Result> *results) const {
   const size_t history_size = segments.history_segments_size();
   if (history_size <= 0) {
@@ -1672,40 +1717,17 @@ bool DictionaryPredictor::AggregateZeroQueryPrediction(
   DCHECK_GT(last_segment.candidates_size(), 0);
   const string &history_value = last_segment.candidate(0).value;
 
-  const char *key_item[] = {history_value.c_str(), 0};
-  const char **key = key_item;
-  // kZeroQueryData_data is a 2-dimensional string array and
-  // sorted by the first string.
-  // For each string array, the first item is a key for zero query prediction,
-  // the rest items are candidates, and the last item is 0.
-  const char ***result_rule =
-      lower_bound(
-          kZeroQueryData_data, kZeroQueryData_data + kZeroQueryData_size,
-          key, ZeroQueryRuleCompare());
-  if (result_rule == (kZeroQueryData_data + kZeroQueryData_size) ||
-      history_value != (*result_rule)[0]) {
+  vector<string> candidates;
+  if (!GetZeroQueryCandidatesForKey(request,
+                                    history_value,
+                                    kZeroQueryData_data,
+                                    kZeroQueryData_data + kZeroQueryData_size,
+                                    &candidates)) {
     return false;
   }
 
-  int cost = 0;
-  for (int i = 1; (*result_rule)[i]; ++i) {
-    string candidate = (*result_rule)[i];
-
-    // Increment cost to show the candidates in order.
-    const int kPenalty = 10;
-
-    results->push_back(Result());
-    Result *result = &results->back();
-
-    result->SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
-    result->key = candidate;
-    result->value = candidate;
-    result->wcost = cost;
-    result->lid = 0;  // EOS
-    result->rid = 0;  // EOS
-
-    cost += kPenalty;
-  }
+  const uint16 kId = 0;  // EOS
+  AppendZeroQueryToResults(candidates, kId, kId, results);
   return true;
 }
 
@@ -1722,11 +1744,12 @@ void DictionaryPredictor::AggregateSuffixPrediction(
 
   const bool is_zero_query = segments.conversion_segment(0).key().empty();
   if (is_zero_query) {
-    if (AggregateNumberZeroQueryPrediction(segments, results)) {
+    if (AggregateNumberZeroQueryPrediction(request, segments, results)) {
       return;
     }
-    if (AggregateZeroQueryPrediction(segments, results)) {
-      return;
+    if (AggregateZeroQueryPrediction(request, segments, results)) {
+      // Fall through
+      // Appends normal suffix predictions
     }
     // Fall through
     // Use normal suffix predictions
