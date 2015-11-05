@@ -875,21 +875,6 @@ void Util::SubString(StringPiece src, size_t start, size_t length,
   substr.CopyToString(result);
 }
 
-bool Util::StartsWith(StringPiece str, StringPiece prefix) {
-  if (str.size() < prefix.size()) {
-    return false;
-  }
-  return (0 == memcmp(str.data(), prefix.data(), prefix.size()));
-}
-
-bool Util::EndsWith(StringPiece str, StringPiece suffix) {
-  if (str.size() < suffix.size()) {
-    return false;
-  }
-  return (0 == memcmp(str.data() + str.size() - suffix.size(),
-                      suffix.data(), suffix.size()));
-}
-
 void Util::StripUTF8BOM(string *line) {
   static const char kUTF8BOM[] = "\xef\xbb\xbf";
   if (line->substr(0, 3) == kUTF8BOM) {
