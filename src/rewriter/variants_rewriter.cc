@@ -36,10 +36,10 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
+#include "request/conversion_request.h"
 
 using mozc::config::CharacterFormManager;
 using mozc::dictionary::POSMatcher;

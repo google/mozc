@@ -38,8 +38,8 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #ifdef MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/packed/packed_data_manager.h"
 #include "data_manager/packed/packed_data_mock.h"

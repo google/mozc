@@ -37,10 +37,10 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
+#include "request/conversion_request.h"
 // For T13n normalize
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"

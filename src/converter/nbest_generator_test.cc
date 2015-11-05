@@ -37,7 +37,6 @@
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/conversion_request.h"
 #include "converter/immutable_converter.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
@@ -54,6 +53,7 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 

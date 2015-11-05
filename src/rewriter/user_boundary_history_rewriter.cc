@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/user_boundary_history_rewriter.h"
+
 #include <algorithm>
 #include <deque>
 #include <string>
@@ -38,12 +40,11 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/user_boundary_history_rewriter.h"
 #include "storage/lru_storage.h"
 #include "usage_stats/usage_stats.h"
 

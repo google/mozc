@@ -33,8 +33,8 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 

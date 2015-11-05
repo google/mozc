@@ -27,9 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "config/config_handler.h"
-#include "converter/conversion_request.h"
+#include "request/conversion_request.h"
+
 #include "base/logging.h"
+#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {

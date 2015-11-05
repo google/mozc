@@ -27,33 +27,19 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# request/ directory contains ConversionRequest class.  It specifies various
+# requests and conditions for conversions.
 {
-  'variables': {
-    'relative_mozc_dir': '',
-    'gen_out_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_mozc_dir)',
-  },
   'targets': [
     {
-      'target_name': 'converter',
+      'target_name': 'conversion_request',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_mozc_dir)/dictionary/pos_matcher.h',
-        'converter.cc',
+        'conversion_request.cc',
       ],
       'dependencies': [
-        '../composer/composer.gyp:composer',
-        '../data_manager/data_manager.gyp:user_pos_manager',
-        '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../prediction/prediction.gyp:prediction',
-        '../prediction/prediction.gyp:prediction_protocol',
+        '../base/base.gyp:base',
         '../protocol/protocol.gyp:commands_proto',
-        '../request/request.gyp:conversion_request',
-        '../rewriter/rewriter.gyp:rewriter',
-        '../usage_stats/usage_stats_base.gyp:usage_stats',
-        'converter_base.gyp:immutable_converter',
-        'converter_base.gyp:immutable_converter_interface',
-        'converter_base.gyp:segmenter',
-        'converter_base.gyp:segments',
       ],
     },
   ],

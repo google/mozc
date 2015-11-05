@@ -34,7 +34,6 @@
 
 #include "base/system_util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "data_manager/user_pos_manager.h"
@@ -43,6 +42,7 @@
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
