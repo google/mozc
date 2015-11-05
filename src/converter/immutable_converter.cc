@@ -44,7 +44,6 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/conversion_request.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
@@ -60,6 +59,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;

@@ -29,9 +29,9 @@
 
 #include "converter/quality_regression_util.h"
 
+#include <sstream>  // NOLINT
 #include <string>
 #include <vector>
-#include <sstream>  // NOLINT
 
 #include "base/file_stream.h"
 #include "base/logging.h"
@@ -41,10 +41,10 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace quality_regression {

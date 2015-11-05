@@ -36,7 +36,6 @@
 
 #include "base/util.h"
 #include "converter/connector.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
@@ -47,6 +46,7 @@
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_list.h"
+#include "request/conversion_request.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 

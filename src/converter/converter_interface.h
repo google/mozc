@@ -31,9 +31,10 @@
 #define MOZC_CONVERTER_CONVERTER_INTERFACE_H_
 
 #include <string>
+
 #include "base/port.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 

@@ -27,10 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/conversion_request.h"
+#include "rewriter/remove_redundant_candidate_rewriter.h"
+
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
-#include "rewriter/remove_redundant_candidate_rewriter.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

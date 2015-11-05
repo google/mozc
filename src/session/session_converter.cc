@@ -47,6 +47,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
 #include "session/session_usage_stats_util.h"

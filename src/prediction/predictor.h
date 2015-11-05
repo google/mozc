@@ -33,8 +33,8 @@
 #include <memory>
 #include <string>
 
-#include "converter/conversion_request.h"
 #include "prediction/predictor_interface.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 

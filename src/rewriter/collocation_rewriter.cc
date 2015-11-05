@@ -39,10 +39,10 @@
 #include "base/logging.h"
 #include "base/string_piece.h"
 #include "base/util.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
+#include "request/conversion_request.h"
 #include "rewriter/collocation_util.h"
 #include "storage/existence_filter.h"
 

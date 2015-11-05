@@ -37,8 +37,8 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
