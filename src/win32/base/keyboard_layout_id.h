@@ -83,10 +83,12 @@ class KeyboardLayoutID {
   // Set |id_| 'cleared'.
   void clear_id();
 
-private:
+ private:
   DWORD id_;
   bool  has_id_;
 };
+
 }  // namespace win32
 }  // namespace mozc
+
 #endif  // MOZC_WIN32_BASE_KEYBOARD_LAYOUT_ID_H_

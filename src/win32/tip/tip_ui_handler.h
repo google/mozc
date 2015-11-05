@@ -65,6 +65,7 @@ class TipUiHandler {
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiHandler);
 };

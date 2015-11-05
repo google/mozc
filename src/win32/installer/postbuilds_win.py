@@ -38,7 +38,6 @@ __author__ = "yukawa"
 import optparse
 import os
 import re
-import shutil
 import subprocess
 import sys
 

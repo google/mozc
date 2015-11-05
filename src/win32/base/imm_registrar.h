@@ -39,6 +39,7 @@
 
 namespace mozc {
 namespace win32 {
+
 // ImmRegistrar is used to register and unregister the IME in the system.
 // This class can only be used in administrators account.
 class ImmRegistrar {
@@ -91,10 +92,12 @@ class ImmRegistrar {
   // IME.
   // Returns S_OK if operation completes successfully.
   static HRESULT MovePreloadValueToTop(const KeyboardLayoutID &klid);
+
  private:
   ImmRegistrar() {}
   virtual ~ImmRegistrar() {}
 };
+
 }  // namespace win32
 }  // namespace mozc
 

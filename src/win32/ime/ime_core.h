@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_IME_IME_CORE_
-#define MOZC_WIN32_IME_IME_CORE_
+#ifndef MOZC_WIN32_IME_IME_CORE_H_
+#define MOZC_WIN32_IME_IME_CORE_H_
 
 #include <windows.h>
 
@@ -248,4 +248,4 @@ class ImeCore {
 
 }  // namespace win32
 }  // namespace mozc
-#endif  // MOZC_WIN32_IME_IME_CORE_
+#endif  // MOZC_WIN32_IME_IME_CORE_H_

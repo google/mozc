@@ -236,7 +236,8 @@ UINT RemovePreloadKeyByKLID(const mozc::win32::KeyboardLayoutID &klid) {
       klid, default_klid);
   return SUCCEEDED(result) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 }
-}
+
+}  // namespace
 
 BOOL APIENTRY DllMain(HMODULE module,
                       DWORD  ul_reason_for_call,

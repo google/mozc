@@ -305,7 +305,7 @@ bool FillCharPosition(TipPrivateContext *private_context,
     return false;
   }
 
-  RendererCommand::Point *top_left=
+  RendererCommand::Point *top_left =
       app_info->mutable_composition_target()->mutable_top_left();
   top_left->set_x(text_rect.left);
   top_left->set_y(text_rect.top);
@@ -313,7 +313,7 @@ bool FillCharPosition(TipPrivateContext *private_context,
   app_info->mutable_composition_target()->set_line_height(
       text_rect.bottom - text_rect.top);
 
-  RendererCommand::Rectangle *area=
+  RendererCommand::Rectangle *area =
       app_info->mutable_composition_target()->mutable_document_area();
   area->set_left(document_rect.left);
   area->set_top(document_rect.top);

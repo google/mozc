@@ -61,7 +61,7 @@ const GUID kSystemInputMode = {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 // {D8C8D5EB-8213-47CE-95B7-BA3F67757F94}
-const GUID kTipLangBarItem_Button= {
+const GUID kTipLangBarItem_Button = {
   0xd8c8d5eb, 0x8213, 0x47ce, {0x95, 0xb7, 0xba, 0x3f, 0x67, 0x75, 0x7f, 0x94}
 };
 
