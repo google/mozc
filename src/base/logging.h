@@ -76,10 +76,8 @@ class NullLogStream;
 
 class Logging {
  public:
-  // Initializes log stream. argv0 is the program name commonly
-  // storead as argv[0].
-  // The default log file is <USER_PROFILE>/<program_name>.log
-  static void           InitLogStream(const char *argv0 = "UNKNOWN");
+  // Initializes log stream with the output file path.
+  static void           InitLogStream(const string &log_file_path);
 
   // Closes the logging stream
   static void           CloseLogStream();

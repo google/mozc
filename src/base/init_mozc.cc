@@ -33,26 +33,45 @@
 #include <windows.h>
 #endif  // OS_WIN
 
+#include <string>
+
+#include "base/file_util.h"
 #include "base/flags.h"
 #include "base/init.h"
 #include "base/logging.h"
+#include "base/system_util.h"
 
 DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
 
-namespace mozc {
+// Even if log_dir is modified in the middle of the process, the
+// logging directory will not be changed because the logging stream is
+// initialized in the very early initialization stage.
+DEFINE_string(log_dir,
+              "",
+              "If specified, logfiles are written into this directory "
+              "instead of the default logging directory.");
 
-#ifdef OS_WIN
+namespace mozc {
 namespace {
 
+#ifdef OS_WIN
 LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
   // Currently, we haven't found a good way to perform both
   // "send mininump" and "exit the process gracefully".
   ::ExitProcess(static_cast<UINT>(-1));
   return EXCEPTION_EXECUTE_HANDLER;
 }
+#endif  // OS_WIN
+
+string GetLogFilePathFromProgramName(const string &program_name) {
+  const string dirname = FLAGS_log_dir.empty()
+                         ? SystemUtil::GetLoggingDirectory()
+                         : FLAGS_log_dir;
+  const string basename = FileUtil::Basename(program_name) + ".log";
+  return FileUtil::JoinPath(dirname, basename);
+}
 
 }  // namespace
-#endif  // OS_WIN
 
 void InitMozc(const char *arg0, int *argc, char ***argv, bool remove_flags) {
 #ifdef OS_WIN
@@ -66,11 +85,8 @@ void InitMozc(const char *arg0, int *argc, char ***argv, bool remove_flags) {
   FLAGS_program_invocation_name = *argv[0];
   mozc_flags::ParseCommandLineFlags(argc, argv, remove_flags);
 
-  if (*argc > 0) {
-    Logging::InitLogStream((*argv)[0]);
-  } else {
-    Logging::InitLogStream();
-  }
+  const string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
+  Logging::InitLogStream(GetLogFilePathFromProgramName(program_name));
 
   RunInitializers();
 }

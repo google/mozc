@@ -55,24 +55,14 @@
 #endif  // OS_ANDROID
 #include "base/clock.h"
 #include "base/file_stream.h"
-#include "base/file_util.h"
 #include "base/flags.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
 
 DEFINE_bool(colored_log, true, "Enables colored log messages on tty devices");
 DEFINE_bool(logtostderr,
             false,
             "log messages go to stderr instead of logfiles");
-
-// Even if log_dir is modified in the middle of the process, the
-// logging directory will not be changed because the logging stream is
-// initialized in the very early initialization stage.
-DEFINE_string(log_dir,
-              "",
-              "If specified, logfiles are written into this directory "
-              "instead of the default logging directory.");
 DEFINE_int32(v, 0, "verbose level");
 
 namespace mozc {
@@ -157,7 +147,7 @@ string Logging::GetLogMessageHeader() {
 
 #ifdef NO_LOGGING
 
-void Logging::InitLogStream(const char *argv0) {
+void Logging::InitLogStream(const string &log_file_path) {
 }
 
 void Logging::CloseLogStream() {
@@ -199,7 +189,10 @@ namespace {
 
 class LogStreamImpl {
  public:
-  void Init(const char *argv0);
+  LogStreamImpl();
+  ~LogStreamImpl();
+
+  void Init(const string &log_file_path);
   void Close();
 
   ostream *stream() {
@@ -224,9 +217,6 @@ class LogStreamImpl {
     return support_color_;
   }
 
-  LogStreamImpl();
-  virtual ~LogStreamImpl();
-
  private:
   ostream *stream_;
   int config_verbose_level_;
@@ -238,7 +228,7 @@ LogStreamImpl::LogStreamImpl()
     : stream_(NULL), config_verbose_level_(0), support_color_(false) {
 }
 
-void LogStreamImpl::Init(const char *argv0) {
+void LogStreamImpl::Init(const string &log_file_path) {
   scoped_lock l(&mutex_);
   if (stream_ != NULL) {
     return;
@@ -261,20 +251,9 @@ void LogStreamImpl::Init(const char *argv0) {
     // framework.
     stream_ = new ostringstream();
 #else
-#ifdef OS_WIN
-    const char *slash = ::strrchr(argv0, '\\');
-#else
-    const char *slash = ::strrchr(argv0, '/');
-#endif
-    const char *program_name = (slash == NULL) ? argv0 : slash + 1;
-    const string log_base = string(program_name) + ".log";
-    const string log_dir =
-        FLAGS_log_dir.empty() ? SystemUtil::GetLoggingDirectory() :
-                                FLAGS_log_dir;
-    const string filename = FileUtil::JoinPath(log_dir, log_base);
-    stream_ = new OutputFileStream(filename.c_str(), ios::app);
+    stream_ = new OutputFileStream(log_file_path.c_str(), ios::app);
 #ifndef OS_WIN
-    ::chmod(filename.c_str(), 0600);
+    ::chmod(log_file_path.c_str(), 0600);
 #endif
 #endif  // OS_ANDROID
   }
@@ -282,7 +261,6 @@ void LogStreamImpl::Init(const char *argv0) {
 
   *stream_ << "Log file created at: "
            << Logging::GetLogMessageHeader() << endl;
-  *stream_ << "Program name: " << argv0 << endl;
 }
 
 void LogStreamImpl::Close() {
@@ -299,8 +277,8 @@ LogStreamImpl::~LogStreamImpl() {
 }
 }  // namespace
 
-void Logging::InitLogStream(const char *argv0) {
-  Singleton<LogStreamImpl>::get()->Init(argv0);
+void Logging::InitLogStream(const string &log_file_path) {
+  Singleton<LogStreamImpl>::get()->Init(log_file_path);
 }
 
 void Logging::CloseLogStream() {

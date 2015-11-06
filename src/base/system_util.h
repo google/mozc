@@ -121,22 +121,6 @@ class SystemUtil {
   static bool EnsureVitalImmutableDataIsAvailable();
 #endif  // OS_WIN
 
-  // Command line arguments
-
-  // Rotate the first argv value to the end of argv.
-  static void CommandLineRotateArguments(int argc, char ***argv);
-
-  // Get a pair of key and value from argv, and returns the number of
-  // arguments used for the pair of key and value.  If the argv
-  // contains invalid format, this function returns false and the
-  // number of checked arguments.  Otherwise returns true.
-  static bool CommandLineGetFlag(int argc,
-                                 char **argv,
-                                 string *key,
-                                 string *value,
-                                 int *used_args);
-
-
   // Return true if the OS is supported.
   // [OS_MACOSX] This function never returns false.
   // [OS_LINUX] This function never returns false.

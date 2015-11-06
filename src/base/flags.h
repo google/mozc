@@ -57,8 +57,9 @@ class FlagRegister {
 };
 
 uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags);
+bool SetFlag(const string &key, const string &value);
 
-}  // mozc_flags
+}  // namespace mozc_flags
 
 #define DEFINE_VARIABLE(type, shorttype, name, value, help) \
 namespace mozc_flags_fL##shorttype { \

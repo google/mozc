@@ -697,56 +697,6 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
 }
 #endif  // OS_WIN
 
-void SystemUtil::CommandLineRotateArguments(int argc, char ***argv) {
-  char *arg = **argv;
-  memmove(*argv, *argv + 1, (argc - 1) * sizeof(**argv));
-  (*argv)[argc - 1] = arg;
-}
-
-bool SystemUtil::CommandLineGetFlag(int argc,
-                                    char **argv,
-                                    string *key,
-                                    string *value,
-                                    int *used_args) {
-  key->clear();
-  value->clear();
-  *used_args = 0;
-  if (argc < 1) {
-    return false;
-  }
-
-  *used_args = 1;
-  const char *start = argv[0];
-  if (start[0] != '-') {
-    return false;
-  }
-
-  ++start;
-  if (start[0] == '-') ++start;
-  const string arg = start;
-  const size_t n = arg.find("=");
-  if (n != string::npos) {
-    *key = arg.substr(0, n);
-    *value = arg.substr(n + 1, arg.size() - n);
-    return true;
-  }
-
-  key->assign(arg);
-  value->clear();
-
-  if (argc == 1) {
-    return true;
-  }
-  start = argv[1];
-  if (start[0] == '-') {
-    return true;
-  }
-
-  *used_args = 2;
-  value->assign(start);
-  return true;
-}
-
 bool SystemUtil::IsPlatformSupported() {
 #if defined(OS_MACOSX)
   // TODO(yukawa): support Mac.

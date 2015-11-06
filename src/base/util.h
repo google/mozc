@@ -241,10 +241,14 @@ class Util {
   }
 
   // Determines whether the beginning of |str| matches |prefix|.
-  static bool StartsWith(StringPiece str, StringPiece prefix);
+  static bool StartsWith(StringPiece str, StringPiece prefix) {
+    return str.starts_with(prefix);
+  }
 
   // Determines whether the end of |str| matches |suffix|.
-  static bool EndsWith(StringPiece str, StringPiece suffix);
+  static bool EndsWith(StringPiece str, StringPiece suffix) {
+    return str.ends_with(suffix);
+  }
 
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static void StripUTF8BOM(string *line);

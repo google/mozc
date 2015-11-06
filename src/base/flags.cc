@@ -30,8 +30,8 @@
 
 #include "base/flags.h"
 
-#include <cstdlib>  // for getenv
 #include <cstring>
+#include <iostream>
 #include <map>
 #include <sstream>
 #include <string>
@@ -39,10 +39,16 @@
 
 #include "base/port.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
-#include "base/util.h"
 
 namespace mozc_flags {
+
+struct Flag {
+  int type;
+  void *storage;
+  const void *default_storage;
+  string help;
+};
+
 namespace {
 
 typedef map<string, mozc_flags::Flag *> FlagMap;
@@ -90,7 +96,7 @@ template <> struct StrToNumberImpl<unsigned long> {                   // NOLINT
 
 template <> struct StrToNumberImpl<unsigned long long> {  // NOLINT
   static unsigned long long Do(const string &s) {         // NOLINT
-    return std::stoull(s);
+    return stoull(s);
   }
 };
 
@@ -98,26 +104,23 @@ template <typename T> inline T StrToNumber(const string &s) {
   return StrToNumberImpl<T>::Do(s);
 }
 
+#if defined(DEBUG) || defined(OS_MACOSX)
+// Defines std::string version of StringPiece::starts_with here to make flags
+// module from independent of string_piece.cc because StringPiece depends on
+// logging.cc etc. and using it causes cyclic dependency.
+inline bool StartsWith(const string &s, const string &prefix) {
+  return s.size() >= prefix.size() &&
+         memcmp(s.data(), prefix.data(), prefix.size()) == 0;
+}
+#endif  // defined(DEBUG) || defined(OS_MACOSX)
+
 }  // namespace
-
-class FlagUtil {
- public:
-  static bool SetFlag(const string &name, const string &value);
-  static void PrintFlags(string *output);
-};
-
-struct Flag {
-  int type;
-  void *storage;
-  const void *default_storage;
-  string help;
-};
 
 FlagRegister::FlagRegister(const char *name,
                            void *storage,
                            const void *default_storage,
                            int shorttpe,
-                           const char *help): flag_(new Flag) {
+                           const char *help) : flag_(new Flag) {
   flag_->type = shorttpe;
   flag_->storage = storage;
   flag_->default_storage = default_storage;
@@ -129,7 +132,7 @@ FlagRegister::~FlagRegister() {
   delete flag_;
 }
 
-bool FlagUtil::SetFlag(const string &name, const string &value) {
+bool SetFlag(const string &name, const string &value) {
   map<string, Flag *>::iterator it = GetFlagMap()->find(name);
   if (it == GetFlagMap()->end()) return false;
   string v = value;
@@ -175,7 +178,11 @@ bool FlagUtil::SetFlag(const string &name, const string &value) {
   return true;
 }
 
-void FlagUtil::PrintFlags(string *output) {
+namespace {
+
+#ifndef IGNORE_HELP_FLAG
+
+void PrintFlags(string *output) {
   ostringstream os;
   for (map<string, Flag *>::const_iterator it = GetFlagMap()->begin();
        it != GetFlagMap()->end(); ++it) {
@@ -214,43 +221,68 @@ void FlagUtil::PrintFlags(string *output) {
   *output = os.str();
 }
 
-uint32 ParseCommandLineFlags(int *argc, char*** argv,
-                             bool remove_flags) {
+#endif  // IGNORE_HELP_FLAG
+
+bool CommandLineGetFlag(int argc,
+                        char **argv,
+                        string *key,
+                        string *value,
+                        int *used_args) {
+  key->clear();
+  value->clear();
+  *used_args = 0;
+  if (argc < 1) {
+    return false;
+  }
+
+  *used_args = 1;
+  const char *start = argv[0];
+  if (start[0] != '-') {
+    return false;
+  }
+
+  ++start;
+  if (start[0] == '-') ++start;
+  const string arg = start;
+  const size_t n = arg.find("=");
+  if (n != string::npos) {
+    *key = arg.substr(0, n);
+    *value = arg.substr(n + 1, arg.size() - n);
+    return true;
+  }
+
+  key->assign(arg);
+  value->clear();
+
+  if (argc == 1) {
+    return true;
+  }
+  start = argv[1];
+  if (start[0] == '-') {
+    return true;
+  }
+
+  *used_args = 2;
+  value->assign(start);
+  return true;
+}
+
+}  // namespace
+
+uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
   int used_argc = 0;
   string key, value;
   for (int i = 1; i < *argc; i += used_argc) {
-    if (!mozc::SystemUtil::CommandLineGetFlag(*argc - i, *argv + i,
-                                              &key, &value, &used_argc)) {
+    if (!CommandLineGetFlag(*argc - i, *argv + i,
+                            &key, &value, &used_argc)) {
       // TODO(komatsu): Do error handling
-      continue;
-    }
-
-    if (key == "fromenv") {
-      vector<string> keys;
-      mozc::Util::SplitStringUsing(value, ",", &keys);
-      for (size_t j = 0; j < keys.size(); ++j) {
-        if (keys[j].empty() || keys[j] == "fromenv") {
-          continue;
-        }
-        string env_key = "FLAGS_";
-        env_key += keys[j];
-        const char *env_value = getenv(env_key.c_str());
-        if (env_value == NULL) {
-          continue;
-        }
-        if (!FlagUtil::SetFlag(keys[j], env_value)) {
-#ifndef IGNORE_INVALID_FLAG
-          cerr << "Unknown/Invalid flag " << key << endl;
-#endif
-        }
-      }
       continue;
     }
 
     if (key == "help") {
 #ifndef IGNORE_HELP_FLAG
       string help;
-      FlagUtil::PrintFlags(&help);
+      PrintFlags(&help);
       cout << help;
       exit(0);
 #endif
@@ -259,19 +291,18 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
     // Ignores unittest specific commandline flags.
     // In the case of Release build, IGNORE_INVALID_FLAG macro is set, so that
     // following condition makes no sense.
-    if (mozc::Util::StartsWith(key, "gtest_") ||
-        mozc::Util::StartsWith(key, "gunit_")) {
+    if (StartsWith(key, "gtest_") || StartsWith(key, "gunit_")) {
       continue;
     }
 #endif  // DEBUG
 #ifdef OS_MACOSX
     // Mac OSX specifies process serial number like -psn_0_217141.
     // Let's ignore it.
-    if (mozc::Util::StartsWith(key, "psn_")) {
+    if (StartsWith(key, "psn_")) {
       continue;
     }
 #endif
-    if (!FlagUtil::SetFlag(key, value)) {
+    if (!SetFlag(key, value)) {
 #ifndef IGNORE_INVALID_FLAG
       cerr << "Unknown/Invalid flag " << key << endl;
       exit(1);

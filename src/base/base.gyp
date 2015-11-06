@@ -103,17 +103,14 @@
         'clock.cc',
         'file_stream.cc',
         'file_util.cc',
-        'flags.cc',
         'hash.cc',
         'init.cc',
         'init_mozc.cc',
         'japanese_util_rule.cc',
         'logging.cc',
         'mmap.cc',
-        'mutex.cc',
         'number_util.cc',
         'scoped_handle.cc',
-        'singleton.cc',
         'string_piece.cc',
         'system_util.cc',
         'text_normalizer.cc',
@@ -123,8 +120,11 @@
         'win_util.cc',
       ],
       'dependencies': [
+        'flags',
         'gen_character_set#host',
         'gen_version_def#host',
+        'mutex',
+        'singleton',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -161,6 +161,36 @@
             'pepper_file_util.cc',
           ],
         }],
+      ],
+    },
+    {
+      'target_name': 'mutex',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'mutex.cc',
+      ]
+    },
+    {
+      'target_name': 'singleton',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'singleton.cc',
+      ],
+      'dependencies': [
+        'mutex',
+      ],
+    },
+    {
+      'target_name': 'flags',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'flags.cc',
+      ],
+      'dependencies': [
+        'singleton',
       ],
     },
     {
