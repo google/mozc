@@ -35,6 +35,7 @@
 
 #include "base/android_jni_proxy.h"
 #include "base/android_util.h"
+#include "base/file_util.h"
 #include "base/scheduler.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -196,7 +197,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
      return JNI_EVERSION;
   }
 
-  mozc::Logging::InitLogStream("libmozc.so");
+  mozc::Logging::InitLogStream(
+      mozc::FileUtil::JoinPath(mozc::SystemUtil::GetLoggingDirectory(),
+                               "libmozc.so.log"));
   return JNI_VERSION_1_6;
 }
 
