@@ -29,10 +29,17 @@
 
 #include "base/file_stream.h"
 
+#ifdef OS_WIN
+#include <codecvt>
+#include <locale>
+#endif  // OS_WIN
+
+#include <string>
+
 #ifdef MOZC_USE_PEPPER_FILE_IO
+#include "base/logging.h"
 #include "base/pepper_file_util.h"
 #endif  // MOZC_USE_PEPPER_FILE_IO
-#include "base/util.h"
 
 namespace mozc {
 
@@ -98,6 +105,25 @@ void OutputFileStream::close() {
 
 # else  // MOZC_USE_PEPPER_FILE_IO
 
+namespace {
+
+#ifdef OS_WIN
+const wstring ToPlatformString(const char* filename) {
+  // Since Windows uses UTF-16 for internationalized file names, we should
+  // convert the encoding of the given |filename| from UTF-8 to UTF-16.
+  // NOTE: To avoid circular dependency, |Util::UTF8ToWide| shouldn't be used
+  // here.
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
+  return utf8_to_wide.from_bytes(filename);
+}
+#else  // OS_WIN
+const string ToPlatformString(const char* filename) {
+  return string(filename);
+}
+#endif  // OS_WIN or not
+
+}  // namespace
+
 InputFileStream::InputFileStream() {}
 
 InputFileStream::InputFileStream(const char* filename,
@@ -106,16 +132,7 @@ InputFileStream::InputFileStream(const char* filename,
 }
 
 void InputFileStream::open(const char* filename, ios_base::openmode mode) {
-#if defined(OS_WIN)
-  // Since Windows uses UTF-16 for internationalized file names, we should
-  // convert the encoding of the given |filename| from UTF-8 to UTF-16.
-  wstring filename_wide;
-  if (Util::UTF8ToWide(filename, &filename_wide) > 0) {
-    ifstream::open(filename_wide.c_str(), mode);
-  }
-#else
-  ifstream::open(filename, mode);
-#endif
+  ifstream::open(ToPlatformString(filename), mode);
 }
 
 OutputFileStream::OutputFileStream() {}
@@ -126,16 +143,7 @@ OutputFileStream::OutputFileStream(const char* filename,
 }
 
 void OutputFileStream::open(const char* filename, ios_base::openmode mode) {
-#if defined(OS_WIN)
-  // Since Windows uses UTF-16 for internationalized file names, we should
-  // convert the encoding of the given |filename| from UTF-8 to UTF-16.
-  wstring filename_wide;
-  if (Util::UTF8ToWide(filename, &filename_wide) > 0) {
-    ofstream::open(filename_wide.c_str(), mode);
-  }
-#else
-  ofstream::open(filename, mode);
-#endif
+  ofstream::open(ToPlatformString(filename), mode);
 }
 #endif  // MOZC_USE_PEPPER_FILE_IO
 
