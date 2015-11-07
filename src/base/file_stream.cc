@@ -108,7 +108,7 @@ void OutputFileStream::close() {
 namespace {
 
 #ifdef OS_WIN
-const wstring ToPlatformString(const char* filename) {
+wstring ToPlatformString(const char* filename) {
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |filename| from UTF-8 to UTF-16.
   // NOTE: To avoid circular dependency, |Util::UTF8ToWide| shouldn't be used
@@ -117,7 +117,7 @@ const wstring ToPlatformString(const char* filename) {
   return utf8_to_wide.from_bytes(filename);
 }
 #else  // OS_WIN
-const string ToPlatformString(const char* filename) {
+string ToPlatformString(const char* filename) {
   return string(filename);
 }
 #endif  // OS_WIN or not
