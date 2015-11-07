@@ -535,8 +535,8 @@ void CharacterFormManagerImpl::AddRule(
   // use vector because set is slower.
   // group table is used in SaveCharacterFormToStorage and this will be called
   // everytime user submits conversion.
-  sort(group.begin(), group.end());
-  vector<uint16>::iterator last = unique(group.begin(), group.end());
+  std::sort(group.begin(), group.end());
+  vector<uint16>::iterator last = std::unique(group.begin(), group.end());
   group.erase(last, group.end());
 
   for (size_t i = 0; i < group.size(); ++i) {

@@ -69,7 +69,7 @@ class StateTable {
         compressed_table_[i] = it->second;
       } else {
         compressed_table_[i] = id;
-        dup.insert(make_pair(idarray_[i], id));
+        dup.insert(std::make_pair(idarray_[i], id));
         ++id;
       }
     }
@@ -103,20 +103,20 @@ class StateTable {
     //
     // if (compressed_size_ < 256) {
     //   // trivial compression -- use uint8 if possible
-    //   *os << "const uint8 " << name << "[] = {" << endl;
+    //   *os << "const uint8 " << name << "[] = {" << std::endl;
     // } else {
-    //   *os << "const uint16 " << name << "[] = {" << endl;
+    //   *os << "const uint16 " << name << "[] = {" << std::endl;
     // }
 
-    *os << "const uint16 " << name << "[] = {" << endl;
+    *os << "const uint16 " << name << "[] = {" << std::endl;
     for (size_t i = 0; i < compressed_table_.size(); ++i) {
       *os << compressed_table_[i];
       if (i < compressed_table_.size() - 1) {
         *os << ",";
       }
-      *os << endl;
+      *os << std::endl;
     }
-    *os << "};" << endl;
+    *os << "};" << std::endl;
   }
 
  private:
@@ -211,8 +211,10 @@ void SegmenterBitarrayGenerator::GenerateBitarray(int lsize, int rsize,
   mozc::OutputFileStream ofs(output_file.c_str());
   CHECK(ofs);
 
-  ofs << "const size_t kCompressedLSize = " << kCompressedLSize << ";" << endl;
-  ofs << "const size_t kCompressedRSize = " << kCompressedRSize << ";" << endl;
+  ofs << "const size_t kCompressedLSize = " << kCompressedLSize << ";"
+      << std::endl;
+  ofs << "const size_t kCompressedRSize = " << kCompressedRSize << ";"
+      << std::endl;
   ltable.Output("kCompressedLIDTable", &ofs);
   rtable.Output("kCompressedRIDTable", &ofs);
 

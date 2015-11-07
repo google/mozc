@@ -69,7 +69,7 @@ bool InputMultiFile::OpenNext() {
     if (!ifs_->fail()) {
       return true;
     }
-    LOG(ERROR) << "Cannot open " << filename << endl;
+    LOG(ERROR) << "Cannot open " << filename << std::endl;
   }
   ifs_.reset();
   return false;

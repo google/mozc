@@ -109,9 +109,9 @@ class QualityRegressionTest : public testing::Test {
       line.append("\tActual: ").append(actual_value);
       if (test_result) {
         // use "-1.0" as a dummy expected ratio
-        (*table)[label].push_back(make_pair(-1.0, line));
+        (*table)[label].push_back(std::make_pair(-1.0, line));
       } else {
-        (*table)[label].push_back(make_pair(item.accuracy, line));
+        (*table)[label].push_back(std::make_pair(item.accuracy, line));
       }
     }
 
@@ -131,7 +131,7 @@ class QualityRegressionTest : public testing::Test {
       map<string, vector<pair<float, string>>> *results) {
     for (auto it = results->begin(); it != results->end(); ++it) {
       vector<pair<float, string>> *values = &it->second;
-      sort(values->begin(), values->end());
+      std::sort(values->begin(), values->end());
       size_t correct = 0;
       bool all_passed = true;
       for (const auto &value : *values) {

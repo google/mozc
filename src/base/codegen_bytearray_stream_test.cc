@@ -316,7 +316,7 @@ TEST_F(CodeGenByteArrayStreamTest, CloseDoubly) {
 
 TEST_F(CodeGenByteArrayStreamTest, FlushBeforeOpen) {
   EXPECT_TRUE(codegen_stream_->good());
-  *codegen_stream_ << "hello, world" << endl;
+  *codegen_stream_ << "hello, world" << std::endl;
   EXPECT_FALSE(codegen_stream_->good());
 }
 

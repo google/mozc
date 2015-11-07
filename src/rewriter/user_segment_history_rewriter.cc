@@ -941,7 +941,7 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
     return false;
   }
 
-  stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
+  std::stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
   return SortCandidates(scores, segment);
 }
 
@@ -1018,7 +1018,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
       continue;
     }
 
-    stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
+    std::stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
     modified |= SortCandidates(scores, segment);
   }
   return modified;

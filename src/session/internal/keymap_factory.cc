@@ -51,7 +51,7 @@ KeyMapManager *KeyMapFactory::GetKeyMapManager(
   if (iter == keymaps_.end()) {
     // create new instance
     KeyMapManager *manager = pool_.Alloc();
-    iter = keymaps_.insert(make_pair(keymap, manager)).first;
+    iter = keymaps_.insert(std::make_pair(keymap, manager)).first;
   }
 
   iter->second->ReloadWithKeymap(keymap);

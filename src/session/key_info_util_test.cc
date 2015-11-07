@@ -75,7 +75,7 @@ TEST(KeyInfoUtilTest, ExtractSortedDirectModeKeys) {
   PushKey("Ctrl j", &expected);
   PushKey("Ctrl k", &expected);
   PushKey("Ctrl l", &expected);
-  sort(expected.begin(), expected.end());
+  std::sort(expected.begin(), expected.end());
 
   ASSERT_EQ(expected.size(), actual.size());
   for (size_t i = 0; i < expected.size(); ++i) {
@@ -89,7 +89,7 @@ TEST(KeyInfoUtilTest, ContainsKey) {
   PushKey("Ctrl j", &direct_mode_keys);
   PushKey("Ctrl k", &direct_mode_keys);
   PushKey("Ctrl l", &direct_mode_keys);
-  sort(direct_mode_keys.begin(), direct_mode_keys.end());
+  std::sort(direct_mode_keys.begin(), direct_mode_keys.end());
 
   {
     KeyEvent key;

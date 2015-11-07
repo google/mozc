@@ -169,11 +169,10 @@ void Lattice::SetKey(StringPiece key) {
   end_nodes_.resize(size + 4);
   cache_info_.resize(size + 4);
 
-  fill(begin_nodes_.begin(), begin_nodes_.end(),
-       static_cast<Node *>(NULL));
-  fill(end_nodes_.begin(), end_nodes_.end(),
-       static_cast<Node *>(NULL));
-  fill(cache_info_.begin(), cache_info_.end(), 0);
+  std::fill(begin_nodes_.begin(), begin_nodes_.end(),
+            static_cast<Node *>(NULL));
+  std::fill(end_nodes_.begin(), end_nodes_.end(), static_cast<Node *>(NULL));
+  std::fill(cache_info_.begin(), cache_info_.end(), 0);
 
   end_nodes_[0] = InitBOSNode(this,
                               static_cast<uint16>(0));
@@ -286,10 +285,10 @@ void Lattice::AddSuffix(const string &suffix_key) {
   begin_nodes_.resize(new_size + 4);
   end_nodes_.resize(new_size + 4);
 
-  fill(begin_nodes_.begin() + old_size, begin_nodes_.end(),
-       static_cast<Node *>(NULL));
-  fill(end_nodes_.begin() + old_size + 1, end_nodes_.end(),
-       static_cast<Node *>(NULL));
+  std::fill(begin_nodes_.begin() + old_size, begin_nodes_.end(),
+            static_cast<Node *>(NULL));
+  std::fill(end_nodes_.begin() + old_size + 1, end_nodes_.end(),
+            static_cast<Node *>(NULL));
 
   end_nodes_[0] = InitBOSNode(this,
                               static_cast<uint16>(0));
@@ -346,7 +345,7 @@ void Lattice::ShrinkKey(const size_t new_len) {
   for (size_t i = 0; i < new_len; ++i) {
     cache_info_[i] = min(cache_info_[i], new_len - i);
   }
-  fill(cache_info_.begin() + new_len, cache_info_.end(), 0);
+  std::fill(cache_info_.begin() + new_len, cache_info_.end(), 0);
 
   // update key
   key_.erase(new_len);
@@ -434,7 +433,7 @@ string Lattice::DebugString() const {
   // Print the best path
   os << "Best path: ";
   os << GetDebugStringForPath(node);
-  os << endl;
+  os << std::endl;
 
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
 
@@ -461,14 +460,15 @@ string Lattice::DebugString() const {
                               info->display_node_str_)) {
         continue;
       }
-      os << "The path " << GetDebugStringForPath(prev_node) <<
-          " ( + connection cost + wcost: " << best_path_node->wcost << ")"
-         << endl << "was defeated"
-         << " by the path " << endl
+      os << "The path " << GetDebugStringForPath(prev_node)
+         << " ( + connection cost + wcost: " << best_path_node->wcost << ")"
+         << std::endl
+         << "was defeated"
+         << " by the path " << std::endl
          << GetDebugStringForPath(best_path_node->prev)
          << " connecting to the node "
          << GetDebugStringForNode(best_path_node, best_path_node->prev)
-         << endl;
+         << std::endl;
     }
   }
 

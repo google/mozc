@@ -104,8 +104,8 @@ bool LookupKanjiList(const string &key, vector<string> *kanji_list) {
   SingleKanjiList key_item;
   key_item.key = key.c_str();
   const SingleKanjiList *result =
-      lower_bound(kSingleKanjis, kSingleKanjis + arraysize(kSingleKanjis),
-                  key_item, SingleKanjiListCompare());
+      std::lower_bound(kSingleKanjis, kSingleKanjis + arraysize(kSingleKanjis),
+                       key_item, SingleKanjiListCompare());
   if (result == (kSingleKanjis + arraysize(kSingleKanjis)) ||
       key.compare(result->key) != 0) {
     return false;
@@ -127,9 +127,9 @@ void GenerateDescription(const string &key, string *desc) {
   DCHECK(desc);
   KanjiVariantItem key_item;
   key_item.target = key.c_str();
-  const KanjiVariantItem *result =
-      lower_bound(kKanjiVariants, kKanjiVariants + arraysize(kKanjiVariants),
-                  key_item, KanjiVariantItemCompare());
+  const KanjiVariantItem *result = std::lower_bound(
+      kKanjiVariants, kKanjiVariants + arraysize(kKanjiVariants), key_item,
+      KanjiVariantItemCompare());
   if (result == (kKanjiVariants + arraysize(kKanjiVariants)) ||
       key.compare(result->target) != 0) {
     return;

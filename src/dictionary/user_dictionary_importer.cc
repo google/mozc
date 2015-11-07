@@ -133,8 +133,8 @@ bool ConvertEntryInternal(
   key.mozc_pos = static_cast<UserDictionary::PosType>(0);
 
   // Search for mapping for the given POS.
-  const POSMap *found = lower_bound(pos_map, pos_map + map_size,
-                                    key, POSMapCompare());
+  const POSMap *found =
+      std::lower_bound(pos_map, pos_map + map_size, key, POSMapCompare());
   if (found == pos_map + map_size ||
       strcmp(found->source_pos, key.source_pos) != 0) {
     LOG(WARNING) << "Invalid POS is passed: " << from.pos;

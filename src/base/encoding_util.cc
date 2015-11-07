@@ -59,7 +59,7 @@ bool IconvHelper(iconv_t ic, const string &input, string *output) {
   char *ibuf = const_cast<char *>(input.data());
   char *obuf_org = const_cast<char *>(tmp.data());
   char *obuf = obuf_org;
-  fill(obuf, obuf + olen, 0);
+  std::fill(obuf, obuf + olen, 0);
   size_t olen_org = olen;
   iconv(ic, 0, &ilen, 0, &olen);  // reset iconv state
   while (ilen != 0) {

@@ -83,8 +83,8 @@ EmbeddedDictionary::Lookup(const string &key) const {
   key_token.key = key.c_str();
   key_token.value = NULL;
   key_token.value_size = 0;
-  const Token *result = lower_bound(token_, token_ + size_,
-                                    key_token, TokenCompare());
+  const Token *result =
+      std::lower_bound(token_, token_ + size_, key_token, TokenCompare());
   if (result == (token_ + size_) || key != result->key) {
     return NULL;
   }
@@ -125,13 +125,13 @@ void EmbeddedDictionary::Compile(const string &name,
   }
 
   ofs << "static const mozc::EmbeddedDictionary::Value k" << name
-      << "_value[] = {" << endl;
+      << "_value[] = {" << std::endl;
 
   size_t value_size = 0;
   for (map<string, vector<CompilerToken> >::iterator it = dic.begin();
        it != dic.end(); ++it) {
     vector<CompilerToken> &vec = it->second;
-    sort(vec.begin(), vec.end(), CompareByCost());
+    std::sort(vec.begin(), vec.end(), CompareByCost());
     for (size_t i = 0; i < vec.size(); ++i) {
       string escaped;
       Util::Escape(vec[i].value, &escaped);
@@ -149,31 +149,31 @@ void EmbeddedDictionary::Compile(const string &name,
         ofs << " \"" << escaped << "\", ";
       }
       ofs << vec[i].lid << ", " << vec[i].rid << ", " << vec[i].cost << " },";
-      ofs << endl;
+      ofs << std::endl;
       ++value_size;
     }
   }
-  ofs << "  { NULL, NULL, NULL, 0, 0, 0 }" << endl;
-  ofs << "};" << endl;
+  ofs << "  { NULL, NULL, NULL, 0, 0, 0 }" << std::endl;
+  ofs << "};" << std::endl;
 
-  ofs << "static const size_t k" << name << "_token_size = "
-      << dic.size() << ";" << endl;
+  ofs << "static const size_t k" << name << "_token_size = " << dic.size()
+      << ";" << std::endl;
 
   ofs << "static const mozc::EmbeddedDictionary::Token k" << name
-      << "_token_data[] = {" << endl;
+      << "_token_data[] = {" << std::endl;
 
   size_t offset = 0;
   for (map<string, vector<CompilerToken> >::const_iterator it = dic.begin();
        it != dic.end(); ++it) {
     string escaped;
     Util::Escape(it->first, &escaped);
-    ofs << "  { \"" << escaped << "\", k" << name << "_value + "
-        << offset << ", " << it->second.size() << "}," << endl;
+    ofs << "  { \"" << escaped << "\", k" << name << "_value + " << offset
+        << ", " << it->second.size() << "}," << std::endl;
     offset += it->second.size();
   }
-  ofs << "  { NULL, " << "k" << name << "_value, " << value_size << " }"
-      << endl;
+  ofs << "  { NULL, "
+      << "k" << name << "_value, " << value_size << " }" << std::endl;
 
-  ofs << "};" << endl;
+  ofs << "};" << std::endl;
 };
 }  // namespace mozc

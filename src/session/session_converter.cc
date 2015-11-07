@@ -944,8 +944,8 @@ void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
   // Clears selected index of a focused segment and trailing segments.
   // TODO(hsumita): Keep the indices if the segment type is FIXED_VALUE.
   selected_candidate_indices_.resize(segments_->conversion_segments_size());
-  fill(selected_candidate_indices_.begin() + segment_index_ + 1,
-       selected_candidate_indices_.end(), 0);
+  std::fill(selected_candidate_indices_.begin() + segment_index_ + 1,
+            selected_candidate_indices_.end(), 0);
   UpdateSelectedCandidateIndex();
 }
 

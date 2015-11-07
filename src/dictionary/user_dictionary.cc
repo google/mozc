@@ -190,7 +190,7 @@ MOZC_CLANG_POP_WARNING();
     }
 
     // Sort first by key and then by POS ID.
-    sort(this->begin(), this->end(), OrderByKeyThenById());
+    std::sort(this->begin(), this->end(), OrderByKeyThenById());
 
     suppression_dictionary_->UnLock();
 
@@ -328,8 +328,8 @@ void UserDictionary::LookupPredictive(
   // Find the starting point of iteration over dictionary contents.
   UserPOS::Token key_token;
   key.CopyToString(&key_token.key);
-  vector<UserPOS::Token *>::const_iterator it =
-      lower_bound(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  vector<UserPOS::Token *>::const_iterator it = std::lower_bound(
+      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   Token token;
   for (; it != tokens_->end(); ++it) {
@@ -377,8 +377,8 @@ void UserDictionary::LookupPrefix(
   // Find the starting point for iteration over dictionary contents.
   UserPOS::Token key_token;
   key_token.key.assign(key.data(), Util::OneCharLen(key.data()));
-  vector<UserPOS::Token *>::const_iterator it =
-      lower_bound(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  vector<UserPOS::Token *>::const_iterator it = std::lower_bound(
+      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   Token token;
   for (; it != tokens_->end(); ++it) {
@@ -423,8 +423,8 @@ void UserDictionary::LookupExact(StringPiece key, Callback *callback) const {
   UserPOS::Token key_token;
   key.CopyToString(&key_token.key);
   typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
-  pair<TokenIterator, TokenIterator> range =
-      equal_range(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  pair<TokenIterator, TokenIterator> range = std::equal_range(
+      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
   if (range.first == range.second) {
     return;
   }
@@ -466,8 +466,8 @@ bool UserDictionary::LookupComment(StringPiece key, StringPiece value,
   UserPOS::Token key_token;
   key.CopyToString(&key_token.key);
   typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
-  pair<TokenIterator, TokenIterator> range =
-      equal_range(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  pair<TokenIterator, TokenIterator> range = std::equal_range(
+      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   // Set the comment that was found first.
   for (; range.first != range.second; ++range.first) {

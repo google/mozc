@@ -96,7 +96,7 @@ template <> struct StrToNumberImpl<unsigned long> {                   // NOLINT
 
 template <> struct StrToNumberImpl<unsigned long long> {  // NOLINT
   static unsigned long long Do(const string &s) {         // NOLINT
-    return stoull(s);
+    return std::stoull(s);
   }
 };
 

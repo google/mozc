@@ -162,7 +162,7 @@ void SessionUsageObserver::EvalCreateSession(
   state.set_created_time(GetTimeInMilliSecond());
   // TODO(toshiyuki): LRU?
   if (states->size() <= kMaxSession) {
-    states->insert(make_pair(output.id(), state));
+    states->insert(std::make_pair(output.id(), state));
   }
 }
 

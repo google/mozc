@@ -194,7 +194,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
   //   2. Accessing all the tokens that have the same value: Since tokens are
   //      also sorted in order of value, this can be done by finding a range of
   //      tokens that have the same value.
-  sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
+  std::sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
 
   vector<Token *> reading_correction_tokens;
   LoadReadingCorrectionTokens(reading_correction_filename, tokens_,
@@ -234,7 +234,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
 
     // Filter the entry if this key value pair already exists in the system
     // dictionary.
-    if (binary_search(
+    if (std::binary_search(
             MakeIteratorAdapter(ref_sorted_tokens.begin(), AsValueAndKey()),
             MakeIteratorAdapter(ref_sorted_tokens.end(), AsValueAndKey()),
             value_key)) {
@@ -249,7 +249,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     typedef vector<Token *>::const_iterator TokenIterator;
     typedef IteratorAdapter<TokenIterator, AsValue> AsValueIterator;
     typedef pair<AsValueIterator, AsValueIterator> Range;
-    Range range = equal_range(
+    Range range = std::equal_range(
         MakeIteratorAdapter(CBegin(ref_sorted_tokens), AsValue()),
         MakeIteratorAdapter(CEnd(ref_sorted_tokens), AsValue()),
         value_key.first);

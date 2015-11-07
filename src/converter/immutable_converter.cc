@@ -1119,10 +1119,10 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
       const int rid = lnode->rid;
       BestMap::value_type key(rid, kInvalidValue);
       BestMap::iterator iter =
-          lower_bound(lbest.begin(), lbest.end(), key, OrderByFirst());
+          std::lower_bound(lbest.begin(), lbest.end(), key, OrderByFirst());
       if (iter == lbest.end() || iter->first != rid) {
         lbest.insert(
-            iter, BestMap::value_type(rid, make_pair(lnode->cost, lnode)));
+            iter, BestMap::value_type(rid, std::make_pair(lnode->cost, lnode)));
       } else if (lnode->cost < iter->second.first) {
         iter->second.first = lnode->cost;
         iter->second.second = lnode;
@@ -1141,7 +1141,7 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
       }
       BestMap::value_type key(rnode->lid, kInvalidValue);
       BestMap::iterator iter =
-          lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
+          std::lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
       if (iter == rbest.end() || iter->first != rnode->lid) {
         rbest.insert(iter, key);
       }
@@ -1170,7 +1170,7 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
       }
       BestMap::value_type key(rnode->lid, kInvalidValue);
       BestMap::iterator iter =
-          lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
+          std::lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
       if (iter == rbest.end() || iter->first != rnode->lid ||
           iter->second.second == NULL) {
         continue;

@@ -100,8 +100,8 @@ bool IMEActivationKeyCustomized() {
     }
     set<string> keymap_table;
     ExtractActivationKeys(ifs.get(), &keymap_table);
-    if (includes(keymap_table.begin(), keymap_table.end(),
-                 customized.begin(), customized.end())) {
+    if (std::includes(keymap_table.begin(), keymap_table.end(),
+                      customized.begin(), customized.end())) {
       // customed keymap is subset of preset keymap
       return false;
     }

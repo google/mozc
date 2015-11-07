@@ -12,16 +12,6 @@
 #include <string.h>
 #include <math.h>
 
-namespace {
-bool IsFinite(double x) {
-#ifdef OS_WIN
-  return _finite(x);
-#else
-  return isfinite(x);
-#endif
-}
-}  // namespace
-
 #include "parser.h"
 
 struct Result {

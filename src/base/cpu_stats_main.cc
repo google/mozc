@@ -72,12 +72,11 @@ int main(int argc, char **argv) {
   }
 
   mozc::CPUStats stats;
-  cout << "NumberOfProcessors: "
-       << stats.GetNumberOfProcessors() << endl;
+  std::cout << "NumberOfProcessors: " << stats.GetNumberOfProcessors()
+            << std::endl;
   for (int i = 0; i < FLAGS_iterations; ++i) {
-    cout << "CPUStats: "
-         << stats.GetSystemCPULoad() << " "
-         << stats.GetCurrentProcessCPULoad() << endl;
+    std::cout << "CPUStats: " << stats.GetSystemCPULoad() << " "
+              << stats.GetCurrentProcessCPULoad() << std::endl;
     mozc::Util::Sleep(FLAGS_polling_duration);
   }
 

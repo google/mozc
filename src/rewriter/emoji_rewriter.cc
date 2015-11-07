@@ -281,11 +281,11 @@ bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
 
 const EmojiRewriter::Token *EmojiRewriter::LookUpToken(const string &key)
     const {
-  const Token *token = lower_bound(
-      MakeIteratorAdapter(token_list_, GetTokenKey()),
-      MakeIteratorAdapter(token_list_ + token_size_, GetTokenKey()),
-      key.c_str(),
-      ConstCharPtrLess()).base();
+  const Token *token =
+      std::lower_bound(
+          MakeIteratorAdapter(token_list_, GetTokenKey()),
+          MakeIteratorAdapter(token_list_ + token_size_, GetTokenKey()),
+          key.c_str(), ConstCharPtrLess()).base();
   if (token == token_list_ + token_size_ || token->key != key) {
     // Not found.
     return NULL;

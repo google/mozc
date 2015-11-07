@@ -94,7 +94,7 @@ void SuffixDictionary::LookupPredictive(
     bool,  // use_kana_modifier_insensitive_lookup
     Callback *callback) const {
   typedef IteratorAdapter<const SuffixToken *, SuffixTokenKeyAdapter> Iter;
-  pair<Iter, Iter> range = equal_range(
+  pair<Iter, Iter> range = std::equal_range(
       MakeIteratorAdapter(suffix_tokens_, SuffixTokenKeyAdapter()),
       MakeIteratorAdapter(suffix_tokens_ + suffix_tokens_size_,
                           SuffixTokenKeyAdapter()),

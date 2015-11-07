@@ -85,9 +85,8 @@ bool Version::CompareVersion(const string &lhs, const string &rhs) {
   Util::SplitStringUsing(lhs, ".", &vlhs);
   vector<string> vrhs;
   Util::SplitStringUsing(rhs, ".", &vrhs);
-  return lexicographical_compare(vlhs.begin(), vlhs.end(),
-                                 vrhs.begin(), vrhs.end(),
-                                 StringAsIntegerComparator);
+  return std::lexicographical_compare(vlhs.begin(), vlhs.end(), vrhs.begin(),
+                                      vrhs.end(), StringAsIntegerComparator);
 }
 
 Version::BuildType Version::GetMozcBuildType() {

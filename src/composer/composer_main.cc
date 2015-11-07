@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
   string command;
   string left, focused, right;
 
-  while (getline(cin, command)) {
+  while (getline(std::cin, command)) {
     if (command == "<") {
       composer->MoveCursorLeft();
     } else if (command == "<<") {
@@ -84,6 +84,6 @@ int main(int argc, char **argv) {
       composer->InsertCharacter(command);
     }
     composer->GetPreedit(&left, &focused, &right);
-    cout << left << "[" << focused << "]" << right << endl;
+    std::cout << left << "[" << focused << "]" << right << std::endl;
   }
 }

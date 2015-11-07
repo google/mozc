@@ -56,16 +56,16 @@ int main(int argc, char **argv) {
 
   switch (run_level) {
     case mozc::RunLevel::NORMAL:
-      cout << "NORMAL" << endl;
+      std::cout << "NORMAL" << std::endl;
       break;
     case mozc::RunLevel::RESTRICTED:
-      cout << "RESTRICTED" << endl;
+      std::cout << "RESTRICTED" << std::endl;
       break;
     case mozc::RunLevel::DENY:
-      cout << "DENY" << endl;
+      std::cout << "DENY" << std::endl;
       break;
     default:
-      cout << "UNKNOWN" << endl;
+      std::cout << "UNKNOWN" << std::endl;
       break;
   }
 

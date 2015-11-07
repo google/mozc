@@ -1788,9 +1788,8 @@ bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
     for (size_t j = 0; j < output.size(); ++j) {
       // "元徳", "建武" and "明徳" require dedupe
       const string value(output[j].value + kNenValue);
-      vector<string>::const_iterator found = find(results->begin(),
-                                                  results->end(),
-                                                  value);
+      vector<string>::const_iterator found =
+          std::find(results->begin(), results->end(), value);
       if (found != results->end()) {
         continue;
       }

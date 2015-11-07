@@ -65,7 +65,7 @@ void Convert() {
     entries.push_back(line);
   }
 
-  ostream *ofs = &cout;
+  ostream *ofs = &std::cout;
   if (!FLAGS_output.empty()) {
     if (FLAGS_binary_mode) {
       ofs = new OutputFileStream(FLAGS_output.c_str(), ios::out | ios::binary);
@@ -81,7 +81,7 @@ void Convert() {
     OutputExistenceHeader(entries, kNameSpace, ofs, FLAGS_error_rate);
   }
 
-  if (ofs != &cout) {
+  if (ofs != &std::cout) {
     delete ofs;
   }
 }

@@ -177,7 +177,7 @@ string GetBasicStats(const vector<uint32> times) {
 
   if (!times.empty()) {
     vector<uint32> tmp(times);
-    sort(tmp.begin(), tmp.end());
+    std::sort(tmp.begin(), tmp.end());
     med_time = tmp[tmp.size() / 2];
   }
 
@@ -270,12 +270,12 @@ void CreatePredictionKeys(PredictionRequestType type,
   }
   switch (type) {
     case ONE_CHAR:
-      copy(one_chars.begin(), one_chars.end(),
-           back_inserter(*request_keys));
+      std::copy(one_chars.begin(), one_chars.end(),
+                back_inserter(*request_keys));
       break;
     case TWO_CHARS:
-      copy(two_chars.begin(), two_chars.end(),
-           back_inserter(*request_keys));
+      std::copy(two_chars.begin(), two_chars.end(),
+                back_inserter(*request_keys));
       break;
     default:
       break;
@@ -385,19 +385,19 @@ int main(int argc, char **argv) {
 
   CHECK_EQ(results.size(), tests.size());
 
-  ostream *ofs = &cout;
+  ostream *ofs = &std::cout;
   if (!FLAGS_log_path.empty()) {
     ofs = new mozc::OutputFileStream(FLAGS_log_path.c_str());
   }
 
   // TODO(taku): generate histogram with ChartAPI
   for (size_t i = 0; i < tests.size(); ++i) {
-    (*ofs) << results[i]->test_name << ": " <<
-        mozc::GetBasicStats(results[i]->operations_times) << endl;
+    (*ofs) << results[i]->test_name << ": "
+           << mozc::GetBasicStats(results[i]->operations_times) << std::endl;
     delete tests[i];
     delete results[i];
   }
-  if (ofs != &cout) {
+  if (ofs != &std::cout) {
     delete ofs;
   }
 

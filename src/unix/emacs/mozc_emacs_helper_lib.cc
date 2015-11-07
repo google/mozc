@@ -204,7 +204,7 @@ void PrintMessage(
 string NormalizeSymbol(const string &symbol) {
   string s = symbol;
   mozc::Util::LowerString(&s);
-  replace(s.begin(), s.end(), '_', '-');
+  std::replace(s.begin(), s.end(), '_', '-');
   return s;
 }
 

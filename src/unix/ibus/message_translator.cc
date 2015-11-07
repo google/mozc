@@ -125,7 +125,7 @@ LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
     DCHECK(mapping.message);
     DCHECK(mapping.translated);
     utf8_japanese_map_.insert(
-        make_pair(mapping.message, mapping.translated));
+        std::make_pair(mapping.message, mapping.translated));
   }
 }
 

@@ -309,7 +309,7 @@ class UserDictionaryTest : public ::testing::Test {
     for (size_t i = 0; i < size; ++i) {
       encoded_items.push_back(EncodeEntry(array[i]));
     }
-    sort(encoded_items.begin(), encoded_items.end());
+    std::sort(encoded_items.begin(), encoded_items.end());
     string result;
     Util::JoinStrings(encoded_items, "", &result);
     return result;
@@ -631,7 +631,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     dic->SetUserDictionaryName(filename);
 
     for (int i = 0; i < 32; ++i) {
-      random_shuffle(keys.begin(), keys.end());
+      std::random_shuffle(keys.begin(), keys.end());
       dic->Reload();
       for (int i = 0; i < 1000; ++i) {
         CollectTokenCallback callback;

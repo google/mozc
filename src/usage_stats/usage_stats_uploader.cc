@@ -342,13 +342,13 @@ bool UsageStatsUploader::Send(void *data) {
   }
 
   vector<pair<string, string> > params;
-  params.push_back(make_pair("hl", "ja"));
-  params.push_back(make_pair("v", Version::GetMozcVersion()));
+  params.push_back(std::make_pair("hl", "ja"));
+  params.push_back(std::make_pair("v", Version::GetMozcVersion()));
   string client_id;
   GetClientId(&client_id);
   DCHECK(!client_id.empty());
-  params.push_back(make_pair("client_id", client_id));
-  params.push_back(make_pair("os_ver", SystemUtil::GetOSVersionString()));
+  params.push_back(std::make_pair("client_id", client_id));
+  params.push_back(std::make_pair("os_ver", SystemUtil::GetOSVersionString()));
 #ifdef OS_ANDROID
   params.push_back(
       make_pair("model",

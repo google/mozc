@@ -166,7 +166,7 @@ void CandidateList::AddCandidateWithAttributes(const int id,
   const uint64 fp = Hash::Fingerprint(value);
 
   const pair<map<uint64, int>::iterator, bool> result =
-    added_candidates_->insert(make_pair(fp, id));
+      added_candidates_->insert(std::make_pair(fp, id));
   if (!result.second) {  // insertion was failed.
     const int alt_id = result.first->second;
     (*alternative_ids_)[id] = alt_id;

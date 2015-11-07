@@ -95,14 +95,14 @@ struct NBestGenerator::QueueElementComparator {
 inline void NBestGenerator::Agenda::Push(
     const NBestGenerator::QueueElement *element) {
   priority_queue_.push_back(element);
-  push_heap(priority_queue_.begin(), priority_queue_.end(),
-            QueueElementComparator());
+  std::push_heap(priority_queue_.begin(), priority_queue_.end(),
+                 QueueElementComparator());
 }
 
 inline void NBestGenerator::Agenda::Pop() {
   DCHECK(!priority_queue_.empty());
-  pop_heap(priority_queue_.begin(), priority_queue_.end(),
-           QueueElementComparator());
+  std::pop_heap(priority_queue_.begin(), priority_queue_.end(),
+                QueueElementComparator());
   priority_queue_.pop_back();
 }
 
