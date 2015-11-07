@@ -270,7 +270,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
     }
 
     wstring crashdump_directory;
-    Util::UTF8ToWide(acrashdump_directory.c_str(), &crashdump_directory);
+    Util::UTF8ToWide(acrashdump_directory, &crashdump_directory);
 
     google_breakpad::ExceptionHandler::FilterCallback filter_callback =
         check_address ? FilterHandler : NULL;

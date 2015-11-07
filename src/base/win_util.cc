@@ -120,7 +120,7 @@ HMODULE WinUtil::LoadSystemLibrary(const wstring &base_filename) {
 
 HMODULE WinUtil::LoadMozcLibrary(const wstring &base_filename) {
   wstring fullpath;
-  Util::UTF8ToWide(SystemUtil::GetServerDirectory().c_str(), &fullpath);
+  Util::UTF8ToWide(SystemUtil::GetServerDirectory(), &fullpath);
   fullpath += L"\\";
   fullpath += base_filename;
 

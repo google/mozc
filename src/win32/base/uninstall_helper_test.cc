@@ -54,7 +54,7 @@ const DWORD kJapaneseKLID = 0xE0200411;
 
 wstring ToWideString(const string &str) {
   wstring wide;
-  if (mozc::Util::UTF8ToWide(str.c_str(), &wide) <= 0) {
+  if (mozc::Util::UTF8ToWide(str, &wide) <= 0) {
     return L"";
   }
   return wide;

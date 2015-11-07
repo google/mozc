@@ -59,7 +59,7 @@ bool ReadWindowInfo(const string &lock_name,
                     ipc::WindowInfo *window_info) {
 #ifdef OS_WIN
   wstring wfilename;
-  mozc::Util::UTF8ToWide(lock_name.c_str(), &wfilename);
+  mozc::Util::UTF8ToWide(lock_name, &wfilename);
   {
     mozc::ScopedHandle handle(
       ::CreateFileW(wfilename.c_str(),

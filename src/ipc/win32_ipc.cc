@@ -107,7 +107,7 @@ class IPCClientMutexBase {
     mutex_name += ipc_channel_name;
     mutex_name += ".ipc";
     wstring wmutex_name;
-    Util::UTF8ToWide(mutex_name.c_str(), &wmutex_name);
+    Util::UTF8ToWide(mutex_name, &wmutex_name);
 
     LPSECURITY_ATTRIBUTES security_attributes_ptr = nullptr;
     SECURITY_ATTRIBUTES security_attributes;
@@ -484,7 +484,7 @@ IPCServer::IPCServer(const string &name,
 
   // Create a named pipe.
   wstring wserver_address;
-  Util::UTF8ToWide(server_address.c_str(), &wserver_address);
+  Util::UTF8ToWide(server_address, &wserver_address);
   HANDLE handle = ::CreateNamedPipe(wserver_address.c_str(),
                                     PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED |
                                     FILE_FLAG_FIRST_PIPE_INSTANCE,
@@ -716,7 +716,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
       continue;
     }
     wstring wserver_address;
-    Util::UTF8ToWide(server_address.c_str(), &wserver_address);
+    Util::UTF8ToWide(server_address, &wserver_address);
 
     if (GetNumberOfProcessors() == 1) {
       // When the code is running in single processor environment, sometimes

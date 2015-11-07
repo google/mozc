@@ -139,7 +139,7 @@ wstring GetFullPathForSystem(const string& basename) {
   const string fullpath = FileUtil::JoinPath(system_dir, basename);
 
   wstring wfullpath;
-  if (Util::UTF8ToWide(fullpath.c_str(), &wfullpath) <= 0) {
+  if (Util::UTF8ToWide(fullpath, &wfullpath) <= 0) {
     return L"";
   }
 
@@ -206,7 +206,7 @@ unsigned int GetPreloadIndex(const KeyboardLayoutID &klid,
 
 wstring ToWideString(const string &str) {
   wstring wide;
-  if (Util::UTF8ToWide(str.c_str(), &wide) <= 0) {
+  if (Util::UTF8ToWide(str, &wide) <= 0) {
     return L"";
   }
   return wide;

@@ -108,7 +108,7 @@ HRESULT CallSystemDllFunction(const char* dll_name,
 wstring GetMozcComponentPath(const string &filename) {
   const string path = mozc::SystemUtil::GetServerDirectory() + "\\" + filename;
   wstring wpath;
-  mozc::Util::UTF8ToWide(path.c_str(), &wpath);
+  mozc::Util::UTF8ToWide(path, &wpath);
   return wpath;
 }
 

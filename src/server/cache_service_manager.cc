@@ -375,7 +375,7 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
     vector<wstring> arguments(state.arguments_size());
     arguments.resize(state.arguments_size());
     for (size_t i = 0; i < state.arguments_size(); ++i) {
-      if (Util::UTF8ToWide(state.arguments(i).c_str(), &arguments[i]) <= 0) {
+      if (Util::UTF8ToWide(state.arguments(i), &arguments[i]) <= 0) {
         return false;
       }
     }
@@ -482,7 +482,7 @@ wstring CacheServiceManager::GetUnquotedServicePath() {
       FileUtil::JoinPath(SystemUtil::GetServerDirectory(),
                          kMozcCacheServiceExeName);
   wstring wlock_service_path;
-  if (Util::UTF8ToWide(lock_service_path.c_str(), &wlock_service_path) <= 0) {
+  if (Util::UTF8ToWide(lock_service_path, &wlock_service_path) <= 0) {
     return L"";
   }
   return wlock_service_path;

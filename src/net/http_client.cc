@@ -227,7 +227,7 @@ bool RequestInternal(HTTPMethodType type,
   uc.dwExtraInfoLength = sizeof(ExtraInfo);
 
   wstring wurl;
-  Util::UTF8ToWide(url.c_str(), &wurl);
+  Util::UTF8ToWide(url, &wurl);
 
   if (!::InternetCrackUrlW(wurl.c_str(), 0, 0, &uc)) {
     LOG(WARNING) << "InternetCrackUrl() failed: "
@@ -288,7 +288,7 @@ bool RequestInternal(HTTPMethodType type,
   for (size_t i = 0; i < option.headers.size(); ++i) {
     const string header = option.headers[i] + "\r\n";
     wstring wheader;
-    Util::UTF8ToWide(header.c_str(), &wheader);
+    Util::UTF8ToWide(header, &wheader);
     if (!::HttpAddRequestHeadersW(handle.get(), wheader.c_str(), -1,
                                   HTTP_ADDREQ_FLAG_ADD |
                                   HTTP_ADDREQ_FLAG_REPLACE)) {

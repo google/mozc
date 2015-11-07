@@ -104,7 +104,7 @@ void StripWritePreventingAttributesIfExists(const string &filename) {
 bool FileUtil::CreateDirectory(const string &path) {
 #ifdef OS_WIN
   wstring wide;
-  return (Util::UTF8ToWide(path.c_str(), &wide) > 0 &&
+  return (Util::UTF8ToWide(path, &wide) > 0 &&
           ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
 #else  // OS_WIN
   return ::mkdir(path.c_str(), 0700) == 0;
@@ -114,7 +114,7 @@ bool FileUtil::CreateDirectory(const string &path) {
 bool FileUtil::RemoveDirectory(const string &dirname) {
 #ifdef OS_WIN
   wstring wide;
-  return (Util::UTF8ToWide(dirname.c_str(), &wide) > 0 &&
+  return (Util::UTF8ToWide(dirname, &wide) > 0 &&
           ::RemoveDirectoryW(wide.c_str()) != 0);
 #else  // OS_WIN
   return ::rmdir(dirname.c_str()) == 0;
@@ -126,7 +126,7 @@ bool FileUtil::Unlink(const string &filename) {
 #ifdef OS_WIN
   StripWritePreventingAttributesIfExists(filename);
   wstring wide;
-  return (Util::UTF8ToWide(filename.c_str(), &wide) > 0 &&
+  return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::DeleteFileW(wide.c_str()) != 0);
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
   return PepperFileUtil::DeleteFile(filename);;
@@ -138,7 +138,7 @@ bool FileUtil::Unlink(const string &filename) {
 bool FileUtil::FileExists(const string &filename) {
 #ifdef OS_WIN
   wstring wide;
-  return (Util::UTF8ToWide(filename.c_str(), &wide) > 0 &&
+  return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::GetFileAttributesW(wide.c_str()) != -1);
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
   return PepperFileUtil::FileExists(filename);
@@ -151,7 +151,7 @@ bool FileUtil::FileExists(const string &filename) {
 bool FileUtil::DirectoryExists(const string &dirname) {
 #ifdef OS_WIN
   wstring wide;
-  if (Util::UTF8ToWide(dirname.c_str(), &wide) <= 0) {
+  if (Util::UTF8ToWide(dirname, &wide) <= 0) {
     return false;
   }
 
@@ -228,7 +228,7 @@ bool FileUtil::HideFileWithExtraAttributes(const string &filename,
   }
 
   wstring wfilename;
-  Util::UTF8ToWide(filename.c_str(), &wfilename);
+  Util::UTF8ToWide(filename, &wfilename);
 
   const DWORD original_attributes = ::GetFileAttributesW(wfilename.c_str());
   const auto result = ::SetFileAttributesW(
@@ -249,7 +249,7 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
 
 #ifdef OS_WIN
   wstring wto;
-  Util::UTF8ToWide(to.c_str(), &wto);
+  Util::UTF8ToWide(to, &wto);
   StripWritePreventingAttributesIfExists(to);
 #endif  // OS_WIN
 
@@ -270,7 +270,7 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
 
 #ifdef OS_WIN
   wstring wfrom;
-  Util::UTF8ToWide(from.c_str(), &wfrom);
+  Util::UTF8ToWide(from, &wfrom);
   ::SetFileAttributesW(wto.c_str(), ::GetFileAttributesW(wfrom.c_str()));
 #endif  // OS_WIN
 
@@ -301,8 +301,8 @@ bool FileUtil::IsEqualFile(const string &filename1,
 bool FileUtil::AtomicRename(const string &from, const string &to) {
 #ifdef OS_WIN
   wstring fromw, tow;
-  Util::UTF8ToWide(from.c_str(), &fromw);
-  Util::UTF8ToWide(to.c_str(), &tow);
+  Util::UTF8ToWide(from, &fromw);
+  Util::UTF8ToWide(to, &tow);
 
   if (TransactionalMoveFile(fromw, tow)) {
     return true;
