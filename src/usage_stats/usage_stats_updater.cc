@@ -207,23 +207,6 @@ void UsageStatsUpdater::UpdateStats() {
   UsageStats::SetBoolean("WindowsX64", SystemUtil::IsWindowsX64());
   UsageStats::SetBoolean("PerUserInputSettingsEnabled",
                          WinUtil::IsPerUserInputSettingsEnabled());
-  UsageStats::SetBoolean("CuasEnabled", WinUtil::IsCuasEnabled());
-  {
-    // get msctf version
-    int major, minor, build, revision;
-    const wchar_t kDllName[] = L"msctf.dll";
-    wstring path = SystemUtil::GetSystemDir();
-    path += L"\\";
-    path += kDllName;
-    if (SystemUtil::GetFileVersion(path, &major, &minor, &build, &revision)) {
-      UsageStats::SetInteger("MsctfVerMajor", major);
-      UsageStats::SetInteger("MsctfVerMinor", minor);
-      UsageStats::SetInteger("MsctfVerBuild", build);
-      UsageStats::SetInteger("MsctfVerRevision", revision);
-    } else {
-      LOG(ERROR) << "get file version for msctf.dll failed";
-    }
-  }
 #endif  // OS_WIN
 
 #ifdef OS_MACOSX

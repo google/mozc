@@ -514,11 +514,6 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
   return true;
 }
 
-bool WinUtil::IsCuasEnabled() {
-  // CUAS is always enabled on Vista or later.
-  return true;
-}
-
 bool WinUtil::GetFileSystemInfoFromPath(
     const wstring &path, BY_HANDLE_FILE_INFORMATION *info) {
   // no read access is required.

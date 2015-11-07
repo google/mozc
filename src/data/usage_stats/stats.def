@@ -479,10 +479,6 @@ PrelauncherEnabled
 # Use Mode Indicator
 ConfigUseModeIndicator
 
-# Need to show the help page after install (TSF is disabled)
-PostInstallShowPageRequired
-# Need to logoff after install (CUAS is disabled)
-PostInstallLogoffRequired
 # Need to do nothing after install
 PostInstallNothingRequired
 # Set Mozc as default on install
@@ -547,13 +543,6 @@ MushroomSelectionDialogOpen
 
 # 64 bit
 WindowsX64
-# Msctf version
-MsctfVerMajor
-MsctfVerMinor
-MsctfVerBuild
-MsctfVerRevision
-# CUAS status
-CuasEnabled
 # Windows 8
 PerUserInputSettingsEnabled
 

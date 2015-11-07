@@ -57,12 +57,6 @@ namespace {
 
 using std::unique_ptr;
 
-// The registry key for the CUAS setting.
-// Note: We have the same values in base/win_util.cc
-// TODO(yukawa): Define these constants at the same place.
-const wchar_t kCUASKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
-const wchar_t kCUASValueName[] = L"CUAS";
-
 // Timeout value used by a work around against b/5765783. As b/6165722
 // this value is determined to be:
 // - smaller than the default time-out used in IsHungAppWindow API.
@@ -86,27 +80,6 @@ bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
   }
 
   return false;
-}
-
-// The CUAS value is set to 64 bit registry keys if KEY_WOW64_64KEY is specified
-// as |additional_regsam| and set to 32 bit registry keys if KEY_WOW64_32KEY is
-// specified.
-bool SetCuasEnabledInternal(bool enable, REGSAM additional_regsam) {
-  REGSAM sam_desired = KEY_WRITE | additional_regsam;
-  CRegKey key;
-  LONG result = key.Open(HKEY_LOCAL_MACHINE, kCUASKey, sam_desired);
-  if (ERROR_SUCCESS != result) {
-    LOG(ERROR) << "Cannot open HKEY_LOCAL_MACHINE\\Software\\Microsoft\\CTF\\"
-                  "SystemShared: "
-               << result;
-    return false;
-  }
-  const DWORD cuas = enable ? 1 : 0;
-  result = key.SetDWORDValue(kCUASValueName, cuas);
-  if (ERROR_SUCCESS != result) {
-    LOG(ERROR) << "Failed to set CUAS value:" << result;
-  }
-  return true;
 }
 
 const wchar_t kTIPKeyboardKey[] = L"Software\\Microsoft\\CTF\\Assemblies\\"

@@ -71,7 +71,7 @@ TEST_F(UsageStatsTest, GetterTest) {
   // Use actual items, but they do not matter with practical usages.
   const char kCountKey[] = "ShutDown";
   const char kIntegerKey[] = "UserRegisteredWord";
-  const char kBooleanKey[] = "CuasEnabled";
+  const char kBooleanKey[] = "ConfigUseDictionarySuggest";
   const char kTimingKey[] = "ElapsedTimeUSec";
   const char kVirtualKeyboardKey[] = "VirtualKeyboardStats";
 

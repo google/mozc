@@ -437,22 +437,6 @@ TEST_F(UsageStatsUploaderTest, UploadDataTest) {
   const string win64 = (string("WindowsX64:b=")
                         + (SystemUtil::IsWindowsX64()? "t" : "f"));
   client_.AddExpectedData(win64);
-  int major, minor, build, revision;
-  const wchar_t kDllName[] = L"msctf.dll";
-  wstring path = SystemUtil::GetSystemDir();
-  path += L"\\";
-  path += kDllName;
-  if (SystemUtil::GetFileVersion(path, &major, &minor, &build, &revision)) {
-    client_.AddExpectedData(Util::StringPrintf("MsctfVerMajor:i=%d", major));
-    client_.AddExpectedData(Util::StringPrintf("MsctfVerMinor:i=%d", minor));
-    client_.AddExpectedData(Util::StringPrintf("MsctfVerBuild:i=%d", build));
-    client_.AddExpectedData(Util::StringPrintf("MsctfVerRevision:i=%d",
-                                               revision));
-  } else {
-    LOG(ERROR) << "get file version for msctf.dll failed";
-  }
-  client_.AddExpectedData(
-      string("CuasEnabled:b=") + (WinUtil::IsCuasEnabled() ? "t" : "f"));
 #endif
   client_.AddExpectedData(Util::StringPrintf("%s:c=%u", kCountStatsKey,
                                              kCountStatsDefaultValue));

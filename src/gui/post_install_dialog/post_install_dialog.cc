@@ -96,7 +96,6 @@ PostInstallDialog::PostInstallDialog()
   // D      : displayed
   //
   if (IsShowHelpPageRequired()) {
-    usage_stats::UsageStats::IncrementCount("PostInstallShowPageRequired");
     thanksLabel->setText(tr("Thanks for installing.\n"
                             "You need to configure your computer before using "
                             "Mozc. Please follow the "
@@ -111,7 +110,6 @@ PostInstallDialog::PostInstallDialog()
     // supported Mac nor Linux yet.
     DCHECK(!logoff_required());
     if (logoff_required()) {
-      usage_stats::UsageStats::IncrementCount("PostInstallLogoffRequired");
       thanksLabel->setText(tr("Thanks for installing.\nYou must log off before "
                               "using Mozc."));
       // remove OK button and move the other buttons to right.

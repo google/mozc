@@ -125,11 +125,6 @@ class WinUtil {
   static bool IsProcessInAppContainer(HANDLE process_handle,
                                       bool *in_appcontainer);
 
-  // Returns true if CUAS (Cicero Unaware Application Support) is enabled.
-  // Note: This method was previously defined in win32/base/imm_util.h but
-  // moved to here because UsateStats depends on this method.
-  static bool IsCuasEnabled();
-
   // Returns true if |info| is filled with a valid file information that
   // describes |path|. |path| can be a directory or a file.
   static bool GetFileSystemInfoFromPath(const wstring &path,

@@ -117,11 +117,6 @@ TEST_F(UsageStatsUpdaterTest, UpdaterTest) {
 #ifdef OS_WIN
     "WindowsX64",
     "PerUserInputSettingsEnabled",
-    "CuasEnabled",
-    "MsctfVerMajor",
-    "MsctfVerMinor",
-    "MsctfVerBuild",
-    "MsctfVerRevision",
 #endif  // OS_WIN
 #ifdef OS_MACOSX
     "PrelauncherEnabled",
