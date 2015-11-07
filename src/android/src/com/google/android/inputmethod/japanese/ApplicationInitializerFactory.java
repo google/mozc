@@ -215,9 +215,9 @@ public class ApplicationInitializerFactory {
               resources.getDisplayMetrics(), resources.getConfiguration().orientation);
           storeDefaultFullscreenMode(
               sharedPreferences, portraitMetrics.heightPixels, portraitMetrics.widthPixels,
-              (int) Math.ceil(getDimensionForOrientation(
+              (int) Math.ceil(MozcUtil.getDimensionForOrientation(
                   resources, R.dimen.input_frame_height, Configuration.ORIENTATION_PORTRAIT)),
-              (int) Math.ceil(getDimensionForOrientation(
+              (int) Math.ceil(MozcUtil.getDimensionForOrientation(
                   resources, R.dimen.input_frame_height, Configuration.ORIENTATION_LANDSCAPE)),
               resources.getDimensionPixelOffset(R.dimen.fullscreen_threshold));
 
@@ -284,27 +284,6 @@ public class ApplicationInitializerFactory {
         result.widthPixels = currentMetrics.heightPixels;
       }
       return result;
-    }
-
-    /**
-     * Get a dimension for the specified orientation.
-     * This method may be heavy since it updates the {@code resources} twice.
-     */
-    @VisibleForTesting
-    static float getDimensionForOrientation(Resources resources, int id, int orientation) {
-      Configuration configuration = resources.getConfiguration();
-      if (configuration.orientation == orientation) {
-        return resources.getDimension(id);
-      }
-
-      Configuration originalConfiguration = new Configuration(resources.getConfiguration());
-      try {
-        configuration.orientation = orientation;
-        resources.updateConfiguration(configuration, null);
-        return resources.getDimension(id);
-      } finally {
-        resources.updateConfiguration(originalConfiguration, null);
-      }
     }
 
     /**

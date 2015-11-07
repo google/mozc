@@ -322,4 +322,19 @@ public class MozcUtilTest extends InstrumentationTestCaseWithMock {
                    testData.expectPreffered, MozcUtil.isVoiceInputPreferred(editorInfo));
     }
   }
+
+  @SmallTest
+  public void testGetDimensionForOrientation() {
+    float portraitValue = MozcUtil.getDimensionForOrientation(
+        getInstrumentation().getContext().getResources(),
+        org.mozc.android.inputmethod.japanese.tests.R.dimen.value_for_testing_port_1dip_land_2dip,
+        Configuration.ORIENTATION_PORTRAIT);
+    float landscapeValue = MozcUtil.getDimensionForOrientation(
+        getInstrumentation().getContext().getResources(),
+        org.mozc.android.inputmethod.japanese.tests.R.dimen.value_for_testing_port_1dip_land_2dip,
+        Configuration.ORIENTATION_LANDSCAPE);
+
+    assertTrue("portrait:" + portraitValue + ", landscape:" + landscapeValue,
+               portraitValue != landscapeValue);
+  }
 }

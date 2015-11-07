@@ -538,6 +538,10 @@ SubmittedCandidateRowGE10
 KeyboardFoldEvent
 KeyboardExpandEvent
 MushroomSelectionDialogOpen
+SoftwareKeyboardHeightDipLandscape
+SoftwareKeyboardHeightDipPortrait
+SoftwareKeyboardLayoutAdjustmentEnabledLandscape
+SoftwareKeyboardLayoutAdjustmentEnabledPortrait
 
 # for windows
 

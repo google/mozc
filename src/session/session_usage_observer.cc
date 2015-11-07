@@ -370,6 +370,35 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
     case commands::SessionCommand::MUSHROOM_SELECTION_DIALOG_OPEN_EVENT:
       UsageStats::IncrementCount("MushroomSelectionDialogOpen");
       break;
+    case commands::SessionCommand::SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE stats"
+          << " must have int value.";
+      UsageStats::SetInteger("SoftwareKeyboardHeightDipLandscape",
+                             input.command().usage_stats_event_int_value());
+      break;
+    case commands::SessionCommand::SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT stats must have int value.";
+      UsageStats::SetInteger("SoftwareKeyboardHeightDipPortrait",
+                             input.command().usage_stats_event_int_value());
+      break;
+    case commands::SessionCommand
+        ::SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE stats"
+          << " must have int value.";
+      UsageStats::SetBoolean("SoftwareKeyboardLayoutAdjustmentEnabledLandscape",
+                             input.command().usage_stats_event_int_value() > 0);
+      break;
+    case commands::SessionCommand
+        ::SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT stats"
+          << " must have int value.";
+      UsageStats::SetBoolean("SoftwareKeyboardLayoutAdjustmentEnabledPortrait",
+                             input.command().usage_stats_event_int_value() > 0);
+      break;
     default:
       LOG(DFATAL) << "client side usage stats event has invalid category";
       break;

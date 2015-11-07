@@ -32,6 +32,8 @@ package org.mozc.android.inputmethod.japanese.session;
 import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import org.mozc.android.inputmethod.japanese.R;
+import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Capability;
@@ -877,28 +879,47 @@ public class SessionExecutor {
     Preconditions.checkNotNull(sharedPreferences);
     Preconditions.checkNotNull(resources);
 
-    ClientSidePreference landscapePreference =
-        new ClientSidePreference(
-            sharedPreferences, resources, Configuration.ORIENTATION_LANDSCAPE);
-    evaluateAsynchronously(
-        Input.newBuilder()
-            .setType(CommandType.SEND_COMMAND)
-            .setCommand(SessionCommand.newBuilder()
-                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
-                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE)
-                .setUsageStatsEventIntValue(landscapePreference.getKeyboardLayout().getId())),
-        Optional.<KeyEventInterface>absent(), Optional.<EvaluationCallback>absent());
+    sendIntegerUsageStatsUsageStatsEvent(
+        UsageStatsEvent.SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE,
+        (int) Math.ceil(MozcUtil.getDimensionForOrientation(
+            resources, R.dimen.ime_window_height, Configuration.ORIENTATION_LANDSCAPE)));
+    sendIntegerUsageStatsUsageStatsEvent(
+        UsageStatsEvent.SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT,
+        (int) Math.ceil(MozcUtil.getDimensionForOrientation(
+            resources, R.dimen.ime_window_height, Configuration.ORIENTATION_PORTRAIT)));
 
-    ClientSidePreference portraitPreference =
-        new ClientSidePreference(
-            sharedPreferences, resources, Configuration.ORIENTATION_PORTRAIT);
-    evaluateAsynchronously(
-        Input.newBuilder()
-            .setType(CommandType.SEND_COMMAND)
-            .setCommand(SessionCommand.newBuilder()
-                .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
-                .setUsageStatsEvent(UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT)
-                .setUsageStatsEventIntValue(portraitPreference.getKeyboardLayout().getId())),
+    ClientSidePreference landscapePreference = new ClientSidePreference(
+            sharedPreferences, resources, Configuration.ORIENTATION_LANDSCAPE);
+    ClientSidePreference portraitPreference = new ClientSidePreference(
+        sharedPreferences, resources, Configuration.ORIENTATION_PORTRAIT);
+
+    sendIntegerUsageStatsUsageStatsEvent(
+        UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE,
+        landscapePreference.getKeyboardLayout().getId());
+    sendIntegerUsageStatsUsageStatsEvent(
+        UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT,
+        portraitPreference.getKeyboardLayout().getId());
+
+    boolean layoutAdjustmentEnabledInLandscape =
+        landscapePreference.getLayoutAdjustment() != LayoutAdjustment.FILL;
+    boolean layoutAdjustmentEnabledInPortrait =
+        portraitPreference.getLayoutAdjustment() != LayoutAdjustment.FILL;
+
+    sendIntegerUsageStatsUsageStatsEvent(
+        UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE,
+        layoutAdjustmentEnabledInLandscape ? 1 : 0);
+    sendIntegerUsageStatsUsageStatsEvent(
+        UsageStatsEvent.SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT,
+        layoutAdjustmentEnabledInPortrait ? 1 : 0);
+  }
+
+  private void sendIntegerUsageStatsUsageStatsEvent(UsageStatsEvent event, int value) {
+    evaluateAsynchronously(Input.newBuilder()
+        .setType(CommandType.SEND_COMMAND)
+        .setCommand(SessionCommand.newBuilder()
+            .setType(SessionCommand.CommandType.USAGE_STATS_EVENT)
+            .setUsageStatsEvent(event)
+            .setUsageStatsEventIntValue(value)),
         Optional.<KeyEventInterface>absent(), Optional.<EvaluationCallback>absent());
   }
 

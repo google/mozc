@@ -935,4 +935,24 @@ public final class MozcUtil {
   public static float clamp(float value, float min, float max) {
     return Math.max(Math.min(value, max), min);
   }
+
+  /**
+   * Get a dimension for the specified orientation.
+   * This method may be heavy since it updates the {@code resources} twice.
+   */
+  public static float getDimensionForOrientation(Resources resources, int id, int orientation) {
+    Configuration configuration = resources.getConfiguration();
+    if (configuration.orientation == orientation) {
+      return resources.getDimension(id);
+    }
+
+    Configuration originalConfiguration = new Configuration(resources.getConfiguration());
+    try {
+      configuration.orientation = orientation;
+      resources.updateConfiguration(configuration, null);
+      return resources.getDimension(id);
+    } finally {
+      resources.updateConfiguration(originalConfiguration, null);
+    }
+  }
 }
