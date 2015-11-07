@@ -64,7 +64,7 @@ void KeyEventTransformer::ReloadConfig(const config::Config &config) {
     // "，"
     key_event.set_key_string("\xef\xbc\x8c");
     // "、"
-    table_.insert(make_pair("\xe3\x80\x81", key_event));
+    table_.insert(std::make_pair("\xe3\x80\x81", key_event));
   }
   if (punctuation == config::Config::COMMA_PERIOD ||
       punctuation == config::Config::KUTEN_PERIOD) {
@@ -73,7 +73,7 @@ void KeyEventTransformer::ReloadConfig(const config::Config &config) {
     // "．"
     key_event.set_key_string("\xef\xbc\x8e");
     // "。"
-    table_.insert(make_pair("\xe3\x80\x82", key_event));
+    table_.insert(std::make_pair("\xe3\x80\x82", key_event));
   }
 
   const config::Config::SymbolMethod symbol = config.symbol_method();
@@ -85,7 +85,7 @@ void KeyEventTransformer::ReloadConfig(const config::Config &config) {
       // "［"
       key_event.set_key_string("\xef\xbc\xbb");
       // "「"
-      table_.insert(make_pair("\xe3\x80\x8c", key_event));
+      table_.insert(std::make_pair("\xe3\x80\x8c", key_event));
     }
     {
       commands::KeyEvent key_event;
@@ -93,7 +93,7 @@ void KeyEventTransformer::ReloadConfig(const config::Config &config) {
       // "］"
       key_event.set_key_string("\xef\xbc\xbd");
       // "」"
-      table_.insert(make_pair("\xe3\x80\x8d", key_event));
+      table_.insert(std::make_pair("\xe3\x80\x8d", key_event));
     }
   }
   if (symbol == config::Config::SQUARE_BRACKET_SLASH ||
@@ -103,7 +103,7 @@ void KeyEventTransformer::ReloadConfig(const config::Config &config) {
     // "／"
     key_event.set_key_string("\xef\xbc\x8f");
     // "・"
-    table_.insert(make_pair("\xE3\x83\xBB", key_event));
+    table_.insert(std::make_pair("\xE3\x83\xBB", key_event));
   }
 }
 

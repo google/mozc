@@ -258,7 +258,7 @@ void SessionOutput::FillUsages(const Segment &segment,
       info->set_description(candidate.usage_description);
       info->add_candidate_id(cand_list.candidate(i).id());
       usageid_information_map.insert(
-          make_pair(candidate.usage_id, make_pair(index, info)));
+          std::make_pair(candidate.usage_id, std::make_pair(index, info)));
     } else {
       index = info_itr->second.first;
       info = info_itr->second.second;

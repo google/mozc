@@ -136,7 +136,7 @@ void SessionWatchDog::Run() {
   // for every 5 second, get CPU load percentage
   const int32 cpu_check_duration_msec = min(5, interval_sec_) * 1000;
 
-  fill(cpu_loads, cpu_loads + arraysize(cpu_loads), 0.0);
+  std::fill(cpu_loads, cpu_loads + arraysize(cpu_loads), 0.0);
 
   uint64 last_cleanup_time = Clock::GetTime();
 

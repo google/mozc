@@ -84,7 +84,7 @@ vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(istream *ifs) {
     }
   }
 
-  sort(result.begin(), result.end());
+  std::sort(result.begin(), result.end());
   return result;
 }
 
@@ -124,7 +124,7 @@ bool KeyInfoUtil::ContainsKey(const vector<KeyInformation> &sorted_keys,
   if (!KeyEventUtil::GetKeyInformation(key_event, &key_info)) {
     return false;
   }
-  return binary_search(sorted_keys.begin(), sorted_keys.end(), key_info);
+  return std::binary_search(sorted_keys.begin(), sorted_keys.end(), key_info);
 }
 
 }  // namespace mozc

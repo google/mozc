@@ -94,7 +94,7 @@ class TestHTTPClient : public HTTPClientInterface {
     Util::SplitStringUsing(data, "&", &data_set);
     for (size_t i = 0; i < expected_data_.size(); ++i) {
       vector<string>::const_iterator itr =
-          find(data_set.begin(), data_set.end(), expected_data_[i]);
+          std::find(data_set.begin(), data_set.end(), expected_data_[i]);
       const bool found = (itr != data_set.end());
       // we can't compile EXPECT_NE(itr, data_set.end()), so we use EXPECT_TRUE
       EXPECT_TRUE(found) << expected_data_[i];
@@ -192,11 +192,12 @@ class UsageStatsUploaderTest : public ::testing::Test {
 
   void SetValidResult() {
     vector<pair<string, string> > params;
-    params.push_back(make_pair("sourceid", "ime"));
-    params.push_back(make_pair("hl", "ja"));
-    params.push_back(make_pair("v", Version::GetMozcVersion()));
-    params.push_back(make_pair("client_id", kTestClientId));
-    params.push_back(make_pair("os_ver", SystemUtil::GetOSVersionString()));
+    params.push_back(std::make_pair("sourceid", "ime"));
+    params.push_back(std::make_pair("hl", "ja"));
+    params.push_back(std::make_pair("v", Version::GetMozcVersion()));
+    params.push_back(std::make_pair("client_id", kTestClientId));
+    params.push_back(
+        std::make_pair("os_ver", SystemUtil::GetOSVersionString()));
 #ifdef OS_ANDROID
     params.push_back(
         make_pair("model",

@@ -239,9 +239,9 @@ bool UserDictionaryUtil::Sanitize(string *str, size_t max_size) {
     const size_t original_size = str->size();
     string::iterator begin = str->begin();
     string::iterator end = str->end();
-    end = remove(begin, end, '\t');
-    end = remove(begin, end, '\n');
-    end = remove(begin, end, '\r');
+    end = std::remove(begin, end, '\t');
+    end = std::remove(begin, end, '\n');
+    end = std::remove(begin, end, '\r');
 
     if (end - begin <= max_size) {
       if (end - begin == original_size) {
@@ -652,9 +652,9 @@ bool UserDictionaryUtil::DeleteDictionary(
   RepeatedPtrField<user_dictionary::UserDictionary> *dictionaries =
       storage->mutable_dictionaries();
   // Move the target dictionary to the end.
-  rotate(dictionaries->pointer_begin() + index,
-         dictionaries->pointer_begin() + index + 1,
-         dictionaries->pointer_end());
+  std::rotate(dictionaries->pointer_begin() + index,
+              dictionaries->pointer_begin() + index + 1,
+              dictionaries->pointer_end());
 
   if (deleted_dictionary == NULL) {
     dictionaries->RemoveLast();

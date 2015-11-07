@@ -78,7 +78,7 @@ TEST(ConnectorTest, CompareWithRawData) {
 
   for (int trial = 0; trial < 3; ++trial) {
     // Lookup in random order for a few times.
-    random_shuffle(data.begin(), data.end());
+    std::random_shuffle(data.begin(), data.end());
     for (size_t i = 0; i < data.size(); ++i) {
       int actual = connector->GetTransitionCost(data[i].rid, data[i].lid);
       EXPECT_EQ(data[i].cost, actual);

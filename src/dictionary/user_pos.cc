@@ -42,8 +42,8 @@ UserPOS::UserPOS(const POSToken *pos_token_array)
     : pos_token_array_(pos_token_array) {
   DCHECK(pos_token_array_);
   for (size_t i = 0; pos_token_array_[i].pos != nullptr; ++i) {
-    pos_map_.insert(make_pair(string(pos_token_array_[i].pos),
-                              &pos_token_array_[i]));
+    pos_map_.insert(
+        std::make_pair(string(pos_token_array_[i].pos), &pos_token_array_[i]));
   }
   CHECK_GT(pos_map_.size(), 1);
 }

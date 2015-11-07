@@ -64,7 +64,9 @@ void Loop(istream *input, ostream *output) {
     }
     if (line.empty()) {
       session.reset(new session::Session(engine.get()));
-      *output << endl << "## New session" << endl << endl;
+      *output << std::endl
+              << "## New session" << std::endl
+              << std::endl;
       continue;
     }
 
@@ -104,25 +106,25 @@ int main(int argc, char **argv) {
     input_file.reset(new mozc::InputFileStream(FLAGS_input.c_str()));
     if (input_file->fail()) {
       LOG(ERROR) << "File not opend: " << FLAGS_input;
-      cerr << "File not opend: " << FLAGS_input << endl;
+      std::cerr << "File not opend: " << FLAGS_input << std::endl;
       return 1;
     }
     input = input_file.get();
   } else {
     // Interaction mode.
-    input = &cin;
+    input = &std::cin;
   }
 
   if (!FLAGS_output.empty()) {
     output_file.reset(new mozc::OutputFileStream(FLAGS_output.c_str()));
     if (output_file->fail()) {
       LOG(ERROR) << "File not opend: " << FLAGS_output;
-      cerr << "File not opend: " << FLAGS_output << endl;
+      std::cerr << "File not opend: " << FLAGS_output << std::endl;
       return 1;
     }
     output = output_file.get();
   } else {
-    output = &cout;
+    output = &std::cout;
   }
 
   mozc::Loop(input, output);

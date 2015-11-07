@@ -204,8 +204,8 @@ void EraseExistingCandidates(
   for (int pos = base_candidate_pos - 1; pos >= 0; --pos) {
     // Simple liner search. |results| size is small. (at most 10 or so)
     const vector<Segment::Candidate>::const_iterator iter =
-        find_if(results.begin(), results.end(),
-                CheckValueOperator(seg->candidate(pos).value));
+        std::find_if(results.begin(), results.end(),
+                     CheckValueOperator(seg->candidate(pos).value));
     if (iter == results.end()) {
       continue;
     }
@@ -304,8 +304,8 @@ void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
   // We don't want to rewrite "千万" to "一千万".
   {
     const string &base_value = seg->candidate(base_candidate_pos).value;
-    vector<Segment::Candidate>::const_iterator itr =
-        find_if(results.begin(), results.end(), CheckValueOperator(base_value));
+    vector<Segment::Candidate>::const_iterator itr = std::find_if(
+        results.begin(), results.end(), CheckValueOperator(base_value));
     if (itr != results.end() &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI_ARABIC) {

@@ -98,7 +98,7 @@ void DictionaryGenerator::AddToken(const Token &token) {
     new_token = it->second;
   } else {
     new_token = token_pool_->Alloc();
-    token_map_->insert(make_pair(token.GetID(), new_token));
+    token_map_->insert(std::make_pair(token.GetID(), new_token));
   }
   new_token->MergeFrom(token);
 }
@@ -127,7 +127,7 @@ void GetSortedTokens(const map<uint64, Token *> *token_map,
        ++it) {
     tokens->push_back(it->second);
   }
-  sort(tokens->begin(), tokens->end(), CompareToken());
+  std::sort(tokens->begin(), tokens->end(), CompareToken());
 }
 }  // namespace
 
@@ -174,7 +174,7 @@ bool DictionaryGenerator::Output(const string &filename) const {
         << (token.description().empty()? "": token.description()) << "\t"
         << (token.additional_description().empty()?
             "": token.additional_description());
-    ofs << endl;
+    ofs << std::endl;
   }
   return true;
 }

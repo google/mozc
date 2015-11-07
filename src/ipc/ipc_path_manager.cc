@@ -150,7 +150,7 @@ class IPCPathManagerMap {
       return it->second;
     }
     IPCPathManager *manager = new IPCPathManager(name);
-    manager_map_.insert(make_pair(name, manager));
+    manager_map_.insert(std::make_pair(name, manager));
     return manager;
   }
 

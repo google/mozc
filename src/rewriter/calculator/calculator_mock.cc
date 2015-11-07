@@ -43,7 +43,7 @@ CalculatorMock::~CalculatorMock() {}
 void CalculatorMock::SetCalculatePair(const string &key,
                                       const string &value,
                                       bool return_value) {
-  calculation_map_[key] = make_pair(value, return_value);
+  calculation_map_[key] = std::make_pair(value, return_value);
 }
 
 int CalculatorMock::calculation_counter() const {

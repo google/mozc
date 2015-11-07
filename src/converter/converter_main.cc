@@ -210,10 +210,10 @@ void PrintCandidate(const Segment &parent, int num,
     lines.push_back("segbdd: " + segbdd_str);
   }
 
-  (*os) << "  " << num << " " << cand.value << endl;
+  (*os) << "  " << num << " " << cand.value << std::endl;
   for (size_t i = 0; i < lines.size(); ++i) {
     if (!lines[i].empty()) {
-      (*os) << "       " << lines[i] << endl;
+      (*os) << "       " << lines[i] << std::endl;
     }
   }
 }
@@ -221,9 +221,9 @@ void PrintCandidate(const Segment &parent, int num,
 void PrintSegment(size_t num, size_t segments_size,
                   const Segment &segment, ostream *os) {
   (*os) << "---------- Segment " << num << "/" << segments_size << " ["
-        << SegmentTypeToString(segment.segment_type())
-        << "] ----------" << endl
-        << segment.key() << endl;
+        << SegmentTypeToString(segment.segment_type()) << "] ----------"
+        << std::endl
+        << segment.key() << std::endl;
   if (FLAGS_show_meta_candidates) {
     for (int i = 0; i < segment.meta_candidates_size(); ++i) {
       PrintCandidate(segment, -i - 1, segment.meta_candidate(i), os);
@@ -402,13 +402,13 @@ int main(int argc, char **argv) {
   mozc::Segments segments;
   string line;
 
-  while (!getline(cin, line).fail()) {
+  while (!getline(std::cin, line).fail()) {
     if (mozc::ExecCommand(*converter, &segments, line, request)) {
       if (FLAGS_output_debug_string) {
-        mozc::PrintSegments(segments, &cout);
+        mozc::PrintSegments(segments, &std::cout);
       }
     } else {
-      cout << "ExecCommand() return false" << endl;
+      std::cout << "ExecCommand() return false" << std::endl;
     }
   }
   return 0;

@@ -58,10 +58,10 @@ int main(int argc, char **argv) {
     string actual_value;
     const  bool result = util.ConvertAndTest(items[i], &actual_value);
     if (result) {
-      cout << "OK:\t" << items[i].OutputAsTSV() << endl;
+      std::cout << "OK:\t" << items[i].OutputAsTSV() << std::endl;
     } else {
-      cout << "FAILED:\t" << items[i].OutputAsTSV() << "\t"
-           << actual_value << endl;
+      std::cout << "FAILED:\t" << items[i].OutputAsTSV() << "\t" << actual_value
+                << std::endl;
     }
   }
 

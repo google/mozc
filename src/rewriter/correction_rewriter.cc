@@ -73,10 +73,8 @@ bool CorrectionRewriter::LookupCorrection(
   ReadingCorrectionItem key_item;
   key_item.error = key.c_str();
   const ReadingCorrectionItem *result =
-      lower_bound(reading_corrections_,
-                  reading_corrections_ + size_,
-                  key_item,
-                  ReadingCorrectionItemCompare());
+      std::lower_bound(reading_corrections_, reading_corrections_ + size_,
+                       key_item, ReadingCorrectionItemCompare());
   if (result == (reading_corrections_ + size_) ||
       key != result->error) {
     return false;

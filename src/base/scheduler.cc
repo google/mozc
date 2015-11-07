@@ -172,8 +172,8 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
       return false;
     }
 
-    pair<map<string, Job>::iterator, bool> insert_result
-        = jobs_.insert(make_pair(job_setting.name(), Job(job_setting)));
+    pair<map<string, Job>::iterator, bool> insert_result =
+        jobs_.insert(std::make_pair(job_setting.name(), Job(job_setting)));
     if (!insert_result.second) {
       LOG(ERROR) << "insert failed";
       return false;

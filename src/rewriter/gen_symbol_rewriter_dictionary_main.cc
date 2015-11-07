@@ -70,7 +70,7 @@ void GetSortingMap(const string &auto_file,
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    sorting_map->insert(make_pair(line, sorting_key));
+    sorting_map->insert(std::make_pair(line, sorting_key));
     ++sorting_key;
   }
 
@@ -91,7 +91,7 @@ void GetSortingMap(const string &auto_file,
       // ordered by rule
       continue;
     }
-    sorting_map->insert(make_pair(utf8, sorting_key));
+    sorting_map->insert(std::make_pair(utf8, sorting_key));
     ++sorting_key;
   }
 }

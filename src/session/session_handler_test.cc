@@ -128,7 +128,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       clock.PutClockForward(interval_time, 0);
     }
 
-    random_shuffle(ids.begin(), ids.end());
+    std::random_shuffle(ids.begin(), ids.end());
     const uint64 oldest_id = ids[0];
     for (size_t i = 0; i < session_size; ++i) {
       EXPECT_TRUE(IsGoodSession(&handler, ids[i]));

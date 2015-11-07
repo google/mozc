@@ -57,9 +57,9 @@ void VerifyCalculation(const CalculatorInterface *calculator,
   const double err = fabs(result_val - expected_val);
 
   EXPECT_DOUBLE_EQ(expected_val, result_val)
-      << "comparison: " << result_val << " vs " << expected_val << endl
-      << "error: " << err << endl
-      << "expr = " << expression << endl
+      << "comparison: " << result_val << " vs " << expected_val << std::endl
+      << "error: " << err << std::endl
+      << "expr = " << expression << std::endl
       << "result = " << result;
 }
 
@@ -70,8 +70,7 @@ void VerifyCalculationInString(const CalculatorInterface *calculator,
   string result;
   EXPECT_TRUE(calculator->CalculateString(expression, &result))
       << expression << "  expected = " << expected;
-  EXPECT_EQ(expected, result)
-      << "expr = " << expression << endl;
+  EXPECT_EQ(expected, result) << "expr = " << expression << std::endl;
 }
 
 // Tries to calculate |wrong_key| and returns true if it fails.
@@ -79,7 +78,7 @@ void VerifyRejection(const CalculatorInterface *calculator,
                      const string &wrong_key) {
   string result;
   EXPECT_FALSE(calculator->CalculateString(wrong_key, &result))
-      << "expression: " << wrong_key << endl;
+      << "expression: " << wrong_key << std::endl;
 }
 
 }  // namespace
@@ -183,7 +182,7 @@ TEST(CalculatorTest, StressTest) {
     VerifyCalculation(calculator, query, answer);
 #endif  // !defined(OS_ANDROID) || !defined(__i386__)
   }
-  LOG(INFO) << "done " << lineno << " tests from " << filename << endl;
+  LOG(INFO) << "done " << lineno << " tests from " << filename << std::endl;
 }
 
 }  // namespace mozc

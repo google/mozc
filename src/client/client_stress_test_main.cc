@@ -113,10 +113,11 @@ int main(int argc, char **argv) {
       mozc::Util::Sleep(FLAGS_key_duration);
       keyevents_size++;
       if (keyevents_size % 100 == 0) {
-        cout << keyevents_size << " key events finished" << endl;
+        std::cout << keyevents_size << " key events finished" << std::endl;
       }
       if (FLAGS_max_keyevents < keyevents_size) {
-        cout << "key events reached to " << FLAGS_max_keyevents << endl;
+        std::cout << "key events reached to " << FLAGS_max_keyevents
+                  << std::endl;
         return 0;
       }
       if (FLAGS_test_testsendkey) {

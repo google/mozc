@@ -74,16 +74,16 @@ TEST(StlUtilTest, OrderBy) {
   typedef OrderBy<FirstKey, Less> OrderByFirst;
   typedef OrderBy<SecondKey, Less> OrderBySecond;
 
-  EXPECT_TRUE(OrderByFirst()(make_pair(0, 1), make_pair(1, 0)));
-  EXPECT_FALSE(OrderBySecond()(make_pair(0, 1), make_pair(1, 0)));
+  EXPECT_TRUE(OrderByFirst()(std::make_pair(0, 1), std::make_pair(1, 0)));
+  EXPECT_FALSE(OrderBySecond()(std::make_pair(0, 1), std::make_pair(1, 0)));
 }
 
 TEST(StlUtilTest, Key) {
-  EXPECT_EQ(1, FirstKey()(make_pair(1, "abc")));
-  EXPECT_EQ(2, FirstKey()(make_pair(2, "abc")));
+  EXPECT_EQ(1, FirstKey()(std::make_pair(1, "abc")));
+  EXPECT_EQ(2, FirstKey()(std::make_pair(2, "abc")));
 
-  EXPECT_STREQ("abc", SecondKey()(make_pair(1, "abc")));
-  EXPECT_STREQ("def", SecondKey()(make_pair(1, "def")));
+  EXPECT_STREQ("abc", SecondKey()(std::make_pair(1, "abc")));
+  EXPECT_STREQ("def", SecondKey()(std::make_pair(1, "def")));
 }
 
 TEST(StlUtilTest, FunctionalComparator) {

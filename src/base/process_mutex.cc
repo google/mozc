@@ -249,7 +249,7 @@ class FileLockManager {
       return false;   // another server is already running
     }
 
-    fdmap_.insert(make_pair(filename, *fd));
+    fdmap_.insert(std::make_pair(filename, *fd));
 
     return true;
   }

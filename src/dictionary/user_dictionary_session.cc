@@ -98,9 +98,8 @@ class UndoDeleteDictionaryCommand : public UserDictionarySession::UndoCommand {
     dictionaries->AddAllocated(dictionary_.release());
 
     // Adjust the position of the reverted dictionary.
-    rotate(dictionaries->pointer_begin() + index_,
-           dictionaries->pointer_end() - 1,
-           dictionaries->pointer_end());
+    std::rotate(dictionaries->pointer_begin() + index_,
+                dictionaries->pointer_end() - 1, dictionaries->pointer_end());
     return true;
   }
 
@@ -228,8 +227,8 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
       uint64 dictionary_id,
       const vector<pair<int, UserDictionary::Entry*> > deleted_entries)
       : dictionary_id_(dictionary_id), deleted_entries_(deleted_entries) {
-    sort(deleted_entries_.begin(), deleted_entries_.end(),
-         DeleteEntryComparator());
+    std::sort(deleted_entries_.begin(), deleted_entries_.end(),
+              DeleteEntryComparator());
   }
   virtual ~UndoDeleteEntryCommand() {
     for (size_t i = 0; i < deleted_entries_.size(); ++i) {
@@ -625,12 +624,12 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
   for (size_t i = 0; i < index_list.size(); ++i) {
     const int index = index_list[i];
 
-    deleted_entries.push_back(make_pair(index, data[index]));
+    deleted_entries.push_back(std::make_pair(index, data[index]));
     data[index] = NULL;
   }
 
-  UserDictionary::Entry **tail = remove(
-      data, data + entries->size(), static_cast<UserDictionary::Entry*>(NULL));
+  UserDictionary::Entry **tail = std::remove(
+      data, data + entries->size(), static_cast<UserDictionary::Entry *>(NULL));
   const int remaining_size = tail - data;
   while (entries->size() > remaining_size) {
     entries->ReleaseLast();

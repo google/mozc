@@ -167,7 +167,7 @@ bool ConstChar32ReverseIterator::Done() const {
 }
 
 MultiDelimiter::MultiDelimiter(const char* delim) {
-  fill(lookup_table_, lookup_table_ + kTableSize, 0);
+  std::fill(lookup_table_, lookup_table_ + kTableSize, 0);
   for (const char* p = delim; *p != '\0'; ++p) {
     const unsigned char c = static_cast<unsigned char>(*p);
     lookup_table_[c >> 3] |= 1 << (c & 0x07);
@@ -319,10 +319,10 @@ void Util::SplitCSV(const string &input, vector<string> *output) {
         }
         *end++ = *str;
       }
-      str = find(str, eos, ',');
+      str = std::find(str, eos, ',');
     } else {
       start = str;
-      str = find(str, eos, ',');
+      str = std::find(str, eos, ',');
       end = str;
     }
     bool end_is_empty = false;
@@ -717,7 +717,7 @@ bool Util::SplitLastChar32(StringPiece s,
   if (it == s.rend()) {
     return false;
   }
-  const StringPiece::difference_type len = distance(s.rbegin(), it) + 1;
+  const StringPiece::difference_type len = std::distance(s.rbegin(), it) + 1;
   const StringPiece last_piece = s.substr(s.size() - len);
   StringPiece result_piece;
   if (!SplitFirstChar32(last_piece, last_char32, &result_piece)) {

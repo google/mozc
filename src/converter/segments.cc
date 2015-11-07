@@ -170,7 +170,7 @@ string Segment::Candidate::DebugString() const {
                                content_key_len, content_value_len);
     }
   }
-  os << ")" << endl;
+  os << ")" << std::endl;
   return os.str();
 }
 
@@ -440,8 +440,7 @@ void Segment::CopyFrom(const Segment &src) {
 
 string Segment::DebugString() const {
   stringstream os;
-  os << "[segtype=" << segment_type()
-     << " key=" << key() << endl;
+  os << "[segtype=" << segment_type() << " key=" << key() << std::endl;
   const int size =
       static_cast<int>(candidates_size() + meta_candidates_size());
   for (int l = 0; l < size; ++l) {
@@ -453,7 +452,7 @@ string Segment::DebugString() const {
     }
     os << "    cand " << j << " " << candidate(j).DebugString();
   }
-  os << "]" << endl;
+  os << "]" << std::endl;
   return os.str();
 }
 
@@ -715,11 +714,11 @@ Lattice *Segments::mutable_cached_lattice() {
 
 string Segments::DebugString() const {
   stringstream os;
-  os << "{" << endl;
+  os << "{" << std::endl;
   for (size_t i = 0; i < segments_size(); ++i) {
     os << "  seg " << i << " " << segment(i).DebugString();
   }
-  os << "}" << endl;
+  os << "}" << std::endl;
   return os.str();
 }
 

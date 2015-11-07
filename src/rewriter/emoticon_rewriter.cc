@@ -106,15 +106,14 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
     sorted_value.push_back(&value[i]);
   }
 
-  sort(sorted_value.begin(), sorted_value.end(), ValueCostCompare());
+  std::sort(sorted_value.begin(), sorted_value.end(), ValueCostCompare());
 
   // after sorting the valeus by |cost|, adjacent candidates
   // will have the same value. It is almost OK to use std::unique to
   // remove dup entries, it is not a perfect way though.
-  sorted_value.erase(unique(sorted_value.begin(),
-                            sorted_value.end(),
-                            IsEqualValue()),
-                     sorted_value.end());
+  sorted_value.erase(
+      std::unique(sorted_value.begin(), sorted_value.end(), IsEqualValue()),
+      sorted_value.end());
 
   for (size_t i = 0; i < sorted_value.size(); ++i) {
     Segment::Candidate *c = NULL;

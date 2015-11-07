@@ -619,7 +619,7 @@ bool NumberUtil::ArabicToOtherRadixes(
     }
     // "b0" will be "0b" in head of |binary|
     binary.append("b0");
-    reverse(binary.begin(), binary.end());
+    std::reverse(binary.begin(), binary.end());
     // "2進数"
     output->push_back(NumberString(binary, "2\xE9\x80\xB2\xE6\x95\xB0",
                                    NumberString::NUMBER_BIN));
@@ -1120,7 +1120,7 @@ bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
 // depending on the maximum number in the sequence.
 bool NormalizeNumbersHelper(const vector<uint64> &numbers,
                             uint64 *number_output) {
-  const auto itr_max = max_element(numbers.begin(), numbers.end());
+  const auto itr_max = std::max_element(numbers.begin(), numbers.end());
   if (itr_max == numbers.end()) {
     return false;  // numbers is empty
   }

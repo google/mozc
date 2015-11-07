@@ -42,10 +42,10 @@ int main(int argc, char **argv) {
   mozc::UserDictionaryImporter::ImportFromMSIME(&user_dic);
 
   for (size_t i = 0; i < user_dic.entries_size(); ++i) {
-    cout << user_dic.entries(i).key() << "\t"
-         << user_dic.entries(i).value() << "\t"
-         << user_dic.entries(i).pos() << "\t"
-         << user_dic.entries(i).comment() << endl;
+    std::cout << user_dic.entries(i).key() << "\t"
+              << user_dic.entries(i).value() << "\t"
+              << user_dic.entries(i).pos() << "\t"
+              << user_dic.entries(i).comment() << std::endl;
   }
 
   return 0;

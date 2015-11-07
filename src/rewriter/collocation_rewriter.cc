@@ -83,11 +83,11 @@ bool ParseCompound(const StringPiece value, const StringPiece pattern,
 
   // Find the |first_content| candidate and check if it consists of Kanji only.
   StringPiece::const_iterator pattern_begin =
-      find(value.begin(), value.end(), pattern[0]);
+      std::find(value.begin(), value.end(), pattern[0]);
   if (pattern_begin == value.end()) {
     return false;
   }
-  first_content->set(value.data(), distance(value.begin(), pattern_begin));
+  first_content->set(value.data(), std::distance(value.begin(), pattern_begin));
   if (!Util::IsScriptType(*first_content, Util::KANJI)) {
     return false;
   }

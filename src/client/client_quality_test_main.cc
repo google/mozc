@@ -108,8 +108,8 @@ bool GenerateKeySequenceFrom(const string& hiragana_sentence,
     } else if (ucs4 == 0x30FB || ucs4 == 0xFF65) {
       key.set_key_code(0x002F);  // "・" -> "/"  "･" -> "/"
     } else {
-      LOG(WARNING) << "Unexpected character: " << hex << ucs4
-                   << ": in " << input << " (" << hiragana_sentence << ")";
+      LOG(WARNING) << "Unexpected character: " << std::hex << ucs4 << ": in "
+                   << input << " (" << hiragana_sentence << ")";
       return false;
     }
     keys->push_back(key);
@@ -179,9 +179,9 @@ bool CalculateBLEU(client::Client* client,
 
   *score = Scorer::BLEUScore(goldens, preedit_normalized);
 
-  VLOG(1) << hiragana_sentence << endl
-          << "   score: " << (*score) << endl
-          << " preedit: " << preedit_normalized << endl
+  VLOG(1) << hiragana_sentence << std::endl
+          << "   score: " << (*score) << std::endl
+          << " preedit: " << preedit_normalized << std::endl
           << "expected: " << expected_normalized;
 
   // Revert session to prevent server from learning this conversion
@@ -229,9 +229,9 @@ int main(int argc, char* argv[]) {
 
     VLOG(1) << "Processing " << hiragana_sentence;
     if (!mozc::IsValidSourceSentence(hiragana_sentence)) {
-      LOG(WARNING) << "Invalid test case: " << endl
-                   << "    source: " << source << endl
-                   << "  hiragana: " << hiragana_sentence << endl
+      LOG(WARNING) << "Invalid test case: " << std::endl
+                   << "    source: " << source << std::endl
+                   << "  hiragana: " << hiragana_sentence << std::endl
                    << "  expected: " << expected_result;
       continue;
     }
@@ -239,16 +239,16 @@ int main(int argc, char* argv[]) {
     double score;
     if (!mozc::CalculateBLEU(&client, hiragana_sentence,
                              expected_result, &score)) {
-      LOG(WARNING) << "Failed to calculate BLEU score: " << endl
-                   << "    source: " << source << endl
-                   << "  hiragana: " << hiragana_sentence << endl
+      LOG(WARNING) << "Failed to calculate BLEU score: " << std::endl
+                   << "    source: " << source << std::endl
+                   << "  hiragana: " << hiragana_sentence << std::endl
                    << "  expected: " << expected_result;
       continue;
     }
     scores[source].push_back(score);
   }
 
-  ostream *ofs = &cout;
+  ostream* ofs = &std::cout;
   if (!FLAGS_log_path.empty()) {
     ofs = new mozc::OutputFileStream(FLAGS_log_path.c_str());
   }
@@ -257,9 +257,9 @@ int main(int argc, char* argv[]) {
   for (map<string, vector<double> >::iterator it = scores.begin();
        it != scores.end(); ++it) {
     const double mean = mozc::CalculateMean(it->second);
-    (*ofs) << it->first << " : " << mean << endl;
+    (*ofs) << it->first << " : " << mean << std::endl;
   }
-  if (ofs != &cout) {
+  if (ofs != &std::cout) {
     delete ofs;
   }
 

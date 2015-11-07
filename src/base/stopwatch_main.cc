@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
   stopwatch.Start();
   mozc::Util::Sleep(FLAGS_sleep_time);
   stopwatch.Stop();
-  cout << stopwatch.GetElapsedMicroseconds() << endl;
+  std::cout << stopwatch.GetElapsedMicroseconds() << std::endl;
 
   return 0;
 }

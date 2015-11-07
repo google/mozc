@@ -85,7 +85,7 @@ void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
     // We cannot use CHECK_NE here because of overload resolution.
     CHECK(character_set_type_map.end() != itr)
         << "Unknown character set type: " << col[1];
-    test_map->insert(make_pair(ucs4, itr->second));
+    test_map->insert(std::make_pair(ucs4, itr->second));
   }
 }
 
@@ -1525,12 +1525,12 @@ TEST(UtilTest, AppendCGIParams) {
   Util::AppendCGIParams(params, &url);
   EXPECT_TRUE(url.empty());
 
-  params.push_back(make_pair("foo", "b a+r"));
+  params.push_back(std::make_pair("foo", "b a+r"));
   url = "http://mozc.com?";
   Util::AppendCGIParams(params, &url);
   EXPECT_EQ("http://mozc.com?foo=b%20a%2Br", url);
 
-  params.push_back(make_pair("buzz", "mozc"));
+  params.push_back(std::make_pair("buzz", "mozc"));
   url.clear();
   Util::AppendCGIParams(params, &url);
   EXPECT_EQ("foo=b%20a%2Br&buzz=mozc", url);

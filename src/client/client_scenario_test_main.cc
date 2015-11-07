@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
     input = input_file.get();
   } else {
     // Interaction mode.
-    input = &cin;
+    input = &std::cin;
   }
 
   return mozc::Loop(input);

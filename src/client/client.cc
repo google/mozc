@@ -197,13 +197,13 @@ void Client::DumpHistorySnapshot(const string &filename,
   // open with append mode
   OutputFileStream output(snapshot_file.c_str(), ios::app);
 
-  output << "---- Start history snapshot for " << label << endl;
+  output << "---- Start history snapshot for " << label << std::endl;
   output << "Created at " << Logging::GetLogMessageHeader() << endl;
-  output << "Version " << Version::GetMozcVersion() << endl;
+  output << "Version " << Version::GetMozcVersion() << std::endl;
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
     output << history_inputs_[i].DebugString();
   }
-  output << "---- End history snapshot for " << label << endl;
+  output << "---- End history snapshot for " << label << std::endl;
 }
 
 void Client::PlaybackHistory() {
@@ -607,7 +607,8 @@ bool Client::CallAndCheckVersion(const commands::Input &input,
 
 bool Client::Call(const commands::Input &input,
                   commands::Output *output) {
-  VLOG(2) << "commands::Input: " << endl << input.DebugString();
+  VLOG(2) << "commands::Input: " << std::endl
+          << input.DebugString();
 
   // don't repeat Call() if the status is either
   // SERVER_FATAL, SERVER_TIMEOUT, or SERVER_BROKEN_MESSAGE
@@ -695,7 +696,8 @@ bool Client::Call(const commands::Input &input,
          server_status_ == SERVER_UNKNOWN /* during StartServer() */)
              << " " << server_status_;
 
-  VLOG(2) << "commands::Output: " << endl << output->DebugString();
+  VLOG(2) << "commands::Output: " << std::endl
+          << output->DebugString();
 
   return true;
 }
