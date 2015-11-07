@@ -1027,7 +1027,7 @@ message Status {
   optional CompositionMode comeback_mode = 3;
 };
 
-// This messsage contains which characters are to be deleted by client.
+// This message contains which characters are to be deleted by client.
 // E.g. if current composition and surrounding text are
 //     "この感じは漢字は"
 //                ^^^^^^
