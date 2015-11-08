@@ -48,7 +48,6 @@
         'stopwatch.cc',
         'timer.cc',
         'unnamed_event.cc',
-        'url.cc',
       ],
       'dependencies': [
         'base_core',
@@ -89,6 +88,18 @@
             ],
           },
         }],
+      ],
+    },
+    {
+      'target_name': 'url',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'url.cc',
+      ],
+      'dependencies': [
+        'base_core',  # for logging, util, version
+        'singleton',
       ],
     },
     {

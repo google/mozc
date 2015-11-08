@@ -235,6 +235,7 @@
           'product_name': 'Uninstall<(branding)',
           'dependencies': [
             '../base/base.gyp:base',
+            '../base/base.gyp:url',
             'gen_client_info_plist',
           ],
           'mac_bundle_resources': [
