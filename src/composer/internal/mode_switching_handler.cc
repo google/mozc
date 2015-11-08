@@ -91,7 +91,8 @@ bool ModeSwitchingHandler::IsDriveLetter(const string &key) const {
 void ModeSwitchingHandler::AddRule(const string &key,
                                    const ModeSwitching display_mode,
                                    const ModeSwitching input_mode) {
-  patterns_.insert(make_pair(key, make_pair(display_mode, input_mode)));
+  patterns_.insert(
+      std::make_pair(key, std::make_pair(display_mode, input_mode)));
 }
 
 

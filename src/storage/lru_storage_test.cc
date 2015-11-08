@@ -69,12 +69,12 @@ void RunTest(LRUStorage *storage, uint32 size) {
       continue;
     }
     used.insert(key);
-    values.push_back(make_pair(key, value));
+    values.push_back(std::make_pair(key, value));
     cache.Insert(key, value);
     storage->Insert(key, reinterpret_cast<const char *>(&value));
   }
 
-  reverse(values.begin(), values.end());
+  std::reverse(values.begin(), values.end());
 
   vector<string> value_list;
   EXPECT_TRUE(storage->GetAllValues(&value_list));

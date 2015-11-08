@@ -3204,7 +3204,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
     result->SetTypesAndTokenAttributes(TestableDictionaryPredictor::REALTIME,
                                        Token::NONE);
   }
-  random_shuffle(results.begin(), results.end());
+  std::random_shuffle(results.begin(), results.end());
 
   Segments segments;
   MakeSegmentsForSuggestion("test", &segments);
@@ -3244,7 +3244,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
       result->cost = i + kInfinity;
     }
   }
-  random_shuffle(results.begin(), results.end());
+  std::random_shuffle(results.begin(), results.end());
 
   Segments segments;
   MakeSegmentsForSuggestion("test", &segments);

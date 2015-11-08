@@ -394,8 +394,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   // Instead of sorting all the results, we construct a heap.
   // This is done in linear time and
   // we can pop as many results as we need efficiently.
-  make_heap(results->begin(), results->end(), ResultCostLess());
-
+  std::make_heap(results->begin(), results->end(), ResultCostLess());
 
   const size_t size = min(segments->max_prediction_candidates_size(),
                           results->size());
@@ -410,7 +409,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   for (size_t i = 0; i < results->size(); ++i) {
     // Pop a result from a heap. Please pay attention not to use results->at(i).
-    pop_heap(results->begin(), results->end() - i, ResultCostLess());
+    std::pop_heap(results->begin(), results->end() - i, ResultCostLess());
     const Result &result = results->at(results->size() - i - 1);
 
     if (added >= size || result.cost >= kInfinity) {
@@ -1261,7 +1260,8 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
     }
 
     // Find the Result with minimum cost. Swap it with the beginning element.
-    iter_swap(min_iter, min_element(min_iter, max_iter, ResultWCostLess()));
+    std::iter_swap(min_iter,
+                   std::min_element(min_iter, max_iter, ResultWCostLess()));
 
     const Result &reference_result = *min_iter;
 
@@ -1273,7 +1273,7 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
       if (MaybeRedundant(reference_result.value, iter->value)) {
         // Swap out the redundant result.
         --max_iter;
-        iter_swap(iter, max_iter);
+        std::iter_swap(iter, max_iter);
       } else {
         ++iter;
       }
@@ -1286,9 +1286,9 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
   // [min_iter, max_iter): remaining results.
   // Here, we revive the redundant results up to five in the result cost order.
   const size_t kDoNotDeleteNum = 5;
-  if (distance(max_iter, raw_result.end()) >= kDoNotDeleteNum) {
-    partial_sort(max_iter, max_iter + kDoNotDeleteNum, raw_result.end(),
-                 ResultWCostLess());
+  if (std::distance(max_iter, raw_result.end()) >= kDoNotDeleteNum) {
+    std::partial_sort(max_iter, max_iter + kDoNotDeleteNum, raw_result.end(),
+                      ResultWCostLess());
     max_iter += kDoNotDeleteNum;
   } else {
     max_iter = raw_result.end();
@@ -1615,7 +1615,7 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
   results->clear();
   const ZeroQueryList key_item = {key.c_str(), NULL, 0};
   const ZeroQueryList *result_rule =
-      lower_bound(begin, end, key_item, ZeroQueryListCompare());
+      std::lower_bound(begin, end, key_item, ZeroQueryListCompare());
   if (result_rule == end || key != result_rule->key) {
     return false;
   }

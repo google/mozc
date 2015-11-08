@@ -241,7 +241,8 @@ void SystemDictionaryBuilder::ReadTokens(const vector<Token *> &tokens,
     CHECK(!token->value.empty()) << "empty value string in input";
     reduce_buffer.push_back(token);
   }
-  stable_sort(reduce_buffer.begin(), reduce_buffer.end(), TokenPtrLessThan());
+  std::stable_sort(reduce_buffer.begin(), reduce_buffer.end(),
+                   TokenPtrLessThan());
 
   // Step 2.
   key_info_list->clear();
@@ -353,7 +354,8 @@ void SystemDictionaryBuilder::SortTokenInfo(KeyInfoList *key_info_list) const {
   for (KeyInfoList::iterator itr = key_info_list->begin();
        itr != key_info_list->end(); ++itr) {
     KeyInfo *key_info = &(*itr);
-    sort(key_info->tokens.begin(), key_info->tokens.end(), TokenGreaterThan());
+    std::sort(key_info->tokens.begin(), key_info->tokens.end(),
+              TokenGreaterThan());
   }
 }
 

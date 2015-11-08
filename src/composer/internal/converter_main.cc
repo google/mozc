@@ -48,8 +48,8 @@ int main(int argc, char **argv) {
 
   string command;
   string result;
-  while (getline(cin, command)) {
+  while (getline(std::cin, command)) {
     converter.Convert(command, &result);
-    cout << result << endl;
+    std::cout << result << std::endl;
   }
 }

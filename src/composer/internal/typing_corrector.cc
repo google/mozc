@@ -123,13 +123,14 @@ void TypingCorrector::InsertCharacter(
           + LookupModelCost(top_n_[i].first, key_as_string,
                             *table_->typing_model());
       if (new_cost < TypingModel::kInfinity) {
-        tmp.push_back(make_pair(top_n_[i].first + key_as_string, new_cost));
+        tmp.push_back(
+            std::make_pair(top_n_[i].first + key_as_string, new_cost));
       }
     }
   }
   const size_t cutoff_size = min(max_correction_query_candidates_, tmp.size());
-  partial_sort(tmp.begin(), tmp.begin() + cutoff_size, tmp.end(),
-               KeyAndPenaltyLess());
+  std::partial_sort(tmp.begin(), tmp.begin() + cutoff_size, tmp.end(),
+                    KeyAndPenaltyLess());
   tmp.resize(cutoff_size);
   top_n_.swap(tmp);
 }
