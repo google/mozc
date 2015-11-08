@@ -29,6 +29,8 @@
 
 // JNI wrapper for SessionHandler.
 
+#ifdef OS_ANDROID
+
 #include <jni.h>
 
 #include <memory>
@@ -36,6 +38,7 @@
 #include "base/android_jni_proxy.h"
 #include "base/android_util.h"
 #include "base/file_util.h"
+#include "base/logging.h"
 #include "base/scheduler.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -216,3 +219,5 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
   }
 }
 }  // extern "C"
+
+#endif  // OS_ANDROID
