@@ -70,6 +70,10 @@ CommitDictionaryPredictorZeroQueryTypeEmoji
 CommitDictionaryPredictorZeroQueryTypeBigram
 CommitDictionaryPredictorZeroQueryTypeSuffix
 
+# User history predictor related
+CommitUserHistoryPredictor
+CommitUserHistoryPredictorZeroQuery
+
 # The count of all events
 SessionAllEvent
 

@@ -138,6 +138,8 @@ class Segment {
       DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI = 1 << 3,
       DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM = 1 << 4,
       DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX = 1 << 5,
+
+      USER_HISTORY_PREDICTOR = 1 << 6,
     };
 
     string key;         // reading

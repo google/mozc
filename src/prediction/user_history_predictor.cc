@@ -68,6 +68,7 @@ using mozc::commands::Request;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
+using mozc::usage_stats::UsageStats;
 
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.
@@ -540,7 +541,7 @@ bool UserHistoryPredictor::Save() {
   }
 
   // Updates usage stats here.
-  usage_stats::UsageStats::SetInteger(
+  UsageStats::SetInteger(
       "UserHistoryPredictorEntrySize",
       static_cast<int>(history.entries_size()));
 
@@ -1462,6 +1463,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
     candidate->attributes |=
         Segment::Candidate::USER_HISTORY_PREDICTION |
         Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->source_info |= Segment::Candidate::USER_HISTORY_PREDICTOR;
     if (result_entry->spelling_correction()) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
     }
@@ -1655,6 +1657,31 @@ void UserHistoryPredictor::Insert(const string &key,
   updated_ = true;
 }
 
+void UserHistoryPredictor::CheckSubmittedCandidateSource(
+    const Segments &segments) const {
+  const Segment &segment = segments.conversion_segment(0);
+  if (segment.candidates_size() < 1) {
+    VLOG(2) << "candidates size < 1";
+    return;
+  }
+
+  const Segment::Candidate &candidate = segment.candidate(0);
+  if (segment.segment_type() != Segment::FIXED_VALUE) {
+    VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
+    return;
+  }
+
+  if (!(candidate.source_info & Segment::Candidate::USER_HISTORY_PREDICTOR)) {
+    VLOG(2) << "candidate is not from user_history_predictor";
+    return;
+  }
+
+  UsageStats::IncrementCount("CommitUserHistoryPredictor");
+  if (segment.key().empty()) {
+    UsageStats::IncrementCount("CommitUserHistoryPredictorZeroQuery");
+  }
+}
+
 void UserHistoryPredictor::Finish(const ConversionRequest &request,
                                   Segments *segments) {
   if (segments->request_type() == Segments::REVERSE_CONVERSION) {
@@ -1676,6 +1703,9 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     LOG(WARNING) << "Syncer is running";
     return;
   }
+
+  // Usege stats
+  CheckSubmittedCandidateSource(*segments);
 
   const RequestType request_type = request.request().zero_query_suggestion() ?
       ZERO_QUERY_SUGGESTION : DEFAULT;
