@@ -512,8 +512,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // such like password.
   bool IsPrivacySensitive(const Segments *segments) const;
 
-  // Usage stats
-  void CheckSubmittedCandidateSource(const Segments &segments) const;
+  void MaybeRecordUsageStats(const Segments &segments) const;
 
   const dictionary::DictionaryInterface *dictionary_;
   const dictionary::POSMatcher *pos_matcher_;

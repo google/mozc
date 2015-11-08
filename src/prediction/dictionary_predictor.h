@@ -444,7 +444,7 @@ class DictionaryPredictor : public PredictorInterface {
                                    const Segments &segments,
                                    vector<Result> *results) const;
 
-  void CheckSubmittedCandidateSource(const Segment::Candidate &candidate) const;
+  void MaybeRecordUsageStats(const Segment::Candidate &candidate) const;
 
   // Sets candidate description.
   static void SetDescription(PredictionTypes types,

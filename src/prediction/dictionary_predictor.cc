@@ -325,10 +325,10 @@ void DictionaryPredictor::Finish(
     return;
   }
 
-  CheckSubmittedCandidateSource(candidate);
+  MaybeRecordUsageStats(candidate);
 }
 
-void DictionaryPredictor::CheckSubmittedCandidateSource(
+void DictionaryPredictor::MaybeRecordUsageStats(
     const Segment::Candidate &candidate) const {
   if (candidate.source_info &
       Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NONE) {

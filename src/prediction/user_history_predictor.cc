@@ -1657,7 +1657,7 @@ void UserHistoryPredictor::Insert(const string &key,
   updated_ = true;
 }
 
-void UserHistoryPredictor::CheckSubmittedCandidateSource(
+void UserHistoryPredictor::MaybeRecordUsageStats(
     const Segments &segments) const {
   const Segment &segment = segments.conversion_segment(0);
   if (segment.candidates_size() < 1) {
@@ -1704,8 +1704,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     return;
   }
 
-  // Usege stats
-  CheckSubmittedCandidateSource(*segments);
+  MaybeRecordUsageStats(*segments);
 
   const RequestType request_type = request.request().zero_query_suggestion() ?
       ZERO_QUERY_SUGGESTION : DEFAULT;
