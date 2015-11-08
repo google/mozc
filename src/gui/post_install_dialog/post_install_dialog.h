@@ -51,16 +51,7 @@ class PostInstallDialog : public QDialog,
   PostInstallDialog();
   virtual ~PostInstallDialog();
 
-  // Returns true if log off is required to use Mozc.
-  // However, this function always returns false in all platforms.
-  // TODO(team): remove the functionalities related to logoff_required and
-  //   OnLogoffNow when we are convinced that we no longer need them.
-  //   See b/2899762 for details.
-  bool logoff_required();
-
  protected slots:
-  virtual void OnLogoffNow();
-  virtual void OnLogoffLater();
   virtual void OnOk();
   virtual void OnsetAsDefaultCheckBoxToggled(int state);
   virtual void reject();

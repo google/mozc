@@ -56,14 +56,6 @@ PostInstallDialog::PostInstallDialog()
                  Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
 
-  QObject::connect(logoffNowButton,
-                   SIGNAL(clicked()),
-                   this,
-                   SLOT(OnLogoffNow()));
-  QObject::connect(logoffLaterButton,
-                   SIGNAL(clicked()),
-                   this,
-                   SLOT(OnLogoffLater()));
   QObject::connect(okButton,
                    SIGNAL(clicked()),
                    this,
@@ -72,49 +64,6 @@ PostInstallDialog::PostInstallDialog()
                    SIGNAL(stateChanged(int)),
                    this,
                    SLOT(OnsetAsDefaultCheckBoxToggled(int)));
-
-  // We change buttons to be displayed depending on the condition this dialog
-  // is launched.
-  // The following table summarizes which buttons are displayed by conditions.
-  //
-  // -------------------------------------
-  // |   OK   | Later  |  Now   | logoff |
-  // -------------------------------------
-  // |   N    |   D    |   D    |  true  |
-  // |   D    |   N    |   N    |  false |
-  // -------------------------------------
-  //
-  // The followings are meanings of the words used in the table.
-  // OK     : okButton
-  // Later  : logoffLaterButton
-  // Now    : logoffNowButton
-  // logoff : The result of IsLogoffRequired()
-  // N      : not displayed
-  // D      : displayed
-
-  // Currently, |logoff_required()| always returns false so the following
-  // conditional section, which was originally been used for rebooting system
-  // to enable CUAS on Windows XP, is now dead code.  If you enable this
-  // section again for some reason, please note that OnLogoffNow has not
-  // supported Mac nor Linux yet.
-  DCHECK(!logoff_required());
-  if (logoff_required()) {
-    thanksLabel->setText(tr("Thanks for installing.\nYou must log off before "
-                            "using Mozc."));
-    // remove OK button and move the other buttons to right.
-    const int rows = gridLayout->rowCount();
-    const int cols = gridLayout->columnCount();
-    okButton->setVisible(false);
-    gridLayout->removeWidget(okButton);
-    gridLayout->addWidget(logoffNowButton, rows - 1, cols - 2);
-    gridLayout->addWidget(logoffLaterButton, rows - 1, cols - 1);
-  } else {
-    usage_stats::UsageStats::IncrementCount("PostInstallNothingRequired");
-    logoffNowButton->setVisible(false);
-    logoffLaterButton->setVisible(false);
-    gridLayout->removeWidget(logoffNowButton);
-    gridLayout->removeWidget(logoffLaterButton);
-  }
 
   // set the default state of migrateDefaultIMEUserDictionaryCheckBox
   const bool status = (!RunLevel::IsElevatedByUAC() &&
@@ -126,37 +75,6 @@ PostInstallDialog::PostInstallDialog()
 }
 
 PostInstallDialog::~PostInstallDialog() {
-}
-
-bool PostInstallDialog::logoff_required() {
-  // This function always returns false in all platforms.  See b/2899762 for
-  // details.
-  return false;
-}
-
-// NOTE(mazda): UsageStats class is not currently multi-process safe so it is
-// possible that usagestats is incorrectly collected.
-// For example if the user activate Mozc in another application before closing
-// this dialog, the usagestats collected in the application can be overwritten
-// when this dialog is closed.
-// But this case is very rare since this dialog is launched immediately after
-// installation.
-// So we accept the potential error until this limitation is fixed.
-void PostInstallDialog::OnLogoffNow() {
-  usage_stats::UsageStats::IncrementCount("PostInstallLogoffNowButton");
-  ApplySettings();
-#ifdef OS_WIN
-  mozc::WinUtil::Logoff();
-#else
-  // not supported on Mac and Linux
-#endif  // OS_WIN
-  done(QDialog::Accepted);
-}
-
-void PostInstallDialog::OnLogoffLater() {
-  usage_stats::UsageStats::IncrementCount("PostInstallLogoffLaterButton");
-  ApplySettings();
-  done(QDialog::Rejected);
 }
 
 void PostInstallDialog::OnOk() {

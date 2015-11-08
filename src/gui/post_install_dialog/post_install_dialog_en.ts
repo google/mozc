@@ -9,47 +9,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="post_install_dialog.ui" line="43"/>
-        <source>Thanks for installing Mozc.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="post_install_dialog.ui" line="80"/>
+        <location filename="post_install_dialog.ui" line="63"/>
         <source>Migrate MSIME&apos;s user dictionary to Mozc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="post_install_dialog.ui" line="90"/>
+        <location filename="post_install_dialog.ui" line="73"/>
         <source>Set Mozc as the default IME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="post_install_dialog.ui" line="66"/>
+        <location filename="post_install_dialog.ui" line="56"/>
         <source>&amp;OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="post_install_dialog.ui" line="73"/>
-        <source>Log off &amp;Later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="post_install_dialog.ui" line="100"/>
-        <source>Log off &amp;Now</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="post_install_dialog.ui" line="107"/>
+        <location filename="post_install_dialog.ui" line="83"/>
         <source>Disable Keyboard layout hotkey (Ctrl+Shift)</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>mozc::gui::PostInstallDialog</name>
-    <message>
-        <location filename="post_install_dialog.cc" line="76"/>
-        <source>Thanks for installing.
-You must log off before using Mozc.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

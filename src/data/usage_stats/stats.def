@@ -487,18 +487,12 @@ PrelauncherEnabled
 # Use Mode Indicator
 ConfigUseModeIndicator
 
-# Need to do nothing after install
-PostInstallNothingRequired
 # Set Mozc as default on install
 PostInstallSetDefault
 # Do not set Mozc as default on install
 PostInstallNotSetDefault
 # Push OK button
 PostInstallOkButton
-# Push Logoff Now button
-PostInstallLogoffNowButton
-# Push Logoff Later button
-PostInstallLogoffLaterButton
 # Push reject (x) button
 PostInstallRejectButton
 
