@@ -35,7 +35,6 @@
 #include "base/file_util.h"
 #include "base/stl_util.h"
 #include "base/system_util.h"
-#include "base/trie.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_test_util.h"

@@ -35,7 +35,6 @@
 
 #include "base/port.h"
 #include "base/string_piece.h"
-#include "base/trie.h"
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {
