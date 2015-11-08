@@ -231,7 +231,7 @@ bool LanguageAwareRewriter::Rewrite(
 }
 
 namespace {
-bool IsLangaugeAwareInputCandidate(const composer::Composer &composer,
+bool IsLanguageAwareInputCandidate(const composer::Composer &composer,
                                    const Segment::Candidate &candidate) {
   // Check candidate.prefix to filter if the candidate is probably generated
   // from LanguangeAwareInput or not.
@@ -251,9 +251,8 @@ bool IsLangaugeAwareInputCandidate(const composer::Composer &composer,
 }  // namespace
 
 void LanguageAwareRewriter::Finish(const ConversionRequest &request,
-                                     Segments *segments) {
-  if (request.request().language_aware_input() !=
-      mozc::commands::Request::LANGUAGE_AWARE_SUGGESTION) {
+                                   Segments *segments) {
+  if (!IsEnabled(request.request())) {
     return;
   }
 
@@ -269,7 +268,7 @@ void LanguageAwareRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (IsLangaugeAwareInputCandidate(request.composer(),
+  if (IsLanguageAwareInputCandidate(request.composer(),
                                     segment.candidate(0))) {
     usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionCommitted");
   }
