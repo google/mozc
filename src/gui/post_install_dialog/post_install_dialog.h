@@ -58,10 +58,6 @@ class PostInstallDialog : public QDialog,
   //   See b/2899762 for details.
   bool logoff_required();
 
-  // Shows the help page by opening it with the default browser.
-  // Returns true if page is successfully opened by the browser.
-  static bool ShowHelpPageIfRequired();
-
  protected slots:
   virtual void OnLogoffNow();
   virtual void OnLogoffLater();
@@ -75,9 +71,6 @@ class PostInstallDialog : public QDialog,
   // - Imports MS-IME's user dictionary to Mozc' dictionary if
   //   the checkbox on the dialog is marked.
   void ApplySettings();
-
-  // Returns true if showing the help page is required.
-  static bool IsShowHelpPageRequired();
 
   std::unique_ptr<SetupUtil> setuputil_;
 };

@@ -65,7 +65,6 @@ int RunPostInstallDialog(int argc, char *argv[]) {
       ("post_install_dialog");
 
   mozc::gui::PostInstallDialog dialog;
-  mozc::gui::PostInstallDialog::ShowHelpPageIfRequired();
   dialog.exec();
 
   return 0;

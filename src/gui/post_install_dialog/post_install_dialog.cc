@@ -77,55 +77,43 @@ PostInstallDialog::PostInstallDialog()
   // is launched.
   // The following table summarizes which buttons are displayed by conditions.
   //
-  // ----------------------------------------------
-  // |   OK   | Later  |  Now   |  help  | logoff |
-  // ----------------------------------------------
-  // |   D    |   N    |   N    |  true  |  true  |
-  // |   D    |   N    |   N    |  true  |  false |
-  // |   N    |   D    |   D    |  false |  true  |
-  // |   D    |   N    |   N    |  false |  false |
-  // ----------------------------------------------
+  // -------------------------------------
+  // |   OK   | Later  |  Now   | logoff |
+  // -------------------------------------
+  // |   N    |   D    |   D    |  true  |
+  // |   D    |   N    |   N    |  false |
+  // -------------------------------------
   //
   // The followings are meanings of the words used in the table.
   // OK     : okButton
   // Later  : logoffLaterButton
   // Now    : logoffNowButton
-  // help   : The result of IsShowHelpPageRequired()
   // logoff : The result of IsLogoffRequired()
   // N      : not displayed
   // D      : displayed
-  //
-  if (IsShowHelpPageRequired()) {
-    thanksLabel->setText(tr("Thanks for installing.\n"
-                            "You need to configure your computer before using "
-                            "Mozc. Please follow the "
-                            "instructions on the help page."));
+
+  // Currently, |logoff_required()| always returns false so the following
+  // conditional section, which was originally been used for rebooting system
+  // to enable CUAS on Windows XP, is now dead code.  If you enable this
+  // section again for some reason, please note that OnLogoffNow has not
+  // supported Mac nor Linux yet.
+  DCHECK(!logoff_required());
+  if (logoff_required()) {
+    thanksLabel->setText(tr("Thanks for installing.\nYou must log off before "
+                            "using Mozc."));
+    // remove OK button and move the other buttons to right.
+    const int rows = gridLayout->rowCount();
+    const int cols = gridLayout->columnCount();
+    okButton->setVisible(false);
+    gridLayout->removeWidget(okButton);
+    gridLayout->addWidget(logoffNowButton, rows - 1, cols - 2);
+    gridLayout->addWidget(logoffLaterButton, rows - 1, cols - 1);
+  } else {
+    usage_stats::UsageStats::IncrementCount("PostInstallNothingRequired");
     logoffNowButton->setVisible(false);
     logoffLaterButton->setVisible(false);
-  } else {
-    // Currently, |logoff_required()| always returns false so the following
-    // conditional section, which was originally been used for rebooting system
-    // to enable CUAS on Windows XP, is now dead code.  If you enable this
-    // section again for some reason, please note that OnLogoffNow has not
-    // supported Mac nor Linux yet.
-    DCHECK(!logoff_required());
-    if (logoff_required()) {
-      thanksLabel->setText(tr("Thanks for installing.\nYou must log off before "
-                              "using Mozc."));
-      // remove OK button and move the other buttons to right.
-      const int rows = gridLayout->rowCount();
-      const int cols = gridLayout->columnCount();
-      okButton->setVisible(false);
-      gridLayout->removeWidget(okButton);
-      gridLayout->addWidget(logoffNowButton, rows - 1, cols - 2);
-      gridLayout->addWidget(logoffLaterButton, rows - 1, cols - 1);
-    } else {
-      usage_stats::UsageStats::IncrementCount("PostInstallNothingRequired");
-      logoffNowButton->setVisible(false);
-      logoffLaterButton->setVisible(false);
-      gridLayout->removeWidget(logoffNowButton);
-      gridLayout->removeWidget(logoffLaterButton);
-    }
+    gridLayout->removeWidget(logoffNowButton);
+    gridLayout->removeWidget(logoffLaterButton);
   }
 
   // set the default state of migrateDefaultIMEUserDictionaryCheckBox
@@ -143,16 +131,6 @@ PostInstallDialog::~PostInstallDialog() {
 bool PostInstallDialog::logoff_required() {
   // This function always returns false in all platforms.  See b/2899762 for
   // details.
-  return false;
-}
-
-bool PostInstallDialog::ShowHelpPageIfRequired() {
-  if (PostInstallDialog::IsShowHelpPageRequired()) {
-    const char kHelpPageUrl[] =
-        "http://www.google.com/support/ime/japanese/bin/answer.py?hl=jp&answer="
-        "166771";
-    return mozc::Process::OpenBrowser(kHelpPageUrl);
-  }
   return false;
 }
 
@@ -218,15 +196,6 @@ void PostInstallDialog::OnsetAsDefaultCheckBoxToggled(int state) {
   IMEHotKeyDisabledCheckBox->setChecked(state);
   IMEHotKeyDisabledCheckBox->setEnabled(static_cast<bool>(state));
 #endif
-}
-
-bool PostInstallDialog::IsShowHelpPageRequired() {
-#ifdef OS_WIN
-  return !win32::ImeUtil::IsCtfmonRunning();
-#else
-  // not supported on Mac and Linux
-  return false;
-#endif  // OS_WIN
 }
 
 }  // namespace gui
