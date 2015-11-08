@@ -46,6 +46,7 @@
 #include "base/stopwatch.h"
 #include "base/util.h"
 #include "composer/table.h"
+#include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
@@ -262,6 +263,7 @@ bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
   ReloadSession();
   engine_->Reload();
+  config::CharacterFormManager::GetCharacterFormManager()->Reload();
   RunReloaders();  // call all reloaders defined in .cc file
   return true;
 }
