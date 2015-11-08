@@ -79,7 +79,6 @@
       'target_name': 'base_test',
       'type': 'executable',
       'sources': [
-        'clock_mock_test.cc',
         'codegen_bytearray_stream_test.cc',
         'cpu_stats_test.cc',
         'process_mutex_test.cc',
@@ -113,8 +112,9 @@
         }],
       ],
       'dependencies': [
-        'base.gyp:base',
         '../testing/testing.gyp:gtest_main',
+        'base.gyp:base',
+        'clock_mock',
       ],
       'variables': {
         'test_size': 'small',
@@ -156,6 +156,23 @@
       'variables': {
         'test_size': 'small',
       },
+    },
+    {
+      'target_name': 'clock_mock',
+      'type': 'static_library',
+      'sources': [
+        'clock_mock.cc'
+      ],
+    },
+    {
+      'target_name': 'clock_mock_test',
+      'type': 'executable',
+      'sources': [
+        'clock_mock_test.cc',
+      ],
+      'dependencies': [
+        'clock_mock',
+      ],
     },
     {
       'target_name': 'install_util_test_data',
@@ -207,6 +224,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'base.gyp:base',
+        'clock_mock',
       ],
       'variables': {
         'test_size': 'small',

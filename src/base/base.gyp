@@ -39,7 +39,6 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        'clock_mock.cc',
         'cpu_stats.cc',
         'encoding_util.cc',
         'process.cc',

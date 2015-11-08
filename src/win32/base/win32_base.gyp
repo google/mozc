@@ -149,6 +149,7 @@
             'surrogate_pair_observer_test.cc',
           ],
           'dependencies': [
+            '../../base/base_test.gyp:clock_mock',
             '../../client/client.gyp:client',
             '../../testing/testing.gyp:gtest_main',
             'ime_impl_base',
