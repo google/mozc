@@ -48,7 +48,6 @@
         'stopwatch.cc',
         'timer.cc',
         'unnamed_event.cc',
-        'update_util.cc',
         'url.cc',
       ],
       'dependencies': [
@@ -160,6 +159,14 @@
             'pepper_file_util.cc',
           ],
         }],
+      ],
+    },
+    {
+      'target_name': 'update_util',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'update_util.cc',
       ],
     },
     {

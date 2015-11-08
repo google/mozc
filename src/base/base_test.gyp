@@ -85,7 +85,6 @@
         'stopwatch_test.cc',
         'timer_test.cc',
         'unnamed_event_test.cc',
-        'update_util_test.cc',
         'url_test.cc',
       ],
       'conditions': [
@@ -172,6 +171,17 @@
       ],
       'dependencies': [
         'clock_mock',
+      ],
+    },
+    {
+      'target_name': 'update_util_test',
+      'type': 'executable',
+      'sources': [
+        'update_util_test.cc'
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:update_util',
       ],
     },
     {
