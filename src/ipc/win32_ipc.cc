@@ -35,6 +35,7 @@
 #include <Windows.h>
 #include <Sddl.h>
 
+#include <algorithm>
 #include <string>
 
 #include "base/const.h"

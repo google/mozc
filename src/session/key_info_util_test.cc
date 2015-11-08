@@ -29,6 +29,9 @@
 
 #include "session/key_info_util.h"
 
+#include <algorithm>
+#include <vector>
+
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"

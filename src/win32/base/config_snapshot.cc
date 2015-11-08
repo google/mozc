@@ -29,6 +29,8 @@
 
 #include "win32/base/config_snapshot.h"
 
+#include <algorithm>
+
 #include "base/win_util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"

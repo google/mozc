@@ -29,6 +29,7 @@
 
 #include "dictionary/system/system_dictionary.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <memory>
 #include <string>

@@ -29,6 +29,7 @@
 
 #include "unix/ibus/surrounding_text_util.h"
 
+#include <algorithm>
 #include <limits>
 #include <string>
 

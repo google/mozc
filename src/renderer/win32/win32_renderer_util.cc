@@ -46,6 +46,7 @@
 #undef max
 #endif  // max
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>

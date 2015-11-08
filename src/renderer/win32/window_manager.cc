@@ -31,6 +31,7 @@
 
 #undef min
 #undef max
+#include <algorithm>
 #include <limits>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE

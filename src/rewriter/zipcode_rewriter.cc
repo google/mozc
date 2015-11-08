@@ -29,6 +29,7 @@
 
 #include "rewriter/zipcode_rewriter.h"
 
+#include <algorithm>
 #include <string>
 
 #include "base/logging.h"
