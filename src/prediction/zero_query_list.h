@@ -34,10 +34,19 @@
 
 namespace mozc {
 enum ZeroQueryType {
-  ZERO_QUERY_NONE = 0,
-  ZERO_QUERY_NUMBER_SUFFIX,
-  ZERO_QUERY_EMOTICON,
-  ZERO_QUERY_EMOJI,
+  ZERO_QUERY_NONE = 0,  // "☁" (symbol, non-unicode 6.0 emoji), and rule based.
+  ZERO_QUERY_NUMBER_SUFFIX,  // "階" from "2"
+  ZERO_QUERY_EMOTICON,  // "(>ω<)" from "うれしい"
+  ZERO_QUERY_EMOJI,  // <umbrella emoji> from "かさ"
+  // Following types are defined for usage stats.
+  // The candidates of these types will not be stored at |ZeroQueryList|.
+  // - "ヒルズ" from "六本木"
+  // These candidates will be generated from dictionary entries
+  // such as "六本木ヒルズ".
+  ZERO_QUERY_BIGRAM,
+  // - "に" from "六本木".
+  // These candidates will be generated from suffix dictionary.
+  ZERO_QUERY_SUFFIX,
 };
 
 // bit fields

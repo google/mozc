@@ -62,6 +62,14 @@ CommitAutoPartialSuggestion
 CommitUnicodeEmoji
 CommitCarrierEmoji
 
+# Zero query related
+CommitDictionaryPredictorZeroQueryTypeNone
+CommitDictionaryPredictorZeroQueryTypeNumberSuffix
+CommitDictionaryPredictorZeroQueryTypeEmoticon
+CommitDictionaryPredictorZeroQueryTypeEmoji
+CommitDictionaryPredictorZeroQueryTypeBigram
+CommitDictionaryPredictorZeroQueryTypeSuffix
+
 # The count of all events
 SessionAllEvent
 

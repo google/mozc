@@ -70,6 +70,8 @@ class DictionaryPredictor : public PredictorInterface {
   virtual bool PredictForRequest(const ConversionRequest &request,
                                  Segments *segments) const;
 
+  virtual void Finish(const ConversionRequest &request, Segments *segments);
+
   virtual const string &GetPredictorName() const { return predictor_name_; }
 
  protected:
@@ -103,13 +105,16 @@ class DictionaryPredictor : public PredictorInterface {
 
   struct Result {
     Result() : types(NO_PREDICTION), wcost(0), cost(0), lid(0), rid(0),
-               candidate_attributes(0), consumed_key_size(0) {}
+               candidate_attributes(0), source_info(0),
+               consumed_key_size(0) {}
 
     void InitializeByTokenAndTypes(const dictionary::Token &token,
                                    PredictionTypes types);
     void SetTypesAndTokenAttributes(
         PredictionTypes prediction_types,
         dictionary::Token::AttributesBitfield token_attr);
+    void SetSourceInfoForZeroQuery(
+        ZeroQueryType zero_query_type);
 
     string key;
     string value;
@@ -133,6 +138,9 @@ class DictionaryPredictor : public PredictorInterface {
     // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
     vector<uint32> inner_segment_boundary;
     uint32 candidate_attributes;
+    // Segment::Candidate::SourceInfo.
+    // Will be used for usage stats.
+    uint32 source_info;
     size_t consumed_key_size;
   };
 
@@ -199,7 +207,9 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, GetCandidateCutoffThreshold);
   FRIEND_TEST(DictionaryPredictorTest, AggregateUnigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateBigramPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction);
   FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
   FRIEND_TEST(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, TriggerZeroQuerySuggestion);
@@ -216,18 +226,21 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, SetDebugDescription);
   FRIEND_TEST(DictionaryPredictorTest, GetZeroQueryCandidates);
 
+  typedef pair<string, ZeroQueryType> ZeroQueryResult;
+
   // Looks up the given range and appends zero query candidate list for |key|
   // to |results|.
   // Returns false if there is no result for |key|.
-  static bool GetZeroQueryCandidatesForKey(const ConversionRequest &request,
-                                           const string &key,
-                                           const ZeroQueryList *begin,
-                                           const ZeroQueryList *end,
-                                           vector<string> *results);
+  static bool GetZeroQueryCandidatesForKey(
+      const ConversionRequest &request,
+      const string &key,
+      const ZeroQueryList *begin,
+      const ZeroQueryList *end,
+      vector<ZeroQueryResult> *results);
 
-  static void AppendZeroQueryToResults(const vector<string> &candidates,
-                                       uint16 lid, uint16 rid,
-                                       vector<Result> *results);
+  static void AppendZeroQueryToResults(
+      const vector<ZeroQueryResult> &candidates,
+      uint16 lid, uint16 rid, vector<Result> *results);
 
   // Returns false if no results were aggregated.
   bool AggregatePrediction(const ConversionRequest &request,
@@ -241,7 +254,6 @@ class DictionaryPredictor : public PredictorInterface {
   bool AggregateZeroQueryPrediction(const ConversionRequest &request,
                                     const Segments &segments,
                                     vector<Result> *result) const;
-
 
   void SetCost(const ConversionRequest &request,
                const Segments &segments, vector<Result> *results) const;
@@ -431,6 +443,8 @@ class DictionaryPredictor : public PredictorInterface {
   bool PushBackTopConversionResult(const ConversionRequest &request,
                                    const Segments &segments,
                                    vector<Result> *results) const;
+
+  void CheckSubmittedCandidateSource(const Segment::Candidate &candidate) const;
 
   // Sets candidate description.
   static void SetDescription(PredictionTypes types,
