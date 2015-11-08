@@ -38,7 +38,6 @@ namespace win32 {
 
 extern const LPARAM kNotifyUpdateUI;
 extern const LPARAM kNotifyReconvertFromIME;
-extern const LPARAM kNotifyDelayedCallback;
 
 class UIMessage {
  public:

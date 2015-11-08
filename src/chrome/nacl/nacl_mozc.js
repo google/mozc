@@ -234,16 +234,6 @@ mozc.NaclMozc = function(naclModule) {
   this.keyTranslator_ = new mozc.KeyTranslator();
 
   /**
-   * callbackCommand_ stores the callback message which is recieved from NaCl
-   * module. This callback will be cancelled when the user presses the
-   * subsequent key. In the current implementation, if the subsequent key event
-   * also makes callback, the second callback will be called in the timimg of
-   * the first callback.
-   * @private {!mozc.Callback}
-   */
-  this.callbackCommand_ = /** @type {!mozc.Callback} */ ({});
-
-  /**
    * The surrounding information.
    * @private {Object.<{text: string, focus: number, anchor: number}>}
    */
@@ -463,36 +453,6 @@ mozc.NaclMozc.prototype.isValidReading = function(text, callback) {
 };
 
 /**
- * Sends callback command to NaCl module.
- * @param {function(!mozc.Command)=} opt_callback Function to be called with
- *     results from NaCl module.
- * @private
- */
-mozc.NaclMozc.prototype.sendCallbackCommand_ = function(opt_callback) {
-  if (!this.sessionID_) {
-    console.error('Session has not been created.');
-    return;
-  }
-  if (!this.callbackCommand_.session_command) {
-    return;
-  }
-  var command = this.callbackCommand_.session_command;
-  if (command.type == 'CONVERT_REVERSE' && this.surroundingInfo_) {
-    if (this.surroundingInfo_.focus < this.surroundingInfo_.anchor) {
-      command.text = this.surroundingInfo_.text.substring(
-                         this.surroundingInfo_.focus,
-                         this.surroundingInfo_.anchor);
-    } else {
-      command.text = this.surroundingInfo_.text.substring(
-                         this.surroundingInfo_.anchor,
-                         this.surroundingInfo_.focus);
-    }
-  }
-  this.callbackCommand_ = /** @type {!mozc.Callback} */ ({});
-  this.postMozcSessionCommand_(command, opt_callback);
-};
-
-/**
  * Wraps event handler to be able to managed by waitingEventHandlers_.
  * @param {!Function} handler Event handler.
  * @return {!Function} Wraped Event handler.
@@ -645,18 +605,6 @@ mozc.NaclMozc.prototype.outputResponse_ = function(output) {
     if (this.compositionMode_ != new_mode) {
       this.compositionMode_ = /** @type {mozc.CompositionMode_} */ (new_mode);
       this.updateMenuItems_();
-    }
-  }
-  if (output.callback) {
-    this.callbackCommand_ = output.callback;
-    if (this.callbackCommand_.delay_millisec) {
-      window.setTimeout(
-          this.sendCallbackCommand_.bind(
-              this,
-              this.processResponse_.bind(this)),
-          this.callbackCommand_.delay_millisec);
-    } else {
-      this.sendCallbackCommand_(this.processResponse_.bind(this));
     }
   }
 };
@@ -1026,9 +974,6 @@ mozc.NaclMozc.prototype.onKeyEventAsync_ = function(engineID, keyData) {
     chrome.input.ime.keyEventHandled(keyData.requestId, false);
     return;
   }
-
-  // Cancels the callback request.
-  this.callbackCommand_ = /** @type {!mozc.Callback} */ ({});
 
   keyEvent.mode = this.compositionMode_;
 
