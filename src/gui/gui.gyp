@@ -57,6 +57,7 @@
         'base/window_title_modifier.cc',
       ],
       'dependencies': [
+        '../dictionary/dictionary_base.gyp:user_dictionary',
         '../ipc/ipc.gyp:ipc',
         '../ipc/ipc.gyp:window_info_protocol',
         '../protocol/protocol.gyp:commands_proto',
