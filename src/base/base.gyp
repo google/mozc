@@ -111,7 +111,6 @@
         'mmap.cc',
         'number_util.cc',
         'scoped_handle.cc',
-        'string_piece.cc',
         'system_util.cc',
         'text_normalizer.cc',
         'thread.cc',
@@ -125,6 +124,7 @@
         'gen_version_def#host',
         'mutex',
         'singleton',
+        'string_piece',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -162,6 +162,14 @@
           ],
         }],
       ],
+    },
+    {
+      'target_name': 'string_piece',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'string_piece.cc',
+      ]
     },
     {
       'target_name': 'mutex',
