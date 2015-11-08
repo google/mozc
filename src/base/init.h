@@ -41,16 +41,12 @@
 //  }
 //  REGISTER_MODULE_INITIALIZER(my_hostname, InitMyHostname());
 
-
 #ifndef MOZC_BASE_INIT_H_
 #define MOZC_BASE_INIT_H_
 
-#include <string>
-#include "base/port.h"
-
-typedef void (*RegisterModuleFunction)();
-
 namespace mozc {
+
+using RegisterModuleFunction = void (*)();
 
 class InitializerRegister {
  public:
@@ -72,14 +68,6 @@ class ReloaderRegister {
                    RegisterModuleFunction function);
 };
 
-// Main thread can call finalizers at the end of main().
-// You can register all cleanup routines with finalizer.
-class FinalizerRegister {
- public:
-  FinalizerRegister(const char *name,
-                    RegisterModuleFunction function);
-};
-
 // Can define callback functions which are called
 // when operating systems or installer/uninstaller
 // sends "shutdown" event to the converter/renderere.
@@ -93,8 +81,8 @@ class ShutdownHandlerRegister {
 };
 
 void RunReloaders();
-void RunFinalizers();
 void RunShutdownHandlers();
+
 }  // namespace mozc
 
 // Reloaders are also called after initializers are invoked.
@@ -107,10 +95,5 @@ void RunShutdownHandlers();
   static void mozc_shutdown_handler_##name() { body; } \
   static const mozc::ShutdownHandlerRegister \
   reloader_##name(#name, mozc_shutdown_handler_##name);
-
-#define REGISTER_MODULE_FINALIZER(name, body) \
-  static void mozc_finalizer_##name() { body; } \
-  static const mozc::FinalizerRegister \
-  finalizer_##name(#name, mozc_finalizer_##name);
 
 #endif  // MOZC_BASE_INIT_H_

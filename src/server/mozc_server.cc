@@ -44,6 +44,7 @@
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
+#include "base/singleton.h"
 #include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
@@ -155,7 +156,7 @@ int MozcServer::Run() {
 }
 
 int MozcServer::Finalize() {
-  mozc::RunFinalizers();
+  mozc::SingletonFinalizer::Finalize();
   return 0;
 }
 

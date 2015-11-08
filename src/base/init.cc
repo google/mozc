@@ -30,35 +30,16 @@
 #include "base/init.h"
 
 #include <vector>
+
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/port.h"
 #include "base/singleton.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace {
-class RegisterModuleHandler {
- public:
-  virtual void Call() = 0;  // virtual
-  void Add(RegisterModuleFunction func);
-  RegisterModuleHandler() {}
-  virtual ~RegisterModuleHandler() {}
 
- protected:
-  Mutex mutex_;
-  vector<RegisterModuleFunction> funcs_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(RegisterModuleHandler);
-};
-
-void RegisterModuleHandler::Add(RegisterModuleFunction func) {
-  scoped_lock l(&mutex_);
-  funcs_.push_back(func);
-}
-
-class Initializer : public RegisterModuleHandler {
+class Initializer {
  public:
   void Call() {
     scoped_lock l(&mutex_);
@@ -68,10 +49,20 @@ class Initializer : public RegisterModuleHandler {
     }
     // clear func not to be called twice
     funcs_.clear();
+    funcs_.shrink_to_fit();
   }
+
+  void Add(RegisterModuleFunction func) {
+    scoped_lock l(&mutex_);
+    funcs_.push_back(func);
+  }
+
+ private:
+  Mutex mutex_;
+  vector<RegisterModuleFunction> funcs_;
 };
 
-class Reloader : public RegisterModuleHandler {
+class Reloader {
  public:
   void Call() {
     scoped_lock l(&mutex_);
@@ -79,38 +70,44 @@ class Reloader : public RegisterModuleHandler {
       funcs_[i]();
     }
   }
-};
 
-class Finalizer : public RegisterModuleHandler {
- public:
-  void Call() {
+  void Add(RegisterModuleFunction func) {
     scoped_lock l(&mutex_);
-    VLOG(1) << "Finalizer is called";
-    // reverse order, as new module will depend on old module.
-    for (int i = static_cast<int>(funcs_.size() - 1); i >= 0; --i) {
-      funcs_[i]();
-    }
-    // clear func not to be called twice
-    funcs_.clear();
+    funcs_.push_back(func);
   }
+
+ private:
+  Mutex mutex_;
+  vector<RegisterModuleFunction> funcs_;
 };
 
-class ShutdownHandler : public RegisterModuleHandler {
+class ShutdownHandler {
  public:
   void Call() {
     scoped_lock l(&mutex_);
     VLOG(1) << "ShutdownHandler is called";
-    // reverse order, as new module will depend on old module.
-    for (int i = static_cast<int>(funcs_.size() - 1); i >= 0; --i) {
-      funcs_[i]();
+    // Call functions in reverse order, as later registered modules may depend
+    // on earlier modules.
+    for (auto iter = funcs_.rbegin(); iter != funcs_.rend(); ++iter) {
+      (*iter)();
     }
     // clear func not to be called twice
     funcs_.clear();
+    funcs_.shrink_to_fit();
   }
+
+  void Add(RegisterModuleFunction func) {
+    scoped_lock l(&mutex_);
+    funcs_.push_back(func);
+  }
+
+ private:
+  Mutex mutex_;
+  vector<RegisterModuleFunction> funcs_;
 };
+
 }  // namespace
 }  // namespace mozc
-
 
 namespace mozc {
 
@@ -119,11 +116,11 @@ InitializerRegister::InitializerRegister(const char *name,
   Singleton<Initializer>::get()->Add(func);
 }
 
-// TODO(taku): this function should be thread-safe
 void RunInitializers() {
   Singleton<Initializer>::get()->Call();
 }
-}   // mozc
+
+}   // namespace mozc
 
 namespace mozc {
 
@@ -134,16 +131,6 @@ ReloaderRegister::ReloaderRegister(const char *name,
 
 void RunReloaders() {
   Singleton<Reloader>::get()->Call();
-}
-
-FinalizerRegister::FinalizerRegister(const char *name,
-                                     RegisterModuleFunction func) {
-  Singleton<Finalizer>::get()->Add(func);
-}
-
-void RunFinalizers() {
-  Singleton<Finalizer>::get()->Call();
-  SingletonFinalizer::Finalize();
 }
 
 ShutdownHandlerRegister::ShutdownHandlerRegister(const char *name,
