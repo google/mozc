@@ -313,7 +313,7 @@ bool LRUStorage::Merge(const LRUStorage &storage) {
     }
   }
 
-  stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
+  std::stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
 
   string buf;
   set<uint64> seen;   // remove duplicated entries.
@@ -476,8 +476,7 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
     ary.push_back(begin);
     begin += (value_size_ + 12);
   }
-  stable_sort(ary.begin(), ary.end(),
-              CompareByTimeStamp());
+  std::stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
 
   lru_list_.reset(new LRUList(size_));
   map_.clear();
@@ -485,7 +484,7 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
   for (size_t i = 0; i < ary.size(); ++i) {
     if (GetTimeStamp(ary[i]) != 0) {
       Node *node = lru_list_->Add(ary[i]);
-      map_.insert(make_pair(GetFP(ary[i]), node));
+      map_.insert(std::make_pair(GetFP(ary[i]), node));
     } else if (last_item_ == NULL) {
       last_item_ = ary[i];
     }
@@ -531,7 +530,7 @@ bool LRUStorage::GetAllValues(vector<string> *values) const {
     DCHECK(node->value);
     values->push_back(string(GetValue(node->value), value_size_));
   }
-  reverse(values->begin(), values->end());
+  std::reverse(values->begin(), values->end());
   return true;
 }
 
@@ -570,12 +569,12 @@ bool LRUStorage::Insert(const string &key, const char *value) {
     }
     lru_list_->MoveToTop(node);
     Update(node->value, fp, value, value_size_);
-    map_.insert(make_pair(fp, node));
+    map_.insert(std::make_pair(fp, node));
   } else if (last_item_ < mmap_->end()) {  // not found, cahce is not FULL
     Node *node = lru_list_->Add(last_item_);
     lru_list_->MoveToTop(node);
     Update(node->value, fp, value, value_size_);
-    map_.insert(make_pair(fp, node));
+    map_.insert(std::make_pair(fp, node));
     last_item_ += (value_size_ + 12);
     if (last_item_ >= mmap_->end()) {
       last_item_ = NULL;

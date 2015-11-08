@@ -340,7 +340,7 @@ bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
     return false;
   }
   const uint32 score = UserHistoryPredictor::GetScore(*entry);
-  agenda_.push(make_pair(score, entry));
+  agenda_.push(std::make_pair(score, entry));
   return true;
 }
 

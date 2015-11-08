@@ -205,7 +205,7 @@ bool TinyStorageImpl::Open(const string &filename) {
       return false;
     }
 
-    dic_.insert(make_pair(key, value));
+    dic_.insert(std::make_pair(key, value));
   }
 
   if (static_cast<size_t>(begin - mmap.begin()) != mmap.size()) {

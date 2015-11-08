@@ -431,7 +431,7 @@ class LookupPrefixTestCallback : public SystemDictionary::Callback {
 
   virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
                              const Token &token) {
-    result_.insert(make_pair(token.key, token.value));
+    result_.insert(std::make_pair(token.key, token.value));
     return TRAVERSE_CONTINUE;
   }
 

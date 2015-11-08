@@ -359,7 +359,7 @@ class SystemDictionary::ReverseLookupIndex {
          id_itr != id_set.end(); ++id_itr) {
       const ReverseLookupResultArray &result_array = index_[*id_itr];
       for (size_t i = 0; i < result_array.size; ++i) {
-        result_map->insert(make_pair(*id_itr, result_array.results[i]));
+        result_map->insert(std::make_pair(*id_itr, result_array.results[i]));
       }
     }
   }
@@ -1148,7 +1148,7 @@ void SystemDictionary::ScanTokens(
       ReverseLookupResult lookup_result;
       lookup_result.tokens_offset = result.tokens_offset;
       lookup_result.id_in_key_trie = result.index;
-      cache->results.insert(make_pair(result.value_id, lookup_result));
+      cache->results.insert(std::make_pair(result.value_id, lookup_result));
     }
   }
 }

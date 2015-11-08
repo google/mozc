@@ -158,7 +158,7 @@ class ZeroBitAdapter : public AdapterBase<int> {
     // The number of 0-bits
     //   = (total num bits) - (1-bits)
     //   = (chunk_size [bytes] * 8 [bits/byte] * (iter's position) - (1-bits)
-    return chunk_size_ * 8 * distance(index_->begin(), iter) - *iter;
+    return chunk_size_ * 8 * std::distance(index_->begin(), iter) - *iter;
   }
 
  private:
@@ -173,11 +173,10 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
 
   // Binary search on chunks.
   ZeroBitAdapter adapter(&index_, chunk_size_);
-  const vector<int>::const_iterator iter = lower_bound(
-      MakeIteratorAdapter(index_.begin(), adapter),
-      MakeIteratorAdapter(index_.end(), adapter),
-      n).base();
-  const int chunk_index = distance(index_.begin(), iter) - 1;
+  const vector<int>::const_iterator iter =
+      std::lower_bound(MakeIteratorAdapter(index_.begin(), adapter),
+                       MakeIteratorAdapter(index_.end(), adapter), n).base();
+  const int chunk_index = std::distance(index_.begin(), iter) - 1;
   DCHECK_GE(chunk_index, 0);
   n -= chunk_size_ * 8 * chunk_index - index_[chunk_index];
 
@@ -208,8 +207,8 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
 
   // Binary search on chunks.
   const vector<int>::const_iterator iter =
-      lower_bound(index_.begin(), index_.end(), n);
-  const int chunk_index = distance(index_.begin(), iter) - 1;
+      std::lower_bound(index_.begin(), index_.end(), n);
+  const int chunk_index = std::distance(index_.begin(), iter) - 1;
   DCHECK_GE(chunk_index, 0);
   n -= index_[chunk_index];
 

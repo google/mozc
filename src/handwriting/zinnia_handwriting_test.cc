@@ -58,8 +58,8 @@ TEST_F(ZinniaHandwritingTest, Recognize) {
   // Initialize a horizontal line like "一".
   Strokes strokes;
   Stroke stroke;
-  stroke.push_back(make_pair(0.2, 0.5));
-  stroke.push_back(make_pair(0.8, 0.5));
+  stroke.push_back(std::make_pair(0.2, 0.5));
+  stroke.push_back(std::make_pair(0.8, 0.5));
   strokes.push_back(stroke);
 
   vector<string> results;
