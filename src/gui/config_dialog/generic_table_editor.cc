@@ -38,7 +38,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 

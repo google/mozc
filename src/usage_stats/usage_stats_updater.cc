@@ -39,6 +39,7 @@
 #include "base/android_util.h"
 #endif  // OS_ANDROID
 #include "base/config_file_stream.h"
+#include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/number_util.h"
 #include "base/port.h"

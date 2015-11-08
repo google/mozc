@@ -38,6 +38,7 @@
 
 #include <string>
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"

@@ -49,7 +49,6 @@
 #include <string>
 
 #include "base/port.h"
-#include "base/util.h"
 
 namespace mozc {
 class Timer;

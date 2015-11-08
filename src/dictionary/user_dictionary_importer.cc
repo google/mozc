@@ -45,6 +45,7 @@
 #include "base/compiler_specific.h"
 #include "base/encoding_util.h"
 #include "base/hash.h"
+#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/port.h"

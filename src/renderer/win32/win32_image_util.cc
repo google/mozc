@@ -40,6 +40,7 @@
 #include <bitset>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/stl_util.h"
 #include "base/util.h"
 

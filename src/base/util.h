@@ -37,7 +37,6 @@
 #include <vector>
 
 #include "base/double_array.h"
-#include "base/logging.h"
 #include "base/port.h"
 #include "base/string_piece.h"
 

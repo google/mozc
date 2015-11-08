@@ -29,6 +29,7 @@
 
 #include "usage_stats/upload_util.h"
 
+#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "net/http_client.h"
