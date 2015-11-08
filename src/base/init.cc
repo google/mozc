@@ -62,25 +62,6 @@ class Initializer {
   vector<RegisterModuleFunction> funcs_;
 };
 
-class Reloader {
- public:
-  void Call() {
-    scoped_lock l(&mutex_);
-    for (size_t i = 0; i < funcs_.size(); ++i) {
-      funcs_[i]();
-    }
-  }
-
-  void Add(RegisterModuleFunction func) {
-    scoped_lock l(&mutex_);
-    funcs_.push_back(func);
-  }
-
- private:
-  Mutex mutex_;
-  vector<RegisterModuleFunction> funcs_;
-};
-
 }  // namespace
 }  // namespace mozc
 
@@ -96,16 +77,3 @@ void RunInitializers() {
 }
 
 }   // namespace mozc
-
-namespace mozc {
-
-ReloaderRegister::ReloaderRegister(const char *name,
-                                   RegisterModuleFunction func) {
-  Singleton<Reloader>::get()->Add(func);
-}
-
-void RunReloaders() {
-  Singleton<Reloader>::get()->Call();
-}
-
-}  // namespace mozc

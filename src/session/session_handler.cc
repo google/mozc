@@ -38,7 +38,6 @@
 
 #include "base/clock.h"
 #include "base/flags.h"
-#include "base/init.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/process.h"
@@ -264,7 +263,6 @@ bool SessionHandler::Reload(commands::Command *command) {
   ReloadSession();
   engine_->Reload();
   config::CharacterFormManager::GetCharacterFormManager()->Reload();
-  RunReloaders();  // call all reloaders defined in .cc file
   return true;
 }
 

@@ -62,20 +62,6 @@ void RunInitializers();
   static const mozc::InitializerRegister \
   initializer_##name(#name, mozc_initializer_##name);
 
-class ReloaderRegister {
- public:
-  ReloaderRegister(const char *name,
-                   RegisterModuleFunction function);
-};
-
-void RunReloaders();
-
 }  // namespace mozc
-
-// Reloaders are also called after initializers are invoked.
-#define REGISTER_MODULE_RELOADER(name, body) \
-  static void mozc_reloader_##name() { body; } \
-  static const mozc::ReloaderRegister \
-  reloader_##name(#name, mozc_reloader_##name);
 
 #endif  // MOZC_BASE_INIT_H_

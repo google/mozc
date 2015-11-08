@@ -37,14 +37,10 @@ namespace {
 int g_counter = 0;
 
 REGISTER_MODULE_INITIALIZER(init_test, { g_counter = 1; });
-REGISTER_MODULE_RELOADER(reload_test, { g_counter = 2; });
 
 TEST(InitTest, InitBasicTest) {
   RunInitializers();
   EXPECT_EQ(1, g_counter);
-
-  RunReloaders();
-  EXPECT_EQ(2, g_counter);
 }
 
 }  // namespace
