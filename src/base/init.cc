@@ -81,31 +81,6 @@ class Reloader {
   vector<RegisterModuleFunction> funcs_;
 };
 
-class ShutdownHandler {
- public:
-  void Call() {
-    scoped_lock l(&mutex_);
-    VLOG(1) << "ShutdownHandler is called";
-    // Call functions in reverse order, as later registered modules may depend
-    // on earlier modules.
-    for (auto iter = funcs_.rbegin(); iter != funcs_.rend(); ++iter) {
-      (*iter)();
-    }
-    // clear func not to be called twice
-    funcs_.clear();
-    funcs_.shrink_to_fit();
-  }
-
-  void Add(RegisterModuleFunction func) {
-    scoped_lock l(&mutex_);
-    funcs_.push_back(func);
-  }
-
- private:
-  Mutex mutex_;
-  vector<RegisterModuleFunction> funcs_;
-};
-
 }  // namespace
 }  // namespace mozc
 
@@ -131,15 +106,6 @@ ReloaderRegister::ReloaderRegister(const char *name,
 
 void RunReloaders() {
   Singleton<Reloader>::get()->Call();
-}
-
-ShutdownHandlerRegister::ShutdownHandlerRegister(const char *name,
-                                                 RegisterModuleFunction func) {
-  Singleton<ShutdownHandler>::get()->Add(func);
-}
-
-void RunShutdownHandlers() {
-  Singleton<ShutdownHandler>::get()->Call();
 }
 
 }  // namespace mozc

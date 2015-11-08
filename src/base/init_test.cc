@@ -38,7 +38,6 @@ int g_counter = 0;
 
 REGISTER_MODULE_INITIALIZER(init_test, { g_counter = 1; });
 REGISTER_MODULE_RELOADER(reload_test, { g_counter = 2; });
-REGISTER_MODULE_SHUTDOWN_HANDLER(shutdown_test, { g_counter = 3; });
 
 TEST(InitTest, InitBasicTest) {
   RunInitializers();
@@ -46,9 +45,6 @@ TEST(InitTest, InitBasicTest) {
 
   RunReloaders();
   EXPECT_EQ(2, g_counter);
-
-  RunShutdownHandlers();
-  EXPECT_EQ(3, g_counter);
 }
 
 }  // namespace

@@ -68,20 +68,7 @@ class ReloaderRegister {
                    RegisterModuleFunction function);
 };
 
-// Can define callback functions which are called
-// when operating systems or installer/uninstaller
-// sends "shutdown" event to the converter/renderere.
-// Callback function MUST be thread safe, as
-// this handler may be called asynchronously. You may
-// not implement complicated operations with this handler.
-class ShutdownHandlerRegister {
- public:
-  ShutdownHandlerRegister(const char *name,
-                          RegisterModuleFunction function);
-};
-
 void RunReloaders();
-void RunShutdownHandlers();
 
 }  // namespace mozc
 
@@ -90,10 +77,5 @@ void RunShutdownHandlers();
   static void mozc_reloader_##name() { body; } \
   static const mozc::ReloaderRegister \
   reloader_##name(#name, mozc_reloader_##name);
-
-#define REGISTER_MODULE_SHUTDOWN_HANDLER(name, body) \
-  static void mozc_shutdown_handler_##name() { body; } \
-  static const mozc::ShutdownHandlerRegister \
-  reloader_##name(#name, mozc_shutdown_handler_##name);
 
 #endif  // MOZC_BASE_INIT_H_
