@@ -238,6 +238,8 @@
           ],
           'action': [
             'python', '../../data/images/android/template/transform.py',
+            '--input_dir',
+            '<(abs_depth)/data/images/android/template',
             '--output_zip', '<@(_outputs)',
           ],
         },

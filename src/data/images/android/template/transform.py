@@ -32,7 +32,7 @@
 
 Usage:
 $ mkdir OUTPUT_PATH
-$ python transform.py --output_dir=OUTPUT_PATH
+$ python transform.py --input_dir=data/images/android/template --output_dir=OUTPUT_PATH
 
 Note:
 We use half-width characters for following to adjust the position
@@ -50,8 +50,6 @@ import os
 import tempfile
 import zipfile
 
-
-ABS_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 _REPLACE_CHAR = '中'
 _REPLACE_CHAR_QWERTY_SUPPORT = '副'
@@ -556,22 +554,22 @@ def WriteKeys(
       write_f.write(keytop)
 
 
-def Transform(output_dir):
+def Transform(input_dir, output_dir):
   """Transforms template .svg files into output_dir."""
   ExpandAndWriteSupportKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'godan__kana__support__template.svg'),
+      os.path.join(input_dir, 'godan__kana__support__template.svg'),
       'godan__kana__support',
       output_dir,
       _GODAN_KANA_SUPPORT_KEY_DEFINITIONS)
 
   ExpandAndWriteSupportKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'godan__kana__support__12__template.svg'),
+      os.path.join(input_dir, 'godan__kana__support__12__template.svg'),
       'godan__kana__support',
       output_dir,
       _GODAN_KANA_SUPPORT_12_KEY_DEFINITION)
 
   WriteSupportPopupKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'support__popup__template.svg'),
+      os.path.join(input_dir, 'support__popup__template.svg'),
       'godan__kana__support__popup',
       output_dir,
       _GODAN_KANA_SUPPORT_POPUP_KEY_DEFINITIONS)
@@ -580,107 +578,107 @@ def Transform(output_dir):
       _QWERTY_KEYICON_KEY_DEFINITIONS + GenerateQwertyAlphabetKeyDefinitions())
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'qwerty__keyicon__template.svg'),
+      os.path.join(input_dir, 'qwerty__keyicon__template.svg'),
       'qwerty__keyicon',
       output_dir,
       qwerty_definitions)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'qwerty__popup__template.svg'),
+      os.path.join(input_dir, 'qwerty__popup__template.svg'),
       'qwerty__popup',
       output_dir,
       [x for x in qwerty_definitions if x.get('support', '')])
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__popup__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__popup__template.svg'),
       'twelvekeys__popup',
       output_dir,
       GenerateTwelvekeysAlphabetKeyDefinitions())
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__alphabet__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__alphabet__template.svg'),
       'twelvekeys__alphabet',
       output_dir,
       _TWELVEKEYS_ALPHABET_KEY_DEFINITIONS)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__alphabet__popup__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__alphabet__popup__template.svg'),
       'twelvekeys__alphabet__popup',
       output_dir,
       _TWELVEKEYS_ALPHABET_KEY_DEFINITIONS)
 
   ExpandAndWriteSupportKeys(
-      os.path.join(ABS_SCRIPT_DIR,
+      os.path.join(input_dir,
                    'twelvekeys__alphabet__support__template.svg'),
       'twelvekeys__alphabet__support',
       output_dir,
       _TWELVEKEYS_ALPHABET_SUPPORT_KEY_DEFINITIONS)
 
   WriteSupportPopupKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'support__popup__template.svg'),
+      os.path.join(input_dir, 'support__popup__template.svg'),
       'twelvekeys__alphabet__support__popup',
       output_dir,
       _TWELVEKEYS_ALPHABET_SUPPORT_POPUP_KEY_DEFINITIONS)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__kana__keyicon__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__kana__keyicon__template.svg'),
       'twelvekeys__kana__keyicon',
       output_dir,
       _TWELVEKEYS_KANA_KEYICON_KEY_DEFINITIONS)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__popup__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__popup__template.svg'),
       'twelvekeys__popup',
       output_dir,
       _TWELVEKEYS_KANA_KEYICON_KEY_DEFINITIONS)
 
   ExpandAndWriteSupportKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__kana__support__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__kana__support__template.svg'),
       'twelvekeys__kana__support',
       output_dir,
       _TWELVEKEYS_KANA_SUPPORT_KEY_DEFINITIONS)
 
   ExpandAndWriteSupportKeys(
-      os.path.join(ABS_SCRIPT_DIR,
+      os.path.join(input_dir,
                    'twelvekeys__kana__support__12__template.svg'),
       'twelvekeys__kana__support',
       output_dir,
       _TWELVEKEYS_KANA_SUPPORT_12_KEY_DEFINITION)
 
   WriteSupportPopupKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'support__popup__template.svg'),
+      os.path.join(input_dir, 'support__popup__template.svg'),
       'twelvekeys__kana__support__popup',
       output_dir,
       _TWELVEKEYS_KANA_SUPPORT_POPUP_KEY_DEFINITIONS)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__number__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__number__template.svg'),
       'twelvekeys__number',
       output_dir,
       _TWELVEKEYS_NUMBER_KEY_DEFINITIONS)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__popup__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__popup__template.svg'),
       'twelvekeys__popup',
       output_dir,
       _TWELVEKEYS_NUMBER_KEY_DEFINITIONS)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR,
+      os.path.join(input_dir,
                    'twelvekeys__number__function__template.svg'),
       'twelvekeys__number__function',
       output_dir,
       _TWELVEKEYS_NUMBER_FUNCTION_KEY_DEFINITIONS)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR,
+      os.path.join(input_dir,
                    'twelvekeys__popup__template.svg'),
       'twelvekeys__popup',
       output_dir,
       _TWELVEKEYS_NUMBER_FUNCTION_KEY_DEFINITIONS)
 
   WriteKeys(
-      os.path.join(ABS_SCRIPT_DIR, 'twelvekeys__popup__template.svg'),
+      os.path.join(input_dir, 'twelvekeys__popup__template.svg'),
       'twelvekeys__popup',
       output_dir,
       _TWELVEKEYS_OTHER_POPUP_DEFINITIONS)
@@ -688,6 +686,8 @@ def Transform(output_dir):
 
 def ParseOptions():
   parser = optparse.OptionParser()
+  parser.add_option('--input_dir', dest='input_dir',
+                    help='Input directory containing source svg files.')
   parser.add_option('--output_dir', dest='output_dir',
                     help='Output directory for generated svg files.')
   parser.add_option('--output_zip', dest='output_zip',
@@ -697,6 +697,9 @@ def ParseOptions():
 
 def main():
   options = ParseOptions()
+  if not options.input_dir:
+    logging.fatal('You must specify --input_dir.')
+    return
   if not options.output_dir and not options.output_zip:
     logging.fatal('You must specify --output_dir and/or --output_zip.')
     return
@@ -706,7 +709,7 @@ def main():
       os.makedirs(output_dir)
   else:
     output_dir = tempfile.mkdtemp()
-  Transform(output_dir)
+  Transform(options.input_dir, output_dir)
   if options.output_zip:
     with zipfile.ZipFile(options.output_zip, 'w', zipfile.ZIP_DEFLATED) as z:
       for f in os.listdir(output_dir):
