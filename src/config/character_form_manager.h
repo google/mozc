@@ -110,8 +110,8 @@ class CharacterFormManager {
   // Loads Default rules.
   void SetDefaultRule();
 
-  // Reload explicitly.
-  void Reload();
+  // Reload config explicitly.
+  void ReloadConfig(const Config &config);
 
   // Utility function: pass character form.
   static void ConvertWidth(const string &input, string *output,

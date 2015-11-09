@@ -586,16 +586,14 @@ CharacterFormManager *CharacterFormManager::GetCharacterFormManager() {
 }
 
 CharacterFormManager::CharacterFormManager() : data_(new Data) {
-  Reload();
+  ReloadConfig(ConfigHandler::GetConfig());
 }
 
 CharacterFormManager::~CharacterFormManager() {
 }
 
-void CharacterFormManager::Reload() {
+void CharacterFormManager::ReloadConfig(const Config &config) {
   Clear();
-  const Config &config = ConfigHandler::GetConfig();
-
   if (config.character_form_rules_size() > 0) {
     for (size_t i = 0; i < config.character_form_rules_size(); ++i) {
       const string &group = config.character_form_rules(i).group();

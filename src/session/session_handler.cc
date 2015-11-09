@@ -257,7 +257,8 @@ bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
   ReloadConfig();
   engine_->Reload();
-  config::CharacterFormManager::GetCharacterFormManager()->Reload();
+  config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(
+      config::ConfigHandler::GetConfig());
   return true;
 }
 

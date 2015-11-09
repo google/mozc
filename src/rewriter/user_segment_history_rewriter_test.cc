@@ -134,7 +134,7 @@ void SetNumberForm(Config::CharacterForm form) {
     }
   }
   ConfigHandler::SetConfig(input);
-  CharacterFormManager::GetCharacterFormManager()->Reload();
+  CharacterFormManager::GetCharacterFormManager()->ReloadConfig(input);
   EXPECT_EQ(form,
             CharacterFormManager::GetCharacterFormManager()->
             GetConversionCharacterForm("0"));
@@ -160,7 +160,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
       }
     }
     ConfigHandler::SetConfig(config);
-    CharacterFormManager::GetCharacterFormManager()->Reload();
+    CharacterFormManager::GetCharacterFormManager()->ReloadConfig(config);
 
     Clock::SetClockForUnitTest(NULL);
 
