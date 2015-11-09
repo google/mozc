@@ -35,6 +35,9 @@
 #include <atlstr.h>  // for CString
 #endif  // !NO_LOGGING
 #include <psapi.h>
+
+#include <algorithm>
+
 #include "base/file_util.h"
 #include "base/scoped_handle.h"
 #include "base/system_util.h"

@@ -44,14 +44,6 @@
 #include "base/stl_util.h"
 #include "base/util.h"
 
-// remove annoying macros
-#ifdef min
-#undef min
-#endif  // min
-#ifdef max
-#undef max
-#endif  // max
-
 namespace mozc {
 namespace renderer {
 namespace win32 {

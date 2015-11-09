@@ -686,6 +686,7 @@
           'COMPILER_MSVC',
           'BUILD_MOZC',  # for ime_shared library
           'ID_TRACE_LEVEL=1',
+          'NOMINMAX',
           'OS_WIN',
           'UNICODE',
           'WIN32',

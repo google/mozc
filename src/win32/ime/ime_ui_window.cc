@@ -39,6 +39,7 @@
 #include <atlmisc.h>
 #include <strsafe.h>
 
+#include <algorithm>
 #include <memory>
 
 #include "base/const.h"
@@ -349,7 +350,7 @@ class LangBarCallbackImpl : public LangBarCallback {
 
   virtual ULONG AddRef() {
     const LONG count = ::InterlockedIncrement(&reference_count_);
-    return max(count, 0);
+    return static_cast<ULONG>(max(count, static_cast<LONG>(0)));
   }
 
   virtual ULONG Release() {

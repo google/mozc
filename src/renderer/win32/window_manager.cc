@@ -29,8 +29,6 @@
 
 #include "renderer/win32/window_manager.h"
 
-#undef min
-#undef max
 #include <algorithm>
 #include <limits>
 
