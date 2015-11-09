@@ -197,10 +197,6 @@ class UserDictionaryImporter {
       TextLineIteratorInterface *iter,
       user_dictionary::UserDictionary *dic);
 
-  // Import a dictionary from MS-IME's user dictionary.
-  // Only available on Windows
-  static ErrorType ImportFromMSIME(user_dictionary::UserDictionary *dic);
-
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserDictionaryImporter);
 };

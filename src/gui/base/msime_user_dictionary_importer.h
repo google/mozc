@@ -27,26 +27,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
-#include <string>
+#ifndef MOZC_GUI_BASE_MSIME_USER_DICTIONARY_IMPORTER_H_
+#define MOZC_GUI_BASE_MSIME_USER_DICTIONARY_IMPORTER_H_
 
-#include "base/flags.h"
-#include "base/init_mozc.h"
+#include "base/port.h"
 #include "dictionary/user_dictionary_importer.h"
-#include "protocol/user_dictionary_storage.pb.h"
 
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+namespace mozc {
+namespace gui {
 
-  mozc::user_dictionary::UserDictionary user_dic;
-  mozc::UserDictionaryImporter::ImportFromMSIME(&user_dic);
+class MSIMEUserDictionarImporter {
+ public:
+  // Caller must take the ownership.
+  // Only available on Windows.
+  static UserDictionaryImporter::InputIteratorInterface *Create();
 
-  for (size_t i = 0; i < user_dic.entries_size(); ++i) {
-    std::cout << user_dic.entries(i).key() << "\t"
-              << user_dic.entries(i).value() << "\t"
-              << user_dic.entries(i).pos() << "\t"
-              << user_dic.entries(i).comment() << std::endl;
-  }
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(MSIMEUserDictionarImporter);
+};
 
-  return 0;
-}
+}  // namespace gui
+}  // namespace mozc
+
+#endif  // MOZC_GUI_BASE_MSIME_USER_DICTIONARY_IMPORTER_H_

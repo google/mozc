@@ -688,26 +688,6 @@ TEST(UserDictionaryImporter, GuessEncodingTypeTest) {
   }
 }
 
-TEST(UserDictionaryImporter, ImportFromMSIMETest) {
-  UserDictionaryStorage::UserDictionary dic;
-
-  UserDictionaryImporter::ErrorType result =
-      UserDictionaryImporter::ImportFromMSIME(&dic);
-
-#ifdef OS_WIN
-  // Currently the following tests are disabled since necessary components
-  // are not available on the continuous build system.
-  // See http://b/237578 for details.
-  // TODO(yukawa): Arrange some automated tests instead of these tests.
-  //               http://b/2375839
-  // EXPECT_NE(UserDictionaryImporter::IMPORT_CANNOT_OPEN_DICTIONARY, result);
-  // EXPECT_NE(UserDictionaryImporter::IMPORT_FATAL, result);
-  // EXPECT_NE(UserDictionaryImporter::IMPORT_UNKNOWN_ERROR, result);
-#else
-  EXPECT_EQ(UserDictionaryImporter::IMPORT_NOT_SUPPORTED, result);
-#endif
-}
-
 TEST(UserDictionaryImporter, StringTextLineIterator) {
   string line;
   const char *kTestData[] = {
