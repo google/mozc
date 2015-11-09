@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "base/iterator_adapter.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -53,21 +52,6 @@ namespace mozc {
 using commands::Request;
 
 namespace {
-
-// Simple getter for Token::key.
-struct GetTokenKey : public AdapterBase<const char *> {
-  template<typename Iter>
-  value_type operator()(Iter iter) const {
-    return iter->key;
-  }
-};
-
-// The lexicographical order comparator for the const char *.
-struct ConstCharPtrLess {
-  bool operator()(const char *s1, const char *s2) const {
-    return strcmp(s1, s2) < 0;
-  }
-};
 
 // "絵文字"
 const char kEmoji[] = "\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97";
@@ -281,11 +265,15 @@ bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
 
 const EmojiRewriter::Token *EmojiRewriter::LookUpToken(const string &key)
     const {
-  const Token *token =
-      std::lower_bound(
-          MakeIteratorAdapter(token_list_, GetTokenKey()),
-          MakeIteratorAdapter(token_list_ + token_size_, GetTokenKey()),
-          key.c_str(), ConstCharPtrLess()).base();
+  struct OrderByKey {
+    bool operator()(const Token &x, const char *y) const {
+      return strcmp(x.key, y) < 0;
+    }
+  };
+  const Token *token = std::lower_bound(token_list_,
+                                        token_list_ + token_size_,
+                                        key.c_str(),
+                                        OrderByKey());
   if (token == token_list_ + token_size_ || token->key != key) {
     // Not found.
     return NULL;
