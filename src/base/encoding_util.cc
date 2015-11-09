@@ -164,10 +164,6 @@ inline bool Convert(const char *from, const char *to,
 
 namespace mozc {
 
-void EncodingUtil::UTF8ToSJIS(const string &input, string *output) {
-  Convert("UTF8", "SJIS", input, output);
-}
-
 void EncodingUtil::SJISToUTF8(const string &input, string *output) {
   Convert("SJIS", "UTF8", input, output);
 }

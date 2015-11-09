@@ -41,13 +41,6 @@ namespace {
 #else
 TEST(EncodingUtilTest, Issue2190350) {
   string result = "";
-  // "\xE3\x81\x82" == Hiragana a in UTF8
-  EncodingUtil::UTF8ToSJIS("\xE3\x81\x82", &result);
-  EXPECT_EQ(2, result.length());
-  // "\x82\xA0" == Hiragana a in Shift-JIS
-  EXPECT_EQ("\x82\xA0", result);
-
-  result = "";
   EncodingUtil::SJISToUTF8("\x82\xA0", &result);
   EXPECT_EQ(3, result.length());
   EXPECT_EQ("\xE3\x81\x82", result);

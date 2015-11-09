@@ -31,7 +31,6 @@
 
 #include <memory>
 
-#include "base/encoding_util.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 
@@ -43,6 +42,36 @@ namespace {
 
 const size_t kMaxReadingChars = 512;
 
+void UTF8ToSJIS(StringPiece input, string *output) {
+  wstring utf16;
+  Util::UTF8ToWide(input, &utf16);
+  if (utf16.empty()) {
+    output->clear();
+    return;
+  }
+
+  const int kCodePageShiftJIS = 932;
+
+  const int output_length_without_null = ::WideCharToMultiByte(
+      kCodePageShiftJIS, 0, utf16.data(), utf16.size(), nullptr, 0, nullptr,
+      nullptr);
+  if (output_length_without_null == 0) {
+    output->clear();
+    return;
+  }
+
+  unique_ptr<char[]> sjis(new char[output_length_without_null]);
+  const int actual_output_length_without_null = ::WideCharToMultiByte(
+      kCodePageShiftJIS, 0, utf16.data(), utf16.size(), sjis.get(),
+      output_length_without_null, nullptr, nullptr);
+  if (output_length_without_null != actual_output_length_without_null) {
+    output->clear();
+    return;
+  }
+
+  output->assign(sjis.get(), actual_output_length_without_null);
+}
+
 }  // namespace
 
 wstring StringUtil::KeyToReading(StringPiece key) {
@@ -52,7 +81,7 @@ wstring StringUtil::KeyToReading(StringPiece key) {
   DWORD lcid = MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT),
                         SORT_JAPANESE_XJIS);
   string sjis;
-  mozc::EncodingUtil::UTF8ToSJIS(katakana, &sjis);
+  UTF8ToSJIS(katakana, &sjis);
 
   // Convert "\x81\x65" (backquote in SJIFT-JIS) to ` by myself since
   // LCMapStringA converts it to ' for some reason.
