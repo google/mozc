@@ -1222,4 +1222,51 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   }
 }
 
+TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  const char kBubun[] = "\xE9\x83\xA8\xE5\x88\x86";  // "部分"
+  Segments segments;
+  {
+    Segment *seg = segments.push_back_segment();
+    // "ひとりひとぱっく"
+    seg->set_key("\xe3\x81\xb2\xe3\x81\xa8\xe3\x82\x8a\xe3\x81\xb2"
+                 "\xe3\x81\xa8\xe3\x81\xb1\xe3\x81\xa3\xe3\x81\x8f");
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->lid = pos_matcher_->GetNumberId();
+    candidate->rid = pos_matcher_->GetNumberId();
+    // "ひとり"
+    candidate->key = "\xe3\x81\xb2\xe3\x81\xa8\xe3\x82\x8a";
+    // "一人"
+    candidate->value = "\xe4\xb8\x80\xe4\xba\xba";
+    // "ひとり"
+    candidate->content_key = "\xe3\x81\xb2\xe3\x81\xa8\xe3\x82\x8a";
+    // "一人"
+    candidate->content_value = "\xe4\xb8\x80\xe4\xba\xba";
+    candidate->description = kBubun;
+    candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->consumed_key_size = 3;
+  }
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+
+  ASSERT_EQ(1, segments.conversion_segments_size());
+  const Segment &seg = segments.conversion_segment(0);
+  ASSERT_LE(2, seg.candidates_size());
+  bool found_halfwidth = false;
+  for (size_t i = 0; i < seg.candidates_size(); ++i) {
+    const Segment::Candidate &candidate = seg.candidate(i);
+    // "1人"
+    if (candidate.value != "\x31\xe4\xba\xba") {
+      continue;
+    }
+    found_halfwidth = true;
+    EXPECT_EQ(3, candidate.consumed_key_size);
+    EXPECT_TRUE(Util::StartsWith(candidate.description, kBubun));
+    EXPECT_TRUE(
+        candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+  }
+  EXPECT_TRUE(found_halfwidth);
+}
+
 }  // namespace mozc

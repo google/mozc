@@ -112,10 +112,13 @@ RewriteType GetRewriteTypeAndBase(
   arabic_candidate->content_value = arabic_number + number_suffix;
   arabic_candidate->key = c.key;
   arabic_candidate->content_key = c.content_key;
+  arabic_candidate->consumed_key_size = c.consumed_key_size;
   arabic_candidate->cost = c.cost;
   arabic_candidate->structure_cost = c.structure_cost;
   arabic_candidate->lid = c.lid;
   arabic_candidate->rid = c.rid;
+  arabic_candidate->attributes |=
+      c.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
   DCHECK(arabic_candidate->IsValid());
   return KANJI_FIRST;
 }
