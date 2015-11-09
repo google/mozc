@@ -44,6 +44,10 @@ message SessionState {
   // whether session is just after commitment
   optional bool committed = 3 [default = false];
 
+  reserved 4;  // Deprecated selected_indices
+
+  reserved 5;  // Deprecated mode
+
   optional uint64 start_preedit_time = 10;
   optional uint64 start_conversion_window_time = 11;
   optional uint64 start_prediction_window_time = 12;
@@ -55,6 +59,8 @@ message SessionState {
 
   // last candidates state
   optional mozc.commands.Candidates candidates = 21;
+
+  reserved 22;  // Deprecated all_candidate_words
 
   // last candidates result
   optional mozc.commands.Result result = 23;

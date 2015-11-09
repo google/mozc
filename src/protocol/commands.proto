@@ -454,6 +454,8 @@ message SessionCommand {
   // New cursor position in preedit. Used with MOVE_CURSOR.
   optional uint32 cursor_position = 5;
 
+  reserved 6;  // Deprecated input_field_type
+
   // Client side event for collecting usage statistics
   enum UsageStatsEvent {
     INFOLIST_WINDOW_SHOW = 1;
@@ -488,6 +490,8 @@ message SessionCommand {
 
   // Obsolete command. Used only in old IBus client.
   optional DeprecatedRectangle deprecated_caret_rectangle = 8;
+
+  reserved 10;  // Deprecated asynchronous_request_id
 };
 
 message Context {
@@ -906,6 +910,8 @@ message Input {
   // If READ_ALL_FROM_STORAGE, key and value fields are ignored.
   optional GenericStorageEntry storage_entry = 10;
 
+  reserved 11;  // Deprecated auth_code
+
   enum TouchAction {
     TOUCH_DOWN = 1;
     TOUCH_MOVE = 2;
@@ -1079,12 +1085,16 @@ message Output {
   };
   optional ErrorCode error_code = 11 [ default = SESSION_SUCCESS ];
 
+  reserved 12;  // Deprecated elapsed_time
+
   // The current IME status.
   optional Status status = 13;
 
   // All flatten candidate words stored in 1D array.  This value is
   // filled only when the content is changed.
   optional CandidateList all_candidate_words = 14;
+
+  reserved 15;  // Deprecated performed_command
 
   // Range of characters to be deleted by client.
   optional DeletionRange deletion_range = 16;
@@ -1113,6 +1123,8 @@ message Output {
 
   // Used when the command is READ_ALL_FROM_STORAGE.
   optional GenericStorageEntry storage_entry = 19;
+
+  reserved 20;  // Deprecated cloud_sync_status
 
   optional mozc.user_dictionary.UserDictionaryCommandStatus
       user_dictionary_command_status = 21;

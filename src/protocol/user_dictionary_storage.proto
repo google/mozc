@@ -103,6 +103,7 @@ message UserDictionary {
     optional string key     = 1 [ default = "" ];
     optional string value   = 2 [ default = "" ];
     // Do NOT use tag number '3' in this proto. Please see below.
+    reserved 3;  // Deprecated pos
     optional string comment = 4 [ default = "" ];
 
     // Historically we used to use tag number '3' for POS in string format.

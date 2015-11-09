@@ -71,6 +71,8 @@ message OBSOLETE_SyncConfig {
 };
 
 message Config {
+  reserved 2 to 9;  // Moved to GeneralConfig
+
   // General config and logging/debugging:
   // We won't use 2-9 and 20-39 ids anymore for historical reasons.
   optional GeneralConfig general_config = 1;
@@ -94,6 +96,8 @@ message Config {
   // Incognito mode:
   // Disable all mutable operation if incognito_mode is true
   optional bool incognito_mode = 20 [default = false];
+
+  reserved 21;  // Deprecated upload_usage_stats
 
   // whether to show the set default dialog on startup
   optional bool check_default = 22 [ default = true ];
@@ -291,6 +295,8 @@ message Config {
 
   message InformationListConfig {
     optional bool use_local_usage_dictionary = 1 [ default = true ];
+    reserved 2;  // Deprecated use_web_usage_dictionary
+    reserved 10;  // Deprecated web_service_entries
   };
   optional InformationListConfig information_list_config = 90;
 
@@ -307,6 +313,7 @@ message Config {
   // Use realtime conversion feature.
   optional bool use_realtime_conversion = 102 [ default = true ];
 
+
   // Size of suggestions.
   optional uint32 suggestions_size = 110 [ default = 3 ];
 
@@ -316,6 +323,7 @@ message Config {
   //
   // Use mode indicator feature.
   optional bool use_mode_indicator = 120 [ default = true ];
+
 
   //////////////////////////////////////////////////////////////
   //
@@ -330,4 +338,8 @@ message Config {
   // NOTE: OSS version does not handle this field.
   optional bool allow_cloud_handwriting = 301 [ default = false ];
 
+
+  reserved 996;  // Deprecated pinyin_config
+  reserved 998;  // Deprecated hangul_config
+  reserved 999;  // Deprecated chewing_config
 };

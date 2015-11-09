@@ -205,6 +205,8 @@ message RendererCommand {
     // Represents caret information.
     optional CaretInfo caret_info = 11;
 
+    reserved 12;  // Deprecated message_sender_type
+
     // A string representation of PangoFontDescription
     // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
     // This field is not application specific information but temporaly locate
