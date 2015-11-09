@@ -66,7 +66,8 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   virtual void Clear();
 
  private:
-  bool IsAvailable(const Segments &segments) const;
+  bool IsAvailable(const ConversionRequest &request,
+                   const Segments &segments) const;
   bool GetScore(const Segments &segments,
                 size_t segment_index,
                 int candidate_index,

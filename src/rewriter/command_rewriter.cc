@@ -177,10 +177,10 @@ Segment::Candidate *InsertCommandCandidate(
   return candidate;
 }
 
-bool IsSuggestionEnabled() {
-  return GET_CONFIG(use_history_suggest) ||
-      GET_CONFIG(use_dictionary_suggest) ||
-      GET_CONFIG(use_realtime_conversion);
+bool IsSuggestionEnabled(const config::Config &config) {
+  return config.use_history_suggest() ||
+      config.use_dictionary_suggest() ||
+      config.use_realtime_conversion();
 }
 }  // namespace
 
@@ -189,11 +189,12 @@ CommandRewriter::CommandRewriter() {}
 CommandRewriter::~CommandRewriter() {}
 
 void CommandRewriter::InsertIncognitoModeToggleCommand(
+    const config::Config &config,
     Segment *segment, size_t reference_pos, size_t insert_pos) const {
-  Segment::Candidate *candidate = InsertCommandCandidate(segment, reference_pos,
-                                                         insert_pos);
+  Segment::Candidate *candidate =
+      InsertCommandCandidate(segment, reference_pos, insert_pos);
   DCHECK(candidate);
-  if (GET_CONFIG(incognito_mode)) {
+  if (config.incognito_mode()) {
     candidate->value = kIncoginitoModeOff;
     candidate->command = Segment::Candidate::DISABLE_INCOGNITO_MODE;
   } else {
@@ -204,16 +205,17 @@ void CommandRewriter::InsertIncognitoModeToggleCommand(
 }
 
 void CommandRewriter::InsertDisableAllSuggestionToggleCommand(
+    const config::Config &config,
     Segment *segment, size_t reference_pos, size_t insert_pos) const {
-  if (!IsSuggestionEnabled()) {
+  if (!IsSuggestionEnabled(config)) {
     return;
   }
 
-  Segment::Candidate *candidate = InsertCommandCandidate(segment, reference_pos,
-                                                         insert_pos);
+  Segment::Candidate *candidate =
+      InsertCommandCandidate(segment, reference_pos, insert_pos);
 
   DCHECK(candidate);
-  if (GET_CONFIG(presentation_mode)) {
+  if (config.presentation_mode()) {
     candidate->value = kDisableAllSuggestionOff;
     candidate->command = Segment::Candidate::DISABLE_PRESENTATION_MODE;
   } else {
@@ -223,25 +225,26 @@ void CommandRewriter::InsertDisableAllSuggestionToggleCommand(
   candidate->content_value = candidate->value;
 }
 
-bool CommandRewriter::RewriteSegment(Segment *segment) const {
+bool CommandRewriter::RewriteSegment(const config::Config &config,
+                                     Segment *segment) const {
   DCHECK(segment);
 
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     const string &value = segment->candidate(i).value;
     if (FindString(value, kCommandValues, arraysize(kCommandValues))) {
       // insert command candidate at an fixed position.
-      InsertDisableAllSuggestionToggleCommand(segment, i, 6);
-      InsertIncognitoModeToggleCommand(segment, i, 6);
+      InsertDisableAllSuggestionToggleCommand(config, segment, i, 6);
+      InsertIncognitoModeToggleCommand(config, segment, i, 6);
       return true;
     }
     if (FindString(value, kIncognitoModeValues,
                    arraysize(kIncognitoModeValues))) {
-      InsertIncognitoModeToggleCommand(segment, i, i + 3);
+      InsertIncognitoModeToggleCommand(config, segment, i, i + 3);
       return true;
     }
     if (FindString(value, kDisableAllSuggestionValues,
                    arraysize(kDisableAllSuggestionValues))) {
-      InsertDisableAllSuggestionToggleCommand(segment, i, i + 3);
+      InsertDisableAllSuggestionToggleCommand(config, segment, i, i + 3);
       return true;
     }
   }
@@ -265,6 +268,6 @@ bool CommandRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  return RewriteSegment(segment);
+  return RewriteSegment(request.config(), segment);
 }
 }  // namespace mozc

@@ -67,6 +67,7 @@ bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
 bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
                                       const string &zipcode,
                                       const string &address,
+                                      const ConversionRequest &request,
                                       Segment *segment) const {
   DCHECK(segment);
   if (segment->candidates_size() == 0) {
@@ -84,7 +85,7 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
   const Segment::Candidate &base_candidate = segment->candidate(offset - 1);
 
   bool is_full_width = true;
-  switch (GET_CONFIG(space_character_form)) {
+  switch (request.config().space_character_form()) {
     case config::Config::FUNDAMENTAL_INPUT_MODE:
       is_full_width = true;
       break;
@@ -152,7 +153,10 @@ bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  return InsertCandidate(insert_pos, zipcode,
-                         address, segments->mutable_conversion_segment(0));
+  return InsertCandidate(insert_pos,
+                         zipcode,
+                         address,
+                         request,
+                         segments->mutable_conversion_segment(0));
 }
 }  // namespace mozc

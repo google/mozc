@@ -72,6 +72,10 @@ const commands::Request &ConversionRequest::request() const {
   return *request_;
 }
 
+const config::Config &ConversionRequest::config() const {
+  return config::ConfigHandler::GetConfig();
+}
+
 bool ConversionRequest::use_actual_converter_for_realtime_conversion() const {
   return use_actual_converter_for_realtime_conversion_;
 }
@@ -109,7 +113,7 @@ void ConversionRequest::set_create_partial_candidates(bool value) {
 
 bool ConversionRequest::IsKanaModifierInsensitiveConversion() const {
   return request_->kana_modifier_insensitive_conversion() &&
-         GET_CONFIG(use_kana_modifier_insensitive_conversion);
+         config().use_kana_modifier_insensitive_conversion();
 }
 
 void ConversionRequest::CopyFrom(const ConversionRequest &request) {

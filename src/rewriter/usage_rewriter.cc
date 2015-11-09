@@ -164,7 +164,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
                             Segments *segments) const {
   VLOG(2) << segments->DebugString();
 
-  const config::Config &config = config::ConfigHandler::GetConfig();
+  const config::Config &config = request.config();
   // Default value of use_local_usage_dictionary() is true.
   // So if information_list_config() is not available in the config,
   // we don't need to return false here.

@@ -441,7 +441,7 @@ int NumberRewriter::capability(const ConversionRequest &request) const {
 bool NumberRewriter::Rewrite(const ConversionRequest &request,
                              Segments *segments) const {
   DCHECK(segments);
-  if (!GET_CONFIG(use_number_conversion)) {
+  if (!request.config().use_number_conversion()) {
     VLOG(2) << "no use_number_conversion";
     return false;
   }

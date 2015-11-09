@@ -759,8 +759,10 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   }
 }
 
-bool UserSegmentHistoryRewriter::IsAvailable(const Segments &segments) const {
-  if (GET_CONFIG(incognito_mode)) {
+bool UserSegmentHistoryRewriter::IsAvailable(
+    const ConversionRequest &request,
+    const Segments &segments) const {
+  if (request.config().incognito_mode()) {
     VLOG(2) << "incognito_mode";
     return false;
   }
@@ -792,11 +794,11 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (!IsAvailable(*segments)) {
+  if (!IsAvailable(request, *segments)) {
     return;
   }
 
-  if (GET_CONFIG(history_learning_level) != Config::DEFAULT_HISTORY) {
+  if (request.config().history_learning_level() != Config::DEFAULT_HISTORY) {
     VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
   }
@@ -947,11 +949,11 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
 
 bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
                                          Segments *segments) const {
-  if (!IsAvailable(*segments)) {
+  if (!IsAvailable(request, *segments)) {
     return false;
   }
 
-  if (GET_CONFIG(history_learning_level) == Config::NO_HISTORY) {
+  if (request.config().history_learning_level() == Config::NO_HISTORY) {
     VLOG(2) << "history_learning_level is NO_HISTORY";
     return false;
   }

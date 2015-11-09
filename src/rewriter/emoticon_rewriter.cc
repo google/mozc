@@ -260,7 +260,7 @@ int EmoticonRewriter::capability(const ConversionRequest &request) const {
 
 bool EmoticonRewriter::Rewrite(const ConversionRequest &request,
                                Segments *segments) const {
-  if (!GET_CONFIG(use_emoticon_conversion)) {
+  if (!request.config().use_emoticon_conversion()) {
     VLOG(2) << "no use_emoticon_conversion";
     return false;
   }

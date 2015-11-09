@@ -221,7 +221,7 @@ int EmojiRewriter::capability(const ConversionRequest &request) const {
 
 bool EmojiRewriter::Rewrite(const ConversionRequest &request,
                             Segments *segments) const {
-  if (!mozc::config::ConfigHandler::GetConfig().use_emoji_conversion()) {
+  if (!request.config().use_emoji_conversion()) {
     VLOG(2) << "no use_emoji_conversion";
     return false;
   }
@@ -238,7 +238,7 @@ bool EmojiRewriter::Rewrite(const ConversionRequest &request,
 
 void EmojiRewriter::Finish(const ConversionRequest &request,
                            Segments *segments) {
-  if (!mozc::config::ConfigHandler::GetConfig().use_emoji_conversion()) {
+  if (!request.config().use_emoji_conversion()) {
     return;
   }
 
