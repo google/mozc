@@ -47,7 +47,6 @@ class SessionObserverInterface {
   virtual ~SessionObserverInterface() {}
 
   virtual void EvalCommandHandler(const commands::Command &command) = 0;
-  virtual void Reload() = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionObserverInterface);

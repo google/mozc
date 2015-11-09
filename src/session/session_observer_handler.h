@@ -52,7 +52,6 @@ class SessionObserverHandler {
 
   void AddObserver(SessionObserverInterface *observer);
   void EvalCommandHandler(const commands::Command &command);
-  void Reload();
 
  private:
   vector<SessionObserverInterface *> observers_;

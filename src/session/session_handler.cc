@@ -224,11 +224,6 @@ bool SessionHandler::StartWatchDog() {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
-void SessionHandler::ReloadSession() {
-  observer_handler_->Reload();
-  ReloadConfig();
-}
-
 void SessionHandler::ReloadConfig() {
   const composer::Table *table = table_manager_->GetTable(
       *request_, config::ConfigHandler::GetConfig());
@@ -252,7 +247,7 @@ bool SessionHandler::SyncData(commands::Command *command) {
 bool SessionHandler::Shutdown(commands::Command *command) {
   VLOG(1) << "Shutdown server";
   SyncData(command);
-  ReloadSession();   // for saving log_commands
+  ReloadConfig();   // for saving log_commands
   is_available_ = false;
   UsageStats::IncrementCount("ShutDown");
   return true;
@@ -260,7 +255,7 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 
 bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
-  ReloadSession();
+  ReloadConfig();
   engine_->Reload();
   config::CharacterFormManager::GetCharacterFormManager()->Reload();
   return true;

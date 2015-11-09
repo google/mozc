@@ -103,8 +103,6 @@ class SessionHandler : public SessionHandlerInterface {
       SessionMap;
   typedef SessionMap::Element SessionElement;
 
-  // Reload settings which are managed by SessionHandler
-  void ReloadSession();
   // Reload the configurations on the current sessions.
   void ReloadConfig();
 
