@@ -111,7 +111,6 @@
         '<(gen_out_dir)/version_def.h',
         'file_stream.cc',
         'file_util.cc',
-        'init.cc',
         'init_mozc.cc',
         'japanese_util_rule.cc',
         'logging.cc',

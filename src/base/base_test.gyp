@@ -346,22 +346,6 @@
         'base.gyp:encryptor',
       ],
     },
-    # init_test.cc is separated from all other base_core_test because it
-    # calls finalizers.
-    {
-      'target_name': 'base_init_test',
-      'type': 'executable',
-      'sources': [
-        'init_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'base.gyp:base',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
     {
       'target_name': 'config_file_stream_test',
       'type': 'executable',
@@ -428,7 +412,6 @@
       'type': 'none',
       'dependencies': [
         'base_core_test',
-        'base_init_test',
         'base_test',
         'clock_mock_test',
         'clock_test',

@@ -40,7 +40,6 @@
 #include "base/config_file_stream.h"
 #include "base/flags.h"
 #include "base/hash.h"
-#include "base/init.h"
 #include "base/logging.h"
 #include "base/thread.h"
 #include "base/trie.h"
