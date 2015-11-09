@@ -53,20 +53,11 @@ class UsageStatsUpdaterTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
-
     UsageStats::ClearAllStatsForTest();
   }
 
   virtual void TearDown() {
     UsageStats::ClearAllStatsForTest();
-
-    // just in case, reset the config in test_tmpdir
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
   }
 
  private:
@@ -130,7 +121,10 @@ TEST_F(UsageStatsUpdaterTest, UpdaterTest) {
     EXPECT_STATS_NOT_EXIST(kStatsNames[i]);
   }
 
-  UsageStatsUpdater::UpdateStats();
+  Config config;
+  ConfigHandler::GetDefaultConfig(&config);
+
+  UsageStatsUpdater::UpdateStats(config);
   for (size_t i = 0; i < arraysize(kStatsNames); ++i) {
     EXPECT_STATS_EXIST(kStatsNames[i]);
   }
@@ -141,14 +135,11 @@ TEST_F(UsageStatsUpdaterTest, UpdaterTest) {
     EXPECT_STATS_EXIST(kStatsNames[i]);
   }
 
-  Config config;
-  ConfigHandler::GetDefaultConfig(&config);
   const bool current_mode = config.incognito_mode();
   EXPECT_BOOLEAN_STATS("ConfigIncognito", current_mode);
 
   config.set_incognito_mode(!current_mode);
-  ConfigHandler::SetConfig(config);
-  UsageStatsUpdater::UpdateStats();
+  UsageStatsUpdater::UpdateStats(config);
   EXPECT_BOOLEAN_STATS("ConfigIncognito", !current_mode);
 }
 
@@ -156,8 +147,7 @@ TEST_F(UsageStatsUpdaterTest, IMEActivationKeyCustomizedTest) {
   {  // Default keymap.
     Config config;
     ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
-    UsageStatsUpdater::UpdateStats();
+    UsageStatsUpdater::UpdateStats(config);
     EXPECT_BOOLEAN_STATS("IMEActivationKeyCustomized", false);
   }
 
@@ -173,8 +163,7 @@ TEST_F(UsageStatsUpdaterTest, IMEActivationKeyCustomizedTest) {
     ConfigHandler::GetDefaultConfig(&config);
     config.set_session_keymap(Config::CUSTOM);
     config.set_custom_keymap_table(kCustomKeymapTable);
-    ConfigHandler::SetConfig(config);
-    UsageStatsUpdater::UpdateStats();
+    UsageStatsUpdater::UpdateStats(config);
     EXPECT_BOOLEAN_STATS("IMEActivationKeyCustomized", true);
   }
 
@@ -190,8 +179,7 @@ TEST_F(UsageStatsUpdaterTest, IMEActivationKeyCustomizedTest) {
     ConfigHandler::GetDefaultConfig(&config);
     config.set_session_keymap(config::Config::CUSTOM);
     config.set_custom_keymap_table(kCustomKeymapTable);
-    ConfigHandler::SetConfig(config);
-    UsageStatsUpdater::UpdateStats();
+    UsageStatsUpdater::UpdateStats(config);
     EXPECT_BOOLEAN_STATS("IMEActivationKeyCustomized", false);
   }
 }

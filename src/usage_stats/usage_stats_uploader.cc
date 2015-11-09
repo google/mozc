@@ -43,6 +43,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "config/config_handler.h"
 #include "config/stats_config_util.h"
 #include "storage/registry.h"
 #include "usage_stats/upload_util.h"
@@ -356,7 +357,7 @@ bool UsageStatsUploader::Send(void *data) {
                     AndroidUtil::kSystemPropertyModel, "Unknown")));
 #endif  // OS_ANDROID
 
-  UsageStatsUpdater::UpdateStats();
+  UsageStatsUpdater::UpdateStats(config::ConfigHandler::GetConfig());
 
   UploadUtil uploader;
   uploader.SetHeader("Daily", elapsed_sec, params);
