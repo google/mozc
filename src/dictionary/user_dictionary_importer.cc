@@ -234,7 +234,7 @@ UserDictionaryImporter::ImportFromTextLineIterator(
 }
 
 UserDictionaryImporter::StringTextLineIterator::StringTextLineIterator(
-    StringPiece data) : data_(data, 0), position_(0) {}
+    StringPiece data) : data_(data), position_(0) {}
 
 UserDictionaryImporter::StringTextLineIterator::~StringTextLineIterator() {}
 
