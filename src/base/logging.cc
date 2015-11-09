@@ -54,7 +54,9 @@
 #include "base/const.h"
 #endif  // OS_ANDROID
 #include "base/clock.h"
+#ifndef OS_ANDROID
 #include "base/file_stream.h"
+#endif  // OS_ANDROID
 #include "base/flags.h"
 #include "base/mutex.h"
 #include "base/singleton.h"

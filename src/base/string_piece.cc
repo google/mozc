@@ -52,7 +52,7 @@ StringPiece::StringPiece(const StringPiece str, size_type pos, size_type len)
 }
 
 ostream &operator<<(ostream &o, const StringPiece &piece) {
-  o.write(piece.data(), static_cast<streamsize>(piece.size()));
+  o.write(piece.data(), static_cast<std::streamsize>(piece.size()));
   return o;
 }
 
