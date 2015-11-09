@@ -43,20 +43,11 @@
 namespace mozc {
 namespace config {
 
-class ImeSwitchUtilTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    ImeSwitchUtil::Reload();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  }
-};
-
-TEST_F(ImeSwitchUtilTest, PresetTest) {
+TEST(ImeSwitchUtilTest, PresetTest) {
   Config config;
-  ConfigHandler::GetConfig(&config);
+  ConfigHandler::GetDefaultConfig(&config);
   config.set_session_keymap(Config::ATOK);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
@@ -80,8 +71,7 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   }
 
   config.set_session_keymap(Config::MSIME);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
@@ -99,8 +89,7 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   }
 
   config.set_session_keymap(Config::KOTOERI);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
@@ -124,12 +113,11 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   }
 }
 
-TEST_F(ImeSwitchUtilTest, DefaultTest) {
+TEST(ImeSwitchUtilTest, DefaultTest) {
   Config config;
-  ConfigHandler::GetConfig(&config);
+  ConfigHandler::GetDefaultConfig(&config);
   config.set_session_keymap(Config::NONE);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   // MSIME for windows, KOTOERI for others
   {
     commands::KeyEvent key;
@@ -158,9 +146,9 @@ TEST_F(ImeSwitchUtilTest, DefaultTest) {
   }
 }
 
-TEST_F(ImeSwitchUtilTest, CustomTest) {
+TEST(ImeSwitchUtilTest, CustomTest) {
   Config config;
-  ConfigHandler::GetConfig(&config);
+  ConfigHandler::GetDefaultConfig(&config);
 
   const string custom_keymap_table =
       "status\tkey\tcommand\n"
@@ -172,8 +160,7 @@ TEST_F(ImeSwitchUtilTest, CustomTest) {
 
   config.set_session_keymap(Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
