@@ -164,7 +164,7 @@ inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
 
 void ValueDictionary::LookupPredictive(
     StringPiece key,
-    bool,  // use_kana_modifier_insensitive_lookup
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   // Do nothing for empty key, although looking up all the entries with empty
   // string seems natural.
@@ -214,10 +214,14 @@ void ValueDictionary::LookupPredictive(
 }
 
 void ValueDictionary::LookupPrefix(
-    StringPiece key, bool use_kana_modifier_insensitive_lookup,
+    StringPiece key,
+    const ConversionRequest &conversion_request,
     Callback *callback) const {}
 
-void ValueDictionary::LookupExact(StringPiece key, Callback *callback) const {
+void ValueDictionary::LookupExact(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   if (key.empty()) {
     // For empty string, return nothing for compatibility reason; see the
     // comment above.
@@ -237,8 +241,11 @@ void ValueDictionary::LookupExact(StringPiece key, Callback *callback) const {
   callback->OnToken(key, key, token);
 }
 
-void ValueDictionary::LookupReverse(StringPiece str,
-                                    Callback *callback) const {}
+void ValueDictionary::LookupReverse(
+    StringPiece str,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
+}
 
 }  // namespace dictionary
 }  // namespace mozc

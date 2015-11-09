@@ -306,16 +306,20 @@ class CallCheckDictionary : public DictionaryInterface {
                      bool(StringPiece));
   MOCK_CONST_METHOD3(LookupPredictive,
                      void(StringPiece key,
-                          bool use_kana_modifier_insensitive_lookup,
+                          const ConversionRequest& convreq,
                           Callback *callback));
   MOCK_CONST_METHOD3(LookupPrefix,
                      void(StringPiece key,
-                          bool use_kana_modifier_insensitive_lookup,
+                          const ConversionRequest& convreq,
                           Callback *callback));
-  MOCK_CONST_METHOD2(LookupExact,
-                     void(StringPiece key, Callback *callback));
-  MOCK_CONST_METHOD2(LookupReverse,
-                     void(StringPiece str, Callback *callback));
+  MOCK_CONST_METHOD3(LookupExact,
+                     void(StringPiece key,
+                          const ConversionRequest& convreq,
+                          Callback *callback));
+  MOCK_CONST_METHOD3(LookupReverse,
+                     void(StringPiece str,
+                          const ConversionRequest& convreq,
+                          Callback *callback));
 };
 
 // Action to call the third argument of LookupPrefix with the token
@@ -630,7 +634,8 @@ class DictionaryPredictorTest : public ::testing::Test {
       composer.GetQueryForPrediction(&query);
       segment->set_key(query);
 
-      EXPECT_CALL(*check_dictionary, LookupPredictive(_, use_expansion, _));
+      EXPECT_CALL(*check_dictionary,
+                  LookupPredictive(_, ::testing::Ref(conversion_request), _));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateUnigramPrediction(
@@ -688,14 +693,16 @@ class DictionaryPredictorTest : public ::testing::Test {
       segment->set_key(query);
 
       // History key and value should be in the dictionary.
-      EXPECT_CALL(*check_dictionary, LookupPrefix(_, _, _))
+      EXPECT_CALL(*check_dictionary,
+                  LookupPrefix(_, ::testing::Ref(conversion_request), _))
           .WillOnce(LookupPrefixOneToken(
               // "ぐーぐる"
               "\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82\x8b",
               // "グーグル"
               "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab",
               1, 1));
-      EXPECT_CALL(*check_dictionary, LookupPredictive(_, use_expansion, _));
+      EXPECT_CALL(*check_dictionary,
+                  LookupPredictive(_, ::testing::Ref(conversion_request), _));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateBigramPrediction(
@@ -736,7 +743,8 @@ class DictionaryPredictorTest : public ::testing::Test {
       composer.GetQueryForPrediction(&query);
       segment->set_key(query);
 
-      EXPECT_CALL(*check_dictionary, LookupPredictive(_, use_expansion, _));
+      EXPECT_CALL(*check_dictionary,
+                  LookupPredictive(_, ::testing::Ref(conversion_request), _));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateSuffixPrediction(
@@ -1774,7 +1782,7 @@ class TestSuffixDictionary : public DictionaryInterface {
 
   virtual void LookupPredictive(
       StringPiece key,
-      bool use_kana_modifier_insensitive_lookup,
+      const ConversionRequest &conversion_request,
       Callback *callback) const {
     Token token;
     for (size_t i = 0; i < arraysize(kSuffixTokens); ++i) {
@@ -1805,12 +1813,17 @@ class TestSuffixDictionary : public DictionaryInterface {
   }
 
   virtual void LookupPrefix(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      StringPiece key,
+      const ConversionRequest &conversion_request,
       Callback *callback) const {}
 
-  virtual void LookupExact(StringPiece key, Callback *callback) const {}
+  virtual void LookupExact(StringPiece key,
+                           const ConversionRequest &conversion_request,
+                           Callback *callback) const {}
 
-  virtual void LookupReverse(StringPiece str, Callback *callback) const {}
+  virtual void LookupReverse(StringPiece str,
+                             const ConversionRequest &conversion_request,
+                             Callback *callback) const {}
 };
 
 }  // namespace

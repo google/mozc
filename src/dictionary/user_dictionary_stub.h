@@ -45,19 +45,30 @@ class UserDictionaryStub : public DictionaryInterface {
   }
 
   virtual void LookupPredictive(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      StringPiece key,
+      const ConversionRequest &conversion_request,
       Callback *callback) const {}
 
   virtual void LookupPrefix(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
+      StringPiece key,
+      const ConversionRequest &conversion_request,
       Callback *callback) const {}
 
-  virtual void LookupExact(StringPiece key, Callback *callback) const {}
+  virtual void LookupExact(
+      StringPiece key,
+      const ConversionRequest &conversion_request,
+      Callback *callback) const {}
 
-  virtual void LookupReverse(StringPiece str, Callback *callback) const {}
+  virtual void LookupReverse(
+      StringPiece str,
+      const ConversionRequest &conversion_request,
+      Callback *callback) const {}
 
-  virtual bool LookupComment(StringPiece key, StringPiece value,
-                             string *comment) const {
+  virtual bool LookupComment(
+      StringPiece key,
+      StringPiece value,
+      const ConversionRequest &conversion_request,
+      string *comment) const {
     if (key == "comment" || value == "comment") {
       comment->assign("UserDictionaryStub");
       return true;

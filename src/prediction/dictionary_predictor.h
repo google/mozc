@@ -274,6 +274,7 @@ class DictionaryPredictor : public PredictorInterface {
   void CheckBigramResult(const dictionary::Token &history_token,
                          const Util::ScriptType history_ctype,
                          const Util::ScriptType last_history_ctype,
+                         const ConversionRequest &request,
                          Result *result) const;
 
   void GetPredictiveResults(const dictionary::DictionaryInterface &dictionary,

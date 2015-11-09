@@ -35,6 +35,7 @@
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "request/conversion_request.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit.h"
@@ -64,6 +65,7 @@ class DictionaryMockTest : public ::testing::Test {
                                   const vector<Token> &tokens);
 
   unique_ptr<DictionaryMock> mock_;
+  ConversionRequest convreq_;
 };
 
 bool DictionaryMockTest::SearchMatchingToken(const string &key,
@@ -137,18 +139,18 @@ TEST_F(DictionaryMockTest, LookupPrefix) {
   dic->AddLookupPrefix(t1->key, t1->key, t1->value, Token::NONE);
 
   CollectTokenCallback callback;
-  dic->LookupPrefix(t0->key, false, &callback);
+  dic->LookupPrefix(t0->key, convreq_, &callback);
   ASSERT_EQ(1, callback.tokens().size());
   EXPECT_TOKEN_EQ(*t0, callback.tokens()[0]);
 
   callback.Clear();
-  dic->LookupPrefix(t1->key, false, &callback);
+  dic->LookupPrefix(t1->key, convreq_, &callback);
   ASSERT_EQ(2, callback.tokens().size());
   EXPECT_TOKEN_EQ(*t0, callback.tokens()[0]);
   EXPECT_TOKEN_EQ(*t1, callback.tokens()[1]);
 
   callback.Clear();
-  dic->LookupPrefix("google", false, &callback);
+  dic->LookupPrefix("google", convreq_, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 }
 
@@ -175,7 +177,7 @@ TEST_F(DictionaryMockTest, LookupReverse) {
   }
 
   CollectTokenCallback callback;
-  dic->LookupReverse(k1, &callback);
+  dic->LookupReverse(k1, convreq_, &callback);
   const vector<Token> &result_tokens = callback.tokens();
   EXPECT_TRUE(SearchMatchingToken(t0->key, t0->value, 0, result_tokens))
       << "Failed to find: " << t0->key;
@@ -204,7 +206,7 @@ TEST_F(DictionaryMockTest, LookupPredictive) {
   }
 
   CollectTokenCallback callback;
-  dic->LookupPredictive(k0, false, &callback);
+  dic->LookupPredictive(k0, convreq_, &callback);
   ASSERT_EQ(2, callback.tokens().size());
   EXPECT_TOKEN_EQ(*t1, callback.tokens()[0]);
   EXPECT_TOKEN_EQ(*t2, callback.tokens()[1]);
@@ -222,17 +224,18 @@ TEST_F(DictionaryMockTest, LookupExact) {
   GetMock()->AddLookupExact(t1->key, t1->key, t1->value, Token::NONE);
 
   CollectTokenCallback callback;
-  dic->LookupExact(kKey, &callback);
+  dic->LookupExact(kKey, convreq_, &callback);
   ASSERT_EQ(2, callback.tokens().size());
   EXPECT_TOKEN_EQ(*t0, callback.tokens()[0]);
   EXPECT_TOKEN_EQ(*t1, callback.tokens()[1]);
 
   callback.Clear();
-  dic->LookupExact("hoge", &callback);
+  dic->LookupExact("hoge", convreq_, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 
   callback.Clear();
   dic->LookupExact("\xE3\x81\xBB",  // "ほ"
+                   convreq_,
                    &callback);
   EXPECT_TRUE(callback.tokens().empty());
 }

@@ -92,6 +92,7 @@ class ConversionRequest {
   void set_composer_key_selection(ComposerKeySelection selection);
 
   const commands::Request &request() const;
+  void set_request(const commands::Request *request);
 
   const config::Config &config() const;
 

@@ -45,7 +45,6 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -141,8 +140,8 @@ bool IsMixedConversionEnabled(const commands::Request& request) {
   return request.mixed_conversion() || FLAGS_enable_mixed_conversion;
 }
 
-bool IsTypingCorrectionEnabled() {
-  return GET_CONFIG(use_typing_correction) ||
+bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
+  return request.config().use_typing_correction() ||
          FLAGS_enable_typing_correction;
 }
 
@@ -1440,7 +1439,7 @@ void DictionaryPredictor::AddBigramResultsFromHistory(
     vector<Result> *results) const {
   // Check that history_key/history_value are in the dictionary.
   FindValueCallback find_history_callback(history_value);
-  dictionary_->LookupPrefix(history_key, false, &find_history_callback);
+  dictionary_->LookupPrefix(history_key, request, &find_history_callback);
 
   // History value is not found in the dictionary.
   // User may create this the history candidate from T13N or segment
@@ -1477,7 +1476,7 @@ void DictionaryPredictor::AddBigramResultsFromHistory(
                                           history_value_size - 1, 1));
   for (size_t i = prev_results_size; i < results->size(); ++i) {
     CheckBigramResult(find_history_callback.token(), history_ctype,
-                      last_history_ctype, &(*results)[i]);
+                      last_history_ctype, request, &(*results)[i]);
   }
 }
 
@@ -1487,6 +1486,7 @@ void DictionaryPredictor::CheckBigramResult(
     const Token &history_token,
     const Util::ScriptType history_ctype,
     const Util::ScriptType last_history_ctype,
+    const ConversionRequest &request,
     Result *result) const {
   DCHECK(result);
 
@@ -1548,7 +1548,7 @@ void DictionaryPredictor::CheckBigramResult(
   }
 
   FindValueCallback callback(value);
-  dictionary_->LookupPrefix(key, false, &callback);
+  dictionary_->LookupPrefix(key, request, &callback);
   if (!callback.found()) {
     result->types = NO_PREDICTION;
     return;
@@ -1571,7 +1571,7 @@ void DictionaryPredictor::GetPredictiveResults(
     const bool is_zero_query = query_key.empty();
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       NULL, is_zero_query, results);
-    dictionary.LookupPredictive(input_key, false, &callback);
+    dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
 
@@ -1589,8 +1589,7 @@ void DictionaryPredictor::GetPredictiveResults(
   PredictiveLookupCallback callback(
       types, lookup_limit, input_key.size(),
       expanded.empty() ? NULL : &expanded, is_zero_query, results);
-  dictionary.LookupPredictive(
-      input_key, request.IsKanaModifierInsensitiveConversion(), &callback);
+  dictionary.LookupPredictive(input_key, request, &callback);
 }
 
 void DictionaryPredictor::GetPredictiveResultsForBigram(
@@ -1611,7 +1610,7 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
     PredictiveBigramLookupCallback callback(
         types, lookup_limit, input_key.size(), NULL, history_value,
         is_zero_query, results);
-    dictionary.LookupPredictive(input_key, false, &callback);
+    dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
 
@@ -1630,8 +1629,7 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
                                           expanded.empty() ? NULL : &expanded,
                                           history_value, is_zero_query,
                                           results);
-  dictionary.LookupPredictive(
-      input_key, request.IsKanaModifierInsensitiveConversion(), &callback);
+  dictionary.LookupPredictive(input_key, request, &callback);
 }
 
 void DictionaryPredictor::GetPredictiveResultsForEnglish(
@@ -1662,7 +1660,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglish(
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), NULL,
                                       false, results);
-    dictionary.LookupPredictive(key, false, &callback);
+    dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::UpperString(&results->at(i).value);
     }
@@ -1673,7 +1671,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglish(
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), NULL,
                                       false, results);
-    dictionary.LookupPredictive(key, false, &callback);
+    dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::CapitalizeString(&results->at(i).value);
     }
@@ -1681,7 +1679,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglish(
     // For other cases (lower and as-is), just look up directly.
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       NULL, false, results);
-    dictionary.LookupPredictive(input_key, false, &callback);
+    dictionary.LookupPredictive(input_key, request, &callback);
   }
   // If input mode is FULL_ASCII, then convert the results to full-width.
   if (request.composer().GetInputMode() == transliteration::FULL_ASCII) {
@@ -1714,8 +1712,7 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(),
         query.expanded.empty() ? NULL : &query.expanded, false, results);
-    dictionary.LookupPredictive(
-        input_key, request.IsKanaModifierInsensitiveConversion(), &callback);
+    dictionary.LookupPredictive(input_key, request, &callback);
 
     for (size_t i = previous_results_size; i < results->size(); ++i) {
       results->at(i).wcost += query.cost;
@@ -1963,7 +1960,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
 
   const bool zero_query_suggestion = request.request().zero_query_suggestion();
   if (IsLatinInputMode(request) && !zero_query_suggestion) {
-    if (GET_CONFIG(use_dictionary_suggest)) {
+    if (request.config().use_dictionary_suggest()) {
       // By following the dictionary_suggest config, enable English prediction.
       result |= ENGLISH;
     }
@@ -1973,7 +1970,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
     return result;
   }
 
-  if (!GET_CONFIG(use_dictionary_suggest) &&
+  if (!request.config().use_dictionary_suggest() &&
       segments.request_type() == Segments::SUGGESTION) {
     VLOG(2) << "no_dictionary_suggest";
     return result;
@@ -2023,7 +2020,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
     result |= SUFFIX;
   }
 
-  if (IsTypingCorrectionEnabled() && key_len >= 3) {
+  if (IsTypingCorrectionEnabled(request) && key_len >= 3) {
     result |= TYPING_CORRECTION;
   }
 
@@ -2042,7 +2039,7 @@ bool DictionaryPredictor::ShouldRealTimeConversionEnabled(
   }
 
   return (segments.request_type() == Segments::PARTIAL_SUGGESTION ||
-          GET_CONFIG(use_realtime_conversion) ||
+          request.config().use_realtime_conversion() ||
           IsMixedConversionEnabled(request.request()));
 }
 

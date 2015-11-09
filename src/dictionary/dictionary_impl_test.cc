@@ -37,6 +37,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
+#include "request/conversion_request.h"
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -194,9 +195,13 @@ class DictionaryImplTest : public ::testing::Test {
   // Pair of DictionaryInterface's lookup method and query text.
   struct LookupMethodAndQuery {
     void (DictionaryInterface::*lookup_method)(
-        StringPiece, bool, DictionaryInterface::Callback *) const;
+        StringPiece,
+        const ConversionRequest &,
+        DictionaryInterface::Callback *) const;
     const char *query;
   };
+
+  ConversionRequest convreq_;
 };
 
 TEST_F(DictionaryImplTest, WordSuppressionTest) {
@@ -226,7 +231,7 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   s->UnLock();
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }
 
@@ -236,7 +241,7 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   s->UnLock();
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
 }
@@ -263,7 +268,7 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   config::ConfigHandler::SetConfig(config);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
 
@@ -272,7 +277,7 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   config::ConfigHandler::SetConfig(config);;
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }
 }
@@ -298,7 +303,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   config::ConfigHandler::SetConfig(config);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
 
@@ -307,7 +312,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   config::ConfigHandler::SetConfig(config);;
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }
 }
@@ -335,7 +340,7 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   config::ConfigHandler::SetConfig(config);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
 
@@ -344,7 +349,7 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   config::ConfigHandler::SetConfig(config);;
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }
 }
@@ -355,12 +360,12 @@ TEST_F(DictionaryImplTest, LookupComment) {
   NodeAllocator allocator;
 
   string comment;
-  EXPECT_FALSE(d->LookupComment("key", "value", &comment));
+  EXPECT_FALSE(d->LookupComment("key", "value", convreq_, &comment));
   EXPECT_TRUE(comment.empty());
 
   // If key or value is "comment", UserDictionaryStub returns
   // "UserDictionaryStub" as comment.
-  EXPECT_TRUE(d->LookupComment("key", "comment", &comment));
+  EXPECT_TRUE(d->LookupComment("key", "comment", convreq_, &comment));
   EXPECT_EQ("UserDictionaryStub", comment);
 }
 

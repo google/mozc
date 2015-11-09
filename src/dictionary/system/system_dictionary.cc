@@ -655,7 +655,8 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
 }
 
 void SystemDictionary::LookupPredictive(
-    StringPiece key, bool use_kana_modifier_insensitive_lookup,
+    StringPiece key,
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   // Do nothing for empty key, although looking up all the entries with empty
   // string seems natural.
@@ -669,9 +670,9 @@ void SystemDictionary::LookupPredictive(
     return;
   }
 
-  const KeyExpansionTable &table = use_kana_modifier_insensitive_lookup
-      ? hiragana_expansion_table_
-      : KeyExpansionTable::GetDefaultInstance();
+  const KeyExpansionTable &table =
+      conversion_request.IsKanaModifierInsensitiveConversion() ?
+      hiragana_expansion_table_ : KeyExpansionTable::GetDefaultInstance();
 
   // TODO(noriyukit): Lookup limit should be implemented at caller side by using
   // callback mechanism.  This hard-coding limits the capability and generality
@@ -966,12 +967,12 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
 
 void SystemDictionary::LookupPrefix(
     StringPiece key,
-    bool use_kana_modifier_insensitive_lookup,
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
 
-  if (!use_kana_modifier_insensitive_lookup) {
+  if (!conversion_request.IsKanaModifierInsensitiveConversion()) {
     RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, codec_,
                             frequent_pos_, key.data(), encoded_key, callback,
                             SelectAllTokens());
@@ -987,7 +988,10 @@ void SystemDictionary::LookupPrefix(
                                    actual_key_buffer, &actual_prefix);
 }
 
-void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
+void SystemDictionary::LookupExact(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   // Find the key in the key trie.
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
@@ -1010,8 +1014,10 @@ void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
   }
 }
 
-void SystemDictionary::LookupReverse(StringPiece str,
-                                     Callback *callback) const {
+void SystemDictionary::LookupReverse(
+    StringPiece str,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   // 1st step: Hiragana/Katakana are not in the value trie
   // 2nd step: Reverse lookup in value trie
   ReverseLookupCallbackWrapper callback_wrapper(callback);

@@ -59,19 +59,27 @@ class UserDictionary : public DictionaryInterface {
   virtual bool HasValue(StringPiece value) const;
   // Lookup methods don't support kana modifier insensitive lookup, i.e.,
   // Callback::OnActualKey() is never called.
-  virtual void LookupPredictive(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const;
-  virtual void LookupPrefix(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const;
-  virtual void LookupExact(StringPiece key, Callback *callback) const;
-  virtual void LookupReverse(StringPiece str, Callback *callback) const;
+  virtual void LookupPredictive(StringPiece key,
+                                const ConversionRequest &conversion_request,
+                                Callback *callback) const;
+
+  virtual void LookupPrefix(StringPiece key,
+                            const ConversionRequest &conversion_request,
+                            Callback *callback) const;
+
+  virtual void LookupExact(StringPiece key,
+                           const ConversionRequest &conversion_request,
+                           Callback *callback) const;
+
+  virtual void LookupReverse(StringPiece str,
+                             const ConversionRequest &conversion_request,
+                             Callback *callback) const;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
   // returned and string is kept as-is.
   virtual bool LookupComment(StringPiece key, StringPiece value,
+                             const ConversionRequest &conversion_request,
                              string *comment) const;
 
   // Loads dictionary from UserDictionaryStorage.
@@ -92,6 +100,7 @@ class UserDictionary : public DictionaryInterface {
   // is executed synchronously with user input.
   bool AddToAutoRegisteredDictionary(
       const string &key, const string &value,
+      const ConversionRequest &conversion_request,
       user_dictionary::UserDictionary::PosType pos);
 
   // Sets user dicitonary filename for unittesting

@@ -72,6 +72,10 @@ const commands::Request &ConversionRequest::request() const {
   return *request_;
 }
 
+void ConversionRequest::set_request(const commands::Request *request) {
+  request_ = request;
+}
+
 const config::Config &ConversionRequest::config() const {
   return config::ConfigHandler::GetConfig();
 }
