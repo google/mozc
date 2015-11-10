@@ -43,7 +43,22 @@ import sys
 
 from build_tools import code_generator_util
 
-CATEGORY_LIST = ['FACE', 'FOOD', 'CITY', 'ACTIVITY', 'NATURE']
+# Table to convert categories.
+# "offset" will be added to each emoji index to keep the order.
+# We assign 100,000 and greater values for carrier emoji, so "offset" should be
+# less than 100,000.
+_CATEGORY_MAP = {
+  'SMILEY_PEOPLE': {'category': 'FACE', 'offset': 0},
+  'ANIMALS_NATURE': {'category': 'FOOD', 'offset': 0},
+  'FOOD_DRINK': {'category': 'FOOD', 'offset': 10000},
+  'TRAVEL_PLACES': {'category': 'CITY', 'offset': 0},
+  'ACTIVITY': {'category': 'ACTIVITY', 'offset': 0},
+  'OBJECTS': {'category': 'ACTIVITY', 'offset': 10000},
+  'SYMBOLS': {'category': 'NATURE', 'offset': 0},
+  'FLAGS': {'category': 'NATURE', 'offset': 10000},
+}
+_CATEGORY_LIST = list(set(
+    [entry['category'] for entry in _CATEGORY_MAP.itervalues()]))
 
 
 def ReadData(stream):
@@ -53,10 +68,13 @@ def ReadData(stream):
   stream = code_generator_util.SelectColumn(stream, [0, 2, 8, 9, 10, 11, 12])
   for (code, pua_code, japanese_name, docomo_name, softbank_name, kddi_name,
        category_index) in stream:
+    if bool(code) != bool(japanese_name):
+      if code:
+        logging.fatal('No Japanese name for %s found.' % code)
+      else:
+        logging.fatal('No Unicode code point for %s found.' % japanese_name)
+      sys.exit(-1)
     if not code:
-      if japanese_name:
-        logging.fatal('No Unicode emoji code point found.')
-        sys.exit(-1)
       # Use dummy code point
       code = '0'
     if not pua_code:
@@ -71,13 +89,15 @@ def ReadData(stream):
     code_values = [int(c, 16) for c in re.split(r' +', code.strip())]
     pua_code_value = int(pua_code, 16)
     (category, index) = category_index.split('-')
+    index = int(index) + _CATEGORY_MAP[category]['offset']
+    category = _CATEGORY_MAP[category]['category']
     category_map[category].append(
         (index, code_values, pua_code_value,
          japanese_name, docomo_name, softbank_name, kddi_name))
   return category_map
 
 
-CHARA_NORMALIZE_MAP = {
+_CHARACTER_NORMALIZE_MAP = {
     u'Ａ': 'A',
     u'Ｂ': 'B',
     u'Ｃ': 'C',
@@ -152,7 +172,7 @@ def PreprocessName(name):
   if not name:
     return 'null'
   name = unicode(name, 'utf-8')
-  name = u''.join(CHARA_NORMALIZE_MAP.get(c, c) for c in name)
+  name = u''.join(_CHARACTER_NORMALIZE_MAP.get(c, c) for c in name)
   name = name.encode('utf-8')
   name = name.replace('(', '\\n(')
   return '"%s"' % name
@@ -165,7 +185,7 @@ def OutputData(category_map, stream):
   stream.write('package org.mozc.android.inputmethod.japanese.emoji;\n'
                'public class EmojiData {\n')
 
-  for category in CATEGORY_LIST:
+  for category in _CATEGORY_LIST:
     # The content of data list is
     # 0: Index in the category
     # 1: Code points of Unicode emoji
