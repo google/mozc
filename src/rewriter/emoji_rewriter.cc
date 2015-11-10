@@ -91,6 +91,8 @@ bool InsertCandidate(const string &key,
     Util::AppendStringWithDelimiter(
         " ", description, &(candidate->description));
   }
+  candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
 
   return true;
 }
