@@ -86,14 +86,6 @@ enum DisplayType {
   CASCADE = 1;
 };
 
-// Obsolete. Used only in old IBus client.
-message DeprecatedRectangle {
-  required int32 x = 1;
-  required int32 y = 2;
-  required int32 width = 3;
-  required int32 height = 4;
-}
-
 message InformationList {
   optional uint32 focused_index = 1;
   repeated Information information = 2;
@@ -206,20 +198,9 @@ message Candidates {
   };
   optional Direction direction = 14 [ default = VERTICAL ];
 
-  // Obsolete. Used only in old IBus client.
-  optional DeprecatedRectangle deprecated_composition_rectangle = 15;
-  optional DeprecatedRectangle deprecated_caret_rectangle = 16;
-
-  // Obsolete. Used only in old IBus client.
-  enum DeprecatedCandidateWindowLocation {
-    // Shows candidate window under the caret. This is used for prediction and
-    // conversion
-    DEPRECATED_CARET = 0;
-    // Shows candidate window aligned with composition area. This is used for
-    // suggestion.
-    DEPRECATED_COMPOSITION = 1;
-  }
-  optional DeprecatedCandidateWindowLocation deprecated_window_location = 17;
+  reserved 15;  // Deprecated composition_rectangle
+  reserved 16;  // Deprecated caret_rectangle
+  reserved 17;  // Deprecated window_location
 
   // The number of candidates per page.
   optional uint32 page_size = 18 [ default = 9 ];

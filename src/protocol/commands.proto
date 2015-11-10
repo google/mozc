@@ -488,8 +488,7 @@ message SessionCommand {
   optional UsageStatsEvent usage_stats_event = 7;
   optional int32 usage_stats_event_int_value = 9;
 
-  // Obsolete command. Used only in old IBus client.
-  optional DeprecatedRectangle deprecated_caret_rectangle = 8;
+  reserved 8;  // Deprecated caret_rectangle
 
   reserved 10;  // Deprecated asynchronous_request_id
 };
@@ -572,9 +571,7 @@ message Request {
   optional bool mixed_conversion = 2
       [default = false] ;  // true for android
 
-  // Combine all segments like mobile IME.
-  optional bool OBSOLETE_combine_all_segments = 3
-      [default = false] ;  // true for android
+  reserved 3;  // Deprecated combine_all_segments
 
   enum SpecialRomanjiTable {
     // Do not use special table.

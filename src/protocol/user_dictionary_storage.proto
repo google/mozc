@@ -312,7 +312,7 @@ message UserDictionaryCommandStatus {
   optional uint64 session_id = 2;
   optional UserDictionaryStorage storage = 3;
   // Use entries field instead.
-  optional UserDictionary.Entry OBSOLETE_entry = 4;
+  reserved 4;  // Deprecated entry
   optional uint64 dictionary_id = 5;
   optional uint32 entry_size = 6;
   repeated UserDictionary.Entry entries = 7;
