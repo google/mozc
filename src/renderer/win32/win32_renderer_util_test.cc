@@ -823,149 +823,6 @@ class Win32RendererUtilTest : public testing::Test {
         use_proportional_font, is_vertical, cursor_offset, hwnd, command);
   }
 
-  // Verification of changes for b/3200425.
-  static void VerifyCompositionStyleBitsCompatibilityForIssue3200425(
-      bool use_deprecated_style, CompositionForm::Style style,
-      bool use_new_style, uint32 style_bits) {
-    const int kCursorOffsetX = 0;
-
-    RendererCommand command;
-
-    HWND hwnd = nullptr;
-    LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
-                             CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
-    CandidateWindowLayout candidate_layout;
-
-    CLogFont logfont;
-
-    bool result = false;
-
-    // w/ candidates, monospaced, horizontal
-    SetRenderereCommandForTest(
-        false, true, false, kCursorOffsetX, hwnd, &command);
-
-    if (use_deprecated_style) {
-      command.mutable_application_info()->mutable_composition_form()
-          ->set_deprecated_style(style);
-    } else {
-      command.mutable_application_info()->mutable_composition_form()
-          ->clear_deprecated_style();
-    }
-    if (use_new_style) {
-      command.mutable_application_info()->mutable_composition_form()
-          ->set_style_bits(style_bits);
-    } else {
-      command.mutable_application_info()->mutable_composition_form()
-          ->clear_style_bits();
-    }
-
-    EXPECT_TRUE(mozc::win32::FontUtil::ToLOGFONT(
-        command.application_info().composition_font(), &logfont));
-    layouts.clear();
-    candidate_layout.Clear();
-    result = layout_mgr.LayoutCompositionWindow(
-        command, &layouts, &candidate_layout);
-    EXPECT_TRUE(result);
-
-    ASSERT_EQ(2, layouts.size());
-
-    // The first line
-    {
-      const CompositionWindowLayout &layout = layouts.at(0);
-      EXPECT_COMPOSITION_WINDOW_LAYOUT(1868, 599, 2003, 648, 0, 0, 135, 49,
-                                       0, 0, 0, 0, 0, 0, logfont, layout);
-      {
-        // "これは"
-        const char kMsg[] = "\343\201\223\343\202\214\343\201\257";
-        wstring msg;
-        mozc::Util::UTF8ToWide(kMsg, &msg);
-        EXPECT_EQ(msg, layout.text);
-      }
-      ASSERT_EQ(1, layout.marker_layouts.size());
-
-      EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-      EXPECT_EQ(CPoint(126, 48), layout.marker_layouts[0].to);
-      EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    }
-
-    // The second line
-    {
-      const CompositionWindowLayout &layout = layouts.at(1);
-      EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1840, 697, 0, 0, 646, 49,
-                                       0, 0, 646, 0, 647, 49, logfont, layout);
-      {
-        // "、Google日本語入力のTestです"
-        const char kMsg[] =
-            "\343\200\201Google\346\227\245\346\234\254\350\252\236\345\205\245"
-            "\345\212\233\343\201\256Test\343\201\247\343\201\231";
-        wstring msg;
-        mozc::Util::UTF8ToWide(kMsg, &msg);
-        EXPECT_EQ(msg, layout.text);
-      }
-      ASSERT_EQ(4, layout.marker_layouts.size());
-
-      EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-      EXPECT_EQ(CPoint(36, 48), layout.marker_layouts[0].to);
-      EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-      EXPECT_EQ(CPoint(45, 48), layout.marker_layouts[1].from);
-      EXPECT_EQ(CPoint(190, 48), layout.marker_layouts[1].to);
-      EXPECT_TRUE(layout.marker_layouts[1].highlighted);
-      EXPECT_EQ(CPoint(196, 48), layout.marker_layouts[2].from);
-      EXPECT_EQ(CPoint(457, 48), layout.marker_layouts[2].to);
-      EXPECT_FALSE(layout.marker_layouts[2].highlighted);
-      EXPECT_EQ(CPoint(466, 48), layout.marker_layouts[3].from);
-      EXPECT_EQ(CPoint(646, 48), layout.marker_layouts[3].to);
-      EXPECT_FALSE(layout.marker_layouts[3].highlighted);
-    }
-    EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-        1238, 697, 1238, 648, 1839, 697, candidate_layout);
-
-    // Check other candidate positions.
-    command.mutable_output()->mutable_candidates()->set_position(0);
-    layouts.clear();
-    candidate_layout.Clear();
-    result = layout_mgr.LayoutCompositionWindow(
-        command, &layouts, &candidate_layout);
-    EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-        1868, 648, 1868, 599, 2003, 648, candidate_layout);
-
-    command.mutable_output()->mutable_candidates()->set_position(3);
-    layouts.clear();
-    candidate_layout.Clear();
-    result = layout_mgr.LayoutCompositionWindow(
-        command, &layouts, &candidate_layout);
-    EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-        1193, 697, 1193, 648, 1839, 697, candidate_layout);
-
-    command.mutable_output()->mutable_candidates()->set_position(10);
-    layouts.clear();
-    candidate_layout.Clear();
-    result = layout_mgr.LayoutCompositionWindow(
-        command, &layouts, &candidate_layout);
-    EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-        1389, 697, 1389, 648, 1839, 697, candidate_layout);
-
-    command.mutable_output()->mutable_candidates()->set_position(16);
-    layouts.clear();
-    candidate_layout.Clear();
-    result = layout_mgr.LayoutCompositionWindow(
-        command, &layouts, &candidate_layout);
-    EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-        1659, 697, 1659, 648, 1839, 697, candidate_layout);
-
-    // w/o candidates, monospaced, horizontal
-    SetRenderereCommandForTest(false, false, false, 0, hwnd, &command);
-    EXPECT_TRUE(mozc::win32::FontUtil::ToLOGFONT(
-        command.application_info().composition_font(), &logfont));
-    layouts.clear();
-    candidate_layout.Clear();
-    result = layout_mgr.LayoutCompositionWindow(
-        command, &layouts, &candidate_layout);
-    EXPECT_TRUE(result);
-    EXPECT_FALSE(candidate_layout.initialized());
-  }
-
  protected:
   static void SetUpTestCase() {
     // On Windows XP, the availability of typical Japanese fonts such are as
@@ -3487,20 +3344,132 @@ TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
 // We should consider the case where two or more style bits are specified
 // at the same time.
 TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
-  // Check the backward compatibility.
-  VerifyCompositionStyleBitsCompatibilityForIssue3200425(
-      true, CompositionForm::RECT,
-      false, CompositionForm::DEFAULT);
+  const uint32 kStyleBit = CompositionForm::RECT | CompositionForm::POINT;
 
-  // Set CompositionForm::RECT and CompositionForm::POINT at the same time.
-  VerifyCompositionStyleBitsCompatibilityForIssue3200425(
-      false, CompositionForm::DEFAULT,
-      true, CompositionForm::RECT | CompositionForm::POINT);
+  const int kCursorOffsetX = 0;
 
-  // If both of them are specified, the legacy one is used.
-  VerifyCompositionStyleBitsCompatibilityForIssue3200425(
-      true, CompositionForm::RECT,
-      true, CompositionForm::POINT);
+  RendererCommand command;
+
+  HWND hwnd = nullptr;
+  LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
+                           CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
+  vector<CompositionWindowLayout> layouts;
+  CandidateWindowLayout candidate_layout;
+
+  CLogFont logfont;
+
+  bool result = false;
+
+  // w/ candidates, monospaced, horizontal
+  SetRenderereCommandForTest(
+      false, true, false, kCursorOffsetX, hwnd, &command);
+  command.mutable_application_info()->mutable_composition_form()
+      ->set_style_bits(kStyleBit);
+
+  EXPECT_TRUE(mozc::win32::FontUtil::ToLOGFONT(
+      command.application_info().composition_font(), &logfont));
+  layouts.clear();
+  candidate_layout.Clear();
+  result = layout_mgr.LayoutCompositionWindow(
+      command, &layouts, &candidate_layout);
+  EXPECT_TRUE(result);
+
+  ASSERT_EQ(2, layouts.size());
+
+  // The first line
+  {
+    const CompositionWindowLayout &layout = layouts.at(0);
+    EXPECT_COMPOSITION_WINDOW_LAYOUT(1868, 599, 2003, 648, 0, 0, 135, 49,
+                                     0, 0, 0, 0, 0, 0, logfont, layout);
+    {
+      // "これは"
+      const char kMsg[] = "\343\201\223\343\202\214\343\201\257";
+      wstring msg;
+      mozc::Util::UTF8ToWide(kMsg, &msg);
+      EXPECT_EQ(msg, layout.text);
+    }
+    ASSERT_EQ(1, layout.marker_layouts.size());
+
+    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
+    EXPECT_EQ(CPoint(126, 48), layout.marker_layouts[0].to);
+    EXPECT_FALSE(layout.marker_layouts[0].highlighted);
+  }
+
+  // The second line
+  {
+    const CompositionWindowLayout &layout = layouts.at(1);
+    EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1840, 697, 0, 0, 646, 49,
+                                     0, 0, 646, 0, 647, 49, logfont, layout);
+    {
+      // "、Google日本語入力のTestです"
+      const char kMsg[] =
+          "\343\200\201Google\346\227\245\346\234\254\350\252\236\345\205\245"
+          "\345\212\233\343\201\256Test\343\201\247\343\201\231";
+      wstring msg;
+      mozc::Util::UTF8ToWide(kMsg, &msg);
+      EXPECT_EQ(msg, layout.text);
+    }
+    ASSERT_EQ(4, layout.marker_layouts.size());
+
+    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
+    EXPECT_EQ(CPoint(36, 48), layout.marker_layouts[0].to);
+    EXPECT_FALSE(layout.marker_layouts[0].highlighted);
+    EXPECT_EQ(CPoint(45, 48), layout.marker_layouts[1].from);
+    EXPECT_EQ(CPoint(190, 48), layout.marker_layouts[1].to);
+    EXPECT_TRUE(layout.marker_layouts[1].highlighted);
+    EXPECT_EQ(CPoint(196, 48), layout.marker_layouts[2].from);
+    EXPECT_EQ(CPoint(457, 48), layout.marker_layouts[2].to);
+    EXPECT_FALSE(layout.marker_layouts[2].highlighted);
+    EXPECT_EQ(CPoint(466, 48), layout.marker_layouts[3].from);
+    EXPECT_EQ(CPoint(646, 48), layout.marker_layouts[3].to);
+    EXPECT_FALSE(layout.marker_layouts[3].highlighted);
+  }
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
+      1238, 697, 1238, 648, 1839, 697, candidate_layout);
+
+  // Check other candidate positions.
+  command.mutable_output()->mutable_candidates()->set_position(0);
+  layouts.clear();
+  candidate_layout.Clear();
+  result = layout_mgr.LayoutCompositionWindow(
+      command, &layouts, &candidate_layout);
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
+      1868, 648, 1868, 599, 2003, 648, candidate_layout);
+
+  command.mutable_output()->mutable_candidates()->set_position(3);
+  layouts.clear();
+  candidate_layout.Clear();
+  result = layout_mgr.LayoutCompositionWindow(
+      command, &layouts, &candidate_layout);
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
+      1193, 697, 1193, 648, 1839, 697, candidate_layout);
+
+  command.mutable_output()->mutable_candidates()->set_position(10);
+  layouts.clear();
+  candidate_layout.Clear();
+  result = layout_mgr.LayoutCompositionWindow(
+      command, &layouts, &candidate_layout);
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
+      1389, 697, 1389, 648, 1839, 697, candidate_layout);
+
+  command.mutable_output()->mutable_candidates()->set_position(16);
+  layouts.clear();
+  candidate_layout.Clear();
+  result = layout_mgr.LayoutCompositionWindow(
+      command, &layouts, &candidate_layout);
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
+      1659, 697, 1659, 648, 1839, 697, candidate_layout);
+
+  // w/o candidates, monospaced, horizontal
+  SetRenderereCommandForTest(false, false, false, 0, hwnd, &command);
+  EXPECT_TRUE(mozc::win32::FontUtil::ToLOGFONT(
+      command.application_info().composition_font(), &logfont));
+  layouts.clear();
+  candidate_layout.Clear();
+  result = layout_mgr.LayoutCompositionWindow(
+      command, &layouts, &candidate_layout);
+  EXPECT_TRUE(result);
+  EXPECT_FALSE(candidate_layout.initialized());
 }
 
 // Evernote Windows Client 4.0.0.2880 (107102) / Editor component

@@ -191,13 +191,8 @@ bool IsCompatibleCompositionForm(const CompositionForm &form,
     return true;
   }
 
-  // TODO(yukawa): Stop supporting |deprecated_style()|.
-  const uint32 style_bits =
-      (form.has_deprecated_style() ? form.deprecated_style()
-                                   : form.style_bits());
-
   // Note that CompositionForm::DEFAULT is defined as 0.
-  if (style_bits != CompositionForm::DEFAULT) {
+  if (form.style_bits() != CompositionForm::DEFAULT) {
     return true;
   }
 
@@ -287,10 +282,7 @@ bool ExtractParams(
     const commands::RendererCommand::CandidateForm &form =
         app_info.candidate_form();
 
-    // TODO(yukawa): Stop supporting |deprecated_style()|.
-    const uint32 candidate_style_bits =
-        (form.has_deprecated_style() ? form.deprecated_style()
-                                     : form.style_bits());
+    const uint32 candidate_style_bits = form.style_bits();
 
     const bool has_candidate_pos_style_bit =
         ((candidate_style_bits & CandidateForm::CANDIDATEPOS) ==
@@ -1836,11 +1828,7 @@ bool LayoutManager::LayoutCompositionWindow(
     }
   }
 
-  // TODO(yukawa): Stop supporting |deprecated_style()|.
-  const uint32 style_bits =
-      (composition_form.has_deprecated_style()
-          ? composition_form.deprecated_style()
-          : composition_form.style_bits());
+  const uint32 style_bits = composition_form.style_bits();
 
   // Check the availability of optional fields.
   // Note that currently we always use |current_position| field even when

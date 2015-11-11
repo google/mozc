@@ -90,6 +90,10 @@ message RendererCommand {
   // An equivalent to COMPOSITIONFORM in IMM32. (For Windows only)
   // TODO(yukawa): make a common composition form format for all platforms.
   message CompositionForm {
+    reserved 1;  // Deprecated style
+    optional Point current_position = 2;
+    optional Rectangle area = 3;
+    // Used as bit flags in |style_bits|.
     // These constants correspond to CFS_* in Imm.h
     enum Style {
       DEFAULT = 0;          // CFS_DEFAULT
@@ -97,28 +101,22 @@ message RendererCommand {
       POINT = 2;            // CFS_POINT
       FORCE_POSITION = 32;  // CFS_FORCE_POSITION
     };
-    // Use |style_bits| instead because there are some applications which
-    // specify a combination of style bits like CFS_RECT + CFS_POINT.
-    optional Style DEPRECATED_style = 1;
-    optional Point current_position = 2;
-    optional Rectangle area = 3;
     optional uint32 style_bits = 4 [ default = 0 ];  // 0 means Style::DEFAULT
   };
 
   // An equivalent to CANDIDATEFORM in IMM32. (For Windows only)
   // TODO(yukawa): make a common candidate form format for all platforms.
   message CandidateForm {
+    reserved 1;  // Deprecated style
+    optional Point current_position = 2;
+    optional Rectangle area = 3;
+    // Used as bit flags in |style_bits|.
     // These constants correspond to CFS_* in Imm.h
     enum Style {
       DEFAULT = 0;        // CFS_DEFAULT
       CANDIDATEPOS = 64;  // CFS_CANDIDATEPOS
       EXCLUDE = 128;      // CFS_EXCLUDE
     };
-    // Use |style_bits| instead in case there is an applications which
-    // specifies a combination of style bits.
-    optional Style DEPRECATED_style = 1;
-    optional Point current_position = 2;
-    optional Rectangle area = 3;
     optional uint32 style_bits = 4 [ default = 0 ];  // 0 means Style::DEFAULT
   };
 
