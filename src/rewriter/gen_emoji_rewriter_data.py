@@ -88,6 +88,7 @@ def ReadEmojiTsv(stream):
       logging.critical('format error: %s', '\t'.join(columns))
       sys.exit(1)
 
+    code_points = columns[0].split(' ')
     # Emoji code point.
     emoji = columns[1] if columns[1] else None
     android_pua = ParseCodePoint(columns[2])
@@ -102,6 +103,15 @@ def ReadEmojiTsv(stream):
     docomo_description = columns[9] if columns[9] else None
     softbank_description = columns[10] if columns[10] else None
     kddi_description = columns[11] if columns[11] else None
+
+    if not android_pua or len(code_points) > 1:
+      # Skip some emoji, which is not supported on old devices.
+      # - Unicode 6.1 or later emoji which doesn't have PUA code point.
+      # - Composite emoji which has multiple code point.
+      # NOTE: Some Unicode 6.0 emoji don't have PUA, and it is also omitted.
+      # TODO(hsumita): Check the availability of such emoji and enable it.
+      logging.info('Skip %s', ' '.join(code_points))
+      continue
 
     # Check consistency between carrier PUA codes and descriptions for Android
     # just in case.
