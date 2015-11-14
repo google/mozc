@@ -1650,4 +1650,45 @@ TEST_F(ConverterTest, ReconstructHistory) {
   EXPECT_NE(0, candidate.rid);
 }
 
+TEST_F(ConverterTest, LimitCandidatesSize) {
+  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
+
+  composer::Table table;
+  mozc::commands::Request request_proto;
+  mozc::composer::Composer composer(&table, &request_proto);
+  composer.InsertCharacterPreedit("\xE3\x81\x82");  // "あ"
+  ConversionRequest request(&composer, &request_proto);
+
+  Segments segments;
+  ASSERT_TRUE(converter->StartConversionForRequest(request, &segments));
+  ASSERT_EQ(1, segments.conversion_segments_size());
+  const int original_candidates_size =
+      segments.segment(0).candidates_size();
+  const int original_meta_candidates_size =
+      segments.segment(0).meta_candidates_size();
+  EXPECT_LT(0, original_candidates_size - 1 - original_meta_candidates_size)
+      << "original candidates size: " << original_candidates_size
+      << ", original meta candidates size: " << original_meta_candidates_size;
+
+  segments.Clear();
+  request_proto.set_candidates_size_limit(original_candidates_size - 1);
+  ASSERT_TRUE(converter->StartConversionForRequest(request, &segments));
+  ASSERT_EQ(1, segments.conversion_segments_size());
+  EXPECT_GE(original_candidates_size - 1,
+            segments.segment(0).candidates_size());
+  EXPECT_LE(original_candidates_size - 1 - original_meta_candidates_size,
+            segments.segment(0).candidates_size());
+  EXPECT_EQ(original_meta_candidates_size,
+            segments.segment(0).meta_candidates_size());
+
+  segments.Clear();
+  request_proto.set_candidates_size_limit(0);
+  ASSERT_TRUE(converter->StartConversionForRequest(request, &segments));
+  ASSERT_EQ(1, segments.conversion_segments_size());
+  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  EXPECT_EQ(original_meta_candidates_size,
+            segments.segment(0).meta_candidates_size());
+}
+
 }  // namespace mozc

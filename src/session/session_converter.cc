@@ -1117,13 +1117,11 @@ void SessionConverter::FillOutput(
       candidate_list_visible_) {
     FillCandidates(output->mutable_candidates());
   }
-#ifndef __native_client__
+
   // All candidate words
-  // In NaCl, we don't use the all candidate word data.
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     FillAllCandidateWords(output->mutable_all_candidate_words());
   }
-#endif  // __native_client__
 }
 
 // static
