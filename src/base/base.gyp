@@ -40,7 +40,6 @@
       'toolsets': ['host', 'target'],
       'sources': [
         'cpu_stats.cc',
-        'encoding_util.cc',
         'process.cc',
         'process_mutex.cc',
         'run_level.cc',
@@ -58,11 +57,6 @@
             'mac_process.mm',
             'mac_util.mm',
           ],
-          'link_settings': {
-            'libraries': [
-              '/usr/lib/libiconv.dylib',  # used in iconv.cc
-            ],
-          },
         }],
         ['OS=="win"', {
           'sources': [

@@ -43,7 +43,6 @@
 #include <string>
 #include <vector>
 
-#include "base/encoding_util.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/run_level.h"
@@ -55,6 +54,7 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "gui/base/encoding_util.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #include "gui/config_dialog/combobox_delegate.h"

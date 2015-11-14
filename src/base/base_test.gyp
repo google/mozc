@@ -253,20 +253,6 @@
       },
     },
     {
-      'target_name': 'encoding_util_test',
-      'type': 'executable',
-      'sources': [
-        'encoding_util_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'base.gyp:base',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'number_util_test',
       'type': 'executable',
       'sources': [
@@ -416,7 +402,6 @@
         'clock_mock_test',
         'clock_test',
         'config_file_stream_test',
-        'encoding_util_test',
         'encryptor_test',
         'file_util_test',
         'hash_test',

@@ -27,28 +27,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_ENCODING_UTIL_H_
-#define MOZC_BASE_ENCODING_UTIL_H_
-
-// Currently EncodingUtil is not available on Android.
-#ifndef OS_ANDROID
+#include "gui/base/encoding_util.h"
 
 #include <string>
 
-#include "base/port.h"
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace {
 
-class EncodingUtil {
- public:
-  static void SJISToUTF8(const string &input, string *output);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(EncodingUtil);
-};
-
-}  // namespace mozc
-
+#ifdef OS_ANDROID
+// At the moment, encoding is not the target of build for Android.
+#else
+TEST(EncodingUtilTest, Issue2190350) {
+  string result = "";
+  EncodingUtil::SJISToUTF8("\x82\xA0", &result);
+  EXPECT_EQ(3, result.length());
+  EXPECT_EQ("\xE3\x81\x82", result);
+}
 #endif  // OS_ANDROID
 
-#endif  // MOZC_BASE_ENCODING_UTIL_H_
+}  // namespace
+}  // namespace mozc

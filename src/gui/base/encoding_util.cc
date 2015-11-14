@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/encoding_util.h"
+#include "gui/base/encoding_util.h"
 
 // No implementation for Android.
 #ifndef OS_ANDROID
@@ -94,7 +94,7 @@ inline bool Convert(const char *from, const char *to,
 // 1. Read the list of code-page identifiers supported by Windows (*1), and;
 // 2. Find a code-page identifier matching to the encoding name:
 // (*1) "http://msdn.microsoft.com/en-us/library/ms776446(VS.85).aspx".
-static int GetCodepage(const char* name) {
+int GetCodepage(const char* name) {
   static const struct {
     const char* name;
     int codepage;
