@@ -42,6 +42,7 @@
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
 #include "data_manager/user_pos_manager.h"

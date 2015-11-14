@@ -129,7 +129,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   virtual const string &GetPredictorName() const { return predictor_name_; }
 
-  // Used in user_history_sync_util.
+  // From user_history_predictor.proto
   typedef user_history_predictor::UserHistory::Entry Entry;
   typedef user_history_predictor::UserHistory::NextEntry NextEntry;
   typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
@@ -275,6 +275,7 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Scenario2);
   FRIEND_TEST(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile);
   FRIEND_TEST(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop);
+  FRIEND_TEST(UserHistoryPredictorTest, UsageStats);
 
   enum MatchType {
     NO_MATCH,            // no match
@@ -510,6 +511,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // Returns true if the input first candidate seems to be a privacy sensitive
   // such like password.
   bool IsPrivacySensitive(const Segments *segments) const;
+
+  void MaybeRecordUsageStats(const Segments &segments) const;
 
   const dictionary::DictionaryInterface *dictionary_;
   const dictionary::POSMatcher *pos_matcher_;

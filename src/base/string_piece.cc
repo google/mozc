@@ -30,30 +30,29 @@
 #include "base/string_piece.h"
 
 #include <algorithm>
+#include <cassert>
 #include <climits>
 #include <iostream>
 #include <string>
 
-#include "base/logging.h"
-
 namespace mozc {
 
-typedef StringPiece::size_type size_type;
+using size_type = StringPiece::size_type;
 
-StringPiece::StringPiece(const StringPiece str, size_type pos) :
-    ptr_(str.data() + pos),
-    length_(str.size() - pos) {
-  DCHECK_LE(pos, str.size());
+StringPiece::StringPiece(const StringPiece str, size_type pos)
+    : ptr_(str.data() + pos),
+      length_(str.size() - pos) {
+  assert(pos <= str.size());
 }
 
-StringPiece::StringPiece(const StringPiece str, size_type pos, size_type len) :
-    ptr_(str.data() + pos),
-    length_(min(len, str.size() - pos)) {
-  DCHECK_LE(pos, str.size());
-};
+StringPiece::StringPiece(const StringPiece str, size_type pos, size_type len)
+    : ptr_(str.data() + pos),
+      length_(min(len, str.size() - pos)) {
+  assert(pos <= str.size());
+}
 
 ostream &operator<<(ostream &o, const StringPiece &piece) {
-  o.write(piece.data(), static_cast<streamsize>(piece.size()));
+  o.write(piece.data(), static_cast<std::streamsize>(piece.size()));
   return o;
 }
 

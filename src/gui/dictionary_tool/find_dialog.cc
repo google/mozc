@@ -29,9 +29,10 @@
 
 #include "gui/dictionary_tool/find_dialog.h"
 
+#include <algorithm>
 #include <QtGui/QtGui>
+
 #include "base/logging.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace gui {

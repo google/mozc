@@ -40,6 +40,7 @@
 
 #include <memory>
 
+#include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 

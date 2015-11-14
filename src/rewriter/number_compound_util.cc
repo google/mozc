@@ -29,8 +29,9 @@
 
 #include "rewriter/number_compound_util.h"
 
+#include <algorithm>
+
 #include "base/iterator_adapter.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/counter_suffix.h"

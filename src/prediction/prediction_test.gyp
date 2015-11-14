@@ -61,6 +61,7 @@
         '../protocol/protocol.gyp:config_proto',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
+        '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'prediction.gyp:prediction',
       ],
       'variables': {

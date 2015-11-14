@@ -39,6 +39,7 @@
 #include "base/android_util.h"
 #endif  // OS_ANDROID
 #include "base/config_file_stream.h"
+#include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/number_util.h"
 #include "base/port.h"
@@ -81,12 +82,12 @@ void ExtractActivationKeys(istream *ifs, set<string> *keys) {
   }
 }
 
-bool IMEActivationKeyCustomized() {
-  const config::Config::SessionKeymap keymap = GET_CONFIG(session_keymap);
+bool IMEActivationKeyCustomized(const config::Config &config) {
+  const config::Config::SessionKeymap keymap = config.session_keymap();
   if (keymap != config::Config::CUSTOM) {
     return false;
   }
-  const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
+  const string &custom_keymap_table = config.custom_keymap_table();
   istringstream ifs_custom(custom_keymap_table);
   set<string> customized;
   ExtractActivationKeys(&ifs_custom, &customized);
@@ -109,9 +110,7 @@ bool IMEActivationKeyCustomized() {
   return true;
 }
 
-void UpdateConfigStats() {
-  const mozc::config::Config config = mozc::config::ConfigHandler::GetConfig();
-
+void UpdateConfigStats(const config::Config &config) {
   UsageStats::SetInteger("ConfigSessionKeymap", config.session_keymap());
   const uint32 preedit_method = config.preedit_method();
   UsageStats::SetInteger("ConfigPreeditMethod", preedit_method);
@@ -178,7 +177,7 @@ void UpdateConfigStats() {
   UsageStats::SetBoolean("ConfigUseJapaneseLayout",
                          config.use_japanese_layout());
   UsageStats::SetBoolean("IMEActivationKeyCustomized",
-                         IMEActivationKeyCustomized());
+                         IMEActivationKeyCustomized(config));
 
   UsageStats::SetBoolean("ConfigAllowCloudHandwriting",
                          config.allow_cloud_handwriting());
@@ -195,8 +194,8 @@ void UpdateConfigStats() {
 }
 }  // namespace
 
-void UsageStatsUpdater::UpdateStats() {
-  UpdateConfigStats();
+void UsageStatsUpdater::UpdateStats(const config::Config &config) {
+  UpdateConfigStats(config);
 
   // Get total memory in MB.
   const uint32 memory_in_mb =

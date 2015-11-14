@@ -2433,7 +2433,7 @@ int DateRewriter::capability(const ConversionRequest &request) const {
 
 bool DateRewriter::Rewrite(const ConversionRequest &request,
                            Segments *segments) const {
-  if (!GET_CONFIG(use_date_conversion)) {
+  if (!request.config().use_date_conversion()) {
     VLOG(2) << "no use_date_conversion";
     return false;
   }

@@ -58,22 +58,22 @@ LanguageAwareRewriter::~LanguageAwareRewriter() {}
 
 namespace {
 
-bool IsEnabled(const mozc::commands::Request &request) {
+bool IsEnabled(const ConversionRequest &request) {
   // The current default value of language_aware_input is
   // NO_LANGUAGE_AWARE_INPUT and only unittests set LANGUAGE_AWARE_SUGGESTION
   // at this moment.  Thus, FillRawText is not performed in the productions
   // yet.
-  if (request.language_aware_input() ==
+  if (request.request().language_aware_input() ==
       mozc::commands::Request::NO_LANGUAGE_AWARE_INPUT) {
     return false;
-  } else if (request.language_aware_input() ==
+  } else if (request.request().language_aware_input() ==
              mozc::commands::Request::LANGUAGE_AWARE_SUGGESTION) {
     return true;
   }
   DCHECK_EQ(mozc::commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR,
-            request.language_aware_input());
+            request.request().language_aware_input());
 
-  if (!GET_CONFIG(use_spelling_correction)) {
+  if (!request.config().use_spelling_correction()) {
     return false;
   }
 
@@ -89,7 +89,7 @@ bool IsEnabled(const mozc::commands::Request &request) {
 int LanguageAwareRewriter::capability(
     const ConversionRequest &request) const {
   // Language aware input is performed only on suggestion or prediction.
-  if (!IsEnabled(request.request())) {
+  if (!IsEnabled(request)) {
     return RewriterInterface::NOT_AVAILABLE;
   }
 
@@ -224,14 +224,14 @@ bool LanguageAwareRewriter::FillRawText(
 
 bool LanguageAwareRewriter::Rewrite(
     const ConversionRequest &request, Segments *segments) const {
-  if (!IsEnabled(request.request())) {
+  if (!IsEnabled(request)) {
     return false;
   }
   return FillRawText(request, segments);
 }
 
 namespace {
-bool IsLangaugeAwareInputCandidate(const composer::Composer &composer,
+bool IsLanguageAwareInputCandidate(const composer::Composer &composer,
                                    const Segment::Candidate &candidate) {
   // Check candidate.prefix to filter if the candidate is probably generated
   // from LanguangeAwareInput or not.
@@ -251,9 +251,8 @@ bool IsLangaugeAwareInputCandidate(const composer::Composer &composer,
 }  // namespace
 
 void LanguageAwareRewriter::Finish(const ConversionRequest &request,
-                                     Segments *segments) {
-  if (request.request().language_aware_input() !=
-      mozc::commands::Request::LANGUAGE_AWARE_SUGGESTION) {
+                                   Segments *segments) {
+  if (!IsEnabled(request)) {
     return;
   }
 
@@ -269,7 +268,7 @@ void LanguageAwareRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (IsLangaugeAwareInputCandidate(request.composer(),
+  if (IsLanguageAwareInputCandidate(request.composer(),
                                     segment.candidate(0))) {
     usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionCommitted");
   }

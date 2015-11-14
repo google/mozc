@@ -176,23 +176,7 @@ class MockDataAndImmutableConverter {
 
 }  // namespace
 
-class ImmutableConverterTest : public ::testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
- private:
-  config::Config default_config_;
-};
-
-TEST_F(ImmutableConverterTest, KeepKeyForPrediction) {
+TEST(ImmutableConverterTest, KeepKeyForPrediction) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
@@ -210,7 +194,7 @@ TEST_F(ImmutableConverterTest, KeepKeyForPrediction) {
   EXPECT_EQ(kRequestKey, segments.segment(0).key());
 }
 
-TEST_F(ImmutableConverterTest, DummyCandidatesCost) {
+TEST(ImmutableConverterTest, DummyCandidatesCost) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segment segment;
@@ -222,7 +206,7 @@ TEST_F(ImmutableConverterTest, DummyCandidatesCost) {
   EXPECT_LT(segment.candidate(0).wcost, segment.candidate(2).wcost);
 }
 
-TEST_F(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
+TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segment segment;
@@ -252,7 +236,8 @@ class KeyCheckDictionary : public DictionaryInterface {
   virtual bool HasValue(StringPiece value) const { return false; }
 
   virtual void LookupPredictive(
-      StringPiece key, bool use_kana_modifier_insensitive_looukp,
+      StringPiece key,
+      const ConversionRequest &convreq,
       Callback *callback) const {
     if (key == target_query_) {
       received_target_query_ = true;
@@ -261,16 +246,20 @@ class KeyCheckDictionary : public DictionaryInterface {
 
   virtual void LookupPrefix(
       StringPiece key,
-      bool use_kana_modifier_insensitive_looukp,
+      const ConversionRequest &convreq,
       Callback *callback) const {
     // No check
   }
 
-  virtual void LookupExact(StringPiece key, Callback *callback) const {
+  virtual void LookupExact(StringPiece key,
+                           const ConversionRequest &convreq,
+                           Callback *callback) const {
     // No check
   }
 
-  virtual void LookupReverse(StringPiece str, Callback *callback) const {
+  virtual void LookupReverse(StringPiece str,
+                             const ConversionRequest &convreq,
+                             Callback *callback) const {
     // No check
   }
 
@@ -284,7 +273,7 @@ class KeyCheckDictionary : public DictionaryInterface {
 };
 }  // namespace
 
-TEST_F(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
+TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -327,7 +316,7 @@ TEST_F(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
   EXPECT_FALSE(dictionary->received_target_query());
 }
 
-TEST_F(ImmutableConverterTest, AddPredictiveNodes) {
+TEST(ImmutableConverterTest, AddPredictiveNodes) {
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -356,7 +345,7 @@ TEST_F(ImmutableConverterTest, AddPredictiveNodes) {
   EXPECT_TRUE(dictionary->received_target_query());
 }
 
-TEST_F(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
+TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
@@ -409,7 +398,7 @@ TEST_F(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
   EXPECT_EQ("\xe4\xb8\xad\xe3\x83\x8e", content_values[2]);
 }
 
-TEST_F(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
+TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
@@ -430,7 +419,7 @@ TEST_F(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
   }
 }
 
-TEST_F(ImmutableConverterTest, NotConnectedTest) {
+TEST(ImmutableConverterTest, NotConnectedTest) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
@@ -478,7 +467,7 @@ TEST_F(ImmutableConverterTest, NotConnectedTest) {
   EXPECT_TRUE(tested);
 }
 
-TEST_F(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
+TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
   // "あ..." (100 times)
   const string kA100 =
       "\xE3\x81\x82\xE3\x81\x82\xE3\x81\x82\xE3\x81\x82\xE3\x81\x82"
@@ -563,32 +552,36 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
 }
 }  // namespace
 
-TEST_F(ImmutableConverterTest, EnableAutoPartialSuggestion) {
+TEST(ImmutableConverterTest, EnableAutoPartialSuggestion) {
   const commands::Request request;
-  ConversionRequest conversion_request(NULL, &request);
+  ConversionRequest conversion_request;
+  conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(true);
 
   EXPECT_TRUE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
-TEST_F(ImmutableConverterTest, DisableAutoPartialSuggestion) {
+TEST(ImmutableConverterTest, DisableAutoPartialSuggestion) {
   const commands::Request request;
-  ConversionRequest conversion_request(NULL, &request);
+  ConversionRequest conversion_request;
+  conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(false);
 
   EXPECT_FALSE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
-TEST_F(ImmutableConverterTest, AutoPartialSuggestionDefault) {
+TEST(ImmutableConverterTest, AutoPartialSuggestionDefault) {
   const commands::Request request;
-  ConversionRequest conversion_request(NULL, &request);
+  ConversionRequest conversion_request;
+  conversion_request.set_request(&request);
 
   EXPECT_FALSE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
-TEST_F(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
+TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
   const commands::Request request;
-  ConversionRequest conversion_request(NULL, &request);
+  ConversionRequest conversion_request;
+  conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(true);
 
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(

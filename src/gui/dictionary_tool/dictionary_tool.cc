@@ -55,6 +55,7 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/dictionary_tool/find_dialog.h"
@@ -958,8 +959,15 @@ void DictionaryTool::ImportFromDefaultIME() {
   const int old_size = dic->entries_size();
   const string dic_name = dic_info.item->text().toStdString();
 
-  const UserDictionaryImporter::ErrorType error =
-      UserDictionaryImporter::ImportFromMSIME(dic);
+  UserDictionaryImporter::ErrorType error =
+      UserDictionaryImporter::IMPORT_NOT_SUPPORTED;
+  {
+    std::unique_ptr<UserDictionaryImporter::InputIteratorInterface> iter(
+        MSIMEUserDictionarImporter::Create());
+    if (iter) {
+      error = UserDictionaryImporter::ImportFromIterator(iter.get(), dic);
+    }
+  }
 
   const int added_entries_size = dic->entries_size() - old_size;
 

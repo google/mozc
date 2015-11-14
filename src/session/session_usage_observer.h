@@ -56,7 +56,6 @@ class SessionUsageObserver : public SessionObserverInterface {
   virtual ~SessionUsageObserver();
 
   virtual void EvalCommandHandler(const commands::Command &command);
-  virtual void Reload();
 
  private:
   struct UsageCache {

@@ -135,10 +135,7 @@ void InsertCorrectedNodes(size_t pos, const string &key,
   }
   KeyCorrectedNodeListBuilder builder(pos, key, key_corrector,
                                       lattice->node_allocator());
-  dictionary->LookupPrefix(
-      StringPiece(str, length),
-      request.IsKanaModifierInsensitiveConversion(),
-      &builder);
+  dictionary->LookupPrefix(StringPiece(str, length), request, &builder);
   if (builder.tail() != NULL) {
     builder.tail()->bnext = NULL;
   }
@@ -776,17 +773,14 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
     BaseNodeListBuilder builder(
         lattice->node_allocator(),
         lattice->node_allocator()->max_nodes_size());
-    dictionary_->LookupReverse(StringPiece(begin, len), &builder);
+    dictionary_->LookupReverse(StringPiece(begin, len), request, &builder);
     result_node = builder.result();
   } else {
     if (is_prediction) {
       NodeListBuilderWithCacheEnabled builder(
           lattice->node_allocator(),
           lattice->cache_info(begin_pos) + 1);
-      dictionary_->LookupPrefix(
-          StringPiece(begin, len),
-          request.IsKanaModifierInsensitiveConversion(),
-          &builder);
+      dictionary_->LookupPrefix(StringPiece(begin, len), request, &builder);
       result_node = builder.result();
       lattice->SetCacheInfo(begin_pos, len);
     } else {
@@ -794,10 +788,7 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
       BaseNodeListBuilder builder(
           lattice->node_allocator(),
           lattice->node_allocator()->max_nodes_size());
-      dictionary_->LookupPrefix(
-          StringPiece(begin, len),
-          request.IsKanaModifierInsensitiveConversion(),
-          &builder);
+      dictionary_->LookupPrefix(StringPiece(begin, len), request, &builder);
       result_node = builder.result();
     }
   }
@@ -1104,7 +1095,7 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
   // Note that, the average number of lid/rid variation is less than 30 in
   // most cases. So, in order to avoid too many allocations for internal
   // nodes of std::map, we use vector of key-value pairs.
-  typedef vector<pair<int, pair<int, Node*> > > BestMap;
+  typedef vector<pair<int, pair<int, Node*>>> BestMap;
   typedef OrderBy<FirstKey, Less> OrderByFirst;
   BestMap lbest, rbest;
   lbest.reserve(128);
@@ -1267,8 +1258,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
           lattice->node_allocator()->max_nodes_size(),
           pos_matcher_);
       suffix_dictionary_->LookupPredictive(
-          StringPiece(key.data() + pos, key.size() - pos),
-          request.IsKanaModifierInsensitiveConversion(), &builder);
+          StringPiece(key.data() + pos, key.size() - pos), request, &builder);
       if (builder.result() != NULL) {
         lattice->Insert(pos, builder.result());
       }
@@ -1298,8 +1288,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
           lattice->node_allocator()->max_nodes_size(),
           pos_matcher_);
       dictionary_->LookupPredictive(
-          StringPiece(key.data() + pos, key.size() - pos),
-          request.IsKanaModifierInsensitiveConversion(), &builder);
+          StringPiece(key.data() + pos, key.size() - pos), request, &builder);
       if (builder.result() != NULL) {
         lattice->Insert(pos, builder.result());
       }
@@ -1584,7 +1573,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
   std::unique_ptr<KeyCorrector> key_corrector;
   if (is_conversion && !segments.resized()) {
     KeyCorrector::InputMode mode = KeyCorrector::ROMAN;
-    if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
+    if (request.config().preedit_method() != config::Config::ROMAN) {
       mode = KeyCorrector::KANA;
     }
     key_corrector.reset(new KeyCorrector(key, mode, history_key.size()));

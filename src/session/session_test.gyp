@@ -111,6 +111,7 @@
         'session_handler_test.cc',
       ],
       'dependencies': [
+        '../base/base_test.gyp:clock_mock',
         '../converter/converter_base.gyp:converter_mock',
         '../engine/engine.gyp:mock_converter_engine',
         '../testing/testing.gyp:gtest_main',
@@ -157,6 +158,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base_test.gyp:clock_mock',
         '../base/base_test.gyp:scheduler_stub',
         '../client/client.gyp:client_mock',
         '../config/config.gyp:config_handler',

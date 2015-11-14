@@ -39,6 +39,7 @@
 #include <memory>
 #include <string>
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "win32/tip/tip_dll_module.h"

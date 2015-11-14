@@ -35,13 +35,13 @@
 #include "base/file_util.h"
 #include "base/stl_util.h"
 #include "base/system_util.h"
-#include "base/trie.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -90,6 +90,7 @@ class ValueDictionaryTest : public testing::Test {
 
   const string dict_name_;
   const POSMatcher *pos_matcher_;
+  ConversionRequest convreq_;
 
  private:
   vector<Token *> tokens_;
@@ -148,12 +149,12 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
 
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("", false, &callback);
+    dictionary->LookupPredictive("", convreq_, &callback);
     EXPECT_TRUE(callback.tokens().empty());
   }
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("w", false, &callback);
+    dictionary->LookupPredictive("w", convreq_, &callback);
     vector<Token *> expected;
     expected.push_back(&token_we);
     expected.push_back(&token_war);
@@ -163,7 +164,7 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   }
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("wo", false, &callback);
+    dictionary->LookupPredictive("wo", convreq_, &callback);
     vector<Token *> expected;
     expected.push_back(&token_word);
     expected.push_back(&token_world);
@@ -171,7 +172,7 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   }
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("ho", false, &callback);
+    dictionary->LookupPredictive("ho", convreq_, &callback);
     EXPECT_TRUE(callback.tokens().empty());
   }
 }
@@ -189,7 +190,7 @@ TEST_F(ValueDictionaryTest, LookupExact) {
       ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
                                                      dict_name_));
   CollectTokenCallback callback;
-  dictionary->LookupExact("war", &callback);
+  dictionary->LookupExact("war", convreq_, &callback);
   ASSERT_EQ(1, callback.tokens().size());
   EXPECT_EQ("war", callback.tokens()[0].value);
 }

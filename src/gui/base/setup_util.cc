@@ -29,11 +29,16 @@
 
 #include "gui/base/setup_util.h"
 
+#ifdef OS_WIN
+#include <algorithm>
+#endif  // OS_WIN
+
 #include "base/logging.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #ifdef OS_WIN
 #include "dictionary/user_dictionary_importer.h"
+#include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #include "usage_stats/usage_stats.h"
 #include "win32/base/imm_util.h"
@@ -129,7 +134,14 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
     return false;
   }
 
-  if (UserDictionaryImporter::ImportFromMSIME(dic) !=
+  std::unique_ptr<UserDictionaryImporter::InputIteratorInterface> iter(
+      MSIMEUserDictionarImporter::Create());
+  if (!iter) {
+    LOG(ERROR) << "ImportFromMSIME failed";
+    return false;
+  }
+
+  if (UserDictionaryImporter::ImportFromIterator(iter.get(), dic) !=
     UserDictionaryImporter::IMPORT_NO_ERROR) {
     LOG(ERROR) << "ImportFromMSIME failed";
     return false;

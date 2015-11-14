@@ -37,6 +37,7 @@
 #include <memory>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/util.h"
 
 namespace mozc {

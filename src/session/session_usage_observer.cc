@@ -592,8 +592,5 @@ void SessionUsageObserver::EvalCommandHandler(
   }
 }
 
-void SessionUsageObserver::Reload() {
-}
-
 }  // namespace session
 }  // namespace mozc

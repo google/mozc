@@ -413,10 +413,9 @@ message SessionCommand {
     // TODO(team): Replace this command by useful one.
     OBSOLETE_SEND_LANGUAGE_BAR_COMMAND = 17;
 
-    // When the server is hadling asynchronous request, the server returns the
-    // message with callback request which session_command is GET_ASYNC_RESULT.
-    // After the delay_millisec, the client sends this command to the server.
-    GET_ASYNC_RESULT = 18;
+    // Obsolete command. Don't simply remove this command for NUM_OF_COMMANDS.
+    // TODO(team): Replace this command by useful one.
+    OBSOLETE_GET_ASYNC_RESULT = 18;
 
     // Commit the raw text of the composed string.
     COMMIT_RAW_TEXT = 19;
@@ -493,9 +492,6 @@ message SessionCommand {
   // Specify the current caret location, this is used for suggest window
   // position calculation. Used with SEND_CARET_LOCATION.
   optional Rectangle caret_rectangle = 8;
-
-  // Unique number specifying an asynchronous request.
-  optional int32 asynchronous_request_id = 10;
 };
 
 message Context {

@@ -62,14 +62,18 @@ class ValueDictionary : public DictionaryInterface {
   // Implementation of DictionaryInterface
   virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
-  virtual void LookupPredictive(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const;
-  virtual void LookupPrefix(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const;
-  virtual void LookupExact(StringPiece key, Callback *callback) const;
-  virtual void LookupReverse(StringPiece str, Callback *callback) const;
+  virtual void LookupPredictive(StringPiece key,
+                                const ConversionRequest &conversion_request,
+                                Callback *callback) const;
+  virtual void LookupPrefix(StringPiece key,
+                            const ConversionRequest &conversion_request,
+                            Callback *callback) const;
+  virtual void LookupExact(StringPiece key,
+                           const ConversionRequest &conversion_request,
+                           Callback *callback) const;
+  virtual void LookupReverse(StringPiece str,
+                             const ConversionRequest &conversion_request,
+                             Callback *callback) const;
 
  private:
   explicit ValueDictionary(const POSMatcher& pos_matcher);

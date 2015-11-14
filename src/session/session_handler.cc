@@ -38,7 +38,6 @@
 
 #include "base/clock.h"
 #include "base/flags.h"
-#include "base/init.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/process.h"
@@ -46,6 +45,7 @@
 #include "base/stopwatch.h"
 #include "base/util.h"
 #include "composer/table.h"
+#include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
@@ -224,11 +224,6 @@ bool SessionHandler::StartWatchDog() {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
-void SessionHandler::ReloadSession() {
-  observer_handler_->Reload();
-  ReloadConfig();
-}
-
 void SessionHandler::ReloadConfig() {
   const composer::Table *table = table_manager_->GetTable(
       *request_, config::ConfigHandler::GetConfig());
@@ -252,7 +247,7 @@ bool SessionHandler::SyncData(commands::Command *command) {
 bool SessionHandler::Shutdown(commands::Command *command) {
   VLOG(1) << "Shutdown server";
   SyncData(command);
-  ReloadSession();   // for saving log_commands
+  ReloadConfig();   // for saving log_commands
   is_available_ = false;
   UsageStats::IncrementCount("ShutDown");
   return true;
@@ -260,9 +255,10 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 
 bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
-  ReloadSession();
+  ReloadConfig();
   engine_->Reload();
-  RunReloaders();  // call all reloaders defined in .cc file
+  config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(
+      config::ConfigHandler::GetConfig());
   return true;
 }
 

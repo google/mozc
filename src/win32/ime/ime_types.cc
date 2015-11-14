@@ -48,7 +48,6 @@ bool BitwiseTest(LPARAM lParam) {
 
 const LPARAM kNotifyUpdateUI = 0x10000;
 const LPARAM kNotifyReconvertFromIME = 0x10001;
-const LPARAM kNotifyDelayedCallback = 0x10002;
 
 CompositionChangeAttributes::CompositionChangeAttributes()
     : composition_attribute(false),

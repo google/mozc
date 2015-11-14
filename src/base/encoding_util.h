@@ -41,7 +41,6 @@ namespace mozc {
 
 class EncodingUtil {
  public:
-  static void UTF8ToSJIS(const string &input, string *output);
   static void SJISToUTF8(const string &input, string *output);
 
  private:

@@ -65,7 +65,6 @@
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/singleton.h"
 #include "base/string_piece.h"
 
 namespace {
@@ -1210,94 +1209,71 @@ void Util::NormalizeVoicedSoundMark(StringPiece input, string *output) {
 }
 
 namespace {
-class BracketHandler {
- public:
-  BracketHandler() {
-    VLOG(1) << "Init bracket mapping";
 
-    const struct BracketType {
-      const char *open_bracket;
-      const char *close_bracket;
-    } kBracketType[] = {
-      //  { "（", "）" },
-      //  { "〔", "〕" },
-      //  { "［", "］" },
-      //  { "｛", "｝" },
-      //  { "〈", "〉" },
-      //  { "《", "》" },
-      //  { "「", "」" },
-      //  { "『", "』" },
-      //  { "【", "】" },
-      //  { "〘", "〙" },
-      //  { "〚", "〛" },
-      { "\xEF\xBC\x88", "\xEF\xBC\x89" },
-      { "\xE3\x80\x94", "\xE3\x80\x95" },
-      { "\xEF\xBC\xBB", "\xEF\xBC\xBD" },
-      { "\xEF\xBD\x9B", "\xEF\xBD\x9D" },
-      { "\xE3\x80\x88", "\xE3\x80\x89" },
-      { "\xE3\x80\x8A", "\xE3\x80\x8B" },
-      { "\xE3\x80\x8C", "\xE3\x80\x8D" },
-      { "\xE3\x80\x8E", "\xE3\x80\x8F" },
-      { "\xE3\x80\x90", "\xE3\x80\x91" },
-      { "\xe3\x80\x98", "\xe3\x80\x99" },
-      { "\xe3\x80\x9a", "\xe3\x80\x9b" },
-      { NULL, NULL },  // sentinel
-    };
-    string open_full_width, open_half_width;
-    string close_full_width, close_half_width;
+struct BracketPair {
+  StringPiece GetOpenBracket() const { return StringPiece(open, open_len); }
+  StringPiece GetCloseBracket() const { return StringPiece(close, close_len); }
 
-    for (size_t i = 0;
-         (kBracketType[i].open_bracket != NULL ||
-          kBracketType[i].close_bracket != NULL);
-         ++i) {
-      Util::FullWidthToHalfWidth(kBracketType[i].open_bracket,
-                                 &open_full_width);
-      Util::HalfWidthToFullWidth(kBracketType[i].open_bracket,
-                                 &open_half_width);
-      Util::FullWidthToHalfWidth(kBracketType[i].close_bracket,
-                                 &close_full_width);
-      Util::HalfWidthToFullWidth(kBracketType[i].close_bracket,
-                                 &close_half_width);
-      open_bracket_[open_half_width]   = close_half_width;
-      open_bracket_[open_full_width]   = close_full_width;
-      close_bracket_[close_half_width] = open_half_width;
-      close_bracket_[close_full_width] = open_full_width;
-    }
-  }
-  ~BracketHandler() {}
+  const char *open;
+  size_t open_len;
 
-  bool IsOpenBracket(const string &key, string *close_bracket) const {
-    map<string, string>::const_iterator it =
-        open_bracket_.find(key);
-    if (it == open_bracket_.end()) {
-      return false;
-    }
-    *close_bracket = it->second;
-    return true;
-  }
-
-  bool IsCloseBracket(const string &key, string *open_bracket) const {
-    map<string, string>::const_iterator it =
-        close_bracket_.find(key);
-    if (it == close_bracket_.end()) {
-      return false;
-    }
-    *open_bracket = it->second;
-    return true;
-  }
-
- private:
-  map<string, string> open_bracket_;
-  map<string, string> close_bracket_;
+  const char *close;
+  size_t close_len;
 };
+
+// A bidirectional map between opening and closing brackets as a sorted array.
+// NOTE: This array is sorted in order of both |open| and |close|.  If you add a
+// new bracket pair, you must keep this property.
+const BracketPair kSortedBracketPairs[] = {
+  {"\x28", 1, "\x29", 1},  // "(", ")"
+  {"\x5B", 1, "\x5D", 1},  // "[", "]"
+  {"\x7B", 1, "\x7D", 1},  // "{", "}"
+  {"\xE3\x80\x88", 3, "\xE3\x80\x89", 3},  // "〈", "〉"
+  {"\xE3\x80\x8A", 3, "\xE3\x80\x8B", 3},  // "《", "》"
+  {"\xE3\x80\x8C", 3, "\xE3\x80\x8D", 3},  // "「", "」"
+  {"\xE3\x80\x8E", 3, "\xE3\x80\x8F", 3},  // "『", "』"
+  {"\xE3\x80\x90", 3, "\xE3\x80\x91", 3},  // "【", "】"
+  {"\xE3\x80\x94", 3, "\xE3\x80\x95", 3},  // "〔", "〕"
+  {"\xE3\x80\x98", 3, "\xE3\x80\x99", 3},  // "〘", "〙"
+  {"\xE3\x80\x9A", 3, "\xE3\x80\x9B", 3},  // "〚", "〛"
+  {"\xEF\xBC\x88", 3, "\xEF\xBC\x89", 3},  // "（", "）"
+  {"\xEF\xBC\xBB", 3, "\xEF\xBC\xBD", 3},  // "［", "］"
+  {"\xEF\xBD\x9B", 3, "\xEF\xBD\x9D", 3},  // "｛", "｝"
+  {"\xEF\xBD\xA2", 3, "\xEF\xBD\xA3", 3},  // "｢", "｣"
+};
+
 }  // namespace
 
-bool Util::IsOpenBracket(const string &key, string *close_bracket) {
-  return Singleton<BracketHandler>::get()->IsOpenBracket(key, close_bracket);
+bool Util::IsOpenBracket(StringPiece key, string *close_bracket) {
+  struct OrderByOpenBracket {
+    bool operator()(const BracketPair &x, StringPiece key) const {
+      return x.GetOpenBracket() < key;
+    }
+  };
+  const auto end = std::end(kSortedBracketPairs);
+  const auto iter = std::lower_bound(
+      std::begin(kSortedBracketPairs), end, key, OrderByOpenBracket());
+  if (iter == end || iter->GetOpenBracket() != key) {
+    return false;
+  }
+  iter->GetCloseBracket().CopyToString(close_bracket);
+  return true;
 }
 
-bool Util::IsCloseBracket(const string &key, string *open_bracket) {
-  return Singleton<BracketHandler>::get()->IsCloseBracket(key, open_bracket);
+bool Util::IsCloseBracket(StringPiece key, string *open_bracket) {
+  struct OrderByCloseBracket {
+    bool operator()(const BracketPair &x, StringPiece key) const {
+      return x.GetCloseBracket() < key;
+    }
+  };
+  const auto end = std::end(kSortedBracketPairs);
+  const auto iter = std::lower_bound(
+      std::begin(kSortedBracketPairs), end, key, OrderByCloseBracket());
+  if (iter == end || iter->GetCloseBracket() != key) {
+    return false;
+  }
+  iter->GetOpenBracket().CopyToString(open_bracket);
+  return true;
 }
 
 bool Util::IsFullWidthSymbolInHalfWidthKatakana(const string &input) {

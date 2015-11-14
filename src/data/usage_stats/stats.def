@@ -62,6 +62,18 @@ CommitAutoPartialSuggestion
 CommitUnicodeEmoji
 CommitCarrierEmoji
 
+# Zero query related
+CommitDictionaryPredictorZeroQueryTypeNone
+CommitDictionaryPredictorZeroQueryTypeNumberSuffix
+CommitDictionaryPredictorZeroQueryTypeEmoticon
+CommitDictionaryPredictorZeroQueryTypeEmoji
+CommitDictionaryPredictorZeroQueryTypeBigram
+CommitDictionaryPredictorZeroQueryTypeSuffix
+
+# User history predictor related
+CommitUserHistoryPredictor
+CommitUserHistoryPredictorZeroQuery
+
 # The count of all events
 SessionAllEvent
 
@@ -306,7 +318,7 @@ SendCommand_UndoOrRewind
 SendCommand_ExpandSuggestion
 SendCommand_SendCaretLocation
 SendCommand_ObsoleteSendLanguageBarCommand
-SendCommand_GetAsyncResult
+SendCommand_ObsoleteGetAsyncResult
 SendCommand_CommitRawText
 SendCommand_ConvertPrevPage
 SendCommand_ConvertNextPage
@@ -479,18 +491,12 @@ PrelauncherEnabled
 # Use Mode Indicator
 ConfigUseModeIndicator
 
-# Need to do nothing after install
-PostInstallNothingRequired
 # Set Mozc as default on install
 PostInstallSetDefault
 # Do not set Mozc as default on install
 PostInstallNotSetDefault
 # Push OK button
 PostInstallOkButton
-# Push Logoff Now button
-PostInstallLogoffNowButton
-# Push Logoff Later button
-PostInstallLogoffLaterButton
 # Push reject (x) button
 PostInstallRejectButton
 

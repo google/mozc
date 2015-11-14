@@ -661,16 +661,6 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 
   // Handle callbacks.
   if (output->has_callback() && output->callback().has_session_command()) {
-    if (output->callback().has_delay_millisec()) {
-      callback_command_.CopyFrom(output->callback());
-      // In the current implementation, if the subsequent key event also makes
-      // callback, the second callback will be called in the timimg of the first
-      // callback.
-      [self performSelector:@selector(sendCallbackCommand)
-                 withObject:nil
-                 afterDelay:output->callback().has_delay_millisec() / 1000.0];
-      return;
-    }
     const SessionCommand &callback_command =
         output->callback().session_command();
     if (callback_command.type() == SessionCommand::CONVERT_REVERSE) {
@@ -900,8 +890,6 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   if ([event type] != NSKeyDown && [event type] != NSFlagsChanged) {
     return NO;
   }
-  // Cancels the callback.
-  callback_command_.Clear();
 
   // Handle KANA key and EISU key.  We explicitly handles this here
   // for mode switch because some text area such like iPhoto person
@@ -998,14 +986,6 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 
   [self processOutput:&output client:sender];
   return output.consumed();
-}
-
-- (void)sendCallbackCommand {
-  if (callback_command_.has_session_command()) {
-    const SessionCommand command = callback_command_.session_command();
-    callback_command_.Clear();
-    [self sendCommand:command];
-  }
 }
 
 #pragma mark callbacks

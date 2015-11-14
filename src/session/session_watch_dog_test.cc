@@ -34,6 +34,7 @@
 
 #include "base/port.h"
 #include "base/cpu_stats.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/util.h"
 #include "client/client_mock.h"

@@ -352,7 +352,7 @@ int SymbolRewriter::capability(const ConversionRequest &request) const {
 
 bool SymbolRewriter::Rewrite(const ConversionRequest &request,
                              Segments *segments) const {
-  if (!GET_CONFIG(use_symbol_conversion)) {
+  if (!request.config().use_symbol_conversion()) {
     VLOG(2) << "no use_symbol_conversion";
     return false;
   }

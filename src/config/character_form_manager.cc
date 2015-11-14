@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
-#include "base/init.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -55,10 +54,6 @@ namespace {
 const uint32 kLRUSize    = 128;  // enough?
 const uint32 kSeedValue  = 0x7fe1fed1;  // random seed value for storage
 const char   kFileName[] = "user://cform.db";
-
-REGISTER_MODULE_RELOADER(
-    character_form,
-    { CharacterFormManager::GetCharacterFormManager()->Reload(); } )
 
 class CharacterFormManagerImpl {
  public:
@@ -591,16 +586,14 @@ CharacterFormManager *CharacterFormManager::GetCharacterFormManager() {
 }
 
 CharacterFormManager::CharacterFormManager() : data_(new Data) {
-  Reload();
+  ReloadConfig(ConfigHandler::GetConfig());
 }
 
 CharacterFormManager::~CharacterFormManager() {
 }
 
-void CharacterFormManager::Reload() {
+void CharacterFormManager::ReloadConfig(const Config &config) {
   Clear();
-  const Config &config = ConfigHandler::GetConfig();
-
   if (config.character_form_rules_size() > 0) {
     for (size_t i = 0; i < config.character_form_rules_size(); ++i) {
       const string &group = config.character_form_rules(i).group();

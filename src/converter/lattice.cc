@@ -29,6 +29,7 @@
 
 #include "converter/lattice.h"
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 #include <vector>

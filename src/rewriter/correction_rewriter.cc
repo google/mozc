@@ -109,7 +109,7 @@ CorrectionRewriter::~CorrectionRewriter() {}
 
 bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
                                  Segments *segments) const {
-  if (!GET_CONFIG(use_spelling_correction)) {
+  if (!request.config().use_spelling_correction()) {
     return false;
   }
 

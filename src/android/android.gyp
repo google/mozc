@@ -586,7 +586,7 @@
       'ldflags': [
          # -s: Strip unused symbols
          # --version-script: Remove almost all exportable symbols
-         '-Wl,-s,--version-script,<(abs_android_dir)/libmozc.map',
+         '-Wl,-s,--version-script,<(abs_android_dir)/libmozc.lds',
       ],
       'conditions': [
         ['branding=="GoogleJapaneseInput"', {

@@ -35,6 +35,7 @@
 
 }
 
++ (void)initializeUninstaller;
 + (void)doUninstall:(DialogsController *)dialogs;
 
 @end

@@ -61,40 +61,6 @@ void CallAuxUlibInitialize() {
   ::AuxUlibInitialize();
 }
 
-// Adjusts privileges in the process token to be able to shutdown the machine.
-// Returns true if the operation finishes without error.
-// We do not use LOG functions in this function to avoid dependency to CRT.
-bool AdjustPrivilegesForShutdown() {
-  TOKEN_PRIVILEGES ns;
-  HANDLE htoken;
-  LUID LID;
-  LUID_AND_ATTRIBUTES att;
-
-  if (!::OpenProcessToken(::GetCurrentProcess(),
-                          TOKEN_ADJUST_PRIVILEGES,
-                          &htoken)) {
-    // Cannot open process token
-    return false;
-  }
-
-  if (!::LookupPrivilegeValue(nullptr, SE_SHUTDOWN_NAME, &LID)) {
-    // LookupPrivilegeValue failed
-    return false;
-  }
-
-  att.Attributes = SE_PRIVILEGE_ENABLED;
-  att.Luid = LID;
-  ns.PrivilegeCount = 1;
-  ns.Privileges[0] = att;
-
-  if (!::AdjustTokenPrivileges(htoken, FALSE, &ns, 0, nullptr, nullptr)) {
-    // AdjustTokenPrivileges failed
-    return false;
-  }
-
-  return true;
-}
-
 bool EqualLuid(const LUID &L1, const LUID &L2) {
   return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
 }
@@ -186,13 +152,6 @@ bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
   }
   *lock_status = (synchronization_held != FALSE);
   return true;
-}
-
-bool WinUtil::Logoff() {
-  if (!AdjustPrivilegesForShutdown()) {
-    return false;
-  }
-  return (::ExitWindowsEx(EWX_LOGOFF, SHTDN_REASON_MINOR_INSTALLATION) != 0);
 }
 
 bool WinUtil::Win32EqualString(const wstring &lhs, const wstring &rhs,

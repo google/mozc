@@ -36,6 +36,7 @@
 #include <ppapi/cpp/var.h>
 #include <ppapi/utility/completion_callback_factory.h>
 
+#include <algorithm>
 #include <memory>
 
 #include "base/logging.h"

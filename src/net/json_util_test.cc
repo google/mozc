@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "net/json_util_test.pb.h"

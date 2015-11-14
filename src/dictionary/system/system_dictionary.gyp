@@ -56,6 +56,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
+        '../../request/request.gyp:conversion_request',
         '../../storage/louds/louds.gyp:bit_vector_based_array',
         '../../storage/louds/louds.gyp:louds_trie',
         '../dictionary_base.gyp:text_dictionary_loader',

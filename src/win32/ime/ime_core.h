@@ -132,12 +132,6 @@ class ImeCore {
   static bool SwitchInputMode(
       HIMC himc, DWORD native_mode, bool generate_message);
 
-  // This function sends callback command to the server which is set in the
-  // response from the server, and updates the input context. If
-  // |generate_message| is false, this function will not generate any UI
-  // message. Returns true if the operation completed successfully.
-  static bool SendCallbackCommand(HIMC himc, bool generate_message);
-
   // Removes and modifies unsupported bits from |raw_conversion_mode|.
   // Returns normalized conversion mode.
   static DWORD GetSupportableConversionMode(DWORD raw_conversion_mode);

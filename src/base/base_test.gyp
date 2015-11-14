@@ -79,15 +79,12 @@
       'target_name': 'base_test',
       'type': 'executable',
       'sources': [
-        'clock_mock_test.cc',
         'codegen_bytearray_stream_test.cc',
         'cpu_stats_test.cc',
         'process_mutex_test.cc',
         'stopwatch_test.cc',
         'timer_test.cc',
         'unnamed_event_test.cc',
-        'update_util_test.cc',
-        'url_test.cc',
       ],
       'conditions': [
         ['OS=="mac"', {
@@ -113,12 +110,25 @@
         }],
       ],
       'dependencies': [
-        'base.gyp:base',
         '../testing/testing.gyp:gtest_main',
+        'base.gyp:base',
+        'clock_mock',
       ],
       'variables': {
         'test_size': 'small',
       },
+    },
+    {
+      'target_name': 'url_test',
+      'type': 'executable',
+      'sources': [
+        'url_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base_core',  # for util
+        'base.gyp:url',
+      ],
     },
     {
       'target_name': 'base_core_test',
@@ -156,6 +166,35 @@
       'variables': {
         'test_size': 'small',
       },
+    },
+    {
+      'target_name': 'clock_mock',
+      'type': 'static_library',
+      'sources': [
+        'clock_mock.cc'
+      ],
+    },
+    {
+      'target_name': 'clock_mock_test',
+      'type': 'executable',
+      'sources': [
+        'clock_mock_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'clock_mock',
+      ],
+    },
+    {
+      'target_name': 'update_util_test',
+      'type': 'executable',
+      'sources': [
+        'update_util_test.cc'
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:update_util',
+      ],
     },
     {
       'target_name': 'install_util_test_data',
@@ -207,6 +246,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'base.gyp:base',
+        'clock_mock',
       ],
       'variables': {
         'test_size': 'small',
@@ -306,22 +346,6 @@
         'base.gyp:encryptor',
       ],
     },
-    # init_test.cc is separated from all other base_core_test because it
-    # calls finalizers.
-    {
-      'target_name': 'base_init_test',
-      'type': 'executable',
-      'sources': [
-        'init_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'base.gyp:base',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
     {
       'target_name': 'config_file_stream_test',
       'type': 'executable',
@@ -388,8 +412,8 @@
       'type': 'none',
       'dependencies': [
         'base_core_test',
-        'base_init_test',
         'base_test',
+        'clock_mock_test',
         'clock_test',
         'config_file_stream_test',
         'encoding_util_test',
@@ -403,6 +427,8 @@
         'scheduler_test',
         'system_util_test',
         'trie_test',
+        'update_util_test',
+        'url_test',
         'util_test',
       ],
       'conditions': [

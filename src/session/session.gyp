@@ -84,6 +84,7 @@
       'dependencies': [
         '../client/client.gyp:client',
         '../composer/composer.gyp:composer',
+        '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../engine/engine.gyp:engine_factory',

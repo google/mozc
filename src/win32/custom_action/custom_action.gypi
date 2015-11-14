@@ -36,6 +36,7 @@
   ],
   'dependencies': [
     '../../base/base.gyp:base',
+    '../../base/base.gyp:url',
     '../../client/client.gyp:client',
     '../../config/config.gyp:stats_config_util',
     '../../renderer/renderer.gyp:renderer_client',

@@ -31,6 +31,8 @@
 
 #include <map>
 
+#include "base/logging.h"
+
 namespace mozc {
 
 SchedulerStub::SchedulerStub() {}

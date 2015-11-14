@@ -252,7 +252,7 @@ int SingleKanjiRewriter::capability(const ConversionRequest &request) const {
 
 bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
-  if (!GET_CONFIG(use_single_kanji_conversion)) {
+  if (!request.config().use_single_kanji_conversion()) {
     VLOG(2) << "no use_single_kanji_conversion";
     return false;
   }

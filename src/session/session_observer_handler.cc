@@ -53,11 +53,5 @@ void SessionObserverHandler::EvalCommandHandler(
   }
 }
 
-void SessionObserverHandler::Reload() {
-  for (ItObservers it = observers_.begin(); it != observers_.end(); ++it) {
-    (*it)->Reload();
-  }
-}
-
 }  // namespace session
 }  // namespace mozc

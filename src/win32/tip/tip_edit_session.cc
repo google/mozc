@@ -38,6 +38,7 @@
 
 #include <string>
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"

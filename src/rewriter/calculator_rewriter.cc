@@ -67,7 +67,7 @@ int CalculatorRewriter::capability(const ConversionRequest &request) const {
 //            a valid expression.
 bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
                                  Segments *segments) const {
-  if (!GET_CONFIG(use_calculator)) {
+  if (!request.config().use_calculator()) {
     return false;
   }
 

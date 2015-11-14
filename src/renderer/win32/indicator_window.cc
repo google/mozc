@@ -42,6 +42,7 @@
 #include <vector>
 
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_image_util.h"

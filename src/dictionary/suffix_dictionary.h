@@ -60,16 +60,22 @@ class SuffixDictionary : public DictionaryInterface {
   virtual bool HasValue(StringPiece value) const;
 
   // Kana modifier insensitive lookup is not supported.
-  virtual void LookupPredictive(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const;
+  virtual void LookupPredictive(StringPiece key,
+                                const ConversionRequest &conversion_request,
+                                Callback *callback) const;
 
   // SuffixDictionary doesn't support Prefix/Revese/Exact Lookup.
-  virtual void LookupPrefix(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const;
-  virtual void LookupReverse(StringPiece str, Callback *callback) const;
-  virtual void LookupExact(StringPiece key, Callback *callback) const;
+  virtual void LookupPrefix(StringPiece key,
+                            const ConversionRequest &conversion_request,
+                            Callback *callback) const;
+
+  virtual void LookupExact(StringPiece key,
+                           const ConversionRequest &conversion_request,
+                           Callback *callback) const;
+
+  virtual void LookupReverse(StringPiece str,
+                             const ConversionRequest &conversion_request,
+                             Callback *callback) const;
 
  private:
   const SuffixToken *const suffix_tokens_;

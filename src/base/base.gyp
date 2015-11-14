@@ -39,7 +39,6 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        'clock_mock.cc',
         'cpu_stats.cc',
         'encoding_util.cc',
         'process.cc',
@@ -49,8 +48,6 @@
         'stopwatch.cc',
         'timer.cc',
         'unnamed_event.cc',
-        'update_util.cc',
-        'url.cc',
       ],
       'dependencies': [
         'base_core',
@@ -94,24 +91,31 @@
       ],
     },
     {
+      'target_name': 'url',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'url.cc',
+      ],
+      'dependencies': [
+        'base_core',  # for logging, util, version
+        'singleton',
+      ],
+    },
+    {
       'target_name': 'base_core',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.h',
-        'clock.cc',
         'file_stream.cc',
         'file_util.cc',
-        'hash.cc',
-        'init.cc',
         'init_mozc.cc',
         'japanese_util_rule.cc',
         'logging.cc',
         'mmap.cc',
         'number_util.cc',
-        'scoped_handle.cc',
-        'string_piece.cc',
         'system_util.cc',
         'text_normalizer.cc',
         'thread.cc',
@@ -120,11 +124,15 @@
         'win_util.cc',
       ],
       'dependencies': [
+        'clock',
         'flags',
         'gen_character_set#host',
         'gen_version_def#host',
+        'hash',
         'mutex',
+        'scoped_handle',
         'singleton',
+        'string_piece',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -164,12 +172,36 @@
       ],
     },
     {
+      'target_name': 'update_util',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'update_util.cc',
+      ],
+    },
+    {
+      'target_name': 'scoped_handle',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'scoped_handle.cc',
+      ],
+    },
+    {
+      'target_name': 'string_piece',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'string_piece.cc',
+      ],
+    },
+    {
       'target_name': 'mutex',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
         'mutex.cc',
-      ]
+      ],
     },
     {
       'target_name': 'singleton',
@@ -191,6 +223,28 @@
       ],
       'dependencies': [
         'singleton',
+      ],
+    },
+    {
+      'target_name': 'clock',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'clock.cc',
+      ],
+      'dependencies': [
+        'singleton',
+      ],
+    },
+    {
+      'target_name': 'hash',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'hash.cc',
+      ],
+      'dependencies': [
+        'string_piece',
       ],
     },
     {

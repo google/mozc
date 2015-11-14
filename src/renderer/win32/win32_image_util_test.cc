@@ -35,8 +35,8 @@
 #include <atlapp.h>
 #include <atlgdi.h>
 #include <atlmisc.h>
-#include <gdiplus.h>
 
+#include <algorithm>
 #include <fstream>
 #include <list>
 #include <memory>
@@ -52,10 +52,13 @@
 
 DECLARE_string(test_srcdir);
 
-namespace mozc {
-namespace renderer {
-namespace win32 {
-namespace {
+using ::std::min;
+using ::std::max;
+
+// gdiplus.h must be placed here because it internally depends on
+// global min/max functions.
+// TODO(yukawa): Use WIC (Windows Imaging Component) instead of GDI+.
+#include <gdiplus.h>  // NOLINT
 
 using ::mozc::renderer::win32::internal::GaussianBlur;
 using ::mozc::renderer::win32::internal::SafeFrameBuffer;
@@ -68,6 +71,11 @@ using ::WTL::CDC;
 using ::WTL::CLogFont;
 using ::WTL::CPoint;
 using ::WTL::CSize;
+
+namespace mozc {
+namespace renderer {
+namespace win32 {
+namespace {
 
 typedef SubdivisionalPixel::SubdivisionalPixelIterator
     SubdivisionalPixelIterator;

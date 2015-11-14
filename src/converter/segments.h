@@ -48,7 +48,7 @@ struct Node;
 template <class T> class ObjectPool;
 
 namespace composer {
-  class Composer;
+class Composer;
 }  // namespace composer
 
 class Segment {
@@ -122,6 +122,26 @@ class Segment {
       DISABLE_PRESENTATION_MODE,  // disables "presentation mode".
     };
 
+    // Bit field indicating candidate source info.
+    // This should be used for usage stats.
+    // TODO(mozc-team): Move Attribute fields for source info
+    // to SourceInfo.
+    enum SourceInfo {
+      SOURCE_INFO_NONE = 0,
+      // Attributes for zero query suggestion.
+      // These are used for usage stats.
+      // For DICTIONARY_PREDICTOR_ZERO_QUERY_XX, XX stands for the
+      // types defined at zero_query_list.h.
+      DICTIONARY_PREDICTOR_ZERO_QUERY_NONE = 1 << 0,
+      DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX = 1 << 1,
+      DICTIONARY_PREDICTOR_ZERO_QUERY_EMOTICON = 1 << 2,
+      DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI = 1 << 3,
+      DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM = 1 << 4,
+      DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX = 1 << 5,
+
+      USER_HISTORY_PREDICTOR = 1 << 6,
+    };
+
     string key;         // reading
     string value;       // surface form
     string content_key;
@@ -161,6 +181,9 @@ class Segment {
     // Attributes of this candidate. Can set multiple attributes
     // defined in enum |Attribute|.
     uint32 attributes;
+
+    // Candidate's source info which will be used for usage stats.
+    uint32 source_info;
 
     // Candidate style. This is not a bit-field.
     // The style is defined in enum |Style|.
@@ -243,6 +266,7 @@ class Segment {
       rid = 0;
       usage_id = 0;
       attributes = 0;
+      source_info = SOURCE_INFO_NONE;
       style = NumberUtil::NumberString::DEFAULT_STYLE;
       command = DEFAULT_COMMAND;
       inner_segment_boundary.clear();
@@ -250,6 +274,7 @@ class Segment {
 
     Candidate() : cost(0), wcost(0), structure_cost(0),
                   lid(0), rid(0), attributes(0),
+                  source_info(SOURCE_INFO_NONE),
                   style(NumberUtil::NumberString::DEFAULT_STYLE),
                   command(DEFAULT_COMMAND) {}
 

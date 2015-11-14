@@ -37,7 +37,6 @@
 #include <vector>
 
 #include "base/double_array.h"
-#include "base/logging.h"
 #include "base/port.h"
 #include "base/string_piece.h"
 
@@ -327,11 +326,11 @@ class Util {
 
   // Returns true if key is an open bracket.  If key is an open bracket,
   // corresponding close bracket is assigned.
-  static bool IsOpenBracket(const string &key, string *close_bracket);
+  static bool IsOpenBracket(StringPiece key, string *close_bracket);
 
   // Returns true if key is a close bracket.  If key is a close bracket,
   // corresponding open bracket is assigned.
-  static bool IsCloseBracket(const string &key, string *open_bracket);
+  static bool IsCloseBracket(StringPiece key, string *open_bracket);
 
   static void EncodeURI(const string &input, string *output);
   static void DecodeURI(const string &input, string *output);

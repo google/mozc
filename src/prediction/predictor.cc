@@ -29,6 +29,7 @@
 
 #include "prediction/predictor.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 

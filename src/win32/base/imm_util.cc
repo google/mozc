@@ -234,37 +234,6 @@ bool ImeUtil::SetDefault() {
   return true;
 }
 
-// TF_IsCtfmonRunning looks for ctfmon.exe's mutex.
-// Ctfmon.exe is running if TSF is enabled.
-// Most of the implementation and comments are based on a code by
-// thatanaka
-bool ImeUtil::IsCtfmonRunning() {
-#ifdef _M_IX86
-  typedef BOOL (__stdcall *PFN_TF_ISCTFMONRUNNING)();
-
-  // If TSF is enabled and this process has created a window, msctf.dll should
-  // be loaded.
-  HMODULE hMsctfDll = WinUtil::GetSystemModuleHandle(L"msctf.dll");
-  if (!hMsctfDll) {
-    LOG(ERROR) << "WinUtil::GetSystemModuleHandle failed";
-    return false;
-  }
-
-  PFN_TF_ISCTFMONRUNNING pfnTF_IsCtfmonRunning =
-      ::GetProcAddress(hMsctfDll, "TF_IsCtfmonRunning");
-  if (!pfnTF_IsCtfmonRunning) {
-    LOG(ERROR) << "GetProcAddress for TF_IsCtfmonRunning failed";
-    return false;
-  }
-
-  return((*pfnTF_IsCtfmonRunning)() == TRUE);
-#else
-  // TODO(mazda): Check if the function declaration is correct.
-  LOG(ERROR) << "Unsupported platform";
-  return false;
-#endif
-}
-
 bool ImeUtil::ActivateForCurrentProcess() {
   const KeyboardLayoutID &mozc_hkld = ImmRegistrar::GetKLIDForIME();
   if (!mozc_hkld.has_id()) {

@@ -76,10 +76,6 @@ class WinUtil {
   // implicit link.
   static bool IsDLLSynchronizationHeld(bool *lock_held);
 
-  // Log off the current user.
-  // Return true if the operation successfully finished.
-  static bool Logoff();
-
   // Returns true if |lhs| and |rhs| are treated as the same string by the OS.
   // This function internally uses CompareStringOrdinal, or
   // RtlCompareUnicodeString as a fallback, or _wcsicmp_l with LANG "English"

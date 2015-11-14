@@ -32,7 +32,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/trie.h"
 #include "converter/node.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"

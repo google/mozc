@@ -67,6 +67,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base_test.gyp:clock_mock',
         '../converter/converter.gyp:converter',
         '../converter/converter_base.gyp:converter_mock',
         '../data_manager/data_manager.gyp:user_pos_manager',

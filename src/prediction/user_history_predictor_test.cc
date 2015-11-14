@@ -53,6 +53,8 @@
 #include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 DECLARE_bool(enable_expansion_for_user_history_predictor);
 
@@ -66,7 +68,7 @@ using mozc::dictionary::Token;
 namespace mozc {
 namespace {
 
-void MakeSegmentsForSuggestion(const string &key, Segments *segments) {
+void AddSegmentForSuggestion(const string &key, Segments *segments) {
   segments->set_max_prediction_candidates_size(10);
   segments->set_request_type(Segments::SUGGESTION);
   Segment *seg = segments->add_segment();
@@ -74,7 +76,12 @@ void MakeSegmentsForSuggestion(const string &key, Segments *segments) {
   seg->set_segment_type(Segment::FIXED_VALUE);
 }
 
-void MakeSegmentsForPrediction(const string &key, Segments *segments) {
+void MakeSegmentsForSuggestion(const string &key, Segments *segments) {
+  segments->Clear();
+  AddSegmentForSuggestion(key, segments);
+}
+
+void AddSegmentForPrediction(const string &key, Segments *segments) {
   segments->set_max_prediction_candidates_size(10);
   segments->set_request_type(Segments::PREDICTION);
   Segment *seg = segments->add_segment();
@@ -82,11 +89,21 @@ void MakeSegmentsForPrediction(const string &key, Segments *segments) {
   seg->set_segment_type(Segment::FIXED_VALUE);
 }
 
-void MakeSegmentsForConversion(const string &key, Segments *segments) {
+void MakeSegmentsForPrediction(const string &key, Segments *segments) {
+  segments->Clear();
+  AddSegmentForPrediction(key, segments);
+}
+
+void AddSegmentForConversion(const string &key, Segments *segments) {
   segments->set_request_type(Segments::CONVERSION);
   Segment *seg = segments->add_segment();
   seg->set_key(key);
   seg->set_segment_type(Segment::FIXED_VALUE);
+}
+
+void MakeSegmentsForConversion(const string &key, Segments *segments) {
+  segments->Clear();
+  AddSegmentForConversion(key, segments);
 }
 
 void AddCandidate(size_t index, const string &value, Segments *segments) {
@@ -157,11 +174,15 @@ class UserHistoryPredictorTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
     data_and_predictor_.reset(CreateDataAndPredictor());
+
+    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   virtual void TearDown() {
     config::ConfigHandler::SetConfig(default_config_);
     FLAGS_enable_expansion_for_user_history_predictor = default_expansion_;
+
+    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   UserHistoryPredictor *GetUserHistoryPredictor() {
@@ -329,6 +350,7 @@ class UserHistoryPredictorTest : public ::testing::Test {
   unique_ptr<ConversionRequest> mobile_conversion_request_;
   const bool default_expansion_;
   unique_ptr<DataAndPredictor> data_and_predictor_;
+  mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
@@ -374,6 +396,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
           "\xE3\x81\x99", &segments);
       predictor->Finish(default_conversion_request(), &segments);
 
+      segments.Clear();
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
@@ -383,6 +406,8 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
                 "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
                 "\xE3\x81\x99",
                 segments.segment(0).candidate(0).value);
+      EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+                  Segment::Candidate::USER_HISTORY_PREDICTOR);
 
       segments.Clear();
       // "わたしの"
@@ -394,6 +419,8 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
                 "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
                 "\xE3\x81\x99",
                 segments.segment(0).candidate(0).value);
+      EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+                  Segment::Candidate::USER_HISTORY_PREDICTOR);
     }
 
     // sync
@@ -541,7 +568,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion) {
     // "火魔汰"
     AddCandidate(0, "\xE7\x81\xAB\xE9\xAD\x94\xE6\xB1\xB0", &segments);
     // "ま"
-    MakeSegmentsForSuggestion("\xE3\x81\xBE", &segments);
+    AddSegmentForSuggestion("\xE3\x81\xBE", &segments);
     // "摩"
     AddCandidate(1, "\xE6\x91\xA9", &segments);
     predictor->Finish(default_conversion_request(), &segments);
@@ -983,7 +1010,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
       "\xE3\x81\x99", &segments);
 
   // "。"
-  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddSegmentForConversion("\xE3\x80\x82", &segments);
   AddCandidate(1, "\xE3\x80\x82", &segments);
 
   predictor->Finish(default_conversion_request(), &segments);
@@ -1040,7 +1067,7 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   // "。"
-  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
+  AddSegmentForPrediction("\xE3\x80\x82", &segments);
   AddCandidate(1, "\xE3\x80\x82", &segments);
   predictor->Finish(default_conversion_request(), &segments);
 
@@ -1062,7 +1089,7 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   // "あ"
-  MakeSegmentsForPrediction("\xE3\x81\x82", &segments);
+  AddSegmentForPrediction("\xE3\x81\x82", &segments);
   // "亜"
   AddCandidate(1, "\xE4\xBA\x9C", &segments);
   predictor->Finish(default_conversion_request(), &segments);
@@ -1089,7 +1116,7 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   // "。"
-  MakeSegmentsForPrediction("\xE3\x80\x82", &segments);
+  AddSegmentForPrediction("\xE3\x80\x82", &segments);
   AddCandidate(1, "\xE3\x80\x82", &segments);
   predictor->Finish(default_conversion_request(), &segments);
 
@@ -1121,7 +1148,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreceedingPunctuation) {
   AddCandidate(0, "\xE3\x80\x82", &segments);
 
   // "わたしのなまえはなかのです"
-  MakeSegmentsForConversion
+  AddSegmentForConversion
       ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
        "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
        "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7"
@@ -1195,7 +1222,7 @@ TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
       MakeSegmentsForConversion(first_char, &segments);
       AddCandidate(0, first_char, &segments);
       // "てすとぶんしょう"
-      MakeSegmentsForConversion(
+      AddSegmentForConversion(
           "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xb6"
           "\xe3\x82\x93\xe3\x81\x97\xe3\x82\x87\xe3\x81\x86", &segments);
       // "テスト文章"
@@ -1270,15 +1297,15 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
     // "はなこに/花子に"
-    MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
-                              "\xE3\x81\x93\xE3\x81\xAB", &segments);
+    AddSegmentForConversion("\xE3\x81\xAF\xE3\x81\xAA"
+                            "\xE3\x81\x93\xE3\x81\xAB", &segments);
     AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
     predictor->Finish(default_conversion_request(), &segments);
     segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
     // "きょうと/京都"
     segments.pop_back_segment();
-    MakeSegmentsForConversion(
+    AddSegmentForConversion(
         "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
         &segments);
     AddCandidate(1, "\xE4\xBA\xAC\xE9\x83\xBD",
@@ -1289,7 +1316,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
 
     // "おおさか/大阪"
     segments.pop_back_segment();
-    MakeSegmentsForConversion(
+    AddSegmentForConversion(
         "\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
         &segments);
     AddCandidate(1, "\xE5\xA4\xA7\xE9\x98\xAA",
@@ -1300,12 +1327,12 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
 
     // Zero query suggestion is disabled.
     segments.pop_back_segment();
-    MakeSegmentsForSuggestion("", &segments);  // empty request
+    AddSegmentForSuggestion("", &segments);  // empty request
     EXPECT_FALSE(predictor->PredictForRequest(
         non_zero_query_conversion_request, &segments));
 
     segments.pop_back_segment();
-    MakeSegmentsForSuggestion("", &segments);   // empty request
+    AddSegmentForSuggestion("", &segments);   // empty request
     EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
     // last-pushed segment is "大阪"
     // "大阪"
@@ -1314,25 +1341,27 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     // "おおさか"
     EXPECT_EQ("\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
               segments.segment(1).candidate(0).key);
+    EXPECT_TRUE(segments.segment(1).candidate(0).source_info &
+                Segment::Candidate::USER_HISTORY_PREDICTOR);
 
     segments.pop_back_segment();
     // "は"
-    MakeSegmentsForSuggestion("\xE3\x81\xAF", &segments);
+    AddSegmentForSuggestion("\xE3\x81\xAF", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "た"
-    MakeSegmentsForSuggestion("\xE3\x81\x9F", &segments);
+    AddSegmentForSuggestion("\xE3\x81\x9F", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "き"
-    MakeSegmentsForSuggestion("\xE3\x81\x8D", &segments);
+    AddSegmentForSuggestion("\xE3\x81\x8D", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "お"
-    MakeSegmentsForSuggestion("\xE3\x81\x8A", &segments);
+    AddSegmentForSuggestion("\xE3\x81\x8A", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
   }
 
@@ -1347,7 +1376,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
 
     // "はなこに/花子に"
-    MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
+    AddSegmentForConversion("\xE3\x81\xAF\xE3\x81\xAA"
                               "\xE3\x81\x93\xE3\x81\xAB", &segments);
     AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
     predictor->Finish(default_conversion_request(), &segments);
@@ -1360,22 +1389,22 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
     // Zero query suggestion is disabled.
-    MakeSegmentsForSuggestion("", &segments);  // empty request
+    AddSegmentForSuggestion("", &segments);  // empty request
     EXPECT_FALSE(predictor->PredictForRequest(
         non_zero_query_conversion_request, &segments));
 
     segments.pop_back_segment();
-    MakeSegmentsForSuggestion("", &segments);   // empty request
+    AddSegmentForSuggestion("", &segments);   // empty request
     EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "は"
-    MakeSegmentsForSuggestion("\xE3\x81\xAF", &segments);
+    AddSegmentForSuggestion("\xE3\x81\xAF", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
 
     segments.pop_back_segment();
     // "た"
-    MakeSegmentsForSuggestion("\xE3\x81\x9F", &segments);
+    AddSegmentForSuggestion("\xE3\x81\x9F", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
   }
 }
@@ -1396,33 +1425,33 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
   // "はなこに/花子に"
-  MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
-                            "\xE3\x81\x93\xE3\x81\xAB", &segments);
+  AddSegmentForConversion("\xE3\x81\xAF\xE3\x81\xAA"
+                          "\xE3\x81\x93\xE3\x81\xAB", &segments);
   AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
   predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
 
   // "むずかしい/難しい"
   segments.clear_conversion_segments();
-  MakeSegmentsForConversion("\xE3\x82\x80\xE3\x81\x9A"
-                            "\xE3\x81\x8B\xE3\x81\x97"
-                            "\xE3\x81\x84", &segments);
+  AddSegmentForConversion("\xE3\x82\x80\xE3\x81\x9A"
+                          "\xE3\x81\x8B\xE3\x81\x97"
+                          "\xE3\x81\x84", &segments);
   AddCandidate(2, "\xE9\x9B\xA3\xE3\x81\x97\xE3\x81\x84", &segments);
   predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(2)->set_segment_type(Segment::HISTORY);
 
   // "ほんを/本を"
   segments.clear_conversion_segments();
-  MakeSegmentsForConversion("\xE3\x81\xBB"
-                            "\xE3\x82\x93\xE3\x82\x92", &segments);
+  AddSegmentForConversion("\xE3\x81\xBB"
+                          "\xE3\x82\x93\xE3\x82\x92", &segments);
   AddCandidate(3, "\xE6\x9C\xAC\xE3\x82\x92", &segments);
   predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(3)->set_segment_type(Segment::HISTORY);
 
   // "よませた/読ませた"
   segments.clear_conversion_segments();
-  MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\xBE"
-                            "\xE3\x81\x9B\xE3\x81\x9F", &segments);
+  AddSegmentForConversion("\xE3\x82\x88\xE3\x81\xBE"
+                          "\xE3\x81\x9B\xE3\x81\x9F", &segments);
   AddCandidate(4, "\xE8\xAA\xAD\xE3\x81\xBE"
                "\xE3\x81\x9B\xE3\x81\x9F", &segments);
   predictor->Finish(default_conversion_request(), &segments);
@@ -1488,8 +1517,8 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
-  MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\x97"
-                            "\xE3\x81\x93\xE3\x81\xAB", &segments);
+  AddSegmentForConversion("\xE3\x82\x88\xE3\x81\x97"
+                          "\xE3\x81\x93\xE3\x81\xAB", &segments);
   AddCandidate(1, "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB", &segments);
   predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
@@ -1502,6 +1531,8 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   EXPECT_EQ("\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF"
             "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
@@ -1518,23 +1549,23 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
 
   // "はなこに/花子に"
-  MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
-                            "\xE3\x81\x93\xE3\x81\xAB", &segments);
+  AddSegmentForConversion("\xE3\x81\xAF\xE3\x81\xAA"
+                          "\xE3\x81\x93\xE3\x81\xAB", &segments);
   AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
 
   // "むずかしい/難しい"
-  MakeSegmentsForConversion("\xE3\x82\x80\xE3\x81\x9A"
-                            "\xE3\x81\x8B\xE3\x81\x97"
-                            "\xE3\x81\x84", &segments);
+  AddSegmentForConversion("\xE3\x82\x80\xE3\x81\x9A"
+                          "\xE3\x81\x8B\xE3\x81\x97"
+                          "\xE3\x81\x84", &segments);
   AddCandidate(2, "\xE9\x9B\xA3\xE3\x81\x97\xE3\x81\x84", &segments);
 
-  MakeSegmentsForConversion("\xE3\x81\xBB"
-                            "\xE3\x82\x93\xE3\x82\x92", &segments);
+  AddSegmentForConversion("\xE3\x81\xBB"
+                          "\xE3\x82\x93\xE3\x82\x92", &segments);
   AddCandidate(3, "\xE6\x9C\xAC\xE3\x82\x92", &segments);
 
   // "よませた/読ませた"
-  MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\xBE"
-                            "\xE3\x81\x9B\xE3\x81\x9F", &segments);
+  AddSegmentForConversion("\xE3\x82\x88\xE3\x81\xBE"
+                          "\xE3\x81\x9B\xE3\x81\x9F", &segments);
   AddCandidate(4, "\xE8\xAA\xAD\xE3\x81\xBE"
                "\xE3\x81\x9B\xE3\x81\x9F", &segments);
 
@@ -1602,7 +1633,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
-  MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\x97"
+  AddSegmentForConversion("\xE3\x82\x88\xE3\x81\x97"
                             "\xE3\x81\x93\xE3\x81\xAB", &segments);
   AddCandidate(1, "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB", &segments);
   predictor->Finish(default_conversion_request(), &segments);
@@ -1616,6 +1647,8 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   EXPECT_EQ("\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF"
             "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
@@ -1635,11 +1668,11 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
                "\xE3\x81\xAF", &segments);
 
   // "、"
-  MakeSegmentsForConversion("\xE3\x80\x81", &segments);
+  AddSegmentForConversion("\xE3\x80\x81", &segments);
   AddCandidate(1, "\xE3\x80\x81", &segments);
 
   // "にほんです"
-  MakeSegmentsForConversion("\xE3\x81\xAB\xE3\x81\xBB"
+  AddSegmentForConversion("\xE3\x81\xAB\xE3\x81\xBB"
                             "\xE3\x82\x93\xE3\x81\xA7\xE3\x81\x99",
                             &segments);
   AddCandidate(2,
@@ -1647,7 +1680,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
                "\xE3\x81\xA7\xE3\x81\x99", &segments);
 
   // "。"
-  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddSegmentForConversion("\xE3\x80\x82", &segments);
   AddCandidate(3, "\xE3\x80\x82", &segments);
 
   predictor->Finish(default_conversion_request(), &segments);
@@ -1665,19 +1698,19 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
                "\xE3\x83\xA1\xE3\x83\xB3\xE3\x81\xAF", &segments);
 
   // "、"
-  MakeSegmentsForConversion("\xE3\x80\x81", &segments);
+  AddSegmentForConversion("\xE3\x80\x81", &segments);
   AddCandidate(1, "\xE3\x80\x81", &segments);
 
   // "めんるいです"
-  MakeSegmentsForConversion("\xE3\x82\x81\xE3\x82\x93"
-                            "\xE3\x82\x8B\xE3\x81\x84"
-                            "\xE3\x81\xA7\xE3\x81\x99", &segments);
+  AddSegmentForConversion("\xE3\x82\x81\xE3\x82\x93"
+                          "\xE3\x82\x8B\xE3\x81\x84"
+                          "\xE3\x81\xA7\xE3\x81\x99", &segments);
   AddCandidate(2,
                "\xE9\xBA\xBA\xE9\xA1\x9E"
                "\xE3\x81\xA7\xE3\x81\x99", &segments);
 
   // "。"
-  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddSegmentForConversion("\xE3\x80\x82", &segments);
   AddCandidate(3, "\xE3\x80\x82", &segments);
 
   predictor->Finish(default_conversion_request(), &segments);
@@ -1697,6 +1730,8 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
             "\xE6\x97\xA5\xE6\x9C\xAC"
             "\xE3\x81\xA7\xE3\x81\x99",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371_Case2) {
@@ -1712,50 +1747,50 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case2) {
   AddCandidate(0, "\xE6\xB1\x9F\xE6\x88\xB8", &segments);
 
   // "("
-  MakeSegmentsForConversion("(", &segments);
+  AddSegmentForConversion("(", &segments);
   AddCandidate(1, "(", &segments);
 
   // "とうきょう/東京"
-  MakeSegmentsForConversion(
+  AddSegmentForConversion(
       "\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
       &segments);
   AddCandidate(2, "\xE6\x9D\xB1\xE4\xBA\xAC", &segments);
 
   // ")"
-  MakeSegmentsForConversion(")", &segments);
+  AddSegmentForConversion(")", &segments);
   AddCandidate(3, ")", &segments);
 
   // "は"
-  MakeSegmentsForConversion("\xE3\x81\xAF", &segments);
+  AddSegmentForConversion("\xE3\x81\xAF", &segments);
   AddCandidate(4, "\xE3\x81\xAF", &segments);
 
   // "えぞ/蝦夷"
-  MakeSegmentsForConversion("\xE3\x81\x88\xE3\x81\x9E", &segments);
+  AddSegmentForConversion("\xE3\x81\x88\xE3\x81\x9E", &segments);
   AddCandidate(5, "\xE8\x9D\xA6\xE5\xA4\xB7", &segments);
 
   // "("
-  MakeSegmentsForConversion("(", &segments);
+  AddSegmentForConversion("(", &segments);
   AddCandidate(6, "(", &segments);
 
   // "ほっかいどう/北海道"
-  MakeSegmentsForConversion("\xE3\x81\xBB\xE3\x81\xA3\xE3\x81\x8B"
-                            "\xE3\x81\x84\xE3\x81\xA9\xE3\x81\x86",
-                            &segments);
+  AddSegmentForConversion("\xE3\x81\xBB\xE3\x81\xA3\xE3\x81\x8B"
+                          "\xE3\x81\x84\xE3\x81\xA9\xE3\x81\x86",
+                          &segments);
   AddCandidate(7, "\xE5\x8C\x97\xE6\xB5\xB7\xE9\x81\x93",
                &segments);
 
   // ")"
-  MakeSegmentsForConversion(")", &segments);
+  AddSegmentForConversion(")", &segments);
   AddCandidate(8, ")", &segments);
 
   // "ではない"
-  MakeSegmentsForConversion("\xE3\x81\xA7\xE3\x81\xAF"
+  AddSegmentForConversion("\xE3\x81\xA7\xE3\x81\xAF"
                             "\xE3\x81\xAA\xE3\x81\x84", &segments);
   AddCandidate(9, "\xE3\x81\xA7\xE3\x81\xAF"
                "\xE3\x81\xAA\xE3\x81\x84", &segments);
 
   // "。"
-  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddSegmentForConversion("\xE3\x80\x82", &segments);
   AddCandidate(10, "\xE3\x80\x82", &segments);
 
   predictor->Finish(default_conversion_request(), &segments);
@@ -1767,12 +1802,16 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case2) {
   EXPECT_TRUE(predictor->Predict(&segments));
   EXPECT_EQ("\xE6\xB1\x9F\xE6\x88\xB8(\xE6\x9D\xB1\xE4\xBA\xAC",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
 
   EXPECT_TRUE(predictor->Predict(&segments));
 
   // "江戸(東京"
   EXPECT_EQ("\xE6\xB1\x9F\xE6\x88\xB8(\xE6\x9D\xB1\xE4\xBA\xAC",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
@@ -1788,24 +1827,24 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
   AddCandidate(0, "\xE3\x80\x8C", &segments);
 
   // "やま/山"
-  MakeSegmentsForConversion("\xE3\x82\x84\xE3\x81\xBE", &segments);
+  AddSegmentForConversion("\xE3\x82\x84\xE3\x81\xBE", &segments);
   AddCandidate(1, "\xE5\xB1\xB1", &segments);
 
   // "」"
-  MakeSegmentsForConversion("\xE3\x80\x8D", &segments);
+  AddSegmentForConversion("\xE3\x80\x8D", &segments);
   AddCandidate(2, "\xE3\x80\x8D", &segments);
 
   // "は"
-  MakeSegmentsForConversion("\xE3\x81\xAF", &segments);
+  AddSegmentForConversion("\xE3\x81\xAF", &segments);
   AddCandidate(3, "\xE3\x81\xAF", &segments);
 
   // "たかい/高い"
-  MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x81\x8B\xE3\x81\x84",
+  AddSegmentForConversion("\xE3\x81\x9F\xE3\x81\x8B\xE3\x81\x84",
                             &segments);
   AddCandidate(4, "\xE9\xAB\x98\xE3\x81\x84", &segments);
 
   // "。"
-  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddSegmentForConversion("\xE3\x80\x82", &segments);
   AddCandidate(5, "\xE3\x80\x82", &segments);
 
   predictor->Finish(default_conversion_request(), &segments);
@@ -1819,23 +1858,23 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
   AddCandidate(0, "\xE3\x80\x8C", &segments);
 
   // "うみ/海"
-  MakeSegmentsForConversion("\xE3\x81\x86\xE3\x81\xBF", &segments);
+  AddSegmentForConversion("\xE3\x81\x86\xE3\x81\xBF", &segments);
   AddCandidate(1, "\xE6\xB5\xB7", &segments);
 
   // "」"
-  MakeSegmentsForConversion("\xE3\x80\x8D", &segments);
+  AddSegmentForConversion("\xE3\x80\x8D", &segments);
   AddCandidate(2, "\xE3\x80\x8D", &segments);
 
   // "は"
-  MakeSegmentsForConversion("\xE3\x81\xAF", &segments);
+  AddSegmentForConversion("\xE3\x81\xAF", &segments);
   AddCandidate(3, "\xE3\x81\xAF", &segments);
 
   // "たかい/高い"
-  MakeSegmentsForConversion("\xE3\x81\xB5\xE3\x81\x8B\xE3\x81\x84", &segments);
+  AddSegmentForConversion("\xE3\x81\xB5\xE3\x81\x8B\xE3\x81\x84", &segments);
   AddCandidate(4, "\xE6\xB7\xB1\xE3\x81\x84", &segments);
 
   // "。"
-  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddSegmentForConversion("\xE3\x80\x82", &segments);
   AddCandidate(5, "\xE3\x80\x82", &segments);
 
   predictor->Finish(default_conversion_request(), &segments);
@@ -1852,6 +1891,8 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
   EXPECT_EQ("\xE3\x80\x8C\xE5\xB1\xB1\xE3\x80\x8D"
             "\xE3\x81\xAF\xE9\xAB\x98\xE3\x81\x84",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843775) {
@@ -1870,7 +1911,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
                "\xE3\x81\xA7\xE3\x81\x99", &segments);
 
   // "。よろしくおねがいします/。よろしくお願いします"
-  MakeSegmentsForConversion("\xE3\x80\x82\xE3\x82\x88"
+  AddSegmentForConversion("\xE3\x80\x82\xE3\x82\x88"
                             "\xE3\x82\x8D\xE3\x81\x97"
                             "\xE3\x81\x8F\xE3\x81\x8A"
                             "\xE3\x81\xAD\xE3\x81\x8C"
@@ -1902,6 +1943,8 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
             "\xE3\x81\x97\xE3\x81\xBE"
             "\xE3\x81\x99",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, DuplicateString) {
@@ -1919,21 +1962,21 @@ TEST_F(UserHistoryPredictorTest, DuplicateString) {
                &segments);
 
   // "（/（"
-  MakeSegmentsForConversion("\xEF\xBC\x88", &segments);
+  AddSegmentForConversion("\xEF\xBC\x88", &segments);
   AddCandidate(1, "\xEF\xBC\x88", &segments);
 
   // "もうじゅう/猛獣"
-  MakeSegmentsForConversion(
+  AddSegmentForConversion(
       "\xE3\x82\x82\xE3\x81\x86\xE3\x81\x98\xE3\x82\x85\xE3\x81\x86",
       &segments);
   AddCandidate(2, "\xE7\x8C\x9B\xE7\x8D\xA3", &segments);
 
   // "）と/）と"
-  MakeSegmentsForConversion("\xEF\xBC\x89\xE3\x81\xA8", &segments);
+  AddSegmentForConversion("\xEF\xBC\x89\xE3\x81\xA8", &segments);
   AddCandidate(3, "\xEF\xBC\x89\xE3\x81\xA8", &segments);
 
   // "ぞうりむし/ゾウリムシ"
-  MakeSegmentsForConversion(
+  AddSegmentForConversion(
       "\xE3\x81\x9E\xE3\x81\x86\xE3\x82\x8A\xE3\x82\x80\xE3\x81\x97",
       &segments);
   AddCandidate(
@@ -1942,17 +1985,17 @@ TEST_F(UserHistoryPredictorTest, DuplicateString) {
       &segments);
 
   // "（/（"
-  MakeSegmentsForConversion("\xEF\xBC\x88", &segments);
+  AddSegmentForConversion("\xEF\xBC\x88", &segments);
   AddCandidate(5, "\xEF\xBC\x88", &segments);
 
   // "びせいぶつ/微生物"
-  MakeSegmentsForConversion(
+  AddSegmentForConversion(
       "\xE3\x81\xB3\xE3\x81\x9B\xE3\x81\x84\xE3\x81\xB6\xE3\x81\xA4",
       &segments);
   AddCandidate(6, "\xE5\xBE\xAE\xE7\x94\x9F\xE7\x89\xA9", &segments);
 
   // "）/）"
-  MakeSegmentsForConversion("\xEF\xBC\x89", &segments);
+  AddSegmentForConversion("\xEF\xBC\x89", &segments);
   AddCandidate(7, "\xEF\xBC\x89", &segments);
 
   predictor->Finish(default_conversion_request(), &segments);
@@ -2638,7 +2681,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveMultiSegmentsTest) {
   {
     Segments segments;
     MakeSegmentsForConversion("123", &segments);
-    MakeSegmentsForConversion("abc!", &segments);
+    AddSegmentForConversion("abc!", &segments);
     AddCandidate(0, "123", &segments);
     AddCandidate(1, "abc!", &segments);
     predictor->Finish(default_conversion_request(), &segments);
@@ -3692,7 +3735,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
   predictor->Finish(default_conversion_request(), &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
-  MakeSegmentsForSuggestion("", &segments);   // empty request
+  AddSegmentForSuggestion("", &segments);   // empty request
   commands::Request request;
   request.set_zero_query_suggestion(true);
   const ConversionRequest conversion_request(NULL, &request);
@@ -4532,7 +4575,7 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile) {
   AddCandidate(0, "\xe7\xa7\x81\xe3\x81\xae", &segments);
 
   // "なまえは"
-  MakeSegmentsForConversion(
+  AddSegmentForConversion(
       "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf", &segments);
   // "名前は"
   AddCandidate(1, "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", &segments);
@@ -4547,6 +4590,8 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile) {
   EXPECT_EQ(1, segments.segment(0).candidates_size());
   // "私の"
   EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   // "わたしの"
@@ -4557,6 +4602,8 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile) {
   EXPECT_EQ(1, segments.segment(0).candidates_size());
   // "私の"
   EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   // "わたしのな"
@@ -4569,6 +4616,8 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile) {
   // "私の名前は"
   EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 }
 
@@ -4587,7 +4636,7 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop) {
   AddCandidate(0, "\xe7\xa7\x81\xe3\x81\xae", &segments);
 
   // "なまえは"
-  MakeSegmentsForConversion(
+  AddSegmentForConversion(
       "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf", &segments);
   // "名前は"
   AddCandidate(1, "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", &segments);
@@ -4603,10 +4652,14 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop) {
   EXPECT_EQ(2, segments.segment(0).candidates_size());
   // "私の"
   EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
   // "私の名前は"
   EXPECT_EQ(
       "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf",
       segments.segment(0).candidate(1).value);
+  EXPECT_TRUE(segments.segment(0).candidate(1).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   // "わたしの"
@@ -4618,6 +4671,8 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop) {
   // "私の名前は"
   EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   // "わたしのな"
@@ -4630,7 +4685,46 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop) {
   // "私の名前は"
   EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf",
             segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
+              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
+}
+
+TEST_F(UserHistoryPredictorTest, UsageStats) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  predictor->WaitForSyncer();
+  predictor->ClearAllHistory();
+  predictor->WaitForSyncer();
+
+  Segments segments;
+  EXPECT_COUNT_STATS("CommitUserHistoryPredictor", 0);
+  EXPECT_COUNT_STATS("CommitUserHistoryPredictorZeroQuery", 0);
+
+  // "なまえは"
+  MakeSegmentsForConversion(
+      "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf", &segments);
+  // "名前は"
+  AddCandidate(0, "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", &segments);
+  segments.mutable_conversion_segment(0)->mutable_candidate(0)->source_info
+      |= Segment::Candidate::USER_HISTORY_PREDICTOR;
+  predictor->Finish(default_conversion_request(), &segments);
+
+  EXPECT_COUNT_STATS("CommitUserHistoryPredictor", 1);
+  EXPECT_COUNT_STATS("CommitUserHistoryPredictorZeroQuery", 0);
+
+  segments.Clear();
+
+  // Zero query
+  MakeSegmentsForConversion("", &segments);
+  // "名前は"
+  AddCandidate(0, "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf", &segments);
+  segments.mutable_conversion_segment(0)->mutable_candidate(0)->source_info
+      |= Segment::Candidate::USER_HISTORY_PREDICTOR;
+  predictor->Finish(default_conversion_request(), &segments);
+
+  // UserHistoryPredictor && ZeroQuery
+  EXPECT_COUNT_STATS("CommitUserHistoryPredictor", 2);
+  EXPECT_COUNT_STATS("CommitUserHistoryPredictorZeroQuery", 1);
 }
 
 }  // namespace mozc

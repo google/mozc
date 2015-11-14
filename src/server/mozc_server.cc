@@ -39,11 +39,11 @@
 
 #include "base/crash_report_handler.h"
 #include "base/flags.h"
-#include "base/init.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
+#include "base/singleton.h"
 #include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
@@ -55,26 +55,6 @@ mozc::SessionServer *g_session_server = NULL;
 }
 
 namespace mozc {
-namespace {
-
-// Calling back a function when the mozc server is shutting down resulted in a
-// lot of crashes as filed in b/2696087.
-// TODO(yukawa): re-enable shutdown handler for Windows.
-#if !defined(OS_WIN)
-// When OS is about to shutdown/logoff,
-// ShutdownSessionCallback is kicked.
-void ShutdownSessionCallback() {
-  VLOG(1) << "ShutdownSessionFunc is called";
-  if (g_session_server != NULL) {
-    g_session_server->Terminate();
-  }
-}
-
-REGISTER_MODULE_SHUTDOWN_HANDLER(shutdown_session,
-                                 ShutdownSessionCallback());
-#endif  // !OS_WIN
-}  // namespace
-
 namespace server {
 
 void InitMozcAndMozcServer(const char *arg0,
@@ -155,7 +135,7 @@ int MozcServer::Run() {
 }
 
 int MozcServer::Finalize() {
-  mozc::RunFinalizers();
+  mozc::SingletonFinalizer::Finalize();
   return 0;
 }
 

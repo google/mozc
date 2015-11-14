@@ -37,7 +37,6 @@
 
 #include "base/file_util.h"
 #include "base/flags.h"
-#include "base/init.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 
@@ -87,8 +86,6 @@ void InitMozc(const char *arg0, int *argc, char ***argv, bool remove_flags) {
 
   const string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
   Logging::InitLogStream(GetLogFilePathFromProgramName(program_name));
-
-  RunInitializers();
 }
 
 }  // namespace mozc

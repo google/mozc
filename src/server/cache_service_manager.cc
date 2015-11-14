@@ -40,6 +40,7 @@
 
 #include "base/const.h"
 #include "base/file_util.h"
+#include "base/logging.h"
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"

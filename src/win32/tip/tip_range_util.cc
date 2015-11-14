@@ -47,10 +47,6 @@ using ATL::CComQIPtr;
 using ATL::CComVariant;
 using std::unique_ptr;
 
-#ifdef min
-#undef min
-#endif  // min
-
 // GUID_PROP_INPUTSCOPE
 GUID kGuidPropInputscope = {
   0x1713dd5a, 0x68e7, 0x4a5b, {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}

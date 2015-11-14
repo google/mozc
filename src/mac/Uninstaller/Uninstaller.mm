@@ -35,31 +35,14 @@
 
 #include <string>
 
-#include "base/init.h"
 #include "base/mac_util.h"
 #include "base/url.h"
 #include "base/version.h"
 
 namespace {
+
 NSURL *kUninstallSurveyUrl = nil;
 NSString *kUninstallerScriptPath = nil;
-
-void InitializeGlobalVariables() {
-  string url;
-  mozc::URL::GetUninstallationSurveyURL(mozc::Version::GetMozcVersion(), &url);
-  NSString *uninstallUrl = [[NSString alloc] initWithBytes:url.data()
-                                             length:url.size()
-                                             encoding:NSUTF8StringEncoding];
-  kUninstallSurveyUrl = [NSURL URLWithString:uninstallUrl];
-
-  kUninstallerScriptPath =
-      [[NSBundle mainBundle] pathForResource:@"uninstaller"
-                                      ofType:@"py"
-                                 inDirectory:nil];
-}
-
-REGISTER_MODULE_INITIALIZER(GoogleJapaneseInputUninstall,
-                            InitializeGlobalVariables());
 
 bool GetPrevilegeRights(AuthorizationRef *auth) {
   OSStatus status;
@@ -171,4 +154,19 @@ bool RunReboot(const AuthorizationRef &auth) {
 
   AuthorizationFree(auth, kAuthorizationFlagDefaults);
 }
+
++ (void)initializeUninstaller {
+  string url;
+  mozc::URL::GetUninstallationSurveyURL(mozc::Version::GetMozcVersion(), &url);
+  NSString *uninstallUrl = [[NSString alloc] initWithBytes:url.data()
+                                                    length:url.size()
+                                                  encoding:NSUTF8StringEncoding];
+  kUninstallSurveyUrl = [NSURL URLWithString:uninstallUrl];
+
+  kUninstallerScriptPath =
+      [[NSBundle mainBundle] pathForResource:@"uninstaller"
+                                      ofType:@"py"
+                                 inDirectory:nil];
+}
+
 @end

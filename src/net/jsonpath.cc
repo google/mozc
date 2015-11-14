@@ -29,6 +29,7 @@
 
 #include "net/jsonpath.h"
 
+#include <algorithm>
 #include <cctype>
 #include <sstream>
 #include <string>

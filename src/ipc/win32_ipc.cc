@@ -30,11 +30,14 @@
 // skip all unless OS_WIN
 #ifdef OS_WIN
 
+#include <algorithm>
+
 #include "ipc/ipc.h"
 
 #include <Windows.h>
 #include <Sddl.h>
 
+#include <algorithm>
 #include <string>
 
 #include "base/const.h"
@@ -60,7 +63,7 @@ const int kMaxSuccessiveConnectionFailureCount = 5;
 size_t GetNumberOfProcessors() {
   // thread-safety is not required.
   static size_t num = CPUStats().GetNumberOfProcessors();
-  return max(num, 1);
+  return max(num, static_cast<size_t>(1));
 }
 
 // Least significant bit of OVERLAPPED::hEvent can be used for special

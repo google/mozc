@@ -35,12 +35,20 @@
 #include "base/port.h"
 
 namespace mozc {
-namespace composer {
-class Composer;
-}  // namespace composer
+// Protocol buffers, commands::Request and config::Config should be forward
+// declaration instead of include header files.  Otherwise, we need to specify
+// 'hard_dependency' to all affected rules in the GYP files.
 namespace commands {
 class Request;
 }  // namespace commands
+
+namespace composer {
+class Composer;
+}  // namespace composer
+
+namespace config {
+class Config;
+}  // namespace config
 
 // Contains utilizable information for conversion, suggestion and prediction,
 // including composition, preceding text, etc.
@@ -84,6 +92,9 @@ class ConversionRequest {
   void set_composer_key_selection(ComposerKeySelection selection);
 
   const commands::Request &request() const;
+  void set_request(const commands::Request *request);
+
+  const config::Config &config() const;
 
   void CopyFrom(const ConversionRequest &request);
 

@@ -29,6 +29,7 @@
 
 #include "rewriter/focus_candidate_rewriter.h"
 
+#include <algorithm>
 #include <string>
 
 #include "base/logging.h"

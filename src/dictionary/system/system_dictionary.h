@@ -99,14 +99,23 @@ class SystemDictionary : public DictionaryInterface {
   // Implementation of DictionaryInterface.
   virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;
-  virtual void LookupPredictive(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const;
-  virtual void LookupPrefix(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const;
-  virtual void LookupExact(StringPiece key, Callback *callback) const;
-  virtual void LookupReverse(StringPiece str, Callback *callback) const;
+
+  virtual void LookupPredictive(StringPiece key,
+                                const ConversionRequest &converter_request,
+                                Callback *callback) const;
+
+  virtual void LookupPrefix(StringPiece key,
+                            const ConversionRequest &converter_request,
+                            Callback *callback) const;
+
+  virtual void LookupExact(StringPiece key,
+                           const ConversionRequest &converter_request,
+                           Callback *callback) const;
+
+  virtual void LookupReverse(StringPiece str,
+                             const ConversionRequest &converter_request,
+                             Callback *callback) const;
+
   virtual void PopulateReverseLookupCache(StringPiece str) const;
   virtual void ClearReverseLookupCache() const;
 

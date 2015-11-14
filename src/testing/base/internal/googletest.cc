@@ -39,7 +39,6 @@
 #include <string>
 
 #include "base/file_util.h"
-#include "base/init.h"
 #include "base/logging.h"
 #include "base/util.h"
 
