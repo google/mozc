@@ -82,7 +82,7 @@ using testing::WithParamInterface;
 class SessionHandlerScenarioTest : public SessionHandlerTestBase,
                                    public WithParamInterface<const char *> {
  protected:
-  virtual void SetUp() {
+  void SetUp() final {
     // Note that singleton Config instance is backed up and restored
     // by SessionHandlerTestBase's SetUp and TearDown methods.
     SessionHandlerTestBase::SetUp();
@@ -94,6 +94,15 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
     request_.reset(new Request);
 
     ConfigHandler::GetConfig(config_.get());
+  }
+
+  void TearDown() final {
+    request_.reset();
+    last_output_.reset();
+    config_.reset();
+    client_.reset();
+    engine_.reset();
+    SessionHandlerTestBase::TearDown();
   }
 
   void ClearAll() {

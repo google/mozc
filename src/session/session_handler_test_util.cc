@@ -32,6 +32,7 @@
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
 #include "base/system_util.h"
+#include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
@@ -57,6 +58,7 @@ namespace session {
 namespace testing {
 
 using commands::Command;
+using config::CharacterFormManager;
 using config::ConfigHandler;
 
 bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
@@ -138,6 +140,10 @@ void SessionHandlerTestBase::ClearState() {
   config::Config config;
   ConfigHandler::GetDefaultConfig(&config);
   ConfigHandler::SetConfig(config);
+
+  // CharacterFormManager is not automatically updated when the config is
+  // updated.
+  CharacterFormManager::GetCharacterFormManager()->ReloadConfig(config);
 
   // Some destructors may save the state on storages. To clear the state, we
   // explicitly call destructors before clearing storages.
