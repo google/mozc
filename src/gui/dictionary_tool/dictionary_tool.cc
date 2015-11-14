@@ -188,7 +188,7 @@ class MultiByteTextLineIterator
       : encoding_type_(encoding_type),
         ifs_(new InputFileStream(filename.c_str())),
         first_line_(true) {
-    const streampos begin = ifs_->tellg();
+    const std::streampos begin = ifs_->tellg();
     ifs_->seekg(0, ios::end);
     const size_t size = static_cast<size_t>(ifs_->tellg() - begin);
     ifs_->seekg(0, ios::beg);
