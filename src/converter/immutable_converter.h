@@ -87,6 +87,15 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
     ONLY_FIRST_SEGMENT,  // Insert only first segment ("私の")
   };
 
+  enum FilterType {
+    // Suppress exact match for prediction.
+    // Users will use conversion for candidates for exact match.
+    DESKTOP,
+    // Do not suppress exact match for prediction.
+    // Users will mainly use suggestion/prediction for all mach cases.
+    MOBILE,
+  };
+
   void ExpandCandidates(const string &original_key,
                         NBestGenerator *nbest, Segment *segment,
                         Segments::RequestType request_type,
@@ -141,13 +150,15 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   void InsertFirstSegmentToCandidates(Segments *segments,
                                       const Lattice &lattice,
                                       const vector<uint16> &group,
-                                      size_t max_candidates_size) const;
+                                      size_t max_candidates_size,
+                                      FilterType filter_type) const;
 
   void InsertCandidates(Segments *segments,
                         const Lattice &lattice,
                         const vector<uint16> &group,
                         size_t max_candidates_size,
-                        InsertCandidatesType type) const;
+                        InsertCandidatesType type,
+                        FilterType filter_type) const;
 
   // Helper function for InsertCandidates().
   // Returns true if |node| is valid node for segment end.

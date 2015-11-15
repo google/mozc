@@ -140,7 +140,8 @@ class MockDataAndImmutableConverter {
                               connector_.get(),
                               data_manager_->GetPOSMatcher(),
                               lattice,
-                              suggestion_filter_.get());
+                              suggestion_filter_.get(),
+                              true);
   }
 
  private:

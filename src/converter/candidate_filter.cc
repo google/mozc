@@ -85,11 +85,14 @@ const int32 kStopEnmerationCacheSize = 15;
 CandidateFilter::CandidateFilter(
     const SuppressionDictionary *suppression_dictionary,
     const POSMatcher *pos_matcher,
-    const SuggestionFilter *suggestion_filter)
+    const SuggestionFilter *suggestion_filter,
+    bool apply_suggestion_filter_for_exact_match)
     : suppression_dictionary_(suppression_dictionary),
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
-      top_candidate_(NULL) {
+      top_candidate_(NULL),
+      apply_suggestion_filter_for_exact_match_(
+          apply_suggestion_filter_for_exact_match) {
   CHECK(suppression_dictionary_);
   CHECK(pos_matcher_);
   CHECK(suggestion_filter_);
@@ -126,6 +129,15 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       }
       FALLTHROUGH_INTENDED;
     case Segments::SUGGESTION:
+      // For mobile, most users will use suggestion/prediction only and do not
+      // trigger conversion explicitly.
+      // So we don't apply the suggestion filter if the user input key
+      // is exactly the same as candidate's.
+      if (!apply_suggestion_filter_for_exact_match_ &&
+          original_key == candidate->key) {
+        break;
+      }
+
       // In contrast to the PREDICTION mode, the SUGGESTION is triggered without
       // any user actions, i.e., suggestion candidates are automatically
       // displayed to users.  Therefore, it's better to filter unfavorable words
