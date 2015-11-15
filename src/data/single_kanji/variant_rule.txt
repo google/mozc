@@ -13,11 +13,19 @@
 # type T, target A, original B means the description "BのT" for the candidate A
 
 異体字
+# Itai Ji
+# <original> is more popular.
+# <target> is another form of <original>. <original> is commonly used.
 叱	𠮟
 埓	埒
 髙	高
+啮	噛
 
 印刷標準字体
+# Insatsu Hyoujun Jitai
+# <original> is more popular.
+# <target> is the standard printed form of <original>, and <original> is
+# simplified printed form. We prefer simplified if we have.
 𠮟	叱
 噓	嘘
 蟬	蝉
@@ -75,6 +83,9 @@
 麴	麹
 
 簡易慣用字体
+# Kani Kanyou Jitai
+# <target> is more popular.
+# <target> is simplified printed form of <original>.
 沪	濾
 唖	啞
 芦	蘆
@@ -93,6 +104,9 @@
 弯	彎
 
 旧字体
+# Kyuu Jitai
+# <original> is more popular.
+# <target> is the old form of <original>.
 緣	縁
 橫	横
 黃	黄
@@ -393,6 +407,9 @@
 鬭	闘
 
 略字
+# Ryaku Ji
+# <target> is more popular.
+# <target> is simplified form of <original>.
 鯵	鰺
 嘘	噓
 焔	焰
@@ -432,27 +449,40 @@
 筝	箏
 
 # 第一水準
-異体字
-噛	啮
-
 簡易慣用字体
+# Kani Kanyou Jitai
+# <target> is more popular.
+# <target> is simplified printed form of <original>.
 噛	嚙
 
 正字
+# Sei Ji
+# <original> is more popular.
+# <target> is the correct form of <original>. <original> is commonly used.
 柁	舵
 瀦	潴
 亙	亘
 
 俗字
+# Zoku Ji
+# <original> is more popular.
+# <target> is non-standard form of <original>.
 駈	駆
 駈	驅
 欝	鬱
 
 別字
+# Betsu Ji
+# Basically, <original> is more popular.
+# <target> is another form of <original>. <original> is commonly used basically,
+# but there is some different use case.
 藷	薯
 
 # 第二水準
 異体字
+# Itai Ji
+# <original> is more popular.
+# <target> is another form of <original>. <original> is commonly used.
 竒	奇
 奩	匳
 妍	姸
@@ -474,19 +504,17 @@
 鵙	鶪
 竸	競
 冱	冴
-冱	沍
+沍	冴
+沍	冱
 凅	涸
 剳	箚
 辧	辨
 劵	倦
 匳	奩
-卍	卐
-卍	萬
+卐	卍
 巖	嵓
 扠	扨
 扨	扠
-沍	冴
-沍	冱
 洌	冽
 獎	奬
 皋	睾
@@ -498,11 +526,18 @@
 韈	襪
 熙	煕
 熙	熈
+兔	兎
 
 簡易慣用字体
+# Kani Kanyou Jitai
+# <target> is more popular.
+# <target> is simplified printed form of <original>.
 并	幷
 
 旧字体
+# Kyuu Jitai
+# <original> is more popular.
+# <target> is the old form of <original>.
 廰	庁
 穰	穣
 窗	窓
@@ -516,8 +551,12 @@
 沒	没
 顏	顔
 饑	飢
+烟	煙
 
 正字
+# Sei Ji
+# <original> is more popular.
+# <target> is the correct form of <original>. <original> is commonly used.
 嚔	嚏
 坡	陂
 壜	罎
@@ -626,6 +665,9 @@
 堯	尭
 
 俗字
+# Zoku Ji
+# <original> is more popular.
+# <target> is non-standard form of <original>.
 咒	呪
 嚏	嚔
 囓	齧
@@ -781,6 +823,10 @@
 鼡	鼠
 
 別字
+# Betsu Ji
+# Basically, <original> is more popular.
+# <target> is another form of <original>. <original> is commonly used basically,
+# but there is some different use case.
 姙	妊
 嫻	嫺
 恊	協
@@ -848,6 +894,10 @@
 飃	飄
 
 本字
+# Hon Ji
+# <original> is more popular.
+# <target> is unsimplified form of <original>. <original> simplified one is
+# commonly used
 朖	朗
 棊	棋
 椶	棕
@@ -878,7 +928,3 @@
 軈	軅
 逎	遒
 鄰	隣
-
-略字
-烟	煙
-兔	兎
