@@ -2322,10 +2322,10 @@ bool IsNDigits(const string &value, int n) {
 //      - All the meta candidates are based on "cd" (e.g. "CD", "Cd").
 //      Therefore to get "2223" we should access the raw input.
 // Prerequisit: |segments| has only one conversion segment.
-const bool GetNDigits(const composer::Composer &composer,
-                      const Segments &segments,
-                      int n,
-                      string *output) {
+bool GetNDigits(const composer::Composer &composer,
+                const Segments &segments,
+                int n,
+                string *output) {
   DCHECK(output);
   DCHECK_EQ(1, segments.conversion_segments_size());
   const Segment &segment = segments.conversion_segment(0);
@@ -2360,8 +2360,8 @@ const bool GetNDigits(const composer::Composer &composer,
 }
 }  // namespace
 
-bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
-                                     Segments *segments) const {
+bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
+                                            Segments *segments) const {
   if (segments->conversion_segments_size() != 1) {
     // This method rewrites a segment only when the segments has only
     // one conversion segment.
@@ -2371,8 +2371,10 @@ bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
   }
 
   string key;
-  if (!GetNDigits(composer, *segments, 4, &key)) {
-    // No four digit key is available.
+  // Currently three and four consecutive digits are converted
+  if (!GetNDigits(composer, *segments, 3, &key) &&
+      !GetNDigits(composer, *segments, 4, &key)) {
+    // No three or four digit key is available.
     return false;
   }
 
@@ -2470,7 +2472,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
   }
 
   if (request.has_composer()) {
-    modified |= RewriteFourDigits(request.composer(), segments);
+    modified |= RewriteConsecutiveDigits(request.composer(), segments);
   }
 
   return modified;

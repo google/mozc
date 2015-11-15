@@ -1130,6 +1130,53 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
   // "日付"
   EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
 
+  // 123 is expected 3 time candidates and 2 date candidates
+  InitSegment("123", "123", &segments);
+  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+  // "時刻"
+  EXPECT_EQ(3, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
+  EXPECT_TRUE(ContainCandidate(segments, "1:23"));
+  // "1時23分"
+  EXPECT_TRUE(ContainCandidate(segments,
+                               "\x31\xe6\x99\x82\x32\x33\xe5\x88\x86"));
+  // "午前1時23分"
+  EXPECT_TRUE(ContainCandidate(
+      segments,
+      "\xe5\x8d\x88\xe5\x89\x8d\x31\xe6\x99\x82\x32\x33\xe5\x88\x86"));
+
+  // "日付"
+  EXPECT_EQ(2, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+  EXPECT_TRUE(ContainCandidate(segments, "01/23"));
+  // "1月23日"
+  EXPECT_TRUE(ContainCandidate(segments,
+                               "\x31\xe6\x9c\x88\x32\x33\xe6\x97\xa5"));
+
+  // 346 is expected 3 time candidates and 0 date candidate
+  InitSegment("346", "346", &segments);
+  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+  // "時刻"
+  EXPECT_EQ(3, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
+  EXPECT_TRUE(ContainCandidate(segments, "3:46"));
+  // "3時46分"
+  EXPECT_TRUE(ContainCandidate(segments,
+                               "\x33\xe6\x99\x82\x34\x36\xe5\x88\x86"));
+  // "午前3時46分"
+  EXPECT_TRUE(ContainCandidate(
+        segments,
+        "\xe5\x8d\x88\xe5\x89\x8d\x33\xe6\x99\x82\x34\x36\xe5\x88\x86"));
+
+  // "日付"
+  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+
+  // 765 is expected 0 time candidate and 0 date candidate
+  InitSegment("765", "765", &segments);
+  EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments));
+  // "時刻"
+  EXPECT_EQ(0, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
+
+  // "日付"
+  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+
   // Especially for mobile, look at meta candidates' value, too.
   // "あかあか" on 12keys layout will be transliterated to "1212".
   InitMetaSegment(
