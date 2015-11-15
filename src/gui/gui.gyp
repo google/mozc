@@ -1027,15 +1027,6 @@
       'dependencies': [
         '../base/base.gyp:base_core',
       ],
-      'conditions': [
-        ['OS=="mac"', {
-          'link_settings': {
-            'libraries': [
-              '/usr/lib/libiconv.dylib',
-            ],
-          },
-        }],
-      ],
     },
     {
       'target_name': 'encoding_util_test',

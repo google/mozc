@@ -29,145 +29,124 @@
 
 #include "gui/base/encoding_util.h"
 
-// No implementation for Android.
-#ifndef OS_ANDROID
-
-#ifndef OS_WIN
-#include <iconv.h>
-#include <algorithm>
-#else
-#include <windows.h>
-#include <memory>
-#endif
-
-#include <string>
-#include "base/logging.h"
-
-#ifdef OS_WIN
-using std::unique_ptr;
-#endif  // OS_WIN
-
-namespace {
-
-#ifndef OS_WIN
-
-bool IconvHelper(iconv_t ic, const string &input, string *output) {
-  size_t ilen = input.size();
-  size_t olen = ilen * 4;
-  string tmp;
-  tmp.reserve(olen);
-  char *ibuf = const_cast<char *>(input.data());
-  char *obuf_org = const_cast<char *>(tmp.data());
-  char *obuf = obuf_org;
-  std::fill(obuf, obuf + olen, 0);
-  size_t olen_org = olen;
-  iconv(ic, 0, &ilen, 0, &olen);  // reset iconv state
-  while (ilen != 0) {
-    if (iconv(ic, reinterpret_cast<char **>(&ibuf), &ilen, &obuf, &olen)
-        == static_cast<size_t>(-1)) {
-      return false;
-    }
-  }
-  output->assign(obuf_org, olen_org - olen);
-  return true;
-}
-
-inline bool Convert(const char *from, const char *to,
-                    const string &input, string *output) {
-  iconv_t ic = iconv_open(to, from);   // note the order
-  if (ic == reinterpret_cast<iconv_t>(-1)) {
-    LOG(WARNING) << "iconv_open failed";
-    *output = input;
-    return false;
-  }
-  bool result = IconvHelper(ic, input, output);
-  iconv_close(ic);
-  return result;
-}
-#else
-// Returns the code-page identifier for the specified encoding string.
-// This function scans a list of mappings from an encoding name to a
-// code-page identifier of Windows according to the encoding name.
-// If the given encoding string does not have any matching code-page
-// identifiers, this function returns 0.
-// To add a mapping from an encoding name to its code-page identifier:
-// 1. Read the list of code-page identifiers supported by Windows (*1), and;
-// 2. Find a code-page identifier matching to the encoding name:
-// (*1) "http://msdn.microsoft.com/en-us/library/ms776446(VS.85).aspx".
-int GetCodepage(const char* name) {
-  static const struct {
-    const char* name;
-    int codepage;
-  } kCodePageMap[] = {
-    { "UTF8",      CP_UTF8 },  // Unicode UTF-8
-    { "SJIS",      932     },  // ANSI/OEM - Japanese, Shift-JIS
-  };
-
-  for (size_t i = 0; i < arraysize(kCodePageMap); i++) {
-    if (strcmp(kCodePageMap[i].name, name) == 0) {
-      return kCodePageMap[i].codepage;
-    }
-  }
-  return 0;
-}
-
-// Converts the encoding of the specified string.
-// This function firstly converts the source string to create a temporary
-// UTF-16 string, and encodes the UTF-16 string with the destination encoding.
-inline bool Convert(const char *from, const char *to,
-                    const string &input, string *output) {
-  const int codepage_from = GetCodepage(from);
-  const int codepage_to = GetCodepage(to);
-  if (codepage_from == 0 || codepage_to == 0) {
-    return false;
-  }
-
-  const int wide_length = MultiByteToWideChar(codepage_from, 0, input.c_str(),
-                                              -1, nullptr, 0);
-  if (wide_length == 0) {
-    return false;
-  }
-
-  unique_ptr<wchar_t[]> wide(new wchar_t[wide_length + 1]);
-  if (wide.get() == nullptr) {
-    return false;
-  }
-
-  if (MultiByteToWideChar(codepage_from, 0, input.c_str(), -1,
-                          wide.get(), wide_length + 1) == 0)
-    return false;
-
-  const int output_length = WideCharToMultiByte(codepage_to, 0, wide.get(), -1,
-                                                nullptr, 0, nullptr, nullptr);
-  if (output_length == 0) {
-    return false;
-  }
-
-  unique_ptr<char[]> multibyte(new char[output_length + 1]);
-  if (multibyte.get() == nullptr) {
-    return false;
-  }
-
-  const int result = WideCharToMultiByte(codepage_to, 0, wide.get(),
-                                         wide_length, multibyte.get(),
-                                         output_length + 1, nullptr, nullptr);
-  if (result == 0) {
-    return false;
-  }
-
-  output->assign(multibyte.get());
-  return true;
-}
-
-#endif
-}   // namespace
+#include "base/port.h"
+#include "base/string_piece.h"
+#include "base/util.h"
 
 namespace mozc {
+namespace {
+
+#include "gui/base/sjis_to_ucs2_table.h"
+
+// Each character of SJIS is encoded in one or two bytes.
+//
+// For first byte, there are 4 valid ranges (closed intervals):
+//   * FirstByteRange1: [0x00, 0x80]
+//   * FirstByteRange2: [0x81, 0x9F]
+//   * FirstByteRange3: [0xA1, 0xDF]
+//   * FirstByteRange4: [0xE0, 0xFF]
+// Ranges 2 and 4 are for two bytes encoding, so one more byte is needed to
+// decode a character.
+//
+// For second byte, there are 2 valid ranges (closed intervals):
+//   * SecondByteRange1: [0x40, 0x7E]
+//   * SecondByteRange2: [0x80, 0xFF]
+// Two byte characters are decoded using the conversion table defined in
+// sjis_to_ucs2_table.h.
+inline bool IsInFirstByteRange1(uint8_t byte) {
+  return byte <= 0x80;
+}
+
+inline bool IsInFirstByteRange2(uint8_t byte) {
+  return 0x81 <= byte && byte <= 0x9F;
+}
+
+inline bool IsInFirstByteRange3(uint8_t byte) {
+  return 0xA1 <= byte && byte <= 0xDF;
+}
+
+inline bool IsInFirstByteRange4(uint8_t byte) {
+  return 0xE0 <= byte;
+}
+
+inline bool IsInSecondByteRange1(uint8_t byte) {
+  return 0x40 <= byte && byte <= 0x7E;
+}
+
+inline bool IsInSecondByteRange2(uint8_t byte) {
+  return 0x80 <= byte;
+}
+
+size_t ComputeIndex(uint8_t first, uint8_t second) {
+  size_t first_index = 0;
+  if (IsInFirstByteRange2(first)) {
+    // first_index = "offset of first in FirstByteRange2".
+    first_index = first - 0x81;
+  } else if (IsInFirstByteRange4(first)) {
+    // first_index = "offset of first in FirstByteRange4" +
+    //               length(FirstByteRange2)
+    first_index = (first - 0xE0) + (0x9F - 0x81 + 1);
+  }
+
+  size_t second_index = 0;
+  if (IsInSecondByteRange1(second)) {
+    // second_index = "offset of second in SecondByteRange1";
+    second_index = second - 0x40;
+  } else if (IsInSecondByteRange2(second)) {
+    // second_index = "offset of second in SecondByteRange2" +
+    //                length(SecondByteRange1)
+    second_index = (second - 0x80) + (0x7E - 0x40 + 1);
+  }
+
+  // width = length(SecondByteRange1) + length(SecondByteRange2)
+  const size_t width = (0x7E - 0x40 + 1) + (0xFF - 0x80 + 1);
+  return first_index * width + second_index;
+}
+
+bool SJISToUTF8Internal(StringPiece input, string* output) {
+  bool expect_first_byte = true;
+  uint8_t first_byte = 0;
+  for (const char c : input) {
+    const uint8_t byte = static_cast<uint8_t>(c);
+
+    if (expect_first_byte) {
+      if (IsInFirstByteRange1(byte)) {
+        Util::UCS4ToUTF8Append(byte, output);
+      } else if (IsInFirstByteRange3(byte)) {
+        Util::UCS4ToUTF8Append(byte + 0xFEC0, output);
+      } else if (IsInFirstByteRange2(byte) || IsInFirstByteRange4(byte)) {
+        first_byte = byte;
+        expect_first_byte = false;
+      } else {
+        return false;  // Invalid first byte.
+      }
+      continue;
+    }
+
+    if (!IsInSecondByteRange1(byte) && !IsInSecondByteRange2(byte)) {
+      return false;
+    }
+    const size_t index = ComputeIndex(first_byte, byte);
+    if (index >= sizeof(kSJISToUCS2Table)) {
+      return false;
+    }
+    const uint16_t ucs2 = kSJISToUCS2Table[index];
+    if (ucs2 == 0) {
+      return false;
+    }
+    Util::UCS4ToUTF8Append(ucs2, output);
+    expect_first_byte = true;
+  }
+  return expect_first_byte;
+}
+
+}   // namespace
 
 void EncodingUtil::SJISToUTF8(const string &input, string *output) {
-  Convert("SJIS", "UTF8", input, output);
+  output->clear();
+  if (!SJISToUTF8Internal(input, output)) {
+    output->clear();
+  }
 }
 
 }  // namespace mozc
-
-#endif  // OS_ANDROID

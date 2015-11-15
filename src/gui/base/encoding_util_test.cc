@@ -29,23 +29,143 @@
 
 #include "gui/base/encoding_util.h"
 
+#ifdef OS_WIN
+#include <windows.h>
+#include <codecvt>
+#include <cstring>
+#include <memory>
+#endif  // OS_WIN
+
 #include <string>
 
+#include "base/logging.h"
+#include "base/port.h"
+#ifdef OS_WIN
+#include "base/string_piece.h"
+#endif  // OS_WIN
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace {
 
-#ifdef OS_ANDROID
-// At the moment, encoding is not the target of build for Android.
-#else
+#ifdef OS_WIN
+
+bool Convert(StringPiece input, string* output) {
+  const int CP_932 = 932;
+
+  output->clear();
+  if (input.empty()) {
+    return true;
+  }
+
+  const int wide_length = MultiByteToWideChar(
+      CP_932, MB_ERR_INVALID_CHARS, input.data(), input.size(), nullptr, 0);
+  if (wide_length == 0) {
+    return false;
+  }
+
+  unique_ptr<wchar_t[]> wide(new wchar_t[wide_length + 1]);
+  if (MultiByteToWideChar(CP_932, MB_ERR_INVALID_CHARS, input.data(),
+                          input.size(), wide.get(),
+                          wide_length + 1) != wide_length) {
+    return false;
+  }
+
+  std::wstring_convert<std::codecvt_utf8<wchar_t>> wide_to_utf8;
+  *output = wide_to_utf8.to_bytes(wide.get(), wide.get() + wide_length);
+  return true;
+}
+
+TEST(EncodingUtilTest, CompareToWinAPI) {
+  const char* kTestCases[] = {
+    // "私の名前はGoogleです。"
+    "\x8E\x84\x82\xCC\x96\xBC\x91\x4F\x82\xCD\x47\x6F\x6F\x67\x6C\x65"
+    "\x82\xC5\x82\xB7\x81\x42",
+    // "今日はとても良い天気です。"
+    "\x8D\xA1\x93\xFA\x82\xCD\x82\xC6\x82\xC4\x82\xE0\x97\xC7\x82\xA2"
+    "\x93\x56\x8B\x43\x82\xC5\x82\xB7\x81\x42",
+    // "This is a test for SJIS."
+    "\x54\x68\x69\x73\x20\x69\x73\x20\x61\x20\x74\x65\x73\x74\x20\x66"
+    "\x6F\x72\x20\x53\x4A\x49\x53\x2E",
+    // "あいうえおアイウエオｱｲｳｴｵ"
+    "\x82\xA0\x82\xA2\x82\xA4\x82\xA6\x82\xA8\x83\x41\x83\x43\x83\x45"
+    "\x83\x47\x83\x49\xB1\xB2\xB3\xB4\xB5",
+  };
+  for (const char* sjis : kTestCases) {
+    string actual;
+    EncodingUtil::SJISToUTF8(sjis, &actual);
+    string expected;
+    ASSERT_TRUE(Convert(sjis, &expected));
+    EXPECT_EQ(expected, actual);
+  }
+}
+
+#endif  // OS_WIN
+
 TEST(EncodingUtilTest, Issue2190350) {
   string result = "";
   EncodingUtil::SJISToUTF8("\x82\xA0", &result);
   EXPECT_EQ(3, result.length());
   EXPECT_EQ("\xE3\x81\x82", result);
 }
-#endif  // OS_ANDROID
+
+TEST(EncodingUtilTest, ValidSJIS) {
+  struct {
+    const char *sjis;
+    const char *utf8;
+  } kTestCases[] = {
+    // "私の名前はGoogleです。"
+    {"\x8E\x84\x82\xCC\x96\xBC\x91\x4F\x82\xCD\x47\x6F\x6F\x67\x6C\x65"
+     "\x82\xC5\x82\xB7\x81\x42",
+     "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D\xE3\x81\xAF\x47"
+     "\x6F\x6F\x67\x6C\x65\xE3\x81\xA7\xE3\x81\x99\xE3\x80\x82"
+     },
+    // "今日はとても良い天気です。"
+    {"\x8D\xA1\x93\xFA\x82\xCD\x82\xC6\x82\xC4\x82\xE0\x97\xC7\x82\xA2"
+     "\x93\x56\x8B\x43\x82\xC5\x82\xB7\x81\x42",
+     "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x81\xAF\xE3\x81\xA8\xE3\x81\xA6\xE3"
+     "\x82\x82\xE8\x89\xAF\xE3\x81\x84\xE5\xA4\xA9\xE6\xB0\x97\xE3\x81"
+     "\xA7\xE3\x81\x99\xE3\x80\x82"},
+    // "This is a test for SJIS."
+    {"\x54\x68\x69\x73\x20\x69\x73\x20\x61\x20\x74\x65\x73\x74\x20\x66"
+     "\x6F\x72\x20\x53\x4A\x49\x53\x2E",
+     "\x54\x68\x69\x73\x20\x69\x73\x20\x61\x20\x74\x65\x73\x74\x20\x66"
+     "\x6F\x72\x20\x53\x4A\x49\x53\x2E"},
+    // "あいうえおアイウエオｱｲｳｴｵ"
+    {"\x82\xA0\x82\xA2\x82\xA4\x82\xA6\x82\xA8\x83\x41\x83\x43\x83\x45"
+     "\x83\x47\x83\x49\xB1\xB2\xB3\xB4\xB5",
+     "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A\xE3"
+     "\x82\xA2\xE3\x82\xA4\xE3\x82\xA6\xE3\x82\xA8\xE3\x82\xAA\xEF\xBD"
+     "\xB1\xEF\xBD\xB2\xEF\xBD\xB3\xEF\xBD\xB4\xEF\xBD\xB5"},
+  };
+  for (const auto &tc : kTestCases) {
+    string actual;
+    EncodingUtil::SJISToUTF8(tc.sjis, &actual);
+    EXPECT_EQ(tc.utf8, actual);
+  }
+}
+
+TEST(EncodingUtilTest, InvalidSJIS) {
+  const char* kInvalidInputs[] = {
+    // Invalid first byte (0xA0) at 1st byte
+    "\xA0\x61\x62\x63",
+    // Invalid first byte (0xA0) at 4-th byte
+    "\x61\x62\x63\xA0\x64\x65\x66",
+    // Invalid first byte (0xA0) at the last byte
+    "\x61\x62\x63\xA0",
+    // Valid first byte (0xE0) but there's no second byte
+    "\x61\x62\x63\xE0",
+    // Valid first byte (0x90) in range 2 + invalid second byte (0x15)
+    "\x61\x62\x63\x90\x15\x64\x65\x66",
+    // Valid first byte (0xEE) in range 4 + invalid second byte (0x01)
+    "\x61\x62\x63\xEE\x01\x64\x65\x66",
+  };
+  for (const char* input : kInvalidInputs) {
+    string actual = "to be cleared";
+    EncodingUtil::SJISToUTF8(input, &actual);
+    EXPECT_TRUE(actual.empty());
+  }
+}
 
 }  // namespace
 }  // namespace mozc
