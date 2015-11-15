@@ -710,4 +710,29 @@ TEST_F(UserDictionarySessionTest, ImportToNewDictionaryFromStringFailure) {
   EXPECT_EQ(0, session.storage().dictionaries_size());
 }
 
+TEST_F(UserDictionarySessionTest, ClearDictionariesAndUndoHistory) {
+  UserDictionarySession session(GetUserDictionaryFile());
+
+  uint64 dic_id;
+  ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
+            session.CreateDictionary("dic1", &dic_id));
+
+  UserDictionary::Entry entry;
+  ResetEntry("reading", "word", UserDictionary::NOUN, &entry);
+  ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
+            session.AddEntry(dic_id, entry));
+
+  ResetEntry("reading", "word2", UserDictionary::NOUN, &entry);
+  ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
+            session.AddEntry(dic_id, entry));
+
+  ASSERT_EQ(1, session.storage().dictionaries_size());
+  ASSERT_TRUE(session.has_undo_history());
+
+  session.ClearDictionariesAndUndoHistory();
+
+  EXPECT_EQ(0, session.storage().dictionaries_size());
+  EXPECT_FALSE(session.has_undo_history());
+}
+
 }  // namespace
