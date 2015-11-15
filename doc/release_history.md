@@ -1,6 +1,39 @@
 Release History
 ===============
 
+2.17.2124.102 - 2.17.2240.102 / *2015-09-20* - *2015-11-15*
+--------------------------------------------------
+You can check out Mozc [2.17.2240.102](https://github.com/google/mozc/commit/95de40fa884d693172605e7283ec82233a908b29) as follows.
+
+```
+git clone https://github.com/google/mozc.git
+cd mozc
+git checkout 95de40fa884d693172605e7283ec82233a908b29
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2124.102](https://github.com/google/mozc/commit/0943e518ebff9ddd9390d0ec29509cb0096ac240) and [2.17.2240.102](https://github.com/google/mozc/commit/95de40fa884d693172605e7283ec82233a908b29) as follows.
+
+  * Third party libraries:
+    * gyp: [cdf037c1 -> e2e928ba](https://chromium.googlesource.com/external/gyp/+log/cdf037c1edc0ba3b5d25f8e3973661efe00980cc..e2e928bacd07fead99a18cb08d64cb24e131d3e5)
+    * zinnia: [44dddcf9 -> 814a49b0](https://github.com/taku910/zinnia/compare/44dddcf96c0970a806d666030295706f45cbd045...814a49b031709b34d23898bce47f08dc1b554ec8)
+  * Build related changes:
+    * Linux-only build option ```-j```/```--jobs``` was deprecated by b393fbdc346a5243ad35eb559d4468a274f2d2d2.  See its commit log on how to work around it.
+    * Pepper 45 SDK is required to build Mozc for NaCl.
+  * Known issues:
+    * [#263](https://github.com/google/mozc/issues/263): Voiced sound marks on the key pad is not placed at correct position in Android
+    * [#273](https://github.com/google/mozc/issues/273): Compilation errors in Android arm64 and mips64 build
+  * Fixed issues:
+    * [#27](https://github.com/google/mozc/issues/27): build fail of ```base/iconv.cc```, FreeBSD
+    * [#219](https://github.com/google/mozc/issues/219): Deprecate ```base/scoped_ptr.h```
+    * [#252](https://github.com/google/mozc/issues/252): Remove dependency on iconv
+    * [#328](https://github.com/google/mozc/issues/328): Partial commit clears remaining composing text in some cases
+    * [#331](https://github.com/google/mozc/issues/331): Predictions on mobile can be too different from conversion result
+    * [#332](https://github.com/google/mozc/issues/332): Clearing user dictionary on the preference app will not take effect immediately
+  * Total commits:
+    * [154 commits](https://github.com/google/mozc/compare/0943e518ebff9ddd9390d0ec29509cb0096ac240%5E...95de40fa884d693172605e7283ec82233a908b29).
+
+
 2.17.2112.102 - 2.17.2123.102 / *2015-09-05* - *2015-09-19*
 --------------------------------------------------
 You can check out Mozc [2.17.2123.102](https://github.com/google/mozc/commit/e398317a086a78c0cf0004505eb8f56586e925b2) as follows.
@@ -28,7 +61,7 @@ Summary of changes between [2.17.2112.102](https://github.com/google/mozc/commit
     * `src/DEPS` was deprecated and removed.  We use `git submodule` to track and check out dependent third party source code.
     * WTL is directly imported under `src/third_party` so as not to depend on subversion.
   * Build related changes:
-    * Zinnia is now built from source and linked statically by default.  To link to system-installed Zinnia, specify `GYP_DEFINES="use_libzinnia=1"`.  Note that `build_mozc.py gyp --use_zinnia` is also deprecated.  
+    * Zinnia is now built from source and linked statically by default.  To link to system-installed Zinnia, specify `GYP_DEFINES="use_libzinnia=1"`.  Note that `build_mozc.py gyp --use_zinnia` is also deprecated.
   * Major changes:
     * Windows build now supports hand-writing with Zinnia.
   * Known issues:
