@@ -766,6 +766,12 @@ message Request {
 
   // Page size of the candidate list.
   optional int32 candidate_page_size = 15 [default = 9];
+
+  // The maximum limit of the candidates size.
+  // If not set, converter doesn't limit the size.
+  // NOTE: Each segment has at least one candidate and meta candidates even if
+  //       this value is set to 0.
+  optional int32 candidates_size_limit = 16;
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.

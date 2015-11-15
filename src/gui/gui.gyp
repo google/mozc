@@ -63,6 +63,7 @@
         '../ipc/ipc.gyp:window_info_protocol',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
+        'encoding_util',
         'gen_base_files',
       ],
       'includes': [
@@ -595,6 +596,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
+        'encoding_util',
         'gen_config_dialog_files',
         'gen_dictionary_tool_files',
       ],
@@ -1014,6 +1016,37 @@
             },
           },
         }],
+      ],
+    },
+    {
+      'target_name': 'encoding_util',
+      'type': 'static_library',
+      'sources': [
+        'base/encoding_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base_core',
+      ],
+    },
+    {
+      'target_name': 'encoding_util_test',
+      'type': 'executable',
+      'sources': [
+        'base/encoding_util_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'encoding_util',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'gui_all_test',
+      'type': 'none',
+      'dependencies': [
+        'encoding_util_test',
       ],
     },
   ],

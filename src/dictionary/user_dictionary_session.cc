@@ -752,5 +752,11 @@ void UserDictionarySession::AddUndoCommand(UndoCommand *undo_command) {
   undo_history_.push_back(undo_command);
 }
 
+void UserDictionarySession::ClearDictionariesAndUndoHistory() {
+  ScopedUserDictionaryLocker l(storage_.get());
+  storage_->clear_dictionaries();
+  ClearUndoHistory();
+}
+
 }  // namespace user_dictionary
 }  // namespace mozc

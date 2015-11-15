@@ -2305,12 +2305,12 @@ bool DateRewriter::RewriteAd(Segment *segment) const {
 }
 
 namespace {
-bool IsFourDigits(const string &value) {
-  return Util::CharsLen(value) == 4 &&
+bool IsNDigits(const string &value, int n) {
+  return Util::CharsLen(value) == n &&
          Util::GetScriptType(value) == Util::NUMBER;
 }
 
-// Gets four digits if possible.
+// Gets n digits if possible.
 // Following trials will be performed in this order.
 // 1. Checks segment's key.
 // 2. Checks all the meta candidates.
@@ -2322,22 +2322,23 @@ bool IsFourDigits(const string &value) {
 //      - All the meta candidates are based on "cd" (e.g. "CD", "Cd").
 //      Therefore to get "2223" we should access the raw input.
 // Prerequisit: |segments| has only one conversion segment.
-const bool GetFourDigits(const composer::Composer &composer,
-                         const Segments &segments,
-                         string *output) {
+bool GetNDigits(const composer::Composer &composer,
+                const Segments &segments,
+                int n,
+                string *output) {
   DCHECK(output);
   DCHECK_EQ(1, segments.conversion_segments_size());
   const Segment &segment = segments.conversion_segment(0);
 
   // 1. Segment's key
-  if (IsFourDigits(segment.key())) {
+  if (IsNDigits(segment.key(), n)) {
     *output = segment.key();
     return true;
   }
 
   // 2. Meta candidates
   for (size_t i = 0; i < segment.meta_candidates_size(); ++i) {
-    if (IsFourDigits(segment.meta_candidate(i).value)) {
+    if (IsNDigits(segment.meta_candidate(i).value, n)) {
       *output = segment.meta_candidate(i).value;
       return true;
     }
@@ -2349,7 +2350,7 @@ const bool GetFourDigits(const composer::Composer &composer,
   // on partial conversion, segment.key() is different from the size of
   // the whole composition.
   composer.GetRawSubString(0, Util::CharsLen(segment.key()), &raw);
-  if (IsFourDigits(raw)) {
+  if (IsNDigits(raw, n)) {
     *output = raw;
     return true;
   }
@@ -2359,8 +2360,8 @@ const bool GetFourDigits(const composer::Composer &composer,
 }
 }  // namespace
 
-bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
-                                     Segments *segments) const {
+bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
+                                            Segments *segments) const {
   if (segments->conversion_segments_size() != 1) {
     // This method rewrites a segment only when the segments has only
     // one conversion segment.
@@ -2370,8 +2371,10 @@ bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
   }
 
   string key;
-  if (!GetFourDigits(composer, *segments, &key)) {
-    // No four digit key is available.
+  // Currently three and four consecutive digits are converted
+  if (!GetNDigits(composer, *segments, 3, &key) &&
+      !GetNDigits(composer, *segments, 4, &key)) {
+    // No three or four digit key is available.
     return false;
   }
 
@@ -2469,7 +2472,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
   }
 
   if (request.has_composer()) {
-    modified |= RewriteFourDigits(request.composer(), segments);
+    modified |= RewriteConsecutiveDigits(request.composer(), segments);
   }
 
   return modified;

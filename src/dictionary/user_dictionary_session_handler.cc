@@ -150,9 +150,11 @@ void UserDictionarySessionHandler::ClearStorage(
   // File operation is not supported on NaCl.
   status->set_status(UserDictionaryCommandStatus::UNKNOWN_ERROR);
 #else
-  FileUtil::Unlink(dictionary_path_);
-  status->set_status(
-      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
+  // Note: session_ might not be created when ClearStorage is called.  So create
+  // a local session to clear the storage.
+  UserDictionarySession session(dictionary_path_);
+  session.ClearDictionariesAndUndoHistory();
+  status->set_status(session.Save());
 #endif
 }
 

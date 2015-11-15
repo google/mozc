@@ -125,10 +125,12 @@ class CandidateFilterTest : public ::testing::Test {
     return *pos_matcher_;
   }
 
-  CandidateFilter *CreateCandidateFilter() const {
+  CandidateFilter *CreateCandidateFilter(
+      bool apply_suggestion_filter_for_exact_match) const {
     return new CandidateFilter(&suppression_dictionary_,
                                pos_matcher_,
-                               suggestion_filter_.get());
+                               suggestion_filter_.get(),
+                               apply_suggestion_filter_for_exact_match);
   }
 
   std::unique_ptr<FreeList<Segment::Candidate> > candidate_freelist_;
@@ -139,7 +141,7 @@ class CandidateFilterTest : public ::testing::Test {
 };
 
 TEST_F(CandidateFilterTest, FilterTest) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> n;
 
   GetDefaultNodes(&n);
@@ -217,7 +219,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
 
 TEST_F(CandidateFilterTest, KatakanaT13N) {
   {
-    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
     vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[0] is KatakanaT13N
@@ -239,7 +241,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
     }
   }
   {
-    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
     vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[1] is KatakanaT13N
@@ -259,7 +261,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
     }
   }
   {
-    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
     vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[1] is not a functional word
@@ -290,7 +292,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
 }
 
 TEST_F(CandidateFilterTest, IsolatedWord) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> nodes;
   Segment::Candidate *c = NewCandidate();
   c->key = "abc";
@@ -341,7 +343,7 @@ TEST_F(CandidateFilterTest, IsolatedWord) {
 }
 
 TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> n;
   GetDefaultNodes(&n);
 
@@ -422,7 +424,8 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   const POSMatcher *pos_matcher =
       UserPosManager::GetUserPosManager()->GetPOSMatcher();
   std::unique_ptr<CandidateFilter> filter(
-      new CandidateFilter(dic.get(), pos_matcher, suggestion_filter_.get()));
+      new CandidateFilter(dic.get(), pos_matcher,
+                          suggestion_filter_.get(), true));
 
   vector<const Node *> n;
   GetDefaultNodes(&n);
@@ -474,7 +477,7 @@ TEST_F(CandidateFilterTest, Regression3437022) {
 }
 
 TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> n;
 
   n.clear();
@@ -509,7 +512,7 @@ TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
 }
 
 TEST_F(CandidateFilterTest, DoNotFilterExchangeableCandidates) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> nodes;
 
   {
@@ -595,7 +598,7 @@ TEST_F(CandidateFilterTest, DoNotFilterExchangeableCandidates) {
 }
 
 TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Conversion) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
 
   // For Segments::CONVERSION, suggestion filter is not applied.
   {
@@ -622,7 +625,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Conversion) {
 }
 
 TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
 
   // For Segments::SUGGESTION, suggestion filter is applied regardless of its
   // original key length. First test unigram case.
@@ -734,8 +737,42 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
   }
 }
 
+TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion_Mobile) {
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(false));
+
+  // For Mobile Segments::SUGGESTION, suggestion filter is NOT applied for
+  // exact match.
+  {
+    Node *n = NewNode();
+    // "ふぃるたー"
+    n->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B\xE3\x81\x9F\xE3\x83\xBC";
+    // "フィルター"
+    n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
+
+    vector<const Node *> nodes;
+    nodes.push_back(n);
+
+    Segment::Candidate *c = NewCandidate();
+    c->key = n->key;
+    c->value = n->value;
+    c->content_key = n->key;
+    c->content_value = n->value;
+    c->cost = 1000;
+    c->structure_cost = 2000;
+
+    // Test case where "フィルター" is suggested from key "ふぃる".
+    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+              filter->FilterCandidate("\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B",
+                                      c, nodes, Segments::SUGGESTION));
+    filter->Reset();
+    // Test case where "フィルター" is suggested from key "ふぃるたー".
+    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+              filter->FilterCandidate(n->key, c, nodes, Segments::SUGGESTION));
+  }
+}
+
 TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
 
   // For Segments::PREDICTION, suggestion filter is applied only when its
   // original key length is equal to the key of predicted node.  First test
@@ -852,7 +889,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
 }
 
 TEST_F(CandidateFilterTest, ReverseConversion) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> nodes;
   GetDefaultNodes(&nodes);
 

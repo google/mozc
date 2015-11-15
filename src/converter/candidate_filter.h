@@ -51,7 +51,8 @@ class CandidateFilter {
   CandidateFilter(
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const dictionary::POSMatcher *pos_matcher,
-      const SuggestionFilter *suggestion_filter);
+      const SuggestionFilter *suggestion_filter,
+      bool apply_suggestion_filter_for_exact_match);
   ~CandidateFilter();
 
   enum ResultType {
@@ -81,6 +82,7 @@ class CandidateFilter {
 
   set<string> seen_;
   const Segment::Candidate *top_candidate_;
+  bool apply_suggestion_filter_for_exact_match_;
 
   DISALLOW_COPY_AND_ASSIGN(CandidateFilter);
 };

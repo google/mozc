@@ -111,14 +111,16 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const Connector *connector,
                                const POSMatcher *pos_matcher,
                                const Lattice *lattice,
-                               const SuggestionFilter *suggestion_filter)
+                               const SuggestionFilter *suggestion_filter,
+                               bool apply_suggestion_filter_for_exact_match)
     : suppression_dictionary_(suppression_dic),
       segmenter_(segmenter), connector_(connector), pos_matcher_(pos_matcher),
       lattice_(lattice),
       begin_node_(NULL), end_node_(NULL),
       freelist_(kFreeListSize),
       filter_(new CandidateFilter(
-          suppression_dic, pos_matcher, suggestion_filter)),
+          suppression_dic, pos_matcher, suggestion_filter,
+          apply_suggestion_filter_for_exact_match)),
       viterbi_result_checked_(false),
       check_mode_(STRICT),
       boundary_checker_(NULL) {

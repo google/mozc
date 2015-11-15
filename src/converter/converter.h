@@ -154,6 +154,11 @@ class ConverterImpl : public ConverterInterface {
   void RewriteAndSuppressCandidates(const ConversionRequest &request,
                                     Segments *segments) const;
 
+  // Limits the number of candidates based on a request.
+  // This method doesn't drop meta candidates for T13n conversion.
+  void TrimCandidates(const ConversionRequest &request,
+                      Segments *segments) const;
+
   // Commits usage stats for committed text.
   // |begin_segment_index| is a index of whole segments. (history and conversion
   // segments)

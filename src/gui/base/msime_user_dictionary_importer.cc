@@ -44,7 +44,6 @@
 #include <vector>
 
 #include "base/compiler_specific.h"
-#include "base/encoding_util.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mmap.h"
@@ -54,6 +53,7 @@
 #include "base/util.h"
 #include "base/win_util.h"
 #include "dictionary/user_dictionary_util.h"
+#include "gui/base/encoding_util.h"
 
 namespace mozc {
 

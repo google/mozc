@@ -43,7 +43,6 @@
 #include <string>
 #include <vector>
 
-#include "base/encoding_util.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/run_level.h"
@@ -55,6 +54,7 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "gui/base/encoding_util.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #include "gui/config_dialog/combobox_delegate.h"
@@ -188,7 +188,7 @@ class MultiByteTextLineIterator
       : encoding_type_(encoding_type),
         ifs_(new InputFileStream(filename.c_str())),
         first_line_(true) {
-    const streampos begin = ifs_->tellg();
+    const std::streampos begin = ifs_->tellg();
     ifs_->seekg(0, ios::end);
     const size_t size = static_cast<size_t>(ifs_->tellg() - begin);
     ifs_->seekg(0, ios::beg);

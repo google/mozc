@@ -39,10 +39,9 @@
 #include "base/protobuf/repeated_field.h"
 #include "base/system_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
-
-DECLARE_string(test_tmpdir);
 
 using ::mozc::protobuf::RepeatedPtrField;
 using ::mozc::user_dictionary::UserDictionary;
@@ -236,21 +235,38 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
 #ifdef __native_client__
   EXPECT_PROTO_EQ("status: UNKNOWN_ERROR", *status_);
 #else
-  const string &user_dictionary_file = GetUserDictionaryFile();
-  // Touch the file.
+  // Set up a user dictionary.
   {
-    OutputFileStream output(user_dictionary_file.c_str());
+    Clear();
+    const uint64 session_id = CreateSession();
+    const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+    AddUserDictionaryEntry(session_id, dictionary_id,
+                         "reading", "word", UserDictionary::NOUN, "");
+    AddUserDictionaryEntry(session_id, dictionary_id,
+                         "reading", "word2", UserDictionary::NOUN, "");
+    ASSERT_EQ(2, GetUserDictionaryEntrySize(session_id, dictionary_id));
+    DeleteSession(session_id);
   }
-  ASSERT_TRUE(FileUtil::FileExists(user_dictionary_file));
-
-  command_->set_type(UserDictionaryCommand::CLEAR_STORAGE);
-  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-
-  // Should never fail.
-  EXPECT_PROTO_EQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
-
-  // The file should be removed.
-  EXPECT_FALSE(FileUtil::FileExists(user_dictionary_file));
+  // Test CLEAR_STORAGE command.
+  {
+    Clear();
+    command_->set_type(UserDictionaryCommand::CLEAR_STORAGE);
+    EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
+    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
+              status_->status());
+  }
+  // After the command invocation, storage becomes empty.
+  {
+    Clear();
+    const uint64 session_id = CreateSession();
+    command_->set_type(UserDictionaryCommand::GET_STORAGE);
+    command_->set_session_id(session_id);
+    ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+    EXPECT_PROTO_PEQ("status: USER_DICTIONARY_COMMAND_SUCCESS\n"
+                     "storage <\n"
+                     ">\n",
+                     *status_);
+  }
 #endif  // __native_client__
 }
 

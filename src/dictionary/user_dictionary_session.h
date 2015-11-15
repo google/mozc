@@ -118,6 +118,10 @@ class UserDictionarySession {
       const string &dictionary_name, const string &data,
       uint64 *new_dictionary_id);
 
+  // Clears all the dictionaries and undo history (doesn't save to the file).
+  // This operation is not undoable.
+  void ClearDictionariesAndUndoHistory();
+
   // Returns true if the session has undo-able history.
   bool has_undo_history() const { return !undo_history_.empty(); }
 

@@ -86,7 +86,8 @@ class NBestGenerator {
       const Connector *connector,
       const dictionary::POSMatcher *pos_matcher,
       const Lattice *lattice,
-      const SuggestionFilter *suggestion_filter);
+      const SuggestionFilter *suggestion_filter,
+      bool apply_suggestion_filter_for_exact_match);
   ~NBestGenerator();
 
   // Reset the iterator status.
