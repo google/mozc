@@ -17,12 +17,21 @@ Summary of changes between [2.17.2124.102](https://github.com/google/mozc/commit
   * Third party libraries:
     * gyp: [cdf037c1 -> e2e928ba](https://chromium.googlesource.com/external/gyp/+log/cdf037c1edc0ba3b5d25f8e3973661efe00980cc..e2e928bacd07fead99a18cb08d64cb24e131d3e5)
     * zinnia: [44dddcf9 -> 814a49b0](https://github.com/taku910/zinnia/compare/44dddcf96c0970a806d666030295706f45cbd045...814a49b031709b34d23898bce47f08dc1b554ec8)
+    * zlib: [50893291](https://github.com/madler/zlib/commit/50893291621658f355bc5b4d450a8d06a563053d) was added to submodules for NaCl build.
   * Build related changes:
     * Linux-only build option ```-j```/```--jobs``` was deprecated by b393fbdc346a5243ad35eb559d4468a274f2d2d2.  See its commit log on how to work around it.
     * Pepper 45 SDK is required to build Mozc for NaCl.
+    * Docker directory id moved from ```mozc/src/docker/``` to ```mozc/docker/``` by cfe9a2a5c7576a01fdbbadca43760496a9405ece.
+    * Enabled continuous build for Android, NaCl, and Linux-desktop on [Travis CI](https://travis-ci.org).
+    * Enabled continuous test for OS X and Linux-desktop on [Travis CI](https://travis-ci.org).
+    * ```REGISTER_MODULE_INITIALIZER```, ```REGISTER_MODULE_RELOADER```, ```REGISTER_MODULE_SHUTDOWN_HANDLER```, and ```REGISTER_MODULE_FINALIZER``` were deprecated since they are known as bug-prone.  Deprecating them allows us to reduce the number of use of ```Singleton<T>```, which is also known as bug-prone.
+    * [#320](https://github.com/google/mozc/pull/320): ```InitGoogle``` was renamed to ```mozc::InitMozc``` and now declared in ```base/init_mozc.h```.  If you have relied on ```InitGoogle```, then you need to 1) include ```base/init_mozc.h``` and 2) replace ```InitGoogle``` with ```mozc::InitMozc```.
+  * Major changes:
+    * DateRewriter is now able to handle 3-digit.  For instance, when converting ```123``` you will see additional candidates such as ```1:23``` and ```01/23```.  See the commit message of f2cc056fd289bb498703a451b163eb73de217c91 and its unittests for details.
   * Known issues:
     * [#263](https://github.com/google/mozc/issues/263): Voiced sound marks on the key pad is not placed at correct position in Android
     * [#273](https://github.com/google/mozc/issues/273): Compilation errors in Android arm64 and mips64 build
+    * [#317](https://github.com/google/mozc/issues/317): session_handler_scenario_test is flaky in Linux build on Travis-CI
   * Fixed issues:
     * [#27](https://github.com/google/mozc/issues/27): build fail of ```base/iconv.cc```, FreeBSD
     * [#219](https://github.com/google/mozc/issues/219): Deprecate ```base/scoped_ptr.h```
