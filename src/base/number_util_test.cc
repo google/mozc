@@ -488,6 +488,7 @@ TEST(NumberUtilTest, SafeStrToDouble) {
       NumberUtil::SafeStrToDouble("1.7976931348623159e308",
                                   &value));  // overflow
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("-1.7976931348623159e308", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToDouble("NaN", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("3e", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble(".", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("", &value));
@@ -537,6 +538,7 @@ TEST(NumberUtilTest, SafeStrToFloat) {
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("3.4028236e38",  // overflow
                                           &value));
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("-3.4028236e38", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToFloat("NaN", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("3e", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToFloat(".", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToFloat("", &value));
