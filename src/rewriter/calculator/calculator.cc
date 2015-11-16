@@ -33,8 +33,8 @@
 // namespace. We need to do this outside the namespace, otherwise features
 // declared in those header files are included by the namespace as well, which
 // causes build error.
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 #ifdef OS_WIN
 #include <float.h>
 #endif
