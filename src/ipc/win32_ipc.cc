@@ -30,8 +30,6 @@
 // skip all unless OS_WIN
 #ifdef OS_WIN
 
-#include <algorithm>
-
 #include "ipc/ipc.h"
 
 #include <Windows.h>
