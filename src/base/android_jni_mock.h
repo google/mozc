@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef IME_MOZC_BASE_ANDROID_JNI_MOCK_H_
-#define IME_MOZC_BASE_ANDROID_JNI_MOCK_H_
+#ifndef MOZC_BASE_ANDROID_JNI_MOCK_H_
+#define MOZC_BASE_ANDROID_JNI_MOCK_H_
 
 // An utility to mock JNI releated stuff for testing purpose.
 #include <jni.h>
@@ -166,4 +166,4 @@ class MockJavaVM {
 }  // namespace jni
 }  // namespace mozc
 
-#endif  // IME_MOZC_BASE_ANDROID_JNI_MOCK_H_
+#endif  // MOZC_BASE_ANDROID_JNI_MOCK_H_
