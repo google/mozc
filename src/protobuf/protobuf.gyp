@@ -323,30 +323,6 @@
         }],
       ],
     },
-    {
-      'target_name': 'install_protoc',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'protoc',
-      },
-      'conditions': [
-        # use system-installed protoc on Linux
-        ['OS!="linux"', {
-          'includes' : [
-            '../gyp/install_build_tool.gypi',
-          ],
-        }, {  # OS=="linux"
-          'conditions': [
-            ['use_libprotobuf==0', {
-              'includes' : [
-                '../gyp/install_build_tool.gypi',
-              ],
-            }],
-          ],
-        }],
-      ],
-    },
   ],
   'conditions': [
     ['use_packed_dictionary==1', {

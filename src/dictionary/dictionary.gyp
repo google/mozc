@@ -93,17 +93,6 @@
       },
     },
     {
-      'target_name': 'install_gen_system_dictionary_data_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_system_dictionary_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi'
-      ],
-    },
-    {
       'target_name': 'dictionary_mock',
       'type': 'static_library',
       'sources': [
