@@ -492,10 +492,11 @@ mozc.OptionPage.prototype.isUnloaded = function() {
  * Creates an Option element.
  * @param {string} name Name of the option.
  * @param {string} value Value of the option.
- * @return {!Element} Created Option element.
+ * @return {!HTMLElement} Created Option element.
  */
 mozc.OptionPage.prototype.createOptionElement = function(name, value) {
-  var option = this.document_.createElement('option');
+  var option =
+      /** @type {!HTMLElement} */ (this.document_.createElement('option'));
   option.appendChild(this.document_.createTextNode(name));
   option.setAttribute('value', value);
   return option;
@@ -1154,10 +1155,9 @@ mozc.OptionPage.prototype.onClearHistoryCancelClicked_ = function() {
 mozc.OptionPage.prototype.setChildNodesUnfocusableByTabKeyById =
     function(elementId) {
   var element = this.document_.getElementById(elementId);
-  if (!element) {
-    return;
+  if (element instanceof HTMLElement) {
+    this.setChildNodesUnfocusableByTabKey_(element);
   }
-  this.setChildNodesUnfocusableByTabKey_(element);
 };
 
 /**
@@ -1168,16 +1168,15 @@ mozc.OptionPage.prototype.setChildNodesUnfocusableByTabKeyById =
 mozc.OptionPage.prototype.setChildNodesFocusableByTabKeyById =
     function(elementId) {
   var element = this.document_.getElementById(elementId);
-  if (!element) {
-    return;
+  if (element instanceof HTMLElement) {
+    this.setChildNodesFocusableByTabKey_(element);
   }
-  this.setChildNodesFocusableByTabKey_(element);
 };
 
 /**
  * Sets the tabIndex of the all focusable elements (tabIndex >= 0) in the target
  * element -1 to make them unfocusable with tab key.
- * @param {!Element} element The target element.
+ * @param {!HTMLElement} element The target element.
  * @private
  */
 mozc.OptionPage.prototype.setChildNodesUnfocusableByTabKey_ =
@@ -1190,14 +1189,17 @@ mozc.OptionPage.prototype.setChildNodesUnfocusableByTabKey_ =
     return;
   }
   for (var i = 0; i < element.childNodes.length; ++i) {
-    this.setChildNodesUnfocusableByTabKey_(element.childNodes[i]);
+    var node = element.childNodes[i];
+    if (node instanceof HTMLElement) {
+      this.setChildNodesUnfocusableByTabKey_(node);
+    }
   }
 };
 
 /**
  * Resets the tabIndex of the all focusable elements in the target element which
  * was set to -1 with setChildNodesUnfocusableByTabKey_().
- * @param {!Element} element The target element.
+ * @param {!HTMLElement} element The target element.
  * @private
  */
 mozc.OptionPage.prototype.setChildNodesFocusableByTabKey_ = function(element) {
@@ -1209,7 +1211,10 @@ mozc.OptionPage.prototype.setChildNodesFocusableByTabKey_ = function(element) {
     return;
   }
   for (var i = 0; i < element.childNodes.length; ++i) {
-    this.setChildNodesFocusableByTabKey_(element.childNodes[i]);
+    var node = element.childNodes[i];
+    if (node instanceof HTMLElement) {
+      this.setChildNodesFocusableByTabKey_(node);
+    }
   }
 };
 
@@ -1219,7 +1224,8 @@ mozc.OptionPage.prototype.setChildNodesFocusableByTabKey_ = function(element) {
  */
 mozc.OptionPage.prototype.freezeMainDiv_ = function() {
   var mainDiv = this.document_.getElementById('settings_div');
-  if (mainDiv.classList.contains('frozen')) {
+  if (!(mainDiv instanceof HTMLElement) ||
+      mainDiv.classList.contains('frozen')) {
     return;
   }
   mainDiv.style.width = this.window_.getComputedStyle(mainDiv).width;
@@ -1237,7 +1243,8 @@ mozc.OptionPage.prototype.freezeMainDiv_ = function() {
  */
 mozc.OptionPage.prototype.unfreezeMainDiv_ = function() {
   var mainDiv = this.document_.getElementById('settings_div');
-  if (!mainDiv.classList.contains('frozen')) {
+  if (!(mainDiv instanceof HTMLElement) ||
+      !mainDiv.classList.contains('frozen')) {
     return;
   }
   this.setChildNodesFocusableByTabKey_(mainDiv);
