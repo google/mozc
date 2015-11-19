@@ -707,7 +707,8 @@ public class BufferedDrawable extends Drawable {
 
   @Override
   public Drawable mutate() {
-    return baseDrawable.mutate();
+    // Mutation is not supported.
+    return this;
   }
 
   @Override
