@@ -166,16 +166,6 @@ class NumberUtil {
   // it returns true and sets correct value when compiled by gcc.
   static bool SafeStrToDouble(StringPiece str, double *value);
 
-  // Converts the string to a float. Returns true if success or false if the
-  // string is in the wrong format.
-  static bool SafeStrToFloat(StringPiece str, float *value);
-  // Converts the string to a float.
-  static float StrToFloat(StringPiece str) {
-    float value;
-    SafeStrToFloat(str, &value);
-    return value;
-  }
-
   // Convert Kanji numeric into Arabic numeric.
   // When the trim_leading_zeros is true, leading zeros for arabic_output
   // are trimmed off.

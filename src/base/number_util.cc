@@ -801,48 +801,6 @@ T StrToRealNumber(const char *ptr, char **end_ptr) {
   return false;
 }
 
-template <>
-double StrToRealNumber(const char *ptr, char **end_ptr) {
-  // strtod of GCC accepts hexadecimal number like "0x1234", but that of
-  // VisualC++ does not.
-  // Note that strtod accepts white spaces at the beginning of the parameter.
-  return std::strtod(ptr, end_ptr);
-}
-
-template <>
-float StrToRealNumber(const char *ptr, char **end_ptr) {
-  // strtof of GCC accepts hexadecimal number like "0x1234", but that of
-  // VisualC++ does not.
-  // Note that strtof accepts white spaces at the beginning of the parameter.
-  return std::strtof(ptr, end_ptr);
-}
-
-template <typename T>
-bool SafeStrToRealNumber(StringPiece str, T *value) {
-  DCHECK(value);
-  // Note that StringPiece isn't terminated by '\0'.  However, since
-  // strtod/strtof requires null-terminated string, we make a string here. If we
-  // have a good estimate of the maximum possible length of the input string, we
-  // may be able to use char buffer instead.  Note: const reference ensures the
-  // life of this temporary string until the end!
-  const string &s = str.as_string();
-  const char *ptr = s.c_str();
-
-  char *end_ptr;
-  errno = 0;  // errno only gets set on errors
-  *value = StrToRealNumber<T>(ptr, &end_ptr);
-  if (errno != 0 ||
-      ptr == end_ptr ||
-      std::isnan(*value) ||
-      *value ==  numeric_limits<T>::infinity() ||
-      *value == -numeric_limits<T>::infinity()) {
-    return false;
-  }
-  // Trailing white spaces are allowed.
-  const StringPiece trailing_str(end_ptr, ptr + s.size() - end_ptr);
-  return SkipWhiteSpace(trailing_str).empty();
-}
-
 }  // namespace
 
 bool NumberUtil::SafeStrToInt16(StringPiece str, int16 *value) {
@@ -919,11 +877,32 @@ bool NumberUtil::SafeStrToUInt64(StringPiece str, uint64 *value) {
 }
 
 bool NumberUtil::SafeStrToDouble(StringPiece str, double *value) {
-  return SafeStrToRealNumber(str, value);
-}
+  DCHECK(value);
+  // Note that StringPiece isn't terminated by '\0'.  However, since strtod
+  // requires null-terminated string, we make a string here. If we have a good
+  // estimate of the maximum possible length of the input string, we may be able
+  // to use char buffer instead.  Note: const reference ensures the life of this
+  // temporary string until the end!
+  const string &s = str.as_string();
+  const char *ptr = s.c_str();
 
-bool NumberUtil::SafeStrToFloat(StringPiece str, float *value) {
-  return SafeStrToRealNumber(str, value);
+  char *end_ptr;
+  errno = 0;  // errno only gets set on errors
+  // strtod of GCC accepts hexadecimal number like "0x1234", but that of
+  // VisualC++ does not.
+  // Note that strtod accepts white spaces at the beginning of the parameter.
+  *value = std::strtod(ptr, &end_ptr);
+
+  if (errno != 0 ||
+      ptr == end_ptr ||
+      std::isnan(*value) ||
+      *value ==  numeric_limits<double>::infinity() ||
+      *value == -numeric_limits<double>::infinity()) {
+    return false;
+  }
+  // Trailing white spaces are allowed.
+  const StringPiece trailing_str(end_ptr, ptr + s.size() - end_ptr);
+  return SkipWhiteSpace(trailing_str).empty();
 }
 
 namespace {
