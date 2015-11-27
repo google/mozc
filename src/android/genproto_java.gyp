@@ -73,7 +73,6 @@
       'type': 'none',
       'dependencies': [
         'sdk_genproto_java_config',
-        'sdk_genproto_java_descriptor',
         'sdk_genproto_java_user_dictionary_storage',
         'sdk_genproto_java_session',
       ],
@@ -83,46 +82,8 @@
       'type': 'none',
       'dependencies': [
         'adt_genproto_java_config',
-        'adt_genproto_java_descriptor',
         'adt_genproto_java_user_dictionary_storage',
         'adt_genproto_java_session',
-      ],
-    },
-    {
-      'target_name': 'sdk_genproto_java_descriptor',
-      'type': 'none',
-      'copies': [{
-        'destination': '<(sdk_protobuf_gen_dir)/com/google/protobuf/',
-        'files': [
-          '<(adt_protobuf_gen_dir)/com/google/protobuf/DescriptorProtos.java',
-        ],
-      }],
-    },
-    {
-      'target_name': 'adt_genproto_java_descriptor',
-      'type': 'none',
-      'variables': {
-        'proto_files': [
-          '<(protobuf_root)/src/google/protobuf/descriptor.proto',
-        ],
-      },
-      'actions': [
-        {
-          'action_name': 'genproto_descriptor',
-          'inputs': [
-            '<@(proto_files)',
-            '<@(additional_inputs)',
-          ],
-          'outputs': [
-            '<(adt_protobuf_gen_dir)/com/google/protobuf/DescriptorProtos.java',
-          ],
-          'action': [
-            '<@(genproto_java_common)',
-            '--proto=<(proto_files)',
-            '--proto_path=<(protobuf_root)',
-            '--java_out=<(DEPTH)/<(relative_dir)/<(adt_protobuf_gen_dir)',
-          ],
-        },
       ],
     },
     {

@@ -29,6 +29,8 @@
 
 {
   'variables': {
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/third_party/protobuf/java/src/main/java',
+
     # We accept following warnings come from protobuf.
     # This list should be revised when protobuf is updated.
     'msvc_disabled_warnings_for_protoc': [
@@ -49,7 +51,10 @@
       # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
       '4800',
     ],
-    'protobuf_cpp_root' : '<(protobuf_root)/src/google/protobuf',
+
+    'protobuf_prebuilt_jar_path': '',
+
+    'protobuf_cpp_root': '<(protobuf_root)/src/google/protobuf',
     'protobuf_sources': [
       '<(protobuf_cpp_root)/any.cc',
       '<(protobuf_cpp_root)/arena.cc',
@@ -319,6 +324,97 @@
                 'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
               ],
             }],
+          ],
+        }],
+      ],
+    },
+    {
+      'target_name': 'protobuf_jar',
+      'type': 'none',
+      'conditions': [
+        ['target_platform!="Android" or _toolset!="target"', {
+          # 'protobuf-java.jar' is never used except for Android target build.
+        }, 'protobuf_prebuilt_jar_path!=""', {
+          # If we already have prebuilt 'protobuf-java.jar', just copy it.
+          'copies': [{
+            'destination': '<(DEPTH)/android/libs',
+            'files': [
+              '<(protobuf_prebuilt_jar_path)',
+            ],
+          }],
+        }, {  # else
+          # Otherwise, 'protobuf-java.jar' needs to be built from source.
+          # Note that we do not support 'use_libprotobuf==1' for Android build.
+          'dependencies': [
+            'protoc#host',
+          ],
+          'variables': {
+            'protoc_wrapper_path': '<(DEPTH)/build_tools/protoc_wrapper.py',
+            'protoc_command': 'protoc<(EXECUTABLE_SUFFIX)',
+            'descriptor_proto_path': '<(protobuf_root)/src/google/protobuf/descriptor.proto',
+            'jar_out_dir': '<(SHARED_INTERMEDIATE_DIR)/third_party/protobuf/java/jar',
+            'protoc_wrapper_additional_options': ['--protoc_dir=<(PRODUCT_DIR)'],
+            'additional_inputs': ['<(PRODUCT_DIR)/<(protoc_command)'],
+            'protobuf_java_sources': [
+              '>!@(find <(protobuf_root)/java/src/main/java -type f -name "*.java" -and -path "*/src/main/java/*")',
+            ],
+          },
+          'actions': [
+            {
+              'action_name': 'run_protoc',
+              'inputs': [
+                '<(descriptor_proto_path)',
+                '<(protoc_wrapper_path)',
+                '<@(additional_inputs)',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/com/google/protobuf/DescriptorProtos.java',
+              ],
+              'action': [
+                'python',
+                '<(protoc_wrapper_path)',
+                '--proto=<(descriptor_proto_path)',
+                '--project_root=<(protobuf_root)/src',
+                '--protoc_command=<(protoc_command)',
+                '--java_out=<(gen_out_dir)',
+                '<@(protoc_wrapper_additional_options)',
+              ],
+            },
+            {
+              'action_name': 'run_javac',
+              'inputs': [
+                '<(gen_out_dir)/com/google/protobuf/DescriptorProtos.java',
+                '<@(protobuf_java_sources)',
+              ],
+              'outputs': [
+                '<(jar_out_dir)/com/google/protobuf/DescriptorsProtos.class',
+                # TODO(yukawa): Add other *.class files.
+              ],
+              'action': [
+                'javac',
+                '-implicit:none',
+                '-sourcepath', '<(gen_out_dir):<(protobuf_root)/java/src/main/java',
+                '-d', '<(jar_out_dir)',
+                '<@(_inputs)',
+              ],
+            },
+            {
+              'action_name': 'run_jar',
+              'inputs': [
+                '<(jar_out_dir)/com/google/protobuf/DescriptorsProtos.class',
+                # TODO(yukawa): Add other *.class files.
+              ],
+              'outputs': [
+                '<(DEPTH)/android/libs/protobuf-java.jar',
+              ],
+              'action': [
+                'jar',
+                'cf',
+                '<(DEPTH)/android/libs/protobuf-java.jar',
+                '-C', '<(jar_out_dir)',
+                '.',
+              ],
+            },
           ],
         }],
       ],

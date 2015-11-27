@@ -218,10 +218,6 @@
     'mac_breakpad_dir': 'dummy_mac_breakpad_dir',
     'mac_breakpad_framework': '<(mac_breakpad_dir)/GoogleBreakpad.framework',
 
-
-    # For Android
-    'protobuf_java_root': '<(additional_third_party_dir)/protobuf/java/src/main',
-
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
     # You should not set this flag if you want to use "dlopen" to

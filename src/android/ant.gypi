@@ -39,7 +39,6 @@
     '<(abs_depth)/build_tools/android_ant.py',
     '<(CONFIGURATION_NAME)',
     '-Dgyp.build_type=<(CONFIGURATION_NAME)',
-    '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
     '-Dsdk.dir=<(android_home)',
   ],
 }

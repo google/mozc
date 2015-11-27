@@ -68,7 +68,6 @@
             '../build_tools/run_after_chdir.py', 'tests',
             'ant',
             'debug',
-            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
             '-Dsdk.dir=<(android_home)',
           ],
         },
@@ -99,7 +98,6 @@
       'target_name': 'apk',
       'type': 'none',
       'dependencies': [
-        'protobuf/protobuf.gyp:protobuf_java',
         'resources/resources.gyp:resources',
         'sdk_apk_dependencies',
         'userfeedback/userfeedback.gyp:userfeedback',
@@ -151,6 +149,7 @@
       'target_name': 'common_apk_dependencies',
       'type': 'none',
       'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf_jar',
         'android_manifest',
         'assets',
         'mozc',
