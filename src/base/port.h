@@ -85,9 +85,9 @@ typedef long long           int64;
 
 #include <stdint.h>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1900
 #define snprintf _snprintf_s
-#endif  // _MSC_VER
+#endif  // _MSC_VER < 1900
 
 template <typename T, size_t N>
 char (&ArraySizeHelper(T (&array)[N]))[N];
