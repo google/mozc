@@ -116,9 +116,13 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
     last_output_->Clear();
   }
 
+  void SyncDataToStorage() {
+    EXPECT_TRUE(engine_->GetUserDataManager()->WaitForSyncerForTest());
+  }
+
   void ClearUserPrediction() {
     EXPECT_TRUE(client_->ClearUserPrediction());
-    EXPECT_TRUE(engine_->GetUserDataManager()->WaitForSyncerForTest());
+    SyncDataToStorage();
   }
 
   void ClearUsageStats() {
@@ -362,6 +366,8 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
       // Skip an empty or comment line.
       continue;
     }
+
+    SyncDataToStorage();
 
     columns.clear();
     Util::SplitStringUsing(line_text, "\t", &columns);
