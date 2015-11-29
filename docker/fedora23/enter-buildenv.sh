@@ -28,4 +28,4 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-docker build --no-cache --rm -t $USER/mozc_fedora21 .
+docker run --interactive --tty --rm $USER/mozc_fedora23
