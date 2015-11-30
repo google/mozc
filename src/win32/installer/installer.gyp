@@ -78,6 +78,12 @@
               'debug_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC120_DebugCRT_x86.msm',
               'release_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC120_CRT_x86.msm',
             }],
+            ['use_dynamically_linked_qt==1 and compiler_target=="msvs" and compiler_target_version_int==1900', {
+              'debug_crt_merge_module_id_prefix': 'DebugCRT140',
+              'release_crt_merge_module_id_prefix': 'CRT140',
+              'debug_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC140_DebugCRT_x86.msm',
+              'release_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC140_CRT_x86.msm',
+            }],
             ['qt_dir and use_qt=="YES" and use_dynamically_linked_qt==1', {
               'qtcore4_dll_path': '<(qt_dir)/bin/QtCore4.dll',
               'qtcored4_dll_path': '<(qt_dir)/bin/QtCored4.dll',
