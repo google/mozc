@@ -52,12 +52,59 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--targetpath', dest='targetpath')
   parser.add_option('--pdbpath', dest='pdbpath', default='')
+  parser.add_option('--msvs_version', dest='msvs_version', default='2013',
+                    help='Specifies the target MSVS version.')
 
   (opts, _) = parser.parse_args()
 
   return opts
 
 
+  vcvarsall_template = (
+      r'C:\Program Files (x86)\Microsoft Visual Studio %d.0\VC\vcvarsall.bat')
+  if opts.msvs_version == '2013':
+    vcvarsall_path = vcvarsall_template % 12
+  elif opts.msvs_version == '2015':
+    vcvarsall_path = vcvarsall_template % 14
+  else:
+    PrintErrorAndExit('Unsupported msvs_version=%s' % opts.msvs_version)
+
+  args = [vcvarsall_path, 'amd64_x86', '&&', 'set']
+  popen = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE)
+  vcvarsall_envs, _ = popen.communicate()
+  if popen.returncode != 0:
+    PrintErrorAndExit('vcvarsall.bat failed. error=%d' % popen.returncode)
+
+  prefix = 'PATH='
+  for line in vcvarsall_envs.splitlines():
+    if line.upper().startswith(prefix):
+      return line[len(prefix):]
+  PrintErrorAndExit('PATH not found')
+
+
+def PostProcessOnWindows(opts):
+  """Apply post-processes for Windows binaries.
+
+  Update the specified executable to be 'release quality' by
+  - bind import functions by bind.exe
+  - Set 'freeze' bit in the PE header.
+  - Code signing.
+  See the following issues for details.
+    http://b/1504561, http://b/1507272, http://b/2289857, http://b/1893852
+
+  Args:
+    opts: build options to be used to update the executable.
+  """
+  abs_target_path = os.path.abspath(opts.targetpath)
+  abs_touch_file_path = abs_target_path + '.postbuild'
+
+  os.environ['PATH'] = GetPath(opts)
+
+  # If the target looks like a PE image, update it.
+  (_, extension) = os.path.splitext(opts.targetpath)
+  if extension.lower() in ['.exe', '.dll', '.ime']:
+    # Protect it against further binding, which invalidates code signing.
+    RunOrDie(['editbin.exe', '/ALLOWBIND:NO', '/RELEASE', abs_target_path])
 
   # Touch the timestamp file.
   if os.path.exists(abs_touch_file_path):

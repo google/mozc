@@ -32,6 +32,21 @@
   'actions': [
     {
       'action_name': 'postbuild',
+      'variables': {
+        'postbuild_additional_options': [],
+      },
+      'conditions': [
+        ['compiler_target=="msvs" and compiler_target_version_int==1800', {
+          'variables': {
+            'postbuild_msvs_option': ['--msvs_version=2013'],
+          },
+        }],
+        ['compiler_target=="msvs" and compiler_target_version_int==1900', {
+          'variables': {
+            'postbuild_msvs_option': ['--msvs_version=2015'],
+          },
+        }],
+      ],
       'inputs': [
         '<(target_file)',
       ],
@@ -42,6 +57,8 @@
         'python',
         'postbuilds_win.py',
         '--targetpath', '<@(_inputs)',
+        '<(postbuild_msvs_option)',
+        '<@(postbuild_additional_options)',
       ],
       'message': 'postbuild for <@(_inputs)',
     },
