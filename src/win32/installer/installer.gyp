@@ -58,7 +58,7 @@
         'variables': {
           'variables': {
             # TODO(yukawa): Support 32-bit environment.
-            'merge_modules_dir': r'"C:\Program Files (x86)\Common Files\Merge Modules"',
+            'merge_modules_dir': r'C:/Program Files (x86)/Common Files/Merge Modules',
           },
           'merge_modules_dir': '<(merge_modules_dir)',
           'debug_crt_merge_module_id_prefix': '',
